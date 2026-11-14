@@ -23,8 +23,8 @@ describe('device registry', () => {
     for (const device of zoom) {
       expect(device.steps.core).toBeUndefined()
       expect(device.firmware?.file).toBeUndefined()
-      // No zdl module contract yet: the pedals stay locked even where an effect loads.
-      expect(readyForMods(device)).toBe(false)
+      // The zdl module contract opens the MS-70CDR for its first module; the others wait for their SDK even where an effect loads.
+      expect(readyForMods(device)).toBe(device.id === 'zoom-ms-70cdr')
     }
     // An Erica Synths machine needs its Modwerk base and a module contract (an SDK) before it takes mods.
     expect(readyForMods(DEVICES_BY_ID['lxr-02'])).toBe(false)
@@ -40,7 +40,7 @@ describe('device registry', () => {
       if (!hasMods) expect(device.steps.mods).toBe('open')
     }
     expect(DEVICES_BY_ID['digitakt-ii'].firmware?.releases).toEqual(['1.17'])
-    expect(DEVICES_BY_ID['digitakt-ii'].status).toBe('research')
+    expect(DEVICES_BY_ID['digitakt-ii'].status).toBe('preview')
   })
 
   it('lists digi mods only for digi machines in the registry', () => {

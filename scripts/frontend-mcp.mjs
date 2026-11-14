@@ -13,6 +13,7 @@ import { assertMcpPrivateHost } from './frontend-mcp-private-host.mjs'
 import { saveSavedBackup } from './frontend-mcp-saved-backup.mjs'
 import { openRemoteUnit } from './frontend-mcp-remote.mjs'
 import * as board from './agent-board.mjs'
+import { nodeMidiAccess, zoomCommand } from './zoom-device.ts'
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url))
 let activeWorkspace = false
@@ -36,12 +37,12 @@ const ids = value => {
 }
 const schema = (properties = {}, required = []) => ({ type: 'object', properties, required, additionalProperties: false })
 const string = { type: 'string' }, strings = { type: 'array', items: string, maxItems: 128, uniqueItems: true }
-const tool = (name, description, properties = {}, required = [], writes = false) => ({ name, description, inputSchema: schema(properties, required), annotations: { readOnlyHint: !writes, destructiveHint: writes, openWorldHint: name.startsWith('api_') || name.startsWith('device_'), idempotentHint: !writes } })
+const tool = (name, description, properties = {}, required = [], writes = false) => ({ name, description, inputSchema: schema(properties, required), annotations: { readOnlyHint: !writes, destructiveHint: writes, openWorldHint: /^(api|device|zoom)_/.test(name), idempotentHint: !writes } })
 const TOOLS = [
   tool('site_features', 'Describe supported frontend operations and the limits of API, DOM and hardware evidence.'),
   tool('site_catalogue', 'List instruments and modules from the actual site catalogue, including current USB package availability.', { machine: string, query: string, category: string, beta: { type: 'boolean' } }),
   tool('site_module', 'Read module controls, usage, licence, evidence and compatibility.', { machine: string, id: string }, ['id']),
-  tool('site_selection', 'Validate a card selection using the site rules, or prepare a USB selection and exact Undo packages without device writes. Optional base/capabilities describe hypothetical planning only; device review reads the connected unit.', { machine: string, moduleIds: strings, keepStockFx2: { type: 'boolean' }, usb: { type: 'boolean' }, beta: { type: 'boolean' }, current: { type: 'object' }, capabilities: { type: 'object' }, base: string }, ['moduleIds']),
+  tool('site_selection', 'Check a selection against the catalogue, or with usb prepare a USB selection and exact Undo packages without device writes. Optional base/capabilities describe hypothetical planning only; device review reads the connected unit.', { machine: string, moduleIds: strings, keepStockFx2: { type: 'boolean' }, usb: { type: 'boolean' }, beta: { type: 'boolean' }, current: { type: 'object' }, capabilities: { type: 'object' }, base: string }, ['moduleIds']),
   tool('set_list', 'Read this MCP workspace’s private module sets; browser and other developers’ workspaces are separate.'),
   tool('set_save', 'Create or update a local module set using the frontend validation/current version rules.', { id: string, name: string, machine: string, moduleIds: strings, keepStockFx2: { type: 'boolean' }, usbAudio: { type: 'object' }, removedStockFx: strings }, ['name', 'moduleIds'], true),
   tool('set_delete', 'Delete one set from this isolated MCP workspace.', { id: string }, ['id'], true),
@@ -67,6 +68,12 @@ const TOOLS = [
   tool('device_trial', 'Install a reviewed set through the real frontend link as a trial, with no self-test (as a site sync). Requires --allow-device-writes; never accepts automatically.', { review: string }, ['review'], true),
   tool('device_keep', 'Explicitly accept the current trial and save it on the card. Requires --allow-device-writes.', { trial: string }, ['trial'], true),
   tool('device_undo', 'Undo the current trial and restore its exact reviewed previous packages.', { trial: string }, ['trial'], true),
+  tool('zoom_status', 'Connect to the Zoom MultiStomp over MIDI (startup --zoom-midi) through the site\u2019s own ZoomLink and read its model and firmware; on MIDISTOMP also its version, features and load. Read-only.'),
+  tool('zoom_list', 'List every file on the Zoom pedal with the group, ID and version of each effect in the group added effects use, and the free space. Read-only.'),
+  { ...tool('zoom_backup', 'Read every file on the Zoom pedal, checksum-checked, into a zip in the startup-selected private workspace and return a receipt (path, size, sha256). Writes nothing to the pedal.'),
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true, idempotentHint: false } },
+  tool('zoom_install', 'Install one added effect file, by name from the startup-selected --zoom-effects directory, as the site does: an effect ID clash moves it to a local ID, it is written and read back, then added to the effect list (the list from before is saved in the workspace). Requires --allow-device-writes and confirm=true; power-cycle the pedal to load it.', { file: string, confirm: { type: 'boolean' } }, ['file', 'confirm'], true),
+  tool('zoom_remove', 'Remove one added effect (group 8) from the Zoom pedal\u2019s effect list and its files, then list to check it went; Zoom\u2019s own effects are refused. Requires --allow-device-writes and confirm=true.', { file: string, confirm: { type: 'boolean' } }, ['file', 'confirm'], true),
   tool('remote_session_request', 'Ask a member, by username, for a read-only remote debug session on their Octatrack. They see who asks and why, and must accept in their browser. Administrators only; needs --allow-api-writes and confirm=true.', { username: string, reason: string, minutes: { type: 'number' }, confirm: { type: 'boolean' } }, ['username', 'reason', 'confirm'], true),
   tool('remote_session_status', 'Read a remote session request: pending, declined, active (with its end time), ended or expired, and the relay state when connected.', { session: string }, ['session']),
   tool('remote_session_connect', 'Connect the device tools to an accepted remote session. Until it ends, device_status and device_load read the member’s Octatrack through their browser; writes and saved-file backups are refused.', { session: string }, ['session']),
@@ -146,7 +153,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       globalThis.localStorage.setItem((key === 'session' ? 'octamod.community.session:' : 'modwerk.developer.session:') + api.href, value)
     }
   }
-  let bench, link, release, trial, closed = false, remote
+  let bench, link, release, trial, closed = false, remote, zoom
   // Remote sessions call admin routes; the Worker checks Origin on writes, so name the site it trusts (--site).
   const adminApi = async (path, method = 'GET', body) => {
     const response = await frontend.apiFetch(path, { method, redirect: 'error', signal: AbortSignal.timeout(30000), headers: { Origin: deployment.origin, ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) })
@@ -187,6 +194,28 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     if (link.getState().status !== 'ready' && !(trial && link.getState().status === 'trial')) throw new Error('Octatrack is not ready: ' + link.getState().status)
     return link
   }
+  // The Zoom pedal: a fresh MIDI port list and ZoomLink whenever the last one isn't ready (unplugged, or not found yet).
+  async function zoomLink() {
+    if (!options.zoomMidi) throw new Error('Zoom tools require --zoom-midi at startup.')
+    if (zoom?.link.getState().status !== 'ready') { zoom?.access.close?.(); zoom = undefined }
+    if (!zoom) {
+      const access = await (dependencies.zoomAccess ?? nodeMidiAccess)()
+      zoom = { access, link: new frontend.ZoomLink(async () => access) }
+      await zoom.link.connect()
+    }
+    return zoom.link
+  }
+  async function zoomRun(command, file, confirmed = false) {
+    try { return await zoomCommand(await zoomLink(), command, file, { dir: dataDir, confirmed }) }
+    // An unplugged pedal leaves the link ready (these ports have no hot-plug): start again on the next call.
+    catch (error) { zoom?.access.close?.(); zoom = undefined; throw error }
+  }
+  const zoomWrite = (args, name) => {
+    if (!options.allowDeviceWrites || args.confirm !== true) throw new Error('Zoom writes require --allow-device-writes and confirm=true.')
+    if (!/^[A-Za-z0-9_]{1,8}\.zdl$/i.test(args.file)) throw new Error('Name one effect file: at most 8 letters, digits or underscores, then .ZDL.')
+    if (name && !options.zoomEffects) throw new Error('Choose the effect files at startup with --zoom-effects DIR.')
+    return name ? join(options.zoomEffects, args.file) : args.file
+  }
   async function snapshot() {
     const unit = await connected(), kit = frontend.moduleSetKit(unit)
     if (unit.getState().status === 'trial') return { state: unit.getState(), before: trial?.before, trial: trial?.id }
@@ -206,7 +235,8 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     const selected = ids(args.moduleIds), machine = args.machine ?? 'octatrack'
     if (machine !== 'octatrack') { if (!frontend.isDigiDevice(machine)) throw new Error('This machine has no supported builder.'); frontend.resolveDigiSelection(machine, selected); return frontend.estimateCombination(machine, selected) }
     frontend.resolveSelection(selected)
-    if (!args.usb) return { availability: frontend.moduleAvailabilityError(selected, !!args.beta), card: frontend.cardBuildError(selected, !!args.beta), conflicts: frontend.selectionConflicts(selected, frontend.DSP_LOADER && (args.keepStockFx2 ?? false)) }
+    // Without `usb` only the catalogue is asked; whether a set fits is the unit's own admission when it is synced.
+    if (!args.usb) return { availability: frontend.moduleAvailabilityError(selected, !!args.beta) }
     const target = { name: 'MCP test set', moduleIds: selected, removedStockFx: [] }, current = args.current ?? { moduleIds: [], removedStockFx: [] }
     ids(current.moduleIds); ids(current.removedStockFx)
     preparedModules?.requireBase([...selected, ...current.moduleIds], args.base)
@@ -225,9 +255,9 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     return token
   }
   const handlers = {
-    site_features: async () => ({ beta: true, tools: TOOLS.map(item => item.name), coverage: ['instrument/module catalogue, search and module guides', 'card compatibility and USB package preflight/Undo', 'isolated set CRUD/import/export/current versions', 'community API with normal permissions', 'saved public firmware download receipts', 'real site USB review/trial/self-test/Keep/Undo', 'cached live load and fixed saved-module-file backup receipts', 'read-only remote sessions on a member’s unit through their browser, after they accept'], limits: ['Domain/API tests do not measure CSS pixels or audible output.', 'OAuth/browser sign-in and upload file selection use their separate existing workflows.', 'No raw memory, key injection, whole-OS flash or automatic Keep.', 'Local sources and private workspace are distinct from a live signed-in browser.', 'A saved-module-file backup does not qualify recovery or permit Keep over foreign saved files.'] }),
+    site_features: async () => ({ beta: true, tools: TOOLS.map(item => item.name), coverage: ['instrument/module catalogue, search and module guides', 'catalogue availability and USB package preflight/Undo', 'isolated set CRUD/import/export/current versions', 'community API with normal permissions', 'saved public firmware download receipts', 'real site USB review/trial/self-test/Keep/Undo', 'cached live load and fixed saved-module-file backup receipts', 'read-only remote sessions on a member’s unit through their browser, after they accept', 'a Zoom MultiStomp over MIDI (--zoom-midi): identity, files, backup, and installing or removing one added effect'], limits: ['Domain/API tests do not measure CSS pixels or audible output.', 'OAuth/browser sign-in and upload file selection use their separate existing workflows.', 'No raw memory, key injection, whole-OS flash or automatic Keep.', 'Local sources and private workspace are distinct from a live signed-in browser.', 'A saved-module-file backup does not qualify recovery or permit Keep over foreign saved files.'] }),
     site_catalogue: async args => {
-      const machine = args.machine ?? 'all', octa = frontend.availableModules(!!args.beta).filter(module => args.beta || !frontend.moduleUsbOnly(module.id)).map(module => ({ ...module, machine: 'octatrack', usb: catalogue.ids.includes(module.id), card: !frontend.moduleUsbOnly(module.id) })), digi = frontend.digiModules.map(module => ({ ...module, name: module.title, description: module.summary, machine: module.device }))
+      const machine = args.machine ?? 'all', octa = frontend.availableModules(!!args.beta).map(module => ({ ...module, machine: 'octatrack', usb: catalogue.ids.includes(module.id) })), digi = frontend.digiModules.map(module => ({ ...module, name: module.title, description: module.summary, machine: module.device }))
       return { machines: frontend.machines, ...preparedModules ? { privatePreparation: preparedModules.info } : {}, modules: [...octa, ...digi].filter(module => (machine === 'all' || module.machine === machine) && (!args.category || (module.libraryCategory ?? module.category) === args.category) && (module.machine === 'octatrack' ? frontend.octatrackMatchesQuery(module, args.query ?? '') : frontend.digiMatchesQuery(module, args.query ?? ''))) }
     },
     site_module: async args => { if ((args.machine ?? 'octatrack') === 'octatrack') { frontend.resolveSelection(ids([args.id])); return frontend.documents[args.id] } const [module] = frontend.resolveDigiSelection(args.machine, ids([args.id])); return module },
@@ -322,6 +352,11 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     },
     device_keep: async args => finish(args, true),
     device_undo: async args => finish(args, false),
+    zoom_status: async () => zoomRun('status'),
+    zoom_list: async () => zoomRun('list'),
+    zoom_backup: async () => zoomRun('backup'),
+    zoom_install: async args => zoomRun('install', zoomWrite(args, true), true),
+    zoom_remove: async args => zoomRun('remove', zoomWrite(args, false), true),
     board_claims: async args => {
       const query = new URLSearchParams(Object.entries({ kind: args.kind, key: args.key, holder: args.holder, released: args.released && '1' }).filter(([, value]) => value))
       const { claims, released } = await board.boardRequest('/agent-board/claims' + (query.size ? '?' + query : ''), boardOptions())
@@ -422,7 +457,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       running = true
       try { return await handlers[name](args) } finally { running = false }
     },
-    async close() { if (closed) return; closed = true; try { if (trial) { try { await link.undo() } catch { /* Unaccepted trials also recover through device timeout. */ } } remote?.relay.end(); release?.(); bench?.socket.destroy() } finally { activeWorkspace = false; await rm(lease, { recursive: true, force: true }) } },
+    async close() { if (closed) return; closed = true; try { if (trial) { try { await link.undo() } catch { /* Unaccepted trials also recover through device timeout. */ } } remote?.relay.end(); release?.(); bench?.socket.destroy(); zoom?.access.close?.() } finally { activeWorkspace = false; await rm(lease, { recursive: true, force: true }) } },
   }
   } catch (error) { activeWorkspace = false; await rm(lease, { recursive: true, force: true }); throw error }
 }
@@ -448,8 +483,8 @@ export function createProtocol(service) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   for (const method of ['log', 'info', 'debug', 'warn', 'error']) console[method] = (...args) => process.stderr.write(formatMcpLog(...args) + '\n')
   try {
-  const { values } = parseArgs({ options: { 'data-dir': { type: 'string' }, 'frontend-root': { type: 'string' }, 'prepared-modules': { type: 'string' }, 'api': { type: 'string' }, site: { type: 'string' }, 'session-file': { type: 'string' }, stock: { type: 'string' }, 'device-socket': { type: 'string' }, 'allow-api-writes': { type: 'boolean' }, 'allow-device-writes': { type: 'boolean' } } })
-  const service = await createFrontendTools({ root: values['frontend-root'] && resolve(values['frontend-root']), preparedModules: values['prepared-modules'] && resolve(values['prepared-modules']), dataDir: values['data-dir'] && resolve(values['data-dir']), apiBase: values.api, site: values.site, sessionFile: values['session-file'], stock: values.stock, deviceSocket: values['device-socket'], allowApiWrites: values['allow-api-writes'], allowDeviceWrites: values['allow-device-writes'] })
+  const { values } = parseArgs({ options: { 'data-dir': { type: 'string' }, 'frontend-root': { type: 'string' }, 'prepared-modules': { type: 'string' }, 'api': { type: 'string' }, site: { type: 'string' }, 'session-file': { type: 'string' }, stock: { type: 'string' }, 'device-socket': { type: 'string' }, 'zoom-midi': { type: 'boolean' }, 'zoom-effects': { type: 'string' }, 'allow-api-writes': { type: 'boolean' }, 'allow-device-writes': { type: 'boolean' } } })
+  const service = await createFrontendTools({ root: values['frontend-root'] && resolve(values['frontend-root']), preparedModules: values['prepared-modules'] && resolve(values['prepared-modules']), dataDir: values['data-dir'] && resolve(values['data-dir']), apiBase: values.api, site: values.site, sessionFile: values['session-file'], stock: values.stock, deviceSocket: values['device-socket'], zoomMidi: values['zoom-midi'], zoomEffects: values['zoom-effects'] && resolve(values['zoom-effects']), allowApiWrites: values['allow-api-writes'], allowDeviceWrites: values['allow-device-writes'] })
   const protocol = createProtocol(service), input = createInterface({ input: process.stdin, crlfDelay: Infinity })
   let queue = Promise.resolve()
   input.on('line', line => { queue = queue.then(async () => { let reply; try { if (Buffer.byteLength(line) > 64 * 1024) throw new Error('Message too large.'); reply = await protocol(JSON.parse(line)) } catch { reply = { jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Invalid JSON-RPC message.' } } } if (reply) process.stdout.write(JSON.stringify(reply) + '\n') }) })

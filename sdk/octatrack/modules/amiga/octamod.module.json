@@ -1,0 +1,260 @@
+{
+  "schemaVersion": 2,
+  "id": "amiga",
+  "key": "AMIGA",
+  "name": "Amiga",
+  "version": "0.2.0-experimental",
+  "category": "machines",
+  "author": {
+    "github": "repeat98",
+    "credits": [
+      "Jannik Aßfalg: design, ColdFire code and host tests (MIT)."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "8-bit sampler",
+    "family": "Sample track machine",
+    "summary": "Plays a Flex sample like an 8-bit tracker: gritty, held samples and a cyclic stretch that pulls pitch and time apart, on whole samples or slices.",
+    "overview": "Amiga is a track machine modelled on how a home computer's 8-bit sound chip and its tracker software played samples. It plays the track's Flex sample through the stock reader, reduces its word length and storage rate before the Octatrack repitches it, and can restart the sample every few milliseconds a little further on, so PTCH changes the pitch and SPD the length. Each restart crossfades out of the sample itself over half a cycle, as Amigo's grains do, and a sliced note stretches inside its slice. RATE is stock's own, forwards and backwards. The track's filter, AMP, LFOs and effects follow as for any sample.",
+    "highlights": [
+      "SPD sets how fast the note moves through the sample and GRN the cycle, 96 to 4128 samples: half speed, about twice as fast or a held sound, at any pitch.",
+      "Slices stretch too: SLIC on, STRT picks the slice, and the stretch stays inside it.",
+      "Every restart crossfades over half a cycle, whichever way the note is going.",
+      "STR can turn the stretch into a pitch shift of up to an octave either way.",
+      "RATE is stock's own: forwards, backwards and slower, with the stretch following it both ways.",
+      "SRR lowers the storage rate, BITS sets the word from 4 to 16 bits (8 by default), LED adds a fixed lowpass.",
+      "RATE, SPD and GRN take parameter locks, LFOs and scenes, as SRC knobs do."
+    ],
+    "usage": [
+      "Double-tap a track key (or open SRC SETUP), move to AMIGA in the machine list and press YES.",
+      "Double-tap the track key again and pick a sample from the Flex list, as for a Flex track.",
+      "Open SRC: knob D is RATE, E is SPD, F is GRN."
+    ]
+  },
+  "controls": [
+    {
+      "name": "RATE",
+      "default": 127,
+      "count": 128,
+      "doc": "Stock's RATE, -64 to +63: speed and pitch together, backwards below 0. The stretch follows it both ways. SRC knob D.",
+      "labels": null
+    },
+    {
+      "name": "SPD",
+      "default": 64,
+      "count": 128,
+      "doc": "How fast the note moves through the sample, whatever the pitch: 64 is its own speed, 32 half, 0 holds. SRC knob E.",
+      "labels": null
+    },
+    {
+      "name": "GRN",
+      "default": 64,
+      "count": 128,
+      "doc": "The stretch's cycle, 96 to 4128 samples; 1120 by default. Each restart crossfades over half of it. SRC knob F.",
+      "labels": null
+    },
+    {
+      "name": "LED",
+      "default": 0,
+      "count": 2,
+      "doc": "A fixed two-pole lowpass on the stored sample. SRC SETUP knob C.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "SRR",
+      "default": 0,
+      "count": 128,
+      "doc": "Storage rate: 16/(16+SRR) of the sample's own, each stored sample an average, then held. SRC SETUP knob D.",
+      "labels": null
+    },
+    {
+      "name": "STR",
+      "default": 1,
+      "count": 3,
+      "doc": "The stretch: OFF plays as FLEX, ON stretches, PCH shifts the pitch by SPD at the note's own length. SRC SETUP knob E.",
+      "labels": [
+        "OFF",
+        "ON",
+        "PCH"
+      ]
+    },
+    {
+      "name": "BITS",
+      "default": 4,
+      "count": 13,
+      "doc": "Word length from 4 to 16 bits; the saved value is bits minus 4. 16 leaves the sample's own word. SRC SETUP knob F.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Track machine",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "USB only: it loads on the Modwerk base over USB (it needs the base's machine list and START dispatch) and has no card build.",
+      "Experimental: played and measured on one MKII on a development base; TESTING.md lists what was not tried.",
+      "Measured on an MKII: one Amiga track beside seven FLEX tracks added 5.5 points to the frame interrupt at the defaults and up to 13.8 with PTCH +12, SRR and LED (0.1.0); this version is 2 to 3 points dearer. The base's CPU budget takes three Amiga tracks a Part and refuses a fourth with CPU FULL; three at the defaults beside four busy tracks already ran the frame late. Other installed modules leave less room: beside fifteen of them and three sounding FLEX tracks, one Amiga track took 12.6 to 16 points.",
+      "With a USB recording running as well, one Amiga track (0.1.0-experimental) at PTCH +12 with SRR and LED on beside seven FLEX tracks froze the unit until a power cycle.",
+      "No stock RTRG or RTIM on an Amiga track: SPD and GRN take their knobs.",
+      "Stock's own time-stretch (TSTR) is off on an Amiga track, and SETUP's LEN switch is LED: the track always uses stock's default length setting, LEN OFF.",
+      "SRR, LED, STR and BITS are SETUP values: one for the Part, without locks or LFOs.",
+      "A sliced note is stretched when it is one slice, as stock plays it with SETUP's LEN off; SRR, BITS and LED work either way.",
+      "The cycle length is in samples, not tied to the tempo.",
+      "The crossfade reads the sample itself. A recorder buffer that is recording, or a sample the module cannot read, restarts with a short fade-out of the step instead.",
+      "A stretched note that is not looped ends when SPD has carried it to the end of the sample, even if LEN would stop a FLEX note sooner by time.",
+      "A project opened without the module plays Amiga tracks as FLEX and reads SPD and GRN as stock's RTRG and RTIM, and LED, SRR, STR and BITS as SETUP's LEN, RATE, TSTR and TSNS.",
+      "Leaving Amiga for another machine puts the track's SRC settings back to FLEX defaults.",
+      "Before a trial of the module ends or the module is removed, put its tracks on another machine: the base refuses to take a machine away from a track that names it."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "2026-11-14",
+    "storage": {
+      "label": "Module image and memory",
+      "display": "11,792 bytes code and data; 2,092 bss",
+      "value": 13884,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "The USB package of this source (SHA-256 6bb8e598b76e359bda78fb420abaa96926ff8e8f3265b78932ef4599755c9b67, built by npm run module:dev -- amiga --build-only): 11,792 bytes of code and data and 2,092 of bss, the eight voices' state and the sample descriptions for the crossfade. The loader's own record for the module and the stack the render uses are not counted. The loader allows a module 128 KiB.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, in the frame interrupt",
+      "display": "Not measured in cycles; on the unit 6 to 28 points of a frame a track",
+      "value": null,
+      "unit": "cycles/block",
+      "method": "unmeasured",
+      "conditions": "No worst case in cycles exists. On the owner's MKII with this version (development twin 2d97f42d of release base 4e9a87ea, 14 November 2026; eight seconds of a 126 BPM pattern with track 1 alone sounding a drum loop, one reading each) the frame interrupt read 29.5 % with track 1 on FLEX, 35.5 % on Amiga at the defaults, 40.6 % at PTCH +12 and 57.3 % at PTCH +12 with GRN 0, SRR 30 and LED; 0.1.0 read 33.3 % and 37.4 % on the same twin. Three Amiga tracks at the defaults beside four STATIC tracks read 64.3 % with the longest frame at 113.2 %. These are means, not a longest frame. ot_emu counts 124 to 4,762 instructions of the engine's own code per audio frame of one track (worst frame 6,488); the unit's time did not follow such counts.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "CPU from frame-interrupt readings of this version on an MKII (one Amiga track playing a loop, from the defaults to PTCH +12 with GRN 0, SRR and LED, and three Amiga tracks beside four STATIC tracks; means, one reading each). Memory from this package's sizes, all eight voices included whether used or not.",
+      "cpu": {
+        "level": "high",
+        "basis": "measured-comparison",
+        "rationale": "The ColdFire reworks the track's source frames in the frame interrupt: the word and rate reduction, the lowpass and the cyclic restarts with their crossfades, which read the sample itself. On the unit one Amiga track added 6 points of the frame at the defaults, 11 at PTCH +12 and 28 at the dearest settings against a FLEX track, 2 to 3 more than 0.1.0; beside other sounding tracks and installed modules it cost 12.6 to 16 (0.1.0). The base's CPU budget admits three Amiga tracks a Part. Worst-case cycles are not measured.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP program, effect slot or DSP state is added. The reworked frames go to the DSP through the stock FLEX path, which repitches and filters them as it does a FLEX track's.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "11,792 bytes of code and data and 2,092 of bss in the package, about 14 KiB of the 128 KiB the loader allows a module. No sample RAM is taken and no stock buffer is reused: the crossfade reads the track's own sample where stock keeps it.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host gate on the engine (verify.py, 72 checks: the crunch, the stretch's timing and its crossfades out of the sample, pages, words and directions), a comparison of the crossfades with Amigo's (reference/amigo_check.py, the owner's installed plug-in), an emulator count of its instructions (bench.py), and RAM trials of this version's release package on the owner's MKII on a development base, 13 and 14 November 2026: restart ticks counted per track over USB Audio against 0.1.0, load with one and three tracks, a recorder buffer. TESTING.md lists what was not tried.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "a679875b1611d27cf1afe86741b6c646ec7fa9d0",
+    "gates": [
+      "python3 -B verify.py",
+      "python3 -B generate.py --check",
+      "python3 -B reference/amigo_check.py <a folder with the Amigo host and its default state> (macOS with Amigo installed)",
+      "python3 -B bench.py --emulator <ot_emu> --main <a MAIN image the emulator boots> --output <new private folder>"
+    ],
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Put a drum loop on an Amiga track and play it. At the defaults it is the loop at 8 bits.",
+          "Turn PTCH up a few semitones: the loop keeps its length and starts to flutter. Turn GRN for the size of the flutter.",
+          "Turn SPD down to 32 for half speed at the same pitch, or all the way to 0 to hold the sound where it is.",
+          "Turn RATE below 0: the loop runs backwards, still stretched.",
+          "On SRC SETUP, turn SRR up to about 20 for a grainy, folded top end, and switch LED on to take the edge off it.",
+          "Put a sliced loop on the track, switch SLIC on in SRC SETUP and trig slices with STRT locks: turn PTCH and each slice keeps its length, SPD and GRN stretch inside it."
+        ]
+      },
+      "screenshots": [
+        "media/amiga-machine-list.png",
+        "media/amiga-src.png",
+        "media/amiga-src-setup.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original code by Jannik Aßfalg under MIT. No firmware, extracted stock routines or tables, samples or third-party code. Amiga names the discontinued home computer whose sound this models; the module is not affiliated with or endorsed by the owners of that name."
+  },
+  "media": [
+    {
+      "path": "media/amiga-machine-list.png",
+      "captureType": "hardware",
+      "caption": "Double-tap a track key, or open SRC SETUP, to reach the machine list. Move down to AMIGA and press YES to put the machine on the track.",
+      "alt": "Octatrack machine list, SELECT MACHINE TYPE: STATIC, FLEX, THRU, NEIGHBOR, PICKUP and AMIGA, with FLEX marked and the cursor on AMIGA.",
+      "credit": "repeat98; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Machine list (SELECT MACHINE TYPE)",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on FLEX, the cursor moved to AMIGA."
+      }
+    },
+    {
+      "path": "media/amiga-src.png",
+      "captureType": "hardware",
+      "caption": "Press SRC. PTCH, STRT, LEN and RATE are stock's; knob E is SPD and knob F is GRN. Turn PTCH up and the loop keeps its length; turn SPD down to 32 for half speed at the same pitch.",
+      "alt": "Octatrack SRC page of an Amiga track: knobs PTCH, STRT, LEN, RATE, SPD and GRN, tempo 126.0, and the status line 8 BIT AMIGA.",
+      "credit": "repeat98; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults."
+      }
+    },
+    {
+      "path": "media/amiga-src-setup.png",
+      "captureType": "hardware",
+      "caption": "Hold FUNC and press SRC for SRC SETUP. Knob C switches LED, the lowpass; D is SRR, the storage rate; E is STR (OFF, ON or PCH) and F is BITS. Try SRR at about 20 with LED on.",
+      "alt": "Octatrack SRC SETUP page of an Amiga track: AMIGA marked in the machine list; LOOP AUTO, SLIC OFF, LED OFF, SRR 0, STR ON and the BITS knob.",
+      "credit": "repeat98; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC SETUP",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults: SRC SETUP."
+      }
+    }
+  ],
+  "access": {
+    "location": "The track's machine list (double-tap TRACK, or SRC SETUP)",
+    "steps": [
+      "Double-tap a track key, choose AMIGA in the machine list and press YES, then double-tap again and pick a Flex sample.",
+      "On SRC, turn PTCH: the pitch moves and the length stays. Turn SPD (knob E) for the length and GRN (knob F) for the flutter; RATE (knob D) is stock's, backwards below 0.",
+      "On SRC SETUP, raise SRR for a lower sample rate. LED, STR and BITS are beside it."
+    ],
+    "screenshots": [
+      "media/amiga-machine-list.png",
+      "media/amiga-src.png",
+      "media/amiga-src-setup.png"
+    ]
+  }
+}

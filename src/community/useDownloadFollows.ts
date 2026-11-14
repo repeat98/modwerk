@@ -13,8 +13,8 @@ export function useDownloadFollows() {
     setFollowNotice('Saving module update preferences…')
     void followDownloadedModules(ids, hasBetaAccess(session)).then(result => {
       window.dispatchEvent(new Event('modwerk-module-updates'))
-      setFollowNotice(result.failed ? 'Your download started, but update preferences could not be saved. Use Get update notifications on each module page.'
-        : result.followed ? 'You’re following updates for downloaded modules. Unfollow on a module page to opt out.'
+      setFollowNotice(result.failed ? 'Update preferences could not be saved. Use Get update notifications on each module page.'
+        : result.followed ? 'You’re following updates for these modules. Unfollow on a module page to opt out.'
         : 'Your existing update opt-outs are kept. Use Get update notifications on a module page to follow again.')
     })
   }

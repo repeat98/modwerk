@@ -23,13 +23,13 @@ describe('what a branch needs claimed', () => {
   it('finds new module folders, hook and table indices, migrations and machine ids, and nothing that was already there', () => {
     const manifest = (...ids) => JSON.stringify({ platform: { kind: 'elemod', claims: ['ui:x', ...ids.map(id => 'machine:' + id)] } })
     const { root, commit } = repository({
-      'sdk/machines/octatrack/events.json': events([35, 36]), 'migrations/0083_old.sql': '', 'sdk/octabam/modules/echo/README.md': '',
+      'sdk/machines/octatrack/events.json': events([35, 36]), 'migrations/0083_old.sql': '', 'sdk/octatrack/modules/echo/README.md': '',
       'sdk/digitakt/core/interface.json': JSON.stringify({ events: [{ name: 'ev_a' }], tables: [] }),
       'sdk/digitakt/modules/poly/modwerk.module.json': manifest(6), 'sdk/analog-rytm-mkii/modules/chorus/README.md': '',
     })
     commit({
-      'sdk/machines/octatrack/events.json': events([35, 36, 37]), 'migrations/0084_new.sql': '', 'sdk/octabam/modules/echo/LICENSE': '',
-      'sdk/octabam/modules/tape-echo/README.md': '', 'sdk/octabam/modules/tape-echo/src/a.c': '', 'sdk/drafts/slicer/README.md': '', 'sdk/digitone/modules/swarm/README.md': '',
+      'sdk/machines/octatrack/events.json': events([35, 36, 37]), 'migrations/0084_new.sql': '', 'sdk/octatrack/modules/echo/LICENSE': '',
+      'sdk/octatrack/modules/tape-echo/README.md': '', 'sdk/octatrack/modules/tape-echo/src/a.c': '', 'sdk/drafts/slicer/README.md': '', 'sdk/digitone/modules/swarm/README.md': '',
       'sdk/digitakt/core/interface.json': JSON.stringify({ events: [{ name: 'ev_a' }, { name: 'ev_b' }], tables: [{ name: 'core_x' }] }),
       // The Analog Rytm keeps its modules in modules/_submissions/<id>; one moved there is not new.
       'sdk/analog-rytm-mkii/modules/_submissions/temp-save/src/main.c': '', 'sdk/analog-rytm-mkii/modules/_submissions/chorus/README.md': '',
@@ -85,7 +85,7 @@ describe('the board client', () => {
   })
   it('gives the doctor a red line for an unclaimed new module or someone else\'s claim', () => {
     const { root } = repository({ 'README.md': '' })
-    const line = (claims, login) => board.moduleClaimLine({ root, machine: 'octatrack', id: 'tape-echo', folder: 'sdk/octabam/modules/tape-echo', claims, login })
+    const line = (claims, login) => board.moduleClaimLine({ root, machine: 'octatrack', id: 'tape-echo', folder: 'sdk/octatrack/modules/tape-echo', claims, login })
     expect(line([], 'ada')).toMatchObject({ state: 'fail', fix: 'npm run board -- claim module octatrack/tape-echo' })
     expect(line([], null).fix).toMatch(/^npm run board -- login/)
     expect(line([claimRow('module', 'octatrack/tape-echo', 'ada')], 'ada').state).toBe('ok')
@@ -134,6 +134,18 @@ describe('questions and findings in the commands', () => {
     const lines = board.describeThread(thread({ replies: [{ id: '12345678-0000-0000-0000-000000000000', author: 'ada', body: 'Yes, take it.', createdAt: '2026-10-30T01:00:00.000Z' }] }))
     expect(lines.slice(1)).toEqual(['    «Room for a chorus?»', '    12345678 @ada: «Yes, take it.»'])
     expect(lines[0]).toMatch(/question +module octatrack\/tape-echo +@bo → @ada {2}open until 2026-11-29$/)
+    // A wanted task names who took it and the pull request that ends it, and its text is quoted like any other.
+    const wanted = board.describeThread(thread({ kind: 'wanted', topic: { kind: 'site', key: 'forum' }, to: 'cy', body: 'Show the module version on forum threads.', pullRequest: 1500 }))
+    expect(wanted).toEqual([expect.stringMatching(/wanted +site forum +@bo taken by @cy {2}open until 2026-11-29 {2}ends with #1500$/), '    «Show the module version on forum threads.»'])
+  })
+  it('sends take, link and a reply\'s pull request to the routes that hold them', async () => {
+    const sent = [], fetch = async (url, init) => { sent.push([url.replace(/^.*\/api/, ''), init.method, JSON.parse(init.body ?? 'null')]); return Response.json({ message: {} }) }
+    const id = crypto.randomUUID(), options = { token: 'a'.repeat(64), api: 'https://api.example.test/api', fetch }
+    await board.messageAction(id, 'take', { pullRequest: 1500 }, options)
+    await board.messageAction(id, 'link', { pullRequest: 1501 }, options)
+    await board.messageAction(id, 'reply', { body: 'Sent as #1502.', pullRequest: 1502 }, options)
+    expect(sent).toEqual([['/agent-board/messages/' + id + '/take', 'POST', { pullRequest: 1500 }], ['/agent-board/messages/' + id + '/fold', 'POST', { pullRequest: 1501 }], ['/agent-board/messages/' + id + '/replies', 'POST', { body: 'Sent as #1502.', pullRequest: 1502 }]])
+    expect(board.MESSAGE_KINDS).toContain('wanted'); expect(board.TOPICS).toContain('site')
   })
 })
 

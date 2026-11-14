@@ -2,7 +2,7 @@ import type { Database, User } from './platform'
 import { needMember, sameDigest, throttle } from './auth'
 import { boundedBody, digest, HttpError, response } from './security'
 import { MODULES } from '../src/catalog/modules'
-import { DEVICE_INCIDENTS, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, DIAGNOSTIC_CONSENT_DAYS, DIAGNOSTIC_BUILD_ERRORS, DIAGNOSTIC_BUILD_KINDS, DIAGNOSTIC_BUILD_PHASES, DIAGNOSTIC_ERROR_KINDS, DIAGNOSTIC_ERRORS, DIAGNOSTIC_EVENTS, DIAGNOSTIC_PHASES, DIAGNOSTIC_RESULTS, DIAGNOSTIC_RETENTION_DAYS, DIAGNOSTIC_SITE_AREAS, DIAGNOSTIC_UNRESPONSIVE, DIAGNOSTIC_USB_ERRORS, DIAGNOSTIC_USB_PHASES, OCTATRACK_DIAGNOSTICS_VERSION, type DiagnosticConsent, type OctatrackDiagnostic } from '../src/community/octatrack-diagnostics-contract'
+import { DIAGNOSTICS_GUEST, DEVICE_INCIDENTS, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, DIAGNOSTIC_CONSENT_DAYS, DIAGNOSTIC_BUILD_ERRORS, DIAGNOSTIC_BUILD_KINDS, DIAGNOSTIC_BUILD_PHASES, DIAGNOSTIC_ERROR_KINDS, DIAGNOSTIC_ERRORS, DIAGNOSTIC_EVENTS, DIAGNOSTIC_PHASES, DIAGNOSTIC_RESULTS, DIAGNOSTIC_RETENTION_DAYS, DIAGNOSTIC_SITE_AREAS, DIAGNOSTIC_SYNC_STEPS, DIAGNOSTIC_UNRESPONSIVE, DIAGNOSTIC_USB_ERRORS, DIAGNOSTIC_USB_PHASES, DIAGNOSTIC_BROWSERS, DIAGNOSTIC_SYSTEMS, PRE_LINK_FAILURES, OCTATRACK_DIAGNOSTICS_VERSION, type DiagnosticConsent, type OctatrackDiagnostic } from '../src/community/octatrack-diagnostics-contract'
 
 const since = (now: Date, days: number) => new Date(now.getTime() - days * 86400000).toISOString()
 const hash = (v: unknown) => typeof v === 'string' && /^[a-f0-9]{64}$/.test(v)
@@ -40,12 +40,18 @@ function deviceCrash(v: unknown) {
     && words(v.d, 8) && words(v.a, 7) && words(v.stack, 8) && words(v.code, 8) && words(v.memory, 8)
 }
 function deviceStall(v: unknown) {
-  return object(v) && exactly(v, 'count,reason,report,ticks') && uint(v.count) && uint(v.reason) && uint(v.ticks) && Array.isArray(v.report) && v.report.length <= 96 && v.report.every(uint)
+  return object(v) && (exactly(v, 'count,reason,report,ticks') || exactly(v, 'count,frames,reason,report,ticks')) && uint(v.count) && uint(v.reason) && uint(v.ticks) && Array.isArray(v.report) && v.report.length <= 96 && v.report.every(uint)
+    && (!('frames' in v) || Array.isArray(v.frames) && v.frames.length <= 256 && v.frames.length % 2 === 0 && v.frames.every(us => upTo(us, 0xffff))) // diag.h's trace: 128 frames, two times each
 }
 function deviceLog(v: unknown) {
   return object(v) && fields(v, ['loads','incidents','crash','stall']) && Array.isArray(v.loads) && Array.isArray(v.incidents)
     && v.loads.length + v.incidents.length + Number('crash' in v) + Number('stall' in v) > 0 && (!('crash' in v) || deviceCrash(v.crash)) && (!('stall' in v) || deviceStall(v.stall))
     && v.loads.length <= DEVICE_LOG_LOADS && v.loads.every(deviceLoad) && v.incidents.length <= DEVICE_LOG_INCIDENTS && v.incidents.every(deviceIncident)
+}
+/** A browser and OS family, and at most the browser's main version: never more of the user agent. */
+function client(v: unknown) {
+  return object(v) && fields(v, ['browser','major','os']) && DIAGNOSTIC_BROWSERS.some(browser => browser === v.browser) && DIAGNOSTIC_SYSTEMS.some(os => os === v.os)
+    && (!('major' in v) || typeof v.major === 'number' && Number.isInteger(v.major) && v.major >= 1 && v.major <= 999)
 }
 /** Which of the newer fields each USB event may carry; any other USB event carries none of them. */
 const USB_EXTRAS: Record<string, { allowed: string[]; required: string[] }> = {
@@ -55,7 +61,8 @@ const USB_EXTRAS: Record<string, { allowed: string[]; required: string[] }> = {
 }
 export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
   const readingKeys = ['state','failed','modules','dsp','intact','ran','cpu','tracks1to4','tracks5to8','frameGap','saved','savedCount','live','culprit','refusal']
-  const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','reading','modules','packages','buildKind','live','reason','log','area','kind'])
+  const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','reading','modules','packages','buildKind','live','reason','log','area','kind','step','client','failure'])
+    && (!('client' in value) || value.event !== 'device_log' && client(value.client)) && (!('failure' in value) || value.event === 'link_failed')
     && (!('live' in value) || live(value.live)) && (!('reason' in value) || DIAGNOSTIC_UNRESPONSIVE.some(reason => reason === value.reason))
     && (!('log' in value) || deviceLog(value.log))
     && typeof value.id === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value.id)
@@ -68,37 +75,75 @@ export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
       && MODULES.some(known => known.id === module.id) && typeof module.catalogVersion === 'string' && /^[0-9][0-9A-Za-z.+-]{0,63}$/.test(module.catalogVersion)) && new Set(value.modules.map(module => module.id)).size === value.modules.length)
     && (!('packages' in value) || Array.isArray(value.packages) && value.packages.length <= 64 && value.packages.every(pack => object(pack) && Object.keys(pack).sort().join(',') === 'bytes,sha256' && hash(pack.sha256) && uint(pack.bytes)))
   const extras = valid ? USB_EXTRAS[value.event as string] ?? { allowed: [], required: [] } : undefined
-  const eventFields = valid && (value.event === 'browser_error' || value.event === 'unhandled_rejection'
-    ? Object.keys(value).sort().join(',') === 'area,event,id,kind,phase' && value.phase === 'browser'
+  const keys = valid ? Object.keys(value).filter(key => key !== 'client').sort().join(',') : ''
+  const eventFields = valid && (value.event === 'link_failed'
+    ? keys === 'event,failure,id,phase' && DIAGNOSTIC_USB_PHASES.some(phase => phase === value.phase) && PRE_LINK_FAILURES.some(failure => failure === value.failure)
+    : value.event === 'browser_error' || value.event === 'unhandled_rejection'
+    ? keys === 'area,event,id,kind,phase' && value.phase === 'browser'
       && DIAGNOSTIC_SITE_AREAS.some(area => area === value.area) && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind)
     : value.event === 'build_failed'
-      ? Object.keys(value).sort().join(',') === 'buildKind,error,event,id,phase' && DIAGNOSTIC_BUILD_KINDS.some(kind => kind === value.buildKind)
+      ? keys === 'buildKind,error,event,id,phase' && DIAGNOSTIC_BUILD_KINDS.some(kind => kind === value.buildKind)
         && DIAGNOSTIC_BUILD_PHASES.some(phase => phase === value.phase) && DIAGNOSTIC_BUILD_ERRORS.some(error => error === value.error)
       : !('buildKind' in value) && !('area' in value) && DIAGNOSTIC_USB_PHASES.some(phase => phase === value.phase)
-        && (!('kind' in value) || value.event === 'sync_failed' && value.error === 'unknown' && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind))
+        && (!('kind' in value) || value.event === 'sync_failed' && (value.error === 'unknown' || value.error === 'transport') && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind))
+        && (!('step' in value) || value.event === 'sync_failed' && DIAGNOSTIC_SYNC_STEPS.some(step => step === value.step))
         && (!('error' in value) || DIAGNOSTIC_USB_ERRORS.some(error => error === value.error))
         && ['live','reason','log'].every(key => !(key in value) || extras!.allowed.includes(key)) && extras!.required.every(key => key in value)
         && (value.event !== 'device_log' || !('modules' in value) && !('reading' in value) && !('packages' in value)))
   if (!eventFields) throw new HttpError(400, 'Invalid diagnostics. Only documented technical fields are accepted.')
   return value as unknown as OctatrackDiagnostic
 }
-async function consent(db: Database, userId: string, now = new Date()): Promise<DiagnosticConsent> {
-  const row = await db.prepare('SELECT enabled,version,changed_at FROM octatrack_diagnostic_consent WHERE user_id=?').bind(userId).first<{ enabled: number; version: string; changed_at: string }>()
+async function consent(db: Database, userId: string, now = new Date(), guest = false): Promise<DiagnosticConsent> {
+  const row = await db.prepare(guest ? 'SELECT enabled,version,changed_at FROM octatrack_guest_diagnostic_consent WHERE guest_id=?' : 'SELECT enabled,version,changed_at FROM octatrack_diagnostic_consent WHERE user_id=?').bind(userId).first<{ enabled: number; version: string; changed_at: string }>()
   const expiresAt = row ? new Date(Date.parse(row.changed_at) + DIAGNOSTIC_CONSENT_DAYS * 86400000).toISOString() : null
-  return { accountId:userId, enabled: !!row?.enabled && row.version === OCTATRACK_DIAGNOSTICS_VERSION && row.changed_at <= now.toISOString() && expiresAt! > now.toISOString(), version: row?.version ?? OCTATRACK_DIAGNOSTICS_VERSION, changedAt: row?.changed_at ?? null, expiresAt }
+  return { accountId:guest ? DIAGNOSTICS_GUEST : userId, enabled: !!row?.enabled && row.changed_at <= now.toISOString() && expiresAt! > now.toISOString(), version: row?.version ?? OCTATRACK_DIAGNOSTICS_VERSION, changedAt: row?.changed_at ?? null, expiresAt }
 }
 /** Hourly cleanup also removes data with expired consent or accounts that are no longer verified members. Reads enforce the same cutoff.
  * Reports sent under an earlier consent text stay until withdrawal or expiry; only new reports need the current text. */
 export async function cleanupOctatrackDiagnostics(db: Database, now = new Date()) {
   await db.batch([
     db.prepare('DELETE FROM octatrack_diagnostic_events WHERE created_at<? OR user_id IN (SELECT user_id FROM octatrack_diagnostic_consent WHERE enabled=0 OR changed_at<=?) OR user_id IN (SELECT id FROM users WHERE suspended=1 OR email_verified=0)').bind(since(now, DIAGNOSTIC_RETENTION_DAYS), since(now, DIAGNOSTIC_CONSENT_DAYS)),
+    db.prepare('DELETE FROM octatrack_guest_diagnostic_events WHERE created_at<?').bind(since(now, DIAGNOSTIC_RETENTION_DAYS)),
+    db.prepare('DELETE FROM octatrack_guest_diagnostic_consent WHERE changed_at<=?').bind(since(now, DIAGNOSTIC_CONSENT_DAYS)), // its reports go with it (cascade)
     db.prepare('DELETE FROM octatrack_beta_daily WHERE day<=?').bind(since(now, DIAGNOSTIC_RETENTION_DAYS).slice(0,10)),
+    db.prepare('DELETE FROM octatrack_count_daily WHERE day<=?').bind(since(now, DIAGNOSTIC_RETENTION_DAYS).slice(0,10)),
   ])
 }
 /** The owner's agents read diagnostics with this key (`npm run diagnostics:pull`); it opens no other route. */
 async function diagnosticsReader(request: Request, configured = '') {
   const key = request.headers.get('X-Modwerk-Diagnostics') ?? '', hash = configured.trim().toLowerCase()
   return /^[a-f0-9]{64}$/.test(hash) && /^[a-f0-9]{64}$/.test(key) && sameDigest(await digest(key), hash)
+}
+/** A visitor without a verified account shares under the random ID their browser made when they agreed; only its SHA-256
+ * is stored. The same consent text, validation, retention and limits as a member's, plus limits per address, since no
+ * sign-in stands in front of it. Stopping deletes the consent and every report. */
+async function guestRoutes(request: Request, db: Database, token: string, path: string, now: Date) {
+  const id = await digest(token), ip = request.headers.get('CF-Connecting-IP') ?? 'local'
+  if (path.endsWith('/consent')) {
+    if (request.method === 'GET') return response(await consent(db,id,now,true))
+    if (request.method !== 'PUT') throw new HttpError(405, 'Use GET or PUT.')
+    const body = await bodyOf(request)
+    if (!object(body) || Object.keys(body).sort().join(',') !== 'enabled,version' || typeof body.enabled !== 'boolean' || body.version !== OCTATRACK_DIAGNOSTICS_VERSION) throw new HttpError(400, 'Choose whether to share the current diagnostics.')
+    if (body.enabled) {
+      await throttle(db,'octatrack-guest-consent:'+ip,10,3600)
+      await db.prepare('INSERT INTO octatrack_guest_diagnostic_consent(guest_id,enabled,version,changed_at) VALUES(?,1,?,?) ON CONFLICT(guest_id) DO UPDATE SET enabled=1,version=excluded.version,changed_at=excluded.changed_at').bind(id,OCTATRACK_DIAGNOSTICS_VERSION,now.toISOString()).run()
+    } else await db.batch([db.prepare('DELETE FROM octatrack_guest_diagnostic_events WHERE guest_id=?').bind(id), db.prepare('DELETE FROM octatrack_guest_diagnostic_consent WHERE guest_id=?').bind(id)])
+    return response(await consent(db,id,now,true))
+  }
+  if (request.method !== 'POST') throw new HttpError(405, 'Use POST.')
+  if (!(await consent(db,id,now,true)).enabled) throw new HttpError(403, 'Current diagnostics consent is required.')
+  if (request.headers.get('DNT') === '1' || request.headers.get('Sec-GPC') === '1') return response({ok:true,stored:false})
+  const body = await bodyOf(request)
+  if (!object(body) || Object.keys(body).sort().join(',') !== 'data,version' || body.version !== OCTATRACK_DIAGNOSTICS_VERSION) throw new HttpError(400, 'Invalid diagnostics version.')
+  const data = validateDiagnostic(body.data)
+  await throttle(db,'octatrack-diagnostics:guest:'+id,120,3600)
+  await throttle(db,'octatrack-diagnostics-ip:'+ip,600,3600)
+  const results = await db.batch([
+    // Recheck in the insert so a concurrent withdrawal cannot be followed by a late queued upload.
+    db.prepare('INSERT INTO octatrack_guest_diagnostic_events(guest_id,event_id,consent_version,data_json,created_at) SELECT ?,?,c.version,?,? FROM octatrack_guest_diagnostic_consent c WHERE c.guest_id=? AND c.enabled=1 AND c.changed_at>? AND c.changed_at<=? ON CONFLICT(guest_id,event_id) DO NOTHING').bind(id,data.id,JSON.stringify(data),now.toISOString(),id,since(now,DIAGNOSTIC_CONSENT_DAYS),now.toISOString()),
+    db.prepare('DELETE FROM octatrack_guest_diagnostic_events WHERE guest_id=? AND event_id NOT IN(SELECT event_id FROM octatrack_guest_diagnostic_events WHERE guest_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1000)').bind(id,id),
+  ])
+  return response({ok:true,stored:!!(results[0] as {meta?:{changes?:number}}).meta?.changes})
 }
 export async function octatrackDiagnosticRoutes(request: Request, db: Database, user: User | null, admin: boolean, readKey?: string): Promise<Response | null> {
   const url = new URL(request.url), path = url.pathname, now = new Date(), cutoff = since(now, DIAGNOSTIC_RETENTION_DAYS)
@@ -108,12 +153,18 @@ export async function octatrackDiagnosticRoutes(request: Request, db: Database, 
     // Without `since`, the newest 100 for the admin page; with it, up to 500 from that time on, oldest first, to page through all of them.
     const after = url.searchParams.get('since')
     if (after !== null && (!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?Z$/.test(after) || Number.isNaN(Date.parse(after)))) throw new HttpError(400, 'Give since as an ISO time.')
-    const order = after === null ? 'DESC,e.rowid DESC LIMIT 100' : 'ASC,e.rowid ASC LIMIT 500'
-    const rows = (await db.prepare('SELECT e.event_id AS eventId,e.created_at AS createdAt,e.data_json,u.username FROM octatrack_diagnostic_events e JOIN users u ON u.id=e.user_id JOIN octatrack_diagnostic_consent c ON c.user_id=e.user_id WHERE e.created_at>=? AND e.created_at>=? AND c.enabled=1 AND c.changed_at>? AND c.changed_at<=? AND u.suspended=0 AND u.email_verified=1 ORDER BY e.created_at '+order).bind(cutoff,after??cutoff,since(now,DIAGNOSTIC_CONSENT_DAYS),now.toISOString()).all<{ data_json: string }>()).results
+    const order = after === null ? 'DESC,rid DESC LIMIT 100' : 'ASC,rid ASC LIMIT 500', window = [cutoff,after??cutoff,since(now,DIAGNOSTIC_CONSENT_DAYS),now.toISOString()]
+    // A visitor's reports carry `guest:` and the start of their stored ID in place of a username.
+    const rows = (await db.prepare('SELECT eventId,createdAt,data_json,username FROM (SELECT e.event_id AS eventId,e.created_at AS createdAt,e.data_json,u.username,e.rowid AS rid FROM octatrack_diagnostic_events e JOIN users u ON u.id=e.user_id JOIN octatrack_diagnostic_consent c ON c.user_id=e.user_id WHERE e.created_at>=? AND e.created_at>=? AND c.enabled=1 AND c.changed_at>? AND c.changed_at<=? AND u.suspended=0 AND u.email_verified=1'
+      + " UNION ALL SELECT e.event_id,e.created_at,e.data_json,'guest:'||substr(e.guest_id,1,8),e.rowid FROM octatrack_guest_diagnostic_events e JOIN octatrack_guest_diagnostic_consent c ON c.guest_id=e.guest_id WHERE e.created_at>=? AND e.created_at>=? AND c.enabled=1 AND c.changed_at>? AND c.changed_at<=?) ORDER BY createdAt "+order).bind(...window,...window).all<{ data_json: string }>()).results
     const counts = (await db.prepare('SELECT day,event,count FROM octatrack_beta_daily WHERE day>? ORDER BY day DESC,event').bind(cutoff.slice(0,10)).all()).results
-    return response({ events: rows.map(({data_json,...row}) => ({...row,data:JSON.parse(data_json)})), counts })
+    // The base install guide's steps and the invitation's answers (usage.ts), identifier-free like `counts`.
+    const steps = (await db.prepare('SELECT day,event,detail,count FROM octatrack_count_daily WHERE day>? ORDER BY day DESC,event,detail').bind(cutoff.slice(0,10)).all()).results
+    return response({ events: rows.map(({data_json,...row}) => ({...row,data:JSON.parse(data_json)})), counts, steps })
   }
   if (!['/api/octatrack/diagnostics','/api/octatrack/diagnostics/consent'].includes(path)) return null
+  const guest = request.headers.get('X-Modwerk-Diagnostics-Guest') ?? ''
+  if (!(user?.username && user.email_verified && !user.suspended) && /^[a-f0-9]{64}$/.test(guest)) return guestRoutes(request,db,guest,path,now)
   const member = needMember(user)
   if (path.endsWith('/consent')) {
     if (request.method === 'GET') return response(await consent(db,member.id,now))
@@ -139,7 +190,7 @@ export async function octatrackDiagnosticRoutes(request: Request, db: Database, 
   await throttle(db,'octatrack-diagnostics:'+member.id,120,3600)
   const results = await db.batch([
     // Recheck in the insert so a concurrent withdrawal cannot be followed by a late queued upload.
-    db.prepare('INSERT INTO octatrack_diagnostic_events(user_id,event_id,consent_version,data_json,created_at) SELECT ?,?,?,?,? WHERE EXISTS(SELECT 1 FROM octatrack_diagnostic_consent c JOIN users u ON u.id=c.user_id WHERE c.user_id=? AND c.enabled=1 AND c.version=? AND c.changed_at>? AND c.changed_at<=? AND u.suspended=0 AND u.email_verified=1) ON CONFLICT(user_id,event_id) DO NOTHING').bind(member.id,data.id,OCTATRACK_DIAGNOSTICS_VERSION,JSON.stringify(data),now.toISOString(),member.id,OCTATRACK_DIAGNOSTICS_VERSION,since(now,DIAGNOSTIC_CONSENT_DAYS),now.toISOString()),
+    db.prepare('INSERT INTO octatrack_diagnostic_events(user_id,event_id,consent_version,data_json,created_at) SELECT ?,?,c.version,?,? FROM octatrack_diagnostic_consent c JOIN users u ON u.id=c.user_id WHERE c.user_id=? AND c.enabled=1 AND c.changed_at>? AND c.changed_at<=? AND u.suspended=0 AND u.email_verified=1 ON CONFLICT(user_id,event_id) DO NOTHING').bind(member.id,data.id,JSON.stringify(data),now.toISOString(),member.id,since(now,DIAGNOSTIC_CONSENT_DAYS),now.toISOString()),
     db.prepare('DELETE FROM octatrack_diagnostic_events WHERE user_id=? AND event_id NOT IN(SELECT event_id FROM octatrack_diagnostic_events WHERE user_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1000)').bind(member.id,member.id),
   ])
   return response({ok:true,stored:!!(results[0] as {meta?:{changes?:number}}).meta?.changes})

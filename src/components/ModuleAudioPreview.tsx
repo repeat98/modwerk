@@ -48,7 +48,7 @@ export function ModuleAudioDetailPreview({ id, name, children }: { id: string; n
       {clip && <div className="audio-preview-dock"><AudioPreviewPlayer key={clip.id} clip={clip} name={name}/></div>}
     </div>
     {showGuide && <div className="audio-preview-upload-guide" id={guideId} role="status">
-      <div><strong>Add your recording</strong><p>Click <strong>Add preview</strong> below to upload a recording of {name}. You’ll find the same button on every module page.</p><small>Verified account · WAV, MP3 or Ogg · up to 90 seconds / 12 MB</small></div>
+      <div><strong>Add your recording</strong><p>Click <strong>Add preview</strong> below to upload a recording of {name}. You’ll find the same button on every module page.</p><small>Verified account · WAV, MP3 or Ogg · up to 12 MB</small></div>
       <button type="button" className="icon-button" aria-label="Dismiss upload tip" onClick={() => setGuideDismissed(true)}><Icon name="close" size={16}/></button>
     </div>}
     {(clips.length > 1 || onAdd) && <div className={'audio-preview-navigation' + (showGuide ? ' is-guided' : '')}>

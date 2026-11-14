@@ -31,7 +31,7 @@ npm run machine:base -- digitakt-ii --stock /private/Digitakt_II_OS1.17.syx --ou
 ```
 
 Two isolated builds with GCC 16.2.0 and binutils 2.47 produced byte-identical packages and verified the
-[previous binding](../base-binding.json). The `0df8409` source refresh is pending a new pinned build.
+[binding](../base-binding.json) for the `0df8409` source refresh. The pinned build has 19 sites and links with both Perform modules, Euclidean Scale and the Chord Arp test fixture.
 A Windows GCC 13.1.0 diagnostic reproduced all 19 sites, linked with both Perform modules, and linked
 with the Euclidean Scale and Chord Arp test modules separately and together. In digikit, the
 Euclidean Scale fixture restored its settings after clearing and reloading the project, and the
@@ -39,8 +39,8 @@ swung Chord Arp fixture reached the scheduler commit routine 16 times.
 
 ## Release status
 
-- **The site still builds with core 1.0.** The machine's core version stays 1.0 until the base ships, so a module that
-  needs a 1.1 entry cannot validate yet (`module.platform.core`).
+- **Browser builds.** The site selects `modwerk-base-digitakt-ii-<sha8>.elemod` by the SHA-256 in the binding.
+  The package declares `core` 1.1, which satisfies the released Perform modules' dependency. Downloads stay disabled.
 - **Hardware.** Earlier base builds have reported hardware results for the Euclidean pitch hook and kit-data reload.
   On the exact integration build, verify the phrase scheduler with a subscriber, **Create New** with kit data present,
   and **SAVE KIT** followed by **LOAD KIT** after changing the module's state. Record the base and image hashes.

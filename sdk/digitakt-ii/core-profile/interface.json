@@ -155,7 +155,7 @@
       "name": "fw_*",
       "since": "1.1",
       "prototype": "digitakt-mk2/core.h: fw_led_set. mk2/core.h: Modwerk's drawing and view bindings.",
-      "purpose": "Firmware locations as exports, by address and without stock bytes, for the LED frame and Modwerk module pages."
+      "purpose": "Firmware locations for the LED frame and module pages. Build preflight rejects the raw +Drive block write."
     }
   ],
   "claims": [],

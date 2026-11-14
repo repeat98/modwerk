@@ -13,13 +13,25 @@ export const FAMILY_STEP_IDS = {
 } as const
 export const MACHINE_STEP_IDS = ['format', 'rebuild', 'source', 'boot', 'core', 'load', 'mods'] as const
 export const MACHINE_STEP_STATES = ['done', 'started', 'open'] as const
-export const MACHINE_PLATFORMS = ['octabam', 'elemod'] as const
+// The stack every machine gets once it takes mods, piece by piece as the Octatrack has it (docs/MACHINE_RECIPE.md).
+// A profile's `stack` records each piece's state; a piece it leaves out is open.
+export const MACHINE_STACK = [
+  { id: 'base', title: 'Modwerk base', description: 'A base whose hooks own the sites mods share and admit each mod by its budgets.' },
+  { id: 'link', title: 'USB link', description: 'The site and the developer tools identify the unit over USB and read what is installed.' },
+  { id: 'flash', title: 'Setup and updates over USB', description: 'A guided first install, then base updates over USB. The maker’s recovery always restores the unit.' },
+  { id: 'loader', title: 'Loading without a reflash', description: 'Mods load for a trial, then Keep or Undo. A power cycle ends a trial.' },
+  { id: 'status', title: 'Status page', description: 'The machine page shows the connected unit: its base, its mods and its load.' },
+  { id: 'diagnostics', title: 'Diagnostics', description: 'Load meters, self-test results and the unit’s log, shared only with consent.' },
+  { id: 'tools', title: 'Device tools', description: 'A coding agent drives the connected unit through the developer MCP’s device tools.' },
+] as const
+export const MACHINE_PLATFORMS = ['octabam', 'elemod', 'zdl'] as const
 export const MACHINE_BODIES = ['compact', 'wide', 'keys', 'box', 'model', 'pedal', 'floor'] as const
 
 export type MachineFamily = typeof MACHINE_FAMILIES[number]
 export type MachineStatus = typeof MACHINE_STATUSES[number]
 export type MachineStepId = typeof MACHINE_STEP_IDS[number]
 export type MachineStepState = typeof MACHINE_STEP_STATES[number]
+export type MachineStackId = typeof MACHINE_STACK[number]['id']
 export type MachinePlatform = typeof MACHINE_PLATFORMS[number]
 export type MachineBudget = { name: string; unit: 'bytes' | 'slots' | 'cycles/sample' | 'percent'; value: number; note: string }
 
@@ -38,6 +50,7 @@ export type MachineProfile = {
     recovery: string
   }
   steps: Partial<Record<MachineStepId, MachineStepState>>
+  stack: Record<MachineStackId, MachineStepState>
   research?: { label: string; url: string; note: string }[]
   sdk?: {
     platform: MachinePlatform
@@ -87,7 +100,7 @@ function https(value: unknown, path: string): string {
 }
 
 export function parseMachineProfile(value: unknown): MachineProfile {
-  const item = object(value, 'machine', ['schemaVersion', 'id', 'order', 'name', 'status', 'summary', 'steps', 'art'], ['family', 'variants', 'firmware', 'research', 'sdk'])
+  const item = object(value, 'machine', ['schemaVersion', 'id', 'order', 'name', 'status', 'summary', 'steps', 'art'], ['family', 'variants', 'firmware', 'research', 'sdk', 'stack'])
   if (item.schemaVersion !== 1) fail('machine.schemaVersion', 'expected 1')
   const id = text(item.id, 'machine.id', 40)
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id) || id === 'all') fail('machine.id', 'expected a lowercase kebab-case id other than "all"')
@@ -96,9 +109,11 @@ export function parseMachineProfile(value: unknown): MachineProfile {
   const stepIds = FAMILY_STEP_IDS[family]
   const stepsValue = object(item.steps, 'machine.steps', stepIds)
   const steps = Object.fromEntries(stepIds.map(step => [step, choice(stepsValue[step], 'machine.steps.' + step, MACHINE_STEP_STATES)])) as Partial<Record<MachineStepId, MachineStepState>>
+  const stackIds = MACHINE_STACK.map(piece => piece.id), stackValue = item.stack === undefined ? {} : object(item.stack, 'machine.stack', [], stackIds)
+  const stack = Object.fromEntries(stackIds.map(piece => [piece, stackValue[piece] === undefined ? 'open' : choice(stackValue[piece], 'machine.stack.' + piece, MACHINE_STEP_STATES)])) as Record<MachineStackId, MachineStepState>
   const profile: MachineProfile = {
     schemaVersion: 1, id, order: integer(item.order, 'machine.order', 0, 999), name: text(item.name, 'machine.name', 60), family, status,
-    summary: text(item.summary, 'machine.summary', 200), steps, art: parseArt(item.art),
+    summary: text(item.summary, 'machine.summary', 200), steps, stack, art: parseArt(item.art),
   }
   if (item.variants !== undefined) profile.variants = list(item.variants, 'machine.variants', 1, 6).map((variant, index) => text(variant, 'machine.variants[' + index + ']', 40))
   if (item.firmware !== undefined) profile.firmware = parseFirmware(item.firmware, family)
@@ -112,6 +127,8 @@ export function parseMachineProfile(value: unknown): MachineProfile {
   const hasMods = status === 'available' || status === 'preview'
   if (hasMods && (!profile.firmware || !profile.sdk)) fail('machine.status', 'machines with mods need firmware and sdk sections')
   if (hasMods && stepIds.some(step => steps[step] !== 'done')) fail('machine.steps', 'machines with mods have every step done')
+  // Mods for everyone wait for the whole stack: until then a machine with mods is a preview.
+  if (status === 'available' && stackIds.some(piece => stack[piece] !== 'done')) fail('machine.stack', 'an available machine has every piece of the stack done (docs/MACHINE_RECIPE.md)')
   if (!hasMods && steps.mods !== 'open') fail('machine.steps.mods', 'only machines with mods can mark mods done or started')
   if (status === 'research' && !stepIds.some(step => steps[step] !== 'open')) fail('machine.status', 'research needs at least one started step')
   if (status === 'research' && !profile.research) fail('machine.research', 'credit the research the status relies on')

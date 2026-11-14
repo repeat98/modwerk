@@ -5,6 +5,7 @@ import KIT from '../../../vendor/elekloader/kit/kit.json' with { type: 'json' }
 import DT2_BASE from '../../../sdk/machines/digitakt-ii/base-binding.json' with { type: 'json' }
 import RYTM_BASE from '../../../sdk/machines/analog-rytm-mkii/base-binding.json' with { type: 'json' }
 import RYTM_FX_IDS from '../../../sdk/machines/analog-rytm-mkii/fx-ids.json' with { type: 'json' }
+import RYTM_VOICE_MODULES from '../../../sdk/machines/analog-rytm-mkii/voice-modules.json' with { type: 'json' }
 import {
   buildLogText as kitBuildLogText, createBuilder, parseCatalog, planBuild as kitPlanBuild, prepare, releases,
   type Builder, type Catalog, type Plan, type Prepared,
@@ -34,13 +35,17 @@ const MODWERK_BASES: Partial<Record<ElekloaderMachine, { variants: Record<string
     variants: { base: DT2_BASE.identity },
     variant: () => 'base',
   },
-  // A send effect contributes to the send-bus variant's FX list, and modules:check ties every one to fx-ids.json; a set
-  // without one builds on plain, core-ar2 0.7's source with the machine list's sections, and pays none of the bus's RAM
-  // or kit storage.
   'analog-rytm-mkii': {
     variants: RYTM_BASE.variants,
-    variant: moduleIds => moduleIds.some(id => Object.values(RYTM_FX_IDS.ids).includes(id)) ? 'send-bus' : 'plain',
+    variant: moduleIds => rytmVariant(moduleIds, Object.values(RYTM_FX_IDS.ids), RYTM_VOICE_MODULES.ids),
   },
+}
+/** The Rytm base variant a selection needs. A send effect contributes to the send-bus variant's FX list and a digital
+ * voice machine to its voices (mw_voices, ev_sound_applied); modules:check ties every one to fx-ids.json or
+ * voice-modules.json. A set with neither builds on plain, core-ar2 0.7's source with the machine list's sections, and pays
+ * none of send-bus's RAM or storage. */
+export function rytmVariant(moduleIds: readonly string[], fxIds: readonly string[], voiceIds: readonly string[]) {
+  return moduleIds.some(id => fxIds.includes(id) || voiceIds.includes(id)) ? 'send-bus' : 'plain'
 }
 /** The Modwerk base variant a selection builds on, or undefined for a machine that builds on a catalogue core. */
 export function baseVariant(machine: ElekloaderMachine, moduleIds: readonly string[]) {

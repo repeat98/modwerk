@@ -1,6 +1,6 @@
-# QPERF
+# QPER Live Rec
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.2.0-experimental, OS 1.74 with core-ar2 0.7. See [TESTING.md](TESTING.md) for what ran on a unit.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993), called QPERF until 10 November 2026. Version 0.2.0-experimental, OS 1.74 with core-ar2 0.7. See [TESTING.md](TESTING.md) for what ran on a unit.
 
 ## Overview
 

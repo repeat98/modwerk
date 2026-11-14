@@ -10,13 +10,13 @@ An Elektron machine moves through five steps:
 4. **Core with hooks.** A small core reserves memory and gives mods shared hooks, so several mods run together.
 5. **First mods.** Reviewed modules with documentation, licences and evidence.
 
-A Zoom MultiStomp pedal (`family: "zoom"`) loads separate effect files on its stock OS, which is never modified, so it has no image to rebuild or core to boot. It moves through three steps, `format`, `load` and `mods`:
+A Zoom MultiStomp pedal (`family: "zoom"`) loads separate effect files on its stock OS, so it has no image to rebuild or core to boot; its base, MIDISTOMP, is a patched Zoom OS flashed once from the pedal page. It moves through three steps, `format`, `load` and `mods`:
 
 1. **Effect file understood.** The ZDL container, its ELF and the calling convention for the audio and knob code are documented.
 2. **Own effect runs.** An effect built from original source loads on the stock firmware, plays and is removed again.
 3. **First mods.** Reviewed effects with documentation, licences and evidence.
 
-A Zoom firmware release lists its version with `"files": []`: Zoom ships its OS as an updater app and no mod touches it. A Zoom pedal stays locked for modules until a `zdl` module contract exists ([proposal](ZOOM_MULTISTOMP.md)). The ZD2 pedals (the Plus and Four series) take the same three steps with `.ZD2` files; list them in `isZd2Pedal` (`src/devices/registry.ts`), since the ZDL pedal page, base and contract do not apply to them ([G1 FOUR](ZOOM_ZD2.md)). MultiStomp profiles use the `pedal` art body (an upright stompbox) and the G1on series uses `floor` (two footswitch plates).
+A Zoom firmware release lists its version with `"files": []`: Zoom ships its OS as an updater app and no mod touches it. The `zdl` module contract is in force on the MS-70CDR, and the other ZDL pedals come up by the road it took ([another ZDL pedal](ZOOM_MULTISTOMP.md#another-zdl-pedal)). The ZD2 pedals (the Plus and Four series) take the same three steps with `.ZD2` files; list them in `isZd2Pedal` (`src/devices/registry.ts`), since the ZDL pedal page, base and contract do not apply to them ([G1 FOUR](ZOOM_ZD2.md)). MultiStomp profiles use the `pedal` art body (an upright stompbox) and the G1on series uses `floor` (two footswitch plates).
 
 An Erica Synths machine (`family: "erica"`) has published firmware source (the LXR-02, GPL-3.0), so mods are changes to that source and nothing is reverse-engineered or rebuilt from a stock image. It moves through four steps, `source`, `boot`, `core` and `mods`:
 
@@ -37,7 +37,7 @@ Do not put OS files, stock effects, memory dumps, disassembly listings or extrac
 
 ## Update a machine's progress
 
-Open a pull request that edits the machine's profile:
+A machine Modwerk does not list yet starts with `npm run machine:new -- <id> --name "<Name>" [--family zoom|erica]`: a profile with its family's steps and the stack's pieces, all open, and a guide that points at the recipe. Then open a pull request that edits the machine's profile:
 
 - Set a step to `started` or `done` and add a `research` entry crediting the public work it relies on (repository, notes, author).
 - Move `status` from `open` to `research` once any step has started.
@@ -83,3 +83,5 @@ Run `npm run check` before opening the pull request. A new machine, platform or 
 ## Aim for the Octatrack's interface
 
 Every machine ends up with the Octatrack's stack, so a module installs, runs beside the others and is tested the same way everywhere: a Modwerk base that owns shared sites as hooks and admits modules by their budgets, a USB link, loading without a reflash (review, trial, self-test, Keep, Undo), base updates over USB, the MCP's device tools and the site's machine page, beta-only behind `hasBetaUi`. The base is Modwerk's, started from an upstream core's source where one exists. [MACHINE_RECIPE.md](MACHINE_RECIPE.md) lists each piece with its Octatrack files and where every machine stands; keep its table current when a piece moves.
+
+The profile's `stack` records it piece by piece (`base`, `link`, `flash`, `loader`, `status`, `diagnostics`, `tools`, each `open`, `started` or `done`; one left out is open), and the machine page shows it as the road after the first mod. A machine with mods stays `preview` until every piece is done: the contract refuses `available` before that.

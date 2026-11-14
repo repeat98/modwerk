@@ -118,3 +118,10 @@ hotplug, the reporter's seven-module project, FM Synth, MKI, Windows/Linux,
 listening/analog checks and cold-start/persistence remain unverified. The
 six-minute musical capture and owner cable pull still belong only to the
 older development identity in the linked record.
+
+## Added 11 November 2026: the `off` layout of the PROJ base, RAM-booted
+
+The `off` layout of the base `4854b76c…` (identity `d891acb3…`), built through the site's own path, was RAM-booted on
+the owner's MKII: it started and answered `status` over the USB link ("normal"). It was not flashed, and its audio and
+MIDI on a host were not tested. None of that base's other layout images was booted; a development twin of its 20-channel
+layout (`513be133…`) was RAM-booted for the PROJ test ([edge case 15](../../../../docs/OCTATRACK_MODULE_EDGE_CASES.md)).

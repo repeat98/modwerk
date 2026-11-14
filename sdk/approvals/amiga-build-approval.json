@@ -1,0 +1,15 @@
+{
+  "kind": "owner-approved-update",
+  "id": "amiga",
+  "version": "0.2.0-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-14",
+  "ownerStatement": "I approve Amiga 0.2.0-experimental for release with worst-case cycles, current-build hardware qualification and complete memory bounds waived.",
+  "reason": "Update of an experimental USB-only track machine: every restart of the cyclic stretch crossfades out of the sample itself, and sliced notes stretch. Written by Claude at the owner's request in the session of 14 November 2026. Worst-case cycles on the chip, a full hardware qualification of this exact build and complete memory bounds are waived for this source and version. What exists: the module's 72 host checks pass; the crossfade's width matches Amigo's (reference/amigo_check.py). The release package 6bb8e598 ran in RAM trials on the owner's MKII on 13 and 14 November 2026 (development twin 2d97f42d of release base 4e9a87ea): counted on track 1's own USB Audio channels against 0.1.0 on the same twin, restarts ahead of the reader ticked 13 to 14 times a second with 0.1.0 and about once with 0.2.0, restarts behind it not at all; one track cost 6 points of the frame at the defaults, 11 at PTCH +12 and 28 at the dearest settings, 2 to 3 more than 0.1.0; the base's CPU budget admits three Amiga tracks a Part; an idle recorder buffer holding silence stayed silent; every trial rolled back clean. The 13 November departure from USB during a recording wrote no crash or stall record. Not done: Keep and removal of this package, a kept set through a power cycle, a project saved and reloaded with Amiga tracks, slices on the unit, RATE below 0 with the stretch, a recorder buffer holding sound, locks, LFOs and scenes on its controls, an MKI, and a bound on the worst case. Hardware is not claimed verified.",
+  "sourceSha256": "33a0cb2ba0bd6d33611e381e1ea927d820143e08e941ace020d14fdcfbe75049",
+  "waived": [
+    "chip-worst-case-cycles",
+    "current-build-hardware",
+    "complete-memory-bounds"
+  ]
+}

@@ -6,9 +6,11 @@ from pathlib import Path
 import unittest
 
 APP = Path(__file__).resolve().parents[2]
-RECORD = json.loads((APP / 'sdk/imports/sidechain-compressor-b0d49bf.json').read_text())
+RECORD = json.loads((APP / 'sdk/imports/sidechain-compressor-ad7ecd2.json').read_text())
 FOLDER = APP / RECORD['root']
-IMAGE = '131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e'
+IMAGE = 'fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc'
+# 0.2.2's hardware report: the module beside Direct Jump, its ColdFire units in the DRAM runtime (#1175).
+FLASHED = 'e77ec14bd2f8f4d1586a3d2366207835485521cc6ce3ee941dc353a66963548a'
 # 0.1.1's evidence/software.json and evidence/common-builder.json stay as that release's history.
 IMAGE_0_1_1 = '4fd5fcb49ed17cd4e707d407a6e42a64ec30b50aefaad3b1eeb1bb804493aef0'
 
@@ -20,12 +22,12 @@ def proofs(name):
 class SidechainCompressor(unittest.TestCase):
     def test_pins_and_authored_file_identities(self):
         # The author's own Modwerk copy of the module (modwerk-modules/sidechain-compressor), byte for byte.
-        self.assertEqual(RECORD['revision'], 'b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511')
+        self.assertEqual(RECORD['revision'], 'ad7ecd2e85fc9622007601b56a7d18b6c031d7c2')
         self.assertEqual(RECORD['authorPin']['revision'], RECORD['revision'])
         paths = [entry['path'] for entry in RECORD['files']]
         self.assertEqual(len(paths), len(set(paths)))
         self.assertEqual(set(paths), {'manifest.py', 'patch_sc_dsp3.asm', 'patch_sidechain.s', 'ui_switch.s', 'sc_tables.py',
-            'sc_keyfilt.py', 'upstream/README.md', 'upstream/LICENSE', 'LICENSE'})
+            'sc_keyfilt.py', 'placement.json', 'upstream/README.md', 'upstream/LICENSE', 'LICENSE'})
         for entry in RECORD['files']:
             data = (FOLDER / entry['path']).read_bytes()
             self.assertEqual(hashlib.sha256(data).hexdigest(), entry['vendoredSha256'], entry['path'])
@@ -77,7 +79,7 @@ class SidechainCompressor(unittest.TestCase):
         self.assertEqual((keywords['replaces'], keywords['stock_dsp'], keywords['fx2_id']), ('COMPRESSOR', True, 0x18))
         ranges = [n for n in calls if n.func.id == 'DspRange']
         self.assertEqual([(ast.literal_eval(n.args[1]), ast.literal_eval(n.args[2])) for n in ranges],
-                         [(0x7f0, 0x210), (0x3dfe, 0x202)])
+                         [(0xff0, 0x10), (0x7e00, 0x200), (0x3dfe, 0x202)])
 
     def test_evidence_is_bound_to_the_module_and_to_the_committed_proofs(self):
         document = json.loads((FOLDER / 'octamod.module.json').read_text())
@@ -88,9 +90,11 @@ class SidechainCompressor(unittest.TestCase):
         self.assertEqual(document['source']['path'], 'modwerk-modules/sidechain-compressor')
         for version in (capture['moduleVersion'], q['moduleVersion']):
             self.assertEqual(version, document['version'])
-        # One image identity everywhere: the shared builder's native image of the module alone, the one flashed.
-        for sha in (capture['imageSha256'], q['imageSha256'], q['hardware']['imageSha256']):
-            self.assertEqual(sha, IMAGE)
+        # The screenshots and the composition proofs: the shared builder's native image of the module alone (0.2.1's bytes,
+        # unchanged in 0.2.2). The hardware report: the image flashed, with the units in the DRAM runtime.
+        self.assertEqual(capture['imageSha256'], IMAGE)
+        for sha in (q['imageSha256'], q['hardware']['imageSha256']):
+            self.assertEqual(sha, FLASHED)
         self.assertEqual(q['hardware']['sourceRevision'], RECORD['revision'])
         self.assertEqual(capture['source']['manifestSha256'], hashlib.sha256((FOLDER / 'manifest.py').read_bytes()).hexdigest())
         self.assertEqual(len(document['media']), 3)
@@ -121,7 +125,7 @@ class SidechainCompressor(unittest.TestCase):
         text = json.dumps(document['compatibility']) + (FOLDER / 'README.md').read_text()
         for phrase in ('Frozen WIP', 'select no companion', 'refuses all fourteen', 'No Core Logger is appended'):
             self.assertNotIn(phrase, text)
-        self.assertEqual(document['compatibility']['conflicts'], ['midi-scenes', 'analog-bassdrum'])
+        self.assertEqual(document['compatibility']['conflicts'], ['analog-bassdrum'])
         for path in ['sdk/octabam/modules/sidechain-compressor/README.md']:
             self.assertTrue((APP / path).exists())
 

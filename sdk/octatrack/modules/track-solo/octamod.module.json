@@ -1,0 +1,267 @@
+{
+  "schemaVersion": 2,
+  "id": "track-solo",
+  "key": "TRACK SOLO",
+  "name": "Track Solo",
+  "version": "0.2.5-experimental",
+  "category": "system",
+  "author": {
+    "github": "twwwy",
+    "credits": [
+      "twwwy"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "TRACK SOLO",
+    "family": "Track audition",
+    "summary": "Momentary solo: hold a track for 0.5 seconds, tap others to join, then release to restore.",
+    "overview": "A session-only audition while editing. The held anchor is hidden from stock shortcuts; underlying mute and solo changes apply when the audition ends.",
+    "highlights": [
+      "Hold one TRACK button for 0.5 seconds to start a temporary solo.",
+      "Toggle other audio tracks into the group with one press.",
+      "Release the anchor to return to the underlying mute and solo state."
+    ],
+    "usage": [
+      "TRACK SOLO starts at HOLD; turn it OFF under PROJECT > CONTROL > SEQUENCER for the session.",
+      "Hold T2 alone for 0.5 seconds, then press T3 to add or remove it.",
+      "Release T2 to end the temporary solo."
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Audio tracks",
+    "conflicts": [],
+    "uiClaims": [
+      "key:TRACK",
+      "key:TRACK+TRACK"
+    ],
+    "limitations": [
+      "USB only: needs the Modwerk base for its key, tick and encoder events and its SEQUENCER row, so card firmware cannot include it.",
+      "Functional hardware report on package 50f64eb6 on beta base 72defb09, mostly alone and once beside Play Modes. Not tested on hardware: other modules, MKI, all eight anchors, external MIDI, arranger rows, Pickup recording, K09 modifier orderings, self-test. See TESTING.md.",
+      "TRACK SOLO is HOLD on startup and after package replacement; set it to OFF for the session to restore stock long TRACK presses. The setting and solo groups are not saved.",
+      "MIDI mode is excluded. When T8 is master, include it with the source tracks in the temporary group; T8 alone has no source audio.",
+      "Mute Modes is optional. Paired emulator audio passed for OT, OTFX, OTFX-T and DT-T on the 0.2.2 package; physical Mute Modes behavior is untested.",
+      "USB settings use the existing shared row table; native card settings integration is pending.",
+      "With Play Modes: whichever TRACK gesture starts first wins. Press UP or DOWN within half a second of holding TRACK to change a Play Modes mode; hold longer and Track Solo starts instead."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "2026-11-06",
+    "storage": {
+      "label": "Storage",
+      "display": "1528 bytes linked code/data; zero BSS",
+      "value": 1528,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "Exact ABI 8 package SHA-256 50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89: 2,156-byte package, 1,528-byte linked image, zero BSS, 24 relocations, seven guarded sites.",
+      "source": "evidence/resource-accounting.md"
+    },
+    "processing": {
+      "label": "ColdFire, per event",
+      "display": "2,622 of 9,577 cycles worst case (static)",
+      "value": 2622,
+      "unit": "cycles/event",
+      "method": "static",
+      "conditions": "Module-owned instructions only: the dearest UI tick transition plus the active frame path, at 2.49216 cycles an instruction. Stock callees, cache and bus waits are excluded. Not measured on a chip. Measured in ot_emu: 677 module instructions, about 1,687 cycles, at the dearest event.",
+      "source": "evidence/performance.json"
+    },
+    "impact": {
+      "conditions": "One global instance with HOLD on and a group active. Estimates come from source and static counts, not measured hardware headroom. Loader allocation is included in memory.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "At most 24 module instructions in a frame, 8 when idle. The dearest work is a UI-tick transition updating sixteen lamps, about 1,028 instructions, only when a hold starts or the group changes. Chip load is not measured.",
+        "source": "evidence/performance.json"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP program, effect slot or DSP state is added. The temporary mute word uses the stock mute path.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "A 1,500-byte image with 44 writable bytes, zero BSS, and a 2,544-byte loader extent, with no buffers or per-track allocation.",
+        "source": "evidence/resource-accounting.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "0.2.5 starts at HOLD (one data byte). Author functional report on real hardware, 13 November 2026: this package on beta base c1f21351 beside 15 kept modules, a trial with HOLD from the start, the row at HOLD and OFF behaving as stock, then Keep, power cycle and HOLD working again with no menu visit, read back from the device. Emulator control and routine suites passed; measured worst event 1,687 cycles, as 0.2.4. Stock benchmark and stress were waived by the owner for 0.2.4 (no MIDI path); renewal for 0.2.5 pending. See TESTING.md.",
+    "hardwareStatus": "reported",
+    "gates": [
+      "python3 -B verify.py",
+      "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-control>",
+      "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-audio> --audio",
+      "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-paired> --audio --paired",
+      "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-save> --audio --save",
+      "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-paired-save> --audio --paired --save",
+      "python3 -B cycle_count.py --inputs <private-inputs> --output <new-private-output>"
+    ],
+    "evidenceRevision": "c329f7d23b57e80aa46844652c1181aeced1798e",
+    "qualification": {
+      "moduleVersion": "0.2.5-experimental",
+      "sourceSha256": "4d3fdbf04d04cf1db20bcd96953a6907a0c4281667f0bc61a1c75a635137607d",
+      "imageSha256": "5ac64b5ef96567b701a603197c737d5cccd6317da7242d15ca1855ab37da7c1c",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 2622,
+          "maxConfiguration": 2622,
+          "maxInstances": 1,
+          "budget": 9577,
+          "unit": "cycles/event",
+          "method": "static",
+          "conditions": {
+            "parameterExtremes": "One setting, OFF or HOLD. Counted: inactive frame path (4 + 4 instructions), active frame path (12 + 12), tick transition with the longest callees, including activation updating all sixteen lamps.",
+            "parameterModulation": "No parameter, lock, LFO, scene or MIDI CC reaches this code. The equivalent path is the live mute word changing underneath a hold, which adds no module work: each frame reads the word once.",
+            "modeSwitching": "Activation, group change and release are the dearest transitions and are the tick bound. PROJECT, project load and MIDI mode cancel through ts_cancel, included in that bound.",
+            "maxLoad": "One global instance. The bound sums mutually exclusive branches and both lamp updates, so it exceeds any single path. Measured in ot_emu with frames and both DSP cores running: 677 module instructions, 1,687 cycles (evidence/performance.json).",
+            "inputConditions": "Audio content is not read; cost does not depend on the signal. Membership changes the path only through the eight-track loops, counted at their bound."
+          },
+          "report": "evidence/performance.json"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "Linked code, tables and read-only data",
+            "space": "sdram",
+            "words": 1456,
+            "wordBits": 8,
+            "bytes": 1456,
+            "scope": "shared"
+          },
+          {
+            "name": "Writable state inside the image: session state, pointers, overlay and frame words",
+            "space": "sdram",
+            "words": 44,
+            "wordBits": 8,
+            "bytes": 44,
+            "scope": "shared"
+          },
+          {
+            "name": "Loader object and seven site descriptors, rounded to 16",
+            "space": "sdram",
+            "words": 1040,
+            "wordBits": 8,
+            "bytes": 1040,
+            "scope": "shared"
+          },
+          {
+            "name": "Image rounding to 16",
+            "space": "sdram",
+            "words": 4,
+            "wordBits": 8,
+            "bytes": 4,
+            "scope": "shared"
+          },
+          {
+            "name": "Largest module-owned stack path before stock replay (caller stack)",
+            "space": "sdram",
+            "words": 56,
+            "wordBits": 8,
+            "bytes": 56,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 2600,
+        "maxInstances": 1,
+        "totalBytes": 2600,
+        "conditions": "ABI 8 package, zero BSS, one instance. Loader figures come from an ABI 10 probe with RUNTIME_MODULES=128. Stock callee stack, transition peaks during replacement and hardware canaries are not measured.",
+        "report": "evidence/resource-accounting.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-11-13",
+        "tester": "twwwy",
+        "sourceRevision": "c329f7d23b57e80aa46844652c1181aeced1798e",
+        "imageSha256": "5ac64b5ef96567b701a603197c737d5cccd6317da7242d15ca1855ab37da7c1c",
+        "summary": "On the flashed Modwerk beta base c1f21351, OS 1.40C, with 15 other modules kept (among them Mute Modes, SAMPLE LOCKS and Beat Slicer): the agent ran a 20-second trial and rolled it back, then loaded a 300-second trial in which the author reported, without opening the menu, holding T2 solos it and T3 joins, the TRACK SOLO row reading HOLD, and OFF giving stock behaviour. The agent then kept this package at the author's request; after the author's power cycle they reported the row at HOLD, the gesture working with no menu visit and the other modules up. Read back from the device: rolled back after the first trial, accepted with this package active, and after the power cycle the same base and the same 16 kept modules.",
+        "limitations": [
+          "Author-reported panel observations with no audio measurement or timing.",
+          "The flashed base answers no screen or memory reads, so the agent's own stage shows loading, running and rollback only.",
+          "Not tested on 0.2.5: all eight anchors, external MIDI, arranger rows, Pickup recording, the K09 orderings, self-test, MKI, removal."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial: audition tracks while editing",
+          "steps": [
+            "Install Track Solo over USB. TRACK SOLO starts at HOLD, so the gesture is ready; PROJECT > CONTROL > SEQUENCER > TRACK SOLO turns it OFF for the session.",
+            "Hold T2 alone for 0.5 seconds. While continuing to hold T2, press and release T3: T2 and T3 are now in the temporary group. Press T3 again to remove it.",
+            "Release T2. The underlying mute and solo state applies again. Select OFF to disable the gesture completely."
+          ]
+        },
+        "screenshots": [
+          "media/track-solo-hold.png",
+          "media/track-solo-off.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original Track Solo source by twwwy, MIT. No stock firmware, extracted code, tables, projects or memory dumps are distributed."
+  },
+  "media": [
+    {
+      "path": "media/track-solo-off.png",
+      "captureType": "emulator",
+      "caption": "Press YES on TRACK SOLO to choose OFF for this session: stock track-button behavior until the next restart.",
+      "alt": "Octatrack SEQUENCER menu with TRACK SOLO set to OFF.",
+      "credit": "twwwy; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "PROJECT / CONTROL / SEQUENCER",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.5-experimental",
+        "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
+        "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.5 package installed through the real runtime backend; panel_test.py --menu (the row opens at HOLD, YES chooses OFF); empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
+      }
+    },
+    {
+      "path": "media/track-solo-hold.png",
+      "captureType": "emulator",
+      "caption": "TRACK SOLO under PROJECT > CONTROL > SEQUENCER starts at HOLD. Close the menu and wait for stock notifications to clear before holding a track for 0.5 seconds.",
+      "alt": "Octatrack SEQUENCER menu with TRACK SOLO set to HOLD.",
+      "credit": "twwwy; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "PROJECT / CONTROL / SEQUENCER",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.5-experimental",
+        "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
+        "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.5 package installed through the real runtime backend; panel_test.py --menu (the row opens at HOLD, YES chooses OFF); empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
+      }
+    }
+  ],
+  "access": {
+    "location": "PROJECT > CONTROL > SEQUENCER > TRACK SOLO",
+    "steps": [
+      "Install Track Solo over USB.",
+      "TRACK SOLO starts at HOLD; PROJECT > CONTROL > SEQUENCER turns it OFF for the session.",
+      "Close the menu, hold one TRACK button alone for 30 instrument UI ticks (about 0.5 seconds), then tap others to toggle their solo.",
+      "Release the original TRACK button to end solo; choose OFF to disable the gesture."
+    ],
+    "screenshots": [
+      "media/track-solo-hold.png",
+      "media/track-solo-off.png"
+    ]
+  }
+}

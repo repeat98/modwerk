@@ -2,7 +2,7 @@
  "schemaVersion": 3,
  "id": "control-in-actions",
  "name": "Control In Actions",
- "version": "0.1.3-experimental",
+ "version": "0.1.4-experimental",
  "machine": "analog-rytm-mkii",
  "category": "system",
  "exclusive": false,
@@ -84,28 +84,28 @@
  },
  "evidence": {
   "tier": "author-hardware",
-  "moduleVersion": "0.1.3-experimental",
-  "sourceSha256": "4664910015b2e5097243eddd2e66e8f212769620ba827a0c4302b89c15e00a9a",
+  "moduleVersion": "0.1.4-experimental",
+  "sourceSha256": "9c46c683f3b44693632626135fb3f3bace00d8252047d2cc5bfacc54a82863e6",
   "reports": [
    "TESTING.md"
   ],
   "hardware": {
    "model": "Analog Rytm MKII",
    "release": "1.74",
-   "testedOn": "2026-11-08",
+   "testedOn": "2026-11-11",
    "tester": "npp1993",
    "durationMinutes": null,
-   "summary": "npp1993 reports that on an Analog Rytm MKII with OS 1.74, in RC36 (a combo set with this source), REC HLD and REC TGL from step recording ended live recording back in step recording, from grid recording back in grid recording and from play mode in play mode, and live recording started with the panel's RECORD + PLAY from step recording and ended by the input came back in step recording. All passed. Earlier, 0.1.2 in LP01 played every action, played nothing with ACTION OFF, and was timed with a telemetry base.",
+   "summary": "npp1993 reports that on an Analog Rytm MKII with OS 1.74, in CK01 (this source with Loop Sync 0.3.2, QPER Live Rec 0.2.0, Quick Mod Assign 0.2.0 and Audio In Routing 0.1.0, booted from RAM over the flashed OS), a footswitch on CONTROL INPUT 1 played MUTE TGL, MUTE HLD, REC TGL, REC HLD, FILL HLD and FILL LAT as the panel's keys do, and REC TGL with QPER held on the SRC page started live recording rather than QPER Live Rec's clear. All passed.",
    "limitations": [
     "Duration was not recorded.",
-    "Tested in combo sets only (RC35 with the earlier grid-only draft, RC36 .syx 25ced0562cd79f13 with this source); not run alone on a unit. Firmware was not read back from the device."
+    "Tested in a five-mod set only, not alone; CONTROL INPUT 2, a gate source and a power cycle not run on 0.1.4. That Loop Sync, Audio In Routing and the base's send pages now see the keys was observed in rytm-emu only: their page flags draw nothing on the unit's screens. Firmware was not read back from the device."
    ]
   },
   "verifiedBy": null
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "Author's unit, builds alone: CI06 and CI07 passed every action, both learns with YES and NO, REVERSE DIRECTION and a power cycle; CI09 the bars, both learns' NO and a hold action. CI11 (0.1.1) reads the jacks in the audio interrupt: in rytm-emu every action played within 0.02 to 1.12 ms of the edge (0.1.0: 4 to 49 ms); works great on the unit, as reported. 0.1.2 in LP01, a 16-module set: actions play, ACTION OFF plays nothing, and with both jacks at ACTION OFF the handler takes 0.8 µs a block (0.1.1: 3.6 µs). Not run alone on a unit. 0.1.3 grid and step return: passed in RC36, a combo set.",
+  "summary": "Author's unit: CI06, CI07 and CI09 alone passed every action, both learns, REVERSE DIRECTION, the bars and a power cycle. 0.1.1 reads the jacks in the audio interrupt (rytm-emu: 0.02 to 1.12 ms from edge to action). 0.1.2 in LP01, a 16-module set: ACTION OFF plays nothing, 0.8 µs a block. 0.1.3: grid and step return, RC36 pass. 0.1.4: in CK01, a five-mod set, every action by footswitch as from the panel, and REC TGL with QPER held still records, as reported.",
   "documentation": {
    "tutorial": {
     "title": "Quick tutorial",
@@ -150,9 +150,9 @@
    "capture": {
     "type": "emulator",
     "release": "1.74",
-    "moduleVersion": "0.1.3-experimental",
-    "imageSha256": "10700f01622297f07b84f93355f75e639139ce0436be81f8bb8debdaf149f0a7",
-    "setup": "Headless rytm-emu (dtboot) running CI15: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "moduleVersion": "0.1.4-experimental",
+    "imageSha256": "929e6f57029f29562259e86e89c0d66d4ee64b43eb0ab622acd80fd8c033d7b3",
+    "setup": "Headless rytm-emu (dtboot) running CI17: core-ar2 0.7 and this folder's Control In Actions 0.1.4-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -166,9 +166,9 @@
    "capture": {
     "type": "emulator",
     "release": "1.74",
-    "moduleVersion": "0.1.3-experimental",
-    "imageSha256": "10700f01622297f07b84f93355f75e639139ce0436be81f8bb8debdaf149f0a7",
-    "setup": "Headless rytm-emu (dtboot) running CI15: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "moduleVersion": "0.1.4-experimental",
+    "imageSha256": "929e6f57029f29562259e86e89c0d66d4ee64b43eb0ab622acd80fd8c033d7b3",
+    "setup": "Headless rytm-emu (dtboot) running CI17: core-ar2 0.7 and this folder's Control In Actions 0.1.4-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -182,9 +182,9 @@
    "capture": {
     "type": "emulator",
     "release": "1.74",
-    "moduleVersion": "0.1.3-experimental",
-    "imageSha256": "10700f01622297f07b84f93355f75e639139ce0436be81f8bb8debdaf149f0a7",
-    "setup": "Headless rytm-emu (dtboot) running CI15: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "moduleVersion": "0.1.4-experimental",
+    "imageSha256": "929e6f57029f29562259e86e89c0d66d4ee64b43eb0ab622acd80fd8c033d7b3",
+    "setup": "Headless rytm-emu (dtboot) running CI17: core-ar2 0.7 and this folder's Control In Actions 0.1.4-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   }
  ]

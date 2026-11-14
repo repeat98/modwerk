@@ -3,8 +3,8 @@
   "id": "digitakt-ii",
   "order": 40,
   "name": "Digitakt II",
-  "status": "research",
-  "summary": "Experimental OS 1.17 support on Modwerk's Digitakt II base, including the shared sequencer and project hooks. Downloads remain disabled during research.",
+  "status": "preview",
+  "summary": "Experimental OS 1.17 support on the Modwerk Digitakt II base. Track Names is the first library module. Downloads stay disabled.",
   "firmware": {
     "releases": [
       {
@@ -23,9 +23,12 @@
   "steps": {
     "format": "done",
     "rebuild": "done",
-    "boot": "started",
+    "boot": "done",
     "core": "done",
-    "mods": "open"
+    "mods": "done"
+  },
+  "stack": {
+    "base": "started"
   },
   "research": [
     {
@@ -64,8 +67,8 @@
       {
         "name": "Core image",
         "unit": "bytes",
-        "value": 500,
-        "note": "Core 1.0 build: 480 bytes .run plus 20 bytes .bss; package link check measures each selected module set."
+        "value": 9400,
+        "note": "Pinned Modwerk base: 7,140 bytes .run plus 2,260 bytes .bss. The linker measures each selected set."
       },
       {
         "name": "Fast SRAM for code",

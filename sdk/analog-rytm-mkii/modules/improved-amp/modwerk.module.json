@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 3,
+  "id": "improved-amp",
+  "name": "Improved AMP",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "npp1993",
+    "name": "Nathaniel Pavel",
+    "credits": [
+      "Nathaniel Pavel — Improved AMP: HOLD order and attack-aware hold, the ATK, DEC, REL and HLD curves, envelope times and HLD in steps on the knobs, OVR's fine low end, and ENV RESET AMP's pre-fade.",
+      "MrScruff — the original ENV RESET AMP mod (rytm-mods 0015-env-reset-amp), its design and code, free to use.",
+      "Iced-Cream — Env Reset Amp, the elemod port of 0015 (rytm2_mods) whose ENV RESET values this module carries.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ]
+  },
+  "maintainers": [
+    "npp1993"
+  ],
+  "presentation": {
+    "label": "IMPROVED AMP",
+    "family": "Sound",
+    "summary": "The AMP page reworked: HLD from no hold to AUTO, in steps that follow the tempo; ATK, DEC and REL in fine steps from 0.2 ms, shown as times; a finer OVR; and ENV RESET AMP without a click.",
+    "overview": "Improved AMP reworks the AMP page. HLD runs from 0 (no hold: the decay starts the moment the attack reaches the top) up to AUTO at the top of the knob (hold while the note lasts), never cuts the attack short, and is a length in steps of the track: it follows the tempo and the track's speed, and FUNC + turn stops on the step grid from 0.125 to 64 steps. AMP ATK and DEC and FILTER ATK, DEC and REL step 0.2 ms at a time up to 5 ms, stay finer than stock up to 300 ms and show times instead of 0..127. OVR keeps its range but spreads the overdrive evenly over the knob, so the low end is fine. SOUND SETTINGS > ENV RESET gains AMP and AMP+FILT: the amp envelope restarts from silence on every sequenced trig and retrig, without a click, so AMP ATK is heard on every hit. The module is always on.",
+    "highlights": [
+      "HLD: 0 = no hold, top = AUTO, in steps that follow the tempo; never cuts the attack.",
+      "ATK, DEC and REL: 0.2 ms steps at the low end, shown in ms and s.",
+      "OVR: a fine low end, the same range.",
+      "ENV RESET AMP and AMP+FILT: every sequenced trig starts from silence, without a click."
+    ],
+    "usage": [
+      "Press AMP. Turn DEC down: the knob shows its time to -60 dB, in 0.2 ms steps below 5 ms.",
+      "Turn HLD to 0: the decay starts as soon as the attack peaks. Turn it up: the knob shows the hold in steps of the track (1 is one step), and the hold follows the tempo. At the top it reads AUTO (decay from note-off).",
+      "Hold FUNC and turn HLD: it stops at 0, 0.125, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 8, 16, 32 and 64 steps, then AUTO.",
+      "Turn OVR up from 0: the first values add drive gently.",
+      "On an analog BD sound set ATK to about 40 and DEC to 100 or more, and place trigs on every second step. Press PLAY: the attack is heard on the first trig only.",
+      "Open the SOUND menu (FUNC + MUTE) > SOUND SETTINGS and set ENV RESET to AMP: every trig now fades in at the ATK rate, without a click."
+    ]
+  },
+  "access": {
+    "location": "AMP page (ATK, HLD, DEC, OVR); FILTER page (ATK, DEC, REL); SOUND menu (FUNC + MUTE) > SOUND SETTINGS > ENV RESET.",
+    "steps": [
+      "Open the AMP page.",
+      "Turn HLD, ATK, DEC or OVR; FUNC + turn on HLD stops at 0, the step grid from 0.125 to 64 steps, and AUTO.",
+      "For ENV RESET AMP: FUNC + MUTE > SOUND SETTINGS > ENV RESET, then LEFT or RIGHT to AMP or AMP+FILT."
+    ],
+    "screenshots": [
+      "media/decay-time.png",
+      "media/hold-steps.png",
+      "media/env-reset-amp.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "AMP > HLD",
+      "default": null,
+      "doc": "0 no hold, then a hold in steps of the track, 0.005 to 124 (0.67 ms to 15.5 s at 120 BPM, 1x), fine at the short end, AUTO at the top. It follows the tempo, the track's speed and an external clock. The number is the hold in steps (1 = one step); FUNC + turn stops at 0, 0.125, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 8, 16, 32 and 64 steps, then AUTO. The decay never starts before the attack peaks.",
+      "labels": null
+    },
+    {
+      "name": "AMP > ATK",
+      "default": null,
+      "doc": "0 instant, 0.2 ms steps to 5 ms, 0.5 ms steps to 15 ms, then about 10 % a step to 30 s.",
+      "labels": null
+    },
+    {
+      "name": "FILTER > ATK",
+      "default": null,
+      "doc": "The same curve as AMP ATK: 0 instant, 0.2 ms steps to 5 ms, 0.5 ms steps to 15 ms, then about 10 % a step to 30 s.",
+      "labels": null
+    },
+    {
+      "name": "AMP > DEC, FILTER > DEC and REL",
+      "default": null,
+      "doc": "0 instant, 0.2 ms steps to 5 ms, 0.5 ms to 15 ms, 1 ms to 25 ms, 2.5 ms to 50 ms, 5 ms to 100 ms, 10 ms to 200 ms, 25 ms to 300 ms, then about 14 % a step to 40-45 s. Times are to -60 dB. AMP DEC at the top stays INF.",
+      "labels": null
+    },
+    {
+      "name": "AMP > OVR",
+      "default": null,
+      "doc": "The stock range, 0 and 127 as stock, with the overdrive's rise spread evenly over the knob: stock's first step takes about eight values. The number stays 0..127.",
+      "labels": null
+    },
+    {
+      "name": "SOUND SETTINGS > ENV RESET",
+      "default": 0,
+      "doc": "Steps OFF, AMP, FILTER, AMP+FILT. With AMP in the value, the amp envelope restarts from silence on every sequenced trig and retrig of this sound; the voice fades out just before the trig.",
+      "labels": [
+        "OFF",
+        "AMP",
+        "FILTER",
+        "AMP+FILT"
+      ]
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [
+      "env-reset-amp"
+    ],
+    "limitations": [
+      "Built for OS 1.74 only, on Modwerk's Rytm base with the amp record hook (ev_amp_record).",
+      "Always on: saved HLD, ATK, DEC, REL and OVR values read differently from stock while it is installed. HLD 0 is no hold instead of AUTO, 127 is AUTO instead of 16 s, 1 to 126 are lengths in steps that follow the tempo, and the others follow the new curves. Removing the module plays every project as before.",
+      "Cannot be installed with Env Reset Amp: this module carries ENV RESET's AMP and AMP+FILT itself.",
+      "ENV RESET AMP acts on trigs the Rytm schedules itself: pad hits, MIDI notes and the first trig after PLAY play as stock.",
+      "With AMP set, a sounding voice is silent for up to about 7 ms before each sequenced trig; a retrig roll faster than twice that gets half its spacing to sound.",
+      "A retrig hit that lands less than 7 ms before the track's next trig starts and is faded out again at once.",
+      "On external MIDI clock a tick that arrives late shortens the next fade by as much; after a tick 6 ms or more late, the next trig plays as stock.",
+      "HLD counts straight steps on the clock: swing does not move a hold's end. When an external clock's master stops, the hold runs on in time instead of waiting for the clock.",
+      "Times shown are calibrated to one Rytm MKII (AMP attack 0.957x, decay 0.918x; the filter envelope runs at the OS model's speed), and OVR's curve to that unit's overdrive; another unit may differ slightly.",
+      "On stock firmware a sound saved here plays the stock way, with ENV RESET's amp bit ignored."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [
+      "ev_tick",
+      "ev_amp_record"
+    ],
+    "claims": [
+      "ui:FUNC + turn of AMP HLD",
+      "ui:value text of AMP ATK/HLD/DEC and FILTER ATK/DEC/REL",
+      "ui:AMP page envelope picture HLD",
+      "ui:SOUND SETTINGS ENV RESET values",
+      "audio:filter attack rate table",
+      "audio:amp hold table",
+      "audio:amp decay table",
+      "audio:filter decay and release table",
+      "audio:amp overdrive CV"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 9548,
+    "fastBytes": null,
+    "load": {
+      "display": "About 1.6 points of the audio block at idle on the author's unit, about 1.0 of them in the amp record entries",
+      "method": "hardware",
+      "conditions": "Measured on the author's MKII, 11 November 2026, sequencer stopped, 120 BPM, a development base with a test link and a meter on the 132 MHz timer, 20 s windows: the audio block 67.4 to 67.5 % busy with this module (six windows), 65.8 % with the base alone earlier that day; the amp record entries 1.09 to 1.14 %, the meter's own 0.14 %. That is 0.1 point more than before the hold was counted in steps, not traced. An idle voice makes no C call, the trig scan returns early while nothing is near, and the OVR reader reuses its last answer. Not measured with a pattern playing."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.1.0-experimental",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-12",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "Run hands off by npp1993's (the author's) automated USB test rig on their Analog Rytm MKII, OS 1.74, as the rig's reports have it. 11 November 2026: 25 cases pass on IL05 (sha256 776adbab), the module alone on a development build of the Modwerk base with a USB test link, loaded to RAM. HLD 42 held 125.0 ms at 120 BPM, 166.5 ms at 90 BPM, 83.0 ms with the track at 3/2x, and 165.5 and 101.5 ms on an external MIDI clock at 90 and 150 BPM; FUNC + turn showed 0.125 to 64 and AUTO. Also: screens, ENV RESET's values, a kit save and reload, DEC and AUTO lengths, OVR's curve, FILTER times, and ENV RESET AMP's fade before sequenced, retrigged, swung, micro-timed and sound-locked trigs, none for MIDI notes, mutes, lock trigs and failed conditions. The package's image IA14 from RAM by notes and CCs: 0.125 to 4 steps within 1 ms. 12 November, this source (only the module ends a hold) on IL06 (sha256 8f1f4df1): the hold and pre-fade cases pass again; HLD turned to or from AUTO in a note is followed. IA15, the package's image, flashed: a boot, pad hits, a project save and load and a power cycle keep HLD and ENV RESET AMP. Idle load metered. Earlier: the comparison with stock.",
+      "limitations": [
+        "Run by an automated rig, and by the author for the flashed image's pads, project and power cycle; not judged by ear.",
+        "The package's own image was flashed and checked for a boot, pad hits, a project save and load and a power cycle; its sequencer was not run.",
+        "No sequencer running on an external clock, tempo change during a hold or NORMAL scale mode; no +Drive sound, pattern change or probability condition.",
+        "The comparison with stock (OVR's curve, the FILTER times) was run on the earlier source of this version, 10 November 2026.",
+        "The audio load was metered with the sequencer stopped only. Duration not recorded."
+      ]
+    },
+    "verifiedBy": null,
+    "sourceSha256": "5d08df1fdc9b71df684ad71d254d90c6fe34aa9ab129ede44aec7d10a0d67331"
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "On the author's Analog Rytm MKII (OS 1.74), by their automated USB test rig, as reported: 25 cases pass on 11 November 2026 on IL05 (this source on a development base with a test link, from RAM): HLD in steps follows the tempo and the track's speed (one step 125.0, 166.5 and 83.0 ms at 120 BPM, 90 BPM and 3/2x) and an external clock, FUNC + turn's stops, the screens, lengths by DEC, OVR's curve, the FILTER times, and ENV RESET AMP's fade. The package's own image from RAM with notes and CCs only. The package's own image flashed: boot, pads, project save and load, power cycle. See TESTING.md.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Press AMP. Turn DEC down: the knob shows its time to -60 dB, in 0.2 ms steps below 5 ms.",
+          "Turn HLD to 0: the decay starts as soon as the attack peaks. Turn it up: the knob shows the hold in steps of the track (1 is one step), and the hold follows the tempo. At the top it reads AUTO (decay from note-off).",
+          "Hold FUNC and turn HLD: it stops at 0, 0.125, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 8, 16, 32 and 64 steps, then AUTO.",
+          "Turn OVR up from 0: the first values add drive gently.",
+          "On an analog BD sound set ATK to about 40 and DEC to 100 or more, and place trigs on every second step. Press PLAY: the attack is heard on the first trig only.",
+          "Open the SOUND menu (FUNC + MUTE) > SOUND SETTINGS and set ENV RESET to AMP: every trig now fades in at the ATK rate, without a click."
+        ]
+      },
+      "screenshots": [
+        "media/decay-time.png",
+        "media/hold-steps.png",
+        "media/env-reset-amp.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "Nathaniel Pavel's code, under GPL-2.0-only. ENV RESET's two byte sites and the reading of the amp envelope's commands come from MrScruff's rytm-mods 0015-env-reset-amp by way of Iced-Cream's Env Reset Amp (rytm2_mods, GPL-2.0-only). The source names firmware addresses only; the patch preconditions are addresses, lengths and SHA-256s."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Improved AMP",
+      "alt": "Original illustration of an amp envelope (attack, hold, decay) over a time ruler with fine steps at the short end",
+      "credit": "Nathaniel Pavel",
+      "license": "GPL-2.0-only",
+      "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/decay-time.png",
+      "kind": "screenshot",
+      "caption": "AMP page, DEC turned down: DECAY TIME, 2.2ms.",
+      "alt": "AMP page titled DECAY TIME with the DEC knob reading 2.2ms and a short decay drawn in the envelope picture.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "c64b04771876129256a87b0dac62d9f90406e38574e5e9b925977977393ccffe",
+        "setup": "Headless rytm-emu (dtboot) running IA14: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/hold-steps.png",
+      "kind": "screenshot",
+      "caption": "AMP page, HLD at 42: HOLD TIME, one step.",
+      "alt": "AMP page titled HOLD TIME with the HLD knob reading 1, its length in steps.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "c64b04771876129256a87b0dac62d9f90406e38574e5e9b925977977393ccffe",
+        "setup": "Headless rytm-emu (dtboot) running IA14: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/env-reset-amp.png",
+      "kind": "screenshot",
+      "caption": "SOUND SETTINGS: ENV RESET set to AMP.",
+      "alt": "SOUND SETTINGS menu with the ENV RESET row reading AMP.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "c64b04771876129256a87b0dac62d9f90406e38574e5e9b925977977393ccffe",
+        "setup": "Headless rytm-emu (dtboot) running IA14: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    }
+  ]
+}

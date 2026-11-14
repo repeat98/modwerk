@@ -75,6 +75,19 @@ def main():
                     _, got, code = cli.lag_guard(types.SimpleNamespace(MANIFEST=manifest), check)
                     self.assertEqual((set(got), code), (held, failed))
 
+    def test_a_module_listed_twice_is_refused(self):
+        # A merge can keep main's row for an earlier version beside the branch's new one.
+        spec = importlib.util.spec_from_file_location('module_packages_twice', ROOT / 'scripts/octatrack-module-packages.py')
+        cli = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cli)
+        with tempfile.TemporaryDirectory() as temp:
+            manifest = Path(temp) / 'packages.json'
+            manifest.write_text(json.dumps({'packages': [{'id': 'everb', 'version': '0.0.1-experimental'},
+                                                         {'id': 'everb', 'version': '0.0.2-experimental'}]}))
+            with self.assertRaises(SystemExit) as stop:
+                cli.lag_guard(types.SimpleNamespace(MANIFEST=manifest), True)
+            self.assertIn('everb 0.0.1-experimental, 0.0.2-experimental', str(stop.exception.code))
+
     def test_a_write_keeps_every_package_it_did_not_rewrite(self):
         spec = importlib.util.spec_from_file_location('module_packages_keep', ROOT / 'scripts/octatrack-module-packages.py')
         cli = importlib.util.module_from_spec(spec)

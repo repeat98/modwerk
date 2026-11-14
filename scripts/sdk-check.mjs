@@ -5,7 +5,10 @@ import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
 import { resolve, dirname } from 'node:path'
 import { takeSlot, workersFor } from './machine-slots.mjs'
+import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+// octabam's tools read the untracked mirror of sdk/octatrack/modules; make it current first.
+mirrorOctatrackModules(root)
 const python = process.platform === 'win32' ? 'python' : 'python3'
 // Repository text is UTF-8, including on Windows hosts with an ANSI locale.
 const unittest = { PYTHONDONTWRITEBYTECODE: '1', PYTHONUTF8: '1' }

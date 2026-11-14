@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: BD ANALOG plays Analog BD's 808 and 909 bass drums on the BD, SD and BT tracks, through the voice's own filter, AMP and OVR.",
+      "The 909 follows Analog BD 0.1.7, refitted to a recorded TR-909.",
+      "Tap B on the SYNTH page to switch 808 and 909; the type is saved with the sound. Velocity is the accent.",
+      "Up to three BD ANALOG voices can hit at the same instant; hits spread across the beat cost less.",
+      "Ported from repeat98's Octatrack module, with his permission."
+    ]
+  }
+]

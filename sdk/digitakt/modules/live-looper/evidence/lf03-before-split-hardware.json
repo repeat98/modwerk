@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-10",
+  "source": "Direct author statements in the development conversation",
+  "reporter": "draadpiraat",
+  "status": "hardware-tested-author-reported",
+  "model": "Digitakt I",
+  "release": "1.54",
+  "moduleVersion": "0.1.0-experimental",
+  "builds": [
+    {
+      "name": "Core 2.1 + Machine Pages 1.2 + loop-fade 0.1.0-experimental (LF03)",
+      "syxSha256": "fb56201eb76f68493e3a0e8ee836966bec0182084cf5d7418c3040907d6ff46c",
+      "statement": "1. perfect 2. yes, through all patterns that have the loop machine enabled 3. yes. 4 yes, except changing modes mid play resets the loop in the middle, note that as a known bug and we'll try to fix it later. 5. yes. 6. yes. 7. yes. 8. yes. 9. yes. 10. yes. 11. yes. 12. overbridge causes lag, thats it.",
+      "durationMinutes": 120,
+      "steps": {
+        "1 CAPT + PICK: FILL captures, the loop plays": "yes (perfect)",
+        "2 the loop keeps playing through pattern changes": "yes, through all patterns that have the loop machine on that track",
+        "3 ONCE: UP arms, records, locks, plays": "yes",
+        "4 PTCH and WARP follow tempo changes": "yes; known bug: changing the mode while it plays resets the loop mid-way",
+        "5 GLOB SND: DEL/REV stay across patterns": "yes",
+        "6 push D: the trim editor opens with the loop": "yes",
+        "7 crossfader groups, LEVEL on the Internal Mixer, FUNC + LEVEL, sends follow": "yes",
+        "8 FADER ON; LEVEL push does nothing on fader pages, stock elsewhere": "yes",
+        "9 the fader CC on FX CONTROL CH": "yes",
+        "10 page 2 and crossfader settings back after a power cycle": "yes",
+        "11 a longer session (2 hours or more)": "yes, no problems",
+        "12 with an Overbridge instance open": "the unit lags; stock 1.54 was not compared"
+      }
+    }
+  ],
+  "limitations": [
+    "Changing PLAY mode while the loop plays restarts the loop mid-way (known bug).",
+    "With an Overbridge instance open the unit lags; not compared with stock 1.54.",
+    "Firmware was not read back from the device; the build is identified by its SysEx hash."
+  ]
+}

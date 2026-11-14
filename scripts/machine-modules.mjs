@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Standalone validation/generation for the elemod source catalogue. Publication gates are unchanged.
+// Standalone validation/generation for the elemod source catalogue and the Zoom pedals' effect files (zdl). Publication
+// gates are unchanged.
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { readFile, readdir, mkdir, writeFile, copyFile } from 'node:fs/promises'
 import { resolve, dirname, relative, sep } from 'node:path'
@@ -14,6 +15,7 @@ import { parseMachineProfile } from '../src/devices/machine-contract.ts'
 import { parseElemodBuild, parseModwerkModule, requireModwerkPublication } from '../src/catalog/module-contract-v3.ts'
 import { compareModuleVersions } from '../src/catalog/versions.ts'
 import { requireFlaggedOverlaps, requireKnownConflicts } from './conflict-ids.mjs'
+import { requireDistinctZdl, requireZdlBinary, unlistedZdl, zdlPath } from './zdl-binaries.mjs'
 const json=async path=>JSON.parse(await readFile(path,'utf8'))
 async function walk(folder){const paths=[];for(const entry of await readdir(folder,{withFileTypes:true})){if(entry.name==='__pycache__')continue;if(entry.isSymbolicLink())throw new Error('Module symlinks are not allowed: '+entry.name);if(entry.isDirectory())paths.push(...(await walk(resolve(folder,entry.name))).map(p=>entry.name+'/'+p));else paths.push(entry.name)}return paths.sort()}
 // Nothing in _submissions/ reaches the library, so a merged submission never goes live: a pull request may only move one out.
@@ -67,9 +69,11 @@ for(const entry of await readdir(resolve(root,'sdk/machines'),{withFileTypes:tru
 let machineModules=0
 const machineDocuments=[],machineDependencies=[]
 const sectionSlots=new Map()
-for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='elemod')){
+for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='elemod'||profile.sdk?.platform==='zdl')){
+ // A Zoom effect is a prebuilt file: no build.json, core interface, dependencies or patch sites.
+ const zdl=machine.sdk.platform==='zdl'
  const folderRoot=resolve(root,machine.sdk.modules),published=machine.sdk.catalog?(await json(resolve(root,machine.sdk.catalog))).modules:[]
- const dependencies=await loadElemodDependencies(root,machine)
+ const dependencies=zdl?new Map():await loadElemodDependencies(root,machine)
  // The configurator follows each module's requires through these, so a clash between what two modules build on is refused at the pick.
  for(const {document} of dependencies.values())machineDependencies.push({machine:machine.id,id:document.id,name:document.name,requires:document.compatibility.requires,conflicts:document.compatibility.conflicts})
  const roots=[folderRoot,...(includeDrafts?[resolve(folderRoot,'_submissions')]:[])]
@@ -80,7 +84,7 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
   if(!entry.isDirectory()||entry.name.startsWith('_'))continue
   if(dependencies.has(entry.name))throw new Error('Module duplicates a dependency: '+entry.name)
   const folder=resolve(dir,entry.name),document=parseModwerkModule(await json(await file(folder,'modwerk.module.json')),machineProfiles)
-  dependencies.set(entry.name,{folder,document,build:parseElemodBuild(await json(await file(folder,document.platform.build)),document)})
+  dependencies.set(entry.name,{folder,document,build:zdl?null:parseElemodBuild(await json(await file(folder,document.platform.build)),document)})
  }
  const core=machine.sdk.core?.path?await json(resolve(root,machine.sdk.core.path,'interface.json')):null
  for(const {entry,dir} of entries){
@@ -97,28 +101,37 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
    if(changed&&!document.tests.documentation)throw new Error(label+': new and updated modules require complete documentation, tutorial and capture provenance')
    if(git('ls-tree','--name-only',baseCommit,'--',oldPath).trim()===oldPath){const old=JSON.parse(git('show',baseCommit+':'+oldPath));const codeChanged=changedPaths.some(path=>!isVersionNeutralChange({path,before:path===oldPath?JSON.stringify(old):'',after:path===oldPath?readFileSync(resolve(folder,'modwerk.module.json'),'utf8'):''}));if(codeChanged&&compareModuleVersions(document.version,old.version)<=0)throw new Error(label+': every code or behaviour update requires a greater module version than '+old.version+'; documentation, media and compatibility.conflicts edits do not')}
   }
-  const build=parseElemodBuild(await json(await file(folder,document.platform.build)),document)
+  const build=zdl?null:parseElemodBuild(await json(await file(folder,document.platform.build)),document)
+  // The pull-request check (--base) holds every Zoom effect to its vendored file; locally a newly scaffolded one passes npm ci's
+  // prepare until its release is vendored, but a file that is there must match.
+  if(zdl&&(baseCommit||existsSync(resolve(root,zdlPath(document)))))requireZdlBinary(root,label,document)
   requireKnownConflicts(machine.id,document,new Set(dependencies.keys()))
   // Modules may use only what their machine's core interface provides.
   if(core){const events=new Set(core.events.map(event=>event.name)),tables=new Set([...core.tables.map(table=>table.name),...dependencyCollections(document,build,dependencies)])
    for(const entry of build.subscribe)if(!events.has(entry.event)&&!tables.has(entry.event))throw new Error(label+': '+entry.event+' is not an event of the '+machine.name+' core interface '+core.interface)
    for(const entry of build.contribute)if(!events.has(entry.to)&&!tables.has(entry.to))throw new Error(label+': '+entry.to+' is not a table of the '+machine.name+' core interface '+core.interface)}
   // A send effect on the Rytm base takes one id from the machine's registry, and its record carries that id.
-  if(build.contribute.some(entry=>entry.to==='mw_fx')){
+  if(build?.contribute.some(entry=>entry.to==='mw_fx')){
    const ids=Object.entries((await json(resolve(root,'sdk/machines',machine.id,'fx-ids.json'))).ids).filter(([,id])=>id===document.id).map(([n])=>Number(n))
    const said=(await Promise.all(build.sources.map(async path=>readFile(await file(folder,path),'utf8')))).join('\n').match(/MW_FX_ABI,\s*\d+/g)?.map(text=>Number(text.split(',')[1]))??[]
    if(ids.length!==1||!(ids[0]>=1&&ids[0]<=63)||said.length!==1||said[0]!==ids[0])throw new Error(label+': a send effect takes one id, 1 to 63, from sdk/machines/'+machine.id+'/fx-ids.json, and its record (MW_FX_ABI, id, ...) carries it')
   }
+  // A digital voice machine on the Rytm base (mw_voices, ev_sound_applied: send-bus only) is listed in voice-modules.json,
+  // so the site builds its sets on send-bus.
+  if(build?.contribute.some(entry=>entry.to==='mw_voices')||build?.subscribe.some(entry=>entry.event==='ev_sound_applied')){
+   const listed=(await json(resolve(root,'sdk/machines',machine.id,'voice-modules.json'))).ids
+   if(!listed.includes(document.id))throw new Error(label+': a digital voice machine (mw_voices, ev_sound_applied) is listed in sdk/machines/'+machine.id+'/voice-modules.json, so the site builds it on the send-bus base')
+  }
   // A machine's section in the Rytm base's machine list (mw_machine_sections): four bytes with no relocation, from the module
   // that adds the machine, naming its slot and a section stock files machines under; no two modules name one slot.
-  for(const entry of build.contribute.filter(entry=>entry.to==='mw_machine_sections')){
+  for(const entry of build?.contribute.filter(entry=>entry.to==='mw_machine_sections')??[]){
    const bytes=entry.data.match(/../g).map(pair=>parseInt(pair,16)),key=machine.id+':'+bytes[0]
    if(entry.relocs.length||bytes.length!==4||bytes[0]<34||bytes[0]>43||![1,2,4,5,6,7,8,9,10,11].includes(bytes[1])||bytes[2]||bytes[3]||!build.contribute.some(other=>other.to==='core_machines'))throw new Error(label+': a mw_machine_sections entry is four bytes with no relocation: the slot (34 to 43) of the machine the module adds through core_machines, a stock section (1 BD, 2 SD, 4 CP, 5 BT, 6 RS, 7 HH, 8 CY, 9 CB, 10 UT, 11 SY) and two zero bytes')
    if(sectionSlots.has(key))throw new Error(label+': '+sectionSlots.get(key)+' already names the section of machine slot '+bytes[0])
    sectionSlots.set(key,document.id)
   }
   const media=document.media.map(item=>item.path),reports=document.evidence.reports
-  for(const path of ['README.md',document.tests.report,document.license.file,...build.sources,...media,...reports])await readFile(await file(folder,path)).catch(()=>{throw new Error(label+': missing '+path)})
+  for(const path of ['README.md',document.tests.report,document.license.file,...(build?.sources??[]),...media,...reports,...(zdl?document.platform.pedals.map(pedal=>pedal.report).filter(Boolean):[])])await readFile(await file(folder,path)).catch(()=>{throw new Error(label+': missing '+path)})
   await requireModwerkDocumentation(folder,document)
   // Only the pull-request check (--base) refuses it: a newly scaffolded module must still pass npm ci's prepare while its developer draws one.
   if(baseCommit&&dir===folderRoot)for(const item of document.media)if(item.kind==='thumbnail')requireOriginalThumbnail(label,item,await readFile(await file(folder,item.path),'utf8'))
@@ -126,12 +139,15 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
   if(published.some(item=>item.id===document.id)||newVersion){try{requireModwerkPublication(document)}catch(error){throw new Error(label+': '+error.message+(newVersion?' (every new library version passes the publication gate: docs/ADD_A_MODULE.md#digitakt-and-digitone)':''),{cause:error})}}
   if(write)for(const item of document.media){const destination=resolve(root,'public/module-media',machine.id+'-'+document.id,document.version,item.path);await mkdir(dirname(destination),{recursive:true});await copyFile(await file(folder,item.path),destination)}
   // Only addresses and lengths are needed by the planner; never include stock bytes.
-  const patchSites=Object.fromEntries(Object.entries(build.releases).map(([release,value])=>[release,[...value.sites,...(build.derive?.releases.includes(release)?build.derive.callSites:[])].map(({addr,len})=>({addr,len}))]))
+  const patchSites=!build?{}:Object.fromEntries(Object.entries(build.releases).map(([release,value])=>[release,[...value.sites,...(build.derive?.releases.includes(release)?build.derive.callSites:[])].map(({addr,len})=>({addr,len}))]))
   machineDocuments.push({...document,patchSites});machineModules++
  }
 }
 // Two mods that patch overlapping bytes on a release both support never link together: one must flag the other.
 if(!includeDrafts)requireFlaggedOverlaps(machineDocuments)
+const zoomEffects=machineDocuments.filter(document=>document.platform.kind==='zdl')
+requireDistinctZdl(zoomEffects)
+if(!includeDrafts)unlistedZdl(root,zoomEffects)
 // The website lists every machine's modules from the same validated folders.
 for(const list of [machineDocuments,machineDependencies])list.sort((a,b)=>a.machine.localeCompare(b.machine)||a.id.localeCompare(b.id))
 const machineTarget=resolve(root,'src/catalog/machine-modules.json'),machineGenerated=JSON.stringify({schemaVersion:3,modules:machineDocuments,dependencies:machineDependencies},null,2)+'\n'
@@ -143,5 +159,5 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),args=process.argv.slice(2),i=args.indexOf('--base')
  if(i>=0&&!args[i+1])throw new Error('--base requires a ref')
  const baseCommit=i<0?null:execFileSync('git',['rev-parse','--verify',args[i+1]+'^{commit}'],{cwd:root,encoding:'utf8'}).trim()
- console.log('Validated '+await machineModules({root,write:args.includes('--write'),baseCommit,includeDrafts:args.includes('--drafts')})+' elemod module folders')
+ console.log('Validated '+await machineModules({root,write:args.includes('--write'),baseCommit,includeDrafts:args.includes('--drafts')})+' elemod and zdl module folders')
 }

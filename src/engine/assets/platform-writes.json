@@ -436,7 +436,7 @@
       "key": "BBD",
       "author": "JamCones",
       "source": "modules/bbd/manifest.py",
-      "sourceSha256": "4979660bdb75d95af3f05ab68a565e4a646a1c329eb0a7f5597b1a840aeb4b51",
+      "sourceSha256": "141d6adda2393ed00db02c1b768dc0625e2ae7635405d5ab7053a31f6caef40e",
       "detours": [
         {
           "address": 1073761548,
@@ -490,47 +490,10 @@
       "writes": 48,
       "bytes": 1112560,
       "sha256": "8a5b26c7f7c97f1e945c2274fb2632e05fc94e7babb941e8b7c80f7e0f24bf61"
-    },
-    {
-      "moduleIds": [
-        "spectrum",
-        "modulation",
-        "miniverb",
-        "euclid"
-      ],
-      "writes": 46,
-      "bytes": 1112560,
-      "sha256": "09effec7437266b693e358d43f0ba0f3de2b0b35fe4d81e7b76ba90cf388bde8"
-    },
-    {
-      "moduleIds": [
-        "spectrum",
-        "modulation",
-        "character",
-        "miniverb",
-        "tapeecho",
-        "euclid",
-        "repitch"
-      ],
-      "writes": 48,
-      "bytes": 1112560,
-      "sha256": "8a5b26c7f7c97f1e945c2274fb2632e05fc94e7babb941e8b7c80f7e0f24bf61"
-    },
-    {
-      "moduleIds": [
-        "euclid",
-        "spectrum"
-      ],
-      "writes": 46,
-      "bytes": 1112560,
-      "sha256": "09effec7437266b693e358d43f0ba0f3de2b0b35fe4d81e7b76ba90cf388bde8"
     }
   ],
-  "sourceCommit": "898ac30d6a716eaee665f08c4176a51a3e1ee9db",
+  "sourceCommit": "46995e4b8570fed3ca0e59735f0f8963c5c004f4",
   "moduleVersions": {
-    "spectrum": "0.1.1-experimental",
-    "modulation": "0.1.1-experimental",
-    "character": "0.1.1-experimental",
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
     "euclid": "0.1.4-experimental",
@@ -538,22 +501,21 @@
     "tapehead": "0.1.2-experimental",
     "airwindows-chorus": "0.1.2-experimental",
     "everb": "0.1.2-experimental",
-    "bbd": "0.1.1-experimental",
+    "bbd": "0.1.2-experimental",
     "lofi2": "0.1.1-experimental",
-    "ring-sc": "0.2.0-experimental",
-    "analog-bassdrum": "0.1.6-experimental",
-    "midi-scenes": "0.2.5-experimental",
+    "ring-sc": "0.2.1-experimental",
+    "analog-bassdrum": "0.1.7-experimental",
     "usb-audio-out-tracks-main-cue": "0.2.0-experimental",
     "quantizer": "0.1.4-experimental",
     "synth": "0.1.2-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
-    "sidechain-compressor": "0.2.0-experimental",
-    "vector": "0.3.1-experimental",
+    "sidechain-compressor": "0.2.2-experimental",
+    "vector": "0.3.2-experimental",
     "playmodes": "0.2.0-experimental",
     "mute-modes": "0.2.2-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
-    "poly8": "0.3.2-experimental",
+    "poly8": "0.3.3-experimental",
     "output-matrix": "0.1.1-experimental",
     "quantize-live-rec-toggle": "0.1.1-experimental",
     "apply-scene": "0.2.0-experimental",
