@@ -13,6 +13,12 @@ PTCH tunes the whole chord. Panel and MIDI notes add their own semitone offset
 without moving PTCH or overwriting its live lock. The machine follows the
 instrument's audio frames and sequencer; it has no independent clock.
 
+0.3.3-experimental makes POLY8 much cheaper while it is installed but on no
+track: on the owner's MKII with four FLEX tracks playing, 4.9 points of the
+audio interrupt instead of 12.2. A stock track's render goes straight to
+stock's own after one short test, and whether a track is POLY8's is worked out
+once a frame. POLY8 tracks sound and behave as before.
+
 0.3.2-experimental fixes the double-tap TRACK machine list on card builds that
 combine POLY8 with VECTOR, FM Synth or Analog BD (#842, #941, #942). The list
 then has seven to nine rows, but stock draws its six visible rows from the top

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "module": "poly8",
-  "version": "0.3.2-experimental",
+  "version": "0.3.3-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
