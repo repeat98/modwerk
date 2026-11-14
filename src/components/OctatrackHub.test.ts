@@ -36,7 +36,7 @@ describe('the Octatrack page', () => {
     vi.mocked(moduleSetReview).mockReturnValue({ changes: { add: ['synth'], remove: ['miniverb'], stockOff: [], stockOn: [] }, updates: [], needsSync: true, problem: undefined })
     const render = (view: HubView, selectedId = first.id) => act(() => root.render(createElement(OctatrackHub, { ...props, view, link, inventory, sets: [first, second], selectedId, header: null, grid: createElement('p', null, 'Module grid'), card: null })))
     await render('status')
-    expect([...container.querySelectorAll('.hub-nav-item')].map(item => item.textContent)).toEqual(['Status', 'Backups', 'Setup'])
+    expect([...container.querySelectorAll('.hub-nav-item')].map(item => item.textContent)).toEqual(['Status', 'Backups', 'Setup', 'Diagnostics'])
     expect(container.querySelector('.hub-nav-item[aria-current="page"]')?.textContent).toBe('Status')
     expect(container.querySelectorAll('.hub-view:not([hidden])')).toHaveLength(1)
     expect(container.querySelector('.hub-set.is-selected em')?.textContent).toBe('Editing · On your Octatrack')

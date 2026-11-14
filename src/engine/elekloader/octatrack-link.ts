@@ -43,6 +43,15 @@ const BUSY_RETRY_MS = 3000
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 const errorName = (error: unknown) => error instanceof Error || error instanceof DOMException ? error.name : ''
 
+/** The base on the unit stages less than this image needs (its upload capacity). Nothing was sent. */
+export class BaseTooBigError extends Error {
+  readonly bytes: number
+  readonly capacity: number
+  constructor(bytes: number, capacity: number) {
+    super('This base is too big for the base on the Octatrack to take over USB in one update.')
+    this.name = 'BaseTooBigError'; this.bytes = bytes; this.capacity = capacity
+  }
+}
 // lib.dom has no WebUSB types; only what the link calls.
 export interface LinkDevice extends ControlDevice {
   readonly configuration: Parameters<typeof findVendorInterface>[0]
@@ -475,17 +484,20 @@ export class OctatrackLink {
    * restarts on NOR once accepted. Only a power cut during the write itself needs the card or MIDI recovery.
    * Every base since the beta RAM-boots, so the trial starts from any of them; only the base that writes needs
    * the capability, and it is the new one.
+   * A base takes only an image its own stage holds: a larger one is refused as BaseTooBigError before anything is
+   * sent, and the caller installs the step base first (base-step.ts). `afterStep` is that second update: the unit
+   * still runs the step base from RAM, so its first arming only restarts it on the same base from flash.
    */
-  async updateBase(bin: Uint8Array, expected: string, report: (step: BaseUpdateStep, fraction?: number) => void = () => {}, signal?: AbortSignal) {
+  async updateBase(bin: Uint8Array, expected: string, report: (step: BaseUpdateStep, fraction?: number) => void = () => {}, signal?: AbortSignal, afterStep = false) {
     try {
-      await this.writeBase(bin, expected, (step, fraction) => {
+      await this.writeBase(bin, expected, afterStep, (step, fraction) => {
         const shown = step === 'done' ? undefined : step
         if (shown !== this.baseStep) { this.baseStep = shown; this.set(this.state) }
         report(step, fraction)
       }, signal)
     } finally { if (this.baseStep) { this.baseStep = undefined; this.set(this.state) } }
   }
-  private async writeBase(bin: Uint8Array, expected: string, report: (step: BaseUpdateStep, fraction?: number) => void, signal?: AbortSignal) {
+  private async writeBase(bin: Uint8Array, expected: string, afterStep: boolean, report: (step: BaseUpdateStep, fraction?: number) => void, signal?: AbortSignal) {
     const file = formats.parse(bin, OCTATRACK) as ElekFile, container = file.container, image = file.section(3)
     if (this.state.status !== 'ready' || !this.state.identity?.canSubmit) throw new Error('Connect the Octatrack first.')
     // The new base starts from RAM first (the trial, the update's one restart: owner, 25 October 2026) and writes itself
@@ -497,7 +509,7 @@ export class OctatrackLink {
     const armedFrom: string[] = []
     // Only the flashed base's gate reads the mailbox: armed from a RAM-booted base, the unit comes back on the flashed one, which arms it properly.
     while (current !== expected) {
-      if (armedFrom.includes(current)) throw new Error(`The Octatrack came back on base ${current.slice(0, 8)}, not the new one. A power cycle returns to the flashed base.`)
+      if (armedFrom.filter(base => base === current).length > (afterStep && current === armedFrom[0] ? 1 : 0)) throw new Error(`The Octatrack came back on base ${current.slice(0, 8)}, not the new one. A power cycle returns to the flashed base.`)
       armedFrom.push(current)
       report('staging', 0)
       const connection = this.connection
@@ -586,6 +598,7 @@ export class OctatrackLink {
       try {
         const session = await this.connectSession(this.transport, base, { timeoutMs })
         this.live(connection)
+        if (data.length > session.status.capacity) throw new BaseTooBigError(data.length, session.status.capacity)
         await this.whenStopped(() => session.stage({ base, data, sha256: sha(data) }, { signal, progress: (done, total) => progress(done / total) }))
         await then(session)
         // A publication makes what it sent the unit's active digest (upload.c mu_publish), a base's container as well.

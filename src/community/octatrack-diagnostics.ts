@@ -26,8 +26,8 @@ const guestHeaders = (member: string | null): Record<string, string> => member =
 export interface DiagnosticPreference { accountId: string | null; available: boolean; enabled: boolean; ready: boolean; busy: boolean; error: string; notice: string; hasChoice: boolean; saved: boolean; lastSent: string | null }
 const listeners = new Set<() => void>()
 const locallyStopped = new Set<string>()
-/** `hasChoice`: a choice under the current text that hasn't expired, so the invitation stays away. `saved`: any earlier choice, whose reports can still be deleted. */
-const choice = (saved: DiagnosticConsent) => ({ hasChoice: saved.version === OCTATRACK_DIAGNOSTICS_VERSION && !!saved.changedAt && Date.parse(saved.expiresAt ?? '') > Date.now(), saved: !!saved.changedAt })
+/** `hasChoice`: a choice that hasn't expired, under any text version, so the invitation stays away. `saved`: any earlier choice, whose reports can still be deleted. */
+const choice = (saved: DiagnosticConsent) => ({ hasChoice: !!saved.changedAt && Date.parse(saved.expiresAt ?? '') > Date.now(), saved: !!saved.changedAt })
 let snapshot: DiagnosticPreference = {accountId:null,available:false,enabled:false,ready:false,busy:false,error:'',notice:'',hasChoice:false,saved:false,lastSent:null}
 let owner: string | null = null, blocked = false, expires = 0
 let preferenceRevision = 0
@@ -101,7 +101,7 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
       if (!current() || snapshot.busy || preferenceRevision !== revision) return false
       if (saved.accountId !== memberId) { publish({enabled:false,ready:false,error:'Your sign-in changed. Refresh this page to manage diagnostics.'}); return false }
       expires = Date.parse(saved.expiresAt ?? '')
-      publish({enabled:saved.enabled && saved.version === OCTATRACK_DIAGNOSTICS_VERSION && !blocked,ready:true,available:true,...choice(saved)})
+      publish({enabled:saved.enabled && !blocked,ready:true,available:true,...choice(saved)})
       if (!saved.enabled) { transfer?.abort(); healthRead?.abort() }
       return true
     } catch { if (current() && preferenceRevision === revision && !snapshot.busy) publish({enabled:false,ready:true,available:false}) }

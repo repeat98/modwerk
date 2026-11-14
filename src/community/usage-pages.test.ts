@@ -15,7 +15,7 @@ describe('closed page catalog', () => {
     ['__proto__', 'unclassified'], ['admin?tab=statistics', null], ['admin/private', null], ['review', null],
     ['device/digitakt', null], ['devices', null], ['your-octatrack', null], ['octatrack', 'octatrack-status'],
     ['overview', 'overview'], ['faq/installing', 'faq'], ['octatrack/backups', 'octatrack-backups'],
-    ['octatrack/samples', 'octatrack-samples'], ['octatrack/setup', 'octatrack-setup'],
+    ['octatrack/samples', 'octatrack-samples'], ['octatrack/setup', 'octatrack-setup'], ['octatrack/diagnostics', 'octatrack-diagnostics'],
     ['beta/join/private-campaign', 'account'], ['page-not-found', 'missing-page'],
   ])('maps %s without exposing arbitrary route content', (route, page) => {
     expect(usagePage(route)).toBe(page)

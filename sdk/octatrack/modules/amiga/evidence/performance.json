@@ -1,14 +1,14 @@
 {
   "schema": 1,
   "module": "amiga",
-  "version": "0.1.0-experimental",
+  "version": "0.2.1-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
     "static": null,
     "measured": null,
     "budget": null,
-    "method": "Not measured in cycles. No static bound was counted, and no event was timed on the chip. What exists: (1) Emulator, not hardware: bench.py in ot_emu counts the instructions the engine's own functions execute per audio frame of one track playing stereo noise, without stock's reader and START: mean 300 (plain) to 5,355 (an octave up, SPD 32, GRN 0, SRR 6, LED), worst frame 6,501. On the unit the time did not follow these counts (a division and a multiply-accumulate cost far more than a move there), so they are not turned into cycles here. (2) The owner's MKII, development twin d8fae687 of the base, package e9730e24, 11 November 2026: the session's guard and stats over five seconds of a 131 BPM pattern, eight tracks playing loops, one reading each. Frame interrupt 63.7 % with eight FLEX tracks; 69.2 % with track 1 on Amiga at the defaults, 72.8 % with PTCH +12, 74.8 % with SRR raised, 77.5 % with LED on; 79.2 % with Amiga on all eight tracks at the defaults, where the base's frame guard skipped 16.9 % of their renders. These are means of the whole interrupt over five seconds, stock work included, not the longest event of the module's code. Tables in TESTING.md."
+    "method": "Not measured in cycles, and this version not on a unit. No static bound was counted, and no event was timed on the chip. What exists: (1) Emulator, not hardware: bench.py in ot_emu counts the instructions the engine's own functions execute per audio frame of one track playing stereo noise, without stock's reader and START: for 0.2.0, whose engine 0.2.1 keeps unchanged (it changes only how the page picks a control widget), mean 124 (plain) to 4,762 (an octave up, SPD 32, GRN 0, SRR 6, LED), worst frame 6,488, where 0.1.0 counted 300 to 5,355, worst 6,501. On the unit the time did not follow such counts (a division and a multiply-accumulate cost far more than a move there), so they are not turned into cycles here. (2) The owner's MKII with 0.1.0-experimental, development twin d8fae687 of the base, package e9730e24, 11 November 2026: the session's guard and stats over five seconds of a 131 BPM pattern, eight tracks playing loops, one reading each. Frame interrupt 63.7 % with eight FLEX tracks; 69.2 % with track 1 on Amiga at the defaults, 72.8 % with PTCH +12, 74.8 % with SRR raised, 77.5 % with LED on; 79.2 % with Amiga on all eight tracks at the defaults, where the base's frame guard skipped 16.9 % of their renders. These are means of the whole interrupt over five seconds, stock work included, not the longest event of the module's code. Tables in TESTING.md."
   },
   "load": {
     "frameUs": 362.8,
@@ -16,7 +16,7 @@
     "moduleLongestUs": null,
     "stockIdlePercent": null,
     "moduleIdlePercent": null,
-    "method": "No cfmeter.py capture and no MIDI flood: Amiga has no MIDI path. It works in the frame interrupt on every frame of a sounding Amiga track, so the comparison that exists is against FLEX on the same unit and pattern (the owner's MKII, twin d8fae687, package e9730e24, 11 November 2026, guard and stats over USB, five seconds, one reading each). Eight FLEX tracks: frame interrupt 63.7 %, longest frame 106.7 % of the 362.8 us frame, CPU 76.1 %. Track 1 on Amiga at the defaults: 69.2 %, 110.8 %, 81.8 %. With PTCH +12, SRR and LED: 77.5 %, 127.6 %, 90.3 %, and 0.3 % of that track's renders skipped by the base's frame guard. That is past the audit's defaults (10 % of a frame, 10 points of idle time), which is why the fields stay empty for the owner to judge and are not entered as a cfmeter result. With the module installed and no track on Amiga, eight FLEX tracks read the same share as without it (65.1 %, an earlier build of the day)."
+    "method": "Measured with 0.1.0-experimental; this version not yet. No cfmeter.py capture and no MIDI flood: Amiga has no MIDI path. It works in the frame interrupt on every frame of a sounding Amiga track, so the comparison that exists is against FLEX on the same unit and pattern (the owner's MKII, twin d8fae687, package e9730e24, 11 November 2026, guard and stats over USB, five seconds, one reading each). Eight FLEX tracks: frame interrupt 63.7 %, longest frame 106.7 % of the 362.8 us frame, CPU 76.1 %. Track 1 on Amiga at the defaults: 69.2 %, 110.8 %, 81.8 %. With PTCH +12, SRR and LED: 77.5 %, 127.6 %, 90.3 %, and 0.3 % of that track's renders skipped by the base's frame guard. That is past the audit's defaults (10 % of a frame, 10 points of idle time), which is why the fields stay empty for the owner to judge and are not entered as a cfmeter result. With the module installed and no track on Amiga, eight FLEX tracks read the same share as without it (65.1 %, an earlier build of the day)."
   },
   "stress": {
     "floodMessagesPerSecond": null,
@@ -25,6 +25,6 @@
     "stuckNotes": null,
     "hangs": null,
     "dropped": null,
-    "droppedExplanation": "No MIDI flood ran: Amiga has no MIDI path. The heaviest runs on the owner's MKII (twin d8fae687, package e9730e24, 11 November 2026) were: Amiga on all eight tracks at the defaults for five seconds of a 131 BPM pattern, frame interrupt 79.2 %, longest frame 135.3 %, CPU 86.0 %, 16.9 % of the renders skipped by the base's frame guard (dropouts), no hang; and one Amiga track at PTCH +12 with SRR and LED beside seven FLEX tracks, which played at 94 % CPU and, with a USB recording running as well, froze the unit until a power cycle (no crash or stall record). LFOs and locks on the Amiga tracks were not part of these runs."
+    "droppedExplanation": "Measured with 0.1.0-experimental; this version not yet. No MIDI flood ran: Amiga has no MIDI path. The heaviest runs on the owner's MKII (twin d8fae687, package e9730e24, 11 November 2026) were: Amiga on all eight tracks at the defaults for five seconds of a 131 BPM pattern, frame interrupt 79.2 %, longest frame 135.3 %, CPU 86.0 %, 16.9 % of the renders skipped by the base's frame guard (dropouts), no hang; and one Amiga track at PTCH +12 with SRR and LED beside seven FLEX tracks, which played at 94 % CPU and, with a USB recording running as well, froze the unit until a power cycle (no crash or stall record). LFOs and locks on the Amiga tracks were not part of these runs."
   }
 }

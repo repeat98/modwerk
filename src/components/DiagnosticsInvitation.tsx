@@ -17,7 +17,7 @@ export function DiagnosticDetails() {
     <p>The Octatrack also keeps a small log of its own, also while this site is closed: its load and whether it was playing, overloads, freezes and crashes, and at such a moment each track’s machine type and effects, playing or stopped, the tempo, the screen that was open and the last 16 keys pressed. The site sends that log the next time you connect.</p>
     <p>Every report except that log also names your browser with its main version and your operating system, such as Chrome 131 on Windows, never the full browser identification.</p>
     <p>No firmware, samples, audio, project, sample or set names, device serial numbers, raw memory or crash dumps. Reports use Modwerk’s Cloudflare service and aren’t posted to GitHub or shared with module authors. I may have an AI assistant (Anthropic’s Claude) help me read them; for that, they are sent to Anthropic.</p>
-    <p>Consent is optional under GDPR Article 6(1)(a). You can stop sharing and delete reports under Setup in Your Octatrack. Signed in, your account data download includes them; without an account they are kept under a random ID stored in this browser. Reports are hidden after 30 days and deleted by hourly cleanup, with at most 1,000 entries per account or browser. <a href="#privacy" target="_blank" rel="noreferrer">Privacy and your rights</a>.</p>
+    <p>Consent is optional under GDPR Article 6(1)(a). You can stop sharing and delete reports under Diagnostics in Your Octatrack. Signed in, your account data download includes them; without an account they are kept under a random ID stored in this browser. Reports are hidden after 30 days and deleted by hourly cleanup, with at most 1,000 entries per account or browser. <a href="#privacy" target="_blank" rel="noreferrer">Privacy and your rights</a>.</p>
     <p>Separate daily counts of sync actions, base install steps and answers to this invitation contain no account, device, module or session identifier. They last 30 days and follow your usage-count preference and browser privacy signals.</p>
   </details>
 }
@@ -61,7 +61,7 @@ export function DiagnosticsInvitation({onClose,preview=false,placement,reason}: 
     </ul>
     <p className="diagnostics-connected">Using your Octatrack over USB? Keep this page open and your Octatrack connected so we can receive a report if something fails.</p>
     <DiagnosticDetails/>
-    <p className="diagnostics-choice">Optional. Sharing applies to {guest ? 'this browser' : 'your signed-in sessions'} for 90 days. You can turn it off and delete reports under Setup in Your Octatrack anytime. Builds and syncing work either way.</p>
+    <p className="diagnostics-choice">Optional. Sharing applies to {guest ? 'this browser' : 'your signed-in sessions'} for 90 days. You can turn it off and delete reports under Diagnostics in Your Octatrack anytime. Builds and syncing work either way.</p>
     {privacy && <p className="diagnostics-choice" role="status">Your browser requests privacy, so automatic diagnostics stay off here.</p>}
     {!preview && state.error && <p className="file-error" role="alert">{state.error}</p>}
     <footer className="diagnostics-actions"><button type="button" className="button button-quiet" onClick={notNow}>Not now</button><button type="button" className="button button-primary" disabled={privacy || !preview && (!state.ready || state.busy)} onClick={()=>void share()}>{state.busy && !preview ? 'Saving…' : 'Share diagnostics'}</button></footer>
@@ -84,7 +84,7 @@ export function DiagnosticsGuideStep({onDone}: {onDone?: (shared: boolean) => vo
   }
   // Not now here answers the first-connection invitation too, so it doesn't follow the guide.
   function notNow() { count('not-now'); declineForThisVisit(state.accountId); if (state.accountId) rememberInvitationAnswer(state.accountId); setAnswer('not-now'); onDone?.(false) }
-  if (answer) return <section className="diagnostics-step" aria-label="Diagnostics"><p role="status">{answer === 'shared' ? 'Thanks. Diagnostics sharing is on.' : 'Nothing is shared. You can turn diagnostics on any time under Setup in Your Octatrack.'}</p></section>
+  if (answer) return <section className="diagnostics-step" aria-label="Diagnostics"><p role="status">{answer === 'shared' ? 'Thanks. Diagnostics sharing is on.' : 'Nothing is shared. You can turn diagnostics on any time under Diagnostics in Your Octatrack.'}</p></section>
   if (!offer) return null
   return <section className="diagnostics-step" aria-labelledby="diagnostics-step-title">
     <div className="diagnostics-heading-icon" aria-hidden="true"><Icon name="wave" size={24}/></div>
@@ -93,7 +93,7 @@ export function DiagnosticsGuideStep({onDone}: {onDone?: (shared: boolean) => vo
     <ul className="diagnostics-facts">
       <li><Icon name="search" size={19}/><div><strong>Technical readings only</strong><p>Sync results, CPU and DSP load, freezes and crashes with what your Octatrack was doing at that moment, your browser and system.</p></div></li>
       <li><Icon name="lock" size={19}/><div><strong>Never your music</strong><p>No samples, audio, projects or their names, no firmware and no serial number. Reports are private and hidden after 30 days.</p></div></li>
-      <li><Icon name="check" size={19}/><div><strong>Yours to switch off</strong><p>Stop sharing and delete your reports any time under Setup in Your Octatrack. Everything works either way.</p></div></li>
+      <li><Icon name="check" size={19}/><div><strong>Yours to switch off</strong><p>Stop sharing and delete your reports any time under Diagnostics in Your Octatrack. Everything works either way.</p></div></li>
     </ul>
     <DiagnosticDetails/>
     <p className="diagnostics-choice">Optional. Sharing applies to {state.accountId === DIAGNOSTICS_GUEST ? 'this browser, under a random ID kept here instead of an account,' : 'your signed-in sessions'} for 90 days.</p>
