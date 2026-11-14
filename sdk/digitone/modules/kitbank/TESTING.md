@@ -2,7 +2,13 @@
 
 ## In Modwerk
 
-No hardware qualification is claimed for this Modwerk build. Evidence tier: `none`. All runs below are in the digiemu emulator (revision `f57c2f237e84b8ff91bc3adb2a2931bccf9928e9`, not the reviewed `c1b5735…`, see [capture.json](media/capture.json)), on a local image linked with `node scripts/link-image.mjs --version XX06` from the stock OS 1.44 file (`d4f200d0…`), core-dn1 2.0a for 1.44 and this module (0.2.0-experimental). Built-image SHA-256: `7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be`. Firmware and derived images stay private.
+### Hardware (author-reported)
+
+Evidence tier: `author-hardware`. On 2026-11-14 the author flashed the module-alone build XX07 (core dn1 2.0a + kitbank 0.2.0-experimental, SHA-256 `30e54a811681c0bcc57f8b1dd026473d346afcaf86e83c4332b6331c4a97eaf0`) on their Digitone, OS 1.44, with a nine-step list (the switch, bank kits while playing, an edit shared by the bank, PTN+YES, project save and power cycle, paste, song mode), and reported: "it worked". The result was one statement, not step by step; which steps were tried and for how long was not reported. Details: [evidence/hardware-testing.json](evidence/hardware-testing.json).
+
+### Emulator
+
+The XX07 build passes `test_kitlock_modwerk`, `test_kitbank_copy` and `test_kitbank_song`, and the full check against stock with the switch off: build PASS, 10 of 10 screens identical, audio identical over 8.3 s, render margin 40.5 % and CPU busy 58 % as stock (the screen stream first differs at 7.8 s, between captures). The runs below are in the digiemu emulator (revision `f57c2f237e84b8ff91bc3adb2a2931bccf9928e9`, not the reviewed `c1b5735…`, see [capture.json](media/capture.json)), on a local image linked with `node scripts/link-image.mjs --version XX06` from the stock OS 1.44 file (`d4f200d0…`), core-dn1 2.0a for 1.44 and this module (0.2.0-experimental). Built-image SHA-256: `7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be`. Firmware and derived images stay private.
 
 ## Behaviour (emulator, real panel inputs)
 
@@ -39,4 +45,4 @@ For under a second after PTN+YES, a knob turn can be ignored while the OS reload
 
 ## Not tested
 
-Hardware with this Modwerk build; undo of a paste; chains built with PTN+trigs while playing (queued changes were); OS 1.43.
+Step-by-step hardware results; undo of a paste; chains built with PTN+trigs while playing (queued changes were); OS 1.43.
