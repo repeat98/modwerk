@@ -42,5 +42,8 @@ swung Chord Arp fixture reached the scheduler commit routine 16 times.
 - **Browser builds.** The site selects `modwerk-base-digitakt-ii-<sha8>.elemod` by the SHA-256 in the binding.
   The package declares `core` 1.1, which satisfies the released Perform modules' dependency. Downloads stay disabled.
 - **Hardware.** Earlier base builds have reported hardware results for the Euclidean pitch hook and kit-data reload.
-  On the exact integration build, verify the phrase scheduler with a subscriber, **Create New** with kit data present,
-  and **SAVE KIT** followed by **LOAD KIT** after changing the module's state. Record the base and image hashes.
+  Claptom-music reported that **Create New** passed with Euclidean Scale: SCF turned off and both octave bounds
+  returned to AUTO in the new project. The Scale-only B117 trial used base SHA-256
+  `1c5c0cd88ad80ba10b22b29853914b189b42b8e0ac2b62643f8bb2a01c65010a` and image SHA-256
+  `5672391278216ee65c312a6eb1183d36acb2ac41f488b18527aab7fa47fdacd3`.
+  The phrase scheduler and **SAVE KIT → LOAD KIT** checks on this base are pending.
