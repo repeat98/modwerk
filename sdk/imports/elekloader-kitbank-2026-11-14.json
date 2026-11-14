@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "kitbank-2026-11-14",
+  "about": "Modwerk source-only kitbank package for Digitone OS 1.44, compiled from sdk/digitone/modules/kitbank.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "kitbank-0.2.0-experimental-os1.44.elemod",
+      "sha256": "4eb689a968d29038fe20516fb3729c7e58e1c99dc2ee428f7c5353887d1e7d9d",
+      "id": "kitbank",
+      "version": "0.2.0-experimental",
+      "device": "digitone-mk1",
+      "os": "1.44",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "aac54b3ce6197a672091a4c4eac21e022e3b8d0b",
+        "path": "sdk/imports/packages/kitbank/kitbank-0.2.0-experimental-os1.44.elemod"
+      },
+      "title": "Kit per bank",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "One kit per bank, like the Octatrack's parts: the 16 patterns of a bank play the kit of its first pattern, with per-pattern locks.",
+      "description": "KIT PER BANK in SETTINGS (off at power-on) gives the 16 patterns of a bank the kit of its first pattern (A01 for A01 to A16). Pattern changes inside a bank keep the sound, including queued changes, chains and song mode. Hold PTN and press YES to lock a pattern to its own copy of the sound. The switch and locks are saved with the project; old projects open with the switch off and play as stock.",
+      "category": "Sequencer",
+      "author": "ZOGV",
+      "needs_core": "2.0a",
+      "on_unit": "The author ran this exact build (core dn1 2.0a + kitbank 0.2.0-experimental, XX07) on a Digitone, OS 1.44 (2026-11-14) with a nine-step test list and reported that it worked. Reported as one statement: which steps were tried and for how long is not recorded."
+    }
+  ]
+}
