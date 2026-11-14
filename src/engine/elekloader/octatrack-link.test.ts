@@ -4,7 +4,7 @@ import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrac
 import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
-import { LinkBusyError, OctatrackLink, StaleLoadError, linkBusy, openFailure, tabLocks } from './octatrack-link'
+import { BaseTooBigError, LinkBusyError, OctatrackLink, StaleLoadError, linkBusy, openFailure, tabLocks } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
 import { UsbVendorTransport, parseBaseSlots } from './upload-usb'
 
@@ -672,6 +672,29 @@ describe('updating the base over USB', () => {
     link.start(); await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
     const { bin, expected } = fakeBin(), steps: string[] = []
     await link.updateBase(bin, expected, step => steps.push(step))
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'staging', 'starting', 'started', 'writing', 'saving', 'restarting', 'done'])
+    expect(unit.flashed).toBe(expected)
+  })
+  it('refuses a base larger than the unit’s base stages before anything is sent', async () => {
+    const { unit, link } = await linked(), { bin, image, expected } = fakeBin(), steps: string[] = []
+    unit.capacity = image.length - 1
+    const refused = await link.updateBase(bin, expected, step => steps.push(step)).catch(error => error)
+    expect(refused).toBeInstanceOf(BaseTooBigError)
+    expect(refused).toMatchObject({ bytes: image.length, capacity: image.length - 1 })
+    expect(dedupe(steps)).toEqual(['staging'])
+    expect(unit.base).toBe(FAKE_BASE); expect(unit.flashed).toBe(FAKE_BASE)
+    await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+    expect(link.getState().baseUpdate).toBeUndefined()
+  })
+  it('after the step base, arms once more when the unit restarts on the same base from flash', async () => {
+    // The step base saved itself and runs on out of RAM: its first arming only restarts it from NOR, on the same identity.
+    const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
+    unit.fromRam = true
+    await expect(link.updateBase(bin, expected)).rejects.toThrow('not the new one')
+    expect(unit.flashed).toBe(FAKE_BASE)
+    unit.fromRam = true
+    await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+    await link.updateBase(bin, expected, step => steps.push(step), undefined, true)
     expect(dedupe(steps)).toEqual(['staging', 'starting', 'staging', 'starting', 'started', 'writing', 'saving', 'restarting', 'done'])
     expect(unit.flashed).toBe(expected)
   })
