@@ -19,7 +19,7 @@ export function createLazyFirmwareClient(create: () => FirmwareClient = createFi
   }
   return {
     inspect: file => observe(() => engine().inspect(file), 'octatrack-firmware', () => 'preparing', 'input'),
-    buildBase: layout => observe(() => engine().buildBase(layout), 'octatrack-base', () => 'building', 'build'),
+    buildBase: (layout, step) => observe(() => engine().buildBase(layout, step), 'octatrack-base', () => 'building', 'build'),
     clear: () => { ++cancellation; return client?.clear() ?? Promise.resolve() },
     dispose: () => { disposed = true; ++cancellation; client?.dispose(); client = null },
   }

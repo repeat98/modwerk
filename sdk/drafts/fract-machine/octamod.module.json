@@ -3,16 +3,16 @@
   "id": "fract-machine",
   "key": "FRACT",
   "name": "FRACT",
-  "version": "0.1.0-experimental",
+  "version": "0.1.2-experimental",
   "category": "machines",
   "source": {
     "repository": "https://github.com/ex1010/modwerk",
-    "revision": "5b5aa328c1bbed129ab6b1a65efb9353b93ede8f",
+    "revision": "b4c69ecdfd62a1cb6b3d6a313191518c86bcd8ca",
     "path": "sdk/drafts/fract-machine"
   },
   "build": {
     "status": "pending",
-    "reason": "Private source baseline plus accepted centered-SIZE/UI and consolidation edits; see README. No listed USB/card package or exact-public hardware qualification; the private paired builder refuses unsupported bases."
+    "reason": "Base-following candidate has named-build functional hardware evidence. Timing/stress and release integration and owner approval remain pending; historical PROJECT RELOAD stall unresolved."
   },
   "author": {
     "github": "ex1010",
@@ -23,14 +23,14 @@
   },
   "nativeManifest": "manifest.py",
   "presentation": {
-    "label": "Three-grain source draft",
+    "label": "Three-grain USB candidate",
     "family": "Granular track machine",
-    "summary": "Three overlapping grains with centered SIZE, wrapping POS and native FLEX pitch. Unlisted source draft.",
-    "overview": "A private-prototype track machine staged for review; public build integration and exact-build qualification remain pending.",
+    "summary": "Three overlapping grains with centered SIZE, wrapping POS and native FLEX pitch.",
+    "overview": "Three-grain track machine. USB release candidate; publication and exact-package hardware qualification pending.",
     "highlights": [
       "Three grains; SIZE expands around POS and wraps sample edges.",
       "Native pitch at MAIN F, neutral 64.",
-      "One owner on T1\u2013T4; no active SPACE or FX2 effect."
+      "One owner on T1–T4; no active SPACE or FX2 effect."
     ],
     "usage": [
       "On a compatible private paired build, choose FRACT in SRC SETUP on T1 and load a FLEX sample.",
@@ -45,7 +45,11 @@
       "Open MAIN, keep PTCH at 64, move POS, then increase SIZE to expand the span around the center.",
       "Play the track, try SPRD and REVS, then stop playback and select a stock machine to leave FRACT."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/ot-setup.png",
+      "media/ot-main.png",
+      "media/ot-playing.png"
+    ]
   },
   "controls": [
     {
@@ -116,21 +120,21 @@
     "uiClaims": [],
     "limitations": [
       "Unlisted source draft; not offered by the public configurator.",
-      "Eight registry slots exist; FRACT admits only one owner on T1\u2013T4.",
-      "Private build requires an exact compatible paired base with FR:1 boot preservation.",
-      "No public lifecycle, stress, companion or exact-build hardware qualification."
+      "Eight registry slots exist; FRACT admits only one owner on T1–T4.",
+      "USB package requires the base identified by requiredBase; compatible base rebuilds relink imports.",
+      "Candidate functional lifecycle recorded; full resource, stress and companion qualification pending."
     ]
   },
   "resources": {
-    "recorded": "4 November 2026; source-draft limits",
+    "recorded": "10 November 2026; own memory/stack accounted; functional hardware reported; timing pending",
     "storage": {
       "label": "Public package memory",
-      "display": "Unmeasured for the public build",
-      "value": null,
+      "display": "31,424 resident pool bytes; 712 own stack bytes per callback",
+      "value": 31424,
       "unit": "bytes",
-      "method": "unmeasured",
-      "conditions": "Exact code/state/buffer/stack inventory not yet measured.",
-      "source": "TESTING.md"
+      "method": "static",
+      "conditions": "One owner, three heads; includes loader header, image/BSS and alignment. Stack separately bounded; samples reuse stock arena.",
+      "source": "release/resources.md"
     },
     "processing": {
       "label": "Worst-case ColdFire work",
@@ -138,23 +142,112 @@
       "value": null,
       "unit": "cycles/block",
       "method": "unmeasured",
-      "conditions": "Private reported CPU about 80% is not an isolated cost measurement.",
+      "conditions": "Worst render timing and matched FLEX comparison not measured; functional hardware checks do not measure cycles.",
       "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "One FRACT owner on T1–T4, three grain heads, moving controls and native-pitch packet splits. Stock sample pages are reused. Replacement temporarily retains two module extents.",
+      "cpu": {
+        "level": "high",
+        "basis": "source-estimate",
+        "rationale": "Audio-rate ColdFire work for three interpolated/windowed stereo readers, unlike a key-only feature; native pitch and split packets affect work. No measured processor percentage or headroom claim.",
+        "source": "release/resources.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No added DSP engine code or DSP state; native FLEX/DSP processing remains instrument-owned.",
+        "source": "release/resources.md"
+      },
+      "memory": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "31,424 resident pool bytes and up to 712 own stack bytes per callback; no independent sample buffer. Replacement retains two extents.",
+        "source": "release/resources.md"
+      }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Firmware-free source check and host fixtures are provided. Only a short private hardware audition is reported; exact-public audio, lifecycle and stress remain untested.",
-    "hardwareStatus": "historical",
-    "evidenceRevision": "5b5aa328c1bbed129ab6b1a65efb9353b93ede8f",
+    "summary": "Named package6ff/base72 passed functional install/Keep/Undo/removal/reinstall, Part/project reload and physical reboot with exact USB set restoration. Timing/stress/companions/full qualification pending; historical reload stall unresolved.",
+    "hardwareStatus": "reported",
     "gates": [
       "modules/fract-machine/verify.py"
-    ]
+    ],
+    "evidenceRevision": "b4c69ecdfd62a1cb6b3d6a313191518c86bcd8ca",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "On a compatible private paired build, choose FRACT in SRC SETUP on T1 and load a FLEX sample.",
+          "Open MAIN, keep PTCH at 64, move POS, then increase SIZE to expand the span around the center.",
+          "Play the track, try SPRD and REVS, then stop playback and select a stock machine to leave FRACT."
+        ]
+      },
+      "screenshots": [
+        "media/ot-setup.png",
+        "media/ot-main.png",
+        "media/ot-playing.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    }
   },
   "license": {
     "spdx": "MIT AND GPL-3.0-or-later",
     "file": "LICENSE",
     "declaration": "Retain MIT licence and third-party notices plus file-level GPL-3.0-or-later notices. No firmware, extracted stock routines, samples or built images are distributed."
   },
-  "media": []
+  "media": [
+    {
+      "path": "media/ot-setup.png",
+      "captureType": "emulator",
+      "caption": "Select T1, hold FUNC and press SRC, then choose FRACT and confirm with YES. This same SETUP page provides PAN for random stereo width and SRNG for FULL or LOCAL source range.",
+      "alt": "SRC SETUP with FRACT highlighted below FLEX, THRU, NEIGHBOR and PICKUP; PAN and SRNG at the right.",
+      "credit": "ex1010/toli (actual emulator framebuffer capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC SETUP",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "223363ef249ca4f3c9aa4a8807b37a1192ebccd51bd7748e6a3cae70dd2c2dc1",
+        "setup": "Headless octemu, MKII panel, DSPs and guarded frame renderer, --guest-clock; private historical card/NVRAM fixture, not factory defaults. Only emulator USB was used."
+      }
+    },
+    {
+      "path": "media/ot-main.png",
+      "captureType": "emulator",
+      "caption": "Load a sample from the FLEX pool, then press SRC for MAIN. Turn A (POS) to move the grain center and B (SIZE) to widen the span; set F (PTCH) to 64 for neutral pitch, displayed 0.0—the pictured stored setting is +3.0.",
+      "alt": "Stopped FRACT MAIN with the PLUCKS1 waveform, POS 18, SIZE 106, REVS 127, SPRD 0, SHPE 64 and PTCH +3.0.",
+      "credit": "ex1010/toli (actual emulator framebuffer capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC MAIN",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "223363ef249ca4f3c9aa4a8807b37a1192ebccd51bd7748e6a3cae70dd2c2dc1",
+        "setup": "Headless octemu, MKII panel, DSPs and guarded frame renderer, --guest-clock; private historical card/NVRAM fixture, not factory defaults. Only emulator USB was used."
+      }
+    },
+    {
+      "path": "media/ot-playing.png",
+      "captureType": "emulator",
+      "caption": "Place a sample trig and press PLAY to follow the three grain markers. Try D (SPRD) for displaced centers and C (REVS) for reverse grains, then press STOP twice; to leave FRACT, select a stock machine in SRC SETUP.",
+      "alt": "FRACT MAIN with the play indicator, three grain markers over the PLUCKS1 waveform, horizontal span bars and SIZE 106.",
+      "credit": "ex1010/toli (actual emulator framebuffer capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC MAIN playing",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "223363ef249ca4f3c9aa4a8807b37a1192ebccd51bd7748e6a3cae70dd2c2dc1",
+        "setup": "Headless octemu, MKII panel, DSPs and guarded frame renderer, --guest-clock; private historical card/NVRAM fixture, not factory defaults. Only emulator USB was used."
+      }
+    }
+  ]
 }

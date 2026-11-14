@@ -27,6 +27,8 @@ Every ColdFire module can define these. They run in the UI task, never at interr
 | `int module_key(int code, int pressed)` | each key press and release | nonzero takes the key from the firmware |
 | `int module_enc(int encoder, int delta)` | each encoder turn | nonzero takes the turn from the firmware |
 
+Every installed module's tick gets the same `api`, one after another, so `api->value` holds whatever the last module to write it left there. A one-shot `npm run device -- try` prints that word each second; with other modules installed that write it (SAMPLE LOCKS, Beat Slicer, Tiempos), it says nothing about the module on trial (13 November 2026, flashed beta base `c1f21351`).
+
 Subscribe to them in `runtime.json` like any hook. Butter Fingers ([its draft](../sdk/drafts/butter-fingers/runtime.json)) does it this way:
 
 ```json
@@ -53,6 +55,7 @@ The base owns every stock site that more than one module needs and shares it as 
 - **MIDI and the keyboard:** `ev_midi_note_on`, `ev_midi_note_off`, `ev_midi_note_key`, `ev_octave_key`, `ev_octave_number`, `ev_keyboard_draw`, the `ev_chromatic_*` hooks, `ev_arp_setup_knob`, `ev_arp_setup_text`.
 - **Editing:** `ev_plock_store` (a lock byte is stored), `ev_knob_store` (a knob turn stores a Part byte).
 - **Projects and settings:** `ev_project_load`, `ev_project_line`, `ev_project_write`, `ev_project_defaults`, `ev_settings_sanitise`.
+- **Projects, banks and Parts as stock saves and loads them:** `ev_banks_load`/`ev_banks_loaded`, `ev_bank_load`/`ev_bank_loaded`, `ev_project_new`, `ev_bank_write`/`ev_bank_written`, `ev_project_store`/`ev_project_stored`, `ev_project_reload`/`ev_project_reloaded`, `ev_part_saved`, `ev_part_clear`. Each `…ed` hook runs when stock's routine returns. With `ev_modules_ready` (the installed modules changed and the card is free), they let a module keep its own file beside the project, read and written from the engine task, the only one that may use the card.
 - **Tables:** `ot_machines` (track machines), `ot_sequencer_rows` (rows in PROJECT > CONTROL > SEQUENCER), `ot_midi_generators`, `ot_sample_editor_actions`, `ot_machine_starts`.
 
 ```json

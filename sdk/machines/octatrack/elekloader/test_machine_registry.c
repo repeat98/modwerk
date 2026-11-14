@@ -118,7 +118,7 @@ static unsigned cpu_boxes, cpu_box_track = 99; static uint32_t cpu_box_booked, c
 void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
 { (void)label; ++cpu_boxes, cpu_box_track = track, cpu_box_booked = booked, cpu_box_add = add; }
 static uint32_t cpu_now; static unsigned hot_boxes, hot_box_track = 99; static uint32_t hot_box_cpu;
-uint32_t modwerk_status_cpu_recent(void) { return cpu_now; }
+uint32_t modwerk_status_cpu_load(void) { return cpu_now; }
 void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu) { (void)label; ++hot_boxes, hot_box_track = track, hot_box_cpu = cpu; }
 void modwerk_dsp_source_release(unsigned track) { voices &= (uint8_t)~(1u << track); voice_of[track] = 0; ++releases; }
 void modwerk_dsp_source_engine_off(uint32_t module)
@@ -413,11 +413,15 @@ static void check_cpu_budget(void)
       cpu_now = mw_cpu_hot;
       CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 1 && hot_box_track == 7 && hot_box_cpu == mw_cpu_hot);
       CHECK(mw_cpu_refusals == refusals + 1 && cpu_boxes == was && !mw_cpu_booked);
-      cpu_now = mw_cpu_hot - 1u;
-      CHECK(mw_assign(part0(), 7, 5) == 1 && hot_boxes == 1);
+      cpu_now = mw_cpu_hot - 120u; /* its price (12 % of a frame, unpriced) would take the meter to the line */
+      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 2 && hot_box_cpu == mw_cpu_hot - 120u);
+      CHECK(mw_assign(part0(), 7, 6) == (unsigned)-1 && hot_boxes == 3);         /* nor the dear one (30) */
+      cpu_now = mw_cpu_hot - 121u;
+      CHECK(mw_assign(part0(), 7, 6) == (unsigned)-1 && hot_boxes == 4);
+      CHECK(mw_assign(part0(), 7, 5) == 1 && hot_boxes == 4);
       cpu_now = 1000u;
-      CHECK(mw_assign(part0(), 7, 5) == 1 && hot_boxes == 1);                    /* already this machine's track */
-      CHECK(mw_assign(part0(), 7, 1) == 1 && hot_boxes == 1);                    /* back to stock: never refused */
+      CHECK(mw_assign(part0(), 7, 5) == 1 && hot_boxes == 4);                    /* already this machine's track */
+      CHECK(mw_assign(part0(), 7, 1) == 1 && hot_boxes == 4);                    /* back to stock: never refused */
       cpu_now = 0; mw_ui_tick(); }
     unsigned boxes = cpu_boxes;
     CHECK(mw_assign(part0(), 0, 5) == 1 && mw_assign(part0(), 1, 5) == 1 && mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes);

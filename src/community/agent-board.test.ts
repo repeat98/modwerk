@@ -98,6 +98,25 @@ describe('agent board', () => {
     expect((await over.json()).error).toMatch(/release/i)
   })
 
+  it('holds a run of hook indices as one claim, which nobody else\'s claim may reach into', async () => {
+    const { boardLogin, claim, call } = await fixture()
+    const ada = await boardLogin('ada'), bo = await boardLogin('bo')
+    for (let index = 38; index < 38 + CLAIM_LIMIT; index++) expect((await claim(ada, { kind: 'hook', key: 'octatrack/' + index })).status).toBe(201)
+    // At the limit, a run over her own single claims replaces them.
+    expect((await claim(ada, { kind: 'hook', key: 'octatrack/38-51' })).status).toBe(201)
+    expect((await (await call('/agent-board/claims?holder=@ada')).json()).claims.map((item: { key: string }) => item.key)).toEqual(['octatrack/38-51'])
+    const inside = await claim(bo, { kind: 'hook', key: 'octatrack/45' })
+    expect(inside.status).toBe(409)
+    expect((await inside.json()).error).toMatch(/octatrack\/38-51 is claimed by @ada/)
+    expect((await claim(bo, { kind: 'hook', key: 'octatrack/50-53' })).status).toBe(409)
+    expect((await claim(bo, { kind: 'hook', key: 'octatrack/events/45' })).status).toBe(201)
+    expect((await claim(bo, { kind: 'hook', key: 'octatrack/52-53' })).status).toBe(201)
+    const past = await claim(bo, { kind: 'hook', key: 'octatrack/53-60' })
+    expect(past.status).toBe(409)
+    expect((await past.json()).error).toMatch(/reaches past/)
+    for (const key of ['octatrack/9-9', 'octatrack/9-3']) expect((await claim(bo, { kind: 'hook', key })).status).toBe(400)
+  })
+
   it('lets the holder or an administrator release a claim, and nobody else', async () => {
     const { call, boardLogin, claim } = await fixture()
     const ada = await boardLogin('ada'), bo = await boardLogin('bo')

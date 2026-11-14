@@ -39,9 +39,9 @@ async function delayedBody() {
   return finish
 }
 describe('regular-member collector consent and account boundaries', () => {
-  it('asks again after a new consent text or expiry but keeps the delete button for earlier reports', async () => {
+  it('keeps sharing under an earlier consent text, asks again only after expiry and keeps the delete button', async () => {
     version = '2026-10-12.2'; await collect()
-    expect(store.diagnosticPreference()).toMatchObject({ enabled: false, hasChoice: false, saved: true })
+    expect(store.diagnosticPreference()).toMatchObject({ enabled: true, hasChoice: true, saved: true })
     version = (await import('./octatrack-diagnostics-contract')).OCTATRACK_DIAGNOSTICS_VERSION
     mocked.request.mockResolvedValueOnce({ ...consent(), enabled: false, expiresAt: new Date(Date.now() - 1).toISOString() })
     vi.resetModules(); store = await import('./octatrack-diagnostics'); await collect()

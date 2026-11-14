@@ -42,8 +42,8 @@ export function createFirmwareClient() {
   return {
     inspect,
     /** The Modwerk base's .bin, built from the verified OS file. */
-    async buildBase(layout?: BaseLayout) {
-      const response = await send({ id: ++nextId, type: 'base', ...(layout ? { layout } : {}) })
+    async buildBase(layout?: BaseLayout, step = false) {
+      const response = await send({ id: ++nextId, type: 'base', ...(layout ? { layout } : {}), ...(step ? { step } : {}) })
       if (response.type !== 'base') throw new Error('The local firmware worker returned an unexpected result.')
       return { buffer: response.buffer, sha256: response.sha256, base: response.base }
     },

@@ -392,6 +392,12 @@ int main(void)
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && !modwerk_runtime_module(0));
     CHECK(memcmp(stock, original, sizeof stock) == 0);
 
+    /* The stock-switch scenario is over. Its paused PC can look like a pool
+     * reference through an overlapping halfword read of truncated host
+     * addresses under ASLR; these allocator cases start with fresh snapshots. */
+    memset(paused, 0, sizeof paused);
+    memset(saved_registers, 0, sizeof saved_registers);
+
     /* Reclaimed: a module no position reaches is freed once no paused task
      * holds an address inside it, so loads never run out by repetition. */
     CHECK(b->retire(0) && modwerk_runtime_free(0) == RUNTIME_POOL_BYTES);

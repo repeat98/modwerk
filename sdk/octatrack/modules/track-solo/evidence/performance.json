@@ -1,14 +1,14 @@
 {
   "schema": 1,
   "module": "track-solo",
-  "version": "0.2.4-experimental",
+  "version": "0.2.5-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
     "static": 2622,
     "measured": 1687,
     "budget": 9577,
-    "method": "One event is the dearest UI tick plus the frame path in the same block. Static, module-owned only: 1,028 tick instructions (a coarse sum of every ts_tick site and maximum callee) plus 12 frame-enter and 12 frame-leave, 1,052 instructions, 2,622 cycles. Measured in ot_emu (emulator, not hardware) with cycle_count.py on package 50f64eb6, base MAIN 124548dc, --dsp --frame, 10 November 2026: PC watches on every halfword of the module image, so only executed module instructions count; 8 activations on anchors T2, T1, T8, T4, each with every other track joining and leaving twice, then release. Dearest tick 653 module instructions over 504 calls, frame enter 12 and leave 12 over 23,190 frames, key 149 over 120 calls: 677 instructions, 1,687 cycles. Entry to exit, with the stock LED and row routines it calls and nested interrupts, the dearest tick was 38,347 instructions; those are stock work. Cycles from instructions at 2.49216 cycles each, Tuner's model; cache and bus waits are not modelled. Budget: Modwerk's ColdFire allowance, 10 % of a 362.8 us block."
+    "method": "One event is the dearest UI tick plus the frame path in the same block. Static, module-owned only: 1,028 tick instructions (a coarse sum of every ts_tick site and maximum callee) plus 12 frame-enter and 12 frame-leave, 1,052 instructions, 2,622 cycles. Measured in ot_emu (emulator, not hardware) with cycle_count.py on package 5ac64b5e (0.2.5), base MAIN 124548dc, --dsp --frame, 13 November 2026, the same counts as 0.2.4's package 50f64eb6 on 10 November; 0.2.5 changes one initial data byte (TRACK SOLO starts at HOLD) and no instruction: PC watches on every halfword of the module image, so only executed module instructions count; 8 activations on anchors T2, T1, T8, T4, each with every other track joining and leaving twice, then release. Dearest tick 653 module instructions over 504 calls, frame enter 12 and leave 12 over 23,190 frames, key 149 over 120 calls: 677 instructions, 1,687 cycles. Entry to exit, with the stock LED and row routines it calls and nested interrupts, the dearest tick was 38,347 instructions; those are stock work. Cycles from instructions at 2.49216 cycles each, Tuner's model; cache and bus waits are not modelled. Budget: Modwerk's ColdFire allowance, 10 % of a 362.8 us block."
   },
   "load": {
     "frameUs": 362.8,
@@ -16,7 +16,7 @@
     "moduleLongestUs": null,
     "stockIdlePercent": null,
     "moduleIdlePercent": null,
-    "method": "Not measured: owner waiver for this exact version (repeat98, agent board, 8 November 2026: no MIDI path). The module adds 24 measured instructions to a frame."
+    "method": "Not measured: owner waiver for 0.2.4 (repeat98, agent board, 8 November 2026: no MIDI path). The module adds 24 measured instructions to a frame. 0.2.5 runs the same instructions; the waiver awaits the owner's confirmation for 0.2.5."
   },
   "stress": {
     "floodMessagesPerSecond": null,
@@ -25,6 +25,6 @@
     "stuckNotes": null,
     "hangs": null,
     "dropped": null,
-    "droppedExplanation": "Not measured: owner waiver for this exact version (repeat98, agent board, 8 November 2026): Track Solo has no MIDI path."
+    "droppedExplanation": "Not measured: owner waiver for 0.2.4 (repeat98, agent board, 8 November 2026): Track Solo has no MIDI path. 0.2.5 runs the same instructions; the waiver awaits the owner's confirmation for 0.2.5."
   }
 }

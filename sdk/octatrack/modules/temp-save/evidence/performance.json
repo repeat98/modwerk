@@ -1,14 +1,14 @@
 {
   "schema": 1,
   "module": "temp-save",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
     "static": null,
     "measured": 640923,
     "budget": 26600000,
-    "method": "Measured under ot_emu --mkii (the ColdFire port; emulator, not hardware), executed ColdFire instructions per key event, not chip cycles, interrupts landing in the window included. Worst event: FUNC + NO's reload while playing, 640,923 from the hook's entry to the end of its screen refresh (verify.py's cost step, frame engine on, after panel edits; stopped 637,251); FUNC + YES's save is 16,287 to its toast. Under the MIDI flood below (--dsp, transport playing, nothing edited between presses) the reload took 605,222 to 635,604 (16 reloads in the load and stress runs) and the save 16,287 to 39,151 (17 saves; the dearer ones had interrupts in the window), all under 640,923. No static bound: almost all of the reload is stock's pattern writer 0x4002b9b0, Part Reload 0x4004aab4 (eight machine transitions) and the screen refresh calls, which nothing in this repository bounds; the module's own code is two copies (0x8ed8 + 0x18b2 bytes through stock's memcpy 0x40020898) and a few dozen instructions. Budget: 100 ms at 266 MHz, a key-press responsiveness target, not a measured limit."
+    "method": "Measured on 0.1.0-experimental; 0.1.1 changes only how the reload calls the seven refresh routines (a loop over their addresses: four more instructions per call, 28 per reload) and how it marks the bank unsaved (the same stores through an address register), so its worst event is at most 28 instructions dearer. Measured under ot_emu --mkii (the ColdFire port; emulator, not hardware), executed ColdFire instructions per key event, not chip cycles, interrupts landing in the window included. Worst event: FUNC + NO's reload while playing, 640,923 from the hook's entry to the end of its screen refresh (verify.py's cost step, frame engine on, after panel edits; stopped 637,251); FUNC + YES's save is 16,287 to its toast. Under the MIDI flood below (--dsp, transport playing, nothing edited between presses) the reload took 605,222 to 635,604 (16 reloads in the load and stress runs) and the save 16,287 to 39,151 (17 saves; the dearer ones had interrupts in the window), all under 640,923. No static bound: almost all of the reload is stock's pattern writer 0x4002b9b0, Part Reload 0x4004aab4 (eight machine transitions) and the screen refresh calls, which nothing in this repository bounds; the module's own code is two copies (0x8ed8 + 0x18b2 bytes through stock's memcpy 0x40020898) and a few dozen instructions. Budget: 100 ms at 266 MHz, a key-press responsiveness target, not a measured limit."
   },
   "load": {
     "frameUs": 362.8,

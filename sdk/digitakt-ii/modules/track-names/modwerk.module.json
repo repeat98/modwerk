@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 3,
+  "id": "track-names",
+  "name": "Track Names",
+  "version": "0.1.3-experimental",
+  "machine": "digitakt-ii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "crisp909",
+    "credits": [
+      "crisp909"
+    ]
+  },
+  "maintainers": [
+    "crisp909"
+  ],
+  "presentation": {
+    "label": "TRACK NAMES",
+    "family": "Display",
+    "summary": "The Internal Mixer shows each track's own name instead of TRK1..TRK16, with the track number above every fader.",
+    "overview": "Track Names puts the names you give tracks in SETUP > RENAME on the Internal Mixer: the first 5 characters replace TRK1..TRK16, and each fader gets its track number in an inverted box at its top left. The names are the Digitakt II's own track names, kept in each pattern's kit, so every pattern has its own and they are saved with the project. The mod only draws; it saves nothing.",
+    "highlights": [
+      "Your track names on mixer pages 2/5 and 3/5, first 5 characters",
+      "Track number above every fader",
+      "Per pattern and saved with the project, by the stock names themselves",
+      "Pop-ups such as pattern select stay on top"
+    ],
+    "usage": [
+      "Select a track with TRK + its trig, open SETUP with FUNC + FLTR and scroll down to RENAME, the last row of the TRACK section.",
+      "Press YES, enter a short name with UP/DOWN and LEFT/RIGHT (FUNC + NO deletes) and press YES to save it.",
+      "Open FUNC + MOD, then press FUNC + MOD again for Internal Mixer 2/5 (tracks 1-8); once more for 3/5 (tracks 9-16).",
+      "Each fader shows its track number at the top left and the first 5 characters of its name below; a track still named PRESET n keeps TRKn."
+    ]
+  },
+  "access": {
+    "location": "Name tracks in SETUP (FUNC + FLTR) > RENAME; the names show on FUNC + MOD, Internal Mixer pages 2/5 and 3/5.",
+    "steps": [
+      "Select a track with TRK + its trig, open SETUP with FUNC + FLTR and scroll down to RENAME, the last row of the TRACK section.",
+      "Press YES, enter a short name with UP/DOWN and LEFT/RIGHT (FUNC + NO deletes) and press YES to save it.",
+      "Open FUNC + MOD, then press FUNC + MOD again for Internal Mixer 2/5 (tracks 1-8); once more for 3/5 (tracks 9-16)."
+    ],
+    "screenshots": [
+      "media/rename.png",
+      "media/mixer-tracks-1-8.png"
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.17"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Only Internal Mixer pages 2/5 and 3/5 show names; other pages are unchanged.",
+      "The mixer shows the first 5 characters of a name.",
+      "A track whose name is still PRESET n keeps its stock TRK label.",
+      "With PERFORM KIT on, the names shown are those of the pattern you are on (not tested)."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "1.0",
+    "build": "build.json",
+    "events": [
+      "ev_draw"
+    ],
+    "claims": [
+      "ui:Internal Mixer track labels"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 4106,
+    "fastBytes": 0,
+    "load": {
+      "display": "UI task only, on the mixer pages: under about 2% of the CPU; elsewhere a few dozen instructions a frame",
+      "method": "static",
+      "conditions": "Static count from the -O2 ColdFire code: every page reads at most 52 scroll-bar pixels and stops there, except Internal Mixer 2/5 and 3/5. There a frame checks the MIX box (about 400 pixels), reads up to 6,912 pixels to find a pop-up, renders up to 16 TRKn labels into a scratch frame with the OS's text routine to compare, and draws 8 badges and up to 8 names: at most about 200,000 instructions, 30 frames a second, UI task only. No audio-path code."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.1.3-experimental",
+    "sourceSha256": "0ee5a7ad509bbdee2ff7a3a9219e1d6507ae82394d6700166d8d7de7bfb17f2b",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Digitakt II",
+      "release": "1.17",
+      "testedOn": "2026-11-13",
+      "tester": "crisp909",
+      "durationMinutes": 120,
+      "summary": "crisp909 (the author) built 0.1.3 with the pinned toolchain in Docker (source commit c22d81d, package sha256 51053686), built the image on elekloader.github.io with core 1.0 and ran it on a Digitakt II, OS 1.17. Reported: names and numbered badges on Internal Mixer 2/5 and 3/5; each pattern its own names with PERFORM KIT off; names back after SAVE PROJECT and a reload; other pages unchanged; the pattern select pop-up stays on top. About 2 hours of testing in all (0.1.2 and 0.1.3).",
+      "limitations": [
+        "PERFORM KIT on was not tested.",
+        "Faint row lines beside pop-ups are the OLED's own crosstalk, seen with the stock OS too."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "crisp909 (the author) ran the pinned-toolchain 0.1.3 package (sha256 51053686\u2026) on a Digitakt II, OS 1.17, core 1.0, about 2 hours in all: names on mixer pages 2/5 and 3/5, per pattern with PERFORM KIT off, kept after SAVE PROJECT and a reload, other pages unchanged, pop-ups on top. Emulator checks and screenshots in TESTING.md and media/capture.json.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Select a track with TRK + its trig, open SETUP with FUNC + FLTR and scroll down to RENAME, the last row of the TRACK section.",
+          "Press YES, enter a short name with UP/DOWN and LEFT/RIGHT (FUNC + NO deletes) and press YES to save it.",
+          "Open FUNC + MOD, then press FUNC + MOD again for Internal Mixer 2/5 (tracks 1-8); once more for 3/5 (tracks 9-16).",
+          "Each fader shows its track number at the top left and the first 5 characters of its name below; a track still named PRESET n keeps TRKn."
+        ]
+      },
+      "screenshots": [
+        "media/rename.png",
+        "media/mixer-tracks-1-8.png",
+        "media/mixer-tracks-9-16.png",
+        "media/ptn-popup.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author. Replace if you choose another GPL-compatible licence."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Track Names",
+      "alt": "Four mixer faders, each with a numbered box above it and a short name below.",
+      "credit": "crisp909",
+      "license": "GPL-3.0-or-later",
+      "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/rename.png",
+      "kind": "screenshot",
+      "caption": "Name a track in SETUP (FUNC + FLTR) > RENAME. The mixer shows the first 5 characters, so keep names short.",
+      "alt": "Stock ENTER TRK PRESET NAME editor with the name KICK.",
+      "credit": "crisp909 documentation capture; Elektron interface",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.17",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "71e7a9e18e361ab1e82625e33271245b85b7f7a52a4d5a8946d43c9a83155887",
+        "setup": "digikit cold boot of OS 1.17 with core 1.0 and Track Names 0.1.3, fresh project; names entered through SETUP > RENAME with panel input only. UI documentation only; plan in media/capture.json."
+      }
+    },
+    {
+      "path": "media/mixer-tracks-1-8.png",
+      "kind": "screenshot",
+      "caption": "Internal Mixer 2/5: names in place of TRK1-TRK8 and the track number above each fader.",
+      "alt": "Mixer page with faders labelled KICK, SNARE, HAT, CLAP, BASS, LEAD, CHORD, PERC and numbered 1 to 8.",
+      "credit": "crisp909 documentation capture; Elektron interface",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.17",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "71e7a9e18e361ab1e82625e33271245b85b7f7a52a4d5a8946d43c9a83155887",
+        "setup": "digikit cold boot of OS 1.17 with core 1.0 and Track Names 0.1.3, fresh project; names entered through SETUP > RENAME with panel input only. UI documentation only; plan in media/capture.json."
+      }
+    },
+    {
+      "path": "media/mixer-tracks-9-16.png",
+      "kind": "screenshot",
+      "caption": "Internal Mixer 3/5: tracks 9-16. Tracks still named PRESET n keep their stock TRK label.",
+      "alt": "Mixer page with VOX, FX, TRK11, RIDE and TRK13 to TRK16, numbered 9 to 16.",
+      "credit": "crisp909 documentation capture; Elektron interface",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.17",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "71e7a9e18e361ab1e82625e33271245b85b7f7a52a4d5a8946d43c9a83155887",
+        "setup": "digikit cold boot of OS 1.17 with core 1.0 and Track Names 0.1.3, fresh project; names entered through SETUP > RENAME with panel input only. UI documentation only; plan in media/capture.json."
+      }
+    },
+    {
+      "path": "media/ptn-popup.png",
+      "kind": "screenshot",
+      "caption": "Pop-ups such as pattern select stay on top; names under them are cut at the pop-up's edge.",
+      "alt": "Pattern select pop-up over the mixer page with the names visible around it.",
+      "credit": "crisp909 documentation capture; Elektron interface",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.17",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "71e7a9e18e361ab1e82625e33271245b85b7f7a52a4d5a8946d43c9a83155887",
+        "setup": "digikit cold boot of OS 1.17 with core 1.0 and Track Names 0.1.3, fresh project; names entered through SETUP > RENAME with panel input only. UI documentation only; plan in media/capture.json."
+      }
+    }
+  ]
+}

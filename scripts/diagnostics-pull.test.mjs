@@ -131,13 +131,20 @@ describe('diagnostics pull', () => {
       fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 2880, playing: false, ...more })
     const log = (n, base, incidents) => entry(n, 'tester', { event: 'device_log', phase: 'ready', base, log: { loads: [], incidents } })
     const old = 'a'.repeat(64), next = 'b'.repeat(64)
-    const events = [log(1, old, [at(1, 1, 'start'), at(2, 2, 'start'), at(3, 3, 'start')]), log(2, old, [at(4, 3, 'hot', 2, { cpu: 920 })]),
-      log(3, old, [at(4, 3, 'hot', 2, { cpu: 920 }), at(5, 4, 'start')]), // sent again by another browser: the same log
+    const events = [log(1, old, [at(1, 1, 'start'), at(2, 2, 'start'), at(3, 3, 'start')]), log(2, old, [at(4, 3, 'hot', 10, { cpu: 920 })]),
+      log(3, old, [at(4, 3, 'hot', 10, { cpu: 920 }), at(5, 4, 'start')]), // sent again by another browser: the same log
       log(4, next, [at(1, 1, 'start'), at(2, 1, 'base', 0xbbbbbbbb), at(3, 1, 'set')]), log(5, next, [at(4, 2, 'start'), at(5, 2, 'base', 0xbbbbbbbb)])]
     const text = summary({ events, counts: [] })
     expect(text).toContain("  restarts 3 (the unit's earlier log, from base aaaaaaaa, starts 1-4)\n  restarts 1 (the unit's log, from base bbbbbbbb, starts 1-2)")
-    expect(text).toContain('  unit: #4 start 3 +4m0s hot (2 half-seconds at 90 %+), cpu 92.0%')
+    expect(text).toContain('  unit: #4 start 3 +4m0s hot (10 half-seconds at 90 %+), cpu 92.0%')
     expect(text).toContain('machines ' + Array(24).fill(0).join(' ') + ' (an earlier log, base aaaaaaaa)\n  unit: #2 start 1 +2m0s base bbbbbbbb\n')
+  })
+  it('leaves short hot spells of a stopped unit out and counts them, keeping long and playing ones', () => {
+    const at = (seq, kind, a, playing = false) => ({ seq, boot: 1, second: 0, kind, a, cpu: 950, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
+      fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 2880, playing })
+    const lines = unitLines([at(1, 'hot', 2), at(2, 'hot', 9), at(3, 'hot', 10), at(4, 'hot', 2, true)])
+    expect(lines[0]).toBe('  unit: 2 hot spells under 5 s while stopped left out (key presses and project loads)')
+    expect(lines.slice(1).map(l => l.slice(0, 12))).toEqual(['  unit: #3 s', '  unit: #4 s'])
   })
   it('calls a stall after a stopped PROJ … RIGHT YES walk at 95 %+ with nothing installed likely an OS upgrade or USB disk mode', () => {
     const at = (seq, boot, kind, a = 0, more = {}) => ({ seq, boot, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),

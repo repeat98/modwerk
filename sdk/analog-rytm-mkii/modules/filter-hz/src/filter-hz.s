@@ -10,10 +10,19 @@
         |
         | Shown to three significant figures: 13.8Hz, 440Hz, 1.11kHz, 21.1kHz. Every
         | value 0..127 lands within 0.6% of the formula.
+        |
+        | Modwerk 1.2.1 adds filter_hz_box: stock inverts a fixed 27-pixel box
+        | behind a locked value, and a kHz value is up to 31 pixels wide, so for
+        | FRQ the box is 33 pixels, the same for every value.
 
         .include "../include/ar2-1.74.inc"
 
         .equ    PARAM_ID_FRQ,   47
+
+        | Stock's knob value routine (0x40037a56), where it pushes the lock box's
+        | rectangle for a value in the label row: x-13..x+13, y-14..y-8.
+        .equ    knob_box_resume, 0x40037bfe       | move.l %d3,-(%sp); jsr (%a0)
+        .equ    KNOB_PARAM_ARG,  88               | the parameter id, from %sp there
 
         .text
 
@@ -127,3 +136,31 @@ ranges:
         .byte   1, 1, 0, 0                        | 1.00kHz .. 9.99kHz
         .long   0xffffffff, 10000
         .byte   2, 1, 0, 0                        | 10.0kHz ..
+
+        | ------------------------------------------------------------------
+        | Stock's knob value routine, at the five pushes of the lock box's
+        | rectangle (label row). %a2 is the knob's x, %a3 its y, %a0 the
+        | rectangle routine, %d3 the screen context; %d0, %d1 and %a1 are free.
+        | Stock's box is x-13..x+13, 27 pixels. FRQ text is up to 31 pixels wide
+        | ("2.22kHz"), centred on x, so for FRQ the box is always x-16..x+16,
+        | 33 pixels: one pixel either side of the widest value, the same size
+        | for every value. Every other parameter gets stock's box.
+        | ------------------------------------------------------------------
+        .globl  filter_hz_box
+        .align  2
+filter_hz_box:
+        moveq   #13,%d1                           | stock's half width
+        movea.l KNOB_PARAM_ARG(%sp),%a1
+        cmpa.l  #PARAM_ID_FRQ,%a1
+        bne.s   1f
+        moveq   #16,%d1                           | FRQ's half width
+1:      move.l  %a2,%d0
+        add.l   %d1,%d0                           | right: x + half
+        neg.l   %d1
+        add.l   %a2,%d1                           | left: x - half
+        pea     -1                                | colour, as stock
+        pea     -8(%a3)                           | bottom
+        move.l  %d0,-(%sp)                        | right
+        pea     -14(%a3)                          | top
+        move.l  %d1,-(%sp)                        | left
+        jmp     knob_box_resume
