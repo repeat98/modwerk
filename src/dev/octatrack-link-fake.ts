@@ -67,6 +67,8 @@ export interface FakeUnit {
   /** Writes during which USB drops: the write finishes on the unit, the reply is lost, and the replugged unit's
    * reset rolls the lost session back, which restarts it on NOR (flash.c f_restore). */
   writeDropouts?: number
+  /** Stagings of its own container whose reply is lost before the write: nothing is written, the unit runs on. */
+  stageLosses?: number
   /** The restart after a saved write hangs at the logo (a DSP stalled while the base was sent does not park): the unit
    * goes away and comes back only when plugged again, as after a power cycle. */
   restartHangs?: boolean
@@ -187,6 +189,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
       async stage(pkg, { signal, progress } = {}) {
         if (unit.playing) return step('normal', 'unsafe')
         if (unit.refusal) return step('normal', 'rejected')
+        if (unit.stageLosses && String.fromCharCode(...pkg.data.subarray(0, 4)) === 'ELEK' && unit.stageLosses-- > 0) { await wait(); throw new UploadUnconfirmedError('hello was not confirmed', status) }
         staged = pkg.sha256; data = pkg.data
         for (let sent = 0; sent < pkg.data.length;) {
           if (signal?.aborted) { status = { ...status, phase: 'normal' }; throw new DOMException('Module staging cancelled.', 'AbortError') }
