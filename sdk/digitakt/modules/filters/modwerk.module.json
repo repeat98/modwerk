@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 3,
+  "id": "filters",
+  "name": "Filters",
+  "version": "0.1.0-experimental",
+  "machine": "digitakt",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "draadpiraat",
+    "credits": [
+      "draadpiraat — design and code"
+    ]
+  },
+  "maintainers": [
+    "draadpiraat"
+  ],
+  "presentation": {
+    "label": "FILTERS",
+    "family": "FILTER",
+    "summary": "Two more filter TYPEs on the stock FLTR page: a one-knob DJ filter (low-pass one way, high-pass the other) and a band-pass.",
+    "overview": "TYPE on the FLTR page goes past EQ:5 to DJ and BP. On DJ, FREQ left of the middle is a low-pass, right of it a high-pass, and the middle is open, with a short catch there when you turn quickly. BP is a 12 dB/octave band-pass whose width RESO sets. FREQ, RESO and ENV act as on the stock types and are saved with the sound, p-lockable and LFO-able.",
+    "highlights": [
+      "DJ: one knob from low-pass through open to high-pass, with a catch in the middle.",
+      "BP: a band-pass at unity gain; RESO narrows it.",
+      "Saved with the sound, p-lockable and LFO-able, like the stock types."
+    ],
+    "usage": [
+      "Select the track and press FLTR.",
+      "Turn TYPE (knob G) past EQ:5 to DJ.",
+      "Turn FREQ left of the middle for a low-pass, right of it for a high-pass; the middle is open.",
+      "Turn RESO up for a peak at the cutoff; FUNC + FREQ takes it back to open."
+    ]
+  },
+  "access": {
+    "location": "FLTR page > TYPE (knob G), past EQ:5",
+    "steps": [
+      "Use a build with Filters on OS 1.54.",
+      "Press FLTR and turn knob G (TYPE) past EQ:5 to DJ, then BP."
+    ],
+    "screenshots": [
+      "media/fltr-dj.png",
+      "media/fltr-bp.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "TYPE (FLTR page, knob G)",
+      "default": null,
+      "doc": "Adds DJ and BP after EQ:5.",
+      "labels": [
+        "DJ",
+        "BP"
+      ]
+    },
+    {
+      "name": "FREQ on DJ (knob E)",
+      "default": 64,
+      "doc": "Below 64 a low-pass, above 64 a high-pass, 64 open. A quick turn across the middle stops there for about a quarter second; FUNC + FREQ jumps to the middle, then to the end.",
+      "labels": null
+    },
+    {
+      "name": "RESO on DJ and BP (knob F)",
+      "default": null,
+      "doc": "DJ: a gentle peak at the cutoff. BP: narrows the band.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.54"
+    ],
+    "requires": [],
+    "conflicts": [
+      "digihealth"
+    ],
+    "limitations": [
+      "Built for OS 1.54 only.",
+      "Not beside Digi Health: both patch the render's per-voice filter call.",
+      "A sound saved with DJ or BP loads on a build without Filters as EQ:5."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "2.1",
+    "build": "build.json",
+    "events": [
+      "ev_tick",
+      "ev_enc"
+    ],
+    "claims": [
+      "ui:FLTR:TYPE"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 5668,
+    "fastBytes": 0,
+    "load": {
+      "display": "No measurable extra load: DJ and BP replace the stock filter's work for their voices (emulator)",
+      "method": "emulator",
+      "conditions": "Emulator: OS 1.54 on Core 2.1, the demo pattern playing, 3,000 blocks with the MCF5441x timing model at 250 MHz, zero-wait memory. Core alone 60.3% mean, 62.0% worst block; with Filters on the stock types 60.3% and 62.1%; with DJ set on the tracks 59.9% and 61.5%; with BP 59.1% and 60.7% (TYPE set through the panel, calls into the new filter counted). Not a hardware measurement."
+    }
+  },
+  "evidence": {
+    "tier": "emulator",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "a95b7442c233f2375b3c6ce2d06630825721dba17ee8e2394890739cdec6bcda",
+    "reports": [
+      "TESTING.md",
+      "evidence/source-identity.json",
+      "evidence/emulator-testing.json"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Emulator (digiemu, OS 1.54, FL01): TYPE reaches DJ and BP past EQ:5 and stops at BP; the page draws both; no measurable extra audio load. Hardware run of FL01 pending.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: a DJ filter on a track",
+        "steps": [
+          "Select the track and press FLTR.",
+          "Turn TYPE (knob G) past EQ:5 to DJ.",
+          "Turn FREQ left of the middle for a low-pass, right of it for a high-pass; the middle is open.",
+          "Turn RESO up for a peak at the cutoff; FUNC + FREQ takes it back to open."
+        ]
+      },
+      "screenshots": [
+        "media/fltr-dj.png",
+        "media/fltr-bp.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by draadpiraat."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Filters thumbnail",
+      "alt": "A DJ filter: a low-pass curve on one side of the middle and a high-pass on the other.",
+      "credit": "draadpiraat",
+      "license": "GPL-3.0-or-later",
+      "source": "Original illustration"
+    },
+    {
+      "path": "media/fltr-dj.png",
+      "kind": "screenshot",
+      "caption": "FLTR with TYPE DJ",
+      "alt": "The FLTR page with TYPE DJ: the title reads Filter Type=DJ, the TYPE knob shows DJ with two arrows, and a tick over the FREQ box marks the middle.",
+      "credit": "Modwerk documentation capture; Elektron interface; draadpiraat module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "473bb8b34781795e34e54b27cd66124ef4b2f936115b405cb02952ee67a67116",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
+      }
+    },
+    {
+      "path": "media/fltr-bp.png",
+      "kind": "screenshot",
+      "caption": "FLTR with TYPE BP",
+      "alt": "The FLTR page with TYPE BP: the title reads Filter Type=BP and the TYPE knob shows a band-pass peak.",
+      "credit": "Modwerk documentation capture; Elektron interface; draadpiraat module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "473bb8b34781795e34e54b27cd66124ef4b2f936115b405cb02952ee67a67116",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
+      }
+    }
+  ]
+}

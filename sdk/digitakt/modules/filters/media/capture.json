@@ -1,0 +1,417 @@
+{
+ "schemaVersion": 1,
+ "machine": "digitakt",
+ "moduleId": "filters",
+ "moduleVersion": "0.1.0-experimental",
+ "capturedAt": "2026-11-10",
+ "firmware": "1.54",
+ "imageSha256": "473bb8b34781795e34e54b27cd66124ef4b2f936115b405cb02952ee67a67116",
+ "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+ "source": {
+  "repository": "https://github.com/repeat98/modwerk",
+  "revision": "uncommitted working tree on 2709906d639e1d57719d6c2659ab2bd82444c729, branch module/filters",
+  "path": "sdk/digitakt/modules/filters"
+ },
+ "kit": {
+  "version": "0.7.0",
+  "lockSha256": "b8b330328071092fe6e64fab5f55ddc25dd027e41ac8c9f0584dab95814a8e85"
+ },
+ "catalog": {
+  "revision": "2709906d639e1d57719d6c2659ab2bd82444c729",
+  "sha256": null,
+  "cores": 0,
+  "mods": 0
+ },
+ "build": {
+  "modules": [
+   {
+    "id": "core",
+    "version": "2.1",
+    "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+   },
+   {
+    "id": "filters",
+    "version": "0.1.0-experimental",
+    "sha256": null
+   }
+  ],
+  "linker": "Modwerk engine linkMods (scripts/link-image.mjs)",
+  "outputVersion": "FL01",
+  "verified": true
+ },
+ "emulator": {
+  "repository": "https://github.com/irpina/digiemu",
+  "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+  "unicorn": {
+   "version": "2.1.4",
+   "patches": {
+    "unicorn-2.1.4-m68k-digikit-accel.patch": "7048704a068cb074b93b751df4b1a73fd8972c1c0cc27e30774c4c2771ec2b5c",
+    "unicorn-2.1.4-m68k-digikit-speed.patch": "9560613223502656e82adc1ecc36d5d8486995bed13ea8ddad168f8c4558a799",
+    "unicorn-2.1.4-m68k-emac-mac-load.patch": "ac128dd6836997de55e0d2ad70d7a2978639168090f552c5634da50fddc70bfe",
+    "unicorn-2.1.4-m68k-emac-modes.patch": "5fc44429ea913c5256c34a6e9c93ab90f727f120b4f12922a8f35a952fd1dace",
+    "unicorn-2.1.4-m68k-fast-mem.patch": "7f79332f318352cbd8055386dbf5149efc801d0663ae2450e33f9f39fed53374",
+    "unicorn-2.1.4-m68k-hook-ccr-sync.patch": "56de71acf2adbd5ca2f448095478e65e49fd79d378aeb5b5e4217d2c90f52f4e"
+   },
+   "librarySha256": "ec37f2a15f263c085eec8a2016d60f8006d77a3bd53dd28998f1145635050c47"
+  },
+  "python": "3.12.15",
+  "platform": "macOS arm64",
+  "hle": false,
+  "audioRecording": false,
+  "cycleTiming": false,
+  "framebuffer": "firmware front LCD buffer at panel_diff flush",
+  "scale": 6,
+  "frameSelection": "Most populated actual LCD frame within the final 250 ms after the latest panel action; 6x integer scaling."
+ },
+ "setup": {
+  "project": "Disposable first-boot A01, stock initial track state; no owner projects or samples.",
+  "fixture": "No sample fixture; the first-boot project, track 1.",
+  "sandbox": "Private temporary output only."
+ },
+ "inputs": [
+  [
+   1002.035,
+   "press 21"
+  ],
+  [
+   1102.035,
+   "release 21"
+  ],
+  [
+   2016.287,
+   "turn 7 +4"
+  ],
+  [
+   2062.035,
+   "turn 7 +4"
+  ],
+  [
+   2102.035,
+   "turn 7 +4"
+  ],
+  [
+   2142.035,
+   "turn 7 +4"
+  ],
+  [
+   2182.035,
+   "turn 7 +4"
+  ],
+  [
+   2922.035,
+   "turn 7 +4"
+  ],
+  [
+   2962.035,
+   "turn 7 +4"
+  ],
+  [
+   3002.035,
+   "turn 7 +4"
+  ],
+  [
+   3049.65,
+   "turn 7 +4"
+  ],
+  [
+   3095.918,
+   "turn 7 +4"
+  ],
+  [
+   3842.035,
+   "turn 7 +4"
+  ],
+  [
+   3882.035,
+   "turn 7 +4"
+  ],
+  [
+   3929.254,
+   "turn 7 +4"
+  ],
+  [
+   3982.035,
+   "turn 7 +4"
+  ],
+  [
+   4029.255,
+   "turn 7 +4"
+  ],
+  [
+   4782.035,
+   "turn 7 +4"
+  ],
+  [
+   4822.035,
+   "turn 7 +4"
+  ],
+  [
+   4862.591,
+   "turn 7 +4"
+  ],
+  [
+   4916.371,
+   "turn 7 +4"
+  ],
+  [
+   4962.035,
+   "turn 7 +4"
+  ],
+  [
+   5702.035,
+   "turn 7 +4"
+  ],
+  [
+   5742.035,
+   "turn 7 +4"
+  ],
+  [
+   5783.063,
+   "turn 7 +4"
+  ],
+  [
+   5829.262,
+   "turn 7 +4"
+  ],
+  [
+   5882.035,
+   "turn 7 +4"
+  ],
+  [
+   6622.035,
+   "turn 7 +4"
+  ],
+  [
+   6662.598,
+   "turn 7 +4"
+  ],
+  [
+   6716.423,
+   "turn 7 +4"
+  ],
+  [
+   6762.035,
+   "turn 7 +4"
+  ],
+  [
+   6802.035,
+   "turn 7 +4"
+  ],
+  [
+   7549.781,
+   "turn 7 +4"
+  ],
+  [
+   7595.935,
+   "turn 7 +4"
+  ],
+  [
+   7642.035,
+   "turn 7 +4"
+  ],
+  [
+   7682.035,
+   "turn 7 +4"
+  ],
+  [
+   7722.035,
+   "turn 7 +4"
+  ],
+  [
+   8462.035,
+   "turn 7 +4"
+  ],
+  [
+   8502.035,
+   "turn 7 +4"
+  ],
+  [
+   8549.81,
+   "turn 7 +4"
+  ],
+  [
+   8595.938,
+   "turn 7 +4"
+  ],
+  [
+   8642.035,
+   "turn 7 +4"
+  ],
+  [
+   9383.168,
+   "turn 5 -4"
+  ],
+  [
+   9429.274,
+   "turn 5 -4"
+  ],
+  [
+   9482.035,
+   "turn 5 -4"
+  ],
+  [
+   9529.275,
+   "turn 5 -4"
+  ],
+  [
+   9582.035,
+   "turn 5 -4"
+  ],
+  [
+   10029.276,
+   "turn 5 -4"
+  ],
+  [
+   10082.035,
+   "turn 5 -4"
+  ],
+  [
+   10122.035,
+   "turn 5 -4"
+  ],
+  [
+   10162.61,
+   "turn 5 -4"
+  ],
+  [
+   10216.526,
+   "turn 5 -4"
+  ],
+  [
+   10662.612,
+   "turn 5 -4"
+  ],
+  [
+   10716.54,
+   "turn 5 -4"
+  ],
+  [
+   10762.035,
+   "turn 5 -4"
+  ],
+  [
+   10816.543,
+   "turn 5 -4"
+  ],
+  [
+   10862.035,
+   "turn 5 -4"
+  ],
+  [
+   11316.557,
+   "turn 5 -4"
+  ],
+  [
+   11362.035,
+   "turn 5 -4"
+  ],
+  [
+   11416.561,
+   "turn 5 -4"
+  ],
+  [
+   11462.035,
+   "turn 5 -4"
+  ],
+  [
+   11502.035,
+   "turn 5 -4"
+  ],
+  [
+   11942.035,
+   "turn 5 -4"
+  ],
+  [
+   11982.035,
+   "turn 5 -4"
+  ],
+  [
+   12029.284,
+   "turn 5 -4"
+  ],
+  [
+   12082.035,
+   "turn 5 -4"
+  ],
+  [
+   12122.035,
+   "turn 5 -4"
+  ],
+  [
+   12562.62,
+   "turn 5 -4"
+  ],
+  [
+   12616.595,
+   "turn 5 -4"
+  ],
+  [
+   12662.035,
+   "turn 5 -4"
+  ],
+  [
+   12702.035,
+   "turn 5 -4"
+  ],
+  [
+   12749.932,
+   "turn 5 -4"
+  ],
+  [
+   13995.958,
+   "turn 7 +4"
+  ],
+  [
+   14042.035,
+   "turn 7 +4"
+  ],
+  [
+   14082.035,
+   "turn 7 +4"
+  ],
+  [
+   14122.035,
+   "turn 7 +4"
+  ],
+  [
+   14162.035,
+   "turn 7 +4"
+  ],
+  [
+   14916.662,
+   "turn 7 +4"
+  ],
+  [
+   14962.035,
+   "turn 7 +4"
+  ],
+  [
+   15002.035,
+   "turn 7 +4"
+  ],
+  [
+   15042.035,
+   "turn 7 +4"
+  ],
+  [
+   15082.035,
+   "turn 7 +4"
+  ]
+ ],
+ "captures": [
+  {
+   "path": "media/fltr-dj.png",
+   "sha256": "77c44545986a7f542fbe1fa3fe24ada149454e32a3186d889c0d1abf130d782a",
+   "plan": "# Filters 0.1.0-experimental: digiemu capture plan (OS 1.54, Core 2.1, Filters)\nwait 1000\n# FLTR on track 1, TYPE (G) up past EQ:5 to DJ\ntap FLTR\nwait 600\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nsnap fltr-dj\n# FREQ (E) down: DJ is a low-pass below the middle\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nwait 400\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nwait 400\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nwait 400\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nwait 400\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nwait 400\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nwait 400\nwait 800\nsnap fltr-dj-low\n# TYPE one more: BP\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nsnap fltr-bp\n",
+   "atMs": 9383.16752136752,
+   "requestedAtMs": 9383.16752136752
+  },
+  {
+   "path": "media/fltr-bp.png",
+   "sha256": "e367422019a363228867fbb916b532a72217235ffc7e26ace8bde90dc368c0c3",
+   "plan": "# Filters 0.1.0-experimental: digiemu capture plan (OS 1.54, Core 2.1, Filters)\nwait 1000\n# FLTR on track 1, TYPE (G) up past EQ:5 to DJ\ntap FLTR\nwait 600\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nsnap fltr-dj\n# FREQ (E) down: DJ is a low-pass below the middle\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nwait 400\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nwait 400\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nwait 400\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nwait 400\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nwait 400\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nturn E -1 40\nwait 400\nwait 800\nsnap fltr-dj-low\n# TYPE one more: BP\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 700\nsnap fltr-bp\n",
+   "atMs": 15829.298076923076,
+   "requestedAtMs": 15829.298076923076
+  }
+ ]
+}

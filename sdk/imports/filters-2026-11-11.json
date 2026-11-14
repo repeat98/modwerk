@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/filters",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-11",
+  "upstream": {
+    "repository": "https://github.com/draadpiraat/modwerk",
+    "revision": "8e42bab3144c053991c1351a672a37114a37b9d1",
+    "path": "sdk/digitakt/modules/filters",
+    "license": "GPL-3.0-or-later"
+  },
+  "changes": [
+    "First Modwerk release for Digitakt I OS 1.54, on Core 2.1: DJ and BP filter types on the stock FLTR page.",
+    "Source-only export compiled in the pinned GCC 16.2 Docker toolchain; it links to the same image (FL01, 473bb8b3…) as the locally compiled recipe used for the emulator checks."
+  ],
+  "runtimeSourceSha256": "5a5243825c5130a6f86cdc55cf21a3afea332119a7995bb24c14cb8d93081718",
+  "packages": [
+    {
+      "os": "1.54",
+      "path": "sdk/imports/packages/filters/filters-0.1.0-experimental-os1.54.elemod",
+      "sha256": "83dcb40bfee580530afca728978bca9ff33082bd8db0b65de4cf8de7b614f4f9"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitakt/modules/filters/evidence/emulator-testing.json",
+  "requires": []
+}
