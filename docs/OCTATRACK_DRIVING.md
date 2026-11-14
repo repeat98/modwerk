@@ -181,6 +181,16 @@ Part and bank switches and picks ran through the queue on an MKII twin (13 Novem
 was not replayed against the real parser. An earlier fresh-RAM-boot hardware probe also misdelivered FUNC, cause
 not isolated: verify each held-row transition and stock modifier release, and stop on a mismatch.
 
+- **After a RAM boot.** The base shows BASE UPDATE / WAITING FOR MODWERK for 25 s and holds the panel, then MISSING
+  MODULES when the bank names modules the twin lacks (YES closes it); keys sent before that are lost, so read
+  `mem:0x80000000:1` after selecting a track before going on (14 November 2026).
+- **Machines.** Double-tap the track key, then LEFT, opens the machine list on the track's own row: STATIC, FLEX, THRU,
+  NEIGHBOR, PICKUP, then the installed module machines, so the first of them is five DOWN from STATIC. YES picks, and
+  NO closes a CPU FULL box together with the list. Check the pick by the Part's bytes (type at Part `+0x22 + track`,
+  signature at `+0x3c + 30 * track`). POLY8 turns TSTR and LOOP off in SRC SETUP and leaving it does not turn them
+  back on (0.3.1 and 0.3.3); FM Synth and Amiga left no Part byte changed.
+- **Grid recording.** REC toggles, and a remote REC can be lost: press one trig and read the track's mask in the
+  pattern (`+0x6 + 0x91a * track` from the pattern's start, two bytes for steps 1 to 16) before placing the rest.
 - **Effects.** FUNC+FX1/FX2 opens the chooser (the left list; its right side are the effect's setup knobs).
   Moving the cursor does not pick; YES does. NO closes. LEVEL scrolls. `pick:` does all of it.
 - **Parts.** Holding PART shows the selector: UP Part 1, RIGHT 2, DOWN 3, LEFT 4. A switch also assigns that Part to the
