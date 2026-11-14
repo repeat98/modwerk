@@ -4,12 +4,14 @@
   "version": "0.2.1-experimental",
   "approvedBy": "repeat98",
   "approvedOn": "2026-11-14",
-  "ownerStatement": "I approve Amiga 0.2.1-experimental for release with worst-case cycles, current-build hardware qualification and complete memory bounds waived.",
-  "reason": "Fix of an experimental USB-only track machine: the 0.2.0 package repeated 14 bytes of the stock OS (#1471), a table of four stock widget addresses the compiler built from modwerk_page_widget() in sdk/machines/octatrack/include/modwerk_page.h. 0.2.1 reaches the widget as a 16-bit step from the lowest address, so no such table is emitted; the engine is unchanged. Written by Claude at the owner's request in the session of 14 November 2026. Worst-case cycles on the chip, a full hardware qualification of this exact build and complete memory bounds are waived for this source and version, as for 0.2.0. What exists: the module's 72 host checks pass, generate.py --check passes, modules:compat finds no problem, and the stock scan of package b19184db against OS 1.40C finds no run of 12 or more bytes (longest 11). 0.2.0's unit results stand for the engine. Not done: any run of this package on a unit. Hardware is not claimed verified.",
+  "ownerStatement": "I approve Amiga 0.2.1-experimental for release with worst-case cycles, current-build hardware qualification and complete memory bounds waived, and with 0.2.0's UI captures kept.",
+  "reason": "Fix of an experimental USB-only track machine: the 0.2.0 package repeated 14 bytes of the stock OS (#1471), a table of four stock widget addresses the compiler built from modwerk_page_widget() in sdk/machines/octatrack/include/modwerk_page.h. 0.2.1 reaches the widget as a 16-bit step from the lowest address, so no such table is emitted; the engine is unchanged. Written by Claude at the owner's request in the session of 14 November 2026. Worst-case cycles on the chip, a full hardware qualification of this exact build and complete memory bounds are waived for this source and version, as for 0.2.0. What exists: the module's 72 host checks pass, generate.py --check passes, modules:compat finds no problem, and the stock scan of package b19184db against OS 1.40C finds no run of 12 or more bytes (longest 11). 0.2.0's unit results stand for the engine. The owner's MKII ran this package in a 20-second RAM trial on 14 November 2026 (release base a6b457a1): admitted, rolled back clean; nothing was listened to. 0.2.0's UI captures are kept (owner's word, 14 November 2026): the page draws the same widgets, now reached by a step instead of a table. Hardware is not claimed verified.",
   "sourceSha256": "e1dbe98b5f5dbdb08af0efc7cbacf2dc24f20acaeaa89f89392555b0fb96a4ba",
   "waived": [
     "chip-worst-case-cycles",
     "current-build-hardware",
-    "complete-memory-bounds"
-  ]
+    "complete-memory-bounds",
+    "release-documentation"
+  ],
+  "retainedUiVersion": "0.2.0-experimental"
 }
