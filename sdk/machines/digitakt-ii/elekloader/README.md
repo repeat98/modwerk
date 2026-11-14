@@ -131,3 +131,9 @@ swung Chord Arp fixture reached the scheduler commit routine 16 times.
   upstream's project archive and sequencer changes. Both passed on hardware.
   The image SHA-256 was
   `e555a7788c464019d35047b5e72e6f6caffc4569d2579f8253304a21ab48c014`.
+
+  Claptom-music repeated both checks on pinned E119 after the startup refresh
+  moved into Modwerk-owned source. Save Project followed by a cold boot
+  preserved the Scale settings and melody. Standalone KIT Save and Load
+  restored the saved bounds and melody. Image SHA-256:
+  `d879c8c9769f91d079457e4e0d257d603bdaa8394d1214b9efbad993af816522`.
