@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/main.c",
+    "src/arp.c",
+    "src/menu-label.s",
+    "src/trial.c",
+    "src/locks.c"
+  ],
+  "defsym": {},
+  "cflags": [
+    "-Wextra",
+    "-Werror",
+    "-DCHORD_ARP_TRIAL"
+  ],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_draw",
+      "fn": "mod_draw",
+      "order": 50
+    },
+    {
+      "event": "ev_settings",
+      "fn": "chord_arp_settings",
+      "order": 50
+    },
+    {
+      "event": "ev_tick",
+      "fn": "chord_arp_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_key",
+      "fn": "chord_arp_key",
+      "order": 50
+    },
+    {
+      "event": "ev_enc",
+      "fn": "chord_arp_encoder",
+      "order": 50
+    },
+    {
+      "fn": "chord_arp_panel_phrase",
+      "order": 50,
+      "event": "ev_seq_audio_phrase"
+    }
+  ],
+  "contribute": [
+    {
+      "data": "00000000",
+      "to": "core_project_archive",
+      "order": 50,
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:chord_arp_project_archive",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.17": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
+}
