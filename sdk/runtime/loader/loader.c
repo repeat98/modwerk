@@ -237,6 +237,26 @@ static int subscribes(const struct runtime_module *m) { (void)m; return 0; }
 static int in_dispatch(uint32_t v) { (void)v; return 0; }
 static uintptr_t raise_of(uint32_t hook) { (void)hook; return 0; }
 #endif
+#if RUNTIME_SITE_EVENTS && defined(RUNTIME_SITE_EVENT_IN_USE)
+/* A module rests until a track uses it (HOOKS.md): while its ev_in_use answers 0 its handlers stay out of the rows of
+ * the events that rest, so the frame interrupt never enters its code there. Bit i of `resting`: position i rests; of
+ * `asks`: its module subscribes ev_in_use. Both change locked: a switch wakes its position, rest_poll the others. */
+static const uint8_t event_rests[RUNTIME_SITE_EVENTS] = RUNTIME_SITE_EVENT_RESTS;
+#define REST_WORDS ((RUNTIME_MODULES + 31u) / 32u)
+static uint32_t resting[REST_WORDS], asks[REST_WORDS];
+static int rests(unsigned e, unsigned i) { return event_rests[e - RUNTIME_EVENTS] && (resting[i / 32u] >> (i % 32u) & 1u); }
+static void woken(unsigned position, const struct runtime_module *m)
+{
+    uint32_t bit = 1u << (position % 32u);
+    resting[position / 32u] &= ~bit;
+    asks[position / 32u] = (asks[position / 32u] & ~bit) | (m && m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] ? bit : 0u);
+}
+#else /* nothing rests: every subscriber is in every row, as before */
+#if RUNTIME_SITE_EVENTS
+static int rests(unsigned e, unsigned i) { (void)e; (void)i; return 0; }
+#endif
+static void woken(unsigned position, const struct runtime_module *m) { (void)position; (void)m; }
+#endif
 
 #ifdef MODWERK_CACHED_MODULES
 /* build_core.py --cached-modules (prototype, README.md "Cached modules"): the ledger and the modules use the pool's
@@ -568,14 +588,15 @@ static void put(const struct runtime_module *m, int patched)
 static const struct runtime_dsp no_dsp;
 static const struct runtime_dsp *dsp_of(const struct runtime_module *m) { return m ? &m->dsp : &no_dsp; }
 #if RUNTIME_SITE_EVENTS
-/* Locked: each site event's row once `position` holds `to`, by (order, module id). */
+/* Locked: each site event's row once `position` holds `to` (awake), by (order, module id); resting modules elsewhere
+ * stay out of the rows of the events that rest. */
 static int events_stage(unsigned position, const struct runtime_module *to)
 {
     for (unsigned e = RUNTIME_EVENTS; e < RUNTIME_HOOKS; ++e) {
         unsigned n = 0;
         for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
             const struct runtime_module *m = i == position ? to : live[i];
-            if (!m || !m->hook[e]) continue;
+            if (!m || !m->hook[e] || (i != position && rests(e, i))) continue;
             unsigned k = n++;
             for (; k && (m->order[e] < by_order[k - 1]->order[e] || (m->order[e] == by_order[k - 1]->order[e] && m->id < by_order[k - 1]->id)); --k)
                 by_order[k] = by_order[k - 1];
@@ -631,6 +652,7 @@ static int switch_locked(unsigned position, struct runtime_module *to, const str
             if (rows && events_stage(position, from)) events_commit(), modwerk_machine_tables_changed();
             modwerk_machine_unmask(mask);
         }
+        woken(position, ok ? to : from); /* the rows just staged hold the position awake */
         if (ok) {
             owners_changing();
             live[position] = to;
@@ -655,6 +677,56 @@ static int restore_to(unsigned position,struct runtime_module *to,const struct r
 {
     restoring=1;int ok=switch_to(position,to,context);restoring=0;return ok;
 }
+#if RUNTIME_SITE_EVENTS && defined(RUNTIME_SITE_EVENT_IN_USE)
+#ifndef RUNTIME_ASK_IN_USE /* the host test answers for module code it cannot run */
+#define RUNTIME_ASK_IN_USE(handler) ((unsigned (*)(void))(handler))()
+#endif
+/* Locked: could a paused task resume part way through a row of the base's dispatch? Unknown counts as yes. */
+static int dispatching(const struct runtime_context *context)
+{
+    struct runtime_span span[RUNTIME_PAUSED];
+    unsigned n = modwerk_machine_paused(span, RUNTIME_PAUSED, context);
+    for (unsigned i = 0; i < n && n <= RUNTIME_PAUSED; ++i)
+        for (const uint8_t *p = span[i].from; p + 4 <= span[i].to; p += 2) if (in_dispatch(be32(p))) return 1;
+    return n > RUNTIME_PAUSED;
+}
+/* The UI tick (loader.h modwerk_runtime_rest_poll). Each module that subscribes ev_in_use is asked unlocked, as a
+ * tick hook is called (modules run no code under the loader's lock). Only when an answer changes the resting set are
+ * the rows staged again, locked and fenced as a switch is, and written masked; a position that changed meanwhile, or
+ * a paused task inside the dispatch, changes nothing, and the next tick asks again. */
+static int __attribute__((used)) rest_poll_context(const struct runtime_context *context)
+{
+    uint32_t epoch = owner_epoch, want[REST_WORDS], any = 0, differs = 0;
+    for (unsigned w = 0; w < REST_WORDS; ++w) any |= asks[w], want[w] = 0;
+    if (!any || (epoch & 1u)) return 0; /* resting positions are asking ones: nothing asks, nothing rests */
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
+        const struct runtime_module *m = asks[i / 32u] >> (i % 32u) & 1u ? live[i] : 0;
+        uintptr_t f = m ? m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] : 0;
+        if (f && !RUNTIME_ASK_IN_USE(f)) want[i / 32u] |= 1u << (i % 32u);
+    }
+    for (unsigned w = 0; w < REST_WORDS; ++w) differs |= want[w] ^ resting[w];
+    if (!differs) return 0;
+    uint32_t lock = modwerk_machine_lock();
+    int ok = owner_epoch == epoch && !dispatching(context);
+    if (ok) {
+        for (unsigned w = 0; w < REST_WORDS; ++w) resting[w] = want[w];
+        /* No position switches: every row from the live modules, which admission fitted in each event's room. */
+        if ((ok = events_stage(RUNTIME_MODULES, 0))) {
+            uint32_t mask = modwerk_machine_mask();
+            events_commit(), modwerk_machine_tables_changed();
+            modwerk_machine_unmask(mask);
+        }
+    }
+    modwerk_machine_unlock(lock);
+    return ok;
+}
+#ifdef __m68k__
+extern int modwerk_runtime_rest_poll(void);
+RUNTIME_CONTEXT_WRAPPER(modwerk_runtime_rest_poll, rest_poll_context, "", 68);
+#else
+int modwerk_runtime_rest_poll(void) { return rest_poll_context(0); } /* host glue supplies its own task contexts */
+#endif
+#endif
 /* The position of the live module `id`, else the first free one. */
 static unsigned position_of(uint32_t id)
 {

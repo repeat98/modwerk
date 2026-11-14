@@ -491,9 +491,10 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
 }
 static void ui_tick(void);
 void mg_tick(void); /* midi_generators.c: the MIDI tracks' generators */
+/* The UI tick, a task: also where a module that no track uses rests (loader.h modwerk_runtime_rest_poll; HOOKS.md). */
 void mw_ui_tick(void)
 {
-    MW_STAMP(14); ui_tick(); MW_STAMP(24); mg_tick(); MW_STAMP(25); MW_STAMP(15);
+    MW_STAMP(14); ui_tick(); MW_STAMP(24); mg_tick(); MW_STAMP(25); modwerk_runtime_rest_poll(); MW_STAMP(15);
 }
 static void ui_tick(void)
 {

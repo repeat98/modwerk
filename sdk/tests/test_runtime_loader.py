@@ -338,6 +338,27 @@ class SiteEventTests(unittest.TestCase):
         self.assertEqual(packages.capabilities(tick)['features'], 0)      # a core tick needs nothing new of the base
         self.assertEqual(packages.capabilities(evented)['features'], 128)  # a site event (or a raise) needs MWCP 128
 
+    def test_modules_rest_out_of_the_per_frame_events_only(self):
+        # ev_in_use is asked by the base, each module on its own: no raise entry, a plain subscription on the site.
+        reg = events.load()
+        asked = next(e for e in reg['events'] if e['event'] == 'ev_in_use')
+        self.assertEqual((asked['index'], asked['site'], asked['results'], asked['prototype']), (38, None, 'each', 'unsigned f(void)'))
+        self.assertNotIn('ev_in_use', events.raised(reg))
+        self.assertNotIn('modwerk_raise_ev_in_use', events.asm(reg))
+        self.assertEqual(next(e for e in json.loads(events.browser(reg))['events'] if e['event'] == 'ev_in_use')['kind'], 'call')
+        header = events.loader(reg)
+        self.assertIn('#define RUNTIME_SITE_EVENT_IN_USE %du\n' % (asked['index'] - 4), header)
+        rests = re.search(r'#define RUNTIME_SITE_EVENT_RESTS \{ (.*) \}', header).group(1).split(', ')
+        self.assertEqual({reg['events'][i]['event'] for i, w in enumerate(rests) if w == '1'},
+                         {'ev_play_increment', 'ev_voice_bind', 'ev_voice_bind_run', 'ev_tail_kill'})
+        # Only a call event at a site rests: never a take hook, a table, a raised event or the asked one; one asked event.
+        doc = json.loads((EVENTS_DIR / 'events.json').read_text())
+        for name, change in (('ev_knob_store', dict(rests=True)), ('ot_machines', dict(rests=True)), ('ev_trig_muted', dict(rests=True)),
+                             ('ev_in_use', dict(rests=True)), ('ev_play_increment', dict(rests=1)), ('ev_mute_keep', dict(results='each'))):
+            bad = json.loads(json.dumps(doc)); next(e for e in bad['events'] if e['event'] == name).update(change)
+            with tempfile.TemporaryDirectory() as temp, self.subTest(name=name, change=change), self.assertRaises(ValueError):
+                Path(temp, 'events.json').write_text(json.dumps(bad)); events.load(Path(temp, 'events.json'))
+
     def test_dispatch_assembles_without_the_displaced_stock_bytes(self):
         asm = shutil.which('m68k-elf-as')
         if not asm:

@@ -180,6 +180,12 @@ unsigned modwerk_runtime_refused_event(void);         /* after RUNTIME_EVENT: th
  * task is inside that dispatch. */
 extern uintptr_t volatile *const modwerk_runtime_event_row[RUNTIME_SITE_EVENTS];
 extern const uint8_t modwerk_events_code[], modwerk_events_code_end[];
+#ifdef RUNTIME_SITE_EVENT_IN_USE
+/* The machine's UI tick (a task, never an interrupt): asks each module that subscribes the event the base asks
+ * (RUNTIME_SITE_EVENT_IN_USE) and moves those answering 0 out of the rows of the events that rest
+ * (RUNTIME_SITE_EVENT_RESTS), and those answering nonzero back. 1 when the rows changed. */
+int modwerk_runtime_rest_poll(void);
+#endif
 #endif
 void modwerk_machine_tables_changed(void);          /* masked, after rows changed; weak no-op by default */
 /* Masked: a site's bytes went back to stock (`patched` were its module's), so stock data that copied them can follow;

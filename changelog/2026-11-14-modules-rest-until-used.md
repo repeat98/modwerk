@@ -1,0 +1,1 @@
+Octatrack base: a module that no track uses can rest. A module that answers the new `ev_in_use` hook with 0 is left out of the base's per-frame hooks until a track uses it again, so it costs the frame interrupt nothing while it rests; modules that do not answer it work as before.
