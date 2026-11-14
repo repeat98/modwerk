@@ -167,10 +167,13 @@ FRAME_SITES = ((0x4000aad0, 8, '5f02b18d204af6e4a0177ad6e41c779a698018b6f25b5d83
                (0x4000d43e, 6, '0f69edd47eb472176050ed5c14a75d055e0de101cd2d3a8d7c79f7dc6526246b', 'mw_render_first'),
                (0x4000d52c, 6, '5bb0079066abd317109cc9ae7a5f58f0a0d1596bb04da603669ed66ec8172243', 'mw_render_second'))
 OS_FIRST, OS_VEROFF, BOOT_IMAGE_BYTES = 0x4fefffe4, 0xde648, 0x180000  # boot.s, boot.h
-# What the bases on units take for a RAM boot, and so for a USB update's trial: 1.25 MiB until the base of 13 November
-# 2026, which stages BOOT_IMAGE_BYTES. A released base must fit it for as long as units run the older bases; a
-# development build only has to fit the base it is booted from (--dev: this one or later).
-USB_UPDATE_BYTES = 0x140000
+# What the bases on units take for a RAM boot, and so for a USB update's trial: 1.25 MiB before the base of 13 November
+# 2026, BOOT_IMAGE_BYTES since. A unit on an older base takes a larger one as two updates, the step base first
+# (src/engine/elekloader/base-step.ts), so a released base must fit the step base's stage.
+USB_UPDATE_BYTES = 0x180000
+# What a base writes to one slot (flash.h FLASH_CONTAINER_BYTES, less the page flash.c keeps back): the packed
+# container, the next limit once the image fits.
+FLASH_SLOT_BYTES = int(re.search(r'#define FLASH_CONTAINER_BYTES (0x[0-9a-f]+)u', (HERE/'flash.h').read_text()).group(1), 16) - 256
 BOOT_RESERVE = (0x40a955e0, 0x41495de0)  # boot.s RESERVE_LO/HI: the gate scans only there
 # REMIX SWITCH's DSP park (dsp_park.asm, assembled by Octabam's dsp_asm), by
 # P address, written into both payloads over dead `jmp *` vectors.
@@ -2338,6 +2341,10 @@ modwerk_retained_end:
         raise ValueError('The MAIN image is %d bytes: %d more than the bases on units take for a USB update (%d).'
                          % (len(main_out), len(main_out) - USB_UPDATE_BYTES, USB_UPDATE_BYTES))
     print('MAIN image: %d bytes, %d under what the bases on units take over USB' % (len(main_out), USB_UPDATE_BYTES - len(main_out)))
+    slot = len(formats.parse(str(out/'NOT_FLASH_CANDIDATE.bin'), device).container)
+    if slot > FLASH_SLOT_BYTES:
+        raise ValueError('The packed base is %d bytes: %d more than a flash slot holds (%d, flash.h).' % (slot, slot - FLASH_SLOT_BYTES, FLASH_SLOT_BYTES))
+    print('Packed base: %d bytes, %d under what a flash slot holds' % (slot, FLASH_SLOT_BYTES - slot))
     (out/'MAIN.raw').write_bytes(main_out)
     report = dict(schema=1, kind='modwerk-elekloader-base-prototype', coreVersion=VERSION,
                   upstream=pin, sources=inputs, configuration=configuration, configurationHash=identity,
