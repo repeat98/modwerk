@@ -216,7 +216,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
             <button type="button" className="button button-quiet" onClick={() => onFill(inventory.moduleIds)}>Start from what’s on it</button>
           </div>}
           {grid}
-        </> : <div className="hub-empty-set"><h2 className="hub-view-title">No module sets yet</h2><p>Start one, then add modules from the library.</p><button type="button" className="button button-primary" onClick={onNew}><Icon name="plus" size={16} />New module set</button></div>)}
+        </> : <div className="hub-empty-set"><Icon name="grid" size={24} /><h2 className="hub-view-title">No module sets yet</h2><p>Start one, then add modules from the library.</p><button type="button" className="button button-primary" onClick={onNew}><Icon name="plus" size={16} />New module set</button></div>)}
       </div>
     </div>
   </div>
