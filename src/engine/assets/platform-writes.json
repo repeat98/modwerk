@@ -492,12 +492,12 @@
       "sha256": "8a5b26c7f7c97f1e945c2274fb2632e05fc94e7babb941e8b7c80f7e0f24bf61"
     }
   ],
-  "sourceCommit": "3d903dcf6e368010e20215440842e4783d262f46",
+  "sourceCommit": "d2a2545c04b507ca67a1e03f95f4ab277551ca46",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
     "euclid": "0.1.4-experimental",
-    "repitch": "0.2.0-experimental",
+    "repitch": "0.2.1-experimental",
     "tapehead": "0.1.2-experimental",
     "airwindows-chorus": "0.1.2-experimental",
     "everb": "0.1.2-experimental",
