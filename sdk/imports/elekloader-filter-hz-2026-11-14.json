@@ -1,22 +1,22 @@
 {
   "schema": 1,
   "kind": "elekloader-catalog",
-  "revision": "filter-hz-2026-10-23",
+  "revision": "filter-hz-2026-11-14",
   "about": "Modwerk source-only filter-hz package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/filter-hz.",
   "cores": [],
   "mods": [
     {
-      "file": "filter-hz-1.2.0-os1.74.elemod",
-      "sha256": "95e455cb67339b6cd32006ec9693024b1860b10df8d8b70b661a150dcd920446",
+      "file": "filter-hz-1.2.1-os1.74.elemod",
+      "sha256": "ce174e49023429ece5bcec9f29ab0c1b1f39d31d530c24828c69eb72d451fea6",
       "id": "filter-hz",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "device": "analog-rytm-mk2",
       "os": "1.74",
       "license": "GPL-2.0-only",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "67558bbaa14f6efe7c2d37b59bb07425efa8c2c9",
-        "path": "sdk/imports/packages/filter-hz/filter-hz-1.2.0-os1.74.elemod"
+        "commit": "2da119eb3dfdf77c458f878fd0b04f82ec7b318e",
+        "path": "sdk/imports/packages/filter-hz/filter-hz-1.2.1-os1.74.elemod"
       },
       "title": "Filter Hz",
       "requires": [
@@ -28,7 +28,7 @@
       "category": "System",
       "author": "Iced-Cream",
       "needs_core": "0.3",
-      "on_unit": "Tested on an Analog Rytm MKII on OS 1.74 with the released core-ar2 0.3 (FZ74)."
+      "on_unit": "Tested on an Analog Rytm MKII on OS 1.74 with the released core-ar2 0.3 (FZ78, RAM boot, 2026-11-14, reported by npp1993); 1.2.0 as FZ74."
     }
   ]
 }

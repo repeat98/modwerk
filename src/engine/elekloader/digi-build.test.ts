@@ -64,7 +64,7 @@ describe('the vendored elekloader catalog', () => {
   it('plans Filter Hz from its pinned source-only package on the plain base', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['filter-hz'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
-      mods: [{ id: 'filter-hz', file: 'filter-hz-1.2.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.0' }],
+      mods: [{ id: 'filter-hz', file: 'filter-hz-1.2.1-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.1' }],
       missing: [],
     })
   })
@@ -112,7 +112,7 @@ describe('the vendored elekloader catalog', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['filter-hz', 'main-rms', 'temp-save'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: [
-        { id: 'filter-hz', file: 'filter-hz-1.2.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.0' },
+        { id: 'filter-hz', file: 'filter-hz-1.2.1-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.1' },
         { id: 'main-rms', file: 'main-rms-1.0.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.0.0' },
         { id: 'temp-save', file: 'temp-save-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
       ],
@@ -189,7 +189,7 @@ describe('the vendored elekloader catalog', () => {
       core: { file: PLAIN, version: '0.7' },
       mods: [
         { id: 'env-reset-amp', file: 'env-reset-amp-1.0.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.0.0' },
-        { id: 'filter-hz', file: 'filter-hz-1.2.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.0' },
+        { id: 'filter-hz', file: 'filter-hz-1.2.1-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.1' },
         { id: 'temp-save', file: 'temp-save-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
       ],
       missing: [],
@@ -212,7 +212,7 @@ describe('the vendored elekloader catalog', () => {
       mods: [
         { id: 'ctrl-all', file: 'ctrl-all-1.2.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.0' },
         { id: 'env-reset-amp', file: 'env-reset-amp-1.0.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.0.0' },
-        { id: 'filter-hz', file: 'filter-hz-1.2.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.0' },
+        { id: 'filter-hz', file: 'filter-hz-1.2.1-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.1' },
       ],
       missing: [],
     })
@@ -252,7 +252,7 @@ describe('the vendored elekloader catalog', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['filter-hz', 'loop-sync', 'midi-feedback', 'midi-mute'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: [
-        { id: 'filter-hz', file: 'filter-hz-1.2.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.0' },
+        { id: 'filter-hz', file: 'filter-hz-1.2.1-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.1' },
         { id: 'loop-sync', file: 'loop-sync-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' },
         { id: 'midi-feedback', file: 'midi-feedback-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
         { id: 'midi-mute', file: 'midi-mute-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
