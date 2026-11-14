@@ -1,0 +1,1 @@
+Digitakt II: the check that rebuilds committed module packages now accepts Digitakt II modules. It knew only the Digitakt, Digitone, Analog Rytm MKII and Analog Four MKII, so the first Digitakt II package would have failed it as an "Invalid artifact identity" before any comparison.

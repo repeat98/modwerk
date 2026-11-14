@@ -44,6 +44,7 @@
     "upstream:tools": "python3 -B scripts/upstream-tools.py",
     "device": "node scripts/device.mjs",
     "zoom": "node scripts/zoom.ts",
+    "device:price": "node scripts/octatrack-price.mjs",
     "device:qualify": "node scripts/mirror-octatrack-modules.mjs && python3 -B scripts/octatrack-qualify.py",
     "device:test": "python3 -B scripts/octatrack-test.py",
     "modules:generate": "node scripts/modules.mjs --write",
