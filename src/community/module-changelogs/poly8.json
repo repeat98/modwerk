@@ -5,7 +5,7 @@
     "changes": [
       "Installed but used on no track, POLY8 now costs the Octatrack less than half the CPU it did while other sample tracks play.",
       "POLY8 tracks sound and behave as before.",
-      "Known issue: measured on a unit with POLY8 on no track; a POLY8 track itself is checked in the emulator only."
+      "Known issue: on a unit only a single-voice POLY8 track was checked with this version; chords, MIDI and power cycles were not."
     ]
   },
   {

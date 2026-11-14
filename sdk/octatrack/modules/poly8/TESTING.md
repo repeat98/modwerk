@@ -8,7 +8,13 @@ Status: experimental release preparation, **not hardware-qualified**.
 - 0.3.1 took +12.2 points of the frame interrupt;
 - this 0.3.3 (USB package `1d9e9eca…`) took **+4.9**, on the CPU meter +2.0 against +4.2-5.6 for 0.3.1.
 
-A POLY8 track was not heard on this build: no POLY8 track, voice, chord, MIDI note or recording was played with it on a unit.
+**A POLY8 track** (the owner's MKII, the same twin, 14 November 2026, package `1d9e9eca…`, POLY8 the only module, timed trials, no Keep; measured by the owner):
+- **Scene:** POLY8 picked on T1 in the owner's project, pattern B01 at 126 BPM, T1 alone trigged, one voice a trig, no chords. Eight seconds were recorded over USB from the track's own outputs while playing, once with the published 0.3.1 package and once with 0.3.3, same steps.
+- **Audio:** after aligning the two recordings by the pattern's position, one bar (84,000 samples) is sample-identical on the left channel (difference 0, correlation 1.00000), levels 0.0463/0.0765 RMS for both. A second 0.3.3 recording matched both.
+- **Load while it played:** frame interrupt 54.2 % (0.3.1) and 54.7 % (0.3.3), longest frame 99.5 % and 99.0 %, nothing skipped.
+- **Seen with both versions (unchanged behaviour, not a regression):** leaving POLY8 for STATIC left the same three SRC SETUP bytes changed (TSTR in both setup blocks and LOOP in one read 0 where they read 1 before); the owner put them back by hand.
+- **An earlier first recording** of 0.3.1, made after a MISSING MODULES notice had eaten key presses, was quieter (0.0143/0.0183 RMS) and did not repeat; its cause was not looked at.
+- **Not done on the unit:** chords, more than one voice, more than one POLY8 track, MIDI, recorded chords, a power cycle; nobody listened by ear.
 
 **Measurements** (`node scripts/octatrack-price.mjs` from the `price-sweep` worktree, same twin and scene, each package tried in RAM and rolled back by itself, its own reading without modules just before it; points of the frame interrupt at rest, CPU meter in brackets). Bisect variants are measurement builds of 0.3.3's first source with one part removed, never published; "drop" removes the site from the package.
 
@@ -51,7 +57,7 @@ A POLY8 track was not heard on this build: no POLY8 track, voice, chord, MIDI no
 
 **What remains** (+4.9 at rest): the render's short path (it was 2.9 through the routine, not measured separately inline), the AMP-builder and command-consumer passes (about 1.7, still through `poly_frame_track`), the increment subscriber's inline test. Only a dispatch that never enters POLY8's code for a stock track removes it all: a render the base's machine registry calls for POLY tracks alone, a redesign that is not part of this version.
 
-Not tested: a POLY8 track on a unit (no audio comparison, no voice, chord, MIDI or recording test with this source), the card build, MKI, and a base without cached module code.
+Not tested: chords, several voices or several POLY8 tracks, MIDI notes and recorded chords with this source on a unit, listening by ear, Part/project reload and power cycles, the card build, MKI, and a base without cached module code.
 
 ## 0.3.2: the card build's machine list scrolls (27 October 2026)
 
