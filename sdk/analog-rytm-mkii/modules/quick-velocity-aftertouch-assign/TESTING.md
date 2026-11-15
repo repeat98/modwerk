@@ -78,13 +78,13 @@ Fixed velocity read from stock's flag every 100M instructions; screens compared 
 
 ## rytm-emu (0.3.0, LFO depth from a locker set without an encoder event)
 
-IQ01 (0.2.0) and IQ02 (0.3.0 work in progress), each with a private MIDI-to-locker test module (the author's), Filter Hz and QPER
+IQ01 (0.2.0) and IQ02 (the MIDI depth change alone, before the look), each with a private MIDI-to-locker test module (the author's), Filter Hz and QPER
 Live Rec on the plain base, BD FILTER page, LFO held 8000M-8400M:
 - An NRPN FRQ sweep from 127 to 42 (NRPN 1:20 through that module, which calls stock's locker
-  interface): 0.2.0 makes FRQ the destination at depth (0) and the depth never moves; 0.2.1
+  interface): 0.2.0 makes FRQ the destination at depth (0) and the depth never moves; IQ02
   makes it the destination and sets the depth to -85.00, kept when LFO is held again, the sound's
   FRQ unchanged after the release.
-- Knob E turned ten times (+12 counts, 6.67M apart) with LFO held and no MIDI: 0.2.0 and 0.2.1 give
+- Knob E turned ten times (+12 counts, 6.67M apart) with LFO held and no MIDI: 0.2.0 and IQ02 give
   the same screen, pixel for pixel (the encoder path is unchanged).
 - FIX and QPER holds with the sweep: same screens on both.
 
@@ -150,9 +150,9 @@ Not covered by the rig: how the LFO sounds, pads, the FX track's LFO, kit save a
 
 ## rytm-emu (0.3.0, a long hold is a look)
 
-RL22 (946c3746…, with Improved MIDI Control, Filter Hz and QPER Live Rec, private), FILTER page of BD, keys held on
-the emulator's panel (so stock's key scan repeats them): stock's first key repeat comes 175-200 ms into a hold, the
-third by 325-350 ms (about 75 ms apart). Counting to the fifth: LFO held 150, 400 or 450 ms opens the LFO page; 475,
-500, 525, 550 or 800 ms leaves the FILTER page. SAMPLER held 150 ms opens the recorder, 800 ms does not. FIX: its
-toggle shows nothing on the screen, so not seen; it takes the same check. On a unit: not tested.
-
+RL24 (4335ec13…, with Improved MIDI Control, Filter Hz and QPER Live Rec, private), FILTER page of BD, keys held on
+the emulator's panel. The hold is counted in ev_tick calls (10). LFO held 150, 350 or 450 ms opens the LFO page;
+500, 550 or 650 ms leaves the FILTER page. LFO held 1.2 s with AMP tapped 0.2 s in: the AMP page stays (counted by
+stock's key repeat, as first built, the repeat moved to AMP and the LFO page opened: a review found it). SAMPLER held
+150 ms opens the recorder, 800 ms does not. FIX: its toggle shows nothing on the screen, so not seen; it takes the
+same check. On a unit: not tested.

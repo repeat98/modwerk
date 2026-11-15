@@ -29,7 +29,7 @@
 // on the release. SAMPLER released with no turn opens the recorder as stock
 // does; after a turn its release is the module's. LFO released with no turn
 // shows the LFO page as stock does (on the release, not the press); after a
-// turn the page stays. A hold to stock's fifth key repeat (about 0.5 s) is a
+// turn the page stays. A hold of about half a second (LOOK_TICKS) is a
 // look at the amounts: its release does nothing, as after a turn. On the LFO
 // page itself the key is stock's. During one key's hold the other two do
 // nothing. FUNC + FIX (stock's FIXED VELOCITY), FUNC + LFO, FIX and SAMPLER on the FX track, and
@@ -129,14 +129,16 @@ struct hold {
     int held;                       // the press was ours and the key is down
     int turned;                     // an encoder turned during the hold
     int ignored;                    // pressed during another key's hold: its release is ours
-    int repeats;                    // stock's key repeats seen during the hold
+    unsigned since;                 // ev_tick's count at the press
 };
 static struct hold holds[KINDS] = {
     { KEY_FIX, 0, 0, 0, 0 }, { KEY_SAMPLER, 0, 0, 0, 0 }, { KEY_LFO, 0, 0, 0, 0 },
 };
-// Stock's key repeat starts 175-200 ms into a hold, then comes about every 75 ms (rytm-emu, 15 Nov 2026):
-// its fifth, about half a second in, makes the hold a look at the amounts, not a tap.
-#define LOOK_REPEATS 5
+// A hold of about half a second with no turn is a look at the amounts, not a tap: counted in ev_tick's
+// calls, as stock's UI loop runs them. Not by stock's key repeat: it moves to the last key pressed, so a
+// page key pressed during the hold stopped the count (rytm-emu, 15 Nov 2026).
+#define LOOK_TICKS 10
+static unsigned ticks;              // ev_tick's count
 
 static void *views;
 static char message[28];
@@ -766,7 +768,7 @@ int quick_velocity_aftertouch_assign_key(void *brain, void *event)
     }
     h = &holds[k];
     if (!down) {
-        int turned = h->turned;
+        int turned = h->turned || ticks - h->since >= LOOK_TICKS;   // a look counts as a turn
         if (h->ignored) {
             h->ignored = 0;
             return 1;
@@ -795,11 +797,8 @@ int quick_velocity_aftertouch_assign_key(void *brain, void *event)
         }
         return turned;                  // SAMPLER: a tap's release opens stock's recorder
     }
-    if (flags & REPEAT) {
-        if (h->held && ++h->repeats >= LOOK_REPEATS)
-            h->turned = 1;              // a look at the amounts, not a tap
+    if (flags & REPEAT)
         return h->ignored || (k != AT && h->held);   // SAMPLER's own repeats are stock's
-    }
     // A fresh press starts a new hold, even if a lost release left one set.
     if (h->held && shown == k)
         locker_remove();
@@ -826,7 +825,7 @@ int quick_velocity_aftertouch_assign_key(void *brain, void *event)
     }
     h->held = 1;
     h->turned = 0;
-    h->repeats = 0;
+    h->since = ticks;
     locker_install(k);
     return k != AT;                     // FIX's and LFO's presses are held back; SAMPLER's does nothing on stock
 }
@@ -1011,6 +1010,7 @@ void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
 // one, not dozens.
 void quick_velocity_aftertouch_assign_tick(void *ctrl)
 {
+    ticks++;
     encoder_turn = 0;
     word_t string;
     char allocator;
