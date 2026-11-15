@@ -92,6 +92,7 @@ def run(a):
         for _ in range(3):tap(0x32)
         advance(2200)
         panel_read()
+        enabled(False)
         key(0x11);advance(2200);assert overlay()==0;key(0x11,False)
         check('G01 OFF preserves long press')
         enabled()

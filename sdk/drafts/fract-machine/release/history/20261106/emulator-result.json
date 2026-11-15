@@ -1,0 +1,25 @@
+{
+  "result": "PASS_EMULATOR_NOT_HARDWARE",
+  "packageSha256": "54ca8f6b1a30e2f4811129e082ce18881148654b00c97c026508460a6cf7272e",
+  "sourceCandidateVersion": "0.1.1-experimental",
+  "nativeVoice": 255,
+  "advancingGrains": 3,
+  "retrigger": "PASS",
+  "loaderErrors": 0,
+  "loaderRejections": [
+    0,
+    0
+  ],
+  "residencyFailures": 0,
+  "pcm": {
+    "sampleRate": 44100,
+    "channels": 2,
+    "frames": 1832144,
+    "peak": 2636,
+    "nonzeroSamples": 593401,
+    "rms": 277.26711135001466,
+    "wavSha256": "7e87655ba7c32073cac21fd3d7b6cb7d468fe7956f02186157b7b714df48427f"
+  },
+  "fixture": "Private copied historical phasenormal1 card/NVRAM; not pristine stock",
+  "hardware": "NOT_RUN"
+}

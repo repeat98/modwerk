@@ -43,6 +43,11 @@
       "name": "ev_project",
       "when": "after CREATE NEW or the project reset (how 0), and after every project load, at boot too (how 1); the stored project and its mod data are in place",
       "handler": "void f(int how, unsigned dropped); dropped flags the global, track, pattern and project scopes that loaded as zeros; keep it short, and start no load or save from it"
+    },
+    {
+      "name": "ev_sound_applied",
+      "when": "stock applied a sound to a track: a kit or sound load, a trig's sound lock, a SOUND SETTINGS change (Modwerk base, send-bus variant)",
+      "handler": "void f(void *sound, int track)"
     }
   ],
   "tables": [
@@ -85,6 +90,11 @@
       "name": "ev_amp_record",
       "entry": 4,
       "purpose": "Assembly entries the base calls once a voice an audio block, lowest order first, before stock's amp record stores (0x40109c24): d0 rate word and d2 level word in and out, d3 voice, a2 state, a3 frame, a4 sound slice; d1/d4/a0 free, every other register kept (modwerk/amp.h; Modwerk base, both variants). Rewriters order 10-39, followers 60-89."
+    },
+    {
+      "name": "mw_voices",
+      "entry": 4,
+      "purpose": "Pointers to struct mw_voice (modwerk/voice.h): a digital voice machine, whose engine calls mw_voice_run; the base silences the analog circuit, writes and clears the voice's stream, ends hits and keeps the machine's type (Modwerk base, send-bus variant)."
     }
   ],
   "exports": [
@@ -137,6 +147,16 @@
       "name": "mw_fx_clock",
       "prototype": "const struct mw_fx_clock *mw_fx_clock(void)",
       "purpose": "The Rytm sequencer's time for the render: pulses from PLAY, the pattern's speed and SWING, the swung step and phase (modwerk/fx.h, Modwerk base)."
+    },
+    {
+      "name": "mw_voice_run",
+      "prototype": "void mw_voice_run(const struct mw_voice *mv, int32_t v, void *frame, uint16_t *blk, int32_t pitch)",
+      "purpose": "A digital voice machine's engine body: trig, knobs, velocity, pitch ratio, LEV into the voice's stream, end of hit and type (modwerk/voice.h, Modwerk base, send-bus variant)."
+    },
+    {
+      "name": "mw_voice_meter",
+      "prototype": "extern volatile struct mw_voice_meters mw_voice_meter",
+      "purpose": "Each digital voice slot's render cost on DMA timer 0, 88000 ticks a block (modwerk/voice.h, Modwerk base, send-bus variant)."
     }
   ],
   "claims": [

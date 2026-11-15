@@ -85,6 +85,7 @@ class ResidentDriver(unittest.TestCase):
             flags += ['-DMODWERK_DSP_%s%d=4096' % (name, core) for name in ('TABLE', 'WORDS', 'MISS', 'METER') for core in (0, 1)]
             for source in (work / 'transfer.c', work / 'dsp.c', RUNTIME / 'stock_hooks.c', RUNTIME / 'stock_hook_driver.c'):
                 compiled = subprocess.run(['m68k-elf-gcc', *flags, '-I' + str(work), '-I' + str(ELEK), '-I' + str(RUNTIME),
+                                '-I' + str(ROOT / 'sdk/machines/octatrack/module-adapters/controller-policy'),
                                 '-I' + str(ROOT / 'sdk/runtime/loader'), '-I' + str(ROOT / 'sdk/runtime/upload'), '-c', str(source),
                                 '-o', str(work / (source.stem + '.o'))], capture_output=True, text=True)
                 self.assertEqual(compiled.returncode, 0, compiled.stderr)

@@ -1,0 +1,1 @@
+Site: the Help & FAQ (quick start, install answer and before-you-install checklist) and the Octatrack update mail draft now ask for a CompactFlash card reader or a MIDI interface as the way back, since either one restores the original OS.

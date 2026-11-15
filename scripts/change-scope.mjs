@@ -4,10 +4,14 @@ import { readFileSync, lstatSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { manifestBuildFields } from './module-source.mjs'
+import { alternation, moduleFolders } from './machine-folders.mjs'
 
-const moduleFolder = /^sdk\/(octatrack|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/]+\//
-const manifest = /^sdk\/(octatrack|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/]+\/(octamod|modwerk)\.module\.json$/
-const digiManifest = /^sdk\/(digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/_][^/]*\/modwerk\.module\.json$/
+// The machine registry names each machine's module folder: the Octatrack's, the elemod machines' (compiled firmware)
+// and the Zoom pedals' (prebuilt effect files, no compile job).
+const ELEMOD = alternation(moduleFolders('elemod')), LISTED = alternation(moduleFolders().filter(folder => folder !== 'octatrack'))
+const moduleFolder = new RegExp(`^sdk\\/(${alternation(moduleFolders())})\\/modules\\/[^/]+\\/`)
+const manifest = new RegExp(`^sdk\\/(octatrack|${ELEMOD})\\/modules\\/[^/]+\\/(octamod|modwerk)\\.module\\.json$`)
+const digiManifest = new RegExp(`^sdk\\/(${LISTED})\\/modules\\/[^/_][^/]*\\/modwerk\\.module\\.json$`)
 const catalogs = new Set(['src/catalog/module-documents.json'])
 const json = text => text === null ? null : JSON.parse(text)
 const canonical = value => JSON.stringify(value, (_, item) => item && typeof item === 'object' && !Array.isArray(item)
@@ -82,7 +86,7 @@ function nativeChange(change, machine) {
   if (machine === 'octatrack') return common || /^sdk\/octatrack\/modules\//.test(path) || /^sdk\/octabam\/(platform|tools|dsp|licenses)\//.test(path)
     || path === 'sdk/catalog.json' || /^src\/engine\/assets\/(?!elemod\/)/.test(path)
     || /^scripts\/(build-module-packages\.py|build-utility-packages\.py|build-usb-audio-packages\.py|build-modules-isolated\.sh|import-module-build\.mjs|module-source\.mjs)$/.test(path)
-  return common || /^sdk\/(digitakt|digitone|analog-rytm-mkii|analog-four-mkii|elemod|machines)\//.test(path) || /^vendor\/elekloader\/(catalog\/|elekloader\.lock\.json$|upstream-catalog\.json$)/.test(path) || /^sdk\/imports\/elekloader-[^/]+\.json$/.test(path)
+  return common || new RegExp(`^sdk\\/(${ELEMOD}|elemod|machines)\\/`).test(path) || /^vendor\/elekloader\/(catalog\/|elekloader\.lock\.json$|upstream-catalog\.json$)/.test(path) || /^sdk\/imports\/elekloader-[^/]+\.json$/.test(path)
     || /^sdk\/octabam\/(scripts\/vendor\.sh|tools\/patches\/|tools\/harness\/dsp_host)/.test(path)
     || /^scripts\/(build-elemod[^/]*|elemod-elf\.mjs|verify-elemod-source-parity\.mjs|package-elemod-recipe\.mjs|verify-elemod-release-exports\.mjs)$/.test(path)
     || /^src\/engine\/assets\/elemod\//.test(path)
@@ -106,7 +110,8 @@ const workerTrees = /^(server|migrations|src\/(community|catalog|devices|config|
 const workerFiles = ['worker.ts', 'wrangler.worker.jsonc', 'package-lock.json', 'src/hosting.ts', 'src/support.ts', 'sdk/catalog.json', 'docs/news/008-beta-invitation.draft.json', '.github/workflows/worker.yml', '.github/module-authors.json']
 function workerChange({ path, before, after }) {
   if (catalogs.has(path) && before !== null && after !== null) return canonical(workerCatalog(json(before))) !== canonical(workerCatalog(json(after)))
-  // The Worker bundles the generated (uncommitted) Digitakt/Digitone list, which follows these manifests.
+  // The Worker bundles the generated (uncommitted) list of every machine's modules but the Octatrack's
+  // (src/catalog/machine-modules.json), which follows these manifests.
   if (digiManifest.test(path)) return before === null || after === null || canonical(workerCatalog({ modules: [json(before)] })) !== canonical(workerCatalog({ modules: [json(after)] }))
   if (/\.test\.ts$/.test(path) || /\.tsx$/.test(path) || isDocumentationPath(path)) return false
   return workerTrees.test(path) || workerFiles.includes(path)

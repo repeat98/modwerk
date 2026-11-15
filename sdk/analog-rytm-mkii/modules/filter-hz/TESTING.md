@@ -1,5 +1,33 @@
 # Filter Hz — test report
 
+## 1.2.1 (a wider lock box for FRQ)
+
+Stock OS 1.74 draws the inverted box behind a locked value itself: its knob value routine
+(`0x40037a56`) centres the text on the knob and, for a value in the label row, inverts
+x−13..x+13, 27 pixels, whatever the text. Every 1.2.0 `kHz` value is 28 to 31 pixels wide and
+stuck out of it. 1.2.1 adds `filter_hz_box` at the routine's five pushes of that rectangle
+(`0x40037bea`, 20 bytes): for FRQ the box is x−16..x+16, 33 pixels, for every value (one pixel
+past the widest text, 31 pixels, on each side); for every other parameter it is stock's ([emulator report](evidence/emulator-1.2.1.json)).
+
+- Emulator, rytm-emu 2ac0f1f, FH00 (Modwerk base + 1.2.0, `1cae85e2…2184`) against FH04 (the same
+  with 1.2.1, `5b5fd85c…1146`). FRQ locked on a trig (GRID RECORDING, trig held, knob E) at every
+  value 0 to 127: the box is x 0..32 every time, the text has at least one pixel of box on each
+  side and nothing outside it. In 1.2.0 every kHz value stuck out of stock's box. Unlocked FRQ (0, 60, 75, 127) and locked RES (0, 64, 127), TYP (3), ENV (0, 64, 127),
+  ATK and DEC (64): identical to 1.2.0's.
+- Screens: the capture plan in [media/capture.json](media/capture.json), rytm-emu c5732f0, gives
+  1.2.0's three frames byte for byte on FZ78 (1.2.1, `3554efa8…a93f`) and on FZ74 rebuilt from
+  main. The new `frq-locked.png` is FZ78 in rytm-emu 2ac0f1f.
+- Memory: 302 bytes (`.text`; 256 in 1.2.0). The gate code is upstream's, unchanged.
+- `evidence/source-parity.json` is 1.2.0's byte-parity record against rytm2_mods v1.2; 1.2.1 adds
+  code upstream does not have.
+- Hardware, as reported by npp1993 (a maintainer, not the author), 2026-11-14: FZ78 (core-ar2 0.3 + Filter Hz 1.2.1,
+  `3554efa8…a93f`) booted from RAM over USB on an Analog Rytm MKII, OS 1.74, in a scratch project. With FRQ locked on a
+  held trig at 440Hz, 1.11kHz, 2.22kHz and 21.1kHz the white box stayed the same width and covered the whole value; a
+  locked RES looked as before; unlocked FRQ read 13.8Hz and 21.1kHz at the ends; about a minute of playback while
+  turning FRQ had no freezes or dropouts ([hardware report](evidence/hardware-testing-1.2.1.json)).
+
+## 1.2.0
+
 - Module: `filter-hz` 1.2.0, for Analog Rytm MKII OS 1.74 on core-ar2 0.3. 1.2.0 drops the OS 1.73
   release (core-ar2 0.1) that 1.1.0 had; the 1.74 code is unchanged.
 - Source: https://github.com/Iced-Cream/rytm2_mods at `afd461d4a8ef4306bb2a57d4c61ad35c362b3940` (tag `v1.2`).
@@ -12,7 +40,7 @@
 - Tested build C3A4 (OS 1.74, core-ar2 0.3 before #153 + all eleven rytm2_mods v1.2 ports): `.syx`
   `04d987ced36850eef5eb5cd1215d411edf621a5af94f980525ab561c9108f951`, main OS `fc871476…d529`.
 
-## Hardware
+### Hardware
 
 On 2026-10-22 Iced-Cream flashed FZ74 (the released core-ar2 0.3 and Filter Hz alone) with
 Transfer. It booted and played as stock. FRQ fully left read 13.8Hz, fully right 21.1kHz, one
@@ -33,7 +61,7 @@ that report left with the release.
 
 Duration and readings beyond those were not recorded.
 
-## Source build comparison
+### Source build comparison
 
 Modwerk's own validation and compiler path, run on this folder:
 
@@ -60,7 +88,7 @@ The source-only export, `sdk/imports/packages/filter-hz/filter-hz-1.2.0-os1.74.e
 Elekloader kit 0.7.0, as vendored in Modwerk, builds it with the released core-ar2 0.3 on stock
 1.74, with display version FZ74, into FZ74's .syx byte for byte (`62c25626…7745`), so the browser's build is the tested build.
 
-## Emulator
+### Emulator
 
 [rytm-emu](https://github.com/trigcondition/rytm-emu), headless `dtboot`, the same input on the
 module's build and on stock ([capture plan](media/capture.json)): `c5732f0` on FZ74 and stock 1.74.
@@ -79,9 +107,11 @@ says nothing about sound, which the module does not touch.
 
 ## Load and memory
 
-256 bytes in the shared DDR area, no `.bss`, no fast SRAM. The site is in
+302 bytes in the shared DDR area (256 before 1.2.1), no `.bss`, no fast SRAM. One site is in
 `param_value_text`, which formats a parameter's value for the screen; for any parameter but
-FRQ the stub re-runs the two displaced instructions and returns. Nothing runs in the audio,
+FRQ the stub re-runs the two displaced instructions and returns. The other (1.2.1) is in
+stock's knob value drawing, where a locked value's box is pushed: a few instructions each time
+a lock box is drawn, stock's rectangle for any parameter but FRQ. Nothing runs in the audio,
 sequencer or tick paths. Static reading, not a measurement.
 
 ## Not tested

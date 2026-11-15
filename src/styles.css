@@ -26,6 +26,8 @@
   --accent-ink: #171722;
   --accent-soft: #353540;
   --accent-line: #626574;
+  /* Progress bars: a blue of their own, so a running transfer never reads as a selected control. */
+  --progress: #3f8cff;
   /* Card footer: the stability grade by level. */
   --grade-limited: #9db4d9;
   --grade-in-use: #7ed3a0;

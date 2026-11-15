@@ -132,17 +132,24 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
     await vi.waitFor(() => expect(guide()?.textContent).toContain('Thanks. Diagnostics sharing is on.'))
     expect(guests[0]).toMatch(/^[a-f0-9]{64}$/); expect(localStorage.getItem('modwerk.diagnostics.guest')).toBe(guests[0])
   }, 15000)
-  it('updates a unit on the previous base in the layout of the member’s set with the USB Audio module, in one update', async () => {
+  // A newer base opens no dialog by itself: the sync asks for it, since nothing syncs to an older base.
+  it('updates a unit on the previous base from the sync, in the layout of the member’s set with the USB Audio module, in one update', async () => {
     const unit = fakeUnit('base'); unit.base = '500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7'
     Object.defineProperty(navigator, 'usb', { value: unit.usb, configurable: true })
     const database = await openDeviceDatabase(), store = deviceStore(database)
     const live = newConfiguration('Live', ['everb', USB_AUDIO_MODULE], undefined, undefined, undefined, { ...usbAudioPreset('computer'), layout: 'main', outboxPairs: [1, 0, 0, 0] })
     await store.saveConfiguration(live); await store.setActiveConfiguration(live.id); database.close()
     await open('library')
+    await wait(3500)
+    expect(guide()).toBeNull()
+    await open('octatrack')
+    const install = () => [...document.querySelectorAll<HTMLButtonElement>('.hub-view-set button')].find(button => /Install (latest base|base with this layout)/.test(button.textContent ?? '') && !button.disabled)
+    await vi.waitFor(() => expect(install()).toBeDefined(), { timeout: 5000 })
+    await act(async () => install()!.click())
     await vi.waitFor(() => expect(guide()?.querySelector('h2')?.textContent).toBe('Update the Modwerk base'), { timeout: 5000 })
-    expect(guide()!.textContent).toContain('It takes a minute or two, with USB Audio · Main.')
+    expect(guide()!.textContent).toContain('Updating takes a minute or two over USB, with USB Audio · Main.')
     expect(guide()!.textContent).not.toContain('USB Audio is off in this base')
-  }, 15000)
+  }, 20000)
   it('leads a signed-out visitor on Your Octatrack to sign in', async () => {
     await open('octatrack', visitor)
     await vi.waitFor(() => expect(container.querySelector('.hub-account-note')).not.toBeNull())

@@ -235,6 +235,17 @@ describe('maintainers of every module in the configuration', () => {
     expect(f.row().status).toBe('closed')
     expect(f.db.prepare('SELECT kind,issue_id FROM notifications').all()).toEqual([{ kind: 'issue_closed', issue_id: id }])
   })
+
+  it('are not told when the reporter replies, while the reporter still hears a maintainer', async () => {
+    const f = await fixture()
+    await f.post()
+    const id = String(f.row().id), zac = await f.developer('zac', 'Zac-Kyoti', ZAC.id), repeat = await f.developer('repeat', 'repeat98', REPEAT.id)
+    for (const [token, module] of [[zac, 'sidechain-compressor'], [repeat, 'miniverb']]) expect((await f.request('/developer/modules/' + module + '/claim', 'POST', {}, '', token)).status).toBe(201)
+    expect((await f.request('/issues/' + id + '/replies', 'POST', { body: 'Still DSP FULL with only these two.' }, f.session)).status).toBe(201)
+    expect(f.db.prepare("SELECT COUNT(*) AS count FROM notifications WHERE kind='issue_comment'").get()).toEqual({ count: 0 })
+    expect((await f.request('/issues/' + id + '/replies', 'POST', { body: 'Which tracks hold them?' }, '', zac)).status).toBe(201)
+    expect(f.db.prepare("SELECT user_id FROM notifications WHERE kind='issue_comment'").all()).toEqual([{ user_id: 'reporter' }])
+  })
 })
 
 describe('GitHub commands on a configuration report', () => {

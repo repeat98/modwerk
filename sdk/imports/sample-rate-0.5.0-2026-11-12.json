@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/sample-rate",
+  "version": "0.5.0-experimental",
+  "date": "2026-11-12",
+  "changes": [
+    "SMPL WAVEFORM shows one row of values (TUN, RATE, BR, LOP, LEV) over a taller waveform: one new site in the SAMPLE view's knob loop (0x400d20ee) calls stock's knob-text routine with the row's place and the value shown, and draws a locked value's box itself; the widget's area in the view's RAM moves from 16/32 to 10/37. While the widget's sample slot reads 0, the module runs stock's page callback (0x400d253a) again every 8 UI ticks, so the waveform appears once the sample has loaded after boot."
+  ],
+  "runtimeSourceSha256": "fc3aa5187ddc37ba6b0c37c3054e5346ad0a2a4e3506eb2fd7570f15c9febfc4",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/sample-rate/sample-rate-0.5.0-experimental-os1.74.elemod",
+      "sha256": "2f92c93284f1ca3be631e118c258d3a2e6a6b73022adf045f92822691e287d7f"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/sample-rate/TESTING.md",
+  "requires": []
+}

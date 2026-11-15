@@ -175,7 +175,13 @@ def effective(module, sdk_root, work, registry=None, path=PORTS):
             raise ValueError('%s needs its controller port %s (module-adapters).' % (module.name, entry['controller'])) from error
         effective_module = controller.port(effective_module, sdk_root, work / 'controller')
     price = (entry or {}).get('price')
-    if price and (APP / price['source']).is_file():
+    if price and price.get('inEngine'):
+        # Its engine package's header carries the price (hook_engines.py), outside the controller digest; the record
+        # keeps only its kind, which says its voice is a DSP voice, so the trust row never pins a price.
+        if price['voice'] or price['engine'] or (APP / price['source']).is_file() and \
+                json.loads((APP / price['source']).read_text()).get('kind') != price['kind'] + '-instructions':
+            raise ValueError('%s: a price in its engine leaves the record 0 and 0, of the source\'s kind' % module.name)
+    elif price and (APP / price['source']).is_file():
         measured = json.loads((APP / price['source']).read_text())
         if (measured.get('perVoice'), measured.get('perCoreWhileEnabled'), measured.get('kind')) != (
                 price['voice'], price['engine'], price['kind'] + '-instructions'):

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top: in every variant (common) the machine list's sections (mw_machine_sections) and the FX track's edit save of words 38 to 41, which stock writes over the delay's TIME (base/fxguard.s), and in send-bus (add) the FX track's lock words, and the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. It comes in two variants: send-bus (the default, with add) and plain (core-ar2 0.7's source with common alone, for a build with no send effect, which then pays none of add's cost).",
+  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top: in every variant (common) the machine list's sections (mw_machine_sections) and the FX track's edit save of words 38 to 41, which stock writes over the delay's TIME (base/fxguard.s), and in send-bus (add) the FX track's lock words, the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to, and digital voices (mw_voices) with the hook ev_sound_applied. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. It comes in two variants: send-bus (the default, with add) and plain (core-ar2 0.7's source with common alone, for a build with no send effect, which then pays none of add's cost).",
   "core": "core-ar2",
   "include": "sdk/machines/analog-rytm-mkii/include",
   "os": "1.74",
@@ -98,7 +98,9 @@
       "../base/locks.s",
       "../base/clock.c",
       "../base/sendbus.c",
-      "../base/sendbus.s"
+      "../base/sendbus.s",
+      "../base/voice.c",
+      "../base/voice.s"
     ],
     "sites": [
       {
@@ -144,9 +146,17 @@
         "new": "ffffffff",
         "kind": "data",
         "stockSha256": "e084a105a7b7d599b8346d3cba5ac51b756d7e29c7ef77fd9eff31fdeae31389"
+      },
+      {
+        "addr": "0x4011f654",
+        "len": 6,
+        "stockSha256": "8d753c8b075b6816018e083a569be977258c02b63721ca61e82d721ccd63c61b",
+        "op": "jsr",
+        "target": "mw_voice_applied_gate"
       }
     ],
     "cflags": [
+      "-fno-late-combine-instructions",
       "-DIS_KEY_HELD_AT=0x40081c28",
       "-DPROJECT_SINGLETON_AT=0x4017fa0a",
       "-DTRACK_INDEX_OF_AT=0x400b693e",
@@ -183,7 +193,18 @@
       "-DSEQ_PLAYING_AT=0x405c8cf8",
       "-DSEQ_PATTERN_AT=0x405c8d04",
       "-DPATTERNS_AT=0x407dd8e3",
-      "-DSPEED_PULSES_AT=0x401db6f8"
+      "-DSPEED_PULSES_AT=0x401db6f8",
+      "-DVOICE_STATE_AT=0x8000fef8",
+      "-DVOICE_STREAM_AT=0x80006bf8",
+      "-DNOISE_GAIN_AT=0x80007000",
+      "-DTRACK_MACHINE_AT=0x8000ea00",
+      "-DHIT_VELOCITY_AT=0x800067c4",
+      "-DSILENCE_AT=0x4011e4c2",
+      "-DPARAM_RECORDS_AT=0x401bfbc8",
+      "-DSTRING_FROM_CSTR_AT=0x401bcff0",
+      "-DSTRING_DTOR_AT=0x401bb540",
+      "-DSHOW_HEADER_AT=0x40035fe8",
+      "-DPARAM_INFO_AT=0x419a4888"
     ],
     "defsym": {
       "mw_send_resume": "0x4010ee6c"
@@ -212,6 +233,36 @@
       {
         "event": "ev_project",
         "fn": "mw_send_project",
+        "order": 50
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_voice_tick",
+        "order": 50
+      },
+      {
+        "event": "ev_draw",
+        "fn": "mw_voice_draw",
+        "order": 50
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_voice_key",
+        "order": 50
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_voice_enc",
+        "order": 50
+      },
+      {
+        "event": "ev_project",
+        "fn": "mw_voice_project",
+        "order": 50
+      },
+      {
+        "event": "ev_render_out",
+        "fn": "mw_voice_render_out",
         "order": 50
       }
     ],
@@ -280,10 +331,25 @@
             0
           ]
         ]
+      },
+      {
+        "to": "core_params",
+        "order": 10,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:mw_voice_params",
+            0
+          ]
+        ]
       }
     ],
     "collections": {
-      "mw_fx": 4
+      "mw_fx": 4,
+      "mw_voices": 4,
+      "ev_sound_applied": 4
     },
     "storage": [
       {
@@ -310,6 +376,11 @@
         "sym": "mw_send_lev",
         "scope": "project",
         "bits": 7
+      },
+      {
+        "sym": "mw_voice_type",
+        "scope": "sound",
+        "bits": 3
       }
     ]
   }
