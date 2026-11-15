@@ -1,10 +1,11 @@
 [
   {
-    "version": "0.2.1-experimental",
-    "date": "2026-11-14",
+    "version": "0.3.0-experimental",
+    "date": "2026-11-15",
     "changes": [
-      "With LFO held, a MIDI turn passed to stock's locker by a module now sets the LFO's depth too, not only the Rytm's knobs.",
-      "Knob turns on the Rytm work as before."
+      "Hold FIX, SAMPLER or LFO for about half a second just to look at the amounts: letting go then does nothing.",
+      "A quick tap still toggles fixed velocity, opens the recorder or opens the LFO page.",
+      "With LFO held, a MIDI turn passed to stock's locker by a module now sets the LFO's depth too, not only the Rytm's knobs."
     ]
   },
   {

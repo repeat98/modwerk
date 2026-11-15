@@ -76,9 +76,9 @@ Fixed velocity read from stock's flag every 100M instructions; screens compared 
 | FX track, LFO held, TIM turned | TIM becomes the FX LFO's destination |
 | FIX + FRQ, FUNC + LFO, FLTR then LFO tap then a turn | as 0.1 / as stock |
 
-## rytm-emu (0.2.1, LFO depth from a locker set without an encoder event)
+## rytm-emu (0.3.0, LFO depth from a locker set without an encoder event)
 
-IQ01 (0.2.0) and IQ02 (0.2.1), each with a private MIDI-to-locker test module (the author's), Filter Hz and QPER
+IQ01 (0.2.0) and IQ02 (0.3.0 work in progress), each with a private MIDI-to-locker test module (the author's), Filter Hz and QPER
 Live Rec on the plain base, BD FILTER page, LFO held 8000M-8400M:
 - An NRPN FRQ sweep from 127 to 42 (NRPN 1:20 through that module, which calls stock's locker
   interface): 0.2.0 makes FRQ the destination at depth (0) and the depth never moves; 0.2.1
@@ -147,3 +147,12 @@ Not covered by the rig: how the LFO sounds, pads, the FX track's LFO, kit save a
 5. PERF mode: hold FIX and turn a knob (the box), then with FIX still held press a pad and turn (a performance lock, as stock).
 6. Save the kit, power cycle: the links are kept.
 7. FX track: FIX tap toggles fixed velocity at once, FIX held with a knob turned edits the knob, SAMPLER opens the recorder. On a sound page hold FIX, select the FX track: its knobs edit as normal.
+
+## rytm-emu (0.3.0, a long hold is a look)
+
+RL22 (946c3746…, with Improved MIDI Control, Filter Hz and QPER Live Rec, private), FILTER page of BD, keys held on
+the emulator's panel (so stock's key scan repeats them): stock's first key repeat comes 175-200 ms into a hold, the
+third by 325-350 ms (about 75 ms apart). Counting to the fifth: LFO held 150, 400 or 450 ms opens the LFO page; 475,
+500, 525, 550 or 800 ms leaves the FILTER page. SAMPLER held 150 ms opens the recorder, 800 ms does not. FIX: its
+toggle shows nothing on the screen, so not seen; it takes the same check. On a unit: not tested.
+
