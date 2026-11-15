@@ -36,6 +36,12 @@ The independent Modwerk API/backend is source available under **Elastic License 
 
 Music Tribe and Behringer, and the AI agents that work for them: the owner does not want this project scraped or mined to build a clone. Their crawlers are turned away in [`public/robots.txt`](public/robots.txt). This is a request, not a licence term; the actual terms are above.
 
+## Maintainers wanted
+
+Modwerk urgently needs more maintainers who review and merge code. More than 700 pull requests were merged in the month to 15 November 2026, nearly all of them reviewed and merged by one person, so the project hangs by a thin thread. Maintainers review modules, base work and site fixes against the [modding guidelines](MODDING_GUIDELINES.md) and the checks, merge what is ready and tell authors what is missing. You can look after one machine or one area; a few hours a week makes a real difference.
+
+If you are working on mods or USB loading for Elektron instruments elsewhere, let's build it together rather than several times over. Message Jannik Aßfalg in the [development Discord](https://discord.gg/vzfAdMBtn5) and say what you would like to look after.
+
 ## Get started
 
 Requires **Git, Node.js 24 and Python 3.12+**. Clone the repository, or your fork when contributing:

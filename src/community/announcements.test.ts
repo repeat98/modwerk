@@ -191,6 +191,16 @@ describe('operator announcements in the bell', () => {
     expect((await (await call('/announcements')).json()).items).toEqual([expect.objectContaining({ title: draft.title, excerpt: draft.body, url: DEVELOPMENT_DISCORD_URL })])
   })
 
+  it('keeps the maintainers call unsent, valid and off the Discord invitation round, which would hide it from members who handled that round', async () => {
+    const { announce, call } = await fixture()
+    const draft = JSON.parse(readFileSync(new URL('../../docs/announcements/maintainers-wanted-2026-11-15.draft.json', import.meta.url), 'utf8'))
+    expect((await (await call('/announcements')).json()).items).toEqual([])
+    expect(draft.visibility).toBe('public')
+    expect(draft.url).not.toBe(DEVELOPMENT_DISCORD_URL)
+    expect((await announce(draft)).status).toBe(201)
+    expect((await (await call('/announcements')).json()).items).toEqual([expect.objectContaining({ title: draft.title, excerpt: draft.body, url: draft.url })])
+  })
+
   it('prepares the approved resend with the same copy and link under a fresh unique key', async () => {
     const { announce, call } = await fixture()
     const draft = JSON.parse(readFileSync(new URL('../../docs/announcements/discord-community-2026-10-12.draft.json', import.meta.url), 'utf8'))
