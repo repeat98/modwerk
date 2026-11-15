@@ -26,7 +26,7 @@
   "presentation": {
     "label": "FILTER HZ",
     "family": "Display",
-    "summary": "FILTER FRQ, and the FX track's DELAY HPF/LPF and REVERB FRQ/HPF/LPF, show their frequency in hertz instead of 0 to 127.",
+    "summary": "The FILTER page's FRQ and the FX track's DELAY HPF/LPF and REVERB FRQ/HPF/LPF show their frequency in hertz instead of 0 to 127.",
     "overview": "Filter Hz changes what the frequency knobs say. On the FILTER page FRQ shows the cutoff to three significant figures instead of the stock 0 to 127: 13.8Hz at 0, 440Hz at 60, 1.11kHz at 76 and 21.1kHz at 127, one semitone a step, from MrScruff's measurement of the self-oscillating filter. Since 1.3.0 the FX track does the same: DELAY and REVERB HPF and LPF and REVERB FRQ show the frequency the stock delay and reverb filters actually use, worked out on the unit from the coefficient the DSP reads. LPF follows HPF, as the stock filters do, and reads OPEN where the low-pass lets everything through. Only the display changes: the filters, their ranges, saved kits and every other parameter are untouched. A locked value's white box is 33 pixels instead of stock's 27, so kHz values fit. It is an elemod port of MrScruff's rytm-mods 0008-filter-hz, with his code unchanged; Modwerk adds the wider box (1.2.1) and the FX pages (1.3.0).",
     "highlights": [
       "FILTER FRQ reads in Hz and kHz to three significant figures, 440Hz at the stock value 60.",
