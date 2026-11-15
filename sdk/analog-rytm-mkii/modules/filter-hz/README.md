@@ -33,8 +33,8 @@ Version **1.3.0** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
 [rytm2_mods](https://github.com/Iced-Cream/rytm2_mods)' elemod port of MrScruff's
 `0008-filter-hz` from [rytm-mods-src](https://github.com/Iced-Cream/rytm-mods-src),
 with his code unchanged; Modwerk's 1.2.1 adds the wider box and 1.3.0 the FX track.
-Testing is in [TESTING.md](TESTING.md): 1.2.0 and 1.2.1 on a unit, 1.3.0 in the
-emulator so far ([report](evidence/emulator-1.3.0.json)).
+Testing is in [TESTING.md](TESTING.md): 1.2.0, 1.2.1 and 1.3.0 on a unit
+([1.3.0 report](evidence/hardware-testing-1.3.0.json)).
 
 ## Controls
 
@@ -99,7 +99,9 @@ See [TESTING.md](TESTING.md) for the commands and results. In short: 1.2.0's pop
 shows Hz on an Analog Rytm MKII in a build of the released core and Filter Hz alone,
 and 1.2.1's box was checked on a unit. In rytm-emu 1.3.0 shows the expected text at every
 value of the five FX knobs, unlocked and locked, in a 33-pixel box with nothing outside
-it; the FILTER page's frames are byte for byte 1.2.1's. Memory: 1,673 bytes (302 in
+it; the FILTER page's frames are byte for byte 1.2.1's. On a unit, 1.3.0's DELAY and REVERB
+values, trig and scene locks (LPF following the locked HPF) and performance edit's stock depth
+read back as expected. Memory: 1,673 bytes (302 in
 1.2.1) of the 128 KiB shared mod area. There is no code in the audio, sequencer or tick
 paths.
 

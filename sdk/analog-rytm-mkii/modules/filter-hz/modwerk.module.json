@@ -121,8 +121,9 @@
   "evidence": {
     "tier": "author-hardware",
     "moduleVersion": "1.3.0",
-    "sourceSha256": "c4ec14ab22c985a0c848ce68782ba675f1eb9d8fce42eb353faaa8c82b1b6e59",
+    "sourceSha256": "81fc303fbb483a687a003c8805a8913cc555048303e26c9cf9ffa9cc6a5a3a7b",
     "reports": [
+      "evidence/hardware-testing-1.3.0.json",
       "evidence/emulator-1.3.0.json",
       "evidence/hardware-testing-1.2.1.json",
       "evidence/emulator-1.2.1.json",
@@ -132,22 +133,22 @@
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-11-14",
+      "testedOn": "2026-11-15",
       "tester": "npp1993 (Nathaniel Pavel)",
       "durationMinutes": null,
-      "summary": "npp1993 reports that on an Analog Rytm MKII with OS 1.74, FZ78 (the released core-ar2 0.3 with Filter Hz 1.2.1 alone, booted from RAM over USB, 2026-11-14) kept FRQ's white lock box the same width and covering the whole value at 440Hz, 1.11kHz, 2.22kHz and 21.1kHz; a locked RES looked as before; unlocked FRQ read 13.8Hz and 21.1kHz at the ends; and about a minute of playback while turning FRQ had no freezes or dropouts.",
+      "summary": "On npp1993's Analog Rytm MKII with OS 1.74, FL01 (a Modwerk base development build with Filter Hz 1.3.0, booted from RAM over USB, 2026-11-15) passed six scripted cases twice, its screens read back from the unit: DELAY and REVERB HPF, LPF and REVERB FRQ in Hz (463Hz, 12.0kHz, 1.44kHz, OPEN, 5.85kHz, 974Hz), trig and SCENE locks in wide boxes with LPF following the locked HPF (1.55kHz from the trig's HPF 39 with the track's HPF at 0), and PERF edit keeping stock's signed depth (+8, -5).",
       "limitations": [
-        "Tested by a maintainer, not by the module's author.",
-        "Booted from RAM; the flash was not written.",
-        "FZ78: .syx 3554efa8d84a384bc18c8f0cf5336d493ca2b26137091432d3ebc610a946a93f. Firmware was not read back from the device.",
-        "Playback not timed exactly; other filter types, other pages' locks and other modules beside it not tried."
+        "Tested by a maintainer, not by the module's porter.",
+        "Booted from RAM in a Modwerk base development build; the flash was not written.",
+        "FL01: .syx beb2a227357a8cf2886a0dfe6dd685434aa3e926e9dd91d97621e8a3a8293b6e, image CRC 38c7eea1 read back from the unit.",
+        "Screens compared by program against references recorded on the unit; playback while turning, other modules beside it, project save and reload, a power cycle and audio were not tried."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "1.2.1: in rytm-emu a locked FRQ's box is 33 pixels for every value, one pixel wider than the widest text each side; unlocked FRQ and other parameters' lock boxes are pixel-identical to 1.2.0. On an Analog Rytm MKII (FZ78, RAM boot, 2026-11-14) the box covered every value tried and RES looked as before. 1.2.0: the FRQ popup shows Hz on an Analog Rytm MKII, OS 1.74, with the released core-ar2 0.3 and Filter Hz alone (FZ74, 2026-10-22).",
+    "summary": "1.3.0: on an Analog Rytm MKII (FL01, RAM boot, 2026-11-15) DELAY and REVERB HPF, LPF and REVERB FRQ read in Hz, trig and scene locks show in wide boxes with LPF following the locked HPF, and PERF edit keeps stock's signed depth; rytm-emu checked every value turned and locked. 1.2.1: the 33-pixel FRQ lock box, checked on a unit (FZ78). 1.2.0: the FRQ popup in Hz on a unit (FZ74, 2026-10-22).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

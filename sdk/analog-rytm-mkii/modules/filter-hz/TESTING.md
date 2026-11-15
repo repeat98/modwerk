@@ -37,8 +37,20 @@ measured on hardware, 48000.4 Hz (rytm-emu's OVERBRIDGE.md).
   REVERB, FRQ (63), HPF (38) and LPF (40) the same way: 5.85kHz, 79.0Hz and 1.44kHz; 1.2.1 shows 64,
   39 and 41. Performance macro 1 in edit, DELAY and REVERB: both builds show stock's signed depth
   (DELAY +5, −2; REVERB FRQ +1, HPF +2, LPF −1), which is not a frequency and stays a number.
-- Not tested: stock flows beyond the FX and FILTER pages, audio (the frequencies are from the
-  equations, not measured), hardware.
+- Hardware, 2026-11-15, run by an automated test link on npp1993's Analog Rytm MKII (OS 1.74),
+  screens read back from the unit, not judged by a person: FL01 (a Modwerk base development build
+  + 1.3.0, `beb2a227…3b6e`, image CRC `38c7eea1`) booted from RAM in a scratch project. Six cases,
+  each run twice, 6 of 6 passing both times ([hardware report](evidence/hardware-testing-1.3.0.json)):
+  - DELAY turned: HPF 64 463Hz, HPF 127 12.0kHz, LPF 80 (HPF 0) 1.44kHz, LPF 96 (HPF 32) OPEN.
+  - REVERB turned: FRQ 64 5.85kHz, FRQ 0 974Hz, HPF 64 463Hz, LPF 80 (HPF 0) 1.44kHz.
+  - Trig lock: HPF 39 and LPF 41 on trig 1, 79.0Hz and 1.44kHz in wide boxes; track HPF then 0 and
+    LPF moved to 42 on the held trig: 1.55kHz, from the trig's HPF, not 97.7Hz.
+  - SCENE edit, scene 1: DELAY 84.8Hz and 1.66kHz; REVERB FRQ 5.96kHz, HPF 84.8Hz, LPF 1.66kHz.
+  - PERF edit, macro 1: stock's signed depth, +8 and −5.
+  - Reported by npp1993 while watching: two locked kHz values on HPF and LPF make their boxes touch
+    (the one-pixel divider above); kept as it is, the same format as FILTER FRQ.
+- Not tested: playback while turning, other modules beside it, saving and reloading a project, a
+  power cycle, audio (the frequencies are from the equations, not measured).
 
 ## 1.2.1 (a wider lock box for FRQ)
 
