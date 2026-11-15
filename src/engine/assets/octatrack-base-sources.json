@@ -43,7 +43,7 @@
   "sdk/machines/octatrack/elekloader/dsp_journal.h": "8a4f1b2016ce15f36fc04679687faac80697352640210df40cc9b568d76dea38",
   "sdk/machines/octatrack/elekloader/dsp_journal_manager.h": "7960a96330eb30778b0c1d22bc994d2358d9919afb5bf05e2587b2123a7a1062",
   "sdk/machines/octatrack/elekloader/dsp_loader.py": "beee14711516351c8ba10e6d99d0d37850f5ee8bd3ee4a71852e180f5e531efd",
-  "sdk/machines/octatrack/elekloader/dsp_packages.py": "c4e1d902aa0a857b070be1a449bf2b07a259c00212469f7e776ef843115f6179",
+  "sdk/machines/octatrack/elekloader/dsp_packages.py": "d7e08cc3709b48e26cb1281495d5df164bf0f0902e294834a4bfba2510922185",
   "sdk/machines/octatrack/elekloader/dsp_park.asm": "77fbc1cc56ae513860c3a335b30a9d85ff0c38b7607cb93ae6e985bb1ecc97c9",
   "sdk/machines/octatrack/elekloader/dsp_receiver.asm": "c4fd632786e11524f296586a93c9c080dd44b10c23c38cbc18f93f257a741668",
   "sdk/machines/octatrack/elekloader/ep0.c": "a34322276f9a3b00ec7eef4737020eacdefe0b24bf76d6a953716d4649f9ba20",
