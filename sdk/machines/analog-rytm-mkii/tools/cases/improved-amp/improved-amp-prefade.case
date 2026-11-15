@@ -1,0 +1,206 @@
+# Improved AMP: ENV RESET's fade before a trig is heard. The BD track holds a trig on every second step
+# (250 ms apart at 120 BPM) and HLD 57 holds each hit into the next. With ENV RESET at AMP or AMP+FILT the
+# voice fades out just before every sequenced trig but the first after PLAY (a dip: 30 dB under the peak
+# for 1 ms or more, inside the sound); at OFF and FILTER it does not, and MIDI notes play as stock.
+# Measured on the unit, from RAM, 10 Nov 2026: dips 0 at OFF, 18 at AMP, 0 at FILTER, 18 at AMP+FILT
+# (19 trigs play before STOP), 0 for eight MIDI notes 250 ms apart at OFF and at AMP; the first trig sounds
+# 45 to 53 ms after PLAY is sent. The BD track needs a sound that rings with the AMP envelope open.
+# Changes the tempo, the BD track's AMP page and its ENV RESET in the active kit, and the BD track of the
+# active pattern, which it clears; ends at 120 BPM, ENV RESET OFF, HLD 0, the track empty.
+name: improved-amp-prefade
+state: changes
+transport: any
+target: unit
+
+hold TRK
+key BD
+release TRK
+# Tempo to 120.0: down to the bottom (30.0), then 90 BPM up, a step of the tempo screen's LEVEL being 1 BPM.
+key TEMPO
+enc LEVEL -127 x64
+nudge LEVEL +21 per 6 x4
+nudge LEVEL +6 per 6
+wait 500
+screen tempo
+expect tempo == ref region 40 15 88 33
+key NO
+key AMP
+cc 78 0
+cc 79 57
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+wait 500
+screen er0
+expect er0 == ref region 39 26 82 11
+key NO x3
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key T1
+key T3
+key T5
+key T7
+key T9
+key T11
+key T13
+key T15
+wait 300
+key RECORD
+wait 300
+audio seqoff BD 5000
+wait 100
+key PLAY
+wait 4480
+key STOP
+wait 700
+wait 300
+audio noteoff BD 3000
+wait 50
+note BD 100 50
+wait 200
+note BD 100 50
+wait 200
+note BD 100 50
+wait 200
+note BD 100 50
+wait 200
+note BD 100 50
+wait 200
+note BD 100 50
+wait 200
+note BD 100 50
+wait 200
+note BD 100 50
+wait 200
+wait 1300
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+key RIGHT
+wait 500
+screen er1
+expect er1 == ref region 39 26 82 11
+key NO x3
+wait 300
+audio seqamp BD 5000
+wait 100
+key PLAY
+wait 4480
+key STOP
+wait 700
+wait 300
+audio noteamp BD 3000
+wait 50
+note BD 100 50
+wait 200
+note BD 100 50
+wait 200
+note BD 100 50
+wait 200
+note BD 100 50
+wait 200
+note BD 100 50
+wait 200
+note BD 100 50
+wait 200
+note BD 100 50
+wait 200
+note BD 100 50
+wait 200
+wait 1300
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+key RIGHT x2
+wait 500
+screen er2
+expect er2 == ref region 39 26 82 11
+key NO x3
+wait 300
+audio seqfilter BD 5000
+wait 100
+key PLAY
+wait 4480
+key STOP
+wait 700
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+key RIGHT x3
+wait 500
+screen er3
+expect er3 == ref region 39 26 82 11
+key NO x3
+wait 300
+audio seqboth BD 5000
+wait 100
+key PLAY
+wait 4480
+key STOP
+wait 700
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+wait 500
+screen erend
+expect erend == er0 region 39 26 82 11
+key NO x3
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key RECORD
+cc 79 0
+
+expect seqoff.dips == 0
+expect noteoff.dips == 0
+expect seqamp.dips == 18
+expect noteamp.dips == 0
+expect seqfilter.dips == 0
+expect seqboth.dips == 18
+expect seqamp.peak == seqoff.peak within 3
