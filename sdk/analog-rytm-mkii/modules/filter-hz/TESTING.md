@@ -30,8 +30,14 @@ measured on hardware, 48000.4 Hz (rytm-emu's OVERBRIDGE.md).
 - FILTER page: 1.2.1's four capture plans on FZ79 (core-ar2 0.3 + 1.3.0, `96cec08b…21bf`) give
   `filter-page.png`, `frq-440hz.png`, `frq-open.png` and `frq-locked.png` byte for byte.
 - Memory: 1,673 bytes (`.run`; 302 in 1.2.1).
-- Not tested: PERF and SCENE screens showing FX values, stock flows beyond the FX and FILTER
-  pages, audio (the frequencies are from the equations, not measured), hardware.
+- SCENE and PERFORMANCE edit (FZ79 against FH04): stock keeps a held trig's, a scene's and a
+  performance macro's locks behind one lock interface, which the knob text and LPF's HPF read the
+  same way. Scene 1 in edit, its pad held, DELAY HPF (38) and LPF (40) turned one step: 79.0Hz and
+  1.44kHz in 33-pixel boxes, LPF from the scene's HPF lock (39 + 41); 1.2.1 shows 39 and 41.
+  Performance macro 1 in edit: both builds show stock's signed depth (+5, −2, REVERB FRQ +3), which
+  is not a frequency and stays a number.
+- Not tested: stock flows beyond the FX and FILTER pages, audio (the frequencies are from the
+  equations, not measured), hardware.
 
 ## 1.2.1 (a wider lock box for FRQ)
 

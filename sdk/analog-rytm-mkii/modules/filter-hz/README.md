@@ -67,7 +67,7 @@ in any kit.
 | 96 | 3.52kHz | 4.21kHz | 4.57kHz | 9.86kHz |
 | 127 | 21.1kHz | 12.0kHz | OPEN | 14.0kHz |
 
-With a trig held, LPF uses that trig's HPF lock when it has one, as the stock filter will.
+With a trig held, or a scene's pad held in SCENE edit, LPF uses that trig's or scene's HPF lock when it has one, as the stock filter will.
 
 ## Compatibility and limitations
 
@@ -75,7 +75,8 @@ Requires core-ar2 0.3 on OS 1.74. Use your own original stock OS 1.74 file.
 
 - Built for OS 1.74 only.
 - FILTER FRQ's scale was measured on the self-oscillating LP2 filter; the other filter types are assumed to share it.
-- Each value is the knob's value or the held trig's lock: envelope depth and LFO modulation are not included.
+- Each value is the knob's value or the held trig's or scene's lock: envelope depth and LFO modulation are not included.
+  PERFORMANCE edit keeps stock's signed depth (+5, −2): it is an amount, not a frequency.
 - The FX frequencies come from the stock filters' equations and coefficients at 48 kHz, read in the
   code: −3 dB points for HPF and LPF, the shelf's corner for REVERB FRQ. They were not measured with audio.
 - LPF needs HPF's value. It reads it as the page's graph does, from the FX page; anywhere the FX page
