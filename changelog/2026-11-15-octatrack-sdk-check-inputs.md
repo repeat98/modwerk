@@ -1,0 +1,1 @@
+Development: Octatrack source checks now use Analog BD 0.1.7's documented engine size and stop rebuilding Modulation and Spectrum, which were removed from the library. The relocation and byte-for-byte package comparisons remain required. Instrument behavior is unchanged.
