@@ -195,6 +195,20 @@ re-hold shows 100 % whatever is locked, so compare before the release (`region 9
 track, `cc 94 0` unmutes it. Stopped, `hold BANK_A`, `key T2` selects A02, with its own kit and tempo. A case never
 stores sounds: a pool sound it needs is stored by hand to the project's pool, and the header says which.
 
+## FX track, scenes and performances
+
+Seen on rytm-emu and a MKII, 15 November 2026 (`cases/filter-hz/`). `key FX` is a toggle: pressed on the FX track it
+goes back to the drum track, and the unit keeps the choice into the next case, so select a drum track first (`hold
+TRK`, `key BD`, `release TRK`, `key FX`). The FX track's auto-channel CCs: DELAY HPF 20, LPF 21; REVERB FRQ 26, HPF 28,
+LPF 29. A key the link holds makes no long press: `hold SCNE` or `hold PERF` never opens the edit. Open it with FUNC +
+pad: `key SCNE` (or `PERF`), `hold FUNC`, `key BD`, `release FUNC` opens scene (macro) 1's edit. In the edit, `key
+LEFT x3`, `key RIGHT x2`, `key YES` clears that scene or macro (CLEARED shows): do it at the start and the end, so the
+case can run again. Hold the pad and turn to lock: a scene's first nudge moves the value one step up from the track's,
+a macro's starts at depth 0 and shows signed. Then `release BD`, `key SCNE` (edit off), `key SCNE` (mode off). In
+GRID RECORDING, holding a trig and nudging locks the shown value first, the second nudge moves it; a re-held trig shows
+no locked values until a knob turns; `key T1` takes the lock trig and its locks off. A value overlay stays about
+2.3 s, so a case that turns knob after knob waits 3 s after each screen.
+
 ## Rules on the unit
 
 - The unit is the developer's: run on it only with their go for this run, and tell them beforehand how long, how
