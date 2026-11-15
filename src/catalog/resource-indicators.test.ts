@@ -16,6 +16,7 @@ import poly8Approval from '../../sdk/approvals/poly8-build-approval.json'
 import everbApproval from '../../sdk/approvals/everb-build-approval.json'
 import playmodesApproval from '../../sdk/approvals/playmodes-build-approval.json'
 import amigaApproval from '../../sdk/approvals/amiga-build-approval.json'
+import tempSaveApproval from '../../sdk/approvals/temp-save-build-approval.json'
 import sdkCatalog from '../../sdk/catalog.json'
 
 const draft = () => parseModuleDocument(example)
@@ -25,7 +26,7 @@ describe('required relative module resource gauges', () => {
   it('populates CPU, DSP and memory for every current version without inventing measurements', () => {
     expect(MODULE_DOCUMENTS).toHaveLength(sdkCatalog.modules.length)
     // Only versions under an owner exception may go without a qualification record; none is invented for them.
-    const exempt = new Set([...baseline.modules, ...waivers.modules, synthApproval, muteApproval, recorderApproval, airChorusApproval, poly8Approval, everbApproval, playmodesApproval, amigaApproval].map(module => module.id))
+    const exempt = new Set([...baseline.modules, ...waivers.modules, synthApproval, muteApproval, recorderApproval, airChorusApproval, poly8Approval, everbApproval, playmodesApproval, amigaApproval, tempSaveApproval].map(module => module.id))
     for (const document of MODULE_DOCUMENTS) {
       const indicators = moduleResourceIndicators(document)
       expect(indicators.map(indicator => indicator.id)).toEqual(['cpu', 'dsp', 'memory'])

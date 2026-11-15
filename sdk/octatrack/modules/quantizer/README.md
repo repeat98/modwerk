@@ -87,9 +87,10 @@ doctor runs, the emulator smoke and the author's MKI reports of 30 October and
 
 Tim Hastie authored Scale Quantizer in
 [timhastie/octatrick-modules](https://github.com/timhastie/octatrick-modules),
-pinned here to `8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c` (his 2.21 quantizer
-plus the TRACK / FOLLOW rows, released with Octatrick 2.22), with the hook comments in words
-and every guard read through `stock_guard`). Sam Banks
+pinned here to his release tag `v2.23`, `e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb`, whose
+`quantizer/` is vendored byte for byte (0.1.4 pinned `8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c`,
+his 2.21 quantizer plus the TRACK / FOLLOW rows, released with Octatrick 2.22), with the hook comments
+in words and every guard read through `stock_guard`. Sam Banks
 provided the Octabam wrapper up to 0.1.3. Vendored source remains MIT licensed
 with its original notices in [LICENSE](LICENSE) and
 [upstream/LICENSE](upstream/LICENSE). Nothing inside `upstream/` is edited.

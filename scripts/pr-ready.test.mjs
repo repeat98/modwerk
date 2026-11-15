@@ -52,6 +52,9 @@ describe('pr:ready verdict', () => {
     expect(gateEdits(['sdk/octatrack/modules/track-mutes/manifest.py', 'scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])).toEqual(['scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])
     expect(gateEdits(['sdk/drafts/track-mutes/manifest.py', '.github/workflows/module-pr.yml'])).toEqual(['.github/workflows/module-pr.yml'])
     expect(gateEdits(['sdk/digitakt/modules/digiperform/build.json', 'scripts/modules.mjs', 'sdk/machines/octatrack/compatibility.json'])).toEqual(['scripts/modules.mjs', 'sdk/machines/octatrack/compatibility.json'])
+    // Every machine the registry gives a module folder, the Zoom pedals' too.
+    expect(gateEdits(['sdk/zoom/modules/loop/modwerk.module.json', 'scripts/machine-folders.mjs'])).toEqual(['scripts/machine-folders.mjs'])
+    expect(gateEdits(['sdk/digitakt-ii/modules/track-names/build.json', 'scripts/change-scope.mjs'])).toEqual(['scripts/change-scope.mjs'])
     // What a module release legitimately carries (ARP KEY LOCKS, #954): the package builder's list, assets, the native comparison, test lists.
     expect(gateEdits(['sdk/octatrack/modules/arp-key-locks/manifest.py', 'scripts/build-module-packages.py', 'src/engine/assets/module-build.json', 'sdk/native-comparisons/arp-key-locks.json', 'scripts/module-release-scope.test.mjs', 'sdk/tests/test_arp_key_locks.py'])).toEqual([])
     // A Fix: pull request to the gate itself changes no module.
@@ -112,6 +115,10 @@ describe('pr:ready verdict', () => {
       mkdirSync(join(checkout, 'scripts'))
       const script = join(checkout, 'scripts', 'pr-ready.mjs')
       copyFileSync(new URL('./pr-ready.mjs', import.meta.url), script)
+      // Its module folders come from the machine registry, as in every checkout.
+      copyFileSync(new URL('./machine-folders.mjs', import.meta.url), join(checkout, 'scripts', 'machine-folders.mjs'))
+      mkdirSync(join(checkout, 'src', 'devices'), { recursive: true })
+      copyFileSync(new URL('../src/devices/machines.generated.json', import.meta.url), join(checkout, 'src', 'devices', 'machines.generated.json'))
       // A stale branch must stop before any generator/check invocation.
       const result = spawnSync(process.execPath, [script, '--remote', 'origin'], { cwd: checkout,
         env: { ...env, npm_execpath: join(directory, 'never-run-npm.mjs') }, encoding: 'utf8' })

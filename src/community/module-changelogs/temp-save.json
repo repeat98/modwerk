@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-12",
+    "changes": [
+      "Temp Save is back on the Octatrack: it installs over USB from the site again.",
+      "Nothing changes in how it works: FUNC + YES keeps the pattern and its Part, FUNC + NO puts both back.",
+      "Known issue: 0.1.1 has not yet run on a unit; 0.1.0 was tested on one MKII over USB."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-10-28",
     "changes": [

@@ -96,9 +96,11 @@ export function unitLines(incidents, names = namesFor) {
     return last?.cpu >= 950 && !last.playing && rightYes(walk) && set?.a === 0
   }
   const latest = Math.max(...all.map(r => r.epoch)), on = r => base.has(at(r)) ? base.get(at(r)).toString(16).padStart(8, '0') : logBase(all, r.epoch)
-  return all.filter(r => r.kind !== 'start').slice(-12).map(r => '  unit: ' + incident(r) + (r.kind === 'crash' ? withName(names(on(r)), r.a) : '') +
+  // A second or two at 90 % while stopped is a key press or a project load: 185 of 280 hot records from 11 to 14 November 2026 were such, 60 of them with nothing installed.
+  const brief = r => r.kind === 'hot' && r.a < 10 && !r.playing, left = all.filter(brief).length
+  return [...left ? [`  unit: ${left} hot spell${left > 1 ? 's' : ''} under 5 s while stopped left out (key presses and project loads)`] : [], ...all.filter(r => r.kind !== 'start' && !brief(r)).slice(-12).map(r => '  unit: ' + incident(r) + (r.kind === 'crash' ? withName(names(on(r)), r.a) : '') +
     (upgrade(r) ? ' (an OS upgrade: this start runs another base; not a hang)' : system(r) ? ' (likely an OS upgrade or USB disk mode, beta finding 72: the session before ended stopped at 95 %+ CPU after PROJ … RIGHT YES, no module installed)' : '') +
-    (r.epoch < latest ? ` (an earlier log, base ${on(r)})` : ''))
+    (r.epoch < latest ? ` (an earlier log, base ${on(r)})` : ''))]
 }
 
 /** The base's saved-set result (modset.c) as a reading's `saved` reports it; 1-6 are what a boot's restore found. */

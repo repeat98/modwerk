@@ -12,7 +12,8 @@
   "copied": [],
   "regions": [],
   "claims": [
-    "ui:FILTER page FRQ value text"
+    "ui:FILTER page FRQ value text",
+    "ui:FILTER page FRQ lock box"
   ],
   "requires": [],
   "derive": null,
@@ -27,6 +28,13 @@
           "stockSha256": "f08a5394f726a8f4773d5695b9807dc82b76b38d0f0379253281fba25625729c",
           "op": "jmp",
           "target": "filter_hz_gate"
+        },
+        {
+          "addr": "0x40037bea",
+          "len": 20,
+          "stockSha256": "49f6a4527387e36b9ce46d41fd5916835cc000c650b024e660695e41c3e85c78",
+          "op": "jmp",
+          "target": "filter_hz_box"
         }
       ]
     }

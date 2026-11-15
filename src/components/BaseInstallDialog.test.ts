@@ -3,7 +3,7 @@ import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeSession, fakeUnit } from '../dev/octatrack-link-fake'
-import { OctatrackLink } from '../engine/elekloader/octatrack-link'
+import { BaseTooBigError, OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { UploadUnconfirmedError } from '../engine/elekloader/upload-session'
 import { BaseInstallDialog } from './BaseInstallDialog'
 import { layoutIdentity } from '../engine/elekloader/base-variants'
@@ -123,6 +123,34 @@ describe('the base dialog for a unit on an older base', () => {
     expect(container.textContent).toContain('The Octatrack stopped answering. Nothing was saved: your Octatrack keeps its current base.')
     expect(container.querySelector('.base-update-plan .is-failed strong')!.textContent).toBe('Send')
     expect(container.textContent).not.toContain('hello was not confirmed')
+  })
+  it('runs as two updates when the unit’s base stages less than the new base: the step base, then the new one', async () => {
+    const { update, buildBase, expected, bin } = await older(true)
+    const stepBin = new Uint8Array([1, 2, 3])
+    buildBase.mockImplementation((async (_layout?: unknown, step?: boolean) => step ? { buffer: stepBin.buffer, sha256: 's', base: 'step' } : { buffer: bin.buffer, sha256: 'x', base: expected }) as never)
+    update.mockImplementationOnce(async () => { throw new BaseTooBigError(1400000, 0x140000) })
+    click(container.querySelector('.risk-accept input')!); click(buttonNamed('Update over USB')!); await settle(); await settle(); await settle()
+    expect(buildBase.mock.calls).toEqual([[undefined], [undefined, true]])
+    expect(update.mock.calls.map(call => [call[1], call[4]])).toEqual([[expected, false], ['step', false], [expected, true]])
+    expect(update.mock.calls[1][0]).toEqual(stepBin)
+    expect(container.textContent).toContain('Done. The new base is saved')
+  })
+  it('says the first update is saved when the second one stops', async () => {
+    const { update } = await older(true)
+    update.mockImplementationOnce(async () => { throw new BaseTooBigError(1400000, 0x140000) }).mockImplementationOnce(async () => {})
+      .mockImplementationOnce(async () => { throw new Error('The Octatrack did not come back within 90 s.') })
+    click(container.querySelector('.risk-accept input')!); click(buttonNamed('Update over USB')!); await settle(); await settle(); await settle()
+    expect(container.textContent).toContain('The first of the two updates is saved. Start the update again for the second.')
+    expect(container.textContent).not.toContain('Nothing was saved')
+  })
+  it('sends to the card when even the step base is too big for the unit’s base', async () => {
+    const { update } = await older(true)
+    update.mockImplementation(async () => { throw new BaseTooBigError(1400000, 4096) })
+    click(container.querySelector('.risk-accept input')!); click(buttonNamed('Update over USB')!); await settle(); await settle(); await settle()
+    expect(update).toHaveBeenCalledTimes(2)
+    expect(container.textContent).toContain('too old to take this update over USB. Update from the card.')
+    expect(container.textContent).toContain('Nothing was saved')
+    expect(buttonNamed('Update from the card')).toBeDefined()
   })
   it('asks for a reload instead of sending its base when the site was deployed since the page opened', async () => {
     const script = Object.assign(document.createElement('script'), { type: 'module' }); script.setAttribute('src', './assets/index-old.js'); document.head.append(script)

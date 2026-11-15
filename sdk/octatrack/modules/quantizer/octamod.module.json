@@ -15,7 +15,7 @@
         "page": "PROJECT > CONTROL",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.5-experimental",
+        "moduleVersion": "0.1.4-experimental",
         "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
       }
@@ -32,7 +32,7 @@
         "page": "CONTROL SEQUENCER: SCALE",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.5-experimental",
+        "moduleVersion": "0.1.4-experimental",
         "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
       }
@@ -49,7 +49,7 @@
         "page": "CONTROL SEQUENCER: ROOT",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.5-experimental",
+        "moduleVersion": "0.1.4-experimental",
         "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
       }
@@ -66,7 +66,7 @@
         "page": "CONTROL SEQUENCER: GLIDE",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.5-experimental",
+        "moduleVersion": "0.1.4-experimental",
         "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
       }
@@ -83,7 +83,7 @@
         "page": "CONTROL SEQUENCER: FOLLOW",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.5-experimental",
+        "moduleVersion": "0.1.4-experimental",
         "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
       }
@@ -100,7 +100,7 @@
         "page": "MIDI trig mode",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.5-experimental",
+        "moduleVersion": "0.1.4-experimental",
         "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
       }

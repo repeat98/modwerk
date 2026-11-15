@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/filter-hz",
+  "version": "1.2.1",
+  "date": "2026-11-14",
+  "upstream": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+    "path": "filter-hz/os1.74",
+    "license": "GPL-2.0-only"
+  },
+  "changes": [
+    "FRQ's lock box: a second site, the five pushes of the rectangle in stock's knob value drawing (0x40037bea, 20 bytes), goes through filter_hz_box, which pushes x-16..x+16 (33 pixels) for FRQ and stock's x-13..x+13 for every other parameter, so a locked kHz value fits inside the white box. The value text and the gate code are unchanged.",
+    "Source-only export compiled from sdk/analog-rytm-mkii/modules/filter-hz at 9eb416750 in the pinned toolchain."
+  ],
+  "runtimeSourceSha256": "1e11d65074db58590e66f5b94b0ddadf08122c49c03ee0bb7ed1a6175c8cf734",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/filter-hz/filter-hz-1.2.1-os1.74.elemod",
+      "sha256": "ce174e49023429ece5bcec9f29ab0c1b1f39d31d530c24828c69eb72d451fea6"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/filter-hz/TESTING.md",
+  "requires": []
+}

@@ -33,6 +33,11 @@ export interface FakeUnit {
   /** The base the unit runs (IDENTIFY), and the one in its NOR: a RAM boot changes the first, a USB base update both. */
   base: string
   flashed: string
+  /** The base runs out of RAM although NOR holds the same one (just after it saved itself on two slots): its gate
+   * does not read the mailbox either, so an armed trial restarts it from NOR first. */
+  fromRam?: boolean
+  /** What the base stages (HELLO's capacity); 262144 when unset. */
+  capacity?: number
   /** The base writes its own container to NOR over USB (capability feature bit 8, flash.c). */
   updatesBase: boolean
   /** Whole-set transaction capability (512), opt in in lifecycle tests. */
@@ -62,6 +67,8 @@ export interface FakeUnit {
   /** Writes during which USB drops: the write finishes on the unit, the reply is lost, and the replugged unit's
    * reset rolls the lost session back, which restarts it on NOR (flash.c f_restore). */
   writeDropouts?: number
+  /** Stagings of its own container whose reply is lost before the write: nothing is written, the unit runs on. */
+  stageLosses?: number
   /** The restart after a saved write hangs at the logo (a DSP stalled while the base was sent does not park): the unit
    * goes away and comes back only when plugged again, as after a power cycle. */
   restartHangs?: boolean
@@ -165,7 +172,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
   return async (_transport?: unknown, _base?: string, options: { timeoutMs?: number } = {}): Promise<LinkSession> => {
     if ((options.timeoutMs ?? 0) > UPLOAD_TIMEOUT_MAX_MS) throw new Error('Upload timeout must be at most ' + UPLOAD_TIMEOUT_MAX_MS + ' ms.') // as UploadSession.connect
     let status: UploadStatus = { command: 'hello', transaction: 0, result: 'ok', phase: unit.staged ? 'receiving' : unit.orphan ? 'trial' : 'normal', activeKnown: true, generation: unit.orphan ? 1 : 0,
-      lastTransaction: unit.orphan ? 7 : 0, currentTransaction: unit.orphan ? 7 : 0, received: 0, capacity: 262144, base: unit.base, session: '00'.repeat(32),
+      lastTransaction: unit.orphan ? 7 : 0, currentTransaction: unit.orphan ? 7 : 0, received: 0, capacity: unit.capacity ?? 262144, base: unit.base, session: '00'.repeat(32),
       active: unit.orphan ?? unit.active }
     let staged = unit.active, owned = false, data: Uint8Array | undefined
     // The base a staged container holds: its section's image. A base before the two slots writes only itself.
@@ -182,6 +189,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
       async stage(pkg, { signal, progress } = {}) {
         if (unit.playing) return step('normal', 'unsafe')
         if (unit.refusal) return step('normal', 'rejected')
+        if (unit.stageLosses && String.fromCharCode(...pkg.data.subarray(0, 4)) === 'ELEK' && unit.stageLosses-- > 0) { await wait(); throw new UploadUnconfirmedError('hello was not confirmed', status) }
         staged = pkg.sha256; data = pkg.data
         for (let sent = 0; sent < pkg.data.length;) {
           if (signal?.aborted) { status = { ...status, phase: 'normal' }; throw new DOMException('Module staging cancelled.', 'AbortError') }
@@ -205,8 +213,8 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
         // A RAM boot image (boot.c): the unit restarts half a second on. Only the flashed base's gate reads the mailbox, so
         // armed from a base running out of RAM it comes back on the flashed one; from that one, on the image's base.
         if (data && data.length >= 4 && new DataView(data.buffer, data.byteOffset).getUint32(0) === 0x4fefffe4) {
-          const next = unit.base === unit.flashed ? fakeBaseOf(data) : unit.flashed
-          setTimeout(() => { unit.base = unit.active = next; unit.unplug(); unit.plug('base') }, delay)
+          const next = unit.base === unit.flashed && !unit.fromRam ? fakeBaseOf(data) : unit.flashed
+          setTimeout(() => { unit.base = unit.active = next; unit.fromRam = false; unit.unplug(); unit.plug('base') }, delay)
         }
         return published
       },
