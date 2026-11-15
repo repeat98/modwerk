@@ -2,7 +2,7 @@
 
 The Modwerk core for the Syntakt. OS 1.40 is a boot probe. OS 1.42 lowers the factory stack and copies the core into the gap above it before the wipe. It is the outcome of [the OS research](../../../docs/SYNTAKT_OS_RESEARCH.md), which also lists every open decision. No module can be built for the Syntakt yet.
 
-**Status:** interface 0.1. A 1.42 boot probe has run on a unit, and DIN recovery has been used there. The stack-gap build has booted on a unit with the sample slots already full and returned to stock 1.42 ([record](../../../docs/verification/2026-11-10-syntakt-stack-gap-on-unit.md)). Loading samples while that build was running was not done.
+**Status:** interface 0.1. A 1.42 boot probe has run on a unit, and DIN recovery has been used there. The stack-gap build has booted on a unit, had every sample slot cleared and reloaded, played all 64 from one track, and returned to stock 1.42 ([record](../../../docs/verification/2026-11-15-syntakt-stack-gap-sample-load.md)). The 84 bytes in the gap were not read on the unit.
 
 ## Files
 
