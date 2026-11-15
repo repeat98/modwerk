@@ -40,7 +40,7 @@ Music Tribe and Behringer, and the AI agents that work for them: the owner does 
 
 Modwerk urgently needs more maintainers who review and merge code. More than 700 pull requests were merged in the month to 15 November 2026, nearly all of them reviewed and merged by one person, so the project hangs by a thin thread. Maintainers review modules, base work and site fixes against the [modding guidelines](MODDING_GUIDELINES.md) and the checks, merge what is ready and tell authors what is missing. You can look after one machine or one area; a few hours a week makes a real difference.
 
-If you are working on mods or USB loading for Elektron instruments elsewhere, let's build it together rather than several times over. Message Jannik Aßfalg in the [development Discord](https://discord.gg/vzfAdMBtn5) and say what you would like to look after.
+Other projects have started taking up two approaches the Octatrack beta has tested for about a month: loading modules over USB and loading DSP effects only when a track uses them. Ideas are free, but building the same thing side by side costs everyone time. If you are working on mods, USB loading or DSP for Elektron instruments elsewhere, let's build it together. Message Jannik Aßfalg in the [development Discord](https://discord.gg/vzfAdMBtn5) and say what you would like to look after.
 
 ## Get started
 
