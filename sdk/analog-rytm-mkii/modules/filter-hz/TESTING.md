@@ -33,9 +33,10 @@ measured on hardware, 48000.4 Hz (rytm-emu's OVERBRIDGE.md).
 - SCENE and PERFORMANCE edit (FZ79 against FH04): stock keeps a held trig's, a scene's and a
   performance macro's locks behind one lock interface, which the knob text and LPF's HPF read the
   same way. Scene 1 in edit, its pad held, DELAY HPF (38) and LPF (40) turned one step: 79.0Hz and
-  1.44kHz in 33-pixel boxes, LPF from the scene's HPF lock (39 + 41); 1.2.1 shows 39 and 41.
-  Performance macro 1 in edit: both builds show stock's signed depth (+5, −2, REVERB FRQ +3), which
-  is not a frequency and stays a number.
+  1.44kHz in 33-pixel boxes, LPF from the scene's HPF lock (39 + 41); 1.2.1 shows 39 and 41. On
+  REVERB, FRQ (63), HPF (38) and LPF (40) the same way: 5.85kHz, 79.0Hz and 1.44kHz; 1.2.1 shows 64,
+  39 and 41. Performance macro 1 in edit, DELAY and REVERB: both builds show stock's signed depth
+  (DELAY +5, −2; REVERB FRQ +1, HPF +2, LPF −1), which is not a frequency and stays a number.
 - Not tested: stock flows beyond the FX and FILTER pages, audio (the frequencies are from the
   equations, not measured), hardware.
 

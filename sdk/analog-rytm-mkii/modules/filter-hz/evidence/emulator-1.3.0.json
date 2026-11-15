@@ -36,8 +36,8 @@
     "Lock-aware LPF: track HPF 0, trig 1 held, HPF locked at 39 (79.0Hz) and LPF locked at 40: LPF reads 1.34kHz, the corner for HPF 39 + LPF 40, not 84.8Hz (HPF 0).",
     "LPF redraws when HPF moves: trig 1 held, LPF locked at 40 first (84.8Hz with HPF 0), then HPF locked up to 39: LPF's box reads 1.34kHz on the next frame.",
     "FILTER page: the 1.2.1 capture plans on FZ79 give media/filter-page.png, frq-440hz.png, frq-open.png and frq-locked.png byte for byte.",
-    "SCENE edit (FZ79 against FH04): SCENE mode, BD selects scene 1, SCNE held to edit, BD held, DELAY HPF (38) and LPF (40) each turned one step: FZ79 shows 79.0Hz and 1.44kHz in 33-pixel inverted boxes, LPF from the scene's HPF lock (39 + 41), not the track's HPF 38 (1.34kHz); FH04 shows 39 and 41 in stock's boxes.",
-    "PERFORMANCE edit (FZ79 against FH04): PERF mode, BD selects macro 1, PERF held to edit, BD held, DELAY HPF and LPF and REVERB FRQ turned: both builds show stock's signed modulation depth (0, +5, -2, +3) in the same stock boxes. A depth is not a frequency, and Filter Hz leaves it alone."
+    "SCENE edit (FZ79 against FH04): SCENE mode, BD selects scene 1, SCNE held to edit, BD held, DELAY HPF (38) and LPF (40) each turned one step: FZ79 shows 79.0Hz and 1.44kHz in 33-pixel inverted boxes, LPF from the scene's HPF lock (39 + 41), not the track's HPF 38 (1.34kHz); FH04 shows 39 and 41 in stock's boxes. REVERB FRQ (63), HPF (38) and LPF (40) the same way: FZ79 5.85kHz, 79.0Hz and 1.44kHz in 33-pixel boxes; FH04 64, 39 and 41.",
+    "PERFORMANCE edit (FZ79 against FH04): PERF mode, BD selects macro 1, PERF held to edit, BD held, DELAY HPF and LPF and REVERB FRQ, HPF and LPF turned: both builds show stock's signed modulation depth (DELAY +5, -2; REVERB FRQ +1 and +3, HPF +2, LPF -1) in the same stock boxes. A depth is not a frequency, and Filter Hz leaves it alone."
   ],
   "limitations": [
     "Emulator only: not hardware evidence.",
