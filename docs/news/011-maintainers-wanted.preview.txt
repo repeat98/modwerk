@@ -1,0 +1,38 @@
+Modwerk needs maintainers
+
+Hey guys,
+I need your help, and I want to be honest about where Modwerk stands.
+
+Modwerk hangs on a thin thread right now. More than 700 pull requests got merged in the last month, and nearly every one of them was reviewed and merged by me. 18 are waiting as I write this. If I’m away for a week, everything stops.
+
+So I’m urgently looking for maintainers who review and merge code:
+
+- Review pull requests
+  Modules, base work, site and SDK fixes. Check them against the guidelines, the checks and the hardware evidence, and tell authors what’s missing.
+- Merge what’s ready
+  So a good module doesn’t sit around for days.
+- Look after one area
+  If you like: one machine, the Octatrack base, the site.
+
+If you’ve built or reviewed a module, know an instrument really well, or read TypeScript, C or DSP/ColdFire assembly, you’re who I’m looking for. A few hours a week already helps a lot.
+
+Like I said before: AI helps writing code, but somebody still has to review and test everything before it ends up on your device. With one person, that doesn’t scale.
+
+For about a month we’ve been testing two things in the beta: modules over USB, no card and undone with a power cycle, and DSP effects that load only when a track uses them. Other projects have now started doing the same. Ideas are free, that’s literally in our guidelines, and it’s good to see it works. But it’s a shame to see everyone build the same thing side by side instead of together. Every hour spent rebuilding what already works here is an hour nobody spends on the next machine.
+
+So if you’re working on mods, USB loading or DSP for Elektron gear somewhere else: come talk to me. The code is public, work done here is credited to whoever did it, and I’d rather share the load than compete. If you build on our code, just keep the licences and the credit.
+
+Interested? Message me in the development Discord and tell me what you’d like to look after.
+
+Join the development Discord (https://discord.gg/vzfAdMBtn5)
+
+Feel free to disagree, just keep it fair.
+
+Thank you,
+Jannik
+
+You’re receiving this because you opted in to Modwerk news. You can turn news emails off in your account settings at any time.
+https://modwerk.app/#account/notifications
+
+Modwerk · https://modwerk.app/
+Need help? support@modwerk.app
