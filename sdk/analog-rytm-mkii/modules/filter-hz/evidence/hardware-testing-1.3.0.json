@@ -3,7 +3,7 @@
   "reportedOn": "2026-11-15",
   "source": "npp1993 (Nathaniel Pavel, Modwerk maintainer), on their own unit: screens read back from the unit by an automated test link, not judged by a person, except where marked as reported",
   "reporter": "npp1993",
-  "statement": "Hardware, OS 1.74: FL01, a Modwerk base build with Filter Hz 1.3.0, booted from RAM over USB on an Analog Rytm MKII on 2026-11-15. Six scripted cases, each run twice (6 of 6 passed both times), read the unit's own screen after each step. DELAY: HPF 64 read 463Hz, HPF 127 12.0kHz, LPF 80 with HPF 0 1.44kHz, LPF 96 with HPF 32 OPEN. REVERB: FRQ 64 5.85kHz, FRQ 0 974Hz, HPF 64 463Hz, LPF 80 with HPF 0 1.44kHz. Trig 1 held in GRID RECORDING, HPF and LPF locked at 39 and 41: 79.0Hz and 1.44kHz in wide inverted boxes; with the track's HPF then set to 0 and LPF moved to 42 on the held trig, LPF read 1.55kHz (the trig's HPF 39 + 42), not 97.7Hz. Scene 1 in SCENE edit: DELAY HPF and LPF locked at 40 and 42 read 84.8Hz and 1.66kHz, and REVERB FRQ 65, HPF 40 and LPF 42 read 5.96kHz, 84.8Hz and 1.66kHz, LPF from the scene's HPF lock. Performance macro 1 in PERF edit: DELAY HPF and LPF showed stock's signed depth, +8 and -5. The same cases on the emulator against the same base without the module showed the stock numbers in each place. Reported by the tester while watching: with HPF and LPF both locked at kHz values the two white boxes touch.",
+  "statement": "Hardware, OS 1.74: FL03, a Modwerk base development build with Filter Hz 1.3.0, booted from RAM over USB on an Analog Rytm MKII on 2026-11-15. Seven scripted cases read the unit's own screen after each step and passed in three full runs (7 of 7 each). DELAY: HPF 64 read 463Hz, HPF 127 12.0kHz, LPF 80 with HPF 0 1.44kHz, LPF 96 with HPF 32 OPEN. REVERB: FRQ 64 5.85kHz, FRQ 0 974Hz, HPF 64 463Hz, LPF 80 with HPF 0 1.44kHz. Trig 1 held in GRID RECORDING, HPF and LPF locked at 39 and 41: 79.0Hz and 1.44kHz; with the track's HPF then set to 0 and LPF moved to 42 on the held trig, LPF read 1.55kHz (the trig's HPF 39 + 42), not 97.7Hz. HPF 86 and LPF 0 locked together: 2.17kHz and 2.21kHz. Scene 1 in SCENE edit: DELAY HPF and LPF locked at 40 and 42 read 84.8Hz and 1.66kHz, and REVERB FRQ 65, HPF 40 and LPF 42 read 5.96kHz, 84.8Hz and 1.66kHz, LPF from the scene's HPF lock. Performance macro 1 in PERF edit: stock's signed depth, +8 and -5. Every locked HPF box is columns 0..32 and every locked LPF box 34..66, with a black column between them and at least one pixel of white either side of each text. Before that, FL01 (the same with LPF's box and text where 1.2.1 put them, beb2a227…3b6e, image CRC 38c7eea1) passed six of these cases twice; there the tester saw two locked kHz values' boxes touch, and the screens read back showed LPF's text with no white on its left (1.44kHz in columns 33..62 of a box 33..64), which FL03 fixes. Reported by the tester: about a minute of playback on FL01 while turning the FX filters was clean.",
   "status": "hardware-tested",
   "scope": "filter-hz 1.3.0 in a Modwerk base development build (FL01), booted from RAM in a scratch project.",
   "modules": [
@@ -14,12 +14,21 @@
   ],
   "builds": [
     {
+      "label": "FL03",
+      "testedOn": "2026-11-15",
+      "os": "1.74",
+      "syxSha256": "662563cf8525f9de4e60cf556534ed1692e2ba93dec5a5e958dc8422df810e4e",
+      "imageCrc32": "850a1eba",
+      "content": "Modwerk's linker on stock 1.74: a Modwerk base development build (core 0.7) + Filter Hz 1.3.0 from this folder, --version FL03.",
+      "loaded": "RAM boot over USB from the flashed Modwerk base image; the flash was not written, and a power cycle returns to the flashed OS."
+    },
+    {
       "label": "FL01",
       "testedOn": "2026-11-15",
       "os": "1.74",
       "syxSha256": "beb2a227357a8cf2886a0dfe6dd685434aa3e926e9dd91d97621e8a3a8293b6e",
       "imageCrc32": "38c7eea1",
-      "content": "Modwerk's linker on stock 1.74: a Modwerk base development build (core 0.7) + Filter Hz 1.3.0 from this folder, --version FL01.",
+      "content": "Modwerk's linker on stock 1.74: a Modwerk base development build (core 0.7) + Filter Hz 1.3.0 from this folder, --version FL01. Before LPF's box and text moved.",
       "loaded": "RAM boot over USB from the flashed Modwerk base image; the flash was not written, and a power cycle returns to the flashed OS."
     }
   ],
@@ -27,6 +36,6 @@
     "Tested by a maintainer, not by the module's porter.",
     "Booted from RAM in a Modwerk base development build, not flashed, and not with core-ar2 0.3 alone.",
     "Screens were compared by program against references recorded on the unit and checked by eye; no audio was measured, and the frequencies are the stock filter equations' -3 dB points.",
-    "Playback while turning, other modules beside it, saving and reloading a project and a power cycle were not part of this run."
+    "Playback while turning was tried on FL01 only (as reported); other modules beside it, saving and reloading a project and a power cycle were not tried."
   ]
 }

@@ -26,6 +26,21 @@
       "label": "FZ79",
       "content": "core-ar2 0.3 + Filter Hz 1.3.0 (documentation captures)",
       "syxSha256": "96cec08b68dfeedec7ef8ea31b6fe888eebd115d94e5d18c69e6928bb1a321bf"
+    },
+    {
+      "label": "FL01",
+      "content": "a Modwerk base development build (core 0.7) + Filter Hz 1.3.0 before LPF's box moved",
+      "syxSha256": "beb2a227357a8cf2886a0dfe6dd685434aa3e926e9dd91d97621e8a3a8293b6e"
+    },
+    {
+      "label": "FL03",
+      "content": "the same with LPF's box and locked text two pixels right",
+      "syxSha256": "662563cf8525f9de4e60cf556534ed1692e2ba93dec5a5e958dc8422df810e4e"
+    },
+    {
+      "label": "FZ80",
+      "content": "core-ar2 0.3 + Filter Hz 1.3.0 (documentation captures)",
+      "syxSha256": "b9bedf5e141edda307e001fc171d19e3f97e8070e6c2ba09390479879469f55f"
     }
   ],
   "method": "Cold boot, NO four times, FX, then SRC (DELAY) or SMPL (REVERB), snapshot. Each knob set by its CC on channel 13 (LPF with its HPF at 0 by CC first), then either one nudge of the knob (the value shows while it turns) or GRID RECORDING, trig 1 held and one nudge, which locks the value. Every value 0..127 of DELAY HPF and LPF and REVERB FRQ, HPF and LPF, unlocked and locked, on FH04 and FX01: 2,560 frames. The value text was read back from the frames by glyph and compared with the expected text worked out offline from the same equations.",
@@ -37,7 +52,9 @@
     "LPF redraws when HPF moves: trig 1 held, LPF locked at 40 first (84.8Hz with HPF 0), then HPF locked up to 39: LPF's box reads 1.34kHz on the next frame.",
     "FILTER page: the 1.2.1 capture plans on FZ79 give media/filter-page.png, frq-440hz.png, frq-open.png and frq-locked.png byte for byte.",
     "SCENE edit (FZ79 against FH04): SCENE mode, BD selects scene 1, SCNE held to edit, BD held, DELAY HPF (38) and LPF (40) each turned one step: FZ79 shows 79.0Hz and 1.44kHz in 33-pixel inverted boxes, LPF from the scene's HPF lock (39 + 41), not the track's HPF 38 (1.34kHz); FH04 shows 39 and 41 in stock's boxes. REVERB FRQ (63), HPF (38) and LPF (40) the same way: FZ79 5.85kHz, 79.0Hz and 1.44kHz in 33-pixel boxes; FH04 64, 39 and 41.",
-    "PERFORMANCE edit (FZ79 against FH04): PERF mode, BD selects macro 1, PERF held to edit, BD held, DELAY HPF and LPF and REVERB FRQ, HPF and LPF turned: both builds show stock's signed modulation depth (DELAY +5, -2; REVERB FRQ +1 and +3, HPF +2, LPF -1) in the same stock boxes. A depth is not a frequency, and Filter Hz leaves it alone."
+    "PERFORMANCE edit (FZ79 against FH04): PERF mode, BD selects macro 1, PERF held to edit, BD held, DELAY HPF and LPF and REVERB FRQ, HPF and LPF turned: both builds show stock's signed modulation depth (DELAY +5, -2; REVERB FRQ +1 and +3, HPF +2, LPF -1) in the same stock boxes. A depth is not a frequency, and Filter Hz leaves it alone.",
+    "HPF and LPF locked together, FL03 against FL01: HPF locked at 0 and at 96, LPF at every value 0..127, DELAY and REVERB, 512 frames each. FL03: HPF's box 0..32 and LPF's 34..66 every time, a black column at 33, at least one pixel of white each side of every text; LPF's text pixel for pixel FL01's two pixels right, the rest of the screen identical. FL01: boxes 0..31 and 33..64 (the shared column inverted twice), 14 to 33 frames per set with LPF's text touching its box's left edge.",
+    "FZ80 (core-ar2 0.3 + this version): the six documentation capture plans give filter-page, frq-440hz, frq-open, frq-locked and reverb-frq byte for byte; delay-locked is recaptured."
   ],
   "limitations": [
     "Emulator only: not hardware evidence.",

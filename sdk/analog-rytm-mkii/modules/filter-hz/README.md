@@ -83,13 +83,15 @@ Requires core-ar2 0.3 on OS 1.74. Use your own original stock OS 1.74 file.
   is not open (no stock screen does this today) LPF shows the stock number.
 - The 0 to 127 numbers are no longer shown for these knobs.
 
-The module patches two sites: eight bytes in `param_value_text` at `0x400a86b4`,
-the same site as the original mod, and since 1.2.1 twenty bytes at `0x40037bea` in
-stock's knob value drawing, where it pushes a locked value's box. For FRQ and the FX
-knobs the box is 33 pixels, x−16..x+16, for every value: one pixel past the widest text
-on each side. When HPF and LPF are both locked their boxes meet at one column, which
-shows as a one-pixel divider. Every other parameter keeps stock's box. Another
-module patching either site cannot be combined with it. A module that gives these
+The module patches three sites: eight bytes in `param_value_text` at `0x400a86b4`,
+the same site as the original mod; since 1.2.1 twenty bytes at `0x40037bea` in stock's
+knob value drawing, where it pushes a locked value's box; and since 1.3.0 ten bytes at
+`0x40037b9c` in the same routine, where it places a locked value's text. For FRQ and the
+FX knobs the box is 33 pixels for every value: one pixel past the widest text on each
+side. HPF and LPF are neighbours 32 pixels apart, so LPF's box and its locked text sit
+two pixels right of the knob (x−14..x+18) and a black column parts the two boxes when
+both are locked. Unlocked values and every other parameter stay where stock draws them,
+with stock's box. Another module patching any of these sites cannot be combined with it. A module that gives these
 parameters its own text through the base's `core_params` (a replacement reverb, say)
 is asked first, so its text wins.
 
@@ -101,7 +103,7 @@ and 1.2.1's box was checked on a unit. In rytm-emu 1.3.0 shows the expected text
 value of the five FX knobs, unlocked and locked, in a 33-pixel box with nothing outside
 it; the FILTER page's frames are byte for byte 1.2.1's. On a unit, 1.3.0's DELAY and REVERB
 values, trig and scene locks (LPF following the locked HPF) and performance edit's stock depth
-read back as expected. Memory: 1,673 bytes (302 in
+read back as expected. Memory: 1,745 bytes (302 in
 1.2.1) of the 128 KiB shared mod area. There is no code in the audio, sequencer or tick
 paths.
 
@@ -117,8 +119,8 @@ Code: [GPL-2.0-only](LICENSE), as rytm-mods-src. `src/filter-hz.s` and
 `include/ar2-1.74.inc` are rytm2_mods' `filter-hz/os1.74/filter-hz.s` and
 `include/ar2-1.74.inc` at `afd461d` (v1.2), byte for byte, except that 1.2.1 adds
 `filter_hz_box` and its two constants to the source and 1.3.0 the FX ids, the call to
-`src/fx-hz.c` and the list of ids with the wider box. `src/fx-hz.c` is new in 1.3.0. The
-source's site comment still names the OS 1.73 address, as upstream's does. The include and
+`src/fx-hz.c`, the table of box widths and `filter_hz_text_x`, which moves LPF's locked
+text. `src/fx-hz.c` is new in 1.3.0. The source's site comment still names the OS 1.73 address, as upstream's does. The include and
 `fx-hz.c` name firmware routines and tables by address only; no stock table is copied.
 The upstream README is in [upstream/README.md](upstream/README.md). Screens show
 Elektron's interface solely to document the modification. No Elektron firmware is included.
@@ -126,8 +128,8 @@ Elektron's interface solely to document the modification. No Elektron firmware i
 ## Screens and audio
 
 These captures are rytm-emu frames of the released core-ar2 0.3 and Filter Hz on stock
-OS 1.74. The first four are the same files on FZ74 (1.2.0), FZ78 (1.2.1) and FZ79 (1.3.0);
-the last two are FZ79's. See [capture provenance](media/capture.json) for hashes and
+OS 1.74. The first four are the same files on FZ74 (1.2.0), FZ78 (1.2.1) and FZ80 (1.3.0);
+the last two are FZ80's. See [capture provenance](media/capture.json) for hashes and
 inputs. The mod changes no sound, so there is no audio demonstration.
 
 ![FILTER page with ATK, DEC, SUS and REL above FRQ, RES, TYP and ENV.](media/filter-page.png)
@@ -150,6 +152,6 @@ Lock FRQ on a trig (hold the trig, turn FRQ): the white box behind the value is 
 
 On the FX track's REVERB page (SMPL), turn FRQ: it reads the corner of the reverb's treble shelf, 5.85kHz at the stock value 64. HPF and LPF read in Hz too.
 
-![DELAY page with a held trig; HPF and LPF read 79.0Hz and 1.34kHz in two white inverted boxes under the HPF/LPF graph.](media/delay-locked.png)
+![DELAY page with a held trig; HPF and LPF read 79.0Hz and 1.34kHz in two white inverted boxes, a black column between them, under the HPF/LPF graph.](media/delay-locked.png)
 
-On the DELAY page, HPF and LPF locked on a held trig: 79.0Hz and 1.34kHz, each in its own wide box. LPF follows the trig's locked HPF, as the stock filter does.
+On the DELAY page, HPF and LPF locked on a held trig: 79.0Hz and 1.34kHz, each in its own wide box with a black column between them. LPF follows the trig's locked HPF, as the stock filter does.
