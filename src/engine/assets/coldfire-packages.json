@@ -246,7 +246,7 @@
       "sha256": "d4b22d2975297e76f90654f25ca6eee4d28a288f727f4b3482fe73616b051378"
     }
   ],
-  "sourceCommit": "40307ecd410d7e4f306d10f04025b8f44ab70447",
+  "sourceCommit": "d848f5b499d6d3e435339c4e682a8920e2be2b57",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
@@ -260,7 +260,7 @@
     "ring-sc": "0.2.1-experimental",
     "analog-bassdrum": "0.1.7-experimental",
     "usb-audio-out-tracks-main-cue": "0.2.0-experimental",
-    "quantizer": "0.1.4-experimental",
+    "quantizer": "0.1.5-experimental",
     "synth": "0.1.3-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
