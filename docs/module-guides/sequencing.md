@@ -47,6 +47,10 @@ Do not hard-code one tempo, one speed or zero swing in a test and call the timin
 
 The core delivers events to your handler (`ev_tick`, `ev_render_in`, `ev_render_out`: [Digitakt guide](../../sdk/machines/digitakt/README.md)). Take timing from what the core and the OS provide at those events; do not count your own. No sequencer-timing contract is documented for these machines yet, so record what you read and how you tested tempo and swing changes in TESTING.md.
 
+## Digitakt II (OS 1.17)
+
+The core's `ev_tick` runs at about 30 Hz, so at 140 BPM one step is about three ticks. The master track's step word runs a step ahead of what plays, and a track's mute is judged a moment after the word moves on. A mute switch meant to start on step 1 therefore has no tick of its own: on a unit (Mute Latch, one kick sample, 128 steps, 140 BPM, reported by its author) acting at the last step let the last two steps through, at the first tick of step 1 the last step, and at the first tick of step 2 step 1 stayed silent; only the second tick of step 1 (or the first tick of step 2 when steps are shorter than that) kept the last step as it was and played step 1 switched, at several tempos. Aim at a boundary this way, and check the result on a unit with a short sample on the steps either side of it; the window is about one step wide, and an emulator does not show it.
+
 ## Analog Rytm MKII (OS 1.74)
 
 The sequencer and the audio engine share a musical clock, not a sample count. Measured in rytm-emu and the disassembly:
