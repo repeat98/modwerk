@@ -150,9 +150,23 @@ Not covered by the rig: how the LFO sounds, pads, the FX track's LFO, kit save a
 
 ## rytm-emu (0.3.0, a long hold is a look)
 
-RL24 (4335ec13…, with Improved MIDI Control, Filter Hz and QPER Live Rec, private), FILTER page of BD, keys held on
+RL24 (4335ec13…, a private combined image with Filter Hz, QPER Live Rec and a private MIDI module of the author's), FILTER page of BD, keys held on
 the emulator's panel. The hold is counted in ev_tick calls (10). LFO held 150, 350 or 450 ms opens the LFO page;
 500, 550 or 650 ms leaves the FILTER page. LFO held 1.2 s with AMP tapped 0.2 s in: the AMP page stays (counted by
 stock's key repeat, as first built, the repeat moved to AMP and the LFO page opened: a review found it). SAMPLER held
 150 ms opens the recorder, 800 ms does not. FIX: its toggle shows nothing on the screen, so not seen; it takes the
 same check. On a unit: not tested.
+
+## Hardware (0.3.0)
+
+**RL26 (a private combined image with this main.c), RAM-booted from RB08, by the author's hand, 15 Nov 2026:**
+- FIX tap: fixed velocity toggles; FIX held about a second, no turn: unchanged.
+- LFO tap: the LFO page opens; LFO held about a second: the page stays.
+- SAMPLER tap: the recorder opens; SAMPLER held about a second: no recorder.
+- LFO held, AMP tapped, LFO let go after about a second: the AMP page stays.
+- LFO held in scene edit, a knob turned: that parameter becomes the LFO's destination at a depth, the page stays.
+
+**Test rig (Rytm and a MIDI controller over USB, with the author's go), RL26 to RL31, 15 Nov 2026:** the LFO hold's
+destination and depth from MIDI through stock's locker (eight slow controller ticks: DEP +8.00, the page stays), FIX
+and SAMPLER amounts from MIDI. All pass. This exact package has not run on a unit.
+

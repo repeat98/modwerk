@@ -90,7 +90,7 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.2.0-experimental",
+    "moduleVersion": "0.3.0-experimental",
     "sourceSha256": "84f4cbc393cf2b6768f93457759dc5273fdb4ce4329690dc80487ad9d7ede8c4",
     "reports": [
       "TESTING.md"
@@ -98,13 +98,14 @@
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-11-11",
+      "testedOn": "2026-11-15",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "On npp1993's Analog Rytm MKII with OS 1.74: the package's own image on the plain base beside LFO RND (QP02 and QP03, flashed), by npp1993's hand: holding LFO on the LFO page shows the page's values as stock; LFO taps step to LFO RND's page and back; LFO + FRQ on FILTER makes FRQ the LFO destination, the depth in hundredths, the page stays; FIX and SAMPLER links as before; after a kit save and a power cycle the links and LFO destinations are kept. All pass, as did the same steps on QP01; QP03 (this package) then passed the FX track's LFO page, PERF over the LFO page, the FILTER assign and the taps through LFO RND. Before that, Modwerk's test rig (key presses and knob turns over USB, screens read back, with npp1993's go) ran six cases on QL13: DEP set exactly as stock's DEP knob, the depth box, a new destination at 0, a knob press to 0, plain taps as stock with Loop Sync following, FIX links. All pass; in rytm-emu QL16 (this source) passes them, with the LFO-page case now checking that the LFO page's key is stock's.",
+      "summary": "On npp1993's Analog Rytm MKII with OS 1.74, RAM-booted private combined images that carry this module's source (RL26 to RL31, beside Filter Hz, QPER Live Rec and a private MIDI module of the author's that passes MIDI to stock's locker): by npp1993's hand on RL26, quick taps of FIX, LFO and SAMPLER do the stock action (fixed velocity toggles, the LFO page opens, the recorder opens); a hold of about a second with no turn does nothing on its release; LFO held with AMP tapped during it stays on AMP; LFO held in scene edit and turned sets the LFO depth, the page stays. Modwerk's test rig (with npp1993's go), driving the Rytm and a MIDI controller, passed on RL26 to RL31 the LFO hold's destination and depth from MIDI through stock's locker (eight slow controller ticks give DEP +8.00; the LFO page stays), and FIX and SAMPLER amounts from MIDI. In rytm-emu the look's cutoff: LFO held 450 ms opens the page, 500 ms does not; SAMPLER likewise.",
       "limitations": [
-        "The rig's unit run was on QL13, before the LFO page was left to stock; QP02 and QP03 (this package) were checked by hand.",
-        "Duration not recorded. SCNE, MUTE and CHRO with LFO held: rytm-emu only; PERF and the PERF pad case by hand on QL13."
+        "This package itself has not run on a unit: the combined images carry the same main.c, built in the same toolchain.",
+        "FIX's toggle after a long hold is checked by hand only (it shows nothing on the screen in rytm-emu).",
+        "Duration not recorded."
       ]
     },
     "verifiedBy": null
