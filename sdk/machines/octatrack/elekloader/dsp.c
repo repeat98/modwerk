@@ -630,6 +630,28 @@ fx_set modwerk_dsp_dry(void)
 #define LOAD_HOLD 3600u
 static unsigned last_track = 0xffu, load_held;
 int modwerk_fxmap_describe(unsigned id, uint32_t *module, uint16_t *layout, char *name); /* fxmap.c */
+#ifndef MODWERK_HOST
+/* machine_registry.c's map of the machines a project uses; a base without the registry has none. */
+__attribute__((weak)) int modwerk_machine_absent(unsigned k, uint32_t *module, char *name) { (void)k, (void)module, (void)name; return 0; }
+__attribute__((weak)) int modwerk_machine_track_absent(unsigned t, uint32_t *module, char *name) { (void)t, (void)module, (void)name; return 0; }
+#endif
+/* The track's machine, when the project's machine map names it and it is absent: "POLY8 IS OFF" when it is switched
+ * off on MODULES, else "MISSING POLY8" (owner, 16 November 2026: machines in the project map). */
+static int machine_notice(unsigned track, char *text)
+{
+    uint32_t module = 0;
+    char name[16];
+    if (track >= 8u || !modwerk_machine_track_absent(track, &module, name)) return 0;
+    int off = modwerk_modset_is_off(module);
+    unsigned n = 0;
+    if (!off) for (const char *t = "MISSING "; *t; ) text[n++] = *t++;
+    unsigned at = n;
+    for (unsigned i = 0; i < 15u && name[i]; ++i) text[n++] = name[i] >= 'a' && name[i] <= 'z' ? (char)(name[i] - 32) : name[i];
+    if (n == at) for (const char *t = "MACHINE"; *t; ) text[n++] = *t++;
+    if (off) for (const char *t = " IS OFF"; *t; ) text[n++] = *t++;
+    text[n] = 0;
+    return 1;
+}
 int modwerk_dsp_missing_tick(int following, unsigned track, char *text)
 {
     if (!modwerk_fxmap_loading()) load_held = 0;
@@ -638,7 +660,7 @@ int modwerk_dsp_missing_tick(int following, unsigned track, char *text)
     last_track = track;
     fx_set say = {{0}};
     if (track < 8u) say = fx_and(modwerk_dsp_dry(), fx_with(fx_with(say, LIVE_FX[track]), LIVE_FX[8u + track]));
-    if (!fx_any(say)) return 0;
+    if (!fx_any(say)) return machine_notice(track, text);
     unsigned k = 0;
     while (!fx_in(say, k)) ++k;
     /* A module switched off on PROJ > MODWERK > MODULES is not missing: "E-VERB IS OFF" (owner, 16 November 2026). */
@@ -676,6 +698,17 @@ unsigned modwerk_dsp_missing_list(uint8_t *out, unsigned first, unsigned most)
         if (seen++ < first) continue;
         uint8_t *e = out + 4u + 24u * n++;
         e[0] = (uint8_t)k, e[1] = 0, e[2] = (uint8_t)(layout >> 8), e[3] = (uint8_t)layout;
+        for (unsigned i = 0; i < 4u; ++i) e[4 + i] = (uint8_t)(module >> (24 - 8 * i));
+        for (unsigned i = 0; i < 16u; ++i) e[8 + i] = (uint8_t)name[i];
+    }
+    /* Then the machines the project uses that are absent (machine_registry.c's map): handle 0xff, 0x80 and the entry. */
+    for (unsigned k = 0; k < MODWERK_MACHINE_MAP && n < most; ++k) {
+        uint32_t module;
+        char name[16];
+        if (!modwerk_machine_absent(k, &module, name)) continue;
+        if (seen++ < first) continue;
+        uint8_t *e = out + 4u + 24u * n++;
+        e[0] = 0xffu, e[1] = (uint8_t)(0x80u | k), e[2] = e[3] = 0;
         for (unsigned i = 0; i < 4u; ++i) e[4 + i] = (uint8_t)(module >> (24 - 8 * i));
         for (unsigned i = 0; i < 16u; ++i) e[8 + i] = (uint8_t)name[i];
     }
