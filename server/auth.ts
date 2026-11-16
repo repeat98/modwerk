@@ -10,6 +10,7 @@ import { memberBetaAccess, memberOctatrackBase } from './beta-testers'
 import { moduleAvailabilityError } from '../src/catalog/availability'
 import { overLimitMessage } from '../src/catalog/set-limit'
 import { DISCORD_INVITE_CAMPAIGN } from '../src/config/development-discord'
+import { OWNER_STATEMENT_ID } from '../src/config/owner-statement'
 import { discordInvitationClaim } from './discord-invitations'
 /** Fixed actor row for administrator history; the administrator is not a visitor account. */
 export const ADMIN_ACTOR='administrator'
@@ -88,12 +89,14 @@ export async function authentication(request:Request,env:Env,path:string):Promis
   await db.prepare('INSERT OR IGNORE INTO member_base_install_prompts(user_id) VALUES(?)').bind(member.id).run()
   return response({ok:true})
  }
- // Shown until the member closes it, then never again on any browser or device. A new note needs a new id here and in src/components/OwnerNote.tsx.
- if(path==='/api/auth/owner-note'){
-  const OWNER_NOTE='2026-10-16-beta-3',member=needMember(await accountUser(request,env,db))
-  if(request.method==='GET')return response({show:!await db.prepare('SELECT 1 FROM member_owner_notes WHERE user_id=? AND note=?').bind(member.id,OWNER_NOTE).first()})
+ // Shown until the member closes it, then never again on any browser or device. A new beta note needs a new id here and in
+ // src/components/OwnerNote.tsx; the statement every visitor sees once takes its id from src/config/owner-statement.ts.
+ const ownerNote=path==='/api/auth/owner-note'?'2026-10-16-beta-3':path==='/api/auth/owner-statement'?OWNER_STATEMENT_ID:null
+ if(ownerNote){
+  const member=needMember(await accountUser(request,env,db))
+  if(request.method==='GET')return response({show:!await db.prepare('SELECT 1 FROM member_owner_notes WHERE user_id=? AND note=?').bind(member.id,ownerNote).first()})
   if(request.method!=='POST')throw new HttpError(405,'Use GET or POST for the note.')
-  await db.prepare('INSERT OR IGNORE INTO member_owner_notes(user_id,note) VALUES(?,?)').bind(member.id,OWNER_NOTE).run()
+  await db.prepare('INSERT OR IGNORE INTO member_owner_notes(user_id,note) VALUES(?,?)').bind(member.id,ownerNote).run()
   return response({ok:true})
  }
  if(path==='/api/auth/build-access'&&request.method==='POST'){
