@@ -116,7 +116,7 @@
       "dsp": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "No DSP code.",
+        "rationale": "No DSP code: Kits runs on the ColdFire and changes what the Parts hold.",
         "source": "manifest.py"
       },
       "memory": {
