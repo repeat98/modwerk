@@ -530,7 +530,7 @@
   },
   "quantizer": {
    "sources": {
-    "sdk/octabam/modules/quantizer/manifest.py": "4768b9e1421fa7681187b208e94ad9995d3fd97b11c057cc7481484f4e1742de",
+    "sdk/octabam/modules/quantizer/manifest.py": "785a132fa736d26ec9da160743f5f1c56f10e4661015088b1763bd8bba4ae3ca",
     "sdk/octabam/modules/quantizer/upstream/quantizer/core.s": "655bf8cb893ecbe8ec167633322491ae89fdf498c818e172ad6ba34c3fc992c8",
     "sdk/octabam/modules/quantizer/upstream/quantizer/keys.s": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
     "sdk/octabam/modules/quantizer/upstream/quantizer/manifest.py": "bdfd9d1de96cc3a8ea07bb9ebed41db0107fa497501f32bf254c29df400e3016",
