@@ -7,6 +7,7 @@ import App from './App'
 import { CommunityContext } from './community/context'
 import type { Session } from './community/api'
 import { fakeUnit } from './dev/octatrack-link-fake'
+import { OWNER_STATEMENT_KEY } from './config/owner-statement'
 
 // A production build with the Octatrack base path's switch flipped per test, on a computer.
 const release = vi.hoisted(() => {
@@ -34,6 +35,8 @@ beforeEach(() => {
   vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {})
   for (const name of ['scrollTo', 'scrollIntoView']) Object.defineProperty(HTMLElement.prototype, name, { configurable: true, value: () => {} })
   container = document.createElement('div'); document.body.append(container); root = createRoot(container)
+  // These tests count the welcome's own dialogs; the once-only owner statement has its own tests.
+  localStorage.setItem(OWNER_STATEMENT_KEY, 'seen')
 })
 afterEach(async () => {
   await act(() => root.unmount()); container.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals()
