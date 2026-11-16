@@ -44,7 +44,6 @@ uint32_t dl_buffers_in_use(void); /* manager.c (build_core.py's edit): FX1 and F
 /* status.s's: the idle counts so far, and the longest pass that still counts as idle (0 until the first
  * window has measured the timer's rate: nothing counts). */
 volatile uint32_t modwerk_idle_counts, modwerk_idle_gap;
-uint32_t mw_delay_quiet[24]; /* status.s mw_delay_idle, per track: ring position, DTIM3, quiet frames */
 volatile uint32_t modwerk_status[STATUS_WORDS]; /* per mille, masks, bytes, counts: the report's tail */
 /* The USB IRQ can preempt this task. Publish one complete bank with a single
  * aligned store; the IRQ only reads the other bank and never waits for us. */
