@@ -26,8 +26,8 @@
       ],
       "documentation": {
         "path": "modules/quantizer/upstream/README.md",
-        "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
-        "reason": "Preserve the archived 0.1.4 upstream overview at its original revision; assembly files are independently pinned to v2.23."
+        "revision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb",
+        "reason": "Re-vendor the root README byte for byte from the same public v2.23 revision as the quantizer code; the previous 38,138-byte archive did not match its recorded revision."
       }
     }
   },
@@ -600,17 +600,17 @@
     {
       "path": "modules/quantizer/upstream/README.md",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+      "revision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb",
       "sourcePath": "README.md",
-      "sourceBytes": 38138,
-      "sourceSha256": "ca7520645850710f6f41dd861e47c74cdcd7fc01a7e0fed3595948e9f561d280",
-      "sourceGitBlob": "3faca120fc7331fe5a71bed17f71b34e71bd0885",
-      "vendoredSha256": "ca7520645850710f6f41dd861e47c74cdcd7fc01a7e0fed3595948e9f561d280",
+      "sourceBytes": 47687,
+      "sourceSha256": "d5ecf06857c2129cde81d839e2fe872fec2b376ee17493e6a21ff4fdd80a0177",
+      "sourceGitBlob": "d06ef4e82720340897fd363293b241b8202c0b24",
+      "vendoredSha256": "d5ecf06857c2129cde81d839e2fe872fec2b376ee17493e6a21ff4fdd80a0177",
       "authorUpdate": {
-        "moduleVersion": "0.1.4-experimental",
-        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
-        "previousVendoredSha256": "d97fb507a8eb6ecbf2c549ff088a4628d816bb42a6485eb13e88bf0d60f016f2",
-        "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte."
+        "moduleVersion": "0.1.5-experimental",
+        "previousRevision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+        "previousVendoredSha256": "ca7520645850710f6f41dd861e47c74cdcd7fc01a7e0fed3595948e9f561d280",
+        "reason": "Re-vendor the root README byte for byte from the same public v2.23 revision as the quantizer code; the previous 38,138-byte archive did not match its recorded revision."
       },
       "assemblyPinRevision": "e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb"
     },

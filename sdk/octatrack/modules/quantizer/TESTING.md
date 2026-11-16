@@ -29,8 +29,10 @@ Development import and `--check-only --verify-existing` pass. The package metada
 signature is corrected, and the module compatibility and package-fingerprint checks pass.
 `module:doctor -- quantizer` still refuses the actual owner's 0.1.4 approval for this new version.
 No 0.1.5 owner approval is fabricated, and these results are not release qualification.
-The import record pins the public v2.23 quantizer files and preserves the separately archived
-root README pin. The 157-file import check and all four requested-import tests pass; the
+The import record pins the public v2.23 quantizer files. At the owner's request, the root README
+is now re-vendored byte for byte from that same revision; its earlier 38,138-byte archive did
+not match its recorded revision. The earlier 157-file import check and four requested-import
+tests passed before that correction; the correction's targeted checks are pending. The test
 version assertion changes only from 0.1.4 to 0.1.5.
 
 ## Emulator — 15 November 2026
@@ -89,7 +91,7 @@ successful session completions report no player present, no guard abort and no t
   address reads `0xff`, no third-step PTCH event is observed, and its audio holds the
   preceding step's pitch. The trace does not establish when that value disappeared.
   The unchanged four-case analysis fails: its presumed neutral reference is actually
-  the preceding +3 pitch. Persistent-zero acceptance remains failed and unmet. The cause
+  the preceding +3 pitch. That attempt failed to establish persistent-zero acceptance. Its cause
   could be the stock editor, module or fixture and is unresolved; the final verification
   press/release toggling the trig is a hypothesis, not a proven cause. All captures and
   failed analysis are retained. No further builder retry or changed tolerance is used.
@@ -111,6 +113,25 @@ successful session completions report no player present, no guard abort and no t
   0.1.4-saved card, empty battery RAM and the same forced project load also reads all-zero scale
   bytes under 0.1.4. Those matching cold-boot/default observations are retained; the restore/load
   order is not qualified by the successful explicit reload.
+
+## Independent follow-up — 15 November 2026
+
+A separate run on the same package and main-only base completes the original integer-lock
+case. After release of every key and with recording off, the actual stored pitches are
+69/79/64/74 (+1/+3/0/+2), all four note events are present, and SCALE is OFF. They remain intact
+through all four plays. The unchanged 0.01-semitone check passes all 16 windows: SCALE OFF
+[1,3,0,2], C MAJOR [0,2,0,2], T1 FOLLOW OFF [1,3,0,2], and D MAJOR [1,2,-1,2]. Maximum error is
+0.000325162 semitone; native effective-pitch words agree with each measured window.
+
+Independent USB Keep/removal restores all seven sites, and explicit reload preserves all four
+0.1.4-saved project/bank files. SAVE and a fresh emulator using only the saved card and completed
+battery-RAM snapshot restore the settings, four locks and four note events. Its sample FOLLOW
+check passes all 16 windows (maximum error 0.000268994 semitone); actual MIDI output has three
+matched note-on/off pairs at 61 with FOLLOW OFF and 60 with FOLLOW ON, channel 2, velocity 100.
+These are emulator results, not physical reboot or hardware evidence. They complete the
+intended acceptance case without turning either earlier failed setup into a pass or proving
+why the earlier zero lock and event disappeared. The incomplete self-test and fidelity limits
+below remain.
 
 ## Current-version UI documentation — 15 November 2026
 
@@ -143,8 +164,8 @@ combinations; Part-copy and Part-save combinations; FM FOLLOW beside the current
 FM Synth. Released FM Synth 0.1.2/0.1.3 declares a conflict, so it is not forced into this set.
 The held FM chromatic-key mark issue described in the PR is a code-reading finding, not a
 new capture. The first integer-lock walk had the incorrect +0.2 input described above;
-the bounded completion leaves persistent-zero acceptance failed with its cause unresolved.
-Neither is a pass of the historical integer-lock playback case.
+the bounded completion also failed, with its cause unresolved. Both remain recorded as failures.
+The independent follow-up above establishes the intended integer-lock playback case.
 
 The 13 November #1272-base lifecycle/co-install/catalogue runs are earlier evidence on their
 own base, not repeated results on this base. The MKI reports below concern 0.1.4's card build,
