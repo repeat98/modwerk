@@ -24,7 +24,8 @@
   "regions": [],
   "claims": [
     "settings:KIT PER BANK",
-    "projdata:KBLK"
+    "projdata:KBLK",
+    "key:PTN+YES"
   ],
   "requires": [],
   "derive": null,

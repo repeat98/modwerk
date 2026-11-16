@@ -3,12 +3,12 @@
   "machine": "digitone",
   "moduleId": "kitbank",
   "moduleVersion": "0.2.0-experimental",
-  "capturedAt": "2026-11-12",
+  "capturedAt": "2026-11-16",
   "firmware": "1.44",
-  "imageSha256": "7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be",
+  "imageSha256": "6c94a77ef70ae10ebdde390bce1252dffdc946f47aca168b42cd880b9494c49c",
   "stockSha256": "d4f200d04484333d82822db7744e6484d0def8f2db8ddf55ee2b780cc13c9659",
   "build": {
-    "tool": "node scripts/link-image.mjs --version XX06",
+    "tool": "node scripts/link-image.mjs --version XX08",
     "modules": [
       {
         "id": "core",
@@ -21,12 +21,11 @@
         "source": "sdk/digitone/modules/kitbank (this folder)"
       }
     ],
-    "outputVersion": "XX06"
+    "outputVersion": "XX08"
   },
   "emulator": {
     "repository": "https://github.com/irpina/digiemu",
-    "revision": "f57c2f237e84b8ff91bc3adb2a2931bccf9928e9",
-    "note": "Not the reviewed revision c1b5735835923e328f8b4950d6ba927875e5b669, which was not reachable from the public repository; the checkout also carries an uncommitted change to emu/gui.py (the desktop window, unused headless). scripts/capture-digi-module-ui.py was run unchanged except for its two revision checks. Re-capture with the reviewed revision before release.",
+    "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
     "python": "3.12.13",
     "platform": "macOS arm64",
     "hle": false,
@@ -34,7 +33,9 @@
     "cycleTiming": false,
     "framebuffer": "firmware front LCD buffer at panel_diff flush",
     "scale": 6,
-    "frameSelection": "Most populated actual LCD frame within the final 250 ms after the latest panel action; 6x integer scaling."
+    "frameSelection": "Most populated actual LCD frame within the final 250 ms after the latest panel action; 6x integer scaling.",
+    "unicorn": "Six pinned patches installed with tools/install-patched-unicorn.sh; .venv/bin/python -m emu.unicorn_compat: compatible",
+    "captureScript": "scripts/capture-digi-module-ui.py, unchanged, run under sandbox-exec (deny network*)"
   },
   "setup": {
     "project": "Disposable first-boot A01, stock initial state; no owner projects or samples.",
@@ -99,7 +100,7 @@
       "release 16"
     ],
     [
-      3800.11,
+      3800.111,
       "press 16"
     ],
     [
@@ -111,7 +112,7 @@
       "press 16"
     ],
     [
-      4300.125,
+      4300.126,
       "release 16"
     ],
     [
@@ -155,7 +156,7 @@
       "release 13"
     ],
     [
-      6600.193,
+      6600.192,
       "press 14"
     ],
     [
@@ -231,8 +232,8 @@
       "path": "media/settings-on.png",
       "sha256": "cece0825ac5c705eaba1c122acf9f2ab2bfd379f89ab4554c1440fe1de53475b",
       "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\ntap NO\ntap NO\npress PTN\ntap 1\nrelease PTN\nwait 700\npress PTN\ntap 3\nrelease PTN\nwait 700\npress PTN\ntap YES 80 200\nrelease PTN\nwait 300\nsnap kit-locked\n",
-      "atMs": 6600.192521367521,
-      "requestedAtMs": 6600.192521367521
+      "atMs": 6600.19188034188,
+      "requestedAtMs": 6600.19188034188
     },
     {
       "path": "media/kit-locked.png",

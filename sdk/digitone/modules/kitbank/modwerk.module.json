@@ -4,7 +4,7 @@
   "name": "kitbank",
   "version": "0.2.0-experimental",
   "machine": "digitone",
-  "category": "playback",
+  "category": "system",
   "exclusive": false,
   "author": {
     "github": "ZOGV",
@@ -72,10 +72,11 @@
     "conflicts": [],
     "limitations": [
       "Built for Digitone OS 1.44 with the vendored core-dn1 2.0a (os1.44); not ported to OS 1.43. The Digitone Keys runs the same OS file but has not been tried.",
-      "The switch and the locks are kept in the project header (an elekloader-format ELKP block tagged KBLK, bytes 0x1c..0x200 the stock OS keeps as they are), written by kitbank's own project save hook because core-dn1 2.0a for 1.44 has no project data. The block is not written when that area already holds another tool's data; it can move to core_projdata when a 1.44 core provides it.",
+      "The switch and locks are one KBLK record in the project header's ELKP list (bytes 0x1c..0x200), written by kitbank's own save, load and new hooks: core-dn1 2.0a for 1.44 has no project data. Other records are kept; KBLK is found anywhere on load. These sites become a core_projdata hook in a later 1.44 core, and kitbank will move to it in an update.",
       "It patches ten stock OS sites itself (kit selection, queued pattern change, kit save/reload/sound reload, project save/load/new); a mod patching the same bytes cannot be combined. If other mods need kit selection or project data, these sites should become core hooks.",
       "A pattern pasted into a bank's first pattern replaces the bank's kit, as the stock OS replaces that pattern's kit. Pasted elsewhere, it never overwrites the bank: it is locked with the pasted sound when that sound differs.",
       "For under a second after PTN+YES, a knob turn can be ignored while the OS reloads the kit into the tracks (measured in the emulator; the stock OS reselecting a pattern by hand does not do this).",
+      "A project saved with kitbank opens on the stock OS, or with kitbank unticked, with each pattern's own kit: the kit it had when it was last saved from its own slot, usually older than the bank's kit it played.",
       "Undo of a paste was not tried."
     ]
   },
@@ -89,11 +90,12 @@
     ],
     "claims": [
       "settings:KIT PER BANK",
-      "projdata:KBLK"
+      "projdata:KBLK",
+      "key:PTN+YES"
     ]
   },
   "resources": {
-    "memoryBytes": 1528,
+    "memoryBytes": 1764,
     "fastBytes": 0,
     "load": {
       "display": "None while playing",
@@ -127,7 +129,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator only (digiemu, OS 1.44): unticked behaves like the stock OS; ticked, bank kits for immediate and queued changes, song mode, edits, kit save/reload, PTN+YES locks, pastes, and the switch and locks through a project save and load; see TESTING.md. Not tried on hardware in this Modwerk build.",
+    "summary": "Build XX08 (core-dn1 2.0a + this version, OS 1.44). Hardware: see evidence/hardware-testing.json. Emulator (digiemu c1b5735): unticked behaves like the stock OS (full check against stock); ticked, bank kits for immediate and queued changes, chains and song mode, edits, kit save/reload, PTN+YES locks (also while building a chain with PTN+trigs), pastes, the switch and locks through project save and load, and other tools' ELKP records kept; see TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial: one kit for a whole bank, one pattern apart",
@@ -173,8 +175,8 @@
         "type": "emulator",
         "release": "1.44",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be",
-        "setup": "Disposable first-boot project, network-denied sandbox; see media/capture.json."
+        "imageSha256": "6c94a77ef70ae10ebdde390bce1252dffdc946f47aca168b42cd880b9494c49c",
+        "setup": "XX08 build, digiemu c1b5735 (reviewed), disposable first-boot project, network-denied sandbox; see media/capture.json."
       }
     },
     {
@@ -189,8 +191,8 @@
         "type": "emulator",
         "release": "1.44",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be",
-        "setup": "Disposable first-boot project, network-denied sandbox; see media/capture.json."
+        "imageSha256": "6c94a77ef70ae10ebdde390bce1252dffdc946f47aca168b42cd880b9494c49c",
+        "setup": "XX08 build, digiemu c1b5735 (reviewed), disposable first-boot project, network-denied sandbox; see media/capture.json."
       }
     },
     {
@@ -205,8 +207,8 @@
         "type": "emulator",
         "release": "1.44",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be",
-        "setup": "Disposable first-boot project, network-denied sandbox; see media/capture.json."
+        "imageSha256": "6c94a77ef70ae10ebdde390bce1252dffdc946f47aca168b42cd880b9494c49c",
+        "setup": "XX08 build, digiemu c1b5735 (reviewed), disposable first-boot project, network-denied sandbox; see media/capture.json."
       }
     }
   ]

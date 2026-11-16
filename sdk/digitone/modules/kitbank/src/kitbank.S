@@ -43,6 +43,7 @@
         .equ KEY_STEP1,  26             | trig keys 1-16: 26..41
         .equ BRAIN_KEY,  0x40016fc0     | the stock key handler (core-dn1 2.0a hooks its call site, not its entry)
         .equ GAP,        0x1c           | project header bytes the OS keeps: elekloader's ELKP area
+        .equ GAP_END,    0x200
         .equ ELKP,       0x454c4b50
         .equ KBLK,       0x4b424c4b
         .equ BLK_SIZE,   20             | kb_on (4) + 128 lock bits (16)
@@ -316,8 +317,23 @@ kb_key:
         bne.s   1f
         andi.l  #1, %d0
         move.b  %d0, kb_ptn             | PTN held or not
+        clr.b   kb_trig                 | no trig pressed under this PTN yet
         bra.s   8f
-1:      moveq   #KEY_YES, %d1
+1:      move.l  12(%a0), %d1            | a trig pressed while PTN is held (a chain being built): noted
+        sub.l   #KEY_STEP1, %d1
+        moveq   #16, %d0
+        cmp.l   %d0, %d1
+        bcc.s   11f
+        tst.b   kb_ptn
+        beq.s   8f
+        move.l  16(%a0), %d0
+        btst    #0, %d0
+        beq.s   8f
+        moveq   #1, %d0
+        move.b  %d0, kb_trig
+        bra.s   8f
+11:     move.l  16(%a0), %d0            | flags again
+        moveq   #KEY_YES, %d1
         cmp.l   12(%a0), %d1
         bne.s   8f
         tst.b   kb_ptn
@@ -340,6 +356,8 @@ kb_key:
 | hand does, and so does not open the SELECT PTN popup when PTN is released. Then the message.
 | at the bsr: 0(sp) back to kb_key, 4(sp) kb_key's return, 8 brain, 12(sp) ev
 reselect:
+        tst.b   kb_trig                 | a trig was already pressed under this PTN: the OS opens no popup,
+        bne.w   9f                      | and a trig handed now would join the chain being built
         move.l  PAT_ACT, %d0
         sub.l   #PATS, %d0
         bcs.s   9f
@@ -445,52 +463,125 @@ toggle:
         lea     16(%sp), %sp
         rts
 
-| ---- project save: Project_serialize(file, project, ...) writes the KBLK block into the file header --------
+| ---- project save: Project_serialize(file, project, ...) writes the KBLK record into the file header -------
+| The header's gap 0x1c..0x200 holds elekloader's project data list: 'ELKP', then per record its tag, its size
+| and its bytes, then a zero tag (core-dn1 / core-dt2 store.c). kitbank rewrites only its own KBLK record and
+| keeps every other tag where it is: a KBLK of the right size is overwritten in place; one of another size is
+| taken out (the records after it move down) and a new one is added before the zero tag. An empty gap gets a
+| new list. A gap holding something else, a list that runs past 0x200 or one with no room left is not touched.
         .globl  kb_projsave
 kb_projsave:
-        movea.l 4(%sp), %a0
-        lea     GAP(%a0), %a0
-        move.l  (%a0), %d0
-        beq.s   1f
-        cmp.l   #ELKP, %d0              | another tool's data: left alone
-        bne.s   4f
-1:      move.l  #ELKP, (%a0)+
+        lea     -16(%sp), %sp
+        movem.l %d2-%d3/%a2-%a3, (%sp)
+        movea.l 20(%sp), %a0            | file
+        lea     GAP(%a0), %a2           | a2 = the gap
+        lea     GAP_END(%a0), %a3       | a3 = its end
+        move.l  (%a2), %d0
+        bne.s   1f
+        move.l  #ELKP, (%a2)            | an empty gap: a new list
+        clr.l   4(%a2)
+        bra.s   2f
+1:      cmp.l   #ELKP, %d0
+        bne.w   9f                      | another tool's data: left alone
+2:      lea     4(%a2), %a0             | a0 = the record
+3:      move.l  %a3, %d0
+        sub.l   %a0, %d0                | d0 = bytes left in the gap
+        moveq   #8, %d1
+        cmp.l   %d1, %d0
+        bcs.w   9f                      | no zero tag before the end: left alone
+        move.l  (%a0), %d1              | tag
+        beq.s   6f                      | the zero tag: add ours here
+        move.l  4(%a0), %d2             | size
+        subq.l  #8, %d0
+        cmp.l   %d2, %d0
+        bcs.w   9f                      | runs past the gap: left alone
+        cmp.l   #KBLK, %d1
+        beq.s   4f
+        lea     8(%a0,%d2.l), %a0       | another tool's record: kept, next
+        bra.s   3b
+4:      moveq   #BLK_SIZE, %d1          | ours
+        cmp.l   %d1, %d2
+        bne.s   5f
+        addq.l  #8, %a0                 | the same size: overwritten in place
+        bsr.w   putblk
+        bra.s   9f
+5:      move.l  %a0, %d3                | another size: taken out, what follows moves down
+        lea     8(%a0,%d2.l), %a1
+51:     cmpa.l  %a3, %a1
+        bcc.s   52f
+        move.b  (%a1)+, (%a0)+
+        bra.s   51b
+52:     cmpa.l  %a3, %a0
+        bcc.s   53f
+        clr.b   (%a0)+
+        bra.s   52b
+53:     movea.l %d3, %a0
+        bra.s   3b
+6:      move.l  %a3, %d0                | the zero tag at a0: tag, size, the block and a new zero tag
+        sub.l   %a0, %d0
+        moveq   #8+BLK_SIZE+4, %d1
+        cmp.l   %d1, %d0
+        bcs.s   9f                      | no room left: not saved
         move.l  #KBLK, (%a0)+
         moveq   #BLK_SIZE, %d0
         move.l  %d0, (%a0)+
-        lea     kb_on, %a1
-        moveq   #BLK_SIZE/4, %d1
-2:      move.l  (%a1)+, (%a0)+
-        subq.l  #1, %d1
-        bne.s   2b
+        bsr.w   putblk
         clr.l   (%a0)                   | a zero tag ends the list
-4:      lea     -44(%sp), %sp           | the 8 stock bytes, replayed
+9:      movem.l (%sp), %d2-%d3/%a2-%a3
+        lea     16(%sp), %sp
+        lea     -44(%sp), %sp           | the 8 stock bytes, replayed
         movem.l %d2-%d7/%a2-%a6, (%sp)
         jmp     0x4000eb18
 
-| ---- project load: Project_deserialize(project, file, ...) reads it back; no block -> off, no lock --------
+| a0 = where the block goes -> a0 just after it (d1, a1 destroyed)
+putblk:
+        lea     kb_on, %a1
+        moveq   #BLK_SIZE/4, %d1
+1:      move.l  (%a1)+, (%a0)+
+        subq.l  #1, %d1
+        bne.s   1b
+        rts
+
+| ---- project load: Project_deserialize(project, file, ...) finds KBLK anywhere in the list; none -> off, no lock
         .globl  kb_projload
 kb_projload:
-        bsr.s   clear
-        movea.l 8(%sp), %a0
+        bsr.w   clear
+        move.l  %d2, -(%sp)
+        movea.l 12(%sp), %a0            | file
         move.l  %a0, %d0
         beq.s   4f
+        lea     GAP_END(%a0), %a1       | a1 = the gap's end
         lea     GAP(%a0), %a0
         move.l  (%a0)+, %d0
         cmp.l   #ELKP, %d0
         bne.s   4f
-        move.l  (%a0)+, %d0
-        cmp.l   #KBLK, %d0
-        bne.s   4f
-        moveq   #BLK_SIZE, %d0
-        cmp.l   (%a0)+, %d0
-        bne.s   4f
-        lea     kb_on, %a1
-        moveq   #BLK_SIZE/4, %d1
-2:      move.l  (%a0)+, (%a1)+
-        subq.l  #1, %d1
-        bne.s   2b
-4:      lea     -36(%sp), %sp
+1:      move.l  %a1, %d0
+        sub.l   %a0, %d0                | bytes left
+        moveq   #8, %d1
+        cmp.l   %d1, %d0
+        bcs.s   4f
+        move.l  (%a0)+, %d1             | tag
+        beq.s   4f                      | the zero tag: no KBLK
+        move.l  (%a0)+, %d2             | size
+        subq.l  #8, %d0
+        cmp.l   %d2, %d0
+        bcs.s   4f                      | runs past the gap: stop
+        cmp.l   #KBLK, %d1
+        beq.s   2f
+        adda.l  %d2, %a0                | another tool's record: next
+        bra.s   1b
+2:      moveq   #BLK_SIZE, %d0          | ours: at most BLK_SIZE bytes, the rest stays 0
+        cmp.l   %d0, %d2
+        bcc.s   3f
+        move.l  %d2, %d0
+3:      lea     kb_on, %a1
+31:     tst.l   %d0
+        beq.s   4f
+        move.b  (%a0)+, (%a1)+
+        subq.l  #1, %d0
+        bra.s   31b
+4:      move.l  (%sp)+, %d2
+        lea     -36(%sp), %sp           | the 8 stock bytes, replayed
         movem.l %d2-%d5/%a2-%a6, (%sp)
         jmp     0x4000e7fc
 
@@ -523,5 +614,6 @@ kb_on:  .skip 4                         | byte 0: the project's KIT PER BANK swi
 kb_locks: .skip 16                      | 128 bits: pattern k = byte k/8, bit k%8
 kb_live: .skip 4                        | byte 0: the switch as of the last pattern change
 kb_ptn: .skip 4                         | byte 0: PTN held
+kb_trig: .skip 4                        | byte 0: a trig pressed while PTN is held
 kb_msg: .skip 4                         | the last PTN+YES message
 kb_ev:  .skip 64                        | the two trig events handed to the OS

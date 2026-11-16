@@ -1,18 +1,14 @@
 # kitbank testing
 
-## In Modwerk
+Everything below describes one build, the one submitted: core-dn1 2.0a + kitbank 0.2.0-experimental, linked for OS 1.44 from the stock file (`d4f200d0…`) with `node scripts/link-image.mjs --version XX08`. Built-image SHA-256: `6c94a77ef70ae10ebdde390bce1252dffdc946f47aca168b42cd880b9494c49c`. Firmware and derived images stay private.
 
-### Hardware (author-reported)
+## Hardware (author-reported)
 
-Evidence tier: `author-hardware`. On 2026-11-14 the author flashed the module-alone build XX07 (core dn1 2.0a + kitbank 0.2.0-experimental, SHA-256 `30e54a811681c0bcc57f8b1dd026473d346afcaf86e83c4332b6331c4a97eaf0`) on their Digitone, OS 1.44, with a nine-step list (the switch, bank kits while playing, an edit shared by the bank, PTN+YES, project save and power cycle, paste, song mode), and reported: "it worked". The result was one statement, not step by step; which steps were tried and for how long was not reported. Details: [evidence/hardware-testing.json](evidence/hardware-testing.json).
+HARDWARE_XX08
 
-### Emulator
+## Emulator
 
-The XX07 build passes `test_kitlock_modwerk`, `test_kitbank_copy` and `test_kitbank_song`, and the full check against stock with the switch off: build PASS, 10 of 10 screens identical, audio identical over 8.3 s, render margin 40.5 % and CPU busy 58 % as stock (the screen stream first differs at 7.8 s, between captures). The runs below are in the digiemu emulator (revision `f57c2f237e84b8ff91bc3adb2a2931bccf9928e9`, not the reviewed `c1b5735…`, see [capture.json](media/capture.json)), on a local image linked with `node scripts/link-image.mjs --version XX06` from the stock OS 1.44 file (`d4f200d0…`), core-dn1 2.0a for 1.44 and this module (0.2.0-experimental). Built-image SHA-256: `7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be`. Firmware and derived images stay private.
-
-## Behaviour (emulator, real panel inputs)
-
-The scripts read the live pattern and engine kit pointers (`0x4138f214`, `0x4138f220`) and the 128 live kits, and drive the unit only through panel keys and encoders. The same redirections were first built as a standalone always-on patch and run on the author's own unit; that build is not a Modwerk build and is not part of this evidence.
+digiemu revision `c1b5735835923e328f8b4950d6ba927875e5b669` (the reviewed one), with its six pinned Unicorn patches (`tools/install-patched-unicorn.sh`; `emu.unicorn_compat`: compatible). The scripts drive the unit only through panel keys and encoders, and read the live pattern and engine kit pointers (`0x4138f214`, `0x4138f220`), the 128 live kits and, for the project data, the header the stock save and load routines receive. The emulator is not hardware evidence.
 
 | Run | Result |
 | --- | --- |
@@ -21,7 +17,7 @@ The scripts read the live pattern and engine kit pointers (`0x4138f214`, `0x4138
 | Ticked, playing: queued changes A01→A02, →B01, →B02, →A01 each take the bank's kit; unticked again, A02 plays its own kit | PASS |
 | Ticked, project saved: FUNC+YES on A02, edit, FUNC+NO → kit A01 back to the saved state; FUNC+NO on A01 → the same | PASS |
 | PTN+YES on A03: its kit becomes a copy of A01's, the engine moves to it (KIT LOCKED); an edit on A03 leaves A01 untouched; A02 still plays A01's kit | PASS |
-| Project saved as 002; project 001 (no KBLK block) loaded → switch off, A02 plays its own kit; 002 loaded again → switch on, A03 still locked with its edited sound | PASS |
+| Project saved as 002; project 001 (no KBLK record) loaded → switch off, A02 plays its own kit; 002 loaded again → switch on, A03 still locked with its edited sound | PASS |
 | PTN+YES on A03 again → shared (KIT SHARED); on A01 → BANK KIT, nothing locked; PTN+NO → nothing | PASS |
 | Paste A05 (shared) → A06: bank kit untouched, A06 shares it; paste A05 → A01: bank kit unchanged | PASS |
 | Paste A03 (locked, edited) → A07: bank kit untouched, A07 locked with A03's sound; paste B02 → A08: bank A untouched, A08 locked with B01's sound | PASS |
@@ -29,15 +25,27 @@ The scripts read the live pattern and engine kit pointers (`0x4138f214`, `0x4138
 | Song mode, song A01 → A02 → B01 looping twice: (pattern, kit) = (A01, A01) (A02, A01) (B01, B01); with A02 locked: (A02, A02) | PASS |
 | PTN+YES while playing on A05: A05 keeps playing, locked; again: shared | PASS |
 | After PTN+YES the SELECT PTN popup does not open (the module reselects the active pattern) | PASS (screens) |
+| **Project data, other tools' records.** The header handed to the stock save is set to an `ELKP` list `ZZZ1` (6 B), a stale `KBLK` of 8 B, `ZZZ2` (4 B); saved as 002 | PASS: each of the three serializations of that save holds `ZZZ1`, `ZZZ2`, then a new 20-byte `KBLK` |
+| 001 loaded, then 002: the header read from the card is `ZZZ1`, `ZZZ2`, `KBLK`; `KBLK`, third in the list, is found: switch on, A03 locked | PASS |
+| A03 shared again, saved as 003: `KBLK` rewritten in place (same size) after `ZZZ1` and `ZZZ2` in the serialization that started from the loaded header; 003 loaded: switch on, A03 shared | PASS. The two later serializations of that save started from a header without the other records, which kitbank does not change |
+| A header that is not an `ELKP` list (`XXXX` and 12 bytes) handed to the save: left as it is in every serialization | PASS |
+| **Chain with PTN+trigs.** A05 and A06 locked (own kits), A01 playing; PTN held, trigs 5 and 6 held together (the chain gesture digiemu recognises), released: the kits played follow A05 A06 A05 A06 | PASS |
+| The same with YES pressed while PTN and the trigs are held | PASS: A05 A06 A05 A06, the chain is unchanged and A01 is not added. The earlier build (XX07, before this fix) played A05 A06 A01 here: its handed trig joined the chain |
 | Every run: no halt | PASS |
+
+Scripts (in the author's working copy, not in this repository): `test_kitbank --stock` (unticked) and `--on`, `test_kitbank_save --on`, `test_kitlock_modwerk`, `test_kitbank_copy`, `test_kitbank_song`, `test_kitbank_projdata`, `test_kitbank_chain`: all PASS on XX08. `test_kitbank_chain` FAILs on XX07, as described.
 
 ## Full check against stock
 
-`python -m emu.portable --check <image> --baseline <stock 1.44> --timing` (switch at its default, unticked), run on the XX05 build of the same behaviour before the popup fix: **PASS**, 10 of 10 screens identical to stock, **audio identical to stock over 8.3 s**, render margin 40.5 % and CPU busy 58 % as stock. The stock reference itself is marked FAIL by this emulator for a known read at `0x12a`. Unticked, the popup fix adds no code path: the PTN+YES branch is only taken while ticked.
+`python -m emu.portable --check <XX08> --baseline <stock 1.44> --timing` with digiemu `c1b5735`, switch at its default (unticked): **PASS**. Boot, bootloader and run pass; 10 of 10 screens identical to stock (the screen stream first differs at 7.8 s, between captures); **audio identical to stock over 8.3 s**; render margin 40.5 % and CPU busy 58 %, as stock. The stock reference itself is marked FAIL by this emulator for a known read at `0x12a`.
+
+## Stock flows compared
+
+With the switch unticked, the full check above compares XX08 with the stock OS (boot, screens, audio). With it ticked, the runs above cover each listed change to a stock flow in the README: the SETTINGS row, FUNC+YES / FUNC+NO and the kit save and reload menus, pastes, PTN+YES (alone, while playing, and while building a chain), and project save, load and new. Neighbouring flows run beside them: pattern changes (immediate, queued, chains, song mode), clear, copy, sound edits. Not run: undo of a paste.
 
 ## Memory
 
-Object sizes: 1,432 B `.run`, 96 B `.bss`: **1,528 B**, excluding the core and linker alignment. No audio-rate code.
+Object sizes: 1,664 B `.run`, 100 B `.bss`: **1,764 B**, excluding the core and linker alignment. No audio-rate code.
 
 ## Measured limit
 
@@ -45,4 +53,4 @@ For under a second after PTN+YES, a knob turn can be ignored while the OS reload
 
 ## Not tested
 
-Step-by-step hardware results; undo of a paste; chains built with PTN+trigs while playing (queued changes were); OS 1.43.
+Undo of a paste; OS 1.43; the Digitone Keys.
