@@ -3,7 +3,7 @@
 ## Status
 
 - **On a unit (reported by the author, crisp909, 2026-11-14):** the package `mute-latch-0.1.0-experimental-os1.17.elemod` built from commit 446dbf76 (sha256 `aa9dd675077e55759fe1b5ad97e234795119939bb6cd452ce28e5f59b6cda9bc`, pinned toolchain, GCC 16.2.0) worked as intended, see [Submitted package on a unit](#submitted-package-on-a-unit-reported-by-the-author-crisp909). Reports are not measurements made here.
-- **The source in this pull request** differs from that package in three places: STOP removes the "MUTES ARMED" message at once, a pass is counted once per wrap of the step position (a pattern of two steps keeps working), and when the steps are too short for the second tick of step 1 the switch is made on the first position seen after it. Its package has not been built or run on a unit yet; the result will be recorded in [Review changes on a unit](#review-changes-on-a-unit) before this pull request is ready.
+- **The source in this pull request** differs from that package in three places: STOP removes the "MUTES ARMED" message at once, a pass is counted once per wrap of the step position (a pattern of two steps keeps working), and when the steps are too short for the second tick of step 1 the switch is made on the first position seen after it. Its package (`mute-latch-0.1.0-experimental-os1.17.elemod`, sha256 `2e47115e6821153430e5ae56479863fce411467cd640a69a93aa8d6f5c2bda08`, built by the author from commit 155a17577 in the pinned toolchain image, GCC 16.2.0) has not been run on a unit yet; the result will be recorded in [Review changes on a unit](#review-changes-on-a-unit) before this pull request is ready.
 - Everything under "Emulator evidence" was seen in digikit's headless ColdFire-only `panel_drive` (no DSP) with the SSI clock at 96 kHz, a one-sample card made with digikit's `plusdrive`, and a 128-step pattern. It approximates the instrument and is not hardware evidence.
 
 ## Not tested
@@ -33,7 +33,7 @@ The step counter runs a step ahead of the sound, and the mute is judged shortly 
 
 ## Review changes on a unit
 
-To be filled from the author's run of the package built from this pull request's source. Planned checks: STOP while armed (the message goes at once); the normal case (128 steps, 140 BPM, kicks on steps 126 to 128 and 1: the switch lands between step 128 and step 1, as in the table above); a fast tempo or 2x track speed; a pattern of two steps. Until then each of these is "not tested".
+Package sha256 `2e47115e6821153430e5ae56479863fce411467cd640a69a93aa8d6f5c2bda08` (recipe `1.17.json` sha256 `0e26cfe5b25d0d3c02fc545a097c1e287a6680e3dee50f9215687a9ece0e5677`). To be filled from the author's run of it. Planned checks: STOP while armed (the message goes at once); the normal case (128 steps, 140 BPM, kicks on steps 126 to 128 and 1: the switch lands between step 128 and step 1, as in the table above); a fast tempo or 2x track speed; a pattern of two steps. Until then each of these is "not tested".
 
 ## Emulator evidence
 

@@ -7,7 +7,7 @@
   "mods": [
     {
       "file": "mute-latch-0.1.0-experimental-os1.17.elemod",
-      "sha256": "aa9dd675077e55759fe1b5ad97e234795119939bb6cd452ce28e5f59b6cda9bc",
+      "sha256": "2e47115e6821153430e5ae56479863fce411467cd640a69a93aa8d6f5c2bda08",
       "id": "mute-latch",
       "version": "0.1.0-experimental",
       "device": "digitakt-mk2",
@@ -15,7 +15,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "85337719822d84a038a71f2105de93bc2a1ca005",
+        "commit": "8c1d5219e7d8429ccdb2deb94af9d76247b4fef2",
         "path": "sdk/imports/packages/mute-latch/mute-latch-0.1.0-experimental-os1.17.elemod"
       },
       "title": "Mute Latch",
@@ -28,7 +28,7 @@
       "category": "System",
       "author": "crisp909",
       "needs_core": "1.0",
-      "on_unit": "The author reported this package (built with GCC 16.2.0, core 1.0) working on a Digitakt II on OS 1.17 on 2026-11-14; an informal report, see TESTING.md."
+      "on_unit": "Not yet run on a unit. An earlier package of this module (GCC 16.2.0, core 1.0) was reported working on a Digitakt II on OS 1.17 on 2026-11-14; an informal report, see TESTING.md."
     }
   ]
 }
