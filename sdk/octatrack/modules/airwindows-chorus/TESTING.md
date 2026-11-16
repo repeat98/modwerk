@@ -370,3 +370,42 @@ hardware waiver cover this continued fix and requested wider compatibility.
 `sdk/airwindows-chorus-build-approval.json` binds the exception to this exact
 0.1.2 source. Hardware remains **untested**; no physical audio, worst-case chip
 timing, Part/project reload or reboot pass is claimed.
+
+## Beta 0.1.3 — bit-identical efficiency pass
+
+16 November 2026. Software only: **not tested on hardware**. All runs used
+this checkout's `dsp_host` (SHA-256 `786bb3a6...`, in `evidence/stress.json`)
+built in the reviewed toolchain image.
+
+- **Parity.** `verify_optimization.py --baseline <0.1.2 source>`: 30 fixtures,
+  983,040 stereo frames, every output word identical to 0.1.2
+  (`evidence/optimization-parity.json`). The fixtures run one instance on a
+  private buffer; `verify_shared_buffer.py` covers the shared T3 and T7 buffers
+  at splits 0/1/8/15, with the stock Y words and the stock X tail preserved
+  and the audio identical to the isolated render.
+- **Gates.** `verify.py`, `verify_controls.py`, `verify_instances.py`,
+  `verify_sine.py`, `verify_shared_buffer.py` and `verify_bounds.py` pass;
+  their records are rewritten for this source.
+- **Cost against stock.** `benchmark.py` on private native images of 0.1.2
+  and 0.1.3 (null stub subtracted, both cores, all splits 0..15, executed
+  instructions per sample, not chip cycles):
+
+  | Effect | No split, fixed | No split, moving | Split, moving (worst) |
+  | --- | ---: | ---: | ---: |
+  | Stock CHORUS | 253.5 | 253.625 | 292.875 |
+  | Stock SPRING REV | 257.4375 | 257.5 | 314 |
+  | Air Chorus 0.1.2 | 388.4375 | 390.5625 | 394.625 |
+  | Air Chorus 0.1.3 | 339.375 | 358.375 | 362.375 |
+
+  The 0.1.2 figure reproduces its own record exactly.
+- **Static bound.** 737 modeled units per sample (0.1.2: 732). The model
+  charges the start-up path of the left ring, which this pass did not shorten.
+- **Stress.** `verify_stress.py`: eight instances, four per core, 31 s, dirty
+  state, guards clean (`evidence/stress.json`).
+- **`npm run perf:audit -- check evidence/performance.json`:** no check failed.
+  It notes 4 x 737 = 2948 of 3120 static units per core, as before (2928).
+- **Size.** 588 program words per core (0.1.2: 539), 844 with the table; the
+  private single-module build leaves 1,880 donor words free per core. Module
+  combinations at the new size were not rebuilt natively.
+- Not tested: physical timing, audio on a unit, Part/project reload, reboot.
+

@@ -140,3 +140,21 @@ The builder can place table and code separately, removes stock reverb donors
 as needed and still refuses combinations that exceed available memory.
 See [the current test record](TESTING.md#beta-012--shared-word-protection-and-wider-compatibility)
 for matched DSP cost, native composition evidence and remaining limits.
+
+## Beta 0.1.3 — 16 November 2026
+
+The same effect in fewer DSP instructions. The output is bit-identical to
+0.1.2 on every recorded fixture (30 fixtures, 983,040 stereo frames: cold and
+warm history, endpoints, moving controls and every trigger split), so the
+sound, the controls and saved settings are unchanged.
+
+The matched worst case drops from 394.625 to 362.375 net executed
+instructions per sample (8.2%), and from 388.4 to 339.4 at fixed settings
+without a trig split (12.6%); stock Chorus is 292.875 and Spring 314. The
+right channel no longer runs the shared-word checks that only the left ring
+needs, a delay triplet inside the protected prefix is read directly, the
+even/odd flip is tested once per channel, and the history count runs only
+while the ring fills. The program grows from 539 to 588 words per core.
+See [the test record](TESTING.md#beta-013--bit-identical-efficiency-pass).
+Not tested on hardware.
+

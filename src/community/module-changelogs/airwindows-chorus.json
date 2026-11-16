@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.1.3-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Uses about 8% less DSP time at its heaviest and about 12% less at steady settings.",
+      "Same sound, controls and saved settings as 0.1.2.",
+      "Known issue: this version is not yet tested on hardware."
+    ]
+  },
+  {
     "version": "0.1.2-experimental",
     "date": "2026-10-09",
     "changes": [
