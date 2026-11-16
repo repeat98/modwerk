@@ -5,6 +5,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { manifestBuildFields } from './module-source.mjs'
 import { alternation, moduleFolders } from './machine-folders.mjs'
+import { touchesBaseSize } from './base-size.mjs'
 
 // The machine registry names each machine's module folder: the Octatrack's, the elemod machines' (compiled firmware)
 // and the Zoom pedals' (prebuilt effect files, no compile job).
@@ -166,7 +167,7 @@ export function readChangeScope({ root, base, head = null }) {
     if (!inspect) return { path, before: '', after: '', regular: true }
     const before = read(commit, path), after = read(head, path)
     return { path, before: before.text, after: after.text, regular: before.regular && after.regular }
-  })), sdk }
+  })), sdk, base: names.some(touchesBaseSize) }
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

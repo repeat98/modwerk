@@ -207,7 +207,7 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
         ...[crashNames(names(member.crashBase), member.crash.pc, member.crash.stack ?? [])].filter(Boolean).map(line => '    ' + line)] : [],
       ...member.stall ? [`  stall record ${member.stall.count}: reason ${member.stall.reason} (1 frames stopped, 2 eDMA refused) at tick ${member.stall.ticks}`,
         ...member.stall.report?.length ? ['    report: ' + stallWords(member.stall.report)] : [],
-        ...member.stall.frames?.length ? ['    ' + describeStallFrames(member.stall.frames)] : []] : [],
+        ...[describeStallFrames(member.stall.frames, member.stall)].filter(Boolean).map(line => '    ' + line)] : [],
       ...unitLines([...member.incidents?.values() ?? []], names),
       '  ' + Object.entries(member.kinds).map(([kind, n]) => kind + ' ' + n).join(', '),
     ]),

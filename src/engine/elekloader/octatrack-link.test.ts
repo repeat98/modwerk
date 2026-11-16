@@ -4,7 +4,7 @@ import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrac
 import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
-import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, StaleLoadError, linkBusy, openFailure, tabLocks } from './octatrack-link'
+import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, StaleLoadError, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
 import { UsbVendorTransport, parseBaseSlots } from './upload-usb'
 
@@ -946,4 +946,71 @@ it('uploads a capable base’s complete set once and accepts nothing before the 
     expect(staged).toHaveLength(2); expect(accept).toHaveBeenCalledTimes(1)
     expect(identity).toHaveBeenCalledTimes(2)
   } finally { stop(); identity.mockRestore() }
+})
+
+describe('several Elektron devices allowed on the site', () => {
+  // A pretend Digitakt or Syntakt: any Elektron product but the Octatrack, without the base's interface.
+  const other = (productName = 'Digitakt'): LinkDevice & { open: ReturnType<typeof vi.fn> } => ({
+    vendorId: 0x1935, productId: 0x7f, productName, opened: false,
+    configuration: { interfaces: [{ interfaceNumber: 0, alternates: [{ interfaceClass: 1, interfaceSubclass: 1, interfaceProtocol: 0, endpoints: [] }] }] },
+    open: vi.fn(async () => {}), async close() {}, async selectConfiguration() {}, async claimInterface() {}, async releaseInterface() {},
+    async controlTransferOut() { return { status: 'stall', bytesWritten: 0 } }, async controlTransferIn() { return { status: 'stall' } },
+  })
+  /** The fake unit's USB, listing `extra` before the unit and letting a test plug in any device. */
+  function usbWith(unit: ReturnType<typeof fakeUnit>, extra: LinkDevice[]) {
+    const connect = new Set<(event: { device: LinkDevice }) => void>()
+    const usb: LinkUsb = { ...unit.usb, async getDevices() { return [...extra, ...await unit.usb.getDevices()] },
+      addEventListener(type, listener) { unit.usb.addEventListener(type, listener); if (type === 'connect') connect.add(listener) },
+      removeEventListener(type, listener) { unit.usb.removeEventListener(type, listener); connect.delete(listener) } }
+    return { usb, plug: (device: LinkDevice) => { for (const listener of connect) listener({ device }) } }
+  }
+  it('ranks the base’s interface first, then an Octatrack by product id or name, and nothing else', async () => {
+    const [base] = await fakeUnit('base').usb.getDevices(), [stock] = await fakeUnit('stock').usb.getDevices()
+    expect([base, stock, other(), other('OCTATRACK MKII')].map(octatrackRank)).toEqual([2, 1, 0, 1])
+    expect(pickOctatrack([other(), stock, base])).toBe(base)
+    expect(pickOctatrack([other(), stock])).toBe(stock)
+    expect(pickOctatrack([other()])).toBeUndefined()
+  })
+  it('opens the Octatrack on the base when a Digitakt is listed first', async () => {
+    const unit = fakeUnit(), digitakt = other(), { usb } = usbWith(unit, [digitakt])
+    const link = new OctatrackLink(usb, fakeSession(unit), 300), stop = link.start()
+    await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+    expect(digitakt.open).not.toHaveBeenCalled()
+    stop()
+  })
+  it('does not call another Elektron device an Octatrack on the original OS', async () => {
+    const unit = fakeUnit('none'), digitakt = other(), { usb, plug } = usbWith(unit, [digitakt])
+    const link = new OctatrackLink(usb, fakeSession(unit), 300), stop = link.start()
+    await settle(); await settle()
+    plug(other('Syntakt')); await settle(); await settle()
+    expect(link.getState().status).toBe('idle')
+    expect(digitakt.open).not.toHaveBeenCalled()
+    stop()
+  })
+  it('stays on the unit when another Elektron device is plugged in while it is busy or on the original OS', async () => {
+    const busyUnit = fakeUnit(), busy = usbWith(busyUnit, [])
+    busyUnit.taken = true
+    const held = new OctatrackLink(busy.usb, fakeSession(busyUnit), 300), stopHeld = held.start()
+    await vi.waitFor(() => expect(held.getState().status).toBe('busy'))
+    const digitakt = other(); busy.plug(digitakt); await settle(); await settle()
+    expect(held.getState().status).toBe('busy'); expect(digitakt.open).not.toHaveBeenCalled()
+    const [stockUnit] = await fakeUnit('stock').usb.getDevices(), opened = vi.spyOn(stockUnit, 'open')
+    busy.plug(stockUnit); await settle(); await settle()
+    expect(opened).not.toHaveBeenCalled() // a stock Octatrack does not take over from one on the base
+    stopHeld()
+
+    const unit = fakeUnit('stock'), stock = usbWith(unit, [])
+    const link = new OctatrackLink(stock.usb, fakeSession(unit), 300), stop = link.start()
+    await vi.waitFor(() => expect(link.getState().status).toBe('stock'))
+    const syntakt = other('Syntakt'); stock.plug(syntakt); await settle(); await settle()
+    expect(link.getState().status).toBe('stock'); expect(syntakt.open).not.toHaveBeenCalled()
+    unit.plug('base') // a unit with the base does take over
+    await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+    stop()
+  })
+  it('lists only Octatracks in Chrome’s picker', async () => {
+    const unit = fakeUnit(), request = vi.spyOn(unit.usb, 'requestDevice'), link = new OctatrackLink(unit.usb, fakeSession(unit), 300)
+    await link.connect()
+    expect(request).toHaveBeenCalledWith({ filters: [{ vendorId: 0x1935, productId: 0x0002 }] })
+  })
 })

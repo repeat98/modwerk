@@ -5,7 +5,8 @@
 //   npm run module:doctor -- --draft <id>  # a draft under sdk/drafts/, copied under sdk/octatrack/modules/ for the run and removed after:
 //                                          # its experimental lines (try it, share it), with the release lines listed as still to do
 //   npm run module:doctor -- --draft <id> --release  # the same draft judged as a release: every line counts
-//   npm run module:doctor -- --all        # every catalog module and every Digitakt/Digitone module; CI runs this
+//   npm run module:doctor -- --all        # every catalog module and every Digitakt/Digitone module; CI runs this. It ends with
+//                                         # the modules due for a re-run on the unit (scripts/retest-queue.mjs), a report only
 //
 // Each line is a point where a module meets an existing workflow, with the command that fixes it when it fails. Run it until
 // it is green, then walk the checklist in docs/module-guides/<category>.md, which covers what a program cannot see.
@@ -26,6 +27,7 @@ import { requireZdlBinary, zdlPath } from './zdl-binaries.mjs'
 import { moduleCardless } from '../src/catalog/usb-only.ts'
 import { controlProblems } from './module-controls.mjs'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
+import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from './retest-queue.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
@@ -73,6 +75,9 @@ const nativeParams = (() => { try { return JSON.parse(nativeRun.stdout) } catch 
 
 // The qualification source hash is async; compute it once per module before the checks run.
 const nativeHashes = new Map()
+// The USB package file's Git history, read once and only when a hardware record and the shipped package differ.
+let packageRows = null
+const retest = documents => retestQueue({ documents, packages: json(PACKAGES).packages, history: (packageRows ??= packageHistory(root)), bases: json(BASES).bases })
 
 function octatrack(id) {
   const lines = []
@@ -153,6 +158,17 @@ function octatrack(id) {
   else if (found.files) ok('dsp sources', found.files + ' DSP source' + (found.files === 1 ? '' : 's') + ': no rep, no label that prefixes another')
   else info('dsp sources', 'no .asm source (ColdFire-only module)')
 
+  // The register contract of its DSP package's entries, read from the assembled words (scripts/dsp-register-contract.py): a hook entry writes only its
+  // site's clobbers, an init keeps r1/n1/m1. Reported until the owner sets REFUSED_FROM there; from then a module listed on or after it is refused.
+  const registers = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/dsp-register-contract.py', '--json', id], { cwd: root, encoding: 'utf8' })
+  const contract = registers.status === 0 ? JSON.parse(registers.stdout) : null, more = contract?.findings?.length > 1 ? ' (and ' + (contract.findings.length - 1) + ' more)' : ''
+  const registersFix = 'keep what the contract names, or widen the site\'s clobbers in a base pull request; python3 -B scripts/dsp-register-contract.py --json ' + id
+  if (!contract) fail('dsp registers', 'the check did not run: ' + (registers.stderr || registers.error?.message || '').trim().split('\n').pop(), 'python3 -B scripts/dsp-register-contract.py --json ' + id)
+  else if (contract.skipped) info('dsp registers', 'not checked: ' + contract.skipped)
+  else if (contract.findings.length && contract.refused) fail('dsp registers', contract.findings[0] + more, registersFix)
+  else if (contract.findings.length) info('dsp registers', contract.findings[0] + more + '. Reported, not refused: the owner sets the date it is refused from')
+  else if (contract.entries) ok('dsp registers', contract.entries + ' DSP entr' + (contract.entries === 1 ? 'y writes' : 'ies write') + ' only what their contract allows')
+
   if (rulesProblem) fail('module rules', 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), 'fix what it names, then run npm run modules:check -- --base origin/main')
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')
 
@@ -181,7 +197,10 @@ function octatrack(id) {
   const hardware = document.tests?.qualification?.hardware
   if (hardware?.status === 'reported' && usbRow?.version === document.version) {
     if (hardware.imageSha256 === usbRow.sha256) ok('tested package', 'the hardware record names the shipped USB package (' + usbRow.sha256.slice(0, 8) + ')')
-    else info('tested package', 'the hardware record names ' + hardware.imageSha256.slice(0, 8) + ', the shipped USB package is ' + usbRow.sha256.slice(0, 8) + ': run the shipped one (npm run device:qualify), or say in TESTING.md why the earlier run covers it')
+    else {
+      const due = retest([document]).due[0]
+      info('tested package', 'the hardware record names ' + hardware.imageSha256.slice(0, 8) + ', the shipped USB package is ' + usbRow.sha256.slice(0, 8) + (due ? ' (' + due.reason + ': ' + due.detail + ')' : '') + ': run the shipped one (npm run device:qualify), or say in TESTING.md why the earlier run covers it')
+    }
   }
 
   const clashes = compatProblems?.filter(problem => problem.modules.includes(id)) ?? []
@@ -279,6 +298,7 @@ for (const id of octatrackIds) {
 const machineIds = all ? machineModules : machineModules.filter(item => ids.includes(item.id))
 for (const item of machineIds) green = report(item.id + ' (' + item.machine + ')', [...machineModule(item), ...boardLines(item.machine, item.id, item.folder)]) && green
 if (!all && !octatrackIds.length && !machineIds.length) { console.error('No module named ' + ids[0] + ' under ' + MODULE_FOLDERS + '.'); process.exit(2) }
+if (all) console.log(formatRetestQueue(retest(octatrackIds.map(id => parseModuleDocument(json('sdk/octatrack/modules/' + id + '/octamod.module.json')))), { history: Object.keys(packageRows ?? {}).length > 0 }))
 const tiered = draft && !release
 if (tiered) console.log(green ? '\nThe experimental lines are green: try it with npm run module:dev, and share the branch; a tester runs the same command on it. The ○ lines are what listing it needs.' : '\nFix the lines marked ✗, then run this again. The ○ lines can wait until you list it.')
 else console.log(green ? '\nEvery integration point is green. Now walk the category checklist in docs/module-guides/.' : '\nFix the lines marked ✗, then run this again.')
