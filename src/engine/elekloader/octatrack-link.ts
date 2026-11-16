@@ -115,8 +115,9 @@ const UNCONFIRMED = 'The Octatrack hasn’t confirmed that the new base is saved
 class NothingWritten extends Error {}
 
 /** One step of a module set load: a runtime package, and the package that puts back what it changes (absent when the
- * site has none, such as for a removed module it does not publish). */
-export interface SetChange { readonly module: string; readonly data: Uint8Array; readonly undo?: Uint8Array }
+ * site has none, such as for a removed module it does not publish). `replaces`: it removes or replaces a module already
+ * on the unit, so a track may be using it (the loader's refusal 7, RUNTIME_IN_USE). */
+export interface SetChange { readonly module: string; readonly data: Uint8Array; readonly undo?: Uint8Array; readonly replaces?: boolean }
 
 export type LinkStatus = 'unsupported' | 'idle' | 'connecting' | 'stock' | 'busy' | 'ready' | 'sending' | 'testing' | 'trial' | 'finishing'
 export interface LinkState {
@@ -147,6 +148,15 @@ const REFUSED: Partial<Record<UploadResultName, string>> = {
  * loader's refusals (sdk/runtime/loader-refusals.json). A code without one shows the plain text above. */
 const REJECTED: Partial<Record<number, string>> = Object.fromEntries(
   loaderRefusals.refusals.flatMap(refusal => 'musician' in refusal && refusal.musician ? [[refusal.code, refusal.musician]] : []))
+const RUNTIME_IN_USE = 7
+/** After refusal 7, the modules the sync removes or replaces: one of them is on a track. The base does not say which
+ * track (November 2026: testers were refused several times in a row looking for it). */
+export function inUseHint(modules: readonly string[]) {
+  const names = [...new Set(modules)]
+  if (!names.length) return ''
+  const shown = names.length > 5 ? [...names.slice(0, 4), `${names.length - 4} more`] : names
+  return ` Look for ${new Intl.ListFormat('en', { type: 'disjunction' }).format(shown)} on the tracks.`
+}
 /** The browser couldn't claim the unit. In the data (11 Nov 2026) that was mostly Modwerk in another tab or browser, which
  * reads the unit every second while connected, not an Elektron app (they use the MIDI and audio interfaces). On Windows it
  * can also be the computer: an interface it set up without the base's interface GUID never claims (the same NetworkError),
@@ -217,6 +227,8 @@ export class OctatrackLink {
   private step?: DiagnosticSyncStep
   /** Changes in the last load: how long its publication or restore may take (setBudget). */
   private rows = 1
+  /** What the last load removes or replaces on the unit (SetChange.replaces), named after refusal 7. */
+  private replaced: readonly string[] = []
   private abort?: AbortController
   private keepalive?: ReturnType<typeof setInterval>
   private baseStep?: BaseUpdateStep
@@ -402,6 +414,7 @@ export class OctatrackLink {
     if (!changes.length || this.state.status !== 'ready' || !this.state.identity?.canSubmit || !base || !await this.claim()) return
     const abort = this.abort = new AbortController(), total = changes.reduce((sum, change) => sum + change.data.length, 0)
     this.rows = changes.length
+    this.replaced = changes.filter(change => change.replaces).map(change => change.module)
     this.set({ status: 'sending', identity: this.state.identity, active: this.state.active, module, progress: 0 })
     this.diagnostic('sync_started', {packages: changes.map(change => ({sha256:sha(change.data),bytes:change.data.length}))})
     let session: LinkSession | undefined
@@ -732,7 +745,8 @@ export class OctatrackLink {
     this.session = undefined
     await this.release()
     // An untrusted connection that could not be read again leaves the running set unknown.
-    const text = recovered && clean ? RECOVERED : (REJECTED[why ?? 0] ?? explainLinkError(error)) + (clean ? '' : ' ' + UNPLUG)
+    const text = recovered && clean ? RECOVERED : (REJECTED[why ?? 0] ?? explainLinkError(error)) +
+      (why === RUNTIME_IN_USE ? inUseHint(this.replaced) : '') + (clean ? '' : ' ' + UNPLUG)
     if (this.device && connection === this.connection) this.ready({ tone: 'error', text }, session ? settled?.status.active : this.state.active)
   }
   /** Cancel, roll back or leave upload mode from whatever phase `session` reports; true once back to normal. */

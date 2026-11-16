@@ -396,8 +396,10 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
         checkPackage(entry, data, step.id, step.group ? entry as MachineVariant : undefined)
         packages.set(entry, data)
       })))
+      // A removal, or a machine package replacing the one on the unit (it has the previous one as its undo), changes what a
+      // track may be using; a new module cannot be in use yet.
       return { name: target.name, changes: steps.map(step => ({ module: step.name, data: step.add ? packages.get(step.add)! : removalPackage(step.id),
-        undo: step.undo ? packages.get(step.undo)! : step.add ? removalPackage(step.id) : undefined })) }
+        undo: step.undo ? packages.get(step.undo)! : step.add ? removalPackage(step.id) : undefined, ...(!step.add || step.undo ? { replaces: true } : {}) })) }
     },
   }
 }

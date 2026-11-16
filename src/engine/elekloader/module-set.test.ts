@@ -66,7 +66,7 @@ describe('preparing a module set', () => {
     expect(changes.map(change => change.module)).toEqual(['Mini Verb'])
     // Off and no longer in the set: the sync removes it from the unit, with its package to put it back on Undo.
     const out = await prepareModuleSet({ name: 'Live', moduleIds: ['everb'] }, current, load, capabilities)
-    expect(out.changes).toEqual([{ module: 'TapeHead', data: removalPackage('tapehead'), undo: file(manifest.packages[2].path) }])
+    expect(out.changes).toEqual([{ module: 'TapeHead', data: removalPackage('tapehead'), undo: file(manifest.packages[2].path), replaces: true }])
   })
   it('removes first, then installs, each with the package that undoes it', async () => {
     const current = inventoryFrom([{ handle: 27, layout: 1, module: '873d83cc', name: 'E-Verb' }, { handle: 0xff, layout: 0, module: '0000002a', name: '' }])
@@ -75,8 +75,9 @@ describe('preparing a module set', () => {
       { abi: 8, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 })
     expect(name).toBe('Live')
     expect(changes.map(change => change.module)).toEqual(['E-Verb', '0000002a', 'TapeHead', 'Mini Verb'])
-    expect(changes[0]).toEqual({ module: 'E-Verb', data: removalPackage('everb'), undo: file(manifest.packages[0].path) })
-    expect(changes[1]).toEqual({ module: '0000002a', data: removalPackage('0000002a'), undo: undefined }) // nothing to put back
+    // A removal may be on a track (the loader's refusal 7 names it); a new module cannot be yet.
+    expect(changes[0]).toEqual({ module: 'E-Verb', data: removalPackage('everb'), undo: file(manifest.packages[0].path), replaces: true })
+    expect(changes[1]).toEqual({ module: '0000002a', data: removalPackage('0000002a'), undo: undefined, replaces: true }) // nothing to put back
     expect(changes[2]).toEqual({ module: 'TapeHead', data: file(manifest.packages[2].path), undo: removalPackage('tapehead') })
   })
   it('refuses what the base cannot do yet, before anything is sent', async () => {
@@ -353,7 +354,7 @@ describe('machine groups over USB', () => {
     const off = catalogue.inventory([], [{ handle: 255, layout: 14, module: runtimeId('octatrack-machines'), name: 'Machines' }])
     expect(off).toEqual({ moduleIds: [], removedStockFx: [], offIds: ['vector', 'synth'] })
     expect(catalogue.review({ name: 'Set', moduleIds: ['synth', 'vector'] }, off, capable)).toMatchObject({ needsSync: false, problem: undefined })
-    expect((await catalogue.prepare({ name: 'Set', moduleIds: [] }, off, fetched, capable)).changes).toEqual([{ module: 'Machines', data: removalPackage('octatrack-machines'), undo: undefined }])
+    expect((await catalogue.prepare({ name: 'Set', moduleIds: [] }, off, fetched, capable)).changes).toEqual([{ module: 'Machines', data: removalPackage('octatrack-machines'), undo: undefined, replaces: true }])
   })
   it('updates the same member IDs from a retained layout and restores that exact package on Undo', async () => {
     const old = groupPackage(['vector', 'synth'], 14, false), next = groupPackage(['vector', 'synth'], 29)
@@ -361,7 +362,7 @@ describe('machine groups over USB', () => {
     const set = { name: 'Studio', moduleIds: ['synth', 'vector'] }
     expect(catalogue.review(set, inventory(14), capable)).toMatchObject({ needsSync: true, updates: ['synth', 'vector'], changes: { add: [], remove: [] }, problem: undefined })
     const prepared = await catalogue.prepare(set, inventory(14), fetched, capable)
-    expect(prepared.changes).toEqual([{ module: 'Machines', data: next.data, undo: old.data }])
+    expect(prepared.changes).toEqual([{ module: 'Machines', data: next.data, undo: old.data, replaces: true }]) // a track may play the old one
     expect(catalogue.review(set, inventory(29), capable)).toMatchObject({ needsSync: false, updates: [], problem: undefined })
   })
   it('does not substitute a larger combination when the selected subset is unpublished', async () => {
@@ -404,7 +405,7 @@ describe('machine groups over USB', () => {
   it('removes a known group as one transaction with the exact retained package for Undo', async () => {
     const old = groupPackage(allMachines, 11, false), { catalogue, fetched, inventory } = machineCatalogue([old])
     const result = await catalogue.prepare({ name: 'Empty', moduleIds: [] }, inventory(11), fetched, capable)
-    expect(result.changes).toEqual([{ module: 'Machines', data: removalPackage('octatrack-machines'), undo: old.data }])
+    expect(result.changes).toEqual([{ module: 'Machines', data: removalPackage('octatrack-machines'), undo: old.data, replaces: true }])
   })
   it.each(['member mask', 'layout', 'module id', 'flags', 'site count', 'copy count', 'fill count', 'truncated record', 'undo hash', 'site keep', 'site checked', 'odd site', 'empty copy', 'copy outside image', 'copy reserved', 'empty fill', 'fill outside image', 'zero fill value', 'fill reserved', 'fill over copy', 'nonzero placeholder'])('refuses %s mismatches before returning a transaction', async field => {
     const old = groupPackage(allMachines, 11, false), next = groupPackage(allMachines, 12)
