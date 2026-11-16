@@ -12,7 +12,8 @@
 #define RUNTIME_CAPABILITY_FLAGS 7u     /* CF sites, hash-backed stock copies, authored constant fills; and 128, site events, when the machine has them (64 is the volatile journal) */
 #define RUNTIME_HEADER_BYTES 80u        /* ABI 9 and 10: ABI 8 (76) plus requires u16, claim and hook-entry counts u8;
                                          * older headers: 76, 72, 68, 50, 32, 28 */
-#define RUNTIME_IMAGE_BYTES 131072u      /* one module's image and bss (Tape Echo's tone table is 86 KiB) */
+#define RUNTIME_IMAGE_BYTES 131072u      /* one module's image (Tape Echo's tone table is 86 KiB) */
+#define RUNTIME_MODULE_BYTES 294912u     /* one module's image and bss (MIDI Scenes' locks: 64 Parts of 4 KiB) */
 #define RUNTIME_RELOCATIONS 2048u
 #define RUNTIME_SITES 128u
 #define RUNTIME_SITE_BYTES 32u
