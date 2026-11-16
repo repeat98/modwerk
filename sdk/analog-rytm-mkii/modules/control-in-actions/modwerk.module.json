@@ -2,7 +2,7 @@
  "schemaVersion": 3,
  "id": "control-in-actions",
  "name": "Control In Actions",
- "version": "0.1.4-experimental",
+ "version": "0.1.5-experimental",
  "machine": "analog-rytm-mkii",
  "category": "system",
  "exclusive": false,
