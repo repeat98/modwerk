@@ -12,6 +12,31 @@ Package SHA-256 `d32d25f1229d2680…` (`module:dev --build-only` at 9f750f1ac), 
 
 Not run in this trial: any scene gesture, the crossfader, CC output, a save, a reload, a power cycle, a project with locks.
 
+### Hand test by the owner, 16 November 2026
+
+Same package as the install trial, a one-hour trial on the same twin, ended after 7 minutes: the owner locked MIDI parameters in scenes and moved the crossfader, and reported "ok, worked". No details recorded.
+
+### CPU and stress, 16 November 2026
+
+Package from 4a6de480a (the battery-RAM range ending at 0x100fbf00), twin `31d16f88`, the owner's project. Each in-use run played a pattern with a trig on every step of all eight MIDI tracks, scene 1 on A and scene 2 on B, MIDI channels off (so no CC or note went out). The CPU meter is the mean of `stats` readings; the frame interrupt's share is the `guard` reading over the run.
+
+| Run | CPU meter | Frame interrupt | Skipped renders |
+|---|---|---|---|
+| `device:price`, pattern A01, at rest, without / with MIDI Scenes | 46.5 / 46.8 % | 28.5 / 28.7 % | 0 |
+| No modules, crossfader still / sweeping | 42.6 / 42.6 % | 24.8 / 24.8 % | 0 |
+| MIDI Scenes, 480 locks (every knob of the five MIDI pages, both scenes, eight tracks), still / sweeping | 42.8 / 42.8 % | 24.8 / 24.9 % | 0 |
+| Stress: sweeps and pattern changes B16-B15, 12 rounds, about 1 min | 42.8 % (max 43.2) | 24.8 % | 0 |
+| 14 other modules installed (POLY8, FM Synth, Amiga, Repitch, Mute Modes, Euclid, Tape Echo, Mini Verb, E-Verb, Apply Scene, Arp Key Locks, Direct Jump, Temp Save, Track Solo), sweeping | 48.1 % | 29.3 % | 0 |
+| The same 14 plus MIDI Scenes, 96 locks, sweeping | 48.2 % | 29.3 % | 0 |
+| The same, stress: 4 rounds of pattern changes, 2-minute trial | 48.2 % (max 48.3) | 29.3 % | 0 |
+
+- The morph ran: MIDI track 1's record (0x46c76dc0) held scene A's values at the crossfader's A end, scene B's at the B end and values between them in the middle.
+- The battery copy counted 480 and then 96 locks as they were set.
+- No crash or stall record was added (crash 12 and stall 45 before and after).
+- Every trial rolled back; the set installed beside 14 modules in one go.
+
+Not measured: CC output with MIDI channels on, a CC flood at 240 BPM, MKI.
+
 ## Commands and exact revision
 
 Branch `module/midi-scenes` on base branch `base/module-bss-cap` (base 0.7.4, which allows a module 288 KiB of image and bss).
