@@ -104,14 +104,15 @@
       "summary": "Package mute-latch-0.1.0-experimental-os1.17.elemod (sha256 aa9dd675..., pinned toolchain, GCC 16.2.0) with core 1.0, from the author's report that it works: with kicks on the last steps and step 1 of a 128-step pattern at several tempos the switch landed between the last step and step 1; 2 and 3 PERFORM presses waited that many passes; choosing the same tracks again cancelled.",
       "limitations": [
         "Informal report: no count of repetitions, tempos or CPU load was given.",
-        "Not tested: a pattern change while armed, shorter patterns, Scale per track, a power cycle with something armed."
+        "The report is for the earlier package; the build of the current source (STOP drops the message, pass counted per wrap) is not yet run on a unit.",
+        "Not tested: leaving Mute Mode or STOP while armed, a pattern change while armed, shorter patterns, Scale per track, a power cycle with something armed."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Two earlier builds reported working on a Digitakt II by the author; the submitted build is tested in the emulator only until it runs on a unit. See TESTING.md.",
+    "summary": "An earlier package (commit 446dbf76) was reported working on a Digitakt II by the author; the build of the current source is still to be run on a unit. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

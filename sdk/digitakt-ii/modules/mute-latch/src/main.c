@@ -43,7 +43,7 @@
 static uint32_t parked;        // tracks waiting for the end of the pattern
 static int loops;              // PERFORM presses so far, 1 to 4: how many passes of the pattern to wait
 static int remaining;          // passes still to wait; the switch comes at the end of the last one
-static int seen_last;          // the master track's last step was already counted in this pass
+static int fired;              // this pass's end was already counted; cleared when the position wraps
 static void *view;             // the PREP MUTES view, once seen on top
 static int last_pos = -1;      // the master track's position at the previous tick
 static int was_playing;
@@ -182,12 +182,14 @@ void mod_tick(void *ctrl)
     int playing = mlk_seq_state == 1;
     uint8_t *pat = (uint8_t *)mlk_seq_pattern;
 
-    // Stopping drops what is armed: the stock flow is the immediate one.
+    // Stopping drops what is armed: the stock flow is the immediate one. The header message goes at once.
     if (!playing || !pat) {
+        if (parked)
+            drop_armed_note();
         parked = 0;
         last_pos = -1;
         was_playing = 0;
-        seen_last = 0;
+        fired = 0;
         return;
     }
 
@@ -195,21 +197,22 @@ void mod_tick(void *ctrl)
     int master = master_track(pat);
     int pos = mlk_seq_pos[master];
     span_ticks = (pos == last_pos) ? span_ticks + 1 : 0;
+    if (pos < last_pos)
+        fired = 0;                              // the position wrapped: a new pass begins
     // The step word runs ahead of the sound: a step's mute is judged a moment after the word moves on to
     // the next one. Measured on a unit, the switch lands between the last step and the first on the second
-    // tick of the first step (or on the first tick of the second step when the steps are short), so the
-    // last step stays muted and the first one plays.
-    int on_last = (pos == 0 && span_ticks >= APPLY_TICK - 1) || pos == 1;
+    // tick of the first step, so the last step stays muted and the first one plays. When the steps are too
+    // short for that tick to be seen, the first position seen after the first step stands in for it.
+    int on_last = (pos == 0 && span_ticks >= APPLY_TICK - 1) || pos >= 1;
     last_pos = pos;
     was_playing = 1;
 
-    // The pass ends when that moment comes round once per pass; seen_last keeps it to once.
+    // The pass ends when that moment comes round once per pass; fired keeps it to once. A pattern of one
+    // step never wraps in the position word, so it ends one pass only (the README names this).
     int passed = 0;
-    if (on_last) {
-        passed = !seen_last;
-        seen_last = 1;
-    } else if (pos >= 2) {
-        seen_last = 0;
+    if (on_last && !fired) {
+        passed = 1;
+        fired = 1;
     }
 
     if (!parked)

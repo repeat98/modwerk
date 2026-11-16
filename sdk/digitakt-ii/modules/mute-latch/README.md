@@ -1,6 +1,6 @@
 # Mute Latch — Digitakt II
 
-A Digitakt II mod by @crisp909. Version 0.1.0-experimental, for OS 1.17 with Elekloader core 1.0. The author reported the submitted package and earlier builds working on a Digitakt II (see [TESTING.md](TESTING.md) for which build each result belongs to). Screenshots are emulator captures.
+A Digitakt II mod by @crisp909. Version 0.1.0-experimental, for OS 1.17 with Elekloader core 1.0. The author reported an earlier package of this module (commit 446dbf76) working on a Digitakt II; the current source has small changes after review that are still to be run on a unit (see [TESTING.md](TESTING.md) for which build each result belongs to). Screenshots are emulator captures.
 
 ## Overview
 
@@ -23,9 +23,11 @@ There are no knobs and no SETTINGS rows.
 | FUNC held, PERFORM again (up to four presses) | Waits one more pass each time: the number next to the icon shows the passes left. The fifth press goes back to 1. |
 | Let go of the TRIG keys, PERFORM and FUNC | Nothing happens now. The armed tracks switch at the end of the last pass, at the pattern's first step. |
 | FUNC held, the same TRIG keys again, PERFORM | Takes those tracks back out; the last one out cancels ("ARM CANCELED"). |
-| STOP, or leaving Mute Mode | Drops everything still armed. |
+| STOP, or leaving Mute Mode | Drops everything still armed; the header message goes at once. |
 
 Armed tracks toggle their mute state, as PREP MUTES does: a track that is muted becomes audible. Choosing a track again and pressing PERFORM takes it back out. Choosing new tracks and pressing PERFORM adds them and counts as a press.
+
+**How the passes are counted.** Every PERFORM press that is taken, including one that adds or takes out only some of the tracks, sets the number of passes to wait *from that moment*; it does not add to what is left. The number next to the icon is what the last press set: armed for 2 with one pass gone, one more press shows 3 and waits three more passes. The fifth press goes back to 1. This is intended, so that the header always says how many passes remain.
 
 ## Usage
 
@@ -46,12 +48,14 @@ Armed tracks toggle their mute state, as PREP MUTES does: a track that is muted 
 
 - Digitakt II, OS 1.17 only.
 - Works while the sequencer plays. Stopped, PERFORM and PREP MUTES keep their stock behaviour. With nothing installed or nothing chosen, nothing changes: there is no setting, and removing the module restores stock behaviour exactly.
-- The step counter the module reads runs a step ahead of the sound, and a step's mute is judged a moment after the counter moves on. The module therefore switches on the second UI tick (the core ticks at about 30 Hz) of the pattern's first step, or on the first tick of the second step if steps are shorter than that. On a unit (author's report, one kick per step, several tempos from about 100 to 170 BPM, 128 steps) the last step stayed muted or unmuted as before and the first step played switched. It is not sample-accurate: it rests on the tick landing in a window of about one step, and a very fast tempo or a late tick could move it by one step. A sequencer hook in the base would make it exact.
+- The step counter the module reads runs a step ahead of the sound, and a step's mute is judged a moment after the counter moves on. The module therefore switches on the second UI tick (the core ticks at about 30 Hz) of the pattern's first step, or, when the steps are shorter than that, on the first position it sees after the first step. On a unit (author's report of the submitted package: one kick per step, several tempos whose values were not recorded, 128 steps) the last step stayed muted or unmuted as before and the first step played switched. It is not sample-accurate: it rests on a tick landing in a window of about one step, and a very fast tempo or a late tick could move it by a step. A sequencer hook in the base would make it exact.
+- Very short steps (2x track speed at a high tempo): the first step can pass between two ticks. The switch is then made on the first position seen after it, a step late at most, not a whole pass late. Not tested on a unit.
+- A pattern of two steps counts one pass per wrap and works. A pattern of one step never shows a wrap in the step position, so it is counted once: the first armed choice switches, and anything armed after that waits until STOP. Not tested on a unit.
 - With Scale per track, the longest track's last step is taken as the pattern's end.
 - The armed choice is kept in RAM only. It is not saved with the project and does not survive a power cycle.
 - After PERFORM the PREP MUTES screen shows no chosen tracks, because the stock choice is cleared; the armed tracks are not shown on the TRIG LEDs, only by the header message.
 - A change of pattern while tracks are armed counts the new pattern's passes. This is the intended reading, not yet observed.
-- Arming during the first two steps of a pass, after the switch moment, does not count that pass; the countdown starts with the next one.
+- Arming after the switch moment of a pass (from the second tick of the first step on) does not count that pass; the countdown starts with the next one.
 - Built for Elekloader core 1.0. It patches no stock site, so it does not clash with core 1.1.
 
 ### Stock flows this module touches
@@ -62,7 +66,7 @@ Armed tracks toggle their mute state, as PREP MUTES does: a track that is muted 
 
 ## How it works
 
-The module uses three core hooks and patches no stock site. In `ev_key` it reads the key event's code; for PERFORM, while the PREP MUTES view is on top with its session open and the sequencer plays, it moves the view's 16-bit choice into its own armed set, clears the view's mask (so letting go of FUNC applies nothing), sets the number of passes to wait (one more for each press, wrapping from four to one), shows MUTES ARMED in the stock header message and takes the event. In `ev_tick` (the UI task, about 30 Hz) it follows the master track's step position, counts a pass at the second tick of the master track's first step (or on the first tick of its second step, whichever comes first), keeps the header message up, and after the last pass writes the armed set into the view's mask and calls the stock routine that applies it. In `ev_draw` it adds the loop icon and the passes left to the header with the stock rectangle routine.
+The module uses three core hooks and patches no stock site. In `ev_key` it reads the key event's code; for PERFORM, while the PREP MUTES view is on top with its session open and the sequencer plays, it moves the view's 16-bit choice into its own armed set, clears the view's mask (so letting go of FUNC applies nothing), sets the number of passes to wait (one more for each press, wrapping from four to one), shows MUTES ARMED in the stock header message and takes the event. In `ev_tick` (the UI task, about 30 Hz) it follows the master track's step position, counts a pass once per wrap of that position, at the second tick of the first step or, if that tick is missed, at the first position seen after it, keeps the header message up, and after the last pass writes the armed set into the view's mask and calls the stock routine that applies it. In `ev_draw` it adds the loop icon and the passes left to the header with the stock rectangle routine.
 
 **The PREP MUTES view.** The module keeps a pointer to the view from the PERFORM press, so it checks it before use. The view is one object that lives while Mute Mode is on: in the emulator its address was the same in four FUNC sessions (and the same after leaving and re-entering Mute Mode), and its session flag toggled with FUNC. Leaving Mute Mode removes it from the view stack, where it may be freed. Before it applies, the tick therefore walks the view stack and looks for that object; if it is not there, the armed choice is dropped and nothing is written or called. Checked in the emulator: armed, then FUNC+TRK to leave Mute Mode, then a full pass: no mute changed. Stock locations of OS 1.17 are named once in `build.json`: the vtable of the PREP MUTES view, the apply routine, the key-down test, the Brain, the header message routine and the UI state, the rectangle routine, and three words of sequencer state (the playing flag, the pattern pointer and each track's step position).
 
@@ -70,7 +74,7 @@ These locations were read from the OS 1.17 image with a static disassembler and 
 
 ## Tests and measurements
 
-The Modwerk evidence tier is `author-hardware`: the author reports the submitted package working on a Digitakt II (an informal report, no owner verification). [TESTING.md](TESTING.md) lists what was and was not checked. Memory is not measured; the load is read from the code, not measured.
+The Modwerk evidence tier is `author-hardware`: the author reports an earlier package of this module working on a Digitakt II (an informal report, no owner verification); the build of the current source is still to be run on a unit. [TESTING.md](TESTING.md) lists what was and was not checked. Memory is not measured; the load is read from the code, not measured.
 
 ## Authorship and licences
 
