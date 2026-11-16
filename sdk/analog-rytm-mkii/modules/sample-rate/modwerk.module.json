@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "sample-rate",
   "name": "Improved SMPL",
-  "version": "0.5.1-experimental",
+  "version": "0.6.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "playback",
   "exclusive": false,
@@ -19,34 +19,40 @@
   "presentation": {
     "label": "IMPROVED SMPL",
     "family": "Sample playback",
-    "summary": "The SAMPLE page, improved: TUN turns in cents, FIN's knob is RATE (pure sample speed, to a stop and into reverse), and SMPL always shows the waveform, with the values that matter in one row.",
-    "overview": "Improved SMPL improves the Rytm's SAMPLE page. TUN turns 1 cent a step, faster as you spin it; press and turn for whole semitones, which keep the cents. The value reads with two places, as LFO depth does: +3.07, +3.00. The cents are kept in TUN itself, so a saved sound plays the same pitch on stock OS, which only shows the whole number. FIN's knob is RATE on every sound, a pure speed control: +63 plays at normal speed, 0 stops, -64 plays backward at normal speed, in a straight line between them, as the Octatrack's RATE with its setting on PTCH. Stock's pitch stops at a quarter of the speed. A trig below 0 starts from END. RATE starts at +63 on a new or cleared sound; a sound saved with FIN at +0 (stock's default, and every sound saved before 0.3.0) loads stopped: turn RATE up to +63. The SMPL key always opens the waveform view (SMPL WAVEFORM); the knob-only view is gone. Its idle screen shows values, not names: TUN, RATE, BR, LOOP (OFF, ON, or PIPO with Ping Pong Loop) and LEV in one row over a taller waveform. STA and END show as their lines, and turning D opens stock's sample list; the header names whichever knob turns.",
+    "summary": "The SAMPLE page, improved: TUN in cents, FIN's knob as RATE (to a stop and into reverse), LOP PIPO for ping-pong loops, FUNC + STA or END to zero crossings, and SMPL always shows the waveform under one row of values.",
+    "overview": "Improved SMPL improves the Rytm's SAMPLE page. TUN turns 1 cent a step, faster as you spin it; press and turn for whole semitones, which keep the cents. The value reads with two places, as LFO depth does: +3.07, +3.00. The cents are kept in TUN itself, so a saved sound plays the same pitch on stock OS, which only shows the whole number. FIN's knob is RATE on every sound, a pure speed control: +63 plays at normal speed, 0 stops, -64 plays backward at normal speed, in a straight line between them, as the Octatrack's RATE with its setting on PTCH. Stock's pitch stops at a quarter of the speed. A trig below 0 starts from END. RATE starts at +63 on a new or cleared sound; a sound saved with FIN at +0 (stock's default, and every sound saved before 0.3.0) loads stopped: turn RATE up to +63. The SMPL key always opens the waveform view (SMPL WAVEFORM); the knob-only view is gone. Its idle screen shows values, not names: TUN, RATE, BR, LOOP (OFF, ON or PIPO) and LEV in one row over a taller waveform. STA and END show as their lines, and turning D opens stock's sample list; the header names whichever knob turns. LOP gets a third value, PIPO, after OFF and ON: the loop between STA and END plays forward, then backward, then forward again, for as long as the note lasts, with each turn exactly on STA or END and no jump. PIPO is an ordinary LOP value: it saves with the sound and kit, takes parameter and scene locks, and plays as ON on an OS without the mod. FUNC + turn on STA or END moves that point to the next zero crossing of the sample the way you turn, stepping as LOP steps; plain turns stay stock. On the waveform a boxed S marks STA's line and a boxed E END's. PIPO and the zero snap came from Ping Pong Loop, which now lives here.",
     "highlights": [
-      "Tune a sample in cents: turn TUN, press and turn for semitones.",
-      "Fine tuning saves in the sound itself and plays the same on stock OS.",
+      "Tune a sample in cents: turn TUN, press and turn for semitones; it saves in the sound and plays the same on stock OS.",
       "Slow a sample to a dead stop and run it backward from FIN's knob, now RATE on every sound.",
       "Exactly the Octatrack's range: +63 is 1x, 0 stops, -64 is -1x.",
-      "RATE is the name everywhere: the knob, the header and the LFO destinations.",
       "SMPL always shows the waveform, taller, under one row of values: TUN, RATE, BR, LOOP, LEV.",
-      "Works beside LOP PIPO from Pipo Loop, without needing it."
+      "Ping-pong loops from LOP's third value, PIPO: lock it on a step or put it in a scene; no jump at the turns.",
+      "FUNC + STA or END steps through the sample's zero crossings, for click-free start and loop points.",
+      "Ping Pong Loop now lives here: one module for how a sample plays from the SAMPLE page."
     ],
     "usage": [
       "Press SMPL and turn TUN slowly: it moves 1 cent a step and reads +0.01, +0.02. Spin it faster to cover more ground.",
       "Press TUN's knob and turn: whole semitones, the cents kept.",
       "Put a long sample on a track, with LOP ON, and set RATE (FIN's knob) to +63. Play the pad and turn RATE down: the sample slows like a stopping turntable and rests at 0.",
-      "Keep turning below 0: it runs backward, smoothly through the stop. A new trig now starts from END."
+      "Keep turning below 0: it runs backward, smoothly through the stop. A new trig now starts from END.",
+      "Turn LOP (knob G) past ON to PIPO and play the sound: the loop between STA and END goes back and forth. Set them around a sustained part (a pad, a vowel) for a seamless drone.",
+      "Hold FUNC and turn STA (or END): the point steps from zero crossing to zero crossing, so the loop starts and ends where the waveform crosses zero."
     ]
   },
   "access": {
-    "location": "SAMPLE page (SMPL key, always the waveform view): TUN (encoder A) for fine tuning, RATE (encoder B, FIN's knob) for speed.",
+    "location": "SAMPLE page (SMPL key, always the waveform view): TUN (A) in cents, RATE (B, FIN's knob), LOP (G) OFF, ON or PIPO, FUNC + STA (E) or END (F) to zero crossings.",
     "steps": [
       "Select a track whose sound plays a sample, and press SMPL: the waveform view opens.",
       "Turn encoder A (TUN) for cents; press and turn it for semitones.",
-      "Turn encoder B (RATE): +63 is normal speed, 0 stops, below 0 plays backward."
+      "Turn encoder B (RATE): +63 is normal speed, 0 stops, below 0 plays backward.",
+      "Turn encoder G (LOP) clockwise past ON: the value reads PIPO.",
+      "Hold FUNC and turn encoder E (STA) or F (END): the point steps from zero crossing to zero crossing."
     ],
     "screenshots": [
       "media/knob-fine-tun.png",
-      "media/knob-rate.png"
+      "media/knob-rate.png",
+      "media/lop-pipo.png",
+      "media/snap-markers.png"
     ]
   },
   "controls": [
@@ -63,9 +69,25 @@
       "labels": null
     },
     {
+      "name": "LOP",
+      "default": 0,
+      "doc": "SAMPLE page, encoder G. OFF and ON as stock; PIPO plays the loop between STA and END forward, then backward, and so on. Locks per step and per scene. The value row reads OFF, ON or PIPO; where stock draws LOP's switch (the knob view, if another module brings it back), it has three positions, as BD CLASSIC's WAV: OFF left, ON middle, PIPO right.",
+      "labels": [
+        "OFF",
+        "ON",
+        "PIPO"
+      ]
+    },
+    {
+      "name": "FUNC + STA / END",
+      "default": null,
+      "doc": "SAMPLE page, FUNC held, encoder E or F: STA or END steps to the next zero crossing the way you turn, as often as LOP would step a value (more on a fast turn), the frame stock plays from; with none further it holds. STA and END may pass each other or share a crossing. With LOP ON only crossings of the other point's direction. With a trig held in GRID RECORDING it steps that trig's lock. Exact up to 30,720 frames (0.64 s); longer samples take the nearest step. Plain turns are stock.",
+      "labels": null
+    },
+    {
       "name": "SMPL key",
       "default": null,
-      "doc": "Opens the SAMPLE page in its waveform view (SMPL WAVEFORM) every time; a second press stays there. One row of values over a taller waveform: TUN, RATE, BR, LOOP (OFF, ON, or PIPO with Ping Pong Loop) and LEV, where knobs A, B, C, G and H turn them. STA and END (E, F) show as their lines and D opens the sample list, as stock. While a knob turns, the header names it.",
+      "doc": "Opens the SAMPLE page in its waveform view (SMPL WAVEFORM) every time; a second press stays there. One row of values over a taller waveform: TUN, RATE, BR, LOOP (OFF, ON or PIPO) and LEV, where knobs A, B, C, G and H turn them. STA and END (E, F) show as their lines and D opens the sample list, as stock. While a knob turns, the header names it.",
       "labels": null
     }
   ],
@@ -74,21 +96,30 @@
       "1.74"
     ],
     "requires": [],
-    "conflicts": [],
+    "conflicts": [
+      "pipo-loop"
+    ],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.7.",
+      "0.6.0 is Improved SMPL 0.5.1 and Ping Pong Loop 0.1.2 in one module, their code unchanged; do not install Ping Pong Loop beside it. Run on a unit by the author as SP03 to SP13 (0.1.x), by the automated rig (0.2.0, 0.3.0), in combo images RC38 to RC40 beside Ping Pong Loop 0.1.2, and as SU02 (0.5.1); see TESTING.md.",
       "The waveform view shows no text for STA, END and SMP: STA and END show as their lines, D's sample list as on stock. With a trig held, a lock on STA, END or SMP gets no box; locks on the row's five are boxed there.",
       "The SAMPLE page's knob-only view is not shown. If another module adds a page behind the SMPL key, the knob view stays in the cycle.",
-      "Run on a unit by the author as SP03 to SP13 (0.1.x) and by the author's automated rig (0.2.0 and 0.3.0, TESTING.md). Two voices together, performance and scene locks and sound browser load are from rytm-emu or not run there.",
       "A sound saved with FIN at +0 (stock's default, and every sound saved before 0.3.0 without SMP RATE) loads with RATE 0: the sample does not play until RATE is turned up. On stock OS a sound saved with RATE +63 plays about a semitone sharp (FIN as a detune).",
-      "MIDI CC 24 sets TUN in whole semitones and clears its cents, as stock's CC does; NRPN keeps them to 1/128 semitone.",
-      "Other screens (LFO destinations, a sound lock's list) and stock OS show TUN as a whole number.",
+      "MIDI CC 24 sets TUN in whole semitones and clears its cents, as stock's CC does; NRPN keeps them to 1/128 semitone; other screens (LFO destinations, a sound lock's list) and stock OS show TUN as a whole number.",
       "A pattern with TUN locks in cents saves one more lock lane per track, of stock's 72; stock OS loads those locks with their cents.",
-      "RATE never goes above 1x by itself; TUN does, to stock's ceiling of about 4x.",
-      "With LOP OFF, once the sample has played out, changing RATE does not bring it back: trig again.",
+      "RATE never goes above 1x by itself (TUN does, to stock's ceiling of about 4x). With LOP OFF, once the sample has played out, changing RATE does not bring it back: trig again.",
       "A change of direction on a looping voice waits until it is 32 frames clear of STA and END; a trig does not wait.",
+      "A sample previewed with FUNC + YES in a sample list plays at 1x, as on stock, whatever the track's RATE or an LFO on it: stock plays a preview from its own slot 129, and the module plays any voice on a slot of 128 or above at 1x, forward.",
       "Sound locks, scene locks and performance locks on RATE have not been run.",
-      "A sample previewed with FUNC + YES in a sample list plays at 1x, as on stock, whatever the track's RATE or an LFO on it: stock plays a preview from its own slot 129, and the module plays any voice on a slot of 128 or above at 1x, forward."
+      "Zero snap is exact only on samples up to 30,720 frames (0.64 s at 48 kHz): STA and END are steps of 1/30,720 of the sample, so on longer samples the point lands on the nearest step, up to frames / 61,440 frames from the crossing (1 frame at 1 s, about 8 at 10 s, 47 at 60 s).",
+      "MIDI CC 30 (LOP) writes its value unchanged, as on stock: CC value 2 now gives PIPO, every other nonzero value ON. Other OFF/ON parameters still read ON for 2.",
+      "On stock OS, or a build without this mod, PIPO plays as ON; LOP reads ERROR for it until the knob is turned, which steps between OFF and ON.",
+      "LOP's switch is drawn with the knob in the middle for ON, where stock draws it on the right; the value text still reads ON.",
+      "FUNC + turn on STA or END no longer gives stock's whole-number steps; use a plain turn for fine moves.",
+      "With END on the sample's very last frame, a turn can land up to 7 frames off (rytm-emu: the first turn after a hit); set END a little before the end for exact turns.",
+      "Exact turns depend on DMA reading frames the module writes (every cache way is pushed first); rytm-emu does not model the cache; PIPO played on the author's unit, and a dedicated click check of the turns on a unit is still open.",
+      "While a FUNC turn settles (stock glides STA and END over a fraction of a second), a loop wrap or PIPO turn can click; settled points are clean.",
+      "A very slow turn registers no change, as on LOP and stock's stepped controls."
     ]
   },
   "platform": {
@@ -103,21 +134,27 @@
       "param:FIN (id 40) is RATE: its names read RATE and its default is +63",
       "param:TUN (id 39) turn and value text: fine in cents",
       "screen:SAMPLE knob page (the SMPL key shows SMPL WAVEFORM only)",
-      "screen:SMPL WAVEFORM layout: one value row and a taller waveform"
+      "screen:SMPL WAVEFORM layout: one value row and a taller waveform",
+      "ui:SAMPLE page LOP value PIPO and its three-position switch",
+      "param:LOP range OFF/ON/PIPO, its value text and icon",
+      "ui:FUNC + SAMPLE STA turn",
+      "ui:FUNC + SAMPLE END turn",
+      "ui:FUNC + SAMPLE STA/END turn with a trig held",
+      "ui:SMPL WAVEFORM S and E labels on the STA and END lines"
     ]
   },
   "resources": {
-    "memoryBytes": 2506,
+    "memoryBytes": 9712,
     "fastBytes": 0,
     "load": {
-      "display": "Near nothing while no track's RATE is below 0; with one below 0, as 0.1.0 (about 0.8 % idle, measured)",
+      "display": "Near nothing for RATE while no track's RATE is below 0; PIPO about as Ping Pong Loop 0.1.2 (measured with it)",
       "method": "hardware",
-      "conditions": "Measured for 0.1.0 on an Analog Rytm MKII with a private telemetry base, sequencer stopped: removing it from the author's 16-module set lowered the idle block from 72.9 % to 72.1 %; that handler walked all eight voices every block. 0.3.0's handler returns at once while no track's RATE is below 0 and no voice is still going down; the two step-loop gates run on every voice, about 10 instructions each. Not measured for 0.3.0."
+      "conditions": "Measured on an Analog Rytm MKII with a private telemetry base, sequencer stopped, in the author's 16-module set (RC30): removing Sample Playback Rate 0.1.0 lowered the idle block from 72.9 % to 72.1 %, removing Ping Pong Loop 0.1.1 to 70.6 %; with both modules' idle fixes (LF01) the set idled at 71.1 %. Since then RATE's handler returns at once while no track's RATE is below 0, and PIPO tests one byte of armed voices before its gates' work. 0.6.0 is the same code in one module; not measured as such."
     }
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.5.1-experimental",
+    "moduleVersion": "0.6.0-experimental",
     "sourceSha256": "8645bba773bee01d6e0be5a8373be1d56c3c46aa1f8a00045ae2d274bd004c1e",
     "reports": [
       "TESTING.md"
@@ -139,7 +176,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Unit (0.5.1, SU02 from RAM, the author playing): sample previews at normal speed at RATE 0, +63, -64 and with an LFO on RATE; pad play follows RATE. rytm-emu (0.5.1): the preview matches stock where 0.5.0 left it silent or bent; normal play unchanged. Unit (0.5.0, combo RC38 to RC40): the value row, every knob, LOOP and PIPO, the playhead, lock boxes, the waveform after boot. Earlier versions: TESTING.md.",
+    "summary": "rytm-emu (0.6.0, SP01): every documented capture of Ping Pong Loop and Improved SMPL replays byte-identical to the two modules side by side (126 frames). Unit (0.5.1, SU02): previews at 1x, pad play follows RATE. Unit (0.5.0, RC38 to RC40, beside Ping Pong Loop 0.1.2): the row, every knob, LOOP and PIPO, the playhead, lock boxes. Ping Pong Loop on a unit: PP14, RC07, LF01. Earlier versions: TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -147,14 +184,24 @@
           "Press SMPL and turn TUN slowly: it moves 1 cent a step and reads +0.01, +0.02. Spin it faster to cover more ground.",
           "Press TUN's knob and turn: whole semitones, the cents kept.",
           "Put a long sample on a track, with LOP ON, and set RATE (FIN's knob) to +63. Play the pad and turn RATE down: the sample slows like a stopping turntable and rests at 0.",
-          "Keep turning below 0: it runs backward, smoothly through the stop. A new trig now starts from END."
+          "Keep turning below 0: it runs backward, smoothly through the stop. A new trig now starts from END.",
+          "Turn LOP (knob G) past ON to PIPO and play the sound: the loop between STA and END goes back and forth. Set them around a sustained part (a pad, a vowel) for a seamless drone.",
+          "Hold FUNC and turn STA (or END): the point steps from zero crossing to zero crossing, so the loop starts and ends where the waveform crosses zero."
         ]
       },
       "screenshots": [
         "media/knob-fine-tun.png",
         "media/knob-rate.png",
         "media/value-rate.png",
-        "media/lfo-rate.png"
+        "media/lfo-rate.png",
+        "media/lop-pipo.png",
+        "media/plock-pipo.png",
+        "media/scene-pipo.png",
+        "media/snap-markers.png",
+        "media/snap-lock.png",
+        "media/markers-shared.png",
+        "media/markers-reversed.png",
+        "media/markers-playing.png"
       ],
       "captureRecord": "media/capture.json"
     }
@@ -185,9 +232,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.5.1-experimental",
-        "imageSha256": "08dcf7e5b7698d65da0bda16aad6f429ff2ca6e4c19d0d3cd92d08ffd6868074",
-        "setup": "Headless rytm-emu (dtboot) running SV12: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.6.0-experimental",
+        "imageSha256": "792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SP01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated 23,777-frame ramp, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -201,9 +248,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.5.1-experimental",
-        "imageSha256": "08dcf7e5b7698d65da0bda16aad6f429ff2ca6e4c19d0d3cd92d08ffd6868074",
-        "setup": "Headless rytm-emu (dtboot) running SV12: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.6.0-experimental",
+        "imageSha256": "792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SP01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated 23,777-frame ramp, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -217,9 +264,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.5.1-experimental",
-        "imageSha256": "08dcf7e5b7698d65da0bda16aad6f429ff2ca6e4c19d0d3cd92d08ffd6868074",
-        "setup": "Headless rytm-emu (dtboot) running SV12: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.6.0-experimental",
+        "imageSha256": "792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SP01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated 23,777-frame ramp, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -233,9 +280,169 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.5.1-experimental",
-        "imageSha256": "08dcf7e5b7698d65da0bda16aad6f429ff2ca6e4c19d0d3cd92d08ffd6868074",
-        "setup": "Headless rytm-emu (dtboot) running SV12: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.6.0-experimental",
+        "imageSha256": "792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SP01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated 23,777-frame ramp, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/lop-off.png",
+      "kind": "screenshot",
+      "caption": "LOP OFF: the row reads OFF; the sample plays once, as stock.",
+      "alt": "SMPL WAVEFORM view with the value row reading (0), 0, 0, OFF, 100 over a ramp, LOOP in the header.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.6.0-experimental",
+        "imageSha256": "792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SP01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/lop-on.png",
+      "kind": "screenshot",
+      "caption": "LOP ON: the loop plays forward, as stock.",
+      "alt": "SMPL WAVEFORM view with the value row reading ON in LOOP's place, LOOP in the header.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.6.0-experimental",
+        "imageSha256": "792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SP01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/lop-pipo.png",
+      "kind": "screenshot",
+      "caption": "Turn LOP past ON to PIPO: the loop between STA and END plays back and forth.",
+      "alt": "SMPL WAVEFORM view with the value row reading PIPO in LOOP's place, LOOP in the header.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.6.0-experimental",
+        "imageSha256": "792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SP01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/plock-pipo.png",
+      "kind": "screenshot",
+      "caption": "In GRID RECORDING, hold a trig and turn LOP to PIPO to lock it on that step.",
+      "alt": "SMPL WAVEFORM view in GRID RECORDING with PIPO boxed as a lock in the value row.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.6.0-experimental",
+        "imageSha256": "792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SP01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/scene-pipo.png",
+      "kind": "screenshot",
+      "caption": "In SCENE mode, hold a pad and turn LOP to PIPO to put it in that scene.",
+      "alt": "SMPL WAVEFORM view with PIPO boxed in the value row and the footer reading SCENE: 1 and LOCKS.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.6.0-experimental",
+        "imageSha256": "792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SP01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/snap-markers.png",
+      "kind": "screenshot",
+      "caption": "FUNC + STA and END step to zero crossings; on SMPL WAVEFORM a boxed S marks STA's line and a boxed E END's.",
+      "alt": "SMPL WAVEFORM view of a slow sine with the STA line on a zero crossing labelled S at its bottom and the END line on a later crossing labelled E at its top.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.6.0-experimental",
+        "imageSha256": "792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SP01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated slow sine (PIPO_SLOW). Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/snap-lock.png",
+      "kind": "screenshot",
+      "caption": "Hold a trig and FUNC + turn STA: the trig's lock steps to a zero crossing and its value shows while the trig is held.",
+      "alt": "SMPL WAVEFORM view with a trig held: STA highlighted at 9.08 below the waveform and its line, labelled S, on the first zero crossing.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.6.0-experimental",
+        "imageSha256": "792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SP01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated slow sine (PIPO_SLOW). Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/markers-shared.png",
+      "kind": "screenshot",
+      "caption": "STA and END can share a crossing: stock draws one line, and both labels show.",
+      "alt": "SMPL WAVEFORM view with one dotted line carrying an S box at its bottom and an E box at its top.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.6.0-experimental",
+        "imageSha256": "792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SP01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated slow sine (PIPO_SLOW). Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/markers-reversed.png",
+      "kind": "screenshot",
+      "caption": "END can sit before STA (the sample plays backward between them, as stock).",
+      "alt": "SMPL WAVEFORM view with the E-labelled line to the left of the S-labelled line.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.6.0-experimental",
+        "imageSha256": "792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SP01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated slow sine (PIPO_SLOW). Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/markers-playing.png",
+      "kind": "screenshot",
+      "caption": "While the sound plays, the playhead runs under the labels.",
+      "alt": "SMPL WAVEFORM view with the S and E labelled lines and a solid playhead line between them.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.6.0-experimental",
+        "imageSha256": "792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SP01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated slow sine (PIPO_SLOW). Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
