@@ -10,7 +10,6 @@ import { memberBetaAccess, memberOctatrackBase } from './beta-testers'
 import { moduleAvailabilityError } from '../src/catalog/availability'
 import { overLimitMessage } from '../src/catalog/set-limit'
 import { DISCORD_INVITE_CAMPAIGN } from '../src/config/development-discord'
-import { OWNER_STATEMENT_ID } from '../src/config/owner-statement'
 import { discordInvitationClaim } from './discord-invitations'
 /** Fixed actor row for administrator history; the administrator is not a visitor account. */
 export const ADMIN_ACTOR='administrator'
@@ -90,8 +89,8 @@ export async function authentication(request:Request,env:Env,path:string):Promis
   return response({ok:true})
  }
  // Shown until the member closes it, then never again on any browser or device. A new beta note needs a new id here and in
- // src/components/OwnerNote.tsx; the statement every visitor sees once takes its id from src/config/owner-statement.ts.
- const ownerNote=path==='/api/auth/owner-note'?'2026-10-16-beta-3':path==='/api/auth/owner-statement'?OWNER_STATEMENT_ID:null
+ // src/components/OwnerNote.tsx; a new statement for every visitor (OwnerStatement.tsx) here and in src/config/owner-statement.ts.
+ const ownerNote=path==='/api/auth/owner-note'?'2026-10-16-beta-3':path==='/api/auth/owner-statement'?'2026-11-16-future':null
  if(ownerNote){
   const member=needMember(await accountUser(request,env,db))
   if(request.method==='GET')return response({show:!await db.prepare('SELECT 1 FROM member_owner_notes WHERE user_id=? AND note=?').bind(member.id,ownerNote).first()})
