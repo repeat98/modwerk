@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Fails when a base package carries stock bytes: every byte it ships literally (section hex parts, site `new`
+"""Lists the stock bytes a package carries: every byte it ships literally (section hex parts, site `new`
 bytes, table entries) is scanned for runs of MIN or more bytes found in the stock MAIN image, at any alignment,
-and in its DSP payloads read as big-endian words (how the ColdFire keeps its copies of stock effect code). What a
-package repeats from the firmware must be a stock-copy part, a hash guard or a fill (build_core.strip).
+and in its DSP payloads read as big-endian words (how the ColdFire keeps its copies of stock effect code). Nothing refuses
+them; build.py's capture uses stock_runs to turn runs into copies from the user's own file.
 
     python3 -B check_stock_free.py PACKAGE.elemod --stock OCTATRACK_OS1.40C.bin --upstream ELEKLOADER [--min 16]
 
@@ -106,8 +106,9 @@ def main():
     for where, offset, length, source in found:
         print('%s +%#x: %d bytes of %s' % (where, offset, length, source))
     if found:
-        sys.exit('%s carries %d stock runs (%d bytes).' % (args.package.name, len(found), sum(f[2] for f in found)))
-    print('%s: no literal run of %d or more stock bytes.' % (args.package.name, args.min))
+        print('%s carries %d stock runs (%d bytes).' % (args.package.name, len(found), sum(f[2] for f in found)))
+    else:
+        print('%s: no literal run of %d or more stock bytes.' % (args.package.name, args.min))
 
 
 if __name__ == '__main__':

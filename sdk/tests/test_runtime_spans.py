@@ -15,7 +15,6 @@ def load(name, path):
     return module
 prep = load('runtime_spans', ROOT / 'scripts/prepare-runtime-spans.py')
 packages = load('runtime_span_test_packages', ROOT / 'sdk/machines/octatrack/elekloader/module_packages.py')
-scanner = load('runtime_span_test_scanner', ROOT / 'sdk/machines/octatrack/elekloader/check_stock_free.py')
 
 
 class ProvenanceTests(unittest.TestCase):
@@ -173,23 +172,6 @@ $acl.AddAccessRule($rule)
 
 
 class StrictScannerTests(unittest.TestCase):
-    def scan(self, data, stock, dsp=()):
-        class PackageView:
-            LIMIT = packages.LIMIT
-            runs = staticmethod(packages.runs)
-            dsp_words = staticmethod(lambda _: dsp)
-        prep.stock_free(data, stock, [('MAIN', stock)], PackageView, scanner)
-
-    def test_both_existing_scanner_thresholds_stay_enforced(self):
-        shared = bytes(range(1, 25))
-        with self.assertRaisesRegex(ValueError, 'strict'):
-            self.scan(b'package' + shared, b'original' + shared)
-        # A zero-heavy run escapes the nonzero limit but remains a legacy hit.
-        shared = bytes([1, 2, 3, 4, 5]) + bytes(11)
-        self.assertFalse(any(n >= packages.LIMIT for n in packages.runs(shared, shared).values()))
-        with self.assertRaisesRegex(ValueError, 'strict'):
-            self.scan(shared, shared)
-
     def test_unused_hook_words_are_filler_but_stock_bytes_beside_them_count(self):
         """Owner decision, 14 Oct 2026: runs made only of 0xFF (unused hook words, RUNTIME_NONE) are ignored as zeros
         are. Synthetic bytes only."""
@@ -200,12 +182,6 @@ class StrictScannerTests(unittest.TestCase):
         self.assertGreaterEqual(counted(none + bytes(range(1, 13))), packages.LIMIT)       # real bytes after filler
         self.assertGreaterEqual(counted(bytes(range(1, 10)) + b'\xff' * 3), packages.LIMIT)  # a shorter 0xFF stretch counts
         self.assertGreaterEqual(counted(bytes(range(1, 7)) + b'\x70\xff' + bytes(range(7, 11))), packages.LIMIT)
-
-    def test_dsp_views_and_new_boundary_matches_cannot_escape_scan(self):
-        shared = bytes(range(1, 25))
-        with self.assertRaisesRegex(ValueError, 'strict'):
-            self.scan(bytes(64), shared, [shared])
-        self.scan(bytes(64), shared)
 
     def test_relocation_oracle_keeps_fixed_stock_addresses_fixed(self):
         import struct
