@@ -19,3 +19,9 @@ core_startup_serialize:
         addq.l  #8,%sp
         move.l  (%sp)+,%d0
 1:      rts
+
+        .balign 4
+        .globl core_startup_kitdata_layout
+core_startup_kitdata_layout:
+        .long FW_STARTUP_PROJECT_FILE, FW_ACTIVE_PROJECT
+        .long FW_STARTUP_KITS_OFFSET, FW_STARTUP_KIT_STRIDE

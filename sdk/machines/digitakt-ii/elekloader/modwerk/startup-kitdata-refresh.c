@@ -2,6 +2,7 @@
 #include "digitakt-mk2/core.h"
 
 extern const uint32_t core_store_layout[];
+extern const uint32_t core_startup_kitdata_layout[4];
 extern const core_kitdata_t *const core_kitdata[];
 extern void core_kitdata_save(uint8_t *record, const uint8_t *kit);
 
@@ -18,12 +19,12 @@ static uint32_t read_word(const uint8_t *bytes)
 /* Keep the active startup container current on stock partial saves. */
 void core_startup_kitdata_refresh(uint8_t *file, const void *project)
 {
-    if ((uint32_t)file != 0x4099d698u || (uint32_t)project != 0x41776c9cu
+    if ((uint32_t)file != core_startup_kitdata_layout[0] || (uint32_t)project != core_startup_kitdata_layout[1]
         || !core_kitdata[0] || read_word(file) != 0xbeefbaceu || read_word(file + 4) != 5)
         return;
 
     for (int kit = 0; kit < CORE_KITS; ++kit) {
-        uint8_t *record = file + 0xae0200u + (uint32_t)kit * 0x5800u;
+        uint8_t *record = file + core_startup_kitdata_layout[2] + (uint32_t)kit * core_startup_kitdata_layout[3];
         if (read_word(record + KIT_PAD - 4) == 0xbacef00cu)
             core_kitdata_save(record, (const uint8_t *)(KITS + (uint32_t)kit * KIT_STRIDE));
     }

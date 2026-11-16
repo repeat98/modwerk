@@ -13,7 +13,7 @@
       "license": "GPL-2.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "453493e5bb775f5f90232035ed6ae5024b7b0909",
+        "commit": "606dc92d22da55f020c9fd9b70ab1c5e39de484e",
         "path": "sdk/imports/packages/modwerk-base-digitakt-ii/modwerk-base-digitakt-ii-510fae56.elemod"
       }
     }
