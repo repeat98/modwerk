@@ -1,0 +1,1 @@
+Octatrack base 0.7.4: one module may now use up to 288 KiB of the shared module memory (its code still up to 128 KiB), so MIDI Scenes can keep its scene locks for all 64 Parts of a project. The shared memory stays 768 KiB, so no sample memory is lost, and every module that loads today loads as before. The site checks the same limit before it sends a module.

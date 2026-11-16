@@ -751,7 +751,7 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
     if (abi >= 9) dsp.requires = (uint16_t)be16(data + 76), dsp.claim_count = (uint8_t)claims;
     /* ABI 10: DSP words with no slot are an engine for the base's hook sites, not an effect. */
     const int engine = abi >= 10u && dsp.count && !dsp.slots;
-    if (image > RUNTIME_IMAGE_BYTES || bss > RUNTIME_IMAGE_BYTES - image || hooks > (abi >= 8u ? RUNTIME_HOOKS : RUNTIME_EVENTS) ||
+    if (image > RUNTIME_IMAGE_BYTES || bss > RUNTIME_MODULE_BYTES - image || hooks > (abi >= 8u ? RUNTIME_HOOKS : RUNTIME_EVENTS) ||
         count > RUNTIME_RELOCATIONS || sites > RUNTIME_SITES || copies > RUNTIME_COPIES || fills > RUNTIME_FILLS ||
         claims > RUNTIME_DSP_CLAIMS || entries > RUNTIME_DSP_HOOK_ENTRIES || length < at + image + 4u * count)
         return refuse(RUNTIME_MALFORMED);

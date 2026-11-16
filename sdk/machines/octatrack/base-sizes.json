@@ -170,6 +170,40 @@
      "container": 797112
     }
    }
+  },
+  {
+   "base": "0.7.4",
+   "identity": "5c99f4d3f6c11a8137441870cddd90bcc78c1bee98ca0521306202818e463af0",
+   "layouts": {
+    "tracks-main-cue": {
+     "main": 1319377,
+     "container": 799068
+    },
+    "tracks": {
+     "main": 1319225,
+     "container": 798908
+    },
+    "tracks-post": {
+     "main": 1320831,
+     "container": 800636
+    },
+    "main-cue": {
+     "main": 1319138,
+     "container": 798836
+    },
+    "main": {
+     "main": 1319000,
+     "container": 798652
+    },
+    "master": {
+     "main": 1319023,
+     "container": 798696
+    },
+    "off": {
+     "main": 1317597,
+     "container": 797080
+    }
+   }
   }
  ]
 }
