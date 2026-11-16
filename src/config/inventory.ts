@@ -61,13 +61,16 @@ export function loadStep(status: string, started: boolean, preparing: boolean): 
 
 /** What this browser last read from each unit, by its base, so the sidebar and the hub can show it while the unit is away. */
 const LAST_SEEN = 'modwerk.octatrack.last-seen'
-export interface LastSeen { base: string; moduleIds: string[]; removedStockFx: string[]; at: string }
+/** `offIds`: those of `moduleIds` switched off on the unit then (PROJ > MODWERK > MODULES). A base update drops that
+ * state, so a put-back brings them back on, and the sync says which (owner, 16 November 2026). */
+export interface LastSeen { base: string; moduleIds: string[]; removedStockFx: string[]; at: string; offIds?: string[] }
 function allSeen(): Record<string, Omit<LastSeen, 'base'>> {
   try { const value = JSON.parse(localStorage.getItem(LAST_SEEN) ?? '{}'); return value && typeof value === 'object' && !Array.isArray(value) ? value : {} } catch { return {} }
 }
 export function rememberInventory(base: string, inventory: Inventory, at = new Date().toISOString()) {
   // With the ones switched off on the unit: they are installed there, and a put-back after a base update brings them along.
-  try { localStorage.setItem(LAST_SEEN, JSON.stringify({ ...allSeen(), [base]: { moduleIds: [...new Set([...inventory.moduleIds, ...inventory.offIds ?? []])], removedStockFx: inventory.removedStockFx, at } })) } catch { /* without storage it says Not connected */ }
+  const offIds = (inventory.offIds ?? []).filter(id => !inventory.moduleIds.includes(id))
+  try { localStorage.setItem(LAST_SEEN, JSON.stringify({ ...allSeen(), [base]: { moduleIds: [...new Set([...inventory.moduleIds, ...offIds])], removedStockFx: inventory.removedStockFx, at, ...offIds.length ? { offIds } : {} } })) } catch { /* without storage it says Not connected */ }
 }
 const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(id => typeof id === 'string')
 /** The newest record (or one base's, or the newest of any other base); undefined when this browser never read one or the record is damaged. */
@@ -75,7 +78,8 @@ export function lastInventory(base?: string, except?: string): LastSeen | undefi
   const [found] = Object.entries(allSeen())
     .filter(([key, seen]) => (!base || key === base) && key !== except && strings(seen?.moduleIds) && typeof seen.at === 'string')
     .sort((a, b) => b[1].at.localeCompare(a[1].at))
-  return found && { base: found[0], moduleIds: found[1].moduleIds, removedStockFx: strings(found[1].removedStockFx) ? found[1].removedStockFx : [], at: found[1].at }
+  const offIds = found && strings(found[1].offIds) ? found[1].offIds.filter(id => found[1].moduleIds.includes(id)) : []
+  return found && { base: found[0], moduleIds: found[1].moduleIds, removedStockFx: strings(found[1].removedStockFx) ? found[1].removedStockFx : [], at: found[1].at, ...offIds.length ? { offIds } : {} }
 }
 /** The self-test record's `saved` when this boot loaded nothing because the card's set is another base's (modset.c FOREIGN):
  * after a base update, or a power cycle back to an older flashed base. The base can't load it itself, since some packages

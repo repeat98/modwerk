@@ -24,7 +24,7 @@ export const DEFAULT_LAYOUT: BaseLayout = (Object.entries(VARIANTS).find(([, ide
 export const MEMBER_LAYOUT: BaseLayout = 'off'
 const IDENTITIES = new Map<string, BaseLayout>([[baseBinding.identity, DEFAULT_LAYOUT], ...Object.entries(VARIANTS).map(([layout, identity]) => [identity, layout as BaseLayout] as const)])
 
-/** A base's version, as its status page shows it (PROJ > MODWERK > LOAD: "MODWERK BASE 0.7"), by the identity a unit
+/** A base's version, as its status page shows it (PROJ > MODWERK > STATUS: "MODWERK BASE 0.7"), by the identity a unit
  * reports: every published version in each of its layouts (sdk/machines/octatrack/base-versions.json, which
  * scripts/octatrack-base.mjs writes). Undefined for a base from before versions (16 November 2026) or a development build. */
 const VERSIONS = new Map<string, string>(baseVersions.bases.flatMap(base => base.identities.map(identity => [identity, base.version] as const)))
