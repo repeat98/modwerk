@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "digitakt-mk2/core.h"
+#include "project-archive.h"
 
 extern const uint32_t core_store_layout[];
 extern const uint32_t core_startup_kitdata_layout[4];
@@ -20,8 +21,13 @@ static uint32_t read_word(const uint8_t *bytes)
 void core_startup_kitdata_refresh(uint8_t *file, const void *project)
 {
     if ((uint32_t)file != core_startup_kitdata_layout[0] || (uint32_t)project != core_startup_kitdata_layout[1]
-        || !core_kitdata[0] || read_word(file) != 0xbeefbaceu || read_word(file + 4) != 5)
+        || read_word(file) != 0xbeefbaceu || read_word(file + 4) != 5)
         return;
+
+    core_project_archive_write(file);
+    if (!core_kitdata[0]) {
+        return;
+    }
 
     for (int kit = 0; kit < CORE_KITS; ++kit) {
         uint8_t *record = file + core_startup_kitdata_layout[2] + (uint32_t)kit * core_startup_kitdata_layout[3];
