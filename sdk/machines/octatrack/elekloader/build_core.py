@@ -211,8 +211,11 @@ DYNLOAD_HOOKS = (
     (0x4001fc96, 6, '2edb8c17ea73bf5ecd097ec929f3bfd6f8a74c81b11080d0d74efd55bec6b416', 'mw_idle'),
     # Modwerk's: the time-stretch helper task skips a track whose TSTR is OFF (status.s).
     (0x40098b2c, 8, 'e3b2889593533c76e33bdee43526078d47b0b1c53b99a6d93d9ff1118e752203', 'mw_ts_gate'),
-    # Modwerk's: the delay routine skips the filter and the mix of a track whose delay is off and whose ring is
-    # silent (status.s). Beside Tape Echo's seam at 0x4000361a, which ends where this one starts.
+    # Modwerk's: the delay routine leaves out the ring transfers, the filter and the mix of a track whose ring is
+    # all zeros and whose send is shut (status.s): track 0's read, each next track's read, and the seam before the
+    # filter, beside Tape Echo's at 0x4000361a, which ends where it starts.
+    (0x4000332a, 6, '35712ed931e7b9f14e5721c866bf66a4ccded8e9b4626aadc3adc68d33f729fd', 'mw_delay_read0'),
+    (0x400035ba, 8, 'dc58231763e0149114fe595c44a7495bb4b761d125428723426785e031a9ac67', 'mw_delay_read'),
     (0x4000362a, 6, '6fe3fe068b6c0068ddd69d19f2d916d6bcb80ffb2ba78d2268618e6f7dcf82e3', 'mw_delay_idle'))
 # --dsp-loader: the knob routine of an audio track's main pages (0x40055008) names the default stepper 0x4003240c by
 # `lea 0x4003240c,%aN` for a live turn; the base repoints that operand at fxpage.s's mw_knob_step, which restages a
