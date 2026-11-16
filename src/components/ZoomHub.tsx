@@ -275,7 +275,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
           <ModuleGrid ids={selected.moduleIds} inventory={plan && { moduleIds: [...plan.keep, ...plan.remove].map(effect => effect.id), removedStockFx: [] }} describe={id => listed.find(effect => effect.id === id)?.presentation.summary ?? ''}
             module={id => { const effect = listed.find(item => item.id === id); return effect && { name: effect.name, preview: <ZoomEffectPreview effect={effect} compact />, href: deviceHref(effect.machine, 'module/' + effect.id) } }}
             onRemove={id => onToggle?.(id)} onKeep={id => onToggle?.(id)} add={{ href: deviceHref(device.id), label: 'Add effects' }} machine={device.id} />
-        </> : <div className="hub-empty-set"><h2 className="hub-view-title">No module sets yet</h2><p>Start one, then add effects from the library.</p><button type="button" className="button button-primary" onClick={onNew}><Icon name="plus" size={16} />New module set</button></div>)}
+        </> : <div className="hub-empty-set"><Icon name="grid" size={24} /><h2 className="hub-view-title">No module sets yet</h2><p>Start one, then add effects from the library.</p><button type="button" className="button button-primary" onClick={onNew}><Icon name="plus" size={16} />New module set</button></div>)}
       </div>
     </div>
   </div>

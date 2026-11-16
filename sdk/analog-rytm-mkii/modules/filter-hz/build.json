@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
   "sources": [
-    "src/filter-hz.s"
+    "src/filter-hz.s",
+    "src/fx-hz.c"
   ],
   "defsym": {},
   "cflags": [],
@@ -13,7 +14,9 @@
   "regions": [],
   "claims": [
     "ui:FILTER page FRQ value text",
-    "ui:FILTER page FRQ lock box"
+    "ui:FILTER page FRQ lock box",
+    "ui:FX track DELAY HPF and LPF value text and lock box",
+    "ui:FX track REVERB FRQ, HPF and LPF value text and lock box"
   ],
   "requires": [],
   "derive": null,
@@ -35,6 +38,13 @@
           "stockSha256": "49f6a4527387e36b9ce46d41fd5916835cc000c650b024e660695e41c3e85c78",
           "op": "jmp",
           "target": "filter_hz_box"
+        },
+        {
+          "addr": "0x40037b9c",
+          "len": 10,
+          "stockSha256": "2a553b3539ce968442278f1a354d6cac1b0bb9c62cf8c891e7989dd2bc26c9fe",
+          "op": "jmp",
+          "target": "filter_hz_text_x"
         }
       ]
     }
