@@ -3,19 +3,19 @@
   "id": "direct-jump-kyoti",
   "key": "DIRECT_JUMP_KYOTI",
   "name": "Direct Jump Kyoti",
-  "version": "0.1.2-experimental",
+  "version": "0.2.0-experimental",
   "category": "system",
   "source": {
-    "repository": "https://github.com/sambanks/octabam",
-    "revision": "b725fb1a20e77bea37930be4f934a13ba53abc23",
-    "path": "modules/direct-jump-kyoti"
+    "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+    "revision": "109f54cd36fcd770e3409d1258254619a161b1d7",
+    "path": "octabam-modules/direct-jump-kyoti"
   },
   "author": {
     "github": "Zac-Kyoti",
     "name": "Zac Kyoti",
     "credits": [
       "Zac Kyoti: Direct Jump's design, its ColdFire source and the MKI hardware work behind it. Sam Banks: octabam integration.",
-      "Modwerk contributors: source import with stock guards in place of stock bytes, the stock-free re-encoding of three kernel posts for the USB package, the emulator gate, documentation and SVG thumbnail."
+      "Modwerk contributors: source import with stock guards in place of stock bytes, the stock-free re-encoding of the kernel posts and two instruction pairs for the USB package, the emulator gate, documentation and SVG thumbnail."
     ]
   },
   "nativeManifest": "manifest.py",
@@ -23,12 +23,15 @@
     "label": "Clock-locked pattern jump on [PTN] + [YES]",
     "family": "Sequencer",
     "summary": "Hold [PTN] and press [YES] to turn Direct Jump Kyoti on: a pattern you cue takes over on the next step, where it would be had it played since START.",
-    "overview": "On the stock OS a cued pattern waits for the playing one to reach its end. With Direct Jump on, it takes over on the next step instead, locked to the master clock: it starts at the step it would be on had it been playing since you pressed PLAY, whatever its length, scale or per-track settings. The Part, START SILENT and trig conditions change as on a stock pattern change. It is off at every power-on, so the stock behaviour stays the default. It is Zac Kyoti's design, distinct from octabam's other direct jump (Tim Hastie's CHAIN AFTER option).",
+    "overview": "On the stock OS a cued pattern waits for the playing one to reach its end. With Direct Jump on, it takes over on the next step instead, locked to the master clock: it starts at the step it would be on had it been playing since you pressed PLAY, whatever its length, scale or per-track settings. Trig conditions carry on as if the new pattern had played all along, each track gets its new Part settings with its own first trig, and with SILENCE TRACKS on the tracks a jump silences are released before the step instead of cut. It is off at every power-on, so the stock behaviour stays the default. It is Zac Kyoti's design, distinct from octabam's other direct jump (Tim Hastie's CHAIN AFTER option).",
     "highlights": [
-      "OS 1.40C. Zac Kyoti tested the clock-locked timing, the Part change and the toggle on his MKI; Modwerk's USB package ran on an MKII.",
+      "OS 1.40C. Zac Kyoti tested this version's behaviour on his MKI in his own builds of the same code (15 November 2026); this Modwerk build has not yet run on a unit.",
       "Off at every power-on: until you turn it on, pattern changes are the stock ones.",
-      "The new pattern lands where it would be had it played since START, also with differing track lengths and scales (PER TRACK mode), so tracks stay in phase with the master clock.",
-      "The Part, START SILENT and trig conditions change as on a stock pattern change; the last MIDI Program Change names the pattern that plays; no MIDI START is sent on a jump.",
+      "The new pattern lands where it would be had it played since START, also with differing track lengths and scales (PER TRACK mode), so tracks stay in phase with the master clock. It lands a tick before the step, so its first step is never late, and a cue in the playing pattern's last step lands on its grid point too.",
+      "Trig conditions carry on across a jump: every A:B count stands where the new pattern's would; a latched [FILL] stays on, and a PRE trig right after the jump plays.",
+      "The Part's pattern-wide settings and START SILENT change as on a stock pattern change. With LFO AUTO CHANGE on, each track's new LFO settings arrive with its first trig of the new pattern, so a sound still ringing keeps its own.",
+      "With SILENCE TRACKS on, the tracks a jump silences are released with stock's note-off just before the step, so they do not pop.",
+      "The last MIDI Program Change names the pattern that plays; no MIDI START is sent on a jump.",
       "Includes Zac Kyoti's fix for stock's MIDI Plays-Free stall, so a Plays Free MIDI track in PER TRACK mode keeps playing and Direct Jump places it with its own scale.",
       "The arranger and pattern chains are left alone: while either runs, pattern changes are stock."
     ],
@@ -72,10 +75,11 @@
       "key:PATTERN+YES"
     ],
     "limitations": [
-      "OS 1.40C. The author tested the timing, the Part change and the toggle on an MKI. Modwerk's USB package ran on an MKII (toggle, jumps between a 64- and a 16-step pattern, a power cycle, removal); a jump into another Part, per-track scales and external MIDI were not tried on it, and the card build has not run on a unit.",
+      "OS 1.40C. The author tested the timing, the Part change, the toggle and this version's trig conditions, Part-per-track and SILENCE TRACKS release on an MKI, in his own builds of the same Direct Jump code. This Modwerk build has not run on a unit; the 0.1.x USB package ran on an MKII (toggle, jumps between a 64- and a 16-step pattern, a power cycle, removal).",
       "OFF at every power-on and not stored in the project: turn it on again after a restart.",
       "While the arranger or a pattern chain runs, pattern changes stay stock.",
       "With differing track scales or lengths in PER TRACK mode, the jump waits for the next tick where every track is at a step boundary, at most one common step of all tracks' scales (24 clock ticks for 1x, 3/4x and 1/2x together).",
+      "With LFO AUTO CHANGE on, a track whose new pattern has trigs keeps the old Part's LFO setup until its first trig there; STOP, turning Direct Jump off or the next jump applies every waiting track at once.",
       "[PTN] + [YES] no longer opens the pattern chooser on releasing [PTN]; [YES] alone and [PTN] with a trig key are unchanged.",
       "Carries the author's fix for stock's MIDI Plays-Free stall (a Plays Free MIDI track with trig quantize DIRECT under PER TRACK scale stopped after its first step), whether Direct Jump is on or off. The bundle's other two fixes are not included.",
       "A jump changes the Part through stock's own Part-change path, so stock's known Part-change carryover issues (a track going from PICKUP to FLEX can keep the old Part's pickup loop) happen on a jump as on a stock pattern change.",

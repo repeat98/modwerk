@@ -1,7 +1,7 @@
 {
   "firmware": "1.40C",
-  "imageSha256": "4453c3684fd72b242bbf9b4abef5b53a344364274391352266b4d81919677768",
-  "emulatorSha256": "bdbe962c14fc3560fb3196b01566646b80a74fd451883873a77290b4973dbbf1",
+  "imageSha256": "3c7b1419bc8c567dc4d09b6a675c36e5fb7e7fa3edfc231ebd43c368b7ebbd62",
+  "emulatorSha256": "87d73ccf8519e0ff8746ddf570fceb00f1ea305284c05379dcfe54a1d1954de8",
   "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6.",
   "palette": {
     "on": [
