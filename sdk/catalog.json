@@ -201,6 +201,11 @@
       "id": "midi-scenes",
       "version": "0.3.0-experimental",
       "addedAt": "2026-11-16T20:00:00Z"
+    },
+    {
+      "id": "kits",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-16T21:00:00Z"
     }
   ]
 }
