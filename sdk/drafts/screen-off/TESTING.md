@@ -30,9 +30,11 @@ A second package, SHA-256 `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c
 
 The same package was tried again without `--accept`, from 21:08:12. The slot was running. At 21:08:33 the diagnostic left `0x0` and read `0x3`. The last line in the log was `0x40` at 21:12:07: 32 toggles, blank off. The person at the unit reported that hold UP, tap NO blanks the screen and the same chord restores it. The log never printed `rolled back`. The link then dropped. A later `npm run device -- status` answered `normal, generation 0`, with no slot running. No SAVE, no flash, no power cycle, no Keep.
 
+16 November 2026. The same package, SHA-256 `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c` (352 bytes), was tried again without `--accept` on `OCTATRACK 1.40C`, base `3ee0515a0f474149…`. The slot was running. The tick word is `(toggles << 1) | blank`. It stayed `0x0` until 25 s, then read `0x3` (one toggle, blank on). The last line before the trial process was killed was `0x68` at 125 s: 52 toggles, blank off. A following `status` still showed the trial, value 104 (`0x68`). `npm run device -- recover` then printed `recovered from trial` and `normal, generation 2, active 3ee0515a0f474149…`. The inventory after that named the same modules as before the trial, including Tiempos. The person at the unit reported that it runs great. No SAVE, no flash, no power cycle, no Keep. The trial process itself did not print `rolled back`.
+
 ## Not tested
 
-- An MKI, and a card install. The MKII chord above is a report from the person at the unit, on the RAM trial of package `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`.
+- An MKI, and a card install. The MKII chord above is a report from the person at the unit, on 7 November and again on 16 November, both RAM trials of package `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`.
 - The package size, the executed instructions of the chord, and the cost of clearing the frame.
 - The stock screen saver while this blank is on, and while a pattern plays.
 - Whether the MKII panel can be powered down as well as painted black.
