@@ -46,7 +46,9 @@
     "firmware": "1.40C",
     "effectId": null,
     "location": "Project sequencer",
-    "conflicts": [],
+    "conflicts": [
+      "pattern-sample-locks"
+    ],
     "uiClaims": [
       "key:PART",
       "key:FUNC+MIDI",
@@ -64,7 +66,8 @@
       "key:FUNC+STOP@KITS",
       "key:FUNC+PLAY@KITS",
       "key:FUNC+BANK@KITS",
-      "key:LEVEL@KITS"
+      "key:LEVEL@KITS",
+      "screen:PART EDIT"
     ],
     "limitations": [
       "OS 1.40C on the Modwerk base with the sample-memory loan (ot_sample_memory), over USB only: card firmware cannot include it. Not yet run on a unit or in the emulator.",
@@ -74,7 +77,8 @@
       "A Kit carries no MIDI scene locks, and a kits.work from an octabam image with MIDI SCENES (version 2) is not read: that project then plays its Parts as stock.",
       "A damaged kits.work is never overwritten: that project then plays its Parts as stock and keeps no Kits. Rename or delete the file on the card to start over.",
       "Keep Kits installed while you save, reload or copy a project that uses it: without it, kits.work is not saved or reloaded with the project.",
-      "The first time Kits reads a project without kits.work it writes one (1.6 MB): installing Kits into a running project does this at once."
+      "The first time Kits reads a project without kits.work it writes one (1.6 MB): installing Kits into a running project does this at once.",
+      "Not offered with Pattern Sample Locks: Kits' SAVE KIT takes FUNC+PART, the Part edit menu Pattern Sample Locks adds its rows to."
     ]
   },
   "resources": {
