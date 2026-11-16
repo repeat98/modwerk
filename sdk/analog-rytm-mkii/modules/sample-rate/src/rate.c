@@ -225,12 +225,9 @@ static char *sample_view(void)          // the SAMPLE view in the view stack, or
     return 0;
 }
 
-static void waveform_page(void)
+static void waveform_page(char *view)
 {
-    char *view = sample_view();
     int *pages;
-    if (!view)
-        return;
     pages = *(int **)(view + VIEW_PAGES);
     if (*(int **)(view + VIEW_PAGES + 4) != pages + 2 || pages[0] != PAGE_KNOBS || pages[1] != PAGE_WAVE)
         return;
@@ -239,9 +236,111 @@ static void waveform_page(void)
     VIEW_INVALIDATE(view);
 }
 
+// SMPL WAVEFORM's layout: one row of values over a taller waveform. Stock draws
+// the eight knobs' names in two rows, above and below a 32-pixel waveform, and
+// a knob's value in place of its name while it turns. Here the row holds TUN,
+// RATE, BR, LOP and LEV, always as values (LOP's text is OFF, ON, or PIPO with
+// Ping Pong Loop), with stock's own routine, so the font, centring and every
+// module's value text stay stock's; a held trig's lock box is the module's
+// (below), as wide as the row allows. STA and END show
+// as their lines, SMP as its list on a turn of D: no text. The header names a
+// knob while it turns, as stock.
+//
+// The waveform widget (view + 400) keeps its area as x0 +28, y0 +32, width +36
+// and height +40, read at every draw (y from the bottom of the screen); stock
+// sets 2, 16, 123, 32. Rows 10..46 from the bottom, under the row and above
+// the status bar, give it 37.
+#define VIEW_WAVE 400
+#define WAVE_Y0 32
+#define WAVE_H 40
+#define STOCK_Y0 16
+#define STOCK_H 32
+#define TALL_Y0 10
+#define TALL_H 37
+#define ROW_Y 61            // stock's top row: the text's bottom 13 below
+#define KNOB_X0 16          // stock's knob centres: 16 + 32 a column, rows 61 and 24
+#define KNOB_DX 32
+#define LOWER_Y 40          // below this, the lower row
+
+typedef void (*knob_text_t)(char *view, void *bmp, int x, int y, int id, int value,
+                            void *entry, int lock, int turning, int bare);
+
+// Knob A..H to its place in the row, or -1 for none (SMP, STA, END)
+static const signed char row_slot[8] = {0, 1, 2, -1, -1, -1, 3, 4};
+// A locked value's box, inverted over its text as stock's (rows y - 14..y - 8):
+// stock's is 27 wide, and five of those overlap on 128 columns, which XOR to a
+// black bar between two locks. These tile the row with one column between them,
+// TUN's the widest for a value such as -12.34; the text is centred in its box.
+static const unsigned char box_l[5] = {0, 27, 53, 78, 103};
+static const unsigned char box_r[5] = {25, 51, 76, 101, 127};
+static const unsigned char row_x[5] = {13, 39, 65, 90, 115};
+typedef void (*fillrect_t)(void *bmp, int x0, int y0, int x1, int y1, int colour);
+#define FILLRECT ((fillrect_t)FILLRECT_AT)
+#define INVERT (-1)
+
+// From the gate in audio.s, once a knob a draw: stock's routine (draw) and its
+// arguments. turning set shows the value; with a trig held stock sets lock on a
+// locked knob, and both of stock's routines then only add the 27-wide box.
+void sample_rate_label(knob_text_t draw, char *view, void *bmp, int x, int y, int id, int value,
+                       void *entry, int lock, int turning, int bare)
+{
+    int col = (x - KNOB_X0) / KNOB_DX, slot;
+    if (x < KNOB_X0 || col > 3 || x != KNOB_X0 + col * KNOB_DX) {
+        draw(view, bmp, x, y, id, value, entry, lock, turning, bare);   // not stock's grid: as stock
+        return;
+    }
+    slot = row_slot[col + (y < LOWER_Y ? 4 : 0)];
+    if (slot < 0)
+        return;
+    draw(view, bmp, row_x[slot], ROW_Y, id, value, entry, 0, 1, bare);
+    if (lock)
+        FILLRECT(bmp, box_l[slot], ROW_Y - 14, box_r[slot], ROW_Y - 8, INVERT);
+}
+
+// The widget draws the sample in its slot (+0), which stock's page callback
+// (0x400d253a: SMP, STA and END into the widget) sets when a parameter or the
+// track changes. It sets slot 0, no sample (the widget's centre line only),
+// while SMP's slot has no sample name yet (0x400b8192). At boot on a unit the
+// callback runs before the samples are loaded, and nothing runs it again until a
+// knob turns: stock's SAMPLE page opens on its knobs at boot and is no wiser, but
+// this one shows the waveform from boot. So while the slot reads 0 the callback
+// runs again, every 8 ticks (0.4 s); with SMP OFF that is all it does.
+#define WAVE_SLOT 0         // the widget's sample slot
+#define FOLLOW_TICKS 8
+typedef void (*page_update_t)(char *view);
+#define PAGE_UPDATE ((page_update_t)PAGE_UPDATE_AT)
+
+static void follow_sample(char *view)
+{
+    static unsigned char wait;
+    if (*(int *)(view + VIEW_WAVE + WAVE_SLOT)) {
+        wait = 0;
+        return;
+    }
+    if (wait) {
+        wait--;
+        return;
+    }
+    wait = FOLLOW_TICKS - 1;
+    PAGE_UPDATE(view);
+}
+
+// The taller waveform, once: only from stock's own area, so a module that moves
+// it keeps its own
+static void tall_waveform(char *view)
+{
+    int *y0 = (int *)(view + VIEW_WAVE + WAVE_Y0), *h = (int *)(view + VIEW_WAVE + WAVE_H);
+    if (*y0 != STOCK_Y0 || *h != STOCK_H)
+        return;
+    *y0 = TALL_Y0;
+    *h = TALL_H;
+    VIEW_INVALIDATE(view);
+}
+
 void sample_rate_tick(void *ctrl)
 {
     volatile uint32_t *rec = (volatile uint32_t *)(REC_TUN + REC_STEP);
+    char *view;
     (void)ctrl;
     fine_turn = 0;
     // A plain step is 1 unit (a cent, at the add), a pressed one a whole semitone.
@@ -250,5 +349,10 @@ void sample_rate_tick(void *ctrl)
     rec[1] = 1;
     rec[2] = 0;
     rec[3] = (uint32_t)&fine_profile;
-    waveform_page();
+    view = sample_view();
+    if (view) {
+        waveform_page(view);
+        tall_waveform(view);
+        follow_sample(view);
+    }
 }

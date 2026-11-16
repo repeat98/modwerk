@@ -26,6 +26,13 @@ describe('machine profiles', () => {
     expect(() => parseMachineProfile({ ...syntakt(), steps: { ...syntakt().steps, format: 'done' } })).toThrow('in research')
   })
 
+  it('records the stack, open by default, and releases a machine only with all of it', () => {
+    expect(parseMachineProfile(syntakt()).stack).toEqual({ base: 'open', link: 'open', flash: 'open', loader: 'open', status: 'open', diagnostics: 'open', tools: 'open' })
+    expect(parseMachineProfile({ ...syntakt(), stack: { link: 'started' } }).stack.link).toBe('started')
+    expect(() => parseMachineProfile({ ...syntakt(), stack: { emulator: 'done' } })).toThrow('unknown field')
+    expect(() => parseMachineProfile({ ...octatrack(), stack: { ...octatrack().stack, diagnostics: 'started' } })).toThrow('every piece of the stack done')
+  })
+
   it('accepts only hashes and safe paths, never firmware contents', () => {
     const profile = octatrack()
     profile.firmware.releases[0].files[0].sha256 = 'not-a-hash'

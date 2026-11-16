@@ -33,6 +33,7 @@ import { buildBase } from '../src/engine/elekloader/octatrack-base.ts'
 import { applyVariantPatch } from '../src/engine/elekloader/base-variants.ts'
 import { USB_AUDIO_LAYOUTS } from '../src/config/usb-audio.ts'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
+import { keepSymbols } from '../src/dev/address-names.ts'
 
 const { values: args } = parseArgs({ options: {
   stock: { type: 'string' }, upstream: { type: 'string', default: join(homedir(), '.cache/modwerk-upstream/elekloader') },
@@ -64,7 +65,7 @@ mirrorOctatrackModules(root)
 const adapters = join(root, 'sdk/machines/octatrack/module-adapters')
 const committed = { package: join(root, 'src/engine/assets/octatrack-base.elemod'), fills: join(root, 'src/engine/assets/octatrack-base-fills.json'),
   sources: join(root, 'src/engine/assets/octatrack-base-sources.json'), binding: join(root, 'sdk/machines/octatrack/base-binding.json'),
-  variants: join(root, 'src/engine/assets/octatrack-base-variants.json'),
+  variants: join(root, 'src/engine/assets/octatrack-base-variants.json'), versions: join(root, 'sdk/machines/octatrack/base-versions.json'),
   policies: join(adapters, 'controller-policies.json') }
 const asm = process.env.ELEKLOADER_DSP_ASM ?? join(homedir(), '.cache/modwerk-upstream/octabam/vendor/dsp56300/build/source/dsp_host/dsp_asm')
 const python = (script, ...rest) => execFileSync('python3', ['-B', script.includes('/') ? script : join(here, script), ...rest], { stdio: 'inherit', env: { ...process.env, ELEKLOADER_DSP_ASM: asm } })
@@ -148,6 +149,21 @@ if (args['usb-audio-variants']) {
   same(Buffer.from(JSON.stringify({ schema: 1, packageSha256: sha(Buffer.from(defaultText)), variants }) + '\n'), committed.variants)
 }
 same(Buffer.from(JSON.stringify(binding, null, 1) + '\n'), committed.binding)
+// The base's version, for people (elekloader/base-version.json, built into the base): base-versions.json keeps every
+// published version's identities, one per layout, so the site can name the base a unit reports. A version that main
+// already has names that base for good: a base with other contents takes the next number.
+const number = JSON.parse(readFileSync(join(here, 'base-version.json'), 'utf8'))
+const version = number.major + '.' + number.minor + (number.patch ? '.' + number.patch : '') // the patch only when not 0: 0.7, 0.7.1
+const identities = [...new Set([binding.identity, ...Object.values(binding.variants ?? {})])]
+const read = text => JSON.parse(text).bases
+let published = []
+try { published = read(execFileSync('git', ['-C', root, 'show', 'origin/main:sdk/machines/octatrack/base-versions.json'], { stdio: ['ignore', 'pipe', 'ignore'] }).toString()) } catch { /* main has no versions yet, or no Git here */ }
+const taken = published.find(base => base.version === version)
+if (taken && JSON.stringify(taken.identities) !== JSON.stringify(identities))
+  throw new Error(`Base ${version} is already published with other contents. Raise sdk/machines/octatrack/elekloader/base-version.json, then build again.`)
+const earlier = existsSync(committed.versions) ? read(readFileSync(committed.versions, 'utf8')).filter(base => base.version !== version) : []
+same(Buffer.from(JSON.stringify({ schema: 1, bases: [...earlier, { version, identities }] }, null, 1) + '\n'), committed.versions)
+console.log('base ' + version + ': ' + binding.identity)
 console.log('package ' + sha(readFileSync(committed.package)) + ', fills ' + sha(readFileSync(committed.fills)))
 console.log('browser .bin = build_core.py .bin: ' + browser.sha256 + ' (' + browser.bin.length + ' bytes)')
 if (args.out) {
@@ -159,5 +175,6 @@ if (args.out) {
   writeFileSync(join(args.out, 'NOT_FLASH_CANDIDATE.bin'), browser.bin)
   writeFileSync(join(args.out, 'MAIN.raw'), formats.mainImage(formats.parse(browser.bin, device), device))
   for (const name of ['proofs.json', 'symbols.json']) copyFileSync(join(core, name), join(args.out, name))
+  try { keepSymbols(args.out) } catch { /* a crash record from this base then prints without names */ } // src/dev/address-names.ts
   console.log('saved ' + resolve(args.out) + ': NOT_FLASH_CANDIDATE.bin, MAIN.raw, proofs.json, symbols.json')
 }

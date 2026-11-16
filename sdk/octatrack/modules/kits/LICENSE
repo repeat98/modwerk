@@ -1,0 +1,58 @@
+MIT License
+
+Copyright (c) 2026 Sam Banks
+
+Portions of the firmware analysis tooling originate from the octamax project
+(https://github.com/mxldyn/octamax), Copyright (c) 2025-2026 Maxolydian,
+also under the MIT License.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+This license covers this repository's own source code and documentation only.
+Transcribed third-party DSP sources, the community modifications carried as
+submodules and the tools fetched by `make setup` are listed with their own
+licences in THIRD_PARTY.md.
+
+It does not extend to any Elektron Music Machines firmware, which is not
+distributed here and remains the property of its copyright holder. Users
+supply their own copy of the official OS. The container-format tooling in
+this repository re-implements Elektron's firmware-update packaging solely for
+interoperability: so that an owner can build and flash a modified image for
+their own unit. Nothing in this project is endorsed by, supported by, or
+affiliated with Elektron. Octatrack and Elektron are trademarks of Elektron
+Music Machines MAV AB, used only to identify the hardware this project
+targets.
+
+---
+
+KITS
+
+kits.s is Sam Banks' module from octabam (modules/kits and the file and CRC
+helpers of modules/store, at f7d72906), under the licence above. Modwerk's
+changes for its base (the hooks, the library and edit pool in borrowed sample
+memory, the read at install, the battery-RAM copy tagged with the project),
+2026, Modwerk contributors, are under the same licence.
+
+KITS follows the design of Em's Octakit (https://github.com/emuyia/ems-octakit),
+MIT License, Copyright (c) 2026 June Kiff, and reads its kits3a/kits3b.work
+files; the slot cases its edit pool and unassigned-pattern rule cover were
+found and fixed by bkkbrls-del (https://github.com/bkkbrls-del) in his OK-MS4.0
+build. None of Octakit's or OK-MS4.0's code or data is included.

@@ -757,7 +757,7 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
     if (abi >= 9) dsp.requires = (uint16_t)be16(data + 76), dsp.claim_count = (uint8_t)claims;
     /* ABI 10: DSP words with no slot are an engine for the base's hook sites, not an effect. */
     const int engine = abi >= 10u && dsp.count && !dsp.slots;
-    if (image > RUNTIME_IMAGE_BYTES || bss > RUNTIME_IMAGE_BYTES - image || hooks > (abi >= 8u ? RUNTIME_HOOKS : RUNTIME_EVENTS) ||
+    if (image > RUNTIME_IMAGE_BYTES || bss > RUNTIME_MODULE_BYTES - image || hooks > (abi >= 8u ? RUNTIME_HOOKS : RUNTIME_EVENTS) ||
         count > RUNTIME_RELOCATIONS || sites > RUNTIME_SITES || copies > RUNTIME_COPIES || fills > RUNTIME_FILLS ||
         claims > RUNTIME_DSP_CLAIMS || entries > RUNTIME_DSP_HOOK_ENTRIES || length < at + image + 4u * count)
         return refuse(RUNTIME_MALFORMED);
@@ -882,7 +882,8 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
     if (dsp.count > RUNTIME_DSP_WORDS || dsp.relocation_count > RUNTIME_DSP_RELOCATIONS ||
         left != 4u * dsp.count + 2u * dsp.relocation_count + 4u * init_words || (!dsp.count && dsp.relocation_count) ||
         (dsp.count && !engine && (dsp.init >= dsp.count || dsp.proc >= dsp.count || !dsp.slots || dsp.slots > 3u)) ||
-        (engine && (dsp.init || dsp.proc || dsp.cycles || dsp.kind || dsp.state || dsp.buffer || dsp.id || !entries)))
+        (engine && (dsp.init || dsp.proc || !dsp.cycles || (dsp.kind != RUNTIME_EXECUTED && dsp.kind != RUNTIME_HARDWARE) ||
+                    dsp.state || dsp.buffer || dsp.id || !entries)))
         return refuse(RUNTIME_MALFORMED);
     for (uint32_t i = 0; i < dsp.count; ++i) if (be32(words + 4u * i) > 0xffffffu) return refuse(RUNTIME_MALFORMED);
     for (uint32_t i = 0; i < init_words; ++i) if (be32(init + 4u * i) > 0xffffffu) return refuse(RUNTIME_MALFORMED);

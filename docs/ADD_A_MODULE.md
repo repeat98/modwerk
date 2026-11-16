@@ -47,6 +47,13 @@ the project after a fresh boot proves project loading, not power-cycle survival.
 Bind results to the exact source/image and record physical reboot evidence
 separately; failures or unavailable paths remain explicit qualification gaps.
 
+Every byte an Octatrack module stores in a Part must be one stock's Part check
+accepts on its own: 0 to 127 in an unused slot, or inside the stock range of the
+slot it reuses. The check runs when the module is not there: at power-on, before
+the base has the kept modules back, and on a unit without the module. One refused
+byte drops the whole bank (every track STATIC, no trigs; VECTOR, #1533). A wrapper
+around the check does not help then.
+
 ## Setup
 
 - Node 24 (see `.nvmrc`), then `npm ci`. This is all you need for documentation, metadata and the website.
@@ -237,7 +244,8 @@ unit. It is the agent's own test before a developer gets a build
 time.
 
 **A private USB package of a draft.** `npm run module:dev -- <id> --build-only`
-builds it ([the fast loop](#the-fast-loop)). Its `Gate` must be
+builds it ([the fast loop](#the-fast-loop)); it refuses a machine module, whose
+package the site's builder makes (`octatrack:module-packages`). Its `Gate` must be
 `modules/<id>/verify.py`: the schema takes only `tools/` or `modules/` paths.
 
 **Growing a stock table over USB.** A runtime package carries no `TableGrow`
@@ -278,6 +286,15 @@ the asset hashes that moved; `--check` must then call every package identical.
 published goes in the host wrapper `scripts/octatrack-module-packages.py`.
 In the toolchain image set `ELEKLOADER_DSP_ASM`; restore old versions it deletes.
 
+**A first release on an owner approval** (`sdk/approvals/<id>-build-approval.json`, which only the owner writes).
+It binds the native source hash: every file in the folder but `octamod.module.json`, `media/`, Markdown and licences,
+so `evidence/performance.json`, the thumbnail and `manifest.py` are final before the owner signs. Without it
+`modules:generate` refuses the module, and the package builder takes the display name from the generated documents:
+folder complete, approval, `modules:generate`, then the package. List the module in `module-set.test.ts`'s
+published packages, `module-qualification.test.ts`'s owner-approved releases and `resource-indicators.test.ts`'s
+exceptions. A module back after removal counts as new: one changelog entry. Taking an id off `REMOVED_MODULE_IDS`
+moves `src/catalog/modules.ts`, which Tape Echo's and Euclid's standalone recipes pin.
+
 A newly developed module selectable in beta module sets must have a working
 USB path, not a card-only fallback; existing card-only modules need a reviewed
 migration before USB rollout. An unavoidable compatibility limit needs its
@@ -299,6 +316,7 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
 3. **Measure and test.**
    - Record the worst-case cycles for each processor and the exact memory regions and totals. New FX should aim for DSP cost in the same ballpark as worst-case stock SPRING REV. Plan around that reference before implementation and compare expensive types/settings, moving controls and trigger splits under matched conditions on both cores. This is a design target without a fixed ratio or hard per-effect ceiling; substantially higher cost needs optimization and review of the remaining headroom.
    - For an effect, also check how it sounds: aliasing, clipping, DC and idle behaviour (`npm run fx:audit`, [effects guide](module-guides/effects.md#sound-quality)). Paste the table into TESTING.md, or write "not tested". No gate in CI runs it.
+   - Name its CPU price in `resources.cpuPrice`, measured on a unit: a machine's worst render with `npm run device -- cpu`, written also as its descriptor's `reserved[0]`; any other module's frame-interrupt share with `npm run device:price`. `modules:check` refuses a module without one ([format](MODULE_PERFORMANCE.md)).
    - Add a hardware report from a real unit, stating its model, how long it ran, what was tested and the limitations. There is no minimum duration or track count.
    - A fix for a stock bug can be regressed in the emulator: `ot_emu`'s `call <address> [args]` runs a stock routine on a booted image, after `poke` has set up the state (Direct Jump Kyoti's `verify.py`, part 6, runs the MIDI Plays-Free stall on the original OS and on the module image).
    - If you could not test on hardware, say so in the pull request. Only the owner can waive this, for one exact version.

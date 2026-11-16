@@ -1,0 +1,35 @@
+# Improved SMPL (0.3.0-experimental, then named Fine Tune + Sample Rate): FIN's knob is RATE on every sound, with no switch.
+# Knob B reads RATE at rest; CC 25 sets it (127 -> word 0x7f00, 64 -> 0x4000) in BD's target
+# (0x8000e5d4); a tap of encoder B, 0.2.0's switch, changes nothing (still 0x7f00, label RATE).
+# SMPL is pressed from AMP, never on its own page (that toggles the knob and waveform views).
+# Changes BD's FIN/RATE and ends with it at +63 (CC 25 127, normal speed).
+name: sample-rate-rate-always
+state: changes
+
+hold TRK
+key BD
+release TRK
+key AMP
+wait 300
+key SMPL
+wait 3500
+cc 25 127
+wait 3000
+screen label
+expect label == ref region 30 9 34 9
+mem t1 0x8000e5d4 2
+expect t1 == 7f00
+key PUSH_B
+wait 3000
+mem t2 0x8000e5d4 2
+expect t2 == 7f00
+screen after
+expect after == label
+cc 25 64
+wait 300
+mem t3 0x8000e5d4 2
+expect t3 == 4000
+cc 25 127
+wait 300
+mem t4 0x8000e5d4 2
+expect t4 == 7f00

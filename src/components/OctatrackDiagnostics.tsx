@@ -6,7 +6,8 @@ import { api } from '../community/api'
 import { browserRequestsPrivacy } from '../community/usage'
 import type { DiagnosticEntry } from '../community/octatrack-diagnostics-contract'
 import { rememberInvitationAnswer, stepTotals, type StepRow } from '../community/diagnostics-sharing'
-import { DiagnosticDetails, DiagnosticsInvitation } from './DiagnosticsInvitation'
+import { DiagnosticDetails, useInvitationCounts } from './DiagnosticsInvitation'
+import { DIAGNOSTICS_GUEST } from '../community/octatrack-diagnostics-contract'
 
 export function OctatrackDiagnosticsCollector({memberId,link,inventory}: {memberId:string;link:OctatrackLink|null;inventory?:Inventory}) {
   const latest = useRef(inventory)
@@ -14,25 +15,30 @@ export function OctatrackDiagnosticsCollector({memberId,link,inventory}: {member
   useEffect(()=>collectOctatrackDiagnostics(memberId,link,()=>latest.current),[memberId,link])
   return null
 }
-/** `username` is the name the owner sees on shared records; testers match it on Discord. */
+/** `username` is the name the owner sees on shared records; testers match it on Discord.
+ * While sharing is off, Share diagnostics turns it on right here, with What gets shared beside it as the dialog has it;
+ * Stop sharing and delete turns it off. */
 export function OctatrackDiagnosticsSettings({username}: {username?: string | null}) {
   const state = useSyncExternalStore(subscribeDiagnosticPreference,diagnosticPreference,diagnosticPreference)
-  const [invitation,setInvitation]=useState(false)
-  const privacy = browserRequestsPrivacy()
+  const privacy = browserRequestsPrivacy(), offer = !state.enabled
+  const count = useInvitationCounts('settings', offer)
+  async function share() { if (await changeDiagnosticSharing(true)) count('shared') }
   return <section className="octatrack-diagnostics" aria-label="Diagnostics">
     <h3>Diagnostics</h3>
     <p>{state.enabled ? 'You’re helping me find browser, build and Octatrack sync problems.' : 'Help me find browser, build and Octatrack sync problems by sharing private technical reports.'}</p>
     {state.enabled && username && <p className="link-hint">They reach me as @{username}. {/^member_[a-z0-9]+$/i.test(username)
       ? <>That name was made up by the site: <a href="#account">choose your own</a>, ideally your Discord name, so I can match your messages to them.</>
       : 'Use the same name on Discord, so I can match your messages to them.'}</p>}
-    {!state.enabled && <button type="button" className="button button-quiet" aria-haspopup="dialog" onClick={()=>setInvitation(true)}>About sharing diagnostics</button>}
     <DiagnosticDetails/>
+    {offer && <>
+      <p className="diagnostics-choice">Optional. Sharing applies to {state.accountId === DIAGNOSTICS_GUEST ? 'this browser' : 'your signed-in sessions'} for 90 days. Builds and syncing work either way.</p>
+      <button type="button" className="button button-primary" disabled={privacy || !state.ready || state.busy} onClick={()=>void share()}>{state.busy ? 'Saving…' : 'Share diagnostics'}</button>
+    </>}
     {state.ready && (state.saved || state.error) && <button className="text-button" disabled={state.busy} onClick={()=>{if(state.accountId)rememberInvitationAnswer(state.accountId);void changeDiagnosticSharing(false)}}>Stop sharing and delete</button>}
     {state.notice && <p className="link-hint" role="status">{state.notice}</p>}
     {state.lastSent && <p className="link-hint" role="status">Last diagnostic received: {new Date(state.lastSent).toLocaleTimeString()}</p>}
     {privacy && <p className="link-hint">Your browser requests privacy, so automatic diagnostics stay off here.</p>}
     {state.error && <p className="file-error" role="alert">{state.error}</p>}
-    {invitation && <DiagnosticsInvitation placement="settings" onClose={()=>setInvitation(false)}/>}
   </section>
 }
 type AdminDiagnostics = {events:DiagnosticEntry[];counts:{day:string;event:string;count:number}[];steps?:StepRow[]}

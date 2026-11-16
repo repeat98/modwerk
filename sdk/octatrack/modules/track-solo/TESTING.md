@@ -1,5 +1,65 @@
 # Track Solo testing
 
+## 0.2.5 — 13 November 2026
+
+**What changed.** TRACK SOLO starts at HOLD on boot, installation and package
+replacement (#1505): one initial data byte, `ts.enabled = 1`, and no
+instruction. The setting is still session-only.
+
+Package `5ac64b5ef96567b701a603197c737d5cccd6317da7242d15ca1855ab37da7c1c`.
+
+### Software and emulator
+
+- `verify.py` (host): passed, now also checking that a fresh state reads HOLD.
+- `emulator_test.py` on the exact package, stock MAIN `164f3122…`, macOS
+  `ot_emu` built from the upstream:tools octabam checkout: passed, 533 checks,
+  including the getter reading HOLD on install.
+- `cycle_count.py` in the runner image (`da70d46e…`), base MAIN `124548dc…`:
+  identical to 0.2.4. Dearest tick 653 module instructions (504 calls), frame
+  enter and leave 12 each (23,190 frames), key 149 (120 calls), worst event 677
+  instructions, about 1,687 cycles.
+- `ux_test.py` (control, in the runner image): passed. It now sets OFF before
+  its G01 OFF long-press check. The `--audio`, `--paired` and `--save` lanes
+  were not run on this package.
+- `panel_test.py --menu` (runner image, base MAIN `124548dc…`): passed "TRACK
+  SOLO starts at HOLD", "OFF preserves an actual long TRACK press" and "stock
+  SEQUENCER row opens at HOLD and switches OFF and HOLD through its actual YES
+  handler", and produced the two screenshots, byte-identical to 0.2.4's (now
+  captured HOLD first, then OFF). It then stopped at the same pre-0.5 s-hold
+  assertion as 0.2.2 to 0.2.4 (now line 265).
+
+### Hardware — agent stage, flashed beta base `c1f21351…`
+
+Run by the agent over `scripts/octatrack-usb-bridge.py` with the one-shot
+`scripts/device.mjs try` (no Keep), with 15 other modules kept beside it,
+among them Mute Modes, SAMPLE LOCKS and Beat Slicer. The flashed base refuses
+screen, key and memory reads, so this stage shows only that the package loads,
+runs and rolls back:
+
+- 20 s trial: staged, ran, rolled back; refusal counter steady at 29 (not read
+  before the trial); afterwards normal, same base, the same 16 kept modules,
+  Track Solo still `f92f5dae`.
+- The diagnostic value word read `0x0`. SAMPLE LOCKS and Beat Slicer write the
+  same word after Track Solo's tick, so it does not show Track Solo's setting.
+
+### Hardware — tester at the panel
+
+Tester: twwwy. Same unit and base, a 300 s trial of the exact package loaded
+by the agent (refusal counter 0 throughout the part read).
+
+| Step | Reported at the panel |
+| --- | --- |
+| Without opening the menu, hold T2 for 0.5 s, tap T3, release T2 | "works fine" |
+| PROJECT > CONTROL > SEQUENCER > TRACK SOLO reads HOLD | "works fine" |
+| Set OFF, hold T2 two seconds: stock behaviour | "works fine" |
+| Keep (by the agent, at the tester's request), power cycle, no menu visit: hold T2, row reads HOLD, other modules come up | "works as intended" |
+
+Read back from the device: Keep accepted, active package `5ac64b5e…`, 16
+modules kept. After the tester's power cycle: same base, generation 0 (a fresh
+start), the same 16 modules kept, Track Solo among them.
+
+Not tested on hardware for 0.2.5: everything listed under 0.2.4 below.
+
 ## 0.2.4 — 10 November 2026
 
 **What changed.** At frame end, `ts_frame_leave` and `ts_scope_end` restore the

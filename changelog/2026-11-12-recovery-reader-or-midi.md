@@ -1,0 +1,1 @@
+Site: the base install guide, the welcome, the FAQ and the beta invitation now ask for a CompactFlash card reader or a MIDI interface as the way back, since either one restores the original OS. They no longer read as if a card reader were required.

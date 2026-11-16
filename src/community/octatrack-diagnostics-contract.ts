@@ -2,7 +2,9 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 
 // Closed, versioned diagnostics: no arbitrary text, project data, USB serials, firmware or memory dumps.
-/** 2026-11-11.1 adds each report's browser and OS family (`client`) and why a connection failed before it existed (`link_failed`). */
+/** 2026-11-11.1 adds each report's browser and OS family (`client`) and why a connection failed before it existed (`link_failed`).
+ * A consent given under an earlier version keeps sharing (owner, 14 Nov 2026): a new version is what new choices record,
+ * never a reason to ask members again. */
 export const OCTATRACK_DIAGNOSTICS_VERSION = '2026-11-11.1'
 export const DIAGNOSTIC_RETENTION_DAYS = 30
 export const DIAGNOSTIC_CONSENT_DAYS = 90
@@ -41,9 +43,10 @@ export type PreLinkFailure = typeof PRE_LINK_FAILURES[number]
 export const DIAGNOSTIC_USB_EVENTS = ['connected', 'disconnected', 'sync_started', 'sync_failed', 'selftest', 'health', 'kept', 'undone', 'load', 'unresponsive', 'device_log'] as const
 /** The part of the site a browser error happened on, from the page's route: a fixed name, never the address. */
 export const DIAGNOSTIC_SITE_AREAS = ['library', 'configuration', 'octatrack', 'module', 'forum', 'account', 'admin', 'other'] as const
-/** A browser error's type, by its standard name; anything else is OtherError. Never its message. */
+/** An error's type, by its standard name, or one of the USB link's own two (a reply that timed out, a submission the
+ * unit dropped or refused); anything else is OtherError. Never its message. */
 export const DIAGNOSTIC_ERROR_KINDS = ['TypeError', 'RangeError', 'ReferenceError', 'SyntaxError', 'AbortError', 'NetworkError', 'NotFoundError',
-  'NotAllowedError', 'InvalidStateError', 'QuotaExceededError', 'SecurityError', 'DataError', 'OtherError'] as const
+  'NotAllowedError', 'InvalidStateError', 'QuotaExceededError', 'SecurityError', 'DataError', 'TimeoutError', 'VendorTransportError', 'OtherError'] as const
 export type DiagnosticSiteArea = typeof DIAGNOSTIC_SITE_AREAS[number]
 export type DiagnosticErrorKind = typeof DIAGNOSTIC_ERROR_KINDS[number]
 /** `load` and `unresponsive`: the connected unit's meters over the last minutes, per mille, as [mean, peak]; a meter
@@ -51,14 +54,75 @@ export type DiagnosticErrorKind = typeof DIAGNOSTIC_ERROR_KINDS[number]
 export interface DiagnosticLive { samples: number; cpu?: [number, number]; dsp1to4?: [number, number]; dsp5to8?: [number, number] }
 export const DIAGNOSTIC_UNRESPONSIVE = ['usb', 'ui'] as const
 /** `device_log`: records from the unit's own log (diag.h), uploaded at the next connection. */
-export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base', 'shed'] as const
+export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base', 'shed', 'cpu'] as const
 /** `frameGap`: the window's longest time between two audio frames, µs (log version 2); `tickGap` its longest run of
  * frames without a UI tick. */
 export interface DeviceLoad { seq: number; boot: number; minute: number; cpu: [number, number]; dsp1to4: [number, number]; dsp5to8: [number, number]; samples: number; playing: number; frameGap?: number; tickGap?: number }
 /** crash.c's record: the last error exception, with the eight longs at its PC read cached and uncached (log version 2). */
 export interface DeviceCrash { count: number; vector: number; pc: number; sr: number; sp: number; d: number[]; a: number[]; stack: number[]; code: number[]; memory: number[] }
-/** dsp.c's record of the last DSP stall: why (1 frames stopped, 2 eDMA refused, 0 a test), the tick, the loader's report words. */
-export interface DeviceStall { count: number; reason: number; ticks: number; report: number[] }
+/** dsp.c's record of the last DSP stall: why (1 frames stopped, 2 eDMA refused, 0 a test), the tick, the loader's report words.
+ * `frames`: the frames before it, oldest first, two numbers each in µs (diag.h's trace): the time since the frame before
+ * began (363 on time) and how long the frame interrupt before it ran. Bases without the trace send none.
+ * `packets`: each core's last loader packet header, eight 16-bit words (the record's tx[2][8]); sites before
+ * 16 November 2026 sent none. */
+export interface DeviceStall { count: number; reason: number; ticks: number; report: number[]; frames?: number[]; packets?: number[][] }
+const FRAME_US = 363, LATE_WINDOW = [110, 190] as const, LATE_TAIL = 6
+/** How late each of a stall's frames began against the DSP's frame grid, in µs: the lateness before it plus its gap
+ * less one frame, never under 0. Past a whole frame (or within 20 µs of one) the DSP has skipped that frame, and a gap
+ * of four frames or more starts again on time. The trace stamps a frame at dl_frame, not at the interrupt's entry, and
+ * the upload rounds to 1 µs, so read these to about 5 µs. */
+export function stallLateness(frames: number[]): number[] {
+  let late = 0
+  return frames.filter((_, i) => i % 2 === 0).map((gap, i) => {
+    late = i === 0 || gap >= 4 * FRAME_US ? 0 : Math.max(0, late + gap - FRAME_US)
+    while (late >= FRAME_US - 20) late = Math.max(0, late - FRAME_US)
+    return late
+  })
+}
+/** A stall in a line: its frames (the last gaps, the longest with the run before it, and whether one of the last frames
+ * began in the late entry's window, docs/MODULE_PERFORMANCE.md: about 150 µs late after a long frame), then each core's
+ * last packet and whether a publication was under way (describeStallPackets). '' when the record holds none of these. */
+export function describeStallFrames(frames: number[] | undefined, stall?: Pick<DeviceStall, 'packets' | 'report'>): string {
+  return [frames?.length ? stallFrames(frames) : '', describeStallPackets(stall)].filter(Boolean).join('; ')
+}
+function stallFrames(frames: number[]): string {
+  const gaps = frames.filter((_, i) => i % 2 === 0), runs = frames.filter((_, i) => i % 2 === 1), longest = gaps.indexOf(Math.max(...gaps))
+  const late = stallLateness(frames), from = Math.max(0, late.length - LATE_TAIL)
+  const hit = late.reduce((found, us, i) => i >= from && us >= LATE_WINDOW[0] && us <= LATE_WINDOW[1] ? i : found, -1)
+  return `${gaps.length} frames before it: last gaps ${gaps.slice(-8).join(' ')} us (363 is on time); longest ${gaps[longest]} us, ${gaps.length - 1 - longest} frames before the last, ` +
+    `after a frame interrupt of ${runs[longest]} us (the longest ran ${Math.max(...runs)} us); the last began ${late.slice(-LATE_TAIL).join(' ')} us late: ` +
+    (hit < 0 ? `none ${LATE_WINDOW[0]} to ${LATE_WINDOW[1]} us late, so not the late entry`
+      : `one ${late[hit]} us late, ${late.length - 1 - hit} before the last, after a frame interrupt of ${runs[hit]} us: fits the late entry (${LATE_WINDOW[0]} to ${LATE_WINDOW[1]} us)`)
+}
+/** The loader's packet opcodes (header word 2): 1 and 3-9 from dsp_receiver.asm's packet comment and its dispatch at
+ * `coldops`, 2 STAGE from the transport's transfer.h enum, 10 PLACE and 11 the fixed reset from the resident transport
+ * (module-adapters/resident_dsp.py receiver_place, resident_driver.py transport). */
+const PACKET_KINDS = ['', 'PROBE', 'STAGE', 'WRITE', 'BIND', 'UNBIND', 'BYPASS', 'BASE', 'PEEK', 'SUM', 'PLACE', 'RESET'], PACKET_MAGIC = 0x4c44
+/** The manager's phases (the transport's manager.c advance): what it sends in each. */
+const MANAGER_PHASES = ['', 'planning', 'writing', 'binding', 'bypassing', 'ready', 'unbinding the old', 'rolling back', 'writing tables', 'restoring tables']
+/** One core's last packet from its header (dsp_receiver.asm: 0 magic, 1 sequence, 2 opcode, 3 core, 4 count or id,
+ * 5 offset or init, 6 checksum, 7 proc, a WRITE's sum or a RESET's feature). The ColdFire clears the magic once the core
+ * answers or after 64 frames without an answer (transfer.c dl_frame); the record is taken before anything else clears
+ * it (dsp.c recover), so a magic still there is a packet in flight when the frames stopped: sent in their last frames.
+ * Only dl_frame writes the header, so it is the last packet before the stop even when the record came later. */
+export function describeStallPacket(header: number[]): string {
+  if (header.length < 8 || header.every(word => !word)) return 'none'
+  const [magic, , op, , a, b, , c] = header, kind = PACKET_KINDS[op]
+  const what = op === 3 || op === 9 ? `${kind} ${a} words at table offset ${b}` : op === 4 ? `BIND id ${a}, init ${b} proc ${c}`
+    : op === 5 || op === 6 ? `${kind} id ${a}` : op === 7 ? `BASE entry ${a}` : op === 8 ? `PEEK P:$${b.toString(16)}`
+      : op === 10 ? `PLACE feature ${a} at table offset ${b}` : op === 11 ? `RESET feature ${c}, ${a} words at table offset ${b}` : kind || `opcode ${op} (unknown)`
+  return what + (magic === PACKET_MAGIC ? ', in flight when the frames stopped' : magic ? `, magic $${magic.toString(16)}` : ', answered or timed out')
+}
+/** Each core's last packet, and whether the loader's manager was publishing (a pick, a Part change or an install) when
+ * the stall was found: the report's `manager` word, phase in its low byte (0 idle). The watchdog finds a stall only
+ * while a job waits (OCTATRACK_HARDWARE_TRAPS.md), so a publication may have begun after the frames stopped. */
+export function describeStallPackets(stall: Pick<DeviceStall, 'packets' | 'report'> | undefined): string {
+  const lines = (stall?.packets ?? []).map((header, core) => `core ${core} last packet: ${describeStallPacket(header)}`)
+  const manager = (stall?.report?.[0] ?? 0) >= 11 ? stall?.report?.[DSP_REPORT_NAMES.indexOf('manager')] : undefined
+  const phase = (manager ?? 0) & 0xff
+  if (manager !== undefined) lines.push(phase ? `a pick, Part change or install under way when it was found (manager phase ${phase}${MANAGER_PHASES[phase] ? ', ' + MANAGER_PHASES[phase] : ''})` : 'no pick, Part change or install under way when it was found')
+  return lines.join('; ')
+}
 /** The loader's report words, as the stall record and the development report (scripts/device.mjs) carry them
  * (dsp.c modwerk_dsp_report, version 11; version 12 adds the effect masks' further words and a pad at the end). */
 export const DSP_REPORT_NAMES = ['version', 'frames', 'phase', 'job0', 'job1', 'hostFlags', 'accepted0', 'accepted1', 'rejected0', 'rejected1',
@@ -118,7 +182,9 @@ export interface OctatrackDiagnostic {
   modules?: { id: string; catalogVersion: string }[]
   packages?: { sha256: string; bytes: number }[]
   area?: DiagnosticSiteArea
-  /** A browser error's type, or an unclassified (`unknown`) sync failure's; never a message. */
+  /** A browser error's type, an unclassified (`unknown`) sync failure's, or what stopped a `transport` one: the
+   * browser's USB error, TimeoutError (no reply in time), VendorTransportError (the unit dropped or refused the
+   * submission), OtherError (a reply that did not confirm the step). Never a message. */
   kind?: DiagnosticErrorKind
   step?: DiagnosticSyncStep
   live?: DiagnosticLive

@@ -5,7 +5,8 @@
 //   npm run module:doctor -- --draft <id>  # a draft under sdk/drafts/, copied under sdk/octatrack/modules/ for the run and removed after:
 //                                          # its experimental lines (try it, share it), with the release lines listed as still to do
 //   npm run module:doctor -- --draft <id> --release  # the same draft judged as a release: every line counts
-//   npm run module:doctor -- --all        # every catalog module and every Digitakt/Digitone module; CI runs this
+//   npm run module:doctor -- --all        # every catalog module and every Digitakt/Digitone module; CI runs this. It ends with
+//                                         # the modules due for a re-run on the unit (scripts/retest-queue.mjs), a report only
 //
 // Each line is a point where a module meets an existing workflow, with the command that fixes it when it fails. Run it until
 // it is green, then walk the checklist in docs/module-guides/<category>.md, which covers what a program cannot see.
@@ -26,6 +27,8 @@ import { requireZdlBinary, zdlPath } from './zdl-binaries.mjs'
 import { moduleCardless } from '../src/catalog/usb-only.ts'
 import { controlProblems } from './module-controls.mjs'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
+import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from './retest-queue.mjs'
+import { cpuPriceStatus, readCpuPricePending } from './module-cpu-price.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
@@ -44,13 +47,15 @@ const exists = path => existsSync(resolve(root, path))
 if (draft) stageDraft(root, ids[0])
 // octabam's tools read the untracked mirror of sdk/octatrack/modules; make it current first.
 else mirrorOctatrackModules(root)
-const catalog = json('sdk/catalog.json'), machineModules = ['digitakt', 'digitone', 'analog-rytm-mkii', 'analog-four-mkii'].flatMap(machine => exists('sdk/' + machine + '/modules') ? readdirSync(resolve(root, 'sdk', machine, 'modules'), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine, folder: 'sdk/' + machine + '/modules/' + entry.name })) : [])
+// Every elemod machine's module folder, from the machine profiles, so a machine added there (the Digitakt II on 13 November 2026) is found.
+const ELEMOD_MACHINES = json('src/devices/machines.generated.json').filter(profile => profile.sdk?.platform === 'elemod').map(profile => ({ machine: profile.id, modules: profile.sdk.modules }))
+const catalog = json('sdk/catalog.json'), machineModules = ELEMOD_MACHINES.flatMap(({ machine, modules }) => exists(modules) ? readdirSync(resolve(root, modules), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine, folder: modules + '/' + entry.name })) : [])
 // Zoom effects (zdl) share one folder for the pedal family; each names the pedal it is developed on.
 if (exists('sdk/zoom/modules')) for (const entry of readdirSync(resolve(root, 'sdk/zoom/modules'), { withFileTypes: true })) if (entry.isDirectory() && !entry.name.startsWith('_')) {
   const folder = 'sdk/zoom/modules/' + entry.name
   machineModules.push({ id: entry.name, machine: exists(folder + '/modwerk.module.json') ? json(folder + '/modwerk.module.json').machine : 'zoom-ms-70cdr', folder, zdl: true })
 }
-const MODULE_FOLDERS = 'sdk/octatrack/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules, sdk/analog-four-mkii/modules or sdk/zoom/modules'
+const MODULE_FOLDERS = ['sdk/octatrack/modules', ...ELEMOD_MACHINES.map(item => item.modules)].join(', ') + ' or sdk/zoom/modules'
 
 // An unknown id is answered before any check runs: the rules below take seconds on a large catalogue.
 if (!all && !exists('sdk/octatrack/modules/' + ids[0]) && !machineModules.some(item => item.id === ids[0])) { console.error('No module named ' + ids[0] + ' under ' + MODULE_FOLDERS + '.'); process.exit(2) }
@@ -69,8 +74,13 @@ const compatResult = (() => { try { return JSON.parse(compat.stdout) } catch { r
 const nativeRun = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/module-native-params.py', ...withId], { cwd: root, encoding: 'utf8' })
 const nativeParams = (() => { try { return JSON.parse(nativeRun.stdout) } catch { return null } })()
 
+// The modules listed before every module had to name its CPU price, which wait for a measurement.
+const cpuPending = readCpuPricePending(root)
 // The qualification source hash is async; compute it once per module before the checks run.
 const nativeHashes = new Map()
+// The USB package file's Git history, read once and only when a hardware record and the shipped package differ.
+let packageRows = null
+const retest = documents => retestQueue({ documents, packages: json(PACKAGES).packages, history: (packageRows ??= packageHistory(root)), bases: json(BASES).bases })
 
 function octatrack(id) {
   const lines = []
@@ -151,6 +161,23 @@ function octatrack(id) {
   else if (found.files) ok('dsp sources', found.files + ' DSP source' + (found.files === 1 ? '' : 's') + ': no rep, no label that prefixes another')
   else info('dsp sources', 'no .asm source (ColdFire-only module)')
 
+  // The register contract of its DSP package's entries, read from the assembled words (scripts/dsp-register-contract.py): a hook entry writes only its
+  // site's clobbers, an init keeps r1/n1/m1. Reported until the owner sets REFUSED_FROM there; from then a module listed on or after it is refused.
+  const registers = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/dsp-register-contract.py', '--json', id], { cwd: root, encoding: 'utf8' })
+  const contract = registers.status === 0 ? JSON.parse(registers.stdout) : null, more = contract?.findings?.length > 1 ? ' (and ' + (contract.findings.length - 1) + ' more)' : ''
+  const registersFix = 'keep what the contract names, or widen the site\'s clobbers in a base pull request; python3 -B scripts/dsp-register-contract.py --json ' + id
+  if (!contract) fail('dsp registers', 'the check did not run: ' + (registers.stderr || registers.error?.message || '').trim().split('\n').pop(), 'python3 -B scripts/dsp-register-contract.py --json ' + id)
+  else if (contract.skipped) info('dsp registers', 'not checked: ' + contract.skipped)
+  else if (contract.findings.length && contract.refused) fail('dsp registers', contract.findings[0] + more, registersFix)
+  else if (contract.findings.length) info('dsp registers', contract.findings[0] + more + '. Reported, not refused: the owner sets the date it is refused from')
+  else if (contract.entries) ok('dsp registers', contract.entries + ' DSP entr' + (contract.entries === 1 ? 'y writes' : 'ies write') + ' only what their contract allows')
+
+  // Every module names its CPU price; a machine's is also its descriptor's reserved[0] (scripts/module-cpu-price.mjs, docs/MODULE_PERFORMANCE.md).
+  const price = cpuPriceStatus({ root, document, pending: cpuPending })
+  if (price.state === 'fail') fail('cpu price', price.detail, price.fix)
+  else if (price.state === 'pending') info('cpu price', price.detail)
+  else ok('cpu price', price.detail)
+
   if (rulesProblem) fail('module rules', 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), 'fix what it names, then run npm run modules:check -- --base origin/main')
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')
 
@@ -179,7 +206,10 @@ function octatrack(id) {
   const hardware = document.tests?.qualification?.hardware
   if (hardware?.status === 'reported' && usbRow?.version === document.version) {
     if (hardware.imageSha256 === usbRow.sha256) ok('tested package', 'the hardware record names the shipped USB package (' + usbRow.sha256.slice(0, 8) + ')')
-    else info('tested package', 'the hardware record names ' + hardware.imageSha256.slice(0, 8) + ', the shipped USB package is ' + usbRow.sha256.slice(0, 8) + ': run the shipped one (npm run device:qualify), or say in TESTING.md why the earlier run covers it')
+    else {
+      const due = retest([document]).due[0]
+      info('tested package', 'the hardware record names ' + hardware.imageSha256.slice(0, 8) + ', the shipped USB package is ' + usbRow.sha256.slice(0, 8) + (due ? ' (' + due.reason + ': ' + due.detail + ')' : '') + ': run the shipped one (npm run device:qualify), or say in TESTING.md why the earlier run covers it')
+    }
   }
 
   const clashes = compatProblems?.filter(problem => problem.modules.includes(id)) ?? []
@@ -221,9 +251,10 @@ function machineModule({ id, machine, folder, zdl = false }) {
     return lines
   }
   // The browser builds only from the files elekloader's catalog pins (vendor/elekloader/catalog/catalog.json); a mod's id is its catalog id.
-  // elekloader names the Rytm's and the Four's devices analog-rytm-mk2 and analog-four-mk2, which their machine ids do not start with.
+  // elekloader names the Rytm's and the Four's devices analog-rytm-mk2 and analog-four-mk2, which their machine ids do not start with,
+  // and the Digitakt II's digitakt-mk2, which the Digitakt's id does: match the link device's key where there is one.
   const device = LINK_DEVICES.find(item => item.machine === machine)?.key
-  const pins = json('vendor/elekloader/catalog/catalog.json').mods.filter(mod => mod.id === id && (mod.device === device || mod.device.startsWith(machine)))
+  const pins = json('vendor/elekloader/catalog/catalog.json').mods.filter(mod => mod.id === id && (device ? mod.device === device : mod.device.startsWith(machine)))
   if (pins.length) lines.push({ state: 'ok', name: 'browser builder', detail: 'pinned in the elekloader catalog for OS ' + pins.map(mod => mod.os).join(', ') })
   else lines.push({ state: 'fail', name: 'browser builder', detail: 'no pinned .elemod file for ' + machine + ', so the browser cannot build it', fix: 'npm run elekloader:update -- ... (vendor/elekloader/README.md, Updating; docs/ADD_A_MODULE.md, Digitakt and Digitone)' })
   if (rulesProblem) lines.push({ state: 'fail', name: 'module rules', detail: 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), fix: 'fix what it names' })
@@ -276,6 +307,7 @@ for (const id of octatrackIds) {
 const machineIds = all ? machineModules : machineModules.filter(item => ids.includes(item.id))
 for (const item of machineIds) green = report(item.id + ' (' + item.machine + ')', [...machineModule(item), ...boardLines(item.machine, item.id, item.folder)]) && green
 if (!all && !octatrackIds.length && !machineIds.length) { console.error('No module named ' + ids[0] + ' under ' + MODULE_FOLDERS + '.'); process.exit(2) }
+if (all) console.log(formatRetestQueue(retest(octatrackIds.map(id => parseModuleDocument(json('sdk/octatrack/modules/' + id + '/octamod.module.json')))), { history: Object.keys(packageRows ?? {}).length > 0 }))
 const tiered = draft && !release
 if (tiered) console.log(green ? '\nThe experimental lines are green: try it with npm run module:dev, and share the branch; a tester runs the same command on it. The ○ lines are what listing it needs.' : '\nFix the lines marked ✗, then run this again. The ○ lines can wait until you list it.')
 else console.log(green ? '\nEvery integration point is green. Now walk the category checklist in docs/module-guides/.' : '\nFix the lines marked ✗, then run this again.')

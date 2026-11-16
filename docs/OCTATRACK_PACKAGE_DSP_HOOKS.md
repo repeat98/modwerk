@@ -71,9 +71,8 @@ stay base data (Phase 3).
 - **Trust.** A row pins the **controller digest** (`loader.h`: the header with its DSP fields zeroed and everything up
   to the claims), not the package's SHA-256; the loader keeps it in the owner record, and the board, the owner checks and
   the write lease compare it. A package that changes only its DSP part (0.1.6) keeps its row, so the base is not rebuilt.
-  The source policy in a row hashes only the controller's inputs (`build.py machine_inputs`), and the price (411 a
-  voice, 3 a core) stays in the machine record (`machine-ports.json`): a price change is a controller change until
-  Phase 2.
+  The source policy in a row hashes only the controller's inputs (`build.py machine_inputs`). The price per voice is
+  the engine header's `cycles` and `kind`, outside the digest (`sdk/runtime/loader/README.md`, "Price").
 - **Admission.** The loader asks `modwerk_machine_dsp_engine_admit` (the board) for an engine: a trusted controller of a
   packaged feature, one entry at the feature's one site on its cores, entered at word 0, an exit exactly where the site
   has one, claims exactly the feature's regions with initial words, at most 2,048 words. A trusted controller of a
@@ -272,10 +271,9 @@ engine, or both (RINGMOD SC needs both: an insert and a tap):
   engine (`modwerk_dsp_source_claim`): a hook at the dispatcher costs on every track of the core whether or not a reader is
   active, so it is a per-core engine price, not a per-instance one.
 
-`build.py --dsp-hook` derives all of it from the module's manifest (`DspHook`, `DspRange`) and refuses, before
-packaging: a site not in the catalogue, a stock guard that differs from the catalogue's, a register outside the site's
-contract (checked on the disassembly, as build_bus's round-trip audit does), a `rep`, a stack depth over the site's
-allowance, or a missing `rts`.
+No `build.py --dsp-hook` exists: `hook_engines.py` builds an engine, `abi9.engine()` packages it, `dsp_sites.py --check`
+proves each site against its manifest, `dsp-source-gates.py` refuses a `rep`, and `scripts/dsp-register-contract.py`
+(module:doctor) reports writes outside a site's `clobbers`, refusing from a date the owner sets. Stack depth is unchecked.
 
 ### 4. The lifecycle (the on-demand engine path, generalised)
 
@@ -559,7 +557,7 @@ reviewed change.
 - Base: the site catalogue and its generator, stubs for every catalogued site, hook slots and their base words, the
   generalised receiver op 10, the ledger in the manager, the init-record writer, the reference-counted key bus.
 - Loader: ABI 9 parsing, admission, and the hook slot lifecycle in `resident_engines.c`'s place.
-- Tools: `build.py --dsp-hook`, the register and `rep` audit, `modules:compat` reading the catalogue and the claims.
+- Tools: `modules:compat` reading the catalogue and the claims (the register and `rep` checks exist).
 - Tests: host tests in the style of `test_resident_engines_board.py` (place, enable, refuse, remove, a stuck PLACE);
   the DSP interpreter run of the bus with two readers on both cores and enable offsets, as for #640's phase test.
 - Hardware: the base requalified once; per module, install, removal and reinstall with the key latency the same each

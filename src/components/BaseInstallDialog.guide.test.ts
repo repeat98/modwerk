@@ -13,6 +13,7 @@ import { USB_AUDIO_MODULE } from '../config/usb-audio'
 
 // The browser's download of the .bin; the guide's own steps are what is tested here.
 vi.mock('../config/firmware-filename', () => ({ saveFirmware: vi.fn() }))
+import { saveFirmware } from '../config/firmware-filename'
 
 let root: Root, container: HTMLDivElement
 beforeEach(() => {
@@ -69,6 +70,8 @@ describe('the guided first install, for a member on the original OS', () => {
     const guide = open({ link }); await guide.render()
     click(container.querySelector('.risk-accept input')!); click(buttonNamed('Download base .bin')!); await settle(); await settle()
     expect(guide.onStage.mock.calls).toEqual([['opened', undefined], ['file-downloaded', undefined]])
+    // Named by the base's identity, the number the module file dialog and the update prompt show (issue from a member, 16 November 2026).
+    expect(saveFirmware).toHaveBeenCalledWith(expect.any(ArrayBuffer), 'base', expected)
     expect(container.querySelector('#base-stage-title')?.textContent).toBe('Copy the file to your card')
     expect(container.textContent).toContain('USB DISK MODE')
     expect(container.textContent).toContain('put it in a card reader')

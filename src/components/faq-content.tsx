@@ -150,7 +150,7 @@ const octatrack: FaqSection[] = [
         title: 'How do I install mods on my Octatrack?',
         keywords: 'install load add modules mods usb base module set sync chrome edge chromium webusb card set file modwerk0.set setup restart reboot update os upgrade usb disk mode mki mkii firefox safari ipad',
         answer: <>
-          <p>You need an Octatrack MKI or MKII, your original OS {OS} file, a USB cable and a CompactFlash card reader in case USB stops working.</p>
+          <p>You need an Octatrack MKI or MKII, your original OS {OS} file, a USB cable and, in case USB stops working, a CompactFlash card reader or a MIDI interface.</p>
           <ol>
             <li><strong>Install the base once.</strong> Open <a href="#octatrack/setup">Your Octatrack → Setup</a> and follow the guide. The first install always goes through the card: the original OS has no USB link for Modwerk. You download the base .bin, copy it to the card over the cable in <strong>USB DISK MODE</strong> or with a card reader, then install it with <strong>PROJECT → SYSTEM → OS UPGRADE</strong>.</li>
             <li><strong>Pick modules</strong> from the <a href="#library">library</a> into your module set.</li>
@@ -380,7 +380,7 @@ const octatrack: FaqSection[] = [
           <ol>
             <li>Back up the card: save your project, choose <strong>SYNC TO CARD</strong>, then copy the whole card to your computer.</li>
             <li>Keep Elektron’s original OS {OS} .bin and .syx on your computer.</li>
-            <li>Have a CompactFlash card reader at hand, and ideally a MIDI interface. They are your way back if USB stops working.</li>
+            <li>Have a CompactFlash card reader or a MIDI interface at hand. Either one is your way back if USB stops working.</li>
             <li>Read <a href="#faq/recover">the recovery steps</a> once, before you need them.</li>
             <li>Use a stable power supply and let the update and the startup finish.</li>
           </ol>
@@ -616,7 +616,7 @@ const QUICK: Record<FaqMachine, QuickStart> = {
     ],
     actions: [{ href: '#octatrack/setup', label: 'Open Setup' }],
     more: 'usb-base',
-    caution: 'Have a CompactFlash card reader at hand before you install the base: it is your way back if USB stops working.',
+    caution: 'Have a CompactFlash card reader or a MIDI interface at hand before you install the base: either one is your way back if USB stops working.',
   },
   digi: {
     title: 'Put mods on your Digitakt or Digitone',

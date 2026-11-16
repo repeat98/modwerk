@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { loadStep, type Inventory, type InventoryTarget } from '../config/inventory'
+import { loadStep, staysOff, type Inventory, type InventoryTarget } from '../config/inventory'
 import { recordSync, rememberSuccessfulSync } from '../config/octatrack-progress'
 import { LINK_BUSY, LinkBusyError, type OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { BaseLayoutRequired, BaseUpdateRequired, baseOutdated, ModuleSetError, moduleSetReview, setLayout, SetLimitError, USB_MODULE_IDS } from '../engine/elekloader/module-set'
@@ -18,6 +18,7 @@ import { installedOnOctatrack } from '../community/installed-follow-up'
 import { StateChip } from './ModuleGrid'
 import { ModulePreview } from './ModulePreview'
 import { Icon } from './Icon'
+import { ProgressBar } from './BaseDialogFrame'
 import type { PrepareUpdate } from './OctatrackUpdate'
 import './link-hero.css'
 import './octatrack-link.css'
@@ -30,10 +31,12 @@ const list = (ids: string[]) => new Intl.ListFormat('en', { type: 'conjunction' 
  * Runtime package changes are reviewed even when the visible member IDs stay the same. A base upgrade or
  * unavailable package stops preparation here; the installer preserves this set. A failed sync offers `onReport`.
  */
-export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdate, onClose, onInstallBase, onEdit, onReport }: {
+export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inventory, prepareUpdate, onClose, onInstallBase, onEdit, onReport }: {
   link: OctatrackLink; set: InventoryTarget; inventory?: Inventory; prepareUpdate?: PrepareUpdate; onClose: () => void
   /** Opened because the base changed and the unit started without these modules (PutBackModules). */
   putBack?: boolean
+  /** With `putBack`: the modules that were switched off on the unit before the base changed. They come back on. */
+  comesBackOn?: readonly string[]
   /** Opens the base installer: with a layout when the set needs the base in another USB Audio layout. */
   onInstallBase: (layout?: BaseLayout) => void; onEdit: () => void; onReport: () => void
 }) {
@@ -61,6 +64,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
   // USB Audio comes with the base: on when the connected base runs the set's layout, otherwise a base install first.
   const audio = setLayout(set), audioOn = audio !== undefined && baseLayout(state.identity?.base) === audio
   const stays = inventory ? set.moduleIds.filter(id => (id === USB_AUDIO_MODULE ? audioOn : inventory.moduleIds.includes(id)) && !updates.includes(id)) : []
+  const off = staysOff(set.moduleIds, inventory) // switched off on the unit (PROJ > MODWERK > MODULES): a sync leaves them off
   // A paused module, or one with no USB package, can still be removed, never added; a beta module (Air Chorus) is added
   // only for a beta tester.
   const paused = changes ? changes.add.filter(id => !isModuleAvailable(id, betaAccess) || !USB_MODULE_IDS.includes(id)) : []
@@ -130,6 +134,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
         : !review?.needsSync && !problem ? <p className="base-install-intro">Your Octatrack already has exactly these modules.</p>
         : <>
           {putBack && <p className="base-install-intro">The base on your Octatrack changed, so it started without your modules. Sync them to put them back.</p>}
+          {putBack && comesBackOn.length > 0 && <p className="base-install-intro">{list([...comesBackOn])} {comesBackOn.length === 1 ? 'was' : 'were'} switched off on your Octatrack and {comesBackOn.length === 1 ? 'comes' : 'come'} back on. To switch {comesBackOn.length === 1 ? 'it' : 'them'} off again, use <strong>PROJECT › MODWERK › MODULES</strong> after the sync.</p>}
           <p className="load-summary">Adds {changes.add.length} · Removes {changes.remove.length}{updates.length > 0 && <> · Updates {updates.length}</>}</p>
           <p className="base-install-intro">The modules stay on your Octatrack, also after a restart. Your project isn’t changed.</p>
           <ul className="load-changes">{([['load', 'Base', audio !== undefined && !audioOn ? [USB_AUDIO_MODULE] : []], ['load', 'Adds', changes.add], ['load', 'Updates', updates], ['leaving', 'Removes', changes.remove]] as const).flatMap(([state, label, ids]) => ids.map(id => {
@@ -141,6 +146,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
             </li>
           }))}</ul>
           {!!stays.length && <details className="load-unchanged"><summary>Already on your Octatrack · {stays.length}</summary><ul>{stays.map(id => <li key={id}>{MODULES.find(module => module.id === id)?.name ?? id}</li>)}</ul></details>}
+          {!!off.length && <details className="load-unchanged"><summary>Switched off on your Octatrack · {off.length}</summary><p>These stay off. Switch one on in PROJECT &gt; MODWERK &gt; MODULES on the Octatrack.</p><ul>{off.map(id => <li key={id}>{MODULES.find(module => module.id === id)?.name ?? id}</li>)}</ul></details>}
           {paused.length > 0 && <div className="load-blocked" role="note">
             <p>{list(paused)} {paused.length === 1 ? 'is' : 'are'} paused for now. Take {paused.length === 1 ? 'it' : 'them'} out of {set.name} to sync the rest.</p>
             <p><button type="button" className="text-button" onClick={onEdit}>Edit {set.name}</button></p>
@@ -154,8 +160,8 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
       {error && <p className="file-error" role="alert">{error}</p>}
     </> : step === 'done' ? <><p className={'base-install-intro ' + (error || notice?.tone === 'error' ? 'file-error' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? LINK_BUSY + ' Nothing was sent.' : 'Done.')}</p>{followNotice && <p className="link-hint" role="status">{followNotice}</p>}</>
     : <>
-      {step === 'loading' && !preparing && <progress className="load-progress" max={1} value={progress} aria-label="Syncing" />}
-      <p className="base-install-intro" role="status">{step === 'loading' ? (preparing ? 'Preparing your modules…' : progress < 1 ? `Syncing… ${Math.round(progress * 100)}%` : 'Starting…')
+      {(step === 'loading' || step === 'trial') && <ProgressBar value={step === 'loading' && !preparing && progress < 1 ? progress : undefined} label="Syncing" percent />}
+      <p className="base-install-intro" role="status">{step === 'loading' ? (preparing ? 'Preparing your modules…' : progress < 1 ? 'Sending your modules to the Octatrack…' : 'Starting them on the Octatrack…')
         : 'Saving on your Octatrack…'}</p>
       {/* Keeping waits for playback to stop; started meanwhile, the link says so and the set runs until it is kept. */}
       {step === 'trial' && notice?.tone === 'error' && <p className="file-error" role="alert">{notice.text}</p>}

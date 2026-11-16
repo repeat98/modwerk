@@ -1,0 +1,193 @@
+{
+  "name": "BD ANALOG",
+  "machine": 36,
+  "other_machine": 0,
+  "types": [
+    "808",
+    "909"
+  ],
+  "tap": "B (TON)",
+  "host": "rig_host.py",
+  "ccs": {
+    "LEV": 16,
+    "TUN": 17,
+    "DEC": 18,
+    "LOW": 19,
+    "TON": 20,
+    "ATK": 21,
+    "SWP": 22,
+    "HI": 23
+  },
+  "defaults": {
+    "LEV": 100,
+    "TUN": 64,
+    "DEC": 80,
+    "LOW": 64,
+    "TON": 80,
+    "ATK": 64,
+    "SWP": 64,
+    "HI": 64
+  },
+  "velocity": 100,
+  "setup": {
+    "27": 0,
+    "31": 0,
+    "70": 0,
+    "71": 64,
+    "72": 127,
+    "73": 127,
+    "74": 127,
+    "75": 0,
+    "77": 64,
+    "78": 0,
+    "79": 127,
+    "80": 127,
+    "81": 0,
+    "82": 0,
+    "83": 0
+  },
+  "long": {
+    "DEC": 127
+  },
+  "stress_tracks": [
+    0,
+    1,
+    4,
+    5,
+    6,
+    8,
+    2,
+    10
+  ],
+  "sweeps": [
+    {
+      "name": "tune",
+      "knob": "TUN",
+      "values": [
+        16,
+        40,
+        64,
+        88,
+        112
+      ],
+      "measure": "f0_hz"
+    },
+    {
+      "name": "decay",
+      "knob": "DEC",
+      "values": [
+        10,
+        40,
+        70,
+        100,
+        127
+      ],
+      "measure": "t20_ms"
+    },
+    {
+      "name": "tone",
+      "knob": "TON",
+      "values": [
+        0,
+        32,
+        64,
+        96,
+        127
+      ],
+      "measure": "presence_db"
+    },
+    {
+      "name": "attack",
+      "knob": "ATK",
+      "values": [
+        0,
+        32,
+        64,
+        96,
+        127
+      ],
+      "measure": "click_db",
+      "types": [
+        "808"
+      ]
+    },
+    {
+      "name": "attack",
+      "knob": "ATK",
+      "values": [
+        0,
+        32,
+        64,
+        96,
+        127
+      ],
+      "measure": "click_hf_db",
+      "types": [
+        "909"
+      ]
+    },
+    {
+      "name": "sweep",
+      "knob": "SWP",
+      "values": [
+        0,
+        32,
+        64,
+        96,
+        127
+      ],
+      "measure": "f0_early_hz"
+    },
+    {
+      "name": "low",
+      "knob": "LOW",
+      "values": [
+        0,
+        32,
+        64,
+        96,
+        127
+      ],
+      "measure": "low_db"
+    },
+    {
+      "name": "high",
+      "knob": "HI",
+      "values": [
+        0,
+        32,
+        64,
+        96,
+        127
+      ],
+      "measure": "presence_db"
+    },
+    {
+      "name": "velocity",
+      "knob": "velocity",
+      "values": [
+        20,
+        50,
+        80,
+        100,
+        127
+      ],
+      "measure": "peak_db"
+    },
+    {
+      "name": "velocity click",
+      "knob": "velocity",
+      "values": [
+        20,
+        50,
+        80,
+        100,
+        127
+      ],
+      "measure": "click_hf_db",
+      "types": [
+        "909"
+      ]
+    }
+  ]
+}

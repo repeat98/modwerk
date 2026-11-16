@@ -8,7 +8,7 @@ Analog BD synthesizes 808 and 909 bassdrums inside the Octatrack DSP. The 909 is
 
 The pitch sweep's depth (up to ±1.45 %, as measured between same-setting hits of the recording), the click strength (±0.7 %) and the noise vary between consecutive hits unless the FIXD switch (SRC SETUP, top middle) is ON. Timing is never randomised. The model's transient shapes remain more consistent than the recording, so individual-hit reproduction is approximate. The reference instrument has a decay modification and was recorded with decay a little above halfway; its full modified decay range is not reproduced.
 
-Moving controls stay smooth: the 909's TDEP excursion and thump and both models' SAT position move a quarter of the remaining way each 16-sample block (about 1.3 ms to settle by half), and SAT's drive and make-up ramp sample by sample within the block. A voice that is silent after its hit has ended rests, and its next hit starts from its knobs. No new saved parameter is added.
+Moving controls stay smooth: the 909's TDEP excursion and thump and both models' SAT position move a quarter of the remaining way each 16-sample block (about 1.3 ms to settle by half), and SAT's drive and make-up ramp sample by sample within the block. A 909 voice that is silent after its hit has ended rests, and its next hit starts from its knobs; the 808 keeps running between hits. No new saved parameter is added.
 
 ## Controls
 
@@ -63,7 +63,7 @@ The supplied 909 recordings cover one modified instrument and one decay setting.
 
 [TESTING.md](TESTING.md) binds the results to this source. For 0.1.7 the DSP engine's output matches its float model (`dsp909.Voice`, `dsp808.Voice`) at -84 dB or better in the shipping configuration (moving knobs, retriggers at every frame offset, SAT/LOW/HIGH extremes), and the new 909 model matches the October refit's at -63 dB, with the same level in every band. Against the recordings, at matched level the 909's first 25 ms are within 1.5 dB in every band below 4 kHz at both Attack endpoints and the Tune maximum (the Tune maximum's lowest band 3 dB low); above 4 kHz its body is about 6 dB quieter than the recording.
 
-Peak executed DSP instructions per voice: 909 186 per sample (377 in 0.1.6), 808 184 (255); a resting voice 3. Glue and both engines take 1003 P words per core (1008 in 0.1.6); the 909's tables and voices fill X from $2841 to $3200 as before. Every instruction form is one that stock or 0.1.6 already runs on the chip. These are emulator counts, not chip timing or maximum-load headroom; the declared price (411 per voice) is unchanged. See [CPU.md](CPU.md).
+Peak executed DSP instructions per voice: 909 186 per sample (377 in 0.1.6), 808 184 (255); a resting 909 voice 3. The 808 has no rest path: a never-triggered 808 voice was reported at about 152 (#1480), not yet measured here. Glue and both engines take 1003 P words per core (1008 in 0.1.6); the 909's tables and voices fill X from $2841 to $3200 as before. Every instruction form is one that stock or 0.1.6 already runs on the chip. These are emulator counts, not chip timing or maximum-load headroom; the declared price (411 per voice) is unchanged. See [CPU.md](CPU.md).
 
 ## Authorship and licences
 

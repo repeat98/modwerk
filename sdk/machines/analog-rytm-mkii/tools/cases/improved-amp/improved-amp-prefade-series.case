@@ -1,0 +1,113 @@
+# Improved AMP: a note trig ends a retrig series, and the hit that no longer comes is not faded for. The BD
+# track holds a trig with a retrig lock on step 1 (the kit's RATE and LEN: 1/16 and 1/4 here, strikes on
+# steps 1 to 4) and a plain trig on step 3, HLD 57 holds each strike into the next. Step 3's note ends the
+# series (as in stock), so a time through the pattern strikes at 0, 125 and 250 ms and not at 375 ms.
+# Each take plays the pattern three times. ENV RESET AMP: 3 hits, 6 dips. OFF: 3 hits, no dip. A fade for
+# the strike at 375 ms would silence the voice there, where it rings on to about 550 ms: the first hit is
+# as long at AMP as at OFF (to 60 ms).
+# Expected from the module's README and code and from stock's manual; not yet run on the unit.
+# The retrig menu's screen is checked against its reference, so another kit's RATE or LEN fails the case
+# there. The BD track needs a sound that rings with the AMP envelope open.
+# Changes the tempo, the BD track's AMP page and its ENV RESET in the active kit, and the BD track of the
+# active pattern, which it clears; ends at 120 BPM, ENV RESET OFF, HLD 0, the track empty.
+name: improved-amp-prefade-series
+state: changes
+transport: any
+target: unit
+
+hold TRK
+key BD
+release TRK
+# Tempo to 120.0: down to the bottom (30.0), then 90 BPM up, a step of the tempo screen's LEVEL being 1 BPM.
+key TEMPO
+enc LEVEL -127 x64
+nudge LEVEL +21 per 6 x4
+nudge LEVEL +6 per 6
+wait 500
+screen tempo
+expect tempo == ref region 40 15 88 33
+key NO
+key AMP
+cc 78 0
+cc 79 57
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+key RIGHT
+wait 500
+screen er1
+expect er1 == ref region 39 26 82 11
+key NO x3
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key T1
+key T3
+hold T1
+wait 300
+key RTRG
+wait 400
+key RTRG
+wait 400
+screen rt1
+release T1
+wait 300
+expect rt1 == ref region 13 19 104 28
+key RECORD
+wait 300
+audio samp BD 5400
+wait 100
+key PLAY
+wait 4480
+key STOP
+wait 900
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+wait 500
+screen er0
+expect er0 == ref region 39 26 82 11
+key NO x3
+wait 300
+audio soff BD 5400
+wait 100
+key PLAY
+wait 4480
+key STOP
+wait 900
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key RECORD
+cc 79 0
+
+expect samp.hits == 3
+expect samp.dips == 6
+expect soff.hits == 3
+expect soff.dips == 0
+expect samp.len20 > soff.len20 - 60
+expect samp.len20 < soff.len20 + 60

@@ -245,10 +245,11 @@ static void claim9(uint8_t space, uint8_t core, uint8_t access, uint32_t address
 }
 static void entry9(uint8_t site, uint8_t cores, uint32_t at) { ++p[79]; p[n++] = site; p[n++] = cores; emit16(0); emit(at); }
 static void dsp_words9(uint32_t words) { for (uint32_t i = 0; i < words; ++i) emit(0x0c0000u + i); }
-/* ABI 10: an engine (DSP words, no slot); entries carry an exit. Then its words, relocations and init claims' words. */
+/* ABI 10: an engine (DSP words, no slot); entries carry an exit. Then its words, relocations and init claims' words. Its
+ * price per voice is its header's cycles and kind (414, executed), as an effect's per instance. */
 static void begin10(uint32_t words)
 {
-    begin9(words, 0); p[5] = 10; p[38] = p[39] = p[43] = p[45] = p[46] = p[47] = 0;
+    begin9(words, 0); p[5] = 10; p[38] = p[39] = p[43] = p[47] = 0; p[44] = 414u >> 8; p[45] = 414u & 0xffu; p[46] = RUNTIME_EXECUTED;
 }
 static void entry10(uint8_t site, uint8_t cores, uint32_t exit, uint32_t at) { ++p[79]; p[n++] = site; p[n++] = cores; emit16(exit); emit(at); }
 static void relocation10(uint32_t r) { uint32_t k = be16(p + 36) + 1u; p[36] = (uint8_t)(k >> 8); p[37] = (uint8_t)k; emit16(r); }
@@ -302,7 +303,7 @@ int main(void)
     CHECK(!retiring(&alias_group, 0x40010007u) && !retiring(&alias_group, 0x48010040u));
 
     /* Refusals before any memory is taken. */
-    for (uint32_t bad = 0; bad < 14; ++bad) {
+    for (uint32_t bad = 0; bad < 15; ++bad) {
         begin(8, 4, 2, &four, 1, 1, 0xa1); site(STOCK + 32, 6);
         if (bad == 0) p[0] = 'X';
         if (bad == 1) p[5] = 2;                                        /* ABI 2 */
@@ -318,6 +319,7 @@ int main(void)
         if (bad == 11) { begin(8, 4, 2, twice, 2, 0, 0); }              /* the same word twice */
         if (bad == 12) { begin(8, 4, 2, 0, 0, 1, 0); site(STOCK + 32, 6); emit(0); } /* trailing bytes */
         if (bad == 13) n = 71u;
+        if (bad == 14) { begin(8, RUNTIME_MODULE_BYTES - 7, 0, 0, 0, 0, 0); }  /* image and bss past the module limit */
         CHECK(!b->prepare(0, p, n) && modwerk_runtime_free(0) == RUNTIME_POOL_BYTES && modwerk_runtime_refusal() == RUNTIME_MALFORMED);
     }
     CHECK(!masked && !locked && memcmp(stock, original, sizeof stock) == 0);
@@ -390,6 +392,12 @@ int main(void)
     begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && !modwerk_runtime_module(0));
     CHECK(memcmp(stock, original, sizeof stock) == 0);
+
+    /* The stock-switch scenario is over. Its paused PC can look like a pool
+     * reference through an overlapping halfword read of truncated host
+     * addresses under ASLR; these allocator cases start with fresh snapshots. */
+    memset(paused, 0, sizeof paused);
+    memset(saved_registers, 0, sizeof saved_registers);
 
     /* Reclaimed: a module no position reaches is freed once no paused task
      * holds an address inside it, so loads never run out by repetition. */
@@ -767,22 +775,24 @@ int main(void)
           engine->dsp.entry_count == 1 && engine->dsp.entries[0].entry == 0 && engine->dsp.entries[0].cores == 3 &&
           engine->dsp.claim_count == 1 && engine->dsp.claims[0].access == 7 && engine->dsp.init_count == 3 &&
           engine->dsp.initial[0] == 0x111111u && engine->dsp.initial[2] == 0xffffffu &&
-          (uintptr_t)(engine->dsp.initial + 3) <= (uintptr_t)engine + engine->size);
+          (uintptr_t)(engine->dsp.initial + 3) <= (uintptr_t)engine + engine->size &&
+          engine->dsp.cycles == 414 && engine->dsp.kind == RUNTIME_EXECUTED);
     memcpy(controller, engine->dsp.controller_sha256, sizeof controller); memcpy(package, engine->dsp.package_sha256, sizeof package);
-    /* The same controller with other DSP words, relocations, an entry, claims and initial words: a new package, the same
-     * controller digest. */
-    id = 95; begin10(9); claim9(1, RUNTIME_CLAIM_BOTH_CORES, RUNTIME_CLAIM_WRITE | RUNTIME_CLAIM_INIT, 0x2840, 2);
+    /* The same controller with other DSP words, relocations, an entry, claims, initial words and price: a new package,
+     * the same controller digest, so a new price never needs a new trust row. */
+    id = 95; begin10(9); p[44] = 0; p[45] = 191; p[46] = RUNTIME_HARDWARE; claim9(1, RUNTIME_CLAIM_BOTH_CORES, RUNTIME_CLAIM_WRITE | RUNTIME_CLAIM_INIT, 0x2840, 2);
     claim9(2, 0, RUNTIME_CLAIM_READ, 0x800, 4); entry10(5, 3, 0, 1); dsp_words9(9); emit(1); emit(2);
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
     engine = modwerk_runtime_module(0);
     CHECK(engine->dsp.engine_count == 9 && !engine->dsp.engine_relocation_count && engine->dsp.init_count == 2 &&
+          engine->dsp.cycles == 191 && engine->dsp.kind == RUNTIME_HARDWARE &&
           !memcmp(engine->dsp.controller_sha256, controller, sizeof controller) &&
           memcmp(engine->dsp.package_sha256, package, sizeof package));
     free = modwerk_runtime_free(0);
-    for (unsigned bad = 0; bad < 13; ++bad) {
+    for (unsigned bad = 0; bad < 16; ++bad) {
         id = 96; begin10(4);
         if (bad == 0) {}                                                     /* an engine with no entry */
-        if (bad == 1) { entry10(5, 3, 0, 0); p[45] = 1; }                    /* a price in an engine's descriptor */
+        if (bad == 1) { entry10(5, 3, 0, 0); p[44] = p[45] = 0; }            /* an engine with no price */
         if (bad == 2) entry10(5, 3, 4, 0);                                   /* an exit past its words */
         if (bad == 3) { entry10(5, 3, 2, 0); }                               /* its exit a relocation (below) */
         if (bad == 4) { entry10(5, 3, 0, 0); claim9(1, 3, RUNTIME_CLAIM_WRITE, 0x2840, 1); } /* no such core */
@@ -794,6 +804,9 @@ int main(void)
         if (bad == 10) { begin9(4, 0); p[5] = 10; claim9(1, 2, 3, 0x2840, 4); } /* an effect's claim on both cores */
         if (bad == 11) { begin9(4, 0); p[5] = 10; claim9(1, 0, 3 | RUNTIME_CLAIM_INIT, 0x2840, 1); } /* an effect's initial words */
         if (bad == 12) { entry10(5, 3, 0, 0); claim9(1, 2, 3 | RUNTIME_CLAIM_INIT, 0x2840, RUNTIME_DSP_INIT_WORDS + 1u); }
+        if (bad == 13) { entry10(5, 3, 0, 0); p[46] = RUNTIME_MODELED; }     /* a price on a model */
+        if (bad == 14) { entry10(5, 3, 0, 0); p[46] = 0; }                   /* a price of no kind */
+        if (bad == 15) { entry10(5, 3, 0, 0); p[41] = 1; }                   /* an entry offset (init) on an engine */
         dsp_words9(4);
         if (bad == 3) relocation10(2 | 0x8000u);
         if (bad == 6) emit(0);
@@ -1030,6 +1043,14 @@ int main(void)
     }
     CHECK(modwerk_runtime_active()==2 && live[0]==baseline0 && live[1]==baseline1);
     CHECK(modwerk_runtime_free(0)==baseline_free && !memcmp(stock,baseline_stock,sizeof stock));
+    /* Bss past the image limit, within RUNTIME_MODULE_BYTES, is admitted where the pool has room; removal returns it. */
+    id=117;
+    begin(8,RUNTIME_IMAGE_BYTES,0,0,0,0,0);
+    CHECK(b->enter(0) && b->prepare(0,p,n) && b->publish(0)==MU_APPLIED && b->retire(0) && b->leave(0));
+    CHECK(modwerk_runtime_active()==3 && modwerk_runtime_free(0)<=baseline_free-RUNTIME_IMAGE_BYTES);
+    begin(0,0,RUNTIME_NONE,0,0,0,0);
+    CHECK(b->enter(0) && b->prepare(0,p,n) && b->publish(0)==MU_APPLIED && b->retire(0) && b->leave(0));
+    CHECK(modwerk_runtime_active()==2 && modwerk_runtime_free(0)==baseline_free);
 #ifdef MODWERK_RUNTIME_SETS
     set_checks();
 #endif

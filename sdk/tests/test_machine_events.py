@@ -44,6 +44,11 @@ class MachineEventTests(unittest.TestCase):
         result = host(self, OT / 'elekloader/test_midi_generators.c')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_sample_memory_on_the_host(self):
+        # ot_sample_memory (sample_memory.c): pages borrowed from stock's sample pool survive a cold init and come back.
+        result = host(self, OT / 'elekloader/test_sample_memory.c')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_registry_knows_every_protect_port_signature(self):
         # The validator keeps a known PROTECT machine's 12 bytes while it is absent (the boot's battery restore runs
         # before the saved set reinstalls it: beta finding 24). The list must be exactly the PROTECT ports and the
@@ -176,6 +181,36 @@ class MachineEventTests(unittest.TestCase):
             for at, length in writes:
                 self.assertFalse(any(at < a + n and a < at + length for a, n in spans),
                                  '%s writes at %#x overlap source START selection' % (module.name, at))
+
+    def test_a_hook_raised_when_a_routine_returns_keeps_its_caller(self):
+        """An "after" hook: the site's tail keeps the caller's return address and puts the base's after-entry in its
+        place, and that entry returns to the kept address after raising the hook. The dispatch assembles."""
+        spec = importlib.util.spec_from_file_location('ot_events', OT / 'events.py')
+        events = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(events)
+        reg = events.load()
+        text = events.asm(reg)
+        after = [e for e in reg['events'] if e.get('after')]
+        self.assertGreaterEqual(len(after), 5)
+        for e in after:
+            at = '%08x' % e['after']
+            tail = [x for x in reg['sites'][e['after']]['tail'] if isinstance(x, str)]
+            self.assertEqual(sum('modwerk_return_' + at in x for x in tail), 1, e['event'])
+            self.assertEqual(sum('modwerk_after_' + at in x for x in tail), 1, e['event'])
+            self.assertIn('modwerk_after_%s:\n        move.l  modwerk_return_%s,-(%%sp)\n        pea     modwerk_runtime_event_row+%d\n'
+                          '        bra.w   modwerk_after_row\n' % (at, at, 4 * (e['index'] - 4)), text)
+            self.assertIn('modwerk_return_%s: .long 0' % at, text)
+        doc = json.loads((OT / 'events.json').read_text())
+        with tempfile.TemporaryDirectory() as temp:  # two hooks after one site: refused
+            doc['events'].append(dict(next(x for x in doc['events'] if x.get('after')), event='ev_twice', index=doc['events'][-1]['index'] + 1))
+            Path(temp, 'e.json').write_text(json.dumps(doc))
+            with self.assertRaises(ValueError):
+                events.load(Path(temp, 'e.json'))
+        asm = shutil.which('m68k-elf-as')
+        if asm:
+            with tempfile.TemporaryDirectory() as temp:
+                Path(temp, 'e.s').write_text(text)
+                subprocess.run([asm, '-mcpu=54455', temp + '/e.s', '-o', temp + '/e.o'], check=True, capture_output=True)
 
 
 if __name__ == '__main__':

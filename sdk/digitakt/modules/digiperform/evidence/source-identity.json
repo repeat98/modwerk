@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators",
-  "sha256": "51b6554169d24c3877510b9aa03bdc68711bc6c5b33975c6f95eb49ec43935fd",
+  "sha256": "6ae2e74d798cb3b360cbb75099260db5c8290bd85782f79e6e0401605306ed16",
   "sources": {
-    "src/kitstore.h": "cfc7a6937cbf8e5113c045e849e2599382db2a402bf29330c1a14753097b9a91",
-    "src/perf.c": "9f299595b002c9aa3360bf173c28f3929f354361f6ccb128a7c36935b6631e48",
+    "src/kitstore.h": "f58772178dc843167bced1390e278e682c6e3436fe987a85b4e814d2938c972f",
+    "src/perf.c": "069c653e759eb16a4b276eb540f11949c949ece89440689a9005a14f52cfd585",
     "src/perf_glue.s": "20017bc2f881f2937b2e4ceffa873700a692bd30690fe9eac285dd99f302a4ef"
   },
   "build": {
@@ -53,7 +53,9 @@
       "sound:spare bytes 3 (bits 0-6), 4 and 5 of tracks 5-8 (macro pool)",
       "ui:PERFORM page:TRIG+REC/PLAY/STOP, FUNC+push, NO",
       "ui:TRIG page:second page, TRIG pressed again",
-      "ui:TRIG page:its body is not drawn while the PERFORM page is open over it"
+      "ui:TRIG page:its body is not drawn while the PERFORM page is open over it",
+      "sound:the working image copy of the macro pool bytes (written with each change)",
+      "midi:CC VAL sends of MIDI tracks 9-16 for CC knobs (stock CC send queue)"
     ],
     "requires": [],
     "derive": null,

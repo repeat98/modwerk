@@ -121,8 +121,9 @@ These represent reviewed authored constant initializers, such as an
 explicit `.fill` array. Every copy/fill destination must be a bounded
 zero placeholder, disjoint from other destinations and relocation words.
 The base reconstructs copies and fills without changing the stock-overlap
-scanner or exempting encoded payloads from it. Image/BSS and relocation
-limits remain 128 KiB and 2,048.
+scanner or exempting encoded payloads from it. A module's image is at most
+128 KiB, its image and bss together at most 288 KiB (`RUNTIME_MODULE_BYTES`,
+MIDI Scenes' 256 KiB of locks), and it has at most 2,048 relocations.
 
 Package flags remain u16 at 6, module ID u32 at 28 and layout u16 at 66.
 The Octatrack's read-only vendor request 29 (`C1`, value 0, vendor-interface
@@ -230,6 +231,13 @@ which it retries, so check what needs the words when the package is built.
   then the same on both cores.
 - **Relocations** of an engine may also name a word holding a fixed P address (`index | 0x8000`: value − base), as the
   base's own engines (`resident_dsp.engine_unit`).
+- **Price** of an engine: the header's `cycles` (bytes 44-45) and `kind` (byte 46) are its price per voice, as an
+  effect's per instance: worst case per sample, charged once per track that plays it (a fixed per-core cost folded in,
+  or the module's own `source_engine`). Never 0, and executed (`RUNTIME_EXECUTED`, 1) or hardware (`RUNTIME_HARDWARE`, 3) evidence only,
+  never modeled: the loader and `abi9.engine` refuse anything else, as an older base refuses any price on an engine. It
+  lies outside the controller digest (below), so a new price ships in the package and never changes a base's trust row.
+  `init` (bytes 40-41) stays 0: an entry offset means nothing on an engine. The site checks every package header as the
+  loader does before it sends one (`src/engine/elekloader/module-set.ts`): change both together.
 - **Claims** of an engine may name both cores (core 2) and carry initial words (access bit 4): the words follow the DSP
   relocations, each claim's in claim order, 4 bytes a 24-bit word, at most `RUNTIME_DSP_INIT_WORDS` (4,096) in all. The
   base writes them before it enables the engine's hooks.

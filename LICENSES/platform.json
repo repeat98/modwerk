@@ -47,6 +47,7 @@
     "src/config/octatrack-base.ts",
     "src/config/support.ts",
     "src/config/usb-audio.ts",
+    "src/dev/address-names.ts",
     "src/devices/registry.ts",
     "src/hosting.ts",
     "src/legal/policy.ts",

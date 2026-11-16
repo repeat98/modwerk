@@ -44,7 +44,9 @@
     "sound:spare bytes 3 (bits 0-6), 4 and 5 of tracks 5-8 (macro pool)",
     "ui:PERFORM page:TRIG+REC/PLAY/STOP, FUNC+push, NO",
     "ui:TRIG page:second page, TRIG pressed again",
-    "ui:TRIG page:its body is not drawn while the PERFORM page is open over it"
+    "ui:TRIG page:its body is not drawn while the PERFORM page is open over it",
+    "sound:the working image copy of the macro pool bytes (written with each change)",
+    "midi:CC VAL sends of MIDI tracks 9-16 for CC knobs (stock CC send queue)"
   ],
   "requires": [],
   "derive": null,

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top: in every variant (common) the machine list's sections (mw_machine_sections) and the FX track's edit save of words 38 to 41, which stock writes over the delay's TIME (base/fxguard.s), and in send-bus (add) the FX track's lock words, and the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. It comes in two variants: send-bus (the default, with add) and plain (core-ar2 0.7's source with common alone, for a build with no send effect, which then pays none of add's cost).",
+  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top: in every variant (common) the machine list's sections (mw_machine_sections) and the FX track's edit save of words 38 to 41, which stock writes over the delay's TIME (base/fxguard.s), and in send-bus (add) the FX track's lock words, the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to, and digital voices (mw_voices) with the hook ev_sound_applied. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. It comes in two variants: send-bus (the default, with add) and plain (core-ar2 0.7's source with common alone, for a build with no send effect, which then pays none of add's cost). npm run machine:base -- analog-rytm-mkii --dev also builds each variant with dev on top: the development link over USB MIDI (base/link.c), for test images only, never a release.",
   "core": "core-ar2",
   "include": "sdk/machines/analog-rytm-mkii/include",
   "os": "1.74",
@@ -98,7 +98,9 @@
       "../base/locks.s",
       "../base/clock.c",
       "../base/sendbus.c",
-      "../base/sendbus.s"
+      "../base/sendbus.s",
+      "../base/voice.c",
+      "../base/voice.s"
     ],
     "sites": [
       {
@@ -144,9 +146,17 @@
         "new": "ffffffff",
         "kind": "data",
         "stockSha256": "e084a105a7b7d599b8346d3cba5ac51b756d7e29c7ef77fd9eff31fdeae31389"
+      },
+      {
+        "addr": "0x4011f654",
+        "len": 6,
+        "stockSha256": "8d753c8b075b6816018e083a569be977258c02b63721ca61e82d721ccd63c61b",
+        "op": "jsr",
+        "target": "mw_voice_applied_gate"
       }
     ],
     "cflags": [
+      "-fno-late-combine-instructions",
       "-DIS_KEY_HELD_AT=0x40081c28",
       "-DPROJECT_SINGLETON_AT=0x4017fa0a",
       "-DTRACK_INDEX_OF_AT=0x400b693e",
@@ -183,7 +193,18 @@
       "-DSEQ_PLAYING_AT=0x405c8cf8",
       "-DSEQ_PATTERN_AT=0x405c8d04",
       "-DPATTERNS_AT=0x407dd8e3",
-      "-DSPEED_PULSES_AT=0x401db6f8"
+      "-DSPEED_PULSES_AT=0x401db6f8",
+      "-DVOICE_STATE_AT=0x8000fef8",
+      "-DVOICE_STREAM_AT=0x80006bf8",
+      "-DNOISE_GAIN_AT=0x80007000",
+      "-DTRACK_MACHINE_AT=0x8000ea00",
+      "-DHIT_VELOCITY_AT=0x800067c4",
+      "-DSILENCE_AT=0x4011e4c2",
+      "-DPARAM_RECORDS_AT=0x401bfbc8",
+      "-DSTRING_FROM_CSTR_AT=0x401bcff0",
+      "-DSTRING_DTOR_AT=0x401bb540",
+      "-DSHOW_HEADER_AT=0x40035fe8",
+      "-DPARAM_INFO_AT=0x419a4888"
     ],
     "defsym": {
       "mw_send_resume": "0x4010ee6c"
@@ -212,6 +233,36 @@
       {
         "event": "ev_project",
         "fn": "mw_send_project",
+        "order": 50
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_voice_tick",
+        "order": 50
+      },
+      {
+        "event": "ev_draw",
+        "fn": "mw_voice_draw",
+        "order": 50
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_voice_key",
+        "order": 50
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_voice_enc",
+        "order": 50
+      },
+      {
+        "event": "ev_project",
+        "fn": "mw_voice_project",
+        "order": 50
+      },
+      {
+        "event": "ev_render_out",
+        "fn": "mw_voice_render_out",
         "order": 50
       }
     ],
@@ -280,10 +331,25 @@
             0
           ]
         ]
+      },
+      {
+        "to": "core_params",
+        "order": 10,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:mw_voice_params",
+            0
+          ]
+        ]
       }
     ],
     "collections": {
-      "mw_fx": 4
+      "mw_fx": 4,
+      "mw_voices": 4,
+      "ev_sound_applied": 4
     },
     "storage": [
       {
@@ -310,6 +376,105 @@
         "sym": "mw_send_lev",
         "scope": "project",
         "bits": 7
+      },
+      {
+        "sym": "mw_voice_type",
+        "scope": "sound",
+        "bits": 3
+      }
+    ]
+  },
+  "dev": {
+    "about": "The development link (base/link.c, link.s): identity, screen and memory reads over USB MIDI SysEx, and while GLOBAL > REMOTE CTRL is on (at every boot) panel keys, encoder turns, the remote YES of stock's OS upgrade and a RAM boot of another image. Any USB host can drive it with no hand on the unit: development bases only.",
+    "sources": [
+      "../base/link.c",
+      "../base/link.s"
+    ],
+    "sites": [
+      {
+        "addr": "0x40083dd8",
+        "len": 8,
+        "stockSha256": "9b78b6778f56449ca9429e734d2140df96316ae0e9eea0b9d6eea089f82ddbd0",
+        "op": "jmp",
+        "target": "mw_link_router"
+      },
+      {
+        "addr": "0x40081c28",
+        "len": 6,
+        "stockSha256": "9eab14ed9d527816054c9f68837b2e021fba5470d105516b94b63ffb8ed1f45d",
+        "op": "jmp",
+        "target": "mw_link_held"
+      },
+      {
+        "addr": "0x4004dc14",
+        "len": 6,
+        "stockSha256": "9f8a100ff33cc7cd854b0b01e86de843b19d6b517737e658d8a00b6a43e242d0",
+        "op": "jsr",
+        "target": "mw_link_program"
+      },
+      {
+        "addr": "0x400008c6",
+        "len": 8,
+        "stockSha256": "dbd7ee3ac848bc629a889c3a534a8b23d8bb88fb05c5dd9f8f825696a3c6b633",
+        "op": "jsr",
+        "target": "mw_boot_site"
+      }
+    ],
+    "cflags": [
+      "-fno-late-combine-instructions",
+      "-DFILLRECT_AT=0x40070726",
+      "-DSEQ_PLAYING_AT=0x405c8cf8",
+      "-DSYSEX_SEND_AT=0x40085a18",
+      "-DUSB_SYSEX_STATE_AT=0x413db244",
+      "-DUI_QUEUE_AT=0x4011fb56",
+      "-DQUEUE_POST_AT=0x400013b2",
+      "-DVIEW_INVALIDATE_AT=0x40078580",
+      "-DFB_FRONT_AT=0x40287b6c"
+    ],
+    "defsym": {
+      "mw_link_router_resume": "0x40083de0",
+      "mw_link_string": "0x401bcff0",
+      "mw_link_flash": "0x4009f404",
+      "mw_boot_data": "0x400007e4",
+      "mw_boot_bss": "0x4000083a"
+    },
+    "subscribe": [
+      {
+        "event": "ev_key",
+        "fn": "mw_link_key",
+        "order": 1
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_link_enc",
+        "order": 1
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_link_tick",
+        "order": 240
+      },
+      {
+        "event": "ev_draw",
+        "fn": "mw_link_draw",
+        "order": 250
+      },
+      {
+        "event": "ev_project",
+        "fn": "mw_link_project",
+        "order": 1
+      },
+      {
+        "event": "ev_settings",
+        "fn": "mw_link_settings",
+        "order": 50
+      }
+    ],
+    "storage": [
+      {
+        "sym": "mw_link_carry",
+        "scope": "project",
+        "bits": 1
       }
     ]
   }
