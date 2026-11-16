@@ -8,7 +8,7 @@
 
 ## Not tested
 
-- On a unit: leaving Mute Mode while armed; patterns of one or two steps; track speed 2x or any setting that makes the steps shorter than a UI tick (only 140 and 200 BPM at 128 steps were run, which is why the short-step fallback is not shown to be exercised); Scale per track.
+- On a unit: leaving Mute Mode while armed; arming a second and third time in a pattern of two steps without STOP between; a pattern of one step; track speed 2x or any setting that makes the steps shorter than a UI tick (only 140 and 200 BPM at 128 steps were run, which is why the short-step fallback is not shown to be exercised); Scale per track.
 - Tempos of the 2026-11-14 report were not recorded, and CPU load and memory were not measured.
 - A pattern change while tracks are parked, a second PREP MUTES session started while tracks are still parked, holding TRIG keys after PERFORM, a power cycle with something armed.
 - Whether a track comes in exactly on a kick at step 1 at every tempo; the report covers several tempos at 128 steps.
@@ -40,8 +40,9 @@ Package `mute-latch-0.1.0-experimental-os1.17.elemod`, sha256 `2e47115e682115343
 | STOP while armed | The "MUTES ARMED" message goes at once. |
 | 128-step pattern, kicks on steps 126 to 128 and 1, 140 BPM and 200 BPM | The switch lands between step 128 and step 1, as with the first package. The change broke nothing the author checked. |
 | Fast tempo | Tried at 200 BPM only; reported fine. |
+| Pattern of two steps, 30 BPM, several PERFORM presses | The countdown ran in the header and the mutes switched after the last pass. |
 
-Not run: patterns of one or two steps, track speed 2x, leaving Mute Mode while armed, Scale per track. Counts of repetitions and CPU load were not recorded.
+Not run: arming again without STOP in the two-step pattern, a pattern of one step, track speed 2x, leaving Mute Mode while armed, Scale per track. Counts of repetitions and CPU load were not recorded.
 
 ## Emulator evidence
 
