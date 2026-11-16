@@ -434,7 +434,9 @@ export function moduleSetKit(link: OctatrackLink) {
     const modules = await link.inventory()
     // Only a base that doesn't know INVENTORY lands here; couldn't-ask-now rejects with LinkBusyError, which callers retry.
     if (!modules) throw new ModuleSetError('This Octatrack’s base doesn’t list its modules. Install the latest Modwerk base, then try again.')
-    return inventoryFrom(modules, await link.off()) // undefined from a base before PROJ > MODWERK > MODULES
+    // Undefined from a base before PROJ > MODWERK > MODULES, and when the list can't be read where the modules could
+    // (a remote read-only session's scope has no OFF request): the unit's modules are still known, the off ones are not.
+    return inventoryFrom(modules, await link.off().catch(() => undefined))
   }
   return { readInventory, prepareUpdate: async (target: InventoryTarget) => {
     const limit = overLimitMessage(target.moduleIds, 'sync')
