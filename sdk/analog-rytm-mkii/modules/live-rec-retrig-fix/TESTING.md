@@ -8,6 +8,7 @@
 
 - Host model (C, the module's queue code copied verbatim, stock's queue modelled from the disassembly): 200 seeded runs, each 400 phases of random stock traffic, UI speed and hit rate, about 4 million hits; no slot was reused while its message waited or was in hand. Mutations check the harness: without the in-hand test it fails on seed 1 (slot reused in hand), without the room test on seed 1 (slot reused while waiting).
 - rytm-emu 2ac0f1f (RAM-boot build), images on the Modwerk base with the development link (`0b33f8ec`) and BD ANALOG 0.2.0: LQ02 (this source plus test-only counters, `a71a73f5…`) and LQ03 (0.2.1, `97beda7e…`). From the rig's booted snapshot: RECORD + PLAY, then RTRG + SD held 7.5 s (factory project, 127 BPM, 1/16). LQ02: 61 hits due, 0 dropped, at most 2 slots in use, all 122 events released after the hold. Pattern A01 read back over the link after STOP: 85,760 bytes, identical in LQ02 and LQ03 (the roll changed 73 of them). The emulator does not reach the load that backs the queue up.
+- Screenshots: LR24 (core-ar2 0.7 and this source alone, `deecc8fc…`) replays both media plans in rytm-emu c5732f0; both frames are byte-identical to 0.2.1's LR23 captures.
 - On the unit: not yet run (see the pull request).
 
 ## 0.2.1: idle CPU (6 November 2026)

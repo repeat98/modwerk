@@ -163,9 +163,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.1-experimental",
-        "imageSha256": "9f65781f497d832abaa1cbf396a2de8145725ca474bb52d187372dfc4545f000",
-        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR23: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.1-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+        "moduleVersion": "0.2.2-experimental",
+        "imageSha256": "deecc8fc4b74843e0c66461bc147752a920acdc3814b822d411849f087df6439",
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR24: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.2-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
       }
     },
     {
@@ -179,9 +179,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.1-experimental",
-        "imageSha256": "9f65781f497d832abaa1cbf396a2de8145725ca474bb52d187372dfc4545f000",
-        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR23: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.1-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+        "moduleVersion": "0.2.2-experimental",
+        "imageSha256": "deecc8fc4b74843e0c66461bc147752a920acdc3814b822d411849f087df6439",
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR24: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.2-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
       }
     }
   ]
