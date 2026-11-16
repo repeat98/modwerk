@@ -1,16 +1,115 @@
 # Scale Quantizer 0.1.5: the two panel sites left out
 
-0.1.5 changes what the package hooks, not what the module does. The author's 2.21 panel publication transaction runs
-only beside FM Synth, in FM Synth's own copy of the quantizer; without it the detours at `0x4004fc84` (16 bytes) and
-`0x40005162` (8 bytes) only replayed the stock instructions they displaced. The wrapper leaves both out
-(`_without_panel`), and the runtime port leaves out the include's second pass, whose replays only those two reached, so
-the package carries no stock copy of `0x4004fc84` either. The upstream source is the author's 2.23 line; its only
-quantizer change is FM Synth's project comment line, assembled only beside FM Synth (HAVE_SYNTH 0 here).
+0.1.5 changes which sites the package hooks. The author's 2.21 panel publication transaction runs
+only beside FM Synth, in FM Synth's own copy of the quantizer; without it the detours at
+`0x4004fc84` (16 bytes) and `0x40005162` (8 bytes) only replayed the displaced stock instructions.
+The wrapper leaves both out (`_without_panel`), and the runtime port omits the include's second
+pass, so the package carries no stock copy of `0x4004fc84` either. The source is the author's
+public v2.23 tag, `e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb`. Its added FM project-comment
+write runs only beside FM Synth (`HAVE_SYNTH` is 0 here); the unused format string remains in
+the native object. The native object therefore changes even though that write does not run.
 
-Built on 13 November 2026 from main `208f05a6`: 7 stock-code sites (was 9), 5 stock copies (was 6), 5,852 bytes of
-code and data, 0 of bss, 105 relocations, 19 hooks; package 7,038 bytes, sha256 `092a8a13b999d14c...`, built three
-times byte-identical; the strict stock-free scan's longest shared run 11 non-zero bytes (fails at 12). Emulator and
-unit runs of this package: see the emulator section below when present; the 0.1.4 report follows unchanged.
+## Builds and checks — 15 November 2026
+
+The USB package first built on 13 November from main `208f05a6` is unchanged after merging
+main `328f2fb5`: 7 sites (was 9), 5 stock copies (was 6), 5,852 bytes of code and data, no bss,
+105 relocations and 19 hooks. Package: 7,038 bytes, SHA-256
+`092a8a13b999d14c63df6100d84f3c5202f615120c95f3df605e8c43d3736d50`.
+Two additional source-only rebuilds reproduce the committed bytes, following the three earlier
+identical builds. Static disassembly finds all 363 direct control-flow destinations even; the
+28 resolved take-hook and row-callback pointers are even and inside code. Eight indirect stock
+callbacks remain outside that static claim. The strict stock-free scan finds a longest shared run of 11 non-zero bytes
+(fails at 12). The catalogue-wide check reproduces all 34 packages but is red on the unchanged
+SYNTIZ strict scan, whose longest non-zero run is 21 bytes.
+
+The source-only isolated Docker build uses the pinned `modwerk-source-tools` image
+`sha256:0db04819ba7c59e422ac32a5a519ba2c19760ac73f46a30bf94018d10edb7ac7`.
+Development import and `--check-only --verify-existing` pass. The package metadata now names
+0.1.5 and its current sources; no release approval was supplied. The POLY8 bundled-declaration
+signature is corrected, and the module compatibility and package-fingerprint checks pass.
+`module:doctor -- quantizer` still refuses the actual owner's 0.1.4 approval for this new version.
+No 0.1.5 owner approval is fabricated, and these results are not release qualification.
+
+## Emulator — 15 November 2026
+
+These new runs use the default base from main, without #1272: MAIN SHA-256
+`f0e8d4175eaf33ce9baf3d3ab1864944635d15c2bd5c7396a23da474e599b61f`.
+All 233 recorded base inputs match main `328f2fb5`; the changes since its build are on another
+machine. Native `ot_emu`, MKII panel, a disposable project and copied card images; no unit,
+physical MIDI connection or hardware timing measurement. Every session takes the rig lease;
+successful session completions report no player present, no guard abort and no timeout.
+
+- USB Keep installs 0.1.5 and the inventory lists it. All seven package spans differ from
+  their stock guards while installed. Removal restores all seven exact stock SHA-256 guards,
+  and another Keep succeeds. Self-test snapshots, including one after a further 180-tick
+  settle request, remain in progress (0 of 2 done, 1 intact, 0 failed); they are not a completed
+  self-test pass.
+- SEQUENCER has eight rows: the stock three, SCALE, ROOT, GLIDE, TRACK and FOLLOW. DOWN
+  past FOLLOW stays there. AUDIO 8 OFF → MIDI 1 ON → AUDIO 8 OFF redraws without closing
+  the page. Individual LEFT/RIGHT presses clamp TRACK at AUDIO 1 and MIDI 8, YES wraps
+  MIDI 8 to AUDIO 1, and YES toggles FOLLOW. Eight SEQUENCER captures compared with an
+  actual 0.1.4 installation on the same base are byte-identical (stock rows, SCALE, ROOT,
+  TRACK and the saved FOLLOW states).
+- With FLEX tracks 1 and 8, the same sample, Part PTCH +1 and trigs 1/5/9/13, C MAJOR
+  makes both tracks play at the same pitch while both follow. With AUDIO 8 FOLLOW OFF,
+  T8 plays 0.99975 semitones above T1. Effective PTCH words are `0x4000` and `0x4500`.
+  This is a relative interval measurement: the inherited sample fixture has effects, and its
+  measured neutral output (344.53125 Hz) is not the source WAV's 220 Hz. Initial captures
+  with TSTR AUTO contained an onset followed by a decay tail and are not pitch evidence;
+  the usable captures have LEN 128 and TSTR OFF.
+  A later dry comparison sets both effects to NONE on T1 and T8 through the native UI.
+  0.1.4 and 0.1.5 measure identically: 344.53125 Hz on both tracks with FOLLOW ON;
+  344.53125 and 365.011137 Hz with AUDIO 8 OFF (0.999668 semitone). Each 300 ms window's
+  DC mean is removed before measuring its 103/108 cycles. The dry output still has DC and
+  differs from the 220 Hz source; the cause is unresolved, so this establishes equal relative
+  pitch behavior between the versions, not absolute source-sample fidelity.
+- A four-lock walk uses the displayed values +1.2, +3, 0 and +2 semitones. SCALE OFF and
+  AUDIO 1 FOLLOW OFF preserve that vector; C MAJOR produces +2, +2, 0, +2 and D MAJOR
+  produces +1, +2, -1, +2. Sixteen measured second-bar windows agree within 0.001 semitone,
+  with at least 80 measured cycles per window. The first value is +1.2, not the historical
+  +1 tie case; nearest-degree expectations follow `qz_asnap`. This is not an absolute
+  sample-pitch or effect-quality measurement.
+- The literal historical knob walk also displays 0 → +2 → +4 → 0, with native Part bytes
+  64 → 74 → 84 → 64. A separate integer-lock walk displays +1.0, +3.0, 0.0 and +2.0;
+  all four stored-lock screenshots are byte-identical before and after playback. That audio
+  comparison is **not green**: relative to the independently captured neutral 344.53125 Hz,
+  13 of 16 second-bar windows match within 0.001 semitone, but the nominal zero lock plays
+  +0.20016 with SCALE OFF and AUDIO 1 FOLLOW OFF. In D MAJOR it plays about +1 instead
+  of the expected lower tie at -1. C MAJOR gives the expected 0, +2, 0, +2. The original
+  analysis using the zero-lock window as its reference also fails and is retained; that window
+  cannot be treated as neutral. The cause of the zero-lock discrepancy is unresolved. No
+  expected value or tolerance was relaxed, and this is not a pass of the historical walk.
+- On a MIDI track, FUNC+DOWN is held through the popup redraw, CHROMATIC selected, and
+  release returns to a responsive C3 keyboard. NOTE 61 and MIDI channel 2 are visible.
+  Actual emulator UART0 output then sends three note-on/off pairs at note 61 with FOLLOW
+  OFF, and three pairs at note 60 with FOLLOW ON in C MAJOR, all on channel 2 at velocity
+  100. Each note-on has its matching note-off; no physical MIDI device is involved.
+- An actual SAVE PROJECT completes before card flush. Both `project.work` and
+  `project.strd` contain SCALE 1, ROOT 0, MIDI_SCALE_OFF 2 and AUDIO_SCALE_OFF 132
+  (AUDIO 3, AUDIO 8 and MIDI 2 OFF). A fresh boot with the completed battery-RAM image
+  and no posted project load restores these settings; TRACK starts at AUDIO 1.
+- With an actual 0.1.4 installation, SAVE PROJECT completes with the same four scale comments.
+  After USB replacement by 0.1.5, all four project/bank work and stored files remain byte-identical.
+  Native PROJECT → RELOAD under the restored 0.1.5 module restores the exact settings
+  `0000008401000002`, including AUDIO 3, AUDIO 8 and MIDI 2 OFF. The earlier forced project load
+  during a fresh emulator boot with empty battery RAM had left those bytes zero. The explicit
+  reload is the successful migration result. A bounded fresh-boot comparison using the actual
+  0.1.4-saved card, empty battery RAM and the same forced project load also reads all-zero scale
+  bytes under 0.1.4. Those matching cold-boot/default observations are retained; the restore/load
+  order is not qualified by the successful explicit reload.
+
+## Limits at this version
+
+Not tested yet on 0.1.5: hardware; complete timing, memory and stress qualification; every
+scale, root and pitch endpoint; Static and Pickup; tempo/swing/track-speed/pattern-change
+combinations; Part-copy and Part-save combinations; FM FOLLOW beside the currently released
+FM Synth. Released FM Synth 0.1.2/0.1.3 declares a conflict, so it is not forced into this set.
+The held FM chromatic-key mark issue described in the PR is a code-reading finding, not a
+new capture. The exact integer-lock walk has the unresolved zero-step result described above.
+
+The 13 November #1272-base lifecycle/co-install/catalogue runs are earlier evidence on their
+own base, not repeated results on this base. The MKI reports below concern 0.1.4's card build,
+not this USB package. No timing or hardware result is inferred from emulator instruction counts.
 
 # Scale Quantizer 0.1.4 testing
 
