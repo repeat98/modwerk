@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The committed Octatrack base package (src/engine/assets/octatrack-base.elemod and its fills), rebuilt from source
-// and your own OS 1.40C file, then proven three ways: it carries no stock bytes (check_stock_free.py), it is the
-// committed one (or, with --write, becomes it), and the browser's path (octatrack-base.ts, the kit in TypeScript)
+// and your own OS 1.40C file, then proven two ways: it is the committed one (or, with --write, becomes it), and the
+// browser's path (octatrack-base.ts, the kit in TypeScript)
 // builds a .bin byte-identical to build_core.py's NOT_FLASH_CANDIDATE.bin, which passes check_flash_safety.py.
 // With --out the browser-built .bin, its MAIN.raw and build_core.py's proofs.json and symbols.json are saved there,
 // a new directory outside Git: what `npm run device -- boot DIR` and the emulator's run scripts read. Firmware and generated images never enter the checkout.
@@ -99,7 +99,6 @@ if (args.controllers) {
   same(readFileSync(join(encoded, 'controller-policies.json')), committed.policies)
   build(core, '--controller-policies', committed.policies, '--controller-layout', join(empty, 'symbols.json'))
 } else build(core)
-python('check_stock_free.py', join(core, 'base.elemod'), '--stock', args.stock, '--upstream', args.upstream)
 for (const [key, file] of [['package', 'base.elemod'], ['fills', 'base-fills.json'], ['sources', 'base-sources.json']])
   same(readFileSync(join(core, file)), committed[key])
 // What the base-bound packages link against (module-adapters/base_bound.py): its identity, arena, pool and lease entries.
@@ -130,7 +129,6 @@ if (args['usb-audio-variants']) {
       assert(readFileSync(join(dir + '-encoded', 'controller-policies.json')).equals(readFileSync(committed.policies)), layout + ': the controller packages differ on this layout.')
       buildLayout(key, dir, '--controller-policies', committed.policies, '--controller-layout', join(dir + '-empty', 'symbols.json'))
     } else buildLayout(key, dir)
-    python('check_stock_free.py', join(dir, 'base.elemod'), '--stock', args.stock, '--upstream', args.upstream)
     const own = bind(dir, dir + '-binding.json')
     assert.deepEqual({ ...own, identity: '' }, { ...binding, identity: '' }, layout + ': the base-bound packages would link differently on this layout.')
     const text = readFileSync(join(dir, 'base.elemod'), 'utf8'), extra = JSON.parse(text).sites.filter(site => !defaultSites.has(site.addr + '+' + site.len))

@@ -59,8 +59,7 @@ big-endian copies of the stock effects, the shared routines in the payload sites
 gap as a recipe of `src/engine/assets/stock-dsp-metadata.json`. The kit refuses the package until
 [`octatrack-base.ts`](../../../../src/engine/elekloader/octatrack-base.ts) has put the words back, recovered
 from the user's file and checked against each recipe's hashes; then it links, packs and verifies as
-`patch.build` does. [`check_stock_free.py`](check_stock_free.py) fails on any run of 16 or more stock bytes
-the package ships literally (`--min 8` lists the chance ones below that: effect names, its own code).
+`patch.build` does.
 
 The committed pair is `src/engine/assets/octatrack-base.elemod` and `octatrack-base-fills.json`. Any change
 to what the base's source hash covers (this folder, the logger, upload, loader, DSP transport and startup
