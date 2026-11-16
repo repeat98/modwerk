@@ -24,9 +24,16 @@
       "../modwerk/seq-phrase-entry.s",
       "../modwerk/project-generation.s",
       "../modwerk/project-archive.c",
-      "../modwerk/project-kitdata.c"
+      "../modwerk/project-kitdata.c",
+      "../modwerk/mixer.c",
+      "../modwerk/mixer-entry.s"
     ],
     "sites": [
+      {"addr":"0x4002dd74","len":6,"stockSha256":"3b5bfef87fffe24f50bcde099ab9d3bc80df33b6497b71debb052fa2595c9ef1","op":"jsr","target":"core_audio_frame_entry"},
+      {"addr":"0x40066df2","len":6,"stockSha256":"b8166e3ccf519a59609e171fee14e51db8875e12043168606db823f0f24f64a1","op":"jmp","target":"core_mixer_count_entry"},
+      {"addr":"0x40066e02","len":6,"stockSha256":"210b33b627af0389b1bddbc2f87f7980cacebd89ef5ac3ba7c4646a7800bc064","op":"jmp","target":"core_mixer_list_entry"},
+      {"addr":"0x400c898a","len":6,"stockSha256":"4804747ca9c54fb6cf82b4a21415559c390b2b2f9fc4f3cea86546d00ee4dc72","op":"jmp","target":"core_mixer_descriptor_entry"},
+      {"addr":"0x400763ac","len":8,"stockSha256":"f884edfcc4fdbe8c922f8080094cae67fdc2e7e87655c90c4eb6b79282f65f60","op":"jmp","target":"core_mixer_draw_entry"},
       {
         "addr": "0x400df938",
         "len": 6,
@@ -81,6 +88,8 @@
       "ev_seq_note": 4,
       "ev_seq_grid": 4,
       "ev_seq_audio_phrase": 4,
+      "core_mixer_pages": 4,
+      "ev_audio_frame": 4,
       "core_project_archive": 4
     }
   }

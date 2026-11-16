@@ -1,5 +1,24 @@
 # Proposed Digitakt II sequencer note hook
 
+## Mixer page registration
+
+The draft Mixer API accepts up to four extension descriptors after COMP.
+The linker orders pointers in `core_mixer_pages` and appends a null pointer.
+The base assigns page IDs 33 through 36 in that order. Incomplete entries are
+skipped and the five stock Mixer pages retain their order. The guarded base
+recipe owns page counting, page list selection, descriptor lookup and draw
+dispatch. A local diagnostic built with GCC 13.1 linked with Elekloader. In
+Digikit, the base-only capture matched stock pixel for pixel on the first
+three Mixer pages. A separate fixture module contributed one descriptor and
+drew its own page immediately after COMP.
+
+With GCC 16.2.0 and binutils 2.47, the tested base package SHA-256 was
+`b6ee556855a209907a27d917f51b8324fd3158e2ade304fc4b2c6aa25104ef54`.
+Claptom-music reported that the combined OS 1.17 image
+`9d3eea5ddf1e6bd0d93629c1f6bfa5221165977114119e3ae403fe5c4f88c435`
+passed COMP → SC → ENV navigation, selected-track AUDIO ducking, GRID
+without a source, and stock COMP dry/wet with SIDECHAIN off on their unit.
+
 ## Playback grid prototype
 
 `ev_seq_grid` observes the audio constructor before stock tests for a trig. It uses the existing playback detour and returns immediately when the collection is empty. The callback receives the originating pattern, track and step plus four adjacent deadlines in stock musical time. The base derives these from the stock tick, lookahead, speed table and per-step swing flags. The callback is read-only.

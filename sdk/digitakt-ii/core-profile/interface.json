@@ -48,6 +48,15 @@
       "order": "lower order first (shipped mods use 10-90); every handler sees the values the earlier ones left"
     },
     {
+      "name": "ev_audio_frame",
+      "since": "1.1",
+      "when": "on the ColdFire audio frame path, immediately before the stock DSP transfer",
+      "handler": "void f(unsigned int data_bytes, const void *data, unsigned int frame_bytes, const void *reply)",
+      "order": "lower subscription order first; linker breaks ties by module ID and contribution order",
+      "room": 4,
+      "purpose": "The arguments are the original stock transfer arguments and are borrowed for this call. A subscriber may update its own preallocated state and its explicitly reserved DSP frame-tail data words only. Preserve stock data, command words and reply storage. Do not allocate, block or retain the pointers."
+    },
+    {
       "name": "ev_key_leds",
       "since": "1.1",
       "when": "every UI frame, after the frame clears the key LEDs and before the stock views set theirs (UI task)",
@@ -62,6 +71,13 @@
     }
   ],
   "tables": [
+    {
+      "name": "core_mixer_pages",
+      "since": "1.1",
+      "entry": 4,
+      "room": 4,
+      "purpose": "Null-terminated pointers to dt2_mixer_extension descriptors, each holding a native page descriptor and void draw(void *view, void *bitmap). The UI reads the table when constructing the Mixer page list and dispatches draw for the active registered page. Lower contribution order first, ties by module ID and contribution order. The renderer may draw into its own page bitmap and update module-owned state; the view is borrowed and stock navigation and page state are read-only."
+    },
     {
       "name": "core_fast",
       "entry": 4,
