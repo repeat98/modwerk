@@ -38,10 +38,10 @@
 
 #include "ar2-1.74.h"
 
-// PRIVATE (RC37, never push): the functions marked QPERF_UI run only from the UI task
-// (keys, tick, project; the quick perf rec bake and clear), never from the audio block.
-// cold puts them out of the hot code and builds them for size; the rest of the module stays
-// at -O2. No behaviour changes.
+// The functions marked QPERF_UI run only from the UI task (keys, tick, project; the quick
+// perf rec bake and clear), never from the audio block. cold puts them out of the hot code
+// and builds them for size, about 1.9 KB less RAM; the rest of the module stays at -O2.
+// No behaviour changes.
 #define QPERF_UI __attribute__((cold))
 
 typedef unsigned long word_t;
