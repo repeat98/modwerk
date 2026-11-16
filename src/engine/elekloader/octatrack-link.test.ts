@@ -4,7 +4,7 @@ import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrac
 import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
-import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, StaleLoadError, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
+import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, StaleLoadError, inUseHint, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
 import { UsbVendorTransport, parseBaseSlots } from './upload-usb'
 
@@ -265,6 +265,7 @@ describe('sending a module', () => {
     unit.refusal = 7 // a track plays the effect it would replace
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toMatch(/A track is using a module this sync changes or removes, as its effect or its machine/)
+    expect(link.getState().notice?.text).not.toContain('Look for') // nothing in this change was marked as on the unit
     unit.refusal = 10 // RUNTIME_FEATURE: the key bus cannot come up this boot
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toMatch(/can’t start the key bus this module needs until it restarts/)
@@ -274,6 +275,13 @@ describe('sending a module', () => {
     unit.refusal = 1 // malformed: the plain text
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toBe('The Octatrack can’t run this module file.')
+  })
+  it('names the modules a track may be using, once each and at most five', () => {
+    expect(inUseHint([])).toBe('')
+    expect(inUseHint(['Tape Echo', 'Tape Echo'])).toBe(' Look for Tape Echo on the tracks.')
+    expect(inUseHint(['Tape Echo', 'BBD Delay', 'Deja Vu'])).toBe(' Look for Tape Echo, BBD Delay, or Deja Vu on the tracks.')
+    expect(inUseHint(['A', 'B', 'C', 'D', 'E'])).toBe(' Look for A, B, C, D, or E on the tracks.')
+    expect(inUseHint(['A', 'B', 'C', 'D', 'E', 'F'])).toBe(' Look for A, B, C, D, or 2 more on the tracks.')
   })
   it('stages again when the loader was busy for a moment', async () => {
     const { unit, link } = await linked()
@@ -484,6 +492,15 @@ describe('loading a module set', () => {
     await result.link.update('Live', set)
     return result
   }
+  it('names what the sync removes or replaces when a track is using one of them', async () => {
+    const { unit, link } = await linked('base', true); unit.modules = ['0000000a']
+    unit.refusal = 7 // a track plays the effect the sync would remove
+    await link.update('Live', [{ ...set[0], module: 'Tape Echo', replaces: true }, { ...set[1], module: 'Deja Vu', replaces: false }])
+    const text = link.getState().notice?.text
+    expect(text).toMatch(/^A track is using a module this sync changes or removes/)
+    expect(text).toContain('then try again. Look for Tape Echo on the tracks.')
+    expect(text).not.toContain('Deja Vu') // added by this sync: no track can be using it yet
+  })
   it('trials the complete set without accepting any change before Keep', async () => {
     const { unit, link } = await loaded()
     expect(link.getState()).toMatchObject({ status: 'trial', module: 'Live' })
