@@ -110,7 +110,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 1745,
+    "memoryBytes": 1545,
     "fastBytes": 0,
     "load": {
       "display": "None in the audio path: runs only when a frequency value's text or a lock box is drawn",
@@ -120,9 +120,11 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "1.3.0",
-    "sourceSha256": "27b1f2e3ca679412f5b767212176517e0cc77670e063609f96b264adf8e8c69d",
+    "moduleVersion": "1.3.1",
+    "sourceSha256": "aea72500ac6b2603519f5073e284bfd80a5002ba985800e59915110d1a12edc4",
     "reports": [
+      "evidence/hardware-testing-1.3.1.json",
+      "evidence/emulator-1.3.1.json",
       "evidence/hardware-testing-1.3.0.json",
       "evidence/emulator-1.3.0.json",
       "evidence/hardware-testing-1.2.1.json",
@@ -133,22 +135,22 @@
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-11-15",
+      "testedOn": "2026-11-16",
       "tester": "npp1993 (Nathaniel Pavel)",
       "durationMinutes": null,
-      "summary": "On npp1993's Analog Rytm MKII with OS 1.74, FL03 (a Modwerk base development build with Filter Hz 1.3.0, booted from RAM over USB, 2026-11-15) passed seven scripted cases three times, its screens read back from the unit: DELAY and REVERB HPF, LPF and REVERB FRQ in Hz, trig and SCENE locks in wide boxes with LPF following the locked HPF, locked HPF and LPF boxes apart with white around both texts (2.17kHz and 2.21kHz), and PERF edit keeping stock's signed depth.",
+      "summary": "1.3.1 changes no behaviour (fx-hz.c's UI-task functions built cold, 200 bytes less RAM). On npp1993's Analog Rytm MKII with OS 1.74, CA02 (a Modwerk development base with this code and three other modules, booted from RAM over USB, 2026-11-16) ran all seven Filter Hz rig cases: every Hz and kHz readout equals the emulator's (79.0Hz and 1.44kHz on DELAY, 5.85kHz on REVERB FRQ). The screen compares flagged other knobs that the unit's project set differently from the emulator's kit, so they count as not a pass. In rytm-emu the same code passed all seven cases against 1.3.0's screens. 1.3.0 passed seven cases three times on FL03 (2026-11-15).",
       "limitations": [
-        "Tested by a maintainer, not by the module's porter.",
-        "Booted from RAM in a Modwerk base development build; the flash was not written.",
-        "FL03: .syx 662563cf8525f9de4e60cf556534ed1692e2ba93dec5a5e958dc8422df810e4e, image CRC 850a1eba read back from the unit.",
-        "Screens compared by program against references recorded on the unit; playback while turning was clean on FL01 as reported, other modules beside it, project save and reload, a power cycle and audio were not tried."
+        "Tested by a maintainer, not by the module's porter, with an automated test link run with npp1993's go.",
+        "1.3.1 on the unit: only the Hz and kHz readouts were checked as equal; the screen compares did not pass because the unit's project differed from the emulator's kit.",
+        "CA02: .syx 8c73268710d8d0d7ebfb2d6e13349a6bbc1a67ecf6a6b7d7cee40d8e5fe6b7b5, image CRC c06360e8, booted from RAM beside three other modules; the flash was not written. Its Filter Hz source differs from this folder's only in a comment.",
+        "No audio was measured; project save and reload and a power cycle were not tried."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "1.3.0: on an Analog Rytm MKII (FL01, RAM boot, 2026-11-15) DELAY and REVERB HPF, LPF and REVERB FRQ read in Hz, trig and scene locks show in wide boxes with LPF following the locked HPF, and PERF edit keeps stock's signed depth; rytm-emu checked every value turned and locked. 1.2.1: the 33-pixel FRQ lock box, checked on a unit (FZ78). 1.2.0: the FRQ popup in Hz on a unit (FZ74, 2026-10-22).",
+    "summary": "1.3.1: no behaviour change (UI-task code built cold); on an Analog Rytm MKII (CA02, RAM boot, 2026-11-16) every Hz and kHz readout equals the emulator's, and rytm-emu's seven cases match 1.3.0's screens. 1.3.0: on a unit (FL03, 2026-11-15) DELAY and REVERB HPF, LPF and REVERB FRQ read in Hz, trig and scene locks show in wide boxes with LPF following the locked HPF. 1.2.1: the 33-pixel FRQ lock box (FZ78). 1.2.0: the FRQ popup in Hz (FZ74, 2026-10-22).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -195,9 +197,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.3.0",
-        "imageSha256": "b9bedf5e141edda307e001fc171d19e3f97e8070e6c2ba09390479879469f55f",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ80, the released core-ar2 0.3 and Filter Hz 1.3.0 built from this folder on the owner's stock OS 1.74; the frame is byte-identical to 1.2.0's and 1.2.1's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.3.1",
+        "imageSha256": "deaaec5660c69ea6c2ea83d14ecb3d1e25ee7b6d5682a6ff54dc8584340bfdb6",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ81, the released core-ar2 0.3 and Filter Hz 1.3.1 built from this folder on the owner's stock OS 1.74; the frame is byte-identical to 1.2.0's, 1.2.1's and 1.3.0's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -211,9 +213,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.3.0",
-        "imageSha256": "b9bedf5e141edda307e001fc171d19e3f97e8070e6c2ba09390479879469f55f",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ80, the released core-ar2 0.3 and Filter Hz 1.3.0 built from this folder on the owner's stock OS 1.74; the frame is byte-identical to 1.2.0's and 1.2.1's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.3.1",
+        "imageSha256": "deaaec5660c69ea6c2ea83d14ecb3d1e25ee7b6d5682a6ff54dc8584340bfdb6",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ81, the released core-ar2 0.3 and Filter Hz 1.3.1 built from this folder on the owner's stock OS 1.74; the frame is byte-identical to 1.2.0's, 1.2.1's and 1.3.0's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -227,9 +229,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.3.0",
-        "imageSha256": "b9bedf5e141edda307e001fc171d19e3f97e8070e6c2ba09390479879469f55f",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ80, the released core-ar2 0.3 and Filter Hz 1.3.0 built from this folder on the owner's stock OS 1.74; the frame is byte-identical to 1.2.0's and 1.2.1's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.3.1",
+        "imageSha256": "deaaec5660c69ea6c2ea83d14ecb3d1e25ee7b6d5682a6ff54dc8584340bfdb6",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ81, the released core-ar2 0.3 and Filter Hz 1.3.1 built from this folder on the owner's stock OS 1.74; the frame is byte-identical to 1.2.0's, 1.2.1's and 1.3.0's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -243,9 +245,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.3.0",
-        "imageSha256": "b9bedf5e141edda307e001fc171d19e3f97e8070e6c2ba09390479879469f55f",
-        "setup": "Headless rytm-emu 2ac0f1f (dtboot) running FZ80, the released core-ar2 0.3 and Filter Hz 1.3.0 built from this folder on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.3.1",
+        "imageSha256": "deaaec5660c69ea6c2ea83d14ecb3d1e25ee7b6d5682a6ff54dc8584340bfdb6",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) running FZ81, the released core-ar2 0.3 and Filter Hz 1.3.1 built from this folder on the owner's stock OS 1.74; the frame is byte-identical to 1.3.0's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -259,9 +261,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.3.0",
-        "imageSha256": "b9bedf5e141edda307e001fc171d19e3f97e8070e6c2ba09390479879469f55f",
-        "setup": "Headless rytm-emu 2ac0f1f (dtboot) running FZ80, the released core-ar2 0.3 and Filter Hz 1.3.0 built from this folder on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.3.1",
+        "imageSha256": "deaaec5660c69ea6c2ea83d14ecb3d1e25ee7b6d5682a6ff54dc8584340bfdb6",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) running FZ81, the released core-ar2 0.3 and Filter Hz 1.3.1 built from this folder on the owner's stock OS 1.74; the frame is byte-identical to 1.3.0's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -275,9 +277,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.3.0",
-        "imageSha256": "b9bedf5e141edda307e001fc171d19e3f97e8070e6c2ba09390479879469f55f",
-        "setup": "Headless rytm-emu 2ac0f1f (dtboot) running FZ80, the released core-ar2 0.3 and Filter Hz 1.3.0 built from this folder on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.3.1",
+        "imageSha256": "deaaec5660c69ea6c2ea83d14ecb3d1e25ee7b6d5682a6ff54dc8584340bfdb6",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) running FZ81, the released core-ar2 0.3 and Filter Hz 1.3.1 built from this folder on the owner's stock OS 1.74; the frame is byte-identical to 1.3.0's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
