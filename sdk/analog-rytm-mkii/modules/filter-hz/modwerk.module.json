@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "filter-hz",
   "name": "Filter Hz",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
@@ -11,7 +11,8 @@
     "credits": [
       "MrScruff — the original mod, 0008-filter-hz in rytm-mods, its design, code and frequency measurements; published in rytm-mods-src with permission.",
       "Iced-Cream — the elemod port (rytm2_mods) and this Modwerk module.",
-      "irpina — Elekloader and core-ar2, the core it links with."
+      "irpina — Elekloader and core-ar2, the core it links with.",
+      "Nathaniel Pavel (npp1993) — Modwerk's wider lock box (1.2.1) and the FX track's DELAY and REVERB frequencies (1.3.0)."
     ]
   },
   "maintainers": [
@@ -25,29 +26,33 @@
   "presentation": {
     "label": "FILTER HZ",
     "family": "Display",
-    "summary": "The FILTER page's FRQ popup shows the cutoff in hertz, from 13.8Hz to 21.1kHz, instead of 0 to 127.",
-    "overview": "Filter Hz changes what the FRQ value popup on the FILTER page says. Instead of the stock 0 to 127 it shows the cutoff frequency to three significant figures: 13.8Hz at 0, 440Hz at 60, 1.11kHz at 76 and 21.1kHz at 127, one semitone a step. The scale comes from MrScruff's measurement of the self-oscillating filter. Only the text changes: the filter, its range, saved kits and every other parameter are untouched. It is an elemod port of MrScruff's rytm-mods 0008-filter-hz, with his code unchanged.",
+    "summary": "The FILTER page's FRQ and the FX track's DELAY HPF/LPF and REVERB FRQ/HPF/LPF show their frequency in hertz instead of 0 to 127.",
+    "overview": "Filter Hz changes what the frequency knobs say. On the FILTER page FRQ shows the cutoff to three significant figures instead of the stock 0 to 127: 13.8Hz at 0, 440Hz at 60, 1.11kHz at 76 and 21.1kHz at 127, one semitone a step, from MrScruff's measurement of the self-oscillating filter. Since 1.3.0 the FX track does the same: DELAY and REVERB HPF and LPF and REVERB FRQ show the frequency the stock delay and reverb filters actually use, worked out on the unit from the coefficient the DSP reads. LPF follows HPF, as the stock filters do, and reads OPEN where the low-pass lets everything through. Only the display changes: the filters, their ranges, saved kits and every other parameter are untouched. A locked value's white box is 33 pixels instead of stock's 27, so kHz values fit. It is an elemod port of MrScruff's rytm-mods 0008-filter-hz, with his code unchanged; Modwerk adds the wider box (1.2.1) and the FX pages (1.3.0).",
     "highlights": [
-      "The FRQ popup reads in Hz and kHz to three significant figures.",
-      "One semitone a step, with 440Hz at the stock value 60.",
-      "Display only: the filter, its range and saved kits are unchanged.",
-      "MrScruff's rytm-mods code, unchanged, linked by the elemod core."
+      "FILTER FRQ reads in Hz and kHz to three significant figures, 440Hz at the stock value 60.",
+      "DELAY HPF/LPF and REVERB FRQ/HPF/LPF read the frequency the stock FX filters use.",
+      "LPF follows HPF, locks included, and reads OPEN when the low-pass is fully open.",
+      "A locked value's white box is wide enough for kHz values.",
+      "Display only: the filters, their ranges and saved kits are unchanged."
     ],
     "usage": [
       "Use a build containing Filter Hz. Select a track and press FILTER to open its FILTER page.",
       "Turn FRQ (knob E). The value popup reads the cutoff in hertz instead of 0 to 127: 440Hz at the stock value 60, one semitone a step.",
-      "Turn FRQ fully right for 21.1kHz, the open filter, or fully left for 13.8Hz. RES and every other parameter still show their plain numbers."
+      "Select the FX track and press SRC for DELAY or SMPL for REVERB. Turn HPF, LPF or the reverb's FRQ: each reads its frequency, and LPF reads OPEN above where the low-pass does anything."
     ]
   },
   "access": {
-    "location": "Any track's FILTER page: the FRQ value popup (knob E).",
+    "location": "Any track's FILTER page (FRQ, knob E), and the FX track's DELAY page (HPF E, LPF F) and REVERB page (FRQ C, HPF E, LPF F).",
     "steps": [
-      "Select a track and press FILTER.",
-      "Turn FRQ (knob E); its value popup reads the cutoff in Hz or kHz."
+      "Select a track and press FILTER, then turn FRQ (knob E).",
+      "Select the FX track and press SRC (DELAY) or SMPL (REVERB), then turn HPF, LPF or FRQ."
     ],
     "screenshots": [
       "media/filter-page.png",
-      "media/frq-440hz.png"
+      "media/frq-440hz.png",
+      "media/frq-locked.png",
+      "media/reverb-frq.png",
+      "media/delay-locked.png"
     ]
   },
   "controls": [
@@ -55,6 +60,24 @@
       "name": "Knob E — FRQ",
       "default": null,
       "doc": "Unchanged control. Its value popup shows the cutoff frequency, 13.8Hz at 0 to 21.1kHz at 127, one semitone a step, instead of the number.",
+      "labels": null
+    },
+    {
+      "name": "DELAY knobs E and F — HPF, LPF",
+      "default": null,
+      "doc": "Unchanged controls. HPF shows the delay's high-pass corner (-3 dB), 5.00Hz at 0 to 12.0kHz at 127; LPF shows the low-pass corner, which stock places from HPF + LPF, or OPEN when the low-pass has no -3 dB point below 24 kHz.",
+      "labels": null
+    },
+    {
+      "name": "REVERB knob C — FRQ",
+      "default": null,
+      "doc": "Unchanged control. Shows the corner of the reverb's treble shelf (the -3 dB point with GAI at 0), 974Hz at 0 to 14.0kHz at 127.",
+      "labels": null
+    },
+    {
+      "name": "REVERB knobs E and F — HPF, LPF",
+      "default": null,
+      "doc": "Unchanged controls. As the DELAY's: the same filters and scale.",
       "labels": null
     }
   ],
@@ -66,9 +89,12 @@
     "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.3. Version 1.2.0 drops the OS 1.73 release (core-ar2 0.1), which Modwerk no longer supports.",
-      "The scale was measured on the self-oscillating LP2 filter; the other filter types are assumed to share it.",
-      "The popup shows the knob's value: envelope depth, LFO modulation and parameter locks applied elsewhere are not included.",
-      "The 0 to 127 number is no longer shown for FRQ."
+      "FILTER FRQ's scale was measured on the self-oscillating LP2 filter; the other filter types are assumed to share it.",
+      "Each value shows the knob's value, or the held trig's or scene's lock: envelope depth and LFO modulation are not included. PERFORMANCE edit keeps stock's signed depth (+5, -2): it is an amount, not a frequency.",
+      "The FX values are worked out from the stock filters' equations and coefficients, at 48 kHz: -3 dB points for HPF and LPF, the shelf's corner for REVERB FRQ. They were not measured with audio.",
+      "LPF needs HPF's value: it reads it as the page's graph does, the held trig's or scene's lock when there is one. Where the FX page is not on screen (another view drawing an FX value) LPF shows the stock number.",
+      "The 0 to 127 numbers are no longer shown for these knobs.",
+      "Two stock sites: param_value_text (0x400a86b4) and the lock box in stock's knob value drawing (0x40037bea). Another module patching either cannot be combined with it. A module that gives these ids its own text through the base's core_params wins over Filter Hz."
     ]
   },
   "platform": {
@@ -77,57 +103,68 @@
     "build": "build.json",
     "events": [],
     "claims": [
-      "ui:FILTER page FRQ value text"
+      "ui:FILTER page FRQ value text",
+      "ui:FILTER page FRQ lock box",
+      "ui:FX track DELAY HPF and LPF value text and lock box",
+      "ui:FX track REVERB FRQ, HPF and LPF value text and lock box"
     ]
   },
   "resources": {
-    "memoryBytes": 256,
+    "memoryBytes": 1745,
     "fastBytes": 0,
     "load": {
-      "display": "None in the audio path: runs only when the FRQ popup's text is drawn",
+      "display": "None in the audio path: runs only when a frequency value's text or a lock box is drawn",
       "method": "static",
-      "conditions": "Static: the one site is in param_value_text, the routine that formats a parameter's value text for the screen; nothing is added to the audio, sequencer or tick paths. Not a measurement."
+      "conditions": "Static: one site is in param_value_text, the routine that formats a parameter's value text for the screen, two in stock's knob value drawing where a locked value's text is placed and its box drawn; nothing is added to the audio, sequencer or tick paths. An FX value's text takes a 28-step CORDIC and, for LPF, a walk of the view stack. Not a measurement."
     }
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "1.2.0",
-    "sourceSha256": "456b3752807d5ccbcbcc3ad9f51fe7d99d82b154def1a99385703b063723439b",
+    "moduleVersion": "1.3.0",
+    "sourceSha256": "27b1f2e3ca679412f5b767212176517e0cc77670e063609f96b264adf8e8c69d",
     "reports": [
+      "evidence/hardware-testing-1.3.0.json",
+      "evidence/emulator-1.3.0.json",
+      "evidence/hardware-testing-1.2.1.json",
+      "evidence/emulator-1.2.1.json",
       "evidence/hardware-testing.json",
       "evidence/source-parity.json"
     ],
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-10-22",
-      "tester": "Iced-Cream",
+      "testedOn": "2026-11-15",
+      "tester": "npp1993 (Nathaniel Pavel)",
       "durationMinutes": null,
-      "summary": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74 the FILTER page's FRQ popup shows the cutoff in Hz, in FZ74, the released core-ar2 0.3 with Filter Hz alone (2026-10-22), and beside all ten other rytm2_mods ports (C3A4, 2026-10-20). Modwerk's 1.2.0 build links to FZ74's main OS byte for byte.",
+      "summary": "On npp1993's Analog Rytm MKII with OS 1.74, FL03 (a Modwerk base development build with Filter Hz 1.3.0, booted from RAM over USB, 2026-11-15) passed seven scripted cases three times, its screens read back from the unit: DELAY and REVERB HPF, LPF and REVERB FRQ in Hz, trig and SCENE locks in wide boxes with LPF following the locked HPF, locked HPF and LPF boxes apart with white around both texts (2.17kHz and 2.21kHz), and PERF edit keeping stock's signed depth.",
       "limitations": [
-        "Only FZ74's one-minute playback was timed; other durations were not recorded.",
-        "FZ74: .syx 62c256261d643752c9e8ffb357aada048af75a9b03c1f1aae649287e4bae7745. Firmware was not read back from the device.",
-        "FZ74's playback check was heard over Overbridge, with samples and delay and reverb sends on all tracks."
+        "Tested by a maintainer, not by the module's porter.",
+        "Booted from RAM in a Modwerk base development build; the flash was not written.",
+        "FL03: .syx 662563cf8525f9de4e60cf556534ed1692e2ba93dec5a5e958dc8422df810e4e, image CRC 850a1eba read back from the unit.",
+        "Screens compared by program against references recorded on the unit; playback while turning was clean on FL01 as reported, other modules beside it, project save and reload, a power cycle and audio were not tried."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Hardware: the FRQ popup shows Hz on an Analog Rytm MKII, OS 1.74, with the released core-ar2 0.3 and Filter Hz alone (FZ74, 2026-10-22). Modwerk's source build gives a main OS byte-identical to FZ74. rytm-emu shows Hz where stock shows numbers, every other pixel the same.",
+    "summary": "1.3.0: on an Analog Rytm MKII (FL01, RAM boot, 2026-11-15) DELAY and REVERB HPF, LPF and REVERB FRQ read in Hz, trig and scene locks show in wide boxes with LPF following the locked HPF, and PERF edit keeps stock's signed depth; rytm-emu checked every value turned and locked. 1.2.1: the 33-pixel FRQ lock box, checked on a unit (FZ78). 1.2.0: the FRQ popup in Hz on a unit (FZ74, 2026-10-22).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
         "steps": [
           "Use a build containing Filter Hz. Select a track and press FILTER to open its FILTER page.",
           "Turn FRQ (knob E). The value popup reads the cutoff in hertz instead of 0 to 127: 440Hz at the stock value 60, one semitone a step.",
-          "Turn FRQ fully right for 21.1kHz, the open filter, or fully left for 13.8Hz. RES and every other parameter still show their plain numbers."
+          "Select the FX track and press SRC for DELAY or SMPL for REVERB. Turn HPF, LPF or the reverb's FRQ: each reads its frequency, and LPF reads OPEN above where the low-pass does anything."
         ]
       },
       "screenshots": [
         "media/filter-page.png",
         "media/frq-440hz.png",
-        "media/frq-open.png"
+        "media/frq-open.png",
+        "media/frq-locked.png",
+        "media/reverb-frq.png",
+        "media/delay-locked.png"
       ],
       "captureRecord": "media/capture.json"
     }
@@ -158,9 +195,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.2.0",
-        "imageSha256": "62c256261d643752c9e8ffb357aada048af75a9b03c1f1aae649287e4bae7745",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ74, the released core-ar2 0.3 and Filter Hz built from the owner's stock OS 1.74; Modwerk's 1.2.0 build of this folder links to the same main OS. The frames were first captured in rytm-emu 3c4c42c on an OS 1.73 build and are byte-identical to FZ74's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.3.0",
+        "imageSha256": "b9bedf5e141edda307e001fc171d19e3f97e8070e6c2ba09390479879469f55f",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ80, the released core-ar2 0.3 and Filter Hz 1.3.0 built from this folder on the owner's stock OS 1.74; the frame is byte-identical to 1.2.0's and 1.2.1's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -174,9 +211,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.2.0",
-        "imageSha256": "62c256261d643752c9e8ffb357aada048af75a9b03c1f1aae649287e4bae7745",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ74, the released core-ar2 0.3 and Filter Hz built from the owner's stock OS 1.74; Modwerk's 1.2.0 build of this folder links to the same main OS. The frames were first captured in rytm-emu 3c4c42c on an OS 1.73 build and are byte-identical to FZ74's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.3.0",
+        "imageSha256": "b9bedf5e141edda307e001fc171d19e3f97e8070e6c2ba09390479879469f55f",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ80, the released core-ar2 0.3 and Filter Hz 1.3.0 built from this folder on the owner's stock OS 1.74; the frame is byte-identical to 1.2.0's and 1.2.1's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -190,9 +227,57 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.2.0",
-        "imageSha256": "62c256261d643752c9e8ffb357aada048af75a9b03c1f1aae649287e4bae7745",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ74, the released core-ar2 0.3 and Filter Hz built from the owner's stock OS 1.74; Modwerk's 1.2.0 build of this folder links to the same main OS. The frames were first captured in rytm-emu 3c4c42c on an OS 1.73 build and are byte-identical to FZ74's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.3.0",
+        "imageSha256": "b9bedf5e141edda307e001fc171d19e3f97e8070e6c2ba09390479879469f55f",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ80, the released core-ar2 0.3 and Filter Hz 1.3.0 built from this folder on the owner's stock OS 1.74; the frame is byte-identical to 1.2.0's and 1.2.1's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/frq-locked.png",
+      "kind": "screenshot",
+      "caption": "Lock FRQ on a trig (hold the trig, turn FRQ): the white box behind the value is wide enough for kHz values.",
+      "alt": "FREQUENCY screen with a locked FRQ reading 21.1kHz in a white inverted box under the filter curve.",
+      "credit": "Modwerk documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.3.0",
+        "imageSha256": "b9bedf5e141edda307e001fc171d19e3f97e8070e6c2ba09390479879469f55f",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) running FZ80, the released core-ar2 0.3 and Filter Hz 1.3.0 built from this folder on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/reverb-frq.png",
+      "kind": "screenshot",
+      "caption": "On the FX track's REVERB page (SMPL), turn FRQ: it reads the corner of the reverb's treble shelf, 5.85kHz at the stock value 64. HPF and LPF read in Hz too.",
+      "alt": "REVERB page with PRE, DEC, the shelf graph and GAI above HPF, LPF and VOL; FRQ's label reads 5.85kHz and the title SHELVING FREQ.",
+      "credit": "Modwerk documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.3.0",
+        "imageSha256": "b9bedf5e141edda307e001fc171d19e3f97e8070e6c2ba09390479879469f55f",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) running FZ80, the released core-ar2 0.3 and Filter Hz 1.3.0 built from this folder on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/delay-locked.png",
+      "kind": "screenshot",
+      "caption": "On the DELAY page, HPF and LPF locked on a held trig: 79.0Hz and 1.34kHz, each in its own wide box with a black column between them. LPF follows the trig's locked HPF, as the stock filter does.",
+      "alt": "DELAY page with a held trig; HPF and LPF read 79.0Hz and 1.34kHz in two white inverted boxes, a black column between them, under the HPF/LPF graph.",
+      "credit": "Modwerk documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.3.0",
+        "imageSha256": "b9bedf5e141edda307e001fc171d19e3f97e8070e6c2ba09390479879469f55f",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) running FZ80, the released core-ar2 0.3 and Filter Hz 1.3.0 built from this folder on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

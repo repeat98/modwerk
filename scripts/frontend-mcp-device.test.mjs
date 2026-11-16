@@ -45,6 +45,7 @@ class FakeLink {
 
   getState = () => this.state
   inventory = async () => structuredClone(this.modules)
+  off = async () => undefined // a base before PROJ > MODWERK > MODULES: nothing is reported as switched off
   missing = async () => []
   health = async () => {
     if (this.failHealthOnce) { this.failHealthOnce = false; throw new Error('post-undo status unavailable') }

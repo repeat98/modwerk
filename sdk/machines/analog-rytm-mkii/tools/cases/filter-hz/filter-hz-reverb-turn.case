@@ -1,0 +1,48 @@
+# Filter Hz 1.3.0: the FX track's REVERB FRQ, HPF and LPF read in hertz while turned.
+# FX track, REVERB page (SMPL, pressed from SRC). Expected: FRQ 64 5.85kHz, FRQ 0 974Hz,
+# HPF 64 463Hz, LPF 80 with HPF 0 1.44kHz. Ends with FRQ 64, HPF 32, LPF 96.
+name: filter-hz-reverb-turn
+state: changes
+# A value overlay stays about 2.3 s, so each screen is followed by 3 s before the next knob moves.
+# FX is a toggle (pressed on the FX track it goes back to the drum track), so BD is selected first.
+hold TRK
+key BD
+release TRK
+key FX
+key SRC
+key SMPL
+wait 3500
+cc 28 32
+cc 29 96
+cc 26 63
+wait 300
+nudge C +1
+wait 750
+screen frq64
+expect frq64 == ref region 0 9 128 46
+wait 3000
+cc 26 1
+wait 300
+nudge C -1
+wait 750
+screen frq0
+expect frq0 == ref region 0 9 128 46
+wait 3000
+cc 28 63
+wait 300
+nudge E +1
+wait 750
+screen hpf64
+expect hpf64 == ref region 0 40 128 15
+wait 3000
+cc 28 0
+cc 29 79
+wait 300
+nudge F +1
+wait 750
+screen lpf80
+expect lpf80 == ref region 0 40 128 15
+wait 3000
+cc 26 64
+cc 28 32
+cc 29 96

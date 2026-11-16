@@ -5,7 +5,7 @@
 import type { Inventory, InventoryTarget } from '../config/inventory.ts'
 import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
 import { depackSection } from '../engine/elektron/codec/depack.ts'
-import { OctatrackLink, type LinkDevice, type LinkSession, type LinkUsb } from '../engine/elekloader/octatrack-link.ts'
+import { ELEKTRON_VENDOR_ID, OCTATRACK_PRODUCT_ID, OctatrackLink, type LinkDevice, type LinkSession, type LinkUsb } from '../engine/elekloader/octatrack-link.ts'
 import { UPLOAD_TIMEOUT_MAX_MS, UploadDeviceError, UploadUnconfirmedError } from '../engine/elekloader/upload-session.ts'
 import { SELFTEST_BYTES, VENDOR_CLASS, VENDOR_PROTOCOL, VENDOR_SUBCLASS } from '../engine/elekloader/upload-usb.ts'
 import type { UploadPhaseName, UploadResultName, UploadStatus } from '../engine/elekloader/upload-wire.ts'
@@ -67,9 +67,14 @@ export interface FakeUnit {
   /** Writes during which USB drops: the write finishes on the unit, the reply is lost, and the replugged unit's
    * reset rolls the lost session back, which restarts it on NOR (flash.c f_restore). */
   writeDropouts?: number
+  /** Stagings of its own container whose reply is lost before the write: nothing is written, the unit runs on. */
+  stageLosses?: number
   /** The restart after a saved write hangs at the logo (a DSP stalled while the base was sent does not park): the unit
    * goes away and comes back only when plugged again, as after a power cycle. */
   restartHangs?: boolean
+  /** RAM boots whose restart loses USB: the unit runs the new base but stays away until plugged again, as only a power
+   * cycle (which starts the flashed base) brings it back. */
+  bootHangs?: number
   /** SLOTS (request 39, flash.h): the base's two-slot record; absent, the base stalls it as one before the two slots.
    * A base that answers it writes another base's container into its spare slot and restarts once onto it, and its own
    * (after the trial) while it runs on, without a restart (flash.c); one that does not restarts after writing itself. */
@@ -90,7 +95,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
     const interfaces = [{ interfaceNumber: 0, alternates: alternates(8, 6, 0x50, [1, 2]) },
       ...base ? [{ interfaceNumber: 5, alternates: alternates(VENDOR_CLASS, VENDOR_SUBCLASS, VENDOR_PROTOCOL) }] : []]
     const device = {
-      opened: false, configuration: { interfaces },
+      opened: false, configuration: { interfaces }, vendorId: ELEKTRON_VENDOR_ID, productId: OCTATRACK_PRODUCT_ID,
       async open() { device.opened = true }, async close() { device.opened = false },
       async selectConfiguration() {},
       async claimInterface() { if (unit.taken) throw new DOMException('Unable to claim interface.', 'NetworkError') },
@@ -187,6 +192,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
       async stage(pkg, { signal, progress } = {}) {
         if (unit.playing) return step('normal', 'unsafe')
         if (unit.refusal) return step('normal', 'rejected')
+        if (unit.stageLosses && String.fromCharCode(...pkg.data.subarray(0, 4)) === 'ELEK' && unit.stageLosses-- > 0) { await wait(); throw new UploadUnconfirmedError('hello was not confirmed', status) }
         staged = pkg.sha256; data = pkg.data
         for (let sent = 0; sent < pkg.data.length;) {
           if (signal?.aborted) { status = { ...status, phase: 'normal' }; throw new DOMException('Module staging cancelled.', 'AbortError') }
@@ -211,7 +217,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
         // armed from a base running out of RAM it comes back on the flashed one; from that one, on the image's base.
         if (data && data.length >= 4 && new DataView(data.buffer, data.byteOffset).getUint32(0) === 0x4fefffe4) {
           const next = unit.base === unit.flashed && !unit.fromRam ? fakeBaseOf(data) : unit.flashed
-          setTimeout(() => { unit.base = unit.active = next; unit.fromRam = false; unit.unplug(); unit.plug('base') }, delay)
+          setTimeout(() => { unit.base = unit.active = next; unit.fromRam = false; unit.unplug(); if (!(unit.bootHangs && unit.bootHangs-- > 0)) unit.plug('base') }, delay)
         }
         return published
       },

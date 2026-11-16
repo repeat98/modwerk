@@ -3,7 +3,7 @@
   "id": "amiga",
   "key": "AMIGA",
   "name": "Amiga",
-  "version": "0.2.1-experimental",
+  "version": "0.3.0-experimental",
   "category": "machines",
   "author": {
     "github": "repeat98",
@@ -21,6 +21,7 @@
       "SPD sets how fast the note moves through the sample and GRN the cycle, 96 to 4128 samples: half speed, about twice as fast or a held sound, at any pitch.",
       "Slices stretch too: SLIC on, STRT picks the slice, and the stretch stays inside it.",
       "Every restart crossfades over half a cycle, whichever way the note is going.",
+      "STR on SYNC, the default, keeps the note in time with the project's tempo by the sample's ORIGINAL TEMPO, at any pitch.",
       "STR can turn the stretch into a pitch shift of up to an octave either way.",
       "RATE is stock's own: forwards, backwards and slower, with the stretch following it both ways.",
       "SRR lowers the storage rate, BITS sets the word from 4 to 16 bits (8 by default), LED adds a fixed lowpass.",
@@ -73,13 +74,14 @@
     },
     {
       "name": "STR",
-      "default": 1,
-      "count": 3,
-      "doc": "The stretch: OFF plays as FLEX, ON stretches, PCH shifts the pitch by SPD at the note's own length. SRC SETUP knob E.",
+      "default": 3,
+      "count": 4,
+      "doc": "The stretch: OFF plays as FLEX, ON stretches, PCH shifts the pitch by SPD at the note's own length, SYNC stretches at the project's tempo over the sample's ORIGINAL TEMPO. SRC SETUP knob E.",
       "labels": [
         "OFF",
         "ON",
-        "PCH"
+        "PCH",
+        "SYNC"
       ]
     },
     {
@@ -103,6 +105,9 @@
       "No stock RTRG or RTIM on an Amiga track: SPD and GRN take their knobs.",
       "Stock's own time-stretch (TSTR) is off on an Amiga track, and SETUP's LEN switch is LED: the track always uses stock's default length setting, LEN OFF.",
       "SRR, LED, STR and BITS are SETUP values: one for the Part, without locks or LFOs.",
+      "SYNC goes by the sample's ORIGINAL TEMPO (audio editor, ATTR): a wrong tempo there gives a wrong length. PCH and SYNC cannot be combined.",
+      "After you choose AMIGA in the machine list, AED shows the track's recorder until you select the track again or pick a sample.",
+      "A track set to SYNC reads as PCH on 0.2.1 and older.",
       "A sliced note is stretched when it is one slice, as stock plays it with SETUP's LEN off; SRR, BITS and LED work either way.",
       "The cycle length is in samples, not tied to the tempo.",
       "The crossfade reads the sample itself. A recorder buffer that is recording, or a sample the module cannot read, restarts with a short fade-out of the step instead.",
@@ -157,9 +162,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate on the engine (verify.py, 72 checks: the crunch, the stretch's timing and its crossfades out of the sample, pages, words and directions), a comparison of the crossfades with Amigo's (reference/amigo_check.py, the owner's installed plug-in), an emulator count of its instructions (bench.py), and RAM trials of this version's release package on the owner's MKII on a development base, 13 and 14 November 2026: restart ticks counted per track over USB Audio against 0.1.0, load with one and three tracks, a recorder buffer. TESTING.md lists what was not tried.",
+    "summary": "Host gate on the engine (verify.py, 75 checks: the crunch, the stretch's timing, also at the project's tempo over the sample's, and its crossfades out of the sample, pages, words and directions), a comparison of the crossfades with Amigo's (reference/amigo_check.py, the owner's installed plug-in), an emulator count of 0.2.0's instructions (bench.py), and RAM trials on the owner's MKII on a development base: 0.2.0's on 13 and 14 November 2026 (restart ticks, load with one and three tracks, a recorder buffer), and this version's release package on 14 November 2026 (SYNC against FLEX's time-stretch on one loop by ear and by load, the default, LOOP on AUTO). TESTING.md lists what was not tried.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "a679875b1611d27cf1afe86741b6c646ec7fa9d0",
+    "evidenceRevision": "ee4d3ba69f1343f8e4eb043864a209adc4f634f1",
     "gates": [
       "python3 -B verify.py",
       "python3 -B generate.py --check",
@@ -170,7 +175,7 @@
       "tutorial": {
         "title": "Quick tutorial",
         "steps": [
-          "Put a drum loop on an Amiga track and play it. At the defaults it is the loop at 8 bits.",
+          "Put a drum loop on an Amiga track and play it. At the defaults it is the loop at 8 bits, in time with the project: STR is on SYNC. If it runs at double or half length, set its ORIGINAL TEMPO in the audio editor (ATTR).",
           "Turn PTCH up a few semitones: the loop keeps its length and starts to flutter. Turn GRN for the size of the flutter.",
           "Turn SPD down to 32 for half speed at the same pitch, or all the way to 0 to hold the sound where it is.",
           "Turn RATE below 0: the loop runs backwards, still stretched.",
@@ -204,16 +209,16 @@
         "page": "Machine list (SELECT MACHINE TYPE)",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
-        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on FLEX, the cursor moved to AMIGA."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "78202bad987758f29039ce444665e08b3ddc2298d707c5f6fc18e5c114762e2f",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 1e66b504 of the Modwerk release base 27c9d36f, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package acae3fef. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on FLEX, the cursor moved to AMIGA."
       }
     },
     {
       "path": "media/amiga-src.png",
       "captureType": "hardware",
       "caption": "Press SRC. PTCH, STRT, LEN and RATE are stock's; knob E is SPD and knob F is GRN. Turn PTCH up and the loop keeps its length; turn SPD down to 32 for half speed at the same pitch.",
-      "alt": "Octatrack SRC page of an Amiga track: knobs PTCH, STRT, LEN, RATE, SPD and GRN, tempo 126.0, and the status line 8 BIT AMIGA.",
+      "alt": "Octatrack SRC page of an Amiga track: knobs PTCH, STRT, LEN, RATE, SPD and GRN, tempo 121.0, and the status line 8 BIT AMIGA.",
       "credit": "repeat98; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
@@ -221,16 +226,16 @@
         "page": "SRC",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
-        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "78202bad987758f29039ce444665e08b3ddc2298d707c5f6fc18e5c114762e2f",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 1e66b504 of the Modwerk release base 27c9d36f, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package acae3fef. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults."
       }
     },
     {
       "path": "media/amiga-src-setup.png",
       "captureType": "hardware",
-      "caption": "Hold FUNC and press SRC for SRC SETUP. Knob C switches LED, the lowpass; D is SRR, the storage rate; E is STR (OFF, ON or PCH) and F is BITS. Try SRR at about 20 with LED on.",
-      "alt": "Octatrack SRC SETUP page of an Amiga track: AMIGA marked in the machine list; LOOP AUTO, SLIC OFF, LED OFF, SRR 0, STR ON and the BITS knob.",
+      "caption": "Hold FUNC and press SRC for SRC SETUP. Knob C switches LED, the lowpass; D is SRR, the storage rate; E is STR (OFF, ON, PCH or SYNC) and F is BITS. Try SRR at about 20 with LED on.",
+      "alt": "Octatrack SRC SETUP page of an Amiga track: AMIGA marked in the machine list; LOOP AUTO, SLIC OFF, LED OFF, SRR 0, STR SYNC and the BITS knob.",
       "credit": "repeat98; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
@@ -238,9 +243,9 @@
         "page": "SRC SETUP",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
-        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults: SRC SETUP."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "78202bad987758f29039ce444665e08b3ddc2298d707c5f6fc18e5c114762e2f",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 1e66b504 of the Modwerk release base 27c9d36f, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package acae3fef. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults: SRC SETUP."
       }
     }
   ],

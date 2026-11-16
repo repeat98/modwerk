@@ -13,7 +13,8 @@ sections (`sections.c`; [machine list sections](../README.md#machine-list-sectio
 (`amp.s`; [amp envelope record](../README.md#amp-envelope-record)). `add` holds the FX track's lock
 words (`locks.c`, `locks.s`) and the send bus (`sendbus.c`, `sendbus.s`, `fx-tables.h`;
 [send effects](../README.md#send-effects)). A site names the stock bytes it replaces by length and SHA-256 only; the
-build fills them from your OS. The USB stack comes next.
+build fills them from your OS. `dev` goes only into development bases (`npm run machine:base -- analog-rytm-mkii --dev`,
+never recorded or released): the USB link (`link.c`, `link.s`; [LINK.md](../LINK.md)).
 
 The base comes in two variants (`base.json`'s `variants`): **send-bus**, the default, with `common` and everything `add`
 names, and **plain**, the imported recipe with `common` alone. The site builds a set with a send effect on send-bus and

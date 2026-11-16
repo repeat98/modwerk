@@ -114,7 +114,14 @@ If even the step base does not fit, the dialog sends the user to the card.
 
 - A base that raises the stage again becomes the next step base: copy its package, fills and variants over the three
   assets and update the pins, in the pull request that first publishes a base too big for the old stage.
-- The packed container is the next limit, and it is the flash's: 851,712 bytes on two slots (`flash.h`).
+- The packed container is the limit that binds first, and it is RAM's, not the flash's: the base that writes a base
+  copies the container into its buffer `packed[FLASH_CONTAINER_BYTES]` (`flash.c`), 851,712 bytes once the page it
+  keeps back is taken off. A slot holds 982,784 (`slots.h`). On two slots the running base writes the spare slot, so
+  the old base's buffer decides: raising it takes a step base, as the stage did. The base build refuses a larger
+  container (`build_core.py` `FLASH_SLOT_BYTES`), as it refuses an image over the step base's stage.
+- `node scripts/base-size.mjs` prints how full the committed base is, from the sizes in
+  `sdk/machines/octatrack/base-sizes.json`; `npm run check` fails a base whose record is missing or over a limit.
+  After `octatrack:base --write`, record the new base with `node scripts/base-size.mjs --stock OS.bin --write`.
 - On the owner's MKII (14 November 2026, a test base padded past the old stage): the two updates from a card-installed
   base on one slot (the site's dialog) and from two slots (the link from the command line). The second overwrites the
   step base's unconfirmed slot and the old base stays the fallback. With the host gone during the send or the save
