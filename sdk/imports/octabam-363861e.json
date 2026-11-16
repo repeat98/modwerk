@@ -533,12 +533,12 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/quantizer/manifest.py",
       "sourceSha256": "0cb4a79f7cd68e1881cd1076a0f6ba2e132b1c199da3a2d4923906b443797602",
-      "vendoredSha256": "4768b9e1421fa7681187b208e94ad9995d3fd97b11c057cc7481484f4e1742de",
+      "vendoredSha256": "785a132fa736d26ec9da160743f5f1c56f10e4661015088b1763bd8bba4ae3ca",
       "localReleaseUpdate": {
         "moduleVersion": "0.1.5-experimental",
         "previousVendoredSha256": "e0841437a471b000b448ce8417c8fd25cba1cf155aec488d08d2888f4c249394",
         "record": "sdk/octatrack/modules/quantizer/TESTING.md",
-        "reason": "Select the public v2.23 author manifest without FM Synth, retain all 28 declared detour guards and the row-count guard, and omit qz_panel_stage and qz_panel_commit from the standalone installation. The runtime port likewise omits the panel include pass; original upstream source fingerprints and the 0.1.4 adaptation are preserved."
+        "reason": "Select the public v2.23 author manifest without FM Synth, retain all 28 declared detour guards and the row-count guard, and omit qz_panel_stage and qz_panel_commit from the standalone installation. The runtime port likewise omits the panel include pass; original upstream source fingerprints and the 0.1.4 adaptation are preserved. The initial wrapper docstring now identifies the same public e908beb0/v2.23 revision and its standalone adaptation; executable Python and the assembled package are unchanged."
       },
       "localReleaseHistory": [
         {
