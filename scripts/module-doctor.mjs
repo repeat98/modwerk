@@ -28,6 +28,7 @@ import { moduleCardless } from '../src/catalog/usb-only.ts'
 import { controlProblems } from './module-controls.mjs'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from './retest-queue.mjs'
+import { cpuPriceStatus, readCpuPricePending } from './module-cpu-price.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
@@ -73,6 +74,8 @@ const compatResult = (() => { try { return JSON.parse(compat.stdout) } catch { r
 const nativeRun = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/module-native-params.py', ...withId], { cwd: root, encoding: 'utf8' })
 const nativeParams = (() => { try { return JSON.parse(nativeRun.stdout) } catch { return null } })()
 
+// The modules listed before every module had to name its CPU price, which wait for a measurement.
+const cpuPending = readCpuPricePending(root)
 // The qualification source hash is async; compute it once per module before the checks run.
 const nativeHashes = new Map()
 // The USB package file's Git history, read once and only when a hardware record and the shipped package differ.
@@ -168,6 +171,12 @@ function octatrack(id) {
   else if (contract.findings.length && contract.refused) fail('dsp registers', contract.findings[0] + more, registersFix)
   else if (contract.findings.length) info('dsp registers', contract.findings[0] + more + '. Reported, not refused: the owner sets the date it is refused from')
   else if (contract.entries) ok('dsp registers', contract.entries + ' DSP entr' + (contract.entries === 1 ? 'y writes' : 'ies write') + ' only what their contract allows')
+
+  // Every module names its CPU price; a machine's is also its descriptor's reserved[0] (scripts/module-cpu-price.mjs, docs/MODULE_PERFORMANCE.md).
+  const price = cpuPriceStatus({ root, document, pending: cpuPending })
+  if (price.state === 'fail') fail('cpu price', price.detail, price.fix)
+  else if (price.state === 'pending') info('cpu price', price.detail)
+  else ok('cpu price', price.detail)
 
   if (rulesProblem) fail('module rules', 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), 'fix what it names, then run npm run modules:check -- --base origin/main')
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')

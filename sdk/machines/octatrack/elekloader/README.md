@@ -345,7 +345,10 @@ and off" above), and before it STATUS, MODULE COST (each
 installed module's share of each core's frame from its own cycle figure, `~` when that is 7/4 of an emulator claim:
 the meters see only each core's sum), MISSING (each module a project names but no installed module serves, with where
 it is named first: the current bank, then the others, a working Part before a saved copy, `BANK A SAVED PART 2 T5`;
-its slots show NONE's page renamed MISSING, `MISS` in the footer) and SELF TEST. SYSTEM stays stock. A DSP core's load is its idle passes times their calibrated cycles (20.0 on core 0, 14.5 on core 1)
+its slots show NONE's page renamed MISSING, `MISS` in the footer; since 0.7.3 also each machine the project uses that
+no installed machine serves, from `machine_registry.c`'s machine map: a Part names a machine only by its signature, so
+the map keeps each one's module and name, in battery RAM at `0x100ffd40` and in project.work as `#MODWERK_MC=` lines
+beside the effects' `#MODWERK_FX=`; its track then says `MISSING POLY8` or `POLY8 IS OFF`) and SELF TEST. SYSTEM stays stock. A DSP core's load is its idle passes times their calibrated cycles (20.0 on core 0, 14.5 on core 1)
 of a 72,520-cycle frame; recalibrate with `build_core.py --dsp-burn 1000` (core 0) or `-1000` (core 1).
 
 

@@ -298,14 +298,24 @@ fx_set modwerk_fxmap_used(void);                                                
 int modwerk_fxmap_loading(void);                                                       /* fxmap.c: a project load runs */
 int modwerk_modset_restored(void);
 extern volatile uint32_t modwerk_modset_result;
-static uint8_t missing[4 + 24 * MODWERK_FX_IDS];
+#ifndef MODWERK_HOST
+/* machine_registry.c's map of the machines a project uses; a base without the registry has none. */
+__attribute__((weak)) void modwerk_machine_map_refresh(void) {}
+__attribute__((weak)) int modwerk_machine_where(unsigned k, unsigned *bank, unsigned *part, unsigned *track)
+{ (void)k, (void)bank, (void)part, (void)track; return 0; }
+__attribute__((weak)) int modwerk_machine_where_module(uint32_t module, unsigned *bank, unsigned *part, unsigned *track)
+{ (void)module, (void)bank, (void)part, (void)track; return 0; }
+#endif
+/* The list: the effects the project names that are not installed, then its absent machines (dsp.c). */
+static uint8_t missing[4 + 24 * MODWERK_MISSING_MAX];
 /* Where each listed module is named, refreshed with the list while the page shows: a lookup reads every bank's Parts,
  * too slow for each drawing (the open page already costs about 0.8 ms a composition, OCTATRACK_HARDWARE_TRAPS.md). */
-static uint8_t missing_at[MODWERK_FX_IDS][4];
+static uint8_t missing_at[MODWERK_MISSING_MAX][4];
 static fx_set missing_told, missing_last; /* the handles the page told about; the list at the last check */
+static uint32_t machines_told, machines_last; /* the same for the machines, by their map entry */
 /* Listed modules switched off on MODULES (modset.c's shelf): named by the project, not gone. They never open the page
  * by themselves, and it says OFF beside them (owner, 16 November 2026: switching one off said NOT INSTALLED). */
-static uint8_t missing_off[MODWERK_FX_IDS];
+static uint8_t missing_off[MODWERK_MISSING_MAX];
 static unsigned missing_gone, missing_offs, missing_shown; /* listed: not switched off; switched off; not quiet */
 /* Modules the player switched off on MODULES, by id, until they are on again or a project loads: MISSING does not open
  * for them by itself, since the player just chose it, but a project that loads with them off opens it, with YES to
@@ -320,7 +330,7 @@ static int is_quiet(uint32_t id)
 static void quiet_add(uint32_t id) { if (id && !is_quiet(id) && quiet_count < RUNTIME_MODULES) quiet[quiet_count++] = id; }
 /* YES on MISSING: every listed module that is off, switched on one after another as MODULES switches one (modset.c),
  * at once; the first refusal ends it and is said in the page's last line. */
-static uint32_t on_queue[MODWERK_FX_IDS], on_said_until;
+static uint32_t on_queue[MODWERK_MISSING_MAX], on_said_until;
 static unsigned on_count, on_next;
 static uint8_t on_waiting;
 static const char *on_said;
@@ -329,18 +339,28 @@ static uint32_t listed_module(unsigned i)
     const uint8_t *e = missing + 4u + 24u * i;
     return (uint32_t)e[4] << 24 | (uint32_t)e[5] << 16 | (uint32_t)e[6] << 8 | e[7];
 }
+/* A machine's entry (dsp.c): handle 0xff, then 0x80 and its map entry. */
+static int listed_machine(unsigned i, unsigned *k)
+{
+    const uint8_t *e = missing + 4u + 24u * i;
+    *k = e[1] & 0x7fu;
+    return e[0] == 0xffu && (e[1] & 0x80u) && *k < MODWERK_MACHINE_MAP;
+}
 static void missing_locate(void)
 {
     for (unsigned i = 0; i < missing[3]; ++i) {
-        unsigned bank = 0, part = 0, track = 0;
-        missing_at[i][0] = (uint8_t)modwerk_fxmap_where(missing[4 + 24 * i], &bank, &part, &track);
+        unsigned bank = 0, part = 0, track = 0, k;
+        missing_at[i][0] = (uint8_t)(listed_machine(i, &k) ? modwerk_machine_where(k, &bank, &part, &track)
+                                                           : modwerk_fxmap_where(missing[4 + 24 * i], &bank, &part, &track));
         missing_at[i][1] = (uint8_t)bank, missing_at[i][2] = (uint8_t)part, missing_at[i][3] = (uint8_t)track;
     }
 }
 static void missing_check(void)
 {
-    unsigned n = (modwerk_dsp_missing_list(missing, 0, MODWERK_FX_IDS) - 4u) / 24u;
+    modwerk_machine_map_refresh(); /* the absent machines, before the list reads them */
+    unsigned n = (modwerk_dsp_missing_list(missing, 0, MODWERK_MISSING_MAX) - 4u) / 24u;
     fx_set handles = {{0}};
+    uint32_t machines_now = 0;
     if (modwerk_fxmap_loading()) quiet_count = 0; /* another project: what it names off is said again */
     unsigned kept = 0;
     for (unsigned i = 0; i < quiet_count; ++i) if (modwerk_modset_is_off(quiet[i])) quiet[kept++] = quiet[i];
@@ -351,17 +371,22 @@ static void missing_check(void)
         missing_off[i] = (uint8_t)modwerk_modset_is_off(module);
         if (missing_off[i]) ++missing_offs;
         else ++missing_gone;
-        if (!missing_off[i] || !is_quiet(module)) handles = fx_with(handles, missing[4 + 24 * i]), ++missing_shown;
+        unsigned k;
+        if (missing_off[i] && is_quiet(module)) continue;
+        if (listed_machine(i, &k)) machines_now |= 1u << k;
+        else handles = fx_with(handles, missing[4 + 24 * i]);
+        ++missing_shown;
     }
     if (open == MISSING && !missing_shown && !missing_asked && !on_count) open = CLOSED;
     if (missing_top + MISSING_ROWS > n) missing_top = n > MISSING_ROWS ? n - MISSING_ROWS : 0;
-    if (fx_any(fx_less(handles, missing_told)) && fx_same(handles, missing_last) && open == CLOSED && transfer == T_NONE && modwerk_modset_restored() &&
-        modwerk_modset_result)
-        open = MISSING, missing_top = 0, missing_asked = 0, missing_told = handles;
+    if ((fx_any(fx_less(handles, missing_told)) || (machines_now & ~machines_told)) && fx_same(handles, missing_last) &&
+        machines_now == machines_last && open == CLOSED && transfer == T_NONE && modwerk_modset_restored() && modwerk_modset_result)
+        open = MISSING, missing_top = 0, missing_asked = 0, missing_told = handles, machines_told = machines_now;
     /* What the open page shows is told; one that comes back and goes missing again is told again. (Told only at the
      * opening, ones added while it showed reopened it at once after NO, 12 October 2026.) */
     missing_told = open == MISSING ? handles : fx_and(missing_told, handles);
-    missing_last = handles;
+    machines_told = open == MISSING ? machines_now : machines_told & machines_now;
+    missing_last = handles, machines_last = machines_now;
     if (open == MISSING) missing_locate();
 }
 /* The memory after a module loads (owner, 11 October 2026): picked onto a track, or accepted over USB. A box with
@@ -499,7 +524,7 @@ static const char *switch_why(uint32_t result)
 static void missing_on_start(void)
 {
     on_count = on_next = 0, on_waiting = 0, on_said = 0;
-    for (unsigned i = 0; i < missing[3] && i < MODWERK_FX_IDS; ++i) {
+    for (unsigned i = 0; i < missing[3] && i < MODWERK_MISSING_MAX; ++i) {
         uint32_t id = listed_module(i);
         unsigned k = 0;
         if (!missing_off[i]) continue;
@@ -541,7 +566,16 @@ static const char *still_used(uint32_t id)
         missing_where(s, at, 1);
         return text;
     }
-    return 0;
+    /* A machine: the project's machine map knows where (machine_registry.c); a Part of this bank naming it refuses the
+     * switch, so this is another bank's. */
+    unsigned bank = 0, part = 0, track = 0;
+    uint8_t at[4] = {(uint8_t)modwerk_machine_where_module(id, &bank, &part, &track), 0, 0, 0};
+    if (!at[0]) return 0;
+    at[1] = (uint8_t)bank, at[2] = (uint8_t)part, at[3] = (uint8_t)track;
+    char *s = used_text;
+    for (const char *t = "USED IN "; *t; ) *s++ = *t++;
+    missing_where(s, at, 1);
+    return used_text;
 }
 static void switches_tick(void)
 {
