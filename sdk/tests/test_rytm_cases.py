@@ -70,5 +70,29 @@ class RytmCases(unittest.TestCase):
             path.unlink(missing_ok=True)
 
 
+    def test_emu_press_holds_a_panel_key_on_the_emulator_alone(self):
+        path = pathlib.Path(self.id().replace(".", "_") + ".case")
+        try:
+            path.write_text("target: emu\nwait 500\nemu press LFO 800\nwait 100\nscreen s\n")
+            case = rytm_test.Case(path)
+            press = [op for op in case.ops if op.name == "press"]
+            self.assertEqual([(op.values, op.only) for op in press], [(("LFO", 800), "emu")])
+            release = [op for op in case.ops if op.name == "release"][-1]
+            self.assertGreaterEqual(release.t, press[0].t + 800 + rytm_test.PANEL_QUIET_MS)   # the link takes it again
+            path.write_text("target: emu\nemu press LFO 1200 &\nwait 200\nemu press AMP 100\n")
+            case = rytm_test.Case(path)
+            at = [op.t for op in case.ops if op.name == "press"]
+            self.assertEqual(at[1] - at[0], 200)        # `&`: AMP pressed during LFO's hold
+            for bad in ("emu press LFO 800",                            # no target: emu
+                        "target: emu\nemu press NOPE 80",               # unknown key
+                        "target: emu\nemu press LFO",                   # no length
+                        "target: emu\nemu press LFO 80\nkey FLTR"):    # a link key inside the quiet window
+                path.write_text(bad + "\n")
+                with self.assertRaises(rytm_test.CaseError, msg=bad):
+                    rytm_test.Case(path)
+        finally:
+            path.unlink(missing_ok=True)
+
+
 if __name__ == "__main__":
     unittest.main()
