@@ -51,8 +51,10 @@ successful session completions report no player present, no guard abort and no t
   past FOLLOW stays there. AUDIO 8 OFF → MIDI 1 ON → AUDIO 8 OFF redraws without closing
   the page. Individual LEFT/RIGHT presses clamp TRACK at AUDIO 1 and MIDI 8, YES wraps
   MIDI 8 to AUDIO 1, and YES toggles FOLLOW. Eight SEQUENCER captures compared with an
-  actual 0.1.4 installation on the same base are byte-identical (stock rows, SCALE, ROOT,
-  TRACK and the saved FOLLOW states).
+  actual 0.1.4 installation on the same base are byte-identical as exported files (stock
+  rows, SCALE, ROOT, TRACK and the saved FOLLOW states). Those earlier exports used fixed
+  delays, so their equality alone does not prove completion of the renderer or complete-frame
+  identity.
 - With FLEX tracks 1 and 8, the same sample, Part PTCH +1 and trigs 1/5/9/13, C MAJOR
   makes both tracks play at the same pitch while both follow. With AUDIO 8 FOLLOW OFF,
   T8 plays 0.99975 semitones above T1. Effective PTCH words are `0x4000` and `0x4500`.
@@ -72,16 +74,22 @@ successful session completions report no player present, no guard abort and no t
   with at least 80 measured cycles per window. The first value is +1.2, not the historical
   +1 tie case; nearest-degree expectations follow `qz_asnap`. This is not an absolute
   sample-pitch or effect-quality measurement.
-- The literal historical knob walk also displays 0 → +2 → +4 → 0, with native Part bytes
-  64 → 74 → 84 → 64. A separate integer-lock walk displays +1.0, +3.0, 0.0 and +2.0;
-  all four stored-lock screenshots are byte-identical before and after playback. That audio
-  comparison is **not green**: relative to the independently captured neutral 344.53125 Hz,
-  13 of 16 second-bar windows match within 0.001 semitone, but the nominal zero lock plays
-  +0.20016 with SCALE OFF and AUDIO 1 FOLLOW OFF. In D MAJOR it plays about +1 instead
-  of the expected lower tie at -1. C MAJOR gives the expected 0, +2, 0, +2. The original
-  analysis using the zero-lock window as its reference also fails and is retained; that window
-  cannot be treated as neutral. The cause of the zero-lock discrepancy is unresolved. No
-  expected value or tolerance was relaxed, and this is not a pass of the historical walk.
+- The literal historical knob walk displays 0 → +2 → +4 → 0, with native Part bytes
+  64 → 74 → 84 → 64. The first attempt at an integer-lock playback walk was an invalid
+  fixture: its step 9 screen actually reads +0.2, initially misread as 0.0. Both the original
+  and post-playback screenshots show +0.2. Its measured +0.20016 with SCALE OFF or FOLLOW
+  OFF, and about +1 in D MAJOR, agree with that actual input. The expected-zero analysis
+  remains failed and is retained, but it does not establish a quantizer defect or test the
+  intended zero lock. The erroneous screenshot-verification metadata is explicitly corrected
+  in the private evidence record. No expected value or tolerance was relaxed.
+  One bounded completion reached a displayed 0.0 and raw byte `0x40` through the native
+  C MAJOR editor, then returned SCALE to OFF without editing that value. Before playback,
+  the four observed bytes were `45/4f/40/4a`. During playback, however, the third address
+  reads `0xff`, no third-step PTCH event is observed, and its audio holds the preceding
+  step's pitch. The unchanged four-case analysis consequently fails: its presumed neutral
+  reference is actually the preceding +3 pitch. The intended persistent-zero lock fixture
+  remains unestablished. All captures and this failed analysis are retained; the native
+  edit/trigger transition is unresolved and is not isolated to a quantizer defect.
 - On a MIDI track, FUNC+DOWN is held through the popup redraw, CHROMATIC selected, and
   release returns to a responsive C3 keyboard. NOTE 61 and MIDI channel 2 are visible.
   Actual emulator UART0 output then sends three note-on/off pairs at note 61 with FOLLOW
@@ -101,6 +109,29 @@ successful session completions report no player present, no guard abort and no t
   bytes under 0.1.4. Those matching cold-boot/default observations are retained; the restore/load
   order is not qualified by the successful explicit reload.
 
+## Current-version UI documentation — 15 November 2026
+
+The gallery uses six actual 0.1.5 framebuffer exports: PROJECT > CONTROL with
+SEQUENCER selected; SCALE MAJOR; ROOT C; GLIDE OFF; TRACK AUDIO 8 with FOLLOW OFF;
+and the MIDI trig-mode popup with CHROMATIC selected. Each was visually reviewed
+with its caption; the selected saved-project FOLLOW capture visibly shows OFF.
+These are original 768×384 PNGs,
+integer scale 6, gray palette 24/240, with no reconstructed labels or edited pixels.
+
+`media/capture.json` records the actual capture date, source files, default-base
+hash and separately installed USB-package hash. The first four images follow a
+completed native LOAD PROJECT. FOLLOW and MIDI use the completed saved card and
+battery-RAM restoration with no newly posted load. All use a populated disposable
+synthetic project, not an empty card. The fixed emulated clock is not the capture
+date. The interactive key/encoder plans and original PNG hashes are retained.
+
+The old 0.1.4 PNGs remain at their original paths. Their actual record, manifest
+media fields and rights declaration are preserved under `media/0.1.4/`;
+none is relabelled. The current README, media captions and manifest now describe
+0.1.5 and distinguish the older hardware reports. These retained exports used fixed
+input/run delays and did not trace renderer completion. They document the visible
+interface, not complete-frame pixel equivalence, hardware, audio or qualification.
+
 ## Limits at this version
 
 Not tested yet on 0.1.5: hardware; complete timing, memory and stress qualification; every
@@ -108,7 +139,9 @@ scale, root and pitch endpoint; Static and Pickup; tempo/swing/track-speed/patte
 combinations; Part-copy and Part-save combinations; FM FOLLOW beside the currently released
 FM Synth. Released FM Synth 0.1.2/0.1.3 declares a conflict, so it is not forced into this set.
 The held FM chromatic-key mark issue described in the PR is a code-reading finding, not a
-new capture. The exact integer-lock walk has the unresolved zero-step result described above.
+new capture. The first integer-lock walk had the incorrect +0.2 input described above;
+the bounded completion did not retain the intended zero step through playback. Neither
+is a pass of the historical integer-lock playback case.
 
 The 13 November #1272-base lifecycle/co-install/catalogue runs are earlier evidence on their
 own base, not repeated results on this base. The MKI reports below concern 0.1.4's card build,
