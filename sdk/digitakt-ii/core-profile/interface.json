@@ -5,12 +5,6 @@
   "status": "Modwerk's Digitakt II base for OS 1.17, built from the pinned core-dt2 1.1 source and selected by the SHA-256 in sdk/machines/digitakt-ii/base-binding.json.",
   "events": [
     {
-      "name": "ev_seq_audio_phrase",
-      "since": "1.1",
-      "when": "On supported audio note trigs after pitch resolution, and on later empty steps when requested. Subscribers are visited in ascending contribution order.",
-      "handler": "uint32_t handler(const struct dt2_seq_grid_window *window, uint32_t pitch, uint32_t velocity, struct dt2_seq_phrase_note *notes); write at most eight notes to notes and return their count. Zero passes through or ends continuation. REST is silent. OR CARRY into the count to request empty steps. Use the read-only stock deadlines, keep work bounded, and leave the stock queue untouched."
-    },
-    {
       "name": "ev_tick",
       "when": "the UI compose check, approximately 30 Hz",
       "handler": "void f(void *ctrl); set ctrl + 0x20 to 1 to request redraw; not an audio-rate clock"
@@ -65,10 +59,15 @@
         "sha256": "cea65d5607761da9df8c0c7d7017d3552f7d8fa860ee8a93172c993bb01290d2"
       },
       "order": "lower order first (shipped mods use 10-90); the first handler to set an LED keeps it"
+    },
+    {
+      "name": "ev_seq_audio_phrase",
+      "since": "1.1",
+      "when": "On supported audio note trigs after pitch resolution, and on later empty steps when requested. Subscribers are visited in ascending contribution order.",
+      "handler": "uint32_t handler(const struct dt2_seq_grid_window *window, uint32_t pitch, uint32_t velocity, struct dt2_seq_phrase_note *notes); write at most eight notes to notes and return their count. Zero passes through or ends continuation. REST is silent. OR CARRY into the count to request empty steps. Use the read-only stock deadlines, keep work bounded, and leave the stock queue untouched."
     }
   ],
   "tables": [
-    { "name": "core_project_archive", "since": "1.1", "entryBytes": 4, "order": "ascending", "purpose": "Pointers to fixed-size project save/load descriptors." },
     {
       "name": "core_fast",
       "entry": 4,
@@ -126,6 +125,14 @@
           "role": "memcpy: follows kit copies in RAM (pattern copy and paste, PASTE KIT, undo)"
         }
       ]
+    },
+    {
+      "name": "core_project_archive",
+      "since": "1.1",
+      "order": "ascending",
+      "purpose": "Pointers to fixed-size project save/load descriptors.",
+      "entry": 4,
+      "room": 4
     }
   ],
   "exports": [
