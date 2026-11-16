@@ -87,7 +87,7 @@ The recorder's press site asks the grid for that skipped or passed point and wri
 - Micro timing has 24 units a step, so a hit can land up to 1/48 of a step from where it sounded.
 - A roll over a step that already has a retrig keeps that step's retrig.
 - A roll started before LIVE RECORDING records from the first hit after it starts, with no press trig. Stock records nothing there.
-- Under heavy load (BD ANALOG playing) stock's UI task can fall seconds behind during a roll. Hits then wait for it and are recorded seconds late, stamped with the step and timing they were played. Only when 126 of the module's own note events still wait (about 63 hits) is a hit dropped rather than recorded wrongly. With this version that load has not been run on a unit yet (TESTING.md).
+- Under heavy load (BD ANALOG playing) stock's UI task can fall seconds behind during a roll. Hits then wait for it and are recorded seconds late, stamped with the step and timing they were played. Only when 126 of the module's own note events still wait (about 63 hits) is a hit dropped rather than recorded wrongly. Past that, when the Rytm is so overloaded that stock's own UI queue overflows, stock loses messages itself, hits among them (TESTING.md).
 - Not tested: external MIDI clock, and what lands in the next pattern when the pattern changes during a roll.
 
 ## Tests and measurements
