@@ -31,9 +31,10 @@ signature is corrected, and the module compatibility and package-fingerprint che
 No 0.1.5 owner approval is fabricated, and these results are not release qualification.
 The import record pins the public v2.23 quantizer files. At the owner's request, the root README
 is now re-vendored byte for byte from that same revision; its earlier 38,138-byte archive did
-not match its recorded revision. The earlier 157-file import check and four requested-import
-tests passed before that correction; the correction's targeted checks are pending. The test
-version assertion changes only from 0.1.4 to 0.1.5.
+not match its recorded revision. After the correction and merging main `fccb6d96`, the
+157-file import check and all four requested-import tests pass. The actual native-source
+fingerprint and 7,038-byte package are unchanged from the independently verified build.
+The test version assertion changes only from 0.1.4 to 0.1.5.
 
 ## Emulator — 15 November 2026
 
