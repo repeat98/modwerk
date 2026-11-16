@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.2.2-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Retrig rolls recorded while the Rytm is working hard (BD ANALOG playing): a hit the Rytm cannot take at once is now recorded a moment later, at the step and timing you played it, instead of being dropped.",
+      "Uses about 3.6 KB more of the module memory.",
+      "Recording, Retrig Grid and the RTRG key work as in 0.2.1."
+    ]
+  },
+  {
     "version": "0.2.1-experimental",
     "date": "2026-11-06",
     "changes": [

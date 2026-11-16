@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "live-rec-retrig-fix",
   "name": "Live Rec Retrig Fix",
-  "version": "0.2.1-experimental",
+  "version": "0.2.2-experimental",
   "machine": "analog-rytm-mkii",
   "category": "machines",
   "exclusive": false,
@@ -101,7 +101,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 10192,
+    "memoryBytes": 13772,
     "fastBytes": 0,
     "load": {
       "display": "Not measured yet",
@@ -111,7 +111,7 @@
   },
   "evidence": {
     "tier": "none",
-    "moduleVersion": "0.2.1-experimental",
+    "moduleVersion": "0.2.2-experimental",
     "sourceSha256": null,
     "reports": [],
     "hardware": null,
@@ -119,7 +119,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu c5732f0, scripted pressure: every rate, ALWAYS ON, a press during a roll, rate changes, swing 50 to 66, quantize on and off, the RTRG key's light. On the author's Analog Rytm MKII (OS 1.74), as reported: 0.1.0 RR09 to RR16 pass; 0.2.0 RC07 to RC11 (rates, quantize, short rolls, re-press, the row, a project save and reload) and LD01 (the key's light); 0.2.1 in LP01, a 16-module set (a roll with pad pressure, Retrig Grid, RTRG + YES), its idle handlers 2.5 µs a block against 3.4 µs. Not run alone on a unit. See TESTING.md.",
+    "summary": "rytm-emu, scripted pressure: every rate, ALWAYS ON, re-press, rate changes, swing, quantize, the RTRG key. Unit (author, OS 1.74): 0.1.0 RR09-RR16; 0.2.0 RC07-RC11, LD01; 0.2.1 LP01 (16 modules), idle 2.5 µs a block. 0.2.2 (hits under BD ANALOG load): host model of stock's queue, 200 runs, no slot reused early; rytm-emu, a 61-hit roll records byte for byte as 0.2.1. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
