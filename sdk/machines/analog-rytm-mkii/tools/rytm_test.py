@@ -46,6 +46,7 @@ SETTLE_MS = 250         # before a capture that follows input, unless the case s
 MEM_MAX = 128           # link.c's MEM_MAX
 IPS = 200_000_000       # dtboot's instructions per second for this machine
 LINK_TICKS_S = 20       # the link counts 20 ticks a second from the boot (measured on the unit, 10 Nov 2026)
+PANEL_QUIET_MS = 3000   # after a panel press the base's link counts a person and refuses keys (see EMU_BOOT_LINK)
 BOOT_SETTLE_S = 6       # a unit run starts no sooner after a boot: twice the 3 s that was tried (see run_unit)
 EMU_LEAD_MS = 50        # a resumed snapshot runs this long before the case's first request
 EMU_TAIL_MS = 300
@@ -136,6 +137,10 @@ class Case:
         raise CaseError('%s:%d: %s' % (self.path, n, why))
 
     def req(self, n, name, *values, slot=None, gap=GAP_MS):
+        if name in ('key', 'enc') and n and self.t < self.panel_quiet:
+            self.fail(n, 'the link refuses keys and turns for %d ms after a panel press: wait first' % PANEL_QUIET_MS)
+        if name == 'release' and self.t < self.panel_quiet:
+            self.t = self.panel_quiet                       # the runner's closing release, once the link takes it
         self.ops.append(Op(self.t, name, values, n, slot))
         self.t += gap
 
@@ -149,6 +154,7 @@ class Case:
     def release_all(self, n):
         """Held keys let go one by one, as the panel sends them, then the link's release: it posts every up
         as a plain 0x10, which is wrong for a key that went down under FUNC, so it is only the net."""
+        self.t = max(self.t, self.panel_quiet)              # the link takes keys again after a panel press
         for name in self.flags.held():
             self.key(n, name, False)
         self.after_turn()
@@ -198,6 +204,7 @@ class Case:
         self.after_input = False
 
     def parse(self):
+        self.panel_quiet = 0
         body, seen = False, set()
         for n, raw in enumerate(self.path.read_text().splitlines(), 1):
             line = raw.split('#')[0].strip()
@@ -255,8 +262,28 @@ class Case:
                 # (GLOBAL > MIDI CONFIG). The unit's timeline keeps its time, idle.
                 # Only steps that leave no key held and no turn state behind: the unit compiles the
                 # same timeline, so a held key or a FUNC turn here would change its later steps.
-                if not args or args[0] not in ('key', 'cc', 'nrpn', 'note', 'wait'):
-                    self.fail(n, '`emu` takes key, cc, nrpn, note or wait: emu key GLOBAL')
+                if not args or args[0] not in ('key', 'cc', 'nrpn', 'note', 'wait', 'press'):
+                    self.fail(n, '`emu` takes key, cc, nrpn, note, wait or press: emu key GLOBAL')
+                if args[0] == 'press':
+                    # A key held on the emulator's panel for MS, as a person holds it: stock's key scan sees it,
+                    # so it repeats (a link key never does). The link then counts a person at the unit and refuses
+                    # keys and turns for 3 s. With `&` the timeline does not wait for its release (a key pressed
+                    # during the hold comes next).
+                    back = len(args) == 4 and args[3] == '&'
+                    if len(args) not in (3, 4) or not args[2].isdigit() or len(args) == 4 and not back:
+                        self.fail(n, 'emu press KEY MS [&]: emu press LFO 800')
+                    if self.head['target'] != 'emu':
+                        self.fail(n, 'a panel press is the emulator\'s alone: give the case target: emu')
+                    if args[1] not in rl.KEYS:
+                        self.fail(n, 'unknown key %s' % args[1])
+                    op = Op(self.t, 'press', (args[1], int(args[2])), n)
+                    op.only = 'emu'
+                    self.ops.append(op)
+                    self.panel_quiet = max(self.panel_quiet, self.t + int(args[2]) + PANEL_QUIET_MS)
+                    if not back:
+                        self.t += int(args[2])
+                    self.after_input = True
+                    return
                 first = len(self.ops)
                 self.step(n, args)
                 for op in self.ops[first:]:
@@ -937,6 +964,8 @@ class Emu:
             at = base + op.t * IPS // 1000
             if op.name in ('note', 'cc'):
                 args += ['--usb-midi', '%s@%d' % (note_bytes(op, note_channel).hex(), at)]
+            elif op.name == 'press':
+                args += ['--press', '%s@%d:%d' % (op.values[0], at, op.values[1] * IPS // 1000)]
             elif op.name != 'audio':
                 seq = (len(sent) + 1) & 0x7f
                 args += ['--usb-midi', '%s@%d' % (rl.request(seq, op.name, *op.values).hex(), at)]
@@ -960,7 +989,7 @@ class Emu:
             problems.insert(0, self.stopped)
         got, replies, begun = iter(match_replies(sent, link_replies(usb), where=True)), [], {}
         for op in case.ops:
-            if op.name in ('note', 'cc'):
+            if op.name in ('note', 'cc', 'press'):
                 replies.append((0, b''))
             elif op.name == 'audio':
                 replies.append(None)

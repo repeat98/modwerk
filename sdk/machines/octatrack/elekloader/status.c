@@ -15,6 +15,7 @@
 #include "fxids.h"
 #include "load_wire.h"
 void modwerk_status_close_menu(void); /* below, with the menu rows */
+extern const char modwerk_base_version[]; /* build_core.py, from base-version.json: "0.7" */
 #ifdef MODWERK_DEV
 void modwerk_cost_stamp(unsigned k); /* diag.c: the development profile of the base's hooks */
 #define MW_STAMP(k) modwerk_cost_stamp(k)
@@ -101,6 +102,7 @@ static void cpu_note_played(void)
     else if (++play_readings >= 8u) cpu_played = recent_mean();
 }
 static void missing_check(void);
+static void switches_tick(void);
 static void memory_tick(void);
 static void status_tick(void);
 void modwerk_fxpage_missing(void); /* fxpage.c: once, unlisted module handles show MISSING, not NONE */
@@ -117,6 +119,7 @@ static void status_tick(void)
     modwerk_fxpage_missing(); /* the first tick builds it; after that it returns at once */
     if (++ticks % 30u) return; /* twice a second */
     missing_check();
+    switches_tick();
     uint32_t count = DTCN3, frames = dl_frames, idle = modwerk_idle_counts;
     uint32_t counts = count - last_count, df = frames - last_frames, di = idle - last_idle;
     last_count = count, last_frames = frames, last_idle = idle;
@@ -150,8 +153,8 @@ static void status_tick(void)
 
 /* The dialogs: while one shows it takes every key and encoder, so nothing changes under it; NO closes it and the
  * screen it covered is back as it was. CUE + PROJ toggles the status from anywhere; PROJ's MODWERK category (the
- * fifth root row build_core.py adds, owner 12 October 2026) opens each page: LOAD, MODULE LOAD, MISSING, SELF TEST. */
-enum { CLOSED, SHOWN, TEST, MISSING, MEMORY, MODULE_LOAD, REFUSED };
+ * fifth root row build_core.py adds, owner 12 October 2026) opens each page: LOAD, MODULE LOAD, MISSING, SELF TEST, MODULES. */
+enum { CLOSED, SHOWN, TEST, MISSING, MEMORY, MODULE_LOAD, REFUSED, SWITCHES };
 static int open, taken = -1; /* which shows; a key press the handler took, whose release it takes too (-1: none; TRIG 1 is 0) */
 /* What a host is doing to the unit, on its own screen (owner, 13 November 2026: a sync shows a dialog with a progress
  * bar, and a base update takes the whole screen and the panel until it is saved). The step is worked out each tick
@@ -246,7 +249,7 @@ static int menu_open(void)
 void modwerk_status_close_menu(void) { if (close_menu) close_menu = 0, CLOSE_MENU(); }
 /* PROJ > MODWERK's rows (build_core.py): the category's label, then each row's label and action. */
 char modwerk_menu_label[] = "MODWERK", modwerk_load_label[] = "LOAD", modwerk_modules_label[] = "MODULE LOAD",
-     modwerk_missing_label[] = "MISSING", modwerk_test_label[] = "SELF TEST";
+     modwerk_missing_label[] = "MISSING", modwerk_test_label[] = "SELF TEST", modwerk_switches_label[] = "MODULES";
 static unsigned missing_top, modules_top;
 static int missing_asked; /* MISSING opened from the menu: it stays open with nothing missing */
 /* Opened from the menu, the page says for two seconds how to open it in one gesture (owner, 15 October 2026). */
@@ -365,6 +368,103 @@ static void memory_tick(void)
  * slots running it: a hardware figure, or 7/4 of an emulator claim (~). */
 static struct modwerk_module_load modules[MODWERK_FX_IDS];
 static unsigned modules_count(void) { return modwerk_dsp_module_loads(modules); }
+/* MODULES (owner, 16 November 2026: modules switched on and off on the unit, at once): every installed module in
+ * name order, ON or OFF at the right. UP and DOWN move, YES switches the module under the cursor (modset.c: unloaded
+ * or loaded at once, and saved), NO closes. A module a track runs, or a unit that plays, is refused, and the page says
+ * why in its last line; nothing changes then. The rows are read when the page opens, after each answer and once a
+ * second, so a host's change shows too. */
+#define SWITCH_ROWS 5u
+struct switch_row { uint32_t id; char name[16]; uint8_t on; };
+static struct switch_row switches[2u * RUNTIME_MODULES];
+static unsigned switch_count, switch_cursor, switch_top;
+static uint32_t switch_asked, switch_read_at, switch_said_until;
+static uint8_t switch_waiting, switch_stale;
+static const char *switch_said;
+static int switch_before(const struct switch_row *a, const struct switch_row *b)
+{
+    for (unsigned i = 0; i < 16u; ++i) if (a->name[i] != b->name[i]) return (unsigned char)a->name[i] < (unsigned char)b->name[i];
+    return a->id < b->id;
+}
+static void switches_read(void)
+{
+    static uint8_t page[4u + 24u * 13u];
+    static struct switch_row row;
+    uint32_t keep = switch_cursor < switch_count ? switches[switch_cursor].id : 0, lock;
+    unsigned n = 0, got;
+    switch_read_at = ticks;
+    /* The shelf first, in one hold of the machine: it either stands still for all of it or is asked again. */
+    lock = modwerk_machine_lock();
+    for (unsigned first = 0; ; first += got) {
+        unsigned bytes = modwerk_modset_off_list(page, first, MODSET_OFF_PAGE);
+        if (!bytes) { modwerk_machine_unlock(lock); switch_stale = 1; return; }
+        got = page[3];
+        for (unsigned i = 0; i < got && n < RUNTIME_MODULES; ++i, ++n) {
+            const uint8_t *e = page + 8u + MODSET_OFF_ENTRY * i;
+            switches[n].id = (uint32_t)e[4] << 24 | (uint32_t)e[5] << 16 | (uint32_t)e[6] << 8 | e[7], switches[n].on = 0;
+            for (unsigned c = 0; c < 16u; ++c) switches[n].name[c] = (char)e[8 + c];
+        }
+        if (got < MODSET_OFF_PAGE) break;
+    }
+    modwerk_machine_unlock(lock);
+    for (unsigned first = 0; ; first += got) {
+        lock = modwerk_machine_lock();
+        got = (modwerk_runtime_list(page, first, 13u) - 4u) / 24u;
+        modwerk_machine_unlock(lock);
+        for (unsigned i = 0; i < got && n < 2u * RUNTIME_MODULES; ++i, ++n) {
+            const uint8_t *e = page + 4u + 24u * i;
+            switches[n].id = (uint32_t)e[4] << 24 | (uint32_t)e[5] << 16 | (uint32_t)e[6] << 8 | e[7], switches[n].on = 1;
+            for (unsigned c = 0; c < 16u; ++c) switches[n].name[c] = (char)e[8 + c];
+        }
+        if (got < 13u) break;
+    }
+    for (unsigned i = 0; i < n; ++i) { /* capitals, as the font has no others, and a name for one without */
+        char *t = switches[i].name;
+        t[15] = 0;
+        if (!t[0]) for (unsigned c = 0; c < 8u; ++c) t[c] = "UNNAMED"[c];
+        for (unsigned c = 0; t[c]; ++c) if (t[c] >= 'a' && t[c] <= 'z') t[c] = (char)(t[c] - 32);
+    }
+    for (unsigned i = 1; i < n; ++i) { /* by name, so a row stays where it is when it is switched */
+        row = switches[i];
+        unsigned k = i;
+        for (; k && switch_before(&row, &switches[k - 1u]); --k) switches[k] = switches[k - 1u];
+        switches[k] = row;
+    }
+    switch_count = n, switch_stale = 0;
+    for (unsigned i = 0; keep && i < n; ++i) if (switches[i].id == keep) switch_cursor = i;
+    if (switch_cursor >= n) switch_cursor = n ? n - 1u : 0;
+    if (switch_top > switch_cursor) switch_top = switch_cursor;
+    if (switch_cursor >= switch_top + SWITCH_ROWS) switch_top = switch_cursor + 1u - SWITCH_ROWS;
+}
+/* What a refused switch says, in the page's last line for three seconds. */
+static const char *switch_why(uint32_t result)
+{
+    if (result == MODSET_SWITCH_PLAYING) return "STOP PLAYBACK FIRST";
+    if (result == MODSET_SWITCH_PARTIAL) return "RESTART FIRST";
+    if (result == MODSET_SWITCH_FULL || result == MODSET_SWITCH_REFUSED + RUNTIME_FULL) return "NO ROOM FOR IT";
+    if (result == MODSET_SWITCH_REFUSED + RUNTIME_IN_USE) return "IN USE ON A TRACK";
+    if (result == MODSET_SWITCH_REFUSED + RUNTIME_MEMORY) return "NO MEMORY FOR IT";
+    if (result == MODSET_SWITCH_REFUSED + RUNTIME_CYCLES) return "DSP FULL";
+    if (result == MODSET_SWITCH_REFUSED + RUNTIME_CONFLICT) return "CLASHES WITH ANOTHER";
+    if (result == MODSET_SWITCH_REFUSED + RUNTIME_FEATURE) return "RESTART, THEN RETRY";
+    if (result == MODSET_SWITCH_BUSY || result == MODSET_SWITCH_REFUSED + RUNTIME_BUSY) return "BUSY: TRY AGAIN";
+    return result >= MODSET_SWITCH_REFUSED ? "REFUSED" : 0; /* GONE: a host changed it, and the rows show how */
+}
+static void switches_tick(void)
+{
+    if (open != SWITCHES) return;
+    if (switch_waiting && modwerk_modset_switch_result != MODSET_SWITCH_PENDING) {
+        switch_waiting = 0, switch_stale = 1;
+        if ((switch_said = switch_why(modwerk_modset_switch_result)) != 0) switch_said_until = ticks + 180u;
+    }
+    if (switch_stale || ticks - switch_read_at >= 60u) switches_read();
+}
+void modwerk_switches_menu(int unused)
+{
+    (void)unused;
+    if (!menu_open()) return;
+    open = SWITCHES, switch_cursor = switch_top = 0, switch_said = 0, close_menu = 1;
+    switches_read();
+}
 volatile uint32_t modwerk_status_key_at; /* modwerk_runtime_ticks at the last key or knob: dsp.c's compaction waits for quiet */
 /* The pages never hold the Octatrack's controls (owner, 15 October 2026: the page ate PLAY and STOP): PLAY, STOP and
  * REC always reach stock and the page stays, so the load can be watched while playing. NO (and YES on the read-only
@@ -396,6 +496,17 @@ int modwerk_status_key(int code, int pressed)
     if (open == CLOSED || code == CUE || code == PLAY || code == STOP || code == REC) return 0;
     if (open == TEST) {
         if (code == NO) modwerk_selftest_abort(), open = CLOSED;
+        taken = code;
+        return 1;
+    }
+    if (open == SWITCHES && (code == UP || code == DOWN || code == YES)) {
+        if (code == UP && switch_cursor) --switch_cursor;
+        if (code == DOWN && switch_cursor + 1u < switch_count) ++switch_cursor;
+        if (switch_top > switch_cursor) switch_top = switch_cursor;
+        if (switch_cursor >= switch_top + SWITCH_ROWS) switch_top = switch_cursor + 1u - SWITCH_ROWS;
+        if (code == YES && switch_cursor < switch_count && !switch_waiting &&
+            modwerk_modset_switch(switches[switch_cursor].id, !switches[switch_cursor].on))
+            switch_waiting = 1, switch_asked = switches[switch_cursor].id, switch_said = 0;
         taken = code;
         return 1;
     }
@@ -492,8 +603,12 @@ static uint32_t share(uint32_t part, uint32_t whole) { return whole ? (part > wh
 /* A frame and its title over the screen, stock's dialog style. */
 static void dialog(unsigned char *frame, const char *title)
 {
+#ifdef MODWERK_HOST
+    host_frame = frame;
+#else
     for (unsigned i = 0; i < 7u; ++i) surface[i] = ((const volatile uint32_t *)SURFACE)[i];
     surface[3] = (uint32_t)(uintptr_t)frame;
+#endif
     fill(frame, X0, Y0, X1, Y1, 0);
     outline(frame, X0, Y0, X1, Y1);
     label((unsigned)(64 - TEXT_WIDTH(FONT, -1, title) / 2), Y0 + 3u, title);
@@ -645,6 +760,29 @@ static void modules_page(unsigned char *frame)
     if (modules_top + ROWS < n) arrow(frame, X0 + 62u, Y0 + 21u + 8u * (ROWS - 1u) + 3u, 0);
     if (estimate) label(X0 + 4u, Y1 - 8u, "~ ESTIMATE");
     button(frame, X1 - 26u, Y1 - 10u, "YES");
+}
+/* MODULES: five rows, the cursor's with a pointer; the last line is why a switch was refused, else the keys. */
+static void switches_page(unsigned char *frame)
+{
+    dialog(frame, "MODULES");
+    if (!switch_count) label(X0 + 6u, Y0 + 17u, "NO MODULES INSTALLED.");
+    for (unsigned i = 0; i < SWITCH_ROWS && switch_top + i < switch_count; ++i) {
+        const struct switch_row *m = &switches[switch_top + i];
+        unsigned top = Y0 + 13u + 8u * i, c = 0;
+        char name[16];
+        for (; c < 15u && m->name[c]; ++c) name[c] = m->name[c];
+        name[c] = 0;
+        while (c && TEXT_WIDTH(FONT, -1, name) > 70) name[--c] = 0; /* clear of the state */
+        if (switch_top + i == switch_cursor) for (unsigned k = 0; k < 3u; ++k) fill(frame, X0 + 3u + k, top + k, X0 + 3u + k, top + 4u - k, 1);
+        label(X0 + 9u, top, name);
+        const char *state = switch_waiting && m->id == switch_asked ? "..." : m->on ? "ON" : "OFF";
+        label(X1 - 14u - (unsigned)TEXT_WIDTH(FONT, -1, state), top, state);
+    }
+    if (switch_top) arrow(frame, X1 - 10u, Y0 + 14u, 1);
+    if (switch_top + SWITCH_ROWS < switch_count) arrow(frame, X1 - 10u, Y0 + 14u + 8u * (SWITCH_ROWS - 1u), 0);
+    if (switch_said && (int32_t)(switch_said_until - ticks) > 0) { label(X0 + 4u, Y1 - 8u, switch_said); return; }
+    if (switch_count) button(frame, X0 + 4u, Y1 - 10u, "YES"), label(X0 + 34u, Y1 - 8u, "ON/OFF");
+    button(frame, X1 - 24u, Y1 - 10u, "NO");
 }
 /* A bar whose last `part` of `permille` is dotted: what one effect adds to what its core already holds. */
 static void share_bar(unsigned char *frame, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t permille, uint32_t part)
@@ -955,8 +1093,12 @@ static void status_draw(unsigned char *frame)
     if (open == MISSING) { missing_page(frame); return; }
     if (open == TEST) { test_page(frame); return; }
     if (open == MODULE_LOAD) { modules_page(frame); return; }
+    if (open == SWITCHES) { switches_page(frame); return; }
     if (open != SHOWN) return;
-    dialog(frame, "MODWERK STATUS");
+    /* The title names the base by its version (owner, 16 November 2026: a number a player can read and say). */
+    static char title[24] = "MODWERK BASE ";
+    for (unsigned i = 0; i < 9u && (title[13u + i] = modwerk_base_version[i]) != 0; ++i) title[14u + i] = 0;
+    dialog(frame, title);
     uint32_t cpu_peak = 0;
     for (unsigned i = 0; i < 8u; ++i) cpu_peak = cpu_recent[i] > cpu_peak ? cpu_recent[i] : cpu_peak;
     /* Two questions a player asks (owner, 15 October 2026): how hard it works now, and how much DSP space is left.
