@@ -12786,7 +12786,7 @@
           "dsp": {
             "level": "minimal",
             "basis": "source-estimate",
-            "rationale": "No DSP code.",
+            "rationale": "No DSP code: MIDI Scenes runs on the ColdFire only and sends MIDI.",
             "source": "manifest.py"
           },
           "memory": {
