@@ -3324,7 +3324,7 @@
       ]
     }
   ],
-  "sourceCommit": "40307ecd410d7e4f306d10f04025b8f44ab70447",
+  "sourceCommit": "c62ee5a6f507d59789f17ce244fdffc343511a20",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
@@ -3351,7 +3351,7 @@
     "output-matrix": "0.1.1-experimental",
     "quantize-live-rec-toggle": "0.1.1-experimental",
     "apply-scene": "0.2.0-experimental",
-    "direct-jump-kyoti": "0.1.2-experimental",
+    "direct-jump-kyoti": "0.2.0-experimental",
     "dejavu": "0.1.0-experimental",
     "arp-key-locks": "0.1.0-experimental",
     "temp-save": "0.1.1-experimental",

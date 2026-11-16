@@ -396,15 +396,15 @@
       "octabam": true,
       "abi": 7,
       "features": 1,
-      "sites": 5,
+      "sites": 6,
       "copies": 0,
       "fills": 0,
-      "version": "0.1.2-experimental",
+      "version": "0.2.0-experimental",
       "name": "DirectJmp Kyoti",
       "module": "075d79a3",
-      "bytes": 2462,
-      "sha256": "89a38e18728bb2039a0f5e3f39305fcb7be75e0db260acd6b33bd46d7e281cef",
-      "path": "octatrack-modules/direct-jump-kyoti/0.1.2-experimental.mwrm"
+      "bytes": 4374,
+      "sha256": "3185b05c49a07e36baf30cf854c4077d78b3beed7300d347f86f9b475666078e",
+      "path": "octatrack-modules/direct-jump-kyoti/0.2.0-experimental.mwrm"
     },
     {
       "id": "dejavu",
