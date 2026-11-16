@@ -158,6 +158,17 @@ function octatrack(id) {
   else if (found.files) ok('dsp sources', found.files + ' DSP source' + (found.files === 1 ? '' : 's') + ': no rep, no label that prefixes another')
   else info('dsp sources', 'no .asm source (ColdFire-only module)')
 
+  // The register contract of its DSP package's entries, read from the assembled words (scripts/dsp-register-contract.py): a hook entry writes only its
+  // site's clobbers, an init keeps r1/n1/m1. Reported until the owner sets REFUSED_FROM there; from then a module listed on or after it is refused.
+  const registers = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/dsp-register-contract.py', '--json', id], { cwd: root, encoding: 'utf8' })
+  const contract = registers.status === 0 ? JSON.parse(registers.stdout) : null, more = contract?.findings?.length > 1 ? ' (and ' + (contract.findings.length - 1) + ' more)' : ''
+  const registersFix = 'keep what the contract names, or widen the site\'s clobbers in a base pull request; python3 -B scripts/dsp-register-contract.py --json ' + id
+  if (!contract) fail('dsp registers', 'the check did not run: ' + (registers.stderr || registers.error?.message || '').trim().split('\n').pop(), 'python3 -B scripts/dsp-register-contract.py --json ' + id)
+  else if (contract.skipped) info('dsp registers', 'not checked: ' + contract.skipped)
+  else if (contract.findings.length && contract.refused) fail('dsp registers', contract.findings[0] + more, registersFix)
+  else if (contract.findings.length) info('dsp registers', contract.findings[0] + more + '. Reported, not refused: the owner sets the date it is refused from')
+  else if (contract.entries) ok('dsp registers', contract.entries + ' DSP entr' + (contract.entries === 1 ? 'y writes' : 'ies write') + ' only what their contract allows')
+
   if (rulesProblem) fail('module rules', 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), 'fix what it names, then run npm run modules:check -- --base origin/main')
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')
 
