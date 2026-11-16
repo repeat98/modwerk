@@ -284,6 +284,8 @@ int main(void)
     /* PROJ > MODWERK's other rows: each opens its page; NO closes it. */
     modwerk_load_menu(0);
     CHECK(open == SHOWN && tip_until == ticks + 120u);                 /* from the menu: the CUE + PROJ tip for 2 s */
+    CHECK(strstr(shows(), "CPU|") && strstr(said, "|DSP T1-4|") && strstr(said, "|DSP T5-8|") && strstr(said, "|MEM T1-4|") &&
+          strstr(said, "|MEM T5-8|") && !strstr(said, "WORKING NOW") && !strstr(said, "DSP SPACE USED")); /* five rows, no headings */
     CHECK(modwerk_status_key(NO, 1) && open == CLOSED && modwerk_status_key(NO, 0));
     /* A machine voice refused for cycles shows the same DSP FULL box, on "Tn SRC" (a track's source, no effect slot). */
     modwerk_status_machine_refused(0, "Analog BD");

@@ -15,7 +15,7 @@
 #include "fxids.h"
 #include "load_wire.h"
 void modwerk_status_close_menu(void); /* below, with the menu rows */
-extern const char modwerk_base_version[]; /* build_core.py, from base-version.json: "0.7" */
+extern const char modwerk_base_version[]; /* build_core.py, from base-version.json: "0.7.1" */
 #ifdef MODWERK_DEV
 void modwerk_cost_stamp(unsigned k); /* diag.c: the development profile of the base's hooks */
 #define MW_STAMP(k) modwerk_cost_stamp(k)
@@ -1102,20 +1102,20 @@ static void status_draw(unsigned char *frame)
     uint32_t cpu_peak = 0;
     for (unsigned i = 0; i < 8u; ++i) cpu_peak = cpu_recent[i] > cpu_peak ? cpu_recent[i] : cpu_peak;
     /* Two questions a player asks (owner, 15 October 2026): how hard it works now, and how much DSP space is left.
-     * Now: the main CPU and each DSP chip by its tracks (measured, with the recent peak's tick). DSP space used: the
+     * Five rows, each with its bar, no headings (owner, 16 November 2026): CPU, then DSP T1-4 and T5-8, each chip's
+     * time by its tracks (measured, with the recent peak's tick), then MEM T1-4 and T5-8, each chip's DSP memory used: the
      * fuller of what admission books and the chip's code memory, whichever says DSP MEMORY FULL first (effects and
      * machines both take it). Tracks 1-4 run on core 1, tracks 5-8 on core 0. */
     /* each core's arena spelled out: the on-demand build rewrites these reads (resident_engines.py status()) */
     const uint32_t code[2] = {share(dl_residency_words[0], modwerk_dsp_arena[0]), share(dl_residency_words[1], modwerk_dsp_arena[1])};
     uint32_t used[2];
     for (unsigned core = 0; core < 2u; ++core) { uint32_t booked = modwerk_dsp_booked(core); used[core] = booked > code[core] ? booked : code[core]; }
-    static const char *const names[7] = {"WORKING NOW", "CPU", "TRACKS 1-4", "TRACKS 5-8", "DSP SPACE USED", "TRACKS 1-4", "TRACKS 5-8"};
-    const uint32_t value[7] = {0, modwerk_status[CPU], modwerk_status[DSP1_MEAN], modwerk_status[DSP0_MEAN], 0, used[1], used[0]},
-                   peak[7] = {0, cpu_peak, modwerk_status[DSP1_PEAK], modwerk_status[DSP0_PEAK], 0, 0, 0};
-    for (unsigned i = 0; i < 7u; ++i) {
-        unsigned y = Y0 + 14u + 7u * i;
+    static const char *const names[5] = {"CPU", "DSP T1-4", "DSP T5-8", "MEM T1-4", "MEM T5-8"};
+    const uint32_t value[5] = {modwerk_status[CPU], modwerk_status[DSP1_MEAN], modwerk_status[DSP0_MEAN], used[1], used[0]},
+                   peak[5] = {cpu_peak, modwerk_status[DSP1_PEAK], modwerk_status[DSP0_PEAK], 0, 0};
+    for (unsigned i = 0; i < 5u; ++i) {
+        unsigned y = Y0 + 16u + 9u * i;
         label(X0 + 4u, y - 1u, names[i]);
-        if (i == 0 || i == 4) continue; /* a heading */
         bar(frame, X0 + 48u, y, 40, 4, value[i], peak[i]);
         percent(X0 + 92u, y - 1u, value[i]);
     }

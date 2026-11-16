@@ -245,7 +245,7 @@ error, rejection, rollback, stall or crash, and frames never stopped.
 | # | Case | Expect | Layer | Status |
 |---|---|---|---|---|
 | 2D.1 | The full set installed, the largest selection the ledger admits on each core | The next pick is refused with its reason; a stock effect is refused only when it is dearer than its bank's Parts use in that slot and would take what runs or another Part past the allowance (finding 34) | U | open |
-| 2D.2 | MODULE LOAD with modules installed | Each module's share is of its core's DSP budget, the same figure the box after a pick and the STATUS page's DSP rows use; never seen on the unit yet | U | open |
+| 2D.2 | MODULE LOAD with modules installed | Each module's share is of its core's DSP budget, the same figure the box after a pick and the STATUS page's DSP rows use | U | done on an MKII, 16 Nov 2026 |
 | 2D.3 | Each module's cost on the unit | `-measure.py` typical and worst on both cores; the declared cost at least the measured one. Analog BD per its hardware plan, with `kind: hardware` afterwards | U | open |
 | 2D.4 | Free words without a run that fits | Refused as memory after the base lets go of what it holds; the planner closes the hole, or the case is the known one that cannot close and is recorded as such | U | done once; redo under the full set |
 
