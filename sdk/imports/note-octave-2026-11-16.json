@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/note-octave",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-16",
+  "upstream": {
+    "repository": "https://github.com/draadpiraat/modwerk",
+    "revision": "e0d1c3c9e5a0b198a17beaf15a2d724df4e5e7bb",
+    "path": "sdk/digitakt/modules/note-octave",
+    "license": "GPL-3.0-or-later"
+  },
+  "changes": [
+    "First Modwerk release for Digitakt I OS 1.54, on Core 2.1: FUNC + turn on a trig's note moves it by octaves.",
+    "Source-only export compiled in the pinned GCC 16.2 Docker toolchain; linked with Core 2.1 it gives the hardware-tested NO08 image (ca7b5b1e…) byte for byte."
+  ],
+  "runtimeSourceSha256": "bc278d69e8f85def1617c34fd8f5f175aecb5a0d004cf7465a712522fbfdfec4",
+  "packages": [
+    {
+      "os": "1.54",
+      "path": "sdk/imports/packages/note-octave/note-octave-0.1.0-experimental-os1.54.elemod",
+      "sha256": "2f9dce2e566bad49d747d377e8953e2edd2b4ede6f6f1771f597e709426312e6"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitakt/modules/note-octave/evidence/hardware-testing.json",
+  "requires": []
+}
