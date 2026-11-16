@@ -40,7 +40,7 @@ On a MIDI track, the scene-held encoder turn and press, the lock LEDs, the scene
 ## Compatibility and limitations
 
 - OS 1.40C on the Modwerk base 0.7.4 or newer, installed over USB. Card firmware cannot include it.
-- Not yet tested on a unit or in the emulator.
+- Installed and run briefly on one MKII; the scene locks, the crossfader, saving and reloading are not yet tested on a unit.
 - A damaged scenes.work, or one from a newer version, is never overwritten: that project then has no MIDI scene locks and keeps none. Rename or delete the file on the card to start over.
 - Keep MIDI Scenes installed while you save, reload or copy a project that uses it: without it, scenes.work is not saved, reloaded or copied with the project.
 - The power-cycle copy holds about 2,500 locks of the current bank. With more, unsaved locks since the last save are lost at a power cut.

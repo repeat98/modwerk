@@ -2,7 +2,15 @@
 
 ## 0.3.0-experimental (draft, 16 November 2026)
 
-Built only. No emulator or hardware run yet.
+### Install trial on an MKII, 16 November 2026
+
+Package SHA-256 `d32d25f1229d2680…` (`module:dev --build-only` at 9f750f1ac), on a development twin of base 0.7.4 (`31d16f88`: the beta flags without the controller rows, plus `--dev`) booted from RAM, module set empty, the loaded project's transport stopped. `npm run device -- try FILE --seconds 20`, not kept:
+
+- The base accepted it: all 33 stock-code sites and the 11 hook subscriptions. It ran 20 s with the UI tick at 60 a second throughout, then rolled back; nothing missing before or after.
+- The install handler ran (ev_modules_ready): battery RAM at 0x100f9800 went from zeros to `SCS2`, bank 0, 0 locks, a sum equal to the project id, and the project id equal to FNV-1a of the unit's "set/project" path read from 0x100f8480 and 0x100f8378. So the hook fired, the file read found no scenes.work, and the packed copy and its sum came out as designed for an empty bank.
+- Before the trial, the loaded project's 64 Parts (working and saved copies, both halves of the LFO designer area) held no MIDISC 2.x blob, so the conversion had nothing to change; no file was written.
+
+Not run in this trial: any scene gesture, the crossfader, CC output, a save, a reload, a power cycle, a project with locks.
 
 ## Commands and exact revision
 

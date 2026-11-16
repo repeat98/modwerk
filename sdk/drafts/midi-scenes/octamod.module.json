@@ -75,7 +75,7 @@
     ],
     "limitations": [
       "OS 1.40C, Modwerk base 0.7.4 or newer, over USB only: card firmware cannot include it.",
-      "Not yet tested on a unit or in the emulator.",
+      "Installed and run briefly on one MKII; the scene locks, the crossfader, saving and reloading are not yet tested on a unit.",
       "A damaged scenes.work, or one from a newer version, is never overwritten: the project then starts with no MIDI scene locks and keeps none. Rename or delete the file on the card to start over.",
       "Keep MIDI Scenes installed while you save, reload or copy projects that use it: without it scenes.work is not saved, reloaded or copied with the project.",
       "Part Save and Reload leave the MIDI locks as they are; a Kit or a Part copy does not carry them.",
@@ -126,7 +126,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Assembled and packaged only. No emulator or hardware results yet.",
+    "summary": "Installed as a 20 s trial on an MKII (base 0.7.4 development twin, not kept): sites and hooks accepted, the install handler wrote its battery-RAM copy as designed. No scene gesture, crossfader, save, reload or power cycle tested yet.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b2f7d26e59fd09ebee929835b8d10a3079f18afc",
     "gates": []
