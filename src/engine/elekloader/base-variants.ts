@@ -5,6 +5,7 @@
 // base-bound packages fits each (scripts/octatrack-base.mjs --usb-audio-variants proves it when it writes them).
 // The committed package is the default layout's; each other variant is a line patch against it, checked by hash.
 import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import baseVersions from '../../../sdk/machines/octatrack/base-versions.json' with { type: 'json' }
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { USB_AUDIO_LAYOUTS, type UsbAudioLayout } from '../../config/usb-audio.ts'
 import type { BaseFill } from './octatrack-base.ts'
@@ -23,6 +24,15 @@ export const DEFAULT_LAYOUT: BaseLayout = (Object.entries(VARIANTS).find(([, ide
 export const MEMBER_LAYOUT: BaseLayout = 'off'
 const IDENTITIES = new Map<string, BaseLayout>([[baseBinding.identity, DEFAULT_LAYOUT], ...Object.entries(VARIANTS).map(([layout, identity]) => [identity, layout as BaseLayout] as const)])
 
+/** A base's version, as its status page shows it (PROJ > MODWERK > LOAD: "MODWERK BASE 0.7"), by the identity a unit
+ * reports: every published version in each of its layouts (sdk/machines/octatrack/base-versions.json, which
+ * scripts/octatrack-base.mjs writes). Undefined for a base from before versions (16 November 2026) or a development build. */
+const VERSIONS = new Map<string, string>(baseVersions.bases.flatMap(base => base.identities.map(identity => [identity, base.version] as const)))
+export const baseVersion = (identity?: string) => identity === undefined ? undefined : VERSIONS.get(identity)
+/** The version of the base the site publishes. */
+export const CURRENT_BASE_VERSION = baseVersion(baseBinding.identity)
+/** How the site names a base to people: its version, or the start of its identity when it has none. */
+export const baseName = (identity: string) => baseVersion(identity) ?? identity.slice(0, 8)
 /** The layout a published base runs, by its identity; undefined for an older or unknown base. */
 export const baseLayout = (identity?: string) => identity === undefined ? undefined : IDENTITIES.get(identity)
 /** The previous base's identities (`500cdb6f…`, published until 11 November 2026, base-binding.json's `variants` at

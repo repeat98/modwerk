@@ -20,4 +20,21 @@ int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out); /* dsp.c:
 uint32_t modwerk_dsp_booked(unsigned core);
 unsigned modwerk_dsp_reads_buffer(unsigned id); /* dsp.c: 0 for an effect that needs no delay memory */
 unsigned modwerk_status_load(uint8_t *out); /* cached MWLD v1, no work scheduled by the read */
+/* PROJ > MODWERK > MODULES: modset.c switches an installed module off or on at once and keeps the ones that are off
+ * on its shelf. modwerk_modset_switch asks (0: the last one is not answered yet); modwerk_modset_switch_result then
+ * goes from PENDING to SWITCHED or to why not: REFUSED plus the loader's refusal (loader.h's runtime_refusal). */
+enum { MODSET_SWITCHED, MODSET_SWITCH_PENDING,
+       MODSET_SWITCH_PLAYING, /* the unit plays or records: stop first */
+       MODSET_SWITCH_BUSY,    /* a host session, a save or the card is in the way: again in a moment */
+       MODSET_SWITCH_FULL,    /* the saved set has no room for it */
+       MODSET_SWITCH_GONE,    /* a host changed it meanwhile */
+       MODSET_SWITCH_PARTIAL, /* this start did not load the card's whole set (skipped, held, one left out): restart first */
+       MODSET_SWITCH_REFUSED = 0x100 };
+int modwerk_modset_switch(uint32_t id, int on);
+extern volatile uint32_t modwerk_modset_switch_result;
+/* The modules that are off: "MWO", the entries here, the shelf's count (u16), 0, 0, then 56 bytes each: an INVENTORY
+ * entry (0xff, 0, parameter layout, module id, name) and the package's SHA-256. 0 while the shelf moves: ask again. */
+#define MODSET_OFF_ENTRY 56u
+#define MODSET_OFF_PAGE 5u /* entries a USB reply holds (ep0.c's OFF request) */
+unsigned modwerk_modset_off_list(uint8_t *out, unsigned first, unsigned most);
 #endif

@@ -353,6 +353,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     else if ((m = /^mask:(\d+)$/.exec(step))) await devIn(20, Math.min(Number(m[1]), 65535), 1) // development bases: interrupts off for N microseconds
     else if (step === 'missing') console.log(await missing())
     else if (step === 'inventory') console.log(JSON.stringify(await transport.inventory() ?? 'this base does not answer INVENTORY'))
+    else if (step === 'off') console.log(JSON.stringify(await transport.off() ?? 'this base does not answer OFF')) // switched off in PROJ > MODWERK > MODULES
     else if (step === 'xwatch') { // probe X bases (dev request 26): does anything write X:$7a92-$7fff? per core
       for (const core of [1, 0]) {
         for (const until = Date.now() + 10000; !(await devIn(26, 0x100 | core, 1))[0]; await wait(100))
