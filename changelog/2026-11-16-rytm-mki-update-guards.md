@@ -1,0 +1,1 @@
+SDK: an Analog Rytm MKI build is now refused when its update is larger than the unit's upgrade buffer takes, or when it changes the stock routines that write the boot flash. The module linker can now keep such routines off limits: a mod that references or copies one is refused. Both MKI limits are reported values still to be checked on the OS image before any Rytm MKI release.

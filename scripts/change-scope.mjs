@@ -5,6 +5,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { manifestBuildFields } from './module-source.mjs'
 import { alternation, moduleFolders } from './machine-folders.mjs'
+import { touchesBaseSize } from './base-size.mjs'
 
 // The machine registry names each machine's module folder: the Octatrack's, the elemod machines' (compiled firmware)
 // and the Zoom pedals' (prebuilt effect files, no compile job).
@@ -129,7 +130,7 @@ export function classifyChanges(changes) {
     if (change.path === '.github/workflows/pages.yml') scope.modules ||= compilerJob(change.before, 'source-packages') !== compilerJob(change.after, 'source-packages')
     scope.worker ||= workerChange(change)
     scope.logger ||= change.path.startsWith('sdk/runtime/logging/') && !isDocumentationPath(change.path)
-    scope.windows ||= /^src\/catalog\/module-folder\.|^scripts\/(modules|machine-modules|module-qualification)\.mjs$/.test(change.path)
+    scope.windows ||= /^src\/catalog\/module-folder\.|^scripts\/(modules|module-cpu-price|machine-modules|module-qualification)\.mjs$/.test(change.path)
       || /^scripts\/(prepare-runtime-spans|runtime_private_paths)\.py$|^sdk\/tests\/test_runtime_spans\.py$/.test(change.path)
       || /^scripts\/frontend-mcp(?:-private-host)?\.mjs$|^sdk\/tests\/test_frontend_mcp_host\.py$/.test(change.path)
   }
@@ -166,7 +167,7 @@ export function readChangeScope({ root, base, head = null }) {
     if (!inspect) return { path, before: '', after: '', regular: true }
     const before = read(commit, path), after = read(head, path)
     return { path, before: before.text, after: after.text, regular: before.regular && after.regular }
-  })), sdk }
+  })), sdk, base: names.some(touchesBaseSize) }
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

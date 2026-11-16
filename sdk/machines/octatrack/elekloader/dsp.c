@@ -153,7 +153,7 @@ static char owner_name[MODWERK_FX_IDS][16];
 static uint8_t *owner_page[MODWERK_FX_IDS]; /* its page recipe (the module image's head), and that image's length */
 static uint32_t owner_page_bytes[MODWERK_FX_IDS];
 static uint8_t owner_pinned[MODWERK_FX_IDS]; /* its ColdFire code names this id: it never moves (loader.h) */
-static uint32_t owner_cycles[MODWERK_FX_IDS]; /* an instance's chip cycles a sample, unfloored (status.c's MODULE LOAD) */
+static uint32_t owner_cycles[MODWERK_FX_IDS]; /* an instance's chip cycles a sample, unfloored (status.c's MODULE COST) */
 /* Each slot's least charge: the dearest stock effect this bank's Parts name there, working or saved, the one it runs and
  * the one `ids` asks for. A module id counts nothing here: each module is admitted for itself, and a Part naming one
  * that does not fit is refused at the switch. */
@@ -559,7 +559,7 @@ int modwerk_dsp_bank_names(unsigned id)
     return named;
 }
 
-/* MODULE LOAD (status.c): each installed module effect, by handle: its name, an instance's chip cycles a sample
+/* MODULE COST (status.c): each installed module effect, by handle: its name, an instance's chip cycles a sample
  * (unfloored: what it costs, not the ledger's charge), whether that is a hardware figure, and how many slots run it
  * on each core (T1-T4 core 1, T5-T8 core 0). Returns how many it wrote, at most MODWERK_FX_IDS. */
 unsigned modwerk_dsp_module_loads(struct modwerk_module_load *out)
@@ -629,6 +629,29 @@ fx_set modwerk_dsp_dry(void)
  * LOAD_HOLD ticks (about a minute), in case one never ends. */
 #define LOAD_HOLD 3600u
 static unsigned last_track = 0xffu, load_held;
+int modwerk_fxmap_describe(unsigned id, uint32_t *module, uint16_t *layout, char *name); /* fxmap.c */
+#ifndef MODWERK_HOST
+/* machine_registry.c's map of the machines a project uses; a base without the registry has none. */
+__attribute__((weak)) int modwerk_machine_absent(unsigned k, uint32_t *module, char *name) { (void)k, (void)module, (void)name; return 0; }
+__attribute__((weak)) int modwerk_machine_track_absent(unsigned t, uint32_t *module, char *name) { (void)t, (void)module, (void)name; return 0; }
+#endif
+/* The track's machine, when the project's machine map names it and it is absent: "POLY8 IS OFF" when it is switched
+ * off on MODULES, else "MISSING POLY8" (owner, 16 November 2026: machines in the project map). */
+static int machine_notice(unsigned track, char *text)
+{
+    uint32_t module = 0;
+    char name[16];
+    if (track >= 8u || !modwerk_machine_track_absent(track, &module, name)) return 0;
+    int off = modwerk_modset_is_off(module);
+    unsigned n = 0;
+    if (!off) for (const char *t = "MISSING "; *t; ) text[n++] = *t++;
+    unsigned at = n;
+    for (unsigned i = 0; i < 15u && name[i]; ++i) text[n++] = name[i] >= 'a' && name[i] <= 'z' ? (char)(name[i] - 32) : name[i];
+    if (n == at) for (const char *t = "MACHINE"; *t; ) text[n++] = *t++;
+    if (off) for (const char *t = " IS OFF"; *t; ) text[n++] = *t++;
+    text[n] = 0;
+    return 1;
+}
 int modwerk_dsp_missing_tick(int following, unsigned track, char *text)
 {
     if (!modwerk_fxmap_loading()) load_held = 0;
@@ -637,9 +660,21 @@ int modwerk_dsp_missing_tick(int following, unsigned track, char *text)
     last_track = track;
     fx_set say = {{0}};
     if (track < 8u) say = fx_and(modwerk_dsp_dry(), fx_with(fx_with(say, LIVE_FX[track]), LIVE_FX[8u + track]));
-    if (!fx_any(say)) return 0;
+    if (!fx_any(say)) return machine_notice(track, text);
     unsigned k = 0;
     while (!fx_in(say, k)) ++k;
+    /* A module switched off on PROJ > MODWERK > MODULES is not missing: "E-VERB IS OFF" (owner, 16 November 2026). */
+    uint32_t module = 0;
+    uint16_t layout;
+    char name[16];
+    if (modwerk_fxmap_describe(k, &module, &layout, name) && modwerk_modset_is_off(module)) {
+        unsigned n = 0;
+        for (; n < 15u && name[n]; ++n) text[n] = name[n] >= 'a' && name[n] <= 'z' ? (char)(name[n] - 32) : name[n];
+        if (!n) for (const char *t = "MODULE"; *t; ) text[n++] = *t++;
+        for (const char *t = " IS OFF"; *t; ) text[n++] = *t++;
+        text[n] = 0;
+        return 1;
+    }
     for (unsigned i = 0; i < 8u; ++i) text[i] = "MISSING "[i];
     modwerk_fxmap_name(k, text + 8);
     for (char *c = text + 8; *c; ++c) if (*c >= 'a' && *c <= 'z') *c = (char)(*c - 32); /* the popup sizes capitals only */
@@ -663,6 +698,17 @@ unsigned modwerk_dsp_missing_list(uint8_t *out, unsigned first, unsigned most)
         if (seen++ < first) continue;
         uint8_t *e = out + 4u + 24u * n++;
         e[0] = (uint8_t)k, e[1] = 0, e[2] = (uint8_t)(layout >> 8), e[3] = (uint8_t)layout;
+        for (unsigned i = 0; i < 4u; ++i) e[4 + i] = (uint8_t)(module >> (24 - 8 * i));
+        for (unsigned i = 0; i < 16u; ++i) e[8 + i] = (uint8_t)name[i];
+    }
+    /* Then the machines the project uses that are absent (machine_registry.c's map): handle 0xff, 0x80 and the entry. */
+    for (unsigned k = 0; k < MODWERK_MACHINE_MAP && n < most; ++k) {
+        uint32_t module;
+        char name[16];
+        if (!modwerk_machine_absent(k, &module, name)) continue;
+        if (seen++ < first) continue;
+        uint8_t *e = out + 4u + 24u * n++;
+        e[0] = 0xffu, e[1] = (uint8_t)(0x80u | k), e[2] = e[3] = 0;
         for (unsigned i = 0; i < 4u; ++i) e[4 + i] = (uint8_t)(module >> (24 - 8 * i));
         for (unsigned i = 0; i < 16u; ++i) e[8 + i] = (uint8_t)name[i];
     }

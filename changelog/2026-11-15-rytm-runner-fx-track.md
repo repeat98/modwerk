@@ -1,0 +1,1 @@
+Analog Rytm MKII SDK: the test runner's guide covers the FX track, SCENE and PERFORMANCE edit (FX is a toggle, FUNC + pad opens an edit, <CLEAR> empties a scene or macro), and `tools/cases/filter-hz/` adds seven cases for Filter Hz 1.3.0's DELAY and REVERB readouts, lock boxes, scene locks and performance depth.

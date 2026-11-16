@@ -2230,6 +2230,33 @@
    "raisers": [],
    "raisedByBase": true,
    "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
+  },
+  {
+   "event": "ot_sample_memory",
+   "index": 52,
+   "kind": "table",
+   "site": null,
+   "length": 0,
+   "record": 16,
+   "key": null,
+   "room": 1,
+   "declaration": "struct modwerk_sample_memory {\n    uint16_t abi;                       /* 1 */\n    uint16_t pages;                     /* 6,144-byte pages of sample memory wanted, 1-400 */\n    uint8_t *volatile at;               /* the base writes the pages' address once they are taken; 0 until then, and while refused */\n    uint32_t reserved[2];               /* 0 */\n};",
+   "when": "a module borrows sample memory while it is installed: the base takes its pages from stock's sample pool on the engine task, before it raises ev_modules_ready, and returns them once the module is removed",
+   "context": "the engine task (take and return); the module reads at from any task",
+   "contract": "Contribute one struct modwerk_sample_memory. The base takes that many whole pages from the top of the sample pool's free list as stock's track recorders do, so the unit's FREE MEM, sample loads and recorders see that much less, and writes their address to at; until then, and when the pool has not that many free pages in one run, at stays 0 and the module must leave stock alone. The pages keep their contents through LOAD PROJECT, a new project and REFORMAT FLEX RAM, but not through a power cycle. A replacement of the same module, same pages, keeps them; removal zeroes them and hands them back. One module at a time.",
+   "order": "one record (room 1).",
+   "subscribers": [],
+   "orderEvidence": "Room 1: the stock pool's cold init keeps one hole; a second borrower needs a reviewed change of the hole bookkeeping first.",
+   "sites": [
+    {
+     "site": "0x40097014",
+     "length": 4,
+     "guard": "e0d3888d08399b17d4ebdae2bd342f5e6714d70a09146a8d632a358d844818a7",
+     "op": "ptr",
+     "target": "mw_arena_clear",
+     "what": "the sample pool's cold init (LOAD PROJECT, a new project, REFORMAT FLEX RAM, boot) clears the arena through this call: the base clears around the borrowed pages and keeps them out of the free list"
+    }
+   ]
   }
  ]
 }

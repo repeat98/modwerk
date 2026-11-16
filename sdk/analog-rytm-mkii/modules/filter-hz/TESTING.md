@@ -1,5 +1,74 @@
 # Filter Hz — test report
 
+## 1.3.0 (the FX track's DELAY and REVERB frequencies)
+
+Read in stock OS 1.74's delay (`0x4010da24`) and reverb (`0x4010d434`), which run at 48 kHz in
+32-frame blocks: HPF and LPF are one-pole filters with coefficients from one Q31 table
+(`0x4028ab18`), the high-pass's at HPF >> 6 and the low-pass's at (HPF + LPF) >> 6; REVERB FRQ
+picks a first-order high shelf's coefficient (`0x4028a318`, whole values) and GAI its treble
+level. `src/fx-hz.c` reads the coefficient the DSP uses and works out the −3 dB frequency (HPF,
+LPF) or the shelf's corner (FRQ) with a 32-bit CORDIC; no table is copied. The 48 kHz rate is
+the audio interrupt's 1,500 blocks a second of 32 frames (rytm-emu) and the Overbridge clock
+measured on hardware, 48000.4 Hz (rytm-emu's OVERBRIDGE.md).
+
+- Independent code review (asm gate, fixed-point bounds, table indexes, view walk, no libgcc
+  calls): no defects; one comment corrected. A second review of the box table and the text site
+  (stack offsets at both sites, live registers, both paths into `0x40037b9c`, the table walk for
+  ids above 255, 0 and absent ones, alignment, branches into the patch): no defects.
+- Host check: `fx-hz.c` compiled on the host against the two tables gives the same text as a
+  floating-point reference of the same equations at every index 0..1016 (HPF, LPF) and every FRQ
+  value 0..127.
+- Emulator, rytm-emu 2ac0f1f, FH04 (Modwerk base 1c14b6b0 + 1.2.1, `5b5fd85c…1146`) against FX02
+  (the same with 1.3.0, `a755575b…c8d7`): DELAY HPF and LPF and REVERB FRQ, HPF and LPF set by CC on
+  channel 13 (LPF with its HPF at 0), each value 0 to 127, turned (one nudge) and locked (GRID
+  RECORDING, trig 1 held, one nudge): 2,560 frames. The text read back from every 1.3.0 frame is
+  the expected one (HPF 5.00Hz..12.0kHz, LPF 5.00Hz..OPEN from 113, FRQ 974Hz..14.0kHz); every
+  locked value is in a 33-pixel box (x−16..x+16) with at least a pixel of box either side and
+  nothing outside it. 1.2.1's frames show stock's numbers in stock's 27-pixel boxes ([report](evidence/emulator-1.3.0.json)).
+- HPF and LPF locked together: on FX02 and FL01 the two 33-pixel boxes shared a column, which
+  stock's inversion turned black and which took LPF's left margin (`1.44kHz` in 33..62 of a box
+  33..64). LPF's box and its locked text now sit two pixels right (x−14..x+18). Emulator, FL03 (a
+  Modwerk base development build + this version, `662563cf…0e4e`) against FL01 (`beb2a227…3b6e`):
+  HPF locked at 0 and at 96 by CC, LPF locked at every value 0..127, DELAY and REVERB, 512 frames.
+  FL03: boxes at 0..32 and 34..66 every time, a black column at 33, a pixel of white or more each
+  side of every text; LPF's text pixel for pixel FL01's moved two right, HPF's and the rest of the
+  screen unchanged. FL01: 14 to 33 frames per set with no white left of LPF's text. Unlocked values
+  and PERFORMANCE edit (stock's small boxes) are unchanged: the rig's turn and perf screens equal
+  FL01's references.
+- LPF follows a lock: track HPF 0, trig 1 held, HPF locked at 39 (79.0Hz) and LPF at 40: LPF reads
+  1.34kHz, the corner for 39 + 40, not 84.8Hz (`media/delay-locked.png`, FZ80). Locked the other way round
+  (LPF first, then HPF moved), LPF's box follows HPF on the next frame.
+- FILTER page: 1.2.1's four capture plans on FZ80 (core-ar2 0.3 + 1.3.0, `b9bedf5e…f55f`) give
+  `filter-page.png`, `frq-440hz.png`, `frq-open.png` and `frq-locked.png` byte for byte, and
+  `reverb-frq.png` is FZ79's byte for byte too.
+- Memory: 1,745 bytes (`.run`; 302 in 1.2.1).
+- SCENE and PERFORMANCE edit (FZ79 against FH04): stock keeps a held trig's, a scene's and a
+  performance macro's locks behind one lock interface, which the knob text and LPF's HPF read the
+  same way. Scene 1 in edit, its pad held, DELAY HPF (38) and LPF (40) turned one step: 79.0Hz and
+  1.44kHz in 33-pixel boxes, LPF from the scene's HPF lock (39 + 41); 1.2.1 shows 39 and 41. On
+  REVERB, FRQ (63), HPF (38) and LPF (40) the same way: 5.85kHz, 79.0Hz and 1.44kHz; 1.2.1 shows 64,
+  39 and 41. Performance macro 1 in edit, DELAY and REVERB: both builds show stock's signed depth
+  (DELAY +5, −2; REVERB FRQ +1, HPF +2, LPF −1), which is not a frequency and stays a number.
+- Hardware, 2026-11-15, run by an automated test link on npp1993's Analog Rytm MKII (OS 1.74),
+  screens read back from the unit, not judged by a person: FL03 (a Modwerk base development build
+  + 1.3.0, `662563cf…0e4e`, image CRC `850a1eba`) booted from RAM in a scratch project. Seven
+  cases, 7 of 7 in each of three full runs ([hardware report](evidence/hardware-testing-1.3.0.json)):
+  - DELAY turned: HPF 64 463Hz, HPF 127 12.0kHz, LPF 80 (HPF 0) 1.44kHz, LPF 96 (HPF 32) OPEN.
+  - REVERB turned: FRQ 64 5.85kHz, FRQ 0 974Hz, HPF 64 463Hz, LPF 80 (HPF 0) 1.44kHz.
+  - Trig lock: HPF 39 and LPF 41 on trig 1, 79.0Hz and 1.44kHz; track HPF then 0 and LPF moved
+    to 42 on the held trig: 1.55kHz, from the trig's HPF, not 97.7Hz.
+  - Two kHz locks side by side, HPF 86 and LPF 0: 2.17kHz and 2.21kHz.
+  - SCENE edit, scene 1: DELAY 84.8Hz and 1.66kHz; REVERB FRQ 5.96kHz, HPF 84.8Hz, LPF 1.66kHz.
+  - PERF edit, macro 1: stock's signed depth, +8 and −5, in stock's small boxes.
+  - Every locked HPF box is columns 0..32 and every LPF box 34..66, a black column between them,
+    at least a pixel of white each side of each text.
+- Earlier the same day FL01 (before LPF's box moved, `beb2a227…3b6e`) passed six of these cases
+  twice. npp1993, watching, saw two locked kHz values' boxes touch; the read-back screens showed
+  LPF's text with no white on its left, which FL03 fixes. Reported by npp1993: about a minute of
+  playback on FL01 while turning the FX filters had no freezes or dropouts.
+- Not tested: playback while turning on FL03 (FL01's was clean), other modules beside it, saving and reloading a project, a
+  power cycle, audio (the frequencies are from the equations, not measured).
+
 ## 1.2.1 (a wider lock box for FRQ)
 
 Stock OS 1.74 draws the inverted box behind a locked value itself: its knob value routine
