@@ -2,7 +2,9 @@
 
 ## Release qualification
 
-QC17 is the release candidate for Digitakt II OS 1.17. Two isolated builds reproduced Chord Arp package SHA-256 fa48f12af8b3e09ced5e66a09d58107ae3332dbeca99a49efa0673bc97fdeae0. It links with core 1.1 package SHA-256 ea66a96f64926db4eab2790427afd2e8cee9d7189ce95d19ef2ed4c5cb3d2047. The native and browser engines produced identical SYX output, SHA-256 3f1bf67f05d81a7d9065285ca6475e17e03d47c4e2d62bbb93979eb290cd27b8. Digikit completed the swung fast playback fixture and restored two track settings and all eight trig locks through the project serializer and loader. On hardware, track selection, swing and groove, and built-in Euclidean playback passed. The tester confirmed the eight-lock limit and asked for a higher cap. Project reload and stock OS reopen were not confirmed on QC17.
+QD17 is the current release candidate for Digitakt II OS 1.17. Two isolated builds reproduced Chord Arp package SHA-256 a3ecd4ad8f6b16cbf67345cd037bb5906426191766c627fecfe0e8969e6b4c9d. It uses the same core package as QC17. The native and browser SYX files matched with SHA-256 5450b7be5cdb4fd44142c686faf739e177fb4ff99f48d3f9404f71b9c99c2d28. The host test accepted 32 locks and refused the 33rd. Digikit restored both track settings and all 32 locks on save and reload. Physical testing of QD17 is pending.
+
+QC17 was the preceding candidate for Digitakt II OS 1.17. Two isolated builds reproduced Chord Arp package SHA-256 fa48f12af8b3e09ced5e66a09d58107ae3332dbeca99a49efa0673bc97fdeae0. It links with core 1.1 package SHA-256 ea66a96f64926db4eab2790427afd2e8cee9d7189ce95d19ef2ed4c5cb3d2047. The native and browser engines produced identical SYX output, SHA-256 3f1bf67f05d81a7d9065285ca6475e17e03d47c4e2d62bbb93979eb290cd27b8. Digikit completed the swung fast playback fixture and restored two track settings and all eight trig locks through the project serializer and loader. On hardware, track selection, swing and groove, and built-in Euclidean playback passed. The tester confirmed the eight-lock limit and asked for a higher cap. Project reload and stock OS reopen were not confirmed on QC17.
 
 ## Latest hardware reference
 
