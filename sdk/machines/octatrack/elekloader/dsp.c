@@ -629,6 +629,7 @@ fx_set modwerk_dsp_dry(void)
  * LOAD_HOLD ticks (about a minute), in case one never ends. */
 #define LOAD_HOLD 3600u
 static unsigned last_track = 0xffu, load_held;
+int modwerk_fxmap_describe(unsigned id, uint32_t *module, uint16_t *layout, char *name); /* fxmap.c */
 int modwerk_dsp_missing_tick(int following, unsigned track, char *text)
 {
     if (!modwerk_fxmap_loading()) load_held = 0;
@@ -640,6 +641,18 @@ int modwerk_dsp_missing_tick(int following, unsigned track, char *text)
     if (!fx_any(say)) return 0;
     unsigned k = 0;
     while (!fx_in(say, k)) ++k;
+    /* A module switched off on PROJ > MODWERK > MODULES is not missing: "E-VERB IS OFF" (owner, 16 November 2026). */
+    uint32_t module = 0;
+    uint16_t layout;
+    char name[16];
+    if (modwerk_fxmap_describe(k, &module, &layout, name) && modwerk_modset_is_off(module)) {
+        unsigned n = 0;
+        for (; n < 15u && name[n]; ++n) text[n] = name[n] >= 'a' && name[n] <= 'z' ? (char)(name[n] - 32) : name[n];
+        if (!n) for (const char *t = "MODULE"; *t; ) text[n++] = *t++;
+        for (const char *t = " IS OFF"; *t; ) text[n++] = *t++;
+        text[n] = 0;
+        return 1;
+    }
     for (unsigned i = 0; i < 8u; ++i) text[i] = "MISSING "[i];
     modwerk_fxmap_name(k, text + 8);
     for (char *c = text + 8; *c; ++c) if (*c >= 'a' && *c <= 'z') *c = (char)(*c - 32); /* the popup sizes capitals only */

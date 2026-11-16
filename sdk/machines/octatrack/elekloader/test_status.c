@@ -56,7 +56,8 @@ unsigned modwerk_dsp_missing_list(uint8_t *out, unsigned first, unsigned most)
     for (unsigned i = 0; i < listed; ++i) {
         uint8_t *e = out + 4u + 24u * i;
         for (unsigned c = 0; c < 24u; ++c) e[c] = 0;
-        e[0] = (uint8_t)(20u + i), e[8] = 'm', e[9] = 'o', e[10] = 'd', e[11] = (uint8_t)('a' + i);
+        e[0] = (uint8_t)(20u + i), e[6] = 1, e[7] = (uint8_t)i; /* module 0x100 + i */
+        e[8] = 'm', e[9] = 'o', e[10] = 'd', e[11] = (uint8_t)('a' + i);
     }
     out[0] = 'M', out[1] = 'W', out[2] = 'M', out[3] = (uint8_t)listed;
     return 4u + 24u * listed;
@@ -69,6 +70,25 @@ int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *t
     return id < 20u + listed ? 1 : 0;
 }
 void modwerk_fxpage_missing(void) {}
+/* modset.c's shelf: `off_module` is switched off. fxmap.c's map: handle 20 + i names the listed module 0x100 + i, and
+ * `map_module` names more; the project uses each. */
+static uint32_t off_module, off_module2, map_module[MODWERK_FX_IDS];
+int modwerk_modset_is_off(uint32_t module) { return module && (module == off_module || module == off_module2); }
+static int fx_loading; /* fxmap.c: a project load runs */
+int modwerk_fxmap_loading(void) { return fx_loading; }
+int modwerk_fxmap_describe(unsigned id, uint32_t *module, uint16_t *layout, char *name)
+{
+    if (id >= MODWERK_FX_IDS || (!map_module[id] && (id < 20u || id >= 20u + listed))) return 0;
+    *module = map_module[id] ? map_module[id] : 0x100u + (id - 20u), *layout = 0;
+    for (unsigned i = 0; i < 16u; ++i) name[i] = 0;
+    return 1;
+}
+fx_set modwerk_fxmap_used(void)
+{
+    fx_set used = {{0}};
+    for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) if (map_module[k] || (k >= 20u && k < 20u + listed)) used = fx_with(used, k);
+    return used;
+}
 static int restored;
 int modwerk_modset_restored(void) { return restored; }
 volatile uint32_t modwerk_modset_result;
@@ -187,6 +207,33 @@ int main(void)
     CHECK(modwerk_status_key(NO, 1) && open == CLOSED && modwerk_status_key(NO, 0));
     missing_check(); missing_check(); CHECK(open == CLOSED);           /* so NO closes it for good (12 October 2026) */
     listed = 0; missing_check(); CHECK(open == CLOSED);                /* all installed: it closes */
+    /* A module switched off on MODULES is named by the project, not gone (owner, 16 November 2026). One the player just
+     * switched off there opens nothing by itself; once a project loads, the page opens for it, says OFF beside it and
+     * YES switches it on. */
+    off_module = 0x100u, listed = 1; quiet_add(0x100u); missing_check(); missing_check(); CHECK(open == CLOSED && quiet_count == 1);
+    fx_loading = 1; missing_check(); fx_loading = 0; missing_check(); CHECK(open == MISSING && !quiet_count);
+    CHECK(strstr(shows(), "MODA (OFF)|") && strstr(said, "SWITCH ON|") && strstr(said, "NO|") && !strstr(said, "NOT INSTALLED"));
+    asked_id = 0; CHECK(modwerk_status_key(YES, 1) && modwerk_status_key(YES, 0) && open == MISSING && on_count == 1);
+    missing_on_tick(); CHECK(asked_id == 0x100u && asked_on == 1 && on_waiting);
+    CHECK(strstr(shows(), "SWITCHING ON...|"));
+    asked_id = 0; CHECK(modwerk_status_key(YES, 1) && modwerk_status_key(YES, 0) && !asked_id); /* one run at a time */
+    modwerk_modset_switch_result = MODSET_SWITCHED, off_module = 0; missing_on_tick(); CHECK(!on_count);
+    listed = 0; missing_check(); CHECK(open == CLOSED);                /* it runs: nothing is missing, the page closes */
+    /* A refusal ends the run and is said; NO closes the page. */
+    off_module = 0x100u, listed = 1; missing_check(); missing_check(); CHECK(open == MISSING);
+    modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); missing_on_tick();
+    modwerk_modset_switch_result = MODSET_SWITCH_PLAYING; missing_on_tick();
+    CHECK(!on_count && strstr(shows(), "STOP PLAYBACK FIRST|") && strstr(said, "NO|"));
+    CHECK(modwerk_status_key(NO, 1) && modwerk_status_key(NO, 0) && open == CLOSED);
+    /* One off, one not installed: both listed, YES switches on only the one that is off. */
+    open = MISSING, missing_top = 0, missing_asked = 1, listed = 2; missing_check();
+    CHECK(strstr(shows(), "MODA (OFF)|") && strstr(said, "MODB|") && strstr(said, "SWITCH ON|"));
+    asked_id = 0; modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); CHECK(on_count == 1); missing_on_tick(); CHECK(asked_id == 0x100u);
+    modwerk_modset_switch_result = MODSET_SWITCHED, off_module = 0; missing_on_tick(); CHECK(!on_count);
+    missing_check(); CHECK(open == MISSING && strstr(shows(), "2 NOT INSTALLED|")); /* the stub still lists both */
+    /* Nothing off: YES only closes, as before. */
+    CHECK(modwerk_status_key(YES, 1) && modwerk_status_key(YES, 0) && open == CLOSED);
+    off_module = off_module2 = 0, listed = 0, missing_asked = 0; missing_check(); CHECK(open == CLOSED);
     /* A module sync shows its box and bar while the modules arrive and start, and holds no key. */
     upload_view = 1, upload_permille = 500; transfer_tick();
     CHECK(transfer == T_SYNC && strstr(shows(), "MODWERK SYNC|RECEIVING MODULES|50%"));
@@ -403,6 +450,26 @@ int main(void)
     (void)shows(); CHECK(strstr(said, "IN USE ON A TRACK") && switches[1].on);
     modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); modwerk_modset_switch_result = MODSET_SWITCH_PLAYING; switches_tick();
     (void)shows(); CHECK(strstr(said, "STOP PLAYBACK FIRST"));
+    /* A start that did not load the card's whole set: a restart when that brings it back, else a sync (owner, 16
+     * November 2026: after a base update RESTART FIRST came back the same). */
+    modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); modwerk_modset_switch_result = MODSET_SWITCH_PARTIAL; switches_tick();
+    (void)shows(); CHECK(strstr(said, "RESTART FIRST"));
+    modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); modwerk_modset_switch_result = MODSET_SWITCH_SYNC; switches_tick();
+    (void)shows(); CHECK(strstr(said, "SYNC ON THE SITE FIRST"));
+    /* Switched off while another Part of the project names it: where, and nothing when it is named nowhere. */
+    map_module[20] = 0x30u;
+    modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); CHECK(asked_id == 0x30u && asked_on == 0);
+    modwerk_modset_switch_result = MODSET_SWITCHED; switches_tick();
+    CHECK(switch_said == used_text && !strcmp(used_text, "USED IN C SAVED PART 2 T5"));
+    CHECK(is_quiet(0x30u));                                             /* MISSING will not open for it by itself */
+    (void)shows(); CHECK(strstr(said, "USED IN ANOTHER PART|"));         /* the host's letters are wider than the unit's */
+    map_module[20] = 0;
+    modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); modwerk_modset_switch_result = MODSET_SWITCHED; switches_tick();
+    CHECK(!switch_said);
+    asked_on = 1; unit[0].on = 0; switches_read(); /* switched on: nothing said either */
+    modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); CHECK(asked_on == 1);
+    map_module[20] = 0x30u; modwerk_modset_switch_result = MODSET_SWITCHED; switches_tick(); CHECK(!switch_said);
+    map_module[20] = 0; unit[0].on = 1; switches_read();
     /* A shelf that moves is read at the next tick; the cursor follows its module when a host changes the set. */
     unit_count = 7; shelf_moving = 1; ticks += 60u; switches_tick(); CHECK(switch_count == 3 && switch_stale); /* the second's reading */
     shelf_moving = 0; switches_tick(); CHECK(switch_count == 7 && switches[switch_cursor].id == 0x30u && !switch_stale);

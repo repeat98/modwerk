@@ -315,8 +315,12 @@ a set with a shelf is version 2 and is whole only with a whole shelf of its own 
 short falls back to the other file's older set and shelf (`sdk/tests/runtime_card_shelf.c` cuts the power before every
 sector). The shelf takes its room from the set's, and it goes with the set when another base starts (FOREIGN). A host
 that installs a module that is off switches it on; one that removes it takes it off the shelf. PROJ held at power-on
-skips the set and keeps the shelf. After a start that did not load the card's whole set (skipped, held or one left out
-by the boot guard) the page refuses a switch with `RESTART FIRST`: saving that start's smaller set would lose the rest.
+skips the set and keeps the shelf. A start that did not load the card's whole set refuses a switch (saving its smaller
+set would lose the rest): `RESTART FIRST` after a skipped or held start, or one the boot guard left a module out of;
+`SYNC ON THE SITE FIRST` after another base's set, a damaged file or a module that failed to load. A module that is off
+is not missing: MISSING marks it (OFF) and YES switches every one on; it opens for one only after a project load, not
+right after the player switched it off, and its track says `<NAME> IS OFF`. Switching off a module another Part names
+says where (`USED IN C SAVED PART 2 T5`).
 
 A host reads the shelf with OFF (0xC1, bRequest 40, wValue the first entry, wLength 288): `MWO`, the entries in the
 reply, the count of all, then 56 bytes a module, an INVENTORY entry and its package's SHA-256, 5 a page. The site lists

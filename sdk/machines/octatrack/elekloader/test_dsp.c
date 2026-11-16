@@ -173,6 +173,9 @@ static int full_or_40(const struct runtime_dsp *none, struct runtime_dsp t) /* a
     return MODWERK_FX_IDS > 32u ? r == RUNTIME_OK && t.id == 40 : r == RUNTIME_FULL;
 }
 #define FULL_OR_40(t) full_or_40(&none, (t))
+/* modset.c's shelf: `dsp_off_module` is switched off on PROJ > MODWERK > MODULES. */
+static uint32_t dsp_off_module;
+int modwerk_modset_is_off(uint32_t module) { return module && module == dsp_off_module; }
 /* One tick of the MISSING popup, as modwerk_dsp_tick makes it: the rebind's step, then the popup. */
 static int popup(unsigned track, char *text) { return modwerk_dsp_missing_tick(rebind_tick(), track, text); }
 int main(void)
@@ -439,6 +442,12 @@ int main(void)
         CHECK(owner[27] == 0x4b && !owner[26] && !rebinding && !fx_in(modwerk_dsp_dry(), 27) && fx_in(modwerk_dsp_dry(), 26));
         /* What is missing is still said, by the map's name: T2 runs Mod G. */
         CHECK(popup(1, text) && !strcmp(text, "MISSING MOD G"));
+        { /* Mod G switched off on MODULES: the track says so, not MISSING (owner, 16 November 2026). */
+            unsigned was = last_track;
+            dsp_off_module = 0x47u, last_track = 0xffu;
+            CHECK(popup(1, text) && !strcmp(text, "MOD G IS OFF"));
+            dsp_off_module = 0, last_track = was;
+        }
         CHECK(!popup(1, text)); /* once per selection */
         /* A track selected during a load is said once the load is over. */
         CHECK(!popup(0, text));
