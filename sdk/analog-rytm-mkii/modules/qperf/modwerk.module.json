@@ -99,16 +99,30 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.2.1-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "f7cf9f63ef62bf83f39698a0ce74d3cd8298cd128c60c110252f8350cbb61f05",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-16",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "0.2.1 ran alone on npp1993's Analog Rytm MKII, OS 1.74, from RAM as QR01 (the Modwerk base with the development link and this module, sha256 b5ad3b25…0d31). The author ran the module's tutorial and reports all passed: QPER + pad links and a knob turn locks, the QPER knob sweeps it, QPER + YES applies, QPER + PLAY clears and PLAY undoes, QPER + RECORD / STOP copies and pastes, and in PERF the quick perf rec loops pad takes, RECORD + NO clears and NO undoes, RECORD + YES writes them into the pattern.",
+      "limitations": [
+        "Reported by the author from playing; no automated rig run for 0.2.1.",
+        "The image holds the base with the development link, not the plain published base.",
+        "Earlier, this source ran in the author's combined images RC37 to RC40 (not a qualification of this package)."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.2.1 (UI-only code built for size, 1.9 KB less RAM): rytm-emu screens byte-identical to 0.2.0; ran in the author's combined images RC37 to RC40, not alone. TESTING.md names each build.",
+    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.2.1 (UI-only code built for size, 1.9 KB less RAM): rytm-emu screens byte-identical to 0.2.0; on the author's unit alone (QR01) the tutorial passed, and earlier in combined images RC37 to RC40. TESTING.md names each build.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

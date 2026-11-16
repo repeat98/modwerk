@@ -10,6 +10,7 @@ Nothing here proves reboot persistence or the QPER knob itself. Hardware results
 
 - rytm-emu 2ac0f1f: QL20 (this source alone on the plain Modwerk base `d6ee1eed`, sha256 `e77e4cd9…`) replays both media plans; both frames are byte-identical to 0.2.0's QL19 captures.
 - On the author's Analog Rytm MKII (OS 1.74), this exact source (the same code, the comment above the attribute reworded since) ran in the author's private combined images RC37 to RC40 (17 modules on a private base; RC40 `5d5241e0…`, on the unit since 12 November 2026). That is a combined-image observation, not a run of this package alone.
+- Alone on the author's unit, 16 November 2026: QR01 (`b5ad3b25…`, the Modwerk base with the development link `0b33f8ec` and this source), RAM boot over the flashed build, scratch project. Reported by the author, all passed: QPER + pad 1 links and a FLTR turn while QPER is held locks; the QPER knob sweeps the move; QPER + YES shows PERFORMANCE 1 APPLIED and keeps the sound; QPER + PLAY clears and PLAY again undoes; QPER + RECORD, pad 2, STOP copies and pastes; in PERF with LIVE RECORDING, squeezed pads 1 and 2 loop on the next pass, RECORD + NO clears (CLEAR QUICK PERF REC) and NO again undoes, RECORD + YES writes the moves into the pattern (APPLY QUICK PERF REC).
 
 ## Idle CPU (6 November 2026)
 
