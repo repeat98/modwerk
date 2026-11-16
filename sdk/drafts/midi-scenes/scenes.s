@@ -1163,7 +1163,7 @@ scn_paste:
 | bank * 4 + Part). Every table above is the displayed Part's slot in the
 | current bank (msc_a0). The library is written whole to scenes.work beside
 | the bank files. The current bank's locks are copied to battery RAM
-| (0x100f9800..0x100fc000, sdk/machines/octatrack/battery-ram.json) on every
+| (0x100f9800..0x100fbf00, sdk/machines/octatrack/battery-ram.json) on every
 | edit, load and bank write, as stock keeps its Part copy there: an unsaved
 | edit survives a power cycle (measured on stock, octabam's MIDI_SCENES.md
 | section 8). The base's hooks call the scn_ev_* handlers (runtime.json).
@@ -1178,7 +1178,7 @@ scn_paste:
 
         .set    CUR_BANK,       0x80000002      | byte: the current bank
         .set    CS1_BASE,       0x100f9800
-        .set    CS1_END,        0x100fc000
+        .set    CS1_END,        CS1_BASE+0x2700 | 9,984 bytes; Kits keeps its 256-byte table above (battery-ram.json)
         .set    CS1_DATA,       0x100f9814      | after the magic, bank, count, sum and project id
         .set    CS1_MAX,        (CS1_END-CS1_DATA)/4
         .set    CS1_MAGIC,      0x53435332      | 'SCS2'

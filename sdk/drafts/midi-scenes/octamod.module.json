@@ -90,7 +90,7 @@
       "value": 278004,
       "unit": "bytes",
       "method": "static",
-      "conditions": "m68k-elf-size of scenes.s: 5,430 bytes of code, 654 of data, 271,920 of bss (64 lock tables of 4,096 bytes, a 4 KB read slot, the file buffer and the CRC table). Battery RAM: 10,240 bytes at 0x100f9800.",
+      "conditions": "m68k-elf-size of scenes.s: 5,430 bytes of code, 654 of data, 271,920 of bss (64 lock tables of 4,096 bytes, a 4 KB read slot, the file buffer and the CRC table). Battery RAM: 9,984 bytes at 0x100f9800.",
       "source": "TESTING.md"
     },
     "processing": {

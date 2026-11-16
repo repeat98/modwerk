@@ -104,5 +104,5 @@ MODULE = Module(
     pokes=POKES,
     # Battery RAM: the current bank's unsaved locks, packed, so they survive a power cycle as stock's own
     # scene locks do (sdk/machines/octatrack/battery-ram.json).
-    claims=Claims(sram=((0x100F9800, 0x2800, "MIDI SCENES: the current bank's locks, packed"),)),
+    claims=Claims(sram=((0x100F9800, 0x2700, "MIDI SCENES: the current bank's locks, packed"),)),
 )

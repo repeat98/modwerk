@@ -26,7 +26,7 @@ Branch `module/midi-scenes` on base branch `base/module-bss-cap` (base 0.7.4, wh
 
 - The project events come from the base's hooks (runtime.json): ev_banks_load/loaded, ev_bank_load/loaded, ev_project_new, ev_bank_written, ev_project_store/stored, ev_project_reloaded, ev_part_clear and ev_modules_ready. octabam's STORE prompt for a refused file is not here.
 - scenes.work is read slot by slot with the CRC over all of it, instead of into a second 256 KiB buffer.
-- The battery-RAM copy holds only the current bank's locks, packed, tagged with the project, at 0x100f9800 (10,240 bytes); octabam's 16,400-byte copy at 0x100fbdf0 is under the base's own records.
+- The battery-RAM copy holds only the current bank's locks, packed, tagged with the project, at 0x100f9800 (9,984 bytes); octabam's 16,400-byte copy at 0x100fbdf0 is under the base's own records.
 - At install (ev_modules_ready, the first time) the project is already loaded: every bank is read from scenes.work, then the battery-RAM copy of the current bank.
 - Three detours that only jump to another stock address are pokes of the same `jmp`.
 
