@@ -23,6 +23,12 @@
 //   shelf      its corner   t = c / (1 - c), the -3 dB point at GAI 0
 // atan2 is a CORDIC on 32-bit integers (no FPU on the MCF54455, no libgcc in a module).
 
+// FHZ_UI marks functions that run only in the UI task (keys, knobs, screen, parameter
+// text, tick housekeeping), never in the audio block. cold builds them for size, out of the hot
+// code, so the module takes less of the RAM all modules share; the rest stays at -O2. No
+// behaviour change.
+#define FHZ_UI __attribute__((cold))
+
 typedef unsigned int u32;
 typedef int s32;
 
@@ -63,7 +69,7 @@ static const s32 atan_q30[28] = {
 };
 
 // (a * b) >> 32, unsigned, from 16-bit halves.
-NOINLINE static u32 mulhi(u32 a, u32 b)
+FHZ_UI NOINLINE static u32 mulhi(u32 a, u32 b)
 {
     u32 ah = a >> 16, al = a & 0xffff, bh = b >> 16, bl = b & 0xffff;
     u32 mid1 = ah * bl, mid2 = al * bh, low = al * bl;
@@ -71,7 +77,7 @@ NOINLINE static u32 mulhi(u32 a, u32 b)
     return ah * bh + (mid1 >> 16) + (mid2 >> 16) + carry;
 }
 
-NOINLINE static u32 isqrt(u32 n)
+FHZ_UI NOINLINE static u32 isqrt(u32 n)
 {
     u32 root = 0, bit = 1u << 30;
     while (bit > n)
@@ -89,7 +95,7 @@ NOINLINE static u32 isqrt(u32 n)
 
 // atan2(y, x) in Q30 for x > 0, y >= 0 (Q29 inputs: x <= 2^30, y <= 2^29). The CORDIC gain
 // (1.647) then keeps x under 2^31: 1.647 * sqrt(2^60 + 2^58) = 1.98e9.
-NOINLINE static u32 atan2_q30(s32 y, s32 x)
+FHZ_UI NOINLINE static u32 atan2_q30(s32 y, s32 x)
 {
     s32 z = 0;
     int i;
@@ -110,13 +116,13 @@ NOINLINE static u32 atan2_q30(s32 y, s32 x)
 
 // The frequency of angle atan(t) = z (Q30, under pi/2) in milli-Hz, truncated (put_hz does
 // the one rounding): f = fs/pi * z / 2^30 * 1000 = z * 15278874.5 / 2^30 = mulhi(2z, 2 * that).
-NOINLINE static u32 milli_hz(u32 z)
+FHZ_UI NOINLINE static u32 milli_hz(u32 z)
 {
     return mulhi(z << 1, 30557749u);
 }
 
 // Q31 coefficient helpers: u = 1 - c in Q31, both as unsigned.
-static u32 one_minus(s32 c)
+FHZ_UI static u32 one_minus(s32 c)
 {
     return 0x80000000u - (u32)c;
 }
@@ -125,7 +131,7 @@ enum { HIGH_PASS, LOW_PASS, SHELF };
 
 // The frequency in milli-Hz for coefficient c (Q31) of a filter of that kind; 0 for a low-pass
 // with no -3 dB point below Nyquist. Inputs to atan2 in Q29.
-NOINLINE static u32 fx_hz(int kind, s32 c)
+FHZ_UI NOINLINE static u32 fx_hz(int kind, s32 c)
 {
     u32 u = one_minus(c);                       // 1 - c, Q31
     s32 y = (s32)(u >> 2), x;
@@ -145,13 +151,13 @@ NOINLINE static u32 fx_hz(int kind, s32 c)
     return milli_hz(atan2_q30(y, x));
 }
 
-static s32 clamp_word(s32 w)
+FHZ_UI static s32 clamp_word(s32 w)
 {
     return w < 0 ? 0 : w > WORD_MAX ? WORD_MAX : w;
 }
 
 // The FX page view on the view stack, or 0.
-static void *fx_page_view(void)
+FHZ_UI static void *fx_page_view(void)
 {
     char *brain = *(char **)BRAIN_AT, *views, *node, *sentinel;
     int n;
@@ -173,7 +179,7 @@ static void *fx_page_view(void)
 
 // Three significant figures: 5.00Hz, 48.1Hz, 463Hz, 1.43kHz, 12.0kHz. f in milli-Hz, at
 // least 1000 (1.00Hz; the lowest here is HPF 0, 5.00Hz).
-NOINLINE static char *put_hz(char *out, u32 f)
+FHZ_UI NOINLINE static char *put_hz(char *out, u32 f)
 {
     // n = f / 10^k rounded, 100..999 (a carry to 1000 moves up a k).
     // k = 1: x.xxHz, 2: xx.xHz, 3: xxxHz, 4: x.xxkHz, 5: xx.xkHz.
@@ -202,7 +208,7 @@ NOINLINE static char *put_hz(char *out, u32 f)
     return out;
 }
 
-static void put_text(char *out, const char *s)
+FHZ_UI static void put_text(char *out, const char *s)
 {
     while ((*out++ = *s++))
         ;
@@ -210,7 +216,7 @@ static void put_text(char *out, const char *s)
 
 // From filter_hz_gate in param_value_text, for ids 76..87. Returns 1 once buf holds the
 // text, 0 to leave the value to stock.
-int filter_hz_fx_text(int id, s32 value, char *buf)
+FHZ_UI int filter_hz_fx_text(int id, s32 value, char *buf)
 {
     u32 f;
     int hpf;
