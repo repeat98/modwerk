@@ -108,7 +108,8 @@ describe('every Octatrack module names its CPU price', () => {
     expect(() => parseModuleCpuPrice({ ...render(7), unit: '%' })).toThrow('percent-of-frame')
     expect(() => parseModuleCpuPrice({ ...render(7), tool: 'npm run device:price' })).toThrow('npm run device -- cpu')
     expect(() => parseModuleCpuPrice({ ...render(7), date: 'November' })).toThrow('YYYY-MM-DD')
-    const { conditions: _, ...vague } = render(7)
+    const vague = render(7)
+    delete vague.conditions
     expect(() => parseModuleCpuPrice(vague)).toThrow('conditions')
   })
 })
