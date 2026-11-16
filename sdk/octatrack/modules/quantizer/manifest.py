@@ -9,12 +9,14 @@ whose FOLLOW is OFF stays stock. The settings live in battery RAM and in the
 project's '#' lines (TRACK itself is not a setting: it only picks the track
 FOLLOW shows, starts at AUDIO 1 and is not saved).
 
-Source: `upstream/` is Tim Hastie's timhastie/octatrick-modules at
-990eff8bf88463af4d396793f1c60eb1dab34ea0 (2.21 + the TRACK / FOLLOW rows, not
-yet published), byte for byte: `upstream/quantizer/` is his `quantizer/`
-folder, and `upstream/LICENSE` / `upstream/README.md` are his repository's.
+Source: `upstream/` is Tim Hastie's timhastie/octatrick-modules at the public
+v2.23 revision e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb, byte for byte:
+`upstream/quantizer/` is his `quantizer/` folder, and `upstream/LICENSE` /
+`upstream/README.md` are his repository's root files at that same revision.
+`sdk/imports/octabam-363861e.json` records their exact source identities.
 Nothing inside `upstream/` is edited here. His manifest declares the units,
-detours, pokes and the SEQUENCER TableGrow; this file re-exports its MODULE.
+detours, pokes and the SEQUENCER TableGrow; this wrapper removes the two panel
+publication detours and re-exports the standalone MODULE.
 
 Guards. His manifest names no stock bytes: it reads every hook site's guard,
 `stock_guard(site, length)`, from the build's own MAIN OS section
