@@ -645,7 +645,17 @@
       "id": "kits",
       "octabam": true,
       "usbOnly": true,
-      "version": "0.1.0-experimental"
+      "version": "0.1.0-experimental",
+      "abi": 8,
+      "features": 129,
+      "sites": 15,
+      "copies": 0,
+      "fills": 0,
+      "name": "Kits",
+      "module": "9ea848b6",
+      "bytes": 12954,
+      "sha256": "f1c13a071b299906dccd7eee60c8b01e82dea9212921f5d7fb28ca14b5932c0b",
+      "path": "octatrack-modules/kits/0.1.0-experimental.mwrm"
     }
   ]
 }

@@ -125,6 +125,15 @@
         "rationale": "About 2 MB of the sample memory while installed, and about 49 KB of the module memory all modules share.",
         "source": "TESTING.md"
       }
+    },
+    "cpuPrice": {
+      "value": 0.0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price",
+      "date": "2026-11-16",
+      "conditions": "MKII, a development twin of base 0.7.4 with ot_sample_memory (7250475e), the owner's project A01 playing, installed with its 331 pages taken and used nowhere, 8 s per reading: frame interrupt 28.7 % before and after, CPU meter 46.7 to 46.8 %. Six LOAD KIT loads while playing beside 14 kept modules moved the meter 0.3 points.",
+      "source": "TESTING.md"
     }
   },
   "tests": {
