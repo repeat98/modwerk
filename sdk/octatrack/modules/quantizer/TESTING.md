@@ -84,12 +84,15 @@ successful session completions report no player present, no guard abort and no t
   in the private evidence record. No expected value or tolerance was relaxed.
   One bounded completion reached a displayed 0.0 and raw byte `0x40` through the native
   C MAJOR editor, then returned SCALE to OFF without editing that value. Before playback,
-  the four observed bytes were `45/4f/40/4a`. During playback, however, the third address
-  reads `0xff`, no third-step PTCH event is observed, and its audio holds the preceding
-  step's pitch. The unchanged four-case analysis consequently fails: its presumed neutral
-  reference is actually the preceding +3 pitch. The intended persistent-zero lock fixture
-  remains unestablished. All captures and this failed analysis are retained; the native
-  edit/trigger transition is unresolved and is not isolated to a quantizer defect.
+  the four observed bytes were `45/4f/40/4a`. The last zero-byte read is while TRIG9 is
+  held; no zero/event check follows its release before PLAY. After playback, the third
+  address reads `0xff`, no third-step PTCH event is observed, and its audio holds the
+  preceding step's pitch. The trace does not establish when that value disappeared.
+  The unchanged four-case analysis fails: its presumed neutral reference is actually
+  the preceding +3 pitch. Persistent-zero acceptance remains failed and unmet. The cause
+  could be the stock editor, module or fixture and is unresolved; the final verification
+  press/release toggling the trig is a hypothesis, not a proven cause. All captures and
+  failed analysis are retained. No further builder retry or changed tolerance is used.
 - On a MIDI track, FUNC+DOWN is held through the popup redraw, CHROMATIC selected, and
   release returns to a responsive C3 keyboard. NOTE 61 and MIDI channel 2 are visible.
   Actual emulator UART0 output then sends three note-on/off pairs at note 61 with FOLLOW
@@ -140,8 +143,8 @@ combinations; Part-copy and Part-save combinations; FM FOLLOW beside the current
 FM Synth. Released FM Synth 0.1.2/0.1.3 declares a conflict, so it is not forced into this set.
 The held FM chromatic-key mark issue described in the PR is a code-reading finding, not a
 new capture. The first integer-lock walk had the incorrect +0.2 input described above;
-the bounded completion did not retain the intended zero step through playback. Neither
-is a pass of the historical integer-lock playback case.
+the bounded completion leaves persistent-zero acceptance failed with its cause unresolved.
+Neither is a pass of the historical integer-lock playback case.
 
 The 13 November #1272-base lifecycle/co-install/catalogue runs are earlier evidence on their
 own base, not repeated results on this base. The MKI reports below concern 0.1.4's card build,
