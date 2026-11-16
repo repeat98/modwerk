@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/quick-velocity-aftertouch-assign",
+  "version": "0.3.0-experimental",
+  "date": "2026-11-15",
+  "changes": [
+    "Hold FIX, SAMPLER or LFO for about half a second (counted in UI ticks) with no turn to look at the amounts: the release then does nothing. A quick tap still toggles fixed velocity, opens the recorder or opens the LFO page. With LFO held, a value passed to stock's locker by a module (MIDI, for one) sets the LFO's depth by its change, not only the Rytm's encoder."
+  ],
+  "runtimeSourceSha256": "ecb7aecdf99dd71a2e06c5b0df37297d66ba163e70aed2e0944e78ef129cdc3c",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.3.0-experimental-os1.74.elemod",
+      "sha256": "663eb45551069b0d9c220b145e6a45d738545ce37df4aa79e943c711a4df81ea"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/quick-velocity-aftertouch-assign/TESTING.md",
+  "requires": []
+}
