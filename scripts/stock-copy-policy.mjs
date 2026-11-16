@@ -2,9 +2,8 @@
 // Which stock copies a requested card package may carry (scripts/import-module-build.mjs). A copy is a zero
 // placeholder the builder fills from the user's verified OS at build time, matched by address, length and SHA-256,
 // so no stock byte is in the package. Two kinds are admitted:
-//   - replay spans: the four of USB MIDI's descriptor package and of VECTOR's and POLY8's replaying units (VECTOR's
-//     fifth: MIDI NOTE SETUP's drawer, its MIDI generator list on a card), each the guarded span of a detour of the
-//     same group (USB MIDI: its 23-byte descriptor);
+//   - replay spans: the four of USB MIDI's descriptor package and of VECTOR's and POLY8's replaying units, each
+//     the guarded span of a detour of the same group (USB MIDI: its 23-byte descriptor);
 //   - data copies: any other package's copies, each a guard its module's import record declares under stockGuards
 //     with kind guarded-local-cpu-read, so a reviewer sees every span a module reads from the OS.
 
@@ -16,7 +15,7 @@ export function checkRequestedStockCopies(pkg, group, guards = []) {
   const copies = pkg.stockCopies
   if (!Array.isArray(copies)) throw new Error('Invalid inherited stock placeholder inventory')
   if (REPLAY_LABELS.includes(pkg.label)) {
-    if (copies.length !== (pkg.label === 'vector' ? 5 : 4)) throw new Error('Invalid inherited stock placeholder inventory')
+    if (copies.length !== 4) throw new Error('Invalid inherited stock placeholder inventory')
     for (const copy of copies) {
       if (pkg.label === 'usbmidi_cfg') {
         if (copy.bytes !== 23) throw new Error('Invalid inherited USB descriptor length')

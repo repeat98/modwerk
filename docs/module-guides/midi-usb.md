@@ -2,7 +2,7 @@
 
 Read [the module guides index](README.md) first. A module that sends or reacts to MIDI clock or notes in time also follows [sequencing.md](sequencing.md).
 
-**Applies to** modules with manifest `category: midi-usb`, including MIDI generators and MIDI effects (below). [CC Map](../../sdk/octabam/modules/cc-map/README.md) maps MIDI CC 68–73 to FX1 SETUP controls. [USB Audio](../../sdk/octabam/modules/usb-audio-out-tracks-main-cue/README.md) sends eight stereo tracks, MAIN and CUE over USB.
+**Applies to** modules with manifest `category: midi-usb`, including MIDI generators and MIDI effects (below). [CC Map](../../sdk/octatrack/modules/cc-map/README.md) maps MIDI CC 68–73 to FX1 SETUP controls. [USB Audio](../../sdk/octatrack/modules/usb-audio-out-tracks-main-cue/README.md) sends eight stereo tracks, MAIN and CUE over USB.
 
 ## Behave like the instrument
 
@@ -44,15 +44,17 @@ Keep a generator's edits cheap; they run on the UI task while the pattern plays.
 ## Integrate
 
 - [ ] Conflicts are declared in `compatibility`; shared audio/MIDI endpoint and descriptor ownership belongs to the SDK/base, not to a second catalogue module.
-- [ ] Over USB, USB Audio is a base layout, not a runtime package: each output layout (and USB MIDI alone) is its own published base, all sharing every address outside a fixed USB reserve. A module set with USB Audio asks for its layout, and the site installs that base over USB before anything else syncs; a set without it leaves the base's layout alone ([the base's variants](../../sdk/machines/octatrack/elekloader/README.md#the-base-in-the-browser)). A change to USB code must fit `USB_RESERVE` and regenerates every variant. Windows keeps one capture endpoint per device and stores its channel count: after a switch from twenty channels to Main + Cue or Main on the same unit (21 October 2026, Windows 11, class driver), WASAPI, MME and DirectSound refused to open it until that format is reselected (Sound settings → Recording → Properties → Advanced), while WDM-KS opened the 2-channel layout at once.
+- [ ] Over USB, USB Audio is a base layout, not a runtime package: each output layout (and USB MIDI alone) is its own published base, all sharing every address outside a fixed USB reserve. A base install or update without a layout gets USB MIDI alone (`off`). A module set with USB Audio asks for its layout, and the site installs that base over USB before anything else syncs; a set without it leaves the base's layout alone ([the base's variants](../../sdk/machines/octatrack/elekloader/README.md#the-base-in-the-browser)). A change to USB code must fit `USB_RESERVE` and regenerates every variant. Windows keeps one capture endpoint per device and stores its channel count: after a switch from twenty channels to Main + Cue or Main on the same unit (21 October 2026, Windows 11, class driver), WASAPI, MME and DirectSound refused to open it until that format is reselected (Sound settings → Recording → Properties → Advanced), while WDM-KS opened the 2-channel layout at once.
 - [ ] `sdk/catalog.json` entry, thumbnail, `resources.impact`, README sections, tutorial and screenshots of the setting that enables it (`PROJ` → `MIDI` → `CONTROL` for CC Map).
 - [ ] A module with no Octatrack page of its own (an automatic USB module) uses the narrow `access.noUiReason` and still documents the host connection and routing. See [MODULE_UI_CAPTURES.md](../MODULE_UI_CAPTURES.md).
 - [ ] `evidence/performance.json` passes `npm run perf:audit -- check` ([Performance](README.md#performance)).
-- [ ] `npm run module:verify -- <id> --os <your 1.40C>` and `npm run module:doctor -- <id>` are green.
+- [ ] `npm run module:doctor -- <id>` is green.
 
 ## Test
 
 Flood and stop it: notes, CC and clock at the wire rate, stopped mid-note, a Part change while it runs, and count what is left sounding and what was dropped. `verify_midi.py`, `verify_ccmap.py`, `verify_usb.py`, `verify_usb_align.py` and `verify_usb_in.py` are the patterns. A host-side test is part of the work: name the operating system, the USB speed and the software you used, or say "not tested".
+
+**Known issue: MIDI clock on USB and DIN at once.** When the Octatrack receives clock on USB and on its DIN MIDI IN together, the tempo can double and be written into the project (reported on another unit, not yet measured on a Modwerk base). The base passes every USB clock tick to stock's clock handler with no check for DIN clock (`usbmidi_rx.s:307-319`), so Modwerk bases likely share it. Until a base fix, clock the unit from one source only, and test a clock-driven module that way.
 
 To test a MIDI track's KEY in `ot_emu`, write it into the saved Part (MIDI setup at body + 0x4e2, 36 bytes a track, KEY at field 17), not the live byte: stock copies the Part's KEY over the live one when the pattern starts, so a poke after the load is gone by the first note. Check the run's output differs between keys; a run where it does not tested nothing.
 

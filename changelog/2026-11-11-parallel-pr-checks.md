@@ -1,0 +1,1 @@
+Checks: a pull request's checks now run side by side instead of in a row. The app tests run in two halves and the SDK suite on a runner of its own, beside the contract, lint, type and build checks, and the Digitakt, Digitone, Rytm and Four compile no longer waits for them. The same checks run as before; `npm run check` and `npm run pr:ready` on your computer are unchanged.

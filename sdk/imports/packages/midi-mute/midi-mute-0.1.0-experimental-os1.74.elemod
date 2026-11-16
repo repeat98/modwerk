@@ -1,0 +1,533 @@
+{
+ "elemod": 2,
+ "id": "midi-mute",
+ "version": "0.1.0-experimental",
+ "title": "MIDI Mute",
+ "description": "Muted tracks also ignore MIDI notes coming in over USB and DIN, and a held note stops when its track is muted.",
+ "category": "midi-usb",
+ "author": "michaelkollmann",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 1321,
+   "parts": [
+    [
+     "hex",
+     "206f0010222f000c226f00142039419f091041e8000b4ab900000000670606800000001c42af00142f4900102f48000c2f4000082f4100044ef9400716e02f0a2f02242f0010246f000c2f0242a742a748790000000023c2000000004eb9000000004fef00104a82663020394131899b028000001fff4a80673c24520a8000001fff45ea00382f4a000c241f245f23c0000000004ef9400785802452428023c00000000045ea00382f4a000c241f245f4ef9400785802039413189972452028000001fff45ea00382f4a000c241f245f23c0000000004ef9400785804ab90000000057c0710044802f4000086000ff50202f000c222f00044a80670e5ec071004480b0b90000000066024e752f4000082f4100046000ff284feffff4700c48d7040cb0af00106550747fb4af001465484ab900000000674a22394131899b028100001fff4a81670000a40a8100001fff262f00100701672a721fc2af0014202f0014ea8043f9000000002440700141f23c00e3a881b18c004cd7040c4fef000c4e75701fc0af0014222f0014ea81242f001041f900000000262f001c2441720143f22c0045f90000000025832c00e1a920014680c1b09c0041f90000000083b09c004878ffff4878ffff42a72f032f2f00282f2f00282f024eb940083f404fef001c4cd7040c4fef000c4e75223941318997028100001fff6000ff564fefffe82f0a2f02740c226f0024202f00282f6f002c0008b489650000a2727fb2806500009a741fc4802209e58945f90000000020422400ea822f41001072012f42000c2408206f0010e5a9d1ef000c24328c002f420014c48146812f4100184a8267162209ef89d28073c1e5890681418f182024414a926f32222f0010242f001841f900000000d2af000cc5b01c002f6f0008002c2f4000282f490024241f245f4fef00184ef94008420a202f001443f900000000c0af001823808c00241f245f4fef00184e7520394131899b4fefffc448d77cfc028000001fff4a8067780a8000001fff22390000000023c0000000004ab90000000067544681c2802f4100384a81674841f9000000004284203c418f18202f48003047f9000000002f40003449f9000000007001e9a8c0af00384a80663270105284d1af0030203c00000200588bd1af0034700db08466da4cd77cfc4fef003c4e75203941318997028000001fff608020044286e5882c6f00342a6f00302f40002c2615429d4a83674c244e240608030000660ce28b5282588a0803000067f47e084a926f162f132f022f044eb94008420a53874fef000c4a8766e67e1f7201ce822002ea80e28bd0af002cefa983b40c004a8366c00686000000204dee00800c8600000080669a70105284d1af0030203c00000200588bd1af0034700db0846600ff306000ff5242a742a74879000000004eb9000000004fef000c41f90000000023c00000000043f9000000004290429142a8000442a9000442a8000842a9000842a8000c42a9000c41e8001043e90010b1fc0000000066d420394131899b028000001fff4a80670e0a8000001fff23c0000000004e75203941318997028000001fff23c0000000004e75203c000000004e754879000000002f2f00084eb900000000508f4e750000202f00342f0c2f002f062f034eb9000000004fef00104e752f0c4eb900000000588f4cef7c7c00184fef00804e75202f00282f002f022f044eb9000000004fef000c4e754e56fffc2f0224084eb900000000486effff2f002f024eb9401bcff04fef000c2002242efff84e5e4e750000000000000000000000000000000000004d555445204d49444920494e00"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 476
+  }
+ },
+ "symbols": {
+  "midi_mute_draw": [
+   ".run",
+   0
+  ],
+  "enabled": [
+   ".bss",
+   472
+  ],
+  "set_enabled": [
+   ".run",
+   62
+  ],
+  "seen_mask": [
+   ".bss",
+   468
+  ],
+  "midi_mute_select": [
+   ".run",
+   220
+  ],
+  "midi_mute_change": [
+   ".run",
+   240
+  ],
+  "swallow": [
+   ".bss",
+   0
+  ],
+  "last_iface": [
+   ".bss",
+   416
+  ],
+  "held": [
+   ".bss",
+   208
+  ],
+  "midi_mute_row": [
+   ".run",
+   1292
+  ],
+  "STRING_CTOR": [
+   "abs",
+   1075564528
+  ],
+  "midi_mute_port_rows_site": [
+   ".run",
+   1204
+  ],
+  "midi_mute_tick": [
+   ".run",
+   708
+  ],
+  "midi_mute_on_site": [
+   ".run",
+   1180
+  ],
+  "midi_mute_project": [
+   ".run",
+   1018
+  ],
+  "midi_mute_note_off": [
+   ".run",
+   508
+  ],
+  "midi_mute_note_on": [
+   ".run",
+   280
+  ],
+  "midi_mute_label": [
+   ".run",
+   1248
+  ],
+  "midi_mute_port_rows": [
+   ".run",
+   1158
+  ],
+  "midi_mute_off_site": [
+   ".run",
+   1226
+  ],
+  "midi_mute_text": [
+   ".run",
+   1150
+  ]
+ },
+ "exports": [
+  "midi_mute_label",
+  "midi_mute_note_off",
+  "midi_mute_note_on",
+  "midi_mute_off_site",
+  "midi_mute_on_site",
+  "midi_mute_port_rows",
+  "midi_mute_port_rows_site",
+  "midi_mute_project",
+  "midi_mute_text",
+  "midi_mute_tick"
+ ],
+ "imports": [
+  "core_additem",
+  "core_store_get",
+  "core_store_set",
+  "midi_mute_on"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   24,
+   "abs32",
+   "sec:.bss",
+   472
+  ],
+  [
+   ".run",
+   82,
+   "abs32",
+   "sym:midi_mute_on",
+   0
+  ],
+  [
+   ".run",
+   88,
+   "abs32",
+   "sec:.bss",
+   472
+  ],
+  [
+   ".run",
+   94,
+   "abs32",
+   "sym:core_store_set",
+   0
+  ],
+  [
+   ".run",
+   144,
+   "abs32",
+   "sec:.bss",
+   468
+  ],
+  [
+   ".run",
+   160,
+   "abs32",
+   "sec:.bss",
+   468
+  ],
+  [
+   ".run",
+   210,
+   "abs32",
+   "sec:.bss",
+   468
+  ],
+  [
+   ".run",
+   222,
+   "abs32",
+   "sec:.bss",
+   472
+  ],
+  [
+   ".run",
+   260,
+   "abs32",
+   "sec:.bss",
+   472
+  ],
+  [
+   ".run",
+   306,
+   "abs32",
+   "sec:.bss",
+   472
+  ],
+  [
+   ".run",
+   358,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   404,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   422,
+   "abs32",
+   "sec:.bss",
+   416
+  ],
+  [
+   ".run",
+   442,
+   "abs32",
+   "sec:.bss",
+   208
+  ],
+  [
+   ".run",
+   556,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   640,
+   "abs32",
+   "sec:.bss",
+   208
+  ],
+  [
+   ".run",
+   686,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   740,
+   "abs32",
+   "sec:.bss",
+   468
+  ],
+  [
+   ".run",
+   746,
+   "abs32",
+   "sec:.bss",
+   468
+  ],
+  [
+   ".run",
+   752,
+   "abs32",
+   "sec:.bss",
+   472
+  ],
+  [
+   ".run",
+   772,
+   "abs32",
+   "sec:.bss",
+   208
+  ],
+  [
+   ".run",
+   790,
+   "abs32",
+   "sec:.bss",
+   416
+  ],
+  [
+   ".run",
+   800,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   1024,
+   "abs32",
+   "sym:midi_mute_on",
+   0
+  ],
+  [
+   ".run",
+   1030,
+   "abs32",
+   "sym:core_store_get",
+   0
+  ],
+  [
+   ".run",
+   1040,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   1046,
+   "abs32",
+   "sec:.bss",
+   472
+  ],
+  [
+   ".run",
+   1052,
+   "abs32",
+   "sec:.bss",
+   208
+  ],
+  [
+   ".run",
+   1094,
+   "abs32",
+   "sec:.bss",
+   208
+  ],
+  [
+   ".run",
+   1124,
+   "abs32",
+   "sec:.bss",
+   468
+  ],
+  [
+   ".run",
+   1144,
+   "abs32",
+   "sec:.bss",
+   468
+  ],
+  [
+   ".run",
+   1152,
+   "abs32",
+   "sec:.run",
+   1308
+  ],
+  [
+   ".run",
+   1160,
+   "abs32",
+   "sec:.run",
+   1292
+  ],
+  [
+   ".run",
+   1170,
+   "abs32",
+   "sym:core_additem",
+   0
+  ],
+  [
+   ".run",
+   1194,
+   "abs32",
+   "sec:.run",
+   280
+  ],
+  [
+   ".run",
+   1208,
+   "abs32",
+   "sec:.run",
+   1158
+  ],
+  [
+   ".run",
+   1238,
+   "abs32",
+   "sec:.run",
+   508
+  ],
+  [
+   ".run",
+   1258,
+   "abs32",
+   "sec:.run",
+   1150
+  ],
+  [
+   ".run",
+   1292,
+   "abs32",
+   "sec:.run",
+   1248
+  ],
+  [
+   ".run",
+   1296,
+   "abs32",
+   "sec:.run",
+   220
+  ],
+  [
+   ".run",
+   1300,
+   "abs32",
+   "sec:.run",
+   0
+  ],
+  [
+   ".run",
+   1304,
+   "abs32",
+   "sec:.run",
+   240
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x400845e4",
+   "len": 26,
+   "stock_sha256": "7ae153bd807d8e02f129f85bac341dde7ffdffdbcd6964f6e6733bb0e80d61e4",
+   "new": "4eb9000000004e714e714e714e714e714e714e714e714e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:midi_mute_on_site",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400844a4",
+   "len": 14,
+   "stock_sha256": "3379a95d14acac84b0cc0ff044c8795041fce860dd5ea7e48c28808c9e6eae29",
+   "new": "4eb9000000004e714e714e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:midi_mute_off_site",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40048486",
+   "len": 6,
+   "stock_sha256": "10552f30e94896a18c635b43b0f16452187a5e3db5b661ba3255c1ecb054fd50",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:midi_mute_port_rows_site",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_tick",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:midi_mute_tick",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_project",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:midi_mute_project",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "storage": [
+  {
+   "sym": "midi_mute_on",
+   "scope": "project",
+   "bits": 1
+  }
+ ],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:GLOBAL > MIDI CONFIG > PORT CONFIG row after RECEIVE CC/NRPN"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

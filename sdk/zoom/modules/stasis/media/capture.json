@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "stasis",
+  "moduleVersion": "1.2.0",
+  "imageSha256": "e4f1d9c8ea2a710c4ab653932b87528b91993158365d5f6af0823e8e02664ad7",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/stasis-screen.png",
+      "sha256": "0fa13f5706cd310f6c818d0bd323434e12af6d885a6d33986d4bec06ed3e66a9",
+      "plan": "the cover picture at the start of .const in the built Stasis.ZDL (ZDL_OWN_RUNTIME=1 ZDL_MATERIALIZE_INIT=0 at 32f3d68), Zoom RLE decoded and drawn as zvis_host.py draws frames"
+    }
+  ]
+}

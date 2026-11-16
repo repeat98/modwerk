@@ -158,6 +158,35 @@ class GateTests(unittest.TestCase):
         self.assertIn('ot_x, which has room for 2 modules', problems[0]['text'])
         self.assertEqual(gate.check(modules, hooks=hooks, rooms={'ot_x': 3, 'ev_y': 2}), [])
 
+    def test_nothing_for_the_base_writes_into_the_table_the_stock_delay_reads(self):
+        from remix.schema import Keep, Linked, Poke
+        first, end = gate.DELAY_TABLE, gate.DELAY_TABLE + gate.DELAY_TABLE_BYTES
+        self.assertEqual((first, end), (0x400d1ce0, 0x400d2ce0))
+        def pinned(at):
+            return Module(name='a', key='A', kind=Kind.CF_PATCH, doc='synthetic', linked=(Linked('apage', 'synthetic.s', cave_addr=at),))
+        def poke(at):
+            return Module(name='b', key='B', kind=Kind.CF_PATCH, doc='synthetic', pokes=(Poke(at, bytes(4), b'\1\2\3\4'),))
+        # The zero run that looks free, where card builds once put overflow code (#1176).
+        problems = gate.check([pinned(0x400d24d0)])
+        self.assertEqual(self.routes(problems), [(('a',), 'cave')])
+        self.assertIn('a writes 0x400d24d0..0x400d24d5 (linked unit apage)', problems[0]['text'])
+        self.assertIn('stock DELAY reads (0x400d1ce0..0x400d2cdf)', problems[0]['text'])
+        # Both ends: a write that stops at the table or starts after it passes, one byte inside is refused.
+        self.assertEqual(gate.check([poke(first - 4)]), [])
+        self.assertEqual(self.routes(gate.check([poke(first - 2)])), [(('b',), 'cave')])
+        self.assertEqual(self.routes(gate.check([poke(end - 2)])), [(('b',), 'cave')])
+        self.assertEqual(gate.check([poke(end)]), [])
+        self.assertEqual(gate.check([pinned(end)]), [])
+        self.assertEqual(self.routes(gate.check([module('c', end - 8)])), [(('c',), 'cave')])
+        # Reading the table is fine: kept bytes and a stock copy write nothing.
+        reader = Module(name='d', key='D', kind=Kind.CF_PATCH, doc='synthetic', keeps=(Keep(0x400d24d0, bytes(16)),))
+        self.assertEqual(gate.check([reader], copies={'d': [(first, 8, 'recipe copy')]}), [])
+        # The base's own sites count. A native manifest's pin does not: only the package form installs on the base.
+        problems = gate.check([module('c')], base_sites=[(end - 6, 6, 'code')])
+        self.assertEqual(self.routes(problems), [((), 'cave')])
+        self.assertIn('the Modwerk base writes 0x400d2cda..0x400d2cdf (base code site)', problems[0]['text'])
+        self.assertEqual(gate.check([pinned(end)], natives={'a': pinned(0x400d24d0)}), [])
+
     def test_repository_passes(self):
         ids, modules, inputs, problems = gate.repository_inputs()
         self.assertEqual(problems + gate.check(modules, **inputs), [])

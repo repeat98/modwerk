@@ -1,0 +1,1 @@
+Octatrack base: when the audio stops, the unit now also keeps the timing of the last 128 audio frames before it. With shared diagnostics that shows whether a module's work or something else held the audio up.

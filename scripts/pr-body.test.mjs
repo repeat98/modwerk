@@ -27,6 +27,9 @@ it('accepts a description in the template\'s own shape and in free form', () => 
   expect(bodyProblems(free + '**Guides:** nothing', template)).toEqual([])
   // A bold question followed only by the next bold question is unanswered.
   expect(bodyProblems(free + '**What the guides lacked**\n\n**Related issues**', template)).toEqual([expect.stringMatching(/^Say what the guides lacked/)])
+  // The question with its answer as a list below it, as #1552 wrote it; with the next question below it, unanswered.
+  expect(bodyProblems(free + '- **What the guides lacked or got wrong, and where I fixed it:**\n  - `docs/ADD_A_MODULE.md` did not say it. Added.', template)).toEqual([])
+  expect(bodyProblems(free + '- **What the guides lacked or got wrong, and where I fixed it:**\n- **Related issues:**\n  - none', template)).toEqual([expect.stringMatching(/^Say what the guides lacked/)])
   // A link to a guide is not an answer.
   expect(bodyProblems('Follows docs/module-guides/effects.md for the new reverb; checked with pr:ready and on an MKII.', template)).toEqual([expect.stringMatching(/^Say what the guides lacked/)])
 })

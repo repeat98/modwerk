@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/sample-rate",
+  "version": "0.4.0-experimental",
+  "date": "2026-11-11",
+  "changes": [
+    "Renamed Improved SMPL. The SMPL key shows SMPL WAVEFORM only: each UI tick the module finds the SAMPLE view in the view stack and, where its page list is exactly the knob page then the waveform, counts one page with the waveform selected. No new stock site."
+  ],
+  "runtimeSourceSha256": "2c8ec3bf3e46bcc64418605544d51d75dd7bc4e1ab0a7d9b28ce5666574a1270",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/sample-rate/sample-rate-0.4.0-experimental-os1.74.elemod",
+      "sha256": "028f3b0bf86dc6d27d101318f09bf10bc5b2cab06c86f483b7b33aea138f0369"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/sample-rate/TESTING.md",
+  "requires": []
+}

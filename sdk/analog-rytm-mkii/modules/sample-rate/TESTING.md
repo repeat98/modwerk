@@ -1,4 +1,4 @@
-# Sample Playback Rate (sample-rate) — test report
+# Improved SMPL (sample-rate) — test report
 
 Everything below was observed in rytm-emu on the named build. Nothing has run on a unit, and the emulator is not hardware evidence: the Hardware section is empty until the author reports from one.
 
@@ -28,6 +28,106 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 - Build SP13 (as SR15, with Pipo Loop `b0ed4fe7`; test image only): `.syx` `221e94bca82b49a56f4179a51df6e01ed472cdcff311475b1ea38a3c86834d5d`.
 - A core-only image, same stock and core, for comparison.
 - Emulator: rytm-emu `c5732f0`, headless `dtboot`, JIT on. One generated sample, RAMP, 23,777 frames (odd, so STA and END fall on no round multiple), on BD with LOP ON. Audio is dtboot's `--wav`. Voice words are read with `DTBOOT_PEEK`: step at rec + 12, position at rec + 4, effective FIN at 0x8000f7cc. A click means a sample-to-sample step over 40, or six times the median, on a ramp whose normal step is below 2; each run also flags the trig's own attack, which is not counted.
+
+## 0.5.0: one row of values over a taller waveform (2026-11-12)
+
+rytm-emu (`c5732f0`, RAMP on BD, LOP ON, RATE +63 by CC 25); emulator results are not hardware evidence. Nothing of 0.5.0 has run on a unit yet.
+
+- Source (0.5.0-experimental): fingerprint `88eb9a55…46f6` (`evidence.sourceSha256`). Build SV02 (vendored core-ar2 0.7 + this source): `.syx` `c2c24d116312b5b6e4dc795f3a41025d1a9f025c40935770075377f16ea15685`. Build SV1P (SV01's source, the same layout code with a saved return slot, + Ping Pong Loop as on main; test image only): `.syx` `f29b7f04…8783`.
+- Idle: one row reads (0), +63, 0, ON, 100 (TUN, RATE, BR, LOP, LEV) above a waveform 37 pixels tall (rows 10..46 from the bottom; stock 16..47); no STA, END or SMP text.
+- Turning each knob: the header names it (TUNE, RATE, START, LOOP) and the row shows the new value in its place: TUN +0.01 a cent a step, RATE +45 and +29, LOP ON to OFF. START moved its line. D opened stock's sample list over the right half; OFF + YES gave a flat line under the same row.
+- BD playing with LOP ON, 16 frames 70 M apart: in rows 9..11 from the bottom and above the waveform, the only lit pixel was the playhead's own, at its current column; no trail.
+- Grid record, T1 held: TUN locked to +0.24 and RATE to +61, each boxed in the row with the module's text (the cents show); neighbouring boxes overlap by 2 columns, which XOR to a 2-pixel gap between them. A STA turn with T1 held showed START in the header and no box (no STA place in the row, as designed). 0.4.0 (SR43) compared with the same presses: the same boxes on its eight places.
+- With Ping Pong Loop (SV1P, sample loaded by replaying the setup's presses): LOP turned up reads PIPO in the row; its S and E marks sit at the bottom and top of the taller waveform.
+- Independent code review: stack and argument layout of the gate against stock's knob loop, registers, mapping, clipping (text clamped, the 27-wide lock box inside 0..127 at the row's ends) and the widget's area checked against stock 1.74; nothing serious. Applied: the gate returns with a jmp to 0x400d20f6 instead of a saved return. Noted: two neighbouring lock boxes overlap (above); in stock's bare lock-editor routine a knob's value text is stock's own, not a module's (not seen in the captures above).
+- Lock boxes, changed after the unit report below: the module draws a locked value's box itself, tiling the row (columns 0..25, 27..51, 53..76, 78..101, 103..127, one column between), and passes stock's routine no lock, so stock's 27-wide boxes no longer overlap. Build SV03 (vendored core-ar2 0.7 + this source): `.syx` `8ca41daa87c0360fa30cbd8dc615846824699d5eebbce54aac18b8e69a70ff1f`. rytm-emu, T1 held: TUN (-4.60), RATE (+61), BR and LOP locked, four boxes with one dark column between each, text inside.
+- Unit, 12 Nov 2026, as reported by npp1993 on their Analog Rytm MKII (OS 1.74), test image RC38 (`41071e4c…b2ab`: the author's private combo RC37 with this module's first 0.5.0 build, SV02's source, flashed by hand): the row, the knobs, LOOP and PIPO, the playhead and the sound look and sound right. Locking TUN and RATE (and LEV beside LOP) on a held trig, the two boxes met with a 2-pixel black bar between them, and a negative four-digit TUN reached its box's right edge; fixed as above, RC39 (`7c8ed400…069c`, RC38 with SV03's source) not yet on the unit. A trig whose SMP was locked to an empty slot showed no waveform while STA and END were locked on it: stock's behaviour (on each STA, END or SMP change stock reads SMP through the held trig's locks, 0x400d253a, and draws no sample for an empty slot), not this module's.
+- No waveform after boot, reported by npp1993 on RC39 (`7c8ed400…`, RC38 with SV03's source): booting into the SMPL page with a sample on BD drew only the centre line until STA or END was turned. Cause, read in stock 1.74: the widget draws the slot in its +0, which stock's page callback 0x400d253a sets, on a parameter or track change only, to SMP's slot or to 0 while that slot has no sample name yet (0x400b8192); at boot it runs before the samples are loaded, and stock's own SAMPLE page sits on its knobs at boot. Fix: while the widget's slot reads 0 the module runs that callback again every 8 ticks. Build SV05 (`9a953918…8c5e`), rytm-emu: with the widget's slot set to 0 by poke, SV03 stayed on the centre line for 700 M; SV05 showed the waveform by the first read (100 M); SMP OFF ran without a fault. Combo RC40 (`5d5241e0…b35e`, RC39 with this source), not yet on the unit. An independent review of the box and slot changes found nothing serious; it notes that with SMP OFF and a trig held whose SMP lock names a loaded sample, the callback can show that sample until the next change (not run).
+- Unit, 12 Nov 2026, as reported by npp1993: RC40 (`5d5241e0…b35e`, this source) flashed by hand, three boots into the SMPL page with a sample on BD. Each time the page showed no waveform for a few seconds after boot, then the waveform appeared with no knob touched. On the third boot STA and END were turned straight away: still no waveform until the sample came in, then it showed. Read in stock 1.74: a slot gets its name (0x41942350, written at 0x4009e39e) only when the sample loader (0x4009df72) has read its file whole; the project's pool loads slot by slot (0x400b739c) from background jobs after boot, and the widget takes a slot only once it has a name, so those seconds are stock's load time.
+- Not run: a KIT menu or other full-screen menu over the page, scene and performance modes on the SMPL page, a sound with a module's page added behind SMPL (the layout then still applies to the waveform page).
+
+## 0.4.0: the SMPL key shows the waveform only (2026-11-11)
+
+rytm-emu (`c5732f0`) unless it says unit; emulator results are not hardware evidence.
+
+- SR42/SR43 (vendored core-ar2 0.7 + this source; SR43 `0a12166c…`): with the SAMPLE page left on its knob view, the view turns to SMPL WAVEFORM by itself; a second SMPL press stays there (stock toggles to the knobs); AMP then SMPL opens the waveform; SMPL held + PLAY still clears the page (CLEAR PAGE SMPL WAVEFORM, RATE back to +63). SR41, which made the list {5} with index 0, showed the waveform's title over the knob view: the view draws by index, so 0.4.0 keeps the list {4, 5}, counts one page and shows index 1.
+- Rig cases on SG04 (`aa073d83…`, the author's private test base + this source), emulator: all six pass, the new sample-rate-smpl-waveform among them (three SMPL presses, the same waveform body each time); the screen references were recorded again in the waveform view.
+- Source (0.4.0-experimental): fingerprint `2c8ec3bf…1270` (`evidence.sourceSha256`).
+- Hardware, 11 Nov 2026: npp1993's Analog Rytm MKII (OS 1.74, RB08 flashed), scratch project, SG04 (`aa073d83…`, image CRC `a04e51b5`) booted from RAM, flash untouched, run by the author's automated rig with the author's go: 7 cases pass in two runs in a row (one recording the unit references, now compared on the label row only, as the rate-default case clears BD's sample slot): sample-rate-smpl-waveform (three SMPL presses, SMPL WAVEFORM each time), rate-always, rate-default, fine-tun, coarse-tun, func-tun and fine-lock, all on the waveform view.
+- Independent code review: no crash, memory or bounds problem; every stock reader of the page list (page key, title, knob ids, CLEAR PAGE, draw, destructor) checked. Noted, not changed: if the change lands while the SAMPLE page is on screen, the header keeps the knob page's title until the next SMPL press; it normally lands at boot.
+
+## 0.3.0: FIN is RATE on every sound (2026-11-11)
+
+Everything in this section ran in rytm-emu (`c5732f0`, RAMP on BD, LOP ON) unless it says unit. Emulator results are not hardware evidence.
+
+- SR30/SR31/SR32 (vendored core-ar2 0.7 + this source as it grew; SR32 `6c18cead…`): with no switch, BD's saved FIN +0 plays as a stop (step word 0); CC 25 127 gives 1x (0x08000000), CC 25 0 gives -1x (0xf8000000), CC 25 64 a stop again.
+- Names: FIN's row now points at RATE and Rate, and the two name gates are gone: the SAMPLE page knob and the header while turning read RATE, and the LFO destination list reads SAMP:Rate (0.2.0 read SAMP:Fine Tune there).
+- Default: clearing the SAMPLE page (SMPL held, PLAY) sets BD's FIN target to 0x7f00 on SR31; SR07 (0.1.1) sets 0x4000.
+- Rig cases on SG02 (`3b9aba2d…`, the author's private test base + this source), emulator: fine-tun, coarse-tun, fine-lock, rate-always (label RATE, CC 25, a tap of encoder B changes nothing) and rate-default pass; func-tun is unit only. In rytm-emu stock's undo of a page clear did not undo it.
+- Independent code review: no defect in the link or audio path; one change taken (a track's STA and END swap once a block even if two voices were its own).
+- Source (0.3.0-experimental): fingerprint `8b335547…9144` (`evidence.sourceSha256`).
+
+Hardware, 11 Nov 2026: npp1993's Analog Rytm MKII (OS 1.74, RB08 flashed again by the author), scratch project, SG02 (`3b9aba2d…`, image CRC `38dd88f8`) booted from RAM, flash untouched, run by the author's automated rig over USB with the author's go; no person at the unit. 6 cases pass in two runs in a row (one recording the unit references):
+
+| Case (unit) | Measured |
+| --- | --- |
+| sample-rate-rate-always | knob B reads RATE at rest; CC 25 127 and 64 give 0x7f00 and 0x4000; a tap of encoder B leaves 0x7f00 and the screen as it was |
+| sample-rate-rate-default | from 0x4000, clearing the SAMPLE page gives 0x7f00 |
+| sample-rate-fine-tun | 0x400a, 0x3ffa, 0x4000; +0.04, -0.02, (0); CC 24 back to 0x4000 |
+| sample-rate-coarse-tun | 0x420a, 0x410a; +2.04 |
+| sample-rate-func-tun | 0x5800 (stock's jump to +24) |
+| sample-rate-fine-lock | the held trig's lock reads +0.05, inverted |
+
+Playhead, the rig on SG02 the same day (no checks, judged by eye from screens and BD's voice position, voice 0 record +4 of 0x2cf9 frames): with the scratch kit's sample looping, RATE set by CC 25, SMPL WAVEFORM's line sat where the voice was: 30 % at 1x (voice 30 %), about 8 % at 0.125x (voice 9 %), and moving back in reverse at -0.5x; at a stop the voice held 0x2cc0 for 1.5 s, at 99.5 %, where the line is hidden by the edge dots. An LFO on RATE moves the same word; in rytm-emu with an LFO on SAMP:Rate the line matched the voice at eight reads.
+
+Lock in cents across a save, as reported by the author on SG02, 11 Nov 2026: a trig on BD with TUN locked to +0.04, the project saved, SG02 booted from RAM again, the project reloaded: the lock reads +0.04. (The rig's own try kept no unsaved edit: a RAM boot reloads the project as last saved.) The author also reports hearing an LFO on RATE change the speed, and, on SG02, SMPL WAVEFORM's playhead moving with an LFO on RATE. Before that, a QPERF performance setup in the scratch project held RATE (and the FILTER page) still, so neither the LFO nor the knobs moved them; performance and scene values are written into the effective words after stock's glide, so a lock on RATE hides everything else on it. Clearing it brought both back.
+
+Not covered: how RATE and the cents sound beyond that report, pads, stock OS loading a sound saved with cents, NRPN, two voices, CPU load.
+
+## 0.2.0: fine TUNE and the switch without a glide (2026-11-11)
+
+Everything in this section ran in rytm-emu unless it says unit. Emulator results are not hardware evidence.
+
+The switch glide, measured. Build SR07 (0.1.1, `59efe414…`) against SF01 (core-ar2 0.7 + this module with the snap alone, `8602953a…`), rytm-emu `c5732f0`, BD on the 23,777-frame RAMP, LOP ON, BD held, encoder B tapped on, then off, `DTBOOT_PEEK` every 1M instructions (5 ms):
+
+| | 0.1.1 (SR07) | 0.2.0 (SF01) |
+| --- | --- | --- |
+| FIN's effective word after the tap on | 0x4da0, 0x571b, 0x5fbb ... 0x7efe after about 200 ms | 0x7f00 at the first read |
+| Step word (1x = 0x08000000) after the tap on | 0x01b40000 (0.21x), back over the glide | 0x08000000 throughout |
+| Loop period through the tap on (WAV, ramp wraps) | 0.5201 s (0.4954 s elsewhere: 25 ms lost) | 0.4954 s |
+| Loop period through the tap off | 0.4941 s (13 ms gained: the pitch slide) | 0.4954 s |
+
+Fine TUNE, raw dtboot on SF04 (`cfd2f464…`): turns of 4 counts at 100M took TUN's word 0x4000, 0x4003, 0x4005, 0x4008, 0x400a (+1 cent a step, each on the cent grid); with encoder A pressed, 0x4008 to 0x4108 and back (a semitone, cents kept); the knob read +0.02; a held trig's lock in GRID RECORDING read +0.01.
+
+Rig cases, `tools/cases/sample-rate/` on the author's private rig (not in this repository), emulator `rytm-emu-ramboot`, image SF05 (`0cb4620e…`: the rig's base with the link + this source) against SO05 (`f2bea70c…`: the same with 0.1.1):
+
+| Case | SF05 | SO05 (0.1.1) |
+| --- | --- | --- |
+| sample-rate-fine-tun: nudges +3, -5, +2 on TUN | +4, -6, +2 cents: words 0x400a, 0x3ffa, 0x4000; reads +0.04, -0.02 | +4, -6 semitones (the same steps) |
+| sample-rate-coarse-tun: pressed +2, -1 from +0.04 | 0x420a, 0x410a (+2.04, +1.04) | 0x5800, 0x5000 (8 semitones a step) |
+| sample-rate-fine-lock: held trig, second nudge | reads +0.05, inverted | not compared |
+| sample-rate-switch-snap: FIN read right after each tap | 0x7f00, 0x4000: pass | 0x782e, 0x40b2: fail (mid-glide) |
+
+Hardware, 11 Nov 2026: npp1993's Analog Rytm MKII (OS 1.74, flash RB08), scratch project, run by the author's automated rig over USB with the author's go; no person at the unit. Results are the rig's: memory words and screens, nobody listened.
+
+- Source (0.2.0-experimental): fingerprint `6837e13d…21a0` (`evidence.sourceSha256`), run as SF08; SF06 (`cbbe1dc7…a0ef`) was the same but for TUN's text, which then dropped the two places on whole semitones.
+- SF06 (`12fbe1bc…9533`, the rig's base with the USB link + this source), booted from RAM (image CRC `829dd163`), flash untouched. SO05 (`f2bea70c…fe91`, the same with 0.1.1), booted from RAM in the same session.
+- The first unit runs found two faults in the cases, not the module: BD's FIN on the scratch project is modulated, so its effective word moved by itself (the cases now read FIN's smoother state, 0x8000ef34, and its target, 0x8000e5d4); and pressing SMPL on its own page toggled the knob and waveform views between cases (the cases now press AMP first). The references are the unit's waveform view.
+
+| Case (unit) | SF06, three runs | SO05 (0.1.1), one run |
+| --- | --- | --- |
+| sample-rate-fine-tun | pass: 0x400a, 0x3ffa, 0x4000; +0.04, -0.02, 0; CC 24 back to 0x4000 | fail: 0x4400, 0x3e00 (semitones) |
+| sample-rate-coarse-tun | pass: 0x420a, 0x410a; +2.04 | fail: 0x5800, 0x5000 |
+| sample-rate-func-tun | pass: 0x5800 (stock's jump to +24), CC 24 back to 0x4000 | pass (unchanged) |
+| sample-rate-fine-lock | pass: the held trig's lock reads +0.05, inverted | fail (screen) |
+| sample-rate-switch-snap | pass: smoother state 0x7f000000 right after the tap on, 0x40000000 after the tap off; label FIN, then RATE +63 | fail: 0x770f31fe, 0x4a71e633 (mid-glide) |
+| sample-rate-switch-keep | pass: FIN +10 stays 0x4a00 through both taps | pass (unchanged) |
+
+SO05's screen checks also differ because it came up in the other SAMPLE view after its boot; its memory checks are the comparison.
+
+SF08 (`2768bf1e…f1f2f`, the rig's base + this source: TUN always with two places, (0) at zero), 11 Nov 2026, booted from RAM after RB08 was flashed again by the author: 6 cases pass in two runs in a row. Screens recorded in the knob view: +0.04, -0.02, (0), +2.04, a held trig's lock +0.05, FIN then RATE +63.
+
+Not covered by the rig: how the switch and the cents sound, pads, a pattern save and reload of TUN locks (the +Drive stays untouched), stock OS loading a sound saved with cents, NRPN, two voices together, CPU load.
 
 ## 0.1.1: idle CPU (2026-11-06)
 

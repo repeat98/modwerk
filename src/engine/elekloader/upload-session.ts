@@ -89,7 +89,7 @@ export class UploadSession {
     let timer: ReturnType<typeof setTimeout> | undefined
     try {
       const deadline = new Promise<never>((_, reject) => {
-        timer = setTimeout(() => { abort.abort(); reject(new Error('Upload acknowledgement timed out.')) }, this.timeout)
+        timer = setTimeout(() => { abort.abort(); reject(Object.assign(new Error('Upload acknowledgement timed out.'), { name: 'TimeoutError' })) }, this.timeout)
       })
       const bytes = await Promise.race([this.transport.exchange(frame, abort.signal), deadline])
       const status = decodeUploadResponse(bytes, request, { base: this.base, session: this.current?.session })

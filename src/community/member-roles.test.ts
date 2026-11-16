@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DatabaseSync } from 'node:sqlite'
 import { testServer } from './test-server'
 import { communityModule } from './modules'
+import { PAUSED_MODULE_IDS, isBetaModule } from '../catalog/availability'
 
 const databases: DatabaseSync[] = [], sent: { to: string[]; text: string }[] = [], password = 'a long original test passphrase'
 beforeEach(() => { sent.length = 0; vi.stubGlobal('fetch', vi.fn(async (_url: string, options: RequestInit) => { sent.push(JSON.parse(String(options.body))); return Response.json({ id: crypto.randomUUID() }) })) })
@@ -77,7 +78,7 @@ describe('member roles', () => {
     expect(await (await f.call('/auth/session', 'GET', undefined, tester.session)).json()).toMatchObject({ admin: false, user: { betaTester: true } })
     expect((await access()).status).toBe(200)
     expect((await startup()).status).toBe(200)
-    expect((await f.call('/auth/build-access', 'POST', { moduleIds: ['spectrum'] }, tester.session)).status).toBe(403)
+    expect((await f.call('/auth/build-access', 'POST', { moduleIds: PAUSED_MODULE_IDS.filter(id => !isBetaModule(id)).slice(0, 1) }, tester.session)).status).toBe(403)
     expect((await f.call('/modules/airwindows-chorus/download', 'POST', {}, tester.session)).status).toBe(200)
     expect(await (await f.call('/forum/profiles/00schneider')).json()).toMatchObject({ role: 'developer', betaTester: true })
     const thread = await (await f.call('/forum/threads', 'POST', { title: 'Testing', body: 'Beta', category: 'general' }, tester.session)).json() as { id: string }

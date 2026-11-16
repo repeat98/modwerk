@@ -12,16 +12,26 @@
 #define DIAG_PAGE 244u        /* ep0.c's LOG reply: never a whole multiple of 64 bytes (OCTATRACK_HARDWARE_TRAPS.md) */
 #define DIAG_LOG_REQUEST 37u  /* bRequest of LOG (0xC1, wValue the page, wLength DIAG_PAGE); 31-36 are taken, 38 sets, 39 SLOTS (flash.h) */
 
-enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8 };
+enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8, DIAG_CPU = 9 };
 /* After the log: crash.c's record (struct crash, 0x100ff800) and dsp.c's stall record (struct stall, 0x100ff900),
  * byte for byte, so the site uploads what a crash or a DSP stall left; each starts with its magic ("MWCR", "MWST"). */
 #define DIAG_CRASH_BYTES 180u
 #define DIAG_STALL_BYTES 456u
+/* After those, the frames before the stall ("MWFT", 0x100ffb30): what the frame interrupt saw in its last
+ * DIAG_TRACE_FRAMES frames (46 ms), oldest first, kept at the tick that finds dsp.c's stall record, with its `count`. Each frame: the time
+ * since the frame before began, then how long the frame interrupt before it ran, both in DTIM3 counts / 64 (0.485 µs;
+ * a frame is 363 µs, so 749), 65535 at most. A long gap after a long run is the frame interrupt's own work; a long gap
+ * after a short one is something else holding it off. Frames stop with the DSPs, so the last ones are the lead-up. */
+#define DIAG_TRACE_FRAMES 128u
+#define DIAG_TRACE_MAGIC 0x4d574654u
+struct diag_trace { uint32_t magic, count; uint16_t frame[DIAG_TRACE_FRAMES][2]; };
+#define DIAG_TRACE_BYTES 520u
+typedef char diag_trace_layout[sizeof(struct diag_trace) == DIAG_TRACE_BYTES ? 1 : -1];
 
 /* Five minutes of the meters (status.c, per mille), sampled twice a second: `samples` of them, `playing` with the
  * sequencer running. `minute` counts from the start (`boot`). `frame_gap`: the longest time between two audio frames
  * in the window, in µs (a frame is 363 µs; past about 515 µs the DSPs starve), `tick_gap` the longest run of frames
- * without a UI tick (a tick is every 2.7 frames; 13,781 is the freeze threshold): what a dropout or a hang looks
+ * without a UI tick (60 ticks a second on the unit, one every 46 frames; 13,781 is the freeze threshold): what a dropout or a hang looks
  * like, where the meters' peaks only show a self-test or an install. */
 struct diag_load {
     uint32_t seq, boot, minute;
@@ -54,7 +64,7 @@ struct diag_log {
 typedef char diag_load_layout[sizeof(struct diag_load) == 32u ? 1 : -1];
 typedef char diag_incident_layout[sizeof(struct diag_incident) == 92u ? 1 : -1];
 typedef char diag_log_layout[sizeof(struct diag_log) == 40u + 92u + 32u * DIAG_LOADS + 92u * DIAG_INCIDENTS ? 1 : -1];
-#define DIAG_IMAGE_BYTES (sizeof(struct diag_log) + DIAG_CRASH_BYTES + DIAG_STALL_BYTES) /* what LOG pages */
+#define DIAG_IMAGE_BYTES (sizeof(struct diag_log) + DIAG_CRASH_BYTES + DIAG_STALL_BYTES + DIAG_TRACE_BYTES) /* what LOG pages */
 
 void modwerk_diag_tick(void);                          /* ev_tick */
 int modwerk_diag_key(int code, int pressed);           /* ev_key: remembers presses, takes none */

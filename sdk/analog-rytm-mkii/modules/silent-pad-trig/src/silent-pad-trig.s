@@ -51,7 +51,21 @@
         | the voice past its record code; both pad views then send MIDI, also
         | when PAD DEST skips the play routine:
         |   hit_gate    0x40084114  the voice trigger returns at once, so a muted
-        |                           hit takes no voice from a shared track
+        |                           hit takes no voice from a shared track; in
+        |                           LIVE REC it runs, so the track's retrig
+        |                           series starts and its hits record
+        |   engine_gate 0x40120a66  the audio block, at the end of each track's
+        |                           pass over its trig sources (sequencer slots,
+        |                           the pad mailbox, the retrig series): a muted
+        |                           track's trig is dropped before any voice is
+        |                           taken, so no voice, amp, sample or LFO
+        |                           starts and a shared partner keeps ringing,
+        |                           while the series keeps its count. The
+        |                           dropped note's release is dropped too:
+        |                           stock's release does not check who owns the
+        |                           voice, and would end the partner's note
+        |   glow        0x4012155a  the audio block's pad glow store: a dropped
+        |                           hit lights its pad as its sound would have
         |   on_key_gate 0x400c6fb0  KeyboardView's and ChromPadsView's MIDI note
         |   on_chro_gate 0x400c58f0 on, skipped
         |   at_key_gate 0x400c75f2  and their MIDI poly pressure, skipped; the
@@ -106,6 +120,17 @@
         .equ    MENU_ITEM_SIZE, 0x54
 
         .equ    VOICE_TRIG,     0x4011e1b4        | (event): the play routine's call
+        .equ    STOCK_APP,      0x401816f4        | () -> the sequencer state
+        .equ    TRACKS,         12
+        .equ    CMD,            0x8000e508        | per track, this block: 1 trig, 2 release
+        .equ    CMD_ECHO,       0x8000e4d4        | its copy for the envelopes and LFO
+        .equ    GATE_LEFT,      0x8000fc24        | per track: time to the automatic release
+        .equ    TRACK_VOICE,    0x4025a3a0        | track -> its analog voice, bytes
+        .equ    VOICE_TRACK,    0x40291138        | voice -> the track that owns it, bytes
+        .equ    FLAGS_AT,       -120              | the trig loop's frame: -> the track's flags
+        .equ    NOTICE_AT,      -76               | the tracks in this block's trig notice
+        .equ    NOTICE_FLAGS,   0x180             | SYN or SMP: a trig stock announces
+        .equ    GLOW_PEAK,      0x10000000        | a dropped hit's pad glow: log2 28 of 31
         .equ    ON_KEY_RESUME,  0x400c6fb6        | KeyboardView, past three pushes
         .equ    ON_KEY_SKIP,    0x400c6fe4        | and its way out
         .equ    ON_CHRO_RESUME, 0x400c58f8        | ChromPadsView, past `0x400b53a2`
@@ -253,11 +278,148 @@ active:
         .globl  silent_pad_trig_hit_gate
 silent_pad_trig_hit_gate:
         move.l  %d2,%d1
-        bsr.s   muted
+        bsr.w   muted
         tst.l   %d0
         beq.s   1f
+        moveq   #TRACKS,%d1
+        cmp.l   %d1,%d2
+        bcc.s   2f                                | the FX track: no voice, as before
+        jsr     STOCK_APP
+        move.l  %d0,-(%sp)
+        jsr     LIVE_GET
+        addq.l  #4,%sp
+        tst.b   %d0
+        beq.s   2f
+1:      jmp     VOICE_TRIG                        | LIVE REC: engine_gate keeps it silent
+2:      rts
+
+        | ------------------------------------------------------------------
+        | engine_gate: the audio interrupt, over `lea 0x8000e508,%a3`
+        | (re-emitted) at 0x40120a66, where each pass of the trig loop has run
+        | the track's sequencer slots, its pad mailbox and its retrig series,
+        | and the block's command for the track (CMD) is final. Nothing has
+        | acted on it yet: the trig notice, slide, LFO, the voice allocation
+        | (phase B), the sample layer, the machine and the amp all follow. d2 is
+        | the track, d3 4 x track; d0/d1/a0/a1 are free, a3 must be CMD.
+        |
+        | While MUTE ALL SOUND is checked (mute_all, which the tick keeps, as
+        | the setting's lookup is not for the interrupt) and the engine's masks
+        | mute the track, its trig is dropped: no voice is taken, so a shared
+        | partner rings on, and nothing keyed on the trig starts. The series
+        | keeps its count, so its hits still record. GATE_LEFT is cleared, so no
+        | automatic release follows, and stock's notice is sent for the track
+        | alone (stock's also clears the lower partner's bit; that partner did
+        | not lose its voice). silenced[t] remembers the dropped note, so its
+        | release is dropped while a partner owns the voice: stock's release
+        | does not check who owns it, and would end the partner's note. While
+        | the track owns its voice the release goes through, so a note the track
+        | still rings ends (its own automatic release went with GATE_LEFT). An
+        | audible trig clears silenced[t]. The FX track is left to stock.
+        | ------------------------------------------------------------------
+        .align  2
+        .globl  silent_pad_trig_engine_gate
+silent_pad_trig_engine_gate:
+        lea     CMD,%a3                           | displaced
+        moveq   #TRACKS,%d0
+        cmp.l   %d0,%d2
+        bcc.w   9f                                | the FX track: stock
+        lea     silenced,%a1
+        move.l  (%a3,%d3.l),%d1
+        moveq   #2,%d0
+        cmp.l   %d0,%d1
+        bne.s   1f
+        tst.b   (%a1,%d2.l)                       | a release: a sounding note's
+        beq.w   9f                                | is stock's
+        clr.b   (%a1,%d2.l)
+        lea     TRACK_VOICE,%a0                   | a dropped note's: stock's
+        moveq   #0,%d1                            | while the track owns its voice,
+        move.b  (%a0,%d2.l),%d1                   | so a note it still rings ends
+        lea     VOICE_TRACK,%a0                   | (the dropped trig's GATE_LEFT
+        move.b  (%a0,%d1.l),%d1                   | replaced that note's); dropped
+        cmp.b   %d2,%d1                           | when a partner owns it
+        beq.s   9f
+        bra.s   5f
+1:      moveq   #1,%d0
+        cmp.l   %d0,%d1
+        bne.s   9f
+        tst.b   mute_all                          | a trig
+        beq.s   6f
+        move.l  ENGINE_SOLOS,%d1
+        beq.s   2f
+        not.l   %d1
+        bra.s   3f
+2:      move.l  ENGINE_MUTES,%d1
+3:      btst    %d2,%d1
+        beq.s   6f
+        move.b  %d0,(%a1,%d2.l)                   | muted: dropped
+        lea     glow,%a0                          | its pad lights as the hit's
+        move.l  #GLOW_PEAK,%d1                    | sound would have lit it
+        move.l  %d1,(%a0,%d3.l)
+        lea     GATE_LEFT,%a0
+        clr.l   (%a0,%d3.l)
+        movea.l FLAGS_AT(%fp),%a0                 | stock's notice, for a trig
+        move.l  (%a0),%d1                         | with SYN or SMP
+        andi.l  #NOTICE_FLAGS,%d1
+        beq.s   5f
+        lsl.l   %d2,%d0
+        or.l    %d0,NOTICE_AT(%fp)
+5:      clr.l   (%a3,%d3.l)
+        lea     CMD_ECHO,%a0
+        clr.l   (%a0,%d3.l)
         rts
-1:      jmp     VOICE_TRIG
+6:      clr.b   (%a1,%d2.l)                       | an audible trig: its release
+9:      rts                                       | is its own
+
+        | ------------------------------------------------------------------
+        | glow (jsr from 0x4012155a, the audio block's pad glow loop): stock
+        | lights each pad from its voice's sound, a running mean of the voice's
+        | square (d2, 0.94 old + 0.06 new a block) while the track owns the
+        | voice and 0 when not, stored at (a0)+ (0x419ca178[t]); the pad views
+        | draw log2 of it (0x400c987e). A dropped hit makes no sound, so its pad
+        | stays dark: glow[t], set by engine_gate, stands in for the sound, and
+        | the larger of the two is stored. glow[t] falls by a sixteenth (and 1)
+        | a block, as stock's mean falls once a sound stops. The stored value is
+        | also stock's mean for the next block, so on a track that owns its voice
+        | a raised value falls at stock's own rate (display only: nothing else
+        | reads the table). The compares are unsigned, as stock's mean of squares
+        | is never below 0. d0 the track; d2 and d5 are free here, a1 is kept.
+        | ------------------------------------------------------------------
+        .align  2
+        .globl  silent_pad_trig_glow
+silent_pad_trig_glow:
+        move.l  %a1,-(%sp)
+        lea     glow,%a1
+        move.l  (%a1,%d0.l*4),%d5
+        beq.s   8f
+        cmp.l   %d5,%d2
+        bcc.s   1f
+        move.l  %d5,%d2                           | the larger
+1:      move.l  %d2,(%a0)+                        | displaced
+        move.l  %d5,%d2
+        lsr.l   #4,%d2
+        addq.l  #1,%d2
+        sub.l   %d2,%d5
+        bcc.s   2f
+        moveq   #0,%d5
+2:      move.l  %d5,(%a1,%d0.l*4)
+        bra.s   9f
+8:      move.l  %d2,(%a0)+                        | displaced
+9:      movea.l (%sp)+,%a1
+        moveq   #12,%d2                           | and the next two
+        addq.l  #1,%d0
+        rts
+
+        | ------------------------------------------------------------------
+        | tick (ev_tick, the UI task): mute_all follows MUTE ALL SOUND for
+        | engine_gate. Its lookup clobbers d0/d1/a0/a1 only.
+        | ------------------------------------------------------------------
+        .align  2
+        .globl  silent_pad_trig_tick
+silent_pad_trig_tick:
+        movea.l #silent_mute_on,%a1
+        bsr.w   flag_get
+        move.b  %d0,mute_all
+        rts
 
         | ------------------------------------------------------------------
         | at_key_gate: KeyboardView's call to the MIDI poly pressure queue,
@@ -681,3 +843,11 @@ txt_mute:
         | Written at run time: whether the press in hand is silent.
         .align  2
 pl_last: .long  0
+
+        | Written by the tick, read by engine_gate: MUTE ALL SOUND is checked.
+mute_all: .byte 0
+        | Per track: its last note was dropped, so its release is too.
+silenced: .space TRACKS
+        .align  2
+        | Per track: the pad glow of its dropped hits, decaying a block at a time.
+glow:   .space  TRACKS*4

@@ -102,7 +102,9 @@ entry) also needs this regeneration.
 USB Audio is part of the base: its output layout sets the USB descriptors, so each layout is its own base, sent over
 USB like any base update when a module set asks for another layout (`src/engine/elekloader/base-variants.ts`). The
 command above builds the twenty-channel default and, with `--usb-audio-variants`, the five other layouts and USB MIDI
-alone (`off`). `build_core.py` links the USB sources last and pads them to a fixed reserve (`USB_RESERVE`: 8 KiB of
+alone (`off`). The committed package stays the twenty-channel layout, which every other layout is a patch against, but the
+site installs `off` when no module set asks for a layout (`MEMBER_LAYOUT`, owner, 11 November 2026): `off` patches four
+stock audio sites fewer, so as the package it would fail the rule below. `build_core.py` links the USB sources last and pads them to a fixed reserve (`USB_RESERVE`: 8 KiB of
 code, 2.5 KiB of data, 96 KiB of bss), so every layout links everything else at the same addresses and one set of
 base-bound packages fits each. For every variant the script proves it: the controller packages encode byte for byte
 as on the default, `base_bound.py bind` gives the same binding but for the identity, the variant patches no stock site
@@ -287,6 +289,40 @@ with nothing recorded, that start installs nothing (result 11, MODULES HELD, 0x1
 Another base ignores the record. On development bases `npm run device -- guardtest` (or `guardtest:0`) arms it as a
 crash in the restore would, blaming the set's first module (or none), so a RAM boot shows what a tester's next start would.
 
+### The base's version
+
+A base has a version for people, `major.minor` or `major.minor.patch`, in [`base-version.json`](base-version.json)
+(owner, 16 November 2026; 0.7 is the first). A patch of 0 is left out, so 0.7 is not 0.7.0. `build_core.py` builds it into the base, whose status page says it in its title (`MODWERK BASE 0.7`).
+`npm run octatrack:base -- --write` records the version's identities, one per USB Audio layout, in
+[`base-versions.json`](../base-versions.json), from which the site names the base a unit reports; a base from before
+versions, or a development build, keeps the start of its identity. Raise the number for every base that is published:
+the patch one for an update (0.7 to 0.7.1, owner, 16 November 2026), the minor or major one only when the owner says so. The build refuses a
+version that `origin/main` already has with other contents. The identity stays what packages, saved sets and USB check.
+
+### Modules on and off
+
+PROJ > MODWERK > MODULES (`status.c`) lists every installed module by name with ON or OFF, and YES switches the one
+under the cursor at once. The page only asks; the engine task switches at its next service (`modset.c`), with the unit
+stopped and no host session open:
+
+- **Off** unloads the module through the loader with the same empty package a host's removal sends, so a module a track
+  runs is refused (`IN USE ON A TRACK`) and nothing changes. Its package moves from the set to the shelf.
+- **On** installs the shelved package as the power-on restore installs one, and it joins the set again.
+
+The set therefore still names exactly what runs, and every identity a host checks (the live set's digest, a sync's
+baseline) holds without a rule for modules that are off. The shelf is saved in the same file, after the set's sectors:
+a set with a shelf is version 2 and is whole only with a whole shelf of its own generation behind it, so a write cut
+short falls back to the other file's older set and shelf (`sdk/tests/runtime_card_shelf.c` cuts the power before every
+sector). The shelf takes its room from the set's, and it goes with the set when another base starts (FOREIGN). A host
+that installs a module that is off switches it on; one that removes it takes it off the shelf. PROJ held at power-on
+skips the set and keeps the shelf. After a start that did not load the card's whole set (skipped, held or one left out
+by the boot guard) the page refuses a switch with `RESTART FIRST`: saving that start's smaller set would lose the rest.
+
+A host reads the shelf with OFF (0xC1, bRequest 40, wValue the first entry, wLength 288): `MWO`, the entries in the
+reply, the count of all, then 56 bytes a module, an INVENTORY entry and its package's SHA-256, 5 a page. The site lists
+those modules as switched off. A sync leaves the ones its set has as they are and removes the others with the
+removal package any module gets (`sdk/tests/runtime_card_guard.c`: the loader takes one for a module that is not running).
+
 ### Status page
 
 `status.s` also gates stock's time-stretch helper task (`mw_ts_gate`): it skips a track whose TSTR is OFF, since only
@@ -295,11 +331,13 @@ time-stretch reads its splice search and only BEAT reads its transient markers.
 `status.c` measures, all the time, the ColdFire's load (main's idle spin, timed on DTIM3, `status.s`), each
 DSP core's mean and peak load (core 0's own idle count, core 1's counted wait for core 0, `dsp_receiver.asm`),
 each core's code arena, the delay-buffer blocks and the module pool. CUE + PROJ shows it as a dialog (NO closes it),
-and so does PROJ > MODWERK > LOAD: MODWERK STATUS in two sections, WORKING NOW (CPU, then each DSP chip by its tracks,
-measured, with the recent peak; tracks 1-4 run on core 1, tracks 5-8 on core 0) and DSP SPACE USED (per chip, the fuller
-of what admission books and its code memory: what says DSP MEMORY FULL first); `npm run device -- stats` prints it from the loader report on development
+and so does PROJ > MODWERK > LOAD: MODWERK BASE and its version over five rows, each with its bar: CPU, DSP T1-4 and
+DSP T5-8 (each DSP chip's time by its tracks, measured, with the recent peak; tracks 1-4 run on core 1, tracks 5-8 on
+core 0), then MEM T1-4 and MEM T5-8 (DSP memory per chip, the fuller of what admission books and its code memory: what says
+DSP MEMORY FULL first); `npm run device -- stats` prints it from the loader report on development
 bases. PROJ > MODWERK is a fifth root category (Octabam's MAINMENU.md: the root window is five rows tall, stock fills
-four; `build_core.py` copies the four stock rows and appends it, with its icon and list): LOAD, MODULE LOAD (each
+four; `build_core.py` copies the four stock rows and appends it, with its icon and list): MODULES last ("Modules on
+and off" above), and before it LOAD, MODULE LOAD (each
 installed module's share of each core's frame from its own cycle figure, `~` when that is 7/4 of an emulator claim:
 the meters see only each core's sum), MISSING (each module a project names but no installed module serves, with where
 it is named first: the current bank, then the others, a working Part before a saved copy, `BANK A SAVED PART 2 T5`;
@@ -502,7 +540,8 @@ command waits until IDENTIFY reports that build's `configurationHash`. A
 power cycle boots the flashed base again. Stop playback and recording first;
 the restart is a reboot.
 
-The base accepts only an OS image (entry word, at most 1.25 MiB) carrying
+The base accepts only an OS image (entry word, at most 1.5 MiB; 1.25 MiB on
+bases before 13 November 2026, which a released base must still fit) carrying
 NOR's own bootstrap version, because an image with another version would
 reprogram the bootstrap at its entry. It stages the image in its own
 reserve, arms a one-shot mailbox, and half a second later quiesces as OS
@@ -537,8 +576,8 @@ NOR when a host asks, with stock's OS UPGRADE routines (the sector erase and
    Then the write, into one of **two slots** (below), and the reply. **At most
    one restart per update:** this base writes itself while it runs on (no
    quiesce: stock's routines mask only their command writes and the OS runs
-   from RAM), with its own box on the unit (BASE UPDATE, a bar) and BASE SAVED
-   after; the next start is from the new slot.
+   from RAM), with its own screen on the unit (BASE UPDATE, a bar, the panel held
+   until it is saved: `status.c`'s transfer screens) and BASE SAVED after; the next start is from the new slot.
 3. On a unit already on two slots there is no trial: the running base takes the
    new base's container for its spare slot (only the checks that keep the
    bootloader safe: entry, bootstrap version, stock's bootloader copy), writes it

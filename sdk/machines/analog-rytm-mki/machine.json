@@ -15,6 +15,9 @@
     "core": "started",
     "mods": "open"
   },
+  "stack": {
+    "base": "started"
+  },
   "firmware": {
     "releases": [
       {

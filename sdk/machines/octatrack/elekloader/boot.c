@@ -166,6 +166,8 @@ const struct mu_backend modwerk_boot_backend = {0, enter, safe, leave, prepare, 
 
 /* flash.c: restart on NOR half a second on, with no mailbox armed (the gate boots the flashed image). */
 void modwerk_boot_restart(void) { armed = 2; countdown = BOOT_DELAY_TICKS; due = 0; }
+/* status.c's update screen: a RAM boot is armed, half a second before the unit restarts into it. */
+int modwerk_boot_pending(void) { return armed == 1; }
 int modwerk_boot_tick(void)
 {
     if (!countdown || --countdown) return 0;

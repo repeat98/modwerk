@@ -2,13 +2,13 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "moduleId": "silent-pad-trig",
-  "moduleVersion": "0.7.0-experimental",
+  "moduleVersion": "0.8.0-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-04T12:00:00Z",
-  "imageSha256": "0b76d7322f5f19415c6c3eacf2201b96e4ff09bd73f2c497cfbde254c861afa9",
-  "mainSha256": "40a8221f5dfdb9fdfe37e2fd0dfe67d0a7ac327099d9486342dd5e7c847b0e3d",
+  "capturedAt": "2026-11-08T23:00:00Z",
+  "imageSha256": "0c55c4c8a661b7b05e9516a40bc245a4892e5aed76952b3433f1de5b5b59d6ce",
+  "mainSha256": "6ff615804b79506540d0862524674d7104e6675a129e079698aaa9c52b188b2e",
   "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
-  "build": "Modwerk's linker: the vendored core-ar2 0.7 (core-ar2-0.7.elemod f1e9cb2c) + this folder's compiled Silent Pad+Trig 0.7.0-experimental, materialised against the owner's stock OS 1.74, --version PS16",
+  "build": "Modwerk's linker: the vendored core-ar2 0.7 (core-ar2-0.7.elemod f1e9cb2c) + this folder's compiled Silent Pad+Trig 0.8.0-experimental, materialised against the owner's stock OS 1.74, --version PS17",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
@@ -16,31 +16,31 @@
     "binary": "dtboot (cargo build --release --bin dtboot)",
     "settings": "a card image with no calibration, JIT on"
   },
-  "conditions": "Headless cold boot on a card image; six NO presses clear the notices; GLOBAL, six DOWNs and YES open CONTROL; two DOWNs and YES open SEQUENCER CONFIG; five DOWNs reach MUTE ALL SOUND, all three new rows unchecked; two UPs reach SILENT PAD+TRIG and YES checks it; the keys move to MUTE ALL SOUND and YES checks it; four NOs leave the menus; pad SD is pressed (silent), then FUNC + SD. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified. The run also changed SAMPLE POS RES, in that run only.",
+  "conditions": "Headless cold boot on a card image; six NO presses clear the notices; GLOBAL, six DOWNs and YES open CONTROL; two DOWNs and YES open SEQUENCER CONFIG; five DOWNs reach MUTE ALL SOUND, all three new rows unchecked; two UPs reach SILENT PAD+TRIG and YES checks it; the keys move to MUTE ALL SOUND and YES checks it; four NOs leave the menus; pad SD is pressed (silent), then FUNC + SD. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified. The run also changed SAMPLE POS RES, in that run only. PS17 reproduces 0.7.0's PS16 frames byte for byte.",
   "captures": [
     {
       "path": "media/control-menu.png",
       "sha256": "2db762a87400f764c69f8b2c3737f61aca19d855fa674771bf9b8ba1f2595b8e",
       "frame": "step14_YES.png",
-      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot ps16.syx --card CARD.img --instr 17700M --every 1000M --press NO@3200M --press NO@3500M --press NO@3800M --press NO@4100M --press NO@4400M --press NO@4700M --press GLOBAL@5100M --press DOWN@5800M --press DOWN@6050M --press DOWN@6300M --press DOWN@6550M --press DOWN@6800M --press DOWN@7050M --press YES@7600M --press DOWN@7900M --press DOWN@8150M --press YES@8400M --press DOWN@8700M --press DOWN@8950M --press DOWN@9200M --press DOWN@9450M --press DOWN@9700M --press UP@10200M --press UP@10800M --press YES@11400M --press DOWN@11800M --press DOWN@12200M --press YES@12600M --press DOWN@13000M --press DOWN@13400M --press YES@13800M --press UP@14200M --press UP@14600M --press NO@15000M --press NO@15300M --press NO@15600M --press NO@15900M --press SD@16500M:40M --press FUNC@17000M:400M --press SD@17150M:40M"
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot ps17.syx --card CARD.img --instr 17700M --every 1000M --press NO@3200M --press NO@3500M --press NO@3800M --press NO@4100M --press NO@4400M --press NO@4700M --press GLOBAL@5100M --press DOWN@5800M --press DOWN@6050M --press DOWN@6300M --press DOWN@6550M --press DOWN@6800M --press DOWN@7050M --press YES@7600M --press DOWN@7900M --press DOWN@8150M --press YES@8400M --press DOWN@8700M --press DOWN@8950M --press DOWN@9200M --press DOWN@9450M --press DOWN@9700M --press UP@10200M --press UP@10800M --press YES@11400M --press DOWN@11800M --press DOWN@12200M --press YES@12600M --press DOWN@13000M --press DOWN@13400M --press YES@13800M --press UP@14200M --press UP@14600M --press NO@15000M --press NO@15300M --press NO@15600M --press NO@15900M --press SD@16500M:40M --press FUNC@17000M:400M --press SD@17150M:40M"
     },
     {
       "path": "media/seq-config.png",
       "sha256": "8745beeb56774ab648866eec2406fcbb24e7b128328e22331c6c85cd0908d000",
       "frame": "step22_DOWN.png",
-      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot ps16.syx --card CARD.img --instr 17700M --every 1000M --press NO@3200M --press NO@3500M --press NO@3800M --press NO@4100M --press NO@4400M --press NO@4700M --press GLOBAL@5100M --press DOWN@5800M --press DOWN@6050M --press DOWN@6300M --press DOWN@6550M --press DOWN@6800M --press DOWN@7050M --press YES@7600M --press DOWN@7900M --press DOWN@8150M --press YES@8400M --press DOWN@8700M --press DOWN@8950M --press DOWN@9200M --press DOWN@9450M --press DOWN@9700M --press UP@10200M --press UP@10800M --press YES@11400M --press DOWN@11800M --press DOWN@12200M --press YES@12600M --press DOWN@13000M --press DOWN@13400M --press YES@13800M --press UP@14200M --press UP@14600M --press NO@15000M --press NO@15300M --press NO@15600M --press NO@15900M --press SD@16500M:40M --press FUNC@17000M:400M --press SD@17150M:40M"
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot ps17.syx --card CARD.img --instr 17700M --every 1000M --press NO@3200M --press NO@3500M --press NO@3800M --press NO@4100M --press NO@4400M --press NO@4700M --press GLOBAL@5100M --press DOWN@5800M --press DOWN@6050M --press DOWN@6300M --press DOWN@6550M --press DOWN@6800M --press DOWN@7050M --press YES@7600M --press DOWN@7900M --press DOWN@8150M --press YES@8400M --press DOWN@8700M --press DOWN@8950M --press DOWN@9200M --press DOWN@9450M --press DOWN@9700M --press UP@10200M --press UP@10800M --press YES@11400M --press DOWN@11800M --press DOWN@12200M --press YES@12600M --press DOWN@13000M --press DOWN@13400M --press YES@13800M --press UP@14200M --press UP@14600M --press NO@15000M --press NO@15300M --press NO@15600M --press NO@15900M --press SD@16500M:40M --press FUNC@17000M:400M --press SD@17150M:40M"
     },
     {
       "path": "media/seq-config-checked.png",
       "sha256": "702aeaff463f0852d7a00fa59271de04e93ad5fdbd513273861a089f5b50d65d",
       "frame": "step28_YES.png",
-      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot ps16.syx --card CARD.img --instr 17700M --every 1000M --press NO@3200M --press NO@3500M --press NO@3800M --press NO@4100M --press NO@4400M --press NO@4700M --press GLOBAL@5100M --press DOWN@5800M --press DOWN@6050M --press DOWN@6300M --press DOWN@6550M --press DOWN@6800M --press DOWN@7050M --press YES@7600M --press DOWN@7900M --press DOWN@8150M --press YES@8400M --press DOWN@8700M --press DOWN@8950M --press DOWN@9200M --press DOWN@9450M --press DOWN@9700M --press UP@10200M --press UP@10800M --press YES@11400M --press DOWN@11800M --press DOWN@12200M --press YES@12600M --press DOWN@13000M --press DOWN@13400M --press YES@13800M --press UP@14200M --press UP@14600M --press NO@15000M --press NO@15300M --press NO@15600M --press NO@15900M --press SD@16500M:40M --press FUNC@17000M:400M --press SD@17150M:40M"
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot ps17.syx --card CARD.img --instr 17700M --every 1000M --press NO@3200M --press NO@3500M --press NO@3800M --press NO@4100M --press NO@4400M --press NO@4700M --press GLOBAL@5100M --press DOWN@5800M --press DOWN@6050M --press DOWN@6300M --press DOWN@6550M --press DOWN@6800M --press DOWN@7050M --press YES@7600M --press DOWN@7900M --press DOWN@8150M --press YES@8400M --press DOWN@8700M --press DOWN@8950M --press DOWN@9200M --press DOWN@9450M --press DOWN@9700M --press UP@10200M --press UP@10800M --press YES@11400M --press DOWN@11800M --press DOWN@12200M --press YES@12600M --press DOWN@13000M --press DOWN@13400M --press YES@13800M --press UP@14200M --press UP@14600M --press NO@15000M --press NO@15300M --press NO@15600M --press NO@15900M --press SD@16500M:40M --press FUNC@17000M:400M --press SD@17150M:40M"
     },
     {
       "path": "media/silent-press.png",
       "sha256": "b5a2e7ca604f43e3351ea999e93cb1955991e36dc4ec0c17f0e369570f22daa4",
       "frame": "step38_SD.png",
-      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot ps16.syx --card CARD.img --instr 17700M --every 1000M --press NO@3200M --press NO@3500M --press NO@3800M --press NO@4100M --press NO@4400M --press NO@4700M --press GLOBAL@5100M --press DOWN@5800M --press DOWN@6050M --press DOWN@6300M --press DOWN@6550M --press DOWN@6800M --press DOWN@7050M --press YES@7600M --press DOWN@7900M --press DOWN@8150M --press YES@8400M --press DOWN@8700M --press DOWN@8950M --press DOWN@9200M --press DOWN@9450M --press DOWN@9700M --press UP@10200M --press UP@10800M --press YES@11400M --press DOWN@11800M --press DOWN@12200M --press YES@12600M --press DOWN@13000M --press DOWN@13400M --press YES@13800M --press UP@14200M --press UP@14600M --press NO@15000M --press NO@15300M --press NO@15600M --press NO@15900M --press SD@16500M:40M --press FUNC@17000M:400M --press SD@17150M:40M"
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot ps17.syx --card CARD.img --instr 17700M --every 1000M --press NO@3200M --press NO@3500M --press NO@3800M --press NO@4100M --press NO@4400M --press NO@4700M --press GLOBAL@5100M --press DOWN@5800M --press DOWN@6050M --press DOWN@6300M --press DOWN@6550M --press DOWN@6800M --press DOWN@7050M --press YES@7600M --press DOWN@7900M --press DOWN@8150M --press YES@8400M --press DOWN@8700M --press DOWN@8950M --press DOWN@9200M --press DOWN@9450M --press DOWN@9700M --press UP@10200M --press UP@10800M --press YES@11400M --press DOWN@11800M --press DOWN@12200M --press YES@12600M --press DOWN@13000M --press DOWN@13400M --press YES@13800M --press UP@14200M --press UP@14600M --press NO@15000M --press NO@15300M --press NO@15600M --press NO@15900M --press SD@16500M:40M --press FUNC@17000M:400M --press SD@17150M:40M"
     }
   ]
 }

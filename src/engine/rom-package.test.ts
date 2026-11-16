@@ -6,10 +6,10 @@ async function hash(bytes: Uint8Array) {
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('')
 }
 describe('authored ROM linking', () => {
-  it('matches native linking at four origins, including changing the Spectrum clone reference', async () => {
+  it('matches native linking at four origins', async () => {
     for (const pkg of packages.packages) for (const proof of pkg.proofs) {
       const object = await readRomPackage(pkg.label)
-      const externals = new Map(Object.entries(proof.externals))
+      const externals = new Map(Object.entries(proof.externals as Record<string, number>))
       const linked = linkRomText(object, proof.base, externals)
       expect(linked.bytes.length, pkg.label).toBe(proof.bytes)
       expect(await hash(linked.bytes), pkg.label).toBe(proof.sha256)
@@ -25,10 +25,8 @@ describe('authored ROM linking', () => {
       expect(await hash(linked.bytes)).toBe(proof.sha256)
     }
   })
-  it('refuses unknown packages, unresolved clone references, unsupported sections and bad rows', async () => {
+  it('refuses unknown packages, unsupported sections and bad rows', async () => {
     await expect(readRomPackage('invented')).rejects.toThrow('Unknown ROM package')
-    const shape = await readRomPackage('spectrum-shape')
-    expect(() => linkRomText(shape, 0x400c45b0)).toThrow('unresolved symbol')
     const repitch = await readRomPackage('repitch'), data = repitch.sections.find(section => section.name === '.data')!
     data.size = 4; data.data = new Uint8Array(4)
     expect(() => linkRomText(repitch, 0x400d7500)).toThrow('reviewed placement profile')

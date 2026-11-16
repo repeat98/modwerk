@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-09",
+  "source": "Two scripted elkbench runs on Iced-Cream's Analog Rytm MKII, approved by Iced-Cream: T208 with a power cycle by hand, and T221 with an Analog Four MKII as the CV source and the cable moved by hand. Plans, screens and readbacks are kept in the author's private test log.",
+  "reporter": "Iced-Cream",
+  "statement": "Hardware, OS 1.74, build CPH2 (2026-11-08): with MODE CV in GLOBAL > CONTROL > CONTROL INPUT 1, PERF DEST is the last row, steps OFF, PF1..PF12 and holds at both ends, and MODE OFF hides it. PF1 was kept over a project save and reload and over a power cycle by hand, and set back to OFF after. With nothing plugged into EXP/CV IN 1 the port reads below CV ZERO and macro 1 stays at 0. analoghealth read the CPU at 74.6% and 74.8% 30 s apart, with the heap flat. Stock 1.74 was flashed back after the run. Hardware, OS 1.74, build CPH3 (2026-11-09): an Analog Four MKII's CV OUT A, VALUE LIN 0-5 V, was patched into EXP/CV IN 1 with CONTROL INPUT 1 in CV mode, PERF DEST PF1 and a performance 1 lock on BD TUNE at +127. At 0, about 2.5 and 5 V, port 1 read 0x3fcc, 0x6048 and 0x7fff, macro 1 read 0x0000, 0x4000 and 0x7f00, and BD TUNE's live word read 0x3d00, 0x7cff and 0x7fff. Back at 0 V it read as at the start. Each row was read twice 1 s apart, and both reads matched. analoghealth read the CPU at 74.9% twice and the DSP at 70.2%, with the heap flat. Both units were flashed back to stock after.",
+  "status": "hardware-tested-author-reported",
+  "scope": "ctrl-in-perf 0.1.0-experimental alone on the Modwerk base for core-ar2 0.7, with analoghealth 1.3 for remote keys. CPH2 was built as 1.0.0-experimental from the same build.json and source; CPH3 holds the committed 0.1.0-experimental package. Not run on the unit: EXPR mode, CONTROL INPUT 2.",
+  "modules": [
+    {
+      "id": "ctrl-in-perf",
+      "version": "0.1.0-experimental"
+    },
+    {
+      "id": "core",
+      "version": "0.7"
+    }
+  ],
+  "builds": [
+    {
+      "label": "CPH2",
+      "testedOn": "2026-11-08",
+      "os": "1.74",
+      "syxSha256": "3039fb3d23caf9e499a3fa2352508420d63e88db24ff6dda855548bd4895a954",
+      "packageSha256": {
+        "ctrl-in-perf-1.0.0-experimental-os1.74.elemod": "13ba8dff489ab1424a0ebb82fc19058ee1ba472341cbcb3f993d9607d0b9c87b",
+        "modwerk-base-analog-rytm-mkii-ba530f45.elemod": "ba530f45d0cd33791d9098d87c1867ef74f6a210953f60d2a97a7548379d20fe"
+      },
+      "content": "CP02 (the Modwerk base for core-ar2 0.7, plain variant, and this module alone, f154018e…08b9) plus the analoghealth 1.3 remote-key layer. Driven over USB by a scripted bench in a ~T test project; stock 1.74 restored after the run.",
+      "results": [
+        "PERF DEST is the last row in CV mode, steps OFF..PF12 and holds at both ends; MODE OFF hides it (screens).",
+        "PF1 kept over a project save and reload, and over a power cycle by hand (screens).",
+        "CPU 74.6% and 74.8% 30 s apart, heap flat (analoghealth)."
+      ]
+    },
+    {
+      "label": "CPH3",
+      "testedOn": "2026-11-09",
+      "os": "1.74",
+      "syxSha256": "e13685cfea3572c9e84cdf5f915c95b367c0a94e5c1c9585d7070d7522777afb",
+      "packageSha256": {
+        "ctrl-in-perf-0.1.0-experimental-os1.74.elemod": "6b6fdb7de3852f0bd7a72e1e55a1074fbccb73214a88fe56a2b9b5f6ed77cb05",
+        "modwerk-base-analog-rytm-mkii-1c14b6b0.elemod": "1c14b6b058d473ca20ba93a128ca39fe74a69f0b08603ca566ee0300933713b6"
+      },
+      "content": "The Modwerk base for core-ar2 0.7 (plain variant) and this module alone, plus the analoghealth 1.3 remote-key layer, built from bb04f1a. Driven over USB by a scripted bench in a ~T test project, with an Analog Four MKII's CV OUT A patched by hand into EXP/CV IN 1; stock 1.74 restored after the run.",
+      "results": [
+        "CV mode, PERF DEST PF1: 0 V, about 2.5 V and 5 V gave port 1 0x3fcc, 0x6048 and 0x7fff and macro 1 0x0000, 0x4000 and 0x7f00 (memory reads, two per step, identical).",
+        "A performance 1 lock on BD TUNE at +127 followed: BD TUNE's live word read 0x3d00, 0x7cff and 0x7fff; back at 0 V, everything read as at the start.",
+        "CPU 74.9% twice, DSP 70.2%, heap flat (analoghealth)."
+      ]
+    }
+  ]
+}

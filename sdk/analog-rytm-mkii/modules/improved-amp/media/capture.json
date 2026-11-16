@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "improved-amp",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-12T01:46:00Z",
+  "imageSha256": "c64b04771876129256a87b0dac62d9f90406e38574e5e9b925977977393ccffe",
+  "build": "Modwerk's linker: Modwerk base for core-ar2 0.7 (plain variant 1c14b6b0) + this folder's Improved AMP 0.1.0-experimental, materialised against stock OS 1.74, --version IA14",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "revision 2ac0f1f; no card (starts formatted); JIT on; --every 1000M; DTBOOT_TURN_PNG after each turn, DTBOOT_STEPS with DTBOOT_PNG_DIR after each key"
+  },
+  "conditions": "Cold boot; eight NO presses from 7003M, 300M apart, close the calibration notices. AMP page: AMP at 11003M (12M), 64 turns of DEC (encoder 2) by -6, 20M apart from 11303M, then 25 turns of HLD (encoder 1) by +6, 20M apart from 12803M (HLD 42). ENV RESET: FUNC + MUTE opens SOUND SETTINGS, four DOWN and YES, two DOWN to ENV RESET, one LEFT from FILTER to AMP. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified.",
+  "captures": [
+    {
+      "path": "media/decay-time.png",
+      "frame": "turn64.png",
+      "plan": "DTBOOT_TURN_PNG=a dtboot Rytm-IA14-os1.74.syx --instr 13400M --every 1000M --press NO@7003M:12M --press NO@7303M:12M --press NO@7603M:12M --press NO@7903M:12M --press NO@8203M:12M --press NO@8503M:12M --press NO@8803M:12M --press NO@9103M:12M --press AMP@11003M:12M --turn 2:-6@11303Mx64/20M --turn 1:6@12803Mx25/20M",
+      "sha256": "5166a566f68a2dbd427c05469c589464d1691c67e39b671566615fc00d154dc9"
+    },
+    {
+      "path": "media/hold-steps.png",
+      "frame": "turn89.png",
+      "plan": "DTBOOT_TURN_PNG=a dtboot Rytm-IA14-os1.74.syx --instr 13400M --every 1000M --press NO@7003M:12M --press NO@7303M:12M --press NO@7603M:12M --press NO@7903M:12M --press NO@8203M:12M --press NO@8503M:12M --press NO@8803M:12M --press NO@9103M:12M --press AMP@11003M:12M --turn 2:-6@11303Mx64/20M --turn 1:6@12803Mx25/20M",
+      "sha256": "104b58cadfcffc4d14b8b2a5be7a3cf161a3bb39577ab15ba06a930150e2f973"
+    },
+    {
+      "path": "media/env-reset-amp.png",
+      "frame": "step18_LEFT.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=e dtboot Rytm-IA14-os1.74.syx --instr 15000M --every 1000M --press NO@7003M:12M --press NO@7303M:12M --press NO@7603M:12M --press NO@7903M:12M --press NO@8203M:12M --press NO@8503M:12M --press NO@8803M:12M --press NO@9103M:12M --press FUNC@11003M:300M --press MUTE@11103M:12M --press DOWN@11503M:12M --press DOWN@11703M:12M --press DOWN@11903M:12M --press DOWN@12103M:12M --press YES@12403M:12M --press DOWN@12703M:12M --press DOWN@12903M:12M --press LEFT@13203M:12M",
+      "sha256": "9fc0e29bb8cc628c9f1a8ebcc1f6318ee0882e614dc6218900b34ca771673aed"
+    }
+  ]
+}

@@ -27,17 +27,17 @@ describe('device persistence', () => {
   it('remembers module views across sessions without changing saved configurations', async () => {
     const name = 'test-' + crypto.randomUUID()
     const db = await openDeviceDatabase(name), store = deviceStore(db)
-    const config = newConfiguration('Earlier release', ['midi-scenes'], false, { 'midi-scenes': '0.1.1-experimental' })
+    const config = newConfiguration('Earlier release', ['tapehead'], false, { tapehead: '0.1.1-experimental' })
     await store.saveConfiguration(config)
     await store.setActiveConfiguration(config.id)
     await Promise.all([
-      store.rememberModuleView({ id: 'midi-scenes', version: '0.1.1-experimental' }),
+      store.rememberModuleView({ id: 'tapehead', version: '0.1.1-experimental' }),
       store.rememberModuleView({ id: 'repitch', version: '0.1.1-experimental' }),
     ])
     db.close()
     const restoredDb = await openDeviceDatabase(name), restored = deviceStore(restoredDb)
-    const current = { id: 'midi-scenes', version: '0.2.0-experimental' }
-    expect(await restored.readModuleViews()).toEqual({ 'midi-scenes': '0.1.1-experimental', repitch: '0.1.1-experimental' })
+    const current = { id: 'tapehead', version: '0.2.0-experimental' }
+    expect(await restored.readModuleViews()).toEqual({ tapehead: '0.1.1-experimental', repitch: '0.1.1-experimental' })
     expect(moduleHasUpdate(current, (await restored.readModuleViews())[current.id])).toBe(true)
     await restored.rememberModuleView(current)
     expect(moduleHasUpdate(current, (await restored.readModuleViews())[current.id])).toBe(false)
@@ -51,12 +51,12 @@ describe('device persistence', () => {
     const db = await openDeviceDatabase('test-' + crypto.randomUUID()), store = deviceStore(db)
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction('settings', 'readwrite')
-      tx.objectStore('settings').put({ id: 'midi-scenes', version: 'latest' }, 'module-view/midi-scenes')
+      tx.objectStore('settings').put({ id: 'tapehead', version: 'latest' }, 'module-view/tapehead')
       tx.oncomplete = () => resolve()
       tx.onerror = () => reject(tx.error)
     })
     expect(await store.readModuleViews()).toEqual({})
-    await expect(store.rememberModuleView({ id: 'midi-scenes', version: 'latest' })).rejects.toThrow('semantic version')
+    await expect(store.rememberModuleView({ id: 'tapehead', version: 'latest' })).rejects.toThrow('semantic version')
     db.close()
   })
   it('keeps independently edited configurations and the active selection across connections', async () => {
@@ -91,6 +91,17 @@ describe('device persistence', () => {
     expect(kept).toEqual(retired)
     db.close()
   })
+  it('lists a configuration that names a module removed from the library, without that module', async () => {
+    const db = await openDeviceDatabase('test-' + crypto.randomUUID())
+    const store = deviceStore(db), current = newConfiguration('Older set', ['miniverb'])
+    // As saved before the module left the library: writing it directly skips today's validation.
+    const saved = { ...current, moduleIds: ['midi-scenes', 'miniverb'], moduleVersions: { ...current.moduleVersions, 'midi-scenes': '0.2.5-experimental' } }
+    await new Promise((resolve, reject) => { const tx = db.transaction('configurations', 'readwrite'); tx.objectStore('configurations').put(saved); tx.oncomplete = resolve; tx.onerror = reject })
+    const skipped: unknown[] = []
+    expect(await store.listConfigurations(error => skipped.push(error))).toEqual([current])
+    expect(skipped).toEqual([])
+    db.close()
+  })
   it('stores a binary locally and removes it permanently without touching configurations', async () => {
     const db = await openDeviceDatabase('test-' + crypto.randomUUID())
     const store = deviceStore(db)
@@ -120,7 +131,7 @@ it('migrates old device configurations without changing selection and preserves 
 
 
 it('persists the initial full catalog across sessions and remembers opening a new module', async () => {
- const name = 'test-' + crypto.randomUUID(), existing = { id: 'repitch', version: '0.1.1-experimental' }, addition = { id: 'midi-scenes', version: '0.2.0-experimental' }
+ const name = 'test-' + crypto.randomUUID(), existing = { id: 'repitch', version: '0.1.1-experimental' }, addition = { id: 'tapehead', version: '0.2.0-experimental' }
  const db = await openDeviceDatabase(name), store = deviceStore(db)
  expect(await store.readModuleBaseline()).toBeUndefined()
  // Legacy viewing history remains usable when establishing the new full-catalog baseline.

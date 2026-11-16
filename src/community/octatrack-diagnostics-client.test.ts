@@ -16,7 +16,7 @@ afterEach(()=>{cleanup?.();cleanup=undefined;vi.useRealTimers()})
 async function fixture() {
   let listener:((event:LinkDiagnostic)=>void)|undefined
   const health=vi.fn(async()=>({state:2,failed:0,modules:2,dsp:2,intact:2,ran:2,cpu:300,tracks1to4:200,tracks5to8:200,frameGap:47900,saved:7,savedCount:2,live:2,culprit:0,refusal:0}))
-  const link={subscribeDiagnostics:(fn:(event:LinkDiagnostic)=>void)=>{listener=fn;return()=>{listener=undefined}},health,getState:()=>({status:'ready',identity:{base:'a'.repeat(64),canSubmit:true},active:'b'.repeat(64)})} as unknown as OctatrackLink
+  const link={subscribe:()=>()=>{},subscribeDiagnostics:(fn:(event:LinkDiagnostic)=>void)=>{listener=fn;return()=>{listener=undefined}},health,getState:()=>({status:'ready',identity:{base:'a'.repeat(64),canSubmit:true},active:'b'.repeat(64)})} as unknown as OctatrackLink
   cleanup=collectOctatrackDiagnostics('member',link,()=>({moduleIds:['everb'],removedStockFx:[]}))
   await vi.advanceTimersByTimeAsync(0)
   return {health,emit:(event:LinkDiagnostic)=>listener?.(event)}
@@ -98,7 +98,7 @@ describe('beta diagnostic collection',()=>{
   })
   it('reads the choice once without a connected unit, and again when the tab comes back into view',async()=>{
     const page=Object.assign(new EventTarget(),{visibilityState:'hidden'});vi.stubGlobal('document',page)
-    const link={subscribeDiagnostics:()=>()=>{},getState:()=>({status:'idle'})} as unknown as OctatrackLink
+    const link={subscribe:()=>()=>{},subscribeDiagnostics:()=>()=>{},getState:()=>({status:'idle'})} as unknown as OctatrackLink
     cleanup=collectOctatrackDiagnostics('member',link,()=>undefined)
     await vi.advanceTimersByTimeAsync(10*30000)
     expect(api).toHaveBeenCalledTimes(1)

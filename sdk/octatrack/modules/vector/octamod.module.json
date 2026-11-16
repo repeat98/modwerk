@@ -1,0 +1,527 @@
+{
+  "schemaVersion": 2,
+  "id": "vector",
+  "key": "VECTOR",
+  "name": "VECTOR",
+  "version": "0.3.2-experimental",
+  "category": "machines",
+  "author": {
+    "github": "repeat98",
+    "credits": [
+      "Octamod contributors: original generator and integration",
+      "Sam Banks / octabam: MIT native UI and registration seams",
+      "Iftah: Sting 2 musical inspiration; no source or assets copied"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "GENERATIVE",
+    "family": "Sample pattern generator",
+    "summary": "Shape an editable sample phrase directly on both native SRC pages.",
+    "overview": "VECTOR commits real trigs and PTCH/HOLD/VOL locks as its SRC parameters change. The native sequencer plays the result immediately. SRC SETUP holds secondary controls. This update protects packed settings from stock Part validation during startup. Physical hardware remains untested; the owner approved release and issue closure with physical reboot/audio unverified.",
+    "highlights": [
+      "Immediate sequence changes while playing",
+      "Two native SRC pages with twelve controls",
+      "Real editable trigs and note locks",
+      "Flex or Static sample playback"
+    ],
+    "usage": [
+      "Select an audio track. Open SRC page 2 (double-tap SRC), choose VECTOR and press YES. In the backing-pool modal, highlight STATIC or FLEX with UP/DOWN or LEVEL, then press RIGHT to enter that pool. YES also opens the highlighted pool; YES on a loaded sample slot assigns that pool and sample to VECTOR. Use the corresponding stock sample-slot and file-loading tools to load a tuned sample; NO returns from the sample browser.",
+      "Double-tap the assigned TRACK to reopen the pool modal. LEFT returns to the machine list; RIGHT on VECTOR opens the modal. RIGHT in the pool modal opens the highlighted Static/Flex sample list. In a sample-slot list, LEFT returns to pool choice and RIGHT opens the stock file browser. Horizontal arrows navigate menus without changing the assigned pool; YES on a sample slot commits the pool and sample.",
+      "Press SRC for TYPE, DENS, ROOT, SCAL, GATE and ACNT on encoders A\u2013F. Turn a parameter to commit a phrase immediately, including during playback. The current seed stays fixed while shaping the vector.",
+      "Open SRC page 2 with a double tap on SRC. Encoders A\u2013F adjust SEED, SPAN, OFST, ROT, RPT and DIR. These changes also commit immediately; press SRC to return.",
+      "Press PLAY to hear the native sequencer repeat the phrase. Push LEVEL on SRC for the ordinary sample controls, then use grid recording and a held trig to edit PTCH. AMP exposes the generated HOLD/VOL locks. Push LEVEL again to return.",
+      "Press YES on the generator for a new seed and variation. STOP/PLAY preserves a populated phrase. Select normal FLEX/STATIC to remove VECTOR while retaining the generated pattern."
+    ]
+  },
+  "controls": [
+    {
+      "name": "TYPE",
+      "default": 11,
+      "count": 16,
+      "doc": "0\u201315. Low values favor varied scale notes; higher values prefer tonic/fifth and stronger beat positions. Original algorithm; not a byte-identical Sting port.",
+      "labels": null
+    },
+    {
+      "name": "DENS",
+      "default": 11,
+      "count": 17,
+      "doc": "0\u201316. Note count is round(motif length \u00d7 DENS / 16). Zero is silence; 16 fills the motif. Changes commit immediately with the current seed.",
+      "labels": null
+    },
+    {
+      "name": "ROOT",
+      "default": 0,
+      "count": 12,
+      "doc": "C\u2013B. Sample reference is C at neutral PTCH. Tune the source sample accordingly. Pitch locks stay within \u221212 to +12 semitones.",
+      "labels": [
+        "C",
+        "C#",
+        "D",
+        "D#",
+        "E",
+        "F",
+        "F#",
+        "G",
+        "G#",
+        "A",
+        "A#",
+        "B"
+      ]
+    },
+    {
+      "name": "SCAL",
+      "default": 1,
+      "count": 5,
+      "doc": "Chromatic, natural minor, major, Dorian or minor pentatonic. All generated pitches remain in the selected scale.",
+      "labels": [
+        "CHR",
+        "MIN",
+        "MAJ",
+        "DOR",
+        "PENT"
+      ]
+    },
+    {
+      "name": "GATE",
+      "default": 32,
+      "count": 127,
+      "doc": "0\u2013126 in native AMP HOLD units, not percent or milliseconds. Generated HOLD locks range from half to all of this value. AMP REL still shapes the audible tail.",
+      "labels": null
+    },
+    {
+      "name": "ACNT",
+      "default": 48,
+      "count": 128,
+      "doc": "0\u2013127. Strong notes keep the Part AMP VOL. Other notes are attenuated by up to half; zero gives equal volumes. This writes AMP VOL locks, not MIDI velocity.",
+      "labels": null
+    },
+    {
+      "name": "SEED",
+      "default": 1,
+      "count": 128,
+      "doc": "0\u2013127. Select the deterministic variation; YES advances and wraps this value. Other parameter edits keep it fixed.",
+      "labels": null
+    },
+    {
+      "name": "SPAN",
+      "default": 12,
+      "count": 13,
+      "doc": "0\u201312 semitones either side of OFST, clipped to the native \u00b112-semitone range. Pitches remain in the selected scale; an empty window uses its nearest scale note.",
+      "labels": null
+    },
+    {
+      "name": "OFST",
+      "default": 12,
+      "count": 25,
+      "doc": "Displayed as \u221212 to +12 semitones; stored midpoint 12 means zero. Moves the center of the pitch window.",
+      "labels": null
+    },
+    {
+      "name": "ROT",
+      "default": 0,
+      "count": 64,
+      "doc": "0\u201363 steps. Rotate the generated phrase right within the native track length.",
+      "labels": null
+    },
+    {
+      "name": "RPT",
+      "default": 0,
+      "count": 65,
+      "doc": "OFF (0) uses the full native track length. 1\u201364 chooses a repeating motif; larger values are clipped to the active length.",
+      "labels": null
+    },
+    {
+      "name": "DIR",
+      "default": 0,
+      "count": 2,
+      "doc": "FWD or REV. Reverse the generated phrase before applying ROT.",
+      "labels": [
+        "FWD",
+        "REV"
+      ]
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Track machine",
+    "conflicts": [
+      "analog-bassdrum",
+      "synth"
+    ],
+    "limitations": [
+      "MKI/MKII hardware support is unverified; documentation captures use the MKII emulator panel.",
+      "Shares machine chooser hooks with Analog BD and FM Synth; the configurator and native builder reject those combinations.",
+      "Sample must be tuned to the stated C reference. Generated pitch is limited to the native \u00b112-semitone range.",
+      "Parameter edits and YES publish during playback. Custom Undo and bar-quantized replacement are not implemented.",
+      "Uses native pattern/track length, speed and swing. RPT sets a motif length within that track; no independent clock, swing or MIDI output.",
+      "SRC generation knobs are request parameters, not p-lock/LFO/scene destinations. The normal EDIT view retains native playback controls.",
+      "Generation owns note trigs, PTCH/HOLD/VOL locks and note timing/conditions. Every changed generator parameter or YES replaces those across the current track; other locks, recorder events and swing are preserved.",
+      "The DRAM loader reserves 1,707 audio pages (10,487,808 bytes) shared across DRAM modules.",
+      "ColdFire resource pricing is a conditional static model, not measured chip timing. See TESTING.md for event-rate and memory-service assumptions.",
+      "Part/project save-reload, fresh saved-project load and battery-RAM-only restart pass in the ColdFire emulator with two distinct instances. Physical reboot, working audio after transitions and mixed-module audio stress remain unverified under the owner exception for this version.",
+      "Keeps existing S2 version 1/2 saved settings. Already reset projects cannot be reconstructed; restore a known-good project/card backup.",
+      "Open (#596, from the source, not yet reproduced): switching a VECTOR track back to STATIC/FLEX leaves settings bytes that, with SPAN 8 or higher, can empty the bank after a save and reboot. Set SPAN to 7 or lower before switching back, or keep the track on VECTOR."
+    ]
+  },
+  "resources": {
+    "recorded": "2026-10-09; isolated compilation, static accounting and exact-image ColdFire emulator probes",
+    "storage": {
+      "label": "Storage",
+      "display": "10.59 MB shared arena",
+      "value": 10586112,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "Tested reported profile: repitch, vector, playmodes, mute-modes and recorder-loop-fix with stock FX2, original 1.40C. Shared arena 10,586,112 bytes includes 10,487,808 module arena plus 98,304 logger reserve, counted once. Linked runtime 90,780 bytes and packed staging fit within it. VECTOR allocated sections: 13,000 text, 398 rodata and 3,368 data bytes; no BSS or new heap. Complete flash append is 18153 bytes. Maximum observed native commit stack 1,048; Part validation 252; fixed added UI stack bound 1,216. Borrowed stock window, lock indexes and 8-track bank/SRAM capacities are retained. Hardware canaries are unmeasured.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Conditional UI event bound",
+      "value": 185200000,
+      "unit": "cycles/event",
+      "method": "static",
+      "conditions": "Conditional 32-cycle/instruction pricing, 700,000-instruction commit ceiling, eight startup commits plus 6,000,000-cycle stock UI/scheduling reserve; one full burst per second at 264 MHz. Not measured chip timing or audio headroom.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "One 1\u201364-step phrase per parameter edit or YES, with first-PLAY empty-track filling. Runs on the UI task and publishes through native live track updates. Stock Flex/Static playback and DSP are retained; no utilization/headroom percentage is asserted.",
+      "cpu": {
+        "level": "moderate",
+        "basis": "source-estimate",
+        "rationale": "Generation runs on the UI task. A synthetic native commit peaks at 472,500 executed instructions; the conditional model also bounds full all-track lock rebuilding. Physical timing and mixed-module audio load are unmeasured.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No added DSP kernel. Generated note density still changes ordinary sample/FX workload, which must be stress-tested.",
+        "source": "TESTING.md"
+      },
+      "memory": {
+        "level": "high",
+        "basis": "source-estimate",
+        "rationale": "The shared loader reserves 10,487,808 audio-pool bytes. VECTOR has one shared runtime/staging buffer, bounded UI stack and reuses native pattern/settings/window capacities. No added DSP buffers or new heap allocations.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Firmware-free generator/writer and all 256 VECTOR-instance masks pass ASan/UBSan; authored assembly reproduces. Exact-image ColdFire emulator tests reproduce the previous reset/stuck transport and pass two-instance Part/project save-reload, saved-card fresh load and battery-only restart. Twelve SRC controls, ordinary stock validation, both pool menus and advancing transport are checked. Physical reboot/audio remain untested under the exact-version owner exception. 0.3.2 (#1533): no packed settings byte reaches 0x80, so stock's Part check passes without VECTOR too; seen in ot_emu and on the owner's MKII (a development twin, RAM boots).",
+    "hardwareStatus": "reported",
+    "gates": [
+      "Firmware-free sanitizer generator, writer and packed-settings checks",
+      "Authored C/hooks to assembly reproducibility without firmware",
+      "Current native SRC and sample-pool emulator behavior walks",
+      "ColdFire instruction/stack probe and conditional resource accounting",
+      "Browser/native build parity and matching composition rejection",
+      "Signed Part validator preservation for all 256 track masks",
+      "Two-instance native Part/project save-reload, saved-card fresh load and battery-RAM-only restart",
+      "Exact-version owner exception; physical reboot/audio unverified",
+      "0.3.2: packed settings pass stock's Part check without VECTOR (host test; ot_emu call of the check)"
+    ],
+    "evidenceRevision": "3d903dcf6e368010e20215440842e4783d262f46",
+    "qualification": {
+      "moduleVersion": "0.3.2-experimental",
+      "sourceSha256": "871a2b4d1d6ab0829a9a1d8457a75a1d790efe89e785bed6cfd3cebc5c36609c",
+      "imageSha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 22400000,
+          "maxConfiguration": 185200000,
+          "maxInstances": 8,
+          "budget": 264000000,
+          "unit": "cycles/event",
+          "method": "static",
+          "conditions": {
+            "parameterExtremes": "Firmware-free sanitizer matrix covers all roots/scales/pitch windows and all secondary-control domains. Native instruction probe: 3,840 length/type/scale/seed cases and eight full native commit calls; static loop ceilings cover 64 steps and 2,016 rank shifts. Part-validation probe covers all 256 instance masks; maximum 64,241 executed instructions including the real stock validator, with 252 observed stack bytes. Added adapter has bounded 8-track/12-byte save and restore loops; no per-sample work.",
+            "parameterModulation": "Generator controls are request parameters, not LFO/p-lock/scene destinations. UI knob changes and YES synchronously publish stock trigs and locks; ordinary sample playback modulation remains native.",
+            "modeSwitching": "Current exact-image emulator: all twelve SRC edits, native sample editor, both backing-pool menus, advancing PLAY, native Part save/reload, panel-driven project save/reload, fresh saved-card project load and battery-RAM-only restart. Physical reboot/audio remain untested.",
+            "maxLoad": "Eight signed audio tracks may auto-fill on one PLAY edge. Conditional UI budget allows one such burst per second at 264 MHz; no audio-thread work is added. Stock rendering/scheduling uses the explicit reserve. Mixed-module audio stress is not measured.",
+            "inputConditions": "Original integer generator is input-independent. Density up to 64 notes/track; native lock rebuild scans every audio/MIDI lane. Audio sample/FX costs remain stock and are outside the added UI-work bound; hardware audio continuity is untested."
+          },
+          "report": "evidence/software.json"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "Shared DRAM arena, including module runtime, packed staging and mandatory core logger reserve",
+            "space": "sdram",
+            "words": 10586112,
+            "wordBits": 8,
+            "bytes": 10586112,
+            "scope": "shared"
+          },
+          {
+            "name": "Complete tested-profile flash append: bootstrap and packed runtime",
+            "space": "cpu-flash",
+            "words": 18153,
+            "wordBits": 8,
+            "bytes": 18153,
+            "scope": "shared"
+          },
+          {
+            "name": "Additional bounded UI stack capacity, including native callees",
+            "space": "cpu-ram",
+            "words": 1216,
+            "wordBits": 8,
+            "bytes": 1216,
+            "scope": "shared"
+          },
+          {
+            "name": "Reused native list window, two surfaces, descriptor and callbacks",
+            "space": "sdram",
+            "words": 2132,
+            "wordBits": 8,
+            "bytes": 2132,
+            "scope": "shared"
+          },
+          {
+            "name": "Reused stock lock-index masks",
+            "space": "sdram",
+            "words": 128,
+            "wordBits": 8,
+            "bytes": 128,
+            "scope": "shared"
+          },
+          {
+            "name": "Sixteen pattern records in loaded bank and SRAM mirror",
+            "space": "cpu-ram",
+            "words": 74560,
+            "wordBits": 8,
+            "bytes": 74560,
+            "scope": "instance"
+          },
+          {
+            "name": "Twelve settings bytes across four Parts, loaded bank and SRAM mirror",
+            "space": "cpu-ram",
+            "words": 96,
+            "wordBits": 8,
+            "bytes": 96,
+            "scope": "instance"
+          }
+        ],
+        "perInstanceBytes": 74656,
+        "sharedBytes": 10607741,
+        "maxInstances": 8,
+        "totalBytes": 11204989,
+        "conditions": "Tested reported profile: repitch, vector, playmodes, mute-modes and recorder-loop-fix with stock FX2, original 1.40C. Shared arena 10,586,112 bytes includes 10,487,808 module arena plus 98,304 logger reserve, counted once. Linked runtime 90,780 bytes and packed staging fit within it. VECTOR allocated sections: 13,000 text, 398 rodata and 3,368 data bytes; no BSS or new heap. Complete flash append is 18153 bytes. Maximum observed native commit stack 1,048; Part validation 252; fixed added UI stack bound 1,216. Borrowed stock window, lock indexes and 8-track bank/SRAM capacities are retained. Hardware canaries are unmeasured.",
+        "report": "evidence/software.json"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-11-13",
+        "tester": "repeat98 (owner's unit, driven over USB by the coordinating session)",
+        "sourceRevision": "3d903dcf6e368010e20215440842e4783d262f46",
+        "imageSha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
+        "summary": "Over USB on an Octatrack MKII (13 November 2026): a RAM-booted development twin (identity 2d97f42d...), this 0.3.2 USB package (428d970a..., 18,334 bytes) as a timed trial, a scratch project. VECTOR chosen on T1 from the machine list and the Flex pool; its second page showed SPAN 12 and the Part held 53 32 02 1b 4b 40, no byte at 0x80 or above. With those settings left on the track, a RAM boot (the battery restore with no module installed) kept the bank: machines, both tracks' trigs and the settings bytes unchanged. The same steps with the published 0.2.5 package (settings ... 0c c0) reset the bank at the restart: all tracks STATIC, no trigs (#1533); a second restart without saving brought it back.",
+        "limitations": [
+          "The base was a development twin of another branch, not the release base; the package ran as a trial, never as a kept module.",
+          "The restart was a RAM boot with the track switched back to FLEX and the settings bytes left in place; a restart with the track still set to VECTOR under 0.3.2, and a power cycle with 0.3.2 kept on the flashed base, were not run.",
+          "Not tested on a unit: the rewrite of settings saved by older versions (emulator only), PROJECT > RELOAD as the recovery, the card build, saved Parts, listening; no chip timing or stress.",
+          "One MKII; no MKI. The earlier 27 October run of the 0.2.5 package (SRC SETUP page 2 over USB) is in TESTING.md."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "screenshotStyle": "black-and-white",
+        "screenshots": [
+          "media/ot-location.png",
+          "media/ot-generator.png",
+          "media/ot-generated.png",
+          "media/ot-edit.png",
+          "media/ot-setup.png",
+          "media/ot-pool-choice.png",
+          "media/ot-static-pool.png",
+          "media/ot-flex-pool.png"
+        ],
+        "tutorial": {
+          "title": "Generate a phrase, then edit a note",
+          "steps": [
+            "Select an audio track. Open SRC page 2 (double-tap SRC), choose VECTOR and press YES. In the backing-pool modal, highlight STATIC or FLEX with UP/DOWN or LEVEL, then press RIGHT to enter that pool. YES also opens the highlighted pool; YES on a loaded sample slot assigns that pool and sample to VECTOR. Use the corresponding stock sample-slot and file-loading tools to load a tuned sample; NO returns from the sample browser.",
+            "Double-tap the assigned TRACK to reopen the pool modal. LEFT returns to the machine list; RIGHT on VECTOR opens the modal. RIGHT in the pool modal opens the highlighted Static/Flex sample list. In a sample-slot list, LEFT returns to pool choice and RIGHT opens the stock file browser. Horizontal arrows navigate menus without changing the assigned pool; YES on a sample slot commits the pool and sample.",
+            "Press SRC for TYPE, DENS, ROOT, SCAL, GATE and ACNT on encoders A\u2013F. Turn a parameter to commit a phrase immediately, including during playback. The current seed stays fixed while shaping the vector.",
+            "Open SRC page 2 with a double tap on SRC. Encoders A\u2013F adjust SEED, SPAN, OFST, ROT, RPT and DIR. These changes also commit immediately; press SRC to return.",
+            "Press PLAY to hear the native sequencer repeat the phrase. Push LEVEL on SRC for the ordinary sample controls, then use grid recording and a held trig to edit PTCH. AMP exposes the generated HOLD/VOL locks. Push LEVEL again to return.",
+            "Press YES on the generator for a new seed and variation. STOP/PLAY preserves a populated phrase. Select normal FLEX/STATIC to remove VECTOR while retaining the generated pattern."
+          ]
+        }
+      }
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original VECTOR C generator, tests, documentation and vector illustration by Octamod contributors. Native registration/input-layer interoperability is adapted from MIT octabam; Sam Banks and existing component notices are retained. Iftah\u2019s Sting 2 is musical inspiration; no Sting source, branding artwork or assets were copied and no exact algorithm or endorsement is claimed. Firmware and extracted routines are excluded; replay bytes are reconstructed only from verified local firmware into temporary build output. Actual LCD images require reviewer rights verification under media/LICENSE.md; review is not automatic legal clearance."
+  },
+  "media": [
+    {
+      "path": "media/ot-location.png",
+      "captureType": "emulator",
+      "caption": "VECTOR is selected in the normal SRC SETUP machine list.",
+      "alt": "Native SRC SETUP machine list with VECTOR selected beneath PICKUP, beside the secondary controls.",
+      "credit": "Octamod contributors",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC SETUP machine chooser",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.3.2-experimental",
+        "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
+        "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
+      }
+    },
+    {
+      "path": "media/ot-generator.png",
+      "captureType": "emulator",
+      "caption": "SRC page 1 uses the normal six native cells: TYPE, DENS, ROOT, SCAL, GATE and ACNT.",
+      "alt": "Native VECTOR SRC page with six generator dials and the normal track, sample and Part display.",
+      "credit": "Octamod contributors",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC generator",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.3.2-experimental",
+        "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
+        "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
+      }
+    },
+    {
+      "path": "media/ot-generated.png",
+      "captureType": "emulator",
+      "caption": "YES advances SEED and commits a fresh variation; turning a parameter commits with the current seed.",
+      "alt": "Native VECTOR SRC page after generating a new variation.",
+      "credit": "Octamod contributors",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC after Generate",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.3.2-experimental",
+        "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
+        "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
+      }
+    },
+    {
+      "path": "media/ot-edit.png",
+      "captureType": "emulator",
+      "caption": "Push LEVEL to access native PTCH, STRT, LEN, RATE, RTRG and RTIM.",
+      "alt": "Native SRC sample controls on a track named VECTOR.",
+      "credit": "Octamod contributors",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC sample editor",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.3.2-experimental",
+        "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
+        "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
+      }
+    },
+    {
+      "path": "media/ot-setup.png",
+      "captureType": "emulator",
+      "caption": "SRC page 2 holds SEED, SPAN, OFST, ROT, RPT and DIR in the native SRC SETUP layout.",
+      "alt": "Native SRC SETUP with VECTOR selected and six secondary generator controls.",
+      "credit": "Octamod contributors",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC SETUP",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.3.2-experimental",
+        "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
+        "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
+      }
+    },
+    {
+      "path": "media/ot-pool-choice.png",
+      "captureType": "emulator",
+      "caption": "VECTOR uses the stock list modal with visible left and right chevrons. RIGHT enters the highlighted pool.",
+      "alt": "Native VECTOR backing-pool modal with Static and Flex entries and left/right menu arrows.",
+      "credit": "Octamod contributors",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Backing-pool choice",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.3.2-experimental",
+        "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
+        "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
+      }
+    },
+    {
+      "path": "media/ot-static-pool.png",
+      "captureType": "emulator",
+      "caption": "RIGHT on STATIC opens the existing Static sample-slot tools.",
+      "alt": "Native Static sample-slot list reached from VECTOR pool choice.",
+      "credit": "Octamod contributors",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Static sample pool",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.3.2-experimental",
+        "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
+        "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
+      }
+    },
+    {
+      "path": "media/ot-flex-pool.png",
+      "captureType": "emulator",
+      "caption": "RIGHT on FLEX opens the existing Flex sample and recorder-slot tools.",
+      "alt": "Native Flex sample-slot list with recorder buffers and memory readout reached from VECTOR pool choice.",
+      "credit": "Octamod contributors",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Flex sample pool",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.3.2-experimental",
+        "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
+        "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
+      }
+    }
+  ],
+  "access": {
+    "location": "Audio track machine chooser: VECTOR, then the native-sized Static/Flex backing-pool modal. SRC main holds live phrase controls; SRC SETUP holds secondary controls. Double-tap TRACK reopens pool choice; push LEVEL toggles ordinary sample editing.",
+    "steps": [
+      "Select an audio track. Open SRC page 2 (double-tap SRC), choose VECTOR and press YES. In the backing-pool modal, highlight STATIC or FLEX with UP/DOWN or LEVEL, then press RIGHT to enter that pool. YES also opens the highlighted pool; YES on a loaded sample slot assigns that pool and sample to VECTOR. Use the corresponding stock sample-slot and file-loading tools to load a tuned sample; NO returns from the sample browser.",
+      "Double-tap the assigned TRACK to reopen the pool modal. LEFT returns to the machine list; RIGHT on VECTOR opens the modal. RIGHT in the pool modal opens the highlighted Static/Flex sample list. In a sample-slot list, LEFT returns to pool choice and RIGHT opens the stock file browser. Horizontal arrows navigate menus without changing the assigned pool; YES on a sample slot commits the pool and sample.",
+      "Press SRC for TYPE, DENS, ROOT, SCAL, GATE and ACNT on encoders A\u2013F. Turn a parameter to commit a phrase immediately, including during playback. The current seed stays fixed while shaping the vector.",
+      "Open SRC page 2 with a double tap on SRC. Encoders A\u2013F adjust SEED, SPAN, OFST, ROT, RPT and DIR. These changes also commit immediately; press SRC to return.",
+      "Press PLAY to hear the native sequencer repeat the phrase. Push LEVEL on SRC for the ordinary sample controls, then use grid recording and a held trig to edit PTCH. AMP exposes the generated HOLD/VOL locks. Push LEVEL again to return.",
+      "Press YES on the generator for a new seed and variation. STOP/PLAY preserves a populated phrase. Select normal FLEX/STATIC to remove VECTOR while retaining the generated pattern."
+    ],
+    "screenshots": [
+      "media/ot-location.png",
+      "media/ot-generator.png",
+      "media/ot-generated.png",
+      "media/ot-edit.png",
+      "media/ot-setup.png",
+      "media/ot-pool-choice.png",
+      "media/ot-static-pool.png",
+      "media/ot-flex-pool.png"
+    ]
+  },
+  "source": {
+    "repository": "https://github.com/repeat98/modwerk",
+    "revision": "16c04ae4d713376bd6bb119951899c33fa2e0ae9",
+    "path": "sdk/octabam/modules/vector"
+  }
+}

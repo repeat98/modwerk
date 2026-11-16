@@ -1,6 +1,6 @@
 # Octatrack SDK
 
-**Platform:** octabam · **OS:** 1.40C (MKI and MKII share one image) · **Modules:** [`sdk/octabam/modules/`](../../octabam/modules/) · **Catalog:** [`sdk/catalog.json`](../../catalog.json)
+**Platform:** octabam · **OS:** 1.40C (MKI and MKII share one image) · **Modules:** [`sdk/octatrack/modules/`](../../octabam/modules/) · **Catalog:** [`sdk/catalog.json`](../../catalog.json)
 
 Octatrack modules build on [octabam](https://github.com/sambanks/octabam) (MIT, © Sam Banks), vendored under `sdk/octabam/` with its provenance in `sdk/UPSTREAM.json` and `sdk/imports/`. DSP effects run on the DSP56300; machines, MIDI and USB modules run on the ColdFire CPU. Modwerk's browser engine composes them from each owner's stock 1.40C file.
 

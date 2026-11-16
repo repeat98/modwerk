@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Icon } from './Icon'
 import { MODULE_SORTS } from '../community/module-statistics'
 import { useOctatrackBase } from '../hooks/useOctatrackLink'
+import { MODULE_COMPARE_ENABLED } from './module-compare'
 
 export type LibraryToolsProps = {
   family: string
@@ -16,12 +17,14 @@ export type LibraryToolsProps = {
   buildLabel?: string
   machine?: ReactNode
   disabled?: boolean
-  // false on machines that never get a firmware build (the Zoom pedals load effect files).
+  // false on machines with nowhere to take a set yet (Zoom pedals without the zdl platform).
   build?: boolean
+  // The button's text where it opens the machine's own page (a Zoom pedal's: Your MS-70CDR).
+  buildText?: string
 }
 
-export function LibraryTools({ family, families, onFamilyChange, sort, onSortChange, comparisonCount, onCompare, buildHref = '#configuration', buildLabel, machine, disabled = false, build = true }: LibraryToolsProps) {
-  // With the Modwerk base connected (beta), loading happens from the Octatrack hub's guided load, not a .bin;
+export function LibraryTools({ family, families, onFamilyChange, sort, onSortChange, comparisonCount, onCompare, buildHref = '#configuration', buildLabel, machine, disabled = false, build = true, buildText }: LibraryToolsProps) {
+  // On the Octatrack base path, loading happens from the Octatrack hub's guided load, not a .bin;
   // #configuration opens it on the set you edit.
   const usb = useOctatrackBase() && buildHref === '#configuration', mobile = useMobileWorkspace()
   return <div className="discovery-tools">
@@ -29,8 +32,8 @@ export function LibraryTools({ family, families, onFamilyChange, sort, onSortCha
     <label>Type<select value={family} disabled={disabled} onChange={event=>onFamilyChange(event.target.value)}><option value="all">All types</option>{families.map(value=><option key={value}>{value}</option>)}</select></label>
     <label>Sort<select value={sort} disabled={disabled} onChange={event=>onSortChange(event.target.value)}>{MODULE_SORTS.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
     <div className="discovery-actions">
-      <button className="button button-quiet" disabled={comparisonCount<2} onClick={onCompare}>Compare{comparisonCount?' ('+comparisonCount+')':''}</button>
-      {build && <a className="button button-primary" href={buildHref ?? undefined} aria-disabled={!buildHref || undefined} tabIndex={buildHref ? undefined : -1} aria-label={mobile || usb ? undefined : buildLabel} title={mobile || usb ? undefined : buildLabel}><Icon name="sliders" size={16}/>{mobile ? 'Open configuration' : usb ? 'Your Octatrack' : 'Build firmware'}</a>}
+      {MODULE_COMPARE_ENABLED && <button className="button button-quiet" disabled={comparisonCount<2} onClick={onCompare}>Compare{comparisonCount?' ('+comparisonCount+')':''}</button>}
+      {build && <a className="button button-primary" href={buildHref ?? undefined} aria-disabled={!buildHref || undefined} tabIndex={buildHref ? undefined : -1} aria-label={mobile || usb ? undefined : buildLabel} title={mobile || usb ? undefined : buildLabel}><Icon name="sliders" size={16}/>{buildText ?? (mobile ? 'Open configuration' : usb ? 'Your Octatrack' : 'Build firmware')}</a>}
     </div>
   </div>
 }

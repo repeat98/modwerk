@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/crossfader",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-10",
+  "upstream": {
+    "repository": "https://github.com/draadpiraat/modwerk",
+    "revision": "182341749a0378b8fcce9f5db36f98a581f01199",
+    "path": "sdk/digitakt/modules/crossfader",
+    "license": "GPL-3.0-or-later"
+  },
+  "changes": [
+    "First Modwerk release for Digitakt I OS 1.54, on Core 2.1: a crossfader between two groups of tracks and inputs.",
+    "Source-only export compiled in the pinned GCC 16.2 Docker toolchain; it links to the same image (CF01, 3419f572…) as the locally compiled recipe used for the emulator checks."
+  ],
+  "runtimeSourceSha256": "beeff3218da6a49c59188657733535ea926aa284bed7bd8e44f974bc07bedd9c",
+  "packages": [
+    {
+      "os": "1.54",
+      "path": "sdk/imports/packages/crossfader/crossfader-0.1.0-experimental-os1.54.elemod",
+      "sha256": "ee5249a93c8374e255583c7af670239942265f8ea01a19dda2f17ab472efbb72"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitakt/modules/crossfader/evidence/emulator-testing.json",
+  "requires": []
+}

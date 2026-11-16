@@ -7,29 +7,38 @@ export interface Inventory {
   moduleIds: string[]; removedStockFx: string[]
   /** Exact combined machine packages reported by the unit. Never inferred from the displayed member names. */
   runtimeGroups?: { id: string; layout: number }[]
+  /** Modules switched off on the unit itself (PROJ > MODWERK > MODULES): installed and saved there, not running. A sync
+   * leaves them as they are. Absent from a base before that page. */
+  offIds?: string[]
 }
 /** What a load makes the unit match: a module set, or the device page's edits. `usbAudio` holds the set's USB Audio
  * layout, which the base itself provides (engine/elekloader/base-variants.ts). */
 export interface InventoryTarget { name: string; moduleIds: string[]; removedStockFx?: string[]; usbAudio?: { layout: UsbAudioLayout } }
 export interface InventoryChanges { add: string[]; remove: string[]; stockOff: string[]; stockOn: string[] }
 
-/** The changes that make `current` match `target`: the unit matches the set exactly, stock effects included. */
+/** The changes that make `current` match `target`: the unit matches the set exactly, stock effects included. A module
+ * of the set that is switched off on the unit is already there, and stays off (owner, 16 November 2026); one that is
+ * off and not in the set leaves the unit like any other. */
 export function inventoryChanges(current: Inventory, target: InventoryTarget): InventoryChanges {
   const off = new Set(target.removedStockFx ?? [])
   return {
-    add: target.moduleIds.filter(id => !current.moduleIds.includes(id)),
-    remove: current.moduleIds.filter(id => !target.moduleIds.includes(id)),
+    add: target.moduleIds.filter(id => !current.moduleIds.includes(id) && !current.offIds?.includes(id)),
+    remove: [...current.moduleIds, ...(current.offIds ?? []).filter(id => !current.moduleIds.includes(id))].filter(id => !target.moduleIds.includes(id)),
     stockOff: STOCK_EFFECTS.filter(key => off.has(key) && !current.removedStockFx.includes(key)),
     stockOn: STOCK_EFFECTS.filter(key => !off.has(key) && current.removedStockFx.includes(key)),
   }
 }
 export const changeCount = (changes: InventoryChanges) => changes.add.length + changes.remove.length + changes.stockOff.length + changes.stockOn.length
 
-export type UnitState = 'on' | 'load' | 'leaving'
-export const UNIT_STATE: Record<UnitState, string> = { on: 'On your Octatrack', load: 'Not on your Octatrack yet', leaving: 'Leaves next sync' }
-/** Where a module stands against the unit: on it, only in the module set, or on it but leaving with the next load. */
+export type UnitState = 'on' | 'load' | 'leaving' | 'off'
+export const UNIT_STATE: Record<UnitState, string> = { on: 'On your Octatrack', load: 'Not on your Octatrack yet', leaving: 'Leaves next sync', off: 'Switched off on your Octatrack' }
+/** Where a module stands against the unit: on it, only in the module set, on it (running or switched off) but leaving
+ * with the next load, or in the set and switched off on the unit itself. */
 export const unitState = (id: string, setIds: readonly string[], inventory?: Inventory): UnitState | undefined =>
-  !inventory ? undefined : inventory.moduleIds.includes(id) ? setIds.includes(id) ? 'on' : 'leaving' : setIds.includes(id) ? 'load' : undefined
+  !inventory ? undefined : inventory.moduleIds.includes(id) || inventory.offIds?.includes(id) ? !setIds.includes(id) ? 'leaving' : inventory.moduleIds.includes(id) ? 'on' : 'off'
+    : setIds.includes(id) ? 'load' : undefined
+/** The modules of a set that are switched off on the unit: a sync leaves them off. */
+export const staysOff = (setIds: readonly string[], inventory?: Inventory) => setIds.filter(id => inventory?.offIds?.includes(id) && !inventory.moduleIds.includes(id))
 
 /** What the unit's project needs that the unit lacks (its MISSING list): the catalogue ids it names, and the names
  * of modules the catalogue does not know. A module's id is the first four bytes of the SHA-256 of its catalogue id. */
@@ -57,7 +66,8 @@ function allSeen(): Record<string, Omit<LastSeen, 'base'>> {
   try { const value = JSON.parse(localStorage.getItem(LAST_SEEN) ?? '{}'); return value && typeof value === 'object' && !Array.isArray(value) ? value : {} } catch { return {} }
 }
 export function rememberInventory(base: string, inventory: Inventory, at = new Date().toISOString()) {
-  try { localStorage.setItem(LAST_SEEN, JSON.stringify({ ...allSeen(), [base]: { moduleIds: inventory.moduleIds, removedStockFx: inventory.removedStockFx, at } })) } catch { /* without storage it says Not connected */ }
+  // With the ones switched off on the unit: they are installed there, and a put-back after a base update brings them along.
+  try { localStorage.setItem(LAST_SEEN, JSON.stringify({ ...allSeen(), [base]: { moduleIds: [...new Set([...inventory.moduleIds, ...inventory.offIds ?? []])], removedStockFx: inventory.removedStockFx, at } })) } catch { /* without storage it says Not connected */ }
 }
 const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(id => typeof id === 'string')
 /** The newest record (or one base's, or the newest of any other base); undefined when this browser never read one or the record is damaged. */

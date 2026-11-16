@@ -876,7 +876,8 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
     if (dsp.count > RUNTIME_DSP_WORDS || dsp.relocation_count > RUNTIME_DSP_RELOCATIONS ||
         left != 4u * dsp.count + 2u * dsp.relocation_count + 4u * init_words || (!dsp.count && dsp.relocation_count) ||
         (dsp.count && !engine && (dsp.init >= dsp.count || dsp.proc >= dsp.count || !dsp.slots || dsp.slots > 3u)) ||
-        (engine && (dsp.init || dsp.proc || dsp.cycles || dsp.kind || dsp.state || dsp.buffer || dsp.id || !entries)))
+        (engine && (dsp.init || dsp.proc || !dsp.cycles || (dsp.kind != RUNTIME_EXECUTED && dsp.kind != RUNTIME_HARDWARE) ||
+                    dsp.state || dsp.buffer || dsp.id || !entries)))
         return refuse(RUNTIME_MALFORMED);
     for (uint32_t i = 0; i < dsp.count; ++i) if (be32(words + 4u * i) > 0xffffffu) return refuse(RUNTIME_MALFORMED);
     for (uint32_t i = 0; i < init_words; ++i) if (be32(init + 4u * i) > 0xffffffu) return refuse(RUNTIME_MALFORMED);

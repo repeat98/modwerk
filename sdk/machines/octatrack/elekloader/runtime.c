@@ -71,6 +71,8 @@ uint32_t modwerk_machine_reference(uint32_t value)
 #ifdef MODWERK_HOST
 int modwerk_test_stopped = 1;
 int modwerk_machine_stopped(void) { return modwerk_test_stopped; }
+int modwerk_test_usb_disk;
+int modwerk_machine_usb_disk(void) { return modwerk_test_usb_disk; }
 void *modwerk_machine_uncached(void *p) { return p; }
 void modwerk_machine_invalidate_code(void) {}
 uint8_t *modwerk_machine_code(uint32_t address) { (void)address; return 0; }
@@ -91,6 +93,10 @@ int modwerk_machine_stopped(void)
     for (unsigned i = 0; i < 16; ++i) if (U8(0x80006500u + i) || U8(0x80004f1eu + i * 84u)) return 0;
     return U32(0x800065b8u) == 0;
 }
+/* Stock's USB DISK MODE is open (its flag, 1 while it is): stock holds the DSP frames still there and starts them
+ * again with the project it loads on the way out. dsp.c's stall watchdog stays out: its recovery, run inside the
+ * mode, left the frames stopped after it until a power cycle (finding 72; an MKII, 10 November 2026). */
+int modwerk_machine_usb_disk(void) { return U32(0x460e76a0u) != 0; }
 void *modwerk_machine_uncached(void *p) { return (void *)((uintptr_t)p + 0x08000000u); }
 /* Every stock CACR write uses 0xa40ce000 (boot write guarded by usb_base.py),
  * which already sets BCINVA; bit 8 adds ICINVA. The data cache is untouched. */

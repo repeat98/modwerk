@@ -1,0 +1,1 @@
+Development: the owner's diagnostics pull no longer lists an Octatrack OS upgrade as a freeze. A unit's "freeze until a restart" record, taken while stopped in a session whose next start runs another base, now says it is an OS upgrade and not a hang, as a stall found at a start on another base already does. A freeze whose base stayed the same is listed as before.

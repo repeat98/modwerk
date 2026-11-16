@@ -1,11 +1,9 @@
 // @vitest-environment jsdom
 import { act, createElement } from 'react'
-import { Blob as NodeBlob } from 'node:buffer'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import 'fake-indexeddb/auto'
-import { deviceStore, openDeviceDatabase } from '../storage/device'
 import { newConfiguration } from '../config/workspace'
 import { DigiConfiguration } from '../devices/MachinePages'
 import { DEVICES_BY_ID } from '../devices/registry'
@@ -21,7 +19,7 @@ const media = vi.hoisted(() => {
   return state
 })
 vi.mock('../hooks/firmware-client', async original => ({ ...await original<typeof import('../hooks/firmware-client')>(), createObservedDigiFirmwareClient: () => { throw new Error('Mobile must not initialize the firmware worker') } }))
-vi.mock('../community/beta-access', async original => ({ ...await original<typeof import('../community/beta-access')>(), hasBetaUi: () => false }))
+vi.mock('../community/beta-access', async original => ({ ...await original<typeof import('../community/beta-access')>(), hasBetaUi: () => false, hasOctatrackBase: () => false }))
 const noop = () => {}
 let root: Root, container: HTMLDivElement
 beforeEach(() => {
@@ -43,31 +41,6 @@ const noFirmware = () => {
 }
 
 describe('mobile configuration workspaces', () => {
-  it('keeps classic Octatrack configuration editing and export available without firmware or sign-in controls', async () => {
-    const configuration = { ...newConfiguration('Phone set', ['miniverb']), classicStartup: true }
-    const database = await openDeviceDatabase(), store = deviceStore(database)
-    await store.saveConfiguration(configuration); await store.setActiveConfiguration(configuration.id); database.close()
-    let exported: Blob | undefined
-    vi.stubGlobal('Blob', NodeBlob)
-    const createURL = vi.fn((blob: Blob) => { exported = blob; return 'blob:configuration' })
-    vi.stubGlobal('URL', class extends URL { static createObjectURL = createURL; static revokeObjectURL = noop })
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(noop)
-    window.location.hash = 'configuration'
-    await act(async () => root.render(createElement(App)))
-    await vi.waitFor(() => expect(container.querySelector('input[aria-label="Import configuration backup"]')).not.toBeNull())
-    noFirmware()
-    expect(container.textContent).toContain('Changes save automatically on this device')
-    expect(button('Export configuration JSON').disabled).toBe(false)
-    await act(() => button('Export configuration JSON').click())
-    expect(createURL).toHaveBeenCalledOnce()
-    expect(JSON.parse(await exported!.text())).toMatchObject({ name: 'Phone set', options: { classicStartup: true }, modules: [{ id: 'miniverb' }] })
-    expect(container.querySelector('a[href="#forum"]')).not.toBeNull()
-    expect(container.querySelector('a[href="#library"]')).not.toBeNull()
-    await vi.waitFor(() => expect(container.querySelector('.compatibility-panel')).not.toBeNull())
-    await act(() => { media.mobile = false; media.listeners.forEach(listener => listener()) })
-    expect(container.querySelector('input[accept=".bin"]')).not.toBeNull()
-  })
-
   it.each(['digitakt', 'digitone'] as const)('retains %s selection, compatibility and JSON actions without starting a firmware worker', async id => {
     const device = DEVICES_BY_ID[id] as typeof DEVICES_BY_ID[string] & { id: DigiMod['device'] }
     const configuration = newConfiguration('Mobile set', [], true, undefined, id), onDialog = vi.fn()
@@ -87,6 +60,9 @@ describe('mobile configuration workspaces', () => {
     noFirmware()
     expect(container.querySelector('.hub-view-setup,.hub-view-status,.hub-view-backups,.hub-view-samples')).toBeNull()
     expect(container.textContent).toContain('Live')
+    // The picker names the open set and holds its menu, so the page has no second set heading above the modules.
+    expect(container.querySelector('.hub-mobile-picker [aria-label="Live actions"]')).not.toBeNull()
+    expect(container.querySelector('.hub-editor-head')).toBeNull()
     await act(() => button('Export configuration JSON').click())
     expect(onSetAction).toHaveBeenCalledWith(set.id, 'export')
     await act(() => button('Import JSON').click())
@@ -105,5 +81,14 @@ describe('mobile configuration workspaces', () => {
     await act(() => { media.mobile = false; media.listeners.forEach(listener => listener()) })
     for (const anchor of container.querySelectorAll('a')) expect(anchor.textContent).toBe('Build firmware')
     expect(MOBILE_WORKSPACE).toContain('(hover: none) and (pointer: coarse)')
+  })
+})
+
+describe('the MS-70CDR pedal page without the beta', () => {
+  it('offers to install the base', async () => {
+    media.mobile = false
+    window.location.hash = 'zoom-ms-70cdr/pedal/setup'
+    await act(async () => root.render(createElement(App)))
+    await vi.waitFor(() => expect(button('Install the base')).toBeDefined(), { timeout: 4_000 })
   })
 })

@@ -1,5 +1,63 @@
 # Control In Actions testing
 
+## 0.1.4: the keys an action plays reach the other mods (10 November 2026)
+
+Source (0.1.4-experimental): fingerprint (`sha256` of `sha256sum build.json src/ar2-1.74.h src/draw.S src/main.c`) `9c46c683…2863e6`.
+
+0.1.3 played its keys straight into stock's `Brain::key` (0x400a0336). Its `ev_key` handler runs at order 10, so every handler after it never saw them: Quick Mod Assign (30), QPER Live Rec and Improved Machine Browser (40), Loop Sync, Audio In Routing and the base's send pages (50). A mod that follows pages or held keys through `ev_key` then went wrong after MUTE HLD, MUTE TGL or FILL, as it would not after the same panel key. 0.1.4 plays MUTE, the mode key it goes back to and FILL through core-ar2's exported `core_key` (core.s, the `ev_key` site itself: every handler in order, then `Brain::key`), and its own handler lets them pass. PLAY, the transport key REC HLD and REC TGL play, still goes to stock alone: QPER Live Rec takes PLAY while QPER is held (QPER + PLAY clears), and an input's PLAY is not that gesture. Keys played from the UI tick (an edge the key message has not played yet, or a hold ended by a change of MODE or ACTION) now reach those handlers from the tick too; the ones that look at MUTE, a mode key or FILL (Loop Sync, Audio In Routing, the base's send pages) only note that the page was left. Because PLAY still goes to stock alone, REC HLD and REC TGL leave Audio In Routing's page as 0.1.3 did, where the panel's PLAY would close it.
+
+- rytm-emu `2ac0f1f`, test builds with `-DCIA_EMU`, CONTROL INPUT 1 in ACTION mode, the level poked. With Loop Sync 0.2.0 (CO21: 0.1.3's code; CN22: this source), Loop Sync's SAMPLE page flag peeked. With QPER Live Rec 0.2.0 (CQ21: an earlier draft that sent PLAY through the chain too; CQ22: this source):
+
+| Steps | Before (CO21 is 0.1.3; CQ21 is the draft) | 0.1.4 |
+| --- | --- | --- |
+| MUTE TGL: SMPL, input high (MUTE mode opens), low, high (closes) | CO21: the same screens; Loop Sync still on the SAMPLE page after MUTE | The same screens; Loop Sync off the SAMPLE page at MUTE, as after the panel's MUTE |
+| REC TGL: input high, low, high, low | CO21: live recording on, then off | The same |
+| FILL LAT: input high, low, high, low | CO21: fill latched, then unlatched | The same |
+| REC TGL with QPER held on a sound page, input high | CQ21: no live recording (QPER took PLAY) | CQ22: live recording on, as 0.1.3 |
+
+- CI17 (vendored core-ar2 0.7 + this source, `929e6f57…d7b3`): boots, and its three media frames are byte-identical to CI15's.
+- Rebased onto main after Quick Mod Assign 0.2.0 (#1429): this source unchanged (fingerprint as above), core-ar2 and the base unchanged since CI17. CK01 (below) boots and answers in rytm-emu.
+
+**On the author's unit, by hand, reported by the author, 11 November 2026.** Analog Rytm MKII, OS 1.74. Build CK01 (`.syx` `033073fb…cbd41`): core-ar2 0.7 send-bus base with Modwerk's development additions, this source, Loop Sync 0.3.2, QPER Live Rec 0.2.0, Quick Mod Assign 0.2.0 and Audio In Routing 0.1.0, RAM-booted over the flashed OS (flash not written), scratch project. A momentary footswitch in EXP/CV IN 1, MODE ACTION, ACTION LEARN with YES.
+
+| Action | Result |
+| --- | --- |
+| MUTE TGL | Tap opens MUTE mode, tap again leaves it, as the panel's MUTE twice. From SCNE mode the second tap goes to play mode, not back to SCNE: the panel's MUTE does the same. Pass |
+| MUTE HLD | MUTE mode while held, back on release. Pass |
+| REC TGL | Tap starts live recording, tap again ends it. Pass |
+| REC HLD | Live recording while held, off on release. Pass |
+| FILL HLD, FILL LAT | FILL while held; tap latches, tap again unlatches. Pass |
+| REC TGL with QPER held, on the SRC page | Live recording starts (QPER Live Rec does not take it as QPER + PLAY); the panel's PLAY with QPER held then shows CLEAR PERFORMANCE, QPER Live Rec's own gesture; the panel's PLAY ended live recording. Pass |
+
+Not seen on the unit: whether Loop Sync, Audio In Routing and the base's send pages note the page left (their flags draw nothing on these screens; rytm-emu above). Not run: alone on a unit, a power cycle, CONTROL INPUT 2, a gate source. Duration not recorded.
+
+## 0.1.3: back to grid or step recording after live recording (8 November 2026)
+
+Source (0.1.3-experimental): fingerprint (`sha256` of `sha256sum build.json src/ar2-1.74.h src/draw.S src/main.c`) `46649100…00a9a` (`evidence.sourceSha256`), the source RC36 carried.
+
+Reported by npp1993 on 0.1.2: in grid recording, REC HLD or REC TGL started live recording, and ending it left the Rytm in play mode, not grid recording. Read in OS 1.74's code: stock's RECORD + PLAY (0x4004190a) turns grid recording (0x400362da, app + 360) and step recording (0x400363cc, app + 362) off before it turns live recording on (0x4003638a, app + 361), and leaving live recording with PLAY (0x4004196c) turns only live recording off. The panel does the same. RECORD + STOP (0x40041ada) turns step recording on with 0x400363cc, which also sets grid recording. 0.1.3 notes the record mode (step, grid or neither) just before live recording starts: when an action starts it, and at the panel's RECORD press (its `ev_key` handler passes the key on to stock), since RECORD + PLAY starts it there. When an action ends live recording, it puts that mode back with stock's own setter. The note goes when RECORD is released with no live recording (a toggle or RECORD + STOP) and when live recording ends any other way. Restoring step recording through 0x400363cc clears the 52 bytes it clears on any entry (app + 364 to 415), as RECORD + STOP does.
+
+An earlier CI14 draft restored grid recording only. A code sweep had missed the call at 0x40041ada, and npp1993 found on RC35 (unit) that REC HLD from step recording returned to grid recording.
+
+- rytm-emu `2ac0f1f`: CI15 (vendored core-ar2 0.7 + this source, `10700f01…f0a7`) boots, and its three media frames are byte-identical to CI12's.
+- CE20 (CI15's source with `-DCIA_EMU`, `cf274eca…`, whose status word carries grid recording as bit 9 and step recording as bit 10), CONTROL INPUT 1 in ACTION mode, the level poked:
+
+| Steps | Result |
+| --- | --- |
+| REC TGL: RECORD (grid recording), input high, low, high | Live recording on and grid recording off, then live recording off and grid recording on |
+| REC HLD: RECORD (grid recording), input high, then low | Live recording on and grid recording off, then live recording off and grid recording on |
+| REC TGL from play mode, input high, low, high | Live recording on, then off: play mode, as 0.1.2 |
+| Grid recording, panel RECORD + PLAY, then input high (REC TGL) | Live recording off, grid recording on |
+| Play mode, panel RECORD + PLAY, then input high (REC TGL) | Live recording off: play mode |
+| RECORD twice (grid on, then off), then REC TGL high, low, high | Play mode at the end |
+| Grid recording, input high (live), panel PLAY (stock: play mode), panel RECORD + PLAY from play mode, input low, then high | Play mode at the end |
+| REC TGL: RECORD + STOP (step recording), input high, low, high | Live recording on, step and grid off; then live recording off, step recording on |
+| REC HLD: RECORD + STOP, input high, then low | Live recording on, then off: step recording on |
+| Step recording, panel RECORD + PLAY, then input high (REC TGL) | Live recording off, step recording on |
+
+- Unit, RC35 (combo with CI14's code), as npp1993 reported: grid recording returns ("I think it's working"); from step recording, REC HLD returned to grid recording, which CI15 fixes.
+- Unit, RC36 (combo with CI15's code, `25ced056…`), as npp1993 reported on 8 November 2026: all the unit checks passed. REC HLD and REC TGL from step recording come back in step recording, from grid recording in grid recording, and from play mode in play mode; live recording started with the panel's RECORD + PLAY from step recording and ended by the input comes back in step recording.
+
 ## 0.1.2: no reading with ACTION OFF (6 November 2026)
 
 0.1.1 armed a jack whenever its MODE was ACTION, so with ACTION set to OFF the audio interrupt still read and compared it every block, for no action. 0.1.2 disarms that jack in the UI tick (as a change of ACTION already did), and the `ev_render_out` handler is a two-byte test that calls the reading (`read_jacks`, unchanged) only while a jack is armed. With ACTION OFF the bars' right-hand line follows stock's smoothed level, as during ACTION LEARN. Nothing else changes.

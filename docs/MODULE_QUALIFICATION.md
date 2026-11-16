@@ -127,7 +127,7 @@ import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parseModuleDocument } from './src/catalog/module-contract.ts'
 import { moduleNativeSourceSha256 } from './scripts/module-qualification.mjs'
-const folder = resolve('sdk/octabam/modules/my-module')
+const folder = resolve('sdk/octatrack/modules/my-module')
 const document = parseModuleDocument(JSON.parse(await readFile(resolve(folder, 'octamod.module.json'), 'utf8')))
 console.log(await moduleNativeSourceSha256(folder, document))
 JS
@@ -255,4 +255,4 @@ The owner approved POLY8@0.2.5-experimental with current-build physical hardware
 
 ## POLY8 0.2.6 exact experimental release exception — 9 October 2026
 
-The owner reported “works like a charm” on the exact POLY8T10 MKII image and explicitly approved “Approve this scoped experimental release” for 0.2.6-experimental. [The source-bound report](../sdk/octabam/modules/poly8/evidence/owner-release-t10.md) retains the delivered image hashes, actual statement and unreported coverage. `sdk/approvals/poly8-build-approval.json` now binds only the exact T10 native source. Chip worst-case timing, complete memory-bound qualification and separately reported Part/project/reboot tests remain waived and unverified. The historical 0.2.5 approval remains in Git history and the report; it does not authorize this update. Documentation, licence, native/browser parity and release checks remain mandatory.
+The owner reported “works like a charm” on the exact POLY8T10 MKII image and explicitly approved “Approve this scoped experimental release” for 0.2.6-experimental. [The source-bound report](../sdk/octatrack/modules/poly8/evidence/owner-release-t10.md) retains the delivered image hashes, actual statement and unreported coverage. `sdk/approvals/poly8-build-approval.json` now binds only the exact T10 native source. Chip worst-case timing, complete memory-bound qualification and separately reported Part/project/reboot tests remain waived and unverified. The historical 0.2.5 approval remains in Git history and the report; it does not authorize this update. Documentation, licence, native/browser parity and release checks remain mandatory.

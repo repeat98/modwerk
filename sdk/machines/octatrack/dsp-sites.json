@@ -36,11 +36,12 @@
      "when": "stock COMPRESSOR's init, at its first instruction (an instance is (re)assigned the effect)", "clobbers": [], "kind": "exclusive"}
   ],
   "regions": [
-    {"feature": 1, "space": "y", "cores": ["A", "B"], "start": "0x7f0", "words": "0x210", "about": "MON words and the LISTEN stash (each bus slot's second half)"},
+    {"feature": 1, "space": "y", "cores": ["A", "B"], "start": "0xff0", "words": "0x10", "about": "MON words, two a track, above every stock range and the voice of a DSP machine"},
     {"feature": 1, "space": "y", "shared": true, "start": "0x3dfe", "words": "0x202", "about": "the cross-core window, as Sidechain has always claimed it"},
+    {"feature": 1, "space": "y", "cores": ["A", "B"], "start": "0x7e00", "words": "0x200", "about": "the key bus and the LISTEN stash (each bus slot's second half)"},
     {"feature": 2, "space": "y", "cores": ["A"], "start": "0xc00", "words": "0xc1", "about": "Output Matrix's levels and state"},
     {"feature": 4, "space": "x", "cores": ["A", "B"], "start": "0x2840", "words": "0xec0", "about": "Analog BD's tables and voice blocks"},
     {"feature": 8, "space": "y", "shared": true, "start": "0x3dfe", "words": "0x202", "about": "seed, counter, then 4 tracks x 4 generations x 32 words: listed first, so a reset's first chunk zeroes the seed"},
-    {"feature": 8, "space": "y", "cores": ["A", "B"], "start": "0x800", "words": "0x200", "about": "the key bus: 8 tracks x 64 words, the first 32 published"}
+    {"feature": 8, "space": "y", "cores": ["A", "B"], "start": "0x7e00", "words": "0x200", "about": "the key bus: 8 tracks x 64 words, the first 32 published; the first internal FX2 slot's tail (+$3E00), past every +$3DFD ring"}
   ]
 }

@@ -22,7 +22,7 @@ function project(name: string, repository: string, type: ProjectType, machines: 
 // An editorial selection, chosen for distinct workflows and useful upstream documentation.
 // Includes independent research beyond the Elektronmods discovery seed; summaries are original.
 // See docs/EXTERNAL_PROJECTS.md for selection criteria and source links.
-// DigiSophie, Digislicer, Digineighbor, Digitables, Digihealth and MIDI Scenes are already in our module library.
+// DigiSophie, Digislicer, Digineighbor, Digitables and Digihealth are already in our module library.
 export const EXTERNAL_PROJECTS: readonly ExternalProject[] = [
   project('DigiChain', 'brian3kb/digichain', 'tool', ['digitakt', 'digitakt-ii', 'octatrack', 'machinedrum'], 'Prepare sample chains in your browser: convert formats, trim and normalize samples, and export Octatrack slice data.'),
   project('Elektroid', 'dagargo/elektroid', 'tool', ['digitakt', 'digitakt-ii', 'digitone', 'digitone-ii', 'syntakt', 'analog-four', 'analog-rytm', 'analog-heat', 'model-cycles', 'model-samples', 'monomachine'], 'Manage samples, sounds and projects from a desktop app or command line. Transfer features vary by instrument; includes SysEx and autosampling tools.'),

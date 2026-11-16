@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-09",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: MrScruff's CTRL IN PERF, ported to OS 1.74 by Iced-Cream.",
+      "PERF DEST in GLOBAL > CONTROL > CONTROL INPUT 1 and 2 sends a CV or EXPR jack to PF1 to PF12.",
+      "The jack sets the macro as its knob would, its locks follow, and it always wins over the knob and pad.",
+      "PERF DEST is saved with the globals slot."
+    ]
+  }
+]

@@ -28,6 +28,15 @@ describe('SDK developer scaffolds', () => {
         expect(()=>parseModuleDocument({...doc,tests:{...doc.tests,qualification:pending}})).toThrow()
         const native = readFileSync(resolve(folder, 'manifest.py'), 'utf8')
         expect(native).toContain('author="example-author"')
+        // The chooser shows the module's own name, never the template's.
+        if (kind === 'dsp') {
+          expect(native).toContain('abbr=b"PROO"')
+          expect(native).toContain('fullname=b"Proof Dsp"')
+        }
+        // The README has every section a listed module needs, and points at the dev loop.
+        const readme = readFileSync(resolve(folder, 'README.md'), 'utf8')
+        for (const section of ['Overview', 'Controls', 'Usage', 'Compatibility and limitations', 'Tests and measurements', 'Authorship and licences', 'Screens and audio']) expect(readme).toContain('## ' + section)
+        expect(readme).toContain('npm run module:dev -- ' + id)
         expect(native).toContain('proof=Proof.UNTESTED')
         expect(native).toContain('modules/' + id + '/verify.py')
         expect(native).not.toContain('verify_template.py')
@@ -42,6 +51,11 @@ describe('SDK developer scaffolds', () => {
       const unsafe = spawnSync(process.execPath, ['scripts/scaffold-module.mjs', '../escape', '--author', 'example-author', '--output', output], { encoding: 'utf8' })
       expect(unsafe.status).not.toBe(0)
       expect(existsSync(resolve(output, 'escape'))).toBe(false)
+      // Without --output a new module goes to sdk/drafts/, and an id a listed module has is refused before anything is written.
+      const listed = spawnSync(process.execPath, ['scripts/scaffold-module.mjs', 'miniverb', '--kind', 'dsp', '--author', 'example-author'], { encoding: 'utf8' })
+      expect(listed.status).not.toBe(0)
+      expect(listed.stderr).toContain('A listed module is already called miniverb')
+      expect(existsSync(resolve('sdk/drafts/miniverb'))).toBe(false)
     } finally { rmSync(output, { recursive: true, force: true }) }
   })
 })

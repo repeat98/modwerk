@@ -1,0 +1,1 @@
+Zoom MS-70CDR (beta): the pedal's Status works like the Octatrack's. It reads what's on the pedal by itself and shows the firmware, and with a MIDISTOMP that reports it, the CPU, the effect chain and the patch's DSP now, the last five minutes, and each slot's share. MIDISTOMP V2.0.1 shows its load on the pedal only, so Status says where to find it.

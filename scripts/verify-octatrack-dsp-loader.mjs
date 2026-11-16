@@ -46,6 +46,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
+import { describeRefusal } from './loader-refusals.mjs'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
 import { diagnostics, removal } from '../src/dev/octatrack-usb-lifecycle.ts'
@@ -128,7 +129,7 @@ if (mode === 'dumps') {
     for (let tries = 0; ; tries++) {
       try { await keep(data); return tries } catch (error) {
         const why = await refusal()
-        if (why !== 5 || tries >= 60) throw new Error(`${what}: ${error.message} (loader refusal ${why})`, { cause: error })
+        if (why !== 5 || tries >= 60) throw new Error(`${what}: ${error.message} (loader refusal ${describeRefusal(why)})`, { cause: error })
         await session.cancel().catch(() => {}); await settle(30)
       }
     }
@@ -302,7 +303,7 @@ if (mode === 'dumps') {
       for (const site of sites) before.push(await peek(site.address, site.length))
       const originalCopies = await captureStockCopies(copies, peek)
       await keep(data).catch(async error => { // loader.h runtime_refusal: 8, the stock bytes under a site are not the ones it names
-        throw new Error(`${error.message} (loader refusal ${(await transport.selftest(false))?.refusal})`)
+        throw new Error(`${error.message} (loader refusal ${describeRefusal((await transport.selftest(false))?.refusal)})`)
       })
       let at
       for (const [i, site] of sites.entries()) {
@@ -361,7 +362,7 @@ if (mode === 'dumps') {
       for (let tries = 1; ; tries++) {
         try { await keep(new Uint8Array(readFileSync(path))); break } catch (error) {
           const refusal = await call(symbols.modwerk_runtime_refusal)
-          console.log(`${path.split('/').at(-1)} refused (loader refusal ${refusal}), try ${tries}`)
+          console.log(`${path.split('/').at(-1)} refused (loader refusal ${describeRefusal(refusal)}), try ${tries}`)
           if (refusal !== 5 || tries === 5) throw error
           await settle(240)
         }

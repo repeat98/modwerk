@@ -1,0 +1,103 @@
+{
+ "elemod": 2,
+ "id": "improved-machine-browser",
+ "version": "0.1.0-experimental",
+ "title": "Improved Machine Browser",
+ "description": "Browse the machine list without loading each machine, and jump between its sections with FUNC + UP or DOWN. YES loads.",
+ "category": "system",
+ "author": "npp1993",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 1064,
+   "parts": [
+    [
+     "hex",
+     "206f0004226800204a89673a2209226900184a8967300681000000142049b1c16728226800084a89671c20110c80401e5ea467120c80401d70c8660e2068000422484a8866d820094e7593c920094e754fefffe048d71c3c246f0024282f00282f6f002c001c266a0050242a0054948be68a671e262a01b0204b428022504a89671a222900045088b28367185280b48066ea4cd71c3c4fef00204e7572ff5088b28366e8b08267ea4aaf001c676653844a84660000ec26005283b6826cd422005283e78941f31808225050884a89671678ffb8a90004670eb68267b62250528350884a8966eab6826ca82a032203e78d41f35800225050884a89670878ffb8a9000466505281b28266ea4cd71c3c4fef00204e75220476ffd280b6816700ff742a012604e78de78b41f35800b2826c00ff622250d1c34a8967087affbaa90004661cd2847affba8166e24cd71c3c4fef00204e7520415288b1c36700ff36b0816700ff30e789207318004a88671a202800042f4a00244cd71c3c2f4000284fef00204ef9400dea5e2f4a002470ff4cd71c3c2f4000284fef00204ef9400dea5e2a00280be78d518422002045d1c44a81677c225051884a89670c76ffb6a900046704538160e8b0816e9a2a012041e78d53882245d3c42f45001cb1c26c1a261151894a83670a7aff2843baac0004662c538876ffb68866e2206f001cd1c44a816700ff5c225051884a896700ff5274ffb4a900046700ff48538160e22a082208e78d2f45001c206f001cd1c460d04a806600ff3242af001c206f001cd1c460be4feffff42f0a2f022f2f00184ebafdb2588f2f2f001c24404eb940071efc588f22004a8a67120680ffffffbe7401b48064127044b081675c4280241f245f4fef000c4e754aaa01d867ee2f2f001c2f41000c4eb940071f54588f0800000067282f2f001c4eb940071f90588fc0827442b4af00086700009e2f0072012f012f0a4ebafd8e4fef000c7001241f245f4fef000c4e752f2f001c4eb940071f24588f0800000067924aaa01d8678c222a01b074ffb4816782206a01d02f50000c2f2f000c206800042f2800782f4100104eb9400a67ca2f4000182f004eb9400bcadc4fef000c222f0008b0aa019c6600ff4ab0816700ff44487800012f2f00102f012f2f001c4eb9400bd1ba4fef001042806000ff282f0072ff2f012f0a4ebafcf24fef000c6000ff624feffff42f0a2f022f2f00184ebafc8a588f20404a806700009c226f001c70072229000cb0816500008c4aa801d8677814290014226900104a0256c0710044804a0267062409e98a22422f002f3c417e37902f092f01486800b42f48001e4eb94006f1fa4fef0014206f000a4a806738487800802f48000e2f4000124eb940081c28222f00124a8056c0d2819381710044802e80700180812f00206f00122f084ebafc464fef000c241f7001245f4fef000c4e75241f4280245f4fef000c4e75"
+    ]
+   ]
+  }
+ },
+ "symbols": {
+  "machine_list": [
+   ".run",
+   0
+  ],
+  "browse": [
+   ".run",
+   80
+  ],
+  "improved_machine_browser_key": [
+   ".run",
+   576
+  ],
+  "improved_machine_browser_enc": [
+   ".run",
+   872
+  ]
+ },
+ "exports": [
+  "improved_machine_browser_enc",
+  "improved_machine_browser_key"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [],
+ "sites": [],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_key",
+   "order": 40,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:improved_machine_browser_key",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_enc",
+   "order": 40,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:improved_machine_browser_enc",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:UP and DOWN in the machine list",
+   "ui:FUNC + UP and FUNC + DOWN in the machine list",
+   "ui:knobs A-H in the machine list",
+   "ui:YES in the machine list"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

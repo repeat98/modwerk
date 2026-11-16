@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import type { LinkState, OctatrackLink } from '../engine/elekloader/octatrack-link'
+import { LINK_BUSY, type LinkState, type OctatrackLink } from '../engine/elekloader/octatrack-link'
+import { baseOutdated } from '../engine/elekloader/module-set'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { Icon } from './Icon'
 import './octatrack-link.css'
@@ -8,13 +9,17 @@ const ACTIVE: LinkState['status'][] = ['sending', 'testing', 'trial', 'finishing
 const activity = ({ status, progress = 0 }: LinkState) => status === 'sending' ? `Syncing ${Math.round(progress * 100)}%`
   : status === 'testing' ? 'Self-test' : 'Saving'
 
-/** The beta Octatrack card's next step (connect, install, retry); nothing once connected or syncing, which the card shows. */
+/** The sidebar Octatrack card's next step (connect, install, retry, or update a base the site no longer syncs to); nothing
+ * once connected on the current base or syncing, which the card shows. */
 export function OctatrackSidebarStatus({ link, onInstall }: { link: OctatrackLink; onInstall: () => void }) {
   const { status, identity, baseUpdate } = useOctatrackLink(link)
-  if (baseUpdate || ACTIVE.includes(status) || status === 'ready' && identity?.canSubmit) return null
+  if (baseUpdate || ACTIVE.includes(status)) return null
+  if (status === 'ready' && identity?.canSubmit) return baseOutdated(identity.base)
+    ? <button type="button" className="instrument-action is-update" title="A new Modwerk base is out. Update it over USB to keep syncing module sets." onClick={onInstall}><span>Update the base</span><Icon name="arrow" size={14} /></button>
+    : null
   const install = status === 'stock' || status === 'ready' || status === 'unsupported'
   const title = install ? 'Install the base' : status === 'connecting' ? 'Connecting…' : status === 'busy' ? 'Try connecting again' : 'Connect Octatrack'
-  const hint = status === 'stock' ? 'Original OS detected. Install once from the card.' : install ? 'Install from the card to get started.' : status === 'busy' ? 'Close the other browser window or app using it. This page connects by itself once it’s free.' : 'Plug in USB, then choose your Octatrack.'
+  const hint = status === 'stock' ? 'Original OS detected. Install once from the card.' : install ? 'Install from the card to get started.' : status === 'busy' ? LINK_BUSY : 'Plug in USB, then choose your Octatrack.'
   return <button type="button" className="instrument-action" title={hint} disabled={status === 'connecting'} onClick={() => { if (install) onInstall(); else void (status === 'busy' ? link.retry() : link.connect()) }}><span>{title}</span><Icon name="arrow" size={14} /></button>
 }
 

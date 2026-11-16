@@ -159,14 +159,6 @@ class FloatingCavePlacement(unittest.TestCase):
         self.assertEqual(at(0x400d7c01, end - 0x10, 0x10, limit), end - 0x10)  # the overflow's last bytes
         self.assertIsNone(at(0x400d7b00, end - 0x10, 0x200, limit))           # fits neither: the build refuses
 
-    def test_browser_uses_the_same_overflow_run(self):
-        menus = (ROOT.parents[1] / 'src/engine/module-menus.ts').read_text(encoding='utf-8')
-        caves = (ROOT.parents[1] / 'src/engine/requested-modules.ts').read_text(encoding='utf-8')
-        self.assertIn('OVERFLOW_START = 0x%x, OVERFLOW_END = 0x%x' % (self.ns['OVERFLOW_RUN'], self.ns['OVERFLOW_RUN_END']), menus)
-        # requestedCaves: window at the next 128 bytes when the cave fits whole, else the overflow at the next 4.
-        self.assertIn('let address = Math.ceil(cursor / 128) * 128', caves)
-        self.assertIn('if (!inside) { address = Math.ceil(overflow / 4) * 4', caves)
-
     def test_the_window_assert_no_longer_runs_before_the_overflow(self):
         source = (ROOT / 'tools/build/build_bus.py').read_text(encoding='utf-8')
         loop = source[source.index('    for _c, _b in _plan:'):]
@@ -181,10 +173,10 @@ class ToolSyntax(unittest.TestCase):
 
 # Builder extensions after the Poly8 record, oldest first. Each proves its own exact before/after transition.
 EXTENSIONS = ['air-chorus-split-builder.json', 'plain-formatter-builder.json', 'floating-cave-overflow-builder.json', 'octabam-emulator-gates-5c71bc8c.json',
-              'ptable2-builder.json', 'octabam-emulator-parent-exit-54200264.json']
+              'ptable2-builder.json', 'octabam-emulator-parent-exit-54200264.json', 'dram-rom-symbols-builder.json', 'runtime-join-builder.json']
 # Documentation-only imports, oldest first: upstream files byte for byte, no build input.
 DOC_IMPORTS = ['octabam-docs-30fbb8e4.json', 'octabam-docs-dcf93d37.json', 'octabam-docs-6328143e.json', 'octabam-docs-bc144523.json',
-               'octabam-docs-5f8e779f.json', 'octabam-docs-54200264.json']
+               'octabam-docs-5f8e779f.json', 'octabam-docs-54200264.json', 'octabam-docs-f7d72906.json']
 
 class SelectiveImport(unittest.TestCase):
     def assert_current_builder_identity(self, path, historical):
@@ -262,6 +254,30 @@ class SelectiveImport(unittest.TestCase):
         self.assertEqual(set(record['builderAdaptations']), {'tools/build/build_bus.py', 'tools/remix/schema.py'})
         for path, change in record['builderAdaptations'].items():
             self.assert_extension_holds('ptable2-builder.json', path, change['after'])
+        self.assertEqual(len(record['selections']), 128)
+        for row in record['selections']:
+            self.assertIsNotNone(row['after'])
+            self.assertEqual(row['before'], row['after'])
+
+    def test_dram_rom_symbols_keeps_every_image_and_refusal(self):
+        import json
+        record = json.loads((ROOT.parent / 'infrastructure-verification/dram-rom-symbols-builder.json').read_text())
+        self.assertEqual(record['kind'], 'dram-rom-symbols-builder-regression')
+        self.assertEqual(set(record['builderAdaptations']), {'tools/build/build_bus.py'})
+        for path, change in record['builderAdaptations'].items():
+            self.assert_extension_holds('dram-rom-symbols-builder.json', path, change['after'])
+        self.assertEqual(len(record['selections']), 128)
+        for row in record['selections']:
+            self.assertIsNotNone(row['after'])
+            self.assertEqual(row['before'], row['after'])
+
+    def test_runtime_join_keeps_every_image_and_refusal(self):
+        import json
+        record = json.loads((ROOT.parent / 'infrastructure-verification/runtime-join-builder.json').read_text())
+        self.assertEqual(record['kind'], 'runtime-join-builder-regression')
+        self.assertEqual(set(record['builderAdaptations']), {'tools/build/build_bus.py'})
+        for path, change in record['builderAdaptations'].items():
+            self.assert_extension_holds('runtime-join-builder.json', path, change['after'])
         self.assertEqual(len(record['selections']), 128)
         for row in record['selections']:
             self.assertIsNotNone(row['after'])

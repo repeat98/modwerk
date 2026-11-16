@@ -9,6 +9,7 @@ import { DIGI_MODS, type DigiMod } from '../devices/digi-mods'
 import { DEVICES_BY_ID, deviceHref } from '../devices/registry'
 import { digiDownloadsEnabled } from '../engine/elekloader/protocol'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
+import { canAdd, LIMIT_REACHED } from '../catalog/set-limit'
 import { useSetWords } from '../community/beta-ui'
 
 const ROWS = ['Machine', 'Version', 'Purpose', 'Location', 'Storage', 'Processing', 'Hardware record', 'Build status'] as const
@@ -29,7 +30,7 @@ export function ModuleComparison({ betaAccess = false, ids, onClose, onToggle, s
   const modules = [
     ...MODULES.filter(module => isModuleAvailable(module.id, betaAccess)).map(module => ({
       key: module.id, name: module.name, author: module.authorName, authorUrl: module.authorUrl,
-      href: moduleHref(module.id), selected: selected.includes(module.id), toggle: () => onToggle(module.id),
+      href: moduleHref(module.id), selected: selected.includes(module.id), toggle: () => onToggle(module.id), full: !canAdd(selected, module.id),
       values: {
         Machine: 'Octatrack', Version: 'v' + module.version, Purpose: module.description, Location: module.detail,
         Storage: RESOURCES[module.id].memory.value, Processing: RESOURCES[module.id].compute.value,
@@ -39,7 +40,7 @@ export function ModuleComparison({ betaAccess = false, ids, onClose, onToggle, s
     })),
     ...DIGI_MODS.map(module => ({
       key: module.device + '-' + module.id, name: module.title, author: module.author, authorUrl: module.repository,
-      href: deviceHref(module.device, 'module/' + module.id), selected: digiSelected[module.device].includes(module.id), toggle: () => onToggleDigi(module.device, module.id),
+      href: deviceHref(module.device, 'module/' + module.id), selected: digiSelected[module.device].includes(module.id), toggle: () => onToggleDigi(module.device, module.id), full: false,
       values: {
         Machine: DEVICES_BY_ID[module.device].name, Version: 'v' + module.version, Purpose: module.summary,
         Location: module.category + ' · OS ' + module.releases.join(' / '),
@@ -49,13 +50,17 @@ export function ModuleComparison({ betaAccess = false, ids, onClose, onToggle, s
       },
     })),
   ].filter(module => ids.includes(module.key))
-  useEffect(() => { ref.current?.showModal() }, [])
+  useEffect(() => {
+    const element = ref.current, previousFocus = document.activeElement
+    element?.showModal()
+    return () => { element?.close(); if (previousFocus instanceof HTMLElement) previousFocus.focus() }
+  }, [])
   return <dialog ref={ref} className="comparison-dialog" aria-labelledby="comparison-title" onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose() }}>
     <div className="section-title"><h2 id="comparison-title">Compare modules</h2><button className="icon-button" onClick={onClose} aria-label="Close comparison">×</button></div>
     <div className="comparison-scroll" tabIndex={0} role="region" aria-label="Module comparison table"><table>
       <thead><tr><th scope="col">Module</th>{modules.map(module => <th scope="col" key={module.key}><a href={module.href} onClick={onClose}>{module.name} ↗</a><small>by <a href={module.authorUrl} target="_blank" rel="noreferrer">{module.author}</a></small></th>)}</tr></thead>
       <tbody>{ROWS.map(label => <tr key={label}><th scope="row">{label}</th>{modules.map(module => <td key={module.key}>{module.values[label]}</td>)}</tr>)}
-        <tr><th scope="row">{w.Set}</th>{modules.map(module => <td key={module.key}><button className="button button-quiet" aria-pressed={!module.selected && module.key === USB_AUDIO_MODULE ? undefined : module.selected} onClick={module.toggle}>{module.selected ? 'Added' : (module.key === USB_AUDIO_MODULE ? 'Configure ' : 'Add ') + module.name}</button></td>)}</tr>
+        <tr><th scope="row">{w.Set}</th>{modules.map(module => <td key={module.key}><button className="button button-quiet" aria-pressed={!module.selected && module.key === USB_AUDIO_MODULE ? undefined : module.selected} disabled={module.full} title={module.full ? LIMIT_REACHED : undefined} onClick={module.toggle}>{module.selected ? 'Added' : (module.key === USB_AUDIO_MODULE ? 'Configure ' : 'Add ') + module.name}</button>{module.full && <small>{LIMIT_REACHED}</small>}</td>)}</tr>
       </tbody>
     </table></div>
     <p className="service-note">Storage and processing values use different measurement methods. Open each module for conditions and test evidence. Adding a module updates its machine’s configuration.</p>

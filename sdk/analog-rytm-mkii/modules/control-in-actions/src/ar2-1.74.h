@@ -44,7 +44,8 @@
 #define FLAG_FUNC 2
 #define FLAG_DOUBLE 4
 
-// The panel's key path: Brain::key(brain, event), the core's KEYDISP.
+// The panel's key path: the core's core_key (every ev_key handler), then
+// Brain::key(brain, event), the core's KEYDISP.
 #define BRAIN_AT 0x419f28f8         // *: the brain
 #define KEY_DISPATCH_AT 0x400a0336
 #define KEY_EVENT_CTOR_AT 0x40071e7c // (event, key, flags, 0, 127)
@@ -61,9 +62,18 @@
 #define KEY_BIT_INDEX 0x418d0be0
 #define KEY_BITS 0x418d1340
 
-// Live recording, on the app.
+// Live recording, on the app (*0x419f28d8, which 0x401816f4 returns). Stock's
+// RECORD + PLAY (0x4004190a) turns grid and step recording off, then live
+// recording on; leaving live recording (0x4004196c) turns only live
+// recording off. RECORD + STOP (0x40041ada) turns step recording on.
 #define APP_SINGLETON_AT 0x401816f4
 #define LIVE_REC_AT 0x40036370      // (app) -> live recording on
+#define GRID_REC_SET_AT 0x400362da  // (app, on): grid recording
+#define STEP_REC_SET_AT 0x400363cc  // (app, on): step recording, with grid recording on
+#define APP_REC_OK 353              // app + 353: the record setters and 0x400363bc act only while set
+#define APP_GRID_REC 360            // app + 360: grid recording on
+#define APP_LIVE_REC 361            // app + 361: live recording on
+#define APP_STEP_REC 362            // app + 362: step recording on
 
 // The mode screens' view classes (pad tracks, then the FX track's).
 #define MUTE_VTABLE 0x401e2bbc

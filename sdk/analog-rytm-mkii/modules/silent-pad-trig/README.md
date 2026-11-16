@@ -48,15 +48,16 @@ MIDI note and leaves no held note, so its release cuts nothing the sequencer pla
 mode the pads play as stock, and TRIG 1-12 select silently there too. MUTE mode, TRK + pad, QPER +
 pad, NO + pad, BANK + TRIG, MIDI notes in, TRIG + YES and the sequencer itself are as stock.
 
-Version **0.7.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
+Version **0.8.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
 Nathaniel Pavel's (@npp1993) own mod, not a port. It was first written as Pad Select (`pad-select` 0.2, row
 PAD+TRIG SEL TRK) in a local checkout of [rytm2_mods](https://github.com/Iced-Cream/rytm2_mods)
 that was never published there; Modwerk is its home. 0.4.x had one checkbox covering both columns
 above; 0.5.0 splits it in two so silent pads while editing and silent pads while live recording
 can be chosen separately; 0.5.1 renames its second row from SILENT LIVE REC to SILENT PAD LIVEREC
 and changes nothing else; 0.6.0 adds MUTE ALL SOUND; 0.7.0 lets FUNC + TRIG play where TRIG keys are
-silent and has the LIVE REC row cover the TRIG keys too, renaming it SILENT P+T LIVEREC. 0.3.0, 0.4.0, 0.5.0 and 0.5.1 ran on a unit; 0.5.1 also ran in rytm-emu (build PS08). 0.6.0
-ran on a unit as builds PS10, PS11 and PS12, as reported. 0.7.0 ran on a unit as PS14 and as PS16, which renames the row and its storage field, as reported.
+silent and has the LIVE REC row cover the TRIG keys too, renaming it SILENT P+T LIVEREC; 0.8.0 lets
+RTRG + a muted pad record its whole roll in LIVE RECORDING without taking a shared voice. 0.3.0, 0.4.0, 0.5.0 and 0.5.1 ran on a unit; 0.5.1 also ran in rytm-emu (build PS08). 0.6.0
+ran on a unit as builds PS10, PS11 and PS12, as reported. 0.7.0 ran on a unit as PS14 and as PS16, which renames the row and its storage field, as reported. 0.8.0 ran on a unit in the combined build AT04, as reported.
 
 ## Controls
 
@@ -115,10 +116,12 @@ While a setting is checked, and only where it applies:
   on stock, select silently with SILENT PAD+TRIG, as in every other mode.
 - **With FIX (fixed velocity) on**, FUNC + pad plays at the fixed velocity, as stock pads do.
 - **A muted track's pads, TRIG keys and MIDI notes**, with MUTE ALL SOUND, start no voice, and a pad
-  or TRIG key sends no MIDI note on or poly pressure. Stock plays them and sends both. This is the module's purpose: recording or playing into a muted track in silence. A
-  mute that also zeroed the track's level and sends would cut a ringing note too, at the price of
-  two sites in the audio block and a muted pad cutting its shared partner, so a ringing note is
-  left as stock leaves it. Uncheck the box for stock. Compared with it unchecked: muted and
+  or TRIG key sends no MIDI note on or poly pressure. Stock plays them and sends both. This is the module's purpose: recording or playing into a muted track in silence. In
+  LIVE RECORDING a muted pad's hit goes on to the audio block, which drops it before it takes a
+  voice: RTRG + pad keeps its roll counting, so every hit records, nothing sounds, and a track that
+  shares the voice (CH and OH, say) keeps ringing. The pad still lights on each hit. A mute that
+  also zeroed the track's level and sends would cut a ringing note too, so a ringing note is left
+  as stock leaves it. Uncheck the box for stock. Compared with it unchecked: muted and
   unmuted pads, RTRG + pad, MIDI notes, solo through MIDI CC 93, LIVE RECORDING and shared voices.
 - **With AUTO TRK SWITCH unchecked**, a silent press still selects its track; FUNC + pad and FUNC + TRIG, which play, follow AUTO TRK SWITCH as stock and do not.
 
@@ -138,7 +141,11 @@ Requires core-ar2 0.3 on OS 1.74. Use your own original stock OS 1.74 file.
   the same code with the row renamed, and has run only in rytm-emu. MIDI out, STEP REC and several
   other flows are not yet tested on a unit (TESTING.md).
 - MUTE ALL SOUND stops new hits only. A note already ringing when you mute rings on, as stock, and
-  delay and reverb tails decay as stock.
+  delay and reverb tails decay as stock. In LIVE RECORDING a muted pad's hit still sets its track's
+  pitch and velocity, so a note the track itself still rings can change pitch; letting go of the
+  pad ends that note, as stock's release would.
+- A muted pad's light in LIVE RECORDING is the module's: a fixed level on each dropped hit, fading
+  as a sound's light does, not following the hit's velocity.
 - The SOUND BROWSER's audition reaches the voice by another path, so it still plays on a muted
   track, on purpose (read in the code, not tested). A muted hit runs no envelope or LFO trig.
 - In CHROMATIC mode stock sends a pad's poly pressure 24 semitones above its note on (note 36 presses
@@ -177,7 +184,12 @@ the pads, the TRIG keys or the SEQUENCER CONFIG menu.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). 0.7.0 (PS14), in rytm-emu: with both SILENT rows checked, FUNC +
+See [TESTING.md](TESTING.md). 0.8.0 ran on an Analog Rytm MKII in AT04, a combined build, as
+reported: with MUTE ALL SOUND, OH playing and CH muted, RTRG + CH in LIVE RECORDING recorded every
+retrig with no sound and no click, OH kept ringing, and the CH pad lit on each hit; outside LIVE
+RECORDING muted pads stayed silent. In rytm-emu (AT04E, CH forced muted) the same roll was
+sample-identical to no press while CH's retrig series counted as unmuted; with nothing muted the
+audio matched the build before. 0.7.0 (PS14), in rytm-emu: with both SILENT rows checked, FUNC +
 TRIG 5 and 13 played their track at VEL, with a MIDI note on, stopped, playing, in CHAIN, SONG, PERF,
 SCENE, MUTE, CHROMATIC, LIVE RECORDING and with a menu open, while plain TRIG 5 and 13 stayed silent.
 In LIVE RECORDING a plain TRIG press ran none of the play routine's record code and left the audio
@@ -204,10 +216,11 @@ Both rows came back after a power-off and two cold boots, and GLOBAL slot 2 kept
 SEQUENCER CONFIG 30 times caused no trouble. 0.5.1 (PS08) changes only the second row's label: its
 full text shows, its box lines up with the other rows', and a card saved by PS07 with the row
 checked boots PS08 with it still checked. 0.3.0 (build PS04) and 0.4.0 (PS05), with one setting,
-and 0.5.0 (PS07) ran on an Analog Rytm MKII, as reported. Memory (0.7.0): a 1196-byte
-`.run` in the 128 KiB shared mod area, no `.bss`, no fast SRAM, three storage bits. Nothing runs in
-the audio, sequencer or tick paths; each key press costs a few compares (static reading, not a
-measurement).
+and 0.5.0 (PS07) ran on an Analog Rytm MKII, as reported. Memory (0.8.0): a 1524-byte
+`.run` in the 128 KiB shared mod area (0.7.0: 1196), no `.bss`, no fast SRAM, three storage bits.
+Each key press costs a few compares; the audio block's trig loop a few compares per track (13 a
+block) and its pad glow store a table read per track (12 a block); the tick reads MUTE ALL SOUND
+about 20 times a second (static reading, not a measurement).
 
 ## Authorship and licences
 

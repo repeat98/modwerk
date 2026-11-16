@@ -1,0 +1,1 @@
+Development: on a Mac, `npm run check` and `pr:ready` ran their tests on one worker, about twice as slow as before, because the worker count read only the memory macOS reports as free and not what its cache gives back.

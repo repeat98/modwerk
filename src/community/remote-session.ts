@@ -4,7 +4,7 @@
 // requests one at a time, each checked here against the session's scope before it reaches the unit.
 import { apiUrl } from '../hosting'
 import { api, post } from './api'
-import { ELEKTRON_VENDOR_ID, USB_LOCK, type LinkDevice, type UsbLocks } from '../engine/elekloader/octatrack-link'
+import { ELEKTRON_VENDOR_ID, OCTATRACK_FILTERS, octatrackRank, USB_LOCK, type LinkDevice, type UsbFilter, type UsbLocks } from '../engine/elekloader/octatrack-link'
 import { findVendorInterface } from '../engine/elekloader/upload-usb'
 import { fromBase64, parseOperatorMessage, REMOTE_READ_REQUESTS, remoteTransferRefusal, toBase64, type MemberMessage, type RelayMessage, type RemoteScope, type RemoteSessionView } from './remote-session-contract'
 
@@ -67,10 +67,11 @@ export async function holdUnit(device: LinkDevice, locks: UsbLocks, waitMs = 500
 }
 
 /** Pick the Octatrack: one this site may already open, else Chrome's picker (call from the Accept click). */
-export async function pickUnit(usb: UsbEvents & { requestDevice(options: { filters: { vendorId: number }[] }): Promise<LinkDevice> }) {
-  const known = (await usb.getDevices()).filter(device => (device as LinkDevice & { vendorId?: number }).vendorId === ELEKTRON_VENDOR_ID)
-  if (known.length === 1) return known[0]
-  try { return await usb.requestDevice({ filters: [{ vendorId: ELEKTRON_VENDOR_ID }] }) }
+export async function pickUnit(usb: UsbEvents & { requestDevice(options: { filters: UsbFilter[] }): Promise<LinkDevice> }) {
+  // Other Elektron devices allowed on this site are not the Octatrack; of several Octatracks, the one on the base.
+  const known = (await usb.getDevices()).filter(device => device.vendorId === ELEKTRON_VENDOR_ID && octatrackRank(device)), based = known.filter(device => octatrackRank(device) === 2)
+  if (based.length === 1 || known.length === 1) return based.length === 1 ? based[0] : known[0]
+  try { return await usb.requestDevice({ filters: OCTATRACK_FILTERS }) }
   catch { throw new Error('No Octatrack was chosen. Plug it in over USB, then accept again.') }
 }
 

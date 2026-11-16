@@ -125,7 +125,8 @@ export async function developerApi(request:Request,db:Database,user:User|null,ad
       const content = required(body.body,'Reply',4000), replyId = crypto.randomUUID()
       await db.batch([
         db.prepare('INSERT INTO issue_replies(id,issue_id,user_id,body) VALUES(?,?,?,?)').bind(replyId,issue.id,member.id,content),
-        ...issueReplyStatements(db,issue,reported,replyId,member.id,content),
+        // A configuration report pings no author until it is narrowed down to one module (DECISIONS, 16 October 2026).
+        ...issueReplyStatements(db,issue,issue.scope==='configuration'?[]:reported,replyId,member.id,content),
       ])
       return response({ok:true},201)
     }

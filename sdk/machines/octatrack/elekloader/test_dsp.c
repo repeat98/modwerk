@@ -5,6 +5,7 @@
  * effects in use, and the catalog the DSP manager reads. */
 #include "sha256.c"
 volatile uint32_t modwerk_flash_refusal, modwerk_flash_quiesced; /* flash.c, not linked here */
+static int usb_disk; int modwerk_machine_usb_disk(void) { return usb_disk; } /* runtime.c, not linked here */
 #include "dsp.c"
 #include "fxmap.c"
 #include <stdio.h>
@@ -328,6 +329,13 @@ int main(void)
     modwerk_flash_quiesced = 1;
     for (unsigned t = 0; t < 100; ++t) CHECK(!modwerk_dsp_stalled(42900u, 1));
     modwerk_flash_quiesced = 0;
+    /* So does stock's USB DISK MODE: no stall while it is open, however long (finding 72); after it the count starts afresh. */
+    usb_disk = 1;
+    for (unsigned t = 0; t < 100; ++t) CHECK(!modwerk_dsp_stalled(42900u, 1));
+    usb_disk = 0;
+    for (unsigned t = 1; t <= 29; ++t) CHECK(!modwerk_dsp_stalled(42900u, 1));
+    CHECK(modwerk_dsp_stalled(42900u, 1));
+    CHECK(!modwerk_dsp_stalled(42901u, 1));
     /* The project's map (fxmap.c): '#MODWERK_FX=' lines in, only module handles, a failed load changes nothing. */
     for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) release(k);
     for (unsigned i = 0; i < 16u; ++i) modwerk_test_live_fx[i] = 0;

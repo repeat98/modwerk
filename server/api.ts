@@ -24,6 +24,7 @@ import { membersOnline, sitePresenceRoute } from './presence'
 import { adminInsights } from './admin-insights'
 import { adminAccounts } from './admin-accounts'
 import { adminActivity, unansweredThreads } from './admin-activity'
+import { adminOctatrack } from './admin-octatrack'
 import { adminAnnouncements, publicAnnouncementItems, publicAnnouncementRoutes } from './announcements'
 import { adminNews, newsUnsubscribe } from './news-mail'
 import recipes from '../src/catalog/module-sets.json'
@@ -83,7 +84,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (path === '/api/usage/module-downloads' && request.method === 'POST') return await recordModuleDownload(request,env,db)
     if (path === '/api/usage/count' && request.method === 'POST') return await recordAnonymousCount(request,env,db)
     if (path === '/api/catalog' && request.method === 'GET') return response((await db.prepare("SELECT s.module_id,s.title,s.repository_url,s.description,s.usage,s.resource_notes,s.test_report_url,s.reviewed_at,strftime('%Y-%m-%dT%H:%M:%SZ',s.reviewed_at) AS updated_at,(SELECT strftime('%Y-%m-%dT%H:%M:%SZ', MIN(first.reviewed_at)) FROM submissions first WHERE first.module_id=s.module_id AND first.status='approved') AS added_at,u.github_login AS author FROM module_publications p JOIN submissions s ON s.id=p.submission_id JOIN users u ON u.id=s.owner_id ORDER BY s.reviewed_at DESC").all()).results)
-    if(path==='/api/community/summary'&&request.method==='GET')return response(await sharedModuleStatistics(db,url.searchParams.get('fresh')==='1'))
+    if(path==='/api/community/summary'&&request.method==='GET')return response(await sharedModuleStatistics(db,url.searchParams.get('fresh')==='1'&&await throttle(db,'summary-fresh:'+(request.headers.get('CF-Connecting-IP')??'local'),30).then(()=>true,()=>false))) // past the limit, the shared answer
     if(path==='/api/community/online'&&request.method==='GET')return response(await membersOnline(db))
     if (path === '/api/announcements' && request.method === 'GET') return response({ items: await publicAnnouncementItems(db) })
     const developerAuth = await developerAuthentication(request,env,db)
@@ -221,6 +222,8 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       const context=issueInput(()=>digi?validateDigiIssueContext(body.context,module.machine):validateIssueContext(body.context,log?.summary??null))
       // The log is optional; older clients may still say why there is none.
       const missing=digi||log||body.logMissing===undefined?null:issueInput(()=>validateLogMissing(body.logMissing,context as import('../src/community/issue-context').OctatrackIssueContext))
+      // Member first, so one member's refused reports never fill the address's or the site's counter.
+      await throttle(db,'issue-member:'+owner.id,10)
       await throttle(db,'issue-ip:'+(request.headers.get('CF-Connecting-IP')??'local'),10)
       // Bound stored reports across the site as well as per IP and member.
       await throttle(db,'issue-global',60)
@@ -229,7 +232,6 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       const published=core||recipe?null:await db.prepare("SELECT u.github_login FROM module_publications p JOIN submissions s ON s.id=p.submission_id JOIN users u ON u.id=s.owner_id WHERE p.module_id=?").bind(match[1]).first<{github_login:string}>()
       const author=module?.author??core?.author??recipe?.author??published?.github_login
       if(!author)throw new HttpError(400,'No author is registered for this module.')
-      await throttle(db,'issue-member:'+owner.id,10)
       const id=crypto.randomUUID(),details=[['Steps to reproduce',steps],['Expected',expected],['Actual',actual]].filter(([,text])=>text).map(([label,text])=>label+':\n'+text).join('\n\n')
       // With GitHub configured, a public report becomes a GitHub issue and gets no forum thread of its own.
       const github=!!publicReport&&!!githubConfig(env)
@@ -265,6 +267,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       const news = await adminNews(request, env, db, path, adminId)
       if (news) return news
       if (path === '/api/admin/insights' && request.method === 'GET') return response(await adminInsights(db))
+      if (path === '/api/admin/octatrack' && request.method === 'GET') return response(await adminOctatrack(db))
       if (path === '/api/admin/unanswered-threads' && request.method === 'GET') return response(await unansweredThreads(db,new Date(),url.searchParams))
       if (path === '/api/admin/activity' && request.method === 'GET') return response(await adminActivity(db,new Date(),Number(url.searchParams.get('days') ?? 30)))
       if (path === '/api/admin/accounts' && request.method === 'GET') return response(await adminAccounts(db,new Date(),Number(url.searchParams.get('days') ?? 30)))

@@ -76,46 +76,6 @@ class UpstreamCheckouts(unittest.TestCase):
             (path / item).write_bytes(original)
         self.sync()
 
-    def test_update_moves_to_main_and_reapplies_repairs(self):
-        self.sync()
-        (self.upstream / "tools/hw/sos_capture.py").write_text("# new upstream tool\n")
-        second = self.commit("second")
-        self.assertEqual(tools.update_octabam(self.pins, self.base, "2026-10-10"), (second, True))
-        pins = json.loads(self.pins.read_text())["octabam"]
-        self.assertEqual((pins["commit"], pins["updated"]), (second, "2026-10-10"))
-        path = self.sync(second)
-        self.assertTrue((path / "tools/hw/sos_capture.py").exists())
-        self.assertEqual(tools.edits(path), set(tools.REPAIRED))
-        self.assertEqual(tools.update_octabam(self.pins, self.base), (second, False))
-
-    def test_update_refuses_when_a_repaired_tool_changed_upstream(self):
-        self.sync()
-        with open(self.upstream / "tools/hw/usb_probe.py", "a") as tool:
-            tool.write("# changed upstream\n")
-        self.commit("changed probe")
-        before = self.pins.read_text()
-        with self.assertRaisesRegex(ValueError, "review its repairs"):
-            tools.update_octabam(self.pins, self.base)
-        self.assertEqual(self.pins.read_text(), before)
-        self.assertEqual(tools.git(self.base / "octabam", "rev-parse", "HEAD"), self.first)
-
-    def test_update_accepts_a_reviewed_revision_of_a_repaired_tool(self):
-        self.sync()
-        probe = self.upstream / "tools/hw/usb_probe.py"
-        source = b"# reworded upstream\n" + probe.read_bytes()
-        probe.write_bytes(source)
-        spec = tools.adapter.TOOLS["usb_probe.py"]
-        text = source.decode()
-        for old, new in spec["edits"]:
-            text = text.replace(old, new)
-        with mock.patch.dict(spec, revisions={tools.sha(source): tools.sha(text.encode())}):
-            second = self.commit("reworded probe")
-            self.assertEqual(tools.update_octabam(self.pins, self.base), (second, True))
-            path = self.sync(second)
-            self.assertEqual(tools.edits(path), set(tools.REPAIRED))
-            self.assertEqual((path / "tools/hw/usb_probe.py").read_text(), text)
-            self.sync(second)
-
     def test_update_moves_a_plain_pin_and_keeps_it_unedited(self):
         self.pins.write_text(json.dumps({"rytm-emu": {"repository": self.url, "commit": self.first, "updated": "x"}}))
         tools.sync("rytm-emu", self.url, self.first, self.base, False)

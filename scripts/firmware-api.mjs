@@ -31,7 +31,7 @@ export async function startFirmwareApi({ stockPath, outputDir, site = 'https://m
     if (request.headers.origin || request.headers.host !== new URL(url).host) return json(403, { error: 'Only direct loopback API clients are allowed.' })
     const supplied = Buffer.from(request.headers.authorization ?? ''), expected = Buffer.from('Bearer ' + token)
     if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) return json(401, { error: 'A local API token is required.' })
-    if (request.url === '/health' && request.method === 'GET') return json(200, { ok: true, busy, machines: ['octatrack', 'digitakt', 'digitone'] })
+    if (request.url === '/health' && request.method === 'GET') return json(200, { ok: true, busy, machines: ['digitakt', 'digitone'] })
     const download = /^\/downloads\/([a-f0-9-]{36})\/(\d+)$/.exec(request.url ?? '')
     if (download && request.method === 'GET') {
       const file = downloads.get(download[1])?.files[Number(download[2])]

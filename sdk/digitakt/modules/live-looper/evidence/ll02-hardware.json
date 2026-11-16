@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-12",
+  "source": "Direct author statements in the development conversation",
+  "reporter": "draadpiraat",
+  "status": "hardware-tested-author-reported",
+  "model": "Digitakt I",
+  "release": "1.54",
+  "moduleVersion": "0.1.0-experimental",
+  "builds": [
+    {
+      "name": "Core 2.1 + Machine Pages 1.2 + live-looper 0.1.0-experimental (LL02)",
+      "syxSha256": "8eb45a154c0e355813e1db5b657700d798e9d6a07b0f7b653a8b043ad5fadc6b",
+      "statement": "it doesnt restart the loop, but it triggers the envelope decay, at the default midway decay time you'll hear it drop in volume slowly. other than that, go and push it, running it right now its perfect",
+      "steps": {
+        "1-8 the LL01 fixes and the quick re-run (HARDWARE-CHECKS-LL02)": "\"running it right now its perfect\"",
+        "9 the trig key in PICK": "it does not restart the loop; it retriggers the amp envelope, so at the default DEC the loop fades down slowly"
+      }
+    }
+  ],
+  "limitations": [
+    "The checklist was answered as one statement, not step by step.",
+    "The run time was not stated.",
+    "Firmware was not read back from the device; the build is identified by its SysEx hash."
+  ]
+}

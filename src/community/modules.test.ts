@@ -12,7 +12,7 @@ describe('reviewed maintainer opt-outs', () => {
     const user = { id: 'former-maintainer', display_name: 'Sam Banks', github_id: '1234', github_login: 'SamBanks' }
     try {
       db.prepare('INSERT INTO users(id,display_name,github_id,github_login) VALUES(?,?,?,?)').run(user.id, user.display_name, user.github_id, user.github_login)
-      for (const id of ['cc-map', 'recorder-loop-fix', 'spectrum']) {
+      for (const id of ['cc-map', 'recorder-loop-fix']) {
         db.prepare('INSERT INTO module_maintainers(module_id,user_id,github_login) VALUES(?,?,?)').run(id, user.id, user.github_login)
         const { recipients, values } = moduleDevelopers(communityModule(id)!, '')
         expect(db.prepare(recipients).all(...values)).toEqual([])
@@ -34,7 +34,6 @@ describe('reviewed maintainer opt-outs', () => {
     expect(developerModules('sambanks')).toEqual([])
     expect(developerModules('SamBanks')).toEqual([])
     expect(COMMUNITY_MODULES.some(module => module.maintainers.some(login => login.toLowerCase() === 'sambanks'))).toBe(false)
-    expect(communityModule('spectrum')).toMatchObject({ author: 'sambanks', maintainers: [] })
     expect(communityModule('miniverb')?.maintainers).toEqual(['repeat98'])
     expect(communityModule('digitakt-digihealth')?.maintainers).toEqual(['irpina'])
   })

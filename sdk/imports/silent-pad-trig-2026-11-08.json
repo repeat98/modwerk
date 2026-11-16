@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/silent-pad-trig",
+  "version": "0.8.0-experimental",
+  "date": "2026-11-08",
+  "changes": [
+    "With MUTE ALL SOUND, a muted pad's hit in LIVE RECORDING reaches the audio block, which drops the muted track's trig before any voice is taken (site 0x40120a66), so RTRG + a muted pad records its whole roll without sounding or stealing a shared voice; a second site at the pad glow store (0x4012155a) lights the pad on each dropped hit."
+  ],
+  "runtimeSourceSha256": "ad162c3df4a526a733d60d0f1cdb3224398263711f85bc0c33bb3ff2d56bb5e6",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/silent-pad-trig/silent-pad-trig-0.8.0-experimental-os1.74.elemod",
+      "sha256": "55b3458ff67361f840b9cc2cf74ffec6b1faa2bd67ce7b93bb57b19c26b64480"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/silent-pad-trig/TESTING.md",
+  "requires": []
+}

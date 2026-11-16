@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "loop",
+  "moduleVersion": "0.3.0",
+  "imageSha256": "696623f79f1d895b317c5230309c00b0058a2b984f4437021455bc19fe1624da",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/loop-play.png",
+      "sha256": "f7e4792eff1802e6608fc0cc70607870ffcab44bc48330619cfcf8b0e994483e",
+      "plan": "python3 src/custom/common/zvis_host.py src/custom/loop <out> --signal pluck --seconds 3 --frames 3 --presses 0.5 (ZoomMultistompZDL at 32f3d68), frame 1"
+    }
+  ]
+}
