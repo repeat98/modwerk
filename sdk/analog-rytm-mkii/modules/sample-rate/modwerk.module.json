@@ -88,7 +88,7 @@
       "With LOP OFF, once the sample has played out, changing RATE does not bring it back: trig again.",
       "A change of direction on a looping voice waits until it is 32 frames clear of STA and END; a trig does not wait.",
       "Sound locks, scene locks and performance locks on RATE have not been run.",
-      "A sample previewed with FUNC + YES in a sample list plays at 1x, as on stock, whatever the track's RATE: stock's preview puts the sample in its own slot (129) with FIN at rest, and the module leaves such a voice at 1x."
+      "A sample previewed with FUNC + YES in a sample list plays at 1x, as on stock, whatever the track's RATE or an LFO on it: stock plays a preview from its own slot 129, and the module plays any voice on a slot of 128 or above at 1x, forward."
     ]
   },
   "platform": {
@@ -118,7 +118,7 @@
   "evidence": {
     "tier": "emulator",
     "moduleVersion": "0.5.1-experimental",
-    "sourceSha256": "f1d4ef34cde8eabb444bbf8f1c893efbdf7edad5477582f22bcbb0517515999e",
+    "sourceSha256": "8645bba773bee01d6e0be5a8373be1d56c3c46aa1f8a00045ae2d274bd004c1e",
     "reports": [
       "TESTING.md"
     ],
@@ -127,7 +127,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu (0.5.1, SO01, SF01): the sample preview plays at 1x as on stock where 0.5.0 left it silent; normal play unchanged. Unit (0.5.0, the author playing, combo RC38 to RC40): the value row, every knob, LOOP and PIPO, the playhead and the sound; lock boxes on RC39; the waveform after boot on RC40. rytm-emu (SV02 to SV05): every knob's turn, the sample list, no sample, held-trig locks, Ping Pong Loop's marks, the slot follow. Earlier versions: TESTING.md.",
+    "summary": "rytm-emu (0.5.1, SF02, SV12): the sample preview plays at 1x as on stock, at RATE 0 and with an LFO on RATE, where 0.5.0 left it silent or bent it; normal play forward and backward unchanged. Unit (0.5.0, the author playing, combo RC38 to RC40): the value row, every knob, LOOP and PIPO, the playhead and the sound; lock boxes on RC39; the waveform after boot on RC40. rytm-emu (SV02 to SV05): every knob's turn, the sample list, no sample, held-trig locks, Ping Pong Loop's marks, the slot follow. Earlier versions: TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -174,8 +174,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.5.1-experimental",
-        "imageSha256": "bc1535604022ddb744e433bdf2d46114aa158dc5e0698d3fc04e0c226bc11035",
-        "setup": "Headless rytm-emu (dtboot) running SV11: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "08dcf7e5b7698d65da0bda16aad6f429ff2ca6e4c19d0d3cd92d08ffd6868074",
+        "setup": "Headless rytm-emu (dtboot) running SV12: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -190,8 +190,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.5.1-experimental",
-        "imageSha256": "bc1535604022ddb744e433bdf2d46114aa158dc5e0698d3fc04e0c226bc11035",
-        "setup": "Headless rytm-emu (dtboot) running SV11: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "08dcf7e5b7698d65da0bda16aad6f429ff2ca6e4c19d0d3cd92d08ffd6868074",
+        "setup": "Headless rytm-emu (dtboot) running SV12: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -206,8 +206,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.5.1-experimental",
-        "imageSha256": "bc1535604022ddb744e433bdf2d46114aa158dc5e0698d3fc04e0c226bc11035",
-        "setup": "Headless rytm-emu (dtboot) running SV11: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "08dcf7e5b7698d65da0bda16aad6f429ff2ca6e4c19d0d3cd92d08ffd6868074",
+        "setup": "Headless rytm-emu (dtboot) running SV12: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -222,8 +222,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.5.1-experimental",
-        "imageSha256": "bc1535604022ddb744e433bdf2d46114aa158dc5e0698d3fc04e0c226bc11035",
-        "setup": "Headless rytm-emu (dtboot) running SV11: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "08dcf7e5b7698d65da0bda16aad6f429ff2ca6e4c19d0d3cd92d08ffd6868074",
+        "setup": "Headless rytm-emu (dtboot) running SV12: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

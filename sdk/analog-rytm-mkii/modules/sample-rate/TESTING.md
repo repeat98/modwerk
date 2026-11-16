@@ -33,12 +33,15 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 
 rytm-emu, headless `dtboot`; emulator results are not hardware evidence.
 
-- Source (0.5.1-experimental): fingerprint `f1d4ef34…999e` (`evidence.sourceSha256`). Build SO01 (Modwerk base `3ece243b` + 0.5.0, the reproduction): `.syx` `7a9ca3fd…09e4`. Build SF01 (the same base + this source): ramSpare 91728. Build SV11 (vendored core-ar2 0.7 + this source, for the screenshots): `.syx` `bc153560…1035`. Stock OS 1.74 and the author's combo RC40 (`5d5241e0`, 0.5.0) for comparison.
-- Cause, read in stock's code: the sample preview (0x400a0dac, called from 0x400a5236 and 0x400e742e) fills a parameter override table that puts SMP in slot 129 and TUN and FIN at rest (0x4000) on the active track; 0.5.0 read FIN at rest as RATE 0 and scaled the step to 0.
-- Reproduction (rytm-emu-ramboot build, the card's RAMP in GLOBAL > SAMPLES > incoming, BD active, its sound saved by stock with FIN +0, FUNC held and YES): stock: voice 0's step went from 0x02000000 to 0x08000000 and its position advanced 0xdf a 100 M instructions; row FIN 0x4000, SMP 0x81. RC40 and SO01: step 0, position frozen, the preview silent. SF01: step 0x08000000 and the position advanced as on stock.
-- Normal play unchanged: RAMP in project slot 1 on BD, RATE set by CC 25 to 100 and then 64, BD pressed each time: SO01 and SF01 gave identical step, FIN and SMP words at every 100 M (playing at 100, stopped at 64).
-- Screenshots retaken on SV11 with 0.5.0's plans: the same screens, apart from where the playhead stood.
-- Not run: a Sound previewed from the SOUND BROWSER whose sample is not in the project (stock may also use slot 129 there; such a Sound would then preview at 1x only at RATE 0, by the code). Nothing of 0.5.1 has run on a unit yet.
+- Source (0.5.1-experimental): fingerprint `8645bba7…4c1e` (`evidence.sourceSha256`). Builds on Modwerk base `3ece243b`: SO01 (0.5.0, the reproduction) `.syx` `7a9ca3fd…09e4`, SF02 (this source) `.syx` `d6a0d07a…e288`. SV12 (vendored core-ar2 0.7 + this source, LFO case and screenshots): `.syx` `08dcf7e5…8074`. Stock OS 1.74 and the author's combo RC40 (`5d5241e0`, 0.5.0) for comparison.
+- Cause, read in stock's code: the sample preview routine (0x400a0dac, called from 0x400a5236 and 0x400e742e) applies an override to the active track's sound that puts SMP in slot 129 and TUN and FIN at rest (0x4000); LFO modulation is added after it. 0.5.0 read FIN at rest as RATE 0 and scaled the step to 0.
+- Reproduction (the card's RAMP in GLOBAL > SAMPLES > incoming, BD active, its sound saved by stock with FIN +0, FUNC held and YES): stock: voice 0's step went from 0x02000000 to 0x08000000, its position advancing 0xdf a 100 M instructions; row FIN 0x4000, SMP 0x81. RC40 and SO01: step 0, position frozen, the preview silent. SF02: step 0x08000000, the position advancing as on stock.
+- LFO on RATE (SV12, LFO DEST SAMP:Rate, DEP +16.18, SPD +63, RATE +63): during the preview the row's FIN swung from 0x3097 to 0x4f86 around 0x4000. A first version of the fix that also required FIN at 0x4000 played the preview at a wobbling step that went negative (backward); this source held the step at 0x08000000 and the position ran forward at stock's rate throughout.
+- LFO on SMP (SV12, full depth): the effective SMP word stayed within 0x0000..0x7fff, so a project voice never reads as slot 128 or above.
+- Normal play unchanged: RAMP in project slot 1 on BD, BD pressed at RATE 100 then 64 (CC 25), and again at RATE 32 (backward): SO01 and SF02 gave identical step, position, FIN and SMP words at every 100 M.
+- Screenshots retaken on SV12 with 0.5.0's plans: the same screens, apart from where the playhead stood.
+- Unit image SU02 (base 1e92a59a with the link + this source, lock RB08, layout 0x026f1e10): `.syx` `3eb6830e…89fe`; boots and answers the link in rytm-emu. The author's earlier rig cases for this module (`cases/sample-rate`) give the same 1 pass and 5 fails on SU02 as on SU00 (0.5.0, same base): their references predate 0.5.0's screen.
+- Not run: a Sound previewed from the SOUND BROWSER whose sample is not in the project (if stock plays it from slot 129, it previews at 1x whatever its RATE). Nothing of 0.5.1 has run on a unit yet.
 
 ## 0.5.0: one row of values over a taller waveform (2026-11-12)
 
