@@ -100,7 +100,7 @@ describe('preparing a module set', () => {
     const target = { name: 'All published', moduleIds: USB_MODULE_IDS }, fetched = vi.fn(load)
     // RINGMOD SC is a published ABI 9 package (a key bus reader) and Analog BD's carries its engine for the base's hook
     // site (ABI 10): a capable base reports ABI 10.
-    const events = { abi: 10, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 }
+    const events = { abi: 10, features: 7 | 128 | 512 | RuntimeFeature.uiRoots, maxSites: 128, maxCopies: 128 } // Tuner asks for uiRoots (base 0.7.5)
     await expect(prepareModuleSet(target, empty, fetched)).rejects.toBeInstanceOf(BaseUpdateRequired)
     await expect(prepareModuleSet(target, empty, fetched, { ...events, features: 7 })).rejects.toBeInstanceOf(BaseUpdateRequired) // Repitch subscribes
     await expect(prepareModuleSet(target, empty, fetched, { ...events, abi: 7 })).rejects.toBeInstanceOf(BaseUpdateRequired)
