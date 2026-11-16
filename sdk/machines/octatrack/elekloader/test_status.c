@@ -18,6 +18,7 @@ int modwerk_dsp_meter_read(unsigned core, unsigned first, unsigned words) { (voi
 uint32_t dl_buffers_in_use(void) { return 0; }
 unsigned modwerk_runtime_active(void) { return 0; }
 volatile struct selftest modwerk_selftest;
+const char modwerk_base_version[] = "0.7"; /* build_core.py's, from base-version.json */
 volatile uint32_t modwerk_selftest_key;
 volatile uint32_t modwerk_flash_progress, modwerk_flash_outcome, modwerk_flash_trial; /* flash.c */
 /* ep0.c's upload and boot.c's armed RAM boot, as the transfer screens read them. */
@@ -87,6 +88,38 @@ unsigned modwerk_dsp_module_loads(struct modwerk_module_load *out)
     for (unsigned i = 0; i < installed; ++i) out[i] = (struct modwerk_module_load){{'m', (char)('a' + i)}, 400u, (uint8_t)(20u + i), 0, {0, 1}};
     return installed;
 }
+/* MODULES: the loader's live modules and modset.c's shelf, and what the page asks of modset.c. */
+static struct { uint32_t id; const char *name; int on; } unit[8];
+static unsigned unit_count, shelf_moving, asked_on, locks;
+static uint32_t asked_id;
+uint32_t modwerk_machine_lock(void) { ++locks; return 0; }
+void modwerk_machine_unlock(uint32_t was) { (void)was; --locks; }
+static unsigned unit_entry(uint8_t *e, unsigned i, unsigned name_at)
+{
+    e[name_at - 4] = (uint8_t)(unit[i].id >> 24), e[name_at - 3] = (uint8_t)(unit[i].id >> 16), e[name_at - 2] = (uint8_t)(unit[i].id >> 8), e[name_at - 1] = (uint8_t)unit[i].id;
+    for (unsigned c = 0; c < 16u; ++c) e[name_at + c] = c < strlen(unit[i].name) ? (uint8_t)unit[i].name[c] : 0;
+    return 1;
+}
+unsigned modwerk_runtime_list(uint8_t *out, unsigned first, unsigned most)
+{
+    unsigned n = 0, seen = 0;
+    for (unsigned i = 0; i < unit_count && n < most; ++i) if (unit[i].on && seen++ >= first) n += unit_entry(out + 4 + 24 * n, i, 8);
+    out[3] = (uint8_t)n;
+    return 4 + 24 * n;
+}
+unsigned modwerk_modset_off_list(uint8_t *out, unsigned first, unsigned most)
+{
+    unsigned n = 0, seen = 0;
+    if (shelf_moving || !locks) return 0; /* the page reads it with the machine held */
+    for (unsigned i = 0; i < unit_count && n < most; ++i) if (!unit[i].on && seen++ >= first) {
+        uint8_t *e = out + 8 + MODSET_OFF_ENTRY * n++;
+        memset(e, 0, MODSET_OFF_ENTRY); e[0] = 0xff; unit_entry(e, i, 8);
+    }
+    out[3] = (uint8_t)n;
+    return 8 + MODSET_OFF_ENTRY * n;
+}
+volatile uint32_t modwerk_modset_switch_result;
+int modwerk_modset_switch(uint32_t id, int on) { asked_id = id, asked_on = (unsigned)on, modwerk_modset_switch_result = MODSET_SWITCH_PENDING; return 1; }
 int main(void)
 {
     uint8_t load_out[MODWERK_LOAD_BYTES];
@@ -330,6 +363,7 @@ int main(void)
       for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0; }
     modwerk_load_menu(0); modwerk_status_cpu_refused(2, "Poly8", 800, 266);
     CHECK(open == SHOWN);
+    CHECK(strstr(shows(), "MODWERK BASE 0.7|"));                       /* the status page names the base by its version */
     modwerk_status_key(NO, 1); modwerk_status_key(NO, 0);
     modwerk_missing_menu(0);
     missing_check();
@@ -344,6 +378,36 @@ int main(void)
     CHECK(!modwerk_status_key(0, 1) && open == CLOSED && !modwerk_status_key(0, 0)); /* TRIG 1 closes it and reaches stock */
     modwerk_test_menu_open = 0; modwerk_modules_menu(0);
     CHECK(open == CLOSED);                                             /* only from the open menu */
+    /* MODULES: every installed module by name, on or off; YES asks modset.c to switch the one under the cursor. */
+    modwerk_switches_menu(0); CHECK(open == CLOSED);
+    unit[0].id = 0x30u, unit[0].name = "Tape Echo", unit[0].on = 1; unit[1].id = 0x10u, unit[1].name = "Euclid", unit[1].on = 0;
+    unit[2].id = 0x20u, unit[2].name = "", unit[2].on = 1; unit_count = 3;
+    for (unsigned i = 3; i < 7u; ++i) unit[i].id = 0x40u + i, unit[i].name = "Zz", unit[i].on = 1;
+    modwerk_test_menu_open = 1; modwerk_switches_menu(0);
+    CHECK(open == SWITCHES && switch_count == 3 && !switch_cursor && !locks);
+    CHECK(switches[0].id == 0x10u && !switches[0].on && !strcmp(switches[0].name, "EUCLID"));
+    CHECK(switches[1].id == 0x30u && switches[1].on && !strcmp(switches[1].name, "TAPE ECHO") && !strcmp(switches[2].name, "UNNAMED"));
+    (void)shows();
+    CHECK(strstr(said, "MODULES") && strstr(said, "EUCLID") && strstr(said, "OFF") && strstr(said, "TAPE ECHO") && strstr(said, "ON/OFF"));
+    CHECK(modwerk_status_key(YES, 1) && modwerk_status_key(YES, 0) && open == SWITCHES && asked_id == 0x10u && asked_on == 1);
+    (void)shows(); CHECK(strstr(said, "...") && !strstr(said, "OFF "));
+    asked_id = 0; CHECK(modwerk_status_key(YES, 1) && modwerk_status_key(YES, 0) && !asked_id); /* one answer at a time */
+    unit[1].on = 1, modwerk_modset_switch_result = MODSET_SWITCHED; switches_tick();
+    CHECK(switches[0].on && !switch_waiting && !switch_said && !switch_cursor);
+    /* A refusal is said in the last line, and the row stays as it was. */
+    CHECK(modwerk_status_key(DOWN, 1) && modwerk_status_key(DOWN, 0) && switch_cursor == 1);
+    CHECK(modwerk_status_key(YES, 1) && modwerk_status_key(YES, 0) && asked_id == 0x30u && asked_on == 0);
+    modwerk_modset_switch_result = MODSET_SWITCH_REFUSED + RUNTIME_IN_USE; switches_tick();
+    (void)shows(); CHECK(strstr(said, "IN USE ON A TRACK") && switches[1].on);
+    modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); modwerk_modset_switch_result = MODSET_SWITCH_PLAYING; switches_tick();
+    (void)shows(); CHECK(strstr(said, "STOP PLAYBACK FIRST"));
+    /* A shelf that moves is read at the next tick; the cursor follows its module when a host changes the set. */
+    unit_count = 7; shelf_moving = 1; ticks += 60u; switches_tick(); CHECK(switch_count == 3 && switch_stale); /* the second's reading */
+    shelf_moving = 0; switches_tick(); CHECK(switch_count == 7 && switches[switch_cursor].id == 0x30u && !switch_stale);
+    for (unsigned i = 0; i < 9u; ++i) modwerk_status_key(DOWN, 1), modwerk_status_key(DOWN, 0);
+    CHECK(switch_cursor == 6 && switch_top == 2);                       /* seven modules, five rows */
+    CHECK(!modwerk_status_key(PLAY, 1) && !modwerk_status_key(PLAY, 0) && open == SWITCHES); /* PLAY reaches stock, it stays */
+    CHECK(modwerk_status_key(NO, 1) && modwerk_status_key(NO, 0) && open == CLOSED);
     if (failures) return 1;
     puts("status keys: ok");
     return 0;

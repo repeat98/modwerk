@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { loadStep, type Inventory, type InventoryTarget } from '../config/inventory'
+import { loadStep, staysOff, type Inventory, type InventoryTarget } from '../config/inventory'
 import { recordSync, rememberSuccessfulSync } from '../config/octatrack-progress'
 import { LINK_BUSY, LinkBusyError, type OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { BaseLayoutRequired, BaseUpdateRequired, baseOutdated, ModuleSetError, moduleSetReview, setLayout, SetLimitError, USB_MODULE_IDS } from '../engine/elekloader/module-set'
@@ -62,6 +62,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
   // USB Audio comes with the base: on when the connected base runs the set's layout, otherwise a base install first.
   const audio = setLayout(set), audioOn = audio !== undefined && baseLayout(state.identity?.base) === audio
   const stays = inventory ? set.moduleIds.filter(id => (id === USB_AUDIO_MODULE ? audioOn : inventory.moduleIds.includes(id)) && !updates.includes(id)) : []
+  const off = staysOff(set.moduleIds, inventory) // switched off on the unit (PROJ > MODWERK > MODULES): a sync leaves them off
   // A paused module, or one with no USB package, can still be removed, never added; a beta module (Air Chorus) is added
   // only for a beta tester.
   const paused = changes ? changes.add.filter(id => !isModuleAvailable(id, betaAccess) || !USB_MODULE_IDS.includes(id)) : []
@@ -142,6 +143,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
             </li>
           }))}</ul>
           {!!stays.length && <details className="load-unchanged"><summary>Already on your Octatrack · {stays.length}</summary><ul>{stays.map(id => <li key={id}>{MODULES.find(module => module.id === id)?.name ?? id}</li>)}</ul></details>}
+          {!!off.length && <details className="load-unchanged"><summary>Switched off on your Octatrack · {off.length}</summary><p>These stay off. Switch one on in PROJECT &gt; MODWERK &gt; MODULES on the Octatrack.</p><ul>{off.map(id => <li key={id}>{MODULES.find(module => module.id === id)?.name ?? id}</li>)}</ul></details>}
           {paused.length > 0 && <div className="load-blocked" role="note">
             <p>{list(paused)} {paused.length === 1 ? 'is' : 'are'} paused for now. Take {paused.length === 1 ? 'it' : 'them'} out of {set.name} to sync the rest.</p>
             <p><button type="button" className="text-button" onClick={onEdit}>Edit {set.name}</button></p>

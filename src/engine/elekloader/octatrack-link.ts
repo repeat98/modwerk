@@ -7,12 +7,13 @@ import { runSelftest, waitUntilSaved } from './selftest.ts'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { UploadDeviceError, UploadSession, UploadUnconfirmedError } from './upload-session.ts'
 import type { UploadResultName } from './upload-wire.ts'
-import { findVendorInterface, RuntimeFeature, UsbVendorTransport, type BaseSlots, type ControlDevice, type MissingModule, type SelftestRecord, type VendorIdentity } from './upload-usb.ts'
+import { findVendorInterface, RuntimeFeature, UsbVendorTransport, type BaseSlots, type ControlDevice, type MissingModule, type OffModule, type SelftestRecord, type VendorIdentity } from './upload-usb.ts'
 import * as formats from '../../../vendor/elekloader/kit/src/formats.ts'
 import type { ElekFile } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { OCTATRACK } from '../../../vendor/elekloader/kit/src/devices.ts'
 import type { OctatrackDiagnostic, DiagnosticReading, DiagnosticSyncStep } from '../../community/octatrack-diagnostics-contract'
 import { encodeModuleSet } from './set-package.ts'
+import { baseName } from './base-variants.ts'
 import { diagnosticErrorKind } from '../../community/site-diagnostic-events'
 import loaderRefusals from '../../../sdk/runtime/loader-refusals.json' with { type: 'json' }
 
@@ -454,6 +455,15 @@ export class OctatrackLink {
   /** The modules installed on the unit, while it is idle; undefined from a base before INVENTORY (it stalls the request).
    * Rejects with LinkBusyError when it couldn't ask just now. */
   inventory(): Promise<MissingModule[] | undefined> { return this.read('modules', transport => transport.inventory()) }
+  /** The modules switched off on the unit (PROJ > MODWERK > MODULES): installed and saved, not running. Undefined from
+   * a base before that page. Rejects with LinkBusyError when it couldn't ask just now. */
+  off(): Promise<OffModule[] | undefined> { return this.read('switched-off modules', transport => transport.off()) }
+  /** The identity of the modules that run now (request 38), which changes when one is switched on the unit itself;
+   * undefined from a base without whole sets, or when it couldn't ask this round. */
+  async liveSet(): Promise<string | undefined> {
+    if (!((this.state.identity?.capabilities?.features ?? 0) & RuntimeFeature.moduleSets)) return undefined
+    return this.read('module set', transport => transport.setIdentity()).catch(() => undefined)
+  }
   /** A read-only request while the unit is idle: WebUSB sends an interface's requests only while it is claimed. It
    * skips the round (LinkBusyError) rather than wait long when another tab or a load holds the unit. */
   private read<T>(what: string, request: (transport: UsbVendorTransport) => Promise<T>, signal?: AbortSignal, allowed: () => boolean = () => true): Promise<T | undefined> {
@@ -509,7 +519,7 @@ export class OctatrackLink {
     const armedFrom: string[] = []
     // Only the flashed base's gate reads the mailbox: armed from a RAM-booted base, the unit comes back on the flashed one, which arms it properly.
     while (current !== expected) {
-      if (armedFrom.filter(base => base === current).length > (afterStep && current === armedFrom[0] ? 1 : 0)) throw new Error(`The Octatrack came back on base ${current.slice(0, 8)}, not the new one. A power cycle returns to the flashed base.`)
+      if (armedFrom.filter(base => base === current).length > (afterStep && current === armedFrom[0] ? 1 : 0)) throw new Error(`The Octatrack came back on base ${baseName(current)}, not the new one. A power cycle returns to the flashed base.`)
       armedFrom.push(current)
       report('staging', 0)
       const connection = this.connection
@@ -549,7 +559,7 @@ export class OctatrackLink {
         }
         report('restarting')
         const back = await this.returned(connection, signal, 90000, late)
-        if (back !== expected) throw new Error(`After the write the Octatrack came back on base ${back.slice(0, 8)}, not the new one.`)
+        if (back !== expected) throw new Error(`After the write the Octatrack came back on base ${baseName(back)}, not the new one.`)
         return report('done')
       } catch (error) {
         // Saved and checked, then not back from the restart (a base before the two slots restarts on NOR): nothing is
@@ -562,7 +572,7 @@ export class OctatrackLink {
         const back = await this.steady(connection, late, signal)
         // After the trial, back on another base means the unit booted NOR, which still holds that base whole: the
         // write never landed.
-        if (back !== expected) throw new Error(`The Octatrack restarted on its current base (${back.slice(0, 8)}) before the new one was saved, so nothing changed. Try again.`, { cause: error })
+        if (back !== expected) throw new Error(`The Octatrack restarted on its current base (${baseName(back)}) before the new one was saved, so nothing changed. Try again.`, { cause: error })
       }
     }
   }

@@ -299,6 +299,11 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     for (const group of groups) {
       const groupMembers = new Set(group.variants.flatMap(variant => variant.members.map(member => member.id)))
       const wanted = target.moduleIds.filter(id => groupMembers.has(id))
+      if (wanted.length && wanted.every(id => current.offIds?.includes(id))) continue // switched off on the unit: it stays off
+      // The machine package is off on the unit and the set wants none of its members: it leaves, by the package's own id.
+      if (!wanted.length && !current.runtimeGroups?.some(item => item.id === group.id) && [...groupMembers].some(id => current.offIds?.includes(id))) {
+        steps.push({ id: group.id, name: group.name, group: true }); continue
+      }
       const records = current.runtimeGroups?.filter(item => item.id === group.id) ?? []
       if (records.length > 1) throw new ModuleSetError('The Octatrack reported more than one copy of its machine package. Reconnect and read it again.')
       const record = records[0], previous = group.variants.find(variant => variant.layout === record?.layout)
@@ -315,7 +320,7 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     }
     const inGroup = (id: string) => members.has(id) && current.runtimeGroups?.some(record => groups.find(group => group.id === record.id)?.variants.find(variant => variant.layout === record.layout)?.members.some(member => member.id === id))
     // Older individual machine inventories do not retain a verified package identity for exact Undo.
-    const removals = changes.remove.filter(id => !inGroup(id) && !byGroup.has(id))
+    const removals = changes.remove.filter(id => !inGroup(id) && !byGroup.has(id) && !(members.has(id) && current.offIds?.includes(id)))
     for (const id of current.moduleIds) if (members.has(id) && !inGroup(id) && target.moduleIds.includes(id)) removals.push(id)
     if (removals.some(id => members.has(id)))
       throw new ModuleSetError('This site can’t identify the exact individual machine package on your Octatrack, so it can’t safely replace it or undo that change.')
@@ -344,15 +349,20 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     }
     if (steps.length > 1 && !(capabilities && capabilities.features & RuntimeFeature.moduleSets)) throw new BaseUpdateRequired()
   }
-  const inventory = (modules: MissingModule[]): Inventory => {
+  /** `off`: the modules switched off on the unit (its OFF list), named as the installed ones are. One the unit also
+   * reports as running is running: the list was read a moment apart. */
+  const inventory = (modules: MissingModule[], off?: MissingModule[]): Inventory => {
     const moduleIds: string[] = [], runtimeGroups: NonNullable<Inventory['runtimeGroups']> = []
+    const named = (item: MissingModule) => { const variant = byGroup.get(item.module)?.variants.find(variant => variant.layout === item.layout)
+      return variant ? variant.members.map(member => member.id) : [BY_RUNTIME_ID.get(item.module) ?? item.module] }
     for (const item of modules) {
-      const group = byGroup.get(item.module), variant = group?.variants.find(variant => variant.layout === item.layout)
+      const group = byGroup.get(item.module)
       if (group) runtimeGroups.push({ id: group.id, layout: item.layout })
-      moduleIds.push(...variant ? variant.members.map(member => member.id) : [BY_RUNTIME_ID.get(item.module) ?? item.module])
+      moduleIds.push(...named(item))
     }
     if (new Set(moduleIds).size !== moduleIds.length) throw new ModuleSetError('The Octatrack’s module list contains overlapping machine packages. Reconnect and read it again.')
-    return { moduleIds, removedStockFx: [], ...runtimeGroups.length ? { runtimeGroups } : {} }
+    const offIds = off && [...new Set(off.flatMap(named))].filter(id => !moduleIds.includes(id))
+    return { moduleIds, removedStockFx: [], ...runtimeGroups.length ? { runtimeGroups } : {}, ...offIds ? { offIds } : {} }
   }
   /** The base layout the set needs, when the connected base runs another (or isn't a published base at all). */
   function requireLayout(target: InventoryTarget, base?: string) {
@@ -424,7 +434,7 @@ export function moduleSetKit(link: OctatrackLink) {
     const modules = await link.inventory()
     // Only a base that doesn't know INVENTORY lands here; couldn't-ask-now rejects with LinkBusyError, which callers retry.
     if (!modules) throw new ModuleSetError('This Octatrack’s base doesn’t list its modules. Install the latest Modwerk base, then try again.')
-    return inventoryFrom(modules)
+    return inventoryFrom(modules, await link.off()) // undefined from a base before PROJ > MODWERK > MODULES
   }
   return { readInventory, prepareUpdate: async (target: InventoryTarget) => {
     const limit = overLimitMessage(target.moduleIds, 'sync')

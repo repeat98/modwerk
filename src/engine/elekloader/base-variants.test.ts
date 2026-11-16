@@ -82,3 +82,22 @@ describe('USB Audio in a module set', () => {
     expect(catalogue.review({ name: 'Bound', moduleIds: [bound.id] }, empty, capable, 'b'.repeat(64)).problem).toBeInstanceOf(BaseUpdateRequired)
   })
 })
+
+describe('a base’s version', () => {
+  it('names the published base in every layout, each version once, and falls back to the identity’s start', async () => {
+    const { baseName, baseVersion, CURRENT_BASE_VERSION } = await import('./base-variants')
+    const versions = (await import('../../../sdk/machines/octatrack/base-versions.json', { with: { type: 'json' } })).default
+    const binding = (await import('../../../sdk/machines/octatrack/base-binding.json', { with: { type: 'json' } })).default
+    const number = (await import('../../../sdk/machines/octatrack/elekloader/base-version.json', { with: { type: 'json' } })).default
+    expect(CURRENT_BASE_VERSION).toBe(number.major + '.' + number.minor) // what the base itself shows: MODWERK BASE 0.7
+    for (const identity of [binding.identity, ...Object.values(binding.variants)]) expect(baseVersion(identity)).toBe(CURRENT_BASE_VERSION)
+    expect(new Set(versions.bases.map(base => base.version)).size).toBe(versions.bases.length)
+    const identities = versions.bases.flatMap(base => base.identities)
+    expect(new Set(identities).size).toBe(identities.length) // one base, one version
+    expect(versions.bases.every(base => /^\d{1,3}\.\d{1,3}$/.test(base.version))).toBe(true)
+    expect(baseName(binding.identity)).toBe(CURRENT_BASE_VERSION)
+    expect(baseVersion('b'.repeat(64))).toBeUndefined()
+    expect(baseName('a6b457a1' + '0'.repeat(56))).toBe('a6b457a1') // a base from before versions
+    expect(baseVersion()).toBeUndefined()
+  })
+})
