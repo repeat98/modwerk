@@ -29,9 +29,10 @@
 // on the release. SAMPLER released with no turn opens the recorder as stock
 // does; after a turn its release is the module's. LFO released with no turn
 // shows the LFO page as stock does (on the release, not the press); after a
-// turn the page stays; on the LFO page itself the key is stock's. During one
-// key's hold the other two do nothing. FUNC + FIX
-// (stock's FIXED VELOCITY), FUNC + LFO, FIX and SAMPLER on the FX track, and
+// turn the page stays. A hold of about half a second (LOOK_TICKS) is a
+// look at the amounts: its release does nothing, as after a turn. On the LFO
+// page itself the key is stock's. During one key's hold the other two do
+// nothing. FUNC + FIX (stock's FIXED VELOCITY), FUNC + LFO, FIX and SAMPLER on the FX track, and
 // a performance or scene pad or a trig that holds stock's locker stay stock.
 //
 // Firmware routines are reached at fixed addresses given for each OS release
@@ -128,10 +129,16 @@ struct hold {
     int held;                       // the press was ours and the key is down
     int turned;                     // an encoder turned during the hold
     int ignored;                    // pressed during another key's hold: its release is ours
+    unsigned since;                 // ev_tick's count at the press
 };
 static struct hold holds[KINDS] = {
-    { KEY_FIX, 0, 0, 0 }, { KEY_SAMPLER, 0, 0, 0 }, { KEY_LFO, 0, 0, 0 },
+    { KEY_FIX, 0, 0, 0, 0 }, { KEY_SAMPLER, 0, 0, 0, 0 }, { KEY_LFO, 0, 0, 0, 0 },
 };
+// A hold of about half a second with no turn is a look at the amounts, not a tap: counted in ev_tick's
+// calls, as stock's UI loop runs them. Not by stock's key repeat: it moves to the last key pressed, so a
+// page key pressed during the hold stopped the count (rytm-emu, 15 Nov 2026).
+#define LOOK_TICKS 10
+static unsigned ticks;              // ev_tick's count
 
 static void *views;
 static char message[28];
@@ -384,6 +391,12 @@ static int lfo_shown(int track)
 static int dep_pending;
 static int pending_knob = -1;           // the knob dep_pending counts, -1 none
 static int dest_knob = -1;              // the knob of the LFO's destination, -1 unknown
+// Set by a knob's encoder event during an LFO hold, cleared by the next locker set, every key
+// event and every tick: a set with it clear came through stock's locker interface from
+// something other than a Rytm knob (MIDI through a module that uses stock's locker, say), whose
+// value is all it has. A knob event that reaches no set (a knob that cannot be locked) leaves
+// it until then, so a non-encoder set in between is taken as the knob's (its step is lost).
+static int encoder_turn;
 static int last_knob = -1;              // the knob of the latest encoder event
 
 // The LFO page's knob accumulator, 0 when the page holder is not found.
@@ -562,9 +575,10 @@ static int locker_get(void *self, int track, int param)
 // the turn, or 0 to make the lock when has said no.
 static void locker_set(void *self, int track, int param, int value)
 {
-    int kind = shown_on(track), logical, slot;
+    int kind = shown_on(track), logical, slot, from_encoder = encoder_turn;
     word_t set;
     (void)self;
+    encoder_turn = 0;                   // one encoder event, one set at most, whatever happens
     if (kind == NONE || !IS_KEY_HELD(holds[kind].key))
         return;                         // a lost release: the tick takes the locker away
     holds[kind].turned = 1;
@@ -579,6 +593,14 @@ static void locker_set(void *self, int track, int param, int value)
         return;
     }
     if (kind == LFO) {
+        if (!from_encoder && lfo_dest(track) == param) {
+            // Not a Rytm knob: the turn is the value's change from what get showed. The box
+            // shows the depth at twice its stored units (lfo_shown).
+            dest_knob = -1;
+            dep_drop();
+            dep_add(track, (value - lfo_shown(track)) / 2);
+            return;
+        }
         lfo_turn(track, param);
         return;
     }
@@ -722,6 +744,7 @@ static void replay_lfo(void *brain, unsigned release_flags)
 
 int quick_velocity_aftertouch_assign_key(void *brain, void *event)
 {
+    encoder_turn = 0;
     int key = *(int *)((char *)event + EV_KEY);
     unsigned flags = *(unsigned *)((char *)event + EV_FLAGS);
     int down = flags & PRESSED, k;
@@ -745,7 +768,7 @@ int quick_velocity_aftertouch_assign_key(void *brain, void *event)
     }
     h = &holds[k];
     if (!down) {
-        int turned = h->turned;
+        int turned = h->turned || ticks - h->since >= LOOK_TICKS;   // a look counts as a turn
         if (h->ignored) {
             h->ignored = 0;
             return 1;
@@ -802,6 +825,7 @@ int quick_velocity_aftertouch_assign_key(void *brain, void *event)
     }
     h->held = 1;
     h->turned = 0;
+    h->since = ticks;
     locker_install(k);
     return k != AT;                     // FIX's and LFO's presses are held back; SAMPLER's does nothing on stock
 }
@@ -813,8 +837,11 @@ int quick_velocity_aftertouch_assign_enc(void *brain, void *event)
 {
     int k;
     (void)brain;
-    if (holds[LFO].held)
+    if (holds[LFO].held) {
+        int knob = *(int *)((char *)event + ENC_KNOB);
+        encoder_turn = knob >= 0 && knob < KNOBS;   // LEVEL never reaches a locker set
         dep_turn(event);
+    }
     for (k = VEL; k < KINDS; k++)
         if (holds[k].held)
             holds[k].turned = 1;
@@ -983,6 +1010,8 @@ void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
 // one, not dozens.
 void quick_velocity_aftertouch_assign_tick(void *ctrl)
 {
+    ticks++;
+    encoder_turn = 0;
     word_t string;
     char allocator;
     struct { void *object; void *counts; } shared;

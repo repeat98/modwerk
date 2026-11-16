@@ -30,6 +30,8 @@ describe('loading a module set from the card', () => {
     expect(dialog.querySelector('h2')?.textContent).toBe('Put MODWERK0.SET on the card')
     expect([...dialog.querySelectorAll('.card-set-plan li')]).toHaveLength(3)
     expect(dialog.textContent).toContain('Top folder, replacing the one there'); expect(dialog.textContent).toContain('Needs the Modwerk base d891acb3 (USB Audio off)')
+    // The base file's own name, so a member who installs from the card can match the two (the .bin's name carries the same eight digits).
+    expect(dialog.textContent).toContain('Modwerk-octatrack-base-d891acb3.bin installed with OS UPGRADE'); expect(dialog.textContent).toContain('named exactly MODWERK0.SET')
     await act(async () => { [...dialog.querySelectorAll('button')].find(item => item.textContent === 'Done')!.click() })
     expect(container.querySelector('dialog')).toBeNull()
   })
