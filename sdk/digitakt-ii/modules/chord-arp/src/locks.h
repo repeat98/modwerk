@@ -22,6 +22,7 @@ uint32_t chord_arp_lock_mask(unsigned int page, unsigned int knob);
 void chord_arp_locks_prune(unsigned int pattern,
                            int (*active)(unsigned int, unsigned int, unsigned int));
 void chord_arp_locks_reset(void);
+unsigned int chord_arp_locks_available(void);
 unsigned int chord_arp_locks_snapshot(struct chord_arp_saved_lock *saved);
 
 #endif

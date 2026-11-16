@@ -115,7 +115,8 @@ static int encoder_step(unsigned int knob, int32_t raw)
 }
 volatile uint32_t chord_arp_project_generation;
 static unsigned int step_mode, step_page, lock_full;
-static int held_step = -1, lock_pattern;
+static uint16_t held_trigs;
+static int lock_pattern;
 
 /* Values are stored as offsets from each control minimum, least-significant bit first. */
 enum { PACKED_SETTINGS_BYTES = 16 };
@@ -276,7 +277,7 @@ static unsigned int stock_audio_track(void)
 
 static int step_key_held(void)
 {
-    return held_step >= 0 && (fw_key_down(TRIG_1 + held_step % 16) & 1);
+    return held_trigs != 0;
 }
 
 int chord_arp_note_trig(unsigned int pattern, unsigned int track, unsigned int step)
@@ -289,18 +290,86 @@ int chord_arp_note_trig(unsigned int pattern, unsigned int track, unsigned int s
     return (*flags & (STOCK_NOTE | STOCK_TRIGLESS)) == STOCK_NOTE;
 }
 
-static int editing_step(void)
+static uint16_t active_held_trigs(void)
 {
-    return step_mode && step_key_held() && lock_pattern == core_kit_on() &&
-        chord_arp_note_trig((unsigned int)lock_pattern, selected_track, (unsigned int)held_step);
+    if (!step_mode || lock_pattern != core_kit_on()) {
+        return 0;
+    }
+    uint16_t active = 0;
+    for (unsigned int trig = 0; trig < 16; ++trig) {
+        if ((held_trigs & (1u << trig)) && (fw_key_down(TRIG_1 + trig) & 1) &&
+            chord_arp_note_trig((unsigned int)lock_pattern, selected_track, step_page * 16 + trig)) {
+            active |= (uint16_t)(1u << trig);
+        }
+    }
+    return active;
+}
+
+static unsigned int first_step(uint16_t trigs)
+{
+    unsigned int trig = 0;
+    while (!(trigs & (1u << trig))) {
+        ++trig;
+    }
+    return step_page * 16 + trig;
 }
 
 static uint32_t selected_step_settings(struct chord_arp_settings *settings)
 {
-    return editing_step() ? chord_arp_lock_read((unsigned int)lock_pattern, selected_track,
-                                               (unsigned int)held_step, settings) : 0;
+    const uint16_t active = active_held_trigs();
+    return active ? chord_arp_lock_read((unsigned int)lock_pattern, selected_track,
+                                      first_step(active), settings) : 0;
 }
 
+static void clear_held_locks(uint32_t controls)
+{
+    const uint16_t active = active_held_trigs();
+    for (unsigned int trig = 0; trig < 16; ++trig) {
+        if (active & (1u << trig)) {
+            chord_arp_lock_clear((unsigned int)lock_pattern, selected_track,
+                                 step_page * 16 + trig, controls);
+        }
+    }
+}
+static void set_held_locks(uint16_t active, unsigned int knob, int next)
+{
+    const unsigned int pattern = (unsigned int)lock_pattern;
+    struct chord_arp_settings settings;
+    unsigned int needed = 0;
+    for (unsigned int trig = 0; trig < 16; ++trig) {
+        if ((active & (1u << trig)) &&
+            !chord_arp_lock_read(pattern, selected_track, step_page * 16 + trig, &settings)) {
+            ++needed;
+        }
+    }
+    if (needed > chord_arp_locks_available()) {
+        lock_full = 1;
+        return;
+    }
+    lock_full = 0;
+    for (unsigned int trig = 0; trig < 16; ++trig) {
+        if (!(active & (1u << trig))) {
+            continue;
+        }
+        const unsigned int step = step_page * 16 + trig;
+        if (!chord_arp_lock_read(pattern, selected_track, step, &settings)) {
+            fw_memcpy(&settings, (const void *)&chord_arp_tracks[selected_track], sizeof settings);
+        }
+        const int8_t (*values)[8] = settings.values;
+        const int low = values[ARP][2], high = values[ARP][3];
+        int value = next;
+        if (page == ARP && knob == 2 && value > high) {
+            value = high;
+        } else if (page == ARP && knob == 3 && value < low) {
+            value = low;
+        } else if (page == RHYTHM && knob == 1 && value > values[RHYTHM][0]) {
+            value = values[RHYTHM][0];
+        } else if (page == RHYTHM && knob == 3 && value > chord_arp_repeat_max(values[ARP][5])) {
+            value = chord_arp_repeat_max(values[ARP][5]);
+        }
+        chord_arp_lock_set(pattern, selected_track, step, page, knob, (int8_t)value, low, high);
+    }
+}
 extern void core_additem(void *menu, const void *const row[4]);
 extern void chord_arp_row_label(void);
 
@@ -351,7 +420,7 @@ static void select_arp(void **payload)
         stock_encoders_initialized = 1;
     }
     step_mode = step_page = lock_full = 0;
-    held_step = -1;
+    held_trigs = 0;
     edit_track(stock_audio_track());
     reset_encoders();
     page = CHORD;
@@ -398,11 +467,19 @@ void chord_arp_tick(uint8_t *controller)
         chord_arp_project_generation = generation;
     }
     chord_arp_locks_prune((unsigned int)core_kit_on(), chord_arp_note_trig);
-    if (held_step >= 0 && !step_key_held()) {
-        held_step = -1;
-        reset_encoders();
-        lock_full = 0;
-        dirty = 1;
+    if (held_trigs) {
+        uint16_t down = 0;
+        for (unsigned int trig = 0; trig < 16; ++trig) {
+            if ((held_trigs & (1u << trig)) && (fw_key_down(TRIG_1 + trig) & 1)) {
+                down |= (uint16_t)(1u << trig);
+            }
+        }
+        if (down != held_trigs) {
+            held_trigs = down;
+            reset_encoders();
+            lock_full = 0;
+            dirty = 1;
+        }
     }
     if (menu_view && !visible(controller)) {
         menu_view = 0;
@@ -431,16 +508,15 @@ int chord_arp_key(const uint8_t *brain, const uint32_t *event)
     if (*keys & bit) {
         if (flags & KEY_RELEASE) {
             *keys &= ~bit;
-            if (key >= TRIG_1 && key <= TRIG_16 && held_step >= 0 &&
-                key == TRIG_1 + (unsigned int)held_step % 16) {
-                held_step = -1;
+            if (trig) {
+                held_trigs &= (uint16_t)~(1u << (key - TRIG_1));
                 reset_encoders();
                 lock_full = 0;
                 dirty = 1;
             }
             return 1;
         }
-        if (trig && held_step < 0 && (flags & KEY_PRESS)) {
+        if (trig && !(held_trigs & (1u << (key - TRIG_1))) && (flags & KEY_PRESS)) {
             *keys &= ~bit;
         } else
         return 1;
@@ -451,30 +527,28 @@ int chord_arp_key(const uint8_t *brain, const uint32_t *event)
     const int func = fw_key_down(FUNC) & 1;
     if (key == PAGE_KEY && func) {
         step_mode = !step_mode;
-        held_step = -1;
+        held_trigs = 0;
         reset_encoders();
         lock_full = 0;
     } else if (step_mode && key == PAGE_KEY) {
-        if (held_step < 0) {
+        if (!held_trigs) {
             step_page = (step_page + 1) % 8;
         }
     } else if (step_mode && trig) {
-        if (held_step < 0) {
+        if (!held_trigs) {
             lock_pattern = core_kit_on();
-            held_step = (int)(step_page * 16 + key - TRIG_1);
-            reset_encoders();
         }
+        held_trigs |= (uint16_t)(1u << (key - TRIG_1));
+        reset_encoders();
+        lock_full = 0;
     } else if (key == RECORD && !func) {
         step_mode = lock_full = 0;
-        held_step = -1;
+        held_trigs = 0;
         reset_encoders();
         dirty = 1;
         return 0;
     } else if (key == NO && step_mode && step_key_held()) {
-        if (editing_step()) {
-            chord_arp_lock_clear((unsigned int)lock_pattern, selected_track,
-                                 (unsigned int)held_step, UINT32_MAX);
-        }
+        clear_held_locks(UINT32_MAX);
         lock_full = 0;
     } else
     if (key == NO) {
@@ -488,11 +562,7 @@ int chord_arp_key(const uint8_t *brain, const uint32_t *event)
     } else if (key >= PUSH_A && key <= PUSH_H) {
         reset_encoder(key - PUSH_A);
         if (step_mode && step_key_held()) {
-            if (editing_step()) {
-                const unsigned int knob = key - PUSH_A;
-                chord_arp_lock_clear((unsigned int)lock_pattern, selected_track, (unsigned int)held_step,
-                                     chord_arp_lock_mask(page, knob));
-            }
+            clear_held_locks(chord_arp_lock_mask(page, key - PUSH_A));
             lock_full = 0;
         } else
         if (page == CHORD && key == PUSH_F) {
@@ -527,7 +597,8 @@ int chord_arp_encoder(const uint8_t *brain, const int32_t *event)
     }
     volatile struct chord_arp_settings *const settings = &chord_arp_tracks[selected_track];
     const volatile int8_t (*values)[8] = settings->values;
-    const int step_edit = editing_step();
+    const uint16_t active = active_held_trigs();
+    const int step_edit = active != 0;
     if ((step_mode && step_key_held() && !step_edit) ||
         (step_edit && ((page == ARP && knob >= 6) || (page == GROOVE && knob >= 3)))) {
         return 1;
@@ -560,8 +631,7 @@ int chord_arp_encoder(const uint8_t *brain, const int32_t *event)
         next = 60;
     }
     if (step_edit) {
-        lock_full = !chord_arp_lock_set((unsigned int)lock_pattern, selected_track, (unsigned int)held_step,
-                                       page, knob, (int8_t)next, values[ARP][2], values[ARP][3]);
+        set_held_locks(active, knob, next);
         dirty = 1;
         return 1;
     }
@@ -668,10 +738,15 @@ void mod_draw(void *bitmap, const uint8_t *controller)
     fw_fillrect(bitmap, 89, 53, 127, 63, RECT_INVERT);
     fw_fillrect(bitmap, 0, 52, 127, 52, 1);
     fw_textf(bitmap, fw_font_narrow, 2, 45, 0, "%s", page_names[page]);
+    const uint16_t active = active_held_trigs();
     if (lock_full) {
         fw_textf(bitmap, fw_font_narrow, 81, 45, TEXT_CENTER, "LOCKS FULL");
-    } else if (editing_step()) {
-        fw_textf(bitmap, fw_font_narrow, 86, 45, TEXT_CENTER, "STEP %03d", held_step + 1);
+    } else if (active) {
+        if (active & (active - 1u)) {
+            fw_textf(bitmap, fw_font_narrow, 85, 45, TEXT_CENTER, "MULTI TRIG");
+        } else {
+            fw_textf(bitmap, fw_font_narrow, 86, 45, TEXT_CENTER, "STEP %03d", first_step(active) + 1);
+        }
     } else if (step_mode && step_key_held()) {
         fw_textf(bitmap, fw_font_narrow, 86, 45, TEXT_CENTER, "NO NOTE TRIG");
     } else if (step_mode) {

@@ -123,6 +123,15 @@ void chord_arp_locks_prune(unsigned int pattern,
     }
 }
 
+unsigned int chord_arp_locks_available(void)
+{
+    unsigned int available = 0;
+    for (unsigned int index = 0; index < LOCKS; ++index) {
+        available += !locks[index].mask;
+    }
+    return available;
+}
+
 void chord_arp_locks_reset(void)
 {
     for (unsigned int pattern = 0; pattern < PATTERNS; ++pattern) {
