@@ -2,19 +2,19 @@
 
 ## Status
 
-- **On a unit (reported by the author, crisp909, 2026-11-14):** the package `mute-latch-0.1.0-experimental-os1.17.elemod` built from commit 446dbf76 (sha256 `aa9dd675077e55759fe1b5ad97e234795119939bb6cd452ce28e5f59b6cda9bc`, pinned toolchain, GCC 16.2.0) worked as intended, see [Submitted package on a unit](#submitted-package-on-a-unit-reported-by-the-author-crisp909). Reports are not measurements made here.
-- **The source in this pull request** differs from that package in three places: STOP removes the "MUTES ARMED" message at once, a pass is counted once per wrap of the step position (a pattern of two steps keeps working), and when the steps are too short for the second tick of step 1 the switch is made on the first position seen after it. Its package (`mute-latch-0.1.0-experimental-os1.17.elemod`, sha256 `2e47115e6821153430e5ae56479863fce411467cd640a69a93aa8d6f5c2bda08`, built by the author from commit 155a17577 in the pinned toolchain image, GCC 16.2.0) has not been run on a unit yet; the result will be recorded in [Review changes on a unit](#review-changes-on-a-unit) before this pull request is ready.
+- **On a unit, current package (reported by the author, crisp909, 2026-11-16):** `mute-latch-0.1.0-experimental-os1.17.elemod`, sha256 `2e47115e6821153430e5ae56479863fce411467cd640a69a93aa8d6f5c2bda08`, built by the author from commit 155a17577 in the pinned toolchain image (GCC 16.2.0). It differs from the first package in three places: STOP removes the "MUTES ARMED" message at once, a pass is counted once per wrap of the step position, and when the steps are too short for the second tick of step 1 the switch is made on the first position seen after it. See [Review changes on a unit](#review-changes-on-a-unit).
+- **On a unit, first package (reported by the author, 2026-11-14):** `aa9dd675077e55759fe1b5ad97e234795119939bb6cd452ce28e5f59b6cda9bc` (commit 446dbf76) worked as intended, see [First package on a unit](#first-package-on-a-unit-reported-by-the-author-crisp909). Reports are not measurements made here.
 - Everything under "Emulator evidence" was seen in digikit's headless ColdFire-only `panel_drive` (no DSP) with the SSI clock at 96 kHz, a one-sample card made with digikit's `plusdrive`, and a 128-step pattern. It approximates the instrument and is not hardware evidence.
 
 ## Not tested
 
-- On a unit: the package built from the source in this pull request (see above); leaving Mute Mode while armed; STOP while armed; patterns of one or two steps; tempos and track speeds with steps shorter than a UI tick.
+- On a unit: leaving Mute Mode while armed; patterns of one or two steps; track speed 2x or any setting that makes the steps shorter than a UI tick (only 140 and 200 BPM at 128 steps were run, which is why the short-step fallback is not shown to be exercised); Scale per track.
 - Tempos of the 2026-11-14 report were not recorded, and CPU load and memory were not measured.
-- Scale per track, a pattern change while tracks are parked, a second PREP MUTES session started while tracks are still parked, holding TRIG keys after PERFORM, a power cycle with something armed.
+- A pattern change while tracks are parked, a second PREP MUTES session started while tracks are still parked, holding TRIG keys after PERFORM, a power cycle with something armed.
 - Whether a track comes in exactly on a kick at step 1 at every tempo; the report covers several tempos at 128 steps.
 - The stock flows with and without the module beyond those listed below; DSP-coupled emulation.
 
-## Submitted package on a unit (reported by the author, crisp909)
+## First package on a unit (reported by the author, crisp909)
 
 Package `mute-latch-0.1.0-experimental-os1.17.elemod`, sha256 `aa9dd675077e55759fe1b5ad97e234795119939bb6cd452ce28e5f59b6cda9bc`, built by the author in the pinned toolchain image (GCC 16.2.0) from commit 446dbf76, linked with core 1.0 by the Elekloader builder for OS 1.17. Tested on a Digitakt II on 2026-11-14 and reported as working, in these words: "tested what you asked and it works". The test asked for: a 128-step pattern, a short kick on the muted track at steps 126 to 128 and 1, several tempos and repetitions, 2 and 3 PERFORM presses (the passes counted down and the switch came after that many), and choosing the same tracks again to cancel. This is a report: the number of repetitions and the tempos were not recorded, and CPU load was not read.
 
@@ -29,11 +29,19 @@ Digitakt II, OS 1.17, 128-step pattern (all tracks the same length, per pattern,
 | Second step (counter at 2) | Step 1 not audible. |
 | Second tick of the first step (`ml-t2`) | Steps 126 to 128 stay as they were, step 1 plays switched. Checked at several tempos (values not recorded). |
 
-The step counter runs a step ahead of the sound, and the mute is judged shortly after the counter moves on, so the window for a switch between the last and the first step is about one step wide. The submitted package switches on the second tick of the first step, or on the first tick of the second step if the steps are shorter.
+The step counter runs a step ahead of the sound, and the mute is judged shortly after the counter moves on, so the window for a switch between the last and the first step is about one step wide. The first package switches on the second tick of the first step, or on the first tick of the second step if the steps are shorter.
 
 ## Review changes on a unit
 
-Package sha256 `2e47115e6821153430e5ae56479863fce411467cd640a69a93aa8d6f5c2bda08` (recipe `1.17.json` sha256 `0e26cfe5b25d0d3c02fc545a097c1e287a6680e3dee50f9215687a9ece0e5677`). To be filled from the author's run of it. Planned checks: STOP while armed (the message goes at once); the normal case (128 steps, 140 BPM, kicks on steps 126 to 128 and 1: the switch lands between step 128 and step 1, as in the table above); a fast tempo or 2x track speed; a pattern of two steps. Until then each of these is "not tested".
+Package `mute-latch-0.1.0-experimental-os1.17.elemod`, sha256 `2e47115e6821153430e5ae56479863fce411467cd640a69a93aa8d6f5c2bda08` (recipe `1.17.json` sha256 `0e26cfe5b25d0d3c02fc545a097c1e287a6680e3dee50f9215687a9ece0e5677`), built by the author from commit 155a17577 in the pinned toolchain image (GCC 16.2.0), linked with core 1.0, run on a Digitakt II, OS 1.17, on 2026-11-16. Reported by the author, not measured here:
+
+| Check | Reported result |
+| --- | --- |
+| STOP while armed | The "MUTES ARMED" message goes at once. |
+| 128-step pattern, kicks on steps 126 to 128 and 1, 140 BPM and 200 BPM | The switch lands between step 128 and step 1, as with the first package. The change broke nothing the author checked. |
+| Fast tempo | Tried at 200 BPM only; reported fine. |
+
+Not run: patterns of one or two steps, track speed 2x, leaving Mute Mode while armed, Scale per track. Counts of repetitions and CPU load were not recorded.
 
 ## Emulator evidence
 

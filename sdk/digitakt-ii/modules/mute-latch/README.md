@@ -1,6 +1,6 @@
 # Mute Latch — Digitakt II
 
-A Digitakt II mod by @crisp909. Version 0.1.0-experimental, for OS 1.17 with Elekloader core 1.0. The author reported an earlier package of this module (commit 446dbf76) working on a Digitakt II; the current source has small changes after review that are still to be run on a unit (see [TESTING.md](TESTING.md) for which build each result belongs to). Screenshots are emulator captures.
+A Digitakt II mod by @crisp909. Version 0.1.0-experimental, for OS 1.17 with Elekloader core 1.0. The author reported the package of this source working on a Digitakt II (see [TESTING.md](TESTING.md) for what was run and what was not). Screenshots are emulator captures.
 
 ## Overview
 
@@ -48,7 +48,7 @@ Armed tracks toggle their mute state, as PREP MUTES does: a track that is muted 
 
 - Digitakt II, OS 1.17 only.
 - Works while the sequencer plays. Stopped, PERFORM and PREP MUTES keep their stock behaviour. With nothing installed or nothing chosen, nothing changes: there is no setting, and removing the module restores stock behaviour exactly.
-- The step counter the module reads runs a step ahead of the sound, and a step's mute is judged a moment after the counter moves on. The module therefore switches on the second UI tick (the core ticks at about 30 Hz) of the pattern's first step, or, when the steps are shorter than that, on the first position it sees after the first step. On a unit (author's report of the submitted package: one kick per step, several tempos whose values were not recorded, 128 steps) the last step stayed muted or unmuted as before and the first step played switched. It is not sample-accurate: it rests on a tick landing in a window of about one step, and a very fast tempo or a late tick could move it by a step. A sequencer hook in the base would make it exact.
+- The step counter the module reads runs a step ahead of the sound, and a step's mute is judged a moment after the counter moves on. The module therefore switches on the second UI tick (the core ticks at about 30 Hz) of the pattern's first step, or, when the steps are shorter than that, on the first position it sees after the first step. On a unit (author's reports: one kick per step, 128 steps, an earlier package at several tempos whose values were not recorded, this package at 140 and 200 BPM) the last step stayed muted or unmuted as before and the first step played switched. It is not sample-accurate: it rests on a tick landing in a window of about one step, and a very fast tempo or a late tick could move it by a step. A sequencer hook in the base would make it exact.
 - Very short steps (2x track speed at a high tempo): the first step can pass between two ticks. The switch is then made on the first position seen after it, a step late at most, not a whole pass late. Not tested on a unit.
 - A pattern of two steps counts one pass per wrap and works. A pattern of one step never shows a wrap in the step position, so it is counted once: the first armed choice switches, and anything armed after that waits until STOP. Not tested on a unit.
 - With Scale per track, the longest track's last step is taken as the pattern's end.
@@ -74,7 +74,7 @@ These locations were read from the OS 1.17 image with a static disassembler and 
 
 ## Tests and measurements
 
-The Modwerk evidence tier is `author-hardware`: the author reports an earlier package of this module working on a Digitakt II (an informal report, no owner verification); the build of the current source is still to be run on a unit. [TESTING.md](TESTING.md) lists what was and was not checked. Memory is not measured; the load is read from the code, not measured.
+The Modwerk evidence tier is `author-hardware`: the author reports this package working on a Digitakt II (an informal report, no owner verification). [TESTING.md](TESTING.md) lists what was and was not checked. Memory is not measured; the load is read from the code, not measured.
 
 ## Authorship and licences
 

@@ -98,21 +98,20 @@
     "hardware": {
       "model": "Digitakt II",
       "release": "1.17",
-      "testedOn": "2026-11-14",
+      "testedOn": "2026-11-16",
       "tester": "crisp909",
       "durationMinutes": null,
-      "summary": "Package mute-latch-0.1.0-experimental-os1.17.elemod (sha256 aa9dd675..., pinned toolchain, GCC 16.2.0) with core 1.0, from the author's report that it works: with kicks on the last steps and step 1 of a 128-step pattern at several tempos the switch landed between the last step and step 1; 2 and 3 PERFORM presses waited that many passes; choosing the same tracks again cancelled.",
+      "summary": "Package mute-latch-0.1.0-experimental-os1.17.elemod (sha256 2e47115e..., pinned toolchain, GCC 16.2.0) with core 1.0, from the author's report: STOP while armed removed the MUTES ARMED message at once, and with kicks on the last steps and step 1 of a 128-step pattern at 140 and 200 BPM the switch landed between step 128 and step 1. An earlier package (aa9dd675...) was reported working on 2026-11-14: 2 and 3 PERFORM presses waited that many passes; choosing the same tracks again cancelled.",
       "limitations": [
         "Informal report: no count of repetitions, tempos or CPU load was given.",
-        "The report is for the earlier package; the build of the current source (STOP drops the message, pass counted per wrap) is not yet run on a unit.",
-        "Not tested: leaving Mute Mode or STOP while armed, a pattern change while armed, shorter patterns, Scale per track, a power cycle with something armed."
+        "Not tested: leaving Mute Mode while armed, patterns of one or two steps, track speed 2x, a pattern change while armed, Scale per track, a power cycle with something armed."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "An earlier package (commit 446dbf76) was reported working on a Digitakt II by the author; the build of the current source is still to be run on a unit. See TESTING.md.",
+    "summary": "The package was reported working on a Digitakt II by the author on 2026-11-16 (STOP while armed, 128 steps at 140 and 200 BPM); an earlier package on 2026-11-14. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
