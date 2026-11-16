@@ -149,7 +149,8 @@ jobs:
       - name: Run the SDK suite with the pinned ColdFire tools and dsp_asm, without network or firmware
         run: |
           image=$(docker image inspect modwerk-source-tools --format '{{.Id}}')
-          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges \
+          # test_ui_capture's DSP capture needs 128 MiB free in /dev/shm; Docker gives 64.
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --shm-size 256m \
             --user "$(id -u):$(id -g)" --env HOME=/tmp --env CI --env GITHUB_ACTIONS --env MODWERK_REQUIRE_TOOLCHAIN=1 \
             --env ELEKLOADER_DSP_ASM=/opt/toolchain/vendor/dsp56300/build/source/dsp_host/dsp_asm \
             --mount "type=bind,source=$GITHUB_WORKSPACE,target=/source" --workdir /source \
