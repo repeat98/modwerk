@@ -206,8 +206,8 @@ not isolated: verify each held-row transition and stock modifier release, and st
   at once; playing, it waits for the pattern's end.
 - **Samples.** FUNC+SRC opens SRC SETUP on the machine list; RIGHT enters the slot list; YES on a slot
   assigns it; YES on an empty slot opens the card browser (LIVE/AUDIO). Parts store each track's slot.
-- **Modwerk's pages.** PROJ's fifth category, MODWERK (from S55, 12 October 2026), lists LOAD (the status dialog,
-  also CUE+PROJ from anywhere), MODULE LOAD, MISSING, SELF TEST and, on a base with it, MODULES (every installed
+- **Modwerk's pages.** PROJ's fifth category, MODWERK (from S55, 12 October 2026), lists STATUS (the status dialog,
+  also CUE+PROJ from anywhere), MODULE COST, MISSING, SELF TEST and, on a base with it, MODULES (every installed
   module, ON or OFF: UP and DOWN move, YES switches the one under the cursor at once, stopped, and the last line says
   why when it can't); NO closes each. The list keeps its cursor from
   last time, like stock's, so go UP to its top before counting rows down. On older bases these were SYSTEM >

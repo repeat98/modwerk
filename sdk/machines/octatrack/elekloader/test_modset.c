@@ -372,6 +372,16 @@ int main(void)
     /* This start runs none of the card's set: a switch now would save the one module over all of them, so it waits. */
     written = writes; CHECK(modwerk_modset_switch(0x202u, 1)); modwerk_modset_service();
     CHECK(modwerk_modset_switch_result == MODSET_SWITCH_PARTIAL && writes == written && used() == HEADER && off_bytes == 512);
+    CHECK(modwerk_modset_is_off(0x202u) && !modwerk_modset_is_off(0x201u) && !modwerk_modset_is_off(0));
+    off_moving = 1; CHECK(!modwerk_modset_is_off(0x202u)); off_moving = 2; /* while the shelf moves: not sure, so not off */
+    /* Another base's set, a damaged file or a module the restore refused: a restart comes back the same, so a sync. */
+    for (uint32_t r = FOREIGN; r <= REFUSED; ++r) {
+        modwerk_modset_result = r; CHECK(modwerk_modset_switch(0x202u, 1)); modwerk_modset_service();
+        CHECK(modwerk_modset_switch_result == MODSET_SWITCH_SYNC && writes == written && off_bytes == 512);
+    }
+    modwerk_modset_result = HELD; CHECK(modwerk_modset_switch(0x202u, 1)); modwerk_modset_service();
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCH_PARTIAL);
+    modwerk_modset_result = SKIPPED;
     card_shelf[slot][OFF_HEADER + OFF_RECORD + 9] ^= 1;
     boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 2 && !off_bytes); /* the older file: both on */
     if (failures) { fprintf(stderr, "%u module set checks failed\n", failures); return 1; }

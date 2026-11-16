@@ -50,6 +50,34 @@
       "handler": "int f(brain, event, track); none taken opens the Mod Menu"
     }
   ],
+  "proposed": [
+    {
+      "name": "ev_note_locks",
+      "status": "proposed, not provided by any core; modules cannot subscribe until it moves to events",
+      "when": "the render takes a note event from its queue, after the voice is set up and before the event's parameter locks are applied, once per note event, for every source (sequencer, MIDI, arpeggiator); runs in the render on the main CPU",
+      "handler": "void f(int track, void *event); the event's p-lock list pointer (event+0x38) may be replaced, by a list the handler keeps for as long as the voice lives; event+0 and the event's flags say where it came from",
+      "order": "ascending order; every handler sees the pointer the one before left",
+      "sites": [
+        {
+          "os": "1.44",
+          "address": "0x4009eae0",
+          "instructions": 2,
+          "length": 8,
+          "sha256": "a70b8c710eea0ba845f9d4fb32e6237d18340205c30c54e4c237c61521991d6b",
+          "state": "candidate read from the OS 1.44 image (main image SHA-256 fce648a9…168e4, the one core-dn1-2.0a-os1.44 targets) and its disassembly; run in digiemu on the sequencer path only; not run on a unit"
+        },
+        {
+          "os": "1.43",
+          "state": "not located"
+        }
+      ],
+      "open": [
+        "What a MIDI note's event looks like here (its kind, flags and lock list pointer) is not observed: no MIDI note has been seen to reach the render queue in digiemu yet.",
+        "Whether a trigless trig reaches this site is not observed. If it does not, a second hook at the sequencer's producer of note events is needed, and is proposed on its own when known.",
+        "A MIDI note-on with no locks may skip the site: the stock code tests the list pointer after it. The hook sits before that test."
+      ]
+    }
+  ],
   "tables": [
     {
       "name": "core_params",

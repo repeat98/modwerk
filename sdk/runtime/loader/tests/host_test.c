@@ -23,7 +23,8 @@ int modwerk_machine_stopped(void) { return stopped; }
 static unsigned uncached_calls, pool_flushes, pool_flushes_invalidated;
 static uint32_t pushed_at, pushed_bytes;
 static int push_pending;
-static int in_pool(uint32_t a, uint32_t n) { uint32_t lo = (uint32_t)(uintptr_t)pool; return a >= lo && n <= RUNTIME_POOL_BYTES - (a - lo); }
+/* The offset modulo 2^32: a 64-bit host can place the pool across a 4 GB line, where its 32-bit addresses wrap. */
+static int in_pool(uint32_t a, uint32_t n) { uint32_t at = a - (uint32_t)(uintptr_t)pool; return at <= RUNTIME_POOL_BYTES && n <= RUNTIME_POOL_BYTES - at; }
 void *modwerk_machine_uncached(void *p) { ++uncached_calls; return p; }
 void modwerk_machine_invalidate_code(void) { if (push_pending) push_pending = 0, ++pool_flushes_invalidated; }
 int modwerk_machine_patchable(uint32_t a, uint32_t n) { return a >= STOCK + 16u && n <= STOCK + sizeof stock - a; }
@@ -303,7 +304,7 @@ int main(void)
     CHECK(!retiring(&alias_group, 0x40010007u) && !retiring(&alias_group, 0x48010040u));
 
     /* Refusals before any memory is taken. */
-    for (uint32_t bad = 0; bad < 14; ++bad) {
+    for (uint32_t bad = 0; bad < 15; ++bad) {
         begin(8, 4, 2, &four, 1, 1, 0xa1); site(STOCK + 32, 6);
         if (bad == 0) p[0] = 'X';
         if (bad == 1) p[5] = 2;                                        /* ABI 2 */
@@ -319,6 +320,7 @@ int main(void)
         if (bad == 11) { begin(8, 4, 2, twice, 2, 0, 0); }              /* the same word twice */
         if (bad == 12) { begin(8, 4, 2, 0, 0, 1, 0); site(STOCK + 32, 6); emit(0); } /* trailing bytes */
         if (bad == 13) n = 71u;
+        if (bad == 14) { begin(8, RUNTIME_MODULE_BYTES - 7, 0, 0, 0, 0, 0); }  /* image and bss past the module limit */
         CHECK(!b->prepare(0, p, n) && modwerk_runtime_free(0) == RUNTIME_POOL_BYTES && modwerk_runtime_refusal() == RUNTIME_MALFORMED);
     }
     CHECK(!masked && !locked && memcmp(stock, original, sizeof stock) == 0);
@@ -1042,6 +1044,14 @@ int main(void)
     }
     CHECK(modwerk_runtime_active()==2 && live[0]==baseline0 && live[1]==baseline1);
     CHECK(modwerk_runtime_free(0)==baseline_free && !memcmp(stock,baseline_stock,sizeof stock));
+    /* Bss past the image limit, within RUNTIME_MODULE_BYTES, is admitted where the pool has room; removal returns it. */
+    id=117;
+    begin(8,RUNTIME_IMAGE_BYTES,0,0,0,0,0);
+    CHECK(b->enter(0) && b->prepare(0,p,n) && b->publish(0)==MU_APPLIED && b->retire(0) && b->leave(0));
+    CHECK(modwerk_runtime_active()==3 && modwerk_runtime_free(0)<=baseline_free-RUNTIME_IMAGE_BYTES);
+    begin(0,0,RUNTIME_NONE,0,0,0,0);
+    CHECK(b->enter(0) && b->prepare(0,p,n) && b->publish(0)==MU_APPLIED && b->retire(0) && b->leave(0));
+    CHECK(modwerk_runtime_active()==2 && modwerk_runtime_free(0)==baseline_free);
 #ifdef MODWERK_RUNTIME_SETS
     set_checks();
 #endif

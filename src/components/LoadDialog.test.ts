@@ -35,12 +35,24 @@ beforeEach(async () => {
   link = { getState: () => state, subscribe: () => () => {}, start: () => () => {}, update: vi.fn(async () => {}), health: async () => undefined } as unknown as OctatrackLink
 })
 afterEach(async () => { await act(() => root.unmount()); container.remove(); stop(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
-async function open(set: ReturnType<typeof newConfiguration>, session: Session = emptySession, onEdit = vi.fn(), putBack = false) {
+async function open(set: ReturnType<typeof newConfiguration>, session: Session = emptySession, onEdit = vi.fn(), putBack = false, comesBackOn: string[] = []) {
   const prepareUpdate = vi.fn(async () => ({ name: set.name, changes: [] }))
   await act(() => root.render(createElement(CommunityContext.Provider, { value: { session, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } },
-    createElement(LoadDialog, { link, set, inventory, putBack, prepareUpdate, onInstallBase() {}, onClose() {}, onEdit, onReport() {} }))))
+    createElement(LoadDialog, { link, set, inventory, putBack, comesBackOn, prepareUpdate, onInstallBase() {}, onClose() {}, onEdit, onReport() {} }))))
   return { prepareUpdate, onEdit }
 }
+
+describe('putting modules back after a base update', () => {
+  it('names the modules that were switched off, since they come back on', async () => {
+    review.mockImplementation(target => ({ changes: { ...noChanges, add: target.moduleIds }, updates: [], needsSync: true, problem: undefined }))
+    await open(newConfiguration('From my Octatrack', ['everb', 'tapeecho']), emptySession, vi.fn(), true, ['tapeecho'])
+    expect(container.textContent).toContain('started without your modules')
+    expect(container.textContent).toMatch(/Tape ?Echo was switched off on your Octatrack and comes back on\. To switch it off again, use PROJECT › MODWERK › MODULES after the sync\./i)
+    await act(() => root.unmount()); root = createRoot(container)
+    await open(newConfiguration('From my Octatrack', ['everb']), emptySession, vi.fn(), true)
+    expect(container.textContent).not.toContain('switched off')
+  })
+})
 
 describe('syncing a set over the module limit', () => {
   it('opens a saved set with more modules, says how many to remove, and syncs once trimmed', async () => {

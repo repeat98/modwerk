@@ -29,7 +29,7 @@ export const TOPIC_KINDS = [...CLAIM_KINDS, 'machine', 'site'] as const
 export type TopicKind = typeof TOPIC_KINDS[number]
 export const MESSAGE_KINDS = ['question', 'finding', 'wanted'] as const
 export type MessageKind = typeof MESSAGE_KINDS[number]
-export const MESSAGE_LIMIT = 500, QUESTION_DAYS = 30, FINDING_DAYS = 90, OPEN_THREADS = 20, REPLY_LIMIT = 50, ACTIVITY_DAYS = 30
+export const MESSAGE_LIMIT = 500, QUESTION_DAYS = 30, ANSWERED_DAYS = 7, FINDING_DAYS = 90, OPEN_THREADS = 20, REPLY_LIMIT = 50, ACTIVITY_DAYS = 30
 
 /** Board text reaches other developers' agents, so it is plain prose on one line: no links, paths, addresses, code,
  * tokens or invisible characters. */
@@ -116,15 +116,17 @@ const expiry = (now: number, linked: boolean) => linked ? null : new Date(now + 
 type MessageRow = { id: string; kind: MessageKind | 'reply'; parent_id: string | null; topic_kind: TopicKind; topic_key: string; user_id: string; github_login: string; to_login: string | null; body: string; pull_request: number | null; created_at: string; active_at: string; ended_at: string | null; ended_reason: string | null }
 // A suspended account's posts disappear at once; the hourly run deletes them.
 const MESSAGE_SELECT = 'SELECT m.id,m.kind,m.parent_id,m.topic_kind,m.topic_key,m.user_id,u.github_login,m.to_login,m.body,m.pull_request,m.created_at,m.active_at,m.ended_at,m.ended_reason FROM agent_messages m JOIN users u ON u.id=m.user_id AND u.suspended=0'
-// A question lapses 30 days after its last post, a finding or wanted task 90 days after it was left, even before the hourly
-// run ends it. Both bind the two cutoffs from cutoffs().
-const LIVE = "m.ended_at IS NULL AND ((m.kind='question' AND m.active_at>?) OR (m.kind<>'question' AND m.created_at>?))"
-const ENDED = "(m.ended_at IS NOT NULL OR (m.kind='question' AND m.active_at<=?) OR (m.kind<>'question' AND m.created_at<=?))"
-const cutoffs = (now: number) => [new Date(now - QUESTION_DAYS * DAY).toISOString(), new Date(now - FINDING_DAYS * DAY).toISOString()]
 // Who wrote a thread's last post: a question waits for whoever did not.
 const LAST_WORD = 'COALESCE((SELECT r.user_id FROM agent_messages r WHERE r.parent_id=m.id ORDER BY r.created_at DESC,r.rowid DESC LIMIT 1),m.user_id)'
+// A question lapses 30 days after its last post, or 7 once someone other than its asker has the last word: an answer the asker
+// lets stand settles it, and a reply from the asker keeps it open. A finding or wanted task lapses 90 days after it was left.
+// Both apply even before the hourly run ends the thread, and both bind the three cutoffs from cutoffs().
+const LIVE = `m.ended_at IS NULL AND ((m.kind='question' AND m.active_at>? AND (m.active_at>? OR ${LAST_WORD}=m.user_id)) OR (m.kind<>'question' AND m.created_at>?))`
+const ENDED = `(m.ended_at IS NOT NULL OR (m.kind='question' AND (m.active_at<=? OR (m.active_at<=? AND ${LAST_WORD}<>m.user_id))) OR (m.kind<>'question' AND m.created_at<=?))`
+const cutoffs = (now: number) => [QUESTION_DAYS, ANSWERED_DAYS, FINDING_DAYS].map(days => new Date(now - days * DAY).toISOString())
 function threadView(row: MessageRow, replies: MessageRow[], now: number) {
-  const lapses = Date.parse(row.kind === 'question' ? row.active_at : row.created_at) + (row.kind === 'question' ? QUESTION_DAYS : FINDING_DAYS) * DAY
+  const answered = (replies.at(-1)?.user_id ?? row.user_id) !== row.user_id
+  const lapses = Date.parse(row.kind === 'question' ? row.active_at : row.created_at) + (row.kind === 'question' ? (answered ? ANSWERED_DAYS : QUESTION_DAYS) : FINDING_DAYS) * DAY
   const ended = row.ended_at ?? (lapses <= now ? new Date(lapses).toISOString() : null)
   return { id: row.id, kind: row.kind, topic: { kind: row.topic_kind, key: row.topic_key }, author: row.github_login, to: row.to_login, body: row.body, pullRequest: row.pull_request, createdAt: row.created_at, activeAt: row.active_at,
     ...(ended ? { endedAt: ended, endedReason: row.ended_reason ?? 'expired' } : { endsAt: new Date(lapses).toISOString() }),
@@ -350,7 +352,7 @@ async function pulls(env: Env, path: string): Promise<unknown> {
  * request by branch, release claims whose pull request was merged or closed, and end threads whose linked pull request
  * merged (a finding as folded, a question or wanted task as merged). A bounded batch per run, the least recently checked first. */
 export async function syncAgentClaims(env: Env, db: Database, batch = 25) {
-  const nowMs = Date.now(), now = new Date(nowMs).toISOString(), kept = new Date(nowMs - RELEASED_KEPT_DAYS * DAY).toISOString(), [question, finding] = cutoffs(nowMs)
+  const nowMs = Date.now(), now = new Date(nowMs).toISOString(), kept = new Date(nowMs - RELEASED_KEPT_DAYS * DAY).toISOString()
   const suspended = 'SELECT id FROM users WHERE suspended=1'
   await db.batch([
     db.prepare('DELETE FROM agent_claims WHERE released_at IS NOT NULL AND released_at<=?').bind(kept),
@@ -358,7 +360,7 @@ export async function syncAgentClaims(env: Env, db: Database, batch = 25) {
     db.prepare(`UPDATE agent_claims SET released_at=?,released_reason='suspended' WHERE released_at IS NULL AND user_id IN (${suspended})`).bind(now),
     db.prepare(`DELETE FROM agent_messages WHERE parent_id IN (SELECT id FROM agent_messages WHERE parent_id IS NULL AND (user_id IN (${suspended}) OR ended_at<=?))`).bind(kept),
     db.prepare(`DELETE FROM agent_messages WHERE user_id IN (${suspended}) OR (parent_id IS NULL AND ended_at<=?)`).bind(kept),
-    db.prepare("UPDATE agent_messages SET ended_at=?,ended_reason='expired' WHERE parent_id IS NULL AND ended_at IS NULL AND ((kind='question' AND active_at<=?) OR (kind<>'question' AND created_at<=?))").bind(now, question, finding),
+    db.prepare(`UPDATE agent_messages AS m SET ended_at=?,ended_reason='expired' WHERE m.parent_id IS NULL AND m.ended_at IS NULL AND ${ENDED}`).bind(now, ...cutoffs(nowMs)),
   ])
   if (!githubConfig(env)) return
   const folds = (await db.prepare('SELECT id,pull_request FROM agent_messages WHERE parent_id IS NULL AND ended_at IS NULL AND pull_request IS NOT NULL ORDER BY checked_at IS NOT NULL,checked_at LIMIT ?').bind(batch).all<{ id: string; pull_request: number }>()).results

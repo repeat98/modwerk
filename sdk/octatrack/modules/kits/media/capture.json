@@ -1,0 +1,22 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
+  "packageSha256": "f1c13a071b299906dccd7eee60c8b01e82dea9212921f5d7fb28ca14b5932c0b",
+  "capturedOn": "2026-11-16",
+  "method": "hardware",
+  "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 with ot_sample_memory (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.0-experimental installed as a 60-second trial (package SHA-256 f1c13a07…) with its 331 pages of sample memory taken, the owner's project on pattern A01 (its Parts read in as Kits), stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. Each list was closed with NO; nothing was loaded or saved, and the trial rolled back.",
+  "plan": [
+    "capture ot-status-kit.png",
+    "PART",
+    "capture ot-load-kit.png",
+    "NO",
+    "FUNC + PART",
+    "capture ot-save-kit.png",
+    "NO"
+  ],
+  "files": {
+    "ot-status-kit.png": "470e6f63078842a1476fc546ea26ba5c5e7ee1c57ce375e5f2f99c137c4faecb",
+    "ot-load-kit.png": "cb9f8955162f3bde40e249a85b5de39e4c165247b975b86a137561c33dd90ff4",
+    "ot-save-kit.png": "d363a2b83d5a4d0e72d9d67bf05a0834adff92d79f8b5bae396498a7c156d736"
+  }
+}
