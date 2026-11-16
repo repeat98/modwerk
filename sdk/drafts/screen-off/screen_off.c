@@ -23,7 +23,7 @@
  * the chord is taken and stock would not redraw it.
  *
  * State lives in initialised data. A bad magic word is a fresh module:
- * screen on, nothing held. screen_off.s is the same decisions for the unit.
+ * screen on, nothing held. The unit runs this file.
  */
 #include <stdint.h>
 

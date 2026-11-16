@@ -65,7 +65,7 @@
       "value": null,
       "unit": "bytes",
       "method": "unmeasured",
-      "conditions": "screen_off.s, one key hook, one draw hook and one tick hook. No stock site, no DSP code. The package size waits on the ColdFire toolchain.",
+      "conditions": "screen_off.c, one key hook, one draw hook and one tick hook. No stock site, no DSP code.",
       "source": "TESTING.md"
     },
     "processing": {
