@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Kits comes to Modwerk: 255 Kits per project, and each pattern plays its own. PART loads a Kit, FUNC+PART saves one.",
+      "Projects without Kits are migrated the first time: each Part becomes a Kit and its patterns keep playing it.",
+      "Uses about 2 MB of sample memory while installed. Works beside other modules; loaded over USB.",
+      "Known issue: not yet tested on a unit."
+    ]
+  }
+]
