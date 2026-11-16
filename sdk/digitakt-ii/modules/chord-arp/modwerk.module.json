@@ -26,9 +26,10 @@
       "Per-trig chord, root and rhythm locks"
     ],
     "usage": [
-      "Place a C5 note trig on step 1 of an audio track. Open SETTINGS, then CHORD ARP.",
-      "On Chord, choose MAJ and leave ROOT on TRIG. On Arp, choose UP and 1/16, then turn ARP on.",
-      "On Groove, turn SPAN on and press PLAY to hear C, E and G across the empty steps."
+      "Place a C5 note trig on step 1 of a pitched audio track.",
+      "Open SETTINGS, select CHORD ARP, and set TYPE to MAJ and ROOT to TRIG.",
+      "Press RIGHT, set ORDER to UP and DIV to 1/16, then turn ARP on.",
+      "Press FUNC + RIGHT, turn SPAN on, then press PLAY."
     ]
   },
   "access": {
