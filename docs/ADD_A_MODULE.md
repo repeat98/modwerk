@@ -286,6 +286,15 @@ the asset hashes that moved; `--check` must then call every package identical.
 published goes in the host wrapper `scripts/octatrack-module-packages.py`.
 In the toolchain image set `ELEKLOADER_DSP_ASM`; restore old versions it deletes.
 
+**A first release on an owner approval** (`sdk/approvals/<id>-build-approval.json`, which only the owner writes).
+It binds the native source hash: every file in the folder but `octamod.module.json`, `media/`, Markdown and licences,
+so `evidence/performance.json`, the thumbnail and `manifest.py` are final before the owner signs. Without it
+`modules:generate` refuses the module, and the package builder takes the display name from the generated documents:
+folder complete, approval, `modules:generate`, then the package. List the module in `module-set.test.ts`'s
+published packages, `module-qualification.test.ts`'s owner-approved releases and `resource-indicators.test.ts`'s
+exceptions. A module back after removal counts as new: one changelog entry. Taking an id off `REMOVED_MODULE_IDS`
+moves `src/catalog/modules.ts`, which Tape Echo's and Euclid's standalone recipes pin.
+
 A newly developed module selectable in beta module sets must have a working
 USB path, not a card-only fallback; existing card-only modules need a reviewed
 migration before USB rollout. An unavoidable compatibility limit needs its
