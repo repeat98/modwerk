@@ -756,9 +756,14 @@ void modwerk_modset_service(void)
        * plays. A module installed into a running project reads its own file now; no project load will tell it. */
         extern uint32_t modwerk_runtime_owner_epoch(void);
         extern const unsigned char modwerk_raise_ev_modules_ready[]; /* runtime_events.s: the base raises it, no module */
+        extern void modwerk_sample_memory_service(void); /* sample_memory.c: ot_sample_memory's pages, before the raise */
         static uint32_t ready;
         uint32_t now = modwerk_runtime_owner_epoch();
-        if (now != ready) { ready = now; (void)((unsigned (*)(void))(uintptr_t)modwerk_raise_ev_modules_ready)(); }
+        if (now != ready) {
+            ready = now;
+            modwerk_sample_memory_service();
+            (void)((unsigned (*)(void))(uintptr_t)modwerk_raise_ev_modules_ready)();
+        }
     }
 #endif
     if (!pending || TICKS < retry_at) return;
