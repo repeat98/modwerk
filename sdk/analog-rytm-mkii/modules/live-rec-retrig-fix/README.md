@@ -50,7 +50,7 @@ A step holds one trig, so the rate decides what is recorded.
 
 The rates follow the track's speed: at 2x, 1/32 is one trig a hit.
 
-Stock's pad retrig series runs in the audio block and reaches no recorder. The module subscribes to core-ar2's `ev_render_out`, follows each pad's tick counter and, for each hit, queues to the sequencer task the note-off and note-on a press and release would queue. Stock's recorder writes the trig. The count is read before Retrig Grid sets it for the next tick (order 40 against 50), and a count that did not step down is not taken for a hit. The module follows each press in stock's note ring, so pressing again during a roll, or a new note in CHROMATIC mode, starts from that press.
+Stock's pad retrig series runs in the audio block and reaches no recorder. The module subscribes to core-ar2's `ev_render_out`, follows each pad's tick counter and, for each hit, queues to the UI task (where stock's recorder runs) the note-off and note-on a press and release would queue. Stock's recorder writes the trig. The count is read before Retrig Grid sets it for the next tick (order 40 against 50), and a count that did not step down is not taken for a hit. The module follows each press in stock's note ring, so pressing again during a roll, or a new note in CHROMATIC mode, starts from that press.
 
 A hit that lands just before a step is recorded on that step while the playhead is still on the step before. Stock's held-note wipe would then remove the hit before it, so until the playhead arrives the module sets the byte stock's own note-off sets for that case. The playhead it watches is the one stock's wipe runs on, the track the recorder follows (a pad press makes it that pad's track), and the guard outlives the release: it ends when that step arrives or the recorder lets the note go.
 
@@ -87,7 +87,7 @@ The recorder's press site asks the grid for that skipped or passed point and wri
 - Micro timing has 24 units a step, so a hit can land up to 1/48 of a step from where it sounded.
 - A roll over a step that already has a retrig keeps that step's retrig.
 - A roll started before LIVE RECORDING records from the first hit after it starts, with no press trig. Stock records nothing there.
-- If the sequencer task falls more than 30 events behind, hits are dropped rather than recorded wrongly.
+- If the UI task falls more than 240 messages behind (seconds under heavy load), hits are dropped rather than recorded wrongly; short of that they are recorded late, at the step and timing they were played.
 - Not tested: external MIDI clock, what lands in the next pattern when the pattern changes during a roll, and load.
 
 ## Tests and measurements
