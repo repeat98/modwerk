@@ -22,7 +22,7 @@ const OCTATRACK_SCREENS: Screen[] = [
     caption: 'The Modwerk mark docks while the Octatrack starts, so you can see at a glance that the base is running.' },
   { src: screen('ot-project-menu.png'), alt: 'Octatrack PROJECT menu with a fifth row, MODWERK, listing STATUS, MODULE COST, MISSING, SELF TEST and MODULES', title: 'PROJ › MODWERK',
     caption: 'A fifth row in the PROJECT menu with five pages: the load, each module’s share of it, the modules a project misses, a self-test, and your modules switched on and off. The rest of the menu, SYSTEM included, stays as Elektron made it.', keys: 'PROJ' },
-  { src: screen('ot-status.png'), alt: 'Octatrack MODWERK BASE 0.7.1 status dialog with five bars: CPU, DSP T1-4, DSP T5-8, MEM T1-4 and MEM T5-8', title: 'Status, from anywhere',
+  { src: screen('ot-status.png'), alt: 'Octatrack MODWERK BASE 0.7.2 status dialog with five bars: CPU, DSP T1-4, DSP T5-8, MEM T1-4 and MEM T5-8', title: 'Status, from anywhere',
     caption: 'How busy the Octatrack is right now: the CPU, and each DSP chip by its tracks (DSP). Below, how full each chip’s DSP memory is (MEM). The title names the base version. NO closes it.', keys: 'CUE + PROJ, or PROJ › MODWERK › STATUS' },
   { src: screen('ot-module-cost.png'), alt: 'Octatrack MODULE COST page: Tape Echo, Mini Verb, E-Verb and Air Chorus, with Mini Verb at about 20 percent on tracks 1-4 and E-Verb at about 21 percent on tracks 5-8', title: 'Module cost',
     caption: 'What each installed module costs on each DSP chip, for the tracks that use it, so you can see which to drop when a set gets heavy. A ~ marks an estimate; - means no track uses it there.', keys: 'PROJ › MODWERK › MODULE COST' },
