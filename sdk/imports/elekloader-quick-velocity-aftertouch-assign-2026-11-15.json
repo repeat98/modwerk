@@ -1,22 +1,22 @@
 {
   "schema": 1,
   "kind": "elekloader-catalog",
-  "revision": "quick-velocity-aftertouch-assign-2026-11-11",
+  "revision": "quick-velocity-aftertouch-assign-2026-11-15",
   "about": "Modwerk source-only quick-velocity-aftertouch-assign package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/quick-velocity-aftertouch-assign.",
   "cores": [],
   "mods": [
     {
-      "file": "quick-velocity-aftertouch-assign-0.2.0-experimental-os1.74.elemod",
-      "sha256": "301a46180bff755947fd55c929db846f8d339ac0f01c34e920e42442fc34f669",
+      "file": "quick-velocity-aftertouch-assign-0.3.0-experimental-os1.74.elemod",
+      "sha256": "663eb45551069b0d9c220b145e6a45d738545ce37df4aa79e943c711a4df81ea",
       "id": "quick-velocity-aftertouch-assign",
-      "version": "0.2.0-experimental",
+      "version": "0.3.0-experimental",
       "device": "analog-rytm-mk2",
       "os": "1.74",
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "4ede58f1005db57fcd28785d8e4d2d2589fd3eb7",
-        "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.2.0-experimental-os1.74.elemod"
+        "commit": "b6da9c445d60b6402961f76a85e507c2f6834b87",
+        "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.3.0-experimental-os1.74.elemod"
       },
       "title": "Quick Mod Assign",
       "requires": [
@@ -28,7 +28,7 @@
       "category": "Performance",
       "author": "npp1993",
       "needs_core": "0.7",
-      "on_unit": "On an Analog Rytm MKII on OS 1.74, as reported by the author: 0.1 passed links, display, kit save, reload and power cycle (RC18, RC19, QM12 alone). 0.2.0's source (this package's) passed the test rig's six cases in QL13 beside Loop Sync and the author's hand checks of the LFO assign; this package itself has not run on a unit."
+      "on_unit": "On an Analog Rytm MKII on OS 1.74, as reported by the author: 0.1 passed links, display, kit save, reload and power cycle; 0.2.0 passed the test rig's six cases and the author's hand checks of the LFO assign. 0.3.0's source (this package's) passed the author's hand checks of the half-second look on a private combined image and the test rig's MIDI depth cases; this package itself has not run on a unit."
     }
   ]
 }
