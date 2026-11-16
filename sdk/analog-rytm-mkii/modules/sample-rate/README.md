@@ -67,6 +67,7 @@ RATE replaces FIN in the sample's pitch. TUN, the trig's note on a chromatic tra
 - RATE never goes above 1x by itself, as on the Octatrack. TUN does: stock's ceiling of about 4x either way stands, set by its 140-frame read window.
 - Below 0 the module swaps the effective STA and END before stock's prefetch reads them, so stock plays the sample backward. A change of direction on a looping voice waits until it is 32 frames clear of STA and END: about 0.7 ms at 1x, longer as RATE nears zero (53 ms at 1/64x). A trig does not wait.
 - With LOP OFF, once the sample has played out, changing RATE does not bring it back: trig again.
+- A sample previewed with FUNC + YES in a sample list plays at 1x, forward, as on stock, whatever the track's RATE; with an LFO on RATE it plays without the small pitch bend stock's preview takes from an LFO on FIN. Stock's preview plays on the active track's voice with the sample in its own slot (129, past the project's 127) and FIN at rest, which an LFO on RATE still moves; the module plays any voice whose SMP slot is 128 or above at 1x and never turns it backward. A project's slots stay at 127 or below, even under an LFO on SMP, so nothing else changes. If stock also previews a Sound from the SOUND BROWSER from slot 129, that preview plays at 1x whatever the Sound's RATE (not run).
 - Scene and performance locks should reach RATE as they reached FIN; not run.
 - On stock OS, or a build without this mod, a saved sound plays FIN as FIN: by the code, RATE +63 is about a semitone sharp and RATE -64 a semitone flat.
 - MIDI CC 24 sets TUN in whole semitones and clears the cents, as stock's CC does. NRPN keeps them to 1/128 semitone.
@@ -84,4 +85,4 @@ Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build SR43 (0.4.0) ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build SV12 (0.5.1) ([media/capture.json](media/capture.json)). No audio preview yet.

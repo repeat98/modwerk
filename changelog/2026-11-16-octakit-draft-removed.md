@@ -1,0 +1,1 @@
+SDK: the Octakit draft (Em's Kits for the Octatrack, sdk/drafts/octakit) is removed now that Kits, which follows its design, is in the library (#1635). Em stays credited on Kits and for the DRAM loader in the composition tools.

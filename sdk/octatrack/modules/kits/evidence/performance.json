@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "kits",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": null,
+    "budget": null,
+    "method": "No static count and no event counter (waived by the owner, sdk/approvals). On the unit, six Kit loads while playing beside 14 modules moved the CPU meter 0.3 points with no skipped render (TESTING.md)."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 144.0,
+    "moduleLongestUs": 145.5,
+    "stockIdlePercent": 51.6,
+    "moduleIdlePercent": 51.3,
+    "method": "Hardware, not cfmeter: the owner's MKII on a development twin of base 0.7.4 with ot_sample_memory, 16 November 2026, package f1c13a07 beside 14 kept modules. Pattern B16 playing with crossfader sweeps; with Kits, six LOAD KIT loads during the run. Without Kits, then with it: the frame guard's longest frame interrupt (39.7 % and 40.1 % of a frame) and the CPU meter (48.4 % and 48.7 %; idle taken as 100 less the meter) (TESTING.md)."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": ""
+  }
+}
