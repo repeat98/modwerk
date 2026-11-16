@@ -173,6 +173,21 @@ static int full_or_40(const struct runtime_dsp *none, struct runtime_dsp t) /* a
     return MODWERK_FX_IDS > 32u ? r == RUNTIME_OK && t.id == 40 : r == RUNTIME_FULL;
 }
 #define FULL_OR_40(t) full_or_40(&none, (t))
+/* machine_registry.c's map: `absent_machine` (0 none) at map entry 3, named Poly8; the current Part's T3 is its track. */
+static uint32_t absent_machine;
+int modwerk_machine_absent(unsigned k, uint32_t *module, char *name)
+{
+    if (k != 3u || !absent_machine) return 0;
+    *module = absent_machine, memset(name, 0, 16), strcpy(name, "Poly8");
+    return 1;
+}
+int modwerk_machine_track_absent(unsigned t, uint32_t *module, char *name) { return t == 2u && modwerk_machine_absent(3, module, name); }
+void modwerk_machine_map_begin(void) {}
+void modwerk_machine_map_stage(const uint8_t *sig, unsigned lo, unsigned hi, uint32_t module, const char *name)
+{ (void)sig, (void)lo, (void)hi, (void)module, (void)name; }
+void modwerk_machine_map_loaded(int ok) { (void)ok; }
+int modwerk_machine_map_line(unsigned k, uint8_t *sig, unsigned *lo, unsigned *hi, uint32_t *module, char *name)
+{ (void)k, (void)sig, (void)lo, (void)hi, (void)module, (void)name; return 0; }
 /* modset.c's shelf: `dsp_off_module` is switched off on PROJ > MODWERK > MODULES. */
 static uint32_t dsp_off_module;
 int modwerk_modset_is_off(uint32_t module) { return module && module == dsp_off_module; }
@@ -381,6 +396,12 @@ int main(void)
     CHECK(modwerk_dsp_missing_list(list, 0, MODWERK_MISSING_PAGE) == 28 && !memcmp(list, "MWM\1", 4) && list[4] == 26 &&
           list[7] == 2 && list[11] == 0x47 && !strcmp((const char *)list + 12, "Mod G"));
     CHECK(modwerk_dsp_missing_list(list, 1, MODWERK_MISSING_PAGE) == 4 && !memcmp(list, "MWM\0", 4)); /* the next page: empty */
+    /* An absent machine follows the effects: handle 0xff (no DSP code), 0x80 and its map entry, its module and name. */
+    absent_machine = 0x9fa85eefu;
+    CHECK(modwerk_dsp_missing_list(list, 0, MODWERK_MISSING_PAGE) == 52 && list[3] == 2 && list[4] == 26 && list[28] == 0xff &&
+          list[29] == 0x83 && list[32] == 0x9f && list[35] == 0xef && !strcmp((const char *)list + 36, "Poly8"));
+    CHECK(modwerk_dsp_missing_list(list, 1, MODWERK_MISSING_PAGE) == 28 && list[4] == 0xff); /* the next page holds it */
+    absent_machine = 0;
 #if MODWERK_FX_IDS > 32
     { /* A map a 32-id base left: kept, widened, sealed as this base's (fxmap.c widened). */
         uint32_t *w = (uint32_t *)&modwerk_test_map, sum = 0x5a17u;
@@ -447,6 +468,17 @@ int main(void)
             dsp_off_module = 0x47u, last_track = 0xffu;
             CHECK(popup(1, text) && !strcmp(text, "MOD G IS OFF"));
             dsp_off_module = 0, last_track = was;
+        }
+        { /* T3 runs no module effect but is signed for a machine the project's map names and nothing serves: the notice
+           * names it, MISSING or IS OFF (owner, 16 November 2026: machines in the project map). */
+            unsigned was = last_track;
+            absent_machine = 0x9fa85eefu, last_track = 0xffu;
+            CHECK(popup(2, text) && !strcmp(text, "MISSING POLY8"));
+            dsp_off_module = 0x9fa85eefu, last_track = 0xffu;
+            CHECK(popup(2, text) && !strcmp(text, "POLY8 IS OFF"));
+            absent_machine = dsp_off_module = 0, last_track = 0xffu;
+            CHECK(!popup(2, text));                                    /* nothing absent: nothing said */
+            last_track = was;
         }
         CHECK(!popup(1, text)); /* once per selection */
         /* A track selected during a load is said once the load is over. */

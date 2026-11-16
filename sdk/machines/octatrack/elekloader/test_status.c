@@ -48,8 +48,20 @@ void modwerk_selftest_abort(void) { ++selftest_aborts; }
 void modwerk_selftest_refresh(void) {}
 uint32_t modwerk_runtime_free(uint32_t *largest) { if (largest) *largest = 0; return 0; }
 /* dsp.c's MISSING list: `listed` modules at handles 20 and up; modset.c's restore. */
-static unsigned listed;
+static unsigned listed, listed_machines;
 volatile uint32_t modwerk_runtime_ticks;
+/* machine_registry.c: the map's refresh, counted; map entry 3 is named in bank B's working Part 3 on T8. */
+static unsigned machine_refreshes;
+void modwerk_machine_map_refresh(void) { ++machine_refreshes; }
+int modwerk_machine_where(unsigned k, unsigned *bank, unsigned *part, unsigned *track)
+{
+    if (k != 3u) return 0;
+    *bank = 1, *part = 2, *track = 7;
+    return 1;
+}
+/* ... and module 0x10 (Euclid in the MODULES rows below) is a machine the map names there too. */
+int modwerk_machine_where_module(uint32_t module, unsigned *bank, unsigned *part, unsigned *track)
+{ return module == 0x10u ? modwerk_machine_where(3, bank, part, track) : 0; }
 unsigned modwerk_dsp_missing_list(uint8_t *out, unsigned first, unsigned most)
 {
     (void)first, (void)most;
@@ -59,8 +71,14 @@ unsigned modwerk_dsp_missing_list(uint8_t *out, unsigned first, unsigned most)
         e[0] = (uint8_t)(20u + i), e[6] = 1, e[7] = (uint8_t)i; /* module 0x100 + i */
         e[8] = 'm', e[9] = 'o', e[10] = 'd', e[11] = (uint8_t)('a' + i);
     }
-    out[0] = 'M', out[1] = 'W', out[2] = 'M', out[3] = (uint8_t)listed;
-    return 4u + 24u * listed;
+    for (unsigned i = 0; i < listed_machines; ++i) { /* then the absent machines: map entry 3 on, module 0x200 on */
+        uint8_t *e = out + 4u + 24u * (listed + i);
+        for (unsigned c = 0; c < 24u; ++c) e[c] = 0;
+        e[0] = 0xffu, e[1] = (uint8_t)(0x80u | (3u + i)), e[6] = 2, e[7] = (uint8_t)i;
+        e[8] = 'P', e[9] = 'O', e[10] = 'L', e[11] = 'Y', e[12] = (uint8_t)('8' + i);
+    }
+    out[0] = 'M', out[1] = 'W', out[2] = 'M', out[3] = (uint8_t)(listed + listed_machines);
+    return 4u + 24u * (listed + listed_machines);
 }
 /* fxmap.c's lookup: handle 20 in bank C's saved Part 2 on T5, the others in bank A's working Part 1 on T2. */
 int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *track)
@@ -234,6 +252,20 @@ int main(void)
     /* Nothing off: YES only closes, as before. */
     CHECK(modwerk_status_key(YES, 1) && modwerk_status_key(YES, 0) && open == CLOSED);
     off_module = off_module2 = 0, listed = 0, missing_asked = 0; missing_check(); CHECK(open == CLOSED);
+    /* A machine the project uses that is absent (machine_registry.c's map; owner, 16 November 2026): it opens the page
+     * as an effect does, with where the project uses it; switched off, it says OFF and YES switches it on, by module. */
+    unsigned refreshed = machine_refreshes;
+    listed_machines = 1; missing_check(); missing_check();
+    CHECK(machine_refreshes == refreshed + 2 && open == MISSING);
+    CHECK(strstr(shows(), "POLY8|") && strstr(said, "BANK B PART 3 T8|") && strstr(said, "1 NOT INSTALLED|"));
+    CHECK(modwerk_status_key(NO, 1) && modwerk_status_key(NO, 0) && open == CLOSED);
+    missing_check(); missing_check(); CHECK(open == CLOSED);          /* told: it stays closed */
+    off_module = 0x200u; missing_check(); CHECK(open == CLOSED);      /* switched off now: still told */
+    open = MISSING, missing_top = 0, missing_asked = 1; missing_check();
+    CHECK(strstr(shows(), "POLY8 (OFF)|") && strstr(said, "SWITCH ON|"));
+    asked_id = 0; modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); missing_on_tick(); CHECK(asked_id == 0x200u && asked_on == 1);
+    modwerk_modset_switch_result = MODSET_SWITCHED, off_module = 0, listed_machines = 0; missing_on_tick(); CHECK(!on_count);
+    open = CLOSED, missing_asked = 0; missing_check(); CHECK(open == CLOSED);
     /* A module sync shows its box and bar while the modules arrive and start, and holds no key. */
     upload_view = 1, upload_permille = 500; transfer_tick();
     CHECK(transfer == T_SYNC && strstr(shows(), "MODWERK SYNC|RECEIVING MODULES|50%"));
@@ -467,6 +499,9 @@ int main(void)
     map_module[20] = 0;
     modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); modwerk_modset_switch_result = MODSET_SWITCHED; switches_tick();
     CHECK(!switch_said);
+    /* A machine another bank's Part uses, by the project's machine map: where too. */
+    switch_waiting = 0, switch_asked = 0x10u, switch_asked_on = 0, switch_waiting = 1, modwerk_modset_switch_result = MODSET_SWITCHED;
+    switches_tick(); CHECK(switch_said == used_text && !strcmp(used_text, "USED IN B PART 3 T8"));
     asked_on = 1; unit[0].on = 0; switches_read(); /* switched on: nothing said either */
     modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); CHECK(asked_on == 1);
     map_module[20] = 0x30u; modwerk_modset_switch_result = MODSET_SWITCHED; switches_tick(); CHECK(!switch_said);
