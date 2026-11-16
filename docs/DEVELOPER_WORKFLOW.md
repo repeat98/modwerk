@@ -67,7 +67,7 @@ These stumbling blocks have each cost a contributor and the owner a repair round
 
 ## Submit a first release
 
-1. **Prepare:** fork Modwerk, branch from current `main`, and build or port the module. Keep source pins, credits and licences; prepare the manifest/version/catalog, README/tutorial, release notes, real UI captures and matching stock-free packages.
+1. **Prepare:** fork Modwerk, branch from current `main`, and build or port the module. Keep source pins, credits and licences; prepare the manifest/version/catalog, README/tutorial, release notes, real UI captures and matching packages.
 2. **Verify:** follow the machine/category guide, regenerate metadata, run `module:doctor` and `npm run check -- --base origin/main`, and qualify the exact private source/build. Give the contributor concrete hardware steps and record only their actual results. Test different simultaneous instances and track/FX-slot/DSP-core isolation and Part/project/physical-reboot persistence where applicable. Emulator project loading is not physical reboot evidence.
 3. **Submit:** commit, push and open a Modwerk PR. Follow checks and fix failures. Every new module currently needs owner review; the first approved release registers its GitHub author for later scoped updates. Website sign-in or claiming does not grant release authority.
 4. **Publish and verify:** after owner merge, follow the exact commit's site/API deployments. Confirm the live version, save a compatible firmware download, and verify its version/source identity and deterministic hash where applicable. A push, merge or ready/download-requested state alone does not prove a saved release download.
