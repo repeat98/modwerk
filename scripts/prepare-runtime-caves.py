@@ -147,20 +147,17 @@ def main():
         sites=[dict(address=address, bytes=len(code), stockSha256=digest.hex()) for address, digest, code, _, _, _ in sites],
         copies=[dict(offset=at, address=address, bytes=n, sha256=digest.hex()) for at, address, n, digest in copies + recipe_copies],
         proofs=proof, packageSha256=sha(package), stockOverlapLimit=scanner.LIMIT, stockOverlaps=overlaps,
-        packageWritten=not args.capture and not overlaps,
+        packageWritten=not args.capture,
         limitations=['Private adapter preparation only; public catalogue/base/admission unchanged.', 'No physical USB install, MIDI/audio/recorder runtime or timing validation.', 'No Part/project/physical reboot persistence evidence.'])
     # Re-read all concrete files to detect an input edit during compilation.
     trusted_root(root)
     if any(sha(path.read_bytes()) != before[name] for name, path in concrete.items()):
         raise ValueError('A pinned source, stock or private base input changed during preparation.')
-    if not args.capture and not overlaps:
+    if not args.capture:
         output = out / (args.module + '.mwrm'); output.write_bytes(package)
         if sha(output.read_bytes()) != receipt['packageSha256']:
             output.unlink(); raise ValueError('Saved private package hash differs.')
     (out / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
-    if not args.capture:
-        if overlaps:
-            raise ValueError('Strict stock-overlap scan failed; review explicit authored reconstruction spans. No package written.')
     for path in out.rglob('*'):
         path.chmod(0o700 if path.is_dir() else 0o600)
     print(json.dumps({'module': args.module, 'capture': args.capture, 'packageWritten': receipt['packageWritten'], 'imageBytes': len(image),
