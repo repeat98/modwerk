@@ -1,22 +1,22 @@
 {
   "schema": 1,
   "kind": "elekloader-catalog",
-  "revision": "sample-rate-2026-11-12",
+  "revision": "sample-rate-2026-11-16",
   "about": "Modwerk source-only sample-rate package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/sample-rate.",
   "cores": [],
   "mods": [
     {
-      "file": "sample-rate-0.5.0-experimental-os1.74.elemod",
-      "sha256": "2f92c93284f1ca3be631e118c258d3a2e6a6b73022adf045f92822691e287d7f",
+      "file": "sample-rate-0.5.1-experimental-os1.74.elemod",
+      "sha256": "a0064aa622cc04a98a0c7b7620a40ceeaedcbaf18eacb7d3b1302eb7d3791786",
       "id": "sample-rate",
-      "version": "0.5.0-experimental",
+      "version": "0.5.1-experimental",
       "device": "analog-rytm-mk2",
       "os": "1.74",
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "7e16b7c50939f8d5d6962360aadd78e0aa1e41b3",
-        "path": "sdk/imports/packages/sample-rate/sample-rate-0.5.0-experimental-os1.74.elemod"
+        "commit": "add6a0165a74a0cc72223b73c2b06031f9f89f11",
+        "path": "sdk/imports/packages/sample-rate/sample-rate-0.5.1-experimental-os1.74.elemod"
       },
       "title": "Improved SMPL",
       "requires": [
@@ -28,7 +28,7 @@
       "category": "Playback",
       "author": "npp1993",
       "needs_core": "0.7",
-      "on_unit": "This source ran on the author's Analog Rytm MKII on OS 1.74 in the author's private combo image RC40, flashed by hand (RC38 and RC39 carried earlier 0.5.0 builds); this package has not run alone on a unit."
+      "on_unit": "This source ran on the author's Analog Rytm MKII on OS 1.74 from RAM in a test image with the author's private development base (SU02); this package has not run alone on a unit."
     }
   ]
 }
