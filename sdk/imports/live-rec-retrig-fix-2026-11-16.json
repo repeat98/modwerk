@@ -4,14 +4,14 @@
   "version": "0.2.2-experimental",
   "date": "2026-11-16",
   "changes": [
-    "Each hit's note events wait in stock's UI queue until the UI task takes them. 0.2.1 dropped a hit whenever more than 30 messages waited there, stock's included, which BD ANALOG load and pad pressure pass during a retrig hold. A slot is now freed once the UI task has taken its message and another (read from the queue's read index and count), so only the module's own waiting events count; 128 slots, about 3.6 KB more RAM. Recording, the grid and the RTRG key are unchanged."
+    "Each hit's note events wait in stock's UI queue until the UI task takes them. 0.2.1 dropped a hit whenever more than 30 messages waited there, stock's included, which BD ANALOG load and pad pressure pass during a retrig hold. A slot is now freed, in posting order, once the UI task has taken its message and a later one (read from the queue's read index and count), so only the module's own waiting events count; 128 slots, about 3.6 KB more RAM. Recording, the grid and the RTRG key are unchanged."
   ],
-  "runtimeSourceSha256": "3529dc9e2995b233477fd029937ad919b4612d77af38439b1029798d6e1917ff",
+  "runtimeSourceSha256": "6a907dbdbb8e0f3694df621519fec2667d2089eb51a6fe66286744eeb1a09d70",
   "packages": [
     {
       "os": "1.74",
       "path": "sdk/imports/packages/live-rec-retrig-fix/live-rec-retrig-fix-0.2.2-experimental-os1.74.elemod",
-      "sha256": "4a34115a417c5643f2bfcc8a6c896a48da206a93ee71bdc35ab64d12b72776e8"
+      "sha256": "6db99decbb02225ebabc0bc261471cc06f4b1b413c2fc3c2a893af24d657e7b9"
     }
   ],
   "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
