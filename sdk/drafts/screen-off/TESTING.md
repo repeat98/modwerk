@@ -32,6 +32,8 @@ The same package was tried again without `--accept`, from 21:08:12. The slot was
 
 16 November 2026. The same package, SHA-256 `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c` (352 bytes), was tried again without `--accept` on `OCTATRACK 1.40C`, base `3ee0515a0f474149…`. The slot was running. The tick word is `(toggles << 1) | blank`. It stayed `0x0` until 25 s, then read `0x3` (one toggle, blank on). The last line before the trial process was killed was `0x68` at 125 s: 52 toggles, blank off. A following `status` still showed the trial, value 104 (`0x68`). `npm run device -- recover` then printed `recovered from trial` and `normal, generation 2, active 3ee0515a0f474149…`. The inventory after that named the same modules as before the trial, including Tiempos. The person at the unit reported that it runs great. No SAVE, no flash, no power cycle, no Keep. The trial process itself did not print `rolled back`.
 
+16 November 2026. A later RAM trial of the same package, SHA-256 `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`, was running without `--accept` on `OCTATRACK 1.40C`, base `3ee0515a0f474149…`. It was not kept. The person at the unit reported that hold UP, tap NO works as it should in a list, the sample editor, the arranger, the Modwerk status page, and beside Tiempos. The tick word is `(toggles << 1) | blank`. The log stayed `0x0` through 30 s. The first non-zero was `0x4` at 31 s: 2 toggles, blank off. The latest line read while this note was written was `0x54` at 432 s: 42 toggles, blank off. The trial process was still running. No SAVE, no flash, no power cycle, no Keep.
+
 ## Not tested
 
 - An MKI, and a card install. The MKII chord above is a report from the person at the unit, on 7 November and again on 16 November, both RAM trials of package `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`.
@@ -39,5 +41,4 @@ The same package was tried again without `--accept`, from 21:08:12. The slot was
 - The stock screen saver while this blank is on, and while a pattern plays.
 - Whether the MKII panel can be powered down as well as painted black.
 - Whether the MKI backlight stays lit behind the blank glass.
-- UP + NO in a list, a dialog, the sample editor and the arranger, side by side with stock.
 - Part save, project save and a power cycle. The blank is only a byte in the module's RAM, so a power cycle should turn the screen back on. That has not been seen.
