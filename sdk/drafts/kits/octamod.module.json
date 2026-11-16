@@ -39,7 +39,11 @@
       "Move to a Kit with UP and DOWN or the LEVEL encoder and press YES: the current pattern plays that Kit.",
       "Press FUNC+PART on the MKII, or FUNC+MIDI then FUNC+BANK on the MKI, to open SAVE KIT; press YES on a Kit, edit its name and confirm to save the current Part into it."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/ot-status-kit.png",
+      "media/ot-load-kit.png",
+      "media/ot-save-kit.png"
+    ]
   },
   "controls": [],
   "compatibility": {
@@ -135,5 +139,57 @@
     "file": "LICENSE",
     "declaration": "Sam Banks' MIT module from octabam with Modwerk's port changes, MIT; after Em's Octakit design (MIT). Stock sites are named by address, length and SHA-256 only. No firmware, extracted stock code or built images are included."
   },
-  "media": []
+  "media": [
+    {
+      "path": "media/ot-status-kit.png",
+      "captureType": "hardware",
+      "caption": "With Kits installed the status line names the Kit the pattern plays: 001 ONE, the project's Part 1 read in as a Kit.",
+      "alt": "Pattern screen of A01 on the MIDI NOTE page; the status line reads 001 ONE where stock shows the Part.",
+      "credit": "Modwerk contributors (capture on the owner's MKII)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Pattern screen",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
+        "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 with ot_sample_memory (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.0-experimental installed as a 60-second trial (package SHA-256 f1c13a07…) with its 331 pages of sample memory taken, the owner's project on pattern A01 (its Parts read in as Kits), stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. Each list was closed with NO; nothing was loaded or saved, and the trial rolled back."
+      }
+    },
+    {
+      "path": "media/ot-load-kit.png",
+      "captureType": "hardware",
+      "caption": "Press PART: LOAD KIT lists UNDO KIT and the project's Kits. YES on a Kit makes the current pattern play it, at once.",
+      "alt": "LOAD KIT list over the pattern screen: UNDO KIT, 001 ONE (selected), 002 TWO, 003 THREE.",
+      "credit": "Modwerk contributors (capture on the owner's MKII)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "LOAD KIT (PART)",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
+        "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 with ot_sample_memory (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.0-experimental installed as a 60-second trial (package SHA-256 f1c13a07…) with its 331 pages of sample memory taken, the owner's project on pattern A01 (its Parts read in as Kits), stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. Each list was closed with NO; nothing was loaded or saved, and the trial rolled back."
+      }
+    },
+    {
+      "path": "media/ot-save-kit.png",
+      "captureType": "hardware",
+      "caption": "Press FUNC + PART: SAVE KIT, with the cursor on the current Kit. YES opens the name editor and saves the current Part into that Kit.",
+      "alt": "SAVE KIT list over the pattern screen: 001 ONE (selected), 002 TWO, 003 THREE, 004 FOUR.",
+      "credit": "Modwerk contributors (capture on the owner's MKII)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SAVE KIT (FUNC + PART)",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
+        "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 with ot_sample_memory (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.0-experimental installed as a 60-second trial (package SHA-256 f1c13a07…) with its 331 pages of sample memory taken, the owner's project on pattern A01 (its Parts read in as Kits), stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. Each list was closed with NO; nothing was loaded or saved, and the trial rolled back."
+      }
+    }
+  ]
 }
