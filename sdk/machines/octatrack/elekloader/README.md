@@ -289,6 +289,40 @@ with nothing recorded, that start installs nothing (result 11, MODULES HELD, 0x1
 Another base ignores the record. On development bases `npm run device -- guardtest` (or `guardtest:0`) arms it as a
 crash in the restore would, blaming the set's first module (or none), so a RAM boot shows what a tester's next start would.
 
+### The base's version
+
+A base has a version for people, `major.minor`, in [`base-version.json`](base-version.json) (owner, 16 November 2026;
+0.7 is the first). `build_core.py` builds it into the base, whose status page says it in its title (`MODWERK BASE 0.7`).
+`npm run octatrack:base -- --write` records the version's identities, one per USB Audio layout, in
+[`base-versions.json`](../base-versions.json), from which the site names the base a unit reports; a base from before
+versions, or a development build, keeps the start of its identity. Raise the number for every base that is published:
+the minor one for an update, the major one when the owner calls a release a new generation. The build refuses a
+version that `origin/main` already has with other contents. The identity stays what packages, saved sets and USB check.
+
+### Modules on and off
+
+PROJ > MODWERK > MODULES (`status.c`) lists every installed module by name with ON or OFF, and YES switches the one
+under the cursor at once. The page only asks; the engine task switches at its next service (`modset.c`), with the unit
+stopped and no host session open:
+
+- **Off** unloads the module through the loader with the same empty package a host's removal sends, so a module a track
+  runs is refused (`IN USE ON A TRACK`) and nothing changes. Its package moves from the set to the shelf.
+- **On** installs the shelved package as the power-on restore installs one, and it joins the set again.
+
+The set therefore still names exactly what runs, and every identity a host checks (the live set's digest, a sync's
+baseline) holds without a rule for modules that are off. The shelf is saved in the same file, after the set's sectors:
+a set with a shelf is version 2 and is whole only with a whole shelf of its own generation behind it, so a write cut
+short falls back to the other file's older set and shelf (`sdk/tests/runtime_card_shelf.c` cuts the power before every
+sector). The shelf takes its room from the set's, and it goes with the set when another base starts (FOREIGN). A host
+that installs a module that is off switches it on; one that removes it takes it off the shelf. PROJ held at power-on
+skips the set and keeps the shelf. After a start that did not load the card's whole set (skipped, held or one left out
+by the boot guard) the page refuses a switch with `RESTART FIRST`: saving that start's smaller set would lose the rest.
+
+A host reads the shelf with OFF (0xC1, bRequest 40, wValue the first entry, wLength 288): `MWO`, the entries in the
+reply, the count of all, then 56 bytes a module, an INVENTORY entry and its package's SHA-256, 5 a page. The site lists
+those modules as switched off. A sync leaves the ones its set has as they are and removes the others with the
+removal package any module gets (`sdk/tests/runtime_card_guard.c`: the loader takes one for a module that is not running).
+
 ### Status page
 
 `status.s` also gates stock's time-stretch helper task (`mw_ts_gate`): it skips a track whose TSTR is OFF, since only
@@ -297,11 +331,12 @@ time-stretch reads its splice search and only BEAT reads its transient markers.
 `status.c` measures, all the time, the ColdFire's load (main's idle spin, timed on DTIM3, `status.s`), each
 DSP core's mean and peak load (core 0's own idle count, core 1's counted wait for core 0, `dsp_receiver.asm`),
 each core's code arena, the delay-buffer blocks and the module pool. CUE + PROJ shows it as a dialog (NO closes it),
-and so does PROJ > MODWERK > LOAD: MODWERK STATUS in two sections, WORKING NOW (CPU, then each DSP chip by its tracks,
+and so does PROJ > MODWERK > LOAD: MODWERK BASE and its version, in two sections, WORKING NOW (CPU, then each DSP chip by its tracks,
 measured, with the recent peak; tracks 1-4 run on core 1, tracks 5-8 on core 0) and DSP SPACE USED (per chip, the fuller
 of what admission books and its code memory: what says DSP MEMORY FULL first); `npm run device -- stats` prints it from the loader report on development
 bases. PROJ > MODWERK is a fifth root category (Octabam's MAINMENU.md: the root window is five rows tall, stock fills
-four; `build_core.py` copies the four stock rows and appends it, with its icon and list): LOAD, MODULE LOAD (each
+four; `build_core.py` copies the four stock rows and appends it, with its icon and list): MODULES last ("Modules on
+and off" above), and before it LOAD, MODULE LOAD (each
 installed module's share of each core's frame from its own cycle figure, `~` when that is 7/4 of an emulator claim:
 the meters see only each core's sum), MISSING (each module a project names but no installed module serves, with where
 it is named first: the current bank, then the others, a working Part before a saved copy, `BANK A SAVED PART 2 T5`;

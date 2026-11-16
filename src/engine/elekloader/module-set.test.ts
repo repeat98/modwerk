@@ -5,7 +5,7 @@ import manifest from '../assets/octatrack-module-packages.json' with { type: 'js
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
 import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 import { removal } from '../../dev/octatrack-usb-lifecycle'
-import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
+import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
 
 const file = (path: string) => new Uint8Array(readFileSync(new URL('../../../public/' + path, import.meta.url)))
 const load = async (entry: { path: string }) => file(entry.path)
@@ -53,6 +53,20 @@ describe('preparing a module set', () => {
     expect((await catalogue.prepare({ name: 'Remove', moduleIds: [] }, current, fetched, undefined, requiredBase)).changes[0].undo).toEqual(file(entry.path))
     expect(() => createRuntimeCatalogue({ packages: [{ ...entry, requiredBase: 'not-an-identity' }] })).toThrow('inconsistent')
     expect(() => createRuntimeCatalogue({ packages: [{ ...entry, requiredBase: [requiredBase] as unknown as string }] })).toThrow('inconsistent')
+  })
+  it('leaves a module that is switched off on the unit off: no package for it, and nothing to sync for it alone', async () => {
+    const running = [{ handle: 27, layout: 1, module: '873d83cc', name: 'E-Verb' }], off = [{ handle: 0xff, layout: 1, module: runtimeId('tapehead'), name: 'TapeHead' }]
+    const current = inventoryFrom(running, off)
+    expect(current).toEqual({ moduleIds: ['everb'], removedStockFx: [], offIds: ['tapehead'] })
+    expect(inventoryFrom(running, [])).toEqual({ moduleIds: ['everb'], removedStockFx: [], offIds: [] }) // a base with the page, nothing off
+    expect(inventoryFrom(running, running).offIds).toEqual([]) // read a moment apart: what runs is not off
+    const capabilities = { abi: 8, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 }
+    expect(moduleSetReview({ name: 'Live', moduleIds: ['everb', 'tapehead'] }, current, capabilities)).toMatchObject({ needsSync: false, changes: { add: [], remove: [] } })
+    const { changes } = await prepareModuleSet({ name: 'Live', moduleIds: ['everb', 'tapehead', 'miniverb'] }, current, load, capabilities)
+    expect(changes.map(change => change.module)).toEqual(['Mini Verb'])
+    // Off and no longer in the set: the sync removes it from the unit, with its package to put it back on Undo.
+    const out = await prepareModuleSet({ name: 'Live', moduleIds: ['everb'] }, current, load, capabilities)
+    expect(out.changes).toEqual([{ module: 'TapeHead', data: removalPackage('tapehead'), undo: file(manifest.packages[2].path) }])
   })
   it('removes first, then installs, each with the package that undoes it', async () => {
     const current = inventoryFrom([{ handle: 27, layout: 1, module: '873d83cc', name: 'E-Verb' }, { handle: 0xff, layout: 0, module: '0000002a', name: '' }])
@@ -333,6 +347,13 @@ describe('machine groups over USB', () => {
     const result = await catalogue.prepare({ name: 'Set', moduleIds: wanted }, empty, fetched, capable)
     expect(result.changes).toEqual([{ module: 'Machines', data: packages[mask - 1].data, undo: removalPackage('octatrack-machines') }])
     expect(inventory(99 + mask)).toEqual({ moduleIds: wanted, removedStockFx: [], runtimeGroups: [{ id: 'octatrack-machines', layout: 99 + mask }] })
+  })
+  it('leaves a machine package that is switched off on the unit off, and removes it by its own id when the set drops its machines', async () => {
+    const packages = [groupPackage(['vector', 'synth'], 14)], { catalogue, fetched } = machineCatalogue(packages)
+    const off = catalogue.inventory([], [{ handle: 255, layout: 14, module: runtimeId('octatrack-machines'), name: 'Machines' }])
+    expect(off).toEqual({ moduleIds: [], removedStockFx: [], offIds: ['vector', 'synth'] })
+    expect(catalogue.review({ name: 'Set', moduleIds: ['synth', 'vector'] }, off, capable)).toMatchObject({ needsSync: false, problem: undefined })
+    expect((await catalogue.prepare({ name: 'Set', moduleIds: [] }, off, fetched, capable)).changes).toEqual([{ module: 'Machines', data: removalPackage('octatrack-machines'), undo: undefined }])
   })
   it('updates the same member IDs from a retained layout and restores that exact package on Undo', async () => {
     const old = groupPackage(['vector', 'synth'], 14, false), next = groupPackage(['vector', 'synth'], 29)

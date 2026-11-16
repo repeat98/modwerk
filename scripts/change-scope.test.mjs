@@ -154,6 +154,9 @@ describe('documentation and firmware scheduling', () => {
       git('add', '.'); git('commit', '-m', 'code')
       const code = git('rev-parse', 'HEAD'); rmSync(resolve(root, 'sdk/digitakt/modules/demo/src/demo.c'))
       expect(readChangeScope({ root, base: code }).elemod).toBe(true)
+      expect(readChangeScope({ root, base: code }).base).toBe(false)
+      mkdirSync(resolve(root, 'sdk/machines/octatrack'), { recursive: true }); writeFileSync(resolve(root, 'sdk/machines/octatrack/base-binding.json'), '{}')
+      expect(readChangeScope({ root, base: code }).base).toBe(true)
       expect(() => readChangeScope({ root, base: 'missing-ref' })).toThrow()
     } finally { rmSync(root, { recursive: true, force: true }) }
   })
