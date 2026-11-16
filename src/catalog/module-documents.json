@@ -12667,6 +12667,208 @@
           }
         }
       ]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "midi-scenes",
+      "key": "MIDI SCENES",
+      "name": "MIDI Scenes",
+      "version": "0.3.0-experimental",
+      "category": "scenes",
+      "access": {
+        "location": "MIDI track pages (NOTE, LFO, ARP, CTRL 1, CTRL 2) with SCENE A or SCENE B held",
+        "steps": [
+          "Press MIDI and select a MIDI track with its TRACK key.",
+          "Hold SCENE A or SCENE B and press a TRIG key to assign a scene to that side.",
+          "Keep the scene key held and turn an encoder on a MIDI page to lock that parameter in the scene; press the encoder to clear the lock.",
+          "Release the scene key and move the crossfader to morph between the two scenes."
+        ],
+        "screenshots": [
+          "media/ot-scene-lock.png",
+          "media/ot-released.png"
+        ]
+      },
+      "author": {
+        "github": "bkkbrls-del",
+        "credits": [
+          "bkkbrls-del: MIDISC, the MIDI scene lock behaviour this module follows",
+          "Sam Banks: the GNU-as rewrite in octabam (MIT)",
+          "Modwerk contributors: the port to the Modwerk base's hooks"
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "MIDI scene locks",
+        "family": "Scenes",
+        "summary": "Scene locks for the MIDI tracks: hold SCENE A or B and turn a knob, then morph with the crossfader.",
+        "overview": "Stock scenes lock audio tracks only. MIDI Scenes gives the eight MIDI tracks the same scene locks: hold SCENE A or SCENE B on a MIDI track and turn a knob on the NOTE, LFO, ARP, CTRL 1 or CTRL 2 page, and the crossfader morphs between the two scenes and sends the values as CCs. Locks are kept per Part, saved with the project and kept over a power cycle like stock's.",
+        "highlights": [
+          "Hold-to-lock, the held scene's value on the knob, encoder press to clear, lock LEDs and lit scene pads, as on audio tracks.",
+          "The crossfader morphs each locked MIDI parameter between scenes A and B; changed values go out as CCs before the note.",
+          "CLEAR, COPY and PASTE SCENE carry the MIDI locks; Part Clear clears them.",
+          "Saved with the project in scenes.work, never in the Part: LFO designer shapes stay intact."
+        ],
+        "usage": [
+          "Press MIDI and select a MIDI track. Assign a scene to SCENE A and another to SCENE B (hold the scene key, press a TRIG key).",
+          "Hold SCENE B and turn a knob, for example encoder A on CTRL 1: the knob shows the locked value. Release the scene key.",
+          "Move the crossfader from A to B: the locked parameter moves between its Part value and the lock and goes out as a CC."
+        ]
+      },
+      "controls": [],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "MIDI tracks",
+        "conflicts": [],
+        "uiClaims": [
+          "key:SCENEA+A@MIDI",
+          "key:SCENEA+B@MIDI",
+          "key:SCENEA+C@MIDI",
+          "key:SCENEA+D@MIDI",
+          "key:SCENEA+E@MIDI",
+          "key:SCENEA+F@MIDI",
+          "key:SCENEB+A@MIDI",
+          "key:SCENEB+B@MIDI",
+          "key:SCENEB+C@MIDI",
+          "key:SCENEB+D@MIDI",
+          "key:SCENEB+E@MIDI",
+          "key:SCENEB+F@MIDI",
+          "key:SCENEA+PUSHA@MIDI",
+          "key:SCENEA+PUSHB@MIDI",
+          "key:SCENEA+PUSHC@MIDI",
+          "key:SCENEA+PUSHD@MIDI",
+          "key:SCENEA+PUSHE@MIDI",
+          "key:SCENEA+PUSHF@MIDI",
+          "key:SCENEB+PUSHA@MIDI",
+          "key:SCENEB+PUSHB@MIDI",
+          "key:SCENEB+PUSHC@MIDI",
+          "key:SCENEB+PUSHD@MIDI",
+          "key:SCENEB+PUSHE@MIDI",
+          "key:SCENEB+PUSHF@MIDI"
+        ],
+        "limitations": [
+          "OS 1.40C, Modwerk base 0.7.4 or newer, over USB only: card firmware cannot include it.",
+          "Installed and run briefly on one MKII; the scene locks, the crossfader, saving and reloading are not yet tested on a unit.",
+          "A damaged scenes.work, or one from a newer version, is never overwritten: the project then starts with no MIDI scene locks and keeps none. Rename or delete the file on the card to start over.",
+          "Keep MIDI Scenes installed while you save, reload or copy projects that use it: without it scenes.work is not saved, reloaded or copied with the project.",
+          "Part Save and Reload leave the MIDI locks as they are; a Kit or a Part copy does not carry them.",
+          "Uses about 272 KB of the shared module memory (a lock table for each of the project's 64 Parts)."
+        ]
+      },
+      "resources": {
+        "recorded": "16 November 2026; from the assembled unit, unmeasured on a unit",
+        "storage": {
+          "label": "Storage",
+          "display": "5.4 KB of code, 0.7 KB of data and 266 KB of buffers; scenes.work on the card (262 KB a project)",
+          "value": 278004,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "m68k-elf-size of scenes.s: 5,430 bytes of code, 654 of data, 271,920 of bss (64 lock tables of 4,096 bytes, a 4 KB read slot, the file buffer and the CRC table). Battery RAM: 9,984 bytes at 0x100f9800.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "ColdFire",
+          "display": "+0.2 points of the frame interrupt, +0.3 of the CPU meter; in use within noise",
+          "value": 0.2,
+          "unit": "percent-of-frame",
+          "method": "hardware",
+          "conditions": "MKII, base 0.7.4 development twin: device:price at rest; then eight MIDI tracks with a trig on every step, 480 locks, crossfader sweeps and pattern changes, alone and beside 14 modules (TESTING.md). MIDI channels off.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "MIDI tracks with scene locks while the crossfader moves.",
+          "cpu": {
+            "level": "minimal",
+            "basis": "measured-comparison",
+            "rationale": "At rest +0.2 points of the frame interrupt; in use with 480 locks and the crossfader sweeping, the CPU meter moved 0.1-0.2 points, within run-to-run noise.",
+            "source": "TESTING.md"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP code: MIDI Scenes runs on the ColdFire only and sends MIDI.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "high",
+            "basis": "source-estimate",
+            "rationale": "About 272 KB of the 768 KiB module memory all modules share.",
+            "source": "TESTING.md"
+          }
+        },
+        "cpuPrice": {
+          "value": 0.2,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price",
+          "date": "2026-11-16",
+          "conditions": "MKII, base 0.7.4 development twin 31d16f88, the owner's project A01 playing, installed and used nowhere, 8 s per reading; in use with 480 scene locks on eight MIDI tracks and the crossfader sweeping it read +0.1 (alone) and +0.0 (beside 14 other modules); MIDI channels off, so no CC was sent",
+          "source": "TESTING.md"
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "MKII, base 0.7.4 development twin: installed as trials, hand-tested by the owner, CPU price +0.2 points at rest, in-use and stress runs with 480 locks alone and beside 14 modules, no skipped render, crash or stall. MIDI channels were off; save, reload and power cycle not tested.",
+        "hardwareStatus": "untested",
+        "evidenceRevision": "b2f7d26e59fd09ebee929835b8d10a3079f18afc",
+        "gates": [],
+        "documentation": {
+          "tutorial": {
+            "title": "Quick tutorial",
+            "steps": [
+              "Press MIDI and select a MIDI track with its TRACK key. Assign a scene to SCENE A and another to SCENE B: hold the scene key and press a TRIG key.",
+              "Hold SCENE B and turn encoder A on CTRL 1: the knob shows the locked value. Release the scene key.",
+              "Move the crossfader from A to B: CC 1 moves between the Part's value and the lock. To stop, hold SCENE B and press encoder A to clear the lock."
+            ]
+          },
+          "screenshots": [
+            "media/ot-scene-lock.png",
+            "media/ot-released.png"
+          ],
+          "screenshotStyle": "black-and-white"
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Sam Banks' MIT rewrite from octabam with Modwerk's port changes, MIT. Stock sites are named by address, length and SHA-256 only. No firmware, extracted stock code or built images are included."
+      },
+      "media": [
+        {
+          "path": "media/ot-scene-lock.png",
+          "captureType": "hardware",
+          "caption": "Hold SCENE B on a MIDI track and turn a knob: the NOTE page shows scene B's locked values (NOTE E 3, VEL 120), highlighted as stock highlights an audio track's scene lock.",
+          "alt": "MIDI NOTE page of MIDI track 1 on pattern A01 with SCENE B held: NOTE E 3 and VEL 120 shown inverted as locked values, LEN 1/16.",
+          "credit": "Modwerk contributors (capture on the owner's MKII)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "MIDI NOTE page, SCENE B held",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.3.0-experimental",
+            "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
+            "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 (MAIN SHA-256 in imageSha256) booted from RAM, MIDI Scenes 0.3.0 installed as a 60-second trial (package SHA-256 f38ae755…), the owner's project on pattern A01, MIDI track 1, scene 1 on A and scene 9 on B, stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. The locks were cleared and the trial rolled back afterwards."
+          }
+        },
+        {
+          "path": "media/ot-released.png",
+          "captureType": "hardware",
+          "caption": "Let go of SCENE B: the page shows the Part's own values again (NOTE E 2, VEL 100). Move the crossfader to morph between them and the scene's locks.",
+          "alt": "MIDI NOTE page of MIDI track 1 on pattern A01 with no scene held: NOTE E 2, VEL 100, LEN 1/16.",
+          "credit": "Modwerk contributors (capture on the owner's MKII)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "MIDI NOTE page",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.3.0-experimental",
+            "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
+            "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 (MAIN SHA-256 in imageSha256) booted from RAM, MIDI Scenes 0.3.0 installed as a 60-second trial (package SHA-256 f38ae755…), the owner's project on pattern A01, MIDI track 1, scene 1 on A and scene 9 on B, stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. The locks were cleared and the trial rolled back afterwards."
+          }
+        }
+      ]
     }
   ]
 }

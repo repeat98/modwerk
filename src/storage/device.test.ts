@@ -95,7 +95,7 @@ describe('device persistence', () => {
     const db = await openDeviceDatabase('test-' + crypto.randomUUID())
     const store = deviceStore(db), current = newConfiguration('Older set', ['miniverb'])
     // As saved before the module left the library: writing it directly skips today's validation.
-    const saved = { ...current, moduleIds: ['midi-scenes', 'miniverb'], moduleVersions: { ...current.moduleVersions, 'midi-scenes': '0.2.5-experimental' } }
+    const saved = { ...current, moduleIds: ['modulation', 'miniverb'], moduleVersions: { ...current.moduleVersions, modulation: '0.1.1-experimental' } }
     await new Promise((resolve, reject) => { const tx = db.transaction('configurations', 'readwrite'); tx.objectStore('configurations').put(saved); tx.oncomplete = resolve; tx.onerror = reject })
     const skipped: unknown[] = []
     expect(await store.listConfigurations(error => skipped.push(error))).toEqual([current])

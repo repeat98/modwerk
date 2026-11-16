@@ -62,7 +62,7 @@ export function getModuleSource(module: FirmwareModule): string {
 
 // Removed from the library for good (owner, 12 November 2026). A saved configuration, version pin or backup that still
 // names one loses it quietly when it is read, instead of becoming unreadable.
-export const REMOVED_MODULE_IDS: readonly string[] = ['spectrum', 'modulation', 'character', 'midi-scenes']
+export const REMOVED_MODULE_IDS: readonly string[] = ['spectrum', 'modulation', 'character']
 export function withoutRemovedModules(ids: readonly string[]): string[] { return ids.filter(id => !REMOVED_MODULE_IDS.includes(id)) }
 
 export function resolveSelection(ids: readonly string[]): FirmwareModule[] {
