@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 2,
+  "id": "midi-scenes",
+  "key": "MIDI SCENES",
+  "name": "MIDI Scenes",
+  "version": "0.3.0-experimental",
+  "category": "scenes",
+  "author": {
+    "github": "bkkbrls-del",
+    "credits": [
+      "bkkbrls-del: MIDISC, the MIDI scene lock behaviour this module follows",
+      "Sam Banks: the GNU-as rewrite in octabam (MIT)",
+      "Modwerk contributors: the port to the Modwerk base's hooks"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "MIDI scene locks",
+    "family": "Scenes",
+    "summary": "Scene locks for the MIDI tracks: hold SCENE A or B and turn a knob, then morph with the crossfader.",
+    "overview": "Stock scenes lock audio tracks only. MIDI Scenes gives the eight MIDI tracks the same scene locks: hold SCENE A or SCENE B on a MIDI track and turn a knob on the NOTE, LFO, ARP, CTRL 1 or CTRL 2 page, and the crossfader morphs between the two scenes and sends the values as CCs. Locks are kept per Part, saved with the project and kept over a power cycle like stock's.",
+    "highlights": [
+      "Hold-to-lock, the held scene's value on the knob, encoder press to clear, lock LEDs and lit scene pads, as on audio tracks.",
+      "The crossfader morphs each locked MIDI parameter between scenes A and B; changed values go out as CCs before the note.",
+      "CLEAR, COPY and PASTE SCENE carry the MIDI locks; Part Clear clears them.",
+      "Saved with the project in scenes.work, never in the Part: LFO designer shapes stay intact."
+    ],
+    "usage": [
+      "Press MIDI and select a MIDI track. Assign a scene to SCENE A and another to SCENE B (hold the scene key, press a TRIG key).",
+      "Hold SCENE B and turn a knob, for example encoder A on CTRL 1: the knob shows the locked value. Release the scene key.",
+      "Move the crossfader from A to B: the locked parameter moves between its Part value and the lock and goes out as a CC."
+    ]
+  },
+  "access": {
+    "location": "MIDI track pages (NOTE, LFO, ARP, CTRL 1, CTRL 2) with SCENE A or SCENE B held",
+    "steps": [
+      "Press MIDI and select a MIDI track with its TRACK key.",
+      "Hold SCENE A or SCENE B and press a TRIG key to assign a scene to that side.",
+      "Keep the scene key held and turn an encoder on a MIDI page to lock that parameter in the scene; press the encoder to clear the lock.",
+      "Release the scene key and move the crossfader to morph between the two scenes."
+    ],
+    "screenshots": []
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "MIDI tracks",
+    "conflicts": [],
+    "uiClaims": [
+      "key:SCENEA+A@MIDI",
+      "key:SCENEA+B@MIDI",
+      "key:SCENEA+C@MIDI",
+      "key:SCENEA+D@MIDI",
+      "key:SCENEA+E@MIDI",
+      "key:SCENEA+F@MIDI",
+      "key:SCENEB+A@MIDI",
+      "key:SCENEB+B@MIDI",
+      "key:SCENEB+C@MIDI",
+      "key:SCENEB+D@MIDI",
+      "key:SCENEB+E@MIDI",
+      "key:SCENEB+F@MIDI",
+      "key:SCENEA+PUSHA@MIDI",
+      "key:SCENEA+PUSHB@MIDI",
+      "key:SCENEA+PUSHC@MIDI",
+      "key:SCENEA+PUSHD@MIDI",
+      "key:SCENEA+PUSHE@MIDI",
+      "key:SCENEA+PUSHF@MIDI",
+      "key:SCENEB+PUSHA@MIDI",
+      "key:SCENEB+PUSHB@MIDI",
+      "key:SCENEB+PUSHC@MIDI",
+      "key:SCENEB+PUSHD@MIDI",
+      "key:SCENEB+PUSHE@MIDI",
+      "key:SCENEB+PUSHF@MIDI"
+    ],
+    "limitations": [
+      "OS 1.40C, Modwerk base 0.7.4 or newer, over USB only: card firmware cannot include it.",
+      "Not yet tested on a unit or in the emulator.",
+      "A damaged scenes.work, or one from a newer version, is never overwritten: the project then starts with no MIDI scene locks and keeps none. Rename or delete the file on the card to start over.",
+      "Keep MIDI Scenes installed while you save, reload or copy projects that use it: without it scenes.work is not saved, reloaded or copied with the project.",
+      "Part Save and Reload leave the MIDI locks as they are; a Kit or a Part copy does not carry them.",
+      "Uses about 272 KB of the shared module memory (a lock table for each of the project's 64 Parts)."
+    ]
+  },
+  "resources": {
+    "recorded": "16 November 2026; from the assembled unit, unmeasured on a unit",
+    "storage": {
+      "label": "Storage",
+      "display": "5.4 KB of code, 0.7 KB of data and 266 KB of buffers; scenes.work on the card (262 KB a project)",
+      "value": 278004,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "m68k-elf-size of scenes.s: 5,430 bytes of code, 654 of data, 271,920 of bss (64 lock tables of 4,096 bytes, a 4 KB read slot, the file buffer and the CRC table). Battery RAM: 10,240 bytes at 0x100f9800.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire",
+      "display": "Unmeasured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "The mix runs when the crossfader moves, at a scene recall, at a pattern or Part change and on the playback step that follows; an edit packs the bank's locks into battery RAM. Nothing on the DSP.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "MIDI tracks with scene locks while the crossfader moves.",
+      "cpu": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "Work happens on crossfader moves, scene and Part events and lock edits, not per sample; not measured.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "high",
+        "basis": "source-estimate",
+        "rationale": "About 272 KB of the 768 KiB module memory all modules share.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Assembled and packaged only. No emulator or hardware results yet.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "b2f7d26e59fd09ebee929835b8d10a3079f18afc",
+    "gates": []
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Sam Banks' MIT rewrite from octabam with Modwerk's port changes, MIT. Stock sites are named by address, length and SHA-256 only. No firmware, extracted stock code or built images are included."
+  },
+  "media": []
+}
