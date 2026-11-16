@@ -132,7 +132,23 @@
     "summary": "Assembled and packaged only. No install, gesture, save, reload or power cycle tested on a unit or in the emulator.",
     "hardwareStatus": "untested",
     "evidenceRevision": "e39515311e23a259fefb00a38c5b73d47893db6a",
-    "gates": []
+    "gates": [],
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Install Kits into a project and press PART (MKI: FUNC+MIDI). The list shows the project's Parts as Kits 001 to 064.",
+          "Change a sound on the current track, press FUNC+PART (MKI: FUNC+MIDI, then FUNC+BANK), move to an empty Kit, press YES, type a name and confirm: `KIT SAVED`, and the status line shows the new Kit.",
+          "Select another pattern, press PART, choose the Kit you saved and press YES: that pattern now plays it. Switch between the two patterns while playing; each plays its own Kit."
+        ]
+      },
+      "screenshots": [
+        "media/ot-status-kit.png",
+        "media/ot-load-kit.png",
+        "media/ot-save-kit.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    }
   },
   "license": {
     "spdx": "MIT",
