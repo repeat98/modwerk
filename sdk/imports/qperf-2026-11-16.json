@@ -6,7 +6,7 @@
   "changes": [
     "35 functions reached only from the key, tick and project handlers are marked cold, so GCC builds them for size; the audio handler, the lockers and the pad gate are unchanged and the module stays at -O2. 17,805 to 15,881 bytes of RAM; no behaviour change."
   ],
-  "runtimeSourceSha256": "7f19a7ae521a9f211f05c577b1712cb6fe64ab97924edcf6df7d7d2cd17766b6",
+  "runtimeSourceSha256": "0357803eb0531b8e14fcba1e1fa4066d369b9d7fa97c47e7c4e7c23b33430fcc",
   "packages": [
     {
       "os": "1.74",
