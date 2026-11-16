@@ -17,7 +17,7 @@ A worker may, without asking: read anything, run `diagnostics:pull`, build and t
 List them with `gh pr list --state open --json number,title,author,isDraft,labels,mergeStateStatus,updatedAt`. The owner's review list is `is:pr is:open draft:false -label:needs-work -label:one-at-a-time`; `pr-triage.yml` labels the rest ([review queue](COMMUNITY_OPERATIONS.md#review-queue-and-saved-replies)). Review contributors' drafts too: many authors open one without knowing it, and the bot skips drafts. Give every pull request one verdict: ready to merge, needs a refresh, red, waiting on its author, or needs the owner's call, and why.
 
 - **Review** new and changed pull requests. Read the code they touch, not only the diff, and judge each against the [modding guidelines](../MODDING_GUIDELINES.md) and the whole stack:
-  - **The base:** its hooks, events and tables, and the order open pull requests regenerate it in.
+  - **The base:** its hooks, events and tables, the order open pull requests regenerate it in, and its cost: a base pull request quotes the line `node scripts/base-size.mjs` prints (container bytes of 851,712, and the change since the previous base).
   - **The USB lifecycle:** package, Keep/Undo, removal, base-bound packages.
   - **Module splits:** one job per module, no dependency on another module, shared code in the base or SDK first, no gesture only one module can hold.
   - **Cross-compatibility:** its `uiClaims` and conflicts against every other module.

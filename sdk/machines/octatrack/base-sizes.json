@@ -1,0 +1,73 @@
+{
+ "schema": 1,
+ "bases": [
+  {
+   "base": "f6422fa6",
+   "identity": "f6422fa60b82848d784ea3086548facca3dd70b20e96dd0960536b0e5ba4e75e",
+   "layouts": {
+    "tracks-main-cue": {
+     "main": 1309685,
+     "container": 788276
+    },
+    "tracks": {
+     "main": 1309529,
+     "container": 788084
+    },
+    "tracks-post": {
+     "main": 1311134,
+     "container": 789896
+    },
+    "main-cue": {
+     "main": 1309448,
+     "container": 788064
+    },
+    "main": {
+     "main": 1309308,
+     "container": 787852
+    },
+    "master": {
+     "main": 1309332,
+     "container": 787916
+    },
+    "off": {
+     "main": 1307905,
+     "container": 786312
+    }
+   }
+  },
+  {
+   "base": "0.7",
+   "identity": "dfb632b0c5a7eda829b8394030d67528f3e54649ae0ca56b741cf9c2036cd731",
+   "layouts": {
+    "tracks-main-cue": {
+     "main": 1314566,
+     "container": 793704
+    },
+    "tracks": {
+     "main": 1314407,
+     "container": 793512
+    },
+    "tracks-post": {
+     "main": 1316025,
+     "container": 795248
+    },
+    "main-cue": {
+     "main": 1314330,
+     "container": 793420
+    },
+    "main": {
+     "main": 1314193,
+     "container": 793308
+    },
+    "master": {
+     "main": 1314214,
+     "container": 793296
+    },
+    "off": {
+     "main": 1312779,
+     "container": 791696
+    }
+   }
+  }
+ ]
+}
