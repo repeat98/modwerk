@@ -92,3 +92,9 @@ The tester confirmed the two remaining U117 hardware checks. ROOT set to TRIG fo
 Standalone X117 uses the Digitakt II base that passes built-in Euclidean hits to Chord Arp. Two pinned builds reproduced image SHA-256 b15a9d2357d3bcc2cefc3e94cd9996790e67d644dbef9df1de01acad50dccb76. In Digikit, four built-in hits over two loops started phrases at the stock hit times and bypass restored the original single notes. Claptom-music reported successful playback on Digitakt II.
 
 Combined Y117 adds Euclidean Scale. Its image SHA-256 is 76ba91b57c347d6d1c37c518250cc9a2f65ec7073a46eff9ad2aff570e6e5c9c. Digikit reproduced the X117 note starts and releases with both modules installed. Claptom-music reported that the combined hardware test worked.
+
+## QB17 hardware report
+
+On 2026-11-16, Claptom-music reported that Chord Arp played on a physical Digitakt II and that saving and reloading the scratch project on QB17 restored the arp enable state and trig lock. Official OS 1.17 then reopened the same project with the A01 kick on step 1 and the A02 snare on step 5 intact.
+
+The QB17 SYX SHA-256 was 9ef3258f10bfa9fd283c21ec3bc9b3d0ddf6c67ec07e02dc0eadf61f53accf30. It used the exact core catalog package from Modwerk PR #1571, SHA-256 510fae56f99e8029784e45e14a8beaf6977afe6e2177d253bb79c458b95046ee. Track Names and the Perform modules were outside this hardware test.
