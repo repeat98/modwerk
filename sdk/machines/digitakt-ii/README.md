@@ -4,7 +4,7 @@ Digitakt II is in preview for stock OS 1.17. The browser uses the pinned Modwerk
 
 ## Modwerk stack
 
-The browser builds on Modwerk's pinned 1.1 base. The Digitakt II follows the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)): a Modwerk base started from that core's source, which takes the hooks mods propose, then a USB link, the loader's glue, base updates over USB, the MCP's device tools and the machine page.
+The browser builds on Modwerk's pinned 1.1 base. The Digitakt II follows the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)): a Modwerk base started from that core's source, which takes the hooks mods propose, then a USB link, the loader's glue, base updates over USB, the MCP's device tools and the machine page. [GOAL.md](GOAL.md) sets out the order, where each piece stands and how contributors take one.
 
 The [Modwerk base](elekloader/README.md) adds the audio sequencer pitch and phrase hooks and active-project lifecycle to the pinned core 1.1 source. The 1.1 additions below give mods per-frame parameter values, key LEDs and per-project and per-kit data.
 
