@@ -42,7 +42,8 @@ rytm-emu, headless `dtboot`; emulator results are not hardware evidence.
 - Normal play unchanged: RAMP in project slot 1 on BD, BD pressed at RATE 100 then 64 (CC 25), and again at RATE 32 (backward): SO01 and SF02 gave identical step, position, FIN and SMP words at every 100 M.
 - Screenshots retaken on SV12 with 0.5.0's plans: the same screens, apart from where the playhead stood.
 - Unit image SU02 (base 1e92a59a with the link + this source, lock RB08, layout 0x026f1e10): `.syx` `3eb6830e…89fe`; boots and answers the link in rytm-emu. The author's earlier rig cases for this module (`cases/sample-rate`) give the same 1 pass and 5 fails on SU02 as on SU00 (0.5.0, same base): their references predate 0.5.0's screen.
-- Not run: a Sound previewed from the SOUND BROWSER whose sample is not in the project (if stock plays it from slot 129, it previews at 1x whatever its RATE). Nothing of 0.5.1 has run on a unit yet.
+- Not run: a Sound previewed from the SOUND BROWSER whose sample is not in the project (if stock plays it from slot 129, it previews at 1x whatever its RATE).
+- Unit (16 Nov 2026, SU02 booted from RAM over RB08 on npp1993's Analog Rytm MKII, OS 1.74, scratch project), as the author reports: FUNC + YES in GLOBAL > SAMPLES previewed at normal speed with the active track at RATE 0, +63 and -64 and with an LFO on RATE; pad play followed RATE. "All good."
 
 ## 0.5.0: one row of values over a taller waveform (2026-11-12)
 
