@@ -1,5 +1,13 @@
 # Direct Jump Kyoti: hardware record
 
+## 0.2.0-experimental (pending)
+
+Not run on a unit yet. The author has a hardware test image of the tested native build for his MKI: this module alone with every stock effect kept, MAIN OS SHA-256 `3c7b1419bc8c567dc4d09b6a675c36e5fb7e7fa3edfc231ebd43c368b7ebbd62`, version string MW_DJK020, built from this branch's source (TESTING.md). His results, with the date, the card `.bin` he flashed and what he tried, go here; until then nothing in this file is about 0.2.0.
+
+The checks asked for: the toggle and its toast; OFF after a power-on; a jump into a pattern on another Part; jumps between patterns of other lengths and scales (PER TRACK); a cue in the playing pattern's last step; 1:2 trig conditions across a jump, with [FILL] latched and a PRE trig after it; LFO AUTO CHANGE on with a sample ringing from the outgoing pattern; SILENCE TRACKS on (no pop); a Plays Free MIDI track in PER TRACK mode; Direct Jump off behaving as stock. The USB package `3185b05c…` cannot be installed on his unit (no beta access), so it is not part of this run.
+
+His own builds of the same Direct Jump code (not Modwerk builds), 15 November 2026: the standalone image `140C_KDJ7` (mainos `7c6131e7…`) ended the SILENCE TRACKS pop at a Part-changing jump; KYOTI V1.8C (beside his Clyps module) passed landings at other lengths and scales, a cue in the last step, trig conditions across a jump and each track's Part with LFO AUTO CHANGE on.
+
 ## 0.1.2-experimental (25 October 2026)
 
 The same unit, base and kept set as the 0.1.1 run below, the same day, at the owner's request; no power cycle, no flash, nothing saved, the kept set put back.
