@@ -1,0 +1,14 @@
+{
+  "kind": "owner-approved-update",
+  "id": "midi-scenes",
+  "version": "0.3.0-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-16",
+  "waived": [
+    "chip-worst-case-cycles",
+    "current-build-hardware"
+  ],
+  "sourceSha256": "2f35728161178a9a91812a7636d2dd87a416e7b04cc0c17056e06fa88cd77af9",
+  "ownerStatement": "Release MIDI Scenes 0.3.0-experimental. I waive the static cycle bound and the hardware qualification of this exact build for this version.",
+  "reason": "A port of Sam Banks' octabam rewrite (MIT, his OK on 13 November 2026) onto base 0.7.4's hooks. On the owner's MKII (development twins of 0.7.4 from RAM, 16 November 2026) it installed and ran as trials, the owner hand-tested it (\"ok, worked\"), and its CPU price read +0.2 points of the frame interrupt at rest; with 480 locks and the crossfader sweeping it stayed within noise, alone and beside 14 other modules, with no skipped render, crash or stall (TESTING.md). No static cycle count was made, and device:qualify did not run on the exact release package and base."
+}

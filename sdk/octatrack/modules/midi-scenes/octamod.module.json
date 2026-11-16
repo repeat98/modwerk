@@ -141,7 +141,22 @@
     "summary": "MKII, base 0.7.4 development twin: installed as trials, hand-tested by the owner, CPU price +0.2 points at rest, in-use and stress runs with 480 locks alone and beside 14 modules, no skipped render, crash or stall. MIDI channels were off; save, reload and power cycle not tested.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b2f7d26e59fd09ebee929835b8d10a3079f18afc",
-    "gates": []
+    "gates": [],
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Press MIDI and select a MIDI track with its TRACK key. Assign a scene to SCENE A and another to SCENE B: hold the scene key and press a TRIG key.",
+          "Hold SCENE B and turn encoder A on CTRL 1: the knob shows the locked value. Release the scene key.",
+          "Move the crossfader from A to B: CC 1 moves between the Part's value and the lock. To stop, hold SCENE B and press encoder A to clear the lock."
+        ]
+      },
+      "screenshots": [
+        "media/ot-scene-lock.png",
+        "media/ot-released.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    }
   },
   "license": {
     "spdx": "MIT",
