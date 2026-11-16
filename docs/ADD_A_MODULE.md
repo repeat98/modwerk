@@ -215,7 +215,7 @@ stock tenants and fixed/instance cycle costs. A native composition or a
 standalone package that links is not completion.
 
 Release evidence must cover the exact source-built browser/runtime packages,
-regeneration and stock-free scan, base compatibility and truthful inventory,
+regeneration, base compatibility and truthful inventory,
 installation, the self-test of the running set, Keep/Undo, replacement/removal, missing-module
 fallback and distinct instances through Part/project reload and physical
 reboot where applicable. Give hardware steps and record actual results;
@@ -260,14 +260,10 @@ replays instructions a detour displaced, and refuses table copies at import.
 Elekloader's port runs a manifest as `octabam_<name>`, so a manifest can
 pick the form by `__name__` (`sdk/octatrack/modules/dejavu/manifest.py`).
 
-**Strict stock scans can match original output.** Locate runs with
-`module_packages.runs` and `check_stock_free.stock_runs`. Vary ignored bitmap
-bits or use one state pointer per function (`sdk/drafts/butter-fingers`). Six
-padded `nop`s already match stock: guard the displaced span with `expect` and
-write only the jump (Direct Jump Kyoti's `TS_HOOK`). Stock-copy sources must also
-pass the machine glue's `modwerk_machine_patchable` bounds; an identical span in
-protected bootloader storage is refused even for copying. Verify the real
-loader, byte equality and final scans; see [source-bound reconstruction](OCTATRACK_RECONSTRUCTION.md).
+**Your own code may match stock.** No scan refuses a package whose instructions
+coincide with the stock OS. A stock copy's source must pass the machine glue's
+`modwerk_machine_patchable` bounds; an identical span in protected bootloader
+storage is refused even for copying ([source-bound reconstruction](OCTATRACK_RECONSTRUCTION.md)).
 
 A new module version rebuilds its USB package in the same pull request:
 `npm run octatrack:module-packages` with the m68k-elf toolchain and the
