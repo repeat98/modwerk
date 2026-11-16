@@ -640,6 +640,12 @@
       "sha256": "acae3fef97f85a941c3215e1065353c94967ff44bb9528c22135c611a8edc32e",
       "path": "octatrack-modules/amiga/0.3.0-experimental.mwrm",
       "usbOnly": true
+    },
+    {
+      "id": "kits",
+      "octabam": true,
+      "usbOnly": true,
+      "version": "0.1.0-experimental"
     }
   ]
 }
