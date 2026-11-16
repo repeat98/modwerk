@@ -12,7 +12,7 @@ every register a reachable instruction writes, compared with its contract:
 - a hook entry may write only its site's `clobbers` (sdk/machines/octatrack/dsp-sites.json), and a site with an
   exit lets it drop the site's return (`move ssh,...`) before it leaves through the exit (the site's `contract`);
 - an effect's init keeps r1, n1 and m1: the FX1 dispatcher indexes its proc table with r1 after `jsr init`
-  (sdk/octabam/docs/TRAPS.md#trap-init-r1); proc may write them (the dispatcher reloads r1);
+  (the DSP trap register's trap-init-r1); proc may write them (the dispatcher reloads r1);
 - no entry writes the mode, the stack or the vectors (omr, mr, sr, sp, ssh, ssl, vba, ep, sz, sc), which no
   document lets an entry change. `do`/`rep` loops and calls restore what they push and are not counted.
 
