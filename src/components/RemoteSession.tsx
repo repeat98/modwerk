@@ -5,11 +5,11 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 import { Icon } from './Icon'
 import { acceptRemoteSession, declineRemoteSession, endRemoteSession, holdUnit, MemberRelay, pickUnit, readRemoteSessions, remoteSessionTicket, type UsbEvents } from '../community/remote-session'
 import { useRemoteSessionDue } from '../community/remote-session-signal'
-import { siteLocks, webUsb, type LinkDevice } from '../engine/elekloader/octatrack-link'
+import { siteLocks, webUsb, type LinkDevice, type UsbFilter } from '../engine/elekloader/octatrack-link'
 import { REMOTE_READ_REQUESTS, type RemoteSessionView } from '../community/remote-session-contract'
 import './remote-session.css'
 
-type Usb = UsbEvents & { requestDevice(options: { filters: { vendorId: number }[] }): Promise<LinkDevice> }
+type Usb = UsbEvents & { requestDevice(options: { filters: UsbFilter[] }): Promise<LinkDevice> }
 const time = (iso: string | null) => iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
 
 /** Mounted once the bell has seen a request this visit (App.tsx); reads the request again whenever the flag rises. */

@@ -25,6 +25,21 @@ export function diagnosticReading(record: SelftestRecord): DiagnosticReading {
 }
 
 export const ELEKTRON_VENDOR_ID = 0x1935
+/** The Octatrack's, MKI and MKII alike (one OS for both): stock's device descriptor, which the base keeps (usb_base.py
+ * STOCK_DEVICE and device()). */
+export const OCTATRACK_PRODUCT_ID = 0x0002
+/** Chrome's picker lists Octatracks only, not every Elektron device on the computer. */
+export const OCTATRACK_FILTERS = [{ vendorId: ELEKTRON_VENDOR_ID, productId: OCTATRACK_PRODUCT_ID }]
+/** 2: the base's interface; 1: an Octatrack without it (the original OS); 0: another Elektron device, left alone. */
+export function octatrackRank(device: LinkDevice) {
+  if (findVendorInterface(device.configuration) !== undefined) return 2
+  return device.productId === OCTATRACK_PRODUCT_ID || /octatrack/i.test(device.productName ?? '') ? 1 : 0
+}
+/** The allowed device to open without the picker: one showing the base's interface first, else an Octatrack. A Digitakt
+ * or Syntakt listed first must not read as "an Octatrack on the original OS". */
+export function pickOctatrack(devices: readonly LinkDevice[]): LinkDevice | undefined {
+  return devices.find(device => octatrackRank(device) === 2) ?? devices.find(device => octatrackRank(device) === 1)
+}
 /** Where a retry alone won't help: Linux needs a udev rule, and Windows binds WinUSB only to the base's interface
  * (docs/OCTATRACK_HARDWARE_TRAPS.md, USB and EP0), so a unit on the original OS can't be opened there at all. */
 export function openFailure(agent = typeof navigator === 'undefined' ? '' : navigator.userAgent) {
@@ -57,13 +72,15 @@ export class BaseTooBigError extends Error {
 export interface LinkDevice extends ControlDevice {
   readonly configuration: Parameters<typeof findVendorInterface>[0]
   readonly opened: boolean
+  readonly vendorId?: number; readonly productId?: number; readonly productName?: string
   open(): Promise<void>; close(): Promise<void>
   selectConfiguration(value: number): Promise<void>
   claimInterface(index: number): Promise<void>; releaseInterface(index: number): Promise<void>
 }
 type DeviceListener = (event: { device: LinkDevice }) => void
+export interface UsbFilter { vendorId: number; productId?: number }
 export interface LinkUsb {
-  requestDevice(options: { filters: { vendorId: number }[] }): Promise<LinkDevice>
+  requestDevice(options: { filters: UsbFilter[] }): Promise<LinkDevice>
   getDevices(): Promise<LinkDevice[]>
   addEventListener(type: 'connect' | 'disconnect', listener: DeviceListener): void
   removeEventListener(type: 'connect' | 'disconnect', listener: DeviceListener): void
@@ -229,7 +246,7 @@ export class OctatrackLink {
       const connection = this.connection
       this.usb.addEventListener('connect', this.onConnect)
       this.usb.addEventListener('disconnect', this.onDisconnect)
-      void this.usb.getDevices().then(([device]) => { if (device && connection === this.connection && this.state.status === 'idle') return this.open(device) }).catch(() => {})
+      void this.usb.getDevices().then(devices => { const device = pickOctatrack(devices); if (device && connection === this.connection && this.state.status === 'idle') return this.open(device) }).catch(() => {})
     }
     let stopped = false
     return () => { if (!stopped && (stopped = true) && --this.users === 0) this.stop() }
@@ -249,7 +266,7 @@ export class OctatrackLink {
     const connection = this.connection
     if (!this.usb) return this.noWebUsb()
     let device: LinkDevice
-    try { device = await this.usb.requestDevice({ filters: [{ vendorId: ELEKTRON_VENDOR_ID }] }) }
+    try { device = await this.usb.requestDevice({ filters: OCTATRACK_FILTERS }) }
     catch (error) { if (errorName(error) === 'NotFoundError') this.diagnostic('link_failed', { failure: 'no-device' }); return } // picker closed
     if (connection === this.connection) await this.open(device)
   }
@@ -259,8 +276,10 @@ export class OctatrackLink {
   /** After another tab or app let go of the unit. */
   retry() { const device = this.device; return device ? this.open(device) : this.connect() }
   // An Octatrack restarting after its OS upgrade comes back here, so the install guide's last step completes by itself.
+  // Another Elektron device plugged in meanwhile is left alone, and so is a stock unit while one with the base is busy.
   private readonly onConnect: DeviceListener = ({ device }) => {
-    if (['idle', 'stock', 'busy'].includes(this.state.status)) void this.open(device)
+    const { status } = this.state, rank = octatrackRank(device)
+    if (rank && (status === 'idle' || ['stock', 'busy'].includes(status) && rank >= (this.device ? octatrackRank(this.device) : 0))) void this.open(device)
   }
   private readonly onDisconnect: DeviceListener = ({ device }) => {
     if (device !== this.device) return
