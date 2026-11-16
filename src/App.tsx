@@ -125,6 +125,8 @@ const DiagnosticsGuideStep = lazy(() => import('./components/DiagnosticsInvitati
 const RemoteSessionGate = lazy(() => import('./components/RemoteSession').then(module => ({ default: module.RemoteSessionGate })))
 const OwnerNoteGate = lazy(() => import('./components/OwnerNote').then(module => ({ default: module.OwnerNoteGate })))
 const OwnerNotePreview = lazy(() => import('./components/OwnerNote').then(module => ({ default: module.OwnerNotePreview })))
+const OwnerStatementGate = lazy(() => import('./components/OwnerStatement').then(module => ({ default: module.OwnerStatementGate })))
+const OwnerStatementPreview = lazy(() => import('./components/OwnerStatement').then(module => ({ default: module.OwnerStatementPreview })))
 const OctatrackWelcome = lazy(() => import('./components/OctatrackWelcome').then(module => ({ default: module.OctatrackWelcome })))
 const BetaJoinPrompt = lazy(() => import('./components/BetaJoinPrompt').then(module => ({ default: module.BetaJoinPrompt })))
 const BetaModuleSets = lazy(() => beta().then(module => ({ default: module.BetaModuleSets })))
@@ -535,6 +537,9 @@ export default function App() {
       {session.available && !sessionLoading && !betaAccess && !welcome.due && !welcome.shown && !touchOnly && !mobileWorkspace && !accountRoute && !faqRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route) && <Suspense fallback={null}><BetaJoinPrompt /></Suspense>}
       {betaAccess && <Suspense fallback={null}><OwnerNoteGate key={session.user!.id} link={usbLink ?? null} enabled={!accountRoute && !faqRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route)} /></Suspense>}
       {import.meta.env.DEV && usbPreview === 'beta-note' && <Suspense fallback={null}><OwnerNotePreview /></Suspense>}
+      {/* Jannik's statement, once for every visitor; it waits for any other dialog to close first. */}
+      {session.available && !usbPreview && <Suspense fallback={null}><OwnerStatementGate enabled={!accountRoute && !faqRoute && !developerRoute && !['admin', 'privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route)} /></Suspense>}
+      {import.meta.env.DEV && usbPreview === 'owner-statement' && <Suspense fallback={null}><OwnerStatementPreview /></Suspense>}
       <Suspense fallback={null}>
       {usbLink && !hubRoute && !loadingTarget && <OctatrackActivity link={usbLink}/>}
       {openModule && (() => {
