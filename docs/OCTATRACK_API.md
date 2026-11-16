@@ -27,7 +27,7 @@ Every ColdFire module can define these. They run in the UI task, never at interr
 | `int module_key(int code, int pressed)` | each key press and release | nonzero takes the key from the firmware |
 | `int module_enc(int encoder, int delta)` | each encoder turn | nonzero takes the turn from the firmware |
 
-Every installed module's tick gets the same `api`, one after another, so `api->value` holds whatever the last module to write it left there. A one-shot `npm run device -- try` prints that word each second; with other modules installed that write it (SAMPLE LOCKS, Beat Slicer, Tiempos), it says nothing about the module on trial (13 November 2026, flashed beta base `c1f21351`).
+Every installed module's tick gets the same `api`, one after another, so `api->value` holds whatever the last module to write it left there. A one-shot `npm run device -- try` prints that word each second; with other modules installed that write it (SAMPLE LOCKS, Beat Slicer, Tiempos), it says nothing about the module on trial (13 November 2026, flashed beta base `c1f21351`). From the base after `dfb632b0` (not built yet on 16 November 2026), the word goes back to 0 on the first tick after the installed set changes, before any tick runs: a value there was written by a module installed now, and 0 means none of them wrote it. On earlier bases a removed module's value stays until another tick writes the word (#1314).
 
 Subscribe to them in `runtime.json` like any hook. Butter Fingers ([its draft](../sdk/drafts/butter-fingers/runtime.json)) does it this way:
 
