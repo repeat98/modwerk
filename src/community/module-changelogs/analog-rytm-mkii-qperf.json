@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.2.1-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Uses about 1.9 KB less of the module memory, leaving more room for other modules beside it.",
+      "Everything works as in 0.2.0."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-11-05",
     "changes": [

@@ -90,7 +90,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 17824,
+    "memoryBytes": 15881,
     "fastBytes": 0,
     "load": {
       "display": "About 0.8 % of the audio block idle (the audio handler, measured on a unit)",
@@ -108,7 +108,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. TESTING.md names each build.",
+    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.2.1 (UI-only code built for size, 1.9 KB less RAM): rytm-emu screens byte-identical to 0.2.0; ran in the author's combined images RC37 to RC40, not alone. TESTING.md names each build.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
