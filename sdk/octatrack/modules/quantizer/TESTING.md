@@ -134,6 +134,66 @@ intended acceptance case without turning either earlier failed setup into a pass
 why the earlier zero lock and event disappeared. The incomplete self-test and fidelity limits
 below remain.
 
+## Base 0.7.1 follow-up — 16 November 2026
+
+Main `1737f320b334c01a9af88f33f9863d1111c1ae7d` is merged, without rebasing. This is a
+bounded compatibility follow-up for the base's installed-module ON/OFF controls and saved-set
+shelf, followed by its status-display patch. It does not relabel the full 15 November pitch
+matrix above as tested on this base. No quantizer executable code changed in this follow-up.
+
+The wrapper's initial docstring now names the actual public v2.23 source and archived root
+README. On matched source and base inputs, its executable AST is identical after removing
+only that initial docstring; actual before/after assembly reproduces the same 7,038-byte
+package and SHA-256 above. The real native-source fingerprint changes from historical
+`6d43e1316d17393b1089b88657cc8e17f97e4d1f8d1153b6ac1258341f617ed7` to
+`931d9cd97feb3e46a9ac0d72581d7587980d92d0e9cd9838cc38ae479a66e8d1`.
+The pinned, network-disabled source build passes with source-tree fingerprint
+`a63afd6cbadfdbccae5ff1bcb3f2411f6a78203838a66157339dc10bd13962a0`.
+Official development import and verification pass. Generated source assets change only their
+source-commit metadata and four quantizer object-source hashes for the wrapper; dependent
+import, machine-port and recipe fingerprints are refreshed. The quantizer runtime package and its recipe's image, copies and fills remain unchanged.
+Initial stale-fingerprint failures are retained;
+correcting those source pins clears them without changing a checker or owner approval.
+The final all-package reproduction matches all 34 packages, with quantizer's strict scan at
+11 bytes; the unchanged SYNTIZ package still fails at 21 bytes against the 12-byte threshold.
+
+The complete seven-layout base 0.7 reproduction passed on main `eaae18b9`. After the reviewed
+status/version-only merge, a scoped default-layout 0.7.1 reproduction matches its committed
+package, fill, source, binding and browser/native output. The other six 0.7.1 layouts were not
+rebuilt. The native fixture uses base identity
+`c8f6cd05233a02ab95f085994651487b6db7ca1a7648f88b4974dc9224c9eaf9`, MAIN SHA-256
+`c237097982e7b0d03f50f0b0608d3521c32df957fac4cf18eda374c744b4e7aa`.
+These are serial native emulator sessions at normal priority under a rig lease, with copied
+cards and completed battery-RAM snapshots, not hardware or empty-battery cold-boot evidence.
+
+- An older-base saved set is reported FOREIGN. USB Keep installs 0.1.5, removal restores all
+  seven exact stock guard hashes, and reinstall succeeds. Native PROJECT RELOAD preserves
+  all four 0.1.4-saved project/bank files byte for byte and restores `0000008401000002`, with
+  the fixture's unchanged event/lock state.
+- The valid +1/+3/0/+2 fixture is observed before native SAVE PROJECT and playback: stored
+  locks 69/79/64/74, four note events, C MAJOR, and the saved FOLLOW settings. SAVE completes
+  and card flush reports zero errors. The actual MODULES page shows Scale Quantizer ON;
+  YES changes it to OFF, restoring all seven stock guards. Two request-40 inventory reads
+  report the same OFF package and leave it inactive.
+- The short paired sample check passes eight measured second-bar windows with the unchanged
+  0.01-semitone tolerance: module ON gives [0,2,0,2], module OFF gives [1,3,0,2]. Maximum error
+  is 0.000363677 semitone. All four locks and note events remain intact. This uses the same
+  DC-removed relative-pitch method as the historical runs, not an absolute-fidelity claim.
+- The real OFF saved set is version 2, generation 4, with no active module and a matching
+  generation-4 MWOF shelf containing the exact package and valid body/package hashes. A
+  fresh process restores OFF, its inventory, seven stock guards, settings and all four locks
+  and events. Native YES re-enables it, and the actual status page shows base 0.7.1 with five
+  rows. Saving the enabled module set writes version 1, generation 5. Another fresh process
+  restores that active set, all seven exact installed detours, settings, locks and events
+  before any new panel input. The four saved project/bank files remain unchanged by toggling.
+- In that final fresh ON restart, actual MIDI UART0 output has three matched note-on/off
+  pairs at note 61 with FOLLOW OFF and three at note 60 with FOLLOW ON in C MAJOR, channel 2,
+  velocity 100, with zero stray data. This is a short MIDI smoke, not a physical MIDI test.
+
+The historical full pitch matrix, UI gallery, incomplete self-test, earlier failed fixtures
+and unqualified items remain as recorded above and below. No full pitch or synthetic
+power-cut matrix was repeated for this base follow-up. The owner approval remains unchanged.
+
 ## Current-version UI documentation — 15 November 2026
 
 The gallery uses six actual 0.1.5 framebuffer exports: PROJECT > CONTROL with
