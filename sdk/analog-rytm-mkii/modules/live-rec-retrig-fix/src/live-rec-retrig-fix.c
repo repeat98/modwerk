@@ -97,10 +97,11 @@ static uint8_t last_velocity[TRACKS];  // the track's last recorded retrig's; 0:
 // task has taken its message and then another (so it is no longer in hand). Under heavy
 // audio load (two BD ANALOG voices) stock's own pad pressure messages back the queue up
 // past 200 during a retrig hold while this module's waiting events stay under 60, so slots
-// are freed by following the read index, not by the queue's depth.
+// are freed by following the read index, not by the queue's depth. A slot is freed in
+// posting order, so one still in the UI task's hand also holds back the ones after it.
 #define EVENT_SLOTS 128
 static uint8_t events[EVENT_SLOTS][32];
-static uint16_t event_at[EVENT_SLOTS];  // 1 + the queue slot of its message (or a later one)
+static uint16_t event_at[EVENT_SLOTS];  // the queue slot of its message (or a later one)
 static uint8_t posted, released;        // counts: slots released .. posted - 1 are in use
 _Static_assert((EVENT_SLOTS & (EVENT_SLOTS - 1)) == 0 && EVENT_SLOTS <= 128,
                "the counts wrap at 256: the ring must divide it and fit in half of it");
@@ -116,37 +117,34 @@ static void queue(const uint8_t *event)
         e[i] = event[i];
     STOCK_QUEUE_POST(q, e);
     // A higher interrupt's post in between only makes this a later slot: freed later.
-    event_at[s] = 1 + ((QUEUE_WRITE(q) - 1) & QUEUE_MASK(q));
+    event_at[s] = (QUEUE_WRITE(q) - 1) & QUEUE_MASK(q);
 }
 
-// The UI task has taken the message in queue slot at: it is no longer in the waiting run
-// from the read index. Only the UI task moves that index, and it does not run inside the
-// audio block. This runs every block while a slot is in use, so the queue's ring cannot
-// lap a slot unseen.
-static int taken(uint32_t q, unsigned at)
+// The UI task is done with the message in queue slot at: it has taken it (at is no longer
+// in the waiting run from the read index) and taken another since (at is not the last one
+// taken, which it may still have in hand). Only the UI task moves the read index, and it
+// does not run inside the audio block. Stock's 60 Hz UI message keeps the queue moving.
+// This runs every block while a slot is in use, so the queue's ring cannot lap a slot unseen.
+static int done(uint32_t q, unsigned at)
 {
-    return ((at - QUEUE_READ(q)) & QUEUE_MASK(q)) >= QUEUED(q);
+    uint32_t read = QUEUE_READ(q), mask = QUEUE_MASK(q);
+
+    return ((at - read) & mask) >= QUEUED(q) && at != ((read - 1) & mask);
 }
 
-static void release_taken(void)
+// Not inlined: the render entry stays without a stack frame while nothing is in use.
+static void __attribute__((noinline)) release_done(void)
 {
     uint32_t q = NOTE_QUEUE;
 
-    while (released != posted && taken(q, event_at[released & (EVENT_SLOTS - 1)] - 1))
+    while (released != posted && done(q, event_at[released & (EVENT_SLOTS - 1)]))
         released++;
 }
 
-// Two free slots for a hit's note-off and note-on, neither holding the message the UI task
-// may still have in hand (the last one it took).
+// Two free slots for a hit's note-off and note-on.
 static int room(void)
 {
-    uint32_t q = NOTE_QUEUE;
-    unsigned last = 1 + ((QUEUE_READ(q) - 1) & QUEUE_MASK(q));
-
-    if ((uint8_t)(posted - released) > EVENT_SLOTS - 2)
-        return 0;
-    return event_at[posted & (EVENT_SLOTS - 1)] != last
-        && event_at[(posted + 1) & (EVENT_SLOTS - 1)] != last;
+    return (uint8_t)(posted - released) <= EVENT_SLOTS - 2;
 }
 
 // A press queues its note event before the audio block arms the series.
@@ -368,7 +366,7 @@ void retrig_fix_render(void)
     const volatile uint32_t *active = (const volatile uint32_t *)RT_ACTIVE;
 
     if (posted != released)
-        release_taken();
+        release_done();
     if (ring_seen != (NOTE_RING_NEXT & 15) || (active[0] | active[1] | active[2]) || running || guarding)
         fix_render();
 }
