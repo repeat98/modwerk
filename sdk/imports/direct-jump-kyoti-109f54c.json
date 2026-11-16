@@ -53,8 +53,7 @@
   "notes": [
     "0.2.0-experimental moves the pin from the octabam wrapper (sambanks/octabam b725fb1a, author pin 329b801c) to the author's repository at 109f54c: DIRECT JUMP V7.2.2. upstream/OCTABAM_README.md and upstream/OCTABAM_LICENSE stay as imported from octabam for its integration credit.",
     "patch_directjump_v7.s comments describe stock routines and data by address and in assembler mnemonics, as the author wrote them; it contains no firmware bytes or hex dumps.",
-    "The stock guard digests were computed from the author's declared expectations and matched against a local original OS 1.40C MAIN image (SHA-256 164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e).",
-    "LICENSE is the author's file at 109f54c, byte for byte: against 329b801c only its copyright line changed, to the name Zac Kyoti."
+    "The stock guard digests were computed from the author's declared expectations and matched against a local original OS 1.40C MAIN image (SHA-256 164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e)."
   ],
   "status": "Owner review pending (new stock addresses: 0x40009ebe).",
   "files": [
@@ -113,12 +112,15 @@
     {
       "path": "LICENSE",
       "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-      "revision": "109f54cd36fcd770e3409d1258254619a161b1d7",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
       "sourcePath": "LICENSE",
       "sourceBytes": 4451,
-      "sourceGitBlob": "8cd09176a276a3854ae947ab148b9b327d77e381",
-      "sourceSha256": "f1f8d5837b6df5d6e5744286e3929883253f1ee754c4f9e0494989f2ef992a05",
-      "vendoredSha256": "f1f8d5837b6df5d6e5744286e3929883253f1ee754c4f9e0494989f2ef992a05"
+      "sourceGitBlob": "3e76489f7da43570add4342b27fd9e1aff949672",
+      "sourceSha256": "0d3f46fdaa57dcf513b0d62975eb019334f4eb9cc8ea0b973ce191dd661741f5",
+      "vendoredSha256": "0d3f46fdaa57dcf513b0d62975eb019334f4eb9cc8ea0b973ce191dd661741f5",
+      "transforms": [
+        "Unchanged since 0.1.0-experimental (the author's file at 329b801cf90f32cbca97c6699a908908968e4df6, byte for byte). At 109f54c only its copyright line differs (the name written Zac Kyoti); it is kept as imported so that the shared licence notice (sdk/octabam/licenses/kyoti-direct-jump.txt) stays as it is in this module update."
+      ]
     },
     {
       "path": "upstream/OCTABAM_LICENSE",
