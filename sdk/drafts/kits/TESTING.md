@@ -37,3 +37,29 @@ octabam's `KIMG` (the kits.work image, 1,622,944 bytes) and `EDREC` (the edit po
 Everything on a unit and in the emulator: install with and without pages, the migration and the Octakit import, LOAD KIT, SAVE KIT and the name editor, UNDO KIT, FUNC+CUE, the list copy, paste, clear and undo, the LEVEL scroll, pattern changes and chains while playing (with an external clock too), the edit pool, the pattern clipboard, PTN+FUNC+RIGHT, PTN+FUNC+TRIG, the status line, kits.work and kits.strd through a save, a reload and a power cycle, the battery-RAM copy and its project tag, Part Clear, removal, the MKI key map, CPU cost, and running beside MIDI Scenes and Temp Save.
 
 octabam's own results for KITS (its README, "Measured" and "On the unit": under its emulator port and on Sam's MKII, 6 October 2026) are for octabam's image with STORE, not for this package.
+
+## Unit runs, 16 November 2026
+
+Package SHA-256 `f1c13a071b299906…` (b8bd326d8's source), on a development twin of base 0.7.4 with `ot_sample_memory`
+(`7250475e`, from `base/module-bss-cap` 0bb47282c), booted from RAM on the owner's MKII, the owner's project loaded.
+Each run a 2-minute `device -- try`, rolled back.
+
+- **The borrow.** The base took Kits' 331 pages at install, at once: the pool's `total` (0x80006920) went 10,109 to
+  9,778, `used` stayed 258 (the project's samples). After the rollback both read as before, and the list's top
+  entries were 10,108 and 10,109 again.
+- **Through a project load.** CHANGE to the same project while Kits held its pages: during the load the counters read
+  used 0, total 13,458 (13,789 pages less Kits' 331: the base's arena clear kept them out of the fresh list); after it
+  used 258 and total 9,778, the list's top entries 9,777, 9,778 then 0, so no page of Kits' run (9,779 to 10,109)
+  went back to samples. The load finished with Kits active ("001 ONE" on the status line).
+- **On install** Kits wrote its battery record (`KCS1` at 0x100f85a0), the status line read `001 ONE`, and PART opened
+  LOAD KIT: UNDO KIT, 001 ONE, 002 TWO, 003 THREE (the project's Parts migrated).
+- **CPU.** `device:price` at rest: frame interrupt +0.0, CPU meter +0.1 (A01 playing, 46.7 to 46.8 %). Playing A01
+  with Kits installed: CPU meter 46.6 %, frame interrupt 28.6 % (28.5 % without it in an earlier run).
+- No crash or stall record was added.
+- **In a whole-set trial Kits stays inactive.** Installed as one of 16 packages through `device -- set` (a trial), Kits
+  got no pages: the base holds back its engine-task service, ev_modules_ready included, while a set trial is open
+  (`modwerk_runtime_set_busy`), so a set becomes live for Kits at Keep. Not changed here.
+
+Not tested on a unit: SAVE KIT, a Kit load while playing, pattern chains and queued patterns, FUNC+CUE, the list
+copy/paste/clear, Part Clear, power cycle (the battery record), Kits beside other active modules, removal with a list
+open, the MKI.
