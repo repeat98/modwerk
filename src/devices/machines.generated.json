@@ -345,8 +345,8 @@
         {
           "name": "Core image",
           "unit": "bytes",
-          "value": 9400,
-          "note": "Pinned Modwerk base: 7,140 bytes .run plus 2,260 bytes .bss. The linker measures each selected set."
+          "value": 19776,
+          "note": "Pinned Modwerk base: 9,928 bytes .run plus 9,848 bytes .bss. The linker measures each selected set."
         },
         {
           "name": "Fast SRAM for code",

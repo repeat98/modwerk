@@ -43,7 +43,11 @@
       "FW_VT_MAIN": "0x40216f14",
       "FW_VT_FUNC": "0x401f9208",
       "FW_PATTERNS": "0x41776cb8",
-      "FW_PATTERN_SIZE": "0x1db8c"
+      "FW_PATTERN_SIZE": "0x1db8c",
+      "FW_STARTUP_PROJECT_FILE": "0x4099d698",
+      "FW_ACTIVE_PROJECT": "0x41776c9c",
+      "FW_STARTUP_KITS_OFFSET": "0xae0200",
+      "FW_STARTUP_KIT_STRIDE": "0x5800"
     },
     "sites": [
       {
