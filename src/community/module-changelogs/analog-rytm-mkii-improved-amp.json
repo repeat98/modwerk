@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Takes less of the RAM all modules share, so more modules fit beside it. No change to how it works or sounds."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-11-09",
     "changes": [

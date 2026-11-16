@@ -1,5 +1,18 @@
 # Control In Actions testing
 
+## 0.1.5: UI-task functions built cold, less shared RAM (16 November 2026)
+
+Source (0.1.5-experimental): fingerprint (`sha256` of `sha256sum build.json src/ar2-1.74.h src/draw.S src/main.c`) `198abecb…7b38ddc` (`evidence.sourceSha256`).
+
+The functions that run only in the UI task (the draw, the EXPR draw, the key handler and the helpers only they call) are marked `CIA_UI`, `__attribute__((cold))`, so GCC builds them for size, out of the hot code. `control_in_actions_tick`, the key play and the audio path stay at -O2. No behaviour change is intended.
+
+- Object compare, before and after: every function left at -O2 has byte-identical instructions apart from relocation offsets. An independent code review found no defect. The module takes 380 bytes less of the shared mod RAM.
+- CI18 (vendored core-ar2 0.7 + this source, `5e554891…e6ab55`), rytm-emu `2ac0f1f`: the three media frames, captured as `media/capture.json` lists, are byte-identical to CI17's. The same plan on CI17 reproduces CI17's frames.
+
+**On the author's unit, 16 November 2026.** Analog Rytm MKII, OS 1.74. Build CA02 (`.syx` `8c732687…e6b7b5`): a development base with the dev link, this code, Quick Mod Assign, Improved AMP and Filter Hz with the same change, RAM-booted over the flashed OS by the test rig, with npp1993's go. CA02's Control In Actions source differs from this one in the comment above the macro only. CA02 booted and ran the other modules' rig cases with Control In Actions installed. Control In Actions itself was not exercised: it has no rig cases, and no action, learn or bar was tried on the unit for 0.1.5. Its actions were last played on the unit in 0.1.4 (CK01, below).
+
+Not run: any action, either learn, the bars, alone on a unit, a power cycle. Duration not recorded.
+
 ## 0.1.4: the keys an action plays reach the other mods (10 November 2026)
 
 Source (0.1.4-experimental): fingerprint (`sha256` of `sha256sum build.json src/ar2-1.74.h src/draw.S src/main.c`) `9c46c683…2863e6`.
