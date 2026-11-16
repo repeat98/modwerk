@@ -80,4 +80,4 @@ Screenshots are rytm-emu captures of build QM21 ([media/capture.json](media/capt
 
 ![VELOCITY MODS FULL](media/mods-full.png) ![Stock's MODULATION SETUP showing the link](media/mod-setup.png)
 
-![FILTER page with LFO held: FRQ is the LFO's destination at depth +45.14](media/lfo-filter.png) ![The LFO page after the hold: DST FRQ](media/lfo-page.png)
+![FILTER page with LFO held: FRQ is the LFO's destination at depth +46.96](media/lfo-filter.png) ![The LFO page after the hold: DST FRQ](media/lfo-page.png)
