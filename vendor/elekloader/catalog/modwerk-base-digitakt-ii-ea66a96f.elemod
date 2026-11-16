@@ -1003,6 +1003,18 @@
    "abs",
    1154672212
   ],
+  "FW_SELECT_TRACK": [
+   "abs",
+   1074230024
+  ],
+  "FW_TRACK_AT": [
+   "abs",
+   1074047928
+  ],
+  "FW_PATTERN_UI": [
+   "abs",
+   1156804768
+  ],
   "FW_ENC_LIST": [
    "abs",
    1074863682
@@ -1275,6 +1287,10 @@
    ".bss",
    4212
   ],
+  "fw_track_at": [
+   "abs",
+   1074047928
+  ],
   "core_seq_note_step": [
    ".run",
    3272
@@ -1335,6 +1351,10 @@
    ".run",
    5474
   ],
+  "fw_pattern_ui": [
+   "abs",
+   1156804768
+  ],
   "fw_enc_param": [
    "abs",
    1154672212
@@ -1362,6 +1382,10 @@
   "core_addrow": [
    ".run",
    748
+  ],
+  "fw_select_track": [
+   "abs",
+   1074230024
   ],
   "core_kit_save": [
    ".run",
@@ -1618,10 +1642,13 @@
   "fw_memcpy",
   "fw_op_new",
   "fw_pattern_size",
+  "fw_pattern_ui",
   "fw_patterns",
+  "fw_select_track",
   "fw_str_new",
   "fw_textbox",
   "fw_textf",
+  "fw_track_at",
   "fw_ui_states",
   "fw_vt_func",
   "fw_vt_main"
@@ -3369,7 +3396,7 @@
    "startup-kitdata-refresh.c": "f2f9caf954bec76995b649b349b282c4a7e20261e4985a3b06bac3958db22b73",
    "project-archive.c": "3c3693285f74f9c7ea95d88bdb1a8849dfba6a86354d3a9d5d5ee73408926722",
    "project-kitdata.c": "35a0b15561f10813710f9787e378f05285ef1722173e128fa94fad53085e16c3",
-   "fw-bindings.s": "482fd9365f7e8ca7cac9fbcd6e5bb558ce0d853456ce5ac4b9307fd902b9d938"
+   "fw-bindings.s": "f831c9f4099170c8390d510ee2ab09a610f8a142ba84363c8c90f51c0ad6187e"
   }
  },
  "signature": null
