@@ -21,3 +21,6 @@
         FW      fw_memcpy, MEMCPY
         FW      fw_patterns, FW_PATTERNS
         FW      fw_pattern_size, FW_PATTERN_SIZE
+        FW      fw_pattern_ui, FW_PATTERN_UI
+        FW      fw_track_at, FW_TRACK_AT
+        FW      fw_select_track, FW_SELECT_TRACK
