@@ -1,0 +1,1 @@
+SDK tests: `sdk:check` lists every skipped test with its reason, and each pull request now runs the SDK suite inside the pinned ColdFire toolchain too, where a test skipped for a missing compiler, assembler or binutils fails the check instead of passing unseen.

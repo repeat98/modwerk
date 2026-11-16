@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { resolve, dirname } from 'node:path'
 import { takeSlot, workersFor } from './machine-slots.mjs'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
+import { skipReport, skipsOf } from './sdk-skips.mjs'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 // octabam's tools read the untracked mirror of sdk/octatrack/modules; make it current first.
 mirrorOctatrackModules(root)
@@ -19,7 +20,7 @@ const jobs = readdirSync(resolve(root, 'sdk/tests')).filter(file => /^test.*\.py
 // fails itself instead of every later module pull request (they ran only in module-pr.yml's octatrack-source before).
 if (process.platform !== 'win32') jobs.push(
   { name: 'sdk/runtime/upload/tests/run_host.sh', command: 'sh', args: ['sdk/runtime/upload/tests/run_host.sh'], env: {} },
-  { name: 'sdk/machines/octatrack/elekloader/test_recipe.py', command: python, args: ['-B', 'sdk/machines/octatrack/elekloader/test_recipe.py'], env: { PYTHONDONTWRITEBYTECODE: '1' } })
+  { name: 'sdk/machines/octatrack/elekloader/test_recipe.py', command: python, args: ['-B', 'sdk/machines/octatrack/elekloader/test_recipe.py', '-v'], env: { PYTHONDONTWRITEBYTECODE: '1' } })
 // The slowest jobs of the last run start first, so none starts last; a job without a time is new and starts before them.
 const record = resolve(root, 'node_modules/.cache/sdk-check-times.json')
 let times = {}
@@ -36,6 +37,7 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
 await takeSlot('npm run sdk:check')
 const workers = workersFor({ most: Math.min(4, availableParallelism()), each: 1024 ** 3 }), started = performance.now(), failed = [], count = jobs.length, taken = {}
 let tests = 0
+const skips = []
 async function worker() {
   for (let job; (job = jobs.shift());) {
     const output = [], begun = performance.now()
@@ -55,6 +57,7 @@ async function worker() {
     const text = Buffer.concat(output).toString()
     process.stdout.write(text)
     tests += Number([...text.matchAll(/^Ran (\d+) tests? in /gm)].at(-1)?.[1] ?? 0)
+    skips.push(...skipsOf(text).map(reason => ({ job: job.name, reason })))
     if (code !== 0) failed.push(job.name)
   }
 }
@@ -64,6 +67,15 @@ try {
   writeFileSync(record, JSON.stringify(taken) + '\n')
 } catch { /* the record only orders the next run */ }
 console.log(`SDK checks: ${tests} tests in ${count} jobs, ${workers} at a time, in ${((performance.now() - started) / 1000).toFixed(1)}s`)
+// Every skip with its reason, so a green run shows what never ran. CI's sdk-toolchain job, inside the pinned image, sets
+// MODWERK_REQUIRE_TOOLCHAIN=1: there a skip for a missing compiler, assembler or binutils is a failure. Elsewhere it is listed.
+const skipped = skipReport(skips, tests), strict = process.env.MODWERK_REQUIRE_TOOLCHAIN === '1'
+if (skipped.lines.length) console.log(skipped.lines.join('\n'))
+if (process.env.GITHUB_ACTIONS === 'true' && skips.length) console.log(`::notice title=SDK skips::${skipped.summary}`)
+if (strict && skipped.toolchain) {
+  console.error(`SDK checks FAILED: ${skipped.toolchain} tests skipped for a missing toolchain, which MODWERK_REQUIRE_TOOLCHAIN=1 refuses (the [toolchain] lines above)`)
+  process.exitCode = 1
+}
 if (failed.length) {
   console.error('SDK checks FAILED: ' + failed.join(', '))
   process.exitCode = 1

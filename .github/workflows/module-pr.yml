@@ -109,6 +109,51 @@ jobs:
           OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
           PART: ${{ matrix.part }}
         run: npm run check -- --base "$OCTAMOD_PR_BASE" --part "$PART"
+  # The SDK suite again, inside the pinned image octatrack-source builds: the tests module-suites skips for want of the ColdFire
+  # compiler, binutils or dsp_asm run here, and a skip for a missing toolchain fails the job (MODWERK_REQUIRE_TOOLCHAIN). Skips for
+  # what CI never has (stock firmware, Windows, an upstream checkout) stay listed in the log.
+  sdk-toolchain:
+    needs: scope
+    if: needs.scope.outputs.documentation != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          # The Dockerfile still verifies the exact pinned image digests.
+          buildkitd-config-inline: |
+            [registry."docker.io"]
+              mirrors = ["mirror.gcr.io"]
+      - name: Prepare pinned release toolchain
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: sdk/build/Dockerfile
+          tags: modwerk-source-tools
+          load: true
+          provenance: false
+          sbom: false
+          cache-from: type=gha,scope=source-tools
+          cache-to: type=gha,scope=source-tools,mode=max
+      - name: Run the SDK suite with the pinned ColdFire tools and dsp_asm, without network or firmware
+        run: |
+          image=$(docker image inspect modwerk-source-tools --format '{{.Id}}')
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges \
+            --user "$(id -u):$(id -g)" --env HOME=/tmp --env CI --env GITHUB_ACTIONS --env MODWERK_REQUIRE_TOOLCHAIN=1 \
+            --env ELEKLOADER_DSP_ASM=/opt/toolchain/vendor/dsp56300/build/source/dsp_host/dsp_asm \
+            --mount "type=bind,source=$GITHUB_WORKSPACE,target=/source" --workdir /source \
+            --entrypoint node "$image" scripts/sdk-check.mjs
   module-paths-windows:
     needs: scope
     if: needs.scope.outputs.windows == 'true'
@@ -240,7 +285,7 @@ jobs:
   # A job the scope skips counts as passed; a failed, cancelled or unrun job does not.
   module-pr-ok:
     if: always()
-    needs: [scope, module-contract, module-suites, module-paths-windows, core-logger-host, elemod-source, octatrack-source]
+    needs: [scope, module-contract, module-suites, sdk-toolchain, module-paths-windows, core-logger-host, elemod-source, octatrack-source]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     permissions: {}
