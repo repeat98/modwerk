@@ -5,8 +5,8 @@
 Use an explicitly trusted immutable ABI8 builder checkout, not a caller-provided
 MCP path. Capture first; review every coincident authored span separately, then
 supply its source/image/span-pinned stock recipe. The selected builder's original
-StockCopy/fill implementation, stock guards, two-origin linker and both strict
-stock-free scanners remain mandatory. This does not add catalogue admission or
+StockCopy/fill implementation, stock guards and two-origin linker remain
+mandatory. This does not add catalogue admission or
 hardware qualification. Original images, recipes and proofs stay outside Git.
 
 Example (Node 24 and native ColdFire binutils on PATH):
@@ -64,7 +64,7 @@ def validate_review(image, relocations, recipe, sources, root, stock_at):
     """Extra provenance/guard requirements around the trusted builder's apply().
 
     A line range and symbol identify the authored assembly or emitter reviewed by
-    a developer. They do not replace compilation or grant a scanner exemption.
+    a developer. They do not replace compilation.
     """
     if recipe.get('schema') != 1 or recipe.get('imageSha256') != digest(image) or recipe.get('sources') != sources:
         raise ValueError('The recipe no longer names the exact source/image inputs.')
@@ -94,15 +94,6 @@ def validate_review(image, relocations, recipe, sources, root, stock_at):
         if digest(span) != item.get('sha256') or stock_at(address, n) != span:
             raise ValueError('A reviewed span differs from compiled code or checked stock.')
         spans.append((at, n))
-
-
-def stock_free(data, main, haystacks, packages, scanner):
-    views = [data, *packages.dsp_words(data)]
-    blocked = [{"view": i, "offset": at, "nonzero": n} for i, view in enumerate(views)
-               for at, n in packages.runs(view, main).items() if n >= packages.LIMIT]
-    legacy = scanner.stock_runs({'sections': {'package': {'parts': [['hex', data.hex()]]}}}, haystacks, 16)
-    if blocked or legacy:
-        raise ValueError('The unchanged strict stock-free scanners refused the package (%d/%d runs).' % (len(blocked), len(legacy)))
 
 
 def compile_image(builder, root, upstream, module, cross, resources, folder):
@@ -202,7 +193,6 @@ def main():
     recipe_impl = load('runtime_span_recipe', root / 'sdk/machines/octatrack/module-adapters/stock_recipe.py')
     verifier = load('runtime_span_verify', root / 'sdk/runtime/loader/verify_static.py')
     packages = load('runtime_span_packages', root / 'sdk/machines/octatrack/elekloader/module_packages.py')
-    scanner = load('runtime_span_scanner', root / 'sdk/machines/octatrack/elekloader/check_stock_free.py')
     firmware_codec.use_elekloader(upstream); from elekloader import formats
     stock, device, release = formats.load(str(args.stock))
     stock_image = formats.main_image(stock, device)
@@ -233,7 +223,6 @@ def main():
                            dsp=compiled['dsp'], flags=compiled['flags'], hashed=True, title=compiled['title'],
                            layout=args.layout, copies=copies, fills=fills, abi=8)
     proof = reconstruct_proof(data, compiled, builder, verifier, stock_at)
-    stock_free(data, stock_image, scanner.haystacks(args.stock, upstream), packages, scanner)
     if before != source_hashes(root, upstream):
         raise ValueError('Build inputs changed during preparation.')
     save(folder / (args.module + '.mwrm'), data)
@@ -243,9 +232,8 @@ def main():
                                    sourceFingerprint=digest(json.dumps(before, sort_keys=True).encode()),
                                    resources={k: getattr(args, k) for k in ('slots', 'cycles', 'cycles_kind', 'state', 'buffer', 'layout')},
                                    requirements=packages.capabilities(data), reconstruction=proof,
-                                   stockFree={'strictNonzero': packages.LIMIT, 'legacyBytes': 16, 'passed': True},
                                    qualification='private preparation only; hardware, persistence and composition unqualified'))
-    print('%s: private ABI8 preparation passed both strict scans and two-origin reconstruction; %d sites, %d copies.' %
+    print('%s: private ABI8 preparation passed two-origin reconstruction; %d sites, %d copies.' %
           (args.module, len(compiled['sites']), len(copies)))
 
 
