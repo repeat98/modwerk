@@ -146,6 +146,8 @@ class MachineBases(unittest.TestCase):
                 self.assertRegex(site["stockSha256"], r"^[0-9a-f]{64}$")
                 if site["op"] == "bytes":
                     self.assertEqual(len(site["new"]), 2 * site["len"], site["addr"])
+                elif site["op"] == "ptr":
+                    self.assertEqual(site["len"], 4, site["addr"])
                 else:
                     self.assertTrue(site["len"] >= 6 and site["len"] % 2 == 0, site["addr"])
 

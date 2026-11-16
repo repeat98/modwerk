@@ -120,7 +120,10 @@
       "VIEW8_N": "1",
       "VIEW9_RET": "0x400c74b4",
       "VIEW9_LIST": "0x401af560",
-      "VIEW9_N": "1"
+      "VIEW9_N": "1",
+      "mw_send_resume": "0x40107faa",
+      "mw_rx_index": "0x402acd70",
+      "mw_rx_ring": "0x8000cf34"
     },
     "sites": [
       {
@@ -1075,11 +1078,6 @@
       "-DDELAY_IN_AT=0x800074b4",
       "-DPARAM_RECORDS_AT=0x416a6aa4"
     ],
-    "defsym": {
-      "mw_send_resume": "0x40107faa",
-      "mw_rx_index": "0x402acd70",
-      "mw_rx_ring": "0x8000cf34"
-    },
     "subscribe": [
       {
         "event": "ev_tick",
