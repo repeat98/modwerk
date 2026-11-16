@@ -977,7 +977,13 @@ static void copy_record(int to, int from)
 #endif
     volatile unsigned *d = RECORD(to), *f = RECORD(from);
     int i;
-    for (i = 0; i < 22; i++) d[i] = f[i];
+    for (i = 0; i < 22; i++) {
+        unsigned v = f[i];
+        // a barrier: with both ids constant, GCC fused the copy into move.l (a0)+,d16(a0) and took d16(a0) as
+        // before the increment, so every word landed 4 bytes on (ColdFire forms the destination after it)
+        __asm__ volatile("" : "+d"(v));
+        d[i] = v;
+    }
 }
 
 static int template_of(const struct mw_fx_control *c)
