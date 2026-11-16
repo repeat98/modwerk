@@ -15,6 +15,8 @@ describe('module doctor', () => {
     expect(result.stdout + result.stderr).not.toContain('✗')
     expect(result.status).toBe(0)
     for (const id of ['miniverb', 'sidechain-compressor', 'analog-bassdrum', 'euclid', 'digihealth']) expect(result.stdout).toContain(id)
+    // The re-test queue is a report at the end: it lists, it never turns the run red.
+    expect(result.stdout).toContain('Due for a re-run on the unit (a report: it fails nothing)')
   // The full catalogue shares CPU with app checks; this is an integration check, not a five-second performance gate.
   }, catalogCheckTimeout + 5000)
   // A machine page's controls come from modwerk_page_control(), which picks stock's switch for two to five values; a page written

@@ -109,7 +109,8 @@ function documentationCheck(missingNotes = false, failure = '', changelogEntry =
   const docs = new URL('../../scripts/docs.mjs', import.meta.url).href
   const ready = new URL('../../scripts/pr-ready.mjs', import.meta.url).href
   const slots = new URL('../../scripts/machine-slots.mjs', import.meta.url).href
-  writeFileSync(join(scripts, 'check.mjs'), readFileSync(runner, 'utf8').replace("'./change-scope.mjs'", JSON.stringify(scope)).replace("'./module-changelogs.mjs'", JSON.stringify(changelogs)).replace("'./changelog.mjs'", JSON.stringify(application)).replace("'./docs.mjs'", JSON.stringify(docs)).replace("'./pr-ready.mjs'", JSON.stringify(ready)).replace("'./machine-slots.mjs'", JSON.stringify(slots)))
+  const size = new URL('../../scripts/base-size.mjs', import.meta.url).href
+  writeFileSync(join(scripts, 'check.mjs'), readFileSync(runner, 'utf8').replace("'./change-scope.mjs'", JSON.stringify(scope)).replace("'./module-changelogs.mjs'", JSON.stringify(changelogs)).replace("'./changelog.mjs'", JSON.stringify(application)).replace("'./docs.mjs'", JSON.stringify(docs)).replace("'./pr-ready.mjs'", JSON.stringify(ready)).replace("'./machine-slots.mjs'", JSON.stringify(slots)).replace("'./base-size.mjs'", JSON.stringify(size)))
   writeFileSync(npm, `import { appendFileSync } from 'node:fs'; appendFileSync(process.env.CHECK_TEST_LOG, process.argv[3] + '\\n'); process.exitCode = process.env.CHECK_TEST_FAIL === process.argv[3] ? 1 : 0`)
   mkdirSync(join(folder, 'src/catalog'), { recursive: true })
   mkdirSync(join(folder, 'src/community/module-changelogs'), { recursive: true })

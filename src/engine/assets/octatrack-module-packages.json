@@ -340,7 +340,7 @@
       "path": "octatrack-modules/sidechain-compressor/0.2.1-experimental.mwrm",
       "lagsBehind": "0.2.2-experimental",
       "lagReason": "0.2.2 changes only the card build's placement: its ColdFire units join the DRAM runtime when another module in the set carries one (#1175). The USB package and its controller are 0.2.1's, so 0.2.1 stays the USB package.",
-      "requiredBase": "f6422fa60b82848d784ea3086548facca3dd70b20e96dd0960536b0e5ba4e75e"
+      "requiredBase": "771f160fdcf4f0e7b28f02a0c74ff1bbd94e7686fa090dea4b1eae21ed058079"
     },
     {
       "id": "output-matrix",
@@ -356,7 +356,7 @@
       "bytes": 3740,
       "sha256": "9c7380301f48bb01d7a7bc2cc6ed310f5a15272b0e870e5042a1932735495302",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "f6422fa60b82848d784ea3086548facca3dd70b20e96dd0960536b0e5ba4e75e"
+      "requiredBase": "771f160fdcf4f0e7b28f02a0c74ff1bbd94e7686fa090dea4b1eae21ed058079"
     },
     {
       "id": "cc-map",
@@ -372,7 +372,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "f6422fa60b82848d784ea3086548facca3dd70b20e96dd0960536b0e5ba4e75e"
+      "requiredBase": "771f160fdcf4f0e7b28f02a0c74ff1bbd94e7686fa090dea4b1eae21ed058079"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -448,9 +448,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "1c68607ec4822058ece9213d757f01d15e3c8a496fe8b46794a7809e2fe40e51",
+      "sha256": "41df2585a57ba347a6b484c34311c50a9d51a3d3f7d28ecf5def1534ac6bfc78",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "f6422fa60b82848d784ea3086548facca3dd70b20e96dd0960536b0e5ba4e75e"
+      "requiredBase": "771f160fdcf4f0e7b28f02a0c74ff1bbd94e7686fa090dea4b1eae21ed058079"
     },
     {
       "id": "analog-bassdrum",
@@ -466,7 +466,7 @@
       "bytes": 26172,
       "sha256": "e683804756e9c898a658f7d4a97df5f8832cfa4f9c2e1d409a32df1a26ee392b",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "f6422fa60b82848d784ea3086548facca3dd70b20e96dd0960536b0e5ba4e75e",
+      "requiredBase": "771f160fdcf4f0e7b28f02a0c74ff1bbd94e7686fa090dea4b1eae21ed058079",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -633,12 +633,12 @@
       "sites": 0,
       "copies": 0,
       "fills": 0,
-      "version": "0.2.1-experimental",
+      "version": "0.3.0-experimental",
       "name": "Amiga",
       "module": "d0711972",
-      "bytes": 12540,
-      "sha256": "b19184db0dbd37ce0411c27fa0bff132d087da70b0f78971324f485c520f3473",
-      "path": "octatrack-modules/amiga/0.2.1-experimental.mwrm",
+      "bytes": 13248,
+      "sha256": "acae3fef97f85a941c3215e1065353c94967ff44bb9528c22135c611a8edc32e",
+      "path": "octatrack-modules/amiga/0.3.0-experimental.mwrm",
       "usbOnly": true
     }
   ]

@@ -1,0 +1,1 @@
+Checks: the Octatrack base's size is now recorded and checked. `node scripts/base-size.mjs` prints how full the committed base is against the 851,712 container bytes a base on a unit takes for a base update, and what it added since the previous base (base 0.7: 795,248 bytes, 56,464 free, +5,352). `npm run check` fails a base change whose size is not recorded or over a limit.
