@@ -60,7 +60,7 @@ describe('module versions in configuration backups',()=>{
  })
  it('leaves out modules removed from the library and keeps the rest of the backup',()=>{
   const exported={...createSelection(['miniverb','euclid'],null,true),name:'Older set'}
-  const removed=[{id:'spectrum',version:'0.1.1-experimental'},{id:'midi-scenes',version:'0.2.5-experimental'}]
+  const removed=[{id:'spectrum',version:'0.1.1-experimental'},{id:'modulation',version:'0.1.1-experimental'}]
   const backup={...exported,modules:[removed[0],...exported.modules,removed[1]]}
   expect(parseSelection(JSON.stringify(backup))).toEqual({name:'Older set',moduleIds:['miniverb','euclid'],moduleVersions:pinModuleVersions(['miniverb','euclid']),keepStockFx2:true})
   expect(parseSelection(JSON.stringify({...exported,modules:removed}))).toMatchObject({moduleIds:[],moduleVersions:{}})

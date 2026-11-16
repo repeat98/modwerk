@@ -207,7 +207,6 @@ def prepare(args, generator):
                     or (generator.PUBLIC / entry['path']).read_bytes() != data
                     or generator.capabilities(data) != {name: entry[name] for name in ('abi', 'features', 'sites', 'copies', 'fills')}):
                 raise ValueError('An existing published runtime package changed: ' + entry['id'])
-            builder.private_stock_free(data, args.stock, original, upstream)
             runtime_candidate.check_sites_and_copies(main, *records(data))
             destination = out / entry['path']; runtime_candidate.private_paths.private_directory(destination.parent)
             runtime_candidate.private_paths.save(destination, data)
@@ -220,7 +219,6 @@ def prepare(args, generator):
                 data = generator.build(entry, work / (module + '.mwrm'), upstream, private_stock=args.stock)
             else:
                 data, proofs = authored(root, upstream, module, builder, binding, stock_at, work / module, 'm68k-elf-')
-                builder.private_stock_free(data, args.stock, original, upstream)
             runtime_candidate.check_sites_and_copies(main, *records(data))
             path = 'octatrack-modules/%s/%s.mwrm' % (module, versions[module])
             destination = out / path; runtime_candidate.private_paths.private_directory(destination.parent)

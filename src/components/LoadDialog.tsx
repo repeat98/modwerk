@@ -31,10 +31,12 @@ const list = (ids: string[]) => new Intl.ListFormat('en', { type: 'conjunction' 
  * Runtime package changes are reviewed even when the visible member IDs stay the same. A base upgrade or
  * unavailable package stops preparation here; the installer preserves this set. A failed sync offers `onReport`.
  */
-export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdate, onClose, onInstallBase, onEdit, onReport }: {
+export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inventory, prepareUpdate, onClose, onInstallBase, onEdit, onReport }: {
   link: OctatrackLink; set: InventoryTarget; inventory?: Inventory; prepareUpdate?: PrepareUpdate; onClose: () => void
   /** Opened because the base changed and the unit started without these modules (PutBackModules). */
   putBack?: boolean
+  /** With `putBack`: the modules that were switched off on the unit before the base changed. They come back on. */
+  comesBackOn?: readonly string[]
   /** Opens the base installer: with a layout when the set needs the base in another USB Audio layout. */
   onInstallBase: (layout?: BaseLayout) => void; onEdit: () => void; onReport: () => void
 }) {
@@ -132,6 +134,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
         : !review?.needsSync && !problem ? <p className="base-install-intro">Your Octatrack already has exactly these modules.</p>
         : <>
           {putBack && <p className="base-install-intro">The base on your Octatrack changed, so it started without your modules. Sync them to put them back.</p>}
+          {putBack && comesBackOn.length > 0 && <p className="base-install-intro">{list([...comesBackOn])} {comesBackOn.length === 1 ? 'was' : 'were'} switched off on your Octatrack and {comesBackOn.length === 1 ? 'comes' : 'come'} back on. To switch {comesBackOn.length === 1 ? 'it' : 'them'} off again, use <strong>PROJECT › MODWERK › MODULES</strong> after the sync.</p>}
           <p className="load-summary">Adds {changes.add.length} · Removes {changes.remove.length}{updates.length > 0 && <> · Updates {updates.length}</>}</p>
           <p className="base-install-intro">The modules stay on your Octatrack, also after a restart. Your project isn’t changed.</p>
           <ul className="load-changes">{([['load', 'Base', audio !== undefined && !audioOn ? [USB_AUDIO_MODULE] : []], ['load', 'Adds', changes.add], ['load', 'Updates', updates], ['leaving', 'Removes', changes.remove]] as const).flatMap(([state, label, ids]) => ids.map(id => {
