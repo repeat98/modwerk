@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.5.1-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Previewing a sample (FUNC + YES in a sample list) plays it at normal speed again, whatever the track's RATE.",
+      "Before, a track at RATE 0, such as a sound saved on stock OS, previewed silent."
+    ]
+  },
+  {
     "version": "0.5.0-experimental",
     "date": "2026-11-12",
     "changes": [

@@ -16,15 +16,29 @@ sample_rate_block_gate:
 | The first gate reads TUN and FIN as stock does, gives the pitch a FIN at rest
 | and keeps the real one for the second gate, which scales the finished step by
 | |FIN - 64| / 64. d6 is free at both.
+|
+| Stock's sample preview (FUNC + YES in a sample list, 0x400a0dec) plays on the
+| active track's voice through an override that puts the sample in slot 129 and
+| TUN and FIN at rest, so it sounds at 1x. A project's samples sit in slots 1 to
+| 127, so a voice whose SMP is 128 or above with FIN at rest plays 1x here too,
+| where RATE 0 would stop it.
 
         .equ    IDLE, 0x7f00                    | what the second gate skips: 1x
+        .equ    REST, 0x4000                    | FIN at rest: stock's +0, RATE 0
+        .equ    OWN_SLOT, 128                   | SMP's first slot that is stock's, not the project's
         .globl  sample_rate_fin_gate, sample_rate_scale_gate
 
 sample_rate_fin_gate:
         mvs.w   2(%a2,%d0.l),%d1                | displaced
+        mvz.b   6(%a2,%d0.l),%d6                | SMP's slot, the high byte of its word
         mvs.w   4(%a2,%d0.l),%d0                | displaced
-        move.l  %d0,sample_rate_fin
-        move.l  #0x4000,%d0
+        cmpi.l  #OWN_SLOT,%d6
+        blt.s   1f
+        cmpi.l  #REST,%d0
+        bne.s   1f
+        move.l  #IDLE,%d0
+1:      move.l  %d0,sample_rate_fin
+        move.l  #REST,%d0
         rts
 
 | In the prefetch's EMAC mode, fractional: the multiply by the amount << 17

@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "moduleId": "sample-rate",
-  "moduleVersion": "0.5.0-experimental",
+  "moduleVersion": "0.5.1-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-12T21:30:00Z",
-  "imageSha256": "c2c24d116312b5b6e4dc795f3a41025d1a9f025c40935770075377f16ea15685",
-  "build": "Modwerk's linker: the vendored core-ar2 0.7 + this folder's Improved SMPL 0.5.0-experimental, materialised against stock OS 1.74, --version SV02",
+  "capturedAt": "2026-11-16T12:00:00Z",
+  "imageSha256": "bc1535604022ddb744e433bdf2d46114aa158dc5e0698d3fc04e0c226bc11035",
+  "build": "Modwerk's linker: the vendored core-ar2 0.7 + this folder's Improved SMPL 0.5.1-experimental, materialised against stock OS 1.74, --version SV11",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
@@ -14,30 +14,30 @@
     "settings": "card image with one generated 23,777-frame ramp, RAMP.wav, added with dtcard; JIT on",
     "revision": "c5732f0"
   },
-  "conditions": "SETUP: a card holding one generated 23,777-frame ramp from -26,000 to +26,000 (RAMP.wav, dtcard add), then dtboot sv02.syx --card card.img --instr 14800M --every 1000M --press NO@2000M --press NO@2300M --press NO@2600M --press NO@2900M --press GLOBAL@3300M --press DOWN@5100M --press YES@5400M --press DOWN@5700M --press YES@6000M --press DOWN@6300M --press YES@6600M --press DOWN@6900M --press YES@7200M --press RIGHT@7500M --press DOWN@7800M --press DOWN@8100M --press YES@8400M --press YES@8700M --press NO@10100M --press NO@10300M --press NO@10500M --press NO@10700M --press SMPL@11000M --turn 3:6@11300Mx6/30M --press YES@11700M --turn 6:6@12500Mx6/30M --save setup.snap (BD on the ramp, LOP ON, SAMPLE page; the kit's FIN, now RATE, is +0). R63: dtboot sv02.syx --load setup.snap --instr 1000M --every 100M --midi bd197f@14900M --save r63.snap (CC 25 127 on the auto channel: RATE +63). Captured on SV02 on 12 Nov 2026 (the waveform view with one row of values over a taller waveform) in rytm-emu c5732f0. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified.",
+  "conditions": "SETUP: a card holding one generated 23,777-frame ramp from -26,000 to +26,000 (RAMP.wav, dtcard add), then dtboot sv11.syx --card card.img --instr 14800M --every 1000M --press NO@2000M --press NO@2300M --press NO@2600M --press NO@2900M --press GLOBAL@3300M --press DOWN@5100M --press YES@5400M --press DOWN@5700M --press YES@6000M --press DOWN@6300M --press YES@6600M --press DOWN@6900M --press YES@7200M --press RIGHT@7500M --press DOWN@7800M --press DOWN@8100M --press YES@8400M --press YES@8700M --press NO@10100M --press NO@10300M --press NO@10500M --press NO@10700M --press SMPL@11000M --turn 3:6@11300Mx6/30M --press YES@11700M --turn 6:6@12500Mx6/30M --save setup.snap (BD on the ramp, LOP ON, SAMPLE page; the kit's FIN, now RATE, is +0). R63: dtboot sv11.syx --load setup.snap --instr 1000M --every 100M --midi bd197f@14900M --save r63.snap (CC 25 127 on the auto channel: RATE +63). Captured on SV11 (0.5.1) on 16 Nov 2026 (the waveform view with one row of values over a taller waveform) in rytm-emu c5732f0. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified.",
   "captures": [
     {
       "path": "media/knob-fine-tun.png",
       "frame": "turn04.png",
-      "plan": "DTBOOT_TURN_PNG=out dtboot sv02.syx --load r63.snap --instr 1600M --every 100M --turn 0:16@15903Mx1/1M --turn 0:4@16403Mx3/100M",
-      "sha256": "dfa974b8bfb9ca87f9a5bf405dcf9340efb6b5af36bc2637a498832e4b9b7df4"
+      "plan": "DTBOOT_TURN_PNG=out dtboot sv11.syx --load r63.snap --instr 1600M --every 100M --turn 0:16@15903Mx1/1M --turn 0:4@16403Mx3/100M",
+      "sha256": "cd16bb520324e4cc2330f7b505c4ce36211a23db0970b9a82d944785b545daa0"
     },
     {
       "path": "media/knob-rate.png",
       "frame": "end",
-      "plan": "DTBOOT_END_PNG=out.png dtboot sv02.syx --load r63.snap --instr 700M --every 100M",
-      "sha256": "45ce1edffb6f63c0c0b7ef59139ace628ea45d23efeae6682dd3fecb4b3b7e13"
+      "plan": "DTBOOT_END_PNG=out.png dtboot sv11.syx --load r63.snap --instr 700M --every 100M",
+      "sha256": "6994455e7539af71b2b5672961420db00397d16e8f27268de878785230be0bfa"
     },
     {
       "path": "media/value-rate.png",
       "frame": "turn13.png",
-      "plan": "DTBOOT_TURN_PNG=out dtboot sv02.syx --load r63.snap --instr 2500M --every 100M --turn 1:-8@16003Mx20/50M",
-      "sha256": "9d735585ed0dd83870bd1924beb1aa833358b515e044334f61c8542a3174c9ed"
+      "plan": "DTBOOT_TURN_PNG=out dtboot sv11.syx --load r63.snap --instr 2500M --every 100M --turn 1:-8@16003Mx20/50M",
+      "sha256": "f990670f5051da6cbb46f9700046a6522cf5783c4a702a97404df85bec153405"
     },
     {
       "path": "media/lfo-rate.png",
       "frame": "turn39.png",
-      "plan": "DTBOOT_TURN_PNG=out dtboot sv02.syx --load r63.snap --instr 5000M --every 100M --press LFO@15803M:20M --turn 3:8@16203Mx52/60M",
+      "plan": "DTBOOT_TURN_PNG=out dtboot sv11.syx --load r63.snap --instr 5000M --every 100M --press LFO@15803M:20M --turn 3:8@16203Mx52/60M",
       "sha256": "de19e9325bb489632f63e6c4dca7c3e5950c8a3fc215512e2bfafc3600ee90fd"
     }
   ]
