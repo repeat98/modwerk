@@ -4,7 +4,7 @@
 
 #include "panel.h"
 
-enum { CHORD_ARP_LOCK_CAPACITY = 128 };
+enum { CHORD_ARP_LOCK_CAPACITY = 8 };
 struct chord_arp_saved_lock {
     uint8_t pattern, track, step;
     uint8_t mask[4];

@@ -26,15 +26,15 @@ int main(void)
     chord_arp_lock_clear(4, 3, 127, UINT32_MAX);
     assert(!chord_arp_lock_read(4, 3, 127, &result));
 
-    for (unsigned int step = 0; step < 128; ++step) {
+    for (unsigned int step = 0; step < CHORD_ARP_LOCK_CAPACITY; ++step) {
         assert(chord_arp_lock_set(0, 0, step, CHORD, 0, 1, 0, 0));
     }
     assert(!chord_arp_lock_set(0, 1, 0, CHORD, 0, 1, 0, 0));
-    chord_arp_lock_clear(0, 0, 16, UINT32_MAX);
+    chord_arp_lock_clear(0, 0, 0, UINT32_MAX);
     assert(chord_arp_lock_set(0, 1, 0, CHORD, 0, 1, 0, 0));
-    assert(chord_arp_lock_read(0, 0, 17, &result));
+    assert(chord_arp_lock_read(0, 0, 1, &result));
     chord_arp_locks_reset();
-    assert(!chord_arp_lock_read(0, 0, 17, &result));
+    assert(!chord_arp_lock_read(0, 0, 1, &result));
     assert(!chord_arp_lock_read(0, 1, 0, &result));
     assert(chord_arp_lock_set(1, 1, 0, CHORD, 0, 1, 0, 0));
     return 0;

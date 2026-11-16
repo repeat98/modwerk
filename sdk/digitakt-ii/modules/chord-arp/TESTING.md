@@ -1,5 +1,22 @@
 # Chord Arp testing
 
+## Release qualification
+
+The revised release package with the compact archive and swung subdivisions has yet to be qualified. The hardware report below applies to QB17 with the previous Chord Arp package and Digitakt II core 1.1 from PR #1571.
+
+## Latest hardware reference
+
+QB17 used Chord Arp package SHA-256 6c794421fbb942b7ac257d10ef9bb5f941c4b01c7800ade32d4ba937e39e6919. Claptom-music reported that the arp enable state and trig lock survived a save and reload, and official OS 1.17 reopened the project with both patterns intact. See the QB17 report for the core and image hashes.
+
+## Not tested
+
+- Exact revised release build on hardware.
+- MIDI tracks are outside the audio-track module scope.
+- Save and reload with Euclidean Scale installed.
+- Chord Arp alongside Track Names.
+
+## Earlier trials
+
 ## Pitch engine
 
 On Windows, GCC 16.2.0 compiled `src/arp.c` and `tests/arp_test.c` as C11 with `-Wall -Wextra -Werror`. The test executable passed all assertions. It covers both bounce directions, the other note orders, extended voicing, duplicate pitches, signed root-relative bounds, and a range with no playable notes. Rhythm tests cover lengths 1–32, all nonzero pulse counts, positive and negative rotation, hit order across the loop, and repeat indexing.

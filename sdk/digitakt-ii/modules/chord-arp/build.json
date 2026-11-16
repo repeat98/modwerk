@@ -4,14 +4,13 @@
     "src/main.c",
     "src/arp.c",
     "src/menu-label.s",
-    "src/trial.c",
+    "src/playback.c",
     "src/locks.c"
   ],
   "defsym": {},
   "cflags": [
     "-Wextra",
-    "-Werror",
-    "-DCHORD_ARP_TRIAL"
+    "-Werror"
   ],
   "weak": [],
   "subscribe": [
@@ -64,7 +63,12 @@
   "collections": {},
   "copied": [],
   "regions": [],
-  "claims": [],
+  "claims": [
+    "screen:CHORD-ARP",
+    "key:LEFT@CHORD-ARP",
+    "key:RIGHT@CHORD-ARP",
+    "key:NO@CHORD-ARP"
+  ],
   "requires": [],
   "derive": null,
   "releases": {

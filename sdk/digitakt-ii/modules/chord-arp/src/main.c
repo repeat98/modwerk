@@ -1,12 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include "arp.h"
 #include "panel.h"
-#include "../../../../machines/digitakt-ii/include/mk2/core.h"
-#ifdef CHORD_ARP_TRIAL
+#include "mk2/core.h"
 #include "locks.h"
 #include "../../../../machines/digitakt-ii/elekloader/modwerk/project-archive.h"
 #include "../../../../machines/digitakt-ii/elekloader/modwerk/project-generation.h"
-#endif
 
 enum {
     NO = 12, LEFT = 13, RIGHT = 15, FUNC = 17, RECORD = 19, PLAY = 20, STOP = 21,
@@ -16,10 +14,8 @@ enum {
     ENCODER_STEP = 8,
     MENU_VIEW = 0x38, BRAIN_CONTROLLER = 0x40,
     STOCK_GRID_RECORD = 0x270,
-#ifdef CHORD_ARP_TRIAL
     STOCK_TRACK_STRIDE = 0x6a5, STOCK_NOTE = 1, STOCK_TRIGLESS = 4,
     STOCK_PATTERN_TRACK_VIEW = 0x30,
-#endif
     TEXT_CENTER = 2, RECT_INVERT = -1,
 };
 
@@ -117,16 +113,50 @@ static int encoder_step(unsigned int knob, int32_t raw)
     encoder_pending[knob] = (int8_t)pending;
     return 0;
 }
-#ifdef CHORD_ARP_TRIAL
 volatile uint32_t chord_arp_project_generation;
 static unsigned int step_mode, step_page, lock_full;
 static int held_step = -1, lock_pattern;
 
-struct chord_arp_project {
-    uint16_t initialized, count;
-    struct chord_arp_settings tracks[AUDIO_TRACKS];
-    struct chord_arp_saved_lock locks[CHORD_ARP_LOCK_CAPACITY];
+/* Values are stored as offsets from each control minimum, least-significant bit first. */
+enum { PACKED_SETTINGS_BYTES = 16 };
+static void pack_settings(uint8_t *packed, int8_t values[PAGE_COUNT][8], unsigned int unpack)
+{
+    unsigned int bit = 0;
+    for (unsigned int row = 0; row < PAGE_COUNT; ++row) {
+        for (unsigned int knob = 0; knob < 8; ++knob) {
+            const struct control *const control = &controls[row][knob];
+            if (!control->label || (row == ARP && knob == 7)) {
+                continue;
+            }
+            unsigned int value = unpack ? 0 : (unsigned int)(values[row][knob] - control->min);
+            unsigned int range = control->max - control->min;
+            for (unsigned int flag = 1; flag <= range; flag <<= 1, ++bit) {
+                const unsigned int mask = 1u << (bit % 8);
+                if (unpack) {
+                    if (packed[bit / 8] & mask) {
+                        value |= flag;
+                    }
+                } else if (value & flag) {
+                    packed[bit / 8] |= mask;
+                }
+            }
+            if (unpack) {
+                values[row][knob] = value <= range ? (int8_t)((int)value + control->min) : control->min;
+            }
+        }
+    }
+}
+struct packed_lock {
+    uint8_t pattern, track, step, mask[4], values[PACKED_SETTINGS_BYTES];
 };
+
+struct chord_arp_project {
+    uint16_t initialized, count, manual_range;
+    uint8_t tracks[AUDIO_TRACKS][PACKED_SETTINGS_BYTES];
+    struct packed_lock locks[CHORD_ARP_LOCK_CAPACITY];
+    uint8_t reserved[2];
+};
+_Static_assert(sizeof(struct chord_arp_project) == 448, "Chord Arp archive size");
 
 static void save_project(void *data)
 {
@@ -138,13 +168,19 @@ static void save_project(void *data)
     saved->initialized = initialized;
     for (unsigned int track = 0; track < AUDIO_TRACKS; ++track) {
         if (initialized & (1u << track)) {
-            fw_memcpy(&saved->tracks[track], (const void *)&chord_arp_tracks[track],
-                      sizeof saved->tracks[track]);
+            struct chord_arp_settings settings;
+            fw_memcpy(&settings, (const void *)&chord_arp_tracks[track], sizeof settings);
+            saved->manual_range |= (uint16_t)(settings.manual_range << track);
+            pack_settings(saved->tracks[track], settings.values, 0);
         }
     }
-    saved->count = (uint16_t)chord_arp_locks_snapshot(saved->locks);
+    struct chord_arp_saved_lock locks[CHORD_ARP_LOCK_CAPACITY];
+    saved->count = (uint16_t)chord_arp_locks_snapshot(locks);
+    for (unsigned int i = 0; i < saved->count; ++i) {
+        fw_memcpy(&saved->locks[i], &locks[i], 7);
+        pack_settings(saved->locks[i].values, locks[i].values, 0);
+    }
 }
-
 static int valid_value(unsigned int page, unsigned int knob, int value)
 {
     const struct control *const control = &controls[page][knob];
@@ -199,16 +235,23 @@ static void load_project(const void *data)
     initialized = 0;
     for (unsigned int track = 0; track < AUDIO_TRACKS; ++track) {
         chord_arp_tracks[track].values[ARP][6] = 0;
-        if (saved && (saved->initialized & (1u << track)) && valid_track(&saved->tracks[track])) {
-            fw_memcpy((void *)&chord_arp_tracks[track], &saved->tracks[track],
-                      sizeof saved->tracks[track]);
-            initialized |= (uint16_t)(1u << track);
+        if (saved && (saved->initialized & (1u << track))) {
+            struct chord_arp_settings settings = {0};
+            settings.manual_range = (saved->manual_range >> track) & 1u;
+            pack_settings((uint8_t *)saved->tracks[track], settings.values, 1);
+            if (valid_track(&settings)) {
+                fw_memcpy((void *)&chord_arp_tracks[track], &settings, sizeof settings);
+                initialized |= (uint16_t)(1u << track);
+            }
         }
     }
     chord_arp_locks_reset();
     if (saved && saved->count <= CHORD_ARP_LOCK_CAPACITY) {
         for (unsigned int i = 0; i < saved->count; ++i) {
-            restore_lock(&saved->locks[i]);
+            struct chord_arp_saved_lock lock = {0};
+            fw_memcpy(&lock, &saved->locks[i], 7);
+            pack_settings((uint8_t *)saved->locks[i].values, lock.values, 1);
+            restore_lock(&lock);
         }
     }
     menu_view = 0;
@@ -217,18 +260,17 @@ static void load_project(const void *data)
 }
 
 const dt2_project_archive_t chord_arp_project_archive = {
-    UINT32_C(0x43415231), sizeof(struct chord_arp_project), save_project, load_project,
+    UINT32_C(0x43415232), sizeof(struct chord_arp_project), save_project, load_project,
 };
 
 /* OS 1.17: the stock trig editor resolves its selected track through this view. */
 static unsigned int stock_audio_track(void)
 {
-    const uintptr_t pattern_ui = *(const volatile uintptr_t *)0x44f370a0u;
+    const uint8_t *const pattern_ui = fw_pattern_ui;
     if (!pattern_ui) {
         return selected_track;
     }
-    unsigned int (*const track_at)(const void *) = (void *)0x4004abb8u;
-    const unsigned int track = track_at((const void *)(pattern_ui + STOCK_PATTERN_TRACK_VIEW));
+    const unsigned int track = fw_track_at(pattern_ui + STOCK_PATTERN_TRACK_VIEW);
     return track < AUDIO_TRACKS ? track : selected_track;
 }
 
@@ -258,7 +300,6 @@ static uint32_t selected_step_settings(struct chord_arp_settings *settings)
     return editing_step() ? chord_arp_lock_read((unsigned int)lock_pattern, selected_track,
                                                (unsigned int)held_step, settings) : 0;
 }
-#endif
 
 extern void core_additem(void *menu, const void *const row[4]);
 extern void chord_arp_row_label(void);
@@ -309,13 +350,9 @@ static void select_arp(void **payload)
         fw_enc_init(&stock_encoders);
         stock_encoders_initialized = 1;
     }
-#ifdef CHORD_ARP_TRIAL
     step_mode = step_page = lock_full = 0;
     held_step = -1;
     edit_track(stock_audio_track());
-#else
-    edit_track(selected_track);
-#endif
     reset_encoders();
     page = CHORD;
     dirty = 1;
@@ -349,7 +386,6 @@ void chord_arp_settings(void *menu)
 
 void chord_arp_tick(uint8_t *controller)
 {
-#ifdef CHORD_ARP_TRIAL
     const uint32_t generation = core_project_generation;
     if (chord_arp_project_generation != generation) {
         for (unsigned int track = 0; track < AUDIO_TRACKS; ++track) {
@@ -368,7 +404,6 @@ void chord_arp_tick(uint8_t *controller)
         lock_full = 0;
         dirty = 1;
     }
-#endif
     if (menu_view && !visible(controller)) {
         menu_view = 0;
         dirty = 1;
@@ -388,17 +423,14 @@ int chord_arp_key(const uint8_t *brain, const uint32_t *event)
     uint32_t *const keys = &consumed[key / 32];
     const uint32_t bit = UINT32_C(1) << (key % 32);
     const int trig = key >= TRIG_1 && key <= TRIG_16;
-#ifdef CHORD_ARP_TRIAL
     /* Stock handles the key after us. Prune first so a rapid re-add cannot
      * revive locks from a delete handled since the last UI tick. */
     if (trig && (flags & KEY_PRESS)) {
         chord_arp_locks_prune((unsigned int)core_kit_on(), chord_arp_note_trig);
     }
-#endif
     if (*keys & bit) {
         if (flags & KEY_RELEASE) {
             *keys &= ~bit;
-#ifdef CHORD_ARP_TRIAL
             if (key >= TRIG_1 && key <= TRIG_16 && held_step >= 0 &&
                 key == TRIG_1 + (unsigned int)held_step % 16) {
                 held_step = -1;
@@ -406,21 +438,17 @@ int chord_arp_key(const uint8_t *brain, const uint32_t *event)
                 lock_full = 0;
                 dirty = 1;
             }
-#endif
             return 1;
         }
-#ifdef CHORD_ARP_TRIAL
         if (trig && held_step < 0 && (flags & KEY_PRESS)) {
             *keys &= ~bit;
         } else
-#endif
         return 1;
     }
     if (!(flags & KEY_PRESS) || !visible(brain + BRAIN_CONTROLLER)) {
         return 0;
     }
     const int func = fw_key_down(FUNC) & 1;
-#ifdef CHORD_ARP_TRIAL
     if (key == PAGE_KEY && func) {
         step_mode = !step_mode;
         held_step = -1;
@@ -449,7 +477,6 @@ int chord_arp_key(const uint8_t *brain, const uint32_t *event)
         }
         lock_full = 0;
     } else
-#endif
     if (key == NO) {
         menu_view = 0;
     } else if (key == LEFT) {
@@ -460,7 +487,6 @@ int chord_arp_key(const uint8_t *brain, const uint32_t *event)
         reset_encoders();
     } else if (key >= PUSH_A && key <= PUSH_H) {
         reset_encoder(key - PUSH_A);
-#ifdef CHORD_ARP_TRIAL
         if (step_mode && step_key_held()) {
             if (editing_step()) {
                 const unsigned int knob = key - PUSH_A;
@@ -469,7 +495,6 @@ int chord_arp_key(const uint8_t *brain, const uint32_t *event)
             }
             lock_full = 0;
         } else
-#endif
         if (page == CHORD && key == PUSH_F) {
             chord_arp_tracks[selected_track].values[CHORD][5] = -1;
         } else if (page == ARP && (key == PUSH_C || key == PUSH_D)) {
@@ -502,7 +527,6 @@ int chord_arp_encoder(const uint8_t *brain, const int32_t *event)
     }
     volatile struct chord_arp_settings *const settings = &chord_arp_tracks[selected_track];
     const volatile int8_t (*values)[8] = settings->values;
-#ifdef CHORD_ARP_TRIAL
     const int step_edit = editing_step();
     if ((step_mode && step_key_held() && !step_edit) ||
         (step_edit && ((page == ARP && knob >= 6) || (page == GROOVE && knob >= 3)))) {
@@ -512,7 +536,6 @@ int chord_arp_encoder(const uint8_t *brain, const int32_t *event)
     if (step_edit && selected_step_settings(&locked)) {
         values = locked.values;
     }
-#endif
     const int delta = control->stock_encoder
         ? fw_enc_list(&stock_encoders, (void *)event, fw_enc_param) / 256
         : encoder_step(knob, raw_delta);
@@ -528,33 +551,26 @@ int chord_arp_encoder(const uint8_t *brain, const int32_t *event)
     } else if (page == RHYTHM && knob == 1) {
         max = values[RHYTHM][0];
     }
-#ifdef CHORD_ARP_TRIAL
     if (page == RHYTHM && knob == 3) {
-        max = chord_arp_trial_repeat_max(values[ARP][5]);
+        max = chord_arp_repeat_max(values[ARP][5]);
     }
-#endif
     const int current = track_selector ? (int)selected_track + 1 : values[page][knob];
     int next = delta < min - current ? min : delta > max - current ? max : current + delta;
     if (page == CHORD && knob == 5 && current < 0) {
         next = 60;
     }
-#ifdef CHORD_ARP_TRIAL
     if (step_edit) {
         lock_full = !chord_arp_lock_set((unsigned int)lock_pattern, selected_track, (unsigned int)held_step,
                                        page, knob, (int8_t)next, values[ARP][2], values[ARP][3]);
         dirty = 1;
         return 1;
     }
-#endif
     if (track_selector) {
         if (next != current) {
             unsigned int track = (unsigned int)(next - 1);
-#ifdef CHORD_ARP_TRIAL
             /* OS 1.17 native track change, including its UI notifications. */
-            void (*const select_stock_track)(unsigned int) = (void *)0x40077308u;
-            select_stock_track(track);
+            fw_select_track(track);
             track = stock_audio_track();
-#endif
             edit_track(track);
         }
     } else {
@@ -564,14 +580,12 @@ int chord_arp_encoder(const uint8_t *brain, const int32_t *event)
         } else if (page == RHYTHM && knob == 0 && values[RHYTHM][1] > next) {
             settings->values[RHYTHM][1] = (int8_t)next;
         }
-#ifdef CHORD_ARP_TRIAL
         if (page == ARP && knob == 5) {
-            const int repeat_max = chord_arp_trial_repeat_max(next);
+            const int repeat_max = chord_arp_repeat_max(next);
             if (values[RHYTHM][3] > repeat_max) {
                 settings->values[RHYTHM][3] = (int8_t)repeat_max;
             }
         }
-#endif
     }
     dirty = 1;
     return 1;
@@ -641,13 +655,11 @@ void mod_draw(void *bitmap, const uint8_t *controller)
     }
     fw_fillrect(bitmap, 0, 0, 127, 63, 0);
     const volatile struct chord_arp_settings *settings = &chord_arp_tracks[selected_track];
-#ifdef CHORD_ARP_TRIAL
     struct chord_arp_settings locked;
     const uint32_t mask = selected_step_settings(&locked);
     if (mask) {
         settings = &locked;
     }
-#endif
     fw_textf(bitmap, fw_font, 2, 55, 0, "T%02d", selected_track + 1);
     fw_textf(bitmap, fw_font, 27, 55, 0, "CHORD ARP");
     fw_textf(bitmap, fw_font_narrow, 100, 56, TEXT_CENTER, "%s", settings->values[ARP][6] ? "ON" : "OFF");
@@ -656,7 +668,6 @@ void mod_draw(void *bitmap, const uint8_t *controller)
     fw_fillrect(bitmap, 89, 53, 127, 63, RECT_INVERT);
     fw_fillrect(bitmap, 0, 52, 127, 52, 1);
     fw_textf(bitmap, fw_font_narrow, 2, 45, 0, "%s", page_names[page]);
-#ifdef CHORD_ARP_TRIAL
     if (lock_full) {
         fw_textf(bitmap, fw_font_narrow, 81, 45, TEXT_CENTER, "LOCKS FULL");
     } else if (editing_step()) {
@@ -666,7 +677,6 @@ void mod_draw(void *bitmap, const uint8_t *controller)
     } else if (step_mode) {
         fw_textf(bitmap, fw_font_narrow, 85, 45, TEXT_CENTER, "LOCK PAGE %d", step_page + 1);
     }
-#endif
     for (unsigned int i = 0; i < PAGE_COUNT; ++i) {
         const int y = 42 - 8 * (int)i;
         fw_fillrect(bitmap, page == i ? 124 : 126, y, 127, y + 1, 1);
@@ -703,11 +713,9 @@ void mod_draw(void *bitmap, const uint8_t *controller)
         } else {
             fw_textf(bitmap, fw_font, x, y + 8, TEXT_CENTER, control->min < 0 && value > 0 ? "+%d" : "%d", value);
         }
-#ifdef CHORD_ARP_TRIAL
         if (mask & chord_arp_lock_mask(page, i)) {
             fw_fillrect(bitmap, x - 12, y + 7, x + 12, y + 15, RECT_INVERT);
         }
-#endif
     }
     if (page == CHORD) {
         draw_chord(bitmap, settings->values[CHORD]);

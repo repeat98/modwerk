@@ -34,10 +34,15 @@
   "access": {
     "location": "SETTINGS > CHORD ARP",
     "steps": [
-      "Choose CHORD ARP in SETTINGS to open the preview.",
+      "Choose CHORD ARP in SETTINGS.",
       "Use LEFT and RIGHT to switch pages. Press NO to return."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/chord.png",
+      "media/arp.png",
+      "media/rhythm.png",
+      "media/groove.png"
+    ]
   },
   "controls": [],
   "compatibility": {
@@ -86,22 +91,104 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "See TESTING.md for hardware results and emulator checks."
+    "summary": "See TESTING.md for hardware results and emulator checks.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Place a C5 note trig on step 1 of a pitched audio track.",
+          "Open SETTINGS, select CHORD ARP, and set TYPE to MAJ and ROOT to TRIG.",
+          "Press RIGHT, set ORDER to UP and DIV to 1/16, then turn ARP on.",
+          "Press FUNC + RIGHT, turn SPAN on, then press PLAY."
+        ]
+      },
+      "screenshots": [
+        "media/chord.png",
+        "media/arp.png",
+        "media/rhythm.png",
+        "media/groove.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
     "file": "LICENSE",
-    "declaration": "Original work by the author. Replace if you choose another GPL-compatible licence."
+    "declaration": "Original Chord Arp source and artwork by Claptom-music, licensed under GPL-3.0-or-later."
   },
   "media": [
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
       "caption": "Chord Arp thumbnail",
-      "alt": "Placeholder thumbnail for Chord Arp",
+      "alt": "A single trig followed by an ascending and descending arpeggio",
       "credit": "Claptom-music",
       "license": "GPL-3.0-or-later",
-      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+      "source": "Original vector illustration by Claptom-music."
+    },
+    {
+      "path": "media/chord.png",
+      "kind": "screenshot",
+      "caption": "Chord page",
+      "alt": "Digitakt II Chord Arp Chord control page",
+      "credit": "Claptom-music documentation capture; Elektron interface",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.17",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9ef3258f10bfa9fd283c21ec3bc9b3d0ddf6c67ec07e02dc0eadf61f53accf30",
+        "setup": "Cold boot QB17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to CHORD and capture the panel after encoder edits."
+      }
+    },
+    {
+      "path": "media/arp.png",
+      "kind": "screenshot",
+      "caption": "Arp page",
+      "alt": "Digitakt II Chord Arp Arp control page",
+      "credit": "Claptom-music documentation capture; Elektron interface",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.17",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9ef3258f10bfa9fd283c21ec3bc9b3d0ddf6c67ec07e02dc0eadf61f53accf30",
+        "setup": "Cold boot QB17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to ARP and capture the panel after encoder edits."
+      }
+    },
+    {
+      "path": "media/rhythm.png",
+      "kind": "screenshot",
+      "caption": "Rhythm page",
+      "alt": "Digitakt II Chord Arp Rhythm control page",
+      "credit": "Claptom-music documentation capture; Elektron interface",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.17",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9ef3258f10bfa9fd283c21ec3bc9b3d0ddf6c67ec07e02dc0eadf61f53accf30",
+        "setup": "Cold boot QB17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to RHYTHM and capture the panel after encoder edits."
+      }
+    },
+    {
+      "path": "media/groove.png",
+      "kind": "screenshot",
+      "caption": "Groove page",
+      "alt": "Digitakt II Chord Arp Groove control page",
+      "credit": "Claptom-music documentation capture; Elektron interface",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.17",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9ef3258f10bfa9fd283c21ec3bc9b3d0ddf6c67ec07e02dc0eadf61f53accf30",
+        "setup": "Cold boot QB17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to GROOVE and capture the panel after encoder edits."
+      }
     }
   ]
 }

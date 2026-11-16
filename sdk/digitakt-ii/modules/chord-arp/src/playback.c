@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
-/* Local trial adapter for the draft Digitakt II base collection. */
+/* Phrase scheduling against the Digitakt II sequencer window. */
 #include "arp.h"
 #include "locks.h"
 #include "panel.h"
 #include "../../../../machines/digitakt-ii/elekloader/modwerk/project-generation.h"
 #include "../../../../machines/digitakt-ii/elekloader/modwerk/seq-phrase.h"
-#include "../../../../machines/digitakt-ii/include/mk2/core.h"
+#include "mk2/core.h"
 
 static const uint16_t periods[] = {
     384, 288, 192, 128, 144, 96, 64, 72, 48, 32, 36, 24, 16, 18, 12, 8, 9, 6, 4,
@@ -29,7 +29,7 @@ struct playback {
 static struct playback playback[AUDIO_TRACKS];
 static struct chord_arp_settings carried_locks[AUDIO_TRACKS];
 
-int chord_arp_trial_repeat_max(int division)
+int chord_arp_repeat_max(int division)
 {
     const unsigned int period = periods[division];
     const unsigned int slots = (ARP_UNITS_PER_STEP + period - 1) / period;
@@ -38,13 +38,18 @@ int chord_arp_trial_repeat_max(int division)
 
 static uint32_t grid_tick(const struct dt2_seq_grid_window *window, int offset)
 {
-    const int32_t unit = window->pulses_per_step * (900000 / ARP_UNITS_PER_STEP);
-    return window->onset + (uint32_t)(offset * unit);
-}
-
-static uint32_t scale_deadline(uint32_t offset, uint32_t ratio)
-{
-    return offset / 256u * ratio + offset % 256u * ratio / 256u;
+    uint32_t start = window->onset, end = window->next;
+    if (offset < 0) {
+        start = window->previous;
+        end = window->onset;
+        offset += ARP_UNITS_PER_STEP;
+    } else if (offset >= ARP_UNITS_PER_STEP) {
+        start = window->next;
+        end = window->following;
+        offset -= ARP_UNITS_PER_STEP;
+    }
+    const int32_t interval = (int32_t)(end - start);
+    return start + (uint32_t)(interval * offset / ARP_UNITS_PER_STEP);
 }
 
 uint32_t chord_arp_panel_phrase(const struct dt2_seq_grid_window *window, uint32_t root,
@@ -120,7 +125,7 @@ uint32_t chord_arp_panel_phrase(const struct dt2_seq_grid_window *window, uint32
     const uint16_t period = periods[division];
     const uint8_t length = (uint8_t)values[RHYTHM][0];
     const uint8_t pulses = (uint8_t)values[RHYTHM][1];
-    const int repeat_limit = chord_arp_trial_repeat_max(division);
+    const int repeat_limit = chord_arp_repeat_max(division);
     const int repeats = values[RHYTHM][3];
     const struct arp_rhythm rhythm = {
         length, pulses < length ? pulses : length, values[RHYTHM][2],
@@ -135,8 +140,7 @@ uint32_t chord_arp_panel_phrase(const struct dt2_seq_grid_window *window, uint32
     if (!empty && (reset & 2u)) {
         state->rhythm_origin = (step * ARP_UNITS_PER_STEP + period - 1u) / period;
     }
-    const uint32_t available = window->next - window->onset;
-    const uint32_t span = window->pulses_per_step * UINT32_C(900000);
+    const uint32_t span = window->next - window->onset;
     struct arp_hit hits[ARP_MAX_HITS];
     uint32_t produced = 0;
     for (uint8_t i = 0; i < slice.count; ++i) {
@@ -165,21 +169,6 @@ uint32_t chord_arp_panel_phrase(const struct dt2_seq_grid_window *window, uint32
                     window->onset + onset, window->onset + release, hits[n].pitch, hits[n].velocity,
                 };
                 ++state->note_position;
-            }
-        }
-    }
-    if (produced) {
-        const uint32_t end = notes[produced - 1].release - window->onset;
-        if (end > available) {
-            /* One ratio for the whole phrase. Preserve its repeat count and
-             * keep the release before a following swung or early stock trig. */
-            const uint32_t ratio = available / (end / 256u + 1u);
-            if (!ratio) {
-                produced = 0;
-            }
-            for (unsigned int i = 0; i < produced; ++i) {
-                notes[i].onset = window->onset + scale_deadline(notes[i].onset - window->onset, ratio);
-                notes[i].release = window->onset + scale_deadline(notes[i].release - window->onset, ratio);
             }
         }
     }

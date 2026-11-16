@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "machine": "digitakt-ii",
+  "moduleId": "chord-arp",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.17",
+  "imageSha256": "9ef3258f10bfa9fd283c21ec3bc9b3d0ddf6c67ec07e02dc0eadf61f53accf30",
+  "captures": [
+    {
+      "path": "media/chord.png",
+      "sha256": "0f957d751030fafc8d4ab77979a89f988f9ae92e6d431d04127994e9d9c83e0e",
+      "plan": "Cold boot QB17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to CHORD and capture the panel after encoder edits."
+    },
+    {
+      "path": "media/arp.png",
+      "sha256": "13b004908f723da4bcdac0bce2777d134785bb09e3e4be65e2efb8729c335378",
+      "plan": "Cold boot QB17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to ARP and capture the panel after encoder edits."
+    },
+    {
+      "path": "media/rhythm.png",
+      "sha256": "5d2138d7df6d4ced0f626c6ded8e8e46f3b799e40357f68dabc18a8a91caa5cd",
+      "plan": "Cold boot QB17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to RHYTHM and capture the panel after encoder edits."
+    },
+    {
+      "path": "media/groove.png",
+      "sha256": "952430c0677557d78cbe5f1706a8cc270849ba57b9a0ced0fe8fb58d201abb93",
+      "plan": "Cold boot QB17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to GROOVE and capture the panel after encoder edits."
+    }
+  ]
+}
