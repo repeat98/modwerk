@@ -335,13 +335,13 @@ time-stretch reads its splice search and only BEAT reads its transient markers.
 `status.c` measures, all the time, the ColdFire's load (main's idle spin, timed on DTIM3, `status.s`), each
 DSP core's mean and peak load (core 0's own idle count, core 1's counted wait for core 0, `dsp_receiver.asm`),
 each core's code arena, the delay-buffer blocks and the module pool. CUE + PROJ shows it as a dialog (NO closes it),
-and so does PROJ > MODWERK > LOAD: MODWERK BASE and its version over five rows, each with its bar: CPU, DSP T1-4 and
+and so does PROJ > MODWERK > STATUS: MODWERK BASE and its version over five rows, each with its bar: CPU, DSP T1-4 and
 DSP T5-8 (each DSP chip's time by its tracks, measured, with the recent peak; tracks 1-4 run on core 1, tracks 5-8 on
 core 0), then MEM T1-4 and MEM T5-8 (DSP memory per chip, the fuller of what admission books and its code memory: what says
 DSP MEMORY FULL first); `npm run device -- stats` prints it from the loader report on development
 bases. PROJ > MODWERK is a fifth root category (Octabam's MAINMENU.md: the root window is five rows tall, stock fills
 four; `build_core.py` copies the four stock rows and appends it, with its icon and list): MODULES last ("Modules on
-and off" above), and before it LOAD, MODULE LOAD (each
+and off" above), and before it STATUS, MODULE COST (each
 installed module's share of each core's frame from its own cycle figure, `~` when that is 7/4 of an emulator claim:
 the meters see only each core's sum), MISSING (each module a project names but no installed module serves, with where
 it is named first: the current bank, then the others, a working Part before a saved copy, `BANK A SAVED PART 2 T5`;

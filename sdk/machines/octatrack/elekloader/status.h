@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
- * What status.c's MODULE LOAD page reads from dsp.c: each installed module effect and what it costs. */
+ * What status.c's MODULE COST page reads from dsp.c: each installed module effect and what it costs. */
 #ifndef MODWERK_STATUS_H
 #define MODWERK_STATUS_H
 #include <stdint.h>

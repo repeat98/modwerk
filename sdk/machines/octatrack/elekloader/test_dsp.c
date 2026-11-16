@@ -229,7 +229,7 @@ int main(void)
     modwerk_test_live_fx[5] = 26, restoring = 1;
     CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_OK && !modwerk_test_live_fx[13] && !modwerk_test_live_fx[5]);
     restoring = 0, modwerk_test_live_fx[5] = 4, modwerk_test_live_fx[13] = 26;
-    /* MODULE LOAD (status.c): the one module, unfloored 7/4 of its claim, an estimate, on T6 FX2 (core 0). */
+    /* MODULE COST (status.c): the one module, unfloored 7/4 of its claim, an estimate, on T6 FX2 (core 0). */
     struct modwerk_module_load loads[MODWERK_FX_IDS];
     CHECK(modwerk_dsp_module_loads(loads) == 1 && loads[0].id == 26 && loads[0].cycles == (244 * 7 + 3) / 4 &&
           !loads[0].measured && loads[0].slots[0] == 1 && !loads[0].slots[1]);

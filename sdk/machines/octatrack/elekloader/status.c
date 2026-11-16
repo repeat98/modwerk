@@ -155,7 +155,8 @@ static void status_tick(void)
 
 /* The dialogs: while one shows it takes every key and encoder, so nothing changes under it; NO closes it and the
  * screen it covered is back as it was. CUE + PROJ toggles the status from anywhere; PROJ's MODWERK category (the
- * fifth root row build_core.py adds, owner 12 October 2026) opens each page: LOAD, MODULE LOAD, MISSING, SELF TEST, MODULES. */
+ * fifth root row build_core.py adds, owner 12 October 2026) opens each page: STATUS, MODULE COST, MISSING, SELF TEST, MODULES (renamed from LOAD and MODULE LOAD, owner,
+ * 16 November 2026: they read like loading modules). */
 enum { CLOSED, SHOWN, TEST, MISSING, MEMORY, MODULE_LOAD, REFUSED, SWITCHES };
 static int open, taken = -1; /* which shows; a key press the handler took, whose release it takes too (-1: none; TRIG 1 is 0) */
 /* What a host is doing to the unit, on its own screen (owner, 13 November 2026: a sync shows a dialog with a progress
@@ -250,7 +251,7 @@ static int menu_open(void)
 #endif
 void modwerk_status_close_menu(void) { if (close_menu) close_menu = 0, CLOSE_MENU(); }
 /* PROJ > MODWERK's rows (build_core.py): the category's label, then each row's label and action. */
-char modwerk_menu_label[] = "MODWERK", modwerk_load_label[] = "LOAD", modwerk_modules_label[] = "MODULE LOAD",
+char modwerk_menu_label[] = "MODWERK", modwerk_load_label[] = "STATUS", modwerk_modules_label[] = "MODULE COST",
      modwerk_missing_label[] = "MISSING", modwerk_test_label[] = "SELF TEST", modwerk_switches_label[] = "MODULES";
 static unsigned missing_top, modules_top;
 static int missing_asked; /* MISSING opened from the menu: it stays open with nothing missing */
@@ -404,7 +405,7 @@ static void memory_tick(void)
     if (open == REFUSED && refused_left && !--refused_left) open = CLOSED;
     if (open != MEMORY) words_before[0] = dl_residency_words[0], words_before[1] = dl_residency_words[1];
 }
-/* MODULE LOAD (owner, 12 October 2026: "load per module"): each installed module effect, with what its instances
+/* MODULE COST (owner, 12 October 2026: "load per module"): each installed module effect, with what its instances
  * cost on each core as a share of that core's DSP budget, as the box and the STATUS page's DSP rows count (owner,
  * 14 October 2026: one denominator). The cores' meters see only their sum, so this is each module's figure times the
  * slots running it: a hardware figure, or 7/4 of an emulator claim (~). */
@@ -849,7 +850,7 @@ static void modules_page(unsigned char *frame)
 {
     unsigned n = modules_count(), estimate = 0;
     if (modules_top + ROWS > n) modules_top = n > ROWS ? n - ROWS : 0;
-    dialog(frame, "MODULE LOAD");
+    dialog(frame, "MODULE COST");
     if (!n) label(X0 + 6u, Y0 + 17u, "NO MODULES INSTALLED.");
     else {
         label(X1 - 4u - (unsigned)TEXT_WIDTH(FONT, -1, "T5-8"), Y0 + 13u, "T5-8");

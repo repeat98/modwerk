@@ -101,7 +101,7 @@ void modwerk_fxmap_name(unsigned id, char *out) { for (unsigned i = 0; i < 16u; 
 int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out) { (void)slot, (void)out; return 0; } /* draws only */
 uint32_t modwerk_dsp_booked(unsigned core) { return core; } /* draws only */
 unsigned modwerk_dsp_reads_buffer(unsigned id) { return id == 27u; } /* E-Verb reads one; Tape Echo (15) none */
-/* dsp.c's MODULE LOAD list: `installed` modules. */
+/* dsp.c's MODULE COST list: `installed` modules. */
 static unsigned installed;
 unsigned modwerk_dsp_module_loads(struct modwerk_module_load *out)
 {
@@ -329,6 +329,7 @@ int main(void)
     CHECK(!modwerk_status_refused(2) && open == SHOWN);                 /* a page is open: not covered */
     modwerk_status_key(NO, 1); modwerk_status_key(NO, 0);
     /* PROJ > MODWERK's other rows: each opens its page; NO closes it. */
+    CHECK(!strcmp(modwerk_load_label, "STATUS") && !strcmp(modwerk_modules_label, "MODULE COST")); /* not read as loading modules */
     modwerk_load_menu(0);
     CHECK(open == SHOWN && tip_until == ticks + 120u);                 /* from the menu: the CUE + PROJ tip for 2 s */
     CHECK(strstr(shows(), "CPU|") && strstr(said, "|DSP T1-4|") && strstr(said, "|DSP T5-8|") && strstr(said, "|MEM T1-4|") &&

@@ -153,7 +153,7 @@ static char owner_name[MODWERK_FX_IDS][16];
 static uint8_t *owner_page[MODWERK_FX_IDS]; /* its page recipe (the module image's head), and that image's length */
 static uint32_t owner_page_bytes[MODWERK_FX_IDS];
 static uint8_t owner_pinned[MODWERK_FX_IDS]; /* its ColdFire code names this id: it never moves (loader.h) */
-static uint32_t owner_cycles[MODWERK_FX_IDS]; /* an instance's chip cycles a sample, unfloored (status.c's MODULE LOAD) */
+static uint32_t owner_cycles[MODWERK_FX_IDS]; /* an instance's chip cycles a sample, unfloored (status.c's MODULE COST) */
 /* Each slot's least charge: the dearest stock effect this bank's Parts name there, working or saved, the one it runs and
  * the one `ids` asks for. A module id counts nothing here: each module is admitted for itself, and a Part naming one
  * that does not fit is refused at the switch. */
@@ -559,7 +559,7 @@ int modwerk_dsp_bank_names(unsigned id)
     return named;
 }
 
-/* MODULE LOAD (status.c): each installed module effect, by handle: its name, an instance's chip cycles a sample
+/* MODULE COST (status.c): each installed module effect, by handle: its name, an instance's chip cycles a sample
  * (unfloored: what it costs, not the ledger's charge), whether that is a hardware figure, and how many slots run it
  * on each core (T1-T4 core 1, T5-T8 core 0). Returns how many it wrote, at most MODWERK_FX_IDS. */
 unsigned modwerk_dsp_module_loads(struct modwerk_module_load *out)
