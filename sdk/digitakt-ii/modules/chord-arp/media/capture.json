@@ -4,27 +4,27 @@
   "moduleId": "chord-arp",
   "moduleVersion": "0.1.0-experimental",
   "firmware": "1.17",
-  "imageSha256": "9ef3258f10bfa9fd283c21ec3bc9b3d0ddf6c67ec07e02dc0eadf61f53accf30",
+  "imageSha256": "3f1bf67f05d81a7d9065285ca6475e17e03d47c4e2d62bbb93979eb290cd27b8",
   "captures": [
     {
       "path": "media/chord.png",
-      "sha256": "0f957d751030fafc8d4ab77979a89f988f9ae92e6d431d04127994e9d9c83e0e",
-      "plan": "Cold boot QB17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to CHORD and capture the panel after encoder edits."
+      "sha256": "1eada8476de621f31e80b2b415ed2e06987946ba2602c000c05679c117dca986",
+      "plan": "Cold boot QC17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to CHORD and capture the panel after encoder edits."
     },
     {
       "path": "media/arp.png",
-      "sha256": "13b004908f723da4bcdac0bce2777d134785bb09e3e4be65e2efb8729c335378",
-      "plan": "Cold boot QB17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to ARP and capture the panel after encoder edits."
+      "sha256": "73cbdf12e0913188012169cadab3a9030e6307e349da01dc085766c3f5f1814d",
+      "plan": "Cold boot QC17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to ARP and capture the panel after encoder edits."
     },
     {
       "path": "media/rhythm.png",
-      "sha256": "5d2138d7df6d4ced0f626c6ded8e8e46f3b799e40357f68dabc18a8a91caa5cd",
-      "plan": "Cold boot QB17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to RHYTHM and capture the panel after encoder edits."
+      "sha256": "b28c1161be2ab367c236f1350f8f1b1c70b4cc679347c5bf30b94451343125e6",
+      "plan": "Cold boot QC17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to RHYTHM and capture the panel after encoder edits."
     },
     {
       "path": "media/groove.png",
-      "sha256": "952430c0677557d78cbe5f1706a8cc270849ba57b9a0ced0fe8fb58d201abb93",
-      "plan": "Cold boot QB17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to GROOVE and capture the panel after encoder edits."
+      "sha256": "4db11c72d581037d6a1764ae93fcdcb708cbb395f146d683d4fa5f123659c531",
+      "plan": "Cold boot QC17 in Digikit, dismiss popups, open SETTINGS and select CHORD ARP. Move right to GROOVE and capture the panel after encoder edits."
     }
   ]
 }
