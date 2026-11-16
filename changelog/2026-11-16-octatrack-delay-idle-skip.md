@@ -1,0 +1,1 @@
+Octatrack base 0.7.5: the ColdFire no longer runs the stock delay's filter and mix on tracks that have no DELAY. Stock ran them for all eight tracks every frame, whatever the track's FX2. A track's sound and its delay memory stay bit-identical; the work comes back about six seconds after a track's delay goes quiet.

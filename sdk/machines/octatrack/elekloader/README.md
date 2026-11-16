@@ -332,6 +332,12 @@ removal package any module gets (`sdk/tests/runtime_card_guard.c`: the loader ta
 `status.s` also gates stock's time-stretch helper task (`mw_ts_gate`): it skips a track whose TSTR is OFF, since only
 time-stretch reads its splice search and only BEAT reads its transient markers.
 
+`status.s` also shortens stock's delay routine (`mw_delay_idle`). Stock filters and mixes all eight tracks' delay
+rings every frame, whatever their FX2. A track whose delay gains have rested at dry only for 16,384 frames (about
+6 s: its ring is all zeros by then) skips both, and its audio and ring stay bit-identical to stock's. A module that
+takes the routine's own seam before it (Tape Echo, `0x4000361a`) is not affected, and the count starts again after
+any frame the hook did not see.
+
 `status.c` measures, all the time, the ColdFire's load (main's idle spin, timed on DTIM3, `status.s`), each
 DSP core's mean and peak load (core 0's own idle count, core 1's counted wait for core 0, `dsp_receiver.asm`),
 each core's code arena, the delay-buffer blocks and the module pool. CUE + PROJ shows it as a dialog (NO closes it),
