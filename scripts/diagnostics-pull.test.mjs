@@ -119,6 +119,16 @@ describe('diagnostics pull', () => {
     expect(lines.filter(l => l.includes('stall'))).toEqual([
       '  unit: #3 start 2 +0m0s stall reason 1 (an OS upgrade: this start runs another base; not a hang)', '  unit: #5 start 3 +0m0s stall reason 1'])
   })
+  it('calls a stopped freeze until a restart before a start on another base an OS upgrade, and no other freeze', () => {
+    const at = (seq, boot, kind, a = 0, more = {}) => ({ seq, boot, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
+      fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 0, playing: false, ...more })
+    const note = ' (an OS upgrade: the next start runs another base; not a hang)'
+    // diag.c adds the freeze at the next start but keeps the boot it happened in: starts 1 and 3 froze before a new base, 2 and 4 did not.
+    const lines = unitLines([at(1, 1, 'base', 0xb5fae2ae), at(2, 2, 'base', 0x049efc39), at(3, 1, 'freeze'), at(4, 2, 'freeze'), at(5, 3, 'base', 0x049efc39),
+      at(6, 4, 'base', 0x27c9d36f), at(7, 3, 'freeze', 0, { playing: true }), at(8, 3, 'freeze', 25919), at(9, 3, 'freeze'), at(10, 4, 'freeze')])
+    expect(lines.filter(l => l.includes('freeze')).map(l => [l.match(/#(\d+)/)[1], l.endsWith(note)])).toEqual(
+      [['3', true], ['4', false], ['7', false], ['8', false], ['9', true], ['10', false]])
+  })
   it('names a crash incident’s program counter from the symbols kept for its base, and from no other base’s', () => {
     const at = (seq, kind, a) => ({ seq, boot: 1, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
       fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 0, playing: false })
