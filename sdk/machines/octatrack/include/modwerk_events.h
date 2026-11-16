@@ -251,4 +251,13 @@ typedef void modwerk_ev_part_clear(unsigned part);
 #define MODWERK_EV_MODULES_READY 51
 typedef unsigned modwerk_ev_modules_ready(void);
 
+/* ot_sample_memory (table, contribute {"to": "ot_sample_memory", "order", "data"}): a module borrows sample memory while it is installed: the base takes its pages from stock's sample pool on the engine task, before it raises ev_modules_ready, and returns them once the module is removed. The engine task (take and return); the module reads at from any task. Contribute one struct modwerk_sample_memory. The base takes that many whole pages from the top of the sample pool's free list as stock's track recorders do, so the unit's FREE MEM, sample loads and recorders see that much less, and writes their address to at; until then, and when the pool has not that many free pages in one run, at stays 0 and the module must leave stock alone. The pages keep their contents through LOAD PROJECT, a new project and REFORMAT FLEX RAM, but not through a power cycle. A replacement of the same module, same pages, keeps them; removal zeroes them and hands them back. One module at a time. */
+#define MODWERK_OT_SAMPLE_MEMORY 52
+struct modwerk_sample_memory {
+    uint16_t abi;                       /* 1 */
+    uint16_t pages;                     /* 6,144-byte pages of sample memory wanted, 1-400 */
+    uint8_t *volatile at;               /* the base writes the pages' address once they are taken; 0 until then, and while refused */
+    uint32_t reserved[2];               /* 0 */
+};
+
 #endif
