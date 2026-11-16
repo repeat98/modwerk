@@ -9,4 +9,7 @@
  */
 extern const volatile uint32_t core_project_generation;
 
+/* Same generation on bases that clear the kit-data blocks on project replacement. */
+extern const volatile uint32_t core_project_kitdata_generation;
+
 #endif

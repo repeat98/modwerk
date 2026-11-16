@@ -49,7 +49,7 @@ regressions when adding host-side firmware or USB helpers.
 `site_features` reports tools and evidence limits. `site_catalogue` searches and
 filters the actual machine/module catalogue; `site_module` exposes controls,
 usage, attribution, licences and evidence. `site_selection` calls the frontend's
-card compatibility or USB package validation. USB preparation verifies both
+catalogue check or USB package validation. USB preparation verifies both
 forward and Undo package hashes and header/capability requirements without
 writing to the device. A beta catalogue inspection grants no live membership.
 
@@ -203,6 +203,43 @@ module as an addition, then Undo. Unsupported modules, stock-menu changes and
 unqualified machine groups retain their existing refusals. The MCP offers no
 raw memory/key injection, arbitrary packages, whole-OS flashing or automatic
 Keep. Base installation/upgrades retain the reviewed card/recovery flow.
+
+## A Zoom pedal over MIDI
+
+A Zoom MultiStomp needs no bridge: the CLI and the MCP drive the site's own
+`ZoomLink` over the computer's MIDI through `@julusian/midi` (RtMidi), wrapped in
+Web MIDI's shape by [`zoom-device.ts`](../scripts/zoom-device.ts). It turns SysEx
+on and sends each message at its Web MIDI timestamp, so the link's pacing holds.
+Close Zoom Effect Manager and every browser tab with a pedal page (dev servers
+too) first: the pedal answers every MIDI client, so another client's replies
+end up in this link's operations, and this link's file commands in theirs.
+On 9 November 2026 `status` read the owner's MS-70CDR on MIDISTOMP 2.0.1
+(identity, features and load) over CoreMIDI; `list` stopped after four files
+because a pedal page in another worktree's dev server was reading the pedal. On
+10 November 2026 the CLI read the same pedal's 166 files, backed them up
+(2 min 55 s), removed one added effect and installed three, each read back and
+listed at its own ID; the pedal booted after each change (owner's report).
+
+```sh
+npm run zoom -- status | list | backup [OUT.zip]
+npm run zoom -- install FILE.ZDL --yes | remove NAME.ZDL --yes
+node scripts/frontend-mcp.mjs --data-dir /private/path/modwerk-mcp --zoom-midi [--zoom-effects DIR] [--allow-device-writes]
+```
+
+`zoom_status` reads the model and firmware (on MIDISTOMP also its version,
+features and load), `zoom_list` the files and the free space, with the
+group, ID and version of effects in the group added effects use, and `zoom_backup` every file into a zip in the
+private workspace (the CLI's default is `~/.cache/modwerk-local/zoom/`).
+`zoom_install` takes an effect file by name from the startup-selected
+`--zoom-effects` directory, never a path; it and `zoom_remove` need
+`--allow-device-writes` and `confirm: true` (the CLI: `--yes`), act as the
+site's pedal page does, and save the effect list from before next to the
+backups. Power-cycle the pedal to load a change. A pedal in update mode
+answers `status` only; flashing a base stays in the site's dialog. These are
+the pedal's own file operations, which the Octatrack's tools have no
+counterpart for; once a Zoom base loads modules over USB, that goes behind
+`device_review`, `device_trial`, Keep and Undo, as the
+[recipe](MACHINE_RECIPE.md) asks. Tests run against `fakeZoomPedal`.
 
 ## A member's unit through a remote session
 

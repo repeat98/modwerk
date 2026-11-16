@@ -9,10 +9,12 @@ GPL-2.0-or-later, by irpina and Iced-Cream, and keep their SPDX lines.
 
 Modwerk's own sources sit beside them in `base/`, and `base.json`'s `common` and `add` merge them into the imported
 recipe when the build stages it, so the imported files stay exact. `common` goes into every variant: the machine list's
-sections (`sections.c`; [machine list sections](../README.md#machine-list-sections)). `add` holds the FX track's lock
+sections (`sections.c`; [machine list sections](../README.md#machine-list-sections)) and the amp envelope's record
+(`amp.s`; [amp envelope record](../README.md#amp-envelope-record)). `add` holds the FX track's lock
 words (`locks.c`, `locks.s`) and the send bus (`sendbus.c`, `sendbus.s`, `fx-tables.h`;
 [send effects](../README.md#send-effects)). A site names the stock bytes it replaces by length and SHA-256 only; the
-build fills them from your OS. The USB stack comes next.
+build fills them from your OS. `dev` goes only into development bases (`npm run machine:base -- analog-rytm-mkii --dev`,
+never recorded or released): the USB link (`link.c`, `link.s`; [LINK.md](../LINK.md)).
 
 The base comes in two variants (`base.json`'s `variants`): **send-bus**, the default, with `common` and everything `add`
 names, and **plain**, the imported recipe with `common` alone. The site builds a set with a send effect on send-bus and
@@ -71,14 +73,15 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD"
 | Compiler | `.run` bytes | Relocations | Same as the release |
 |---|---|---|---|
 | irpina's release `core-ar2-0.7.elemod` | 10,692 | 103 | — |
-| m68k-elf GCC 16.2.0, binutils 2.47 (reviewed; this base's plain variant, `ba530f45`) | 10,628 | 102 | sources, sites, interface |
+| m68k-elf GCC 16.2.0, binutils 2.47 (reviewed; this base's plain variant, `1c14b6b0`) | 10,792 | 102 | sources, sites, interface |
 | Debian 12 m68k-linux-gnu GCC 12.2.0 | 10,248 | 94 | sources, sites, interface |
 | Ubuntu 24.04 m68k-linux-gnu GCC 13.3.0 | 10,320 | 94 | sources, sites, interface |
 | Debian 13 m68k-linux-gnu GCC 14.2.0 | 10,168 | 93 | sources, sites, interface |
 
-The send-bus variant (`c338266c`) has 28,702 bytes of `.run` and 2,708 of `.bss`, and 62 of the kit's 64 storage
-bits: about 97 KiB of the 128 KiB mod area stays for modules and the effect that runs, whose work area is the RAM they
-leave free (`sendbus.c`), against about 116 KiB on plain.
+The send-bus variant (`3ece243b`) has 33,006 bytes of `.run` and 4,172 of `.bss` (4,140 and 1,464 more since
+the digital voices), 62 of the kit's 64 storage bits and 3 bits of each sound (a voice machine's type): about 92 KiB of the
+128 KiB mod area stays for modules and the effect that runs, whose work area is the RAM they leave free (`sendbus.c`),
+against about 116 KiB on plain.
 
 The release records its sources but not its compiler, and none of these reproduces its compiled code byte for byte.
 The 22 functions that change size are all compiled C: 21 from `store.c`, 1 from `machines.c`. The sites, the

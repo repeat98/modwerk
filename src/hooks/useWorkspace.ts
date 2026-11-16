@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { afterDeleting, newConfiguration, cleanName, pinModuleVersions, configurationDevice, DEFAULT_DEVICE, removedSettings, startupSettings, storageSettings } from '../config/workspace'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { isModuleAvailable } from '../catalog/availability'
+import { canAdd } from '../catalog/set-limit'
 import type { Configuration, StorageLock } from '../config/workspace'
 import { deviceStore, openDeviceDatabase } from '../storage/device'
 import type { DeviceStore } from '../storage/device'
@@ -60,7 +61,8 @@ export function useWorkspace() {
         if (cancelled) return
         replaceConfigurations(items)
         changeActive(items.some(item => item.id === rememberedId) ? rememberedId! : items[0].id)
-        const stored = await store.readFirmware()
+        // The saved sets are open by now: a firmware record that cannot be read or forgotten must not replace them.
+        const stored = await store.readFirmware().catch(() => undefined)
         if (cancelled) return
         if (stored) {
           const request = requestGeneration.current
@@ -73,7 +75,7 @@ export function useWorkspace() {
             setFirmware(verified); setFirmwareSaved(true); setFileState('ready')
           } catch {
             // A file chosen or cleared during the check supersedes it and must not be forgotten.
-            if (!cancelled && request === requestGeneration.current) { setFileState('error'); setFileError('The saved firmware could not be verified. Choose the original 1.40C file again.'); await store.forgetFirmware() }
+            if (!cancelled && request === requestGeneration.current) { setFileState('error'); setFileError('The saved firmware could not be verified. Choose the original 1.40C file again.'); await store.forgetFirmware().catch(() => {}) }
           }
         }
       } catch (error) {
@@ -147,10 +149,24 @@ export function useWorkspace() {
     // USB is added atomically with the user's setup through configureUsbAudio.
     if (device === DEFAULT_DEVICE && id === USB_AUDIO_MODULE && !current.moduleIds.includes(id)) return
     if (!current.moduleIds.includes(id) && device === DEFAULT_DEVICE && !isModuleAvailable(id, betaAccess)) return
+    // A full Octatrack set takes no further module (set-limit.ts); the library shows why before anyone gets here.
+    if (!canAdd(current.moduleIds, id, configurationDevice(current))) return
     const moduleIds = current.moduleIds.includes(id) ? current.moduleIds.filter(value => value !== id) : [...current.moduleIds, id]
     const moduleVersions = Object.fromEntries(moduleIds.map(selected=>[selected,current.moduleVersions[selected]??pinModuleVersions([selected],device)[selected]]))
     updateActive({ moduleIds, moduleVersions, ...(id === USB_AUDIO_MODULE && !moduleIds.includes(id) ? { usbAudio: undefined } : {}) })
     if(!current.moduleIds.length&&moduleIds.length)trackConfigurationStarted(current.id)
+  }
+  /** Adds every one of `ids` to the active set at once, as an import takes a set: one over the limit (set-limit.ts)
+   * still holds them all, and says why it can't be synced or built until trimmed. As toggleModule, it leaves out a
+   * module that isn't available here (paused, or beta without beta access) and USB Audio, which comes with its setup. */
+  function addModules(ids: readonly string[], device = DEFAULT_DEVICE) {
+    const current = configurationFor(device)
+    const adding = device === DEFAULT_DEVICE ? ids.filter(id => id !== USB_AUDIO_MODULE && isModuleAvailable(id, betaAccess)) : ids
+    const moduleIds = [...new Set([...current.moduleIds, ...adding])]
+    if (moduleIds.length === current.moduleIds.length) return
+    const moduleVersions = Object.fromEntries(moduleIds.map(selected=>[selected,current.moduleVersions[selected]??pinModuleVersions([selected],device)[selected]]))
+    updateActive({ moduleIds, moduleVersions })
+    if(!current.moduleIds.length)trackConfigurationStarted(current.id)
   }
   function configureUsbAudio(usbAudio: UsbAudioConfiguration | undefined) {
     const current = configurationFor(DEFAULT_DEVICE)
@@ -196,5 +212,5 @@ export function useWorkspace() {
     persist(store => store.forgetFirmware())
     void clientRef.current?.clear().catch(() => setFileError('The firmware reader stopped. Reload the page.'))
   }
-  return { firmwareClient: clientRef, setKeepStockFx2: (keepStockFx2: boolean) => updateActive({ keepStockFx2 }), setClassicStartup: (classicStartup: boolean) => updateActive({ classicStartup }), setRemovedStockFx: (keys: string[]) => updateActive({ removedStockFx: normalizeRemovedStockFx(keys) }), configureUsbAudio, importConfiguration, saveStorageLock, configurations, active, ready, saving, storageError, unreadable, selectConfiguration, createConfiguration, renameConfiguration, deleteConfiguration, toggleModule, firmware, fileState, fileError, setFileError, firmwareSaved, readFile, clearFile }
+  return { firmwareClient: clientRef, setKeepStockFx2: (keepStockFx2: boolean) => updateActive({ keepStockFx2 }), setClassicStartup: (classicStartup: boolean) => updateActive({ classicStartup }), setRemovedStockFx: (keys: string[]) => updateActive({ removedStockFx: normalizeRemovedStockFx(keys) }), configureUsbAudio, importConfiguration, saveStorageLock, configurations, active, ready, saving, storageError, unreadable, selectConfiguration, createConfiguration, renameConfiguration, deleteConfiguration, toggleModule, addModules, firmware, fileState, fileError, setFileError, firmwareSaved, readFile, clearFile }
 }

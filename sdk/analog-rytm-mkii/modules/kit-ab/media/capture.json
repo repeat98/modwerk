@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "kit-ab",
+  "moduleVersion": "1.0.0",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-09T09:30:00Z",
+  "imageSha256": "2128ac54e0dcd0c2da9dc6a3d484ff21f7481c57bb6a82d2988670886ec74b36",
+  "mainSha256": "11f2ad04bebfd1aac6e865f38087089182b834a989f0a6d8fdcb7db6485152ca",
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker (scripts/link-image.mjs): Modwerk's base for core-ar2 0.7 (plain variant 1c14b6b0, sdk/imports/packages/modwerk-base-analog-rytm-mkii) + this folder's kit-ab 1.0.0, compiled with m68k-linux-gnu GCC and materialised against stock OS 1.74 (cb0f99d6…e123), --version KB17",
+  "emulator": {
+    "name": "analog-emu (trigcondition's Rytm and A4 emulator built on rytm-emu; its history holds rytm-emu c5732f0)",
+    "repository": "https://github.com/trigcondition/analog-emu",
+    "revision": "4c07ed3",
+    "binary": "dtboot (cargo build --release, Windows)",
+    "settings": "no card image, JIT on, --every 1000M; DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out"
+  },
+  "conditions": "Headless cold boot; four NO presses clear the missing-calibration notices and leave the BD synthesis page. DEC (encoder index 3) is turned down eight times by 10, to 82. FUNC + PLAY MODE opens the KIT menu, YES chooses RELOAD, NO leaves the menu and a zero-count turn of DEC takes a frame; the same again for the second RELOAD; a last +1 turn of DEC ends the run (its frame is not used). The same plan on stock 1.74 gives byte-identical frames up to the second RELOAD, which shows KIT RELOADED! again and leaves the boot screen's DEC (the saved value). On both builds the frame after the first RELOAD equals the boot frame byte for byte; on KB17 the frame after the second RELOAD shows the edited DEC. Every frame is byte-identical to the same plans' frames on KB07 (the earlier plain base ba530f45 + kit-ab, .syx 0c773091…8c6d) and on KA74 (core-ar2 0.3 + kit-ab). A second plan presses NO + PLAY MODE, stock's kit reload key, twice after the same DEC edit: KIT 1 RELOADED! with the saved DEC, then EDITS RESTORED! with DEC 82 (the same frame as the KIT menu's second RELOAD); stock 1.74 shows KIT 1 RELOADED! both times.",
+  "captures": [
+    {
+      "path": "media/kit-menu.png",
+      "sha256": "3ee3d87a6e216585ae92a5e198ad3fff23db27c758886fd4f1341fe531275a4d",
+      "frame": "step14_FUNC.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot kb17.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
+    },
+    {
+      "path": "media/dec-edited.png",
+      "sha256": "f240919084b02351627597ba52cc1d2fc14cca4443dafa09af5c99ade7720985",
+      "frame": "turn12.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot kb17.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
+    },
+    {
+      "path": "media/kit-reloaded.png",
+      "sha256": "860548a8cfce4ecbd9901f68d907c611c97c0b599278bbeb2efc516e3d300601",
+      "frame": "step15_YES.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot kb17.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
+    },
+    {
+      "path": "media/edits-restored.png",
+      "sha256": "f6c99b7f0db0e35bfdbc8508ce11c18ddea691614facfc122a9f5a116bc47e9f",
+      "frame": "step20_YES.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot kb17.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
+    },
+    {
+      "path": "media/dec-restored.png",
+      "sha256": "eb5f3cd02b7118de29aa3ad730e8fac98b7de68fcbf4804de03931cc80961780",
+      "frame": "turn22.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot kb17.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
+    },
+    {
+      "path": "media/noplaymode-reloaded.png",
+      "sha256": "55a35d7a2078204ba714d46a80b86f4b37fd32b34412691cb0bf198ffe19f2ac",
+      "frame": "step14_NO.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot kb17.syx --instr 11500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press NO@8200M:300M --press PLAYMODE@8300M:40M --turn 3:0@9300Mx1 --press NO@9700M:300M --press PLAYMODE@9800M:40M --turn 3:0@10800Mx1"
+    }
+  ]
+}

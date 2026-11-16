@@ -34,7 +34,7 @@ export async function renderLicenseNotices(root) {
     sections.push([component.name, 'SPDX: ' + component.spdx, 'Used in: ' + component.usedIn.join('; '), ...component.sources.map(source => 'Notice source: ' + (source.url ?? source.path)), '', notice].join('\n'))
   }
   for (const [id, components] of Object.entries(manifest.moduleComponents)) {
-    const moduleFolder = resolve(root, 'sdk/octabam/modules', id)
+    const moduleFolder = resolve(root, 'sdk/octatrack/modules', id)
     const document = JSON.parse(await readFile(resolve(moduleFolder, 'octamod.module.json'), 'utf8'))
     const terms = (await readFile(resolve(moduleFolder, document.license.file), 'utf8')).trimEnd()
     const expectedSpdx = ['MIT', ...components.map(component => {

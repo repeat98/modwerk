@@ -4,15 +4,11 @@
   "sourceRepository": "https://github.com/repeat98/octamad",
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
   "scope": [
-    "character",
     "euclid",
     "miniverb",
-    "modulation",
     "repitch",
-    "spectrum",
     "tapeecho",
     "analog-bassdrum",
-    "midi-scenes",
     "usb-audio-out-tracks-main-cue",
     "quantizer",
     "cc-map",
@@ -78,7 +74,6 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "modules": [
         "analog-bassdrum",
-        "midi-scenes",
         "usb-audio-out-tracks-main-cue",
         "quantizer"
       ],

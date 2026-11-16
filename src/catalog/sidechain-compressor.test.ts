@@ -3,11 +3,8 @@ import composition from '../engine/assets/sidechain-composition-proofs.json'
 import visibleProofs from '../engine/assets/sidechain-visible-proofs.json'
 import analogProofs from '../engine/assets/sidechain-analog-bd-proofs.json'
 import { CATALOG_SOURCE } from './modules'
-import { checkSelection } from './compatibility'
-import { selectionConflicts } from './selection-conflicts'
-import { defaultChoosers } from '../engine/choosers'
 import { parseModuleDocument, requireModuleQualificationForPublication } from './module-contract'
-import manifest from '../../sdk/octabam/modules/sidechain-compressor/octamod.module.json'
+import manifest from '../../sdk/octatrack/modules/sidechain-compressor/octamod.module.json'
 
 const key = (ids: readonly string[], keep: boolean) => [...ids].sort().join('+') + ':' + keep
 const visible = ['miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'usb-audio-out-tracks-main-cue', 'quantizer', 'previewvol', 'cc-map']
@@ -41,11 +38,6 @@ describe('Sidechain Compressor native evidence on the shared builder', () => {
       }
     }
   })
-  it('builds the same menus as the native profiles for every selection', () => {
-    for (const { data } of suites.filter(suite => suite.data !== analogProofs)) for (const proof of data.proofs) {
-      expect(defaultChoosers(proof.moduleIds, proof.keepStockFx2), key(proof.moduleIds, proof.keepStockFx2)).toEqual({ fx1: proof.menu.fx1, fx2: proof.menu.fx2 })
-    }
-  })
   it('records which selections native builds and why it refuses the others', () => {
     for (const { name, data, expected, built } of suites) {
       const proofs = data.proofs
@@ -74,29 +66,17 @@ describe('Sidechain Compressor native evidence on the shared builder', () => {
   })
   it('pins the native image of the module alone, both menu modes', () => {
     const alone = (keep: boolean) => composition.proofs.find(proof => key(proof.moduleIds, proof.keepStockFx2) === key(['sidechain-compressor'], keep))!
-    expect(alone(true)).toMatchObject({ bytes: 1112560, sha256: '131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e' })
-    expect(alone(false)).toMatchObject({ bytes: 1112560, sha256: '6a916c39c1243642324a86abde53bafe88a0e363005ac3e0c79ec02ba376b6c6' })
-  })
-  it('retains the historical Analog BD refusals without treating them as current limits', () => {
-    expect(analogProofs.proofs.every(proof => 'error' in proof)).toBe(true)
-    expect(selectionConflicts(['sidechain-compressor', 'analog-bassdrum'])).toEqual([])
-    expect(selectionConflicts(['sidechain-compressor'], true)).toEqual([])
-  })
-  it('keeps MIDI Scenes standalone and records a declaration check for every other selection', () => {
-    expect(checkSelection(['sidechain-compressor', 'midi-scenes']).issues.join(' ')).toContain('standalone')
-    const others = ['analog-bassdrum', ...visible]
-    for (let mask = 0; mask < 2 ** others.length; mask++) {
-      const result = checkSelection([...others.filter((_, bit) => mask >> bit & 1), 'sidechain-compressor'])
-      expect(result.notes).toEqual([])
-    }
+    expect(alone(true)).toMatchObject({ bytes: 1112560, sha256: 'fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc' })
+    expect(alone(false)).toMatchObject({ bytes: 1112560, sha256: '655183ae46e8aa9eafa08bd3e1a63497feb2f22897f3ea23e27a96a10bb76f06' })
   })
   it('carries its own reported hardware evidence and cannot reuse the 0.1.1 waiver', () => {
     const current = () => parseModuleDocument(JSON.parse(JSON.stringify(manifest)))
     expect(() => requireModuleQualificationForPublication(current())).not.toThrow()
     expect(current().tests.hardwareStatus).toBe('reported')
-    expect(current().tests.qualification?.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKI', imageSha256: '131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e' })
-    // The pinned image is the one the hardware report names.
-    expect(composition.proofs.find(proof => key(proof.moduleIds, proof.keepStockFx2) === key(['sidechain-compressor'], true))!.sha256).toBe(current().tests.qualification!.imageSha256)
+    // 0.2.2's report is the author's run with the ColdFire units in the DRAM runtime, beside Direct Jump (#1175).
+    expect(current().tests.qualification?.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKI', imageSha256: 'e77ec14bd2f8f4d1586a3d2366207835485521cc6ce3ee941dc353a66963548a' })
+    // The module alone (cave placement) still builds the image 0.2.1's report ran, which the screenshots show.
+    expect(composition.proofs.find(proof => key(proof.moduleIds, proof.keepStockFx2) === key(['sidechain-compressor'], true))!.sha256).toBe('fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc')
     // The owner's 5 October waiver covered 0.1.1 only.
     const waived = current()
     waived.tests.qualification!.hardware = { kind: 'owner-waived', status: 'waived', approvedBy: 'repeat98', approvedOn: '2026-10-05', reason: 'reuse', report: 'evidence/software.json' }

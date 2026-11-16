@@ -1,0 +1,1 @@
+Zoom MS-70CDR: the module library takes Zoom effects. An effect lists the file its author released, checked to carry no code from Zoom's own effects. Add it to your set, then sync the set from the pedal page over USB; or download the file for Zoom Effect Manager. The first effects follow in their own releases.

@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { accountHref } from './member-access'
 import { useCommunity } from './context'
 import { Icon } from '../components/Icon'
-/** The sign-in prompt. Without `action` it is the firmware build gate, which `onSkip` lets a guest pass; with one ("Sign in to like this module") it explains what a free account unlocks. */
-export function LoginPromptDialog({next,onClose,action,onSkip}:{next:string;onClose:()=>void;action?:string;onSkip?:()=>void}) {
+/** The sign-in prompt. Without `action` it is the firmware build gate, which `onSkip` lets a guest pass; with one ("Sign in to like this module") it explains what a free account unlocks. `onAccount`: Sign in or Create account was followed, after `onClose`. */
+export function LoginPromptDialog({next,onClose,action,onSkip,onAccount}:{next:string;onClose:()=>void;action?:string;onSkip?:()=>void;onAccount?:()=>void}) {
   const dialog=useRef<HTMLDialogElement>(null),signIn=useRef<HTMLAnchorElement>(null)
   const [skipWait,setSkipWait]=useState(5),hasSkip=!!onSkip
   useEffect(()=>{const element=dialog.current,previousFocus=document.activeElement;element?.showModal();signIn.current?.focus();return()=>{element?.close();if(previousFocus instanceof HTMLElement)previousFocus.focus()}},[])
@@ -24,8 +24,8 @@ export function LoginPromptDialog({next,onClose,action,onSkip}:{next:string;onCl
     </div>
     <p id="login-prompt-privacy">{action?'You come back to this page after signing in.':'Your configuration will be waiting when you return. Your firmware stays on this device.'}</p>
     <div className="dialog-actions">
-      <a ref={signIn} className="button button-primary" href={accountHref('login',next)} onClick={onClose}>Sign in</a>
-      <a className="button button-quiet" href={accountHref('register',next)} onClick={onClose}>Create account</a>
+      <a ref={signIn} className="button button-primary" href={accountHref('login',next)} onClick={()=>{onClose();onAccount?.()}}>Sign in</a>
+      <a className="button button-quiet" href={accountHref('register',next)} onClick={()=>{onClose();onAccount?.()}}>Create account</a>
     </div>
     {onSkip&&<button type="button" className="text-button login-prompt-skip" disabled={skipWait>0} onClick={onSkip}>{skipWait?`Skip for now (${skipWait}s)`:'Skip for now'}</button>}
   </dialog>

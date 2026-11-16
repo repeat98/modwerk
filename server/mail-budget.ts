@@ -1,9 +1,10 @@
 import type { Database, Env } from './platform'
 import { throttle } from './auth'
 
-type MailBudget = 'account' | 'welcome' | 'activity' | 'news'
+type MailBudget = 'account' | 'reset' | 'welcome' | 'activity' | 'news'
 const settings = {
-  account: ['ACCOUNT_MAIL_DAILY_LIMIT', 'ACCOUNT_MAIL_MONTHLY_LIMIT', 60],
+  account: ['ACCOUNT_MAIL_DAILY_LIMIT', 'ACCOUNT_MAIL_MONTHLY_LIMIT', 40],
+  reset: ['RESET_MAIL_DAILY_LIMIT', 'RESET_MAIL_MONTHLY_LIMIT', 20],
   welcome: ['WELCOME_MAIL_DAILY_LIMIT', 'WELCOME_MAIL_MONTHLY_LIMIT', 20],
   activity: ['ACTIVITY_MAIL_DAILY_LIMIT', 'ACTIVITY_MAIL_MONTHLY_LIMIT', 15],
   news: ['NEWS_MAIL_DAILY_LIMIT', 'NEWS_MAIL_MONTHLY_LIMIT', 5],
@@ -14,7 +15,7 @@ function limit(value: string | undefined, fallback: number) {
   return Number.isInteger(parsed) && parsed >= 0 && parsed <= 100000 ? parsed : fallback
 }
 
-/** Separate budgets reserve verification/recovery capacity even when welcomes or digests are busy. */
+/** Separate budgets reserve verification and recovery capacity even when sign-ups, welcomes or digests are busy. */
 export function mailLimits(env: Env, purpose: MailBudget) {
   const [dailySetting, monthlySetting, fallback] = settings[purpose]
   const daily = limit(env[dailySetting], fallback)

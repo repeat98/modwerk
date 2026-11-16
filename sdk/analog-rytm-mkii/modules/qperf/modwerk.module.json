@@ -1,13 +1,14 @@
 {
   "schemaVersion": 3,
   "id": "qperf",
-  "name": "QPERF",
+  "name": "QPER Live Rec",
   "version": "0.2.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "scenes",
   "exclusive": false,
   "author": {
     "github": "npp1993",
+    "name": "Nathaniel Pavel",
     "credits": [
       "Nathaniel Pavel"
     ]
@@ -16,7 +17,7 @@
     "npp1993"
   ],
   "presentation": {
-    "label": "QPERF",
+    "label": "QPER LIVE REC",
     "family": "Performance",
     "summary": "Set performance locks by holding QPER and turning knobs, apply them to the kit, and record performance moves in LIVE RECORDING.",
     "overview": "Hold QPER and turn a knob: it edits that parameter's offset in the performance linked to QPER, and the knob inverts and shows it as it does for a held performance pad. QPER + PLAY clears it and PLAY again undoes that. QPER + RECORD and STOP copy and paste it. QPER + YES writes what you hear into the kit and removes those locks. In LIVE RECORDING the pads, the QPER knob and MIDI performance moves are kept in a quick perf rec that loops with the pattern; RECORD + YES writes it into the pattern as locks, RECORD + NO clears it.",
@@ -137,7 +138,7 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "QPERF: a QPER knob move recorded and written onto the steps",
+      "caption": "QPER Live Rec: a QPER knob move recorded and written onto the steps",
       "alt": "The QPER knob draws a curve that loops; RECORD + YES turns it into lock bars on the steps",
       "credit": "npp1993",
       "license": "GPL-3.0-or-later",

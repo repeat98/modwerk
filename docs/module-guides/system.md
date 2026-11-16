@@ -2,7 +2,7 @@
 
 Read [the module guides index](README.md) first.
 
-**Applies to** modules with manifest `category: system`: behaviour that belongs to the project or system menus rather than to a track or an effect. No module uses this manifest category yet; the library shows [Scale Quantizer](../../sdk/octabam/modules/quantizer/README.md), [Repitch](../../sdk/octabam/modules/repitch/README.md) and [Preview Vol](../../sdk/octabam/modules/previewvol/README.md) under System, so read their READMEs as the nearest examples and also [machines.md](machines.md) (project machines) and [playback.md](playback.md).
+**Applies to** modules with manifest `category: system`: behaviour that belongs to the project or system menus rather than to a track or an effect. No module uses this manifest category yet; the library shows [Scale Quantizer](../../sdk/octatrack/modules/quantizer/README.md), [Repitch](../../sdk/octatrack/modules/repitch/README.md) and [Preview Vol](../../sdk/octatrack/modules/previewvol/README.md) under System, so read their READMEs as the nearest examples and also [machines.md](machines.md) (project machines) and [playback.md](playback.md).
 
 ## Behave like the instrument
 
@@ -39,7 +39,7 @@ interpreting edit timing; trig masks and advancing DSP frames do not prove audio
 
 - [ ] `sdk/catalog.json` entry, thumbnail, `resources.impact`, README sections, tutorial and screenshots of the menu path, with exact button sequences.
 - [ ] If the library should group it under System while its manifest says otherwise, that is a one-line override in `src/catalog/modules.ts`, not a reason to change the manifest category.
-- [ ] `npm run module:verify -- <id> --os <your 1.40C>` and `npm run module:doctor -- <id>` are green.
+- [ ] `npm run module:doctor -- <id>` is green.
 
 Compile portable C with the pinned freestanding ColdFire toolchain early and
 inspect unresolved symbols (`m68k-elf-nm -u`) before claiming native readiness.

@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/amp-write.s",
+    "src/pre-fade.s",
+    "src/pre-fade.c",
+    "src/ovr.s",
+    "src/improved-amp.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "improved_amp_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_amp_record",
+      "fn": "amp_prefade_write",
+      "order": 20
+    },
+    {
+      "event": "ev_amp_record",
+      "fn": "improved_amp_write",
+      "order": 50
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_params",
+      "order": 50,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:improved_amp_params",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:FUNC + turn of AMP HLD",
+    "ui:value text of AMP ATK/HLD/DEC and FILTER ATK/DEC/REL",
+    "ui:AMP page envelope picture HLD",
+    "ui:SOUND SETTINGS ENV RESET values",
+    "audio:filter attack rate table",
+    "audio:amp hold table",
+    "audio:amp decay table",
+    "audio:filter decay and release table",
+    "audio:amp overdrive CV"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [
+        "-DSEQ_PATTERN_AT=0x405c8d04",
+        "-DPATTERNS_AT=0x407dd8e3",
+        "-DSPEED_PULSES_AT=0x401db6f8"
+      ],
+      "sites": [
+        {
+          "addr": "0x400d3302",
+          "len": 6,
+          "stockSha256": "704bb7e62b7dc84ac22bb9ec1242ae79e917ce47a7b6a4aa06ec60b72654b2c0",
+          "op": "jsr",
+          "target": "improved_amp_amp_graph"
+        },
+        {
+          "addr": "0x4010d2aa",
+          "len": 4,
+          "stockSha256": "bb101f17b7e23130f5e92c2f8e616cf858c9db923af32f0756f4cd9af27591d0",
+          "op": "ptr",
+          "target": "improved_amp_flt_atk"
+        },
+        {
+          "addr": "0x40109bc4",
+          "len": 4,
+          "stockSha256": "a93a6f0c7e9387b5bf90a027d5678b11c90d555082736705d44faca3b73d46b6",
+          "op": "ptr",
+          "target": "improved_amp_hold"
+        },
+        {
+          "addr": "0x40109bf0",
+          "len": 4,
+          "stockSha256": "8879f37f45bb49679a30176c392dc823a5215ba1fdbecc9406684fec9adbc2aa",
+          "op": "ptr",
+          "target": "improved_amp_amp_dec"
+        },
+        {
+          "addr": "0x4010d344",
+          "len": 4,
+          "stockSha256": "e752dd02ad509e30bf4eab19cb5a7ef8760906dfdfa6d410e8a42e3635a2ef39",
+          "op": "ptr",
+          "target": "improved_amp_flt_dec"
+        },
+        {
+          "addr": "0x4010d3b4",
+          "len": 4,
+          "stockSha256": "e752dd02ad509e30bf4eab19cb5a7ef8760906dfdfa6d410e8a42e3635a2ef39",
+          "op": "ptr",
+          "target": "improved_amp_flt_dec"
+        },
+        {
+          "addr": "0x4010d3dc",
+          "len": 4,
+          "stockSha256": "e752dd02ad509e30bf4eab19cb5a7ef8760906dfdfa6d410e8a42e3635a2ef39",
+          "op": "ptr",
+          "target": "improved_amp_flt_dec"
+        },
+        {
+          "addr": "0x400bcf8a",
+          "len": 2,
+          "stockSha256": "0b358362552792220751c58c4cca9c4e54407d2339649a0b96182880f0504c1a",
+          "op": "bytes",
+          "new": "7403",
+          "kind": "code"
+        },
+        {
+          "addr": "0x400ef8d6",
+          "len": 2,
+          "stockSha256": "4e4b41344512feecd49483d4a3f357ebd5b45f53276f21411a66cb3b4d597c16",
+          "op": "bytes",
+          "new": "4e71",
+          "kind": "code"
+        },
+        {
+          "addr": "0x40109b14",
+          "len": 10,
+          "stockSha256": "5adaf3a189fb5246174467f7f31078396df1442816ac890b1104c0e4390dd196",
+          "op": "jsr",
+          "target": "improved_amp_ovr"
+        }
+      ]
+    }
+  }
+}

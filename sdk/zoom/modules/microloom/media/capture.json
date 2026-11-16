@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "microloom",
+  "moduleVersion": "2.0.0",
+  "imageSha256": "fd6235f686cf548573f09b081ce9a3cbbbdc0c18a6d8994d7b7fdb053f272d13",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/microloom-screen.png",
+      "sha256": "afd5f3d1cfe4f0768e024de5090baae2898c286737897e9f99edceeb8ed4c07d",
+      "plan": "the cover picture at the start of .const in the built Microlm.ZDL (ZDL_OWN_RUNTIME=1 ZDL_MATERIALIZE_INIT=0 at 32f3d68), Zoom RLE decoded and drawn as zvis_host.py draws frames"
+    }
+  ]
+}

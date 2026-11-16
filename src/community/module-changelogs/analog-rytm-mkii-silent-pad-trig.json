@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.8.0-experimental",
+    "date": "2026-11-08",
+    "changes": [
+      "With MUTE ALL SOUND, RTRG + a muted pad in LIVE RECORDING now records the whole roll, in silence.",
+      "A muted pad no longer takes the voice it shares: with CH muted, OH keeps ringing, with no click.",
+      "A muted pad lights up on each recorded hit, as a sounding pad does.",
+      "Outside LIVE RECORDING muted pads stay silent, as before."
+    ]
+  },
+  {
     "version": "0.7.0-experimental",
     "date": "2026-11-04",
     "changes": [

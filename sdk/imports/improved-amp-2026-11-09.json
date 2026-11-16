@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/improved-amp",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-09",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7 and the Modwerk base's amp record hook. The AMP page's HLD runs from no hold to AUTO, in steps that follow the tempo; ATK, DEC and REL move in fine steps and read as times; AMP OVR is finer at its low end; ENV RESET gains AMP and AMP+FILT, faded before the trig."
+  ],
+  "runtimeSourceSha256": "88ed007c1dc734769a203e465c6fbc4fb041b344304a19f80569ff60e5306cb2",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/improved-amp/improved-amp-0.1.0-experimental-os1.74.elemod",
+      "sha256": "4f05bd735b69916ee389e01d56aa006af882a6fba807d8113126d551a220323f"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/improved-amp/TESTING.md",
+  "requires": []
+}

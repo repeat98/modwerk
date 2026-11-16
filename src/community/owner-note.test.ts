@@ -42,4 +42,13 @@ describe('once-per-account owner note', () => {
     db.prepare('DELETE FROM auth_users WHERE id=?').run(owner.id)
     expect(db.prepare('SELECT COUNT(*) AS count FROM member_owner_notes').get()).toEqual({ count: 0 })
   })
+  it('keeps the statement for every member apart from the beta note', async () => {
+    const { call, member } = await fixture(), owner = await member('statementowner')
+    const due = async (path: string) => (await (await call(path, 'GET', undefined, owner.token)).json()).show
+    expect((await call('/auth/owner-statement', 'POST', {}, owner.token)).status).toBe(200)
+    expect(await due('/auth/owner-statement')).toBe(false)
+    expect(await due('/auth/owner-note')).toBe(true)
+    expect((await call('/auth/owner-statement', 'GET')).status).toBe(401)
+    expect((await call('/auth/owner-statement', 'PUT', {}, owner.token)).status).toBe(405)
+  })
 })

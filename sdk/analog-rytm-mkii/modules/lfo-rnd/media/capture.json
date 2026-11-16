@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "lfo-rnd",
+  "moduleVersion": "1.2.0",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-08T20:42:00Z",
+  "imageSha256": "252003328bb687ed0996bb5b0073741dea0a56d65c8db46c70fb74534cd7ca26",
+  "mainSha256": null,
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker (scripts/link-image.mjs in modwerk-source-tools): the Modwerk base for core-ar2 0.7 (plain variant ba530f45, vendored) + this folder's lfo-rnd 1.2.0, materialised against stock OS 1.74 (cb0f99d6…e123), --version LR12",
+  "emulator": {
+    "name": "analog-emu (trigcondition's Rytm and A4 emulator built on rytm-emu; its history holds rytm-emu c5732f0, 951dcbc and e914f46)",
+    "repository": "https://github.com/trigcondition/analog-emu",
+    "revision": "4c07ed3",
+    "binary": "dtboot (cargo build --release, Windows)",
+    "settings": "no card image, JIT on, --every 1000M; DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out"
+  },
+  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; a short LFO press (12M) opens BD's LFO page and a second one LFO RND; encoder 0 (DS1) turns up in twenty steps through the destination list, a zero-count turn lets the list settle, YES confirms FILT:Frequency; encoder 4 (DP1) turns up in sixteen steps. Stock 1.74 with the same input gives byte-identical frames until the second LFO press, where stock stays on the LFO page; afterwards stock's turns move LFO SPD and DEP. Playback was not judged in the emulator.",
+  "captures": [
+    {
+      "path": "media/lfo-page.png",
+      "sha256": "5133c4c31f237706b864d1cae6c5576ae49aaed7182dd620e40f02a2f38c178f",
+      "frame": "step05_LFO.png",
+      "plan": "dtboot lr12.syx --instr 15000M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press LFO@7503M:12M --press LFO@8503M:12M --turn 0:0@9003Mx1 --turn 0:4@9203Mx20/100M --turn 0:0@11303Mx1 --press YES@11503M:12M --turn 4:0@12003Mx1 --turn 4:4@12103Mx16/100M --turn 4:0@13903Mx1"
+    },
+    {
+      "path": "media/lfo-rnd-page.png",
+      "sha256": "ead01dc084943a9df5eecf2e8f1ac1c48b01e1c980f2bdde1ff0f7d41c9df037",
+      "frame": "step06_LFO.png",
+      "plan": "dtboot lr12.syx --instr 15000M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press LFO@7503M:12M --press LFO@8503M:12M --turn 0:0@9003Mx1 --turn 0:4@9203Mx20/100M --turn 0:0@11303Mx1 --press YES@11503M:12M --turn 4:0@12003Mx1 --turn 4:4@12103Mx16/100M --turn 4:0@13903Mx1"
+    },
+    {
+      "path": "media/destination-list.png",
+      "sha256": "be507821b591fe500afea75a0ece191cd4ea5cdcefb5eb8971fd2a0587912905",
+      "frame": "turn28.png",
+      "plan": "dtboot lr12.syx --instr 15000M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press LFO@7503M:12M --press LFO@8503M:12M --turn 0:0@9003Mx1 --turn 0:4@9203Mx20/100M --turn 0:0@11303Mx1 --press YES@11503M:12M --turn 4:0@12003Mx1 --turn 4:4@12103Mx16/100M --turn 4:0@13903Mx1"
+    },
+    {
+      "path": "media/ds1-frq-confirmed.png",
+      "sha256": "273fec215f73d5d483161ae18888637276c59db4e17a64e7b15f41ef274abe78",
+      "frame": "step29_YES.png",
+      "plan": "dtboot lr12.syx --instr 15000M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press LFO@7503M:12M --press LFO@8503M:12M --turn 0:0@9003Mx1 --turn 0:4@9203Mx20/100M --turn 0:0@11303Mx1 --press YES@11503M:12M --turn 4:0@12003Mx1 --turn 4:4@12103Mx16/100M --turn 4:0@13903Mx1"
+    },
+    {
+      "path": "media/dp1-depth.png",
+      "sha256": "d101a9ff21a6750cfd41969664d2901e566965b5f00491d49ec065ea90bc50b9",
+      "frame": "turn46.png",
+      "plan": "dtboot lr12.syx --instr 15000M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press LFO@7503M:12M --press LFO@8503M:12M --turn 0:0@9003Mx1 --turn 0:4@9203Mx20/100M --turn 0:0@11303Mx1 --press YES@11503M:12M --turn 4:0@12003Mx1 --turn 4:4@12103Mx16/100M --turn 4:0@13903Mx1"
+    }
+  ]
+}

@@ -5,7 +5,11 @@ export function ConfigurationDialog({ mode, initialName, onSubmit, onClose }: { 
   const dialog = useRef<HTMLDialogElement>(null)
   const [name, setName] = useState(initialName)
   const [error, setError] = useState('')
-  useEffect(() => { dialog.current?.showModal() }, [])
+  useEffect(() => {
+    const element = dialog.current, previousFocus = document.activeElement
+    element?.showModal()
+    return () => { element?.close(); if (previousFocus instanceof HTMLElement) previousFocus.focus() }
+  }, [])
   const title = mode === 'create' ? 'New ' + w.set : mode === 'rename' ? 'Rename ' + w.set : mode === 'duplicate' ? 'Duplicate ' + w.set : 'Delete ' + w.set + '?'
   return <dialog ref={dialog} className="app-dialog" onCancel={onClose} aria-labelledby="dialog-title"><form onSubmit={event => { event.preventDefault(); try { onSubmit(name); onClose() } catch (error) { setError(error instanceof Error ? error.message : 'Unable to save.') } }}>
     <h2 id="dialog-title">{title}</h2>

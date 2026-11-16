@@ -1,0 +1,1 @@
+Digitakt II: a module can no longer reach the raw block write to the +Drive. The base's source offers it to modules as `fw_card_write`; it writes under the file system, so one wrong block could cost projects and samples. The build preflight now refuses a build whose mod file refers to it by name or names its address. No module used it.

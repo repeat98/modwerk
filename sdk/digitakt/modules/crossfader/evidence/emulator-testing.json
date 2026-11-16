@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/crossfader",
+  "moduleVersion": "0.1.0-experimental",
+  "sourceSha256": "63172f54d98bfe0083bca644df2f6d6029d1352b52359342922d2ed9dc790f8f",
+  "date": "2026-11-10",
+  "tester": "draadpiraat (run by Claude Code)",
+  "emulator": {
+    "name": "digiemu",
+    "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+    "unicornLibrarySha256": "ec37f2a15f263c085eec8a2016d60f8006d77a3bd53dd28998f1145635050c47",
+    "hle": false
+  },
+  "build": {
+    "release": "1.54",
+    "modules": [
+      "core 2.1",
+      "crossfader 0.1.0-experimental"
+    ],
+    "linker": "Modwerk engine linkMods (scripts/link-image.mjs), no other mods",
+    "imageSha256": "3419f57266d48b8d28416a99dd766654b31b9cd9a1f7673ba488f3d899076c1c",
+    "note": "CF01"
+  },
+  "checks": [
+    {
+      "name": "crossfader settings",
+      "result": "passed",
+      "detail": "SETTINGS > CROSSFADER is the last row; LEFT/RIGHT set groups; trig key 2 on FADER ON ticks track 2."
+    },
+    {
+      "name": "fader on pages",
+      "result": "passed",
+      "detail": "LEVEL on the Internal Mixer (2/3) moves the fader shown at the lower left; on track 2's AMP page (FADER ON) the fader box replaces the level bar."
+    },
+    {
+      "name": "audio-block load",
+      "result": "measured",
+      "detail": "Core alone 60.3% / 62.0%; Crossfader, no groups 60.8% / 62.5%; all ten channels grouped, fader at 64: 61.0% / 62.8% (mean / worst block)."
+    },
+    {
+      "name": "shared memory",
+      "result": "measured",
+      "detail": "4,844 bytes of the 128 KiB shared mod area."
+    }
+  ],
+  "notTested": [
+    "Hardware: CF01 not yet run on a unit (the combined LF03 build was; see TESTING.md)."
+  ]
+}

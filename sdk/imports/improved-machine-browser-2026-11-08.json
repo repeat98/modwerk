@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/improved-machine-browser",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-08",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7. In the machine list, UP, DOWN and the knobs A-H move the outline without loading; YES loads it, NO changes nothing. FUNC + DOWN jumps to the next section, FUNC + UP to the top of this section, then of the one above."
+  ],
+  "runtimeSourceSha256": "031e307ca2f5964574beaf72975166a383bca21a5dc47027c1f08661d4746cae",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/improved-machine-browser/improved-machine-browser-0.1.0-experimental-os1.74.elemod",
+      "sha256": "03ce01cf8f87bd5b59b657d18495bd27228bbdf7cbd42023148f3f7a3bc5dfe2"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/improved-machine-browser/TESTING.md",
+  "requires": []
+}

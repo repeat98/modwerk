@@ -28,7 +28,7 @@
         .set    MB_PARK,     24             | the DSP cores that took the park command
         .set    STAGE_STUB,  64             | the copy stub runs here, outside the image it overwrites
         .set    STAGE_IMAGE, 320            | the staged image
-        .set    STAGE_MAX,   0x140000       | its maximum length (boot.h)
+        .set    STAGE_MAX,   0x180000       | its maximum length (boot.h BOOT_IMAGE_BYTES)
 | Where any base's stage can be: Octabam's platform reserve (Elekloader's
 | core RAM starts at its bottom). The gate scans it, so a base can arm a boot
 | that another base's gate runs (the flashed one runs after every reset).

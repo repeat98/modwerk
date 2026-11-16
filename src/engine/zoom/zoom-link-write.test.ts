@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { fakeEffect, fakeEffectList, fakeZoomPedal, type FakePedalFile } from '../../dev/zoom-pedal-fake'
-import { ZoomLink } from './zoom-link'
+import { ZoomLink, type MidiAccessLike, type MidiIn } from './zoom-link'
 import { LOCAL_IDS, effectInfo, listRecords, listWith, listWithout, localIdFor, withEffectId } from './zoom-protocol'
 
 const pedal = (options: Parameters<typeof fakeZoomPedal>[0] = {}) => {
@@ -77,6 +77,37 @@ describe('installing and removing over the link', () => {
     expect(effectInfo(fake.files.find(f => f.name === 'GOOEY.ZDL')!.data)).toEqual({ gid: 8, fxid: moved!.to, version: '2.01' })
     expect(await link.installFile('GOOEY.ZDL', newer.data)).toMatchObject({ unchanged: true })
   })
+  it('takes a new file off the pedal when its install fails, and puts one the effect list doesn’t name into it', async () => {
+    const fx = fakeEffect('NEWFX.ZDL', 8, 905, '1.00', 2000)
+    for (const failWriteOf of ['FLST_SEQ.ZDT', 'NEWFX.ZDL']) {
+      const fake = pedal({ failWriteOf }), link = await connect(fake)
+      await expect(link.installFile('NEWFX.ZDL', fx.data)).rejects.toThrow(failWriteOf === 'NEWFX.ZDL' ? /stopped answering/ : /written back/)
+      expect(fake.files.some(f => f.name === 'NEWFX.ZDL')).toBe(false)
+      expect(list(fake)).toEqual(['7:DELAY.ZDL', '8:LOOP.ZDL'])
+      await link.installFile('NEWFX.ZDL', fx.data)
+      expect(list(fake)).toEqual(['7:DELAY.ZDL', '8:LOOP.ZDL', '8:NEWFX.ZDL'])
+    }
+    const left = pedal(), link = await connect(left)
+    left.files.push(fx)   // on the pedal, but outside the effect list
+    expect(await link.installFile('NEWFX.ZDL', fx.data)).toMatchObject({ unchanged: false })
+    expect(list(left)).toEqual(['7:DELAY.ZDL', '8:LOOP.ZDL', '8:NEWFX.ZDL'])
+  })
+  it('takes turns with the pedal page in another tab', async () => {
+    let queue: Promise<unknown> = Promise.resolve()
+    vi.stubGlobal('navigator', { locks: { request: (_name: string, job: () => Promise<unknown>) => { const run = queue.then(job); queue = run.catch(() => {}); return run } } })
+    try {
+      const fake = pedal({ latency: 1 }), fx = fakeEffect('NEWFX.ZDL', 8, 905, '1.00', 3000)
+      const port = (id: string): MidiIn & { state: string } => ({ id, name: 'ZOOM MS Series', state: 'connected', onmidimessage: null })
+      const a = port('a'), b = port('b'), tab = (input: MidiIn) => new ZoomLink(() => Promise.resolve<MidiAccessLike>({ inputs: new Map([['in', input]]), outputs: new Map([['out', fake.output]]), onstatechange: null }), 200)
+      fake.input.onmidimessage = event => { a.onmidimessage?.(event); b.onmidimessage?.(event) }
+      const tabA = tab(a), tabB = tab(b)
+      await tabA.connect(); await tabB.connect()
+      const results = await Promise.allSettled([tabA.installFile('NEWFX.ZDL', fx.data), new Promise(resolve => setTimeout(resolve, 40)).then(() => tabB.listFiles({ versions: true }))])
+      expect(results.map(result => result.status)).toEqual(['fulfilled', 'fulfilled'])
+      expect(fake.files.find(f => f.name === 'NEWFX.ZDL')?.data).toEqual(fx.data)
+      expect(list(fake)).toEqual(['7:DELAY.ZDL', '8:LOOP.ZDL', '8:NEWFX.ZDL'])
+    } finally { vi.unstubAllGlobals() }
+  })
   it('installs IDs up to 1023, the most a patch stores', async () => {
     const fake = pedal(), link = await connect(fake)
     await link.installFile('SCR1023.ZDL', fakeEffect('SCR1023.ZDL', 8, 1023, '2.00').data)
@@ -118,5 +149,37 @@ describe('installing and removing over the link', () => {
     await expect(link.installFile('NAM1SMOK.ZDL', fakeEffect('NAM1SMOK.ZDL', 8, 900, '0.26').data)).rejects.toThrow(/original effect list was written back/)
     expect(list(fake)).toEqual(before)
     expect(link.getState().status).toBe('ready')
+  })
+  it('writes the original effect list back when removing fails to write the new one, and hands it over for saving', async () => {
+    const fake = pedal({ failWriteOf: 'FLST_SEQ.ZDT' }), link = await connect(fake), before = list(fake)
+    const error = await link.removeFile('LOOP.ZDL').catch((e: Error & { previousList?: number[] }) => e)
+    expect((error as Error).message).toMatch(/original effect list was written back/)
+    expect(listRecords((error as { previousList: number[] }).previousList).map(r => r.name)).toEqual(['DELAY.ZDL', 'LOOP.ZDL'])
+    expect(list(fake)).toEqual(before)
+    expect(fake.files.some(f => f.name === 'LOOP.ZDL')).toBe(true)
+    expect(link.getState().status).toBe('ready')
+  })
+  it('tries a failed update of an installed effect once more, then takes it out of the list and off the pedal', async () => {
+    const newer = fakeEffect('LOOP.ZDL', 8, 480, '0.04', 1300)
+    const once = pedal({ failWriteOf: 'LOOP.ZDL' })
+    expect(await (await connect(once)).installFile('LOOP.ZDL', newer.data)).toMatchObject({ unchanged: false })
+    expect(once.files.find(f => f.name === 'LOOP.ZDL')?.data).toEqual(newer.data)
+    const twice = pedal({ failWriteOf: 'LOOP.ZDL', slow: { cmd: 0x23, nth: 1, ms: null } }), link = await connect(twice)   // the retry's first block goes unanswered too
+    await expect(link.installFile('LOOP.ZDL', newer.data)).rejects.toThrow(/failed twice, so LOOP\.ZDL was taken out of the effect list and off the pedal\. Don’t power-cycle/)
+    expect(list(twice)).toEqual(['7:DELAY.ZDL'])
+    expect(twice.files.some(f => f.name === 'LOOP.ZDL')).toBe(false)
+    expect(await link.installFile('LOOP.ZDL', newer.data)).toMatchObject({ unchanged: false })   // and it installs again
+    expect(list(twice)).toEqual(['7:DELAY.ZDL', '8:LOOP.ZDL'])
+  })
+  it('writes only to an MS-70CDR on Zoom’s 2.10 or the base, and sends nothing to another model or firmware', async () => {
+    for (const options of [{ deviceId: 0x58, firmware: '3.10' }, { firmware: '2.00' }, { deviceId: 0x7a }]) {
+      const fake = pedal(options), link = await connect(fake)
+      await expect(link.installFile('NAM1SMOK.ZDL', fakeEffect('NAM1SMOK.ZDL', 8, 900, '0.26').data)).rejects.toThrow(/tested only on the MS-70CDR/)
+      await expect(link.removeFile('LOOP.ZDL')).rejects.toThrow(/tested only on the MS-70CDR/)
+      expect(fake.sent.some(m => m[1] === 0x52)).toBe(false)   // no file command at all
+    }
+    const base = pedal({ firmware: 'M201' })
+    await (await connect(base)).installFile('NAM1SMOK.ZDL', fakeEffect('NAM1SMOK.ZDL', 8, 900, '0.26').data)
+    expect(list(base)).toContain('8:NAM1SMOK.ZDL')
   })
 })

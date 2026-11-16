@@ -3,38 +3,6 @@
   "noticeSources": "Pinned revisions identify the files used to verify the notices, not the module source revisions; module source provenance remains in sdk/UPSTREAM.json and each module manifest.",
   "components": [
     {
-      "id": "hera",
-      "name": "Hera Chorus",
-      "spdx": "ISC",
-      "noticeFile": "hera.txt",
-      "sources": [
-        {
-          "url": "https://raw.githubusercontent.com/jpcima/rc-effect-playground/3375323d8616cbfc73c9701a3765f738d574c460/LICENSE",
-          "revision": "3375323d8616cbfc73c9701a3765f738d574c460",
-          "path": "LICENSE"
-        }
-      ],
-      "usedIn": [
-        "modules/modulation: JUNO"
-      ]
-    },
-    {
-      "id": "chowphaser",
-      "name": "ChowPhaser",
-      "spdx": "BSD-3-Clause",
-      "noticeFile": "chowphaser.txt",
-      "sources": [
-        {
-          "url": "https://raw.githubusercontent.com/jatinchowdhury18/ChowPhaser/31eac4df747e9a778a6efe53d461f526343cb61d/LICENSE",
-          "revision": "31eac4df747e9a778a6efe53d461f526343cb61d",
-          "path": "LICENSE"
-        }
-      ],
-      "usedIn": [
-        "modules/modulation: PHSR"
-      ]
-    },
-    {
       "id": "jsfxclones",
       "name": "JSFXClones (TapeHead, DaTube, OInflator, AC1)",
       "spdx": "MIT",
@@ -47,53 +15,15 @@
         }
       ],
       "usedIn": [
-        "modules/character: SAT, COMP, GLUE",
         "modules/tapehead: TapeHead"
       ]
     },
     {
-      "id": "audiojs-filter",
-      "name": "audiojs/filter (moogLadder and oberheim)",
-      "spdx": "MIT",
-      "noticeFile": "audiojs-filter.txt",
-      "sources": [
-        {
-          "url": "https://raw.githubusercontent.com/audiojs/filter/0a851e9907101899ffc0708f5abf864e1e873cb9/LICENSE",
-          "revision": "0a851e9907101899ffc0708f5abf864e1e873cb9",
-          "path": "LICENSE"
-        }
-      ],
-      "usedIn": [
-        "modules/spectrum: filters"
-      ]
-    },
-    {
-      "id": "rings",
-      "name": "Mutable Instruments Rings (string.h / string.cc)",
-      "spdx": "MIT",
-      "noticeFile": "rings.txt",
-      "sources": [
-        {
-          "url": "https://raw.githubusercontent.com/pichenettes/eurorack/08460a69a7e1f7a81c5a2abcc7189c9a6b7208d4/rings/dsp/string.h",
-          "revision": "08460a69a7e1f7a81c5a2abcc7189c9a6b7208d4",
-          "path": "rings/dsp/string.h"
-        }
-      ],
-      "usedIn": [
-        "modules/modulation: COMB"
-      ]
-    },
-    {
       "id": "airwindows",
-      "name": "Airwindows Chorus, Capacitor2 (and historical Pockey transcription)",
+      "name": "Airwindows Chorus",
       "spdx": "MIT",
       "noticeFile": "airwindows.txt",
       "sources": [
-        {
-          "url": "https://raw.githubusercontent.com/airwindows/airwindows/d22a25b7f7c0c8c05e9f3ae480e7f1da9769f49d/LICENSE",
-          "revision": "d22a25b7f7c0c8c05e9f3ae480e7f1da9769f49d",
-          "path": "LICENSE"
-        },
         {
           "url": "https://raw.githubusercontent.com/airwindows/airwindows/e718c9bcfcdd736deeddb08bffe6bce2aa8e0eea/LICENSE",
           "revision": "e718c9bcfcdd736deeddb08bffe6bce2aa8e0eea",
@@ -101,8 +31,6 @@
         }
       ],
       "usedIn": [
-        "modules/spectrum: capacitor2_ref.py",
-        "modules/character: retired Pockey attribution",
         "modules/airwindows-chorus: Chorus"
       ]
     },
@@ -351,18 +279,6 @@
     }
   ],
   "moduleComponents": {
-    "modulation": [
-      "hera",
-      "chowphaser",
-      "rings"
-    ],
-    "spectrum": [
-      "audiojs-filter",
-      "airwindows"
-    ],
-    "character": [
-      "jsfxclones"
-    ],
     "usb-audio-out-tracks-main-cue": [
       "octemu"
     ],

@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "captured": "2026-11-11",
+  "moduleId": "fract-machine",
+  "moduleVersion": "0.1.2-experimental",
+  "sourceRevision": "b4c69ecdfd62a1cb6b3d6a313191518c86bcd8ca",
+  "firmware": "1.40C",
+  "imageSha256": "223363ef249ca4f3c9aa4a8807b37a1192ebccd51bd7748e6a3cae70dd2c2dc1",
+  "packageSha256": "6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874",
+  "baseIdentity": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6",
+  "emulatorSha256": "a319b105580cdbdf1cb058764522b446fa5c336bc785e03cc7daf84279668e94",
+  "setup": "Headless octemu, MKII panel, DSPs and guarded frame renderer, --guest-clock; private historical card/NVRAM fixture, not factory defaults. Only emulator USB was used.",
+  "captureMethod": "UART panel input; GDB observes actual module_draw entry and return before each real framebuffer export. No guest state or framebuffer writes. Monochrome 128x64 pixels, nearest-neighbor integer scale 6, gray levels 24/240.",
+  "palette": {
+    "off": [
+      24,
+      24,
+      24
+    ],
+    "on": [
+      240,
+      240,
+      240
+    ]
+  },
+  "plan": [
+    "Install and Keep the exact named package through the emulator USB socket.",
+    "STOP, NO, TRACK1, SRC, FUNC+SRC; LEFT twice, UP twelve times, DOWN five times; capture chooser.",
+    "YES, NO, SRC; capture selected MAIN.",
+    "FUNC+SRC; capture SETUP (private duplicate of chooser); NO, SRC.",
+    "PLAY; wait 2500 guest ms; capture playing MAIN.",
+    "Observe a second playing state, then STOP twice, PLAY and observe retrigger; finish STOP."
+  ],
+  "screenshots": {
+    "ot-setup.png": "835f83af2e2fbba36aa8e53c09f0a1c60eb673ef4b291ca8e4b9229faf843cbe",
+    "ot-main.png": "c489c4a32fefa9afeb0ad9ccaf52dfa00a4b1b1d4acf26861faf5b2392bea60c",
+    "ot-playing.png": "d1665286873799ba50ba01db9f286838fd7f14a60af821e057836443102b43b9"
+  },
+  "captures": [
+    {
+      "path": "media/ot-setup.png",
+      "sha256": "835f83af2e2fbba36aa8e53c09f0a1c60eb673ef4b291ca8e4b9229faf843cbe",
+      "drawCompleted": true,
+      "guestFrames": 84784,
+      "rawFramebufferSha256": "43973356ec95f670219b85f97108615a098df722afb05ef3b4609748ca4095c0"
+    },
+    {
+      "path": "media/ot-main.png",
+      "sha256": "c489c4a32fefa9afeb0ad9ccaf52dfa00a4b1b1d4acf26861faf5b2392bea60c",
+      "drawCompleted": true,
+      "guestFrames": 88933,
+      "rawFramebufferSha256": "106f08139e8fff3ca28cf569f9e3a56a6f354e1fd74852335d25f784cecf3d1d"
+    },
+    {
+      "path": "media/ot-playing.png",
+      "sha256": "d1665286873799ba50ba01db9f286838fd7f14a60af821e057836443102b43b9",
+      "drawCompleted": true,
+      "guestFrames": 101523,
+      "rawFramebufferSha256": "19f2fe48a62cd22c1cc02302b843c376147f08fa36acae64b896c344f77e2455"
+    }
+  ],
+  "nativeSources": {
+    "scripts/source-runtime-package.py": "e6d2c49233ecf0cca6bcbe8dafbbbdf42264179f44993988fc0ff8d2633f0696",
+    "module/base_binding.c": "217dc052fbdffd80733c852550596fa6f1207d7921647a25f89077a23f5bbf7e",
+    "module/base_binding.h": "ba584ceb7b5616a819db330303fc89228f75254aa9cd2158a77fd550a4a05e61",
+    "module/control_layout.h": "4085f97129fbaf36fe808fba8081bdfbe5b5d175dd47f857d08bc2e98d2e708f",
+    "module/cpu_profile.h": "4fc9ced2fa683f30d3f3c59516a769b41b5dab85ff2f3dacb9126d9aa113ee20",
+    "module/engine/grain.c": "2d5233909b681098810c4a0f3b6f85ddcf3cfbc5179749d6f0ac5452822081d1",
+    "module/engine/kernel.h": "ffd5a9cd274145db26cc988afacce5e007d35c79a36ce8a44914e281ae861d17",
+    "module/engine/kernel.s": "643e34e4c1b75557e365f07030788d2a274fb7b5aa0f30acc5efb699fae6ad1a",
+    "module/engine/page_coordinates.h": "59720b052ab4e43b00ef48a9a292baea3f862bda9c818470e64b929b5a1f5b54",
+    "module/engine/pitch.c": "b49882cccb3a74a5c039b29a1b07e6f4ca8ed7d937fd02b7ccb3d643b9e9ec1c",
+    "module/engine/source.c": "df2abb3a8b6201cff01ee8b380d61c2535390d7f1c04204ebe3b22157bc0a0d6",
+    "module/fract_ui.h": "c70699b713c4ae0a1f3720e4b34bce546de40ac43feaebfb141c93e43659bb3a",
+    "module/machine.c": "4877588007cd5f7cda73bcf4d925f03b70379f07b19f3405aca27d6564eff36f",
+    "module/machine.h": "5d77969beb3aa41b359facfa9d4e267d3d986f2d306c9264a65b1d2cc98cb854",
+    "module/native_source.h": "071d9aee84067d5c165606e555d007c737a8c7aef99811ed3fce926e1ee9f8ab",
+    "module/registration.c": "3f9ffc31540e5a47da3fad1128ec17c28bb9816d930dd6d2062a97f7b558b34f",
+    "module/render.c": "fa4cff0f3b0aa8df3db966bbb9d777b874e39052c12679a814b11d3968f134ce",
+    "module/render.h": "2c81a00122910d8ec71d44917246e5b69fd6ca68e53772700f3c6672d3ffa773",
+    "module/runtime-build.json": "28458553c69014d31c67cfae3dfff72d96cd16392db749ad03e80e0e5c6c3b97",
+    "module/runtime.json": "10e2234c9a3fcceda4407f51a546bf29b206d298cd7ea0c50e846b0cc046a204",
+    "module/sample_pool.h": "157769f26f7ff4f8b0fb5f1cf42701a95e31616312c9ab234e958080e864b5e9",
+    "module/selection.h": "f2869ec9179878a3ba7020472725219602c0de3c1b331c8069dec68d6272b0ba",
+    "module/start.c": "e1e7e805090a2022f1bea33fe4f98f4b4698d91edb3388df7e2701e2547990c3",
+    "module/support/control.c": "f4035fa092840db61b7cbb7141e1af8cefebd91875748e9c4b05ad9c6fae62e4",
+    "module/support/grain.h": "accd83129e5d243abcfe6ddb27d3bee9440b3d1c25e2c98aff4e56c87c2f22d3",
+    "module/support/pan.h": "e1a05cf6d36716e5c0b0aaca19c19a86d7fa9669956ce97b2cfa2461420128eb",
+    "module/support/shapes.h": "fec26545e613ea7fa60a0d27f1aa906e864ea439ff5d82b7c1dbf3b00496e77a",
+    "module/support/sizes.h": "0e82d939929976de7aa3f0c17e014c34a45bbdc4ea68e92a30c58d40b17081bb",
+    "module/support/source.h": "75bbfd34bc9da1bf315650516eb3118c6472d6a845a56f471d3b39cd70d54771",
+    "module/support/window.h": "963478023953646d95e089110dae034de29aeb4c6c964d8e45ff39f3e9aeb34a",
+    "sdk/machines/octatrack/base-binding.json": "4bb77f94df46bbe89a60e2dbc828669bc450a80c7f11b805ec59368fd8b6fc10",
+    "sdk/machines/octatrack/events.json": "35c45bcc2971a808c61bd5e633231bae1b26c10580ab8e1b72a5988a6efab4ae",
+    "sdk/machines/octatrack/events.py": "4dd1da3aaa03d72cd36283388ba23a19d07d65588e415aa773c4ac1301c5d78d",
+    "sdk/machines/octatrack/include/modwerk_events.h": "de68bd469a5fda319fdb901e6b1688e3bdd34012a755a4e40c20bd11fc8e0633",
+    "sdk/machines/octatrack/include/modwerk_sample_editor.h": "48c0aa9a2227cc59cc6a88fadc7712b48f3fd999b46d263f30975986ae66db12",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/dsp_ledger.h": "4b25ee7a43a40ab8e6181373810731a6f90e3bd84c351575d215bd35089b9c6d",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.h": "9991ef756302106b30fe0d70bbdba1e7949cb2c3950ac9dbcf1e6832edf1c161",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/stock_hook_driver.h": "91554cb0ff7f6d00b3e04eb0fd8f950dd74ad5674d01a1b95a9cf8c774562143",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/stock_hook_resources.h": "adf14294cb1d0813662da1b669ce27db75c3ce7f2e8329100a05cebf2b865018",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/stock_hooks.h": "04f062478016eb69b14c0f0c150e87bb4107d66cdea5afdf047068a4f9511e5e",
+    "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
+    "sdk/runtime/loader/build.py": "5131901224dcd037c07f0233cadabd67eec2a952878bef5a92274dd3d6236c7d",
+    "sdk/runtime/loader/context.h": "7c811eb9f3bccef7b03a129f2ebe00ba477422f07315e682f6211d761aacf44b",
+    "sdk/runtime/loader/journal.h": "ecb3a90e3b8ae8f82a50ddc0dccd7d9201fcf1c244faa6f498a55c6625ed26b0",
+    "sdk/runtime/loader/loader.h": "1a1181510e5a6ba000ad57b51daad9bf0a6aa4fb27d41792ddc7e94a9b3de9e9",
+    "sdk/runtime/loader/modwerk_module.h": "55f39232ec7eb2fe8a497f946f559a9f4e78f90e637ea5475cca686bc5c56218",
+    "sdk/runtime/loader/set_package.h": "5ec2b110cb85a6fe7190686101689ae599e7edb467265c35352b26e62b26c545",
+    "sdk/runtime/loader/tests/events/runtime_events.h": "da56edc53d46a30617ef66d9a230ea2ffeeb011a3e5932ff1168870c99ae955c",
+    "sdk/runtime/loader/tests/set_test.h": "643d6dd135cb2c15f46d49fa1e1448953e8965dff1a7342aeb3d541e80d4c8be",
+    "sdk/runtime/logging/freestanding.c": "698d66b43a956e789c8b3057375a195db12e9a88968d2fbb3c7ce09a8021b575",
+    "sdk/runtime/m68k_codegen.py": "2ba57326583cbb0f9ada1d7c2b09fe4577a1ce35693b78dffaa4af7617dedfab",
+    "sdk/runtime/upload/upload.h": "4717f5f55c48e7d3f1d045aee72b5cf5e1194f707eb4a9da2bef0ca48b22ef6b",
+    "sdk/runtime/upload/vendor.h": "e6cd2ffd6137f668c6939a2c4a3990848cf05e92e3f84d04c862bc23e229b363",
+    "sdk/runtime/upload/wire.h": "781b3dc8cd4e59ffdd4e2c60b1b1f99356050be58c3c529b945d82e60e768829",
+    "src/engine/assets/octatrack-base.elemod": "722ff28f693fa58854e669f94087bc8dde513b345a814ad50baaa13cba74e51e"
+  },
+  "limitations": [
+    "Emulator UI and software rendering evidence only; no hardware timing or listening qualification.",
+    "Fixture retains sample and settings: POS 18, SIZE 106, REVS 127, SPRD 0, SHPE 64, PTCH +3.0. These are not fresh defaults.",
+    "No source sample, firmware, card/NVRAM image, raw framebuffer, memory dump or private log is distributed.",
+    "Chooser and SETUP captures show the same page; one is declared to avoid duplicate gallery images."
+  ],
+  "rights": "Original framebuffer captures by ex1010/toli for module documentation. LicenseRef-OT-UI-Documentation preserves underlying Elektron interface/mark rights; MIT artwork permission does not license the depicted stock interface."
+}

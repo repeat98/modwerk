@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "scene-mutes-2026-11-08",
+  "about": "Modwerk source-only scene-mutes package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/scene-mutes.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "scene-mutes-0.1.0-experimental-os1.74.elemod",
+      "sha256": "79828696a54066244b0e7e0ddf60123850895b70802ddbd2b4715cefc203af83",
+      "id": "scene-mutes",
+      "version": "0.1.0-experimental",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-only",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "1dec1d3c5476942184259e24a0513b0fbd4e74dd",
+        "path": "sdk/imports/packages/scene-mutes/scene-mutes-0.1.0-experimental-os1.74.elemod"
+      },
+      "title": "Scene Mutes",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Each scene can carry its own track mutes: engage the scene and the mutes change with it.",
+      "description": "In scene edit, FUNC + T1..T13 builds the edited scene's mute mask (T13 is FX), shown on the trig keys while FUNC is held. Engaging a marked scene sets the mutes; an unmarked scene, or none, puts back the mutes from before. CLEAR and CLEAR ALL also drop the masks. Scenes engaged from the pads were tested on a unit; CC 92, NRPN and Overbridge should work, not tested. A port of MrScruff's rytm-mods 0018-scene-mutes, with his code unchanged.",
+      "category": "Performance",
+      "author": "Iced-Cream",
+      "needs_core": "0.7",
+      "on_unit": "On an Analog Rytm MKII on OS 1.74 (run T210, the Modwerk base for core-ar2 0.7 with this module), engaging a scene from its pad with T1 and T2 in its mask silenced BD and SD while RS and CH played, disengaging brought them back, a hand mute while engaged was kept, the mask survived a power cycle and CLEAR dropped it. CC 92, NRPN and Overbridge engage were not tested. This package's own bytes have not been flashed from the site."
+    }
+  ]
+}

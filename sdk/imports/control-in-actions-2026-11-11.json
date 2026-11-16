@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/control-in-actions",
+  "version": "0.1.4-experimental",
+  "date": "2026-11-11",
+  "changes": [
+    "MUTE HLD (and the mode it returns to), MUTE TGL, FILL HLD and FILL LAT are played through the base's key chain (core_key), so other mods that follow pages and held keys see them as a panel press. PLAY (REC HLD, REC TGL) still goes to stock alone, so QPER Live Rec does not read it as QPER + PLAY."
+  ],
+  "runtimeSourceSha256": "9c46c683f3b44693632626135fb3f3bace00d8252047d2cc5bfacc54a82863e6",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/control-in-actions/control-in-actions-0.1.4-experimental-os1.74.elemod",
+      "sha256": "4b689ecb2b5dd87078ecc89754d68eed90931a9ec5fef1c6b9e278cd246fecd2"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/control-in-actions/TESTING.md",
+  "requires": []
+}

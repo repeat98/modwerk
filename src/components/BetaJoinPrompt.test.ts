@@ -49,8 +49,11 @@ it('sends a visitor to sign in and back to the join page, and Not now lasts for 
 
 it('joins with the current risk acknowledgement only after the box is ticked, then refreshes the session', async () => {
   answers(3); mocks.post.mockResolvedValue({ status: 'active' }); await render()
-  expect(container.textContent).toContain('Load modules over USB')
-  expect(container.textContent).toContain('Turn on diagnostics')
+  // Loading over USB is everyone's now, and diagnostics are an offer, not a condition of joining.
+  expect(container.textContent).toContain('Try new modules first')
+  expect(container.textContent).toContain('Share diagnostics if you like')
+  expect(container.textContent).not.toContain('Load modules over USB')
+  expect(container.textContent).not.toContain('Turn on diagnostics')
   expect(button('Join the beta')?.hasAttribute('disabled')).toBe(true)
   await act(() => container.querySelector<HTMLInputElement>('.risk-accept input')!.click())
   await act(() => button('Join the beta')!.click())

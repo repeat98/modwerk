@@ -4,7 +4,7 @@ import { ACTIONS_BOT_ID, AUTHOR_RELEASE_REQUEST, AUTHOR_RELEASE_EVIDENCE, author
 const registry = { schemaVersion: 1 as const, accounts: { devilfish707: 86663946, irpina: 264014615 } }
 const author = { login: 'devilfish707', id: 86663946, type: 'User' }, base = 'b'.repeat(40), head = 'a'.repeat(40)
 const document = { id: 'tapehead', version: '0.1.2-experimental', author: { github: 'devilfish707' }, license: { spdx: 'MIT' }, compatibility: { effectId: 31 } }
-const modules: AuthorModule[] = [{ folder: 'sdk/octabam/modules/tapehead', document }, { folder: 'sdk/octabam/modules/quantizer', document: { ...document, id: 'quantizer', author: { github: 'irpina' } } }]
+const modules: AuthorModule[] = [{ folder: 'sdk/octatrack/modules/tapehead', document }, { folder: 'sdk/octatrack/modules/quantizer', document: { ...document, id: 'quantizer', author: { github: 'irpina' } } }]
 const path = modules[0].folder + '/octamod.module.json'
 const change = (path: string, before: unknown, after: unknown, regular = true): AuthorChange => ({ path, before: before === null ? null : JSON.stringify(before), after: after === null ? null : JSON.stringify(after), regular })
 const update = () => [change(path, document, { ...document, version: '0.1.3-experimental' }), change(modules[0].folder + '/tapehead.asm', 'old', 'new')]
@@ -16,14 +16,14 @@ describe('module author release authority', () => {
   })
   it('uses immutable IDs from the trusted registry and supports case changes', () => {
     expect(authorizeAuthorUpdate(registry, { ...author, login: 'Devilfish707' }, modules, update()).modules).toEqual(['tapehead'])
-    for (const account of [{ ...author, id: 1 }, { ...author, type: 'Bot' }, { ...author, login: 'other' }]) expect(() => authorizeAuthorUpdate(registry, account, modules, update())).toThrow('registered')
+    for (const account of [{ ...author, id: 1 }, { ...author, type: 'Bot' }, { ...author, login: 'other' }, { login: 'other', type: 'User' }, { type: 'User' }]) expect(() => authorizeAuthorUpdate(registry, account, modules, update())).toThrow('registered')
     expect(ACTIONS_BOT_ID).toBe(41898282)
     expect(() => parseAuthorRegistry({ ...registry, accounts: { devilfish707: '86663946' } })).toThrow('immutable')
   })
   it('rejects cross-author, new-module and ownership/waiver changes', () => {
     const bad = [
       [...update(), change(modules[1].folder + '/source.s', 'old', 'new')],
-      [...update(), change('sdk/octabam/modules/new-module/source.s', null, 'new')],
+      [...update(), change('sdk/octatrack/modules/new-module/source.s', null, 'new')],
       [change(path, document, { ...document, version: '0.1.3-experimental', author: { github: 'other' } })],
       [change(path, document, { ...document, version: '0.1.3-experimental', tests: { releaseWaiver: {} } })],
       [...update(), change('sdk/approvals/module-release-waivers.json', {}, {})],
@@ -38,7 +38,7 @@ describe('module author release authority', () => {
     for (const changes of [[change(path, document, document)], [change(path, document, null)], [...update(), change(modules[0].folder + '/source.s', null, 'link', false)], [...update(), change(modules[0].folder + '/firmware.bin', null, 'bytes')], [...update(), change(modules[0].folder + '/.github/x.yml', null, 'x')]]) expect(() => authorizeAuthorUpdate(registry, author, modules, changes)).toThrow()
   })
   it('allows two owned modules and scopes the same ID separately on each machine', () => {
-    const owned = [modules[0], { folder: 'sdk/octabam/modules/playmodes', document: { ...document, id: 'playmodes' } }]
+    const owned = [modules[0], { folder: 'sdk/octatrack/modules/playmodes', document: { ...document, id: 'playmodes' } }]
     const changes = [...update(), change(owned[1].folder + '/octamod.module.json', owned[1].document, { ...owned[1].document, version: '0.1.3-experimental' })]
     expect(authorizeAuthorUpdate(registry, author, owned, changes).modules).toEqual(['playmodes', 'tapehead'])
     const digi = ['digitakt', 'digitone'].map(machine => ({ folder: 'sdk/' + machine + '/modules/digihealth', document: { ...document, id: 'digihealth', machine } }))

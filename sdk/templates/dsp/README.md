@@ -1,7 +1,7 @@
 # <Module name>
 
-One paragraph: what it is. (`modules/character/README.md` is this template
-filled in.)
+One paragraph: what it is. (`modules/miniverb/README.md` is a finished
+example.)
 
 ## Status
 

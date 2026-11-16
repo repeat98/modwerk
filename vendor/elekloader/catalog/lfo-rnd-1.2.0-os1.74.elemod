@@ -1,0 +1,2074 @@
+{
+ "elemod": 2,
+ "id": "lfo-rnd",
+ "version": "1.2.0",
+ "title": "LFO RND",
+ "description": "A second LFO page: two random modifiers per sound, each offsetting a chosen parameter by a new random amount on every note.",
+ "category": "machines",
+ "author": "Iced-Cream",
+ "license": "GPL-2.0-only",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 1664,
+   "parts": [
+    [
+     "hex",
+     "2f0842a72f082f3c000000004eb9000000004fef000c205f4a80660471e800144e754eb94017fa0a2040486800304eb9400b693e588f2f004eb94017fa0a2040486801604eb9400a67ca508f4a8067224feffff82ebc401cb88c1f7c000100042f0f2f0020402050206800104e904fef00104e752f014eba057c221f4a8067102f016100ff7c221fe589e2a8720fc0814e7522002f016100ffdc221f08010000660841fa044071b008004e75202f0004538061de08010000670841fa04ea71b00800e188206f0008208070014e754feffff448d7040c246f0010262f00145383242f0018e082673222036100ff88d0826a024280720fb0816f0220012203610000ec4a8167145381670c42a72f2f00184eba0520508f4ebaff0a4cd7040c4fef000c70014e752f02206f0008202800045380240022006100ff3c08020000661a41fa03a271b008006100002a226f00082269000c12d866fc6014226f00082269000c41fa043271b008004eba044a241f70014e752f004eba047c672871a8006822172e802f014eb940007028588f4a80671272344c0108000680401bfbf820402050600441fa039a588f4e75202f0008720280817203b08166242f6f000c00082f6f0018000c2f6f001c00102f6f0020001470012f4000184ef9400ffa684feffff048d7003c4ef9400a85f02f012f004eba040267582f022f086100fe04222f000ce589740fe3aa4682c480202f0008e3a88480720120574a68001467064268001472022f4100082f0242a72f082f3c000000004eb9000000004fef00102002222f0008242f00044fef00104e75508f42814e752f0041fa028c720f71b01800b097670453816af42001588f4e75202f000853807203b08162086100fe16e1884e754feffff048d744044ef9400a8e6e202f000853807203b081623c2f00080000006630202f0010e0886100ffa84a806b2222176100ff364a8167185381671042a72f2f0010226f00104eba037a508f4ebafd50588f4e754fefffd848d704fc4ef9400a90744eb9400aa2804fefffe848d70707203c00000600b0ae002066444aae0014663e206e000842a800b8206effa82450240a206effa8200ab0a80004671e201a2f004eb940006ea86100ff264a806b082017224222805882588f60d6214200044cd707074fef00184ef94004aecc4eb940006ea84a80660a2217b23a000c670270ff4ef940039d3800004eb940006ea87202b28467067204b284660270ff4ef94003a5f8221713c1000000004eb940006ea84ef940039da02945000c294000184feffff048d70303202f006c720bb08162202f004eba024e221f4a80671420402f016100fc38221f43fa012ad281338018004cd703034fef00104ef94009b0744fefffdc48d7073f428245f98000e50843fa011a7001b09a664441fa00f82002d08077f008007a02700fc08341fa00d271b0080012c02003e888720fc08141fa017273b0080042804a81670841fa00c24eba019a12c0e08b538566cc5989200272544c01080006808000f7a820407a02719973194a81671ee189d08077700800d6816a024283283c00007fffb6846f02260431830800538566d65282700cb4806600ff724cd7073f4fef00244eb94009e7fc4ef940121020000000040000000c000000000000000c0000000000000001000000030000000000000000000000020000000400000000000000000000000100000004000000000000000000000000090a0b0c0d0e0f1012151e1f232628296c8e9cf50000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002d2d0052616e646f6d203120446573740052616e646f6d20312044657074680052616e646f6d203220446573740052616e646f6d2032204465707468004c464f20524e44004453310044503100445332004450320000000102030406080a0c1014182028304000081119222a333b444c555d666e777f80fc000a4a4067067230d28012c148407230d28012c142114e752f012010223c41c64e6d4c0108005280208048402217d28152814c4100012001909f4e754eb94017fa0a2040486800304eb9400b693e588f2f004eb94017fa0a2040486801604eb9400a67ca508f2f0020402250226900284e91588f20404a804e752052206800a02f3cffffffff2f0a4e90508f2240200967242040226f0004202f000822280008206800042f002f092f012f084eb94003355c4fef00104e75487800804eb940081c28588f4a804e75"
+    ]
+   ]
+  }
+ },
+ "symbols": {
+  "TRIG_BIT_TRIG": [
+   "abs",
+   1
+  ],
+  "TRIG_BIT_LOCK": [
+   "abs",
+   4
+  ],
+  "TRIG_BIT_ACCENT": [
+   "abs",
+   8
+  ],
+  "TRIG_BIT_SWING": [
+   "abs",
+   16
+  ],
+  "MICROTIMING_MAX": [
+   "abs",
+   23
+  ],
+  "MICROTIMING_UNIT_TICKS": [
+   "abs",
+   25
+  ],
+  "TRIG_BIT_SLIDE": [
+   "abs",
+   32
+  ],
+  "FX_RETURN_PRE_OFFSET": [
+   "abs",
+   48
+  ],
+  "KEY_LEFT": [
+   "abs",
+   64
+  ],
+  "OUTPUT_FRAME_STRIDE": [
+   "abs",
+   64
+  ],
+  "KEY_RIGHT": [
+   "abs",
+   65
+  ],
+  "KEY_FUNC": [
+   "abs",
+   128
+  ],
+  "KEY_TRK": [
+   "abs",
+   134
+  ],
+  "PARAM_ID_BOOL_OP": [
+   "abs",
+   467
+  ],
+  "STEP_TICKS": [
+   "abs",
+   600
+  ],
+  "fpga_status_bit5": [
+   "abs",
+   1073743722
+  ],
+  "param_tables_build": [
+   "abs",
+   1073769688
+  ],
+  "param_container_index": [
+   "abs",
+   1073770152
+  ],
+  "param_is_machine": [
+   "abs",
+   1073770264
+  ],
+  "sound_param_id_for_index": [
+   "abs",
+   1073770536
+  ],
+  "machine_available": [
+   "abs",
+   1073770726
+  ],
+  "machine_home_track": [
+   "abs",
+   1073770774
+  ],
+  "param_machine": [
+   "abs",
+   1073770826
+  ],
+  "track_physical_voice_get": [
+   "abs",
+   1073770862
+  ],
+  "sound_load": [
+   "abs",
+   1073775094
+  ],
+  "sound_save": [
+   "abs",
+   1073775674
+  ],
+  "kit_load_machine_fallback": [
+   "abs",
+   1073776392
+  ],
+  "pattern_track_load": [
+   "abs",
+   1073777454
+  ],
+  "pattern_track_load_euclid_resume": [
+   "abs",
+   1073777866
+  ],
+  "pattern_track_save": [
+   "abs",
+   1073778120
+  ],
+  "microtiming_pack_site": [
+   "abs",
+   1073778320
+  ],
+  "pattern_track_save_euclid_resume": [
+   "abs",
+   1073778536
+  ],
+  "sound_init_defaults": [
+   "abs",
+   1073816246
+  ],
+  "kit_param_changed": [
+   "abs",
+   1073952092
+  ],
+  "ui_set_title": [
+   "abs",
+   1073962984
+  ],
+  "trig_keys_held": [
+   "abs",
+   1073964998
+  ],
+  "page_view_activate": [
+   "abs",
+   1073969190
+  ],
+  "param_apply_delta": [
+   "abs",
+   1073969318
+  ],
+  "param_apply_delta_resume": [
+   "abs",
+   1073969326
+  ],
+  "param_apply_delta_body": [
+   "abs",
+   1073969334
+  ],
+  "param_apply_delta_track": [
+   "abs",
+   1073969340
+  ],
+  "param_apply_delta_dispatch": [
+   "abs",
+   1073969346
+  ],
+  "param_apply_delta_dispatch_resume": [
+   "abs",
+   1073969352
+  ],
+  "page_param_set": [
+   "abs",
+   1073969402
+  ],
+  "knob_draw": [
+   "abs",
+   1073969750
+  ],
+  "knob_draw_alt": [
+   "abs",
+   1073970214
+  ],
+  "page_get_value": [
+   "abs",
+   1073972322
+  ],
+  "page_get_value_body": [
+   "abs",
+   1073972330
+  ],
+  "filter_env_graph_draw": [
+   "abs",
+   1073973680
+  ],
+  "filter_graph_draw": [
+   "abs",
+   1073974710
+  ],
+  "page_knob_turn": [
+   "abs",
+   1073979196
+  ],
+  "param_edit_handler": [
+   "abs",
+   1073979196
+  ],
+  "param_edit_resume": [
+   "abs",
+   1073979464
+  ],
+  "page_cycle_after_invalidate": [
+   "abs",
+   1073982364
+  ],
+  "sound_apply_step_locks": [
+   "abs",
+   1073985706
+  ],
+  "pattern_grid_view_keys": [
+   "abs",
+   1073990804
+  ],
+  "microtiming_menu_draw": [
+   "abs",
+   1074024180
+  ],
+  "microtiming_clamp_lo": [
+   "abs",
+   1074024758
+  ],
+  "microtiming_clamp_hi": [
+   "abs",
+   1074024774
+  ],
+  "microtiming_change": [
+   "abs",
+   1074025010
+  ],
+  "microtiming_menu_keys": [
+   "abs",
+   1074025256
+  ],
+  "dest_list_view_ctor": [
+   "abs",
+   1074048288
+  ],
+  "dest_list_build_resume": [
+   "abs",
+   1074048716
+  ],
+  "bitmap_ctor": [
+   "abs",
+   1074199086
+  ],
+  "fill_rect": [
+   "abs",
+   1074202406
+  ],
+  "text_draw": [
+   "abs",
+   1074206028
+  ],
+  "bitmap_draw": [
+   "abs",
+   1074206432
+  ],
+  "text_font": [
+   "abs",
+   1074207720
+  ],
+  "popup_ctor": [
+   "abs",
+   1074227028
+  ],
+  "view_show_popup": [
+   "abs",
+   1074238562
+  ],
+  "control_frame_send": [
+   "abs",
+   1074242980
+  ],
+  "control_frame_dma_start": [
+   "abs",
+   1074243122
+  ],
+  "is_key_held": [
+   "abs",
+   1074273320
+  ],
+  "mem_new": [
+   "abs",
+   1074276928
+  ],
+  "exp_convert": [
+   "abs",
+   1074366952
+  ],
+  "memcpy": [
+   "abs",
+   1074367424
+  ],
+  "trig_fire": [
+   "abs",
+   1074375208
+  ],
+  "trig_fire_euclid_flag_load": [
+   "abs",
+   1074375478
+  ],
+  "trig_fire_euclid_flag_resume": [
+   "abs",
+   1074375486
+  ],
+  "trig_fire_grid_flags_load": [
+   "abs",
+   1074375646
+  ],
+  "trig_fire_flags_join": [
+   "abs",
+   1074375672
+  ],
+  "microtiming_scale_shift": [
+   "abs",
+   1074376020
+  ],
+  "microtiming_unit_mul": [
+   "abs",
+   1074376042
+  ],
+  "trig_fire_vel_resume": [
+   "abs",
+   1074376722
+  ],
+  "trig_fire_cfg_resume": [
+   "abs",
+   1074376820
+  ],
+  "getFadeStep": [
+   "abs",
+   1074390508
+  ],
+  "lfo_block": [
+   "abs",
+   1074391036
+  ],
+  "lfo_mod_block": [
+   "abs",
+   1074391036
+  ],
+  "kit_param_set": [
+   "abs",
+   1074422926
+  ],
+  "kit_apply": [
+   "abs",
+   1074423204
+  ],
+  "kit_track_sound": [
+   "abs",
+   1074423754
+  ],
+  "param_knob_draw": [
+   "abs",
+   1074431464
+  ],
+  "param_knob_draw_body": [
+   "abs",
+   1074431472
+  ],
+  "param_value_text": [
+   "abs",
+   1074431564
+  ],
+  "param_value_text_resume": [
+   "abs",
+   1074431572
+  ],
+  "param_value_text_body": [
+   "abs",
+   1074431580
+  ],
+  "param_value_text_args": [
+   "abs",
+   1074431588
+  ],
+  "param_value_text_invoke": [
+   "abs",
+   1074431668
+  ],
+  "param_value_text_invoke_resume": [
+   "abs",
+   1074431676
+  ],
+  "param_get_boolop_arm": [
+   "abs",
+   1074432184
+  ],
+  "param_set_read": [
+   "abs",
+   1074433638
+  ],
+  "param_set_read_body": [
+   "abs",
+   1074433646
+  ],
+  "param_minmax": [
+   "abs",
+   1074433952
+  ],
+  "param_short_name": [
+   "abs",
+   1074434048
+  ],
+  "param_short_name_body": [
+   "abs",
+   1074434058
+  ],
+  "param_set_value": [
+   "abs",
+   1074434156
+  ],
+  "param_set_value_body": [
+   "abs",
+   1074434164
+  ],
+  "param_set_apply_delta": [
+   "abs",
+   1074435656
+  ],
+  "param_set_boolop_arm": [
+   "abs",
+   1074437398
+  ],
+  "sound_set_write": [
+   "abs",
+   1074438154
+  ],
+  "dest_list_build": [
+   "abs",
+   1074438784
+  ],
+  "pattern_track": [
+   "abs",
+   1074442910
+  ],
+  "lock_pool_set": [
+   "abs",
+   1074448092
+  ],
+  "track_selection": [
+   "abs",
+   1074455698
+  ],
+  "current_track_pattern": [
+   "abs",
+   1074458850
+  ],
+  "kit_reload": [
+   "abs",
+   1074458942
+  ],
+  "param_target_for_track": [
+   "abs",
+   1074459930
+  ],
+  "track_index_of": [
+   "abs",
+   1074489662
+  ],
+  "sound_randomize_values": [
+   "abs",
+   1074513266
+  ],
+  "sound_randomize": [
+   "abs",
+   1074513502
+  ],
+  "env_reset_get": [
+   "abs",
+   1074515744
+  ],
+  "env_reset_set": [
+   "abs",
+   1074515792
+  ],
+  "machine_list_build": [
+   "abs",
+   1074523086
+  ],
+  "trig_flag_get": [
+   "abs",
+   1074526840
+  ],
+  "vel_get_stock": [
+   "abs",
+   1074527628
+  ],
+  "pattern_step_has_trig": [
+   "abs",
+   1074528126
+  ],
+  "Pattern_getMicrotiming": [
+   "abs",
+   1074529096
+  ],
+  "pattern_length": [
+   "abs",
+   1074529572
+  ],
+  "track_lock_set": [
+   "abs",
+   1074529676
+  ],
+  "Pattern_setMicrotiming": [
+   "abs",
+   1074530532
+  ],
+  "euclid_bool_op_get": [
+   "abs",
+   1074532892
+  ],
+  "euclid_bool_op_set": [
+   "abs",
+   1074532940
+  ],
+  "euclid_step_map_get": [
+   "abs",
+   1074533038
+  ],
+  "euclid_generate": [
+   "abs",
+   1074534916
+  ],
+  "trig_flags_set": [
+   "abs",
+   1074537602
+  ],
+  "trig_place": [
+   "abs",
+   1074538016
+  ],
+  "trig_place_lock": [
+   "abs",
+   1074538136
+  ],
+  "euclid_bake": [
+   "abs",
+   1074543738
+  ],
+  "euclid_bake_body": [
+   "abs",
+   1074543746
+  ],
+  "top_bar_draw": [
+   "abs",
+   1074561766
+  ],
+  "view_lfo_page_count": [
+   "abs",
+   1074573462
+  ],
+  "euclid_toggle_handler": [
+   "abs",
+   1074601084
+  ],
+  "sound_page_draw": [
+   "abs",
+   1074605702
+  ],
+  "kit_reload_key": [
+   "abs",
+   1074648498
+  ],
+  "env_reset_menu_change": [
+   "abs",
+   1074722982
+  ],
+  "track_menu_ctor": [
+   "abs",
+   1074764708
+  ],
+  "track_menu_ctor_tail": [
+   "abs",
+   1074765570
+  ],
+  "fx_prepost_format": [
+   "abs",
+   1074773642
+  ],
+  "filter_type_knob_draw": [
+   "abs",
+   1074786578
+  ],
+  "filter_type_text": [
+   "abs",
+   1074786830
+  ],
+  "euclid_bool_op_format": [
+   "abs",
+   1074787398
+  ],
+  "boolop_icon_draw": [
+   "abs",
+   1074787550
+  ],
+  "param_info": [
+   "abs",
+   1074787778
+  ],
+  "param_info_resume": [
+   "abs",
+   1074787788
+  ],
+  "page_info": [
+   "abs",
+   1074787808
+  ],
+  "page_info_resume": [
+   "abs",
+   1074787814
+  ],
+  "synth_page_knob_table": [
+   "abs",
+   1074787846
+  ],
+  "lfo_dst_knob_draw": [
+   "abs",
+   1074788968
+  ],
+  "audio_dsp_region": [
+   "abs",
+   1074790508
+  ],
+  "static_ctors_run": [
+   "abs",
+   1074792174
+  ],
+  "control_frame_cal_init": [
+   "abs",
+   1074825222
+  ],
+  "balance_linear": [
+   "abs",
+   1074829436
+  ],
+  "balance_clamped": [
+   "abs",
+   1074829492
+  ],
+  "amp_env_commands": [
+   "abs",
+   1074829632
+  ],
+  "amp_env_attack_cmd": [
+   "abs",
+   1074830192
+  ],
+  "amp_env_attack_resume": [
+   "abs",
+   1074830198
+  ],
+  "filter_cal_build": [
+   "abs",
+   1074843636
+  ],
+  "filter_env_commands": [
+   "abs",
+   1074843900
+  ],
+  "audio_dsp_block_example": [
+   "abs",
+   1074845772
+  ],
+  "master_controls_write": [
+   "abs",
+   1074848268
+  ],
+  "fx_generate": [
+   "abs",
+   1074849468
+  ],
+  "fx_return_gain_route_site": [
+   "abs",
+   1074850060
+  ],
+  "voice_output_mix": [
+   "abs",
+   1074850460
+  ],
+  "fx_return_mix_pre": [
+   "abs",
+   1074850706
+  ],
+  "fx_return_mix_post": [
+   "abs",
+   1074850922
+  ],
+  "machine_func_gen": [
+   "abs",
+   1074873032
+  ],
+  "machine_hh_test": [
+   "abs",
+   1074873548
+  ],
+  "osc_trim_band": [
+   "abs",
+   1074892796
+  ],
+  "osc_cal_set": [
+   "abs",
+   1074893020
+  ],
+  "osc_trim_write": [
+   "abs",
+   1074894836
+  ],
+  "chip_step_offset": [
+   "abs",
+   1074896832
+  ],
+  "machine_bt_improved": [
+   "abs",
+   1074901732
+  ],
+  "noise_generate": [
+   "abs",
+   1074904250
+  ],
+  "clap_noise": [
+   "abs",
+   1074904540
+  ],
+  "machine_sd_test": [
+   "abs",
+   1074909940
+  ],
+  "machine_rs_test": [
+   "abs",
+   1074910328
+  ],
+  "machine_cy_test": [
+   "abs",
+   1074910752
+  ],
+  "machine_cb_test": [
+   "abs",
+   1074911516
+  ],
+  "machine_bd_test": [
+   "abs",
+   1074912094
+  ],
+  "machine_mt_test": [
+   "abs",
+   1074912892
+  ],
+  "machine_bt_test": [
+   "abs",
+   1074913132
+  ],
+  "voice_trig_reset": [
+   "abs",
+   1074914498
+  ],
+  "segment_rate": [
+   "abs",
+   1074915354
+  ],
+  "segment_length": [
+   "abs",
+   1074915438
+  ],
+  "pitch_tune_unipolar": [
+   "abs",
+   1074915456
+  ],
+  "pitch_tune_bipolar": [
+   "abs",
+   1074915504
+  ],
+  "pitch_to_cv": [
+   "abs",
+   1074915546
+  ],
+  "machine_lt_test": [
+   "abs",
+   1074915588
+  ],
+  "click_level": [
+   "abs",
+   1074915908
+  ],
+  "hat_bank_write": [
+   "abs",
+   1074915926
+  ],
+  "control_frame_defaults": [
+   "abs",
+   1074916194
+  ],
+  "tempo_get": [
+   "abs",
+   1074918236
+  ],
+  "kit_push": [
+   "abs",
+   1074919690
+  ],
+  "lfo_block_call_site": [
+   "abs",
+   1074925594
+  ],
+  "lfo_call_resume": [
+   "abs",
+   1074925600
+  ],
+  "machine_dispatch": [
+   "abs",
+   1074925914
+  ],
+  "audio_rx_filled": [
+   "abs",
+   1074926538
+  ],
+  "audio_rx_filled_resume": [
+   "abs",
+   1074926544
+  ],
+  "adc_average": [
+   "abs",
+   1075027508
+  ],
+  "adc_pedal_update": [
+   "abs",
+   1075049364
+  ],
+  "param_text_format": [
+   "abs",
+   1075196960
+  ],
+  "shared_ptr_release": [
+   "abs",
+   1075252184
+  ],
+  "project_singleton": [
+   "abs",
+   1075313162
+  ],
+  "view_list_open": [
+   "abs",
+   1075321608
+  ],
+  "kit_mark": [
+   "abs",
+   1075407750
+  ],
+  "kit_working_data": [
+   "abs",
+   1075407792
+  ],
+  "bitmap_set_make": [
+   "abs",
+   1075543924
+  ],
+  "std_string_dtor": [
+   "abs",
+   1075557696
+  ],
+  "std_string_from_cstr": [
+   "abs",
+   1075564528
+  ],
+  "voice_channel_map": [
+   "abs",
+   1075572032
+  ],
+  "machine_names": [
+   "abs",
+   1075573332
+  ],
+  "track_default_machine": [
+   "abs",
+   1075573756
+  ],
+  "machine_voice_mask": [
+   "abs",
+   1075573804
+  ],
+  "track_physical_voice": [
+   "abs",
+   1075573912
+  ],
+  "param_modflags": [
+   "abs",
+   1075575752
+  ],
+  "param_record_base": [
+   "abs",
+   1075575752
+  ],
+  "param_table_rom": [
+   "abs",
+   1075575792
+  ],
+  "machine_to_storage_fx": [
+   "abs",
+   1075600204
+  ],
+  "machine_to_storage_voice": [
+   "abs",
+   1075600508
+  ],
+  "sound_slot_map": [
+   "abs",
+   1075600508
+  ],
+  "sound_config_changed_info_vt": [
+   "abs",
+   1075624076
+  ],
+  "pattern_grid_view_vtable": [
+   "abs",
+   1075628332
+  ],
+  "microtiming_label_table": [
+   "abs",
+   1075632924
+  ],
+  "parameter_set_vtables": [
+   "abs",
+   1075695016
+  ],
+  "SOUND_PARAM_SET_VT": [
+   "abs",
+   1075695140
+  ],
+  "TRIG_PARAM_SET_VT": [
+   "abs",
+   1075695388
+  ],
+  "comp_view_knob_draw": [
+   "abs",
+   1075713260
+  ],
+  "params_seq_note_view_vtable": [
+   "abs",
+   1075720520
+  ],
+  "track_selection_view_vtable": [
+   "abs",
+   1075722656
+  ],
+  "env_reset_labels": [
+   "abs",
+   1075745148
+  ],
+  "filter_type_labels": [
+   "abs",
+   1075758740
+  ],
+  "euclid_bool_op_labels": [
+   "abs",
+   1075758768
+  ],
+  "amp_env_rate_tables": [
+   "abs",
+   1075766812
+  ],
+  "voice_switch_bits_rs": [
+   "abs",
+   1075798500
+  ],
+  "voice_switch_bits_sd": [
+   "abs",
+   1075798528
+  ],
+  "voice_switch_bits_bd": [
+   "abs",
+   1075798556
+  ],
+  "str_fmt_s": [
+   "abs",
+   1076106196
+  ],
+  "str_width_xxx": [
+   "abs",
+   1076106200
+  ],
+  "key_scan_ids": [
+   "abs",
+   1076386256
+  ],
+  "tempo_word": [
+   "abs",
+   1076396028
+  ],
+  "param_page_table": [
+   "abs",
+   1076397980
+  ],
+  "machine_engine_table": [
+   "abs",
+   1076430556
+  ],
+  "voice_owner_track": [
+   "abs",
+   1076433208
+  ],
+  "filter_type_icon_pixels": [
+   "abs",
+   1076569344
+  ],
+  "text_ctx": [
+   "abs",
+   1098791068
+  ],
+  "lfo_state_base": [
+   "abs",
+   1100227924
+  ],
+  "PARAM_INFO_BASE": [
+   "abs",
+   1100630152
+  ],
+  "filter_cal_coeffs": [
+   "abs",
+   1100783380
+  ],
+  "fx_return_gain_pre_current": [
+   "abs",
+   1100783648
+  ],
+  "filter_type_icon_set": [
+   "abs",
+   1100946232
+  ],
+  "fx_mix_stage_buffer": [
+   "abs",
+   1118596644
+  ],
+  "fx_mix_ring": [
+   "abs",
+   1118596912
+  ],
+  "fx_return_gain_pre": [
+   "abs",
+   1123764916
+  ],
+  "fx_return_gain_post": [
+   "abs",
+   1123764924
+  ],
+  "machine_pitch_cache": [
+   "abs",
+   1123773048
+  ],
+  "output_ring_base": [
+   "abs",
+   2147483648
+  ],
+  "voice_control_block": [
+   "abs",
+   2147509184
+  ],
+  "voice_digital_buf": [
+   "abs",
+   2147511288
+  ],
+  "voice_noise_gain": [
+   "abs",
+   2147512320
+  ],
+  "voice_noise_buf": [
+   "abs",
+   2147512384
+  ],
+  "fx_reverb_out": [
+   "abs",
+   2147515204
+  ],
+  "fx_delay_out": [
+   "abs",
+   2147515460
+  ],
+  "engine_sound_settings": [
+   "abs",
+   2147543552
+  ],
+  "lfo_track_array": [
+   "abs",
+   2147547048
+  ],
+  "fx_return_level_delay": [
+   "abs",
+   2147548088
+  ],
+  "fx_return_route_flag_delay": [
+   "abs",
+   2147548092
+  ],
+  "fx_mix_ring_slot": [
+   "abs",
+   2147548916
+  ],
+  "voice_machine_state": [
+   "abs",
+   2147548920
+  ],
+  "P_DEST_LIST": [
+   "abs",
+   1
+  ],
+  "P_PHASE": [
+   "abs",
+   2
+  ],
+  "PAGE_RND": [
+   "abs",
+   12
+  ],
+  "PAGE_LFO": [
+   "abs",
+   3
+  ],
+  "ID_FIRST": [
+   "abs",
+   1
+  ],
+  "OFF_PARAMS": [
+   "abs",
+   20
+  ],
+  "OFF_MACHINE": [
+   "abs",
+   104
+  ],
+  "PARAM_ROM": [
+   "abs",
+   1075575752
+  ],
+  "PARAM_ROM_SHORT": [
+   "abs",
+   48
+  ],
+  "LIST_X": [
+   "abs",
+   184
+  ],
+  "LR_TRACKSEL": [
+   "abs",
+   48
+  ],
+  "LR_KIT": [
+   "abs",
+   352
+  ],
+  "VT_CONFIG_CHANGED": [
+   "abs",
+   16
+  ],
+  "SOUND_CONFIG_CHANGED": [
+   "abs",
+   1075624076
+  ],
+  "word_of": [
+   ".run",
+   0
+  ],
+  "notify": [
+   ".run",
+   34
+  ],
+  "nibble": [
+   ".run",
+   116
+  ],
+  "shared_cur_sound": [
+   ".run",
+   1524
+  ],
+  "setting_of": [
+   ".run",
+   146
+  ],
+  "dst_indices": [
+   ".run",
+   1252
+  ],
+  "lfo_rnd_get": [
+   ".run",
+   172
+  ],
+  "shared_stops": [
+   ".run",
+   1446
+  ],
+  "lfo_rnd_delta": [
+   ".run",
+   206
+  ],
+  "set_field": [
+   ".run",
+   492
+  ],
+  "shared_mark_changed": [
+   ".run",
+   1586
+  ],
+  "lfo_rnd_text": [
+   ".run",
+   294
+  ],
+  "dst_name": [
+   ".run",
+   372
+  ],
+  "shared_amounts": [
+   ".run",
+   1430
+  ],
+  "shared_fmt_u8": [
+   ".run",
+   1462
+  ],
+  "str_none": [
+   ".run",
+   1344
+  ],
+  "knob_draw_gate": [
+   ".run",
+   428
+  ],
+  "pos_of": [
+   ".run",
+   596
+  ],
+  "read_gate": [
+   ".run",
+   622
+  ],
+  "setter_gate": [
+   ".run",
+   656
+  ],
+  "shared_mark_changed_set": [
+   ".run",
+   1606
+  ],
+  "list_filter_gate": [
+   ".run",
+   742
+  ],
+  "LIST_SAME_RESUME": [
+   "abs",
+   1073978680
+  ],
+  "list_same_gate": [
+   ".run",
+   850
+  ],
+  "list_owner": [
+   ".run",
+   876
+  ],
+  "KNOB_CIDX_RESUME": [
+   "abs",
+   1073980920
+  ],
+  "knob_cidx_gate": [
+   ".run",
+   878
+  ],
+  "LIST_NEW_RESUME": [
+   "abs",
+   1073978784
+  ],
+  "list_new_gate": [
+   ".run",
+   904
+  ],
+  "VOICE_TRACKS": [
+   "abs",
+   12
+  ],
+  "TF_TRACK": [
+   "abs",
+   92
+  ],
+  "TRIG_FLAGS": [
+   "abs",
+   2147542280
+  ],
+  "PARAMS_EFF": [
+   "abs",
+   2147547048
+  ],
+  "TRACK_STRIDE": [
+   "abs",
+   84
+  ],
+  "PARAM_MAX": [
+   "abs",
+   32767
+  ],
+  "trig_cfg_gate": [
+   ".run",
+   924
+  ],
+  "shared_sound_of": [
+   ".run",
+   1544
+  ],
+  "cfg": [
+   ".run",
+   1272
+  ],
+  "audio_gate": [
+   ".run",
+   996
+  ],
+  "held": [
+   ".run",
+   1296
+  ],
+  "rng_state": [
+   ".run",
+   1268
+  ],
+  "shared_rnd": [
+   ".run",
+   1488
+  ],
+  "page_rnd": [
+   ".run",
+   1196
+  ],
+  "str_page": [
+   ".run",
+   1405
+  ],
+  "str_r1dst_l": [
+   ".run",
+   1347
+  ],
+  "str_r1dep_l": [
+   ".run",
+   1361
+  ],
+  "str_r2dst_l": [
+   ".run",
+   1376
+  ],
+  "str_r2dep_l": [
+   ".run",
+   1390
+  ],
+  "str_group": [
+   ".run",
+   1405
+  ],
+  "str_r1dst": [
+   ".run",
+   1413
+  ],
+  "str_r1dep": [
+   ".run",
+   1417
+  ],
+  "str_r2dst": [
+   ".run",
+   1421
+  ],
+  "str_r2dep": [
+   ".run",
+   1425
+  ],
+  "RND_LCG_A": [
+   "abs",
+   1103515245
+  ],
+  "VT_STORAGE": [
+   "abs",
+   40
+  ],
+  "PROJ_TRACKSEL": [
+   "abs",
+   48
+  ],
+  "PROJ_KIT": [
+   "abs",
+   352
+  ],
+  "shared_func_held": [
+   ".run",
+   1648
+  ],
+  "lfo_rnd_params": [
+   ".run",
+   1232
+  ],
+  "lfo_rnd_view_page": [
+   ".run",
+   1180
+  ],
+  "lfo_rnd_str_r1dst_l": [
+   ".run",
+   1347
+  ],
+  "lfo_rnd_str_r2dst": [
+   ".run",
+   1421
+  ],
+  "lfo_rnd_audio_gate": [
+   ".run",
+   996
+  ],
+  "lfo_rnd_str_r2dep": [
+   ".run",
+   1425
+  ],
+  "lfo_rnd_page": [
+   ".run",
+   1192
+  ],
+  "lfo_rnd_str_group": [
+   ".run",
+   1405
+  ],
+  "lfo_rnd_str_r1dst": [
+   ".run",
+   1413
+  ],
+  "lfo_rnd_read_gate": [
+   ".run",
+   622
+  ],
+  "lfo_rnd_str_r2dep_l": [
+   ".run",
+   1390
+  ],
+  "lfo_rnd_trig_cfg_gate": [
+   ".run",
+   924
+  ],
+  "lfo_rnd_knob_cidx_gate": [
+   ".run",
+   878
+  ],
+  "lfo_rnd_str_r1dep_l": [
+   ".run",
+   1361
+  ],
+  "lfo_rnd_list_filter_gate": [
+   ".run",
+   742
+  ],
+  "lfo_rnd_str_r1dep": [
+   ".run",
+   1417
+  ],
+  "lfo_rnd_knob_draw_gate": [
+   ".run",
+   428
+  ],
+  "lfo_rnd_str_r2dst_l": [
+   ".run",
+   1376
+  ],
+  "lfo_rnd_list_same_gate": [
+   ".run",
+   850
+  ],
+  "lfo_rnd_setter_gate": [
+   ".run",
+   656
+  ],
+  "lfo_rnd_list_new_gate": [
+   ".run",
+   904
+  ]
+ },
+ "exports": [
+  "lfo_rnd_audio_gate",
+  "lfo_rnd_knob_cidx_gate",
+  "lfo_rnd_knob_draw_gate",
+  "lfo_rnd_list_filter_gate",
+  "lfo_rnd_list_new_gate",
+  "lfo_rnd_list_same_gate",
+  "lfo_rnd_page",
+  "lfo_rnd_params",
+  "lfo_rnd_read_gate",
+  "lfo_rnd_setter_gate",
+  "lfo_rnd_str_group",
+  "lfo_rnd_str_r1dep",
+  "lfo_rnd_str_r1dep_l",
+  "lfo_rnd_str_r1dst",
+  "lfo_rnd_str_r1dst_l",
+  "lfo_rnd_str_r2dep",
+  "lfo_rnd_str_r2dep_l",
+  "lfo_rnd_str_r2dst",
+  "lfo_rnd_str_r2dst_l",
+  "lfo_rnd_trig_cfg_gate",
+  "lfo_rnd_view_page"
+ ],
+ "imports": [
+  "core_store_get",
+  "core_store_set",
+  "lfo_rnd_cfg"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   8,
+   "abs32",
+   "sym:lfo_rnd_cfg",
+   0
+  ],
+  [
+   ".run",
+   14,
+   "abs32",
+   "sym:core_store_get",
+   0
+  ],
+  [
+   ".run",
+   560,
+   "abs32",
+   "sym:lfo_rnd_cfg",
+   0
+  ],
+  [
+   ".run",
+   566,
+   "abs32",
+   "sym:core_store_set",
+   0
+  ],
+  [
+   ".run",
+   908,
+   "abs32",
+   "sec:.run",
+   876
+  ],
+  [
+   ".run",
+   1196,
+   "abs32",
+   "sec:.run",
+   1405
+  ],
+  [
+   ".run",
+   1240,
+   "abs32",
+   "sec:.run",
+   172
+  ],
+  [
+   ".run",
+   1244,
+   "abs32",
+   "sec:.run",
+   206
+  ],
+  [
+   ".run",
+   1248,
+   "abs32",
+   "sec:.run",
+   294
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x40039d32",
+   "len": 6,
+   "stock_sha256": "6204b2aabf5d22b36c4a6e5102abf648121e85d0fa007d6050c2f63972dc628e",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:lfo_rnd_list_same_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40039d9a",
+   "len": 6,
+   "stock_sha256": "6204b2aabf5d22b36c4a6e5102abf648121e85d0fa007d6050c2f63972dc628e",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:lfo_rnd_list_new_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4003a5f2",
+   "len": 6,
+   "stock_sha256": "6204b2aabf5d22b36c4a6e5102abf648121e85d0fa007d6050c2f63972dc628e",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:lfo_rnd_knob_cidx_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4004aec6",
+   "len": 6,
+   "stock_sha256": "eb4729c8cc3ef61110831a5721e52ded0c444bb1eab96d820d4b553988cf94d1",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:lfo_rnd_list_filter_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4009b06c",
+   "len": 8,
+   "stock_sha256": "87df2ddf0d469a42ba7a38b57183cac80f2668acd2f70920b4cce5a2ed2eb84e",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:lfo_rnd_trig_cfg_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400a85e8",
+   "len": 8,
+   "stock_sha256": "4c0570fc6ef0682508e64de2367e111c27f895b6b78e58c300b3f2e7b8010118",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:lfo_rnd_knob_draw_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400a8e66",
+   "len": 8,
+   "stock_sha256": "7bd6605886ea552365a0007dae08f4c15412c7ca6166e437c8a42c3070be6841",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:lfo_rnd_read_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400a906c",
+   "len": 8,
+   "stock_sha256": "5d2a2288f0ba5d0f0cc324b54053e974e3b598fbc56198be06c9dad910cace18",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:lfo_rnd_setter_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4012101a",
+   "len": 6,
+   "stock_sha256": "62c768716ba61e741abf4bd858e8d15cf5860d94c7b5cab1e18547235cfd1eac",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:lfo_rnd_audio_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401bfc00",
+   "len": 4,
+   "stock_sha256": "ad95131bc0b799c0b1af477fb14fcf26a6a9f76079e48bf090acb7e8367bfd0e",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401bfc08",
+   "len": 4,
+   "stock_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+   "new": "00007f00",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401bfc20",
+   "len": 4,
+   "stock_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+   "new": "00010000",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401bfc24",
+   "len": 4,
+   "stock_sha256": "54f76c5219f8f277a0a7d2a5e3f6ccf9a3848fae6df2570867bab85c34f25c52",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_str_r1dst_l",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401bfc28",
+   "len": 4,
+   "stock_sha256": "045ec3466fe1e33d1bf3396f99e01bd2eb977b1ac583e73e964b0207cbe7430b",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_str_group",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401bfc2c",
+   "len": 4,
+   "stock_sha256": "c1faf587ba1f2c379073e6a62aeb736acf877960909fb245349d52128a8cdd33",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_str_r1dst",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401bfc34",
+   "len": 4,
+   "stock_sha256": "ad95131bc0b799c0b1af477fb14fcf26a6a9f76079e48bf090acb7e8367bfd0e",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401bfc3c",
+   "len": 4,
+   "stock_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+   "new": "00007f00",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401bfc58",
+   "len": 4,
+   "stock_sha256": "54f76c5219f8f277a0a7d2a5e3f6ccf9a3848fae6df2570867bab85c34f25c52",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_str_r1dep_l",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401bfc5c",
+   "len": 4,
+   "stock_sha256": "045ec3466fe1e33d1bf3396f99e01bd2eb977b1ac583e73e964b0207cbe7430b",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_str_group",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401bfc60",
+   "len": 4,
+   "stock_sha256": "c1faf587ba1f2c379073e6a62aeb736acf877960909fb245349d52128a8cdd33",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_str_r1dep",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401bfc68",
+   "len": 4,
+   "stock_sha256": "ad95131bc0b799c0b1af477fb14fcf26a6a9f76079e48bf090acb7e8367bfd0e",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401bfc70",
+   "len": 4,
+   "stock_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+   "new": "00007f00",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401bfc88",
+   "len": 4,
+   "stock_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+   "new": "00010000",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401bfc8c",
+   "len": 4,
+   "stock_sha256": "54f76c5219f8f277a0a7d2a5e3f6ccf9a3848fae6df2570867bab85c34f25c52",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_str_r2dst_l",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401bfc90",
+   "len": 4,
+   "stock_sha256": "045ec3466fe1e33d1bf3396f99e01bd2eb977b1ac583e73e964b0207cbe7430b",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_str_group",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401bfc94",
+   "len": 4,
+   "stock_sha256": "c1faf587ba1f2c379073e6a62aeb736acf877960909fb245349d52128a8cdd33",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_str_r2dst",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401bfc9c",
+   "len": 4,
+   "stock_sha256": "ad95131bc0b799c0b1af477fb14fcf26a6a9f76079e48bf090acb7e8367bfd0e",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401bfca4",
+   "len": 4,
+   "stock_sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+   "new": "00007f00",
+   "kind": "data",
+   "relocs": []
+  },
+  {
+   "addr": "0x401bfcc0",
+   "len": 4,
+   "stock_sha256": "54f76c5219f8f277a0a7d2a5e3f6ccf9a3848fae6df2570867bab85c34f25c52",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_str_r2dep_l",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401bfcc4",
+   "len": 4,
+   "stock_sha256": "045ec3466fe1e33d1bf3396f99e01bd2eb977b1ac583e73e964b0207cbe7430b",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_str_group",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401bfcc8",
+   "len": 4,
+   "stock_sha256": "c1faf587ba1f2c379073e6a62aeb736acf877960909fb245349d52128a8cdd33",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_str_r2dep",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "core_pages",
+   "order": 12,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_page",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "core_params",
+   "order": 12,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_params",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "core_view_pages",
+   "order": 20,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:lfo_rnd_view_page",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "storage": [
+  {
+   "sym": "lfo_rnd_cfg",
+   "scope": "sound",
+   "bits": 16
+  }
+ ],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:LFO page key second press (LFO RND page, core_view_pages)",
+   "sequencer:note trig random parameter offset",
+   "param:hidden ids 1-4"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

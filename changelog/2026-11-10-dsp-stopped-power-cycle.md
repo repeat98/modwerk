@@ -1,0 +1,1 @@
+Octatrack (beta): when the live load stays frozen for 10 seconds and the unit’s own record shows its DSP stopped, or the unit no longer answers that read, the Octatrack page now says to switch it off and on, instead of showing it as connected and fine.

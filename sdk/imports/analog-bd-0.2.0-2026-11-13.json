@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/analog-bd",
+  "version": "0.2.0-experimental",
+  "date": "2026-11-13",
+  "changes": [
+    "First import: BD ANALOG for the Analog Rytm MKII, a digital voice machine on the Modwerk base (repeat98/modwerk#1447): Analog BD's 808 and 909 (0.1.7) in fixed-point C and ColdFire assembly, machine slot 36 in the BD section, offered on the BD, SD and BT tracks."
+  ],
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/analog-bd/analog-bd-0.2.0-experimental-os1.74.elemod",
+      "sha256": "85d42e7752c747aa730fc2377e2969c156b4008fa08feb82f62b7e4bbd4a403a"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/analog-bd/TESTING.md",
+  "requires": []
+}

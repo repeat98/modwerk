@@ -39,6 +39,7 @@ POINTERS = (
 # descriptor set (ep0.c); stock's own STALL tail is where both requests land.
 STOCK_DEVICE = bytes.fromhex('120100020000004035190200010001020301')  # 0x400e2000, guarded in sites()
 MS_VENDOR_CODE, MS_OS_20_INDEX = 0x20, 7
+BASE_REVISION = 0x0101  # bcdDevice: see device()
 INTERFACE_GUID = '{4DEA1B9D-6B51-400A-93C9-5CFFC5DF8CF1}'
 WINDOWS_8_1 = 0x06030000
 # Development bases only (build_core.py --dev): USB AUDIO OUT MAIN CUE streams
@@ -122,9 +123,12 @@ def audio_assembly():
 
 
 def device(dev_audio=False):
-    """USB 2.10; with audio, the interface-association composite class (EF/02/01), as USB AUDIO OUT's poke sets."""
+    """USB 2.10; with audio, the interface-association composite class (EF/02/01), as USB AUDIO OUT's poke sets.
+    bcdDevice BASE_REVISION, not stock's 0x0001: Windows reads the Microsoft OS 2.0 registry property (the interface
+    GUID WebUSB needs) only when it sets an interface up, and a changed revision makes it set them up again."""
     return (STOCK_DEVICE[:2] + struct.pack('<H', 0x0210) +
-            (bytes([0xef, 2, 1]) if dev_audio else STOCK_DEVICE[4:7]) + STOCK_DEVICE[7:])
+            (bytes([0xef, 2, 1]) if dev_audio else STOCK_DEVICE[4:7]) + STOCK_DEVICE[7:12] +
+            struct.pack('<H', BASE_REVISION) + STOCK_DEVICE[14:])
 
 
 def msos20():

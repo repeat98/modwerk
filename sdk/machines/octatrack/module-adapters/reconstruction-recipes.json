@@ -25,7 +25,7 @@
         "sdk/runtime/m68k_codegen.py": "2ba57326583cbb0f9ada1d7c2b09fe4577a1ce35693b78dffaa4af7617dedfab",
         "sdk/machines/octatrack/module-adapters/standalone_runtime.py": "3a7559a330ae4f031c7c47b7cb67f679cd7fb4e4f2aa69f2e3971940be4c46ae",
         "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
-        "sdk/machines/octatrack/elekloader/runtime.c": "78c66d9de28701274d38f83dccedad5ea75c8dd0cb5fc8068c5dc3a550ab64eb"
+        "sdk/machines/octatrack/elekloader/runtime.c": "a05e15110b32bd653fe3f64f6e4feda6da8507d39b2538379abec9e2f38c99ee"
       },
       "copies": [
         {

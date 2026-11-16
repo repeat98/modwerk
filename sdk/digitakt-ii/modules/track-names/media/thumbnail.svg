@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" role="img" aria-label="Four mixer faders, each with a numbered box and a short name below">
+  <rect width="320" height="160" fill="#000"/>
+  <g fill="none" stroke="#fff" stroke-width="4">
+    <rect x="40" y="24" width="22" height="84" rx="3"/>
+    <rect x="110" y="24" width="22" height="84" rx="3"/>
+    <rect x="180" y="24" width="22" height="84" rx="3"/>
+    <rect x="250" y="24" width="22" height="84" rx="3"/>
+  </g>
+  <g fill="#fff">
+    <rect x="44" y="60" width="14" height="44"/>
+    <rect x="114" y="44" width="14" height="60"/>
+    <rect x="184" y="70" width="14" height="34"/>
+    <rect x="254" y="52" width="14" height="52"/>
+    <rect x="16" y="24" width="18" height="22"/>
+    <rect x="86" y="24" width="18" height="22"/>
+    <rect x="156" y="24" width="18" height="22"/>
+    <rect x="226" y="24" width="18" height="22"/>
+  </g>
+  <g font-family="monospace" font-weight="bold" font-size="18" text-anchor="middle">
+    <text x="25" y="42" fill="#000">1</text><text x="95" y="42" fill="#000">2</text>
+    <text x="165" y="42" fill="#000">3</text><text x="235" y="42" fill="#000">4</text>
+    <text x="51" y="140" fill="#fff">KICK</text><text x="121" y="140" fill="#fff">SNARE</text>
+    <text x="191" y="140" fill="#fff">HAT</text><text x="261" y="140" fill="#fff">BASS</text>
+  </g>
+</svg>

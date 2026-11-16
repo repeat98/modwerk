@@ -20,9 +20,11 @@
     "SESSION_TRANSPORT": "bearer",
     "WELCOME_MAIL_ENABLED": "true",
     // Paid Resend plan: 50,000/month. Independent 30-day budgets total 48,000 attempts.
-    // Verification/recovery capacity cannot be consumed by welcomes, activity or news.
-    "ACCOUNT_MAIL_DAILY_LIMIT": "500",
-    "ACCOUNT_MAIL_MONTHLY_LIMIT": "6000",
+    // Verification and recovery capacity cannot be consumed by welcomes, activity or news, nor recovery by sign-ups.
+    "ACCOUNT_MAIL_DAILY_LIMIT": "400",
+    "ACCOUNT_MAIL_MONTHLY_LIMIT": "4800",
+    "RESET_MAIL_DAILY_LIMIT": "100",
+    "RESET_MAIL_MONTHLY_LIMIT": "1200",
     "WELCOME_MAIL_DAILY_LIMIT": "500",
     "WELCOME_MAIL_MONTHLY_LIMIT": "6000",
     "ACTIVITY_MAIL_DAILY_LIMIT": "1000",

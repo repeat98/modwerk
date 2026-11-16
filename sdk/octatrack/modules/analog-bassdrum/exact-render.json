@@ -1,0 +1,90 @@
+[
+ {
+  "model": "bd808",
+  "case": "default",
+  "samples": 262144,
+  "sha256": "c8fbdb0c33ae30c9deb73b52f5db7a3f305ee94972df2021aa10ac3eae50c580",
+  "before": 227.9375,
+  "after": 218.9375,
+  "audio_exact": true,
+  "state_exact": true,
+  "state_sha256": "3517cbb9b56946f8c3ecef1e5fbe2bf5b557d8b2bd8ba21dffff49a6446f0269"
+ },
+ {
+  "model": "bd808",
+  "case": "minimum",
+  "samples": 262144,
+  "sha256": "a4f22d7ef149a4360a4d113a21d6289764b9d091c48d9d9de3a595eb8c716d60",
+  "before": 227.9375,
+  "after": 218.9375,
+  "audio_exact": true,
+  "state_exact": true,
+  "state_sha256": "94d9d4337637b8facffcc718999ea134512b5db4c609d1b5ee3435aa220f5fb5"
+ },
+ {
+  "model": "bd808",
+  "case": "maximum",
+  "samples": 262144,
+  "sha256": "a32b1f8d5a43ad3cd5632ac30f87ee9c3b9de8429852884b2880492e349fdc2e",
+  "before": 227.9375,
+  "after": 218.9375,
+  "audio_exact": true,
+  "state_exact": true,
+  "state_sha256": "d81555e09ceff9c4ee46363cb31dc393cd535f537b22166cb5ae9f0b475c839d"
+ },
+ {
+  "model": "bd808",
+  "case": "automation",
+  "samples": 131072,
+  "sha256": "46682f4c9801a29da60615b488739fd05f832e3a670bd74a2b996baa9e6a40f6",
+  "before": 227.9375,
+  "after": 218.9375,
+  "audio_exact": true,
+  "state_exact": true,
+  "state_sha256": "7f659e6a6a92fd45c743b511f3a9f524679ddecff62367c8dc12db5c7434953a"
+ },
+ {
+  "model": "bd909",
+  "case": "default",
+  "samples": 262144,
+  "sha256": "272462ff6b6a30decd76a3702725917d3ee4d0739c83b77ed3609b44399baf61",
+  "before": 334.125,
+  "after": 322.125,
+  "audio_exact": true,
+  "state_exact": true,
+  "state_sha256": "9924c73ee32745f0bc8f7ca38b411253f345e34acd4e419de7c6ccd5f745ced9"
+ },
+ {
+  "model": "bd909",
+  "case": "minimum",
+  "samples": 262144,
+  "sha256": "36755a3690d1fff8691fef4289124f74f0e88559abafcc33e5190dddc69e021e",
+  "before": 334.125,
+  "after": 322.125,
+  "audio_exact": true,
+  "state_exact": true,
+  "state_sha256": "e0b5d0265f5755bdd2b9ec00534b223e1dd0649f668b193737afcc8f7c765001"
+ },
+ {
+  "model": "bd909",
+  "case": "maximum",
+  "samples": 262144,
+  "sha256": "3ded0af0f0c05235a152fb903c13c3942c8f570ab0a81a420c01b5b8205e380e",
+  "before": 334.125,
+  "after": 322.125,
+  "audio_exact": true,
+  "state_exact": true,
+  "state_sha256": "29e4aace75f5a69d0b305749a4c0d0e11d8efad1dd4f5594bb62788d079d7eed"
+ },
+ {
+  "model": "bd909",
+  "case": "automation",
+  "samples": 131072,
+  "sha256": "4894a131a4042f022d708c1c74f7763ae0b64f1a438f8883ee74ccde391cf6e3",
+  "before": 334.125,
+  "after": 322.125,
+  "audio_exact": true,
+  "state_exact": true,
+  "state_sha256": "dffbb7717573507d90d2af9c0e1c85811932d067f38fa6044900ee5e34163db7"
+ }
+]

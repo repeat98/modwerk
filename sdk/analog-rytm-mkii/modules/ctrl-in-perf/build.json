@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/ctrl-in-perf.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_render_in",
+      "fn": "ctrl_in_perf_audio",
+      "order": 50
+    },
+    {
+      "event": "ev_tick",
+      "fn": "ctrl_in_perf_tick",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "storage": [
+    {
+      "sym": "ctrl_in_perf_dest_1",
+      "scope": "global",
+      "bits": 4
+    },
+    {
+      "sym": "ctrl_in_perf_dest_2",
+      "scope": "global",
+      "bits": 4
+    }
+  ],
+  "claims": [
+    "ui:GLOBAL > CONTROL > CONTROL INPUT 1 and 2: PERF DEST row in CV and EXPR modes",
+    "input:EXP/CV IN 1 and 2 in CV and EXPR modes drive a performance macro"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x40131b2e",
+          "len": 6,
+          "stockSha256": "f9e4e460a94d586bd50a8538ac6ecd2a217e485ea070088393ded7cc52205994",
+          "op": "jmp",
+          "target": "ctrl_in_perf_menu"
+        }
+      ]
+    }
+  }
+}

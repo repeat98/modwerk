@@ -1,0 +1,1 @@
+Octatrack base 0.7.1: the status page (CUE + PROJ, or PROJECT > MODWERK > LOAD) is easier to read: five rows, each with its bar, and no headings: CPU, DSP T1-4 and DSP T5-8 (how hard each DSP chip works now), then MEM T1-4 and MEM T5-8 (how much of each DSP chip's memory is used).

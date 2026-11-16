@@ -6,8 +6,9 @@ import { socialProviders } from './social-config'
 import { socialRoutes } from './social'
 import { profileRoutes } from './profile'
 import { betaInvitationRoutes } from './beta-invitations'
-import { memberBetaAccess } from './beta-testers'
+import { memberBetaAccess, memberOctatrackBase } from './beta-testers'
 import { moduleAvailabilityError } from '../src/catalog/availability'
+import { overLimitMessage } from '../src/catalog/set-limit'
 import { DISCORD_INVITE_CAMPAIGN } from '../src/config/development-discord'
 import { discordInvitationClaim } from './discord-invitations'
 /** Fixed actor row for administrator history; the administrator is not a visitor account. */
@@ -78,20 +79,23 @@ export async function authentication(request:Request,env:Env,path:string):Promis
  }
  // Due until the member's unit has reported any Modwerk base; the site records it then. Base updates are prompted from the
  // connected unit (src/hooks/useBaseInstallPrompt.ts), not from this record, so a new base needs no migration.
- // Due only to beta testers and verified administrators while USB loading is a beta (src/engine/protocol.ts USB_LINK).
+ // Due to beta testers and verified administrators, and to every verified member once the Octatrack base path is
+ // released (memberOctatrackBase, src/config/octatrack-base.ts).
  if(path==='/api/auth/base-install-prompt'){
   const member=needMember(await accountUser(request,env,db))
-  if(request.method==='GET')return response({show:(memberBetaAccess(member)||await isAdmin(request,env,db))&&!await db.prepare('SELECT 1 FROM member_base_install_prompts WHERE user_id=?').bind(member.id).first()})
+  if(request.method==='GET')return response({show:(memberOctatrackBase(member)||await isAdmin(request,env,db))&&!await db.prepare('SELECT 1 FROM member_base_install_prompts WHERE user_id=?').bind(member.id).first()})
   if(request.method!=='POST')throw new HttpError(405,'Use GET or POST for the base install prompt.')
   await db.prepare('INSERT OR IGNORE INTO member_base_install_prompts(user_id) VALUES(?)').bind(member.id).run()
   return response({ok:true})
  }
- // Shown until the member closes it, then never again on any browser or device. A new note needs a new id here and in src/components/OwnerNote.tsx.
- if(path==='/api/auth/owner-note'){
-  const OWNER_NOTE='2026-10-16-beta-3',member=needMember(await accountUser(request,env,db))
-  if(request.method==='GET')return response({show:!await db.prepare('SELECT 1 FROM member_owner_notes WHERE user_id=? AND note=?').bind(member.id,OWNER_NOTE).first()})
+ // Shown until the member closes it, then never again on any browser or device. A new beta note needs a new id here and in
+ // src/components/OwnerNote.tsx; a new statement for every visitor (OwnerStatement.tsx) here and in src/config/owner-statement.ts.
+ const ownerNote=path==='/api/auth/owner-note'?'2026-10-16-beta-3':path==='/api/auth/owner-statement'?'2026-11-16-future':null
+ if(ownerNote){
+  const member=needMember(await accountUser(request,env,db))
+  if(request.method==='GET')return response({show:!await db.prepare('SELECT 1 FROM member_owner_notes WHERE user_id=? AND note=?').bind(member.id,ownerNote).first()})
   if(request.method!=='POST')throw new HttpError(405,'Use GET or POST for the note.')
-  await db.prepare('INSERT OR IGNORE INTO member_owner_notes(user_id,note) VALUES(?,?)').bind(member.id,OWNER_NOTE).run()
+  await db.prepare('INSERT OR IGNORE INTO member_owner_notes(user_id,note) VALUES(?,?)').bind(member.id,ownerNote).run()
   return response({ok:true})
  }
  if(path==='/api/auth/build-access'&&request.method==='POST'){
@@ -103,6 +107,8 @@ export async function authentication(request:Request,env:Env,path:string):Promis
    let error:string
    try{error=moduleAvailabilityError(body.moduleIds,betaAccess)}catch{throw new HttpError(400,'Unknown module.')}
    if(error)throw new HttpError(403,error)
+   // A set over the module limit (src/catalog/set-limit.ts) is not built until trimmed, whichever page asks.
+   const limit=overLimitMessage(body.moduleIds,'build');if(limit)throw new HttpError(403,limit)
   }
   return response({ok:true})
  }

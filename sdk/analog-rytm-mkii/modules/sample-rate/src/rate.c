@@ -1,24 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Sample Rate for the Analog Rytm MKII: a sample's speed down to a stop and
-// into reverse, as the Octatrack's RATE with its setting on PTCH.
+// Improved SMPL for the Analog Rytm MKII: FIN's knob is RATE on every sound, a
+// sample's speed down to a stop and into reverse, as the Octatrack's RATE with its
+// setting on PTCH; TUN turns in cents; and the SMPL key opens the waveform view.
 //
 // Stock's sample engine builds each voice's step once a block, in the prefetch,
-// from the note, TUN and FIN, clamped to 0.25x..4x. For a sound with SOUND
-// SETTINGS > SMP RATE on, the gates in audio.s take FIN out of the pitch and
-// scale the step by |FIN - 64| / 64, with raw 127 exactly 1x (the Octatrack's
-// increment: PTCH's, times that). Below 64 the voice goes backward: stock plays
-// a sample backward when END is below STA, so this handler swaps the effective
-// STA and END before the prefetch reads them. A trig then starts from END. Stock
-// rebuilds the array every block before this runs, so the swap lasts one block.
-//
-// The setting is a bit of the sound. Stock copies a sound's settings to the
-// audio side, per track, whenever it applies a sound to a track (kit load, sound
-// load, a sound lock on a trig, a change in SOUND SETTINGS or a tap of FIN's knob):
-// the module's copy follows there (sample_rate_applied), so the audio code never
-// walks the kit.
+// from the note, TUN and FIN, clamped to 0.25x..4x. The gates in audio.s take FIN
+// out of the pitch and scale the step by |FIN - 64| / 64, with raw 127 exactly 1x
+// (the Octatrack's increment: PTCH's, times that). FIN's default is 127, so a new
+// sound plays at 1x; a sound saved with FIN at 64, stock's default, stops. Below
+// 64 the voice goes backward: stock plays a sample backward when END is below
+// STA, so this handler swaps the effective STA and END before the prefetch reads
+// them. A trig then starts from END. Stock rebuilds the array every block before
+// this runs, so the swap lasts one block.
 
 #include <stdint.h>
-#include "analog-rytm-mk2/store.h"
+#include "analog-rytm-mk2/pages.h"
 
 #define EFF(t, i) (*(volatile short *)(PARAMS_EFF_AT + (t) * 84 + (i) * 2))
 #define IDX_FIN 18
@@ -33,31 +29,16 @@
 
 #define VOICES 8
 #define TRACKS 12
-#define ID_FIN 40           // FIN's parameter id
 #define STOP 0x4000         // FIN 64 in 8.8: the step scales to 0, and in the pitch no detune
-#define FULL 0x7f00         // FIN 127 in 8.8: 1x
 #define TURN_LAG 14         // going down, the voice reads this many frames below the same position
 #define EDGE 32             // frames from STA or END where a change of direction waits
 #define MIN_WAIT 141        // shortest loop stock plays: below it no position is clear of both
-
-STORE_FIELD(sample_rate_on);
-
-unsigned char sample_rate_voices;               // one bit a voice: audio.s scales its step
-
-static volatile unsigned char track_on[TRACKS]; // one byte a track: written from the UI and the audio interrupt
 
 static unsigned char going_down[VOICES];        // the way each voice went last block
 static unsigned char going_any;                  // any of them going down
 
 // stock's frames for STA and END (8.8, of 120), audio.s; the DMA follows these frames
 void sample_rate_frames(int sta, int end, unsigned frames, int *out);
-
-// From the gate in stock's routine that applies a sound to a track, audio side
-void sample_rate_applied(void *sound, int track)
-{
-    if (track >= 0 && track < TRACKS)
-        track_on[track] = (unsigned char)core_store_get(STORE(sample_rate_on), sound, 0);
-}
 
 // RATE's sign changes on this voice. Going down the voice reads TURN_LAG frames
 // below the same position, so the position moves to keep the frames heard. Near
@@ -84,37 +65,34 @@ static int turn_round(int v, int t, int trig)
 // Each block, before the prefetch
 void sample_rate_block(void)
 {
-    unsigned char mask = 0, down_now = 0;
+    unsigned char down_now = 0;
+    unsigned swapped = 0;       // one bit a track: EFF is a track's, so swap it once a block
     int v;
-    // No track with RATE on and no voice still going down: the loop below would change
+    // No track below 0 and no voice still going down: the loop below would change
     // nothing, so skip it (the audio interrupt runs this every block).
     if (!going_any) {
         int t;
-        for (t = 0; t < TRACKS && !track_on[t]; t++)
+        for (t = 0; t < TRACKS && EFF(t, IDX_FIN) >= STOP; t++)
             ;
-        if (t == TRACKS) {
-            sample_rate_voices = 0;
+        if (t == TRACKS)
             return;
-        }
     }
     for (v = 0; v < VOICES; v++) {
-        int t = OWNER(v), on, down;
+        int t = OWNER(v), down;
         if (t >= TRACKS) {
             going_down[v] = 0;
             continue;
         }
-        on = track_on[t];
-        down = on && EFF(t, IDX_FIN) < STOP;   // switched off going down: back up, as any change of sign
+        down = EFF(t, IDX_FIN) < STOP;
         if (down != going_down[v]) {
             if (turn_round(v, t, (int)(TRIG_NEXT >> v & 1)))
                 going_down[v] = (unsigned char)down;
             else
                 down = going_down[v];
         }
-        if (on)
-            mask |= (unsigned char)(1u << v);
-        if (down) {
+        if (down && !(swapped >> t & 1)) {
             short sta = EFF(t, IDX_STA);
+            swapped |= 1u << t;
             EFF(t, IDX_STA) = EFF(t, IDX_END);
             EFF(t, IDX_END) = sta;
         }
@@ -122,217 +100,259 @@ void sample_rate_block(void)
             down_now = 1;
     }
     going_any = down_now;
-    sample_rate_voices = mask;
 }
 
-// The selected track's sound, for the row, the tap and the knob's label.
-// Stock returns pointers in d0: these are integers, cast where used.
-typedef uint32_t (*get0_t)(void);
-typedef uint32_t (*get1_t)(uint32_t);
-typedef uint32_t (*get2_t)(uint32_t, int);
-typedef uint32_t (*get3_t)(uint32_t, int, int);
-typedef void (*set_value_t)(uint32_t, int, int, int, int, int);
-typedef void (*bitmap_t)(void *, const void *, int, int, int);
-typedef int (*held_t)(int);
-typedef void (*invalidate_t)(void *);
-#define PROJECT ((get0_t)PROJECT_AT)
-#define TRACK_INDEX_OF ((get1_t)TRACK_INDEX_OF_AT)
-#define KIT_TRACK_SOUND ((get2_t)KIT_TRACK_SOUND_AT)
-#define PARAM_TARGET ((get3_t)PARAM_TARGET_AT)
-#define PARAM_SET ((set_value_t)PARAM_SET_AT)
-#define BITMAP_DRAW ((bitmap_t)BITMAP_DRAW_AT)
-#define CHECK_GLYPHS (*(const unsigned char *const *)CHECK_GLYPHS_AT)    // unchecked, then checked
-#define IS_KEY_HELD ((held_t)IS_KEY_HELD_AT)
-#define LOCK_EDITOR ((get1_t)LOCK_EDITOR_AT)
-#define LIVE_RECORDING ((get1_t)LIVE_RECORDING_AT)
-#define VIEW_INVALIDATE ((invalidate_t)VIEW_INVALIDATE_AT)
-#define SOUND_OF_WRAPPER 40          // the wrapper's vtable: its live sound, or 0
-#define NOTIFY_OF_WRAPPER 16         // and the change notice
-#define LIVE_SOUND_FIN 0x38          // FIN's word in a live sound
-#define PROJECT_TRACKSEL 48          // the project's track selection
-#define PROJECT_TRACKS 352           // the project's track sounds
-#define VIEW_PAGE_STATE 108          // a sound page view's lock and record state
-#define VT_PARAM_OBJ 160              // a sound page view's vtable: its parameter object
-#define VIEW_MANAGER 44              // a view's view manager
-#define MANAGER_LAST 24              // the manager's top list node
-#define NODE_VIEW 8                  // a list node's view
-#define KEY_FUNC 0x80
-#define KEY_NO 0x45
-#define KEY_PAD_FIRST 0x90
-#define KEY_PAD_LAST 0x9b
-#define KEY_TRIGS 16                 // trig keys are ids 0..15
-#define KEY_DOWN 1                   // the event's flags
-#define KEY_REPEAT 8
-#define ENC_FIN 1                    // encoder B on the SAMPLE page
-#define TAP_TICKS 8                  // about 0.4 s of the UI's 20 Hz
-#define TAP_TURNS 3                  // encoder events in a press that make it a turn
+// Fine TUNE. TUN's value is an 8.8 word, and stock's engine, sound, kit, SysEx and
+// scene and performance locks keep its low byte: a fraction of a semitone plays,
+// saves and loads on stock OS too, which only shows the whole number. A plain turn
+// of TUN moves 1 cent a count, with stock's acceleration; a press and turn moves
+// whole semitones and keeps the cents, as stock's STA and END turn fine and
+// coarse. Stock adds every turn of TUN, the sound's or a held trig's lock, at one
+// place (0x400a88ea, audio.s): there a plain turn's count becomes cents.
+#define ID_TUN 39
+#define TUN_REST 0x4000
+#define REC_TUN (0x419a4888 + 84 * ID_TUN)   // TUN's RAM parameter record
+#define REC_STEP 4          // its turn: factor plain, factor pressed, 0, profile
+#define ENC_PRESSED 20      // the event's byte, set while the knob is held down
 
-struct picked {
-    uint32_t project, wrapper;
-    unsigned char *sound;
-    int track;
-};
+static int fine_turn;       // the UI tick's turn is a plain one (no knob held down)
 
-static int pick(struct picked *p)
+// A knob's turn profile (stock's, 0x4006eb06): three flags, then the plain and
+// the pressed curve, each {acceleration, counts a step, units a step}. TUN's own
+// sets both rounding flags, so every step is a whole semitone; this one rounds
+// only pressed turns, so a plain step is the record's factor in raw units, and
+// takes STA's acceleration (0x4006ead8) on the plain curve, so a quick spin
+// covers ground.
+static struct {
+    unsigned char on, whole, whole_pressed, pad;
+    int32_t plain[3], pressed[3];
+} fine_profile = {1, 0, 1, 0, {18, 3, 1}, {2, 3, 1}};
+
+// Cents from TUN's word, rounded to the nearest
+static int cents_of(int word)
 {
-    p->project = PROJECT();
-    p->track = (int)TRACK_INDEX_OF(p->project + PROJECT_TRACKSEL);
-    if ((unsigned)p->track >= TRACKS)
-        return 0;
-    p->wrapper = KIT_TRACK_SOUND(p->project + PROJECT_TRACKS, p->track);
-    p->sound = (unsigned char *)(*(get1_t *)(*(uint32_t *)p->wrapper + SOUND_OF_WRAPPER))(p->wrapper);
-    return p->sound != 0;
+    int d = (word - TUN_REST) * 100;
+    return d >= 0 ? (d + 128) / 256 : -((-d + 128) / 256);
 }
 
-int sample_rate_selected(void)   // nonzero while FIN is RATE on the selected track's sound
+// On even words only: a lock save keeps bits 15 to 1 (0x40009216), so an odd
+// word would come back a cent off. 1/128 semitone still gives every cent its word.
+static int word_of(int cents)
 {
-    struct picked p;
-    return pick(&p) && core_store_get(STORE(sample_rate_on), p.sound, 0);
+    int d = cents * 128;
+    return TUN_REST + 2 * (d >= 0 ? (d + 50) / 100 : -((-d + 50) / 100));
 }
 
-// FIN at its detune's rest would stop the sample, so switching on takes it to
-// 1x, and switching off takes 1x back to rest. Any other value stays: it may be
-// a sound's real detune, or the RATE to come back to.
-static void set_on(int on)
+// From the gate at the add: the delta stock is about to add to TUN's value cur
+int sample_rate_tun_delta(int cur, int delta)
 {
-    struct picked p;
-    struct {
-        const void *vtable;
-        unsigned char changed;
-    } info = {(const void *)CONFIG_CHANGED_INFO, 1};
-    int fin;
-    if (!pick(&p) || (int)core_store_get(STORE(sample_rate_on), p.sound, 0) == on)
-        return;
-    core_store_set(STORE(sample_rate_on), p.sound, 0, (unsigned)on);
-    ((void (*)(uint32_t, void *))*(uint32_t *)(*(uint32_t *)p.wrapper + NOTIFY_OF_WRAPPER))(p.wrapper, &info);
-    fin = *(short *)(p.sound + LIVE_SOUND_FIN);
-    if (on && fin == STOP)
-        PARAM_SET(PARAM_TARGET(p.project, p.track, 0), ID_FIN, FULL, p.track, 1, 1);
-    else if (!on && fin >= FULL)
-        PARAM_SET(PARAM_TARGET(p.project, p.track, 0), ID_FIN, STOP, p.track, 1, 1);
+    if (!fine_turn)
+        return delta;
+    return word_of(cents_of(cur) + delta) - cur;
 }
 
-// The SOUND SETTINGS row. core_additem builds it from four callbacks, each
-// called as its std::function's invoker: the first argument is the function's
-// payload, which holds the menu for select and change.
-extern void sample_rate_row_label(void);
-extern void core_additem(void *menu, const void *row);
-
-static void row_select(void **menu, void *item)
+// TUN's value text, as stock's LFO depth (0x400fbbda, "%c%d.%02d"): a sign and
+// two places, "+3.00", "-0.02", and "(0)" at zero
+static int tun_text(struct core_text *t)
 {
-    (void)item;
-    set_on(!sample_rate_selected());
-    VIEW_INVALIDATE((char *)*menu + 56);
-}
-
-static void row_draw(void **menu, void *item, void *bitmap, int x, int y)
-{
-    (void)menu;
-    (void)item;
-    BITMAP_DRAW(bitmap, CHECK_GLYPHS + (sample_rate_selected() ? 28 : 0), x + 11, y, 0);
-}
-
-static void row_change(void **menu, void *item, int dir)
-{
-    (void)item;
-    if (dir) {
-        set_on(dir > 0);
-        VIEW_INVALIDATE((char *)*menu + 56);
-    }
-}
-
-static const void *const row[4] = {
-    (const void *)sample_rate_row_label, (const void *)row_select,
-    (const void *)row_draw, (const void *)row_change,
-};
-
-void sample_rate_add_row(void *menu)
-{
-    core_additem(menu, row);
-}
-
-// A tap on FIN's knob turns RATE over: pressed and let go inside TAP_TICKS. A
-// click nudges the encoder, so the first turns of a press are swallowed, neither
-// a turn nor a change of value; TAP_TURNS of them make it stock's press and turn.
-// Stock's press shows the parameter and changes nothing, so it goes on as ever. A
-// press with a trig, FUNC or NO held, with a lock editor open, or with a pad held
-// in scene or performance mode is stock's lock work, and so is every press in
-// running live recording.
-static int tap_ticks = -1;      // UI ticks since the press, -1 with no tap open
-static int tap_turns;
-
-extern char sample_rate_vt_scene[], sample_rate_vt_perf[];   // the top view in those modes
-
-static int plain_press(void *view)
-{
-    uint32_t page = *(uint32_t *)((char *)view + VIEW_PAGE_STATE);
-    uint32_t manager = *(uint32_t *)((char *)view + VIEW_MANAGER);
-    uint32_t node = *(uint32_t *)(manager + MANAGER_LAST);
-    uint32_t top = **(uint32_t **)(node + NODE_VIEW);
-    int k;
-    if (top == (uint32_t)sample_rate_vt_scene || top == (uint32_t)sample_rate_vt_perf)
-        for (k = KEY_PAD_FIRST; k <= KEY_PAD_LAST; k++)
-            if (IS_KEY_HELD(k))
-                return 0;           // in those modes a held pad is the scene being edited
-    if (LOCK_EDITOR(page) || LIVE_RECORDING(page) || IS_KEY_HELD(KEY_FUNC) || IS_KEY_HELD(KEY_NO))
-        return 0;
-    for (k = 0; k < KEY_TRIGS; k++)
-        if (IS_KEY_HELD(k))
-            return 0;
-    return 1;
-}
-
-// Stock puts a parameter's name in the header at the press, and the tap acts at
-// the release, so it puts the name there again, as stock's handler does.
-extern void sample_rate_string(void *string, const char *text, void *allocator);
-extern void sample_rate_string_end(void *string);
-extern void sample_rate_header(uint32_t page, void *string);
-extern uint32_t sample_rate_long_name(uint32_t obj, int id);
-
-static void show_name(void *view)
-{
-    uint32_t vtable = *(uint32_t *)view;
-    uint32_t obj = (*(get2_t *)(vtable + VT_PARAM_OBJ))((uint32_t)view, -1);
-    uint32_t string[2];
-    char allocator;
-    sample_rate_string(string, (const char *)sample_rate_long_name(obj, ID_FIN), &allocator);
-    sample_rate_header(*(uint32_t *)((char *)view + VIEW_PAGE_STATE), string);
-    sample_rate_string_end(string);
-}
-
-// From the gate in stock's sound page key handler, for any knob's press or release
-void sample_rate_knob(void *view, int id, const char *event)
-{
-    int flags = *(const int *)(event + 16);
-    if (id != ID_FIN || (flags & KEY_REPEAT))
-        return;
-    if (flags & KEY_DOWN) {
-        tap_ticks = plain_press(view) ? 0 : -1;
-        tap_turns = 0;
+    int c = cents_of(t->value), a = c < 0 ? -c : c;
+    char *b = t->buf;
+    if (!c) {
+        *b++ = '(';
+        *b++ = '0';
+        *b++ = ')';
     } else {
-        if (tap_ticks >= 0 && plain_press(view)) {
-            set_on(!sample_rate_selected());
-            show_name(view);
-            VIEW_INVALIDATE(view);
-        }
-        tap_ticks = -1;
+        *b++ = c < 0 ? '-' : '+';
+        if (a >= 1000)
+            *b++ = (char)('0' + a / 1000);
+        *b++ = (char)('0' + a / 100 % 10);
+        *b++ = '.';
+        *b++ = (char)('0' + a / 10 % 10);
+        *b++ = (char)('0' + a % 10);
     }
+    *b = 0;
+    return CORE_TEXT_DONE;
 }
+
+const struct core_param sample_rate_tun_param = {ID_TUN, ID_TUN, 0, 0, tun_text};
 
 int sample_rate_turn(void *brain, char *event)
 {
     (void)brain;
-    if (*(int *)(event + 12) != ENC_FIN || tap_ticks < 0)
-        return 0;
-    if (++tap_turns < TAP_TURNS)
-        return 1;
-    tap_ticks = -1;
+    fine_turn = !event[ENC_PRESSED];
     return 0;
+}
+
+// The SMPL key opens the SAMPLE view's waveform page, never its knob page. Every
+// page view keeps its own copy of its page list (core-ar2's pages.s), a vector at
+// +124..+128, and shows the page at index +140; the SAMPLE view's is stock's 4
+// (the knobs) then 5 (the waveform), and it draws by the index. Where the list
+// is exactly that, its end moves back one entry and the index goes to 1: with
+// one page counted the SMPL key has nothing to cycle to, the view draws the
+// waveform, and page 5 still sits at index 1 for any reader. A list a mod has
+// added pages to is left as it is. The view sits in the view manager's stack below the screen's overlays,
+// so the whole stack is searched, every tick: stock builds the views once, but
+// would build them again (with the knob page) if every holder let them go. The
+// change normally lands at boot, before the first SMPL press sets the header.
+#define BRAIN (*(char *volatile *)BRAIN_AT)
+#define BRAIN_VIEWS 32      // the brain's view manager
+#define MANAGER_LIST 20     // the manager's sentinel node
+#define MANAGER_LAST 24     // its top view's node
+#define NODE_PREV 4
+#define NODE_VIEW 8
+#define VIEW_PAGES 124      // a page view's page ids, begin and end
+#define VIEW_SEL 140        // the index of the page shown
+#define PAGE_KNOBS 4
+#define PAGE_WAVE 5
+#define STACK_MAX 32        // views searched at most
+typedef void (*invalidate_t)(void *);
+#define VIEW_INVALIDATE ((invalidate_t)VIEW_INVALIDATE_AT)
+extern char sample_rate_vt_sample[];    // the SAMPLE view's vtable
+
+static char *sample_view(void)          // the SAMPLE view in the view stack, or 0
+{
+    char *views = BRAIN ? *(char **)(BRAIN + BRAIN_VIEWS) : 0, *node, *view;
+    int n;
+    if (!views)
+        return 0;
+    node = *(char **)(views + MANAGER_LAST);
+    for (n = 0; node && node != views + MANAGER_LIST && n < STACK_MAX; n++) {
+        view = *(char **)(node + NODE_VIEW);
+        if (view && *(char **)view == sample_rate_vt_sample)
+            return view;
+        node = *(char **)(node + NODE_PREV);
+    }
+    return 0;
+}
+
+static void waveform_page(char *view)
+{
+    int *pages;
+    pages = *(int **)(view + VIEW_PAGES);
+    if (*(int **)(view + VIEW_PAGES + 4) != pages + 2 || pages[0] != PAGE_KNOBS || pages[1] != PAGE_WAVE)
+        return;
+    *(int **)(view + VIEW_PAGES + 4) = pages + 1;   // one page: the key has nothing to cycle to
+    *(int *)(view + VIEW_SEL) = 1;                   // and the view draws its second, the waveform
+    VIEW_INVALIDATE(view);
+}
+
+// SMPL WAVEFORM's layout: one row of values over a taller waveform. Stock draws
+// the eight knobs' names in two rows, above and below a 32-pixel waveform, and
+// a knob's value in place of its name while it turns. Here the row holds TUN,
+// RATE, BR, LOP and LEV, always as values (LOP's text is OFF, ON, or PIPO with
+// Ping Pong Loop), with stock's own routine, so the font, centring and every
+// module's value text stay stock's; a held trig's lock box is the module's
+// (below), as wide as the row allows. STA and END show
+// as their lines, SMP as its list on a turn of D: no text. The header names a
+// knob while it turns, as stock.
+//
+// The waveform widget (view + 400) keeps its area as x0 +28, y0 +32, width +36
+// and height +40, read at every draw (y from the bottom of the screen); stock
+// sets 2, 16, 123, 32. Rows 10..46 from the bottom, under the row and above
+// the status bar, give it 37.
+#define VIEW_WAVE 400
+#define WAVE_Y0 32
+#define WAVE_H 40
+#define STOCK_Y0 16
+#define STOCK_H 32
+#define TALL_Y0 10
+#define TALL_H 37
+#define ROW_Y 61            // stock's top row: the text's bottom 13 below
+#define KNOB_X0 16          // stock's knob centres: 16 + 32 a column, rows 61 and 24
+#define KNOB_DX 32
+#define LOWER_Y 40          // below this, the lower row
+
+typedef void (*knob_text_t)(char *view, void *bmp, int x, int y, int id, int value,
+                            void *entry, int lock, int turning, int bare);
+
+// Knob A..H to its place in the row, or -1 for none (SMP, STA, END)
+static const signed char row_slot[8] = {0, 1, 2, -1, -1, -1, 3, 4};
+// A locked value's box, inverted over its text as stock's (rows y - 14..y - 8):
+// stock's is 27 wide, and five of those overlap on 128 columns, which XOR to a
+// black bar between two locks. These tile the row with one column between them,
+// TUN's the widest for a value such as -12.34; the text is centred in its box.
+static const unsigned char box_l[5] = {0, 27, 53, 78, 103};
+static const unsigned char box_r[5] = {25, 51, 76, 101, 127};
+static const unsigned char row_x[5] = {13, 39, 65, 90, 115};
+typedef void (*fillrect_t)(void *bmp, int x0, int y0, int x1, int y1, int colour);
+#define FILLRECT ((fillrect_t)FILLRECT_AT)
+#define INVERT (-1)
+
+// From the gate in audio.s, once a knob a draw: stock's routine (draw) and its
+// arguments. turning set shows the value; with a trig held stock sets lock on a
+// locked knob, and both of stock's routines then only add the 27-wide box.
+void sample_rate_label(knob_text_t draw, char *view, void *bmp, int x, int y, int id, int value,
+                       void *entry, int lock, int turning, int bare)
+{
+    int col = (x - KNOB_X0) / KNOB_DX, slot;
+    if (x < KNOB_X0 || col > 3 || x != KNOB_X0 + col * KNOB_DX) {
+        draw(view, bmp, x, y, id, value, entry, lock, turning, bare);   // not stock's grid: as stock
+        return;
+    }
+    slot = row_slot[col + (y < LOWER_Y ? 4 : 0)];
+    if (slot < 0)
+        return;
+    draw(view, bmp, row_x[slot], ROW_Y, id, value, entry, 0, 1, bare);
+    if (lock)
+        FILLRECT(bmp, box_l[slot], ROW_Y - 14, box_r[slot], ROW_Y - 8, INVERT);
+}
+
+// The widget draws the sample in its slot (+0), which stock's page callback
+// (0x400d253a: SMP, STA and END into the widget) sets when a parameter or the
+// track changes. It sets slot 0, no sample (the widget's centre line only),
+// while SMP's slot has no sample name yet (0x400b8192). At boot on a unit the
+// callback runs before the samples are loaded, and nothing runs it again until a
+// knob turns: stock's SAMPLE page opens on its knobs at boot and is no wiser, but
+// this one shows the waveform from boot. So while the slot reads 0 the callback
+// runs again, every 8 ticks (0.4 s); with SMP OFF that is all it does.
+#define WAVE_SLOT 0         // the widget's sample slot
+#define FOLLOW_TICKS 8
+typedef void (*page_update_t)(char *view);
+#define PAGE_UPDATE ((page_update_t)PAGE_UPDATE_AT)
+
+static void follow_sample(char *view)
+{
+    static unsigned char wait;
+    if (*(int *)(view + VIEW_WAVE + WAVE_SLOT)) {
+        wait = 0;
+        return;
+    }
+    if (wait) {
+        wait--;
+        return;
+    }
+    wait = FOLLOW_TICKS - 1;
+    PAGE_UPDATE(view);
+}
+
+// The taller waveform, once: only from stock's own area, so a module that moves
+// it keeps its own
+static void tall_waveform(char *view)
+{
+    int *y0 = (int *)(view + VIEW_WAVE + WAVE_Y0), *h = (int *)(view + VIEW_WAVE + WAVE_H);
+    if (*y0 != STOCK_Y0 || *h != STOCK_H)
+        return;
+    *y0 = TALL_Y0;
+    *h = TALL_H;
+    VIEW_INVALIDATE(view);
 }
 
 void sample_rate_tick(void *ctrl)
 {
+    volatile uint32_t *rec = (volatile uint32_t *)(REC_TUN + REC_STEP);
+    char *view;
     (void)ctrl;
-    if (tap_ticks >= 0 && ++tap_ticks > TAP_TICKS)
-        tap_ticks = -1;
+    fine_turn = 0;
+    // A plain step is 1 unit (a cent, at the add), a pressed one a whole semitone.
+    // Stock fills the record at boot; written each tick, it holds whatever ran since.
+    rec[0] = 1;
+    rec[1] = 1;
+    rec[2] = 0;
+    rec[3] = (uint32_t)&fine_profile;
+    view = sample_view();
+    if (view) {
+        waveform_page(view);
+        tall_waveform(view);
+        follow_sample(view);
+    }
 }

@@ -5,7 +5,7 @@ import manifest from '../assets/octatrack-module-packages.json' with { type: 'js
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
 import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 import { removal } from '../../dev/octatrack-usb-lifecycle'
-import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
+import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
 
 const file = (path: string) => new Uint8Array(readFileSync(new URL('../../../public/' + path, import.meta.url)))
 const load = async (entry: { path: string }) => file(entry.path)
@@ -13,7 +13,7 @@ const empty = { moduleIds: [], removedStockFx: [] }
 
 describe('the site’s runtime packages', () => {
   it('publishes each listed module with its checked runtime identity, ABI and record counts', () => {
-    expect(USB_MODULE_IDS).toEqual(['everb', 'miniverb', 'tapehead', 'airwindows-chorus', 'lofi2', 'ring-sc', 'previewvol', 'apply-scene', 'repitch', 'poly8', 'vector', 'synth', 'quantizer', 'tapeecho', 'euclid', 'bbd', 'playmodes', 'mute-modes', 'sidechain-compressor', 'output-matrix', 'cc-map', 'quantize-live-rec-toggle', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'recorder-loop-fix', 'analog-bassdrum', 'beat-slicer', 'temp-save', 'slow-lfo', 'bar-led', 'tiempos', 'usb-audio-out-tracks-main-cue'])
+    expect(USB_MODULE_IDS).toEqual(['everb', 'miniverb', 'tapehead', 'airwindows-chorus', 'lofi2', 'ring-sc', 'previewvol', 'apply-scene', 'repitch', 'poly8', 'vector', 'synth', 'quantizer', 'tapeecho', 'euclid', 'bbd', 'playmodes', 'mute-modes', 'sidechain-compressor', 'output-matrix', 'cc-map', 'quantize-live-rec-toggle', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'recorder-loop-fix', 'analog-bassdrum', 'beat-slicer', 'temp-save', 'slow-lfo', 'bar-led', 'tiempos', 'syntiz', 'track-solo', 'pattern-sample-locks', 'amiga', 'usb-audio-out-tracks-main-cue'])
     for (const entry of manifest.packages) {
       const data = file(entry.path), view = new DataView(data.buffer), abi = view.getUint16(4)
       expect(entry.path).toBe(`octatrack-modules/${entry.id}/${entry.version}.mwrm`)
@@ -53,6 +53,20 @@ describe('preparing a module set', () => {
     expect((await catalogue.prepare({ name: 'Remove', moduleIds: [] }, current, fetched, undefined, requiredBase)).changes[0].undo).toEqual(file(entry.path))
     expect(() => createRuntimeCatalogue({ packages: [{ ...entry, requiredBase: 'not-an-identity' }] })).toThrow('inconsistent')
     expect(() => createRuntimeCatalogue({ packages: [{ ...entry, requiredBase: [requiredBase] as unknown as string }] })).toThrow('inconsistent')
+  })
+  it('leaves a module that is switched off on the unit off: no package for it, and nothing to sync for it alone', async () => {
+    const running = [{ handle: 27, layout: 1, module: '873d83cc', name: 'E-Verb' }], off = [{ handle: 0xff, layout: 1, module: runtimeId('tapehead'), name: 'TapeHead' }]
+    const current = inventoryFrom(running, off)
+    expect(current).toEqual({ moduleIds: ['everb'], removedStockFx: [], offIds: ['tapehead'] })
+    expect(inventoryFrom(running, [])).toEqual({ moduleIds: ['everb'], removedStockFx: [], offIds: [] }) // a base with the page, nothing off
+    expect(inventoryFrom(running, running).offIds).toEqual([]) // read a moment apart: what runs is not off
+    const capabilities = { abi: 8, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 }
+    expect(moduleSetReview({ name: 'Live', moduleIds: ['everb', 'tapehead'] }, current, capabilities)).toMatchObject({ needsSync: false, changes: { add: [], remove: [] } })
+    const { changes } = await prepareModuleSet({ name: 'Live', moduleIds: ['everb', 'tapehead', 'miniverb'] }, current, load, capabilities)
+    expect(changes.map(change => change.module)).toEqual(['Mini Verb'])
+    // Off and no longer in the set: the sync removes it from the unit, with its package to put it back on Undo.
+    const out = await prepareModuleSet({ name: 'Live', moduleIds: ['everb'] }, current, load, capabilities)
+    expect(out.changes).toEqual([{ module: 'TapeHead', data: removalPackage('tapehead'), undo: file(manifest.packages[2].path) }])
   })
   it('removes first, then installs, each with the package that undoes it', async () => {
     const current = inventoryFrom([{ handle: 27, layout: 1, module: '873d83cc', name: 'E-Verb' }, { handle: 0xff, layout: 0, module: '0000002a', name: '' }])
@@ -234,13 +248,15 @@ describe('ABI 9 packages: base features and DSP claims', () => {
 })
 
 /** An ABI 10 engine package from an ABI 8 controller package, as sdk/runtime/loader/abi9.py `engine` writes one: the
- * 80-byte header with DSP words and no slot, then after the fills its claims (here each written with its initial words),
- * one hook entry (site, cores, exit, entry 0), the words, relocations and the initial words. Synthetic words. */
+ * 80-byte header with DSP words and no slot and its price per voice (cycles 414, executed), then after the fills its
+ * claims (here each written with its initial words), one hook entry (site, cores, exit, entry 0), the words, relocations
+ * and the initial words. Synthetic words. */
 type EngineClaim = [space: number, core: number, address: number, init: number[]]
 function abi10(data: Uint8Array, words: number[], relocations: number[], exit: number, claims: EngineClaim[], site = 5, cores = 3) {
   const body = data.subarray(76), init = claims.flatMap(claim => claim[3])
   const out = new Uint8Array(80 + body.length + 12 * claims.length + 8 + 4 * words.length + 2 * relocations.length + 4 * init.length), o = new DataView(out.buffer)
   out.set(data.subarray(0, 76)); o.setUint16(4, 10); o.setUint32(32, words.length); o.setUint16(36, relocations.length)
+  o.setUint16(44, 414); out[46] = 1
   out[78] = claims.length; out[79] = 1; out.set(body, 80)
   let at = 80 + body.length
   for (const [space, core, address, values] of claims) { out.set([space, core, 7, 0], at); o.setUint32(at + 4, address); o.setUint32(at + 8, values.length); at += 12 }
@@ -285,7 +301,15 @@ describe('ABI 10 packages: an engine for the base\'s hook sites', () => {
     await refused(abi10(published, words, [3, 9 | 0x8000], 31, [[1, 3, 0x2840, [1]]])) // no such core
     const short = abi10(published, words, [3, 9 | 0x8000], 31, [region]); await refused(short.subarray(0, short.length - 4)) // an initial word short
     const big = abi10(published, words, [3, 9 | 0x8000], 31, [[1, 2, 0x2840, [0x1000000]]]); await refused(big) // not 24 bits
-    const slot = abi10(published, words, [3, 9 | 0x8000], 31, [region]); slot[45] = 1; await refused(slot) // a price in an engine's descriptor
+    // Its price per voice: never 0, executed (1) or hardware (3) but never modeled (2) or of no kind; init stays 0.
+    const priced = (patch: (data: Uint8Array) => void) => { const data = abi10(published, words, [3, 9 | 0x8000], 31, [region]); patch(data); return data }
+    await refused(priced(data => { data[44] = data[45] = 0 })) // no price
+    await refused(priced(data => { data[46] = 2 })) // a price on a model
+    await refused(priced(data => { data[46] = 0 })) // a price of no kind
+    await refused(priced(data => { data[41] = 1 })) // an entry offset on an engine
+    const hardware = priced(data => { data[44] = 0; data[45] = 191; data[46] = 3 }), fetched = vi.fn(async () => hardware)
+    const { changes } = await engine(hardware).catalogue.prepare(target, empty, fetched, base, at)
+    expect(changes).toEqual([{ module: 'Analog BD', data: hardware, undo: removalPackage('analog-bassdrum') }]) // any price the loader takes
   })
 })
 
@@ -323,6 +347,13 @@ describe('machine groups over USB', () => {
     const result = await catalogue.prepare({ name: 'Set', moduleIds: wanted }, empty, fetched, capable)
     expect(result.changes).toEqual([{ module: 'Machines', data: packages[mask - 1].data, undo: removalPackage('octatrack-machines') }])
     expect(inventory(99 + mask)).toEqual({ moduleIds: wanted, removedStockFx: [], runtimeGroups: [{ id: 'octatrack-machines', layout: 99 + mask }] })
+  })
+  it('leaves a machine package that is switched off on the unit off, and removes it by its own id when the set drops its machines', async () => {
+    const packages = [groupPackage(['vector', 'synth'], 14)], { catalogue, fetched } = machineCatalogue(packages)
+    const off = catalogue.inventory([], [{ handle: 255, layout: 14, module: runtimeId('octatrack-machines'), name: 'Machines' }])
+    expect(off).toEqual({ moduleIds: [], removedStockFx: [], offIds: ['vector', 'synth'] })
+    expect(catalogue.review({ name: 'Set', moduleIds: ['synth', 'vector'] }, off, capable)).toMatchObject({ needsSync: false, problem: undefined })
+    expect((await catalogue.prepare({ name: 'Set', moduleIds: [] }, off, fetched, capable)).changes).toEqual([{ module: 'Machines', data: removalPackage('octatrack-machines'), undo: undefined }])
   })
   it('updates the same member IDs from a retained layout and restores that exact package on Undo', async () => {
     const old = groupPackage(['vector', 'synth'], 14, false), next = groupPackage(['vector', 'synth'], 29)

@@ -81,7 +81,7 @@ class SavedSetWiring(unittest.TestCase):
                 flags += ['-DMODWERK_DSP_%s%d=4096' % (name, c) for name in ('TABLE', 'WORDS', 'MISS', 'METER') for c in (0, 1)]
                 if resident:
                     flags.append('-DMODWERK_RESIDENT_STOCK_HOOKS')
-                includes = ['-I'+str(path) for path in (work, ELEK, GLUE, ADAPTER / 'resident-runtime',
+                includes = ['-I'+str(path) for path in (work, ELEK, GLUE, ADAPTER / 'resident-runtime', ADAPTER / 'controller-policy',
                     ROOT / 'sdk/runtime/loader', ROOT / 'sdk/runtime/upload')]
                 sources = [work / 'transfer.c', work / 'selection.c', work / 'dsp.c', ELEK / 'ep0.c', ELEK / 'modset.c',
                            GLUE / 'saved_set_export.c', GLUE / 'saved_set_reader.c', GLUE / 'saved_set_session.c']

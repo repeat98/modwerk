@@ -1,0 +1,1 @@
+Development: `/modwerk-diagnostics` is the owner's pass over the diagnostics members share. The agent pulls them, sorts the failures into causes, drops what is already fixed, reported or by design, proves the rest in a test and fixes each on its own branch. Tester names and records stay off GitHub, and nothing is pushed or run on the unit without the owner's yes.

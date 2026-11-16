@@ -70,8 +70,12 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
     uint32_t want = s[6] | (uint32_t)s[7] << 8;
     if (s[0] != 0xc1 || s[4] != MODWERK_VENDOR_INTERFACE || s[5]) return 0;
     if (s[1] == 5 && want == 1 && s[2] < 64u && s[3] <= 1u) {
+#ifdef MODWERK_DSP_LOADER
+        out[0] = (uint8_t)modwerk_remote_key(s[2], s[3]); /* rung at a tick, between two physical reports (dsp.c, #1110) */
+#else
         modwerk_post_key(s[2], s[3]);
         out[0] = 1;
+#endif
         *reply = out;
         return 1;
     }
@@ -145,8 +149,12 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         return 2;
     }
     if (s[1] == 8 && want == 1 && ((s[2] >= 0x30u && s[2] <= 0x36u && s[3]) || s[2] == 0x40u)) {
+#ifdef MODWERK_DSP_LOADER
+        out[0] = (uint8_t)modwerk_remote_bytes(s[2], s[3]);
+#else
         modwerk_panel_bytes(s[2], s[3]);
         out[0] = 1;
+#endif
         *reply = out;
         return 1;
     }
@@ -212,6 +220,18 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         for (unsigned i = 0; i < 28u; ++i) out[i] = (uint8_t)(v[i / 4u] >> (24 - 8 * (i % 4u)));
         *reply = out;
         return 28;
+    }
+    if (s[1] == 30 && want == 76u) { /* CPU: the CPU budget (machine_registry.c); wValue its allowance in percent of a frame
+                                        * (0 keeps it): the allowance, what the Part books, the tracks refused; then since
+                                        * the last read each guarded render's longest time (track's first pass, then second) */
+        extern volatile uint32_t mw_cpu_allowance, mw_cpu_booked, mw_frame_cost_max[16];
+        extern volatile uint8_t mw_cpu_refused;
+        if (s[2]) mw_cpu_allowance = s[2];
+        uint32_t v[19] = {mw_cpu_allowance, mw_cpu_booked, mw_cpu_refused};
+        for (unsigned k = 0; k < 16u; ++k) v[3u + k] = mw_frame_cost_max[k], mw_frame_cost_max[k] = 0;
+        for (unsigned i = 0; i < 76u; ++i) out[i] = (uint8_t)(v[i / 4u] >> (24 - 8 * (i % 4u)));
+        *reply = out;
+        return 76;
     }
     if (s[1] == 23 && want == 4 && !s[2] && !s[3]) { /* GAP: the longest time between two frames since the last read, DTCN3 counts */
         extern volatile uint32_t dl_frame_gap;

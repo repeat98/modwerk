@@ -1,0 +1,1 @@
+Octatrack base: on some Windows computers the site could never connect and said Modwerk was open in another tab. The base now reports a new USB device revision, so Windows sets up its USB connection again by itself. Where a Windows computer still can't connect, the message now says to install the latest base from the card once, instead of only blaming another tab.

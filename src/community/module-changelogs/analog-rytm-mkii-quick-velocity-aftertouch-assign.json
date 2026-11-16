@@ -1,5 +1,25 @@
 [
   {
+    "version": "0.3.0-experimental",
+    "date": "2026-11-15",
+    "changes": [
+      "Hold FIX, SAMPLER or LFO for about half a second just to look at the amounts: letting go then does nothing.",
+      "A quick tap still toggles fixed velocity, opens the recorder or opens the LFO page.",
+      "With LFO held, a MIDI turn passed to stock's locker by a module now sets the LFO's depth too, not only the Rytm's knobs."
+    ]
+  },
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-10",
+    "changes": [
+      "Now called Quick Mod Assign.",
+      "Hold LFO and turn a knob: that parameter becomes the LFO's destination; keep turning to set the depth.",
+      "With LFO held, pressing the destination's knob sets the depth back to 0.",
+      "An LFO tap opens the LFO page on the release, as FIX now toggles on the release.",
+      "Other mods that follow the page keys now see that LFO tap too."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-11-03",
     "changes": [

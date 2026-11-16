@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 3,
+  "id": "stasis",
+  "name": "Stasis",
+  "version": "1.2.0",
+  "machine": "zoom-ms-70cdr",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "themanro",
+    "name": "Roman Rusinov",
+    "credits": [
+      "Roman Rusinov (Manro): Stasis",
+      "Leemuzhko: the effect runtime it is built with (zui and Dll_)",
+      "Jannik Aßfalg: the ZoomMultistompZDL toolchain"
+    ]
+  },
+  "maintainers": [
+    "themanro",
+    "repeat98"
+  ],
+  "source": {
+    "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+    "revision": "32f3d6877d892409c6defeeeec57040ad004d31f",
+    "path": "src/custom/stasis"
+  },
+  "presentation": {
+    "label": "STASIS",
+    "family": "Freeze",
+    "summary": "A footswitch freeze: turn it on and the note you just played holds while you play over it.",
+    "overview": "Stasis keeps listening while it is off. Turn it on with the footswitch and it holds the last moments you played as a seamless loop, while your dry signal stays open on top; turn it off to let go. Length, Blur, Decay and Tone shape the hold, and Capture can hold or release independently of the footswitch.",
+    "highlights": [
+      "Holds what you just played, captured looking back",
+      "Seamless loop with a crossfade that scales with its length",
+      "Decay from a slow fade to an endless hold"
+    ],
+    "usage": [
+      "Put Stasis in a patch, leave Capture at 0 and play a note.",
+      "Turn Stasis on with the footswitch: what you just played holds while you play over it.",
+      "Turn it off to let go. Length, Blur, Decay and Tone shape the hold."
+    ]
+  },
+  "access": {
+    "location": "The pedal's effect list, Delay group, as Stasis.",
+    "steps": [
+      "Add Stasis to a patch from the effect list (Delay group).",
+      "Its knobs are on the effect's pages, three per page."
+    ],
+    "screenshots": [
+      "media/stasis-screen.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Length",
+      "default": 35,
+      "doc": "Loop length, about 60 ms to 1.4 s, live.",
+      "labels": null
+    },
+    {
+      "name": "Blur",
+      "default": 50,
+      "doc": "Crossfade at the loop seam, as a share of the loop.",
+      "labels": null
+    },
+    {
+      "name": "Decay",
+      "default": 100,
+      "doc": "How the hold fades; fully up holds for ever.",
+      "labels": null
+    },
+    {
+      "name": "Tone",
+      "default": 55,
+      "doc": "Low-pass on the held layer only; the dry stays open.",
+      "labels": null
+    },
+    {
+      "name": "Mix",
+      "default": 50,
+      "doc": "Dry and wet blend while it holds; idle passes dry at unity.",
+      "labels": null
+    },
+    {
+      "name": "Capture",
+      "default": 0,
+      "doc": "0 = the footswitch captures and releases; 1 = release; 2 = capture and hold regardless of the footswitch.",
+      "labels": [
+        "Stomp",
+        "Release",
+        "Hold"
+      ]
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "2.10"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "A patch loads with nothing held: it never freezes on load.",
+      "Built with the init path off: a recalled patch plays the knobs' defaults until you touch a knob."
+    ]
+  },
+  "platform": {
+    "kind": "zdl",
+    "file": "Stasis.ZDL",
+    "effectId": {
+      "gid": 8,
+      "fxid": 440
+    },
+    "effectVersion": "1.02",
+    "dspCost": 20,
+    "binary": {
+      "sha256": "e4f1d9c8ea2a710c4ab653932b87528b91993158365d5f6af0823e8e02664ad7",
+      "bytes": 8214,
+      "release": {
+        "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+        "tag": "stasis-1.02",
+        "asset": "Stasis.ZDL"
+      }
+    },
+    "screen": "static",
+    "pedals": [
+      {
+        "machine": "zoom-ms-70cdr",
+        "firmware": "2.10",
+        "status": "confirmed",
+        "report": "TESTING.md"
+      }
+    ]
+  },
+  "resources": {
+    "memoryBytes": 8214,
+    "fastBytes": null,
+    "load": {
+      "display": "DSP 20 of 225 per patch",
+      "method": "static",
+      "conditions": "The cost Stasis declares in its descriptor, which the pedal adds up per patch; not read from the DSP meter."
+    }
+  },
+  "evidence": {
+    "tier": "owner-verified",
+    "moduleVersion": "1.2.0",
+    "sourceSha256": "e4f1d9c8ea2a710c4ab653932b87528b91993158365d5f6af0823e8e02664ad7",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Zoom MS-70CDR",
+      "release": "2.10+MIDISTOMP 2.0.1",
+      "testedOn": "2026-11-10",
+      "tester": "Jannik Aßfalg",
+      "durationMinutes": null,
+      "summary": "The release file was on the pedal (read back over USB with the same SHA-256): the pedal booted, the effect showed its screen and did its job.",
+      "limitations": [
+        "One run, reported by the tester as working; nothing measured.",
+        "Built with the init path off: the sound takes saved knob values only once a knob is touched.",
+        "MIDISTOMP V2.0.1 on Zoom's 2.10, not Zoom's 2.10 alone."
+      ]
+    },
+    "verifiedBy": "repeat98"
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "The release file has no code from Zoom's effects (check_no_stock.py), passes Ziddle's loader check, renders in Ziddle, and ran on an MS-70CDR.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Put Stasis in a patch, leave Capture at 0 and play a note.",
+          "Turn Stasis on with the footswitch: what you just played holds while you play over it.",
+          "Turn it off to let go. Length, Blur, Decay and Tone shape the hold."
+        ]
+      },
+      "screenshots": [
+        "media/stasis-screen.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "MIT AND BSD-3-Clause",
+    "file": "LICENSE",
+    "declaration": "ZoomMultistompZDL's MIT licence (Roman Rusinov, Jannik Aßfalg). Leemuzhko's runtime inside the file is MIT; its three call helpers are TI's RTS source, BSD-3-Clause."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Stasis thumbnail",
+      "alt": "Conceptual drawing of Stasis: a footswitch freeze",
+      "credit": "Modwerk",
+      "license": "MIT",
+      "source": "Original illustration for Modwerk's library."
+    },
+    {
+      "path": "media/stasis-screen.png",
+      "kind": "screenshot",
+      "caption": "Stasis's screen",
+      "alt": "Pedal screen of Stasis",
+      "credit": "Roman Rusinov's Stasis, rendered by Modwerk",
+      "license": "MIT",
+      "source": "The cover picture inside the release file itself, decoded from its Zoom RLE: what the pedal shows for this effect.",
+      "capture": {
+        "type": "emulator",
+        "release": "2.10",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "e4f1d9c8ea2a710c4ab653932b87528b91993158365d5f6af0823e8e02664ad7",
+        "setup": "The cover picture inside the release file itself, decoded from its Zoom RLE: what the pedal shows for this effect. the cover picture at the start of .const in the built Stasis.ZDL (ZDL_OWN_RUNTIME=1 ZDL_MATERIALIZE_INIT=0 at 32f3d68), Zoom RLE decoded and drawn as zvis_host.py draws frames"
+      }
+    }
+  ]
+}

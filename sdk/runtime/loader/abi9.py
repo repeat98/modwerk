@@ -29,6 +29,7 @@ HERE = Path(__file__).resolve().parent
 REGISTRY = HERE.parents[1] / 'machines/octatrack/dsp-sites.json'
 CLAIMS, HOOK_ENTRIES = 16, 8  # loader.h's RUNTIME_DSP_CLAIMS, RUNTIME_DSP_HOOK_ENTRIES
 HEADERS = {4: 32, 5: 50, 6: 68, 7: 72, 8: 76, 9: 80, 10: 80}
+ENGINE_KINDS = {'executed': 1, 'hardware': 3}  # loader.h runtime_cycles; an engine's price is never modeled (2)
 ACCESS = {'r': 1, 'w': 2, 'rw': 3}
 INIT, BOTH_CORES = 4, 2  # loader.h RUNTIME_CLAIM_INIT, RUNTIME_CLAIM_BOTH_CORES
 DSP_WORDS, INIT_WORDS = 4096, 4096  # loader.h RUNTIME_DSP_WORDS, RUNTIME_DSP_INIT_WORDS
@@ -124,12 +125,18 @@ def controller_sha256(data):
     return hashlib.sha256(hashlib.sha256(head).digest() + hashlib.sha256(data[header:_claims_end(data)]).digest()).hexdigest()
 
 
-def engine(data, words, relocations, site, cores, exit=0, claims=(), requires=0):
+def engine(data, words, relocations, site, cores, exit=0, claims=(), requires=0, cycles=0, kind=None):
     """`data` (an ABI 4 to 8 package with no DSP code: a controller) as ABI 10 with an engine for one of the base's hook
     sites: `words` at base 0, `relocations` (an index, | 0x8000 for a word holding a fixed P address), entered at word
     0 from site `site` on `cores` (bit 0 core 0, bit 1 core 1), `exit` 0 or the word holding a long branch's
     displacement the base points at the site's exit. `claims`: (space, core 0|1|2, address, initial words), each
-    written with its initial words before the base enables the hooks (core 2: the same span on both cores)."""
+    written with its initial words before the base enables the hooks (core 2: the same span on both cores).
+    `cycles` and `kind`: its price per voice, in the header's cycles and kind as an effect's per-instance figure (worst
+    case per sample, charged once per track that plays it, a fixed per-core cost folded in), outside the controller
+    digest, so a price changes with the package and never the base's trust row. Executed or hardware evidence only:
+    an engine is never priced on a model, and never at 0."""
+    if not 0 < cycles <= 0xffff or kind not in ENGINE_KINDS:
+        raise ValueError('An engine declares its price per voice: 1 to 65535 cycles, executed or hardware.')
     if data[:4] != b'MWRM' or len(data) < 32:
         raise ValueError('Not a runtime package.')
     abi, flags = struct.unpack_from('>HH', data, 4)
@@ -156,7 +163,7 @@ def engine(data, words, relocations, site, cores, exit=0, claims=(), requires=0)
     if abi < 5:  # the DSP descriptor and name (ABI 5 and 6) were not there: an ABI 4 header gains them as zeros
         head[32:] = bytes(48)
     head[4:6] = struct.pack('>H', 10)
-    head[32:50] = struct.pack('>IHBBHHHBBH', len(words), len(relocations), 0, 0, 0, 0, 0, 0, 0, 0)  # slots 0: an engine
+    head[32:50] = struct.pack('>IHBBHHHBBH', len(words), len(relocations), 0, 0, 0, 0, cycles, ENGINE_KINDS[kind], 0, 0)  # slots 0: an engine
     if abi < 7:
         head[68:76] = bytes(8)
     elif abi == 7:

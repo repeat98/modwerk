@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 3,
+  "id": "mangle",
+  "name": "Mangle",
+  "version": "9.0.0",
+  "machine": "zoom-ms-70cdr",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "themanro",
+    "name": "Roman Rusinov",
+    "credits": [
+      "Roman Rusinov (Manro): Mangle",
+      "Leemuzhko: the effect runtime it is built with (zui and Dll_)",
+      "Jannik Aßfalg: the ZoomMultistompZDL toolchain"
+    ]
+  },
+  "maintainers": [
+    "themanro",
+    "repeat98"
+  ],
+  "source": {
+    "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+    "revision": "32f3d6877d892409c6defeeeec57040ad004d31f",
+    "path": "src/custom/mangle"
+  },
+  "presentation": {
+    "label": "MANGLE",
+    "family": "Delay",
+    "summary": "A delay whose repeats get crushed, pulsed or shimmered a little more on every pass.",
+    "overview": "Mangle is a feedback delay with three mutations you can blend. Crush degrades each repeat and Tremolo makes it pulse, both inside the feedback so they compound with every pass; Pitch adds an octave-down grain shimmer to the output. With all three at 0 it is a clean delay.",
+    "highlights": [
+      "Crush and Tremolo compound with every repeat",
+      "Octave-down shimmer on the output",
+      "All three at 0 is a clean delay"
+    ],
+    "usage": [
+      "Put Mangle in a patch: with Crush, Tremolo and Pitch at 0 it is a clean delay.",
+      "Set Time and Feedbk, then raise Crush, Tremolo or Pitch to change every repeat.",
+      "Mix blends the repeats with your dry signal."
+    ]
+  },
+  "access": {
+    "location": "The pedal's effect list, Delay group, as Mangle.",
+    "steps": [
+      "Add Mangle to a patch from the effect list (Delay group).",
+      "Its knobs are on the effect's pages, three per page."
+    ],
+    "screenshots": [
+      "media/mangle-screen.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Time",
+      "default": 40,
+      "doc": "Delay length, about 23 ms to 1.3 s.",
+      "labels": null
+    },
+    {
+      "name": "Feedbk",
+      "default": 45,
+      "doc": "Feedback: how many repeats.",
+      "labels": null
+    },
+    {
+      "name": "Crush",
+      "default": 0,
+      "doc": "Degradation in the feedback (sample-rate reduction, bit crush, darkening); 0 = off.",
+      "labels": null
+    },
+    {
+      "name": "Tremolo",
+      "default": 0,
+      "doc": "An amplitude wobble of about 4.5 Hz in the feedback, so repeats pulse harder each pass; 0 = off.",
+      "labels": null
+    },
+    {
+      "name": "Pitch",
+      "default": 0,
+      "doc": "Octave-down grain shimmer on the output; 0 = off.",
+      "labels": null
+    },
+    {
+      "name": "Mix",
+      "default": 50,
+      "doc": "Dry and wet blend.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "2.10"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built with the init path off: a recalled patch plays the knobs' defaults until you touch a knob."
+    ]
+  },
+  "platform": {
+    "kind": "zdl",
+    "file": "Mangle.ZDL",
+    "effectId": {
+      "gid": 8,
+      "fxid": 470
+    },
+    "effectVersion": "9.00",
+    "dspCost": 20,
+    "binary": {
+      "sha256": "2838303ac0ac2714ed1fffef1890e05dd8b7e86db1cc179b77cf6273781aec59",
+      "bytes": 7022,
+      "release": {
+        "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+        "tag": "mangle-9.00",
+        "asset": "Mangle.ZDL"
+      }
+    },
+    "screen": "static",
+    "pedals": [
+      {
+        "machine": "zoom-ms-70cdr",
+        "firmware": "2.10",
+        "status": "confirmed",
+        "report": "TESTING.md"
+      }
+    ]
+  },
+  "resources": {
+    "memoryBytes": 7022,
+    "fastBytes": null,
+    "load": {
+      "display": "DSP 20 of 225 per patch",
+      "method": "static",
+      "conditions": "The cost Mangle declares in its descriptor, which the pedal adds up per patch; not read from the DSP meter."
+    }
+  },
+  "evidence": {
+    "tier": "owner-verified",
+    "moduleVersion": "9.0.0",
+    "sourceSha256": "2838303ac0ac2714ed1fffef1890e05dd8b7e86db1cc179b77cf6273781aec59",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Zoom MS-70CDR",
+      "release": "2.10+MIDISTOMP 2.0.1",
+      "testedOn": "2026-11-10",
+      "tester": "Jannik Aßfalg",
+      "durationMinutes": null,
+      "summary": "The release file was installed over USB and read back identical; after a power cycle the pedal booted with the effect installed.",
+      "limitations": [
+        "One run, reported by the tester; nothing measured. The report covers the boot and the effect being installed, not its sound or its knobs.",
+        "Built with the init path off: the sound takes saved knob values only once a knob is touched.",
+        "MIDISTOMP V2.0.1 on Zoom's 2.10, not Zoom's 2.10 alone."
+      ]
+    },
+    "verifiedBy": "repeat98"
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "The release file has no code from Zoom's effects (check_no_stock.py), passes Ziddle's loader check, renders in Ziddle, and booted installed on an MS-70CDR.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Put Mangle in a patch: with Crush, Tremolo and Pitch at 0 it is a clean delay.",
+          "Set Time and Feedbk, then raise Crush, Tremolo or Pitch to change every repeat.",
+          "Mix blends the repeats with your dry signal."
+        ]
+      },
+      "screenshots": [
+        "media/mangle-screen.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "MIT AND BSD-3-Clause",
+    "file": "LICENSE",
+    "declaration": "ZoomMultistompZDL's MIT licence (Roman Rusinov, Jannik Aßfalg). Leemuzhko's runtime inside the file is MIT; its three call helpers are TI's RTS source, BSD-3-Clause."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Mangle thumbnail",
+      "alt": "Conceptual drawing of Mangle: a delay whose repeats get crushed, pulsed or shimmered a little more on every pass.",
+      "credit": "Modwerk",
+      "license": "MIT",
+      "source": "Original illustration for Modwerk's library."
+    },
+    {
+      "path": "media/mangle-screen.png",
+      "kind": "screenshot",
+      "caption": "Mangle's screen",
+      "alt": "Pedal screen of Mangle",
+      "credit": "Roman Rusinov's Mangle, rendered by Modwerk",
+      "license": "MIT",
+      "source": "The cover picture inside the release file itself, decoded from its Zoom RLE: what the pedal shows for this effect.",
+      "capture": {
+        "type": "emulator",
+        "release": "2.10",
+        "moduleVersion": "9.0.0",
+        "imageSha256": "2838303ac0ac2714ed1fffef1890e05dd8b7e86db1cc179b77cf6273781aec59",
+        "setup": "The cover picture inside the release file itself, decoded from its Zoom RLE: what the pedal shows for this effect. the cover picture at the start of .const in the built Mangle.ZDL (ZDL_OWN_RUNTIME=1 ZDL_MATERIALIZE_INIT=0 at 32f3d68), Zoom RLE decoded and drawn as zvis_host.py draws frames"
+      }
+    }
+  ]
+}

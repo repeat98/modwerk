@@ -3,8 +3,8 @@
   "id": "digitakt-ii",
   "order": 40,
   "name": "Digitakt II",
-  "status": "research",
-  "summary": "Experimental OS 1.17 support exists in elekloader, with a core and released perform mods. Modwerk integration and qualification are not complete.",
+  "status": "preview",
+  "summary": "Experimental OS 1.17 support exists in elekloader, with a core and released perform mods. Track Names is the first library module; downloads stay off until the owner turns them on.",
   "firmware": {
     "releases": [
       {
@@ -23,9 +23,12 @@
   "steps": {
     "format": "done",
     "rebuild": "done",
-    "boot": "started",
+    "boot": "done",
     "core": "done",
-    "mods": "open"
+    "mods": "done"
+  },
+  "stack": {
+    "base": "started"
   },
   "research": [
     {

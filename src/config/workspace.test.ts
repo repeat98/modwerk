@@ -23,7 +23,26 @@ describe('persistent configuration version pins',()=>{
   const current=newConfiguration('Legacy',['repitch'])
   expect(validateConfiguration({...current,moduleVersions:undefined}).moduleVersions).toEqual(current.moduleVersions)
   expect(validateConfiguration({...current,moduleVersions:{}}).moduleVersions).toEqual(current.moduleVersions)
-  for(const pins of [[],null,{repitch:'latest'},{repitch:123},{repitch:'0.1.0',spectrum:'0.1.0'}])expect(()=>validateConfiguration({...current,moduleVersions:pins})).toThrow()
+  for(const pins of [[],null,{repitch:'latest'},{repitch:123},{repitch:'0.1.0',miniverb:'0.1.0'}])expect(()=>validateConfiguration({...current,moduleVersions:pins})).toThrow()
+ })
+})
+describe('modules removed from the library',()=>{
+ it('drops a removed module and its pin from a saved configuration and keeps the rest',()=>{
+  const current=newConfiguration('Live set',['miniverb','euclid'])
+  const saved={...current,moduleIds:['spectrum','miniverb','euclid','midi-scenes'],moduleVersions:{...current.moduleVersions,spectrum:'0.1.1-experimental','midi-scenes':'0.2.5-experimental'}}
+  expect(validateConfiguration(saved)).toEqual(current)
+  const only={...current,moduleIds:['character','modulation'],moduleVersions:{character:'0.1.1-experimental'}}
+  expect(validateConfiguration(only)).toMatchObject({moduleIds:[],moduleVersions:{}})
+ })
+ it('leaves a removed module out of a copied or imported configuration',()=>{
+  const copy=newConfiguration('Copy',['midi-scenes','repitch'],true,{'midi-scenes':'0.2.5-experimental',repitch:'0.1.1-experimental'})
+  expect(copy.moduleIds).toEqual(['repitch'])
+  expect(copy.moduleVersions).toEqual(pinModuleVersions(['repitch']))
+  expect(pinModuleVersions(['spectrum','repitch'])).toEqual(pinModuleVersions(['repitch']))
+ })
+ it('still refuses a module the catalog never had',()=>{
+  expect(()=>newConfiguration('Unknown',['not-a-module'])).toThrow('Unknown module')
+  expect(()=>validateConfiguration({...newConfiguration('Unknown'),moduleIds:['not-a-module']})).toThrow('Unknown module')
  })
 })
 describe('startup choice',()=>{

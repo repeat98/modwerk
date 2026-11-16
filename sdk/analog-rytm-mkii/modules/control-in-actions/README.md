@@ -1,13 +1,13 @@
 # Control In Actions
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.2-experimental, OS 1.74 with core-ar2 0.7.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.4-experimental, OS 1.74 with core-ar2 0.7.
 
 ## Overview
 
 A footswitch or a 0 to 5 V gate on EXP/CV IN 1 or 2 can play a panel action, so both hands stay on the pads. Stock OS 1.74 already holds a footswitch mode in GLOBAL > CONTROL > CONTROL INPUT 1 and 2, left over from Elektron's other machines, but stops MODE at EXPR and does nothing with it on the Rytm. This mod opens it as **ACTION**:
 
 - **MUTE HLD / MUTE TGL**: MUTE mode while the input is held, then back to the mode you were in, or a MUTE press.
-- **REC HLD / REC TGL**: live recording while held, or on and off. It starts a stopped sequencer and never stops it.
+- **REC HLD / REC TGL**: live recording while held, or on and off. It starts a stopped sequencer and never stops it, and leaves you in grid or step recording again if you were in it.
 - **FILL HLD / FILL LAT**: FILL while held, or latched as FUNC + FILL FILL and ended as FILL.
 
 Everything is set up in stock's own CONTROL INPUT menus and saved with stock's control-input settings. Bars beside the menu, laid out as EXPR's, show the input against the learned levels and when it counts as pressed.
@@ -26,8 +26,8 @@ Everything is set up in stock's own CONTROL INPUT menus and saved with stock's c
 | OFF | Nothing | Nothing |
 | MUTE HLD | Opens MUTE mode | Goes back to the mode you were in: CHRO, SCNE, PERF, or none; if MUTE mode was already open, it stays |
 | MUTE TGL | A MUTE press: opens or closes MUTE mode | Nothing |
-| REC HLD | Live recording on (RECORD + PLAY: starts the sequencer when stopped) | Live recording off; the pattern plays on |
-| REC TGL | Live recording on (starting a stopped sequencer) or off (the pattern plays on) | Nothing |
+| REC HLD | Live recording on (RECORD + PLAY: starts the sequencer when stopped) | Live recording off; the pattern plays on, back in grid or step recording if it was on before live recording started |
+| REC TGL | Live recording on (starting a stopped sequencer) or off (the pattern plays on, back in grid or step recording if it was on before live recording started, from the input or RECORD + PLAY) | Nothing |
 | FILL HLD | Holds FILL: fill mode on, as while you hold the key | Lets FILL go: fill mode off, and a latched fill unlatched, as stock's FILL release |
 | FILL LAT | Latches fill mode, as FUNC + FILL FILL, or ends the latch, as FILL | Nothing |
 
@@ -60,14 +60,14 @@ Plug the switch or gate in, set MODE to ACTION, learn the levels if it is a foot
 ## Compatibility and limitations
 
 - OS 1.74 only, with core-ar2 0.7. No other module is needed.
-- It changes nine stock instructions, all in the CONTROL INPUT menu: the two MODE limits, the ACTION row's limit and where it reads its names, the names of the mode, the row and ACTION LEARN, ACTION LEARN's first message line, and the draw's test for EXPR, so that ACTION draws its bars. Stock's own text stays in the firmware; only these screens point at the mod's. It subscribes to `ev_tick` for the settings and the screen, `ev_render_out` to read the jacks, and `ev_key` (order 10) for its own key message; an action is the key press stock already handles (MUTE, CHRO, SCNE, PERF, PLAY, FILL), played through stock's own key path (`KEYDISP`), so the pads, LEDs and modes behave as from the panel. REC HLD and REC TGL hold RECORD as stock reads it only for their one PLAY press. No storage of its own.
+- It changes nine stock instructions, all in the CONTROL INPUT menu: the two MODE limits, the ACTION row's limit and where it reads its names, the names of the mode, the row and ACTION LEARN, ACTION LEARN's first message line, and the draw's test for EXPR, so that ACTION draws its bars. Stock's own text stays in the firmware; only these screens point at the mod's. It subscribes to `ev_tick` for the settings and the screen, `ev_render_out` to read the jacks, and `ev_key` (order 10) for its own key message; an action is the key press stock already handles (MUTE, CHRO, SCNE, PERF, PLAY, FILL), played as from the panel, so the pads, LEDs and modes behave as from the panel: MUTE, the mode keys and FILL through the base's key chain (`core_key`: every mod's `ev_key` handler, then stock's `KEYDISP`), so other mods that follow pages see them; PLAY through `KEYDISP` alone, so a mod that takes PLAY in a gesture of its own (QPER + PLAY in QPER Live Rec) does not read the input's PLAY as the musician's. REC HLD and REC TGL hold RECORD as stock reads it only for their one PLAY press. No storage of its own.
 - It claims the ACTION mode of the CONTROL INPUT menus and the jacks in that mode.
 - Timing. The audio interrupt reads the converter 1,500 times a second, unsmoothed, and on an edge puts a key message on the UI task's queue, as stock's converter reports there from the same interrupt. The UI task plays it as it would a panel key, so an action comes within about a millisecond of the edge (rytm-emu: 0.02 to 1.1 ms). Stock's own reading of the jack, which 0.1.0 used once each UI tick, is smoothed by 2% a block and so crosses the switch point about 33 ms after a clean edge; with the tick, about 20 a second, an action came 33 to 83 ms late. What the jack's analog input stage adds is not known.
 - Without the mod, a unit left in ACTION mode reads that jack as nothing, and the menu turns MODE back no further than EXPR.
 
 ## Tests and measurements
 
-The author's unit, builds alone: CI06 passed every action, ACTION LEARN with YES and NO, REVERSE DIRECTION and a power cycle; CI07 passed EXPRESSION LEARN's NO and YES. CI09 added the ACTION LEARN name and a code review's fixes; on the unit its bars, both learns' NO and a hold action passed. CI11, this package (0.1.1), reads the jacks in the audio interrupt: in rytm-emu every action played within 0.02 to 1.12 ms of the edge, against 4 to 49 ms for 0.1.0's code there; on the unit, as reported, it works great. 0.1.2, this package, stops reading a jack with ACTION OFF; in the author's 16-module build LP01 actions play and ACTION OFF plays nothing, as reported ([TESTING.md](TESTING.md)). Memory (CI11, -O2): 4,098 bytes of code and initialised data and 84 bytes of `.bss` in the 128 KiB shared mod area. Load: each audio block, a comparison of each jack in ACTION mode with an action against its thresholds; a jack with ACTION OFF, or in another mode, is not read. Measured on the author's unit (TESTING.md): about 3.3 to 3.7 µs of the 667 µs audio block with a jack armed, and 0.8 µs with both jacks at ACTION OFF (0.1.1: 3.6 µs). Each UI tick, the thresholds from the settings.
+The author's unit, builds alone: CI06 passed every action, ACTION LEARN with YES and NO, REVERSE DIRECTION and a power cycle; CI07 passed EXPRESSION LEARN's NO and YES. CI09 added the ACTION LEARN name and a code review's fixes; on the unit its bars, both learns' NO and a hold action passed. CI11, this package (0.1.1), reads the jacks in the audio interrupt: in rytm-emu every action played within 0.02 to 1.12 ms of the edge, against 4 to 49 ms for 0.1.0's code there; on the unit, as reported, it works great. 0.1.2, this package, stops reading a jack with ACTION OFF; in the author's 16-module build LP01 actions play and ACTION OFF plays nothing, as reported ([TESTING.md](TESTING.md)). 0.1.4, this package: in a five-mod set (CK01) with Loop Sync, QPER Live Rec, Quick Mod Assign and Audio In Routing, every action played by a footswitch as from the panel, and REC TGL with QPER held still started live recording, as reported. Memory (CI11, -O2): 4,098 bytes of code and initialised data and 84 bytes of `.bss` in the 128 KiB shared mod area. Load: each audio block, a comparison of each jack in ACTION mode with an action against its thresholds; a jack with ACTION OFF, or in another mode, is not read. Measured on the author's unit (TESTING.md): about 3.3 to 3.7 µs of the 667 µs audio block with a jack armed, and 0.8 µs with both jacks at ACTION OFF (0.1.1: 3.6 µs). Each UI tick, the thresholds from the settings.
 
 ## Authorship and licences
 

@@ -101,7 +101,7 @@ def ab_package(seed=0, n=998, image=None):
     """The Analog BD controller as ABI 10: its CF image (the trust row's), its engine and initial words (not the row's)."""
     data = package(PACKAGES['ab'][0], PACKAGES['ab'][2] if image is None else image)
     words, relocations, exit = ab_engine(seed, n)
-    return abi9.engine(data, words, relocations, AB_SITE, 3, exit, [('x', 2, 0x2840, ab_words(seed))])
+    return abi9.engine(data, words, relocations, AB_SITE, 3, exit, [('x', 2, 0x2840, ab_words(seed))], cycles=414, kind='executed')
 
 
 def header():
