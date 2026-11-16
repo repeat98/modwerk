@@ -87,6 +87,7 @@ nrpn 1:20 64 0           # an NRPN on the auto channel as a controller sends it:
 midi fb begin            # what the Rytm sends on MIDI from here (a link answer marks the place)
 midi fb end              # to here: its non-SysEx, non-real-time messages, over USB on both targets
 emu key GLOBAL           # key, cc, nrpn, note or wait for the emulator alone; the unit keeps the time
+emu press LFO 800        # holds a key on the emulator's panel 800 ms (target: emu); & does not wait for it
 audio hit BD 1200        # record 1200 ms (20 to 30000) from here: a track, MAIN or IN
 expect up != rest                    # two captures of one kind
 expect up == ref                     # a screen's recorded reference (never `!=`, never mem)
