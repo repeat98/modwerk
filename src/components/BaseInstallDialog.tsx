@@ -76,6 +76,12 @@ const USB_STEPS: Record<BaseUpdateStep, string> = {
   restarting: 'Saved and checked. The Octatrack restarts on the new base',
   done: 'Done. The new base is saved, and you can use your Octatrack again.',
 }
+/** In place of HANDS_OFF once a restart is not back after POWER_CYCLE_MS: it may have lost USB, which only a power cycle
+ * brings back. Safe at both restarts: before the save nothing is written, after it the saved base is checked. */
+const NOT_BACK: Partial<Record<BaseUpdateStep, string>> = {
+  starting: 'It hasn’t come back from its restart. Nothing is saved yet, so it starts your current base, and the update carries on from there.',
+  restarting: 'It hasn’t come back from its restart. The new base is saved and checked, so it starts on the new base.',
+}
 // What the guide promises: only what the base does today. Cross-compatibility,
 // automatic stress tests and bug reports are still to be built (docs/OCTATRACK_ELEKLOADER_MIGRATION.md).
 const ALSO_NEW: BasePromise[] = [
@@ -143,7 +149,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   const state = useOctatrackLink(link)
   const [accepted, setAccepted] = useState(false), [signIn, setSignIn] = useState(false)
   // A failed update keeps the stage it stopped in (`at`), so the window shows where, and whether anything was saved.
-  const [usb, setUsb] = useState<{ step: BaseUpdateStep; overall: number; pass?: 1 | 2 } | { error: string; at: number; stepped?: boolean } | null>(null)
+  const [usb, setUsb] = useState<{ step: BaseUpdateStep; overall: number; pass?: 1 | 2; slow?: boolean } | { error: string; at: number; stepped?: boolean } | null>(null)
   const [card, setCard] = useState(false), [outdated, setOutdated] = useState(false)
   const [pending, setPending] = useState(pendingBaseInstall)
   const [download, setDownload] = useState<'idle' | 'building' | 'done' | 'failed'>(pending ? 'done' : 'idle'), [failure, setFailure] = useState('')
@@ -216,10 +222,10 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
     // base takes, then this one (BaseTooBigError is raised before anything is sent). Each of the two is half the bar.
     const run = (target: BaseImage, pass?: 1 | 2) => {
       let reached = 0
-      return link.updateBase(new Uint8Array(target.buffer), target.base, (step, fraction) => {
+      return link.updateBase(new Uint8Array(target.buffer), target.base, (step, fraction, slow) => {
         if (pass === 1 && step === 'done') return // the second update follows: not done yet
         at = stageOf(step); reached = updateProgress(step, fraction, reached)
-        setUsb({ step, overall: pass ? (pass - 1 + reached) / 2 : reached, ...(pass ? { pass } : {}) })
+        setUsb({ step, overall: pass ? (pass - 1 + reached) / 2 : reached, ...(pass ? { pass } : {}), ...(slow ? { slow } : {}) })
       }, undefined, pass === 2)
     }
     try {
@@ -282,7 +288,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
       return <>
         {/* The window's title says what this is: the stage's own heading is for screen readers and focus only. */}
         <h3 id="base-stage-title" className="sr-only" data-stage-title tabIndex={-1}>{updating ? 'Updating your Octatrack' : step ? 'Update complete' : 'Update over USB'}</h3>
-        {updating && <div className="base-update-hands-off" role="alert"><Icon name="warn" size={22}/><div><strong>Hands off your Octatrack</strong><p>{HANDS_OFF}</p></div></div>}
+        {updating && <div className="base-update-hands-off" role="alert"><Icon name="warn" size={22}/><div>{step?.slow && NOT_BACK[step.step] ? <><strong>Switch your Octatrack off and on</strong><p>{NOT_BACK[step.step]}</p></> : <><strong>Hands off your Octatrack</strong><p>{HANDS_OFF}</p></>}</div></div>}
         <StagePlan compact stages={usbStages} progressLabel="Update stages" run={usb ? { at, done: step?.step === 'done', failed: !!failed } : undefined} />
         {step?.pass && updating && <p className="subtle" role="status">Update {step.pass} of 2. {TWO_UPDATES}</p>}
         {step && <div className="base-update-overall"><ProgressBar value={step.overall} label="Update progress" busy={updating} percent /></div>}
