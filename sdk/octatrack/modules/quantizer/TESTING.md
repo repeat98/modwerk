@@ -29,6 +29,9 @@ Development import and `--check-only --verify-existing` pass. The package metada
 signature is corrected, and the module compatibility and package-fingerprint checks pass.
 `module:doctor -- quantizer` still refuses the actual owner's 0.1.4 approval for this new version.
 No 0.1.5 owner approval is fabricated, and these results are not release qualification.
+The import record pins the public v2.23 quantizer files and preserves the separately archived
+root README pin. The 157-file import check and all four requested-import tests pass; the
+version assertion changes only from 0.1.4 to 0.1.5.
 
 ## Emulator — 15 November 2026
 

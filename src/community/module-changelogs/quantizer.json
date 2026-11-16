@@ -3,8 +3,7 @@
     "version": "0.1.5-experimental",
     "date": "2026-11-13",
     "changes": [
-      "No longer hooks the two panel publication sites at 0x4004fc84 and 0x40005162: without FM Synth they only replayed the stock instructions, and FM Synth's own copy of the quantizer needs them. Nothing a player hears or sees changes.",
-      "The quantizer source is the author's 2.23 line, whose only quantizer change is FM Synth's project comment line, assembled only beside FM Synth."
+      "Leaves out two panel hooks so FM Synth 0.1.4 can install beside Scale Quantizer when its own update is released."
     ]
   },
   {
