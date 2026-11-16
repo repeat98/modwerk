@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 
 export const SIZES = 'sdk/machines/octatrack/base-sizes.json'
-const ELEKLOADER = 'sdk/machines/octatrack/elekloader'
+const SOURCES = 'sdk/machines/octatrack/elekloader'
 const ASSETS = 'src/engine/assets/octatrack-base'
 const FIX = `run node scripts/base-size.mjs --stock OCTATRACK_OS1.40C.bin --write and commit ${SIZES}`
 
@@ -25,9 +25,9 @@ export const touchesBaseSize = path =>
 
 /** The limits, read from the base's source as build_core.py reads them. */
 export function baseLimits(root) {
-  const flash = readFileSync(join(root, ELEKLOADER, 'flash.h'), 'utf8').match(/#define FLASH_CONTAINER_BYTES (0x[0-9a-f]+)u/)
-  const usb = readFileSync(join(root, ELEKLOADER, 'build_core.py'), 'utf8').match(/^USB_UPDATE_BYTES = (0x[0-9a-f]+)$/m)
-  if (!flash || !usb) throw new Error(`${ELEKLOADER}: FLASH_CONTAINER_BYTES (flash.h) or USB_UPDATE_BYTES (build_core.py) moved; read it anew in scripts/base-size.mjs.`)
+  const flash = readFileSync(join(root, SOURCES, 'flash.h'), 'utf8').match(/#define FLASH_CONTAINER_BYTES (0x[0-9a-f]+)u/)
+  const usb = readFileSync(join(root, SOURCES, 'build_core.py'), 'utf8').match(/^USB_UPDATE_BYTES = (0x[0-9a-f]+)$/m)
+  if (!flash || !usb) throw new Error(`${SOURCES}: FLASH_CONTAINER_BYTES (flash.h) or USB_UPDATE_BYTES (build_core.py) moved; read it anew in scripts/base-size.mjs.`)
   return { container: Number(flash[1]) - 256, main: Number(usb[1]) }  // flash.c keeps one 256-byte page of the buffer back
 }
 
