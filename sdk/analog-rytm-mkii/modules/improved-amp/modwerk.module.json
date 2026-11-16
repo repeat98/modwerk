@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "improved-amp",
   "name": "Improved AMP",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "machine": "analog-rytm-mkii",
   "category": "machines",
   "exclusive": false,

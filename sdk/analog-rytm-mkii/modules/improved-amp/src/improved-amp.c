@@ -32,6 +32,12 @@
 #include "hot.h"
 #include "analog-rytm-mk2/pages.h"
 
+// IA_UI marks functions that run only in the UI task (keys, knobs, screen, parameter
+// text, tick housekeeping), never in the audio block. cold builds them for size, out of the hot
+// code, so the module takes less of the RAM all modules share; the rest stays at -O2. No
+// behaviour change.
+#define IA_UI __attribute__((cold))
+
 typedef uint32_t word_t;
 
 // ---- stock OS 1.74 ----
@@ -369,7 +375,7 @@ uint32_t improved_amp_voice(int32_t v, volatile int32_t *st, const volatile int8
 }
 
 // ---- FUNC + turn on HOLD: 0, the step grid (0.125 .. 64 steps), AUTO ----
-static int32_t hold_jump(const void *fn, int32_t value, int32_t delta, int32_t min, int32_t max,
+IA_UI static int32_t hold_jump(const void *fn, int32_t value, int32_t delta, int32_t min, int32_t max,
                          int32_t def)
 {
     static const int8_t pos[] = { 0, 19, 25, 33, 37, 42, 49, 53, 61, 66, 78, 90, 102, 114, HLD_AUTO };  // HOLD_STEPS' grid
@@ -389,7 +395,7 @@ static int32_t hold_jump(const void *fn, int32_t value, int32_t delta, int32_t m
 }
 
 // The records are built at boot; the jump goes in once and is checked at the UI's rate.
-void improved_amp_tick(void *ctrl)
+IA_UI void improved_amp_tick(void *ctrl)
 {
     (void)ctrl;
     if (JUMP_INVOKER(ID_A_HLD) != (word_t)hold_jump) {
@@ -399,7 +405,7 @@ void improved_amp_tick(void *ctrl)
 }
 
 // ---- times on the knobs ----
-__attribute__((noinline)) static char *put_uint(char *p, uint32_t v)
+IA_UI __attribute__((noinline)) static char *put_uint(char *p, uint32_t v)
 {
     char t[10];
     int n = 0;
@@ -411,14 +417,14 @@ __attribute__((noinline)) static char *put_uint(char *p, uint32_t v)
     return p;
 }
 
-__attribute__((noinline)) static void put_text(char *p, const char *s)
+IA_UI __attribute__((noinline)) static void put_text(char *p, const char *s)
 {
     while ((*p++ = *s++))
         ;
 }
 
 // ticks of 2 samples: "0", "0.2ms", "9.8ms", "87ms", "1234ms", "2.1s", "15.5s", "100s".
-__attribute__((noinline)) static void put_time(char *p, uint32_t ticks)
+IA_UI __attribute__((noinline)) static void put_time(char *p, uint32_t ticks)
 {
     uint32_t ms10, ms, s10;
 
@@ -456,7 +462,7 @@ __attribute__((noinline)) static void put_time(char *p, uint32_t ticks)
 // A hold in steps from HOLD_STEPS, three digits: "0", "0.005", "0.080", "1.64", "14.9", "21.0",
 // "124". A hold of whole eighths of a step below 100, which the grid's 13 are and no other value
 // is, drops the zeros at its end: "0.125", "0.5", "1", "1.5", "64".
-__attribute__((noinline)) static void put_steps(char *p, uint32_t cq)
+IA_UI __attribute__((noinline)) static void put_steps(char *p, uint32_t cq)
 {
     uint32_t q, d;
     char *end;
@@ -499,7 +505,7 @@ __attribute__((noinline)) static void put_steps(char *p, uint32_t cq)
 }
 
 // log2(y) x 65536, y > 0.
-__attribute__((noinline)) static int32_t log2_q16(uint32_t y)
+IA_UI __attribute__((noinline)) static int32_t log2_q16(uint32_t y)
 {
     int32_t n = 31, bit, f = 0;
     uint32_t m;
@@ -523,7 +529,7 @@ __attribute__((noinline)) static int32_t log2_q16(uint32_t y)
 // The OS's own (0x4011e85c) runs on the MAC in fractional mode, which only the audio
 // interrupt sets, so it reads wrong from the UI. Small steps: -ln p = x (1 + x / 2), x =
 // step / 2^31 (the next term is under 0.01 %); larger: log2, 1/65536 resolution.
-__attribute__((noinline)) static uint32_t t60_ticks(uint32_t c)
+IA_UI __attribute__((noinline)) static uint32_t t60_ticks(uint32_t c)
 {
     uint32_t s = rate_step(c), d;
     int32_t q;
@@ -541,7 +547,7 @@ __attribute__((noinline)) static uint32_t t60_ticks(uint32_t c)
 }
 
 // A linear segment's ticks over levels, as the OS counts them (0x4011e7d6).
-__attribute__((noinline)) static uint32_t linear_ticks(uint32_t levels, uint32_t c)
+IA_UI __attribute__((noinline)) static uint32_t linear_ticks(uint32_t levels, uint32_t c)
 {
     uint32_t s = rate_step(c);
     return s ? (levels << 23) / s + 1 : 0x7fffffffu;
@@ -549,12 +555,12 @@ __attribute__((noinline)) static uint32_t linear_ticks(uint32_t levels, uint32_t
 
 // ticks x f / 1024, rounded, without overflow (ticks up to 0x7fffffff). Rounded, not
 // floored, so short attacks (a few dozen ticks) read their nearest tenth.
-static uint32_t scaled(uint32_t ticks, uint32_t f)
+IA_UI static uint32_t scaled(uint32_t ticks, uint32_t f)
 {
     return (ticks >> 10) * f + (((ticks & 1023) * f + 512) >> 10);
 }
 
-static int improved_amp_text(struct core_text *t)
+IA_UI static int improved_amp_text(struct core_text *t)
 {
     int v = t->value >> 8;
 
