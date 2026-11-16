@@ -85,6 +85,7 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .sidebar-nav a.active { color: var(--text); background: var(--accent-soft); box-shadow: inset 3px 0 var(--accent); }
 .sidebar-nav a.active svg { color: var(--accent); }
 .sidebar-nav small { margin-left: auto; color: var(--faint); font-size: 12px; }
+.sidebar-nav .sidebar-feature-new { margin-left: auto; flex: 0 0 auto; padding: 2px 6px; border-radius: 4px; border: 1px solid #9788de; color: #d5c9ff; font-size: 10px; line-height: 1.4; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 .sidebar-nav small.count-selected { color: #c1c4ff; background: #56597d; border-radius: 4px; padding: 2px 5px; }
 .sidebar-spacer { flex: 1 0 16px; }
 .sidebar-build { display: flex; align-items: center; gap: 9px; border-top: 1px solid var(--line); padding: 14px 3px 4px; }
@@ -853,7 +854,7 @@ h1 { font-size: 28px; }
   .button { min-height: 42px; }
 }
 .community-label { padding-top: 18px; }
-.community-nav a > span:not(.sidebar-online) { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.community-nav a > span:not(.sidebar-online):not(.sidebar-feature-new) { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .community-page { max-width: 980px; margin: 0 auto; }
 .community-form { display: flex; flex-direction: column; gap: 20px; }
 .community-form label, .review-notes { display: flex; flex-direction: column; gap: 9px; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
