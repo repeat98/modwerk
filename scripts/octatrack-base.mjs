@@ -151,7 +151,8 @@ same(Buffer.from(JSON.stringify(binding, null, 1) + '\n'), committed.binding)
 // The base's version, for people (elekloader/base-version.json, built into the base): base-versions.json keeps every
 // published version's identities, one per layout, so the site can name the base a unit reports. A version that main
 // already has names that base for good: a base with other contents takes the next number.
-const number = JSON.parse(readFileSync(join(here, 'base-version.json'), 'utf8')), version = number.major + '.' + number.minor
+const number = JSON.parse(readFileSync(join(here, 'base-version.json'), 'utf8'))
+const version = number.major + '.' + number.minor + (number.patch ? '.' + number.patch : '') // the patch only when not 0: 0.7, 0.7.1
 const identities = [...new Set([binding.identity, ...Object.values(binding.variants ?? {})])]
 const read = text => JSON.parse(text).bases
 let published = []

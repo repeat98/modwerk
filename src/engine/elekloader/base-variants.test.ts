@@ -89,7 +89,8 @@ describe('a base’s version', () => {
     const versions = (await import('../../../sdk/machines/octatrack/base-versions.json', { with: { type: 'json' } })).default
     const binding = (await import('../../../sdk/machines/octatrack/base-binding.json', { with: { type: 'json' } })).default
     const number = (await import('../../../sdk/machines/octatrack/elekloader/base-version.json', { with: { type: 'json' } })).default
-    expect(CURRENT_BASE_VERSION).toBe(number.major + '.' + number.minor) // what the base itself shows: MODWERK BASE 0.7
+    const patch = 'patch' in number && number.patch ? '.' + number.patch : ''
+    expect(CURRENT_BASE_VERSION).toBe(number.major + '.' + number.minor + patch) // what the base itself shows: MODWERK BASE 0.7.1
     for (const identity of [binding.identity, ...Object.values(binding.variants)]) expect(baseVersion(identity)).toBe(CURRENT_BASE_VERSION)
     expect(new Set(versions.bases.map(base => base.version)).size).toBe(versions.bases.length)
     const identities = versions.bases.flatMap(base => base.identities)

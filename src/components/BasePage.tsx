@@ -15,13 +15,19 @@ const screen = (file: string) => assetUrl('base/' + file)
 
 // The Octatrack's own display, captured in the Octatrack emulator from the release base built of OS 1.40C (and a
 // development twin of it, whose composed screen includes the base's dialogs); the machine list is Amiga's module capture.
+// PROJ > MODWERK, the status, MODULE LOAD and MODULES were read off an MKII running development twins of base 0.7.1's source
+// (device.mjs png:, 16 November 2026); MODULE LOAD and MODULES with five module effects installed, two on tracks, one off.
 const OCTATRACK_SCREENS: Screen[] = [
   { src: screen('ot-startup.png'), alt: 'Octatrack display at startup: the Modwerk mark between NEW and BETA, above the word MODWERK', title: 'Startup',
     caption: 'The Modwerk mark docks while the Octatrack starts, so you can see at a glance that the base is running.' },
-  { src: screen('ot-project-menu.png'), alt: 'Octatrack PROJECT menu with a fifth row, MODWERK, listing LOAD, MODULE LOAD, MISSING and SELF TEST', title: 'PROJ › MODWERK',
-    caption: 'A fifth row in the PROJECT menu with four pages: the load, each module’s share of it, the modules a project misses, and a self-test. The rest of the menu, SYSTEM included, stays as Elektron made it.', keys: 'PROJ' },
-  { src: screen('ot-status.png'), alt: 'Octatrack MODWERK STATUS dialog: CPU and both DSP chips working now, and how much DSP space is used', title: 'Status, from anywhere',
-    caption: 'How busy the Octatrack is right now, the CPU and each DSP chip by its tracks, and how full the DSP memory is. NO closes it.', keys: 'CUE + PROJ' },
+  { src: screen('ot-project-menu.png'), alt: 'Octatrack PROJECT menu with a fifth row, MODWERK, listing LOAD, MODULE LOAD, MISSING, SELF TEST and MODULES', title: 'PROJ › MODWERK',
+    caption: 'A fifth row in the PROJECT menu with five pages: the load, each module’s share of it, the modules a project misses, a self-test, and your modules switched on and off. The rest of the menu, SYSTEM included, stays as Elektron made it.', keys: 'PROJ' },
+  { src: screen('ot-status.png'), alt: 'Octatrack MODWERK BASE 0.7.1 status dialog with five bars: CPU, DSP T1-4, DSP T5-8, MEM T1-4 and MEM T5-8', title: 'Status, from anywhere',
+    caption: 'How busy the Octatrack is right now: the CPU, and each DSP chip by its tracks (DSP). Below, how full each chip’s DSP memory is (MEM). The title names the base version. NO closes it.', keys: 'CUE + PROJ' },
+  { src: screen('ot-module-load.png'), alt: 'Octatrack MODULE LOAD page: Tape Echo, Mini Verb, E-Verb and Air Chorus, with Mini Verb at about 20 percent on tracks 1-4 and E-Verb at about 21 percent on tracks 5-8', title: 'Module load',
+    caption: 'What each installed module costs on each DSP chip, for the tracks that use it, so you can see which to drop when a set gets heavy. A ~ marks an estimate; - means no track uses it there.', keys: 'PROJ › MODWERK › MODULE LOAD' },
+  { src: screen('ot-modules.png'), alt: 'Octatrack MODULES page listing five installed modules, four ON and Tapehead OFF, with YES ON/OFF and NO', title: 'Modules on and off',
+    caption: 'Every installed module with ON or OFF. YES switches the one under the cursor at once, with the Octatrack stopped. A module that is off stays saved on the card, also after a restart, and a sync from this site leaves it off.', keys: 'PROJ › MODWERK › MODULES' },
   { src: screen('ot-self-test.png'), alt: 'Octatrack SELF TEST page ending in ALL PASSED', title: 'Self-test',
     caption: 'Checks the modules the Octatrack runs and says ALL PASSED, or what is wrong. Status on Your Octatrack runs the same test from this site.', keys: 'PROJ › MODWERK › SELF TEST' },
   { src: screen('ot-machine-list.png'), alt: 'Octatrack SELECT MACHINE TYPE list with the module machine AMIGA below the stock machines', title: 'Shared lists',
@@ -32,7 +38,6 @@ const OCTATRACK_SCREENS: Screen[] = [
 
 /** What the base shows that has no picture here: each appears only with modules installed or during a transfer. */
 const OCTATRACK_ALSO: [string, string][] = [
-  ['MODULE LOAD', 'what each installed module costs on each DSP chip, so you can see which to drop when a set gets heavy.'],
   ['MISSING', 'modules the open project uses that the Octatrack doesn’t have, with where each is used, such as BANK A SAVED PART 2 T5. Their slots say MISSING instead of going quiet without a word.'],
   ['MODWERK SYNC', 'a small box with a bar while a sync from this site sends your modules and starts them.'],
   ['CPU FULL', 'when a machine or effect pick would overload the Octatrack, the base refuses it and says why, instead of overloading it. Stock machines, stock effects and NONE are never refused.'],
