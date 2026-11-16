@@ -22,6 +22,12 @@
 
 #include "ar2-1.74.h"
 
+// CIA_UI marks functions that run only in the UI task (keys, knobs, screen, parameter
+// text, tick housekeeping), never in the audio block. cold builds them for size, out of the hot
+// code, so the module takes less of the RAM all modules share; the rest stays at -O2. No
+// behaviour change.
+#define CIA_UI __attribute__((cold))
+
 #define KEY_MUTE 0x11
 #define KEY_CHRO 0x12
 #define KEY_SCNE 0x13
@@ -356,7 +362,7 @@ static void end_holds(int port)
 // Whether the input counts as pressed, from the two learned levels and
 // whether it did: past their middle toward the higher one, with hysteresis.
 // REVERSE DIRECTION swaps the levels, so the lower one is pressed.
-static int pressed(int low, int high, int level, int was)
+CIA_UI static int pressed(int low, int high, int level, int was)
 {
     int middle = (low + high) / 2;
     int band = (high > low ? high - low : low - high) / 8;
@@ -372,14 +378,14 @@ static int pressed(int low, int high, int level, int was)
 }
 
 // The bar's row for a level: the EXPR bars' scale, -0.5 V to 5.5 V over 45 rows.
-static int bar_row(int mv)
+CIA_UI static int bar_row(int mv)
 {
     int row = (mv + 500) * 45 / 6000;
     return (row < 0 ? 0 : row > 45 ? 45 : row) + 3;
 }
 
 // A learned level: the bar shaded from it to the bar's end, bracketed beside.
-static void mark(void *screen, int row, int end)
+CIA_UI static void mark(void *screen, int row, int end)
 {
     FILL(screen, 4, row, 15, end, 1);
     HLINE(screen, 18, row, 19, 1);
@@ -425,7 +431,7 @@ static void learned(int port, char *view, int learn)
 
 // Each draw of the CONTROL INPUT view, in EXPR or ACTION: which learn is
 // open, and the view to draw again. The port, or -1.
-static int watch(char *view)
+CIA_UI static int watch(char *view)
 {
     int port = *(long *)(view + VIEW_PORT);
     int learn;
@@ -443,7 +449,7 @@ static int watch(char *view)
 }
 
 // EXPR mode's draw, before stock's bars (draw.S).
-void control_in_actions_expr(char *view)
+CIA_UI void control_in_actions_expr(char *view)
 {
     watch(view);
 }
@@ -452,7 +458,7 @@ void control_in_actions_expr(char *view)
 // bars: the input's level against the two learned levels, which ACTION LEARN
 // moves as it runs, then a line at the box's far end while the input counts
 // as pressed, as EXPR's output line.
-void control_in_actions_draw(char *view, void *screen, int mv)
+CIA_UI void control_in_actions_draw(char *view, void *screen, int mv)
 {
     int port = watch(view);
     int low, high;
@@ -592,7 +598,7 @@ void control_in_actions_audio(void)
 // the record mode, for a live recording that RECORD + PLAY may start (which
 // turns grid and step recording off). Released with no live recording, it
 // was a toggle or RECORD + STOP, and the note goes.
-static void record_key(unsigned flags)
+CIA_UI static void record_key(unsigned flags)
 {
     if (flags & EV_REPEAT)
         return;
@@ -603,7 +609,7 @@ static void record_key(unsigned flags)
 
 // The key message, on the UI task: play what the interrupt saw, and keep it
 // from every other key handler and stock.
-int control_in_actions_key(void *brain, char *event)
+CIA_UI int control_in_actions_key(void *brain, char *event)
 {
     int port;
     long key = *(long *)(event + EV_KEY);
