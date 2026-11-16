@@ -225,7 +225,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     if (preparedModules) {
       const modules = await unit.inventory()
       if (!modules) throw new Error('The connected base does not list its modules.')
-      inventory = catalogue.inventory(modules)
+      inventory = catalogue.inventory(modules, await unit.off().catch(() => undefined)) // switched off on the unit: left as they are
     } else inventory = await kit.readInventory()
     const missing = await unit.missing(), diagnostics = await unit.health(), after = unit.getState()
     if (after.status !== 'ready' || after.identity?.base !== state.identity.base || after.active !== state.active) throw new Error('The device changed while reading; reconnect and review again.')

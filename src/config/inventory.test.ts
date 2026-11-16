@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { changeCount, inventoryChanges, lastInventory, listboxMove, loadStep, missingFromProject, modulesToPutBack, rememberInventory, sameModules, SAVED_BY_ANOTHER_BASE, unitState } from './inventory'
+import { changeCount, inventoryChanges, lastInventory, listboxMove, loadStep, missingFromProject, modulesToPutBack, rememberInventory, sameModules, SAVED_BY_ANOTHER_BASE, staysOff, unitState } from './inventory'
 
 describe('making the unit match a module set', () => {
   it('adds and removes modules and switches stock effects both ways', () => {
@@ -15,6 +15,14 @@ describe('making the unit match a module set', () => {
     const unit = { moduleIds: ['everb', 'poly8'], removedStockFx: [] }, set = ['everb', 'tapeecho']
     expect(['everb', 'tapeecho', 'poly8', 'repitch'].map(id => unitState(id, set, unit))).toEqual(['on', 'load', 'leaving', undefined])
     expect(unitState('everb', set)).toBeUndefined()
+  })
+  it('leaves a module of the set that is switched off on the unit as it is, and removes one that is off and not in the set', () => {
+    const unit = { moduleIds: ['everb'], removedStockFx: [], offIds: ['tapeecho', 'poly8'] }, set = ['everb', 'tapeecho', 'miniverb']
+    expect(inventoryChanges(unit, { name: 'Set', moduleIds: set })).toMatchObject({ add: ['miniverb'], remove: ['poly8'] })
+    expect(['everb', 'tapeecho', 'poly8', 'miniverb'].map(id => unitState(id, set, unit))).toEqual(['on', 'off', 'leaving', 'load'])
+    expect(staysOff(set, unit)).toEqual(['tapeecho'])
+    expect(staysOff(set, { moduleIds: ['tapeecho'], removedStockFx: [], offIds: ['tapeecho'] })).toEqual([]) // read a moment apart: it runs
+    expect(staysOff(set)).toEqual([])
   })
 })
 

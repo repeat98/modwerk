@@ -1989,6 +1989,12 @@ def main():
     # IDENTIFY reports this configuration identity as the installed base.
     definitions += 'const uint8_t modwerk_base_digest[32] = {%s};\n' % ','.join(
         '0x' + identity[i:i+2] for i in range(0, 64, 2))
+    # The base's version, for people (owner, 16 November 2026): base-version.json, raised with every base that is
+    # published. status.c shows it; the site names a unit's base by it (sdk/machines/octatrack/base-versions.json).
+    version = json.loads((HERE / 'base-version.json').read_text())
+    if set(version) != {'major', 'minor'} or not all(type(n) is int and 0 <= n <= 999 for n in version.values()):
+        raise ValueError('base-version.json holds a major and a minor number, 0-999 each.')
+    definitions += 'const char modwerk_base_version[] = "%d.%d";\n' % (version['major'], version['minor'])
     for key, size in FIELDS.items():
         if len(values[key]) >= size:
             raise ValueError('Logger identity field exceeds capacity: ' + key)
@@ -2021,7 +2027,7 @@ def main():
             raise ValueError('PROJ\'s root menu is not the four stock rows; review the MODWERK category.')
         stock_rows = image[ROOT_ROWS - device.main_load:][:4 * 24]
         columns = [sum(1 << r for r in range(8) if ICON[r][c] == '#') << 24 for c in range(19)]
-        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'))
+        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'), ('switches', 'switches'))
         definitions += ('struct menu_row { const void *label, *window, *action, *value, *child; uint32_t page; };\n'
                         'extern char modwerk_menu_label[], %s;\nvoid %s;\n' % (
                             ', '.join('modwerk_%s_label[]' % label for label, _ in leaves),

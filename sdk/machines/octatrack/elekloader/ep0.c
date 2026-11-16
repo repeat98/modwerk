@@ -14,6 +14,7 @@
  *
  * The controller's backend is boot.c's: the runtime loader's for module
  * packages, plus whole OS images for a RAM boot. */
+#include "status.h"
 #ifdef MODWERK_DSP_LOADER
 #include "selftest.h"
 #include "fxids.h"
@@ -379,6 +380,17 @@ uint32_t modwerk_ep0_dispatch(void)
         modwerk_ep0_reply = out;
         return modwerk_runtime_list(out, SETUP[2], 13u);
     }
+    /* OFF (0xC1, bRequest 40, wValue the first entry, wLength 288): the modules switched off on the unit (modset.c
+     * modwerk_modset_off_list), so the site shows them and leaves them off; 5 a page, so a host asks on from wValue 5
+     * while a page comes back full. Refused while the shelf moves: the host asks again. Read-only; bases before the
+     * MODULES page stall it. */
+    if (r.action == MV_STALL && SETUP[0] == MV_RESULT_TYPE && SETUP[1] == 40 && SETUP[2] < RUNTIME_MODULES && !SETUP[3] &&
+        SETUP[4] == MODWERK_VENDOR_INTERFACE && !SETUP[5] && (SETUP[6] | SETUP[7] << 8) == 8u + MODSET_OFF_ENTRY * MODSET_OFF_PAGE) {
+        unsigned n = modwerk_modset_off_list(out, SETUP[2], MODSET_OFF_PAGE);
+        if (!n) return MODWERK_EP0_REFUSE;
+        modwerk_ep0_reply = out;
+        return n;
+    }
 #ifdef MODWERK_SAVED_SET_EXPORT
     if (r.action == MV_STALL && SETUP[1] >= 31u && SETUP[1] <= 33u) {
         uint32_t lock = modwerk_machine_lock();
@@ -521,6 +533,7 @@ void modwerk_ep0_bus_reset(void)
  * or trial is open is handled as unplugged (mv_tick). */
 #define HOST_TIMEOUT_TICKS 600u
 int modwerk_modset_due(void); /* modset.c: a kept set waits for its save */
+int modwerk_modset_switch_due(void); /* modset.c: PROJ > MODWERK > MODULES asked for a module on or off */
 void modwerk_modset_notice_tick(void); /* modset.c: "MODULES LOADED" once the restored engines run */
 void modwerk_ep0_tick(void);
 static void ep0_tick(void);
@@ -551,6 +564,7 @@ static void ep0_tick(void)
     if (modwerk_boot_tick()) wake(); /* an armed RAM boot is due */
     if (modwerk_flash_tick()) wake(); /* the slots' first look, or the confirm (flash.c) */
     if (held) held = 0, wake(); /* the engine runs only when woken; an idle unit sends it nothing else */
+    if (modwerk_modset_switch_due()) wake(); /* the engine switches it at its next service */
     /* A kept set the card gate held back (playing, the card busy) or a failed write whose retry is due: twice a
      * second. Only an OUT frame wakes the engine, and a host waiting for the save only reads, so without this the
      * set stayed unsaved until the host's next command (owner's MKII, 20 October 2026: 20 s after a Keep). */

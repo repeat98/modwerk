@@ -17,7 +17,7 @@ A worker may, without asking: read anything, run `diagnostics:pull`, build and t
 List them with `gh pr list --state open --json number,title,author,isDraft,labels,mergeStateStatus,updatedAt`. The owner's review list is `is:pr is:open draft:false -label:needs-work -label:one-at-a-time`; `pr-triage.yml` labels the rest ([review queue](COMMUNITY_OPERATIONS.md#review-queue-and-saved-replies)). Review contributors' drafts too: many authors open one without knowing it, and the bot skips drafts. Give every pull request one verdict: ready to merge, needs a refresh, red, waiting on its author, or needs the owner's call, and why.
 
 - **Review** new and changed pull requests. Read the code they touch, not only the diff, and judge each against the [modding guidelines](../MODDING_GUIDELINES.md) and the whole stack:
-  - **The base:** its hooks, events and tables, and the order open pull requests regenerate it in.
+  - **The base:** its hooks, events and tables, the order open pull requests regenerate it in, and its cost: a base pull request quotes the line `node scripts/base-size.mjs` prints (container bytes of 851,712, and the change since the previous base).
   - **The USB lifecycle:** package, Keep/Undo, removal, base-bound packages.
   - **Module splits:** one job per module, no dependency on another module, shared code in the base or SDK first, no gesture only one module can hold.
   - **Cross-compatibility:** its `uiClaims` and conflicts against every other module.
@@ -52,7 +52,8 @@ Aim to close as many issues as you can each pass. List what is new or changed si
 ## Upstream worker
 
 - **Refresh** with `npm run upstream:tools -- --update`, which keeps the upstream checkouts outside Git. Octabam's pin is frozen and its upstream is no longer followed: Modwerk builds its own. List Elekloader's commits since the newest import record in `sdk/imports/`; with none, report "nothing new" and stop.
-- **Say** in a few lines what changed and what is worth taking: infrastructure, docs, tools, fixes to modules Modwerk carries. A module or anyone's own work needs its author's permission. This pass vendors nothing; a pick from the briefing becomes its own pull request, re-synced docs a new docs-only record ([imports](OCTABAM_INFRASTRUCTURE.md)).
+- **Say** in a few lines what changed and what is worth taking: infrastructure, docs, tools, fixes to modules Modwerk carries. A module or anyone's own work needs its author's permission. This pass vendors nothing; a pick from the briefing becomes its own pull request ([imports](OCTABAM_INFRASTRUCTURE.md)).
+- **Traps:** the vendored register under `sdk/octabam/docs/` (TRAPS.md, FAILURE_MODES.md) is frozen at its pin, and nobody re-vendors it. A newer upstream trap is read at the source and, where Modwerk is exposed, written into Modwerk's own doc for that task in Modwerk's words, as a lead until measured on a Modwerk base: the late frame entry in [MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md), core 1's frame head in [OCTATRACK_DSP_WINDOW.md](OCTATRACK_DSP_WINDOW.md#a-lead-packet-work-at-core-1s-frame-head).
 - Keep the titles, bodies and commits of import pull requests free of the upstream project's name and `#` references, which ping the other repository; the import record and licences carry the provenance.
 
 ## Main and the computer
