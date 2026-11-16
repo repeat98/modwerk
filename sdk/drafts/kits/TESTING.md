@@ -60,6 +60,12 @@ Each run a 2-minute `device -- try`, rolled back.
   got no pages: the base holds back its engine-task service, ev_modules_ready included, while a set trial is open
   (`modwerk_runtime_set_busy`), so a set becomes live for Kits at Keep. Not changed here.
 
-Not tested on a unit: SAVE KIT, a Kit load while playing, pattern chains and queued patterns, FUNC+CUE, the list
+- **Beside 14 kept modules** (POLY8, FM Synth, Amiga, Repitch, Mute Modes, Euclid, Tape Echo, Mini Verb, E-Verb, Apply
+  Scene, Arp Key Locks, Direct Jump, Temp Save, Track Solo; kept for the run, then removed): Kits as a trial took its
+  331 pages at once. Six LOAD KIT loads (between Kits 006 and 007) while B16 played, with crossfader sweeps: CPU meter
+  48.7 % (at most 49.2), frame interrupt 29.7 %, against 48.4 % and 29.7 % with the 14 alone; no skipped render,
+  crash or stall. Bank B's four Parts read the same as before the run afterwards.
+
+Not tested on a unit: SAVE KIT, pattern chains and queued patterns, FUNC+CUE, the list
 copy/paste/clear, Part Clear, power cycle (the battery record), Kits beside other active modules, removal with a list
 open, the MKI.

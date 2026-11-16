@@ -52,6 +52,8 @@ In the LOAD KIT and SAVE KIT lists:
 
 ## Compatibility and limitations
 
+- Kits starts working after Keep: while a Sync from the site is still a trial, the base keeps the sample memory and the project load for Kits until Keep.
+
 - OS 1.40C on the Modwerk base with the sample-memory loan (`ot_sample_memory`), installed over USB. Card firmware cannot include it. This port has not run on a unit or in the emulator yet.
 - Kits borrows 331 pages of sample memory (2,033,664 bytes) while it is installed: about 23 s less of 16-bit mono sample time (11.5 s of stereo). When the sample pool cannot spare them, Kits stays off and the unit behaves as stock.
 - FUNC+PART opens SAVE KIT, so stock's Part Edit window, and the rows Pattern Sample Locks adds to it, cannot be opened while Kits is installed.
