@@ -29,6 +29,22 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 - A core-only image, same stock and core, for comparison.
 - Emulator: rytm-emu `c5732f0`, headless `dtboot`, JIT on. One generated sample, RAMP, 23,777 frames (odd, so STA and END fall on no round multiple), on BD with LOP ON. Audio is dtboot's `--wav`. Voice words are read with `DTBOOT_PEEK`: step at rec + 12, position at rec + 4, effective FIN at 0x8000f7cc. A click means a sample-to-sample step over 40, or six times the median, on a ramp whose normal step is below 2; each run also flags the trig's own attack, which is not counted.
 
+## 0.5.1: the sample preview plays at 1x (2026-11-16, issue #1591)
+
+rytm-emu, headless `dtboot`; emulator results are not hardware evidence.
+
+- Source (0.5.1-experimental): fingerprint `8645bba7…4c1e` (`evidence.sourceSha256`). Builds on Modwerk base `3ece243b`: SO01 (0.5.0, the reproduction) `.syx` `7a9ca3fd…09e4`, SF02 (this source) `.syx` `d6a0d07a…e288`. SV12 (vendored core-ar2 0.7 + this source, LFO case and screenshots): `.syx` `08dcf7e5…8074`. Stock OS 1.74 and the author's combo RC40 (`5d5241e0`, 0.5.0) for comparison.
+- Cause, read in stock's code: the sample preview routine (0x400a0dac, called from 0x400a5236 and 0x400e742e) applies an override to the active track's sound that puts SMP in slot 129 and TUN and FIN at rest (0x4000); LFO modulation is added after it. 0.5.0 read FIN at rest as RATE 0 and scaled the step to 0.
+- Reproduction (the card's RAMP in GLOBAL > SAMPLES > incoming, BD active, its sound saved by stock with FIN +0, FUNC held and YES): stock: voice 0's step went from 0x02000000 to 0x08000000, its position advancing 0xdf a 100 M instructions; row FIN 0x4000, SMP 0x81. RC40 and SO01: step 0, position frozen, the preview silent. SF02: step 0x08000000, the position advancing as on stock.
+- LFO on RATE (SV12, LFO DEST SAMP:Rate, DEP +16.18, SPD +63, RATE +63): during the preview the row's FIN swung from 0x3097 to 0x4f86 around 0x4000. A first version of the fix that also required FIN at 0x4000 played the preview at a wobbling step that went negative (backward); this source held the step at 0x08000000 and the position ran forward at stock's rate throughout. Stock's own preview would bend in pitch by the LFO's fine tune here; 0.5.1 plays it without the bend.
+- Negative RATE (SF02 and stock, CC 25 at 32, RATE -32, before the preview): the step went from 0xff000000 (0.5.1) or 0x02000000 (stock) to 0x08000000 on both, and the position ran forward at the same rate on both.
+- LFO on SMP (SV12, triangle, full depth, slot 1): the effective SMP word swung both ways and stayed within 0x0000..0x7fff (held at 0x0000 below), so a project voice never reads as slot 128 or above.
+- Normal play unchanged: RAMP in project slot 1 on BD, BD pressed at RATE 100 then 64 (CC 25), and again at RATE 32 (backward): SO01 and SF02 gave identical step, position, FIN and SMP words at every 100 M.
+- Screenshots retaken on SV12 with 0.5.0's plans: the same screens, apart from where the playhead stood.
+- Unit image SU02 (base 1e92a59a with the link + this source, lock RB08, layout 0x026f1e10): `.syx` `3eb6830e…89fe`; boots and answers the link in rytm-emu. The author's earlier rig cases for this module (`cases/sample-rate`) give the same 1 pass and 5 fails on SU02 as on SU00 (0.5.0, same base): their references predate 0.5.0's screen.
+- Not run: a Sound previewed from the SOUND BROWSER whose sample is not in the project (if stock plays it from slot 129, it previews at 1x whatever its RATE).
+- Unit (16 Nov 2026, SU02 booted from RAM over RB08 on npp1993's Analog Rytm MKII, OS 1.74, scratch project), as the author reports: FUNC + YES in GLOBAL > SAMPLES previewed at normal speed with the active track at RATE 0, +63 and -64 and with an LFO on RATE; pad play followed RATE. "All good."
+
 ## 0.5.0: one row of values over a taller waveform (2026-11-12)
 
 rytm-emu (`c5732f0`, RAMP on BD, LOP ON, RATE +63 by CC 25); emulator results are not hardware evidence. Nothing of 0.5.0 has run on a unit yet.

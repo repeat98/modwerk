@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "sample-rate",
   "name": "Improved SMPL",
-  "version": "0.5.0-experimental",
+  "version": "0.5.1-experimental",
   "machine": "analog-rytm-mkii",
   "category": "playback",
   "exclusive": false,
@@ -87,7 +87,8 @@
       "RATE never goes above 1x by itself; TUN does, to stock's ceiling of about 4x.",
       "With LOP OFF, once the sample has played out, changing RATE does not bring it back: trig again.",
       "A change of direction on a looping voice waits until it is 32 frames clear of STA and END; a trig does not wait.",
-      "Sound locks, scene locks and performance locks on RATE have not been run."
+      "Sound locks, scene locks and performance locks on RATE have not been run.",
+      "A sample previewed with FUNC + YES in a sample list plays at 1x, as on stock, whatever the track's RATE or an LFO on it: stock plays a preview from its own slot 129, and the module plays any voice on a slot of 128 or above at 1x, forward."
     ]
   },
   "platform": {
@@ -116,30 +117,29 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.5.0-experimental",
-    "sourceSha256": "fc3aa5187ddc37ba6b0c37c3054e5346ad0a2a4e3506eb2fd7570f15c9febfc4",
+    "moduleVersion": "0.5.1-experimental",
+    "sourceSha256": "8645bba773bee01d6e0be5a8373be1d56c3c46aa1f8a00045ae2d274bd004c1e",
     "reports": [
       "TESTING.md"
     ],
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-11-12",
+      "testedOn": "2026-11-16",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "0.5.0 ran on npp1993's Analog Rytm MKII, OS 1.74, in the author's private combo images flashed by hand, as the author reports. RC38 (first 0.5.0 build): the value row, every knob, LOOP and PIPO, the playhead and the sound looked and sounded right; locking TUN and RATE on a held trig left a 2-pixel black bar between their boxes. RC39: the lock boxes looked good. RC40 (this source, combo 5d5241e0): booting into the SMPL page with a sample on BD, the waveform appeared by itself a few seconds after boot, once stock had loaded the sample, three boots in a row.",
+      "summary": "0.5.1 ran on npp1993's Analog Rytm MKII, OS 1.74, as SU02 (Modwerk base with the development link + Improved SMPL 0.5.1 only, sha256 3eb6830e…89fe), booted from RAM over the flashed build. The author previewed samples with FUNC + YES in GLOBAL > SAMPLES with the active track at RATE 0, +63 and -64 and with an LFO on RATE, and played the pads at several RATEs, and reports all good: the previews played at normal speed and pad play followed RATE.",
       "limitations": [
-        "Reported by the author from playing; no automated rig run for 0.5.0.",
-        "The value row and lock boxes were seen on RC38 and RC39, whose module source differs from this one only in the box drawing and the boot follow; RC40 itself was checked for the waveform after boot.",
-        "Not run on a unit: scene and performance modes on the SMPL page, a full-screen menu over it, SMP OFF with a held trig's SMP lock.",
-        "The images hold the author's private combo of modules and base; the library build uses the published base, not run on the unit."
+        "Reported by the author from playing; no automated rig case covers the preview.",
+        "The image holds the author's private development base (with the link), not the published base.",
+        "Not run on a unit: a Sound previewed from the SOUND BROWSER whose sample is not in the project; scene and performance locks on RATE."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Unit (0.5.0, the author playing, combo RC38 to RC40): the value row, every knob, LOOP and PIPO, the playhead and the sound; lock boxes on RC39; the waveform after boot on RC40. rytm-emu (SV02 to SV05): every knob's turn, the sample list, no sample, held-trig locks, Ping Pong Loop's marks, the slot follow. Earlier versions: TESTING.md.",
+    "summary": "Unit (0.5.1, SU02 from RAM, the author playing): sample previews at normal speed at RATE 0, +63, -64 and with an LFO on RATE; pad play follows RATE. rytm-emu (0.5.1): the preview matches stock where 0.5.0 left it silent or bent; normal play unchanged. Unit (0.5.0, combo RC38 to RC40): the value row, every knob, LOOP and PIPO, the playhead, lock boxes, the waveform after boot. Earlier versions: TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -185,9 +185,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.5.0-experimental",
-        "imageSha256": "c2c24d116312b5b6e4dc795f3a41025d1a9f025c40935770075377f16ea15685",
-        "setup": "Headless rytm-emu (dtboot) running SV02: core-ar2 0.7 and this folder's Improved SMPL 0.5.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.1-experimental",
+        "imageSha256": "08dcf7e5b7698d65da0bda16aad6f429ff2ca6e4c19d0d3cd92d08ffd6868074",
+        "setup": "Headless rytm-emu (dtboot) running SV12: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -201,9 +201,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.5.0-experimental",
-        "imageSha256": "c2c24d116312b5b6e4dc795f3a41025d1a9f025c40935770075377f16ea15685",
-        "setup": "Headless rytm-emu (dtboot) running SV02: core-ar2 0.7 and this folder's Improved SMPL 0.5.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.1-experimental",
+        "imageSha256": "08dcf7e5b7698d65da0bda16aad6f429ff2ca6e4c19d0d3cd92d08ffd6868074",
+        "setup": "Headless rytm-emu (dtboot) running SV12: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -217,9 +217,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.5.0-experimental",
-        "imageSha256": "c2c24d116312b5b6e4dc795f3a41025d1a9f025c40935770075377f16ea15685",
-        "setup": "Headless rytm-emu (dtboot) running SV02: core-ar2 0.7 and this folder's Improved SMPL 0.5.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.1-experimental",
+        "imageSha256": "08dcf7e5b7698d65da0bda16aad6f429ff2ca6e4c19d0d3cd92d08ffd6868074",
+        "setup": "Headless rytm-emu (dtboot) running SV12: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -233,9 +233,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.5.0-experimental",
-        "imageSha256": "c2c24d116312b5b6e4dc795f3a41025d1a9f025c40935770075377f16ea15685",
-        "setup": "Headless rytm-emu (dtboot) running SV02: core-ar2 0.7 and this folder's Improved SMPL 0.5.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.5.1-experimental",
+        "imageSha256": "08dcf7e5b7698d65da0bda16aad6f429ff2ca6e4c19d0d3cd92d08ffd6868074",
+        "setup": "Headless rytm-emu (dtboot) running SV12: core-ar2 0.7 and this folder's Improved SMPL 0.5.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
