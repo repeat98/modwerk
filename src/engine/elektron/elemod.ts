@@ -15,6 +15,8 @@ export type LinkRelease = { version: string; syxSha256: string; mainSha256: stri
 export type LinkDevice = {
   key: string; machine: ElemodMachine; name: string; sysexId: number; mainLoad: number; releases: LinkRelease[]
   areas: Record<string, [number, number]>; ddr: [number, number]; sramCode: [number, number]; fastTable: string; protected: [number, number, string][]
+  /** Stock routines no mod may reference (an absolute symbol or relocation) or copy, such as boot-flash writers. */
+  noLink?: [number, number, string][]
 }
 
 // Facts from public research (elekloader device profiles): where mods may run and which releases exist.
@@ -259,6 +261,19 @@ async function commonChecks(mods: ParsedMod[], image: Uint8Array, spans: [number
   for (const mod of mods) for (const name of mod.names) { const other = owner.get(name); if (other && other !== mod) bad.push(label(other) + ' and ' + label(mod) + ' both claim ' + name); owner.set(name, mod) }
   const device = mods[0].device
   for (const mod of mods) for (const site of mod.sites) for (const [lo, hi, why] of device.protected) if (site.addr < hi && lo < site.addr + site.length) bad.push(label(mod) + ' site ' + hex32(site.addr) + ' is inside ' + hex32(lo) + '-' + hex32(hi) + ', ' + why + ': protected on the ' + device.name)
+  if (device.noLink?.length) {
+    const absolute = new Map(mods.flatMap(mod => mod.exports.flatMap(symbol => { const value = mod.symbols.get(symbol); return value?.[0] === 'abs' ? [[symbol, value[1]] as const] : [] })))
+    for (const mod of mods) {
+      const own = (name: string) => { const value = mod.symbols.get(name); return value ? (value[0] === 'abs' ? value[1] : undefined) : absolute.get(name) }
+      const refs: [number, number, string][] = [...mod.symbols].flatMap(([symbol, [section, value]]) => section === 'abs' ? [[value, value + 1, 'symbol ' + symbol] as [number, number, string]] : [])
+      for (const reloc of [...mod.relocs, ...mod.sites.flatMap(site => site.relocs), ...mod.contribute.flatMap(entry => entry.relocs)]) {
+        const base = reloc.target === 'abs' ? 0 : reloc.target.startsWith('sym:') ? own(reloc.target.slice(4)) : undefined
+        if (base !== undefined) refs.push([base + reloc.addend, base + reloc.addend + 1, 'a reference to ' + hex32(base + reloc.addend)])
+      }
+      for (const part of [...Object.values(mod.sections), mod.blob].flatMap(section => section && 'parts' in section ? section.parts : [])) if (part.kind === 'stock') refs.push([part.addr, part.addr + part.length, 'a stock copy from ' + hex32(part.addr)])
+      for (const [a, b, what] of refs) for (const [lo, hi, why] of device.noLink) if (a < hi && lo < b) bad.push(label(mod) + ': ' + what + ' reaches ' + hex32(lo) + '-' + hex32(hi) + ', ' + why + ': no mod may link to it on the ' + device.name)
+    }
+  }
   for (const mod of mods) for (const site of mod.sites) {
     const offset = site.addr - device.mainLoad
     if (await sha256Hex(image.subarray(offset, offset + site.length)) !== site.stockSha256) bad.push(label(mod) + ' site ' + hex32(site.addr) + ': the stock bytes are not the ones it expects')
