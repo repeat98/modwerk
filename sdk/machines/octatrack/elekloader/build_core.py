@@ -1991,10 +1991,13 @@ def main():
         '0x' + identity[i:i+2] for i in range(0, 64, 2))
     # The base's version, for people (owner, 16 November 2026): base-version.json, raised with every base that is
     # published. status.c shows it; the site names a unit's base by it (sdk/machines/octatrack/base-versions.json).
+    # A patch number (owner, 16 November 2026: 0.7.1) is optional and said only when it is not 0, so 0.7 stays 0.7.
     version = json.loads((HERE / 'base-version.json').read_text())
-    if set(version) != {'major', 'minor'} or not all(type(n) is int and 0 <= n <= 999 for n in version.values()):
-        raise ValueError('base-version.json holds a major and a minor number, 0-999 each.')
-    definitions += 'const char modwerk_base_version[] = "%d.%d";\n' % (version['major'], version['minor'])
+    if set(version) not in ({'major', 'minor'}, {'major', 'minor', 'patch'}) or \
+            not all(type(n) is int and 0 <= n <= 999 for n in version.values()):
+        raise ValueError('base-version.json holds a major, a minor and an optional patch number, 0-999 each.')
+    definitions += 'const char modwerk_base_version[] = "%d.%d%s";\n' % (
+        version['major'], version['minor'], '.%d' % version['patch'] if version.get('patch') else '')
     for key, size in FIELDS.items():
         if len(values[key]) >= size:
             raise ValueError('Logger identity field exceeds capacity: ' + key)
