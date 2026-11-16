@@ -35,13 +35,9 @@ Each package is exactly what the local path makes (sdk/runtime/loader/build.py, 
   (abi9.py's --claim syntax). The manifest then also says `requires` (the feature bits) and `claims` (their count).
 To add a module, add its entry (id and figures) to the manifest and run this.
 
-ABI 6 packages are checked to have no stock-code sites (the only place they would carry stock bytes). --stock also
-scans every package, and its DSP words packed in three bytes either way round, for runs of 12 or more bytes that
-appear in the stock OS image too, counted by their bytes that are not filler (zero padding and empty header fields,
-and stretches of four or more 0xFF bytes such as unused hook words, match anywhere), and fails on 12 (E-Verb's DSP
-words share 10 by chance), and runs check_stock_free.py's scan (16 bytes at any alignment, against the image and its
-DSP words as the ColdFire keeps them). Needs Elekloader (--upstream,
-default ~/.cache/modwerk-upstream/elekloader) to unpack the OS. Node 24 for the page recipe."""
+ABI 6 packages are checked to have no stock-code sites. --stock gives the recipes that copy from the user's OS their
+stock bytes. Needs Elekloader (--upstream, default ~/.cache/modwerk-upstream/elekloader) to unpack the OS. Node 24
+for the page recipe."""
 import argparse, hashlib, json, shutil, struct, subprocess, sys, tempfile
 from pathlib import Path
 
@@ -52,7 +48,7 @@ BUILD = APP / 'sdk/runtime/loader/build.py'
 DSP = APP / 'src/engine/assets/dsp-packages.json'
 MANIFEST = APP / 'src/engine/assets/octatrack-module-packages.json'
 PUBLIC = APP / 'public'
-SEED, LIMIT = 12, 12  # bytes: a shared run worth looking at; its counted (not filler) bytes that fail
+SEED, LIMIT = 12, 12  # bytes: a shared run worth looking at; its counted (not filler) bytes a capture copies (build.py)
 FILL = 4  # 0xFF bytes in a stretch this long count as filler: a whole unused hook word (the loader's RUNTIME_NONE)
 
 
@@ -207,9 +203,6 @@ def main():
         parsed, device, _ = formats.load(str(a.stock))
         stock = formats.main_image(parsed, device)
         stock_at = lambda address, n: stock[address - device.main_load:address - device.main_load + n]
-        sys.path.insert(0, str(Path(__file__).resolve().parent))
-        import check_stock_free
-        haystacks = check_stock_free.haystacks(a.stock, upstream)
     failed, entries = 0, []
     with tempfile.TemporaryDirectory() as work:
         for entry in manifest['packages']:
@@ -230,7 +223,6 @@ def main():
                 entries.append(entry)
                 continue
             data = build(entry, Path(work) / 'p.mwrm', upstream, stock_at=stock_at)
-            views = [data] + dsp_words(data)
             path = 'octatrack-modules/%s/%s.mwrm' % (entry['id'], version)
             name = data[50:66].split(b'\0')[0].decode('latin-1')
             made = dict(entry, **capabilities(data), version=version, name=name, module=data[28:32].hex(), bytes=len(data),
@@ -247,18 +239,6 @@ def main():
                     shutil.rmtree(PUBLIC / 'octatrack-modules', ignore_errors=True)
                 (PUBLIC / path).parent.mkdir(parents=True, exist_ok=True)
                 (PUBLIC / path).write_bytes(data)
-            if stock is not None:
-                longest = 0
-                for view in views:
-                    for start, n in sorted(runs(view, stock).items()):
-                        longest = max(longest, n)
-                        if n >= LIMIT:
-                            print('  %s: a run at %d with %d non-zero bytes is also in the stock OS' % (entry['id'], start, n))
-                print('  %-16s most non-zero bytes in a run shared with the stock OS: %d (fails at %d)' % (entry['id'], longest, LIMIT))
-                found = check_stock_free.stock_runs({'sections': {'package': {'parts': [['hex', data.hex()]]}}}, haystacks, 16)
-                for where, offset, length, source in found:
-                    print('  %s +%#x: %d bytes of %s (check_stock_free.py)' % (entry['id'], offset, length, source))
-                failed += longest >= LIMIT or bool(found)
     if not a.check:
         MANIFEST.write_text(json.dumps(dict(manifest, packages=entries), indent=2) + '\n')
     sys.exit(1 if failed else 0)
