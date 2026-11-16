@@ -291,12 +291,12 @@ crash in the restore would, blaming the set's first module (or none), so a RAM b
 
 ### The base's version
 
-A base has a version for people, `major.minor`, in [`base-version.json`](base-version.json) (owner, 16 November 2026;
-0.7 is the first). `build_core.py` builds it into the base, whose status page says it in its title (`MODWERK BASE 0.7`).
+A base has a version for people, `major.minor` or `major.minor.patch`, in [`base-version.json`](base-version.json)
+(owner, 16 November 2026; 0.7 is the first). A patch of 0 is left out, so 0.7 is not 0.7.0. `build_core.py` builds it into the base, whose status page says it in its title (`MODWERK BASE 0.7`).
 `npm run octatrack:base -- --write` records the version's identities, one per USB Audio layout, in
 [`base-versions.json`](../base-versions.json), from which the site names the base a unit reports; a base from before
 versions, or a development build, keeps the start of its identity. Raise the number for every base that is published:
-the minor one for an update, the major one when the owner calls a release a new generation. The build refuses a
+the patch one for an update (0.7 to 0.7.1, owner, 16 November 2026), the minor or major one only when the owner says so. The build refuses a
 version that `origin/main` already has with other contents. The identity stays what packages, saved sets and USB check.
 
 ### Modules on and off
@@ -331,9 +331,10 @@ time-stretch reads its splice search and only BEAT reads its transient markers.
 `status.c` measures, all the time, the ColdFire's load (main's idle spin, timed on DTIM3, `status.s`), each
 DSP core's mean and peak load (core 0's own idle count, core 1's counted wait for core 0, `dsp_receiver.asm`),
 each core's code arena, the delay-buffer blocks and the module pool. CUE + PROJ shows it as a dialog (NO closes it),
-and so does PROJ > MODWERK > LOAD: MODWERK BASE and its version, in two sections, WORKING NOW (CPU, then each DSP chip by its tracks,
-measured, with the recent peak; tracks 1-4 run on core 1, tracks 5-8 on core 0) and DSP SPACE USED (per chip, the fuller
-of what admission books and its code memory: what says DSP MEMORY FULL first); `npm run device -- stats` prints it from the loader report on development
+and so does PROJ > MODWERK > LOAD: MODWERK BASE and its version over five rows, each with its bar: CPU, DSP T1-4 and
+DSP T5-8 (each DSP chip's time by its tracks, measured, with the recent peak; tracks 1-4 run on core 1, tracks 5-8 on
+core 0), then MEM T1-4 and MEM T5-8 (DSP memory per chip, the fuller of what admission books and its code memory: what says
+DSP MEMORY FULL first); `npm run device -- stats` prints it from the loader report on development
 bases. PROJ > MODWERK is a fifth root category (Octabam's MAINMENU.md: the root window is five rows tall, stock fills
 four; `build_core.py` copies the four stock rows and appends it, with its icon and list): MODULES last ("Modules on
 and off" above), and before it LOAD, MODULE LOAD (each
