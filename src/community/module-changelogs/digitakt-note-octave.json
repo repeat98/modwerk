@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "On the TRIG page, FUNC + turn on a note now moves it an octave every three detents instead of jumping, on audio NOTE and MIDI NOT1 to NOT4.",
+      "With a trig held it moves that step's note lock; an octave that would leave the range is not made.",
+      "Digitakt I, OS 1.54 only. A very fast spin moves at most one octave per encoder message."
+    ]
+  }
+]

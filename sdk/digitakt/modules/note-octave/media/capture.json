@@ -1,0 +1,161 @@
+{
+ "schemaVersion": 1,
+ "machine": "digitakt",
+ "moduleId": "note-octave",
+ "moduleVersion": "0.1.0-experimental",
+ "capturedAt": "2026-11-16",
+ "firmware": "1.54",
+ "imageSha256": "ca7b5b1e7f237fdee02005b7ebc515bf77370d446dc454faaba3920936a07877",
+ "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+ "source": {
+  "repository": "https://github.com/repeat98/modwerk",
+  "revision": "uncommitted working tree on d341b00af9726c67abb28387990263eb80efa0b4, branch module/note-octave",
+  "path": "sdk/digitakt/modules/note-octave"
+ },
+ "kit": {
+  "version": "0.7.0",
+  "lockSha256": "b8b330328071092fe6e64fab5f55ddc25dd027e41ac8c9f0584dab95814a8e85"
+ },
+ "catalog": {
+  "revision": "d341b00af9726c67abb28387990263eb80efa0b4",
+  "sha256": null,
+  "cores": 0,
+  "mods": 0
+ },
+ "build": {
+  "modules": [
+   {
+    "id": "core",
+    "version": "2.1",
+    "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+   },
+   {
+    "id": "note-octave",
+    "version": "0.1.0-experimental",
+    "sha256": "2f9dce2e566bad49d747d377e8953e2edd2b4ede6f6f1771f597e709426312e6"
+   }
+  ],
+  "linker": "Modwerk engine linkMods (scripts/link-image.mjs)",
+  "outputVersion": "NO08",
+  "verified": true
+ },
+ "emulator": {
+  "repository": "https://github.com/irpina/digiemu",
+  "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+  "unicorn": {
+   "version": "2.1.4",
+   "patches": {
+    "unicorn-2.1.4-m68k-digikit-accel.patch": "7048704a068cb074b93b751df4b1a73fd8972c1c0cc27e30774c4c2771ec2b5c",
+    "unicorn-2.1.4-m68k-digikit-speed.patch": "9560613223502656e82adc1ecc36d5d8486995bed13ea8ddad168f8c4558a799",
+    "unicorn-2.1.4-m68k-emac-mac-load.patch": "ac128dd6836997de55e0d2ad70d7a2978639168090f552c5634da50fddc70bfe",
+    "unicorn-2.1.4-m68k-emac-modes.patch": "5fc44429ea913c5256c34a6e9c93ab90f727f120b4f12922a8f35a952fd1dace",
+    "unicorn-2.1.4-m68k-fast-mem.patch": "7f79332f318352cbd8055386dbf5149efc801d0663ae2450e33f9f39fed53374",
+    "unicorn-2.1.4-m68k-hook-ccr-sync.patch": "56de71acf2adbd5ca2f448095478e65e49fd79d378aeb5b5e4217d2c90f52f4e"
+   },
+   "librarySha256": "ec37f2a15f263c085eec8a2016d60f8006d77a3bd53dd28998f1145635050c47"
+  },
+  "python": "3.12.15",
+  "platform": "macOS arm64",
+  "hle": false,
+  "audioRecording": false,
+  "cycleTiming": false,
+  "framebuffer": "firmware front LCD buffer at panel_diff flush",
+  "scale": 6,
+  "frameSelection": "Most populated actual LCD frame within the final 250 ms after the latest panel action; 6x integer scaling."
+ },
+ "setup": {
+  "project": "Disposable first-boot A01, stock initial track state; no owner projects or samples.",
+  "fixture": "No sample fixture; the first-boot project.",
+  "sandbox": "Private temporary output only."
+ },
+ "inputs": [
+  [
+   3000.001,
+   "press 19"
+  ],
+  [
+   3100.001,
+   "release 19"
+  ],
+  [
+   3914.307,
+   "press 1"
+  ],
+  [
+   4314.319,
+   "turn 1 -4"
+  ],
+  [
+   4514.325,
+   "turn 1 -4"
+  ],
+  [
+   4714.331,
+   "turn 1 -4"
+  ],
+  [
+   5160.0,
+   "release 1"
+  ],
+  [
+   5860.0,
+   "press 2"
+  ],
+  [
+   5960.561,
+   "press 32"
+  ],
+  [
+   6060.561,
+   "release 32"
+  ],
+  [
+   6360.562,
+   "release 2"
+  ],
+  [
+   6960.564,
+   "press 19"
+  ],
+  [
+   7060.564,
+   "release 19"
+  ],
+  [
+   7860.568,
+   "press 1"
+  ],
+  [
+   8264.434,
+   "turn 1 +4"
+  ],
+  [
+   8464.44,
+   "turn 1 +4"
+  ],
+  [
+   8664.445,
+   "turn 1 +4"
+  ],
+  [
+   9114.458,
+   "release 1"
+  ]
+ ],
+ "captures": [
+  {
+   "path": "media/audio-note-down.png",
+   "sha256": "ba1c03b97564ca1317c05d17b25c96f6aade5f923cb1eced541c604c11248957",
+   "atMs": 5860.000427350427,
+   "requestedAtMs": 5860.000427350427,
+   "plan": "# Note Octave 0.1.0-experimental: digiemu capture plan (OS 1.54, Core 2.1, Note Octave)\nwait 3000\n# audio track 1, TRIG page: FUNC + three detents left on NOTE = down an octave\ntap TRIG\nwait 500\npress FUNC\nwait 300\nturn A -1 40\nwait 150\nturn A -1 40\nwait 150\nturn A -1 40\nwait 400\nrelease FUNC\nwait 600\nsnap audio-note-down\n# MIDI track 9, TRIG page: FUNC + three detents right on NOT1 = up an octave\npress TRK\ntap 9\nrelease TRK\nwait 500\ntap TRIG\nwait 500\npress FUNC\nwait 300\nturn A 1 40\nwait 150\nturn A 1 40\nwait 150\nturn A 1 40\nwait 400\nrelease FUNC\nwait 600\nsnap midi-not1-up\n"
+  },
+  {
+   "path": "media/midi-not1-up.png",
+   "sha256": "8ddf30e4452d39dbc2c40d72ce7790eaa2312ef6ecf8c0ad0945d6bbfa18cbef",
+   "atMs": 9814.478632478633,
+   "requestedAtMs": 9814.478632478633,
+   "plan": "# Note Octave 0.1.0-experimental: digiemu capture plan (OS 1.54, Core 2.1, Note Octave)\nwait 3000\n# audio track 1, TRIG page: FUNC + three detents left on NOTE = down an octave\ntap TRIG\nwait 500\npress FUNC\nwait 300\nturn A -1 40\nwait 150\nturn A -1 40\nwait 150\nturn A -1 40\nwait 400\nrelease FUNC\nwait 600\nsnap audio-note-down\n# MIDI track 9, TRIG page: FUNC + three detents right on NOT1 = up an octave\npress TRK\ntap 9\nrelease TRK\nwait 500\ntap TRIG\nwait 500\npress FUNC\nwait 300\nturn A 1 40\nwait 150\nturn A 1 40\nwait 150\nturn A 1 40\nwait 400\nrelease FUNC\nwait 600\nsnap midi-not1-up\n"
+  }
+ ]
+}

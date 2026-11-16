@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/note-octave",
+  "moduleVersion": "0.1.0-experimental",
+  "sourceSha256": "07263fd1f018720417099b855414c8ec17147bfdc2f1746e82bc4c073f104a76",
+  "date": "2026-11-16",
+  "tester": "draadpiraat (run by Claude Code)",
+  "emulator": {
+    "name": "digiemu",
+    "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+    "unicornLibrarySha256": "ec37f2a15f263c085eec8a2016d60f8006d77a3bd53dd28998f1145635050c47",
+    "hle": false
+  },
+  "build": {
+    "release": "1.54",
+    "modules": [
+      "core 2.1",
+      "note-octave 0.1.0-experimental"
+    ],
+    "linker": "Modwerk engine linkMods (scripts/link-image.mjs), no other mods",
+    "imageSha256": "ca7b5b1e7f237fdee02005b7ebc515bf77370d446dc454faaba3920936a07877",
+    "note": "NO08"
+  },
+  "checks": [
+    {
+      "name": "audio NOTE",
+      "result": "passed",
+      "detail": "FUNC held, 12 detents left 150 ms apart: -12, -24, -36, -48, an octave every three; 12 right: back to 0."
+    },
+    {
+      "name": "MIDI NOT1/NOT2",
+      "result": "passed",
+      "detail": "FUNC + turn moves NOT1 60 to 72 and NOT2 by 12; three detents an octave."
+    },
+    {
+      "name": "range edge",
+      "result": "passed",
+      "detail": "An octave that would leave the note's range is not made: the value stays."
+    },
+    {
+      "name": "other knobs",
+      "result": "passed",
+      "detail": "FUNC + turn on VEL keeps stock's jump."
+    },
+    {
+      "name": "with other modules",
+      "result": "passed",
+      "detail": "live61 (owner's set, with Note Accumulator's TRIG page knobs): the same audio NOTE steps."
+    },
+    {
+      "name": "shared memory",
+      "result": "measured",
+      "detail": "284 bytes of the 128 KiB shared mod area."
+    },
+    {
+      "name": "audio-block load",
+      "result": "measured",
+      "detail": "None: the module runs only inside the TRIG page's knob handler, on encoder events; it adds nothing to the audio path."
+    }
+  ],
+  "notTested": [
+    "OS 1.53."
+  ]
+}

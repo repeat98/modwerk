@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-16",
+  "source": "Direct author statements in the development conversation",
+  "reporter": "draadpiraat",
+  "status": "hardware-tested-author-reported",
+  "model": "Digitakt I",
+  "release": "1.54",
+  "moduleVersion": "0.1.0-experimental",
+  "builds": [
+    {
+      "name": "Core 2.1 + note-octave 0.1.0-experimental (NO08, this release)",
+      "syxSha256": "ca7b5b1e7f237fdee02005b7ebc515bf77370d446dc454faaba3920936a07877",
+      "statement": "note octave seems good, publish it."
+    },
+    {
+      "name": "Core 2.1 + note-octave, an octave a detent (NO03, before the pace change)",
+      "syxSha256": "620568df3e19f7a13dce620b1805e4d539f37cff70d11a6049b22168ee0ffb5c",
+      "statement": "NO03 works, but its way too fast, should be more of the same feel as the trig length steps when func is held."
+    }
+  ],
+  "observations": [
+    "NO03's octave a detent was too fast; NO08 moves an octave every three detents, FUNC + LEN's pace, which the author accepted."
+  ],
+  "limitations": [
+    "The author's statement covers NO08 as a whole: held-trig locks, MIDI chord notes and the range edge were not reported one by one.",
+    "Run time was not stated.",
+    "Firmware was not read back from the device; the builds are identified by their SysEx hashes."
+  ]
+}
