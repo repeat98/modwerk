@@ -424,7 +424,7 @@ uint32_t modwerk_ep0_dispatch(void)
     /* MISSING (0xC1, bRequest 14, wValue the first entry, wLength 316): the modules the project names that are not
      * installed (dsp.c modwerk_dsp_missing_list), so the host can offer them; at most 13 a page, so a host asks on
      * from wValue 13 while a page comes back full (page 0 is the reply from before pages). Read-only. */
-    if (r.action == MV_STALL && SETUP[0] == MV_RESULT_TYPE && SETUP[1] == 14 && SETUP[2] < MODWERK_FX_IDS && !SETUP[3] &&
+    if (r.action == MV_STALL && SETUP[0] == MV_RESULT_TYPE && SETUP[1] == 14 && SETUP[2] < MODWERK_MISSING_MAX && !SETUP[3] &&
         SETUP[4] == MODWERK_VENDOR_INTERFACE && !SETUP[5] && (SETUP[6] | SETUP[7] << 8) == 4u + 24u * MODWERK_MISSING_PAGE) {
         unsigned modwerk_dsp_missing_list(uint8_t *, unsigned, unsigned);
         modwerk_ep0_reply = out;

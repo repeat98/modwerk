@@ -71,8 +71,8 @@ function list(value: unknown, path: string, maximum: number): unknown[] {
 }
 function texts(value: unknown, path: string, maximum: number): string[] { return list(value,path,maximum).map((v,i)=>text(v,path+'['+i+']')) }
 // What a module may claim in compatibility.uiClaims (docs/module-guides/README.md#ui-claims): panel keys, encoder turns
-// (A-F, LEVEL), TRACK and TRIG for any of their keys.
-const UI_KEYS=['FUNC','YES','NO','UP','DOWN','LEFT','RIGHT','PROJ','PART','AED','ARR','MIXER','MIDI','CUE','REC','REC1','REC2','REC3','PLAY','STOP','TEMPO','BANK','PATTERN','PAGE','SCENEA','SCENEB','SRC','AMP','LFO','FX1','FX2','TRACK','TRIG','A','B','C','D','E','F','LEVEL']
+// (A-F, LEVEL), encoder presses (PUSHA-PUSHF), TRACK and TRIG for any of their keys.
+const UI_KEYS=['FUNC','YES','NO','UP','DOWN','LEFT','RIGHT','PROJ','PART','AED','ARR','MIXER','MIDI','CUE','REC','REC1','REC2','REC3','PLAY','STOP','TEMPO','BANK','PATTERN','PAGE','SCENEA','SCENEB','SRC','AMP','LFO','FX1','FX2','TRACK','TRIG','A','B','C','D','E','F','LEVEL','PUSHA','PUSHB','PUSHC','PUSHD','PUSHE','PUSHF']
 function uiClaim(value: unknown, path: string): string {
   const claim=text(value,path,80), key=/^key:([A-Z0-9+]+)(?:@[A-Z0-9][A-Z0-9 ]*)?$/.exec(claim)
   if(key?key[1].split('+').every(name=>UI_KEYS.includes(name)):/^screen:[A-Z0-9][A-Z0-9 ]*$/.test(claim)) return claim
@@ -209,7 +209,7 @@ export function parseModuleDocument(value: unknown): ModuleDocument {
   const authorName={...('name' in a ? { name:text(a.name,'author.name',100) } : {}),...('contributors' in a ? {contributors:parseModuleContributors(a.contributors,github,'author.contributors')} : {})}
   const p=object(d.presentation,'presentation',['label','family','summary','overview','highlights','usage'])
   const c=object(d.compatibility,'compatibility',['firmware','effectId','location','conflicts','limitations'],['uiClaims'])
-  const uiClaims='uiClaims' in c?list(c.uiClaims,'compatibility.uiClaims',16).map((v,i)=>uiClaim(v,'compatibility.uiClaims['+i+']')):undefined
+  const uiClaims='uiClaims' in c?list(c.uiClaims,'compatibility.uiClaims',24).map((v,i)=>uiClaim(v,'compatibility.uiClaims['+i+']')):undefined
   if(c.effectId!==null&&(typeof c.effectId!=='number'||!Number.isInteger(c.effectId)||c.effectId<4||c.effectId>31))fail('compatibility.effectId','expected a valid effect ID or null for contributions without an effect slot')
   if(c.firmware!=='1.40C') fail('compatibility.firmware','only 1.40C is supported')
   const r=object(d.resources,'resources',['recorded','storage','processing'],['impact','cpuPrice'])

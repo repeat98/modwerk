@@ -38,7 +38,7 @@ const OCTATRACK_SCREENS: Screen[] = [
 
 /** What the base shows that has no picture here: each appears only with modules installed or during a transfer. */
 const OCTATRACK_ALSO: [string, string][] = [
-  ['MISSING', 'modules the open project uses that the Octatrack doesn’t have, with where each is used, such as BANK A SAVED PART 2 T5. Their slots say MISSING instead of going quiet without a word.'],
+  ['MISSING', 'modules the open project uses that the Octatrack doesn’t have or has switched off, machines included, with where each is used, such as BANK A SAVED PART 2 T5, and YES to switch the ones that are off back on. Their tracks say so, MISSING POLY8 or POLY8 IS OFF, instead of going quiet without a word.'],
   ['MODWERK SYNC', 'a small box with a bar while a sync from this site sends your modules and starts them.'],
   ['CPU FULL', 'when a machine or effect pick would overload the Octatrack, the base refuses it and says why, instead of overloading it. Stock machines, stock effects and NONE are never refused.'],
 ]

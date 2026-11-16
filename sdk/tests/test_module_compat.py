@@ -142,10 +142,11 @@ class GateTests(unittest.TestCase):
                               manifests=ui(a=['key:UP+TEMPO'], b=['key:UP+TEMPO@PART']))
         self.assertEqual(self.routes(problems), [(('a', 'b'), 'ui')])
         self.assertIn('key:UP+TEMPO', problems[0]['text'])
-        for a, b in ((['key:FUNC+UP+TEMPO'], ['key:UP+FUNC+TEMPO']), (['screen:TEMPO'], ['screen:TEMPO'])):
+        for a, b in ((['key:FUNC+UP+TEMPO'], ['key:UP+FUNC+TEMPO']), (['screen:TEMPO'], ['screen:TEMPO']),
+                     (['key:TRIG+PUSHD'], ['key:TRIG+PUSHD@PART'])):
             self.assertEqual(len(list(gate.ui_clashes(ui(a=a, b=b)))), 1, (a, b))
         for a, b in ((['key:UP+TEMPO'], ['key:TEMPO+UP']), (['key:FUNC+LEFT@CHROMATIC'], ['key:FUNC+LEFT@PART']),
-                     (['key:TEMPO'], ['screen:TEMPO'])):
+                     (['key:TEMPO'], ['screen:TEMPO']), (['key:TRIG+PUSHD'], ['key:TRIG+D@ARP SETUP'])):
             self.assertEqual(list(gate.ui_clashes(ui(a=a, b=b))), [], (a, b))
         declared = ui(a=['screen:TEMPO'], b=['screen:TEMPO']); declared['b']['conflicts'] = ['a']
         self.assertEqual(list(gate.ui_clashes(declared)), [])
