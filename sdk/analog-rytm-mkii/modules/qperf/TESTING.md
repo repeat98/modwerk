@@ -6,7 +6,7 @@ Nothing here proves reboot persistence or the QPER knob itself. Hardware results
 
 ## 0.2.1: UI-only code built for size (16 November 2026)
 
-35 functions reached only from `qperf_key`, `qperf_tick` and `qperf_project` (the gestures, popups, link moves, the quick perf rec's bake and clear) are marked `__attribute__((cold))`; the module stays at -O2, and `qperf_render`, the lockers and the pad gate are not marked. Built in Modwerk's isolated toolchain: 17,805 B (`.run` + `.bss`) for 0.2.0, 15,881 B (`.run` 8,741, `.bss` 7,140) for this source. No behaviour change is intended.
+35 functions reached only from `qperf_key`, `qperf_tick` and `qperf_project` (the gestures, popups, the quick perf rec's bake and clear) are marked `__attribute__((cold))`; the module stays at -O2, and `qperf_render`, the lockers and the pad gate are not marked. Built in Modwerk's isolated toolchain: 17,805 B (`.run` + `.bss`) for 0.2.0, 15,881 B (`.run` 8,741, `.bss` 7,140) for this source. No behaviour change is intended.
 
 - rytm-emu 2ac0f1f: QL20 (this source alone on the plain Modwerk base `d6ee1eed`, sha256 `e77e4cd9…`) replays both media plans; both frames are byte-identical to 0.2.0's QL19 captures.
 - On the author's Analog Rytm MKII (OS 1.74), this exact source (the same code, the comment above the attribute reworded since) ran in the author's private combined images RC37 to RC40 (17 modules on a private base; RC40 `5d5241e0…`, on the unit since 12 November 2026). That is a combined-image observation, not a run of this package alone.

@@ -4,7 +4,7 @@
     "date": "2026-11-16",
     "changes": [
       "Uses about 1.9 KB less of the module memory, leaving more room for other modules beside it.",
-      "Everything works as in 0.2.0."
+      "Nothing else changes from 0.2.0."
     ]
   },
   {
