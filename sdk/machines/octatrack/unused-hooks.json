@@ -15,6 +15,7 @@
   "ev_project_reloaded": "added in #1564 for MIDI Scenes and Kits, which keep data per project, bank and Part; first module pending",
   "ev_part_saved": "added in #1564 for MIDI Scenes and Kits, which keep data per project, bank and Part; first module pending",
   "ev_part_clear": "added in #1564 for MIDI Scenes and Kits, which keep data per project, bank and Part; first module pending; not yet reached on a unit",
-  "ev_modules_ready": "added in #1564: the base raises it when the installed modules change, so a module may read its file from the card; first module pending"
+  "ev_modules_ready": "added in #1564: the base raises it when the installed modules change, so a module may read its file from the card; first module pending",
+  "ot_sample_memory": "added in #1629 for Kits, which keeps its 2 MB library in borrowed sample memory; Kits ships in its own pull request after this base"
  }
 }
