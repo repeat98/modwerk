@@ -1,0 +1,1 @@
+Checks: the pull request description check accepts the guides question answered as a list below it, which it refused although the answer was there. `node scripts/pr-body.mjs FILE.md` checks a description in a file before the pull request is open, and `pr:ready` says so.

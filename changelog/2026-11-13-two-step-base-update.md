@@ -1,0 +1,1 @@
+Improvement: an Octatrack on an older Modwerk base can take a larger new base over USB. The site installs it as two updates, one after the other, when the base on the unit is too small to take it in one, and says so plainly when only the card is left.

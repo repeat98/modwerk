@@ -441,8 +441,9 @@ MODULE = Module(
                "LFO engine (the routine) depth read: LFO 3 reads depth 0 on a synth track",
                kind="jmp", pad_to=8),
         Detour(LFO_DEPTH_HOOK2, stock_guard(0x4000d03e, 8, "affe75cc6a50fffd392b3e1045e18d0fbf846ff2f30fe75be1e445e634f96cf9"), "poly", "po_lfo3b",
-               "LFO engine (the frame builder's inlined copy) depth read: the same",
-               kind="jmp", pad_to=8),
+               "LFO engine (the frame builder's inlined copy) depth read: the same; a jsr since Modwerk 0.1.3 "
+               "(LFO 1 and 2 return within one line; track 0's LFO 3 also runs the clock and the frame's masks)",
+               kind="jsr", pad_to=8),
         Detour(LFO_PAGE_HOOK, LFO_PAGE_STOCK, "poly", "po_lfopage",
                "page resolver LFO descriptor: a synth track gets the VOIC/CHRD clone",
                kind="jmp", pad_to=8),

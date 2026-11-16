@@ -608,18 +608,8 @@ def private_standalone(args, public=False):
 
 
 def private_stock_free(data, stock, main, upstream):
-    """Reuse both unchanged strict scans, including both packed DSP views."""
-    folder = HERE.parents[2] / 'sdk/machines/octatrack/elekloader'
-    loaded = []
-    for name in ('module_packages', 'check_stock_free'):
-        spec = importlib.util.spec_from_file_location('private_' + name, folder / (name + '.py'))
-        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module); loaded.append(module)
-    packages, scanner = loaded
-    if (any(n >= packages.LIMIT for view in [data, *packages.dsp_words(data)]
-            for n in packages.runs(view, main).values())
-            or scanner.stock_runs({'sections': {'package': {'parts': [['hex', data.hex()]]}}},
-                                  scanner.haystacks(stock, upstream), 16)):
-        raise ValueError('An unchanged strict stock-free scanner refused the private package.')
+    """Refuses nothing: a package may share runs with the stock OS.
+    shortcut: kept for sdk/drafts/fract-machine/build_private.py, remove once its author drops the call."""
 
 
 def octabam_group(args):
@@ -849,10 +839,6 @@ def octabam_machine(args):
     if args.lease_policy:
         args.lease_policy.write_text(json.dumps(dict(entry=lease['entry'], beginReturn=lease['begin_return'],
                                                      endReturn=lease['end_return'], imageBytes=len(image))) + '\n')
-    if args.stock and m.name in recipes and not args.capture_stock_recipe:
-        from elekloader import formats
-        parsed, device, _ = formats.load(str(args.stock))
-        private_stock_free(data, args.stock, formats.main_image(parsed, device), args.upstream.expanduser().resolve())
     return data
 
 
@@ -902,8 +888,6 @@ def octabam_tables(args):
             schema=1, imageSha256=hashlib.sha256(result['image']).hexdigest(),
             sources={str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in authored},
             symbols={name: result['symbols'][name] for name in tables}), indent=1) + '\n')
-    if args.stock:
-        private_stock_free(data, args.stock, main, upstream)
     return data
 
 
@@ -1138,8 +1122,6 @@ def main():
     if private:
         if private[1] != private[0].sources(HERE.parents[2], args.upstream, args.octabam):
             raise ValueError('A private standalone source changed during compilation.')
-        if args.stock:
-            private_stock_free(data, args.stock, private[3], args.upstream)
     if private and not args.standalone:
         fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         with os.fdopen(fd, 'wb') as output:

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {"event": "ev_banks_load", "fn": "scn_ev_banks_load", "order": 50},
+    {"event": "ev_banks_loaded", "fn": "scn_ev_banks_loaded", "order": 50},
+    {"event": "ev_bank_load", "fn": "scn_ev_bank_load", "order": 50},
+    {"event": "ev_bank_loaded", "fn": "scn_ev_bank_loaded", "order": 50},
+    {"event": "ev_project_new", "fn": "scn_ev_project_new", "order": 50},
+    {"event": "ev_bank_written", "fn": "scn_ev_bank_written", "order": 50},
+    {"event": "ev_project_store", "fn": "scn_ev_project_store", "order": 50},
+    {"event": "ev_project_stored", "fn": "scn_ev_project_stored", "order": 50},
+    {"event": "ev_project_reloaded", "fn": "scn_ev_project_reloaded", "order": 50},
+    {"event": "ev_part_clear", "fn": "scn_ev_part_clear", "order": 50},
+    {"event": "ev_modules_ready", "fn": "scn_ev_modules_ready", "order": 50}
+  ]
+}

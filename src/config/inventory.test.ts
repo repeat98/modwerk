@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { changeCount, inventoryChanges, lastInventory, listboxMove, loadStep, missingFromProject, modulesToPutBack, rememberInventory, sameModules, SAVED_BY_ANOTHER_BASE, unitState } from './inventory'
+import { changeCount, inventoryChanges, lastInventory, listboxMove, loadStep, missingFromProject, modulesToPutBack, rememberInventory, sameModules, SAVED_BY_ANOTHER_BASE, staysOff, unitState } from './inventory'
 
 describe('making the unit match a module set', () => {
   it('adds and removes modules and switches stock effects both ways', () => {
@@ -15,6 +15,14 @@ describe('making the unit match a module set', () => {
     const unit = { moduleIds: ['everb', 'poly8'], removedStockFx: [] }, set = ['everb', 'tapeecho']
     expect(['everb', 'tapeecho', 'poly8', 'repitch'].map(id => unitState(id, set, unit))).toEqual(['on', 'load', 'leaving', undefined])
     expect(unitState('everb', set)).toBeUndefined()
+  })
+  it('leaves a module of the set that is switched off on the unit as it is, and removes one that is off and not in the set', () => {
+    const unit = { moduleIds: ['everb'], removedStockFx: [], offIds: ['tapeecho', 'poly8'] }, set = ['everb', 'tapeecho', 'miniverb']
+    expect(inventoryChanges(unit, { name: 'Set', moduleIds: set })).toMatchObject({ add: ['miniverb'], remove: ['poly8'] })
+    expect(['everb', 'tapeecho', 'poly8', 'miniverb'].map(id => unitState(id, set, unit))).toEqual(['on', 'off', 'leaving', 'load'])
+    expect(staysOff(set, unit)).toEqual(['tapeecho'])
+    expect(staysOff(set, { moduleIds: ['tapeecho'], removedStockFx: [], offIds: ['tapeecho'] })).toEqual([]) // read a moment apart: it runs
+    expect(staysOff(set)).toEqual([])
   })
 })
 
@@ -57,6 +65,11 @@ describe('the Octatrack hub', () => {
     expect(modulesToPutBack('new', SAVED_BY_ANOTHER_BASE, undefined)).toBeUndefined() // not read yet
     rememberInventory('old', empty, '2026-10-21T10:00:00.000Z')
     expect(modulesToPutBack('new', SAVED_BY_ANOTHER_BASE, empty)).toBeUndefined() // the old base was empty too
+    // Switched off on the old base: put back with the rest, and named, since they come back on.
+    rememberInventory('old', { moduleIds: ['everb'], removedStockFx: [], offIds: ['tapeecho', 'everb'] }, '2026-10-22T10:00:00.000Z')
+    expect(modulesToPutBack('new', SAVED_BY_ANOTHER_BASE, empty)).toMatchObject({ moduleIds: ['everb', 'tapeecho'], offIds: ['tapeecho'] })
+    store.set('modwerk.octatrack.last-seen', '{"old":{"moduleIds":["everb"],"removedStockFx":[],"at":"2026-10-23T10:00:00.000Z","offIds":["poly8",3]}}')
+    expect(lastInventory()?.offIds).toBeUndefined() // a damaged list, or ones not put back: none named
   })
   it('works without storage', () => {
     vi.stubGlobal('localStorage', { getItem() { throw new Error('blocked') }, setItem() { throw new Error('blocked') } })

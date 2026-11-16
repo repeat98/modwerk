@@ -20,11 +20,16 @@
 #define MODWERK_PAGE_KNOB 0u               /* stock's ordinary knob */
 #define MODWERK_PAGE_OFF_ON 0x4003c14cu    /* stock's formatter for the words OFF and ON */
 
-/* The widget stock uses for a control with `count` values. */
+/* The widget stock uses for a control with `count` values. The three are reached as steps from the lowest one,
+ * never as a list of the addresses: a compiler turns a chain of comparisons into such a list, and switch, select,
+ * select, select5 in a row is a stretch of stock's own page descriptors, which no package may repeat (#1471). */
 static inline uint32_t modwerk_page_widget(unsigned count)
 {
-    return count == 2u ? MODWERK_PAGE_SWITCH : count == 3u || count == 4u ? MODWERK_PAGE_SELECT :
-        count == 5u ? MODWERK_PAGE_SELECT5 : MODWERK_PAGE_KNOB;
+    static const uint16_t step[4] = {
+        (uint16_t)(MODWERK_PAGE_SWITCH - MODWERK_PAGE_SELECT5), (uint16_t)(MODWERK_PAGE_SELECT - MODWERK_PAGE_SELECT5),
+        (uint16_t)(MODWERK_PAGE_SELECT - MODWERK_PAGE_SELECT5), 0u,
+    };
+    return count - 2u < 4u ? MODWERK_PAGE_SELECT5 + step[count - 2u] : MODWERK_PAGE_KNOB;
 }
 
 static inline void modwerk_page_put32(uint8_t *desc, unsigned at, uint32_t v)

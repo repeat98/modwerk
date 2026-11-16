@@ -26,7 +26,7 @@ export function OctatrackLoad({ link, active }: { link: OctatrackLink | null; ac
     <Meter area="hub-cell-dsp2" title="DSP tracks 5–8 · working now" value={latest?.tracks5to8} peak={latest?.peak5to8} />
     <LoadChart points={points} now={now} series={SERIES} onClear={clear}
       off={off ? unsupported ? 'Live load needs a newer Modwerk base than the one on your Octatrack.' : 'Connect your Octatrack over USB to see its live load.' : undefined}
-      note={notice || (latest ? 'Every two seconds while your Octatrack is connected. The CPU runs the screen, the sequencer and the modules’ code; each DSP runs the sound, machines and effects of four tracks.' : 'Waiting for live load. Syncing takes priority.')} />
+      note={notice || (latest ? 'Every two seconds while your Octatrack is connected. The CPU runs the screen, the sequencer and the modules’ code; each DSP runs the sound, machines and effects of four tracks. Without any module an Octatrack reads about 45 % CPU stopped and 60 to 75 % playing; from 85 % it takes no further module machine or effect.' : 'Waiting for live load. Syncing takes priority.')} />
   </>
 }
 

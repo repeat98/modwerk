@@ -4,8 +4,9 @@
     python3 -B bench.py --emulator <ot_emu> --main <a MAIN image the emulator boots> --output <new private folder>
 
 amiga.c is compiled for the ColdFire as the package is, placed in free emulator RAM, and its engine is
-called the way amiga_render calls it: rest, then blend, declick, crunch, and stretch or pass, and seek at a restart, for the two
-render calls of every frame of a note, with the frame interrupt off. A PC watch at each function's entry
+called the way amiga_render calls it: rest, then the crossfade while one runs, declick, crunch, and stretch or pass, and seek
+at a restart, for the two render calls of every frame of a note, with the frame interrupt off. The crossfade reads a
+16-bit stereo sample in one run, as on a unit it reads one page at a time. A PC watch at each function's entry
 and at its return gives the instructions in between. It is the module's own code only: stock's reader and
 START, which the render also calls, are the instrument's (docs/MODULE_PERFORMANCE.md). Instructions become
 time at Tuner's 9.44 ns each, which prices a division or a multiply-accumulate like a move: read the result
@@ -25,7 +26,8 @@ SDK = next(p for p in HERE.parents if (p / 'machines/octatrack/include/modwerk_e
 sys.path.insert(0, str(SDK / 'octabam/modules/track-solo'))  # its ot_emu session: poke, call, watch
 from emulator_test import Emulator  # noqa: E402
 
-CODE, VOICE, PCM = 0x47031000, 0x47038000, 0x4703c000
+CODE, VOICE, PCM, SAMPLE, SOURCE = 0x47031000, 0x47038000, 0x4703c000, 0x4703f000, 0x47040000
+XLEN = 140  # the voice's xlen on the ColdFire: 35 longs before it
 NS, FRAME_US = 9.44, 362.8
 FLAGS = ['-mcpu=5475', '-msoft-float', '-O2', '-ffreestanding', '-fno-builtin', '-fno-common', '-fno-jump-tables',
          '-fno-asynchronous-unwind-tables', '-fno-ident', '-fomit-frame-pointer', '-I', str(SDK / 'machines/octatrack/include')]
@@ -78,10 +80,12 @@ def run(a):
 
         get = lambda name, v: call(name, v)[0]
         rng, report = random.Random(1), {}
+        window = 44100
+        for off in range(0, window * 4, 2048):  # the sample the crossfade reads: noise, big-endian 16-bit stereo
+            e.write(SOURCE + off, bytes(rng.randrange(256) for _ in range(min(2048, window * 4 - off))))
+        e.write(SAMPLE, struct.pack('>5I', 0, SOURCE, window, 2, 2))  # locate 0: one run at ctx
         for label, c in CASES.items():
-            for off in range(0, 2048 * 4 + 256, 2048):
-                e.write(VOICE + off, bytes(2048))
-            window = 44100
+            e.write(VOICE, bytes(256))
             call('amiga_note', VOICE, window)
             ratio, read, frames, restarts = 2 ** (c['pitch'] / 12), 0.0, [], 0
             parts = {}
@@ -91,15 +95,15 @@ def run(a):
                     n = int(read + out * ratio) - int(read)
                     read += out * ratio
                     e.write(PCM, struct.pack(f'>{2 * n}i', *[rng.randrange(-2 ** 30, 2 ** 30) for _ in range(2 * n)]))
-                    rest, used = call('amiga_rest', VOICE, out, n, c['spd'])  # as amiga_render: a note at rest only remembers and counts
+                    rest, used = call('amiga_rest', VOICE, out, n, c['spd'])  # as amiga_render: a note at rest only counts
                     cost += used
                     parts['amiga_rest'] = parts.get('amiga_rest', 0) + used
                     d0 = (1 << 32) - 1  # KEEP
                     steps = [('amiga_crunch', (VOICE, PCM, n, c['srr'], c['bits'], c['led']))]
-                    if rest != 2:
-                        steps.insert(0, ('amiga_blend', (VOICE, PCM, n)))
                     if not rest:
-                        steps.insert(1, ('amiga_declick', (VOICE, PCM, n)))
+                        steps.insert(0, ('amiga_declick', (VOICE, PCM, n)))
+                    if struct.unpack('>I', e.read(VOICE + XLEN, 4))[0]:
+                        steps.insert(0, ('amiga_cross', (VOICE, PCM, n, SAMPLE)))
                     steps.append(('amiga_pass', (VOICE, out, c['grn'])) if rest == 1 else ('amiga_stretch', (VOICE, out, n, c['spd'], c['grn'], 1)))
                     for name, args in steps:
                         result, used = call(name, *args)
@@ -108,9 +112,9 @@ def run(a):
                         cost += used
                         parts[name] = parts.get(name, 0) + used
                     at = d0 - (1 << 32) if d0 >> 31 else d0
-                    if at >= 0:
+                    if at >= 0:  # the last grain goes on from where the note is, as the unit's reader would
                         restarts += 1
-                        cost += call('amiga_seek', VOICE, at)[1]
+                        cost += call('amiga_seek', VOICE, at, (at + 1000) % window, 0)[1]
                 frames.append(cost)
             report[label] = dict(settings=c, frames=len(frames), restarts=restarts, meanInstructions=round(sum(frames) / len(frames)),
                                  meanByFunction={name[6:]: round(total / len(frames)) for name, total in parts.items()},

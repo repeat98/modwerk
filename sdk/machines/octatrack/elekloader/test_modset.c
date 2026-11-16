@@ -3,7 +3,9 @@
  * removal drops its module, the newest whole set is installed after a boot, a damaged newer file leaves the
  * older one, and another base's set or a held PROJ or FUNC installs nothing. A Keep joins the set only as exactly the
  * trial's whole-set identity, and its save reports unsaved and failed until the card has it. A start that crashed,
- * stopped or hung while its restore ran leaves the package it was installing out, or holds the set once. */
+ * stopped or hung while its restore ran leaves the package it was installing out, or holds the set once. A module
+ * switched off on the unit is unloaded and waits on the shelf, across power cycles, until it is switched on or a host
+ * installs or removes it; a refused switch changes nothing. */
 #define MODWERK_RUNTIME_VOLATILE_JOURNAL
 #include "sha256.c"
 #include "modset.c"
@@ -29,14 +31,17 @@ static unsigned failures;
 #define HOLD(code) (modwerk_test_keys[(code) >> 3] |= (uint8_t)(1u << ((code) & 7u)))
 #define LET_GO() memset(modwerk_test_keys, 0, sizeof modwerk_test_keys)
 const uint8_t modwerk_base_digest[32] = {1, 2, 3};
-static uint8_t card[2][SET_BYTES];
-static int card_bytes[2];
+static uint8_t card[2][SET_BYTES], card_shelf[2][SET_BYTES];
+static int card_bytes[2], card_shelf_bytes[2];
 static int volatile_busy;
 static unsigned writes, write_fail;
 int modwerk_runtime_volatile_busy(void) { return volatile_busy; }
 int modwerk_test_file(int op, const char *path, uint8_t *data, unsigned n)
 {
     int which = path[8] == '1';
+    if (op == 2) { memcpy(data, card_shelf[which], (size_t)card_shelf_bytes[which]); return card_shelf_bytes[which]; }
+    if (op == 3) { memcpy(card_shelf[which], data, n); card_shelf_bytes[which] = (int)n; return 1; }
+    if (op == 1) card_shelf_bytes[which] = 0; /* a new file: the shelf follows, or none */
     if (op == 1 && write_fail) { ++writes; memcpy(card[which], data, n / 2); card_bytes[which] = (int)n; return 0; } /* torn */
     if (op == 1) { ++writes;memcpy(card[which], data, n); card_bytes[which] = (int)n; return 1; }
     if (!card_bytes[which]) return 0;
@@ -55,7 +60,7 @@ static int prepare(void *u, const uint8_t *d, uint32_t n)
     (void)u; ids[prepared++ % 8] = be32(d + 28);
     if (crash_id && be32(d + 28) == crash_id) { ++modwerk_test_crashes; longjmp(crashed, 1); }
     if (stall_id && be32(d + 28) == stall_id) { ++modwerk_test_stalls; return 0; } /* dsp.c shuts the loader off */
-    int ok = n > 32u && be32(d + 28) != refuse_id;
+    int ok = (n > 32u || !be32(d + 8)) && be32(d + 28) != refuse_id; /* a removal is 32 bytes (the site's, modset.c's) */
     if (!ok && busy_left && !--busy_left) refuse_id = 0; /* the last refusal: it installs next */
     return ok;
 }
@@ -297,8 +302,91 @@ int main(void)
     HOLD(FUNC); cut(); modwerk_modset_service(); LET_GO();
     CHECK(modwerk_modset_result == SKIPPED && !installed);
     boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == LEFT_OUT && installed == 2);
+    /* PROJ > MODWERK > MODULES. A unit with Tape Echo (named) and two more, saved. */
+    memset(card_bytes, 0, sizeof card_bytes); memset(card_shelf_bytes, 0, sizeof card_shelf_bytes);
+    memset(&modwerk_test_guard, 0, sizeof modwerk_test_guard); memset(set, 0, sizeof set); off_bytes = 0;
+    cut(); restored = 1; refuse_id = 0; refusal_now = RUNTIME_IN_USE;
+    make_named(0, 0x201u, "Tape Echo"); named[0][67] = 9; make(3, 0x202u, 0); make(4, 0x203u, 0);
+    modwerk_modset_candidate(named[0], 72); modwerk_modset_accepted(); accept(3, 48); accept(4, 44);
+    modwerk_modset_service(); CHECK(modwerk_modset_count == 3 && !pending);
+    uint8_t off[8 + MODSET_OFF_ENTRY * 4], sum[32];
+    CHECK(modwerk_modset_off_list(off, 0, 4) == 8 && !off[3] && !off[5] && !modwerk_modset_switch_due());
+    /* Off: the loader removes it, it leaves the set for the shelf, and the card has both at once. */
+    written = writes; prepared = 0;
+    CHECK(modwerk_modset_switch(0x201u, 0) && modwerk_modset_switch_result == MODSET_SWITCH_PENDING && modwerk_modset_switch_due());
+    CHECK(!modwerk_modset_switch(0x202u, 0));                                /* one at a time */
+    modwerk_modset_service();
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCHED && !modwerk_modset_switch_due() && prepared == 1 && ids[0] == 0x201u);
+    CHECK(modwerk_modset_count == 2 && !pending && writes == written + 1 && off_bytes == 512);
+    mu_sha256(named[0], 72, sum);
+    CHECK(modwerk_modset_off_list(off, 0, 4) == 8 + MODSET_OFF_ENTRY && off[3] == 1 && off[5] == 1 && be32(off + 8) == 0xff000009u &&
+          be32(off + 12) == 0x201u && !strcmp((const char *)off + 16, "Tape Echo") && !memcmp(off + 32, sum, 32)); /* layout 9 */
+    { uint32_t have[2]; uint8_t sha[64], want[32], got[32]; /* the set's identity is the two that run */
+      have[0] = 0x202u, have[1] = 0x203u; mu_sha256(package[3], 48, sha); mu_sha256(package[4], 44, sha + 32);
+      CHECK(runtime_journal_set_digest(have, sha, 2, want));
+      have[0] = be32(set + HEADER), mu_sha256(set + HEADER + 8, be32(set + HEADER + 4), sha);
+      have[1] = be32(set + HEADER + 56), mu_sha256(set + HEADER + 64, be32(set + HEADER + 60), sha + 32);
+      CHECK(runtime_journal_set_digest(have, sha, 2, got) && !memcmp(want, got, 32)); }
+    /* A power cycle: the two install, the third stays off. */
+    boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 2 && modwerk_modset_off_list(off, 0, 4) == 8 + MODSET_OFF_ENTRY && be32(off + 12) == 0x201u);
+    run(GUARD_SETTLE + 1u);
+    /* Refused, and nothing changes: playing, a host session, a module a track runs, one that is not there. */
+    written = writes;
+    modwerk_test_playing = 1; CHECK(modwerk_modset_switch(0x202u, 0)); modwerk_modset_service(); modwerk_test_playing = 0;
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCH_PLAYING);
+    modwerk_test_host_busy = 1; CHECK(modwerk_modset_switch(0x202u, 0)); modwerk_modset_service(); modwerk_test_host_busy = 0;
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCH_BUSY);
+    refuse_id = 0x202u; CHECK(modwerk_modset_switch(0x202u, 0)); modwerk_modset_service(); refuse_id = 0;
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCH_REFUSED + RUNTIME_IN_USE);
+    CHECK(modwerk_modset_switch(0x777u, 0)); modwerk_modset_service(); CHECK(modwerk_modset_switch_result == MODSET_SWITCH_GONE);
+    CHECK(modwerk_modset_switch(0x202u, 1)); modwerk_modset_service(); CHECK(modwerk_modset_switch_result == MODSET_SWITCH_GONE);
+    refuse_id = 0x201u; CHECK(modwerk_modset_switch(0x201u, 1)); modwerk_modset_service(); refuse_id = 0;
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCH_REFUSED + RUNTIME_IN_USE);
+    CHECK(modwerk_modset_count == 2 && writes == written && off_bytes == 512 && be32(OFF + 8) == 1 && !pending);
+    /* On: the shelved package installs byte for byte and joins the set; the shelf is empty on the card too. */
+    prepared = 0; CHECK(modwerk_modset_switch(0x201u, 1)); modwerk_modset_service();
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCHED && prepared == 1 && ids[0] == 0x201u && modwerk_modset_count == 3 && !off_bytes);
+    CHECK(be32(set + used() - 80) == 0x201u && be32(set + used() - 76) == 72 && !memcmp(set + used() - 72, named[0], 72));
+    CHECK(writes == written + 1 && !card_shelf_bytes[slot]);
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 3 && !off_bytes);
+    run(GUARD_SETTLE + 1u);
+    /* Three off, then the middle one on: the two beside it keep their packages. */
+    CHECK(modwerk_modset_switch(0x202u, 0)); modwerk_modset_service(); CHECK(modwerk_modset_switch(0x201u, 0)); modwerk_modset_service();
+    CHECK(modwerk_modset_switch(0x203u, 0)); modwerk_modset_service();
+    CHECK(!modwerk_modset_count && used() == HEADER && be32(OFF + 8) == 3);
+    CHECK(modwerk_modset_switch(0x201u, 1)); modwerk_modset_service();
+    CHECK(modwerk_modset_count == 1 && modwerk_modset_off_list(off, 0, 4) == 8 + 2 * MODSET_OFF_ENTRY && be32(off + 12) == 0x202u &&
+          be32(off + 12 + MODSET_OFF_ENTRY) == 0x203u && off_whole(OFF, off_bytes));
+    mu_sha256(package[4], 44, sum); CHECK(!memcmp(off + 32 + MODSET_OFF_ENTRY, sum, 32));
+    CHECK(modwerk_modset_off_list(off, 1, 4) == 8 + MODSET_OFF_ENTRY && be32(off + 12) == 0x203u && off[5] == 2); /* paged */
+    /* A host that installs a module that is off switches it on; one that removes it takes it off the shelf. */
+    accept(3, 48); CHECK(modwerk_modset_count == 2 && be32(OFF + 8) == 1 && be32(OFF + OFF_HEADER) == 0x203u);
+    make(2, 0x203u, 1); accept(2, 32); CHECK(modwerk_modset_count == 2 && !off_bytes);
+    modwerk_modset_service(); CHECK(!pending);
+    /* PROJ held at power-on skips the set and keeps the shelf. A set whose shelf is damaged is not whole: the other
+     * file's older set restores, as after a write cut short between the two. */
+    CHECK(modwerk_modset_switch(0x202u, 0)); modwerk_modset_service(); CHECK(modwerk_modset_switch_result == MODSET_SWITCHED && !pending);
+    HOLD(PROJ); boot(); modwerk_modset_service(); LET_GO();
+    CHECK(modwerk_modset_result == SKIPPED && !installed && off_bytes == 512 && be32(OFF + OFF_HEADER) == 0x202u);
+    /* This start runs none of the card's set: a switch now would save the one module over all of them, so it waits. */
+    written = writes; CHECK(modwerk_modset_switch(0x202u, 1)); modwerk_modset_service();
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCH_PARTIAL && writes == written && used() == HEADER && off_bytes == 512);
+    CHECK(modwerk_modset_is_off(0x202u) && !modwerk_modset_is_off(0x201u) && !modwerk_modset_is_off(0));
+    off_moving = 1; CHECK(!modwerk_modset_is_off(0x202u)); off_moving = 2; /* while the shelf moves: not sure, so not off */
+    /* Another base's set, a damaged file or a module the restore refused: a restart comes back the same, so a sync. */
+    for (uint32_t r = FOREIGN; r <= REFUSED; ++r) {
+        modwerk_modset_result = r; CHECK(modwerk_modset_switch(0x202u, 1)); modwerk_modset_service();
+        CHECK(modwerk_modset_switch_result == MODSET_SWITCH_SYNC && writes == written && off_bytes == 512);
+    }
+    modwerk_modset_result = HELD; CHECK(modwerk_modset_switch(0x202u, 1)); modwerk_modset_service();
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCH_PARTIAL);
+    modwerk_modset_result = SKIPPED;
+    card_shelf[slot][OFF_HEADER + OFF_RECORD + 9] ^= 1;
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 2 && !off_bytes); /* the older file: both on */
     if (failures) { fprintf(stderr, "%u module set checks failed\n", failures); return 1; }
     puts("Octatrack module set: saved in turn, removals dropped, the newest whole set restored, damaged and foreign sets and a held PROJ or FUNC refused, "
-         "a Keep joined only as the trial's identity and reported unsaved until saved, a start that crashed or stopped while restoring guarded.");
+         "a Keep joined only as the trial's identity and reported unsaved until saved, a start that crashed or stopped while restoring guarded, "
+         "modules switched off and on at once and kept off across power cycles.");
     return 0;
 }

@@ -176,14 +176,12 @@
       "sites": 23,
       "copies": 5,
       "fills": 0,
-      "version": "0.3.1-experimental",
+      "version": "0.3.3-experimental",
       "name": "POLY8",
       "module": "9fa85eef",
-      "bytes": 59308,
-      "sha256": "dc2ce372af73b93ef9e34a1c05c8ad18269631e0f20ed4f94e461310990466b9",
-      "path": "octatrack-modules/poly8/0.3.1-experimental.mwrm",
-      "lagsBehind": "0.3.2-experimental",
-      "lagReason": "0.3.2 changes only the card build's machine chooser (#842, #941, #942); over USB the base owns the chooser, and the package rebuilds byte-identical from 0.3.2's source"
+      "bytes": 59808,
+      "sha256": "1d9e9ecae22a60b592e5cfc8750adcdf0060faad36c826b6e6abb5393bb86c21",
+      "path": "octatrack-modules/poly8/0.3.3-experimental.mwrm"
     },
     {
       "id": "vector",
@@ -191,16 +189,14 @@
       "abi": 8,
       "features": 131,
       "sites": 2,
-      "copies": 8,
+      "copies": 9,
       "fills": 0,
-      "version": "0.2.5-experimental",
+      "version": "0.3.2-experimental",
       "name": "VECTOR",
       "module": "b0d51c58",
-      "bytes": 18354,
-      "sha256": "45c962ca3a202ac697e3d33d97e4b3b94052706a390189e5baf923fa829de577",
-      "path": "octatrack-modules/vector/0.2.5-experimental.mwrm",
-      "lagsBehind": "0.3.1-experimental",
-      "lagReason": "0.3.1 is 0.2.6's code, rolling back 0.3.0 (the MIDI generator becomes its own module): it changes only the card build, whose st_setup_page no longer tests for row 5, which VECTOR's USB adapter already dropped (#972, #1119); the package's control unit source is byte-identical to 0.2.5's"
+      "bytes": 18334,
+      "sha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
+      "path": "octatrack-modules/vector/0.3.2-experimental.mwrm"
     },
     {
       "id": "synth",
@@ -208,14 +204,14 @@
       "abi": 8,
       "features": 131,
       "sites": 24,
-      "copies": 38,
+      "copies": 39,
       "fills": 0,
-      "version": "0.1.2-experimental",
+      "version": "0.1.3-experimental",
       "name": "FM Synth",
       "module": "e8c3e4fa",
-      "bytes": 29810,
-      "sha256": "6e5716540d78b652b272c364ddf398f688eb9dff7e2b926b2895e250341aaca7",
-      "path": "octatrack-modules/synth/0.1.2-experimental.mwrm"
+      "bytes": 30498,
+      "sha256": "19e7e08c864de3ef4007aff3f6d6b33965844fe95df153e7bce3d67206295efd",
+      "path": "octatrack-modules/synth/0.1.3-experimental.mwrm"
     },
     {
       "id": "quantizer",
@@ -342,7 +338,7 @@
       "bytes": 2636,
       "sha256": "fd275bf2f8eb1340228d12224b3b84560584038c6637e6ed9775e50c60914f09",
       "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
-      "requiredBase": "8183698e2a4cc0292e4340ddd494b1c13c6735799da30fe101393a2c81909c10"
+      "requiredBase": "c14b4d4c277355ec87bd0bf78af66d77fc59e8df3b78274ceedd135f2aeec04e"
     },
     {
       "id": "output-matrix",
@@ -358,7 +354,7 @@
       "bytes": 3740,
       "sha256": "d905f7e04554d9f49c6e8761feffa9e9b6f6187cb8bd2c263cc209e932de2252",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "8183698e2a4cc0292e4340ddd494b1c13c6735799da30fe101393a2c81909c10"
+      "requiredBase": "c14b4d4c277355ec87bd0bf78af66d77fc59e8df3b78274ceedd135f2aeec04e"
     },
     {
       "id": "cc-map",
@@ -374,7 +370,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "8183698e2a4cc0292e4340ddd494b1c13c6735799da30fe101393a2c81909c10"
+      "requiredBase": "c14b4d4c277355ec87bd0bf78af66d77fc59e8df3b78274ceedd135f2aeec04e"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -450,9 +446,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "b39bfa9f124f33f4de887dc830694c7072747f7a19b5568a47adc8d0cd73a353",
+      "sha256": "41df2585a57ba347a6b484c34311c50a9d51a3d3f7d28ecf5def1534ac6bfc78",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "8183698e2a4cc0292e4340ddd494b1c13c6735799da30fe101393a2c81909c10"
+      "requiredBase": "c14b4d4c277355ec87bd0bf78af66d77fc59e8df3b78274ceedd135f2aeec04e"
     },
     {
       "id": "analog-bassdrum",
@@ -468,7 +464,7 @@
       "bytes": 26172,
       "sha256": "8f1bb88c67d1903c6189fe558947d909934df39a9839fe3d2921561bca1dceff",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "8183698e2a4cc0292e4340ddd494b1c13c6735799da30fe101393a2c81909c10",
+      "requiredBase": "c14b4d4c277355ec87bd0bf78af66d77fc59e8df3b78274ceedd135f2aeec04e",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -494,6 +490,21 @@
       "module": "c8d078f2",
       "bytes": 5780,
       "sha256": "6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d"
+    },
+    {
+      "id": "temp-save",
+      "octabam": true,
+      "version": "0.1.1-experimental",
+      "path": "octatrack-modules/temp-save/0.1.1-experimental.mwrm",
+      "abi": 7,
+      "features": 1,
+      "sites": 2,
+      "copies": 0,
+      "fills": 0,
+      "name": "Temp Save",
+      "module": "84a2f52f",
+      "bytes": 1088,
+      "sha256": "a389aa93c6408ba99f4049247934dc371c2fcad6cee72e039876a8d3df451ea9"
     },
     {
       "id": "slow-lfo",
@@ -620,13 +631,61 @@
       "sites": 0,
       "copies": 0,
       "fills": 0,
-      "version": "0.1.0-experimental",
+      "version": "0.3.0-experimental",
       "name": "Amiga",
       "module": "d0711972",
-      "bytes": 11316,
-      "sha256": "18cef8b2d5d9152fd12d85d8ca607821776587b6f5b87868f7984eec02373ff3",
-      "path": "octatrack-modules/amiga/0.1.0-experimental.mwrm",
+      "bytes": 13248,
+      "sha256": "acae3fef97f85a941c3215e1065353c94967ff44bb9528c22135c611a8edc32e",
+      "path": "octatrack-modules/amiga/0.3.0-experimental.mwrm",
       "usbOnly": true
+    },
+    {
+      "id": "midi-scenes",
+      "octabam": true,
+      "usbOnly": true,
+      "version": "0.3.0-experimental",
+      "abi": 8,
+      "features": 129,
+      "sites": 33,
+      "copies": 0,
+      "fills": 0,
+      "name": "MIDI Scenes",
+      "module": "21a6ffd7",
+      "bytes": 8560,
+      "sha256": "f38ae755bbf3c3a6a675209b1421292e5806f0e8c1ac44bbd7a0d55e1ff546d5",
+      "path": "octatrack-modules/midi-scenes/0.3.0-experimental.mwrm"
+    },
+    {
+      "id": "kits",
+      "octabam": true,
+      "usbOnly": true,
+      "version": "0.1.0-experimental",
+      "abi": 8,
+      "features": 129,
+      "sites": 15,
+      "copies": 0,
+      "fills": 0,
+      "name": "Kits",
+      "module": "9ea848b6",
+      "bytes": 12954,
+      "sha256": "f1c13a071b299906dccd7eee60c8b01e82dea9212921f5d7fb28ca14b5932c0b",
+      "path": "octatrack-modules/kits/0.1.0-experimental.mwrm"
+    },
+    {
+      "id": "tuner",
+      "octabam": true,
+      "version": "0.1.0-experimental",
+      "requiresCapabilities": 1024,
+      "abi": 7,
+      "features": 1,
+      "sites": 3,
+      "copies": 0,
+      "fills": 0,
+      "name": "Tuner",
+      "module": "fc7a2965",
+      "bytes": 22920,
+      "sha256": "05fef3971afaabec88d5e7238a185b7fd0fce171c91f02ff41ecee7294e9dbd7",
+      "path": "octatrack-modules/tuner/0.1.0-experimental.mwrm"
     }
   ]
 }

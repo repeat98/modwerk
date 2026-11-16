@@ -24,12 +24,12 @@ the stock UI clock; POLY playback/recording still follows the native sequencer.
 | Tag/code | `a` | `b` |
 | --- | --- | --- |
 | POLY/1 | Transport bits 0–7, live REC 8–15, grid REC 16–23, modal present bit 24, sample slots present bit 25 | Selected track 24–31, Part 16–23, pattern 8–15, native fired flags 0–7 |
-| POLY/2 | Render entries, including ordinary stock sample tracks | Render completions |
+| POLY/2 | Render entries of POLY tracks (before 0.3.3 also of ordinary stock sample tracks) | Render completions |
 | POLY/3 | POLY stock-fetch calls | Requested source frames |
 | POLY/4 | Diagnostic module version `0x00020500` | Active voice cap 8; emitted once at initialization |
 | POLY/5 | Panel POLY record callbacks, even when REC is off | Successful native chord placements |
 | POLY/6 | Last recorded track 24–31, zero-based step 16–23, root 8–15, chord shape 0–7 | Active POLY heads 24–31, highest physical selector 16–23, current selector 8–15, chromatic mode 0–7 |
-| POLY/7 | Native command-consumer hook calls, including stock tracks | Native AMP-builder hook calls, including stock tracks |
+| POLY/7 | Native command-consumer hook calls on POLY tracks (before 0.3.3 also on stock tracks) | Native AMP-builder hook calls on POLY tracks (before 0.3.3 also on stock tracks) |
 
 These are stage-call counts, not a frame counter: invocation frequency depends on native track/command paths. Zero or stopped deltas locate missing progress only in combination with transport and other counters.
 

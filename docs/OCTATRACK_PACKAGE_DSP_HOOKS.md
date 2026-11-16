@@ -219,8 +219,7 @@ A registry like `events.json`: `sdk/machines/octatrack/dsp-sites.json`, with `ev
 
 The base build installs the JSR and a dormant stub at every catalogued site, as it does for today's resident features.
 The stub's on path becomes `jsr <placed entry>`, then the displaced instruction, then `rts`: **the base replays the
-stock instruction, never the package.** A package then carries no stock words at all, so it stays stock-free under the
-unchanged scans. Today's engines end with the displaced instruction themselves (Sidechain's `sctap` ends with it); a
+stock instruction, never the package.** A package then carries no stock words at all. Today's engines end with the displaced instruction themselves (Sidechain's `sctap` ends with it); a
 package must not.
 
 Initial sites, all already hooked by resident features or requested:
@@ -269,10 +268,9 @@ engine, or both (RINGMOD SC needs both: an insert and a tap):
   engine (`modwerk_dsp_source_claim`): a hook at the dispatcher costs on every track of the core whether or not a reader is
   active, so it is a per-core engine price, not a per-instance one.
 
-`build.py --dsp-hook` derives all of it from the module's manifest (`DspHook`, `DspRange`) and refuses, before
-packaging: a site not in the catalogue, a stock guard that differs from the catalogue's, a register outside the site's
-contract (checked on the disassembly, as build_bus's round-trip audit does), a `rep`, a stack depth over the site's
-allowance, or a missing `rts`.
+No `build.py --dsp-hook` exists: `hook_engines.py` builds an engine, `abi9.engine()` packages it, `dsp_sites.py --check`
+proves each site against its manifest, `dsp-source-gates.py` refuses a `rep`, and `scripts/dsp-register-contract.py`
+(module:doctor) reports writes outside a site's `clobbers`, refusing from a date the owner sets. Stack depth is unchecked.
 
 ### 4. The lifecycle (the on-demand engine path, generalised)
 
@@ -556,7 +554,7 @@ reviewed change.
 - Base: the site catalogue and its generator, stubs for every catalogued site, hook slots and their base words, the
   generalised receiver op 10, the ledger in the manager, the init-record writer, the reference-counted key bus.
 - Loader: ABI 9 parsing, admission, and the hook slot lifecycle in `resident_engines.c`'s place.
-- Tools: `build.py --dsp-hook`, the register and `rep` audit, `modules:compat` reading the catalogue and the claims.
+- Tools: `modules:compat` reading the catalogue and the claims (the register and `rep` checks exist).
 - Tests: host tests in the style of `test_resident_engines_board.py` (place, enable, refuse, remove, a stuck PLACE);
   the DSP interpreter run of the bus with two readers on both cores and enable offsets, as for #640's phase test.
 - Hardware: the base requalified once; per module, install, removal and reinstall with the key latency the same each

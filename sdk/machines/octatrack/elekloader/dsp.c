@@ -153,7 +153,7 @@ static char owner_name[MODWERK_FX_IDS][16];
 static uint8_t *owner_page[MODWERK_FX_IDS]; /* its page recipe (the module image's head), and that image's length */
 static uint32_t owner_page_bytes[MODWERK_FX_IDS];
 static uint8_t owner_pinned[MODWERK_FX_IDS]; /* its ColdFire code names this id: it never moves (loader.h) */
-static uint32_t owner_cycles[MODWERK_FX_IDS]; /* an instance's chip cycles a sample, unfloored (status.c's MODULE LOAD) */
+static uint32_t owner_cycles[MODWERK_FX_IDS]; /* an instance's chip cycles a sample, unfloored (status.c's MODULE COST) */
 /* Each slot's least charge: the dearest stock effect this bank's Parts name there, working or saved, the one it runs and
  * the one `ids` asks for. A module id counts nothing here: each module is admitted for itself, and a Part naming one
  * that does not fit is refused at the switch. */
@@ -559,7 +559,7 @@ int modwerk_dsp_bank_names(unsigned id)
     return named;
 }
 
-/* MODULE LOAD (status.c): each installed module effect, by handle: its name, an instance's chip cycles a sample
+/* MODULE COST (status.c): each installed module effect, by handle: its name, an instance's chip cycles a sample
  * (unfloored: what it costs, not the ledger's charge), whether that is a hardware figure, and how many slots run it
  * on each core (T1-T4 core 1, T5-T8 core 0). Returns how many it wrote, at most MODWERK_FX_IDS. */
 unsigned modwerk_dsp_module_loads(struct modwerk_module_load *out)
@@ -629,6 +629,29 @@ fx_set modwerk_dsp_dry(void)
  * LOAD_HOLD ticks (about a minute), in case one never ends. */
 #define LOAD_HOLD 3600u
 static unsigned last_track = 0xffu, load_held;
+int modwerk_fxmap_describe(unsigned id, uint32_t *module, uint16_t *layout, char *name); /* fxmap.c */
+#ifndef MODWERK_HOST
+/* machine_registry.c's map of the machines a project uses; a base without the registry has none. */
+__attribute__((weak)) int modwerk_machine_absent(unsigned k, uint32_t *module, char *name) { (void)k, (void)module, (void)name; return 0; }
+__attribute__((weak)) int modwerk_machine_track_absent(unsigned t, uint32_t *module, char *name) { (void)t, (void)module, (void)name; return 0; }
+#endif
+/* The track's machine, when the project's machine map names it and it is absent: "POLY8 IS OFF" when it is switched
+ * off on MODULES, else "MISSING POLY8" (owner, 16 November 2026: machines in the project map). */
+static int machine_notice(unsigned track, char *text)
+{
+    uint32_t module = 0;
+    char name[16];
+    if (track >= 8u || !modwerk_machine_track_absent(track, &module, name)) return 0;
+    int off = modwerk_modset_is_off(module);
+    unsigned n = 0;
+    if (!off) for (const char *t = "MISSING "; *t; ) text[n++] = *t++;
+    unsigned at = n;
+    for (unsigned i = 0; i < 15u && name[i]; ++i) text[n++] = name[i] >= 'a' && name[i] <= 'z' ? (char)(name[i] - 32) : name[i];
+    if (n == at) for (const char *t = "MACHINE"; *t; ) text[n++] = *t++;
+    if (off) for (const char *t = " IS OFF"; *t; ) text[n++] = *t++;
+    text[n] = 0;
+    return 1;
+}
 int modwerk_dsp_missing_tick(int following, unsigned track, char *text)
 {
     if (!modwerk_fxmap_loading()) load_held = 0;
@@ -637,9 +660,21 @@ int modwerk_dsp_missing_tick(int following, unsigned track, char *text)
     last_track = track;
     fx_set say = {{0}};
     if (track < 8u) say = fx_and(modwerk_dsp_dry(), fx_with(fx_with(say, LIVE_FX[track]), LIVE_FX[8u + track]));
-    if (!fx_any(say)) return 0;
+    if (!fx_any(say)) return machine_notice(track, text);
     unsigned k = 0;
     while (!fx_in(say, k)) ++k;
+    /* A module switched off on PROJ > MODWERK > MODULES is not missing: "E-VERB IS OFF" (owner, 16 November 2026). */
+    uint32_t module = 0;
+    uint16_t layout;
+    char name[16];
+    if (modwerk_fxmap_describe(k, &module, &layout, name) && modwerk_modset_is_off(module)) {
+        unsigned n = 0;
+        for (; n < 15u && name[n]; ++n) text[n] = name[n] >= 'a' && name[n] <= 'z' ? (char)(name[n] - 32) : name[n];
+        if (!n) for (const char *t = "MODULE"; *t; ) text[n++] = *t++;
+        for (const char *t = " IS OFF"; *t; ) text[n++] = *t++;
+        text[n] = 0;
+        return 1;
+    }
     for (unsigned i = 0; i < 8u; ++i) text[i] = "MISSING "[i];
     modwerk_fxmap_name(k, text + 8);
     for (char *c = text + 8; *c; ++c) if (*c >= 'a' && *c <= 'z') *c = (char)(*c - 32); /* the popup sizes capitals only */
@@ -663,6 +698,17 @@ unsigned modwerk_dsp_missing_list(uint8_t *out, unsigned first, unsigned most)
         if (seen++ < first) continue;
         uint8_t *e = out + 4u + 24u * n++;
         e[0] = (uint8_t)k, e[1] = 0, e[2] = (uint8_t)(layout >> 8), e[3] = (uint8_t)layout;
+        for (unsigned i = 0; i < 4u; ++i) e[4 + i] = (uint8_t)(module >> (24 - 8 * i));
+        for (unsigned i = 0; i < 16u; ++i) e[8 + i] = (uint8_t)name[i];
+    }
+    /* Then the machines the project uses that are absent (machine_registry.c's map): handle 0xff, 0x80 and the entry. */
+    for (unsigned k = 0; k < MODWERK_MACHINE_MAP && n < most; ++k) {
+        uint32_t module;
+        char name[16];
+        if (!modwerk_machine_absent(k, &module, name)) continue;
+        if (seen++ < first) continue;
+        uint8_t *e = out + 4u + 24u * n++;
+        e[0] = 0xffu, e[1] = (uint8_t)(0x80u | k), e[2] = e[3] = 0;
         for (unsigned i = 0; i < 4u; ++i) e[4 + i] = (uint8_t)(module >> (24 - 8 * i));
         for (unsigned i = 0; i < 16u; ++i) e[8 + i] = (uint8_t)name[i];
     }
@@ -990,8 +1036,70 @@ static unsigned st_queued, st_deferred, st_used, st_try, st_slot, st_back, st_ba
 static uint32_t st_counted, st_frames, st_failures, st_reads;
 volatile uint32_t modwerk_selftest_key;
 void modwerk_post_key(unsigned code, int pressed); /* boot.c: through the panel's byte ringer */
+void modwerk_panel_bytes(uint8_t first, uint8_t second);
+/* Remote keys (the self-test's, a development base's USB keys) wait for a whole physical report (#1110). The panel
+ * sends two-byte reports through the same ringer, and its parser takes the byte after a header as that report's
+ * value: a remote report rung between a fader's header and its value gave the fader the remote header and read the
+ * fader's value as key rows (TRIG5-7 held, a FUNC release lost). So one is rung only when the ringer holds nothing
+ * and the parser expects a header, and only from the tick, a task: an interrupt above the parser's could see that
+ * state in the middle of its run. */
+#ifdef MODWERK_HOST
+uint32_t modwerk_test_panel_count;
+uint8_t modwerk_test_panel_header = 1;
+#define PANEL_COUNT modwerk_test_panel_count
+#define PANEL_HEADER modwerk_test_panel_header
+#else
+#define PANEL_COUNT (*(volatile uint32_t *)0x460ffda0u) /* bytes rung that the parser has not taken */
+#define PANEL_HEADER (*(volatile uint8_t *)0x400d16b8u) /* nonzero: its next byte starts a report */
+#endif
 static uint8_t st_lanes[8][72];
-static void press(unsigned code) { modwerk_selftest_key = code + 1u; modwerk_post_key(code, 1); modwerk_post_key(code, 0); }
+/* A key pressed and let go; 0 while the panel is in the middle of a report: the self-test asks again next tick. */
+static int press(unsigned code)
+{
+    uint32_t sr = modwerk_machine_mask();
+    int whole = !PANEL_COUNT && PANEL_HEADER;
+    if (whole) modwerk_selftest_key = code + 1u, modwerk_post_key(code, 1), modwerk_post_key(code, 0);
+    modwerk_machine_unmask(sr);
+    return whole;
+}
+#if defined(MODWERK_DEV) || defined(MODWERK_HOST)
+/* A development base's USB keys come from the USB interrupt, so they queue for the tick. A key whose row another key
+ * of this pass already changed waits a tick: the rows it is built from (boot.c) change once the parser has run. */
+#define REMOTE_KEYS 16u
+static volatile uint8_t remote[REMOTE_KEYS][3]; /* 1, code, pressed; or 0 and a report's two bytes */
+static volatile uint32_t remote_in, remote_out;
+static int remote_put(unsigned key, unsigned a, unsigned b)
+{
+    uint32_t sr = modwerk_machine_mask();
+    int room = remote_in - remote_out < REMOTE_KEYS;
+    if (room) {
+        volatile uint8_t *e = remote[remote_in % REMOTE_KEYS];
+        e[0] = (uint8_t)key, e[1] = (uint8_t)a, e[2] = (uint8_t)b;
+        remote_in = remote_in + 1;
+    }
+    modwerk_machine_unmask(sr);
+    return room;
+}
+int modwerk_remote_key(unsigned code, int pressed) { return code < 64u && remote_put(1, code, pressed != 0); }
+int modwerk_remote_bytes(uint8_t first, uint8_t second) { return remote_put(0, first, second); }
+static void remote_tick(void)
+{
+    uint8_t changed[8] = {0}; /* per key row: 1 + the key this pass changed there */
+    uint32_t sr = modwerk_machine_mask();
+    if (!PANEL_COUNT && PANEL_HEADER)
+        for (unsigned n = 0; n < 8u && remote_out != remote_in; ++n) { /* 16 of the ringer's 32 bytes at most */
+            volatile uint8_t *e = remote[remote_out % REMOTE_KEYS];
+            if (e[0]) {
+                unsigned row = e[1] >> 3;
+                if (changed[row] && changed[row] != e[1] + 1u) break;
+                changed[row] = (uint8_t)(e[1] + 1u);
+                modwerk_post_key(e[1], e[2]);
+            } else modwerk_panel_bytes(e[1], e[2]);
+            remote_out = remote_out + 1;
+        }
+    modwerk_machine_unmask(sr);
+}
+#endif
 /* The FX lane bytes of track t: page 1 FX1 18-23, FX2 24-29; page 2 FX1 0x32-0x37, FX2 0x38-0x3d. */
 static int fx_lane_byte(unsigned b) { return (b >= 18u && b < 30u) || (b >= 0x32u && b < 0x3eu); }
 static unsigned triangle(unsigned x) { x &= 255u; return x < 128u ? x : 255u - x; }
@@ -1234,7 +1342,7 @@ static void selftest_tick(void)
     if (t->state != SELFTEST_RUNNING) return;
     ++st_ticks;
     if (t->phase == SELFTEST_CONFIGURATION) { /* PLAY, and the checks once it plays */
-        if (!st_step) { press(0x28u), st_played = 1, st_step = 1, st_ticks = 0; return; }
+        if (!st_step) { if (press(0x28u)) st_played = 1, st_step = 1, st_ticks = 0; return; }
         if (PLAYING && st_ticks > 6u) { started(t); return; }
         if (st_ticks > 120u) t->failed |= SELFTEST_ABORTED, t->phase = SELFTEST_RESTORE, st_ticks = 0; /* it would not play */
         return;
@@ -1267,7 +1375,7 @@ static void selftest_tick(void)
     }
     set_live(st_live);
     if (!taken(st_live) && st_ticks <= 300u) return;
-    if (st_played && PLAYING) { if (st_step != 9) press(0x27u), st_step = 9, st_ticks = 0; if (st_ticks < 60u) return; }
+    if (st_played && PLAYING) { if (st_step != 9) { if (!press(0x27u)) return; st_step = 9, st_ticks = 0; } if (st_ticks < 60u) return; }
     finish();
 }
 #endif
@@ -1443,6 +1551,9 @@ void modwerk_dsp_tick(void)
         ((void (*)(const char *, unsigned))0x4005a2b8u)(text, 0xa0);
         modwerk_dsp_missing = modwerk_dsp_missing + 1;
     }
+#ifdef MODWERK_DEV
+    remote_tick();
+#endif
     if (nudge) { nudge = 0; dl_residency_nudge(); }
     if (picks_in == picks_out) return;
     uint32_t p = picks[picks_out % 4u];

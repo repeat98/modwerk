@@ -288,27 +288,33 @@ ts_reload:
         moveq   #0,%d1
         move.b  3(%a2),%d1
         lsl.l   %d1,%d0
+        |    (both bytes through an address register, so the package does not
+        |    repeat stock's own instruction bytes for this)
         move.l  (BANK_PTR).l,%a0
         add.l   #UNSAVED,%a0
+        lea     (CS1_UNSAVED).l,%a1
         move.b  (%a0),%d1
         or.l    %d0,%d1
         move.b  %d1,(%a0)
-        move.b  (CS1_UNSAVED).l,%d1
+        move.b  (%a1),%d1
         or.l    %d0,%d1
-        move.b  %d1,(CS1_UNSAVED).l
+        move.b  %d1,(%a1)
 
         | 3. FUNC + CUE's refresh, then the toast: the refresh repaints an open
         |    window, which would hide a toast drawn before it
-        moveq   #1,%d0
-        move.l  %d0,(REFRESH_ON).l
+        moveq   #1,%d1
+        move.l  %d1,(REFRESH_ON).l
+        |    The calls go through ts_refresh, a list of their addresses: the
+        |    same seven calls in stock's order, with -1 on the stack for each,
+        |    but not stock's own instruction bytes. d2 and a2 survive the
+        |    calls (C convention) and are restored below.
         pea     (-1).w
-        jsr     (0x4004d948).l
-        jsr     (0x40032208).l
-        jsr     (0x4004d640).l
-        jsr     (0x400486cc).l
-        jsr     (0x4006dbe8).l
-        jsr     (0x40077b00).l
-        jsr     (0x4002f2f8).l
+        lea     ts_refresh(%pc),%a2
+        moveq   #7-1,%d2                | the seven entries of ts_refresh
+1:      move.l  (%a2)+,%a0
+        jsr     (%a0)
+        subq.l  #1,%d2
+        bpl.s   1b
         addq.l  #4,%sp
         pea     (0x18).w
         pea     ts_text_reloaded(%pc)
@@ -371,6 +377,12 @@ ts_project:
         subq.l  #1,%d1
         bne.s   2b
 3:      rts
+
+| FUNC + CUE's refresh, in stock's order (ts_reload calls each in turn).
+        .balign 4
+ts_refresh:
+        .long   0x4004d948, 0x40032208, 0x4004d640, 0x400486cc
+        .long   0x4006dbe8, 0x40077b00, 0x4002f2f8
 
 ts_text_saved:    .asciz "TEMP SAVED"
 ts_text_reloaded: .asciz "RELOADED"

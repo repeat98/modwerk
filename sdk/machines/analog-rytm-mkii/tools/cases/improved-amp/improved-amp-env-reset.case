@@ -1,0 +1,58 @@
+# Improved AMP (0.1.0-experimental): SOUND SETTINGS > ENV RESET steps OFF, AMP, FILTER, AMP+FILT and stops
+# at both ends. Leaves it on OFF.
+# Screens only: what the pre-fade sounds like is in improved-amp-prefade.
+# The other rows of the menu are the kit's, so a reference is compared in the ENV RESET row only.
+# Both lists open on the row they were left on (seen on the unit), hence the UP presses before each
+# count down.
+# Changes the BD track's sound in the active kit and does not put it back.
+name: improved-amp-env-reset
+state: changes
+
+hold TRK
+key BD
+release TRK
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+wait 750
+screen off
+expect off == ref region 39 26 82 11
+key LEFT
+wait 750
+screen under
+expect under == off
+key RIGHT
+wait 750
+screen amp
+expect amp == ref region 39 26 82 11
+key RIGHT
+wait 750
+screen filter
+expect filter == ref region 39 26 82 11
+key RIGHT
+wait 750
+screen ampfilt
+expect ampfilt == ref region 39 26 82 11
+key RIGHT
+wait 750
+screen over
+expect over == ampfilt
+key LEFT
+wait 750
+screen back
+expect back == filter
+expect amp != off
+expect filter != amp
+expect ampfilt != filter
+key LEFT x3
+wait 750
+screen end
+expect end == off
+key NO x3
