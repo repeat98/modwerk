@@ -2,7 +2,7 @@
 
 ## Release qualification
 
-QC17 is the release candidate for Digitakt II OS 1.17. Two isolated builds reproduced Chord Arp package SHA-256 fa48f12af8b3e09ced5e66a09d58107ae3332dbeca99a49efa0673bc97fdeae0. It links with core 1.1 package SHA-256 ea66a96f64926db4eab2790427afd2e8cee9d7189ce95d19ef2ed4c5cb3d2047. The native and browser engines produced identical SYX output, SHA-256 3f1bf67f05d81a7d9065285ca6475e17e03d47c4e2d62bbb93979eb290cd27b8. Digikit completed the swung fast playback fixture and restored two track settings and all eight trig locks through the project serializer and loader. Physical testing of this exact candidate is pending.
+QC17 is the release candidate for Digitakt II OS 1.17. Two isolated builds reproduced Chord Arp package SHA-256 fa48f12af8b3e09ced5e66a09d58107ae3332dbeca99a49efa0673bc97fdeae0. It links with core 1.1 package SHA-256 ea66a96f64926db4eab2790427afd2e8cee9d7189ce95d19ef2ed4c5cb3d2047. The native and browser engines produced identical SYX output, SHA-256 3f1bf67f05d81a7d9065285ca6475e17e03d47c4e2d62bbb93979eb290cd27b8. Digikit completed the swung fast playback fixture and restored two track settings and all eight trig locks through the project serializer and loader. On hardware, track selection, swing and groove, and built-in Euclidean playback passed. The tester confirmed the eight-lock limit and asked for a higher cap. Project reload and stock OS reopen were not confirmed on QC17.
 
 ## Latest hardware reference
 

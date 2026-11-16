@@ -156,7 +156,7 @@ struct chord_arp_project {
     struct packed_lock locks[CHORD_ARP_LOCK_CAPACITY];
     uint8_t reserved[2];
 };
-_Static_assert(sizeof(struct chord_arp_project) == 448, "Chord Arp archive size");
+_Static_assert(sizeof(struct chord_arp_project) == 1000, "Chord Arp archive size");
 
 static void save_project(void *data)
 {
@@ -260,7 +260,7 @@ static void load_project(const void *data)
 }
 
 const dt2_project_archive_t chord_arp_project_archive = {
-    UINT32_C(0x43415232), sizeof(struct chord_arp_project), save_project, load_project,
+    UINT32_C(0x43415233), sizeof(struct chord_arp_project), save_project, load_project,
 };
 
 /* OS 1.17: the stock trig editor resolves its selected track through this view. */
