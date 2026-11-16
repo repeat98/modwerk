@@ -65,6 +65,11 @@ describe('the Octatrack hub', () => {
     expect(modulesToPutBack('new', SAVED_BY_ANOTHER_BASE, undefined)).toBeUndefined() // not read yet
     rememberInventory('old', empty, '2026-10-21T10:00:00.000Z')
     expect(modulesToPutBack('new', SAVED_BY_ANOTHER_BASE, empty)).toBeUndefined() // the old base was empty too
+    // Switched off on the old base: put back with the rest, and named, since they come back on.
+    rememberInventory('old', { moduleIds: ['everb'], removedStockFx: [], offIds: ['tapeecho', 'everb'] }, '2026-10-22T10:00:00.000Z')
+    expect(modulesToPutBack('new', SAVED_BY_ANOTHER_BASE, empty)).toMatchObject({ moduleIds: ['everb', 'tapeecho'], offIds: ['tapeecho'] })
+    store.set('modwerk.octatrack.last-seen', '{"old":{"moduleIds":["everb"],"removedStockFx":[],"at":"2026-10-23T10:00:00.000Z","offIds":["poly8",3]}}')
+    expect(lastInventory()?.offIds).toBeUndefined() // a damaged list, or ones not put back: none named
   })
   it('works without storage', () => {
     vi.stubGlobal('localStorage', { getItem() { throw new Error('blocked') }, setItem() { throw new Error('blocked') } })
