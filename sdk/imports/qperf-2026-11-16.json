@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/qperf",
+  "version": "0.2.1-experimental",
+  "date": "2026-11-16",
+  "changes": [
+    "35 functions reached only from the key, tick and project handlers are marked cold, so GCC builds them for size; the audio handler, the lockers and the pad gate are unchanged and the module stays at -O2. 17,805 to 15,881 bytes of RAM; no behaviour change."
+  ],
+  "runtimeSourceSha256": "a52b93352eb451401a577d291a7449a248e229a7b38d0f3271fb7365f597ea2f",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/qperf/qperf-0.2.1-experimental-os1.74.elemod",
+      "sha256": "98127e16dc0d1c65cb78344bb9183441d346a3a9626d6d0c0d2b1467da73f0c0"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/qperf/TESTING.md",
+  "requires": []
+}
