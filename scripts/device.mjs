@@ -49,7 +49,7 @@ import { OCTATRACK } from '../vendor/elekloader/kit/src/devices.ts'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
 import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
-import { DSP_REPORT_NAMES as REPORT_NAMES, describeStallFrames } from '../src/community/octatrack-diagnostics-contract.ts'
+import { DSP_REPORT_NAMES as REPORT_NAMES, describeStallFrames, describeStallPackets } from '../src/community/octatrack-diagnostics-contract.ts'
 import { encodeModuleSet } from '../src/engine/elekloader/set-package.ts'
 import { diagnostics, removal, runLifecycle, runtimePackage, ENTRY } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { describeRefusal } from './loader-refusals.mjs'
@@ -431,6 +431,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
         const kept = tv.getUint32(0) === 0x4d574654 && tv.getUint32(4) === w(1)
         console.log(`stall ${w(1)}: ${['test', 'frames stopped', 'eDMA refused a transfer'][w(2)] ?? 'reason ' + w(2)} at tick ${w(3)}\n  ` +
         named(i => i < w(4) ? w(5 + i) : 0) + `\n  packets core 0 ${Buffer.from(b.subarray(404, 420)).toString('hex')} core 1 ${Buffer.from(b.subarray(420, 436)).toString('hex')}` +
+        '\n  ' + describeStallPackets({ packets: [0, 1].map(c => Array.from({ length: 8 }, (_, i) => v.getUint16(404 + 16 * c + 2 * i))), report: Array.from({ length: Math.min(w(4), 96) }, (_, i) => w(5 + i)) }) +
         `\n  live FX ${Buffer.from(b.subarray(436, 452)).toString('hex')}\n  host ISR selected core 0x${v.getUint16(452).toString(16)} ` +
         `(RXDF ${v.getUint16(452) & 1}: a word the ColdFire never took), core 1 as last read 0x${v.getUint16(454).toString(16)}` +
         (kept ? '\n  ' + describeStallFrames(Array.from({ length: 256 }, (_, i) => us(i))) + '\n  gaps ' + Array.from({ length: 128 }, (_, i) => us(2 * i)).join(' ') + '\n  runs ' + Array.from({ length: 128 }, (_, i) => us(2 * i + 1)).join(' ') : '\n  no frames kept with it (a base before the trace)'))
@@ -455,7 +456,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
         for (const r of log.loads.slice(-6)) console.log(`  #${r.seq} boot ${r.boot} min ${r.minute} cpu ${r.cpu.map(v => v / 10).join('/')}% T1-4 ${r.dsp1to4.map(v => v / 10).join('/')}% ` +
           `T5-8 ${r.dsp5to8.map(v => v / 10).join('/')}% playing ${r.playing}/${r.samples}` + (r.frameGap !== undefined ? ` frame gap ${r.frameGap} us, tick gap ${r.tickGap} frames` : ''))
         if (log.crash) console.log(`  crash record ${log.crash.count}: vector ${log.crash.vector} PC 0x${log.crash.pc.toString(16)} code ${log.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${log.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}` + lined(crashNames(namesFor(identity.base), log.crash.pc, log.crash.stack)))
-        if (log.stall) console.log(`  stall record ${log.stall.count}: reason ${log.stall.reason} tick ${log.stall.ticks}, ${log.stall.report.length} report words` + (log.stall.frames ? '\n    ' + describeStallFrames(log.stall.frames) : ''))
+        if (log.stall) console.log(`  stall record ${log.stall.count}: reason ${log.stall.reason} tick ${log.stall.ticks}, ${log.stall.report.length} report words` + [describeStallFrames(log.stall.frames, log.stall)].filter(Boolean).map(line => '\n    ' + line).join(''))
       }
     }
     else if (step === 'crash') { // crash.c's record in battery RAM: what the last error exception was, and where
