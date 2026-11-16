@@ -91,10 +91,21 @@ type Connect = (transport: UsbVendorTransport, base: string, options?: { timeout
 /** A base update over USB, step by step: the new base staged and started from RAM (the trial), then, running, writing its own
  * container to NOR and restarting on it. */
 export type BaseUpdateStep = 'staging' | 'starting' | 'started' | 'writing' | 'saving' | 'reconnecting' | 'restarting' | 'done'
+/** `slow`: a restart ('starting', 'restarting') is not back after POWER_CYCLE_MS, and switching off and on is safe now. */
+export type BaseUpdateReport = (step: BaseUpdateStep, fraction?: number, slow?: boolean) => void
 /** A base write ended without a verdict this many times: the user is told to keep the unit on and try again. */
 const BASE_WRITE_ATTEMPTS = 4
 /** How long a unit may take to come back after a write step failed (a slow NOR erase, then the restart). */
 const RECONNECT_MS = 120000
+/** A restart is back in 5-13 s in the field (docs/OCTATRACK_BETA_TEST_PLAN.md item 78), 12-16 s on the bench: past this
+ * the unit has more likely lost USB, which only a power cycle brings back (the soft reset stops the USB controller first;
+ * such a stop is reported to leave the USB PHY dead about once in 76 to 200 stops, not measured on a Modwerk base). The
+ * site then asks for one and still takes a late return. */
+export const POWER_CYCLE_MS = 25000
+/** Not back from the trial's restart: nothing is written yet, so a power cycle starts the flashed base. */
+const NOT_BACK = 'Your Octatrack didn’t come back after its restart. Switch it off and on, then start the update again.'
+/** Not back from the restart after a verified save (a base before the two slots): it starts the new base. */
+const NOT_BACK_SAVED = 'Your Octatrack didn’t come back after saving the new base. Switch it off and on: it starts on the new base.'
 /** Connected this long without going away again: any restart the reconnect set off has happened. */
 const STEADY_MS = 2000
 /** Two slots: the save goes into the spare slot, so the current base stays whole whatever happens to it. */
@@ -517,16 +528,16 @@ export class OctatrackLink {
    * sent, and the caller installs the step base first (base-step.ts). `afterStep` is that second update: the unit
    * still runs the step base from RAM, so its first arming only restarts it on the same base from flash.
    */
-  async updateBase(bin: Uint8Array, expected: string, report: (step: BaseUpdateStep, fraction?: number) => void = () => {}, signal?: AbortSignal, afterStep = false) {
+  async updateBase(bin: Uint8Array, expected: string, report: BaseUpdateReport = () => {}, signal?: AbortSignal, afterStep = false) {
     try {
-      await this.writeBase(bin, expected, afterStep, (step, fraction) => {
+      await this.writeBase(bin, expected, afterStep, (step, fraction, slow) => {
         const shown = step === 'done' ? undefined : step
         if (shown !== this.baseStep) { this.baseStep = shown; this.set(this.state) }
-        report(step, fraction)
+        report(step, fraction, slow)
       }, signal)
     } finally { if (this.baseStep) { this.baseStep = undefined; this.set(this.state) } }
   }
-  private async writeBase(bin: Uint8Array, expected: string, afterStep: boolean, report: (step: BaseUpdateStep, fraction?: number) => void, signal?: AbortSignal) {
+  private async writeBase(bin: Uint8Array, expected: string, afterStep: boolean, report: BaseUpdateReport, signal?: AbortSignal) {
     const file = formats.parse(bin, OCTATRACK) as ElekFile, container = file.container, image = file.section(3)
     if (this.state.status !== 'ready' || !this.state.identity?.canSubmit) throw new Error('Connect the Octatrack first.')
     // The new base starts from RAM first (the trial, the update's one restart: owner, 25 October 2026) and writes itself
@@ -536,15 +547,18 @@ export class OctatrackLink {
     const late = this.slotsRead?.layout === 'two' ? UNCONFIRMED_TWO : UNCONFIRMED
     let current = this.state.identity.base
     const armedFrom: string[] = []
+    let cycled = false // asked for a power cycle, and the unit came back on the base it was armed from: armed once more
     // Only the flashed base's gate reads the mailbox: armed from a RAM-booted base, the unit comes back on the flashed one, which arms it properly.
     while (current !== expected) {
-      if (armedFrom.filter(base => base === current).length > (afterStep && current === armedFrom[0] ? 1 : 0)) throw new Error(`The Octatrack came back on base ${baseName(current)}, not the new one. A power cycle returns to the flashed base.`)
+      if (armedFrom.filter(base => base === current).length > (afterStep && current === armedFrom[0] ? 1 : 0) + (cycled ? 1 : 0)) throw new Error(`The Octatrack came back on base ${baseName(current)}, not the new one. A power cycle returns to the flashed base.`)
       armedFrom.push(current)
       report('staging', 0)
       const connection = this.connection
       await this.sendBase(current, image, 60000, fraction => report('staging', fraction), signal, session => session.activate().then(() => {}))
       report('starting')
-      current = await this.returned(connection, signal)
+      let slow = false
+      current = await this.returned(connection, signal, undefined, NOT_BACK, () => { slow = true; report('starting', undefined, true) })
+      if (slow && current !== expected) cycled = true
     }
     report('started')
     if (!this.canUpdateBase()) throw new Error('The new base can’t write itself over USB, so install it from the card. A power cycle returns the Octatrack to its current base.')
@@ -577,7 +591,7 @@ export class OctatrackLink {
           return report('done')
         }
         report('restarting')
-        const back = await this.returned(connection, signal, 90000, late)
+        const back = await this.returned(connection, signal, 90000, NOT_BACK_SAVED, () => report('restarting', undefined, true))
         if (back !== expected) throw new Error(`After the write the Octatrack came back on base ${baseName(back)}, not the new one.`)
         return report('done')
       } catch (error) {
@@ -638,12 +652,15 @@ export class OctatrackLink {
       } finally { await this.release() }
     })
   }
-  /** The unit going away (the connection counter moves on) and coming back after a restart: the base it reports then. */
-  private returned(connection: number, signal?: AbortSignal, timeoutMs = 90000, late = `The Octatrack did not come back within ${timeoutMs / 1000} s. A power cycle boots its flashed base.`) {
+  /** The unit going away (the connection counter moves on) and coming back after a restart: the base it reports then.
+   * `slow` runs once it is not back after POWER_CYCLE_MS; the wait goes on. */
+  private returned(connection: number, signal?: AbortSignal, timeoutMs = 90000, late = `The Octatrack did not come back within ${timeoutMs / 1000} s. A power cycle boots its flashed base.`, slow?: () => void) {
     return new Promise<string>((resolve, reject) => {
-      const done = (settle: () => void) => { stop(); clearTimeout(timer); signal?.removeEventListener('abort', aborted); settle() }
+      let over = false
+      const done = (settle: () => void) => { over = true; stop(); clearTimeout(timer); clearTimeout(hint); signal?.removeEventListener('abort', aborted); settle() }
       const aborted = () => done(() => reject(new DOMException('The base update was cancelled.', 'AbortError')))
       const timer = setTimeout(() => done(() => reject(new Error(late))), timeoutMs)
+      const hint = slow ? setTimeout(() => { if (!over) slow() }, POWER_CYCLE_MS) : undefined
       const check = () => {
         const { status, identity } = this.state
         if (this.connection === connection) return

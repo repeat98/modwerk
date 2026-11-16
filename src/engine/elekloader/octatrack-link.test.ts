@@ -4,7 +4,7 @@ import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrac
 import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
-import { BaseTooBigError, LinkBusyError, OctatrackLink, StaleLoadError, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
+import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, StaleLoadError, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
 import { UsbVendorTransport, parseBaseSlots } from './upload-usb'
 
@@ -789,15 +789,69 @@ describe('updating the base over USB', () => {
     expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'saving', 'done'])
     expect(unit.flashed).toBe(expected); expect(unit.base).toBe(expected); expect(restarts()).toBe(1)
   })
+  // A restart can lose USB until the power is cycled (reported, not yet measured on a Modwerk base): past POWER_CYCLE_MS
+  // the site asks for one instead of waiting out 90 s, and still takes a late return.
+  const noting = (steps: string[]) => (step: string, _fraction?: number, slow?: boolean) => { steps.push(slow ? step + ' slow' : step) }
   // A tester's unit saved the new base, then hung at the logo on the restart: the site said "reconnecting", wrote again
   // and ended on the text about MIDI recovery. A verified save is not written again; the restart's failure ends it.
   it('ends an update whose restart after the saved write never comes back, without writing again', async () => {
     const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
     unit.restartHangs = true
     vi.useFakeTimers({ toFake: ['setTimeout'] })
-    await expect(run(link.updateBase(bin, expected, step => steps.push(step)))).rejects.toThrow('Keep it switched on')
-    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'saving', 'restarting'])
+    await expect(run(link.updateBase(bin, expected, noting(steps)))).rejects.toThrow('Switch it off and on: it starts on the new base.')
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'saving', 'restarting', 'restarting slow'])
     expect(unit.flashed).toBe(expected)
+  })
+  it('does not ask for a power cycle when the unit is back in time', async () => {
+    const { link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    await run(link.updateBase(bin, expected, noting(steps)))
+    await vi.advanceTimersByTimeAsync(2 * POWER_CYCLE_MS)
+    expect(steps.filter(step => step.endsWith('slow'))).toEqual([])
+  })
+  it('asks for a power cycle when the trial’s restart is not back, then carries on from the base the unit starts', async () => {
+    const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
+    unit.bootHangs = 1
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    const update = link.updateBase(bin, expected, noting(steps))
+    await vi.advanceTimersByTimeAsync(POWER_CYCLE_MS - 1000)
+    expect(steps.at(-1)).toBe('starting')
+    await vi.advanceTimersByTimeAsync(2000) // the sends before the restart take a few fake timer turns too
+    expect(steps.at(-1)).toBe('starting slow')
+    unit.base = unit.active = unit.flashed; unit.plug('base') // switched off and on: the flashed base starts
+    await run(update)
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'starting slow', 'staging', 'starting', 'started', 'writing', 'saving', 'restarting', 'done'])
+    expect(unit.flashed).toBe(expected)
+  })
+  it('still takes the new base when it comes back late by itself after the ask', async () => {
+    const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
+    unit.bootHangs = 1
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    const update = link.updateBase(bin, expected, noting(steps))
+    await vi.advanceTimersByTimeAsync(POWER_CYCLE_MS + 15000)
+    unit.plug('base') // still on the new base from RAM
+    await run(update)
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'starting slow', 'started', 'writing', 'saving', 'restarting', 'done'])
+  })
+  it('ends with the power cycle when the trial’s restart never comes back, nothing saved', async () => {
+    const { unit, link } = await linked(), { bin, expected } = fakeBin()
+    unit.bootHangs = 1
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    await expect(run(link.updateBase(bin, expected))).rejects.toThrow('Switch it off and on, then start the update again.')
+    expect(unit.flashed).toBe(FAKE_BASE)
+  })
+  it('stops when the unit comes back on its current base twice after asking for the power cycle', async () => {
+    const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
+    unit.bootHangs = 2
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    const update = link.updateBase(bin, expected, noting(steps)), failed = expect(update).rejects.toThrow('not the new one')
+    for (let cycle = 0; cycle < 2; cycle++) {
+      await vi.advanceTimersByTimeAsync(POWER_CYCLE_MS + 2000)
+      unit.base = unit.active = unit.flashed; unit.plug('base')
+    }
+    await run(update.catch(() => {})); await failed
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'starting slow', 'staging', 'starting', 'starting slow'])
+    expect(unit.flashed).toBe(FAKE_BASE)
   })
   it('converts a unit with one copy with one restart: the trial, then the new base saves itself and runs on', async () => {
     const unit = fakeUnit(), { link, restarts } = await counting(unit, 0), { bin, expected } = fakeBin(), steps: string[] = []
