@@ -104,7 +104,7 @@ A module reaches the musician and the instrument through an entry point: a key g
 
 Build your module to work with everything else: that is the default. Two modules must not take the same key gesture or the same stock screen, because the musician would get whichever one runs first. Declare what yours takes in `compatibility.uiClaims` in `octamod.module.json`, and the gate compares it with every active module:
 
-- `key:HELD+PRESSED`: the keys held, in any order, then the key pressed or the encoder turned, for example `key:UP+TEMPO` or `key:CUE+LEVEL`. Add `@PAGE` when it only works on one page (`key:FUNC+LEFT@CHROMATIC`); without it, the gesture counts on every page. `TRACK` and `TRIG` stand for any track or trig key, `A`-`F` and `LEVEL` for turning an encoder. The contract lists every name.
+- `key:HELD+PRESSED`: the keys held, in any order, then the key pressed or the encoder turned, for example `key:UP+TEMPO` or `key:CUE+LEVEL`. Add `@PAGE` when it only works on one page (`key:FUNC+LEFT@CHROMATIC`); without it, the gesture counts on every page. `TRACK` and `TRIG` stand for any track or trig key, `A`-`F` and `LEVEL` for turning an encoder, `PUSHA`-`PUSHF` for pressing one (`key:TRIG+PUSHD`: a trig held, knob D pressed). The contract lists every name.
 - `screen:NAME`: a stock window or page your module draws over or replaces, for example `screen:TEMPO`.
 - `[]` when it takes neither. What it adds through the base's FX list, machine list or menu rows is not a claim: the base shares those.
 
@@ -201,7 +201,7 @@ Each problem is one line naming the modules, the byte ranges and what each one p
 
 ## Performance
 
-A module that is slow, or that only works when it is the only thing running, takes the room of every other module and of the stock instrument. So every new module carries `evidence/performance.json`: worst-case cycles, a benchmark against the closest stock effect and a stress run, which `npm run perf:audit` judges and `module:doctor` requires. A new FX aims for the cost of stock SPRING REV at its worst settings. Read [MODULE_PERFORMANCE.md](../MODULE_PERFORMANCE.md) before you measure.
+A module that is slow, or that only works when it is the only thing running, takes the room of every other module and of the stock instrument. So every new module carries `evidence/performance.json`: worst-case cycles, a benchmark against the closest stock effect and a stress run, which `npm run perf:audit` judges and `module:doctor` requires. A new FX aims for the cost of stock SPRING REV at its worst settings. Every Octatrack module also names its CPU price (`resources.cpuPrice`), measured on a unit; a machine's is its descriptor's `reserved[0]` too, and `modules:check` refuses a module without one. Read [MODULE_PERFORMANCE.md](../MODULE_PERFORMANCE.md) before you measure.
 
 ## Digitakt and Digitone
 
