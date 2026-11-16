@@ -1,0 +1,43 @@
+# The runner's MIDI steps on stock behaviour: a knob turn sends its parameter out as NRPN (PARAM OUTPUT
+# NRPN, ENCODER DEST INT+EXT), and an NRPN in sets the parameter without sending it back. rytm-emu's own
+# settings are PARAM OUTPUT CC and ENCODER DEST INT, so the case sets them first with `emu` steps; a unit's
+# MIDI settings are its owner's, so the case runs on the emulator only. Changes the BD sound's FRQ (64 at the
+# end) and the emulator's MIDI settings (a snapshot each case: nothing kept).
+name: link-midi-out
+state: changes
+target: emu
+
+emu key GLOBAL
+emu wait 500
+emu key UP x12                      # GLOBAL opens on the row it was left on (REMOTE CTRL after the boot)
+emu key DOWN x3                     # MIDI CONFIG
+emu key YES
+emu wait 500
+emu key UP x4
+emu key DOWN                        # PORT CONFIG
+emu key YES
+emu wait 500
+emu key UP x12
+emu key DOWN x6                     # PARAM OUTPUT: CC to NRPN
+emu key LEFT
+emu key DOWN                        # ENCODER DEST: INT to INT+EXT
+emu key RIGHT
+emu key NO x3
+emu wait 500
+hold TRK
+key BD
+release TRK
+key FLTR
+cc 74 64
+wait 3500
+midi turn begin
+nudge E +4 per 3                    # FRQ, by the knob
+wait 750
+midi turn end
+expect turn has nrpn 1:20           # the turn goes out as FRQ's NRPN (1:20), on the auto channel
+expect turn lacks cc 74
+midi quiet begin
+nrpn 1:20 64
+wait 750
+midi quiet end
+expect quiet.count == 0             # a parameter set from MIDI is not sent back

@@ -5,7 +5,7 @@ import manifest from '../assets/octatrack-module-packages.json' with { type: 'js
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
 import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 import { removal } from '../../dev/octatrack-usb-lifecycle'
-import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
+import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
 
 const file = (path: string) => new Uint8Array(readFileSync(new URL('../../../public/' + path, import.meta.url)))
 const load = async (entry: { path: string }) => file(entry.path)
@@ -13,7 +13,7 @@ const empty = { moduleIds: [], removedStockFx: [] }
 
 describe('the site’s runtime packages', () => {
   it('publishes each listed module with its checked runtime identity, ABI and record counts', () => {
-    expect(USB_MODULE_IDS).toEqual(['everb', 'miniverb', 'tapehead', 'airwindows-chorus', 'lofi2', 'ring-sc', 'previewvol', 'apply-scene', 'repitch', 'poly8', 'vector', 'synth', 'quantizer', 'tapeecho', 'euclid', 'bbd', 'playmodes', 'mute-modes', 'sidechain-compressor', 'output-matrix', 'cc-map', 'quantize-live-rec-toggle', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'recorder-loop-fix', 'analog-bassdrum', 'beat-slicer', 'temp-save', 'slow-lfo', 'bar-led', 'tiempos', 'syntiz', 'track-solo', 'pattern-sample-locks', 'amiga', 'usb-audio-out-tracks-main-cue'])
+    expect(USB_MODULE_IDS).toEqual(['everb', 'miniverb', 'tapehead', 'airwindows-chorus', 'lofi2', 'ring-sc', 'previewvol', 'apply-scene', 'repitch', 'poly8', 'vector', 'synth', 'quantizer', 'tapeecho', 'euclid', 'bbd', 'playmodes', 'mute-modes', 'sidechain-compressor', 'output-matrix', 'cc-map', 'quantize-live-rec-toggle', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'recorder-loop-fix', 'analog-bassdrum', 'beat-slicer', 'temp-save', 'slow-lfo', 'bar-led', 'tiempos', 'syntiz', 'track-solo', 'pattern-sample-locks', 'amiga', 'midi-scenes', 'kits', 'usb-audio-out-tracks-main-cue'])
     for (const entry of manifest.packages) {
       const data = file(entry.path), view = new DataView(data.buffer), abi = view.getUint16(4)
       expect(entry.path).toBe(`octatrack-modules/${entry.id}/${entry.version}.mwrm`)
@@ -54,6 +54,20 @@ describe('preparing a module set', () => {
     expect(() => createRuntimeCatalogue({ packages: [{ ...entry, requiredBase: 'not-an-identity' }] })).toThrow('inconsistent')
     expect(() => createRuntimeCatalogue({ packages: [{ ...entry, requiredBase: [requiredBase] as unknown as string }] })).toThrow('inconsistent')
   })
+  it('leaves a module that is switched off on the unit off: no package for it, and nothing to sync for it alone', async () => {
+    const running = [{ handle: 27, layout: 1, module: '873d83cc', name: 'E-Verb' }], off = [{ handle: 0xff, layout: 1, module: runtimeId('tapehead'), name: 'TapeHead' }]
+    const current = inventoryFrom(running, off)
+    expect(current).toEqual({ moduleIds: ['everb'], removedStockFx: [], offIds: ['tapehead'] })
+    expect(inventoryFrom(running, [])).toEqual({ moduleIds: ['everb'], removedStockFx: [], offIds: [] }) // a base with the page, nothing off
+    expect(inventoryFrom(running, running).offIds).toEqual([]) // read a moment apart: what runs is not off
+    const capabilities = { abi: 8, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 }
+    expect(moduleSetReview({ name: 'Live', moduleIds: ['everb', 'tapehead'] }, current, capabilities)).toMatchObject({ needsSync: false, changes: { add: [], remove: [] } })
+    const { changes } = await prepareModuleSet({ name: 'Live', moduleIds: ['everb', 'tapehead', 'miniverb'] }, current, load, capabilities)
+    expect(changes.map(change => change.module)).toEqual(['Mini Verb'])
+    // Off and no longer in the set: the sync removes it from the unit, with its package to put it back on Undo.
+    const out = await prepareModuleSet({ name: 'Live', moduleIds: ['everb'] }, current, load, capabilities)
+    expect(out.changes).toEqual([{ module: 'TapeHead', data: removalPackage('tapehead'), undo: file(manifest.packages[2].path), replaces: true }])
+  })
   it('removes first, then installs, each with the package that undoes it', async () => {
     const current = inventoryFrom([{ handle: 27, layout: 1, module: '873d83cc', name: 'E-Verb' }, { handle: 0xff, layout: 0, module: '0000002a', name: '' }])
     expect(current).toEqual({ moduleIds: ['everb', '0000002a'], removedStockFx: [] })
@@ -61,8 +75,9 @@ describe('preparing a module set', () => {
       { abi: 8, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 })
     expect(name).toBe('Live')
     expect(changes.map(change => change.module)).toEqual(['E-Verb', '0000002a', 'TapeHead', 'Mini Verb'])
-    expect(changes[0]).toEqual({ module: 'E-Verb', data: removalPackage('everb'), undo: file(manifest.packages[0].path) })
-    expect(changes[1]).toEqual({ module: '0000002a', data: removalPackage('0000002a'), undo: undefined }) // nothing to put back
+    // A removal may be on a track (the loader's refusal 7 names it); a new module cannot be yet.
+    expect(changes[0]).toEqual({ module: 'E-Verb', data: removalPackage('everb'), undo: file(manifest.packages[0].path), replaces: true })
+    expect(changes[1]).toEqual({ module: '0000002a', data: removalPackage('0000002a'), undo: undefined, replaces: true }) // nothing to put back
     expect(changes[2]).toEqual({ module: 'TapeHead', data: file(manifest.packages[2].path), undo: removalPackage('tapehead') })
   })
   it('refuses what the base cannot do yet, before anything is sent', async () => {
@@ -102,13 +117,13 @@ describe('preparing a module set', () => {
     const moved = createRuntimeCatalogue({ packages: [{ ...entry, bytes: core.length, sha256: sha(core) }] })
     await expect(moved.prepare({ name: 'Set', moduleIds: ['repitch'] }, empty, async () => core, events)).rejects.toThrow('inconsistent')
   })
-  it('checks a raised event’s slot, a take event’s record and a table’s record as the loader does', async () => {
+  it('checks a raised event’s slot, a take event’s record, a table’s record and a module’s memory as the loader does', async () => {
     const index = (name: string) => siteEvents.events.find(event => event.event === name)!.index
     const events = { abi: 8, features: 7 | 128, maxSites: 128, maxCopies: 128 }
     // Authored synthetic bytes only: an ABI 8 header, hook words, a zeroed image, no records and no firmware data.
-    function subscriber(words: Record<number, number>, image = 96, slot = 0) {
+    function subscriber(words: Record<number, number>, image = 96, slot = 0, bss = 0) {
       const hooks = Math.max(...Object.keys(words).map(Number)) + 1, data = new Uint8Array(76 + 4 * hooks + image), v = new DataView(data.buffer)
-      v.setUint32(0, 0x4d57524d); v.setUint16(4, 8); v.setUint32(8, image); v.setUint32(20, hooks); v.setUint32(28, Number.parseInt(runtimeId('mute-modes'), 16))
+      v.setUint32(0, 0x4d57524d); v.setUint16(4, 8); v.setUint32(8, image); v.setUint32(12, bss); v.setUint32(20, hooks); v.setUint32(28, Number.parseInt(runtimeId('mute-modes'), 16))
       for (let i = 0; i < hooks; i++) v.setUint32(76 + 4 * i, words[i] ?? 0xffffffff)
       if (slot) v.setUint32(76 + 4 * hooks + slot, 0x12345678)
       const entry = { id: 'mute-modes', name: 'Mute Modes', abi: 8, features: 128, sites: 0, copies: 0, fills: 0, bytes: data.length, sha256: sha(data), path: 'test/sub.mwrm' }
@@ -125,6 +140,9 @@ describe('preparing a module set', () => {
     await expect(subscriber({ [index('ot_machines')]: order(16) })).resolves.toBeDefined()
     await expect(subscriber({ [index('ot_machines')]: order(20) })).rejects.toThrow('inconsistent') // an 80-byte record past the image
     await expect(subscriber({ [4 + SITE_EVENTS]: order(8) })).rejects.toThrow('inconsistent') // past the base's events
+    // Image and bss together up to 288 KiB (loader.h RUNTIME_MODULE_BYTES), past the 128 KiB image limit.
+    await expect(subscriber({ [index('ev_mute_keep')]: raise(8) }, 96, 0, 294912 - 96)).resolves.toBeDefined()
+    await expect(subscriber({ [index('ev_mute_keep')]: raise(8) }, 96, 0, 294912 - 95)).rejects.toThrow('inconsistent')
   })
   it('fetches the site’s copy and refuses one that did not arrive intact', async () => {
     const entry = manifest.packages[0], data = file(entry.path)
@@ -334,13 +352,20 @@ describe('machine groups over USB', () => {
     expect(result.changes).toEqual([{ module: 'Machines', data: packages[mask - 1].data, undo: removalPackage('octatrack-machines') }])
     expect(inventory(99 + mask)).toEqual({ moduleIds: wanted, removedStockFx: [], runtimeGroups: [{ id: 'octatrack-machines', layout: 99 + mask }] })
   })
+  it('leaves a machine package that is switched off on the unit off, and removes it by its own id when the set drops its machines', async () => {
+    const packages = [groupPackage(['vector', 'synth'], 14)], { catalogue, fetched } = machineCatalogue(packages)
+    const off = catalogue.inventory([], [{ handle: 255, layout: 14, module: runtimeId('octatrack-machines'), name: 'Machines' }])
+    expect(off).toEqual({ moduleIds: [], removedStockFx: [], offIds: ['vector', 'synth'] })
+    expect(catalogue.review({ name: 'Set', moduleIds: ['synth', 'vector'] }, off, capable)).toMatchObject({ needsSync: false, problem: undefined })
+    expect((await catalogue.prepare({ name: 'Set', moduleIds: [] }, off, fetched, capable)).changes).toEqual([{ module: 'Machines', data: removalPackage('octatrack-machines'), undo: undefined, replaces: true }])
+  })
   it('updates the same member IDs from a retained layout and restores that exact package on Undo', async () => {
     const old = groupPackage(['vector', 'synth'], 14, false), next = groupPackage(['vector', 'synth'], 29)
     const { catalogue, fetched, inventory } = machineCatalogue([old, next])
     const set = { name: 'Studio', moduleIds: ['synth', 'vector'] }
     expect(catalogue.review(set, inventory(14), capable)).toMatchObject({ needsSync: true, updates: ['synth', 'vector'], changes: { add: [], remove: [] }, problem: undefined })
     const prepared = await catalogue.prepare(set, inventory(14), fetched, capable)
-    expect(prepared.changes).toEqual([{ module: 'Machines', data: next.data, undo: old.data }])
+    expect(prepared.changes).toEqual([{ module: 'Machines', data: next.data, undo: old.data, replaces: true }]) // a track may play the old one
     expect(catalogue.review(set, inventory(29), capable)).toMatchObject({ needsSync: false, updates: [], problem: undefined })
   })
   it('does not substitute a larger combination when the selected subset is unpublished', async () => {
@@ -383,7 +408,7 @@ describe('machine groups over USB', () => {
   it('removes a known group as one transaction with the exact retained package for Undo', async () => {
     const old = groupPackage(allMachines, 11, false), { catalogue, fetched, inventory } = machineCatalogue([old])
     const result = await catalogue.prepare({ name: 'Empty', moduleIds: [] }, inventory(11), fetched, capable)
-    expect(result.changes).toEqual([{ module: 'Machines', data: removalPackage('octatrack-machines'), undo: old.data }])
+    expect(result.changes).toEqual([{ module: 'Machines', data: removalPackage('octatrack-machines'), undo: old.data, replaces: true }])
   })
   it.each(['member mask', 'layout', 'module id', 'flags', 'site count', 'copy count', 'fill count', 'truncated record', 'undo hash', 'site keep', 'site checked', 'odd site', 'empty copy', 'copy outside image', 'copy reserved', 'empty fill', 'fill outside image', 'zero fill value', 'fill reserved', 'fill over copy', 'nonzero placeholder'])('refuses %s mismatches before returning a transaction', async field => {
     const old = groupPackage(allMachines, 11, false), next = groupPackage(allMachines, 12)

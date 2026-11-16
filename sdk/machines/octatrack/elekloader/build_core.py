@@ -1684,7 +1684,7 @@ def main():
             usb_profiles = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb_profiles)
     for name in ('ep0.c', 'fxids.h', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s', 'flash.c', 'flash.h', 'slots.c', 'slots.h', 'modset.c', 'boot_anim.c', 'boot_anim.s', 'crash.c', 'crash.s', 'run_unpack.s') + (('dev.c',) if args.dev else ()) + (
             ('runtime_events.h', 'runtime_events.s', 'machine_registry.c', 'machine_registry.s', 'midi_generators.c',
-             'midi_generators.s') if args.site_events else ()):
+             'midi_generators.s', 'sample_memory.c') if args.site_events else ()):
         shutil.copyfile(HERE / name, source / name)
     # The boot stub's sector, which flash.c writes when it converts a unit to two slots (build_stub.py: stub_body.c).
     sys.path.insert(0, str(HERE))
@@ -1989,6 +1989,15 @@ def main():
     # IDENTIFY reports this configuration identity as the installed base.
     definitions += 'const uint8_t modwerk_base_digest[32] = {%s};\n' % ','.join(
         '0x' + identity[i:i+2] for i in range(0, 64, 2))
+    # The base's version, for people (owner, 16 November 2026): base-version.json, raised with every base that is
+    # published. status.c shows it; the site names a unit's base by it (sdk/machines/octatrack/base-versions.json).
+    # A patch number (owner, 16 November 2026: 0.7.1) is optional and said only when it is not 0, so 0.7 stays 0.7.
+    version = json.loads((HERE / 'base-version.json').read_text())
+    if set(version) not in ({'major', 'minor'}, {'major', 'minor', 'patch'}) or \
+            not all(type(n) is int and 0 <= n <= 999 for n in version.values()):
+        raise ValueError('base-version.json holds a major, a minor and an optional patch number, 0-999 each.')
+    definitions += 'const char modwerk_base_version[] = "%d.%d%s";\n' % (
+        version['major'], version['minor'], '.%d' % version['patch'] if version.get('patch') else '')
     for key, size in FIELDS.items():
         if len(values[key]) >= size:
             raise ValueError('Logger identity field exceeds capacity: ' + key)
@@ -2021,7 +2030,7 @@ def main():
             raise ValueError('PROJ\'s root menu is not the four stock rows; review the MODWERK category.')
         stock_rows = image[ROOT_ROWS - device.main_load:][:4 * 24]
         columns = [sum(1 << r for r in range(8) if ICON[r][c] == '#') << 24 for c in range(19)]
-        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'))
+        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'), ('switches', 'switches'))
         definitions += ('struct menu_row { const void *label, *window, *action, *value, *child; uint32_t page; };\n'
                         'extern char modwerk_menu_label[], %s;\nvoid %s;\n' % (
                             ', '.join('modwerk_%s_label[]' % label for label, _ in leaves),

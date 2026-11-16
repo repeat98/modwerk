@@ -217,6 +217,16 @@ and framebuffer data are removed by the script.
 - Without `--dsp` a session runs about ten times faster, for screens only (the firmware then shows DSP LOAD
   FAILED), and a package that carries a DSP engine (Analog BD) is refused at verify with loader refusal 3. Card samples do not play faithfully under the port, so compare levels against a sample on a unit.
 
+### Capturing the base's own screens
+
+`capture-module-ui.py` reads stock's LCD plane, so it misses everything a base draws through `ev_draw`: the startup,
+the CUE + PROJ status, the MODWERK pages' dialogs, the update and sync screens. A base image also runs past the
+emulator's default instruction budget before it is ready (`BUDGET -- instruction budget exhausted`); pass `--max 4000000000`.
+Capture those screens from a development twin (`build_core.py` with the release flags plus `--dev`) under `--usb-host`
+and `pace on`: `npm run device -- do 'PROJ w500 … png:FILE' --emulator --socket SOCK`, or the emulator's `peek` of the
+`screen` symbol (dev.c's composed frame) while `npm run device -- boot DIR` runs, which shows the real BASE UPDATE screen.
+The startup's last frame comes from `scripts/verify-startup-base.py --png`.
+
 ## Rights and release review
 
 Provide an accurate contributor declaration for original captures and preserve

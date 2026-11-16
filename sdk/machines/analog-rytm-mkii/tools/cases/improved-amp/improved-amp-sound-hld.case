@@ -1,0 +1,122 @@
+# Improved AMP: HLD's length is heard. BD hits by MIDI note with ATK 0 and DEC 55, 120 BPM at 1x: each hit
+# is longer than the one at HLD 0 by its hold (15: 10 ms, 31: 51 ms, 42: one step, 125 ms, 57: 298 ms). The
+# hold is a count of steps: at 90 BPM HLD 42 holds 166.7 ms, 41.7 ms longer, and it does not follow the
+# note's length. HLD 127 (AUTO) holds for as long as the note does.
+# The BD track needs a sound that rings for 600 ms or more with the AMP envelope open.
+# Measured on the unit on 10 Nov 2026 while the hold was a time (six runs): len20 10.0 at HLD 0, 20.0
+# to 20.5 at 15, 61.0 to 61.5 at 31, 134.5 to 135.0 at 42, 307.5 to 308.0 at 57; AUTO 108.0 to 109.5 for a
+# 100 ms note, 509.0 to 509.5 for 500 ms.
+# Changes the tempo and the BD track's AMP page in the active kit; ends at 120 BPM, HLD 0, the short decay.
+name: improved-amp-sound-hld
+state: changes
+target: unit
+
+hold TRK
+key BD
+release TRK
+# Tempo to 120.0: down to the bottom (30.0), then 90 BPM up, a step of the tempo screen's LEVEL being 1 BPM.
+key TEMPO
+enc LEVEL -127 x64
+nudge LEVEL +21 per 6 x4
+nudge LEVEL +6 per 6
+wait 500
+screen tempo
+expect tempo == ref region 40 15 88 33
+key NO
+# The BD track's scale is 1x, and the musical clock runs with the sequencer stopped (so the holds
+# below are counted on it, not on the standing-clock fallback).
+key FUNC+PAGE
+# The SCALE SETUP popup's edges (LCD rows 10 to 12 and 51 to 52) take a few frames to draw: only
+# its content is compared.
+wait 400
+screen scale1x
+expect scale1x == ref region 0 13 128 36
+key NO
+wait 300
+mem c1 0x8000fe54 4
+wait 200
+mem c2 0x8000fe54 4
+expect c1 != c2
+key AMP
+cc 78 0
+cc 79 0
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+wait 300
+audio h0 BD 1200
+wait 50
+note BD
+wait 1300
+cc 79 15
+wait 300
+audio h15 BD 1200
+wait 50
+note BD
+wait 1300
+cc 79 31
+wait 300
+audio h31 BD 1200
+wait 50
+note BD
+wait 1300
+cc 79 42
+wait 300
+audio h42 BD 1200
+wait 50
+note BD
+wait 1300
+wait 300
+audio h42long BD 1200
+wait 50
+note BD 100 400
+wait 1300
+cc 79 57
+wait 300
+audio h57 BD 1200
+wait 50
+note BD
+wait 1300
+cc 79 127
+wait 300
+audio autoshort BD 1500
+wait 50
+note BD 100 100
+wait 1600
+wait 300
+audio autolong BD 1500
+wait 50
+note BD 100 500
+wait 1600
+cc 79 42
+key TEMPO
+nudge LEVEL -15 per 6 x2
+wait 500
+screen tempo90
+expect tempo90 == ref region 40 15 88 33
+key NO
+wait 300
+audio h42at90 BD 1200
+wait 50
+note BD
+wait 1300
+key TEMPO
+nudge LEVEL +15 per 6 x2
+wait 500
+screen tempoback
+expect tempoback == tempo region 40 15 88 33
+key NO
+cc 79 0
+
+expect h0.hits == 1
+expect h15.len20 == h0.len20 + 10 within 2
+expect h31.len20 == h0.len20 + 51 within 3
+expect h42.len20 == h0.len20 + 125 within 3
+expect h57.len20 == h0.len20 + 298 within 4
+expect h42long.len20 == h42.len20 within 2
+expect h42at90.len20 == h42.len20 + 41.7 within 3
+expect autoshort.len20 == h0.len20 + 100 within 8
+expect autolong.len20 == h0.len20 + 500 within 8
