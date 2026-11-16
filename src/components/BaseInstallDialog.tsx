@@ -244,7 +244,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
     if (await siteUpdated()) return setOutdated(true)
     setDownload('building')
     try {
-      const image = await buildBase!(installLayout); saveFirmware(image.buffer, 'base', image.sha256)
+      const image = await buildBase!(installLayout); saveFirmware(image.buffer, 'base', image.base)
       const previousBase = link.getState().identity?.base
       waitForBaseInstall(image.sha256, image.base, previousBase, returnSetId)
       setPending({ sha256: image.sha256, expectedBase: image.base, previousBase, returnSetId }); setDownload('done'); setStage('copy')
