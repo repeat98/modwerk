@@ -12,6 +12,7 @@ import { BASELINE_PATH, WAIVERS_PATH, parseQualificationBaseline, parseReleaseWa
 import { parseRetainedResourceImpacts, requireModuleResourceImpact } from '../src/catalog/resource-impact.ts'
 import { USB_WAIVERS_PATH, parseUsbPackageWaivers } from './retained-evidence.mjs'
 import { requireKnownConflicts } from './conflict-ids.mjs'
+import { CPU_PRICE_PENDING_PATH, cpuPriceProblems, parseCpuPricePending, readCpuPricePending } from './module-cpu-price.mjs'
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),modules=resolve(root,'sdk/octatrack/modules')
 const args=process.argv.slice(2),write=args.includes('--write'),baseIndex=args.indexOf('--base'),base=baseIndex<0?null:args[baseIndex+1]
 if(baseIndex>=0&&!base)throw new Error('--base requires a Git commit/ref')
@@ -66,6 +67,10 @@ try{execFileSync(process.platform==='win32'?'python':'python3',['-B','scripts/ds
 catch(error){throw new Error('DSP source gates: '+(error.stderr||error.message).trim().split('\n').filter(line=>line.startsWith('error: ')).join('\n'),{cause:error})}
 const catalog=await json(resolve(root,'sdk/catalog.json'))
 if(catalog.schemaVersion!==1||!Array.isArray(catalog.modules)||!/^[a-f0-9]{40}$/.test(catalog.sourceRevision))throw new Error('Invalid SDK catalog pin')
+// Every module names its CPU price, a machine's the same as its descriptor's reserved[0]; the ones listed before the rule wait on one list that only shrinks (scripts/module-cpu-price.mjs).
+const basePending=baseCommit&&git('ls-tree','--name-only',baseCommit,'--',CPU_PRICE_PENDING_PATH).trim()===CPU_PRICE_PENDING_PATH?parseCpuPricePending(git('show',baseCommit+':'+CPU_PRICE_PENDING_PATH)):null
+const priceProblems=cpuPriceProblems({root,documents,catalog,pending:readCpuPricePending(root),basePending})
+if(priceProblems.length)throw new Error('CPU price ('+priceProblems.length+'): '+priceProblems.join('\n'))
 const selected=[],seen=new Set()
 for(const item of catalog.modules){const document=documents.get(item.id);if(!document||item.version!==document.version||seen.has(item.id))throw new Error('Catalog must pin each included module exactly once at its declared version: '+item.id);if(typeof item.addedAt!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(item.addedAt)||!Number.isFinite(Date.parse(item.addedAt)))throw new Error('Catalog entry needs addedAt, the UTC time the module was first added (for example 2026-10-05T12:00:00Z): '+item.id);if(previouslyIncluded&&!previouslyIncluded.has(item.id))requireModuleUiForPublication(document);seen.add(item.id);selected.push(document)}
 const generated=JSON.stringify({schemaVersion:2,revision:catalog.sourceRevision,modules:selected},null,2)+'\n',target=resolve(root,'src/catalog/module-documents.json')
@@ -74,4 +79,4 @@ const machineModules=await generateMachineModules({root,write,baseCommit})
 requireDistinctThumbnails(root)
 unlistedPackages(root)
 if(baseCommit){const problem=evidenceOnBaseProblem({root,base:baseCommit})??testingVersionProblem({root,base:baseCommit});if(problem)throw new Error(problem)}
-console.log('Validated '+documents.size+' Octatrack module folders and '+machineModules+' elemod module folders; '+selected.length+' version-pinned catalog entries; all CPU/DSP/memory gauges populated; two exact owner-waived utility versions retain untested hardware/unmeasured timing; worst-case cycles, exact memory, hardware test evidence and complete documentation/tutorial/screenshots required for new modules and runtime/resource changes; editorial updates may retain evidence from approved, byte-identical runtime inputs'+(baseCommit?'; version bumps and OT UI publication evidence checked against '+baseCommit:'.'))
+console.log('Validated '+documents.size+' Octatrack module folders and '+machineModules+' elemod module folders; '+selected.length+' version-pinned catalog entries; all CPU/DSP/memory gauges populated; every CPU price named or pending; two exact owner-waived utility versions retain untested hardware/unmeasured timing; worst-case cycles, exact memory, hardware test evidence and complete documentation/tutorial/screenshots required for new modules and runtime/resource changes; editorial updates may retain evidence from approved, byte-identical runtime inputs'+(baseCommit?'; version bumps and OT UI publication evidence checked against '+baseCommit:'.'))

@@ -8,6 +8,12 @@ export type ModuleMetric = { label: string; display: string; value: number | nul
 export type ResourceLoadLevel = 'minimal' | 'low' | 'moderate' | 'high'
 export type ResourceLoadEstimate = { level: ResourceLoadLevel; basis: 'source-estimate' | 'measured-comparison'; rationale: string; source: string }
 export type ModuleResourceImpact = { conditions: string; cpu: ResourceLoadEstimate; dsp: ResourceLoadEstimate; memory: ResourceLoadEstimate }
+// What a module costs the Octatrack's ColdFire, measured on a unit (docs/MODULE_PERFORMANCE.md, "Every module names its CPU price").
+// machine-render: a machine's worst render on one track, both passes of a frame, every voice playing (npm run device -- cpu); the
+// value is its descriptor's reserved[0], so a whole percent from 1. frame-interrupt: the share of the frame interrupt a module adds
+// installed and in use (npm run device:price), to a tenth of a point. scripts/module-cpu-price.mjs requires one of every module.
+export const MODULE_CPU_PRICE_MEASURES = ['machine-render', 'frame-interrupt'] as const
+export type ModuleCpuPrice = { value: number; unit: 'percent-of-frame'; measure: typeof MODULE_CPU_PRICE_MEASURES[number]; tool: string; date: string; conditions: string; source: string }
 export type ModuleControl = { name: string; default: number; count: number; doc: string; labels: string[] | null }
 export type ModuleUiCapture = { page: string; shows: 'location' | 'controls' | 'location-and-controls'; firmware: '1.40C'; moduleVersion: string; imageSha256: string; setup: string }
 export type QualificationConditions = { parameterExtremes: string; parameterModulation: string; modeSwitching: string; maxLoad: string; inputConditions: string }
@@ -38,7 +44,7 @@ export type ModuleDocument = {
   access?: { location: string; steps: string[]; screenshots: string[]; noUiReason?: string }
   controls: ModuleControl[]
   compatibility: { firmware: '1.40C'; effectId: number | null; location: 'FX1' | 'FX2' | 'FX1 / FX2' | 'Flex / Static' | 'Track machine' | 'Audio tracks' | 'MIDI tracks' | 'Project sequencer' | 'USB'; conflicts: string[]; uiClaims?: string[]; limitations: string[] }
-  resources: { recorded: string; storage: ModuleMetric; processing: ModuleMetric; impact?: ModuleResourceImpact }
+  resources: { recorded: string; storage: ModuleMetric; processing: ModuleMetric; impact?: ModuleResourceImpact; cpuPrice?: ModuleCpuPrice }
   tests: { report: string; summary: string; hardwareStatus: 'untested' | 'historical' | 'reported' | 'verified'; evidenceRevision: string; gates: string[]; documentation?: ModuleQualification['documentation']; qualification?: ModuleQualification; releaseWaiver?: ModuleReleaseWaiver; retainedEvidence?: { commit: string; moduleVersion: string; documentation: ModuleQualification['documentation'] } }
   license: { spdx: string; file: string; declaration: string }
   media: { path: string; captureType: 'hardware' | 'emulator' | 'audio'; caption: string; alt: string; credit: string; license: string; source: string; otUi?: ModuleUiCapture }[]
@@ -167,6 +173,19 @@ export function parseModuleResourceImpact(value: unknown, path='resources.impact
   }
   return {conditions:text(impact.conditions,path+'.conditions',1000),cpu:estimate('cpu'),dsp:estimate('dsp'),memory:estimate('memory')}
 }
+export function parseModuleCpuPrice(value: unknown, path='resources.cpuPrice'): ModuleCpuPrice {
+  const p=object(value,path,['value','unit','measure','tool','date','conditions','source'])
+  const measure=enumeration(p.measure,path+'.measure',MODULE_CPU_PRICE_MEASURES)
+  if(p.unit!=='percent-of-frame') fail(path+'.unit','expected percent-of-frame')
+  const v=p.value
+  if(measure==='machine-render'&&(typeof v!=='number'||!Number.isInteger(v)||v<1||v>100)) fail(path+'.value','a machine\'s render price is its descriptor\'s reserved[0]: a whole percent of a frame from 1 to 100')
+  if(measure==='frame-interrupt'&&(typeof v!=='number'||!Number.isFinite(v)||v<0||v>100||Math.abs(Math.round(v*10)-v*10)>1e-9)) fail(path+'.value','expected the measured share from 0 to 100, to a tenth of a point')
+  const tool=text(p.tool,path+'.tool',200), expected=measure==='machine-render'?'npm run device -- cpu':'npm run device:price'
+  if(!tool.startsWith(expected)) fail(path+'.tool','a '+measure+' price is read with '+expected)
+  const date=text(p.date,path+'.date',10)
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date+'T00:00:00Z'))) fail(path+'.date','expected the day it was measured, YYYY-MM-DD')
+  return {value:v as number,unit:'percent-of-frame',measure,tool,date,conditions:text(p.conditions,path+'.conditions',1000),source:modulePath(p.source,path+'.source')}
+}
 export function parseModuleDocument(value: unknown): ModuleDocument {
   const d=object(value,'module',['schemaVersion','id','key','name','version','category','author','nativeManifest','presentation','controls','compatibility','resources','tests','license','media'],['source','build','access'])
   if(d.schemaVersion!==2) fail('schemaVersion','expected 2')
@@ -193,8 +212,9 @@ export function parseModuleDocument(value: unknown): ModuleDocument {
   const uiClaims='uiClaims' in c?list(c.uiClaims,'compatibility.uiClaims',16).map((v,i)=>uiClaim(v,'compatibility.uiClaims['+i+']')):undefined
   if(c.effectId!==null&&(typeof c.effectId!=='number'||!Number.isInteger(c.effectId)||c.effectId<4||c.effectId>31))fail('compatibility.effectId','expected a valid effect ID or null for contributions without an effect slot')
   if(c.firmware!=='1.40C') fail('compatibility.firmware','only 1.40C is supported')
-  const r=object(d.resources,'resources',['recorded','storage','processing'],['impact'])
+  const r=object(d.resources,'resources',['recorded','storage','processing'],['impact','cpuPrice'])
   const impact='impact' in r?parseModuleResourceImpact(r.impact):undefined
+  const cpuPrice='cpuPrice' in r?parseModuleCpuPrice(r.cpuPrice):undefined
   const t=object(d.tests,'tests',['report','summary','hardwareStatus','evidenceRevision','gates'],['qualification','releaseWaiver','retainedEvidence','documentation'])
   const evidenceRevision=text(t.evidenceRevision,'tests.evidenceRevision',40)
   if(!/^[a-f0-9]{40}$/.test(evidenceRevision)) fail('tests.evidenceRevision','pin the exact evidence source commit')
@@ -253,7 +273,7 @@ export function parseModuleDocument(value: unknown): ModuleDocument {
   const waiver='releaseWaiver' in t?releaseWaiver(t.releaseWaiver):undefined
   if(proof&&waiver) fail('tests','use measured qualification or an owner release waiver, never both')
   const documentation='documentation' in t?qualificationDocumentation(t.documentation,'tests',noUi):undefined
-  return {schemaVersion:2,id,key:text(d.key,'key',60),name:text(d.name,'name',100),version,category:enumeration(d.category,'category',MODULE_CATEGORIES),...(source?{source}:{}),...(build?{build}:{}),...(access?{access}:{}),author:{github,...authorName,credits:texts(a.credits,'author.credits',30)},nativeManifest,presentation:{label:text(p.label,'presentation.label',80),family:text(p.family,'presentation.family',80),summary:text(p.summary,'presentation.summary',300),overview:text(p.overview,'presentation.overview'),highlights:texts(p.highlights,'presentation.highlights',12),usage:texts(p.usage,'presentation.usage',12)},controls,compatibility:{firmware:'1.40C',effectId:c.effectId as number|null,location:enumeration(c.location,'compatibility.location',['FX1','FX2','FX1 / FX2','Flex / Static','Track machine','Audio tracks','MIDI tracks','Project sequencer','USB']),conflicts:texts(c.conflicts,'compatibility.conflicts',64),...(uiClaims?{uiClaims}:{}),limitations:texts(c.limitations,'compatibility.limitations',24)},resources:{recorded:text(r.recorded,'resources.recorded',100),storage:metric(r.storage,'resources.storage'),processing:metric(r.processing,'resources.processing'),...(impact?{impact}:{})},tests:{report:modulePath(t.report,'tests.report'),summary:text(t.summary,'tests.summary'),hardwareStatus:enumeration(t.hardwareStatus,'tests.hardwareStatus',['untested','historical','reported','verified']),evidenceRevision,gates:texts(t.gates,'tests.gates',64),...(documentation?{documentation}:{}),...(proof?{qualification:proof}:{}),...(waiver?{releaseWaiver:waiver}:{}),...(retainedEvidence?{retainedEvidence}:{})},license:{spdx:text(l.spdx,'license.spdx',100),file:modulePath(l.file,'license.file'),declaration:text(l.declaration,'license.declaration')},media}
+  return {schemaVersion:2,id,key:text(d.key,'key',60),name:text(d.name,'name',100),version,category:enumeration(d.category,'category',MODULE_CATEGORIES),...(source?{source}:{}),...(build?{build}:{}),...(access?{access}:{}),author:{github,...authorName,credits:texts(a.credits,'author.credits',30)},nativeManifest,presentation:{label:text(p.label,'presentation.label',80),family:text(p.family,'presentation.family',80),summary:text(p.summary,'presentation.summary',300),overview:text(p.overview,'presentation.overview'),highlights:texts(p.highlights,'presentation.highlights',12),usage:texts(p.usage,'presentation.usage',12)},controls,compatibility:{firmware:'1.40C',effectId:c.effectId as number|null,location:enumeration(c.location,'compatibility.location',['FX1','FX2','FX1 / FX2','Flex / Static','Track machine','Audio tracks','MIDI tracks','Project sequencer','USB']),conflicts:texts(c.conflicts,'compatibility.conflicts',64),...(uiClaims?{uiClaims}:{}),limitations:texts(c.limitations,'compatibility.limitations',24)},resources:{recorded:text(r.recorded,'resources.recorded',100),storage:metric(r.storage,'resources.storage'),processing:metric(r.processing,'resources.processing'),...(impact?{impact}:{}),...(cpuPrice?{cpuPrice}:{})},tests:{report:modulePath(t.report,'tests.report'),summary:text(t.summary,'tests.summary'),hardwareStatus:enumeration(t.hardwareStatus,'tests.hardwareStatus',['untested','historical','reported','verified']),evidenceRevision,gates:texts(t.gates,'tests.gates',64),...(documentation?{documentation}:{}),...(proof?{qualification:proof}:{}),...(waiver?{releaseWaiver:waiver}:{}),...(retainedEvidence?{retainedEvidence}:{})},license:{spdx:text(l.spdx,'license.spdx',100),file:modulePath(l.file,'license.file'),declaration:text(l.declaration,'license.declaration')},media}
 }
 
 /** New modules and updates need real UI evidence; unchanged legacy publications remain readable. */

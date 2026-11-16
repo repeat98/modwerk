@@ -201,7 +201,7 @@ Each problem is one line naming the modules, the byte ranges and what each one p
 
 ## Performance
 
-A module that is slow, or that only works when it is the only thing running, takes the room of every other module and of the stock instrument. So every new module carries `evidence/performance.json`: worst-case cycles, a benchmark against the closest stock effect and a stress run, which `npm run perf:audit` judges and `module:doctor` requires. A new FX aims for the cost of stock SPRING REV at its worst settings. Read [MODULE_PERFORMANCE.md](../MODULE_PERFORMANCE.md) before you measure.
+A module that is slow, or that only works when it is the only thing running, takes the room of every other module and of the stock instrument. So every new module carries `evidence/performance.json`: worst-case cycles, a benchmark against the closest stock effect and a stress run, which `npm run perf:audit` judges and `module:doctor` requires. A new FX aims for the cost of stock SPRING REV at its worst settings. Every Octatrack module also names its CPU price (`resources.cpuPrice`), measured on a unit; a machine's is its descriptor's `reserved[0]` too, and `modules:check` refuses a module without one. Read [MODULE_PERFORMANCE.md](../MODULE_PERFORMANCE.md) before you measure.
 
 ## Digitakt and Digitone
 
