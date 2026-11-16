@@ -39,7 +39,10 @@
       "Keep the scene key held and turn an encoder on a MIDI page to lock that parameter in the scene; press the encoder to clear the lock.",
       "Release the scene key and move the crossfader to morph between the two scenes."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/ot-scene-lock.png",
+      "media/ot-released.png"
+    ]
   },
   "controls": [],
   "compatibility": {
@@ -145,5 +148,40 @@
     "file": "LICENSE",
     "declaration": "Sam Banks' MIT rewrite from octabam with Modwerk's port changes, MIT. Stock sites are named by address, length and SHA-256 only. No firmware, extracted stock code or built images are included."
   },
-  "media": []
+  "media": [
+    {
+      "path": "media/ot-scene-lock.png",
+      "captureType": "hardware",
+      "caption": "Hold SCENE B on a MIDI track and turn a knob: the NOTE page shows scene B's locked values (NOTE E 3, VEL 120), highlighted as stock highlights an audio track's scene lock.",
+      "alt": "MIDI NOTE page of MIDI track 1 on pattern A01 with SCENE B held: NOTE E 3 and VEL 120 shown inverted as locked values, LEN 1/16.",
+      "credit": "Modwerk contributors (capture on the owner's MKII)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "MIDI NOTE page, SCENE B held",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
+        "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 (MAIN SHA-256 in imageSha256) booted from RAM, MIDI Scenes 0.3.0 installed as a 60-second trial (package SHA-256 f38ae755…), the owner's project on pattern A01, MIDI track 1, scene 1 on A and scene 9 on B, stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. The locks were cleared and the trial rolled back afterwards."
+      }
+    },
+    {
+      "path": "media/ot-released.png",
+      "captureType": "hardware",
+      "caption": "Let go of SCENE B: the page shows the Part's own values again (NOTE E 2, VEL 100). Move the crossfader to morph between them and the scene's locks.",
+      "alt": "MIDI NOTE page of MIDI track 1 on pattern A01 with no scene held: NOTE E 2, VEL 100, LEN 1/16.",
+      "credit": "Modwerk contributors (capture on the owner's MKII)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "MIDI NOTE page",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
+        "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 (MAIN SHA-256 in imageSha256) booted from RAM, MIDI Scenes 0.3.0 installed as a 60-second trial (package SHA-256 f38ae755…), the owner's project on pattern A01, MIDI track 1, scene 1 on A and scene 9 on B, stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. The locks were cleared and the trial rolled back afterwards."
+      }
+    }
+  ]
 }

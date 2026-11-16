@@ -196,6 +196,11 @@
       "id": "amiga",
       "version": "0.3.0-experimental",
       "addedAt": "2026-11-11T10:50:00Z"
+    },
+    {
+      "id": "midi-scenes",
+      "version": "0.3.0-experimental",
+      "addedAt": "2026-11-16T20:00:00Z"
     }
   ]
 }

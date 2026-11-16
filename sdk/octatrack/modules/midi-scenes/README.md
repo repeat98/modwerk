@@ -56,4 +56,12 @@ bkkbrls-del designed the behaviour in MIDISC ([midisc](https://github.com/bkkbrl
 
 ## Screens and audio
 
-None yet.
+![SCENE B held on a MIDI track: the NOTE page shows the scene's locks](media/ot-scene-lock.png)
+
+Hold SCENE B on a MIDI track and turn a knob: the page shows the held scene's locked values, highlighted.
+
+![SCENE B released: the Part's own values](media/ot-released.png)
+
+Let go: the page shows the Part's values again, and the crossfader morphs between them and the locks.
+
+Captured on an MKII (media/capture.json). No audio: MIDI Scenes sends MIDI only.
