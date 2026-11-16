@@ -512,6 +512,7 @@ static void check_machine_map(void)
     memcpy(host_at(0x46000000u + PART_OFF + SIG + 30u * 6u), "PL\1", 3); mc_stale = 1; modwerk_machine_map_refresh(); /* T7 signed POLY8, none installed */
     CHECK(modwerk_machine_absent(0, &m, name) && m == 0x9fa85eefu && modwerk_machine_track_absent(6, &m, name));
     CHECK(modwerk_machine_where(0, &b, &p, &t) == 1 && t == 6);
+    CHECK(modwerk_machine_where_module(0x9fa85eefu, &b, &p, &t) == 1 && t == 6 && !modwerk_machine_where_module(0x1234u, &b, &p, &t));
     memcpy(host_at(0x46000000u + 0x9504au + 2u * 6322u + SIG + 30u * 5u), "PL\1", 3); /* also in a saved Part 3's T6 */
     bank[0x9504au + 2u * 6322u + 0x22 + 5] = 1;
     memset(host_at(0x46000000u + PART_OFF + SIG + 30u * 6u), 0, 3); mc_stale = 1; modwerk_machine_map_refresh();

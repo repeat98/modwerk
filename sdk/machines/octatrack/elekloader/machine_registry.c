@@ -1100,6 +1100,13 @@ int modwerk_machine_where(unsigned k, unsigned *bank, unsigned *part_index, unsi
     }
     return 0;
 }
+/* status.c's MODULES page, a machine just switched off: where the project still names it, by its module. */
+int modwerk_machine_where_module(uint32_t module, unsigned *bank, unsigned *part_index, unsigned *track)
+{
+    for (unsigned k = 0; module && k < MODWERK_MACHINE_MAP && MCMAP->magic == MC_MAGIC; ++k)
+        if (MCMAP->e[k].module == module) return modwerk_machine_where(k, bank, part_index, track);
+    return 0;
+}
 /* fxmap.c, a project load: its '#MODWERK_MC=' lines, then the end. A project with lines names its machines; one
  * without (saved before them) keeps the map there is. Either way the installed machines it names are noted. */
 static struct mc_entry mc_staged[MODWERK_MACHINE_MAP];

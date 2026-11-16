@@ -48,6 +48,7 @@ int modwerk_modset_is_off(uint32_t module);
 int modwerk_machine_absent(unsigned k, uint32_t *module, char *name);
 int modwerk_machine_track_absent(unsigned track, uint32_t *module, char *name);
 int modwerk_machine_where(unsigned k, unsigned *bank, unsigned *part, unsigned *track);
+int modwerk_machine_where_module(uint32_t module, unsigned *bank, unsigned *part, unsigned *track);
 void modwerk_machine_map_refresh(void);
 void modwerk_machine_map_begin(void);
 void modwerk_machine_map_stage(const uint8_t *sig, unsigned lo, unsigned hi, uint32_t module, const char *name);

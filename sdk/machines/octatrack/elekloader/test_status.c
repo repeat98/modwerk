@@ -59,6 +59,9 @@ int modwerk_machine_where(unsigned k, unsigned *bank, unsigned *part, unsigned *
     *bank = 1, *part = 2, *track = 7;
     return 1;
 }
+/* ... and module 0x10 (Euclid in the MODULES rows below) is a machine the map names there too. */
+int modwerk_machine_where_module(uint32_t module, unsigned *bank, unsigned *part, unsigned *track)
+{ return module == 0x10u ? modwerk_machine_where(3, bank, part, track) : 0; }
 unsigned modwerk_dsp_missing_list(uint8_t *out, unsigned first, unsigned most)
 {
     (void)first, (void)most;
@@ -496,6 +499,9 @@ int main(void)
     map_module[20] = 0;
     modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); modwerk_modset_switch_result = MODSET_SWITCHED; switches_tick();
     CHECK(!switch_said);
+    /* A machine another bank's Part uses, by the project's machine map: where too. */
+    switch_waiting = 0, switch_asked = 0x10u, switch_asked_on = 0, switch_waiting = 1, modwerk_modset_switch_result = MODSET_SWITCHED;
+    switches_tick(); CHECK(switch_said == used_text && !strcmp(used_text, "USED IN B PART 3 T8"));
     asked_on = 1; unit[0].on = 0; switches_read(); /* switched on: nothing said either */
     modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); CHECK(asked_on == 1);
     map_module[20] = 0x30u; modwerk_modset_switch_result = MODSET_SWITCHED; switches_tick(); CHECK(!switch_said);

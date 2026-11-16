@@ -303,6 +303,8 @@ extern volatile uint32_t modwerk_modset_result;
 __attribute__((weak)) void modwerk_machine_map_refresh(void) {}
 __attribute__((weak)) int modwerk_machine_where(unsigned k, unsigned *bank, unsigned *part, unsigned *track)
 { (void)k, (void)bank, (void)part, (void)track; return 0; }
+__attribute__((weak)) int modwerk_machine_where_module(uint32_t module, unsigned *bank, unsigned *part, unsigned *track)
+{ (void)module, (void)bank, (void)part, (void)track; return 0; }
 #endif
 /* The list: the effects the project names that are not installed, then its absent machines (dsp.c). */
 static uint8_t missing[4 + 24 * MODWERK_MISSING_MAX];
@@ -564,7 +566,16 @@ static const char *still_used(uint32_t id)
         missing_where(s, at, 1);
         return text;
     }
-    return 0;
+    /* A machine: the project's machine map knows where (machine_registry.c); a Part of this bank naming it refuses the
+     * switch, so this is another bank's. */
+    unsigned bank = 0, part = 0, track = 0;
+    uint8_t at[4] = {(uint8_t)modwerk_machine_where_module(id, &bank, &part, &track), 0, 0, 0};
+    if (!at[0]) return 0;
+    at[1] = (uint8_t)bank, at[2] = (uint8_t)part, at[3] = (uint8_t)track;
+    char *s = used_text;
+    for (const char *t = "USED IN "; *t; ) *s++ = *t++;
+    missing_where(s, at, 1);
+    return used_text;
 }
 static void switches_tick(void)
 {
