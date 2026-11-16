@@ -155,7 +155,7 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
   // Hooks 0-3 are the core handlers; an ABI 8 package that subscribes to the base's site events (feature 128) adds one
   // word per event of sdk/machines/octatrack/events.json after them: its order in the top byte, its handler below.
   const subscriber = abi >= 8 && (want.features & RuntimeFeature.siteEvents) !== 0
-  if (flags & ~(abi >= 8 ? 7 : 3) || image + bss > 131072 || relocations > 2048 || hooks > (subscriber ? 4 + SITE_EVENTS : 4) ||
+  if (flags & ~(abi >= 8 ? 7 : 3) || image > 131072 || image + bss > 294912 || relocations > 2048 || hooks > (subscriber ? 4 + SITE_EVENTS : 4) ||
       view.getUint32(32) > 4096 || view.getUint16(36) > 256 || header + 4 * hooks + image + 4 * relocations > data.length) fail()
   if (variant) {
     const mask = variant.members.reduce((value, member) => value | MACHINE_BITS[member.id], 0), start = header + 4 * hooks
