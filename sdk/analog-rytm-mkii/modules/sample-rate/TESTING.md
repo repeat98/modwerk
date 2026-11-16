@@ -33,9 +33,9 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 
 0.6.0 is Improved SMPL 0.5.1 and Ping Pong Loop 0.1.2 in one module. The code is unchanged: Ping Pong Loop's `src/pipo.c`, `src/snap.c` and `src/marks.c` are copied as they were (comments only now name `src/pipo.s`), its `src/audio.s` is `src/pipo.s` here, and its sites, defsyms, cflags and claims join `build.json` as they were. The two modules shared no stock site: their 22 sites do not overlap (checked when merging), and the two audio-block gates stay in their order (RATE's at 0x4012112c, then PIPO's at 0x40121134). Shared cflags (`PARAMS_EFF_AT`, `VOICE_REC_AT`, `VOICE_OWNER_AT`, `TRIG_NEXT_AT`, `FILLRECT_AT`) carry the same values in both. Symbols keep their prefixes (`sample_rate_`, `pipo_loop_`), so none clash.
 
-- Build SP00 (vendored core-ar2 0.7 + Ping Pong Loop 0.1.2 + Improved SMPL 0.5.1, as on main, `--version SP00`): `.syx` `229cb17d6a1b9b7e96611441eadaff360ccb75c78c4377d2e62f60e9502b3e3e`, `ramSpare` 109244.
-- Build SP01 (vendored core-ar2 0.7 + this folder's 0.6.0, `--version SP01`): `.syx` `792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd`, `ramSpare` 109232. Core alone: `ramSpare` 118944, so the module takes 9,712 bytes (`resources.memoryBytes`).
-- rytm-emu `c5732f0`, headless `dtboot`: every documented capture plan of both former modules (Ping Pong Loop's ten: LOP OFF, ON and PIPO, a PIPO p-lock in GRID RECORDING, PIPO in a scene, FUNC + STA and END on zero crossings, STA and END sharing a crossing and reversed, the playhead, a held trig's STA lock snapped; Improved SMPL's four: TUN in cents, the value row, RATE turning, the LFO destination list) replayed on SP00 and SP01. All 126 frames, the intermediate turn frames included, are byte-identical between the two; no fault, no dropped key. The media/ screens are these SP01 frames ([media/capture.json](media/capture.json)).
+- Build MS00 (vendored core-ar2 0.7 + Ping Pong Loop 0.1.2 + Improved SMPL 0.5.1, as on main, `--version MS00`): `.syx` `229cb17d6a1b9b7e96611441eadaff360ccb75c78c4377d2e62f60e9502b3e3e`, `ramSpare` 109244.
+- Build MS01 (vendored core-ar2 0.7 + this folder's 0.6.0, `--version MS01`): `.syx` `792b0739bea198d65e2348a332fdac20ef4cc4f3536fd82ab7e0d79066b217fd`, `ramSpare` 109232. Core alone: `ramSpare` 118944, so the module takes 9,712 bytes (`resources.memoryBytes`).
+- rytm-emu `c5732f0`, headless `dtboot`: every documented capture plan of both former modules (Ping Pong Loop's ten: LOP OFF, ON and PIPO, a PIPO p-lock in GRID RECORDING, PIPO in a scene, FUNC + STA and END on zero crossings, STA and END sharing a crossing and reversed, the playhead, a held trig's STA lock snapped; Improved SMPL's four: TUN in cents, the value row, RATE turning, the LFO destination list) replayed on MS00 and MS01. All 126 frames, the intermediate turn frames included, are byte-identical between the two; no fault, no dropped key. The media/ screens are these MS01 frames ([media/capture.json](media/capture.json)).
 - Emulator trap found on the way: rytm-emu `c5732f0` drops a panel event that falls exactly on an `--every` report boundary (`no key named "SMPL" on this machine` in the log), so the setup never reached the SAMPLE page; every plan now runs with `--every 99999M`.
 - Not run on a unit yet.
 
@@ -363,7 +363,7 @@ The owner approved the first library release of 0.1.0-experimental on 2 November
 
 # Ping Pong Loop (pipo-loop) up to 0.1.2: its test report
 
-Ping Pong Loop was its own module, `pipo-loop`, until it moved into Improved SMPL 0.6.0 unchanged. Its report follows as it stood at 0.1.2; file names are its own (`src/audio.s` there is `src/pipo.s` here), and its media/ captures are retaken on SP01 (see 0.6.0 above).
+Ping Pong Loop was its own module, `pipo-loop`, until it moved into Improved SMPL 0.6.0 unchanged. Its report follows as it stood at 0.1.2; file names are its own (`src/audio.s` there is `src/pipo.s` here), and its media/ captures are retaken on MS01 (see 0.6.0 above).
 
 Everything below was observed in rytm-emu on the named build, except the Hardware section, which records what npp1993 reported from a unit.
 
