@@ -210,7 +210,13 @@ DYNLOAD_HOOKS = (
     # stock's spin stays, where ot_emu parks main again after a bench call.
     (0x4001fc96, 6, '2edb8c17ea73bf5ecd097ec929f3bfd6f8a74c81b11080d0d74efd55bec6b416', 'mw_idle'),
     # Modwerk's: the time-stretch helper task skips a track whose TSTR is OFF (status.s).
-    (0x40098b2c, 8, 'e3b2889593533c76e33bdee43526078d47b0b1c53b99a6d93d9ff1118e752203', 'mw_ts_gate'))
+    (0x40098b2c, 8, 'e3b2889593533c76e33bdee43526078d47b0b1c53b99a6d93d9ff1118e752203', 'mw_ts_gate'),
+    # Modwerk's: the delay routine leaves out the ring transfers, the filter and the mix of a track whose ring and
+    # filter are silent (within -120 dBFS of zero) and whose send is shut (status.s): track 0's read, each next track's read, and the seam before the
+    # filter, beside Tape Echo's at 0x4000361a, which ends where it starts.
+    (0x4000332a, 6, '35712ed931e7b9f14e5721c866bf66a4ccded8e9b4626aadc3adc68d33f729fd', 'mw_delay_read0'),
+    (0x400035ba, 8, 'dc58231763e0149114fe595c44a7495bb4b761d125428723426785e031a9ac67', 'mw_delay_read'),
+    (0x4000362a, 6, '6fe3fe068b6c0068ddd69d19f2d916d6bcb80ffb2ba78d2268618e6f7dcf82e3', 'mw_delay_idle'))
 # --dsp-loader: the knob routine of an audio track's main pages (0x40055008) names the default stepper 0x4003240c by
 # `lea 0x4003240c,%aN` for a live turn; the base repoints that operand at fxpage.s's mw_knob_step, which restages a
 # module page's turned knob before it (a select then steps as stock's do from the first visit). Address, the lea's
@@ -549,7 +555,8 @@ DSP_EDITS = {
                    '    else if(token==current && phase && phase!=6) rollback();\n}')),
     # The switch frame runs the outgoing effect's first sub-block, then the incoming one's init and its
     # second: no instance runs twice, so no overlap charge (it would refuse stock picks beside modules).
-    # Each core's sum starts at its machines' source-stage charge (dsp.c), so FX slots are admitted beside it.
+    # Each core's sum starts at its machines' source-stage charge (dsp.c), so FX slots are admitted beside it. It is read
+    # after the floors, where voices first give way to what a loaded bank names (dsp.c's make_way; #1542).
     # Each slot is charged at least the dearest stock effect its bank's Parts name there (dsp.c's floors; owner, 24 October
     # 2026): a Part switch or a RELOAD then needs no room it was not given, and a stock pick dearer than that is admitted.
     'allocator.c': (('#include "allocator.h"\n', '#include "allocator.h"\nuint32_t modwerk_dsp_source_charge(unsigned);\n'
@@ -558,14 +565,15 @@ DSP_EDITS = {
                      '{ (void)ids; for(unsigned i=0;i<16;++i) least[i]=0; return 0; }\n'),
                     ('    if(!token || token==a->token) return DL_ALLOC_STALE;\n',
                      '    if(!token || token==a->token) return DL_ALLOC_STALE;\n'
-                     '    uint32_t least[16]; unsigned crowded=modwerk_dsp_slot_floors(ids,least); /* 1 + a core a raised floor overfills */\n'),
+                     '    uint32_t least[16]; unsigned crowded=modwerk_dsp_slot_floors(ids,least); /* 1 + a core a raised floor overfills */\n'
+                     '    steady[0]=modwerk_dsp_source_charge(0); steady[1]=modwerk_dsp_source_charge(1); /* after the voices made way */\n'
+                     '    if(steady[0]>a->allowance[0] || steady[1]>a->allowance[1]) return DL_ALLOC_CYCLES;\n'),
                     ('        if(pkg->cycles>a->allowance[c]-steady[c]) return DL_ALLOC_CYCLES;\n        steady[c]+=pkg->cycles;\n    }\n',
                      '        uint32_t cost=pkg->cycles>least[i] ? pkg->cycles : least[i];\n'
                      '        if(cost>a->allowance[c]-steady[c]) return DL_ALLOC_CYCLES;\n        steady[c]+=cost;\n    }\n'
                      '    if(crowded) return DL_ALLOC_CYCLES;\n'),
                     ('    uint32_t steady[2]={0,0},overlap[2]={0,0};',
-                     '    uint32_t steady[2]={modwerk_dsp_source_charge(0),modwerk_dsp_source_charge(1)};\n'
-                     '    if(steady[0]>a->allowance[0] || steady[1]>a->allowance[1]) return DL_ALLOC_CYCLES;'),
+                     '    uint32_t steady[2]={0,0};'),
                     ('    overlap[0]=steady[0]; overlap[1]=steady[1];\n'
                      '    for(unsigned i=0;i<16;++i) {\n'
                      '        unsigned p=a->active[i],c=core_of(i);\n'
@@ -1551,6 +1559,13 @@ def main():
                              'not the uncached one (sdk/runtime/loader/README.md, "Cached modules"). Off by default.')
     parser.add_argument('--module-sets', action='store_true',
                         help='Private whole-set transaction candidate. Retains every predecessor through Keep/Undo; needs exact hardware qualification.')
+    parser.add_argument('--module-ui-roots', action='store_true',
+                        help='Refuse to retire any module whose window, page or key layer is still open (RUNTIME_UI_OPEN, '
+                             'loader capability 1024; machine_admission_runtime.c). Part of the beta base.')
+    parser.add_argument('--measure-voices', action='store_true',
+                        help='with --dev and --dsp-loader, a development twin only: machine voices and engines are admitted '
+                             'without a cycle charge, so a voice with no hardware price yet can be measured with the meters '
+                             'on a Part with NONE in every FX slot (#1542). Nothing guards the DSP: never for users.')
     parser.add_argument('--fx-ids', type=int, choices=(32, 128), default=128,
                         help='with --dsp-loader: the base\'s effect ids (fxids.h, the dispatch and chooser tables; '
                              'docs/OCTATRACK_MORE_EFFECT_IDS.md). 32, the old width, only to bisect a fault.')
@@ -1563,6 +1578,8 @@ def main():
         parser.error('Private saved-set export requires the ordinary DSP loader without probes/burn.')
     if args.resident_stock_hooks and (not args.dsp_loader or args.dsp_probe or args.dsp_burn):
         parser.error('Private resident stock hooks require the ordinary DSP loader, without probes/burn.')
+    if args.measure_voices and (not args.dev or not args.dsp_loader):
+        parser.error('--measure-voices is for a development twin: it needs --dev and --dsp-loader.')
     if args.resident_on_demand and not args.resident_stock_hooks:
         parser.error('--resident-on-demand needs --resident-stock-hooks.')
     if args.resident_stock_hooks and not args.resident_on_demand:
@@ -1684,7 +1701,7 @@ def main():
             usb_profiles = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb_profiles)
     for name in ('ep0.c', 'fxids.h', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s', 'flash.c', 'flash.h', 'slots.c', 'slots.h', 'modset.c', 'boot_anim.c', 'boot_anim.s', 'crash.c', 'crash.s', 'run_unpack.s') + (('dev.c',) if args.dev else ()) + (
             ('runtime_events.h', 'runtime_events.s', 'machine_registry.c', 'machine_registry.s', 'midi_generators.c',
-             'midi_generators.s') if args.site_events else ()):
+             'midi_generators.s', 'sample_memory.c') if args.site_events else ()):
         shutil.copyfile(HERE / name, source / name)
     # The boot stub's sector, which flash.c writes when it converts a unit to two slots (build_stub.py: stub_body.c).
     sys.path.insert(0, str(HERE))
@@ -1965,6 +1982,8 @@ def main():
                          **({'cachedModules': 'prototype-1'} if args.cached_modules else {}))
     if args.module_sets:
         configuration['usb']['moduleSets'] = 'mwms-1'
+    if args.module_ui_roots:
+        configuration['usb']['uiRoots'] = 'mwur-1'
     if args.dsp_loader:
         configuration.update(dsp=dict(loader='dsp-dynload-3', stock='on-demand', rows='runtime',
                                       allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, burn=args.dsp_burn, **({'burnWindow': args.dsp_burn_window} if args.dsp_burn_window else {}), hook=args.dsp_hook, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
@@ -1989,6 +2008,15 @@ def main():
     # IDENTIFY reports this configuration identity as the installed base.
     definitions += 'const uint8_t modwerk_base_digest[32] = {%s};\n' % ','.join(
         '0x' + identity[i:i+2] for i in range(0, 64, 2))
+    # The base's version, for people (owner, 16 November 2026): base-version.json, raised with every base that is
+    # published. status.c shows it; the site names a unit's base by it (sdk/machines/octatrack/base-versions.json).
+    # A patch number (owner, 16 November 2026: 0.7.1) is optional and said only when it is not 0, so 0.7 stays 0.7.
+    version = json.loads((HERE / 'base-version.json').read_text())
+    if set(version) not in ({'major', 'minor'}, {'major', 'minor', 'patch'}) or \
+            not all(type(n) is int and 0 <= n <= 999 for n in version.values()):
+        raise ValueError('base-version.json holds a major, a minor and an optional patch number, 0-999 each.')
+    definitions += 'const char modwerk_base_version[] = "%d.%d%s";\n' % (
+        version['major'], version['minor'], '.%d' % version['patch'] if version.get('patch') else '')
     for key, size in FIELDS.items():
         if len(values[key]) >= size:
             raise ValueError('Logger identity field exceeds capacity: ' + key)
@@ -2021,7 +2049,7 @@ def main():
             raise ValueError('PROJ\'s root menu is not the four stock rows; review the MODWERK category.')
         stock_rows = image[ROOT_ROWS - device.main_load:][:4 * 24]
         columns = [sum(1 << r for r in range(8) if ICON[r][c] == '#') << 24 for c in range(19)]
-        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'))
+        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'), ('switches', 'switches'))
         definitions += ('struct menu_row { const void *label, *window, *action, *value, *child; uint32_t page; };\n'
                         'extern char modwerk_menu_label[], %s;\nvoid %s;\n' % (
                             ', '.join('modwerk_%s_label[]' % label for label, _ in leaves),
@@ -2086,10 +2114,14 @@ modwerk_retained_end:
          '-DMODWERK_DSP_RESERVE=%d' % DSP_RESERVE] +
         ['-DMODWERK_DSP_%s%d=%d' % (key, n, dsp_layout[t][field]) for n, t in enumerate('AB')
          for key, field in (('TABLE', 'table'), ('WORDS', 'tableWords'), ('MISS', 'miss'), ('METER', 'meter'))] if args.dsp_loader else [])
+    if args.measure_voices:  # dsp.c: voices admitted uncharged
+        recipe['cflags'].append('-DMODWERK_MEASURE_VOICES')
     if args.cached_modules:  # loader.c, runtime.c, fxpage.c, controller_board.c
         recipe['cflags'].append('-DMODWERK_CACHED_MODULES')
     if args.module_sets:
         recipe['cflags'].append('-DMODWERK_RUNTIME_SETS')
+    if args.module_ui_roots:  # loader.c's capability 1024, machine_admission_runtime.c
+        recipe['cflags'].append('-DMODWERK_RUNTIME_UI_ROOTS')
     if args.saved_set_export:
         recipe['cflags'].append('-DMODWERK_SAVED_SET_EXPORT')
     if args.resident_stock_hooks:

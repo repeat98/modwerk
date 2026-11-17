@@ -5,7 +5,7 @@
     "changes": [
       "Repackages Tim Hastie\u2019s v2.21 Tuner source plus his DC-offset fix, with the original pitch detector and UP + TEMPO gesture.",
       "Read the selected audio track\u2019s note, cents and frequency without using an effect slot.",
-      "Card builds only for this first draft."
+      "Installs over USB on the Modwerk base 0.7.5 or later; close its window before you remove or replace it."
     ]
   }
 ]

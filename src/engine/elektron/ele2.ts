@@ -13,18 +13,35 @@ const MAGIC = 'ELE2', HEADER_SIZE = 0x18, VERSION_FIELD = [0x10, 0x14] as const,
 export type Ele2Machine = 'analog-rytm-mki'
 export type Ele2Device = {
   mainLoad: number; stage: number; flashAt: number; flashLimit: number; sysexId: number
+  /** Most decoded bytes (8-byte preamble + container) the in-OS upgrade takes. */
+  updateMax: number
   /** Main OS ranges, as absolute addresses [start, end), that a build must keep byte-identical to stock, with the reason. */
   keep: [number, number, string][]
+  /** Stock routines no mod may reference or copy (LinkDevice.noLink, once the machine links mods). */
+  noLink: [number, number, string][]
 }
 
-// Facts about each machine's container and loader, measured on stock MKI 1.74 (docs/RYTM_MKI_OS_RESEARCH.md).
+// Facts about each machine's container and loader, measured on stock MKI 1.74 (docs/RYTM_MKI_OS_RESEARCH.md), except
+// where marked "reported": those were read elsewhere and are not yet checked on a Modwerk 1.74 image. Re-check them
+// on the OS image before any Rytm MKI release.
 export const ELE2_DEVICES: Record<Ele2Machine, Ele2Device> = {
-  // The OS container sits at flash 0x20000; the lowest calibration record the OS reads is at 0x780000.
+  // The OS container sits at flash 0x20000; the lowest calibration record the OS reads is at 0x780000. Reported: the
+  // in-OS upgrade decodes into a fixed 2 MiB buffer (0x40366570) with other statics after it, so a larger update
+  // overruns them (MIDI DIN recovery survives that); 0x1F0000 stays under it.
   'analog-rytm-mki': {
-    mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x20000, flashLimit: 0x780000, sysexId: 0x07,
+    mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x20000, flashLimit: 0x780000, sysexId: 0x07, updateMax: 0x1f0000,
     keep: [
       [0x40000592, 0x400005d8, 'the OS entry compares the bootstrap versions and may rewrite boot flash'],
       [0x4028c768, 0x402a1b84, 'the embedded bootstrap image and its version'],
+      [0x4011a7a4, 0x4011aa7a, 'BOOTSTRAP UPGRADE, which rewrites the boot flash'],   // start measured, end reported
+      [0x40096a6c, 0x40096b3e, 'the flash erase and program routines every flash write uses'],   // reported
+    ],
+    // Calling these can erase or overwrite the boot sectors, which hold the recovery menu: a unit no cable brings back.
+    noLink: [
+      [0x4011a7a4, 0x4011aa7a, 'BOOTSTRAP UPGRADE, which rewrites the boot flash'],
+      [0x40096a6c, 0x40096ac2, 'the flash erase the OS store and calibration use'],
+      [0x40096ac2, 0x40096af6, 'the flash erase used only for the bootstrap'],
+      [0x40096af6, 0x40096b3e, 'the flash program routine every flash write uses'],
     ],
   },
 }
@@ -79,7 +96,7 @@ export function writeEle2Syx(stock: Ele2File, storedMain: Uint8Array, version?: 
   return encodeSyx(stream, stock.deviceId, stock.framing[0], stock.framing[1])
 }
 
-export type Ele2BuildFacts = { bytes: number; messages: number; containerLength: number; flashEnd: number; flashHeadroom: number; version: string; mainStored: number; mainImage: number; inplaceGap: number }
+export type Ele2BuildFacts = { bytes: number; messages: number; containerLength: number; flashEnd: number; flashHeadroom: number; updateHeadroom: number; version: string; mainStored: number; mainImage: number; inplaceGap: number }
 
 /** Refuses unless `output` is `stock` with only the main OS changed, depacking in place to `wantMain` with the kept ranges intact. */
 export function verifyEle2Build(output: Uint8Array, stock: Ele2File, wantMain: Uint8Array, device: Ele2Device, version?: string): Ele2BuildFacts {
@@ -99,6 +116,7 @@ export function verifyEle2Build(output: Uint8Array, stock: Ele2File, wantMain: U
   const end = HEADER_SIZE + built.stored.length
   if (built.total !== end + (-end & 3) || built.container.subarray(end).some(byte => byte !== 0)) throw new Error('The container is not its stream padded to a 4-byte boundary.')
   if (device.flashAt + built.total > device.flashLimit) throw new Error('The container does not fit the flash.')
+  if (8 + built.total > device.updateMax) throw new Error('The update is ' + (8 + built.total) + ' bytes decoded, more than the unit\'s upgrade buffer takes (' + device.updateMax + ').')
   for (let i = 0; i < HEADER_SIZE; i++) if (built.header[i] !== stock.header[i] && !(i >= VERSION_FIELD[0] && i < VERSION_FIELD[1])) throw new Error('The ELE2 header differs outside the version field.')
   if (version !== undefined && built.version !== version) throw new Error('The version field is not ' + version + '.')
   if (built.load !== device.mainLoad) throw new Error('The main OS load address is not the device\'s.')
@@ -112,5 +130,5 @@ export function verifyEle2Build(output: Uint8Array, stock: Ele2File, wantMain: U
     const from = start - device.mainLoad, to = stop - device.mainLoad
     if (to > image.length || to > stockImage.length || !equal(image.subarray(from, to), stockImage.subarray(from, to))) throw new Error('The build changes ' + reason + '.')
   }
-  return { bytes: output.length, messages: built.dataMessages.length + 2, containerLength: built.total, flashEnd: device.flashAt + built.total, flashHeadroom: device.flashLimit - device.flashAt - built.total, version: built.version, mainStored: built.stored.length, mainImage: image.length, inplaceGap: gap }
+  return { bytes: output.length, messages: built.dataMessages.length + 2, containerLength: built.total, flashEnd: device.flashAt + built.total, flashHeadroom: device.flashLimit - device.flashAt - built.total, updateHeadroom: device.updateMax - 8 - built.total, version: built.version, mainStored: built.stored.length, mainImage: image.length, inplaceGap: gap }
 }

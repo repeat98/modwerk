@@ -54,6 +54,8 @@ function updateProgress(step: BaseUpdateStep, fraction = 0, reached = 0) {
 const HANDS_OFF = 'No keys, no power switch, no cable until this window says Done. It restarts once and can look ready before the base is saved. Keep this page open.'
 /** Shown while an update runs as two (updateOverUsb): the base on the unit first needs a newer one. */
 const TWO_UPDATES = 'Your Octatrack’s base is too old to take this one directly, so this runs as two updates, one after the other. It restarts more than once.'
+/** After the card install the unit still reports the base it had: OS UPGRADE most likely took another .bin on the card. */
+const STILL_PREVIOUS_BASE = 'Your Octatrack still runs the base it had before, so OS UPGRADE probably installed another .bin from the card. Remove every other .bin from the card’s top level, keep the downloaded one, then run OS UPGRADE again.'
 /** Even the step base does not fit the unit's base: only the card is left. */
 const TOO_OLD_FOR_USB = 'The base on your Octatrack is too old to take this update over USB. Update from the card.'
 /** Before an update that installs USB Audio off over a base that had it, or may have had it. */
@@ -75,6 +77,12 @@ const USB_STEPS: Record<BaseUpdateStep, string> = {
   reconnecting: 'USB dropped out. Keep the Octatrack switched on: it finishes saving by itself. Reconnecting',
   restarting: 'Saved and checked. The Octatrack restarts on the new base',
   done: 'Done. The new base is saved, and you can use your Octatrack again.',
+}
+/** In place of HANDS_OFF once a restart is not back after POWER_CYCLE_MS: it may have lost USB, which only a power cycle
+ * brings back. Safe at both restarts: before the save nothing is written, after it the saved base is checked. */
+const NOT_BACK: Partial<Record<BaseUpdateStep, string>> = {
+  starting: 'It hasn’t come back from its restart. Nothing is saved yet, so it starts your current base, and the update carries on from there.',
+  restarting: 'It hasn’t come back from its restart. The new base is saved and checked, so it starts on the new base.',
 }
 // What the guide promises: only what the base does today. Cross-compatibility,
 // automatic stress tests and bug reports are still to be built (docs/OCTATRACK_ELEKLOADER_MIGRATION.md).
@@ -143,7 +151,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   const state = useOctatrackLink(link)
   const [accepted, setAccepted] = useState(false), [signIn, setSignIn] = useState(false)
   // A failed update keeps the stage it stopped in (`at`), so the window shows where, and whether anything was saved.
-  const [usb, setUsb] = useState<{ step: BaseUpdateStep; overall: number; pass?: 1 | 2 } | { error: string; at: number; stepped?: boolean } | null>(null)
+  const [usb, setUsb] = useState<{ step: BaseUpdateStep; overall: number; pass?: 1 | 2; slow?: boolean } | { error: string; at: number; stepped?: boolean } | null>(null)
   const [card, setCard] = useState(false), [outdated, setOutdated] = useState(false)
   const [pending, setPending] = useState(pendingBaseInstall)
   const [download, setDownload] = useState<'idle' | 'building' | 'done' | 'failed'>(pending ? 'done' : 'idle'), [failure, setFailure] = useState('')
@@ -177,6 +185,8 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   const alreadyCurrent = launch && !pending && !usb && !older && !switching && view !== 'done' && unitForPrompt(state) === 'current'
   // A wrong base after the card install: neither the downloaded one nor the one it ran before.
   const wrongBase = !!pending && stage === 'connect' && state.status === 'ready' && !!state.identity && state.identity.base !== pending.expectedBase && state.identity.base !== pending.previousBase
+  // Still the base it ran before: OS UPGRADE most likely took an older .bin left on the card (issue 1624).
+  const stillPrevious = !!pending?.previousBase && stage === 'connect' && state.status === 'ready' && state.identity?.base === pending.previousBase
   function report(reached: BaseGuideStage, detail?: BaseGuideFailure) {
     if (reported.current.has(reached)) return
     reported.current.add(reached); onStage?.(reached, detail)
@@ -216,10 +226,10 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
     // base takes, then this one (BaseTooBigError is raised before anything is sent). Each of the two is half the bar.
     const run = (target: BaseImage, pass?: 1 | 2) => {
       let reached = 0
-      return link.updateBase(new Uint8Array(target.buffer), target.base, (step, fraction) => {
+      return link.updateBase(new Uint8Array(target.buffer), target.base, (step, fraction, slow) => {
         if (pass === 1 && step === 'done') return // the second update follows: not done yet
         at = stageOf(step); reached = updateProgress(step, fraction, reached)
-        setUsb({ step, overall: pass ? (pass - 1 + reached) / 2 : reached, ...(pass ? { pass } : {}) })
+        setUsb({ step, overall: pass ? (pass - 1 + reached) / 2 : reached, ...(pass ? { pass } : {}), ...(slow ? { slow } : {}) })
       }, undefined, pass === 2)
     }
     try {
@@ -244,7 +254,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
     if (await siteUpdated()) return setOutdated(true)
     setDownload('building')
     try {
-      const image = await buildBase!(installLayout); saveFirmware(image.buffer, 'base', image.sha256)
+      const image = await buildBase!(installLayout); saveFirmware(image.buffer, 'base', image.base)
       const previousBase = link.getState().identity?.base
       waitForBaseInstall(image.sha256, image.base, previousBase, returnSetId)
       setPending({ sha256: image.sha256, expectedBase: image.base, previousBase, returnSetId }); setDownload('done'); setStage('copy')
@@ -282,7 +292,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
       return <>
         {/* The window's title says what this is: the stage's own heading is for screen readers and focus only. */}
         <h3 id="base-stage-title" className="sr-only" data-stage-title tabIndex={-1}>{updating ? 'Updating your Octatrack' : step ? 'Update complete' : 'Update over USB'}</h3>
-        {updating && <div className="base-update-hands-off" role="alert"><Icon name="warn" size={22}/><div><strong>Hands off your Octatrack</strong><p>{HANDS_OFF}</p></div></div>}
+        {updating && <div className="base-update-hands-off" role="alert"><Icon name="warn" size={22}/><div>{step?.slow && NOT_BACK[step.step] ? <><strong>Switch your Octatrack off and on</strong><p>{NOT_BACK[step.step]}</p></> : <><strong>Hands off your Octatrack</strong><p>{HANDS_OFF}</p></>}</div></div>}
         <StagePlan compact stages={usbStages} progressLabel="Update stages" run={usb ? { at, done: step?.step === 'done', failed: !!failed } : undefined} />
         {step?.pass && updating && <p className="subtle" role="status">Update {step.pass} of 2. {TWO_UPDATES}</p>}
         {step && <div className="base-update-overall"><ProgressBar value={step.overall} label="Update progress" busy={updating} percent /></div>}
@@ -323,7 +333,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
       <p>The download was requested. Find the Modwerk base .bin in your browser’s downloads.</p>
       <ol className="base-instructions">
         <li><strong>Open the Octatrack’s card on your computer</strong><p>Connect the USB cable. On the Octatrack, open <b>PROJECT → SYSTEM → USB DISK MODE</b> and press <b>YES</b>. Or take the card out and put it in a card reader.</p></li>
-        <li><strong>Copy the downloaded .bin onto the card</strong><p>Put it at the top level, outside any folder.</p></li>
+        <li><strong>Copy the downloaded .bin onto the card</strong><p>Put it at the top level, outside any folder, and remove every other .bin there: OS UPGRADE may install one of those instead.</p></li>
         <li><strong>Eject the drive on your computer</strong><p>Then leave USB DISK MODE on the Octatrack, or put the card back in.</p></li>
       </ol>
     </>}
@@ -342,7 +352,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
         <ol className="card-set-steps"><li>Add modules to your module set from the library.</li><li>In <strong>Setup</strong>, under <strong>Load from the card</strong>, download the module file.</li><li>Copy it to the top folder of the card, then switch the Octatrack off and on. It starts with your modules.</li></ol>
         <p>To sync over USB instead, without the card and without a restart, open Modwerk in <strong>Chrome or Edge on a computer</strong>.</p></> : <>
         <p>Keep the USB cable connected. Choose your Octatrack in the browser’s device list.</p>
-        <p className="base-install-note" role="status">{found ? 'The downloaded base is confirmed. Opening your module set…' : state.status === 'connecting' ? 'Connecting to your Octatrack…' : state.status === 'busy' ? LINK_BUSY : state.status === 'stock' || state.status === 'ready' ? 'The downloaded base hasn’t been confirmed yet. Finish the installation, then connect again.' : 'Once the installed base is recognised, your module set opens automatically.'}</p>
+        <p className="base-install-note" role="status">{found ? 'The downloaded base is confirmed. Opening your module set…' : state.status === 'connecting' ? 'Connecting to your Octatrack…' : state.status === 'busy' ? LINK_BUSY : stillPrevious ? STILL_PREVIOUS_BASE : state.status === 'stock' || state.status === 'ready' ? 'The downloaded base hasn’t been confirmed yet. Finish the installation, then connect again.' : 'Once the installed base is recognised, your module set opens automatically.'}</p>
         {state.notice && <p className="file-error" role="status">{state.notice.text}</p>}
       </>}
     </>}

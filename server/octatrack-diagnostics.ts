@@ -40,8 +40,9 @@ function deviceCrash(v: unknown) {
     && words(v.d, 8) && words(v.a, 7) && words(v.stack, 8) && words(v.code, 8) && words(v.memory, 8)
 }
 function deviceStall(v: unknown) {
-  return object(v) && (exactly(v, 'count,reason,report,ticks') || exactly(v, 'count,frames,reason,report,ticks')) && uint(v.count) && uint(v.reason) && uint(v.ticks) && Array.isArray(v.report) && v.report.length <= 96 && v.report.every(uint)
+  return object(v) && fields(v, ['count','reason','report','ticks','frames','packets']) && uint(v.count) && uint(v.reason) && uint(v.ticks) && Array.isArray(v.report) && v.report.length <= 96 && v.report.every(uint)
     && (!('frames' in v) || Array.isArray(v.frames) && v.frames.length <= 256 && v.frames.length % 2 === 0 && v.frames.every(us => upTo(us, 0xffff))) // diag.h's trace: 128 frames, two times each
+    && (!('packets' in v) || Array.isArray(v.packets) && v.packets.length === 2 && v.packets.every(header => Array.isArray(header) && header.length === 8 && header.every(word => upTo(word, 0xffff)))) // each core's last packet header
 }
 function deviceLog(v: unknown) {
   return object(v) && fields(v, ['loads','incidents','crash','stall']) && Array.isArray(v.loads) && Array.isArray(v.incidents)
@@ -61,7 +62,7 @@ const USB_EXTRAS: Record<string, { allowed: string[]; required: string[] }> = {
 }
 export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
   const readingKeys = ['state','failed','modules','dsp','intact','ran','cpu','tracks1to4','tracks5to8','frameGap','saved','savedCount','live','culprit','refusal']
-  const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','reading','modules','packages','buildKind','live','reason','log','area','kind','step','client','failure'])
+  const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','reading','modules','packages','buildKind','live','reason','log','area','kind','step','usb','client','failure'])
     && (!('client' in value) || value.event !== 'device_log' && client(value.client)) && (!('failure' in value) || value.event === 'link_failed')
     && (!('live' in value) || live(value.live)) && (!('reason' in value) || DIAGNOSTIC_UNRESPONSIVE.some(reason => reason === value.reason))
     && (!('log' in value) || deviceLog(value.log))
@@ -87,6 +88,7 @@ export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
       : !('buildKind' in value) && !('area' in value) && DIAGNOSTIC_USB_PHASES.some(phase => phase === value.phase)
         && (!('kind' in value) || value.event === 'sync_failed' && (value.error === 'unknown' || value.error === 'transport') && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind))
         && (!('step' in value) || value.event === 'sync_failed' && DIAGNOSTIC_SYNC_STEPS.some(step => step === value.step))
+        && (!('usb' in value) || value.event === 'sync_failed' && value.error === 'transport' && Array.isArray(value.usb) && value.usb.length === 6 && value.usb.every(uint))
         && (!('error' in value) || DIAGNOSTIC_USB_ERRORS.some(error => error === value.error))
         && ['live','reason','log'].every(key => !(key in value) || extras!.allowed.includes(key)) && extras!.required.every(key => key in value)
         && (value.event !== 'device_log' || !('modules' in value) && !('reading' in value) && !('packages' in value)))

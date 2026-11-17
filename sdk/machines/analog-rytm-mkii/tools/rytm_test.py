@@ -46,6 +46,7 @@ SETTLE_MS = 250         # before a capture that follows input, unless the case s
 MEM_MAX = 128           # link.c's MEM_MAX
 IPS = 200_000_000       # dtboot's instructions per second for this machine
 LINK_TICKS_S = 20       # the link counts 20 ticks a second from the boot (measured on the unit, 10 Nov 2026)
+PANEL_QUIET_MS = 3000   # after a panel press the base's link counts a person and refuses keys (see EMU_BOOT_LINK)
 BOOT_SETTLE_S = 6       # a unit run starts no sooner after a boot: twice the 3 s that was tried (see run_unit)
 EMU_LEAD_MS = 50        # a resumed snapshot runs this long before the case's first request
 EMU_TAIL_MS = 300
@@ -136,6 +137,10 @@ class Case:
         raise CaseError('%s:%d: %s' % (self.path, n, why))
 
     def req(self, n, name, *values, slot=None, gap=GAP_MS):
+        if name in ('key', 'enc') and n and self.t < self.panel_quiet:
+            self.fail(n, 'the link refuses keys and turns for %d ms after a panel press: wait first' % PANEL_QUIET_MS)
+        if name == 'release' and self.t < self.panel_quiet:
+            self.t = self.panel_quiet                       # the runner's closing release, once the link takes it
         self.ops.append(Op(self.t, name, values, n, slot))
         self.t += gap
 
@@ -149,6 +154,7 @@ class Case:
     def release_all(self, n):
         """Held keys let go one by one, as the panel sends them, then the link's release: it posts every up
         as a plain 0x10, which is wrong for a key that went down under FUNC, so it is only the net."""
+        self.t = max(self.t, self.panel_quiet)              # the link takes keys again after a panel press
         for name in self.flags.held():
             self.key(n, name, False)
         self.after_turn()
@@ -198,6 +204,7 @@ class Case:
         self.after_input = False
 
     def parse(self):
+        self.panel_quiet = 0
         body, seen = False, set()
         for n, raw in enumerate(self.path.read_text().splitlines(), 1):
             line = raw.split('#')[0].strip()
@@ -255,8 +262,28 @@ class Case:
                 # (GLOBAL > MIDI CONFIG). The unit's timeline keeps its time, idle.
                 # Only steps that leave no key held and no turn state behind: the unit compiles the
                 # same timeline, so a held key or a FUNC turn here would change its later steps.
-                if not args or args[0] not in ('key', 'cc', 'nrpn', 'note', 'wait'):
-                    self.fail(n, '`emu` takes key, cc, nrpn, note or wait: emu key GLOBAL')
+                if not args or args[0] not in ('key', 'cc', 'nrpn', 'note', 'wait', 'press'):
+                    self.fail(n, '`emu` takes key, cc, nrpn, note, wait or press: emu key GLOBAL')
+                if args[0] == 'press':
+                    # A key held on the emulator's panel for MS, as a person holds it: stock's key scan sees it,
+                    # so it repeats (a link key never does). The link then counts a person at the unit and refuses
+                    # keys and turns for 3 s. With `&` the timeline does not wait for its release (a key pressed
+                    # during the hold comes next).
+                    back = len(args) == 4 and args[3] == '&'
+                    if len(args) not in (3, 4) or not args[2].isdigit() or len(args) == 4 and not back:
+                        self.fail(n, 'emu press KEY MS [&]: emu press LFO 800')
+                    if self.head['target'] != 'emu':
+                        self.fail(n, 'a panel press is the emulator\'s alone: give the case target: emu')
+                    if args[1] not in rl.KEYS:
+                        self.fail(n, 'unknown key %s' % args[1])
+                    op = Op(self.t, 'press', (args[1], int(args[2])), n)
+                    op.only = 'emu'
+                    self.ops.append(op)
+                    self.panel_quiet = max(self.panel_quiet, self.t + int(args[2]) + PANEL_QUIET_MS)
+                    if not back:
+                        self.t += int(args[2])
+                    self.after_input = True
+                    return
                 first = len(self.ops)
                 self.step(n, args)
                 for op in self.ops[first:]:
@@ -353,16 +380,25 @@ class Case:
                 self.after_turn()                           # a turn before it has reached the sound
                 self.req(n, 'note', 'on', track, int(vel), gap=int(ms))
                 self.req(n, 'note', 'off', track, 0)
+            elif verb in ('cc', 'nrpn') and args and re.fullmatch(r'ch\d+', args[-1]) \
+                    and not 1 <= int(args[-1][2:]) <= 16:
+                self.fail(n, 'a channel is ch1 to ch16, as: nrpn 1:20 64 ch2')
             elif verb == 'cc':
+                ch = [int(args.pop()[2:])] if args and re.fullmatch(r'ch\d+', args[-1]) else []
+                if len(args) != 2:
+                    self.fail(n, 'cc takes a controller 0 to 119 and a value 0 to 127, as: cc 79 42')
                 number, value = args
                 if not (number.isdigit() and value.isdigit() and int(number) <= 119 and int(value) <= 127):
                     self.fail(n, 'cc takes a controller 0 to 119 and a value 0 to 127, as: cc 79 42')
                 self.after_turn()
-                self.req(n, 'cc', int(number), int(value))
+                self.req(n, 'cc', int(number), int(value), *ch)
                 self.after_input = True
             elif verb == 'nrpn':
                 # As a controller sends it, on the auto channel: NRPN MSB (CC 99), LSB (98), the value
                 # (data entry, CC 6), and its fine part (CC 38) when given.
+                ch = [int(args.pop()[2:])] if args and re.fullmatch(r'ch\d+', args[-1]) else []
+                if not args:
+                    self.fail(n, 'nrpn takes MSB:LSB (0 to 127 each), a value 0 to 127 and a fine part, as: nrpn 1:20 64 0')
                 number, value = args[0], args[1:]
                 m = re.fullmatch(r'(\d+):(\d+)', number)
                 if not m or not 1 <= len(value) <= 2 or not all(v.isdigit() and int(v) <= 127 for v in value) \
@@ -371,7 +407,7 @@ class Case:
                 self.after_turn()
                 for cc, v in [(99, int(m.group(1))), (98, int(m.group(2))), (6, int(value[0]))] + \
                         ([(38, int(value[1]))] if len(value) == 2 else []):
-                    self.req(n, 'cc', cc, v)
+                    self.req(n, 'cc', cc, v, *ch)
                 self.after_input = True
             elif verb == 'midi':
                 # What the Rytm sends on MIDI between two link answers (USB MIDI on both targets).
@@ -467,8 +503,13 @@ class Case:
                              'region': region, 'within': within})
 
     def expect_midi(self, n, a, text):
-        """fb has|lacks nrpn 1:20 [VALUE] | cc 74 [VALUE], or fb.count ==|!=|<|> N."""
+        """fb has|lacks nrpn 1:20 [VALUE] [chN] | cc 74 [VALUE] [chN], or fb.count ==|!=|<|> N."""
         name, _, field = a[0].partition('.')
+        channel = None
+        if len(a) >= 5 and re.fullmatch(r'ch\d+', a[-1]):
+            channel, a = int(a[-1][2:]), a[:-1]             # only on that channel
+            if not 1 <= channel <= 16:
+                self.fail(n, 'a channel is ch1 to ch16, as: expect fb has nrpn 5:0 1 ch2')
         if field == 'count' and len(a) == 3 and a[1] in ('==', '!=', '<', '>') and a[2].isdigit():
             want = ('count', int(a[2]))
         elif not field and len(a) in (4, 5) and a[1] in ('has', 'lacks') and a[2] in ('nrpn', 'cc'):
@@ -482,7 +523,7 @@ class Case:
             value = int(a[4]) if len(a) == 5 else None
             if value is not None and not 0 <= value <= 127 or a[2] == 'cc' and not 0 <= number <= 127:
                 self.fail(n, 'a controller and a value are 0 to 127')
-            want = (a[1], (a[2], number, value))
+            want = (a[1], (a[2], number, value, channel))
         else:
             self.fail(n, 'a MIDI capture is checked as: NAME has|lacks nrpn 1:20 [VALUE], NAME has|lacks cc 74 [VALUE], '
                          'or NAME.count ==|!=|<|> N')
@@ -637,8 +678,9 @@ def check_midi(e, got):
         have = len(got)
         return {'==': have == what, '!=': have != what, '<': have < what, '>': have > what}[e['op']], \
             '%d messages: %s' % (have, seen)
-    kind, number, value = what
-    hit = any(ev[0] == kind and ev[2] == number and (value is None or ev[3] == value) for ev in got)
+    kind, number, value, channel = what
+    hit = any(ev[0] == kind and ev[2] == number and (value is None or ev[3] == value)
+              and (channel is None or ev[1] == channel) for ev in got)
     return hit == (how == 'has'), 'heard: %s' % seen
 
 def decode(kind, ops, got):
@@ -820,8 +862,9 @@ def check_audio(e, caps, refs, record, clean):
 def note_bytes(op, channel):
     """The MIDI message of a `note` or `cc` op on the auto channel: a note's number is the track's place, 0
     for BD; a controller change goes to the active track."""
-    if op.name == 'cc':
-        return bytes([0xb0 | (channel - 1), op.values[0], op.values[1]])
+    if op.name == 'cc':                 # a third value: its own channel (`ch2`), a track that is not active
+        ch = op.values[2] if len(op.values) > 2 else channel
+        return bytes([0xb0 | (ch - 1), op.values[0], op.values[1]])
     on, track, vel = op.values
     return bytes([(0x90 if on == 'on' else 0x80) | (channel - 1), TRACKS.index(track), vel])
 
@@ -937,6 +980,8 @@ class Emu:
             at = base + op.t * IPS // 1000
             if op.name in ('note', 'cc'):
                 args += ['--usb-midi', '%s@%d' % (note_bytes(op, note_channel).hex(), at)]
+            elif op.name == 'press':
+                args += ['--press', '%s@%d:%d' % (op.values[0], at, op.values[1] * IPS // 1000)]
             elif op.name != 'audio':
                 seq = (len(sent) + 1) & 0x7f
                 args += ['--usb-midi', '%s@%d' % (rl.request(seq, op.name, *op.values).hex(), at)]
@@ -960,7 +1005,7 @@ class Emu:
             problems.insert(0, self.stopped)
         got, replies, begun = iter(match_replies(sent, link_replies(usb), where=True)), [], {}
         for op in case.ops:
-            if op.name in ('note', 'cc'):
+            if op.name in ('note', 'cc', 'press'):
                 replies.append((0, b''))
             elif op.name == 'audio':
                 replies.append(None)

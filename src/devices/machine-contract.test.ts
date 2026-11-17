@@ -22,6 +22,10 @@ describe('machine profiles', () => {
     expect(() => parseMachineProfile({ ...octatrack(), steps: { ...octatrack().steps, core: 'started' } })).toThrow('every step done')
     expect(() => parseMachineProfile({ ...syntakt(), steps: { ...syntakt().steps, mods: 'done' } })).toThrow('only machines with mods')
     expect(() => parseMachineProfile({ ...syntakt(), status: 'research' })).toThrow('at least one started step')
+    // Maintainers review the machine's first releases: GitHub logins, each once.
+    expect(parseMachineProfile({ ...syntakt(), maintainers: ['octo-dev'] }).maintainers).toEqual(['octo-dev'])
+    expect(() => parseMachineProfile({ ...syntakt(), maintainers: ['@octo-dev'] })).toThrow('expected a GitHub login')
+    expect(() => parseMachineProfile({ ...syntakt(), maintainers: ['octo-dev', 'Octo-Dev'] })).toThrow('lists a login twice')
     expect(() => parseMachineProfile({ ...syntakt(), status: 'research', steps: { ...syntakt().steps, format: 'started' } })).toThrow('credit the research')
     expect(() => parseMachineProfile({ ...syntakt(), steps: { ...syntakt().steps, format: 'done' } })).toThrow('in research')
   })

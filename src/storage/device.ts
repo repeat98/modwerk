@@ -28,15 +28,16 @@ export function deviceStore(db: IDBDatabase) {
       const tx = db.transaction(store, mode)
       const request = operation(tx.objectStore(store))
       tx.oncomplete = () => resolve(request.result)
-      tx.onabort = tx.onerror = () => reject(tx.error ?? request.error ?? new Error('Could not save on this device.'))
+      // Safari aborts transactions without any error, for example while it suspends a home-screen app.
+      tx.onabort = tx.onerror = () => reject(tx.error ?? request.error ?? new Error(mode === 'readonly' ? 'The browser stopped reading its storage without giving a reason.' : 'The browser stopped this save without giving a reason.'))
     })
   }
   return {
     /** Readable configurations. A record this version cannot read, such as one naming a module the catalog dropped,
      * is skipped and reported, never deleted, so it comes back once the catalog can read it again. */
-    async listConfigurations(unreadable?: (error: unknown) => void) {
+    async listConfigurations(unreadable?: (error: unknown, record: unknown) => void) {
       const items: unknown[] = await transaction('configurations', 'readonly', store => store.getAll())
-      return items.flatMap(item => { try { return [validateConfiguration(item)] } catch (error) { unreadable?.(error); return [] } })
+      return items.flatMap(item => { try { return [validateConfiguration(item)] } catch (error) { unreadable?.(error, item); return [] } })
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     },
     async saveConfiguration(item: Configuration) {

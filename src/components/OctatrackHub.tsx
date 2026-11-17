@@ -5,7 +5,7 @@ import { MODULES } from '../catalog/modules'
 import { lastInventory, sameModules, type Inventory } from '../config/inventory'
 import { lastSuccessfulSync } from '../config/octatrack-progress'
 import { BaseLayoutRequired, BaseUpdateRequired, baseOutdated, moduleSetReview, setLayout } from '../engine/elekloader/module-set'
-import { baseLayout, type BaseLayout } from '../engine/elekloader/base-variants'
+import { baseLayout, baseVersion, type BaseLayout } from '../engine/elekloader/base-variants'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import type { Configuration } from '../config/workspace'
 import { DeviceImage } from '../devices/DeviceImage'
@@ -156,7 +156,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
             <span>There your modules sync over USB in seconds, without the card and without a restart. In this browser they go onto the card as a file.</span>
           </div></div>}
           {(connected || lastSync) && <dl className="hub-facts">
-            {connected && <div><dt>Base</dt><dd><code>{identity!.base.slice(0, 8)}</code></dd></div>}
+            {connected && <div><dt>Base</dt><dd title={identity!.base}>{baseVersion(identity!.base) ?? <code>{identity!.base.slice(0, 8)}</code>}</dd></div>}
             {lastSync && <div><dt>Last sync from this browser</dt><dd><b>{lastSync.name}</b> · <time dateTime={lastSync.at}>{when(lastSync.at)}</time></dd></div>}
           </dl>}
         </div>
@@ -183,7 +183,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
           <section className="hub-section hub-base" aria-labelledby="setup-base-title">
             <h3 id="setup-base-title">Modwerk base</h3>
             <p>{!usb ? 'This browser can’t use USB, so it can’t sync module sets. You can still install the base from here, once, through the card. Your modules then go onto the Octatrack as the card file below. To sync over USB, open this page in Chrome or Edge on a computer.'
-              : connected ? <>Your {model} runs the Modwerk base <code>{identity!.base.slice(0, 8)}</code>.{needsBase && (wantedLayout ? ' Your set needs it in another USB Audio layout.' : ' This site needs a newer one to sync your set.')}</>
+              : connected ? <>Your {model} runs the Modwerk base {baseVersion(identity!.base) ?? <code>{identity!.base.slice(0, 8)}</code>}.{needsBase && (wantedLayout ? ' Your set needs it in another USB Audio layout.' : ' This site needs a newer one to sync your set.')}</>
               : status === 'stock' ? <>Your {model} runs the original OS. Install the base once from the card to sync module sets over USB. Later base updates go over USB.</>
               : status === 'ready' ? 'Your Octatrack runs a Modwerk base this site can’t talk to. Install the current one.'
               : 'Connect your Octatrack to see which base it runs. Installing the base for the first time? The guide takes you through it.'}</p>

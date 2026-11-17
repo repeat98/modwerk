@@ -38,6 +38,14 @@ describe('pr:ready verdict', () => {
     expect(notes[0]).toContain('owner reviews it and merges it with one click')
     expect(notes.at(-1)).toContain('If main moves before the merge, run this again')
   })
+  it('says a change to what runs on an instrument opens as a draft until the exact build ran on a unit', () => {
+    const verdict = readiness({ instrument: ['src/engine/assets/octatrack-base.elemod'] })
+    expect(verdict.ok).toBe(true)
+    expect(verdict.instrument).toBe(true)
+    expect(verdict.notes.find(note => note.startsWith('This changes what runs on an instrument'))).toContain('gh pr create --draft')
+    expect(verdict.notes.at(-1)).toContain('If main moves before the merge, run this again')
+    expect(readiness({}).instrument).toBe(false)
+  })
   it('asks what the guides lacked, listing the guide edits on the branch', () => {
     const asked = readiness({}).notes.find(note => note.startsWith('What did the guides lack'))
     expect(asked).toContain('write "nothing" in the PR')
@@ -55,6 +63,8 @@ describe('pr:ready verdict', () => {
     // Every machine the registry gives a module folder, the Zoom pedals' too.
     expect(gateEdits(['sdk/zoom/modules/loop/modwerk.module.json', 'scripts/machine-folders.mjs'])).toEqual(['scripts/machine-folders.mjs'])
     expect(gateEdits(['sdk/digitakt-ii/modules/track-names/build.json', 'scripts/change-scope.mjs'])).toEqual(['scripts/change-scope.mjs'])
+    // The CPU price check is a gate; its pending list is not, so a module that names its price deletes its own line there.
+    expect(gateEdits(['sdk/octatrack/modules/poly8/octamod.module.json', 'scripts/module-cpu-price.mjs', 'sdk/module-cpu-prices-pending.json'])).toEqual(['scripts/module-cpu-price.mjs'])
     // What a module release legitimately carries (ARP KEY LOCKS, #954): the package builder's list, assets, the native comparison, test lists.
     expect(gateEdits(['sdk/octatrack/modules/arp-key-locks/manifest.py', 'scripts/build-module-packages.py', 'src/engine/assets/module-build.json', 'sdk/native-comparisons/arp-key-locks.json', 'scripts/module-release-scope.test.mjs', 'sdk/tests/test_arp_key_locks.py'])).toEqual([])
     // A Fix: pull request to the gate itself changes no module.
@@ -117,6 +127,8 @@ describe('pr:ready verdict', () => {
       copyFileSync(new URL('./pr-ready.mjs', import.meta.url), script)
       // Its module folders come from the machine registry, as in every checkout.
       copyFileSync(new URL('./machine-folders.mjs', import.meta.url), join(checkout, 'scripts', 'machine-folders.mjs'))
+      // What runs on an instrument is defined once, beside the description check that also asks about it.
+      copyFileSync(new URL('./pr-body.mjs', import.meta.url), join(checkout, 'scripts', 'pr-body.mjs'))
       mkdirSync(join(checkout, 'src', 'devices'), { recursive: true })
       copyFileSync(new URL('../src/devices/machines.generated.json', import.meta.url), join(checkout, 'src', 'devices', 'machines.generated.json'))
       // A stale branch must stop before any generator/check invocation.

@@ -8,7 +8,8 @@
 //   while [ -f scripts/device.mjs ]; do npm run device -- serve [--share /tmp/modwerk-share.sock]; sleep 1; done   # one long-lived link (starts the bridge
 //       if needed; --share lets the frontend MCP use the unit through it, --device-socket that path); send it
 //       scripts/device-send.py part2 pick:T1:FX2:E-Verb stats png:/tmp/s.png   # or 'try FILE', 'remove FILE', 'boot DIR'
-//   npm run device -- try MODULE.mwrm [--seconds 5] [--accept]
+//   npm run device -- try MODULE.mwrm [--seconds 5] [--accept]   # ends with a verdict from the unit's log: a crash, stall,
+//       frozen UI or skipped track during the trial fails it (exit 1) and it is rolled back even with --accept
 //   npm run device -- remove [MODULE.mwrm] [--accept]   # that file's module, else module 0
 //   npm run device -- set A.mwrm,B.mwrm,-C.mwrm [--accept]  # one whole-set offer, as the site's Sync sends it: files to install, -FILE
 //       to remove that file's module, +refuse for two test modules of which the base refuses the second (so the set rolls back)
@@ -49,11 +50,12 @@ import { OCTATRACK } from '../vendor/elekloader/kit/src/devices.ts'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
 import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
-import { DSP_REPORT_NAMES as REPORT_NAMES, describeStallFrames } from '../src/community/octatrack-diagnostics-contract.ts'
+import { DSP_REPORT_NAMES as REPORT_NAMES, describeStallFrames, describeStallPackets } from '../src/community/octatrack-diagnostics-contract.ts'
 import { encodeModuleSet } from '../src/engine/elekloader/set-package.ts'
 import { diagnostics, removal, runLifecycle, runtimePackage, ENTRY } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { describeRefusal } from './loader-refusals.mjs'
 import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
+import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
@@ -88,6 +90,16 @@ const transport = new UsbVendorTransport(unit, index, { pollMs: 5 })
 const identity = await transport.identify()
 // DIAG is the Octatrack base's own request; other bases may not answer it.
 const diag = () => diagnostics(unit, index).catch(() => undefined)
+/** diag.c's log over LOG (any base with it): the parsed log, null before the unit wrote one; throws on a base without LOG. */
+async function readLog() {
+  const data = new Uint8Array(DEVICE_LOG_PAGE * DEVICE_LOG_PAGES)
+  for (let page = 0; page < DEVICE_LOG_PAGES; ++page) {
+    const reply = await unit.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request: DEVICE_LOG_REQUEST, value: page, index }, DEVICE_LOG_PAGE)
+    if (reply.status !== 'ok' || reply.data?.byteLength !== DEVICE_LOG_PAGE) throw new Error(`This base does not answer LOG (diag.c): page ${page} ${reply.status} ${reply.data?.byteLength}`)
+    data.set(new Uint8Array(reply.data.buffer, reply.data.byteOffset, DEVICE_LOG_PAGE), page * DEVICE_LOG_PAGE)
+  }
+  return parseDeviceLog(data) ?? null
+}
 
 // Development bases (build_core.py --dev, dev.c): keys as the panel reports them, and the composed screen.
 const KEYS = { DOWN: 0x20, RIGHT: 0x21, SRC: 0x22, AMP: 0x23, LFO: 0x24, FX1: 0x25, FX2: 0x26, STOP: 0x27, PLAY: 0x28,
@@ -353,6 +365,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     else if ((m = /^mask:(\d+)$/.exec(step))) await devIn(20, Math.min(Number(m[1]), 65535), 1) // development bases: interrupts off for N microseconds
     else if (step === 'missing') console.log(await missing())
     else if (step === 'inventory') console.log(JSON.stringify(await transport.inventory() ?? 'this base does not answer INVENTORY'))
+    else if (step === 'off') console.log(JSON.stringify(await transport.off() ?? 'this base does not answer OFF')) // switched off in PROJ > MODWERK > MODULES
     else if (step === 'xwatch') { // probe X bases (dev request 26): does anything write X:$7a92-$7fff? per core
       for (const core of [1, 0]) {
         for (const until = Date.now() + 10000; !(await devIn(26, 0x100 | core, 1))[0]; await wait(100))
@@ -430,6 +443,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
         const kept = tv.getUint32(0) === 0x4d574654 && tv.getUint32(4) === w(1)
         console.log(`stall ${w(1)}: ${['test', 'frames stopped', 'eDMA refused a transfer'][w(2)] ?? 'reason ' + w(2)} at tick ${w(3)}\n  ` +
         named(i => i < w(4) ? w(5 + i) : 0) + `\n  packets core 0 ${Buffer.from(b.subarray(404, 420)).toString('hex')} core 1 ${Buffer.from(b.subarray(420, 436)).toString('hex')}` +
+        '\n  ' + describeStallPackets({ packets: [0, 1].map(c => Array.from({ length: 8 }, (_, i) => v.getUint16(404 + 16 * c + 2 * i))), report: Array.from({ length: Math.min(w(4), 96) }, (_, i) => w(5 + i)) }) +
         `\n  live FX ${Buffer.from(b.subarray(436, 452)).toString('hex')}\n  host ISR selected core 0x${v.getUint16(452).toString(16)} ` +
         `(RXDF ${v.getUint16(452) & 1}: a word the ColdFire never took), core 1 as last read 0x${v.getUint16(454).toString(16)}` +
         (kept ? '\n  ' + describeStallFrames(Array.from({ length: 256 }, (_, i) => us(i))) + '\n  gaps ' + Array.from({ length: 128 }, (_, i) => us(2 * i)).join(' ') + '\n  runs ' + Array.from({ length: 128 }, (_, i) => us(2 * i + 1)).join(' ') : '\n  no frames kept with it (a base before the trace)'))
@@ -438,13 +452,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     else if (step === 'crashtest') await devIn(17, 0, 1) // development bases: an illegal instruction on the next tick (crash.c)
     else if ((m = /^freezetest:(\d+)$/.exec(step))) await devIn(28, Number(m[1]), 1) // development bases: the UI tick stands still N s (diag.c)
     else if (step === 'diaglog') { // diag.c's log over LOG (any base with it): its incidents and the last loads
-      const data = new Uint8Array(DEVICE_LOG_PAGE * DEVICE_LOG_PAGES)
-      for (let page = 0; page < DEVICE_LOG_PAGES; ++page) {
-        const reply = await unit.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request: DEVICE_LOG_REQUEST, value: page, index }, DEVICE_LOG_PAGE)
-        if (reply.status !== 'ok' || reply.data?.byteLength !== DEVICE_LOG_PAGE) throw new Error(`This base does not answer LOG (diag.c): page ${page} ${reply.status} ${reply.data?.byteLength}`)
-        data.set(new Uint8Array(reply.data.buffer, reply.data.byteOffset, DEVICE_LOG_PAGE), page * DEVICE_LOG_PAGE)
-      }
-      const log = parseDeviceLog(data)
+      const log = await readLog()
       if (!log) console.log('diaglog: no log yet')
       else {
         console.log(`diaglog boot ${log.boot} seq ${log.seq}: ${log.incidents.length} incidents, ${log.loads.length} loads`)
@@ -454,7 +462,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
         for (const r of log.loads.slice(-6)) console.log(`  #${r.seq} boot ${r.boot} min ${r.minute} cpu ${r.cpu.map(v => v / 10).join('/')}% T1-4 ${r.dsp1to4.map(v => v / 10).join('/')}% ` +
           `T5-8 ${r.dsp5to8.map(v => v / 10).join('/')}% playing ${r.playing}/${r.samples}` + (r.frameGap !== undefined ? ` frame gap ${r.frameGap} us, tick gap ${r.tickGap} frames` : ''))
         if (log.crash) console.log(`  crash record ${log.crash.count}: vector ${log.crash.vector} PC 0x${log.crash.pc.toString(16)} code ${log.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${log.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}` + lined(crashNames(namesFor(identity.base), log.crash.pc, log.crash.stack)))
-        if (log.stall) console.log(`  stall record ${log.stall.count}: reason ${log.stall.reason} tick ${log.stall.ticks}, ${log.stall.report.length} report words` + (log.stall.frames ? '\n    ' + describeStallFrames(log.stall.frames) : ''))
+        if (log.stall) console.log(`  stall record ${log.stall.count}: reason ${log.stall.reason} tick ${log.stall.ticks}, ${log.stall.report.length} report words` + [describeStallFrames(log.stall.frames, log.stall)].filter(Boolean).map(line => '\n    ' + line).join(''))
       }
     }
     else if (step === 'crash') { // crash.c's record in battery RAM: what the last error exception was, and where
@@ -488,10 +496,12 @@ process.once('SIGINT', () => { console.log('interrupted: rolling back'); process
 
 /** While the unit plays, the base presses STOP and refuses with `unsafe`; retry for 3 s as the site does. A rollback
  * the loader could not switch yet answers `needs-recovery` and stays in recovery, from where it rolls back again
- * (OctatrackLink.whenStopped); given up at once, it left the unit in recovery until the base's own timeout. */
+ * (OctatrackLink.whenStopped); given up at once, it left the unit in recovery until the base's own timeout.
+ * A set rolls back one engine turn a row: at 3 s a 24-module trial stopped 16 rows in (MKII, 17 November 2026).
+ * shortcut: 20 s covers about 100 rows; take the site's setBudget(rows) when a set here grows past that. */
 async function stopping(step) {
   for (const start = Date.now(); ; await wait(200)) {
-    try { return await step() } catch (error) { if (!['unsafe', 'needs-recovery'].includes(error.status?.result) || Date.now() - start > 3000) throw error }
+    try { return await step() } catch (error) { if (!['unsafe', 'needs-recovery'].includes(error.status?.result) || Date.now() - start > (error.status.result === 'needs-recovery' ? 20000 : 3000)) throw error }
   }
 }
 
@@ -508,7 +518,10 @@ async function retried(step) {
     }
   }
 }
+/** The verdict comes from the unit's log before the trial and again before it is kept or undone (src/dev/trial-verdict.ts): a trial
+ * that logged a crash, a stall, a frozen UI or a skipped track is rolled back even with --accept, and the command exits 1. */
 async function trial(session, pkg) {
+  const logged = () => readLog().catch(() => undefined), before = await logged()
   await stopping(() => session.stage(pkg, { signal: interrupt.signal })); await session.activate(); await session.startTrial()
   console.log(`trial: ${pkg.sha256.slice(0, 16)}… running`)
   for (let second = 1; second <= seconds && !interrupt.signal.aborted; second++) {
@@ -517,8 +530,11 @@ async function trial(session, pkg) {
     if (d) console.log(`  ${second}s: ticks ${d.ticks}, value 0x${d.value.toString(16)}, slot ${d.active ? 'running' : 'empty'}, refusals ${d.refusals}`)
   }
   await stopping(() => session.holdTrial())
-  if (values.accept && !interrupt.signal.aborted) { await session.accept(); console.log('accepted') }
-  else { await stopping(() => session.rollback()); console.log('rolled back' + (values.accept ? '' : ' (pass --accept to keep it)')) }
+  const verdict = trialVerdict(before, await logged(), namesFor(identity.base))
+  console.log('verdict: ' + verdict.lines.join('\n  '))
+  if (verdict.failed && command !== 'serve') process.exitCode = 1
+  if (values.accept && !interrupt.signal.aborted && !verdict.failed) { await session.accept(); console.log('accepted') }
+  else { await stopping(() => session.rollback()); console.log('rolled back' + (verdict.failed ? ': the trial logged a fault (above), so it is not kept' : values.accept ? '' : ' (pass --accept to keep it)')) }
   const left = Date.now(), status = await session.leaveUploadMode()
   console.log(`left upload mode in ${Date.now() - left} ms`) // the card-set save runs first, in the same task
   return status
@@ -749,6 +765,6 @@ if (command === 'serve') {
   }
 } catch (error) {
   console.error(error.message, error.cause?.message ?? '')
-  console.error('If a module was left in trial, unplug USB: the base rolls back anything not accepted.')
+  console.error('If a module was left in trial, unplug USB: the base rolls back anything not accepted. If the unit restarted, npm run device -- do diaglog shows why once it is back.')
   process.exitCode = 1
 } finally { bench.socket.end(); backBench?.socket.end() }

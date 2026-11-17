@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { CARD_SET_FILE } from '../engine/elekloader/card-set'
+import { firmwareFilename } from '../config/firmware-filename'
 import { prepareCardSet } from '../engine/elekloader/module-set'
-import { layoutName, type BaseLayout } from '../engine/elekloader/base-variants'
+import { baseName, layoutName, type BaseLayout } from '../engine/elekloader/base-variants'
 import type { InventoryTarget } from '../config/inventory'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import { Icon } from './Icon'
@@ -52,11 +53,11 @@ function CardSetDialog({ name, written, error, notice, onClose }: { name?: strin
     </header>
     {written ? <>
       <ol className="card-set-plan">
-        <li><span aria-hidden="true">1</span><div><strong>Copy the file to the card</strong><p>Top folder, replacing the one there. Card reader or USB DISK MODE.</p></div></li>
+        <li><span aria-hidden="true">1</span><div><strong>Copy the file to the card</strong><p>Top folder, replacing the one there, named exactly {CARD_SET_FILE}: if your browser added a number to the name, take it out. Card reader or USB DISK MODE.</p></div></li>
         <li><span aria-hidden="true">2</span><div><strong>Switch the Octatrack off and on</strong><p>It reads the file when it starts.</p></div></li>
         <li><span aria-hidden="true">3</span><div><strong>Play</strong><p>{name ? <>It starts with the modules of <b>{name}</b>.</> : 'It starts with your modules.'}</p></div></li>
       </ol>
-      <p className="card-set-base">Needs the Modwerk base <b>{written.base.slice(0, 8)}</b> ({layoutName(written.layout)}) on the Octatrack.{notice && <> {notice}</>}</p>
+      <p className="card-set-base">Needs the Modwerk base <b title={written.base}>{baseName(written.base)}</b> ({layoutName(written.layout)}) on the Octatrack, the file <b>{firmwareFilename('base', written.base)}</b> installed with OS UPGRADE. On any other OS or base the Octatrack ignores this file.{notice && <> {notice}</>}</p>
     </> : <p className="file-error" role="alert">{error}</p>}
     <div className="dialog-actions"><button ref={done} type="button" className="button button-primary" onClick={onClose}>{written ? 'Done' : 'Close'}</button></div>
   </dialog>

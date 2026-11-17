@@ -13,6 +13,7 @@ import { USB_AUDIO_MODULE } from '../config/usb-audio'
 
 // The browser's download of the .bin; the guide's own steps are what is tested here.
 vi.mock('../config/firmware-filename', () => ({ saveFirmware: vi.fn() }))
+import { saveFirmware } from '../config/firmware-filename'
 
 let root: Root, container: HTMLDivElement
 beforeEach(() => {
@@ -69,9 +70,13 @@ describe('the guided first install, for a member on the original OS', () => {
     const guide = open({ link }); await guide.render()
     click(container.querySelector('.risk-accept input')!); click(buttonNamed('Download base .bin')!); await settle(); await settle()
     expect(guide.onStage.mock.calls).toEqual([['opened', undefined], ['file-downloaded', undefined]])
+    // Named by the base's identity, the number the module file dialog and the update prompt show (issue from a member, 16 November 2026).
+    expect(saveFirmware).toHaveBeenCalledWith(expect.any(ArrayBuffer), 'base', expected)
     expect(container.querySelector('#base-stage-title')?.textContent).toBe('Copy the file to your card')
     expect(container.textContent).toContain('USB DISK MODE')
     expect(container.textContent).toContain('put it in a card reader')
+    // An older .bin left on the card can be the one OS UPGRADE installs (issue 1624).
+    expect(container.textContent).toContain('remove every other .bin there')
     click(buttonNamed('File copied')!)
     expect(container.querySelector('#base-stage-title')?.textContent).toBe('Install it on your Octatrack')
     expect(container.textContent).toContain('PROJECT → SYSTEM → OS UPGRADE')
@@ -127,6 +132,21 @@ describe('the guided first install, for a member on the original OS', () => {
     unit.base = expected; unit.unplug(); unit.plug('base')
     await vi.waitFor(() => expect(guide.onReady).toHaveBeenCalledOnce())
     expect(guide.onStage.mock.calls.map(call => call[0])).toEqual(['opened', 'first-connection'])
+  })
+  it('says to remove other .bin files when the unit comes back on the base it ran before (issue 1624)', async () => {
+    const previous = 'cc'.repeat(32)
+    const { unit, link } = await connected('base', previous)
+    waitForBaseInstall('ab'.repeat(32), expected, previous)
+    const guide = open({ link }); await guide.render()
+    // OS UPGRADE took an older Modwerk .bin left on the card, so the unit restarts on the base it had.
+    unit.unplug(); unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().identity?.base).toBe(previous))
+    await settle()
+    const note = container.querySelector('.base-install-note')?.textContent
+    expect(note).toContain('still runs the base it had before')
+    expect(note).toContain('Remove every other .bin')
+    expect(guide.onReady).not.toHaveBeenCalled()
+    expect(pendingBaseInstall()?.expectedBase).toBe(expected)
   })
   it('closes by itself when the unit turns out to run the current base already', async () => {
     const { unit, link } = await connected('none')

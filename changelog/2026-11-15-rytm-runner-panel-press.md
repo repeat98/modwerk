@@ -1,0 +1,1 @@
+Analog Rytm MKII SDK: the test runner's `emu press KEY MS [&]` holds a key on rytm-emu's panel, so stock's key scan sees a real hold and its key repeats, which the link's keys never give; a case can time a tap against a hold. The Rytm guide notes that only the key pressed last repeats.

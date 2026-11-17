@@ -5,7 +5,7 @@
 import type { Inventory, InventoryTarget } from '../config/inventory.ts'
 import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
 import { depackSection } from '../engine/elektron/codec/depack.ts'
-import { OctatrackLink, type LinkDevice, type LinkSession, type LinkUsb } from '../engine/elekloader/octatrack-link.ts'
+import { ELEKTRON_VENDOR_ID, OCTATRACK_PRODUCT_ID, OctatrackLink, type LinkDevice, type LinkSession, type LinkUsb } from '../engine/elekloader/octatrack-link.ts'
 import { UPLOAD_TIMEOUT_MAX_MS, UploadDeviceError, UploadUnconfirmedError } from '../engine/elekloader/upload-session.ts'
 import { SELFTEST_BYTES, VENDOR_CLASS, VENDOR_PROTOCOL, VENDOR_SUBCLASS } from '../engine/elekloader/upload-usb.ts'
 import type { UploadPhaseName, UploadResultName, UploadStatus } from '../engine/elekloader/upload-wire.ts'
@@ -72,6 +72,9 @@ export interface FakeUnit {
   /** The restart after a saved write hangs at the logo (a DSP stalled while the base was sent does not park): the unit
    * goes away and comes back only when plugged again, as after a power cycle. */
   restartHangs?: boolean
+  /** RAM boots whose restart loses USB: the unit runs the new base but stays away until plugged again, as only a power
+   * cycle (which starts the flashed base) brings it back. */
+  bootHangs?: number
   /** SLOTS (request 39, flash.h): the base's two-slot record; absent, the base stalls it as one before the two slots.
    * A base that answers it writes another base's container into its spare slot and restarts once onto it, and its own
    * (after the trial) while it runs on, without a restart (flash.c); one that does not restarts after writing itself. */
@@ -82,6 +85,8 @@ export interface FakeUnit {
    * package in order: + installed, - removed. */
   modules: string[]
   kept: string[]
+  /** DIAG version 3 (request 4): frames, refusals, resets, primes, completions and abandons; absent, it stalls. */
+  ep0?: number[]
 }
 
 export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
@@ -92,7 +97,7 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
     const interfaces = [{ interfaceNumber: 0, alternates: alternates(8, 6, 0x50, [1, 2]) },
       ...base ? [{ interfaceNumber: 5, alternates: alternates(VENDOR_CLASS, VENDOR_SUBCLASS, VENDOR_PROTOCOL) }] : []]
     const device = {
-      opened: false, configuration: { interfaces },
+      opened: false, configuration: { interfaces }, vendorId: ELEKTRON_VENDOR_ID, productId: OCTATRACK_PRODUCT_ID,
       async open() { device.opened = true }, async close() { device.opened = false },
       async selectConfiguration() {},
       async claimInterface() { if (unit.taken) throw new DOMException('Unable to claim interface.', 'NetworkError') },
@@ -123,6 +128,11 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
           return { status: 'ok', data: view }
         }
         if (setup.request === 39 && unit.slots) return { status: 'ok', data: new DataView(unit.slots.slice().buffer) }
+        if (setup.request === 4 && unit.ep0) {
+          const diag = new DataView(new ArrayBuffer(68)); diag.setUint32(0, 0x4d575544); diag.setUint8(4, 3)
+          ;[3, 4, 5, 6, 7, 14].forEach((word, i) => diag.setUint32(8 + 4 * word, unit.ep0![i]))
+          return { status: 'ok', data: diag }
+        }
         if (setup.request === 27) { // INVENTORY, 13 a page from wValue: no DSP code, no name
           const page = unit.modules.slice(setup.value, setup.value + 13), list = new DataView(new ArrayBuffer(4 + 24 * page.length))
           ;[0x4d, 0x57, 0x49, page.length].forEach((byte, i) => list.setUint8(i, byte))
@@ -214,7 +224,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
         // armed from a base running out of RAM it comes back on the flashed one; from that one, on the image's base.
         if (data && data.length >= 4 && new DataView(data.buffer, data.byteOffset).getUint32(0) === 0x4fefffe4) {
           const next = unit.base === unit.flashed && !unit.fromRam ? fakeBaseOf(data) : unit.flashed
-          setTimeout(() => { unit.base = unit.active = next; unit.fromRam = false; unit.unplug(); unit.plug('base') }, delay)
+          setTimeout(() => { unit.base = unit.active = next; unit.fromRam = false; unit.unplug(); if (!(unit.bootHangs && unit.bootHangs-- > 0)) unit.plug('base') }, delay)
         }
         return published
       },

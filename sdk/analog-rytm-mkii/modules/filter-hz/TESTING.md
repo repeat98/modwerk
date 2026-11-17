@@ -1,5 +1,40 @@
 # Filter Hz — test report
 
+## 1.3.1 (less RAM, no behaviour change)
+
+Every function in `src/fx-hz.c` runs in the UI task when an FX value's text is drawn, never in
+the audio block. 1.3.1 marks them `FHZ_UI` (`__attribute__((cold))`), so GCC builds them for size
+and out of the hot code; `filter-hz.s` is unchanged. The module's `.run` is 1,545 bytes (1,745 in
+1.3.0), 200 bytes less of the RAM all modules share.
+
+- Source: fingerprint (`sha256` of `sha256sum include/ar2-1.74.inc src/filter-hz.s src/fx-hz.c`)
+  `aea72500…edc4` (`evidence.sourceSha256`). The test images below carried the same code; their
+  `fx-hz.c` differed only in the comment that explains the macro.
+- Object compare: with every function left at -O2, the objects before and after are
+  byte-identical in their instructions apart from relocation offsets. An independent review of
+  the change found no defect.
+- Emulator, rytm-emu 2ac0f1f (ramboot build), Modwerk's Rytm test rig: CB00 (a Modwerk
+  development base with the dev link + Filter Hz 1.3.0, Improved AMP, Quick Mod Assign and
+  Control In Actions, `2df46aa4…48f9`) recorded the references; CA01 (the same with the cold
+  sources, `cfc5ee3b…61fa`) passed all 26 cases against them with identical screens and
+  measures, the seven Filter Hz cases (delay-turn, delay-lock, khz-pair, reverb-turn,
+  reverb-scene, scene-edit, perf-edit) among them ([report](evidence/emulator-1.3.1.json)).
+- Screenshots: the six capture plans on FZ81 (core-ar2 0.3 + 1.3.1, `deaaec56…bdb6`) give all six
+  frames in `media/` byte for byte.
+- Hardware, 2026-11-16, run by the automated test link with npp1993's go on npp1993's Analog
+  Rytm MKII (OS 1.74), screens read back from the unit, not judged by a person: CA02 (CA01's
+  sources on the store lock of the unit's flashed build, `8c732687…b7b5`, image CRC `c06360e8`)
+  booted from RAM over USB in a scratch project ([hardware report](evidence/hardware-testing-1.3.1.json)).
+  - All seven Filter Hz cases ran (six in a first pass, scene-edit later). Every Hz and kHz
+    readout on the unit equals the emulator's, for example 79.0Hz and 1.44kHz on DELAY and
+    5.85kHz on REVERB FRQ.
+  - Filter Hz has no screens recorded on a unit, so CB00's emulator screens were the
+    references. The compares flagged only other knobs (REV, DEC, GAI, X) that the scratch
+    project set differently from the emulator's default kit. Counted as not a pass: only the
+    readouts were seen to match.
+- Not tested: Filter Hz alone on core-ar2 on the unit, audio, saving and reloading a project, a
+  power cycle.
+
 ## 1.3.0 (the FX track's DELAY and REVERB frequencies)
 
 Read in stock OS 1.74's delay (`0x4010da24`) and reverb (`0x4010d434`), which run at 48 kHz in

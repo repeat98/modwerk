@@ -1,0 +1,1 @@
+SDK: `npm run module:new` gives a new Octatrack module its author's own MIT licence, as its manifest declares, instead of a copy of Octabam's LICENSE, which named Octabam's author and covered that repository. Modules made earlier keep their file; an author whose original module carries Octabam's text replaces it with their own.

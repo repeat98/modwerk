@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/sample-rate",
+  "version": "0.6.0-experimental",
+  "date": "2026-11-16",
+  "changes": [
+    "Ping Pong Loop 0.1.2 folded in unchanged: LOP's third value PIPO (a ping-pong loop with exact turns at STA and END), FUNC + STA or END stepping to zero crossings, and the S and E labels on SMPL WAVEFORM. Its sources, 13 sites, defsyms, cflags and claims join the module; no site overlaps Improved SMPL's own. Declares pipo-loop in compatibility.conflicts until that module retires."
+  ],
+  "runtimeSourceSha256": "461f1259d481af52ccf547debc34d48dea9cda09d40e73b638c6a9fe87708339",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/sample-rate/sample-rate-0.6.0-experimental-os1.74.elemod",
+      "sha256": "f749f2492a25ecb20a268e063b4a56c546b6ef713112744c70eba4bd84fad2c8"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/sample-rate/TESTING.md",
+  "requires": []
+}

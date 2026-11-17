@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Kits comes to Modwerk: 255 Kits per project, and each pattern plays its own. PART loads a Kit, FUNC+PART saves one.",
+      "Projects without Kits are read in the first time: each Part becomes a Kit and its patterns keep playing it.",
+      "Borrows about 2 MB of sample memory only while installed, and gives it back when removed. Needs Modwerk base 0.7.4 or newer, over USB.",
+      "Not offered together with Pattern Sample Locks: both use the Part menu. After a Sync, Kits starts working once you press Keep.",
+      "Known issue: SAVE KIT, pattern chains and a power cycle are not yet tested on a unit."
+    ]
+  }
+]

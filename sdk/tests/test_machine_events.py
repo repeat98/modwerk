@@ -44,6 +44,11 @@ class MachineEventTests(unittest.TestCase):
         result = host(self, OT / 'elekloader/test_midi_generators.c')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_sample_memory_on_the_host(self):
+        # ot_sample_memory (sample_memory.c): pages borrowed from stock's sample pool survive a cold init and come back.
+        result = host(self, OT / 'elekloader/test_sample_memory.c')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_registry_knows_every_protect_port_signature(self):
         # The validator keeps a known PROTECT machine's 12 bytes while it is absent (the boot's battery restore runs
         # before the saved set reinstalls it: beta finding 24). The list must be exactly the PROTECT ports and the
@@ -81,6 +86,22 @@ class MachineEventTests(unittest.TestCase):
                         'machine_admission', 'machine_declarations', 'table_admission', 'table_declarations',
                         'sample_editor_actions')))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_ordinary_modules_are_not_retired_while_their_ui_is_open(self):
+        result = host(self, ADAPTERS / 'test_module_ui_roots.c',
+                      *(ADAPTERS / (name + '.c') for name in ('machine_contributors', 'machine_lifetime', 'machine_parts',
+                        'machine_admission', 'machine_declarations', 'table_admission', 'table_declarations',
+                        'sample_editor_actions')))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_ui_roots_admission_cross_compiles(self):
+        gcc = shutil.which('m68k-elf-gcc')
+        if not gcc:
+            self.skipTest('no ColdFire compiler')
+        with tempfile.TemporaryDirectory() as temp:
+            subprocess.run([gcc, '-mcpu=5475', '-msoft-float', '-O2', '-std=c99', '-ffreestanding', '-fno-builtin', '-Wall', '-Wextra',
+                            '-Werror', '-DMODWERK_RUNTIME_EVENTS', '-DMODWERK_RUNTIME_UI_ROOTS', '-DRUNTIME_MODULES=128u', *INCLUDES, '-c',
+                            ADAPTERS / 'machine_admission_runtime.c', '-o', temp + '/a.o'], check=True, capture_output=True)
 
     def test_registry_cross_compiles_without_new_optimisation_flags(self):
         gcc = shutil.which('m68k-elf-gcc')

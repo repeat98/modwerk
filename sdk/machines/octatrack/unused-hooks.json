@@ -1,0 +1,8 @@
+{
+ "about": "The hooks and tables in events.json that no module, draft, module adapter, base build or test subscribes, raises or contributes to yet, each with one line saying why (hook_coverage.py, run by sdk/tests/test_hook_coverage.py). A hook here is base code no module exercises: the first place to look when the base needs room. Remove a line in the pull request that gives its hook a user; the check fails on a line whose hook is used or gone.",
+ "unused": {
+  "ot_midi_generators": "base table since #775, its reader host-tested; VECTOR MIDI contributed in VECTOR 0.3.0 (#1339) and left with 0.3.1 (#1342), its own module pending",
+  "ev_bank_write": "added in #1564 for MIDI Scenes and Kits, which keep data per project, bank and Part; first module pending",
+  "ev_project_reload": "added in #1564 for MIDI Scenes and Kits, which keep data per project, bank and Part; first module pending"
+ }
+}
