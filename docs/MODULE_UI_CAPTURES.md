@@ -216,6 +216,10 @@ and framebuffer data are removed by the script.
   ninth of 24 words a frame).
 - Without `--dsp` a session runs about ten times faster, for screens only (the firmware then shows DSP LOAD
   FAILED), and a package that carries a DSP engine (Analog BD) is refused at verify with loader refusal 3. Card samples do not play faithfully under the port, so compare levels against a sample on a unit.
+- A USB trial needs `--dsp --dsp-rt`, or no `--dsp` at all: under plain `--dsp` the session runs slower than real time and
+  `try` stops at "hello was not confirmed … Upload acknowledgement timed out" (Arr Rows' draft, 17 November 2026).
+- On macOS a Unix socket path is limited to 104 characters: with a longer `--usb-host` path (a scratch directory's
+  often is) the emulator logs "cannot listen" and exits. Put the socket in `/tmp`.
 
 ### Capturing the base's own screens
 
@@ -226,6 +230,11 @@ Capture those screens from a development twin (`build_core.py` with the release 
 and `pace on`: `npm run device -- do 'PROJ w500 … png:FILE' --emulator --socket SOCK`, or the emulator's `peek` of the
 `screen` symbol (dev.c's composed frame) while `npm run device -- boot DIR` runs, which shows the real BASE UPDATE screen.
 The startup's last frame comes from `scripts/verify-startup-base.py --png`.
+
+A module's own `module_draw` overlay (marks drawn over a stock page) is missed the same way. Without a development twin,
+rebuild the screen from what the panel link receives: after each `run`, send `tx` and feed its bytes to Octabam's
+`tools/panel/panel_link.py` (`PanelLink.feed`), then save `render_png(scale=6, dark=24, light=240)`, the documentation
+palette. Say so in `capture.json`'s method, as Arr Rows' draft does.
 
 ## Rights and release review
 
