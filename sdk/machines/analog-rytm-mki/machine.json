@@ -12,7 +12,7 @@
     "format": "done",
     "rebuild": "done",
     "boot": "done",
-    "core": "done",
+    "core": "started",
     "mods": "open"
   },
   "stack": {

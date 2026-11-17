@@ -74,12 +74,7 @@
     {
       "name": "mw_machine_sections",
       "entry": 4,
-      "purpose": "Four bytes, contributed as data with no relocation: a core_machines slot (34 to 43), the machine list section it files under (1 BD, 2 SD, 4 CP, 5 BT, 6 RS, 7 HH, 8 CY, 9 CB, 10 UT, 11 SY) and two zero bytes. Without one the machine sorts above BD, as on core-ar2; SY machines sort after stock's (Modwerk base, both variants)."
-    },
-    {
-      "name": "ev_amp_record",
-      "entry": 4,
-      "purpose": "Assembly entries the base calls once a voice an audio block, lowest order first, before stock's amp record stores (0x40109c24): d0 rate word and d2 level word in and out, d3 voice, a2 state, a3 frame, a4 sound slice; d1/d4/a0 free, every other register kept (modwerk/amp.h; Modwerk base, both variants). Rewriters order 10-39, followers 60-89."
+      "purpose": "Four bytes, contributed as data with no relocation: a core_machines slot (34 to 43), the machine list section it files under (1 BD, 2 SD, 4 CP, 5 BT, 6 RS, 7 HH, 8 CY, 9 CB, 10 UT, 11 SY) and two zero bytes. Without one the machine sorts above BD, as on core-ar2; SY machines sort after stock's (Modwerk base)."
     }
   ],
   "exports": [
@@ -97,6 +92,16 @@
       "name": "core_store_set",
       "prototype": "void core_store_set(unsigned field, void *item, int index, unsigned value)",
       "purpose": "Write a mod storage field; interrupts are masked while it writes."
+    },
+    {
+      "name": "core_key",
+      "prototype": "int core_key(void *brain, void *event)",
+      "purpose": "Play a key event as the panel's: every ev_key handler in order, then stock's Brain::key unless one took it. For a mod that holds a key back and plays it later; guard its own ev_key handler against the replay (core.s)."
+    },
+    {
+      "name": "core_enc",
+      "prototype": "int core_enc(void *brain, void *event)",
+      "purpose": "Play an encoder event as the panel's: every ev_enc handler in order, then stock's encoder dispatch unless one took it (core.s)."
     },
     {
       "name": "core_audio_load",

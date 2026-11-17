@@ -23,19 +23,16 @@ The MKI follows the [machine recipe](../../../docs/MACHINE_RECIPE.md) on its own
 ## Match stock's knobs
 
 A mod's controls should look and turn exactly as stock's do (FUNC, push + turn, speed, widget). On the MKI, every
-parameter id has a record in RAM (88 bytes an id, from `0x416a6aa4`) that decides all of it: the turn's fine step
-(+4) and coarse step while the encoder is pushed (+8), an acceleration (+12, +20), the value's printer (+24..+39),
-the knob's drawing (+40..+55: a dial, a fader, a bipolar dial, a list) and FUNC + turn's jump (+72..). A stock page
-turns a knob as counts x step through that acceleration, then core-ar2 hands the result to the mod (core_params'
-delta, in 8.8). Most records step 0x100 a count and 0x800 pushed, but records differ (LFO DEP, delay X, the pulse
-records of the hidden TEST machines), and sends and levels draw as faders.
+parameter id has a record in RAM (88 bytes an id, from `0x416a6aa4`) that decides it: the turn's fine step (+4),
+the coarse step while the encoder is pushed (+8) and the knob's drawing (+48, +52: a dial, a fader, a bipolar dial, a
+list). Most records step 0x100 a count and 0x800 pushed, but records differ (LFO DEP, delay X), and sends and levels
+draw as faders. A stock page turns a knob through its record, then core-ar2 hands the result to the mod (core_params'
+delta, in 8.8).
 
 - Put a mod's controls on a stock parameter page (core_pages, core_page_fns, core_params) rather than drawing a page
   of its own, so stock turns and draws them.
 - Give each control a record that behaves as the stock parameter it stands for: a send as AMP's DEL, a level as a
-  VOL, a feedback as the delay's FDB. The send bus copies the stock record into its own id's at project start.
-- Unused ids for a mod: the hidden TEST machines' records (machines 45-52, ids 430-460) are not on any user machine;
-  check each one's record, as some are pulse or selector records, not plain dials.
+  VOL, a feedback as the delay's FDB.
 - An effect's or knob's own speed tables, ported from the MKII, will feel wrong here: stock steps once a count.
 
 ## Audio block notes
