@@ -399,17 +399,21 @@ enum { S_INC = 0, S_BEND, S_DP, S_DE, S_GAIN, S_KT, S_VEL, S_ATK };
 enum { S_GL2 = 14, S_GH = 15 };     /* both models: the desk's LOW and HIGH */
 
 #define COLD __attribute__((noinline, cold))
+/* A knob table's Q31 word: 16-bit steps above its smallest word (tools/gen_tables.py --errors
+ * gives each table's worst error, 1.5e-5 of full scale at most). */
+#define KNOB(t, i) ((int32_t)((uint32_t)t##_LO + ((uint32_t)t[i] << t##_SH)))
 
 static void COLD settings909(int32_t *set, const struct ab_knobs *k)
 {
-    int32_t q = qmul(qmul(T_AP[k->ptch], T_GT[k->tone]), T_GD[k->swep]);
-    int32_t vb = T_VB[k->acnt], va = T_VA[k->acnt], atp = T_ATP[k->atk], gp, gs;
-    set[S_INCB] = ratio_mul(T_INCB[k->ptch] + KTFB0 + qmul(KTFB, T_GT[k->tone]), k->ratio);
+    int32_t gt = T_GT[k->tone];
+    int32_t q = qmul(qmul(T_AP[k->ptch], gt), T_GD[k->swep]);
+    int32_t vb = k->acnt * k->acnt << 17, va = KNOB(T_VA, k->acnt), atp = KNOB(T_ATP, k->atk), gp, gs;
+    set[S_INCB] = ratio_mul(KNOB(T_INCB, k->ptch) + KTFB0 + qmul(KTFB, gt), k->ratio);
     set[S_INCA] = ratio_mul(qmul(q, KA_INC), k->ratio);
-    set[S_GDCH] = qmul(vb, T_THS[(uint32_t)q >> 24]) >> 1;
+    set[S_GDCH] = qmul(vb, KNOB(T_THS, (uint32_t)q >> 24)) >> 1;
     set[S_GBODY] = qmul(vb, K_BODY);
     set[S_DKP] = T_DKP[k->tone];
-    set[S_DKD] = T_DKD[k->dcay];
+    set[S_DKD] = KNOB(T_DKD, k->dcay);
     /* the click's gains (dsp909.Voice.click, FIXD on: the base strength KPBASE) */
     gp = qmul(va, atp);
     gs = qmul(va, KGS) + sshl(qmul(gp, KFDR), 2);
@@ -418,22 +422,22 @@ static void COLD settings909(int32_t *set, const struct ab_knobs *k)
     set[S_G3] = qmul(set[S_G1], KA1);
     set[S_G4] = qmul(set[S_G1], KB1) + qmul(set[S_G2], KB2);
     set[S_GN16] = qmul(va, KN0X + sshl(qmul(KN1Q, atp), 2));
-    set[S_GL2] = T_GL2[k->low];
-    set[S_GH] = T_GH[k->high];
+    set[S_GL2] = KNOB(T_GL2, k->low);
+    set[S_GH] = 2 * KNOB(T_GL2, k->high);
 }
 
 static void COLD settings808(int32_t *set, const struct ab_knobs *k)
 {
-    set[S_INC] = ratio_mul(B_INC[k->ptch], k->ratio);
-    set[S_BEND] = ratio_mul(sshl(qmul(B_BEND[k->dcay], k->swep << 24), 1), k->ratio);
-    set[S_DE] = B_DE[k->dcay];
-    set[S_DP] = B_DP[k->dcay];
-    set[S_GAIN] = B_GAIN[k->dcay];
-    set[S_KT] = B_TONE[k->tone];
-    set[S_VEL] = B_VEL[k->acnt];
-    set[S_ATK] = B_ATK[k->atk];
-    set[S_GL2] = T_GL2[k->low];
-    set[S_GH] = T_GH[k->high];
+    set[S_INC] = ratio_mul(KNOB(B_INC, k->ptch), k->ratio);
+    set[S_BEND] = ratio_mul(sshl(qmul(KNOB(B_BEND, k->dcay), k->swep << 24), 1), k->ratio);
+    set[S_DE] = KNOB(B_DE, k->dcay);
+    set[S_DP] = KNOB(B_DP, k->dcay);
+    set[S_GAIN] = KNOB(B_GAIN, k->dcay);
+    set[S_KT] = KNOB(B_TONE, k->tone);
+    set[S_VEL] = (k->acnt ? k->acnt : 1) * Q_I127;
+    set[S_ATK] = k->atk * Q_I127;
+    set[S_GL2] = KNOB(T_GL2, k->low);
+    set[S_GH] = 2 * KNOB(T_GL2, k->high);
 }
 
 /* ENV2 = e2 - e3 16 samples on, with its gain, and the ramp that reaches it */
