@@ -10,6 +10,7 @@
 import { execFileSync, spawnSync } from 'node:child_process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { alternation, moduleFolders } from './machine-folders.mjs'
+import { instrumentFiles } from './pr-body.mjs'
 
 const GENERATORS = [['licenses:generate'], ['machines:generate'], ['modules:generate']]
 
@@ -54,7 +55,7 @@ export function pythonProblem({ command = 'python3', version = null, error = nul
 }
 
 /** The verdict from what was found; every problem says what to do. */
-export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], compiled = null, board = null }) {
+export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], instrument = [], compiled = null, board = null }) {
   const problems = [...board?.problems ?? []], notes = [...board?.notes ?? []]
   if (python) problems.push(python)
   if (gateEdits.length) problems.push(gateProblem(gateEdits))
@@ -74,8 +75,11 @@ export function readiness({ python = null, dirty = [], behind = false, remote = 
   notes.push('What did the guides lack or get wrong while you did this? ' + (guideEdits.length
     ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix. If a developer working now could hit it before this merges, post it on the agent board yourself: npm run board -- finding <topic> <key> "…" --pr <n>.'
     : 'No guide edit is on this branch: fix it where a reader would look (docs/, AGENTS.md, the machine guide; for a module release, a separate Docs: PR), or write "nothing" in the PR.'))
+  // Ready means the checks pass, not that anything ran on a unit (#1694 went up ready to merge after only development twins had).
+  if (instrument.length) notes.push('This changes what runs on an instrument (' + instrument.slice(0, 3).join(', ') + (instrument.length > 3 ? ` and ${instrument.length - 3} more` : '') +
+    '): open the pull request as a draft (gh pr create --draft) and mark it ready only after the developer has tested the exact build on a unit. The description then names it on a line of its own ("Tested on a unit: base 8d1db124 (or the package\'s sha256), MKII, what ran", or "Not tested on a unit: <why>" for the owner to decide); CI refuses a ready one without it.')
   notes.push('Then push, open or update the PR with a description in the template\'s shape (CI checks it says what changed and answers the guides question; `node scripts/pr-body.mjs FILE.md` checks a description in a file the same way before you open the PR), and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
-  return { ok: problems.length === 0, problems, notes }
+  return { ok: problems.length === 0, problems, notes, instrument: instrument.length > 0 }
 }
 
 /** Claim on the agent board what this branch adds (a module, a hook or table index, a migration), so two developers never
@@ -155,11 +159,13 @@ async function main(argv) {
   const boardModule = !dirty.length && !behind ? await import('./agent-board.mjs') : null
   const claimed = boardModule && await boardClaims(root, base, boardModule), waiting = boardModule ? await boardModule.inboxNotes() : []
   const board = claimed || waiting.length ? { problems: claimed?.problems ?? [], notes: [...claimed?.notes ?? [], ...waiting] } : null
-  const verdict = readiness({ python, dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), compiled, board })
+  const verdict = readiness({ python, dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
   for (const line of verdict.notes) console.log('· ' + line)
-  console.log(verdict.ok ? 'Ready: this PR can merge without the owner repairing it.' : 'Not ready yet.')
+  console.log(!verdict.ok ? 'Not ready yet.' : verdict.instrument
+    ? 'Ready to open as a draft: the checks pass. Mark it ready for review once the exact build has run on a unit (above).'
+    : 'Ready: this PR can merge without the owner repairing it.')
   return verdict.ok ? 0 : 1
 }
 
