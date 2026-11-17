@@ -242,7 +242,7 @@ int main(void)
     hold(CUE, 1); hold(FUNC, 1); tap(STOP); hold(FUNC, 0); hold(CUE, 0);
     check("an insert at the end (P == count) changes no target", rows() == 9 && row(2)[3] == 5);
 
-    /* targets past row 127: stock compares them signed and never moves them; the module does */
+    /* a target past row 127 moves like any other (stock reads targets unsigned) */
     fill(210);
     row(205)[0] = 1; row(205)[3] = 200;
     set_cursor(5);

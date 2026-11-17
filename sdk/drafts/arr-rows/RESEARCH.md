@@ -9,8 +9,8 @@ What the module relies on, read from the stock image (load address `0x40000400`)
   the row count, then 256 rows of 22 bytes from `+0x14`. This is the `.work`/`.strd` file's block after its header,
   so the module never touches the file format.
 - A row's byte 0 is its type: 0 pattern, 1 LOOP/JUMP/HALT, 2 REM. A type-1 row's byte 3 is its target row and byte 2
-  its count. The draw code (`0x400494f6`) labels it by target against its own row, read signed (`mvs.b`): less is
-  LOOP, equal is HALT, greater is JUMP. Only a LOOP draws its count: `%02d`, or for 0 two glyphs that show as `∞`
+  its count. The draw code (`0x400494f6`; the main screen's list at `0x40048d12`) labels it by target against its own
+  row: less is LOOP, equal is HALT, greater is JUMP. Only a LOOP draws its count: `%02d`, or for 0 two glyphs that show as `∞`
   (measured: `LOOP: 001/∞`). The editor's writer clamps the count to 0-64 (`0x40049ed6`). Turning LEVEL below A01 in
   the PAT column makes a pattern row type 1 (a HALT on its own row) and then REM.
 - `0x100b14d1` (byte, read with `mvz.b`) is the arrangement's number 0-7 (`0x100b14ce` is the current bank, which stock's insert uses for the new row); `0x1001614c` holds one changed bit per arrangement. Stock's
@@ -41,15 +41,21 @@ What the module relies on, read from the stock image (load address `0x40000400`)
   (-1 none); FUNC + STOP again on that row restores it (`UNDO PASTE ROW`). Without a copy: `NO COPY`.
 - Clear: the same undo; the row is cleared by `0x4009aff4(row)`, which resets its fields by type.
 - Insert (FUNC + DOWN, `0x4009e4c8(P)`): refused at 256 rows (`ROW LIMIT REACHED`, `0x400b94ab`); every type-1 row
-  whose target is greater than P (signed) gets target + 1, then rows P.. shift down, which leaves a copy of row P at
+  whose target is greater than P gets target + 1, then rows P.. shift down, which leaves a copy of row P at
   P: in the middle the insert duplicates the cursor row; on an empty arrangement it writes a pattern row with the
   current bank (`0x100b14ce`) and pattern (`0x100b14d0`). A HALT at P is not special: measured, `HALT: 003` with FUNC +
   DOWN on it gave `HALT: 003` and `LOOP: 003/∞` below it, an endless loop.
 - Delete (FUNC + UP, `0x4009b168(D)`): nothing on an empty arrangement or D ≥ count; every type-1 row whose target is
-  greater than D (signed) gets target − 1, a target equal to D stays (the row that moves up into D); rows shift up,
+  greater than D gets target − 1, a target equal to D stays (the row that moves up into D); rows shift up,
   the count drops, the arranger's playing row `0x80006698` is clamped to the new last row. A HALT below D follows
   itself. Measured: deleting the duplicated HALT above put `HALT: 003` back.
-- Stock compares targets signed in insert, delete and the draw code, so a target past row 127 never moves.
+- Every read of a type-1 target is unsigned (`mvz.b`): insert `0x4009e570`, delete `0x4009b19e`, the editor's labels
+  `0x40049500`/`0x4004956c`, the main screen's `0x40048d14`, the editor's target edit `0x40049eb2` (clamped to
+  0..count) and playback's row resolver `0x4009aed0` (`0x4009af04`: equal stays, a HALT; greater jumps; less loops,
+  with a bitmap of rows already visited). A HALT past row 127 is a HALT. (Until 17 November 2026 this file said
+  signed: opmode `110` was misread as MVS; it is MVZ, MVS being `10s`.)
+- The arrangement chain loads arrangement n by writing `0x100b14d1` and pointing `0x10000000` at
+  `0x10000004 + n × 5652` (20 + 256 × 22).
 - Messages: `0x4005a2b8(text, 0x30)` formats the text into stock's own box; `0x460d1e70` is nonzero while one is up.
 
 ## The screen

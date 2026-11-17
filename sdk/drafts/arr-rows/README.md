@@ -61,8 +61,7 @@ arrangement, open EDIT and paste or insert.
 - A paste or insert past 256 rows is refused with stock's ROW LIMIT REACHED, changing nothing.
 - An insert of N rows at row P moves LOOP and JUMP targets past P by N, as stock's FUNC + DOWN does by one, and a
   HALT moves with its row, so it stays a HALT. One difference from stock: stock leaves a HALT sitting at P pointing at
-  the new row, which turns it into an endless LOOP; the module keeps it a HALT. Targets past row 127 move too (stock
-  never moves them). Inserted rows whose target is inside the copied block keep their place in the block; a LOOP
+  the new row, which turns it into an endless LOOP; the module keeps it a HALT. Inserted rows whose target is inside the copied block keep their place in the block; a LOOP
   count is kept within stock's 0-64. An overwrite paste (FUNC + STOP) does the same for the pasted rows: a copied
   LOOP or HALT points into the pasted rows, a target outside the copied block is kept (no row moves). Stock's one-row
   paste keeps the target as copied, so a HALT pasted elsewhere becomes an endless LOOP back to its old row.

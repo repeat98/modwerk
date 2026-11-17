@@ -276,8 +276,8 @@ static unsigned byte_at_most(unsigned v) { return v > 255u ? 255u : v; }
 /* Where a type-1 row's target goes when n rows are inserted at `at`, the row itself being at `own` before it.
  * Stock's insert (0x4009e4c8) moves a target past the insertion row by one and leaves the rest. A HALT is a row
  * whose target is its own row (the draw code labels target < own LOOP, == own HALT, > own JUMP), so it follows its
- * row: also a HALT sitting at `at`, which stock leaves behind as a LOOP to the new row. Unsigned, where stock compares
- * signed, so targets past row 127 move too. */
+ * row: also a HALT sitting at `at`, which stock leaves behind as a LOOP to the new row. Targets are unsigned bytes,
+ * as stock reads them everywhere (mvz.b: insert, delete, the labels, the playback resolver 0x4009aed0). */
 static unsigned moved_target(unsigned target, unsigned own, unsigned at, unsigned n)
 {
     if (target == own) return own >= at ? byte_at_most(own + n) : own;
