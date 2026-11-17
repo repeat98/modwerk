@@ -160,7 +160,7 @@
       "testedOn": "2026-11-01",
       "tester": "svindler",
       "durationMinutes": null,
-      "summary": "Test builds ME09 to ME17 on the author's unit over DIN (and USB once), a synth's MIDI read on a computer monitor: silent track, notes and chords, LEN and INF, STOP, lane values and locks, lock trigs, live PB/MW/AT and CC knobs, SND OFF, LFO on a lane, swing and microtiming, mute, save and power cycle, leaving the machine. ME17 last: leave and return, then PLAY, with no stray CC.",
+      "summary": "Test builds ME09 to ME17 on the author's unit over DIN (and USB once), a synth's MIDI read on a computer monitor: silent track, notes and chords, LEN and INF, STOP, lane values and locks, lock trigs, live PB/MW/AT and CC knobs, SND OFF, LFO on a lane, swing and microtiming, mute, save and power cycle, leaving the machine. ME17 last: leave and return, then PLAY, with no stray CC. MER1, the released package, on 2026-11-17: the same notes, lanes and leave-and-return result over DIN.",
       "limitations": [
         "One unit, one MIDI track at a time; scenes, performances, conditions and pattern changes not tested.",
         "No CPU load measured on the unit."

@@ -107,6 +107,13 @@ BD and SD on stock machines with TRK SEND MIDI on (channels 1 and 2), trigs on s
 
 `midi-engine-0.1.0-experimental-os1.74.elemod` (sha256 8797a971…3f911) is compiled from this folder in Modwerk's pinned toolchain (m68k-elf GCC 16.2.0) by `scripts/build-elemod-isolated.sh`, and `package-elemod-recipe.mjs --check` reproduces it. The unit runs above used local builds with GCC 12.2, so the package is not byte-identical to ME17. Since ME17 the source changed only by adding `machine:42` to `build.json`'s claims; the C and assembly are unchanged.
 
+MER1 is that package, built the way the site builds it (the vendored kit's `build` with core-ar2 0.7 on the stock OS 1.74 file). On the developer's unit, 2026-11-17, over DIN:
+
+- The first Transfer DROP stalled at the startup screen's "Waiting for SysEx"; after a power cycle ME17 still booted, and a second DROP installed MER1. The screen shows MER1.
+- BD on MIDI, channel 1, HLD lane on CC 74, SND PMA: at PLAY CC 74, PB, MW and AT once, then the chord C1 G1 C2 at velocity 100 on every trig, CC 74 alternating 24 and 20 with the locks, offs after LEN and at STOP. No CC 64. The same messages as ME17.
+- BD on another machine: stock's own MIDI note, C1, per trig. Back on MIDI the AMP page is all OFF and PLAY sends plain C1 notes with no controllers, as ME17 (leaving the machine switches the lanes and SND OFF).
+- Not tested on MER1: save and power cycle, USB MIDI, whether a project saved by ME17 loads its lanes and SND (MER1 uses a new storage layout).
+
 ## Not tested
 
 - Several MIDI tracks at once, shared voices (CH/OH, RS/CP, MT/HT, CY/CB), scenes and performances, conditions, pattern and song changes, the load under a flood (`perf:audit`).
