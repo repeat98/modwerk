@@ -101,7 +101,7 @@
     ],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.7.",
-      "0.6.0 is Improved SMPL 0.5.1 and Ping Pong Loop 0.1.2 in one module, code unchanged; never install Ping Pong Loop beside it. Not run on a unit: several voices in PIPO, LOP locks and scenes, MIDI CC 30, samples over 0.64 s, RATE on two voices together, scene and performance locks on RATE, a sound browser load. Unit runs, emulator runs and builds: TESTING.md.",
+      "0.6.0 is Improved SMPL 0.5.1 and Ping Pong Loop 0.1.2 in one module, code unchanged; never install Ping Pong Loop beside it. Run on a unit as MSU1 (rig and author). Not run on a unit: several voices in PIPO, a scene lock of PIPO, MIDI CC 30 by ear, samples over 0.64 s, RATE on two voices, scene and performance locks on RATE, a sound browser load. TESTING.md has the rest.",
       "The waveform view shows no text for STA, END and SMP: STA and END show as their lines, D's sample list as on stock. With a trig held, a lock on STA, END or SMP gets no box; locks on the row's five are boxed there.",
       "The SAMPLE page's knob-only view is not shown. If another module adds a page behind the SMPL key, the knob view stays in the cycle.",
       "A sound saved with FIN at +0 (stock's default, and every sound saved before 0.3.0 without SMP RATE) loads with RATE 0: the sample does not play until RATE is turned up. On stock OS a sound saved with RATE +63 plays about a semitone sharp (FIN as a detune).",
@@ -165,18 +165,18 @@
       "testedOn": "2026-11-16",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "0.5.1 ran on npp1993's Analog Rytm MKII, OS 1.74, as SU02 (Modwerk base with the development link + Improved SMPL 0.5.1 only, sha256 3eb6830e…89fe), booted from RAM over the flashed build. The author previewed samples with FUNC + YES in GLOBAL > SAMPLES with the active track at RATE 0, +63 and -64 and with an LFO on RATE, and played the pads at several RATEs, and reports all good: the previews played at normal speed and pad play followed RATE.",
+      "summary": "0.6.0 ran on npp1993's Analog Rytm MKII, OS 1.74, as MSU1 (the author's development base with the link + Improved SMPL 0.6.0 only, sha256 a34e9ec9…0579), booted from RAM over the flashed build, in a scratch project. The author's rig ran twelve Improved SMPL cases on the unit with no failed check (TUN in cents, held-trig locks, the value row, RATE's playhead at 1x, 0.125x, stop and -0.5x). By hand the author reports all pass: the SMPL key's waveform view and row; LOP PIPO back and forth with no click at the turns; FUNC + STA and END to zero crossings with the S and E labels; RATE through 0 into reverse with LOP ON and PIPO; TUN in cents and semitones; a PIPO lock on a held trig.",
       "limitations": [
-        "Reported by the author from playing; no automated rig case covers the preview.",
+        "Hand results are reported by the author from playing; the rig's twelve cases are its own checks, five of them without stored references (judged by eye).",
         "The image holds the author's private development base (with the link), not the published base.",
-        "Not run on a unit: a Sound previewed from the SOUND BROWSER whose sample is not in the project; scene and performance locks on RATE."
+        "Not run on a unit: several voices in PIPO at once, a scene lock of PIPO, MIDI CC 30 by ear, samples over 0.64 s, a power cycle with PIPO saved, sound browser load, scene and performance locks on RATE."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu (0.6.0, MS01): every documented capture of Ping Pong Loop and Improved SMPL replays byte-identical to the two modules side by side (126 frames). Unit (0.5.1, SU02): previews at 1x, pad play follows RATE. Unit (0.5.0, RC38 to RC40, beside Ping Pong Loop): the row, every knob, LOOP and PIPO, the playhead, lock boxes. Ping Pong Loop on a unit: PP14, RC07, LF01. Earlier versions: TESTING.md.",
+    "summary": "Unit (0.6.0, MSU1 from RAM): the rig's 12 cases with no failed check; by hand, as the author reports, PIPO, zero snap and labels, RATE through 0 with ON and PIPO, TUN, a PIPO lock. rytm-emu (MS01): every documented capture of Ping Pong Loop and Improved SMPL replays byte-identical to the two side by side (126 frames). Earlier versions and Ping Pong Loop's history: TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
