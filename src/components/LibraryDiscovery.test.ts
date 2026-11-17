@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AVAILABLE_MODULES, availableModules } from '../catalog/availability'
+import { asBeta } from '../catalog/beta-fixture'
 import { MachineLibrary } from '../devices/MachinePages'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { ModuleComparison } from './ModuleComparison'
@@ -52,18 +53,18 @@ describe('module library discovery', () => {
     await click(container.querySelector('.filter-clear-all')!)
     expect(onClearSearch).toHaveBeenCalledOnce()
   })
-  it('counts beta modules from the same catalogue as the cards', async () => {
+  it('counts beta modules from the same catalogue as the cards', () => asBeta(async () => {
     const beta = availableModules(true).find(module => !AVAILABLE_MODULES.some(item => item.id === module.id))!
     expect(beta).toBeDefined()
     const slot = document.createElement('div'); slot.dataset.testSlot = ''; document.body.append(slot)
     await act(() => root.render(createElement(MachineLibrary, { ...library, device: DEVICES_BY_ID.octatrack, query: beta.name, octatrackModules: [beta], octatrackCatalogue: availableModules(true), phone: true, resultsSlot: slot })))
     await click(slot.querySelector('[aria-label="Type: all types"]')!)
     expect(buttonNamed('All types1')).toBeDefined()
-  })
-  it('only includes the eligible beta module in comparisons when beta access is present', () => {
+  }))
+  it('only includes the eligible beta module in comparisons when beta access is present', () => asBeta(() => {
     const props = { ids: ['airwindows-chorus', 'everb'], selected: [], digiSelected: library.digiSelected, onToggle: noop, onToggleDigi: noop, onClose: noop }
     const count = (betaAccess: boolean) => renderToStaticMarkup(createElement(ModuleComparison, { ...props, betaAccess })).match(/<th scope="col">/g)?.length
     expect(count(false)).toBe(2)
     expect(count(true)).toBe(3)
-  })
+  }))
 })

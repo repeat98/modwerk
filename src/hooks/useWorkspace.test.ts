@@ -10,10 +10,17 @@ import { AVAILABLE_MODULES, PAUSED_MODULE_IDS, isBetaModule, isModulePaused } fr
 import { SET_MODULE_LIMIT } from '../catalog/set-limit'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
 
-// The saved firmware record cannot be read, as when the browser refuses that one store.
+// The saved firmware record cannot be read, as when the browser refuses that one store. The tests also see every
+// connection the workspace opens, and can make the next read of the saved sets abort the way Safari does.
+const storage = vi.hoisted(() => ({ connections: [] as IDBDatabase[], failReads: 0 }))
 vi.mock('../storage/device', async original => {
   const actual = await original<typeof import('../storage/device')>()
-  return { ...actual, deviceStore: (db: IDBDatabase) => ({ ...actual.deviceStore(db), readFirmware: () => Promise.reject(new Error('The firmware record could not be read.')) }) }
+  return { ...actual, deviceStore: (db: IDBDatabase) => {
+    storage.connections.push(db)
+    const store = actual.deviceStore(db)
+    return { ...store, readFirmware: () => Promise.reject(new Error('The firmware record could not be read.')),
+      listConfigurations: (unreadable?: (error: unknown, record: unknown) => void) => storage.failReads-- > 0 ? Promise.reject(new Error('The browser stopped reading its storage without giving a reason.')) : store.listConfigurations(unreadable) }
+  } }
 })
 
 let root: Root, container: HTMLDivElement, workspace: ReturnType<typeof useWorkspace>
@@ -22,7 +29,8 @@ beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   container = document.createElement('div'); document.body.append(container); root = createRoot(container)
 })
-afterEach(async () => { await act(() => root.unmount()); container.remove(); vi.unstubAllGlobals() })
+afterEach(async () => { await act(() => root.unmount()); container.remove(); vi.unstubAllGlobals(); storage.connections = []; storage.failReads = 0; await clearSets() })
+async function clearSets() { const db = await openDeviceDatabase(); await new Promise<void>((resolve, reject) => { const tx = db.transaction(['configurations', 'settings'], 'readwrite'); tx.objectStore('configurations').clear(); tx.objectStore('settings').clear(); tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error) }); db.close() }
 
 describe('opening the workspace', () => {
   it('keeps the saved sets when the saved firmware cannot be read, and saves edits to them', async () => {
@@ -39,6 +47,59 @@ describe('opening the workspace', () => {
     const reopened = await openDeviceDatabase()
     expect((await deviceStore(reopened).listConfigurations()).map(item => item.name)).toEqual(['Live', 'Studio B'])
     reopened.close()
+  })
+})
+
+describe('when Safari drops device storage', () => {
+  async function seed(...names: string[]) {
+    const database = await openDeviceDatabase(), store = deviceStore(database)
+    const items = names.map((name, index) => ({ ...newConfiguration(name), createdAt: '2026-11-0' + (index + 1) + 'T10:00:00.000Z' }))
+    for (const item of items) await store.saveConfiguration(item)
+    database.close(); storage.connections = []
+    return items
+  }
+  it('opens the saved sets on a second attempt when the first read is aborted', async () => {
+    await seed('Live')
+    storage.failReads = 1
+    await act(async () => root.render(createElement(Probe, { onRender: value => { workspace = value } })))
+    await vi.waitFor(() => expect(workspace.ready).toBe(true))
+    expect(workspace.configurations.map(item => item.name)).toEqual(['Live'])
+    expect(workspace.storageError).toBe('')
+  })
+  it('says why when both attempts fail, and never writes its placeholder set over the saved ones', async () => {
+    await seed('Live')
+    storage.failReads = 2
+    await act(async () => root.render(createElement(Probe, { onRender: value => { workspace = value } })))
+    await vi.waitFor(() => expect(workspace.ready).toBe(true))
+    expect(workspace.storageError).toBe('Your saved sets could not be loaded from this device, so changes are not saved. Reload the page to try again. The browser stopped reading its storage without giving a reason.')
+    await act(() => workspace.renameConfiguration('Placeholder'))
+    await vi.waitFor(() => expect(workspace.saving).toBe(false))
+    const reopened = await openDeviceDatabase()
+    expect((await deviceStore(reopened).listConfigurations()).map(item => item.name)).toEqual(['Live'])
+    reopened.close()
+  })
+  it('reconnects and saves when the connection is lost after the sets opened', async () => {
+    await seed('Live')
+    await act(async () => root.render(createElement(Probe, { onRender: value => { workspace = value } })))
+    await vi.waitFor(() => expect(workspace.ready).toBe(true))
+    storage.connections[0].close()
+    await act(() => workspace.renameConfiguration('Live B'))
+    await vi.waitFor(() => expect(workspace.saving).toBe(false))
+    expect(workspace.storageError).toBe('')
+    expect(storage.connections).toHaveLength(2)
+    const reopened = await openDeviceDatabase()
+    expect((await deviceStore(reopened).listConfigurations()).map(item => item.name)).toEqual(['Live B'])
+    reopened.close()
+  })
+  it('names each saved set it cannot open and why, and keeps it', async () => {
+    const [live] = await seed('Live')
+    const database = await openDeviceDatabase()
+    await new Promise<void>((resolve, reject) => { const tx = database.transaction('configurations', 'readwrite'); tx.objectStore('configurations').put({ ...newConfiguration('Old set'), moduleIds: ['no-such-module'] }); tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error) })
+    database.close()
+    await act(async () => root.render(createElement(Probe, { onRender: value => { workspace = value } })))
+    await vi.waitFor(() => expect(workspace.ready).toBe(true))
+    expect(workspace.configurations.map(item => item.id)).toEqual([live.id])
+    expect(workspace.unreadable).toEqual([{ name: 'Old set', reason: 'Unknown module: no-such-module' }])
   })
 })
 
@@ -74,16 +135,16 @@ describe('the module limit of an Octatrack set', () => {
     expect(Object.keys(workspace.active!.moduleVersions).sort()).toEqual(ids.slice(0, over).sort())
     await vi.waitFor(() => expect(workspace.saving).toBe(false))
   })
-  it('leaves out of that fill what isn’t available here, as adding one by one does: a paused module, and a beta one without beta access', async () => {
+  it('leaves out of that fill what isn’t available here, as adding one by one does: a paused module', async () => {
     const paused = PAUSED_MODULE_IDS.find(id => !isBetaModule(id))!
-    expect(isModulePaused(paused)).toBe(true); expect(isBetaModule('airwindows-chorus')).toBe(true)
+    expect(isModulePaused(paused)).toBe(true); expect(isBetaModule('airwindows-chorus')).toBe(false)
     await act(async () => root.render(createElement(Probe, { onRender: value => { workspace = value } })))
     await vi.waitFor(() => expect(workspace.ready).toBe(true))
     await act(() => { workspace.importConfiguration('Empty', []) })
     await act(() => workspace.addModules(['everb', paused, 'airwindows-chorus', 'tapehead']))
-    expect(workspace.active?.moduleIds).toEqual(['everb', 'tapehead'])
+    expect(workspace.active?.moduleIds).toEqual(['everb', 'airwindows-chorus', 'tapehead'])
     await act(() => workspace.toggleModule(paused))
-    expect(workspace.active?.moduleIds).toEqual(['everb', 'tapehead'])
+    expect(workspace.active?.moduleIds).toEqual(['everb', 'airwindows-chorus', 'tapehead'])
     await vi.waitFor(() => expect(workspace.saving).toBe(false))
   })
 })

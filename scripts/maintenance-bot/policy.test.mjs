@@ -6,9 +6,13 @@ const issue = (extra = {}) => ({ number: 9, isPull: false, author: 'bob', state:
 const merge = (extra = {}) => ({ kind: 'merge', number: 5, head: 'a1', summary: 'Merge Tape Echo 0.4', reason: 'Green.', ...extra })
 
 describe('maintenance bot policy', () => {
-  it('merges a green module pull request after the window, with a merge commit for catalogue rows', () => {
-    expect(classify(merge(), pull())).toMatchObject({ tier: 'window', windowHours: 12, payload: { method: 'merge', head: 'a1' } })
-    expect(classify(merge(), pull({ files: ['src/App.tsx'] })).payload.method).toBe('squash')
+  it('merges a green pull request after the window, and asks before any merge that publishes modules', () => {
+    expect(classify(merge(), pull({ files: ['src/App.tsx'] }))).toMatchObject({ tier: 'window', windowHours: 12, payload: { method: 'squash', head: 'a1' } })
+    for (const file of ['sdk/octatrack/modules/tapeecho/src/main.c', 'sdk/imports/mute-latch.json', 'src/catalog/modules.ts', 'src/community/module-changelogs/euclid.md']) {
+      const decision = classify(merge(), pull({ files: [file] }))
+      expect([file, decision.tier, decision.reason]).toEqual([file, 'ask', 'Green.\nAsking because merging it publishes modules on the site.'])
+    }
+    expect(classify(merge(), pull()).payload.method).toBe('merge')
   })
 
   it('asks the owner before merging anything sensitive or from a first-time contributor', () => {
