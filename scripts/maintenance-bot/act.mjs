@@ -6,11 +6,11 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { TODO_COMMAND, actionId, classify } from './policy.mjs'
-import { MARKER, github, ledger, pages, readBoardTarget, readTarget } from './lib.mjs'
+import { MARKER, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
 import { dailyReport } from './report.mjs'
 
 const daily = process.env.BOT_MODE === 'daily', dir = process.env.BOT_DIR ?? 'bot'
-const { api } = github(), bot = ledger()
+const { api } = github(), bot = ledger(), chat = discord()
 const targets = new Map(), rejected = [], log = []
 const target = async number => { if (!targets.has(number)) targets.set(number, await readTarget(api, number)); return targets.get(number) }
 const fresh = async number => { targets.delete(number); return target(number) }
@@ -31,11 +31,13 @@ if (existsSync(file)) {
 const labels = new Set((await pages(api, '/labels')).map(label => label.name))
 const accepted = []
 for (const proposal of (Array.isArray(proposals.actions) ? proposals.actions : []).slice(0, 40)) {
-  const board = String(proposal?.kind ?? '').startsWith('board_'), number = board ? 0 : Number(proposal?.number)
-  if (!board && (!Number.isSafeInteger(number) || number < 1)) { rejected.push('A proposal named no pull request or issue.'); continue }
+  const kind = String(proposal?.kind ?? ''), board = kind.startsWith('board_'), talk = kind === 'discord_reply', number = board || talk ? 0 : Number(proposal?.number)
+  if (!board && !talk && (!Number.isSafeInteger(number) || number < 1)) { rejected.push('A proposal named no pull request or issue.'); continue }
+  if (talk && !chat) { rejected.push('A Discord reply was proposed, but the bot has no Discord token.'); continue }
   try {
-    const decision = classify(proposal, board ? await readBoardTarget(proposal.kind, proposal.thread ?? proposal.claim) : await target(number), labels)
-    if (decision.reject) { rejected.push((board ? 'Board' : '#' + number) + ' ' + proposal.kind + ': ' + decision.reject + '.'); continue }
+    const where = talk ? await readDiscordTarget(chat, proposal.channel, proposal.message) : board ? await readBoardTarget(kind, proposal.thread ?? proposal.claim) : await target(number)
+    const decision = classify(proposal, where, labels)
+    if (decision.reject) { rejected.push((talk ? 'Discord' : board ? 'Board' : '#' + number) + ' ' + kind + ': ' + decision.reject + '.'); continue }
     accepted.push({ id: decision.id, kind: decision.payload.kind, target: number, tier: decision.tier, summary: decision.summary, reason: decision.reason, payload: decision.payload, windowHours: decision.windowHours })
   } catch (error) { rejected.push('#' + number + ': could not be read (' + error.message + ').') }
 }
@@ -51,9 +53,68 @@ for (const todo of (Array.isArray(proposals.todos) ? proposals.todos : []).slice
 }
 if (todos.length) await bot('/todos', 'POST', { todos })
 
+// Watchers that need no model. A red run on main becomes an urgent to-do (the Worker tells the owner at once).
+const latest = new Map(), today = new Date().toISOString().slice(0, 10)
+// The Monday of this week: a weekly to-do keeps one id all week, so a ticked-off one can come back next week.
+const week = new Date(Date.now() - ((new Date().getUTCDay() + 6) % 7) * 86400000).toISOString().slice(0, 10)
+for (const run of (await api('/actions/runs?branch=main&status=completed&per_page=60')).workflow_runs ?? []) {
+  if (run.path?.endsWith('/maintenance-bot.yml') || run.event === 'pull_request' || latest.has(run.workflow_id)) continue
+  latest.set(run.workflow_id, run)
+}
+const failing = [...latest.values()].filter(run => run.conclusion === 'failure')
+if (failing.length) await bot('/todos', 'POST', { todos: failing.map(run => ({ id: actionId('todo', 0, 'red main', run.workflow_id, today), target: 0, command: 'gh run view ' + run.id + ' --log-failed', note: 'main is red: ' + run.name + ' at ' + run.head_sha.slice(0, 9), urgent: true })) })
+
+// Open to-dos whose item is settled go away: a closed issue or pull request, an ended board thread, a workflow
+// that is green on main again.
+for (const todo of (await bot('/todos')).todos) {
+  const thread = todo.command.match(/^npm run board -- reply ([0-9a-f-]{36})$/)?.[1], run = todo.command.match(/^gh run view (\d+) --log-failed$/)?.[1]
+  let settled = false
+  if (thread) settled = (await readBoardTarget('board_reply', thread))?.state === 'closed'
+  else if (run) { const workflow = (await api('/actions/runs/' + run).catch(() => null))?.workflow_id; settled = !!workflow && latest.get(workflow)?.conclusion === 'success' }
+  else if (todo.target) settled = (await api('/issues/' + todo.target).then(issue => issue.state, () => 'open')) === 'closed'
+  if (settled) await bot('/todos/' + todo.id + '/status', 'POST', { status: 'dropped' })
+}
+
+if (daily) {
+  // Diagnostics members share, counted by failure: a new failure, or one more than twice its usual daily rate.
+  const { failures } = await bot('/diagnostics')
+  const rising = failures.filter(row => row.today >= 2 && (row.week === 0 || row.today > 2 * row.week / 7)).slice(0, 4)
+  if (rising.length) await bot('/todos', 'POST', { todos: [{ id: actionId('todo', 0, '/modwerk-diagnostics', week), target: 0, command: '/modwerk-diagnostics', note: 'New or rising: ' + rising.map(row => row.key + ' (' + row.today + ')').join(', '), urgent: false }] })
+  // Mondays: new commits upstream since the owner last looked (docs/MAINTENANCE.md, upstream worker).
+  if (new Date().getUTCDay() === 1) await upstreamWatch()
+}
+
+async function upstreamWatch() {
+  const tools = JSON.parse(readFileSync('sdk/upstream-tools.json', 'utf8')), lines = [], heads = {}
+  const seen = JSON.parse((await bot('/state')).upstream || '{}')
+  for (const [name, entry] of Object.entries(tools)) {
+    const repo = entry?.repository?.match(/^https:\/\/github\.com\/([\w.-]+\/[\w.-]+?)(?:\.git)?$/)?.[1]
+    if (!repo || entry.frozen) continue
+    const response = await fetch('https://api.github.com/repos/' + repo + '/commits?per_page=1', { headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + process.env.GITHUB_TOKEN }, signal: AbortSignal.timeout(30000) })
+    const head = response.ok ? (await response.json())[0]?.sha : null
+    if (!head) continue
+    heads[name] = head
+    if (!seen[name] || seen[name] === head) continue
+    const compare = await fetch('https://api.github.com/repos/' + repo + '/compare/' + seen[name] + '...' + head, { headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + process.env.GITHUB_TOKEN }, signal: AbortSignal.timeout(30000) })
+    const ahead = compare.ok ? (await compare.json()).ahead_by : null
+    lines.push(name + ' ' + (ahead ?? 'some') + ' new')
+  }
+  // The to-do carries the week; the next week counts from here, whether or not the owner looked yet.
+  if (lines.length) await bot('/todos', 'POST', { todos: [{ id: actionId('todo', 0, '/modwerk-maintain upstream', week), target: 0, command: '/modwerk-maintain upstream', note: 'Upstream commits: ' + lines.join(', '), urgent: false }] })
+  await bot('/state', 'PUT', { upstream: JSON.stringify(heads) })
+}
+
 // 2. What is due: approved by the owner, a notice, or a window that closed without a Stop.
 async function carryOut(action) {
   const { payload } = action
+  if (payload.kind === 'discord_reply') {
+    if (!chat) return ['failed', 'no Discord token']
+    const now = await readDiscordTarget(chat, payload.channel, payload.message)
+    if (!now || now.state !== 'open') return ['expired', 'someone answered in the meantime']
+    // No pings of any kind: not @everyone, not roles, not the person replied to beyond Discord's reply marker.
+    await chat('/channels/' + payload.channel + '/messages', 'POST', { content: payload.body, message_reference: { message_id: payload.message, channel_id: payload.channel, fail_if_not_exists: false }, allowed_mentions: { parse: [], replied_user: false } })
+    return ['done', '']
+  }
   if (payload.kind.startsWith('board_')) {
     const id = payload.thread ?? payload.claim, now = await readBoardTarget(payload.kind, id)
     if (!now || now.state !== 'open') return ['expired', 'it ended in the meantime']
@@ -103,8 +164,10 @@ for (const action of due) {
 }
 // Merges made with the job's token start no push workflows; publish the way module author updates do.
 if (merged) for (const workflow of ['pages.yml', 'worker.yml']) await api('/actions/workflows/' + workflow + '/dispatches', 'POST', { ref: 'main' })
-console.log(log.length ? log.join('\n') : 'Nothing was due.')
-if (rejected.length) console.log('Held back:\n' + rejected.join('\n'))
+// This log is public: counts only, since a summary can name a tester. The details are in Telegram and the ledger.
+const tally = status => log.filter(line => line.startsWith(status + ':')).length
+console.log(log.length ? log.length + ' carried out: ' + tally('done') + ' done, ' + tally('failed') + ' failed, ' + tally('expired') + ' dropped.' : 'Nothing was due.')
+if (rejected.length) console.log(rejected.length + ' held back by the policy.')
 
 // 3. The fingerprint moves only after the model's proposals were filed, so a failed run is retried next pass.
 if (process.env.BOT_FINGERPRINT && existsSync(file)) await bot('/state', 'PUT', { fingerprint: process.env.BOT_FINGERPRINT })
@@ -112,13 +175,6 @@ if (process.env.BOT_FINGERPRINT && existsSync(file)) await bot('/state', 'PUT', 
 // 4. The daily report: a few lines; each action already has its own message with buttons.
 if (daily) {
   const { actions } = await bot('/actions/recent?hours=24')
-  // A to-do whose pull request or issue was closed is done with, whoever closed it.
-  const open = []
-  for (const todo of (await bot('/todos')).todos) {
-    const thread = todo.command.match(/^npm run board -- reply ([0-9a-f-]{36})$/)?.[1]
-    const state = thread ? (await readBoardTarget('board_reply', thread))?.state : await api('/issues/' + todo.target).then(issue => issue.state, () => 'open')
-    if (state === 'closed') await bot('/todos/' + todo.id + '/status', 'POST', { status: 'dropped' }); else open.push(todo)
-  }
   const broken = !existsSync(file) || rejected.some(reason => reason.startsWith('The model wrote'))
-  await bot('/report', 'POST', { text: dailyReport(actions, open) + (broken ? '\n⚠️ The review itself failed today; see the Actions log.' : '') })
+  await bot('/report', 'POST', { text: dailyReport(actions, (await bot('/todos')).todos) + (broken ? '\n⚠️ The review itself failed today; see the Actions log.' : '') })
 }

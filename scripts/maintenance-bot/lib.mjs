@@ -65,3 +65,31 @@ export async function readBoardTarget(kind, id) {
   const thread = (await boardGet('/messages/' + id))?.message
   return { kind: 'thread', id, number: 0, author: thread?.author ?? '', replies: thread?.replies?.length ?? 0, state: thread && !thread.endedAt ? 'open' : 'closed' }
 }
+
+/** Discord's REST API as TARS (docs/DISCORD_BOT.md). Null when the bot has no Discord token. */
+export function discord() {
+  const token = process.env.DISCORD_BOT_TOKEN
+  if (!token) return null
+  return async (path, method = 'GET', body) => {
+    const response = await fetch('https://discord.com/api/v10' + path, {
+      method, headers: { Authorization: 'Bot ' + token, 'User-Agent': 'DiscordBot (https://modwerk.app, 1)', ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      ...(body ? { body: JSON.stringify(body) } : {}), redirect: 'error', signal: AbortSignal.timeout(30000),
+    })
+    if (response.status === 404) return null
+    if (!response.ok) throw new Error('Discord ' + method + ' ' + path.split('?')[0] + ' HTTP ' + response.status)
+    return response.status === 204 ? null : await response.json()
+  }
+}
+
+/**
+ * A Discord message as the policy sees it. It is open while nobody has answered it: no later message from TARS or
+ * the owner in the channel, and no reply to it from anyone.
+ */
+export async function readDiscordTarget(send, channel, message) {
+  if (!/^\d{17,20}$/.test(String(channel)) || !/^\d{17,20}$/.test(String(message))) return null
+  const [original, me, later] = await Promise.all([send('/channels/' + channel + '/messages/' + message), send('/users/@me'), send('/channels/' + channel + '/messages?after=' + message + '&limit=100')])
+  if (!original) return { kind: 'discord', number: 0, state: 'closed' }
+  const owner = process.env.DISCORD_OWNER_ID ?? ''
+  const answered = (later ?? []).some(next => next.author?.id === me?.id || (owner && next.author?.id === owner) || next.message_reference?.message_id === message)
+  return { kind: 'discord', number: 0, channel, id: message, author: original.author?.username ?? '', bot: !!original.author?.bot, after: (later ?? []).length, state: answered || original.author?.id === me?.id ? 'closed' : 'open' }
+}

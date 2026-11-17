@@ -3,7 +3,7 @@ import type { DatabaseSync } from 'node:sqlite'
 import { testServer } from './test-server'
 import { handleCommunity } from '../../server/transport'
 import { digest } from '../../server/security'
-import { chunks } from '../../server/maintenance-bot'
+import { chunks, failureKey } from '../../server/maintenance-bot'
 
 const KEY = 'k'.repeat(64), SECRET = 's'.repeat(40), CHAT = '4242'
 const databases: DatabaseSync[] = []
@@ -158,6 +158,32 @@ describe('maintenance bot ledger', () => {
     // A board action has no pull request number.
     expect((await bot('/actions', 'POST', { actions: [{ ...action('7'.repeat(16), 'window'), kind: 'board_reply', target: 0 }] })).status).toBe(200)
     expect((await bot('/actions', 'POST', { actions: [{ ...action('6'.repeat(16), 'window'), target: 0 }] })).status).toBe(400)
+  })
+
+  it('tells the owner about a new urgent to-do at once, and only once', async () => {
+    const { bot, sent } = await fixture()
+    const red = { id: '5'.repeat(16), target: 0, command: 'gh run view 123 --log-failed', note: 'main is red: Deploy community Worker at abc', urgent: true }
+    await bot('/todos', 'POST', { todos: [red, { ...red, id: '4'.repeat(16), urgent: false, command: '/modwerk-diagnostics', note: 'New: link_failed:timeout (3)' }] })
+    await bot('/todos', 'POST', { todos: [red] })
+    expect(sent.filter(item => item.method === 'sendMessage').map(item => item.body.text)).toEqual(['⚠️ main is red: Deploy community Worker at abc\nTo-do: /modwerk-todo'])
+  })
+
+  it('counts shared diagnostics by failure, never by person', async () => {
+    const { bot, db } = await fixture()
+    expect(failureKey({ event: 'link_failed', failure: 'timeout', id: 'x', phase: 'claim' })).toBe('link_failed:timeout')
+    expect(failureKey({ event: 'sync_kept', id: 'x' })).toBeNull()
+    expect(failureKey({ kind: 'freeze', seq: 1 })).toBe('incident:freeze')
+    db.prepare("INSERT INTO octatrack_guest_diagnostic_consent(guest_id,enabled,version,changed_at) VALUES('g',1,'1',?)").run(new Date().toISOString())
+    const event = (n: number, ago: number) => db.prepare('INSERT INTO octatrack_guest_diagnostic_events(guest_id,event_id,consent_version,data_json,created_at) VALUES(?,?,?,?,?)').run('g', 'e' + n, '1', JSON.stringify({ event: 'link_failed', failure: 'timeout', id: 'e' + n, phase: 'claim' }), new Date(Date.now() - ago * 3600000).toISOString())
+    event(1, 1); event(2, 2); event(3, 50)
+    expect(await (await bot('/diagnostics')).json()).toEqual({ failures: [{ key: 'link_failed:timeout', today: 2, week: 1 }] })
+  })
+
+  it('remembers where upstream was', async () => {
+    const { bot } = await fixture()
+    expect((await bot('/state', 'PUT', {})).status).toBe(400)
+    await bot('/state', 'PUT', { upstream: '{"elekloader":"abc"}' })
+    expect((await (await bot('/state')).json()).upstream).toBe('{"elekloader":"abc"}')
   })
 
   it('keeps the fingerprint and splits long reports', async () => {

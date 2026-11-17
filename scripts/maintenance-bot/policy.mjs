@@ -7,8 +7,8 @@ import { createHash } from 'node:crypto'
 
 export const OWNER = 'repeat98'
 /** Hours an action waits for the owner's Stop before it runs. */
-export const WINDOW_HOURS = { merge: 12, close: 12, comment: 4, review: 4, board_reply: 4, board_close: 12 }
-const KINDS = new Set(['label', 'comment', 'review', 'merge', 'close', 'decline', 'board_reply', 'board_close', 'board_release'])
+export const WINDOW_HOURS = { merge: 12, close: 12, comment: 4, review: 4, board_reply: 4, board_close: 12, discord_reply: 1 }
+const KINDS = new Set(['label', 'comment', 'review', 'merge', 'close', 'decline', 'board_reply', 'board_close', 'board_release', 'discord_reply'])
 const LABELS = /^(bug|documentation|duplicate|enhancement|question|invalid|wontfix|configuration|accessibility|good first issue|help wanted|needs-work|needs-info|priority:P[123]|module:[a-z0-9-]+)$/
 /**
  * Paths a merge never touches without the owner's OK: CI and the bot itself, deploy and schema, sign-in and
@@ -24,8 +24,8 @@ const SENSITIVE = [
 const LINK = /https?:\/\/[^\s)>\]]+/g
 const LINK_HOSTS = /^https:\/\/(github\.com\/repeat98\/modwerk(\/|$|#)|modwerk\.[a-z]+(\/|$)|octamod\.[a-z]+(\/|$))/
 
-/** A to-do's command: a /modwerk-* skill, or answering a board thread (number 0). The Worker checks the same shape. */
-export const TODO_COMMAND = /^(\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?|npm run board -- reply [0-9a-f-]{36})$/
+/** A to-do's command: a /modwerk-* skill, answering a board thread, or a red run on main (both number 0). The Worker checks the same shape. */
+export const TODO_COMMAND = /^(\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?|npm run board -- reply [0-9a-f-]{36}|gh run view \d{1,20} --log-failed)$/
 export const actionId = (...parts) => createHash('sha256').update(parts.map(String).join('\u0000')).digest('hex').slice(0, 16)
 
 /** Text the bot posts in public: plain, bounded, no mass mentions, links only to Modwerk. */
@@ -46,13 +46,13 @@ export function checkText(body, author) {
 export function classify(proposal, target, existingLabels = new Set()) {
   const kind = proposal?.kind
   if (!KINDS.has(kind)) return { reject: 'kind "' + kind + '" is not something the bot may do' }
-  const board = kind.startsWith('board_')
-  if (!target || target.state !== 'open') return { reject: (board ? 'that board thread or claim' : '#' + proposal.number) + ' is not open' }
+  const board = kind.startsWith('board_'), chat = kind === 'discord_reply'
+  if (!target || target.state !== 'open') return { reject: (chat ? 'that Discord message was answered or is gone' : board ? 'that board thread or claim' : '#' + proposal.number) + (chat ? '' : ' is not open') }
   const summary = String(proposal.summary ?? '').trim().replace(/\s+/g, ' ').slice(0, 90), reason = String(proposal.reason ?? '').trim().slice(0, 800)
   if (!summary) return { reject: 'it has no summary' }
   // Every action pins the state it was proposed against; the executor drops it if the target moved on.
   const pin = { head: target.head ?? '', comments: target.comments }
-  const base = { summary: (board ? 'Board: ' : '#' + target.number + ' ') + summary, reason }
+  const base = { summary: (chat ? 'Discord: ' : board ? 'Board: ' : '#' + target.number + ' ') + summary, reason }
   const sensitive = (target.files ?? []).filter(file => SENSITIVE.some(pattern => pattern.test(file)))
   switch (kind) {
     case 'label': {
@@ -104,6 +104,15 @@ export function classify(proposal, target, existingLabels = new Set()) {
       const problem = String(proposal.body ?? '').length > 500 ? 'it is over the board’s 500 characters' : checkText(proposal.body, target.author)
       if (problem) return { reject: 'the board reply was held back because ' + problem }
       return { ...base, tier: 'window', windowHours: WINDOW_HOURS.board_reply, id: actionId(kind, target.id, target.replies), payload: { kind, thread: target.id, body: proposal.body.trim(), pin: pinned } }
+    }
+    // TARS on Discord (docs/DISCORD_BOT.md, docs/DISCORD_VOICE.md): one reply to a message nobody answered, never a ping.
+    case 'discord_reply': {
+      if (target.kind !== 'discord') return { reject: 'that is not a Discord message' }
+      if (target.bot) return { reject: 'it answers a bot' }
+      const body = String(proposal.body ?? '').trim()
+      const problem = body.length > 1500 ? 'it is over 1500 characters' : /(?<![\w`])@\w/.test(body) ? 'it mentions someone' : checkText(body, '')
+      if (problem) return { reject: 'the Discord reply was held back because ' + problem }
+      return { ...base, tier: 'window', windowHours: WINDOW_HOURS.discord_reply, id: actionId(kind, target.channel, target.id), payload: { kind, channel: target.channel, message: target.id, body, pin: {} } }
     }
     case 'board_release':
       if (target.kind !== 'claim') return { reject: 'that is not a board claim' }
