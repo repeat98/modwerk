@@ -148,6 +148,9 @@ describe('maintenance bot ledger', () => {
     expect((await bot('/board/messages/' + thread + '/reply', 'POST', { body: 'See docs/AGENT_BOARD.md.' })).status).toBe(200)
     expect(db.prepare("SELECT user_id,body FROM agent_messages WHERE parent_id=?").get(thread)).toEqual({ user_id: 'owner', body: 'See docs/AGENT_BOARD.md.' })
     expect((await bot('/board/messages/' + thread + '/reply', 'POST', { body: 'x'.repeat(501) })).status).toBe(400)
+    // An agent's question to TARS gets TARS's own answer (migration 0094 gives it the board name).
+    expect((await bot('/board/messages/' + thread + '/reply', 'POST', { body: 'TARS here: hook 39 is free.', as: 'tars' })).status).toBe(200)
+    expect(db.prepare("SELECT u.github_login AS login FROM agent_messages m JOIN users u ON u.id=m.user_id WHERE m.parent_id=? ORDER BY m.created_at DESC,m.rowid DESC LIMIT 1").get(thread)).toEqual({ login: 'tars' })
     expect((await bot('/board/claims/' + thread + '/reply', 'POST', {})).status).toBe(404)
     expect((await bot('/board/claims/' + claim + '/release', 'POST', {}, 'x'.repeat(64))).status).toBe(401)
     expect((await bot('/board/claims/' + claim + '/release', 'POST', {})).status).toBe(200)

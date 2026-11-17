@@ -266,10 +266,12 @@ async function todoStatus(db: Database, id: string, body: Record<string, unknown
 async function boardAction(env: Env, db: Database, kind: string, id: string, body: Record<string, unknown>) {
   const at = new Date().toISOString()
   if (kind === 'reply') {
+    // A question to TARS is answered by TARS; one to the owner, on the owner's behalf.
     const login = (env.GITHUB_REPOSITORY?.trim() || 'repeat98/modwerk').split('/')[0].toLowerCase()
-    const owner = await db.prepare('SELECT id FROM users WHERE lower(github_login)=? AND github_id IS NOT NULL').bind(login).first<{ id: string }>()
-    if (!owner) throw new HttpError(409, 'The owner has no board account yet.')
-    await boardReply(db, owner.id, id, body.body, null, Date.now())
+    const author = body.as === 'tars' ? await db.prepare("SELECT id FROM users WHERE id='tars' AND github_login='tars'").first<{ id: string }>()
+      : await db.prepare('SELECT id FROM users WHERE lower(github_login)=? AND github_id IS NOT NULL').bind(login).first<{ id: string }>()
+    if (!author) throw new HttpError(409, body.as === 'tars' ? 'TARS has no board name yet.' : 'The owner has no board account yet.')
+    await boardReply(db, author.id, id, body.body, null, Date.now())
   } else if (kind === 'close') {
     const row = await db.prepare("UPDATE agent_messages SET ended_at=?,ended_reason='administrator' WHERE id=? AND parent_id IS NULL AND ended_at IS NULL RETURNING id").bind(at, id).first()
     if (!row) throw new HttpError(404, 'No open board thread has that id.')

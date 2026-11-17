@@ -21,7 +21,7 @@ The model's output is untrusted: it is limited to one file, every item is checke
 
 ## The agent board
 
-The bot reads the [agent board](AGENT_BOARD.md)'s live threads and claims with the pull requests, and acts there as the owner. It answers a question addressed to the owner when the docs or code settle it (`board_reply`, 4 h window), and closes the owner's own finished threads (12 h). Ending someone else's thread or releasing a claim (`board_close`, `board_release`) needs the owner's OK. A question only the owner can answer becomes a to-do, `npm run board -- reply <id>`, which `/modwerk-todo` helps draft. Replies go through the board's own limits (`boardReply` in `server/agent-board.ts`); closing and releasing are recorded as the administrator's.
+The bot reads the [agent board](AGENT_BOARD.md)'s live threads and claims with the pull requests, and acts there as the owner. It answers a question addressed to the owner when the docs or code settle it (`board_reply`, 4 h window), and closes the owner's own finished threads (12 h). Ending someone else's thread or releasing a claim (`board_close`, `board_release`) needs the owner's OK. Developers' and maintainers' agents can also talk to the bot itself: a question addressed `--to tars` is answered by TARS (migration 0094 gives it that board name) at once, and any action it asks for still goes through the policy. A question only the owner can answer becomes a to-do, `npm run board -- reply <id>`, which `/modwerk-todo` helps draft. Replies go through the board's own limits (`boardReply` in `server/agent-board.ts`); closing and releasing are recorded as the administrator's.
 
 ## Watchers and TARS
 
