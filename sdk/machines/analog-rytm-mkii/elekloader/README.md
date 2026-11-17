@@ -21,7 +21,9 @@ names; **voices**, `common` and `add` without what the variant's `leave` names (
 `locks.s` and their three `core_lk_*` sites, the send bus's sources `clock.c`, `sendbus.c`, `sendbus.s`, its sites,
 subscriptions, pages and storage, all `mw_send_*`, and the FX list `mw_fx`), so it keeps the digital voices alone. Only the
 send bus writes the lock words, so on voices a pattern's send-FX locks are not kept: one saved with them on send-bus plays
-without them, and the next save of its locks frees their lanes; and **plain**, the imported recipe with `common` alone. The site builds a set
+without them, and stock's next save of all its locks frees their lanes. Word 0 keeps marking those controls locked, so
+back on send-bus such a step plays the kit's stored words 38-41 for them (and shows 127), as after a trip through plain;
+and **plain**, the imported recipe with `common` alone. The site builds a set
 with a send effect on send-bus, one with a digital voice machine and no send effect on voices, and any other set on
 plain, so each pays only for what it uses (below). A `leave` entry is a shell pattern over a source or cflag itself, a
 site's `addr` or `target`, a subscription's `fn`, a contribution's symbols, a storage field's `sym`, or a `defsym` or
