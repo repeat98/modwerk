@@ -27,15 +27,15 @@ export async function siteUpdated() {
 }
 
 /**
- * The base install guide and the update prompt, opened once the page is visible and no other dialog is open.
+ * The base install guide, opened once the page is visible and no other dialog is open.
  * The connected unit is the authority; an account's record is only a hint for when no unit is connected:
  * - The guide (install) opens on the Your Octatrack page (`installHere`) for a unit on the original OS, whatever the
  *   account says, and, with no unit connected, while the member's units have never reported a Modwerk base (the
  *   server's record) or, for a visitor without an account, while this browser has never read a unit with one. A unit
  *   that reports a base records it, so the guide never comes back on its own for a member whose unit has the base.
- * - The update prompt opens wherever the connected unit runs an older base, so every base update reaches everyone
- *   without a migration.
- * Neither opens in a browser without WebUSB: Setup's own button opens the guide there. Closing either or Later hides it for this
+ * - An older base opens nothing (owner, 14 November 2026): the sync dialog, the hub and the link refuse to sync to it
+ *   and offer the update instead (module-set.ts baseOutdated).
+ * It never opens in a browser without WebUSB: Setup's own button opens the guide there. Closing it or Later hides it for this
  * visit. A failed read keeps the guide quiet; a failed record lets it show again next visit.
  */
 export function useBaseInstallPrompt(memberId: string | null, enabled: boolean, link: OctatrackLink | null = null, installHere = true) {
@@ -54,7 +54,7 @@ export function useBaseInstallPrompt(memberId: string | null, enabled: boolean, 
   const hasBase = unit === 'current' || unit === 'older'
   if (hasBase && !seenHere) setSeenHere(true)
   const hinted = memberId ? due : !seenHere
-  const wanted = unit === 'older' || installHere && (unit === 'stock' || hinted && unit === 'none')
+  const wanted = installHere && (unit === 'stock' || hinted && unit === 'none')
   useEffect(() => {
     if (!wanted || open || quiet || !enabled) return
     const timer = window.setInterval(() => { if (document.visibilityState === 'visible' && !document.querySelector('dialog[open]')) setOpen(true) }, 1500)
@@ -63,9 +63,7 @@ export function useBaseInstallPrompt(memberId: string | null, enabled: boolean, 
   return {
     // Once open it stays until closed: the unit changes its answer mid-install (the new base connects, an update restarts it).
     open,
-    /** The connected unit runs an older base: the dialog goes straight to the update steps. */
-    update: unit === 'older',
-    /** Gone for this visit only, so the prompt returns on the next one while it is still wanted. */
+    /** Gone for this visit only, so the guide returns on the next one while it is still wanted. */
     close() { setQuiet(true); setOpen(false) },
     /** Set aside while the member signs in (the guide's build gate): not an answer, so it opens again while still wanted. */
     pause() { setOpen(false) },

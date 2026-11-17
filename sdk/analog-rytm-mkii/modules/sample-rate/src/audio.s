@@ -16,14 +16,26 @@ sample_rate_block_gate:
 | The first gate reads TUN and FIN as stock does, gives the pitch a FIN at rest
 | and keeps the real one for the second gate, which scales the finished step by
 | |FIN - 64| / 64. d6 is free at both.
+|
+| Stock's sample preview (FUNC + YES in a sample list; the routine at 0x400a0dac)
+| plays on the active track's voice with the sample in its own slot 129 and TUN
+| and FIN at rest, but an LFO on FIN still moves it, so FIN alone cannot tell a
+| preview. A project's samples sit in slots 1 to 127, and the effective SMP is
+| held there even under an LFO, so a voice whose slot is 128 or above is stock's
+| own and plays at 1x here: RATE 0 or an LFO on RATE would stop or bend it.
 
         .equ    IDLE, 0x7f00                    | what the second gate skips: 1x
+        .equ    OWN_SLOT, 128                   | SMP's first slot that is stock's, not the project's
         .globl  sample_rate_fin_gate, sample_rate_scale_gate
 
 sample_rate_fin_gate:
         mvs.w   2(%a2,%d0.l),%d1                | displaced
+        mvz.b   6(%a2,%d0.l),%d6                | SMP's slot, the high byte of its word
         mvs.w   4(%a2,%d0.l),%d0                | displaced
-        move.l  %d0,sample_rate_fin
+        cmpi.l  #OWN_SLOT,%d6
+        blt.s   1f
+        move.l  #IDLE,%d0
+1:      move.l  %d0,sample_rate_fin
         move.l  #0x4000,%d0
         rts
 

@@ -7,7 +7,7 @@ import { COMMUNITY_MODULES, nativeModule } from './modules'
 const sections = {
   overview: 'Machine overview',
   'octatrack-status': 'Octatrack · status', 'octatrack-backups': 'Octatrack · backups',
-  'octatrack-samples': 'Octatrack · samples', 'octatrack-setup': 'Octatrack · setup',
+  'octatrack-samples': 'Octatrack · samples', 'octatrack-setup': 'Octatrack · setup', 'octatrack-diagnostics': 'Octatrack · diagnostics',
   forum: 'Forum', 'forum-thread': 'Forum · discussions', 'forum-profile': 'Forum · profiles',
   'forum-messages': 'Private messages', 'forum-compose': 'New discussion', 'forum-shoutbox': 'Shoutbox archive',
   account: 'Account', developer: 'Creator settings', 'module-sets': 'Module sets', 'module-set': 'Module set details',
@@ -34,7 +34,7 @@ export function usagePage(route: string, missing = false): string | null {
   // Keep the old key separate: older clients counted valid pages there too.
   if (missing || path === 'page-not-found') return 'missing-page'
   if (path === 'octatrack') return 'octatrack-status'
-  if (['backups', 'samples', 'setup'].some(view => path === 'octatrack/' + view)) return 'octatrack-' + path.split('/')[1]
+  if (['backups', 'samples', 'setup', 'diagnostics'].some(view => path === 'octatrack/' + view)) return 'octatrack-' + path.split('/')[1]
   if (section === 'faq') return 'faq'
   if (path.startsWith('beta/join/')) return 'account'
   if (path === 'all' || path.startsWith('all/') && LIBRARY_CATEGORIES.some(category => path === 'all/' + category)) return 'library:all'

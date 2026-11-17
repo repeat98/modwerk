@@ -82,12 +82,16 @@ const stallWords = report => STALL_WORDS.map(name => [name, report[DSP_REPORT_NA
  * found at a start that runs another base than the session before is an OS upgrade (stock halts the DSPs for it while
  * the loader may have a job open; beta finding 55), not a hang: said so. One after a session that ended stopped at
  * 95 % CPU or more after PROJ … RIGHT YES (PROJ may have left the 16 keys the unit keeps), with the log's last set record
- * showing none installed, is likely one too, or USB disk mode (beta finding 72): only a hint, since the base stayed the same. */
+ * showing none installed, is likely one too, or USB disk mode (beta finding 72): only a hint, since the base stayed the same.
+ * A freeze until a restart, stopped, in a session whose next start runs another base is the upgrade seen by diag.c's
+ * freeze watch (six of the 37 such freezes in the 16 November 2026 pull): said so. One whose base stayed is left as it is. */
 export function unitLines(incidents, names = namesFor) {
   const all = [...incidents].map(r => ({ epoch: 0, ...r })).sort((a, b) => a.epoch - b.epoch || a.seq - b.seq)
   const at = (r, boot = r.boot) => r.epoch + '/' + boot
   const base = new Map(all.filter(r => r.kind === 'base').map(r => [at(r), r.a]))
   const upgrade = r => r.kind === 'stall' && base.has(at(r)) && base.has(at(r, r.boot - 1)) && base.get(at(r)) !== base.get(at(r, r.boot - 1))
+  // The freeze twin: stock's OS upgrade stops the UI tick while the frames still run, and the record keeps the boot it happened in.
+  const upgraded = r => r.kind === 'freeze' && !r.a && !r.playing && base.has(at(r)) && base.has(at(r, r.boot + 1)) && base.get(at(r)) !== base.get(at(r, r.boot + 1))
   const system = r => {
     if (r.kind !== 'stall') return false
     const last = all.findLast(p => at(p) === at(r, r.boot - 1) && !STATELESS.includes(p.kind))
@@ -96,9 +100,11 @@ export function unitLines(incidents, names = namesFor) {
     return last?.cpu >= 950 && !last.playing && rightYes(walk) && set?.a === 0
   }
   const latest = Math.max(...all.map(r => r.epoch)), on = r => base.has(at(r)) ? base.get(at(r)).toString(16).padStart(8, '0') : logBase(all, r.epoch)
-  return all.filter(r => r.kind !== 'start').slice(-12).map(r => '  unit: ' + incident(r) + (r.kind === 'crash' ? withName(names(on(r)), r.a) : '') +
-    (upgrade(r) ? ' (an OS upgrade: this start runs another base; not a hang)' : system(r) ? ' (likely an OS upgrade or USB disk mode, beta finding 72: the session before ended stopped at 95 %+ CPU after PROJ … RIGHT YES, no module installed)' : '') +
-    (r.epoch < latest ? ` (an earlier log, base ${on(r)})` : ''))
+  // A second or two at 90 % while stopped is a key press or a project load: 185 of 280 hot records from 11 to 14 November 2026 were such, 60 of them with nothing installed.
+  const brief = r => r.kind === 'hot' && r.a < 10 && !r.playing, left = all.filter(brief).length
+  return [...left ? [`  unit: ${left} hot spell${left > 1 ? 's' : ''} under 5 s while stopped left out (key presses and project loads)`] : [], ...all.filter(r => r.kind !== 'start' && !brief(r)).slice(-12).map(r => '  unit: ' + incident(r) + (r.kind === 'crash' ? withName(names(on(r)), r.a) : '') +
+    (upgrade(r) ? ' (an OS upgrade: this start runs another base; not a hang)' : upgraded(r) ? ' (an OS upgrade: the next start runs another base; not a hang)' : system(r) ? ' (likely an OS upgrade or USB disk mode, beta finding 72: the session before ended stopped at 95 %+ CPU after PROJ … RIGHT YES, no module installed)' : '') +
+    (r.epoch < latest ? ` (an earlier log, base ${on(r)})` : ''))]
 }
 
 /** The base's saved-set result (modset.c) as a reading's `saved` reports it; 1-6 are what a boot's restore found. */
@@ -201,7 +207,7 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
         ...[crashNames(names(member.crashBase), member.crash.pc, member.crash.stack ?? [])].filter(Boolean).map(line => '    ' + line)] : [],
       ...member.stall ? [`  stall record ${member.stall.count}: reason ${member.stall.reason} (1 frames stopped, 2 eDMA refused) at tick ${member.stall.ticks}`,
         ...member.stall.report?.length ? ['    report: ' + stallWords(member.stall.report)] : [],
-        ...member.stall.frames?.length ? ['    ' + describeStallFrames(member.stall.frames)] : []] : [],
+        ...[describeStallFrames(member.stall.frames, member.stall)].filter(Boolean).map(line => '    ' + line)] : [],
       ...unitLines([...member.incidents?.values() ?? []], names),
       '  ' + Object.entries(member.kinds).map(([kind, n]) => kind + ' ' + n).join(', '),
     ]),

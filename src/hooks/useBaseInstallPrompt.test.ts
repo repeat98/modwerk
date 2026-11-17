@@ -31,7 +31,7 @@ afterEach(async () => { await act(() => root.unmount()); container.remove(); vi.
 it('opens the install prompt for a unit on the original OS', async () => {
   await render(unit({ status: 'stock' }).link)
   await act(() => vi.advanceTimersByTimeAsync(1500))
-  expect(prompt.open).toBe(true); expect(prompt.update).toBe(false); expect(mocked.post).not.toHaveBeenCalled()
+  expect(prompt.open).toBe(true); expect(mocked.post).not.toHaveBeenCalled()
 })
 it('stays closed without a unit once the member has had a base', async () => {
   mocked.api.mockResolvedValue({ show: false })
@@ -50,35 +50,30 @@ it('waits while the unit is read, records the current base, and stays closed aft
   await act(() => vi.advanceTimersByTimeAsync(6000))
   expect(prompt.open).toBe(false); expect(mocked.post).toHaveBeenCalledTimes(1)
 })
-it('records an older base as installed and opens the update prompt, even when the install prompt is not due', async () => {
+// An older base is updated from the sync, which refuses to sync to it (LoadDialog, OctatrackHub); no dialog opens for it.
+it('records an older base as installed and opens nothing for it', async () => {
   await render(unit({ status: 'ready', identity: { base: 'a'.repeat(64), canSubmit: true, model: 'OT' } }).link)
-  await act(() => vi.advanceTimersByTimeAsync(1500))
-  expect(prompt.open).toBe(true); expect(prompt.update).toBe(true); expect(mocked.post).toHaveBeenCalledTimes(1)
-  await act(async () => prompt.close())
   await act(() => vi.advanceTimersByTimeAsync(6000))
-  expect(prompt.open).toBe(false)
+  expect(prompt.open).toBe(false); expect(mocked.post).toHaveBeenCalledTimes(1)
 })
-it('opens the update prompt for a base this page cannot talk to', async () => {
+it('opens nothing for a base this page cannot talk to', async () => {
   mocked.api.mockResolvedValue({ show: false })
   await render(unit({ status: 'ready' }).link)
-  await act(() => vi.advanceTimersByTimeAsync(1500))
-  expect(prompt.open).toBe(true); expect(prompt.update).toBe(true); expect(mocked.post).not.toHaveBeenCalled()
+  await act(() => vi.advanceTimersByTimeAsync(6000))
+  expect(prompt.open).toBe(false); expect(mocked.post).not.toHaveBeenCalled()
 })
 
 // The guide is the Your Octatrack page's (installHere): the unit is the authority, the account or this browser a hint.
-it('opens the install guide only on the Your Octatrack page; the update prompt anywhere', async () => {
+it('opens the install guide only on the Your Octatrack page', async () => {
   await render(unit({ status: 'stock' }).link, { installHere: false })
   await act(() => vi.advanceTimersByTimeAsync(6000))
   expect(prompt.open).toBe(false)
-  await render(unit({ status: 'ready', identity: { base: 'a'.repeat(64), canSubmit: true, model: 'OT' } }).link, { installHere: false })
-  await act(() => vi.advanceTimersByTimeAsync(1500))
-  expect(prompt.open).toBe(true); expect(prompt.update).toBe(true)
 })
 it('opens the guide for a unit on the original OS even when the account says it had a base', async () => {
   mocked.api.mockResolvedValue({ show: false })
   await render(unit({ status: 'stock' }).link)
   await act(() => vi.advanceTimersByTimeAsync(1500))
-  expect(prompt.open).toBe(true); expect(prompt.update).toBe(false)
+  expect(prompt.open).toBe(true)
 })
 it('opens no guide in a browser without WebUSB, where the card build is the way', async () => {
   await render(unit({ status: 'unsupported' }).link)

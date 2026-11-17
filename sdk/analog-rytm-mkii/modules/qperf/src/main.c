@@ -38,6 +38,12 @@
 
 #include "ar2-1.74.h"
 
+// The functions marked QPERF_UI run only from the UI task (keys, tick, project; the quick
+// perf rec bake and clear), never from the audio block. cold puts them out of the hot code
+// and builds them for size, about 1.9 KB less RAM; the rest of the module stays at -O2.
+// No behaviour changes.
+#define QPERF_UI __attribute__((cold))
+
 typedef unsigned long word_t;
 typedef word_t (*project_singleton_t)(void);
 typedef word_t (*kit_param_set_t)(void *kit, int track);
@@ -295,7 +301,7 @@ static void show(const char *text)
 }
 
 // What is on screen: the top view's class, past the popups, which pass keys on.
-static word_t top_view(void)
+QPERF_UI static word_t top_view(void)
 {
     char *node = *(char **)((char *)views + MANAGER_LAST);
     for (;;) {
@@ -308,7 +314,7 @@ static word_t top_view(void)
 
 // A screen can take QPER's release, which leaves stock's QPER view open behind
 // it, taking pads with QPER up. Closing it twice is harmless: it only sets a flag.
-static void close_qper_view(void)
+QPERF_UI static void close_qper_view(void)
 {
     char *list = (char *)views + MANAGER_LIST;
     char *node = *(char **)((char *)views + MANAGER_LAST);
@@ -321,7 +327,7 @@ static void close_qper_view(void)
     }
 }
 
-static int on_pages(void)
+QPERF_UI static int on_pages(void)
 {
     word_t top = top_view();
     return top == PAGES_TOP_VTABLE || top == PERF_VTABLE || top == SCENE_VTABLE
@@ -366,7 +372,7 @@ static int slots_free(const unsigned char *t)
 }
 
 // A sound parameter's id on this track: machine parameters have one per machine.
-static int track_id(void *set, int param)
+QPERF_UI static int track_id(void *set, int param)
 {
     word_t source = *(word_t *)((char *)set + SET_SOUND), sound;
     typedef word_t (*live_t)(word_t self);
@@ -380,12 +386,12 @@ static int track_id(void *set, int param)
     return ID_FOR_INDEX(param, *(unsigned char *)(sound + SOUND_MACHINE));
 }
 
-static int param_id(void *set, int track, int param)
+QPERF_UI static int param_id(void *set, int track, int param)
 {
     return track == FX_TRACK ? FX_ID(param) : track_id(set, param);
 }
 
-static int param_read(void *set, int id)
+QPERF_UI static int param_read(void *set, int id)
 {
     return (*(set_read_t *)(*(word_t *)set + VT_READ))(set, id);
 }
@@ -500,7 +506,7 @@ static void locker_remove(void)
 }
 
 // A message with the linked performance's number in it.
-static void show_numbered(const char *before, unsigned mask, const char *after)
+QPERF_UI static void show_numbered(const char *before, unsigned mask, const char *after)
 {
     char *out = message;
     int number = lowest_linked(mask) + 1;
@@ -541,7 +547,7 @@ static void link_moved(unsigned mask)
     perf_rec_busy = 0;
 }
 
-static void apply_linked(void *kit)
+QPERF_UI static void apply_linked(void *kit)
 {
     void *perf = (void *)KIT_PERF(kit);
     const unsigned char *t = lock_table(perf);
@@ -573,7 +579,7 @@ static void apply_linked(void *kit)
 }
 
 // As stock's own menu rows do: undo if there is one, then the action.
-static void clear_linked(void *perf, int index)
+QPERF_UI static void clear_linked(void *perf, int index)
 {
     if (PERF_UNDO(perf, index, UNDO_CLEAR))
         show("UNDO CLEAR");
@@ -583,7 +589,7 @@ static void clear_linked(void *perf, int index)
         show("NOTHING TO CLEAR");
 }
 
-static void paste_linked(void *perf, int index)
+QPERF_UI static void paste_linked(void *perf, int index)
 {
     if (PERF_UNDO(perf, index, UNDO_PASTE))
         show("UNDO PASTE");
@@ -594,9 +600,9 @@ static void paste_linked(void *perf, int index)
 }
 
 static int live_rec(void);
-static void perf_rec_action(int key);
+QPERF_UI static void perf_rec_action(int key);
 
-static void perf_action(int key)
+QPERF_UI static void perf_action(int key)
 {
     void *kit = active_kit();
     void *perf = (void *)KIT_PERF(kit);
@@ -642,18 +648,18 @@ static word_t live_pattern_data(void)
     return index < 0 ? 0 : PATTERNS_AT + (word_t)PATTERN_BYTES * index;
 }
 
-static int per_track(word_t pattern)
+QPERF_UI static int per_track(word_t pattern)
 {
     return *(volatile unsigned char *)(pattern + PATTERN_PER_TRACK) == 1;
 }
 
-static int track_length(word_t pattern, int track)
+QPERF_UI static int track_length(word_t pattern, int track)
 {
     int steps = *(volatile unsigned char *)(pattern + (word_t)TRACK_BYTES * track + TRACK_LENGTH);
     return steps < 1 || steps > STEPS ? STEPS : steps;
 }
 
-static int track_speed(word_t pattern, int track)
+QPERF_UI static int track_speed(word_t pattern, int track)
 {
     return *(volatile unsigned char *)(pattern + (word_t)TRACK_BYTES * track + TRACK_SPEED);
 }
@@ -870,7 +876,7 @@ void qperf_render(void)
 
 // A step's value in one performance's quick perf rec: its first recorded point, so a
 // move shorter than a step still lands. -1 for none.
-static int step_amount(int p, int step)
+QPERF_UI static int step_amount(int p, int step)
 {
     unsigned bits = perf_rec_has[p][step];
     int q = 0;
@@ -881,7 +887,7 @@ static int step_amount(int p, int step)
     return perf_rec[p][step * POINTS + q] << 7;
 }
 
-static int row_used(const char *data, int track, int word)
+QPERF_UI static int row_used(const char *data, int track, int word)
 {
     int step;
     for (step = 0; step < STEPS; step++)
@@ -890,7 +896,7 @@ static int row_used(const char *data, int track, int word)
     return 0;
 }
 
-static int matrix_rows(const char *data)
+QPERF_UI static int matrix_rows(const char *data)
 {
     int track, word, rows = 0;
     for (track = 0; track <= FX_TRACK; track++)
@@ -902,7 +908,7 @@ static int matrix_rows(const char *data)
 
 // How many steps a track takes the quick perf rec on: its own length with a length per
 // track, as long as it runs at the pattern's speed (0: none).
-static int track_steps(word_t pattern, int track, int steps)
+QPERF_UI static int track_steps(word_t pattern, int track, int steps)
 {
     if (!per_track(pattern))
         return steps;
@@ -912,7 +918,7 @@ static int track_steps(word_t pattern, int track, int steps)
 }
 
 // Each (track, word) a performance in the quick perf rec locks, once.
-static int perf_rec_target(const unsigned char *table, int i)
+QPERF_UI static int perf_rec_target(const unsigned char *table, int i)
 {
     const unsigned char *t = table + SLOT_BYTES * i, *u = table;
     int j;
@@ -927,7 +933,7 @@ static int perf_rec_target(const unsigned char *table, int i)
 // One (track, word): each step a quick perf rec move reaches gets the step's own lock or
 // the kit's value plus the moves, and the step after a move gets that value
 // back. Returns how many steps it writes, and writes only with write set.
-static int apply_target(void *kit, const unsigned char *table, word_t pattern, int track, int word,
+QPERF_UI static int apply_target(void *kit, const unsigned char *table, word_t pattern, int track, int word,
                        int length, int steps, int write)
 {
     void *set = (void *)KIT_PARAM_SET(kit, track);
@@ -984,18 +990,18 @@ static int apply_target(void *kit, const unsigned char *table, word_t pattern, i
     return n;
 }
 
-static void *track_data(void *trk)
+QPERF_UI static void *track_data(void *trk)
 {
     return (void *)(*(word_t (**)(void *))(*(word_t *)trk + LOCKS_DATA))(trk);
 }
 
-static void notice(void *object)
+QPERF_UI static void notice(void *object)
 {
     (*(notice_t *)(*(word_t *)object + VT_NOTICE))(object, 0);
 }
 
 // One step's contents onto another, as stock's page copy moves a page's.
-static void copy_step(void *trk, char *locks, int from, int to)
+QPERF_UI static void copy_step(void *trk, char *locks, int from, int to)
 {
     static const short rows[STEP_FIELDS] = { 128, 192, 256, 320, 576, 384, 448, 512, 640 };
     unsigned char *d = (unsigned char *)track_data(trk);
@@ -1009,7 +1015,7 @@ static void copy_step(void *trk, char *locks, int from, int to)
     MEMCPY(locks + MATRIX_STEP * to, locks + MATRIX_STEP * from, MATRIX_STEP);
 }
 
-static int gcd(int a, int b)
+QPERF_UI static int gcd(int a, int b)
 {
     while (b) {
         int r = a % b;
@@ -1023,7 +1029,7 @@ static int gcd(int a, int b)
 // times a cycle to one loop a cycle: stock counts a loop each time a track
 // ends, so copy c of cycle m ran in loop k * m + c. The copy keeps the passes
 // it played on: a new N:M, none, or COND_NEVER.
-static int copy_condition(int condition, int k, int c)
+QPERF_UI static int copy_condition(int condition, int k, int c)
 {
     int n, m, r, g, mm, kk, inv, m0;
     if (condition == COND_FIRST)
@@ -1053,7 +1059,7 @@ static int copy_condition(int condition, int k, int c)
 // to 64 every track restarts with it, so repeating a track's steps out to it
 // plays the same. Without one (INF) or past 64, only a length that divides 64
 // repeats the same way.
-static int can_lengthen(word_t pattern, void *trk, int length, int steps)
+QPERF_UI static int can_lengthen(word_t pattern, void *trk, int length, int steps)
 {
     int master = (short)U16(pattern + PATTERN_LENGTH);
     signed char fallback = ((signed char *)track_data(trk))[COND_DEFAULT];
@@ -1071,7 +1077,7 @@ static int can_lengthen(word_t pattern, void *trk, int length, int steps)
 
 // Repeat a track's steps out to the quick perf rec's length and rewrite its conditions
 // so every copy plays on the passes the original did.
-static void lengthen(void *trk, char *locks, int length, int steps)
+QPERF_UI static void lengthen(void *trk, char *locks, int length, int steps)
 {
     unsigned char *d;
     int k = steps / length, j;
@@ -1098,7 +1104,7 @@ static void lengthen(void *trk, char *locks, int length, int steps)
 }
 
 // QPER + YES with LIVE RECORDING on.
-static void apply_perf_rec(void)
+QPERF_UI static void apply_perf_rec(void)
 {
     void *kit = active_kit();
     const unsigned char *table = lock_table((void *)KIT_PERF(kit));
@@ -1190,7 +1196,7 @@ static void apply_perf_rec(void)
 }
 
 // QPER + NO: empty the quick perf rec, and bring it back on the next press.
-static void clear_perf_rec(void)
+QPERF_UI static void clear_perf_rec(void)
 {
     if (perf_rec_hidden) {
         perf_rec_hidden = 0;
@@ -1235,7 +1241,7 @@ typedef void (*rec_set_t)(word_t rec, int on);
 static unsigned char grid_at_press, live_at_press;
 static int record_held;                 // RECORD down, from its own events: stock's key table can stick
 
-static void record_press(void)
+QPERF_UI static void record_press(void)
 {
     word_t rec = U32(REC_UI_AT);
     if (rec) {
@@ -1244,7 +1250,7 @@ static void record_press(void)
     }
 }
 
-static void record_restore(void)
+QPERF_UI static void record_restore(void)
 {
     word_t rec = U32(REC_UI_AT);
     if (!rec)
@@ -1255,7 +1261,7 @@ static void record_restore(void)
         LIVE_REC_SET(rec, live_at_press);
 }
 
-int qperf_key(void *brain, void *event)
+QPERF_UI int qperf_key(void *brain, void *event)
 {
     int key = *(int *)((char *)event + EV_KEY);
     unsigned flags = *(unsigned *)((char *)event + EV_FLAGS), bit;
@@ -1324,7 +1330,7 @@ void qperf_kit_changed(void)
     kit_changed = 1;
 }
 
-void qperf_project(int how, unsigned dropped)
+QPERF_UI void qperf_project(int how, unsigned dropped)
 {
     (void)how;
     (void)dropped;
@@ -1333,7 +1339,7 @@ void qperf_project(int how, unsigned dropped)
     perf_rec_pattern = -2;              // a new project: the next block empties it
 }
 
-void qperf_tick(void *ctrl)
+QPERF_UI void qperf_tick(void *ctrl)
 {
     word_t string;
     char allocator;

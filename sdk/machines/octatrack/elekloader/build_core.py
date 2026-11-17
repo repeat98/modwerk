@@ -167,10 +167,13 @@ FRAME_SITES = ((0x4000aad0, 8, '5f02b18d204af6e4a0177ad6e41c779a698018b6f25b5d83
                (0x4000d43e, 6, '0f69edd47eb472176050ed5c14a75d055e0de101cd2d3a8d7c79f7dc6526246b', 'mw_render_first'),
                (0x4000d52c, 6, '5bb0079066abd317109cc9ae7a5f58f0a0d1596bb04da603669ed66ec8172243', 'mw_render_second'))
 OS_FIRST, OS_VEROFF, BOOT_IMAGE_BYTES = 0x4fefffe4, 0xde648, 0x180000  # boot.s, boot.h
-# What the bases on units take for a RAM boot, and so for a USB update's trial: 1.25 MiB until the base of 13 November
-# 2026, which stages BOOT_IMAGE_BYTES. A released base must fit it for as long as units run the older bases; a
-# development build only has to fit the base it is booted from (--dev: this one or later).
-USB_UPDATE_BYTES = 0x140000
+# What the bases on units take for a RAM boot, and so for a USB update's trial: 1.25 MiB before the base of 13 November
+# 2026, BOOT_IMAGE_BYTES since. A unit on an older base takes a larger one as two updates, the step base first
+# (src/engine/elekloader/base-step.ts), so a released base must fit the step base's stage.
+USB_UPDATE_BYTES = 0x180000
+# What a base writes to one slot (flash.h FLASH_CONTAINER_BYTES, less the page flash.c keeps back): the packed
+# container, the next limit once the image fits.
+FLASH_SLOT_BYTES = int(re.search(r'#define FLASH_CONTAINER_BYTES (0x[0-9a-f]+)u', (HERE/'flash.h').read_text()).group(1), 16) - 256
 BOOT_RESERVE = (0x40a955e0, 0x41495de0)  # boot.s RESERVE_LO/HI: the gate scans only there
 # REMIX SWITCH's DSP park (dsp_park.asm, assembled by Octabam's dsp_asm), by
 # P address, written into both payloads over dead `jmp *` vectors.
@@ -1548,6 +1551,9 @@ def main():
                              'not the uncached one (sdk/runtime/loader/README.md, "Cached modules"). Off by default.')
     parser.add_argument('--module-sets', action='store_true',
                         help='Private whole-set transaction candidate. Retains every predecessor through Keep/Undo; needs exact hardware qualification.')
+    parser.add_argument('--module-ui-roots', action='store_true',
+                        help='Refuse to retire any module whose window, page or key layer is still open (RUNTIME_UI_OPEN, '
+                             'loader capability 1024; machine_admission_runtime.c). Part of the beta base.')
     parser.add_argument('--fx-ids', type=int, choices=(32, 128), default=128,
                         help='with --dsp-loader: the base\'s effect ids (fxids.h, the dispatch and chooser tables; '
                              'docs/OCTATRACK_MORE_EFFECT_IDS.md). 32, the old width, only to bisect a fault.')
@@ -1681,7 +1687,7 @@ def main():
             usb_profiles = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb_profiles)
     for name in ('ep0.c', 'fxids.h', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s', 'flash.c', 'flash.h', 'slots.c', 'slots.h', 'modset.c', 'boot_anim.c', 'boot_anim.s', 'crash.c', 'crash.s', 'run_unpack.s') + (('dev.c',) if args.dev else ()) + (
             ('runtime_events.h', 'runtime_events.s', 'machine_registry.c', 'machine_registry.s', 'midi_generators.c',
-             'midi_generators.s') if args.site_events else ()):
+             'midi_generators.s', 'sample_memory.c') if args.site_events else ()):
         shutil.copyfile(HERE / name, source / name)
     # The boot stub's sector, which flash.c writes when it converts a unit to two slots (build_stub.py: stub_body.c).
     sys.path.insert(0, str(HERE))
@@ -1962,6 +1968,8 @@ def main():
                          **({'cachedModules': 'prototype-1'} if args.cached_modules else {}))
     if args.module_sets:
         configuration['usb']['moduleSets'] = 'mwms-1'
+    if args.module_ui_roots:
+        configuration['usb']['uiRoots'] = 'mwur-1'
     if args.dsp_loader:
         configuration.update(dsp=dict(loader='dsp-dynload-3', stock='on-demand', rows='runtime',
                                       allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, burn=args.dsp_burn, **({'burnWindow': args.dsp_burn_window} if args.dsp_burn_window else {}), hook=args.dsp_hook, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
@@ -1986,6 +1994,15 @@ def main():
     # IDENTIFY reports this configuration identity as the installed base.
     definitions += 'const uint8_t modwerk_base_digest[32] = {%s};\n' % ','.join(
         '0x' + identity[i:i+2] for i in range(0, 64, 2))
+    # The base's version, for people (owner, 16 November 2026): base-version.json, raised with every base that is
+    # published. status.c shows it; the site names a unit's base by it (sdk/machines/octatrack/base-versions.json).
+    # A patch number (owner, 16 November 2026: 0.7.1) is optional and said only when it is not 0, so 0.7 stays 0.7.
+    version = json.loads((HERE / 'base-version.json').read_text())
+    if set(version) not in ({'major', 'minor'}, {'major', 'minor', 'patch'}) or \
+            not all(type(n) is int and 0 <= n <= 999 for n in version.values()):
+        raise ValueError('base-version.json holds a major, a minor and an optional patch number, 0-999 each.')
+    definitions += 'const char modwerk_base_version[] = "%d.%d%s";\n' % (
+        version['major'], version['minor'], '.%d' % version['patch'] if version.get('patch') else '')
     for key, size in FIELDS.items():
         if len(values[key]) >= size:
             raise ValueError('Logger identity field exceeds capacity: ' + key)
@@ -2018,7 +2035,7 @@ def main():
             raise ValueError('PROJ\'s root menu is not the four stock rows; review the MODWERK category.')
         stock_rows = image[ROOT_ROWS - device.main_load:][:4 * 24]
         columns = [sum(1 << r for r in range(8) if ICON[r][c] == '#') << 24 for c in range(19)]
-        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'))
+        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'), ('switches', 'switches'))
         definitions += ('struct menu_row { const void *label, *window, *action, *value, *child; uint32_t page; };\n'
                         'extern char modwerk_menu_label[], %s;\nvoid %s;\n' % (
                             ', '.join('modwerk_%s_label[]' % label for label, _ in leaves),
@@ -2087,6 +2104,8 @@ modwerk_retained_end:
         recipe['cflags'].append('-DMODWERK_CACHED_MODULES')
     if args.module_sets:
         recipe['cflags'].append('-DMODWERK_RUNTIME_SETS')
+    if args.module_ui_roots:  # loader.c's capability 1024, machine_admission_runtime.c
+        recipe['cflags'].append('-DMODWERK_RUNTIME_UI_ROOTS')
     if args.saved_set_export:
         recipe['cflags'].append('-DMODWERK_SAVED_SET_EXPORT')
     if args.resident_stock_hooks:
@@ -2338,6 +2357,10 @@ modwerk_retained_end:
         raise ValueError('The MAIN image is %d bytes: %d more than the bases on units take for a USB update (%d).'
                          % (len(main_out), len(main_out) - USB_UPDATE_BYTES, USB_UPDATE_BYTES))
     print('MAIN image: %d bytes, %d under what the bases on units take over USB' % (len(main_out), USB_UPDATE_BYTES - len(main_out)))
+    slot = len(formats.parse(str(out/'NOT_FLASH_CANDIDATE.bin'), device).container)
+    if slot > FLASH_SLOT_BYTES:
+        raise ValueError('The packed base is %d bytes: %d more than a flash slot holds (%d, flash.h).' % (slot, slot - FLASH_SLOT_BYTES, FLASH_SLOT_BYTES))
+    print('Packed base: %d bytes, %d under what a flash slot holds' % (slot, FLASH_SLOT_BYTES - slot))
     (out/'MAIN.raw').write_bytes(main_out)
     report = dict(schema=1, kind='modwerk-elekloader-base-prototype', coreVersion=VERSION,
                   upstream=pin, sources=inputs, configuration=configuration, configurationHash=identity,

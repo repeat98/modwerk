@@ -1,0 +1,25 @@
+# FUNC + `nudge` takes stock's coarse steps (NOT: octaves) and comes back. The runner spends
+# stock's dropped first FUNC turn itself. Coarse steps snap to stock's grid, so the value only
+# returns when it began on the grid (NOT at a whole octave, as a new trig page has it).
+name: link-func-nudge
+state: changes
+
+# TRIG pressed on its own page shows its second page, and the unit keeps that choice: come from another.
+key AMP
+key TRIG
+wait 3500
+screen rest
+hold FUNC
+nudge A +1
+release FUNC
+wait 3500
+screen up
+expect up != rest
+hold FUNC
+nudge A -1
+nudge A -1
+nudge A +1
+release FUNC
+wait 3500
+screen back
+expect back == rest

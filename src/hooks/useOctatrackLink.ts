@@ -36,6 +36,14 @@ export function useInventory(link?: OctatrackLink | null, read?: () => Promise<I
       error => { if ((error as { retry?: boolean })?.retry) again = setTimeout(() => { if (live) setAttempt(n => n + 1) }, 2000); else console.error(error) })
     return () => { live = false; clearTimeout(again) }
   }, [key, read, attempt])
+  // A module switched on or off on the unit itself (PROJECT > MODWERK > MODULES) changes what runs without a sync:
+  // the identity of the running set is asked every 5 s while the unit is idle, and a change reads the modules again.
+  useEffect(() => {
+    if (!key || !link || !read) return
+    let live = true, seen: string | undefined
+    const timer = setInterval(() => { void link.liveSet().then(now => { if (!live || !now) return; if (seen && now !== seen) setAttempt(n => n + 1); seen = now }) }, 5000)
+    return () => { live = false; clearInterval(timer) }
+  }, [key, link, read])
   return key && inventory?.key === key ? inventory.value : undefined
 }
 
