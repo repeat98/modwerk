@@ -327,6 +327,14 @@ export class UsbVendorTransport implements UploadTransport {
       if (owned !== undefined) await this.releaseSavedSet(owned)
     }
   }
+  /** DIAG version 3 (request 4, ep0.c): the base's EP0 counters, answered in its USB interrupt even while it refuses
+   * submissions: frames received, refusals, bus resets, data stages primed, completed and abandoned. */
+  async ep0(): Promise<number[]> {
+    const reply = await this.device.controlTransferIn(this.setup(4, 0), 68), view = reply.data
+    if (reply.status !== 'ok' || !view || view.byteLength !== 68 || view.getUint32(0) !== 0x4d575544 || view.getUint8(4) !== 3)
+      throw new VendorTransportError('The Octatrack did not answer DIAG version 3.')
+    return [3, 4, 5, 6, 7, 14].map(word => view.getUint32(8 + 4 * word))
+  }
   async result(signal?: AbortSignal): Promise<VendorResult> {
     signal?.throwIfAborted()
     const reply = await this.device.controlTransferIn(this.setup(VENDOR_RESULT, 0), VENDOR_RESULT_BYTES)
