@@ -3,8 +3,8 @@ paste or insert them together.
 
 CUE + UP/DOWN starts or extends a selection from the cursor (stock moves the
 cursor as for UP/DOWN alone); FUNC + REC copies it, FUNC + PLAY clears it,
-FUNC + STOP pastes the copied rows over the rows from the cursor (overwrite,
-as stock's one-row paste) and CUE + FUNC + STOP inserts them. Repeating a
+FUNC + STOP replaces the selected rows (or the cursor row) with the copied
+rows and CUE + FUNC + STOP inserts them. Repeating a
 paste, clear or insert in the same place undoes it, as stock does for one row.
 Without a selection and without rows copied here, every key is stock's.
 

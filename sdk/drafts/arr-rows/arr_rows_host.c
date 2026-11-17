@@ -163,13 +163,13 @@ int main(void)
     set32(0x100b14d0u, 0x00030000u); /* arrangement 3 (byte 0x100b14d1) */
     set32(0x1001614cu, 0);
     hold(FUNC, 1);
-    check("FUNC + STOP pastes the copied rows over rows 7-9", tap(STOP) == 1 && same(7, 2) && same(8, 3) && same(9, 4) && rows() == 10);
+    check("FUNC + STOP with no selection replaces the cursor row 7 with the three copied rows", tap(STOP) == 1 && same(6, 6) && same(7, 2) && same(8, 3) && same(9, 4) && same(10, 8) && same(11, 9) && rows() == 12);
     hold(FUNC, 0);
     check("it says PASTE 3 ROWS", !strcmp(last_message, "PASTE 3 ROWS"));
     check("the arrangement is marked changed, as stock marks it", (arrangement[0x11] & 1) && host_rd8(0x1001614cu) == 1u << 3);
     check("stock's one-row undo is forgotten", host_rd8(0x400d816eu) == 0xff && host_rd8(0x400d816fu) == 0xff);
     hold(FUNC, 1);
-    check("FUNC + STOP again at the same row undoes the paste", tap(STOP) == 1 && same(7, 7) && same(8, 8) && same(9, 9));
+    check("FUNC + STOP again at the same row undoes the paste", tap(STOP) == 1 && same(7, 7) && same(8, 8) && same(9, 9) && rows() == 10);
     hold(FUNC, 0);
     check("it says UNDO PASTE 3 ROWS", !strcmp(last_message, "UNDO PASTE 3 ROWS"));
 
@@ -177,12 +177,12 @@ int main(void)
     hold(FUNC, 1);
     tap(STOP);
     hold(FUNC, 0);
-    check("a paste past the end adds rows", rows() == 11 && same(8, 2) && same(10, 4));
+    check("replacing row 8 of 10 with three rows makes 12", rows() == 12 && same(8, 2) && same(10, 4) && same(11, 9));
     row(9)[5] = 0x77; /* the musician edits a pasted row */
     hold(FUNC, 1);
     tap(STOP);
     hold(FUNC, 0);
-    check("after an edit, FUNC + STOP pastes again instead of undoing", row(9)[5] == 0x40 + 3 && rows() == 11);
+    check("after an edit, FUNC + STOP pastes again instead of undoing", row(9)[5] == 0x40 + 3 && rows() == 14);
 
     /* insert: CUE + FUNC + STOP at row 1, with JUMPs to rows 6 and 1 */
     fill(10);
@@ -232,7 +232,7 @@ int main(void)
     check("a count past 64 is clamped to 64, as stock's editor clamps it", row(8)[2] == 64);
     check("the original JUMP to row 9 moved with its row too", row(3)[3] == 12 && row(2)[3] == 1);
 
-    /* the same block pasted over rows 6-8 (FUNC + STOP): inside targets follow the block, outside ones stay */
+    /* the same block replacing row 6 (FUNC + STOP): inside targets follow the block, outside ones follow their rows */
     fill(12);
     row(1)[0] = 1; row(1)[3] = 1;                  /* HALT on its own row, inside the block 1-3 */
     row(2)[0] = 1; row(2)[2] = 3; row(2)[3] = 1;   /* LOOP x3 back to row 1, inside */
@@ -242,11 +242,11 @@ int main(void)
     hold(FUNC, 1); tap(REC); hold(FUNC, 0);
     tap(DOWN); tap(DOWN); tap(DOWN);               /* cursor 6; ends the selection */
     hold(FUNC, 1); tap(STOP); hold(FUNC, 0);
-    check("overwrite: a pasted HALT stays a HALT on its new row", row(6)[0] == 1 && row(6)[3] == 6);
-    check("overwrite: a pasted LOOP inside the block points into the pasted block", row(7)[3] == 6 && row(7)[2] == 3);
-    check("overwrite: a target outside the block is kept, as no row moved", row(8)[3] == 9 && row(8)[2] == 64);
-    check("overwrite: the rows copied from are untouched", row(1)[3] == 1 && row(2)[3] == 1 && row(3)[3] == 9 && row(3)[2] == 100);
-    check("overwrite: the count is unchanged", rows() == 12);
+    check("replace: a pasted HALT stays a HALT on its new row", row(6)[0] == 1 && row(6)[3] == 6);
+    check("replace: a pasted LOOP inside the block points into the pasted block", row(7)[3] == 6 && row(7)[2] == 3);
+    check("replace: a target outside the block follows its row (9 is now 11)", row(8)[3] == 11 && row(8)[2] == 64);
+    check("replace: the original JUMP to row 9 follows it too; the rest stay", row(3)[3] == 11 && row(1)[3] == 1 && row(2)[3] == 1);
+    check("replace: one row out, three in", rows() == 14);
 
     /* inserting at the end changes no target */
     fill(6);
@@ -363,8 +363,8 @@ int main(void)
     arr_key(CUE, 1);                               /* a CUE press the module saw, its release it missed */
     tap(DOWN); tap(DOWN); tap(DOWN);               /* to row 6 */
     hold(FUNC, 1); tap(STOP); hold(FUNC, 0);
-    check("a missed CUE release does not turn FUNC + STOP into an insert", rows() == 10 && !strcmp(last_message, "PASTE 2 ROWS"));
-    check("and plain DOWN still ended the selection (it pasted at the cursor)", same(6, 2) && same(7, 3));
+    check("a missed CUE release does not turn FUNC + STOP into an insert", rows() == 11 && !strcmp(last_message, "PASTE 2 ROWS"));
+    check("and plain DOWN still ended the selection (it replaced the cursor row)", same(6, 2) && same(7, 3) && same(8, 7));
     arr_key(CUE, 0);
     arr_key(FUNC, 1);                              /* the module saw FUNC go down, stock never did */
     check("STOP without stock's FUNC layer is the transport's: never taken", arr_key(STOP, 1) == 0 && arr_key(STOP, 0) == 0);
@@ -372,7 +372,7 @@ int main(void)
     /* FUNC down first, then CUE: stock pushes CUE's layer without setting its flag */
     tap(UP);
     hold(FUNC, 1); hold(CUE, 1);
-    check("FUNC then CUE, then STOP: an insert", tap(STOP) == 1 && rows() == 12 && !strcmp(last_message, "INSERT 2 ROWS"));
+    check("FUNC then CUE, then STOP: an insert", tap(STOP) == 1 && rows() == 13 && !strcmp(last_message, "INSERT 2 ROWS"));
     hold(CUE, 0); hold(FUNC, 0);
     /* the selection drawn after the list has scrolled */
     fill(14);
@@ -392,6 +392,33 @@ int main(void)
     hold(CUE, 0);
     arr_tick((void *)&api);
     check("the diagnostic word counts the two disagreements above", (api.value >> 8 & 0xff) >= 2);
+
+    /* a selection of three rows replaced by two copied rows: the rows below move up */
+    fill(12);
+    row(6)[0] = 1; row(6)[3] = 3;                  /* a JUMP back to the first replaced row, just below them */
+    row(8)[0] = 1; row(8)[3] = 10;                 /* a JUMP to a row below */
+    set_cursor(9);
+    hold(CUE, 1); tap(DOWN); hold(CUE, 0);         /* rows 9-10 */
+    hold(FUNC, 1); tap(REC); hold(FUNC, 0);
+    tap(UP); tap(UP); tap(UP); tap(UP); tap(UP); tap(UP); tap(UP);  /* row 3; ends the selection */
+    hold(CUE, 1); tap(DOWN); tap(DOWN); hold(CUE, 0);  /* rows 3-5 */
+    hold(FUNC, 1); tap(STOP); hold(FUNC, 0);
+    check("FUNC + STOP replaces the selected rows 3-5 with the two copied rows", same(2, 2) && same(3, 9) && same(4, 10) && rows() == 11 && !strcmp(last_message, "PASTE 2 ROWS"));
+    check("a JUMP to a replaced row points at the first pasted row, and stays a JUMP or LOOP", row(5)[0] == 1 && row(5)[3] == 3);
+    check("a JUMP to a row below follows it up", row(7)[0] == 1 && row(7)[3] == 9 && same(9, 10) && same(10, 11));
+    check("the row left past the end is cleared", row(11)[1] == 0 && row(11)[5] == 0);
+    hold(FUNC, 1); tap(STOP); hold(FUNC, 0);
+    check("again undoes it", rows() == 12 && same(3, 3) && same(5, 5) && row(6)[3] == 3 && row(8)[3] == 10);
+
+    /* stock's delete turns a JUMP just below the deleted row into a HALT (#1668); a replace never does */
+    fill(8);
+    row(4)[0] = 1; row(4)[3] = 3;                  /* a LOOP back to row 3, just below it */
+    set_cursor(0);
+    hold(CUE, 1); tap(UP); hold(CUE, 0);           /* row 0 */
+    hold(FUNC, 1); tap(REC); hold(FUNC, 0);
+    tap(DOWN); tap(DOWN); tap(DOWN);               /* row 3 */
+    hold(FUNC, 1); tap(STOP); hold(FUNC, 0);
+    check("replacing row 3 with one row keeps the LOOP below it a LOOP to row 3", row(4)[0] == 1 && row(4)[3] == 3 && rows() == 8);
 
     printf("%d checks, %d failed\n", checks, failures);
     return failures != 0;

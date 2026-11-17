@@ -4,7 +4,7 @@
     python3 -B verify.py     # needs a host C compiler (cc); m68k-elf-gcc for the generated-unit check
 
 1. arr_rows_host.c drives arr_rows.c (-DARR_HOST) against simulated OS 1.40C memory, big-endian as on the unit
-   (68 checks): every key is stock's while the editor is closed, without a selection and without rows copied here;
+   (74 checks): every key is stock's while the editor is closed, without a selection and without rows copied here;
    CUE + UP/DOWN reaches stock and marks the rows; copy, clear, paste over and insert of a range; LOOP/JUMP targets
    after an insert; undo by repeating, and no undo after another edit; the 256-row limit; the changed marks stock
    sets; a stock copy, a stock insert or delete, NO and the editor closing each end the module's part.

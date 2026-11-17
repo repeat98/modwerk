@@ -4,7 +4,7 @@ Every result names its build. "Not tested" is a result.
 
 ## Host gate
 
-`python3 -B sdk/drafts/arr-rows/verify.py` (17 November 2026, source at this branch): 68 checks pass, and
+`python3 -B sdk/drafts/arr-rows/verify.py` (17 November 2026, source at this branch): 74 checks pass, and
 `arr_rows_core.s` matches `arr_rows.c` (m68k-elf-gcc 16.2, no unresolved symbols, the shared codegen guard passes).
 It proves the module's logic against simulated stock memory, not the firmware.
 
@@ -126,7 +126,24 @@ Source `f9fbcd669`, package `e091641009bc7ffbde12884e0d22903fb636a64c3d3b1506589
 Inventory `[]` before; a 20-second trial ran the whole time (1,143 ticks) with the diagnostic word reading
 `0xff000000` (editor not open, no selection), rolled back by itself; inventory `[]` and the base's identity after.
 Before it, under ot_emu: the marks follow the editor's scroll (rows 3-8 with the list showing row 3 first), and a
-copy and a paste of 20 rows during PLAY left the transport running. Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
+copy and a paste of 20 rows during PLAY left the transport running.
+
+### The module, stage 2 again: the developer's short re-test of that build (17 November 2026)
+
+Build `f9fbcd669` (package `e0916410…`) as a 30-minute trial from 16:14 on the developer's MKI. As Andrey Sidorkin
+reported it: the marks followed the selection, also with the list scrolled, and moving the cursor with LEVEL moved the
+selection with it, as intended; FUNC + STOP and CUE + FUNC + STOP behaved differently, as intended; copies during
+PLAY showed no problem. The diagnostic word logged every copy, paste, insert and undo he made, and at the end both
+views agreed that no key was held. Its disagreement count rose on nearly every key press: it compared the two views
+on CUE's and FUNC's own events, before stock switches its layer, so the count was noise; the next build skips those
+two keys.
+
+He asked for a different paste: with no selection FUNC + STOP replaces only the cursor row with the copied rows, and
+with a selection it replaces the selected rows. Built that way: a paste and an insert are one operation (replace D
+rows at P with the N copied ones; D = 0 for an insert), every row and target mapped from before to after in one step
+(README). Pressing FUNC + STOP again where the cursor was undoes it, also after replacing a selection. Under ot_emu on
+the beta base: copying rows 1-3 of `0 1 2 3 4 5 6 7` and replacing row 6 gave `0 1 2 3 4 5 1 2 3 7` (10 rows), and
+replacing rows 2-4 gave `0 1 1 2 3 5 6 7`; FUNC + STOP again restored each. Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
 FUNC + DOWN insert and FUNC + UP delete; CUE + track keys in the editor; ARR CHANGE, SAVE, RELOAD; a project saved
 with the module loaded on a base without it (arrNN files compared).
 
