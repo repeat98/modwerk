@@ -398,14 +398,14 @@ static unsigned keybus_at(unsigned c, uint32_t module)
     for (unsigned e = 0; e < SOURCE_ENGINES; ++e) if (source_engine[c][e].module == module) return e;
     return SOURCE_ENGINES;
 }
-/* 1: already charged on both cores, or it would fit beside every slot and source of each core now. */
+/* 1: already charged on both cores, or it would fit beside each core's slots, as voices book them, and its sources now. */
 int modwerk_dsp_keybus_fits(void)
 {
     uint32_t e = charged(MW_DSP_KEYBUS_HARDWARE, RUNTIME_HARDWARE);
     for (unsigned c = 0; c < 2u; ++c) {
         if (keybus_at(c, KEYBUS_MODULE) < SOURCE_ENGINES) continue;
         if (keybus_at(c, 0) == SOURCE_ENGINES ||
-            slot_charge(c) + modwerk_dsp_source_charge(c) + e > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) return 0;
+            voice_slots(c) + modwerk_dsp_source_charge(c) + e > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) return 0;
     }
     return 1;
 }
