@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {"event": "module_key", "fn": "as_key"},
+    {"event": "module_tick", "fn": "as_tick"},
+    {"event": "module_draw", "fn": "as_draw"},
+    {"event": "ev_banks_load", "fn": "as_project_load", "order": 50},
+    {"event": "ev_banks_loaded", "fn": "as_project_loaded", "order": 50},
+    {"event": "ev_project_new", "fn": "as_project_load", "order": 50},
+    {"event": "ev_project_stored", "fn": "as_project_stored", "order": 50},
+    {"event": "ev_project_reloaded", "fn": "as_project_reloaded", "order": 50},
+    {"event": "ev_modules_ready", "fn": "as_modules_ready", "order": 50}
+  ]
+}
