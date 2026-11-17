@@ -49,6 +49,9 @@ the same image booted one-shot came back. Everything else here was done on the o
   was absent keeps its tracks drawn as FLEX until a trig or a Part change. Listen during the trial, and load a project
   without the machine before it ends. A machine's trial that ends while tracks name it answers needs-recovery, and
   what plays afterwards is not the module's sound (30 October 2026, MKII, twin `04e94075`).
+  A machine with a DSP engine needs its whole package built for the twin (`base_bound.build` with the twin's binding,
+  its recaptured recipe in place): the twin build's own `rows/<id>-work` package is the controller alone, and the
+  base refuses that machine's pick without a box, the track staying on its old machine (Analog BD, 17 November 2026).
 - Verify an Undo's active identity and inventory after the reply; a ready host UI alone is insufficient. On a contributor's MKII (25 October 2026, private base `52c291c2…`), a 12-module timed Undo left recovery/active unknown and standard
   rollback retries still returned needs-recovery. Stop installing and ask the owner to power-cycle when recovery cannot finish.
 - After a crash restart, or finding the unit on the flashed base with no power cycle you know of, ask for a power
