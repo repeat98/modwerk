@@ -148,23 +148,23 @@
       "screenshotStyle": "black-and-white"
     },
     "qualification": {
-      "moduleVersion": "0.2.2-experimental",
-      "sourceSha256": "bdfceea33319bc21db121e142573a8c2f9b675b457a3de3e3a3b3b7b251ba7b9",
+      "moduleVersion": "0.2.3-experimental",
+      "sourceSha256": "e230e4e7320d195a1796402f45d9e8abb7d936498abcbbfebcaa640f5bd6e8aa",
       "imageSha256": "d8267756d27485d51032e4b231538c397afc227d38664a788b258572063dcbeb",
       "cycles": [
         {
           "processor": "coldfire",
           "worstCase": 3440,
-          "maxConfiguration": 16624,
+          "maxConfiguration": 20976,
           "maxInstances": 1,
           "budget": 95778,
           "unit": "cycles/block",
           "method": "emulator",
           "conditions": {
-            "parameterExtremes": "All four MUTE MODE values and every eight-bit mute and solo mask with SOLO_FLAG set and clear, plain and SC_KEY variants, and the hold from an OT frame into each soft mode (evidence/probes.json, 4,353,132 executed cases).",
+            "parameterExtremes": "All four MUTE MODE values and every eight-bit mute and solo mask with SOLO_FLAG set and clear, plain and SC_KEY variants, and the hold from an OT frame into each soft mode (evidence/probes.json, 4,353,132 executed cases). ev_trig_muted (0.2.3), asked through the base's raise after every frame of loader_mute_keep_fixture: every MUTE MODE, mute and solo masks with SOLO_FLAG set and clear, four SIDE-CHAIN KEY layouts, with and without an ev_mute_keep provider (244 asks, 94 dropping trigs): at most 34 instructions per ask, 16 in mm_trig_muted itself.",
             "parameterModulation": "Not applicable: MUTE MODE is one global PERSONALIZE setting; mute and solo change from the panel or MIDI and are read once per frame.",
             "modeSwitching": "MUTE MODE changed between frames in every order; mutes and solos set and cleared between frames, including the 0->1 edge that issues each track's note-off.",
-            "maxLoad": "One instance (a global setting). Per 16-sample block: the frame hook once (at most 3,440, SC_KEY variant in OTFX; 2,176 plain) plus the per-trig hooks for all eight tracks in the same block, 8 x (336 + 336 + 352 + 320 + 304) = 13,184.",
+            "maxLoad": "One instance (a global setting). Per 16-sample block: the frame hook once (at most 3,440, SC_KEY variant in OTFX; 2,176 plain) plus the per-trig hooks for all eight tracks in the same block, 8 x (336 + 336 + 352 + 320 + 304) = 13,184. Over USB a machine that starts its own note asks ev_trig_muted once per trig: at most eight asks per block, 8 x 544 = 4,352 more (16,624 + 4,352 = 20,976).",
             "inputConditions": "Independent of audio content. Conservative V4 core-path bounds from the actual assembled instructions of this version (16 cycles per ordinary instruction), not chip wall-clock timing; stock callbacks (the note-off and voice routines) are stock cost and excluded."
           },
           "report": "TESTING.md"
