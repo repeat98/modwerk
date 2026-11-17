@@ -12,7 +12,11 @@ What it changes, reasoned from the base's source (`machine_registry.c`), not tri
 
 `7d59f809…` (30,498 bytes, 24 sites, 39 stock copies, as 0.1.3's `19e7e08c…`). `cmp` finds one byte different from 0.1.3's package: offset 26,913 (0x6921), 0 to 6, `reserved[0]` of the `mw_machine` descriptor, between its source kind byte and its label "FM SYNTH". Its recipe was recaptured from the stock OS 1.40C (`build.py --octabam-machine synth --capture-stock-recipe`): the same 39 copies, only the image hash moved; every machine recipe's pin of `machine-ports.json` moved with it. `octatrack:module-packages -- --check`: every package identical.
 
-Unit trial of the 0.1.4 package: PENDING (filled in by the main session)
+Unit trial of the 0.1.4 package (17 November 2026, owner's MKII, development twin `945cc074` of base 0.7.7, package `7d59f809…`, FM Synth the only module, a timed trial that was rolled back; driven over USB by the agent, nobody listened):
+- Picked on tracks 1 to 8 of a default Part: the budget booked 6, 12, 18, 24, 30, 36 and 42 % of its 45 %, and track 8 was refused with CPU FULL ("FM SYNTH NEEDS +13 %", "CPU 107 %").
+- Seven FM Synth tracks at the default sound, trigs on steps 1, 5, 9 and 13 of each, playing: the frame interrupt at 53.6 %, the CPU meter at 59.3 %, no render skipped by the frame guard.
+- Each track set back to STATIC; the Part's working copy then equalled its saved copy.
+- Not tested: sound by ear, chords, glide, MIDI, other modules beside it, a Keep, a power cycle.
 
 **Not tested on 0.1.4:** everything else: seven FM Synth tracks admitted and the eighth refused, the CPU FULL box, playback and sound, chords, glide, MIDI, Part and project reload, a power cycle, MKI. 0.1.3's untested list below stands.
 
