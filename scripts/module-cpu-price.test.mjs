@@ -18,7 +18,7 @@ function fixture(files) {
   }
   return root
 }
-const render = value => ({ value, unit: 'percent-of-frame', measure: 'machine-render', tool: 'npm run device -- cpu', date: '2026-11-20', conditions: 'MKII, base 0.7.2, one track, eight voices held, five minutes', source: 'TESTING.md' })
+const render = value => ({ value, unit: 'percent-of-frame', measure: 'machine-render', tool: 'npm run device -- do guard', date: '2026-11-20', conditions: 'MKII, base 0.7.2, one track, eight voices held, five minutes', source: 'TESTING.md' })
 const share = value => ({ value, unit: 'percent-of-frame', measure: 'frame-interrupt', tool: 'npm run device:price -- echo', date: '2026-11-20', conditions: 'MKII, base 0.7.2, four FLEX tracks, the effect on T1 at its defaults', source: 'TESTING.md' })
 const module = (id, location, cpuPrice) => ({ id, compatibility: { location }, resources: cpuPrice ? { cpuPrice } : {} })
 const machineC = reserved => `#include "modwerk_events.h"\n#define WAVE_PRICE 9u\nconst struct modwerk_machine wave = {\n    .abi = MODWERK_MACHINE_ABI, .label = "WAVE",\n    .render = wave_render,${reserved}\n};\n`
@@ -35,10 +35,16 @@ describe('every Octatrack module names its CPU price', () => {
   }, 20_000)
 
   it('reads reserved[0] of every machine on main, ported or written in C', () => {
-    const glue = portGlue(repo)
-    for (const id of ['poly8', 'vector', 'synth', 'analog-bassdrum']) expect(machineDescriptors({ root: repo, id, glue })).toMatchObject([{ symbol: 'mw_machine', price: 0, port: true }])
-    expect(machineDescriptors({ root: repo, id: 'syntiz', glue })).toMatchObject([{ symbol: 'wave_machine', price: 0 }])
-    expect(machineDescriptors({ root: repo, id: 'amiga', glue })).toMatchObject([{ symbol: 'amiga_machine', price: 0 }])
+    // Each descriptor carries what its module names (0 while it names none), so a release that prices a machine leaves this test alone.
+    const glue = portGlue(repo), json = path => JSON.parse(readFileSync(join(repo, path), 'utf8'))
+    const ports = json('sdk/machines/octatrack/module-adapters/machine-ports.json').ports
+    const named = id => json('sdk/octatrack/modules/' + id + '/octamod.module.json').resources.cpuPrice?.value ?? 0
+    for (const id of ['poly8', 'vector', 'synth', 'analog-bassdrum']) {
+      expect(ports[id].cpuPrice ?? 0).toBe(named(id))
+      expect(machineDescriptors({ root: repo, id, glue })).toMatchObject([{ symbol: 'mw_machine', price: named(id), port: true }])
+    }
+    expect(machineDescriptors({ root: repo, id: 'syntiz', glue })).toMatchObject([{ symbol: 'wave_machine', price: named('syntiz') }])
+    expect(machineDescriptors({ root: repo, id: 'amiga', glue })).toMatchObject([{ symbol: 'amiga_machine', price: named('amiga') }])
     expect(machineDescriptors({ root: repo, id: 'euclid', glue })).toEqual([])
   }, 20_000)
 
@@ -46,7 +52,7 @@ describe('every Octatrack module names its CPU price', () => {
     const root = fixture(machineFolder(''))
     const machine = cpuPriceStatus({ root, document: module('wave', 'Track machine'), pending: new Map(), glue: {} })
     expect(machine).toMatchObject({ state: 'fail', detail: expect.stringContaining('names no CPU price') })
-    expect(machine.fix).toContain('npm run device -- cpu')
+    expect(machine.fix).toContain('npm run device -- do')
     const effect = cpuPriceStatus({ root, document: module('echo', 'FX2'), pending: new Map(), glue: {} })
     expect(effect.fix).toContain('npm run device:price -- echo')
   })
@@ -68,7 +74,7 @@ describe('every Octatrack module names its CPU price', () => {
     expect(cpuPriceStatus({ root: fixture({}), document: module('wave', 'Track machine', render(7)), pending: new Map(), glue: {} }).state).toBe('fail')
   })
 
-  it('says a ported machine needs the generator to write its price', () => {
+  it('says the price of a ported machine goes in its machine-ports.json entry', () => {
     const root = fixture({ 'sdk/machines/octatrack/module-adapters/machine-ports.json': { schema: 1, ports: { wave: { machine: { sig: 'WV' }, contribute: [{ to: 'ot_machines', order: 10, data: 'mw_machine' }] } } } })
     const glue = { wave: 'mw_machine:\n        .long   1\n        .word   0, 0\n        .byte   1, 0, 0, 0\n' }
     const status = cpuPriceStatus({ root, document: module('wave', 'Track machine', render(7)), pending: new Map(), glue })
@@ -106,7 +112,7 @@ describe('every Octatrack module names its CPU price', () => {
     expect(() => parseModuleCpuPrice(render(7.5))).toThrow('reserved[0]')
     expect(() => parseModuleCpuPrice(share(0.25))).toThrow('a tenth of a point')
     expect(() => parseModuleCpuPrice({ ...render(7), unit: '%' })).toThrow('percent-of-frame')
-    expect(() => parseModuleCpuPrice({ ...render(7), tool: 'npm run device:price' })).toThrow('npm run device -- cpu')
+    expect(() => parseModuleCpuPrice({ ...render(7), tool: 'npm run device:price' })).toThrow('npm run device -- do')
     expect(() => parseModuleCpuPrice({ ...render(7), date: 'November' })).toThrow('YYYY-MM-DD')
     const vague = render(7)
     delete vague.conditions
