@@ -157,7 +157,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.2 (stock's hold compare kept from ending a hold by two byte sites instead of a 512-byte table; no change in behaviour) has not run on a unit yet: its .run is 0.1.1's minus the table, byte for byte, and in rytm-emu its image and 0.1.1's give the same audio, voice states and screens. 0.1.1, by the author's automated USB test rig on their Analog Rytm MKII (OS 1.74), 16 November 2026: 18 of 25 cases pass on CA02; the 7 failures and their likely causes are in TESTING.md. 0.1.0: 25 cases on IL05, the hold and pre-fade cases on IL06, the package's own image flashed (boot, pads, project save and load, power cycle).",
+    "summary": "0.1.2 (stock's hold compare kept from ending a hold by two byte sites instead of a 512-byte table) has not run on a unit yet: its .run is 0.1.1's minus the table, and in rytm-emu it gives the same audio, voice states and screens as 0.1.1. 0.1.1: 18 of 25 rig cases on the author's MKII (CA02), the failures' causes in TESTING.md. 0.1.0: 25 cases on IL05, the package flashed.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
