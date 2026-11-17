@@ -29,6 +29,7 @@ import { controlProblems } from './module-controls.mjs'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from './retest-queue.mjs'
 import { cpuPriceStatus, readCpuPricePending } from './module-cpu-price.mjs'
+import { moduleTestFiles, runModuleTests } from './module-tests.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
@@ -112,6 +113,15 @@ function octatrack(id) {
     if (problems.length) fail('controls', problems.slice(0, 3).join('; ') + (problems.length > 3 ? '; and ' + (problems.length - 3) + ' more' : ''), 'make controls[] in octamod.module.json say what manifest.py declares (name, default, count), then npm run modules:generate')
     else ok('controls', knobs.length + ' knob' + (knobs.length === 1 ? '' : 's') + ' in manifest.py, the same in controls[]')
   }
+  // Its own host tests (scripts/module-tests.mjs), run as sdk:check runs a listed module's on every pull request.
+  const tests = moduleTestFiles(root, folder)
+  if (tests.length && all) info('host tests', tests.length + ' test_*.py file' + (tests.length === 1 ? '' : 's') + ': npm run sdk:check runs them, npm run module:doctor -- ' + id + ' too')
+  else if (tests.length) {
+    const failed = runModuleTests(root, tests).filter(result => !result.ok)
+    if (failed.length) fail('host tests', failed.length + ' of ' + tests.length + ' fail: ' + failed.slice(0, 2).map(result => result.file.slice(folder.length + 1) + ' (' + result.detail + ')').join('; ') + (failed.length > 2 ? '; and ' + (failed.length - 2) + ' more' : ''),
+      'python3 -B ' + (draft ? 'sdk/drafts/' + id + failed[0].file.slice(folder.length) : failed[0].file) + ', and fix what it reports. A test_*.py runs with no arguments and no firmware, unit or emulator; rename a script that needs one (docs/ADD_A_MODULE.md, Host tests)')
+    else ok('host tests', tests.length + ' test_*.py file' + (tests.length === 1 ? '' : 's') + ' pass (a test skips what this computer lacks a tool for)')
+  } else info('host tests', 'none: a test_*.py in the module folder runs here and in npm run sdk:check')
   // No gate can see how an effect sounds, so this only points at the check and says whether TESTING.md already answers it.
   if (document.category === 'effects') {
     const testing = exists(folder + '/TESTING.md') ? readFileSync(resolve(root, folder + '/TESTING.md'), 'utf8') : ''

@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process'
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { availableParallelism, setPriority } from 'node:os'
 import { performance } from 'node:perf_hooks'
+import { listedModuleTests, moduleTestCommand } from './module-tests.mjs'
 import { fileURLToPath } from 'node:url'
 import { resolve, dirname } from 'node:path'
 import { takeSlot, workersFor } from './machine-slots.mjs'
@@ -15,6 +16,9 @@ const unittest = { PYTHONDONTWRITEBYTECODE: '1', PYTHONUTF8: '1' }
 // One unittest process per test file, up to four at once: in one process, the suite took minutes.
 const jobs = readdirSync(resolve(root, 'sdk/tests')).filter(file => /^test.*\.py$/.test(file))
   .map(file => ({ name: file, command: python, args: ['-X', 'utf8', '-B', '-m', 'unittest', 'discover', '-s', 'sdk/tests', '-p', file, '-v'], env: unittest }))
+// Each listed module's host tests (scripts/module-tests.mjs), so a shared-SDK change that breaks one fails itself. They compile with
+// the host's C compiler, as the host checks below do.
+if (process.platform !== 'win32') jobs.push(...listedModuleTests(root).map(file => ({ name: file, ...moduleTestCommand(file) })))
 // Shared Octatrack host checks (no firmware, a few seconds): here, on every pull request, so a change that breaks them
 // fails itself instead of every later module pull request (they ran only in module-pr.yml's octatrack-source before).
 if (process.platform !== 'win32') jobs.push(
