@@ -4,6 +4,7 @@
 // the whole rings now and then. usage: harness STOCK.raw OTHER.raw MODULE.bin FRAMES; MODULE.bin is the seam test double (mod.s), put into both
 #include <cstdio>
 #include <cstdlib>
+#include <cmath>
 #include <cstring>
 #include <fstream>
 #include <iterator>
@@ -39,6 +40,7 @@ int main(int argc,char** argv){
     // per-track plan: the FX2 id and its settings change every `hold` frames
     uint8_t setup[8][8]={}; uint16_t knobs[8][6]={}; uint8_t gate[8]={}; unsigned hold[8]={};
     uint64_t insA=0,insB=0; unsigned warm=std::getenv("NODELAY")?20000:0; unsigned skippedFrames=0, lsb=0;
+    const uint32_t tol=std::getenv("TOL")?std::strtoul(std::getenv("TOL"),nullptr,0):0; uint32_t nearMax[4]={}; uint64_t nearCount[4]={};
     for(unsigned f=0;f<frames;++f){
         unsigned slot=f&3,ping=f&1; g_clock=f*47890u+(rnd()%2000);
         for(unsigned t=0;t<8;++t) if(!hold[t]--){
@@ -64,18 +66,23 @@ int main(int argc,char** argv){
             { unsigned n=run(m,0x400031a0,endpc,250000); if(f>=warm) (mp==&a?insA:insB)+=n; }
         }
         auto fail=[&](const char* what,unsigned t,uint32_t x,uint32_t y){ std::fprintf(stderr,"MISMATCH %s frame %u track %u: stock %08x / skip %08x\n",what,f,t,x,y); std::exit(1); };
+        // TOL=n: audio, filter state and ring words may differ by up to n (the floor that counts as silence); the rest stays exact
+        auto near=[&](const char* what,unsigned k,unsigned t,uint32_t x,uint32_t y){ if(x==y) return; uint32_t d=uint32_t(std::abs(int64_t(int32_t(y))-int64_t(int32_t(x))));
+            if(d>tol) fail(what,t,x,y); ++nearCount[k]; if(d>nearMax[k]) nearMax[k]=d; };
         for(unsigned t=0;t<8;++t){
             for(unsigned i=0;i<32;++i){ auto ad=0x80003190+ping*1024+t*128+4*i; uint32_t x=a.read32(ad),y=b.read32(ad);
-                if(x!=y){ if(std::getenv("LSB_OK") && y-x==1 && y==audio[t][i]){ ++lsb; continue; } fail("audio",t,x,y);} }
-            for(unsigned j=0;j<68;j+=4){ auto ad=0x80005f60+t*68+j; if(a.read32(ad)!=b.read32(ad)) fail(j==28||j==32||j==36||j==40?"filter state":"state",t*100+j,a.read32(ad),b.read32(ad)); }
+                if(x!=y){ if(std::getenv("LSB_OK") && y-x==1 && y==audio[t][i]){ ++lsb; continue; } near("audio",0,t,x,y);} }
+            for(unsigned j=0;j<68;j+=4){ auto ad=0x80005f60+t*68+j; if(a.read32(ad)!=b.read32(ad)){ if(j==28||j==32||j==36||j==40) near("filter state",1,t*100+j,a.read32(ad),b.read32(ad)); else fail("state",t*100+j,a.read32(ad),b.read32(ad)); } }
             uint32_t pos=(a.read32(0x80005f9c+t*68)+RINGB-128)%RINGB;      // where this frame's 128 bytes went
-            for(unsigned i=0;i<32;++i){ auto ad=RING+t*STRIDE+pos+4*i; if(a.read32(ad)!=b.read32(ad)) fail("ring write",t,a.read32(ad),b.read32(ad)); }
+            for(unsigned i=0;i<32;++i){ auto ad=RING+t*STRIDE+pos+4*i; near("ring write",2,t,a.read32(ad),b.read32(ad)); }
         }
         for(uint32_t ad:{0x800000e8u,0x80006180u,0x80004804u}) if(a.read32(ad)!=b.read32(ad)) fail("pointer",ad&0xffff,a.read32(ad),b.read32(ad));
-        if(f%20000==19999||f+1==frames) for(unsigned t=0;t<8;++t) for(uint32_t o=0;o<RINGB;o+=4){ auto ad=RING+t*STRIDE+o; if(a.read32(ad)!=b.read32(ad)) fail("whole ring",t,a.read32(ad),b.read32(ad)); }
+        if(f%20000==19999||f+1==frames) for(unsigned t=0;t<8;++t) for(uint32_t o=0;o<RINGB;o+=4){ auto ad=RING+t*STRIDE+o; near("whole ring",3,t,a.read32(ad),b.read32(ad)); }
     }
-    std::printf("PASS %u frames: audio, state records, scratch pointers and rings equal%s\n",frames,lsb?" (audio within the allowed 1 LSB)":"");
+    std::printf("PASS %u frames: audio, state records, scratch pointers and rings equal%s\n",frames,tol?" (audio, filter state and rings within TOL)":lsb?" (audio within the allowed 1 LSB)":"");
     std::printf("instructions per frame: stock %.0f, with the skip %.0f (%.1f %% fewer over this mix of tracks)\n",double(insA)/(frames-warm),double(insB)/(frames-warm),100.0*(double(insA)-double(insB))/double(insA));
     std::printf("eDMA transfers per frame: stock %.1f, with the skip %.1f\n",double(g_xfer[0])/frames,double(g_xfer[1])/frames);
     if(lsb) std::printf("1-LSB audio differences: %u\n",lsb);
+    if(tol){ const char* names[4]={"audio","filter state","ring write","whole ring"};
+        for(unsigned k=0;k<4;++k) std::printf("%s: %llu words differ, largest %u (%.1f dBFS)\n",names[k],(unsigned long long)nearCount[k],nearMax[k],nearMax[k]?20*std::log10(nearMax[k]/2147483648.0):-999.0); }
 }

@@ -47,13 +47,30 @@ mw_ts_gate:
 | [0] the routine's call count, [1 + track] the call that last passed the seam, [9 + track] the quiet frames,
 | [17 + track] whether this frame's read was left out.
 |
-| Quiet frames: the seam counts a frame whose read brought zeros in both taps (16 stereo samples each, in the
-| scratch buffer and 160 bytes on) into a filter whose four state words are zero, with the send's gain zero at the
-| frame's start and target: such a frame writes zeros to the ring. DELAY_QUIET of them in a row (11,025 write the
-| whole ring once) make the ring all zeros, and nothing writes it after that but this routine's own path through
+| Quiet frames: the seam counts a frame whose read brought silence in both taps (16 stereo samples each, in the
+| scratch buffer and 160 bytes on) into a filter whose four state words are silent, with the send's gain zero at the
+| frame's start and target: such a frame writes silence to the ring. DELAY_QUIET of them in a row (11,025 write the
+| whole ring once) make the ring all silence, and nothing writes it after that but this routine's own path through
 | the seam, or a module that takes the track at stock's seam before it (0x4000361a, Tape Echo, which reads the ring
 | itself): a call that did not pass the seam starts the count again, so does any frame that is not quiet.
+|
+| Silence is every word within DELAY_FLOOR of zero, not zero itself: stock's filter never comes back to rest once a
+| delay has been sent to. Its state sticks at a few counts (seen up to -1,404 in the A/B harness) and, with feedback,
+| the ring keeps about one 24-bit step for good, which stock adds to the track at its wet level. 680 is -130 dBFS of
+| the 32-bit sample words (2.7 steps of 24 bits; owner's call, 17 November 2026). Leaving a quiet track out drops at
+| most that much from its audio, and a send that opens on it starts from zero taps where stock would have read that
+| much: not bit-identical, never audible. A filter stuck further out keeps stock's path.
         .equ    DELAY_QUIET, 16384
+        .equ    DELAY_FLOOR, 680
+| a0 = words, d2 = how many. Answers equal when every word lies within DELAY_FLOOR of zero. Uses d1, d2, a0.
+mw_delay_silent:
+        move.l  (%a0)+,%d1
+        addi.l  #DELAY_FLOOR,%d1
+        cmpi.l  #2*DELAY_FLOOR,%d1
+        bhi.s   9f                              | above the floor: not-equal (bhi: carry and zero clear)
+        subq.l  #1,%d2
+        bne.s   mw_delay_silent
+9:      rts
 | d1 = the track whose read is due. Marks it and answers not-equal when the read can be left out. Uses d0, a0.
 mw_delay_quiet:
         lea     mw_delay,%a0
@@ -116,19 +133,18 @@ mw_delay_idle:
         bne.w   6f
         tst.l   68(%a1)
         bne.w   2f
-        movea.l 0x80006180,%a2                  | the track's filter record: state at +28..+40
-        move.l  28(%a2),%d1
-        or.l    32(%a2),%d1
-        or.l    36(%a2),%d1
-        or.l    40(%a2),%d1
-        movea.l %d0,%a0
-        .rept 32
-        or.l    (%a0)+,%d1
-        .endr
+        movea.l 0x80006180,%a0                  | the track's filter record: state at +28..+40
+        lea     28(%a0),%a0
+        moveq   #4,%d2
+        bsr.w   mw_delay_silent
+        bne.w   7f
+        movea.l %d0,%a0                         | the two taps
+        moveq   #32,%d2
+        bsr.w   mw_delay_silent
+        bne.w   7f
         lea     32(%a0),%a0
-        .rept 32
-        or.l    (%a0)+,%d1
-        .endr
+        moveq   #32,%d2
+        bsr.w   mw_delay_silent
         bne.w   7f
         move.l  36(%a1),%d1
         cmpi.l  #DELAY_QUIET,%d1
