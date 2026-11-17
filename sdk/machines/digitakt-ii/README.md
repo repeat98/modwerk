@@ -64,7 +64,7 @@ No Modwerk build writes SHARC code yet. The first base or module that does follo
 
 - Shared DDR: `0x47F00000–0x47F40000` (262,144 bytes for core and linked mods).
 - Fast-code SRAM: `0x8000F100–0x80010000` (3,840 bytes). The core copies `.fast` code on its first UI tick.
-- Modwerk base footprint: 9,920 bytes `.run` plus 9,848 bytes `.bss`; the linker remains authoritative for combined sizes and overlap.
+- Modwerk base footprint: 10,448 bytes `.run` plus 9,884 bytes `.bss`; the linker remains authoritative for combined sizes and overlap.
 - Each hook collection has four entries. `core_fast` has sixteen copy-table entries.
 
 ## Build and recovery

@@ -28,7 +28,7 @@
   },
   ".run": {
    "align": 4,
-   "len": 10032,
+   "len": 10448,
    "parts": [
     [
      "hex",
@@ -971,13 +971,117 @@
     ],
     [
      "hex",
-     "00000000102120423063408450a560c670e781089129a14ab16bc18cd1ade1cef1ef123102103273225252b5429472f762d693398318b37ba35ad3bdc39cf3ffe3de246234430420140164e674c744a45485a56ab54b85289509e5eef5cfc5acd58d365326721611063076d766f6569546b4b75ba77a97198738f7dfe7fed79dc7bc48c458e5688678a70840186128023823c9ccd9ede98ef9af89489969a90ab92b5af54ad47ab76a961a710a503a332a12dbfdcbdcfbbfeb9e9b798b58bb3bab1a6ca67c874ce45cc52c223c030c601c41edaefd8fcdecddcdad2abd0b8d689d497e976eb65ed54ef43e132e321e510e70ff9fefbedfddcffcbf1baf3a9f598f78918881a9b1caa1ebd10cc12df14ee16f108000a130c220e3500440257046606783b99398a3fbb3dac33dd31ce37ff35e02b1129022f332d24235521462777256b5eaa5cb95a88589f56ee54fd52cc50d34e224c314a004817466644754244405a7dbb7fa879997b8e75ff77ec71dd73c26d336f2069116b06657767646155634d94cc96df90ee92f99c889e9b98aa9ab584448657806682718c008e1388228a3cb7ddb5ceb3ffb1e8bf99bd8abbbbb9a4a755a546a377a160af11ad02ab33a92fd2eed0fdd6ccd4dbdaaad8b9de88dc97c266c075c644c453ca22c831ce00cc1ef1fff3ecf5ddf7caf9bbfba8fd99ff86e177e364e555e742e933eb20ed11ef000000000000000000000000000000000"
+     "00002f027403"
+    ],
+    [
+     "stock",
+     "0x40135fd4",
+     10
+    ],
+    [
+     "hex",
+     "ffdfb481653a41f90000000043f00c0041f90000000058884aa8fffc6722b3c866f441f90000000020301c004a80671020404a90670a4aa800046704241f4e75241f"
+    ],
+    [
+     "stock",
+     "0x401ae0fc",
+     8
+    ],
+    [
+     "hex",
+     "7221"
+    ],
+    [
+     "stock",
+     "0x40001796",
+     8
+    ],
+    [
+     "hex",
+     "7410226f0014700124822051588947f20c004a8867164a90670a4aa8000467045280268152817425b48166de721141f20c0020c174155281b48166f64cd70c045880"
+    ],
+    [
+     "stock",
+     "0x40004662",
+     8
+    ],
+    [
+     "hex",
+     "000000004879000000004ebaff9c"
+    ],
+    [
+     "stock",
+     "0x40122356",
+     8
+    ],
+    [
+     "hex",
+     "4ebaff3c588f4a806704"
+    ],
+    [
+     "stock",
+     "0x4003b554",
+     8
+    ],
+    [
+     "hex",
+     "00044eb9400692142f004ebaff20508f4a806714"
+    ],
+    [
+     "stock",
+     "0x4002dafe",
+     8
+    ],
+    [
+     "hex",
+     "2240206900044e90"
+    ],
+    [
+     "stock",
+     "0x4004eaf4",
+     8
+    ],
+    [
+     "hex",
+     "2f0a45f900000000201a671a"
+    ],
+    [
+     "stock",
+     "0x40111e9a",
+     8
+    ],
+    [
+     "stock",
+     "0x40111e9a",
+     8
+    ],
+    [
+     "hex",
+     "20404e904fef001060e2245f4ef9400cd4202f082f094eb900000000225f205f220070012f014ef940066df8203c000000004ef940066e082f082f092f2f000c4eb900000000588f225f205f4a80660c7220202f00044ef9400c8990"
+    ],
+    [
+     "stock",
+     "0x4002dafc",
+     10
+    ],
+    [
+     "hex",
+     "4eb900000000508f4a80660e"
+    ],
+    [
+     "stock",
+     "0x400015a0",
+     8
+    ],
+    [
+     "hex",
+     "4ef9400763b44e7500000000102120423063408450a560c670e781089129a14ab16bc18cd1ade1cef1ef123102103273225252b5429472f762d693398318b37ba35ad3bdc39cf3ffe3de246234430420140164e674c744a45485a56ab54b85289509e5eef5cfc5acd58d365326721611063076d766f6569546b4b75ba77a97198738f7dfe7fed79dc7bc48c458e5688678a70840186128023823c9ccd9ede98ef9af89489969a90ab92b5af54ad47ab76a961a710a503a332a12dbfdcbdcfbbfeb9e9b798b58bb3bab1a6ca67c874ce45cc52c223c030c601c41edaefd8fcdecddcdad2abd0b8d689d497e976eb65ed54ef43e132e321e510e70ff9fefbedfddcffcbf1baf3a9f598f78918881a9b1caa1ebd10cc12df14ee16f108000a130c220e3500440257046606783b99398a3fbb3dac33dd31ce37ff35e02b1129022f332d24235521462777256b5eaa5cb95a88589f56ee54fd52cc50d34e224c314a004817466644754244405a7dbb7fa879997b8e75ff77ec71dd73c26d336f2069116b06657767646155634d94cc96df90ee92f99c889e9b98aa9ab584448657806682718c008e1388228a3cb7ddb5ceb3ffb1e8bf99bd8abbbbb9a4a755a546a377a160af11ad02ab33a92fd2eed0fdd6ccd4dbdaaad8b9de88dc97c266c075c644c453ca22c831ce00cc1ef1fff3ecf5ddf7caf9bbfba8fd99ff86e177e364e555e742e933eb20ed11ef000000000000000000000000000000000"
     ]
    ]
   },
   ".bss": {
    "align": 4,
-   "size": 9848
+   "size": 9884
   }
  },
  "symbols": {
@@ -1215,7 +1319,7 @@
   ],
   "callbacks": [
    ".run",
-   10016
+   10432
   ],
   "start_stock": [
    ".run",
@@ -1281,9 +1385,21 @@
    ".bss",
    4216
   ],
+  "extension": [
+   ".run",
+   9504
+  ],
+  "core_mixer_page_ids": [
+   ".bss",
+   9848
+  ],
   "fw_key_down": [
    "abs",
    1074913616
+  ],
+  "core_mixer_list_entry": [
+   ".run",
+   9832
   ],
   "core_projdata_load": [
    ".run",
@@ -1393,6 +1509,10 @@
    "abs",
    1074868654
   ],
+  "dt2_mixer_page_list": [
+   ".run",
+   9588
+  ],
   "core_kit_load": [
    ".run",
    606
@@ -1420,6 +1540,10 @@
   "fw_font_menu": [
    "abs",
    1076534240
+  ],
+  "core_mixer_descriptor": [
+   ".run",
+   9694
   ],
   "core_seq_grid_observe": [
    ".run",
@@ -1461,6 +1585,10 @@
    ".run",
    478
   ],
+  "core_mixer_prepare": [
+   ".run",
+   9674
+  ],
   "core_enc": [
    ".run",
    108
@@ -1468,6 +1596,10 @@
   "core_projdata_save": [
    ".run",
    1434
+  ],
+  "core_mixer_draw": [
+   ".run",
+   9714
   ],
   "core_seq_phrase_empty": [
    ".run",
@@ -1501,6 +1633,10 @@
    ".run",
    4726
   ],
+  "core_mixer_draw_entry": [
+   ".run",
+   9882
+  ],
   "core_startup_kitdata_layout": [
    ".run",
    8232
@@ -1524,6 +1660,10 @@
   "core_key_leds": [
    ".run",
    522
+  ],
+  "core_mixer_count_entry": [
+   ".run",
+   9806
   ],
   "fw_patterns": [
    "abs",
@@ -1577,6 +1717,10 @@
    ".run",
    8984
   ],
+  "core_audio_frame_entry": [
+   ".run",
+   9760
+  ],
   "core_kitdata_save": [
    ".run",
    1910
@@ -1600,6 +1744,10 @@
   "core_seq_phrase_start": [
    ".run",
    7916
+  ],
+  "core_mixer_descriptor_entry": [
+   ".run",
+   9844
   ]
  },
  "exports": [
@@ -1607,6 +1755,7 @@
   "core_additem",
   "core_addrow",
   "core_addvalue",
+  "core_audio_frame_entry",
   "core_draw",
   "core_enc",
   "core_fastcopy",
@@ -1621,6 +1770,14 @@
   "core_kitdata_room",
   "core_kitdata_save",
   "core_memcpy",
+  "core_mixer_count_entry",
+  "core_mixer_descriptor",
+  "core_mixer_descriptor_entry",
+  "core_mixer_draw",
+  "core_mixer_draw_entry",
+  "core_mixer_list_entry",
+  "core_mixer_page_ids",
+  "core_mixer_prepare",
   "core_personalize",
   "core_proj_load",
   "core_proj_save",
@@ -1659,6 +1816,7 @@
   "core_tick",
   "core_value_label",
   "core_zero",
+  "dt2_mixer_page_list",
   "fw_brain",
   "fw_enc_init",
   "fw_enc_list",
@@ -1692,8 +1850,10 @@
   "__run_words",
   "core_fast",
   "core_kitdata",
+  "core_mixer_pages",
   "core_projdata",
   "core_project_archive",
+  "ev_audio_frame",
   "ev_draw",
   "ev_enc",
   "ev_frame_params",
@@ -1888,7 +2048,7 @@
    1024,
    "abs32",
    "sec:.run",
-   9504
+   9920
   ],
   [
    ".run",
@@ -2385,7 +2545,7 @@
    3160,
    "abs32",
    "sec:.run",
-   10016
+   10432
   ],
   [
    ".run",
@@ -3026,28 +3186,98 @@
   ],
   [
    ".run",
-   10016,
+   9526,
+   "abs32",
+   "sym:core_mixer_pages",
+   -128
+  ],
+  [
+   ".run",
+   9536,
+   "abs32",
+   "sym:core_mixer_pages",
+   0
+  ],
+  [
+   ".run",
+   9554,
+   "abs32",
+   "sym:core_mixer_pages",
+   0
+  ],
+  [
+   ".run",
+   9676,
+   "abs32",
+   "sym:core_mixer_pages",
+   0
+  ],
+  [
+   ".run",
+   9682,
+   "abs32",
+   "sec:.bss",
+   9848
+  ],
+  [
+   ".run",
+   9764,
+   "abs32",
+   "sym:ev_audio_frame",
+   0
+  ],
+  [
+   ".run",
+   9812,
+   "abs32",
+   "sec:.run",
+   9674
+  ],
+  [
+   ".run",
+   9834,
+   "abs32",
+   "sec:.bss",
+   9848
+  ],
+  [
+   ".run",
+   9854,
+   "abs32",
+   "sec:.run",
+   9694
+  ],
+  [
+   ".run",
+   9892,
+   "abs32",
+   "sec:.run",
+   9714
+  ],
+  [
+   ".run",
+   10432,
    "abs32",
    "sec:.run",
    878
   ],
   [
    ".run",
-   10020,
+   10436,
    "abs32",
    "sec:.run",
    2936
   ],
   [
    ".run",
-   10024,
+   10440,
    "abs32",
    "sec:.run",
    3028
   ],
   [
    ".run",
-   10028,
+   10444,
    "abs32",
    "sec:.run",
    2938
@@ -3265,6 +3495,81 @@
    ]
   },
   {
+   "addr": "0x4002dd74",
+   "len": 6,
+   "stock_sha256": "3b5bfef87fffe24f50bcde099ab9d3bc80df33b6497b71debb052fa2595c9ef1",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_audio_frame_entry",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40066df2",
+   "len": 6,
+   "stock_sha256": "b8166e3ccf519a59609e171fee14e51db8875e12043168606db823f0f24f64a1",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_mixer_count_entry",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40066e02",
+   "len": 6,
+   "stock_sha256": "210b33b627af0389b1bddbc2f87f7980cacebd89ef5ac3ba7c4646a7800bc064",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_mixer_list_entry",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400c898a",
+   "len": 6,
+   "stock_sha256": "4804747ca9c54fb6cf82b4a21415559c390b2b2f9fc4f3cea86546d00ee4dc72",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_mixer_descriptor_entry",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400763ac",
+   "len": 8,
+   "stock_sha256": "f884edfcc4fdbe8c922f8080094cae67fdc2e7e87655c90c4eb6b79282f65f60",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_mixer_draw_entry",
+     0
+    ]
+   ]
+  },
+  {
    "addr": "0x40041b52",
    "len": 6,
    "stock_sha256": "68e887a69b3099a79e0defe6aa56f93a434d5d01ab0f05f1074caea323945d12",
@@ -3428,6 +3733,12 @@
   "ev_seq_audio_phrase": {
    "entry": 4
   },
+  "core_mixer_pages": {
+   "entry": 4
+  },
+  "ev_audio_frame": {
+   "entry": 4
+  },
   "core_project_archive": {
    "entry": 4
   }
@@ -3476,6 +3787,8 @@
    "startup-kitdata-refresh.c": "35865626ca8887c8d10291e294450ddab339756917743662547fe57e620e1057",
    "project-archive.c": "3c751ee73d5cc44527335e2e283331f8fc1d15acd90963470fbed17722c1c4e2",
    "project-kitdata.c": "35a0b15561f10813710f9787e378f05285ef1722173e128fa94fad53085e16c3",
+   "mixer.c": "9bfa9940f8cb2afdbfebc070d27b2ccf507794675a73aa7cb7a9d057a92a6d19",
+   "mixer-entry.s": "72f5f759878fb6dbc1d30b13f6cf1b5631a47ac76bbbda40fca402ae24c3019d",
    "fw-bindings.s": "f831c9f4099170c8390d510ee2ab09a610f8a142ba84363c8c90f51c0ad6187e"
   }
  },
