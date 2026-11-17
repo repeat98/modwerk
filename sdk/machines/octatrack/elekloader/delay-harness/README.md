@@ -70,4 +70,9 @@ it proves bytes and order, never transfer timing. That is the unit's part.
   every send open, 40.3-41.4 % playing with them shut, 36.3-36.5 % stopped after; all three fed tracks went quiet
   (filters at -1,404, -1,404 and -720/-702). Tape Echo 0.1.6 (a USB trial) on a track with trigs ran at about 50 % (its sound not listened to);
   back to DELAY, that track's filter restarted at zero and the meter read 37.3-37.4 % stopped with Tape Echo installed.
-- Not yet run on a unit: the sampler recorders, a card build, a long soak with a real project.
+- Same twin, same Part, playing: 32 cycles in 10 minutes of opening the sends on all or a random subset of tracks
+  (1.5-7.5 s) and shutting them (8-15 s): meter 42.1-48.2 % open, 39.9-41.7 % shut, no new stall or crash record.
+  Then 30 minutes playing with every send shut: 40.5-41.9 %, nothing new, about an hour since the boot. A track
+  recorder (T1, MKII key code 0x2b) recording while T1-T3's sends opened and shut: T1's filter settled at -1,179,
+  nothing new.
+- Not yet run on a unit: a card build, a soak with a real project.
