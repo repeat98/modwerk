@@ -95,7 +95,7 @@
     "load": {
       "display": "About 0.5 % of the audio block idle (the audio handler, measured on a unit)",
       "method": "hardware",
-      "conditions": "Measured on an Analog Rytm MKII with a private telemetry base, sequencer stopped, in the author's 16-module set, on 0.2.0: the audio handler took 8.7 us a block (1.3 %) before its idle early return and 5.1 us (0.8 %) after; removing the whole module lowered the idle block from 72.9 % to 70.9 %. 0.2.2, alone on the base with the development link, timed against 0.2.1 on the same unit and kit: the audio handler took 470 ticks of DTIM0 a block (3.6 us, 0.53 %) stopped instead of 851 (0.97 %), and 902 (1.03 %) playing instead of 1270 to 1286 (1.45 %). With moves to record, a pad held or a take playing back it runs in full each block."
+      "conditions": "Measured on an Analog Rytm MKII, the audio handler timed on DTIM0. 0.2.0 in the author's 16-module set, stopped: 8.7 us a block before its idle early return, 5.1 us after; removing the module lowered the idle block from 72.9 % to 70.9 %. 0.2.2 alone against 0.2.1 on the same unit and kit: 3.6 us a block stopped (0.53 %, 0.2.1 0.97 %) and 6.8 us playing (1.03 %, 0.2.1 1.45 %). With moves to record, a pad held or a take playing back it runs in full each block."
     }
   },
   "evidence": {
