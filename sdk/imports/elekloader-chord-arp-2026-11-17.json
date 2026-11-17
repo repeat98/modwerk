@@ -7,7 +7,7 @@
   "mods": [
     {
       "file": "chord-arp-0.1.0-experimental-os1.17.elemod",
-      "sha256": "378fc77fc08928de4af6b6638b5bd5549c62309b54273a26fbfa64f97736e5f0",
+      "sha256": "c8f810a10f05e74d7e357582a76ee5b9ce50ba92890ae1c25c1e0b3af8623a27",
       "id": "chord-arp",
       "version": "0.1.0-experimental",
       "device": "digitakt-mk2",
@@ -15,7 +15,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "688f9bba093d8f65c25ae08497656056f96e4b55",
+        "commit": "3945894297337673ba7882701bbe869c732ea087",
         "path": "sdk/imports/packages/chord-arp/chord-arp-0.1.0-experimental-os1.17.elemod"
       },
       "title": "Chord Arp",
@@ -25,7 +25,7 @@
       "conflicts": [],
       "summary": "Turn a Digitakt II audio trig into a chord played one note at a time.",
       "description": "Turn a Digitakt II audio trig into a chord played one note at a time.",
-      "category": "MIDI & USB",
+      "category": "Playback",
       "author": "Claptom-music",
       "needs_core": "1.1",
       "on_unit": "The author reported a cold-boot project recall pass on QF17. See TESTING.md for scope and limitations."
