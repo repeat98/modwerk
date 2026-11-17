@@ -45,3 +45,23 @@ export async function readTarget(api, number) {
   const files = await pages(api, '/pulls/' + number + '/files')
   return { ...target, draft: !!pull.draft, head: pull.head.sha, files: files.flatMap(file => [file.filename, file.previous_filename].filter(Boolean)), firstTime: ['FIRST_TIMER', 'FIRST_TIME_CONTRIBUTOR', 'NONE'].includes(pull.author_association), checksGreen: (await checkSummary(api, pull.head.sha)) === 'green' }
 }
+
+/** The agent board's public reads (threads and claims need no sign-in). */
+export async function boardGet(path) {
+  const base = process.env.COMMUNITY_API_URL?.replace(/\/+$/, '')
+  const response = await fetch(base + '/agent-board' + path, { headers: { Accept: 'application/json' }, redirect: 'error', signal: AbortSignal.timeout(30000) })
+  if (response.status === 404) return null
+  if (!response.ok) throw new Error('Agent board: GET ' + path + ' HTTP ' + response.status)
+  return await response.json()
+}
+
+/** A board thread or claim as the policy sees it; a missing or ended one is closed. */
+export async function readBoardTarget(kind, id) {
+  if (!/^[0-9a-f-]{36}$/.test(String(id))) return null
+  if (kind === 'board_release') {
+    const claim = (await boardGet('/claims'))?.claims?.find(row => row.id === id)
+    return { kind: 'claim', id, number: 0, holder: claim?.holder ?? '', state: claim ? 'open' : 'closed' }
+  }
+  const thread = (await boardGet('/messages/' + id))?.message
+  return { kind: 'thread', id, number: 0, author: thread?.author ?? '', replies: thread?.replies?.length ?? 0, state: thread && !thread.endedAt ? 'open' : 'closed' }
+}

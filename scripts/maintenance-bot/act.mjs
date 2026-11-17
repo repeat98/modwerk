@@ -5,8 +5,8 @@
 // not stopped, and on the daily run sends the report to Telegram.
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { actionId, classify } from './policy.mjs'
-import { MARKER, github, ledger, pages, readTarget } from './lib.mjs'
+import { TODO_COMMAND, actionId, classify } from './policy.mjs'
+import { MARKER, github, ledger, pages, readBoardTarget, readTarget } from './lib.mjs'
 import { dailyReport } from './report.mjs'
 
 const daily = process.env.BOT_MODE === 'daily', dir = process.env.BOT_DIR ?? 'bot'
@@ -31,11 +31,11 @@ if (existsSync(file)) {
 const labels = new Set((await pages(api, '/labels')).map(label => label.name))
 const accepted = []
 for (const proposal of (Array.isArray(proposals.actions) ? proposals.actions : []).slice(0, 40)) {
-  const number = Number(proposal?.number)
-  if (!Number.isSafeInteger(number) || number < 1) { rejected.push('A proposal named no pull request or issue.'); continue }
+  const board = String(proposal?.kind ?? '').startsWith('board_'), number = board ? 0 : Number(proposal?.number)
+  if (!board && (!Number.isSafeInteger(number) || number < 1)) { rejected.push('A proposal named no pull request or issue.'); continue }
   try {
-    const decision = classify(proposal, await target(number), labels)
-    if (decision.reject) { rejected.push('#' + number + ' ' + proposal.kind + ': ' + decision.reject + '.'); continue }
+    const decision = classify(proposal, board ? await readBoardTarget(proposal.kind, proposal.thread ?? proposal.claim) : await target(number), labels)
+    if (decision.reject) { rejected.push((board ? 'Board' : '#' + number) + ' ' + proposal.kind + ': ' + decision.reject + '.'); continue }
     accepted.push({ id: decision.id, kind: decision.payload.kind, target: number, tier: decision.tier, summary: decision.summary, reason: decision.reason, payload: decision.payload, windowHours: decision.windowHours })
   } catch (error) { rejected.push('#' + number + ': could not be read (' + error.message + ').') }
 }
@@ -46,14 +46,23 @@ console.log(accepted.length + ' proposals accepted (' + created.length + ' new),
 const todos = []
 for (const todo of (Array.isArray(proposals.todos) ? proposals.todos : []).slice(0, 30)) {
   const number = Number(todo?.number), command = String(todo?.command ?? '').trim(), note = String(todo?.note ?? '').trim().replace(/\s+/g, ' ').slice(0, 200)
-  if (!Number.isSafeInteger(number) || number < 1 || !/^\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?$/.test(command) || !note) { rejected.push('A to-do was not a /modwerk-* command with a number and a note.'); continue }
+  if (!Number.isSafeInteger(number) || number < 0 || !TODO_COMMAND.test(command) || !note) { rejected.push('A to-do was not a /modwerk-* command with a number and a note.'); continue }
   todos.push({ id: actionId('todo', number, command), target: number, command, note, urgent: todo.urgent === true })
 }
 if (todos.length) await bot('/todos', 'POST', { todos })
 
 // 2. What is due: approved by the owner, a notice, or a window that closed without a Stop.
 async function carryOut(action) {
-  const { payload } = action, now = await fresh(payload.number)
+  const { payload } = action
+  if (payload.kind.startsWith('board_')) {
+    const id = payload.thread ?? payload.claim, now = await readBoardTarget(payload.kind, id)
+    if (!now || now.state !== 'open') return ['expired', 'it ended in the meantime']
+    if (payload.pin?.replies !== undefined && now.replies !== payload.pin.replies) return ['expired', 'someone replied in the meantime']
+    const verb = { board_reply: 'reply', board_close: 'close', board_release: 'release' }[payload.kind]
+    await bot('/board/' + (payload.claim ? 'claims/' : 'messages/') + id + '/' + verb, 'POST', { body: payload.body ?? '' })
+    return ['done', '']
+  }
+  const now = await fresh(payload.number)
   if (now.state !== 'open') return ['expired', 'it was closed in the meantime']
   if ((payload.pin?.head ?? '') !== now.head) return ['expired', 'new commits arrived']
   if (payload.kind !== 'merge' && payload.kind !== 'label' && payload.pin?.comments !== now.comments) return ['expired', 'someone replied in the meantime']
@@ -106,7 +115,8 @@ if (daily) {
   // A to-do whose pull request or issue was closed is done with, whoever closed it.
   const open = []
   for (const todo of (await bot('/todos')).todos) {
-    const state = await api('/issues/' + todo.target).then(issue => issue.state, () => 'open')
+    const thread = todo.command.match(/^npm run board -- reply ([0-9a-f-]{36})$/)?.[1]
+    const state = thread ? (await readBoardTarget('board_reply', thread))?.state : await api('/issues/' + todo.target).then(issue => issue.state, () => 'open')
     if (state === 'closed') await bot('/todos/' + todo.id + '/status', 'POST', { status: 'dropped' }); else open.push(todo)
   }
   const broken = !existsSync(file) || rejected.some(reason => reason.startsWith('The model wrote'))

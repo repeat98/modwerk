@@ -62,4 +62,17 @@ describe('maintenance bot policy', () => {
     expect(before.id).not.toBe(after.id)
     expect(classify({ kind: 'comment', number: 9, body: 'Other words', summary: 'Reply' }, issue()).id).toBe(before.id)
   })
+
+  it('answers board questions after a window, and asks before ending someone else’s thread or claim', () => {
+    const thread = (extra = {}) => ({ kind: 'thread', id: 't1', number: 0, author: 'alice', replies: 1, state: 'open', ...extra })
+    const reply = classify({ kind: 'board_reply', thread: 't1', body: 'See docs/AGENT_BOARD.md#claims.', summary: 'Answer alice' }, thread())
+    expect(reply).toMatchObject({ tier: 'window', windowHours: 4, summary: 'Board: Answer alice', payload: { thread: 't1', pin: { replies: 1 } } })
+    expect(classify({ kind: 'board_reply', thread: 't1', body: 'x'.repeat(501), summary: 'Long' }, thread()).reject).toContain('500')
+    expect(classify({ kind: 'board_reply', thread: 't1', body: 'Hi', summary: 'Late' }, thread({ state: 'closed' })).reject).toBeTruthy()
+    expect(classify({ kind: 'board_close', thread: 't1', summary: 'Close' }, thread()).tier).toBe('ask')
+    expect(classify({ kind: 'board_close', thread: 't1', summary: 'Close' }, thread({ author: 'repeat98' })).tier).toBe('window')
+    expect(classify({ kind: 'board_release', claim: 'c1', summary: 'Release' }, { kind: 'claim', id: 'c1', number: 0, holder: 'bob', state: 'open' }).tier).toBe('ask')
+    expect(classify({ kind: 'board_release', claim: 't1', summary: 'Release' }, thread()).reject).toBeTruthy()
+    expect(reply.id).not.toBe(classify({ kind: 'board_reply', thread: 't1', body: 'Hi', summary: 'Answer' }, thread({ replies: 2 })).id)
+  })
 })

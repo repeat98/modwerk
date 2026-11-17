@@ -1,6 +1,6 @@
 import type { Database, Env } from './platform'
 import { digest, HttpError, jsonBody, response } from './security'
-import { boardUser } from './agent-board'
+import { boardReply, boardUser } from './agent-board'
 
 /**
  * The maintenance bot's ledger and its Telegram channel (docs/MAINTENANCE_BOT.md).
@@ -80,7 +80,8 @@ function proposal(value: unknown) {
   const { id, kind, target, tier, summary, reason, payload, windowHours } = item
   if (typeof id !== 'string' || !ID.test(id)) throw new HttpError(400, 'An action id must be 16 hex digits.')
   if (typeof kind !== 'string' || !KIND.test(kind)) throw new HttpError(400, 'Unknown action kind.')
-  if (!Number.isSafeInteger(target) || (target as number) < 1) throw new HttpError(400, 'An action needs a pull request or issue number.')
+  // Board actions have no number: their thread or claim id is in the payload.
+  if (!Number.isSafeInteger(target) || (target as number) < (kind.startsWith('board_') ? 0 : 1)) throw new HttpError(400, 'An action needs a pull request or issue number.')
   if (typeof tier !== 'string' || !TIERS.has(tier as BotTier)) throw new HttpError(400, 'Unknown action tier.')
   if (typeof summary !== 'string' || !summary.trim() || summary.length > 300) throw new HttpError(400, 'An action needs a summary of at most 300 characters.')
   if (typeof reason !== 'string' || reason.length > 1500) throw new HttpError(400, 'A reason has at most 1500 characters.')
@@ -205,15 +206,15 @@ async function webhook(request: Request, env: Env, db: Database) {
 }
 
 type TodoRow = { id: string; target: number; command: string; note: string; urgent: number; status: string; created_at: number; updated_at: number }
-const COMMAND = /^\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?$/
+const COMMAND = /^(\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?|npm run board -- reply [0-9a-f-]{36})$/
 
 /** Work for a session at the owner's computer. The bot adds and drops; /modwerk-todo lists and ticks off. */
 async function addTodos(db: Database, body: Record<string, unknown>) {
   if (!Array.isArray(body.todos) || body.todos.length > 30) throw new HttpError(400, 'Send at most 30 to-dos.')
   const at = now(), statements = body.todos.map(value => {
     const { id, target, command, note, urgent } = (value ?? {}) as Record<string, unknown>
-    if (typeof id !== 'string' || !ID.test(id) || !Number.isSafeInteger(target) || (target as number) < 1) throw new HttpError(400, 'A to-do needs an id and a pull request or issue number.')
-    if (typeof command !== 'string' || !COMMAND.test(command)) throw new HttpError(400, 'A to-do command is a /modwerk-* command on one line.')
+    if (typeof id !== 'string' || !ID.test(id) || !Number.isSafeInteger(target) || (target as number) < 0) throw new HttpError(400, 'A to-do needs an id and a pull request or issue number (0 for the board).')
+    if (typeof command !== 'string' || !COMMAND.test(command)) throw new HttpError(400, 'A to-do command is a /modwerk-* command on one line, or a board reply.')
     if (typeof note !== 'string' || !note.trim() || note.length > 200) throw new HttpError(400, 'A to-do note is 1 to 200 characters.')
     return db.prepare('INSERT INTO maintenance_bot_todos(id,target,command,note,urgent,created_at,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET note=excluded.note,urgent=excluded.urgent,updated_at=excluded.updated_at WHERE status=\'open\'')
       .bind(id, target, command, note.trim().replace(/\s+/g, ' '), urgent === true ? 1 : 0, at, at)
@@ -226,6 +227,24 @@ async function todoStatus(db: Database, id: string, body: Record<string, unknown
   if (body.status !== 'done' && body.status !== 'dropped') throw new HttpError(400, 'A to-do is done or dropped.')
   const row = await db.prepare("UPDATE maintenance_bot_todos SET status=?,updated_at=? WHERE id=? AND status='open' RETURNING id").bind(body.status, now(), id).first()
   if (!row) throw new HttpError(404, 'No open to-do has that id.')
+  return { ok: true }
+}
+
+/** The bot acts on the agent board as the owner: replies through the board's own rules, closes and releases as administrator. */
+async function boardAction(env: Env, db: Database, kind: string, id: string, body: Record<string, unknown>) {
+  const at = new Date().toISOString()
+  if (kind === 'reply') {
+    const login = (env.GITHUB_REPOSITORY?.trim() || 'repeat98/modwerk').split('/')[0].toLowerCase()
+    const owner = await db.prepare('SELECT id FROM users WHERE lower(github_login)=? AND github_id IS NOT NULL').bind(login).first<{ id: string }>()
+    if (!owner) throw new HttpError(409, 'The owner has no board account yet.')
+    await boardReply(db, owner.id, id, body.body, null, Date.now())
+  } else if (kind === 'close') {
+    const row = await db.prepare("UPDATE agent_messages SET ended_at=?,ended_reason='administrator' WHERE id=? AND parent_id IS NULL AND ended_at IS NULL RETURNING id").bind(at, id).first()
+    if (!row) throw new HttpError(404, 'No open board thread has that id.')
+  } else {
+    const row = await db.prepare("UPDATE agent_claims SET released_at=?,released_reason='administrator' WHERE id=? AND released_at IS NULL RETURNING id").bind(at, id).first()
+    if (!row) throw new HttpError(404, 'No active claim has that id.')
+  }
   return { ok: true }
 }
 
@@ -248,6 +267,8 @@ export async function maintenanceBotRoutes(request: Request, env: Env, db: Datab
   if (who && todo && method === 'POST') return response(await todoStatus(db, todo[1], await jsonBody(request)))
   if (who !== 'bot') throw new HttpError(401, who ? 'Only the bot may do that.' : 'Wrong maintenance bot key. The owner signs in with npm run board -- login.')
   if (route === '/todos' && method === 'POST') return response(await addTodos(db, await jsonBody(request, 64 * 1024)))
+  const board = route.match(/^\/board\/(messages|claims)\/([0-9a-f-]{36})\/(reply|close|release)$/)
+  if (board && method === 'POST' && (board[1] === 'claims') === (board[3] === 'release')) return response(await boardAction(env, db, board[3], board[2], await jsonBody(request)))
   if (route === '/state' && method === 'GET') return response(await state(db))
   if (route === '/state' && method === 'PUT') {
     const body = await jsonBody(request)

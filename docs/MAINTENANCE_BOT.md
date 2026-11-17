@@ -19,6 +19,10 @@ The bot never pushes, releases, deploys, touches secrets, or works on firmware, 
 
 The model's output is untrusted: it is limited to one file, every item is checked against the policy, public text may mention only the item's author and link only to Modwerk, and anything outside the policy is held back and listed in the report. Changes to `scripts/maintenance-bot/` always need the owner's OK.
 
+## The agent board
+
+The bot reads the [agent board](AGENT_BOARD.md)'s live threads and claims with the pull requests, and acts there as the owner. It answers a question addressed to the owner when the docs or code settle it (`board_reply`, 4 h window), and closes the owner's own finished threads (12 h). Ending someone else's thread or releasing a claim (`board_close`, `board_release`) needs the owner's OK. A question only the owner can answer becomes a to-do, `npm run board -- reply <id>`, which `/modwerk-todo` helps draft. Replies go through the board's own limits (`boardReply` in `server/agent-board.ts`); closing and releasing are recorded as the administrator's.
+
 ## Telegram
 
 Each action is one message of two lines, what and when, with **Stop**, **Now** or **Approve**, and **Why?** for the reason. The report at 07:00 UTC is a few lines: what waits, what was done (counted), failures, and how many to-dos wait, naming the urgent ones. `/pause` stops all proposals and actions until `/resume`, and `/status` shows what is waiting. Only the owner's private chat counts.
