@@ -1,1 +1,1 @@
-Site: on the Start developing page, the release steps now show how a module is really made: agree the plan, build it, test on your unit, open the pull request, check it live.
+Site: on the Start developing page, the release steps now show how a module is really made: agree the plan, build it, test on your unit, open the pull request, community review, check it live.
