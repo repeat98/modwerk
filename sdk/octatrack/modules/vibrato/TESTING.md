@@ -42,7 +42,7 @@ VIBRATO's worst is 0.50x SPRING REV, 0.53x CHORUS and 1.19x FLANGER. No VIBRATO 
 
 `python3 -B modules/vibrato/perf.py stress /perf --seconds 32`, first layout (LOFI2's): VIBRATO on FX2 of all eight tracks (four per core) behind DJ EQ on every FX1, three LFOs per track on SPD, DEP and MIX, a new random value on every slot of both effects each sixteenth at 120 BPM (11 slots, SHP included), trig splits on six tracks, eight different stems, `-guard 0x4000 -guard-shared -dirty 0x5a`: host exit 0, no hang, VIBRATO's eight instances 0 stray write regions and 0 clobbers (the DJ EQs write their own scratch, 0 clobbers), 16 guarded instances, per-core peak 1,884.1 and 1,885.9 executed instructions a sample, 24 minutes of wall time.
 
-Not run yet: the layout `perf:audit` needs for the eight instances a core the record claims (VIBRATO on FX1 and FX2 of every track, 12 slots changing a step). `perf.py stress` now builds that layout; the run stopped before it started when Docker's engine stopped answering.
+Second layout, the one `perf:audit` needs for the eight a core the record claims: VIBRATO on FX1 and FX2 of every track (eight per core), three LFOs per instance (SLEW, WID and DEP on FX1; SPD, DEP and MIX on FX2), 12 slots changing a step, the same splits, stems and guards: host exit 0, no hang, all sixteen instances 0 stray write regions and 0 clobbers, per-core peak 1,155.4 and 1,150.8 executed instructions a sample, 28 minutes of wall time. `npm run perf:audit -- check evidence/performance.json --stamp`: no check failed.
 
 ### Screenshots, 17 November 2026
 

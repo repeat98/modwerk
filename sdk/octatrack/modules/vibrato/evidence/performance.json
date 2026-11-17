@@ -1,33 +1,34 @@
 {
- "schema": 1,
- "module": "vibrato",
- "version": "0.1.0-experimental",
- "kind": "dsp",
- "cycles": {
-  "unit": "instructions/sample",
-  "static": 108,
-  "measured": 156.25,
-  "instancesPerCore": 8,
-  "method": "static: tools/build/cycle_count.py on a scratch remix of VIBRATO alone, the per-sample loop with its two vb_tap calls, 108 cycles/sample (the author's figure too). measured: modules/vibrato/perf.py bench, benchmark_reverbs.run as benchmark_stock_dsp.py runs it (one instance per core at positions 0 and 4, audio at X:0, 4,096 blocks of 16 frames, the null stub's peak subtracted) on the private native image a2c7001d... (octabam e85f54e0 with Modwerk's changes, VIBRATO 0.1.0-experimental beside twelve stock effects; 17 Nov 2026). Worst of 82 VIBRATO cases: the moving-knob pattern with a trig split at frame 1, 156.25 executed instructions/sample (131.19 unsplit); every knob 127: SINE 144.44, TRI 144.25, SQR 143.25, RND 155.50 with splits; MIX 0 115.50. Executed instructions in dsp_host, not chip cycles; no stalls modelled. The author measured 4.50 % of a frame a slot at the defaults and 4.41 % at the dearest on his MKII with LOAD METER (octabam build, 4 Nov 2026)."
- },
- "stock": {
-  "comparator": "CHORUS",
-  "comparatorWorst": 293.06,
-  "dearestWorst": 330.94,
-  "baseline": "perf.py bench: CHORUS, FLANGER, SPRING REV and DJ EQ run on the original image through the same cases as VIBRATO (fixed, the moving pattern, and a trig split at every position 1-15). Unsplit they read CHORUS 253.62, FLANGER 115.69, SPRING REV 257.50 and DJ EQ 293.38, the last two as benchmark_stock_dsp.py's figures in E-Verb's and LOFI2's records.",
-  "stockSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
-  "justification": "VIBRATO is a modulated delay like stock CHORUS and FLANGER: one 1,024-word line per channel read at a moving fractional position, the position walked per block toward a knot from the LFO's closed-form shape. Its worst case 156.25 is 0.53x CHORUS (293.06), 1.19x FLANGER (131.06), 0.50x SPRING REV (314.19, the cost target for new FX) and 0.47x DJ EQ (330.94, the dearest stock effect). Eight instances on one core (FX1 and FX2 of its four tracks) are 8 x 108 = 864 of the 3,120 usable static cycles."
- },
- "stress": {
-  "instancesPerCore": 4,
-  "tracks": 8,
-  "lfosPerTrack": 3,
-  "lockedSlots": 11,
-  "seconds": 32,
-  "guard": true,
-  "dirty": true,
-  "clobbers": 0,
-  "hangs": 0,
-  "method": "modules/vibrato/perf.py stress. The load stress_project.py describes, driven straight into dsp_host on the private native image a2c7001d... (17 Nov 2026): VIBRATO on FX2 of all eight tracks (four per core) behind DJ EQ, the dearest stock effect, on every FX1; per block, three LFOs (sine, triangle, square) on VIBRATO's SPD, DEP and MIX, and a new random value on every slot of both effects each sixteenth at 120 BPM: 11 slots changed per step (VIBRATO's six, SHP included so the shapes switch under load, and DJ EQ's five); trig splits of 1, 3, 7, 8, 12 and 15 frames on six tracks; eight different 32 s stems plus a 2 s tail; dsp_host -guard 0x4000 -guard-shared -dirty 0x5a. Result: host exit 0, no hang; VIBRATO's eight instances 0 stray write regions and 0 clobbers (the stock DJ EQs write their own scratch, 0 clobbers); 16 guarded instances; per-core peak 1884.1 and 1885.9 executed instructions/sample with all sixteen effects. It exercises the DSP side only: the firmware's own LFO and lock delivery, Part switches and the ColdFire side are not in it."
- }
+  "schema": 1,
+  "module": "vibrato",
+  "version": "0.1.0-experimental",
+  "sourceSha256": "4129c9655376d72f1b9fd882c525b1ff49e38a58d058bbd4f9955b1826bcfbf0",
+  "kind": "dsp",
+  "cycles": {
+    "unit": "instructions/sample",
+    "static": 108,
+    "measured": 156.25,
+    "instancesPerCore": 8,
+    "method": "static: tools/build/cycle_count.py on a scratch remix of VIBRATO alone, the per-sample loop with its two vb_tap calls, 108 cycles/sample (the author's figure too). measured: modules/vibrato/perf.py bench, benchmark_reverbs.run as benchmark_stock_dsp.py runs it (one instance per core at positions 0 and 4, audio at X:0, 4,096 blocks of 16 frames, the null stub's peak subtracted) on the private native image a2c7001d... (octabam e85f54e0 with Modwerk's changes, VIBRATO 0.1.0-experimental beside twelve stock effects; 17 Nov 2026). Worst of 82 VIBRATO cases: the moving-knob pattern with a trig split at frame 1, 156.25 executed instructions/sample (131.19 unsplit); every knob 127: SINE 144.44, TRI 144.25, SQR 143.25, RND 155.50 with splits; MIX 0 115.50. Executed instructions in dsp_host, not chip cycles; no stalls modelled. The author measured 4.50 % of a frame a slot at the defaults and 4.41 % at the dearest on his MKII with LOAD METER (octabam build, 4 Nov 2026)."
+  },
+  "stock": {
+    "comparator": "CHORUS",
+    "comparatorWorst": 293.06,
+    "dearestWorst": 330.94,
+    "baseline": "perf.py bench: CHORUS, FLANGER, SPRING REV and DJ EQ run on the original image through the same cases as VIBRATO (fixed, the moving pattern, and a trig split at every position 1-15). Unsplit they read CHORUS 253.62, FLANGER 115.69, SPRING REV 257.50 and DJ EQ 293.38, the last two as benchmark_stock_dsp.py's figures in E-Verb's and LOFI2's records.",
+    "stockSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+    "justification": "VIBRATO is a modulated delay like stock CHORUS and FLANGER: one 1,024-word line per channel read at a moving fractional position, the position walked per block toward a knot from the LFO's closed-form shape. Its worst case 156.25 is 0.53x CHORUS (293.06), 1.19x FLANGER (131.06), 0.50x SPRING REV (314.19, the cost target for new FX) and 0.47x DJ EQ (330.94, the dearest stock effect). Eight instances on one core (FX1 and FX2 of its four tracks) are 8 x 108 = 864 of the 3,120 usable static cycles."
+  },
+  "stress": {
+    "instancesPerCore": 8,
+    "tracks": 8,
+    "lfosPerTrack": 3,
+    "lockedSlots": 12,
+    "seconds": 32,
+    "guard": true,
+    "dirty": true,
+    "clobbers": 0,
+    "hangs": 0,
+    "method": "modules/vibrato/perf.py stress. The load stress_project.py describes, driven straight into dsp_host on the private native image a2c7001d... (17 Nov 2026): VIBRATO on FX1 and FX2 of all eight tracks (eight per core, the most it supports); per block, three LFOs (sine, triangle, square) on SLEW, WID and DEP of each FX1 instance and on SPD, DEP and MIX of each FX2 instance, and a new random value on every slot of both effects each sixteenth at 120 BPM: 12 slots changed per step (six each, SHP included so the shapes switch under load); trig splits of 1, 3, 7, 8, 12 and 15 frames on six tracks; eight different 32 s stems plus a 2 s tail; dsp_host -guard 0x4000 -guard-shared -dirty 0x5a. Result: host exit 0, no hang; all sixteen instances 0 stray write regions and 0 clobbers; 16 guarded instances; per-core peak 1155.4 and 1150.8 executed instructions/sample. An earlier run with VIBRATO on FX2 only, behind DJ EQ on every FX1, was clean as well (per-core peak 1,884.1 and 1,885.9). It exercises the DSP side only: the firmware's own LFO and lock delivery, Part switches and the ColdFire side are not in it."
+  }
 }

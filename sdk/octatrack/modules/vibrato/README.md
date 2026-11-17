@@ -30,12 +30,13 @@ SPD and DEP glide: each knob word runs through two one-poles in a row, so a fast
 
 Select an audio track, hold FUNC and press FX1 (or FX2) for its SETUP page, turn LEVEL to VIBRATO and press YES. SHP is on the SETUP page; press FX1 (or FX2) for SPD, DEP, SLEW, WID and MIX. It runs on FX1 or FX2, and on several tracks at once.
 
-## Quick tutorial
+## Quick tutorial: a vibrato, then a trill
 
-1. On an audio track that plays a sustained sound (a pad, a held note), hold FUNC and press FX2, turn LEVEL to VIBRATO and press YES. (FX1 works the same way.)
+1. On an audio track that plays a sustained sound, hold FUNC and press FX2, turn LEVEL to VIBRATO and press YES. (FX1 works the same way.)
 2. Press FX2 for the main page. At the defaults the track has a gentle sine vibrato of about 14 cents at 3.4 Hz. Turn DEP (encoder B) to 80 for a deep, singing vibrato, and SPD (encoder A) to 100 for a faster one.
-3. Hold FUNC and press FX2 again, turn SHP (encoder A) to SQR, then turn DEP to 127 on the main page: the track now trills a whole tone. Turn SLEW up to round the trill into a glide.
-4. Turn MIX to 0 to hear the dry track again, or pick NONE in FX2 SETUP to take VIBRATO off the track.
+3. Hold FUNC and press FX2 again, turn SHP (encoder A) to SQR, then turn DEP to 127 on the main page: the track now trills a whole tone. Turn MIX to 0 for the dry track, or pick NONE in FX2 SETUP to take VIBRATO off.
+
+It also runs on FX1, and on several tracks at once.
 
 ## Compatibility and limitations
 
@@ -64,11 +65,20 @@ The author's README and usage page are kept unchanged in `upstream/`.
 
 ## Screens and audio
 
-Headless emulator captures of a private native build (`media/`, provenance in `media/capture.json`), on FX2:
+Headless emulator captures of a private native build, on FX2 (provenance in `media/capture.json`). The native build's FX2 list holds only NONE and VIBRATO; on the Modwerk base it also holds the stock effects and the other installed modules. No audio preview yet.
 
-1. `media/ot-setup.png`: FX2 SETUP with VIBRATO chosen; SHP on encoder A.
-2. `media/ot-main.png`: the main page, SPD, DEP and SLEW above WID and MIX.
-3. `media/ot-deep.png`: DEP turned to 127.
-4. `media/ot-shape-sqr.png`: SHP set to SQR, the trill.
+![FX2 SETUP with VIBRATO highlighted under NONE in the effect list; the SHP knob on the right.](media/ot-setup.png)
 
-The native build's FX2 list holds only NONE and VIBRATO; on the Modwerk base the list also holds the stock effects and the other installed modules. No audio preview yet.
+Hold FUNC and press FX2, turn LEVEL to VIBRATO and press YES. The SETUP page then shows SHP, the pitch shape, on encoder A.
+
+![FX2 main page of VIBRATO with SPD, DEP and SLEW above WID and MIX.](media/ot-main.png)
+
+Press FX2 for the main page: SPD, DEP and SLEW above WID and MIX. The defaults give a gentle sine vibrato of about 14 cents at 3.4 Hz.
+
+![FX2 main page of VIBRATO with DEP turned to 127.](media/ot-deep.png)
+
+Turn encoder B to raise DEP: at 127 the pitch swings a whole semitone either side of the note.
+
+![FX2 SETUP with VIBRATO selected and SHP set to SQR.](media/ot-shape-sqr.png)
+
+Back on the SETUP page, turn encoder A to set SHP to SQR: the vibrato becomes a trill between two notes. Pick NONE in the list to take VIBRATO off the track.
