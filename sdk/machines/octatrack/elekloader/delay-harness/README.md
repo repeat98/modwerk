@@ -53,4 +53,8 @@ it proves bytes and order, never transfer timing. That is the unit's part.
   track never counts as quiet again until the next start, so the saving shrinks as more tracks' delays get used.
   Since 17 November 2026 the skip treats every word within 680 counts of zero as silence (owner's call), so a fed
   track counts as quiet again; filters stuck further out (the harness saw one at -1,404) keep stock's path.
-- Not yet run on a unit: a Tape Echo track, the sampler recorders, a card build.
+- Everything above ran on the exact-zero build. The floor build (base 0.7.6) has only run in this harness:
+  `TOL=680`, 3,000,000 frames, PASS; largest differences: audio 293 (-137.3 dBFS), filter state 543 (-131.9 dBFS),
+  ring 250 (-138.7 dBFS); eDMA transfers 32.0 a frame against 14.8 (the exact-zero build: 23.4 over 200,000
+  frames). `NODELAY=1`: no word differs.
+- Not yet run on a unit: the floor build, a Tape Echo track, the sampler recorders, a card build.
