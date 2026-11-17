@@ -60,7 +60,10 @@ refusals). The screen was read from the panel link's transmit stream (Octabam's 
 
 ### Stock behaviour, reported by the developer (MKI, stock OS 1.40C, no Modwerk base, 17 November 2026)
 
-What Andrey Sidorkin saw on his own MKI, as he reported it; no module was installed:
+What Andrey Sidorkin saw on his own MKI, as he reported it; no module was installed. Both stock bugs below (an
+insert on a HALT making an endless LOOP, a delete turning a JUMP into a HALT) and whether the module may take FUNC +
+DOWN are raised with the owner in [#1668](https://github.com/repeat98/modwerk/issues/1668); until he answers, stock
+FUNC + DOWN and FUNC + UP stay untouched.
 
 - Delete (FUNC + UP) of row D while a JUMP points at row T:
   1. T below D on the screen (T > D): the target number dropped by one and still names the same row's content.
@@ -75,9 +78,23 @@ a target below D is untouched, observed (2); (d) the rows shift up, the count dr
 the shift observed in (3), the clamp not observed. Case 3 is how a stock delete turns a JUMP into a HALT. Stock's
 FUNC + UP and FUNC + DOWN stay untouched by the module (the developer, 17 November 2026).
 
-### The module
+### The module, stage 1: the agent's run on the developer's MKI (17 November 2026)
 
-Not tested yet. Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
+Build: source `85783acab`, package `7b692b0e9355552b8c3a28909463891270f170b1d1346333e08f321033986b50`
+(`npm run module:dev -- arr-rows --build-only`). Unit: the developer's MKI, OS 1.40C, the Modwerk base installed from
+the site (`6c189889…`), no modules installed, transport stopped. One session (`npm run device -- serve --share`).
+
+- Before: inventory `[]`, active identity the base's own. The base answers no development requests (built without
+  `--dev`), so `device:test`, scripted keys and screenshots were not run; on an MKI the arrow keys do not go through
+  the session either (docs/OCTATRACK_DRIVING.md).
+- `npm run device -- try <package> --seconds 20`: installed as a trial, the module's tick ran the whole time (1,143
+  ticks in 20 s, about 60 a second), the slot stayed running, then it rolled back by itself ("rolled back", generation
+  2, active identity the base's own again).
+- The DIAG refusal counter rose by about one every 3-4 s during the trial; with no module installed it rose at the
+  same rate (12 to 16 in 12 s): the session's own development requests, which this base refuses, not the module.
+- After: inventory `[]`, the base's identity active. Nothing was kept or saved.
+- Not run here: everything in the editor (the developer's stage 2), the CPU price (`device:price` needs a development
+  base), audio. Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
 FUNC + DOWN insert and FUNC + UP delete; CUE + track keys in the editor; ARR CHANGE, SAVE, RELOAD; a project saved
 with the module loaded on a base without it (arrNN files compared).
 
