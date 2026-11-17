@@ -118,7 +118,15 @@ the editor; its own first row is `0x460d1c64`, so once the list scrolled the mar
 screen. A copy and a paste of 20 rows while the arrangement played left the transport running (`0x800065b8` = 1). The
 paste behaving as an insert was not reproduced; the module decided "CUE held" from its own count of key events, which
 a missed release would leave stuck. Fixed in the next build: the first row from `0x460d1c64`, CUE and FUNC read from
-stock itself (RESEARCH.md), a diagnostic word printed by `try`. The MIDI stop is not explained yet. Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
+stock itself (RESEARCH.md), a diagnostic word printed by `try`. The MIDI stop is not explained yet.
+
+### The module, stage 1 again: the next build (17 November 2026)
+
+Source `f9fbcd669`, package `e091641009bc7ffbde12884e0d22903fb636a64c3d3b1506589c3586851e0546`, the same unit and base.
+Inventory `[]` before; a 20-second trial ran the whole time (1,143 ticks) with the diagnostic word reading
+`0xff000000` (editor not open, no selection), rolled back by itself; inventory `[]` and the base's identity after.
+Before it, under ot_emu: the marks follow the editor's scroll (rows 3-8 with the list showing row 3 first), and a
+copy and a paste of 20 rows during PLAY left the transport running. Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
 FUNC + DOWN insert and FUNC + UP delete; CUE + track keys in the editor; ARR CHANGE, SAVE, RELOAD; a project saved
 with the module loaded on a base without it (arrNN files compared).
 
