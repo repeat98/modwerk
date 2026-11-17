@@ -1,0 +1,127 @@
+# SPDX-License-Identifier: Elastic-2.0
+# Copyright (c) 2026 Jannik Aßfalg (repeat98)
+name: Maintenance bot
+# Reviews pull requests and issues every 30 minutes and reports to the owner on Telegram each morning
+# (docs/MAINTENANCE_BOT.md). The model runs read-only in `propose` and only writes proposals; `act` runs trusted
+# main with write access and no model, and the policy in scripts/maintenance-bot/policy.mjs decides each one.
+# It stays off until the owner runs `npm run maintenance-bot:setup`, which sets the key and the Claude token.
+# The Worker starts it (dispatchMaintenance in server/maintenance-bot.ts): a pass at :05 and :35, the daily run at
+# 07:00 UTC. GitHub's own schedule runs hours late in this repository, so there is none here.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'pass (review what changed) or daily (also send the report)'
+        type: choice
+        options: [pass, daily]
+        default: pass
+permissions:
+  contents: read
+concurrency:
+  # The daily run has its own group so a pass never cancels it while queued; claims in the ledger keep two
+  # overlapping runs from carrying out the same action.
+  group: maintenance-bot-${{ inputs.mode == 'daily' && 'daily' || 'pass' }}
+  cancel-in-progress: false
+env:
+  BOT_MODE: ${{ inputs.mode == 'daily' && 'daily' || 'pass' }}
+  BOT_DIR: bot
+jobs:
+  propose:
+    if: vars.MAINTENANCE_BOT_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+      actions: read
+      checks: read
+    outputs:
+      ran: ${{ steps.model.outcome == 'success' }}
+      fingerprint: ${{ steps.snapshot.outputs.fingerprint }}
+    steps:
+      # Trusted main only. Pull request code is read through the API and never checked out or run.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - id: snapshot
+        run: node scripts/maintenance-bot/snapshot.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          COMMUNITY_API_URL: ${{ vars.COMMUNITY_API_URL }}
+          MAINTENANCE_BOT_KEY: ${{ secrets.MAINTENANCE_BOT_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_GUILD_ID: ${{ vars.DISCORD_GUILD_ID }}
+          DISCORD_IGNORE_CHANNELS: ${{ vars.DISCORD_IGNORE_CHANNELS }}
+      - if: steps.snapshot.outputs.run == 'true'
+        run: npm install --global --no-fund --no-audit @anthropic-ai/claude-code@2.1.311
+      # The model gets a read-only token and read-only commands. It may write only under bot/.
+      - id: model
+        if: steps.snapshot.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          MODEL: ${{ env.BOT_MODE == 'daily' && (vars.MAINTENANCE_BOT_DAILY_MODEL || 'claude-opus-5-5') || (vars.MAINTENANCE_BOT_MODEL || 'claude-sonnet-5-5') }}
+        run: |
+          claude -p "$(cat scripts/maintenance-bot/prompt.md)" --model "$MODEL" --max-turns 120 --output-format json \
+            --allowedTools 'Read' 'Grep' 'Glob' 'Edit(./bot/**)' \
+              'Bash(gh pr view:*)' 'Bash(gh pr list:*)' 'Bash(gh pr diff:*)' 'Bash(gh pr checks:*)' \
+              'Bash(gh issue view:*)' 'Bash(gh issue list:*)' 'Bash(gh run list:*)' 'Bash(gh run view:*)' \
+              'Bash(git log:*)' 'Bash(git show:*)' 'Bash(git diff:*)' \
+            --disallowedTools 'WebFetch' 'WebSearch' 'Bash(gh api:*)' 'Bash(curl:*)' 'Bash(wget:*)' > "$RUNNER_TEMP/model.json" || true
+          # The repository is public, and so are this log and its artifacts. Discord messages, diagnostics and draft
+          # replies stay out of both: the log gets how the run ended and its token counts, never its text, and the
+          # proposals travel encrypted with the bot key.
+          node scripts/maintenance-bot/model-status.mjs "$RUNNER_TEMP/model.json"
+          test -s bot/proposals.json
+      - if: steps.model.outcome == 'success'
+        env:
+          MAINTENANCE_BOT_KEY: ${{ secrets.MAINTENANCE_BOT_KEY }}
+        run: openssl enc -aes-256-cbc -pbkdf2 -salt -in bot/proposals.json -out bot/proposals.enc -pass env:MAINTENANCE_BOT_KEY && rm bot/proposals.json
+      - if: steps.model.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: proposals
+          path: bot/proposals.enc
+          retention-days: 1
+  act:
+    needs: propose
+    # Due actions run even when the model failed or was skipped; a cancelled run does nothing.
+    if: ${{ !cancelled() && vars.MAINTENANCE_BOT_ENABLED == 'true' && needs.propose.result != 'skipped' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: write
+      checks: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - if: needs.propose.outputs.ran == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: proposals
+          path: bot
+      - if: needs.propose.outputs.ran == 'true'
+        env:
+          MAINTENANCE_BOT_KEY: ${{ secrets.MAINTENANCE_BOT_KEY }}
+        run: openssl enc -d -aes-256-cbc -pbkdf2 -in bot/proposals.enc -out bot/proposals.json -pass env:MAINTENANCE_BOT_KEY
+      - run: node scripts/maintenance-bot/act.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          COMMUNITY_API_URL: ${{ vars.COMMUNITY_API_URL }}
+          MAINTENANCE_BOT_KEY: ${{ secrets.MAINTENANCE_BOT_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_OWNER_ID: ${{ vars.DISCORD_OWNER_ID }}
+          BOT_FINGERPRINT: ${{ needs.propose.outputs.ran == 'true' && needs.propose.outputs.fingerprint || '' }}

@@ -28,6 +28,12 @@ describe('SDK developer scaffolds', () => {
         expect(()=>parseModuleDocument({...doc,tests:{...doc.tests,qualification:pending}})).toThrow()
         const native = readFileSync(resolve(folder, 'manifest.py'), 'utf8')
         expect(native).toContain('author="example-author"')
+        // The LICENSE is the author's own MIT, as the manifest declares, not Octabam's.
+        const licence = readFileSync(resolve(folder, 'LICENSE'), 'utf8')
+        expect(doc.license.spdx).toBe('MIT')
+        expect(licence).toMatch(/^MIT License\n\nCopyright \(c\) \d{4} example-author\n/)
+        expect(licence).not.toContain('Sam Banks')
+        expect(licence).not.toContain('octamax')
         // The chooser shows the module's own name, never the template's.
         if (kind === 'dsp') {
           expect(native).toContain('abbr=b"PROO"')

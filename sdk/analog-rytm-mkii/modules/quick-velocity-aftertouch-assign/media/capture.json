@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "moduleId": "quick-velocity-aftertouch-assign",
-  "moduleVersion": "0.3.0-experimental",
+  "moduleVersion": "0.3.1-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-15T22:30:00Z",
-  "imageSha256": "c1ee037e167065198083c975e6dc554702b21b47d3a57aff33c6c9ab1702dcab",
-  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Quick Mod Assign 0.3.0-experimental, materialised against stock OS 1.74, --version QM30",
+  "capturedAt": "2026-11-16T23:05:00Z",
+  "imageSha256": "55a50da750bab93a4dd4930f85e258ba2e4df1532d2c7dc511c063dbe92517aa",
+  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Quick Mod Assign 0.3.1-experimental, materialised against stock OS 1.74, --version QM31",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
     "binary": "dtboot",
     "settings": "revision 2ac0f1f with a private RAM-boot model that a plain boot does not use; a fresh card; DTBOOT_END_PNG at the end of each run"
   },
-  "conditions": "SETUP: boot QM30 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each capture loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M.",
+  "conditions": "SETUP: boot QM31 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each capture loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M.",
   "captures": [
     {
       "path": "media/fix-filter.png",

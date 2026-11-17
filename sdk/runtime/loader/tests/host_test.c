@@ -23,7 +23,8 @@ int modwerk_machine_stopped(void) { return stopped; }
 static unsigned uncached_calls, pool_flushes, pool_flushes_invalidated;
 static uint32_t pushed_at, pushed_bytes;
 static int push_pending;
-static int in_pool(uint32_t a, uint32_t n) { uint32_t lo = (uint32_t)(uintptr_t)pool; return a >= lo && n <= RUNTIME_POOL_BYTES - (a - lo); }
+/* The offset modulo 2^32: a 64-bit host can place the pool across a 4 GB line, where its 32-bit addresses wrap. */
+static int in_pool(uint32_t a, uint32_t n) { uint32_t at = a - (uint32_t)(uintptr_t)pool; return at <= RUNTIME_POOL_BYTES && n <= RUNTIME_POOL_BYTES - at; }
 void *modwerk_machine_uncached(void *p) { ++uncached_calls; return p; }
 void modwerk_machine_invalidate_code(void) { if (push_pending) push_pending = 0, ++pool_flushes_invalidated; }
 int modwerk_machine_patchable(uint32_t a, uint32_t n) { return a >= STOCK + 16u && n <= STOCK + sizeof stock - a; }

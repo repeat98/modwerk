@@ -26,6 +26,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [MODULE_AUTHOR_UPDATES.md](MODULE_AUTHOR_UPDATES.md): registered authors publishing their own updates.
 - [OWNER_OPERATIONS.md](OWNER_OPERATIONS.md): the owner's issue-fix and release flow, mail sendouts, locks and disk rules.
 - [MAINTENANCE.md](MAINTENANCE.md): the daily pass the owner starts with "maintain": pull request, issue, beta and upstream workers, one briefing.
+- [MAINTENANCE_BOT.md](MAINTENANCE_BOT.md): the bot that reviews pull requests and issues every 30 minutes, acts within its policy, and reports on Telegram.
 - [MODULE_ADDITION_WORKFLOW.md](MODULE_ADDITION_WORKFLOW.md): moved to ADD_A_MODULE.md.
 
 ## Module reference

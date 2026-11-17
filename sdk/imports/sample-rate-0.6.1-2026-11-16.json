@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/sample-rate",
+  "version": "0.6.1-experimental",
+  "date": "2026-11-16",
+  "changes": [
+    "Ping Pong Loop (pipo-loop) leaves the library, so compatibility.conflicts no longer names it. Nothing else changes: linked, 0.6.1 gives the same images byte for byte as 0.6.0."
+  ],
+  "runtimeSourceSha256": "1ccd05126d12cd30d65f4ca496a53b69f36682c146bcf8eeb53d4e393c1fdc0a",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/sample-rate/sample-rate-0.6.1-experimental-os1.74.elemod",
+      "sha256": "67ed32bb2cd59f249d4de16bc9ffa5c81818b973efaeef6d93a1641ce6b90f0a"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/sample-rate/TESTING.md",
+  "requires": []
+}

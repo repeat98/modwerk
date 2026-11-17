@@ -35,12 +35,14 @@ const MODWERK_BASES: Partial<Record<ElekloaderMachine, { variants: Record<string
     variant: moduleIds => rytmVariant(moduleIds, Object.values(RYTM_FX_IDS.ids), RYTM_VOICE_MODULES.ids),
   },
 }
-/** The Rytm base variant a selection needs. A send effect contributes to the send-bus variant's FX list and a digital
- * voice machine to its voices (mw_voices, ev_sound_applied); modules:check ties every one to fx-ids.json or
- * voice-modules.json. A set with neither builds on plain, core-ar2 0.7's source with the machine list's sections, and pays
- * none of send-bus's RAM or storage. */
+/** The Rytm base variant a selection needs. A send effect contributes to the send-bus variant's FX list, and a digital
+ * voice machine to the voices (mw_voices, ev_sound_applied) that send-bus and voices both carry; modules:check ties every
+ * one to fx-ids.json or voice-modules.json. A set with a send effect builds on send-bus, one with a voice machine and no
+ * send effect on voices, which has no send bus, pages, clock or FX list, and any other on plain, core-ar2 0.7's source
+ * with the machine list's sections: each pays only for what it uses. */
 export function rytmVariant(moduleIds: readonly string[], fxIds: readonly string[], voiceIds: readonly string[]) {
-  return moduleIds.some(id => fxIds.includes(id) || voiceIds.includes(id)) ? 'send-bus' : 'plain'
+  if (moduleIds.some(id => fxIds.includes(id))) return 'send-bus'
+  return moduleIds.some(id => voiceIds.includes(id)) ? 'voices' : 'plain'
 }
 /** The Modwerk base variant a selection builds on, or undefined for a machine that builds on a catalogue core. */
 export function baseVariant(machine: ElekloaderMachine, moduleIds: readonly string[]) {
