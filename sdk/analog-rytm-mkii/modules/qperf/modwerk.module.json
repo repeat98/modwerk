@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "qperf",
   "name": "QPER Live Rec",
-  "version": "0.2.1-experimental",
+  "version": "0.2.2-experimental",
   "machine": "analog-rytm-mkii",
   "category": "scenes",
   "exclusive": false,
@@ -95,29 +95,15 @@
     "load": {
       "display": "About 0.8 % of the audio block idle (the audio handler, measured on a unit)",
       "method": "hardware",
-      "conditions": "Measured on an Analog Rytm MKII with a private telemetry base, sequencer stopped, in the author's 16-module set: the audio handler took 8.7 us a block (1.3 %) before its idle early return and 5.1 us (0.8 %) after; removing the whole module lowered the idle block from 72.9 % to 70.9 %. With moves to record, a pad held or a take playing back it runs in full each block."
+      "conditions": "Measured on an Analog Rytm MKII with a private telemetry base, sequencer stopped, in the author's 16-module set, on 0.2.0: the audio handler took 8.7 us a block (1.3 %) before its idle early return and 5.1 us (0.8 %) after; removing the whole module lowered the idle block from 72.9 % to 70.9 %. 0.2.2's quick exit runs about a quarter of the instructions and reads 5 of the module's data cache lines instead of 14 (rytm-emu, which counts instructions only); not yet measured on a unit. With moves to record, a pad held or a take playing back it runs in full each block."
     }
   },
   "evidence": {
-    "tier": "author-hardware",
-    "moduleVersion": "0.2.1-experimental",
-    "sourceSha256": "f7cf9f63ef62bf83f39698a0ce74d3cd8298cd128c60c110252f8350cbb61f05",
-    "reports": [
-      "TESTING.md"
-    ],
-    "hardware": {
-      "model": "Analog Rytm MKII",
-      "release": "1.74",
-      "testedOn": "2026-11-16",
-      "tester": "npp1993",
-      "durationMinutes": null,
-      "summary": "0.2.1 ran alone on npp1993's Analog Rytm MKII, OS 1.74, from RAM as QR01 (the Modwerk base with the development link and this module, sha256 b5ad3b25…0d31). The author ran the module's tutorial and reports all passed: QPER + pad links and a knob turn locks, the QPER knob sweeps it, QPER + YES applies, QPER + PLAY clears and PLAY undoes, QPER + RECORD / STOP copies and pastes, and in PERF the quick perf rec loops pad takes, RECORD + NO clears and NO undoes, RECORD + YES writes them into the pattern.",
-      "limitations": [
-        "Reported by the author from playing; no automated rig run for 0.2.1.",
-        "The image holds the base with the development link, not the plain published base.",
-        "Earlier, this source ran in the author's combined images RC37 to RC40 (not a qualification of this package)."
-      ]
-    },
+    "tier": "none",
+    "moduleVersion": "0.2.2-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
     "verifiedBy": null
   },
   "tests": {

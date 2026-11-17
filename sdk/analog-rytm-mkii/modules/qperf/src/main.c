@@ -149,7 +149,6 @@ typedef void (*view_close_t)(void *view);
 static int held;                    // QPER is down, on a screen of ours, without FUNC
 static unsigned swallowed;          // YES, PLAY, REC and STOP: their release is ours too
 static unsigned known;              // the link as we last set or saw it
-static int ready;                   // a project is loaded
 static int kit_changed;             // stock changed the whole kit
 int qperf_pot;                      // the QPER knob + 1, 0 until it first moves
 
@@ -236,15 +235,25 @@ typedef void (*notice_t)(void *self, void *info);
 
 static unsigned char perf_rec[PERFS][REC_POINTS]; // amount >> 7 at each point
 static unsigned char perf_rec_has[PERFS][STEPS];  // a bit for each recorded point
-static unsigned perf_rec_used;          // performances with any point
-static int perf_rec_hidden;             // emptied by RECORD + NO, NO again brings it back
-static volatile int perf_rec_busy;      // the UI is reading or emptying it
-static int perf_rec_pattern = -1;       // the pattern it was recorded in
-static unsigned short seen[PERFS];      // each amount as we last wrote or saw it
+
+// What the audio block reads when nothing happens, together on four cache lines: stock's
+// audio work evicts module data every block, and each cold line costs about 20 ticks.
+static struct qperf_hot {
+    unsigned short seen[PERFS];         // each amount as we last wrote or saw it
+    int ready;                          // a project is loaded
+    volatile int perf_rec_busy;         // the UI is reading or emptying it
+    int perf_rec_pattern;               // the pattern it was recorded in
+    unsigned perf_rec_used;             // performances with any point
+    int perf_rec_hidden;                // emptied by RECORD + NO, NO again brings it back
+    int last_pos;                       // the position last block
+    int stirring;                       // after the last whole block: a knob, pad, take, drive,
+                                        // touch or recording point was still in play
+    int pot_still;                      // where the knob rests (pot_last once pot_rest is set),
+                                        // 0 while it has no rest: then only 0 changes nothing
+} hot __attribute__((aligned(16))) = { .perf_rec_pattern = -1, .last_pos = -1, .stirring = 1 };
 static unsigned short rest[PERFS];      // each driven amount before we drove it
 static unsigned short touched[PERFS];   // audio blocks left of the last move
 static unsigned driven;                 // performances the quick perf rec plays now
-static int last_pos = -1;               // the position last block
 static int rec_pos[PERFS];              // each one's last recorded point, -1 none
 static unsigned pads_held;              // performances a pad or MIDI holds above zero
 static int pot_rest;                    // the QPER knob where it last came to rest
@@ -525,7 +534,7 @@ static void seen_now(void)
 {
     int i;
     for (i = 0; i < PERFS; i++)
-        seen[i] = PERF_AMOUNT(i);
+        hot.seen[i] = PERF_AMOUNT(i);
 }
 
 // An unlinked performance stops adding, and a new one takes over at the knob's
@@ -535,7 +544,7 @@ static void link_moved(unsigned mask)
     word_t project = PROJECT_SINGLETON();
     unsigned old = known;
     int i, amount = qperf_pot ? (qperf_pot - 1) << 7 : old ? (int)PERF_AMOUNT(lowest_linked(old)) : 0;
-    perf_rec_busy = 1;
+    hot.perf_rec_busy = 1;
     for (i = 0; i < PERFS; i++) {
         if ((old & ~mask) >> i & 1)
             AMOUNT_SET(project, i, 0, 1, 1);
@@ -544,7 +553,7 @@ static void link_moved(unsigned mask)
     }
     known = mask;
     seen_now();                         // our own writes are no move for the quick perf rec
-    perf_rec_busy = 0;
+    hot.perf_rec_busy = 0;
 }
 
 QPERF_UI static void apply_linked(void *kit)
@@ -691,8 +700,8 @@ static int position(void)
         + (int)(((long)pulse * PULSE_UNITS + elapsed) * POINTS / ((long)pps * PULSE_UNITS));
     // The pulse handler can be cut between its pulse reset and its step count,
     // which reads as a step back: hold the last place then.
-    if (last_pos >= 0 && pos < last_pos && last_pos - pos < POINTS)
-        pos = last_pos;
+    if (hot.last_pos >= 0 && pos < hot.last_pos && hot.last_pos - pos < POINTS)
+        pos = hot.last_pos;
     return pos;
 }
 
@@ -712,7 +721,7 @@ static void record(int p, int pos, unsigned amount)
         perf_rec_has[p][i / POINTS] |= (unsigned char)(1 << (i % POINTS));
     }
     rec_pos[p] = pos;
-    perf_rec_used |= 1u << p;
+    hot.perf_rec_used |= 1u << p;
 }
 
 static void wipe(void)
@@ -723,8 +732,8 @@ static void wipe(void)
             perf_rec_has[p][s] = 0;
         rec_pos[p] = -1;
     }
-    perf_rec_used = 0;
-    perf_rec_hidden = 0;
+    hot.perf_rec_used = 0;
+    hot.perf_rec_hidden = 0;
 }
 
 // Hand each driven performance back to what it was before the quick perf rec took it.
@@ -734,42 +743,20 @@ static void release_driven(void)
     for (p = 0; p < PERFS; p++)
         if (driven >> p & 1) {
             PERF_AMOUNT(p) = rest[p];
-            seen[p] = rest[p];
+            hot.seen[p] = rest[p];
         }
     driven = 0;
 }
 
-// Every performance's amount as we last saw it, none still touched or recording.
-static int quiet(void)
-{
-    int p;
-    for (p = 0; p < PERFS; p++)
-        if (PERF_AMOUNT(p) != seen[p] || touched[p] || rec_pos[p] >= 0)
-            return 0;
-    return 1;
-}
-
-void qperf_render(void)
+// The whole block: what qperf_render did up to 0.2.1, after its first test. Its early
+// return for a block where nothing happens is qperf_render's quick exit now.
+static void render_all(void)
 {
     int p, pos, rec, pattern = U8(LIVE_PATTERN_AT);
-    if (!ready || perf_rec_busy)
-        return;
-    if (pattern != perf_rec_pattern) {
+    if (pattern != hot.perf_rec_pattern) {
         release_driven();
         wipe();
-        perf_rec_pattern = pattern;
-    }
-    // Nothing to do this block: no knob turn or take, no pad held, nothing driven or
-    // touched, no quick perf rec to play back, every amount where it was. Then the rest
-    // of this handler changes nothing but last_pos, which position() reads next block, so
-    // set only that. The audio interrupt runs this every block, sequencer stopped or not.
-    if (!knob_touched && !knob_armed && !knob_was && !pads_held && !driven
-        && (!perf_rec_used || perf_rec_hidden)) {
-        int pot = qperf_pot;
-        if ((!pot || (pot == pot_last && pot_rest)) && quiet()) {
-            last_pos = playing() ? position() : -1;
-            return;
-        }
+        hot.perf_rec_pattern = pattern;
     }
     // The QPER knob: a resting pot wobbles a step, and stock writes each wobble
     // to the linked performance. So a turn starts only once the knob has left
@@ -817,8 +804,8 @@ void qperf_render(void)
     for (p = 0; p < PERFS; p++) {
         unsigned short now = PERF_AMOUNT(p);
         int knob = known >> p & 1, wobble = knob && qperf_pot && now == (unsigned short)((qperf_pot - 1) << 7);
-        int moved = now != seen[p] && !wobble, held_now;
-        if (now != seen[p] && (!wobble || !now)) {
+        int moved = now != hot.seen[p] && !wobble, held_now;
+        if (now != hot.seen[p] && (!wobble || !now)) {
             if (now)
                 pads_held |= 1u << p;
             else
@@ -826,12 +813,12 @@ void qperf_render(void)
         }
         held_now = pads_held >> p & 1;
         if (moved || held_now || (knob && (knob_armed || knob_touched))) {
-            seen[p] = now;
+            hot.seen[p] = now;
             touched[p] = moved || held_now ? TOUCH_BLOCKS : 1;   // the knob lets go at once
             driven &= ~(1u << p);       // it is theirs now
         } else {
-            if (now != seen[p]) {
-                seen[p] = now;          // the knob resting: its amount, but no move
+            if (now != hot.seen[p]) {
+                hot.seen[p] = now;      // the knob resting: its amount, but no move
                 driven &= ~(1u << p);
             }
             if (touched[p])
@@ -840,17 +827,17 @@ void qperf_render(void)
     }
     if (pos < 0) {
         release_driven();
-        last_pos = -1;
+        hot.last_pos = -1;
         for (p = 0; p < PERFS; p++)
             rec_pos[p] = -1;
         return;
     }
-    last_pos = pos;
+    hot.last_pos = pos;
     for (p = 0; p < PERFS; p++) {
         unsigned bit = 1u << p;
         if (touched[p]) {
             if (rec) {
-                if (perf_rec_hidden) {
+                if (hot.perf_rec_hidden) {
                     wipe();             // a new take replaces the cleared one
                 }
                 record(p, pos, PERF_AMOUNT(p));
@@ -858,20 +845,73 @@ void qperf_render(void)
             continue;
         }
         rec_pos[p] = -1;
-        if (!perf_rec_hidden && (perf_rec_used & bit) && has_point(p, pos)) {
+        if (!hot.perf_rec_hidden && (hot.perf_rec_used & bit) && has_point(p, pos)) {
             unsigned short amount = (unsigned short)(perf_rec[p][pos] << 7);
             if (!(driven & bit)) {
                 rest[p] = PERF_AMOUNT(p);
                 driven |= bit;
             }
             PERF_AMOUNT(p) = amount;
-            seen[p] = amount;
+            hot.seen[p] = amount;
         } else if (driven & bit) {
             PERF_AMOUNT(p) = rest[p];
-            seen[p] = rest[p];
+            hot.seen[p] = rest[p];
             driven &= ~bit;
         }
     }
+}
+
+// Anything left in play after a whole block that a later block must look at. Only the
+// whole block raises these; the UI only lowers them (release_driven, wipe), so a 0 here
+// stays true until the next whole block.
+static int stirring(void)
+{
+    int p;
+    if (knob_touched || knob_armed || knob_was || pads_held || driven)
+        return 1;
+    for (p = 0; p < PERFS; p++)
+        if (touched[p] || rec_pos[p] >= 0)
+            return 1;
+    return 0;
+}
+
+// Every performance's amount where we last saw it: two at a time.
+typedef unsigned long __attribute__((may_alias)) amount_pair_t;
+static int amounts_seen(const amount_pair_t *was)
+{
+    const volatile amount_pair_t *now = (const volatile amount_pair_t *)PERF_AMOUNTS_AT;
+    return now[0] == was[0] && now[1] == was[1] && now[2] == was[2]
+        && now[3] == was[3] && now[4] == was[4] && now[5] == was[5];
+}
+
+// A whole block, then what the quick exit needs to know about it.
+static void __attribute__((noinline)) render_whole(void)
+{
+    render_all();
+    hot.stirring = stirring();
+    hot.pot_still = pot_rest ? pot_last : 0;
+}
+
+// The audio interrupt runs this every block, sequencer stopped or not. A block where
+// nothing happens takes the quick exit: the same pattern, nothing still in play from the
+// last whole block (stirring), no quick perf rec to play back, the knob at rest and every
+// amount where it was. That is 0.2.1's early return, and as there, the whole block would
+// change nothing but last_pos, so set only that. It reads the hot lines only.
+void qperf_render(void)
+{
+    struct qperf_hot *h = &hot;
+    int pot;
+    __asm__("" : "+a"(h));              // one address register for the hot lines: shorter code
+    if (!h->ready || h->perf_rec_busy)
+        return;
+    if (!h->stirring && U8(LIVE_PATTERN_AT) == h->perf_rec_pattern
+        && (!h->perf_rec_used || h->perf_rec_hidden)
+        && (!(pot = qperf_pot) || pot == h->pot_still)
+        && amounts_seen((const amount_pair_t *)h->seen)) {
+        h->last_pos = playing() ? position() : -1;
+        return;
+    }
+    render_whole();
 }
 
 // A step's value in one performance's quick perf rec: its first recorded point, so a
@@ -922,10 +962,10 @@ QPERF_UI static int perf_rec_target(const unsigned char *table, int i)
 {
     const unsigned char *t = table + SLOT_BYTES * i, *u = table;
     int j;
-    if (t[2] > TRACK_NONE || t[4] >= PERFS || !(perf_rec_used >> t[4] & 1) || t[3] >= WORDS)
+    if (t[2] > TRACK_NONE || t[4] >= PERFS || !(hot.perf_rec_used >> t[4] & 1) || t[3] >= WORDS)
         return 0;
     for (j = 0; j < i; j++, u += SLOT_BYTES)
-        if (u[2] == t[2] && u[3] == t[3] && u[4] < PERFS && (perf_rec_used >> u[4] & 1))
+        if (u[2] == t[2] && u[3] == t[3] && u[4] < PERFS && (hot.perf_rec_used >> u[4] & 1))
             return 0;
     return 1;
 }
@@ -944,7 +984,7 @@ QPERF_UI static int apply_target(void *kit, const unsigned char *table, word_t p
         return 0;
     for (i = 0; i < SLOTS && count < PERFS; i++) {
         const unsigned char *t = table + SLOT_BYTES * i;
-        if (t[2] == track && t[3] == word && t[4] < PERFS && (perf_rec_used >> t[4] & 1)) {
+        if (t[2] == track && t[3] == word && t[4] < PERFS && (hot.perf_rec_used >> t[4] & 1)) {
             locks[count] = (short)(t[0] << 8 | t[1]);
             perfs[count++] = t[4];
         }
@@ -1115,7 +1155,7 @@ QPERF_UI static void apply_perf_rec(void)
     char *data;
     unsigned tracks = 0, longer = 0, skipped = 0;
     int i, need = 0, wrote = 0, steps, track, length[FX_TRACK + 1];
-    if (!perf_rec_used || perf_rec_hidden || !steps_pattern || !locks) {
+    if (!hot.perf_rec_used || hot.perf_rec_hidden || !steps_pattern || !locks) {
         show("NOTHING TO APPLY");
         return;
     }
@@ -1198,12 +1238,12 @@ QPERF_UI static void apply_perf_rec(void)
 // QPER + NO: empty the quick perf rec, and bring it back on the next press.
 QPERF_UI static void clear_perf_rec(void)
 {
-    if (perf_rec_hidden) {
-        perf_rec_hidden = 0;
+    if (hot.perf_rec_hidden) {
+        hot.perf_rec_hidden = 0;
         show("UNDO CLEAR");
-    } else if (perf_rec_used) {
+    } else if (hot.perf_rec_used) {
         release_driven();
-        perf_rec_hidden = 1;
+        hot.perf_rec_hidden = 1;
         show("CLEAR QUICK PERF REC");
     } else {
         show("NOTHING TO CLEAR");
@@ -1212,12 +1252,12 @@ QPERF_UI static void clear_perf_rec(void)
 
 static void perf_rec_action(int key)
 {
-    perf_rec_busy = 1;
+    hot.perf_rec_busy = 1;
     if (key == KEY_YES)
         apply_perf_rec();
     else
         clear_perf_rec();
-    perf_rec_busy = 0;
+    hot.perf_rec_busy = 0;
 }
 
 void qperf_pad(void *event, int perf)
@@ -1334,9 +1374,9 @@ QPERF_UI void qperf_project(int how, unsigned dropped)
 {
     (void)how;
     (void)dropped;
-    ready = 1;
+    hot.ready = 1;
     kit_changed = 1;
-    perf_rec_pattern = -2;              // a new project: the next block empties it
+    hot.perf_rec_pattern = -2;          // a new project: the next block empties it
 }
 
 QPERF_UI void qperf_tick(void *ctrl)
@@ -1346,7 +1386,7 @@ QPERF_UI void qperf_tick(void *ctrl)
     struct { void *object; void *counts; } shared;
     void *popup;
     (void)ctrl;
-    if (ready && kit_changed) {
+    if (hot.ready && kit_changed) {
         unsigned mask;
         kit_changed = 0;                // first, so a change after this asks again
         mask = linked(active_kit());
