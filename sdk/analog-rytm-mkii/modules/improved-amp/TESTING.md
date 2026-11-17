@@ -1,10 +1,44 @@
 # Improved AMP: testing
 
-Improved AMP 0.1.1-experimental (0.1.0-experimental from "The package's own image flashed: IA15" down), Analog Rytm MKII OS 1.74, on the Modwerk base (core-ar2 0.7) with the
+Improved AMP 0.1.2-experimental (0.1.1-experimental from "0.1.1: the UI task's functions built cold" down, 0.1.0-experimental from "The package's own image flashed: IA15" down), Analog Rytm MKII OS 1.74, on the Modwerk base (core-ar2 0.7) with the
 amp record hook. The sections from "Unit, ED02" down record the module's builds under its earlier name,
 Improved Envelopes (symbols `envelopes_*`, now `improved_amp_*`; HLD then read in ms). "ENV RESET AMP
 pre-fade" records the pre-fade's builds from before it moved into this module. The test builds' `.syx`
 files stayed on the tester's computer.
+
+## 0.1.2: stock's hold compare without a table, 17 Nov 2026
+
+The change: stock's hold compare in `amp_env_commands` (0x40109bc2..0x40109bd1, every block of state 2:
+the hold counter against the entry for the knob's value in the hold table) no longer reads the
+module's 512-byte table of 0x7fffffff, which a `ptr` site pointed it at. Two byte sites make it compare
+the counter with 0x7fffffff held in a0: the table's lea becomes `movea.l #0x7fffffff,%a0` (6 bytes) and
+the indexed compare `tst.l %d1; cmp.l %a0,%d1` (4 bytes). The compare sets the same flags as before
+for every counter and every HLD value, so the branch after it, the state and the counter move as
+before; a0 is scratch from there to the loop head, which loads it again (the record hook's entries may
+use it). No change in behaviour is intended. Fingerprint (as below, the same seven files):
+`91539146…5649`, `evidence.sourceSha256`. The test builds' `.syx` files stayed on the tester's
+computer.
+
+- **Reading.** Stock OS 1.74 read from the tester's own copy: the only code that writes the voices'
+  amp states and hold counters is `amp_env_commands` (no other absolute reference to them); the hold
+  table was read only at this compare. The two sites overlap no other site of this module or the base, and a scan of the whole
+  image finds no stock branch into them after their first byte.
+- **Package.** `.run` 8,364 bytes (0.1.1: 8,876), 512 fewer; it is 0.1.1's `.run` with the table taken
+  out, byte for byte, and its relocations the same moved by the table's length. `.bss` unchanged
+  (160). Linked alone on the plain base (IA17, sha256 `32787aac…f6e0`) the module takes 8,716 bytes of
+  the shared mod area (ramSpare 110,288; 0.1.1's package on the same base, IB11: 109,776). Beside the
+  two sites, the image differs from IB11 only in the addresses of the tables that moved.
+- **rytm-emu** (`2ac0f1f`, the author's local build). IA17 against IB11 from cold boot, the same input:
+  BD pad hits with HLD turned through 0, one step, 16 steps, 126 and AUTO, turned to and from AUTO
+  inside a hold and a gate, ATK raised, SD and CH hits and a fast series inside an 8-step hold: the
+  analog voices' recording and every DAC word the same, and voice 0's state and hold counter, read
+  every million instructions (4,300 readings, through states 1, 2 and 3), the same. With voice 0 put in
+  state 2 and its counter poked to 0x7fffffff, 0x7ffffff0, 0x80000000 and 0, both images move it the
+  same way. The screenshot plans: all 89 AMP page frames and 18 ENV RESET frames the same bytes as
+  IB11's, and the three captures the same as those committed since 0.1.0.
+- **Host.** The pre-fade scan's host test passes (68 checks); `improved_amp_voice` and the pre-fade are
+  byte-identical to 0.1.1's, so their earlier host results stand.
+- **Not run for 0.1.2:** a unit. Planned: the module's 25 rig cases and a hold heard on the unit.
 
 ## 0.1.1: the UI task's functions built cold, 16 Nov 2026
 

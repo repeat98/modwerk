@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "improved-amp",
   "name": "Improved AMP",
-  "version": "0.1.1-experimental",
+  "version": "0.1.2-experimental",
   "machine": "analog-rytm-mkii",
   "category": "machines",
   "exclusive": false,
@@ -130,14 +130,14 @@
       "ui:AMP page envelope picture HLD",
       "ui:SOUND SETTINGS ENV RESET values",
       "audio:filter attack rate table",
-      "audio:amp hold table",
+      "audio:amp hold compare",
       "audio:amp decay table",
       "audio:filter decay and release table",
       "audio:amp overdrive CV"
     ]
   },
   "resources": {
-    "memoryBytes": 9228,
+    "memoryBytes": 8716,
     "fastBytes": null,
     "load": {
       "display": "About 1.6 points of the audio block at idle on the author's unit, about 1.0 of them in the amp record entries",
@@ -146,31 +146,18 @@
     }
   },
   "evidence": {
-    "tier": "author-hardware",
-    "moduleVersion": "0.1.1-experimental",
+    "tier": "emulator",
+    "moduleVersion": "0.1.2-experimental",
     "reports": [
       "TESTING.md"
     ],
-    "hardware": {
-      "model": "Analog Rytm MKII",
-      "release": "1.74",
-      "testedOn": "2026-11-16",
-      "tester": "npp1993",
-      "durationMinutes": null,
-      "summary": "0.1.1 (functions that run only in the UI task built cold, for size; the audio path's code byte-identical) ran on npp1993's (the author's) Analog Rytm MKII, OS 1.74, run by the author's automated USB test rig with the author's go, 16 November 2026, as the rig's reports have it: CA02 (sha256 8c732687), a development build of the Modwerk base with a USB test link and four modules carrying the same change, loaded to RAM over the flashed RB08. Of the module's 25 rig cases 18 pass: env-reset, filter-times, hld-func, hld, ovr, save, times and prefade-fast, and with a looped sample on BD (the cases need a sound that rings) first-trig and the pre-fade's prefade, -cond, -edit, -locktrig, -micro, -mute, -retrig, -series and -swing. 7 fail: sound, sound-filter, sound-hld and sound-ovr (exact lengths and peaks written for one particular ringing sound, which the loop measures differently), hld-speed and sound-hld-speed and sound-hld's screen compares (the track-speed digit on stock's SCALE page), and prefade-lock (its lock screen differs, one extra dip, likely the loop point). In rytm-emu the module's 8 cases give the same screens and measures as the source before. 0.1.0's runs: TESTING.md.",
-      "limitations": [
-        "Run by an automated rig; not judged by ear. 7 of 25 cases fail on the unit; the summary and TESTING.md give each one's likely cause as the reports have it (references written for another sound, the track-speed digit on stock's SCALE page, a lock screen and one extra dip).",
-        "The tested image held a private development base with a USB test link and three other modules, not the published base; its sources differ from this source only in a comment. The package's own image (IA16) has not run on a unit.",
-        "Not run for this version: the package flashed, a project save and load or a power cycle, the audio load. The audio path's functions are byte-identical to 0.1.0's, whose runs TESTING.md lists.",
-        "No sequencer running on an external clock, tempo change during a hold or NORMAL scale mode; no +Drive sound, pattern change or probability condition (as for 0.1.0)."
-      ]
-    },
+    "hardware": null,
     "verifiedBy": null,
-    "sourceSha256": "fa0f2eac66ab7528ff9b505269fa79e9f79dee552c8321dead391fefb5cbc1b7"
+    "sourceSha256": "91539146218079afd15030ba398e7c268855cb94043469ce65f4cce18b6f5649"
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.1, by the author's automated USB test rig on their Analog Rytm MKII (OS 1.74), 16 November 2026: 18 of 25 cases pass on CA02 (this change on a development base with a test link and three other modules, from RAM); the 7 failures and their likely causes are in TESTING.md. rytm-emu: the module's 8 cases and the screenshots match the source before. 0.1.0: 25 cases on IL05, the hold and pre-fade cases on IL06, the package's own image flashed (boot, pads, project save and load, power cycle).",
+    "summary": "0.1.2 (stock's hold compare kept from ending a hold by two byte sites instead of a 512-byte table; no change in behaviour) has not run on a unit yet: its .run is 0.1.1's minus the table, byte for byte, and in rytm-emu its image and 0.1.1's give the same audio, voice states and screens. 0.1.1, by the author's automated USB test rig on their Analog Rytm MKII (OS 1.74), 16 November 2026: 18 of 25 cases pass on CA02; the 7 failures and their likely causes are in TESTING.md. 0.1.0: 25 cases on IL05, the hold and pre-fade cases on IL06, the package's own image flashed (boot, pads, project save and load, power cycle).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -217,9 +204,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "4579c5bf720756cf365723a85d1f26c04b89df7c59850d8e3c41c8d73f8ab37a",
-        "setup": "Headless rytm-emu (dtboot) running IA16: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.1-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "32787aac0f5c8518aa9293251c4a650c4760f3a3d62e5082e43e8a81636df6e0",
+        "setup": "Headless rytm-emu (dtboot) running IA17: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.2-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -233,9 +220,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "4579c5bf720756cf365723a85d1f26c04b89df7c59850d8e3c41c8d73f8ab37a",
-        "setup": "Headless rytm-emu (dtboot) running IA16: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.1-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "32787aac0f5c8518aa9293251c4a650c4760f3a3d62e5082e43e8a81636df6e0",
+        "setup": "Headless rytm-emu (dtboot) running IA17: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.2-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -249,9 +236,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "4579c5bf720756cf365723a85d1f26c04b89df7c59850d8e3c41c8d73f8ab37a",
-        "setup": "Headless rytm-emu (dtboot) running IA16: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.1-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "32787aac0f5c8518aa9293251c4a650c4760f3a3d62e5082e43e8a81636df6e0",
+        "setup": "Headless rytm-emu (dtboot) running IA17: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.2-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
