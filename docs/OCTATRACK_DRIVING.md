@@ -234,7 +234,8 @@ To compare a Part's working and saved copies: `mem:` both addresses with length 
 ## Fast and safe habits
 
 - One session; a handful of steps per command; `perl -e 'alarm N; exec @ARGV'` around anything that talks to
-  the unit.
+  the unit. Right before a trial, check `~/.cache/modwerk-octatrack/last-boot` and running `device.mjs`
+  processes: another session's RAM boot mid-trial replaces your image and ends the trial.
 - Let steps wait for their result (`pick:`, `part`), not fixed `w` waits.
 - After a power cycle, the first `npm run device` command often fails while the bridge reopens the unit; run it
   again before treating it as a fault. `status` then shows generation 0 and the base's own digest as the active
