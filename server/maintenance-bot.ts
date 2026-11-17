@@ -1,5 +1,6 @@
 import type { Database, Env } from './platform'
 import { digest, HttpError, jsonBody, response } from './security'
+import { boardUser } from './agent-board'
 
 /**
  * The maintenance bot's ledger and its Telegram channel (docs/MAINTENANCE_BOT.md).
@@ -53,12 +54,18 @@ export function chunks(text: string, limit = TELEGRAM_LIMIT) {
   return parts
 }
 
-const when = (seconds: number) => new Date(seconds * 1000).toISOString().slice(0, 16).replace('T', ' ') + ' UTC'
-function actionText(row: Pick<ActionRow, 'tier' | 'summary' | 'reason' | 'due_at'>, outcome = '') {
-  const head = row.tier === 'ask' ? 'Needs your OK' : 'Will do at ' + when(row.due_at) + ' unless you stop it'
-  return [head, row.summary, row.reason, outcome].filter(Boolean).join('\n\n')
+/** The owner's local time; the owner lives in Berlin. */
+const when = (seconds: number) => new Date(seconds * 1000).toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' })
+/** Two lines the owner can read at a glance: what, and what happens next. The reason shows only after Why?. */
+function actionText(row: Pick<ActionRow, 'tier' | 'summary' | 'reason' | 'due_at'>, expanded = false) {
+  const next = row.tier === 'ask' ? 'Needs your OK.' : 'Runs at ' + when(row.due_at) + ' unless you stop it.'
+  return [row.summary, next, expanded && row.reason].filter(Boolean).join('\n')
 }
-const buttons = (row: Pick<ActionRow, 'id' | 'tier'>) => ({ inline_keyboard: [[{ text: 'Stop', callback_data: 's:' + row.id }, { text: row.tier === 'ask' ? 'Approve' : 'Do it now', callback_data: 'g:' + row.id }]] })
+const outcomeText = (mark: string, row: Pick<ActionRow, 'summary'>, detail = '') => mark + ' ' + row.summary + (detail ? ' (' + detail + ')' : '')
+function buttons(row: Pick<ActionRow, 'id' | 'tier'>, expanded = false) {
+  const go = { text: row.tier === 'ask' ? 'Approve' : 'Now', callback_data: 'g:' + row.id }, stop = { text: 'Stop', callback_data: 's:' + row.id }
+  return { inline_keyboard: [[...(row.tier === 'ask' ? [go, stop] : [stop, go]), ...(expanded ? [] : [{ text: 'Why?', callback_data: 'w:' + row.id }])]] }
+}
 
 async function state(db: Database) {
   const rows = (await db.prepare('SELECT key,value FROM maintenance_bot_state').all<{ key: string; value: string }>()).results
@@ -127,8 +134,8 @@ async function finish(env: Env, db: Database, id: string, body: Record<string, u
   const row = await db.prepare(`UPDATE maintenance_bot_actions SET status=?,result=?,updated_at=? WHERE id=? AND status='running' RETURNING ${PUBLIC},telegram_message_id`).bind(status, result, now(), id).first<ActionRow>()
   if (!row) throw new HttpError(409, 'That action is not claimed.')
   if (row.telegram_message_id) {
-    const outcome = (status === 'done' ? 'Done' : status === 'failed' ? 'Failed' : 'Dropped: things changed since') + (result ? ': ' + result : '.')
-    await telegram(env, 'editMessageText', { chat_id: configured(env).chat, message_id: row.telegram_message_id, text: actionText(row, outcome) }).catch(() => undefined)
+    const text = status === 'done' ? outcomeText('✅', row) : status === 'failed' ? outcomeText('❌ Failed:', row, result) : outcomeText('➖ Dropped:', row, 'changed since')
+    await telegram(env, 'editMessageText', { chat_id: configured(env).chat, message_id: row.telegram_message_id, text }).catch(() => undefined)
   }
   return { ok: true }
 }
@@ -153,14 +160,20 @@ type TelegramUpdate = {
 
 async function decide(env: Env, db: Database, query: NonNullable<TelegramUpdate['callback_query']>) {
   const [verb, id] = (query.data ?? '').split(':')
-  if ((verb !== 's' && verb !== 'g') || !ID.test(id ?? '')) return 'Unknown button.'
+  if ((verb !== 's' && verb !== 'g' && verb !== 'w') || !ID.test(id ?? '')) return 'Unknown button.'
   const at = now()
+  if (verb === 'w') {
+    const row = await db.prepare(`SELECT ${PUBLIC},telegram_message_id FROM maintenance_bot_actions WHERE id=?`).bind(id).first<ActionRow>()
+    if (!row || !row.telegram_message_id || (row.status !== 'pending' && row.status !== 'approved')) return 'Already decided or finished.'
+    await telegram(env, 'editMessageText', { chat_id: configured(env).chat, message_id: row.telegram_message_id, text: actionText(row, true), reply_markup: buttons(row, true) }).catch(() => undefined)
+    return ''
+  }
   const row = verb === 's'
     ? await db.prepare(`UPDATE maintenance_bot_actions SET status='vetoed',decided_at=?,updated_at=? WHERE id=? AND status IN ('pending','approved') RETURNING ${PUBLIC},telegram_message_id`).bind(at, at, id).first<ActionRow>()
     : await db.prepare(`UPDATE maintenance_bot_actions SET status='approved',decided_at=?,updated_at=? WHERE id=? AND status='pending' RETURNING ${PUBLIC},telegram_message_id`).bind(at, at, id).first<ActionRow>()
   if (!row) return 'Already decided or finished.'
-  const outcome = verb === 's' ? 'Stopped. The bot will not propose this again unless it changes.' : 'Approved: runs at the next hourly pass.'
-  if (row.telegram_message_id) await telegram(env, 'editMessageText', { chat_id: configured(env).chat, message_id: row.telegram_message_id, text: actionText(row, outcome) }).catch(() => undefined)
+  const text = verb === 's' ? outcomeText('✋ Stopped:', row) : outcomeText('👍 Approved:', row, 'runs within 30 min')
+  if (row.telegram_message_id) await telegram(env, 'editMessageText', { chat_id: configured(env).chat, message_id: row.telegram_message_id, text }).catch(() => undefined)
   return verb === 's' ? 'Stopped' : 'Approved'
 }
 
@@ -172,7 +185,7 @@ async function command(env: Env, db: Database, text: string) {
   else if (word === '/status' || word === '/start') {
     const { paused, actions } = await recent(db, 24)
     const count = (status: string) => actions.filter(action => action.status === status).length
-    reply = (paused ? 'Paused.' : 'Running.') + ' Waiting: ' + count('pending') + ', approved: ' + count('approved') + '. Last 24 h: ' + count('done') + ' done, ' + count('failed') + ' failed, ' + count('vetoed') + ' stopped. Commands: /pause, /resume, /status.'
+    reply = (paused ? 'Paused.' : 'Running.') + ' Waiting: ' + count('pending') + '. Done today: ' + count('done') + (count('failed') ? ', failed: ' + count('failed') : '') + '.'
   } else return
   await telegram(env, 'sendMessage', { chat_id: chat, text: reply })
 }
@@ -191,13 +204,50 @@ async function webhook(request: Request, env: Env, db: Database) {
   return response({ ok: true })
 }
 
+type TodoRow = { id: string; target: number; command: string; note: string; urgent: number; status: string; created_at: number; updated_at: number }
+const COMMAND = /^\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?$/
+
+/** Work for a session at the owner's computer. The bot adds and drops; /modwerk-todo lists and ticks off. */
+async function addTodos(db: Database, body: Record<string, unknown>) {
+  if (!Array.isArray(body.todos) || body.todos.length > 30) throw new HttpError(400, 'Send at most 30 to-dos.')
+  const at = now(), statements = body.todos.map(value => {
+    const { id, target, command, note, urgent } = (value ?? {}) as Record<string, unknown>
+    if (typeof id !== 'string' || !ID.test(id) || !Number.isSafeInteger(target) || (target as number) < 1) throw new HttpError(400, 'A to-do needs an id and a pull request or issue number.')
+    if (typeof command !== 'string' || !COMMAND.test(command)) throw new HttpError(400, 'A to-do command is a /modwerk-* command on one line.')
+    if (typeof note !== 'string' || !note.trim() || note.length > 200) throw new HttpError(400, 'A to-do note is 1 to 200 characters.')
+    return db.prepare('INSERT INTO maintenance_bot_todos(id,target,command,note,urgent,created_at,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET note=excluded.note,urgent=excluded.urgent,updated_at=excluded.updated_at WHERE status=\'open\'')
+      .bind(id, target, command, note.trim().replace(/\s+/g, ' '), urgent === true ? 1 : 0, at, at)
+  })
+  if (statements.length) await db.batch(statements)
+  return { ok: true }
+}
+const openTodos = async (db: Database) => ({ todos: (await db.prepare("SELECT id,target,command,note,urgent,created_at FROM maintenance_bot_todos WHERE status='open' ORDER BY urgent DESC,created_at LIMIT 100").all<TodoRow>()).results.map(row => ({ ...row, urgent: row.urgent === 1 })) })
+async function todoStatus(db: Database, id: string, body: Record<string, unknown>) {
+  if (body.status !== 'done' && body.status !== 'dropped') throw new HttpError(400, 'A to-do is done or dropped.')
+  const row = await db.prepare("UPDATE maintenance_bot_todos SET status=?,updated_at=? WHERE id=? AND status='open' RETURNING id").bind(body.status, now(), id).first()
+  if (!row) throw new HttpError(404, 'No open to-do has that id.')
+  return { ok: true }
+}
+
+/** The bot's key, or (for the to-do list only) the owner's own board session from `npm run board -- login`. */
+async function caller(request: Request, env: Env, db: Database, key: string) {
+  const bearer = request.headers.get('Authorization')?.match(/^Bearer (\S{32,200})$/)?.[1] ?? ''
+  if (bearer && same(await digest(bearer), key)) return 'bot'
+  const user = await boardUser(request, env, db), owner = (env.GITHUB_REPOSITORY?.trim() || 'repeat98/modwerk').split('/')[0].toLowerCase()
+  return user?.github_login.toLowerCase() === owner ? 'owner' : null
+}
+
 /** Routes under /api/maintenance-bot/. They run server-to-server, before the Origin check. */
 export async function maintenanceBotRoutes(request: Request, env: Env, db: Database, path: string): Promise<Response | null> {
   if (!path.startsWith('/api/maintenance-bot/')) return null
   const route = path.slice('/api/maintenance-bot'.length), method = request.method
   if (route === '/telegram' && method === 'POST') return await webhook(request, env, db)
-  const { key } = configured(env), bearer = request.headers.get('Authorization')?.match(/^Bearer (\S{32,200})$/)?.[1] ?? ''
-  if (!same(await digest(bearer), key)) throw new HttpError(401, 'Wrong maintenance bot key.')
+  const who = await caller(request, env, db, configured(env).key)
+  const todo = route.match(/^\/todos\/([a-f0-9]{16})\/status$/)
+  if (who && route === '/todos' && method === 'GET') return response(await openTodos(db))
+  if (who && todo && method === 'POST') return response(await todoStatus(db, todo[1], await jsonBody(request)))
+  if (who !== 'bot') throw new HttpError(401, who ? 'Only the bot may do that.' : 'Wrong maintenance bot key. The owner signs in with npm run board -- login.')
+  if (route === '/todos' && method === 'POST') return response(await addTodos(db, await jsonBody(request, 64 * 1024)))
   if (route === '/state' && method === 'GET') return response(await state(db))
   if (route === '/state' && method === 'PUT') {
     const body = await jsonBody(request)

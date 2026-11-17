@@ -15,13 +15,13 @@ The maintenance bot does the routine part of the [daily pass](MAINTENANCE.md) on
 | window | other replies and reviews (4 h); merging a green pull request, closing an issue (12 h) | Telegram message with **Stop** and **Do it now**; runs when the time is up |
 | ask | merges that touch CI, the bot, migrations, dependencies, sign-in, AGENTS.md, the guidelines or the SDK outside module folders; a first-time contributor's merge; turning down someone else's pull request | Telegram message with **Approve** and **Stop**; never runs without Approve |
 
-The bot never pushes, releases, deploys, touches secrets, or works on firmware, a unit or an emulator. Those items go in the report under "Needs a local session", with the command to run (`/modwerk-fix-issue`, `/modwerk-maintain`). Every action pins the head commit and comment count it was proposed against. If either changes before the action runs, the action is dropped and proposed again next pass. A merge is checked again for green checks at the moment it runs, then publishes through `workflow_dispatch` the way [author updates](MODULE_AUTHOR_UPDATES.md) do. The job's token cannot merge a change to `.github/workflows/`; the owner merges those.
+The bot never pushes, releases, deploys, touches secrets, or works on firmware, a unit or an emulator. Those become **to-dos**, each with the `/modwerk-*` command that does it, kept in the ledger (`maintenance_bot_todos`, migration 0092). In any session at the owner's computer, `/modwerk-todo` lists them (`npm run todo`, signed in with the owner's `npm run board -- login`), runs the command, and ticks it off. A to-do whose item closes is dropped on the next daily run. Every action pins the head commit and comment count it was proposed against. If either changes before the action runs, the action is dropped and proposed again next pass. A merge is checked again for green checks at the moment it runs, then publishes through `workflow_dispatch` the way [author updates](MODULE_AUTHOR_UPDATES.md) do. The job's token cannot merge a change to `.github/workflows/`; the owner merges those.
 
 The model's output is untrusted: it is limited to one file, every item is checked against the policy, public text may mention only the item's author and link only to Modwerk, and anything outside the policy is held back and listed in the report. Changes to `scripts/maintenance-bot/` always need the owner's OK.
 
 ## Telegram
 
-Tap **Stop**, **Do it now** or **Approve** on an action's message. `/pause` stops all proposals and actions until `/resume`, and `/status` shows what is waiting. Only the owner's private chat counts. The report arrives at 07:00 UTC.
+Each action is one message of two lines, what and when, with **Stop**, **Now** or **Approve**, and **Why?** for the reason. The report at 07:00 UTC is a few lines: what waits, what was done (counted), failures, and how many to-dos wait, naming the urgent ones. `/pause` stops all proposals and actions until `/resume`, and `/status` shows what is waiting. Only the owner's private chat counts.
 
 ## Setup and settings
 
