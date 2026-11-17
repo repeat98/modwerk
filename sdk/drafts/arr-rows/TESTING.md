@@ -143,7 +143,13 @@ with a selection it replaces the selected rows. Built that way: a paste and an i
 rows at P with the N copied ones; D = 0 for an insert), every row and target mapped from before to after in one step
 (README). Pressing FUNC + STOP again where the cursor was undoes it, also after replacing a selection. Under ot_emu on
 the beta base: copying rows 1-3 of `0 1 2 3 4 5 6 7` and replacing row 6 gave `0 1 2 3 4 5 1 2 3 7` (10 rows), and
-replacing rows 2-4 gave `0 1 1 2 3 5 6 7`; FUNC + STOP again restored each. Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
+replacing rows 2-4 gave `0 1 1 2 3 5 6 7`; FUNC + STOP again restored each.
+
+Stage 1 on that build: source `80e94f2be`, package
+`a0e796c23ecc1fd15d3d5e5c4670683783ac06d485933c2ff748566f53a9c9cd`, the developer's MKI. Inventory `[]` before (the
+previous trial stopped with Ctrl-C and rolled back); a 20-second trial ran the whole time with the diagnostic word
+`0xff0c0001` (the editor open, cursor row 12, no selection, no disagreement), rolled back by itself; inventory `[]`
+and the base's identity after. Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
 FUNC + DOWN insert and FUNC + UP delete; CUE + track keys in the editor; ARR CHANGE, SAVE, RELOAD; a project saved
 with the module loaded on a base without it (arrNN files compared).
 
