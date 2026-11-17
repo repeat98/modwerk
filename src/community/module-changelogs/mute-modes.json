@@ -3,8 +3,9 @@
     "version": "0.2.3-experimental",
     "date": "2026-11-13",
     "changes": [
-      "In OTFX-T and DT-T, a muted FM Synth track now stays silent too, once FM Synth asks Mute Modes which trigs to drop (FM Synth 0.1.4). Until then, use MUTE MODE OT for FM tracks.",
-      "Other machines that start their own notes can ask the same way; audio tracks behave as before."
+      "In OTFX-T and DT-T, a muted FM Synth track stays silent too once FM Synth asks Mute Modes which trigs to drop (FM Synth 0.1.4). Until then, use MUTE MODE OT for FM tracks.",
+      "Other machines that start their own notes can ask the same way; audio tracks behave as before.",
+      "Tested over USB on an MKI: all four modes, solo, a power cycle and removal."
     ]
   },
   {

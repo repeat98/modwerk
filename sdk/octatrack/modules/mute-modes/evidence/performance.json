@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "module": "mute-modes",
-  "version": "0.2.2-experimental",
+  "version": "0.2.3-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",

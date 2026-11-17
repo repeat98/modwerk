@@ -11,7 +11,7 @@
     {
       "path": "patch_softmute.s",
       "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-      "revision": "d2187784e59e1a01195ecb86790029f7ff51d889",
+      "revision": "00897f016fbe8e82f111718d2860535e8f6f72ac",
       "sourcePath": "modwerk-modules/mute-modes/patch_softmute.s",
       "sourceBytes": 90891,
       "sourceGitBlob": "d410213b39a62f855c9898a12c380b58fcf513e2",
@@ -21,7 +21,7 @@
     {
       "path": "patch_mutemode.s",
       "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-      "revision": "d2187784e59e1a01195ecb86790029f7ff51d889",
+      "revision": "00897f016fbe8e82f111718d2860535e8f6f72ac",
       "sourcePath": "modwerk-modules/mute-modes/patch_mutemode.s",
       "sourceBytes": 10222,
       "sourceGitBlob": "132712bf4a68879c6a0433ad08a44703523885a2",
@@ -31,7 +31,7 @@
     {
       "path": "manifest.py",
       "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-      "revision": "d2187784e59e1a01195ecb86790029f7ff51d889",
+      "revision": "00897f016fbe8e82f111718d2860535e8f6f72ac",
       "sourcePath": "modwerk-modules/mute-modes/manifest.py",
       "sourceBytes": 8503,
       "sourceGitBlob": "fc9fcfc41ddceab6b166ad865bc216103a546041",
@@ -41,7 +41,7 @@
     {
       "path": "runtime.json",
       "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-      "revision": "d2187784e59e1a01195ecb86790029f7ff51d889",
+      "revision": "00897f016fbe8e82f111718d2860535e8f6f72ac",
       "sourcePath": "modwerk-modules/mute-modes/runtime.json",
       "sourceBytes": 270,
       "sourceGitBlob": "5ca1cad407746fd7e18206b36c5dae5c7e26c618",
@@ -134,6 +134,6 @@
   "status": "Listed; author update. Hardware: see TESTING.md.",
   "authorPin": {
     "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-    "revision": "d2187784e59e1a01195ecb86790029f7ff51d889"
+    "revision": "00897f016fbe8e82f111718d2860535e8f6f72ac"
   }
 }

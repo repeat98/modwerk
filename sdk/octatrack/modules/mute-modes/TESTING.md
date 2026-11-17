@@ -1,6 +1,28 @@
 # Mute Modes measurements
 
-Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0, 0.2.1 and 0.2.2 below, upstream `6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136` (0.2.2: sambanks/octabam `08bffd529c0f301708bcb2d48759e54e11f59858`).
+Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0, 0.2.1, 0.2.2 and 0.2.3 below, upstream `6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136` (0.2.2: sambanks/octabam `08bffd529c0f301708bcb2d48759e54e11f59858`).
+
+## 0.2.3: Mute Modes answers `ev_trig_muted` (16 November 2026)
+
+- **The change.** A machine that starts its own note from a trig, before stock binds the track's voice (FM Synth), asks the base's raised `ev_trig_muted` which tracks' new trigs are dropped (#777). `mm_trig_muted` answers it: in OTFX-T and DT-T, the muted tracks, or with any track soloed the tracks that are not, less a SIDE-CHAIN key track (KEYMASK). That is `fresh_bind`'s per-track test applied to the whole mute word at once; OT and OTFX answer 0. `runtime.json` subscribes it at order 50. A first draft asked `mm_voice_bind` for all eight tracks: 305 instructions per ask, too much for a machine that asks once per trig in the frame interrupt, so the answer is one mask (16 at most).
+- **Source.** The author's files byte for byte at Zac-Kyoti/octatrack-kyoti-fw `00897f0` (`modwerk-modules/mute-modes/`); `sdk/imports/mute-modes-00897f0.json` replaces `mute-modes-bb9bead.json`. The handler sits under `MODWERK_EVENTS` only, so the native units do not change.
+- **Native probe.** `qualification/run.py` in the toolchain container (a Linux build of this checkout's `ot_emu`, mc68k `4a6d0d17`; `emac`, `periph`, `mc68kColdFireTimingTest` and `mc68kColdFireDivideTest` pass): `evidence/probes.json` and `evidence/source-identity.json` come out byte for byte as 0.2.2's.
+- **Emulator** (`loader_mute_keep_fixture`, run by `sdk/tests/test_mute_modes_runtime.py`; synthetic, as for 0.2.1): after every frame of every MUTE MODE, mute and solo state and KEY layout, with and without an `ev_mute_keep` provider, the base's `modwerk_raise_ev_trig_muted` answers exactly the tracks whose reset `mm_voice_bind` dropped in that frame: 244 asks, 94 of them non-zero, 0 failures in 6,561 checks; d2-d7/a2-a6 and the stack are kept; nothing installed, or only the provider, answers 0. At most 34 instructions per ask through the raise, 16 in the handler. A mask without KEYMASK, or without the solo term, fails. The fixture's `ev_trig_muted` checks follow in their own pull request (they are base files).
+- **Package.** `d460c7e2…` (2,922 bytes). `build.py --octabam-tables mute-modes` and `npm run octatrack:module-packages` build the same bytes.
+- **Table owner.** The declaration and recipe for this package are in `module-adapters/table-owners/` (tables at 1,388, 1,456 and 1,524; `table_declarations.validate` accepts it; SHA-256 `334e3290…`). Its approval and the base rebuilt with it are the owner's, after #1418.
+
+### Hardware report (MKI, 16 November 2026)
+
+The author put the Modwerk base on an Octatrack MKI (OS 1.40C) from a development build of the site (`npm run dev`, base `1625fef6…`). A development twin of base 0.7.5 with this version as the PERSONALIZE table owner (`4b375949…`, MAIN `a9cbf819…`) was booted from RAM over USB, and the release package `d460c7e2…` installed through the development session (accepted, no refusals). The author played a project and reported every step passing; the MUTE MODE word and the mute word were read back over USB at each step:
+
+- With T1 muted while playing: OT cuts at once with its tails (word 0); OTFX cuts the dry sound and lets the FX tails already running ring out (3); OTFX-T also drops new trigs (1); DT-T lets the sounding note finish its amp envelope and drops new trigs (2).
+- In DT-T, soloing T2 silences the other tracks as muted.
+- After a power cycle (the unit started on the flashed base) and a new RAM boot of the twin, the twin restored the module from the card by itself, with MUTE MODE still on DT-T.
+- Removal from the main page was accepted; the MUTE MODE row left PERSONALIZE and a mute cut as stock. With PERSONALIZE still open the base refused it (loader refusal 7, the table owner guard).
+
+The five pictures in `media/` are the unit's own LCD, read over USB during this run (`media/capture.json`).
+
+Not run on a unit: a machine that asks `ev_trig_muted` (FM Synth 0.1.4 has no package yet), a muted SIDE-CHAIN key track (Sidechain Compressor's package is bound to the flashed base, not the twin), an MKII, and the base rebuilt with this table owner.
 
 ## 0.2.2: OT-exit hold, a track still muted when MUTE MODE leaves OT stays cut (3 November 2026)
 

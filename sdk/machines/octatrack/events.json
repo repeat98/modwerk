@@ -1918,17 +1918,9 @@
    "context": "where the machine starts its note: the frame interrupt (the renderer the packer calls at 0x4000d43e) or a task: short, no firmware call that can block",
    "contract": "Return the tracks whose new trigs this module drops now: bit t for track t+1, bits 0-7; higher bits are ignored. Every handler runs. They are the tracks whose ev_voice_bind this module drops (1) in the same frame: muted or soloed-out tracks while one of its trig-dropping modes is on, less those whose trigs it lets through (ev_mute_keep). The asking machine starts no new note on these tracks and lets a note already sounding finish; with no answer (0) it plays every trig, as stock does. d2-d7/a2-a6 must be kept.",
    "order": "lower first, then module id; every handler runs and the answers are OR'd, so the order does not change the answer. 10-90.",
-   "subscribers": [
-    {
-     "module": "mute-modes",
-     "fn": "mm_trig_muted",
-     "order": 50,
-     "does": "in OTFX-T and DT-T, the muted tracks, or with any track soloed the tracks that are not, less a SIDE-CHAIN key track: the set whose reset its ev_voice_bind handler drops now, at most 16 instructions; 0 in OT and OTFX",
-     "evidence": "sdk/octabam/modules/mute-modes/patch_softmute.s mm_trig_muted (fresh_bind's test as one mask); sdk/tests/test_mute_modes_runtime.py checks the answer against the resets mm_voice_bind drops in every frame"
-    }
-   ],
+   "subscribers": [],
    "raisers": [],
-   "orderEvidence": "The answer is an OR: no handler can let another's dropped trigs through. Mute Modes (0.2.3) answers with its ev_voice_bind handler's test as one mask, checked against that handler in every frame of its runtime test (issue #777); FM Synth, which starts its note in its renderer before stock reaches ev_voice_bind, is the first machine to ask."
+   "orderEvidence": "The answer is an OR: no handler can let another's dropped trigs through. No module answers or asks it yet (issue #777): Mute Modes' answer is the test its ev_voice_bind handler makes for each track (fresh_bind, with KEYMASK), and FM Synth, which starts its note in its renderer before stock reaches ev_voice_bind, is the first machine to ask."
   },
   {
    "event": "ot_sample_editor_actions",
