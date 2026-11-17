@@ -146,18 +146,31 @@
     }
   },
   "evidence": {
-    "tier": "emulator",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.2-experimental",
     "reports": [
       "TESTING.md"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-17",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "0.1.2 (stock's hold compare kept from ending a hold by two byte sites instead of a 512-byte table) ran on npp1993's (the author's) Analog Rytm MKII, OS 1.74, from RAM (IA18, CRC 8acf944e: this version alone on a development base with a USB test link), run by the author's automated test rig with the author's go, 17 November 2026. With a looped sample on BD every hold measured as for 0.1.1 and 0.1.0: HLD 42 135.0 ms (8.5 at HLD 0), 57 308.0, 42 at 90 BPM 176.0, AUTO 108.5 and 509.5 for 100 and 500 ms notes, the track's faster speed 92.5; all sound checks of sound-hld and sound-hld-speed pass. env-reset, filter-times, hld, hld-func, ovr, save, times, prefade-swing and first-trig pass. The author played holds by ear and heard nothing wrong.",
+      "limitations": [
+        "Run by an automated rig; the author listened only informally.",
+        "The pre-fade cases and the other sound cases ran without a ringing sound (the rig's cases cleared or quietened the BD's sample part-way, not traced), so they did not measure the module; that code is byte-identical to 0.1.1's.",
+        "Screen compares of stock's SCALE page fail on its speed digit, as for 0.1.1.",
+        "The tested image held a development base with a USB test link, not the published base. Not run: the package flashed, a project save and load, a power cycle, the audio load."
+      ]
+    },
     "verifiedBy": null,
     "sourceSha256": "ff15f650635420c4152afbd3392de36c2f47164637c69d8fd5673da58112e13c"
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.2 (stock's hold compare kept from ending a hold by two byte sites instead of a 512-byte table) has not run on a unit yet: its .run is 0.1.1's minus the table, and in rytm-emu it gives the same audio, voice states and screens as 0.1.1. 0.1.1: 18 of 25 rig cases on the author's MKII (CA02), the failures' causes in TESTING.md. 0.1.0: 25 cases on IL05, the package flashed.",
+    "summary": "0.1.2 (two byte sites in place of a 512-byte table for stock's hold compare): on the author's MKII from RAM (IA18), 17 Nov 2026, every hold measured as for 0.1.1 (sound-hld, sound-hld-speed), and 9 more rig cases pass; rytm-emu gives the same audio, voice states and screens as 0.1.1. 0.1.1: 18 of 25 rig cases (CA02). 0.1.0: 25 cases on IL05, the package flashed.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

@@ -39,7 +39,22 @@ computer.
   IB11's, and the three captures the same as those committed since 0.1.0.
 - **Host.** The pre-fade scan's host test passes (68 checks); `improved_amp_voice` and the pre-fade are
   byte-identical to 0.1.1's, so their earlier host results stand.
-- **Not run for 0.1.2:** a unit. Planned: the module's 25 rig cases and a hold heard on the unit.
+- **On the unit.** IA18 (sha256 `d41c5c59…f4cc`, unpacked CRC `8acf944e`): this version on the
+  development base with the USB test link (`8e336c94`) alone, linked on RB08's store lock (ramSpare
+  94,896; 0.1.1's package on the same base and lock, IB12: 94,384). Loaded to RAM on the author's
+  Analog Rytm MKII (RB08 in flash) and run by the automated test rig with the author's go, 17 Nov
+  2026, in a scratch project, 120 BPM. With a looped sample on BD, the two hold cases measure every
+  hold as 0.1.1 and 0.1.0 did (len20 at HLD 0 8.5 ms; HLD 15 19.0, 31 60.5, 42 135.0 for a short and a
+  long note, 57 308.0; 42 at 90 BPM 176.0; AUTO 108.5 for a 100 ms note and 509.5 for 500 ms; 42 at
+  the track's faster speed 92.5 and back 134.5): every sound check of `sound-hld` and
+  `sound-hld-speed` passes. Their screen compares of stock's SCALE page fail on its speed digit, as
+  for 0.1.1. Of the other cases env-reset, filter-times, hld, hld-func, ovr, save, times,
+  prefade-swing and first-trig pass. The rest (the pre-fade's and the other sound cases) ran without a
+  sound that rang through them: the BD's sample was cleared or quietened by the rig's cases
+  part-way through (a rig fault, not traced), so they measure the sound, not the module; their code
+  is byte-identical to 0.1.1's. The author also played holds by ear on IA18 and heard nothing wrong.
+- **Not run for 0.1.2:** the package flashed, a project save and load, a power cycle, the audio load,
+  the pre-fade cases with a ringing sound.
 
 ## 0.1.1: the UI task's functions built cold, 16 Nov 2026
 
