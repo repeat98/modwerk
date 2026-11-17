@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 3,
+  "id": "light-taps",
+  "name": "Light Taps",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "filefolder",
+    "credits": [
+      "filefolder"
+    ]
+  },
+  "maintainers": [
+    "filefolder"
+  ],
+  "presentation": {
+    "label": "LIGHT TAPS",
+    "family": "Pads",
+    "summary": "Plays the light pad taps the Rytm normally ignores, as a soft hit.",
+    "overview": "The Rytm's pads report a light tap as a press but send it no strike, so stock plays nothing, though the same tap still toggles a mute. With LIGHT TAPS on, a pad press that gets no strike within 3 ms plays the pad at a low velocity (8 of 255), just below the softest hit the pads report. Real hits are untouched and keep their velocity. Off, the pads behave exactly as on stock.",
+    "highlights": [
+      "Light pad taps play instead of being ignored",
+      "Real hits keep the pads' own velocity",
+      "One switch in the GLOBAL menu, saved with the project"
+    ],
+    "usage": [
+      "Play quiet ghost notes and rolls with light fingertip taps",
+      "Live record light taps into the sequencer"
+    ]
+  },
+  "access": {
+    "location": "The GLOBAL menu, after SYSTEM: LIGHT TAPS: OFF or ON.",
+    "steps": [
+      "Press GLOBAL and scroll down past SYSTEM to LIGHT TAPS: OFF.",
+      "Press YES: the row reads LIGHT TAPS: ON.",
+      "Tap a pad lightly: it plays as a soft hit. Press YES on the row again to turn it off."
+    ],
+    "screenshots": []
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Every light tap plays at the same velocity: the pads report no force for a light tap, so there is nothing to grade it by.",
+      "A light tap plays about 3 ms after its press, the time the module waits for a strike that never comes.",
+      "OS 1.74 only."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [
+      "ev_settings",
+      "ev_tick"
+    ],
+    "claims": [
+      "settings:LIGHT TAPS",
+      "pad:panel pad event post (0x4008232c)",
+      "pad:panel key event post (0x40082492)",
+      "pad:panel task tick (0x40081944)"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": {
+      "display": "Not measured yet",
+      "method": "unmeasured",
+      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Built and linked for OS 1.74; not yet run on a unit as this module (Pad Thresh experiments reported in TESTING.md)."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author. Replace if you choose another GPL-compatible licence."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Light Taps thumbnail",
+      "alt": "A light pad tap that stays silent on stock, and plays as a soft hit with Light Taps on",
+      "credit": "filefolder",
+      "license": "GPL-3.0-or-later",
+      "source": "Original illustration in the shared signal-art style."
+    }
+  ]
+}

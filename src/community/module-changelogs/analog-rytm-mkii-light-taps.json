@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-17",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74 on the Modwerk base: light pad taps that stock ignores play as a soft hit.",
+      "Switch it on in the GLOBAL menu, past SYSTEM: LIGHT TAPS: ON. It is saved with the project.",
+      "Hard hits keep the pads' own velocity; a light tap plays at velocity 8, about 3 ms after the press."
+    ]
+  }
+]
