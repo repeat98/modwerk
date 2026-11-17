@@ -11,17 +11,17 @@
     {
       "path": "patch_softmute.s",
       "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-      "revision": "19f9dae64d5d59a171dfa4754cb4321cb1a7896e",
+      "revision": "d2187784e59e1a01195ecb86790029f7ff51d889",
       "sourcePath": "modwerk-modules/mute-modes/patch_softmute.s",
-      "sourceBytes": 90578,
-      "sourceGitBlob": "81b85c77bedf0ebbdc43c60749c223835c9c279a",
-      "sourceSha256": "950e52600b5ce671de64b729286a7fdcf05c69d3688f6ea579b81f40a8a186b5",
-      "vendoredSha256": "950e52600b5ce671de64b729286a7fdcf05c69d3688f6ea579b81f40a8a186b5"
+      "sourceBytes": 90891,
+      "sourceGitBlob": "d410213b39a62f855c9898a12c380b58fcf513e2",
+      "sourceSha256": "2003ca1fa0aafbbf7a2b6655803603b1621457b32e8904b8e6c165309fdc47e3",
+      "vendoredSha256": "2003ca1fa0aafbbf7a2b6655803603b1621457b32e8904b8e6c165309fdc47e3"
     },
     {
       "path": "patch_mutemode.s",
       "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-      "revision": "19f9dae64d5d59a171dfa4754cb4321cb1a7896e",
+      "revision": "d2187784e59e1a01195ecb86790029f7ff51d889",
       "sourcePath": "modwerk-modules/mute-modes/patch_mutemode.s",
       "sourceBytes": 10222,
       "sourceGitBlob": "132712bf4a68879c6a0433ad08a44703523885a2",
@@ -31,7 +31,7 @@
     {
       "path": "manifest.py",
       "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-      "revision": "19f9dae64d5d59a171dfa4754cb4321cb1a7896e",
+      "revision": "d2187784e59e1a01195ecb86790029f7ff51d889",
       "sourcePath": "modwerk-modules/mute-modes/manifest.py",
       "sourceBytes": 8503,
       "sourceGitBlob": "fc9fcfc41ddceab6b166ad865bc216103a546041",
@@ -41,7 +41,7 @@
     {
       "path": "runtime.json",
       "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-      "revision": "19f9dae64d5d59a171dfa4754cb4321cb1a7896e",
+      "revision": "d2187784e59e1a01195ecb86790029f7ff51d889",
       "sourcePath": "modwerk-modules/mute-modes/runtime.json",
       "sourceBytes": 270,
       "sourceGitBlob": "5ca1cad407746fd7e18206b36c5dae5c7e26c618",
@@ -128,12 +128,12 @@
   ],
   "notes": [
     "patch_softmute.s, patch_mutemode.s, manifest.py and runtime.json are the author's files byte for byte at the pinned commit, from modwerk-modules/mute-modes/, the author's own Modwerk copy (the 0.2.1 sources with Modwerk's MODWERK_EVENTS blocks, plus this version's changes). upstream/README.md, LICENSE and upstream/OCTABAM_LICENSE are unchanged from 0.1.0's record.",
-    "0.2.3 answers the base's raised ev_trig_muted (Modwerk #777): mm_trig_muted asks mm_voice_bind for tracks 7..0 and returns the tracks whose reset it drops (bit t = track t+1), so a machine that starts its own note from a trig (FM Synth) drops the same trigs Mute Modes drops for stock machines; OT and OTFX answer 0. runtime.json subscribes it at order 50. The code sits under MODWERK_EVENTS only: the native units (plain 996 B, SC_KEY 1106 B) and every author reference are unchanged.",
+    "0.2.3 answers the base's raised ev_trig_muted (Modwerk #777): mm_trig_muted applies fresh_bind's per-track test to the whole MUTE_STATE at once (muted tracks, or every unsoloed track while any is soloed, less the SIDE-CHAIN key tracks in KEYMASK), at most 16 instructions per ask; OT and OTFX answer 0. loader_mute_keep_fixture checks it against the resets mm_voice_bind drops in every frame. runtime.json subscribes it at order 50. The code sits under MODWERK_EVENTS only: the native units (plain 996 B, SC_KEY 1106 B) and every author reference are unchanged.",
     "The stock guard digests are 0.1.0's; no hook site changed."
   ],
   "status": "Listed; author update. Hardware: see TESTING.md.",
   "authorPin": {
     "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-    "revision": "19f9dae64d5d59a171dfa4754cb4321cb1a7896e"
+    "revision": "d2187784e59e1a01195ecb86790029f7ff51d889"
   }
 }

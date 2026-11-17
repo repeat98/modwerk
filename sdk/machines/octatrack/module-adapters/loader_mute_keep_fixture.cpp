@@ -10,6 +10,7 @@
 // whose per-track reset Mute Modes dropped in that frame. Synthetic, never qualification: the register/stack state at the sites,
 // the mute/solo/mode words, the per-track DSP records, the battery shadow and a stub that records
 // note-offs in place of stock's 0x40008f84. Local stock MAIN required; nothing is written back.
+#include <algorithm>
 #include <cassert>
 #include <cstdio>
 #include <fstream>
@@ -40,7 +41,7 @@ static unsigned checks, failures;
 #define CHECK(x) do { ++checks; if (!(x)) { ++failures; std::fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
 
 struct Probe {
-    ot::Machine m; std::map<std::string, uint32_t> sym;
+    ot::Machine m; std::map<std::string, uint32_t> sym; unsigned steps = 0; // instructions the last run() executed
     Probe(const std::vector<uint8_t>& stock, const std::vector<uint8_t>& code, const std::map<std::string, uint32_t>& symbols, bool events)
         : m(stock), sym(symbols)
     {
@@ -71,7 +72,8 @@ struct Probe {
         m68k_set_reg(cpu, M68K_REG_SP, sp0); m.write32(sp0, stop);
         for (unsigned i = 0; i < args.size(); i++) m.write32(sp0 + 4 + 4 * i, args[i]);
         auto unmapped = m.unmappedCount(); m68k_set_reg(cpu, M68K_REG_PC, entry); unsigned budget = 100000000;
-        while (m.pc() != until && budget--) assert(m.step());
+        steps = 0;
+        while (m.pc() != until && budget--) { assert(m.step()); ++steps; }
         assert(m.pc() == until && m.unmappedCount() == unmapped);
         std::vector<uint32_t> out(16);
         for (unsigned r = 0; r < 16; r++) out[r] = m68k_get_reg(cpu, m68k_register_t(M68K_REG_D0 + r));
@@ -99,7 +101,7 @@ int main(int argc, char **argv)
     auto stock = load(argv[1]);
     auto ev_code = load(argv[2]); auto ev_sym = names(argv[3]); auto old_code = load(argv[4]); auto old_sym = names(argv[5]);
     Pkt mmNew{load(argv[6]), names(argv[7])}, mmPlain{load(argv[8]), names(argv[9])}, mmKey{load(argv[10]), names(argv[11])}, keep{load(argv[12])};
-    unsigned scenarios = 0, asked = 0, answered = 0; uint32_t last_trig = 0;
+    unsigned scenarios = 0, asked = 0, answered = 0, raise_most = 0, handler_most = 0; uint32_t last_trig = 0;
 
     // The frame: hook 1 from its site to its return, then every track's fresh-voice bind (and the all-tracks call).
     auto frame = [&](Probe& p, const Pkt *mm, const Frame& f) {
@@ -138,6 +140,10 @@ int main(int argc, char **argv)
             CHECK(t[2] == 0x22222222 && t[3] == 0x33333333 && t[4] == 0x44444444 && t[5] == 0x55555555 && t[6] == 0x66666666);
             CHECK(t[7] == 0x77777777 && t[10] == 0xaaaaaaaa && t[11] == 0xbbbbbbbb && t[12] == 0xcccccccc && t[13] == 0xdddddddd);
             CHECK(t[14] == 0xeeeeeeee && t[15] == sp0 + 4);
+            raise_most = std::max(raise_most, p.steps);
+            // The handler alone, entered directly (its image offset in the installed unit): what one ask costs Mute Modes.
+            auto h = p.run(p.call("fixture_image", {mm->id()}) + mm->sym.at("mm_trig_muted"), {}, stop);
+            CHECK(h[0] == t[0]); handler_most = std::max(handler_most, p.steps);
             last_trig = t[0]; ++asked; answered += t[0] != 0;
         }
         ++scenarios; return out;
@@ -206,9 +212,9 @@ int main(int argc, char **argv)
     // The raw forms are refused on the events base; the subscriber form and the provider on the base without events.
     { Probe p(stock, ev_code, ev_sym, true); CHECK(p.install(mmPlain.b) == -9 && p.install(mmKey.b) == -9); }
     { Probe p(stock, old_code, old_sym, false); CHECK(p.install(mmNew.b) < 0 && p.install(keep.b) < 0); }
-    std::printf("{\"scenarios\":%u,\"checks\":%u,\"failures\":%u,\"trigMuted\":[%u,%u],\"gateRestore\":[%u,%u,%u],\"rawOnEventBase\":\"RUNTIME_EVENT\","
+    std::printf("{\"scenarios\":%u,\"checks\":%u,\"failures\":%u,\"trigMuted\":[%u,%u],\"trigMutedInstructions\":{\"raise\":%u,\"handler\":%u},\"gateRestore\":[%u,%u,%u],\"rawOnEventBase\":\"RUNTIME_EVENT\","
                 "\"synthetic\":[\"site registers and stack\",\"mute/solo/mode words\",\"per-track DSP records\",\"battery shadow\","
                 "\"note-off stub at 0x40008f84\",\"provider is the proposed Sidechain handler, not a Sidechain package\"],"
-                "\"emulator\":true,\"hardware\":false}\n", scenarios, checks, failures, asked, answered, restored[0], restored[1], restored[2]);
+                "\"emulator\":true,\"hardware\":false}\n", scenarios, checks, failures, asked, answered, raise_most, handler_most, restored[0], restored[1], restored[2]);
     return failures ? 1 : 0;
 }

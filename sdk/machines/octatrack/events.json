@@ -1923,12 +1923,12 @@
      "module": "mute-modes",
      "fn": "mm_trig_muted",
      "order": 50,
-     "does": "in OTFX-T and DT-T, the muted or soloed-out tracks whose reset its ev_voice_bind handler drops now (a SIDE-CHAIN key track keeps its trigs); 0 in OT and OTFX",
-     "evidence": "sdk/octabam/modules/mute-modes/patch_softmute.s mm_trig_muted, which asks mm_voice_bind for each track; sdk/tests/test_mute_modes_runtime.py checks the answer against the resets dropped in every frame"
+     "does": "in OTFX-T and DT-T, the muted tracks, or with any track soloed the tracks that are not, less a SIDE-CHAIN key track: the set whose reset its ev_voice_bind handler drops now, at most 16 instructions; 0 in OT and OTFX",
+     "evidence": "sdk/octabam/modules/mute-modes/patch_softmute.s mm_trig_muted (fresh_bind's test as one mask); sdk/tests/test_mute_modes_runtime.py checks the answer against the resets mm_voice_bind drops in every frame"
     }
    ],
    "raisers": [],
-   "orderEvidence": "The answer is an OR: no handler can let another's dropped trigs through. Mute Modes (0.2.3) answers with its own ev_voice_bind handler, asked for each track, so the two cannot disagree (issue #777); FM Synth, which starts its note in its renderer before stock reaches ev_voice_bind, is the first machine to ask."
+   "orderEvidence": "The answer is an OR: no handler can let another's dropped trigs through. Mute Modes (0.2.3) answers with its ev_voice_bind handler's test as one mask, checked against that handler in every frame of its runtime test (issue #777); FM Synth, which starts its note in its renderer before stock reaches ev_voice_bind, is the first machine to ask."
   },
   {
    "event": "ot_sample_editor_actions",

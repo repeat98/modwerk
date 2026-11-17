@@ -105,7 +105,7 @@
     "sdk/octabam/modules/mute-modes/manifest.py": "33e06de61d255800107843c44583c6487280ef452c703e79fa07179051d4e1bd",
     "sdk/octabam/modules/mute-modes/qualification.example.json": "80662f1b39221cc59d933e023ddddedc3bdcc65f10185acd4a6816a420485519",
     "sdk/octabam/modules/mute-modes/octamod.module.json": "6174f54b450ac0371212234733e31130ff990981233b3e33b1139047f685745b",
-    "sdk/octabam/modules/mute-modes/patch_softmute.s": "950e52600b5ce671de64b729286a7fdcf05c69d3688f6ea579b81f40a8a186b5",
+    "sdk/octabam/modules/mute-modes/patch_softmute.s": "2003ca1fa0aafbbf7a2b6655803603b1621457b32e8904b8e6c165309fdc47e3",
     "sdk/octabam/modules/mute-modes/evidence/reproduction.json": "ead6381c5e7c9bfa04ac08572d5d71f90e7318a5cbb26d2fb4182db210b2242f",
     "sdk/octabam/modules/mute-modes/evidence/source-identity.json": "a46af3e865ca0b920c0ab31a688fe9b5764aa437dd01869432f58007a1bc6aa3",
     "sdk/octabam/modules/mute-modes/evidence/probes.json": "aed2f2c1ca1fd3574620f89446c5f09ef1f7ea513f940cfe4b6974fa67e7b6fe",
