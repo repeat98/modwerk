@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 2,
+  "id": "arr-rows",
+  "key": "ARR ROWS",
+  "name": "Arr Rows",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "author": {
+    "github": "Andrey-Sidorkin",
+    "credits": [
+      "Andrey-Sidorkin: the module, its research, tests and documentation."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Select, copy and paste many arrangement rows",
+    "family": "Editing",
+    "summary": "Select several rows in the arrangement editor and copy, clear, paste or insert them together, also into another arrangement.",
+    "overview": "Stock copies, clears and pastes one arrangement row at a time. Arr Rows adds a selection: hold CUE and press UP or DOWN to mark rows from the cursor, then the usual FUNC + REC, FUNC + PLAY and FUNC + STOP act on all of them. FUNC + STOP overwrites from the cursor as stock's paste does; CUE + FUNC + STOP inserts the rows and moves what follows down. The copied rows stay until power off, so a section of one arrangement can go into another. Without a selection everything is stock, and the arrangement is saved in stock's own format.",
+    "highlights": [
+      "CUE + UP/DOWN marks rows; their numbers show inverted.",
+      "FUNC + REC, FUNC + PLAY and FUNC + STOP act on the selection; repeating a paste, clear or insert in the same place undoes it, as stock does for one row.",
+      "CUE + FUNC + STOP inserts the copied rows at the cursor; LOOP and JUMP targets below move with their rows.",
+      "Copied rows survive ARR CHANGE: paste them into another arrangement.",
+      "No stock code patched, no file format change, no setting."
+    ],
+    "usage": [
+      "Open the arrangement editor (MKII: ARR, then EDIT; MKI: FUNC + PATTERN for arrangement mode, then FUNC + BANK and EDIT).",
+      "Put the cursor on the first row you want, hold CUE and press DOWN (or UP) until the rows are marked.",
+      "Press FUNC + REC to copy them, or FUNC + PLAY to clear them.",
+      "Move the cursor to where they should go and press FUNC + STOP to paste over the rows there, or hold CUE and press FUNC + STOP to insert them.",
+      "Press the same keys again in the same place to undo the paste, clear or insert."
+    ]
+  },
+  "access": {
+    "location": "The arrangement editor",
+    "steps": [
+      "Open the arrangement editor (MKII: ARR, then EDIT; MKI: FUNC + PATTERN for arrangement mode, then FUNC + BANK and EDIT).",
+      "Put the cursor on the first row you want, hold CUE and press DOWN (or UP) until the rows are marked.",
+      "Press FUNC + REC to copy them, or FUNC + PLAY to clear them.",
+      "Move the cursor to where they should go and press FUNC + STOP to paste over the rows there, or hold CUE and press FUNC + STOP to insert them.",
+      "Press the same keys again in the same place to undo the paste, clear or insert."
+    ],
+    "screenshots": []
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Project sequencer",
+    "conflicts": [],
+    "uiClaims": [
+      "key:CUE+UP@ARRANGER",
+      "key:CUE+DOWN@ARRANGER",
+      "key:FUNC+REC@ARRANGER",
+      "key:FUNC+PLAY@ARRANGER",
+      "key:FUNC+STOP@ARRANGER",
+      "key:CUE+FUNC+STOP@ARRANGER",
+      "screen:ARRANGEMENT EDITOR"
+    ],
+    "limitations": [
+      "OS 1.40C. Not yet tested on a unit.",
+      "In the arrangement editor, CUE + UP/DOWN still move the cursor as UP/DOWN do, and now also mark rows; after rows were copied here, FUNC + STOP pastes them instead of stock's one copied row until the next stock copy. Remove the module to restore stock behaviour.",
+      "The copied rows live in RAM until power off or until the module is removed.",
+      "A paste or insert that would pass 256 rows is refused with stock's ROW LIMIT REACHED."
+    ]
+  },
+  "resources": {
+    "recorded": "17 November 2026",
+    "storage": {
+      "label": "Runtime package",
+      "display": "3,864 B code and data + 11,320 B state",
+      "value": 3864,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "npm run module:dev -- arr-rows --build-only: one ColdFire unit, three runtime hooks, 15 relocations, no stock-code sites, no DSP code. The state holds the clipboard and the undo copy, 256 rows of 22 bytes each.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, per key and UI tick",
+      "display": "Unmeasured",
+      "value": null,
+      "unit": "instructions/event",
+      "method": "unmeasured",
+      "conditions": "A few compares per key and tick; a copy, paste, clear or insert walks at most 256 rows once and sums them twice, only when pressed in the editor. Nothing per sample or frame.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "UI task: key events, the 60 Hz tick and the composed frame while the editor is open.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "Panel-event work only; the row walks run once per editing key press.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "A 3.8 KB unit and 11 KB of state.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host gate (verify.py, 42 checks); stock key routing measured under ot_emu (MKI panel); select, copy, paste, undo, insert and a paste into another arrangement run under ot_emu on the beta base over emulated USB. Not yet tested on a unit.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "0000000000000000000000000000000000000000",
+    "gates": [
+      "modules/arr-rows/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original module by Andrey Sidorkin, MIT. No firmware, extracted stock code or built images are included."
+  },
+  "media": []
+}

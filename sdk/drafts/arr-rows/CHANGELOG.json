@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-17",
+    "changes": [
+      "Hold CUE and press UP or DOWN in the arrangement editor to select rows.",
+      "FUNC + REC, FUNC + PLAY and FUNC + STOP copy, clear and paste the selected rows; CUE + FUNC + STOP inserts them.",
+      "Paste copied rows into another arrangement after ARR CHANGE.",
+      "Without a selection, every key works as on stock."
+    ]
+  }
+]
