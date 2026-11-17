@@ -108,7 +108,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.2.1 (UI-only code built for size, 1.9 KB less RAM): rytm-emu screens byte-identical to 0.2.0; on the author's unit alone (QR01) the tutorial passed, and earlier in combined images RC37 to RC40. TESTING.md names each build.",
+    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.2.2 (a shorter quick exit for the audio block): a host differential test against 0.2.1 found no difference in 80 million blocks, rytm-emu screens are byte-identical, and the audio hook ran a quarter of the instructions while idle; not yet on a unit. 0.2.1 passed the tutorial on the author's unit alone (QR01). TESTING.md names each build.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -155,9 +155,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.1-experimental",
-        "imageSha256": "e77e4cd996a0ae3074c14a2c69c854ef44b1457e20ad44ca9448937a8a66458a",
-        "setup": "Headless rytm-emu (dtboot) running QL20: the Modwerk base for core-ar2 0.7 and this folder's QPER Live Rec 0.2.1-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.2-experimental",
+        "imageSha256": "1b9ea783a4db43e2bfbbc98cbe225d9dd0e1f82d8045304abf68eef6d011645e",
+        "setup": "Headless rytm-emu (dtboot) running QL21: the Modwerk base for core-ar2 0.7 and this folder's QPER Live Rec 0.2.2-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -171,9 +171,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.1-experimental",
-        "imageSha256": "e77e4cd996a0ae3074c14a2c69c854ef44b1457e20ad44ca9448937a8a66458a",
-        "setup": "Headless rytm-emu (dtboot) running QL20: the Modwerk base for core-ar2 0.7 and this folder's QPER Live Rec 0.2.1-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.2-experimental",
+        "imageSha256": "1b9ea783a4db43e2bfbbc98cbe225d9dd0e1f82d8045304abf68eef6d011645e",
+        "setup": "Headless rytm-emu (dtboot) running QL21: the Modwerk base for core-ar2 0.7 and this folder's QPER Live Rec 0.2.2-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
