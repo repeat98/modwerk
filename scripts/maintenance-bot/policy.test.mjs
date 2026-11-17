@@ -75,4 +75,15 @@ describe('maintenance bot policy', () => {
     expect(classify({ kind: 'board_release', claim: 't1', summary: 'Release' }, thread()).reject).toBeTruthy()
     expect(reply.id).not.toBe(classify({ kind: 'board_reply', thread: 't1', body: 'Hi', summary: 'Answer' }, thread({ replies: 2 })).id)
   })
+
+  it('lets TARS answer each unanswered Discord message once, after an hour, without pinging anyone', () => {
+    const message = (extra = {}) => ({ kind: 'discord', number: 0, channel: '155', id: '157', author: 'fraki', bot: false, state: 'open', ...extra })
+    const reply = classify({ kind: 'discord_reply', channel: '155', message: '157', body: 'Try a power cycle, then Keep again.', summary: 'Help fraki with Keep' }, message())
+    expect(reply).toMatchObject({ tier: 'window', windowHours: 1, summary: 'Discord: Help fraki with Keep', payload: { channel: '155', message: '157' } })
+    expect(reply.id).toBe(classify({ kind: 'discord_reply', channel: '155', message: '157', body: 'Other words', summary: 'Again' }, message()).id)
+    expect(classify({ kind: 'discord_reply', channel: '155', message: '157', body: 'Hey @fraki try this', summary: 'Ping' }, message()).reject).toContain('mentions')
+    expect(classify({ kind: 'discord_reply', channel: '155', message: '157', body: 'See https://evil.example', summary: 'Link' }, message()).reject).toContain('links')
+    expect(classify({ kind: 'discord_reply', channel: '155', message: '157', body: 'Hi', summary: 'Bot' }, message({ bot: true })).reject).toBeTruthy()
+    expect(classify({ kind: 'discord_reply', channel: '155', message: '157', body: 'Hi', summary: 'Answered' }, message({ state: 'closed' })).reject).toContain('answered')
+  })
 })

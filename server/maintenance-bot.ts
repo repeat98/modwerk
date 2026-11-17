@@ -70,7 +70,7 @@ function buttons(row: Pick<ActionRow, 'id' | 'tier'>, expanded = false) {
 async function state(db: Database) {
   const rows = (await db.prepare('SELECT key,value FROM maintenance_bot_state').all<{ key: string; value: string }>()).results
   const value = (key: string) => rows.find(row => row.key === key)?.value ?? ''
-  return { paused: value('paused') === '1', fingerprint: value('fingerprint') }
+  return { paused: value('paused') === '1', fingerprint: value('fingerprint'), upstream: value('upstream') }
 }
 const setState = (db: Database, key: string, value: string) => db.prepare('INSERT INTO maintenance_bot_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(key, value).run()
 
@@ -80,8 +80,8 @@ function proposal(value: unknown) {
   const { id, kind, target, tier, summary, reason, payload, windowHours } = item
   if (typeof id !== 'string' || !ID.test(id)) throw new HttpError(400, 'An action id must be 16 hex digits.')
   if (typeof kind !== 'string' || !KIND.test(kind)) throw new HttpError(400, 'Unknown action kind.')
-  // Board actions have no number: their thread or claim id is in the payload.
-  if (!Number.isSafeInteger(target) || (target as number) < (kind.startsWith('board_') ? 0 : 1)) throw new HttpError(400, 'An action needs a pull request or issue number.')
+  // Board and Discord actions have no number: their thread, claim or message id is in the payload.
+  if (!Number.isSafeInteger(target) || (target as number) < (kind.startsWith('board_') || kind.startsWith('discord_') ? 0 : 1)) throw new HttpError(400, 'An action needs a pull request or issue number.')
   if (typeof tier !== 'string' || !TIERS.has(tier as BotTier)) throw new HttpError(400, 'Unknown action tier.')
   if (typeof summary !== 'string' || !summary.trim() || summary.length > 300) throw new HttpError(400, 'An action needs a summary of at most 300 characters.')
   if (typeof reason !== 'string' || reason.length > 1500) throw new HttpError(400, 'A reason has at most 1500 characters.')
@@ -206,10 +206,10 @@ async function webhook(request: Request, env: Env, db: Database) {
 }
 
 type TodoRow = { id: string; target: number; command: string; note: string; urgent: number; status: string; created_at: number; updated_at: number }
-const COMMAND = /^(\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?|npm run board -- reply [0-9a-f-]{36})$/
+const COMMAND = /^(\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?|npm run board -- reply [0-9a-f-]{36}|gh run view \d{1,20} --log-failed)$/
 
 /** Work for a session at the owner's computer. The bot adds and drops; /modwerk-todo lists and ticks off. */
-async function addTodos(db: Database, body: Record<string, unknown>) {
+async function addTodos(env: Env, db: Database, body: Record<string, unknown>) {
   if (!Array.isArray(body.todos) || body.todos.length > 30) throw new HttpError(400, 'Send at most 30 to-dos.')
   const at = now(), statements = body.todos.map(value => {
     const { id, target, command, note, urgent } = (value ?? {}) as Record<string, unknown>
@@ -219,8 +219,36 @@ async function addTodos(db: Database, body: Record<string, unknown>) {
     return db.prepare('INSERT INTO maintenance_bot_todos(id,target,command,note,urgent,created_at,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET note=excluded.note,urgent=excluded.urgent,updated_at=excluded.updated_at WHERE status=\'open\'')
       .bind(id, target, command, note.trim().replace(/\s+/g, ' '), urgent === true ? 1 : 0, at, at)
   })
+  const known = new Set((await db.prepare('SELECT id FROM maintenance_bot_todos WHERE id IN (SELECT value FROM json_each(?))').bind(JSON.stringify(body.todos.map(todo => (todo as { id: string }).id))).all<{ id: string }>()).results.map(row => row.id))
   if (statements.length) await db.batch(statements)
+  // An urgent to-do (a red main, the unit's safety) cannot wait for the morning report.
+  for (const todo of body.todos as { id: string; target: number; note: string; urgent?: boolean }[]) {
+    if (todo.urgent !== true || known.has(todo.id)) continue
+    await telegram(env, 'sendMessage', { chat_id: configured(env).chat, text: '⚠️ ' + (todo.target ? '#' + todo.target + ' ' : '') + todo.note.trim() + '\nTo-do: /modwerk-todo', link_preview_options: { is_disabled: true } }).catch(() => undefined)
+  }
   return { ok: true }
+}
+
+/** Shared diagnostics, counted by failure and never by person: the last 24 hours against the 7 days before. */
+export function failureKey(data: unknown) {
+  if (!data || typeof data !== 'object') return null
+  const value = data as Record<string, unknown>, text = (key: string) => typeof value[key] === 'string' ? value[key] as string : ''
+  const event = text('event') || (text('kind') ? 'incident' : ''), why = text('failure') || text('error') || text('refusal') || (event === 'incident' ? text('kind') : '')
+  return /fail|error|refus|crash/.test(event) || why ? [event, why].filter(Boolean).join(':') : null
+}
+async function diagnostics(db: Database) {
+  const day = 86400000, now = Date.now(), since = new Date(now - 8 * day).toISOString(), recent = new Date(now - day).toISOString()
+  const rows = (await db.prepare('SELECT data_json,created_at FROM octatrack_diagnostic_events WHERE created_at>=? UNION ALL SELECT data_json,created_at FROM octatrack_guest_diagnostic_events WHERE created_at>=? LIMIT 20000').bind(since, since).all<{ data_json: string; created_at: string }>()).results
+  const counts = new Map<string, { today: number; week: number }>()
+  for (const row of rows) {
+    let key: string | null
+    try { key = failureKey(JSON.parse(row.data_json)) } catch { continue }
+    if (!key) continue
+    const entry = counts.get(key) ?? { today: 0, week: 0 }
+    if (row.created_at >= recent) entry.today++; else entry.week++
+    counts.set(key, entry)
+  }
+  return { failures: [...counts].map(([key, value]) => ({ key, ...value })).filter(row => row.today).sort((a, b) => b.today - a.today).slice(0, 20) }
 }
 const openTodos = async (db: Database) => ({ todos: (await db.prepare("SELECT id,target,command,note,urgent,created_at FROM maintenance_bot_todos WHERE status='open' ORDER BY urgent DESC,created_at LIMIT 100").all<TodoRow>()).results.map(row => ({ ...row, urgent: row.urgent === 1 })) })
 async function todoStatus(db: Database, id: string, body: Record<string, unknown>) {
@@ -266,14 +294,18 @@ export async function maintenanceBotRoutes(request: Request, env: Env, db: Datab
   if (who && route === '/todos' && method === 'GET') return response(await openTodos(db))
   if (who && todo && method === 'POST') return response(await todoStatus(db, todo[1], await jsonBody(request)))
   if (who !== 'bot') throw new HttpError(401, who ? 'Only the bot may do that.' : 'Wrong maintenance bot key. The owner signs in with npm run board -- login.')
-  if (route === '/todos' && method === 'POST') return response(await addTodos(db, await jsonBody(request, 64 * 1024)))
+  if (route === '/todos' && method === 'POST') return response(await addTodos(env, db, await jsonBody(request, 64 * 1024)))
+  if (route === '/diagnostics' && method === 'GET') return response(await diagnostics(db))
   const board = route.match(/^\/board\/(messages|claims)\/([0-9a-f-]{36})\/(reply|close|release)$/)
   if (board && method === 'POST' && (board[1] === 'claims') === (board[3] === 'release')) return response(await boardAction(env, db, board[3], board[2], await jsonBody(request)))
   if (route === '/state' && method === 'GET') return response(await state(db))
   if (route === '/state' && method === 'PUT') {
     const body = await jsonBody(request)
-    if (typeof body.fingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(body.fingerprint)) throw new HttpError(400, 'A fingerprint is a SHA-256 hex digest.')
-    await setState(db, 'fingerprint', body.fingerprint)
+    if (body.fingerprint !== undefined && (typeof body.fingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(body.fingerprint))) throw new HttpError(400, 'A fingerprint is a SHA-256 hex digest.')
+    if (body.upstream !== undefined && (typeof body.upstream !== 'string' || body.upstream.length > 4000)) throw new HttpError(400, 'The upstream heads are a short JSON text.')
+    if (body.fingerprint === undefined && body.upstream === undefined) throw new HttpError(400, 'Send a fingerprint or the upstream heads.')
+    if (typeof body.fingerprint === 'string') await setState(db, 'fingerprint', body.fingerprint)
+    if (typeof body.upstream === 'string') await setState(db, 'upstream', body.upstream)
     return response({ ok: true })
   }
   if (route === '/actions' && method === 'POST') return response(await propose(env, db, await jsonBody(request, 256 * 1024)))

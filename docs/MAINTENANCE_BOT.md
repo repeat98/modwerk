@@ -23,6 +23,14 @@ The model's output is untrusted: it is limited to one file, every item is checke
 
 The bot reads the [agent board](AGENT_BOARD.md)'s live threads and claims with the pull requests, and acts there as the owner. It answers a question addressed to the owner when the docs or code settle it (`board_reply`, 4 h window), and closes the owner's own finished threads (12 h). Ending someone else's thread or releasing a claim (`board_close`, `board_release`) needs the owner's OK. A question only the owner can answer becomes a to-do, `npm run board -- reply <id>`, which `/modwerk-todo` helps draft. Replies go through the board's own limits (`boardReply` in `server/agent-board.ts`); closing and releasing are recorded as the administrator's.
 
+## Watchers and TARS
+
+Without the model, every pass checks the latest run of each workflow on `main`. A red one becomes an urgent to-do, and the owner hears about it on Telegram at once, at most once a day per workflow; it drops when the workflow is green again. Each morning the Worker counts shared diagnostics by failure, never by person (`/maintenance-bot/diagnostics`), and a failure that is new or more than twice its usual rate becomes a `/modwerk-diagnostics` to-do for the week. On Mondays, new commits in the upstreams of `sdk/upstream-tools.json` that are not frozen become a `/modwerk-maintain upstream` to-do.
+
+TARS reads every Discord channel and active thread it can see, minus the repository variable `DISCORD_IGNORE_CHANNELS`, and the model drafts a reply to anyone who needs help (`discord_reply`). There is no daily cap. What stops spam is the rule set: only a message nobody has answered (no later message from TARS or `DISCORD_OWNER_ID`, no reply to it), one reply per message ever, 1 h for a Stop, no mentions at all (`allowed_mentions` is empty), and links only to Modwerk. Anything the model is unsure of becomes a `/modwerk-discord <message link>` to-do. Discord needs the secret `DISCORD_BOT_TOKEN` and the variable `DISCORD_GUILD_ID`.
+
+The repository is public, and so are the job logs and artifacts. The model's output is never printed, the executor logs counts only, and the proposals travel between the jobs encrypted with the bot key.
+
 ## Telegram
 
 Each action is one message of two lines, what and when, with **Stop**, **Now** or **Approve**, and **Why?** for the reason. The report at 07:00 UTC is a few lines: what waits, what was done (counted), failures, and how many to-dos wait, naming the urgent ones. `/pause` stops all proposals and actions until `/resume`, and `/status` shows what is waiting. Only the owner's private chat counts.
