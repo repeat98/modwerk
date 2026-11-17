@@ -1,7 +1,7 @@
 # The delay routine's A/B harness
 
-`status.s` leaves out the stock delay routine's ring transfers, filter and mix for a track whose ring is all zeros
-and whose send is shut (`mw_delay_read0`, `mw_delay_read`, `mw_delay_idle`). This harness runs the whole stock routine
+`status.s` leaves out the stock delay routine's ring transfers, filter and mix for a track whose ring and filter are
+silent (every word within 680 counts of zero, -130 dBFS) and whose send is shut (`mw_delay_read0`, `mw_delay_read`, `mw_delay_idle`). This harness runs the whole stock routine
 (`0x400031a0`) on two emulated machines, stock and stock with those stubs, on the same random audio, knobs and FX2
 changes, and compares after every frame: the tracks' audio blocks, the eight 68-byte state records, the scratch and
 filter pointers, the 128 bytes each ring was written, and every 20,000 frames the whole rings. `mod.s` is a test
@@ -25,7 +25,11 @@ m68k-elf-ld -Ttext=0x47308000 --defsym modwerk_idle_gap=0x47310000 --defsym modw
 # does), take the three entry addresses from `m68k-elf-nm status.elf`, then:
 ./harness MAIN.raw MAIN.raw mod.bin 3000000 status.bin 47308000 4000332a:<mw_delay_read0> 400035ba:<mw_delay_read> 4000362a:<mw_delay_idle>
 NODELAY=1 ./harness …   # no DELAY on any track: the steady saving
+TOL=680 ./harness …      # audio, filter state and ring words may differ by up to 680; prints the largest difference
 ```
+
+Without `TOL` every byte must match, which the floor no longer promises: a quiet track drops the residue stock would
+have mixed in. With `TOL=680` everything but the audio, the four filter state words and the ring must still be equal.
 
 It prints PASS, the instructions a frame and the eDMA transfers a frame on both sides. Its eDMA moves bytes at once:
 it proves bytes and order, never transfer timing. That is the unit's part.
@@ -47,5 +51,6 @@ it proves bytes and order, never transfer timing. That is the unit's part.
 - A delay that has been fed does not return to zeros: its filter's output sticks at a small negative value, and with
   feedback its ring keeps a constant of about one 24-bit step. Stock then adds that to the track for good. Such a
   track never counts as quiet again until the next start, so the saving shrinks as more tracks' delays get used.
-  Open: a path that knows this fixed point, or treating it as silence (no longer bit-identical).
+  Since 17 November 2026 the skip treats every word within 680 counts of zero as silence (owner's call), so a fed
+  track counts as quiet again; filters stuck further out (the harness saw one at -1,404) keep stock's path.
 - Not yet run on a unit: a Tape Echo track, the sampler recorders, a card build.

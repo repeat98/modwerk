@@ -211,8 +211,8 @@ DYNLOAD_HOOKS = (
     (0x4001fc96, 6, '2edb8c17ea73bf5ecd097ec929f3bfd6f8a74c81b11080d0d74efd55bec6b416', 'mw_idle'),
     # Modwerk's: the time-stretch helper task skips a track whose TSTR is OFF (status.s).
     (0x40098b2c, 8, 'e3b2889593533c76e33bdee43526078d47b0b1c53b99a6d93d9ff1118e752203', 'mw_ts_gate'),
-    # Modwerk's: the delay routine leaves out the ring transfers, the filter and the mix of a track whose ring is
-    # all zeros and whose send is shut (status.s): track 0's read, each next track's read, and the seam before the
+    # Modwerk's: the delay routine leaves out the ring transfers, the filter and the mix of a track whose ring and
+    # filter are silent (within -130 dBFS of zero) and whose send is shut (status.s): track 0's read, each next track's read, and the seam before the
     # filter, beside Tape Echo's at 0x4000361a, which ends where it starts.
     (0x4000332a, 6, '35712ed931e7b9f14e5721c866bf66a4ccded8e9b4626aadc3adc68d33f729fd', 'mw_delay_read0'),
     (0x400035ba, 8, 'dc58231763e0149114fe595c44a7495bb4b761d125428723426785e031a9ac67', 'mw_delay_read'),

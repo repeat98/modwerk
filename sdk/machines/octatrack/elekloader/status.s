@@ -41,9 +41,9 @@ mw_ts_gate:
 | The delay routine (0x400031a0, called once a frame from the frame transfer) reads two taps of every track's ring
 | over the eDMA, filters them, mixes them with the track's audio and writes 128 bytes back to the ring, for all
 | eight tracks every frame, whatever their FX2 and however silent the ring. On a unit that is 45 µs a frame, 43 of
-| them the transfers (owner's MKII, 16 November 2026). A track whose ring is all zeros and whose send is shut needs
-| none of it: the taps would read zeros, the filter would rest, the ring would be written with zeros, and only the
-| dry gain reaches the audio. Three sites leave those transfers and loops out; mw_delay (status.c) holds
+| them the transfers (owner's MKII, 16 November 2026). A track whose ring and filter are silent and whose send is
+| shut needs none of it: the taps would read silence, the filter would stay where it is, the ring would be written
+| with silence, and only the dry gain reaches the audio. Three sites leave those transfers and loops out; mw_delay (status.c) holds
 | [0] the routine's call count, [1 + track] the call that last passed the seam, [9 + track] the quiet frames,
 | [17 + track] whether this frame's read was left out.
 |
