@@ -218,3 +218,5 @@ skipped track logged, rolled back, inventory `[]` before and after. Then his 30-
 Sidorkin reported it: a selection moved with CUE + RIGHT and back with CUE + LEFT, the marks following; the cursor row
 alone moved the same way with no selection; `LOOP: 003` on row 6 moved up past row 3 became a JUMP to the same row's
 content; LEFT/RIGHT without CUE still changed columns. All as intended.
+The trial's link went quiet at 18:16:48 because the developer switched the unit off after his checks; the trial was
+in RAM, so it ended with the power. Nothing was kept.
