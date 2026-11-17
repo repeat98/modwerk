@@ -1,12 +1,30 @@
 # Direct Jump Kyoti: hardware record
 
-## 0.2.0-experimental (pending)
+## 0.2.0-experimental (17 November 2026)
 
-Not run on a unit yet. The author has a hardware test image of the tested native build for his MKI: this module alone (DIRECT JUMP V7.3, the author's code byte for byte) with every stock effect kept, MAIN OS SHA-256 `a7074bfd6fea3c9516eaf872d1693327957fe4c1248b01ead73136fadbfe9f1c`, version string MW_DJK73B, built from this branch's source (TESTING.md). His results, with the date, the card `.bin` he flashed and what he tried, go here; until then nothing in this file is about 0.2.0.
+The author, Zac Kyoti, on his Octatrack MKI, OS 1.40C. He flashed the native card image of this module alone with every stock effect kept: `OCTATRACK_MW_DJK73B.bin` (card OS UPGRADE, SHA-256 `912343943b156624d75e526ff8d382bbd3ddc3b8dca950cc9c707d8d3990b20e`), OS VERSION MW_DJK73B, MAIN OS SHA-256 `a7074bfd6fea3c9516eaf872d1693327957fe4c1248b01ead73136fadbfe9f1c`, built from this branch's source at `20d216e1b454edee281d66dcfb179275fe24b4b0` (DIRECT JUMP V7.3 as in Zac-Kyoti/octatrack-kyoti-fw `cd788e9`, byte for byte, and his MIDI Plays-Free fix). His report: "Flashed. All tests pass."
 
-The checks asked for: the toggle and its toast; OFF after a power-on; a jump into a pattern on another Part; jumps between patterns of other lengths and scales (PER TRACK); a cue in the playing pattern's last step; 1:2 trig conditions across a jump, with [FILL] latched and a PRE trig after it; a jump after a normal pattern change (16-step A01, a normal change to a 12-step A02, then a jump to a 12-step A03: A03 lands in phase with A02 and a 1:2 hi-hat stays in step); LFO AUTO CHANGE on with a sample ringing from the outgoing pattern; SILENCE TRACKS on (no pop); a Plays Free MIDI track in PER TRACK mode; Direct Jump off behaving as stock. The USB package `ed3ba88a…` is not part of this run.
+The checklist he ran, all 13 items passed:
 
-His own builds of the same Direct Jump code (not Modwerk builds): on 15 November 2026 the standalone image `140C_KDJ7` (mainos `7c6131e7…`, V7.2.2) ended the SILENCE TRACKS pop at a Part-changing jump, and KYOTI V1.8C (beside his Clyps module) passed landings at other lengths and scales, a cue in the last step, trig conditions across a jump and each track's Part with LFO AUTO CHANGE on; on 16 November 2026 KYOTI V1.8C with V7.3 (`KY18C DJR1`, mainos `9d1a29c9…`): after a normal change from a 16-step A01 to a 12-step A02, a jump to a 12-step A03 landed in phase with A02, 1:2 trigs stayed in step, and a Clyps load after the jump stayed in step.
+1. Boot: starts normally, OS version MW_DJK73B.
+2. Toggle: [PTN] + [YES] shows DIRECT JUMP ON; releasing [PTN] leaves the pattern chooser shut; again shows DIRECT JUMP OFF.
+3. OFF at power-on: turned ON, power-cycled, it came up OFF (a cue waits for the pattern end).
+4. A jump from a pattern on Part 1 to one on Part 2 lands on the next step with Part 2 active and its sounds.
+5. Lengths and scales: jumps between patterns of other lengths and into a PER TRACK pattern with differing track scales land where the pattern would be had it played since PLAY, or since the last normal pattern change (in time, no step shift).
+6. A cue in the playing pattern's last step lands on its grid point.
+7. Trig conditions: 1:2 and 1:4 trigs keep alternating across jumps, in step with what was playing; a latched [FILL] stays on after a jump; a PRE trig right after a jump plays.
+8. Restart (V7.3): A01 (16 steps) from PLAY, a normal change with Direct Jump OFF to a 12-step A02, then Direct Jump ON and, about 4 steps into A02, a jump to a 12-step A03: A03 lands in phase with A02, and a 1:2 hi-hat stays in step across the jump.
+9. LFO AUTO CHANGE on: a sample ringing from the old pattern keeps its LFO until its own track's first trig in the new pattern; tracks with no trig get the new Part's LFOs at once.
+10. SILENCE TRACKS on: a Part-changing jump that silences ringing tracks does not pop.
+11. A Plays Free MIDI track with trig quantize DIRECT in PER TRACK mode keeps playing after its trig key starts it and lands with its own scale on a jump; with gear on MIDI OUT, the Program Change follows the pattern that plays and no MIDI START is sent on a jump.
+12. With Direct Jump OFF, pattern changes, the arranger and chains behave as on the stock OS.
+13. Nothing odd: no crash, freeze or wrong landing.
+
+Items 5 and 7 were worded for V7.3's rule (since PLAY, or since the last normal pattern change) before the run.
+
+Limitations: a functional report from one MKI. The project, how long it ran and whether gear was attached to MIDI OUT for item 11 are not stated; nothing was timed or recorded. The USB package `ed3ba88a…` was not installed (no beta access), and no MKII ran this version.
+
+His own builds of the same Direct Jump code (not Modwerk builds) before this run: on 15 November 2026 the standalone image `140C_KDJ7` (mainos `7c6131e7…`, V7.2.2) ended the SILENCE TRACKS pop at a Part-changing jump, and KYOTI V1.8C (beside his Clyps module) passed landings at other lengths and scales, a cue in the last step, trig conditions across a jump and each track's Part with LFO AUTO CHANGE on; on 16 November 2026 KYOTI V1.8C with V7.3 (`KY18C DJR1`, mainos `9d1a29c9…`) passed the restart case and a Clyps load after the jump.
 
 ## 0.1.2-experimental (25 October 2026)
 

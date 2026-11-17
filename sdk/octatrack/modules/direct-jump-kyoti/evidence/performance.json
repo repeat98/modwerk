@@ -28,8 +28,8 @@
     "droppedExplanation": "Emulator, not hardware, the run above on the module image with Direct Jump ON: 15,000 three-byte messages and 1,500 clock bytes; 15 cues gave 15 jumps, the original OS under the same input changed pattern 4 times (each cue waits for the pattern end). At 4.71 s the flood left the transport state at 2 on both images alike, and the run pressed PLAY once. Dropped: counted at the MIDI thread's handlers (note on 0x4000e018, note off 0x4000db98, CC 0x4000e79c, clock 0x40005a48): every type's entries were at least the messages sent (a few more note entries, as on the original OS), none missing. Stuck notes: no samples are loaded and nothing was sent to MIDI OUT, so audible stuck notes could not occur here. Hangs: frames advanced to the end and the transport was running. Bypass: the module's OFF state is checked in the gate (verify.py), not in this run."
   },
   "hardwareEvidence": {
-    "status": "pending",
+    "status": "reported",
     "existingReport": "evidence/hardware.md",
-    "note": "0.2.0-experimental has not run on a unit yet: its native module-alone image is waiting for the author's MKI run (evidence/hardware.md). The cycles, load and stress rows are ot_emu measurements."
+    "note": "Functional checks on the author's MKI on 17 November 2026 with the native card image of this build (MAIN OS a7074bfd...): all 13 checklist items passed, nothing timed or recorded (evidence/hardware.md). The cycles, load and stress rows are ot_emu measurements."
   }
 }
