@@ -1,6 +1,6 @@
 /** The release flow shown on the Start developing page. The prompts hand the work to the module skills, and the rules behind each step live in the repository (AGENTS.md, docs/DEVELOPER_WORKFLOW.md), which every coding agent reads. */
 export type DeveloperTask = 'create' | 'update'
-export type DeveloperStage = 'plan' | 'build' | 'test' | 'submit' | 'publish'
+export type DeveloperStage = 'plan' | 'build' | 'test' | 'submit' | 'review' | 'publish'
 
 /** The order of work in /modwerk-new-module and /modwerk-update-module, in a developer's words. */
 export const RELEASE_STEPS: Record<DeveloperTask, { id: DeveloperStage; title: string; summary: string }[]> = {
@@ -8,7 +8,8 @@ export const RELEASE_STEPS: Record<DeveloperTask, { id: DeveloperStage; title: s
     { id: 'plan', title: 'Agree the plan', summary: 'Your agent checks what already exists, then proposes the controls and waits for your OK.' },
     { id: 'build', title: 'Build it', summary: 'It writes the module and runs the checks.' },
     { id: 'test', title: 'Test on your unit', summary: 'Your agent tests it over USB first. Then you play it and listen. No unit? Start in the emulator.' },
-    { id: 'submit', title: 'Open the pull request', summary: 'Once you say testing is done. The owner reviews every first release.' },
+    { id: 'submit', title: 'Open the pull request', summary: 'Once you say testing is done. Automatic checks run on it.' },
+    { id: 'review', title: 'Owner review', summary: 'The owner reviews every first release. Your agent fixes what the review asks for.' },
     { id: 'publish', title: 'Check it live', summary: 'After the merge it is in the library. Check the live version and its download.' },
   ],
   update: [
