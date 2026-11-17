@@ -6,6 +6,6 @@ export function DevelopCard({ current }: { current: boolean }) {
   return <a className={'develop-card' + (current ? ' active' : '')} href="#submit" aria-current={current ? 'page' : undefined}>
     <span className="develop-card-icon"><Icon name="plus" size={14} /></span>
     <strong>Start developing</strong>
-    <small>Describe it, paste one prompt, build it together.</small>
+    <small>Set up once, describe your idea, build it together.</small>
   </a>
 }

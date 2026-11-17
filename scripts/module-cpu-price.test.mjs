@@ -35,10 +35,16 @@ describe('every Octatrack module names its CPU price', () => {
   }, 20_000)
 
   it('reads reserved[0] of every machine on main, ported or written in C', () => {
-    const glue = portGlue(repo)
-    for (const id of ['poly8', 'vector', 'synth', 'analog-bassdrum']) expect(machineDescriptors({ root: repo, id, glue })).toMatchObject([{ symbol: 'mw_machine', price: 0, port: true }])
-    expect(machineDescriptors({ root: repo, id: 'syntiz', glue })).toMatchObject([{ symbol: 'wave_machine', price: 0 }])
-    expect(machineDescriptors({ root: repo, id: 'amiga', glue })).toMatchObject([{ symbol: 'amiga_machine', price: 0 }])
+    // Each descriptor carries what its module names (0 while it names none), so a release that prices a machine leaves this test alone.
+    const glue = portGlue(repo), json = path => JSON.parse(readFileSync(join(repo, path), 'utf8'))
+    const ports = json('sdk/machines/octatrack/module-adapters/machine-ports.json').ports
+    const named = id => json('sdk/octatrack/modules/' + id + '/octamod.module.json').resources.cpuPrice?.value ?? 0
+    for (const id of ['poly8', 'vector', 'synth', 'analog-bassdrum']) {
+      expect(ports[id].cpuPrice ?? 0).toBe(named(id))
+      expect(machineDescriptors({ root: repo, id, glue })).toMatchObject([{ symbol: 'mw_machine', price: named(id), port: true }])
+    }
+    expect(machineDescriptors({ root: repo, id: 'syntiz', glue })).toMatchObject([{ symbol: 'wave_machine', price: named('syntiz') }])
+    expect(machineDescriptors({ root: repo, id: 'amiga', glue })).toMatchObject([{ symbol: 'amiga_machine', price: named('amiga') }])
     expect(machineDescriptors({ root: repo, id: 'euclid', glue })).toEqual([])
   }, 20_000)
 
