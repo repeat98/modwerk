@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceCommit": "274f9a7a1179cdf4e034e39121c8e57a547341d5",
+  "sourceCommit": "4a8cbf6c0c1e3c0b9418a8f743f8c9deda86e2e9",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
@@ -16,7 +16,7 @@
     "analog-bassdrum": "0.1.7-experimental",
     "usb-audio-out-tracks-main-cue": "0.2.0-experimental",
     "quantizer": "0.1.4-experimental",
-    "synth": "0.1.3-experimental",
+    "synth": "0.1.4-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
     "sidechain-compressor": "0.2.2-experimental",
@@ -248,7 +248,7 @@
     {
       "label": "poly",
       "moduleId": "synth",
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "key": "SYNTH MACHINE",
       "author": "timhastie",
       "nativeAuthor": "timhastie",
@@ -281,7 +281,7 @@
     {
       "label": "fm_qzk",
       "moduleId": "synth",
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "key": "SYNTH MACHINE",
       "author": "timhastie",
       "nativeAuthor": "timhastie",
@@ -304,7 +304,7 @@
     {
       "label": "fm_qzc",
       "moduleId": "synth",
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "key": "SYNTH MACHINE",
       "author": "timhastie",
       "nativeAuthor": "timhastie",
@@ -327,7 +327,7 @@
     {
       "label": "fm_qzs",
       "moduleId": "synth",
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "key": "SYNTH MACHINE",
       "author": "timhastie",
       "nativeAuthor": "timhastie",
@@ -350,7 +350,7 @@
     {
       "label": "fm_qz",
       "moduleId": "synth",
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "key": "SYNTH MACHINE",
       "author": "timhastie",
       "nativeAuthor": "timhastie",
@@ -373,7 +373,7 @@
     {
       "label": "fmpage",
       "moduleId": "synth",
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "key": "SYNTH MACHINE",
       "author": "timhastie",
       "nativeAuthor": "timhastie",
@@ -396,7 +396,7 @@
     {
       "label": "fmmachine",
       "moduleId": "synth",
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "key": "SYNTH MACHINE",
       "author": "timhastie",
       "nativeAuthor": "timhastie",
@@ -419,7 +419,7 @@
     {
       "label": "fmregistration",
       "moduleId": "synth",
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "key": "SYNTH MACHINE",
       "author": "timhastie",
       "nativeAuthor": "timhastie",
