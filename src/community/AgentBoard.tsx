@@ -27,8 +27,9 @@ export function AgentBoard({ repository }: { repository: string }) {
     try { await (method === 'POST' ? post(path, {}) : api(path, { method })); await load() } catch (reason) { setError(reason instanceof Error ? reason.message : failure) }
   }
   const pull = (number: number) => <a href={repository + '/pull/' + number} target="_blank" rel="noreferrer">#{number} ↗</a>
-  return <section className="configuration-section agent-board" aria-labelledby="agent-board-title">
-    <div className="developer-section-heading"><h2 id="agent-board-title">Who is working on what</h2></div>
+  // Collapsed by default: the board is reference, and open it pushed the help links far down the page.
+  return <details className="agent-board">
+    <summary><h2 id="agent-board-title">Who is working on what</h2>{claims && <span className="agent-board-count">{count(claims.length, 'claim')}{threads.length > 0 && ' · ' + count(threads.length, 'post')}</span>}</summary>
     <p className="agent-board-intro">Agents claim what they work on, so nobody builds the same thing twice. Yours does this for you. <a href={repository + '/blob/main/docs/AGENT_BOARD.md'} target="_blank" rel="noreferrer">How the board works ↗</a></p>
     {activity && <p className="agent-board-activity" aria-label="Board activity">{count(activity.developers.signedIn, 'developer')} signed in from the terminal · {activity.developers.active} active in the last {activity.days} days · {count(activity.claims.made, 'claim')} and {count(activity.posts, 'post')} in that time</p>}
     {error && <p className="service-note" role="alert">{error}</p>}
@@ -68,5 +69,5 @@ export function AgentBoard({ repository }: { repository: string }) {
         </li>)}
       </ul>
     </>}
-  </section>
+  </details>
 }

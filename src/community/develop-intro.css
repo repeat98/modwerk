@@ -59,8 +59,7 @@
 .developer-skills li { display: grid; grid-template-columns: minmax(0, 15em) minmax(0, 1fr); align-items: baseline; gap: 2px 20px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .developer-skills code { color: var(--text); font-size: 14px; overflow-wrap: anywhere; }
 .developer-skills span { color: var(--text-secondary); font-size: 16px; }
-.developer-more .agent-board { margin: 0 0 40px; padding: 0; border: 0; border-radius: 0; background: transparent; }
-.developer-more .developer-section-heading { margin: 0; }
+.developer-more .agent-board { margin-top: 36px; }
 .developer-help { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; color: var(--accent); font-size: 15px; }
 .developer-help a:not(.button):hover { text-decoration: underline; text-underline-offset: 3px; }
 
