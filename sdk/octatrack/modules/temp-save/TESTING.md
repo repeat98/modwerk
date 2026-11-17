@@ -1,5 +1,16 @@
 # Temp Save testing
 
+## 0.1.1-experimental (12 November 2026)
+
+0.1.1 changes two spots in `unit.s` so the USB package no longer repeats stock's own instruction bytes (#1391): the reload calls FUNC + CUE's seven refresh routines through a list of their addresses (`ts_refresh`) instead of seven written-out calls, and marks the bank unsaved through address registers. The calls, their order and the stack they see are unchanged.
+
+| check | result |
+|---|---|
+| `npm run octatrack:module-packages -- --stock` with OS 1.40C | package `a389aa93…` (1,088 bytes, module `84a2f52f`); longest run shared with the stock OS 11 bytes (fails at 12); `check_stock_free.py` finds none. 0.1.0's package had runs of 51 and 16 bytes. Every other published package rebuilt byte for byte. |
+| `npm run module:doctor -- temp-save` cross-compatibility | installs beside every other active module and the base |
+| emulator (`verify.py`) | not run on 0.1.1 |
+| hardware | owner's MKII, 14 November 2026, flashed release base `a6b457a1…` (a published USB Audio layout of `10ec7118`), no other module installed: package `a389aa93…` in a 20-second RAM trial over USB (`device -- try`), rolled back clean (the unit's generation moved by one publish and its rollback), the unit left with no module and the same base. Whether the module showed as running was not captured, and no key was pressed: saving and reloading, NO TEMP SAVE, the sample-list preview and RELOAD PART were not tried on 0.1.1 (owner's waiver) |
+
 **Hardware status: tested by hand on one MKII over USB, 28 October 2026** ([evidence/hardware.md](evidence/hardware.md)): every step passed with package `f9f45010…` (commit 001fc493), the published package `10784818…` (commit eadd58a4) passed a retest, and the release package `00b8d5ab…` (commit d88d7207, page and menu windows) passed run 4. The first package failed one check, a quick second FUNC + YES / FUNC + NO, which 001fc493 fixes. The MKI and the card build have not run on a unit; nothing was timed on the unit.
 
 The rest of this file is the ColdFire port (`ot_emu`) on native builds of OS 1.40C, which approximates the instrument: no real-time timing, no audio check.

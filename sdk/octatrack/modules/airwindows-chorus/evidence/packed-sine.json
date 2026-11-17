@@ -1,8 +1,8 @@
 {
-  "version": "0.1.2-experimental",
-  "sourceSha256": "2a39a3cf0ae9918cf4fffb84d8bb1da73ff09c39895663f815f6b5425000d8e0",
-  "assembledSha256": "03469c86e11d0aca51b98501293074cd7140339cc8664e39376507339a322daa",
-  "programWords": 539,
+  "version": "0.1.3-experimental",
+  "sourceSha256": "93f58d2cc5a6e23c6dbc03d387530f5bfd3b3a023ee271a83b28bbca6093a569",
+  "assembledSha256": "4bb74803178a809892e542d78608265a3a682892e26ac29ac87e63aa44835a0f",
+  "programWords": 588,
   "tableWords": 256,
   "originalValues": 1026,
   "tableSha256": "d1f4bf6a582860ec18a16e3a28c9ceae52520297f651ece4f4795428db38a0fc",

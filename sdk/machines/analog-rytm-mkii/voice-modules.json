@@ -1,5 +1,5 @@
 {
-  "about": "Modules that add a digital voice machine on the Rytm base (they contribute to mw_voices or subscribe to ev_sound_applied). Both are in the base's send-bus variant only, so the site builds a set holding one of these on send-bus, as it does for a send effect (src/engine/elekloader/machine-build.ts). npm run modules:check refuses such a module that is not listed here.",
+  "about": "Modules that add a digital voice machine on the Rytm base (they contribute to mw_voices or subscribe to ev_sound_applied). Both are in the base's voices and send-bus variants, so the site builds a set holding one of these on voices, or on send-bus when it also holds a send effect (src/engine/elekloader/machine-build.ts). npm run modules:check refuses such a module that is not listed here, or that uses the send bus's code, which voices does not have.",
   "ids": [
     "analog-bd"
   ]

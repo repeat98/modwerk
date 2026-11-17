@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "moduleId": "quick-velocity-aftertouch-assign",
-  "moduleVersion": "0.2.0-experimental",
+  "moduleVersion": "0.3.1-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-11T17:00:00Z",
-  "imageSha256": "bbf9d4e51d0727c4db4ff42b3850d5202a8f63043f53bb8f8ba58c1cc1dceb76",
-  "build": "Modwerk's linker: Modwerk base 73f3668c (send-bus) for core-ar2 0.7 + this folder's Quick Mod Assign 0.2.0-experimental, materialised against stock OS 1.74, --version QM21",
+  "capturedAt": "2026-11-16T23:05:00Z",
+  "imageSha256": "55a50da750bab93a4dd4930f85e258ba2e4df1532d2c7dc511c063dbe92517aa",
+  "build": "Modwerk's linker: Modwerk base 1c14b6b0 (plain) for core-ar2 0.7 + this folder's Quick Mod Assign 0.3.1-experimental, materialised against stock OS 1.74, --version QM31",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
     "binary": "dtboot",
     "settings": "revision 2ac0f1f with a private RAM-boot model that a plain boot does not use; a fresh card; DTBOOT_END_PNG at the end of each run"
   },
-  "conditions": "SETUP: boot QM21 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each capture loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M.",
+  "conditions": "SETUP: boot QM31 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each capture loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M.",
   "captures": [
     {
       "path": "media/fix-filter.png",
@@ -43,13 +43,13 @@
       "path": "media/lfo-filter.png",
       "frame": "end.png",
       "plan": "--press FLTR@8020000000:12000000 --press LFO@8120000000:1200000000 --nudge 4:1@8240000000x1/30000000 --turn 4:6@8400000000x16/4000000",
-      "sha256": "346573186222244b959cc6ba1e70e8f793466db099c692b82dc32e5da01e0583"
+      "sha256": "283d19403766ad645206f7efc1ac471a759db76fa79241cb7898909fc1c3a804"
     },
     {
       "path": "media/lfo-page.png",
       "frame": "end.png",
       "plan": "--press FLTR@8020000000:12000000 --press LFO@8120000000:600000000 --nudge 4:1@8240000000x1/30000000 --turn 4:6@8400000000x16/4000000 --press LFO@9300000000:12000000",
-      "sha256": "67d6690707e88a95f0b55fe71e05c462c3850de2a6c2deb34532b17b89980a89"
+      "sha256": "b94ea0cf2c569daee128e42371f7c2dcb864bddb829ce733020f4184c0941bdb"
     }
   ]
 }

@@ -9,6 +9,7 @@ import { newConfiguration } from '../config/workspace'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import { SET_MODULE_LIMIT } from '../catalog/set-limit'
 import { isModuleAvailable } from '../catalog/availability'
+import { asBeta } from '../catalog/beta-fixture'
 import { CommunityContext, emptySession } from '../community/context'
 import type { Session } from '../community/api'
 import { LoadDialog } from './LoadDialog'
@@ -35,12 +36,24 @@ beforeEach(async () => {
   link = { getState: () => state, subscribe: () => () => {}, start: () => () => {}, update: vi.fn(async () => {}), health: async () => undefined } as unknown as OctatrackLink
 })
 afterEach(async () => { await act(() => root.unmount()); container.remove(); stop(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
-async function open(set: ReturnType<typeof newConfiguration>, session: Session = emptySession, onEdit = vi.fn(), putBack = false) {
+async function open(set: ReturnType<typeof newConfiguration>, session: Session = emptySession, onEdit = vi.fn(), putBack = false, comesBackOn: string[] = []) {
   const prepareUpdate = vi.fn(async () => ({ name: set.name, changes: [] }))
   await act(() => root.render(createElement(CommunityContext.Provider, { value: { session, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } },
-    createElement(LoadDialog, { link, set, inventory, putBack, prepareUpdate, onInstallBase() {}, onClose() {}, onEdit, onReport() {} }))))
+    createElement(LoadDialog, { link, set, inventory, putBack, comesBackOn, prepareUpdate, onInstallBase() {}, onClose() {}, onEdit, onReport() {} }))))
   return { prepareUpdate, onEdit }
 }
+
+describe('putting modules back after a base update', () => {
+  it('names the modules that were switched off, since they come back on', async () => {
+    review.mockImplementation(target => ({ changes: { ...noChanges, add: target.moduleIds }, updates: [], needsSync: true, problem: undefined }))
+    await open(newConfiguration('From my Octatrack', ['everb', 'tapeecho']), emptySession, vi.fn(), true, ['tapeecho'])
+    expect(container.textContent).toContain('started without your modules')
+    expect(container.textContent).toMatch(/Tape ?Echo was switched off on your Octatrack and comes back on\. To switch it off again, use PROJECT › MODWERK › MODULES after the sync\./i)
+    await act(() => root.unmount()); root = createRoot(container)
+    await open(newConfiguration('From my Octatrack', ['everb']), emptySession, vi.fn(), true)
+    expect(container.textContent).not.toContain('switched off')
+  })
+})
 
 describe('syncing a set over the module limit', () => {
   it('opens a saved set with more modules, says how many to remove, and syncs once trimmed', async () => {
@@ -92,14 +105,14 @@ describe('syncing a set over the module limit', () => {
 describe('a beta module in a saved set', () => {
   const chorus = newConfiguration('Chorus', ['airwindows-chorus'])
   beforeEach(() => review.mockReturnValue({ changes: { ...noChanges, add: ['airwindows-chorus'] }, updates: [], needsSync: true, problem: undefined }))
-  it('is paused for a member who is not a beta tester', async () => {
+  it('is paused for a member who is not a beta tester', () => asBeta(async () => {
     await open(chorus)
     expect(container.textContent).toMatch(/Air Chorus is paused for now/)
     expect(button('Sync to Octatrack')?.disabled).toBe(true)
-  })
-  it('syncs for a beta tester', async () => {
+  }))
+  it('syncs for a beta tester', () => asBeta(async () => {
     await open(chorus, tester)
     expect(container.textContent).not.toMatch(/paused for now/)
     expect(button('Sync to Octatrack')?.disabled).toBe(false)
-  })
+  }))
 })

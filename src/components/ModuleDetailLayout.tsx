@@ -15,7 +15,7 @@ import { hasBetaAccess } from '../community/beta-access'
 import { catalogNeighbors, type CatalogBrowse } from '../catalog/catalog-browse'
 import { CatalogNavigation } from './CatalogNavigation'
 import { ModuleAuthors } from './ModuleAuthors'
-import type { ModuleContributor } from '../catalog/module-authors'
+import { DISPLAY_AUTHORS, type ModuleContributor } from '../catalog/module-authors'
 import { refusesAdd, type AddBlock } from '../catalog/add-blocks'
 import { AddBlockChip, AddBlockPrompt } from './AddBlockPrompt'
 import { useAddBlockPrompt } from './use-add-block-prompt'
@@ -81,7 +81,7 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
       <div className="detail-intro">
         <div className="detail-tags"><span className="pill">{family}</span><span className="subtle">{detail}</span></div>
         <div className="detail-title"><h1 id="module-title">{title}</h1>{titleBadge && <span className="module-compatibility-badge">{titleBadge}</span>}</div>
-        <div className="module-creator"><ModuleAuthors name={author} url={authorUrl} contributors={contributors} by arrows><CreatorSupport key={id} id={id}/></ModuleAuthors></div>
+        <div className="module-creator"><ModuleAuthors name={author} url={authorUrl} contributors={contributors} by arrows>{!DISPLAY_AUTHORS[id] && <CreatorSupport key={id} id={id}/>}</ModuleAuthors></div>
         <p className="detail-description">{description}</p>
         {notice && <div className="detail-notice">{notice}</div>}
         <div className="module-add-region">

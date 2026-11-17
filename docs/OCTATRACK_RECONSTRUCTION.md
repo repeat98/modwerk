@@ -1,9 +1,8 @@
 # Source-bound Octatrack USB reconstruction
 
-When independently authored ColdFire output coincides with stock bytes, first
-establish provenance and inspect every match. A guarded stock copy can preserve
-the authored runtime while avoiding shipping those literal spans. It is not a
-scanner exemption or evidence that publication is approved.
+A guarded stock copy rebuilds a span of a package from the user's own OS
+instead of shipping it. Authored code that merely coincides with stock needs
+none: no scan refuses it.
 
 The normal `scripts/octatrack-module-packages.py` host wrapper accepts
 `reconstruction: true` on an ordinary `octabam: true` package entry. Its recipe

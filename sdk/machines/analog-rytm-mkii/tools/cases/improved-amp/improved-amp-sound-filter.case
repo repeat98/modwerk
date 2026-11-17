@@ -1,0 +1,127 @@
+# Improved AMP: the FILTER envelope's DEC and REL are heard. The BD track's lowpass is closed (FRQ 0)
+# and its envelope opens it fully (ENV at the top, ATK 0); AMP HLD 77 holds the voice for about a second,
+# so the hit lasts as long as the filter stays open. A held note with SUS 0 closes it by DEC, a short note
+# with SUS at the top by REL: the hit is longer with every value tried, and shorter than with the filter
+# left open.
+# Against stock, measured on the unit on 10 Nov 2026 with this case's sound and settings, the hit's len20
+# in ms. Stock FILTER envelope (an image with the same core and link, no module): DEC 23 37.0, 65 336.0,
+# 89 985.5; REL 23 85.5, 65 385.0, 89 1045.5. The module: DEC 65 7.0, 75 13.5, 85 25.0, 89 36.5;
+# REL 65 56.0, 75 61.5, 85 73.5, 89 85.5. So the module's 89 is stock's 23, as the README says, and the
+# expects hold it there: stock's own envelope fails them.
+# The case begins and ends by reloading the kit as saved (NO + PLAY MODE): the first screen shows the
+# saved kit's FILTER page, the second the page as the case set it, the last must show the first again.
+# The BD track needs a sound that rings for a second or more with the AMP envelope and the filter open.
+# Reloads the active kit as it was saved, before and after: what was unsaved in it is lost.
+name: improved-amp-sound-filter
+state: changes
+target: unit
+ignore: 0 0 128 9, 0 55 128 9
+
+hold TRK
+key BD
+release TRK
+hold NO
+key PLAYMODE
+release NO
+wait 300
+key FLTR
+wait 2700
+screen before
+key AMP
+cc 78 0
+cc 79 77
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+key FLTR
+cc 70 0
+cc 71 65
+cc 72 0
+cc 73 65
+cc 74 0
+cc 75 0
+cc 76 0
+cc 77 127
+wait 2700
+screen set
+expect set == ref
+cc 71 65
+wait 300
+audio d65 BD 1600
+wait 50
+note BD 100 1200
+wait 1700
+cc 71 75
+wait 300
+audio d75 BD 1600
+wait 50
+note BD 100 1200
+wait 1700
+cc 71 85
+wait 300
+audio d85 BD 1600
+wait 50
+note BD 100 1200
+wait 1700
+cc 71 89
+wait 300
+audio d89 BD 1600
+wait 50
+note BD 100 1200
+wait 1700
+cc 72 127
+cc 71 127
+cc 73 65
+wait 300
+audio r65 BD 1600
+wait 50
+note BD 100 50
+wait 1700
+cc 73 75
+wait 300
+audio r75 BD 1600
+wait 50
+note BD 100 50
+wait 1700
+cc 73 85
+wait 300
+audio r85 BD 1600
+wait 50
+note BD 100 50
+wait 1700
+cc 73 89
+wait 300
+audio r89 BD 1600
+wait 50
+note BD 100 50
+wait 1700
+cc 74 127
+cc 77 64
+wait 300
+audio open BD 1600
+wait 50
+note BD 100 50
+wait 1700
+hold NO
+key PLAYMODE
+release NO
+wait 2700
+screen after
+expect after == before
+
+expect open.hits == 1
+expect d65.len20 < d75.len20
+expect d75.len20 < d85.len20
+expect d85.len20 < d89.len20
+expect d89.len20 < open.len20
+expect r65.len20 < r75.len20
+expect r75.len20 < r85.len20
+expect r85.len20 < r89.len20
+expect r89.len20 < open.len20
+expect d65.len20 < 20
+expect d89.len20 == 37 within 10
+expect r65.len20 < 70
+expect r89.len20 == 85.5 within 10

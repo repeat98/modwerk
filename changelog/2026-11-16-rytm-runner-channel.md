@@ -1,0 +1,1 @@
+Analog Rytm MKII SDK: the test runner's `cc` and `nrpn` steps take a last `chN` to send on that channel instead of the auto channel (a track that is not active), and a MIDI expectation takes one to match only that channel.

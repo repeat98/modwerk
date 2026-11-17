@@ -1,5 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
         .text
+        .globl core_seq_phrase_start
+core_seq_phrase_start:
+        addq.l #1,core_seq_transport_epoch
+        jmp 0x401388b6
+
         .globl core_seq_phrase_submit
 core_seq_phrase_submit:
         tst.l ev_seq_audio_phrase

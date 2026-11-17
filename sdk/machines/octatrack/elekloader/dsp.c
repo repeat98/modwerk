@@ -22,9 +22,10 @@ struct code { const uint32_t *words; const uint16_t *relocations; uint16_t count
 /* Stock first: each slot is charged at least the dearest stock effect its bank's Parts name there
  * (modwerk_dsp_slot_floors; owner, 24 October 2026, beta finding 34), so a Part switch or a RELOAD never needs room it
  * was not given, and eight stock slots of any bank fit a core (the dearest, MODWERK_DSP_RESERVE, eight times): only a
- * module, or a stock pick dearer than its bank's Parts use there, is refused. Machine voices and engines, which a bank
- * change keeps, still book each slot at MODWERK_DSP_RESERVE. All in chip cycles per sample (build_core.py). A module is
- * admitted before its tracks are known, so against the smaller core's allowance. */
+ * module, or a stock pick dearer than its bank's Parts use there, is refused. Machine voices and engines book the slots
+ * the same way, and give way when a bank or project load needs more (make_way; owner, 17 November 2026, #1542). All in
+ * chip cycles per sample (build_core.py). A module is admitted before its tracks are known, so against the smaller
+ * core's allowance. */
 #define MODWERK_DSP_ALLOWANCE (MODWERK_DSP_ALLOWANCE0 < MODWERK_DSP_ALLOWANCE1 ? MODWERK_DSP_ALLOWANCE0 : MODWERK_DSP_ALLOWANCE1)
 typedef char stock_always_fits[8u * MODWERK_DSP_RESERVE <= MODWERK_DSP_ALLOWANCE ? 1 : -1];
 /* An instance's chip cycles. A claim from the emulator (executed instructions, modeled cycles) ran 1.42-1.74 times
@@ -33,21 +34,16 @@ static uint32_t charged(uint32_t cycles, uint8_t kind) { return kind == RUNTIME_
 static uint32_t chip_cycles(const struct runtime_dsp *d) { return charged(d->cycles, d->kind); }
 /* Source stage: a machine whose DSP voice replaces a track's stock source declares a price per voice (each track it
  * renders) and per core while its engine is on, in its own figure kind. Both are charged before every FX slot (the
- * allocator starts each core's sum at modwerk_dsp_source_charge), and a claim fits beside each slot's committed or
- * pending charge, at least the stock reserve, so a stock pick still never needs admission. Machine lock held. */
+ * allocator starts each core's sum at modwerk_dsp_source_charge), and a claim fits beside the bank's slots as the
+ * allocator books them (voice_slots), so a Part switch or a stock pick the bank already names never needs room the
+ * voices took. A bank or project load that needs more takes it back from the voices (make_way). Machine lock held. */
 #define SOURCE_ENGINES 8u
 uint32_t dl_slot_cycles(unsigned slot); /* manager.c (build_core.py): a slot's committed or pending charge */
 static uint32_t source_voice[8], source_owner[8];
 static volatile uint8_t source_frozen; /* the self-test runs: no voice is charged anew until it ends (beta finding 63) */
 static struct { uint32_t module, cycles; } source_engine[2][SOURCE_ENGINES];
 static unsigned source_core(unsigned track) { return track < 4u ? 1u : 0u; } /* the allocator's core_of: tracks 1-4 on core 1 */
-static uint32_t slot_charge(unsigned core) /* each of the core's eight slots at least the stock reserve: for voices */
-{
-    uint32_t sum = 0;
-    for (unsigned i = 0; i < 16u; ++i)
-        if (source_core(i & 7u) == core) { uint32_t x = dl_slot_cycles(i); sum += x > MODWERK_DSP_RESERVE ? x : MODWERK_DSP_RESERVE; }
-    return sum;
-}
+static uint32_t voice_slots(unsigned core); /* below: the core's slots as a voice books them */
 uint32_t modwerk_dsp_source_charge(unsigned core)
 {
     uint32_t sum = 0;
@@ -73,8 +69,11 @@ int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, ui
     for (unsigned e = 0; at == SOURCE_ENGINES && e < SOURCE_ENGINES; ++e) if (!source_engine[c][e].module) at = e;
     if (at == SOURCE_ENGINES) return RUNTIME_FULL;
     uint32_t v = charged(voice, kind), e = charged(engine, kind), old = source_engine[c][at].module ? source_engine[c][at].cycles : 0;
+#ifdef MODWERK_MEASURE_VOICES
+    v = e = 0; /* a development twin measuring a voice (build_core.py --measure-voices): admitted uncharged */
+#endif
     uint32_t keep = old > e ? old : e;
-    uint32_t total = slot_charge(c) + modwerk_dsp_source_charge(c) - source_voice[track] - old + v + keep;
+    uint32_t total = voice_slots(c) + modwerk_dsp_source_charge(c) - source_voice[track] - old + v + keep;
     if (total > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) { refused_core = c, refused_add = v + keep - old; return RUNTIME_CYCLES; }
     source_voice[track] = v, source_owner[track] = module;
     source_engine[c][at].module = module, source_engine[c][at].cycles = keep;
@@ -153,7 +152,7 @@ static char owner_name[MODWERK_FX_IDS][16];
 static uint8_t *owner_page[MODWERK_FX_IDS]; /* its page recipe (the module image's head), and that image's length */
 static uint32_t owner_page_bytes[MODWERK_FX_IDS];
 static uint8_t owner_pinned[MODWERK_FX_IDS]; /* its ColdFire code names this id: it never moves (loader.h) */
-static uint32_t owner_cycles[MODWERK_FX_IDS]; /* an instance's chip cycles a sample, unfloored (status.c's MODULE LOAD) */
+static uint32_t owner_cycles[MODWERK_FX_IDS]; /* an instance's chip cycles a sample, unfloored (status.c's MODULE COST) */
 /* Each slot's least charge: the dearest stock effect this bank's Parts name there, working or saved, the one it runs and
  * the one `ids` asks for. A module id counts nothing here: each module is admitted for itself, and a Part naming one
  * that does not fit is refused at the switch. */
@@ -189,6 +188,33 @@ static uint32_t bank_booking(const uint32_t least[16], unsigned core)
     return most;
 }
 static const uint8_t no_target[16] = {255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255};
+/* A voice's view of the core's slots: the bank's dearest set as the allocator books it (each slot at least the dearest
+ * stock effect the bank's Parts or the tracks name there), and each slot's committed or pending charge where that is
+ * dearer, so a pick under way is not undercut. */
+static uint32_t voice_slots(unsigned core)
+{
+    uint32_t least[16];
+    floors(no_target, least);
+    for (unsigned i = 0; i < 16u; ++i) { uint32_t x = dl_slot_cycles(i); if (x > least[i]) least[i] = x; }
+    return bank_booking(least, core);
+}
+/* machine_registry.c: the track's voice gives way (its charge, and its engine when no other track holds it). A harness
+ * without machines frees the charge only. */
+void modwerk_machine_voice_shed(unsigned track);
+__attribute__((weak)) void modwerk_machine_voice_shed(unsigned track) { modwerk_dsp_source_release(track); }
+/* The bank first (owner, 17 November 2026, #1542): before the allocator plans the tracks' effects, a core whose bank
+ * (`was`: what its Parts and the tracks name) no longer fits beside its voices, after a bank or project load, drops
+ * voices from its last track down until it does. Such a track renders the stock silent source, and the machine
+ * registry claims it again each tick, with the DSP FULL box, until there is room. A pick the bank does not name never
+ * takes a voice's room: it is refused as before. */
+static void make_way(const uint32_t was[16])
+{
+    for (unsigned c = 0; c < 2u; ++c) {
+        uint32_t bank = bank_booking(was, c), allowance = c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0;
+        for (unsigned t = c ? 4u : 8u; t-- > (c ? 0u : 4u) && bank + modwerk_dsp_source_charge(c) > allowance;)
+            if (source_owner[t]) modwerk_machine_voice_shed(t);
+    }
+}
 /* The allocator's prepare (`ids` its target): each slot's floor into `least`, and 1 + the core where the target's raised
  * floors (a stock pick dearer than its bank's Parts use there) take what runs or a Part of the bank past the allowance
  * beside the machines' voices, else 0, so a Part switch is never refused for a stock effect (owner, 24 October 2026, beta
@@ -198,6 +224,7 @@ unsigned modwerk_dsp_slot_floors(const uint8_t ids[16], uint32_t least[16])
     uint32_t was[16];
     unsigned raised = 0;
     floors(no_target, was); /* the Parts once: the target only adds its own stock effects */
+    make_way(was);
     for (unsigned i = 0; i < 16u; ++i) {
         unsigned p = ids[i];
         uint32_t x = p < MODWERK_FX_IDS && !owner[p] ? dl_catalog[p].cycles : 0u;
@@ -559,7 +586,7 @@ int modwerk_dsp_bank_names(unsigned id)
     return named;
 }
 
-/* MODULE LOAD (status.c): each installed module effect, by handle: its name, an instance's chip cycles a sample
+/* MODULE COST (status.c): each installed module effect, by handle: its name, an instance's chip cycles a sample
  * (unfloored: what it costs, not the ledger's charge), whether that is a hardware figure, and how many slots run it
  * on each core (T1-T4 core 1, T5-T8 core 0). Returns how many it wrote, at most MODWERK_FX_IDS. */
 unsigned modwerk_dsp_module_loads(struct modwerk_module_load *out)
@@ -629,6 +656,29 @@ fx_set modwerk_dsp_dry(void)
  * LOAD_HOLD ticks (about a minute), in case one never ends. */
 #define LOAD_HOLD 3600u
 static unsigned last_track = 0xffu, load_held;
+int modwerk_fxmap_describe(unsigned id, uint32_t *module, uint16_t *layout, char *name); /* fxmap.c */
+#ifndef MODWERK_HOST
+/* machine_registry.c's map of the machines a project uses; a base without the registry has none. */
+__attribute__((weak)) int modwerk_machine_absent(unsigned k, uint32_t *module, char *name) { (void)k, (void)module, (void)name; return 0; }
+__attribute__((weak)) int modwerk_machine_track_absent(unsigned t, uint32_t *module, char *name) { (void)t, (void)module, (void)name; return 0; }
+#endif
+/* The track's machine, when the project's machine map names it and it is absent: "POLY8 IS OFF" when it is switched
+ * off on MODULES, else "MISSING POLY8" (owner, 16 November 2026: machines in the project map). */
+static int machine_notice(unsigned track, char *text)
+{
+    uint32_t module = 0;
+    char name[16];
+    if (track >= 8u || !modwerk_machine_track_absent(track, &module, name)) return 0;
+    int off = modwerk_modset_is_off(module);
+    unsigned n = 0;
+    if (!off) for (const char *t = "MISSING "; *t; ) text[n++] = *t++;
+    unsigned at = n;
+    for (unsigned i = 0; i < 15u && name[i]; ++i) text[n++] = name[i] >= 'a' && name[i] <= 'z' ? (char)(name[i] - 32) : name[i];
+    if (n == at) for (const char *t = "MACHINE"; *t; ) text[n++] = *t++;
+    if (off) for (const char *t = " IS OFF"; *t; ) text[n++] = *t++;
+    text[n] = 0;
+    return 1;
+}
 int modwerk_dsp_missing_tick(int following, unsigned track, char *text)
 {
     if (!modwerk_fxmap_loading()) load_held = 0;
@@ -637,9 +687,21 @@ int modwerk_dsp_missing_tick(int following, unsigned track, char *text)
     last_track = track;
     fx_set say = {{0}};
     if (track < 8u) say = fx_and(modwerk_dsp_dry(), fx_with(fx_with(say, LIVE_FX[track]), LIVE_FX[8u + track]));
-    if (!fx_any(say)) return 0;
+    if (!fx_any(say)) return machine_notice(track, text);
     unsigned k = 0;
     while (!fx_in(say, k)) ++k;
+    /* A module switched off on PROJ > MODWERK > MODULES is not missing: "E-VERB IS OFF" (owner, 16 November 2026). */
+    uint32_t module = 0;
+    uint16_t layout;
+    char name[16];
+    if (modwerk_fxmap_describe(k, &module, &layout, name) && modwerk_modset_is_off(module)) {
+        unsigned n = 0;
+        for (; n < 15u && name[n]; ++n) text[n] = name[n] >= 'a' && name[n] <= 'z' ? (char)(name[n] - 32) : name[n];
+        if (!n) for (const char *t = "MODULE"; *t; ) text[n++] = *t++;
+        for (const char *t = " IS OFF"; *t; ) text[n++] = *t++;
+        text[n] = 0;
+        return 1;
+    }
     for (unsigned i = 0; i < 8u; ++i) text[i] = "MISSING "[i];
     modwerk_fxmap_name(k, text + 8);
     for (char *c = text + 8; *c; ++c) if (*c >= 'a' && *c <= 'z') *c = (char)(*c - 32); /* the popup sizes capitals only */
@@ -663,6 +725,17 @@ unsigned modwerk_dsp_missing_list(uint8_t *out, unsigned first, unsigned most)
         if (seen++ < first) continue;
         uint8_t *e = out + 4u + 24u * n++;
         e[0] = (uint8_t)k, e[1] = 0, e[2] = (uint8_t)(layout >> 8), e[3] = (uint8_t)layout;
+        for (unsigned i = 0; i < 4u; ++i) e[4 + i] = (uint8_t)(module >> (24 - 8 * i));
+        for (unsigned i = 0; i < 16u; ++i) e[8 + i] = (uint8_t)name[i];
+    }
+    /* Then the machines the project uses that are absent (machine_registry.c's map): handle 0xff, 0x80 and the entry. */
+    for (unsigned k = 0; k < MODWERK_MACHINE_MAP && n < most; ++k) {
+        uint32_t module;
+        char name[16];
+        if (!modwerk_machine_absent(k, &module, name)) continue;
+        if (seen++ < first) continue;
+        uint8_t *e = out + 4u + 24u * n++;
+        e[0] = 0xffu, e[1] = (uint8_t)(0x80u | k), e[2] = e[3] = 0;
         for (unsigned i = 0; i < 4u; ++i) e[4 + i] = (uint8_t)(module >> (24 - 8 * i));
         for (unsigned i = 0; i < 16u; ++i) e[8 + i] = (uint8_t)name[i];
     }

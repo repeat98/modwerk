@@ -263,6 +263,13 @@ with tempfile.TemporaryDirectory() as tmp:
     check('at half RATE an octave up it restarts every cycle and still lasts twice as long', len(restarts) > 20 and over is not None and abs(over * 16 - 2 * W) <= 2400, f'{len(restarts)} {over}')
     restarts, over = rated(32, 0x4000, 0x4000, 1.0, 0, back=1)
     check('backwards at half speed the note lasts twice as long too', len(restarts) > 20 and over is not None and abs(over * 16 - 2 * W) <= 2400, f'{len(restarts)} {over}')
+    # SYNC: the same fraction carries the project's tempo over the sample's (BPM x 24).
+    restarts, over = rated(64, 2160, 2880, 1.0, 0)
+    check('SYNC: a 120 BPM sample at 90 BPM lasts a third longer at its own pitch', len(restarts) > 20 and over is not None and abs(over * 16 - W * 4 // 3) <= 2400, f'{len(restarts)} {over}')
+    restarts, over = rated(64, 2880, 2160, 1.0, 0)
+    check('SYNC: a 90 BPM sample at 120 BPM lasts three quarters as long', len(restarts) > 20 and over is not None and abs(over * 16 - W * 3 // 4) <= 2400, f'{len(restarts)} {over}')
+    restarts, over = rated(127, 256 * 7200, 256 * 720, 1.0, 0)
+    check('SYNC: the fastest case (300 over 30 BPM, SPD 127) does not overflow', over is not None and abs(over * 16 - W * 64 // 1270) <= 2400, f'{over}')
     v = Voice()
     lib.amiga_note(ctypes.byref(v), W)
     for _ in range(100):

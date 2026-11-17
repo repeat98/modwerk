@@ -1,0 +1,1 @@
+Site: a base update over USB no longer stops with "The Octatrack stopped answering" at Save when a reply goes missing before the new base starts writing itself. Nothing was written then, so the page reconnects and sends it again, up to four tries.

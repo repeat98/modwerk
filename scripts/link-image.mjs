@@ -4,7 +4,7 @@
 // link it with the core (and any prebuilt --elemod), and write the stock file again with the new main OS section.
 //
 //   node scripts/link-image.mjs --stock Analog-Rytm_MKII_OS1.74.syx --version XX01 --out my-build.syx \
-//     --elemod vendor/elekloader/catalog/core-ar2-0.7.elemod --module analog-rytm-mkii:pipo-loop
+//     --elemod vendor/elekloader/catalog/core-ar2-0.7.elemod --module analog-rytm-mkii:sample-rate
 //
 // A core with mod storage lays every module's saved fields out afresh unless you pass the lockfile of the build the unit
 // runs now (--lock-in): with it, every field stays where that build's projects keep it. --lock-out writes this build's
