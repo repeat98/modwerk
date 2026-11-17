@@ -6,7 +6,7 @@
   "changes": [
     "First release on Digitakt II OS 1.17 with the Modwerk core 1.1 base."
   ],
-  "runtimeSourceSha256": "ee5aaef96e4728158d063f1e51f4d1cddf4ad7dbf9ef4642356c91a54ac8fe78",
+  "runtimeSourceSha256": "f7e52922d8d1828907ab163d6ecfd95ae0e929707424ecff44c97af7acd14969",
   "packages": [
     {
       "os": "1.17",
