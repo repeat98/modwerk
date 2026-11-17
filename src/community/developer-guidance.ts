@@ -4,16 +4,16 @@ export type DeveloperStage = 'prepare' | 'verify' | 'submit' | 'publish'
 
 export const RELEASE_STEPS: Record<DeveloperTask, { id: DeveloperStage; title: string; summary: string }[]> = {
   create: [
-    { id: 'prepare', title: 'Prepare the module', summary: 'Build or port it with matching docs, credits, media and release notes.' },
-    { id: 'verify', title: 'Verify the exact build', summary: 'Run the checks, test on your unit and record actual results.' },
-    { id: 'submit', title: 'Submit for first review', summary: 'Open a Modwerk PR. Every new module currently needs owner review.' },
-    { id: 'publish', title: 'Check the published download', summary: 'Follow deployment, confirm the live version and save a compatible firmware download.' },
+    { id: 'prepare', title: 'Prepare the module', summary: 'Build or port it, with docs, credits and release notes.' },
+    { id: 'verify', title: 'Verify the exact build', summary: 'Run the checks and test it on your unit.' },
+    { id: 'submit', title: 'Submit for first review', summary: 'Open a pull request. The owner reviews every first release.' },
+    { id: 'publish', title: 'Check the published download', summary: 'Check the live version and its download.' },
   ],
   update: [
-    { id: 'prepare', title: 'Change, version and document', summary: 'Fix or update your module; bump the version and write matching release notes.' },
-    { id: 'verify', title: 'Verify the exact build', summary: 'Run the checks, test on your unit and personally review the evidence.' },
-    { id: 'submit', title: 'Request publication in the PR', summary: 'Registered authors check both release boxes after personally verifying the evidence.' },
-    { id: 'publish', title: 'Verify live, then resolve', summary: 'Save and test the published download before resolving a fixed report.' },
+    { id: 'prepare', title: 'Change, version and document', summary: 'Make the change, raise the version, write release notes.' },
+    { id: 'verify', title: 'Verify the exact build', summary: 'Run the checks and test it on your unit.' },
+    { id: 'submit', title: 'Request publication in the PR', summary: 'Registered authors tick both release boxes.' },
+    { id: 'publish', title: 'Verify live, then resolve', summary: 'Test the live download, then close the report.' },
   ],
 }
 
@@ -23,3 +23,17 @@ export const INSTRUMENT_STEPS = [
   { title: 'Qualify on hardware', summary: 'Test the exact build and record actual results and remaining gaps.' },
   { title: 'Owner review, then modules', summary: 'Instrument integration needs owner review before module publication.' },
 ]
+
+/** The skills the setup prompt installs, in a developer's words. Every folder in .claude/skills/ is in one of these lists (starter-prompts.test.ts). */
+export const DEVELOPER_SKILLS = [
+  { name: 'modwerk-start', summary: 'Start here' },
+  { name: 'modwerk-new-module', summary: 'Build a new module' },
+  { name: 'modwerk-update-module', summary: 'Update your module' },
+  { name: 'modwerk-test-on-unit', summary: 'Test on your machine' },
+  { name: 'modwerk-pr-ready', summary: 'Get ready to merge' },
+  { name: 'modwerk-fix-issue', summary: 'Fix a reported issue' },
+  { name: 'modwerk-contribute', summary: 'Find something to help with' },
+]
+export const MAINTAINER_SKILLS = ['modwerk-review-prs', 'modwerk-triage-issues', 'modwerk-discord']
+/** Never offered to developers: their descriptions say they are for the owner only, and the setup prompt skips them. */
+export const OWNER_SKILLS = ['modwerk-maintain', 'modwerk-diagnostics', 'modwerk-todo']
