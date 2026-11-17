@@ -2274,7 +2274,7 @@
    "contract": "Return nonzero while this module acts on at least one track of the current Part (a machine: a track runs it; a feature: its setting is on somewhere), 0 while it acts on none. While it answers 0 the module rests: the base leaves its handlers out of every hook that rests (HOOKS.md's kind column), so the frame interrupt never enters its code there, and keeps every other hook, table and its setup UI, so the musician can still turn it on. The first nonzero answer puts it back in its (order, module id) place, from the next tick on, so a note that starts in the gap before that tick runs without it: answer for every Part a pattern change could bring in while playing, and start any per-track state afresh when the module wakes. A module that does not subscribe never rests; installing, replacing or removing a module wakes its position until the next answer. d2-d7/a2-a6 must be kept.",
    "order": "any: the base asks every subscriber on its own and nothing is OR'd, so the order changes nothing.",
    "subscribers": [],
-   "orderEvidence": "Each module answers only for itself. No module subscribes yet: POLY8, FM Synth and Repitch, each 3-5 points of every frame while installed on no track (an MKII, 14 November 2026), are the first to adopt it."
+   "orderEvidence": "Each module answers only for itself. No module subscribes yet. Resting takes out handlers only, never a module's own stock-site detours: on an MKII (17 November 2026) a test handler of 400 loop passes cost 12.5 frame points on no track and 1.0 resting, while Repitch 0.2.1 cost 2.4 either way."
   }
  ]
 }

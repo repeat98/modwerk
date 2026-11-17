@@ -198,7 +198,7 @@ A raised hook has no stock site: these modules call the base's entry and act on 
 - `ev_part_clear`: No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order.
 - `ev_modules_ready`: No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order.
 - `ot_sample_memory`: Room 1: the stock pool's cold init keeps one hole; a second borrower needs a reviewed change of the hole bookkeeping first.
-- `ev_in_use`: Each module answers only for itself. No module subscribes yet: POLY8, FM Synth and Repitch, each 3-5 points of every frame while installed on no track (an MKII, 14 November 2026), are the first to adopt it.
+- `ev_in_use`: Each module answers only for itself. No module subscribes yet. Resting takes out handlers only, never a module's own stock-site detours: on an MKII (17 November 2026) a test handler of 400 loop passes cost 12.5 frame points on no track and 1.0 resting, while Repitch 0.2.1 cost 2.4 either way.
 
 ## The sites
 
