@@ -137,6 +137,29 @@ describe('maintenance bot ledger', () => {
     expect((await (await bot('/todos')).json()).todos.map((row: { id: string }) => row.id)).toEqual(['8'.repeat(16)])
   })
 
+  it('answers, closes and releases on the agent board as the owner, through the board’s own rules', async () => {
+    const { bot, db } = await fixture()
+    const now = new Date().toISOString(), thread = '11111111-1111-4111-8111-111111111111', claim = '22222222-2222-4222-8222-222222222222'
+    db.prepare('INSERT INTO users(id,display_name,github_id,github_login) VALUES(?,?,?,?)').run('alice', 'alice', 7, 'alice')
+    db.prepare("INSERT INTO agent_messages(id,kind,topic_kind,topic_key,user_id,to_login,body,created_at,active_at) VALUES(?,'question','site','forum','alice','repeat98','Which hook?',?,?)").run(thread, now, now)
+    db.prepare("INSERT INTO agent_claims(id,kind,claim_key,user_id,note,created_at,renewed_at) VALUES(?,'migration','0099','alice','',?,?)").run(claim, now, now)
+    expect((await bot('/board/messages/' + thread + '/reply', 'POST', { body: 'See docs/AGENT_BOARD.md.' })).status).toBe(409)
+    db.prepare('INSERT INTO users(id,display_name,github_id,github_login) VALUES(?,?,?,?)').run('owner', 'Jannik', 1, 'repeat98')
+    expect((await bot('/board/messages/' + thread + '/reply', 'POST', { body: 'See docs/AGENT_BOARD.md.' })).status).toBe(200)
+    expect(db.prepare("SELECT user_id,body FROM agent_messages WHERE parent_id=?").get(thread)).toEqual({ user_id: 'owner', body: 'See docs/AGENT_BOARD.md.' })
+    expect((await bot('/board/messages/' + thread + '/reply', 'POST', { body: 'x'.repeat(501) })).status).toBe(400)
+    expect((await bot('/board/claims/' + thread + '/reply', 'POST', {})).status).toBe(404)
+    expect((await bot('/board/claims/' + claim + '/release', 'POST', {}, 'x'.repeat(64))).status).toBe(401)
+    expect((await bot('/board/claims/' + claim + '/release', 'POST', {})).status).toBe(200)
+    expect(db.prepare('SELECT released_reason FROM agent_claims WHERE id=?').get(claim)).toEqual({ released_reason: 'administrator' })
+    expect((await bot('/board/claims/' + claim + '/release', 'POST', {})).status).toBe(404)
+    expect((await bot('/board/messages/' + thread + '/close', 'POST', {})).status).toBe(200)
+    expect((await bot('/board/messages/' + thread + '/reply', 'POST', { body: 'late' })).status).toBe(404)
+    // A board action has no pull request number.
+    expect((await bot('/actions', 'POST', { actions: [{ ...action('7'.repeat(16), 'window'), kind: 'board_reply', target: 0 }] })).status).toBe(200)
+    expect((await bot('/actions', 'POST', { actions: [{ ...action('6'.repeat(16), 'window'), target: 0 }] })).status).toBe(400)
+  })
+
   it('keeps the fingerprint and splits long reports', async () => {
     const { bot, sent } = await fixture()
     expect((await bot('/state', 'PUT', { fingerprint: 'nope' })).status).toBe(400)

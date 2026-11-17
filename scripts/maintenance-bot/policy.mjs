@@ -7,8 +7,8 @@ import { createHash } from 'node:crypto'
 
 export const OWNER = 'repeat98'
 /** Hours an action waits for the owner's Stop before it runs. */
-export const WINDOW_HOURS = { merge: 12, close: 12, comment: 4, review: 4 }
-const KINDS = new Set(['label', 'comment', 'review', 'merge', 'close', 'decline'])
+export const WINDOW_HOURS = { merge: 12, close: 12, comment: 4, review: 4, board_reply: 4, board_close: 12 }
+const KINDS = new Set(['label', 'comment', 'review', 'merge', 'close', 'decline', 'board_reply', 'board_close', 'board_release'])
 const LABELS = /^(bug|documentation|duplicate|enhancement|question|invalid|wontfix|configuration|accessibility|good first issue|help wanted|needs-work|needs-info|priority:P[123]|module:[a-z0-9-]+)$/
 /**
  * Paths a merge never touches without the owner's OK: CI and the bot itself, deploy and schema, sign-in and
@@ -24,6 +24,8 @@ const SENSITIVE = [
 const LINK = /https?:\/\/[^\s)>\]]+/g
 const LINK_HOSTS = /^https:\/\/(github\.com\/repeat98\/modwerk(\/|$|#)|modwerk\.[a-z]+(\/|$)|octamod\.[a-z]+(\/|$))/
 
+/** A to-do's command: a /modwerk-* skill, or answering a board thread (number 0). The Worker checks the same shape. */
+export const TODO_COMMAND = /^(\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?|npm run board -- reply [0-9a-f-]{36})$/
 export const actionId = (...parts) => createHash('sha256').update(parts.map(String).join('\u0000')).digest('hex').slice(0, 16)
 
 /** Text the bot posts in public: plain, bounded, no mass mentions, links only to Modwerk. */
@@ -44,12 +46,13 @@ export function checkText(body, author) {
 export function classify(proposal, target, existingLabels = new Set()) {
   const kind = proposal?.kind
   if (!KINDS.has(kind)) return { reject: 'kind "' + kind + '" is not something the bot may do' }
-  if (!target || target.state !== 'open') return { reject: '#' + proposal.number + ' is not open' }
+  const board = kind.startsWith('board_')
+  if (!target || target.state !== 'open') return { reject: (board ? 'that board thread or claim' : '#' + proposal.number) + ' is not open' }
   const summary = String(proposal.summary ?? '').trim().replace(/\s+/g, ' ').slice(0, 90), reason = String(proposal.reason ?? '').trim().slice(0, 800)
   if (!summary) return { reject: 'it has no summary' }
   // Every action pins the state it was proposed against; the executor drops it if the target moved on.
   const pin = { head: target.head ?? '', comments: target.comments }
-  const base = { summary: '#' + target.number + ' ' + summary, reason }
+  const base = { summary: (board ? 'Board: ' : '#' + target.number + ' ') + summary, reason }
   const sensitive = (target.files ?? []).filter(file => SENSITIVE.some(pattern => pattern.test(file)))
   switch (kind) {
     case 'label': {
@@ -89,5 +92,22 @@ export function classify(proposal, target, existingLabels = new Set()) {
       const payload = { kind: 'close', number: target.number, isPull: target.isPull, body: comment, stateReason, pin }
       return { ...base, tier: decline ? 'ask' : 'window', windowHours: decline ? 0 : WINDOW_HOURS.close, id: actionId('close', target.number, pin.comments, pin.head), payload }
     }
+    // The agent board (docs/AGENT_BOARD.md). `target` is { kind: 'thread', id, author, replies, state } or { kind: 'claim', id, holder, state }.
+    case 'board_reply': case 'board_close': {
+      if (target.kind !== 'thread') return { reject: 'that is not a board thread' }
+      const pinned = { replies: target.replies }
+      if (kind === 'board_close') {
+        // Ending someone else's thread is the owner's call; the owner's own waits for a Stop.
+        const own = target.author === OWNER
+        return { ...base, tier: own ? 'window' : 'ask', windowHours: own ? WINDOW_HOURS.board_close : 0, id: actionId(kind, target.id, target.replies), payload: { kind, thread: target.id, pin: pinned } }
+      }
+      const problem = String(proposal.body ?? '').length > 500 ? 'it is over the board’s 500 characters' : checkText(proposal.body, target.author)
+      if (problem) return { reject: 'the board reply was held back because ' + problem }
+      return { ...base, tier: 'window', windowHours: WINDOW_HOURS.board_reply, id: actionId(kind, target.id, target.replies), payload: { kind, thread: target.id, body: proposal.body.trim(), pin: pinned } }
+    }
+    case 'board_release':
+      if (target.kind !== 'claim') return { reject: 'that is not a board claim' }
+      // Taking a claim from its holder is always the owner's call.
+      return { ...base, tier: 'ask', windowHours: 0, id: actionId(kind, target.id), payload: { kind, claim: target.id, pin: {} } }
   }
 }
