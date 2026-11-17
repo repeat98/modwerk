@@ -165,7 +165,7 @@ const uint32_t improved_amp_flt_dec[128] __attribute__((aligned(4))) = {
 // is counted in steps by improved_amp_voice. build.json's two byte sites make it compare the counter
 // with 0x7fffffff, out of its reach, for every knob value, 127 (AUTO, read when HLD is turned to AUTO
 // in a hold) too: the lea of the table becomes `movea.l #0x7fffffff,%a0`, the indexed compare
-// `tst.l %d1; cmp.l %a0,%d1`. (Until 0.1.1 a ptr site pointed the lea at a 512-byte table of
+// `tst.l %d1; cmp.l %a0,%d1`. (Up to 0.1.1 a ptr site pointed the lea at a 512-byte table of
 // 0x7fffffff; the flags and the state it leaves are the same. a0 is scratch from there to the loop's
 // end: the record hook's entries may use it, and the loop head loads it again.)
 

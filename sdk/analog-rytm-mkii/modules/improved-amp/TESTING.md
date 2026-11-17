@@ -16,7 +16,7 @@ the indexed compare `tst.l %d1; cmp.l %a0,%d1` (4 bytes). The compare sets the s
 for every counter and every HLD value, so the branch after it, the state and the counter move as
 before; a0 is scratch from there to the loop head, which loads it again (the record hook's entries may
 use it). No change in behaviour is intended. Fingerprint (as below, the same seven files):
-`91539146…5649`, `evidence.sourceSha256`. The test builds' `.syx` files stayed on the tester's
+`ff15f650…e13c`, `evidence.sourceSha256`. The test builds' `.syx` files stayed on the tester's
 computer.
 
 - **Reading.** Stock OS 1.74 read from the tester's own copy: the only code that writes the voices'
@@ -27,7 +27,8 @@ computer.
   out, byte for byte, and its relocations the same moved by the table's length. `.bss` unchanged
   (160). Linked alone on the plain base (IA17, sha256 `32787aac…f6e0`) the module takes 8,716 bytes of
   the shared mod area (ramSpare 110,288; 0.1.1's package on the same base, IB11: 109,776). Beside the
-  two sites, the image differs from IB11 only in the addresses of the tables that moved.
+  two sites, the image differs from IB11 only in addresses that moved with the table and in the
+  base's count of the `.run` length.
 - **rytm-emu** (`2ac0f1f`, the author's local build). IA17 against IB11 from cold boot, the same input:
   BD pad hits with HLD turned through 0, one step, 16 steps, 126 and AUTO, turned to and from AUTO
   inside a hold and a gate, ATK raised, SD and CH hits and a fast series inside an 8-step hold: the

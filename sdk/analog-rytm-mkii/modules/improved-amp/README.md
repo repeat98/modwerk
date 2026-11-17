@@ -80,7 +80,7 @@ let a long sound restart cleanly on every step.
   the filter decay and release records (0x4010d342, 0x4010d3b2, 0x4010d3da). Two byte sites make
   stock's hold compare (0x40109bc2 and 0x40109bce) compare its counter with 0x7fffffff, out of its
   reach, in place of the hold table's entry, so stock never ends a timed hold: only
-  `improved_amp_voice` does. (Until 0.1.1 a `ptr` site pointed it at a 512-byte table of that value.) Stock's tables stay where they are,
+  `improved_amp_voice` does. (Up to 0.1.1 a `ptr` site pointed it at a 512-byte table of that value.) Stock's tables stay where they are,
   unread by the OS. The AMP table is built for the VCA's
   0.918x decay speed, the filter's for 1.00x. The same script builds `improved_amp_hold_steps`, the
   hold in steps x 225,000 (a quarter of the clock's units in a step at one pulse a step). The hold is
