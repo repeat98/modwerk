@@ -41,4 +41,6 @@ npm run machine:base -- digitakt-ii --stock /private/Digitakt_II_OS1.17.syx --ou
 
 On QF17 with base `e88273ed`, Claptom-music verified that Chord Arp remained enabled on both test tracks and the checked trig locks survived Save Project and a power cycle. Digikit confirmed the startup archive update. Image SHA-256 `f8406f34dd18bed623db0d076062ac2ae2b1fe774b5525e6e6f48c5942f5f721`.
 
-With base `e88273ed`, the site's builder and preflight under Node passed for the base alone, Track Names, both Perform modules together, and Mute Latch. QK17 combines the same base with Euclidean Scale for kit-data qualification. Image SHA-256 `4a87420a08ff3be4f526dd80012807661b53908fa2a2e50c4d4e2dd3437f0441`. Hardware verification of kit data is pending.
+With base `e88273ed`, the site's builder and preflight under Node passed for the base alone, Track Names, both Perform modules together, and Mute Latch.
+
+On QK17 with the same base and Euclidean Scale, Claptom-music verified that Save Project and a cold boot preserved SCF, LO, HI and the saved RNN melody. Standalone KIT Save and Load restored the saved bounds and melody after changes. Image SHA-256 `4a87420a08ff3be4f526dd80012807661b53908fa2a2e50c4d4e2dd3437f0441`.
