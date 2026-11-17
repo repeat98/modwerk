@@ -4,9 +4,9 @@
     "date": "2026-11-16",
     "changes": [
       "A jump now counts from the last restart, PLAY or the last normal pattern change: after a normal change, the new pattern lands in phase with the one that started there.",
-      "Trig conditions carry on across a jump: 1:2 and the other A:B counts stand where the new pattern's would had it played since that restart. A held [FILL] stays on, and a PRE trig right after the jump plays.",
+      "Trig conditions carry on across a jump: 1:2 and the other A:B counts stand where the new pattern's would since that restart. A held [FILL] stays on, and a PRE trig right after the jump plays.",
       "A jump now lands just before the step, so the new pattern's first step is never late, and a cue made in the playing pattern's last step lands on its grid point too.",
-      "With LFO AUTO CHANGE on, each track's new LFO settings arrive with its first trig of the new pattern; with SILENCE TRACKS on, the tracks a jump silences are released just before the step, so they no longer pop.",
+      "With LFO AUTO CHANGE on, each track's new LFOs arrive with its first trig of the new pattern; with SILENCE TRACKS on, the tracks a jump silences are released just before the step, without a pop.",
       "Known issue: the author tested these on his MKI in his own builds of the same code; this Modwerk build has not yet run on a unit."
     ]
   },

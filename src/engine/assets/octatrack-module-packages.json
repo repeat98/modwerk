@@ -396,14 +396,14 @@
       "octabam": true,
       "abi": 7,
       "features": 1,
-      "sites": 6,
+      "sites": 7,
       "copies": 0,
       "fills": 0,
       "version": "0.2.0-experimental",
       "name": "DirectJmp Kyoti",
       "module": "075d79a3",
-      "bytes": 4374,
-      "sha256": "3185b05c49a07e36baf30cf854c4077d78b3beed7300d347f86f9b475666078e",
+      "bytes": 4526,
+      "sha256": "2f25a2084402f03ff3cd09e25cc59a90cadfaa714b21639e60567b03af8c533b",
       "path": "octatrack-modules/direct-jump-kyoti/0.2.0-experimental.mwrm"
     },
     {
