@@ -1,7 +1,6 @@
 {
  "about": "Octatrack modules listed before 17 November 2026 that do not yet name their CPU price (resources.cpuPrice, docs/MODULE_PERFORMANCE.md). Every other module must name one. This list only shrinks: npm run modules:check refuses an id that is not on it at the pull request's base or that was listed from 17 November 2026, and an id whose module names a price. Measure, write resources.cpuPrice, then delete the module's line here in the same pull request.",
  "pending": {
-  "airwindows-chorus": "price not yet measured",
   "amiga": "price not yet measured",
   "analog-bassdrum": "price not yet measured",
   "apply-scene": "price not yet measured",

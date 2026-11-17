@@ -63,11 +63,20 @@
       "FX2 only; stale FX1 dispatch passes dry without writing its buffer.",
       "About 16-bit delay-buffer precision; dry bypass retains 24 bits.",
       "Extreme modulation retains pitch and aliasing artifacts.",
-      "Beta release: shared DSP mailbox/parameter data are protected. The reported T3 clicking remains unverified on hardware; physical timing, Part/project/reboot persistence and hardware multi-instance audio are owner-waived for this exact source/version.",
+      "Shared DSP mailbox/parameter data are protected. On an MKII, four instances (T3/T4 and T7/T8) gave exact silence for silent input and no clicks with music; Part/project/reboot persistence, eight instances on a unit and chip timing are not tested and are owner-waived for this exact source/version.",
       "Air Chorus combines with Analog BD and E-Verb. Available DSP code space still limits larger selections; stock reverb donors may be removed."
     ]
   },
   "resources": {
+    "cpuPrice": {
+      "value": 0.0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price",
+      "date": "2026-11-17",
+      "conditions": "MKII, base 0.7.6 development twin 5412b595, project MODWERK-TEST2 bank A pattern 1 playing (sound on T2 and T3), 8 s per reading: frame interrupt 35.1 % before, installed and on T3 FX2 alike; CPU meter 51.3 % before and at rest, 51.6 % in use. One instance on T3 raised its DSP core (T1-4) from 40.3 to 51.1 %.",
+      "source": "TESTING.md"
+    },
     "recorded": "16 November 2026: bit-identical efficiency pass; chip timing unmeasured.",
     "storage": {
       "label": "Per-instance used DSP storage",
@@ -111,8 +120,8 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Beta 0.1.3 runs the 0.1.2 effect in fewer DSP instructions with bit-identical output. Like 0.1.2 it protects live stock shared data within safe instance state and losslessly packs the sine table, preserving the full delay range, sound and controls. Current physical hardware remains untested under the owner beta waiver.",
-    "hardwareStatus": "untested",
+    "summary": "0.1.3 runs the 0.1.2 effect in fewer DSP instructions with bit-identical output. Like 0.1.2 it protects live stock shared data within safe instance state and losslessly packs the sine table, preserving the full delay range, sound and controls. Three rolled-back trials on an MKII (17 November 2026) placed four instances and read their audio over USB; persistence and chip timing are untested under the owner waiver.",
+    "hardwareStatus": "reported",
     "evidenceRevision": "ed61db5cf1ad04331438fd15967b0ba8cdf4b109",
     "gates": [
       "verify.py",

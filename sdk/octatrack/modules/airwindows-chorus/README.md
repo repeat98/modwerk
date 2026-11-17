@@ -156,5 +156,12 @@ needs, a delay triplet inside the protected prefix is read directly, the
 even/odd flip is tested once per channel, and the history count runs only
 while the ring fills. The program grows from 539 to 588 words per core.
 See [the test record](TESTING.md#beta-013--bit-identical-efficiency-pass).
-Not tested on hardware.
+
+On an MKII (17 November 2026), four instances, two per core, ran on T1/T3/T5/T7
+and on T3/T4/T7/T8. T3, T4 and T7 output exact digital silence for silent input
+at full settings, which a corrupted delay ring would not. Music on T3 with moving
+controls showed no click above the stock Part's own transients. Two instances per
+core added about 14% less DSP load than 0.1.2 did. With 0.1.3, Air Chorus is
+offered to everyone again, no longer only to beta testers. Not tested: Part or
+project reload with Air Chorus saved, a reboot, and eight instances on the unit.
 
