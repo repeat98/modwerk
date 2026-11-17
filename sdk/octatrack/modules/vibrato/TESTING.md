@@ -1,6 +1,6 @@
 # Vibrato testing
 
-Source: octabam `e85f54e0d570bd74bfd70b9d5467b35c01b9c468`, `modules/vibrato` and `tools/verify/verify_vibrato.py`, with Modwerk's changes listed in README.md. OS 1.40C.
+Version 0.1.0-experimental. Source: octabam `e85f54e0d570bd74bfd70b9d5467b35c01b9c468`, `modules/vibrato` and `tools/verify/verify_vibrato.py`, with Modwerk's changes listed in README.md. OS 1.40C.
 
 ## On the unit
 
