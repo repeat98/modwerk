@@ -13,6 +13,7 @@
  *                      cursor row, with the copied rows; the rows below move
  *                      up or down to fit. Again at the same place undoes it.
  *                      After a stock copy, stock's own one-row paste.
+ *   CUE + LEFT/RIGHT   moves the selected rows, or the cursor row, up/down one.
  *   CUE + FUNC + STOP  inserts the copied rows at the cursor, moving the rows
  *                      below and the LOOP/JUMP targets that point past the
  *                      cursor down, as stock's FUNC + DOWN does for one row.
@@ -40,6 +41,8 @@
 #define K_FUNC 0x2d
 #define K_NO 0x32
 #define K_UP 0x33
+#define K_LEFT 0x34
+#define K_RIGHT 0x21
 
 #define ROWS 256u
 #define ROW_BYTES 22u
@@ -115,7 +118,7 @@ struct arr_state {
     uint8_t cue, func;         /* held, as the key events said: only compared with stock's view, for the diagnostic word */
     uint8_t last;              /* the last thing done, for the diagnostic word (see arr_tick) */
     uint8_t disagreed;         /* key events after which the two views of CUE or FUNC differed */
-    uint8_t taken;             /* key codes whose press we took, so their release is ours too: bit 0 REC, 1 PLAY, 2 STOP */
+    uint8_t taken;             /* key codes whose press we took, so their release is ours too: bit 0 REC, 1 PLAY, 2 STOP, 3 LEFT, 4 RIGHT */
     uint8_t from_here;         /* the clipboard holds rows copied here (else FUNC + STOP is stock's) */
     int16_t anchor;            /* the selection's first row, -1 none */
     uint16_t sel_count;        /* the row count when it began: a stock insert or delete ends it */
@@ -166,7 +169,7 @@ static int editor_on_top(void)
 static int func_held(void) { return rd32(KEYS + K_STOP * 0x18u) == EDITOR_FUNC_KEYS; }
 static int cue_held(void) { return rd32(CUE_HELD) || rd32(KEYS + K_T1 * 0x18u) == CUE_KEYS; }
 
-enum { DID_NOTHING, DID_COPY, DID_CLEAR, DID_PASTE, DID_INSERT, DID_REFUSE, DID_UNDO, DID_PASS };
+enum { DID_NOTHING, DID_COPY, DID_CLEAR, DID_PASTE, DID_INSERT, DID_REFUSE, DID_UNDO, DID_PASS, DID_MOVE };
 
 static void forget_selection(struct arr_state *s) { s->anchor = -1; }
 
@@ -399,10 +402,41 @@ static void put_rows(struct arr_state *s, unsigned at, unsigned del, unsigned ki
     done(s, say(s, word, n));
 }
 
+/* CUE + LEFT/RIGHT: the selected rows, or the cursor row, one place up (dir -1) or down (+1); the row they pass goes to
+ * the other side of them. Every LOOP/JUMP target follows the row it points at, so a HALT stays a HALT and no other row
+ * can point at itself; a LOOP carried past its target becomes a JUMP and the other way round (the developer's choice).
+ * The cursor and the selection move with the rows, so the next press moves them on. No message box: moving back undoes. */
+static void move_rows(struct arr_state *s, unsigned lo, unsigned hi, int dir)
+{
+    uint32_t a = arr();
+    unsigned have = count(a);
+    if (hi >= have || (dir < 0 && lo == 0) || (dir > 0 && hi + 1 >= have)) return;
+    unsigned passed = dir < 0 ? lo - 1 : hi + 1;           /* the row the block moves past */
+    unsigned lands = dir < 0 ? hi : lo;                   /* where that row ends up */
+    for (unsigned r = 0; r < have; ++r) {                  /* targets first, by the rows' old places */
+        uint32_t row = row_at(a, r);
+        if (rd8(row) != TYPE_JUMP) continue;
+        unsigned t = rd8(row + 3);
+        if (t == passed) wr8(row + 3, lands);
+        else if (t >= lo && t <= hi) wr8(row + 3, (unsigned)((int)t + dir));
+    }
+    uint8_t keep[ROW_BYTES];
+    copy_bytes(keep, row_at(a, passed), ROW_BYTES);
+    if (dir < 0) for (unsigned r = lo; r <= hi; ++r) copy_row(a, r, r - 1);
+    else for (unsigned r = hi + 1; r-- > lo;) copy_row(a, r, r + 1);
+    put_bytes(row_at(a, lands), keep, ROW_BYTES);
+    wr32(CURSOR, (uint32_t)((int)cursor() + dir));
+    if (s->anchor >= 0) s->anchor = (int16_t)(s->anchor + dir);
+    s->undo = UNDO_NONE;
+    s->last = DID_MOVE;
+    changed(a);
+    redraw();
+}
+
 int arr_key(int code, int pressed)
 {
     struct arr_state *s = ready();
-    unsigned bit = code == K_REC ? 1u : code == K_PLAY ? 2u : code == K_STOP ? 4u : 0u;
+    unsigned bit = code == K_REC ? 1u : code == K_PLAY ? 2u : code == K_STOP ? 4u : code == K_LEFT ? 8u : code == K_RIGHT ? 16u : 0u;
     if (code == K_CUE) s->cue = (uint8_t)!!pressed;
     if (code == K_FUNC) s->func = (uint8_t)!!pressed;
     if (!pressed) {
@@ -428,6 +462,14 @@ int arr_key(int code, int pressed)
         return 0;                                          /* stock moves the cursor either way */
     }
     if (code == K_NO) { forget_selection(s); return 0; }
+    if (code == K_LEFT || code == K_RIGHT) {               /* CUE + LEFT/RIGHT move rows; without CUE stock's columns */
+        if (!cue || func) return 0;
+        unsigned c = (unsigned)cursor();
+        if (selected) move_rows(s, lo, hi, code == K_LEFT ? -1 : 1);
+        else if (c < count(arr())) move_rows(s, c, c, code == K_LEFT ? -1 : 1);
+        s->taken |= (uint8_t)bit;
+        return 1;
+    }
     if (!bit) return 0;
     if (!func) { s->last = DID_PASS; return 0; }           /* REC, PLAY, STOP without FUNC: stock's, the transport's */
     if (code == K_REC) {
@@ -449,9 +491,9 @@ int arr_key(int code, int pressed)
 struct arr_api { volatile uint32_t value; }; /* modwerk_runtime_api: npm run device -- try prints it each second */
 
 /* The selection ends when the editor closes or another window covers it. The diagnostic word, read with `try`:
- * bit 0 editor on top, 1 CUE and 2 FUNC as stock sees them, 3 CUE and 4 FUNC as the key events said, 5-7 the last
- * thing done (1 copy, 2 clear, 3 paste, 4 insert, 5 refused, 6 undo, 7 REC/PLAY/STOP left to stock), 8-15 the key
- * events after which the two views differed, 16-23 the cursor row, 24-31 the selection's first row (255: none). */
+ * bit 0 editor on top, 1 CUE and 2 FUNC as stock sees them, 3-6 the last thing done (1 copy, 2 clear, 3 paste,
+ * 4 insert, 5 refused, 6 undo, 7 REC/PLAY/STOP left to stock, 8 move), 7 unused, 8-15 the key events after which the
+ * module's own count of CUE and FUNC differed from stock's, 16-23 the cursor row, 24-31 the selection's first row (255: none). */
 void arr_tick(void *api)
 {
     struct arr_state *s = ready();
@@ -459,7 +501,7 @@ void arr_tick(void *api)
     if (s->anchor >= 0 && !on_top) forget_selection(s);
     if (!api) return;
     ((struct arr_api *)api)->value = (uint32_t)on_top | (uint32_t)(on_top && cue_held()) << 1 | (uint32_t)(on_top && func_held()) << 2
-        | (uint32_t)s->cue << 3 | (uint32_t)s->func << 4 | (uint32_t)(s->last & 7u) << 5 | (uint32_t)s->disagreed << 8
+        | (uint32_t)(s->last & 15u) << 3 | (uint32_t)s->disagreed << 8
         | (uint32_t)(cursor() & 0xff) << 16 | (uint32_t)(s->anchor < 0 ? 0xffu : (unsigned)s->anchor & 0xffu) << 24;
 }
 

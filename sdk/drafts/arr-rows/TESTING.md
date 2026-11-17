@@ -200,3 +200,14 @@ with the module loaded on a base without it (arrNN files compared).
 `npm run module:dev -- arr-rows --build-only` (17 November 2026): 3,864 bytes of code and data, 11,320 of state,
 15 relocations, three hooks, no stock-code sites. No stock code site of the base or any module overlaps the stock
 routines it calls or the editor's key handlers (`scripts/stock-code-sites.py`, 416 sites).
+
+## 0.2.0-experimental: moving rows (local, not yet released)
+
+The developer asked for moving rows on 17 November 2026 and chose CUE + LEFT/RIGHT. Stock gives them no function of
+their own in the editor (measured under ot_emu: CUE + RIGHT changed the column as RIGHT does; CUE + FUNC + UP/DOWN
+did what FUNC + UP/DOWN do). `verify.py`: 85 host checks, among them a move of a selection and of the cursor row,
+targets following their rows, a HALT staying a HALT, a LOOP moved past its target becoming a JUMP (the developer's
+choice), the edges, and LEFT/RIGHT without CUE left to stock. Under ot_emu on the beta base (MKI panel): rows 2-3 of
+`0 1 2 3 4 5 6 7` selected, CUE + RIGHT twice gave `0 1 4 2 3 5 6 7` then `0 1 4 5 2 3 6 7`, CUE + LEFT
+`0 1 4 2 3 5 6 7`; the marks and the cursor followed. Not tested on a unit yet. The screenshots in `media/` are of
+0.1.0-experimental.

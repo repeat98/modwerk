@@ -20,6 +20,8 @@ void arr_draw(unsigned char *frame);
 #define FUNC 0x2d
 #define NO 0x32
 #define UP 0x33
+#define LEFT 0x34
+#define RIGHT 0x21
 
 #define ARR 0x20000000u      /* where the simulated working arrangement lives */
 #define ROWB 22u
@@ -387,8 +389,8 @@ int main(void)
     struct { volatile uint32_t value; } api = {0};
     hold(CUE, 1);
     arr_tick((void *)&api);
-    check("the diagnostic word: editor, CUE seen by stock and by the events, cursor 8, selection from 3",
-          (api.value & 0x1f) == 0x0b && (api.value >> 16 & 0xff) == 8 && (api.value >> 24) == 3);
+    check("the diagnostic word: editor, CUE seen by stock, cursor 8, selection from 3",
+          (api.value & 7) == 3 && (api.value >> 16 & 0xff) == 8 && (api.value >> 24) == 3);
     hold(CUE, 0);
     arr_tick((void *)&api);
     check("the diagnostic word counts the two disagreements above", (api.value >> 8 & 0xff) >= 2);
@@ -419,6 +421,38 @@ int main(void)
     tap(DOWN); tap(DOWN); tap(DOWN);               /* row 3 */
     hold(FUNC, 1); tap(STOP); hold(FUNC, 0);
     check("replacing row 3 with one row keeps the LOOP below it a LOOP to row 3", row(4)[0] == 1 && row(4)[3] == 3 && rows() == 8);
+
+    /* CUE + LEFT/RIGHT move rows */
+    fill(10);
+    row(7)[0] = 1; row(7)[3] = 3;                  /* a LOOP back to row 3 */
+    row(8)[0] = 1; row(8)[3] = 8;                  /* a HALT */
+    set_cursor(2);
+    hold(CUE, 1); tap(DOWN); hold(CUE, 0);         /* rows 2-3 */
+    hold(CUE, 1);
+    check("CUE + RIGHT is taken", tap(RIGHT) == 1);
+    hold(CUE, 0);
+    check("the selected rows moved down one, the row below went above them", same(2, 4) && same(3, 2) && same(4, 3) && rows() == 10);
+    check("a LOOP to a moved row follows it", row(7)[3] == 4);
+    check("the cursor and the selection moved with the rows", cursor() == 4);
+    hold(CUE, 1); tap(LEFT); hold(CUE, 0);
+    check("CUE + LEFT moves them back: the move undone", same(2, 2) && same(3, 3) && same(4, 4) && row(7)[3] == 3 && cursor() == 3);
+    tap(DOWN); tap(DOWN); tap(DOWN); tap(DOWN); tap(DOWN);  /* row 8, the HALT; ends the selection */
+    hold(CUE, 1); tap(LEFT); hold(CUE, 0);
+    check("the cursor row alone moves: a HALT stays a HALT", row(7)[0] == 1 && row(7)[3] == 7 && row(8)[3] == 3 && cursor() == 7);
+    /* a LOOP carried past its target turns into a JUMP (allowed) */
+    tap(DOWN);                                     /* row 8: the LOOP to 3 */
+    for (int k = 0; k < 4; ++k) { hold(CUE, 1); tap(LEFT); hold(CUE, 0); }
+    check("four moves up: the LOOP on row 4 still loops back to row 3", row(4)[0] == 1 && row(4)[3] == 3);
+    hold(CUE, 1); tap(LEFT); hold(CUE, 0);
+    check("the fifth carries it past its target: on row 3 it now jumps forward to it, on row 4", row(3)[0] == 1 && row(3)[3] == 4 && same(4, 3));
+    /* the edges, and the keys without CUE */
+    set_cursor(0);
+    hold(CUE, 1); tap(LEFT); hold(CUE, 0);
+    check("at the top, CUE + LEFT changes nothing", same(0, 0) && cursor() == 0);
+    check("LEFT without CUE is stock's (columns)", tap(LEFT) == 0 && tap(RIGHT) == 0);
+    set_cursor(9);
+    hold(CUE, 1); tap(RIGHT); hold(CUE, 0);
+    check("at the bottom, CUE + RIGHT changes nothing", same(9, 9) && cursor() == 9 && rows() == 10);
 
     printf("%d checks, %d failed\n", checks, failures);
     return failures != 0;

@@ -27,6 +27,7 @@ and EDIT):
 | FUNC + PLAY | clears the selected rows; again on the same rows undoes it | stock's one-row clear |
 | FUNC + STOP | replaces the selected rows with the copied rows (the rows below move up or down to fit); again in the same place undoes it | after a copy here: replaces the cursor row with the copied rows; after a stock copy: stock's one-row paste |
 | CUE + FUNC + STOP | inserts the copied rows at the cursor; again in the same place undoes it | the same |
+| CUE + LEFT / RIGHT | moves the selected rows up / down one place; the row they pass goes to the other side; the marks and the cursor move with them; moving back undoes it | moves the cursor row the same way |
 
 UP or DOWN without CUE, NO, a stock insert or delete (FUNC + DOWN, FUNC + UP) and leaving the editor end the
 selection. An undo works only while the rows are as the edit left them: after any other change, the same keys edit
@@ -37,6 +38,9 @@ Stock changes, listed as the module guides ask:
 - **CUE + UP/DOWN in the arrangement editor** now also mark rows. Stock gives them no function of their own there
   (they move the cursor as UP/DOWN do, measured: RESEARCH.md), and they still do. Considered instead: a new page or a
   FUNC gesture; a FUNC gesture would take stock's insert and delete. Only while the module is installed.
+- **CUE + LEFT/RIGHT in the arrangement editor** move rows instead of changing columns. Stock gives them no function of
+  their own there (they change columns as LEFT/RIGHT do); LEFT/RIGHT without CUE are unchanged. Chosen by the
+  developer over CUE + FUNC + UP/DOWN. Only while the module is installed.
 - **FUNC + STOP after a copy made here** pastes those rows instead of stock's one copied row, until the next stock copy
   (FUNC + REC with no selection). Only while the module is installed; the neighbouring flows checked are in TESTING.md.
 
@@ -71,6 +75,9 @@ arrangement, open EDIT and paste or insert.
   whose target would land on its own new row is refused, changing nothing: `JUMP>HALT ROW 8` (or `LOOP>HALT`) names
   the row. Paste one row further, or change the target first. (Stock's one-row delete does turn a JUMP into a HALT
   this way, silently; the module leaves stock's FUNC + UP and FUNC + DOWN as they are.)
+- A move (CUE + LEFT/RIGHT) keeps every LOOP/JUMP target on the row it pointed at, so a HALT stays a HALT. A LOOP
+  moved past its target becomes a JUMP to it, and a JUMP moved past its target a LOOP with no count shown (stock
+  labels a row by its target below or above it). Each press moves one place; holding the key does not repeat.
 - The copied rows live in RAM: gone after a power cycle or when the module is removed.
 - Editing while the arrangement plays behaves as stock's own edits do; it was not tested separately.
 
