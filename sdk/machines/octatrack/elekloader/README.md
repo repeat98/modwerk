@@ -176,8 +176,10 @@ hashes; Octabam's DSP DYNLOAD STOCK is the reference for the layout. It
 needs Octabam's patched `dsp_asm` (`ELEKLOADER_DSP_ASM`), with
 `dsp56kDisassemble` built beside it in the same tree (`make setup` in
 `~/.cache/modwerk-upstream/octabam`, or `cmake --build` of its
-`vendor/dsp56300` with the `dsp_asm` and `dsp56kDisassemble` targets), and
-Node 24 for Modwerk's chooser composer ([`octatrack-base-choosers.mjs`](../../../../scripts/octatrack-base-choosers.mjs)).
+`vendor/dsp56300` with the `dsp_asm` and `dsp56kDisassemble` targets). The
+base builds its choosers on the unit; building a module FX package
+(`sdk/runtime/loader/build.py --dsp`) needs Node 24 for its FX page recipe
+([`octatrack-module-page.mjs`](../../../../scripts/octatrack-module-page.mjs)).
 The module FX with a chooser row (`MODULES` in `dsp_loader.py`) as packages. The
 figures are each module's own: cycles per sample and instance with their kind
 (executed worst cases for E-Verb and AIR CHORUS, static bounds, modeled, for the rest),
