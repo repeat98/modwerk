@@ -77,22 +77,36 @@
     "memoryBytes": 23631,
     "fastBytes": 0,
     "load": {
-      "display": "Not measured yet",
-      "method": "unmeasured",
-      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+      "display": "Bounded sequencer work per audio-track step",
+      "method": "static",
+      "conditions": "Source bound: at most 72 pitches in a voicing, six subdivisions per stock step, and eight scheduled notes per phrase. A group edit checks at most 16 held trigs and 32 lock slots in the UI. No per-sample DSP code. Physical CPU percentage was not measured."
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "8f3a76b55168c869a9abd4e485b6fe3e0fa1ab4723251b52782d88e360612324",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Digitakt II",
+      "release": "1.17",
+      "testedOn": "2026-11-16",
+      "tester": "Claptom-music",
+      "durationMinutes": null,
+      "summary": "QF17 restored both ARP switches and the checked trig lock on each of two tracks after a save and cold boot, before a manual load. The same Chord Arp binary passed multi-trig editing and clearing on QE17. See TESTING.md for exact package and base identities.",
+      "limitations": [
+        "All 32 slots were checked on reload in Digikit. The physical QF17 cold-boot test checked one locked trig per track.",
+        "Opening a QF17-saved project on official OS, project reload alongside Euclidean Scale, and operation alongside Track Names were not tested on this build.",
+        "Chord Arp supports audio tracks. MIDI tracks were not tested."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "See TESTING.md for hardware results and emulator checks.",
+    "summary": "The author verified cold-boot project recall on QF17. Digikit verified all 32 lock slots and the QE17 group editing path.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
