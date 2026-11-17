@@ -105,6 +105,15 @@
         "rationale": "A 3.8 KB unit and 11 KB of state.",
         "source": "TESTING.md"
       }
+    },
+    "cpuPrice": {
+      "value": 0.0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price",
+      "date": "2026-11-17",
+      "conditions": "The developer's Octatrack MKI, OS 1.40C, a development twin of the beta base (7db3251b, RAM-booted), the developer's scratch project, Part 2, the selected pattern playing 8 s per reading, the module installed and used nowhere (at rest; it works only on key presses in the arrangement editor). Two runs: the frame interrupt's share -0.1 and +0.2 points, the CPU meter -0.2 and -1.7; DSP 5-8 read +37.5 and +18.9, but the control module Tiempos (no DSP code either) read -9.7 in the same scene, so that meter is noise here.",
+      "source": "TESTING.md"
     }
   },
   "tests": {

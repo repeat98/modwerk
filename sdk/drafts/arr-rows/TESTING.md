@@ -164,7 +164,34 @@ reported it:
 | Insert, the marks while scrolling, copies during PLAY | No problem seen |
 | Replacing the row that is playing | The old pattern keeps playing until the arranger moves on or STOP/PLAY; stock's own one-row paste does the same |
 
-The diagnostic word counted no disagreement between the module's and stock's view of CUE and FUNC during the trial. Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
+The diagnostic word counted no disagreement between the module's and stock's view of CUE and FUNC during the trial.
+
+## CPU price and performance (17 November 2026)
+
+**CPU price, on the developer's MKI.** A development twin of the beta base (`build_core.py` with the beta flags but
+the controller rows, plus `--dev`; base `7db3251b…`) RAM-booted with `npm run device -- boot DIR --chunk 4096`, nothing
+flashed; the developer's scratch project, Part 2, the selected pattern; `npm run device:price -- --scene … <package
+a0e796c2>`, 8 s per reading, each a trial rolled back:
+
+| Run | Frame interrupt | CPU meter | DSP 1-4 | DSP 5-8 |
+| --- | --- | --- | --- | --- |
+| ARR ROWS, 1 | -0.1 | -0.2 | -0.2 | +37.5 |
+| ARR ROWS, 2 | +0.2 | -1.7 | 0.0 | +18.9 |
+| Tiempos (control, no DSP code) | +0.2 | +0.2 | -0.1 | -9.7 |
+
+The module adds nothing measurable to the frame interrupt (`resources.cpuPrice` 0.0). DSP 5-8 swung by tens of
+points between readings with a module that has no DSP code either, so it says nothing about either module. The
+inventory was `[]` after each run.
+
+**Performance record** (`evidence/performance.json`, `npm run perf:audit -- check`, ot_emu, the same package on the
+beta base):
+
+| Check | Result |
+| --- | --- |
+| record | key-press ColdFire record for arr-rows@0.1.0-experimental |
+| cycles | the dearest press (an insert of 56 rows at row 0 of 200): 131,124 executed instructions from the key site to its return, budget 26,600,000 cycles (0 %) |
+| stock benchmark | none: a key-press module adds nothing to the frame interrupt |
+| stress | 40 presses of the dearest event while playing (20, STOP, PLAY, a Part change, the editor reopened, 20), no hang; the transport ran throughout | Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
 FUNC + DOWN insert and FUNC + UP delete; CUE + track keys in the editor; ARR CHANGE, SAVE, RELOAD; a project saved
 with the module loaded on a base without it (arrNN files compared).
 
