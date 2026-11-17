@@ -186,6 +186,29 @@ describe('maintenance bot ledger', () => {
     expect((await (await bot('/state')).json()).upstream).toBe('{"elekloader":"abc"}')
   })
 
+  it('answers in the forum and the shoutbox as TARS, through the site’s own handlers, only while nobody has', async () => {
+    const { bot, db } = await fixture()
+    db.prepare("INSERT INTO users(id,display_name,username,email_verified) VALUES('ana','Ana','ana',1)").run()
+    db.prepare("INSERT INTO users(id,display_name,username,email_verified,is_admin) VALUES('jannik','Jannik','jannik',1,1)").run()
+    db.prepare("INSERT INTO forum_threads(id,user_id,title,category) VALUES('t1','ana','Keep does nothing','general')").run()
+    db.prepare("INSERT INTO forum_posts(id,thread_id,user_id,body) VALUES('p1','t1','ana','I press Keep and nothing happens. What am I missing?')").run()
+    db.prepare("INSERT INTO forum_shouts(id,user_id,body) VALUES('s1','ana','anyone know how to undo a set?')").run()
+    const activity = await (await bot('/forum')).json()
+    expect(activity.threads[0]).toMatchObject({ id: 't1', posts: [{ id: 'p1', author: 'ana', helper: false }] })
+    expect(activity.shouts).toMatchObject([{ id: 's1', author: 'ana', helper: false }])
+    expect((await bot('/forum/threads/t1/reply', 'POST', { body: 'Hi Ana!', after: 'p0' })).status).toBe(409)
+    expect((await bot('/forum/threads/t1/reply', 'POST', { body: 'Hi Ana! After Keep, power the Octatrack off and on once.', after: 'p1' })).status).toBe(200)
+    expect(db.prepare("SELECT user_id,body FROM forum_posts WHERE thread_id='t1' AND user_id='tars'").get()).toEqual({ user_id: 'tars', body: 'Hi Ana! After Keep, power the Octatrack off and on once.' })
+    // The thread now ends with TARS's own post: nothing more until Ana writes again.
+    const last = (db.prepare("SELECT id FROM forum_posts WHERE user_id='tars'").get() as { id: string }).id
+    expect((await bot('/forum/threads/t1/reply', 'POST', { body: 'Again', after: last })).status).toBe(409)
+    expect((await bot('/forum/shouts/s1/reply', 'POST', { body: '@ana Undo is in the device panel.' })).status).toBe(200)
+    expect((await bot('/forum/shouts/s1/reply', 'POST', { body: '@ana Twice' })).status).toBe(409)
+    db.prepare("INSERT INTO forum_shouts(id,user_id,body) VALUES('s2','ana','thanks!')").run()
+    db.prepare("INSERT INTO forum_shouts(id,user_id,body) VALUES('s3','jannik','np')").run()
+    expect((await bot('/forum/shouts/s2/reply', 'POST', { body: '@ana You are welcome.' })).status).toBe(409)
+  })
+
   it('keeps the fingerprint and splits long reports', async () => {
     const { bot, sent } = await fixture()
     expect((await bot('/state', 'PUT', { fingerprint: 'nope' })).status).toBe(400)

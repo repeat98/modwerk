@@ -29,15 +29,26 @@ if (existsSync(file)) {
   try { proposals = JSON.parse(readFileSync(file, 'utf8')) } catch { rejected.push('The model wrote proposals that are not valid JSON.') }
 }
 const labels = new Set((await pages(api, '/labels')).map(label => label.name))
+// The forum and the shoutbox as the policy sees them: a thread is open while its last post is not a helper's.
+let activity
+async function siteTarget(kind, id) {
+  activity ??= await bot('/forum')
+  if (kind === 'forum_reply') {
+    const thread = activity.threads.find(row => row.id === id), last = thread?.posts.at(-1)
+    return { kind: 'forum', id, number: 0, author: last?.author ?? '', lastPost: last?.id, state: thread && !thread.locked && last && !last.helper ? 'open' : 'closed' }
+  }
+  const index = activity.shouts.findIndex(row => row.id === id), shout = activity.shouts[index]
+  return { kind: 'shout', id, number: 0, author: shout?.author ?? '', state: shout && !shout.helper && !activity.shouts.slice(index + 1).some(row => row.helper) ? 'open' : 'closed' }
+}
 const accepted = []
 for (const proposal of (Array.isArray(proposals.actions) ? proposals.actions : []).slice(0, 40)) {
-  const kind = String(proposal?.kind ?? ''), board = kind.startsWith('board_'), talk = kind === 'discord_reply', number = board || talk ? 0 : Number(proposal?.number)
-  if (!board && !talk && (!Number.isSafeInteger(number) || number < 1)) { rejected.push('A proposal named no pull request or issue.'); continue }
+  const kind = String(proposal?.kind ?? ''), board = kind.startsWith('board_'), talk = kind === 'discord_reply', site = kind === 'forum_reply' || kind === 'shout_reply', number = board || talk || site ? 0 : Number(proposal?.number)
+  if (!board && !talk && !site && (!Number.isSafeInteger(number) || number < 1)) { rejected.push('A proposal named no pull request or issue.'); continue }
   if (talk && !chat) { rejected.push('A Discord reply was proposed, but the bot has no Discord token.'); continue }
   try {
-    const where = talk ? await readDiscordTarget(chat, proposal.channel, proposal.message) : board ? await readBoardTarget(kind, proposal.thread ?? proposal.claim) : await target(number)
+    const where = site ? await siteTarget(kind, kind === 'forum_reply' ? proposal.thread : proposal.shout) : talk ? await readDiscordTarget(chat, proposal.channel, proposal.message) : board ? await readBoardTarget(kind, proposal.thread ?? proposal.claim) : await target(number)
     const decision = classify(proposal, where, labels)
-    if (decision.reject) { rejected.push((talk ? 'Discord' : board ? 'Board' : '#' + number) + ' ' + kind + ': ' + decision.reject + '.'); continue }
+    if (decision.reject) { rejected.push((site ? 'Site' : talk ? 'Discord' : board ? 'Board' : '#' + number) + ' ' + kind + ': ' + decision.reject + '.'); continue }
     accepted.push({ id: decision.id, kind: decision.payload.kind, target: number, tier: decision.tier, summary: decision.summary, reason: decision.reason, payload: decision.payload, windowHours: decision.windowHours })
   } catch (error) { rejected.push('#' + number + ': could not be read (' + error.message + ').') }
 }
@@ -107,6 +118,12 @@ async function upstreamWatch() {
 // 2. What is due: approved by the owner, a notice, or a window that closed without a Stop.
 async function carryOut(action) {
   const { payload } = action
+  if (payload.kind === 'forum_reply' || payload.kind === 'shout_reply') {
+    // The Worker posts only while nobody has answered; it says 409 otherwise.
+    const path = payload.kind === 'forum_reply' ? '/forum/threads/' + payload.thread + '/reply' : '/forum/shouts/' + payload.shout + '/reply'
+    try { await bot(path, 'POST', { body: payload.body, after: payload.after }) } catch (error) { if (error.status === 409) return ['expired', 'someone answered in the meantime']; throw error }
+    return ['done', '']
+  }
   if (payload.kind === 'discord_reply') {
     if (!chat) return ['failed', 'no Discord token']
     const now = await readDiscordTarget(chat, payload.channel, payload.message)
