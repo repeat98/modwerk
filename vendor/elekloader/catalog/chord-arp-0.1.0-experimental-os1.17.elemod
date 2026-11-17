@@ -4,7 +4,7 @@
  "version": "0.1.0-experimental",
  "title": "Chord Arp",
  "description": "Turn a Digitakt II audio trig into a chord played one note at a time.",
- "category": "midi-usb",
+ "category": "playback",
  "author": "Claptom-music",
  "license": "GPL-3.0-or-later",
  "target": {

@@ -4,7 +4,7 @@
   "name": "Chord Arp",
   "version": "0.1.0-experimental",
   "machine": "digitakt-ii",
-  "category": "midi-usb",
+  "category": "playback",
   "exclusive": false,
   "author": {
     "github": "Claptom-music",
