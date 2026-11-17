@@ -90,6 +90,16 @@ class MachineBases(unittest.TestCase):
             self.assertEqual(binding["built"]["toolchain"], config["toolchain"], machine)
             self.assertEqual(binding["built"]["stock"], machine_base.stock_sha(machine, config["os"]), machine)
 
+    def test_profiles_budget_the_bound_base_footprint(self):
+        # The machine page shows machine.json's budgets; one of them is the bound package's .run plus .bss.
+        for machine, config in bases():
+            binding = binding_of(machine, config)
+            if binding is None:
+                continue
+            footprint = binding["sections"][".run"] + binding["sections"][".bss"]
+            budgets = json.loads((APP / "sdk/machines" / machine / "machine.json").read_text())["sdk"]["budgets"]
+            self.assertIn(footprint, [budget["value"] for budget in budgets if budget["unit"] == "bytes"], machine)
+
     def test_staging_lays_out_every_source_and_header_mod_json_names(self):
         for machine, config in bases():
             with tempfile.TemporaryDirectory() as work:
