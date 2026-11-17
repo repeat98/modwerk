@@ -6,7 +6,7 @@ Version 0.1.0-experimental. Tim Hastie’s Tuner, packaged for Modwerk from his 
 
 Hold **UP first, then press TEMPO** to open a pitch readout for the selected audio track. The source provides note and octave, signed cents, frequency and a needle around the nearest note, with A4 fixed at 440 Hz. It reads after track effects and before the fader, uses no effect slot and is designed to leave the audio unchanged.
 
-**Card builds only: the base has no removal refusal for ordinary modules.** USB support is optional future work; the earlier admission proposal is retained in [evidence/usb-admission.md](evidence/usb-admission.md), not implemented or required for this card-only draft.
+**Installs over USB on Modwerk base 0.7.5 or later.** The window holds callbacks into the module's memory, so that base refuses to remove, replace or undo Tuner while its window is open: close it (TEMPO, YES or NO), then sync again. An older base is asked to update first.
 
 On the emulator (30 October 2026) the card build of this source reads a tone on the input live: A4 +0c 440.0Hz, E2 +0c 82.4Hz and A4 +19c 445.0Hz, and a track whose effects leave a DC offset larger than its swing now reads too; cost and memory are measured under an eight-track load. On hardware, the author reports the same card (TEST3, byte-identical) working on his MKI on 1 November 2026, every item of its test sheet; readings were not recorded. [TESTING.md](TESTING.md) has the numbers and the earlier records.
 
