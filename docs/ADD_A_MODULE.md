@@ -222,7 +222,8 @@ reboot where applicable. Give hardware steps and record actual results;
 emulator/host tests do not fill missing hardware qualification. With
 `npm run device -- serve` running, `npm run device:qualify -- --keeps-ok
 --testing-entry run.md <package>` installs the package, places it alone on
-each DSP core and then beside itself on every track, sweeps its knobs, switches
+each DSP core (a machine through the machine list, playing, its render read
+against its CPU price) and then beside itself on every track, sweeps its knobs, switches
 Parts and banks, optionally soaks (`--soak`) and crashes on purpose
 (`--crash`), restores the Part and removes the package. It writes what it saw,
 with the package's SHA-256, as an entry to paste into TESTING.md. The
