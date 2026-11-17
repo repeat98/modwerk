@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.3-experimental",
+    "date": "2026-11-17",
+    "changes": [
+      "Chris Johnson's Airwindows Chorus is open to everyone again, no longer only to beta testers.",
+      "Uses about 8% less DSP time at its heaviest and about 12% less at steady settings.",
+      "Same sound, controls and saved settings as 0.1.2.",
+      "Tested on an MKII with four instances: no clicks on T3, T4, T7 or T8.",
+      "Known issue: not yet tested across Part or project reloads and reboots."
+    ]
+  },
+  {
     "version": "0.1.2-experimental",
     "date": "2026-10-09",
     "changes": [

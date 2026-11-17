@@ -57,8 +57,17 @@ jobs:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_GUILD_ID: ${{ vars.DISCORD_GUILD_ID }}
           DISCORD_IGNORE_CHANNELS: ${{ vars.DISCORD_IGNORE_CHANNELS }}
+      # The CLI's Linux binary is an optional dependency, and npm skips an optional download that fails without
+      # an error. The step checks that the binary runs and installs again from scratch if it does not.
       - if: steps.snapshot.outputs.run == 'true'
-        run: npm install --global --no-fund --no-audit @anthropic-ai/claude-code@2.1.311
+        run: |
+          for attempt in 1 2 3; do
+            npm install --global --no-fund --no-audit @anthropic-ai/claude-code@2.1.311 && claude --version && exit 0
+            echo "The Claude CLI did not install completely (attempt $attempt of 3)."
+            npm uninstall --global @anthropic-ai/claude-code || true
+            sleep 15
+          done
+          exit 1
       # The model gets a read-only token and read-only commands. It may write only under bot/.
       - id: model
         if: steps.snapshot.outputs.run == 'true'
