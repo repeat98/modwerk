@@ -74,16 +74,16 @@ describe('the module limit of an Octatrack set', () => {
     expect(Object.keys(workspace.active!.moduleVersions).sort()).toEqual(ids.slice(0, over).sort())
     await vi.waitFor(() => expect(workspace.saving).toBe(false))
   })
-  it('leaves out of that fill what isn’t available here, as adding one by one does: a paused module, and a beta one without beta access', async () => {
+  it('leaves out of that fill what isn’t available here, as adding one by one does: a paused module', async () => {
     const paused = PAUSED_MODULE_IDS.find(id => !isBetaModule(id))!
-    expect(isModulePaused(paused)).toBe(true); expect(isBetaModule('airwindows-chorus')).toBe(true)
+    expect(isModulePaused(paused)).toBe(true); expect(isBetaModule('airwindows-chorus')).toBe(false)
     await act(async () => root.render(createElement(Probe, { onRender: value => { workspace = value } })))
     await vi.waitFor(() => expect(workspace.ready).toBe(true))
     await act(() => { workspace.importConfiguration('Empty', []) })
     await act(() => workspace.addModules(['everb', paused, 'airwindows-chorus', 'tapehead']))
-    expect(workspace.active?.moduleIds).toEqual(['everb', 'tapehead'])
+    expect(workspace.active?.moduleIds).toEqual(['everb', 'airwindows-chorus', 'tapehead'])
     await act(() => workspace.toggleModule(paused))
-    expect(workspace.active?.moduleIds).toEqual(['everb', 'tapehead'])
+    expect(workspace.active?.moduleIds).toEqual(['everb', 'airwindows-chorus', 'tapehead'])
     await vi.waitFor(() => expect(workspace.saving).toBe(false))
   })
 })
