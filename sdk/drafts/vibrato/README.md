@@ -32,10 +32,10 @@ Select an audio track, hold FUNC and press FX1 (or FX2) for its SETUP page, turn
 
 ## Quick tutorial
 
-1. On an audio track that plays a sustained sound (a pad, a held note), hold FUNC and press FX1, turn LEVEL to VIBRATO and press YES.
-2. Press FX1 for the main page. At the defaults the track has a gentle sine vibrato of about 14 cents at 3.4 Hz. Turn DEP to 80 for a deep, singing vibrato, and SPD to 100 for a faster one.
-3. Hold FUNC and press FX1 again, set SHP to SQR, then turn DEP to 127 on the main page: the track now trills a whole tone. Turn SLEW up to round the trill into a glide.
-4. Turn MIX to 0 to hear the dry track again, or pick another effect in FX1 SETUP to take VIBRATO off the track.
+1. On an audio track that plays a sustained sound (a pad, a held note), hold FUNC and press FX2, turn LEVEL to VIBRATO and press YES. (FX1 works the same way.)
+2. Press FX2 for the main page. At the defaults the track has a gentle sine vibrato of about 14 cents at 3.4 Hz. Turn DEP (encoder B) to 80 for a deep, singing vibrato, and SPD (encoder A) to 100 for a faster one.
+3. Hold FUNC and press FX2 again, turn SHP (encoder A) to SQR, then turn DEP to 127 on the main page: the track now trills a whole tone. Turn SLEW up to round the trill into a glide.
+4. Turn MIX to 0 to hear the dry track again, or pick NONE in FX2 SETUP to take VIBRATO off the track.
 
 ## Compatibility and limitations
 
@@ -64,7 +64,14 @@ The author's README and usage page are kept unchanged in `upstream/`.
 
 ## Screens and audio
 
-Not captured yet.
+Headless emulator captures of a private native build (`media/`, provenance in `media/capture.json`), on FX2:
+
+1. `media/ot-setup.png`: FX2 SETUP with VIBRATO chosen; SHP on encoder A.
+2. `media/ot-main.png`: the main page, SPD, DEP and SLEW above WID and MIX.
+3. `media/ot-deep.png`: DEP turned to 127.
+4. `media/ot-shape-sqr.png`: SHP set to SQR, the trill.
+
+The native build's FX2 list holds only NONE and VIBRATO; on the Modwerk base the list also holds the stock effects and the other installed modules. No audio preview yet.
 
 ## Develop
 
