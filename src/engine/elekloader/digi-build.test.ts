@@ -100,12 +100,11 @@ describe('the vendored elekloader catalog', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['chorus'], catalog).core).toBeUndefined()
     expect(planBuild('analog-rytm-mkii', '1.74', [], catalog).core?.file).toBe(PLAIN)
   })
-  it('plans Pipo Loop, Sample RATE and Silent Pad+Trig together from their pinned source-only packages on the plain base', () => {
-    expect(planBuild('analog-rytm-mkii', '1.74', ['pipo-loop', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
+  it('plans Improved SMPL (with Ping Pong Loop folded in) and Silent Pad+Trig together from their pinned source-only packages on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['sample-rate', 'silent-pad-trig'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: [
-        { id: 'pipo-loop', file: 'pipo-loop-0.1.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.2-experimental' },
-        { id: 'sample-rate', file: 'sample-rate-0.5.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.5.1-experimental' },
+        { id: 'sample-rate', file: 'sample-rate-0.6.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.1-experimental' },
         { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
       ],
       missing: [],
@@ -137,7 +136,7 @@ describe('the vendored elekloader catalog', () => {
       core: { file: PLAIN, version: '0.7' },
       mods: [
         { id: 'quick-velocity-aftertouch-assign', file: 'quick-velocity-aftertouch-assign-0.3.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.3.1-experimental' },
-        { id: 'sample-rate', file: 'sample-rate-0.5.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.5.1-experimental' },
+        { id: 'sample-rate', file: 'sample-rate-0.6.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.1-experimental' },
         { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
       ],
       missing: [],
@@ -180,7 +179,7 @@ describe('the vendored elekloader catalog', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['live-rec-retrig-fix', 'qperf', 'temp-save'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: [
-        { id: 'live-rec-retrig-fix', file: 'live-rec-retrig-fix-0.2.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.1-experimental' },
+        { id: 'live-rec-retrig-fix', file: 'live-rec-retrig-fix-0.2.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.2-experimental' },
         { id: 'qperf', file: 'qperf-0.2.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.1-experimental' },
         { id: 'temp-save', file: 'temp-save-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
       ],
@@ -225,14 +224,14 @@ describe('the vendored elekloader catalog', () => {
       core: { file: PLAIN, version: '0.7' },
       mods: [
         { id: 'control-in-actions', file: 'control-in-actions-0.1.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.2-experimental' },
-        { id: 'sample-rate', file: 'sample-rate-0.5.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.5.1-experimental' },
+        { id: 'sample-rate', file: 'sample-rate-0.6.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.1-experimental' },
         { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
       ],
       missing: [],
     })
   })
-  it('plans Audio In FX beside Pipo Loop, Sample RATE and Silent Pad+Trig from their pinned source-only packages on the plain base', () => {
-    expect(planBuild('analog-rytm-mkii', '1.74', ['audio-in-fx', 'pipo-loop', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
+  it('plans Audio In FX beside Improved SMPL and Silent Pad+Trig from their pinned source-only packages on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['audio-in-fx', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: expect.arrayContaining([
         expect.objectContaining({ id: 'audio-in-fx', file: 'audio-in-fx-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' }),
@@ -263,17 +262,17 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
-  it('plans Live Rec Retrig Fix beside Pipo Loop, Sample RATE and Silent Pad+Trig from its pinned source-only package on the plain base', () => {
-    expect(planBuild('analog-rytm-mkii', '1.74', ['live-rec-retrig-fix', 'pipo-loop', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
+  it('plans Live Rec Retrig Fix beside Improved SMPL and Silent Pad+Trig from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['live-rec-retrig-fix', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: expect.arrayContaining([
-        expect.objectContaining({ id: 'live-rec-retrig-fix', file: 'live-rec-retrig-fix-0.2.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.1-experimental' }),
+        expect.objectContaining({ id: 'live-rec-retrig-fix', file: 'live-rec-retrig-fix-0.2.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.2-experimental' }),
       ]),
       missing: [],
     })
   })
-  it('plans Euclid Accents beside Pipo Loop and Silent Pad+Trig from its pinned source-only package on the plain base', () => {
-    expect(planBuild('analog-rytm-mkii', '1.74', ['euclid-accents', 'pipo-loop', 'silent-pad-trig'])).toMatchObject({
+  it('plans Euclid Accents beside Improved SMPL and Silent Pad+Trig from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['euclid-accents', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: expect.arrayContaining([
         expect.objectContaining({ id: 'euclid-accents', file: 'euclid-accents-1.2.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.0' }),
@@ -281,8 +280,8 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
-  it('plans Velocity Humanise beside Pipo Loop and Silent Pad+Trig from its pinned source-only package on the plain base', () => {
-    expect(planBuild('analog-rytm-mkii', '1.74', ['velocity-humanise', 'pipo-loop', 'silent-pad-trig'])).toMatchObject({
+  it('plans Velocity Humanise beside Improved SMPL and Silent Pad+Trig from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['sample-rate', 'silent-pad-trig', 'velocity-humanise'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: expect.arrayContaining([
         expect.objectContaining({ id: 'velocity-humanise', file: 'velocity-humanise-1.2.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.0' }),
@@ -308,8 +307,8 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
-  it('plans Compressor Preview beside Pipo Loop and Velocity Humanise from its pinned source-only package on the plain base', () => {
-    expect(planBuild('analog-rytm-mkii', '1.74', ['comp-preview', 'pipo-loop', 'velocity-humanise'])).toMatchObject({
+  it('plans Compressor Preview beside Improved SMPL and Velocity Humanise from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['comp-preview', 'sample-rate', 'velocity-humanise'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: expect.arrayContaining([
         expect.objectContaining({ id: 'comp-preview', file: 'comp-preview-1.1.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.1.0' }),

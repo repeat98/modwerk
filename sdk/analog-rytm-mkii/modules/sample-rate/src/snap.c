@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Pipo Loop: zero snap. FUNC + turn on the SAMPLE page's STA or END moves
 // that point to the next zero crossing of the sample in the direction of the
-// turn, on the sound or on held trigs' locks (audio.s hands the turn over).
+// turn, on the sound or on held trigs' locks (pipo.s hands the turn over).
 // The encoder feels like a stepped control: with FUNC held, stock's encoder
 // engine reads the turn through LOP's own profile (pipo_loop_profile), so a
 // crossing goes by exactly when LOP would step a value, several on a fast
@@ -196,9 +196,9 @@ static int steps_of(int delta)
     return delta < 0 ? -n : n;
 }
 
-// From audio.s, before stock's encoder engine reads a turn on STA or END:
+// From pipo.s, before stock's encoder engine reads a turn on STA or END:
 // with FUNC held, LOP's profile (copied into the handler's buffer) instead of
-// STA and END's own; 1 when it did, and audio.s takes LOP's count factors too.
+// STA and END's own; 1 when it did, and pipo.s takes LOP's count factors too.
 #define LOP_PROFILE (*(const char *volatile *)(LOP_REC_AT + 16))
 #define PROFILE_BYTES 28
 int pipo_loop_profile(char *buf)
@@ -212,7 +212,7 @@ int pipo_loop_profile(char *buf)
     return 1;
 }
 
-// From audio.s, FUNC + turn on STA or END: the sound's value (lock 0), or a
+// From pipo.s, FUNC + turn on STA or END: the sound's value (lock 0), or a
 // held trig's lock through the lock editor (lock 1).
 int pipo_loop_snap(void *view, int id, int delta, int lock)
 {
@@ -250,7 +250,7 @@ static int trig_value(void *view, int trig, int id)
     return (int)(short)vcall3(view, VT_VALUE, id, (int)vcall2(view, VT_TRIG_CTX, trig));
 }
 
-// From audio.s, stock's per-trig lock edit, for a trig that has a lock: with
+// From pipo.s, stock's per-trig lock edit, for a trig that has a lock: with
 // FUNC held on STA or END, the step from that trig's own lock.
 int pipo_loop_snap_trig(void *view, int trig, int id, int delta)
 {

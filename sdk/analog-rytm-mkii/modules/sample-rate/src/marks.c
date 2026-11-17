@@ -7,7 +7,7 @@
 // Stock's waveform widget (its draw routine is the only caller) keeps the
 // lines' columns at +4 (STA) and +8 (END), from x0 at +28; its area starts at
 // y0 (+32, y counts up from the bottom of the screen) and is +40 high; the
-// lines run from y0 + 1 to y0 + height - 2. audio.s calls this as the routine
+// lines run from y0 + 1 to y0 + height - 2. pipo.s calls this as the routine
 // ends, after the lines and the playheads.
 
 typedef void (*fillrect_t)(void *bmp, int x0, int y0, int x1, int y1, int colour);

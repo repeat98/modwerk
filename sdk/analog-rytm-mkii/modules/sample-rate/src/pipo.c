@@ -13,7 +13,7 @@
 // copies, a block ahead, a 140-frame window of the sample into SRAM by DMA:
 // near the loop's end, the frames up to the end, then the loop's start, so
 // the voice wraps mid-block at the exact frame. For a voice in PIPO the
-// module turns that wrap into the turn: the gates in audio.s point the DMA
+// module turns that wrap into the turn: the gates in pipo.s point the DMA
 // of the frames past the turn at a buffer holding the loop's frames in
 // reverse order (pipo_loop_mirror), so the voice plays straight on into the
 // way back, at the exact frame, with stock's own interpolation. The block
@@ -64,13 +64,13 @@ struct voice {
 };
 
 static struct voice voices[VOICES];
-// Voices armed for a turn this block (bit v), for the gates in audio.s: with none armed they
+// Voices armed for a turn this block (bit v), for the gates in pipo.s: with none armed they
 // leave the DMA as stock set it without calling pipo_loop_mirror, which costs the audio
 // interrupt 16 C calls a block with LOP OFF everywhere.
 unsigned char pipo_loop_armed;
 static short mirror[VOICES][MIRROR] __attribute__((aligned(16)));
 
-int pipo_loop_frame(int v8, unsigned frames);   // audio.s
+int pipo_loop_frame(int v8, unsigned frames);   // pipo.s
 
 // STA/END (8.8, of 120) to stock's frame, by the routine stock's prefetch calls. Its EMAC rounding
 // decides which 8-frame boundary the DMA aligns to: a frame off here on a multiple of 8 and every
@@ -179,7 +179,7 @@ void pipo_loop_audio(void)
     }
 }
 
-// From the gates in audio.s, as stock's prefetch sets up the DMA of a voice's
+// From the gates in pipo.s, as stock's prefetch sets up the DMA of a voice's
 // window that wraps at the loop's end. which 1: the segment after hi (stock:
 // the loop's start, from wrap_al), for a voice going up; which 2: the main
 // segment (stock: from ws_al up to hi), for a voice going down, which reads
