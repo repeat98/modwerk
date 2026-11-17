@@ -1,0 +1,221 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { DatabaseSync } from 'node:sqlite'
+import { testServer } from './test-server'
+import { handleCommunity } from '../../server/transport'
+import { digest } from '../../server/security'
+import { chunks, failureKey } from '../../server/maintenance-bot'
+
+const KEY = 'k'.repeat(64), SECRET = 's'.repeat(40), CHAT = '4242'
+const databases: DatabaseSync[] = []
+afterEach(() => { databases.splice(0).forEach(db => db.close()); vi.unstubAllGlobals(); vi.useRealTimers() })
+
+async function fixture() {
+  const server = await testServer(); databases.push(server.db)
+  Object.assign(server.env, { MAINTENANCE_BOT_KEY_SHA256: await digest(KEY), TELEGRAM_BOT_TOKEN: '123:test', TELEGRAM_CHAT_ID: CHAT, TELEGRAM_WEBHOOK_SECRET: SECRET })
+  const sent: { method: string; body: Record<string, unknown> }[] = []
+  let message = 900
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+    const method = url.split('/').at(-1)!
+    sent.push({ method, body: JSON.parse(String(init.body)) })
+    return Response.json({ ok: true, result: method === 'sendMessage' ? { message_id: ++message } : true })
+  }))
+  // Server-to-server, like the GitHub job: no Origin.
+  const bot = (path: string, method = 'GET', body?: unknown, key = KEY) => handleCommunity(new Request('https://api.example.test/api/maintenance-bot' + path, {
+    method, headers: { Authorization: 'Bearer ' + key, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body),
+  }), server.env)
+  const hook = (update: unknown, secret = SECRET) => handleCommunity(new Request('https://api.example.test/api/maintenance-bot/telegram', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Telegram-Bot-Api-Secret-Token': secret }, body: JSON.stringify(update),
+  }), server.env)
+  const press = (data: string, from = Number(CHAT)) => hook({ callback_query: { id: 'q', data, from: { id: from }, message: { message_id: 1, chat: { id: from } } } })
+  return { ...server, sent, bot, hook, press }
+}
+const action = (id: string, tier: string, extra = {}) => ({ id, kind: 'merge', target: 7, tier, summary: '#7 Merge the thing', reason: 'Green and reviewed.', payload: { kind: 'merge', number: 7 }, ...extra })
+
+describe('maintenance bot ledger', () => {
+  it('refuses a wrong key, and answers 503 until it is set up', async () => {
+    const { bot, env } = await fixture()
+    expect((await bot('/state', 'GET', undefined, 'x'.repeat(64))).status).toBe(401)
+    delete env.TELEGRAM_BOT_TOKEN
+    expect((await bot('/state')).status).toBe(503)
+  })
+
+  it('records a proposal once, sends it to Telegram with buttons, and runs it only after its window', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-11-17T10:00:00Z'))
+    const { bot, sent } = await fixture()
+    expect(await (await bot('/actions', 'POST', { actions: [action('a'.repeat(16), 'window', { windowHours: 2 })] })).json()).toEqual({ created: ['a'.repeat(16)] })
+    expect(await (await bot('/actions', 'POST', { actions: [action('a'.repeat(16), 'window', { summary: 'Changed wording' })] })).json()).toEqual({ created: [] })
+    expect(sent).toHaveLength(1)
+    expect(sent[0].body.text).toBe('#7 Merge the thing\nRuns at 13:00 unless you stop it.')
+    expect(JSON.stringify(sent[0].body.reply_markup)).toContain('w:' + 'a'.repeat(16))
+    expect(JSON.stringify(sent[0].body.reply_markup)).toContain('s:' + 'a'.repeat(16))
+    expect((await (await bot('/actions/due')).json()).actions).toEqual([])
+    vi.setSystemTime(new Date('2026-11-17T12:00:01Z'))
+    expect((await (await bot('/actions/due')).json()).actions.map((row: { id: string }) => row.id)).toEqual(['a'.repeat(16)])
+    expect((await bot('/actions/' + 'a'.repeat(16) + '/claim', 'POST')).status).toBe(200)
+    // A second, overlapping run cannot claim it again.
+    expect((await bot('/actions/' + 'a'.repeat(16) + '/claim', 'POST')).status).toBe(409)
+    expect((await bot('/actions/' + 'a'.repeat(16) + '/result', 'POST', { status: 'done', result: 'merged abc' })).status).toBe(200)
+    expect(sent.at(-1)).toMatchObject({ method: 'editMessageText', body: { message_id: 901 } })
+    expect(sent.at(-1)!.body.text).toBe('✅ #7 Merge the thing')
+  })
+
+  it('runs a notice at once without a Telegram message, and an ask never without approval', async () => {
+    const { bot, sent, press } = await fixture()
+    await bot('/actions', 'POST', { actions: [action('b'.repeat(16), 'notify', { kind: 'label' }), action('c'.repeat(16), 'ask')] })
+    expect(sent.map(item => item.method)).toEqual(['sendMessage'])
+    expect(sent[0].body.text).toContain('Needs your OK')
+    expect((await (await bot('/actions/due')).json()).actions.map((row: { id: string }) => row.id)).toEqual(['b'.repeat(16)])
+    await press('g:' + 'c'.repeat(16))
+    expect((await (await bot('/actions/due')).json()).actions.map((row: { id: string }) => row.id)).toEqual(['b'.repeat(16), 'c'.repeat(16)])
+  })
+
+  it('stops an action from Telegram, and ignores anyone but the owner', async () => {
+    const { bot, sent, press, hook } = await fixture()
+    await bot('/actions', 'POST', { actions: [action('d'.repeat(16), 'window', { windowHours: 0 })] })
+    await press('s:' + 'd'.repeat(16), 999)
+    expect(sent.at(-1)).toMatchObject({ method: 'answerCallbackQuery', body: { text: 'Not yours.' } })
+    expect((await hook({ callback_query: { id: 'q', data: 's:' + 'd'.repeat(16) } }, 'w'.repeat(40))).status).toBe(403)
+    expect((await (await bot('/actions/due')).json()).actions).toHaveLength(1)
+    await press('s:' + 'd'.repeat(16))
+    expect((await (await bot('/actions/due')).json()).actions).toEqual([])
+    expect((await bot('/actions/' + 'd'.repeat(16) + '/claim', 'POST')).status).toBe(409)
+    const recent = await (await bot('/actions/recent')).json()
+    expect(recent.actions[0]).toMatchObject({ status: 'vetoed', payload: { number: 7 } })
+  })
+
+  it('shows the reason only after Why?, and keeps the other buttons', async () => {
+    const { bot, sent, press } = await fixture()
+    await bot('/actions', 'POST', { actions: [action('f'.repeat(16), 'ask')] })
+    expect(sent[0].body.text).toBe('#7 Merge the thing\nNeeds your OK.')
+    await press('w:' + 'f'.repeat(16))
+    const edit = sent.find(item => item.method === 'editMessageText')!
+    expect(edit.body.text).toBe('#7 Merge the thing\nNeeds your OK.\nGreen and reviewed.')
+    expect(JSON.stringify(edit.body.reply_markup)).not.toContain('w:')
+    expect(JSON.stringify(edit.body.reply_markup)).toContain('g:' + 'f'.repeat(16))
+    expect((await (await bot('/actions/due')).json()).actions).toEqual([])
+  })
+
+  it('pauses and resumes from Telegram', async () => {
+    const { bot, hook, sent } = await fixture()
+    await bot('/actions', 'POST', { actions: [action('e'.repeat(16), 'notify')] })
+    await hook({ message: { text: '/pause', chat: { id: Number(CHAT) } } })
+    expect(await (await bot('/actions/due')).json()).toEqual({ paused: true, actions: [] })
+    expect((await (await bot('/state')).json()).paused).toBe(true)
+    await hook({ message: { text: '/pause', chat: { id: 1 } } })
+    await hook({ message: { text: '/resume', chat: { id: Number(CHAT) } } })
+    expect((await (await bot('/actions/due')).json()).actions).toHaveLength(1)
+    expect(sent.filter(item => item.method === 'sendMessage')).toHaveLength(2)
+  })
+
+  it('keeps a to-do list the bot adds to and only the owner reads and ticks off', async () => {
+    const { bot, env, db } = await fixture()
+    Object.assign(env, { GITHUB_OAUTH_CLIENT_ID: 'client', GITHUB_OAUTH_CLIENT_SECRET: 'secret' })
+    const client = await digest('client:secret')
+    const session = async (login: string, token: string, id: number) => {
+      db.prepare('INSERT INTO users(id,display_name,github_id,github_login) VALUES(?,?,?,?)').run(login, login, id, login)
+      db.prepare("INSERT INTO developer_sessions(token_hash,user_id,client_hash,expires,purpose) VALUES(?,?,?,?,'board')").run(await digest(token), login, client, 4102444800)
+    }
+    await session('repeat98', '1'.repeat(64), 1)
+    await session('mallory', '2'.repeat(64), 2)
+    const as = (token: string, path: string, method = 'GET', body?: unknown) => handleCommunity(new Request('https://api.example.test/api/maintenance-bot' + path, {
+      method, headers: { 'X-Modwerk-Developer': token, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body),
+    }), env)
+    const todo = { id: '9'.repeat(16), target: 1386, command: '/modwerk-fix-issue 1386', note: 'USB base update  stuck', urgent: true }
+    expect((await bot('/todos', 'POST', { todos: [{ ...todo, command: 'rm -rf /' }] })).status).toBe(400)
+    await bot('/todos', 'POST', { todos: [{ ...todo, id: '8'.repeat(16), target: 5, command: '/modwerk-pr-ready 5', note: 'refresh', urgent: false }, todo] })
+    await bot('/todos', 'POST', { todos: [{ ...todo, note: 'USB base update stuck in recovery' }] })
+    const list = await (await as('1'.repeat(64), '/todos')).json()
+    expect(list.todos.map((row: { id: string; urgent: boolean; note: string }) => [row.id, row.urgent, row.note])).toEqual([['9'.repeat(16), true, 'USB base update stuck in recovery'], ['8'.repeat(16), false, 'refresh']])
+    expect((await as('2'.repeat(64), '/todos')).status).toBe(401)
+    expect((await as('2'.repeat(64), '/todos/' + '9'.repeat(16) + '/status', 'POST', { status: 'done' })).status).toBe(401)
+    expect((await as('1'.repeat(64), '/todos', 'POST', { todos: [] })).status).toBe(401)
+    expect((await as('1'.repeat(64), '/actions/due')).status).toBe(401)
+    expect((await as('1'.repeat(64), '/todos/' + '9'.repeat(16) + '/status', 'POST', { status: 'done' })).status).toBe(200)
+    expect((await as('1'.repeat(64), '/todos/' + '9'.repeat(16) + '/status', 'POST', { status: 'done' })).status).toBe(404)
+    // A finished to-do stays finished when the bot proposes the same work again.
+    await bot('/todos', 'POST', { todos: [todo] })
+    expect((await (await bot('/todos')).json()).todos.map((row: { id: string }) => row.id)).toEqual(['8'.repeat(16)])
+  })
+
+  it('answers, closes and releases on the agent board as the owner, through the board’s own rules', async () => {
+    const { bot, db } = await fixture()
+    const now = new Date().toISOString(), thread = '11111111-1111-4111-8111-111111111111', claim = '22222222-2222-4222-8222-222222222222'
+    db.prepare('INSERT INTO users(id,display_name,github_id,github_login) VALUES(?,?,?,?)').run('alice', 'alice', 7, 'alice')
+    db.prepare("INSERT INTO agent_messages(id,kind,topic_kind,topic_key,user_id,to_login,body,created_at,active_at) VALUES(?,'question','site','forum','alice','repeat98','Which hook?',?,?)").run(thread, now, now)
+    db.prepare("INSERT INTO agent_claims(id,kind,claim_key,user_id,note,created_at,renewed_at) VALUES(?,'migration','0099','alice','',?,?)").run(claim, now, now)
+    expect((await bot('/board/messages/' + thread + '/reply', 'POST', { body: 'See docs/AGENT_BOARD.md.' })).status).toBe(409)
+    db.prepare('INSERT INTO users(id,display_name,github_id,github_login) VALUES(?,?,?,?)').run('owner', 'Jannik', 1, 'repeat98')
+    expect((await bot('/board/messages/' + thread + '/reply', 'POST', { body: 'See docs/AGENT_BOARD.md.' })).status).toBe(200)
+    expect(db.prepare("SELECT user_id,body FROM agent_messages WHERE parent_id=?").get(thread)).toEqual({ user_id: 'owner', body: 'See docs/AGENT_BOARD.md.' })
+    expect((await bot('/board/messages/' + thread + '/reply', 'POST', { body: 'x'.repeat(501) })).status).toBe(400)
+    expect((await bot('/board/claims/' + thread + '/reply', 'POST', {})).status).toBe(404)
+    expect((await bot('/board/claims/' + claim + '/release', 'POST', {}, 'x'.repeat(64))).status).toBe(401)
+    expect((await bot('/board/claims/' + claim + '/release', 'POST', {})).status).toBe(200)
+    expect(db.prepare('SELECT released_reason FROM agent_claims WHERE id=?').get(claim)).toEqual({ released_reason: 'administrator' })
+    expect((await bot('/board/claims/' + claim + '/release', 'POST', {})).status).toBe(404)
+    expect((await bot('/board/messages/' + thread + '/close', 'POST', {})).status).toBe(200)
+    expect((await bot('/board/messages/' + thread + '/reply', 'POST', { body: 'late' })).status).toBe(404)
+    // A board action has no pull request number.
+    expect((await bot('/actions', 'POST', { actions: [{ ...action('7'.repeat(16), 'window'), kind: 'board_reply', target: 0 }] })).status).toBe(200)
+    expect((await bot('/actions', 'POST', { actions: [{ ...action('6'.repeat(16), 'window'), target: 0 }] })).status).toBe(400)
+  })
+
+  it('tells the owner about a new urgent to-do at once, and only once', async () => {
+    const { bot, sent } = await fixture()
+    const red = { id: '5'.repeat(16), target: 0, command: 'gh run view 123 --log-failed', note: 'main is red: Deploy community Worker at abc', urgent: true }
+    await bot('/todos', 'POST', { todos: [red, { ...red, id: '4'.repeat(16), urgent: false, command: '/modwerk-diagnostics', note: 'New: link_failed:timeout (3)' }] })
+    await bot('/todos', 'POST', { todos: [red] })
+    expect(sent.filter(item => item.method === 'sendMessage').map(item => item.body.text)).toEqual(['⚠️ main is red: Deploy community Worker at abc\nTo-do: /modwerk-todo'])
+  })
+
+  it('counts shared diagnostics by failure, never by person', async () => {
+    const { bot, db } = await fixture()
+    expect(failureKey({ event: 'link_failed', failure: 'timeout', id: 'x', phase: 'claim' })).toBe('link_failed:timeout')
+    expect(failureKey({ event: 'sync_kept', id: 'x' })).toBeNull()
+    expect(failureKey({ kind: 'freeze', seq: 1 })).toBe('incident:freeze')
+    db.prepare("INSERT INTO octatrack_guest_diagnostic_consent(guest_id,enabled,version,changed_at) VALUES('g',1,'1',?)").run(new Date().toISOString())
+    const event = (n: number, ago: number) => db.prepare('INSERT INTO octatrack_guest_diagnostic_events(guest_id,event_id,consent_version,data_json,created_at) VALUES(?,?,?,?,?)').run('g', 'e' + n, '1', JSON.stringify({ event: 'link_failed', failure: 'timeout', id: 'e' + n, phase: 'claim' }), new Date(Date.now() - ago * 3600000).toISOString())
+    event(1, 1); event(2, 2); event(3, 50)
+    expect(await (await bot('/diagnostics')).json()).toEqual({ failures: [{ key: 'link_failed:timeout', today: 2, week: 1 }] })
+  })
+
+  it('remembers where upstream was', async () => {
+    const { bot } = await fixture()
+    expect((await bot('/state', 'PUT', {})).status).toBe(400)
+    await bot('/state', 'PUT', { upstream: '{"elekloader":"abc"}' })
+    expect((await (await bot('/state')).json()).upstream).toBe('{"elekloader":"abc"}')
+  })
+
+  it('answers in the forum and the shoutbox as TARS, through the site’s own handlers, only while nobody has', async () => {
+    const { bot, db } = await fixture()
+    db.prepare("INSERT INTO users(id,display_name,username,email_verified) VALUES('ana','Ana','ana',1)").run()
+    db.prepare("INSERT INTO users(id,display_name,username,email_verified,is_admin) VALUES('jannik','Jannik','jannik',1,1)").run()
+    db.prepare("INSERT INTO forum_threads(id,user_id,title,category) VALUES('t1','ana','Keep does nothing','general')").run()
+    db.prepare("INSERT INTO forum_posts(id,thread_id,user_id,body) VALUES('p1','t1','ana','I press Keep and nothing happens. What am I missing?')").run()
+    db.prepare("INSERT INTO forum_shouts(id,user_id,body) VALUES('s1','ana','anyone know how to undo a set?')").run()
+    const activity = await (await bot('/forum')).json()
+    expect(activity.threads[0]).toMatchObject({ id: 't1', posts: [{ id: 'p1', author: 'ana', helper: false }] })
+    expect(activity.shouts).toMatchObject([{ id: 's1', author: 'ana', helper: false }])
+    expect((await bot('/forum/threads/t1/reply', 'POST', { body: 'Hi Ana!', after: 'p0' })).status).toBe(409)
+    expect((await bot('/forum/threads/t1/reply', 'POST', { body: 'Hi Ana! After Keep, power the Octatrack off and on once.', after: 'p1' })).status).toBe(200)
+    expect(db.prepare("SELECT user_id,body FROM forum_posts WHERE thread_id='t1' AND user_id='tars'").get()).toEqual({ user_id: 'tars', body: 'Hi Ana! After Keep, power the Octatrack off and on once.' })
+    // The thread now ends with TARS's own post: nothing more until Ana writes again.
+    const last = (db.prepare("SELECT id FROM forum_posts WHERE user_id='tars'").get() as { id: string }).id
+    expect((await bot('/forum/threads/t1/reply', 'POST', { body: 'Again', after: last })).status).toBe(409)
+    expect((await bot('/forum/shouts/s1/reply', 'POST', { body: '@ana Undo is in the device panel.' })).status).toBe(200)
+    expect((await bot('/forum/shouts/s1/reply', 'POST', { body: '@ana Twice' })).status).toBe(409)
+    db.prepare("INSERT INTO forum_shouts(id,user_id,body) VALUES('s2','ana','thanks!')").run()
+    db.prepare("INSERT INTO forum_shouts(id,user_id,body) VALUES('s3','jannik','np')").run()
+    expect((await bot('/forum/shouts/s2/reply', 'POST', { body: '@ana You are welcome.' })).status).toBe(409)
+  })
+
+  it('keeps the fingerprint and splits long reports', async () => {
+    const { bot, sent } = await fixture()
+    expect((await bot('/state', 'PUT', { fingerprint: 'nope' })).status).toBe(400)
+    await bot('/state', 'PUT', { fingerprint: 'f'.repeat(64) })
+    expect((await (await bot('/state')).json()).fingerprint).toBe('f'.repeat(64))
+    await bot('/report', 'POST', { text: ('line\n').repeat(2000) })
+    expect(sent.filter(item => item.method === 'sendMessage').length).toBe(3)
+    expect(chunks('x'.repeat(9000)).map(part => part.length)).toEqual([4000, 4000, 1000])
+  })
+})

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/improved-amp",
+  "version": "0.1.1-experimental",
+  "date": "2026-11-16",
+  "changes": [
+    "Takes less of the shared mod area (9,228 bytes, was 9,548): the functions that run only in the UI task (the tick, the knob texts, FUNC + turn's HLD jump and their helpers) are built cold, for size; improved_amp_voice, the pre-fade and every hook stay at -O2, their instructions byte-identical. No change in behaviour."
+  ],
+  "runtimeSourceSha256": "1dfd4455563487d71d9975ea41e5ee93c0e304d87a3730da0bff98dfb534fdfd",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/improved-amp/improved-amp-0.1.1-experimental-os1.74.elemod",
+      "sha256": "d5cff060ade6014cdcb63b7aae01f1c625cb3eed5b57aec908649642b0b86c4d"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/improved-amp/TESTING.md",
+  "requires": []
+}

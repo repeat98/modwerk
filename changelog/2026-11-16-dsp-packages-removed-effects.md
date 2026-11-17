@@ -1,0 +1,1 @@
+Development: the Octatrack DSP package rebuild (`dsp_packages.py`) no longer stops on Modulation and Spectrum, which left the catalogue in #1468; with the DSP assembler installed, its rebuild check and `test_dsp_packages_rebuild_from_source` pass again for the six DSP effects.
