@@ -196,6 +196,43 @@ int main(void)
     hold(CUE, 0);
     check("again at the same row undoes the insert", rows() == 10 && same(1, 1) && same(9, 9) && row(5)[3] == 6);
 
+    /* the insert rule (owner's decision of 17 November 2026) */
+    fill(10);
+    row(1)[0] = 1; row(1)[3] = 1;                  /* a HALT at the insertion row */
+    row(4)[0] = 1; row(4)[3] = 0;                  /* a LOOP to row 0, before the insertion row */
+    set_cursor(1);
+    hold(CUE, 1); hold(FUNC, 1); tap(STOP); hold(FUNC, 0); hold(CUE, 0);
+    check("a HALT at the insertion row stays a HALT (stock leaves a LOOP to the new row)", row(4)[0] == 1 && row(4)[3] == 4);
+    check("a target before the insertion row stays", row(7)[0] == 1 && row(7)[3] == 0);
+
+    /* a copied block with a LOOP inside it and a JUMP out of it, inserted elsewhere */
+    fill(12);
+    row(2)[0] = 1; row(2)[2] = 3; row(2)[3] = 1;   /* LOOP x3 back to row 1, inside the block 1-3 */
+    row(3)[0] = 1; row(3)[2] = 100; row(3)[3] = 9; /* JUMP to row 9, outside the block; a count past stock's 64 */
+    set_cursor(1);
+    hold(CUE, 1); tap(DOWN); tap(DOWN); hold(CUE, 0); /* rows 1-3 */
+    hold(FUNC, 1); tap(REC); hold(FUNC, 0);
+    set_cursor(6);
+    hold(CUE, 1); hold(FUNC, 1); tap(STOP); hold(FUNC, 0); hold(CUE, 0);
+    check("a target inside the copied block keeps its place in the block", row(7)[0] == 1 && row(7)[2] == 3 && row(7)[3] == 6);
+    check("a target outside it past the insertion row moves by the block", row(8)[0] == 1 && row(8)[3] == 12);
+    check("a count past 64 is clamped to 64, as stock's editor clamps it", row(8)[2] == 64);
+    check("the original JUMP to row 9 moved with its row too", row(3)[3] == 12 && row(2)[3] == 1);
+
+    /* inserting at the end changes no target */
+    fill(6);
+    row(2)[0] = 1; row(2)[3] = 5;
+    set_cursor(6);
+    hold(CUE, 1); hold(FUNC, 1); tap(STOP); hold(FUNC, 0); hold(CUE, 0);
+    check("an insert at the end (P == count) changes no target", rows() == 9 && row(2)[3] == 5);
+
+    /* targets past row 127: stock compares them signed and never moves them; the module does */
+    fill(210);
+    row(205)[0] = 1; row(205)[3] = 200;
+    set_cursor(5);
+    hold(CUE, 1); hold(FUNC, 1); tap(STOP); hold(FUNC, 0); hold(CUE, 0);
+    check("a LOOP to row 200 moves to 203", row(208)[0] == 1 && row(208)[3] == 203);
+
     /* clear a selection of rows 5-6 (selected upwards) */
     fill(10);
     set_cursor(6);

@@ -4,7 +4,7 @@ Every result names its build. "Not tested" is a result.
 
 ## Host gate
 
-`python3 -B sdk/drafts/arr-rows/verify.py` (17 November 2026, source at this branch): 42 checks pass, and
+`python3 -B sdk/drafts/arr-rows/verify.py` (17 November 2026, source at this branch): 50 checks pass, and
 `arr_rows_core.s` matches `arr_rows.c` (m68k-elf-gcc 16.2, no unresolved symbols, the shared codegen guard passes).
 It proves the module's logic against simulated stock memory, not the firmware.
 
@@ -47,6 +47,9 @@ refusals). The screen was read from the panel link's transmit stream (Octabam's 
 - Stock's one-row copy and paste with the module installed and no selection: row 3 pasted over row 0, as on stock.
 - A HALT row (row 3, target 3; made with LEVEL below A01): stock's FUNC + DOWN at row 1 moved it to row 4, target 4;
   then the module's insert of two rows at row 1 moved it to row 6, target 6.
+- The insert rule (17 November 2026, after the owner's decision): a LOOP with count 0 draws `LOOP: 001/∞`; stock's
+  FUNC + DOWN on `HALT: 003` gave `HALT: 003` and `LOOP: 003/∞` below it; stock's FUNC + UP on the new row put
+  `HALT: 003` back; the module's insert of a copied row at row 3 moved the HALT to row 4 with target 4.
 - Not run here: a LOOP/JUMP to another row through a module insert (host only), editing while the arrangement plays,
   SAVE/RELOAD, a power cycle, the MKII panel.
 

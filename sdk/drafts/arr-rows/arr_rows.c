@@ -116,6 +116,7 @@ struct arr_state {
     uint16_t sel_count;        /* the row count when it began: a stock insert or delete ends it */
     uint32_t sel_arr;          /* the arrangement it belongs to */
     uint16_t clip_n;           /* rows on the clipboard */
+    uint16_t clip_from;        /* the row the first of them was copied from: targets inside the block move with it */
     uint8_t undo, undo_index;  /* the last edit, and which arrangement it changed */
     uint16_t undo_at, undo_n, undo_count;
     uint32_t undo_sum;         /* the rows as that edit left them: any other change since forgets the undo */
@@ -252,6 +253,7 @@ static void copy_rows(struct arr_state *s, unsigned lo, unsigned hi)
     unsigned n = hi - lo + 1;
     copy_bytes(s->clip, row_at(arr(), lo), n * ROW_BYTES);
     s->clip_n = (uint16_t)n;
+    s->clip_from = (uint16_t)lo;
     s->from_here = 1;
     s->undo = UNDO_NONE;
     message(say(s, "COPY", n));
@@ -279,25 +281,48 @@ static void paste_rows(struct arr_state *s, unsigned at)
     done(s, say(s, "PASTE", n));
 }
 
+#define LOOP_MAX 64u /* stock's editor clamps a LOOP's count to 0-64 (0x40049ed6); 0 draws as infinite */
+
+static unsigned byte_at_most(unsigned v) { return v > 255u ? 255u : v; }
+
+/* Where a type-1 row's target goes when n rows are inserted at `at`, the row itself being at `own` before it.
+ * Stock's insert (0x4009e4c8) moves a target past the insertion row by one and leaves the rest. A HALT is a row
+ * whose target is its own row (the draw code labels target < own LOOP, == own HALT, > own JUMP), so it follows its
+ * row: also a HALT sitting at `at`, which stock leaves behind as a LOOP to the new row. Unsigned, where stock compares
+ * signed, so targets past row 127 move too. */
+static unsigned moved_target(unsigned target, unsigned own, unsigned at, unsigned n)
+{
+    if (target == own) return own >= at ? byte_at_most(own + n) : own;
+    return target > at ? byte_at_most(target + n) : target;
+}
+
 static void insert_rows(struct arr_state *s, unsigned at)
 {
     uint32_t a = arr();
-    unsigned n = s->clip_n, have = count(a);
+    unsigned n = s->clip_n, have = count(a), from = s->clip_from;
     if (can_undo(s, UNDO_INSERT, at, n)) { restore(s, say(s, "UNDO INSERT", n)); return; }
     if (at > have) at = have;
     if (have + n > ROWS) { row_limit(); return; }
     snapshot(s, UNDO_INSERT, at, n);
-    /* LOOP/JUMP targets past the insertion point move with their rows, as stock's insert moves them by one. */
     for (unsigned r = 0; r < have; ++r) {
         uint32_t row = row_at(a, r);
-        unsigned target = rd8(row + 3);
-        if (rd8(row) == TYPE_JUMP && target > at) wr8(row + 3, target + n > 255u ? 255u : target + n);  /* a byte: stop at 255 */
+        if (rd8(row) == TYPE_JUMP) wr8(row + 3, moved_target(rd8(row + 3), r, at, n));
     }
     for (unsigned r = have; r-- > at;) {
-        uint32_t from = row_at(a, r), to = row_at(a, r + n);
-        for (unsigned i = 0; i < ROW_BYTES; ++i) wr8(to + i, rd8(from + i));
+        uint32_t src = row_at(a, r), to = row_at(a, r + n);
+        for (unsigned i = 0; i < ROW_BYTES; ++i) wr8(to + i, rd8(src + i));
     }
     put_bytes(row_at(a, at), s->clip, n * ROW_BYTES);
+    /* The pasted rows: a target inside the copied block keeps its place in the block, one outside follows the rule
+     * above; a count past stock's range is clamped as stock's editor would. */
+    for (unsigned k = 0; k < n; ++k) {
+        uint32_t row = row_at(a, at + k);
+        if (rd8(row) != TYPE_JUMP) continue;
+        unsigned target = rd8(row + 3);
+        wr8(row + 3, target >= from && target < from + n ? at + (target - from)
+                                                         : (target > at ? byte_at_most(target + n) : target));
+        if (rd8(row + 2) > LOOP_MAX) wr8(row + 2, LOOP_MAX);
+    }
     wr16(a + COUNT_AT, have + n);
     forget_selection(s);
     done(s, say(s, "INSERT", n));
