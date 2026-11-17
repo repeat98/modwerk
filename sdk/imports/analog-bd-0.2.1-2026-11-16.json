@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/analog-bd",
+  "version": "0.2.1-experimental",
+  "date": "2026-11-16",
+  "changes": [
+    "The knob tables read once per knob change are stored as 16-bit steps above their smallest word, three of them worked out instead: 5,024 bytes less module RAM. Per-sample code unchanged; the sound within -55.8 dBFS of 0.2.0 on the host."
+  ],
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/analog-bd/analog-bd-0.2.1-experimental-os1.74.elemod",
+      "sha256": "7644a29330f1a6c9b9afbb6b95d63e9c2322a21a62a4ed107613c649f62364b1"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/analog-bd/TESTING.md",
+  "requires": []
+}

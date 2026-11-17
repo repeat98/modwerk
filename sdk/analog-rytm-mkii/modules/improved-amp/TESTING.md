@@ -1,10 +1,58 @@
 # Improved AMP: testing
 
-Improved AMP 0.1.0-experimental, Analog Rytm MKII OS 1.74, on the Modwerk base (core-ar2 0.7) with the
+Improved AMP 0.1.1-experimental (0.1.0-experimental from "The package's own image flashed: IA15" down), Analog Rytm MKII OS 1.74, on the Modwerk base (core-ar2 0.7) with the
 amp record hook. The sections from "Unit, ED02" down record the module's builds under its earlier name,
 Improved Envelopes (symbols `envelopes_*`, now `improved_amp_*`; HLD then read in ms). "ENV RESET AMP
 pre-fade" records the pre-fade's builds from before it moved into this module. The test builds' `.syx`
 files stayed on the tester's computer.
+
+## 0.1.1: the UI task's functions built cold, 16 Nov 2026
+
+The change: the functions that run only in the UI task (the tick, the knob texts, FUNC + turn's HLD jump
+and their helpers) are marked `IA_UI`, `__attribute__((cold))`, so GCC builds them for size, out of the
+hot code. `improved_amp_voice`, the pre-fade and every hook stay at -O2. No change in behaviour is
+intended. Fingerprint (as below, the same seven files): `fa0f2eac…b1c7`, `evidence.sourceSha256`. The
+test builds' `.syx` files stayed on the tester's computer.
+
+- **Objects.** Before and after compared: every function left at -O2 has byte-identical instructions
+  apart from relocation offsets. An independent review of the change found no defect.
+- **Memory.** `.run` 8,876 bytes (0.1.0: 9,192), 316 fewer. Linked alone on the plain base (IA16,
+  below) the module takes 9,228 bytes of the shared mod area (ramSpare 109,776; 0.1.0's IA15: 9,548).
+- **Images.** All on OS 1.74: a development build of Modwerk's base with the USB test link (`8e336c94`,
+  the send-bus base from a private tree that leaves out the send bus, as in the author's combined
+  images) plus four modules, each with the same change: Control In Actions, Filter Hz, Improved AMP and
+  Quick Mod Assign. CB00 (`2df46aa4…48f9`) carries their sources before the change, CA01
+  (`cfc5ee3b…61fa`) after it; both are rytm-emu RAM-boot builds. CA02 (`8c732687…b5b5`) is CA01's
+  sources on the store lock of RB08, the build in the unit's flash. These sources differ from this
+  folder's only in the text of the macro's comment; they were linked before the version number moved to
+  0.1.1, so CA02's link log names 0.1.0-experimental.
+- **rytm-emu.** CB00's screens and measures were recorded as references; CA01 passes all 26 emulator
+  cases against them (identical screens and measures), Improved AMP's 8 among them: env-reset,
+  filter-times, hld-func, hld-speed, hld, ovr, save and times.
+- **On the unit.** CA02 loaded to RAM on the author's Analog Rytm MKII (RB08 in flash) over the
+  development link, run by the automated test rig with the author's go, 16 Nov 2026 (reports kept on the
+  tester's computer). Screen references: the repository's unit references for this module. Of the 25
+  cases 18 pass: env-reset, filter-times, hld-func, hld, ovr, save, times and prefade-fast (on a fresh
+  kit), and, with a looped sample on BD (these cases need a sound that rings), first-trig, prefade,
+  prefade-cond, prefade-edit, prefade-locktrig, prefade-micro, prefade-mute, prefade-retrig,
+  prefade-series and prefade-swing. 7 fail:
+  - sound, sound-filter, sound-hld and sound-ovr: their exact lengths and peaks were written for one
+    particular ringing sound, and the looped sample measures differently;
+  - hld-speed, sound-hld-speed and sound-hld's screen compares: the track-speed digit on stock's SCALE
+    page;
+  - prefade-lock: the lock screen differs, and one extra dip, likely the sample's loop point.
+
+  Earlier passes on the author's edited kit and on a fresh kit failed the sound cases because the BD did
+  not ring (about 126 ms). The audio path's functions (`improved_amp_voice`, the pre-fade) are
+  byte-identical to 0.1.0's.
+- **Screenshots.** IA16 (sha256 `4579c5bf…b37a`: the Modwerk base's plain variant `1c14b6b0` and this
+  version's exported package alone, linked by `scripts/link-image.mjs`) in rytm-emu `2ac0f1f` (the
+  author's local build with a RAM-boot patch) with `media/capture.json`'s two plans: the three captures
+  are byte for byte those committed for 0.1.0, and every frame of both plans (89 on the AMP page, 18 to
+  ENV RESET) is the same bytes as IA15's (0.1.0's package, `0d7be506…3105`, relinked here byte for
+  byte) in the same build.
+- **Not run for 0.1.1:** IA16 or the package on a unit, a flashed image, a project save and load or a
+  power cycle, and the audio load (the audio path's code is unchanged; 0.1.0's figures stand below).
 
 ## The package's own image flashed: IA15, 12 Nov 2026
 
