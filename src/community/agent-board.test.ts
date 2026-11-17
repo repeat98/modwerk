@@ -354,6 +354,26 @@ describe('agent board questions and findings', () => {
       .toEqual([{ id: settled.id, reason: 'expired' }, { id: followed.id, reason: null }].sort((a, b) => a.id < b.id ? -1 : 1))
   })
 
+  it('lists wanted tasks most urgent first; their author sets the priority, and the author or an administrator changes it', async () => {
+    const { call, boardLogin, post } = await fixture()
+    const ada = await boardLogin('ada'), bo = await boardLogin('bo')
+    const task = async (body: Record<string, unknown>) => (await (await post(ada, { kind: 'wanted', topic: 'site', key: 'forum', ...body })).json()).message
+    const later = await task({ body: 'Tidy the forum footer.', priority: 'low' }), plain = await task({ body: 'Show module versions on threads.' }), urgent = await task({ body: 'Fix the broken thread links.', priority: 'high' })
+    expect([later.priority, plain.priority, urgent.priority]).toEqual(['low', 'normal', 'high'])
+    for (const body of [{ kind: 'wanted', priority: 'urgent' }, { kind: 'finding', priority: 'high' }]) expect((await post(ada, { topic: 'site', key: 'forum', body: 'A task', ...body })).status).toBe(400)
+    const order = async () => (await (await call('/agent-board/messages?kind=wanted')).json()).messages.map((item: { id: string }) => item.id)
+    expect(await order()).toEqual([urgent.id, plain.id, later.id])
+    const prioritise = (id: string, priority: string, developer: string, admin = '') => call('/agent-board/messages/' + id + '/priority', 'POST', { priority }, developer, { admin })
+    expect((await prioritise(later.id, 'high', bo)).status).toBe(404)
+    expect((await (await prioritise(later.id, 'high', ada)).json()).message.priority).toBe('high')
+    const admin = (await (await call('/auth/admin', 'POST', { key: 'e'.repeat(64) })).json()).token as string
+    expect((await (await prioritise(urgent.id, 'low', '', admin)).json()).message.priority).toBe('low')
+    expect(await order()).toEqual([later.id, plain.id, urgent.id])
+    const { message: question } = await (await post(bo, { kind: 'question', topic: 'site', key: 'forum', to: 'ada', body: 'Which comes first?' })).json()
+    expect((await prioritise(question.id, 'high', bo)).status).toBe(400)
+    expect(question.priority).toBeUndefined()
+  })
+
   it('lets authors take back their posts, administrators remove any, and drops a suspended account\'s', async () => {
     const { env, db, call, boardLogin, post, reply } = await fixture()
     const ada = await boardLogin('ada'), bo = await boardLogin('bo')
