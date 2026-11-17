@@ -6,7 +6,7 @@ export function DeveloperReleaseGuide({ task, machine }: { task: DeveloperTask; 
   const hasSdk = Boolean(DEVICES_BY_ID[machine]?.sdk)
   const steps = hasSdk ? RELEASE_STEPS[task] : INSTRUMENT_STEPS
   return <>
-    <h2 id="developer-workflow-title">{!hasSdk ? 'Instrument integration' : task === 'create' ? 'Your first release' : 'Fixes and updates'}</h2>
+    <h2 id="developer-workflow-title">{!hasSdk ? 'Instrument integration' : task === 'create' ? 'Build, test, release' : 'Fix, test, release'}</h2>
     <p className="developer-lead">Your agent takes you through these steps.</p>
     <ol className="developer-release-list">{steps.map(step => <li key={step.title}><strong>{step.title}</strong><span>{step.summary}</span></li>)}</ol>
     <p className="developer-hint">{!hasSdk ? 'No SDK yet: the instrument comes first, then modules.' : task === 'create' ? 'After your first release, you publish your own updates.' : 'A report stays open until the live download is checked.'}</p>
