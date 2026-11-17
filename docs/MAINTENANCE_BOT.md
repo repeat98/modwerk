@@ -35,7 +35,7 @@ The repository is public, and so are the job logs and artifacts. The model's out
 
 ## Telegram
 
-Each action is one message of two lines, what and when, with **Stop**, **Now** or **Approve**, and **Why?** for the reason. The report at 07:00 UTC is a few lines: what waits, what was done (counted), failures, and how many to-dos wait, naming the urgent ones. `/pause` stops all proposals and actions until `/resume`, and `/status` shows what is waiting. Only the owner's private chat counts.
+Each action is one message of two lines, what and when, with **Stop**, **Now** or **Approve**, and **Why?** for the reason. The report at 07:00 UTC is a few lines: what waits, what was done (counted), failures, and how many to-dos wait, naming the urgent ones. `/pause` stops all proposals and actions until `/resume`, `/status` shows what is waiting, and `/todos` lists the open to-dos with their commands. Only the owner's private chat counts.
 
 ## The clock
 
