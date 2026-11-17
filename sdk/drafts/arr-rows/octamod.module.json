@@ -109,7 +109,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate (verify.py, 60 checks); stock key routing measured under ot_emu (MKI panel); select, copy, paste, undo, insert and a paste into another arrangement run under ot_emu on the beta base over emulated USB. Not yet tested on a unit.",
+    "summary": "Host gate (verify.py, 68 checks); stock key routing measured under ot_emu (MKI panel); select, copy, paste, undo, insert and a paste into another arrangement run under ot_emu on the beta base over emulated USB. Not yet tested on a unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "0000000000000000000000000000000000000000",
     "gates": [

@@ -4,7 +4,7 @@ Every result names its build. "Not tested" is a result.
 
 ## Host gate
 
-`python3 -B sdk/drafts/arr-rows/verify.py` (17 November 2026, source at this branch): 60 checks pass, and
+`python3 -B sdk/drafts/arr-rows/verify.py` (17 November 2026, source at this branch): 68 checks pass, and
 `arr_rows_core.s` matches `arr_rows.c` (m68k-elf-gcc 16.2, no unresolved symbols, the shared codegen guard passes).
 It proves the module's logic against simulated stock memory, not the firmware.
 
@@ -94,7 +94,31 @@ the site (`6c189889…`), no modules installed, transport stopped. One session (
   same rate (12 to 16 in 12 s): the session's own development requests, which this base refuses, not the module.
 - After: inventory `[]`, the base's identity active. Nothing was kept or saved.
 - Not run here: everything in the editor (the developer's stage 2), the CPU price (`device:price` needs a development
-  base), audio. Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
+  base), audio.
+
+### The module, stage 2: the developer's test on the same build (17 November 2026)
+
+Same build (`85783acab`, package `7b692b0e…`) as a trial (15 minutes, then a second of 30 minutes stopped early with
+Ctrl-C), on the developer's MKI with a scratch project. As Andrey Sidorkin reported it:
+
+| Step | Reported |
+| --- | --- |
+| Select (CUE + DOWN) | The rows were selected (copies had the right count), but the marks were wrong: about right only from the first rows; from row 3 only the three lowest lines looked selected, from row 7 nothing was marked; after a while nothing was marked even from row 000 |
+| Copy, paste, undo | Work |
+| Paste over (FUNC + STOP) | Behaved like the insert (CUE + FUNC + STOP): the cursor row stayed, the pasted rows next to it |
+| Clear | Works, as stock's clear |
+| A pasted JUMP onto its own target row | Refused as expected |
+| Paste into another arrangement | Works |
+| Stock keys with no selection | Unchanged |
+| Copy of many rows while playing | Once, MIDI to external synths stopped until the next PLAY; later copies were fine |
+| Save, then reload after the rollback | The arrangement kept the edits: durable |
+
+Diagnosed afterwards (ot_emu, the same package): the marks used `0x460d16e8` as the first row shown, which stays 0 in
+the editor; its own first row is `0x460d1c64`, so once the list scrolled the marks were drawn too high or off the
+screen. A copy and a paste of 20 rows while the arrangement played left the transport running (`0x800065b8` = 1). The
+paste behaving as an insert was not reproduced; the module decided "CUE held" from its own count of key events, which
+a missed release would leave stuck. Fixed in the next build: the first row from `0x460d1c64`, CUE and FUNC read from
+stock itself (RESEARCH.md), a diagnostic word printed by `try`. The MIDI stop is not explained yet. Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
 FUNC + DOWN insert and FUNC + UP delete; CUE + track keys in the editor; ARR CHANGE, SAVE, RELOAD; a project saved
 with the module loaded on a base without it (arrNN files compared).
 

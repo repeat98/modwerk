@@ -26,8 +26,9 @@ void arr_draw(unsigned char *frame);
 
 static uint8_t arrangement[0x14 + 256 * ROWB];
 static uint8_t scalars[64][4]; /* one word each for the stock words the module reads */
-static const uint32_t scalar_at[] = {0x10000000u, 0x100b14d0u, 0x1001614cu, 0x460d16e4u, 0x460d16e8u, 0x400c0b74u,
-                                     0x400d816cu, 0x400d8170u, 0x46c7d8deu + DOWN * 0x18u, 0x460d1e70u};
+static const uint32_t scalar_at[] = {0x10000000u, 0x100b14d0u, 0x1001614cu, 0x460d16e4u, 0x460d1c64u, 0x400c0b74u,
+                                     0x400d816cu, 0x400d8170u, 0x46c7d8deu + DOWN * 0x18u, 0x460d1e70u,
+                                     0x460d168cu, 0x46c7d8deu + 0x10u * 0x18u, 0x46c7d8deu + STOP * 0x18u};
 static char last_message[32];
 static int clears[256], cleared, redraws;
 static int failures, checks;
@@ -65,7 +66,8 @@ static void check(const char *name, int ok)
 
 static int cursor(void) { return (int)get32(0x460d16e4u); }
 static void set_cursor(int c) { set32(0x460d16e4u, (uint32_t)c); }
-static void editor(int open) { set32(0x400c0b74u, open ? 0x46000000u : 0); set32(0x46c7d8deu + DOWN * 0x18u, open ? 0x40058f34u : 0x400491a0u); }
+static void route(void);
+static void editor(int open) { set32(0x400c0b74u, open ? 0x46000000u : 0); if (open) route(); else set32(0x46c7d8deu + DOWN * 0x18u, 0x400491a0u); }
 
 /* A press and its release; returns what the module did with the press. Stock's cursor moves for UP/DOWN it passed. */
 static int tap(int code)
@@ -82,10 +84,21 @@ static int tap(int code)
     if (released != taken) { printf("[FAIL] release of 0x%02x not as its press\n", code); ++failures; }
     return taken;
 }
+/* Stock's routing in the editor, as measured under ot_emu for every order of CUE and FUNC (RESEARCH.md): the module
+ * sees the key event first, then stock pushes or pops the layer. */
+static int cue_down, func_down, cue_last;
+static void route(void)
+{
+    set32(0x46c7d8deu + DOWN * 0x18u, func_down ? 0x40049f54u : 0x40058f34u);
+    set32(0x46c7d8deu + STOP * 0x18u, func_down ? 0x40049f54u : 0x4004aca4u);
+    set32(0x46c7d8deu + 0x10u * 0x18u, cue_down && (cue_last || !func_down) ? 0x40083dc4u : func_down ? 0x40083dfcu : 0x40040250u);
+}
 static void hold(int code, int down)
 {
-    if (code == FUNC) set32(0x46c7d8deu + DOWN * 0x18u, down ? 0x40049f54u : 0x40058f34u); /* the editor's FUNC layer */
     arr_key(code, down);
+    if (code == CUE) { cue_down = down; if (down) { cue_last = 1; if (!func_down) set32(0x460d168cu, 1); } else set32(0x460d168cu, 0); }
+    if (code == FUNC) { func_down = down; if (down) cue_last = 0; }
+    route();
 }
 
 static void fill(unsigned n)
@@ -122,7 +135,7 @@ int main(void)
     check("the cursor moved on to row 4", cursor() == 4);
 
     memset(lcd, 0, sizeof lcd);
-    set32(0x460d16e8u, 0);
+    set32(0x460d1c64u, 0);
     arr_draw(lcd);
     /* rows 2 and 3 above the cursor at y 31 and 37, the cursor row 4 at 43 + 3 */
     check("rows 2, 3 and the cursor row 4 are drawn inverted", lit(5, 31) && lit(5, 35) && lit(5, 37) && lit(5, 46) && lit(18, 50));
@@ -341,6 +354,44 @@ int main(void)
     tap(DOWN); tap(DOWN); tap(DOWN); tap(DOWN);
     hold(FUNC, 1); tap(STOP); hold(FUNC, 0);
     check("a copied HALT pastes as a HALT on its new row", row(9)[0] == 1 && row(9)[3] == 9);
+
+    /* stock's view of the held keys decides, not the module's own count of events */
+    fill(10);
+    set_cursor(2);
+    hold(CUE, 1); tap(DOWN); hold(CUE, 0);
+    hold(FUNC, 1); tap(REC); hold(FUNC, 0);
+    arr_key(CUE, 1);                               /* a CUE press the module saw, its release it missed */
+    tap(DOWN); tap(DOWN); tap(DOWN);               /* to row 6 */
+    hold(FUNC, 1); tap(STOP); hold(FUNC, 0);
+    check("a missed CUE release does not turn FUNC + STOP into an insert", rows() == 10 && !strcmp(last_message, "PASTE 2 ROWS"));
+    check("and plain DOWN still ended the selection (it pasted at the cursor)", same(6, 2) && same(7, 3));
+    arr_key(CUE, 0);
+    arr_key(FUNC, 1);                              /* the module saw FUNC go down, stock never did */
+    check("STOP without stock's FUNC layer is the transport's: never taken", arr_key(STOP, 1) == 0 && arr_key(STOP, 0) == 0);
+    arr_key(FUNC, 0);
+    /* FUNC down first, then CUE: stock pushes CUE's layer without setting its flag */
+    tap(UP);
+    hold(FUNC, 1); hold(CUE, 1);
+    check("FUNC then CUE, then STOP: an insert", tap(STOP) == 1 && rows() == 12 && !strcmp(last_message, "INSERT 2 ROWS"));
+    hold(CUE, 0); hold(FUNC, 0);
+    /* the selection drawn after the list has scrolled */
+    fill(14);
+    set_cursor(3);
+    hold(CUE, 1); tap(DOWN); tap(DOWN); tap(DOWN); tap(DOWN); tap(DOWN); hold(CUE, 0);  /* rows 3-8, cursor 8 */
+    set32(0x460d1c64u, 3);                         /* the editor shows row 3 first */
+    memset(lcd, 0, sizeof lcd);
+    arr_draw(lcd);
+    check("scrolled: the first row shown (3) is marked at the top", lit(5, 19) && lit(5, 23));
+    check("scrolled: the cursor row 8 is marked in the cursor's place", lit(5, 19 + 6 * 5 + 3));
+    /* the diagnostic word */
+    struct { volatile uint32_t value; } api = {0};
+    hold(CUE, 1);
+    arr_tick((void *)&api);
+    check("the diagnostic word: editor, CUE seen by stock and by the events, cursor 8, selection from 3",
+          (api.value & 0x1f) == 0x0b && (api.value >> 16 & 0xff) == 8 && (api.value >> 24) == 3);
+    hold(CUE, 0);
+    arr_tick((void *)&api);
+    check("the diagnostic word counts the two disagreements above", (api.value >> 8 & 0xff) >= 2);
 
     printf("%d checks, %d failed\n", checks, failures);
     return failures != 0;

@@ -74,7 +74,7 @@ arrangement, open EDIT and paste or insert.
 
 ## Tests and measurements
 
-`verify.py` runs the module's C on the host against simulated stock memory (60 checks) and checks the generated
+`verify.py` runs the module's C on the host against simulated stock memory (68 checks) and checks the generated
 ColdFire unit. The stock behaviour it relies on was read from the 1.40C image and measured under `ot_emu`
 (RESEARCH.md). Results, and what is not tested yet, are in TESTING.md.
 

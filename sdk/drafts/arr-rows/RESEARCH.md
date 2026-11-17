@@ -59,9 +59,24 @@ What the module relies on, read from the stock image (load address `0x40000400`)
   `0x10000004 + n × 5652` (20 + 256 × 22).
 - Messages: `0x4005a2b8(text, 0x30)` formats the text into stock's own box; `0x460d1e70` is nonzero while one is up.
 
+## What stock sees held
+
+Measured under ot_emu in the editor, every order of CUE and FUNC (routed press handler, `0x46c7d8de + code × 0x18`):
+
+| Held | T1 | STOP | DOWN | CUE flag `0x460d168c` |
+| --- | --- | --- | --- | --- |
+| nothing | `0x40040250` | `0x4004aca4` (the transport's STOP) | `0x40058f34` | 0 |
+| CUE | `0x40083dc4` (CUE's layer) | `0x4004aca4` | `0x40058f34` | 1 |
+| CUE, then FUNC | `0x40083dfc` | `0x40049f54` (the editor's FUNC layer) | `0x40049f54` | 1 |
+| FUNC | `0x40083dfc` | `0x40049f54` | `0x40049f54` | 0 |
+| FUNC, then CUE | `0x40083dc4` | `0x40049f54` | `0x40049f54` | 0 |
+
+So FUNC is held when STOP routes to `0x40049f54`, and CUE when the flag is set or T1 routes to `0x40083dc4`. With FUNC
+up, STOP in the editor is the transport's STOP.
+
 ## The screen
 
 Measured from `ot_emu` frames (MKI panel, eight rows, cursor rows 0-8): the list's first row text starts at LCD y 19;
 a row is 5 px of text and 1 px of gap; the cursor row's text is 3 px lower, between dotted lines, and the row after it
-starts 9 px after the cursor row's text. The first row shown is `0x460d16e8`, the cursor `0x460d16e4`; the cursor
+starts 9 px after the cursor row's text. The first row shown is `0x460d1c64` (the redraw `0x40049738` adds it to each line's index at `0x4004983c`; `0x460d16e8` stays 0 in the editor), the cursor `0x460d16e4`; the cursor
 stays at most five rows below the first row shown. Row numbers occupy x 6-18.
