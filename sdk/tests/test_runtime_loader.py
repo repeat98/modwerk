@@ -342,7 +342,7 @@ class SiteEventTests(unittest.TestCase):
         # ev_in_use is asked by the base, each module on its own: no raise entry, a plain subscription on the site.
         reg = events.load()
         asked = next(e for e in reg['events'] if e['event'] == 'ev_in_use')
-        self.assertEqual((asked['index'], asked['site'], asked['results'], asked['prototype']), (38, None, 'each', 'unsigned f(void)'))
+        self.assertEqual((asked['index'], asked['site'], asked['results'], asked['prototype']), (53, None, 'each', 'unsigned f(void)'))
         self.assertNotIn('ev_in_use', events.raised(reg))
         self.assertNotIn('modwerk_raise_ev_in_use', events.asm(reg))
         self.assertEqual(next(e for e in json.loads(events.browser(reg))['events'] if e['event'] == 'ev_in_use')['kind'], 'call')
