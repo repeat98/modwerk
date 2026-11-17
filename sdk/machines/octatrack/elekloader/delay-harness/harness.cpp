@@ -32,6 +32,7 @@ static void init(ot::Machine& m){ m68k_set_reg(m.getCpuState(),M68K_REG_SR,0x270
 int main(int argc,char** argv){
     auto image=rd(argv[1]), patched=rd(argv[2]), mod=rd(argv[3]); unsigned frames=std::atoi(argv[4]);
     ot::Machine a(image),b(patched); g_first=&a; ot::Edma da,db; dma_model(a,da); dma_model(b,db); init(a); init(b);
+    a.endPeripheralWriteLog(); b.endPeripheralWriteLog();   // the emulator logs every peripheral write until told not to: 2 KB a frame
     if(argc>5){ auto blob=rd(argv[5]); uint32_t at=std::strtoul(argv[6],nullptr,16);   // the base's stubs, assembled from its source; then SITE:ENTRY pairs
         for(unsigned i=0;i<blob.size();++i) b.write8(at+i,blob[i]);
         for(int n=7;n<argc;++n){ uint32_t site=std::strtoul(argv[n],nullptr,16), entry=std::strtoul(std::strchr(argv[n],':')+1,nullptr,16);
