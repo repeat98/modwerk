@@ -7,6 +7,12 @@
   "category": "effects",
   "author": {
     "github": "repeat98",
+    "contributors": [
+      {
+        "github": "airwindows",
+        "name": "Chris Johnson"
+      }
+    ],
     "credits": [
       "Chris Johnson / Airwindows: original Chorus algorithm and MIT-licensed source",
       "Jannik Assfalg (repeat98): DSP56300 fixed-point port and control smoothing"
