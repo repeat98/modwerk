@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { spawnSync } from 'node:child_process'
 import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { delimiter, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
@@ -46,6 +46,9 @@ describe('module doctor', () => {
   it.skipIf(process.env.MODWERK_DEFER_DRAFT_DOCTOR === '1')('checks a draft where every gate looks: a fresh module:new draft of each kind', () => {
     const upstream = join(homedir(), '.cache/modwerk-upstream')
     const tools = existsSync(join(upstream, 'elekloader/elekloader')) && existsSync(process.env.ELEKLOADER_DSP_ASM ?? join(upstream, 'octabam/vendor/dsp56300/build/source/dsp_host/dsp_asm'))
+    // A ColdFire draft also needs m68k-elf binutils on PATH (scripts/module-dev-package.py).
+    const onPath = tool => (process.env.PATH ?? '').split(delimiter).some(dir => dir && existsSync(join(dir, tool)))
+    const binutils = ['as', 'ld', 'readelf', 'objcopy', 'nm'].every(tool => onPath('m68k-elf-' + tool))
     const out = mkdtempSync(join(tmpdir(), 'modwerk-fresh-draft.'))
     for (const kind of ['dsp', 'coldfire']) {
       const id = 'zz-fresh-' + kind + '-' + process.pid
@@ -55,7 +58,7 @@ describe('module doctor', () => {
         const result = doctor('--draft', id)
         expect(result.stdout).toContain('The experimental lines are green')
         expect(result.status, result.stdout).toBe(0)
-        if (tools) {
+        if (tools && (kind === 'dsp' || binutils)) {
           const built = spawnSync(process.execPath, ['scripts/module-dev.mjs', id, '--build-only', '--out', join(out, id + '.mwrm')], { cwd: root, encoding: 'utf8', timeout: 120_000 })
           expect(built.status, built.stdout + built.stderr).toBe(0)
         }
