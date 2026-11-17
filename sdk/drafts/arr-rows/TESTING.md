@@ -149,7 +149,22 @@ Stage 1 on that build: source `80e94f2be`, package
 `a0e796c23ecc1fd15d3d5e5c4670683783ac06d485933c2ff748566f53a9c9cd`, the developer's MKI. Inventory `[]` before (the
 previous trial stopped with Ctrl-C and rolled back); a 20-second trial ran the whole time with the diagnostic word
 `0xff0c0001` (the editor open, cursor row 12, no selection, no disagreement), rolled back by itself; inventory `[]`
-and the base's identity after. Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
+and the base's identity after.
+
+### The module, stage 2 on that build (17 November 2026)
+
+Package `a0e796c2…` as a 30-minute trial from 16:43 on the developer's MKI, a scratch project. As Andrey Sidorkin
+reported it:
+
+| Check | Reported |
+| --- | --- |
+| FUNC + STOP with no selection replaces the cursor row | Works; FUNC + STOP again undoes it, also after waiting about 10 s, with the cursor on the same row (the diagnostic log shows an undo nine seconds after the paste, the cursor having moved away and back) |
+| FUNC + STOP with a selection replaces the selected rows | Works |
+| `LOOP: 004` on row 8, rows 3-5 replaced by two copied rows | The LOOP moved to row 7 and showed `LOOP: 003` (the first pasted row), not a HALT; again undid it |
+| Insert, the marks while scrolling, copies during PLAY | No problem seen |
+| Replacing the row that is playing | The old pattern keeps playing until the arranger moves on or STOP/PLAY; stock's own one-row paste does the same |
+
+The diagnostic word counted no disagreement between the module's and stock's view of CUE and FUNC during the trial. Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
 FUNC + DOWN insert and FUNC + UP delete; CUE + track keys in the editor; ARR CHANGE, SAVE, RELOAD; a project saved
 with the module loaded on a base without it (arrNN files compared).
 
