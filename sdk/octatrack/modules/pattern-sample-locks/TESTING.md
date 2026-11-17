@@ -1,5 +1,23 @@
 # Testing: Pattern Sample Locks 0.1.9-experimental
 
+## Hardware release run — 0.1.9, 18 November 2026
+
+The author's MKII, a development build of base 0.7.8 with the Part Edit menu (`e08c4416…`) booted from RAM, bank I pattern 1 (its Part had no unsaved edits), transport stopped; run by Claude Code over USB with the author's OK. Agent's run, not the author's observation.
+
+#### Qualification run, 2026-11-18
+
+Command: `npm run device:qualify -- --keeps-ok --testing-entry <entry file> public/octatrack-modules/pattern-sample-locks/0.1.9-experimental.mwrm`
+
+- Package `0.1.9-experimental.mwrm`, SAMPLE LOCKS, SHA-256 `6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3`
+- All at once, playing (): CPU 355, T1-4 peak 338, T5-8 peak 286 per mille
+- Part switches: 12 of 12 ran their own effects within 3 s
+- Crash test: not run
+- Result: passed
+
+Not covered by this run: listening to the sound, the power cycle and what survives it, MIDI, scenes and recording, modules beside other installed modules.
+
+Afterwards: inventory empty, back on I01, loader 0 rejected, 0 rollbacks. Not covered: a Lock or Clear applied on hardware (left to the author), MKI, audio, a power cycle.
+
 ## Worst key press and press stress on the emulator — 0.1.9, 17–18 November 2026
 
 Emulator only (`ot_emu` `b087c97f…`), not hardware. Octatrack base 0.7.8 with the Part Edit menu (`f429652e…`, a
