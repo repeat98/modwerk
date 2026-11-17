@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "qperf",
   "name": "QPER Live Rec",
-  "version": "0.2.0-experimental",
+  "version": "0.2.1-experimental",
   "machine": "analog-rytm-mkii",
   "category": "scenes",
   "exclusive": false,
@@ -90,7 +90,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 17824,
+    "memoryBytes": 15881,
     "fastBytes": 0,
     "load": {
       "display": "About 0.8 % of the audio block idle (the audio handler, measured on a unit)",
@@ -99,16 +99,30 @@
     }
   },
   "evidence": {
-    "tier": "none",
-    "moduleVersion": "0.2.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "tier": "author-hardware",
+    "moduleVersion": "0.2.1-experimental",
+    "sourceSha256": "f7cf9f63ef62bf83f39698a0ce74d3cd8298cd128c60c110252f8350cbb61f05",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-16",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "0.2.1 ran alone on npp1993's Analog Rytm MKII, OS 1.74, from RAM as QR01 (the Modwerk base with the development link and this module, sha256 b5ad3b25…0d31). The author ran the module's tutorial and reports all passed: QPER + pad links and a knob turn locks, the QPER knob sweeps it, QPER + YES applies, QPER + PLAY clears and PLAY undoes, QPER + RECORD / STOP copies and pastes, and in PERF the quick perf rec loops pad takes, RECORD + NO clears and NO undoes, RECORD + YES writes them into the pattern.",
+      "limitations": [
+        "Reported by the author from playing; no automated rig run for 0.2.1.",
+        "The image holds the base with the development link, not the plain published base.",
+        "Earlier, this source ran in the author's combined images RC37 to RC40 (not a qualification of this package)."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. TESTING.md names each build.",
+    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.2.1 (UI-only code built for size, 1.9 KB less RAM): rytm-emu screens byte-identical to 0.2.0; on the author's unit alone (QR01) the tutorial passed, and earlier in combined images RC37 to RC40. TESTING.md names each build.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -155,9 +169,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "a8a2dea0238e0630958f4ca18645db5ddcad3930b50aa2bbc9a8b28d23a8b40b",
-        "setup": "Headless rytm-emu (dtboot) running QL19: the Modwerk base for core-ar2 0.7 and this folder's QPERF 0.2.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "e77e4cd996a0ae3074c14a2c69c854ef44b1457e20ad44ca9448937a8a66458a",
+        "setup": "Headless rytm-emu (dtboot) running QL20: the Modwerk base for core-ar2 0.7 and this folder's QPER Live Rec 0.2.1-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -171,9 +185,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "a8a2dea0238e0630958f4ca18645db5ddcad3930b50aa2bbc9a8b28d23a8b40b",
-        "setup": "Headless rytm-emu (dtboot) running QL19: the Modwerk base for core-ar2 0.7 and this folder's QPERF 0.2.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "e77e4cd996a0ae3074c14a2c69c854ef44b1457e20ad44ca9448937a8a66458a",
+        "setup": "Headless rytm-emu (dtboot) running QL20: the Modwerk base for core-ar2 0.7 and this folder's QPER Live Rec 0.2.1-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
