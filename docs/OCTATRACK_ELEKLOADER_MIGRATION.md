@@ -2459,8 +2459,7 @@ Not the loader's doing: on 14 October 2026 (dev twin of base `362fb24d`, `octatr
   refused. Since then (owner's choice, beta finding 34) each slot is charged at least the dearest stock effect its bank's
   Parts name there (this table's figures, DELAY and NONE 0), so a Part switch or a RELOAD never needs room it was not
   given. A stock pick dearer than its bank uses in that slot is refused (DSP FULL) when it would take what runs or
-  another Part of the bank past the allowance. Machine voices and engines, which a bank change keeps, still booked 342 a
-  slot until 17 November 2026; since then (#1542) they book the bank's slots too, and give way at a bank or project load.
+  another Part of the bank past the allowance. Machine voices booked 342 a slot until 17 November 2026 (#1542).
 - **Modules.** A module carrying an emulator figure is charged 7/4 of it until it carries a hardware figure.
 - **Effect.** With 342 a slot, one ~665-cycle module fit on core 0 beside anything stock, two on core 1. In a bank of
   FILTER and DELAY, three Mini Verbs (720 charged) fit on core 1 and two on core 0 (owner's MKII, 24 October 2026, twin of
