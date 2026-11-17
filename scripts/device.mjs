@@ -496,10 +496,12 @@ process.once('SIGINT', () => { console.log('interrupted: rolling back'); process
 
 /** While the unit plays, the base presses STOP and refuses with `unsafe`; retry for 3 s as the site does. A rollback
  * the loader could not switch yet answers `needs-recovery` and stays in recovery, from where it rolls back again
- * (OctatrackLink.whenStopped); given up at once, it left the unit in recovery until the base's own timeout. */
+ * (OctatrackLink.whenStopped); given up at once, it left the unit in recovery until the base's own timeout.
+ * A set rolls back one engine turn a row: at 3 s a 24-module trial stopped 16 rows in (MKII, 17 November 2026).
+ * shortcut: 20 s covers about 100 rows; take the site's setBudget(rows) when a set here grows past that. */
 async function stopping(step) {
   for (const start = Date.now(); ; await wait(200)) {
-    try { return await step() } catch (error) { if (!['unsafe', 'needs-recovery'].includes(error.status?.result) || Date.now() - start > 3000) throw error }
+    try { return await step() } catch (error) { if (!['unsafe', 'needs-recovery'].includes(error.status?.result) || Date.now() - start > (error.status.result === 'needs-recovery' ? 20000 : 3000)) throw error }
   }
 }
 

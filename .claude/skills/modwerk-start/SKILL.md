@@ -18,4 +18,4 @@ description: First-session overview of Modwerk development. Asks which instrumen
    - ask a module's author before changing their module;
    - every module works on its own and beside every other module.
 
-   Then ask what they want to make.
+   Then ask what they want to make. Without an idea of their own, offer `/modwerk-contribute`.
