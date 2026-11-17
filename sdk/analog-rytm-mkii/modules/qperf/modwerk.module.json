@@ -93,22 +93,36 @@
     "memoryBytes": 16233,
     "fastBytes": 0,
     "load": {
-      "display": "About 0.8 % of the audio block idle (the audio handler, measured on a unit)",
+      "display": "About 0.5 % of the audio block idle (the audio handler, measured on a unit)",
       "method": "hardware",
-      "conditions": "Measured on an Analog Rytm MKII with a private telemetry base, sequencer stopped, in the author's 16-module set, on 0.2.0: the audio handler took 8.7 us a block (1.3 %) before its idle early return and 5.1 us (0.8 %) after; removing the whole module lowered the idle block from 72.9 % to 70.9 %. 0.2.2's quick exit runs about a quarter of the instructions and reads 5 of the module's data cache lines instead of 14 (rytm-emu, which counts instructions only); not yet measured on a unit. With moves to record, a pad held or a take playing back it runs in full each block."
+      "conditions": "Measured on an Analog Rytm MKII with a private telemetry base, sequencer stopped, in the author's 16-module set, on 0.2.0: the audio handler took 8.7 us a block (1.3 %) before its idle early return and 5.1 us (0.8 %) after; removing the whole module lowered the idle block from 72.9 % to 70.9 %. 0.2.2, alone on the base with the development link, timed against 0.2.1 on the same unit and kit: the audio handler took 470 ticks of DTIM0 a block (3.6 us, 0.53 %) stopped instead of 851 (0.97 %), and 902 (1.03 %) playing instead of 1270 to 1286 (1.45 %). With moves to record, a pad held or a take playing back it runs in full each block."
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.2.2-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "076348b89eac05101ef735996cd450b23b146030780d9df14334e208572b2073",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-17",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "0.2.2 ran alone on npp1993's Analog Rytm MKII, OS 1.74, from RAM as QPN2 (the Modwerk base with the development link, this module and a private meter that times the audio handler on DTIM0, sha256 3c6578d8…a93b), against 0.2.1 as QPO2 (72693bc6…dd4d) booted before and after it. The audio handler took 470 ticks a block stopped (0.2.1: 850 to 854) and 902 playing (0.2.1: 1270 to 1286). Two rig cases, run by the test rig on the unit with no hand on it (RECORD + YES and RECORD + NO with nothing to apply or clear, a QPER hold; performance 1's amount by MIDI stopped, playing and in LIVE RECORDING, the quick perf rec playing a take back on the next pass, RECORD + NO clearing it and NO undoing it), gave the same screens and the same amounts on both images.",
+      "limitations": [
+        "Run by the rig over the USB link, not by a person: no pads, pressure, QPER knob or LEDs.",
+        "The image holds the base with the development link and a private meter, not the plain published base.",
+        "0.2.1's tutorial result (QR01) was not repeated by hand on 0.2.2."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.2.2 (a shorter quick exit for the audio block): a host differential test against 0.2.1 found no difference in 80 million blocks, rytm-emu screens are byte-identical, and the audio hook ran a quarter of the instructions while idle; not yet on a unit. 0.2.1 passed the tutorial on the author's unit alone (QR01). TESTING.md names each build.",
+    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.2.2 (a shorter quick exit for the audio block): a host differential test against 0.2.1 found no difference in 80 million blocks, rytm-emu screens are byte-identical, the audio hook ran a quarter of the instructions while idle, and on the author's unit it took 470 ticks a block stopped against 0.2.1's 851, with the same results in two rig cases. 0.2.1 passed the tutorial on the author's unit alone (QR01). TESTING.md names each build.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
