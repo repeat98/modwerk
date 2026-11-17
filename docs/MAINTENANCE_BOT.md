@@ -37,6 +37,10 @@ The repository is public, and so are the job logs and artifacts. The model's out
 
 Each action is one message of two lines, what and when, with **Stop**, **Now** or **Approve**, and **Why?** for the reason. The report at 07:00 UTC is a few lines: what waits, what was done (counted), failures, and how many to-dos wait, naming the urgent ones. `/pause` stops all proposals and actions until `/resume`, and `/status` shows what is waiting. Only the owner's private chat counts.
 
+## The clock
+
+GitHub starts scheduled workflows hours late in this repository, so the workflow has no schedule. The Worker's 5-minute cron starts it instead (`dispatchMaintenance` in `server/maintenance-bot.ts`): a pass at :05 and :35, the daily run at 07:00 UTC, each slot once and none while paused. It needs the Worker secret `MAINTENANCE_BOT_GITHUB_TOKEN`: a fine-grained token for this repository only, with **Actions: read and write** and nothing else. If GitHub refuses a start, the owner gets one Telegram line that day, and `/status` shows the last start. When the token expires, make a new one and put it again: `npx wrangler secret put MAINTENANCE_BOT_GITHUB_TOKEN --config wrangler.worker.jsonc`.
+
 ## Setup and settings
 
 After the pull request that adds the bot is merged and the Worker has deployed (migration 0091), the owner runs `npm run maintenance-bot:setup`. It needs `gh` signed in, `CLOUDFLARE_ACCOUNT_ID` set for wrangler, a bot token from @BotFather and a token from `claude setup-token`. It finds the owner's chat and generates the key, then sets four Worker secrets (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_WEBHOOK_SECRET`, `MAINTENANCE_BOT_KEY_SHA256`), two GitHub secrets (`MAINTENANCE_BOT_KEY`, `CLAUDE_CODE_OAUTH_TOKEN`) and the webhook. It switches the bot on last, with the repository variable `MAINTENANCE_BOT_ENABLED=true`. Setting that variable to anything else switches the bot off.
