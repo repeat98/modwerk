@@ -145,6 +145,20 @@ async function liveThread(db: Database, id: string, now: number) {
   return await db.prepare(MESSAGE_SELECT + ' WHERE m.id=? AND m.parent_id IS NULL AND ' + LIVE).bind(id, ...cutoffs(now)).first<MessageRow>()
 }
 
+/** One reply to an open thread; the maintenance bot posts the owner's through here too (server/maintenance-bot.ts). */
+export async function boardReply(db: Database, userId: string, id: string, value: unknown, pr: number | null, nowMs: number) {
+  if (!await liveThread(db, id, nowMs)) throw new HttpError(404, 'No open board thread has that id.')
+  const count = await db.prepare('SELECT COUNT(*) AS n FROM agent_messages WHERE parent_id=?').bind(id).first<{ n: number }>()
+  if ((count?.n ?? 0) >= REPLY_LIMIT) throw new HttpError(409, `This thread has ${REPLY_LIMIT} replies. Start a new question.`)
+  const text = messageBody(value), now = new Date(nowMs).toISOString()
+  // A reply keeps a question open for another 30 days; one that names the pull request ("sent as #1311") links it.
+  await db.batch([
+    db.prepare("INSERT INTO agent_messages(id,kind,parent_id,user_id,body,created_at,active_at) VALUES(?,'reply',?,?,?,?,?)").bind(crypto.randomUUID(), id, userId, text, now, now),
+    db.prepare('UPDATE agent_messages SET active_at=?,pull_request=COALESCE(?,pull_request),checked_at=CASE WHEN ? IS NULL THEN checked_at END WHERE id=?').bind(now, pr, pr, id),
+  ])
+  return await thread(db, id, nowMs)
+}
+
 /** Questions, findings, wanted tasks and replies (docs/AGENT_BOARD.md, "Questions and findings"). */
 async function messageRoutes(request: Request, url: URL, env: Env, db: Database, adminId: string | null, nowMs: number): Promise<Response> {
   const path = url.pathname, now = new Date(nowMs).toISOString(), live = cutoffs(nowMs)
@@ -210,16 +224,8 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
   // The thread's author, or whoever it is to (a question's addressee, a wanted task's taker), links the pull request that ends it.
   const linker = !user || row.user_id === user.id || row.to_login === user.github_login
   if (action === 'replies') {
-    const count = await db.prepare('SELECT COUNT(*) AS n FROM agent_messages WHERE parent_id=?').bind(id).first<{ n: number }>()
-    if ((count?.n ?? 0) >= REPLY_LIMIT) throw new HttpError(409, `This thread has ${REPLY_LIMIT} replies. Start a new question.`)
-    const text = messageBody(body.body)
     if (pr && !linker) throw new HttpError(403, 'Only the thread\'s author, or the one it is to, links its pull request.')
-    // A reply keeps a question open for another 30 days; one that names the pull request ("sent as #1311") links it.
-    await db.batch([
-      db.prepare("INSERT INTO agent_messages(id,kind,parent_id,user_id,body,created_at,active_at) VALUES(?,'reply',?,?,?,?,?)").bind(crypto.randomUUID(), id, user!.id, text, now, now),
-      db.prepare('UPDATE agent_messages SET active_at=?,pull_request=COALESCE(?,pull_request),checked_at=CASE WHEN ? IS NULL THEN checked_at END WHERE id=?').bind(now, pr, pr, id),
-    ])
-    return response({ message: await thread(db, id, nowMs) }, 201)
+    return response({ message: await boardReply(db, user!.id, id, body.body, pr, nowMs) }, 201)
   }
   if (action === 'take') {
     // A wanted task has one holder at a time, named in to_login; taking it again renews it, and --pr links its pull request.
