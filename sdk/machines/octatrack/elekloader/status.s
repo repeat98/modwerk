@@ -55,13 +55,14 @@ mw_ts_gate:
 | itself): a call that did not pass the seam starts the count again, so does any frame that is not quiet.
 |
 | Silence is every word within DELAY_FLOOR of zero, not zero itself: stock's filter never comes back to rest once a
-| delay has been sent to. Its state sticks at a few counts (seen up to -1,404 in the A/B harness) and, with feedback,
-| the ring keeps about one 24-bit step for good, which stock adds to the track at its wet level. 680 is -130 dBFS of
-| the 32-bit sample words (2.7 steps of 24 bits; owner's call, 17 November 2026). Leaving a quiet track out drops at
-| most that much from its audio, and a send that opens on it starts from zero taps where stock would have read that
-| much: not bit-identical, never audible. A filter stuck further out keeps stock's path.
+| delay has been sent to. Its state sticks at a few hundred counts (-1,404 on a unit's default DELAY and in the A/B
+| harness) and, with feedback, the ring keeps about one 24-bit step for good, which stock adds to the track at its wet
+| level. 2,048 is -120.4 dBFS of the 32-bit sample words (8 steps of 24 bits; owner's call, 17 November 2026, after
+| 680 left that -1,404 on stock's path). Leaving a quiet track out drops at most that much from its audio, and a send
+| that opens on it starts from zero taps where stock would have read that much: not bit-identical, never audible. A
+| filter stuck further out keeps stock's path.
         .equ    DELAY_QUIET, 16384
-        .equ    DELAY_FLOOR, 680
+        .equ    DELAY_FLOOR, 2048
 | a0 = words, d2 = how many. Answers equal when every word lies within DELAY_FLOOR of zero. Uses d1, d2, a0.
 mw_delay_silent:
         move.l  (%a0)+,%d1

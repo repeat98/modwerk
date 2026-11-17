@@ -1,7 +1,7 @@
 # The delay routine's A/B harness
 
 `status.s` leaves out the stock delay routine's ring transfers, filter and mix for a track whose ring and filter are
-silent (every word within 680 counts of zero, -130 dBFS) and whose send is shut (`mw_delay_read0`, `mw_delay_read`, `mw_delay_idle`). This harness runs the whole stock routine
+silent (every word within 2,048 counts of zero, -120 dBFS) and whose send is shut (`mw_delay_read0`, `mw_delay_read`, `mw_delay_idle`). This harness runs the whole stock routine
 (`0x400031a0`) on two emulated machines, stock and stock with those stubs, on the same random audio, knobs and FX2
 changes, and compares after every frame: the tracks' audio blocks, the eight 68-byte state records, the scratch and
 filter pointers, the 128 bytes each ring was written, and every 20,000 frames the whole rings. `mod.s` is a test
@@ -25,11 +25,11 @@ m68k-elf-ld -Ttext=0x47308000 --defsym modwerk_idle_gap=0x47310000 --defsym modw
 # does), take the three entry addresses from `m68k-elf-nm status.elf`, then:
 ./harness MAIN.raw MAIN.raw mod.bin 3000000 status.bin 47308000 4000332a:<mw_delay_read0> 400035ba:<mw_delay_read> 4000362a:<mw_delay_idle>
 NODELAY=1 ./harness …   # no DELAY on any track: the steady saving
-TOL=680 ./harness …      # audio, filter state and ring words may differ by up to 680; prints the largest difference
+TOL=2048 ./harness …     # audio, filter state and ring words may differ by up to 2,048; prints the largest difference
 ```
 
 Without `TOL` every byte must match, which the floor no longer promises: a quiet track drops the residue stock would
-have mixed in. With `TOL=680` everything but the audio, the four filter state words and the ring must still be equal.
+have mixed in. With `TOL=2048` everything but the audio, the four filter state words and the ring must still be equal.
 
 `ot::Machine` logs every peripheral write until `endPeripheralWriteLog()` is called, about 2 KB a frame here: a host
 harness that runs millions of frames must call it after the boot, as this one does, or it runs out of memory (a 3M-frame
@@ -55,10 +55,13 @@ it proves bytes and order, never transfer timing. That is the unit's part.
 - A delay that has been fed does not return to zeros: its filter's output sticks at a small negative value, and with
   feedback its ring keeps a constant of about one 24-bit step. Stock then adds that to the track for good. Such a
   track never counts as quiet again until the next start, so the saving shrinks as more tracks' delays get used.
-  Since 17 November 2026 the skip treats every word within 680 counts of zero as silence (owner's call), so a fed
-  track counts as quiet again; filters stuck further out (the harness saw one at -1,404) keep stock's path.
-- Everything above ran on the exact-zero build. The floor build (base 0.7.6) has only run in this harness:
-  `TOL=680`, 3,000,000 frames, PASS; largest differences: audio 293 (-137.3 dBFS), filter state 543 (-131.9 dBFS),
-  ring 250 (-138.7 dBFS); eDMA transfers 32.0 a frame against 14.8 (the exact-zero build: 23.4 over 200,000
-  frames). `NODELAY=1`: no word differs.
-- Not yet run on a unit: the floor build, a Tape Echo track, the sampler recorders, a card build.
+  Since 17 November 2026 the skip treats every word within a floor of zero as silence (owner's call), so a fed
+  track counts as quiet again; filters stuck further out keep stock's path.
+- Everything above ran on the exact-zero build. A first floor of 680 (-130 dBFS) passed this harness (`TOL=680`,
+  3,000,000 frames; largest differences audio -137.3, filter state -131.9, ring -138.7 dBFS; eDMA transfers 32.0 a
+  frame against 14.8, the exact-zero build 23.4). On the MKII (twin `0f487c37`, Part 2, DELAY on every track, three
+  tracks with trigs) it left two of three fed tracks on stock's path: after the sends closed their filters stuck at
+  -1,404 and -758/-700. The meter read 37.8-38.0 % stopped before, 48.2-51.7 % playing with every send open,
+  42.5-43.7 % playing with them shut, 38.8-39.0 % stopped after. Hence 2,048.
+- FLOOR2048
+- Not yet run on a unit: the 2,048 build, a Tape Echo track, the sampler recorders, a card build.
