@@ -1,5 +1,12 @@
 # Testing: Pattern Sample Locks 0.1.9-experimental
 
+## Author's check — 0.1.9, 18 November 2026 (reported)
+
+Reported by the author (`twwwy`) on their MKII, on a scratch project, with the exact package `6fea272e…` installed as a
+timed trial on the development build of base 0.7.8 (`e08c4416…`): LOCK SAMPLES (opened with FUNC+PART, LOCKS, RIGHT)
+and CLEAR LOCKS both applied as expected, and playback kept playing during an action. Recorded as the author reported
+it; the agent did not observe the screens.
+
 ## Hardware release run — 0.1.9, 18 November 2026
 
 The author's MKII, a development build of base 0.7.8 with the Part Edit menu (`e08c4416…`) booted from RAM, bank I pattern 1 (its Part had no unsaved edits), transport stopped; run by Claude Code over USB with the author's OK. Agent's run, not the author's observation.
@@ -16,7 +23,7 @@ Command: `npm run device:qualify -- --keeps-ok --testing-entry <entry file> publ
 
 Not covered by this run: listening to the sound, the power cycle and what survives it, MIDI, scenes and recording, modules beside other installed modules.
 
-Afterwards: inventory empty, back on I01, loader 0 rejected, 0 rollbacks. Not covered: a Lock or Clear applied on hardware (left to the author), MKI, audio, a power cycle.
+Afterwards: inventory empty, back on I01, loader 0 rejected, 0 rollbacks. Not covered by this run: a Lock or Clear applied (the author's check above), MKI, audio, a power cycle.
 
 ## Worst key press and press stress on the emulator — 0.1.9, 17–18 November 2026
 
