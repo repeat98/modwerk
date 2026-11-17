@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "e85f54e0d570bd74bfd70b9d5467b35c01b9c468",
+  "moduleVersion": "0.1.0-experimental",
+  "root": "sdk/octabam/modules/vibrato",
+  "modules": [
+    "vibrato"
+  ],
+  "author": {
+    "github": "bryantysinger",
+    "name": "Bryan T",
+    "pullRequests": [
+      "https://github.com/sambanks/octabam/pull/1045"
+    ],
+    "mergeCommits": [
+      "960882f3cee2a72cfe854ae012e275b59aa85c1c",
+      "0869753fa5dac6c498b3f6f369678a26eb1c9e99"
+    ]
+  },
+  "files": [
+    {
+      "path": "vibrato.asm",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "e85f54e0d570bd74bfd70b9d5467b35c01b9c468",
+      "sourcePath": "modules/vibrato/vibrato.asm",
+      "sourceBytes": 27282,
+      "sourceGitBlob": "bb30e5fdf6f618402cd8beefc0e59e3b2500d193",
+      "sourceSha256": "cc598ead12ddba939daa1af4ed00c2f357c595471aa360c8235b5a3d759737f1",
+      "vendoredSha256": "9633838fb59bec038e246c432e528a9ef9ad05fd6dcc63382ed94956c2743225",
+      "transforms": [
+        "The SLOTS FX1+FX2 variant fixed: the FX2 flag's line `tpl x0,b` becomes `nop` (octabam's stations.LIVE_FLAG text), so an FX2 instance runs live; a comment keeps the original line.",
+        "@SEED@ becomes payload A's seed, $5eed01, on both cores: a USB package is one text for both payloads and Modwerk's package builders apply no subst. A comment says so; per-instance seeds still differ by r7."
+      ]
+    },
+    {
+      "path": "vibrato_ref.py",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "e85f54e0d570bd74bfd70b9d5467b35c01b9c468",
+      "sourcePath": "modules/vibrato/vibrato_ref.py",
+      "sourceBytes": 13496,
+      "sourceGitBlob": "70768679cb74ef3df72a6815468cc4dfc9158451",
+      "sourceSha256": "1371154745b18e709f079278caf856e43c28e8cceaa106cd9eff17aa29d9a0f1",
+      "vendoredSha256": "1371154745b18e709f079278caf856e43c28e8cceaa106cd9eff17aa29d9a0f1",
+      "note": "Imported unchanged"
+    },
+    {
+      "path": "vibrato.dsp",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "e85f54e0d570bd74bfd70b9d5467b35c01b9c468",
+      "sourcePath": "modules/vibrato/vibrato.dsp",
+      "sourceBytes": 2537,
+      "sourceGitBlob": "5a05fa1a528c3038ac79be618ed5abc1b978b0f3",
+      "sourceSha256": "6ddb1a28ded33034f7538f7de06667015b5be2611c54111ccb356653fded497a",
+      "vendoredSha256": "6ddb1a28ded33034f7538f7de06667015b5be2611c54111ccb356653fded497a",
+      "note": "Imported unchanged"
+    },
+    {
+      "path": "manifest.py",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "e85f54e0d570bd74bfd70b9d5467b35c01b9c468",
+      "sourcePath": "modules/vibrato/manifest.py",
+      "sourceBytes": 5634,
+      "sourceGitBlob": "3953184d57d32485aab73773a3806465dd350040",
+      "sourceSha256": "9ed199301562166801da80eeec2a147ec35c02c9d56673e89bb064c9733a9076",
+      "vendoredSha256": "2132a870dfad1e4f1cd74fb8d8f66db05cdd844f1bfdd3c56aaee8ed4ee2bb53",
+      "transforms": [
+        "No SLOTS setting: the stations import, Store, settings, variant and _slots are removed; Claims drops fx1_only (an FX2 instance runs live); the docstring says so.",
+        "No subst: the seed and the live flag are in vibrato.asm (above); a comment in DspSection says why.",
+        "Evidence(Level.UNIT, ...) becomes this SDK's proof=Proof.HARDWARE with the author's note in proof_note, its words kept.",
+        "Module.author \"Bryan T\" -> \"bryantysinger\": Modwerk's package compiler requires the native author to equal the manifest's GitHub handle. \"Bryan T\" remains the display name in octamod.module.json.",
+        "Gate path tools/verify/verify_vibrato.py -> modules/vibrato/verify_vibrato.py; doc line without SLOTS."
+      ]
+    },
+    {
+      "path": "verify_vibrato.py",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "e85f54e0d570bd74bfd70b9d5467b35c01b9c468",
+      "sourcePath": "tools/verify/verify_vibrato.py",
+      "sourceBytes": 29557,
+      "sourceGitBlob": "132b989500bb3962069c5de09f3a37649c91622f",
+      "sourceSha256": "cdf28084b434798635df3952a6e3d3a0d884d51d193c65493d1b8b577c7b3eeb",
+      "vendoredSha256": "56fadda01182a8377dc99eeb7a2c07bc2cf59eab897e97f34721a458b2a67344",
+      "transforms": [
+        "Moved from tools/verify/ into the module folder; the toolpath line, the reference's import path and the usage line follow the new location.",
+        "The scratch image is built in the script (VIBRATO alone, fallback NONE, static_stock), as Modwerk's LOFI2 gate does: this tree has no SEND module for octabam's audition to pair with; the 'module is in the image' guard compares with TAPEHEAD's id instead of SEND's.",
+        "Section 2 (an FX2 instance is a dry pass) is removed with the FX1-only build; section 10 runs on the main image instead of building octabam's vibrato-fx2 remix. Every other check, input and limit is unchanged."
+      ]
+    },
+    {
+      "path": "upstream/LICENSE",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "e85f54e0d570bd74bfd70b9d5467b35c01b9c468",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 2112,
+      "sourceGitBlob": "112114d5d319dc4a789dacf1e84b867420a03614",
+      "sourceSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "vendoredSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "note": "Imported unchanged"
+    },
+    {
+      "path": "upstream/modules/vibrato/README.md",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "e85f54e0d570bd74bfd70b9d5467b35c01b9c468",
+      "sourcePath": "modules/vibrato/README.md",
+      "sourceBytes": 11697,
+      "sourceGitBlob": "851748f8848d3f7598ce4cda2a92dfd7153df1ec",
+      "sourceSha256": "4fe6f77323e80ff421341a8f2df1b0523cee53ef0383df65cabd3ae1e43f6a79",
+      "vendoredSha256": "4fe6f77323e80ff421341a8f2df1b0523cee53ef0383df65cabd3ae1e43f6a79",
+      "note": "Imported unchanged"
+    },
+    {
+      "path": "upstream/docs/vibrato-usage.md",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "e85f54e0d570bd74bfd70b9d5467b35c01b9c468",
+      "sourcePath": "docs/site/usage/vibrato.md",
+      "sourceBytes": 2356,
+      "sourceGitBlob": "4da8f890fc78ab02bb63637d2042e156382f7b79",
+      "sourceSha256": "f472a429884e42177d114e7350f619327bda4da2a23851186c4b52e302230f3d",
+      "vendoredSha256": "f472a429884e42177d114e7350f619327bda4da2a23851186c4b52e302230f3d",
+      "note": "Imported unchanged"
+    }
+  ]
+}
