@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "sources": ["src/main.c", "src/pitch.c"],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    { "event": "ev_draw", "fn": "euclidean_draw", "order": 50 },
+    { "event": "ev_enc", "fn": "euclidean_encoder", "order": 50 },
+    { "event": "ev_key", "fn": "euclidean_key", "order": 50 },
+    { "event": "ev_seq_note", "fn": "euclidean_pitch", "order": 50 },
+    { "event": "ev_tick", "fn": "euclidean_tick", "order": 50 }
+  ],
+  "contribute": [
+    { "to": "core_kitdata", "order": 50, "data": "00000000", "relocs": [[0, "abs32", "sym:euclidean_kitdata", 0]] }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": ["key:FUNC+AMP@EUCLIDEAN", "screen:EUCLIDEAN-SCALE", "kitdata:EUS2"],
+  "requires": [],
+  "derive": null,
+  "releases": { "1.17": { "defsym": {}, "cflags": [], "sites": [] } }
+}
