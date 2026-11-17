@@ -1,0 +1,256 @@
+{
+  "schemaVersion": 3,
+  "id": "midi-expression",
+  "name": "Digi Expression",
+  "version": "0.13.0-experimental",
+  "machine": "digitakt",
+  "category": "midi-usb",
+  "exclusive": false,
+  "author": {
+    "github": "tekomelu",
+    "credits": [
+      "tekomelu — design and code"
+    ]
+  },
+  "maintainers": [
+    "tekomelu"
+  ],
+  "presentation": {
+    "label": "DIGI EXPRESSION",
+    "family": "MIDI",
+    "summary": "Pitch bend, aftertouch, the mod wheel, breath and velocity from MIDI IN play a MIDI track's synth and the Digitakt's own audio tracks, with each track's routings on an EXPRESSION page in SETTINGS.",
+    "overview": "Stock, the Digitakt passes the notes of an external keyboard through to the synth a MIDI track plays, but drops pitch bend, aftertouch and the mod wheel. Each track can now pass them on and route them: on the AUTO CHANNEL to the active track, and on a track's own TRACK CHANNEL to that track. A MIDI track with THRU ON adds them to its own PB, AT and MW (its knob, parameter locks and LFO), within the MIDI limits, on its CHAN out of MIDI OUT. An audio track bends its TUNE and moves parameters of its choice. Out of the box nothing is switched on, so a fresh install plays as stock. Each track's settings are on the EXPRESSION page: SETTINGS > EXPRESSION, YES, and TRK + trig picks the track. The settings are saved with the project as text files, and kept as presets (a 1-second push of knob A). For live playing: the live values are not recorded into the sequencer.",
+    "highlights": [
+      "Play a synth through a MIDI track with pitch bend, aftertouch, the mod wheel and breath, added to the track's own values.",
+      "Route the wheel, aftertouch and velocity to any value the MIDI LFO reaches (PB, AT, MW, BC, CC VAL 1-8), or to any SRC, FLTR, AMP or LFO amount of an audio track.",
+      "Two values on one CC number are merged into one, so the synth never jumps between them.",
+      "Velocity sensitivity per track on what plays, live or recorded; the sequencer keeps the velocity as played.",
+      "A stock-looking EXPRESSION page from SETTINGS that follows the active track."
+    ],
+    "usage": [
+      "Connect a keyboard to MIDI IN on the Digitakt's AUTO CHANNEL, and a synth to MIDI OUT.",
+      "Select MIDI track A (TRK + trig 9), switch its CHAN on (SRC page, FUNC + knob A) and set the synth's channel.",
+      "Open SETTINGS, go down to EXPRESSION and press YES, then turn knob A to set THRU ON.",
+      "Play: pitch bend, aftertouch, the mod wheel and breath reach the synth with the notes.",
+      "For an audio track: press TRK + its trig with the page up, then set BEND and the routes."
+    ]
+  },
+  "access": {
+    "location": "SETTINGS > EXPRESSION",
+    "steps": [
+      "Use a build containing Digi Expression for the original Digitakt on OS 1.54.",
+      "Press SETTINGS and go down to EXPRESSION, below SYSTEM, with UP/DOWN.",
+      "Press YES: the EXPRESSION page of the active track. TRK + trig picks another track; NO goes back to SETTINGS."
+    ],
+    "screenshots": [
+      "media/settings-row.png",
+      "media/page-audio.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "BEND",
+      "default": null,
+      "labels": null,
+      "doc": "Audio track, knob A: OFF to 12.00 semitones of TUNE, in fine steps; FUNC + turn snaps to whole semitones. Default OFF."
+    },
+    {
+      "name": "THRU",
+      "default": null,
+      "labels": null,
+      "doc": "MIDI track, knob A: ON adds the input's pitch bend, aftertouch, mod wheel (CC 1) and breath (CC 2) to the track's own PB, AT, MW and BC. Default OFF."
+    },
+    {
+      "name": "V.SNS",
+      "default": null,
+      "labels": null,
+      "doc": "Knob B: 0-100 %, how much velocity counts in what plays, live or from the sequencer; 50 % plays 0-127 as 64-127, 0 % plays every note full. The sequencer records the velocity as played, so V.SNS can be changed afterwards. Default 100 %."
+    },
+    {
+      "name": "MW / VEL / AT",
+      "default": null,
+      "labels": null,
+      "doc": "Knobs C, E, G: what the wheel, the velocity and aftertouch move. Audio track: an SRC, FLTR, AMP or LFO amount. MIDI track: the MIDI LFO page's list (PB, AT, MW, BC, CC VAL 1-8 on its SEL's CC number), then the track's own LFO Speed, Multiplier, Fade, Start Phase and Depth. VEL is the velocity of the last note the track played, live or from the sequencer. Default none."
+    },
+    {
+      "name": "M.DEP / V.DEP / A.DEP",
+      "default": null,
+      "labels": null,
+      "doc": "Knobs D, F, H: -64.00 to +64.00, how far, as finely as the LFO page's DEP, in the stock LFO's scale. Default 0."
+    },
+    {
+      "name": "PRESETS",
+      "default": null,
+      "labels": null,
+      "doc": "Knob A pushed for a second: LOAD, SAVE, RESET TO DEFAULT and SELECT DEFAULT, with 64 audio-track and 64 MIDI-track presets. UP/DOWN or LEVEL move, YES or a knob push chooses, NO goes back, a page key leaves. SAVE names a preset as SAVE PROJECT AS names a project, with the letter grid on FUNC. SELECT DEFAULT picks the preset new projects and RESET TO DEFAULT use (FACTORY: the mod's own defaults)."
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.54"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.54 only.",
+      "Settings are saved per project slot as text files on the +Drive (/cfw/expression), not inside the project: copying a sound or track does not copy them (a preset does). Each file is written to /cfw/expression/_temp first; a broken file is skipped for its copy, then the defaults.",
+      "Sends where OUTPUT TO says (MIDI OUT, USB or both), with the track's own values, through the MIDI tracks' own task.",
+      "Not recorded: the sequencer never sees the live values; recorded notes keep their velocity as played.",
+      "With Digi Slicer 1.0 KB of RAM is left: the two fit, with no room for a third mod of any size.",
+      "Avoid a MIDI loop: a synth echoing MIDI OUT back into MIDI IN on the same channel feeds the mod's output back as input.",
+      "Two values a MIDI track sends on one CC number are merged while anything live is aimed at them; the track's own value is the one that changed last.",
+      "Writing a settings file holds the UI for a moment; the power-on file is written only while the sequencer is stopped and nothing has been played for 2 seconds."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "2.1",
+    "build": "build.json",
+    "events": [
+      "ev_settings",
+      "ev_tick",
+      "ev_draw",
+      "ev_key",
+      "ev_enc"
+    ],
+    "claims": [
+      "settings:EXPRESSION",
+      "drive:/cfw/expression"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 36181,
+    "fastBytes": 0,
+    "load": {
+      "display": "About 1.2% of the emulated CPU idle, 1.9% under a MIDI flood with every route live (emulator)",
+      "method": "emulator",
+      "conditions": "digiemu c1b5735, OS 1.54 on Core 2.1, image 9b76047a...2696: executed instructions in the module's code per emulated second, against the emulator's 64 million a second. Idle: 0.77 M/s (1.20%). Every route of every audio track live under a flood of pitch bend, aftertouch, mod wheel and notes at the MIDI wire rate: 1.13 M/s (1.77%); the same on MIDI track A: 1.20 M/s (1.87%). Instruction counts, not cycles: no contention or wait states. Not a hardware measurement."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.13.0-experimental",
+    "sourceSha256": "b0263168c142fc314add1426e1af923beb3848805fd56159536187f0edbc021b",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "evidence/source-identity.json"
+    ],
+    "hardware": {
+      "model": "Digitakt 1",
+      "release": "1.54",
+      "testedOn": "2026-11-07",
+      "tester": "tekomelu",
+      "durationMinutes": 15,
+      "summary": "The author ran hwqual.py's v013 phase on 0.13.0 (11 of 11): the SETTINGS row and the page following the track, NO and TRIG as stock, the factory settings passing only notes over MIDI, THRU and BEND OFF in a new project, and the power-on file not written while playing, written after STOP. The MIDI, audio and file code is 0.12.4's, which passed the full hwqual.py run over DIN and USB.",
+      "limitations": [
+        "durationMinutes is the time on 0.13.0 (two runs of the v013 phase); 0.10-0.12.4 had about 8 hours on the unit, the author's own playing included.",
+        "The test MIDI interface drops a DIN message that follows a clock byte within about 0.3 ms (scripts/loopback.py); DIN losses with clock in the 0.12.4 runs were traced to it, not the mod.",
+        "Run on one unit; Digitakt 2 and OS 1.53 not tested."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host unit tests (about 2.44 million checks, also under AddressSanitizer and UBSan, with 3,000 random broken files); the digiemu emulator on the firmware (MIDI-track sums and merging, saving and loading, the SETTINGS row and the page, the preset menu, heap and CPU use); a link check with every other Modwerk Digitakt module. Hardware: the full hwqual.py run on 0.12.4 over DIN and USB (TESTING.md); 0.13.0's SETTINGS row, factory defaults and power-on file passed on the unit (hwqual.py v013, 11 of 11).",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: bend a synth through a MIDI track",
+        "steps": [
+          "Connect a keyboard to MIDI IN on the Digitakt's AUTO CHANNEL, and a synth to MIDI OUT.",
+          "Select MIDI track A (TRK + trig 9), switch its CHAN on (SRC page, FUNC + knob A) and set the synth's channel.",
+          "Open SETTINGS, go down to EXPRESSION and press YES, then turn knob A to set THRU ON.",
+          "Play: pitch bend, aftertouch, the mod wheel and breath reach the synth with the notes.",
+          "For an audio track: press TRK + its trig with the page up, then set BEND and the routes."
+        ]
+      },
+      "screenshots": [
+        "media/settings-row.png",
+        "media/page-audio.png",
+        "media/page-midi.png",
+        "media/presets.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by tekomelu. The SETTINGS row follows the row record and OS 1.54 addresses Digi Matrix and FX Track use (GPL-3.0-or-later)."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Digi Expression thumbnail",
+      "alt": "A pitch bend from MIDI IN splitting to a MIDI track's output and an audio track's tune.",
+      "credit": "tekomelu",
+      "license": "GPL-3.0-or-later",
+      "source": "Original illustration"
+    },
+    {
+      "path": "media/settings-row.png",
+      "kind": "screenshot",
+      "caption": "SETTINGS with the EXPRESSION row selected",
+      "alt": "SETTINGS with EXPRESSION selected below SYSTEM, on the Digitakt monochrome LCD",
+      "credit": "Modwerk documentation capture; Elektron interface; tekomelu module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.13.0-experimental",
+        "imageSha256": "8abc2a681841a9f78d0938a1e2b7b72a8e61c55115d2ea7eddb84b6e40df3a02",
+        "setup": "Pinned digiemu c1b5735, firmware-native drawing, disposable first-boot project, panel input only (media/capture-plan.txt). No audio or timing qualification."
+      }
+    },
+    {
+      "path": "media/page-audio.png",
+      "kind": "screenshot",
+      "caption": "The EXPRESSION page on an audio track: bend range, velocity sensitivity and a wheel route",
+      "alt": "The EXPRESSION page on audio track 1: BEND 1, MW to SRC Tune, M.DEP +16, on the Digitakt monochrome LCD",
+      "credit": "Modwerk documentation capture; Elektron interface; tekomelu module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.13.0-experimental",
+        "imageSha256": "8abc2a681841a9f78d0938a1e2b7b72a8e61c55115d2ea7eddb84b6e40df3a02",
+        "setup": "Pinned digiemu c1b5735, firmware-native drawing, disposable first-boot project, panel input only (media/capture-plan.txt). No audio or timing qualification."
+      }
+    },
+    {
+      "path": "media/page-midi.png",
+      "kind": "screenshot",
+      "caption": "The EXPRESSION page on a MIDI track with THRU ON",
+      "alt": "The EXPRESSION page on MIDI track A with THRU ON, on the Digitakt monochrome LCD",
+      "credit": "Modwerk documentation capture; Elektron interface; tekomelu module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.13.0-experimental",
+        "imageSha256": "8abc2a681841a9f78d0938a1e2b7b72a8e61c55115d2ea7eddb84b6e40df3a02",
+        "setup": "Pinned digiemu c1b5735, firmware-native drawing, disposable first-boot project, panel input only (media/capture-plan.txt). No audio or timing qualification."
+      }
+    },
+    {
+      "path": "media/presets.png",
+      "kind": "screenshot",
+      "caption": "The preset menu: LOAD, SAVE, RESET TO DEFAULT, SELECT DEFAULT",
+      "alt": "The preset menu of MIDI track A, on the Digitakt monochrome LCD",
+      "credit": "Modwerk documentation capture; Elektron interface; tekomelu module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.13.0-experimental",
+        "imageSha256": "8abc2a681841a9f78d0938a1e2b7b72a8e61c55115d2ea7eddb84b6e40df3a02",
+        "setup": "Pinned digiemu c1b5735, firmware-native drawing, disposable first-boot project, panel input only (media/capture-plan.txt). No audio or timing qualification."
+      }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 import { normalizeRemovedStockFx } from '../catalog/stock-effects'
 import { DSP_LOADER } from '../engine/protocol'
-import { CATALOG_SOURCE, resolveSelection } from '../catalog/modules'
+import { CATALOG_SOURCE, REMOVED_MODULE_IDS, resolveSelection } from '../catalog/modules'
 import { BASE_FIRMWARE, type FirmwareInspection } from '../engine/base'
 import { cleanName, pinModuleVersions, normalizeModuleVersions, startupSettings } from './workspace'
 import { parseUsbAudioConfiguration, USB_AUDIO_MODULE, type UsbAudioConfiguration } from './usb-audio'
@@ -44,8 +44,10 @@ export function parseSelection(text: string) {
   if (item.base && item.base.sha256 !== BASE_FIRMWARE.sha256) throw new Error('This backup uses a different base firmware. Octamod currently supports original OS 1.40C.')
   const keepStockFx2 = item.schemaVersion === 1 ? true : item.options?.keepStockFx2
   if (typeof keepStockFx2 !== 'boolean') throw new Error('The backup has an unreadable chooser setting.')
-  const ids = resolveSelection(item.modules.map(module=>module.id as string)).map(module=>module.id)
-  const pins = Number(item.schemaVersion)>=3 ? Object.fromEntries(item.modules.map(module=>{if(typeof module.version!=='string')throw new Error('This backup is missing module versions.');return [module.id,module.version]})) : undefined
+  // A module removed from the library since the backup was made is left out.
+  const modules = item.modules.filter(module => !REMOVED_MODULE_IDS.includes(module.id as string))
+  const ids = resolveSelection(modules.map(module=>module.id as string)).map(module=>module.id)
+  const pins = Number(item.schemaVersion)>=3 ? Object.fromEntries(modules.map(module=>{if(typeof module.version!=='string')throw new Error('This backup is missing module versions.');return [module.id,module.version]})) : undefined
   if (item.options?.usbAudio !== undefined && (item.schemaVersion !== 4 || !ids.includes(USB_AUDIO_MODULE))) throw new Error('USB Audio settings require a version 4 backup with USB Audio selected.')
   const usbAudio = item.options?.usbAudio === undefined ? undefined : parseUsbAudioConfiguration(item.options.usbAudio)
   const removedStockFx = normalizeRemovedStockFx((item.options as { removedStockFx?: unknown } | undefined)?.removedStockFx)

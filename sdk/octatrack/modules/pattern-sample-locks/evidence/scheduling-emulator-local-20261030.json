@@ -1,0 +1,1424 @@
+{
+  "date": "2026-10-30",
+  "localOnly": true,
+  "hardware": false,
+  "identity": {
+    "base": "2e1a612832625e268492a06623c3cac5ebfb0ea324889d9e8f30509bbbffc248",
+    "packageSha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+    "emulatorSha256": "b087c97f3031f075551b3336afcd75a407ca4d3476e04a9d5cfaa059b1d40363",
+    "cardInputSha256": "d64abdaf0f7f957da796f458114396e7df9ef626eb52a89079c922cf98861ab8",
+    "cardOutputSha256": "da60251ffc43d026d0d4ac2bb65fb78dde63b96a1b39a1fc08a7a1bf3209d52c",
+    "sources": {
+      "capture_emulator.py": "bf73e0aee9a34a43b9f840f783edc117328a00e2e8651be85d1637b482bed44e",
+      "attestation_emulator.py": "24856c4ca80551313dd78fa4d7ef7d342aa39d2a27c71e6ea78c3952525f34d5",
+      "prepare_fixture_emulator.py": "7cc2bfd126fc9ed2380f21653e0b96c34e4104afe1783184c1934a8abc04dd72",
+      "profile_symbols.py": "972462022bd9534dc574a0a706976febdd448147079d7c20ca906ca65155f4dc",
+      "live_emulator.py": "ba26261794b953152641fc16b53e1dced6ccbd88a7443ba8e99a0bf58102416a",
+      "performance_emulator.py": "abf2f0094b48cf021b6c2edb18ecbf8077f38b5be9f9e1324b5e9c65ba38ea9e",
+      "profile_emulator.py": "20152342d1dd859b152d3781245783c2dc2c409162b077b5a1d6098832a5944d",
+      "stress_emulator.py": "65ad5a1d951cfba71513468855d9e79ea602c8a74226eeea5c52e90cbc693aad",
+      "exercise_emulator.py": "fabef3812487f64a9fa59fa25cb44b5b5b214b7dd3898e49569b34791c4a2b30",
+      "unit.s": "837e44f48fa137444e14755d96011731c8fde29a73fa877ffc35edac3510473f",
+      "engine.c": "a41ace651c2ff9f72d43e783d6121c64f51fe6d21e49bc60cf3b26a97ebdaa38",
+      "engine.h": "d1c067250f8bc555944303fb526cd9ec22c281c0f4773c95ed6fbdd332925ca1",
+      "ui.c": "3d452769338be043c327ab6bf0a8db9b09c0c7504f62710c46d32d205a75f4c7",
+      "ui.h": "514cbdcfd88777769e4883d020d7fe6a2b5301a5d04c136eb67f7b7bb54f45bd",
+      "native.c": "a5d11e7320a91b00457fbe1f89453e8a432e65877e92af0aa64705f6b2a6050e",
+      "font.c": "63104792b675f7cce15582b554eaf4b05e008a63c2433db7fecb71210e115079",
+      "font.h": "a94a3103633a0084e11d53fbe46d0590812011062aa01d2c28de35b60ef8ea99",
+      "runtime.json": "710371710bd6c2522067c62f36c6ffbf211232b88c75a71a3dab2ac913e9742e",
+      "manifest.py": "ff0d9749fa181a8dabadddc711295a987d58c0d7f3516556aadbae97b6e7d7ab"
+    }
+  },
+  "checks": {
+    "performanceOperationsVerified": true,
+    "performanceHelperSha256": "abf2f0094b48cf021b6c2edb18ecbf8077f38b5be9f9e1324b5e9c65ba38ea9e",
+    "schedulingTraceVerified": true,
+    "schedulingHelperSha256": "4dc44497d0a45ca3db051cd4d35c54dc8616aaf713f1d9a6975d88412e83621e",
+    "runtimeImageMatchesPackage": true,
+    "runtimeSitesMatchPackage": true,
+    "runtimeInitializedBytesCompared": 8748,
+    "runtimeSitesCompared": 3,
+    "performanceRemovalCompleted": true
+  },
+  "dspRuntimeBefore": {
+    "dl_frames": 42756,
+    "dl_errors": 0,
+    "modwerk_dsp_stalls": 0
+  },
+  "dspRuntimeAfter": {
+    "dl_frames": 81885,
+    "dl_errors": 0,
+    "modwerk_dsp_stalls": 0
+  },
+  "usbRemoval": true,
+  "summary": [
+    {
+      "repeat": 1,
+      "operation": "Lock",
+      "taskExclusionModelMs": 0.4136588637125694,
+      "maskMaxInstructions": 87,
+      "baselineFrameGapModelUs": 373.3636363636364,
+      "activeFrameGapModelUs": 369.7348484848485
+    },
+    {
+      "repeat": 1,
+      "operation": "Clear",
+      "taskExclusionModelMs": 1.5980199932938923,
+      "maskMaxInstructions": 87,
+      "baselineFrameGapModelUs": 371.95454545454544,
+      "activeFrameGapModelUs": 368.6666666666667
+    },
+    {
+      "repeat": 2,
+      "operation": "Lock",
+      "taskExclusionModelMs": 0.41473866071073373,
+      "maskMaxInstructions": 87,
+      "baselineFrameGapModelUs": 362.8181818181818,
+      "activeFrameGapModelUs": 371.6287878787879
+    },
+    {
+      "repeat": 2,
+      "operation": "Clear",
+      "taskExclusionModelMs": 1.5969288300115367,
+      "maskMaxInstructions": 87,
+      "baselineFrameGapModelUs": 362.8181818181818,
+      "activeFrameGapModelUs": 376.25757575757575
+    },
+    {
+      "repeat": 3,
+      "operation": "Lock",
+      "taskExclusionModelMs": 0.4140112185224967,
+      "maskMaxInstructions": 87,
+      "baselineFrameGapModelUs": 362.8181818181818,
+      "activeFrameGapModelUs": 382.6212121212121
+    },
+    {
+      "repeat": 3,
+      "operation": "Clear",
+      "taskExclusionModelMs": 1.5954284804982979,
+      "maskMaxInstructions": 87,
+      "baselineFrameGapModelUs": 362.82575757575756,
+      "activeFrameGapModelUs": 373.1969696969697
+    },
+    {
+      "repeat": 4,
+      "operation": "Lock",
+      "taskExclusionModelMs": 0.5642678123881132,
+      "maskMaxInstructions": 87,
+      "baselineFrameGapModelUs": 362.8181818181818,
+      "activeFrameGapModelUs": 376.22727272727275
+    },
+    {
+      "repeat": 4,
+      "operation": "Clear",
+      "taskExclusionModelMs": 1.5980540921464659,
+      "maskMaxInstructions": 87,
+      "baselineFrameGapModelUs": 380.81060606060606,
+      "activeFrameGapModelUs": 365.4848484848485
+    }
+  ],
+  "sequencerEntriesAcrossAllWatchWindows": 2076,
+  "sequencerEntriesDuringTaskGuards": 0,
+  "scheduling": {
+    "hardware": false,
+    "packageSha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+    "handlerAddresses": {
+      "audio": 1073785552,
+      "sequencer": 1074404876,
+      "uiTimer": 1074093240,
+      "scheduler": 1073743184,
+      "dma8": 1073760320,
+      "dma9": 1073760320,
+      "dma15": 1073745268
+    },
+    "exactObjectBoundaryOffsets": {
+      "taskRaise": 5872,
+      "taskRestore": 5954,
+      "maskRaise": 58,
+      "maskRestore": 136
+    },
+    "instructionsPerModelMs": 175959.0,
+    "scope": "Four native maximum Lock/Clear pairs. Passive PC watches; emulator-only gap counters reset per window. No SR, vector, native writer or firmware code patched.",
+    "limitations": [
+      "Instruction-derived model time is not physical cycles or wall-clock time.",
+      "No worst-case external streaming/MIDI/USB load qualification.",
+      "Handler entries show service, not interrupt assertion-to-entry latency.",
+      "Vectors can share handler addresses; handler counts must not be summed as distinct vector acknowledgements.",
+      "Active gap windows include key delivery and four model ms after completion.",
+      "Post-restore dispatch instruction distances may cross idle time skips; no time conversion."
+    ],
+    "traces": [
+      {
+        "taskExclusionInstructionsIncludingBoundaryOps": 72787,
+        "taskExclusionModelMs": 0.4136588637125694,
+        "maskSpanInstructionsIncludingBoundaryOps": [
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87
+        ],
+        "maskSpanMaxModelUs": 0.494433362317358,
+        "handlerEntriesDuringTaskExclusion": {
+          "audio": 1,
+          "sequencer": 0,
+          "uiTimer": 0,
+          "scheduler": 0,
+          "dma8": 1,
+          "dma9": 1,
+          "dma15": 0
+        },
+        "schedulerEntriesDuringTaskExclusion": 0,
+        "schedulerResumeObserved": true,
+        "firstPostRestoreDispatchInstructionDistance": 146571,
+        "allHandlersOutsideFullMaskSpans": true,
+        "audioEntryInstructionGapsWhollyInsideTaskGuard": [],
+        "savedTaskMask": 0,
+        "savedPublicationMasks": [
+          2
+        ]
+      },
+      {
+        "taskExclusionInstructionsIncludingBoundaryOps": 281186,
+        "taskExclusionModelMs": 1.5980199932938923,
+        "maskSpanInstructionsIncludingBoundaryOps": [
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87
+        ],
+        "maskSpanMaxModelUs": 0.494433362317358,
+        "handlerEntriesDuringTaskExclusion": {
+          "audio": 0,
+          "sequencer": 0,
+          "uiTimer": 0,
+          "scheduler": 0,
+          "dma8": 4,
+          "dma9": 4,
+          "dma15": 0
+        },
+        "schedulerEntriesDuringTaskExclusion": 0,
+        "schedulerResumeObserved": true,
+        "firstPostRestoreDispatchInstructionDistance": 19,
+        "allHandlersOutsideFullMaskSpans": true,
+        "audioEntryInstructionGapsWhollyInsideTaskGuard": [],
+        "savedTaskMask": 0,
+        "savedPublicationMasks": [
+          2
+        ]
+      },
+      {
+        "taskExclusionInstructionsIncludingBoundaryOps": 72977,
+        "taskExclusionModelMs": 0.41473866071073373,
+        "maskSpanInstructionsIncludingBoundaryOps": [
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87
+        ],
+        "maskSpanMaxModelUs": 0.494433362317358,
+        "handlerEntriesDuringTaskExclusion": {
+          "audio": 1,
+          "sequencer": 0,
+          "uiTimer": 0,
+          "scheduler": 0,
+          "dma8": 1,
+          "dma9": 1,
+          "dma15": 0
+        },
+        "schedulerEntriesDuringTaskExclusion": 0,
+        "schedulerResumeObserved": true,
+        "firstPostRestoreDispatchInstructionDistance": 19,
+        "allHandlersOutsideFullMaskSpans": true,
+        "audioEntryInstructionGapsWhollyInsideTaskGuard": [],
+        "savedTaskMask": 0,
+        "savedPublicationMasks": [
+          2
+        ]
+      },
+      {
+        "taskExclusionInstructionsIncludingBoundaryOps": 280994,
+        "taskExclusionModelMs": 1.5969288300115367,
+        "maskSpanInstructionsIncludingBoundaryOps": [
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87
+        ],
+        "maskSpanMaxModelUs": 0.494433362317358,
+        "handlerEntriesDuringTaskExclusion": {
+          "audio": 0,
+          "sequencer": 0,
+          "uiTimer": 0,
+          "scheduler": 0,
+          "dma8": 4,
+          "dma9": 4,
+          "dma15": 0
+        },
+        "schedulerEntriesDuringTaskExclusion": 0,
+        "schedulerResumeObserved": true,
+        "firstPostRestoreDispatchInstructionDistance": 179161,
+        "allHandlersOutsideFullMaskSpans": true,
+        "audioEntryInstructionGapsWhollyInsideTaskGuard": [],
+        "savedTaskMask": 0,
+        "savedPublicationMasks": [
+          2
+        ]
+      },
+      {
+        "taskExclusionInstructionsIncludingBoundaryOps": 72849,
+        "taskExclusionModelMs": 0.4140112185224967,
+        "maskSpanInstructionsIncludingBoundaryOps": [
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87
+        ],
+        "maskSpanMaxModelUs": 0.494433362317358,
+        "handlerEntriesDuringTaskExclusion": {
+          "audio": 1,
+          "sequencer": 0,
+          "uiTimer": 0,
+          "scheduler": 0,
+          "dma8": 1,
+          "dma9": 1,
+          "dma15": 0
+        },
+        "schedulerEntriesDuringTaskExclusion": 0,
+        "schedulerResumeObserved": true,
+        "firstPostRestoreDispatchInstructionDistance": 146699,
+        "allHandlersOutsideFullMaskSpans": true,
+        "audioEntryInstructionGapsWhollyInsideTaskGuard": [],
+        "savedTaskMask": 0,
+        "savedPublicationMasks": [
+          2
+        ]
+      },
+      {
+        "taskExclusionInstructionsIncludingBoundaryOps": 280730,
+        "taskExclusionModelMs": 1.5954284804982979,
+        "maskSpanInstructionsIncludingBoundaryOps": [
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87
+        ],
+        "maskSpanMaxModelUs": 0.494433362317358,
+        "handlerEntriesDuringTaskExclusion": {
+          "audio": 0,
+          "sequencer": 0,
+          "uiTimer": 1,
+          "scheduler": 0,
+          "dma8": 4,
+          "dma9": 4,
+          "dma15": 0
+        },
+        "schedulerEntriesDuringTaskExclusion": 0,
+        "schedulerResumeObserved": true,
+        "firstPostRestoreDispatchInstructionDistance": 19,
+        "allHandlersOutsideFullMaskSpans": true,
+        "audioEntryInstructionGapsWhollyInsideTaskGuard": [],
+        "savedTaskMask": 0,
+        "savedPublicationMasks": [
+          2
+        ]
+      },
+      {
+        "taskExclusionInstructionsIncludingBoundaryOps": 99288,
+        "taskExclusionModelMs": 0.5642678123881132,
+        "maskSpanInstructionsIncludingBoundaryOps": [
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87
+        ],
+        "maskSpanMaxModelUs": 0.494433362317358,
+        "handlerEntriesDuringTaskExclusion": {
+          "audio": 0,
+          "sequencer": 0,
+          "uiTimer": 0,
+          "scheduler": 0,
+          "dma8": 2,
+          "dma9": 2,
+          "dma15": 0
+        },
+        "schedulerEntriesDuringTaskExclusion": 0,
+        "schedulerResumeObserved": true,
+        "firstPostRestoreDispatchInstructionDistance": 19,
+        "allHandlersOutsideFullMaskSpans": true,
+        "audioEntryInstructionGapsWhollyInsideTaskGuard": [],
+        "savedTaskMask": 0,
+        "savedPublicationMasks": [
+          2
+        ]
+      },
+      {
+        "taskExclusionInstructionsIncludingBoundaryOps": 281192,
+        "taskExclusionModelMs": 1.5980540921464659,
+        "maskSpanInstructionsIncludingBoundaryOps": [
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87,
+          87
+        ],
+        "maskSpanMaxModelUs": 0.494433362317358,
+        "handlerEntriesDuringTaskExclusion": {
+          "audio": 0,
+          "sequencer": 0,
+          "uiTimer": 0,
+          "scheduler": 0,
+          "dma8": 4,
+          "dma9": 4,
+          "dma15": 0
+        },
+        "schedulerEntriesDuringTaskExclusion": 0,
+        "schedulerResumeObserved": true,
+        "firstPostRestoreDispatchInstructionDistance": 179401,
+        "allHandlersOutsideFullMaskSpans": true,
+        "audioEntryInstructionGapsWhollyInsideTaskGuard": [],
+        "savedTaskMask": 0,
+        "savedPublicationMasks": [
+          2
+        ]
+      }
+    ],
+    "gapWindows": [
+      {
+        "baselineStart": "cfstatus instructions=2063262611 ms=17474.168 pc=4001fc9c",
+        "baselineEnd": "cfstatus instructions=2063555964 ms=17478.169 pc=4001fc9c",
+        "activeStart": "cfstatus instructions=2063555964 ms=17478.169 pc=4001fc9c",
+        "activeEnd": "cfstatus instructions=2064053156 ms=17482.919 pc=40003776",
+        "baselineGapCounters": {
+          "frame_gap": 49285,
+          "tick_gap": 16,
+          "dl_frame_gap": 49284
+        },
+        "applyAndRecoveryGapCounters": {
+          "frame_gap": 48806,
+          "tick_gap": 29,
+          "dl_frame_gap": 48805
+        },
+        "keyDeliveryThroughClosedModelMs": 0.75,
+        "timerModeHex": "000b",
+        "baselineWindowModelMs": 4,
+        "recoveryWindowModelMs": 4
+      },
+      {
+        "baselineStart": "cfstatus instructions=2184757105 ms=18993.756 pc=4000c8b4",
+        "baselineEnd": "cfstatus instructions=2185053851 ms=18997.756 pc=4000ca88",
+        "activeStart": "cfstatus instructions=2185053851 ms=18997.756 pc=4000ca88",
+        "activeEnd": "cfstatus instructions=2185749306 ms=19003.529 pc=4001fc9c",
+        "baselineGapCounters": {
+          "frame_gap": 49099,
+          "tick_gap": 24,
+          "dl_frame_gap": 49098
+        },
+        "applyAndRecoveryGapCounters": {
+          "frame_gap": 48664,
+          "tick_gap": 40,
+          "dl_frame_gap": 48664
+        },
+        "keyDeliveryThroughClosedModelMs": 1.75,
+        "timerModeHex": "000b",
+        "baselineWindowModelMs": 4,
+        "recoveryWindowModelMs": 4
+      },
+      {
+        "baselineStart": "cfstatus instructions=2331321656 ms=20828.265 pc=4001fc9c",
+        "baselineEnd": "cfstatus instructions=2331617854 ms=20832.301 pc=4001fc9c",
+        "activeStart": "cfstatus instructions=2331617854 ms=20832.301 pc=4001fc9c",
+        "activeEnd": "cfstatus instructions=2332115856 ms=20837.051 pc=40003740",
+        "baselineGapCounters": {
+          "frame_gap": 47892,
+          "tick_gap": 27,
+          "dl_frame_gap": 47892
+        },
+        "applyAndRecoveryGapCounters": {
+          "frame_gap": 49055,
+          "tick_gap": 40,
+          "dl_frame_gap": 49055
+        },
+        "keyDeliveryThroughClosedModelMs": 0.75,
+        "timerModeHex": "000b",
+        "baselineWindowModelMs": 4,
+        "recoveryWindowModelMs": 4
+      },
+      {
+        "baselineStart": "cfstatus instructions=2453003488 ms=22347.802 pc=4001fc9c",
+        "baselineEnd": "cfstatus instructions=2453297890 ms=22351.861 pc=4001fc9c",
+        "activeStart": "cfstatus instructions=2453297890 ms=22351.861 pc=4001fc9c",
+        "activeEnd": "cfstatus instructions=2454030311 ms=22357.646 pc=4001fc9c",
+        "baselineGapCounters": {
+          "frame_gap": 47892,
+          "tick_gap": 35,
+          "dl_frame_gap": 47892
+        },
+        "applyAndRecoveryGapCounters": {
+          "frame_gap": 49666,
+          "tick_gap": 46,
+          "dl_frame_gap": 49666
+        },
+        "keyDeliveryThroughClosedModelMs": 1.75,
+        "timerModeHex": "000b",
+        "baselineWindowModelMs": 4,
+        "recoveryWindowModelMs": 4
+      },
+      {
+        "baselineStart": "cfstatus instructions=2599013198 ms=24181.689 pc=4001fc9c",
+        "baselineEnd": "cfstatus instructions=2599307156 ms=24185.703 pc=4001fc9c",
+        "activeStart": "cfstatus instructions=2599307156 ms=24185.703 pc=4001fc9c",
+        "activeEnd": "cfstatus instructions=2599832748 ms=24190.453 pc=4000cc18",
+        "baselineGapCounters": {
+          "frame_gap": 47892,
+          "tick_gap": 36,
+          "dl_frame_gap": 47892
+        },
+        "applyAndRecoveryGapCounters": {
+          "frame_gap": 50507,
+          "tick_gap": 46,
+          "dl_frame_gap": 50506
+        },
+        "keyDeliveryThroughClosedModelMs": 0.75,
+        "timerModeHex": "000b",
+        "baselineWindowModelMs": 4,
+        "recoveryWindowModelMs": 4
+      },
+      {
+        "baselineStart": "cfstatus instructions=2720140709 ms=25701.062 pc=4000416a",
+        "baselineEnd": "cfstatus instructions=2720436065 ms=25705.062 pc=4000d632",
+        "activeStart": "cfstatus instructions=2720436065 ms=25705.062 pc=4000d632",
+        "activeEnd": "cfstatus instructions=2721137920 ms=25710.812 pc=4000d082",
+        "baselineGapCounters": {
+          "frame_gap": 47893,
+          "tick_gap": 44,
+          "dl_frame_gap": 47893
+        },
+        "applyAndRecoveryGapCounters": {
+          "frame_gap": 49262,
+          "tick_gap": 50,
+          "dl_frame_gap": 49262
+        },
+        "keyDeliveryThroughClosedModelMs": 1.75,
+        "timerModeHex": "000b",
+        "baselineWindowModelMs": 4,
+        "recoveryWindowModelMs": 4
+      },
+      {
+        "baselineStart": "cfstatus instructions=2866392931 ms=27534.348 pc=4001fc9c",
+        "baselineEnd": "cfstatus instructions=2866688008 ms=27538.372 pc=4001fc9c",
+        "activeStart": "cfstatus instructions=2866688008 ms=27538.372 pc=4001fc9c",
+        "activeEnd": "cfstatus instructions=2867194108 ms=27543.123 pc=4000af0c",
+        "baselineGapCounters": {
+          "frame_gap": 47892,
+          "tick_gap": 43,
+          "dl_frame_gap": 47892
+        },
+        "applyAndRecoveryGapCounters": {
+          "frame_gap": 49663,
+          "tick_gap": 46,
+          "dl_frame_gap": 49662
+        },
+        "keyDeliveryThroughClosedModelMs": 0.75,
+        "timerModeHex": "000b",
+        "baselineWindowModelMs": 4,
+        "recoveryWindowModelMs": 4
+      },
+      {
+        "baselineStart": "cfstatus instructions=2988016275 ms=29053.727 pc=4000d192",
+        "baselineEnd": "cfstatus instructions=2988408752 ms=29057.728 pc=400208c6",
+        "activeStart": "cfstatus instructions=2988408752 ms=29057.728 pc=400208c6",
+        "activeEnd": "cfstatus instructions=2989100183 ms=29063.478 pc=4000ce92",
+        "baselineGapCounters": {
+          "frame_gap": 50268,
+          "tick_gap": 46,
+          "dl_frame_gap": 50267
+        },
+        "applyAndRecoveryGapCounters": {
+          "frame_gap": 48244,
+          "tick_gap": 21,
+          "dl_frame_gap": 48244
+        },
+        "keyDeliveryThroughClosedModelMs": 1.75,
+        "timerModeHex": "000b",
+        "baselineWindowModelMs": 4,
+        "recoveryWindowModelMs": 4
+      }
+    ],
+    "helperSha256": "4dc44497d0a45ca3db051cd4d35c54dc8616aaf713f1d9a6975d88412e83621e"
+  },
+  "functionalMeasurements": {
+    "maximumEmpty_0": {
+      "changedLocks": 512,
+      "operations": {
+        "lock": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              72803
+            ],
+            "totalInstructions": 72803,
+            "modelMilliseconds": 0.413749793986099
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              19891
+            ],
+            "totalInstructions": 19891,
+            "modelMilliseconds": 0.11304337942361573
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6455,
+              30,
+              20441,
+              30,
+              72996,
+              30
+            ],
+            "totalInstructions": 100090,
+            "modelMilliseconds": 0.5688256923487858
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 86,
+            "maxModelMicroseconds": 0.4887502202217562
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 6040,
+            "indexPlanning": 12020,
+            "finalRevalidation": 6741,
+            "publication": 46657,
+            "nativeFollowup": 1339,
+            "epilogue": 5
+          },
+          "guardTimerMax": 63
+        },
+        "clear": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              281221
+            ],
+            "totalInstructions": 281221,
+            "modelMilliseconds": 1.5982189032672385
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              12187
+            ],
+            "totalInstructions": 12187,
+            "modelMilliseconds": 0.06926045271909934
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6456,
+              30,
+              12737,
+              30,
+              281410,
+              30
+            ],
+            "totalInstructions": 300801,
+            "modelMilliseconds": 1.709494825499122
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 86,
+            "maxModelMicroseconds": 0.4887502202217562
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 6040,
+            "indexPlanning": 246520,
+            "finalRevalidation": 6741,
+            "publication": 20556,
+            "nativeFollowup": 1339,
+            "epilogue": 24
+          },
+          "guardTimerMax": 63
+        }
+      }
+    },
+    "maximumEmpty_1": {
+      "changedLocks": 512,
+      "operations": {
+        "lock": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              73012
+            ],
+            "totalInstructions": 73012,
+            "modelMilliseconds": 0.4149375706840798
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              19891
+            ],
+            "totalInstructions": 19891,
+            "modelMilliseconds": 0.11304337942361573
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6466,
+              30,
+              20441,
+              30,
+              73205,
+              30
+            ],
+            "totalInstructions": 100310,
+            "modelMilliseconds": 0.5700759836098181
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 86,
+            "maxModelMicroseconds": 0.4887502202217562
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 6040,
+            "indexPlanning": 12020,
+            "finalRevalidation": 6741,
+            "publication": 46847,
+            "nativeFollowup": 1339,
+            "epilogue": 24
+          },
+          "guardTimerMax": 63
+        },
+        "clear": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              281010
+            ],
+            "totalInstructions": 281010,
+            "modelMilliseconds": 1.5970197602850664
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              12187
+            ],
+            "totalInstructions": 12187,
+            "modelMilliseconds": 0.06926045271909934
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6465,
+              30,
+              12737,
+              30,
+              281199,
+              30
+            ],
+            "totalInstructions": 300599,
+            "modelMilliseconds": 1.7083468307958103
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 86,
+            "maxModelMicroseconds": 0.4887502202217562
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 6040,
+            "indexPlanning": 220135,
+            "finalRevalidation": 32934,
+            "publication": 20556,
+            "nativeFollowup": 1339,
+            "epilogue": 5
+          },
+          "guardTimerMax": 63
+        }
+      }
+    },
+    "maximumEmpty_2": {
+      "changedLocks": 512,
+      "operations": {
+        "lock": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              72865
+            ],
+            "totalInstructions": 72865,
+            "modelMilliseconds": 0.41410214879602636
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              19891
+            ],
+            "totalInstructions": 19891,
+            "modelMilliseconds": 0.11304337942361573
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6466,
+              30,
+              20441,
+              30,
+              73058,
+              30
+            ],
+            "totalInstructions": 100163,
+            "modelMilliseconds": 0.5692405617217647
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 86,
+            "maxModelMicroseconds": 0.4887502202217562
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 6040,
+            "indexPlanning": 12020,
+            "finalRevalidation": 6741,
+            "publication": 46719,
+            "nativeFollowup": 1339,
+            "epilogue": 5
+          },
+          "guardTimerMax": 63
+        },
+        "clear": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              282935
+            ],
+            "totalInstructions": 282935,
+            "modelMilliseconds": 1.6079598088190998
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              12187
+            ],
+            "totalInstructions": 12187,
+            "modelMilliseconds": 0.06926045271909934
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6465,
+              30,
+              12737,
+              30,
+              283124,
+              30
+            ],
+            "totalInstructions": 302524,
+            "modelMilliseconds": 1.719286879329844
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 86,
+            "maxModelMicroseconds": 0.4887502202217562
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 6040,
+            "indexPlanning": 246064,
+            "finalRevalidation": 6741,
+            "publication": 20556,
+            "nativeFollowup": 1339,
+            "epilogue": 2194
+          },
+          "guardTimerMax": 63
+        }
+      }
+    },
+    "maximumEmpty_3": {
+      "changedLocks": 512,
+      "operations": {
+        "lock": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              100821
+            ],
+            "totalInstructions": 100821,
+            "modelMilliseconds": 0.5729800692206707
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              19891
+            ],
+            "totalInstructions": 19891,
+            "modelMilliseconds": 0.11304337942361573
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6466,
+              30,
+              20441,
+              30,
+              101014,
+              30
+            ],
+            "totalInstructions": 128119,
+            "modelMilliseconds": 0.7281184821464091
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 86,
+            "maxModelMicroseconds": 0.4887502202217562
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 32285,
+            "indexPlanning": 12020,
+            "finalRevalidation": 6741,
+            "publication": 46913,
+            "nativeFollowup": 1339,
+            "epilogue": 1522
+          },
+          "guardTimerMax": 63
+        },
+        "clear": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              281208
+            ],
+            "totalInstructions": 281208,
+            "modelMilliseconds": 1.5981450224199956
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              12187
+            ],
+            "totalInstructions": 12187,
+            "modelMilliseconds": 0.06926045271909934
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              8161,
+              30,
+              12737,
+              30,
+              281397,
+              30
+            ],
+            "totalInstructions": 302493,
+            "modelMilliseconds": 1.7191107019248801
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 86,
+            "maxModelMicroseconds": 0.4887502202217562
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 6040,
+            "indexPlanning": 246526,
+            "finalRevalidation": 6741,
+            "publication": 20556,
+            "nativeFollowup": 1339,
+            "epilogue": 5
+          },
+          "guardTimerMax": 63
+        }
+      }
+    },
+    "model": {
+      "instructionsPerMillisecond": 175959.0,
+      "hardware": false,
+      "scope": "Playing disposable MKII emulator fixture; elapsed instructions include interrupts; no hardware cycle or audio qualification"
+    }
+  }
+}

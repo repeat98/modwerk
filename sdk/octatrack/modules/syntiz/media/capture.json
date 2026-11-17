@@ -1,0 +1,58 @@
+{
+ "scope": "Actual screens after normal emulator boot and USB module install",
+ "inputs": {
+  "emulator": {
+   "sha256": "26fb1b8f835bef07a6be72efa4eafc4ae33287dd184e08941ae0e70c8a56ee7f",
+   "bytes": 2909016
+  },
+  "base": {
+   "sha256": "8963b03acccb3e8aea2c7f5f8a9a2f7c12692609eb3a189245e94672693fe8d5",
+   "bytes": 1299981
+  },
+  "proof": {
+   "sha256": "97a7bc654cbc89cae053d59978b9495147cf4419fda6a9a148e993dba55ccfe7",
+   "bytes": 81897
+  },
+  "symbols": {
+   "sha256": "f7a95f63c52e3975902a3d06a1bb1a90a6f99d05af1bc74f8e06695966673518",
+   "bytes": 137281
+  },
+  "package": {
+   "sha256": "d0af83365984248117abff39748b015c631743038b1523e442adb9d159e99292",
+   "bytes": 54272
+  },
+  "card": {
+   "sha256": "f0bc7b9410a1a193758dfecba814ca6645a6d30a9d48d4c3f471f5df3b6a1503",
+   "bytes": 67108864
+  }
+ },
+ "baseIdentity": "be678c65f584137216a466a23eb83741fa6ea3f23bf21f2324eab09f56895028",
+ "hardware": false,
+ "functionalSuiteCompleted": false,
+ "usbUndoTested": false,
+ "moduleVersion": "0.1.0-experimental",
+ "modulePackageSha256": "d0af83365984248117abff39748b015c631743038b1523e442adb9d159e99292",
+ "images": [
+  {
+   "path": "ot-chooser.png",
+   "sha256": "ddedc3c80c6406d94040d24b813569af70af5eabdec01e8297375ce8835662cc",
+   "scale": 6
+  },
+  {
+   "path": "ot-model-list.png",
+   "sha256": "5e38d16063f17adaf48acf9979e58a8dd3bdd6be11198cde6b85ad450d4bf3ad",
+   "scale": 6
+  },
+  {
+   "path": "ot-saw-src.png",
+   "sha256": "7cdadad5e3ef73c0c392b622c7c06e22f2384802c974ec77028bd3274fdf047b",
+   "scale": 6
+  },
+  {
+   "path": "ot-table-src.png",
+   "sha256": "9710686d8803bf57dbeae9713be9cecc71aca1ebbe24ddf9c08d36ce2f496736",
+   "scale": 6
+  }
+ ],
+ "plan": "tools: press YES (SET DATE/TIME), TRACK1, FUNC+SRC, DOWN x4, capture; YES, SRC, capture; double tap TRACK1, UP x3, DOWN x3, capture; YES, NO, SRC, capture"
+}

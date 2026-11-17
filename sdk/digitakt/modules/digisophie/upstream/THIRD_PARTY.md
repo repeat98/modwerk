@@ -32,3 +32,11 @@ GPL-2.0-or-later, not MIT. Its full license is retained at
 `diagnostics/digihealth/LICENSE`. The local change makes FAST AUDIO opt-in
 instead of enabling it at boot. Its source is included so that the exact
 diagnostic configuration used during hardware testing is reproducible.
+
+## digisophie-dn (Digitone port)
+
+`digisophie-dn/` carries SOPHIE to the Digitone mk1/Keys (machine 11 SOPH,
+OS 1.43 + 1.44) through the stock filter/mixer/AMP. It reuses the shared
+`sophie.c` core above; Digitone-only behavior lives in the adapter, not
+the core. Developed alongside this repo at
+[x2k77m1/digisophie-dn](https://github.com/x2k77m1/digisophie-dn).

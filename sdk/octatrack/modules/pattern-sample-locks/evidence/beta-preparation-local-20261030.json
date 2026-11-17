@@ -1,0 +1,430 @@
+{
+  "schema": 1,
+  "recorded": "2026-10-30",
+  "status": "local incomplete qualification; unpublished",
+  "sourceCheckpoint": "8d61a18d",
+  "pushed": false,
+  "deviceAccessed": false,
+  "preparation": {
+    "hardware": false,
+    "published": false,
+    "releaseReady": false,
+    "moduleVersion": "0.1.8-experimental",
+    "packageSha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+    "bytes": 9652,
+    "initializedBytes": 8748,
+    "bssBytes": 1328,
+    "relocations": 167,
+    "cMatchesCommittedAssembly": true,
+    "mcf54455GuardPassed": true,
+    "moduleOwnedImageAndBssBytes": 10076,
+    "sourceLoopLimits": {
+      "tracks": 8,
+      "stepsPerTrack": 64,
+      "changedFields": 512,
+      "otherLockChecksOnClear": 15872,
+      "shortPublicationGuards": 64,
+      "workingAndMirrorByteWrites": 1024,
+      "stockRefreshCalls": 9
+    },
+    "publicWrapperRebuildIdentical": true,
+    "publicWrapperAttempts": [
+      {
+        "check": false,
+        "exitCode": 1
+      },
+      {
+        "check": true,
+        "exitCode": 1
+      }
+    ],
+    "publicWrapperStockScansPassed": false,
+    "publicWrapperMatchesTestedPackage": true,
+    "privateCatalogueFixtureOnly": true,
+    "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+    "compilerFlags": [
+      "-mcpu=54455",
+      "-Os",
+      "-std=c99",
+      "-ffreestanding",
+      "-fno-builtin",
+      "-fno-common",
+      "-fno-tree-loop-distribute-patterns",
+      "-fno-asynchronous-unwind-tables",
+      "-fno-unwind-tables",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I",
+      "/work/sdk/runtime/loader",
+      "-fno-late-combine-instructions",
+      "-fstack-usage",
+      "-fcallgraph-info=su"
+    ],
+    "stackFrames": [
+      {
+        "function": "close_view",
+        "frameBytes": 0,
+        "kind": "static"
+      },
+      {
+        "function": "text",
+        "frameBytes": 0,
+        "kind": "static"
+      },
+      {
+        "function": "psl_write_step",
+        "frameBytes": 8,
+        "kind": "static"
+      },
+      {
+        "function": "source_valid",
+        "frameBytes": 8,
+        "kind": "static"
+      },
+      {
+        "function": "pixel",
+        "frameBytes": 4,
+        "kind": "static"
+      },
+      {
+        "function": "psl_prepare",
+        "frameBytes": 60,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "psl_validate",
+        "frameBytes": 32,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "psl_apply",
+        "frameBytes": 64,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "psl_font_text_at",
+        "frameBytes": 40,
+        "kind": "static"
+      },
+      {
+        "function": "psl_font_clear",
+        "frameBytes": 36,
+        "kind": "static"
+      },
+      {
+        "function": "psl_font_small_text",
+        "frameBytes": 52,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "psl_font_box",
+        "frameBytes": 68,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "psl_font_dashed_box",
+        "frameBytes": 68,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "psl_font_invert",
+        "frameBytes": 40,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "psl_ui_phase",
+        "frameBytes": 0,
+        "kind": "static"
+      },
+      {
+        "function": "psl_ui_open",
+        "frameBytes": 0,
+        "kind": "static"
+      },
+      {
+        "function": "psl_native_source",
+        "frameBytes": 44,
+        "kind": "static"
+      },
+      {
+        "function": "psl_native_context",
+        "frameBytes": 0,
+        "kind": "static"
+      },
+      {
+        "function": "psl_native_popup",
+        "frameBytes": 0,
+        "kind": "static"
+      },
+      {
+        "function": "module_tick",
+        "frameBytes": 12,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "psl_native_cursor",
+        "frameBytes": 0,
+        "kind": "static"
+      },
+      {
+        "function": "psl_native_set_cursor",
+        "frameBytes": 0,
+        "kind": "static"
+      },
+      {
+        "function": "move",
+        "frameBytes": 20,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "module_enc",
+        "frameBytes": 16,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "psl_native_close_popup",
+        "frameBytes": 0,
+        "kind": "static"
+      },
+      {
+        "function": "psl_native_redraw",
+        "frameBytes": 0,
+        "kind": "static"
+      },
+      {
+        "function": "psl_native_text",
+        "frameBytes": 60,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "psl_native_part_menu_draw",
+        "frameBytes": 96,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "module_draw",
+        "frameBytes": 116,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "psl_native_transport",
+        "frameBytes": 0,
+        "kind": "static"
+      },
+      {
+        "function": "psl_native_commit",
+        "frameBytes": 344,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "module_key",
+        "frameBytes": 104,
+        "kind": "dynamic,bounded"
+      },
+      {
+        "function": "psl_open",
+        "frameBytes": 36,
+        "kind": "dynamic,bounded"
+      }
+    ],
+    "authoredStackPaths": {
+      "module_key": {
+        "authoredOnlyBytes": 500,
+        "path": [
+          "module_key",
+          "psl_native_commit",
+          "psl_validate",
+          "source_valid"
+        ]
+      },
+      "module_draw": {
+        "authoredOnlyBytes": 296,
+        "path": [
+          "module_draw",
+          "psl_native_part_menu_draw",
+          "psl_font_box",
+          "pixel"
+        ]
+      },
+      "module_tick": {
+        "authoredOnlyBytes": 16,
+        "path": [
+          "module_tick",
+          "psl_native_context"
+        ]
+      },
+      "module_enc": {
+        "authoredOnlyBytes": 44,
+        "path": [
+          "module_enc",
+          "move",
+          "psl_native_set_cursor"
+        ]
+      },
+      "psl_open": {
+        "authoredOnlyBytes": 40,
+        "path": [
+          "psl_open",
+          "psl_native_popup"
+        ]
+      }
+    },
+    "unresolvedCallGraphEdges": [
+      {
+        "caller": "psl_native_close_popup",
+        "target": "__indirect_call"
+      },
+      {
+        "caller": "psl_native_text",
+        "target": "__indirect_call"
+      },
+      {
+        "caller": "psl_native_part_menu_draw",
+        "target": "__indirect_call"
+      },
+      {
+        "caller": "psl_native_part_menu_draw",
+        "target": "__indirect_call"
+      },
+      {
+        "caller": "psl_native_commit",
+        "target": "__indirect_call"
+      },
+      {
+        "caller": "psl_native_commit",
+        "target": "__indirect_call"
+      },
+      {
+        "caller": "psl_open",
+        "target": "__indirect_call"
+      }
+    ],
+    "stackLimitations": "Authored-only conservative sums include 4-byte return words at internal calls. Stock callees, callers and interrupt nesting are additional; no complete system stack bound is claimed.",
+    "cpuLimitations": "Emulator model times do not establish physical WCET. Stock callees, memory contention and hardware timing remain to qualify.",
+    "currentPublicBase": "18902326cb138804e330a133355281a703bd2ef999deae1919b1046b03efe33f",
+    "sourceHashes": {
+      "translation.c": "307d7f0d95a8eef8746c069472123555eebd40635e9401c3946e7d51e69113a5",
+      "native.c": "a5d11e7320a91b00457fbe1f89453e8a432e65877e92af0aa64705f6b2a6050e",
+      "engine.c": "a41ace651c2ff9f72d43e783d6121c64f51fe6d21e49bc60cf3b26a97ebdaa38",
+      "engine.h": "d1c067250f8bc555944303fb526cd9ec22c281c0f4773c95ed6fbdd332925ca1",
+      "ui.c": "3d452769338be043c327ab6bf0a8db9b09c0c7504f62710c46d32d205a75f4c7",
+      "ui.h": "514cbdcfd88777769e4883d020d7fe6a2b5301a5d04c136eb67f7b7bb54f45bd",
+      "font.c": "63104792b675f7cce15582b554eaf4b05e008a63c2433db7fecb71210e115079",
+      "font.h": "a94a3103633a0084e11d53fbe46d0590812011062aa01d2c28de35b60ef8ea99",
+      "unit.s": "837e44f48fa137444e14755d96011731c8fde29a73fa877ffc35edac3510473f",
+      "manifest.py": "ff0d9749fa181a8dabadddc711295a987d58c0d7f3516556aadbae97b6e7d7ab",
+      "runtime.json": "710371710bd6c2522067c62f36c6ffbf211232b88c75a71a3dab2ac913e9742e"
+    },
+    "builderHashes": {
+      "scripts/octatrack-module-packages.py": "22905335e59b5f98b0f457155db8b33fa52041e6d11e1c4629d87d3dcba42e4d",
+      "sdk/machines/octatrack/elekloader/module_packages.py": "26247dd2448e8cd281cea83c999139931cbc0766bbbab553d2048ab8a2c13824",
+      "sdk/runtime/loader/build.py": "e8d2b83d2da6964fd5c48ff5b58fbcf2edd67d377404a1d96c497586b51a6c43"
+    },
+    "preparationHelperSha256": "9a7673fbf6297949c761655a1fa8c0939efee19854e67067ffb5f9d208238977"
+  },
+  "browserComponents": {
+    "hardware": false,
+    "published": false,
+    "privateCatalogueFixtureOnly": true,
+    "packageSha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+    "basePreflightCases": [
+      {
+        "base": "18902326cb138804e330a133355281a703bd2ef999deae1919b1046b03efe33f",
+        "standaloneAddAndRemovalUndo": true
+      },
+      {
+        "base": "b4bd202cf777bf5d54f1d57d8265be450ab5cd03b6ccfa070838c1f9013f4525",
+        "standaloneAddAndRemovalUndo": true
+      },
+      {
+        "base": "2d4e2743df9568b24b432d05256a864044ec9015c5fda0a374b6305d0ce7bae4",
+        "standaloneAddAndRemovalUndo": true
+      },
+      {
+        "base": "fc5901e98b48fe81b9dd728b02b3cdae99a55107eb7c2fa1fa81eb276a0c66a2",
+        "standaloneAddAndRemovalUndo": true
+      },
+      {
+        "base": "b6fa9cafa42252d294149480a3e04c730c984453c9ccc7f7f1f4a205439d39d5",
+        "standaloneAddAndRemovalUndo": true
+      },
+      {
+        "base": "0ebb20991b3340bf820d155ceccf71018e409987880ca6b1b2478007638d6dd1",
+        "standaloneAddAndRemovalUndo": true
+      },
+      {
+        "base": "f4c1667e0d1a52248a1adb590e1ccfae0d3e27988c24bfe21ad71372ee8942cd",
+        "standaloneAddAndRemovalUndo": true
+      }
+    ],
+    "allPackagePreflightCount": 29,
+    "companionAdditionChanges": 1,
+    "inventoryMapping": true,
+    "oldAbiAndSiteLimitRefusedBeforeFetch": true,
+    "corruptedPackageRefused": true,
+    "cardLinkerComponentCases": [
+      {
+        "base": 1090519040,
+        "bytes": 8748,
+        "sha256": "0db28a70dcf17fa9279fd8806e033e44f9402cbae964842863415b877a84390a",
+        "globalsAndMemoryEndMatch": true
+      },
+      {
+        "base": 1090531456,
+        "bytes": 8748,
+        "sha256": "8303c000c14dba508698ccc5baf897dfd0532905ac042526a616d6aeed9190c1",
+        "globalsAndMemoryEndMatch": true
+      },
+      {
+        "base": 1107296256,
+        "bytes": 8748,
+        "sha256": "92cf8e59dafdc9be88e073297421be2a64052ac299b086516849fb0618eafabb",
+        "globalsAndMemoryEndMatch": true
+      }
+    ],
+    "completeCardCompositionTested": false,
+    "limitations": "In-memory catalogue fixture and production component checks only. No device, audio, native stock-only UI integration, stock-free approval or public catalogue admission is established."
+  },
+  "authoredPublicationInstructionBound": {
+    "maximumInstructions": 87,
+    "formula": "1 raise + 3 setup + 9 * 8 loop + 10 finish + 1 restore",
+    "raiseImageOffset": 58,
+    "loopImageOffsets": [
+      76,
+      100
+    ],
+    "restoreImageOffset": 136,
+    "physicalCycles": null,
+    "condition": "Reviewed exact authored disassembly; 1..8 edits per call. Does not bound physical memory waits, callers or exceptions."
+  },
+  "stockScanRejection": {
+    "buildExitCode": 1,
+    "checkExitCode": 1,
+    "longestWeightedNonzeroRun": 14,
+    "weightedFailureThreshold": 12,
+    "secondScannerMatch": {
+      "packageOffset": 3828,
+      "bytes": 16,
+      "compiledRoutine": "module_enc",
+      "offsetFromRoutineEntry": 6
+    },
+    "classification": "Fresh authored C reproduces the package; compiler-pattern collision is supported, no scan exception granted.",
+    "logSha256": "8a9d4ec82a34c8819e0107196d3b5e50455b3f1ec0815fd65fa5114f41ed5bd6"
+  },
+  "validation": {
+    "portablePlannerUiAndProductionNativeSanitizers": "pass",
+    "existingVitestFiles": 3,
+    "existingVitestTestsPassed": 91,
+    "draftDoctor": "rejects publication; declaration compatibility, category and UI claims pass"
+  },
+  "browserHarnessSha256": "e66d6a42c2e4f4a6679b938b2809af0405271154e7b8a3c10f65c43e347e4795",
+  "remaining": [
+    "physical WCET including stock callees and permitted interrupts",
+    "total stack bound and actual stack headroom",
+    "stock scan rejection review",
+    "complete native stock-only card integration and comparison",
+    "exact-current-base supervised hardware qualification",
+    "owner first-release approval"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "version": "0.1.3-experimental",
+  "assemblySha256": "4bb74803178a809892e542d78608265a3a682892e26ac29ac87e63aa44835a0f",
+  "dspHostSha256": "786bb3a61cb710b660937157e379a37d2b6e76f458070f6962e0313ffff059a2",
+  "sampleRate": 44100,
+  "framesPerBlock": 16,
+  "blocks": 85444,
+  "seconds": 31.000090702947844,
+  "instances": 8,
+  "instancesPerCore": 4,
+  "modeledLfosPerTrack": 3,
+  "targetSlotsLockedPerStep": 12,
+  "guardPassed": true,
+  "dirtySeed": 12648430,
+  "clobbers": 0,
+  "hangs": 0,
+  "splitPerInstance": [
+    1,
+    8,
+    15,
+    0,
+    1,
+    8,
+    15,
+    0
+  ],
+  "conditions": "31-second native DSP-only replay of three tempo-derived LFO target streams per instance (120 BPM; 1/2/4-beat periods), rapid endpoint locks and 12 parameter-byte targets each step. Only SPD/RNG/MIX have an audible path; other slots are inactive. Both cores, four independent rings each, 0.98-FS bursts plus tones, dirty state and local/shared canaries. ColdFire sequencer/LFO, scenes, MIDI, transport, project and physical timing are not tested."
+}

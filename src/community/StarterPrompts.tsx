@@ -34,14 +34,14 @@ export function StarterPrompts({ login, machine, onMachine, task, repository, in
           <select value={starter.id} onChange={event => setStarterId(event.target.value)}>{starters.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select>
         </label>
         <label className="starter-field starter-field-wide"><span>{starter.port ? 'Module name or source link' : 'Your idea'} <small>optional</small></span>
-          <textarea rows={2} value={idea} onChange={event => setIdea(event.target.value)} placeholder={starter.port ? 'The module name and a link to its source' : 'What should it do? Describe the controls, sound or behaviour.'} />
+          <textarea rows={2} value={idea} onChange={event => setIdea(event.target.value)} placeholder={starter.port ? 'The module name and a link to its source' : 'What should it do?'} />
         </label>
       </> : <>
         <label className="starter-field"><span>Module ID or source link</span><input value={module} onChange={event => setModule(event.target.value)} placeholder="e.g. miniverb" /></label>
         <label className="starter-field starter-field-wide"><span>Change or GitHub issue link <small>optional</small></span><textarea rows={2} value={change} onChange={event => setChange(event.target.value)} placeholder="Describe the improvement, or link the report to fix." /></label>
       </>}
     </div>
-    <div className="developer-prompt-actions"><span>Hands the work to the Modwerk skills in your fork.</span><CopyButton text={prompt} label="Copy prompt" primary /></div>
-    <details className="starter-prompt"><summary>Preview complete prompt</summary><pre tabIndex={0} aria-label="Starter prompt">{prompt}</pre></details>
+    <div className="developer-prompt-actions"><span>Paste it into your agent, in your Modwerk folder.</span><CopyButton text={prompt} label="Copy prompt" primary /></div>
+    <details className="starter-prompt"><summary>Show the prompt</summary><pre tabIndex={0} aria-label="Starter prompt">{prompt}</pre></details>
   </div>
 }

@@ -1,0 +1,104 @@
+{
+  "date": "2026-11-01",
+  "machine": "analog-rytm-mkii",
+  "moduleVersion": "0.1.0-experimental",
+  "sourceSha256": "f0a29634b48a7e74232822b4d8bd13cae0a9513850fd2435a1f32f4e04f174c5",
+  "sourceHashMethod": "SHA-256 of UTF-8 JSON with sorted module-relative build.json/src paths mapped to file SHA-256, no whitespace.",
+  "inputs": {
+    "build.json": "b959c9df51f9d338e933a3b9b0d5cfa89a2f4a7f3142805aeae02dbbbf66422b",
+    "src/feedback.c": "d5cd8106ffbeeaa5311ddc621651820457488adae4f83feb9a112659b352398c",
+    "src/feedback.h": "457c3d1b9fbb0bed310253720a4807f9fddfb3556eedb2bc346c8db61b835e6c",
+    "src/labels.s": "fdee36dcc74e421f4bda9699f5d04f7c7c9a7c50f3c1b0b9226006b3c732dea6",
+    "src/main.c": "b6cc27ef5aebcfd8ec268b9edbab6530c96eb3c1e8e247ce6dc59b716ee1e6f6"
+  },
+  "firmwareSha256": "7bb7fb434981d0d5f144cfdb7c8e6bf29c10c849fcdb6207a5d72e17796c2b05",
+  "emulatorRevision": "2ac0f1f09e0c126d314b87de494f8da2848cfa8b",
+  "sdkRevision": "dc6ac1fd6792eeb3ab217b6ab2d6b73aa7aa30f6",
+  "packageMemory": {
+    "runBytes": 1974,
+    "bssBytes": 688,
+    "fastBytes": 0,
+    "includesCore": false,
+    "toolchain": "Development m68k-linux-gnu; exact compiler version not captured."
+  },
+  "outputProbe": {
+    "status": "PASS",
+    "messages": 673,
+    "assignments": 84,
+    "automatic_repeats": 6,
+    "track_level_before": 37,
+    "track_level_after": 55,
+    "sent_counter": 673,
+    "limits": "Emulator only; RAM-configured; UI, flood, persistence and hardware pending."
+  },
+  "lifecycle": [
+    {
+      "test": "disabled",
+      "status": "PASS",
+      "new_output_bytes": 0,
+      "stock_level": 12
+    },
+    {
+      "test": "encoder-int",
+      "status": "PASS",
+      "new_output_bytes": 0,
+      "stock_level": 12
+    },
+    {
+      "test": "nrpn-mode",
+      "status": "PASS",
+      "new_output_bytes": 0,
+      "stock_level": 12
+    },
+    {
+      "test": "usb-only",
+      "status": "PASS",
+      "new_output_bytes": 0,
+      "stock_level": 12
+    },
+    {
+      "test": "track-1-channel-off",
+      "status": "PASS",
+      "assignments": 77
+    },
+    {
+      "test": "track-1-reassigned-to-channel-16",
+      "status": "PASS",
+      "messages": 253
+    },
+    {
+      "test": "stock-kit-quick-save-and-reload",
+      "status": "PASS",
+      "values": [
+        55,
+        61,
+        23,
+        11,
+        73,
+        29,
+        41
+      ]
+    },
+    {
+      "test": "feedback-enabled-after-virtual-power-cycle",
+      "status": "PASS",
+      "enabled": 1
+    },
+    {
+      "test": "60-second-DIN-wire-rate-flood",
+      "status": "PASS",
+      "input_bytes": 187538,
+      "new_feedback_messages": 5269,
+      "coalesced": 7878,
+      "deferred": 0,
+      "limits": "No hang and output progress only; audible/stuck-note and hardware timing not qualified."
+    }
+  ],
+  "pc12": "Physical USB PC12 and emulated Rytm: automatic 2-second feedback observed, initial pickup 55 observed, smooth ten-second movement reported by developer.",
+  "limits": [
+    "No Rytm hardware qualification.",
+    "No pinned release package or browser publication.",
+    "No measured worst-event CPU/IRQ timing.",
+    "Queue-full firmware execution not qualified."
+  ]
+}

@@ -1,0 +1,1 @@
+SDK: `scripts/link-image.mjs` takes `--lock-in` and `--lock-out`, so a local Rytm image built from the lockfile of the image already on the unit keeps every module's saved settings where its projects expect them, as the site's builds do. It also prints the linker's storage notes. Nothing changes for players.

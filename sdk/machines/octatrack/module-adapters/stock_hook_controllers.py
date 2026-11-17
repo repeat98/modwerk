@@ -32,7 +32,7 @@ _spec = importlib.util.spec_from_file_location('stock_hook_private_paths', _ROOT
 _private = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(_private)
 
 SOURCE_PINS = {
-    'modules/sidechain-compressor/manifest.py': '62f004df8eb3e727da05430b18785142f6f3de6c1418b42de49b9073d6f17e44',
+    'modules/sidechain-compressor/manifest.py': 'ad3a66d0644a61a8b388f4ca75cd59987e61f527c26c603c71e96bd1ecce7418',
     'modules/sidechain-compressor/patch_sidechain.s': '0cbd52f14497253f067f91f54e9bbeb96176e73bb8a438edb89aaf3d09abd325',
     'modules/sidechain-compressor/ui_switch.s': '643c8e68a6f914896740406599369c5d6e0112f1b2f388233a2bfcda10b7b4ab',
     'modules/output-matrix/manifest.py': '65d1ae009dc1c956ce2036181667434e31b361179ca138e5c8f1091227b55619',

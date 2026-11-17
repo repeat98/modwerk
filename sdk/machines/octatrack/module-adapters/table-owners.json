@@ -4,11 +4,11 @@
  "owners": [
   {
    "module": "mute-modes",
-   "package": "public/octatrack-modules/mute-modes/0.2.1-experimental.mwrm",
+   "package": "public/octatrack-modules/mute-modes/0.2.2-experimental.mwrm",
    "declaration": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes.declaration.json",
    "recipe": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes.recipe.json",
-   "reviewedSha256": "2e2b3da9570fa1efebeaae2ab687cbce0714fdae50bec731039be052e7eddeba",
-   "approval": "repeat98, 14 Oct 2026: open every module for the beta, hardware evidence waived per version"
+   "reviewedSha256": "078d3bf27d4732fab69fe029188a407121805ab94e8ba9e246f8ba2d764885ec",
+   "approval": "repeat98, 4 Nov 2026: Mute Modes 0.2.2 approved as an owner-reviewed update; no owner unit run of this package"
   }
  ]
 }

@@ -126,8 +126,8 @@ static int same(const void *a, const void *b, unsigned n)
 static int nonzero(const uint8_t *p, unsigned n) { while (n--) if (*p++) return 1; return 0; }
 static unsigned cores(unsigned feature) { return MW_DSP_CORES(feature); }
 /* stock_hooks reset totals, from the ledger (dsp_sites.py --check keeps them equal to resident_dsp.resource_ranges):
- * SC Y $7f0+$210 and the shared tail $202; Matrix Y $c00+$c1 on core A; Analog BD X $2840-$36ff on both cores; the key
- * bus the shared tail $202 first (its seed and counter lead it), then Y $800+$200. */
+ * SC Y $ff0+$10, Y $7e00+$200 and the shared tail $202; Matrix Y $c00+$c1 on core A; Analog BD X $2840-$36ff on both
+ * cores; the key bus the shared tail $202 first (its seed and counter lead it), then Y $7e00+$200. */
 #define KEYBUS MW_DSP_KEYBUS /* the key bus: a base feature, held for packages and Sidechain */
 #define KEYBUS_WORDS MW_DSP_RESET_WORDS(MW_DSP_KEYBUS)
 #define KEYBUS_SPLIT MW_DSP_RESET_SPLIT(MW_DSP_KEYBUS) /* its first owned range: one per reset chunk */
@@ -424,7 +424,7 @@ static int reset_source(void *u, const struct mw_controller_binding *b, unsigned
         return m && engine_init(&m->dsp, c, offset, words, count) && *count <= n - offset;
     }
     unsigned k = n - offset > MW_CONTROLLER_RESET_CHUNK ? MW_CONTROLLER_RESET_CHUNK : n - offset;
-    if (f == 1u && offset < 528u && k > 528u - offset) k = 528u - offset; /* one owned range per chunk */
+    if (k > MW_DSP_RESET_END(f, offset) - offset) k = MW_DSP_RESET_END(f, offset) - offset; /* one owned range per chunk */
     *words = kb_zeros; *count = k; return 1;
 }
 /* Known from the dormant boot upload and every ACKed owned CAS since; any

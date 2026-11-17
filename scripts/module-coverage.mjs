@@ -17,12 +17,9 @@ export const COMPARED_BEFORE_RECORDS = {
   previewvol: '86deed960c094df1d0d2a4a9d3a955a62e804175f2f22d8ac53f5eff141aeaca',
   'cc-map': '85ac180b75837d7681c74325b29a3a78416d3b2a8890fb6394f033c27993393d',
 }
-// Modules that do not compose with others (MIDI Scenes builds on its own) have no coverage comparison.
-export const NOT_COMPOSED = ['midi-scenes']
-
-/** The modules a new module is compared beside: every offered module except MIDI Scenes, which only builds alone. */
+/** The modules a new module is compared beside: every offered module. */
 export function comparisonPool(availableIds) {
-  return availableIds.filter(id => id !== 'midi-scenes')
+  return [...availableIds]
 }
 
 // A small deterministic generator, so the same module and pool always give the same sample.

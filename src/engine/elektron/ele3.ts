@@ -135,7 +135,7 @@ export function packMain(image: Uint8Array): Uint8Array { return packSection(ima
  * over it. Returns the image and the smallest distance between the writer and the next unread stream byte; a distance
  * above zero throughout means the in-place result equals an ordinary depack.
  */
-export function inplaceDepack(stored: Uint8Array, device: Ele3Device): { image: Uint8Array; gap: number } {
+export function inplaceDepack(stored: Uint8Array, device: Pick<Ele3Device, 'mainLoad' | 'stage'>): { image: Uint8Array; gap: number } {
   const stream = packedStream(stored), length = stream.length - 8, base = device.stage - device.mainLoad
   let position = 8, tag = 0, remaining = 0, lastOffset = 1, gap = Infinity
   const out: number[] = []

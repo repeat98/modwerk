@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.1.2-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "Card builds can now combine BBD Delay with Sidechain Compressor; before, the two were refused together.",
+      "Keeps running on T1 and T5 beside Sidechain Compressor and Sidechain Ringmod after the next beta base moves their key bus.",
+      "No change to the sound."
+    ]
+  },
+  {
     "version": "0.1.1-experimental",
     "date": "2026-10-15",
     "changes": [

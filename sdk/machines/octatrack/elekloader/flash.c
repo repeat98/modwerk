@@ -154,6 +154,10 @@ static void upgrade_screen(int step, uint32_t done, uint32_t total)
     else modwerk_flash_progress = 1u + (step == 3 ? 1000u : step == 1 ? 100u + 850u * done / total : 100u * done / total);
 }
 static const char *note; /* a popup the next tick shows (stock's popup from the sys task, as ep0.c's) */
+/* For status.c's update screen. Outcome: how many of this base's own writes ended, in the high bits, and whether the
+ * last one was saved (1) or not (0). Trial: this base runs from RAM while the slot NOR starts next names another base,
+ * so an update is under way and its write is still to come (set at the slots' first look). */
+volatile uint32_t modwerk_flash_outcome, modwerk_flash_trial;
 
 /* The packed .run as MAIN loaded it: its digest and length with its header, 0 until .boot took them. */
 static uint8_t run_digest[MU_DIGEST_BYTES];
@@ -416,6 +420,7 @@ static void slots_refresh(void)
         if (n >= 0 && !s[n].confirmed && s[n].tries > SLOT_TRIES) r[6] |= 1u; /* the stub started the other one */
         if (r[5] != 0xff && s[r[5]].confirmed) r[6] |= 2u;
         newest_named = n >= 0 && named(&s[n]);
+        modwerk_flash_trial = run >= 0 && named(&s[run]) && differ(s[run].identity, modwerk_base_digest, MU_DIGEST_BYTES);
         if (r[6] & 1u) slots_note = 2;
         else if (n >= 0 && r[5] == n && !s[n].confirmed && s[n].tries == 1u) slots_note = 1;
     }
@@ -447,7 +452,7 @@ int modwerk_flash_tick(void)
     if (ticks == SLOTS_LOOK_TICKS) return due_look = 1;
     if (ticks == SLOTS_NOTE_TICKS && slots_note)
         popup(slots_note == 1 ? "BASE UPDATED" : "UPDATE UNDONE");
-    if (note && !busy) { popup(note); note = 0; modwerk_flash_progress = 0; }
+    if (note && !busy) { popup(note); note = 0; }
     if (!asked && ticks >= SLOTS_CONFIRM_TICKS && (modwerk_flash_host || newest_named)) return asked = due_confirm = 1;
     return 0;
 }
@@ -484,6 +489,8 @@ static enum mu_publication f_publish(void *u)
     if (restart) modwerk_flash_quiesced = 1, modwerk_boot_quiesce();
     int ok = two ? update(base == 2) : convert(old);
     slots_refresh(); busy = 0;
+    /* A write that failed left its box over everything until the next start: nothing took it down. */
+    if (!restart) modwerk_flash_progress = 0, modwerk_flash_outcome = (modwerk_flash_outcome & ~1u) + 2u + (ok ? 1u : 0u);
     if (!ok) { modwerk_flash_refusal = FLASH_WRITE; return MU_UNCERTAIN; }
     f_flashed = restart;
     if (!restart) note = "BASE SAVED";

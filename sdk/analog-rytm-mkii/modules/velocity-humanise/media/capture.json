@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "velocity-humanise",
+  "moduleVersion": "1.2.0",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-07T13:40:00Z",
+  "imageSha256": "854bfcf00d0ef3c5b11d03211d1eaf8107b30f3106e40c3f88e10e5b85a8b7b3",
+  "mainSha256": null,
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker (scripts/link-image.mjs in modwerk-source-tools): the Modwerk base for core-ar2 0.7 (plain variant ba530f45, vendored) + this folder's velocity-humanise 1.2.0, materialised against stock OS 1.74 (cb0f99d6…e123), --version VH12",
+  "emulator": {
+    "name": "analog-emu (trigcondition's Rytm and A4 emulator built on rytm-emu; its history holds rytm-emu c5732f0, 951dcbc and e914f46)",
+    "repository": "https://github.com/trigcondition/analog-emu",
+    "revision": "4c07ed3",
+    "binary": "dtboot (cargo build --release, Windows)",
+    "settings": "no card image, JIT on, --every 1000M; DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out"
+  },
+  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; a short TRIG press (12M) opens BD's TRIG page; FUNC is held while encoder 1 (VEL) turns up in twenty-four steps, with a zero-count turn first to frame the held state. Stock 1.74 with the same input gives byte-identical frames until FUNC is held; from then on it shows VEL and the trig velocity where VH12 shows RND and N. The three frames are byte-identical to 1.1's captures on VH74. Playback was not judged in the emulator.",
+  "captures": [
+    {
+      "path": "media/trig-page.png",
+      "sha256": "5232c3fec1174a4cc34af2fbe20a88a01cff82a249ef1c91198c770dba2a2094",
+      "frame": "step05_TRIG.png",
+      "plan": "dtboot vh12.syx --instr 11400M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press TRIG@7503M:12M --press FUNC@8003M:2900M --turn 1:0@8103Mx1 --turn 1:4@8303Mx24/100M --turn 1:0@10803Mx1"
+    },
+    {
+      "path": "media/func-rnd-label.png",
+      "sha256": "c3c0bc3818741fff5b6a9875d704a584600c3f5904e1d821becee1a32b53ef77",
+      "frame": "turn06.png",
+      "plan": "dtboot vh12.syx --instr 11400M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press TRIG@7503M:12M --press FUNC@8003M:2900M --turn 1:0@8103Mx1 --turn 1:4@8303Mx24/100M --turn 1:0@10803Mx1"
+    },
+    {
+      "path": "media/rnd-12.png",
+      "sha256": "82a3310bd5b2566d33473227104a0091482ca1281a05a45c58243ae7ea56522c",
+      "frame": "turn26.png",
+      "plan": "dtboot vh12.syx --instr 11400M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press TRIG@7503M:12M --press FUNC@8003M:2900M --turn 1:0@8103Mx1 --turn 1:4@8303Mx24/100M --turn 1:0@10803Mx1"
+    }
+  ]
+}

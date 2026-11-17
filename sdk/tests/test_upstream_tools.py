@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import unittest
 from unittest import mock
+import zipfile
 
 APP = pathlib.Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("upstream_tools", APP / "scripts/upstream-tools.py")
@@ -75,45 +76,23 @@ class UpstreamCheckouts(unittest.TestCase):
             (path / item).write_bytes(original)
         self.sync()
 
-    def test_update_moves_to_main_and_reapplies_repairs(self):
-        self.sync()
-        (self.upstream / "tools/hw/sos_capture.py").write_text("# new upstream tool\n")
-        second = self.commit("second")
-        self.assertEqual(tools.update_octabam(self.pins, self.base, "2026-10-10"), (second, True))
-        pins = json.loads(self.pins.read_text())["octabam"]
-        self.assertEqual((pins["commit"], pins["updated"]), (second, "2026-10-10"))
-        path = self.sync(second)
-        self.assertTrue((path / "tools/hw/sos_capture.py").exists())
-        self.assertEqual(tools.edits(path), set(tools.REPAIRED))
-        self.assertEqual(tools.update_octabam(self.pins, self.base), (second, False))
+    def test_update_moves_a_plain_pin_and_keeps_it_unedited(self):
+        self.pins.write_text(json.dumps({"rytm-emu": {"repository": self.url, "commit": self.first, "updated": "x"}}))
+        tools.sync("rytm-emu", self.url, self.first, self.base, False)
+        (self.upstream / "src.rs").write_text("// upstream fix\n")
+        second = self.commit("fix")
+        self.assertEqual(tools.update_plain(self.pins, "rytm-emu", self.base, "2026-11-02"), (second, True))
+        pins = json.loads(self.pins.read_text())["rytm-emu"]
+        self.assertEqual((pins["commit"], pins["updated"]), (second, "2026-11-02"))
+        path = tools.sync("rytm-emu", self.url, second, self.base, False)
+        self.assertEqual(tools.edits(path), set())
+        self.assertTrue((path / "src.rs").exists())
+        self.assertEqual(tools.update_plain(self.pins, "rytm-emu", self.base), (second, False))
 
-    def test_update_refuses_when_a_repaired_tool_changed_upstream(self):
-        self.sync()
-        with open(self.upstream / "tools/hw/usb_probe.py", "a") as tool:
-            tool.write("# changed upstream\n")
-        self.commit("changed probe")
-        before = self.pins.read_text()
-        with self.assertRaisesRegex(ValueError, "review its repairs"):
-            tools.update_octabam(self.pins, self.base)
-        self.assertEqual(self.pins.read_text(), before)
-        self.assertEqual(tools.git(self.base / "octabam", "rev-parse", "HEAD"), self.first)
-
-    def test_update_accepts_a_reviewed_revision_of_a_repaired_tool(self):
-        self.sync()
-        probe = self.upstream / "tools/hw/usb_probe.py"
-        source = b"# reworded upstream\n" + probe.read_bytes()
-        probe.write_bytes(source)
-        spec = tools.adapter.TOOLS["usb_probe.py"]
-        text = source.decode()
-        for old, new in spec["edits"]:
-            text = text.replace(old, new)
-        with mock.patch.dict(spec, revisions={tools.sha(source): tools.sha(text.encode())}):
-            second = self.commit("reworded probe")
-            self.assertEqual(tools.update_octabam(self.pins, self.base), (second, True))
-            path = self.sync(second)
-            self.assertEqual(tools.edits(path), set(tools.REPAIRED))
-            self.assertEqual((path / "tools/hw/usb_probe.py").read_text(), text)
-            self.sync(second)
+    def test_the_rytm_emu_pin_is_a_full_commit_of_its_repository(self):
+        pin = json.loads(tools.PINS.read_text())["rytm-emu"]
+        self.assertEqual(pin["repository"], "https://github.com/trigcondition/rytm-emu.git")
+        self.assertRegex(pin["commit"], "^[0-9a-f]{40}$")
 
     def test_checkouts_stay_outside_git_and_on_their_own_remote(self):
         with self.assertRaisesRegex(ValueError, "outside every Git"):
@@ -128,6 +107,41 @@ class UpstreamCheckouts(unittest.TestCase):
         (path / "tools/hw/rec.swift").write_text("// mine\n")
         with self.assertRaisesRegex(ValueError, "local edits"):
             tools.sync("plain", self.url, self.first, self.base, False)
+
+
+class ArchivePin(unittest.TestCase):
+    def setUp(self):
+        self.temp = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.temp)
+        source = self.temp / "ziddle-1.zip"
+        with zipfile.ZipFile(source, "w") as bundle:
+            bundle.writestr("ziddle-1/Cargo.toml", "[workspace]\n")
+            bundle.writestr("ziddle-1/ziddle/src/lib.rs", "// upstream\n")
+        self.entry = {"archive": source.as_uri(), "sha256": tools.sha(source.read_bytes())}
+        self.base = self.temp / "checkouts"
+        self.base.mkdir()
+
+    def test_unpacks_once_keeps_builds_and_refuses_local_edits(self):
+        path = tools.fetch_archive(self.entry, self.base)
+        self.assertEqual(path, self.base / "ziddle-1")
+        (path / "target").mkdir()
+        self.assertEqual(tools.fetch_archive(self.entry, self.base), path)
+        (path / "Cargo.toml").write_text("# mine\n")
+        with self.assertRaisesRegex(ValueError, "local edits"):
+            tools.fetch_archive(self.entry, self.base)
+        (path / "Cargo.toml").unlink()
+        with self.assertRaisesRegex(ValueError, "local edits"):
+            tools.fetch_archive(self.entry, self.base)
+
+    def test_an_archive_other_than_the_pinned_one_is_refused_unwritten(self):
+        with self.assertRaisesRegex(ValueError, "does not match its pin"):
+            tools.fetch_archive(dict(self.entry, sha256="0" * 64), self.base)
+        self.assertEqual(list(self.base.iterdir()), [])
+
+    def test_the_ziddle_pin_is_berbasofts_source_archive(self):
+        pin = json.loads(tools.PINS.read_text())["ziddle"]
+        self.assertRegex(pin["archive"], r"^https://berbasoft\.com/ziddle/ziddle-\d+\.zip$")
+        self.assertRegex(pin["sha256"], "^[0-9a-f]{64}$")
 
 
 if __name__ == "__main__":

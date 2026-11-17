@@ -1,0 +1,1070 @@
+{
+ "status": "emulator measurement; hardware pending",
+ "date": "2026-10-30",
+ "change": "DC removal: tu_analyse stage A takes the ring mean ((sum + 2048) >> 12) off every sample (clamped to a word) before the peak gate and the analysis; nothing else changed",
+ "identities": {
+  "emulator": {
+   "path": "ot_emu",
+   "sha256": "c81d13dc70f9012cd1431b115a13d0804a47d0b7ebae6eacfca8329b7e32bff9"
+  },
+  "image_bus": {
+   "name": "mainos_bus.bin (tuner-keep.bin)",
+   "bytes": 1114848,
+   "sha256": "da2375cfbcee92129aad89b93ca202fff4b441f615fed2d22d2d8b8830055d74"
+  },
+  "card_image": {
+   "name": "OCTATRACK_MODWERK_TUNER_TEST2.bin",
+   "bytes": 448084,
+   "sha256": "d4452bbb41d859deb71a159afa085e8b20c9f034818013fb531193a260d416f5",
+   "firmwareVersion": "OCTAMOD79",
+   "note": "canonical recipe (pinned Docker 0db04819, unchanged exporter, --vendored-sdk --static-stock --modules tuner --select tuner:true); the same recipe rebuilt b87ab778 / 91bf159e byte for byte from a0d35e2b first"
+  },
+  "unit_text": {
+   "bytes": 2894,
+   "sha256": "3491c80563cea3607fe5b59ed4142da614dece053ae043e83d3cc37fe48fdfd1",
+   "data_base": "0x40a98130",
+   "note": "a local m68k-elf link of upstream/tuner.s at 0x40a955e0 / 0x40a98130 compared equal to emulated RAM before measuring (both sessions)"
+  },
+  "fixture_card": {
+   "name": "tuner-load8",
+   "sha256": "90bef7e18ca2552944a3dfbd8f2eef4f645ad02f0317681061826f546b27bbb6"
+  },
+  "built_source": "Modwerk tuner-0.1-dc 67a75997 (upstream tuner 03202050 = v2.21 9e4d34a + DC removal)"
+ },
+ "method": {
+  "same_as": "qualification-emulator-2026-10-29.json (tap, signal schedule, PC-watch counting, 9.44 ns model)",
+  "symbols": {
+   "tu_frame": "0x40a95608/0x40a95670",
+   "tu_tick": "0x40a95676/0x40a956b0",
+   "tu_analyse": "0x40a9572e (ok 0x40a95c0a, rejected 0x40a95c12)",
+   "tu_draw": "0x40a95cc0/0x40a95ebc",
+   "frame_body": "0x4000aad8/0x4000d9a6"
+  },
+  "timing": "readings taken at the 29 Oct run's times in the schedule (52.4 s for 82.41 Hz, 84.4 s for 445 Hz, 112.4 s for 110 Hz) are compared one to one; readings 0.4-2 s after a tone change carry the previous tone through T8's effects"
+ },
+ "readings": {
+  "440 Hz": {
+   "readings": [
+    [
+     "A4 +0c 440.0Hz",
+     "live",
+     21573
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "live",
+     21973
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "live",
+     22373
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "live",
+     22773
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "live",
+     23173
+    ]
+   ],
+   "ring_peak": 148,
+   "ring_mean": -0.1,
+   "ring_ac_rms": 98.0
+  },
+  "82.41 Hz (52.4 s)": {
+   "readings": [
+    [
+     "E2 +0c 82.4Hz",
+     "live",
+     52458
+    ],
+    [
+     "E2 +0c 82.4Hz",
+     "live",
+     52858
+    ],
+    [
+     "E2 +0c 82.4Hz",
+     "live",
+     53258
+    ],
+    [
+     "E2 +0c 82.4Hz",
+     "live",
+     53658
+    ],
+    [
+     "E2 +0c 82.4Hz",
+     "live",
+     54059
+    ]
+   ],
+   "ring_peak": 273,
+   "ring_mean": -7.7,
+   "ring_ac_rms": 147.0
+  },
+  "82.41 Hz (2.4 s after the change)": {
+   "readings": [
+    [
+     "E2 +26c 83.6Hz",
+     "live",
+     42450
+    ],
+    [
+     "E2 +24c 83.5Hz",
+     "live",
+     42850
+    ],
+    [
+     "E2 +4c 82.6Hz",
+     "live",
+     43250
+    ],
+    [
+     "E2 +5c 82.6Hz",
+     "live",
+     43650
+    ],
+    [
+     "E2 +5c 82.6Hz",
+     "live",
+     44050
+    ]
+   ],
+   "ring_peak": 288,
+   "ring_mean": 6.7,
+   "ring_ac_rms": 148.7
+  },
+  "445 Hz (84.4 s)": {
+   "readings": [
+    [
+     "A4 +19c 445.0Hz",
+     "live",
+     84458
+    ],
+    [
+     "A4 +19c 445.0Hz",
+     "live",
+     84858
+    ],
+    [
+     "A4 +19c 445.0Hz",
+     "live",
+     85258
+    ],
+    [
+     "A4 +19c 445.0Hz",
+     "live",
+     85658
+    ],
+    [
+     "A4 +19c 445.0Hz",
+     "live",
+     86058
+    ]
+   ],
+   "ring_peak": 240,
+   "ring_mean": 0.4,
+   "ring_ac_rms": 176.5
+  },
+  "445 Hz (2.4 s after the change)": {
+   "readings": [
+    [
+     "A4 +20c 445.2Hz",
+     "live",
+     72450
+    ],
+    [
+     "A4 +21c 445.4Hz",
+     "live",
+     72850
+    ],
+    [
+     "A4 +19c 444.9Hz",
+     "live",
+     73250
+    ],
+    [
+     "A4 +20c 445.1Hz",
+     "live",
+     73650
+    ],
+    [
+     "A4 +19c 444.9Hz",
+     "live",
+     74050
+    ]
+   ],
+   "ring_peak": 254,
+   "ring_mean": -2.0,
+   "ring_ac_rms": 174.9
+  },
+  "110 Hz": {
+   "readings": [
+    [
+     "A2 -1c 109.9Hz",
+     "live",
+     112459
+    ],
+    [
+     "A2 -1c 109.9Hz",
+     "live",
+     112859
+    ],
+    [
+     "A2 -1c 109.9Hz",
+     "live",
+     113259
+    ],
+    [
+     "A2 -1c 109.9Hz",
+     "live",
+     113659
+    ],
+    [
+     "A2 -1c 109.9Hz",
+     "live",
+     114059
+    ]
+   ],
+   "ring_peak": 119,
+   "ring_mean": 1.4,
+   "ring_ac_rms": 76.7
+  },
+  "white noise 0.3 FS": {
+   "readings": [
+    [
+     "A2 +22c 111.4Hz",
+     "live",
+     131959
+    ],
+    [
+     "A2 +22c 111.4Hz",
+     "HOLD",
+     132359
+    ],
+    [
+     "A2 +22c 111.4Hz",
+     "HOLD",
+     132759
+    ]
+   ],
+   "ring_peak": 100,
+   "ring_mean": 0.1,
+   "ring_ac_rms": 32.1
+  },
+  "silence": {
+   "readings": [
+    [
+     "A2 +22c 111.4Hz",
+     "HOLD",
+     141959
+    ],
+    [
+     "A2 +22c 111.4Hz",
+     "HOLD",
+     142359
+    ],
+    [
+     "A2 +22c 111.4Hz",
+     "HOLD",
+     142759
+    ]
+   ],
+   "ring_peak": 16,
+   "ring_mean": -0.5,
+   "ring_ac_rms": 4.2
+  },
+  "440 Hz again": {
+   "readings": [
+    [
+     "A4 +0c 440.0Hz",
+     "live",
+     152458
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "live",
+     152858
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "live",
+     153258
+    ]
+   ],
+   "ring_peak": 163,
+   "ring_mean": -0.1,
+   "ring_ac_rms": 107.5
+  },
+  "T2 FLEX fixture sample (DC offset)": {
+   "readings": [
+    [
+     "F4 -23c 344.6Hz",
+     "live",
+     162050
+    ],
+    [
+     "F4 -22c 344.9Hz",
+     "live",
+     162450
+    ],
+    [
+     "F4 -25c 344.3Hz",
+     "live",
+     162850
+    ],
+    [
+     "F4 -24c 344.5Hz",
+     "live",
+     163250
+    ],
+    [
+     "F4 -32c 342.8Hz",
+     "live",
+     163650
+    ]
+   ],
+   "ring_peak": 3725,
+   "ring_mean": 1910.9,
+   "ring_ac_rms": 833.6,
+   "reference": "the same ring analysed off-line (mean removed, full-rate difference minimum): 344.2 Hz, FFT peak 345.8 Hz; the fixture sample is a 220 Hz sine played transposed through EQ and CHORUS, so the reading follows the signal at the tap, chorus wobble included"
+  }
+ },
+ "transition_control": {
+  "note": "Control session on the previous image (bus 91bf159e) with the same schedule: readings 2.4 s after the 440 -> 82.41 and 82.41 -> 445 changes. Both images read the same within one cent there (period within 0.3 %), so the early wander is the previous tone in T8's effects, not the DC removal.",
+  "old_image": {
+   "82.41 Hz early": [
+    [
+     "E2 +25c 83.6Hz",
+     "live",
+     42449,
+     134968
+    ],
+    [
+     "E2 +25c 83.6Hz",
+     "live",
+     42849,
+     135000
+    ],
+    [
+     "E2 +4c 82.6Hz",
+     "live",
+     43249,
+     136669
+    ],
+    [
+     "E2 +5c 82.6Hz",
+     "live",
+     43649,
+     136573
+    ],
+    [
+     "E2 +4c 82.6Hz",
+     "live",
+     44049,
+     136635
+    ]
+   ],
+   "445 Hz early": [
+    [
+     "A4 +20c 445.1Hz",
+     "live",
+     72449,
+     25364
+    ],
+    [
+     "A4 +21c 445.4Hz",
+     "live",
+     72849,
+     25346
+    ],
+    [
+     "A4 +19c 444.9Hz",
+     "live",
+     73249,
+     25372
+    ],
+    [
+     "A4 +20c 445.1Hz",
+     "live",
+     73649,
+     25360
+    ],
+    [
+     "A4 +19c 444.9Hz",
+     "live",
+     74049,
+     25372
+    ]
+   ]
+  },
+  "new_image": {
+   "82.41 Hz early": [
+    [
+     "E2 +26c 83.6Hz",
+     "live",
+     42450,
+     134951
+    ],
+    [
+     "E2 +24c 83.5Hz",
+     "live",
+     42850,
+     135070
+    ],
+    [
+     "E2 +4c 82.6Hz",
+     "live",
+     43250,
+     136653
+    ],
+    [
+     "E2 +5c 82.6Hz",
+     "live",
+     43650,
+     136573
+    ],
+    [
+     "E2 +5c 82.6Hz",
+     "live",
+     44050,
+     136625
+    ]
+   ],
+   "445 Hz early": [
+    [
+     "A4 +20c 445.2Hz",
+     "live",
+     72450,
+     25353
+    ],
+    [
+     "A4 +21c 445.4Hz",
+     "live",
+     72850,
+     25343
+    ],
+    [
+     "A4 +19c 444.9Hz",
+     "live",
+     73250,
+     25371
+    ],
+    [
+     "A4 +20c 445.1Hz",
+     "live",
+     73650,
+     25360
+    ],
+    [
+     "A4 +19c 444.9Hz",
+     "live",
+     74050,
+     25372
+    ]
+   ]
+  }
+ },
+ "cost": {
+  "model": {
+   "ns_per_instruction": 9.44,
+   "core_hz": 264000000.0,
+   "cycles_per_instruction": 2.49216,
+   "block_cycles": 95779,
+   "module_budget_cycles": 9577,
+   "block": "16 samples at 44.1 kHz = 362.8 us",
+   "label": "instruction-count model: emulated ColdFire instructions x 9.44 ns at 264 MHz (CF METER calibration); not opcode cycles, not chip wall-clock"
+  },
+  "windows": {
+   "closed_load8": {
+    "window_ms": 3001.6,
+    "blocks": 8280,
+    "frame_hook": {
+     "n": 8280,
+     "mean": 4,
+     "max": 4,
+     "min": 4
+    },
+    "ui_hook_not_due": {
+     "n": 324,
+     "mean": 4,
+     "max": 4,
+     "min": 4
+    },
+    "ui_visits_per_s": 107.9,
+    "analysis_and_draw_excl": null,
+    "analysis_and_draw_incl": null,
+    "analyse": null,
+    "analyse_exit": [],
+    "draw": null,
+    "frame_body_incl": {
+     "n": 8280,
+     "mean": 25284.1,
+     "max": 40982,
+     "min": 24206
+    },
+    "unmatched_boundary": 0
+   },
+   "closed_stopped": {
+    "window_ms": 2000.0,
+    "blocks": 5517,
+    "frame_hook": {
+     "n": 5518,
+     "mean": 4,
+     "max": 4,
+     "min": 4
+    },
+    "ui_hook_not_due": {
+     "n": 216,
+     "mean": 4,
+     "max": 4,
+     "min": 4
+    },
+    "ui_visits_per_s": 108.0,
+    "analysis_and_draw_excl": null,
+    "analysis_and_draw_incl": null,
+    "analyse": null,
+    "analyse_exit": [],
+    "draw": null,
+    "frame_body_incl": {
+     "n": 5517,
+     "mean": 24194.8,
+     "max": 24340,
+     "min": 24146
+    },
+    "unmatched_boundary": 1
+   },
+   "open_load8_110": {
+    "window_ms": 5002.3,
+    "blocks": 13800,
+    "frame_hook": {
+     "n": 13800,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 506,
+     "mean": 7,
+     "max": 7,
+     "min": 7
+    },
+    "ui_visits_per_s": 107.9,
+    "analysis_and_draw_excl": {
+     "n": 34,
+     "mean": 1039582.6,
+     "max": 1046232,
+     "min": 1038578
+    },
+    "analysis_and_draw_incl": {
+     "n": 34,
+     "mean": 1727817.5,
+     "max": 1772762,
+     "min": 1672314
+    },
+    "analyse": {
+     "n": 34,
+     "mean": 1034030,
+     "max": 1040680,
+     "min": 1033026
+    },
+    "analyse_exit": [
+     "an_ok"
+    ],
+    "draw": {
+     "n": 34,
+     "mean": 5538.6,
+     "max": 5557,
+     "min": 5538
+    },
+    "frame_body_incl": {
+     "n": 13800,
+     "mean": 25455.0,
+     "max": 41221,
+     "min": 24307
+    },
+    "unmatched_boundary": 0
+   },
+   "open_load8_440": {
+    "window_ms": 5002.4,
+    "blocks": 13800,
+    "frame_hook": {
+     "n": 13800,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 505,
+     "mean": 7,
+     "max": 7,
+     "min": 7
+    },
+    "ui_visits_per_s": 107.9,
+    "analysis_and_draw_excl": {
+     "n": 35,
+     "mean": 1041581.2,
+     "max": 1048251,
+     "min": 1040571
+    },
+    "analysis_and_draw_incl": {
+     "n": 35,
+     "mean": 1731519.1,
+     "max": 1771788,
+     "min": 1675965
+    },
+    "analyse": {
+     "n": 35,
+     "mean": 1036047.7,
+     "max": 1042718,
+     "min": 1035038
+    },
+    "analyse_exit": [
+     "an_ok"
+    ],
+    "draw": {
+     "n": 35,
+     "mean": 5519.5,
+     "max": 5538,
+     "min": 5519
+    },
+    "frame_body_incl": {
+     "n": 13800,
+     "mean": 25427.2,
+     "max": 41039,
+     "min": 24263
+    },
+    "unmatched_boundary": 0
+   },
+   "open_load8_445": {
+    "window_ms": 5002.2,
+    "blocks": 13799,
+    "frame_hook": {
+     "n": 13799,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 507,
+     "mean": 7,
+     "max": 7,
+     "min": 7
+    },
+    "ui_visits_per_s": 108.2,
+    "analysis_and_draw_excl": {
+     "n": 34,
+     "mean": 1041766.6,
+     "max": 1047346,
+     "min": 1040780
+    },
+    "analysis_and_draw_incl": {
+     "n": 34,
+     "mean": 1735189.1,
+     "max": 1776159,
+     "min": 1679420
+    },
+    "analyse": {
+     "n": 34,
+     "mean": 1036133.4,
+     "max": 1041708,
+     "min": 1035150
+    },
+    "analyse_exit": [
+     "an_ok"
+    ],
+    "draw": {
+     "n": 35,
+     "mean": 5619.3,
+     "max": 5628,
+     "min": 5616
+    },
+    "frame_body_incl": {
+     "n": 13799,
+     "mean": 25454.5,
+     "max": 41175,
+     "min": 24307
+    },
+    "unmatched_boundary": 2
+   },
+   "open_load8_82": {
+    "window_ms": 5002.3,
+    "blocks": 13800,
+    "frame_hook": {
+     "n": 13800,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 506,
+     "mean": 7,
+     "max": 7,
+     "min": 7
+    },
+    "ui_visits_per_s": 108.0,
+    "analysis_and_draw_excl": {
+     "n": 34,
+     "mean": 1039148.5,
+     "max": 1047120,
+     "min": 1038284
+    },
+    "analysis_and_draw_incl": {
+     "n": 34,
+     "mean": 1726834.6,
+     "max": 1770095,
+     "min": 1674052
+    },
+    "analyse": {
+     "n": 34,
+     "mean": 1033715.5,
+     "max": 1041688,
+     "min": 1032852
+    },
+    "analyse_exit": [
+     "an_ok"
+    ],
+    "draw": {
+     "n": 34,
+     "mean": 5418.9,
+     "max": 5426,
+     "min": 5418
+    },
+    "frame_body_incl": {
+     "n": 13800,
+     "mean": 25413.3,
+     "max": 41221,
+     "min": 24279
+    },
+    "unmatched_boundary": 0
+   },
+   "open_load8_noise": {
+    "window_ms": 4001.9,
+    "blocks": 11040,
+    "frame_hook": {
+     "n": 11040,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 405,
+     "mean": 7,
+     "max": 7,
+     "min": 7
+    },
+    "ui_visits_per_s": 108.2,
+    "analysis_and_draw_excl": {
+     "n": 28,
+     "mean": 966956.8,
+     "max": 972901,
+     "min": 965115
+    },
+    "analysis_and_draw_incl": {
+     "n": 28,
+     "mean": 1609981.9,
+     "max": 1645366,
+     "min": 1555381
+    },
+    "analyse": {
+     "n": 28,
+     "mean": 960957.2,
+     "max": 966938,
+     "min": 959152
+    },
+    "analyse_exit": [
+     "an_nosig"
+    ],
+    "draw": {
+     "n": 28,
+     "mean": 5985.6,
+     "max": 6973,
+     "min": 5949
+    },
+    "frame_body_incl": {
+     "n": 11040,
+     "mean": 25415.0,
+     "max": 41039,
+     "min": 24277
+    },
+    "unmatched_boundary": 0
+   },
+   "open_load8_silence": {
+    "window_ms": 4001.9,
+    "blocks": 11040,
+    "frame_hook": {
+     "n": 11040,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 404,
+     "mean": 7,
+     "max": 7,
+     "min": 7
+    },
+    "ui_visits_per_s": 107.9,
+    "analysis_and_draw_excl": {
+     "n": 28,
+     "mean": 90036.1,
+     "max": 106443,
+     "min": 87910
+    },
+    "analysis_and_draw_incl": {
+     "n": 28,
+     "mean": 148016.2,
+     "max": 203091,
+     "min": 136823
+    },
+    "analyse": {
+     "n": 28,
+     "mean": 84073.1,
+     "max": 100480,
+     "min": 81947
+    },
+    "analyse_exit": [
+     "an_nosig"
+    ],
+    "draw": {
+     "n": 28,
+     "mean": 5949,
+     "max": 5949,
+     "min": 5949
+    },
+    "frame_body_incl": {
+     "n": 11040,
+     "mean": 25385.9,
+     "max": 41085,
+     "min": 24257
+    },
+    "unmatched_boundary": 0
+   },
+   "open_load8_t2flex": {
+    "window_ms": 5002.2,
+    "blocks": 13799,
+    "frame_hook": {
+     "n": 13799,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 506,
+     "mean": 7,
+     "max": 7,
+     "min": 7
+    },
+    "ui_visits_per_s": 108.0,
+    "analysis_and_draw_excl": {
+     "n": 34,
+     "mean": 1038623.4,
+     "max": 1045898,
+     "min": 1034738
+    },
+    "analysis_and_draw_incl": {
+     "n": 34,
+     "mean": 1726771.4,
+     "max": 1771817,
+     "min": 1669365
+    },
+    "analyse": {
+     "n": 34,
+     "mean": 1032982.6,
+     "max": 1040257,
+     "min": 1029101
+    },
+    "analyse_exit": [
+     "an_ok"
+    ],
+    "draw": {
+     "n": 35,
+     "mean": 5626.8,
+     "max": 5631,
+     "min": 5619
+    },
+    "frame_body_incl": {
+     "n": 13799,
+     "mean": 25416.6,
+     "max": 41173,
+     "min": 24273
+    },
+    "unmatched_boundary": 2
+   },
+   "open_stopped": {
+    "window_ms": 5000.1,
+    "blocks": 13794,
+    "frame_hook": {
+     "n": 13794,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 507,
+     "mean": 7.0,
+     "max": 11,
+     "min": 7
+    },
+    "ui_visits_per_s": 108.2,
+    "analysis_and_draw_excl": {
+     "n": 34,
+     "mean": 1040590.1,
+     "max": 1046788,
+     "min": 1040114
+    },
+    "analysis_and_draw_incl": {
+     "n": 34,
+     "mean": 1677719.5,
+     "max": 1707917,
+     "min": 1674364
+    },
+    "analyse": {
+     "n": 34,
+     "mean": 1035057.1,
+     "max": 1041255,
+     "min": 1034581
+    },
+    "analyse_exit": [
+     "an_ok"
+    ],
+    "draw": {
+     "n": 34,
+     "mean": 5519,
+     "max": 5519,
+     "min": 5519
+    },
+    "frame_body_incl": {
+     "n": 13794,
+     "mean": 24475.3,
+     "max": 24553,
+     "min": 24383
+    },
+    "unmatched_boundary": 0
+   }
+  },
+  "worst": {
+   "frame_hook_instr": 195,
+   "analysis_event_instr": 1048251,
+   "analysis_event_cycles": 2612409,
+   "analysis_event_us": 9895.5,
+   "ui_not_due_instr": 7,
+   "ui_visits_per_s_max": 108.2,
+   "amortized_instr_per_block": 2815.9,
+   "amortized_cycles_per_block": 7017.7,
+   "frame_hook_cycles_per_block": 486.0,
+   "closed_frame_instr": 4,
+   "closed_ui_instr": 4,
+   "closed_cycles_per_block": 10.4
+  },
+  "before": {
+   "frame_hook_instr": 195,
+   "analysis_event_instr": 1008258,
+   "amortized_cycles_per_block": 6769,
+   "noise_max": 935298,
+   "silence_max": 56115,
+   "stopped_max": 1005617
+  },
+  "lifecycle": {
+   "open_instr": 13750,
+   "open_note": "from the TEMPO site 0x40059ef0 to the first draw's rts (13,749 from tu_tempo, as before)",
+   "close_instr": 5968,
+   "close_note": "tu_close entry to rts, TEMPO through the window's key layer"
+  }
+ },
+ "memory": {
+  "text": 2894,
+  "data": 19500,
+  "gap": 8194,
+  "appended_loader_and_unit": 2288,
+  "hook_sites": 18,
+  "ui_stack_peak": 236,
+  "own_total": 33130,
+  "reserve_less_span": 10457220,
+  "total": 10490350,
+  "stack": {
+   "n_writes": 347525,
+   "analyses": 6,
+   "draws": 6,
+   "sp_entries": [
+    [
+     "0x40a95676",
+     "0x460d59a8"
+    ],
+    [
+     "0x40a9572e",
+     "0x460d5978"
+    ],
+    [
+     "0x40a95c0a",
+     "0x460d5978"
+    ],
+    [
+     "0x40a95cc0",
+     "0x460d5978"
+    ],
+    [
+     "0x40a95ebc",
+     "0x460d5978"
+    ]
+   ],
+   "deepest_by_tuner_pc": 172,
+   "deepest_in_analyse_any_pc": 616,
+   "analyse_pcs_lowest": [
+    "0x40000888",
+    "0x40000968",
+    "0x40000c3c",
+    "0x40000ff0",
+    "0x40001114",
+    "0x40001494",
+    "0x40001496",
+    "0x40001598",
+    "0x4000159a",
+    "0x400031a4",
+    "0x400031c0",
+    "0x400031d6"
+   ],
+   "deepest_in_draw_any_pc": 236,
+   "draw_lowest_pcs": [
+    [
+     "0x40012bdc",
+     236
+    ],
+    [
+     "0x40012bdc",
+     232
+    ],
+    [
+     "0x40011108",
+     232
+    ],
+    [
+     "0x40012bdc",
+     228
+    ],
+    [
+     "0x40011108",
+     228
+    ],
+    [
+     "0x40011108",
+     224
+    ],
+    [
+     "0x40012bdc",
+     224
+    ],
+    [
+     "0x40011108",
+     220
+    ]
+   ]
+  },
+  "stack_note": "tu_analyse pushes nothing (the new pass uses d0-d6/a1 only); the deepest Tuner-PC write is 172 B and the deepest write inside tu_draw 236 B (stock TEXT 0x40012bdc), both as before. Interrupt chains nested inside tu_analyse spans (stock PCs 0x40000888..0x400031d6) reached 616 B in this sample (528 B in the 29 Oct sample); they are not Tuner frames."
+ }
+}

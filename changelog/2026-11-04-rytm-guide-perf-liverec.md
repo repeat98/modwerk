@@ -1,0 +1,1 @@
+Docs: the Analog Rytm MKII guide now says how to tell LIVE RECORDING is on, how to write a step lock and a lock trig, the 72 lock rows a pattern keeps, that pad pressure stops at 32640 and a pad's release writes nothing, and which class the FX track's performance mode is. The sequencing guide notes that the Rytm's step counter runs a step ahead of what plays.

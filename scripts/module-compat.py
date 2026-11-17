@@ -74,6 +74,10 @@ SPAN_FINDINGS = ('ColdFire cave', 'hook site', 'poke site', 'kept bytes', 'grown
 LISTED_UI_CLAIMS = {'playmodes': ['key:TRACK+UP', 'key:TRACK+DOWN'], 'output-matrix': ['key:CUE+LEVEL']}
 HOOKS = ('detour', 'hook', 'base code')  # code sites: behaviour hooks
 NOT_WRITES = ('keep', 'copy')
+# The stock DELAY's coefficient table: 1,024 longwords it reads as 0x400d1ce0 + 4 * (x >> 6). Entries 508 and up (from
+# 0x400d24d0) are zero in stock and look like free space; it reads them at default settings and at boot
+# (sdk/octabam/docs/FAILURE_MODES.md, "A cave at 0x400d24d0 changes the stock DELAY"; docs/OCTATRACK_HARDWARE_TRAPS.md).
+DELAY_TABLE, DELAY_TABLE_BYTES = 0x400d1ce0, 4 * 1024
 
 
 def claims(m):
@@ -272,6 +276,13 @@ def check(modules, base_sites=(), events=(), copies=None, relations=(), base_own
                        f'{len(users)} cannot install together', 'room')
     for a, x, b, y in ui_clashes(manifests or {}):
         problem((a, b), f'{a} ({x}) and {b} ({y}) take the same {"key gesture" if x.startswith("key:") else "screen"}', 'ui')
+    # What a module's package and the base write, as they install on the base; a native manifest's pins are not built.
+    for name, items in owners.items():
+        for c in items:
+            if c[0] not in NOT_WRITES and c[1] < DELAY_TABLE + DELAY_TABLE_BYTES and DELAY_TABLE < c[1] + c[2]:
+                problem((name,), f'{name} writes {span(c[1], c[2])} ({c[0]} {c[3]}), inside the coefficient table the stock '
+                                 f'DELAY reads ({span(DELAY_TABLE, DELAY_TABLE_BYTES)}): the zero run from 0x400d24d0 belongs '
+                                 f'to it and is not free space, and anything written there changes how DELAY sounds', 'cave')
     native = [(natives or {}).get(m.name, m) for m in modules]
     for a, b in itertools.combinations(native, 2):
         for text in ledger_findings([a, b], platform or {}):

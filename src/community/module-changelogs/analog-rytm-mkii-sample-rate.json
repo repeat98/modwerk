@@ -1,11 +1,84 @@
 [
   {
+    "version": "0.6.1-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Ping Pong Loop has left the library: its PIPO loop and zero snap live here, unchanged.",
+      "No change on the unit."
+    ]
+  },
+  {
+    "version": "0.6.0-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Ping Pong Loop now lives here: LOP's third value PIPO plays the loop forward, then backward.",
+      "FUNC + turn on STA or END steps that point to the next zero crossing; S and E label their lines on the waveform.",
+      "Both play and look exactly as before. Remove Ping Pong Loop from your set: the two can't be installed together."
+    ]
+  },
+  {
+    "version": "0.5.1-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Previewing a sample (FUNC + YES in a sample list) plays it at normal speed again, whatever the track's RATE.",
+      "In 0.5.0 the preview was silent at RATE 0 (as on a sound saved on stock OS) and bent by an LFO on RATE."
+    ]
+  },
+  {
+    "version": "0.5.0-experimental",
+    "date": "2026-11-12",
+    "changes": [
+      "The SMPL page shows values, not names: TUN, RATE, BR, LOOP (OFF, ON or PIPO) and LEV in one row.",
+      "The waveform is taller.",
+      "STA and END show as their lines; turn D for the sample list.",
+      "The header names a knob while it turns."
+    ]
+  },
+  {
+    "version": "0.4.0-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "Renamed Improved SMPL.",
+      "The SMPL key always opens the waveform view; the knob-only view is gone.",
+      "The knobs still work there, each value showing while it turns."
+    ]
+  },
+  {
+    "version": "0.3.0-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "FIN's knob is now RATE on every sound, and is called RATE everywhere, LFO destinations too.",
+      "No more SMP RATE row or knob tap: fine tuning lives on TUN.",
+      "RATE starts at +63 (normal speed) on a new or cleared sound.",
+      "Sounds saved with FIN at +0 now load stopped: turn RATE up to +63."
+    ]
+  },
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "Renamed Fine Tune + Sample Rate.",
+      "TUN now turns 1 cent a step; press and turn for whole semitones. Reads like +3.07.",
+      "Fine tuning saves in the sound and plays the same on stock OS.",
+      "Tapping the knob between FIN and RATE no longer dips the speed or slides the pitch."
+    ]
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-06",
+    "changes": [
+      "Uses less CPU when no sound has RATE on, leaving more time for the screen and pads.",
+      "No change to how RATE plays."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-11-02",
     "changes": [
       "First library release, for Analog Rytm MKII OS 1.74: FIN's knob becomes RATE, sound by sound.",
       "RATE is pure sample speed, down to a stop and into reverse. Tap the knob, or check SMP RATE in SOUND SETTINGS, to switch.",
-      "Not yet tested on a unit: this exact build, two voices together, sound, scene and performance locks, and SOUND MANAGER."
+      "Not yet tested on a unit: this exact build, two voices together, sound, scene and performance locks, and SOUND MANAGER.",
+      "Renamed Sample Playback Rate (was Sample RATE), and the module page now credits the author as Nathaniel Pavel (@npp1993). No change on the unit."
     ]
   }
 ]

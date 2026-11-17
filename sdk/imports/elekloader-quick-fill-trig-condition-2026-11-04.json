@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "quick-fill-trig-condition-2026-11-04",
+  "about": "Modwerk source-only quick-fill-trig-condition package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/quick-fill-trig-condition.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "quick-fill-trig-condition-0.2.0-experimental-os1.74.elemod",
+      "sha256": "0480e613140879da6d728c63b990113f080f98d0c12a543f0d03e22049ec1772",
+      "id": "quick-fill-trig-condition",
+      "version": "0.2.0-experimental",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "804e73740565e26350e5d87bd06edfc7cd106c1b",
+        "path": "sdk/imports/packages/quick-fill-trig-condition/quick-fill-trig-condition-0.2.0-experimental-os1.74.elemod"
+      },
+      "title": "Quick Trig Conditions",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Hold a trig in GRID RECORDING: FILL locks FILL, NOT FILL, then no lock; UP and DOWN set a ratio such as 3:8.",
+      "description": "Set a trig condition without going to the TRC knob. In GRID RECORDING, hold one or more trigs and press FILL: the trigs get a FILL condition lock. Press again for NOT FILL, and again to remove the lock. UP and DOWN set a ratio: UP steps the first number, DOWN the second, from 1:2 to 8:8. FILL does not engage fill, and a fill latched with FUNC + FILL plays out its loop.",
+      "category": "Sequencer",
+      "author": "npp1993",
+      "needs_core": "0.7",
+      "on_unit": "On an Analog Rytm MKII on OS 1.74, as reported by the author: build FC09 (this package's source, linked alone on core-ar2 0.7 by Modwerk's linker) passed FILL, NOT FILL, the UP and DOWN ratios, several held trigs, the RETRIG menu, pattern save and reload, and power cycle. Its 0.1.0 code (FC04 to FC07) passed beside seven other modules. This package's own bytes have not been flashed from the site."
+    }
+  ]
+}

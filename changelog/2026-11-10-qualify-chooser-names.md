@@ -1,0 +1,1 @@
+SDK: `npm run device:qualify` finds an effect whose chooser name has the package name's words in another order (RINGMOD SC for the SC Ringmod package), so it places Sidechain Ringmod instead of failing to find it.

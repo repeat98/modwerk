@@ -265,7 +265,7 @@ Counts are not measured chip timing. Fresh DSP-enabled control/assignment
 captures were opened and reviewed. The required Node 24 check passes 1,402
 app tests in 200 files and 86 SDK tests, catalogue/licences, lint, types and the
 production bundle. Firmware and reference audio remain private.
-See [the exact-source approval](../sdk/analog-bassdrum-build-approval.json) and
+See [the exact-source approval](../sdk/approvals/analog-bassdrum-build-approval.json) and
 [the testing record](../sdk/octabam/modules/analog-bassdrum/TESTING.md).
 
 ## Digitakt II browser-builder preview — 10 October 2026

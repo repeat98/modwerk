@@ -1,0 +1,110 @@
+{
+  "date": "2026-11-01",
+  "machine": "analog-rytm-mkii",
+  "os": "1.74",
+  "moduleVersion": "0.1.0-experimental",
+  "sourceCommit": "1bf73478ada76e0fcb152e03ab1105a5f2788d65",
+  "sourceTreeSha256": "bc3328bd4204dde0c4e980f93adf9e8f8399ea0795a5e6396ce5447003b444cf",
+  "compiler": {
+    "gcc": "m68k-elf-gcc (GCC) 16.2.0",
+    "assembler": "GNU assembler (GNU Binutils) 2.47.20260726",
+    "linker": "GNU ld (GNU Binutils) 2.47.20260726",
+    "node": "v24.21.0"
+  },
+  "toolchainImageId": "sha256:1e14610dce258b288254f393d753a2b5f53616a8705f795d601f460b773ccca2",
+  "packagePath": "sdk/imports/packages/midi-feedback/midi-feedback-0.1.0-experimental-os1.74.elemod",
+  "packageSha256": "95ef570f6d9ca0704dfa03a852fdbfb93ae67f4ff28464245c7a758a0c206b6f",
+  "packageMemory": {
+    "runBytes": 1914,
+    "bssBytes": 688,
+    "fastBytes": 0,
+    "totalBytes": 2602,
+    "includesCore": false
+  },
+  "determinism": "Two isolated source-only container builds matched byte for byte; verify-elemod-release-exports reproduced 29 exports.",
+  "candidate": "MF02; local-only full OS file, not committed or uploaded.",
+  "imageSha256": "362313ce6f35dc3ae54126f1d3dac108b3e4c787f9087d41130261a85d7cc84b",
+  "core": {
+    "version": "0.7",
+    "sha256": "f1e9cb2c39eb52af15e7cf8ad25596e46f550e4f748bc9dd60d63a44da2dd9c1"
+  },
+  "outputProbe": {
+    "status": "PASS",
+    "messages": 673,
+    "assignments": 84,
+    "automatic_repeats": 6,
+    "track_level_before": 37,
+    "track_level_after": 55,
+    "sent_counter": 673,
+    "limits": "Emulator only; RAM-configured; UI, flood, persistence and hardware pending."
+  },
+  "lifecycle": [
+    {
+      "test": "disabled",
+      "status": "PASS",
+      "new_output_bytes": 0,
+      "stock_level": 12
+    },
+    {
+      "test": "encoder-int",
+      "status": "PASS",
+      "new_output_bytes": 0,
+      "stock_level": 12
+    },
+    {
+      "test": "nrpn-mode",
+      "status": "PASS",
+      "new_output_bytes": 0,
+      "stock_level": 12
+    },
+    {
+      "test": "usb-only",
+      "status": "PASS",
+      "new_output_bytes": 0,
+      "stock_level": 12
+    },
+    {
+      "test": "track-1-channel-off",
+      "status": "PASS",
+      "assignments": 77
+    },
+    {
+      "test": "track-1-reassigned-to-channel-16",
+      "status": "PASS",
+      "messages": 253
+    },
+    {
+      "test": "stock-kit-quick-save-and-reload",
+      "status": "PASS",
+      "values": [
+        55,
+        61,
+        23,
+        11,
+        73,
+        29,
+        41
+      ]
+    },
+    {
+      "test": "feedback-enabled-after-virtual-power-cycle",
+      "status": "PASS",
+      "enabled": 1
+    },
+    {
+      "test": "60-second-DIN-wire-rate-flood",
+      "status": "PASS",
+      "input_bytes": 187538,
+      "new_feedback_messages": 5269,
+      "coalesced": 7878,
+      "deferred": 0,
+      "limits": "No hang and output progress only; audible/stuck-note and hardware timing not qualified."
+    }
+  ],
+  "hardware": null,
+  "limitations": [
+    "Physical Rytm, IRQ/CPU headroom and saturated MIDI output are not qualified.",
+    "Physical PC12 pickup was checked with the earlier development-compiler image; repeat on MF02 hardware.",
+    "No public catalogue listing or release approval."
+  ]
+}

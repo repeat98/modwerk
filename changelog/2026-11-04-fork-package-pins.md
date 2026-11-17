@@ -1,0 +1,1 @@
+Improvement: when `npm run elekloader:update -- --overlay` cannot fetch a package pinned at a commit that only a fork holds, it now says to open the pull request first and run it again, and the elemod source build guide says the same: raw.githubusercontent.com serves a fork's commit under repeat98/modwerk only once a pull request names it.

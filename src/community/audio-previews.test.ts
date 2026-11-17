@@ -47,7 +47,7 @@ describe('public module audio previews',() => {
     expect((await f.upload({},wav(),f.tokens.unverified)).status).toBe(403)
     expect((await f.upload({permission:'false'})).status).toBe(400)
     expect((await f.upload({credit:''})).status).toBe(400)
-    expect((await f.upload({duration:'91'})).status).toBe(400)
+    for(const duration of ['0','-1','NaN'])expect((await f.upload({duration})).status).toBe(400)
     expect((await f.upload({},new TextEncoder().encode('firmware is never an audio file'.repeat(3)))).status).toBe(415)
     expect(f.objects.size).toBe(0)
   })
@@ -64,6 +64,11 @@ describe('public module audio previews',() => {
     expect(partial.status).toBe(206);expect(partial.headers.get('Content-Range')).toBe('bytes 5-10/'+wav().length)
     expect(new Uint8Array(await partial.arrayBuffer())).toEqual(wav().slice(5,11))
     expect((await f.media(item.id,'bytes=999999-')).status).toBe(416)
+  })
+  it('accepts a long recording; only the 12 MB cap bounds it',async() => {
+    const f=await fixture(), created=await f.upload({duration:'240'})
+    expect(created.status).toBe(201)
+    expect((await created.json()).duration).toBe(240)
   })
   it('deduplicates a retried upload and prevents another member taking its identifier',async() => {
     const f=await fixture(), id=crypto.randomUUID()

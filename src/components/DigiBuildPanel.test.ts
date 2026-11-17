@@ -34,7 +34,7 @@ function downloadAction(machine: DigiMachine) {
 }
 
 describe('Digi firmware download statistics', () => {
-  it.each(['digitakt', 'digitone'] as const)('counts %s modules from the completed build only after a download request', machine => {
+  it.each(['digitakt', 'digitone', 'analog-rytm-mkii'] as const)('counts %s modules from the completed build only after a download request', machine => {
     const click = vi.fn()
     vi.stubGlobal('document', {createElement: () => ({click, remove: vi.fn()}), body: {append: vi.fn()}})
     vi.stubGlobal('window', {setTimeout: (callback: () => void) => callback()})
@@ -62,7 +62,6 @@ describe('Digi firmware download statistics', () => {
 
   it('never exposes a Digitakt II download before its machine-specific qualification', () => {
     expect(downloadAction('digitakt-ii')).toBeUndefined()
-    expect(downloadAction('analog-rytm-mkii')).toBeUndefined()
     expect(mocks.track).not.toHaveBeenCalled()
   })
 })

@@ -1,0 +1,1 @@
+SDK: the published-package test accepts an ABI 8 C package that only has its UI handlers (module_tick, module_draw, module_key, module_enc), as `npm run octatrack:module-packages` now publishes one with no events (#1231). Only hook words past those four, which are site events, need the base's events feature (128), as the builder already decides.

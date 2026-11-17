@@ -5,17 +5,19 @@ import { moduleResourceIndicators } from './resource-indicators'
 import { parseRetainedResourceImpacts, requireModuleResourceImpact } from './resource-impact'
 import { resourceImpactFixture } from './test-fixtures/resource-impact'
 import example from '../../public/module-repository.example.json'
-import baseline from '../../sdk/module-qualification-baseline.json'
+import baseline from '../../sdk/approvals/module-qualification-baseline.json'
 import retained from '../../sdk/module-resource-estimates.json'
-import waivers from '../../sdk/module-release-waivers.json'
-import midiScenesApproval from '../../sdk/midi-scenes-build-approval.json'
-import synthApproval from '../../sdk/synth-build-approval.json'
-import muteApproval from '../../sdk/mute-modes-build-approval.json'
-import recorderApproval from '../../sdk/recorder-loop-fix-build-approval.json'
-import airChorusApproval from '../../sdk/airwindows-chorus-build-approval.json'
-import poly8Approval from '../../sdk/poly8-build-approval.json'
-import everbApproval from '../../sdk/everb-build-approval.json'
-import playmodesApproval from '../../sdk/playmodes-build-approval.json'
+import waivers from '../../sdk/approvals/module-release-waivers.json'
+import synthApproval from '../../sdk/approvals/synth-build-approval.json'
+import muteApproval from '../../sdk/approvals/mute-modes-build-approval.json'
+import recorderApproval from '../../sdk/approvals/recorder-loop-fix-build-approval.json'
+import airChorusApproval from '../../sdk/approvals/airwindows-chorus-build-approval.json'
+import poly8Approval from '../../sdk/approvals/poly8-build-approval.json'
+import everbApproval from '../../sdk/approvals/everb-build-approval.json'
+import playmodesApproval from '../../sdk/approvals/playmodes-build-approval.json'
+import amigaApproval from '../../sdk/approvals/amiga-build-approval.json'
+import tempSaveApproval from '../../sdk/approvals/temp-save-build-approval.json'
+import kitsApproval from '../../sdk/approvals/kits-build-approval.json'
 import sdkCatalog from '../../sdk/catalog.json'
 
 const draft = () => parseModuleDocument(example)
@@ -25,7 +27,7 @@ describe('required relative module resource gauges', () => {
   it('populates CPU, DSP and memory for every current version without inventing measurements', () => {
     expect(MODULE_DOCUMENTS).toHaveLength(sdkCatalog.modules.length)
     // Only versions under an owner exception may go without a qualification record; none is invented for them.
-    const exempt = new Set([...baseline.modules, ...waivers.modules, midiScenesApproval, synthApproval, muteApproval, recorderApproval, airChorusApproval, poly8Approval, everbApproval, playmodesApproval].map(module => module.id))
+    const exempt = new Set([...baseline.modules, ...waivers.modules, synthApproval, muteApproval, recorderApproval, airChorusApproval, poly8Approval, everbApproval, playmodesApproval, amigaApproval, tempSaveApproval, kitsApproval].map(module => module.id))
     for (const document of MODULE_DOCUMENTS) {
       const indicators = moduleResourceIndicators(document)
       expect(indicators.map(indicator => indicator.id)).toEqual(['cpu', 'dsp', 'memory'])

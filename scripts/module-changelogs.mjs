@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process'
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -17,8 +18,17 @@ export function writeModuleChangelogs(root) {
   return JSON.parse(text)
 }
 
-/** Metadata-only gate: no firmware, package compilation or module execution. */
-export async function checkModuleChangelogs(root) {
+/** A module's first release in the library has one entry, saying what players get: versions before it never reached them
+ * (docs/ADD_A_MODULE.md#release-notes-required-for-every-fix-and-module-version). isNew says whether a key has no notes on the base. */
+export function firstReleaseProblem(notes, isNew) {
+  for (const [id, entries] of Object.entries(notes)) if (isNew(id) && entries.length > 1)
+    return id + ' is new to the library, so ' + NOTES + '/' + id + '.json holds one entry, for v' + entries[0].version + ', saying what players get. Fold the notes of '
+      + entries.slice(1).map(entry => 'v' + entry.version).join(', ') + ' into it: those versions never reached players.'
+  return null
+}
+
+/** Metadata-only gate: no firmware, package compilation or module execution. With a base, also the first-release rule above. */
+export async function checkModuleChangelogs(root, base = null) {
   const read = path => JSON.parse(readFileSync(join(root, path), 'utf8'))
   const octatrack = read('src/catalog/module-documents.json').modules
   const machines = read('src/catalog/machine-modules.json').modules
@@ -30,6 +40,9 @@ export async function checkModuleChangelogs(root) {
   // Loaded only now: the parser's module imports the generated file written above.
   const { parseModuleChangelogs } = await import('../src/community/module-changelogs.ts')
   const notes = parseModuleChangelogs(data, catalog)
+  const onBase = id => { try { execFileSync('git', ['cat-file', '-e', base + ':' + NOTES + '/' + id + '.json'], { cwd: root, stdio: 'ignore' }); return true } catch { return false } }
+  const problem = base && firstReleaseProblem(notes, id => !onBase(id))
+  if (problem) throw new Error(problem)
   return { modules: catalog.length, releases: Object.values(notes).reduce((count, entries) => count + entries.length, 0) }
 }
 

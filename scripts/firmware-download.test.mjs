@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, readFile, readdir, rm, stat } from 'node:fs/
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { parseBuildRequest, siteBase, verifyPublishedModules, buildAndSave } from './firmware-download.mjs'
+import { parseBuildRequest, siteBase, verifyPublishedModules, buildAndSave, libraryModuleIds } from './firmware-download.mjs'
 import { readFirmwareBuildManifest, sha256 } from './firmware-build-manifest.mjs'
 
 const image = new Uint8Array([1, 2, 3, 4])
@@ -48,7 +48,7 @@ async function fixture() {
 describe('local firmware release verification', () => {
   it('rejects filesystem injection, paused machines and missing risk acceptance', () => {
     for (const override of [{ outputDir: '/tmp/elsewhere' }, { stockPath: '/etc/passwd' }, { machine: 'digitakt-ii' }, { riskAccepted: false }, { moduleIds: ['digimono', 'digimono'] }]) expect(() => parseBuildRequest({ ...request, ...override })).toThrow()
-    expect(() => parseBuildRequest({ machine: 'octatrack', os: '1.40C', moduleIds: ['quantizer'], riskAccepted: true })).not.toThrow()
+    expect(() => parseBuildRequest({ machine: 'octatrack', os: '1.40C', moduleIds: ['quantizer'], riskAccepted: true })).toThrow('Octatrack modules go through the Modwerk base')
     expect(() => parseBuildRequest({ ...request, expectedSha256: 'not a hash' })).toThrow()
     expect(() => siteBase('http://example.com')).toThrow()
     expect(() => siteBase('https://user:secret@example.com')).toThrow()
@@ -64,6 +64,10 @@ describe('local firmware release verification', () => {
     expect(() => verifyPublishedModules(inventory, [{ ...local[0], version: 'old' }], 'digitakt', ['digimono'])).toThrow('differs')
     inventory.modules[0].beta = true
     expect(() => verifyPublishedModules(inventory, local, 'digitakt', ['digimono'])).toThrow('unavailable')
+  })
+
+  it('leaves dependency folders to their catalogue pins, not the release list', () => {
+    expect(libraryModuleIds(['machine-pages', 'digistring', 'dt-support', 'euclidean', 'digichain'], 'digitakt')).toEqual(['digistring', 'euclidean', 'digichain'])
   })
 
   it('fingerprints input bytes, independent of filesystem enumeration order', async () => {

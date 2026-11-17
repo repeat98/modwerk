@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/comp-preview.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [
+    {
+      "to": "core_view_pages",
+      "order": 20,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:comp_preview_view_page",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:COMP view page list (preview page)",
+    "ui:compressor page draw and keys",
+    "audio:master compressor gain-reduction estimate each block"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x4012140c",
+          "len": 10,
+          "stockSha256": "fc8947b953d7ee01c0c1af709539effe9f1b97ae3dded616fb965fc2ede8b61f",
+          "op": "jmp",
+          "target": "comp_preview_comp_probe"
+        },
+        {
+          "addr": "0x401e1460",
+          "len": 4,
+          "stockSha256": "635b8c136d2dd923292fba076c7982e65e615a31b686d15dbbe2fc238436292d",
+          "op": "ptr",
+          "target": "comp_preview_comp_keys"
+        },
+        {
+          "addr": "0x401e1468",
+          "len": 4,
+          "stockSha256": "61a1e381a7586627a1af26881c2009a7d1a371f9b82a42b79d41728f92dc7cff",
+          "op": "ptr",
+          "target": "comp_preview_comp_draw"
+        }
+      ]
+    }
+  }
+}

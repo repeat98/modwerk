@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/live-rec-retrig-fix",
+  "version": "0.2.0-experimental",
+  "date": "2026-11-04",
+  "changes": [
+    "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.7, with Retrig Grid by stigmagit folded in: LIVE RECORDING records every pad retrig hit as a real trig, pad retrigs fall on the sequencer's swung grid while it plays (QUANT RTRG TO SEQ in SEQUENCER CONFIG turns it off), and the RTRG key glows dim red while the selected track is ALWAYS ON."
+  ],
+  "runtimeSourceSha256": "a740b62d45b28744d3c5b82b6b54c6dd3bc3b74b37a39407554f0dbf9cb40368",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/live-rec-retrig-fix/live-rec-retrig-fix-0.2.0-experimental-os1.74.elemod",
+      "sha256": "3863f03c94704e1c03c4b2cfa1b9b785a4c2dc03d16164264153932be3b212be"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/live-rec-retrig-fix/TESTING.md",
+  "requires": []
+}

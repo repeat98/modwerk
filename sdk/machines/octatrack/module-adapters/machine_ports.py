@@ -132,8 +132,9 @@ def glue(name, entry):
                        m['sig'][0], m['sig'][1], m['lo'], m['hi'], sum(FLAGS[f] for f in m['flags']), m['fields'].get('defaults', 0)))
         out += ['        .long   %s\n' % (m['fields'].get(f) or 0) for f in FIELDS]
         price = entry.get('price')
-        out.append('        .word   %d, %d\n        .byte   %d, 0, 0, 0\n' % (
-            (price['voice'], price['engine'], KINDS[price['kind']]) if price else (0, 0, 0)))
+        # reserved[0]: the machine's CPU price, a whole percent of a frame (docs/MODULE_PERFORMANCE.md); 0 names none.
+        out.append('        .word   %d, %d\n        .byte   %d, %d, 0, 0\n' % (
+            ((price['voice'], price['engine'], KINDS[price['kind']]) if price else (0, 0, 0)) + (entry.get('cpuPrice', 0),)))
         if 'SETUP_PAGE' in m['flags']:  # the record goes on: struct modwerk_machine_setup (EVENTS.md ot_machines)
             out += ['        .long   %s\n' % (m['fields'].get(f) or 0) for f in SETUP_FIELDS]
         unknown = set(m['fields']) - set(FIELDS) - {'defaults'} - (set(SETUP_FIELDS) if 'SETUP_PAGE' in m['flags'] else set())
@@ -175,7 +176,13 @@ def effective(module, sdk_root, work, registry=None, path=PORTS):
             raise ValueError('%s needs its controller port %s (module-adapters).' % (module.name, entry['controller'])) from error
         effective_module = controller.port(effective_module, sdk_root, work / 'controller')
     price = (entry or {}).get('price')
-    if price and (APP / price['source']).is_file():
+    if price and price.get('inEngine'):
+        # Its engine package's header carries the price (hook_engines.py), outside the controller digest; the record
+        # keeps only its kind, which says its voice is a DSP voice, so the trust row never pins a price.
+        if price['voice'] or price['engine'] or (APP / price['source']).is_file() and \
+                json.loads((APP / price['source']).read_text()).get('kind') != price['kind'] + '-instructions':
+            raise ValueError('%s: a price in its engine leaves the record 0 and 0, of the source\'s kind' % module.name)
+    elif price and (APP / price['source']).is_file():
         measured = json.loads((APP / price['source']).read_text())
         if (measured.get('perVoice'), measured.get('perCoreWhileEnabled'), measured.get('kind')) != (
                 price['voice'], price['engine'], price['kind'] + '-instructions'):

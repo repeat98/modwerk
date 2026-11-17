@@ -1,0 +1,40 @@
+{
+  "moduleId": "quantizer",
+  "replace": {
+    "detours": [
+      {
+        "address": 1074026776,
+        "guardLength": 8,
+        "guardSha256": "112b7d2434bae65950506429fa2e8d01b20316d7ab6d1848ba91f10c451e11ac",
+        "unit": "qz",
+        "symbol": "qz_octkey",
+        "target": null,
+        "kind": "jmp",
+        "writeLength": 8
+      },
+      {
+        "address": 1074022846,
+        "guardLength": 8,
+        "guardSha256": "494435e3f72313a14453f642bdba5b064022c657c63c015752fe23092eabd19f",
+        "unit": "qz",
+        "symbol": "qz_octnum",
+        "target": null,
+        "kind": "jmp",
+        "writeLength": 8
+      }
+    ],
+    "refs": [],
+    "pokes": []
+  },
+  "runtimeUnits": [],
+  "suppliedBy": "synth",
+  "supplied": {
+    "signature": "687ed9a89369f80a795ebb020c6ea0eb47fb7c3cdc010e17ffba3e2f052c57f1",
+    "units": {
+      "qzk": "fm_qzk",
+      "qzc": "fm_qzc",
+      "qzs": "fm_qzs",
+      "qz": "fm_qz"
+    }
+  }
+}

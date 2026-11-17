@@ -4,6 +4,7 @@ import { expect, it } from 'vitest'
 import sharp from 'sharp'
 import { MODULES } from '../src/catalog/modules.ts'
 import { digiModulePageHtml, digiModuleThumbnail, modulePageHtml, modulePages, moduleThumbnail, notFoundPageHtml } from './module-pages.ts'
+import { escapeHtml } from './page-html.ts'
 import { DIGI_MODS, digiModuleDocument } from '../src/devices/digi-mods.ts'
 import { DEVICES_BY_ID } from '../src/devices/registry.ts'
 
@@ -49,7 +50,7 @@ it('builds the FM Synth canonical page and keeps the old URL loadable', async ()
   // This integration renders every catalog thumbnail while the full check also bundles the app.
   for (const mod of DIGI_MODS) {
     const page = assets.find(asset => asset.fileName === `${mod.device}/module/${mod.id}/index.html`)
-    expect(page.source).toContain(`<h1>${mod.title} for Elektron ${DEVICES_BY_ID[mod.device].name}</h1>`)
+    expect(page.source).toContain(`<h1>${escapeHtml(mod.title)} for Elektron ${escapeHtml(DEVICES_BY_ID[mod.device].name)}</h1>`)
   }
 }, 30_000)
 

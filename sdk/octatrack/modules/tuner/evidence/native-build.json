@@ -1,0 +1,54 @@
+{
+  "attempt": 1,
+  "state": "finished",
+  "command": [
+    "make",
+    "image",
+    "REMIX=relay-tuner",
+    "BUILD=1",
+    "VERSION=MWTUN0.1"
+  ],
+  "cwd": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/card-sdk",
+  "started_utc": "2026-10-25T17:42:18.035115+00:00",
+  "candidate_scope": "Private native SDK; Tuner only; all stock FX; static stock DSP",
+  "canonical_docker_proof": false,
+  "usb_base": false,
+  "raw_output_policy": "Merged stdout/stderr held in memory and discarded; whole-stream SHA-256 and byte count only.",
+  "runtime_executed": false,
+  "tests_executed": false,
+  "pid": 52011,
+  "finished_utc": "2026-10-25T17:42:25.783846+00:00",
+  "duration_seconds": 7.748407583218068,
+  "exit_code": 0,
+  "timed_out": false,
+  "output_bytes": 5323,
+  "output_sha256": "75be5e90fbfaba97a3b63ba1ff550cdffd03ee1d318e50d4e775ac94a80283d2",
+  "source_frames": [],
+  "exception_types": [],
+  "semantic_failure": null,
+  "cleanup": [],
+  "child_reaped": true,
+  "artifacts": [
+    {
+      "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/card-sdk/out/mainos_bus.bin",
+      "bytes": 1114801,
+      "sha256": "91bf159ee5a25c1d6b9356fe3eb0f43d8985f569bbfdeee3a7f85ba0da3770b3"
+    },
+    {
+      "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/card-sdk/out/OCTATRACK_MWTUN0.1.bin",
+      "bytes": 448024,
+      "sha256": "beb2628bb981fed62f1113a69ae331deb27d649ac5ddd5e2c6471efc6889bed2"
+    },
+    {
+      "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/card-sdk/out/OCTATRACK_OS1.40C_MWTUN0.1.syx",
+      "bytes": 625821,
+      "sha256": "207c57d7eb0bac1fb42a3350c3261f7ff3cb6e5bc9491c5a065d9ce1c795196a"
+    },
+    {
+      "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/card-sdk/out/elek_1.bin",
+      "bytes": 448006,
+      "sha256": "5954634ac75d225f55eb76f827940cc5cb7dc743713e0143d9d1ff94c3bd2548"
+    }
+  ],
+  "recorder_sha256": "a8083da36d008143992415d8429e03fec6d76bee32f553d7288c2d9f3d746637"
+}

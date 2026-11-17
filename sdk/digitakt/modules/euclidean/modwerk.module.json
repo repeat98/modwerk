@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "euclidean",
   "name": "Euclidean Sequencing",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "machine": "digitakt",
   "category": "machines",
   "exclusive": false,
@@ -142,10 +142,10 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "1.1.5",
-    "sourceSha256": "56ce0d64930138fe1bb5d504355d45fd693b10865f0527b56039008c4e36f2df",
+    "moduleVersion": "1.1.6",
+    "sourceSha256": "1e2288bda27580ce393d2dfce9a77d345b81874c937d6d8181a00b755f035060",
     "reports": [
-      "evidence/page-keys-1.1.5.json",
+      "evidence/func-euc-off-1.1.6.json",
       "evidence/hardware-testing.json",
       "evidence/source-identity.json",
       "evidence/regressions-core21.json",
@@ -155,21 +155,21 @@
     "hardware": {
       "model": "Digitakt 1",
       "release": "1.53 and 1.54",
-      "testedOn": "2026-10-16",
+      "testedOn": "2026-11-04",
       "tester": "sumedho",
-      "durationMinutes": 30,
-      "summary": "sumedho tested 1.1.5 on a Digitakt 1, OS 1.53 and 1.54, with all six mods and with Euclidean alone: the page keys and FUNC shortcuts leave Euclidean on audio and MIDI tracks, holding FUNC + AMP reopens it, and settings survived project save/reload and a power cycle (2026-10-16). Reported working, with no failures.",
+      "durationMinutes": null,
+      "summary": "sumedho tested 1.1.6 on a Digitakt 1, OS 1.53 and 1.54, with all six mods and with Euclidean alone: holding FUNC while turning D off no longer clicks, playing or stopped, on audio and MIDI tracks, and still converts the rhythm to ordinary trigs; plain D off stays silent, page keys leave Euclidean and FUNC + AMP reopens it, and settings survived project save/reload and a power cycle (2026-11-04). Reported working, with no failures.",
       "limitations": [
-        "Reported as under 30 minutes in total; 30 is an upper bound, not a measured duration.",
-        "Individual outcomes were not itemized beyond the coverage listed in evidence/page-keys-1.1.5.json.",
-        "Tested SysEx (all six mods): 1.53 f84a7159a4c1054febb9aa566804bc5953507906625815b49fe55d9afabee6cb, 1.54 4479e908e120e2ecb8890b62374355909303790208c8b83b17101704ea3e75fc; Euclidean alone: 1.53 b32f3bb8c7c56a7ff6d9e55b25e35895275d709d0c5ed9cd62ce958bd069aca0, 1.54 e7c3e4448a0fa42908756fe889957b3362e7eff97aa12223523583ec4c30c634. Firmware was not read back from the device."
+        "Test duration was not reported.",
+        "Outcomes were reported for the checklist in evidence/func-euc-off-1.1.6.json as a whole, not itemized per image.",
+        "Tested SysEx (all six mods): 1.53 ad46ffa76fe261ae8fb541767c693e9d3f3f3c48fe7a9aa340af8756eb9eeb47, 1.54 eb119355d3514132ceae730d3cc9a45d64f82a01f2cc61c0d6c3ed3adccc0869; Euclidean alone: 1.53 1ea0d1a65538ed456821130e130f9d7c27d2dd4e1586a0ccea8ad1a1754542bf, 1.54 ebc31354507f2f154159398e44e2efca14b80791735e2688ceb5e879e5c53b70. Firmware was not read back from the device."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Runs on Core 2.1. Emulator regressions on OS 1.53 and 1.54, an emulator CPU-load comparison with stock, Modwerk source-build parity with the native build, and the 1.1.5 page-key regression are in TESTING.md. sumedho tested 1.1.5 on a Digitakt 1, OS 1.53 and 1.54, with all six mods and alone, including project save/reload and a power cycle (2026-10-16).",
+    "summary": "Runs on Core 2.1. Emulator regressions on OS 1.53 and 1.54, an emulator CPU-load comparison with stock, Modwerk source-build parity with the native build, and the 1.1.6 conversion-click analysis are in TESTING.md. sumedho tested 1.1.6 on a Digitakt 1, OS 1.53 and 1.54, with all six mods and alone, including project save/reload and a power cycle (2026-11-04).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -215,8 +215,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.53",
-        "moduleVersion": "1.1.5",
-        "imageSha256": "f84a7159a4c1054febb9aa566804bc5953507906625815b49fe55d9afabee6cb",
+        "moduleVersion": "1.1.6",
+        "imageSha256": "ad46ffa76fe261ae8fb541767c693e9d3f3f3c48fe7a9aa340af8756eb9eeb47",
         "setup": "Actual cold-booted OS 1.53 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
       }
     },
@@ -231,8 +231,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.53",
-        "moduleVersion": "1.1.5",
-        "imageSha256": "f84a7159a4c1054febb9aa566804bc5953507906625815b49fe55d9afabee6cb",
+        "moduleVersion": "1.1.6",
+        "imageSha256": "ad46ffa76fe261ae8fb541767c693e9d3f3f3c48fe7a9aa340af8756eb9eeb47",
         "setup": "Actual cold-booted OS 1.53 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
       }
     },
@@ -247,8 +247,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "1.1.5",
-        "imageSha256": "4479e908e120e2ecb8890b62374355909303790208c8b83b17101704ea3e75fc",
+        "moduleVersion": "1.1.6",
+        "imageSha256": "eb119355d3514132ceae730d3cc9a45d64f82a01f2cc61c0d6c3ed3adccc0869",
         "setup": "Actual cold-booted OS 1.54 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
       }
     },
@@ -263,8 +263,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "1.1.5",
-        "imageSha256": "4479e908e120e2ecb8890b62374355909303790208c8b83b17101704ea3e75fc",
+        "moduleVersion": "1.1.6",
+        "imageSha256": "eb119355d3514132ceae730d3cc9a45d64f82a01f2cc61c0d6c3ed3adccc0869",
         "setup": "Actual cold-booted OS 1.54 all-mods SysEx on Core 2.1; cloned drive and native panel input. UI documentation only."
       }
     }

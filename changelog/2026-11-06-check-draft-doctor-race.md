@@ -1,0 +1,1 @@
+Development: `npm run check` no longer fails at random in the SDK suite with a draft's manifest error. The module doctor's draft test copies a draft under `sdk/octabam/modules/` for its run; it now runs alone after the SDK suite, the other tests and the build, so none of them reads the draft as a listed module.

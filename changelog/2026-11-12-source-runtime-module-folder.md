@@ -1,0 +1,1 @@
+Source-runtime package recipes now accept the current `sdk/octatrack/modules` folder while retaining the older mirror path. FRACT's promotion regression builds and checks its prospective row from the current folder; no FRACT renderer or published package changes.

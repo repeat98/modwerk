@@ -102,6 +102,107 @@ int main(void) {
             with self.subTest(defines=defines):
                 self.compile_run(source, defines + sanitizers)
 
+    def test_a_save_torn_inside_its_header_never_wedges_the_saved_set(self):
+        # A power cut inside a save's first sector leaves the new header's first bytes and the slot's old bytes after
+        # them. The next start restores the other slot or nothing, and the next save restores again. The case lives
+        # here, on test_modset.c's pretend card, because a file in the base's folders changes the base.
+        fixture = (ELEK / 'test_modset.c').read_text()
+        source = fixture[:fixture.index('int main(void)')] + r'''
+/* The save just written to `which`, torn: its bytes up to `at`, what the slot held before after them. */
+static void tear(unsigned which, unsigned at, const uint8_t *before)
+{
+    static uint8_t now[SET_BYTES];
+    memcpy(now, card[which], SET_BYTES); memcpy(card[which], before, SET_BYTES); memcpy(card[which], now, at);
+}
+static void fresh(void)
+{
+    memset(card, 0, sizeof card); memset(card_bytes, 0, sizeof card_bytes);
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == NONE_SAVED);
+}
+static int nothing_restored(void)
+{
+    return !installed && (modwerk_modset_result == FOREIGN || modwerk_modset_result == DAMAGED || modwerk_modset_result == NONE_SAVED);
+}
+int main(void)
+{
+    static uint8_t was[SET_BYTES];
+    static const unsigned at[] = {2, 6, 10, 14, 18, 30, 60, 83}; /* magic, version, generation, count, length, base, SHA-256 */
+    make(0, 0x873d83ccu, 0); make(1, 0x3cbedc9cu, 0); make(2, 0x873d83ccu, 1);
+    for (unsigned i = 0; i < sizeof at / sizeof *at; ++i) {
+        /* A fresh card's first save. */
+        fresh(); memcpy(was, card[1], SET_BYTES);
+        accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED); tear(1, at[i], was);
+        boot(); modwerk_modset_service(); CHECK(nothing_restored());
+        accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED);
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1);
+        /* The first save after a base change: both slots hold another base's sets. */
+        fresh(); accept(0, 48); accept(1, 40); modwerk_modset_service(); accept(2, 36); modwerk_modset_service();
+        card[0][20] ^= 1; card[1][20] ^= 1;
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == FOREIGN && !installed);
+        memcpy(was, card[1], SET_BYTES);
+        accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED); tear(1, at[i], was);
+        boot(); modwerk_modset_service(); CHECK(nothing_restored());
+        accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED);
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1);
+        /* This base's whole set in the other slot: the torn one is passed over, and the next save goes over it. */
+        fresh(); accept(0, 48); modwerk_modset_service(); accept(1, 40); modwerk_modset_service();
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 2);
+        memcpy(was, card[1], SET_BYTES);
+        accept(2, 36); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED); tear(1, at[i], was);
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 2 && modwerk_modset_generation == 2);
+        accept(2, 36); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED);
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1 && modwerk_modset_generation == 3);
+        if (failures) { fprintf(stderr, "torn %u bytes into the header\n", at[i]); return 1; }
+    }
+    return 0;
+}
+'''
+        self.compile_run(source, ('-DMODWERK_HOST', '-Wno-unused-function', '-g', *SANITIZE, '-fno-sanitize-recover=all'))
+
+    def test_the_base_restores_a_set_file_the_site_wrote_for_the_card(self):
+        # The site writes the module set as the base's own file (src/engine/elekloader/card-set.ts) for the card
+        # route. card-set-fixture.hex is that writer's output, held byte for byte by card-set.test.ts; here the
+        # base's real code takes it: over an older set the unit saved itself, with the unit's later saves winning
+        # in turn, and not on another base. On test_modset.c's pretend card, as above.
+        site = bytes.fromhex((ROOT / 'sdk/tests/card-set-fixture.hex').read_text().strip())
+        fixture = (ELEK / 'test_modset.c').read_text()
+        source = fixture[:fixture.index('int main(void)')] + 'static const uint8_t site_file[] = {' + ','.join(map(str, site)) + '};' + r'''
+/* The site's file copied to the card as MODWERK0.SET: whole sectors, its length in use in its header. */
+static void copy_to_card(void) { memcpy(card[0], site_file, sizeof site_file); card_bytes[0] = (int)be32(site_file + 16); }
+int main(void)
+{
+    CHECK(sizeof site_file % 512u == 0 && be32(site_file + 16) <= sizeof site_file);
+    /* A unit that kept one module itself: its first save, generation 1, in the other file. */
+    memset(card, 0, sizeof card); memset(card_bytes, 0, sizeof card_bytes);
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == NONE_SAVED);
+    make(0, 0x11111111u, 0); accept(0, 48); modwerk_modset_service();
+    CHECK(modwerk_modset_result == SAVED && card_bytes[1] && !card_bytes[0]);
+    /* The site's file beside it: the next start installs exactly its two packages, in its order. */
+    copy_to_card(); boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 2 && modwerk_modset_count == 2);
+    CHECK(prepared == 2 && ids[0] == 0x873d83ccu && ids[1] == 0x3cbedc9cu);
+    CHECK(modwerk_modset_generation == 1700000000u);
+    /* A module added on the unit afterwards is saved to the other file and is the set of the next start. */
+    make(1, 0x22222222u, 0); accept(1, 48); modwerk_modset_service();
+    CHECK(modwerk_modset_result == SAVED && modwerk_modset_generation == 1700000001u);
+    boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 3 && modwerk_modset_count == 3);
+    /* A changed byte in a package: not whole, so the unit's own newer file stays the set. */
+    copy_to_card(); card[0][HEADER + 9] ^= 1; boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 3);
+    /* Alone on the card of a unit that runs another base: nothing is installed. */
+    memset(card, 0, sizeof card); memset(card_bytes, 0, sizeof card_bytes);
+    copy_to_card(); card[0][20] ^= 1; boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == FOREIGN && !installed);
+    if (failures) { fprintf(stderr, "%u card set checks failed\n", failures); return 1; }
+    return 0;
+}
+'''
+        sanitizers = ('-g', *SANITIZE, '-fno-sanitize-recover=all')
+        for defines in (('-DMODWERK_HOST',), ('-DMODWERK_HOST', '-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u')):
+            with self.subTest(defines=defines):
+                self.compile_run(source, defines + sanitizers + ('-Wno-unused-function',))  # the fixture's other helpers
+
     def test_missing_production_journal_backend_does_not_open_a_service(self):
         # Keep the real legacy loader suite and remove only the synthetic
         # journal adapter and its enabled-path fixture. Its weak production

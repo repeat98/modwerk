@@ -11,8 +11,8 @@ import { EXTERNAL_PROJECTS, PROJECT_DESCRIPTION, PROJECT_MACHINES, PROJECT_TITLE
 
 export function homeContent(appUrl: URL) {
   const modules = (items: { path: string; name: string; description: string }[]) => `<ul>${items.map(item => `<li>${link(new URL(item.path, appUrl).href, item.name)}${paragraph(item.description)}</li>`).join('')}</ul>`
-  return '<h1>Mods for Elektron instruments</h1>'
-    + paragraph('Explore custom firmware modules for the Elektron Octatrack, Digitakt and Digitone. Choose modules, check compatibility and build firmware in your browser. Your original firmware stays on your device.')
+  return '<h1>Community mods for electronic music hardware</h1>'
+    + paragraph('Modwerk is a community workshop for opening up electronic music hardware to mods. Choose modules for the Elektron Octatrack, Digitakt, Digitone and Analog Rytm, check compatibility and build firmware in your browser, or help open up the next instrument. Your original firmware stays on your device.')
     + '<h2>Octatrack modules</h2>' + modules(AVAILABLE_MODULES.map(module => ({ path: modulePath(module.id), name: module.name, description: module.description })))
     + DIGI_DEVICES.filter(device => DIGI_MODS.some(mod => mod.device === device)).map(device => `<h2>${escapeHtml(DEVICES_BY_ID[device].name)} modules</h2>` + modules(DIGI_MODS.filter(mod => mod.device === device).map(mod => ({ path: `${device}/module/${mod.id}/`, name: mod.title, description: mod.summary })))).join('')
     + '<h2>Build your own module</h2>' + paragraph('Use the instrument SDK, document your module and submit it for review in the Modwerk library.')
@@ -51,9 +51,9 @@ export function digiContent(mod: DigiMod, appUrl: URL) {
 
 export function developerContent(appUrl: URL) {
   return link(appUrl.href, 'Module library') + '<h1>Start developing</h1>'
-    + paragraph('Build a mod for Elektron instruments with the Modwerk SDKs. Fork the repository, clone your fork and open it in your coding agent. Use Node 24; Octatrack native builds also need Python 3.10+, Docker and your own OS 1.40C.')
-    + '<h2>Your first release</h2><ol>' + RELEASE_STEPS.create.map(step => `<li><h3>${escapeHtml(step.title)}</h3>${paragraph(step.summary)}</li>`).join('') + '</ol>'
-    + paragraph('First releases require owner review. Registered authors can then publish verified updates to their own modules. Instruments without a published SDK must be integrated and qualified before module development.')
+    + paragraph('Build a mod for Elektron instruments with the Modwerk SDKs. Paste the setup prompt into Claude Code or Codex: it installs the tools, forks and clones Modwerk and installs the Modwerk skills. Octatrack native builds also need Python 3.12+, Docker and your own OS 1.40C.')
+    + '<h2>Build, test, release</h2><ol>' + RELEASE_STEPS.create.map(step => `<li><h3>${escapeHtml(step.title)}</h3>${paragraph(step.summary)}</li>`).join('') + '</ol>'
+    + paragraph('Every first release gets a community review before it goes live. Registered authors can then publish verified updates to their own modules. Instruments without a published SDK must be integrated and qualified before module development.')
     + '<h2>Three separate catalogues</h2>' + paragraph('Octabam, Modwerk and Elekloader have separate catalogues. Publishing upstream does not submit your module to Modwerk. An Elekloader listing is optional.')
     + link('https://github.com/repeat98/modwerk/blob/main/docs/DEVELOPER_WORKFLOW.md', 'Developer workflow')
 }

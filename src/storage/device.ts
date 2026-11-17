@@ -28,15 +28,16 @@ export function deviceStore(db: IDBDatabase) {
       const tx = db.transaction(store, mode)
       const request = operation(tx.objectStore(store))
       tx.oncomplete = () => resolve(request.result)
-      tx.onabort = tx.onerror = () => reject(tx.error ?? request.error ?? new Error('Could not save on this device.'))
+      // Safari aborts transactions without any error, for example while it suspends a home-screen app.
+      tx.onabort = tx.onerror = () => reject(tx.error ?? request.error ?? new Error(mode === 'readonly' ? 'The browser stopped reading its storage without giving a reason.' : 'The browser stopped this save without giving a reason.'))
     })
   }
   return {
     /** Readable configurations. A record this version cannot read, such as one naming a module the catalog dropped,
      * is skipped and reported, never deleted, so it comes back once the catalog can read it again. */
-    async listConfigurations(unreadable?: (error: unknown) => void) {
+    async listConfigurations(unreadable?: (error: unknown, record: unknown) => void) {
       const items: unknown[] = await transaction('configurations', 'readonly', store => store.getAll())
-      return items.flatMap(item => { try { return [validateConfiguration(item)] } catch (error) { unreadable?.(error); return [] } })
+      return items.flatMap(item => { try { return [validateConfiguration(item)] } catch (error) { unreadable?.(error, item); return [] } })
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     },
     async saveConfiguration(item: Configuration) {
@@ -69,11 +70,11 @@ export function deviceStore(db: IDBDatabase) {
       compareModuleVersions(module.version, module.version)
       await transaction('settings', 'readwrite', store => store.put({ id: module.id, version: module.version }, 'module-view/' + module.id))
     },
-    async readFirmware(machine: 'octatrack' | 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii' = 'octatrack'): Promise<StoredFirmware | undefined> { return transaction('firmware', 'readonly', store => store.get(machine === 'octatrack' ? 'base' : 'base/' + machine)) },
-    async saveFirmware(file: File, machine: 'octatrack' | 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii' = 'octatrack') {
+    async readFirmware(machine: 'octatrack' | 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii' | 'zoom-ms-70cdr' = 'octatrack'): Promise<StoredFirmware | undefined> { return transaction('firmware', 'readonly', store => store.get(machine === 'octatrack' ? 'base' : 'base/' + machine)) },
+    async saveFirmware(file: File, machine: 'octatrack' | 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii' | 'zoom-ms-70cdr' = 'octatrack') {
       await transaction('firmware', 'readwrite', store => store.put({ name: file.name, blob: file }, machine === 'octatrack' ? 'base' : 'base/' + machine))
     },
-    async forgetFirmware(machine: 'octatrack' | 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii' = 'octatrack') { await transaction('firmware', 'readwrite', store => store.delete(machine === 'octatrack' ? 'base' : 'base/' + machine)) },
+    async forgetFirmware(machine: 'octatrack' | 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii' | 'zoom-ms-70cdr' = 'octatrack') { await transaction('firmware', 'readwrite', store => store.delete(machine === 'octatrack' ? 'base' : 'base/' + machine)) },
   }
 }
 export type DeviceStore = ReturnType<typeof deviceStore>

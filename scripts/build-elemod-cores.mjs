@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto'
 import { LINK_DEVICES, parseElemod } from '../src/engine/elektron/elemod.ts'
 import { elfToElemod, readElemodElf } from './elemod-elf.mjs'
 
-export async function buildCoreProbes({ root, output, sourceCommit, compiler, cflags, ldScript, run, stage = 'boot-probe' }) {
+export async function buildCoreProbes({ root, output, scratch, sourceCommit, compiler, cflags, ldScript, run, stage = 'boot-probe' }) {
   const variants = {
     'boot-probe': { prefix: 'cores', manifest: 'probe.json', inventory: 'core-build.json', version: '0.1.0-dev', name: 'Modwerk boot probe' },
     'ui-hook-probe': { prefix: 'ui-cores', manifest: 'ui-probe.json', inventory: 'core-ui-build.json', version: '0.2.0-dev', name: 'Modwerk UI hook probe' },
@@ -37,7 +37,7 @@ export async function buildCoreProbes({ root, output, sourceCommit, compiler, cf
     const spec = JSON.parse(specBytes.toString('utf8'))
     if (spec.schemaVersion !== 1 || spec.machine !== device.machine || spec.stage !== stage || spec.providesInterface !== false || spec.version !== version || Object.keys(spec.releases).sort().join() !== device.releases.map(r => r.version).sort().join()) throw new Error('Invalid draft core probe')
     const defs = device.machine === 'digitone' ? ['-DMODWERK_DIGITONE'] : []
-    const work = resolve('/tmp/modwerk-compile/core', device.machine)
+    const work = resolve(scratch, 'core', device.machine)
     await mkdir(work, { recursive: true })
     // Host tests execute only inside the network-disabled, unprivileged wrapper.
     const hostTest = resolve('/test', device.machine + '-event-bus-test')
@@ -107,7 +107,7 @@ export async function buildCoreProbes({ root, output, sourceCommit, compiler, cf
   }
   let syntheticFixtures
   if (commonHooks) {
-    const path = 'core-event-fixtures.json', object = '/tmp/modwerk-compile/event-fixtures.o'
+    const path = 'core-event-fixtures.json', object = resolve(scratch, 'event-fixtures.o')
     run('as', ['-mcpu=54455', '-o', object, resolve(shared, 'tests/event-fixtures.s')])
     const elf = readElemodElf(await readFile(object)), section = elf.sections.find(section => section.name === '.run')
     const instructions = Object.fromEntries(['settings', 'render_in', 'render_out'].map(event => {

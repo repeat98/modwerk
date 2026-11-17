@@ -1,0 +1,150 @@
+{
+  "candidate": "MF06",
+  "moduleVersion": "0.1.0-experimental",
+  "sourceCommit": "69934f88f664d64b08d50656ca3f792049d85952",
+  "sourceTreeSha256": "b397e5e6a98f000b8ca2aa4f7813abb7c0b476f53c165c44b520a00d3d9b54d3",
+  "compiler": {
+    "gcc": "m68k-elf-gcc (GCC) 16.2.0",
+    "assembler": "GNU assembler (GNU Binutils) 2.47.20260726",
+    "linker": "GNU ld (GNU Binutils) 2.47.20260726",
+    "node": "v24.21.0"
+  },
+  "packagePath": "sdk/imports/packages/midi-feedback/midi-feedback-0.1.0-experimental-os1.74.elemod",
+  "packageSha256": "590803e11e7cef3bb981cae26fd50e4c20dd7ac9b11ca5c77bdf6222d4c3980d",
+  "imageSha256": "51af69bc85d195d77ef802f54a2c15f3a08ddd30c61f76df232a7abd6ac47eb5",
+  "packageMemory": {
+    "runBytes": 2445,
+    "bssBytes": 1112,
+    "fastBytes": 0,
+    "totalBytes": 3557,
+    "includesCore": false
+  },
+  "outputProbe": {
+    "status": "PASS",
+    "messages": 669,
+    "assignments": 84,
+    "automatic_repeats": 6,
+    "track_level_before": 37,
+    "track_level_after": 55,
+    "sent_counter": 669,
+    "limits": "Emulator only; RAM-configured; UI, flood, persistence and hardware pending."
+  },
+  "lifecycle": [
+    {
+      "test": "disabled",
+      "status": "PASS",
+      "new_output_bytes": 0,
+      "stock_level": 12
+    },
+    {
+      "test": "encoder-int",
+      "status": "PASS",
+      "new_output_bytes": 0,
+      "stock_level": 12
+    },
+    {
+      "test": "nrpn-mode",
+      "status": "PASS",
+      "new_output_bytes": 0,
+      "stock_level": 12
+    },
+    {
+      "test": "usb-only",
+      "status": "PASS",
+      "new_output_bytes": 0,
+      "stock_level": 12
+    },
+    {
+      "test": "track-1-channel-off",
+      "status": "PASS",
+      "assignments": 77
+    },
+    {
+      "test": "track-1-reassigned-to-channel-16",
+      "status": "PASS",
+      "messages": 249
+    },
+    {
+      "test": "stock-kit-quick-save-and-reload",
+      "status": "PASS",
+      "values": [
+        55,
+        61,
+        23,
+        11,
+        73,
+        29,
+        41
+      ]
+    },
+    {
+      "test": "feedback-enabled-after-virtual-power-cycle",
+      "status": "PASS",
+      "enabled": 1
+    },
+    {
+      "test": "60-second-DIN-wire-rate-flood",
+      "status": "PASS",
+      "input_bytes": 187538,
+      "new_feedback_messages": 634,
+      "coalesced": 8,
+      "deferred": 0,
+      "limits": "No hang and output progress only; audible/stuck-note and hardware timing not qualified."
+    },
+    {
+      "test": "play-track-switch-filter-edits",
+      "status": "PASS",
+      "panel_track_select_chords": 60,
+      "final_frequency": 53,
+      "final_resonance": 71,
+      "limits": "Emulator progress and final values only; no physical PC12 pickup evidence."
+    },
+    {
+      "test": "moving-filter-targets-withheld",
+      "status": "PASS",
+      "frequency_values": [
+        53,
+        61,
+        79
+      ],
+      "resonance_values": [
+        23,
+        71,
+        89
+      ],
+      "limits": "Emulator output only; physical PC12 remains unqualified."
+    }
+  ],
+  "hardware": {
+    "model": "Elektron Analog Rytm MKII",
+    "release": "1.74",
+    "testedOn": "2026-11-07",
+    "tester": "claptom-music",
+    "durationMinutes": 45,
+    "summary": "MF06 with Faderfox PC12 over two-way DIN: responsive playback, smooth pickup and pattern transitions with both PC12 forwarding modes disabled. Kit reload and project restart restored pickup. A 45-minute follow-up began with about 4–5 minutes of DIN OUT disconnected. The author reported no issues throughout.",
+    "limitations": [
+      "Author-reported functional checks.",
+      "Earlier MF06 pattern transition freeze remains unexplained.",
+      "Hardware CPU, IRQ and queue timing were not measured."
+    ]
+  },
+  "load": {
+    "imageSha256": "51af69bc85d195d77ef802f54a2c15f3a08ddd30c61f76df232a7abd6ac47eb5",
+    "method": "emulator",
+    "timing": {
+      "mf_audio_clock": {
+        "completed_calls_at_least": 105000,
+        "max_elapsed_emulator_clocks": 2
+      },
+      "send_cc": {
+        "completed_calls_at_least": 334,
+        "max_elapsed_emulator_clocks": 71394
+      },
+      "mf_tick": {
+        "completed_calls_at_least": 1300,
+        "max_elapsed_emulator_clocks": 87284
+      }
+    },
+    "limits": "Observed emulator elapsed clocks under DIN input stress, including preemption. Physical processor cycles and audio deadline margins remain unmeasured."
+  }
+}

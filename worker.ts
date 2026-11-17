@@ -16,6 +16,7 @@ import { cleanupForumMedia } from './server/forum-media'
 import { cleanupAudioPreviews } from './server/audio-previews'
 import { cleanupRemoteSessions } from './server/remote-sessions'
 import { syncAgentClaims } from './server/agent-board'
+import { dispatchMaintenance } from './server/maintenance-bot'
 import { handleCommunity } from './server/transport'
 import type { Env } from './server/platform'
 export { RemoteSessionRelay } from './server/remote-relay'
@@ -45,6 +46,7 @@ export default {
     }
     if (event.cron === '*/5 * * * *') {
       context.waitUntil(sendMemberWelcomes(env, env.DB))
+      context.waitUntil(dispatchMaintenance(env, env.DB).catch(error => console.error(`Maintenance bot dispatch failed: ${failureDetail(error)}`)))
       return
     }
     const db = env.DB

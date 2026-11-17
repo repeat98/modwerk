@@ -42,7 +42,16 @@ class ResidentStockDsp(unittest.TestCase):
             self.assertTrue(resident.buffer_fits(tag, 2, block, 0x3da2, resident.SIDECHAIN))  # stock DARK's actual high water
             self.assertFalse(resident.buffer_fits(tag, 2, block, 0x3dff, resident.SIDECHAIN))
             self.assertFalse(resident.buffer_fits(tag, 2, block, 16384, resident.SIDECHAIN))
-            self.assertTrue(resident.buffer_fits(tag, 2, 0x4000, 16384, resident.SIDECHAIN))
+            # The first internal slot's tail is the key bus (Y $7e00..$7fff): a +$3DFD ring and BBD's 0x203A fit, a whole
+            # slot does not; the second internal slot is whole.
+            self.assertFalse(resident.buffer_fits(tag, 2, 0x4000, 16384, resident.SIDECHAIN))
+            self.assertFalse(resident.buffer_fits(tag, 2, 0x4000, 16384, resident.KEYBUS))
+            self.assertTrue(resident.buffer_fits(tag, 2, 0x4000, 16384, 0))
+            self.assertTrue(resident.buffer_fits(tag, 2, 0x4000, 0x3dfe, resident.SIDECHAIN | resident.KEYBUS))
+            self.assertTrue(resident.buffer_fits(tag, 2, 0x4000, 0x203a, resident.SIDECHAIN | resident.KEYBUS))
+            self.assertTrue(resident.buffer_fits(tag, 2, 0x4000, 0x3e00, resident.KEYBUS))
+            self.assertFalse(resident.buffer_fits(tag, 2, 0x4000, 0x3e01, resident.KEYBUS))
+            self.assertTrue(resident.buffer_fits(tag, 2, 0x8000, 16384, resident.SIDECHAIN | resident.KEYBUS))
             self.assertTrue(resident.buffer_fits(tag, 1, 0x1000, 3072, resident.SIDECHAIN))
         self.assertFalse(resident.buffer_fits('B', 2, 0x38000, 1, resident.MATRIX))
         self.assertFalse(resident.buffer_fits('A', 2, 0x30001, 4, 0))

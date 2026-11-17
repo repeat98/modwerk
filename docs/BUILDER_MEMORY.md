@@ -4,6 +4,8 @@ The Octatrack builder accepts `DramRegion(symbol, size, align=16)` declarations 
 
 Nonempty ELF `.bss` contributes to occupied runtime memory but never to packed firmware bytes. Modules must initialize BSS and declared regions before reading them. The packed stage may temporarily occupy BSS until depacking finishes; preboot payloads must avoid BSS, regions and the runtime/stage. Native layout records include `bss_end` and `regions` when present; browser layouts expose `bssEnd` and `regions`.
 
+A requested card package carries stock copies (zero placeholders the builder fills from the verified local OS) of two kinds only: the replay spans of its own detours, and data copies its import record declares under `stockGuards` with kind `guarded-local-cpu-read` (`address`, `bytes`, `sha256`). `scripts/stock-copy-policy.mjs` holds the rule.
+
 The native ledger checks complete fixed patch spans, source cave reservations (`CavePatch.reserve`), declared conflicts and kept stock spans (`Keep`). Browser package metadata carries these contracts and DRAM declarations when used. Keep fingerprints are checked against the verified original OS before writes and against the final patched OS. Neither builder permits a conflicting write into kept bytes.
 
 Legacy detours with guards shorter than their emitted instruction span are extended only from the globally fingerprinted, original local OS. No extracted bytes are committed or shipped in source packages. Whole emitted/guarded spans, rather than only hook start addresses, participate in conflict checks.

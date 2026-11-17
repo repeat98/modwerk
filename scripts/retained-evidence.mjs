@@ -12,7 +12,7 @@ import { compareModuleVersions } from '../src/catalog/versions.ts'
 import { requireModuleDocumentation } from './module-documentation.mjs'
 
 const assets = 'src/engine/assets'
-export const USB_WAIVERS_PATH = 'sdk/usb-package-waivers.json'
+export const USB_WAIVERS_PATH = 'sdk/approvals/usb-package-waivers.json'
 const USB_MANIFEST = assets + '/octatrack-module-packages.json'
 const git = (root, ...args) => execFileSync('git', args, { cwd: root, maxBuffer: 32 * 1024 * 1024 })
 const text = (root, ...args) => git(root, ...args).toString('utf8')
@@ -98,7 +98,7 @@ function ownRows(value, id) {
   return { version: value?.moduleVersions?.[id] ?? null, rows }
 }
 
-// The owner's hash-bound USB package waivers (sdk/usb-package-waivers.json): at most one for this exact version.
+// The owner's hash-bound USB package waivers (sdk/approvals/usb-package-waivers.json): at most one for this exact version.
 export function parseUsbPackageWaivers(value) {
   const fields = ['module', 'version', 'path', 'sha256', 'approval', 'hardware', 'emulator']
   if (!value || value.schemaVersion !== 1 || typeof value.about !== 'string' || !Array.isArray(value.waivers) || Object.keys(value).sort().join() !== 'about,schemaVersion,waivers')
@@ -129,8 +129,9 @@ export async function requireRetainedEvidence(root, folder, document, baseline, 
   // approved base, or origin/main for local generation and release validation.
   try { git(root, 'merge-base', '--is-ancestor', record.commit, approvedRef) }
   catch { throw new Error(label + ': evidence commit must belong to the approved main history; fetch origin/main or pass the exact PR base') }
-  const prefix = 'sdk/octabam/modules/' + document.id + '/'
-  const files = tree(root, record.commit, prefix)
+  // The module's folder at the evidence commit: where it is now, or sdk/octabam/modules/ before the folders moved (12 November 2026).
+  let prefix = 'sdk/octatrack/modules/' + document.id + '/', files = tree(root, record.commit, prefix)
+  if (!files.size) { prefix = 'sdk/octabam/modules/' + document.id + '/'; files = tree(root, record.commit, prefix) }
   const previous = parseModuleDocument(JSON.parse(files.get(prefix + 'octamod.module.json')?.toString('utf8') ?? 'null'))
   if (previous.id !== document.id || previous.version !== record.moduleVersion) throw new Error(label + ': prior module/version does not match the approved commit')
   if (previous.tests.retainedEvidence) throw new Error(label + ': reference the original reviewed evidence commit, not another retained-evidence update')

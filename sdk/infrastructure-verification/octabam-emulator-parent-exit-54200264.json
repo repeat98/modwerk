@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "kind": "emulator-extension",
+  "baseCommit": "edf56934ec2cb4ca484c9f48aa73beb407483d9c",
+  "historicalRecord": "ptable2-builder.json",
+  "importRecord": "imports/octabam-infrastructure-54200264.json",
+  "upstreamRevision": "54200264209d44303e150cdb946ca96ef1062c30",
+  "builderAdaptations": {
+    "tools/emu/ot_emu/main.cpp": {
+      "before": "409b3de1a4fd0c4de450e33a6d7748dc2b0d16d49efd1172c598560f5168166a",
+      "after": "1606c4c4df91f1e596f90760e7305bf3404f3da5fcdfff6e0fcefb3b10e40d54"
+    }
+  },
+  "builderSourcesUnchanged": {
+    "tools/build/build_bus.py": "e9b63f90f186284d523913f131573118c1eb0bddb253d13f685245b7f98be29c",
+    "tools/build/cycle_count.py": "e17affe5d31752f544c5c32990615e46f6f7b84bb478a6763b11ce81a282ee91",
+    "tools/remix/schema.py": "6843e02b1baf24572d77f9ecc9cac4c51644b48ca949d6eee6524408741b0fb3",
+    "tools/remix/platform_build.py": "e72b7a29b45851addecf135ad520db98b66f5e10c5cd354adf37fb52d6c2e42f",
+    "tools/remix/ledger.py": "73407d159a965671da2255aef5864bd0c745dfa2a600575918f48c40fc170f83",
+    "tools/remix/dsp_ranges.py": "085aca1208a672c91e8db2ea620a5a17eaa2b577f16f074ecb89fdf2bc23c300"
+  },
+  "scope": "In --interactive, ot_emu ends itself (status 3, 'ot_emu: parent <pid> is gone: exiting') once the process that started it has died, polling getppid() once a second from a detached thread started at the top of serveInteractive. Upstream commit b10a6b66 (merged as 26b1de62, 30 October 2026), unchanged; no other part of upstream's newer main.cpp.",
+  "softwareTests": {
+    "otEmuBuild": "cmake -S sdk/octabam/tools/emu/ot_emu -B <build> -DCMAKE_BUILD_TYPE=Release -DOT_VENDOR=<octabam checkout>/vendor (dsp56300 8ccdd843, the vendor.sh pin); cmake --build -j8, under the shared build lock (macOS 26.6.2, Apple clang 21.0.0, CMake 4.0.1, 5 November 2026): built with this main.cpp, and the ot_emu target built again with main's main.cpp (409b3de1) in the same tree.",
+    "ctest": "ctest -E ^(rtos|dsp|repitch-stock|repitch-patch)$ on the new build: 5 of 5 passed (emac, periph, mc68kColdFireTimingTest, mc68kHdi08ReceiveTest, mc68kColdFireDivideTest).",
+    "orphan": "A Python driver forks an intermediate parent that starts ot_emu --image <a local base MAIN.raw, kept outside Git> --boot-logo --ms 50 --main-level off --interactive --rtc off (the verify-startup-* arguments), reads its 'ready sample=2205.000 frames=0' line, sends 'run 600000', then kills itself with SIGKILL; the driver polls the emulator's pid every 0.5 s for 10 s. main's build: still running after 10 s, re-parented to pid 1 (killed by the driver). This build: gone after 1.0 s, its stderr ending 'ot_emu: parent <pid> is gone: exiting'.",
+    "sdkTests": "python3 -m unittest sdk/tests/test_infrastructure_regressions.py and npm run pr:ready: see the pull request."
+  },
+  "limitations": "Emulator only and one host: built and run on macOS (Apple clang); the Linux build uses the same POSIX calls (getppid, std::thread, _exit, all already used or included by main.cpp) but was not compiled here. No builder, base or module file changes, so every image and refusal of the earlier records holds by identity. No stock image was committed or written; the boot image used for the orphan check stays on the developer's computer."
+}

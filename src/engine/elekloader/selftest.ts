@@ -31,8 +31,10 @@ export const SELFTEST_LOAD = 1 << 3 | 1 << 8
 /** The failed bits that fail a sync. */
 export const selftestFaults = (failed: number) => failed & ~SELFTEST_LOAD
 
-/** After Keep: waits until the base says the running set is saved on the card and read back (true), or the save
- * failed or it took too long (false; the set still runs until the Octatrack is switched off). */
+/** After Keep: waits until the base says the running set is saved on the card and read back (true) or that the save
+ * failed (false; the set still runs until the Octatrack is switched off). 'pending' when it took too long: the base
+ * has not tried yet (its card gate holds a save while the unit is busy or playing) and saves by itself once it may.
+ * In the field (12-13 November 2026) four such saves landed within about a minute of a Keep the site called failed. */
 export async function waitUntilSaved(transport: SelftestTransport, options: { signal?: AbortSignal; pollMs?: number; timeoutMs?: number } = {}) {
   const { signal, pollMs = 500, timeoutMs = 20_000 } = options
   for (const start = Date.now(); Date.now() - start < timeoutMs; await wait(pollMs, signal)) {
@@ -41,7 +43,7 @@ export async function waitUntilSaved(transport: SelftestTransport, options: { si
     if (record.saved === 7 && record.savedCount === record.live) return true
     if (record.saved === 8) return false
   }
-  return false
+  return 'pending' as const
 }
 
 export interface SelftestTransport { selftest(start: boolean, signal?: AbortSignal): Promise<SelftestRecord | undefined> }

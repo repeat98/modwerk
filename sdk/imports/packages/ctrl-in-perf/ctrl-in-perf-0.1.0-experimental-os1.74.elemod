@@ -1,0 +1,433 @@
+{
+ "elemod": 2,
+ "id": "ctrl-in-perf",
+ "version": "0.1.0-experimental",
+ "title": "Ctrl In Perf",
+ "description": "EXP/CV IN 1 or 2 plays a performance macro: a PERF DEST row in the CONTROL INPUT menus sends the jack to PF1 to PF12.",
+ "category": "system",
+ "author": "Iced-Cream",
+ "license": "GPL-2.0-only",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 944,
+   "parts": [
+    [
+     "hex",
+     "4feffff448d7001c740041f90000000079b0280043f90000000043f12a004a84676841f90000000077b0280041f98000fcf820302c007202b68167207201b68166480480000040006a027000d0800c8000007fff6f06203c00007fff73516b16e18906810000008092806a0244810c81000000c06f04e088328071d1e18841f98000e57a31804a00600470ff328052827002b4806d00ff744cd7001c4fef000c4e754fefffdc2f42002074002f0f2f024eb9400fa7e4508f201741f9000000001180280020026100001e41f9000000001180280052827002b4806dd0242f00204fef00244e754ab9419f28a8672c2f00610000d0610000a2221f4a806b1c610000862f0042a72f094eb9000000004fef000c720cb08162024e7570004e754feffff848d7000c240026014ab9419f28a8674a6100008e610000604a806b3e2202610000442f032f0042a72f094eb9000000004fef001041f900000000118328004eb94017fa0a0680000000ec204042a72f082050206800504e90508f4cd7000c4fef00084e75227c000000004a816706227c000000004e7520080480413192ff651872004a8067160480000000e4650a52810c81000000046dea70ff4e7520014e754eb94017fa0a0680000000ec20402f082050206800344e90588f20404e75202a01b453807201b081620000b04fefffc0264f720f204b429853816afa268a203c0000000027400008203c000000002740000c274a0020203c0000000027400028203c000000002740002c274a0030203c0000000027400038203c000000002740003c487800544eb940082a40588f2e00487800084878ffff486b0030486b0020486b001048532f074eb940072fbc4fef001c2052206800082f072f0a4e90508f74032002e988487308004eb940170b92588f53826aec4fef0040205242a72f064ef940131b344e56fffc2f02486effff487a00e024082f084eb9401bcff04fef000c2002242efff84e5e4e75206f00042050202801b041f90000000071b008004a80660c487a00b64879402413d460062f00487a00ac48780004202f002054802f00202f00200680000000132f004879417e38842f2f00244eb9400713404fef001c4e75222f000c673c2f0a2f02206f000c24502401202a01b041f90000000073b00800d2826a027200740cb2826f0222026100fdc8486a00384eb940078580588f241f245f4e75206f0004202f000c660820bc0000000060145380660620af0008600a53806606226f0008209170004e75504552462044455354004f464600504625640000ffffffff00000000"
+    ]
+   ]
+  }
+ },
+ "symbols": {
+  "PORT_VALUE": [
+   "abs",
+   2147548408
+  ],
+  "PERF_TARGET": [
+   "abs",
+   2147542396
+  ],
+  "MODE_CV": [
+   "abs",
+   1
+  ],
+  "MODE_EXPR": [
+   "abs",
+   2
+  ],
+  "HYST": [
+   "abs",
+   192
+  ],
+  "PORTS": [
+   "abs",
+   2
+  ],
+  "DESTS": [
+   "abs",
+   12
+  ],
+  "CI_SETTINGS_AT": [
+   "abs",
+   1074767844
+  ],
+  "REC_BYTES": [
+   "abs",
+   32
+  ],
+  "mem_new": [
+   "abs",
+   1074276928
+  ],
+  "std_string_from_cstr": [
+   "abs",
+   1075564528
+  ],
+  "project_singleton": [
+   "abs",
+   1075313162
+  ],
+  "GLOBAL_LIVE": [
+   "abs",
+   1093767935
+  ],
+  "GLOBAL_STRIDE": [
+   "abs",
+   228
+  ],
+  "PROJ_GLOBALS": [
+   "abs",
+   236
+  ],
+  "PROJ_SINGLETON": [
+   "abs",
+   1100949672
+  ],
+  "VT_RECORD": [
+   "abs",
+   52
+  ],
+  "VT_CHANGED": [
+   "abs",
+   80
+  ],
+  "CIP_MENU_RESUME": [
+   "abs",
+   1074993972
+  ],
+  "MENU_ITEM_CTOR": [
+   "abs",
+   1074212796
+  ],
+  "FN_DTOR": [
+   "abs",
+   1075252114
+  ],
+  "VIEW_PORT": [
+   "abs",
+   432
+  ],
+  "VIEW_MODE": [
+   "abs",
+   436
+  ],
+  "VIEW_INVALIDATE": [
+   "abs",
+   1074234752
+  ],
+  "TEXT_PRINTF": [
+   "abs",
+   1074205504
+  ],
+  "CI_FONT": [
+   "abs",
+   1098791044
+  ],
+  "FMT_S": [
+   "abs",
+   1076106196
+  ],
+  "dest": [
+   ".run",
+   940
+  ],
+  "last_step": [
+   ".run",
+   936
+  ],
+  "mode": [
+   ".run",
+   942
+  ],
+  "dest_get": [
+   ".run",
+   230
+  ],
+  "rec_active": [
+   ".run",
+   450
+  ],
+  "gslot": [
+   ".run",
+   408
+  ],
+  "field_of": [
+   ".run",
+   390
+  ],
+  "dest_set": [
+   ".run",
+   286
+  ],
+  "cip_mgr": [
+   ".run",
+   874
+  ],
+  "cip_label": [
+   ".run",
+   680
+  ],
+  "cip_draw": [
+   ".run",
+   718
+  ],
+  "cip_change": [
+   ".run",
+   806
+  ],
+  "txt_label": [
+   ".run",
+   916
+  ],
+  "txt_off": [
+   ".run",
+   926
+  ],
+  "txt_pf": [
+   ".run",
+   930
+  ],
+  "ctrl_in_perf_tick": [
+   ".run",
+   162
+  ],
+  "ctrl_in_perf_menu": [
+   ".run",
+   480
+  ],
+  "ctrl_in_perf_audio": [
+   ".run",
+   0
+  ]
+ },
+ "exports": [
+  "ctrl_in_perf_audio",
+  "ctrl_in_perf_menu",
+  "ctrl_in_perf_tick"
+ ],
+ "imports": [
+  "core_store_get",
+  "core_store_set",
+  "ctrl_in_perf_dest_1",
+  "ctrl_in_perf_dest_2"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   12,
+   "abs32",
+   "sec:.run",
+   940
+  ],
+  [
+   ".run",
+   22,
+   "abs32",
+   "sec:.run",
+   936
+  ],
+  [
+   ".run",
+   36,
+   "abs32",
+   "sec:.run",
+   942
+  ],
+  [
+   ".run",
+   188,
+   "abs32",
+   "sec:.run",
+   942
+  ],
+  [
+   ".run",
+   204,
+   "abs32",
+   "sec:.run",
+   940
+  ],
+  [
+   ".run",
+   266,
+   "abs32",
+   "sym:core_store_get",
+   0
+  ],
+  [
+   ".run",
+   334,
+   "abs32",
+   "sym:core_store_set",
+   0
+  ],
+  [
+   ".run",
+   344,
+   "abs32",
+   "sec:.run",
+   940
+  ],
+  [
+   ".run",
+   392,
+   "abs32",
+   "sym:ctrl_in_perf_dest_1",
+   0
+  ],
+  [
+   ".run",
+   402,
+   "abs32",
+   "sym:ctrl_in_perf_dest_2",
+   0
+  ],
+  [
+   ".run",
+   514,
+   "abs32",
+   "sec:.run",
+   874
+  ],
+  [
+   ".run",
+   524,
+   "abs32",
+   "sec:.run",
+   680
+  ],
+  [
+   ".run",
+   538,
+   "abs32",
+   "sec:.run",
+   874
+  ],
+  [
+   ".run",
+   548,
+   "abs32",
+   "sec:.run",
+   718
+  ],
+  [
+   ".run",
+   562,
+   "abs32",
+   "sec:.run",
+   874
+  ],
+  [
+   ".run",
+   572,
+   "abs32",
+   "sec:.run",
+   806
+  ],
+  [
+   ".run",
+   730,
+   "abs32",
+   "sec:.run",
+   940
+  ],
+  [
+   ".run",
+   830,
+   "abs32",
+   "sec:.run",
+   940
+  ],
+  [
+   ".run",
+   886,
+   "abs32",
+   "sec:.run",
+   874
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x40131b2e",
+   "len": 6,
+   "stock_sha256": "f9e4e460a94d586bd50a8538ac6ecd2a217e485ea070088393ded7cc52205994",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ctrl_in_perf_menu",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_render_in",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:ctrl_in_perf_audio",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_tick",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:ctrl_in_perf_tick",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "storage": [
+  {
+   "sym": "ctrl_in_perf_dest_1",
+   "scope": "global",
+   "bits": 4
+  },
+  {
+   "sym": "ctrl_in_perf_dest_2",
+   "scope": "global",
+   "bits": 4
+  }
+ ],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:GLOBAL > CONTROL > CONTROL INPUT 1 and 2: PERF DEST row in CV and EXPR modes",
+   "input:EXP/CV IN 1 and 2 in CV and EXPR modes drive a performance macro"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

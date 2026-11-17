@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.4-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "Recorded notes follow a scale change: what Static, Flex and MIDI tracks play snaps to SCALE and ROOT, MIDI chords, TRAN and the arpeggiator included (#439).",
+      "On MIDI tracks the NOTE knob, NOTE locks and chromatic keys step through the scale from ROOT.",
+      "New SEQUENCER rows TRACK and FOLLOW: pick an audio or MIDI track with TRACK and set FOLLOW to OFF to keep that track unquantized, for drums or fixed-pitch samples.",
+      "Keeps 0.1.3's MIDI trig-mode freeze fix (#181, #264). The held chromatic key is marked on the note it sounds.",
+      "Compatibility: FM Synth 0.1.4 declares this module a conflict (it bundles its own copy of the quantizer; both patch the same sites). Reported working on the author's MKI (30 Oct 2026)."
+    ]
+  },
+  {
     "version": "0.1.3-experimental",
     "date": "2026-10-11",
     "changes": [

@@ -89,7 +89,21 @@ describe('account-mail failures and quotas',()=>{
   expect(sender).toHaveBeenCalledTimes(2)
   expect(db.prepare('SELECT purpose,accepted,limited FROM account_mail_daily ORDER BY purpose').all()).toEqual([{purpose:'reset',accepted:1,limited:0},{purpose:'verify',accepted:1,limited:0}])
  })
- it.each([['account-mail:daily',86400,60],['account-mail:monthly',30*86400,1800]] as const)('rejects exhausted %s quota before contacting the provider',async(key,seconds,limit)=>{
+ it('keeps recovery mail when sign-ups use up theirs, and caps sign-ups across the site',async()=>{
+  const {call,db}=await fixture(),sender=vi.fn(async()=>Response.json({id:'recovery-email'}))
+  vi.stubGlobal('fetch',sender)
+  const now=Math.floor(Date.now()/1000),fill=async(key:string,seconds:number,count:number)=>db.prepare('INSERT OR REPLACE INTO rate_limits(key,count,expires) VALUES(?,?,?)').run(await digest(key+':'+Math.floor(now/seconds)),count,now+seconds)
+  await fill('account-mail:daily',86400,40)
+  expect((await call('/auth/register','POST',{rulesVersion:COMMUNITY_RULES_VERSION,username:'starved',email:'starved@example.test',password})).status).toBe(202)
+  expect(sender).not.toHaveBeenCalled()
+  expect((await call('/auth/forgot','POST',{email:'starved@example.test'})).status).toBe(202)
+  expect(sender).toHaveBeenCalledTimes(1)
+  expect(db.prepare('SELECT purpose,accepted,limited FROM account_mail_daily ORDER BY purpose').all()).toEqual([{purpose:'reset',accepted:1,limited:0},{purpose:'verify',accepted:0,limited:1}])
+  await fill('auth-register',3600,30)
+  expect((await call('/auth/register','POST',{rulesVersion:COMMUNITY_RULES_VERSION,username:'capped',email:'capped@example.test',password})).status).toBe(429)
+  expect(db.prepare("SELECT COUNT(*) AS count FROM users WHERE username='capped'").get()).toEqual({count:0})
+ })
+ it.each([['account-mail:daily',86400,40],['account-mail:monthly',30*86400,1200]] as const)('rejects exhausted %s quota before contacting the provider',async(key,seconds,limit)=>{
   const {call,db}=await fixture(),sender=vi.fn(async()=>Response.json({id:'should-not-send'}))
   vi.stubGlobal('fetch',sender)
   const now=Math.floor(Date.now()/1000)

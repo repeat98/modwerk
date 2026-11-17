@@ -1,0 +1,131 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
+  "emulatorSha256": "870b66f73749a41d042484e47c248f4c53e42ce0481a4c38b95cffac98dc17db",
+  "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 150,
+  "plan": [
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "MENU"
+      ]
+    },
+    {
+      "press": [
+        "LEFT"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "RIGHT"
+      ]
+    },
+    {
+      "capture": "ot-system.png"
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "capture": "ot-personalize.png"
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "capture": "ot-mute-ot.png"
+    },
+    {
+      "press": [
+        "RIGHT"
+      ]
+    },
+    {
+      "capture": "ot-mute-otfx.png"
+    },
+    {
+      "press": [
+        "RIGHT"
+      ]
+    },
+    {
+      "capture": "ot-mute-otfx-t.png"
+    },
+    {
+      "press": [
+        "RIGHT"
+      ]
+    },
+    {
+      "capture": "ot-mute-dt-t.png"
+    }
+  ],
+  "screenshots": {
+    "ot-system.png": "c5974f5b5e462b3abb757cfa4f49b91848cb411841b9b255c201f4dc2c866aee",
+    "ot-mute-ot.png": "f1b49fe1a69443f64e28013e89cd95ffa7533568b2d21a58c208b45a4f214f00",
+    "ot-mute-otfx.png": "497d97df83e7bde1c160e9b9f9955fd146a77c3bd441644280e1d03b09390e4c",
+    "ot-mute-otfx-t.png": "6aaef48eaf3715d9da16d0e9c04b9e08c7f3209288d4b229f94e63cadf9ed04b",
+    "ot-mute-dt-t.png": "4f2117386d263e7d41ec8f9fc41e18a5179abb2e2f0d39a2122324ab71fef03b"
+  },
+  "moduleVersion": "0.2.2-experimental",
+  "buildKind": "native card image of this module alone, every stock effect kept",
+  "projectLoadStatus": "missing-project prompts dismissed; no valid project loaded",
+  "harness": "scripts/capture-module-ui.py, unmodified; the plan of 0.1.0's captures",
+  "sourceSha256": "bdfceea33319bc21db121e142573a8c2f9b675b457a3de3e3a3b3b7b251ba7b9"
+}

@@ -22,6 +22,19 @@ def bases():
         yield path.parts[-3], json.loads(path.read_text())
 
 
+def imported_recipe(machine, config):
+    """The core's mod.json as imported: in the machine's own folder, or in the one its base names as source."""
+    return APP / "sdk/machines" / config.get("source", machine) / "elekloader" / config["core"] / "mod.json"
+
+
+def binding_of(machine, config):
+    """The machine's base-binding.json, or None while its base.json says why it cannot be built yet."""
+    path = APP / "sdk/machines" / machine / "base-binding.json"
+    if not path.exists() and config.get("pending"):
+        return None
+    return json.loads(path.read_text())
+
+
 class MachineBases(unittest.TestCase):
     def test_rytm_base_is_core_ar2_0_7_source_unchanged(self):
         record = json.loads((APP / "sdk/imports/core-ar2-source-fb58292.json").read_text())
@@ -33,7 +46,7 @@ class MachineBases(unittest.TestCase):
         self.assertEqual({name: imported[name] for name in release["build"]["sources"]}, release["build"]["sources"])
 
     def test_digitakt_ii_base_source_is_core_dt2_1_1_unchanged(self):
-        record = json.loads((APP / "sdk/imports/core-dt2-source-3d7c2e3.json").read_text())
+        record = json.loads((APP / "sdk/imports/core-dt2-source-0df8409.json").read_text())
         self.assertRegex(record["revision"], r"^[0-9a-f]{40}$")
         for item in record["files"]:
             self.assertEqual(sha(APP / item["to"]), item["sha256"], item["to"])
@@ -43,7 +56,7 @@ class MachineBases(unittest.TestCase):
         mod = json.loads((folder / "mod.json").read_text())
         for source in mod["sources"]:
             self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), imported, source)
-        self.assertIn("sdk/machines/digitakt-ii/include/mk2/core.h", imported)
+        self.assertIn("sdk/machines/digitakt-ii/include/digitakt-mk2/core.h", imported)
 
     def test_digitakt_ii_proposed_hooks_name_the_sites_the_source_patches(self):
         interface = json.loads((APP / "sdk/digitakt-ii/core-profile/interface.json").read_text())
@@ -69,11 +82,23 @@ class MachineBases(unittest.TestCase):
 
     def test_bindings_name_what_they_were_built_from(self):
         for machine, config in bases():
-            binding = json.loads((APP / "sdk/machines" / machine / "base-binding.json").read_text())
+            binding = binding_of(machine, config)
+            self.assertEqual(sha(APP / config["reference"]["file"]), config["reference"]["sha256"], machine)
+            if binding is None:
+                continue
             self.assertRegex(binding["identity"], r"^[0-9a-f]{64}$")
             self.assertEqual(binding["built"]["toolchain"], config["toolchain"], machine)
             self.assertEqual(binding["built"]["stock"], machine_base.stock_sha(machine, config["os"]), machine)
-            self.assertEqual(sha(APP / config["reference"]["file"]), config["reference"]["sha256"], machine)
+
+    def test_profiles_budget_the_bound_base_footprint(self):
+        # The machine page shows machine.json's budgets; one of them is the bound package's .run plus .bss.
+        for machine, config in bases():
+            binding = binding_of(machine, config)
+            if binding is None:
+                continue
+            footprint = binding["sections"][".run"] + binding["sections"][".bss"]
+            budgets = json.loads((APP / "sdk/machines" / machine / "machine.json").read_text())["sdk"]["budgets"]
+            self.assertIn(footprint, [budget["value"] for budget in budgets if budget["unit"] == "bytes"], machine)
 
     def test_staging_lays_out_every_source_and_header_mod_json_names(self):
         for machine, config in bases():
@@ -87,23 +112,70 @@ class MachineBases(unittest.TestCase):
 
     def test_staging_adds_modwerk_sources_and_leaves_the_imported_recipe_exact(self):
         for machine, config in bases():
-            imported = (APP / "sdk/machines" / machine / "elekloader" / config["core"] / "mod.json").read_bytes()
+            imported = imported_recipe(machine, config).read_bytes()
             with tempfile.TemporaryDirectory() as work:
                 core = machine_base.stage(machine, config, pathlib.Path(work))
                 mod = json.loads((core / "mod.json").read_text())
-                for source in config.get("add", {}).get("sources", []):
+                for source in config.get("add", {}).get("sources", []) + config.get("recipe", {}).get("sources", []):
                     self.assertIn(source, mod["sources"])
-            self.assertEqual((APP / "sdk/machines" / machine / "elekloader" / config["core"] / "mod.json").read_bytes(), imported)
+            self.assertEqual(imported_recipe(machine, config).read_bytes(), imported)
+
+    def test_variants_stage_with_or_without_add_and_bindings_record_each(self):
+        for machine, config in bases():
+            names = [name for name, _, _ in machine_base.variants(config)]
+            binding = binding_of(machine, config)
+            if "variants" in config and binding is not None:
+                self.assertEqual(list(binding["variants"]), names, machine)
+                self.assertEqual(binding["identity"], binding["variants"][names[0]], machine)
+            for name, add, leave in machine_base.variants(config):
+                with tempfile.TemporaryDirectory() as work:
+                    core = machine_base.stage(machine, config, pathlib.Path(work), add=add, leave=leave)
+                    staged = (core / "mod.json").read_bytes()
+                imported = imported_recipe(machine, config).read_bytes()
+                if "recipe" in config:
+                    mod = json.loads(staged)
+                    self.assertEqual(mod["device"], config["recipe"]["device"], name)
+                    self.assertEqual(mod["defsym"], config["recipe"]["defsym"], name)
+                elif add:
+                    self.assertNotEqual(staged, imported, name)
+                elif config.get("common"):
+                    # common alone: the imported recipe with common's parts, and none of add's
+                    mod = json.loads(staged)
+                    for source in config["common"].get("sources", []):
+                        self.assertIn(source, mod["sources"], name)
+                    for source in config.get("add", {}).get("sources", []):
+                        self.assertNotIn(source, mod["sources"], name)
+                else:
+                    self.assertEqual(staged, imported, name)
 
     def test_every_added_site_is_guarded_by_a_hash_not_stock_bytes(self):
         for machine, config in bases():
-            for site in config.get("add", {}).get("sites", []):
+            sites = [site for part in ("common", "add", "dev") for site in config.get(part, {}).get("sites", [])]
+            for site in sites + config.get("recipe", {}).get("sites", []):
                 self.assertNotIn("stock", site, site["addr"])
                 self.assertRegex(site["stockSha256"], r"^[0-9a-f]{64}$")
-                if site.get("kind") == "data":
+                if site["op"] == "bytes":
                     self.assertEqual(len(site["new"]), 2 * site["len"], site["addr"])
                 else:
                     self.assertTrue(site["len"] >= 6 and site["len"] % 2 == 0, site["addr"])
+
+    def test_copies_name_an_unchanged_original_and_refuse_a_changed_one(self):
+        for machine, config in bases():
+            source = APP / "sdk/machines" / config.get("source", machine) / "elekloader"
+            for copy in config.get("copies", []):
+                self.assertEqual(sha(source / copy["from"]), copy["sha256"], copy["path"])
+                self.assertTrue((APP / "sdk/machines" / machine / "elekloader/copies" / copy["path"]).is_file(), copy["path"])
+            if config.get("copies"):
+                stale = dict(config, copies=[dict(config["copies"][0], sha256="0" * 64)])
+                with tempfile.TemporaryDirectory() as work, self.assertRaisesRegex(ValueError, "redo the copy"):
+                    machine_base.stage(machine, stale, pathlib.Path(work))
+
+    def test_retarget_replaces_the_recipe_and_refuses_anything_else(self):
+        mod = {"device": "a", "defsym": {"X": "1"}, "sites": [{"a": 1}], "sources": ["a.s"]}
+        out = machine_base.retarget(dict(mod), {"device": "b", "defsym": {"Y": "2"}, "sites": [], "sources": ["b.s"]}, [{"b": 2}])
+        self.assertEqual(out, {"device": "b", "defsym": {"Y": "2"}, "sites": [{"b": 2}], "sources": ["a.s", "b.s"]})
+        with self.assertRaises(ValueError):
+            machine_base.retarget(dict(mod), {"exports": []}, [])
 
     def test_merge_extends_lists_and_refuses_a_redefined_name(self):
         mod = {"sources": ["a.s"], "defsym": {"X": "1"}}
@@ -117,6 +189,97 @@ class MachineBases(unittest.TestCase):
             machine_base.merge(dict(mod), {"defsym": {"X": "3"}}, [])
         with self.assertRaises(ValueError):
             machine_base.merge(dict(mod), {"description": "no"}, [])
+
+    def test_parts_put_common_before_add_and_refuse_a_name_in_both(self):
+        config = {"common": {"sources": ["c.c"], "collections": {"t": 4}}, "add": {"sources": ["a.c"], "collections": {"u": 4}}}
+        self.assertEqual(machine_base.parts(config), {"sources": ["c.c", "a.c"], "collections": {"t": 4, "u": 4}})
+        self.assertEqual(machine_base.parts(config, add=False), {"sources": ["c.c"], "collections": {"t": 4}})
+        self.assertEqual(machine_base.parts({"add": {"sources": ["a.c"]}}, add=False), {})
+        with self.assertRaises(ValueError):
+            machine_base.parts({"common": {"collections": {"t": 4}}, "add": {"collections": {"t": 4}}})
+
+    def test_parts_put_dev_last_and_only_for_a_development_base(self):
+        config = {"common": {"sources": ["c.c"]}, "add": {"sources": ["a.c"]},
+                  "dev": {"about": "text", "sources": ["d.c"], "defsym": {"D": "1"}}}
+        self.assertEqual(machine_base.parts(config), {"sources": ["c.c", "a.c"]})
+        self.assertEqual(machine_base.parts(config, dev=True), {"sources": ["c.c", "a.c", "d.c"], "defsym": {"D": "1"}})
+        self.assertEqual(machine_base.parts(config, add=False, dev=True), {"sources": ["c.c", "d.c"], "defsym": {"D": "1"}})
+        with self.assertRaises(ValueError):
+            machine_base.parts({"add": {"defsym": {"D": "1"}}, "dev": {"defsym": {"D": "1"}}}, dev=True)
+
+    def test_a_variant_leaves_out_of_add_what_its_patterns_name_and_keeps_the_rest_in_order(self):
+        add = {"sources": ["a.c", "bus.c", "v.c"], "cflags": ["-DX=1"],
+               "sites": [{"addr": "0x10", "target": "bus_gate"}, {"addr": "0x20", "op": "bytes"}, {"addr": "0x30", "target": "v_gate"}],
+               "subscribe": [{"event": "ev_tick", "fn": "bus_tick"}, {"event": "ev_tick", "fn": "v_tick"}],
+               "contribute": [{"to": "pages", "relocs": [[0, "abs32", "sym:bus_page", 0]]}, {"to": "params", "relocs": [[0, "abs32", "sym:v_params", 0]]}],
+               "defsym": {"bus_resume": "0x40"}, "collections": {"bus_fx": 4, "v_list": 4},
+               "storage": [{"sym": "bus_send", "scope": "sound", "bits": 7}, {"sym": "v_type", "scope": "sound", "bits": 3}]}
+        self.assertEqual(machine_base.leave_out(add, ["bus.c", "bus_*", "0x20"]), {
+            "sources": ["a.c", "v.c"], "cflags": ["-DX=1"], "sites": [{"addr": "0x30", "target": "v_gate"}],
+            "subscribe": [{"event": "ev_tick", "fn": "v_tick"}], "contribute": [add["contribute"][1]],
+            "collections": {"v_list": 4}, "storage": [add["storage"][1]]})
+        with self.assertRaises(ValueError):
+            machine_base.leave_out(add, ["bus_*", "no_such_*"])
+        with self.assertRaises(ValueError):
+            machine_base.variants({"variants": {"bad": {"add": False, "leave": ["bus_*"]}}})
+
+    def test_the_rytm_voices_variant_stages_add_without_the_send_bus(self):
+        config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
+        variants = {name: (add, leave) for name, add, leave in machine_base.variants(config)}
+        staged = {}
+        for name in ("send-bus", "voices"):
+            with tempfile.TemporaryDirectory() as work:
+                add, leave = variants[name]
+                core = machine_base.stage("analog-rytm-mkii", config, pathlib.Path(work), add=add, leave=leave)
+                staged[name] = json.loads((core / "mod.json").read_text())
+        bus, voices = staged["send-bus"], staged["voices"]
+        for source in ("../base/clock.c", "../base/sendbus.c", "../base/sendbus.s"):
+            self.assertIn(source, bus["sources"])
+            self.assertNotIn(source, voices["sources"])
+        for source in ("../base/locks.c", "../base/locks.s", "../base/voice.c", "../base/voice.s"):
+            self.assertIn(source, voices["sources"])
+        names = json.dumps(voices)
+        self.assertNotIn("mw_send_", names)
+        self.assertNotIn("mw_fx", voices["collections"])
+        for name in ("mw_voices", "ev_sound_applied"):
+            self.assertIn(name, voices["collections"])
+        self.assertEqual([field["sym"] for field in voices["storage"]], ["mw_voice_type"])
+        # what remains is send-bus's, in send-bus's order
+        self.assertEqual([s for s in bus["sources"] if s in voices["sources"]], voices["sources"])
+        self.assertEqual([s for s in bus["subscribe"] if s in voices["subscribe"]], voices["subscribe"])
+
+    def test_development_bases_stage_dev_on_every_variant_and_releases_never_carry_it(self):
+        for machine, config in bases():
+            if "dev" not in config:
+                continue
+            for name, add, leave in machine_base.variants(config):
+                for dev in (False, True):
+                    with tempfile.TemporaryDirectory() as work:
+                        core = machine_base.stage(machine, config, pathlib.Path(work), add=add, dev=dev, leave=leave)
+                        mod = json.loads((core / "mod.json").read_text())
+                    for source in config["dev"]["sources"]:
+                        (self.assertIn if dev else self.assertNotIn)(source, mod["sources"], (name, dev))
+                        self.assertTrue((APP / "sdk/machines" / machine / "elekloader/base" / pathlib.Path(source).name).is_file())
+
+    def test_dev_sites_take_no_bytes_a_release_site_or_the_core_takes(self):
+        for machine, config in bases():
+            spans = lambda part: [(int(s["addr"], 16), int(s["addr"], 16) + s["len"], s["addr"])
+                                  for s in config.get(part, {}).get("sites", [])]
+            core = json.loads(imported_recipe(machine, config).read_text()).get("sites", [])
+            release = spans("common") + spans("add") + spans("recipe") + [
+                (int(s["addr"], 16), int(s["addr"], 16) + len(s["stock"]) // 2, s["addr"]) for s in core]
+            for start, end, addr in spans("dev"):
+                for other_start, other_end, other in release:
+                    self.assertFalse(start < other_end and other_start < end, (machine, addr, other))
+
+    def test_dev_cflags_that_repeat_a_release_define_give_it_the_same_value(self):
+        for machine, config in bases():
+            defined = lambda part: dict(f[2:].split("=", 1) for f in config.get(part, {}).get("cflags", [])
+                                        if f.startswith("-D") and "=" in f)
+            release = dict(defined("common"), **defined("add"))
+            for name, value in defined("dev").items():
+                if name in release:
+                    self.assertEqual(value, release[name], (machine, name))
 
     def test_keeps_wants_every_item_of_the_release_and_allows_additions(self):
         reference = {"id": "core", "sites": [1, 2], "build": {"sources": {"x": "1"}}}

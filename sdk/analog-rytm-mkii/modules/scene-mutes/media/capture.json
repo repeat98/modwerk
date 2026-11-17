@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "scene-mutes",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-08T21:20:00Z",
+  "imageSha256": "556262bde12a54fe6108d5de3e4af30b9ef95304dc54f2059d84deead3d91767",
+  "build": "Modwerk's linker: Modwerk base for core-ar2 0.7 (plain variant ba530f45) + this folder's Scene Mutes 0.1.0-experimental (package 8b8ebc1e), materialised against stock OS 1.74, --version SM01",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "revision de24ae6 (2ac0f1f's dtboot code; the one later commit changes only the window program); no card (starts formatted); JIT on; --every 1000M; DTBOOT_END_PNG at the end of the run"
+  },
+  "conditions": "Cold boot; eight NO presses from 7003M, 300M apart, close the calibration notices. Then SCNE held from 11003M for 1500M, FUNC held from 11303M for 900M, T1 at 11503M and T2 at 11703M (12M each); the frame is taken at 12003M with SCNE and FUNC still held. The same plan on the base without the module gives the same screen: the module's change shows on the trig LEDs (T1 and T2 lit), not the screen. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified.",
+  "captures": [
+    {
+      "path": "media/scene-edit.png",
+      "frame": "end.png",
+      "plan": "DTBOOT_END_PNG=scene-edit.png dtboot SM01.syx --instr 12003M --every 1000M --press NO@7003M:12M --press NO@7303M:12M --press NO@7603M:12M --press NO@7903M:12M --press NO@8203M:12M --press NO@8503M:12M --press NO@8803M:12M --press NO@9103M:12M --press SCNE@11003M:1500M --press FUNC@11303M:900M --press T1@11503M:12M --press T2@11703M:12M",
+      "sha256": "c4a6f0cd4008b43a7a2ff756dff36be152eff1f1c2a057010fdb484cf98260fe"
+    }
+  ]
+}

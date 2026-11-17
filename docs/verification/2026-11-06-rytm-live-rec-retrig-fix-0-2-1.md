@@ -1,0 +1,8 @@
+# Analog Rytm MKII: Live Rec Retrig Fix 0.2.1-experimental — 6 November 2026
+
+Nathaniel Pavel's (@npp1993) Live Rec Retrig Fix 0.2.1 turns both `ev_render_out` handlers (the recording follower and Retrig Grid's) into short entries that call the unchanged bodies only when they have work, so an idle audio block no longer sets up a 144-byte frame and saves nine registers. Recording, the grid and the RTRG key are unchanged. Its source-only OS 1.74 package is pinned in `sdk/imports/elekloader-live-rec-retrig-fix-2026-11-06.json` (commit `ec69c137`), replacing 0.2.0's pin.
+
+- **Build:** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (image `8f3b70d4…`) from a clean checkout of `5a54dd29`, the source the package commit carries. Exported with `package-elemod-recipe.mjs`, which reproduces it with `--check`.
+- **Package:** `live-rec-retrig-fix-0.2.1-experimental-os1.74.elemod` `0760ed0d…61d5`, copied into the vendored catalogue (same bytes as the pinned file). 0.2.0's source-only package stays in `sdk/imports`.
+- **Emulator:** LR23 (vendored core-ar2 0.7 + this source, `9f65781f…`) in rytm-emu `c5732f0`: both media plans replay, and both frames are byte-identical to 0.2.0's LR22 captures.
+- **On a unit:** measured on the author's Analog Rytm MKII with a private telemetry base (audio block and each handler timed on DTIM0, sent over USB MIDI), RC31's 16-module set, sequencer stopped: the two handlers cost 3.4 µs a block with 0.2.0 (LR01) and 2.5 µs with this source (LR02), about 0.14 points of the block. In LP01 (that set with this source and two other idle changes), recording a roll with pad pressure, Retrig Grid while playing and RTRG + YES pass, as reported. Not run alone on a unit.

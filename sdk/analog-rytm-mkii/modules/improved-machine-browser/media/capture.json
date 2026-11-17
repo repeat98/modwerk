@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "improved-machine-browser",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-08T23:00:00Z",
+  "imageSha256": "b80f699128b096aeced35fc8840aa3dd1800c694288609baab85e802dff68e6e",
+  "build": "Modwerk's linker: Modwerk base for core-ar2 0.7 (plain variant ba530f45) + this folder's Improved Machine Browser 0.1.0-experimental, materialised against stock OS 1.74, --version MB03",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "revision 2ac0f1f; no card; JIT on; DTBOOT_END_PNG at the end of each run"
+  },
+  "conditions": "SETUP: boot MB03 for 4000M with NO pressed six times from 2000M to close the notices, snapshot; the default kit, BD track, SRC page. Each capture loads that snapshot, opens the machine list with FUNC held from 4100M and SRC at 4120M (outline on BD PLASTIC), runs the listed --press events (12M each) and ends 700M-800M after the snapshot.",
+  "captures": [
+    {
+      "path": "media/browse.png",
+      "frame": "end.png",
+      "plan": "DOWN, DOWN",
+      "sha256": "af216b767a0b75f7b6a159a3ea9bf94cd7488b50ee367df408c82bf8bc3888ac"
+    },
+    {
+      "path": "media/section-jump.png",
+      "frame": "end.png",
+      "plan": "FUNC held, DOWN",
+      "sha256": "37d1f99e0057ab7e1d3b83a42d3222441346b3a20eedfc84edf13313c82f3ff7"
+    },
+    {
+      "path": "media/confirmed.png",
+      "frame": "end.png",
+      "plan": "DOWN, YES",
+      "sha256": "34259ce3bb9efb41a3c6becb746fe58120efc9f6f2f3ad61abdcc7db3b609747"
+    }
+  ]
+}

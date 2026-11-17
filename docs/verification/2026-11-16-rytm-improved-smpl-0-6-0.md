@@ -1,0 +1,9 @@
+# Analog Rytm MKII: Improved SMPL 0.6.0-experimental, with Ping Pong Loop folded in — 16 November 2026
+
+Nathaniel Pavel's (@npp1993) Improved SMPL (id `sample-rate`) 0.6.0 takes in his Ping Pong Loop (`pipo-loop` 0.1.2) unchanged: LOP PIPO, FUNC + STA or END to zero crossings, and the S and E labels on SMPL WAVEFORM. The code of both is unchanged, and their 22 sites do not overlap. It declares `pipo-loop` in `compatibility.conflicts` until that module retires. Its source-only OS 1.74 package is pinned in `sdk/imports/elekloader-sample-rate-2026-11-16.json` (commit `7a6ab7f79`), replacing 0.5.1's pin.
+
+- **Build:** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (image `3d0d46b0…`) from a clean checkout of `8edbe0be3`. Exported with `package-elemod-recipe.mjs`; a second clean build gives the same file (`--check`), and `verify-elemod-release-exports.mjs` reproduced all 67 current exports from that build, this one included.
+- **Package:** `sample-rate-0.6.0-experimental-os1.74.elemod` `f749f249…d2c8`. Earlier source-only packages stay in `sdk/imports`.
+- **Emulator:** rytm-emu `c5732f0`: the 14 documented capture plans of both modules give 126 byte-identical frames on MS01 (core-ar2 0.7 + this source) and MS00 (the same core with Ping Pong Loop 0.1.2 and Improved SMPL 0.5.1). Media captured on MS01.
+- **On a unit:** the author's Analog Rytm MKII, OS 1.74, MSU1 (the author's private development base + this source, `a34e9ec9…0579`) booted from RAM: the author's rig ran twelve Improved SMPL cases with no failed check, and the author reports PIPO, the zero snap and labels, RATE through 0 and TUN all pass. Details in the module's TESTING.md.
+- **Linking:** `planBuild` plans it beside Silent Pad+Trig, Audio In FX and Live Rec Retrig Fix (`src/engine/elekloader/digi-build.test.ts`).

@@ -3,12 +3,23 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import { copyFileSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { gateEdits, readiness } from './pr-ready.mjs'
+import { MODULE_SCOPE_REQUIRED_FROM, baseEdits, gateEdits, moduleScopeProblems, pythonProblem, readiness } from './pr-ready.mjs'
 
 describe('pr:ready verdict', () => {
   it('is ready only with a committed, current, regenerated branch whose checks pass', () => {
     expect(readiness({}).ok).toBe(true)
     for (const state of [{ dirty: ['a.ts'] }, { behind: true }, { regenerated: ['src/catalog/module-documents.json'] }, { checkPassed: false }]) expect(readiness(state).ok).toBe(false)
+  })
+  it('says the checks need Python 3.10+ instead of letting an older one crash inside them', () => {
+    for (const version of ['3.10.0', '3.12.4', '3.14.0', '4.0.0']) expect(pythonProblem({ version })).toBeNull()
+    const old = pythonProblem({ command: 'python3', version: '3.9.6' })
+    expect(old).toContain('needs Python 3.10 or newer')
+    expect(old).toContain('python3 is 3.9.6')
+    expect(pythonProblem({ command: 'python', error: 'spawn python ENOENT' })).toContain('python did not run (spawn python ENOENT)')
+    expect(pythonProblem({ version: null })).toContain('an unknown version')
+    const verdict = readiness({ python: old })
+    expect(verdict.ok).toBe(false)
+    expect(verdict.problems[0]).toBe(old)
   })
   it('says how to bring a stale branch up to date from the remote that holds main', () => {
     expect(readiness({ behind: true, remote: 'upstream' }).problems[0]).toContain('git merge upstream/main')
@@ -27,6 +38,14 @@ describe('pr:ready verdict', () => {
     expect(notes[0]).toContain('owner reviews it and merges it with one click')
     expect(notes.at(-1)).toContain('If main moves before the merge, run this again')
   })
+  it('says a change to what runs on an instrument opens as a draft until the exact build ran on a unit', () => {
+    const verdict = readiness({ instrument: ['src/engine/assets/octatrack-base.elemod'] })
+    expect(verdict.ok).toBe(true)
+    expect(verdict.instrument).toBe(true)
+    expect(verdict.notes.find(note => note.startsWith('This changes what runs on an instrument'))).toContain('gh pr create --draft')
+    expect(verdict.notes.at(-1)).toContain('If main moves before the merge, run this again')
+    expect(readiness({}).instrument).toBe(false)
+  })
   it('asks what the guides lacked, listing the guide edits on the branch', () => {
     const asked = readiness({}).notes.find(note => note.startsWith('What did the guides lack'))
     expect(asked).toContain('write "nothing" in the PR')
@@ -38,17 +57,44 @@ describe('pr:ready verdict', () => {
   })
   it('refuses a module pull request that edits a check which judges modules, and lets a module release carry the rest', () => {
     // Track Mutes (#931) edited the compatibility gate to turn it green; its test still found every clash.
-    expect(gateEdits(['sdk/octabam/modules/track-mutes/manifest.py', 'scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])).toEqual(['scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])
+    expect(gateEdits(['sdk/octatrack/modules/track-mutes/manifest.py', 'scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])).toEqual(['scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])
     expect(gateEdits(['sdk/drafts/track-mutes/manifest.py', '.github/workflows/module-pr.yml'])).toEqual(['.github/workflows/module-pr.yml'])
     expect(gateEdits(['sdk/digitakt/modules/digiperform/build.json', 'scripts/modules.mjs', 'sdk/machines/octatrack/compatibility.json'])).toEqual(['scripts/modules.mjs', 'sdk/machines/octatrack/compatibility.json'])
+    // Every machine the registry gives a module folder, the Zoom pedals' too.
+    expect(gateEdits(['sdk/zoom/modules/loop/modwerk.module.json', 'scripts/machine-folders.mjs'])).toEqual(['scripts/machine-folders.mjs'])
+    expect(gateEdits(['sdk/digitakt-ii/modules/track-names/build.json', 'scripts/change-scope.mjs'])).toEqual(['scripts/change-scope.mjs'])
+    // The CPU price check is a gate; its pending list is not, so a module that names its price deletes its own line there.
+    expect(gateEdits(['sdk/octatrack/modules/poly8/octamod.module.json', 'scripts/module-cpu-price.mjs', 'sdk/module-cpu-prices-pending.json'])).toEqual(['scripts/module-cpu-price.mjs'])
     // What a module release legitimately carries (ARP KEY LOCKS, #954): the package builder's list, assets, the native comparison, test lists.
-    expect(gateEdits(['sdk/octabam/modules/arp-key-locks/manifest.py', 'scripts/build-module-packages.py', 'src/engine/assets/module-build.json', 'sdk/native-comparisons/arp-key-locks.json', 'scripts/module-release-scope.test.mjs', 'sdk/tests/test_arp_key_locks.py'])).toEqual([])
+    expect(gateEdits(['sdk/octatrack/modules/arp-key-locks/manifest.py', 'scripts/build-module-packages.py', 'src/engine/assets/module-build.json', 'sdk/native-comparisons/arp-key-locks.json', 'scripts/module-release-scope.test.mjs', 'sdk/tests/test_arp_key_locks.py'])).toEqual([])
     // A Fix: pull request to the gate itself changes no module.
     expect(gateEdits(['scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])).toEqual([])
     const verdict = readiness({ gateEdits: ['scripts/module-compat.py'] })
     expect(verdict.ok).toBe(false)
     expect(verdict.problems[0]).toContain('scripts/module-compat.py')
     expect(verdict.problems[0]).toContain('never change the check to pass it')
+  })
+  it('refuses a module pull request that also changes the base, and leaves a module its own recipe rows', () => {
+    // Threshold Slices (#1285) added a shared sample-editor service and a hook beside its draft.
+    const threshold = ['sdk/drafts/threshold-slices/README.md', 'sdk/machines/octatrack/events.json', 'sdk/machines/octatrack/include/modwerk_events.h', 'sdk/machines/octatrack/module-adapters/sample_editor_service.c']
+    expect(baseEdits(threshold)).toEqual(threshold.slice(1))
+    expect(baseEdits(['sdk/octatrack/modules/syntiz/manifest.py', 'src/engine/assets/octatrack-base.elemod', 'src/engine/assets/octatrack-base-sources.json'])).toHaveLength(2)
+    // What module releases carried in October and November: package rows, their own recipe rows and runtime helpers.
+    expect(baseEdits(['sdk/octatrack/modules/scale-quantizer/manifest.py', 'sdk/machines/octatrack/module-adapters/machine-recipes.json', 'sdk/machines/octatrack/module-adapters/quantizer_runtime.py', 'src/engine/assets/octatrack-module-packages.json'])).toEqual([])
+    // A base pull request changes no module folder.
+    expect(baseEdits(threshold.slice(1))).toEqual([])
+    const verdict = readiness({ baseEdits: threshold.slice(1) })
+    expect(verdict.ok).toBe(false)
+    expect(verdict.problems[0]).toContain('its own owner-reviewed pull request')
+  })
+  it('refuses both in CI for a contributor\'s module pull request opened from the start day, never the owner\'s', () => {
+    const files = ['sdk/drafts/threshold-slices/README.md', 'sdk/machines/octatrack/events.json', 'scripts/modules.mjs']
+    const contributor = { author: 'someone', owner: 'repeat98', openedAt: MODULE_SCOPE_REQUIRED_FROM + 'T10:00:00Z' }
+    expect(moduleScopeProblems(files, contributor)).toHaveLength(2)
+    expect(moduleScopeProblems(files, { ...contributor, author: 'Repeat98' })).toEqual([])
+    expect(moduleScopeProblems(files, { ...contributor, openedAt: '2026-11-07T10:00:00Z' })).toEqual([])
+    expect(moduleScopeProblems(files, { ...contributor, author: null })).toEqual([])
+    expect(moduleScopeProblems(['sdk/drafts/threshold-slices/README.md'], contributor)).toEqual([])
   })
   it('says which packages CI rebuilds and how to reproduce them before the push', () => {
     expect(readiness({ compiled: { octatrack: true, elemod: false } }).notes.some(note => note.includes('build-modules-isolated.sh'))).toBe(true)
@@ -79,6 +125,12 @@ describe('pr:ready verdict', () => {
       mkdirSync(join(checkout, 'scripts'))
       const script = join(checkout, 'scripts', 'pr-ready.mjs')
       copyFileSync(new URL('./pr-ready.mjs', import.meta.url), script)
+      // Its module folders come from the machine registry, as in every checkout.
+      copyFileSync(new URL('./machine-folders.mjs', import.meta.url), join(checkout, 'scripts', 'machine-folders.mjs'))
+      // What runs on an instrument is defined once, beside the description check that also asks about it.
+      copyFileSync(new URL('./pr-body.mjs', import.meta.url), join(checkout, 'scripts', 'pr-body.mjs'))
+      mkdirSync(join(checkout, 'src', 'devices'), { recursive: true })
+      copyFileSync(new URL('../src/devices/machines.generated.json', import.meta.url), join(checkout, 'src', 'devices', 'machines.generated.json'))
       // A stale branch must stop before any generator/check invocation.
       const result = spawnSync(process.execPath, [script, '--remote', 'origin'], { cwd: checkout,
         env: { ...env, npm_execpath: join(directory, 'never-run-npm.mjs') }, encoding: 'utf8' })

@@ -62,3 +62,12 @@ test('an export keeps its bytes when the source only adds conflict flags, and no
   assert.equal(reproducesExport(exportText(packageRecipe(flagged(['a', 'b']))), flagged(['a'])), false, 'an export may not gain a flag')
   assert.equal(reproducesExport(released.replace('"names"', '"claims"'), flagged(['a', 'b'])), false)
 })
+
+test('an export keeps its title and description when the module is renamed, and nothing else may differ', () => {
+  const released = exportText(packageRecipe(plan))
+  const renamed = { ...plan, module: { ...plan.module, title: 'Renamed', description: 'A new summary.' } }
+  assert.equal(reproducesExport(released, renamed), true)
+  assert.equal(reproducesExport(exportText(packageRecipe(renamed)), plan), true, 'the name the source had at release time is kept either way')
+  assert.equal(reproducesExport(released.replace('"names"', '"claims"'), renamed), false)
+  assert.equal(reproducesExport(released, { ...renamed, module: { ...renamed.module, author: 'someone-else' } }), false, 'the author login stays versioned')
+})

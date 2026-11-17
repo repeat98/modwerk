@@ -1,0 +1,1 @@
+Docs: the packaged DSP hooks guide says a machine engine's price per voice is its package header's `cycles` and `kind` (#1487, in #1502), no longer the machine record's, so a price change is a new package and never a base rebuild.

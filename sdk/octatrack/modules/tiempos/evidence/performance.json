@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "tiempos",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": 1133300,
+    "budget": 4330000,
+    "method": "An event is one composed screen frame while Tiempos is open: module_draw clears and redraws the 128x64 frame on the UI task, not in an interrupt; closed it returns at once. Emulator, not hardware: ot_emu (octabam dcf93d3, adapted by scripts/octatrack-emulator/build.py), MKI panel, development base 6a44c813 (26 Oct 2026), package 0506a245, 30 Oct 2026. The base's modwerk_cost read twice 10 s apart: runtime module draw [22] 12.5 us a tick with no module, 18.8 us installed and closed, 260.6 us open and stopped, 314.6 us open and playing, with all eight rows empty in that project; runtime tick [1] 15.0 us with no module, 16.1-17.9 us with Tiempos (all eight voices read every tick, open or closed). Worst case estimated, not measured: the host build counts 341 pixel writes a draw for eight empty rows and 4,653 for eight playing rows in their last 30 s (the dearest layout), and 314.6 x 4,653 / 341 = 4,293 us, 1,133,300 cycles at 264 MHz; this scales the whole draw, frame clear included, by the pixel count, so it overstates. No static bound. Budget: one UI tick, 16.4 ms at 61 ticks a second (4,330,000 cycles). On the developer's MKI (released base 24a0ed57, which has no modwerk_cost) the CPU on MODWERK > LOAD read 62 % just after a minute open with three tracks playing, against a 64 % peak without Tiempos, and the base's five-minute records read 51.1 % mean / 62.7 % peak with the trial against 51.3 % / 64.7 % without it (TESTING.md)."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "No cfmeter.py capture and no frame-guard reading: the developer's MKI runs the released base 24a0ed57, which answers no development request. Tiempos adds nothing to the frame interrupt (it has no frame, MIDI or DSP hook: only the core's tick, draw, key and encoder hooks on the UI task). On that unit, the base's MODWERK > LOAD page and five-minute records, three tracks playing: CPU 51.3 % mean / 64.7 % peak without Tiempos (minutes 15-20), 51.1 % / 62.7 % with Tiempos in trial and opened for about a minute (minutes 20-25); DSP load tracks 1-4 / 5-8 32.7-32.8 % / 41.9 % and DSP space 32 % / 37 % in both; the UI tick gap 69 frames without, 63 with."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "No MIDI flood ran: Tiempos has no MIDI path and nothing on this Mac sends MIDI. Instead three tracks played for about seven minutes with the screen opened and closed, tempo changes and retriggers, on the developer's MKI: the base's tick count grew 60 a second without a gap and no stall was recorded (TESTING.md)."
+  }
+}

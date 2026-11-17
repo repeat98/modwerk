@@ -3,7 +3,7 @@ import { api, post } from './api'
 import { useCommunity } from './context'
 
 export type BoardClaim = { id: string; kind: 'module' | 'hook' | 'migration' | 'dsp-region' | 'machine-id'; key: string; holder: string; branch: string | null; pullRequest: number | null; note: string; createdAt: string; expiresAt: string | null; releasedAt?: string; releasedReason?: string }
-export type BoardThread = { id: string; kind: 'question' | 'finding'; topic: { kind: BoardClaim['kind'] | 'machine'; key: string }; author: string; to: string | null; body: string; pullRequest: number | null; createdAt: string; endsAt?: string; replies: { id: string; author: string; body: string; createdAt: string }[] }
+export type BoardThread = { id: string; kind: 'question' | 'finding' | 'wanted'; topic: { kind: BoardClaim['kind'] | 'machine' | 'site'; key: string }; author: string; to: string | null; body: string; pullRequest: number | null; createdAt: string; endsAt?: string; replies: { id: string; author: string; body: string; createdAt: string }[] }
 export type BoardActivity = { days: number; developers: { signedIn: number; active: number }; claims: { active: number; made: number }; questions: { open: number }; findings: { active: number }; posts: number }
 const KIND = { module: 'Module', hook: 'Hook or table', migration: 'Migration', 'dsp-region': 'DSP region', 'machine-id': 'Machine id', machine: 'Machine' } as const
 const ENDED = { holder: 'released', administrator: 'released by an administrator', merged: 'merged', closed: 'pull request closed', expired: 'lapsed', suspended: 'account suspended' } as Record<string, string>
@@ -27,9 +27,10 @@ export function AgentBoard({ repository }: { repository: string }) {
     try { await (method === 'POST' ? post(path, {}) : api(path, { method })); await load() } catch (reason) { setError(reason instanceof Error ? reason.message : failure) }
   }
   const pull = (number: number) => <a href={repository + '/pull/' + number} target="_blank" rel="noreferrer">#{number} ↗</a>
-  return <section className="configuration-section agent-board" aria-labelledby="agent-board-title">
-    <div className="developer-section-heading"><h2 id="agent-board-title">Who is working on what</h2><span className="subtle">Claims, questions and findings from developers' agents, so nobody builds the same module twice</span></div>
-    <p className="agent-board-intro">Your agent claims a module, hook or migration when it starts and checks here before it plans; <code>npm run board -- login</code> signs it in once. A claim lapses after 14 days without a pull request and ends when its pull request is merged or closed. Agents ask a claim's holder or a module's author with <code>npm run board -- ask</code> and leave what they found for the next developer with <code>npm run board -- finding</code>. <a href={repository + '/blob/main/docs/AGENT_BOARD.md'} target="_blank" rel="noreferrer">How the board works ↗</a></p>
+  // Collapsed by default: the board is reference, and open it pushed the help links far down the page.
+  return <details className="agent-board">
+    <summary><h2 id="agent-board-title">Who is working on what</h2>{claims && <span className="agent-board-count">{count(claims.length, 'claim')}{threads.length > 0 && ' · ' + count(threads.length, 'post')}</span>}</summary>
+    <p className="agent-board-intro">Agents claim what they work on, so nobody builds the same thing twice. Yours does this for you. <a href={repository + '/blob/main/docs/AGENT_BOARD.md'} target="_blank" rel="noreferrer">How the board works ↗</a></p>
     {activity && <p className="agent-board-activity" aria-label="Board activity">{count(activity.developers.signedIn, 'developer')} signed in from the terminal · {activity.developers.active} active in the last {activity.days} days · {count(activity.claims.made, 'claim')} and {count(activity.posts, 'post')} in that time</p>}
     {error && <p className="service-note" role="alert">{error}</p>}
     {!claims && !error && <p className="subtle">Loading claims…</p>}
@@ -56,10 +57,10 @@ export function AgentBoard({ repository }: { repository: string }) {
       <h3 className="agent-board-subtitle">Questions and findings</h3>
       <ul className="agent-board-list agent-board-threads">
         {threads.map(thread => <li key={thread.id}>
-          <div className="agent-board-claim"><span className="agent-board-kind">{thread.kind === 'question' ? 'Question' : 'Finding'}</span><strong>{thread.topic.key}</strong></div>
+          <div className="agent-board-claim"><span className="agent-board-kind">{{ question: 'Question', finding: 'Finding', wanted: 'Wanted' }[thread.kind]}</span><strong>{thread.topic.key}</strong></div>
           <div className="agent-board-meta">
-            <span>@{thread.author}{thread.to && ' to @' + thread.to}</span>
-            {thread.pullRequest ? <span>folds into a guide in {pull(thread.pullRequest)}</span> : thread.endsAt && <span>open until {day(thread.endsAt)}</span>}
+            <span>@{thread.author}{thread.to && (thread.kind === 'wanted' ? ' taken by @' : ' to @') + thread.to}</span>
+            {thread.pullRequest ? <span>{thread.kind === 'finding' ? 'folds into a guide in' : 'ends with'} {pull(thread.pullRequest)}</span> : thread.endsAt && <span>open until {day(thread.endsAt)}</span>}
             {session.admin && <button type="button" className="text-button" onClick={() => void act('Close this ' + thread.kind + ' by @' + thread.author + '?', '/agent-board/messages/' + thread.id + '/close', 'POST', 'The thread could not be closed.')}>Close</button>}
             {session.admin && <button type="button" className="text-button" onClick={() => void act('Delete this ' + thread.kind + ' by @' + thread.author + ' and its replies?', '/agent-board/messages/' + thread.id, 'DELETE', 'The thread could not be deleted.')}>Delete</button>}
           </div>
@@ -68,5 +69,5 @@ export function AgentBoard({ repository }: { repository: string }) {
         </li>)}
       </ul>
     </>}
-  </section>
+  </details>
 }

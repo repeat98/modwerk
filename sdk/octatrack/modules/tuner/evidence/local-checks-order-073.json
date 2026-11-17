@@ -1,0 +1,397 @@
+{
+  "schema_version": 1,
+  "order": "ORDER-073",
+  "record_type": "documentation_checkpoint",
+  "recorded_utc": "2026-10-26T17:54:21.862399+00:00",
+  "branch": "promotion",
+  "checked_source_commit": "87f2be3c04bb232ee3ed3fa935b4b61a98177739",
+  "checkpoint_documentation_not_in_checked_commit": true,
+  "status": "PARTIAL",
+  "leaves": [
+    {
+      "id": "D01",
+      "name": "Docker source packages",
+      "identity": {
+        "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/checks/promotion/receipts/D01.json",
+        "bytes": 2534,
+        "sha256": "81e9e01e0208bcd025b92ec1f3719a3916238ba74b200a7690ce71193de033d8"
+      },
+      "result": {
+        "id": "D01",
+        "attempt": 1,
+        "status": "FAIL",
+        "source_commit": "87f2be3c04bb232ee3ed3fa935b4b61a98177739",
+        "exit_code": 125,
+        "seconds": 4.168613499961793,
+        "finished": "2026-10-26T17:36:49.507273+00:00",
+        "exception_class": null,
+        "process_reaped": true,
+        "stream_drains_complete": true,
+        "process_cleanup_errors": [],
+        "classification": "ours",
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "bytes": 217,
+          "sha256": "30980061dd2b500a9c9077d298b1756c0bcc5481a591d4b8c58a031de6df0d5e"
+        },
+        "raw_streams_persisted": false
+      },
+      "diagnostics": {
+        "categories": [
+          "docker_bind_source_missing",
+          "docker_invalid_mount"
+        ],
+        "counts": {},
+        "unittest_nonpasses": [],
+        "npm": {
+          "fixed_codes": [],
+          "fixed_categories": [],
+          "syscalls": [],
+          "unrecognized_code_count": 0,
+          "prepare_started": false,
+          "raw_messages_retained": false
+        },
+        "source_coordinates": [],
+        "vitest_nonpasses": [],
+        "missing_file_paths": [],
+        "raw_messages_retained": false
+      },
+      "container_cleanup_state": "absent"
+    },
+    {
+      "id": "L03",
+      "name": "Module catalogue qualification",
+      "identity": {
+        "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/checks/promotion/receipts/L03.json",
+        "bytes": 2112,
+        "sha256": "ae48043f90fef8a74ba91427acd536aa113f7651927239affe68f7871fe7b337"
+      },
+      "result": {
+        "id": "L03",
+        "attempt": 1,
+        "status": "FAIL",
+        "source_commit": "87f2be3c04bb232ee3ed3fa935b4b61a98177739",
+        "exit_code": 1,
+        "seconds": 5.950279374606907,
+        "finished": "2026-10-26T17:42:24.269014+00:00",
+        "exception_class": null,
+        "process_reaped": true,
+        "stream_drains_complete": true,
+        "process_cleanup_errors": [],
+        "classification": "qualification",
+        "stdout": {
+          "bytes": 245,
+          "sha256": "31941b1e42d075c3496ff89373c3aa4bdd6c5ad85b5f605fbe81f014f110242c"
+        },
+        "stderr": {
+          "bytes": 987,
+          "sha256": "e339e504ca00a87572642f31a303f3aaf52673b6d4322710f181d4e76ea0bb61"
+        },
+        "raw_streams_persisted": false
+      },
+      "diagnostics": {
+        "categories": [
+          "qualification_evidence"
+        ],
+        "counts": {},
+        "unittest_nonpasses": [],
+        "npm": {
+          "fixed_codes": [],
+          "fixed_categories": [],
+          "syscalls": [],
+          "unrecognized_code_count": 0,
+          "prepare_started": false,
+          "raw_messages_retained": false
+        },
+        "source_coordinates": [
+          {
+            "file": "scripts/module-qualification.mjs",
+            "line": 118,
+            "column": 3
+          },
+          {
+            "file": "scripts/modules.mjs",
+            "line": 47,
+            "column": 22
+          },
+          {
+            "file": "src/catalog/module-contract.ts",
+            "line": 46
+          },
+          {
+            "file": "src/catalog/module-contract.ts",
+            "line": 46,
+            "column": 61
+          },
+          {
+            "file": "src/catalog/module-contract.ts",
+            "line": 270,
+            "column": 10
+          }
+        ],
+        "vitest_nonpasses": [],
+        "missing_file_paths": [],
+        "raw_messages_retained": false
+      },
+      "container_cleanup_state": "not_applicable"
+    },
+    {
+      "id": "L06",
+      "name": "Compatibility pairs",
+      "identity": {
+        "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/checks/promotion/receipts/L06.json",
+        "bytes": 1477,
+        "sha256": "f2f6e756cb48bb468973d5734c5c414abaaa30c2d172f78ef15e16a9a800e396"
+      },
+      "result": {
+        "id": "L06",
+        "attempt": 1,
+        "status": "PASS",
+        "source_commit": "87f2be3c04bb232ee3ed3fa935b4b61a98177739",
+        "exit_code": 0,
+        "seconds": 8.028756125364453,
+        "finished": "2026-10-26T17:42:32.298384+00:00",
+        "exception_class": null,
+        "process_reaped": true,
+        "stream_drains_complete": true,
+        "process_cleanup_errors": [],
+        "classification": null,
+        "stdout": {
+          "bytes": 196,
+          "sha256": "52b6ea79ec37d2c40679600a10d2174d1fa8a4c9088f543a470e85ce6eb72b93"
+        },
+        "stderr": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "raw_streams_persisted": false
+      },
+      "diagnostics": {
+        "categories": [],
+        "counts": {},
+        "unittest_nonpasses": [],
+        "npm": {
+          "fixed_codes": [],
+          "fixed_categories": [],
+          "syscalls": [],
+          "unrecognized_code_count": 0,
+          "prepare_started": false,
+          "raw_messages_retained": false
+        },
+        "source_coordinates": [],
+        "vitest_nonpasses": [],
+        "missing_file_paths": [],
+        "raw_messages_retained": false
+      },
+      "container_cleanup_state": "not_applicable"
+    },
+    {
+      "id": "L07",
+      "name": "Changelog",
+      "identity": {
+        "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/checks/promotion/receipts/L07.json",
+        "bytes": 1420,
+        "sha256": "363f474576426a6ba35f58d398ba2879c51d40c524dd29dc7a81cad993bf2f68"
+      },
+      "result": {
+        "id": "L07",
+        "attempt": 1,
+        "status": "FAIL",
+        "source_commit": "87f2be3c04bb232ee3ed3fa935b4b61a98177739",
+        "exit_code": 1,
+        "seconds": 0.07597612496465445,
+        "finished": "2026-10-26T17:42:32.375231+00:00",
+        "exception_class": null,
+        "process_reaped": true,
+        "stream_drains_complete": true,
+        "process_cleanup_errors": [],
+        "classification": "ours",
+        "stdout": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stderr": {
+          "bytes": 150,
+          "sha256": "85a5e230bec321cb0df28530c206cd1ed09395ad9e53031243ff75f18523617d"
+        },
+        "raw_streams_persisted": false
+      },
+      "diagnostics": {
+        "categories": [
+          "missing_file"
+        ],
+        "counts": {},
+        "unittest_nonpasses": [],
+        "npm": {
+          "fixed_codes": [],
+          "fixed_categories": [],
+          "syscalls": [],
+          "unrecognized_code_count": 0,
+          "prepare_started": false,
+          "raw_messages_retained": false
+        },
+        "source_coordinates": [],
+        "vitest_nonpasses": [],
+        "missing_file_paths": [],
+        "raw_messages_retained": false
+      },
+      "container_cleanup_state": "not_applicable"
+    },
+    {
+      "id": "L14",
+      "name": "Vitest",
+      "status": "NOT_RUN",
+      "classification": "ours",
+      "reason": "Pending decision on missing ignored preparation inputs and media setup; no ORDER073 attempt is claimed.",
+      "receipt": null
+    },
+    {
+      "id": "L16",
+      "name": "Bundle",
+      "status": "NOT_RUN",
+      "classification": "ours",
+      "reason": "Pending decision on missing ignored preparation inputs and media setup; no ORDER073 attempt is claimed.",
+      "receipt": null
+    }
+  ],
+  "preparation": {
+    "dependency_copy": {
+      "identity": {
+        "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/checks/promotion/DEPENDENCIES.json",
+        "bytes": 2025,
+        "sha256": "c6c112d75a8649a49083e8ed26fd567f253c38420d9d1c3744b7e2e4c84d9dd6"
+      },
+      "result": {
+        "attempt": 1,
+        "status": "PASS"
+      },
+      "diagnostics": {},
+      "container_cleanup_state": null
+    },
+    "missing_ignored_inputs_at_checkpoint": [
+      "src/catalog/machine-modules.json",
+      "src/community/module-changelogs.json",
+      "vendor/elekloader/catalog/catalog.json",
+      "public/module-media"
+    ],
+    "generation": {
+      "draft_media": {
+        "identity": {
+          "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/generation/draft-media.json",
+          "bytes": 503,
+          "sha256": "f6c5726ad8aaa38de797cf1b1b82f77eb215edc335925d717f487ddc35f246a7"
+        },
+        "result": {
+          "action": "draft-media",
+          "attempt": 1,
+          "status": "FAIL",
+          "source_commit": "e17e2cc8e42f38f47fe0dd7cd7e87ef5dd1865ac",
+          "exit_code": 1,
+          "seconds": 1.7143055000342429,
+          "exception_class": null,
+          "process_reaped": true,
+          "stdout": {
+            "bytes": 70,
+            "sha256": "08348dd4ad54bf3ffdfb9cbaaac3c69e647faf1db09f9c9e15d2252f4b0d33f6"
+          },
+          "stderr": {
+            "bytes": 1097,
+            "sha256": "94fd726a2621638cd2bbba8153233fd7c6bf598a991ba89e6513831cc3fc30b4"
+          },
+          "raw_streams_persisted": false
+        },
+        "diagnostics": {},
+        "container_cleanup_state": null
+      },
+      "approved_base_ref_correction": {
+        "identity": {
+          "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/generation/base-references.json",
+          "bytes": 555,
+          "sha256": "c8993774210b5d24c811dd3decc6fdb65fc80562bda7f29ce843721c5284910a"
+        },
+        "records": [
+          {
+            "branch": "draft",
+            "local_ref": "refs/remotes/origin/main",
+            "commit": "4e2226f1be6347f74d51a0d5b99ee572ba3a82bb",
+            "reason": "Restore the same approved local base reference present in the successful previous setup; no remote configured or contacted"
+          },
+          {
+            "branch": "promotion",
+            "local_ref": "refs/remotes/origin/main",
+            "commit": "4e2226f1be6347f74d51a0d5b99ee572ba3a82bb",
+            "reason": "Restore the same approved local base reference present in the successful previous setup; no remote configured or contacted"
+          }
+        ]
+      },
+      "pairs": {
+        "identity": {
+          "path": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-073/generation/promotion-pairs.json",
+          "bytes": 922,
+          "sha256": "aac02fd61c6a7475001009c213fac1b7d2ac90eca8b83fe832c7ff795e20439f"
+        },
+        "result": {
+          "action": "promotion-pairs",
+          "attempt": 1,
+          "status": "PASS",
+          "source_commit": "cd68ab53f711707c69037e8cdc5877711ebc0af3",
+          "exit_code": 0,
+          "seconds": 8.42247512517497,
+          "exception_class": null,
+          "process_reaped": true,
+          "stdout": {
+            "bytes": 204,
+            "sha256": "b64f4d0a8332ad67919f2dd2884b5de33849cf894683e2f96a3148ca4401fb96"
+          },
+          "stderr": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "raw_streams_persisted": false
+        },
+        "diagnostics": {
+          "categories": [],
+          "counts": {},
+          "unittest_nonpasses": [],
+          "npm": {
+            "fixed_codes": [],
+            "fixed_categories": [],
+            "syscalls": [],
+            "unrecognized_code_count": 0,
+            "prepare_started": false,
+            "raw_messages_retained": false
+          },
+          "source_coordinates": [],
+          "vitest_nonpasses": [],
+          "missing_file_paths": [],
+          "raw_messages_retained": false
+        },
+        "container_cleanup_state": null
+      },
+      "pairs_commit": "87f2be3c04bb232ee3ed3fa935b4b61a98177739"
+    },
+    "media_question": "Unresolved. The first draft generation failed without exact error diagnostics; local approved-base refs are corrected, but no successful replacement generation is asserted.",
+    "approved_ref_diagnosis": "The first new draft setup lacked origin/main; modules:generate omitted --base, and retained-evidence validation defaults to origin/main. This is a deterministic source/setup blocker, not recovered stderr.",
+    "classification_boundary": "Missing ignored preparation inputs are ours. Promotion L07 is not reclassified as qualification-only; promotion L03 separately failed qualification."
+  },
+  "canonical_firmware": {
+    "rebuilt": false,
+    "changed": false,
+    "new_runtime_or_hardware_claim": false
+  },
+  "usb_lifecycle": {
+    "source_changed": false,
+    "runtime_exercised": false
+  },
+  "limits": [
+    "No tests, generators, builds or runtime were executed to create this checkpoint.",
+    "Original failed receipts and historical evidence remain unchanged.",
+    "D01 failures remain ours and do not establish a package compilation result.",
+    "D02 is source compilation of the authored upload controller, not a USB lifecycle or hardware pass.",
+    "Hardware, chip timing and complete memory qualification remain unmeasured or untested as previously documented.",
+    "L14 and L16 are explicitly NOT_RUN in this checkpoint, pending setup authorization."
+  ]
+}

@@ -10,6 +10,7 @@
 //
 // The FX page (FX track, DELAY pressed again) shows the effect: FUNC + A chooses it among the build's records,
 // FUNC + E sets LEV, A-H its eight controls. The effect and its controls are kept in the kit, LEV in the project.
+// SRC (the DELAY page key) held + YES sets A-H at random, + NO brings back the values before, once.
 // The pages sit in the page keys' lists core-ar2 keeps. A-H take parameter locks as stock's own do (a step held
 // in grid recording, or live recording), in stock's lock table on the FX track, which the base saves (locks.c).
 //
@@ -106,6 +107,9 @@ typedef void (*add_lock_trig_t)(void *tp, int step, int on);
 #define KEY_PUSH_FIRST 0x70        // the encoders A-H pressed
 #define KEY_PUSH_LAST 0x77
 #define KEY_PRESSED 1              // ev_key flags: 1 pressed
+#define KEY_YES 0x44
+#define KEY_NO 0x45
+#define KEY_SRC 0x31               // the FX track's DELAY page key
 #define FX_TRACK 12
 #define SOUND_TRACKS 12
 #define PROJECT_KIT 352            // project + 352: the active kit
@@ -120,8 +124,8 @@ typedef void (*add_lock_trig_t)(void *tp, int step, int on);
 #define PAGE_SHOWN_FX 1            // page: the FX page
 #define PAGE_SHOWN_SEND 2          // the SEND page
 
-#define POOL MW_FX_WORK             // words: the work area the effect that runs uses
-#define CLEAR_STEP 1024            // pool words cleared a block, the effect silent until it is clean
+#define MODS_END 0x47c00000        // the end of the mods' RAM (elekloader's Analog Rytm MKII ddr), where the work area ends
+#define CLEAR_STEP 1024            // work area words cleared a block, the effect silent until it is clean
 #define UNITS_PER_BPM 120          // the tempo word's unit
 #define DIVS 12                    // note divisions (div_q1000)
 #define VOICES 8
@@ -136,22 +140,31 @@ typedef void (*add_lock_trig_t)(void *tp, int step, int on);
 // names its effect by the record's id, so a kit whose effect the build does not hold keeps its values and plays
 // no return (MISSING).
 extern const struct mw_fx *const mw_fx[];
+// The work area the effect that runs uses (its delay lines, its tables): the mods' RAM the build leaves free, from
+// the end of every mod's .bss (__bss_end, the linker's) to MODS_END. It is sized by the set, so it takes no RAM a mod
+// needs, and a set whose modules leave less than an effect asks for does not list that effect.
+extern int __bss_end[];
 #define ROOM 16                    // the records the chooser lists
 #define MISSING 0xff
 static const struct mw_fx *list[ROOM];
 static int n_fx = -1;              // -1 until the first project: nothing runs
 static const struct mw_fx missing = { MW_FX_ABI, 0, 0, 0, 256, 0, "MISSING", { { "", 0, 0, 0 } }, 0, 0, 0 };
 
+static int *work;                  // the work area (below)
+static unsigned room;              // its words
+
 // The records a module may hold: this ABI, the one send, a known id once, the work area it fits in.
 static void build_list(void)
 {
     int i, j, n = 0;
+    work = (int *)(((unsigned)__bss_end + 15) & ~15u);
+    room = (MODS_END - (unsigned)work) / 4;
     for (i = 0; mw_fx[i] && n < ROOM; i++) {
         const struct mw_fx *fx = mw_fx[i];
         int dup = 0;
         for (j = 0; j < n; j++) dup |= list[j]->id == fx->id;
         if (fx->abi == MW_FX_ABI && fx->slot == 0 && fx->id >= 1 && fx->id <= 63 && !dup
-            && fx->work <= MW_FX_WORK && fx->render && fx->reset)
+            && fx->work <= MW_FX_WORK && fx->work <= room && fx->render && fx->reset)
             list[n++] = fx;
     }
     n_fx = n;
@@ -184,10 +197,9 @@ static const struct mw_fx *cur(void) { return fx_type < n_fx ? list[fx_type] : &
 static unsigned char send[SOUND_TRACKS];
 static int ready;
 
-// The audio block's state. The work area the effect that runs uses (its delay lines, its tables), cleared a step
-// a block when an effect starts.
-static int work[POOL] __attribute__((aligned(16)));
-static int clear_at = POOL;
+// The audio block's state. The words of the work area the effect that runs uses, cleared a step a block when it
+// starts.
+static unsigned clear_at, clear_end;
 static int g_voice[VOICES];
 // Light blocks (gate.s): every other block only keeps its input (xb) and
 // gives back the return the block before worked out for it (ob); the block
@@ -223,6 +235,9 @@ static int page;                   // the page up, as the last frame drawn told:
 static volatile int drawn;         // the pages whose ids stock asked since the last frame, 1 << PAGE_SHOWN_*
 static int acc_enc = -1, acc_cnt, acc_func;
 static int shown_knob = -1, show_ticks, title_ticks;
+static int random_ticks, undo_type = -1;   // SRC + YES's notice; the effect SRC + NO can bring back
+static unsigned char undo_knob[8];
+static unsigned urnd;
 static char *g_ctrl;               // the view controller ev_tick last had: +0x20 asks for a redraw
 
 // The send runs on 16-bit signals (about +-2^15, held within +-2^16): the
@@ -246,6 +261,7 @@ static int lfo(unsigned ph)
 static void reset_state(const struct mw_fx *fx)
 {
     clear_at = 0;
+    clear_end = fx->work;
     fx->reset(work);
     blk.last = blk.pv[0] = blk.pv[1] = blk.state = 0;
     blk.lockw = ~0;
@@ -272,6 +288,10 @@ void mw_send_inl(void *b, const volatile int *rx);
 void mw_send_ret(void *b, volatile int *pre, int tlev);
 
 static void run_fx(int type, const int *x, int *L, int *R) { list[type]->render(x, L, R, par, work); }
+
+// The sequencer's time for the effects (clock.c): worked out each block, then dated for each render.
+void mw_clock_block(void);
+void mw_clock_date(int back);
 
 // The CPU meter: DMA timer 0's counter, which core-ar2 starts free running
 // at the bus clock (its core.s) and stock reads as a time base. gate.s times
@@ -342,12 +362,12 @@ static int COLD active(void)
 }
 
 // A new effect starts clean; after 2 s with no send the effect is left
-// silent (a clean state once); a new effect's pool is cleared a step a
-// block, the effect silent until it is clean. 1: the block stops here, each
+// silent (a clean state once); the work area words a new effect uses are
+// cleared a step a block, the effect silent until they are clean. 1: the block stops here, each
 // voice's gain set to its send.
 static int COLD unusual(int type, int moving)
 {
-    int f;
+    unsigned f, n;
     if (type != run_type) {
         const struct mw_fx *fx = list[type];
         reset_state(fx);
@@ -360,9 +380,10 @@ static int COLD unusual(int type, int moving)
             reset_state(list[type]);
             idle++;
         }
-    } else if (clear_at < POOL) {
-        for (f = 0; f < CLEAR_STEP; f++) work[clear_at + f] = 0;
-        clear_at += CLEAR_STEP;
+    } else if (clear_at < clear_end) {
+        n = clear_end - clear_at < CLEAR_STEP ? clear_end - clear_at : CLEAR_STEP;
+        for (f = 0; f < n; f++) work[clear_at + f] = 0;
+        clear_at += n;
     } else {
         return 0;
     }
@@ -436,6 +457,7 @@ void mw_send_block(int slot)
     int v, n, moving = 0, half, tlev, type = fx_type;
     unsigned m;
 
+    mw_clock_block();
     if (type >= n_fx) {                          // no effect, or the kit's is missing: no return
         if (moving) set_gains();
         run_type = -1;
@@ -447,7 +469,7 @@ void mw_send_block(int slot)
     n = moving ? active() : blk.nv;
     if (n) idle = 0;
     else if (idle < IDLE_BLOCKS) idle++;
-    if ((type != run_type || idle >= IDLE_BLOCKS || clear_at < POOL) && unusual(type, moving)) return;
+    if ((type != run_type || idle >= IDLE_BLOCKS || clear_at < clear_end) && unusual(type, moving)) return;
 
     // A-H: one word read a block, the lock pairs only while a lock plays.
     m = SMOOTH_FX(LOCK_WORD_MASK);
@@ -461,6 +483,7 @@ void mw_send_block(int slot)
     half = blk.mode & 1;
     tlev = (lev * lev * blk.ltrim) >> 8;
     if (blk.state == 2) {
+        mw_clock_date(1);
         run_fx(type, blk.xb, half ? &blk.ob[0][1] : blk.ob[0], half ? &blk.ob[1][1] : blk.ob[1]);
         mw_send_ret(&blk, PRE(slot, 0), tlev);
     }
@@ -470,14 +493,15 @@ void mw_send_block(int slot)
     if (moving) input_moving(half);
     else if (blk.nv > 1) input8(half);
     else mw_send_inl(&blk, &RX(0, 0));
+    mw_clock_date(0);
     run_fx(type, blk.xb, half ? &blk.ob[0][1] : blk.ob[0], half ? &blk.ob[1][1] : blk.ob[1]);
     blk.state = 1;
     blk.glev = tlev;
 }
 
 // Everything below runs in the UI task: built for size, as the 128 KB the
-// mods share holds core-ar2, Loop Sync, Retrig Grid and this mod's 64 KB
-// pool. The audio block above stays at the build's -O2.
+// mods share holds core-ar2, every other mod and what is left of it is the
+// send effects' work area. The audio block above stays at the build's -O2.
 #pragma GCC optimize ("Os")
 
 // ---------------------------------------------------------------- storage
@@ -548,7 +572,10 @@ static void load_kit(void)
         }
         if (v != knob[k]) { knob[k] = (unsigned char)v; moved = 1; }
     }
-    if (moved) knobs_moved();
+    if (moved) {                                 // another kit (or effect): SRC + NO has nothing of its to bring back
+        knobs_moved();
+        undo_type = -1;
+    }
     lev = (unsigned char)((core_store_get(STORE(mw_send_lev), 0, 0) & 127) ^ LEV_DEFAULT);
 }
 
@@ -734,7 +761,7 @@ static int page_up(int p);
 
 static unsigned shown_state(void)
 {
-    unsigned h = (unsigned)page * 31u + fx_type * 131u + lev * 7u + (unsigned)(shown_knob + 1) * 977u + (title_ticks != 0) * 5u;
+    unsigned h = (unsigned)page * 31u + fx_type * 131u + lev * 7u + (unsigned)(shown_knob + 1) * 977u + (title_ticks != 0) * 5u + (random_ticks != 0) * 11u;
     int k, sel = selected_track();
     view_values();
     for (k = 0; k < 8; k++) h = h * 33u + disp[k];
@@ -760,6 +787,7 @@ void mw_send_tick(char *ctrl)
     load_kit();
     if (show_ticks && !--show_ticks) shown_knob = -1;
     if (title_ticks) title_ticks--;
+    if (random_ticks) random_ticks--;
     if (page) {
         int sel = selected_track();
         if ((page == PAGE_SHOWN_FX) != (sel == FX_TRACK) || sel < 0 || sel > FX_TRACK)
@@ -773,6 +801,34 @@ void mw_send_tick(char *ctrl)
     }
 }
 
+// SRC + YES on the FX page: A-H at random, a feedback (FDBK) kept below its
+// runaway (100 of 127); SRC + NO: the values before it, once. The kit keeps
+// them as if turned; locks stay.
+static void random_knobs(int roll)
+{
+    int k;
+    if (fx_type == MISSING)
+        return;
+    for (k = 0; k < 8; k++) {
+        if (roll) {
+            unsigned v = (unsigned)top_of(list[fx_type], k) + 1;
+            undo_knob[k] = knob[k];
+            urnd = urnd * 1664525u + DTCN0;
+            v = (urnd >> 16) * v >> 16;
+            if (list[fx_type]->c[k].icon == MW_IC_FDBK) v = v * 101 >> 7;
+            if (list[fx_type]->c[k].icon != MW_IC_EMPTY) knob[k] = (unsigned char)v;
+        } else if (undo_type == fx_type) {
+            knob[k] = undo_knob[k];
+        }
+    }
+    undo_type = roll ? fx_type : -1;
+    random_ticks = roll ? SHOW_TICKS : 0;
+    knobs_moved();
+    save_kit();
+    if (g_ctrl)
+        g_ctrl[0x20] = 1;
+}
+
 // ev_key: the page keys step through core-ar2's lists, so a page key, a menu
 // key or any other key but FUNC, TRK, the trigs, the pads and the transport
 // leaves the mod's page as far as this mod knows; the next frame that draws
@@ -783,9 +839,15 @@ int mw_send_key(void *brain, char *ev)
     (void)brain;
     if (!ready || !(flags & KEY_PRESSED))
         return 0;
-    if (key == KEY_FUNC || key == KEY_TRK || key <= KEY_TRIG_LAST
+    // TRK lets go of the page as any other key does: a double press opens stock's list, which stock draws without
+    // asking the page again, so a page kept would be drawn over it. TRK + a pad still changes track.
+    if (key == KEY_FUNC || key <= KEY_TRIG_LAST
         || (key >= KEY_PAD_FIRST && key <= KEY_PAD_LAST) || (key >= KEY_RECORD && key <= KEY_STOP))
         return 0;
+    if (page == PAGE_SHOWN_FX && (key == KEY_YES || key == KEY_NO) && IS_KEY_HELD(KEY_SRC)) {
+        random_knobs(key == KEY_YES);
+        return 1;
+    }
     if (page && key >= KEY_PUSH_FIRST && key <= KEY_PUSH_LAST) {
         if (page == PAGE_SHOWN_FX)
             lock_clear(key - KEY_PUSH_FIRST);    // with steps held: their locks of that control
@@ -817,8 +879,8 @@ int mw_send_enc(void *brain, char *ev)
     if (!steps)
         return 1;
     if (page == PAGE_SHOWN_FX && func) {
-        if (enc == 0) {
-            int t = fx_type + (steps > 0 ? 1 : -1);
+        if (enc == 0) {                          // from MISSING: right the first effect, left the last
+            int t = fx_type == MISSING ? (steps > 0 ? 0 : n_fx - 1) : fx_type + (steps > 0 ? 1 : -1);
             if (t >= 0 && t < n_fx) set_type(t);
         } else if (enc == 4) {
             int v = lev + steps;
@@ -1332,7 +1394,7 @@ static void __attribute__((noinline)) draw_fx(void)
     box(0, 0, 17, 10);
     big_number((int)fx_id, 2, 3, 2);
     rect(20, 0, 127, 10, 1);
-    big_text(cur()->name, 23, 2, 0);
+    big_text(random_ticks ? "RANDOM" : cur()->name, 23, 2, 0);
     box(0, 13, 17, 36);
     if (IS_KEY_HELD(KEY_FUNC)) {                 // the CPU meter, in percent
         n = (cpu_shown + 5) / 10;
@@ -1399,6 +1461,7 @@ typedef void (*unlock_guard_t)(void *guard);
 #define VC_MUTEX 4                 // the view controller: its windows' lock
 #define VC_WINDOWS 20              // and their ring's head
 #define WIN_DRAW 16                // a window's vtable: draw(win, bmp)
+#define WIN_COVERED 23             // a window: 1 while a full-screen menu (KIT ...) covers it, and drawAll skips it
 
 static void __attribute__((noinline)) draw_popups(char *ctrl, void *bmp)
 {
@@ -1421,6 +1484,10 @@ void mw_send_draw(void *bmp, void *ctrl)
     if (d & 1 << PAGE_SHOWN_FX) page = PAGE_SHOWN_FX;
     else if (d & 1 << PAGE_SHOWN_SEND) page = PAGE_SHOWN_SEND;
     if (page && !page_up(page))
+        page = 0;
+    // A full-screen menu over the page's view (the KIT menu, OS UPGRADE): stock's
+    // alone, as its own pages are (the page was drawn under it, mixed with it).
+    if (page && page_view[page] && page_view[page][WIN_COVERED])
         page = 0;
     if (!page)
         return;

@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-13",
+  "source": "Direct statements by the module author after flashing each build",
+  "reporter": "ROMsets",
+  "statement": "Build 014b (the power-cycle fix alone): \"Smoke test is all good\", including assigning without saving and a power cycle, with the assignments kept. Build 5.0f with CC Names: \"ERR is gone, names show correctly now\"; \"the midi cc knobs send fine to my synth\". A paste report was withdrawn: \"My mistake the midi CCs werent assigned on the midi page\". After the 0.1.4 checklist (power cycle without saving, SAVE PROJECT then LOAD PROJECT, a CC knob letting go on leaving, NO and pattern change, sequencer trigs on the MIDI track, an LFO on a CC VAL and Overbridge, OS release): \"Everything seems good\", \"I have performed all those tests on 1.53\", \"So a recorded CC trig value always superceeds the perform mode value\". Smoke tests: \"those tests look good on 1.53\", \"I have already smoke tested 1.54\".",
+  "status": "hardware-tested-author-reported",
+  "model": "Digitakt 1",
+  "release": "1.53 and 1.54",
+  "durationMinutes": null,
+  "packages": {
+    "note": "The 5.0f images were linked from packages built from this source whose code, sites and relocations are the same as the released 0.1.4-experimental packages; they differ only in the version text (the tested ones read 0.1.3-experimental), the description and two added claim names (compared on both releases).",
+    "tested": {
+      "1.53": "f57672cdd7865c2852f60e1abdf1fc9e3460a45bbcfa509305934ec84b65a8ea",
+      "1.54": "81c09838624637a6a53ceb07133e8248d778794e0a8fab53a19ce70c579cbf3c"
+    },
+    "released": {
+      "1.53": "f3700850477ecf52dd821e0a601a9425bf1ea21a8daf5c7827077ea12c4e0cc6",
+      "1.54": "1a6a5fe353b2d35e16e5a7370457564b2f21724b26b28f8bba9384a197164062"
+    }
+  },
+  "builds": [
+    {
+      "file": "5.0f-153-alone.syx",
+      "release": "1.53",
+      "syxSha256": "68403db664482b16bffaf55c3515b5ff4684eed5df4e42357eaa5aa250dedc0d",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "f38b0c193677a060b3fdb28fe71b9332be8a5e7d36ecaf91a3c86a61bab558eb"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.3-experimental",
+          "sha256": "f57672cdd7865c2852f60e1abdf1fc9e3460a45bbcfa509305934ec84b65a8ea"
+        }
+      ]
+    },
+    {
+      "file": "5.0f-153-ccnames.syx",
+      "release": "1.53",
+      "syxSha256": "1f85fc9e0decf8fc2c12adc3b6d33db3317a01d679f7e9322e9b7275a1d2a393",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "f38b0c193677a060b3fdb28fe71b9332be8a5e7d36ecaf91a3c86a61bab558eb"
+        },
+        {
+          "id": "dt-support",
+          "version": "1.0.1",
+          "sha256": "2164a3bf1d89743189616127a5bc7e93743f2a691502d4750f517915fbd0180c"
+        },
+        {
+          "id": "cc-names",
+          "version": "2.1.1",
+          "sha256": "24aff56846b356b6f0c78459ee38854980804d39949d149076e53f24fe0755ac"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.3-experimental",
+          "sha256": "f57672cdd7865c2852f60e1abdf1fc9e3460a45bbcfa509305934ec84b65a8ea"
+        }
+      ]
+    },
+    {
+      "file": "5.0f-154-alone.syx",
+      "release": "1.54",
+      "syxSha256": "9741b4b52076ce7e037eb5e0ddaac958cfc75660580dd690fbd8dc1da6fade93",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.3-experimental",
+          "sha256": "81c09838624637a6a53ceb07133e8248d778794e0a8fab53a19ce70c579cbf3c"
+        }
+      ]
+    },
+    {
+      "file": "5.0f-154-ccnames.syx",
+      "release": "1.54",
+      "syxSha256": "f922cc7382b69fdfe083b4e0ca2a4c14de08b89300c39c1b8550286b1d65d9a1",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+        },
+        {
+          "id": "dt-support",
+          "version": "1.0.1",
+          "sha256": "7378c51c4970df68a47e51c9a85402b91577a1495931f2ef4ec566a572dd0b88"
+        },
+        {
+          "id": "cc-names",
+          "version": "2.1.1",
+          "sha256": "78de45bbe8a206422f14c227b5a1b4db7214b388ec06410c7513385287627459"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.3-experimental",
+          "sha256": "81c09838624637a6a53ceb07133e8248d778794e0a8fab53a19ce70c579cbf3c"
+        }
+      ]
+    }
+  ]
+}

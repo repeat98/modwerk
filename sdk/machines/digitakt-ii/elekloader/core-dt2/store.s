@@ -1,25 +1,25 @@
 | SPDX-License-Identifier: GPL-2.0-or-later
-| core-dt2 1.1 and core-dn2 0.3: where the project's saves, loads and kit
-| copies call core for the mods' project and kit data (store.c; the format and
-| the firmware's routines:
-| docs/ADAPTING.md, "Frames, LEDs, project and kit data, value rows").
-| ColdFire V4; assemble with -mcpu=54455.
+| core-dt2 1.1: where the project's saves, loads and kit copies call core for
+| the mods' project and kit data (store.c). ColdFire V4; assemble with
+| -mcpu=54455. OS 1.17. The format and the firmware's routines:
+| docs/ADAPTING.md, "Project data, kit data and value rows (core-dt2 1.1, Digitakt II)".
 |
 | The sites, each a whole instruction the shim runs too:
-|   kit save   move.l #0xbacef00c,d1, before the kit serializer writes the record's
-|              end mark (DT2 0x400dbee4 in 0x400dbdca, DN2 0x400de0d4 in 0x400ddfa8):
-|              a2 the record, a3 the kit's RAM
-|   kit load   the same instruction in the kit loader, after the record's version check
-|              (DT2 0x400db8be in 0x400db898, DN2 0x400ddddc in 0x400dddb6): DT2 a2 the
-|              kit's RAM, a3 the record; DN2 the other way round (KIT_LOAD_A3_RAM)
-|   project save  move.l #0xbeefbace,(a3), the file's mark (DT2 0x400df932 in the save
-|              0x400df66c, DN2 0x400e18be in 0x400e15f8): a3 the file; d0 is live after
-|   project load  move.l #0xbeefbace,d0, the load's check of the mark (DT2 0x400df99c in
-|              0x400df95a, DN2 0x400e1928 in 0x400e18e6): a3 the file
-|   memcpy     its first 12 bytes, three loads of its arguments (DT2 0x40136388, DN2
-|              0x40134770), by jmp: a copy of a kit's size (KIT_SIZE) also calls
-|              core_kit_copied(dst, src); every other copy goes on into memcpy at once
-        .text
+|   kit save      move.l #0xbacef00c,d1, before the kit serializer (0x400dbdca)
+|                 writes the record's end mark (0x400dbee4): a2 the record, a3
+|                 the kit's RAM
+|   kit load      the same instruction in the kit loader (0x400db898), after the
+|                 record's version check (0x400db8be): a2 the kit's RAM, a3 the
+|                 record
+|   project save  move.l #0xbeefbace,(a3), the file's mark, in the save
+|                 (0x400df66c) at 0x400df932: a3 the file; d0 is live after
+|   project load  move.l #0xbeefbace,d0, the load's (0x400df95a) check of the
+|                 mark at 0x400df99c: a3 the file
+|   memcpy        its first 12 bytes (0x40136388), three loads of its
+|                 arguments, by jmp: a copy of a kit's size (KIT_SIZE) also
+|                 calls core_kit_copied(dst, src); every other copy goes on
+|                 into memcpy at once
+        .section .run, "ax"
         .globl  core_kit_save, core_kit_load, core_proj_save, core_proj_load, core_memcpy
         .globl  core_store_layout
 
@@ -38,13 +38,8 @@ core_kit_save:
         rts
 
 core_kit_load:
-        .if     KIT_LOAD_A3_RAM
-        move.l  %a2, -(%sp)
-        move.l  %a3, -(%sp)
-        .else
         move.l  %a3, -(%sp)
         move.l  %a2, -(%sp)
-        .endif
         jsr     core_kitdata_load       | (kit, record)
         addq.l  #8, %sp
         move.l  #0xbacef00c, %d1

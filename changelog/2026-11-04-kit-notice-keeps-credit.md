@@ -1,0 +1,1 @@
+Licences: the elekloader notice Modwerk ships now keeps elekloader's "Code from other projects" credit (digikit by Em D, and irpina) for the codec and ColdFire files Modwerk replaces with its own implementation, since that implementation keeps their formats and was checked against outputs recorded from them.

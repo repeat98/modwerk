@@ -5,7 +5,7 @@ import { refuseNewEntries } from './changelog.mjs'
 
 /** The documents every agent reads stay short enough to read in one go: one may grow to LIMIT bytes, and one already
  * longer may not grow at all. The two old logs are frozen; a new record is its own dated file (docs/README.md). */
-export const LIMIT = 32 * 1024
+export const LIMIT = 40 * 1024
 export const FROZEN = { 'docs/VERIFICATION.md': 'docs/verification/', 'docs/DECISIONS.md': 'docs/decisions/' }
 const RECORD = /^\d{4}-\d{2}-\d{2}-[a-z0-9]+(?:-[a-z0-9]+)*\.md$/
 

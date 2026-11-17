@@ -5,6 +5,7 @@
  * effects in use, and the catalog the DSP manager reads. */
 #include "sha256.c"
 volatile uint32_t modwerk_flash_refusal, modwerk_flash_quiesced; /* flash.c, not linked here */
+static int usb_disk; int modwerk_machine_usb_disk(void) { return usb_disk; } /* runtime.c, not linked here */
 #include "dsp.c"
 #include "fxmap.c"
 #include <stdio.h>
@@ -131,6 +132,11 @@ uint32_t dl_slot_cycles(unsigned i) { return slot_cycles[i]; }
 static void sources(void)
 {
     const uint32_t a = 0xab, b = 0xbb; /* two machine modules' runtime ids */
+    uint8_t live[16], *had_bank = modwerk_test_bank;
+    const uint32_t dj = dl_catalog[13].cycles;
+    memcpy(live, modwerk_test_live_fx, 16);
+    modwerk_test_bank = 0, dl_catalog[13].cycles = MODWERK_DSP_RESERVE; /* no project: what the tracks run counts */
+    for (unsigned i = 0; i < 16u; ++i) modwerk_test_live_fx[i] = 13; /* DJ EQ, the dearest stock effect, everywhere */
     /* Core 0 (tracks 5-8) keeps 3120 - 8 x 342 = 384 cycles; core 1 (tracks 1-4) 3565 - 2736 = 829. */
     CHECK(modwerk_dsp_source_claim(4, a, 411, 3, RUNTIME_EXECUTED) == RUNTIME_CYCLES); /* 720 + 6 > 384 */
     { unsigned rc; uint32_t ra; modwerk_dsp_source_refusal(&rc, &ra); CHECK(rc == 0 && ra == 726); } /* what the box shows */
@@ -163,6 +169,29 @@ static void sources(void)
     CHECK(modwerk_dsp_source_claim(0, a, 1, 1, 0) == RUNTIME_MALFORMED);
     CHECK(modwerk_dsp_source_claim(0, a, 1, 1, RUNTIME_HARDWARE + 1) == RUNTIME_MALFORMED);
     CHECK(modwerk_dsp_source_charge(0) == 0 && modwerk_dsp_source_charge(1) == 0 && modwerk_dsp_source_charge(2) == 0);
+    /* Voices book the slots as the bank uses them (#1542), not at the stock reserve: with nothing on core 0's slots,
+     * four voices at 720 and one engine at 6 fit its 3120. */
+    for (unsigned i = 0; i < 16u; ++i) modwerk_test_live_fx[i] = (i & 7u) < 4u ? 13 : 0;
+    for (unsigned t = 4; t < 8u; ++t) CHECK(modwerk_dsp_source_claim(t, a, 411, 3, RUNTIME_EXECUTED) == RUNTIME_OK);
+    CHECK(modwerk_dsp_source_charge(0) == 4u * 720u + 6u);
+    CHECK(modwerk_dsp_source_claim(0, b, 400, 0, RUNTIME_HARDWARE) == RUNTIME_OK);     /* core 1: 2736 + 400 */
+    /* A bank load whose Part 1 names DJ EQ on both of T5's slots: 684 + 2886 > 3120. Before the allocator plans it,
+     * core 0 drops voices from T8 down until the bank fits (2166 + 684); core 1, which fits, keeps its voice. */
+    static uint8_t loaded[0x9504a + 4 * 6322];
+    modwerk_test_bank = loaded, loaded[0x8ed80 + 4] = loaded[0x8ed80 + 12] = 13;
+    uint8_t ids[16]; uint32_t least[16];
+    memcpy(ids, loaded + 0x8ed80, 16);
+    for (unsigned i = 0; i < 16u; ++i) modwerk_test_live_fx[i] = ids[i];
+    CHECK(!modwerk_dsp_slot_floors(ids, least) && least[4] == 342 && least[12] == 342); /* the bank is never refused */
+    CHECK(modwerk_dsp_source_charge(0) == 3u * 720u + 6u && !source_owner[7] && source_owner[6] == a);
+    CHECK(modwerk_dsp_source_charge(1) == 400);
+    CHECK(modwerk_dsp_source_claim(7, a, 411, 3, RUNTIME_EXECUTED) == RUNTIME_CYCLES); /* T8 asks again: no room */
+    /* A pick the bank does not name never takes a voice's room: DJ EQ on T6 FX1 is refused, the voices stay. */
+    ids[5] = 13;
+    CHECK(modwerk_dsp_slot_floors(ids, least) == 1u && modwerk_dsp_source_charge(0) == 3u * 720u + 6u);
+    modwerk_dsp_source_engine_off(a), modwerk_dsp_source_engine_off(b);
+    loaded[0x8ed80 + 4] = loaded[0x8ed80 + 12] = 0;
+    modwerk_test_bank = had_bank, dl_catalog[13].cycles = dj, memcpy(modwerk_test_live_fx, live, 16);
 }
 
 /* All handles held: FULL; past 32 ids the fixture's third handle, 40, is still free and goes to the newcomer. */
@@ -172,6 +201,24 @@ static int full_or_40(const struct runtime_dsp *none, struct runtime_dsp t) /* a
     return MODWERK_FX_IDS > 32u ? r == RUNTIME_OK && t.id == 40 : r == RUNTIME_FULL;
 }
 #define FULL_OR_40(t) full_or_40(&none, (t))
+/* machine_registry.c's map: `absent_machine` (0 none) at map entry 3, named Poly8; the current Part's T3 is its track. */
+static uint32_t absent_machine;
+int modwerk_machine_absent(unsigned k, uint32_t *module, char *name)
+{
+    if (k != 3u || !absent_machine) return 0;
+    *module = absent_machine, memset(name, 0, 16), strcpy(name, "Poly8");
+    return 1;
+}
+int modwerk_machine_track_absent(unsigned t, uint32_t *module, char *name) { return t == 2u && modwerk_machine_absent(3, module, name); }
+void modwerk_machine_map_begin(void) {}
+void modwerk_machine_map_stage(const uint8_t *sig, unsigned lo, unsigned hi, uint32_t module, const char *name)
+{ (void)sig, (void)lo, (void)hi, (void)module, (void)name; }
+void modwerk_machine_map_loaded(int ok) { (void)ok; }
+int modwerk_machine_map_line(unsigned k, uint8_t *sig, unsigned *lo, unsigned *hi, uint32_t *module, char *name)
+{ (void)k, (void)sig, (void)lo, (void)hi, (void)module, (void)name; return 0; }
+/* modset.c's shelf: `dsp_off_module` is switched off on PROJ > MODWERK > MODULES. */
+static uint32_t dsp_off_module;
+int modwerk_modset_is_off(uint32_t module) { return module && module == dsp_off_module; }
 /* One tick of the MISSING popup, as modwerk_dsp_tick makes it: the rebind's step, then the popup. */
 static int popup(unsigned track, char *text) { return modwerk_dsp_missing_tick(rebind_tick(), track, text); }
 int main(void)
@@ -225,7 +272,7 @@ int main(void)
     modwerk_test_live_fx[5] = 26, restoring = 1;
     CHECK(modwerk_machine_dsp_admit(&fx, &none) == RUNTIME_OK && !modwerk_test_live_fx[13] && !modwerk_test_live_fx[5]);
     restoring = 0, modwerk_test_live_fx[5] = 4, modwerk_test_live_fx[13] = 26;
-    /* MODULE LOAD (status.c): the one module, unfloored 7/4 of its claim, an estimate, on T6 FX2 (core 0). */
+    /* MODULE COST (status.c): the one module, unfloored 7/4 of its claim, an estimate, on T6 FX2 (core 0). */
     struct modwerk_module_load loads[MODWERK_FX_IDS];
     CHECK(modwerk_dsp_module_loads(loads) == 1 && loads[0].id == 26 && loads[0].cycles == (244 * 7 + 3) / 4 &&
           !loads[0].measured && loads[0].slots[0] == 1 && !loads[0].slots[1]);
@@ -328,6 +375,13 @@ int main(void)
     modwerk_flash_quiesced = 1;
     for (unsigned t = 0; t < 100; ++t) CHECK(!modwerk_dsp_stalled(42900u, 1));
     modwerk_flash_quiesced = 0;
+    /* So does stock's USB DISK MODE: no stall while it is open, however long (finding 72); after it the count starts afresh. */
+    usb_disk = 1;
+    for (unsigned t = 0; t < 100; ++t) CHECK(!modwerk_dsp_stalled(42900u, 1));
+    usb_disk = 0;
+    for (unsigned t = 1; t <= 29; ++t) CHECK(!modwerk_dsp_stalled(42900u, 1));
+    CHECK(modwerk_dsp_stalled(42900u, 1));
+    CHECK(!modwerk_dsp_stalled(42901u, 1));
     /* The project's map (fxmap.c): '#MODWERK_FX=' lines in, only module handles, a failed load changes nothing. */
     for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) release(k);
     for (unsigned i = 0; i < 16u; ++i) modwerk_test_live_fx[i] = 0;
@@ -370,6 +424,12 @@ int main(void)
     CHECK(modwerk_dsp_missing_list(list, 0, MODWERK_MISSING_PAGE) == 28 && !memcmp(list, "MWM\1", 4) && list[4] == 26 &&
           list[7] == 2 && list[11] == 0x47 && !strcmp((const char *)list + 12, "Mod G"));
     CHECK(modwerk_dsp_missing_list(list, 1, MODWERK_MISSING_PAGE) == 4 && !memcmp(list, "MWM\0", 4)); /* the next page: empty */
+    /* An absent machine follows the effects: handle 0xff (no DSP code), 0x80 and its map entry, its module and name. */
+    absent_machine = 0x9fa85eefu;
+    CHECK(modwerk_dsp_missing_list(list, 0, MODWERK_MISSING_PAGE) == 52 && list[3] == 2 && list[4] == 26 && list[28] == 0xff &&
+          list[29] == 0x83 && list[32] == 0x9f && list[35] == 0xef && !strcmp((const char *)list + 36, "Poly8"));
+    CHECK(modwerk_dsp_missing_list(list, 1, MODWERK_MISSING_PAGE) == 28 && list[4] == 0xff); /* the next page holds it */
+    absent_machine = 0;
 #if MODWERK_FX_IDS > 32
     { /* A map a 32-id base left: kept, widened, sealed as this base's (fxmap.c widened). */
         uint32_t *w = (uint32_t *)&modwerk_test_map, sum = 0x5a17u;
@@ -431,6 +491,23 @@ int main(void)
         CHECK(owner[27] == 0x4b && !owner[26] && !rebinding && !fx_in(modwerk_dsp_dry(), 27) && fx_in(modwerk_dsp_dry(), 26));
         /* What is missing is still said, by the map's name: T2 runs Mod G. */
         CHECK(popup(1, text) && !strcmp(text, "MISSING MOD G"));
+        { /* Mod G switched off on MODULES: the track says so, not MISSING (owner, 16 November 2026). */
+            unsigned was = last_track;
+            dsp_off_module = 0x47u, last_track = 0xffu;
+            CHECK(popup(1, text) && !strcmp(text, "MOD G IS OFF"));
+            dsp_off_module = 0, last_track = was;
+        }
+        { /* T3 runs no module effect but is signed for a machine the project's map names and nothing serves: the notice
+           * names it, MISSING or IS OFF (owner, 16 November 2026: machines in the project map). */
+            unsigned was = last_track;
+            absent_machine = 0x9fa85eefu, last_track = 0xffu;
+            CHECK(popup(2, text) && !strcmp(text, "MISSING POLY8"));
+            dsp_off_module = 0x9fa85eefu, last_track = 0xffu;
+            CHECK(popup(2, text) && !strcmp(text, "POLY8 IS OFF"));
+            absent_machine = dsp_off_module = 0, last_track = 0xffu;
+            CHECK(!popup(2, text));                                    /* nothing absent: nothing said */
+            last_track = was;
+        }
         CHECK(!popup(1, text)); /* once per selection */
         /* A track selected during a load is said once the load is over. */
         CHECK(!popup(0, text));

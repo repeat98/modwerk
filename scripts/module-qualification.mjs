@@ -1,4 +1,6 @@
 // Read-only qualification checks. Never import/evaluate submitted native source.
+import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { readFile, readdir } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { resolve } from 'node:path'
@@ -9,8 +11,8 @@ import { requireModuleQualificationForPublication, requireModuleUiForPublication
 import { compareModuleVersions } from '../src/catalog/versions.ts'
 import { requireModuleDocumentation } from './module-documentation.mjs'
 
-export const BASELINE_PATH = 'sdk/module-qualification-baseline.json'
-export const WAIVERS_PATH = 'sdk/module-release-waivers.json'
+export const BASELINE_PATH = 'sdk/approvals/module-qualification-baseline.json'
+export const WAIVERS_PATH = 'sdk/approvals/module-release-waivers.json'
 const sha = bytes => createHash('sha256').update(bytes).digest('hex')
 async function inventory(folder, prefix='') {
   const files=[]
@@ -34,10 +36,17 @@ export function qualificationReports(document) {
   const q=document.tests.qualification
   return q?[...new Set([...q.cycles.map(c=>c.report),q.memory.report,q.hardware.report])]:document.tests.releaseWaiver?[document.tests.releaseWaiver.report]:[]
 }
-export async function moduleNativeSourceSha256(folder, document) {
+async function nativePaths(folder, document) {
   const reports=new Set(qualificationReports(document))
-  const paths=(await inventory(folder)).filter(path=>!['octamod.module.json','qualification.example.json'].includes(path)&&!path.startsWith('media/')&&!/\.md$/i.test(path)&&!/(^|\/)(LICENSE|LICENCE|COPYING)(\.|$)/i.test(path)&&!reports.has(path))
-  return fingerprint(folder,paths)
+  return (await inventory(folder)).filter(path=>!['octamod.module.json','qualification.example.json'].includes(path)&&!path.startsWith('media/')&&!/\.md$/i.test(path)&&!/(^|\/)(LICENSE|LICENCE|COPYING)(\.|$)/i.test(path)&&!reports.has(path))
+}
+export async function moduleNativeSourceSha256(folder, document) {
+  return fingerprint(folder,await nativePaths(folder,document))
+}
+// The source a performance record was measured on: the native source without evidence/, so the stamp written into
+// evidence/performance.json (npm run perf:audit -- check FILE --stamp) does not change what it stamps.
+export async function modulePerformanceSourceSha256(folder, document) {
+  return fingerprint(folder,(await nativePaths(folder,document)).filter(path=>!path.startsWith('evidence/')))
 }
 // An owner-approved update publishes a new version without fresh evidence for
 // what the owner names in `waived`. The approval lives in sdk/, outside the
@@ -47,7 +56,7 @@ export async function moduleNativeSourceSha256(folder, document) {
 const UPDATE_WAIVABLE=['current-build-hardware','chip-worst-case-cycles','complete-memory-bounds','release-documentation']
 async function requireOwnerApprovedUpdate(root, folder, document) {
   let approval
-  try { approval=JSON.parse(await readFile(resolve(root,'sdk',document.id+'-build-approval.json'),'utf8')) } catch(error) { if(error.code==='ENOENT') return null; throw error }
+  try { approval=JSON.parse(await readFile(resolve(root,'sdk','approvals',document.id+'-build-approval.json'),'utf8')) } catch(error) { if(error.code==='ENOENT') return null; throw error }
   if(approval?.kind!=='owner-approved-update') return null
   const fail=message=>{ throw new Error(document.id+': owner-approved update '+message) }
   const keys=Object.keys(approval).filter(key=>key!=='retainedUiVersion').sort().join(',')
@@ -92,15 +101,6 @@ export async function requireFolderQualification(folder, document, baseline, wai
   const existing=baseline.get(document.id)
   if(existing?.version===document.version&&existing.folderSha256===await moduleFolderSha256(folder)) return 'retained'
   const declaration=document.tests.releaseWaiver
-  if(document.id==='midi-scenes'&&document.version==='0.2.4-experimental'&&declaration?.approvedOn==='2026-10-03') {
-    const approval=JSON.parse(await readFile(new URL('../sdk/midi-scenes-build-approval.json',import.meta.url),'utf8'))
-    if(approval.id!=='midi-scenes'||approval.version!==document.version||approval.approvedBy!=='repeat98'||approval.approvedOn!=='2026-10-03'||JSON.stringify(approval.waived)!==JSON.stringify(['hardware-timing','complete-memory-bounds'])||approval.imageSha256!=='debb24090cada4be00bc70880136f14e813b0d3a9018b516f922d33671bd9b87'||approval.sourceSha256!==declaration.sourceSha256||approval.imageSha256!==declaration.imageSha256||await moduleNativeSourceSha256(folder,document)!==approval.sourceSha256||await moduleFolderSha256(folder)!==approval.folderSha256) throw new Error('MIDI Scenes: owner build approval does not cover this exact source, image and folder')
-    if(document.build||document.tests.qualification||document.tests.hardwareStatus!=='reported'||document.compatibility.conflicts.length!==13) throw new Error('MIDI Scenes: standalone approval requires honest reported status and all companion exclusions')
-    const report=JSON.parse(await readFile(resolve(folder,declaration.report),'utf8'))
-    if(report.moduleVersion!==document.version||report.sourceSha256!==approval.sourceSha256||report.imageSha256!==approval.imageSha256||report.hardwareTiming!==null||report.completeMemoryBounds!==null||report.standaloneOnly!==true||report.sharedWorkerParity?.status!=='passed'||report.sharedWorkerParity.mixedSelectionsRefused!==13||report.sharedWorkerParity.mainSha256!==approval.imageSha256||report.sharedWorkerParity.updateSha256!=='d7c792e0ec9b28e1b674e92526b2fa9a8a8279655dbd66a7b59495e5d5c54007'||report.sharedWorkerParity.changedBaseRefused!==true) throw new Error('MIDI Scenes: incomplete or stale shared-worker verification')
-    await requireModuleDocumentation(folder,document)
-    return 'owner-approved-standalone'
-  }
   if(document.id==='synth'&&document.version==='0.1.1-experimental'&&declaration?.approvedOn==='2026-10-06') return requireSynthRelease(options.root??fileURLToPath(new URL('../',import.meta.url)),folder,document,moduleNativeSourceSha256)
   const waiver=waivers.get(document.id)
   if(waiver?.version===document.version&&declaration) {
@@ -121,7 +121,7 @@ export async function requireFolderQualification(folder, document, baseline, wai
     // The owner waived only fresh hardware evidence, for this exact version, source and image. Documentation and media are not part of that binding. The approval is a
     // separate record, so the module folder cannot grant it to itself; every software record must still describe the same build.
     const q=document.tests.qualification
-    const approval=JSON.parse(await readFile(new URL('../sdk/'+document.id+'-build-approval.json',import.meta.url),'utf8'))
+    const approval=JSON.parse(await readFile(new URL('../sdk/approvals/'+document.id+'-build-approval.json',import.meta.url),'utf8'))
     if(approval.id!==document.id||approval.version!==document.version||approval.approvedBy!=='repeat98'||approval.approvedOn!==q.hardware.approvedOn||JSON.stringify(approval.waived)!==JSON.stringify(['current-build-hardware'])||approval.sourceSha256!==q.sourceSha256||approval.imageSha256!==q.imageSha256) throw new Error(document.id+': hardware-only approval does not cover this exact version, source and image')
     const software=JSON.parse(await readFile(resolve(folder,'evidence/software.json'),'utf8'))
     if(software.sourceSha256!==q.sourceSha256||software.imageSha256!==q.imageSha256||software.moduleVersion!==document.version||software.hardwareStatus!==document.tests.hardwareStatus||software.currentBuildHardware!=='owner-waived'||software.chipWallClockCycles!==null||software.memory?.totalBytes!==q.memory.totalBytes||software.memory?.hardwareCanaries!==null) throw new Error(document.id+': software evidence does not match the qualification record')
@@ -141,4 +141,40 @@ export async function requireFolderQualification(folder, document, baseline, wai
   }
   await requireModuleDocumentation(folder,document)
   return 'qualified'
+}
+
+/** A module new to the library was never on main, so a tested commit already on main cannot be the one its tests ran on (DATAMATIC, #1103,
+ * named a main commit without its draft). Commits from the author's own repository or octabam are not judged: this clone does not know them. */
+export function evidenceOnBaseProblem({ root, base }) {
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 32 * 1024 * 1024 })
+  const succeeds = (...args) => { try { git(...args); return true } catch { return false } }
+  const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octatrack/modules/*/octamod.module.json']
+  const changed = (git('diff', '--name-only', '--diff-filter=AM', base, '--', ...specs) + git('ls-files', '--others', '--exclude-standard', '--', ...specs)).split('\n').filter(Boolean)
+  for (const path of new Set(changed)) {
+    const id = path.split('/').at(-2), rev = JSON.parse(readFileSync(resolve(root, path), 'utf8')).tests?.evidenceRevision
+    if (!/^[a-f0-9]{40}$/.test(rev ?? '')) continue
+    const listedOnBase = ['sdk/drafts/' + id, 'sdk/octatrack/modules/' + id, 'sdk/octabam/modules/' + id].some(folder => succeeds('cat-file', '-e', base + ':' + folder + '/octamod.module.json'))
+    if (!listedOnBase && succeeds('merge-base', '--is-ancestor', rev, base)) return path + ': tests.evidenceRevision names ' + rev.slice(0, 8) + ', a commit already on main, which has no ' + id + '. Name the commit your tests ran on: one of this branch\'s, or your own repository\'s (docs/MODULE_QUALIFICATION.md).'
+  }
+  return null
+}
+
+/** A pull request that gives a module a new version also says in its TESTING.md what was tested at that version: 84 of 87 modules
+ * name their current version there, and a report left at the old one reads as evidence for the new. Every machine's manifests and drafts. */
+export function testingVersionProblem({ root, base }) {
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 32 * 1024 * 1024 })
+  const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octatrack/modules/*/octamod.module.json', ':(glob)sdk/*/modules/*/modwerk.module.json']
+  const changed = (git('diff', '--name-only', '--diff-filter=AM', base, '--', ...specs) + git('ls-files', '--others', '--exclude-standard', '--', ...specs)).split('\n').filter(Boolean)
+  for (const path of new Set(changed)) {
+    const version = JSON.parse(readFileSync(resolve(root, path), 'utf8')).version
+    let before = null
+    // An Octatrack module's manifest sat under sdk/octabam/modules/ before the folders moved (12 November 2026).
+    for (const at of [path, path.replace(/^sdk\/octatrack\/modules\//, 'sdk/octabam/modules/')]) { try { before = JSON.parse(git('show', base + ':' + at)).version; break } catch { /* new here */ } }
+    if (version === before || typeof version !== 'string') continue
+    const folder = path.slice(0, path.lastIndexOf('/')), report = resolve(root, folder, 'TESTING.md')
+    const text = (() => { try { return readFileSync(report, 'utf8') } catch { return '' } })(), short = version.replace(/-experimental$/, '')
+    if (!text.includes(version) && !new RegExp('(?<![\\d.])' + short.replaceAll('.', '\\.') + '(?![\\d.])').test(text))
+      return folder + '/TESTING.md does not name ' + version + '. Say what you ran on this version, and on which build, or write that it is not tested yet.'
+  }
+  return null
 }

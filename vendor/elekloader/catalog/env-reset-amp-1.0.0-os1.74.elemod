@@ -1,0 +1,119 @@
+{
+ "elemod": 2,
+ "id": "env-reset-amp",
+ "version": "1.0.0",
+ "title": "Env Reset Amp",
+ "description": "SOUND SETTINGS ENV RESET gains AMP and AMP+FILT: the amp envelope restarts from silence on every trig, so AMP ATK is heard on every hit.",
+ "category": "machines",
+ "author": "Iced-Cream",
+ "license": "GPL-2.0-only",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 52,
+   "parts": [
+    [
+     "hex",
+     "0080b000000041f9402911387bb0380041f98000ea307db0580008060000670c203cb0100000243c000000804ef940109b760000"
+    ]
+   ]
+  }
+ },
+ "symbols": {
+  "P_BIT_PROBE": [
+   "abs",
+   0
+  ],
+  "ATTACK_RESUME": [
+   "abs",
+   1074830198
+  ],
+  "VOICE_TRACK": [
+   "abs",
+   1076433208
+  ],
+  "ENV_RESET": [
+   "abs",
+   2147543600
+  ],
+  "ENV_RESET_AMP": [
+   "abs",
+   0
+  ],
+  "DROP_RATE": [
+   "abs",
+   2953838592
+  ],
+  "DROP_LEVEL": [
+   "abs",
+   128
+  ],
+  "env_reset_amp_attack": [
+   ".run",
+   0
+  ]
+ },
+ "exports": [
+  "env_reset_amp_attack"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [],
+ "sites": [
+  {
+   "addr": "0x400bcf8a",
+   "len": 2,
+   "stock_sha256": "0b358362552792220751c58c4cca9c4e54407d2339649a0b96182880f0504c1a",
+   "new": "7403",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x400ef8d6",
+   "len": 2,
+   "stock_sha256": "4e4b41344512feecd49483d4a3f357ebd5b45f53276f21411a66cb3b4d597c16",
+   "new": "4e71",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x40109b70",
+   "len": 6,
+   "stock_sha256": "17271641181704a08a8766493e2315ce4d971137f09ddf962389424c9cbfac6f",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:env_reset_amp_attack",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:SOUND SETTINGS ENV RESET values",
+   "audio:amp envelope attack on trig"
+  ],
+  "core": "0.3"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

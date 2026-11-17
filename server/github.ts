@@ -100,7 +100,7 @@ export function issueMarkdown(issue: MirroredIssue, app?: string) {
   const modules = configuration ? issue.details.modules ?? [] : []
   const report = ['Reported on [Modwerk](' + site + ') for ' + (configuration ? 'the **whole configuration**' : '**`' + issue.module_id + '`**') + ' by ' + (profile ? '[' + reporter + '](' + profile + ')' : reporter) + (owners.length ? ' · ' + owners.join(' ') : ''), '',
     '| | |', '| --- | --- |', '| Device | ' + cell(device) + ' |', configuration ? '| Configuration | ' + configurationSummary(modules.length) + ' |' : '| Module version | ' + cell(version) + ' |',
-    ...(context ? ['| Firmware | ' + cell(FLASH_STATES[context.flash].replace('an Octamod', 'a Modwerk')) + ' |', '| Build fingerprint | ' + (context.build ? '`' + context.build + '`' : 'Not recorded') + ' |'] : []), '',
+    ...(context ? ['| Firmware | ' + cell(FLASH_STATES[context.flash]) + ' |', '| Build fingerprint | ' + (context.build ? '`' + context.build + '`' : 'Not recorded') + ' |'] : []), '',
     ...(configuration ? ['### Modules in this configuration', '', ...modules.map(module => '- `' + module.id + '` ' + inert(module.version)), '', 'Reported for the whole configuration: the cause may be one module or how they combine. Reply here to narrow it down, then mention the author of the module at fault.', ''] : []),
     ...(!configuration && context ? ['### Configuration', '', ...(context.modules.length ? context.modules.map(module => '- `' + module.id + '` ' + inert(module.version)) : ['No modules recorded.']), ''] : []),
     ...([['Steps to reproduce', steps], ['Expected', expected], ['Actual', actual]] as const).filter(([, text]) => text).flatMap(([heading, text]) => ['### ' + heading, '', quote(text), ''])]

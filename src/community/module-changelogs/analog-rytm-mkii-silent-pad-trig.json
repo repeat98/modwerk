@@ -1,5 +1,25 @@
 [
   {
+    "version": "0.8.0-experimental",
+    "date": "2026-11-08",
+    "changes": [
+      "With MUTE ALL SOUND, RTRG + a muted pad in LIVE RECORDING now records the whole roll, in silence.",
+      "A muted pad no longer takes the voice it shares: with CH muted, OH keeps ringing, with no click.",
+      "A muted pad lights up on each recorded hit, as a sounding pad does.",
+      "Outside LIVE RECORDING muted pads stay silent, as before."
+    ]
+  },
+  {
+    "version": "0.7.0-experimental",
+    "date": "2026-11-04",
+    "changes": [
+      "FUNC + TRIG now plays the track at the TRIG page's VEL wherever TRIG keys are silent, the way a plain TRIG press plays on stock.",
+      "The LIVE REC row now covers TRIG keys too, and is renamed SILENT P+T LIVEREC: a TRIG key selects silently and records nothing, and FUNC + TRIG plays and records.",
+      "GRID and STEP RECORDING keep stock's FUNC + TRIG.",
+      "After updating, all three rows start unchecked: check the ones you use again once."
+    ]
+  },
+  {
     "version": "0.6.0-experimental",
     "date": "2026-11-02",
     "changes": [
@@ -7,7 +27,7 @@
       "SILENT PAD+TRIG: pads and TRIG keys select their track without playing it. FUNC + pad still plays.",
       "SILENT PAD LIVEREC: pads stay silent in LIVE RECORDING too.",
       "MUTE ALL SOUND: a muted track stays silent from pads, TRIG keys and MIDI, while its trigs still record.",
-      "Not yet tested on a unit: this exact build, MIDI out and STEP REC."
+      "Not yet tested on a unit: this exact build, MIDI out and STEP REC. The module page now credits Nathaniel Pavel (@npp1993)."
     ]
   }
 ]

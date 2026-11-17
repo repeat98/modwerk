@@ -31,9 +31,10 @@ export async function createConfigurationReport(request: Request, env: Env, db: 
   const log = attached ? input(() => parseOtLog(body.log as string)) : null
   // An attached log records the configuration the device ran; otherwise the reporter names it.
   const { context, modules } = input(() => validateConfigurationReportContext(body.context, log?.summary ?? null))
+  // Member first, so one member's refused reports never fill the address's or the site's counter.
+  await throttle(db, 'issue-member:' + owner.id, 10)
   await throttle(db, 'issue-ip:' + (request.headers.get('CF-Connecting-IP') ?? 'local'), 10)
   await throttle(db, 'issue-global', 60)
-  await throttle(db, 'issue-member:' + owner.id, 10)
   const anchor = communityModule(modules[0].id)!
   const id = crypto.randomUUID(), details = [['Steps to reproduce', steps], ['Expected', expected], ['Actual', actual]].filter(([, text]) => text).map(([label, text]) => label + ':\n' + text).join('\n\n')
   // With GitHub configured, a public report becomes a GitHub issue and gets no forum thread of its own.

@@ -1,0 +1,258 @@
+{
+  "schemaVersion": 3,
+  "id": "lfo-rnd",
+  "name": "LFO RND",
+  "version": "1.2.0",
+  "machine": "analog-rytm-mkii",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "Iced-Cream",
+    "credits": [
+      "MrScruff — the original mod, 0004-lfo-rnd in rytm-mods, its design and code; published in rytm-mods-src with permission.",
+      "Iced-Cream — the elemod port (rytm2_mods), its move to core-ar2 storage and pages, and this Modwerk module.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ]
+  },
+  "maintainers": [
+    "Iced-Cream"
+  ],
+  "source": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "e029f7540c2df2a5185620ca68b4c08579e120c6",
+    "path": "lfo-rnd"
+  },
+  "presentation": {
+    "label": "LFO RND",
+    "family": "Modulation",
+    "summary": "A second LFO page: two random modifiers per sound, each offsetting a chosen parameter by a new random amount on every note.",
+    "overview": "LFO RND adds a page behind the LFO page key: press LFO again to reach it. It holds two random modifiers per sound. Each has a destination (DS1, DS2), one of sixteen parameters taken from stock's LFO destination list (the eight machine parameters, FIN, STA, FRQ, RES, DEC, PAN, DEL and REV), and a depth (DP1, DP2), 0 to 64 in sixteen steps. On every note trig each modifier draws a random offset between -depth and +depth for its destination, clamped to the parameter's range and held until the next note, on top of p-locks, slides and LFO 1. The settings are kept in the sound through core-ar2's mod storage. It is rytm2_mods' elemod port of MrScruff's rytm-mods 0004-lfo-rnd; from 1.2 its page and knobs go through core-ar2's page tables (core_pages, core_params, core_view_pages) instead of detours of its own.",
+    "highlights": [
+      "Two random modifiers per sound, each with its own destination and depth.",
+      "Sixteen destinations from stock's LFO list; depth 0 is stock behaviour.",
+      "A new value on every note, held until the next one.",
+      "Saved with the sound in core-ar2 mod storage."
+    ],
+    "usage": [
+      "Use a build containing LFO RND. Open the LFO page on a voice track and press the LFO page key again: LFO RND shows DS1 and DS2 on knobs A and B, DP1 and DP2 on E and F.",
+      "Turn DS1: the destination list opens. Pick FRQ and press YES, then turn DP1 to 32.",
+      "Play trigs on that track: the filter cutoff moves to a new random value on every note. Turn DP1 to 0: the notes play as stock again. Press LFO once more to go back to the LFO page."
+    ]
+  },
+  "access": {
+    "location": "LFO page key, pressed a second time on a voice track: the LFO RND page.",
+    "steps": [
+      "Select a voice track (not the FX track).",
+      "Press the LFO page key, then press it again: LFO RND.",
+      "Press LFO once more to return to the LFO page."
+    ],
+    "screenshots": [
+      "media/lfo-page.png",
+      "media/lfo-rnd-page.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "DS1 (knob A, LFO RND page)",
+      "default": null,
+      "doc": "Random modifier 1's destination: opens stock's LFO destination list, limited to sixteen entries (the eight machine parameters, FIN, STA, FRQ, RES, DEC, PAN, DEL, REV). YES confirms.",
+      "labels": null
+    },
+    {
+      "name": "DS2 (knob B, LFO RND page)",
+      "default": null,
+      "doc": "Random modifier 2's destination, as DS1.",
+      "labels": null
+    },
+    {
+      "name": "DP1 (knob E, LFO RND page)",
+      "default": null,
+      "doc": "Random modifier 1's depth: sixteen steps from 0 to 64. Each note offsets DS1's parameter by a random amount between -DP1 and +DP1. 0 is off.",
+      "labels": null
+    },
+    {
+      "name": "DP2 (knob F, LFO RND page)",
+      "default": null,
+      "doc": "Random modifier 2's depth, as DP1.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only. 1.2.0 reaches its page and knobs through core-ar2's page tables (core_pages, core_params, core_view_pages; core-ar2 0.4 and later; Modwerk's base is core-ar2 0.7). 1.1 and earlier detoured those page routines itself and does not link with core-ar2 0.4 or later.",
+      "Voice tracks only: the FX track has no LFO RND page.",
+      "DS1, DS2, DP1 and DP2 cannot be p-locked, scene-locked or modulated; they are sound settings (lfo-rnd 1.3 adds that, but needs core-ar2 0.9).",
+      "Needs core-ar2's mod storage: one 16-bit sound field (lfo_rnd_cfg). On stock firmware, or a build without this module, the sound plays without the random offsets.",
+      "Sounds saved by lfo-rnd 1.0 (which kept the settings in the sound's parameter word 0) keep them; the first edit moves them into mod storage.",
+      "Hooks the audio interrupt next to Loop Sync's site (different bytes); the pair has not been run together."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:LFO page key second press (LFO RND page, core_view_pages)",
+      "sequencer:note trig random parameter offset",
+      "param:hidden ids 1-4"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 1676,
+    "fastBytes": 0,
+    "load": {
+      "display": "Small: a storage read per voice trig and one random draw per modifier at each note's start",
+      "method": "static",
+      "conditions": "Static: the sequencer interrupt reads the sound's field once per voice trig; the audio interrupt draws and clamps at most two offsets when a note starts and otherwise adds the held offsets. The rest runs on UI edits and drawing. On a unit with all eleven rytm2_mods ports on core-ar2 0.10 (T133, lfo-rnd 1.2 among them) the whole set idled at CPU 80 % and peaked at 96 % with notes on eight voice tracks; this module's share was not measured on its own."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "1.2.0",
+    "sourceSha256": "ebe1b499069d08992845853366a231466f10fe28c99d04f24344af347d600bbf",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "evidence/source-parity.json"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-08",
+      "tester": "Iced-Cream",
+      "durationMinutes": null,
+      "summary": "Iced-Cream reports: Hardware, Analog Rytm MKII OS 1.74, 2026-11-08 (run T207), LT12: Modwerk's base (core-ar2 0.7), analoghealth 1.3 and this package. LFO pressed twice on CP opened LFO RND; DS1 confirmed FRQ; DP1 showed 64 and 0; over 80 hits per 10 s take, CP's per-hit spectral centroid spread 5.66 semitones at DP1 64 against 0.45 at DP1 0; DS1 FRQ and DP1 64 were kept through a power cycle without a save. Earlier, 2026-10-21 (runs T22, T23, T25) on core-ar2 0.4 with all eleven rytm2_mods ports, every README test step passed (P4A4), the page-key list through core_view_pages passed (Q4A4) and U4A4 (this folder's bytes) stepped LFO, LFO RND, LFO.",
+      "limitations": [
+        "LT12 ran this package with analoghealth only, not beside other library modules.",
+        "Kit save and reload and 1.0 kits were checked on core-ar2 0.3 and 0.4 (C3A4, P4A4), not on Modwerk's base.",
+        "LT12: .syx f9622564736c613a638575e29d7484a0c2cee94fb4e8d05c9d8656f9581e01f1. P4A4: .syx 1c0311697543789316c10dbbbfa78b9a717a180eb26611f2f0d1b732a428d65c. U4A4: .syx 18681f8709242b9d3c5117335a81cd5659ea01c583e3e8477d536e379517b785. Firmware was not read back from the device.",
+        "Duration was not recorded.",
+        "The random offsets were measured on CP's FRQ only; other destinations and DS2/DP2 were not exercised on LT12."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Hardware: lfo-rnd 1.2 on an Analog Rytm MKII, OS 1.74, with core-ar2 0.4 and the other rytm2_mods ports (P4A4, Q4A4, U4A4, 2026-10-21): the page through core's page tables, its list and depths, offsets per note, settings kept through save and power cycle. Modwerk's package linked with core-ar2 0.7 is byte-identical to rytm2_mods v1.3's release object linked with it. Emulator on the Modwerk base (LR12): page, list, DS1 and DP1. Not yet on a unit with Modwerk's base.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Use a build containing LFO RND. Open the LFO page on a voice track and press the LFO page key again: LFO RND shows DS1 and DS2 on knobs A and B, DP1 and DP2 on E and F.",
+          "Turn DS1: the destination list opens. Pick FRQ and press YES, then turn DP1 to 32.",
+          "Play trigs on that track: the filter cutoff moves to a new random value on every note. Turn DP1 to 0: the notes play as stock again. Press LFO once more to go back to the LFO page."
+        ]
+      },
+      "screenshots": [
+        "media/lfo-page.png",
+        "media/lfo-rnd-page.png",
+        "media/destination-list.png",
+        "media/ds1-frq-confirmed.png",
+        "media/dp1-depth.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "MrScruff's rytm-mods code and Iced-Cream's elemod port, under GPL-2.0-only as rytm-mods-src. include/ar2-1.74.inc and shared/shared.s name firmware routines and RAM by address only; the patch preconditions are addresses, lengths and SHA-256s."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "LFO RND",
+      "alt": "Original illustration of a parameter line jumping to a new random level at each trig, within a plus-minus band",
+      "credit": "Iced-Cream",
+      "license": "GPL-2.0-only",
+      "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/lfo-page.png",
+      "kind": "screenshot",
+      "caption": "Press LFO on track BD: the LFO page, as on stock.",
+      "alt": "LFO page with SPD, MUL, FAD and DST above WAV, SPH, MOD and DEP.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "252003328bb687ed0996bb5b0073741dea0a56d65c8db46c70fb74534cd7ca26",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running LR12, the Modwerk base for core-ar2 0.7 (plain variant) and lfo-rnd 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/lfo-rnd-page.png",
+      "kind": "screenshot",
+      "caption": "Press LFO again: LFO RND, with DS1 and DS2 on knobs A and B and DP1 and DP2 on E and F. Stock stays on the LFO page.",
+      "alt": "LFO RND page with DS1 and DS2 reading LEV above the DP1 and DP2 dials.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "252003328bb687ed0996bb5b0073741dea0a56d65c8db46c70fb74534cd7ca26",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running LR12, the Modwerk base for core-ar2 0.7 (plain variant) and lfo-rnd 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/destination-list.png",
+      "kind": "screenshot",
+      "caption": "Turn DS1: the destination list opens. Here FILT:Frequency is selected; press YES to confirm.",
+      "alt": "Destination list with FILT:Frequency highlighted under CONFIRM? YES/N.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "252003328bb687ed0996bb5b0073741dea0a56d65c8db46c70fb74534cd7ca26",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running LR12, the Modwerk base for core-ar2 0.7 (plain variant) and lfo-rnd 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/ds1-frq-confirmed.png",
+      "kind": "screenshot",
+      "caption": "After YES, DS1 reads FRQ: modifier 1 now moves the filter frequency.",
+      "alt": "LFO RND page after confirming, DS1 reading FRQ.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "252003328bb687ed0996bb5b0073741dea0a56d65c8db46c70fb74534cd7ca26",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running LR12, the Modwerk base for core-ar2 0.7 (plain variant) and lfo-rnd 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/dp1-depth.png",
+      "kind": "screenshot",
+      "caption": "Turn DP1: the popup shows the depth, here 10. Each note now offsets FRQ by up to plus or minus 10; 0 turns it off.",
+      "alt": "RANDOM 1 DEPTH popup reading 10 over the LFO RND page.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "252003328bb687ed0996bb5b0073741dea0a56d65c8db46c70fb74534cd7ca26",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running LR12, the Modwerk base for core-ar2 0.7 (plain variant) and lfo-rnd 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    }
+  ]
+}

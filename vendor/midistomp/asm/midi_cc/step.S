@@ -4,6 +4,10 @@
 ;   CC 81, value >= 64: next patch (patch 50 wraps to 1)
 ; Values below 64 do nothing, so a button that sends 127 on press and 0 on
 ; release steps once. CC 80/81 are the MIDI spec's general purpose buttons.
+;   CC 82, value >= 64: one tap of tap tempo (issue #53), through tempo-hold's
+;   tap_trampoline, so it counts like a pedal tap and does nothing while the
+;   MIDI clock is live. The tempo screen does not open (the callers of the
+;   stock tap do that, not the tap itself). CC 82 below 64 goes to stock.
 ;
 ; handler.S jumps here for every CC outside its 14-73 map, with the stock
 ; midi_channel_msg(type, channel, number, value) arguments:
@@ -19,7 +23,8 @@
         .equ    STOCK_CHANNEL_MSG, 0xC00ADF20
         .equ    CUR_PATCH, 324              ; B14 offset, current patch 0-49
         .equ    PATCHES, 50
-        .equ    CC_PREV, 80                 ; CC_NEXT = CC_PREV + 1
+        .equ    CC_PREV, 80                 ; CC_NEXT = CC_PREV + 1, CC_TAP = + 2
+        .equ    TAP_TRAMPOLINE, 0xC00D1BF0  ; tempo_hold/tap_trampoline.S
 
         .text
         .nocmp
@@ -29,7 +34,7 @@ step:
         sub     .L1     a6, a0, a1          ; a1 = 0 prev, 1 next
         mvk     .S1     1, a0
         cmpgtu  .L1     a1, a0, a2          ; not CC 80/81 -> stock
-  [a2]  b       .S1     stock
+  [a2]  b       .S1     tapcc
         nop     5
         shru    .S2     b6, 6, b0           ; value >= 64
   [!b0] b       .S2     b3                  ; release: nothing
@@ -51,5 +56,18 @@ stock:
         ; Tail call, B3 untouched.
         mvkl    .S2     STOCK_CHANNEL_MSG, b0
         mvkh    .S2     STOCK_CHANNEL_MSG, b0
+        b       .S2     b0
+        nop     5
+tapcc:  ; a1 = CC - 80 (> 1 here)
+        mvk     .S1     2, a0
+        cmpeq   .L1     a1, a0, a2          ; CC 82
+  [!a2] b       .S1     stock
+        nop     5
+        shru    .S2     b6, 6, b0           ; value >= 64
+  [!b0] b       .S1     stock
+        nop     5
+        ; Tail call, B3 untouched.
+        mvkl    .S2     TAP_TRAMPOLINE, b0
+        mvkh    .S2     TAP_TRAMPOLINE, b0
         b       .S2     b0
         nop     5

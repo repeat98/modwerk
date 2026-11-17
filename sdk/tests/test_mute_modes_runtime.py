@@ -98,7 +98,7 @@ class MuteModesRuntime(unittest.TestCase):
                             '-I' + str(native / 'vendor/dsp56300/source'), str(ADAPTERS / 'loader_mute_keep_fixture.cpp'), *map(str, archives),
                             '-lpthread', '-o', str(work / 'probe')], check=True, capture_output=True)
             result = subprocess.run([str(work / 'probe'), stock, *(str(work / f) for f in (
-                'events.bin', 'events.sym', 'legacy.bin', 'legacy.sym', 'new.mwrm', 'new.syms', 'plain.mwrm', 'key.mwrm', 'key.syms',
+                'events.bin', 'events.sym', 'legacy.bin', 'legacy.sym', 'new.mwrm', 'new.syms', 'plain.mwrm', 'plain.syms', 'key.mwrm', 'key.syms',
                 'keep.mwrm'))], capture_output=True, text=True)
             packages = {f: hashlib.sha256((work / f).read_bytes()).hexdigest() for f in ('new.mwrm', 'plain.mwrm', 'key.mwrm', 'keep.mwrm')}
         self.assertEqual(result.returncode, 0, result.stderr[-4000:])

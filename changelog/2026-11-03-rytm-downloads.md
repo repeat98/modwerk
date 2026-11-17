@@ -1,0 +1,1 @@
+Analog Rytm MKII: you can now download the .syx you build. Build your modules on the Rytm's configuration page, confirm that you know how to get back to stock, and save the file to flash with Elektron Transfer. Getting back to stock needs a MIDI DIN interface, because the Rytm's startup menu never appears over USB.

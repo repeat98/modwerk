@@ -1,0 +1,1 @@
+SDK: `sdk:imports:check` now also checks the import records of vendored upstream trees (MIDISTOMP, the Zoom ZDL runtime): every recorded path is relative with forward slashes, and every recorded hash is the committed file's. A record written on Windows, with backslash paths or CRLF hashes, is refused instead of passing unchecked.

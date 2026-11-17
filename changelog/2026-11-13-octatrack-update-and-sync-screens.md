@@ -1,0 +1,1 @@
+Base: a base update now takes the Octatrack's whole screen (BASE UPDATE, a progress bar, DO NOT TOUCH) and holds its keys and knobs until the base is saved, and a module sync shows a MODWERK SYNC box with a progress bar. A base write that failed no longer leaves its box on the screen until the next start.

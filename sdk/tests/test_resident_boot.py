@@ -110,7 +110,7 @@ class ResidentBoot(unittest.TestCase):
         self.assertLess(prepared['packedUniqueBytes'], sum(row['packedBytes'] for row in prepared['receipt']))
         pointer = boot.POINTERS['A'][0] - device.main_load
         with self.assertRaisesRegex(ValueError, 'overlaps'):  # an original record over a zeroed owned Y range
-            boot.prepare(image, device, SimpleNamespace(records=lambda *_: [(2, 0x7f0, 1, 0)]), layout)
+            boot.prepare(image, device, SimpleNamespace(records=lambda *_: [(2, 0xff0, 1, 0)]), layout)
         image[pointer] ^= 1
         with self.assertRaisesRegex(ValueError, 'pointer changed'):
             boot.prepare(image, device, parser, layout)

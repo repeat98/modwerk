@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/flanger",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-04",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on the Modwerk base's send-bus variant: a barber-pole flanger on the send bus, Send FX's FLANGER unchanged."
+  ],
+  "runtimeSourceSha256": "9bd6733a94e6591ccf72e2a22ae69a78cbcb2c8f79a0b545c44056aa2a98bb86",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/flanger/flanger-0.1.0-experimental-os1.74.elemod",
+      "sha256": "42b96d1ec813ad2c6bf2e86b818418e18a3530047b8e3a5d2b4448c48a203923"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/flanger/TESTING.md",
+  "requires": []
+}

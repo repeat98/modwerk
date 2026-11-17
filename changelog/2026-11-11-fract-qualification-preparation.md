@@ -1,0 +1,1 @@
+FRACT's unlisted source draft now includes exact-candidate emulator UI evidence and offline tools for preparing matched FLEX/FRACT load tests. The normal 0.1.2 candidate is unchanged; hardware timing, remaining qualification and first-release approval are still pending. This preparation does not publish a module or change the base.

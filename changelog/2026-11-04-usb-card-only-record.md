@@ -1,0 +1,1 @@
+SDK: the owner can now record a card-only OK for one exact Octatrack module version in `sdk/usb-card-only.json`, with its reason and the issue that gives it a USB package. `npm run module:doctor` accepts that version without a USB package and still refuses every other version and module listed from 2 October. The first record is Tuner 0.1.0, card-only until #1162.

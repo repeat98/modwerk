@@ -1,0 +1,13 @@
+{
+  "kind": "owner-approved-update",
+  "id": "mute-modes",
+  "version": "0.2.2-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-04",
+  "waived": [
+    "current-build-hardware"
+  ],
+  "sourceSha256": "bdfceea33319bc21db121e142573a8c2f9b675b457a3de3e3a3b3b7b251ba7b9",
+  "ownerStatement": "Approved by repeat98 on 4 Nov 2026: release Mute Modes 0.2.2-experimental as an owner-reviewed update, without the frame-interrupt load capture and the flood stress run. No owner unit run of this version was done.",
+  "reason": "The 0.2.2 source moves SHADOW out of stock SRAM into mm_softmute and adds KEYHOLD and the OT-exit hold. The native probe (4,353,132 cases) puts the frame hook's worst bound at 3,440 cycles (SC_KEY, OTFX; 3,344 in 0.2.1) and the plain one at 2,176 (2,032), at most 16,624 per block against a 95,778 budget; the per-trig paths are unchanged. The author reported his MKI runs on native card images: MW_MMOH1 (Sidechain Compressor + Mute Modes, MAIN d8267756…, from a2d9882b) on 3 Nov 2026, MW_MMKH1 (before the OT-exit hold) on 3 Nov and MW_MM022 (this module alone, before KEYHOLD) on 27 Oct. The USB package d8b871e3… was not run on a unit, nor was any MKII. Only the missing stock benchmark (frame-interrupt load) and stress rows are waived, for this exact version and source; every other qualification stays required."
+}

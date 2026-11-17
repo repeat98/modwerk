@@ -39,7 +39,7 @@ export async function audioPreviewRoutes(request: Request, env: Env, db: Databas
     if (!(file instanceof File) || !file.size || file.size > MAX_BYTES) throw new HttpError(413, 'Choose a recording smaller than 12 MB.')
     if (typeof id !== 'string' || !/^[a-f0-9-]{36}$/.test(id)) throw new HttpError(400, 'This submission needs a valid identifier.')
     if (form.get('permission') !== 'true') throw new HttpError(400, 'Confirm you have permission to share this recording.')
-    if (!Number.isFinite(duration) || duration <= 0 || duration > 90) throw new HttpError(400, 'Choose a recording up to 90 seconds long.')
+    if (!Number.isFinite(duration) || duration <= 0) throw new HttpError(400, 'This recording could not be read.')
     const bytes = await file.arrayBuffer(), detected = detectMedia(bytes,'')
     if (detected.kind !== 'audio') throw new HttpError(415, 'Choose a WAV, MP3 or Ogg recording.')
     const sha = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),byte=>byte.toString(16).padStart(2,'0')).join('')

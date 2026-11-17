@@ -29,6 +29,7 @@ export type DeviceProfile = {
   // file: the newest release's stock OS file; Zoom releases list none (the OS is never modified).
   firmware?: { releases: string[]; file?: string; flash: string; recovery: string }
   steps: Partial<Record<DeviceStepId, StepState>>
+  stack: MachineProfile['stack']
   research?: { label: string; url: string; note: string }[]
   sdk?: string
   art: DeviceArt
@@ -45,9 +46,9 @@ export const DEVICE_STEPS: DeviceStep[] = [
   { id: 'mods', title: 'First mods', description: 'Reviewed mods with documentation, licences and test evidence.' },
 ]
 
-// The Zoom MultiStomp road: separate effect files on the stock OS, which is never modified.
+// The Zoom road: separate effect files on the stock OS, which is never modified.
 const ZOOM_STEPS: DeviceStep[] = [
-  { id: 'format', title: 'Effect file understood', description: 'The ZDL container, its ELF and the calling convention for the audio and knob code are documented.' },
+  { id: 'format', title: 'Effect file understood', description: 'The effect container (ZDL or ZD2), its ELF and the calling convention for the audio and knob code are documented.' },
   { id: 'load', title: 'Own effect runs', description: 'An effect built from original source loads on the stock firmware, plays and is removed again.' },
   { id: 'mods', title: 'First mods', description: 'Reviewed effects with documentation, licences and test evidence.' },
 ]
@@ -66,6 +67,11 @@ export function deviceSteps(device: Pick<DeviceProfile, 'family'>) {
   return FAMILY_STEPS[device.family]
 }
 
+// The Zoom pedals that load ZD2 effects (docs/ZOOM_ZD2.md). Every other Zoom pedal is of the ZDL family
+// (docs/ZOOM_MULTISTOMP.md), whose pedal page, link, base and proposed module contract do not apply to these.
+const ZD2_PEDALS: readonly string[] = ['zoom-g1-four']
+export const isZd2Pedal = (device: Pick<DeviceProfile, 'id' | 'family'>) => device.family === 'zoom' && ZD2_PEDALS.includes(device.id)
+
 // Where a machine is ready for its first module: the core on Elektron machines; on Zoom pedals a loading effect, on
 // Erica Synths machines the Modwerk base, each with an SDK, since Modwerk takes their mods only once a module contract exists.
 export function readyForMods(device: Pick<DeviceProfile, 'family' | 'steps' | 'sdk'>) {
@@ -81,7 +87,7 @@ export const DEVICES: DeviceProfile[] = (MACHINES as MachineProfile[]).map(machi
     file: machine.firmware.releases[machine.firmware.releases.length - 1].files[0]?.name,
     flash: machine.firmware.flash, recovery: machine.firmware.recovery,
   },
-  steps: machine.steps, research: machine.research, sdk: machine.sdk?.guide, art: machine.art,
+  steps: machine.steps, stack: machine.stack, research: machine.research, sdk: machine.sdk?.guide, art: machine.art,
 }))
 
 export const DEVICES_BY_ID: Record<string, DeviceProfile> = Object.fromEntries(DEVICES.map(device => [device.id, device]))

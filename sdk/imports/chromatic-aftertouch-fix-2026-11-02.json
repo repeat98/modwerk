@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/chromatic-aftertouch-fix",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-02",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7: CHROMATIC pads send their MIDI poly pressure on the note they played, not 24 semitones above it, until the note off."
+  ],
+  "runtimeSourceSha256": "928e3d61cc86486352f5a9d1f6335b2ae44c5884982d5586f9e544e963106f74",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/chromatic-aftertouch-fix/chromatic-aftertouch-fix-0.1.0-experimental-os1.74.elemod",
+      "sha256": "38a69a81c1f3e7f35513ad34d2cb7e2c3a2337e4d678f4fdf5279df5ed86899b"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/chromatic-aftertouch-fix/TESTING.md",
+  "requires": []
+}

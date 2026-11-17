@@ -22,16 +22,16 @@ export function manifestBuildFields(text) {
   return JSON.stringify([document.id, document.version, document.key, document.author?.github ?? null, source ? [source.repository, source.revision, source.path] : null, document.compatibility?.effectId ?? null, document.build?.status ?? null])
 }
 /** Relative paths of every SDK file that can change a compiled package. */
-/** A C runtime module (its USB package row has "sources") has no card form: no card compiler reads its folder. Mirrors build-module-packages.py. */
+/** Source runtimes and explicit USB-only packages have no card form. Mirrors build-module-packages.py. */
 async function cardlessModules(root) {
   let text
   try { text=await readFile(resolve(root,'src/engine/assets/octatrack-module-packages.json'),'utf8') } catch(error) { if(error.code==='ENOENT') return new Set(); throw error } // a source tree without the USB package list
-  return new Set(JSON.parse(text).packages.filter(row=>row.sources).map(row=>row.id))
+  return new Set(JSON.parse(text).packages.filter(row=>row.sources||row.usbOnly===true).map(row=>row.id))
 }
-export async function moduleSourcePaths(root) { const native=resolve(root,'sdk/octabam'),cardless=await cardlessModules(root),files=[];for(const group of SOURCE_GROUPS)files.push(...await inventory(resolve(native,group),group));return files.filter(path=>!isDocumentationPath(path)&&!(path.startsWith('modules/')&&cardless.has(path.split('/')[1]))).sort() }
+export async function moduleSourcePaths(root) { const native=resolve(root,'sdk/octabam'),cardless=await cardlessModules(root),files=[];for(const group of SOURCE_GROUPS)files.push(...await inventory(group==='modules'?resolve(root,'sdk/octatrack/modules'):resolve(native,group),group));return files.filter(path=>!isDocumentationPath(path)&&!(path.startsWith('modules/')&&cardless.has(path.split('/')[1]))).sort() }
 /** The SHA-256 the compiler records for one source path: the file's bytes, or for a module manifest its build fields. */
 export async function sourceEntryHash(root, path) {
-  const bytes = await readFile(resolve(root,'sdk/octabam',path))
+  const bytes = await readFile(resolve(root,path.startsWith('modules/')?'sdk/octatrack':'sdk/octabam',path))
   return /^modules\/[^/]+\/octamod\.module\.json$/.test(path) ? sha(manifestBuildFields(bytes.toString('utf8'))) : sha(bytes)
 }
 /** The same SHA-256 tree fingerprint the compiler records as sourceTreeSha256. */
@@ -47,7 +47,7 @@ export async function compiledModuleVersions(root, catalog) {
   for (const module of catalog.modules) {
     if (!/^[a-z][a-z0-9-]*$/.test(module.id) || seen.has(module.id)) throw new Error('Invalid catalog module id: ' + module.id)
     seen.add(module.id)
-    const document = parseModuleDocument(JSON.parse(await readFile(resolve(root, 'sdk/octabam/modules', module.id, 'octamod.module.json'), 'utf8')))
+    const document = parseModuleDocument(JSON.parse(await readFile(resolve(root, 'sdk/octatrack/modules', module.id, 'octamod.module.json'), 'utf8')))
     if (document.id !== module.id || document.version !== module.version) throw new Error('Stale catalog module version: ' + module.id)
     if (document.build?.status !== 'pending') versions[module.id] = module.version
   }

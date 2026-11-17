@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { maintainedModules, developerApi } from '../../server/developers'
 import { moduleDevelopers } from '../../server/bug-reports'
+import { issueMarkdown } from '../../server/github'
 import { testDatabase } from './test-server'
 import { MODULE_DOCUMENTS_BY_ID } from '../catalog/documents'
 import { MODULES } from '../catalog/modules'
@@ -12,7 +13,7 @@ describe('reviewed maintainer opt-outs', () => {
     const user = { id: 'former-maintainer', display_name: 'Sam Banks', github_id: '1234', github_login: 'SamBanks' }
     try {
       db.prepare('INSERT INTO users(id,display_name,github_id,github_login) VALUES(?,?,?,?)').run(user.id, user.display_name, user.github_id, user.github_login)
-      for (const id of ['cc-map', 'recorder-loop-fix', 'spectrum']) {
+      for (const id of ['cc-map', 'recorder-loop-fix']) {
         db.prepare('INSERT INTO module_maintainers(module_id,user_id,github_login) VALUES(?,?,?)').run(id, user.id, user.github_login)
         const { recipients, values } = moduleDevelopers(communityModule(id)!, '')
         expect(db.prepare(recipients).all(...values)).toEqual([])
@@ -30,11 +31,18 @@ describe('reviewed maintainer opt-outs', () => {
     }
   })
 
+  it('mirrors USB Audio reports to GitHub without mentioning Mark Roberts', () => {
+    const owners = communityModule('usb-audio-out-tracks-main-cue')!.maintainers
+    const body = issueMarkdown({ id: 'r1', module_id: 'usb-audio-out-tracks-main-cue', title: 'No audio', reporter: 'tester', owners, details: { device: 'Octatrack MKII', version: '0.2.0', steps: '', expected: '', actual: 'Silence' } }, 'https://modwerk.app/')
+    expect(body).not.toContain('@markandrus')
+    expect(MODULE_DOCUMENTS_BY_ID['usb-audio-out-tracks-main-cue'].author.github).toBe('markandrus')
+  })
+
   it('prevents all opted-out claims, including older modules and differently cased logins', () => {
     expect(developerModules('sambanks')).toEqual([])
     expect(developerModules('SamBanks')).toEqual([])
     expect(COMMUNITY_MODULES.some(module => module.maintainers.some(login => login.toLowerCase() === 'sambanks'))).toBe(false)
-    expect(communityModule('spectrum')).toMatchObject({ author: 'sambanks', maintainers: [] })
+    expect(communityModule('usb-audio-out-tracks-main-cue')).toMatchObject({ author: 'markandrus', maintainers: [] })
     expect(communityModule('miniverb')?.maintainers).toEqual(['repeat98'])
     expect(communityModule('digitakt-digihealth')?.maintainers).toEqual(['irpina'])
   })

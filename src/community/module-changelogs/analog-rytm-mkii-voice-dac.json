@@ -1,0 +1,12 @@
+[
+  {
+    "version": "1.4.0",
+    "date": "2026-11-08",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74 on core-ar2: GLOBAL > AUDIO ROUTING > DAC SUM routes every voice to the main mix through the DAC.",
+      "With DAC SUM on, press FILTER twice for DAC FILTER: a per-voice filter (FRQ, RES, TYP, DEP), a transient shaper (ATK, SUS) and polarity.",
+      "The page shows only the knobs the selected sound's TYP uses: no RES for LP1 and HP1, neither FRQ nor RES with TYP OFF.",
+      "Filter settings are kept with the sound, DAC SUM with the global slot."
+    ]
+  }
+]

@@ -1,0 +1,1 @@
+Developer guides: the Analog Rytm MKII, Analog Four MKII and Digitakt II guides are listed beside the others, a Digitakt or Digitone mod can be built and tried locally with `scripts/link-image.mjs` before its pull request, and Octatrack native work names Python 3.12+ everywhere. Fixing someone else's module now says what follows the author's OK.

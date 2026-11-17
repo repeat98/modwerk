@@ -1,8 +1,8 @@
 {
  "schemaVersion": 1,
- "moduleVersion": "1.1.5",
+ "moduleVersion": "1.1.6",
  "core": "2.1",
- "sourceCommit": "fb640666dd2ffe1e8ac47c649f3b21ddac0b8702",
+ "sourceCommit": "eeba4e989402ebf68005ff53f73e0e8cc4b39b85",
  "compiler": {
   "gcc": "m68k-elf-gcc (GCC) 16.2.0",
   "assembler": "GNU assembler (GNU Binutils) 2.47.20260726",
@@ -14,8 +14,8 @@
  "selections": 126,
  "allSelectionsMatch": true,
  "allModsMainSha256": {
-  "1.53": "8b6f4e836bf43dbf3127f90bb5e829fe6bd6cdd9f4d525323488db0343dc9718",
-  "1.54": "587a6de40e6184633205cfa6b0ab8a3b1690b745c5f3f2e0d5d0d0ebab16b6a6"
+  "1.53": "33892f533ace12ad67448c8c1dc1f59c91d4f738aa4fca5d706ad71678300887",
+  "1.54": "b83ccb3f25847912116bd380d8ce21a7fe36a5f3f658ee6ed9e9192c9e239f1e"
  },
  "nativeReference": "Elekloader Core 2.1 native build of the same sources (digiemu build_dual full matrix); its all-mods SysEx are the files tested on hardware.",
  "conflictAlignment": "Modwerk main declares conflicts added after the native reference was built (#629): cc-names digimono, note-accumulator digipoly, ram-machines digihealth, sample-tools digimono. They were copied into the native reference objects before comparison. Conflict lists are catalogue metadata and do not change any linked image.",
@@ -25,7 +25,7 @@
    "os": "1.53",
    "semanticParity": true,
    "addedConflicts": [],
-   "recipeSha256": "729d16ba484e6ff9a08bf0d461e52678f1f462faa3f53d01c21e88c591c805d9",
+   "recipeSha256": "f83f77e282c581c13895e2d484b4664c76fdaac55b0c9c5a543afc34f7770ecd",
    "sourceTreeSha256": "bb512fd45792cdb493c261ea7c8609100328a9b581d0be46703f93acb94f67ef",
    "exportedSha256": "2164a3bf1d89743189616127a5bc7e93743f2a691502d4750f517915fbd0180c"
   },
@@ -34,7 +34,7 @@
    "os": "1.53",
    "semanticParity": true,
    "addedConflicts": [],
-   "recipeSha256": "cbe209d2e6670936e05c74ae6aa6e357bb6b0d12b62b5046261156f2cd9c4d4a",
+   "recipeSha256": "c2f823b1fa419d14610af68fbe8e8ef9a64cb73dfc7d30ec7bd67b715298fd0d",
    "sourceTreeSha256": "1c8fabc43d7e9b6da6cdce061712855594d30034233b2f70520f65f93c6f3354",
    "exportedSha256": "93092ba38bf65583a3d436e3d8c560b0df0480477f81127fe9de7a3264ba38c6"
   },
@@ -43,7 +43,7 @@
    "os": "1.53",
    "semanticParity": true,
    "addedConflicts": [],
-   "recipeSha256": "26ec4e3db87fed191ee2ce4544acf0a959e90db14e80f4070bfb52d219158d06",
+   "recipeSha256": "31a361635d166225de46e567991353096c84153197b4ffe51fbf75b0116d2f39",
    "sourceTreeSha256": "640d6cb708aec26d56aa8dffb3aea03a45b6184c245c54e5c859330b5d6ebc2f",
    "exportedSha256": "fe2ba05cd83e00187a1c4e74504be99e62a0c4115ba841031ca221d620dc095c"
   },
@@ -52,16 +52,16 @@
    "os": "1.53",
    "semanticParity": true,
    "addedConflicts": [],
-   "recipeSha256": "a5a7c41ac21cbb50bec6bd760c1177b8074ffc921b9b9f48fff381a67ea0e649",
-   "sourceTreeSha256": "7400bf35fd74b6ed66e4fc59b067b27fe963c66e37265aecc33879654f9777bd",
-   "exportedSha256": "1fce621ede91db064b0d1c6c8c337d962fa08dda31eef1248052fd5b5ffe4dfa"
+   "recipeSha256": "72522179aad037d12e86f60339cb8d6c0915fa1a37353247caf44037edfc9506",
+   "sourceTreeSha256": "83ba583d9d5a0e21d9ed3cf9f07126a7e0394700c35d1269b86f9c46e0c9a0e9",
+   "exportedSha256": "98888434af4c54c851758de61a775672e02dceca62e6b66f93c041df8effd8f1"
   },
   {
    "id": "midi-retrig",
    "os": "1.53",
    "semanticParity": true,
    "addedConflicts": [],
-   "recipeSha256": "f8bae0404e3b95715ef90eae875f21c253dfec2f27c901ac9f76ea1d86cc1588",
+   "recipeSha256": "468e228a4cd8a20a8eaddb67e9f28d257f06953d78acfc2f3cee627d56824349",
    "sourceTreeSha256": "eb83df66f5c131d869d3fb6c84e03ae0c5a30ba02d17619f11fca3c5ff1923da",
    "exportedSha256": "ffe2e60aba95ae09df36ecc3d9e5d185c64e97f52fa02c1ff4ca84e9709486b9"
   },
@@ -70,7 +70,7 @@
    "os": "1.53",
    "semanticParity": true,
    "addedConflicts": [],
-   "recipeSha256": "8229dc1ccf1ae8181511a1f7310ac11f0f1bfe85277a03ead3952b2ca4c326ea",
+   "recipeSha256": "f5ddcb47c343b41522b1fb4a19d8e15b89fa083b341cafca7e12afffcd58c5e0",
    "sourceTreeSha256": "f31803054623a2e471c831452bb4c228197c13ce43a5213837fb31b6bd30dec6",
    "exportedSha256": "4c22ddc65ee86b78218114eda1c4099f16e24cb0300dd8d3d54db11f33844262"
   },
@@ -79,7 +79,7 @@
    "os": "1.53",
    "semanticParity": true,
    "addedConflicts": [],
-   "recipeSha256": "448bdf6bb0bc19ec45acd39d91415226e12592d7d34ec2b117749478657718bf",
+   "recipeSha256": "c900d4c7b46e21abc925a780f6add79127b147b449996724a2a32f28118f94c5",
    "sourceTreeSha256": "b9082e9db46bcc6f3ba1017ac8454d64e473e92f239a40cca8fb5b3fb35421b3",
    "exportedSha256": "841b468a1a1336e6dd5baeb59e9b4a2639cb3046121ed92ea75e33a3f9b4cce2"
   },
@@ -87,8 +87,10 @@
    "id": "sample-tools",
    "os": "1.53",
    "semanticParity": true,
-   "addedConflicts": [],
-   "recipeSha256": "5d094e6c672eab989a9ba7052c4d637fb0addcbe90d82b9b0b600b4c5787ea54",
+   "addedConflicts": [
+    "digislicer"
+   ],
+   "recipeSha256": "61d4ac402db4d936dd323b4ebf0cb3e48ae1b69a04594e022df1a7fabf0da4e3",
    "sourceTreeSha256": "18799899e9e96cfd76be1b07f3f60bf9dcc67ba5ecea15431ddf8b254622ac99",
    "exportedSha256": "e8b9bb827e0f818cc38e1f1997e53a76cd74f1e7e692dad6d2af71cc7d9dc04c"
   },
@@ -97,7 +99,7 @@
    "os": "1.54",
    "semanticParity": true,
    "addedConflicts": [],
-   "recipeSha256": "159b6fe2a92f3c33250367651abf3e4e0682f930f7d2448933ab5263f96617e6",
+   "recipeSha256": "7e86f1e43558fa56b24e6247ddc5b7cf8673afd3f98316b1fed0e6559c178b67",
    "sourceTreeSha256": "bb512fd45792cdb493c261ea7c8609100328a9b581d0be46703f93acb94f67ef",
    "exportedSha256": "7378c51c4970df68a47e51c9a85402b91577a1495931f2ef4ec566a572dd0b88"
   },
@@ -106,7 +108,7 @@
    "os": "1.54",
    "semanticParity": true,
    "addedConflicts": [],
-   "recipeSha256": "92d70dd34404b8132b3f6464806e6ee3ab236b976f8ee20cd731e51688bc9aea",
+   "recipeSha256": "43d160960d0d8f48a34ac37bfe9edb6829b24536ffc98cfbaf41698211ba75d1",
    "sourceTreeSha256": "1c8fabc43d7e9b6da6cdce061712855594d30034233b2f70520f65f93c6f3354",
    "exportedSha256": "1ab853a2ff628dd60b8fa0c5693f3babac64b95c456b331162797aac1526b1a0"
   },
@@ -115,7 +117,7 @@
    "os": "1.54",
    "semanticParity": true,
    "addedConflicts": [],
-   "recipeSha256": "ed25c3723882dbff7e01d8a9c93cd30c06b1a29ab33595ffec12cae1db375f94",
+   "recipeSha256": "c488e6e7a0cd82f5f57514f46d926eee9b6497bca26fecaa31543e7d41275377",
    "sourceTreeSha256": "640d6cb708aec26d56aa8dffb3aea03a45b6184c245c54e5c859330b5d6ebc2f",
    "exportedSha256": "9b3640b6dc3b20d8ed30c478a1f9564ad784534869e1a4322a4787e3f6eefb52"
   },
@@ -124,16 +126,16 @@
    "os": "1.54",
    "semanticParity": true,
    "addedConflicts": [],
-   "recipeSha256": "f700f1a0d05bfd31b352e44121021acced4136c58b7f7712f50dad0f95280682",
-   "sourceTreeSha256": "7400bf35fd74b6ed66e4fc59b067b27fe963c66e37265aecc33879654f9777bd",
-   "exportedSha256": "b8315446ecd011d3798ed70692dd4762301458c930209465c2bd58bc52568bd9"
+   "recipeSha256": "ef525386eedb8b4eff3e76f2d7e043f1786328da8040e5df67184543e09246b3",
+   "sourceTreeSha256": "83ba583d9d5a0e21d9ed3cf9f07126a7e0394700c35d1269b86f9c46e0c9a0e9",
+   "exportedSha256": "78427e214f70528cdbaecb60d8860ec7c9a9559594b894f6c693968082744856"
   },
   {
    "id": "midi-retrig",
    "os": "1.54",
    "semanticParity": true,
    "addedConflicts": [],
-   "recipeSha256": "c9785be605aafcee9bdc283d10508ef5d8e00d3841ddebb61cb35915a4c9ce93",
+   "recipeSha256": "2c8ee169624bf9ec0ba8bc6822eaa3ce2c7302140bdf9423054662f83f5ec423",
    "sourceTreeSha256": "eb83df66f5c131d869d3fb6c84e03ae0c5a30ba02d17619f11fca3c5ff1923da",
    "exportedSha256": "29d1f2f99bf47c4688808253a19cfad0627845370170949b19159640f2116d3d"
   },
@@ -142,7 +144,7 @@
    "os": "1.54",
    "semanticParity": true,
    "addedConflicts": [],
-   "recipeSha256": "121392b51f27f8695ba81eb3c1106452652f6bc542a132e74cf6bfbc75cfacee",
+   "recipeSha256": "29f845ed566e3b95bbb51be0b01078b31a1b1cffd219973d5b55582158b7d98b",
    "sourceTreeSha256": "f31803054623a2e471c831452bb4c228197c13ce43a5213837fb31b6bd30dec6",
    "exportedSha256": "faac823eedcfe583944d5d9457619d55978a4fd92a3051329ecd89db93964a9a"
   },
@@ -151,7 +153,7 @@
    "os": "1.54",
    "semanticParity": true,
    "addedConflicts": [],
-   "recipeSha256": "f6898d4bec02643e334e76fa5e0a5a6f57a538319852a0d9baa90d48aca121da",
+   "recipeSha256": "07bf5324bf12495f73cafeb9c7c88007f43a69319410558d541fe893306c1cb3",
    "sourceTreeSha256": "b9082e9db46bcc6f3ba1017ac8454d64e473e92f239a40cca8fb5b3fb35421b3",
    "exportedSha256": "af6c0735fcbd3663b4536e4dffcd5a78fd7ed25e7888aa7c84dea9c9ae26450d"
   },
@@ -159,8 +161,10 @@
    "id": "sample-tools",
    "os": "1.54",
    "semanticParity": true,
-   "addedConflicts": [],
-   "recipeSha256": "3faf33a2bbcba26597b957c57aa7ed8cdde0b033f54e0d78896ee84a6bf1cf19",
+   "addedConflicts": [
+    "digislicer"
+   ],
+   "recipeSha256": "70623654ae607214c4e2b71d4a4f27a92aba69124fc051d8ceb9f41c0fb032b1",
    "sourceTreeSha256": "18799899e9e96cfd76be1b07f3f60bf9dcc67ba5ecea15431ddf8b254622ac99",
    "exportedSha256": "49619a91508d8bbc4e8052720a1c296b1765c0ae7cb37b130002473f2209e075"
   }

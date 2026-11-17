@@ -1,0 +1,1 @@
+Spectrum, Modulation, Character and MIDI Scenes, paused since October, have left the Octatrack library for good. A saved configuration or backup that still lists one of them now opens without it, instead of being set aside as unreadable.

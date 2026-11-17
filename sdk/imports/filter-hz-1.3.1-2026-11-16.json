@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/filter-hz",
+  "version": "1.3.1",
+  "date": "2026-11-16",
+  "upstream": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+    "path": "filter-hz/os1.74",
+    "license": "GPL-2.0-only"
+  },
+  "changes": [
+    "src/fx-hz.c's functions, which run only in the UI task to format the FX pages' text, are marked FHZ_UI (__attribute__((cold))): built for size and out of the hot code, .run 1,545 bytes (1,745). filter-hz.s is unchanged; no behaviour change.",
+    "Source-only export compiled from sdk/analog-rytm-mkii/modules/filter-hz at 2394e7a68 in the pinned toolchain."
+  ],
+  "runtimeSourceSha256": "64c5190f9fdc386a09d464fd83c4d82de31734b59699add2ee0c56ec366f56da",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/filter-hz/filter-hz-1.3.1-os1.74.elemod",
+      "sha256": "70a4c3f7dd50cfe6dd45f5c6a492da232e7111ee7aaa10ad7fd28348b769c1c2"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/filter-hz/TESTING.md",
+  "requires": []
+}

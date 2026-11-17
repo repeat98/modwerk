@@ -1,10 +1,12 @@
 import { compareModuleVersions } from './versions.ts'
 import { parseModuleContributors, type ModuleContributor } from './module-authors.ts'
 import type { MachineProfile } from '../devices/machine-contract.ts'
+import { CLASHING_EFFECT_IDS, LOCAL_IDS } from './zoom-effect-ids.ts'
 
 // Module contract v3 (modwerk.module.json): one shared core for every machine, plus the machine's platform section.
 // Octatrack modules keep contract v2 (octamod.module.json) until their next version; this file adds the shared core and
-// the elemod platform used by the Digitakt and Digitone. No source is executed and no firmware is read.
+// the elemod platform used by the Digitakt and Digitone, and the zdl platform of the Zoom MultiStomp pedals' effect files
+// (docs/ZDL_MODULE_CONTRACT.md). No source is executed and no firmware is read.
 
 export const MODULE_V3_CATEGORIES = ['effects', 'playback', 'machines', 'scenes', 'midi-usb', 'system', 'standalone'] as const
 export const EVIDENCE_TIERS = ['none', 'emulator', 'author-hardware', 'owner-verified'] as const
@@ -13,6 +15,16 @@ export type EvidenceTier = typeof EVIDENCE_TIERS[number]
 export type EvidenceMethod = typeof EVIDENCE_METHODS[number]
 
 export type ElemodPlatform = { kind: 'elemod'; core: string; build: string; events: string[]; claims: string[] }
+export const ZDL_SCREENS = ['static', 'live'] as const
+export const ZDL_PEDAL_STATUSES = ['confirmed', 'reported', 'untested'] as const
+/** A Zoom effect file: its name and effect ID on the pedal, the author's release file it comes from (pinned), and how
+ * far each pedal is tested. */
+export type ZdlPlatform = {
+  kind: 'zdl'; file: string; effectId: { gid: number; fxid: number }; effectVersion: string; dspCost: number
+  binary: { sha256: string; bytes: number; release: { repository: string; tag: string; asset: string } }
+  screen: typeof ZDL_SCREENS[number]
+  pedals: { machine: string; firmware: string; status: typeof ZDL_PEDAL_STATUSES[number]; report: string | null }[]
+}
 export type ModwerkModule = {
   schemaVersion: 3
   id: string; name: string; version: string; machine: string; category: typeof MODULE_V3_CATEGORIES[number]
@@ -25,7 +37,7 @@ export type ModwerkModule = {
   access: { location: string; steps: string[]; screenshots: string[] } | { noUiReason: string }
   controls: { name: string; default: number | null; doc: string; labels: string[] | null }[]
   compatibility: { releases: string[]; requires: string[]; conflicts: string[]; limitations: string[] }
-  platform: ElemodPlatform
+  platform: ElemodPlatform | ZdlPlatform
   resources: { memoryBytes: number | null; fastBytes: number | null; load: { display: string; method: EvidenceMethod; conditions: string } }
   evidence: {
     tier: EvidenceTier; moduleVersion: string; sourceSha256: string | null; reports: string[]
@@ -105,7 +117,7 @@ export function parseModwerkModule(value: unknown, machines: readonly MachinePro
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id)) fail('module.id', 'expected lowercase kebab-case')
   const machine = machines.find(profile => profile.id === item.machine)
   if (!machine) fail('module.machine', 'expected a machine from sdk/machines')
-  if (machine.sdk?.platform !== 'elemod') fail('module.machine', machine.name + ' modules use its own platform contract (' + (machine.sdk?.platform ?? 'no SDK yet') + ')')
+  if (machine.sdk?.platform !== 'elemod' && machine.sdk?.platform !== 'zdl') fail('module.machine', machine.name + ' modules use its own platform contract (' + (machine.sdk?.platform ?? 'no SDK yet') + ')')
   const moduleVersion = version(item.version, 'module.version')
 
   const authorValue = object(item.author, 'module.author', ['github', 'credits'], ['name', 'contributors'])
@@ -140,16 +152,21 @@ export function parseModwerkModule(value: unknown, machines: readonly MachinePro
   for (const release of releases) if (!supported.includes(release)) fail('module.compatibility.releases', release + ' is not a ' + machine.name + ' OS release in its machine profile')
   const compatibility = { releases, requires: texts(compatibilityValue.requires, 'module.compatibility.requires', 0, 20, 60), conflicts: texts(compatibilityValue.conflicts, 'module.compatibility.conflicts', 0, 20, 60), limitations: texts(compatibilityValue.limitations, 'module.compatibility.limitations', 0, 20, 400) }
 
-  const platformValue = object(item.platform, 'module.platform', ['kind', 'core', 'build', 'events', 'claims'])
-  if (platformValue.kind !== 'elemod') fail('module.platform.kind', 'expected elemod')
-  const core = coreVersion(platformValue.core, 'module.platform.core')
-  if (machine.sdk.core && /^\d/.test(machine.sdk.core.version) && compareCoreVersions(core, machine.sdk.core.version) > 0) fail('module.platform.core', 'needs core ' + core + ', newer than the machine’s core ' + machine.sdk.core.version)
-  const platform: ElemodPlatform = { kind: 'elemod', core, build: modulePath(platformValue.build, 'module.platform.build'), events: texts(platformValue.events, 'module.platform.events', 0, 16, 40), claims: texts(platformValue.claims, 'module.platform.claims', 0, 32, 80) }
-  for (const event of platform.events) if (!/^ev_[a-z_]+$/.test(event)) fail('module.platform.events', 'expected core event names such as ev_draw')
+  if ((item.platform as { kind?: unknown } | null)?.kind !== machine.sdk.platform) fail('module.platform.kind', 'expected ' + machine.sdk.platform + ', the ' + machine.name + '’s platform')
+  const platform = machine.sdk.platform === 'zdl' ? parseZdl(item.platform, machine, machines) : (() => {
+    const platformValue = object(item.platform, 'module.platform', ['kind', 'core', 'build', 'events', 'claims'])
+    const core = coreVersion(platformValue.core, 'module.platform.core')
+    if (machine.sdk.core && /^\d/.test(machine.sdk.core.version) && compareCoreVersions(core, machine.sdk.core.version) > 0) fail('module.platform.core', 'needs core ' + core + ', newer than the machine’s core ' + machine.sdk.core.version)
+    const elemod: ElemodPlatform = { kind: 'elemod', core, build: modulePath(platformValue.build, 'module.platform.build'), events: texts(platformValue.events, 'module.platform.events', 0, 16, 40), claims: texts(platformValue.claims, 'module.platform.claims', 0, 32, 80) }
+    for (const event of elemod.events) if (!/^ev_[a-z_]+$/.test(event)) fail('module.platform.events', 'expected core event names such as ev_draw')
+    return elemod
+  })()
 
   const resourcesValue = object(item.resources, 'module.resources', ['memoryBytes', 'fastBytes', 'load'])
   const loadValue = object(resourcesValue.load, 'module.resources.load', ['display', 'method', 'conditions'])
   const resources = { memoryBytes: count(resourcesValue.memoryBytes, 'module.resources.memoryBytes'), fastBytes: count(resourcesValue.fastBytes, 'module.resources.fastBytes'), load: { display: text(loadValue.display, 'module.resources.load.display', 120), method: choice(loadValue.method, 'module.resources.load.method', EVIDENCE_METHODS), conditions: text(loadValue.conditions, 'module.resources.load.conditions', 600) } }
+  // An effect file's memory is the file the pedal keeps in its effect area.
+  if (platform.kind === 'zdl' && resources.memoryBytes !== null && resources.memoryBytes !== platform.binary.bytes) fail('module.resources.memoryBytes', 'is the effect file’s size, ' + platform.binary.bytes + ' bytes')
   for (const [field, name] of [['memoryBytes', 'Shared mod memory'], ['fastBytes', 'Fast SRAM for code']] as const) {
     const budget = machine.sdk.budgets.find(entry => entry.name === name), value = resources[field]
     if (budget && value !== null && value > budget.value) fail('module.resources.' + field, value + ' bytes exceed the ' + machine.name + ' budget of ' + budget.value)
@@ -198,7 +215,7 @@ export function parseModwerkModule(value: unknown, machines: readonly MachinePro
   }
   if (typeof item.exclusive !== 'boolean') fail('module.exclusive', 'expected true or false')
   if (item.exclusive !== (document.category === 'standalone')) fail('module.exclusive', 'standalone firmware, and only standalone firmware, is exclusive')
-  if (document.exclusive && (platform.events.length || platform.claims.length)) fail('module.platform', 'standalone firmware does not link with the core: leave events and claims empty')
+  if (document.exclusive && (platform.kind !== 'elemod' || platform.events.length || platform.claims.length)) fail('module.platform', 'standalone firmware does not link with the core: leave events and claims empty')
   if (item.source !== undefined) {
     const source = object(item.source, 'module.source', ['repository', 'revision', 'path'])
     const repository = text(source.repository, 'module.source.repository', 200), revision = text(source.revision, 'module.source.revision', 40)
@@ -207,6 +224,42 @@ export function parseModwerkModule(value: unknown, machines: readonly MachinePro
     document.source = { repository, revision, path: text(source.path, 'module.source.path', 200) }
   }
   return document
+}
+
+function parseZdl(value: unknown, machine: MachineProfile, machines: readonly MachineProfile[]): ZdlPlatform {
+  const item = object(value, 'module.platform', ['kind', 'file', 'effectId', 'effectVersion', 'dspCost', 'binary', 'screen', 'pedals'])
+  const budget = (name: string) => machine.sdk!.budgets.find(entry => entry.name === name)?.value ?? Infinity
+  const file = text(item.file, 'module.platform.file', 40)
+  if (!/^[A-Za-z0-9_]{1,8}\.ZDL$/.test(file)) fail('module.platform.file', 'expected the name on the pedal: at most 8 letters, digits or underscores, then .ZDL')
+  const id = object(item.effectId, 'module.platform.effectId', ['gid', 'fxid']), gid = id.gid, fxid = id.fxid
+  if (gid !== 8 || typeof fxid !== 'number' || !Number.isInteger(fxid) || fxid < 403 || fxid >= LOCAL_IDS.first) fail('module.platform.effectId', 'added effects use group 8 and IDs 403 to ' + (LOCAL_IDS.first - 1) + ' (' + LOCAL_IDS.first + ' to ' + LOCAL_IDS.last + ' are the pedal page’s local IDs)')
+  const clash = CLASHING_EFFECT_IDS.find(entry => entry.gid === gid && entry.fxid === fxid)
+  if (clash) fail('module.platform.effectId', gid + '/' + fxid + ' was shipped by ' + clash.files + ' for different effects; take another ID')
+  const effectVersion = text(item.effectVersion, 'module.platform.effectVersion', 4)
+  if (!/^\d\.\d\d$/.test(effectVersion)) fail('module.platform.effectVersion', 'expected the version in the file’s header, such as 0.03')
+  const dspCost = item.dspCost
+  if (typeof dspCost !== 'number' || !(dspCost > 0) || dspCost > budget('Patch DSP')) fail('module.platform.dspCost', 'expected the DSP cost the pedal adds up, above 0 and within the patch budget of ' + budget('Patch DSP'))
+  const binaryValue = object(item.binary, 'module.platform.binary', ['sha256', 'bytes', 'release'])
+  const bytes = binaryValue.bytes
+  if (typeof bytes !== 'number' || !Number.isInteger(bytes) || bytes < 1 || bytes > budget('Effect file')) fail('module.platform.binary.bytes', 'expected the file size, at most ' + budget('Effect file') + ' bytes (the largest effect proven to load)')
+  const releaseValue = object(binaryValue.release, 'module.platform.binary.release', ['repository', 'tag', 'asset'])
+  const repository = text(releaseValue.repository, 'module.platform.binary.release.repository', 200)
+  if (!/^https:\/\/github\.com\/[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(repository)) fail('module.platform.binary.release.repository', 'expected a GitHub repository URL')
+  const tag = text(releaseValue.tag, 'module.platform.binary.release.tag', 100), asset = text(releaseValue.asset, 'module.platform.binary.release.asset', 100)
+  if (!/\.zdl$/i.test(asset) || /[/\\]/.test(asset) || /[/\\]|\.\./.test(tag)) fail('module.platform.binary.release', 'expected a release tag and the .ZDL asset attached to it')
+  const pedals = list(item.pedals, 'module.platform.pedals', 1, 8).map((entry, index) => {
+    const path = 'module.platform.pedals[' + index + ']', pedal = object(entry, path, ['machine', 'firmware', 'status', 'report'])
+    const profile = machines.find(other => other.id === pedal.machine && other.family === 'zoom')
+    if (!profile) fail(path + '.machine', 'expected a Zoom pedal from sdk/machines')
+    const firmware = text(pedal.firmware, path + '.firmware', 20)
+    if (!profile.firmware?.releases.some(release => release.version === firmware)) fail(path + '.firmware', firmware + ' is not a ' + profile.name + ' release in its machine profile')
+    const status = choice(pedal.status, path + '.status', ZDL_PEDAL_STATUSES), report = pedal.report === null ? null : modulePath(pedal.report, path + '.report')
+    if (status !== 'untested' && !report) fail(path + '.report', status + ' needs the report behind it')
+    return { machine: profile.id, firmware, status, report }
+  })
+  if (!pedals.some(pedal => pedal.machine === machine.id)) fail('module.platform.pedals', 'include ' + machine.name + ', the pedal the module is developed and tested on')
+  if (new Set(pedals.map(pedal => pedal.machine + '@' + pedal.firmware)).size !== pedals.length) fail('module.platform.pedals', 'list each pedal and firmware once')
+  return { kind: 'zdl', file, effectId: { gid, fxid }, effectVersion, dspCost, binary: { sha256: sha256(binaryValue.sha256, 'module.platform.binary.sha256'), bytes, release: { repository, tag, asset } }, screen: choice(item.screen, 'module.platform.screen', ZDL_SCREENS), pedals }
 }
 
 function parseEvidence(value: unknown, moduleVersion: string): ModwerkModule['evidence'] {
@@ -243,6 +296,8 @@ export function requireModwerkPublication(document: ModwerkModule) {
   if (document.resources.load.method === 'unmeasured') fail(document.id + '.resources.load.method', 'measure the audio and CPU load before publication')
   if (EVIDENCE_TIERS.indexOf(document.evidence.tier) < EVIDENCE_TIERS.indexOf('author-hardware')) fail(document.id + '.evidence.tier', 'publication needs at least author-hardware evidence')
   if ('screenshots' in document.access && !document.access.screenshots.length) fail(document.id + '.access.screenshots', 'publication needs actual screenshots of where the mod appears')
+  // A Zoom effect is listed for a pedal only with hardware evidence on that pedal (docs/ZDL_MODULE_CONTRACT.md#evidence).
+  if (document.platform.kind === 'zdl' && !document.platform.pedals.some(pedal => pedal.machine === document.machine && pedal.status === 'confirmed')) fail(document.id + '.platform.pedals', 'publication needs a confirmed hardware report on ' + document.machine)
 }
 
 // The elemod build spec (build.json): what Modwerk's toolchain compiles and links. Stock bytes never appear here:
@@ -320,6 +375,8 @@ function range(value: unknown, path: string): [string, string] {
 }
 
 export function parseElemodBuild(value: unknown, document: Pick<ModwerkModule, 'platform' | 'compatibility'>): ElemodBuildSpec {
+  const platform = document.platform
+  if (platform.kind !== 'elemod') fail('build', 'only elemod modules have a build.json')
   const keys = ['schemaVersion', 'sources', 'defsym', 'cflags', 'weak', 'subscribe', 'contribute', 'collections', 'copied', 'regions', 'claims', 'requires', 'derive', 'releases'] as const
   const item = object(value, 'build', keys, ['strings', 'storage'])
   if (item.schemaVersion !== 1) fail('build.schemaVersion', 'expected 1')
@@ -354,9 +411,9 @@ export function parseElemodBuild(value: unknown, document: Pick<ModwerkModule, '
   })
   if (new Set(storage.map(field => field.sym)).size !== storage.length) fail('build.storage', 'each field once')
   const claims = texts(item.claims, 'build.claims', 0, 32, 80)
-  if ([...claims].sort().join('\n') !== [...document.platform.claims].sort().join('\n')) fail('build.claims', 'must match module.platform.claims')
+  if ([...claims].sort().join('\n') !== [...platform.claims].sort().join('\n')) fail('build.claims', 'must match module.platform.claims')
   const events = new Set([...subscribe.map(entry => entry.event), ...contribute.map(entry => entry.to).filter(name => name.startsWith('ev_'))])
-  if ([...events].sort().join('\n') !== [...document.platform.events].sort().join('\n')) fail('build.subscribe', 'the events the build subscribes to must match module.platform.events')
+  if ([...events].sort().join('\n') !== [...platform.events].sort().join('\n')) fail('build.subscribe', 'the events the build subscribes to must match module.platform.events')
   const requires = texts(item.requires, 'build.requires', 0, 16, 60)
   for (const id of requires) if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id)) fail('build.requires', 'expected module ids')
   let derive: ElemodBuildSpec['derive'] = null

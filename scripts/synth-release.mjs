@@ -33,7 +33,7 @@ export async function nativeParityCoversPool(parity, catalogIds) {
 }
 export async function requireSynthRelease(root, folder, document, sourceHash) {
   const fail = message => { throw new Error('FM Synth: ' + message) }
-  const approval = await json(resolve(root, 'sdk/synth-build-approval.json')), declaration = document.tests.releaseWaiver
+  const approval = await json(resolve(root, 'sdk/approvals/synth-build-approval.json')), declaration = document.tests.releaseWaiver
   if (approval.id !== 'synth' || approval.version !== '0.1.1-experimental' || document.id !== approval.id || document.version !== approval.version || approval.approvedBy !== 'repeat98' || approval.approvedOn !== '2026-10-06' || !isDeepStrictEqual(approval.waived, SYNTH_WAIVED) || approval.imageSha256 !== SYNTH_IMAGE || !declaration || declaration.approvedBy !== approval.approvedBy || declaration.approvedOn !== approval.approvedOn || declaration.moduleVersion !== document.version || declaration.sourceSha256 !== approval.sourceSha256 || declaration.imageSha256 !== approval.imageSha256 || await sourceHash(folder, document) !== approval.sourceSha256 || synthRuntimeSha256(document) !== approval.runtimeSha256) fail('owner approval does not cover this exact version, source, declarations and image')
   if (document.build || document.tests.qualification || document.tests.hardwareStatus !== 'untested' || document.resources.processing.value !== null || document.resources.processing.method !== 'unmeasured' || declaration.report !== 'evidence/software.json') fail('hardware and unmeasured timing/memory must remain honest')
   const report = await json(resolve(folder, declaration.report)), parity = await json(resolve(root, 'sdk/native-comparisons/synth.json'))

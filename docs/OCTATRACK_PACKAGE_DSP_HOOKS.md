@@ -71,9 +71,8 @@ stay base data (Phase 3).
 - **Trust.** A row pins the **controller digest** (`loader.h`: the header with its DSP fields zeroed and everything up
   to the claims), not the package's SHA-256; the loader keeps it in the owner record, and the board, the owner checks and
   the write lease compare it. A package that changes only its DSP part (0.1.6) keeps its row, so the base is not rebuilt.
-  The source policy in a row hashes only the controller's inputs (`build.py machine_inputs`), and the price (411 a
-  voice, 3 a core) stays in the machine record (`machine-ports.json`): a price change is a controller change until
-  Phase 2.
+  The source policy in a row hashes only the controller's inputs (`build.py machine_inputs`). The price per voice is
+  the engine header's `cycles` and `kind`, outside the digest (`sdk/runtime/loader/README.md`, "Price").
 - **Admission.** The loader asks `modwerk_machine_dsp_engine_admit` (the board) for an engine: a trusted controller of a
   packaged feature, one entry at the feature's one site on its cores, entered at word 0, an exit exactly where the site
   has one, claims exactly the feature's regions with initial words, at most 2,048 words. A trusted controller of a
@@ -222,8 +221,7 @@ A registry like `events.json`: `sdk/machines/octatrack/dsp-sites.json`, with `ev
 
 The base build installs the JSR and a dormant stub at every catalogued site, as it does for today's resident features.
 The stub's on path becomes `jsr <placed entry>`, then the displaced instruction, then `rts`: **the base replays the
-stock instruction, never the package.** A package then carries no stock words at all, so it stays stock-free under the
-unchanged scans. Today's engines end with the displaced instruction themselves (Sidechain's `sctap` ends with it); a
+stock instruction, never the package.** A package then carries no stock words at all. Today's engines end with the displaced instruction themselves (Sidechain's `sctap` ends with it); a
 package must not.
 
 Initial sites, all already hooked by resident features or requested:
@@ -272,10 +270,9 @@ engine, or both (RINGMOD SC needs both: an insert and a tap):
   engine (`modwerk_dsp_source_claim`): a hook at the dispatcher costs on every track of the core whether or not a reader is
   active, so it is a per-core engine price, not a per-instance one.
 
-`build.py --dsp-hook` derives all of it from the module's manifest (`DspHook`, `DspRange`) and refuses, before
-packaging: a site not in the catalogue, a stock guard that differs from the catalogue's, a register outside the site's
-contract (checked on the disassembly, as build_bus's round-trip audit does), a `rep`, a stack depth over the site's
-allowance, or a missing `rts`.
+No `build.py --dsp-hook` exists: `hook_engines.py` builds an engine, `abi9.engine()` packages it, `dsp_sites.py --check`
+proves each site against its manifest, `dsp-source-gates.py` refuses a `rep`, and `scripts/dsp-register-contract.py`
+(module:doctor) reports writes outside a site's `clobbers`, refusing from a date the owner sets. Stack depth is unchecked.
 
 ### 4. The lifecycle (the on-demand engine path, generalised)
 
@@ -297,7 +294,7 @@ slot on each core.
 
 The point is to ship a hook module's DSP change as a new package, with no base rebuild. So admission can't be by an exact
 package hash pinned in the base, as controller trust rows are. The proposal: a hook package is admitted like an effect
-package, by the catalogue and qualification path (review, `module:verify`, hardware evidence), with the base enforcing
+package, by the catalogue and qualification path (review, hardware evidence), with the base enforcing
 only the structural rules above (sites, guards, claims, cost, P room). That is a policy change for the owner: a hook
 runs on every track of a core, so a bad package can silence or stall a core. It is the same class of risk as an effect
 package, larger in reach.
@@ -375,10 +372,10 @@ stays byte-identical; only its feature split moves (KEYBUS, bit 8, out of SIDECH
   carries the tap and no instance. "Installed, on no track" measures nothing on an on-demand base (above). Core 1's
   meter is not calibrated.
 
-**Resets.** KEYBUS resets the window ($33dfe / $3bdfe, $202 words) and then the bus (Y $800, $200 words), 1,026 words
-per core, when it is placed: the window first, so the first chunk zeroes the seed mark and counter. Once it is let go
+**Resets.** KEYBUS resets the window ($33dfe / $3bdfe, $202 words) and then the bus (Y $7e00, $200 words), 1,026 words
+per core, when it is placed: the window first, so the first chunk zeroes the seed and counter. Once let go
 after a run, the board sends that one chunk again (the scrub) while it still holds the window, so a stale mark never
-outlives the bus. Sidechain keeps its exact reset (1,042 words: Y $7f0+$210 and the window), so its contract and
+outlives the bus. Sidechain keeps its exact reset (1,042 words: Y $ff0+$10, the window, Y $7e00+$200), so its contract and
 DSP stay byte-identical; a held Sidechain holds KEYBUS, which the base places, resets and enables first. Side effect:
 installing or reinstalling Sidechain while a reader is live re-zeroes the bus and the window once, so that reader hears
 up to about a block of silent key while the tap re-adopts its counter by #640's rule.
@@ -559,7 +556,7 @@ reviewed change.
 - Base: the site catalogue and its generator, stubs for every catalogued site, hook slots and their base words, the
   generalised receiver op 10, the ledger in the manager, the init-record writer, the reference-counted key bus.
 - Loader: ABI 9 parsing, admission, and the hook slot lifecycle in `resident_engines.c`'s place.
-- Tools: `build.py --dsp-hook`, the register and `rep` audit, `modules:compat` reading the catalogue and the claims.
+- Tools: `modules:compat` reading the catalogue and the claims (the register and `rep` checks exist).
 - Tests: host tests in the style of `test_resident_engines_board.py` (place, enable, refuse, remove, a stuck PLACE);
   the DSP interpreter run of the bus with two readers on both cores and enable offsets, as for #640's phase test.
 - Hardware: the base requalified once; per module, install, removal and reinstall with the key latency the same each

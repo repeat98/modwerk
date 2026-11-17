@@ -1,6 +1,20 @@
 export const INDEPENDENCE_NOTICE = 'Modwerk is an independent, unofficial project. It is not affiliated with, endorsed by or supported by Elektron, Zoom or Erica Synths.'
 export const FLASHING_RISKS = 'Custom firmware can make your device unusable, cause data loss, affect warranty coverage and prevent future official updates. Recovery is not guaranteed.'
 export const FIRMWARE_SHARING_NOTICE = 'Do not upload, share or redistribute original or generated firmware images: they contain Elektron’s copyrighted firmware. Share configuration JSON and properly licensed module sources instead.'
-// The beta's recovery requirement and where beta bugs go, shown wherever a tester joins, flashes or reports.
-export const BETA_RECOVERY_NOTICE = 'Don’t flash the beta unless you can recover without the Octatrack’s USB: have a CompactFlash card reader at hand, and ideally a MIDI interface to send Elektron’s original OS .syx through the startup menu.'
-export const BETA_REPORTING_NOTICE = 'Report beta bugs only in #beta-testers on Discord, not through the report forms on this site.'
+// The way back before anyone installs the Modwerk base: shown in the base install guide, the FAQ and the beta invitation.
+export const BASE_RECOVERY_NOTICE = 'Before you install the Modwerk base, make sure you can recover without the Octatrack’s USB: have a CompactFlash card reader to put the original OS on the card, or a MIDI interface to send Elektron’s original OS .syx through the startup menu.'
+// What the first install needs: shown in the base install guide and the welcome to modules over USB.
+export const BASE_INSTALL_NEEDS = 'You need an Octatrack (MKI or MKII), your original OS 1.40C file, a USB cable, Chrome or Edge on a computer, and a CompactFlash card reader or a MIDI interface in case USB stops working.'
+// Where everyone reports problems with the base, a sync or a module: the site's own report forms (the Your Octatrack
+// page's Report a problem, a module page's report form). Beta modules and beta pages keep BETA_REPORTING_NOTICE.
+export const REPORT_PROBLEMS = 'Report problems with Report a problem on the Your Octatrack page, or with the report form on the module’s page.'
+// Where beta bugs go, shown wherever a tester joins or reports.
+export const BETA_REPORTING_NOTICE = 'Report bugs in beta modules and beta pages only in #beta-testers on Discord, not through the report forms on this site.'
+/** How to start the Octatrack without loading its modules. The only place this is said: the base install guide and the
+ * Your Octatrack page show it when it is not empty; set it to '' to take it off the site. On the owner's MKII
+ * (docs/OCTATRACK_MODULE_EDGE_CASES.md, case 15): FUNC pressed once the startup animation began skipped the restore on
+ * the flashed beta (12 October 2026); PROJ held through a RAM boot of a development twin of the base that brings PROJ
+ * showed MODULES SKIPPED (11 November 2026), and PROJ held at power-on on the earlier flashed base did not open
+ * Elektron's Startup Menu. Not confirmed: PROJ held from a cold power-on on that base flashed, and anything on an MKI,
+ * which has no PROJ key (FUNC is its gesture). */
+export const MODULE_SKIP_HINT: string = 'If the Octatrack doesn’t start with your modules, hold PROJ while you switch it on (on an MKI: press and hold FUNC as soon as the startup animation begins): it starts without loading them, and loads them again at the next start.'

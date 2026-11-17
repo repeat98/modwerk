@@ -1,0 +1,1 @@
+Development: the pull request description check now accepts a guides answer written in bold, such as "**Guides:** nothing" or a bold question with the answer below it, instead of asking for an answer the description already gives.

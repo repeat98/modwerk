@@ -1,0 +1,10 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-06",
+    "changes": [
+      "Send seven parameter values per track over DIN MIDI for controller pickup on Analog Rytm MKII OS 1.74.",
+      "Enable feedback per project for automatic refresh and a short pause before sending moving values."
+    ]
+  }
+]

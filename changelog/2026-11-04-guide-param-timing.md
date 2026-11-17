@@ -1,0 +1,1 @@
+Developer docs: the machines guide now asks each machine to decide, parameter by parameter, whether a turn changes a note already playing or waits for the next trig, to match the stock machines, and to say in the README which ones wait.
