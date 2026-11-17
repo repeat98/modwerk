@@ -58,7 +58,7 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Hardware: the author reports the submitted package (pinned toolchain) working on a Digitakt II, OS 1.17, 2026-11-14, as an informal report. See TESTING.md.",
+      "Hardware: the author reports the submitted package (2e47115e…, pinned toolchain) working on a Digitakt II, OS 1.17, on 2026-11-16 (an earlier package on 2026-11-14), as an informal report. See TESTING.md.",
       "Works while the sequencer plays; when it is stopped PREP MUTES keeps its stock behaviour.",
       "With Scale per track the longest track's last step ends the pattern.",
       "Switches on the second UI tick (about 30 Hz) of the first step after the last counted pass, because the step counter runs ahead of the sound; not sample-accurate.",
