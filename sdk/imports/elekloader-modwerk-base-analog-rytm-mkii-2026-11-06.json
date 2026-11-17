@@ -42,7 +42,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "0000000000000000000000000000000000000000",
+        "commit": "b1e043de18b9f476c0488dd1f90f900b7d7dd649",
         "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-dd771eae.elemod"
       }
     }
