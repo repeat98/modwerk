@@ -221,8 +221,7 @@ A registry like `events.json`: `sdk/machines/octatrack/dsp-sites.json`, with `ev
 
 The base build installs the JSR and a dormant stub at every catalogued site, as it does for today's resident features.
 The stub's on path becomes `jsr <placed entry>`, then the displaced instruction, then `rts`: **the base replays the
-stock instruction, never the package.** A package then carries no stock words at all, so it stays stock-free under the
-unchanged scans. Today's engines end with the displaced instruction themselves (Sidechain's `sctap` ends with it); a
+stock instruction, never the package.** A package then carries no stock words at all. Today's engines end with the displaced instruction themselves (Sidechain's `sctap` ends with it); a
 package must not.
 
 Initial sites, all already hooked by resident features or requested:
