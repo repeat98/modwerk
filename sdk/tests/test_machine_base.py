@@ -223,7 +223,7 @@ class MachineBases(unittest.TestCase):
         with self.assertRaises(ValueError):
             machine_base.variants({"variants": {"bad": {"add": False, "leave": ["bus_*"]}}})
 
-    def test_the_rytm_voices_variant_stages_add_without_the_send_bus(self):
+    def test_the_rytm_voices_variant_stages_add_without_the_send_bus_or_its_lock_words(self):
         config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
         variants = {name: (add, leave) for name, add, leave in machine_base.variants(config)}
         staged = {}
@@ -233,13 +233,20 @@ class MachineBases(unittest.TestCase):
                 core = machine_base.stage("analog-rytm-mkii", config, pathlib.Path(work), add=add, leave=leave)
                 staged[name] = json.loads((core / "mod.json").read_text())
         bus, voices = staged["send-bus"], staged["voices"]
-        for source in ("../base/clock.c", "../base/sendbus.c", "../base/sendbus.s"):
+        for source in ("../base/locks.c", "../base/locks.s", "../base/clock.c", "../base/sendbus.c", "../base/sendbus.s"):
             self.assertIn(source, bus["sources"])
             self.assertNotIn(source, voices["sources"])
-        for source in ("../base/locks.c", "../base/locks.s", "../base/voice.c", "../base/voice.s"):
+        for source in ("../base/voice.c", "../base/voice.s"):
             self.assertIn(source, voices["sources"])
         names = json.dumps(voices)
         self.assertNotIn("mw_send_", names)
+        # the FX track's lock words, which only the send bus writes: their three sites stay on send-bus with it
+        targets = {name: [site["target"] for site in machine_base.parts(config, add=variants[name][0], leave=variants[name][1])["sites"] if "target" in site]
+                   for name in ("send-bus", "voices")}
+        self.assertEqual([t for t in targets["send-bus"] if t.startswith("core_lk_")],
+                         ["core_lk_save_one", "core_lk_save_all", "core_lk_load"])
+        self.assertEqual([t for t in targets["voices"] if t.startswith("core_lk_")], [])
+        self.assertIn("mw_voice_applied_gate", targets["voices"])
         self.assertNotIn("mw_fx", voices["collections"])
         for name in ("mw_voices", "ev_sound_applied"):
             self.assertIn(name, voices["collections"])
