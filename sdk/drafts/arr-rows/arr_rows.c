@@ -284,17 +284,49 @@ static unsigned moved_target(unsigned target, unsigned own, unsigned at, unsigne
     return target > at ? byte_at_most(target + n) : target;
 }
 
-/* The rows just pasted at `at`: a target inside the copied block (copied from `from`) keeps its place in the block,
- * so a copied LOOP or HALT stays one; a target outside it moves by `shift` when past `at` (an insert's rule; 0 for an
- * overwrite, which moves no row). A count past stock's range is clamped as stock's editor would. */
+/* Where a pasted row's target goes, the row being the k-th of the block copied from `from` and pasted at `at`: a
+ * target inside the copied block keeps its place in the block, so a copied LOOP or HALT stays one; a target outside
+ * it moves by `shift` when past `at` (an insert's rule; 0 for an overwrite, which moves no row). */
+static unsigned pasted_target(unsigned target, unsigned at, unsigned n, unsigned from, unsigned shift)
+{
+    return target >= from && target < from + n ? at + (target - from) : (target > at ? byte_at_most(target + shift) : target);
+}
+
+/* A LOOP or JUMP that the paste would turn into a HALT: a target outside the block landing on the row's new index
+ * (target == own row is what a HALT is). Its place k in the block, or -1. Stock's one-row delete does this silently
+ * (TESTING.md, the developer's MKI); the module refuses the paste instead and says which row. */
+static int halt_made(struct arr_state *s, unsigned at, unsigned shift)
+{
+    for (unsigned k = 0; k < s->clip_n; ++k) {
+        const uint8_t *row = &s->clip[k * ROW_BYTES];
+        if (row[0] != TYPE_JUMP || row[3] == s->clip_from + k) continue;
+        if (pasted_target(row[3], at, s->clip_n, s->clip_from, shift) == at + k) return (int)k;
+    }
+    return -1;
+}
+
+/* "JUMP>HALT ROW 8" (or LOOP, as stock labels the copied row: target below its row LOOP, above JUMP) into s->text. */
+static const char *would_halt(struct arr_state *s, unsigned k, unsigned at)
+{
+    const char *word = s->clip[k * ROW_BYTES + 3] < s->clip_from + k ? "LOOP>HALT ROW" : "JUMP>HALT ROW";
+    char *t = s->text;
+    while (*word) *t++ = *word++;
+    unsigned r = at + k;
+    *t++ = ' ';
+    if (r >= 100) *t++ = (char)('0' + r / 100);
+    if (r >= 10) *t++ = (char)('0' + r / 10 % 10);
+    *t++ = (char)('0' + r % 10);
+    *t = 0;
+    return s->text;
+}
+
+/* The rows just pasted: their targets (above) and a count past stock's range clamped, as stock's editor would. */
 static void pasted(uint32_t a, unsigned at, unsigned n, unsigned from, unsigned shift)
 {
     for (unsigned k = 0; k < n; ++k) {
         uint32_t row = row_at(a, at + k);
         if (rd8(row) != TYPE_JUMP) continue;
-        unsigned target = rd8(row + 3);
-        wr8(row + 3, target >= from && target < from + n ? at + (target - from)
-                                                         : (target > at ? byte_at_most(target + shift) : target));
+        wr8(row + 3, pasted_target(rd8(row + 3), at, n, from, shift));
         if (rd8(row + 2) > LOOP_MAX) wr8(row + 2, LOOP_MAX);
     }
 }
@@ -305,6 +337,8 @@ static void paste_rows(struct arr_state *s, unsigned at)
     unsigned n = s->clip_n, have = count(a);
     if (can_undo(s, UNDO_PASTE, at, n)) { restore(s, say(s, "UNDO PASTE", n)); return; }
     if (at + n > ROWS) { row_limit(); return; }
+    int halt = halt_made(s, at, 0);
+    if (halt >= 0) { message(would_halt(s, (unsigned)halt, at)); return; }
     snapshot(s, UNDO_PASTE, at, n);
     put_bytes(row_at(a, at), s->clip, n * ROW_BYTES);
     pasted(a, at, n, s->clip_from, 0);
@@ -319,6 +353,8 @@ static void insert_rows(struct arr_state *s, unsigned at)
     if (can_undo(s, UNDO_INSERT, at, n)) { restore(s, say(s, "UNDO INSERT", n)); return; }
     if (at > have) at = have;
     if (have + n > ROWS) { row_limit(); return; }
+    int halt = halt_made(s, at, n);
+    if (halt >= 0) { message(would_halt(s, (unsigned)halt, at)); return; }
     snapshot(s, UNDO_INSERT, at, n);
     for (unsigned r = 0; r < have; ++r) {
         uint32_t row = row_at(a, r);

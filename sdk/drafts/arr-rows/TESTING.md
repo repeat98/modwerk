@@ -4,7 +4,7 @@ Every result names its build. "Not tested" is a result.
 
 ## Host gate
 
-`python3 -B sdk/drafts/arr-rows/verify.py` (17 November 2026, source at this branch): 55 checks pass, and
+`python3 -B sdk/drafts/arr-rows/verify.py` (17 November 2026, source at this branch): 60 checks pass, and
 `arr_rows_core.s` matches `arr_rows.c` (m68k-elf-gcc 16.2, no unresolved symbols, the shared codegen guard passes).
 It proves the module's logic against simulated stock memory, not the firmware.
 
@@ -51,10 +51,31 @@ refusals). The screen was read from the panel link's transmit stream (Octabam's 
   FUNC + DOWN on `HALT: 003` gave `HALT: 003` and `LOOP: 003/∞` below it; stock's FUNC + UP on the new row put
   `HALT: 003` back; the module's insert of a copied row at row 3 moved the HALT to row 4 with target 4.
 - Overwrite paste (same day): rows 2-3 (a pattern row, `HALT: 003`) pasted over rows 4-5 gave `HALT: 005`.
+- Never a silent HALT (same day): `JUMP: 008` copied from row 5 and pasted over row 8 was refused with
+  `JUMP▸HALT ROW 8` in stock's box, row 8 unchanged; one row down it pasted as `JUMP: 008` on row 9.
 - Not run here: a LOOP/JUMP to another row through a module insert (host only), editing while the arrangement plays,
   SAVE/RELOAD, a power cycle, the MKII panel.
 
 ## On a unit
+
+### Stock behaviour, reported by the developer (MKI, stock OS 1.40C, no Modwerk base, 17 November 2026)
+
+What Andrey Sidorkin saw on his own MKI, as he reported it; no module was installed:
+
+- Delete (FUNC + UP) of row D while a JUMP points at row T:
+  1. T below D on the screen (T > D): the target number dropped by one and still names the same row's content.
+  2. T above D (T < D): the target number did not change.
+  3. T == D, with the JUMP on the row just below D: the target did not change; the JUMP moved up into row D, pointed
+     at itself and showed as HALT. A JUMP turned into a HALT without any message.
+- Insert (FUNC + DOWN) on a HALT row: the HALT moved one row down showed as `LOOP: <row>/∞`, as in ot_emu (below).
+
+Against the delete routine read from the image (RESEARCH.md): (a) nothing on an empty arrangement or D ≥ count,
+not observed; (b) a target greater than D drops by one, observed (1); (c) a target equal to D stays, observed (3), and
+a target below D is untouched, observed (2); (d) the rows shift up, the count drops and the playing row is clamped:
+the shift observed in (3), the clamp not observed. Case 3 is how a stock delete turns a JUMP into a HALT. Stock's
+FUNC + UP and FUNC + DOWN stay untouched by the module (the developer, 17 November 2026).
+
+### The module
 
 Not tested yet. Stock flows to compare with and without the module: one-row copy, clear and paste and their undo;
 FUNC + DOWN insert and FUNC + UP delete; CUE + track keys in the editor; ARR CHANGE, SAVE, RELOAD; a project saved

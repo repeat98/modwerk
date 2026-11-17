@@ -311,6 +311,37 @@ int main(void)
     check("FUNC + UP (stock's delete) goes to stock", tap(UP) == 0);
     hold(FUNC, 0);
 
+    /* never a silent HALT: a pasted LOOP or JUMP whose target would be its own new row */
+    fill(12);
+    row(5)[0] = 1; row(5)[2] = 2; row(5)[3] = 8;   /* JUMP to row 8 */
+    set_cursor(5);
+    hold(CUE, 1); tap(UP); tap(DOWN); hold(CUE, 0); /* select row 5 alone */
+    hold(FUNC, 1); tap(REC); hold(FUNC, 0);
+    tap(DOWN); tap(DOWN); tap(DOWN);               /* to row 8: UP/DOWN end the selection */
+    hold(FUNC, 1);
+    check("pasting JUMP 8 over row 8 is refused", tap(STOP) == 1 && same(8, 8) && rows() == 12);
+    hold(FUNC, 0);
+    check("it says JUMP>HALT ROW 8", !strcmp(last_message, "JUMP>HALT ROW 8"));
+    tap(DOWN);
+    hold(FUNC, 1); tap(STOP); hold(FUNC, 0);
+    check("one row further it pastes, still a JUMP to 8", row(9)[0] == 1 && row(9)[3] == 8);
+    fill(12);
+    row(5)[0] = 1; row(5)[3] = 2;                  /* LOOP back to row 2 */
+    set_cursor(5);
+    hold(CUE, 1); tap(UP); tap(DOWN); hold(CUE, 0);
+    hold(FUNC, 1); tap(REC); hold(FUNC, 0);
+    tap(UP); tap(UP); tap(UP);
+    hold(CUE, 1); hold(FUNC, 1); tap(STOP); hold(FUNC, 0); hold(CUE, 0);
+    check("inserting LOOP 2 at row 2 is refused", rows() == 12 && !strcmp(last_message, "LOOP>HALT ROW 2"));
+    fill(12);
+    row(5)[0] = 1; row(5)[3] = 5;                  /* a HALT */
+    set_cursor(5);
+    hold(CUE, 1); tap(UP); tap(DOWN); hold(CUE, 0);
+    hold(FUNC, 1); tap(REC); hold(FUNC, 0);
+    tap(DOWN); tap(DOWN); tap(DOWN); tap(DOWN);
+    hold(FUNC, 1); tap(STOP); hold(FUNC, 0);
+    check("a copied HALT pastes as a HALT on its new row", row(9)[0] == 1 && row(9)[3] == 9);
+
     printf("%d checks, %d failed\n", checks, failures);
     return failures != 0;
 }

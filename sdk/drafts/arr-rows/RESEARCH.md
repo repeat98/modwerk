@@ -48,7 +48,8 @@ What the module relies on, read from the stock image (load address `0x40000400`)
 - Delete (FUNC + UP, `0x4009b168(D)`): nothing on an empty arrangement or D ≥ count; every type-1 row whose target is
   greater than D gets target − 1, a target equal to D stays (the row that moves up into D); rows shift up,
   the count drops, the arranger's playing row `0x80006698` is clamped to the new last row. A HALT below D follows
-  itself. Measured: deleting the duplicated HALT above put `HALT: 003` back.
+  itself. Measured: deleting the duplicated HALT above put `HALT: 003` back. A JUMP on the row below D that points at
+  D moves into D and becomes a HALT (target == own), with no message: reported on the developer's MKI (TESTING.md).
 - Every read of a type-1 target is unsigned (`mvz.b`): insert `0x4009e570`, delete `0x4009b19e`, the editor's labels
   `0x40049500`/`0x4004956c`, the main screen's `0x40048d14`, the editor's target edit `0x40049eb2` (clamped to
   0..count) and playback's row resolver `0x4009aed0` (`0x4009af04`: equal stays, a HALT; greater jumps; less loops,
