@@ -354,9 +354,9 @@
       "name": "OUTPUT MATRIX",
       "module": "caf158b5",
       "bytes": 3740,
-      "sha256": "9c7380301f48bb01d7a7bc2cc6ed310f5a15272b0e870e5042a1932735495302",
+      "sha256": "38953347345a17bdc3e42a0b8473ea31fe6258a1036a0c3bf8e756553fbf963e",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "59c85053c23be780af95983730123b1c2eb101111128c832412f2e08dd9a3d94"
+      "requiredBase": "a383e0afbe56529d50f54fba5a2fad37b1f0aa2a057a4d847f1fa89c957cf11b"
     },
     {
       "id": "cc-map",
@@ -372,7 +372,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "59c85053c23be780af95983730123b1c2eb101111128c832412f2e08dd9a3d94"
+      "requiredBase": "a383e0afbe56529d50f54fba5a2fad37b1f0aa2a057a4d847f1fa89c957cf11b"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -450,7 +450,7 @@
       "bytes": 1818,
       "sha256": "41df2585a57ba347a6b484c34311c50a9d51a3d3f7d28ecf5def1534ac6bfc78",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "59c85053c23be780af95983730123b1c2eb101111128c832412f2e08dd9a3d94"
+      "requiredBase": "a383e0afbe56529d50f54fba5a2fad37b1f0aa2a057a4d847f1fa89c957cf11b"
     },
     {
       "id": "analog-bassdrum",
@@ -464,9 +464,9 @@
       "name": "Analog BD",
       "module": "abdb1445",
       "bytes": 26172,
-      "sha256": "e683804756e9c898a658f7d4a97df5f8832cfa4f9c2e1d409a32df1a26ee392b",
+      "sha256": "fe89b4788ebc67ac34b03524d9529266f47d40db8a3fa26cfc8a86b377bef63c",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "59c85053c23be780af95983730123b1c2eb101111128c832412f2e08dd9a3d94",
+      "requiredBase": "a383e0afbe56529d50f54fba5a2fad37b1f0aa2a057a4d847f1fa89c957cf11b",
       "requires": 0,
       "claims": 1,
       "entries": 1
