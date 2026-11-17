@@ -82,12 +82,12 @@
       }
     },
     "cpuPrice": {
-      "value": 2.4,
+      "value": 0.8,
       "unit": "percent-of-frame",
       "measure": "frame-interrupt",
       "tool": "npm run device:price",
       "date": "2026-11-17",
-      "conditions": "Measured by the owner's session: MKII, development twin of base 0.7.8 (f24d6e97), the owner's project bank C pattern C01 playing with three static loops sounding on T2-T4, Repitch installed on no track, 8 s per reading. Two runs alternating with the published 0.2.0: 0.2.1 added +2.4 and +2.3 points, 0.2.0 +4.1 and +4.1. The build measured carried one extra 16-byte routine nothing calls, so the code after it sat 16 bytes later than in this package; this package itself was not measured. A track with REPITCH in force was not measured.",
+      "conditions": "Measured by the owner's session: MKII, development twin of base 0.7.8 (98637a13), the owner's project bank C pattern C01 playing three static loops on T2-T4, TSTR OFF where a loop carries REPITCH, so Repitch acted on no track (increments read at unity), 8 s per reading. Two runs alternating: this package (sha256 4b927846) added +0.8 and +0.8 points, the published 0.2.0 +1.2 and +1.2. A track with REPITCH in force was measured only as a whole set (same package +0.8 with two REPITCH tracks), not per track.",
       "source": "TESTING.md"
     }
   },
