@@ -19,6 +19,8 @@ Claptom-music reported that the combined OS 1.17 image
 passed COMP → SC → ENV navigation, selected-track AUDIO ducking, GRID
 without a source, and stock COMP dry/wet with SIDECHAIN off on their unit.
 
+The [hardware record](../../../../../docs/verification/2026-11-14-digitakt-ii-render-probe.md#reported-hardware-result) also covers the rebuilt base after #1571, including the project reload and power-cycle checks.
+
 ## Playback grid prototype
 
 `ev_seq_grid` observes the audio constructor before stock tests for a trig. It uses the existing playback detour and returns immediately when the collection is empty. The callback receives the originating pattern, track and step plus four adjacent deadlines in stock musical time. The base derives these from the stock tick, lookahead, speed table and per-step swing flags. The callback is read-only.

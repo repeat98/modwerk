@@ -4,6 +4,8 @@
 
 On 15 November 2026, Claptom-music tested the combined base and effect image on Digitakt II OS 1.17. The base package SHA-256 was `b6ee556855a209907a27d917f51b8324fd3158e2ade304fc4b2c6aa25104ef54` and the sealed image SHA-256 was `9d3eea5ddf1e6bd0d93629c1f6bfa5221165977114119e3ae403fe5c4f88c435`. The tester reported that COMP → SC → ENV navigation, selected-track AUDIO ducking, GRID with no source, and stock COMP dry/wet with SIDECHAIN off all passed. This report covers the combined image. The return-only diagnostic below was exercised in Digikit.
 
+On 17 November 2026, Claptom-music reported that boot and playback, COMP → SC → ENV navigation, selected-track AUDIO, source-free GRID and stock COMP with SIDECHAIN off passed on the rebuilt base (`93d9d821fe4d0fef23d94c437335ead98865e0196ad27c22195b5856368e6f8b`) and image (`966070ca4802e42b1ca5f3c057cea1df6512d9a80aaa2c21cf60c8eed73147c5`). With the same base and a Sidechain module updated to use the project archive, the tester also verified that SC and ENV settings returned on project reload and after power cycling (`c244b72ff960f20a22d3514b4f69c0055ea922b04e8947b2c92f303438e3d324`).
+
 This local probe composes the catalogue Core 1.0 with a pre-send dispatcher and one return-only callback per phase. The public builder still produces a stock DSP section. The probe exercises the build and dispatcher before adding the sidechain or a shared module ABI.
 
 From the repository root with Node 24 and the installed catalogue, run:
