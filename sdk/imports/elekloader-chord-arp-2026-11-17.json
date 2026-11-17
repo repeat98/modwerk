@@ -15,7 +15,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "3945894297337673ba7882701bbe869c732ea087",
+        "commit": "6b13920fc412b6810ef25eeafc03eff8e3df692e",
         "path": "sdk/imports/packages/chord-arp/chord-arp-0.1.0-experimental-os1.17.elemod"
       },
       "title": "Chord Arp",
