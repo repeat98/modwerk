@@ -4,6 +4,8 @@
 
 The bases named below are development builds of the Modwerk base with the digital voices (and, for BL01, a USB test link), not published and not rebuildable from this repository; the published base is the send-bus variant of repeat98/modwerk#1447 (3ece243b): this module ran on it in rytm-emu (BA21) and, by hand, on the author's unit (VB01, 12 November 2026: chosen from the BD section and offered on SD and BT only, the 808/909 tap, a kit reload keeping the type, a sound lock changing the type, a project save and power cycle; docs/verification/2026-11-12-rytm-base-digital-voices.md), but not the rig's knob sweeps.
 
+- RC42 (0.2.1-experimental, sha256 1ac19211…, a private 17-module combo: this module beside 16 others on a base of the digital voices without the send bus, 1,564 B of module RAM left): flashed, tried by hand by the author on 16 November 2026. Reported: everything works and sounds as before; with three BD ANALOG voices playing the unit gets laggy. Not measured by the rig.
+- BA22 (0.2.1-experimental, sha256 b5b06ee1…, solo on the published base 3ece243b): the README's three screens captured again with capture.json's plans; each frame byte for byte 0.2.0's (BA21).
 - AB23 (0.2.1-experimental, sha256 3f7bbb91…, solo on the published base 3ece243b): the knob tables read only when a knob changes stored as 16-bit steps above their smallest word (`NAME_LO + (NAME[i] << NAME_SH)`); the body's level, velocity and ATK worked out instead of read; HIGH's weight twice LOW's from one table. T_AP, T_GT, T_GD and T_DKP stay Q31 words. Every per-sample routine is instruction for instruction the same as 0.2.0's (objdump). tools/asm_check.py: every routine saves its registers; desk, bodies, click and noise match their C, 0 differences. emu_check: all pass, meter unchanged (mean 3.4 %, dearest block 4.6 %). Not on the unit yet.
 - AB16 (0.2.0-experimental, sha256 d7bba966…, solo on Modwerk base 6fca633f): AB15 with BD ANALOG offered on the BD, SD and BT tracks only, after the unit's stress (below). emu_check: all pass, meter unchanged.
 - BP02 (rytm-emu only): this module on the base of the digital voices pull request (send-bus 3ece243b, merged in repeat98/modwerk#1447): emu_check all pass, mean 3.4 %, dearest block 4.6 % of a block.
@@ -23,6 +25,10 @@ The bases named below are development builds of the Modwerk base with the digita
 ## Source fingerprint, 0.2.0
 
 `evidence.sourceSha256` is the sha256 of `sha256sum build.json src/machine.c src/ab_dsp.c src/ab_desk.s src/ab_body.s src/ab_body808.s src/ab_noise.s src/ab_click.s src/ab_tone808.s src/ab_trig808.s src/ab_dsp.h src/tables.h` (in that order): `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+
+## Source fingerprint, 0.2.1
+
+`evidence.sourceSha256`, worked out in the module's folder as `sha256sum build.json src/machine.c src/ab_dsp.c src/ab_desk.s src/ab_body.s src/ab_body808.s src/ab_noise.s src/ab_click.s src/ab_tone808.s src/ab_trig808.s src/ab_dsp.h src/tables.h | sha256sum`: `4583f70cdd8cf66f0273f681865ddd7c29c9273eba8dab1f371fd66f70a1c9d0`. 0.2.0's recorded value above is the hash of empty input (the command hashed nothing); the same command gives `5dc3e042…` for 0.2.0's files.
 
 ## Memory, 0.2.1 (16 November 2026)
 

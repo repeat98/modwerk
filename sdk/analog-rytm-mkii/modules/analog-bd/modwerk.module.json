@@ -83,29 +83,30 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.2.0-experimental",
-    "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "moduleVersion": "0.2.1-experimental",
+    "sourceSha256": "4583f70cdd8cf66f0273f681865ddd7c29c9273eba8dab1f371fd66f70a1c9d0",
     "reports": [
       "TESTING.md"
     ],
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-11-12",
+      "testedOn": "2026-11-16",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "0.2.0 on npp1993's Analog Rytm MKII, OS 1.74, in a scratch project. By hand (VB01, 12 Nov 2026, the published base 3ece243b with this module, flashed with Transfer): chosen from the BD section of BD's machine list and offered on SD and BT only; B reads TON and the bar 808, a tap gives SWT and 909 and back; a kit saved as 909 reloads as 909; a 909 sound lock on an 808 track plays the 909 on that step and the label follows; project save and power cycle keep the type, the lock and the sound. By the author's automated rig on a development base (BL01, 11 Nov 2026, RAM boot): MIDI notes and sequencer trigs play; 808 and 909 knob sweeps follow the host model (909 TUN within 0.0 % over 36-61 Hz); stress with the 909 on N tracks hit together: three voices clean, four overran.",
+      "summary": "0.2.1 on npp1993's Analog Rytm MKII, OS 1.74, by hand (16 Nov 2026): a private 17-module combo image (RC42, sha256 1ac19211…, this module beside 16 others, 1,564 B of module RAM left), flashed. The tester reports everything working, the sound as before; with three BD ANALOG voices playing the unit gets laggy. 0.2.1 changes only how the knob tables are stored (5,024 B less RAM), so 0.2.0's runs stand for the rest: by hand on the published base 3ece243b (VB01, 12 Nov 2026: machine list, the 808/909 tap, kit reload, sound lock, project save and power cycle) and the author's automated rig (BL01, 11 Nov 2026: 808 and 909 knob sweeps follow the host model; three 909s hit together clean, four overran).",
       "limitations": [
-        "The rig's knob sweeps and stress ran on a development base with a USB test link, not the published base; the by-hand run on the published base did not repeat them.",
-        "Not run on a unit: pads and pressure, the +Drive, an external clock, how it sounds beyond the measures; the 909's DEC and velocity-to-click were not judged by the rig.",
-        "The measured load is the 0.1.0 808 on a telemetry base; the 0.2.0 909's cost on a unit is known only as 'three voices fit, four overran'."
+        "0.2.1 was tried by hand on a combo image, not measured by the rig; that its sound matches 0.2.0 is measured on the host and in rytm-emu (TESTING.md).",
+        "The rig's knob sweeps and stress (0.2.0) ran on a development base with a USB test link, not the published base.",
+        "Not run on a unit: pads and pressure, the +Drive, an external clock; the 909's DEC and velocity-to-click were not judged by the rig.",
+        "The measured load is the 0.1.0 808 on a telemetry base; the 909's cost on a unit is known only as 'three voices fit, four overran', and three make the unit laggy in a large module set."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on OS 1.74: select, keys, 808/909 tap, meter; assembly passes match their C (asm_check, 0 differences); host engine within -41 to -68 dB of repeat98's models. Unit: by hand (0.1.0, AB04; 0.2.0 on the published base, VB01: choice, tap, kit reload, sound lock, power cycle) and the author's rig (BL01: sweeps follow the model, stress as limited).",
+    "summary": "rytm-emu on OS 1.74: select, keys, 808/909 tap, meter; assembly passes match their C (asm_check, 0 differences); host engine within -41 to -68 dB of repeat98's models, 0.2.1 within -55.8 dBFS of 0.2.0. Unit: by hand (0.1.0, AB04; 0.2.0 on the published base, VB01; 0.2.1 in a 17-module combo, RC42) and the author's rig (BL01: sweeps follow the model, stress as limited).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -150,9 +151,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "692962ffc94f269497e9f2973ff8e5c5e49b3ef7b9c0a0e40d11d6c873df1b39",
-        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA21: the Modwerk base's send-bus variant with digital voices (3ece243b, merged in repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.0-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "b5b06ee1f22c6a8d5575b62f8d023d6b05f69c5f0771f1f79ac81c0a828d0e75",
+        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA22: the Modwerk base's send-bus variant with digital voices (3ece243b, merged in repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.1-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -166,9 +167,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "692962ffc94f269497e9f2973ff8e5c5e49b3ef7b9c0a0e40d11d6c873df1b39",
-        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA21: the Modwerk base's send-bus variant with digital voices (3ece243b, merged in repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.0-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "b5b06ee1f22c6a8d5575b62f8d023d6b05f69c5f0771f1f79ac81c0a828d0e75",
+        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA22: the Modwerk base's send-bus variant with digital voices (3ece243b, merged in repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.1-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -182,9 +183,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "692962ffc94f269497e9f2973ff8e5c5e49b3ef7b9c0a0e40d11d6c873df1b39",
-        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA21: the Modwerk base's send-bus variant with digital voices (3ece243b, merged in repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.0-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "b5b06ee1f22c6a8d5575b62f8d023d6b05f69c5f0771f1f79ac81c0a828d0e75",
+        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA22: the Modwerk base's send-bus variant with digital voices (3ece243b, merged in repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.1-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
