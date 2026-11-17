@@ -442,9 +442,9 @@ def allocator(text):
                    'uint32_t modwerk_dsp_source_charge(unsigned);\n' + PENDING +
                    'volatile uint32_t dl_cycles_core=2; /* the core the last DL_ALLOC_CYCLES ran out on */\n',
                    'allocator declaration')
-    text = _change(text, '    uint32_t steady[2]={modwerk_dsp_source_charge(0),modwerk_dsp_source_charge(1)};\n',
-                   '    uint32_t steady[2]={modwerk_dsp_source_charge(0)+modwerk_controller_keybus_pending(0,ids),\n'
-                   '                        modwerk_dsp_source_charge(1)+modwerk_controller_keybus_pending(1,ids)};\n',
+    text = _change(text, '    steady[0]=modwerk_dsp_source_charge(0); steady[1]=modwerk_dsp_source_charge(1); /* after the voices made way */\n',
+                   '    steady[0]=modwerk_dsp_source_charge(0)+modwerk_controller_keybus_pending(0,ids); /* after the voices made way */\n'
+                   '    steady[1]=modwerk_dsp_source_charge(1)+modwerk_controller_keybus_pending(1,ids);\n',
                    'allocator key bus price')
     text = _change(text, '    if(steady[0]>a->allowance[0] || steady[1]>a->allowance[1]) return DL_ALLOC_CYCLES;',
                    '    if(steady[0]>a->allowance[0] || steady[1]>a->allowance[1]) {\n'
