@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.6.0-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Ping Pong Loop now lives here: LOP's third value PIPO plays the loop forward, then backward.",
+      "FUNC + turn on STA or END steps that point to the next zero crossing; S and E label their lines on the waveform.",
+      "Both play and look exactly as before. Remove Ping Pong Loop from your set: the two can't be installed together."
+    ]
+  },
+  {
     "version": "0.5.1-experimental",
     "date": "2026-11-16",
     "changes": [
