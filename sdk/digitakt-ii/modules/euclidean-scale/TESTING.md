@@ -4,6 +4,8 @@
 
 On Digitakt II OS 1.17, Claptom-music reported that QK17 preserved SCF, LO, HI and the saved RNN melody after Save Project and a cold boot. Standalone KIT Save and Load restored the saved bounds and melody after changes. QK17 used Modwerk base `e88273ed`. The local image SHA-256 was `4a87420a08ff3be4f526dd80012807661b53908fa2a2e50c4d4e2dd3437f0441`.
 
+Two isolated builds produced identical source-only recipes. Linking the catalog package (SHA-256 `8e220e314369873074e7e2c9d08f10a68a6b6cc9611557c69cd84b3b0dc921e5`) with the same base and QK17 OS label reproduced the hardware test image byte for byte.
+
 ## Local emulator build
 
 Digitakt II OS 1.17, digikit `d6de4d0`. The module used the pinned Modwerk base `0a91dfe0c53f4b056f54a815d66aa8a7234698afa27e993868045fac6246ad7b` and compiled on Windows with m68k-elf GCC 13.1.0 and binutils 2.40. The linked emulator image SHA-256 is `51623261d813aa9af2f1a1c49172a5420d12219cba4fe2e8817035c937672a1e`. The linker found no patch-site overlap. The module has 1,602 bytes in `.run` and 8,208 bytes in `.bss`.
