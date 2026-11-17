@@ -9,7 +9,7 @@ export const RELEASE_STEPS: Record<DeveloperTask, { id: DeveloperStage; title: s
     { id: 'build', title: 'Build it', summary: 'It writes the module and runs the checks.' },
     { id: 'test', title: 'Test on your unit', summary: 'Your agent tests it over USB first. Then you play it and listen. No unit? Start in the emulator.' },
     { id: 'submit', title: 'Open the pull request', summary: 'Once you say testing is done. Automatic checks run on it.' },
-    { id: 'review', title: 'Owner review', summary: 'The owner reviews every first release. Your agent fixes what the review asks for.' },
+    { id: 'review', title: 'Community review', summary: 'Every first release is reviewed before it goes live. Your agent fixes what the review asks for.' },
     { id: 'publish', title: 'Check it live', summary: 'After the merge it is in the library. Check the live version and its download.' },
   ],
   update: [

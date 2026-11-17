@@ -238,8 +238,8 @@ describe('start developing page', () => {
     // The steps follow the skill: plan, build, test on the unit, pull request, live.
     expect(html.indexOf('Agree the plan')).toBeLessThan(html.indexOf('Test on your unit'))
     expect(html.indexOf('Test on your unit')).toBeLessThan(html.indexOf('Open the pull request'))
-    expect(html.indexOf('Open the pull request')).toBeLessThan(html.indexOf('Owner review'))
-    expect(html.indexOf('Owner review')).toBeLessThan(html.indexOf('Check it live'))
+    expect(html.indexOf('Open the pull request')).toBeLessThan(html.indexOf('Community review'))
+    expect(html.indexOf('Community review')).toBeLessThan(html.indexOf('Check it live'))
   })
 
   it('preselects the machine an overview link names', () => {
