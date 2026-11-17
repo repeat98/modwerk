@@ -1,15 +1,17 @@
 """<Module name> -- one line on what it is.
 
-Copy this directory to modules/<yourname>/ and edit. Directories starting
-with `_` are skipped by the registry, so this file is never built.
+`npm run module:new` made this draft under sdk/drafts/. It builds as it is:
+`npm run module:dev -- <id>` tries it on your unit over USB, and
+`npm run module:doctor -- --draft <id>` checks it.
 
 Say what the module is, what it changes, what is measured and what is
 open. Delete every comment below once answered.
 
-docs/remixer/MODULES.md is the guide; tools/remix/schema.py the field list.
-This is the skeleton of a DSP effect. modules/miniverb/ is a finished one
-(an in-place insert with its own verify gate). A module that changes what
-the firmware does starts from modules/_template_cf/ (then modules/repitch/).
+sdk/octabam/docs/remixer/MODULES.md is the guide; sdk/octabam/tools/remix/schema.py
+the field list; docs/OCTATRACK_API.md the hooks. This is the skeleton of a DSP
+effect. sdk/octatrack/modules/miniverb/ is a finished one (an in-place insert
+with its own verify gate). A module that changes what the firmware does starts
+from `npm run module:new -- <id> --kind coldfire` (then sdk/octatrack/modules/repitch/).
 """
 
 from remix.schema import (Category, Proof, BusRole, DspSection, Formatter, Gate, Harness, Kind,
@@ -21,7 +23,7 @@ MODULE = Module(
     name="_template",
     key="TEMPLATE",
     kind=Kind.DSP_EFFECT,          # or DSP_CLIENT / CF_PATCH / HYBRID
-    doc="One line, shown by `make modules`.",
+    doc="One line, shown in the build report.",
     category=Category.TRACK, author="__AUTHOR__", author_url="https://github.com/__AUTHOR__",
     proof=Proof.UNTESTED, proof_note="Development scaffold; no module behavior has been verified.",
 
@@ -76,12 +78,11 @@ MODULE = Module(
     # render should be able to place on a track.
     harness=Harness(layout_char=None, is_server=False),
 
-    # The checks `make check` runs when a remix carries this module: your
-    # render gates (modules/miniverb has verify.py). stage="image" for one that reads the built image.
+    # The checks the build runs on this module: your render gates
+    # (sdk/octatrack/modules/miniverb has verify.py). stage="image" for one that reads the built image.
     gates=(Gate("modules/_template/verify.py", remix_arg=False),),
     # Every knob at its DEAREST setting, by name: the mode the pricer calls
-    # the worst loop, work-gating knobs at maximum. The pressure render and
-    # the stress fixture use it; without it `make accept` is blocked for
-    # every remix that carries the module. Checked against `params`.
+    # the worst loop, work-gating knobs at maximum. The pressure render, the
+    # stress fixture and npm run perf:audit use it. Checked against `params`.
     dear={"P0": 127, "P1": 127},
 )

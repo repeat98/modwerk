@@ -76,6 +76,24 @@ Fixed velocity read from stock's flag every 100M instructions; screens compared 
 | FX track, LFO held, TIM turned | TIM becomes the FX LFO's destination |
 | FIX + FRQ, FUNC + LFO, FLTR then LFO tap then a turn | as 0.1 / as stock |
 
+## rytm-emu (0.3.0, LFO depth from a locker set without an encoder event)
+
+IQ01 (0.2.0) and IQ02 (the MIDI depth change alone, before the look), each with a private MIDI-to-locker test module (the author's), Filter Hz and QPER
+Live Rec on the plain base, BD FILTER page, LFO held 8000M-8400M:
+- An NRPN FRQ sweep from 127 to 42 (NRPN 1:20 through that module, which calls stock's locker
+  interface): 0.2.0 makes FRQ the destination at depth (0) and the depth never moves; IQ02
+  makes it the destination and sets the depth to -85.00, kept when LFO is held again, the sound's
+  FRQ unchanged after the release.
+- Knob E turned ten times (+12 counts, 6.67M apart) with LFO held and no MIDI: 0.2.0 and IQ02 give
+  the same screen, pixel for pixel (the encoder path is unchanged).
+- FIX and QPER holds with the sweep: same screens on both.
+
+After a review, IQ03 (the encoder flag cleared at the top of every locker set and on every key
+event, and set only for knobs A-H): the same screens as IQ02 for the MIDI depth (-85.00) and as
+0.2.0 for the encoder-only run, FIX and QPER.
+
+Not tested on a unit.
+
 ## Hardware
 
 **RC17 (QM06 inside), reported by the author, 3 Nov 2026:**
@@ -129,3 +147,53 @@ Not covered by the rig: how the LFO sounds, pads, the FX track's LFO, kit save a
 5. PERF mode: hold FIX and turn a knob (the box), then with FIX still held press a pad and turn (a performance lock, as stock).
 6. Save the kit, power cycle: the links are kept.
 7. FX track: FIX tap toggles fixed velocity at once, FIX held with a knob turned edits the knob, SAMPLER opens the recorder. On a sound page hold FIX, select the FX track: its knobs edit as normal.
+
+## rytm-emu (0.3.0, a long hold is a look)
+
+RL24 (4335ec13…, a private combined image with Filter Hz, QPER Live Rec and a private MIDI module of the author's), FILTER page of BD, keys held on
+the emulator's panel. The hold is counted in ev_tick calls (10). LFO held 150, 350 or 450 ms opens the LFO page;
+500, 550 or 650 ms leaves the FILTER page. LFO held 1.2 s with AMP tapped 0.2 s in: the AMP page stays (counted by
+stock's key repeat, as first built, the repeat moved to AMP and the LFO page opened: a review found it). SAMPLER held
+150 ms opens the recorder, 800 ms does not. FIX: its toggle shows nothing on the screen, so not seen; it takes the
+same check. On a unit: not tested.
+
+## Hardware (0.3.0)
+
+**RL26 (a private combined image with this main.c), RAM-booted from RB08, by the author's hand, 15 Nov 2026:**
+- FIX tap: fixed velocity toggles; FIX held about a second, no turn: unchanged.
+- LFO tap: the LFO page opens; LFO held about a second: the page stays.
+- SAMPLER tap: the recorder opens; SAMPLER held about a second: no recorder.
+- LFO held, AMP tapped, LFO let go after about a second: the AMP page stays.
+- LFO held in scene edit, a knob turned: that parameter becomes the LFO's destination at a depth, the page stays.
+
+**Test rig (Rytm and a MIDI controller over USB, with the author's go), RL26 to RL31, 15 Nov 2026:** the LFO hold's
+destination and depth from MIDI through stock's locker (eight slow controller ticks: DEP +8.00, the page stays), FIX
+and SAMPLER amounts from MIDI. All pass. This exact package has not run on a unit.
+
+## 0.3.1 (UI-task-only functions cold)
+
+The change: functions that run only in the UI task are marked `__attribute__((cold))` (built for size, out of the hot
+code); no behaviour change. 1,832 bytes less of the shared mod RAM. Old and new objects compared with every function
+at `-O2`: the instructions are byte-identical apart from relocation offsets. An independent code review found no defect.
+
+Images (OS 1.74, private, never committed): a development base `8e336c94` (Modwerk's send-bus base with the dev link,
+from a private tree that leaves out the send bus) with this module, Control In Actions, Improved AMP and Filter Hz, each
+cold-marked the same way.
+
+**rytm-emu (`2ac0f1f` with a private RAM-boot model), 16 Nov 2026:** CB00 (the old sources) recorded the reference
+screens; CA01 (the new sources) gave identical screens and measures in every case: qma-fix-velocity, qma-lfo-depth,
+qma-lfo-grab, qma-lfo-on-lfo-page, qma-lfo-regrab, qma-lfo-tap and the look cases look-lfo-150, look-lfo-650,
+look-lfo-amp, look-sampler-150, look-sampler-800. All pass.
+
+**Test rig on the unit (Modwerk's rig, with npp1993's go), 16 Nov 2026:** CA02 (CA01's sources on RB08's store lock;
+they differ from this folder's source only in the macro's comment text), RAM-booted on the author's Analog Rytm MKII
+(flash RB08) over the dev link. Screens compared with the repository's unit references:
+- qma-fix-velocity, qma-lfo-depth, qma-lfo-grab, qma-lfo-regrab, qma-lfo-tap: pass.
+- qma-lfo-on-lfo-page: not checked (no unit reference for its screen).
+- The look cases: rytm-emu only.
+
+Not tested: this package's own image on a unit, and no hand test on the unit.
+
+**Screenshots:** re-captured in rytm-emu from this version (QM31, `55a50da7…`: plain base `1c14b6b0` and this folder's
+0.3.1 source, linked by Modwerk's linker against stock OS 1.74) with `media/capture.json`'s plans. All six PNGs are
+byte-identical to 0.3.0's (QM30).

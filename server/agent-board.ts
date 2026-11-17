@@ -29,7 +29,7 @@ export const TOPIC_KINDS = [...CLAIM_KINDS, 'machine', 'site'] as const
 export type TopicKind = typeof TOPIC_KINDS[number]
 export const MESSAGE_KINDS = ['question', 'finding', 'wanted'] as const
 export type MessageKind = typeof MESSAGE_KINDS[number]
-export const MESSAGE_LIMIT = 500, QUESTION_DAYS = 30, FINDING_DAYS = 90, OPEN_THREADS = 20, REPLY_LIMIT = 50, ACTIVITY_DAYS = 30
+export const MESSAGE_LIMIT = 500, QUESTION_DAYS = 30, ANSWERED_DAYS = 7, FINDING_DAYS = 90, OPEN_THREADS = 20, REPLY_LIMIT = 50, ACTIVITY_DAYS = 30
 
 /** Board text reaches other developers' agents, so it is plain prose on one line: no links, paths, addresses, code,
  * tokens or invisible characters. */
@@ -116,15 +116,17 @@ const expiry = (now: number, linked: boolean) => linked ? null : new Date(now + 
 type MessageRow = { id: string; kind: MessageKind | 'reply'; parent_id: string | null; topic_kind: TopicKind; topic_key: string; user_id: string; github_login: string; to_login: string | null; body: string; pull_request: number | null; created_at: string; active_at: string; ended_at: string | null; ended_reason: string | null }
 // A suspended account's posts disappear at once; the hourly run deletes them.
 const MESSAGE_SELECT = 'SELECT m.id,m.kind,m.parent_id,m.topic_kind,m.topic_key,m.user_id,u.github_login,m.to_login,m.body,m.pull_request,m.created_at,m.active_at,m.ended_at,m.ended_reason FROM agent_messages m JOIN users u ON u.id=m.user_id AND u.suspended=0'
-// A question lapses 30 days after its last post, a finding or wanted task 90 days after it was left, even before the hourly
-// run ends it. Both bind the two cutoffs from cutoffs().
-const LIVE = "m.ended_at IS NULL AND ((m.kind='question' AND m.active_at>?) OR (m.kind<>'question' AND m.created_at>?))"
-const ENDED = "(m.ended_at IS NOT NULL OR (m.kind='question' AND m.active_at<=?) OR (m.kind<>'question' AND m.created_at<=?))"
-const cutoffs = (now: number) => [new Date(now - QUESTION_DAYS * DAY).toISOString(), new Date(now - FINDING_DAYS * DAY).toISOString()]
 // Who wrote a thread's last post: a question waits for whoever did not.
 const LAST_WORD = 'COALESCE((SELECT r.user_id FROM agent_messages r WHERE r.parent_id=m.id ORDER BY r.created_at DESC,r.rowid DESC LIMIT 1),m.user_id)'
+// A question lapses 30 days after its last post, or 7 once someone other than its asker has the last word: an answer the asker
+// lets stand settles it, and a reply from the asker keeps it open. A finding or wanted task lapses 90 days after it was left.
+// Both apply even before the hourly run ends the thread, and both bind the three cutoffs from cutoffs().
+const LIVE = `m.ended_at IS NULL AND ((m.kind='question' AND m.active_at>? AND (m.active_at>? OR ${LAST_WORD}=m.user_id)) OR (m.kind<>'question' AND m.created_at>?))`
+const ENDED = `(m.ended_at IS NOT NULL OR (m.kind='question' AND (m.active_at<=? OR (m.active_at<=? AND ${LAST_WORD}<>m.user_id))) OR (m.kind<>'question' AND m.created_at<=?))`
+const cutoffs = (now: number) => [QUESTION_DAYS, ANSWERED_DAYS, FINDING_DAYS].map(days => new Date(now - days * DAY).toISOString())
 function threadView(row: MessageRow, replies: MessageRow[], now: number) {
-  const lapses = Date.parse(row.kind === 'question' ? row.active_at : row.created_at) + (row.kind === 'question' ? QUESTION_DAYS : FINDING_DAYS) * DAY
+  const answered = (replies.at(-1)?.user_id ?? row.user_id) !== row.user_id
+  const lapses = Date.parse(row.kind === 'question' ? row.active_at : row.created_at) + (row.kind === 'question' ? (answered ? ANSWERED_DAYS : QUESTION_DAYS) : FINDING_DAYS) * DAY
   const ended = row.ended_at ?? (lapses <= now ? new Date(lapses).toISOString() : null)
   return { id: row.id, kind: row.kind, topic: { kind: row.topic_kind, key: row.topic_key }, author: row.github_login, to: row.to_login, body: row.body, pullRequest: row.pull_request, createdAt: row.created_at, activeAt: row.active_at,
     ...(ended ? { endedAt: ended, endedReason: row.ended_reason ?? 'expired' } : { endsAt: new Date(lapses).toISOString() }),
@@ -141,6 +143,20 @@ async function thread(db: Database, id: string, now: number) {
 }
 async function liveThread(db: Database, id: string, now: number) {
   return await db.prepare(MESSAGE_SELECT + ' WHERE m.id=? AND m.parent_id IS NULL AND ' + LIVE).bind(id, ...cutoffs(now)).first<MessageRow>()
+}
+
+/** One reply to an open thread; the maintenance bot posts the owner's through here too (server/maintenance-bot.ts). */
+export async function boardReply(db: Database, userId: string, id: string, value: unknown, pr: number | null, nowMs: number) {
+  if (!await liveThread(db, id, nowMs)) throw new HttpError(404, 'No open board thread has that id.')
+  const count = await db.prepare('SELECT COUNT(*) AS n FROM agent_messages WHERE parent_id=?').bind(id).first<{ n: number }>()
+  if ((count?.n ?? 0) >= REPLY_LIMIT) throw new HttpError(409, `This thread has ${REPLY_LIMIT} replies. Start a new question.`)
+  const text = messageBody(value), now = new Date(nowMs).toISOString()
+  // A reply keeps a question open for another 30 days; one that names the pull request ("sent as #1311") links it.
+  await db.batch([
+    db.prepare("INSERT INTO agent_messages(id,kind,parent_id,user_id,body,created_at,active_at) VALUES(?,'reply',?,?,?,?,?)").bind(crypto.randomUUID(), id, userId, text, now, now),
+    db.prepare('UPDATE agent_messages SET active_at=?,pull_request=COALESCE(?,pull_request),checked_at=CASE WHEN ? IS NULL THEN checked_at END WHERE id=?').bind(now, pr, pr, id),
+  ])
+  return await thread(db, id, nowMs)
 }
 
 /** Questions, findings, wanted tasks and replies (docs/AGENT_BOARD.md, "Questions and findings"). */
@@ -208,16 +224,8 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
   // The thread's author, or whoever it is to (a question's addressee, a wanted task's taker), links the pull request that ends it.
   const linker = !user || row.user_id === user.id || row.to_login === user.github_login
   if (action === 'replies') {
-    const count = await db.prepare('SELECT COUNT(*) AS n FROM agent_messages WHERE parent_id=?').bind(id).first<{ n: number }>()
-    if ((count?.n ?? 0) >= REPLY_LIMIT) throw new HttpError(409, `This thread has ${REPLY_LIMIT} replies. Start a new question.`)
-    const text = messageBody(body.body)
     if (pr && !linker) throw new HttpError(403, 'Only the thread\'s author, or the one it is to, links its pull request.')
-    // A reply keeps a question open for another 30 days; one that names the pull request ("sent as #1311") links it.
-    await db.batch([
-      db.prepare("INSERT INTO agent_messages(id,kind,parent_id,user_id,body,created_at,active_at) VALUES(?,'reply',?,?,?,?,?)").bind(crypto.randomUUID(), id, user!.id, text, now, now),
-      db.prepare('UPDATE agent_messages SET active_at=?,pull_request=COALESCE(?,pull_request),checked_at=CASE WHEN ? IS NULL THEN checked_at END WHERE id=?').bind(now, pr, pr, id),
-    ])
-    return response({ message: await thread(db, id, nowMs) }, 201)
+    return response({ message: await boardReply(db, user!.id, id, body.body, pr, nowMs) }, 201)
   }
   if (action === 'take') {
     // A wanted task has one holder at a time, named in to_login; taking it again renews it, and --pr links its pull request.
@@ -350,7 +358,7 @@ async function pulls(env: Env, path: string): Promise<unknown> {
  * request by branch, release claims whose pull request was merged or closed, and end threads whose linked pull request
  * merged (a finding as folded, a question or wanted task as merged). A bounded batch per run, the least recently checked first. */
 export async function syncAgentClaims(env: Env, db: Database, batch = 25) {
-  const nowMs = Date.now(), now = new Date(nowMs).toISOString(), kept = new Date(nowMs - RELEASED_KEPT_DAYS * DAY).toISOString(), [question, finding] = cutoffs(nowMs)
+  const nowMs = Date.now(), now = new Date(nowMs).toISOString(), kept = new Date(nowMs - RELEASED_KEPT_DAYS * DAY).toISOString()
   const suspended = 'SELECT id FROM users WHERE suspended=1'
   await db.batch([
     db.prepare('DELETE FROM agent_claims WHERE released_at IS NOT NULL AND released_at<=?').bind(kept),
@@ -358,7 +366,7 @@ export async function syncAgentClaims(env: Env, db: Database, batch = 25) {
     db.prepare(`UPDATE agent_claims SET released_at=?,released_reason='suspended' WHERE released_at IS NULL AND user_id IN (${suspended})`).bind(now),
     db.prepare(`DELETE FROM agent_messages WHERE parent_id IN (SELECT id FROM agent_messages WHERE parent_id IS NULL AND (user_id IN (${suspended}) OR ended_at<=?))`).bind(kept),
     db.prepare(`DELETE FROM agent_messages WHERE user_id IN (${suspended}) OR (parent_id IS NULL AND ended_at<=?)`).bind(kept),
-    db.prepare("UPDATE agent_messages SET ended_at=?,ended_reason='expired' WHERE parent_id IS NULL AND ended_at IS NULL AND ((kind='question' AND active_at<=?) OR (kind<>'question' AND created_at<=?))").bind(now, question, finding),
+    db.prepare(`UPDATE agent_messages AS m SET ended_at=?,ended_reason='expired' WHERE m.parent_id IS NULL AND m.ended_at IS NULL AND ${ENDED}`).bind(now, ...cutoffs(nowMs)),
   ])
   if (!githubConfig(env)) return
   const folds = (await db.prepare('SELECT id,pull_request FROM agent_messages WHERE parent_id IS NULL AND ended_at IS NULL AND pull_request IS NOT NULL ORDER BY checked_at IS NOT NULL,checked_at LIMIT ?').bind(batch).all<{ id: string; pull_request: number }>()).results

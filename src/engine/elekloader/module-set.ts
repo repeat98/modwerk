@@ -28,6 +28,9 @@ export interface RuntimePackage {
   entries?: number
   /** Exact IDENTIFY digest when authored code depends on this base's addresses. */
   requiredBase?: string
+  /** Loader capability bits (MWCP) the package needs beyond what its records imply, such as RuntimeFeature.uiRoots for a
+   * module with a window of its own: only a base that refuses to retire it while the window is open may take it. */
+  requiresCapabilities?: number
 }
 export interface MachineVariant extends RuntimePackage {
   layout: number; current: boolean; members: { id: string; version: string }[]
@@ -121,7 +124,7 @@ function requirements(entry: RuntimePackage, group = false) {
   const requires = entry.requires ?? 0, claims = entry.claims ?? 0, entries = entry.entries ?? 0
   // An engine (ABI 10 hook entries) runs only for a controller its base trusts, so only a base-bound package has one.
   if (![6, 7, 8, 9, 10].includes(abi) || !bounded(sites, 128) || !bounded(copies, 128) || !bounded(fills, 64) ||
-      !bounded(entry.features ?? 0, 65535) || (abi < 8 && fills) || (abi < 7 && copies) ||
+      !bounded(entry.features ?? 0, 65535) || !bounded(entry.requiresCapabilities ?? 0, 65535) || (abi < 8 && fills) || (abi < 7 && copies) ||
       !bounded(requires, 65535) || !bounded(claims, DSP_CLAIMS) || (abi < 9 && (requires || claims)) || (requires & ~BASE_DSP_FEATURES) ||
       !bounded(entries, HOOK_ENTRIES) || (entries && (abi < 10 || entry.requiredBase === undefined)) ||
       (group && abi !== 8) || (entry.requiredBase !== undefined && (typeof entry.requiredBase !== 'string' || !/^[0-9a-f]{64}$/.test(entry.requiredBase))) ||
@@ -130,7 +133,7 @@ function requirements(entry: RuntimePackage, group = false) {
     throw invalidPackage()
   // Required features follow the actual record types even if a manifest accidentally omits a bit.
   const features = (entry.features ?? 0) | (sites ? RuntimeFeature.sites : 0) | (copies ? RuntimeFeature.stockCopies : 0) |
-    (fills ? RuntimeFeature.fills : 0) | (group ? RuntimeFeature.machineGroups : 0)
+    (fills ? RuntimeFeature.fills : 0) | (group ? RuntimeFeature.machineGroups : 0) | (entry.requiresCapabilities ?? 0)
   return { abi, sites, copies, fills, features, requires, claims, entries }
 }
 /** Two ABI 9 claims meet as the loader says (loader.c claims_meet): the same core (an ABI 10 claim on both cores, core 2,
@@ -155,7 +158,7 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
   // Hooks 0-3 are the core handlers; an ABI 8 package that subscribes to the base's site events (feature 128) adds one
   // word per event of sdk/machines/octatrack/events.json after them: its order in the top byte, its handler below.
   const subscriber = abi >= 8 && (want.features & RuntimeFeature.siteEvents) !== 0
-  if (flags & ~(abi >= 8 ? 7 : 3) || image + bss > 131072 || relocations > 2048 || hooks > (subscriber ? 4 + SITE_EVENTS : 4) ||
+  if (flags & ~(abi >= 8 ? 7 : 3) || image > 131072 || image + bss > 294912 || relocations > 2048 || hooks > (subscriber ? 4 + SITE_EVENTS : 4) ||
       view.getUint32(32) > 4096 || view.getUint16(36) > 256 || header + 4 * hooks + image + 4 * relocations > data.length) fail()
   if (variant) {
     const mask = variant.members.reduce((value, member) => value | MACHINE_BITS[member.id], 0), start = header + 4 * hooks
@@ -299,6 +302,11 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     for (const group of groups) {
       const groupMembers = new Set(group.variants.flatMap(variant => variant.members.map(member => member.id)))
       const wanted = target.moduleIds.filter(id => groupMembers.has(id))
+      if (wanted.length && wanted.every(id => current.offIds?.includes(id))) continue // switched off on the unit: it stays off
+      // The machine package is off on the unit and the set wants none of its members: it leaves, by the package's own id.
+      if (!wanted.length && !current.runtimeGroups?.some(item => item.id === group.id) && [...groupMembers].some(id => current.offIds?.includes(id))) {
+        steps.push({ id: group.id, name: group.name, group: true }); continue
+      }
       const records = current.runtimeGroups?.filter(item => item.id === group.id) ?? []
       if (records.length > 1) throw new ModuleSetError('The Octatrack reported more than one copy of its machine package. Reconnect and read it again.')
       const record = records[0], previous = group.variants.find(variant => variant.layout === record?.layout)
@@ -315,7 +323,7 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     }
     const inGroup = (id: string) => members.has(id) && current.runtimeGroups?.some(record => groups.find(group => group.id === record.id)?.variants.find(variant => variant.layout === record.layout)?.members.some(member => member.id === id))
     // Older individual machine inventories do not retain a verified package identity for exact Undo.
-    const removals = changes.remove.filter(id => !inGroup(id) && !byGroup.has(id))
+    const removals = changes.remove.filter(id => !inGroup(id) && !byGroup.has(id) && !(members.has(id) && current.offIds?.includes(id)))
     for (const id of current.moduleIds) if (members.has(id) && !inGroup(id) && target.moduleIds.includes(id)) removals.push(id)
     if (removals.some(id => members.has(id)))
       throw new ModuleSetError('This site can’t identify the exact individual machine package on your Octatrack, so it can’t safely replace it or undo that change.')
@@ -344,15 +352,20 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     }
     if (steps.length > 1 && !(capabilities && capabilities.features & RuntimeFeature.moduleSets)) throw new BaseUpdateRequired()
   }
-  const inventory = (modules: MissingModule[]): Inventory => {
+  /** `off`: the modules switched off on the unit (its OFF list), named as the installed ones are. One the unit also
+   * reports as running is running: the list was read a moment apart. */
+  const inventory = (modules: MissingModule[], off?: MissingModule[]): Inventory => {
     const moduleIds: string[] = [], runtimeGroups: NonNullable<Inventory['runtimeGroups']> = []
+    const named = (item: MissingModule) => { const variant = byGroup.get(item.module)?.variants.find(variant => variant.layout === item.layout)
+      return variant ? variant.members.map(member => member.id) : [BY_RUNTIME_ID.get(item.module) ?? item.module] }
     for (const item of modules) {
-      const group = byGroup.get(item.module), variant = group?.variants.find(variant => variant.layout === item.layout)
+      const group = byGroup.get(item.module)
       if (group) runtimeGroups.push({ id: group.id, layout: item.layout })
-      moduleIds.push(...variant ? variant.members.map(member => member.id) : [BY_RUNTIME_ID.get(item.module) ?? item.module])
+      moduleIds.push(...named(item))
     }
     if (new Set(moduleIds).size !== moduleIds.length) throw new ModuleSetError('The Octatrack’s module list contains overlapping machine packages. Reconnect and read it again.')
-    return { moduleIds, removedStockFx: [], ...runtimeGroups.length ? { runtimeGroups } : {} }
+    const offIds = off && [...new Set(off.flatMap(named))].filter(id => !moduleIds.includes(id))
+    return { moduleIds, removedStockFx: [], ...runtimeGroups.length ? { runtimeGroups } : {}, ...offIds ? { offIds } : {} }
   }
   /** The base layout the set needs, when the connected base runs another (or isn't a published base at all). */
   function requireLayout(target: InventoryTarget, base?: string) {
@@ -386,8 +399,10 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
         checkPackage(entry, data, step.id, step.group ? entry as MachineVariant : undefined)
         packages.set(entry, data)
       })))
+      // A removal, or a machine package replacing the one on the unit (it has the previous one as its undo), changes what a
+      // track may be using; a new module cannot be in use yet.
       return { name: target.name, changes: steps.map(step => ({ module: step.name, data: step.add ? packages.get(step.add)! : removalPackage(step.id),
-        undo: step.undo ? packages.get(step.undo)! : step.add ? removalPackage(step.id) : undefined })) }
+        undo: step.undo ? packages.get(step.undo)! : step.add ? removalPackage(step.id) : undefined, ...(!step.add || step.undo ? { replaces: true } : {}) })) }
     },
   }
 }
@@ -424,7 +439,9 @@ export function moduleSetKit(link: OctatrackLink) {
     const modules = await link.inventory()
     // Only a base that doesn't know INVENTORY lands here; couldn't-ask-now rejects with LinkBusyError, which callers retry.
     if (!modules) throw new ModuleSetError('This Octatrack’s base doesn’t list its modules. Install the latest Modwerk base, then try again.')
-    return inventoryFrom(modules)
+    // Undefined from a base before PROJ > MODWERK > MODULES, and when the list can't be read where the modules could
+    // (a remote read-only session's scope has no OFF request): the unit's modules are still known, the off ones are not.
+    return inventoryFrom(modules, await link.off().catch(() => undefined))
   }
   return { readInventory, prepareUpdate: async (target: InventoryTarget) => {
     const limit = overLimitMessage(target.moduleIds, 'sync')

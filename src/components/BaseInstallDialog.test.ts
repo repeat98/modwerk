@@ -97,6 +97,28 @@ describe('the base dialog for a unit on an older base', () => {
     expect(container.querySelector('.base-update-hands-off')).toBeNull()
     expect(buttonNamed('Continue')).toBeDefined()
   })
+  it('asks for a power cycle in place of hands off once a restart is not back, and says which base starts', async () => {
+    const { update } = await older(true)
+    let next = () => {}
+    update.mockImplementation(async (_bin, _base, report) => {
+      report?.('starting'); report?.('starting', undefined, true)
+      await new Promise<void>(resolve => { next = resolve })
+      report?.('restarting', undefined, true)
+      await new Promise<void>(resolve => { next = resolve })
+      report?.('done')
+    })
+    click(container.querySelector('.risk-accept input')!); click(buttonNamed('Update over USB')!)
+    await vi.waitFor(() => expect(container.querySelector('.base-update-hands-off')?.textContent).toContain('Switch your Octatrack off and on'))
+    const box = container.querySelector('.base-update-hands-off')!
+    expect(box.getAttribute('role')).toBe('alert')
+    expect(box.textContent).toContain('Nothing is saved yet, so it starts your current base')
+    expect(box.textContent).not.toContain('no power switch')
+    await act(async () => next()); await settle()
+    expect(container.querySelector('.base-update-hands-off')!.textContent).toContain('The new base is saved and checked, so it starts on the new base')
+    await act(async () => next()); await settle()
+    expect(container.querySelector('.base-update-hands-off')).toBeNull()
+    expect(container.textContent).toContain('Done. The new base is saved')
+  })
   // A base writing another base's container quiesces stock, and a stall then hung units (30 October 2026): on two slots
   // the new base also starts from RAM and saves itself.
   it('on two slots, names Send, Restart, Save as with one copy', async () => {

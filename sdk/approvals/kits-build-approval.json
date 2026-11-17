@@ -1,0 +1,14 @@
+{
+  "kind": "owner-approved-update",
+  "id": "kits",
+  "version": "0.1.0-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-16",
+  "waived": [
+    "chip-worst-case-cycles",
+    "current-build-hardware"
+  ],
+  "sourceSha256": "49938a21191befd944c3f82fba87aa62333a206672e39dad91f48f7f2e1e249a",
+  "ownerStatement": "Release Kits 0.1.0-experimental. I waive the static cycle bound and the hardware qualification of this exact build for this version.",
+  "reason": "A port of Sam Banks' octabam KITS (MIT, his OK on 13 November 2026) onto base 0.7.4's hooks and ot_sample_memory. On the owner's MKII (a development twin of 0.7.4 with ot_sample_memory, 16 November 2026) it ran as trials: it took its 331 pages of sample memory at install, kept them through a project load, gave them back at removal, loaded Kits while playing beside 14 kept modules, and cost +0.1 points of CPU at rest, with no skipped render, crash or stall (TESTING.md). No static cycle count was made, and device:qualify did not run on the exact release package and base."
+}

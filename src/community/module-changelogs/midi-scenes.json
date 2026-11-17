@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.3.0-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "MIDI Scenes is back, rebuilt: hold SCENE A or B and turn a knob on a MIDI track to lock it; the crossfader morphs the locks and sends them as CCs.",
+      "Locks are saved with the project in their own file, so the LFO designer's shapes are no longer touched. Projects saved with 0.2 are converted the first time they load.",
+      "Works beside other modules. Needs Modwerk base 0.7.4 or newer, over USB.",
+      "Known issue: muting a scene (FUNC + SCENE A or B), saving, reloading and a power cycle are not yet tested with MIDI locks."
+    ]
+  }
+]

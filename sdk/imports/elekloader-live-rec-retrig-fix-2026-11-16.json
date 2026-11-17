@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "live-rec-retrig-fix-2026-11-16",
+  "about": "Modwerk source-only live-rec-retrig-fix package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/live-rec-retrig-fix.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "live-rec-retrig-fix-0.2.2-experimental-os1.74.elemod",
+      "sha256": "6db99decbb02225ebabc0bc261471cc06f4b1b413c2fc3c2a893af24d657e7b9",
+      "id": "live-rec-retrig-fix",
+      "version": "0.2.2-experimental",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "4d1cbd5e2a8c027229488e9fd987284ed68fd90e",
+        "path": "sdk/imports/packages/live-rec-retrig-fix/live-rec-retrig-fix-0.2.2-experimental-os1.74.elemod"
+      },
+      "title": "Live Rec Retrig Fix",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "LIVE RECORDING records every pad retrig hit as a real trig, with the velocity and timing you played. While the sequencer plays, every pad retrig falls on its swung grid (Retrig Grid).",
+      "description": "LIVE RECORDING records every pad retrig hit as a real trig, with the velocity and timing you played. While the sequencer plays, every pad retrig falls on its swung grid (Retrig Grid).",
+      "category": "Sequencer",
+      "author": "npp1993",
+      "needs_core": "0.7",
+      "on_unit": "This source ran on the author's Analog Rytm MKII on OS 1.74 from RAM in test images with test-only counters (LQ04 with BD ANALOG: 145 hits, 0 dropped, every hit on its step; LQ05, 13 modules); this package has not run alone on a unit."
+    }
+  ]
+}

@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "identity": "b6ee556855a209907a27d917f51b8324fd3158e2ade304fc4b2c6aa25104ef54",
+  "identity": "93d9d821fe4d0fef23d94c437335ead98865e0196ad27c22195b5856368e6f8b",
   "package": "core-1.1.elemod",
   "sections": {
     ".boot": 50,
-    ".run": 10279,
-    ".bss": 11200
+    ".run": 10448,
+    ".bss": 9884
   },
-  "sites": 26,
+  "sites": 27,
   "built": {
     "kit": "3b31ef3c0e43c810e3acd0be6257e2484b20fc40",
     "toolchain": {

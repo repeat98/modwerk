@@ -29,7 +29,7 @@
     },
     {
       "id": "airwindows-chorus",
-      "version": "0.1.2-experimental",
+      "version": "0.1.3-experimental",
       "addedAt": "2026-10-08T21:00:00Z"
     },
     {
@@ -196,6 +196,16 @@
       "id": "amiga",
       "version": "0.3.0-experimental",
       "addedAt": "2026-11-11T10:50:00Z"
+    },
+    {
+      "id": "midi-scenes",
+      "version": "0.3.0-experimental",
+      "addedAt": "2026-11-16T20:00:00Z"
+    },
+    {
+      "id": "kits",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-16T21:00:00Z"
     }
   ]
 }

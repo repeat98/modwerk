@@ -341,7 +341,7 @@ describe('social onboarding from either account entry point',()=>{
     f.db.exec('UPDATE social_pending_accounts SET expires=0; UPDATE social_flows SET expires=0')
     expect((await f.call('/auth/sso/exchange','POST',{code:pending.code,verifier:pending.verifier})).status).toBe(400)
     await cleanupAccounts(f.env.DB!)
-    expect(f.db.prepare("SELECT COUNT(*) AS count FROM users WHERE id NOT IN ('administrator','modwerk')").get()).toEqual({count:0})
+    expect(f.db.prepare("SELECT COUNT(*) AS count FROM users WHERE id NOT IN ('administrator','modwerk','tars')").get()).toEqual({count:0})
     for(const table of ['social_pending_accounts','auth_users','auth_accounts','auth_sessions','social_flows'])expect(f.db.prepare('SELECT COUNT(*) AS count FROM '+table).get()).toEqual({count:0})
   })
 })

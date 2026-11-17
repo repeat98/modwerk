@@ -1,0 +1,1 @@
+Site: Air Chorus's byline and author name Chris Johnson (Airwindows) alone, linked to his GitHub, with no support cup. The port stays in its credits list. Display only: the module, its version and its package are unchanged.
