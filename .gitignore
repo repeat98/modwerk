@@ -45,6 +45,7 @@ sdk/octabam/out/
 !.agents/skills/
 .claude/*
 !.claude/skills/
+!.claude/settings.json
 AGENTS.local.md
 GEMINI.md
 /GOAL.md
