@@ -4,7 +4,7 @@
     "date": "2026-11-17",
     "changes": [
       "Takes less of the Rytm's processing time while nothing moves, stopped or playing, leaving more room for other modules.",
-      "Uses about 0.4 KB more of the module memory.",
+      "Uses about 0.35 KB more of the module memory.",
       "Nothing else changes from 0.2.1."
     ]
   },
