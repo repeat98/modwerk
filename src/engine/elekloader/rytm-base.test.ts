@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import CATALOG from '../../../vendor/elekloader/catalog/catalog.json'
 import RYTM_BASE from '../../../sdk/machines/analog-rytm-mkii/base-binding.json'
 import FX_IDS from '../../../sdk/machines/analog-rytm-mkii/fx-ids.json'
+import VOICE_MODULES from '../../../sdk/machines/analog-rytm-mkii/voice-modules.json'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import type { Catalog } from '../../../vendor/elekloader/kit/src/kit/catalog.ts'
 import { createService } from '../../../vendor/elekloader/kit/src/kit/serve.ts'
@@ -10,15 +11,18 @@ import { exportText, packageRecipe } from '../../../scripts/package-elemod-recip
 import { baseVariant, buildWithLock, builtLock, prepareBuild, type Builder } from './machine-build.ts'
 
 // The site builds an Analog Rytm MKII set on Modwerk's own base (sdk/machines/analog-rytm-mkii/base-binding.json): the
-// send-bus variant when the set holds a send effect, the plain one otherwise.
+// send-bus variant when the set holds a send effect, voices when it holds a digital voice machine and no send effect, the
+// plain one otherwise.
 const read = (file: string) => new Uint8Array(readFileSync(new URL('../../../vendor/elekloader/catalog/' + file, import.meta.url)))
-const variantPin = (variant: 'plain' | 'send-bus') => CATALOG.cores.find(core => core.sha256 === RYTM_BASE.variants[variant])!
-const variantPackage = (variant: 'plain' | 'send-bus') => JSON.parse(new TextDecoder().decode(read(variantPin(variant).file)))
+type Variant = 'plain' | 'voices' | 'send-bus'
+const VARIANTS = ['plain', 'voices', 'send-bus'] as const
+const variantPin = (variant: Variant) => CATALOG.cores.find(core => core.sha256 === RYTM_BASE.variants[variant])!
+const variantPackage = (variant: Variant) => JSON.parse(new TextDecoder().decode(read(variantPin(variant).file)))
 const FX_EXPORTS = ['mw_fx_rate', 'mw_fx_onepole', 'mw_fx_tempo']
 
 describe('the Rytm sets\' Modwerk base', () => {
   it('serves each variant base-binding.json names, pinned by its identity', () => {
-    for (const variant of ['plain', 'send-bus'] as const) {
+    for (const variant of VARIANTS) {
       expect(variantPin(variant), variant).toMatchObject({ id: 'core', version: '0.7', device: 'analog-rytm-mk2', os: '1.74' })
       expect(sha(read(variantPin(variant).file)), variant).toBe(RYTM_BASE.variants[variant])
     }
@@ -33,8 +37,27 @@ describe('the Rytm sets\' Modwerk base', () => {
     expect(plain.storage).toBeUndefined()
     expect(plain.sections['.bss'].len ?? plain.sections['.bss'].size).toBeLessThan(2048)
   })
-  it('gives both variants the machine list sections: the table and the three sites of stock\'s sort', () => {
-    for (const variant of ['plain', 'send-bus'] as const) {
+  it('gives the voices variant send-bus\'s digital voices and lock words, and none of the send bus, its clock or the FX list', () => {
+    const voices = variantPackage('voices'), bus = variantPackage('send-bus')
+    for (const name of ['mw_voices', 'ev_sound_applied']) {
+      expect(Object.keys(voices.collections), name).toContain(name)
+      expect(Object.keys(bus.collections), name).toContain(name)
+    }
+    expect(Object.keys(voices.collections)).not.toContain('mw_fx')
+    for (const name of FX_EXPORTS) expect(voices.exports).not.toContain(name)
+    expect((voices.exports as string[]).filter(name => name.startsWith('mw_send_') || name.startsWith('mw_clock_'))).toEqual([])
+    // the voice type keeps send-bus's field, so a lockfile carries it between the two; the bus's fields stay behind
+    expect(voices.storage).toEqual(bus.storage.filter((field: { sym: string }) => !field.sym.startsWith('mw_send_')))
+    expect(voices.storage).toEqual([{ sym: 'mw_voice_type', scope: 'sound', bits: 3 }])
+    // the FX track's lock words: the same sites in both
+    const sites = (pack: { sites: { addr: string }[] }) => pack.sites.map(site => site.addr)
+    for (const addr of ['0x4000940c', '0x40009216', '0x40008f98', '0x4011f654']) expect(sites(voices), addr).toContain(addr)
+    for (const addr of ['0x4010ee66', '0x401c5324', '0x401c5358']) expect(sites(voices), addr).not.toContain(addr)
+    const run = (pack: { sections: Record<string, { len?: number; size?: number }> }) => pack.sections['.run'].len ?? pack.sections['.run'].size ?? 0
+    expect(run(voices)).toBeLessThan(run(bus) - 12_000)
+  })
+  it('gives every variant the machine list sections: the table and the three sites of stock\'s sort', () => {
+    for (const variant of VARIANTS) {
       const pack = variantPackage(variant)
       expect(Object.keys(pack.collections), variant).toContain('mw_machine_sections')
       const sites = (pack.sites as { addr: string }[]).map(site => site.addr)
@@ -51,6 +74,13 @@ describe('the Rytm sets\' Modwerk base', () => {
     expect(effects.sort()).toEqual(Object.values(FX_IDS.ids).sort())
     for (const id of effects) expect(baseVariant('analog-rytm-mkii', ['loop-sync', id]), id).toBe('send-bus')
     expect(baseVariant('analog-rytm-mkii', ['loop-sync', 'filter-hz'])).toBe('plain')
+  })
+  it('takes the voices variant for every digital voice machine, and send-bus beside a send effect', () => {
+    expect(VOICE_MODULES.ids.length).toBeGreaterThan(0)
+    for (const id of VOICE_MODULES.ids) {
+      expect(baseVariant('analog-rytm-mkii', ['loop-sync', id]), id).toBe('voices')
+      expect(baseVariant('analog-rytm-mkii', [id, 'chorus']), id).toBe('send-bus')
+    }
   })
 })
 
