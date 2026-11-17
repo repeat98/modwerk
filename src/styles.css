@@ -865,6 +865,8 @@ h1 { font-size: 28px; }
 .community-form legend { padding: 0 7px; font-weight: 600; font-size: 15px; color: #dddde9; }
 .form-two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .service-note { color: #a7a7b9; font-size: 13px; line-height: 1.75; margin: 12px 0 18px; }
+.unreadable-sets p { margin: 0; }
+.unreadable-sets ul { margin: 4px 0 0; padding-left: 18px; overflow-wrap: anywhere; }
 .beta-report-reminder { display: flex; gap: 10px; margin: 0 0 16px; padding: 12px 14px; border: 1px solid #715235; border-radius: 8px; background: #382d23; color: #f0c792; font-size: 13px; line-height: 1.6; }
 .beta-report-reminder svg { flex-shrink: 0; margin-top: 2px; }
 .beta-report-reminder strong, .beta-report-reminder a { color: #ffe0b8; }
