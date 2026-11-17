@@ -4,6 +4,7 @@
 
 The bases named below are development builds of the Modwerk base with the digital voices (and, for BL01, a USB test link), not published and not rebuildable from this repository; the published base is the send-bus variant of repeat98/modwerk#1447 (3ece243b): this module ran on it in rytm-emu (BA21) and, by hand, on the author's unit (VB01, 12 November 2026: chosen from the BD section and offered on SD and BT only, the 808/909 tap, a kit reload keeping the type, a sound lock changing the type, a project save and power cycle; docs/verification/2026-11-12-rytm-base-digital-voices.md), but not the rig's knob sweeps.
 
+- AB23 (0.2.1-experimental, sha256 3f7bbb91…, solo on the published base 3ece243b): the knob tables read only when a knob changes stored as 16-bit steps above their smallest word (`NAME_LO + (NAME[i] << NAME_SH)`); the body's level, velocity and ATK worked out instead of read; HIGH's weight twice LOW's from one table. T_AP, T_GT, T_GD and T_DKP stay Q31 words. Every per-sample routine is instruction for instruction the same as 0.2.0's (objdump). tools/asm_check.py: every routine saves its registers; desk, bodies, click and noise match their C, 0 differences. emu_check: all pass, meter unchanged (mean 3.4 %, dearest block 4.6 %). Not on the unit yet.
 - AB16 (0.2.0-experimental, sha256 d7bba966…, solo on Modwerk base 6fca633f): AB15 with BD ANALOG offered on the BD, SD and BT tracks only, after the unit's stress (below). emu_check: all pass, meter unchanged.
 - BP02 (rytm-emu only): this module on the base of the digital voices pull request (send-bus 3ece243b, merged in repeat98/modwerk#1447): emu_check all pass, mean 3.4 %, dearest block 4.6 % of a block.
 - AB15 (0.2.0-experimental, sha256 f3142d40…, solo on Modwerk base 6fca633f, send-bus with machine-list sections): the 909 of Analog BD 0.1.7 (refitted to the recorded TR-909: body from two tables, the click from a table and two decaying words, the noise envelope ramped, control every 16 samples, the model's rest), and LOW/HIGH as one weight per band for both models. tools/asm_check.py (`--pass` 1-4, machine-list sections base): every routine saves its registers; desk 134,991, bodies 270,542, click 13,156, noise 31,648 blocks checked, 0 differences. emu_check: all pass. rytm-emu meter, 808 then 909, against 0.1.0 with the lite desk on the same base: mean 3.4 % of a block (4.1 %), dearest block 4.6 % (6.5 %). Emulator counts, not unit time: the unit pays roughly three times them. Not on the unit.
@@ -22,6 +23,19 @@ The bases named below are development builds of the Modwerk base with the digita
 ## Source fingerprint, 0.2.0
 
 `evidence.sourceSha256` is the sha256 of `sha256sum build.json src/machine.c src/ab_dsp.c src/ab_desk.s src/ab_body.s src/ab_body808.s src/ab_noise.s src/ab_click.s src/ab_tone808.s src/ab_trig808.s src/ab_dsp.h src/tables.h` (in that order): `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+
+## Memory, 0.2.1 (16 November 2026)
+
+5,024 bytes less than 0.2.0: `ramSpare` from `scripts/link-image.mjs` on the published base 3ece243b, 76,272 bytes with this module (71,248 with 0.2.0). The module's `.run` (m68k-elf-size): 15,186 bytes (20,206); the tables shrank by 5,120 bytes (.rodata 14,394 to 9,274) and the two settings routines grew by 100.
+
+## Host, 0.2.1 (16 November 2026)
+
+- Each table's worst error against the Q31 word it replaces (`python3 tools/gen_tables.py --errors`): at most 1.5e-5 of full scale (T_GD's and LOW/HIGH's weights), 3.1e-4 of the word for a decay coefficient (T_DKD), 6.4e-5 for a pitch (B_INC, 0.1 cent), 1.0e-5 for the 909's (T_INCB). The body's level is exact; velocity and ATK within 8 of 2^31. LOW or HIGH at 1 now weights its band 0 (was -111 dB).
+- Every setting a block uses, 0.2.0 against 0.2.1, over each knob from 0 to 127 and over all 2,097,152 TUN x TON x SWP settings of the 909: the sweep (INCA) and the thump (GDCH, its row picked by the sweep's size) the same as 0.2.0's, which is why T_AP, T_GT and T_GD stay Q31 words (as 16-bit steps, 505 settings took the neighbouring thump row).
+- Host renders, 0.2.0 against 0.2.1 (tools/host_render.c, UBSan), 462 scenarios (each knob at its ends and middle, both models, and 300 random settings): largest difference -55.8 dBFS (an 808 at TUN 2, DEC 112: its pitch 0.1 cent apart drifts the phase over the long hit); median -79.5 dB of the hit's peak.
+- tools/compare.py against repeat98's models: every scenario within 1 dB of 0.2.0's residual, the 808 default 3 dB closer; worst -23.3 dB as before.
+- rytm-emu, AB21 (0.2.0) against AB23, emu_check's sequence (808 trigs, the tap, the 909) captured for half a second: the two images run 31 samples apart; aligned, voice 1's codec slot is the same within 1 of 32,767 (peak 14,184), the analog voice's slot the same.
+- Code review (independent agent): no bugs; its points taken: the LOW clamp is asserted in the generator, and T_DKP stays a Q31 word (as 16-bit steps it cost the 909 default 2 dB against the model).
 
 ## Memory, 0.2.0 (12 November 2026)
 

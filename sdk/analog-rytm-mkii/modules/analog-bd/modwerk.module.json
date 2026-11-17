@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "analog-bd",
   "name": "Analog BD",
-  "version": "0.2.0-experimental",
+  "version": "0.2.1-experimental",
   "machine": "analog-rytm-mkii",
   "category": "machines",
   "exclusive": false,
