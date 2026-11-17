@@ -269,18 +269,6 @@ static void clear_rows(struct arr_state *s, unsigned lo, unsigned hi)
     done(s, say(s, "CLEAR", n));
 }
 
-static void paste_rows(struct arr_state *s, unsigned at)
-{
-    uint32_t a = arr();
-    unsigned n = s->clip_n, have = count(a);
-    if (can_undo(s, UNDO_PASTE, at, n)) { restore(s, say(s, "UNDO PASTE", n)); return; }
-    if (at + n > ROWS) { row_limit(); return; }
-    snapshot(s, UNDO_PASTE, at, n);
-    put_bytes(row_at(a, at), s->clip, n * ROW_BYTES);
-    if (at + n > have) wr16(a + COUNT_AT, at + n);
-    done(s, say(s, "PASTE", n));
-}
-
 #define LOOP_MAX 64u /* stock's editor clamps a LOOP's count to 0-64 (0x40049ed6); 0 draws as infinite */
 
 static unsigned byte_at_most(unsigned v) { return v > 255u ? 255u : v; }
@@ -294,6 +282,34 @@ static unsigned moved_target(unsigned target, unsigned own, unsigned at, unsigne
 {
     if (target == own) return own >= at ? byte_at_most(own + n) : own;
     return target > at ? byte_at_most(target + n) : target;
+}
+
+/* The rows just pasted at `at`: a target inside the copied block (copied from `from`) keeps its place in the block,
+ * so a copied LOOP or HALT stays one; a target outside it moves by `shift` when past `at` (an insert's rule; 0 for an
+ * overwrite, which moves no row). A count past stock's range is clamped as stock's editor would. */
+static void pasted(uint32_t a, unsigned at, unsigned n, unsigned from, unsigned shift)
+{
+    for (unsigned k = 0; k < n; ++k) {
+        uint32_t row = row_at(a, at + k);
+        if (rd8(row) != TYPE_JUMP) continue;
+        unsigned target = rd8(row + 3);
+        wr8(row + 3, target >= from && target < from + n ? at + (target - from)
+                                                         : (target > at ? byte_at_most(target + shift) : target));
+        if (rd8(row + 2) > LOOP_MAX) wr8(row + 2, LOOP_MAX);
+    }
+}
+
+static void paste_rows(struct arr_state *s, unsigned at)
+{
+    uint32_t a = arr();
+    unsigned n = s->clip_n, have = count(a);
+    if (can_undo(s, UNDO_PASTE, at, n)) { restore(s, say(s, "UNDO PASTE", n)); return; }
+    if (at + n > ROWS) { row_limit(); return; }
+    snapshot(s, UNDO_PASTE, at, n);
+    put_bytes(row_at(a, at), s->clip, n * ROW_BYTES);
+    pasted(a, at, n, s->clip_from, 0);
+    if (at + n > have) wr16(a + COUNT_AT, at + n);
+    done(s, say(s, "PASTE", n));
 }
 
 static void insert_rows(struct arr_state *s, unsigned at)
@@ -313,16 +329,7 @@ static void insert_rows(struct arr_state *s, unsigned at)
         for (unsigned i = 0; i < ROW_BYTES; ++i) wr8(to + i, rd8(src + i));
     }
     put_bytes(row_at(a, at), s->clip, n * ROW_BYTES);
-    /* The pasted rows: a target inside the copied block keeps its place in the block, one outside follows the rule
-     * above; a count past stock's range is clamped as stock's editor would. */
-    for (unsigned k = 0; k < n; ++k) {
-        uint32_t row = row_at(a, at + k);
-        if (rd8(row) != TYPE_JUMP) continue;
-        unsigned target = rd8(row + 3);
-        wr8(row + 3, target >= from && target < from + n ? at + (target - from)
-                                                         : (target > at ? byte_at_most(target + n) : target));
-        if (rd8(row + 2) > LOOP_MAX) wr8(row + 2, LOOP_MAX);
-    }
+    pasted(a, at, n, from, n);
     wr16(a + COUNT_AT, have + n);
     forget_selection(s);
     done(s, say(s, "INSERT", n));

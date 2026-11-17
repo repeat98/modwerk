@@ -219,6 +219,22 @@ int main(void)
     check("a count past 64 is clamped to 64, as stock's editor clamps it", row(8)[2] == 64);
     check("the original JUMP to row 9 moved with its row too", row(3)[3] == 12 && row(2)[3] == 1);
 
+    /* the same block pasted over rows 6-8 (FUNC + STOP): inside targets follow the block, outside ones stay */
+    fill(12);
+    row(1)[0] = 1; row(1)[3] = 1;                  /* HALT on its own row, inside the block 1-3 */
+    row(2)[0] = 1; row(2)[2] = 3; row(2)[3] = 1;   /* LOOP x3 back to row 1, inside */
+    row(3)[0] = 1; row(3)[2] = 100; row(3)[3] = 9; /* JUMP to row 9, outside; a count past 64 */
+    set_cursor(1);
+    hold(CUE, 1); tap(DOWN); tap(DOWN); hold(CUE, 0);
+    hold(FUNC, 1); tap(REC); hold(FUNC, 0);
+    tap(DOWN); tap(DOWN); tap(DOWN);               /* cursor 6; ends the selection */
+    hold(FUNC, 1); tap(STOP); hold(FUNC, 0);
+    check("overwrite: a pasted HALT stays a HALT on its new row", row(6)[0] == 1 && row(6)[3] == 6);
+    check("overwrite: a pasted LOOP inside the block points into the pasted block", row(7)[3] == 6 && row(7)[2] == 3);
+    check("overwrite: a target outside the block is kept, as no row moved", row(8)[3] == 9 && row(8)[2] == 64);
+    check("overwrite: the rows copied from are untouched", row(1)[3] == 1 && row(2)[3] == 1 && row(3)[3] == 9 && row(3)[2] == 100);
+    check("overwrite: the count is unchanged", rows() == 12);
+
     /* inserting at the end changes no target */
     fill(6);
     row(2)[0] = 1; row(2)[3] = 5;

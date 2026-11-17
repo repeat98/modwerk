@@ -63,14 +63,15 @@ arrangement, open EDIT and paste or insert.
   HALT moves with its row, so it stays a HALT. One difference from stock: stock leaves a HALT sitting at P pointing at
   the new row, which turns it into an endless LOOP; the module keeps it a HALT. Targets past row 127 move too (stock
   never moves them). Inserted rows whose target is inside the copied block keep their place in the block; a LOOP
-  count is kept within stock's 0-64. An overwrite paste (FUNC + STOP) keeps pasted rows as copied, as stock's paste
-  does.
+  count is kept within stock's 0-64. An overwrite paste (FUNC + STOP) does the same for the pasted rows: a copied
+  LOOP or HALT points into the pasted rows, a target outside the copied block is kept (no row moves). Stock's one-row
+  paste keeps the target as copied, so a HALT pasted elsewhere becomes an endless LOOP back to its old row.
 - The copied rows live in RAM: gone after a power cycle or when the module is removed.
 - Editing while the arrangement plays behaves as stock's own edits do; it was not tested separately.
 
 ## Tests and measurements
 
-`verify.py` runs the module's C on the host against simulated stock memory (50 checks) and checks the generated
+`verify.py` runs the module's C on the host against simulated stock memory (55 checks) and checks the generated
 ColdFire unit. The stock behaviour it relies on was read from the 1.40C image and measured under `ot_emu`
 (RESEARCH.md). Results, and what is not tested yet, are in TESTING.md.
 
