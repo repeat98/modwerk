@@ -1,6 +1,6 @@
 # Improved SMPL
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.6.0-experimental, OS 1.74 with core-ar2 0.7. Called Sample Playback Rate before 0.2.0 and Fine Tune + Sample Rate in 0.2.0 and 0.3.0; its id stays `sample-rate`. Since 0.6.0 it holds Ping Pong Loop (LOP PIPO and the zero snap on STA and END), which was its own module, `pipo-loop`, up to 0.1.2: both change how a sample plays from the SAMPLE page, so they live in one place. Do not install Ping Pong Loop beside it.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.6.1-experimental, OS 1.74 with core-ar2 0.7. Called Sample Playback Rate before 0.2.0 and Fine Tune + Sample Rate in 0.2.0 and 0.3.0; its id stays `sample-rate`. Since 0.6.0 it holds Ping Pong Loop (LOP PIPO and the zero snap on STA and END), which was its own module, `pipo-loop`, up to 0.1.2: both change how a sample plays from the SAMPLE page, so they live in one place. Ping Pong Loop has left the library; install this module instead.
 
 ## Overview
 
@@ -80,7 +80,7 @@ RATE replaces FIN in the sample's pitch. TUN, the trig's note on a chromatic tra
 
 ## Compatibility and limitations
 
-- OS 1.74 only, with core-ar2 0.7. No other module is needed. It links beside Silent Pad+Trig, Loop Sync and Filter Hz, with no shared sites. Ping Pong Loop is part of it since 0.6.0: never install the two together.
+- OS 1.74 only, with core-ar2 0.7. No other module is needed. It links beside Silent Pad+Trig, Loop Sync and Filter Hz, with no shared sites. Ping Pong Loop is part of it since 0.6.0 and has left the library.
 - Sites, fine TUNE: stock's add of a turn to a value (0x400a88ea), where a plain turn of TUN becomes cents; one data word, TUN's fine-lock flag in its parameter row (0x401c03c8); TUN's turn profile in its RAM record (written each UI tick); the value text through core-ar2's `core_params`.
 - The waveform view's layout: one site in the SAMPLE view's own knob loop (0x400d20ee), where stock calls a knob's text routine; the module calls the same routine with the row's place and the value shown. The taller waveform is no site: the widget's y and height in the view's RAM (view + 400, +32 and +40) move from stock's 16 and 32 to 10 and 37, once, while they are still stock's.
 - The SMPL key: no site; each UI tick the module finds the SAMPLE view (vtable 0x401e3420) in the view manager's stack and, where its own page list is exactly the knob page then the waveform, counts it as one page with the waveform selected.

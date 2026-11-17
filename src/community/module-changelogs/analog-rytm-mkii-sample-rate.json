@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.6.1-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Ping Pong Loop has left the library: its PIPO loop and zero snap live here, unchanged.",
+      "No change on the unit."
+    ]
+  },
+  {
     "version": "0.6.0-experimental",
     "date": "2026-11-16",
     "changes": [

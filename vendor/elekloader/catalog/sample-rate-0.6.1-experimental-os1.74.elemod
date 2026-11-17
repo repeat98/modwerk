@@ -1,7 +1,7 @@
 {
  "elemod": 2,
  "id": "sample-rate",
- "version": "0.6.0-experimental",
+ "version": "0.6.1-experimental",
  "title": "Improved SMPL",
  "description": "The SAMPLE page, improved: TUN in cents, FIN's knob as RATE (to a stop and into reverse), LOP PIPO for ping-pong loops, FUNC + STA or END to zero crossings, and SMPL always shows the waveform under one row of values.",
  "category": "playback",
@@ -1080,8 +1080,6 @@
  "requires": [
   "core"
  ],
- "conflicts": [
-  "pipo-loop"
- ],
+ "conflicts": [],
  "signature": null
 }

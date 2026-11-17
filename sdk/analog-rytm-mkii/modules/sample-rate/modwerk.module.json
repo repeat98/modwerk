@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "sample-rate",
   "name": "Improved SMPL",
-  "version": "0.6.0-experimental",
+  "version": "0.6.1-experimental",
   "machine": "analog-rytm-mkii",
   "category": "playback",
   "exclusive": false,
@@ -96,12 +96,10 @@
       "1.74"
     ],
     "requires": [],
-    "conflicts": [
-      "pipo-loop"
-    ],
+    "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.7.",
-      "0.6.0 is Improved SMPL 0.5.1 and Ping Pong Loop 0.1.2 in one module, code unchanged; never install Ping Pong Loop beside it. Run on a unit as MSU1 (rig and author). Not run on a unit: several voices in PIPO, a scene lock of PIPO, MIDI CC 30 by ear, samples over 0.64 s, RATE on two voices, scene and performance locks on RATE, a sound browser load. TESTING.md has the rest.",
+      "Since 0.6.0 Improved SMPL 0.5.1 and Ping Pong Loop 0.1.2 are one module, code unchanged; Ping Pong Loop has left the library. Run on a unit as MSU1 (rig and author). Not run on a unit: several voices in PIPO, a scene lock of PIPO, MIDI CC 30 by ear, samples over 0.64 s, RATE on two voices, scene and performance locks on RATE, a sound browser load. TESTING.md has the rest.",
       "The waveform view shows no text for STA, END and SMP: STA and END show as their lines, D's sample list as on stock. With a trig held, a lock on STA, END or SMP gets no box; locks on the row's five are boxed there.",
       "The SAMPLE page's knob-only view is not shown. If another module adds a page behind the SMPL key, the knob view stays in the cycle.",
       "A sound saved with FIN at +0 (stock's default, and every sound saved before 0.3.0 without SMP RATE) loads with RATE 0: the sample does not play until RATE is turned up. On stock OS a sound saved with RATE +63 plays about a semitone sharp (FIN as a detune).",
@@ -154,8 +152,8 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.6.0-experimental",
-    "sourceSha256": "e894aa1d38db76c1f90c407b3fc9d1130441df782a10a17dbbdf4a968985affe",
+    "moduleVersion": "0.6.1-experimental",
+    "sourceSha256": "6965728efbed20529e8cbdddf72e0aace93cdd2d6310250bb5bfb80ee34d3c23",
     "reports": [
       "TESTING.md"
     ],
@@ -165,7 +163,7 @@
       "testedOn": "2026-11-16",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "0.6.0 ran on npp1993's Analog Rytm MKII, OS 1.74, as MSU1 (the author's development base with the link + Improved SMPL 0.6.0 only, sha256 a34e9ec9…0579), booted from RAM over the flashed build, in a scratch project. The author's rig ran twelve Improved SMPL cases on the unit with no failed check (TUN in cents, held-trig locks, the value row, RATE's playhead at 1x, 0.125x, stop and -0.5x). By hand the author reports all pass: the SMPL key's waveform view and row; LOP PIPO back and forth with no click at the turns; FUNC + STA and END to zero crossings with the S and E labels; RATE through 0 into reverse with LOP ON and PIPO; TUN in cents and semitones; a PIPO lock on a held trig.",
+      "summary": "0.6.0 ran on npp1993's Analog Rytm MKII, OS 1.74, as MSU1 (the author's development base with the link + Improved SMPL 0.6.0 only, sha256 a34e9ec9…0579), booted from RAM over the flashed build, in a scratch project. The author's rig ran twelve Improved SMPL cases on the unit with no failed check (TUN in cents, held-trig locks, the value row, RATE's playhead at 1x, 0.125x, stop and -0.5x). By hand the author reports all pass: the SMPL key's waveform view and row; LOP PIPO back and forth with no click at the turns; FUNC + STA and END to zero crossings with the S and E labels; RATE through 0 into reverse with LOP ON and PIPO; TUN in cents and semitones; a PIPO lock on a held trig. 0.6.1 differs only in compatibility.conflicts: linked, it gives the same image byte for byte.",
       "limitations": [
         "Hand results are reported by the author from playing; the rig's twelve cases are its own checks, five of them without stored references (judged by eye).",
         "The image holds the author's private development base (with the link), not the published base.",
@@ -232,7 +230,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
+        "moduleVersion": "0.6.1-experimental",
         "imageSha256": "5ecfe9cbcbc308b616514174170e61ed998651e7a7ee0be454d862bc7dbeed0d",
         "setup": "Headless rytm-emu c5732f0 (dtboot) running MS01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated 23,777-frame ramp, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -248,7 +246,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
+        "moduleVersion": "0.6.1-experimental",
         "imageSha256": "5ecfe9cbcbc308b616514174170e61ed998651e7a7ee0be454d862bc7dbeed0d",
         "setup": "Headless rytm-emu c5732f0 (dtboot) running MS01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated 23,777-frame ramp, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -264,7 +262,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
+        "moduleVersion": "0.6.1-experimental",
         "imageSha256": "5ecfe9cbcbc308b616514174170e61ed998651e7a7ee0be454d862bc7dbeed0d",
         "setup": "Headless rytm-emu c5732f0 (dtboot) running MS01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated 23,777-frame ramp, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -280,7 +278,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
+        "moduleVersion": "0.6.1-experimental",
         "imageSha256": "5ecfe9cbcbc308b616514174170e61ed998651e7a7ee0be454d862bc7dbeed0d",
         "setup": "Headless rytm-emu c5732f0 (dtboot) running MS01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated 23,777-frame ramp, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -296,7 +294,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
+        "moduleVersion": "0.6.1-experimental",
         "imageSha256": "5ecfe9cbcbc308b616514174170e61ed998651e7a7ee0be454d862bc7dbeed0d",
         "setup": "Headless rytm-emu c5732f0 (dtboot) running MS01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -312,7 +310,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
+        "moduleVersion": "0.6.1-experimental",
         "imageSha256": "5ecfe9cbcbc308b616514174170e61ed998651e7a7ee0be454d862bc7dbeed0d",
         "setup": "Headless rytm-emu c5732f0 (dtboot) running MS01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -328,7 +326,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
+        "moduleVersion": "0.6.1-experimental",
         "imageSha256": "5ecfe9cbcbc308b616514174170e61ed998651e7a7ee0be454d862bc7dbeed0d",
         "setup": "Headless rytm-emu c5732f0 (dtboot) running MS01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -344,7 +342,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
+        "moduleVersion": "0.6.1-experimental",
         "imageSha256": "5ecfe9cbcbc308b616514174170e61ed998651e7a7ee0be454d862bc7dbeed0d",
         "setup": "Headless rytm-emu c5732f0 (dtboot) running MS01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -360,7 +358,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
+        "moduleVersion": "0.6.1-experimental",
         "imageSha256": "5ecfe9cbcbc308b616514174170e61ed998651e7a7ee0be454d862bc7dbeed0d",
         "setup": "Headless rytm-emu c5732f0 (dtboot) running MS01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -376,7 +374,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
+        "moduleVersion": "0.6.1-experimental",
         "imageSha256": "5ecfe9cbcbc308b616514174170e61ed998651e7a7ee0be454d862bc7dbeed0d",
         "setup": "Headless rytm-emu c5732f0 (dtboot) running MS01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated slow sine (PIPO_SLOW). Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -392,7 +390,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
+        "moduleVersion": "0.6.1-experimental",
         "imageSha256": "5ecfe9cbcbc308b616514174170e61ed998651e7a7ee0be454d862bc7dbeed0d",
         "setup": "Headless rytm-emu c5732f0 (dtboot) running MS01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated slow sine (PIPO_SLOW). Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -408,7 +406,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
+        "moduleVersion": "0.6.1-experimental",
         "imageSha256": "5ecfe9cbcbc308b616514174170e61ed998651e7a7ee0be454d862bc7dbeed0d",
         "setup": "Headless rytm-emu c5732f0 (dtboot) running MS01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated slow sine (PIPO_SLOW). Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -424,7 +422,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
+        "moduleVersion": "0.6.1-experimental",
         "imageSha256": "5ecfe9cbcbc308b616514174170e61ed998651e7a7ee0be454d862bc7dbeed0d",
         "setup": "Headless rytm-emu c5732f0 (dtboot) running MS01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated slow sine (PIPO_SLOW). Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -440,7 +438,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
+        "moduleVersion": "0.6.1-experimental",
         "imageSha256": "5ecfe9cbcbc308b616514174170e61ed998651e7a7ee0be454d862bc7dbeed0d",
         "setup": "Headless rytm-emu c5732f0 (dtboot) running MS01: core-ar2 0.7 and this folder's Improved SMPL 0.6.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated slow sine (PIPO_SLOW). Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
