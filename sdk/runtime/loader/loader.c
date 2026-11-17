@@ -51,6 +51,12 @@ static struct {
 #define SET_ROWS 0u
 #define SET_CAPABILITY 0u
 #endif
+/* 1024: the machine refuses to retire a module whose window, page or key layer is still open (RUNTIME_UI_OPEN). */
+#ifdef MODWERK_RUNTIME_UI_ROOTS
+#define UI_ROOTS_CAPABILITY 1024u
+#else
+#define UI_ROOTS_CAPABILITY 0u
+#endif
 int modwerk_runtime_set_busy(void) { return SET_ROWS != 0; }
 #ifndef MODWERK_RUNTIME_JOURNAL_EXTERNAL
 __attribute__((weak)) int modwerk_machine_journal_enabled(void) { return 0; }
@@ -118,7 +124,7 @@ unsigned modwerk_runtime_capabilities(uint8_t *out)
 {
     out[0] = 'M'; out[1] = 'W'; out[2] = 'C'; out[3] = 'P';
     out[4] = 1; out[5] = RUNTIME_ABI;
-    unsigned flags = RUNTIME_CAPABILITY_FLAGS | (RUNTIME_SITE_EVENTS ? 128u : 0u) | SET_CAPABILITY;
+    unsigned flags = RUNTIME_CAPABILITY_FLAGS | (RUNTIME_SITE_EVENTS ? 128u : 0u) | SET_CAPABILITY | UI_ROOTS_CAPABILITY;
     out[6] = (uint8_t)(flags >> 8); out[7] = (uint8_t)flags;
     out[8] = (uint8_t)(RUNTIME_SITES >> 8); out[9] = (uint8_t)RUNTIME_SITES;
     out[10] = (uint8_t)(RUNTIME_COPIES >> 8); out[11] = (uint8_t)RUNTIME_COPIES;

@@ -59,7 +59,7 @@ describe('temporary module availability', () => {
     expect(() => moduleAvailabilityError(['unknown'])).toThrow('Unknown module')
   })
   it('no longer offers or pauses the modules removed from the library', () => {
-    expect(REMOVED_MODULE_IDS).toEqual(['spectrum', 'modulation', 'character', 'midi-scenes'])
+    expect(REMOVED_MODULE_IDS).toEqual(['spectrum', 'modulation', 'character'])
     for (const id of REMOVED_MODULE_IDS) {
       expect(MODULES.some(module => module.id === id)).toBe(false)
       expect(PAUSED_MODULE_IDS).not.toContain(id)

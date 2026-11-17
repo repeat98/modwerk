@@ -4,7 +4,7 @@ Status: **research, core started**. The OS files are understood and rebuilt, mod
 
 ## Modwerk stack
 
-The core stage is planned as the Syntakt's Modwerk base, so that it ends up with the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)): hooks, a USB link, the loader's glue, base updates over USB, the MCP's device tools and the machine page. Only the boot probe exists.
+The core stage is planned as the Syntakt's Modwerk base, so that it ends up with the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)): hooks, a USB link, the loader's glue, base updates over USB, the MCP's device tools and the machine page. Only the boot probe exists. [GOAL.md](GOAL.md) sets out the order, where each piece stands and how contributors take one.
 
 ## Platform
 

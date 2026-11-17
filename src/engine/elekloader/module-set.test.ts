@@ -5,6 +5,7 @@ import manifest from '../assets/octatrack-module-packages.json' with { type: 'js
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
 import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 import { removal } from '../../dev/octatrack-usb-lifecycle'
+import { RuntimeFeature } from './upload-usb'
 import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
 
 const file = (path: string) => new Uint8Array(readFileSync(new URL('../../../public/' + path, import.meta.url)))
@@ -13,7 +14,7 @@ const empty = { moduleIds: [], removedStockFx: [] }
 
 describe('the site’s runtime packages', () => {
   it('publishes each listed module with its checked runtime identity, ABI and record counts', () => {
-    expect(USB_MODULE_IDS).toEqual(['everb', 'miniverb', 'tapehead', 'airwindows-chorus', 'lofi2', 'ring-sc', 'previewvol', 'apply-scene', 'repitch', 'poly8', 'vector', 'synth', 'quantizer', 'tapeecho', 'euclid', 'bbd', 'playmodes', 'mute-modes', 'sidechain-compressor', 'output-matrix', 'cc-map', 'quantize-live-rec-toggle', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'recorder-loop-fix', 'analog-bassdrum', 'beat-slicer', 'temp-save', 'slow-lfo', 'bar-led', 'tiempos', 'syntiz', 'track-solo', 'pattern-sample-locks', 'amiga', 'usb-audio-out-tracks-main-cue'])
+    expect(USB_MODULE_IDS).toEqual(['everb', 'miniverb', 'tapehead', 'airwindows-chorus', 'lofi2', 'ring-sc', 'previewvol', 'apply-scene', 'repitch', 'poly8', 'vector', 'synth', 'quantizer', 'tapeecho', 'euclid', 'bbd', 'playmodes', 'mute-modes', 'sidechain-compressor', 'output-matrix', 'cc-map', 'quantize-live-rec-toggle', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'recorder-loop-fix', 'analog-bassdrum', 'beat-slicer', 'temp-save', 'slow-lfo', 'bar-led', 'tiempos', 'syntiz', 'track-solo', 'pattern-sample-locks', 'amiga', 'midi-scenes', 'kits', 'tuner', 'usb-audio-out-tracks-main-cue'])
     for (const entry of manifest.packages) {
       const data = file(entry.path), view = new DataView(data.buffer), abi = view.getUint16(4)
       expect(entry.path).toBe(`octatrack-modules/${entry.id}/${entry.version}.mwrm`)
@@ -80,6 +81,17 @@ describe('preparing a module set', () => {
     expect(changes[1]).toEqual({ module: '0000002a', data: removalPackage('0000002a'), undo: undefined, replaces: true }) // nothing to put back
     expect(changes[2]).toEqual({ module: 'TapeHead', data: file(manifest.packages[2].path), undo: removalPackage('tapehead') })
   })
+  it('offers a package that needs a capability (a window of its own: uiRoots) only to a base that reports it', () => {
+    expect(RuntimeFeature.uiRoots).toBe(1024)
+    expect(readFileSync(new URL('../../../sdk/runtime/loader/loader.c', import.meta.url), 'utf8')).toContain('#define UI_ROOTS_CAPABILITY 1024u')
+    const entry = manifest.packages.find(item => item.id === 'tapehead')!
+    const catalogue = createRuntimeCatalogue({ packages: [{ ...entry, requiresCapabilities: RuntimeFeature.uiRoots }] })
+    const target = { name: 'Window', moduleIds: ['tapehead'] }, base = { abi: 10, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 }
+    expect(catalogue.review(target, empty, base).problem).toBeInstanceOf(BaseUpdateRequired)
+    expect(catalogue.review(target, empty, { ...base, features: base.features | RuntimeFeature.uiRoots }).problem).toBeUndefined()
+    expect(createRuntimeCatalogue({ packages: [entry] }).review(target, empty, base).problem).toBeUndefined()
+    expect(() => createRuntimeCatalogue({ packages: [{ ...entry, requiresCapabilities: 65536 }] }).review(target, empty, base)).toThrow(ModuleSetError)
+  })
   it('refuses what the base cannot do yet, before anything is sent', async () => {
     await expect(prepareModuleSet({ name: 'Set', moduleIds: ['everb', 'tapeecho'] }, empty, load)).rejects.toThrow(ModuleSetError)
     await expect(prepareModuleSet({ name: 'Set', moduleIds: [], removedStockFx: ['DARK REV'] }, empty, load)).rejects.toThrow(/stock effects/)
@@ -88,7 +100,7 @@ describe('preparing a module set', () => {
     const target = { name: 'All published', moduleIds: USB_MODULE_IDS }, fetched = vi.fn(load)
     // RINGMOD SC is a published ABI 9 package (a key bus reader) and Analog BD's carries its engine for the base's hook
     // site (ABI 10): a capable base reports ABI 10.
-    const events = { abi: 10, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 }
+    const events = { abi: 10, features: 7 | 128 | 512 | RuntimeFeature.uiRoots, maxSites: 128, maxCopies: 128 } // Tuner asks for uiRoots (base 0.7.5)
     await expect(prepareModuleSet(target, empty, fetched)).rejects.toBeInstanceOf(BaseUpdateRequired)
     await expect(prepareModuleSet(target, empty, fetched, { ...events, features: 7 })).rejects.toBeInstanceOf(BaseUpdateRequired) // Repitch subscribes
     await expect(prepareModuleSet(target, empty, fetched, { ...events, abi: 7 })).rejects.toBeInstanceOf(BaseUpdateRequired)

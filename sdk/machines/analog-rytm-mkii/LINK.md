@@ -22,7 +22,7 @@ key injection and RAM boot live only in its development bases. Build one with
 npm run machine:base -- analog-rytm-mkii --stock STOCK.syx --dev --out NEW-DIR
 ```
 
-which builds each variant (send-bus and plain) with base.json's `dev` on top, writes
+which builds each variant (send-bus, voices and plain) with base.json's `dev` on top, writes
 `modwerk-base-analog-rytm-mkii-dev-<sha>.elemod` and checks it against no binding: a development
 base is never recorded or released. Link a test image from it with
 `node scripts/link-image.mjs ... --elemod DEV.elemod` as any image. The plain variant with `dev`

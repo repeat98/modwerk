@@ -330,7 +330,8 @@ plan; keep it in `capture.json` with the PNG hashes and the built `.syx` hash.
   Send FX's boot plan lost its NO presses
   ([repeat98/modwerk#878](https://github.com/repeat98/modwerk/pull/878)), and a
   FLTR press at 11900M with `--every 100M` looked like a build that failed
-  only past a certain size. The pinned revision runs such an event a few
+  only past a certain size. A dropped key press logs `no key named "SMPL" on
+  this machine` for a key the Rytm has. The pinned revision runs such an event a few
   instructions late instead; plans still place events 3M off the boundaries,
   so they replay on older revisions too.
 - Keep key presses short. From rytm-emu `e914f46` the PIT divides the bus
