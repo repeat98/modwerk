@@ -2,7 +2,7 @@
 
 Version: 0.2.1-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
 
-0.2.1 makes the idle case cheaper and nothing else; 0.2.0 changed the runtime package only (REPITCH subscribes to `ev_play_increment`, order 50, on a base that owns 0x40004100). The historical evidence below is retained; no new hardware or DSP qualification is claimed.
+0.2.1 makes the idle case cheaper and nothing else; 0.2.0 changed the runtime package only (REPITCH subscribes to `ev_play_increment`, order 50, on a base that owns 0x40004100). The historical evidence below is retained. 0.2.1's only unit result is its cost at rest, so no new hardware or DSP qualification is claimed.
 
 ## 0.2.1: less work on tracks without REPITCH (14 November 2026)
 
@@ -10,7 +10,8 @@ Version: 0.2.1-experimental · author: [Jannik Aßfalg](https://github.com/repea
 - **Change.** `rate_gate` tests the flag first and takes stock's reuse path at once. On a recompute it calls `rp_find` without saving d0-d2/a0, which stock writes before reading after 0x4000407a; `rp_source` keeps every register for the PTCH widget. `rp_find` tests the SETUP TSTR byte first: OFF, NORM and BEAT return after that read, AUTO goes on to the sample's TSMODE as before. The sites, the result and the hooks it feeds are unchanged.
 - **Emulator comparison** (a scratch harness on the events base built as `test_events_execute_under_the_emulator` builds it, the owner's local 1.40C MAIN, synthetic state): 0.2.0 and 0.2.1 installed, run from 0x4000406a to 0x40004178 (after stock sets d3 itself) over 10,368 track states (tracks 0/3/7; flag on and off; TSTR 0-5; STATIC, FLEX, PICKUP; TSMODE 0/2/3/4; sample bound or not; sample and project tempo in and out of range; two PTCH/RATE settings): every register, the track's state, the output records and the builder's frame identical. The PTCH widget run to the stock knob over 256 states: identical registers and knob arguments. Instructions added to the base alone per builder call, 0.2.0 → 0.2.1: recompute with TSTR OFF/NORM/BEAT 55 → 41, AUTO without REPITCH 55 → 50 (the scene's FLEX track: 63 → 54), REPITCH in force 68 → 64; a call that reuses the increment 37-45 → 2. The per-frame call is the recompute; a second call comes only in a frame with a trig at a sub-frame offset.
 - **What stays.** Each recompute still pays the base's call into `repitch_play_increment` (about 12 instructions), `pitch_gate` (4) and, for AUTO, the four reads that find the sample's TSMODE; the renderer's `tstr_resolve` stays at 3.
-- Not run: hardware, audio, `verify_repitch.py` and the other native gates.
+- **On a unit: the cost at rest** (measured by the owner's session, 17 November 2026; reported, not observed here; `resources.cpuPrice`). MKII, development twin of base 0.7.8 (`f24d6e97`), the owner's project bank C pattern C01 playing with three static loops sounding on T2-T4, Repitch installed on no track, `npm run device:price`, 8 s per reading, two runs alternating with the published 0.2.0 package: 0.2.0 added +4.1 and +4.1 points of the frame interrupt, 0.2.1 +2.4 and +2.3; no skipped frames. The build measured as 0.2.1 carried one extra 16-byte routine that nothing calls (a later test's `repitch_in_use`, not subscribed), so the voice-renderer detour and the code after it sat 16 bytes later than in this package; the instructions are otherwise the same. This package itself was not measured.
+- Not run: the sound of a REPITCH track on a unit (the emulator comparison above is its only check), a track with REPITCH in force on a unit, Part/project reload and power cycles, the MKI, `verify_repitch.py` and the other native gates.
 
 ## 0.2.0: the playback-increment event (prepared 14 October 2026, not released)
 

@@ -1,9 +1,9 @@
 {
   "kind": "owner-approved-update",
   "id": "repitch",
-  "version": "0.2.0-experimental",
+  "version": "0.2.1-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-10-14",
+  "approvedOn": "2026-11-17",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
@@ -11,7 +11,7 @@
     "release-documentation"
   ],
   "retainedUiVersion": "0.1.2-experimental",
-  "sourceSha256": "51ec4dbe5bcf960219982194de22ee40c8c21fe193b5ccdcb5a4a0853d011f1b",
-  "ownerStatement": "Approved by repeat98 in chat 14 Oct 2026: release Repitch 0.2.0.",
-  "reason": "The owner approved this exact native source: 0.1.2 with its runtime package's rate_hook detour replaced by an ev_play_increment subscriber (order 50) using the same RP_SCALE macro; native octabam builds assemble byte-identical. The OT pages and controls are unchanged, so the 0.1.2 captures are retained. Evidence is emulator-only (synthetic register state at the site); current-build hardware, chip worst-case timing and complete memory bounds stay waived for this exact version only, and historical hardware reports stay historical. Native/browser parity, source-only reproduction and repository checks remain required; the release can only publish once a base built with site events ships."
+  "sourceSha256": "c835b97e0b14e53fd8fcf0e1981b9df35b354f7675a840c6428ba01c21992b7e",
+  "ownerStatement": "Approved by repeat98 on 17 Nov 2026, as relayed by the owner's session that measured Repitch's cost at rest: release Repitch 0.2.1-experimental.",
+  "reason": "0.2.1 changes only rate_gate, which now tests the recompute flag before its REPITCH test and takes stock's reuse path at once; on a recompute rp_find returns after the SETUP TSTR byte for OFF, NORM and BEAT. Sites, results and hooks are unchanged: a scratch emulator comparison of 0.2.0 and 0.2.1 over 10,368 increment-builder states and 256 PTCH widget states gave identical registers, track state and output. On the owner's MKII (development twin of base 0.7.8 f24d6e97, 17 Nov 2026, bank C pattern C01 with three static loops on T2-T4, Repitch on no track, npm run device:price, two alternating runs) 0.2.0 added +4.1 and +4.1 points of the frame interrupt and 0.2.1 +2.4 and +2.3; the build measured carried one extra 16-byte routine nothing calls ahead of the voice-renderer detour, so the released package itself was not measured. The UI and pages are 0.1.2's, so its captures are retained. Waived for this exact source: the sound of a REPITCH track on a unit, a track with REPITCH in force on a unit, Part/project reload and power cycles, the MKI, verify_repitch.py and the native gates, chip worst-case cycles and complete memory bounds."
 }

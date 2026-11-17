@@ -921,7 +921,7 @@
       "id": "repitch",
       "key": "REPITCH",
       "name": "Repitch",
-      "version": "0.2.0-experimental",
+      "version": "0.2.1-experimental",
       "category": "playback",
       "access": {
         "location": "STATIC or FLEX track SRC SETUP: TSTR = RPCH. The sample attribute route also offers TIMESTRETCH = REPITCH.",
@@ -1014,6 +1014,15 @@
             "rationale": "The described contribution is a playback-speed and menu patch, reusing the existing sample renderer and storage. Minimal estimates added module storage; recorder and slice cases are explicitly unmeasured in the source record.",
             "source": "README.md"
           }
+        },
+        "cpuPrice": {
+          "value": 2.4,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price",
+          "date": "2026-11-17",
+          "conditions": "Measured by the owner's session: MKII, development twin of base 0.7.8 (f24d6e97), the owner's project bank C pattern C01 playing with three static loops sounding on T2-T4, Repitch installed on no track, 8 s per reading. Two runs alternating with the published 0.2.0: 0.2.1 added +2.4 and +2.3 points, 0.2.0 +4.1 and +4.1. The build measured carried one extra 16-byte routine nothing calls, so the code after it sat 16 bytes later than in this package; this package itself was not measured. A track with REPITCH in force was not measured.",
+          "source": "TESTING.md"
         }
       },
       "tests": {
