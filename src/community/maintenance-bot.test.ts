@@ -241,6 +241,22 @@ describe('maintenance bot ledger', () => {
     expect(JSON.parse((db.prepare("SELECT value FROM maintenance_bot_state WHERE key='dispatch'").get() as { value: string }).value)).toEqual({ slot: '2026-11-17T10:35', mode: 'pass', ok: false, status: 401 })
   })
 
+  it('merges in the owner’s name at exactly the checked commit', async () => {
+    const { bot, env } = await fixture()
+    const sha = 'a'.repeat(40), calls: { url: string; auth: string; body: unknown }[] = []
+    expect((await bot('/merge', 'POST', { number: 7, sha, method: 'squash' })).status).toBe(503)
+    env.MAINTENANCE_BOT_GITHUB_TOKEN = 'github_pat_owner'
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      calls.push({ url, auth: new Headers(init.headers).get('Authorization')!, body: JSON.parse(String(init.body)) })
+      return calls.length === 1 ? Response.json({ merged: true, sha: 'b'.repeat(40) }) : Response.json({ message: 'Head branch was modified.' }, { status: 409 })
+    }))
+    expect((await bot('/merge', 'POST', { number: 7, sha: 'nope', method: 'squash' })).status).toBe(400)
+    expect(await (await bot('/merge', 'POST', { number: 7, sha, method: 'squash' })).json()).toEqual({ merged: true, sha: 'b'.repeat(40) })
+    expect(calls[0]).toEqual({ url: 'https://api.github.com/repos/repeat98/modwerk/pulls/7/merge', auth: 'Bearer github_pat_owner', body: { sha, merge_method: 'squash' } })
+    const refused = await bot('/merge', 'POST', { number: 7, sha, method: 'merge' })
+    expect([refused.status, (await refused.json()).error]).toEqual([409, 'GitHub refused the merge: Head branch was modified.'])
+  })
+
   it('keeps the fingerprint and splits long reports', async () => {
     const { bot, sent } = await fixture()
     expect((await bot('/state', 'PUT', { fingerprint: 'nope' })).status).toBe(400)
