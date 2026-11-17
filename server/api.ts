@@ -40,6 +40,7 @@ import { createConfigurationReport } from './configuration-reports'
 import { octatrackDiagnosticRoutes } from './octatrack-diagnostics'
 import { remoteSessionRoutes } from './remote-sessions'
 import { agentBoardRoutes } from './agent-board'
+import { maintenanceBotRoutes } from './maintenance-bot'
 import { IssueInputError, validateIssueContext, validateLogMissing } from '../src/community/issue-context'
 import { OT_LOG_MAX_BYTES, OtLogError, parseOtLog } from '../src/community/ot-log'
 
@@ -70,6 +71,11 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (path === '/api/news/unsubscribe' && request.method === 'POST') {
       if (!env.DB) throw new HttpError(503,'Community services are not connected yet.')
       return await newsUnsubscribe(request,env,env.DB)
+    }
+    // Telegram and the maintenance bot's GitHub job call these server-to-server: a webhook secret or bearer key authenticates them.
+    if (path.startsWith('/api/maintenance-bot/')) {
+      if (!env.DB) throw new HttpError(503,'Community services are not connected yet.')
+      return (await maintenanceBotRoutes(request,env,env.DB,path))!
     }
     checkOrigin(request,env)
     const auth = await authentication(request,env,path)

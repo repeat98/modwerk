@@ -2,6 +2,8 @@
 
 When the owner says **maintain**, run this pass. It covers the work that comes back every day: pull requests, GitHub issues, the beta and its diagnostics, upstream projects, and the health of `main` and the owner's computer. **maintain prs** (or issues, beta, upstream) runs one worker only. It is owner work, like [OWNER_OPERATIONS.md](OWNER_OPERATIONS.md); a contributor's session never runs it.
 
+The [maintenance bot](MAINTENANCE_BOT.md) runs the routine part of the pull request and issue workers every 30 minutes, within its policy. Start a pass from its morning report: the ledger shows what it did and what waits, so a worker here does not redo or contradict it.
+
 ## How a pass runs
 
 1. **Start from the last briefing.** Read the newest `~/.cache/modwerk-local/maintain/<YYYY-MM-DD>.md`: what was waiting on whom, and what the owner decided. Read the repository at `origin/main` or in a fresh worktree; the primary checkout often sits on a stale local `main`.
