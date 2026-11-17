@@ -11,8 +11,9 @@ Reads, and SKIPs without them:
 Needs m68k-elf-as/ld/nm on PATH: the unit is assembled here for its symbol offsets.
 
 1. The image (no emulator): the original OS matches the manifest's guards and the [PTN]-layer YES slot is
-   NULL; the image holds a jsr at the landing, MIDI START and light Part apply's LFO AUTO CHANGE sites and a
-   jmp at the [PTN] release, each onto the unit's own symbol, and the slot names dj_toggle. After boot, the
+   NULL; the image holds a jsr at the landing, MIDI START, light Part apply's LFO AUTO CHANGE and stock pattern
+   switch (COND_RESET call) sites and a jmp at the [PTN] release, each onto the unit's own symbol, and the slot
+   names dj_toggle. After boot, the
    unit in DRAM is the bytes the manifest's reference names.
 2. The toggle, by the keys (MKII panel, empty card), on this image and on the original OS: OFF after boot;
    [PTN] + [YES] turns it ON with a toast, and releasing [PTN] closes the toast and leaves the pattern
@@ -44,8 +45,15 @@ Needs m68k-elf-as/ld/nm on PATH: the unit is assembled here for its symbol offse
 8. SILENCE TRACKS (V7.2.2): with the project's SILENCE TRACKS on and two tracks' START SILENT set to OFF, the
    jump calls stock's note-off once for each of the six silenced audio tracks, on the tick after the landing,
    and for no other track.
-What it cannot see: a real unit's timing, audio (the pop itself), external MIDI gear, the arranger and chains,
-an MKI panel.
+9. The last restart (V7.3): [PLAY] on A01, a stock pattern change (DIRECT JUMP off) to A02, then DIRECT JUMP on
+   and a jump to A03 a few steps into A02; against a reference run that changed from A01 straight to A03 on the
+   same tick (DIRECT JUMP on, idle, from the same tick). From the tick after the landing every tick's sequencer
+   state and trig-condition state equals the reference's (the author's cmp_reflock.py --ref-for). Ticks are
+   counted from [PLAY] by the unit's tick hook, so a re-based clock cannot hide a shift. Twice: 16 -> 12 -> 12
+   steps at 1x (the author's hardware case), and 1x -> 12 steps at 2x -> 12 steps at 3/4x (the switch's first
+   step runs at the outgoing rate). Stock's switch runs the COND_RESET call once, for the stock change only.
+What it cannot see: a real unit's timing, audio (the pop itself), external MIDI gear, the arranger, an MKI
+panel.
 """
 import ast
 import hashlib
@@ -82,6 +90,7 @@ STEPS, SCALES = 0x800064d0, 0x8000663e    # per-track step and scale index, trac
 # [FILL] press (0x40050050): it latches FILL for every track (0x46107959 or 0x46107969).
 COND, COND_RESET, FILL_LATCH = (0x46107918, 0x46107989), 0x400a539c, 0x400a5460
 TRK_APPLY, NOTE_OFF, LIGHT_APPLY = 0x40001f18, 0x40008f84, 0x40009e00   # (bank, part, t); (t); (bank, part)
+SWRES_SITE = 0x400a4850                   # stock's switch block: `jsr COND_RESET` (V7.3: jsr dj_swres)
 LFO_AUTO, SILENCE_DEF = 0x80000050, 0x8000004f   # LFO AUTO CHANGE; SILENCE TRACKS (a START SILENT byte of -1 uses it)
 FAILS = []
 SPAN = [0x10000]                          # the unit's length, from the manifest (main): calls made from inside it
@@ -481,6 +490,78 @@ def part_silence(image, symbols):
           "and nothing else: %s" % (landed, None if landed is None else landed + 1, released))
 
 
+def part_restart(image, symbols, name, x, y, cue_x=40, dj_on=100, cue_y=114, until=300, window=8):
+    """V7.3: [PLAY] on A01 (16 steps, 1x); pattern `x` = (length, master scale byte) cued as a stock change at tick
+    `cue_x`; DIRECT JUMP on at `dj_on`; pattern `y` jumped to at `cue_y`. The reference cues y the stock way at
+    `cue_x` and turns DIRECT JUMP on at `dj_on`. Ticks: [PLAY] = 1, then one per call of the unit's tick hook
+    (dj_land), which runs every tick whatever DJ_MODE and dj_T say."""
+    runs, switches, unit = {}, {}, None
+    for jump in (False, True):
+        with tempfile.TemporaryDirectory(prefix="dj-gate.") as directory:
+            port = Port(image, pathlib.Path(directory))
+            try:
+                unit = port.int(0x400bf0c0)
+                for index, (length, scale) in ((1, x), (2, y)):
+                    shape(port, index, length=length)
+                    port.poke(PAT_BASE + index * PAT_STRIDE + 0x8e54, bytes([scale]))
+                land, swres = unit + symbols["dj_land"], SWRES_SITE
+                port.send("watch %d,%d" % (land, swres))
+                start(port)
+                seen, tick, pending, ran = {}, None, [(cue_x, 1 if jump else 2), (dj_on, None)] + ([(cue_y, 2)] if jump else []), []
+                while tick is None or tick < until:
+                    port.send("run 4")
+                    rows = port.records()
+                    ran += [(tick, row) for row in rows if row[0] == swres]
+                    if tick is None:
+                        clock = port.int(unit + symbols["dj_T"])
+                        if clock > 0:
+                            tick = clock
+                    else:
+                        tick += sum(row[0] == land for row in rows)
+                    if tick is None:
+                        continue
+                    seen[tick] = (port.int(ACT_PAT, 1), engine(port), port.mem(COND[0], COND[1] - COND[0]))
+                    while pending and tick >= pending[0][0]:
+                        what = pending.pop(0)[1]
+                        if what is None:
+                            port.poke(unit + symbols["DJ_MODE"], b"\x00\x00\x00\x01")
+                        else:
+                            pattern(port, what, 2)
+                runs[jump], switches[jump] = seen, ran
+            finally:
+                port.close()
+    reference, run = runs[False], runs[True]
+    master = ENGINE[0][1] - ENGINE[0][0]
+    changed = lambda r, index: min((t for t, (act, _, _) in r.items() if act == index), default=None)
+    switch = changed(reference, 2)
+    check(switch is not None and changed(run, 1) == switch and len(switches[False]) == 1 and len(switches[True]) == 1,
+          name + ": the stock change lands at tick %s in both runs (A02 in the run, A03 in the reference), and stock's "
+          "switch calls COND_RESET through 0x%x once in each (%d, %d): the jump never does" % (
+              switch, SWRES_SITE, len(switches[False]), len(switches[True])))
+    phase = lambda r, t: int.from_bytes(r[t][1][master:master + 2], "big") if t in r else None
+    longest = max(phase(reference, t) for t, (act, _, _) in reference.items() if act == 2) + 1
+    check(longest == y[0], name + ": the reference plays the edited A03 (master %d steps)" % longest)
+    if x == y:
+        check(phase(run, cue_y) == phase(reference, cue_y), name + ": when the jump is cued, A02 and the reference's A03 "
+              "are on the same master step (%s, %s): the same pattern length since the same restart" % (
+                  phase(run, cue_y), phase(reference, cue_y)))
+    landed = min((t for t, (act, _, _) in run.items() if act == 2), default=None)
+    check(landed is not None and cue_y <= landed <= cue_y + window,
+          name + ": cued at tick %d, landed at tick %s (window %d)" % (cue_y, landed, window))
+    if landed is None:
+        return
+    common = [t for t in sorted(run) if landed < t <= until and t in reference]
+    wrong = [t for t in common if run[t][:2] != reference[t][:2]]
+    check(len(common) > 150 and not wrong, name + ": %d ticks after the landing equal the reference run (A03's master step "
+          "at tick %d: %s, the reference's %s)%s" % (len(common), landed + 1, phase(run, landed + 1), phase(reference, landed + 1),
+                                                     "" if not wrong else ", first difference at tick %d" % wrong[0]))
+    wrong = [t for t in common if run[t][2] != reference[t][2]]
+    counters = sorted({int.from_bytes(run[t][2][4 * k:4 * k + 4], "big") for t in common for k in range(16)})
+    check(len(common) > 150 and not wrong and len(counters) > 1,
+          name + ": the trig conditions (A:B counters %d..%d, FILL and PRE latches) equal the reference on the same "
+          "ticks%s" % (counters[0], counters[-1], "" if not wrong else ", first difference at tick %d" % wrong[0]))
+
+
 def power_cycle(image, battery, symbols):
     with tempfile.TemporaryDirectory(prefix="dj-gate.") as directory:
         work = pathlib.Path(directory)
@@ -525,7 +606,8 @@ def main():
     facts, image, stock = declared(), IMAGE.read_bytes(), STOCK.read_bytes()
     at = lambda address: address - BASE
     print("1. the image")
-    for site in ("LAND_HOOK", "NOFA_HOOK", "PTNREL_HOOK", "LFOQ_HOOK", "TS_HOOK"):
+    check(facts["SWRES_HOOK"] == SWRES_SITE, "the manifest's switch site is the one part 9 watches (%#x)" % SWRES_SITE)
+    for site in ("LAND_HOOK", "NOFA_HOOK", "PTNREL_HOOK", "LFOQ_HOOK", "SWRES_HOOK", "TS_HOOK"):
         length, digest = facts["guards"][site]
         address = facts[site]
         check(hashlib.sha256(stock[at(address):at(address) + length]).hexdigest() == digest, "the original OS matches the guard at %#x" % address)
@@ -537,7 +619,8 @@ def main():
           "the source links to the manifest's reference (%d bytes)" % facts["UNIT_BYTES"])
     unit = int.from_bytes(image[at(slot):at(slot) + 4], "big")
     for site, opcode, name in (("LAND_HOOK", b"\x4e\xb9", "dj_land"), ("NOFA_HOOK", b"\x4e\xb9", "dj_nofa"),
-                               ("PTNREL_HOOK", b"\x4e\xf9", "dj_ptnrel"), ("LFOQ_HOOK", b"\x4e\xb9", "dj_lfoq")):
+                               ("PTNREL_HOOK", b"\x4e\xf9", "dj_ptnrel"), ("LFOQ_HOOK", b"\x4e\xb9", "dj_lfoq"),
+                               ("SWRES_HOOK", b"\x4e\xb9", "dj_swres")):
         address = facts[site]
         check(image[at(address):at(address) + 6] == opcode + (unit + symbols[name]).to_bytes(4, "big"),
               "%#x holds a %s to %s" % (address, "jsr" if opcode[1] == 0xb9 else "jmp", name))
@@ -589,6 +672,9 @@ def main():
     part_publish(IMAGE, symbols)
     print("8. SILENCE TRACKS: the silenced tracks released first")
     part_silence(IMAGE, symbols)
+    print("9. the last restart: a jump after a stock pattern change")
+    part_restart(IMAGE, symbols, "16 -> 12 -> 12 steps at 1x", (12, 2), (12, 2))
+    part_restart(IMAGE, symbols, "16 at 1x -> 12 at 2x -> 12 at 3:4x", (12, 0), (12, 3), cue_y=120, until=330, window=10)
     print("%d failed" % len(FAILS) if FAILS else "all passed")
     return 1 if FAILS else 0
 

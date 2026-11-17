@@ -7,7 +7,7 @@
   "category": "system",
   "source": {
     "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-    "revision": "109f54cd36fcd770e3409d1258254619a161b1d7",
+    "revision": "cd788e93c765120cd2d2feda60bafee9a02f8508",
     "path": "octabam-modules/direct-jump-kyoti"
   },
   "author": {
@@ -22,13 +22,13 @@
   "presentation": {
     "label": "Clock-locked pattern jump on [PTN] + [YES]",
     "family": "Sequencer",
-    "summary": "Hold [PTN] and press [YES] to turn Direct Jump Kyoti on: a pattern you cue takes over on the next step, where it would be had it played since START.",
-    "overview": "On the stock OS a cued pattern waits for the playing one to reach its end. With Direct Jump on, it takes over on the next step instead, locked to the master clock: it starts at the step it would be on had it been playing since you pressed PLAY, whatever its length, scale or per-track settings. Trig conditions carry on as if the new pattern had played all along, each track gets its new Part settings with its own first trig, and with SILENCE TRACKS on the tracks a jump silences are released before the step instead of cut. It is off at every power-on, so the stock behaviour stays the default. It is Zac Kyoti's design, distinct from octabam's other direct jump (Tim Hastie's CHAIN AFTER option).",
+    "summary": "Hold [PTN] and press [YES] to turn Direct Jump Kyoti on: a pattern you cue takes over on the next step, where it would be had it played since PLAY or the last normal pattern change.",
+    "overview": "On the stock OS a cued pattern waits for the playing one to reach its end. With Direct Jump on, it takes over on the next step instead, locked to the master clock: it starts at the step it would be on had it been playing since you pressed PLAY, or since the last normal pattern change, whatever its length, scale or per-track settings. Trig conditions carry on as if the new pattern had played all along, each track gets its new Part settings with its own first trig, and with SILENCE TRACKS on the tracks a jump silences are released before the step instead of cut. It is off at every power-on, so the stock behaviour stays the default. It is Zac Kyoti's design, distinct from octabam's other direct jump (Tim Hastie's CHAIN AFTER option).",
     "highlights": [
-      "OS 1.40C. Zac Kyoti tested this version's behaviour on his MKI in his own builds of the same code (15 November 2026); this Modwerk build has not yet run on a unit.",
+      "OS 1.40C. Zac Kyoti tested this version's behaviour on his MKI in his own builds of the same code (15 and 16 November 2026); this Modwerk build has not yet run on a unit.",
       "Off at every power-on: until you turn it on, pattern changes are the stock ones.",
-      "The new pattern lands where it would be had it played since START, also with differing track lengths and scales (PER TRACK mode), so tracks stay in phase with the master clock. It lands a tick before the step, so its first step is never late, and a cue in the playing pattern's last step lands on its grid point too.",
-      "Trig conditions carry on across a jump: every A:B count stands where the new pattern's would; a latched [FILL] stays on, and a PRE trig right after the jump plays.",
+      "The new pattern lands where it would be had it played since PLAY or the last normal pattern change, also with differing track lengths and scales (PER TRACK mode), so tracks stay in phase with the master clock: after a normal change to a 12-step pattern, a jump to another 12-step pattern lands on the step the first was on. It lands a tick before the step, so its first step is never late, and a cue in the playing pattern's last step lands on its grid point too.",
+      "Trig conditions carry on across a jump: every A:B count stands where the new pattern's would, counted from that same restart; a latched [FILL] stays on, and a PRE trig right after the jump plays.",
       "The Part's pattern-wide settings and START SILENT change as on a stock pattern change. With LFO AUTO CHANGE on, each track's new LFO settings arrive with its first trig of the new pattern, so a sound still ringing keeps its own.",
       "With SILENCE TRACKS on, the tracks a jump silences are released with stock's note-off just before the step, so they do not pop.",
       "The last MIDI Program Change names the pattern that plays; no MIDI START is sent on a jump.",
@@ -37,7 +37,7 @@
     ],
     "usage": [
       "Hold [PTN] and press [YES]: DIRECT JUMP ON appears. Release [PTN]; the pattern chooser stays shut.",
-      "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since START.",
+      "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since PLAY or the last normal pattern change.",
       "Hold [PTN] and press [YES] again for DIRECT JUMP OFF: cued patterns wait for the end of the playing one again, as on the stock OS."
     ]
   },
@@ -45,7 +45,7 @@
     "location": "Front panel: hold [PTN], press [YES]. No menu row or page.",
     "steps": [
       "Hold [PTN] and press [YES]: DIRECT JUMP ON appears. Release [PTN]; the pattern chooser stays shut.",
-      "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since START.",
+      "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since PLAY or the last normal pattern change.",
       "Hold [PTN] and press [YES] again for DIRECT JUMP OFF: cued patterns wait for the end of the playing one again, as on the stock OS."
     ],
     "screenshots": [
@@ -75,7 +75,7 @@
       "key:PATTERN+YES"
     ],
     "limitations": [
-      "OS 1.40C. The author tested the timing, the Part change, the toggle and this version's trig conditions, Part-per-track and SILENCE TRACKS release on an MKI, in his own builds of the same Direct Jump code. This Modwerk build has not run on a unit; the 0.1.x USB package ran on an MKII (toggle, jumps between a 64- and a 16-step pattern, a power cycle, removal).",
+      "OS 1.40C. The author tested the timing, the Part change, the toggle and this version's trig conditions, Part-per-track, SILENCE TRACKS release and jumps after a normal pattern change on an MKI, in his own builds of the same Direct Jump code. This Modwerk build has not run on a unit; the 0.1.x USB package ran on an MKII (toggle, jumps between a 64- and a 16-step pattern, a power cycle, removal).",
       "OFF at every power-on and not stored in the project: turn it on again after a restart.",
       "While the arranger or a pattern chain runs, pattern changes stay stock.",
       "With differing track scales or lengths in PER TRACK mode, the jump waits for the next tick where every track is at a step boundary, at most one common step of all tracks' scales (24 clock ticks for 1x, 3/4x and 1/2x together).",
@@ -141,7 +141,7 @@
         "title": "Quick tutorial: jump between patterns on the next step",
         "steps": [
           "Hold [PTN] and press [YES]: DIRECT JUMP ON appears. Release [PTN]; the pattern chooser stays shut.",
-          "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since START.",
+          "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since PLAY or the last normal pattern change.",
           "Hold [PTN] and press [YES] again for DIRECT JUMP OFF: cued patterns wait for the end of the playing one again, as on the stock OS."
         ]
       },
@@ -231,7 +231,7 @@
           "title": "Quick tutorial: jump between patterns on the next step",
           "steps": [
             "Hold [PTN] and press [YES]: DIRECT JUMP ON appears. Release [PTN]; the pattern chooser stays shut.",
-            "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since START.",
+            "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since PLAY or the last normal pattern change.",
             "Hold [PTN] and press [YES] again for DIRECT JUMP OFF: cued patterns wait for the end of the playing one again, as on the stock OS."
           ]
         },
