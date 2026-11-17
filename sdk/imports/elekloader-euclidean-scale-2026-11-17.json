@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "euclidean-scale-2026-11-17",
+  "about": "Modwerk source-only Euclidean Scale package for Digitakt II OS 1.17.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "euclidean-scale-0.2.0-experimental-os1.17.elemod",
+      "sha256": "8e220e314369873074e7e2c9d08f10a68a6b6cc9611557c69cd84b3b0dc921e5",
+      "id": "euclidean-scale",
+      "version": "0.2.0-experimental",
+      "device": "digitakt-mk2",
+      "os": "1.17",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "e3a07d1a2294c8c14151e511df956bc97046e2f2",
+        "path": "sdk/imports/packages/euclidean-scale/euclidean-scale-0.2.0-experimental-os1.17.elemod"
+      },
+      "title": "Euclidean Scale",
+      "requires": ["core"],
+      "conflicts": [],
+      "summary": "Keep stock Euclidean audio notes in the current keyboard scale and reroll their pitches.",
+      "description": "Follow the pattern scale and reroll a repeating melody within independent octave bounds for each pattern and audio track.",
+      "category": "System",
+      "author": "Claptom-music",
+      "needs_core": "1.1",
+      "on_unit": "Claptom-music reported cold boot and KIT Save and Load results on the QK17 qualification image. See TESTING.md."
+    }
+  ]
+}
