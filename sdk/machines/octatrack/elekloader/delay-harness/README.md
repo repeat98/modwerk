@@ -63,5 +63,11 @@ it proves bytes and order, never transfer timing. That is the unit's part.
   tracks with trigs) it left two of three fed tracks on stock's path: after the sends closed their filters stuck at
   -1,404 and -758/-700. The meter read 37.8-38.0 % stopped before, 48.2-51.7 % playing with every send open,
   42.5-43.7 % playing with them shut, 38.8-39.0 % stopped after. Hence 2,048.
-- FLOOR2048
-- Not yet run on a unit: the 2,048 build, a Tape Echo track, the sampler recorders, a card build.
+- The 2,048 build (base 0.7.6), harness: `TOL=2048`, 3,000,000 frames, PASS; largest differences audio 411 (-134.4
+  dBFS), filter state 1,464 (-123.3 dBFS), ring 743 (-129.2 dBFS); eDMA transfers 32.0 a frame against 14.0.
+  `NODELAY=1`: no word differs.
+- The 2,048 build on the MKII (twin `745efb59`, the same steps): 37.6-37.8 % stopped before, 47.7-52.2 % playing with
+  every send open, 40.3-41.4 % playing with them shut, 36.3-36.5 % stopped after; all three fed tracks went quiet
+  (filters at -1,404, -1,404 and -720/-702). Tape Echo 0.1.6 (a USB trial) on a track with trigs ran at about 50 % (its sound not listened to);
+  back to DELAY, that track's filter restarted at zero and the meter read 37.3-37.4 % stopped with Tape Echo installed.
+- Not yet run on a unit: the sampler recorders, a card build, a long soak with a real project.
