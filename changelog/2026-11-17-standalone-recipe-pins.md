@@ -1,0 +1,1 @@
+SDK: `npm run check` passes again on a computer with the Octatrack toolchain. Tape Echo's and Euclid's reviewed build recipes still named the module catalogue source from before Air Chorus's byline change (#1675), so the package rebuild check stopped at Tape Echo. Both packages rebuild byte for byte; only the recorded hash of that one source file changed.

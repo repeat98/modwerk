@@ -231,8 +231,33 @@ function integrationPrompt(machine: StarterMachine, idea = '', login = '', modul
   ], repository, login)
 }
 
+const repositoryParts = (repository: string) => { const [, owner = 'repeat98', name = 'modwerk'] = repository.match(/github\.com\/([^/]+)\/([^/]+)$/) ?? []; return { owner, name } }
+
+/** One prompt for every developer, whatever the instrument: a coding agent sets the computer up and installs the skills; a chat assistant only gets the newcomer to a coding agent. The instrument's own tools come from the setup section it points to. */
+export function setupPrompt(repository = REPOSITORY) {
+  const { owner, name } = repositoryParts(repository)
+  return [
+    'Set up my computer for Modwerk development: ' + repository + ', a community workshop that builds mods for electronic music instruments.',
+    '',
+    'If you are a chat assistant without access to my files and a terminal (ChatGPT, Gemini, Claude on the web), you cannot do this setup. Guide me instead, one step at a time, and wait for me to confirm each step. Ask which operating system I use and show me how to open a terminal. Help me create a free GitHub account (github.com/signup). Then help me install a coding agent that works on files on my computer: Claude Code (Claude subscription) or Codex (ChatGPT plan), as a desktop app or a terminal tool. Then tell me to open it in an empty folder, paste this whole prompt there, and stop. Do nothing below.',
+    '',
+    'If you are a coding agent that can run commands on my computer, do the setup yourself, step by step. Before each step, say in one plain sentence what it does. Ask before you install anything, skip anything already in place, and answer in the language I write to you in.',
+    '',
+    '1. Tools: git, the GitHub CLI signed in (`gh auth login`; help me create a GitHub account if I have none), and Node 24 through nvm. On Windows, set up WSL and work inside it, because the developer MCP does not run on native Windows.',
+    '2. My fork: unless this folder is already my Modwerk checkout, run `gh repo fork ' + owner + '/' + name + ' --clone`, which also adds `upstream`. In an existing checkout, check that `upstream` is ' + repository + '.git and run `git fetch upstream`. Then, inside the checkout, run `nvm install && npm ci`.',
+    '3. Ask me which instruments I own and how I will test: on my own unit (recommended), in an emulator, or not yet. Set up what docs/DEVELOPER_WORKFLOW.md#your-development-setup describes for that. Firmware and stock OS files stay on my computer: never commit, upload or paste them.',
+    '4. Register the developer MCP with yourself as docs/FRONTEND_MCP.md shows, with its data in a private folder outside the repository such as ~/.modwerk. Leave out --allow-device-writes.',
+    '5. The agent board: run `npm run board -- login` once. It shows who is working on what.',
+    '6. The Modwerk skills: they live in the checkout\'s .agents/skills/ (Claude Code reads the identical .claude/skills/). Install them for yourself by linking, not copying, each skill folder into your own user skills folder (Claude Code: ~/.claude/skills/), so a `git pull` keeps them current. Leave out the owner\'s own skills, whose description says they are only for the owner. Then give me an overview: one plain line per skill, from its SKILL.md description, saying what it does and when I would use it.',
+    '7. Check that it works: call the MCP\'s site_catalogue tool, and device_status if my unit runs the Modwerk base and is connected.',
+    '8. Give me a short list of what is ready and what is still missing, with the one command or click that fixes each. If the skills don\'t show up for you yet, tell me to reopen you in the ' + name + ' folder. Then run /modwerk-start.',
+    '',
+    'Reminder for a chat assistant: only the guidance in the second paragraph applies to you.',
+  ].join('\n')
+}
+
 export function cloneCommands(repository: string, login = '') {
-  const [, owner = 'repeat98', name = 'modwerk'] = repository.match(/github\.com\/([^/]+)\/([^/]+)$/) ?? []
+  const { owner, name } = repositoryParts(repository)
   const fork = login.trim().replace(/^@/, '') || '<your-github-login>'
   return ['git clone https://github.com/' + fork + '/' + name + '.git', 'cd ' + name, 'git remote add upstream https://github.com/' + owner + '/' + name + '.git', 'nvm use && npm ci'].join('\n')
 }
