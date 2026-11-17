@@ -46,6 +46,38 @@ if(machine!=='octatrack'){
   await claimModule()
   process.exit(0)
 }
+// MIT for a new Octatrack module, held by its author (the GitHub login until they put their name), and what it does not cover.
+const mitLicence=holder=>`MIT License
+
+Copyright (c) ${new Date().getUTCFullYear()} ${holder}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+This licence covers this module's own source code and documentation only. It
+does not extend to any Elektron Music Machines firmware, which is not
+distributed here and remains the property of its copyright holder. Nothing in
+this module is endorsed by, supported by, or affiliated with Elektron.
+Octatrack and Elektron are trademarks of Elektron Music Machines MAV AB, used
+only to identify the hardware this module targets.
+`
 if(!id||!['dsp','coldfire'].includes(kind)||!author)throw new Error('Usage: npm run module:new -- my-filter --kind dsp|coldfire --author github-login')
 const document=JSON.parse(await readFile(resolve(root,'public/module-repository.example.json'),'utf8'))
 document.id=id;document.key=id.toUpperCase().replaceAll('-',' ');document.name=id.split('-').map(word=>word[0]?.toUpperCase()+word.slice(1)).join(' ');document.author={github:author,credits:[author]}
@@ -60,7 +92,9 @@ await mkdir(destination,{recursive:true});await mkdir(resolve(destination,'media
 const template=resolve(root,'sdk/templates',kind),placeholder=kind==='dsp'?'_template':'_template_cf'
 for(const file of await readdir(template)){if(file==='manifest.py'){let source=await readFile(resolve(template,file),'utf8');source=source.replaceAll('__AUTHOR__',author).replaceAll(placeholder,id).replaceAll(kind==='dsp'?'TEMPLATE':'TEMPLATE CF',document.key).replace('abbr=b"TMPL"','abbr=b"'+document.key.replace(/[^A-Z0-9]/g,'').slice(0,4)+'"').replace('fullname=b"Template"','fullname=b"'+document.name.slice(0,12)+'"');await writeFile(resolve(destination,file),source)}else await copyFile(resolve(template,file),resolve(destination,file))}
 await writeFile(resolve(destination,'octamod.module.json'),JSON.stringify(document,null,2)+'\n')
-await copyFile(resolve(root,'sdk/octabam/LICENSE'),resolve(destination,'LICENSE'))
+// The author's own MIT licence, as the manifest declares (license.spdx). Octabam's LICENSE names Octabam's author and covers that
+// repository, not a new module.
+await writeFile(resolve(destination,'LICENSE'),mitLicence(author))
 await copyFile(resolve(root,'public/module-qualification.example.json'),resolve(destination,'qualification.example.json'))
 await copyFile(resolve(root,'public/module-resource-impact.example.json'),resolve(destination,'resource-impact.example.json'))
 // A draft's README and TESTING.md: the headings a listed module needs (scripts/module-documentation.mjs), one line each. What a release
