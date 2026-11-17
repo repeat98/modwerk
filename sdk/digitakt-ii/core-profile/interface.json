@@ -61,6 +61,13 @@
       "order": "lower order first (shipped mods use 10-90); the first handler to set an LED keeps it"
     },
     {
+      "name": "ev_seq_note",
+      "since": "1.1",
+      "when": "After the OS constructs a supported audio note, on PLAY and subsequent steps, before the note enters the stock queue.",
+      "handler": "int32_t handler(const struct dt2_seq_note_context *context, uint32_t pitch); return a pitch from 0 through 127, or leave the current pitch unchanged with an out-of-range result. The context is read-only.",
+      "order": "Four slots, in ascending contribution order. Each callback sees the previous accepted pitch."
+    },
+    {
       "name": "ev_seq_audio_phrase",
       "since": "1.1",
       "when": "On supported audio note trigs after pitch resolution, and on later empty steps when requested. Subscribers are visited in ascending contribution order.",
