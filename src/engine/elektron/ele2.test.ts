@@ -4,7 +4,7 @@ import { contentChecksum, encodeSyx, splitMessages } from './sysex'
 import { ELE2_DEVICES, mainImage, readEle2Syx, verifyEle2Build, writeEle2Syx, type Ele2Device } from './ele2'
 
 // A synthetic device and container: no Elektron firmware is involved.
-const device: Ele2Device = { mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x20000, flashLimit: 0x780000, sysexId: 0x07, keep: [[0x40000500, 0x40000540, 'the test range']] }
+const device: Ele2Device = { mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x20000, flashLimit: 0x780000, sysexId: 0x07, updateMax: 0x1f0000, keep: [[0x40000500, 0x40000540, 'the test range']], noLink: [] }
 const framing = (count: number) => Uint8Array.from([0xf0, 0x00, 0x20, 0x3c, 0x07, 0x00, 0x7f, 0x00, 0x02, 0x01, 0x02, 0x03, (count >> 14) & 0x7f, (count >> 7) & 0x7f, count & 0x7f, 0xf7])
 const pattern = (length: number, seed: number) => Uint8Array.from({ length }, (_, i) => (i * seed + (i >> 5)) & 0xff)
 const main = pattern(9000, 13)
@@ -64,7 +64,17 @@ describe('ELE2 containers', () => {
     expect(() => readEle2Syx(encodeSyx(new Uint8Array(64), 0x07, framing(0), framing(0)))).toThrow('no ELE2 container')
   })
 
-  it('keeps the MKI bootstrap and its version check', () => {
-    expect(ELE2_DEVICES['analog-rytm-mki'].keep.map(([start, stop]) => [start, stop])).toEqual([[0x40000592, 0x400005d8], [0x4028c768, 0x402a1b84]])
+  it('refuses an update larger than the upgrade buffer takes', () => {
+    const output = writeEle2Syx(stock, stock.stored), total = readEle2Syx(output).total
+    expect(verifyEle2Build(output, stock, main, { ...device, updateMax: 8 + total }).updateHeadroom).toBe(0)
+    expect(() => verifyEle2Build(output, stock, main, { ...device, updateMax: 8 + total - 1 })).toThrow('upgrade buffer')
+  })
+
+  it('keeps the MKI bootstrap, its version check and the boot-flash writers stock and unlinkable', () => {
+    const mki = ELE2_DEVICES['analog-rytm-mki']
+    expect(mki.updateMax).toBe(0x1f0000)
+    expect(mki.keep.map(([start, stop]) => [start, stop])).toEqual([[0x40000592, 0x400005d8], [0x4028c768, 0x402a1b84], [0x4011a7a4, 0x4011aa7a], [0x40096a6c, 0x40096b3e]])
+    expect(mki.noLink.map(([start, stop]) => [start, stop])).toEqual([[0x4011a7a4, 0x4011aa7a], [0x40096a6c, 0x40096ac2], [0x40096ac2, 0x40096af6], [0x40096af6, 0x40096b3e]])
+    for (const [start, stop] of mki.noLink) expect(mki.keep.some(([from, to]) => from <= start && stop <= to)).toBe(true)
   })
 })

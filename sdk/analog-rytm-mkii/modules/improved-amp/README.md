@@ -190,7 +190,7 @@ November, after a review made only the module end a timed hold, the hold and pre
 again (IL06), and a hold follows HLD turned to or from AUTO during a note. The package's own image
 (IA15) was then flashed: it booted, pad hits held their step, HLD and ENV RESET AMP came back after a
 project save and load and after a power cycle.
-Memory: 9,548 bytes of the shared mod area (the plain base alone leaves 119,004, with this module 109,456).
+Memory: 9,228 bytes of the shared mod area (the plain base alone leaves 119,004, with this module 109,776; 9,548 before 0.1.1).
 Load, on the author's unit with the sequencer stopped (TESTING.md): the audio block was 67.4 to 67.5 %
 busy with this module, where the base alone read 65.8 % earlier that day: about 1.6 points, about 1.0 of
 them in the amp record entries, which run every block for every voice (0.1 point more than before the
@@ -208,7 +208,7 @@ addresses only; no Elektron firmware is included.
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build IA14, this package linked alone on the Modwerk base
+Screenshots are rytm-emu captures of build IA16 (0.1.1), this package linked alone on the Modwerk base
 ([media/capture.json](media/capture.json)). No audio preview.
 
 ![AMP DEC reading a time](media/decay-time.png) ![AMP HLD reading steps](media/hold-steps.png) ![ENV RESET at AMP](media/env-reset-amp.png)

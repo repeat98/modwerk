@@ -1,7 +1,7 @@
 {
-  "version": "0.1.2-experimental",
-  "assemblySha256": "03469c86e11d0aca51b98501293074cd7140339cc8664e39376507339a322daa",
-  "dspHostSha256": "c83443548b0bcba884761566dd10b39575714f9823d4287ef46998f4d2f80552",
+  "version": "0.1.3-experimental",
+  "assemblySha256": "4bb74803178a809892e542d78608265a3a682892e26ac29ac87e63aa44835a0f",
+  "dspHostSha256": "786bb3a61cb710b660937157e379a37d2b6e76f458070f6962e0313ffff059a2",
   "sampleRate": 44100,
   "framesPerBlock": 16,
   "blocks": 85444,

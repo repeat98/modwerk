@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/filter-hz",
+  "version": "1.3.0",
+  "date": "2026-11-15",
+  "upstream": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+    "path": "filter-hz/os1.74",
+    "license": "GPL-2.0-only"
+  },
+  "changes": [
+    "The FX track's DELAY HPF/LPF and REVERB FRQ/HPF/LPF read in hertz: filter_hz_gate sends ids 76..87 to filter_hz_fx_text (src/fx-hz.c), which reads the coefficient the stock DSP uses and works out the -3 dB frequency (HPF, LPF) or the shelf's corner (FRQ) with a 32-bit CORDIC; LPF reads HPF through stock's page value getter, so a held trig's or scene's lock counts. No stock table is copied.",
+    "Lock boxes: a table of box widths per id; the FX ids get 1.2.1's 33-pixel box, LPF's two pixels right (x-14..x+18). A third site, where stock's knob value drawing places a value's text (0x40037b9c, 10 bytes), moves LPF's locked text with its box, so locked HPF and LPF keep a black column between them.",
+    "Source-only export compiled from sdk/analog-rytm-mkii/modules/filter-hz at 6eb906493 in the pinned toolchain."
+  ],
+  "runtimeSourceSha256": "9769deb9d5f201d04639cb5a19555990b440850b211921336a5262b4c386b56c",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/filter-hz/filter-hz-1.3.0-os1.74.elemod",
+      "sha256": "2f5d14a782ca4437ca40bbb6b6758755127f48d07c5a98e07fcec4dc951a756d"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/filter-hz/TESTING.md",
+  "requires": []
+}

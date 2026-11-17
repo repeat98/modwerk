@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include "loader.h"
 #include "modwerk_events.h"
+#include "status.h" /* MODWERK_MACHINE_MAP and the machine map's calls */
 #ifndef MW_HOST /* test_machine_registry.c maps these onto a model of the unit's memory */
 #define U8(a) (*(volatile uint8_t *)(uintptr_t)(a))
 #define U32(a) (*(volatile uint32_t *)(uintptr_t)(a))
@@ -93,6 +94,10 @@ static void release(unsigned track)
     charged[track] = 0; modwerk_dsp_source_release(track);
     if (!charges(old)) modwerk_dsp_source_engine_off(key(old));
 }
+/* dsp.c's make_way: a bank or project load needs the room this track's voice booked (#1542). The track renders the
+ * stock silent source until charge() claims it again, with the DSP FULL box while it does not fit. */
+void modwerk_machine_voice_shed(unsigned track);
+void modwerk_machine_voice_shed(unsigned track) { if (track < 8u) release(track); }
 /* Charge `who`'s voice on the track, replacing what was charged there; 0 when its core cannot carry it (nothing
  * changes). The machine the track was charged to keeps its engine only while another track still is. */
 /* Its price per voice: its module's engine's when its package carries one (ABI 10: the header's cycles and kind,
@@ -425,6 +430,7 @@ static unsigned relive(const Part *part, uint32_t offset, unsigned track, unsign
     if (part[0x22 + track] == type) STOCK(void (*)(unsigned, unsigned, unsigned), 0x40001f18u)(U8(0x100b14ceu), offset / PART_STRIDE, track);
     return type;
 }
+static void mc_assigned(const Machine *who); /* the machine map, below: a track takes an installed machine */
 /* A machine's admission precedes every mutation; -1 refuses. */
 extern volatile uint32_t modwerk_machine_assigned; /* controller_board.c: it reads the bank's machines again after an assignment */
 unsigned mw_assign(Part *part, unsigned track, unsigned row)
@@ -459,6 +465,7 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
             }
         }
         if (next->source_kind && old != next && !claim(track, next)) return (unsigned)-1;
+        if (old != next) mc_assigned(next);
         if (old && old != next) leave(part, mirror, track, old);
         if (absent) flex_defaults(part, mirror, track);
         if (next->assign) return next->assign(part, track, 1);
@@ -910,4 +917,242 @@ int mw_foreign_render(unsigned track, unsigned ping, unsigned start, unsigned en
         (who->source_kind && charged[track] != who))
         return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
     return who->source_kind ? f(track, ping, start, end) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
+}
+
+/* ---- The machines a project uses (owner, 16 November 2026: machines in the project map) ------------------------------
+ * A Part names a machine only by its signature: two letters and a version at 60 + 30 * track. That names no module, so
+ * with the machine absent (switched off on MODULES, removed, or never installed on this unit) nothing could say which
+ * one the track wants: POLY8's tracks just read as FLEX. This map remembers, for each machine the project uses, its
+ * signature and version range, its module and its name: in battery RAM, so a power cycle keeps it, and in project.work
+ * as '#MODWERK_MC=' lines (fxmap.c writes and reads them), so the project carries it to another unit. An installed
+ * machine is noted when a track takes it, when a project loads or saves and when the installed set changes. MISSING
+ * lists the entries the project names that no installed machine serves (dsp.c), and a track of one says so when it is
+ * selected. The UI task works that out twice a second (modwerk_machine_map_refresh); the USB request and the page only
+ * read the result, so neither scans a bank nor holds the machine table. */
+struct mc_entry { uint32_t module; uint8_t sig[2], lo, hi; char name[16]; };
+struct mc_map { uint32_t magic, generation; struct mc_entry e[MODWERK_MACHINE_MAP]; uint32_t sum; };
+#define MC_MAGIC 0x4d574d43u /* 'MWMC' */
+#ifdef MW_HOST
+static struct mc_map host_mc_map;
+#define MCMAP (&host_mc_map)
+#ifndef MW_BANKS
+#define MW_BANKS 1u
+#define MW_BANK_AT(b) (0x46000000u + 0u * (b)) /* the model holds one bank */
+#endif
+#else
+/* Battery RAM after diag.c's trace of the frames before a stall (sdk/machines/octatrack/battery-ram.json). */
+#define MCMAP ((volatile struct mc_map *)0x100ffd40u)
+typedef char mc_map_fits[0x100ffd40u + sizeof(struct mc_map) <= 0x100fff00u ? 1 : -1];
+#define MW_BANKS 16u
+#define MW_BANK_AT(b) (0x400e21e0u + (b) * 0x9b340u) /* all 16 banks stay in RAM (fxmap.c's PART_FX) */
+#endif
+static uint32_t mc_checksum(void)
+{
+    const volatile uint8_t *p = (const volatile uint8_t *)MCMAP;
+    uint32_t sum = 0x6d63u;
+    for (unsigned i = 0; i < sizeof(struct mc_map) - 4u; ++i) sum = sum * 31u + p[i];
+    return sum;
+}
+static void mc_seal(void) { MCMAP->magic = MC_MAGIC, MCMAP->generation = MCMAP->generation + 1u, MCMAP->sum = mc_checksum(); }
+/* A map this base can read, or an empty one: a fresh battery, or damage. */
+static void mc_valid(void)
+{
+    if (MCMAP->magic == MC_MAGIC && MCMAP->sum == mc_checksum()) return;
+    volatile uint8_t *p = (volatile uint8_t *)MCMAP;
+    for (unsigned i = 0; i < sizeof(struct mc_map); ++i) p[i] = 0;
+    mc_seal();
+}
+static void mc_put(volatile struct mc_entry *e, uint32_t module, const uint8_t *sig, unsigned lo, unsigned hi, const char *name)
+{
+    e->module = module, e->sig[0] = sig[0], e->sig[1] = sig[1], e->lo = (uint8_t)lo, e->hi = (uint8_t)hi;
+    unsigned i = 0;
+    for (; name && i < 15u && name[i]; ++i) e->name[i] = name[i];
+    for (; i < 16u; ++i) e->name[i] = 0;
+}
+/* Each machine-signed track of every bank's Parts, working and saved: `found` gets, per entry, whether one names it,
+ * and `mine` (installed machines m[0..n), may be 0) whether one of them owns it. */
+static uint32_t mc_scan(const Machine *const *m, unsigned n, uint32_t *mine)
+{
+    uint32_t found = 0, owned = 0;
+    if (!valid_bank()) { if (mine) *mine = 0; return 0; }
+    for (unsigned b = 0; b < MW_BANKS; ++b)
+        for (unsigned p = 0; p < 8u; ++p) {
+            const Part *part = AT(MW_BANK_AT(b) + (p < 4u ? PART_OFF : SAVED_OFF - 4u * PART_STRIDE) + p * PART_STRIDE);
+            for (unsigned t = 0; t < 8u; ++t) {
+                if (part[0x22 + t] > 1u) continue;
+                const Part *s = part + SIG + 30u * t;
+                if (!s[0]) continue;
+                for (unsigned k = 0; k < MODWERK_MACHINE_MAP; ++k) {
+                    const volatile struct mc_entry *e = &MCMAP->e[k];
+                    if (e->module && s[0] == e->sig[0] && s[1] == e->sig[1] && s[2] >= e->lo && s[2] <= e->hi) found |= 1u << k;
+                }
+                for (unsigned k = 0; mine && k < n; ++k)
+                    if (s[0] == m[k]->sig[0] && s[1] == m[k]->sig[1] && s[2] >= m[k]->sig_lo && s[2] <= m[k]->sig_hi) owned |= 1u << k;
+            }
+        }
+    if (mine) *mine = owned;
+    return found;
+}
+/* An installed machine into the map, by its module: its entry kept up to date, or a free one, or one the project does
+ * not name. 1 when the map changed. */
+static int mc_note(const Machine *who)
+{
+    struct runtime_owner o;
+    if (!who || modwerk_runtime_owner_at((uintptr_t)who, &o) != 1 || !o.module) return 0;
+    volatile struct mc_entry *free_one = 0;
+    for (unsigned k = 0; k < MODWERK_MACHINE_MAP; ++k) {
+        volatile struct mc_entry *e = &MCMAP->e[k];
+        if (e->module == o.module) {
+            int same = e->sig[0] == who->sig[0] && e->sig[1] == who->sig[1] && e->lo == who->sig_lo && e->hi == who->sig_hi;
+            for (unsigned i = 0; same && i < 15u; ++i) {
+                char c = who->label ? who->label[i] : 0;
+                same = e->name[i] == c;
+                if (!c) break;
+            }
+            if (same) return 0;
+            mc_put(e, o.module, who->sig, who->sig_lo, who->sig_hi, who->label);
+            return 1;
+        }
+        if (!e->module && !free_one) free_one = e;
+    }
+    if (!free_one) {
+        uint32_t named = mc_scan(0, 0, 0);
+        for (unsigned k = 0; k < MODWERK_MACHINE_MAP && !free_one; ++k) if (!(named >> k & 1u)) free_one = &MCMAP->e[k];
+    }
+    if (!free_one) return 0; /* sixteen machines the project uses: the rest go unnamed */
+    mc_put(free_one, o.module, who->sig, who->sig_lo, who->sig_hi, who->label);
+    return 1;
+}
+/* Every installed machine the project names into the map. */
+static void mc_note_named(void)
+{
+    const Machine *m[ROWS - 5u]; unsigned n = machines(m), changed = 0;
+    uint32_t mine;
+    (void)mc_scan(m, n, &mine);
+    for (unsigned k = 0; k < n; ++k) if (mine >> k & 1u) changed |= (unsigned)mc_note(m[k]);
+    if (changed) mc_seal();
+}
+static volatile uint32_t mc_absent; /* the entries the project names that no installed machine serves: the UI task's */
+static uint32_t mc_epoch, mc_refreshes;
+static uint8_t mc_epoch_seen, mc_stale = 1;
+/* status.c's tick, twice a second (the UI task): the map's check, a newly installed set's machines, and the absent
+ * entries, worked out again every two seconds or at once after a change. */
+void modwerk_machine_map_refresh(void)
+{
+    if (!(++mc_refreshes & 7u) || MCMAP->magic != MC_MAGIC) mc_valid(); /* the whole check every four seconds */
+    uint32_t epoch = modwerk_runtime_owner_epoch();
+    if (!mc_epoch_seen || epoch != mc_epoch) mc_epoch = epoch, mc_epoch_seen = 1, mc_note_named(), mc_stale = 1;
+    static uint32_t generation;
+    if (MCMAP->generation != generation) generation = MCMAP->generation, mc_stale = 1;
+    if (!mc_stale && (mc_refreshes & 3u)) return;
+    mc_stale = 0;
+    const Machine *m[ROWS - 5u]; unsigned n = machines(m);
+    uint32_t named = mc_scan(0, 0, 0), absent = 0;
+    for (unsigned k = 0; k < MODWERK_MACHINE_MAP; ++k) {
+        const volatile struct mc_entry *e = &MCMAP->e[k];
+        if (!(named >> k & 1u)) continue;
+        unsigned served = 0;
+        for (unsigned i = 0; i < n && !served; ++i)
+            served = m[i]->sig[0] == e->sig[0] && m[i]->sig[1] == e->sig[1] && m[i]->sig_lo <= e->hi && m[i]->sig_hi >= e->lo;
+        if (!served) absent |= 1u << k;
+    }
+    mc_absent = absent;
+}
+/* dsp.c's MISSING list: entry k when the project names it and no installed machine serves it. Reads the refresh's
+ * result only, so the USB request may ask. */
+int modwerk_machine_absent(unsigned k, uint32_t *module, char *name)
+{
+    if (k >= MODWERK_MACHINE_MAP || !(mc_absent >> k & 1u) || MCMAP->magic != MC_MAGIC) return 0;
+    const volatile struct mc_entry *e = &MCMAP->e[k];
+    if (!e->module) return 0;
+    *module = e->module;
+    for (unsigned i = 0; i < 16u; ++i) name[i] = i < 15u ? e->name[i] : 0;
+    return 1;
+}
+/* dsp.c's notice when a track is selected: the absent machine the current Part's track t is signed for. */
+int modwerk_machine_track_absent(unsigned t, uint32_t *module, char *name)
+{
+    if (t >= 8u || !valid_bank() || MCMAP->magic != MC_MAGIC) return 0;
+    const Part *part = current_part(), *s = part + SIG + 30u * t;
+    if (part[0x22 + t] > 1u || !s[0]) return 0;
+    for (unsigned k = 0; k < MODWERK_MACHINE_MAP; ++k) {
+        const volatile struct mc_entry *e = &MCMAP->e[k];
+        if (e->module && s[0] == e->sig[0] && s[1] == e->sig[1] && s[2] >= e->lo && s[2] <= e->hi)
+            return modwerk_machine_absent(k, module, name);
+    }
+    return 0;
+}
+/* status.c's MISSING page: where the project names entry k first, as fxmap.c's modwerk_fxmap_where says it for an
+ * effect: the current bank first, its working Parts before the saved copies, then the other banks in order. */
+int modwerk_machine_where(unsigned k, unsigned *bank, unsigned *part_index, unsigned *track)
+{
+    if (k >= MODWERK_MACHINE_MAP || !valid_bank() || MCMAP->magic != MC_MAGIC || !MCMAP->e[k].module) return 0;
+    const volatile struct mc_entry *e = &MCMAP->e[k];
+    unsigned now = MW_BANKS > 1u ? (U32(BANK) - MW_BANK_AT(0)) / (MW_BANKS > 1u ? MW_BANK_AT(1) - MW_BANK_AT(0) : 1u) : 0u;
+    if (now >= MW_BANKS) now = 0;
+    for (unsigned b = 0; b < MW_BANKS; ++b) {
+        unsigned at = !b ? now : b - 1u < now ? b - 1u : b;
+        for (unsigned p = 0; p < 8u; ++p) {
+            const Part *part = AT(MW_BANK_AT(at) + (p < 4u ? PART_OFF : SAVED_OFF - 4u * PART_STRIDE) + p * PART_STRIDE);
+            for (unsigned t = 0; t < 8u; ++t) {
+                const Part *s = part + SIG + 30u * t;
+                if (part[0x22 + t] <= 1u && s[0] == e->sig[0] && s[1] == e->sig[1] && s[2] >= e->lo && s[2] <= e->hi) {
+                    *bank = at, *part_index = p & 3u, *track = t;
+                    return p < 4u ? 1 : 2;
+                }
+            }
+        }
+    }
+    return 0;
+}
+/* status.c's MODULES page, a machine just switched off: where the project still names it, by its module. */
+int modwerk_machine_where_module(uint32_t module, unsigned *bank, unsigned *part_index, unsigned *track)
+{
+    for (unsigned k = 0; module && k < MODWERK_MACHINE_MAP && MCMAP->magic == MC_MAGIC; ++k)
+        if (MCMAP->e[k].module == module) return modwerk_machine_where(k, bank, part_index, track);
+    return 0;
+}
+/* fxmap.c, a project load: its '#MODWERK_MC=' lines, then the end. A project with lines names its machines; one
+ * without (saved before them) keeps the map there is. Either way the installed machines it names are noted. */
+static struct mc_entry mc_staged[MODWERK_MACHINE_MAP];
+static unsigned mc_staged_count;
+void modwerk_machine_map_begin(void) { mc_staged_count = 0; }
+void modwerk_machine_map_stage(const uint8_t *sig, unsigned lo, unsigned hi, uint32_t module, const char *name)
+{
+    if (!module || !sig[0] || lo > hi || hi > 255u || mc_staged_count >= MODWERK_MACHINE_MAP) return;
+    for (unsigned k = 0; k < mc_staged_count; ++k) if (mc_staged[k].module == module) return;
+    mc_put(&mc_staged[mc_staged_count++], module, sig, lo, hi, name);
+}
+void modwerk_machine_map_loaded(int ok)
+{
+    mc_valid();
+    if (ok && mc_staged_count) {
+        for (unsigned k = 0; k < MODWERK_MACHINE_MAP; ++k) {
+            const struct mc_entry *s = &mc_staged[k];
+            if (k < mc_staged_count) mc_put(&MCMAP->e[k], s->module, s->sig, s->lo, s->hi, s->name);
+            else { static const uint8_t none[2]; mc_put(&MCMAP->e[k], 0, none, 0, 0, 0); }
+        }
+        mc_seal();
+    }
+    mc_staged_count = 0;
+    mc_note_named();
+    mc_stale = 1;
+}
+/* fxmap.c, a project save: entry k's line when the project names it, after the installed machines it names are noted. */
+static uint32_t mc_written_named;
+int modwerk_machine_map_line(unsigned k, uint8_t *sig, unsigned *lo, unsigned *hi, uint32_t *module, char *name)
+{
+    if (!k) mc_valid(), mc_note_named(), mc_written_named = mc_scan(0, 0, 0);
+    if (k >= MODWERK_MACHINE_MAP || !(mc_written_named >> k & 1u)) return 0;
+    const volatile struct mc_entry *e = &MCMAP->e[k];
+    if (!e->module) return 0;
+    sig[0] = e->sig[0], sig[1] = e->sig[1], *lo = e->lo, *hi = e->hi, *module = e->module;
+    for (unsigned i = 0; i < 16u; ++i) name[i] = i < 15u ? e->name[i] : 0;
+    return 1;
+}
+static void mc_assigned(const Machine *who)
+{
+    mc_valid();
+    if (mc_note(who)) mc_seal();
+    mc_stale = 1;
 }

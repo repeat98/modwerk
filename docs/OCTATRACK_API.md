@@ -56,6 +56,7 @@ The base owns every stock site that more than one module needs and shares it as 
 - **MIDI and the keyboard:** `ev_midi_note_on`, `ev_midi_note_off`, `ev_midi_note_key`, `ev_octave_key`, `ev_octave_number`, `ev_keyboard_draw`, the `ev_chromatic_*` hooks, `ev_arp_setup_knob`, `ev_arp_setup_text`.
 - **Editing:** `ev_plock_store` (a lock byte is stored), `ev_knob_store` (a knob turn stores a Part byte).
 - **Projects and settings:** `ev_project_load`, `ev_project_line`, `ev_project_write`, `ev_project_defaults`, `ev_settings_sanitise`.
+- **Projects, banks and Parts as stock saves and loads them:** `ev_banks_load`/`ev_banks_loaded`, `ev_bank_load`/`ev_bank_loaded`, `ev_project_new`, `ev_bank_write`/`ev_bank_written`, `ev_project_store`/`ev_project_stored`, `ev_project_reload`/`ev_project_reloaded`, `ev_part_saved`, `ev_part_clear`. Each `…ed` hook runs when stock's routine returns. With `ev_modules_ready` (the installed modules changed and the card is free), they let a module keep its own file beside the project, read and written from the engine task, the only one that may use the card.
 - **Tables:** `ot_machines` (track machines), `ot_sequencer_rows` (rows in PROJECT > CONTROL > SEQUENCER), `ot_midi_generators`, `ot_sample_editor_actions`, `ot_machine_starts`.
 
 ```json
@@ -90,6 +91,7 @@ Never write into bytes another module saves, even one listed in your `compatibil
 
 - **An effect** has twelve knobs on two pages: slots 0-5 and 6-11. Each `Param` gives a short label, a default, a value count and a formatter. Put a MODE switch on an even slot. The page comes from the manifest. A draft's page is derived from it by `module:dev`, which shows stepped knobs as numbers until the module is listed.
 - **ColdFire code** draws with `module_draw`, reads keys and encoders with `module_key` and `module_enc`, or contributes to a table. For example, a row in `ot_sequencer_rows` is a `struct modwerk_sequencer_row` with `label`, `get` and `set`. Each module's controls sit where a musician would look for them ([choose how a module hooks in](module-guides/README.md#choose-how-a-module-hooks-in)).
+- **A window or key layer of its own** (the stock window manager, an input layer pushed onto stock's): the base will not remove, replace or undo the module while stock still names any of its memory, or while a task is paused in its code. The sync is refused with `RUNTIME_UI_OPEN` until the musician closes it. So close everything you open, on every path out (NO, another page, the stock window that evicts yours). A package that opens one names `requiresCapabilities: 1024` in `src/engine/assets/octatrack-module-packages.json`, so only a base with this check (loader capability 1024) is offered it.
 
 ## What stays stable
 

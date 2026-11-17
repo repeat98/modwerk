@@ -1,0 +1,88 @@
+# Improved AMP (0.1.0-experimental): AMP ATK and DEC read as times with the fine low end: ATK 0, 0.2ms (1),
+# 5.0ms (25), 15.0ms (45); DEC 0, 0.2ms (1), 5.0ms (25), 25ms (55), 300ms (89), 39.4s (126), INF (127).
+# Screens only: what the envelopes, the overdrive and the pre-fade sound like is in the sound cases.
+# The case sets what its references show: the BD track, every value of the page by CC on the auto channel
+# and, where a number depends on it, the tempo. The title bar (kit name, tempo, record state) and the status
+# line (track level, pattern) are left out of every comparison (`ignore`).
+# A value shows as text in place of its label for a while after a knob turn (not after a CC), so every
+# screen is taken after a turn of the knob it is about. The AMP and FILTER pages take 3 counts a step.
+# Changes the BD track's sound in the active kit and does not put it back.
+name: improved-amp-times
+state: changes
+ignore: 0 0 128 9, 0 55 128 9
+
+hold TRK
+key BD
+release TRK
+key AMP
+cc 78 0
+cc 79 0
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+cc 78 1
+nudge A -1 per 3
+wait 750
+screen a0
+expect a0 == ref
+nudge A -1 per 3
+wait 750
+screen aunder
+expect aunder == a0
+nudge A +1 per 3
+wait 750
+screen a1
+expect a1 == ref
+nudge A +24 per 3
+wait 750
+screen a25
+expect a25 == ref
+nudge A +20 per 3
+wait 750
+screen a45
+expect a45 == ref
+cc 78 0
+cc 80 1
+# The value text of the knob turned before is gone after 2.5 s (measured, emulator): wait it out.
+wait 3000
+nudge C -1 per 3
+wait 750
+screen d0
+expect d0 == ref
+nudge C -1 per 3
+wait 750
+screen dunder
+expect dunder == d0
+nudge C +1 per 3
+wait 750
+screen d1
+expect d1 == ref
+nudge C +24 per 3
+wait 750
+screen d25
+expect d25 == ref
+nudge C +30 per 3
+wait 750
+screen d55
+expect d55 == ref
+nudge C +34 per 3
+wait 750
+screen d89
+expect d89 == ref
+nudge C +37 per 3
+wait 750
+screen d126
+expect d126 == ref
+nudge C +1 per 3
+wait 750
+screen inf
+expect inf == ref
+nudge C +1 per 3
+wait 750
+screen over
+expect over == inf
+# Back to a decay that ends, so a later note on the BD does not ring on.
+cc 80 55

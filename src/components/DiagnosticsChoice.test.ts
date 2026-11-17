@@ -73,7 +73,7 @@ describe('the install guide’s diagnostics step', () => {
     const onDone = vi.fn()
     await render(createElement(DiagnosticsGuideStep, { onDone }))
     expect(container.textContent).toContain('Help make this work on every Octatrack'); expect(container.textContent).toContain('What gets shared')
-    expect(container.textContent).toContain('under Setup in Your Octatrack')
+    expect(container.textContent).toContain('under Diagnostics in Your Octatrack')
     expect(container.querySelector('dialog')).toBeNull() // a part of the guide, not a dialog over it
     await act(async () => { button('Not now').click(); await flush() })
     expect(onDone).toHaveBeenCalledWith(false); expect(mocked.share).not.toHaveBeenCalled()

@@ -1,0 +1,45 @@
+# Filter Hz 1.3.0: the FX track's DELAY HPF and LPF read in hertz while turned.
+# FX track, DELAY page (SRC). Each value is set by CC one below, then one nudge up.
+# Expected (from the stock filter equations): HPF 64 463Hz, HPF 127 12.0kHz; with HPF 0,
+# LPF 80 1.44kHz; with HPF 32, LPF 96 OPEN. Ends with HPF 32, LPF 96 (the stock defaults).
+name: filter-hz-delay-turn
+state: changes
+# A value overlay stays about 2.3 s, so each screen is followed by 3 s before the next knob moves.
+# FX is a toggle (pressed on the FX track it goes back to the drum track), so BD is selected first.
+hold TRK
+key BD
+release TRK
+key FX
+key SRC
+wait 3500
+cc 20 32
+cc 21 96
+cc 20 63
+wait 300
+nudge E +1
+wait 750
+screen hpf64
+expect hpf64 == ref region 0 40 128 15
+wait 3000
+cc 20 126
+wait 300
+nudge E +1
+wait 750
+screen hpf127
+expect hpf127 == ref region 0 40 128 15
+wait 3000
+cc 20 0
+cc 21 79
+wait 300
+nudge F +1
+wait 750
+screen lpf80
+expect lpf80 == ref region 0 40 128 15
+wait 3000
+cc 20 32
+cc 21 95
+wait 300
+nudge F +1
+wait 750
+screen lpfopen
+expect lpfopen == ref region 0 40 128 15

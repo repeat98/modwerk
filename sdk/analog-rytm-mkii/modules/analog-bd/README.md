@@ -46,14 +46,14 @@ None: BD ANALOG is a machine of its own in the machine list. Choosing another ma
 
 ## Compatibility and limitations
 
-- Tracks: BD ANALOG is in the machine list of the BD, SD and BT tracks only. On the unit (rig, 11 Nov 2026) three 909s hit together played clean and four overran the audio block, so three voices is the cap.
+- Tracks: BD ANALOG is in the machine list of the BD, SD and BT tracks only. On the unit (rig, 11 Nov 2026) three 909s hit together played clean and four overran the audio block, so three voices is the cap. With three playing in a large set of modules the unit's controls can lag.
 - CPU: the Rytm's own audio work takes about two thirds of the audio block with nothing playing. An 808 voice adds about 7 % of the block (its render about 5 %, the base's work under 1 %, stock's for the track about 1 %). Hits spread across the beat cost less than hits at the same instant ([TESTING.md](TESTING.md)).
 - The level into the voice's analog path and how hard it can be driven are not yet measured on a unit.
 - Built for OS 1.74 only, on the Modwerk base's digital voices (its send-bus variant: the site picks it for a set with this module).
 
 ## Tests and measurements
 
-rytm-emu on OS 1.74, the hand-written assembly against its C, the host engine against repeat98's float models, the author's own unit by hand (0.1.0) and the author's automated rig on a MKII (0.2.0): [TESTING.md](TESTING.md).
+rytm-emu on OS 1.74, the hand-written assembly against its C, the host engine against repeat98's float models, the author's own unit by hand (0.1.0, 0.2.0 and 0.2.1) and the author's automated rig on a MKII (0.2.0): [TESTING.md](TESTING.md).
 
 ## Authorship and licences
 
@@ -61,4 +61,4 @@ Original 808/909 models, fits and coefficients: Jannik Aßfalg (repeat98), MIT, 
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build BA21 (0.2.0 on the base of the digital voices, repeat98/modwerk#1447) ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build BA22 (0.2.1 on the base of the digital voices, repeat98/modwerk#1447; the same frames as 0.2.0's) ([media/capture.json](media/capture.json)). No audio preview yet.

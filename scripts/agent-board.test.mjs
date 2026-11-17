@@ -44,6 +44,11 @@ describe('what a branch needs claimed', () => {
     ])
     expect(board.neededClaims({ root, base: 'HEAD~1' }).find(item => item.key === 'octatrack/slicer').note).toBe('Slices a loop across the pads.')
   })
+  it('claims consecutive new hook indices as one run', () => {
+    const { root, commit } = repository({ 'sdk/machines/octatrack/events.json': events([35, 36]) })
+    commit({ 'sdk/machines/octatrack/events.json': events([35, 36, 37, 38, 39, 40, 42]) })
+    expect(board.neededClaims({ root, base: 'HEAD~1' }).map(item => item.key).sort()).toEqual(['octatrack/37-40', 'octatrack/42'])
+  })
   it('notes a module claim with its summary, cut at a word to 120 characters, and never the template\'s placeholder', () => {
     const note = summary => board.summaryNote(JSON.stringify({ presentation: { summary } }))
     const long = note('A stereo chorus for the send bus: two swept taps, the right side out of phase, with feedback and its own high- and low-pass.')
@@ -61,6 +66,14 @@ describe('the board client', () => {
     const compared = await board.compareClaims(needed, 'Ada', { fetch })
     expect([compared.mine, compared.others, compared.free].map(list => list.map(item => item.key))).toEqual([['0084'], ['octatrack/37'], ['octatrack/tape-echo']])
     expect((await board.compareClaims(needed, null, { fetch })).unknown).toHaveLength(2)
+  })
+  it('compares a run of hooks with every claim inside it', async () => {
+    const needed = [{ kind: 'hook', key: 'octatrack/38-51' }]
+    const compare = (...rows) => board.compareClaims(needed, 'Ada', { fetch: answer(200, { claims: rows }) })
+    expect((await compare(claimRow('hook', 'octatrack/40', 'bo'))).others[0].claim.key).toBe('octatrack/40')
+    expect((await compare(claimRow('hook', 'octatrack/38', 'ada'))).free).toHaveLength(1)
+    expect((await compare(claimRow('hook', 'octatrack/38-51', 'ada'))).mine).toHaveLength(1)
+    expect((await compare(claimRow('hook', 'octatrack/events/40', 'bo'), claimRow('hook', 'octatrack/52', 'bo'))).free).toHaveLength(1)
   })
   it('fails an unclaimed item only in a pull request run, and someone else\'s claim always', () => {
     const free = { mine: [], others: [], unknown: [], free: [{ kind: 'module', key: 'octatrack/drummap', why: 'new module' }] }

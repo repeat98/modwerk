@@ -1,0 +1,36 @@
+# A CC on the auto channel sets a value of the active track as the knob does: AMP HLD by CC 79 and by
+# knob B draw the same page. A CC shows no value text, a turn does for a while (over 750 ms on a unit),
+# so the two are compared in the graph only (the page's top left).
+# Changes the BD track's sound in the active kit and does not put it back.
+name: link-cc
+state: changes
+
+hold TRK
+key BD
+release TRK
+key AMP
+cc 78 0
+cc 79 0
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+cc 79 1
+nudge B -1 per 3
+wait 750
+screen zero
+nudge B +42 per 3
+wait 750
+screen knob
+cc 79 0
+wait 500
+screen back
+cc 79 42
+wait 500
+screen cc
+expect knob != zero region 0 9 64 16
+expect back == zero region 0 9 64 16
+expect cc == knob region 0 9 64 16
+cc 79 0

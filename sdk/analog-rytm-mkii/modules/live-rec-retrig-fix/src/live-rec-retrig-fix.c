@@ -9,7 +9,7 @@
 // fires on the ticks where the count is a multiple of the rate's period and reloads
 // from 1 to 960. ev_render_out follows the count and, for each hit, closes the hit
 // before it and starts this one by queueing the note events a pad would queue to the
-// sequencer task. Stock's own recorder then writes the trig. The module's order is
+// UI task. Stock's own recorder then writes the trig. The module's order is
 // before Retrig Grid's, which rewrites the count in the same block.
 //
 // A step holds one trig. A rate faster than the track's step records a trig on the
@@ -39,7 +39,10 @@
 #define NOTE_RING ((volatile uint8_t *)NOTE_RING_AT)        // 16 events of 32 bytes
 #define NOTE_RING_NEXT (*(volatile uint32_t *)NOTE_RING_NEXT_AT)
 #define NOTE_QUEUE (*(volatile uint32_t *)NOTE_QUEUE_AT)
-#define QUEUED(q) (*(volatile uint32_t *)((q) + 4))      // events waiting
+#define QUEUED(q) (*(volatile uint32_t *)((q) + 4))      // messages waiting
+#define QUEUE_MASK(q) (*(volatile uint32_t *)((q) + 16))  // its slots - 1
+#define QUEUE_READ(q) (*(volatile uint32_t *)((q) + 28))  // the next slot the task takes
+#define QUEUE_WRITE(q) (*(volatile uint32_t *)((q) + 24)) // the next slot a post fills
 #define NOTE_START ((volatile uint32_t *)NOTE_START_AT)     // [t * 128 + note] clock / 2
 #define WIPE_SKIP 251756        // recorder + track: 1 skips the next held-note wipe
 #define HELD 251236             // recorder + 40 * track: its held notes, begin at +8, end at +24
@@ -86,18 +89,62 @@ static uint8_t running;             // a series has run since the last idle pass
 static uint8_t guarding;            // some ahead[t] is set
 static uint8_t last_velocity[TRACKS];  // the track's last recorded retrig's; 0: none
 
-// The events this module queues: stock's own ring has no lock for the audio block.
-static uint8_t events[32][32];
-static uint8_t next_event;
+// The events this module queues: stock's own ring has no lock for the audio block. Each
+// hit is posted at once, in order with stock's own press and release messages, and its step
+// and timing were stamped when it sounded. Stock's UI queue is a ring of 1024 pointers: a
+// post stores one at the write index, the UI task takes them in order at the read index and
+// handles one at a time, both with interrupts masked. A slot here is in use until the UI
+// task has taken its message and then another (so it is no longer in hand). Under heavy
+// audio load (two BD ANALOG voices) stock's own pad pressure messages back the queue up
+// past 200 during a retrig hold while this module's waiting events stay under 60, so slots
+// are freed by following the read index, not by the queue's depth. A slot is freed in
+// posting order, so one still in the UI task's hand also holds back the ones after it.
+#define EVENT_SLOTS 128
+static uint8_t events[EVENT_SLOTS][32];
+static uint16_t event_at[EVENT_SLOTS];  // the queue slot of its message (or a later one)
+static uint8_t posted, released;        // counts: slots released .. posted - 1 are in use
+_Static_assert((EVENT_SLOTS & (EVENT_SLOTS - 1)) == 0 && EVENT_SLOTS <= 128,
+               "the counts wrap at 256: the ring must divide it and fit in half of it");
 
 static void queue(const uint8_t *event)
 {
-    uint8_t *e = events[next_event++ & 31];
+    uint32_t q = NOTE_QUEUE;
+    unsigned s = posted++ & (EVENT_SLOTS - 1);
+    uint8_t *e = events[s];
     int i;
 
     for (i = 0; i < 32; i++)
         e[i] = event[i];
-    STOCK_QUEUE_POST(NOTE_QUEUE, e);
+    STOCK_QUEUE_POST(q, e);
+    // A higher interrupt's post in between only makes this a later slot: freed later.
+    event_at[s] = (QUEUE_WRITE(q) - 1) & QUEUE_MASK(q);
+}
+
+// The UI task is done with the message in queue slot at: it has taken it (at is no longer
+// in the waiting run from the read index) and taken another since (at is not the last one
+// taken, which it may still have in hand). Only the UI task moves the read index, and it
+// does not run inside the audio block. Stock's 60 Hz UI message keeps the queue moving.
+// This runs every block while a slot is in use, so the queue's ring cannot lap a slot unseen.
+static int done(uint32_t q, unsigned at)
+{
+    uint32_t read = QUEUE_READ(q), mask = QUEUE_MASK(q);
+
+    return ((at - read) & mask) >= QUEUED(q) && at != ((read - 1) & mask);
+}
+
+// Not inlined: the render entry stays without a stack frame while nothing is in use.
+static void __attribute__((noinline)) release_done(void)
+{
+    uint32_t q = NOTE_QUEUE;
+
+    while (released != posted && done(q, event_at[released & (EVENT_SLOTS - 1)]))
+        released++;
+}
+
+// Two free slots for a hit's note-off and note-on.
+static int room(void)
+{
+    return (uint8_t)(posted - released) <= EVENT_SLOTS - 2;
 }
 
 // A press queues its note event before the audio block arms the series.
@@ -190,8 +237,8 @@ static void hit(int t)
     }
     if (++hits[t] % block)
         return;
-    if (QUEUED(NOTE_QUEUE) > 30)
-        return;                         // the task is held up: every slot may be waiting
+    if (!room())
+        return;                         // seconds behind: every slot is still waiting
     STOCK_STEP_PLACE(CLOCK, t, place);
     velocity = RT_VELOCITY[t] >> 8;
     if (velocity < 1)
@@ -318,6 +365,8 @@ void retrig_fix_render(void)
 {
     const volatile uint32_t *active = (const volatile uint32_t *)RT_ACTIVE;
 
+    if (posted != released)
+        release_done();
     if (ring_seen != (NOTE_RING_NEXT & 15) || (active[0] | active[1] | active[2]) || running || guarding)
         fix_render();
 }

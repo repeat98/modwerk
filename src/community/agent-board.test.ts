@@ -98,6 +98,25 @@ describe('agent board', () => {
     expect((await over.json()).error).toMatch(/release/i)
   })
 
+  it('holds a run of hook indices as one claim, which nobody else\'s claim may reach into', async () => {
+    const { boardLogin, claim, call } = await fixture()
+    const ada = await boardLogin('ada'), bo = await boardLogin('bo')
+    for (let index = 38; index < 38 + CLAIM_LIMIT; index++) expect((await claim(ada, { kind: 'hook', key: 'octatrack/' + index })).status).toBe(201)
+    // At the limit, a run over her own single claims replaces them.
+    expect((await claim(ada, { kind: 'hook', key: 'octatrack/38-51' })).status).toBe(201)
+    expect((await (await call('/agent-board/claims?holder=@ada')).json()).claims.map((item: { key: string }) => item.key)).toEqual(['octatrack/38-51'])
+    const inside = await claim(bo, { kind: 'hook', key: 'octatrack/45' })
+    expect(inside.status).toBe(409)
+    expect((await inside.json()).error).toMatch(/octatrack\/38-51 is claimed by @ada/)
+    expect((await claim(bo, { kind: 'hook', key: 'octatrack/50-53' })).status).toBe(409)
+    expect((await claim(bo, { kind: 'hook', key: 'octatrack/events/45' })).status).toBe(201)
+    expect((await claim(bo, { kind: 'hook', key: 'octatrack/52-53' })).status).toBe(201)
+    const past = await claim(bo, { kind: 'hook', key: 'octatrack/53-60' })
+    expect(past.status).toBe(409)
+    expect((await past.json()).error).toMatch(/reaches past/)
+    for (const key of ['octatrack/9-9', 'octatrack/9-3']) expect((await claim(bo, { kind: 'hook', key })).status).toBe(400)
+  })
+
   it('lets the holder or an administrator release a claim, and nobody else', async () => {
     const { call, boardLogin, claim } = await fixture()
     const ada = await boardLogin('ada'), bo = await boardLogin('bo')
@@ -291,11 +310,11 @@ describe('agent board questions and findings', () => {
 
   it('lets a question lapse 30 days after its last post and a finding after 90, then deletes them', async () => {
     const { env, db, call, boardLogin, post, reply } = await fixture()
-    const ada = await boardLogin('ada'), bo = await boardLogin('bo')
+    const ada = await boardLogin('ada'); await boardLogin('bo')
     const { message: question } = await (await post(ada, { kind: 'question', topic: 'migration', key: '0090', to: 'bo', body: 'Do you still need migration 0090?' })).json()
     const { message: finding } = await (await post(ada, { kind: 'finding', topic: 'machine', key: 'digitone', body: 'The core profile lags the release by a day.' })).json()
     vi.useFakeTimers({ now: Date.now() + 20 * 86400000, toFake: ['Date'] })
-    expect((await reply(bo, question.id, 'Not any more, take it.')).status).toBe(201)
+    expect((await reply(ada, question.id, 'Still asking: I would take 0090 next week.')).status).toBe(201)
     vi.setSystemTime(Date.now() + 20 * 86400000)
     const ids = async () => (await (await call('/agent-board/messages')).json()).messages.map((item: { id: string }) => item.id).sort()
     expect(await ids()).toEqual([question.id, finding.id].sort())
@@ -308,6 +327,31 @@ describe('agent board questions and findings', () => {
     vi.setSystemTime(Date.now() + 91 * 86400000)
     await syncAgentClaims(env, env.DB!)
     expect(db.prepare('SELECT COUNT(*) AS n FROM agent_messages').get()).toEqual({ n: 0 })
+  })
+
+  it('ends an answered question a week after the answer unless its asker replies', async () => {
+    const { env, db, call, boardLogin, post, reply } = await fixture()
+    const ada = await boardLogin('ada'), bo = await boardLogin('bo'), cy = await boardLogin('cy')
+    const ask = async (body: string) => (await (await post(ada, { kind: 'question', topic: 'migration', key: '0091', to: 'bo', body })).json()).message
+    const settled = await ask('Do you still need migration 0091?'), followed = await ask('Which number should the next migration take?')
+    const start = Date.now()
+    vi.useFakeTimers({ now: start + 86400000, toFake: ['Date'] })
+    // Anyone but the asker answering counts, as when the owner answers for an absent holder.
+    expect((await reply(cy, settled.id, 'The holder left it, so take it.')).status).toBe(201)
+    expect((await reply(bo, followed.id, 'Take 0092.')).status).toBe(201)
+    const listed = async () => (await (await call('/agent-board/messages')).json()).messages as { id: string; endsAt: string }[]
+    expect((await listed()).find(item => item.id === settled.id)!.endsAt).toBe(new Date(start + 8 * 86400000).toISOString())
+    vi.setSystemTime(start + 2 * 86400000)
+    expect((await reply(ada, followed.id, 'Is 0092 free on main as well?')).status).toBe(201)
+    vi.setSystemTime(start + 9 * 86400000)
+    expect((await listed()).map(item => item.id)).toEqual([followed.id])
+    const waiting = (await (await call('/agent-board/inbox', 'GET', undefined, bo)).json()).waiting.map((item: { id: string }) => item.id)
+    expect(waiting).toEqual([followed.id])
+    expect((await (await call('/agent-board/messages?ended=1')).json()).ended).toMatchObject([{ id: settled.id, endedReason: 'expired' }])
+    expect((await (await call('/agent-board/activity')).json()).questions).toEqual({ open: 1 })
+    await syncAgentClaims(env, env.DB!)
+    expect(db.prepare('SELECT id, ended_reason AS reason FROM agent_messages WHERE parent_id IS NULL ORDER BY id').all())
+      .toEqual([{ id: settled.id, reason: 'expired' }, { id: followed.id, reason: null }].sort((a, b) => a.id < b.id ? -1 : 1))
   })
 
   it('lets authors take back their posts, administrators remove any, and drops a suspended account\'s', async () => {

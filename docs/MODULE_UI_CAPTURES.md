@@ -217,6 +217,16 @@ and framebuffer data are removed by the script.
 - Without `--dsp` a session runs about ten times faster, for screens only (the firmware then shows DSP LOAD
   FAILED), and a package that carries a DSP engine (Analog BD) is refused at verify with loader refusal 3. Card samples do not play faithfully under the port, so compare levels against a sample on a unit.
 
+### Capturing the base's own screens
+
+`capture-module-ui.py` reads stock's LCD plane, so it misses everything a base draws through `ev_draw`: the startup,
+the CUE + PROJ status, the MODWERK pages' dialogs, the update and sync screens. A base image also runs past the
+emulator's default instruction budget before it is ready (`BUDGET -- instruction budget exhausted`); pass `--max 4000000000`.
+Capture those screens from a development twin (`build_core.py` with the release flags plus `--dev`) under `--usb-host`
+and `pace on`: `npm run device -- do 'PROJ w500 … png:FILE' --emulator --socket SOCK`, or the emulator's `peek` of the
+`screen` symbol (dev.c's composed frame) while `npm run device -- boot DIR` runs, which shows the real BASE UPDATE screen.
+The startup's last frame comes from `scripts/verify-startup-base.py --png`.
+
 ## Rights and release review
 
 Provide an accurate contributor declaration for original captures and preserve
@@ -320,7 +330,8 @@ plan; keep it in `capture.json` with the PNG hashes and the built `.syx` hash.
   Send FX's boot plan lost its NO presses
   ([repeat98/modwerk#878](https://github.com/repeat98/modwerk/pull/878)), and a
   FLTR press at 11900M with `--every 100M` looked like a build that failed
-  only past a certain size. The pinned revision runs such an event a few
+  only past a certain size. A dropped key press logs `no key named "SMPL" on
+  this machine` for a key the Rytm has. The pinned revision runs such an event a few
   instructions late instead; plans still place events 3M off the boundaries,
   so they replay on older revisions too.
 - Keep key presses short. From rytm-emu `e914f46` the PIT divides the bus

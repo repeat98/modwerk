@@ -25,7 +25,7 @@ LITERAL = '$fab1e0'  # the P table's address in a module's source
 ORGS = (0x100000, 0x200000)
 PROOF_BASES = (0x1000, 0x1400, 0x1801, 0x2407)
 SPLIT_BASES = ((0x1000, 0x5000), (0x2407, 0x1100), (0x1801, 0x7003))  # (table, program); (0x1400, beside) is added
-FX = ('airwindows-chorus', 'euclid', 'everb', 'miniverb', 'modulation', 'spectrum', 'tapeecho', 'tapehead')
+FX = ('airwindows-chorus', 'euclid', 'everb', 'miniverb', 'tapeecho', 'tapehead')
 digest = lambda words: hashlib.sha256(b''.join(w.to_bytes(3, 'big') for w in words)).hexdigest()
 
 

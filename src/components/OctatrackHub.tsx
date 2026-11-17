@@ -5,7 +5,7 @@ import { MODULES } from '../catalog/modules'
 import { lastInventory, sameModules, type Inventory } from '../config/inventory'
 import { lastSuccessfulSync } from '../config/octatrack-progress'
 import { BaseLayoutRequired, BaseUpdateRequired, baseOutdated, moduleSetReview, setLayout } from '../engine/elekloader/module-set'
-import { baseLayout, type BaseLayout } from '../engine/elekloader/base-variants'
+import { baseLayout, baseVersion, type BaseLayout } from '../engine/elekloader/base-variants'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import type { Configuration } from '../config/workspace'
 import { DeviceImage } from '../devices/DeviceImage'
@@ -31,7 +31,7 @@ const modules = (n: number) => n + (n === 1 ? ' module' : ' modules')
 const BUSY = ['sending', 'testing', 'trial', 'finishing']
 const when = (at: string) => new Date(at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 
-export type HubView = 'status' | 'backups' | 'samples' | 'setup' | 'set'
+export type HubView = 'status' | 'backups' | 'samples' | 'setup' | 'diagnostics' | 'set'
 export type { SetAction }
 /** The Octatrack's own pages, in the list above the module sets; `#configuration` is the set you edit. */
 const UNIT_VIEWS: { view: Exclude<HubView, 'set'>; title: string; href: string; icon: IconName }[] = [
@@ -39,13 +39,14 @@ const UNIT_VIEWS: { view: Exclude<HubView, 'set'>; title: string; href: string; 
   { view: 'backups', title: 'Backups', href: '#octatrack/backups', icon: 'download' },
   { view: 'samples', title: 'Samples', href: '#octatrack/samples', icon: 'wave' },
   { view: 'setup', title: 'Setup', href: '#octatrack/setup', icon: 'sliders' },
+  { view: 'diagnostics', title: 'Diagnostics', href: '#octatrack/diagnostics', icon: 'shield' },
 ]
 // Samples is unfinished: its panel stays (and keeps its tests), but nothing leads to it until it is ready.
 const NAV_VIEWS = UNIT_VIEWS.filter(item => item.view !== 'samples')
 
 /**
  * Your Octatrack: the Octatrack's configuration page on the base path (hasOctatrackBase). A list on the leading side holds the Octatrack's own pages
- * (Status, Backups, Samples, Setup) and your module sets; the selected item fills the trailing side. Opening a set
+ * (Status, Backups, Samples, Setup, Diagnostics) and your module sets; the selected item fills the trailing side. Opening a set
  * makes it the set you edit (the library adds to it, Sync sends it). The page's header (`header`), the set's modules
  * (`grid`) and the module file for the card (`card`) are App's own parts. Every page stays mounted, so
  * local samples and the load history survive moving around. Nothing goes onto the unit without the guided sync.
@@ -155,7 +156,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
             <span>There your modules sync over USB in seconds, without the card and without a restart. In this browser they go onto the card as a file.</span>
           </div></div>}
           {(connected || lastSync) && <dl className="hub-facts">
-            {connected && <div><dt>Base</dt><dd><code>{identity!.base.slice(0, 8)}</code></dd></div>}
+            {connected && <div><dt>Base</dt><dd title={identity!.base}>{baseVersion(identity!.base) ?? <code>{identity!.base.slice(0, 8)}</code>}</dd></div>}
             {lastSync && <div><dt>Last sync from this browser</dt><dd><b>{lastSync.name}</b> · <time dateTime={lastSync.at}>{when(lastSync.at)}</time></dd></div>}
           </dl>}
         </div>
@@ -182,7 +183,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
           <section className="hub-section hub-base" aria-labelledby="setup-base-title">
             <h3 id="setup-base-title">Modwerk base</h3>
             <p>{!usb ? 'This browser can’t use USB, so it can’t sync module sets. You can still install the base from here, once, through the card. Your modules then go onto the Octatrack as the card file below. To sync over USB, open this page in Chrome or Edge on a computer.'
-              : connected ? <>Your {model} runs the Modwerk base <code>{identity!.base.slice(0, 8)}</code>.{needsBase && (wantedLayout ? ' Your set needs it in another USB Audio layout.' : ' This site needs a newer one to sync your set.')}</>
+              : connected ? <>Your {model} runs the Modwerk base {baseVersion(identity!.base) ?? <code>{identity!.base.slice(0, 8)}</code>}.{needsBase && (wantedLayout ? ' Your set needs it in another USB Audio layout.' : ' This site needs a newer one to sync your set.')}</>
               : status === 'stock' ? <>Your {model} runs the original OS. Install the base once from the card to sync module sets over USB. Later base updates go over USB.</>
               : status === 'ready' ? 'Your Octatrack runs a Modwerk base this site can’t talk to. Install the current one.'
               : 'Connect your Octatrack to see which base it runs. Installing the base for the first time? The guide takes you through it.'}</p>
@@ -200,8 +201,8 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
             <p><strong>In use by another window or app:</strong> Modwerk open in another browser, another Chrome profile or a private window holds the Octatrack, and so can another app that talks to it. Close it, and this page connects by itself. If it stays in use, quit the browser completely and open it again, or unplug the Octatrack and plug it back in.</p>
           </section>}
           {card}
-          <OctatrackDiagnosticsSettings username={username} />
         </>)}
+        {panel('diagnostics', <><h2 className="hub-view-title">Diagnostics</h2><OctatrackDiagnosticsSettings username={username} /></>)}
         {panel('set', selected ? <>
           <HubSetHead set={selected} kicker={'Module set · ' + modules(selected.moduleIds.length)} onSetAction={onSetAction} />
           {/* Without USB the hero's Load from the card is the one way to send this set. */}
@@ -215,7 +216,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
             <button type="button" className="button button-quiet" onClick={() => onFill(inventory.moduleIds)}>Start from what’s on it</button>
           </div>}
           {grid}
-        </> : <div className="hub-empty-set"><h2 className="hub-view-title">No module sets yet</h2><p>Start one, then add modules from the library.</p><button type="button" className="button button-primary" onClick={onNew}><Icon name="plus" size={16} />New module set</button></div>)}
+        </> : <div className="hub-empty-set"><Icon name="grid" size={24} /><h2 className="hub-view-title">No module sets yet</h2><p>Start one, then add modules from the library.</p><button type="button" className="button button-primary" onClick={onNew}><Icon name="plus" size={16} />New module set</button></div>)}
       </div>
     </div>
   </div>

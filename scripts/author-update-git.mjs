@@ -2,6 +2,7 @@
 import { execFileSync } from 'node:child_process'
 import { authorizeAuthorUpdate, parseAuthorRegistry } from '../src/release/author-updates.ts'
 import { readChangeScope } from './change-scope.mjs'
+import { alternation, moduleFolders } from './machine-folders.mjs'
 import { UPSTREAM_CATALOG, assembleCatalog } from './elekloader-vendor.ts'
 
 export function inspectAuthorUpdate(root, base, head, author) {
@@ -15,9 +16,11 @@ export function inspectAuthorUpdate(root, base, head, author) {
   const text = (ref, path) => git('show', ref + ':' + path)
   const registry = parseAuthorRegistry(JSON.parse(text(base, '.github/module-authors.json')))
   const published = new Set(JSON.parse(text(base, 'sdk/catalog.json')).modules.map(row => 'octatrack/' + row.id))
-  // The generated Digitakt/Digitone/Analog Rytm list (not committed) holds every module folder on main.
-  for (const path of oldTree.keys()) { const folder = path.match(/^sdk\/(digitakt|digitakt-ii|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/([^/_][^/]*)\/modwerk\.module\.json$/); if (folder) published.add(folder[1] + '/' + folder[2]) }
-  const modules = [...oldTree.keys()].filter(path => /^sdk\/(octatrack|digitakt|digitakt-ii|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/]+\/(octamod|modwerk)\.module\.json$/.test(path)).map(path => {
+  // The generated elemod list (not committed) holds every module folder on main. Author updates cover the Octatrack
+  // and the elemod machines only; the Zoom pedals' modules stay with owner review.
+  const elemod = alternation(moduleFolders('elemod'))
+  for (const path of oldTree.keys()) { const folder = path.match(new RegExp(`^sdk\\/(${elemod})\\/modules\\/([^/_][^/]*)\\/modwerk\\.module\\.json$`)); if (folder) published.add(folder[1] + '/' + folder[2]) }
+  const modules = [...oldTree.keys()].filter(path => new RegExp(`^sdk\\/(octatrack|${elemod})\\/modules\\/[^/]+\\/(octamod|modwerk)\\.module\\.json$`).test(path)).map(path => {
     const parts = path.split('/'), document = JSON.parse(text(base, path))
     return { folder: parts.slice(0, -1).join('/'), document, published: published.has(parts[1] + '/' + document.id) }
   }).filter(module => module.published)

@@ -3,7 +3,7 @@
 import { MODULE_DOCUMENTS } from './documents.ts'
 import { moduleReleasedAt } from './module-releases.ts'
 import sdkCatalog from '../../sdk/catalog.json' with { type: 'json' }
-import { displayName, type ModuleContributor } from './module-authors.ts'
+import { DISPLAY_AUTHORS, displayName, type ModuleContributor } from './module-authors.ts'
 export const CATALOG_SOURCE = {
   repository: 'https://github.com/repeat98/octamad',
   revision: 'b8deefc88b2c3e5f3c6158e364eb741df1924e1d',
@@ -45,7 +45,7 @@ export type FirmwareModule = {
 export const MODULES: readonly FirmwareModule[] = MODULE_DOCUMENTS.map(document=>({
   id:document.id,key:document.key,name:document.name,category:LIBRARY_CATEGORY_OVERRIDES[document.id]??document.category,
   description:document.presentation.summary,detail:document.compatibility.location,
-  author:document.author.github,authorName:displayName(document.author.github,document.author.name),authorUrl:'https://github.com/'+document.author.github,
+  author:document.author.github,authorName:DISPLAY_AUTHORS[document.id]?.name??displayName(document.author.github,document.author.name),authorUrl:'https://github.com/'+(DISPLAY_AUTHORS[document.id]?.github??document.author.github),
   contributors:document.author.contributors,
   sourcePath:'sdk/octatrack/modules/'+document.id+'/manifest.py',version:document.version,addedAt:MODULE_ADDED_AT[document.id],updatedAt:moduleReleasedAt(document.id,document.version),fxId:document.compatibility.effectId??undefined,
 }))
@@ -62,7 +62,7 @@ export function getModuleSource(module: FirmwareModule): string {
 
 // Removed from the library for good (owner, 12 November 2026). A saved configuration, version pin or backup that still
 // names one loses it quietly when it is read, instead of becoming unreadable.
-export const REMOVED_MODULE_IDS: readonly string[] = ['spectrum', 'modulation', 'character', 'midi-scenes']
+export const REMOVED_MODULE_IDS: readonly string[] = ['spectrum', 'modulation', 'character']
 export function withoutRemovedModules(ids: readonly string[]): string[] { return ids.filter(id => !REMOVED_MODULE_IDS.includes(id)) }
 
 export function resolveSelection(ids: readonly string[]): FirmwareModule[] {
