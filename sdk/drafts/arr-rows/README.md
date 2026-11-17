@@ -87,4 +87,12 @@ Original module by Andrey Sidorkin, MIT (LICENSE). Key codes and key layers from
 
 ## Screens and audio
 
-No screenshots yet: they follow the emulator and unit tests. The module makes no sound.
+Emulator captures of the 1.40C editor with the module installed on the beta base (`media/capture.json` records how):
+
+![Rows 002-007 selected: their numbers show inverted](media/ot-select.png)
+
+![FUNC + REC: COPY 6 ROWS](media/ot-copy.png)
+
+![Rows 001-002 replaced with the six copied rows](media/ot-paste.png)
+
+The module makes no sound.

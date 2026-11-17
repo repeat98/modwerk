@@ -41,7 +41,11 @@
       "Move the cursor to where they should go and press FUNC + STOP to replace that row with them (or select rows first to replace those), or hold CUE and press FUNC + STOP to insert them.",
       "Press the same keys again in the same place to undo the paste, clear or insert."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/ot-select.png",
+      "media/ot-copy.png",
+      "media/ot-paste.png"
+    ]
   },
   "controls": [],
   "compatibility": {
@@ -130,5 +134,57 @@
     "file": "LICENSE",
     "declaration": "Original module by Andrey Sidorkin, MIT. No firmware, extracted stock code or built images are included."
   },
-  "media": []
+  "media": [
+    {
+      "path": "media/ot-select.png",
+      "captureType": "emulator",
+      "caption": "Hold CUE and press DOWN in the arrangement editor: the selected rows' numbers show inverted (here rows 002-007, the list scrolled).",
+      "alt": "The arrangement editor with row numbers 002 to 007 inverted and the cursor on row 007.",
+      "credit": "Andrey-Sidorkin (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "ARRANGEMENT EDITOR",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9c861d6f30aa6adeab6d536ae91b2a926405857495e16b422b5e74acd4d3cc24",
+        "setup": "Headless ot_emu (octabam f7d72906, scripts/octatrack-emulator/build.py), MKI panel, --dsp --dsp-rt, stopped transport; the Modwerk beta base 0.7.5 built from the developer's own 1.40C with the package installed over the emulated USB; the LCD as the panel link carries it (module_draw included), 128x64 at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-copy.png",
+      "captureType": "emulator",
+      "caption": "FUNC + REC copies the selected rows; stock's message box says how many.",
+      "alt": "The arrangement editor with a message box reading COPY 6 ROWS.",
+      "credit": "Andrey-Sidorkin (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "ARRANGEMENT EDITOR",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9c861d6f30aa6adeab6d536ae91b2a926405857495e16b422b5e74acd4d3cc24",
+        "setup": "Headless ot_emu (octabam f7d72906, scripts/octatrack-emulator/build.py), MKI panel, --dsp --dsp-rt, stopped transport; the Modwerk beta base 0.7.5 built from the developer's own 1.40C with the package installed over the emulated USB; the LCD as the panel link carries it (module_draw included), 128x64 at integer scale 6."
+      }
+    },
+    {
+      "path": "media/ot-paste.png",
+      "captureType": "emulator",
+      "caption": "With rows 001-002 selected, FUNC + STOP replaced them with the six copied rows; the rows below moved down.",
+      "alt": "The arrangement editor after a paste: rows 001 to 006 hold patterns A03 to A08.",
+      "credit": "Andrey-Sidorkin (headless capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "ARRANGEMENT EDITOR",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9c861d6f30aa6adeab6d536ae91b2a926405857495e16b422b5e74acd4d3cc24",
+        "setup": "Headless ot_emu (octabam f7d72906, scripts/octatrack-emulator/build.py), MKI panel, --dsp --dsp-rt, stopped transport; the Modwerk beta base 0.7.5 built from the developer's own 1.40C with the package installed over the emulated USB; the LCD as the panel link carries it (module_draw included), 128x64 at integer scale 6."
+      }
+    }
+  ]
 }
