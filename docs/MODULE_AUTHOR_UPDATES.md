@@ -1,6 +1,6 @@
 # Publishing updates as a module author
 
-The owner approves a module's first release by reviewing and merging its addition. After that, its registered author can request automatic merge and publication of their own updates. Open a pull request against `repeat98/modwerk` `main`; pushing to a personal upstream repository does not submit an update to Modwerk. New modules, ownership changes, shared SDK/compiler changes and release exceptions still need owner review.
+A maintainer of its machine or the owner approves a module's first release by reviewing and merging its addition ([who](DEVELOPER_WORKFLOW.md#who-reviews-a-first-release)). After that, its registered author can request automatic merge and publication of their own updates. Open a pull request against `repeat98/modwerk` `main`; pushing to a personal upstream repository does not submit an update to Modwerk. Ownership changes, shared SDK/compiler changes and release exceptions still need owner review.
 
 ## Start with an issue
 
@@ -85,4 +85,4 @@ This implementation needs no new personal access token, repository-wide collabor
 
 If main requires an approving review for every PR, GitHub will block automatic author merges until that rule is adjusted. Keep required `module-contract` and relevant source-build checks and require branches to be up to date; do not give the bot a general bypass of branch protections. The scope policy supplies owner review for changes beyond authors' own modules. Review repository-wide consequences before changing a ruleset.
 
-All current published primary authors are registered with numeric IDs from their public GitHub repository owner records. On the first owner-reviewed addition by a new author, register that account ID in the same PR. Release authority grows slowly and stays narrow: a registered author can release only their own modules, and nobody gains wider rights for being the most eager helper. Handle renames, maintainer appointments and revocations also need owner review of the registry/manifests. Website module claims and developer sign-in do not change this release authority.
+All current published primary authors are registered with numeric IDs from their public GitHub repository owner records. On the first reviewed addition by a new author, register that account ID in the same PR. Release authority grows slowly and stays narrow: a registered author can release only their own modules, and nobody gains wider rights for being the most eager helper. Handle renames, maintainer appointments and revocations also need owner review of the registry/manifests. Website module claims and developer sign-in do not change this release authority.

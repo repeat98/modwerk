@@ -2,6 +2,7 @@
 // All machine integrations use the unchanged Elekloader kit. A machine extends its catalogue/core, not its builder.
 import CATALOG_JSON from '../../../vendor/elekloader/catalog/catalog.json' with { type: 'json' }
 import KIT from '../../../vendor/elekloader/kit/kit.json' with { type: 'json' }
+import DT2_BASE from '../../../sdk/machines/digitakt-ii/base-binding.json' with { type: 'json' }
 import RYTM_BASE from '../../../sdk/machines/analog-rytm-mkii/base-binding.json' with { type: 'json' }
 import RYTM_FX_IDS from '../../../sdk/machines/analog-rytm-mkii/fx-ids.json' with { type: 'json' }
 import RYTM_VOICE_MODULES from '../../../sdk/machines/analog-rytm-mkii/voice-modules.json' with { type: 'json' }
@@ -30,6 +31,10 @@ export function createMachineBuilder(): Builder {
 /** A machine whose site builds use Modwerk's own base: its variants by identity (base-binding.json), and the variant a
  * selection needs. The catalogue lists every variant as a core of the same version; the build takes only that one. */
 const MODWERK_BASES: Partial<Record<ElekloaderMachine, { variants: Record<string, string>; variant: (moduleIds: readonly string[]) => string }>> = {
+  'digitakt-ii': {
+    variants: { base: DT2_BASE.identity },
+    variant: () => 'base',
+  },
   'analog-rytm-mkii': {
     variants: RYTM_BASE.variants,
     variant: moduleIds => rytmVariant(moduleIds, Object.values(RYTM_FX_IDS.ids), RYTM_VOICE_MODULES.ids),

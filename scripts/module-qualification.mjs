@@ -36,10 +36,17 @@ export function qualificationReports(document) {
   const q=document.tests.qualification
   return q?[...new Set([...q.cycles.map(c=>c.report),q.memory.report,q.hardware.report])]:document.tests.releaseWaiver?[document.tests.releaseWaiver.report]:[]
 }
-export async function moduleNativeSourceSha256(folder, document) {
+async function nativePaths(folder, document) {
   const reports=new Set(qualificationReports(document))
-  const paths=(await inventory(folder)).filter(path=>!['octamod.module.json','qualification.example.json'].includes(path)&&!path.startsWith('media/')&&!/\.md$/i.test(path)&&!/(^|\/)(LICENSE|LICENCE|COPYING)(\.|$)/i.test(path)&&!reports.has(path))
-  return fingerprint(folder,paths)
+  return (await inventory(folder)).filter(path=>!['octamod.module.json','qualification.example.json'].includes(path)&&!path.startsWith('media/')&&!/\.md$/i.test(path)&&!/(^|\/)(LICENSE|LICENCE|COPYING)(\.|$)/i.test(path)&&!reports.has(path))
+}
+export async function moduleNativeSourceSha256(folder, document) {
+  return fingerprint(folder,await nativePaths(folder,document))
+}
+// The source a performance record was measured on: the native source without evidence/, so the stamp written into
+// evidence/performance.json (npm run perf:audit -- check FILE --stamp) does not change what it stamps.
+export async function modulePerformanceSourceSha256(folder, document) {
+  return fingerprint(folder,(await nativePaths(folder,document)).filter(path=>!path.startsWith('evidence/')))
 }
 // An owner-approved update publishes a new version without fresh evidence for
 // what the owner names in `waived`. The approval lives in sdk/, outside the

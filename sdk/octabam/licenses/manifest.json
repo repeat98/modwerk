@@ -220,6 +220,20 @@
       ]
     },
     {
+      "id": "vibrato",
+      "name": "VIBRATO (Bryan T, in octabam)",
+      "spdx": "MIT",
+      "noticeFile": "vibrato.txt",
+      "sources": [
+        {
+          "path": "sdk/octabam/modules/vibrato/upstream/LICENSE"
+        }
+      ],
+      "usedIn": [
+        "modules/vibrato"
+      ]
+    },
+    {
       "id": "kyoti-quantize-live-rec-toggle",
       "name": "Zac Kyoti Quantize Live Rec Toggle",
       "spdx": "MIT",
@@ -300,6 +314,9 @@
     ],
     "lofi2": [
       "lofi2"
+    ],
+    "vibrato": [
+      "vibrato"
     ],
     "quantize-live-rec-toggle": [
       "kyoti-quantize-live-rec-toggle"

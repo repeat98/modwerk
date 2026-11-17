@@ -3,7 +3,7 @@
   "id": "airwindows-chorus",
   "key": "AIR CHORUS",
   "name": "Air Chorus",
-  "version": "0.1.2-experimental",
+  "version": "0.1.3-experimental",
   "category": "effects",
   "author": {
     "github": "repeat98",
@@ -63,28 +63,37 @@
       "FX2 only; stale FX1 dispatch passes dry without writing its buffer.",
       "About 16-bit delay-buffer precision; dry bypass retains 24 bits.",
       "Extreme modulation retains pitch and aliasing artifacts.",
-      "Beta release: shared DSP mailbox/parameter data are protected. The reported T3 clicking remains unverified on hardware; physical timing, Part/project/reboot persistence and hardware multi-instance audio are owner-waived for this exact source/version.",
+      "Shared DSP mailbox/parameter data are protected. On an MKII, four instances (T3/T4 and T7/T8) gave exact silence for silent input and no clicks with music; Part/project/reboot persistence, eight instances on a unit and chip timing are not tested and are owner-waived for this exact source/version.",
       "Air Chorus combines with Analog BD and E-Verb. Available DSP code space still limits larger selections; stock reverb donors may be removed."
     ]
   },
   "resources": {
-    "recorded": "9 October 2026: lossless packing and shared-word protection; chip timing unmeasured.",
+    "cpuPrice": {
+      "value": 0.0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price",
+      "date": "2026-11-17",
+      "conditions": "MKII, base 0.7.6 development twin 5412b595, project MODWERK-TEST2 bank A pattern 1 playing (sound on T2 and T3), 8 s per reading: frame interrupt 35.1 % before, installed and on T3 FX2 alike; CPU meter 51.3 % before and at rest, 51.6 % in use. One instance on T3 raised its DSP core (T1-4) from 40.3 to 51.1 %.",
+      "source": "TESTING.md"
+    },
+    "recorded": "16 November 2026: bit-identical efficiency pass; chip timing unmeasured.",
     "storage": {
       "label": "Per-instance used DSP storage",
       "display": "16,312 Y + 132 X words",
       "value": 49332,
       "unit": "bytes at 24 bits/word",
       "method": "static",
-      "conditions": "Uses existing 16,384-word FX2 rings. First 72 virtual ring words use X offsets 60..131; 60 control words. Stock X offsets 132..255 remain untouched. Shared code/table use 795 P words per core (539 program + 256 lossless sine differences). No new allocation.",
+      "conditions": "Uses existing 16,384-word FX2 rings. First 72 virtual ring words use X offsets 60..131; 60 control words. Stock X offsets 132..255 remain untouched. Shared code/table use 844 P words per core (588 program + 256 lossless sine differences). No new allocation.",
       "source": "evidence/bounds.json"
     },
     "processing": {
       "label": "Conservative DSP instruction budget",
-      "display": "732 modeled units/sample",
-      "value": 732,
+      "display": "737 modeled units/sample",
+      "value": 737,
       "unit": "modeled instruction units/sample",
       "method": "static",
-      "conditions": "Conservative source-word/call bound including trigger splits. Four instances plus four bounded initializations: 47,256 modeled units/core/block. Excludes contention stalls; not chip cycles or physical deadline evidence.",
+      "conditions": "Conservative source-word/call bound including trigger splits. Four instances plus four bounded initializations: 47,576 modeled units/core/block. Excludes contention stalls; not chip cycles or physical deadline evidence.",
       "source": "evidence/bounds.json"
     },
     "impact": {
@@ -98,21 +107,21 @@
       "dsp": {
         "level": "high",
         "basis": "measured-comparison",
-        "rationale": "Observed maximum 394.625 net executed instructions/sample versus stock Chorus 292.875 and expensive split Spring 314 under matched conditions on both cores. Shared-word protection and lossless table decoding increase cost 17.2% from beta 0.1.1 (336.75); still 24.8% below original 0.1.0 (524.5). Chip timing and physical headroom remain unmeasured.",
+        "rationale": "Observed maximum 362.375 net executed instructions/sample versus stock Chorus 292.875 and expensive split Spring 314 under matched conditions on both cores: 8.2% below beta 0.1.2 (394.625) with bit-identical output, and 30.9% below original 0.1.0 (524.5). Chip timing and physical headroom remain unmeasured.",
         "source": "evidence/stock-comparison.json"
       },
       "memory": {
         "level": "high",
         "basis": "source-estimate",
-        "rationale": "Full 16,384-word virtual stereo ring per instance, split between 16,312 Y and 72 X words; 60 additional control X words within safe offsets 0..131. Uses existing reservations and 795 P code/table words per core. No added sample heap.",
+        "rationale": "Full 16,384-word virtual stereo ring per instance, split between 16,312 Y and 72 X words; 60 additional control X words within safe offsets 0..131. Uses existing reservations and 844 P code/table words per core. No added sample heap.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Beta 0.1.2 protects live stock shared data within safe instance state and losslessly packs the sine table, preserving the full delay range, sound and controls while widening module combinations. Current physical hardware remains untested under the owner beta waiver.",
-    "hardwareStatus": "untested",
+    "summary": "0.1.3 runs the 0.1.2 effect in fewer DSP instructions with bit-identical output. Like 0.1.2 it protects live stock shared data within safe instance state and losslessly packs the sine table, preserving the full delay range, sound and controls. Three rolled-back trials on an MKII (17 November 2026) placed four instances and read their audio over USB; persistence and chip timing are untested under the owner waiver.",
+    "hardwareStatus": "reported",
     "evidenceRevision": "ed61db5cf1ad04331438fd15967b0ba8cdf4b109",
     "gates": [
       "verify.py",

@@ -2,6 +2,8 @@
 
 When the owner says **maintain**, run this pass. It covers the work that comes back every day: pull requests, GitHub issues, the beta and its diagnostics, upstream projects, and the health of `main` and the owner's computer. **maintain prs** (or issues, beta, upstream) runs one worker only. It is owner work, like [OWNER_OPERATIONS.md](OWNER_OPERATIONS.md); a contributor's session never runs it.
 
+The [maintenance bot](MAINTENANCE_BOT.md) runs the routine part of the pull request and issue workers every 30 minutes, within its policy. Start a pass from its morning report: the ledger shows what it did and what waits, so a worker here does not redo or contradict it.
+
 ## How a pass runs
 
 1. **Start from the last briefing.** Read the newest `~/.cache/modwerk-local/maintain/<YYYY-MM-DD>.md`: what was waiting on whom, and what the owner decided. Read the repository at `origin/main` or in a fresh worktree; the primary checkout often sits on a stale local `main`.
@@ -30,7 +32,7 @@ List them with `gh pr list --state open --json number,title,author,isDraft,label
 - **The triage bot** runs at minute 41 of every hour. Preview it with `PR_TRIAGE_DRY_RUN=1 GITHUB_REPOSITORY=repeat98/modwerk GITHUB_TOKEN=$(gh auth token) node scripts/pr-triage.mjs` and say what it would label, comment or close, above all on a pull request whose author the owner asked to wait.
 - **Red checks:** read the failing job (`gh run view <id> --log-failed`) and say whether the pull request, `main` or a flaky test is at fault.
 - **Follow up** on a pull request quiet since its last request with one short draft; `pr-triage.yml` closes `needs-work` after 14 days.
-- **Merge**, once the owner says so: `gh pr merge <n> --squash`, or `--merge` when the pull request's catalogue rows pin one of its own commits. Before a module update merges, tell the owner that publishing notifies its followers. An owner-approved update needs `sdk/approvals/<id>-build-approval.json`, which only the owner writes: hand them the record with `sourceSha256` from `moduleNativeSourceSha256` in `scripts/module-qualification.mjs`. Then follow the merge commit's runs (`gh run list --commit <sha>`) to green and, for a module release, check that the live site lists the new version.
+- **Merge**, once the owner says so (a machine maintainer merges first releases for their machine, [who](DEVELOPER_WORKFLOW.md#who-reviews-a-first-release)): `gh pr merge <n> --squash`, or `--merge` when the pull request's catalogue rows pin one of its own commits. Before a module update merges, tell the owner that publishing notifies its followers. An owner-approved update needs `sdk/approvals/<id>-build-approval.json`, which only the owner writes: hand them the record with `sourceSha256` from `moduleNativeSourceSha256` in `scripts/module-qualification.mjs`. Then follow the merge commit's runs (`gh run list --commit <sha>`) to green and, for a module release, check that the live site lists the new version.
 
 ## Issue worker
 

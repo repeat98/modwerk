@@ -38,6 +38,14 @@ describe('pr:ready verdict', () => {
     expect(notes[0]).toContain('owner reviews it and merges it with one click')
     expect(notes.at(-1)).toContain('If main moves before the merge, run this again')
   })
+  it('says a change to what runs on an instrument opens as a draft until the exact build ran on a unit', () => {
+    const verdict = readiness({ instrument: ['src/engine/assets/octatrack-base.elemod'] })
+    expect(verdict.ok).toBe(true)
+    expect(verdict.instrument).toBe(true)
+    expect(verdict.notes.find(note => note.startsWith('This changes what runs on an instrument'))).toContain('gh pr create --draft')
+    expect(verdict.notes.at(-1)).toContain('If main moves before the merge, run this again')
+    expect(readiness({}).instrument).toBe(false)
+  })
   it('asks what the guides lacked, listing the guide edits on the branch', () => {
     const asked = readiness({}).notes.find(note => note.startsWith('What did the guides lack'))
     expect(asked).toContain('write "nothing" in the PR')
@@ -119,6 +127,8 @@ describe('pr:ready verdict', () => {
       copyFileSync(new URL('./pr-ready.mjs', import.meta.url), script)
       // Its module folders come from the machine registry, as in every checkout.
       copyFileSync(new URL('./machine-folders.mjs', import.meta.url), join(checkout, 'scripts', 'machine-folders.mjs'))
+      // What runs on an instrument is defined once, beside the description check that also asks about it.
+      copyFileSync(new URL('./pr-body.mjs', import.meta.url), join(checkout, 'scripts', 'pr-body.mjs'))
       mkdirSync(join(checkout, 'src', 'devices'), { recursive: true })
       copyFileSync(new URL('../src/devices/machines.generated.json', import.meta.url), join(checkout, 'src', 'devices', 'machines.generated.json'))
       // A stale branch must stop before any generator/check invocation.

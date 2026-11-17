@@ -19,6 +19,8 @@ description: Review Modwerk's open pull requests, answer their authors where som
    - red checks, and whose fault they are;
    - runs waiting for approval (`action_required`): nothing else moves until they run;
    - what the triage bot's next run would do.
+
+   A machine maintainer reviews and merges first releases of modules for their machine only, never their own, and hands the rest to the owner (`docs/DEVELOPER_WORKFLOW.md#who-reviews-a-first-release`): for those, say so on the pull request and stop.
 2. **Talk back where needed**, at most one comment per pull request: a change it must make, a question only its author can answer, or a refresh it needs.
    - Ask for everything it still needs in that one comment, so the next pass can finish it.
    - Write plainly and friendly, in the invoker's voice, and post from a file.
