@@ -81,6 +81,9 @@ a Modwerk base with the USB bridge ([driving the Octatrack](OCTATRACK_DRIVING.md
 `m68k-elf` binutils for ColdFire code and Octabam's `dsp_asm` for DSP code
 (`npm run upstream:tools`, then `make setup` in that octabam checkout), and
 no firmware. Hooks, entry points and state: [OCTATRACK_API.md](OCTATRACK_API.md).
+Each trial ends with a verdict from the unit's own log: a crash, DSP stall,
+frozen UI or skipped track during it fails the trial (exit 1), and it is
+rolled back even with `--accept`; `npm run device -- do diaglog` shows the log.
 
 **Two tiers.** `module:doctor -- --draft <id>` judges a draft as experimental:
 the lines a trial and a tester need (category, DSP sources, cross-compatibility,
@@ -88,6 +91,15 @@ UI claims, the board claim) must be green, and the release lines read as still
 to do (○). Share an experimental draft as a branch; a tester runs
 `npm run module:dev -- <id>` on it. `--draft <id> --release` judges every line,
 as listing it does.
+
+### Host tests
+
+A test that needs no firmware, unit or emulator goes in the module's folder as
+`test_*.py`, at any depth. It runs with no arguments from the checkout root
+(`python3 -B FILE`) and skips with `unittest.skipUnless` when a tool is missing.
+`module:doctor -- <id>` runs them (a draft's as a release line), and
+`npm run sdk:check` runs every listed module's on each pull request. Name an
+emulator or hardware script otherwise, such as `emulator_test.py`.
 
 Run this after every edit: about 15 seconds, no firmware, no module code run.
 
