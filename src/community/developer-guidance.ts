@@ -1,19 +1,22 @@
 /** The release flow shown on the Start developing page. The prompts hand the work to the module skills, and the rules behind each step live in the repository (AGENTS.md, docs/DEVELOPER_WORKFLOW.md), which every coding agent reads. */
 export type DeveloperTask = 'create' | 'update'
-export type DeveloperStage = 'prepare' | 'verify' | 'submit' | 'publish'
+export type DeveloperStage = 'plan' | 'build' | 'test' | 'submit' | 'publish'
 
+/** The order of work in /modwerk-new-module and /modwerk-update-module, in a developer's words. */
 export const RELEASE_STEPS: Record<DeveloperTask, { id: DeveloperStage; title: string; summary: string }[]> = {
   create: [
-    { id: 'prepare', title: 'Prepare the module', summary: 'Build or port it, with docs, credits and release notes.' },
-    { id: 'verify', title: 'Verify the exact build', summary: 'Run the checks and test it on your unit.' },
-    { id: 'submit', title: 'Submit for first review', summary: 'Open a pull request. The owner reviews every first release.' },
-    { id: 'publish', title: 'Check the published download', summary: 'Check the live version and its download.' },
+    { id: 'plan', title: 'Agree the plan', summary: 'Your agent checks what already exists, then proposes the controls and waits for your OK.' },
+    { id: 'build', title: 'Build it', summary: 'It writes the module and runs the checks.' },
+    { id: 'test', title: 'Test on your unit', summary: 'Your agent tests it over USB first. Then you play it and listen. No unit? Start in the emulator.' },
+    { id: 'submit', title: 'Open the pull request', summary: 'Once you say testing is done. The owner reviews every first release.' },
+    { id: 'publish', title: 'Check it live', summary: 'After the merge it is in the library. Check the live version and its download.' },
   ],
   update: [
-    { id: 'prepare', title: 'Change, version and document', summary: 'Make the change, raise the version, write release notes.' },
-    { id: 'verify', title: 'Verify the exact build', summary: 'Run the checks and test it on your unit.' },
-    { id: 'submit', title: 'Request publication in the PR', summary: 'Registered authors tick both release boxes.' },
-    { id: 'publish', title: 'Verify live, then resolve', summary: 'Test the live download, then close the report.' },
+    { id: 'plan', title: 'Ask the author', summary: 'Not your module? Its author says yes before any work starts.' },
+    { id: 'build', title: 'Make the change', summary: 'With a new version and its release notes.' },
+    { id: 'test', title: 'Test on your unit', summary: 'Your agent tests it over USB first. Then you confirm the change yourself.' },
+    { id: 'submit', title: 'Open the pull request', summary: 'Registered authors release their own updates by ticking both release boxes.' },
+    { id: 'publish', title: 'Check it live', summary: 'Test the live download on your unit, then close the report.' },
   ],
 }
 
