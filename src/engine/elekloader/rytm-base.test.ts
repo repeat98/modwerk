@@ -138,4 +138,17 @@ describe.runIf(STOCK && FX)('a Rytm set built on the Modwerk base with the owner
       if (sets.includes('loop-sync')) expect(bus.lock!.ancestors.concat(bus.lock!.id)).toContain(plain.lock!.id)
     }
   }, 120_000)
+
+  it('builds Analog BD alone on voices, and carries its lockfile to send-bus with CHORUS and back', async () => {
+    const voices = await build(['analog-bd'])
+    expect(voices.enabled.some(path => path.endsWith(variantPin('voices').file))).toBe(true)
+    const bus = await build(['analog-bd', 'chorus'], voices.lock)
+    expect(bus.enabled.some(path => path.endsWith(variantPin('send-bus').file))).toBe(true)
+    for (const field of voices.lock!.fields) expect(bus.lock!.fields, field.sym).toContainEqual(field)
+    // back on voices the bus's fields leave the build but keep their bits, so the next send-bus build is the same layout
+    const back = await build(['analog-bd'], bus.lock)
+    for (const field of voices.lock!.fields) expect(back.lock!.fields, field.sym).toContainEqual(field)
+    for (const field of bus.lock!.fields.filter(field => field.sym.startsWith('mw_send_'))) expect(back.lock!.freed, field.sym).toContainEqual(field)
+    expect((await build(['analog-bd', 'chorus'], back.lock)).lock!.id).toBe(bus.lock!.id)
+  }, 180_000)
 })
