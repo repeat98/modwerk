@@ -65,6 +65,13 @@
       "since": "1.1",
       "when": "On supported audio note trigs after pitch resolution, and on later empty steps when requested. Subscribers are visited in ascending contribution order.",
       "handler": "uint32_t handler(const struct dt2_seq_grid_window *window, uint32_t pitch, uint32_t velocity, struct dt2_seq_phrase_note *notes); write at most eight notes to notes and return their count. Zero passes through or ends continuation. REST is silent. OR CARRY into the count to request empty steps. Use the read-only stock deadlines, keep work bounded, and leave the stock queue untouched."
+    },
+    {
+      "name": "ev_seq_note",
+      "since": "1.1",
+      "when": "After the OS constructs a supported audio note, on PLAY and subsequent steps, before the note enters the stock queue.",
+      "handler": "int32_t handler(const struct dt2_seq_note_context *context, uint32_t pitch); return a pitch from 0 through 127, or leave the current pitch unchanged with an out-of-range result. The context is read-only.",
+      "order": "Four slots, in ascending contribution order. Each callback sees the previous accepted pitch."
     }
   ],
   "tables": [
