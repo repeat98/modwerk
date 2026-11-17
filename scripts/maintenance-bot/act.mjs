@@ -137,7 +137,7 @@ async function carryOut(action) {
     if (!now || now.state !== 'open') return ['expired', 'it ended in the meantime']
     if (payload.pin?.replies !== undefined && now.replies !== payload.pin.replies) return ['expired', 'someone replied in the meantime']
     const verb = { board_reply: 'reply', board_close: 'close', board_release: 'release' }[payload.kind]
-    await bot('/board/' + (payload.claim ? 'claims/' : 'messages/') + id + '/' + verb, 'POST', { body: payload.body ?? '' })
+    await bot('/board/' + (payload.claim ? 'claims/' : 'messages/') + id + '/' + verb, 'POST', { body: payload.body ?? '', as: payload.as })
     return ['done', '']
   }
   const now = await fresh(payload.number)
@@ -158,9 +158,11 @@ async function carryOut(action) {
       return ['done', '']
     case 'merge': {
       if (now.draft || !now.checksGreen) return ['expired', now.draft ? 'it became a draft' : 'its checks are no longer green']
-      const result = await api('/pulls/' + n + '/merge', 'PUT', { sha: payload.head, merge_method: payload.method })
-      if (!result?.merged) return ['failed', 'GitHub refused the merge']
-      return ['done', 'merged ' + result.sha.slice(0, 9)]
+      // The Worker merges with the owner's token, at exactly the commit that was checked, so the merge counts as
+      // the owner's for the site's release gate and starts the usual push workflows.
+      let result
+      try { result = await bot('/merge', 'POST', { number: n, sha: payload.head, method: payload.method }) } catch (error) { return ['failed', error.message.slice(0, 200)] }
+      return ['done', 'merged ' + String(result.sha).slice(0, 9)]
     }
     case 'close':
       if (payload.body) await api('/issues/' + n + '/comments', 'POST', { body: payload.body + '\n\n' + MARKER })
@@ -170,17 +172,13 @@ async function carryOut(action) {
   return ['failed', 'unknown kind']
 }
 const { actions: due } = await bot('/actions/due')
-let merged = false
 for (const action of due) {
   try { await bot('/actions/' + action.id + '/claim', 'POST') } catch (error) { if (error.status === 409) continue; throw error }
   let outcome
   try { outcome = await carryOut(action) } catch (error) { outcome = ['failed', error.message.slice(0, 300)] }
   await bot('/actions/' + action.id + '/result', 'POST', { status: outcome[0], result: outcome[1] })
-  if (action.kind === 'merge' && outcome[0] === 'done') merged = true
   log.push(outcome[0] + ': ' + action.summary + (outcome[1] ? ' (' + outcome[1] + ')' : ''))
 }
-// Merges made with the job's token start no push workflows; publish the way module author updates do.
-if (merged) for (const workflow of ['pages.yml', 'worker.yml']) await api('/actions/workflows/' + workflow + '/dispatches', 'POST', { ref: 'main' })
 // This log is public: counts only, since a summary can name a tester. The details are in Telegram and the ledger.
 const tally = status => log.filter(line => line.startsWith(status + ':')).length
 console.log(log.length ? log.length + ' carried out: ' + tally('done') + ' done, ' + tally('failed') + ' failed, ' + tally('expired') + ' dropped.' : 'Nothing was due.')

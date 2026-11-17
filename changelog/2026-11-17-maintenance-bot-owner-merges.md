@@ -1,0 +1,1 @@
+Worker and CI: the maintenance bot's merges now publish. It had merged with GitHub's own bot account, which the site's release gate rightly refuses, so its merges stayed unpublished and the site build went red. The Worker now merges in the owner's name at exactly the checked commit, and every merge that publishes modules needs the owner's Approve in Telegram.

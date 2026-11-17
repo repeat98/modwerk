@@ -6,9 +6,13 @@ const issue = (extra = {}) => ({ number: 9, isPull: false, author: 'bob', state:
 const merge = (extra = {}) => ({ kind: 'merge', number: 5, head: 'a1', summary: 'Merge Tape Echo 0.4', reason: 'Green.', ...extra })
 
 describe('maintenance bot policy', () => {
-  it('merges a green module pull request after the window, with a merge commit for catalogue rows', () => {
-    expect(classify(merge(), pull())).toMatchObject({ tier: 'window', windowHours: 12, payload: { method: 'merge', head: 'a1' } })
-    expect(classify(merge(), pull({ files: ['src/App.tsx'] })).payload.method).toBe('squash')
+  it('merges a green pull request after the window, and asks before any merge that publishes modules', () => {
+    expect(classify(merge(), pull({ files: ['src/App.tsx'] }))).toMatchObject({ tier: 'window', windowHours: 12, payload: { method: 'squash', head: 'a1' } })
+    for (const file of ['sdk/octatrack/modules/tapeecho/src/main.c', 'sdk/imports/mute-latch.json', 'src/catalog/modules.ts', 'src/community/module-changelogs/euclid.md']) {
+      const decision = classify(merge(), pull({ files: [file] }))
+      expect([file, decision.tier, decision.reason]).toEqual([file, 'ask', 'Green.\nAsking because merging it publishes modules on the site.'])
+    }
+    expect(classify(merge(), pull()).payload.method).toBe('merge')
   })
 
   it('asks the owner before merging anything sensitive or from a first-time contributor', () => {
@@ -97,5 +101,11 @@ describe('maintenance bot policy', () => {
     expect(classify({ kind: 'shout_reply', shout: 's1', body: '@ana it is in the device panel', summary: 'Answer Ana' }, shout)).toMatchObject({ summary: 'Shoutbox: Answer Ana', payload: { shout: 's1' } })
     expect(classify({ kind: 'shout_reply', shout: 's1', body: 'x'.repeat(601), summary: 'Long' }, shout).reject).toContain('600')
     expect(classify({ kind: 'shout_reply', shout: 's1', body: 'x', summary: 'x' }, thread).reject).toBeTruthy()
+  })
+
+  it('answers agents who ask TARS at once, as TARS, and answers for the owner only after a window', () => {
+    const thread = { kind: 'thread', id: 't9', number: 0, author: 'zac', to: 'tars', replies: 0, state: 'open' }
+    expect(classify({ kind: 'board_reply', thread: 't9', body: '@zac #1642 waits on its MKII run.', summary: 'Tell zac where #1642 stands' }, thread)).toMatchObject({ tier: 'notify', payload: { as: 'tars' } })
+    expect(classify({ kind: 'board_reply', thread: 't9', body: 'Hi', summary: 'x' }, { ...thread, to: 'repeat98' })).toMatchObject({ tier: 'window', payload: { as: 'owner' } })
   })
 })

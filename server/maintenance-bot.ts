@@ -266,10 +266,12 @@ async function todoStatus(db: Database, id: string, body: Record<string, unknown
 async function boardAction(env: Env, db: Database, kind: string, id: string, body: Record<string, unknown>) {
   const at = new Date().toISOString()
   if (kind === 'reply') {
+    // A question to TARS is answered by TARS; one to the owner, on the owner's behalf.
     const login = (env.GITHUB_REPOSITORY?.trim() || 'repeat98/modwerk').split('/')[0].toLowerCase()
-    const owner = await db.prepare('SELECT id FROM users WHERE lower(github_login)=? AND github_id IS NOT NULL').bind(login).first<{ id: string }>()
-    if (!owner) throw new HttpError(409, 'The owner has no board account yet.')
-    await boardReply(db, owner.id, id, body.body, null, Date.now())
+    const author = body.as === 'tars' ? await db.prepare("SELECT id FROM users WHERE id='tars' AND github_login='tars'").first<{ id: string }>()
+      : await db.prepare('SELECT id FROM users WHERE lower(github_login)=? AND github_id IS NOT NULL').bind(login).first<{ id: string }>()
+    if (!author) throw new HttpError(409, body.as === 'tars' ? 'TARS has no board name yet.' : 'The owner has no board account yet.')
+    await boardReply(db, author.id, id, body.body, null, Date.now())
   } else if (kind === 'close') {
     const row = await db.prepare("UPDATE agent_messages SET ended_at=?,ended_reason='administrator' WHERE id=? AND parent_id IS NULL AND ended_at IS NULL RETURNING id").bind(at, id).first()
     if (!row) throw new HttpError(404, 'No open board thread has that id.')
@@ -373,6 +375,26 @@ export async function dispatchMaintenance(env: Env, db: Database, now = new Date
     await telegram(env, 'sendMessage', { chat_id: configured(env).chat, text: '⚠️ The maintenance bot could not start its run (GitHub said ' + (reply?.status ?? 'nothing') + '). Its GitHub token may have expired: see docs/MAINTENANCE_BOT.md.' }).catch(() => undefined)
 }
 
+/**
+ * Merges for the bot in the owner's name, with MAINTENANCE_BOT_GITHUB_TOKEN (Contents and Pull requests: write).
+ * The site publishes only owner merges (scripts/release-approval.mjs), and an owner merge starts the push workflows.
+ * GitHub refuses unless the head is still exactly the commit the bot checked.
+ */
+async function mergeAsOwner(env: Env, body: Record<string, unknown>) {
+  const token = env.MAINTENANCE_BOT_GITHUB_TOKEN?.trim(), { number, sha, method } = body
+  if (!token) throw new HttpError(503, 'The bot has no GitHub token to merge with.')
+  if (!Number.isSafeInteger(number) || (number as number) < 1 || typeof sha !== 'string' || !/^[a-f0-9]{40}$/.test(sha) || (method !== 'merge' && method !== 'squash')) throw new HttpError(400, 'A merge needs a number, the checked commit and merge or squash.')
+  const repository = env.GITHUB_REPOSITORY?.trim() || 'repeat98/modwerk'
+  const reply = await fetch('https://api.github.com/repos/' + repository + '/pulls/' + number + '/merge', {
+    method: 'PUT', redirect: 'manual', signal: AbortSignal.timeout(20000),
+    headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'User-Agent': 'modwerk-maintenance-bot', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sha, merge_method: method }),
+  })
+  const result = await reply.json().catch(() => null) as { merged?: boolean; sha?: string; message?: string } | null
+  if (!reply.ok || !result?.merged || !result.sha) throw new HttpError(409, 'GitHub refused the merge: ' + (result?.message ?? 'HTTP ' + reply.status))
+  return { merged: true, sha: result.sha }
+}
+
 /** Routes under /api/maintenance-bot/. They run server-to-server, before the Origin check. */
 export async function maintenanceBotRoutes(request: Request, env: Env, db: Database, path: string): Promise<Response | null> {
   if (!path.startsWith('/api/maintenance-bot/')) return null
@@ -385,6 +407,7 @@ export async function maintenanceBotRoutes(request: Request, env: Env, db: Datab
   if (who !== 'bot') throw new HttpError(401, who ? 'Only the bot may do that.' : 'Wrong maintenance bot key. The owner signs in with npm run board -- login.')
   if (route === '/todos' && method === 'POST') return response(await addTodos(env, db, await jsonBody(request, 64 * 1024)))
   if (route === '/diagnostics' && method === 'GET') return response(await diagnostics(db))
+  if (route === '/merge' && method === 'POST') return response(await mergeAsOwner(env, await jsonBody(request)))
   if (route === '/forum' && method === 'GET') return response(await forumActivity(env, db))
   // TARS's profile picture, through the site's own avatar upload (size, type and storage checks included).
   if (route === '/tars/avatar' && method === 'POST') {

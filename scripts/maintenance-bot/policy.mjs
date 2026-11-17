@@ -21,6 +21,8 @@ const SENSITIVE = [
   /^public\/_headers$/, /^vite\.config\.ts$/, /^MODDING_GUIDELINES\.md$/, /^AGENTS\.md$/, /^\.claude\//, /^\.agents\//,
   /^sdk\/(?!octatrack\/modules\/|drafts\/|[a-z0-9-]+\/modules\/)/,
 ]
+/** Paths whose merge publishes modules on the site: a release the owner approves every time. */
+const PUBLISHES = [/\/modules\//, /^sdk\/imports\//, /^sdk\/catalog\.json$/, /^src\/catalog\//, /^src\/community\/module-changelogs\//]
 const LINK = /https?:\/\/[^\s)>\]]+/g
 const LINK_HOSTS = /^https:\/\/(github\.com\/repeat98\/modwerk(\/|$|#)|modwerk\.[a-z]+(\/|$)|octamod\.[a-z]+(\/|$))/
 
@@ -77,7 +79,9 @@ export function classify(proposal, target, existingLabels = new Set()) {
       if (target.draft) return { reject: 'it is a draft' }
       if (!target.checksGreen) return { reject: 'its checks are not green' }
       if (proposal.head !== target.head) return { reject: 'it was reviewed at another commit' }
-      const why = sensitive.length ? 'it touches protected files (' + sensitive[0] + (sensitive.length > 1 ? ' and ' + (sensitive.length - 1) + ' more' : '') + ')' : target.firstTime ? 'it is a first-time contributor’s' : ''
+      // A merge runs in the owner's name (the site only publishes owner merges), so a release always asks the owner.
+      const publishes = (target.files ?? []).some(file => PUBLISHES.some(pattern => pattern.test(file)))
+      const why = publishes ? 'merging it publishes modules on the site' : sensitive.length ? 'it touches protected files (' + sensitive[0] + (sensitive.length > 1 ? ' and ' + (sensitive.length - 1) + ' more' : '') + ')' : target.firstTime ? 'it is a first-time contributor’s' : ''
       const method = (target.files ?? []).some(file => file.startsWith('src/catalog/') || /\/modules\//.test(file)) ? 'merge' : 'squash'
       const payload = { kind, number: target.number, head: target.head, method, pin }
       return { ...base, reason: [reason, why && 'Asking because ' + why + '.'].filter(Boolean).join('\n'), tier: why ? 'ask' : 'window', windowHours: why ? 0 : WINDOW_HOURS.merge, id: actionId(kind, target.number, target.head), payload }
@@ -103,7 +107,9 @@ export function classify(proposal, target, existingLabels = new Set()) {
       }
       const problem = String(proposal.body ?? '').length > 500 ? 'it is over the board’s 500 characters' : checkText(proposal.body, target.author)
       if (problem) return { reject: 'the board reply was held back because ' + problem }
-      return { ...base, tier: 'window', windowHours: WINDOW_HOURS.board_reply, id: actionId(kind, target.id, target.replies), payload: { kind, thread: target.id, body: proposal.body.trim(), pin: pinned } }
+      // An agent that asked TARS gets TARS's answer at once; an answer in the owner's name waits for a Stop.
+      const asTars = target.to === 'tars'
+      return { ...base, tier: asTars ? 'notify' : 'window', windowHours: asTars ? 0 : WINDOW_HOURS.board_reply, id: actionId(kind, target.id, target.replies), payload: { kind, thread: target.id, body: proposal.body.trim(), as: asTars ? 'tars' : 'owner', pin: pinned } }
     }
     // TARS on Discord (docs/DISCORD_BOT.md, docs/DISCORD_VOICE.md): one reply to a message nobody answered, never a ping.
     case 'discord_reply': {
