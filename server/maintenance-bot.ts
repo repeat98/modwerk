@@ -189,7 +189,8 @@ async function command(env: Env, db: Database, text: string) {
   else if (word === '/status' || word === '/start') {
     const { paused, actions } = await recent(db, 24)
     const count = (status: string) => actions.filter(action => action.status === status).length
-    reply = (paused ? 'Paused.' : 'Running.') + ' Waiting: ' + count('pending') + '. Done today: ' + count('done') + (count('failed') ? ', failed: ' + count('failed') : '') + '.'
+    const last = JSON.parse((await db.prepare("SELECT value FROM maintenance_bot_state WHERE key='dispatch'").first<{ value: string }>())?.value ?? 'null') as { slot: string; ok: boolean } | null
+    reply = (paused ? 'Paused.' : 'Running.') + (last ? ' Last start: ' + last.slot.slice(11) + ' UTC' + (last.ok ? '' : ' (failed)') + '.' : '') + ' Waiting: ' + count('pending') + '. Done today: ' + count('done') + (count('failed') ? ', failed: ' + count('failed') : '') + '.'
   } else return
   await telegram(env, 'sendMessage', { chat_id: chat, text: reply })
 }
@@ -336,6 +337,40 @@ async function caller(request: Request, env: Env, db: Database, key: string) {
   if (bearer && same(await digest(bearer), key)) return 'bot'
   const user = await boardUser(request, env, db), owner = (env.GITHUB_REPOSITORY?.trim() || 'repeat98/modwerk').split('/')[0].toLowerCase()
   return user?.github_login.toLowerCase() === owner ? 'owner' : null
+}
+
+/**
+ * The bot's clock. GitHub runs scheduled workflows hours late in this repository, so the Worker's 5-minute cron starts
+ * the workflow itself: a pass at :05 and :35, the daily run at 07:00 UTC. A slot starts once, and not while paused.
+ * Needs MAINTENANCE_BOT_GITHUB_TOKEN, a fine-grained token for this repository with Actions: read and write.
+ */
+export function dispatchSlot(now: Date) {
+  const minute = Math.floor(now.getUTCMinutes() / 5) * 5, hour = now.getUTCHours()
+  const mode = hour === 7 && minute === 0 ? 'daily' : minute === 5 || minute === 35 ? 'pass' : null
+  return mode && { mode, slot: now.toISOString().slice(0, 11) + String(hour).padStart(2, '0') + ':' + String(minute).padStart(2, '0') }
+}
+export async function dispatchMaintenance(env: Env, db: Database, now = new Date()) {
+  const token = env.MAINTENANCE_BOT_GITHUB_TOKEN?.trim(), due = dispatchSlot(now)
+  if (!token || !due || !env.MAINTENANCE_BOT_KEY_SHA256) return
+  const current = await state(db)
+  if (current.paused) return
+  // Claim the slot first, so a retried cron never starts the same run twice.
+  const claimed = await db.prepare("INSERT INTO maintenance_bot_state(key,value) VALUES('slot',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE value<>excluded.value RETURNING value").bind(due.slot).first()
+  if (!claimed) return
+  const repository = env.GITHUB_REPOSITORY?.trim() || 'repeat98/modwerk'
+  const reply = await fetch('https://api.github.com/repos/' + repository + '/actions/workflows/maintenance-bot.yml/dispatches', {
+    method: 'POST', redirect: 'manual', signal: AbortSignal.timeout(15000),
+    headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'User-Agent': 'modwerk-maintenance-bot', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ref: 'main', inputs: { mode: due.mode } }),
+  }).catch(() => null)
+  const ok = reply?.status === 204
+  await setState(db, 'dispatch', JSON.stringify({ slot: due.slot, mode: due.mode, ok, status: reply?.status ?? 0 }))
+  if (ok) return
+  console.error('Maintenance bot could not start its ' + due.mode + ' run: HTTP ' + (reply?.status ?? 'no answer'))
+  // One Telegram line a day at most: the bot is silently not running otherwise.
+  const day = due.slot.slice(0, 10)
+  if (await db.prepare("INSERT INTO maintenance_bot_state(key,value) VALUES('dispatch_alert',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE value<>excluded.value RETURNING value").bind(day).first())
+    await telegram(env, 'sendMessage', { chat_id: configured(env).chat, text: '⚠️ The maintenance bot could not start its run (GitHub said ' + (reply?.status ?? 'nothing') + '). Its GitHub token may have expired: see docs/MAINTENANCE_BOT.md.' }).catch(() => undefined)
 }
 
 /** Routes under /api/maintenance-bot/. They run server-to-server, before the Origin check. */

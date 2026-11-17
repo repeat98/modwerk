@@ -3,7 +3,7 @@ import type { DatabaseSync } from 'node:sqlite'
 import { testServer } from './test-server'
 import { handleCommunity } from '../../server/transport'
 import { digest } from '../../server/security'
-import { chunks, failureKey } from '../../server/maintenance-bot'
+import { chunks, dispatchMaintenance, dispatchSlot, failureKey } from '../../server/maintenance-bot'
 
 const KEY = 'k'.repeat(64), SECRET = 's'.repeat(40), CHAT = '4242'
 const databases: DatabaseSync[] = []
@@ -207,6 +207,35 @@ describe('maintenance bot ledger', () => {
     db.prepare("INSERT INTO forum_shouts(id,user_id,body) VALUES('s2','ana','thanks!')").run()
     db.prepare("INSERT INTO forum_shouts(id,user_id,body) VALUES('s3','jannik','np')").run()
     expect((await bot('/forum/shouts/s2/reply', 'POST', { body: '@ana You are welcome.' })).status).toBe(409)
+  })
+
+  it('starts its own runs on time from the Worker’s clock, once per slot and never while paused', async () => {
+    const { env, db, hook } = await fixture()
+    expect(dispatchSlot(new Date('2026-11-17T07:01:30Z'))).toEqual({ mode: 'daily', slot: '2026-11-17T07:00' })
+    expect(dispatchSlot(new Date('2026-11-17T09:36:00Z'))).toEqual({ mode: 'pass', slot: '2026-11-17T09:35' })
+    expect(dispatchSlot(new Date('2026-11-17T09:10:00Z'))).toBeNull()
+    const calls: { url: string; body: unknown }[] = []
+    let status = 204
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      calls.push({ url, body: JSON.parse(String(init.body)) })
+      return url.includes('api.telegram.org') ? Response.json({ ok: true, result: { message_id: 1 } }) : new Response(null, { status })
+    }))
+    await dispatchMaintenance(env, env.DB!, new Date('2026-11-17T09:05:10Z'))
+    expect(calls).toEqual([])
+    env.MAINTENANCE_BOT_GITHUB_TOKEN = 'github_pat_test'
+    await dispatchMaintenance(env, env.DB!, new Date('2026-11-17T09:05:10Z'))
+    await dispatchMaintenance(env, env.DB!, new Date('2026-11-17T09:05:50Z'))
+    expect(calls).toEqual([{ url: 'https://api.github.com/repos/repeat98/modwerk/actions/workflows/maintenance-bot.yml/dispatches', body: { ref: 'main', inputs: { mode: 'pass' } } }])
+    await hook({ message: { text: '/pause', chat: { id: Number(CHAT) } } })
+    calls.length = 0
+    await dispatchMaintenance(env, env.DB!, new Date('2026-11-17T09:35:10Z'))
+    expect(calls.filter(call => call.url.includes('github'))).toEqual([])
+    await hook({ message: { text: '/resume', chat: { id: Number(CHAT) } } })
+    status = 401; calls.length = 0
+    await dispatchMaintenance(env, env.DB!, new Date('2026-11-17T10:05:10Z'))
+    await dispatchMaintenance(env, env.DB!, new Date('2026-11-17T10:35:10Z'))
+    expect(calls.filter(call => call.url.includes('sendMessage')).length).toBe(1)
+    expect(JSON.parse((db.prepare("SELECT value FROM maintenance_bot_state WHERE key='dispatch'").get() as { value: string }).value)).toEqual({ slot: '2026-11-17T10:35', mode: 'pass', ok: false, status: 401 })
   })
 
   it('keeps the fingerprint and splits long reports', async () => {
