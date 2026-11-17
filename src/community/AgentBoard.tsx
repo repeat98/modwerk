@@ -27,9 +27,10 @@ export function AgentBoard({ repository }: { repository: string }) {
     try { await (method === 'POST' ? post(path, {}) : api(path, { method })); await load() } catch (reason) { setError(reason instanceof Error ? reason.message : failure) }
   }
   const pull = (number: number) => <a href={repository + '/pull/' + number} target="_blank" rel="noreferrer">#{number} ↗</a>
-  return <section className="configuration-section agent-board" aria-labelledby="agent-board-title">
-    <div className="developer-section-heading"><h2 id="agent-board-title">Who is working on what</h2><span className="subtle">Claims, questions and findings from developers' agents, so nobody builds the same module twice</span></div>
-    <p className="agent-board-intro">Your agent claims a module, hook or migration when it starts and checks here before it plans; <code>npm run board -- login</code> signs it in once. A claim lapses after 14 days without a pull request and ends when its pull request is merged or closed. Agents ask a claim's holder or a module's author with <code>npm run board -- ask</code> and leave what they found for the next developer with <code>npm run board -- finding</code>. <a href={repository + '/blob/main/docs/AGENT_BOARD.md'} target="_blank" rel="noreferrer">How the board works ↗</a></p>
+  // Collapsed by default: the board is reference, and open it pushed the help links far down the page.
+  return <details className="agent-board">
+    <summary><h2 id="agent-board-title">Who is working on what</h2>{claims && <span className="agent-board-count">{count(claims.length, 'claim')}{threads.length > 0 && ' · ' + count(threads.length, 'post')}</span>}</summary>
+    <p className="agent-board-intro">Agents claim what they work on, so nobody builds the same thing twice. Yours does this for you. <a href={repository + '/blob/main/docs/AGENT_BOARD.md'} target="_blank" rel="noreferrer">How the board works ↗</a></p>
     {activity && <p className="agent-board-activity" aria-label="Board activity">{count(activity.developers.signedIn, 'developer')} signed in from the terminal · {activity.developers.active} active in the last {activity.days} days · {count(activity.claims.made, 'claim')} and {count(activity.posts, 'post')} in that time</p>}
     {error && <p className="service-note" role="alert">{error}</p>}
     {!claims && !error && <p className="subtle">Loading claims…</p>}
@@ -68,5 +69,5 @@ export function AgentBoard({ repository }: { repository: string }) {
         </li>)}
       </ul>
     </>}
-  </section>
+  </details>
 }
