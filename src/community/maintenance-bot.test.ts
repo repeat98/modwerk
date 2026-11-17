@@ -107,6 +107,21 @@ describe('maintenance bot ledger', () => {
     expect(sent.filter(item => item.method === 'sendMessage')).toHaveLength(2)
   })
 
+  it('lists the open to-dos in Telegram, urgent first, only to the owner', async () => {
+    const { bot, hook, sent } = await fixture()
+    const texts = () => sent.filter(item => item.method === 'sendMessage').map(item => item.body.text)
+    await hook({ message: { text: '/todos', chat: { id: Number(CHAT) } } })
+    expect(texts()).toEqual(['No open to-dos.'])
+    await bot('/todos', 'POST', { todos: [
+      { id: '8'.repeat(16), target: 0, command: 'npm run board -- reply ' + '0'.repeat(8) + '-0000-0000-0000-' + '0'.repeat(12), note: 'twwwy asks about Kits', urgent: false },
+      { id: '9'.repeat(16), target: 1690, command: '/modwerk-fix-issue 1690', note: 'Euclid NOTCH stays audible', urgent: true },
+    ] })
+    await hook({ message: { text: '/todos@modwerk_bot', chat: { id: Number(CHAT) } } })
+    expect(texts().at(-1)).toBe('2 open to-dos, for /modwerk-todo at your computer:\n⚠️ #1690 Euclid NOTCH stays audible\n   /modwerk-fix-issue 1690\n• twwwy asks about Kits\n   npm run board -- reply 00000000-0000-0000-0000-000000000000')
+    await hook({ message: { text: '/todos', chat: { id: 1 } } })
+    expect(texts()).toHaveLength(3)
+  })
+
   it('keeps a to-do list the bot adds to and only the owner reads and ticks off', async () => {
     const { bot, env, db } = await fixture()
     Object.assign(env, { GITHUB_OAUTH_CLIENT_ID: 'client', GITHUB_OAUTH_CLIENT_SECRET: 'secret' })

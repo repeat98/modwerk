@@ -85,6 +85,8 @@ export interface FakeUnit {
    * package in order: + installed, - removed. */
   modules: string[]
   kept: string[]
+  /** DIAG version 3 (request 4): frames, refusals, resets, primes, completions and abandons; absent, it stalls. */
+  ep0?: number[]
 }
 
 export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
@@ -126,6 +128,11 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
           return { status: 'ok', data: view }
         }
         if (setup.request === 39 && unit.slots) return { status: 'ok', data: new DataView(unit.slots.slice().buffer) }
+        if (setup.request === 4 && unit.ep0) {
+          const diag = new DataView(new ArrayBuffer(68)); diag.setUint32(0, 0x4d575544); diag.setUint8(4, 3)
+          ;[3, 4, 5, 6, 7, 14].forEach((word, i) => diag.setUint32(8 + 4 * word, unit.ep0![i]))
+          return { status: 'ok', data: diag }
+        }
         if (setup.request === 27) { // INVENTORY, 13 a page from wValue: no DSP code, no name
           const page = unit.modules.slice(setup.value, setup.value + 13), list = new DataView(new ArrayBuffer(4 + 24 * page.length))
           ;[0x4d, 0x57, 0x49, page.length].forEach((byte, i) => list.setUint8(i, byte))

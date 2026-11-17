@@ -417,6 +417,7 @@ export class OctatrackLink {
     this.replaced = changes.filter(change => change.replaces).map(change => change.module)
     this.set({ status: 'sending', identity: this.state.identity, active: this.state.active, module, progress: 0 })
     this.diagnostic('sync_started', {packages: changes.map(change => ({sha256:sha(change.data),bytes:change.data.length}))})
+    const usb = this.diagnosticListeners.size ? await this.transport?.ep0().catch(() => undefined) : undefined
     let session: LinkSession | undefined
     this.step = 'session'
     try {
@@ -443,7 +444,7 @@ export class OctatrackLink {
       this.startKeepalive()
       this.set({ status: 'trial', identity: this.state.identity, active: session.status.active, module })
     } catch (error) {
-      if (connection === this.connection) await this.failed(error, session)
+      if (connection === this.connection) await this.failed(error, session, usb)
       this.step = undefined
     }
   }
@@ -721,10 +722,12 @@ export class OctatrackLink {
   /** Undo what this session left behind. When a reply went missing (the session no longer trusts its
    * connection), a fresh session reads where the base stands and undoes it from there; only when that fails
    * too does the user get the unplug advice. */
-  private async failed(error: unknown, session?: LinkSession) {
+  private async failed(error: unknown, session?: LinkSession, usb?: number[]) {
     const connection = this.connection
     if (!(error instanceof UploadDeviceError) && !(error instanceof DOMException) && !(error instanceof StaleLoadError) && !(error instanceof WholeSetBaseRequired)) console.error(error)
     this.stopKeepalive()
+    // Read before the recovery below sends anything, so the counters cover the failed sync alone.
+    const after = usb && error instanceof UploadUnconfirmedError ? await this.transport?.ep0().catch(() => undefined) : undefined
     let clean = !session, settled = session?.connectionTrusted ? session : undefined, recovered = false
     if (session && !session.connectionTrusted && error instanceof UploadUnconfirmedError && this.transport && this.state.identity?.base) {
       try { settled = await this.connectSession(this.transport, this.state.identity.base); recovered = true } catch { settled = undefined }
@@ -740,8 +743,11 @@ export class OctatrackLink {
     // An unclassified failure names its error type (never the message), so the diagnostics can tell a bug from a refusal;
     // a transport failure names what stopped it (the browser's USB error, a timeout, a dropped submission, else a reply
     // that did not confirm the step): in November 2026 four units failed every sync at `stage` and the record could not say why.
+    // `kind` then said only VendorTransportError (the unit stalled the submission), so the base's EP0 counters over the sync
+    // come too: they tell a submission refused at its SETUP from a data stage that stopped part way or a bus reset.
     const step = this.step
-    this.diagnostic('sync_failed', {error: label, ...(step ? {step} : {}), ...(label === 'unknown' ? {kind: diagnosticErrorKind(error)} : label === 'transport' ? {kind: diagnosticErrorKind((error as Error).cause)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {})})
+    this.diagnostic('sync_failed', {error: label, ...(step ? {step} : {}), ...(label === 'unknown' ? {kind: diagnosticErrorKind(error)} : label === 'transport' ? {kind: diagnosticErrorKind((error as Error).cause)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {}),
+      ...(usb && after ? {usb: after.map((count, i) => (count - usb[i]) >>> 0)} : {})})
     this.session = undefined
     await this.release()
     // An untrusted connection that could not be read again leaves the running set unknown.

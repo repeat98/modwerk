@@ -3,7 +3,7 @@
   "id": "repitch",
   "key": "REPITCH",
   "name": "Repitch",
-  "version": "0.2.0-experimental",
+  "version": "0.2.1-experimental",
   "category": "playback",
   "author": {
     "github": "repeat98",
@@ -80,6 +80,15 @@
         "rationale": "The described contribution is a playback-speed and menu patch, reusing the existing sample renderer and storage. Minimal estimates added module storage; recorder and slice cases are explicitly unmeasured in the source record.",
         "source": "README.md"
       }
+    },
+    "cpuPrice": {
+      "value": 0.8,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price",
+      "date": "2026-11-17",
+      "conditions": "Measured by the owner's session: MKII, development twin of base 0.7.8 (98637a13), the owner's project bank C pattern C01 playing three static loops on T2-T4, TSTR OFF where a loop carries REPITCH, so Repitch acted on no track (increments read at unity), 8 s per reading. Two runs alternating: this package (sha256 4b927846) added +0.8 and +0.8 points, the published 0.2.0 +1.2 and +1.2. A track with REPITCH in force was measured only as a whole set (same package +0.8 with two REPITCH tracks), not per track.",
+      "source": "TESTING.md"
     }
   },
   "tests": {
