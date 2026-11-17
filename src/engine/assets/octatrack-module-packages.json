@@ -697,7 +697,16 @@
       "state": 64,
       "buffer": 2048,
       "version": "0.1.0-experimental",
-      "path": "octatrack-modules/vibrato/0.1.0-experimental.mwrm"
+      "path": "octatrack-modules/vibrato/0.1.0-experimental.mwrm",
+      "abi": 6,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Vibrato",
+      "module": "d4582ab2",
+      "bytes": 3446,
+      "sha256": "f311dd620daf296dc6caff7f442533fe6e7262e2a1834bbfbc237fc4d3ff1631"
     }
   ]
 }
