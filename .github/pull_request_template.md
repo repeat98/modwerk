@@ -3,6 +3,7 @@
 - **What was wrong or hard:**
 - **What this changes:**
 - **How I checked it:** (`npm run pr:ready` and anything else you ran)
+- **Tested on a unit:** (a change to a built package or base: the exact build, the model and what ran; keep the pull request a draft until then, or write "Not tested on a unit:" and why)
 - **What the guides lacked or got wrong, and where I fixed it:** ("nothing" is a fine answer)
 
 **A module or module update:** describe the change in behaviour, module version(s), compatibility and source/media attribution. Then say what the guides lacked or got wrong while you built it and link the `Docs:` pull request that fixes it, or write "nothing"; the module release itself stays free of guide edits.
