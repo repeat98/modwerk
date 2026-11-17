@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/quick-velocity-aftertouch-assign",
+  "version": "0.3.1-experimental",
+  "date": "2026-11-16",
+  "changes": [
+    "Functions that run only in the UI task are marked cold (built for size, out of the hot code): 1,832 bytes less of the shared mod RAM. No change to behaviour."
+  ],
+  "runtimeSourceSha256": "f8165ff137e9ff02ded30ef2c4b148f0f0dc29b85244e1bf2b681523d67b2c49",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.3.1-experimental-os1.74.elemod",
+      "sha256": "fc2ceed9ac50a333d1a1db08924a879393d14d3c395be374ad4e1cb331e0b711"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/quick-velocity-aftertouch-assign/TESTING.md",
+  "requires": []
+}

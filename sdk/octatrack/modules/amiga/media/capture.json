@@ -1,15 +1,15 @@
 {
   "firmware": "1.40C",
-  "moduleVersion": "0.2.0-experimental",
+  "moduleVersion": "0.3.0-experimental",
   "hardware": true,
   "model": "MKII",
   "capturedOn": "2026-11-14",
   "capturedBy": "repeat98",
-  "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
-  "baseIdentity": "2d97f42de736fb6a84c003597605a4c7958917b96903e8ed641b74ba456d0d75",
-  "packageSha256": "6bb8e598b76e359bda78fb420abaa96926ff8e8f3265b78932ef4599755c9b67",
-  "sourceRevision": "a679875b1611d27cf1afe86741b6c646ec7fa9d0",
-  "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 2d97f42d of the Modwerk release base 4e9a87ea (imageSha256 is that twin's MAIN image; baseIdentity is the identity the unit reported). The module ran as a RAM trial of the package named here, the release package built by npm run octatrack:module-packages from the source revision named here. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session (double tap T1, LEFT, DOWN to AMIGA; YES, NO, SRC; FUNC+SRC).",
+  "imageSha256": "78202bad987758f29039ce444665e08b3ddc2298d707c5f6fc18e5c114762e2f",
+  "baseIdentity": "1e66b504b480df30570e825d4fb056c81be8a407c4a26722b38fcdef442840ee",
+  "packageSha256": "acae3fef97f85a941c3215e1065353c94967ff44bb9528c22135c611a8edc32e",
+  "sourceRevision": "ee4d3ba69f1343f8e4eb043864a209adc4f634f1",
+  "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 1e66b504 of the Modwerk release base 27c9d36f (imageSha256 is that twin's MAIN image; baseIdentity is the identity the unit reported). The module ran as a RAM trial of the package named here, the release package built by npm run octatrack:module-packages from the source revision named here. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session (double tap T1, LEFT, DOWN to AMIGA; YES, NO, SRC; FUNC+SRC).",
   "palette": {
     "on": [
       24,
@@ -32,14 +32,14 @@
     },
     {
       "path": "amiga-src.png",
-      "sha256": "b1143c7fb2bad8919f056fc5728c1c128bdeb9e76804d2995ff6c5907eb11007",
+      "sha256": "9a712f1e90821163ba299a3da937968a44b1da13b9d78aa5a7eddae2322913f5",
       "scale": 2,
       "page": "SRC",
       "state": "Track 1 on Amiga with a Flex sample, at the defaults."
     },
     {
       "path": "amiga-src-setup.png",
-      "sha256": "1c5392fab24f8de0953011ff68aacfad7bf38b252209bf8fac95ea0055d84e08",
+      "sha256": "c55d1bb4f27d20a28d5f26c06d4f6d1b74f96f4c5219adbda91d928c7237a5a6",
       "scale": 2,
       "page": "SRC SETUP",
       "state": "Track 1 on Amiga with a Flex sample, at the defaults: SRC SETUP."

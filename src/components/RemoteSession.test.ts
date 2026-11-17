@@ -3,7 +3,7 @@ import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { RemoteSessionBanner, RemoteSessionConsent } from './RemoteSession'
-import { MemberRelay } from '../community/remote-session'
+import { MemberRelay, pickUnit } from '../community/remote-session'
 import { fakeUnit } from '../dev/octatrack-link-fake'
 import { REMOTE_SESSION_CONSENT_VERSION, type RemoteSessionView } from '../community/remote-session-contract'
 
@@ -43,6 +43,17 @@ it('says who asks, why, for how long and that nothing can be changed, before any
   await vi.waitFor(() => expect(onStarted).toHaveBeenCalledTimes(1))
   expect(calls).toEqual([{ path: `/remote-sessions/${session.id}/accept`, body: { version: REMOTE_SESSION_CONSENT_VERSION } }])
   ;(onStarted.mock.calls[0][0] as MemberRelay).stop()
+})
+it('picks the Octatrack, not another Elektron device this site may open, and lists only Octatracks in the picker', async () => {
+  const [base] = await fakeUnit('base').usb.getDevices(), [stock] = await fakeUnit('stock').usb.getDevices()
+  const digitakt = { ...stock, productId: 0x7f, productName: 'Digitakt' } // a pretend other Elektron device on the original OS
+  const usb = (devices: typeof base[]) => ({ async getDevices() { return devices }, addEventListener() {}, removeEventListener() {}, requestDevice: vi.fn(async () => base) })
+  expect(await pickUnit(usb([digitakt, base]))).toBe(base)
+  expect(await pickUnit(usb([digitakt, stock, base]))).toBe(base)
+  expect(await pickUnit(usb([digitakt, stock]))).toBe(stock)
+  const none = usb([digitakt])
+  expect(await pickUnit(none)).toBe(base)
+  expect(none.requestDevice).toHaveBeenCalledWith({ filters: [{ vendorId: 0x1935, productId: 0x0002 }] })
 })
 it('declines without touching USB, and says when the browser has no WebUSB', async () => {
   const onAnswered = vi.fn()

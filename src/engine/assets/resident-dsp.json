@@ -97,14 +97,14 @@
       "baselineDescriptors": []
     }
   ],
-  "sourceCommit": "3f1b4643b9c5b7344f7bf2ade6a0a5911a901ae0",
+  "sourceCommit": "274f9a7a1179cdf4e034e39121c8e57a547341d5",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
     "euclid": "0.1.4-experimental",
     "repitch": "0.2.0-experimental",
     "tapehead": "0.1.2-experimental",
-    "airwindows-chorus": "0.1.2-experimental",
+    "airwindows-chorus": "0.1.3-experimental",
     "everb": "0.1.2-experimental",
     "bbd": "0.1.2-experimental",
     "lofi2": "0.1.1-experimental",

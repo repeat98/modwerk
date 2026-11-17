@@ -1405,7 +1405,7 @@
       "id": "airwindows-chorus",
       "key": "AIR CHORUS",
       "name": "Air Chorus",
-      "version": "0.1.2-experimental",
+      "version": "0.1.3-experimental",
       "category": "effects",
       "source": {
         "repository": "https://github.com/airwindows/airwindows",
@@ -1485,28 +1485,28 @@
           "FX2 only; stale FX1 dispatch passes dry without writing its buffer.",
           "About 16-bit delay-buffer precision; dry bypass retains 24 bits.",
           "Extreme modulation retains pitch and aliasing artifacts.",
-          "Beta release: shared DSP mailbox/parameter data are protected. The reported T3 clicking remains unverified on hardware; physical timing, Part/project/reboot persistence and hardware multi-instance audio are owner-waived for this exact source/version.",
+          "Shared DSP mailbox/parameter data are protected. On an MKII, four instances (T3/T4 and T7/T8) gave exact silence for silent input and no clicks with music; Part/project/reboot persistence, eight instances on a unit and chip timing are not tested and are owner-waived for this exact source/version.",
           "Air Chorus combines with Analog BD and E-Verb. Available DSP code space still limits larger selections; stock reverb donors may be removed."
         ]
       },
       "resources": {
-        "recorded": "9 October 2026: lossless packing and shared-word protection; chip timing unmeasured.",
+        "recorded": "16 November 2026: bit-identical efficiency pass; chip timing unmeasured.",
         "storage": {
           "label": "Per-instance used DSP storage",
           "display": "16,312 Y + 132 X words",
           "value": 49332,
           "unit": "bytes at 24 bits/word",
           "method": "static",
-          "conditions": "Uses existing 16,384-word FX2 rings. First 72 virtual ring words use X offsets 60..131; 60 control words. Stock X offsets 132..255 remain untouched. Shared code/table use 795 P words per core (539 program + 256 lossless sine differences). No new allocation.",
+          "conditions": "Uses existing 16,384-word FX2 rings. First 72 virtual ring words use X offsets 60..131; 60 control words. Stock X offsets 132..255 remain untouched. Shared code/table use 844 P words per core (588 program + 256 lossless sine differences). No new allocation.",
           "source": "evidence/bounds.json"
         },
         "processing": {
           "label": "Conservative DSP instruction budget",
-          "display": "732 modeled units/sample",
-          "value": 732,
+          "display": "737 modeled units/sample",
+          "value": 737,
           "unit": "modeled instruction units/sample",
           "method": "static",
-          "conditions": "Conservative source-word/call bound including trigger splits. Four instances plus four bounded initializations: 47,256 modeled units/core/block. Excludes contention stalls; not chip cycles or physical deadline evidence.",
+          "conditions": "Conservative source-word/call bound including trigger splits. Four instances plus four bounded initializations: 47,576 modeled units/core/block. Excludes contention stalls; not chip cycles or physical deadline evidence.",
           "source": "evidence/bounds.json"
         },
         "impact": {
@@ -1520,21 +1520,30 @@
           "dsp": {
             "level": "high",
             "basis": "measured-comparison",
-            "rationale": "Observed maximum 394.625 net executed instructions/sample versus stock Chorus 292.875 and expensive split Spring 314 under matched conditions on both cores. Shared-word protection and lossless table decoding increase cost 17.2% from beta 0.1.1 (336.75); still 24.8% below original 0.1.0 (524.5). Chip timing and physical headroom remain unmeasured.",
+            "rationale": "Observed maximum 362.375 net executed instructions/sample versus stock Chorus 292.875 and expensive split Spring 314 under matched conditions on both cores: 8.2% below beta 0.1.2 (394.625) with bit-identical output, and 30.9% below original 0.1.0 (524.5). Chip timing and physical headroom remain unmeasured.",
             "source": "evidence/stock-comparison.json"
           },
           "memory": {
             "level": "high",
             "basis": "source-estimate",
-            "rationale": "Full 16,384-word virtual stereo ring per instance, split between 16,312 Y and 72 X words; 60 additional control X words within safe offsets 0..131. Uses existing reservations and 795 P code/table words per core. No added sample heap.",
+            "rationale": "Full 16,384-word virtual stereo ring per instance, split between 16,312 Y and 72 X words; 60 additional control X words within safe offsets 0..131. Uses existing reservations and 844 P code/table words per core. No added sample heap.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price",
+          "date": "2026-11-17",
+          "conditions": "MKII, base 0.7.6 development twin 5412b595, project MODWERK-TEST2 bank A pattern 1 playing (sound on T2 and T3), 8 s per reading: frame interrupt 35.1 % before, installed and on T3 FX2 alike; CPU meter 51.3 % before and at rest, 51.6 % in use. One instance on T3 raised its DSP core (T1-4) from 40.3 to 51.1 %.",
+          "source": "TESTING.md"
         }
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Beta 0.1.2 protects live stock shared data within safe instance state and losslessly packs the sine table, preserving the full delay range, sound and controls while widening module combinations. Current physical hardware remains untested under the owner beta waiver.",
-        "hardwareStatus": "untested",
+        "summary": "0.1.3 runs the 0.1.2 effect in fewer DSP instructions with bit-identical output. Like 0.1.2 it protects live stock shared data within safe instance state and losslessly packs the sine table, preserving the full delay range, sound and controls. Three rolled-back trials on an MKII (17 November 2026) placed four instances and read their audio over USB; persistence and chip timing are untested under the owner waiver.",
+        "hardwareStatus": "reported",
         "evidenceRevision": "ed61db5cf1ad04331438fd15967b0ba8cdf4b109",
         "gates": [
           "verify.py",
@@ -12408,7 +12417,7 @@
       "id": "amiga",
       "key": "AMIGA",
       "name": "Amiga",
-      "version": "0.2.1-experimental",
+      "version": "0.3.0-experimental",
       "category": "machines",
       "access": {
         "location": "The track's machine list (double-tap TRACK, or SRC SETUP)",
@@ -12439,6 +12448,7 @@
           "SPD sets how fast the note moves through the sample and GRN the cycle, 96 to 4128 samples: half speed, about twice as fast or a held sound, at any pitch.",
           "Slices stretch too: SLIC on, STRT picks the slice, and the stretch stays inside it.",
           "Every restart crossfades over half a cycle, whichever way the note is going.",
+          "STR on SYNC, the default, keeps the note in time with the project's tempo by the sample's ORIGINAL TEMPO, at any pitch.",
           "STR can turn the stretch into a pitch shift of up to an octave either way.",
           "RATE is stock's own: forwards, backwards and slower, with the stretch following it both ways.",
           "SRR lowers the storage rate, BITS sets the word from 4 to 16 bits (8 by default), LED adds a fixed lowpass.",
@@ -12491,13 +12501,14 @@
         },
         {
           "name": "STR",
-          "default": 1,
-          "count": 3,
-          "doc": "The stretch: OFF plays as FLEX, ON stretches, PCH shifts the pitch by SPD at the note's own length. SRC SETUP knob E.",
+          "default": 3,
+          "count": 4,
+          "doc": "The stretch: OFF plays as FLEX, ON stretches, PCH shifts the pitch by SPD at the note's own length, SYNC stretches at the project's tempo over the sample's ORIGINAL TEMPO. SRC SETUP knob E.",
           "labels": [
             "OFF",
             "ON",
-            "PCH"
+            "PCH",
+            "SYNC"
           ]
         },
         {
@@ -12522,6 +12533,9 @@
           "No stock RTRG or RTIM on an Amiga track: SPD and GRN take their knobs.",
           "Stock's own time-stretch (TSTR) is off on an Amiga track, and SETUP's LEN switch is LED: the track always uses stock's default length setting, LEN OFF.",
           "SRR, LED, STR and BITS are SETUP values: one for the Part, without locks or LFOs.",
+          "SYNC goes by the sample's ORIGINAL TEMPO (audio editor, ATTR): a wrong tempo there gives a wrong length. PCH and SYNC cannot be combined.",
+          "After you choose AMIGA in the machine list, AED shows the track's recorder until you select the track again or pick a sample.",
+          "A track set to SYNC reads as PCH on 0.2.1 and older.",
           "A sliced note is stretched when it is one slice, as stock plays it with SETUP's LEN off; SRR, BITS and LED work either way.",
           "The cycle length is in samples, not tied to the tempo.",
           "The crossfade reads the sample itself. A recorder buffer that is recording, or a sample the module cannot read, restarts with a short fade-out of the step instead.",
@@ -12575,9 +12589,9 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Host gate on the engine (verify.py, 72 checks: the crunch, the stretch's timing and its crossfades out of the sample, pages, words and directions), a comparison of the crossfades with Amigo's (reference/amigo_check.py, the owner's installed plug-in), an emulator count of its instructions (bench.py), and RAM trials of this version's release package on the owner's MKII on a development base, 13 and 14 November 2026: restart ticks counted per track over USB Audio against 0.1.0, load with one and three tracks, a recorder buffer. TESTING.md lists what was not tried.",
+        "summary": "Host gate on the engine (verify.py, 75 checks: the crunch, the stretch's timing, also at the project's tempo over the sample's, and its crossfades out of the sample, pages, words and directions), a comparison of the crossfades with Amigo's (reference/amigo_check.py, the owner's installed plug-in), an emulator count of 0.2.0's instructions (bench.py), and RAM trials on the owner's MKII on a development base: 0.2.0's on 13 and 14 November 2026 (restart ticks, load with one and three tracks, a recorder buffer), and this version's release package on 14 November 2026 (SYNC against FLEX's time-stretch on one loop by ear and by load, the default, LOOP on AUTO). TESTING.md lists what was not tried.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "a679875b1611d27cf1afe86741b6c646ec7fa9d0",
+        "evidenceRevision": "ee4d3ba69f1343f8e4eb043864a209adc4f634f1",
         "gates": [
           "python3 -B verify.py",
           "python3 -B generate.py --check",
@@ -12588,7 +12602,7 @@
           "tutorial": {
             "title": "Quick tutorial",
             "steps": [
-              "Put a drum loop on an Amiga track and play it. At the defaults it is the loop at 8 bits.",
+              "Put a drum loop on an Amiga track and play it. At the defaults it is the loop at 8 bits, in time with the project: STR is on SYNC. If it runs at double or half length, set its ORIGINAL TEMPO in the audio editor (ATTR).",
               "Turn PTCH up a few semitones: the loop keeps its length and starts to flutter. Turn GRN for the size of the flutter.",
               "Turn SPD down to 32 for half speed at the same pitch, or all the way to 0 to hold the sound where it is.",
               "Turn RATE below 0: the loop runs backwards, still stretched.",
@@ -12622,16 +12636,16 @@
             "page": "Machine list (SELECT MACHINE TYPE)",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.0-experimental",
-            "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
-            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on FLEX, the cursor moved to AMIGA."
+            "moduleVersion": "0.3.0-experimental",
+            "imageSha256": "78202bad987758f29039ce444665e08b3ddc2298d707c5f6fc18e5c114762e2f",
+            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 1e66b504 of the Modwerk release base 27c9d36f, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package acae3fef. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on FLEX, the cursor moved to AMIGA."
           }
         },
         {
           "path": "media/amiga-src.png",
           "captureType": "hardware",
           "caption": "Press SRC. PTCH, STRT, LEN and RATE are stock's; knob E is SPD and knob F is GRN. Turn PTCH up and the loop keeps its length; turn SPD down to 32 for half speed at the same pitch.",
-          "alt": "Octatrack SRC page of an Amiga track: knobs PTCH, STRT, LEN, RATE, SPD and GRN, tempo 126.0, and the status line 8 BIT AMIGA.",
+          "alt": "Octatrack SRC page of an Amiga track: knobs PTCH, STRT, LEN, RATE, SPD and GRN, tempo 121.0, and the status line 8 BIT AMIGA.",
           "credit": "repeat98; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -12639,16 +12653,16 @@
             "page": "SRC",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.0-experimental",
-            "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
-            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults."
+            "moduleVersion": "0.3.0-experimental",
+            "imageSha256": "78202bad987758f29039ce444665e08b3ddc2298d707c5f6fc18e5c114762e2f",
+            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 1e66b504 of the Modwerk release base 27c9d36f, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package acae3fef. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults."
           }
         },
         {
           "path": "media/amiga-src-setup.png",
           "captureType": "hardware",
-          "caption": "Hold FUNC and press SRC for SRC SETUP. Knob C switches LED, the lowpass; D is SRR, the storage rate; E is STR (OFF, ON or PCH) and F is BITS. Try SRR at about 20 with LED on.",
-          "alt": "Octatrack SRC SETUP page of an Amiga track: AMIGA marked in the machine list; LOOP AUTO, SLIC OFF, LED OFF, SRR 0, STR ON and the BITS knob.",
+          "caption": "Hold FUNC and press SRC for SRC SETUP. Knob C switches LED, the lowpass; D is SRR, the storage rate; E is STR (OFF, ON, PCH or SYNC) and F is BITS. Try SRR at about 20 with LED on.",
+          "alt": "Octatrack SRC SETUP page of an Amiga track: AMIGA marked in the machine list; LOOP AUTO, SLIC OFF, LED OFF, SRR 0, STR SYNC and the BITS knob.",
           "credit": "repeat98; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -12656,9 +12670,431 @@
             "page": "SRC SETUP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.0-experimental",
-            "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
-            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults: SRC SETUP."
+            "moduleVersion": "0.3.0-experimental",
+            "imageSha256": "78202bad987758f29039ce444665e08b3ddc2298d707c5f6fc18e5c114762e2f",
+            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 1e66b504 of the Modwerk release base 27c9d36f, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package acae3fef. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults: SRC SETUP."
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "midi-scenes",
+      "key": "MIDI SCENES",
+      "name": "MIDI Scenes",
+      "version": "0.3.0-experimental",
+      "category": "scenes",
+      "access": {
+        "location": "MIDI track pages (NOTE, LFO, ARP, CTRL 1, CTRL 2) with SCENE A or SCENE B held",
+        "steps": [
+          "Press MIDI and select a MIDI track with its TRACK key.",
+          "Hold SCENE A or SCENE B and press a TRIG key to assign a scene to that side.",
+          "Keep the scene key held and turn an encoder on a MIDI page to lock that parameter in the scene; press the encoder to clear the lock.",
+          "Release the scene key and move the crossfader to morph between the two scenes."
+        ],
+        "screenshots": [
+          "media/ot-scene-lock.png",
+          "media/ot-released.png"
+        ]
+      },
+      "author": {
+        "github": "bkkbrls-del",
+        "credits": [
+          "bkkbrls-del: MIDISC, the MIDI scene lock behaviour this module follows",
+          "Sam Banks: the GNU-as rewrite in octabam (MIT)",
+          "Modwerk contributors: the port to the Modwerk base's hooks"
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "MIDI scene locks",
+        "family": "Scenes",
+        "summary": "Scene locks for the MIDI tracks: hold SCENE A or B and turn a knob, then morph with the crossfader.",
+        "overview": "Stock scenes lock audio tracks only. MIDI Scenes gives the eight MIDI tracks the same scene locks: hold SCENE A or SCENE B on a MIDI track and turn a knob on the NOTE, LFO, ARP, CTRL 1 or CTRL 2 page, and the crossfader morphs between the two scenes and sends the values as CCs. Locks are kept per Part, saved with the project and kept over a power cycle like stock's.",
+        "highlights": [
+          "Hold-to-lock, the held scene's value on the knob, encoder press to clear, lock LEDs and lit scene pads, as on audio tracks.",
+          "The crossfader morphs each locked MIDI parameter between scenes A and B; changed values go out as CCs before the note.",
+          "CLEAR, COPY and PASTE SCENE carry the MIDI locks; Part Clear clears them.",
+          "Saved with the project in scenes.work, never in the Part: LFO designer shapes stay intact."
+        ],
+        "usage": [
+          "Press MIDI and select a MIDI track. Assign a scene to SCENE A and another to SCENE B (hold the scene key, press a TRIG key).",
+          "Hold SCENE B and turn a knob, for example encoder A on CTRL 1: the knob shows the locked value. Release the scene key.",
+          "Move the crossfader from A to B: the locked parameter moves between its Part value and the lock and goes out as a CC."
+        ]
+      },
+      "controls": [],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "MIDI tracks",
+        "conflicts": [],
+        "uiClaims": [
+          "key:SCENEA+A@MIDI",
+          "key:SCENEA+B@MIDI",
+          "key:SCENEA+C@MIDI",
+          "key:SCENEA+D@MIDI",
+          "key:SCENEA+E@MIDI",
+          "key:SCENEA+F@MIDI",
+          "key:SCENEB+A@MIDI",
+          "key:SCENEB+B@MIDI",
+          "key:SCENEB+C@MIDI",
+          "key:SCENEB+D@MIDI",
+          "key:SCENEB+E@MIDI",
+          "key:SCENEB+F@MIDI",
+          "key:SCENEA+PUSHA@MIDI",
+          "key:SCENEA+PUSHB@MIDI",
+          "key:SCENEA+PUSHC@MIDI",
+          "key:SCENEA+PUSHD@MIDI",
+          "key:SCENEA+PUSHE@MIDI",
+          "key:SCENEA+PUSHF@MIDI",
+          "key:SCENEB+PUSHA@MIDI",
+          "key:SCENEB+PUSHB@MIDI",
+          "key:SCENEB+PUSHC@MIDI",
+          "key:SCENEB+PUSHD@MIDI",
+          "key:SCENEB+PUSHE@MIDI",
+          "key:SCENEB+PUSHF@MIDI"
+        ],
+        "limitations": [
+          "OS 1.40C, Modwerk base 0.7.4 or newer, over USB only: card firmware cannot include it.",
+          "Installed and run briefly on one MKII; the scene locks, the crossfader, saving and reloading are not yet tested on a unit.",
+          "A damaged scenes.work, or one from a newer version, is never overwritten: the project then starts with no MIDI scene locks and keeps none. Rename or delete the file on the card to start over.",
+          "Keep MIDI Scenes installed while you save, reload or copy projects that use it: without it scenes.work is not saved, reloaded or copied with the project.",
+          "Part Save and Reload leave the MIDI locks as they are; a Kit or a Part copy does not carry them.",
+          "Uses about 272 KB of the shared module memory (a lock table for each of the project's 64 Parts)."
+        ]
+      },
+      "resources": {
+        "recorded": "16 November 2026; from the assembled unit, unmeasured on a unit",
+        "storage": {
+          "label": "Storage",
+          "display": "5.4 KB of code, 0.7 KB of data and 266 KB of buffers; scenes.work on the card (262 KB a project)",
+          "value": 278004,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "m68k-elf-size of scenes.s: 5,430 bytes of code, 654 of data, 271,920 of bss (64 lock tables of 4,096 bytes, a 4 KB read slot, the file buffer and the CRC table). Battery RAM: 9,984 bytes at 0x100f9800.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "ColdFire",
+          "display": "+0.2 points of the frame interrupt, +0.3 of the CPU meter; in use within noise",
+          "value": 0.2,
+          "unit": "percent-of-frame",
+          "method": "hardware",
+          "conditions": "MKII, base 0.7.4 development twin: device:price at rest; then eight MIDI tracks with a trig on every step, 480 locks, crossfader sweeps and pattern changes, alone and beside 14 modules (TESTING.md). MIDI channels off.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "MIDI tracks with scene locks while the crossfader moves.",
+          "cpu": {
+            "level": "minimal",
+            "basis": "measured-comparison",
+            "rationale": "At rest +0.2 points of the frame interrupt; in use with 480 locks and the crossfader sweeping, the CPU meter moved 0.1-0.2 points, within run-to-run noise.",
+            "source": "TESTING.md"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP code: MIDI Scenes runs on the ColdFire only and sends MIDI.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "high",
+            "basis": "source-estimate",
+            "rationale": "About 272 KB of the 768 KiB module memory all modules share.",
+            "source": "TESTING.md"
+          }
+        },
+        "cpuPrice": {
+          "value": 0.2,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price",
+          "date": "2026-11-16",
+          "conditions": "MKII, base 0.7.4 development twin 31d16f88, the owner's project A01 playing, installed and used nowhere, 8 s per reading; in use with 480 scene locks on eight MIDI tracks and the crossfader sweeping it read +0.1 (alone) and +0.0 (beside 14 other modules); MIDI channels off, so no CC was sent",
+          "source": "TESTING.md"
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "MKII, base 0.7.4 development twin: installed as trials, hand-tested by the owner, CPU price +0.2 points at rest, in-use and stress runs with 480 locks alone and beside 14 modules, no skipped render, crash or stall. MIDI channels were off; save, reload and power cycle not tested.",
+        "hardwareStatus": "untested",
+        "evidenceRevision": "b2f7d26e59fd09ebee929835b8d10a3079f18afc",
+        "gates": [],
+        "documentation": {
+          "tutorial": {
+            "title": "Quick tutorial",
+            "steps": [
+              "Press MIDI and select a MIDI track with its TRACK key. Assign a scene to SCENE A and another to SCENE B: hold the scene key and press a TRIG key.",
+              "Hold SCENE B and turn encoder A on CTRL 1: the knob shows the locked value. Release the scene key.",
+              "Move the crossfader from A to B: CC 1 moves between the Part's value and the lock. To stop, hold SCENE B and press encoder A to clear the lock."
+            ]
+          },
+          "screenshots": [
+            "media/ot-scene-lock.png",
+            "media/ot-released.png"
+          ],
+          "screenshotStyle": "black-and-white"
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Sam Banks' MIT rewrite from octabam with Modwerk's port changes, MIT. Stock sites are named by address, length and SHA-256 only. No firmware, extracted stock code or built images are included."
+      },
+      "media": [
+        {
+          "path": "media/ot-scene-lock.png",
+          "captureType": "hardware",
+          "caption": "Hold SCENE B on a MIDI track and turn a knob: the NOTE page shows scene B's locked values (NOTE E 3, VEL 120), highlighted as stock highlights an audio track's scene lock.",
+          "alt": "MIDI NOTE page of MIDI track 1 on pattern A01 with SCENE B held: NOTE E 3 and VEL 120 shown inverted as locked values, LEN 1/16.",
+          "credit": "Modwerk contributors (capture on the owner's MKII)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "MIDI NOTE page, SCENE B held",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.3.0-experimental",
+            "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
+            "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 (MAIN SHA-256 in imageSha256) booted from RAM, MIDI Scenes 0.3.0 installed as a 60-second trial (package SHA-256 f38ae755…), the owner's project on pattern A01, MIDI track 1, scene 1 on A and scene 9 on B, stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. The locks were cleared and the trial rolled back afterwards."
+          }
+        },
+        {
+          "path": "media/ot-released.png",
+          "captureType": "hardware",
+          "caption": "Let go of SCENE B: the page shows the Part's own values again (NOTE E 2, VEL 100). Move the crossfader to morph between them and the scene's locks.",
+          "alt": "MIDI NOTE page of MIDI track 1 on pattern A01 with no scene held: NOTE E 2, VEL 100, LEN 1/16.",
+          "credit": "Modwerk contributors (capture on the owner's MKII)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "MIDI NOTE page",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.3.0-experimental",
+            "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
+            "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 (MAIN SHA-256 in imageSha256) booted from RAM, MIDI Scenes 0.3.0 installed as a 60-second trial (package SHA-256 f38ae755…), the owner's project on pattern A01, MIDI track 1, scene 1 on A and scene 9 on B, stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. The locks were cleared and the trial rolled back afterwards."
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "kits",
+      "key": "KITS",
+      "name": "Kits",
+      "version": "0.1.0-experimental",
+      "category": "scenes",
+      "access": {
+        "location": "PART (MKII) or FUNC+MIDI (MKI) from any page",
+        "steps": [
+          "Press PART on the MKII, or FUNC+MIDI on the MKI, to open LOAD KIT.",
+          "Move to a Kit with UP and DOWN or the LEVEL encoder and press YES: the current pattern plays that Kit.",
+          "Press FUNC+PART on the MKII, or FUNC+MIDI then FUNC+BANK on the MKI, to open SAVE KIT; press YES on a Kit, edit its name and confirm to save the current Part into it."
+        ],
+        "screenshots": [
+          "media/ot-status-kit.png",
+          "media/ot-load-kit.png",
+          "media/ot-save-kit.png"
+        ]
+      },
+      "author": {
+        "github": "sambanks",
+        "credits": [
+          "Sam Banks: KITS in octabam (MIT)",
+          "Em (June Kiff, @emuyia): the Octakit design KITS follows (MIT)",
+          "bkkbrls-del: the slot cases the edit pool and the unassigned-pattern rule cover",
+          "Modwerk contributors: the port to the Modwerk base's hooks and borrowed sample memory"
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "255 Kits per project",
+        "family": "Parts and Kits",
+        "summary": "255 Kits per project instead of four Parts per bank: each pattern plays its own Kit, saved and loaded by name.",
+        "overview": "A Kit is a saved Part with a name: machines, samples by slot, effects, track and MIDI settings, LFOs and the 16 scenes. Kits keeps 255 of them per project and lets each pattern play its own, so patterns are no longer tied to their bank's four Parts. Press PART to load a Kit into the current pattern, FUNC+PART to save the current Part as a Kit. Behind the scenes each pattern's Kit is copied into a free Part slot of its bank before the pattern plays, through the stock Part engine.",
+        "highlights": [
+          "LOAD KIT and SAVE KIT lists with the Kits' names, UNDO KIT, and seven-character names.",
+          "Each pattern plays its Kit; copying and pasting a pattern carries its Kit.",
+          "Copy, paste and clear Kits in the list; FUNC+CUE reloads the pattern's Kit as saved.",
+          "Projects without Kits are migrated: each stock Part becomes a Kit and its patterns keep playing it."
+        ],
+        "usage": [
+          "Press PART (MKI: FUNC+MIDI): LOAD KIT lists UNDO KIT and the 255 Kits. Choose one with YES: the current pattern plays it now.",
+          "Press FUNC+PART (MKI: FUNC+MIDI, then FUNC+BANK): SAVE KIT. Choose a Kit with YES, name it and confirm: the current Part is saved into it and the pattern plays it.",
+          "The status line shows the current pattern's Kit as NNN name."
+        ]
+      },
+      "controls": [],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Project sequencer",
+        "conflicts": [
+          "pattern-sample-locks"
+        ],
+        "uiClaims": [
+          "key:PART",
+          "key:FUNC+MIDI",
+          "key:FUNC+PART",
+          "key:FUNC+CUE",
+          "key:STOP+PART",
+          "key:FUNC+STOP+PART",
+          "key:FUNC+STOP+MIDI",
+          "key:PATTERN+FUNC+RIGHT",
+          "key:PATTERN+FUNC+TRIG",
+          "key:PATTERN+FUNC+TRIG+REC",
+          "key:PATTERN+FUNC+TRIG+STOP",
+          "key:PATTERN+FUNC+TRIG+PLAY",
+          "key:FUNC+REC@KITS",
+          "key:FUNC+STOP@KITS",
+          "key:FUNC+PLAY@KITS",
+          "key:FUNC+BANK@KITS",
+          "key:LEVEL@KITS",
+          "screen:PART EDIT"
+        ],
+        "limitations": [
+          "OS 1.40C on the Modwerk base with the sample-memory loan (ot_sample_memory), over USB only: card firmware cannot include it. Not yet run on a unit or in the emulator.",
+          "Borrows 331 pages (about 2 MB) of sample memory while installed: about 23 s less of 16-bit mono sample time. When the pool cannot spare them, Kits stays off and the unit behaves as stock.",
+          "FUNC+PART opens SAVE KIT, so the stock Part Edit window and the rows other modules add there cannot be opened while Kits is installed.",
+          "No quick save with FUNC+YES in SAVE KIT: save with YES and the name editor. FUNC+YES in either list does what it does elsewhere.",
+          "A Kit carries no MIDI scene locks, and a kits.work from an octabam image with MIDI SCENES (version 2) is not read: that project then plays its Parts as stock.",
+          "A damaged kits.work is never overwritten: that project then plays its Parts as stock and keeps no Kits. Rename or delete the file on the card to start over.",
+          "Keep Kits installed while you save, reload or copy a project that uses it: without it, kits.work is not saved or reloaded with the project.",
+          "The first time Kits reads a project without kits.work it writes one (1.6 MB): installing Kits into a running project does this at once.",
+          "Not offered with Pattern Sample Locks: Kits' SAVE KIT takes FUNC+PART, the Part edit menu Pattern Sample Locks adds its rows to."
+        ]
+      },
+      "resources": {
+        "recorded": "16 November 2026; from the assembled unit, unmeasured on a unit",
+        "storage": {
+          "label": "Storage",
+          "display": "10.5 KB code, 38 KB buffers, 2 MB borrowed sample memory; kits.work 1.6 MB a project",
+          "value": 49712,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "m68k-elf-size of kits.s: 10,548 bytes of code, 196 of data, 38,968 of bss. Sample memory: 331 pages of 6,144 bytes for the library (1,622,944 bytes) and the edit pool (405,632 bytes). Battery RAM: 72 bytes at 0x100f85a0 and 256 at 0x100fbf00.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "ColdFire",
+          "display": "Unmeasured",
+          "value": null,
+          "unit": "unknown",
+          "method": "unmeasured",
+          "conditions": "Work happens when a pattern is requested or chained (a Kit copied into a slot: up to four Part compares and two Part copies), at LOAD KIT, SAVE KIT and the list operations, and at a project load or save (kits.work is read or written whole). Nothing on the DSP.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "Pattern changes while playing; project loads and saves.",
+          "cpu": {
+            "level": "low",
+            "basis": "source-estimate",
+            "rationale": "Work happens at pattern requests and panel actions, not per sample or per step; not measured.",
+            "source": "TESTING.md"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP code: Kits runs on the ColdFire and changes what the Parts hold.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "high",
+            "basis": "source-estimate",
+            "rationale": "About 2 MB of the sample memory while installed, and about 49 KB of the module memory all modules share.",
+            "source": "TESTING.md"
+          }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price",
+          "date": "2026-11-16",
+          "conditions": "MKII, a development twin of base 0.7.4 with ot_sample_memory (7250475e), the owner's project A01 playing, installed with its 331 pages taken and used nowhere, 8 s per reading: frame interrupt 28.7 % before and after, CPU meter 46.7 to 46.8 %. Six LOAD KIT loads while playing beside 14 kept modules moved the meter 0.3 points.",
+          "source": "TESTING.md"
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "Assembled and packaged only. No install, gesture, save, reload or power cycle tested on a unit or in the emulator.",
+        "hardwareStatus": "untested",
+        "evidenceRevision": "e39515311e23a259fefb00a38c5b73d47893db6a",
+        "gates": [],
+        "documentation": {
+          "tutorial": {
+            "title": "Quick tutorial",
+            "steps": [
+              "Install Kits into a project and press PART (MKI: FUNC+MIDI). The list shows the project's Parts as Kits 001 to 064.",
+              "Change a sound on the current track, press FUNC+PART (MKI: FUNC+MIDI, then FUNC+BANK), move to an empty Kit, press YES, type a name and confirm: `KIT SAVED`, and the status line shows the new Kit.",
+              "Select another pattern, press PART, choose the Kit you saved and press YES: that pattern now plays it. Switch between the two patterns while playing; each plays its own Kit."
+            ]
+          },
+          "screenshots": [
+            "media/ot-status-kit.png",
+            "media/ot-load-kit.png",
+            "media/ot-save-kit.png"
+          ],
+          "screenshotStyle": "black-and-white"
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Sam Banks' MIT module from octabam with Modwerk's port changes, MIT; after Em's Octakit design (MIT). Stock sites are named by address, length and SHA-256 only. No firmware, extracted stock code or built images are included."
+      },
+      "media": [
+        {
+          "path": "media/ot-status-kit.png",
+          "captureType": "hardware",
+          "caption": "With Kits installed the status line names the Kit the pattern plays: 001 ONE, the project's Part 1 read in as a Kit.",
+          "alt": "Pattern screen of A01 on the MIDI NOTE page; the status line reads 001 ONE where stock shows the Part.",
+          "credit": "Modwerk contributors (capture on the owner's MKII)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Pattern screen",
+            "shows": "location",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
+            "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 with ot_sample_memory (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.0-experimental installed as a 60-second trial (package SHA-256 f1c13a07…) with its 331 pages of sample memory taken, the owner's project on pattern A01 (its Parts read in as Kits), stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. Each list was closed with NO; nothing was loaded or saved, and the trial rolled back."
+          }
+        },
+        {
+          "path": "media/ot-load-kit.png",
+          "captureType": "hardware",
+          "caption": "Press PART: LOAD KIT lists UNDO KIT and the project's Kits. YES on a Kit makes the current pattern play it, at once.",
+          "alt": "LOAD KIT list over the pattern screen: UNDO KIT, 001 ONE (selected), 002 TWO, 003 THREE.",
+          "credit": "Modwerk contributors (capture on the owner's MKII)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "LOAD KIT (PART)",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
+            "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 with ot_sample_memory (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.0-experimental installed as a 60-second trial (package SHA-256 f1c13a07…) with its 331 pages of sample memory taken, the owner's project on pattern A01 (its Parts read in as Kits), stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. Each list was closed with NO; nothing was loaded or saved, and the trial rolled back."
+          }
+        },
+        {
+          "path": "media/ot-save-kit.png",
+          "captureType": "hardware",
+          "caption": "Press FUNC + PART: SAVE KIT, with the cursor on the current Kit. YES opens the name editor and saves the current Part into that Kit.",
+          "alt": "SAVE KIT list over the pattern screen: 001 ONE (selected), 002 TWO, 003 THREE, 004 FOUR.",
+          "credit": "Modwerk contributors (capture on the owner's MKII)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SAVE KIT (FUNC + PART)",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
+            "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 with ot_sample_memory (MAIN SHA-256 in imageSha256) booted from RAM, Kits 0.1.0-experimental installed as a 60-second trial (package SHA-256 f1c13a07…) with its 331 pages of sample memory taken, the owner's project on pattern A01 (its Parts read in as Kits), stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. Each list was closed with NO; nothing was loaded or saved, and the trial rolled back."
           }
         }
       ]

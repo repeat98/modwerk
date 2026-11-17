@@ -2,6 +2,8 @@
 
 When the owner says **maintain**, run this pass. It covers the work that comes back every day: pull requests, GitHub issues, the beta and its diagnostics, upstream projects, and the health of `main` and the owner's computer. **maintain prs** (or issues, beta, upstream) runs one worker only. It is owner work, like [OWNER_OPERATIONS.md](OWNER_OPERATIONS.md); a contributor's session never runs it.
 
+The [maintenance bot](MAINTENANCE_BOT.md) runs the routine part of the pull request and issue workers every 30 minutes, within its policy. Start a pass from its morning report: the ledger shows what it did and what waits, so a worker here does not redo or contradict it.
+
 ## How a pass runs
 
 1. **Start from the last briefing.** Read the newest `~/.cache/modwerk-local/maintain/<YYYY-MM-DD>.md`: what was waiting on whom, and what the owner decided. Read the repository at `origin/main` or in a fresh worktree; the primary checkout often sits on a stale local `main`.
@@ -17,7 +19,7 @@ A worker may, without asking: read anything, run `diagnostics:pull`, build and t
 List them with `gh pr list --state open --json number,title,author,isDraft,labels,mergeStateStatus,updatedAt`. The owner's review list is `is:pr is:open draft:false -label:needs-work -label:one-at-a-time`; `pr-triage.yml` labels the rest ([review queue](COMMUNITY_OPERATIONS.md#review-queue-and-saved-replies)). Review contributors' drafts too: many authors open one without knowing it, and the bot skips drafts. Give every pull request one verdict: ready to merge, needs a refresh, red, waiting on its author, or needs the owner's call, and why.
 
 - **Review** new and changed pull requests. Read the code they touch, not only the diff, and judge each against the [modding guidelines](../MODDING_GUIDELINES.md) and the whole stack:
-  - **The base:** its hooks, events and tables, and the order open pull requests regenerate it in.
+  - **The base:** its hooks, events and tables, the order open pull requests regenerate it in, and its cost: a base pull request quotes the line `node scripts/base-size.mjs` prints (container bytes of 851,712, and the change since the previous base).
   - **The USB lifecycle:** package, Keep/Undo, removal, base-bound packages.
   - **Module splits:** one job per module, no dependency on another module, shared code in the base or SDK first, no gesture only one module can hold.
   - **Cross-compatibility:** its `uiClaims` and conflicts against every other module.
@@ -30,7 +32,7 @@ List them with `gh pr list --state open --json number,title,author,isDraft,label
 - **The triage bot** runs at minute 41 of every hour. Preview it with `PR_TRIAGE_DRY_RUN=1 GITHUB_REPOSITORY=repeat98/modwerk GITHUB_TOKEN=$(gh auth token) node scripts/pr-triage.mjs` and say what it would label, comment or close, above all on a pull request whose author the owner asked to wait.
 - **Red checks:** read the failing job (`gh run view <id> --log-failed`) and say whether the pull request, `main` or a flaky test is at fault.
 - **Follow up** on a pull request quiet since its last request with one short draft; `pr-triage.yml` closes `needs-work` after 14 days.
-- **Merge**, once the owner says so: `gh pr merge <n> --squash`, or `--merge` when the pull request's catalogue rows pin one of its own commits. Before a module update merges, tell the owner that publishing notifies its followers. An owner-approved update needs `sdk/<id>-build-approval.json`, which only the owner writes: hand them the record with `sourceSha256` from `moduleNativeSourceSha256` in `scripts/module-qualification.mjs`. Then follow the merge commit's runs (`gh run list --commit <sha>`) to green and, for a module release, check that the live site lists the new version.
+- **Merge**, once the owner says so: `gh pr merge <n> --squash`, or `--merge` when the pull request's catalogue rows pin one of its own commits. Before a module update merges, tell the owner that publishing notifies its followers. An owner-approved update needs `sdk/approvals/<id>-build-approval.json`, which only the owner writes: hand them the record with `sourceSha256` from `moduleNativeSourceSha256` in `scripts/module-qualification.mjs`. Then follow the merge commit's runs (`gh run list --commit <sha>`) to green and, for a module release, check that the live site lists the new version.
 
 ## Issue worker
 
@@ -52,7 +54,8 @@ Aim to close as many issues as you can each pass. List what is new or changed si
 ## Upstream worker
 
 - **Refresh** with `npm run upstream:tools -- --update`, which keeps the upstream checkouts outside Git. Octabam's pin is frozen and its upstream is no longer followed: Modwerk builds its own. List Elekloader's commits since the newest import record in `sdk/imports/`; with none, report "nothing new" and stop.
-- **Say** in a few lines what changed and what is worth taking: infrastructure, docs, tools, fixes to modules Modwerk carries. A module or anyone's own work needs its author's permission. This pass vendors nothing; a pick from the briefing becomes its own pull request, re-synced docs a new docs-only record ([imports](OCTABAM_INFRASTRUCTURE.md)).
+- **Say** in a few lines what changed and what is worth taking: infrastructure, docs, tools, fixes to modules Modwerk carries. A module or anyone's own work needs its author's permission. This pass vendors nothing; a pick from the briefing becomes its own pull request ([imports](OCTABAM_INFRASTRUCTURE.md)).
+- **Traps:** the vendored register under `sdk/octabam/docs/` (TRAPS.md, FAILURE_MODES.md) is frozen at its pin, and nobody re-vendors it. A newer upstream trap is read at the source and, where Modwerk is exposed, written into Modwerk's own doc for that task in Modwerk's words, as a lead until measured on a Modwerk base: the late frame entry in [MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md), core 1's frame head in [OCTATRACK_DSP_WINDOW.md](OCTATRACK_DSP_WINDOW.md#a-lead-packet-work-at-core-1s-frame-head).
 - Keep the titles, bodies and commits of import pull requests free of the upstream project's name and `#` references, which ping the other repository; the import record and licences carry the provenance.
 
 ## Main and the computer

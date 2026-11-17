@@ -1,0 +1,1 @@
+CI: the maintenance bot checks that the Claude CLI runs after installing it and installs it again, up to three times, when npm skipped its Linux binary. A pass at 14:05 UTC failed because that optional download was dropped silently.

@@ -30,6 +30,13 @@ describe('stock-write checker', () => {
     expect(report).toEqual({ changed: [[0x101, 0x106]], tail: 16, sites: 1 })
   })
 
+  it('splits a contiguous change across adjacent guarded sites', async () => {
+    const built = build([[0x40000100, JMP + '7000']])
+    const sites = [site(0x40000100, 6), site(0x40000106, 2)]
+    const report = await checkStockWrites(stock, built, map, sites)
+    expect(report.changed).toEqual([[0x101, 0x106], [0x106, 0x108]])
+  })
+
   it('refuses a change outside every declared site', async () => {
     const built = build([[0x40000100, JMP + NOP], [0x40000300, '4e75']])
     await expect(checkStockWrites(stock, built, map, [site(0x40000100, 8)])).rejects.toThrow('0x40000301-0x40000302 change outside every declared site')

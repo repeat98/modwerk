@@ -20,7 +20,7 @@ describe('documentation and firmware scheduling', () => {
   it.each(['scripts/frontend-mcp.mjs', 'scripts/frontend-mcp-private-host.mjs', 'sdk/tests/test_frontend_mcp_host.py'])('checks actual native Windows MCP refusal for %s without firmware compilation', path => {
     expect(scope(change(path))).toMatchObject({ documentation: false, windows: true, modules: false, elemod: false })
   })
-  it.each(['scripts/modules.mjs', 'scripts/machine-modules.mjs', 'scripts/module-qualification.mjs'])('runs the Windows module path check for %s, which modules:check runs', path => {
+  it.each(['scripts/modules.mjs', 'scripts/module-cpu-price.mjs', 'scripts/machine-modules.mjs', 'scripts/module-qualification.mjs'])('runs the Windows module path check for %s, which modules:check runs', path => {
     expect(scope(change(path))).toMatchObject({ windows: true })
   })
   it.each(['scripts/prepare-runtime-spans.py', 'scripts/runtime_private_paths.py', 'sdk/tests/test_runtime_spans.py'])('runs native Windows privacy checks for %s without firmware compilation', path => {
@@ -154,6 +154,9 @@ describe('documentation and firmware scheduling', () => {
       git('add', '.'); git('commit', '-m', 'code')
       const code = git('rev-parse', 'HEAD'); rmSync(resolve(root, 'sdk/digitakt/modules/demo/src/demo.c'))
       expect(readChangeScope({ root, base: code }).elemod).toBe(true)
+      expect(readChangeScope({ root, base: code }).base).toBe(false)
+      mkdirSync(resolve(root, 'sdk/machines/octatrack'), { recursive: true }); writeFileSync(resolve(root, 'sdk/machines/octatrack/base-binding.json'), '{}')
+      expect(readChangeScope({ root, base: code }).base).toBe(true)
       expect(() => readChangeScope({ root, base: 'missing-ref' })).toThrow()
     } finally { rmSync(root, { recursive: true, force: true }) }
   })

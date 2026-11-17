@@ -97,7 +97,7 @@ def only_key_bus(capabilities):
 def engines(capabilities, dsp_words):
     """ABI 10: a base-bound controller's engine for the base's hook sites (Analog BD: module-adapters/hook_engines.py).
     The pinned builder reads ABI 6 to 9; an engine package reads as its controller (the same records, its DSP part
-    dropped: sdk/runtime/loader/abi9.py) plus `requires`, `claims` and `entries`, and its stock-free scan covers the
+    dropped: sdk/runtime/loader/abi9.py) plus `requires`, `claims` and `entries`, and its DSP words are the
     engine's words and its initial words. Here, not in the builder, whose source the base and the cave declarations pin."""
     spec = importlib.util.spec_from_file_location('module_packages_abi9', APP / 'sdk/runtime/loader/abi9.py')
     abi9 = importlib.util.module_from_spec(spec); spec.loader.exec_module(abi9)

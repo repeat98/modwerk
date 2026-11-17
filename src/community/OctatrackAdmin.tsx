@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { api } from './api'
 import type { AdminOctatrack, AdminOctatrackCount, AdminOctatrackDay } from './admin-octatrack-contract'
-import { baseLayout, layoutName, runningLayout } from '../engine/elekloader/base-variants'
+import { baseLayout, baseVersion, layoutName, runningLayout } from '../engine/elekloader/base-variants'
 
 const format = (value: number) => value.toLocaleString()
 const plural = (count: number, word: string) => format(count) + ' ' + word + (count === 1 ? '' : 's')
@@ -89,7 +89,7 @@ export function OctatrackAdminReport({ data, loading, error, refresh, metric, on
     </figure>
     <div className="octatrack-admin-groups">
       <div className="statistics-issue-ages octatrack-admin-counts"><h3>Bases in use</h3>
-        {bases.length ? bases.map(row => <div key={row.base} className={'base-' + row.kind}><span title={row.base}>{row.label} <code>{row.base.slice(0, 8)}</code></span><progress aria-label={row.label} value={row.people} max={Math.max(1, ...bases.map(item => item.people))}/><strong title={'Last seen ' + row.lastSeen}>{format(row.people)}</strong></div>)
+        {bases.length ? bases.map(row => <div key={row.base} className={'base-' + row.kind}><span title={row.base}>{row.label} {baseVersion(row.base) && <b>{baseVersion(row.base)} </b>}<code>{row.base.slice(0, 8)}</code></span><progress aria-label={row.label} value={row.people} max={Math.max(1, ...bases.map(item => item.people))}/><strong title={'Last seen ' + row.lastSeen}>{format(row.people)}</strong></div>)
           : <p className="service-note">No sharer reported a base in 30 days.</p>}
       </div>
       <Counts title="Sync failures" rows={health.syncFailures}/>

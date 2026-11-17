@@ -1,0 +1,32 @@
+# Filter Hz 1.3.0: two kHz values locked side by side keep their boxes apart. Track HPF 86 and
+# LPF 0 (the corner for 86 + 0); trig 1 held in GRID RECORDING, one nudge each, which locks the
+# shown value. Expected 2.17kHz and 2.21kHz, each in its own box with a black column between
+# them and a pixel of white each side of both texts (the pair whose boxes touched before 1.3.0's box move).
+# Ends by tapping T1 in GRID RECORDING, which takes the lock trig off, and puts HPF 38, LPF 40
+# back. Needs step 1 of the FX track's pattern empty at the start.
+name: filter-hz-khz-pair
+state: changes
+# FX is a toggle (pressed on the FX track it goes back to the drum track), so BD is selected first.
+hold TRK
+key BD
+release TRK
+key FX
+key SRC
+wait 3500
+cc 20 86
+cc 21 0
+wait 300
+key RECORD
+hold T1
+nudge E +1
+nudge F +1
+wait 750
+screen pair
+expect pair == ref region 0 40 128 15
+release T1
+wait 300
+key T1
+wait 300
+key RECORD
+cc 20 38
+cc 21 40

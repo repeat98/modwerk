@@ -1,0 +1,43 @@
+# Filter Hz 1.3.0: DELAY HPF and LPF locked on trig 1 (GRID RECORDING) show hertz in wide
+# boxes, and LPF follows the trig's HPF lock, not the track's HPF.
+# Track HPF 38, LPF 40; trig 1 held, each knob nudged twice (the first nudge locks the shown
+# value, the second moves it): locks HPF 39, LPF 41. Expected 79.0Hz and 1.44kHz (39 + 41).
+# Then track HPF set to 0, trig 1 held again (a re-hold shows no values) and LPF nudged once
+# more to 42: expected 1.55kHz (the trig's HPF 39 + 42), not 97.7Hz (the track's HPF 0 + 42).
+# Ends by tapping T1 in GRID RECORDING, which takes the lock trig and its locks off, and puts
+# HPF 38, LPF 40 back. Needs step 1 of the FX track's pattern empty at the start.
+name: filter-hz-delay-lock
+state: changes
+# FX is a toggle (pressed on the FX track it goes back to the drum track), so BD is selected first.
+hold TRK
+key BD
+release TRK
+key FX
+key SRC
+wait 3500
+cc 20 38
+cc 21 40
+key RECORD
+hold T1
+nudge E +1
+nudge E +1
+nudge F +1
+nudge F +1
+wait 750
+screen locked
+expect locked == ref region 0 40 128 15
+release T1
+cc 20 0
+wait 300
+hold T1
+nudge F +1
+wait 750
+screen again
+expect again == ref region 0 40 128 15
+release T1
+wait 300
+key T1
+wait 300
+key RECORD
+cc 20 38
+cc 21 40

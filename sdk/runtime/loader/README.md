@@ -121,8 +121,9 @@ These represent reviewed authored constant initializers, such as an
 explicit `.fill` array. Every copy/fill destination must be a bounded
 zero placeholder, disjoint from other destinations and relocation words.
 The base reconstructs copies and fills without changing the stock-overlap
-scanner or exempting encoded payloads from it. Image/BSS and relocation
-limits remain 128 KiB and 2,048.
+scanner or exempting encoded payloads from it. A module's image is at most
+128 KiB, its image and bss together at most 288 KiB (`RUNTIME_MODULE_BYTES`,
+MIDI Scenes' 256 KiB of locks), and it has at most 2,048 relocations.
 
 Package flags remain u16 at 6, module ID u32 at 28 and layout u16 at 66.
 The Octatrack's read-only vendor request 29 (`C1`, value 0, vendor-interface

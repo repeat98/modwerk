@@ -1,6 +1,6 @@
 # Amiga
 
-Version 0.2.1-experimental · by Jannik Aßfalg (@repeat98) · experimental: played and measured on one MKII on a development base; the list of what was not tried is in [TESTING.md](TESTING.md).
+Version 0.3.0-experimental · by Jannik Aßfalg (@repeat98) · experimental: played and measured on one MKII on a development base; the list of what was not tried is in [TESTING.md](TESTING.md).
 
 ## Overview
 
@@ -24,12 +24,12 @@ On SRC SETUP. LOOP and SLIC (knobs A and B) are stock FLEX's. With SLIC on, STRT
 | --- | --- | --- | --- | --- |
 | C | LED | OFF, ON | OFF | A fixed lowpass (two poles, about 3.3 kHz at PTCH 0) on the stored sample. It moves with PTCH. |
 | D | SRR | 0–127 | 0 | Storage rate: the sample is stored at 16/(16+SRR) of its rate, each stored sample the average of those it replaces, then held. 0 keeps every sample, 16 is half the rate, 127 about a ninth. |
-| E | STR | OFF, ON, PCH | ON | The stretch. OFF plays as FLEX does: pitch changes the length, and SPD and GRN do nothing. PCH turns it into a pitch shift: the length stays and SPD moves the pitch instead, 32 an octave up, 127 an octave down, no further, and never past PTCH's own range. |
+| E | STR | OFF, ON, PCH, SYNC | SYNC | The stretch. OFF plays as FLEX does: pitch changes the length, and SPD and GRN do nothing. PCH turns it into a pitch shift: the length stays and SPD moves the pitch instead, 32 an octave up, 127 an octave down, no further, and never past PTCH's own range. SYNC is ON following the project's tempo: the note moves through the sample at the project's tempo over the sample's ORIGINAL TEMPO (audio editor, ATTR), so a loop stays in time at any tempo and any pitch, and SPD works on top (32 is half time). A sample without a tempo from 30 to 300 BPM plays as ON. |
 | F | BITS | 4–16 | 8 | Word length. 16 leaves the sample untouched. It moves one step every few detents. |
 
 RATE, SPD and GRN take parameter locks, LFOs and scenes, as SRC knobs do. SPD and GRN act from the next cycle.
 
-With STR on, SPD 64, PTCH 0 and RATE +63 nothing is restarted. With SRR 0, BITS 16 and LED off as well, the track hands the Octatrack exactly what FLEX does.
+With STR on ON, or on SYNC while the project plays at the sample's own tempo, SPD 64, PTCH 0 and RATE +63 restart nothing. With SRR 0, BITS 16 and LED off as well, the track hands the Octatrack exactly what FLEX does.
 
 ## Usage
 
@@ -39,7 +39,7 @@ With STR on, SPD 64, PTCH 0 and RATE +63 nothing is restarted. With SRR 0, BITS 
 
 ## Quick tutorial
 
-1. Put a drum loop on an Amiga track and play it. At the defaults it is the loop at 8 bits.
+1. Put a drum loop on an Amiga track and play it. At the defaults it is the loop at 8 bits, in time with the project: STR is on SYNC. If it runs at double or half length, set its ORIGINAL TEMPO in the audio editor (ATTR).
 2. Turn PTCH up a few semitones: the loop keeps its length and starts to flutter. Turn GRN for the size of the flutter.
 3. Turn SPD down to 32 for half speed at the same pitch, or all the way to 0 to hold the sound where it is.
 4. Turn RATE below 0: the loop runs backwards, still stretched.
@@ -53,6 +53,10 @@ With STR on, SPD 64, PTCH 0 and RATE +63 nothing is restarted. With SRR 0, BITS 
 - SRR, LED, STR and BITS are SETUP values: one for the Part, without locks or LFOs.
 - A sliced note is stretched when it is one slice, as stock plays it with LEN off. To move the reader, the module tells stock for that one START that the slice starts (backwards: ends) at the frame it wants, then puts the slice back. SRR, BITS and LED work either way.
 - The cycle length is in samples, not tied to the tempo.
+- SYNC goes by the sample's ORIGINAL TEMPO, as stock's time-stretch does without a loop length: a wrong tempo there gives a wrong length. It is ON and the tempo together, so PCH and SYNC cannot be combined.
+- LOOP on AUTO follows the sample's own loop setting, as on FLEX: a sample that is not set to loop ends at its end.
+- After you choose AMIGA in the machine list, AED shows the track's recorder (three tabs) until you select the track again or pick a sample. The base sets this, not the module.
+- A track set to SYNC reads as PCH on 0.2.1 and older.
 - The crossfade reads the last grain from the sample itself, where stock keeps it in memory, in pages as FRACT's Flex adapter found them. A recorder buffer that is recording, or a sample whose pages are not laid out as known, restarts with a short fade-out of the step instead; so does a restart that cuts a crossfade short, and a reader that turns round.
 - A stretched note that is not looped ends when SPD has carried it to the end of the sample (its start, backwards), even if LEN would stop a FLEX note sooner by time.
 - When RATE slows a stretched note, the place follows stock's RATE as a straight line from 0 to +63 (0 to −64 backwards). Where stock's own scale differs, the note's length is off by that much; at SPD 64 and PTCH 0 the place is the reader's own and nothing restarts.

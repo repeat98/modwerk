@@ -1,0 +1,50 @@
+# Quick Mod Assign 0.2.0 (LFO assign): a fast turn takes DEP to its end (+127 box); turning another knob in
+# the same hold moves the destination there at depth 0; pressing the destination's knob sets DEP back to 0,
+# as a press clears a lock. The LFO page then shows the new DST.
+# Sets and leaves the BD track's LFO at DST none, DEP 0 and FRQ 64, RES 0 (by CC), and checks FRQ and RES
+# themselves did not move. Changes the BD sound's LFO in the active kit.
+name: qma-lfo-regrab
+state: changes
+ignore: 0 0 128 9, 0 55 128 9
+
+hold TRK
+key BD
+release TRK
+cc 105 0
+cc 109 64
+cc 74 64
+cc 75 0
+key FLTR
+wait 3500
+screen fltr0
+hold LFO
+nudge E +1
+enc E +40 x16
+wait 750
+screen frqmax
+expect frqmax == ref                # FRQ box +127.99, across the knob's column
+wait 2500                           # FRQ's value overlay gone before res0
+nudge F +1
+wait 750
+screen res0
+expect res0 == ref                  # FRQ unboxed, RES box (0)
+enc F +40 x4
+wait 750
+screen resup
+expect resup != res0
+key PUSH_F
+wait 750
+screen respush
+expect respush == res0 region 32 9 96 46  # RES back to 0 (FRQ's label still shows its value in res0)
+release LFO
+wait 500
+key LFO
+wait 3500
+screen lfo
+expect lfo == ref region 96 9 32 46   # DST RES, DEP at its centre
+key FLTR
+wait 3500
+screen fltrend
+expect fltrend == fltr0              # FRQ and RES themselves did not move
+cc 105 0
+cc 109 64
