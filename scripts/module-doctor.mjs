@@ -19,8 +19,8 @@ import { LIBRARY_CATEGORIES } from '../src/catalog/modules.ts'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
 import { moduleSourceFingerprint } from './module-source.mjs'
 import { ANALOG_BD_DSP_COMPANIONS } from '../src/engine/analog-bd-layout.ts'
-import { moduleNativeSourceSha256 } from './module-qualification.mjs'
-import { judgeRecord, ownerWaivedPerformanceRow } from './perf-audit-analysis.mjs'
+import { moduleNativeSourceSha256, modulePerformanceSourceSha256 } from './module-qualification.mjs'
+import { judgeRecord, ownerWaivedPerformanceRow, stampVerdict } from './perf-audit-analysis.mjs'
 import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
 import { stageDraft } from './draft-stage.mjs'
 import { requireZdlBinary, zdlPath } from './zdl-binaries.mjs'
@@ -33,6 +33,9 @@ import { moduleTestFiles, runModuleTests } from './module-tests.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
+// Modules first listed on or after this day, and every draft judged as a release, stamp their performance record with the source it
+// was measured on (npm run perf:audit -- check FILE --stamp); earlier records are asked to stamp at their next measurement.
+const PERFORMANCE_STAMP_REQUIRED_FROM = '2026-11-18'
 // Modules first listed on or after this day declare the key gestures and screens they take (compatibility.uiClaims).
 const UI_CLAIMS_REQUIRED_FROM = '2026-10-14'
 // Octatrack modules first listed on or after this day, and every draft judged as a release, build a machine page's controls with modwerk_page_control()
@@ -78,7 +81,7 @@ const nativeParams = (() => { try { return JSON.parse(nativeRun.stdout) } catch 
 // The modules listed before every module had to name its CPU price, which wait for a measurement.
 const cpuPending = readCpuPricePending(root)
 // The qualification source hash is async; compute it once per module before the checks run.
-const nativeHashes = new Map()
+const nativeHashes = new Map(), performanceHashes = new Map()
 // The USB package file's Git history, read once and only when a hardware record and the shipped package differ.
 let packageRows = null
 const retest = documents => retestQueue({ documents, packages: json(PACKAGES).packages, history: (packageRows ??= packageHistory(root)), bases: json(BASES).bases })
@@ -147,6 +150,11 @@ function octatrack(id) {
       else fail('performance', row.name + ': ' + row.detail, row.fix ?? 'npm run perf:audit -- check ' + folder + '/evidence/performance.json')
     }
     if (!lines.some(line => line.name === 'performance')) ok('performance', rows.filter(item => item.name !== 'record' && !ownerWaivedPerformanceRow(record, item, hardwareApproval, nativeHashes.get(id))).map(item => item.name + ' ' + item.state).join(', ') + ' (npm run perf:audit)')
+    // Were these numbers taken on this code? The stamp names the source they were measured on.
+    const stamped = stampVerdict(record, performanceHashes.get(id), draft || !entry || (entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_STAMP_REQUIRED_FROM, (draft ? 'sdk/drafts/' + id : folder) + '/evidence/performance.json')
+    if (stamped.state === 'fail') fail('performance stamp', stamped.detail, stamped.fix)
+    else if (stamped.state === 'note') info('performance stamp', stamped.detail)
+    else ok('performance stamp', stamped.detail)
   } else if (performanceRequired) fail('performance', 'a new module needs ' + folder + '/evidence/performance.json: worst-case cycles, a benchmark against stock and a stress run', 'npm run perf:audit -- template dsp|coldfire, measure (docs/MODULE_PERFORMANCE.md), then npm run perf:audit -- check')
   else info('performance', 'no evidence/performance.json. Not required before ' + PERFORMANCE_REQUIRED_FROM + '; npm run perf:audit measures the same three things')
 
@@ -305,6 +313,7 @@ const octatrackIds = all ? catalog.modules.map(item => item.id) : ids.filter(id 
 for (const id of octatrackIds) {
   const document = parseModuleDocument(json('sdk/octatrack/modules/' + id + '/octamod.module.json'))
   nativeHashes.set(id, await moduleNativeSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
+  performanceHashes.set(id, await modulePerformanceSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
 }
 // The fingerprint of the compiled packages must match the code too: documentation edits never change it.
 const fingerprintOk = !octatrackIds.length || (await moduleSourceFingerprint(root)) === json('src/engine/assets/module-build.json').sourceTreeSha256
