@@ -150,6 +150,7 @@ describe('questions and findings in the commands', () => {
     // A wanted task names who took it and the pull request that ends it, and its text is quoted like any other.
     const wanted = board.describeThread(thread({ kind: 'wanted', topic: { kind: 'site', key: 'forum' }, to: 'cy', body: 'Show the module version on forum threads.', pullRequest: 1500 }))
     expect(wanted).toEqual([expect.stringMatching(/wanted +site forum +@bo taken by @cy {2}open until 2026-11-29 {2}ends with #1500$/), '    «Show the module version on forum threads.»'])
+    expect(board.describeThread(thread({ kind: 'wanted', to: null, priority: 'high' }))[0]).toMatch(/open until 2026-11-29 {2}high priority$/)
   })
   it('sends take, link and a reply\'s pull request to the routes that hold them', async () => {
     const sent = [], fetch = async (url, init) => { sent.push([url.replace(/^.*\/api/, ''), init.method, JSON.parse(init.body ?? 'null')]); return Response.json({ message: {} }) }
@@ -158,6 +159,8 @@ describe('questions and findings in the commands', () => {
     await board.messageAction(id, 'link', { pullRequest: 1501 }, options)
     await board.messageAction(id, 'reply', { body: 'Sent as #1502.', pullRequest: 1502 }, options)
     expect(sent).toEqual([['/agent-board/messages/' + id + '/take', 'POST', { pullRequest: 1500 }], ['/agent-board/messages/' + id + '/fold', 'POST', { pullRequest: 1501 }], ['/agent-board/messages/' + id + '/replies', 'POST', { body: 'Sent as #1502.', pullRequest: 1502 }]])
+    await board.messageAction(id, 'priority', { priority: 'high' }, options)
+    expect(sent.at(-1)).toEqual(['/agent-board/messages/' + id + '/priority', 'POST', { priority: 'high' }])
     expect(board.MESSAGE_KINDS).toContain('wanted'); expect(board.TOPICS).toContain('site')
   })
 })
