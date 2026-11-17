@@ -211,3 +211,10 @@ choice), the edges, and LEFT/RIGHT without CUE left to stock. Under ot_emu on th
 `0 1 2 3 4 5 6 7` selected, CUE + RIGHT twice gave `0 1 4 2 3 5 6 7` then `0 1 4 5 2 3 6 7`, CUE + LEFT
 `0 1 4 2 3 5 6 7`; the marks and the cursor followed. Not tested on a unit yet. The screenshots in `media/` are of
 0.1.0-experimental.
+
+On the developer's MKI (17 November 2026, flashed base `6c189889…`): my stage 1 on source `2f2a0043f`, package
+`e96b2e44589001e5c34ee8784daebfb09fcf3fc27b0e158bface7ea8ff9776c2`, a 20-second trial: no crash, stall, freeze or
+skipped track logged, rolled back, inventory `[]` before and after. Then his 30-minute trial from 18:04. As Andrey
+Sidorkin reported it: a selection moved with CUE + RIGHT and back with CUE + LEFT, the marks following; the cursor row
+alone moved the same way with no selection; `LOOP: 003` on row 6 moved up past row 3 became a JUMP to the same row's
+content; LEFT/RIGHT without CUE still changed columns. All as intended.
