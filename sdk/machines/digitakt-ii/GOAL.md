@@ -8,12 +8,12 @@ A Digitakt II owner opens the machine page, builds the Modwerk base in the brows
 
 This is the Octatrack's stack on the Digitakt II ([machine recipe](../../../docs/MACHINE_RECIPE.md)). Extend the Octatrack's and the Rytm's pieces rather than designing a second set.
 
-## Where it stands (16 November 2026)
+## Where it stands (17 November 2026)
 
 | Piece | State | Where to look |
 | --- | --- | --- |
-| Base | Started. The core 1.1 source and a local candidate with proposed sequencer hooks are on `main`. The site still builds core 1.0 | [base source](elekloader/README.md); #1571 lets the browser build the Modwerk base, and #1582 adds the shared Mixer and a guarded pre-send render |
-| Hooks | Core 1.1's UI hooks, frame values, key LEDs, and project and kit data. Sequencer note, grid and phrase hooks are proposed | [core hooks](README.md#core-hooks), [sequencer hooks](elekloader/modwerk/README.md) |
+| Base | Started. The site builds the pinned Modwerk base `e88273ed` on core 1.1 (#1571). Project and kit data survived Save Project, a cold boot and KIT Save and Load on one unit. Downloads stay off | [base source](elekloader/README.md); #1582 adds the shared Mixer and a guarded pre-send render |
+| Hooks | Core 1.1's UI hooks, frame values, key LEDs, and project and kit data, plus the base's sequencer phrase hook and project archive. The base's pitch and grid collections are not in the contract yet | [core hooks](README.md#core-hooks), [sequencer hooks](elekloader/modwerk/README.md) |
 | USB link | Being scoped: SysEx over the stock USB MIDI first | [USB link](#usb-link) below |
 | Loading without a reflash | Not started | [porting the runtime loader](../../runtime/loader/README.md#porting-to-another-machine) |
 | Base updates over USB | Not started | [two-slot base](../../../docs/OCTATRACK_TWO_SLOT_BASE.md) |
@@ -25,7 +25,7 @@ When a piece moves, update this table, the [recipe's table](../../../docs/MACHIN
 
 ## The order
 
-1. **Ship the base.** Review and merge the base pull requests and run the exact build on more than one unit. Then the site builds the Modwerk base and the machine's core version goes to 1.1.
+1. **Finish the base.** The site builds the Modwerk base on core 1.1. It is done once its exact build has run on more than one unit, its core source comes from elekloader's merged release, and the owner turns downloads on.
 2. **USB link**, in parallel with step 1 on development bases. It starts with identify, status and the unit's log (diagnostics), then adds chunked writes for module packages.
 3. **Loading without a reflash.** Port the runtime loader: review, a trial in RAM, Keep, Undo.
 4. **Base updates over USB.** Two slots and at most one restart. The maker's recovery (FUNC + TRIG 4, then the stock `.syx` over MIDI DIN) stays the floor.
@@ -58,8 +58,8 @@ OS 1.17 offers USB MIDI in all three USB modes (MIDI, Audio/MIDI and Overbridge)
 ## Open questions
 
 - **Kit data that changes alone.** Does OS 1.17 save a kit when only a module's block changed? The test steps are in the [machine guide](README.md#core-hooks), and any unit owner can run them.
-- **More units.** So far the base pull requests' exact builds have each run on one unit.
-- **Upstream drift.** The core 1.1 source comes from an open elekloader pull request. Before the base ships, take it again from the merged release ([release status](elekloader/README.md#release-status)).
+- **More units.** The pinned base `e88273ed` has run on one unit so far.
+- **Upstream drift.** The core 1.1 source is `0df8409`, the reviewed head of the open [elekloader#221](https://github.com/elekloader/elekloader/pull/221). When it merges, take the source again from the release and rebuild the base ([base source](elekloader/README.md)).
 - **A SHARC assembler.** No Modwerk build writes SHARC code yet. The first one to do so brings its toolchain, pinned through `npm run upstream:tools`, and a build check for the rules above.
 
 ## How to join
