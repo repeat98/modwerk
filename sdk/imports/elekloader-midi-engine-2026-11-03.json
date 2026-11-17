@@ -28,7 +28,7 @@
       "category": "MIDI",
       "author": "svindler",
       "needs_core": "0.7",
-      "on_unit": "Builds ME09 to ME17 ran on the author's Analog Rytm MKII on OS 1.74 over DIN and USB; this package, compiled with GCC 16.2 from the same C, ran as build MER1 on the same unit on 2026-11-17: notes, chords, lanes, PB, MW and AT and leaving the machine as on ME17."
+      "on_unit": "Builds ME09 to ME17 ran on the author's Analog Rytm MKII on OS 1.74 over DIN and USB; this package, compiled with GCC 16.2 from the same C, ran on the same unit on 2026-11-17 with core-ar2 0.7 (MER1) and with Modwerk's plain Rytm base 1c14b6b0 (MER2): notes, chords, lanes, PB, MW and AT and leaving the machine as on ME17, and on MER2 the lanes and SND kept through a power cycle."
     }
   ]
 }

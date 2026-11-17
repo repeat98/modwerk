@@ -139,12 +139,12 @@
     ]
   },
   "resources": {
-    "memoryBytes": null,
-    "fastBytes": null,
+    "memoryBytes": 9308,
+    "fastBytes": 0,
     "load": {
-      "display": "Not measured yet",
-      "method": "unmeasured",
-      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+      "display": "About 1.2 % of the audio block on average, 2.8 % at its dearest, while a track plays chords (emulator count)",
+      "method": "emulator",
+      "conditions": "rytm-emu 4c07ed3 with a local timer around the base's audio-block and tick calls, MER2 (this package on the plain Rytm base 1c14b6b0) against the base alone, 30 G instructions, BD on MIDI playing chords on four steps a bar: the audio-block call took 1,635 instructions on average and 3,827 at most (the base alone 21) of about 134,000 a block; the UI tick 463 typically. An emulator count, not a unit measurement: the unit pays stalls and cache refills the emulator does not count. Memory: link-image with the plain base, 118,836 bytes of the mod area free alone and 109,528 with this module."
     }
   },
   "evidence": {
@@ -160,7 +160,7 @@
       "testedOn": "2026-11-01",
       "tester": "svindler",
       "durationMinutes": null,
-      "summary": "Test builds ME09 to ME17 on the author's unit over DIN (and USB once), a synth's MIDI read on a computer monitor: silent track, notes and chords, LEN and INF, STOP, lane values and locks, lock trigs, live PB/MW/AT and CC knobs, SND OFF, LFO on a lane, swing and microtiming, mute, save and power cycle, leaving the machine. ME17 last: leave and return, then PLAY, with no stray CC. MER1, the released package, on 2026-11-17: the same notes, lanes and leave-and-return result over DIN.",
+      "summary": "Test builds ME09 to ME17 on the author's unit over DIN (and USB once), a synth's MIDI read on a computer monitor: silent track, notes and chords, LEN and INF, STOP, lane values and locks, lock trigs, live PB/MW/AT and CC knobs, SND OFF, LFO on a lane, swing and microtiming, mute, save and power cycle, leaving the machine. ME17 last: leave and return, then PLAY, with no stray CC. The released package on 2026-11-17, on core-ar2 0.7 (MER1) and on Modwerk's plain base (MER2): the same notes, lanes and leave-and-return result over DIN, and the lanes kept through a power cycle.",
       "limitations": [
         "One unit, one MIDI track at a time; scenes, performances, conditions and pattern changes not tested.",
         "No CPU load measured on the unit."

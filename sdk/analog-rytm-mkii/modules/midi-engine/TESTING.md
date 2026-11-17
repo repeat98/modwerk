@@ -114,6 +114,14 @@ MER1 is that package, built the way the site builds it (the vendored kit's `buil
 - BD on another machine: stock's own MIDI note, C1, per trig. Back on MIDI the AMP page is all OFF and PLAY sends plain C1 notes with no controllers, as ME17 (leaving the machine switches the lanes and SND OFF).
 - Not tested on MER1: save and power cycle, USB MIDI, whether a project saved by ME17 loads its lanes and SND (MER1 uses a new storage layout).
 
+MER2 is the same package on Modwerk's plain Rytm base (`modwerk-base-analog-rytm-mkii-1c14b6b0.elemod`), which the site builds a set without send effects or voices on since mid-November; same storage layout as MER1. On the developer's unit, 2026-11-17, over DIN, 120 BPM, BD trigs on steps 1, 5, 9 and 13 (LEN 1/16, CC1 24 with a lock of 20 on steps 5 and 13, N2 +7, N3 +12):
+
+- Installed with one Transfer DROP; the screen shows MER2.
+- PLAY: CC 74 = 24, PB, MW and AT once, then C1 G1 C2 at velocity 100 on every trig, CC 74 alternating 20 and 24 with the lock, offs about 0.12 s after each trig and at STOP. No CC 64. The same messages as MER1.
+- BD to another machine and back to MIDI: AMP all OFF; PLAY sends plain C1 notes and offs, nothing else.
+- AMP set again (channel 1, HLD CC 74, SND PMA), power off and on without saving: the AMP page came back as set, and PLAY sent CC 74, PB, MW and AT, then the notes. N2, N3 and CC1 stayed at the values the machine change had reset (single C1 notes, CC 74 = 0 with the lock's 20), as set.
+- Not tested on MER2: USB MIDI, a saved project reloaded, the other base variants (send bus, voices).
+
 ## Not tested
 
 - Several MIDI tracks at once, shared voices (CH/OH, RS/CP, MT/HT, CY/CB), scenes and performances, conditions, pattern and song changes, the load under a flood (`perf:audit`).
