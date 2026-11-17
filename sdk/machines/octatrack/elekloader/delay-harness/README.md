@@ -31,6 +31,10 @@ TOL=680 ./harness …      # audio, filter state and ring words may differ by up
 Without `TOL` every byte must match, which the floor no longer promises: a quiet track drops the residue stock would
 have mixed in. With `TOL=680` everything but the audio, the four filter state words and the ring must still be equal.
 
+`ot::Machine` logs every peripheral write until `endPeripheralWriteLog()` is called, about 2 KB a frame here: a host
+harness that runs millions of frames must call it after the boot, as this one does, or it runs out of memory (a 3M-frame
+run reached 3.9 GB and was OOM-killed). Cap long runs anyway (`prlimit --as=2000000000`).
+
 It prints PASS, the instructions a frame and the eDMA transfers a frame on both sides. Its eDMA moves bytes at once:
 it proves bytes and order, never transfer timing. That is the unit's part.
 
