@@ -18,7 +18,7 @@ describe('the Octatrack base path gate, apart from the rest of the beta', () => 
     expect(hasBetaAccess(plain)).toBe(false)
     const offered = availableModules(hasBetaAccess(plain)).map(module => module.id)
     for (const id of BETA_MODULE_IDS) expect(offered).not.toContain(id)
-    expect(moduleAvailabilityError([...BETA_MODULE_IDS], hasBetaAccess(plain))).not.toBe('')
+    for (const id of BETA_MODULE_IDS) expect(moduleAvailabilityError([id], hasBetaAccess(plain))).not.toBe('')
   })
   it('unreleased, changes nothing: beta testers and verified administrators only', () => {
     expect(hasOctatrackBase(plain, false)).toBe(false)
