@@ -1,6 +1,6 @@
 # Vibrato
 
-A pitch vibrato for any audio track, on FX1 or FX2, by Bryan T (@bryantysinger). Version 0.1.0-experimental, a draft not yet tried on the Modwerk base.
+A pitch vibrato for any audio track, on FX1 or FX2, by Bryan T (@bryantysinger). Version 0.1.0-experimental.
 
 ## Overview
 
@@ -44,11 +44,11 @@ Select an audio track, hold FUNC and press FX1 (or FX2) for its SETUP page, turn
 - **Modwerk differs from octabam here:** octabam's SLOTS build setting chose between an FX1-only build (an FX2 instance a dry pass, so it could sit beside octabam's bus servers) and FX1+FX2. Modwerk has no bus servers and its base places an effect on either slot, so this port is the FX1+FX2 build, always.
 - **One random seed for both cores:** octabam seeds the random generator per DSP core; a Modwerk USB package is one program for both cores, so this port uses core A's seed on both. Each instance's seed still mixes in its own state address, so every RND instance differs from every other except the same slot on the two cores (track 1 FX1 and track 5 FX1, say).
 - A project that selects VIBRATO on a unit without it falls back to no effect on that slot.
-- Not tried on the Modwerk base on a unit yet: see TESTING.md.
+- Tried on an MKII over USB as trials on a development twin of base 0.7.7; not yet listened to there, kept or carried through a power cycle (TESTING.md).
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). In short: the USB package builds from source (696 DSP words). The author's octabam render gate and his MKII measurement (4.5 % of a DSP frame a slot) are his results on octabam's build, quoted there; nothing has run on the Modwerk base yet.
+See [TESTING.md](TESTING.md). In short: on an MKII over USB (a development twin of base 0.7.7, as trials) the scripted device test passed, VIBRATO took 249 chip cycles a sample against stock SPRING REV's 339, and it added nothing to the frame interrupt. In dsp_host the author's render gate passed 63 of 63, its worst case was 156 executed instructions a sample (SPRING REV 314), sixteen instances ran under stress without a stray write, and the sound audit was clean with modulation off.
 
 ## Authorship and licences
 
@@ -72,8 +72,3 @@ Headless emulator captures of a private native build (`media/`, provenance in `m
 4. `media/ot-shape-sqr.png`: SHP set to SQR, the trill.
 
 The native build's FX2 list holds only NONE and VIBRATO; on the Modwerk base the list also holds the stock effects and the other installed modules. No audio preview yet.
-
-## Develop
-
-- Hear it: `npm run module:dev -- vibrato` builds it and tries it on your unit over USB; `--watch` does that again on every save.
-- Check it: `npm run module:doctor -- --draft vibrato`.

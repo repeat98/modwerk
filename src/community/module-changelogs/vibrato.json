@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-17",
+    "changes": [
+      "New: Bryan T's VIBRATO, a pitch vibrato with its depth in cents: sine, triangle, a two-note trill (SQR) or a random pitch every half cycle (RND).",
+      "Runs on FX1 or FX2 of any audio track. SPD and DEP glide, so a fast twist or an LFO stays smooth; SLEW rounds the shape, WID spreads it in stereo, MIX blends the dry track back in.",
+      "About three quarters of SPRING REV's DSP time, and nothing on the CPU.",
+      "Known: RND on the same slot of track 1 and track 5 draws the same random pattern."
+    ]
+  }
+]

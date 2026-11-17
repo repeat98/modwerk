@@ -4,13 +4,16 @@ Source: octabam `e85f54e0d570bd74bfd70b9d5467b35c01b9c468`, `modules/vibrato` an
 
 ## On the unit
 
-Not tested on the Modwerk base yet.
+### MKII over USB, 17 November 2026
 
-### USB package build, 17 November 2026
+The owner's MKII, OS 1.40C, RAM-booted into development twin `945cc074` of base 0.7.7 (MAIN.raw `461a4a2a…`, built from `main` by another session the same day), driven over USB by this port's agent session with nobody at the unit. Bank C, pattern C01, Part 1 (every Part at its defaults: FILTER on FX1, DELAY on FX2; STATIC loops in slots 2 and 3), its working copy equal to its saved one before and after (byte for byte). Package `73db0ee3…` (module `d4582ab2`, 696 DSP words), built from this folder with `npm run module:dev -- vibrato --build-only --slots both --buffer 2048 --cycles 157 --cycles-kind executed --state 64`; every run a trial in RAM, rolled back at its end.
 
-`npm run module:dev -- vibrato --build-only` from `sdk/drafts/vibrato` (Modwerk `c60cceb46` plus this draft): module `d4582ab2`, DSP effect 11, 696 DSP words, 7 relocations, no ColdFire code, no hooks, no stock-code sites. Built with the default draft budget (600 modeled cycles, 132 state words); measured figures still to come.
+- **`npm run device:test`**: passed. The self-test with VIBRATO installed: 1 of 1 intact and ran, CPU peak 34.8 %, cores 35.9 % (T1-4) and 49.2 % (T5-8), longest frame 428 µs. Picked alone on FX2 of T1 and T5: admitted in 115 and 141 ms, core peaks 382 and 463 per mille. On FX2 of every track while the pattern played: three a core admitted (the package then declared 157 executed cycles, which the base charges as 275), core peaks 471 and 558 per mille, CPU 35.6 %. Its knobs swept minimum to maximum while playing; twelve Part switches each ran their own effects within 3 s; a queued change to bank A and back; no crash, no stall; the inventory at the end equal to the one before.
+- **Chip cycles** (`scripts/octatrack-measure.py --slot 2 NONE VIBRATO 'SPRING REV'`, FX2 of T1 and T5, playing): VIBRATO 248.9 / 240.8 cycles a sample above NONE as picked, 248.9 / 240.8 and 244.5 / 236.4 with every knob at its minimum and maximum, peak frame 297.3 / 318.3; SPRING REV 338.5 / 327.0, peak 387.9 / 368.2. The package declares 249, a hardware figure, which the base charges as it stands.
+- **CPU price** (`npm run device:price` with the `.mwrm`, 8 s readings, playing): frame interrupt 27.3 % before and installed on no track (+0.0), CPU meter 39.0 % and 38.8 %. In use on T1 FX2 in place of DELAY, by hand with the same steps (`device:price` prices a slot only for a listed package): frame interrupt 27.3 % (+0.0), CPU 38.8 % to 39.4 %, T1-4's DSP core 38.6 % to 44.1 % mean.
+- A last 240 s trial ended with no crash, stall, freeze or skipped track logged, rolled back.
 
-Not tested yet: install, Keep/Undo, both slots, both cores, several instances, knobs, parameter locks, LFOs, scenes, Part and project reload, power cycle, CPU and DSP price, screenshots.
+Not tested on the unit: listening (how it sounds there rests on the dsp_host renders and the author's own listening on his MKII), FX1, parameter locks, scenes, MIDI, a Keep, a power cycle and Part or project reload with VIBRATO saved, an MKI, the exact release package (it differs from the tested one only in its declared cycles, 249 hardware in place of 157 executed). One side effect to know: `octatrack-measure.py --pkg` installs through the session's `try`, which keeps at once, so on this twin its install and removal were two Keeps and replaced the card's kept set (the flashed base's Kits, MIDI Scenes and Amiga, all published versions, to be installed again after the power cycle).
 
 ## In dsp_host (emulated DSP, not hardware)
 
@@ -40,10 +43,6 @@ VIBRATO's worst is 0.50x SPRING REV, 0.53x CHORUS and 1.19x FLANGER. No VIBRATO 
 `python3 -B modules/vibrato/perf.py stress /perf --seconds 32`, first layout (LOFI2's): VIBRATO on FX2 of all eight tracks (four per core) behind DJ EQ on every FX1, three LFOs per track on SPD, DEP and MIX, a new random value on every slot of both effects each sixteenth at 120 BPM (11 slots, SHP included), trig splits on six tracks, eight different stems, `-guard 0x4000 -guard-shared -dirty 0x5a`: host exit 0, no hang, VIBRATO's eight instances 0 stray write regions and 0 clobbers (the DJ EQs write their own scratch, 0 clobbers), 16 guarded instances, per-core peak 1,884.1 and 1,885.9 executed instructions a sample, 24 minutes of wall time.
 
 Not run yet: the layout `perf:audit` needs for the eight instances a core the record claims (VIBRATO on FX1 and FX2 of every track, 12 slots changing a step). `perf.py stress` now builds that layout; the run stopped before it started when Docker's engine stopped answering.
-
-### USB package for the unit trial
-
-`npm run module:dev -- vibrato --build-only --slots both --buffer 2048 --cycles 157 --cycles-kind executed --state 64`: module `d4582ab2`, the same 696 DSP words, now declaring both slots, a 2,048-word slot buffer (within the base's 3,072 for FX1), the measured 157 executed cycles and the 64 state words of its r7 block.
 
 ### Screenshots, 17 November 2026
 

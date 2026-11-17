@@ -206,6 +206,11 @@
       "id": "kits",
       "version": "0.1.0-experimental",
       "addedAt": "2026-11-16T21:00:00Z"
+    },
+    {
+      "id": "vibrato",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-17T19:20:00Z"
     }
   ]
 }

@@ -688,6 +688,16 @@
       "bytes": 22920,
       "sha256": "05fef3971afaabec88d5e7238a185b7fd0fce171c91f02ff41ecee7294e9dbd7",
       "path": "octatrack-modules/tuner/0.1.0-experimental.mwrm"
+    },
+    {
+      "id": "vibrato",
+      "slots": "both",
+      "cycles": 249,
+      "cyclesKind": "hardware",
+      "state": 64,
+      "buffer": 2048,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/vibrato/0.1.0-experimental.mwrm"
     }
   ]
 }
