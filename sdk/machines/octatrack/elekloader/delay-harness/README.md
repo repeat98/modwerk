@@ -75,4 +75,9 @@ it proves bytes and order, never transfer timing. That is the unit's part.
   Then 30 minutes playing with every send shut: 40.5-41.9 %, nothing new, about an hour since the boot. A track
   recorder (T1, MKII key code 0x2b) recording while T1-T3's sends opened and shut: T1's filter settled at -1,179,
   nothing new.
-- Not yet run on a unit: a card build, a soak with a real project.
+- Same twin, an older project of the owner's (135 BPM, FILTER and DELAY on every track in all four Parts, few tracks
+  with a sample): the 10-minute send cycling, 32 cycles (40.8-46.9 % open, 39.0-39.9 % shut); 20 Part changes in 10
+  minutes; 54 FX2 picks in 10 minutes on random tracks while playing (DELAY, SPRING, DARK and PLATE REV, CHORUS,
+  NONE; 19 of the DELAY picks fed for 2-5 s), every pick running within 120 ms, meter 38.6-41.5 %. No new stall or
+  crash record in any of it, about 90 minutes after the boot.
+- Not yet run on a unit: a card build, a project whose tracks all sound.
