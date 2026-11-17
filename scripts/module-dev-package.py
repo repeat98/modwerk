@@ -100,7 +100,7 @@ def pack_page(build, page):
     import struct
     inherited = sum(1 << slot for slot in page['inheritedEnable'])
     head = build.PAGE_MAGIC + struct.pack('>I', page['donor']) + bytes.fromhex(page['donorSha256']) + struct.pack(
-        '>HBBBBHI', inherited, len(page['integers']), len(page['strings']), len(page['formatters']), 0, 0, 0)
+        '>HBBBBHI', inherited, len(page['integers']), len(page['strings']), len(page['formatters']), 0, page.get('cpuPrice', 0), 0)
     body = b''.join(struct.pack('>HBBI', f['offset'], f['width'], 0, f['value']) for f in page['integers'])
     for f in page['strings']:
         text = f['value'].encode('latin-1')

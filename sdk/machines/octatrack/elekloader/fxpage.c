@@ -50,6 +50,11 @@ static uint8_t missing_page[0x1a0] __attribute__((aligned(4)));
 static int missing_built;
 static uint32_t unlisted(void) { return missing_built ? ADDR(MISSING_PAGE) : modwerk_fx1_list[0]; }
 static uint8_t serves[MODWERK_FX_IDS]; /* the slots each id's page is listed in: 1 FX1, 2 FX2 */
+/* Each listed id's CPU price: the recipe's bytes 46-47 (build.py page_section), what one instance adds to the frame
+ * interrupt in tenths of a percent of a frame (per mille, the module's resources.cpuPrice), 0 when it names none.
+ * Older bases leave those bytes alone. status.c admits a pick by it. */
+static uint16_t price[MODWERK_FX_IDS];
+unsigned modwerk_fxpage_price(unsigned id) { return id < MODWERK_FX_IDS && serves[id] ? price[id] : 0u; }
 static const uint8_t *checked_recipe[MODWERK_FX_IDS];
 static uint32_t checked_bytes[MODWERK_FX_IDS];
 static uint8_t checked_digest[MODWERK_FX_IDS][MU_DIGEST_BYTES];
@@ -130,7 +135,7 @@ int modwerk_fxpage_build(unsigned id, uint8_t *recipe, uint32_t bytes, unsigned 
     }
     put32(recipe + 48, ADDR(d));
     modwerk_machine_invalidate_code(); /* the fixups changed formatter code */
-    serves[id] = (uint8_t)(slots & 3u);
+    serves[id] = (uint8_t)(slots & 3u), price[id] = (uint16_t)be16(recipe + 46);
     rows();
     checked_recipe[id] = recipe; checked_bytes[id] = bytes;
     if (!page_stamp(id, recipe, bytes, slots, checked_digest[id])) checked_recipe[id] = 0;
@@ -151,7 +156,7 @@ void modwerk_fxpage_missing(void)
 void modwerk_fxpage_drop(unsigned id)
 {
     if (id >= MODWERK_FX_IDS || !serves[id]) return;
-    serves[id] = 0;
+    serves[id] = 0, price[id] = 0;
     checked_recipe[id] = 0; checked_bytes[id] = 0;
     rows();
 }

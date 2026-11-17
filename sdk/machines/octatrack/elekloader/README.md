@@ -340,6 +340,8 @@ filter never comes back to exact zero after a send, so this drops a residue belo
 bit-identical. A send that opens starts from silent taps. A module that takes the routine's seam before it (Tape Echo,
 `0x4000361a`) restarts the count. The A/B harness and the unit figures are in `delay-harness/`.
 
+`status.c` also keeps the frame interrupt's share of each frame from the frame guard's sums, and admits a module effect's pick by it: the effect's CPU price comes from its package (the page recipe's bytes 46-47, kept by `fxpage.c`), and a pick that would take the share to `mw_frame_line` is refused with CPU FULL before stock writes it (`modwerk_status_effect_busy`). The box after a pick shows that share and the price in its CPU row.
+
 `status.c` measures, all the time, the ColdFire's load (main's idle spin, timed on DTIM3, `status.s`), each
 DSP core's mean and peak load (core 0's own idle count, core 1's counted wait for core 0, `dsp_receiver.asm`),
 each core's code arena, the delay-buffer blocks and the module pool. CUE + PROJ shows it as a dialog (NO closes it),
