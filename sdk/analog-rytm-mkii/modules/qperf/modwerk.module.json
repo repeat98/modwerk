@@ -111,7 +111,7 @@
       "testedOn": "2026-11-17",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "0.2.2 ran alone on npp1993's Analog Rytm MKII, OS 1.74, from RAM as QPN2 (the Modwerk base with the development link, this module and a private meter that times the audio handler on DTIM0, sha256 3c6578d8…a93b), against 0.2.1 as QPO2 (72693bc6…dd4d) booted before and after it. The audio handler took 470 ticks a block stopped (0.2.1: 850 to 854) and 902 playing (0.2.1: 1270 to 1286). Two rig cases, run by the test rig on the unit with no hand on it (RECORD + YES and RECORD + NO with nothing to apply or clear, a QPER hold; performance 1's amount by MIDI stopped, playing and in LIVE RECORDING, the quick perf rec playing a take back on the next pass, RECORD + NO clearing it and NO undoing it), gave the same screens and the same amounts on both images.",
+      "summary": "0.2.2 ran alone on npp1993's Analog Rytm MKII, OS 1.74, from RAM as QPN2 (the Modwerk base with the development link, this module and a private meter that times the audio handler on DTIM0, sha256 3c6578d8…a93b), against 0.2.1 as QPO2 (72693bc6…dd4d) booted before and after it. The audio handler took 470 ticks a block stopped (0.2.1: 850 to 854) and 902 playing (0.2.1: 1269 to 1286). Two rig cases, run by the test rig on the unit with no hand on it (RECORD + YES and RECORD + NO with nothing to apply or clear, a QPER hold; performance 1's amount by MIDI stopped, playing and in LIVE RECORDING, the quick perf rec playing a take back on the next pass, RECORD + NO clearing it and NO undoing it), gave the same screens and the same amounts on both images.",
       "limitations": [
         "Run by the rig over the USB link, not by a person: no pads, pressure, QPER knob or LEDs.",
         "The image holds the base with the development link and a private meter, not the plain published base.",
@@ -122,7 +122,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.2.2 (a shorter quick exit for the audio block): a host differential test against 0.2.1 found no difference in 80 million blocks, rytm-emu screens are byte-identical, the audio hook ran a quarter of the instructions while idle, and on the author's unit it took 470 ticks a block stopped against 0.2.1's 851, with the same results in two rig cases. 0.2.1 passed the tutorial on the author's unit alone (QR01). TESTING.md names each build.",
+    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.2.2 (a shorter quick exit for the audio block): a host differential test against 0.2.1 found no difference in 80 million blocks, rytm-emu screens are byte-identical, with the sequencer stopped the audio hook ran a quarter of the instructions, and on the author's unit it took 470 ticks a block stopped against 0.2.1's 850 to 854, with the same results in two rig cases. 0.2.1 passed the tutorial on the author's unit alone (QR01). TESTING.md names each build.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
