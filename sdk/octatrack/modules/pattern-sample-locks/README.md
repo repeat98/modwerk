@@ -1,6 +1,6 @@
 # Pattern Sample Locks
 
-Version: 0.1.8-experimental · author: @twwwy · category: system
+Version: 0.1.9-experimental · author: @twwwy · category: system
 
 ## Overview
 
@@ -24,7 +24,7 @@ firmware is unsupported and must refuse this module. Card support is deferred.
 
 ## Controls
 
-Level 1 is **FUNC + PART**. The headerless stock list keeps RENAME, RELOAD, SAVE and SAVE ALL, then appends the two actions.
+Level 1 is **FUNC + PART**, the base's Part Edit window (base 0.7.8 or newer). Its left column lists PART (stock's RENAME, RELOAD, SAVE and SAVE ALL), LOCKS (this module) and the rows other modules add; its right column shows the highlighted row's actions. Move to LOCKS with UP/DOWN or LEVEL, press RIGHT or YES, then choose LOCK SAMPLES or CLEAR LOCKS with YES. LEFT goes back; NO closes, as in PROJECT. The window opens where you left it, as PROJECT does: the same row, the same column and each row's last action.
 
 Level 2 always lists eight tracks in two columns: T1–T4 left, T5–T8 right. S means Static and F means Flex. Other machines are greyed out, have no brackets, cannot be selected and are skipped by arrows. Levels 2 and 3 use tall popups, white headers and equal seven-pixel text spacing.
 
@@ -42,11 +42,11 @@ Level 3 identifies the pattern and shows a count for each selected track; unsele
 
 Final YES keeps playback as it was: playing continues and stopped stays stopped. Active live recording or a sampler recorder refuses the operation without changing transport. Transport, recorder and project gestures close an armed menu before reaching stock controls.
 
-After a successful operation, each action remembers its own selected tracks and highlighted cursor; Lock also remembers Replace existing. Level one highlights the last successfully used action. Selecting All with A remembers that intention for the next pattern’s eligible tracks; a custom selection is intersected with currently eligible tracks. Cancelled and refused operations keep the previous saved settings. Preferences live only in module RAM: they survive pattern/bank changes and project reload while the module stays loaded, and reset on module reload or power cycling. First-use selection is empty and Replace existing is OFF.
+After a successful operation, each action remembers its own selected tracks and highlighted cursor; Lock also remembers Replace existing. Selecting All with A remembers that intention for the next pattern’s eligible tracks; a custom selection is intersected with currently eligible tracks. Cancelled and refused operations keep the previous saved settings. Preferences live only in module RAM: they survive pattern/bank changes and project reload while the module stays loaded, and reset on module reload or power cycling. First-use selection is empty and Replace existing is OFF.
 
 ## Usage
 
-On MKII press FUNC + PART, choose an action with YES. Navigate with arrows, select with A/B and review the Lock replacement policy on C. Press YES to review counts, then YES to apply or NO to return. NO in level 2 closes.
+On MKII press FUNC + PART, move to LOCKS, press RIGHT and choose an action with YES. Navigate with arrows, select with A/B and review the Lock replacement policy on C. Press YES to review counts, then YES to apply or NO to return. NO in level 2 closes.
 
 Only ordinary Flex/Static tracks are eligible. Current PL/AB/FM/S2 contributed-machine signatures are excluded. MKI controls and hardware behavior remain untested.
 
@@ -103,7 +103,7 @@ Original source and UI by twwwy, MIT. Small lettering is reused from twwwy's ori
 
 All images capture exact version 0.1.8; the manifest records whether each image is from the MKII or emulator and binds its build identity. The first five images form the usage walkthrough. [TESTING.md](TESTING.md) records capture limits; [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md) consolidates retired versions. Generated test tones and emulator audio captures remain private fixture artifacts; no physical audio recording is supplied.
 
-Press FUNC + PART, then choose Lock Samples to Pattern or Clear Sample Locks with YES. Both actions appear below the four stock Part Edit rows.
+Press FUNC + PART, move to LOCKS and press RIGHT, then choose LOCK SAMPLES or CLEAR LOCKS with YES. (The image below shows 0.1.8's single list; 0.1.9's two-column window is not captured yet.)
 
 ![Part Edit, actual MKII](media/mkii-part-menu.png)
 

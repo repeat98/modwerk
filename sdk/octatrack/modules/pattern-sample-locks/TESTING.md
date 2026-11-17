@@ -1,4 +1,53 @@
-# Testing: Pattern Sample Locks 0.1.8-experimental
+# Testing: Pattern Sample Locks 0.1.9-experimental
+
+## Pattern Sample Locks 0.1.9-experimental: the base's Part Edit menu, unit run of 17 November 2026
+
+Build: source `598edfaa4`; a development twin of base 0.7.6
+(`build_core.py` with the beta flags and `--dev`, without the resident controller rows), MAIN booted from RAM as
+`812ac544…`. Packages: Pattern Sample Locks 0.1.9 `b79de4b9…`, Kits 0.1.1 `af773397…`, installed together as one timed
+trial (`npm run device -- set A,B --seconds 600`, no Keep) on the developer's MKII, project on bank K, transport
+stopped. Screens read with `png:` over USB. The trial was interrupted after about 82 s and rolled back (inventory empty
+afterwards, active base still the twin; loader 0 rejected, 0 rollbacks). Agent's run, not the developer's.
+
+- FUNC+PART draws the two-column window: PART, SAMPLE LOCKS, KITS on the left; RENAME, RELOAD, SAVE, SAVE ALL on the
+  right. DOWN on the left shows SAMPLE LOCKS' LOCK SAMPLES and CLEAR LOCKS; RIGHT moves into them, DOWN moves the
+  cursor; LEFT goes back; KITS shows SAVE KIT.
+- YES on LOCK SAMPLES opens LOCK SAMPLES TO PATTERN (the track screen, as 0.1.8); NO closes it.
+- YES on SAVE KIT shows KITS NOT ACTIVE: during a trial Kits gets no pages, as its README says. The SAVE KIT list
+  itself was not reached (it needs a Keep).
+- FUNC+PART again opens on KITS, the module row chosen last.
+- PART's actions open on stock's remembered row (SAVE here), as stock's Part Edit does: YES there ran stock's Part
+  Save (`PART 1 SAVED`) by the agent's mistake. The Part's working and saved copies read the same bytes before and
+  after (`mem`), and its edited flag stayed set.
+- Seen on the twin, not traced to these packages: a DSP stall record about 57 s after the RAM boot (tick 3119), before
+  either package was installed, after which T5-T8 showed no effects; a crash record (address error, PC `0x40d52f64`)
+  from an earlier boot; a 1.5 s UI tick gap in minute 5, around the trial's install.
+
+Not tested: the SAVE KIT list and a Kit saved from it, CLEAR LOCKS and a Lock or Clear applied, MKI, playing
+transport, a Keep, a power cycle, sound.
+
+Kept run, the same day, same twin and packages, with the developer's OK to Keep (and to save one Kit):
+`npm run device -- set A,B --accept` installed both (loader 0 rejected); Kits became active (status line `033 ONE`).
+
+- FUNC+PART > KITS > SAVE KIT opens the SAVE KIT list on the current Kit (033). LEVEL scrolled to the first empty Kit,
+  065; YES opened KIT NAME (NEW KIT); YES saved: `KIT SAVED`, status line `065 NEW KIT`. Saving also named the Part
+  NEW KIT (it was ONE) and wrote kits.work, as Kits does.
+- FUNC+PART then opened on KITS (chosen last); SAMPLE LOCKS > CLEAR LOCKS opened CLEAR SAMPLE LOCKS; NO closed it.
+- PART's actions opened on SAVE (stock's remembered row); LEFT went back, NO closed the window. No PART action run.
+- Both removed with a second Keep (`set -- -A,-B --accept`): inventory empty, and FUNC+PART then showed stock's own
+  one-column Part Edit popup.
+
+Not tested: FUNC+PASTE+PART, a Lock or Clear applied, playing transport, MKI, a power cycle, sound.
+
+Restyled window, the same day: a development twin of base 0.7.6 booted from RAM as `9173ba81…`, Pattern Sample Locks
+`6fea272e…` and Kits `8ce226a5…` as one timed trial (no Keep), rolled back afterwards (inventory empty). Agent's run.
+
+- FUNC+PART draws the window as PROJ draws its menu: the title bar PART EDIT, icons beside PART, LOCKS and KITS, the
+  rule, the track strips left and right still showing; compared by screenshot with PROJ on the same unit.
+- In LOCKS' actions on CLEAR LOCKS, NO closed the window; FUNC+PART reopened it there (right column, CLEAR LOCKS);
+  LEFT went back to the left column; NO closed it. PROJ on the same unit reopened in the SYSTEM list on CARD TOOLS after
+  NO, the behaviour this copies.
+
 
 10 November 2026 (Taipei) · twwwy · first release, submitted for owner review.
 

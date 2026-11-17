@@ -356,7 +356,7 @@
       "bytes": 3740,
       "sha256": "38953347345a17bdc3e42a0b8473ea31fe6258a1036a0c3bf8e756553fbf963e",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "b3be9a5fb31e5bfa01d1cb082f88cc470934096d7105747fe4eb876d1760b96a"
+      "requiredBase": "f429652efd4896f2e525ed72a5a3f08ae3b96cf6da1e6876e921009770c7e709"
     },
     {
       "id": "cc-map",
@@ -372,7 +372,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "b3be9a5fb31e5bfa01d1cb082f88cc470934096d7105747fe4eb876d1760b96a"
+      "requiredBase": "f429652efd4896f2e525ed72a5a3f08ae3b96cf6da1e6876e921009770c7e709"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -450,7 +450,7 @@
       "bytes": 1818,
       "sha256": "490a4c1c615331be73ea3f4653e59f868ca0f29486ee5ce81a27be84e8a3aa52",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "b3be9a5fb31e5bfa01d1cb082f88cc470934096d7105747fe4eb876d1760b96a"
+      "requiredBase": "f429652efd4896f2e525ed72a5a3f08ae3b96cf6da1e6876e921009770c7e709"
     },
     {
       "id": "analog-bassdrum",
@@ -466,7 +466,7 @@
       "bytes": 26172,
       "sha256": "fe89b4788ebc67ac34b03524d9529266f47d40db8a3fa26cfc8a86b377bef63c",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "b3be9a5fb31e5bfa01d1cb082f88cc470934096d7105747fe4eb876d1760b96a",
+      "requiredBase": "f429652efd4896f2e525ed72a5a3f08ae3b96cf6da1e6876e921009770c7e709",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -610,20 +610,19 @@
     {
       "id": "pattern-sample-locks",
       "octabam": true,
-      "reconstruction": true,
       "usbOnly": true,
-      "version": "0.1.8-experimental",
-      "path": "octatrack-modules/pattern-sample-locks/0.1.8-experimental.mwrm",
+      "version": "0.1.9-experimental",
+      "path": "octatrack-modules/pattern-sample-locks/0.1.9-experimental.mwrm",
       "name": "SAMPLE LOCKS",
       "unitName": "SAMPLE LOCKS",
       "abi": 8,
-      "features": 3,
-      "sites": 3,
-      "copies": 9,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
       "fills": 0,
       "module": "4bdbfbf9",
-      "bytes": 10048,
-      "sha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79"
+      "bytes": 8740,
+      "sha256": "6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3"
     },
     {
       "id": "amiga",

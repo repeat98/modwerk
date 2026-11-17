@@ -260,4 +260,16 @@ struct modwerk_sample_memory {
     uint32_t reserved[2];               /* 0 */
 };
 
+/* ot_part_menu (table, contribute {"to": "ot_part_menu", "order", "data"}): FUNC+PART (MKII), or another of stock's three Part Edit openers, opens the Part Edit window as stock does; with a contribution installed the base draws it as PROJ's menu draws its categories, in two columns: the parents on the left (PART, stock's RENAME, RELOAD, SAVE and SAVE ALL, then one row per contribution) and the highlighted parent's actions on the right. The UI task: choose is short and may open a window of its own. Contribute one struct modwerk_part_menu (every field set). UP/DOWN (and LEVEL) move in the focused column, RIGHT or YES on a parent moves into its actions, LEFT goes back, NO closes the window from either column, as PROJ's menu does. YES on one of PART's actions is stock's; YES on a contribution's action closes the Part Edit window, then calls choose(action) once: the module opens what it needs itself and must not close or reopen stock's Part Edit window. The window opens where it was left, as PROJ's menu does: the same parent, the same column and each parent's last action row, also after NO. Labels are read each time the window is drawn: keep them in the image, printable capitals: a parent label at most 7 characters (the left column fits 7 beside an icon), an action at most 14. An icon is optional. A record with a wrong abi, no label, no choose or a count outside 1-6 is skipped. With no contribution the window is stock's. */
+#define MODWERK_OT_PART_MENU 53
+struct modwerk_part_menu {
+    uint32_t abi;                       /* MODWERK_PART_MENU_ABI */
+    const char *label;                  /* its parent row in the left column: up to 7 characters */
+    uint32_t count;                     /* its actions, 1-6 */
+    const char *const *actions;         /* each action's row in the right column: up to 14 characters */
+    void (*choose)(unsigned action);    /* YES on action 0..count-1, after the base has closed the Part Edit window */
+    const uint32_t *icon;               /* 0, or its icon beside the label: 9 rows, bit 18 the leftmost of 19 columns */
+};
+#define MODWERK_PART_MENU_ABI 1u
+
 #endif

@@ -178,6 +178,7 @@ The more of these the base owns, the more modules combine. Each is a hook to [pr
 | Track machine list (SRC SETUP) | Base table `ot_machines`; on the card, POLY8's shared machine list |
 | Effect lists (FX1, FX2) | USB: the base has 128 effect ids, 109 of them for modules, and gives each installed effect module its own ([wider ids](../OCTATRACK_MORE_EFFECT_IDS.md)); card: stock's 32, 13 of them for modules, pinned |
 | SEQUENCER rows | Base table `ot_sequencer_rows` |
+| Part Edit window (FUNC+PART) rows | Base table `ot_part_menu`: a parent row and its actions, in two columns |
 | MIDI generators on a MIDI track (MIDI NOTE SETUP's list, the ARP page) | Base table `ot_midi_generators`; on the card, VECTOR's own registry ([midi-usb.md](midi-usb.md#midi-generators-and-midi-effects)) |
 | MIDI effects on a MIDI track's notes | Pitch: take hook `ev_midi_note_key`. Velocity, timing, added notes: not built |
 | Stock DSP effects a module hooks (Sidechain Compressor, Output Matrix) | Not built: DSP-side taps, one owner per stock site |

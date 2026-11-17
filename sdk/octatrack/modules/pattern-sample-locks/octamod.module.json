@@ -3,7 +3,7 @@
   "id": "pattern-sample-locks",
   "key": "PATTERN SAMPLE LOCKS",
   "name": "Pattern Sample Locks",
-  "version": "0.1.8-experimental",
+  "version": "0.1.9-experimental",
   "category": "system",
   "author": {
     "github": "twwwy",
@@ -36,9 +36,7 @@
     "firmware": "1.40C",
     "location": "Flex / Static",
     "conflicts": [],
-    "uiClaims": [
-      "screen:PART EDIT"
-    ],
+    "uiClaims": [],
     "limitations": [
       "Experimental: tested on one MKII over USB; no MKI, no audio checks on this base.",
       "Under a high-load development run, SAMPLE fields on one pattern changed without explanation; the cause is unknown.",

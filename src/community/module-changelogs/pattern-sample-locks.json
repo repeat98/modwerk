@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.1.9-experimental",
+    "date": "2026-11-17",
+    "changes": [
+      "FUNC + PART now opens the Part Edit window in two columns, drawn like the PROJECT menu: PART, LOCKS and other modules' rows on the left, their actions on the right.",
+      "Pick LOCKS, press RIGHT or YES, then LOCK SAMPLES or CLEAR LOCKS. LEFT goes back and NO closes, as in PROJECT; the track and confirm screens are as before.",
+      "Needs Modwerk base 0.7.8 or newer, over USB."
+    ]
+  },
+  {
     "version": "0.1.8-experimental",
     "date": "2026-11-10",
     "changes": [
