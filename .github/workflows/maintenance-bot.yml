@@ -67,15 +67,16 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           MODEL: ${{ env.BOT_MODE == 'daily' && (vars.MAINTENANCE_BOT_DAILY_MODEL || 'claude-opus-5-5') || (vars.MAINTENANCE_BOT_MODEL || 'claude-sonnet-5-5') }}
         run: |
-          claude -p "$(cat scripts/maintenance-bot/prompt.md)" --model "$MODEL" --max-turns 120 --output-format text \
-            --allowedTools 'Read' 'Grep' 'Glob' 'Write(./bot/**)' 'Edit(./bot/**)' \
+          claude -p "$(cat scripts/maintenance-bot/prompt.md)" --model "$MODEL" --max-turns 120 --output-format json \
+            --allowedTools 'Read' 'Grep' 'Glob' 'Edit(./bot/**)' \
               'Bash(gh pr view:*)' 'Bash(gh pr list:*)' 'Bash(gh pr diff:*)' 'Bash(gh pr checks:*)' \
               'Bash(gh issue view:*)' 'Bash(gh issue list:*)' 'Bash(gh run list:*)' 'Bash(gh run view:*)' \
               'Bash(git log:*)' 'Bash(git show:*)' 'Bash(git diff:*)' \
-            --disallowedTools 'WebFetch' 'WebSearch' 'Bash(gh api:*)' 'Bash(curl:*)' 'Bash(wget:*)' > "$RUNNER_TEMP/model.log"
+            --disallowedTools 'WebFetch' 'WebSearch' 'Bash(gh api:*)' 'Bash(curl:*)' 'Bash(wget:*)' > "$RUNNER_TEMP/model.json" || true
           # The repository is public, and so are this log and its artifacts. Discord messages, diagnostics and draft
-          # replies stay out of both: the log gets a count, and the proposals travel encrypted with the bot key.
-          echo "The model finished ($(wc -l < "$RUNNER_TEMP/model.log") lines of output, not shown)."
+          # replies stay out of both: the log gets how the run ended and its token counts, never its text, and the
+          # proposals travel encrypted with the bot key.
+          node scripts/maintenance-bot/model-status.mjs "$RUNNER_TEMP/model.json"
           test -s bot/proposals.json
       - if: steps.model.outcome == 'success'
         env:

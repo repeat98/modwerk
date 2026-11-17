@@ -31,3 +31,13 @@ describe('maintenance bot to-do client', () => {
     expect(formatTodos([{ id: '9'.repeat(16), urgent: true, command: '/modwerk-fix-issue 1386', target: 1386, note: 'stuck' }])).toBe('9999999999999999  URGENT  /modwerk-fix-issue 1386  #1386: stuck')
   })
 })
+
+describe('maintenance bot model status', () => {
+  it('says how the run ended and what it cost, never what it wrote', async () => {
+    const { modelStatus } = await import('./model-status.mjs')
+    const run = { subtype: 'success', is_error: false, num_turns: 31, duration_ms: 184000, result: 'Fraki asked about Keep', usage: { input_tokens: 1200, cache_read_input_tokens: 480000, cache_creation_input_tokens: 52000, output_tokens: 9100 } }
+    expect(modelStatus(JSON.stringify(run))).toEqual({ ok: true, line: 'Model run: success, 31 turns, 184 s; tokens: 1,200 in, 480,000 cache read, 52,000 cache write, 9,100 out.' })
+    expect(modelStatus(JSON.stringify({ ...run, subtype: 'error_max_turns' })).ok).toBe(false)
+    expect(modelStatus('Fraki asked about Keep').line).not.toContain('Fraki')
+  })
+})
