@@ -86,4 +86,16 @@ describe('maintenance bot policy', () => {
     expect(classify({ kind: 'discord_reply', channel: '155', message: '157', body: 'Hi', summary: 'Bot' }, message({ bot: true })).reject).toBeTruthy()
     expect(classify({ kind: 'discord_reply', channel: '155', message: '157', body: 'Hi', summary: 'Answered' }, message({ state: 'closed' })).reject).toContain('answered')
   })
+
+  it('lets TARS answer an open forum thread or shout once, kindly and by name', () => {
+    const thread = { kind: 'forum', id: 't1', number: 0, author: 'ana', lastPost: 'p1', state: 'open' }
+    const reply = classify({ kind: 'forum_reply', thread: 't1', body: 'Hi @ana! Power cycle once after Keep.', summary: 'Help Ana with Keep' }, thread)
+    expect(reply).toMatchObject({ tier: 'window', windowHours: 1, summary: 'Forum: Help Ana with Keep', payload: { thread: 't1', after: 'p1' } })
+    expect(classify({ kind: 'forum_reply', thread: 't1', body: 'cc @bob', summary: 'x' }, thread).reject).toContain('mentions')
+    expect(classify({ kind: 'forum_reply', thread: 't1', body: 'x', summary: 'x' }, { ...thread, state: 'closed' }).reject).toBeTruthy()
+    const shout = { kind: 'shout', id: 's1', number: 0, author: 'ana', state: 'open' }
+    expect(classify({ kind: 'shout_reply', shout: 's1', body: '@ana it is in the device panel', summary: 'Answer Ana' }, shout)).toMatchObject({ summary: 'Shoutbox: Answer Ana', payload: { shout: 's1' } })
+    expect(classify({ kind: 'shout_reply', shout: 's1', body: 'x'.repeat(601), summary: 'Long' }, shout).reject).toContain('600')
+    expect(classify({ kind: 'shout_reply', shout: 's1', body: 'x', summary: 'x' }, thread).reject).toBeTruthy()
+  })
 })

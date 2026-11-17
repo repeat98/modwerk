@@ -51,8 +51,11 @@ if (chat && /^\d{17,20}$/.test(guild)) {
   ].filter(room => !ignore.has(room.id) && room.last)
 }
 
+// The site's forum and shoutbox, the last three days (TARS answers there too).
+const site = await bot('/forum')
 const fingerprint = createHash('sha256').update(JSON.stringify({
   red: red.map(run => run.run), rooms: rooms.map(room => [room.id, room.last]),
+  forum: site.threads.map(thread => [thread.id, thread.posts.at(-1)?.id]), shouts: site.shouts.at(-1)?.id ?? '',
   prs: prs.map(({ number, head, draft, checks, comments, labels }) => [number, head, draft, checks, comments, labels]), issues: issues.map(({ number, comments, labels }) => [number, comments, labels]),
   threads: threads.map(({ id, replies }) => [id, replies.length]), claims: claims.map(({ id, pullRequest }) => [id, pullRequest]),
 })).digest('hex')
@@ -71,7 +74,7 @@ if (run && chat) {
 }
 
 mkdirSync(dir, { recursive: true })
-writeFileSync(join(dir, 'context.json'), JSON.stringify({ mode: daily ? 'daily' : 'pass', now: new Date().toISOString(), prs, issues, board: { threads, claims }, discord: conversations, mainRed: red, ledger: recent.actions.map(({ payload, ...action }) => ({ ...action, body: payload?.body?.slice(0, 400), thread: payload?.thread, claim: payload?.claim, message: payload?.message })) }, null, 1))
+writeFileSync(join(dir, 'context.json'), JSON.stringify({ mode: daily ? 'daily' : 'pass', now: new Date().toISOString(), prs, issues, board: { threads, claims }, discord: conversations, forum: site.threads, shoutbox: site.shouts, mainRed: red, ledger: recent.actions.map(({ payload, ...action }) => ({ ...action, body: payload?.body?.slice(0, 400), thread: payload?.thread, claim: payload?.claim, message: payload?.message, shout: payload?.shout })) }, null, 1))
 const output = process.env.GITHUB_OUTPUT
 if (output) appendFileSync(output, 'run=' + run + '\nfingerprint=' + fingerprint + '\n')
 console.log((state.paused ? 'Paused. ' : '') + prs.length + ' open pull requests, ' + issues.length + ' open issues, ' + threads.length + ' board threads, ' + claims.length + ' claims, ' + rooms.length + ' Discord rooms' + (red.length ? ', main red in ' + red.length + ' workflow(s)' : '') + '; ' + (run ? 'the model runs.' : 'nothing changed, the model is skipped.'))

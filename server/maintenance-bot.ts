@@ -1,6 +1,9 @@
-import type { Database, Env } from './platform'
+import type { Database, Env, User } from './platform'
 import { digest, HttpError, jsonBody, response } from './security'
 import { boardReply, boardUser } from './agent-board'
+import { forum } from './forum'
+import { shoutbox } from './shoutbox'
+import { avatarRoutes } from './avatars'
 
 /**
  * The maintenance bot's ledger and its Telegram channel (docs/MAINTENANCE_BOT.md).
@@ -81,7 +84,7 @@ function proposal(value: unknown) {
   if (typeof id !== 'string' || !ID.test(id)) throw new HttpError(400, 'An action id must be 16 hex digits.')
   if (typeof kind !== 'string' || !KIND.test(kind)) throw new HttpError(400, 'Unknown action kind.')
   // Board and Discord actions have no number: their thread, claim or message id is in the payload.
-  if (!Number.isSafeInteger(target) || (target as number) < (kind.startsWith('board_') || kind.startsWith('discord_') ? 0 : 1)) throw new HttpError(400, 'An action needs a pull request or issue number.')
+  if (!Number.isSafeInteger(target) || (target as number) < (/^(board|discord|forum|shout)_/.test(kind) ? 0 : 1)) throw new HttpError(400, 'An action needs a pull request or issue number.')
   if (typeof tier !== 'string' || !TIERS.has(tier as BotTier)) throw new HttpError(400, 'Unknown action tier.')
   if (typeof summary !== 'string' || !summary.trim() || summary.length > 300) throw new HttpError(400, 'An action needs a summary of at most 300 characters.')
   if (typeof reason !== 'string' || reason.length > 1500) throw new HttpError(400, 'A reason has at most 1500 characters.')
@@ -276,6 +279,57 @@ async function boardAction(env: Env, db: Database, kind: string, id: string, bod
   return { ok: true }
 }
 
+/**
+ * TARS in the forum and the shoutbox (migration 0093). It reads recent activity, and it posts through the site's own
+ * handlers as its member account, so validation, rate limits and notifications are the same as anyone's.
+ */
+const TARS = 'tars'
+async function siteHelpers(env: Env, db: Database) {
+  const login = (env.GITHUB_REPOSITORY?.trim() || 'repeat98/modwerk').split('/')[0].toLowerCase()
+  const rows = (await db.prepare("SELECT id FROM users WHERE id=? OR is_admin=1 OR role='owner' OR lower(github_login)=?").bind(TARS, login).all<{ id: string }>()).results
+  return new Set(rows.map(row => row.id))
+}
+async function forumActivity(env: Env, db: Database) {
+  const since = new Date(Date.now() - 3 * 86400000).toISOString().replace('T', ' ').slice(0, 19), us = await siteHelpers(env, db)
+  const threads = (await db.prepare("SELECT t.id,t.title,COALESCE(t.section,t.category) AS section,t.locked FROM forum_threads t WHERE t.hidden=0 AND t.updated_at>=? ORDER BY t.updated_at DESC LIMIT 40").bind(since).all<{ id: string; title: string; section: string; locked: number }>()).results
+  const out = []
+  for (const thread of threads) {
+    const posts = (await db.prepare('SELECT p.id,p.body,p.created_at,p.user_id,u.username FROM forum_posts p JOIN users u ON u.id=p.user_id WHERE p.thread_id=? AND p.hidden=0 ORDER BY p.created_at DESC,p.rowid DESC LIMIT 6').bind(thread.id).all<{ id: string; body: string; created_at: string; user_id: string; username: string | null }>()).results.reverse()
+    out.push({ id: thread.id, title: thread.title, section: thread.section, locked: !!thread.locked, posts: posts.map(post => ({ id: post.id, author: post.username ?? 'Modwerk', helper: us.has(post.user_id), at: post.created_at, body: post.body.slice(0, 800) })) })
+  }
+  const shouts = (await db.prepare('SELECT s.id,s.body,s.created_at,s.user_id,u.username FROM forum_shouts s JOIN users u ON u.id=s.user_id WHERE s.hidden=0 AND s.created_at>=? ORDER BY s.rowid DESC LIMIT 60').bind(since).all<{ id: string; body: string; created_at: string; user_id: string; username: string | null }>()).results.reverse()
+  return { threads: out, shouts: shouts.map(shout => ({ id: shout.id, author: shout.username, helper: us.has(shout.user_id), at: shout.created_at, body: shout.body })) }
+}
+async function tarsUser(db: Database) {
+  const tars = await db.prepare('SELECT id,display_name,username,avatar_id,email_verified,suspended,beta_tester FROM users WHERE id=?').bind(TARS).first<User>()
+  if (!tars?.username || tars.suspended) throw new HttpError(409, 'The TARS account is missing or suspended.')
+  // A system account, not a member (migration 0093): it counts as verified only for the bot's own posts.
+  return { ...tars, email_verified: 1 }
+}
+/** Posts as TARS through a site handler, as if TARS had sent the request itself. */
+async function asTars(db: Database, handler: typeof shoutbox, path: string, body: unknown) {
+  const tars = await tarsUser(db)
+  const request = new Request('https://bot.internal' + path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': 'maintenance-bot' }, body: JSON.stringify(body) })
+  const result = await handler(request, db, tars, false)
+  if (!result || result.status >= 300) throw new HttpError(result?.status ?? 500, 'The site refused the post.')
+  return { ok: true }
+}
+/** A reply only while the thread still ends with the post the bot read, and that post is not from a helper. */
+async function forumReply(env: Env, db: Database, thread: string, body: Record<string, unknown>) {
+  const last = await db.prepare('SELECT id,user_id FROM forum_posts WHERE thread_id=? AND hidden=0 ORDER BY created_at DESC,rowid DESC LIMIT 1').bind(thread).first<{ id: string; user_id: string }>()
+  if (!last || last.id !== body.after || (await siteHelpers(env, db)).has(last.user_id)) throw new HttpError(409, 'Someone answered in the meantime.')
+  return await asTars(db, forum, '/api/forum/threads/' + thread + '/replies', { body: body.body })
+}
+/** A shout reply only while no helper has written in the shoutbox since. */
+async function shoutReply(env: Env, db: Database, shout: string, body: Record<string, unknown>) {
+  const row = await db.prepare('SELECT rowid AS n,user_id FROM forum_shouts WHERE id=? AND hidden=0').bind(shout).first<{ n: number; user_id: string }>()
+  const us = await siteHelpers(env, db)
+  if (!row || us.has(row.user_id)) throw new HttpError(409, 'That message is gone or from a helper.')
+  const later = (await db.prepare('SELECT user_id FROM forum_shouts WHERE rowid>? AND hidden=0').bind(row.n).all<{ user_id: string }>()).results
+  if (later.some(next => us.has(next.user_id))) throw new HttpError(409, 'Someone answered in the meantime.')
+  return await asTars(db, shoutbox, '/api/forum/shouts', { body: body.body })
+}
+
 /** The bot's key, or (for the to-do list only) the owner's own board session from `npm run board -- login`. */
 async function caller(request: Request, env: Env, db: Database, key: string) {
   const bearer = request.headers.get('Authorization')?.match(/^Bearer (\S{32,200})$/)?.[1] ?? ''
@@ -296,6 +350,14 @@ export async function maintenanceBotRoutes(request: Request, env: Env, db: Datab
   if (who !== 'bot') throw new HttpError(401, who ? 'Only the bot may do that.' : 'Wrong maintenance bot key. The owner signs in with npm run board -- login.')
   if (route === '/todos' && method === 'POST') return response(await addTodos(env, db, await jsonBody(request, 64 * 1024)))
   if (route === '/diagnostics' && method === 'GET') return response(await diagnostics(db))
+  if (route === '/forum' && method === 'GET') return response(await forumActivity(env, db))
+  // TARS's profile picture, through the site's own avatar upload (size, type and storage checks included).
+  if (route === '/tars/avatar' && method === 'POST') {
+    const upload = new Request('https://bot.internal/api/forum/avatar', { method: 'POST', headers: { 'Content-Type': request.headers.get('Content-Type') ?? 'application/octet-stream' }, body: await request.arrayBuffer() })
+    return (await avatarRoutes(upload, env, db, await tarsUser(db)))!
+  }
+  const site = route.match(/^\/forum\/(threads|shouts)\/([a-zA-Z0-9-]{1,80})\/reply$/)
+  if (site && method === 'POST') { const body = await jsonBody(request); return response(site[1] === 'threads' ? await forumReply(env, db, site[2], body) : await shoutReply(env, db, site[2], body)) }
   const board = route.match(/^\/board\/(messages|claims)\/([0-9a-f-]{36})\/(reply|close|release)$/)
   if (board && method === 'POST' && (board[1] === 'claims') === (board[3] === 'release')) return response(await boardAction(env, db, board[3], board[2], await jsonBody(request)))
   if (route === '/state' && method === 'GET') return response(await state(db))

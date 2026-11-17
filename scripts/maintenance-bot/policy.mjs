@@ -7,8 +7,8 @@ import { createHash } from 'node:crypto'
 
 export const OWNER = 'repeat98'
 /** Hours an action waits for the owner's Stop before it runs. */
-export const WINDOW_HOURS = { merge: 12, close: 12, comment: 4, review: 4, board_reply: 4, board_close: 12, discord_reply: 1 }
-const KINDS = new Set(['label', 'comment', 'review', 'merge', 'close', 'decline', 'board_reply', 'board_close', 'board_release', 'discord_reply'])
+export const WINDOW_HOURS = { merge: 12, close: 12, comment: 4, review: 4, board_reply: 4, board_close: 12, discord_reply: 1, forum_reply: 1, shout_reply: 1 }
+const KINDS = new Set(['label', 'comment', 'review', 'merge', 'close', 'decline', 'board_reply', 'board_close', 'board_release', 'discord_reply', 'forum_reply', 'shout_reply'])
 const LABELS = /^(bug|documentation|duplicate|enhancement|question|invalid|wontfix|configuration|accessibility|good first issue|help wanted|needs-work|needs-info|priority:P[123]|module:[a-z0-9-]+)$/
 /**
  * Paths a merge never touches without the owner's OK: CI and the bot itself, deploy and schema, sign-in and
@@ -46,13 +46,13 @@ export function checkText(body, author) {
 export function classify(proposal, target, existingLabels = new Set()) {
   const kind = proposal?.kind
   if (!KINDS.has(kind)) return { reject: 'kind "' + kind + '" is not something the bot may do' }
-  const board = kind.startsWith('board_'), chat = kind === 'discord_reply'
-  if (!target || target.state !== 'open') return { reject: (chat ? 'that Discord message was answered or is gone' : board ? 'that board thread or claim' : '#' + proposal.number) + (chat ? '' : ' is not open') }
+  const board = kind.startsWith('board_'), site = kind === 'forum_reply' || kind === 'shout_reply', chat = kind === 'discord_reply' || site
+  if (!target || target.state !== 'open') return { reject: (chat ? 'that message was answered or is gone' : board ? 'that board thread or claim' : '#' + proposal.number) + (chat ? '' : ' is not open') }
   const summary = String(proposal.summary ?? '').trim().replace(/\s+/g, ' ').slice(0, 90), reason = String(proposal.reason ?? '').trim().slice(0, 800)
   if (!summary) return { reject: 'it has no summary' }
   // Every action pins the state it was proposed against; the executor drops it if the target moved on.
   const pin = { head: target.head ?? '', comments: target.comments }
-  const base = { summary: (chat ? 'Discord: ' : board ? 'Board: ' : '#' + target.number + ' ') + summary, reason }
+  const base = { summary: (kind === 'forum_reply' ? 'Forum: ' : kind === 'shout_reply' ? 'Shoutbox: ' : chat ? 'Discord: ' : board ? 'Board: ' : '#' + target.number + ' ') + summary, reason }
   const sensitive = (target.files ?? []).filter(file => SENSITIVE.some(pattern => pattern.test(file)))
   switch (kind) {
     case 'label': {
@@ -113,6 +113,15 @@ export function classify(proposal, target, existingLabels = new Set()) {
       const problem = body.length > 1500 ? 'it is over 1500 characters' : /(?<![\w`])@\w/.test(body) ? 'it mentions someone' : checkText(body, '')
       if (problem) return { reject: 'the Discord reply was held back because ' + problem }
       return { ...base, tier: 'window', windowHours: WINDOW_HOURS.discord_reply, id: actionId(kind, target.channel, target.id), payload: { kind, channel: target.channel, message: target.id, body, pin: {} } }
+    }
+    // TARS in the site's forum and shoutbox: the same rules as Discord, and it may greet the person by name.
+    case 'forum_reply': case 'shout_reply': {
+      if (target.kind !== (kind === 'forum_reply' ? 'forum' : 'shout')) return { reject: 'that is not a ' + (kind === 'forum_reply' ? 'forum thread' : 'shout') }
+      const body = String(proposal.body ?? '').trim(), limit = kind === 'forum_reply' ? 4000 : 600
+      const problem = body.length > limit ? 'it is over ' + limit + ' characters' : checkText(body, target.author)
+      if (problem) return { reject: 'the reply was held back because ' + problem }
+      const payload = kind === 'forum_reply' ? { kind, thread: target.id, after: target.lastPost, body, pin: {} } : { kind, shout: target.id, body, pin: {} }
+      return { ...base, tier: 'window', windowHours: WINDOW_HOURS[kind], id: actionId(kind, target.id, target.lastPost ?? ''), payload }
     }
     case 'board_release':
       if (target.kind !== 'claim') return { reject: 'that is not a board claim' }
