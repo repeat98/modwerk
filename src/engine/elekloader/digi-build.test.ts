@@ -69,6 +69,13 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
+  it('plans MIDI Engine from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['midi-engine'])).toMatchObject({
+      core: { file: PLAIN, version: '0.7' },
+      mods: [{ id: 'midi-engine', file: 'midi-engine-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' }],
+      missing: [],
+    })
+  })
   it('plans Loop Sync, a storage mod, from its pinned source-only package on the plain base', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['loop-sync'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
