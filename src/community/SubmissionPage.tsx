@@ -66,12 +66,12 @@ export function SubmissionPage({ moduleId = '', machine: initialMachine }: { mod
     <section className="developer-more" aria-label="More for developers">
       <h2 id="commands-title">Commands in your agent</h2>
       <ul className="developer-skills" aria-labelledby="commands-title">{DEVELOPER_SKILLS.map(skill => <li key={skill.name}><code>/{skill.name}</code><span>{skill.summary}</span></li>)}</ul>
-      <AgentBoard repository={repository} />
       <nav className="developer-help" aria-label="Help and guides">
         <a className="button development-discord-button" href={DEVELOPMENT_DISCORD_URL} target="_blank" rel="noreferrer" aria-label="Join Discord for module development (opens in a new tab)"><img src={assetUrl('auth/discord.svg')} width={20} height={15} alt="" aria-hidden="true" /><span>Join Discord</span><span aria-hidden="true">↗</span></a>
         <a href={repository} target="_blank" rel="noreferrer">Modwerk on GitHub ↗</a>
         <DeveloperLinks repository={repository} machine={machine} />
       </nav>
+      <AgentBoard repository={repository} />
     </section>
   </div>
 }

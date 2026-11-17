@@ -228,6 +228,8 @@ describe('start developing page', () => {
     expect(html.match(/Show the prompt/g)).toHaveLength(2)
     expect(html).toContain('DEVELOPER_WORKFLOW.md#your-development-setup')
     expect(html).not.toContain('<details open')
+    // The board stays collapsed, below the help links, so Discord is not pushed down the page.
+    expect(html.indexOf('Join Discord')).toBeLessThan(html.indexOf('<details class="agent-board">'))
     expect(html.indexOf('Set up your computer')).toBeLessThan(html.indexOf('Describe your idea'))
     expect(html.indexOf('Describe your idea')).toBeLessThan(html.indexOf('Your first release'))
     expect(html.indexOf('Your first release')).toBeLessThan(html.indexOf('Commands in your agent'))
