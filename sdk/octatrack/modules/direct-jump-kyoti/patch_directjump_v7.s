@@ -621,25 +621,12 @@ dj_unhide:
     move.b  %d0,PEND_BANK
     move.b  ACT_PAT,%d0                | the wrap's {0x11, pattern, 1} again: the UI repaints the cue
     move.b  %d0,MSG_PAT_ARG
-    lea     MSG_PAT,%a0
-    bsr.w   dj_post                    | MODWERK: KPOST(UI_QUEUE, MSG_PAT), see dj_post
+    pea     MSG_PAT
+    pea     UI_QUEUE
+    jsr     KPOST
+    addq.l  #8,%sp
 du_out:
     rts
-
-| MODWERK: dj_post(a0 = message) -- the kernel post stock's wrap-change makes, KPOST(UI_QUEUE,
-| message), reached through %a1. Same calls in the same order as the author's four inline
-| posts, so that no 12 bytes of a USB package repeat stock's own posting code (the strict
-| stock-free scan); the second purge table's two leas and the two operands of the hand-off's
-| switch time are swapped for the same reason. KPOST is a C function: it keeps a2-a6/d2-d7,
-| which is all the callers rely on (every caller runs inside dj_land, which saves them all).
-dj_post:
-    move.l  %a0,-(%sp)
-    pea     UI_QUEUE
-    lea     KPOST,%a1
-    jsr     (%a1)
-    addq.l  #8,%sp
-    rts
-
 
 | dl_commit: the landing tick.  Registers are free (saved by the caller).
 dl_commit:
@@ -777,13 +764,17 @@ dc_store:
 |   read out of the old bank.
     move.b  ACT_BANK,%d0
     move.b  %d0,MSG_BANKPAT_ARG
-    lea     MSG_BANKPAT,%a0
-    bsr.w   dj_post                    | MODWERK: KPOST(UI_QUEUE, MSG_BANKPAT), see dj_post
+    pea     MSG_BANKPAT
+    pea     UI_QUEUE
+    jsr     KPOST
+    addq.l  #8,%sp
     bsr.w   dj_handoff                 | V7.0.1: the rest of stock's real-switch hand-off
     move.b  ACT_PAT,%d0
     move.b  %d0,MSG_PAT_ARG
-    lea     MSG_PAT,%a0
-    bsr.w   dj_post                    | MODWERK: KPOST(UI_QUEUE, MSG_PAT), see dj_post
+    pea     MSG_PAT
+    pea     UI_QUEUE
+    jsr     KPOST
+    addq.l  #8,%sp
     moveq   #ST_LANDING,%d0
     move.b  %d0,dj_state
     .ifdef DJ_DIAG
@@ -855,8 +846,10 @@ dj_handoff:
     move.l  #P_PART,%d1
     move.b  (%a2,%d1.l),%d0
     move.b  %d0,MSG_PART_ARG
-    lea     MSG_PART,%a0
-    bsr.w   dj_post                    | MODWERK: KPOST(UI_QUEUE, MSG_PART), see dj_post
+    pea     MSG_PART
+    pea     UI_QUEUE
+    jsr     KPOST
+    addq.l  #8,%sp
 |   audio engine: flags = bit0 | bit1 | START-SILENT tracks (bits 8..15), 0x400a45a8-0x400a463a
     moveq   #3,%d4
     move.l  #A_LEN+T_SILENT,%d3        | audio track 0 record +3 (= +0x53)
@@ -864,8 +857,8 @@ dj_handoff:
     bsr.w   ho_bits
     move.l  %d4,ENG_AFLAGS
     move.l  %d4,dj_silA                | V7.2: START SILENT tracks publish on the boundary tick
-    move.l  #TICK_A,%d0                | MODWERK: TICK_A + sclk, the same sum and flags (dj_post's note)
-    add.l   SCLK,%d0                   | stock: sclk + tps_M * TICK_A; V7.1: the boundary is the NEXT tick
+    move.l  SCLK,%d0                   | stock: sclk + tps_M * TICK_A (a master step ahead)
+    addi.l  #TICK_A,%d0                | V7.1: the boundary is the NEXT tick (V7.0.x: "now")
     move.l  %d0,ENG_ATIME
     move.b  ACT_BANK,%d0
     move.b  %d0,ENG_ABANK
@@ -1226,8 +1219,8 @@ dj_purge:
     lea     0x46c7fe44,%a3
     bsr.b   pg_table
     lea     0x80001984,%a0
-    lea     0x46c7fe8c,%a3                | MODWERK: a3 before a1 (dj_post's note)
     lea     0x46c7faa4,%a1
+    lea     0x46c7fe8c,%a3
     bsr.b   pg_table
     move.l  MCLK,%d5
     move.l  #TICK_M/2,%d3              | half a MIDI tick

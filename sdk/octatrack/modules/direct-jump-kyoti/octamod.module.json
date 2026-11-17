@@ -15,7 +15,7 @@
     "name": "Zac Kyoti",
     "credits": [
       "Zac Kyoti: Direct Jump's design, its ColdFire source and the MKI hardware work behind it. Sam Banks: octabam integration.",
-      "Modwerk contributors: source import with stock guards in place of stock bytes, the stock-free re-encoding of the kernel posts and two instruction pairs for the USB package, the emulator gate, documentation and SVG thumbnail."
+      "Modwerk contributors: source import with stock guards in place of stock bytes, the emulator gate, documentation and SVG thumbnail."
     ]
   },
   "nativeManifest": "manifest.py",

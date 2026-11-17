@@ -43,18 +43,21 @@ required for its MIDI_PLAYS_FREE_FIX: stock's PER TRACK scale seed reads a MIDI
 track's scale with the audio stride, so the byte Direct Jump reads to place that
 track is garbage (the source then falls back to the master's). Since 0.1.1 that
 fix is folded in here, as the author's standalone image does: patch_trigscale.s,
-his file (unchanged since 329b801c but for its copyright line), as a second unit
-`ts` with one 18-byte splice. The bundle's other two fixes stay out. The two
+his file at cd788e9 with one label renamed (`cave` -> `ts_cave`, as it links
+beside Direct Jump's unit), as a second unit `ts` with one 18-byte splice. The bundle's other two fixes stay out. The two
 Keeps that protected the rest of the [PTN]-layer YES record are dropped: a USB
 package cannot carry them, and the symbol reference's own guard (the slot is
 NULL) still refuses a changed record. The author's conflicts name modules
 Modwerk does not have (octabam's DIRECT JUMP and OCTAKIT; Octakit wraps stock's
 switch block around the fifth site, and Modwerk's Kits, which follows its design,
 hooks the pattern schedule and chain append instead), so none is declared.
-patch_directjump_v7.s is the author's V7.3 with six re-encodings marked
-MODWERK (four kernel posts through one helper, two leas and the two operands of
-one sum swapped): the same calls, values and flags, so that no 12 bytes of the
-USB package repeat stock code.
+patch_directjump_v7.s is the author's V7.3 file unchanged, so the unit is his
+bytes. Up to the V7.2.2 preparation Modwerk re-encoded six spots (and moved one
+instruction of patch_trigscale.s) only so that no 12 bytes of the USB package
+matched a run of the stock OS. Base 0.7.5 (#1475) dropped that refusal, and those
+runs were the author's original code calling the OS the way the OS calls itself
+(the same arguments pushed, then the same routine), not Elektron bytes, so the
+re-encodings are gone.
 """
 
 import os
@@ -85,17 +88,13 @@ PTN_LAYER_YES_PRESS = 0x400bf0c0
 TS_HOOK = 0x4009b6f2
 
 # patch_directjump_v7.s, m68k-elf-as -mcpu=5407 or 54455 (identical), linked at 0x400d6d38:
-# 3918 bytes. Re-linked there and compared on every build. The author's V7.3 at that address (his
-# manifest's oracle at cd788e9, the code of his KYOTI V1.8C image KY18C DJR1) is 3938 bytes, SHA-256
-# 51478a6773f5b987dc98c595f55a3dd88e9de514d1cedb8fbd35cffe4755e48d; this source links to exactly that with
-# its MODWERK re-encodings taken back (four kernel posts through dj_post, two leas and one sum's two
-# operands swapped, so no 12 bytes of the USB package repeat stock code). V7.3's own additions needed none.
-UNIT_BYTES = 3918
-REFERENCE = (0x400d6d38, "c8273e8f790ee5a046c8a4d459c4ff7276d65289d4812282a6e97c05d5f22cef")
-# patch_trigscale.s, position independent, 62 bytes. With its MODWERK change taken back (one
-# movea.l moved, the label renamed) it links to the author's pinned bytes, SHA-256
-# a1eec6b67bb817cc2e063f23897377697f6057a9bf2389d5eb442813b854bba4.
-TS_REFERENCE = (0x400d7b00, "3f30e0a33d3776fc897803f95fe79ee14abe15ed8aa0496d645d22d4ecce604b")
+# 3938 bytes, the author's V7.3 byte for byte: his manifest's REFERENCE at cd788e9, the code of his
+# KYOTI V1.8C image KY18C DJR1. Re-linked there and compared on every build.
+UNIT_BYTES = 3938
+REFERENCE = (0x400d6d38, "51478a6773f5b987dc98c595f55a3dd88e9de514d1cedb8fbd35cffe4755e48d")
+# patch_trigscale.s, position independent, 62 bytes: the author's pinned bytes (the label rename
+# changes no byte).
+TS_REFERENCE = (0x400d7b00, "a1eec6b67bb817cc2e063f23897377697f6057a9bf2389d5eb442813b854bba4")
 
 MODULE = Module(
     name="direct-jump-kyoti",
