@@ -68,7 +68,7 @@ describe('every Octatrack module names its CPU price', () => {
     expect(cpuPriceStatus({ root: fixture({}), document: module('wave', 'Track machine', render(7)), pending: new Map(), glue: {} }).state).toBe('fail')
   })
 
-  it('says a ported machine's price goes in its machine-ports.json entry', () => {
+  it('says the price of a ported machine goes in its machine-ports.json entry', () => {
     const root = fixture({ 'sdk/machines/octatrack/module-adapters/machine-ports.json': { schema: 1, ports: { wave: { machine: { sig: 'WV' }, contribute: [{ to: 'ot_machines', order: 10, data: 'mw_machine' }] } } } })
     const glue = { wave: 'mw_machine:\n        .long   1\n        .word   0, 0\n        .byte   1, 0, 0, 0\n' }
     const status = cpuPriceStatus({ root, document: module('wave', 'Track machine', render(7)), pending: new Map(), glue })
