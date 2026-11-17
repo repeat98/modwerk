@@ -45,7 +45,7 @@ export function classify(proposal, target, existingLabels = new Set()) {
   const kind = proposal?.kind
   if (!KINDS.has(kind)) return { reject: 'kind "' + kind + '" is not something the bot may do' }
   if (!target || target.state !== 'open') return { reject: '#' + proposal.number + ' is not open' }
-  const summary = String(proposal.summary ?? '').trim().slice(0, 280), reason = String(proposal.reason ?? '').trim().slice(0, 1400)
+  const summary = String(proposal.summary ?? '').trim().replace(/\s+/g, ' ').slice(0, 90), reason = String(proposal.reason ?? '').trim().slice(0, 800)
   if (!summary) return { reject: 'it has no summary' }
   // Every action pins the state it was proposed against; the executor drops it if the target moved on.
   const pin = { head: target.head ?? '', comments: target.comments }
@@ -74,7 +74,7 @@ export function classify(proposal, target, existingLabels = new Set()) {
       if (target.draft) return { reject: 'it is a draft' }
       if (!target.checksGreen) return { reject: 'its checks are not green' }
       if (proposal.head !== target.head) return { reject: 'it was reviewed at another commit' }
-      const why = sensitive.length ? 'it touches ' + sensitive.slice(0, 3).join(', ') + (sensitive.length > 3 ? ' and more' : '') : target.firstTime ? 'it is a first-time contributor’s' : ''
+      const why = sensitive.length ? 'it touches protected files (' + sensitive[0] + (sensitive.length > 1 ? ' and ' + (sensitive.length - 1) + ' more' : '') + ')' : target.firstTime ? 'it is a first-time contributor’s' : ''
       const method = (target.files ?? []).some(file => file.startsWith('src/catalog/') || /\/modules\//.test(file)) ? 'merge' : 'squash'
       const payload = { kind, number: target.number, head: target.head, method, pin }
       return { ...base, reason: [reason, why && 'Asking because ' + why + '.'].filter(Boolean).join('\n'), tier: why ? 'ask' : 'window', windowHours: why ? 0 : WINDOW_HOURS.merge, id: actionId(kind, target.number, target.head), payload }

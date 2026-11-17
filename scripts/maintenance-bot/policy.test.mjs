@@ -15,7 +15,7 @@ describe('maintenance bot policy', () => {
     for (const file of ['.github/workflows/x.yml', 'scripts/maintenance-bot/policy.mjs', 'migrations/0099_x.sql', 'package-lock.json', 'server/auth.ts', 'sdk/octabam/base/x.c', 'sdk/runtime/a.c', 'AGENTS.md']) {
       const decision = classify(merge(), pull({ files: ['src/App.tsx', file] }))
       expect([file, decision.tier]).toEqual([file, 'ask'])
-      expect(decision.reason).toContain('Asking because it touches')
+      expect(decision.reason).toContain('Asking because it touches protected files')
     }
     expect(classify(merge(), pull({ firstTime: true })).tier).toBe('ask')
   })

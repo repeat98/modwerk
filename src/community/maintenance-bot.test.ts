@@ -45,7 +45,8 @@ describe('maintenance bot ledger', () => {
     expect(await (await bot('/actions', 'POST', { actions: [action('a'.repeat(16), 'window', { windowHours: 2 })] })).json()).toEqual({ created: ['a'.repeat(16)] })
     expect(await (await bot('/actions', 'POST', { actions: [action('a'.repeat(16), 'window', { summary: 'Changed wording' })] })).json()).toEqual({ created: [] })
     expect(sent).toHaveLength(1)
-    expect(sent[0].body.text).toContain('unless you stop it')
+    expect(sent[0].body.text).toBe('#7 Merge the thing\nRuns at 13:00 unless you stop it.')
+    expect(JSON.stringify(sent[0].body.reply_markup)).toContain('w:' + 'a'.repeat(16))
     expect(JSON.stringify(sent[0].body.reply_markup)).toContain('s:' + 'a'.repeat(16))
     expect((await (await bot('/actions/due')).json()).actions).toEqual([])
     vi.setSystemTime(new Date('2026-11-17T12:00:01Z'))
@@ -55,7 +56,7 @@ describe('maintenance bot ledger', () => {
     expect((await bot('/actions/' + 'a'.repeat(16) + '/claim', 'POST')).status).toBe(409)
     expect((await bot('/actions/' + 'a'.repeat(16) + '/result', 'POST', { status: 'done', result: 'merged abc' })).status).toBe(200)
     expect(sent.at(-1)).toMatchObject({ method: 'editMessageText', body: { message_id: 901 } })
-    expect(String(sent.at(-1)!.body.text)).toContain('Done: merged abc')
+    expect(sent.at(-1)!.body.text).toBe('✅ #7 Merge the thing')
   })
 
   it('runs a notice at once without a Telegram message, and an ask never without approval', async () => {
@@ -82,6 +83,18 @@ describe('maintenance bot ledger', () => {
     expect(recent.actions[0]).toMatchObject({ status: 'vetoed', payload: { number: 7 } })
   })
 
+  it('shows the reason only after Why?, and keeps the other buttons', async () => {
+    const { bot, sent, press } = await fixture()
+    await bot('/actions', 'POST', { actions: [action('f'.repeat(16), 'ask')] })
+    expect(sent[0].body.text).toBe('#7 Merge the thing\nNeeds your OK.')
+    await press('w:' + 'f'.repeat(16))
+    const edit = sent.find(item => item.method === 'editMessageText')!
+    expect(edit.body.text).toBe('#7 Merge the thing\nNeeds your OK.\nGreen and reviewed.')
+    expect(JSON.stringify(edit.body.reply_markup)).not.toContain('w:')
+    expect(JSON.stringify(edit.body.reply_markup)).toContain('g:' + 'f'.repeat(16))
+    expect((await (await bot('/actions/due')).json()).actions).toEqual([])
+  })
+
   it('pauses and resumes from Telegram', async () => {
     const { bot, hook, sent } = await fixture()
     await bot('/actions', 'POST', { actions: [action('e'.repeat(16), 'notify')] })
@@ -92,6 +105,36 @@ describe('maintenance bot ledger', () => {
     await hook({ message: { text: '/resume', chat: { id: Number(CHAT) } } })
     expect((await (await bot('/actions/due')).json()).actions).toHaveLength(1)
     expect(sent.filter(item => item.method === 'sendMessage')).toHaveLength(2)
+  })
+
+  it('keeps a to-do list the bot adds to and only the owner reads and ticks off', async () => {
+    const { bot, env, db } = await fixture()
+    Object.assign(env, { GITHUB_OAUTH_CLIENT_ID: 'client', GITHUB_OAUTH_CLIENT_SECRET: 'secret' })
+    const client = await digest('client:secret')
+    const session = async (login: string, token: string, id: number) => {
+      db.prepare('INSERT INTO users(id,display_name,github_id,github_login) VALUES(?,?,?,?)').run(login, login, id, login)
+      db.prepare("INSERT INTO developer_sessions(token_hash,user_id,client_hash,expires,purpose) VALUES(?,?,?,?,'board')").run(await digest(token), login, client, 4102444800)
+    }
+    await session('repeat98', '1'.repeat(64), 1)
+    await session('mallory', '2'.repeat(64), 2)
+    const as = (token: string, path: string, method = 'GET', body?: unknown) => handleCommunity(new Request('https://api.example.test/api/maintenance-bot' + path, {
+      method, headers: { 'X-Modwerk-Developer': token, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) }, body: body === undefined ? undefined : JSON.stringify(body),
+    }), env)
+    const todo = { id: '9'.repeat(16), target: 1386, command: '/modwerk-fix-issue 1386', note: 'USB base update  stuck', urgent: true }
+    expect((await bot('/todos', 'POST', { todos: [{ ...todo, command: 'rm -rf /' }] })).status).toBe(400)
+    await bot('/todos', 'POST', { todos: [{ ...todo, id: '8'.repeat(16), target: 5, command: '/modwerk-pr-ready 5', note: 'refresh', urgent: false }, todo] })
+    await bot('/todos', 'POST', { todos: [{ ...todo, note: 'USB base update stuck in recovery' }] })
+    const list = await (await as('1'.repeat(64), '/todos')).json()
+    expect(list.todos.map((row: { id: string; urgent: boolean; note: string }) => [row.id, row.urgent, row.note])).toEqual([['9'.repeat(16), true, 'USB base update stuck in recovery'], ['8'.repeat(16), false, 'refresh']])
+    expect((await as('2'.repeat(64), '/todos')).status).toBe(401)
+    expect((await as('2'.repeat(64), '/todos/' + '9'.repeat(16) + '/status', 'POST', { status: 'done' })).status).toBe(401)
+    expect((await as('1'.repeat(64), '/todos', 'POST', { todos: [] })).status).toBe(401)
+    expect((await as('1'.repeat(64), '/actions/due')).status).toBe(401)
+    expect((await as('1'.repeat(64), '/todos/' + '9'.repeat(16) + '/status', 'POST', { status: 'done' })).status).toBe(200)
+    expect((await as('1'.repeat(64), '/todos/' + '9'.repeat(16) + '/status', 'POST', { status: 'done' })).status).toBe(404)
+    // A finished to-do stays finished when the bot proposes the same work again.
+    await bot('/todos', 'POST', { todos: [todo] })
+    expect((await (await bot('/todos')).json()).todos.map((row: { id: string }) => row.id)).toEqual(['8'.repeat(16)])
   })
 
   it('keeps the fingerprint and splits long reports', async () => {

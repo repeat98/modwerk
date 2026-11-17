@@ -5,8 +5,9 @@
 // not stopped, and on the daily run sends the report to Telegram.
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { classify } from './policy.mjs'
+import { actionId, classify } from './policy.mjs'
 import { MARKER, github, ledger, pages, readTarget } from './lib.mjs'
+import { dailyReport } from './report.mjs'
 
 const daily = process.env.BOT_MODE === 'daily', dir = process.env.BOT_DIR ?? 'bot'
 const { api } = github(), bot = ledger()
@@ -40,6 +41,15 @@ for (const proposal of (Array.isArray(proposals.actions) ? proposals.actions : [
 }
 const { created } = accepted.length ? await bot('/actions', 'POST', { actions: accepted }) : { created: [] }
 console.log(accepted.length + ' proposals accepted (' + created.length + ' new), ' + rejected.length + ' held back.')
+
+// To-dos: work only a session at the owner's computer can do, picked up there with /modwerk-todo.
+const todos = []
+for (const todo of (Array.isArray(proposals.todos) ? proposals.todos : []).slice(0, 30)) {
+  const number = Number(todo?.number), command = String(todo?.command ?? '').trim(), note = String(todo?.note ?? '').trim().replace(/\s+/g, ' ').slice(0, 200)
+  if (!Number.isSafeInteger(number) || number < 1 || !/^\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?$/.test(command) || !note) { rejected.push('A to-do was not a /modwerk-* command with a number and a note.'); continue }
+  todos.push({ id: actionId('todo', number, command), target: number, command, note, urgent: todo.urgent === true })
+}
+if (todos.length) await bot('/todos', 'POST', { todos })
 
 // 2. What is due: approved by the owner, a notice, or a window that closed without a Stop.
 async function carryOut(action) {
@@ -90,24 +100,15 @@ if (rejected.length) console.log('Held back:\n' + rejected.join('\n'))
 // 3. The fingerprint moves only after the model's proposals were filed, so a failed run is retried next pass.
 if (process.env.BOT_FINGERPRINT && existsSync(file)) await bot('/state', 'PUT', { fingerprint: process.env.BOT_FINGERPRINT })
 
-// 4. The daily report: the model's briefing first, then the ledger's last 24 hours.
+// 4. The daily report: a few lines; each action already has its own message with buttons.
 if (daily) {
   const { actions } = await bot('/actions/recent?hours=24')
-  const line = action => '• ' + action.summary + (action.result ? ' (' + action.result + ')' : '')
-  const group = (title, rows) => rows.length ? [title, ...rows.map(line)].join('\n') : ''
-  const until = action => new Date(action.due_at * 1000).toISOString().slice(11, 16) + ' UTC'
-  const text = [
-    'Modwerk maintenance, ' + new Date().toISOString().slice(0, 10),
-    String(proposals.report ?? '').trim() || 'The model wrote no briefing today.',
-    group('Needs your OK (tap Approve or Stop on its message):', actions.filter(a => a.status === 'pending' && a.tier === 'ask')),
-    group('Will happen unless you stop it:', actions.filter(a => a.status === 'pending' && a.tier === 'window').map(a => ({ ...a, summary: a.summary + ' at ' + until(a) }))),
-    group('Done in the last 24 hours:', actions.filter(a => a.status === 'done')),
-    group('Failed (look at these):', actions.filter(a => a.status === 'failed')),
-    group('Stuck mid-run, outcome unknown (check GitHub):', actions.filter(a => a.status === 'running' && Date.now() / 1000 - a.updated_at > 3600)),
-    group('Stopped by you:', actions.filter(a => a.status === 'vetoed')),
-    group('Dropped because things changed:', actions.filter(a => a.status === 'expired')),
-    rejected.length ? 'Held back by the policy today:\n' + rejected.map(reason => '• ' + reason).join('\n') : '',
-    'Commands: /status, /pause, /resume.',
-  ].filter(Boolean).join('\n\n')
-  await bot('/report', 'POST', { text: text.slice(0, 30000) })
+  // A to-do whose pull request or issue was closed is done with, whoever closed it.
+  const open = []
+  for (const todo of (await bot('/todos')).todos) {
+    const state = await api('/issues/' + todo.target).then(issue => issue.state, () => 'open')
+    if (state === 'closed') await bot('/todos/' + todo.id + '/status', 'POST', { status: 'dropped' }); else open.push(todo)
+  }
+  const broken = !existsSync(file) || rejected.some(reason => reason.startsWith('The model wrote'))
+  await bot('/report', 'POST', { text: dailyReport(actions, open) + (broken ? '\n⚠️ The review itself failed today; see the Actions log.' : '') })
 }
