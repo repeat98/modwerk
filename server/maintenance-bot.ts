@@ -191,8 +191,13 @@ async function command(env: Env, db: Database, text: string) {
     const count = (status: string) => actions.filter(action => action.status === status).length
     const last = JSON.parse((await db.prepare("SELECT value FROM maintenance_bot_state WHERE key='dispatch'").first<{ value: string }>())?.value ?? 'null') as { slot: string; ok: boolean } | null
     reply = (paused ? 'Paused.' : 'Running.') + (last ? ' Last start: ' + last.slot.slice(11) + ' UTC' + (last.ok ? '' : ' (failed)') + '.' : '') + ' Waiting: ' + count('pending') + '. Done today: ' + count('done') + (count('failed') ? ', failed: ' + count('failed') : '') + '.'
+  } else if (word === '/todos' || word === '/todo') {
+    const { todos } = await openTodos(db)
+    reply = todos.length
+      ? todos.length + ' open to-dos, for /modwerk-todo at your computer:\n' + todos.map(todo => (todo.urgent ? '⚠️ ' : '• ') + (todo.target ? '#' + todo.target + ' ' : '') + todo.note + '\n   ' + todo.command).join('\n')
+      : 'No open to-dos.'
   } else return
-  await telegram(env, 'sendMessage', { chat_id: chat, text: reply })
+  for (const text of chunks(reply)) await telegram(env, 'sendMessage', { chat_id: chat, text, link_preview_options: { is_disabled: true } })
 }
 
 /** Telegram's webhook. It retries anything but a 200, so only a wrong secret is refused. */
