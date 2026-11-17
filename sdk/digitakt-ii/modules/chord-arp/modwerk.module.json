@@ -85,20 +85,21 @@
   "evidence": {
     "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "8f3a76b55168c869a9abd4e485b6fe3e0fa1ab4723251b52782d88e360612324",
+    "sourceSha256": "18c3f358a4df34ebb45ab7ffa4d13ffa1431f2f0ad6845b5c0a083e5d2f9fd0f",
     "reports": [
       "TESTING.md"
     ],
     "hardware": {
       "model": "Digitakt II",
       "release": "1.17",
-      "testedOn": "2026-11-16",
+      "testedOn": "2026-11-17",
       "tester": "Claptom-music",
       "durationMinutes": null,
-      "summary": "QF17 restored both ARP switches and the checked trig lock on each of two tracks after a save and cold boot, before a manual load. The same Chord Arp binary passed multi-trig editing and clearing on QE17. See TESTING.md for exact package and base identities.",
+      "summary": "QG17, a local build of this module source, passed LO/HI leaving AUTO, GRV with a DIV change during SPAN, first-step playback, STOP, a trig lock, and ARP and lock recall after save and cold boot. QF17 earlier restored both ARP switches and a trig lock per track after a cold boot. See TESTING.md for exact package and image identities.",
       "limitations": [
-        "All 32 slots were checked on reload in Digikit. The physical QF17 cold-boot test checked one locked trig per track.",
-        "Opening a QF17-saved project on official OS, project reload alongside Euclidean Scale, and operation alongside Track Names were not tested on this build.",
+        "The QH17 release image, built from the same source in the pinned toolchain, has not run on hardware.",
+        "All 32 slots were checked on reload in the Digikit emulator only. The physical tests checked one locked trig per track.",
+        "Opening a project saved with Chord Arp on official OS was last tested on QB17. Project reload alongside Euclidean Scale and operation alongside Track Names were not tested on the release build.",
         "Chord Arp supports audio tracks. MIDI tracks were not tested."
       ]
     },
@@ -106,7 +107,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The author verified cold-boot project recall on QF17. Digikit verified all 32 lock slots and the QE17 group editing path.",
+    "summary": "The author verified the playback fixes and cold-boot project recall on QG17, built from this module source, and cold-boot recall on QF17. The Digikit emulator verified all 32 lock slots and the QE17 group editing path. The QH17 release image is not yet tested on hardware.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

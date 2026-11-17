@@ -11,7 +11,7 @@
     {
       "os": "1.17",
       "path": "sdk/imports/packages/chord-arp/chord-arp-0.1.0-experimental-os1.17.elemod",
-      "sha256": "c8f810a10f05e74d7e357582a76ee5b9ce50ba92890ae1c25c1e0b3af8623a27"
+      "sha256": "376ef286e47c7c2ad4402321b235913d6ad8a08898a7b8ec2d2519857b4d9e81"
     }
   ],
   "stockPolicy": "The package contains authored module code and needs the owner’s stock OS 1.17 to build a firmware image.",

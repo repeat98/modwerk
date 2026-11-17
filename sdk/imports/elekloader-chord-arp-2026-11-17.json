@@ -7,7 +7,7 @@
   "mods": [
     {
       "file": "chord-arp-0.1.0-experimental-os1.17.elemod",
-      "sha256": "c8f810a10f05e74d7e357582a76ee5b9ce50ba92890ae1c25c1e0b3af8623a27",
+      "sha256": "376ef286e47c7c2ad4402321b235913d6ad8a08898a7b8ec2d2519857b4d9e81",
       "id": "chord-arp",
       "version": "0.1.0-experimental",
       "device": "digitakt-mk2",
@@ -28,7 +28,7 @@
       "category": "Playback",
       "author": "Claptom-music",
       "needs_core": "1.1",
-      "on_unit": "The author reported a cold-boot project recall pass on QF17. See TESTING.md for scope and limitations."
+      "on_unit": "The author reported the playback fixes and cold-boot project recall passing on QG17, a local build of this source. The QH17 release image is not yet tested on a unit. See TESTING.md for scope and limitations."
     }
   ]
 }
