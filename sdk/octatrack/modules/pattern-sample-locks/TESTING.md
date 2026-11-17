@@ -1,5 +1,42 @@
 # Testing: Pattern Sample Locks 0.1.9-experimental
 
+## Worst key press and press stress on the emulator — 0.1.9, 17–18 November 2026
+
+Emulator only (`ot_emu` `b087c97f…`), not hardware. Octatrack base 0.7.8 with the Part Edit menu (`f429652e…`, a
+local build), exact package `6fea272e…`, DSP running, in the arm64 toolchain container, the same card as 0.1.8's
+run (`be0b309d…`). Each action is opened as a player does: FUNC+PART, LOCKS, then the action. Recorded in
+[evidence/performance.json](evidence/performance.json).
+
+| Check | Result |
+| --- | --- |
+| record | key-press coldfire record for pattern-sample-locks@0.1.9-experimental |
+| cycles | worst event 307,343 of 26,600,000 (1 %) |
+| stock benchmark | none: a key-press module adds nothing to the frame interrupt |
+| stress | 40 presses of the dearest event while playing, no hang |
+
+The dearest press is still CLEAR SAMPLE LOCKS confirmed on 8 tracks × 64 steps (512 fields): 307,343 instructions
+from `module_key` entry to return (0.1.8: 333,805), the commit alone 276,410; LOCK on the same fixture 96,682
+(0.1.8: 134,167); 2 fields: 32,240 and 14,187. Every case verified the written fields and the lock index. The
+emulator's CPU meter read 1000 ‰ closed with the module, while selecting tracks and closed after removal alike: no
+difference to report from it.
+
+Stress: 20 rounds, each PLAY, LOCK then CLEAR on 512 fields, every write and the battery copy verified, playback still
+running and audio frames advancing (at least 6,379 per action); then STOP and a Part change (all four Parts visited).
+Removal afterwards left the base's `ot_part_menu` row empty.
+
+```sh
+python3 -B sdk/octatrack/modules/pattern-sample-locks/profile_symbols.py --object unit.o \
+  --package public/octatrack-modules/pattern-sample-locks/0.1.9-experimental.mwrm --out profile.json
+python3 -B sdk/octatrack/modules/pattern-sample-locks/capture_emulator.py --emulator ot_emu --base <base 0.7.8 build> \
+  --card <disposable card> --package <0.1.9 package> --profile-symbols profile.json --out <new dir> --performance
+# the same with --press-stress for the stress rounds
+npm run perf:audit -- check sdk/octatrack/modules/pattern-sample-locks/evidence/performance.json
+```
+
+The harness now finds the module through the base's `ot_part_menu` row and opens the actions through the base's
+window; on a base 0.7.8 build it needs `--max 4000000000` (now in the command) and, in a container, an output folder
+whose USB socket path is short.
+
 ## Pattern Sample Locks 0.1.9-experimental: the base's Part Edit menu, unit run of 17 November 2026
 
 Build: source `598edfaa4`; a development twin of base 0.7.6
