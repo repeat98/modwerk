@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "quick-velocity-aftertouch-assign",
   "name": "Quick Mod Assign",
-  "version": "0.3.0-experimental",
+  "version": "0.3.1-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
@@ -90,21 +90,22 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.3.0-experimental",
-    "sourceSha256": "ecb7aecdf99dd71a2e06c5b0df37297d66ba163e70aed2e0944e78ef129cdc3c",
+    "moduleVersion": "0.3.1-experimental",
+    "sourceSha256": "5479afc2a9689e446a3093f18c50f18c8508781ee7412140760d4098cefc8591",
     "reports": [
       "TESTING.md"
     ],
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-11-15",
+      "testedOn": "2026-11-16",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "On npp1993's Analog Rytm MKII with OS 1.74, RAM-booted private combined images that carry this module's source (RL26 to RL31, beside Filter Hz, QPER Live Rec and a private MIDI module of the author's that passes MIDI to stock's locker): by npp1993's hand on RL26, quick taps of FIX, LFO and SAMPLER do the stock action (fixed velocity toggles, the LFO page opens, the recorder opens); a hold of about a second with no turn does nothing on its release; LFO held with AMP tapped during it stays on AMP; LFO held in scene edit and turned sets the LFO depth, the page stays. Modwerk's test rig (with npp1993's go), driving the Rytm and a MIDI controller, passed on RL26 to RL31 the LFO hold's destination and depth from MIDI through stock's locker (eight slow controller ticks give DEP +8.00; the LFO page stays), and FIX and SAMPLER amounts from MIDI. In rytm-emu the look's cutoff: LFO held 450 ms opens the page, 500 ms does not; SAMPLER likewise.",
+      "summary": "On npp1993's Analog Rytm MKII with OS 1.74, Modwerk's test rig (key presses and knob turns over USB, screens read back, with npp1993's go) ran CA02 on 16 Nov 2026: a private development image RAM-booted from RB08 that carries this version's source (differing only in a comment) beside Control In Actions, Improved AMP and Filter Hz, cold-marked the same way. qma-fix-velocity, qma-lfo-depth, qma-lfo-grab, qma-lfo-regrab and qma-lfo-tap pass against the repository's unit references. In rytm-emu, CA01 (the new sources) gives the same screens and measures as CB00 (the old sources) in all eleven Quick Mod Assign cases, the half-second look included. The change only marks UI-task functions cold: old and new objects at -O2 are byte-identical apart from relocation offsets.",
       "limitations": [
-        "This package itself has not run on a unit: the combined images carry the same main.c, built in the same toolchain.",
-        "FIX's toggle after a long hold is checked by hand only (it shows nothing on the screen in rytm-emu).",
+        "This package itself has not run on a unit: CA02 is a private combined image that carries the same source, comment text aside.",
+        "qma-lfo-on-lfo-page was not checked on the unit (no unit reference for its screen); the look cases ran in rytm-emu only.",
+        "No hand test on the unit for 0.3.1; 0.3.0's hand checks are in TESTING.md.",
         "Duration not recorded."
       ]
     },
@@ -161,9 +162,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.3.0-experimental",
-        "imageSha256": "c1ee037e167065198083c975e6dc554702b21b47d3a57aff33c6c9ab1702dcab",
-        "setup": "Headless rytm-emu (dtboot) running QM30: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.3.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.3.1-experimental",
+        "imageSha256": "55a50da750bab93a4dd4930f85e258ba2e4df1532d2c7dc511c063dbe92517aa",
+        "setup": "Headless rytm-emu (dtboot) running QM31: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.3.1-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -177,9 +178,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.3.0-experimental",
-        "imageSha256": "c1ee037e167065198083c975e6dc554702b21b47d3a57aff33c6c9ab1702dcab",
-        "setup": "Headless rytm-emu (dtboot) running QM30: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.3.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.3.1-experimental",
+        "imageSha256": "55a50da750bab93a4dd4930f85e258ba2e4df1532d2c7dc511c063dbe92517aa",
+        "setup": "Headless rytm-emu (dtboot) running QM31: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.3.1-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -193,9 +194,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.3.0-experimental",
-        "imageSha256": "c1ee037e167065198083c975e6dc554702b21b47d3a57aff33c6c9ab1702dcab",
-        "setup": "Headless rytm-emu (dtboot) running QM30: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.3.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.3.1-experimental",
+        "imageSha256": "55a50da750bab93a4dd4930f85e258ba2e4df1532d2c7dc511c063dbe92517aa",
+        "setup": "Headless rytm-emu (dtboot) running QM31: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.3.1-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -209,9 +210,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.3.0-experimental",
-        "imageSha256": "c1ee037e167065198083c975e6dc554702b21b47d3a57aff33c6c9ab1702dcab",
-        "setup": "Headless rytm-emu (dtboot) running QM30: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.3.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.3.1-experimental",
+        "imageSha256": "55a50da750bab93a4dd4930f85e258ba2e4df1532d2c7dc511c063dbe92517aa",
+        "setup": "Headless rytm-emu (dtboot) running QM31: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.3.1-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -225,9 +226,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.3.0-experimental",
-        "imageSha256": "c1ee037e167065198083c975e6dc554702b21b47d3a57aff33c6c9ab1702dcab",
-        "setup": "Headless rytm-emu (dtboot) running QM30: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.3.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.3.1-experimental",
+        "imageSha256": "55a50da750bab93a4dd4930f85e258ba2e4df1532d2c7dc511c063dbe92517aa",
+        "setup": "Headless rytm-emu (dtboot) running QM31: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.3.1-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -241,9 +242,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.3.0-experimental",
-        "imageSha256": "c1ee037e167065198083c975e6dc554702b21b47d3a57aff33c6c9ab1702dcab",
-        "setup": "Headless rytm-emu (dtboot) running QM30: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.3.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.3.1-experimental",
+        "imageSha256": "55a50da750bab93a4dd4930f85e258ba2e4df1532d2c7dc511c063dbe92517aa",
+        "setup": "Headless rytm-emu (dtboot) running QM31: the Modwerk base (plain, 1c14b6b0) for core-ar2 0.7 and this folder's Quick Mod Assign 0.3.1-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
