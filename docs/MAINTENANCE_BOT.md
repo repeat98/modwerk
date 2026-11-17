@@ -29,11 +29,17 @@ Without the model, every pass checks the latest run of each workflow on `main`. 
 
 TARS reads every Discord channel and active thread it can see, minus the repository variable `DISCORD_IGNORE_CHANNELS`, and the model drafts a reply to anyone who needs help (`discord_reply`). There is no daily cap. What stops spam is the rule set: only a message nobody has answered (no later message from TARS or `DISCORD_OWNER_ID`, no reply to it), one reply per message ever, 1 h for a Stop, no mentions at all (`allowed_mentions` is empty), and links only to Modwerk. Anything the model is unsure of becomes a `/modwerk-discord <message link>` to-do. Discord needs the secret `DISCORD_BOT_TOKEN` and the variable `DISCORD_GUILD_ID`.
 
+On the site, TARS answers in the forum and the shoutbox as the system account `tars` (migration 0093), with the same rules: a thread whose last post is not from TARS or the owner, or a shout no helper has answered since, one reply each, 1 h for a Stop (`forum_reply`, `shout_reply`). The Worker posts through the site's own forum and shoutbox handlers, so limits and notifications are the same as anyone's, and refuses with 409 if someone answered first. Like the `modwerk` system author, `tars` has no verified email, so it stays out of member lists, @-suggestions and announcement audiences. `POST /api/maintenance-bot/tars/avatar` sets its picture through the site's avatar upload. Every public reply follows the prompt's "How you write": the answer first, plain words, kind, one step at a time.
+
 The repository is public, and so are the job logs and artifacts. The model's output is never printed, the executor logs counts only, and the proposals travel between the jobs encrypted with the bot key.
 
 ## Telegram
 
 Each action is one message of two lines, what and when, with **Stop**, **Now** or **Approve**, and **Why?** for the reason. The report at 07:00 UTC is a few lines: what waits, what was done (counted), failures, and how many to-dos wait, naming the urgent ones. `/pause` stops all proposals and actions until `/resume`, and `/status` shows what is waiting. Only the owner's private chat counts.
+
+## The clock
+
+GitHub starts scheduled workflows hours late in this repository, so the workflow has no schedule. The Worker's 5-minute cron starts it instead (`dispatchMaintenance` in `server/maintenance-bot.ts`): a pass at :05 and :35, the daily run at 07:00 UTC, each slot once and none while paused. It needs the Worker secret `MAINTENANCE_BOT_GITHUB_TOKEN`: a fine-grained token for this repository only, with **Actions: read and write** and nothing else. If GitHub refuses a start, the owner gets one Telegram line that day, and `/status` shows the last start. When the token expires, make a new one and put it again: `npx wrangler secret put MAINTENANCE_BOT_GITHUB_TOKEN --config wrangler.worker.jsonc`.
 
 ## Setup and settings
 

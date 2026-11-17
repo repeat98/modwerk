@@ -3,7 +3,7 @@ import type { DatabaseSync } from 'node:sqlite'
 import { testServer } from './test-server'
 import { handleCommunity } from '../../server/transport'
 import { digest } from '../../server/security'
-import { chunks, failureKey } from '../../server/maintenance-bot'
+import { chunks, dispatchMaintenance, dispatchSlot, failureKey } from '../../server/maintenance-bot'
 
 const KEY = 'k'.repeat(64), SECRET = 's'.repeat(40), CHAT = '4242'
 const databases: DatabaseSync[] = []
@@ -184,6 +184,58 @@ describe('maintenance bot ledger', () => {
     expect((await bot('/state', 'PUT', {})).status).toBe(400)
     await bot('/state', 'PUT', { upstream: '{"elekloader":"abc"}' })
     expect((await (await bot('/state')).json()).upstream).toBe('{"elekloader":"abc"}')
+  })
+
+  it('answers in the forum and the shoutbox as TARS, through the site’s own handlers, only while nobody has', async () => {
+    const { bot, db } = await fixture()
+    db.prepare("INSERT INTO users(id,display_name,username,email_verified) VALUES('ana','Ana','ana',1)").run()
+    db.prepare("INSERT INTO users(id,display_name,username,email_verified,is_admin) VALUES('jannik','Jannik','jannik',1,1)").run()
+    db.prepare("INSERT INTO forum_threads(id,user_id,title,category) VALUES('t1','ana','Keep does nothing','general')").run()
+    db.prepare("INSERT INTO forum_posts(id,thread_id,user_id,body) VALUES('p1','t1','ana','I press Keep and nothing happens. What am I missing?')").run()
+    db.prepare("INSERT INTO forum_shouts(id,user_id,body) VALUES('s1','ana','anyone know how to undo a set?')").run()
+    const activity = await (await bot('/forum')).json()
+    expect(activity.threads[0]).toMatchObject({ id: 't1', posts: [{ id: 'p1', author: 'ana', helper: false }] })
+    expect(activity.shouts).toMatchObject([{ id: 's1', author: 'ana', helper: false }])
+    expect((await bot('/forum/threads/t1/reply', 'POST', { body: 'Hi Ana!', after: 'p0' })).status).toBe(409)
+    expect((await bot('/forum/threads/t1/reply', 'POST', { body: 'Hi Ana! After Keep, power the Octatrack off and on once.', after: 'p1' })).status).toBe(200)
+    expect(db.prepare("SELECT user_id,body FROM forum_posts WHERE thread_id='t1' AND user_id='tars'").get()).toEqual({ user_id: 'tars', body: 'Hi Ana! After Keep, power the Octatrack off and on once.' })
+    // The thread now ends with TARS's own post: nothing more until Ana writes again.
+    const last = (db.prepare("SELECT id FROM forum_posts WHERE user_id='tars'").get() as { id: string }).id
+    expect((await bot('/forum/threads/t1/reply', 'POST', { body: 'Again', after: last })).status).toBe(409)
+    expect((await bot('/forum/shouts/s1/reply', 'POST', { body: '@ana Undo is in the device panel.' })).status).toBe(200)
+    expect((await bot('/forum/shouts/s1/reply', 'POST', { body: '@ana Twice' })).status).toBe(409)
+    db.prepare("INSERT INTO forum_shouts(id,user_id,body) VALUES('s2','ana','thanks!')").run()
+    db.prepare("INSERT INTO forum_shouts(id,user_id,body) VALUES('s3','jannik','np')").run()
+    expect((await bot('/forum/shouts/s2/reply', 'POST', { body: '@ana You are welcome.' })).status).toBe(409)
+  })
+
+  it('starts its own runs on time from the Worker’s clock, once per slot and never while paused', async () => {
+    const { env, db, hook } = await fixture()
+    expect(dispatchSlot(new Date('2026-11-17T07:01:30Z'))).toEqual({ mode: 'daily', slot: '2026-11-17T07:00' })
+    expect(dispatchSlot(new Date('2026-11-17T09:36:00Z'))).toEqual({ mode: 'pass', slot: '2026-11-17T09:35' })
+    expect(dispatchSlot(new Date('2026-11-17T09:10:00Z'))).toBeNull()
+    const calls: { url: string; body: unknown }[] = []
+    let status = 204
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      calls.push({ url, body: JSON.parse(String(init.body)) })
+      return url.includes('api.telegram.org') ? Response.json({ ok: true, result: { message_id: 1 } }) : new Response(null, { status })
+    }))
+    await dispatchMaintenance(env, env.DB!, new Date('2026-11-17T09:05:10Z'))
+    expect(calls).toEqual([])
+    env.MAINTENANCE_BOT_GITHUB_TOKEN = 'github_pat_test'
+    await dispatchMaintenance(env, env.DB!, new Date('2026-11-17T09:05:10Z'))
+    await dispatchMaintenance(env, env.DB!, new Date('2026-11-17T09:05:50Z'))
+    expect(calls).toEqual([{ url: 'https://api.github.com/repos/repeat98/modwerk/actions/workflows/maintenance-bot.yml/dispatches', body: { ref: 'main', inputs: { mode: 'pass' } } }])
+    await hook({ message: { text: '/pause', chat: { id: Number(CHAT) } } })
+    calls.length = 0
+    await dispatchMaintenance(env, env.DB!, new Date('2026-11-17T09:35:10Z'))
+    expect(calls.filter(call => call.url.includes('github'))).toEqual([])
+    await hook({ message: { text: '/resume', chat: { id: Number(CHAT) } } })
+    status = 401; calls.length = 0
+    await dispatchMaintenance(env, env.DB!, new Date('2026-11-17T10:05:10Z'))
+    await dispatchMaintenance(env, env.DB!, new Date('2026-11-17T10:35:10Z'))
+    expect(calls.filter(call => call.url.includes('sendMessage')).length).toBe(1)
+    expect(JSON.parse((db.prepare("SELECT value FROM maintenance_bot_state WHERE key='dispatch'").get() as { value: string }).value)).toEqual({ slot: '2026-11-17T10:35', mode: 'pass', ok: false, status: 401 })
   })
 
   it('keeps the fingerprint and splits long reports', async () => {

@@ -1,0 +1,1 @@
+Worker and CI: the maintenance bot now runs on time. GitHub started its scheduled runs hours late, so the Worker's 5-minute clock starts a pass at :05 and :35 and the morning run at 07:00 UTC, once per slot and not while paused. If a start fails, the owner hears about it once that day on Telegram.

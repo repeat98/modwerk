@@ -5,11 +5,9 @@ name: Maintenance bot
 # (docs/MAINTENANCE_BOT.md). The model runs read-only in `propose` and only writes proposals; `act` runs trusted
 # main with write access and no model, and the policy in scripts/maintenance-bot/policy.mjs decides each one.
 # It stays off until the owner runs `npm run maintenance-bot:setup`, which sets the key and the Claude token.
+# The Worker starts it (dispatchMaintenance in server/maintenance-bot.ts): a pass at :05 and :35, the daily run at
+# 07:00 UTC. GitHub's own schedule runs hours late in this repository, so there is none here.
 on:
-  schedule:
-    - cron: '7,37 * * * *'
-    # 07:00 UTC: 08:00 in Berlin in winter, 09:00 in summer.
-    - cron: '0 7 * * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -22,10 +20,10 @@ permissions:
 concurrency:
   # The daily run has its own group so a pass never cancels it while queued; claims in the ledger keep two
   # overlapping runs from carrying out the same action.
-  group: maintenance-bot-${{ (github.event.schedule == '0 7 * * *' || inputs.mode == 'daily') && 'daily' || 'pass' }}
+  group: maintenance-bot-${{ inputs.mode == 'daily' && 'daily' || 'pass' }}
   cancel-in-progress: false
 env:
-  BOT_MODE: ${{ (github.event.schedule == '0 7 * * *' || inputs.mode == 'daily') && 'daily' || 'pass' }}
+  BOT_MODE: ${{ inputs.mode == 'daily' && 'daily' || 'pass' }}
   BOT_DIR: bot
 jobs:
   propose:
