@@ -28,7 +28,7 @@
       "category": "Playback",
       "author": "Claptom-music",
       "needs_core": "1.1",
-      "on_unit": "The author reported the playback fixes and cold-boot project recall passing on QG17, a local build of this source. The QH17 release image is not yet tested on a unit. See TESTING.md for scope and limitations."
+      "on_unit": "The author reported the playback fixes and cold-boot project recall passing on the QH17 release image. See TESTING.md for scope and limitations."
     }
   ]
 }

@@ -4,9 +4,20 @@
 
 QH17 is the release build of Chord Arp 0.1.0-experimental for Digitakt II OS 1.17. The isolated toolchain (`scripts/build-elemod-isolated.sh`, `modwerk-source-tools` image `dd9a6fc89fce…`) built it from commit `451b89bf`. The exported package `sdk/imports/packages/chord-arp/chord-arp-0.1.0-experimental-os1.17.elemod` has SHA-256 `376ef286e47c7c2ad4402321b235913d6ad8a08898a7b8ec2d2519857b4d9e81`. Linked with the core 1.1 base package (SHA-256 `e88273edd8caf822fd33b0d16d8fd14530781d296496b6c9b650aaa0eee8b005`) and stock OS 1.17, it gives image SHA-256 `62169804e750f06fc81900a152a69f5b0a0c679ed4ff1a65a77bef293d3f44f2`. The browser builder reproduced that image byte for byte. The host pitch and lock tests pass.
 
-What passed on QH17 itself: the build, export and browser parity above. QH17 has not run on hardware or in the Digikit emulator yet.
+On 2026-11-17, Claptom-music reported three hardware passes on QH17 on a Digitakt II running that exact image:
 
-Its module source is the source of QG17, a local build of the same three playback fixes made with a different compiler. The tester's hardware passes on QG17 and on the earlier builds below cover the same behaviour, but they are results for those builds, not for QH17.
+1. On the Arp page, turning LO from AUTO showed LO −1 and HI +2 and kept the full major chord. After pressing C, turning HI from AUTO showed HI +3 and LO 0. The same LO edit held in lock mode on trig 1.
+2. With GRV, SPAN on, LEN 3 and PULS 1, a single trig on step 2 of an eight-step pattern played on steps 2, 5 and 8. Changing DIV to 1/32 and back during playback kept the hits counted from step 2.
+3. First-step PLAY, STOP with no hanging notes, and one trig lock passed. After Save Project and a power cycle, ARP was still on and the lock was still there.
+
+QH17 has not run in the Digikit emulator. Its module source is the source of QG17, a local build made with a different compiler that passed the same three tests on hardware.
+
+### Beside other modules
+
+Both images below link the QH17 package with base `e88273ed` and stock OS 1.17. They are local test images, not committed.
+
+- **Track Names: pass.** Image SHA-256 `41fe9e105deece52a6244a433452432dedc76da64ced05546b5b795511e7db01` adds Track Names 0.1.3-experimental. On 2026-11-17, Claptom-music reported that a renamed track 2 showed its name on Internal Mixer 2/5, Chord Arp opened on that track and played its lock, and after Save Project and a power cycle the name, ARP ON and the lock were all still there.
+- **Euclidean Scale: fail on recall.** Image SHA-256 `d0130bebef53acb22f5f0f0b4e466ca712f20282c15efc6511f160662c825349` adds Euclidean Scale 0.2.0-experimental and Track Names. Euclidean Scale worked once the scratch pattern had a scale set. After Save Project and a power cycle, Chord Arp's ARP switches came back OFF, and its locked track played single stock notes. The cause is in the base, not the module. Core kit data (`KIT_PAD` 0x573e, 194 bytes) covers the last 48 bytes of each 0x5800-byte kit record, where the project archive keeps its chunks. Core kit data clears its whole area when it saves, so with any kit-data module installed the archive is lost. Chord Arp alone keeps its settings because nothing else writes there. A separate base fix will address it.
 
 ## Hardware results on earlier builds
 
@@ -22,10 +33,10 @@ All of these were reported by Claptom-music on a Digitakt II running the named b
 
 ## Not tested
 
-- QH17, the exact release build, on hardware or in the Digikit emulator.
-- The clipped-hit note-order fix has no dedicated test. Hardware runs on QG17 covered normal note order.
-- Save and reload beside Euclidean Scale on the release build. The tester reported the earlier combined Y117 build working, including playback with both modules on one track.
-- Chord Arp beside Track Names.
+- QH17 in the Digikit emulator.
+- On QH17 hardware: official OS 1.17 reopening a saved project (last passed on QB17), multi-trig lock editing (QE17), track selection and the built-in Euclidean sequencer (QC17), microtiming and RESET modes (U117).
+- The clipped-hit note-order fix has no dedicated test. Hardware runs on QG17 and QH17 covered normal note order.
+- Save and reload beside Euclidean Scale with the base fix. On base `e88273ed` it fails, as described above.
 - MIDI tracks. They are outside the module's audio-track scope.
 
 ## Earlier trial builds
