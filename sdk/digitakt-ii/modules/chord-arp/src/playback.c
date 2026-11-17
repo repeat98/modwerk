@@ -15,13 +15,12 @@ struct playback {
     uint32_t epoch;
     uint32_t generation;
     uint32_t cycle;
-    uint32_t rhythm_origin;
+    uint32_t origin_step;
     uint32_t note_position;
     uint16_t pattern;
     uint8_t step;
     uint8_t length;
     uint8_t source_step;
-    uint8_t division;
     uint8_t valid;
     uint8_t had_lock;
 };
@@ -89,6 +88,7 @@ uint32_t chord_arp_panel_phrase(const struct dt2_seq_grid_window *window, uint32
     state->length = window->length;
     if (!empty) {
         state->source_step = window->step;
+        state->origin_step = state->cycle + window->step;
         if (reset & 1u) {
             state->note_position = 0;
         }
@@ -133,13 +133,10 @@ uint32_t chord_arp_panel_phrase(const struct dt2_seq_grid_window *window, uint32
     };
     const uint32_t step = state->cycle + window->step;
     const struct arp_division_slice slice = arp_division_at(step, period);
-    if (state->division != division || !(reset & 2u)) {
-        state->rhythm_origin = 0;
-    }
-    state->division = division;
-    if (!empty && (reset & 2u)) {
-        state->rhythm_origin = (step * ARP_UNITS_PER_STEP + period - 1u) / period;
-    }
+    /* GRV and ALL restart the rhythm at the source trig. Anchor it in stock
+     * steps so a DIV change while a phrase spans empty steps keeps that origin. */
+    const uint32_t rhythm_origin = (reset & 2u)
+        ? (state->origin_step * ARP_UNITS_PER_STEP + period - 1u) / period : 0;
     const uint32_t span = window->next - window->onset;
     struct arp_hit hits[ARP_MAX_HITS];
     uint32_t produced = 0;
@@ -148,7 +145,7 @@ uint32_t chord_arp_panel_phrase(const struct dt2_seq_grid_window *window, uint32
         const int slow = period > ARP_UNITS_PER_STEP;
         const struct arp_subdivision subdivision = {
             .index = slice.first_index + i,
-            .rhythm_origin = state->rhythm_origin,
+            .rhythm_origin = rhythm_origin,
             .note_position = state->note_position, .use_note_position = reset != 0,
             .previous = grid_tick(window, slow ? -ARP_UNITS_PER_STEP : offset - period),
             .start = grid_tick(window, offset),
@@ -168,9 +165,11 @@ uint32_t chord_arp_panel_phrase(const struct dt2_seq_grid_window *window, uint32
                 notes[produced++] = (struct dt2_seq_phrase_note){
                     window->onset + onset, window->onset + release, hits[n].pitch, hits[n].velocity,
                 };
-                ++state->note_position;
             }
         }
+        /* Each rendered hit took position + n, so a hit clipped out of the
+         * step still uses its pitch and the order stays intact. */
+        state->note_position += rendered;
     }
     if (!empty && (latch || span_enabled)) {
         return DT2_SEQ_PHRASE_CARRY | produced;

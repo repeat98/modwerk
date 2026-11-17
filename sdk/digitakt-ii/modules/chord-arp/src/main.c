@@ -331,6 +331,24 @@ static void clear_held_locks(uint32_t controls)
         }
     }
 }
+/* The effective LO/HI pair. AUTO starts from a range that holds the whole
+ * voicing (extensions reach +22 semitones) across the OCT spread, so the
+ * first edit out of AUTO never collapses the phrase to the root octave. */
+static void range_bounds(const volatile int8_t arp[8], unsigned int manual, int *low, int *high)
+{
+    if (manual) {
+        *low = arp[2];
+        *high = arp[3];
+        return;
+    }
+    const int octaves = arp[1];
+    *low = octaves < 0 ? octaves : 0;
+    *high = (octaves > 0 ? octaves : 0) + 2;
+    if (*high > ARP_MAX_OCTAVE) {
+        *high = ARP_MAX_OCTAVE;
+    }
+}
+
 static void set_held_locks(uint16_t active, unsigned int knob, int next)
 {
     const unsigned int pattern = (unsigned int)lock_pattern;
@@ -356,7 +374,8 @@ static void set_held_locks(uint16_t active, unsigned int knob, int next)
             fw_memcpy(&settings, (const void *)&chord_arp_tracks[selected_track], sizeof settings);
         }
         const int8_t (*values)[8] = settings.values;
-        const int low = values[ARP][2], high = values[ARP][3];
+        int low, high;
+        range_bounds(values[ARP], settings.manual_range, &low, &high);
         int value = next;
         if (page == ARP && knob == 2 && value > high) {
             value = high;
@@ -604,9 +623,13 @@ int chord_arp_encoder(const uint8_t *brain, const int32_t *event)
         return 1;
     }
     struct chord_arp_settings locked;
+    unsigned int manual = settings->manual_range;
     if (step_edit && selected_step_settings(&locked)) {
         values = locked.values;
+        manual = locked.manual_range;
     }
+    int low, high;
+    range_bounds(values[ARP], manual, &low, &high);
     const int delta = control->stock_encoder
         ? fw_enc_list(&stock_encoders, (void *)event, fw_enc_param) / 256
         : encoder_step(knob, raw_delta);
@@ -616,16 +639,19 @@ int chord_arp_encoder(const uint8_t *brain, const int32_t *event)
     const int track_selector = page == ARP && knob == 7;
     int min = control->min, max = control->max;
     if (page == ARP && knob == 2) {
-        max = values[ARP][3];
+        max = high;
     } else if (page == ARP && knob == 3) {
-        min = values[ARP][2];
+        min = low;
     } else if (page == RHYTHM && knob == 1) {
         max = values[RHYTHM][0];
     }
     if (page == RHYTHM && knob == 3) {
         max = chord_arp_repeat_max(values[ARP][5]);
     }
-    const int current = track_selector ? (int)selected_track + 1 : values[page][knob];
+    const int current = track_selector ? (int)selected_track + 1
+        : page == ARP && knob == 2 ? low
+        : page == ARP && knob == 3 ? high
+        : values[page][knob];
     int next = delta < min - current ? min : delta > max - current ? max : current + delta;
     if (page == CHORD && knob == 5 && current < 0) {
         next = 60;
@@ -644,10 +670,15 @@ int chord_arp_encoder(const uint8_t *brain, const int32_t *event)
             edit_track(track);
         }
     } else {
-        settings->values[page][knob] = (int8_t)next;
         if (page == ARP && (knob == 2 || knob == 3)) {
+            /* Publish both bounds before the range becomes manual. */
+            settings->values[ARP][2] = (int8_t)(knob == 2 ? next : low);
+            settings->values[ARP][3] = (int8_t)(knob == 3 ? next : high);
             settings->manual_range = 1;
-        } else if (page == RHYTHM && knob == 0 && values[RHYTHM][1] > next) {
+        } else {
+            settings->values[page][knob] = (int8_t)next;
+        }
+        if (page == RHYTHM && knob == 0 && values[RHYTHM][1] > next) {
             settings->values[RHYTHM][1] = (int8_t)next;
         }
         if (page == ARP && knob == 5) {

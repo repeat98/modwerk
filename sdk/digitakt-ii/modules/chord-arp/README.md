@@ -33,18 +33,29 @@ DIV covers straight, dotted and triplet rates from 1/1 to 1/64T, relative to the
 
 - **Chord A · TYPE** picks the chord shape. B–E add or change the 7th, 9th, 11th and 13th. **AUTO** uses the voicing's built-in extension when it has one.
 - **Chord F · ROOT** defaults to **TRIG**, which uses the Digitakt NOTE value for each trig, including a stock NOTE lock. Turn F to choose a fixed root, starting at C5, and press F to return to TRIG. For example, stock C5 and D5 trigs give you C major and D major with TYPE set to MAJ and ROOT set to TRIG. A fixed C5 root gives both trigs C major.
-- **Arp A · ORDER** sets the order of notes. **OCT** adds copies of the chord above or below the root octave. **LO** and **HI** filter the resulting notes. Editing either limit enables both, and an untouched limit starts at 0. With a C5 root, OCT 0, LO −1 and HI 0, only C5 fits because the range ends at C5. Raise HI to +2 to keep extensions up to the 13th, or set OCT to −1 to generate notes below the root. Press C or D to restore both limits to AUTO.
-- **Arp E · GATE** changes how long each hit lasts. **DIV** changes how often the arp gets a pulse. At 1/16 it gets one pulse per track step, at 1/8 it gets one every two steps, and at 1/32 it gets two per step. A slower division still fits each gate into the stock step where it starts. Swing and microtiming move the phrase start with the stock trig. The arp fits its subdivisions into the available stock window before the next note.
+- **Arp A · ORDER** sets the order of notes. **OCT** adds copies of the chord above or below the root octave. **LO** and **HI** filter the resulting notes. Turning either limit enables both, starting from a range that keeps every note the chord and OCT produce: LO at the lowest OCT copy (0 or below) and HI two octaves above the highest copy, which leaves room for extensions up to the 13th. With a C5 root and OCT 0, one turn of LO to the left gives LO −1 and HI +2. Lower HI to 0 to keep only notes up to C5, or set OCT to −1 to generate notes below the root. Press C or D to restore both limits to AUTO.
+- **Arp E · GATE** changes how long each hit lasts. **DIV** changes how often the arp gets a pulse. At 1/16 it gets one pulse per track step, at 1/8 it gets one every two steps, and at 1/32 it gets two per step. A slower division still fits each gate into the stock step where it starts. [Swing and timing](#swing-and-timing) explains how pulses follow the pattern's swing.
 
 ## Rhythm and Groove
 
 **Rhythm** decides which arp pulses you hear. **LEN** sets the number of pulses in the cycle, **PULS** sets how many of them play, and **ROT** shifts that pattern. Try LEN 8, PULS 3 and ROT 0 to hear hits on pulses 1, 3 and 6. **REPT** adds extra hits within each active pulse, up to the limit for the current DIV.
 
-**Groove** shapes the timing and velocity of the pulses that play. Subdivisions are spaced within the stock swung step window. Groove moves the resulting hits relative to those positions, within the scheduling window and its release guard. **STYLE** picks a four-pulse pattern. **STR8** leaves the pulses straight, **PUSH** moves some earlier, **LAID** moves some later, and **OFFBT** mixes early and late pulses. **TIME** sets how far they move. **ACCNT** sets how strongly their velocities differ. Try PUSH with TIME at 0, then raise TIME and listen for the difference.
+**Groove** shapes the timing and velocity of the pulses that play, on top of the pattern's swing ([Swing and timing](#swing-and-timing)). **STYLE** picks a four-pulse pattern. **STR8** leaves the pulses straight, **PUSH** moves some earlier, **LAID** moves some later, and **OFFBT** mixes early and late pulses. **TIME** sets how far they move. **ACCNT** sets how strongly their velocities differ. Try PUSH with TIME at 0, then raise TIME and listen for the difference.
 
 - **Groove F · SPAN** carries the last chord through empty steps to the end of the loop. With a single trig on step 5 of an eight-step pattern, the arp also plays steps 6–8 at DIV 1/16.
 - **Groove E · LATCH** also carries the chord into the next loop of the same pattern. In that example it fills steps 1–4 after the loop wraps. A new note trig takes over when it arrives. STOP and pattern changes end the carry. If you delete the source trig during playback, its chord finishes the current loop.
 - **Groove D · RESET** decides what a new note trig restarts. **CONT** uses the running phase. **NOTE** restarts only the pitch order. **GRV** restarts the RHYTHM cycle and the four-pulse GROOVE pattern while pitch order continues. **ALL** restarts pitch order, rhythm and groove. With C major and ORDER set to UP, ALL starts the note order from C and the rhythm from pulse 1 at the next note trig.
+
+## Swing and timing
+
+Chord Arp keeps no clock of its own. For each step it plays, the Digitakt II's sequencer supplies the swung time of that step and of the next track step, computed from the track's swing, tempo and speed. The pulses are placed from those two times:
+
+- **Pulses within a step.** At divisions faster than 1/16, a pulse sits at its share of the way between this step's swung time and the next step's swung time. At 1/32 the second pulse lands halfway between the two swung steps, so a swung step pair keeps its long-short feel inside the arp. This is the interpolation [sequencing.md](../../../../docs/module-guides/sequencing.md) asks for.
+- **The end of the window.** The window ends a short release guard before the next step's swung time, and earlier still when the next trig is microtimed early, so the last note releases before the next one starts. The guard moves the later pulses of a step slightly toward its start.
+- **Slower divisions.** At 1/8 and slower, a pulse starts at its interpolated position in the step where it falls, and its gate ends by the next step.
+- **REPT** splits each pulse's time into equal parts, one per hit.
+- **A microtimed source trig** moves the start of its step's window with it. The pulses are spread from the shifted start to the next step's swung time.
+- **GROOVE.** **TIME** moves each pulse by a percentage of the shorter gap to its neighbouring pulse positions, which already include swing. A STYLE moves a pulse by at most 16% of that gap at TIME 100, so Groove adds to the pattern's swing and never moves a pulse past its neighbour. At TIME 0 the pulses sit exactly on their swung positions. **ACCNT** changes velocity only.
 
 
 ## Step locks
