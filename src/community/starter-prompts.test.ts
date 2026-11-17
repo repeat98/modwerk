@@ -231,8 +231,11 @@ describe('start developing page', () => {
     // The board stays collapsed, below the help links, so Discord is not pushed down the page.
     expect(html.indexOf('Join Discord')).toBeLessThan(html.indexOf('<details class="agent-board">'))
     expect(html.indexOf('Set up your computer')).toBeLessThan(html.indexOf('Describe your idea'))
-    expect(html.indexOf('Describe your idea')).toBeLessThan(html.indexOf('Your first release'))
-    expect(html.indexOf('Your first release')).toBeLessThan(html.indexOf('Commands in your agent'))
+    expect(html.indexOf('Describe your idea')).toBeLessThan(html.indexOf('Build, test, release'))
+    expect(html.indexOf('Build, test, release')).toBeLessThan(html.indexOf('Commands in your agent'))
+    // The steps follow the skill: plan, build, test on the unit, pull request, live.
+    expect(html.indexOf('Agree the plan')).toBeLessThan(html.indexOf('Test on your unit'))
+    expect(html.indexOf('Test on your unit')).toBeLessThan(html.indexOf('Open the pull request'))
   })
 
   it('preselects the machine an overview link names', () => {
@@ -244,9 +247,10 @@ describe('start developing page', () => {
   it.each(['miniverb', 'digitakt-digihealth', 'digitone-digihealth'])('prefills the correct update path for %s', moduleId => {
     const html = renderToStaticMarkup(createElement(SubmissionPage, { moduleId }))
     expect(html).toContain('Describe the change')
-    expect(html).toContain('Fixes and updates')
+    expect(html).toContain('Fix, test, release')
     expect(html).toContain('Module ID or source link')
     expect(html).not.toContain('npm run module:new')
-    expect(html).toContain('Verify live, then resolve')
+    expect(html).toContain('Test on your unit')
+    expect(html).toContain('then close the report')
   })
 })

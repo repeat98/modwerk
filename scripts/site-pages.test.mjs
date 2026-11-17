@@ -18,6 +18,7 @@ it('gives the page its own title, description, canonical URL and card', () => {
   expect(page.match(/rel="canonical"/g)).toHaveLength(1)
   expect(page).toContain('<h1>Start developing</h1>')
   expect(page).toContain('The owner reviews every first release.')
+  expect(page).toContain('Test on your unit')
   expect(sitePageHtml(html, SITE_PAGES[0], 'x.jpg', '/octamod/')).toContain('<base href="/octamod/" />')
 })
 
