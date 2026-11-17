@@ -71,8 +71,16 @@ These stumbling blocks have each cost a contributor and the owner a repair round
 
 1. **Prepare:** fork Modwerk, branch from current `main`, and build or port the module. Keep source pins, credits and licences; prepare the manifest/version/catalog, README/tutorial, release notes, real UI captures and matching packages.
 2. **Verify:** follow the machine/category guide, regenerate metadata, run `module:doctor` and `npm run check -- --base origin/main`, and qualify the exact private source/build. Give the contributor concrete hardware steps and record only their actual results. Test different simultaneous instances and track/FX-slot/DSP-core isolation and Part/project/physical-reboot persistence where applicable. Emulator project loading is not physical reboot evidence.
-3. **Submit:** commit, push and open a Modwerk PR. Follow checks and fix failures. Every new module currently needs owner review; the first approved release registers its GitHub author for later scoped updates. Website sign-in or claiming does not grant release authority.
-4. **Publish and verify:** after owner merge, follow the exact commit's site/API deployments. Confirm the live version, save a compatible firmware download, and verify its version/source identity and deterministic hash where applicable. A push, merge or ready/download-requested state alone does not prove a saved release download.
+3. **Submit:** commit, push and open a Modwerk PR. Follow checks and fix failures. A maintainer of its machine or the owner reviews every new module ([who](#who-reviews-a-first-release)); the first approved release registers its GitHub author for later scoped updates. Website sign-in or claiming does not grant release authority.
+4. **Publish and verify:** after the merge, follow the exact commit's site/API deployments. Confirm the live version, save a compatible firmware download, and verify its version/source identity and deterministic hash where applicable. A push, merge or ready/download-requested state alone does not prove a saved release download.
+
+### Who reviews a first release
+
+A machine's maintainers review and merge the first releases of its modules; the owner can always do so too. They are the GitHub logins under `maintainers` in `sdk/machines/<id>/machine.json`. Only the owner names or removes one, in a pull request of the owner's own, and gives them the repository access a merge needs; a machine without maintainers stays with the owner. A maintainer reviews by the [pull request worker's checklist](MAINTENANCE.md#pull-request-worker), never reviews their own module, and hands these to the owner instead of deciding them:
+
+- anything beyond the module's own folder and catalogue rows: the base, a hook, the shared SDK, a builder, a check, another machine;
+- any question under the [modding guidelines](../MODDING_GUIDELINES.md): a port's permission or licence, a source that is unclear, a likeness to a maker's product;
+- a waiver: `sdk/approvals/<id>-build-approval.json` stays the owner's to write.
 
 Keep firmware, extracted stock bytes/tables, dumps, projects/cards and complete built images private. Submit only original or properly licensed source/media and approved stock-free module packages. Keep the previous approved download available while a new release is pending or failed.
 

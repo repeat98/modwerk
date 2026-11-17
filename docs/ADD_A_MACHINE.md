@@ -42,6 +42,7 @@ A machine Modwerk does not list yet starts with `npm run machine:new -- <id> --n
 - Set a step to `started` or `done` and add a `research` entry crediting the public work it relies on (repository, notes, author).
 - Move `status` from `open` to `research` once any step has started.
 - Run `npm run machines:check`; the contract rejects inconsistent claims.
+- Leave `maintainers` alone: only the owner names who reviews a machine's first releases ([who](DEVELOPER_WORKFLOW.md#who-reviews-a-first-release)).
 
 A pull request that marks steps done includes the evidence in its description: links to the public writer, emulator or boot reports. It never includes firmware.
 

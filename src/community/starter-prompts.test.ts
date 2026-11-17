@@ -70,7 +70,9 @@ describe('starter prompts', () => {
     expect(create).toContain('never patches a stock site another module or the base patches')
     expect(create).toContain('on their unit (recommended')
     expect(create).toContain('#your-development-setup')
-    expect(create).toContain('the owner reviews its first release')
+    expect(create).toContain('a maintainer of its machine or the owner reviews its first release')
+    expect(readFileSync('docs/DEVELOPER_WORKFLOW.md', 'utf8')).toContain('### Who reviews a first release')
+    expect(readFileSync('docs/DEVELOPER_WORKFLOW.md', 'utf8')).toContain('Only the owner names or removes one')
     expect(create).toContain('verify the live version and a saved download')
     for (const skill of [create, update]) expect(skill).toMatch(/Record only (what was observed|the results they report)/)
     expect(update).toContain('ask-the-author-first')
@@ -236,6 +238,8 @@ describe('start developing page', () => {
     // The steps follow the skill: plan, build, test on the unit, pull request, live.
     expect(html.indexOf('Agree the plan')).toBeLessThan(html.indexOf('Test on your unit'))
     expect(html.indexOf('Test on your unit')).toBeLessThan(html.indexOf('Open the pull request'))
+    expect(html.indexOf('Open the pull request')).toBeLessThan(html.indexOf('Community review'))
+    expect(html.indexOf('Community review')).toBeLessThan(html.indexOf('Check it live'))
   })
 
   it('preselects the machine an overview link names', () => {

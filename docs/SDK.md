@@ -109,7 +109,7 @@ The Octatrack keeps its stricter qualification contract ([MODULE_QUALIFICATION.m
 
 Every new module, update, document and media change is a pull request. Every change to a module's code needs a strictly greater semantic version; documentation and media edits do not. A merged pull request approves that exact version. See [CONTRIBUTING](../CONTRIBUTING.md).
 
-Maintainers listed in a module's manifest are its contacts for updates, reviews of changes to their folder and bug reports. The owner reviews and merges every pull request; there are no automatic merges for now.
+Maintainers listed in a module's manifest are its contacts for updates, reviews of changes to their folder and bug reports. A machine's maintainers or the owner review a module's first release, and registered authors release their own updates ([who reviews](DEVELOPER_WORKFLOW.md#who-reviews-a-first-release)).
 
 ## Licences
 
