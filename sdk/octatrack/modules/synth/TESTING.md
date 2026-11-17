@@ -1,3 +1,21 @@
+# FM Synth 0.1.4: its CPU price
+
+0.1.4 differs from 0.1.3 only in the price byte of its generated machine descriptor: `"cpuPrice": 6` in FM Synth's entry of `sdk/machines/octatrack/module-adapters/machine-ports.json`, which `machine_ports.py` writes as `reserved[0]` of the `mw_machine` descriptor, and the same 6 as `resources.cpuPrice` in `octamod.module.json`. No code changed: in the module's folder only `release-notes.json`, the manifest and Markdown differ from 0.1.3. The 0.1.3 report follows unchanged below.
+
+## The price (measured on 0.1.3, 17 November 2026)
+
+Measured by the owner on his MKII, development twin `945cc074` of base 0.7.7, 17 November 2026, with FM Synth 0.1.3 (whose code 0.1.4 is), SYNTIZ, Amiga and POLY8 installed: one FM Synth track at its default sound with a trig on every step of a 16-step pattern, seven empty STATIC tracks, `npm run device -- do 'PLAY w2500 guard w6000 guard STOP'`, the second `guard` line's "in the frame interrupt". 36.8 % with the trigs against 32.2 % without them: 4.6 points, priced 6 with room for longer notes (docs/MODULE_PERFORMANCE.md, "A machine that renders on the ColdFire names its CPU price").
+
+What it changes, reasoned from the base's source (`machine_registry.c`), not tried with 0.1.4: the base admits a Part's machines against a CPU budget of 45 % of a frame and charges a machine that names no price 12. So 0.1.3 fitted three FM Synth tracks a Part and the fourth was refused with CPU FULL; at 6, seven fit (42) and the eighth is refused. The budget came with #1482 (12 November 2026), so every base from 0.7 on has it; a base without it ignores the price. The base's other check, which refuses a further machine while the CPU meter plus ten times its price reaches 85 %, still applies.
+
+## The package
+
+`7d59f809…` (30,498 bytes, 24 sites, 39 stock copies, as 0.1.3's `19e7e08c…`). `cmp` finds one byte different from 0.1.3's package: offset 26,913 (0x6921), 0 to 6, `reserved[0]` of the `mw_machine` descriptor, between its source kind byte and its label "FM SYNTH". Its recipe was recaptured from the stock OS 1.40C (`build.py --octabam-machine synth --capture-stock-recipe`): the same 39 copies, only the image hash moved; every machine recipe's pin of `machine-ports.json` moved with it. `octatrack:module-packages -- --check`: every package identical.
+
+Unit trial of the 0.1.4 package: PENDING (filled in by the main session)
+
+**Not tested on 0.1.4:** everything else: seven FM Synth tracks admitted and the eighth refused, the CPU FULL box, playback and sound, chords, glide, MIDI, Part and project reload, a power cycle, MKI. 0.1.3's untested list below stands.
+
 # FM Synth 0.1.3: what it costs on no track
 
 0.1.3 makes FM Synth cheaper on the CPU, above all while it is installed and on no track. Sound and controls are meant to be unchanged; one stock bug FM Synth caused is fixed (below). It changes `upstream/synth/poly.s`, the LFO site's kind in `upstream/synth/manifest.py` and the machine port (no RENDER_FLEX); no base change. The 0.1.2 report follows unchanged below.

@@ -1,17 +1,17 @@
 {
   "kind": "owner-approved-update",
   "id": "synth",
-  "version": "0.1.3-experimental",
-  "sourceSha256": "ef20673449356633d7bb5268805c25f25f910980fece218e26a4d72b77185937",
+  "version": "0.1.4-experimental",
+  "sourceSha256": "c606d4bf4be6740d6a13ae521bb218e2feca8d98546d11baf04bef7562fef8e3",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-11-14",
+  "approvedOn": "2026-11-17",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
     "complete-memory-bounds",
     "release-documentation"
   ],
-  "ownerStatement": "Approved by repeat98 on 14 Nov 2026 in the session that measured the modules' cost at rest: \"yes\" to approving FM Synth 0.1.3-experimental after reading its measured cost, the unit recording and what stays untested. The author, Tim Hastie, gave the owner his OK for optimizations verbally (owner's word, 13 and 14 Nov 2026).",
-  "reason": "0.1.3 changes only how FM Synth's frame-interrupt hooks treat tracks that need no engine: no RENDER_FLEX, the tracks the engine must render worked out once a frame, the slot copy and the LFO depth site testing one bit inline; it also fixes track 1's LFO 3, which wrote into FM Synth's clock. On the owner's MKII (development twin 0277c5c5 of main, 14 Nov 2026, four FLEX tracks playing at 126 BPM, FM Synth on no track) it costs +3.2 points of the frame interrupt at rest against +19.0 for 0.1.2 and +15.6 for the first 0.1.3 source. One FM Synth track alone on T1, recorded over USB, matches 0.1.2 as closely as two takes of 0.1.2 match each other (correlation 0.9999); a FLEX track beside it is sample-identical. The UI and pages are 0.1.2's, so its captures are retained; an emulator probe matches fm_is_native, po_lfo3_depth and the dispatch rules. Waived for this exact source: chords, glide, MIDI, legacy FMSYNTH samples, GLIDE on sample tracks and track 1's LFO 3 on a unit, listening by ear, Part/project reload and power cycles, the card build on a unit, chip worst-case cycles and complete memory bounds.",
+  "ownerStatement": "PENDING OWNER CONFIRMATION: prepared on 17 Nov 2026 by the session that made the 0.1.4 release; repeat98 has not yet approved FM Synth 0.1.4-experimental. Replace this line with the owner's own words, and approvedOn with the day he gives them, before merge.",
+  "reason": "0.1.4 changes only FM Synth's CPU price: \"cpuPrice\": 6 in its machine-ports.json entry, which machine_ports.py writes as reserved[0] of the generated mw_machine descriptor, and resources.cpuPrice in octamod.module.json. The module's code is 0.1.3's; in its folder only release-notes.json, the manifest and Markdown changed, and the USB package differs from 0.1.3's in that one byte. The price is what one playing track adds to the frame interrupt, measured with 0.1.3 on the owner's MKII (development twin 945cc074 of base 0.7.7, 17 Nov 2026): 36.8 % with a trig on every step of one FM Synth track against 32.2 % without, 4.6 points, priced 6. The base's CPU budget (45 % a Part) then admits seven FM Synth tracks where its default price of 12 admitted three. The UI and pages are 0.1.2's, so its captures are retained. Waived for this exact source, as for 0.1.3: chords, glide, MIDI, legacy FMSYNTH samples, GLIDE on sample tracks and track 1's LFO 3 on a unit, listening by ear, Part/project reload and power cycles, the card build on a unit, chip worst-case cycles and complete memory bounds.",
   "retainedUiVersion": "0.1.2-experimental"
 }

@@ -206,12 +206,12 @@
       "sites": 24,
       "copies": 39,
       "fills": 0,
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "name": "FM Synth",
       "module": "e8c3e4fa",
       "bytes": 30498,
-      "sha256": "19e7e08c864de3ef4007aff3f6d6b33965844fe95df153e7bce3d67206295efd",
-      "path": "octatrack-modules/synth/0.1.3-experimental.mwrm"
+      "sha256": "7d59f80928cee4690781039ae521c15e5d2bbedf70b0e88616c7bcf2bcecffc3",
+      "path": "octatrack-modules/synth/0.1.4-experimental.mwrm"
     },
     {
       "id": "quantizer",
