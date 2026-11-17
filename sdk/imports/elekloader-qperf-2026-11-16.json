@@ -1,22 +1,22 @@
 {
   "schema": 1,
   "kind": "elekloader-catalog",
-  "revision": "qperf-2026-11-05",
+  "revision": "qperf-2026-11-16",
   "about": "Modwerk source-only qperf package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/qperf.",
   "cores": [],
   "mods": [
     {
-      "file": "qperf-0.2.0-experimental-os1.74.elemod",
-      "sha256": "37ea0357a38af507a272e31de142c6adbf46f1fb1a2a966d7e731fec2f30df11",
+      "file": "qperf-0.2.1-experimental-os1.74.elemod",
+      "sha256": "98127e16dc0d1c65cb78344bb9183441d346a3a9626d6d0c0d2b1467da73f0c0",
       "id": "qperf",
-      "version": "0.2.0-experimental",
+      "version": "0.2.1-experimental",
       "device": "analog-rytm-mk2",
       "os": "1.74",
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "59065954a15c8e9ab404248d265f4b308af494dc",
-        "path": "sdk/imports/packages/qperf/qperf-0.2.0-experimental-os1.74.elemod"
+        "commit": "5eeb9ab15dbd33f83107e5fe3bb553d5d2ef072f",
+        "path": "sdk/imports/packages/qperf/qperf-0.2.1-experimental-os1.74.elemod"
       },
       "title": "QPERF",
       "requires": [
@@ -28,7 +28,7 @@
       "category": "Performance",
       "author": "npp1993",
       "needs_core": "0.7",
-      "on_unit": "The author's Analog Rytm MKII on OS 1.74 ran this source in a 16-module combined image (LF01, 6 November 2026: the QPER knob, pad locks and the quick perf rec work, as reported); QL19 ran the code before the idle early return alone, and QT01 to QT08 earlier 0.2.0 builds, as TESTING.md records. The package file itself has not been loaded from the site."
+      "on_unit": "This package's source ran alone on the author's Analog Rytm MKII on OS 1.74 from RAM in a test image with the development base (QR01); the tutorial passed, as the author reports."
     }
   ]
 }
