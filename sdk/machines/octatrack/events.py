@@ -403,7 +403,11 @@ def markdown(reg):
            'every hook whose kind says `rests`, so the frame interrupt never enters its code there; its other hooks\n'
            '(keys, pages, tables, project files) stay, so its setup still works. The base asks each module on its own\n'
            'from the UI tick and puts it back, in its (order, module id) place, at the first nonzero answer. A module\n'
-           'that does not subscribe never rests. Installing, replacing or removing a module wakes its position.\n\n'
+           'that does not subscribe never rests. Installing, replacing or removing a module wakes its position.\n'
+           'A module can let its own detours rest too: `"rests": ["0x…"]` in its runtime.json names them, and while it\n'
+           'answers 0 the base puts stock\'s bytes back there, then its patch at the next nonzero answer (never under a\n'
+           'paused task\'s resume address). Stock runs those sites unpatched until the next UI tick wakes the module, so\n'
+           'name only detours whose stock path is safe with the module\'s settings present for that tick.\n\n'
            'The names `events.json`, `events.py`, `modwerk_events.h` and runtime.json\'s `"event"` key stay until the\n'
            'next base build, which renames them; the base loads them by those paths.\n\n'
            '| hook | kind | site | when | prototype or record | result | order | context |\n|---|---|---|---|---|---|---|---|\n']

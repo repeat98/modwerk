@@ -250,7 +250,8 @@ static uintptr_t raise_of(uint32_t hook) { (void)hook; return 0; }
 static const uint8_t event_rests[RUNTIME_SITE_EVENTS] = RUNTIME_SITE_EVENT_RESTS;
 #define REST_WORDS ((RUNTIME_MODULES + 31u) / 32u)
 static uint32_t resting[REST_WORDS], asks[REST_WORDS];
-static int rests(unsigned e, unsigned i) { return event_rests[e - RUNTIME_EVENTS] && (resting[i / 32u] >> (i % 32u) & 1u); }
+static int is_resting(unsigned i) { return resting[i / 32u] >> (i % 32u) & 1u; }
+static int rests(unsigned e, unsigned i) { return event_rests[e - RUNTIME_EVENTS] && is_resting(i); }
 static void woken(unsigned position, const struct runtime_module *m)
 {
     uint32_t bit = 1u << (position % 32u);
@@ -262,6 +263,7 @@ static void woken(unsigned position, const struct runtime_module *m)
 static int rests(unsigned e, unsigned i) { (void)e; (void)i; return 0; }
 #endif
 static void woken(unsigned position, const struct runtime_module *m) { (void)position; (void)m; }
+static int is_resting(unsigned i) { (void)i; return 0; }
 #endif
 
 #ifdef MODWERK_CACHED_MODULES
@@ -511,11 +513,12 @@ static void code_write(volatile uint8_t *to, const uint8_t *from, uint32_t n)
     }
     for (; j < n; ++j) to[j] = from[j];
 }
-static int holds(const struct runtime_module *m, int patched)
+/* Do m's sites hold its patches (patched) or stock's bytes? A module that rests keeps stock's in its resting sites. */
+static int holds(const struct runtime_module *m, int patched, int resting)
 {
     for (uint32_t i = 0; m && i < m->sites; ++i) {
         const struct runtime_site *s = &m->site[i];
-        if (!code_equal(modwerk_machine_code(s->address), patched ? s->code : s->stock, s->length)) return 0;
+        if (!code_equal(modwerk_machine_code(s->address), patched && !(resting && s->rests) ? s->code : s->stock, s->length)) return 0;
     }
     return 1;
 }
@@ -544,7 +547,7 @@ unsigned modwerk_runtime_intact(void)
     uint32_t lock = modwerk_machine_lock();
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) { /* masked a module at a time: many modules, short spans */
         uint32_t mask = modwerk_machine_mask();
-        n += live[i] && holds(live[i], 1);
+        n += live[i] && holds(live[i], 1, is_resting(i));
         modwerk_machine_unmask(mask);
     }
     modwerk_machine_unlock(lock);
@@ -557,7 +560,7 @@ uint32_t modwerk_runtime_broken(void)
     uint32_t lock = modwerk_machine_lock();
     for (unsigned i = 0; !id && i < RUNTIME_MODULES; ++i) {
         uint32_t mask = modwerk_machine_mask();
-        if (live[i] && !holds(live[i], 1)) id = live[i]->id;
+        if (live[i] && !holds(live[i], 1, is_resting(i))) id = live[i]->id;
         modwerk_machine_unmask(mask);
     }
     modwerk_machine_unlock(lock);
@@ -591,6 +594,39 @@ static void put(const struct runtime_module *m, int patched)
         if (!patched) modwerk_machine_site_restored(s->address, s->length, s->code, s->stock);
     }
 }
+#if RUNTIME_SITE_EVENTS && defined(RUNTIME_SITE_EVENT_IN_USE)
+/* Masked: m's resting sites to stock's bytes (it rests) or back to its patches (it wakes). */
+static void put_rests(const struct runtime_module *m, int resting)
+{
+    for (uint32_t i = 0; m && i < m->sites; ++i) {
+        const struct runtime_site *s = &m->site[i];
+        if (!s->rests) continue;
+        modwerk_machine_flush_data(s->address, s->length);
+        code_write(modwerk_machine_code(s->address), resting ? s->stock : s->code, s->length);
+        if (resting) modwerk_machine_site_restored(s->address, s->length, s->code, s->stock);
+    }
+}
+static int has_rests(const struct runtime_module *m)
+{
+    for (uint32_t i = 0; m && i < m->sites; ++i) if (m->site[i].rests) return 1;
+    return 0;
+}
+/* Locked: could a paused task resume inside one of m's resting sites, past its first byte? Waking writes the patch
+ * over stock's instructions there, so it would run the middle of one. Unknown counts as yes. */
+static int rests_in_flight(const struct runtime_module *m, const struct runtime_context *context)
+{
+    struct runtime_span span[RUNTIME_PAUSED];
+    unsigned n = modwerk_machine_paused(span, RUNTIME_PAUSED, context);
+    if (n > RUNTIME_PAUSED) return 1;
+    for (unsigned i = 0; i < n; ++i)
+        for (const uint8_t *p = span[i].from; p + 4 <= span[i].to; p += 2) {
+            uint32_t v = be32(p);
+            for (uint32_t k = 0; k < m->sites; ++k)
+                if (m->site[k].rests && v > m->site[k].address && v < m->site[k].address + m->site[k].length) return 1;
+        }
+    return 0;
+}
+#endif
 static const struct runtime_dsp no_dsp;
 static const struct runtime_dsp *dsp_of(const struct runtime_module *m) { return m ? &m->dsp : &no_dsp; }
 #if RUNTIME_SITE_EVENTS
@@ -641,7 +677,7 @@ static int switch_locked(unsigned position, struct runtime_module *to, const str
     /* Only the writes run masked. The checks before and after them only read code, which the caller's lock keeps
      * this the only writer of: masked as well, a module with many sites held the frame interrupt past 200 µs (Play
      * Modes' 35, 229 µs) and could stop the DSPs (beta finding 46). */
-    if (ok) ok = holds(from, 1) && holds_stock_after(from, to);
+    if (ok) ok = holds(from, 1, is_resting(position)) && holds_stock_after(from, to);
     if (ok) {
         uint32_t mask = modwerk_machine_mask(); /* the machine's real-time interrupts may run these bytes */
         put(from, 0);
@@ -649,7 +685,7 @@ static int switch_locked(unsigned position, struct runtime_module *to, const str
         modwerk_machine_invalidate_code();
         if (rows) events_commit(), modwerk_machine_tables_changed();
         modwerk_machine_unmask(mask);
-        ok = holds(to, 1);
+        ok = holds(to, 1, 0);
         if (!ok) { /* a write that did not land: put back the sites and the rows `from` had */
             mask = modwerk_machine_mask();
             put(to, 0);
@@ -714,14 +750,35 @@ static int __attribute__((used)) rest_poll_context(const struct runtime_context 
     if (!differs) return 0;
     uint32_t lock = modwerk_machine_lock();
     int ok = owner_epoch == epoch && !dispatching(context);
+    /* A module's resting sites change with its rows: each must hold what its present state says, and none may be
+     * woken under a paused task's resume address. */
+    for (unsigned i = 0; ok && i < RUNTIME_MODULES; ++i) {
+        const struct runtime_module *m = live[i];
+        int now = is_resting(i), to = want[i / 32u] >> (i % 32u) & 1u;
+        if (now != to && has_rests(m)) ok = holds(m, 1, now) && (to || !rests_in_flight(m, context));
+    }
     if (ok) {
-        for (unsigned w = 0; w < REST_WORDS; ++w) resting[w] = want[w];
+        uint32_t was[REST_WORDS];
+        for (unsigned w = 0; w < REST_WORDS; ++w) was[w] = resting[w], resting[w] = want[w];
         /* No position switches: every row from the live modules, which admission fitted in each event's room. */
         if ((ok = events_stage(RUNTIME_MODULES, 0))) {
             uint32_t mask = modwerk_machine_mask();
+            for (unsigned i = 0; i < RUNTIME_MODULES; ++i)
+                if ((was[i / 32u] ^ want[i / 32u]) >> (i % 32u) & 1u) put_rests(live[i], is_resting(i));
+            modwerk_machine_invalidate_code();
             events_commit(), modwerk_machine_tables_changed();
             modwerk_machine_unmask(mask);
-        }
+            for (unsigned i = 0; ok && i < RUNTIME_MODULES; ++i) ok = !live[i] || holds(live[i], 1, is_resting(i));
+            if (!ok) { /* a write that did not land: every changed position back as it was, sites and rows */
+                for (unsigned w = 0; w < REST_WORDS; ++w) resting[w] = was[w];
+                mask = modwerk_machine_mask();
+                for (unsigned i = 0; i < RUNTIME_MODULES; ++i)
+                    if ((was[i / 32u] ^ want[i / 32u]) >> (i % 32u) & 1u) put_rests(live[i], is_resting(i));
+                modwerk_machine_invalidate_code();
+                if (events_stage(RUNTIME_MODULES, 0)) events_commit(), modwerk_machine_tables_changed();
+                modwerk_machine_unmask(mask);
+            }
+        } else for (unsigned w = 0; w < REST_WORDS; ++w) resting[w] = was[w];
     }
     modwerk_machine_unlock(lock);
     return ok;
@@ -855,8 +912,14 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
      * may reach past the site, over an instruction the module returns to); relocations u8; the SHA-256. */
     for (uint32_t i = 0; i < sites; ++i) {
         if (left < 8u) return refuse(RUNTIME_MALFORMED);
-        uint32_t n = abi >= 7u ? p[4] : be16(p + 4), keep = abi >= 7u ? p[5] : 0u, checked = abi >= 7u ? p[6] : n,
+        uint32_t n = abi >= 7u ? p[4] & ~RUNTIME_SITE_RESTS & 0xffu : be16(p + 4), keep = abi >= 7u ? p[5] : 0u, checked = abi >= 7u ? p[6] : n,
                  r = abi >= 7u ? p[7] : be16(p + 6);
+#if RUNTIME_SITE_EVENTS && defined(RUNTIME_SITE_EVENT_IN_USE)
+        if (abi >= 7u && p[4] & RUNTIME_SITE_RESTS && hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] == RUNTIME_NONE)
+            return refuse(RUNTIME_MALFORMED); /* a site rests only with a module that says when it is in use */
+#else
+        if (abi >= 7u && p[4] & RUNTIME_SITE_RESTS) return refuse(RUNTIME_MALFORMED);
+#endif
         address[i] = be32(p); size[i] = n;
         if (!n || n > RUNTIME_SITE_BYTES || (address[i] | n) & 1u || !checked || checked > RUNTIME_SITE_BYTES || keep > n || keep > checked ||
             r > RUNTIME_SITE_RELOCATIONS || left < site_bytes(abi, n, r) || !modwerk_machine_patchable(address[i], n > checked ? n : checked))
@@ -1027,7 +1090,7 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
         p = record;
         for (uint32_t i = 0; i < sites; ++i) {
             uint32_t n = size[i], r = abi >= 7u ? p[7] : be16(p + 6), held = abi >= 7u ? MU_DIGEST_BYTES : n, keep = abi >= 7u ? p[5] : 0u;
-            site[i].address = address[i]; site[i].length = n;
+            site[i].address = address[i]; site[i].length = n; site[i].rests = (uint8_t)(abi >= 7u && p[4] & RUNTIME_SITE_RESTS);
             for (uint32_t j = 0; j < n; ++j) site[i].code[j] = p[8 + held + j];
             if (abi < 7u) for (uint32_t j = 0; j < n; ++j) site[i].stock[j] = p[8 + j];
             else if (!stock_of(slot, address[i], n, p[6], site[i].stock, p + 8)) return refuse(RUNTIME_STOCK);
@@ -1134,7 +1197,7 @@ int modwerk_runtime_journal_digest(uint8_t out[MU_DIGEST_BYTES])
            !o.module) return 0;
         /* Match the existing intact-site check: the stable lock prevents task
          * mutation, and only this module's short site spans mask frames. */
-        uint32_t mask=modwerk_machine_mask();int intact=holds(live[i],1);
+        uint32_t mask=modwerk_machine_mask();int intact=holds(live[i],1,is_resting(i));
         modwerk_machine_unmask(mask);if(!intact) return 0;
         ids[n]=o.module;
         for(unsigned k=0;k<MU_DIGEST_BYTES;++k) sha[MU_DIGEST_BYTES*n+k]=o.package_sha256[k];

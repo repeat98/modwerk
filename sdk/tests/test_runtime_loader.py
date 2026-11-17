@@ -197,6 +197,30 @@ spec.loader.exec_module(events)
 class SiteEventTests(unittest.TestCase):
     """The Octatrack's events at base-owned stock sites: registry, generated files, loader rows, builder."""
 
+    def test_a_site_rests_only_as_a_declared_detour_of_a_module_that_answers_ev_in_use(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / 'runtime.json'
+            sub = [{'event': 'ev_play_increment', 'fn': 'f', 'order': 50}]
+            for bad in ({'subscribe': sub, 'rests': ['0x4000406a']},                     # no ev_in_use subscription
+                        {'subscribe': sub + [{'event': 'ev_in_use', 'fn': 'u', 'order': 50}], 'rests': ['4000406a']},
+                        {'subscribe': sub + [{'event': 'ev_in_use', 'fn': 'u', 'order': 50}], 'rests': ['0x4000406a', '0x4000406A']}):
+                path.write_text(json.dumps(dict(schema=1, **bad)))
+                with self.subTest(bad), self.assertRaises(ValueError):
+                    build.runtime_declaration(temp)
+            path.write_text(json.dumps(dict(schema=1, subscribe=sub + [{'event': 'ev_in_use', 'fn': 'u', 'order': 50}],
+                                            rests=['0x4000406a'])))
+            self.assertEqual(build.runtime_declaration(temp)['rests'], ['0x4000406a'])
+        # The flag is bit 7 of the hashed site's length byte, and only there; the verifier reads the length without it.
+        digest = hashlib.sha256(b'\0' * 8).digest()
+        sites = [(0x4000406a, digest, b'\x4e\xf9\0\0\0\0\x4e\x71', [2], 0, 8, True), (0x4000409e, digest, b'\x4e\xf9\0\0\0\0\x4e\x71', [2], 0, 8)]
+        data = build.package(b'\x4e\x75\0\0', 0, [], [], sites, name='rests', hashed=True, title='RESTS', abi=8)
+        at = data.index(struct.pack('>I', 0x4000406a))
+        self.assertEqual(data[at + 4], 8 | build.REST_FLAG)
+        at = data.index(struct.pack('>I', 0x4000409e))
+        self.assertEqual(data[at + 4], 8)
+        with self.assertRaises(ValueError):
+            build.package(b'\x4e\x75\0\0', 0, [], [], [(0x4000406a, b'\0' * 8, b'\x4e\xf9\0\0\0\0\x4e\x71', [2], 0, 8, True)], name='x')
+
     def test_rows_refusals_and_rollback_on_the_host(self):
         cc = shutil.which('cc')
         if not cc:

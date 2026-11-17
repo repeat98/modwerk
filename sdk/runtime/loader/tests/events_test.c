@@ -119,6 +119,16 @@ static void copy8(uint32_t address, uint32_t length) /* image offset 8 must be z
     mu_sha256(original + (address - STOCK), length, p + n); n += 32;
 }
 static int install(void) { return b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0); }
+/* A module that answers ev_in_use (its handler at image offset 4), with one 8-byte site at `address`; `rests` flags it. */
+static void resting_site(uint32_t id, uint32_t address, int rests)
+{
+    uint32_t hooks[RUNTIME_HOOKS];
+    for (unsigned i = 0; i < RUNTIME_HOOKS; ++i) hooks[i] = RUNTIME_NONE;
+    hooks[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] = 50u << 24 | 4u;
+    pkg(id, hooks, RUNTIME_HOOKS, 1, 0);
+    unsigned at = n; site8(address, 8, 8);
+    if (rests) p[at + 4] |= RUNTIME_SITE_RESTS;
+}
 /* ev_in_use, answered for the module whose handler it is: idle[id] answers 0. Never under the lock or masked. */
 #define IN_USE (RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE)
 static uint8_t idle[256];
@@ -361,12 +371,43 @@ int main(void)
     idle[120] = 1; CHECK(modwerk_runtime_rest_poll() && row_is(0, (const uint32_t[]){150, 130}, 2) && row_is(1, (const uint32_t[]){150, 130}, 2));
     for (const uint32_t *id = (const uint32_t[]){120, 130, 150, 160, 0}; *id; ++id) CHECK(removal(*id));
     asked = 0; CHECK(!modwerk_runtime_rest_poll() && !asked);
+    /* A site that rests with its module (RUNTIME_SITE_RESTS): stock's bytes while the module answers ev_in_use 0, its
+     * patch again when it wakes. A module that never answers ev_in_use may not flag one. */
+    enum { AT = 0x1050u };
+    uint8_t bare[8]; memcpy(bare, stock + (AT - STOCK), 8);
+    pkg(170, none, RUNTIME_HOOKS, 1, 0); { unsigned at = n; site8(AT, 8, 8); p[at + 4] |= RUNTIME_SITE_RESTS; }
+    CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_MALFORMED && !memcmp(stock + (AT - STOCK), bare, 8));
+    resting_site(170, AT, 1); CHECK(install());
+    const struct runtime_module *r = live_id(170);
+    CHECK(r && r->site[0].rests && !memcmp(stock + (AT - STOCK), r->site[0].code, 8) && modwerk_runtime_intact() == 1);
+    idle[170] = 1; changed = tables_changed;
+    CHECK(modwerk_runtime_rest_poll() && !memcmp(stock + (AT - STOCK), bare, 8) && tables_changed == changed + 1u);
+    CHECK(modwerk_runtime_intact() == 1 && !modwerk_runtime_broken());   /* resting is not broken */
+    CHECK(!modwerk_runtime_rest_poll() && !memcmp(stock + (AT - STOCK), bare, 8));
+    /* A paused task that would resume inside the site past its first byte: the wake waits for the next poll. */
+    idle[170] = 0; put32(paused + 8, AT + 2u);
+    CHECK(!modwerk_runtime_rest_poll() && !memcmp(stock + (AT - STOCK), bare, 8));
+    put32(paused + 8, AT);                                               /* at its first byte: it may wake */
+    CHECK(modwerk_runtime_rest_poll() && !memcmp(stock + (AT - STOCK), r->site[0].code, 8));
+    put32(paused + 8, (uint32_t)(uintptr_t)modwerk_events_code_end);
+    /* Resting under a paused task is fine: stock's instructions start where the patch did. */
+    idle[170] = 1; put32(paused + 8, AT); CHECK(modwerk_runtime_rest_poll() && !memcmp(stock + (AT - STOCK), bare, 8));
+    put32(paused + 8, (uint32_t)(uintptr_t)modwerk_events_code_end);
+    /* A site that someone else wrote: the poll leaves it and the resting set as they are. */
+    idle[170] = 0; stock[AT - STOCK] ^= 1; CHECK(!modwerk_runtime_rest_poll()); stock[AT - STOCK] ^= 1;
+    CHECK(modwerk_runtime_rest_poll() && !memcmp(stock + (AT - STOCK), r->site[0].code, 8));
+    /* Removed while it rests: stock's bytes stay; the next module there starts patched and awake. */
+    idle[170] = 1; CHECK(modwerk_runtime_rest_poll() && removal(170) && !memcmp(stock + (AT - STOCK), bare, 8));
+    /* A site without the flag stays patched while its module rests out of the rows. */
+    idle[171] = 1; resting_site(171, AT, 0); CHECK(install() && !memcmp(stock + (AT - STOCK), live_id(171)->site[0].code, 8));
+    CHECK(modwerk_runtime_rest_poll() && !memcmp(stock + (AT - STOCK), live_id(171)->site[0].code, 8) && modwerk_runtime_intact() == 1);
+    CHECK(removal(171) && !memcmp(stock + (AT - STOCK), bare, 8));
     for (unsigned e = 0; e < RUNTIME_SITE_EVENTS; ++e) CHECK(row_is(e, 0, 0));
     CHECK(!modwerk_runtime_active() && modwerk_runtime_free(0) == RUNTIME_POOL_BYTES);
     CHECK(!memcmp(stock, original, sizeof stock) && !rows_written_unmasked && !masked && !locked);
     if (failures) { fprintf(stderr, "%u event checks failed\n", failures); return 1; }
     puts("Site events: refusals naming the event, ordered rows in every install order, removal, replacement and "
          "restore, two events at one site, the paused-dispatch fence, groups, journal commit/rollback, take and table rooms, owned"
-         " table sites, contributor marks, a raised event's entry slot and modules resting by their ev_in_use answers passed.");
+         " table sites, contributor marks, a raised event's entry slot, modules resting by their ev_in_use answers and their resting sites passed.");
     return 0;
 }

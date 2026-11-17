@@ -47,7 +47,10 @@ enum runtime_event { RUNTIME_TICK, RUNTIME_DRAW, RUNTIME_KEY, RUNTIME_ENC, RUNTI
 #define RUNTIME_HOOKS (RUNTIME_EVENTS + RUNTIME_SITE_EVENTS)
 #define RUNTIME_RAISE 255u /* a raised event's hook word with this order: the image offset of a zero 4-byte slot the
                             * loader fills with the base's entry for that event (modwerk_raise_<event>); not a handler */
-struct runtime_site { uint32_t address, length; uint8_t stock[RUNTIME_SITE_BYTES], code[RUNTIME_SITE_BYTES]; };
+/* ABI 7 site records: bit 7 of the length byte marks a site that rests with its module (HOOKS.md, ev_in_use): while
+ * the module answers ev_in_use 0 the site holds its stock bytes. Older bases read such a length as malformed. */
+#define RUNTIME_SITE_RESTS 0x80u
+struct runtime_site { uint32_t address, length; uint8_t stock[RUNTIME_SITE_BYTES], code[RUNTIME_SITE_BYTES], rests; };
 /* ABI 9: an X/Y span the module's DSP code reads or writes outside its own slot (README.md, "Base features and DSP
  * claims"). space 1 X, 2 Y; core 0 or 1 (on the Octatrack core 0 runs payload A, tracks 5-8); an address at or past
  * 0x30000 is in the window both cores see. access bit 0 read, bit 1 write. ABI 10, an engine's claims only: bit 2, its
