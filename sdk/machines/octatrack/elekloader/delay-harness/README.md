@@ -80,4 +80,6 @@ it proves bytes and order, never transfer timing. That is the unit's part.
   minutes; 54 FX2 picks in 10 minutes on random tracks while playing (DELAY, SPRING, DARK and PLATE REV, CHORUS,
   NONE; 19 of the DELAY picks fed for 2-5 s), every pick running within 120 ms, meter 38.6-41.5 %. No new stall or
   crash record in any of it, about 90 minutes after the boot.
+- Base 0.7.7 (this skip together with #1666's voice booking), twin `5412b595`, the same older project: 9 cycles in 3
+  minutes of opening and shutting the sends, 40.3-45.7 % open, 39.8-40.4 % shut, nothing new recorded.
 - Not yet run on a unit: a card build, a project whose tracks all sound.
