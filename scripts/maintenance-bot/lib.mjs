@@ -63,7 +63,7 @@ export async function readBoardTarget(kind, id) {
     return { kind: 'claim', id, number: 0, holder: claim?.holder ?? '', state: claim ? 'open' : 'closed' }
   }
   const thread = (await boardGet('/messages/' + id))?.message
-  return { kind: 'thread', id, number: 0, author: thread?.author ?? '', replies: thread?.replies?.length ?? 0, state: thread && !thread.endedAt ? 'open' : 'closed' }
+  return { kind: 'thread', id, number: 0, author: thread?.author ?? '', to: thread?.to ?? '', replies: thread?.replies?.length ?? 0, state: thread && !thread.endedAt ? 'open' : 'closed' }
 }
 
 /** Discord's REST API as TARS (docs/DISCORD_BOT.md). Null when the bot has no Discord token. */

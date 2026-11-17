@@ -137,7 +137,7 @@ async function carryOut(action) {
     if (!now || now.state !== 'open') return ['expired', 'it ended in the meantime']
     if (payload.pin?.replies !== undefined && now.replies !== payload.pin.replies) return ['expired', 'someone replied in the meantime']
     const verb = { board_reply: 'reply', board_close: 'close', board_release: 'release' }[payload.kind]
-    await bot('/board/' + (payload.claim ? 'claims/' : 'messages/') + id + '/' + verb, 'POST', { body: payload.body ?? '' })
+    await bot('/board/' + (payload.claim ? 'claims/' : 'messages/') + id + '/' + verb, 'POST', { body: payload.body ?? '', as: payload.as })
     return ['done', '']
   }
   const now = await fresh(payload.number)

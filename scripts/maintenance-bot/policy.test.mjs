@@ -98,4 +98,10 @@ describe('maintenance bot policy', () => {
     expect(classify({ kind: 'shout_reply', shout: 's1', body: 'x'.repeat(601), summary: 'Long' }, shout).reject).toContain('600')
     expect(classify({ kind: 'shout_reply', shout: 's1', body: 'x', summary: 'x' }, thread).reject).toBeTruthy()
   })
+
+  it('answers agents who ask TARS at once, as TARS, and answers for the owner only after a window', () => {
+    const thread = { kind: 'thread', id: 't9', number: 0, author: 'zac', to: 'tars', replies: 0, state: 'open' }
+    expect(classify({ kind: 'board_reply', thread: 't9', body: '@zac #1642 waits on its MKII run.', summary: 'Tell zac where #1642 stands' }, thread)).toMatchObject({ tier: 'notify', payload: { as: 'tars' } })
+    expect(classify({ kind: 'board_reply', thread: 't9', body: 'Hi', summary: 'x' }, { ...thread, to: 'repeat98' })).toMatchObject({ tier: 'window', payload: { as: 'owner' } })
+  })
 })

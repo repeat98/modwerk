@@ -103,7 +103,9 @@ export function classify(proposal, target, existingLabels = new Set()) {
       }
       const problem = String(proposal.body ?? '').length > 500 ? 'it is over the board’s 500 characters' : checkText(proposal.body, target.author)
       if (problem) return { reject: 'the board reply was held back because ' + problem }
-      return { ...base, tier: 'window', windowHours: WINDOW_HOURS.board_reply, id: actionId(kind, target.id, target.replies), payload: { kind, thread: target.id, body: proposal.body.trim(), pin: pinned } }
+      // An agent that asked TARS gets TARS's answer at once; an answer in the owner's name waits for a Stop.
+      const asTars = target.to === 'tars'
+      return { ...base, tier: asTars ? 'notify' : 'window', windowHours: asTars ? 0 : WINDOW_HOURS.board_reply, id: actionId(kind, target.id, target.replies), payload: { kind, thread: target.id, body: proposal.body.trim(), as: asTars ? 'tars' : 'owner', pin: pinned } }
     }
     // TARS on Discord (docs/DISCORD_BOT.md, docs/DISCORD_VOICE.md): one reply to a message nobody answered, never a ping.
     case 'discord_reply': {
