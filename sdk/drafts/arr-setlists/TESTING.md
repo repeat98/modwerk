@@ -61,3 +61,13 @@ arrangement, NO left the list.
 
 Not measured. A switch runs in stock's card task inside stock's own job; the UI does nothing a frame but draw the label
 in ARR > CHANGE.
+
+### Book 2 a copy of book 1 (found on the unit, 18 November 2026)
+
+After the first session book 2 held a copy of book 1, and clean runs on books 3 and 4 could not make another. The
+session's order fits one cause: the kept build was on book 2, my diagnostic trial replaced it and switched to book 1,
+the rollback brought the kept build back with its memory still saying book 2 over book 1's arrangements, and its next
+switch saved them as book 2. Fixed: the record carries a serial each copy writes, and on install a copy trusts its
+own memory only while the serial is still its own; otherwise it rereads the record and checks it against the
+arrangements. `verify.py` (52 checks) replays that order; against the old logic it fails, writing book 1's songs into
+arr09. On the unit: not yet.

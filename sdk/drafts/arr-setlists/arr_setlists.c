@@ -36,7 +36,7 @@
 #define BLOCK 5652u                  /* one arrangement in battery RAM: a 20-byte header, 256 rows of 22 bytes */
 #define WORKING 0x10000004u          /* the 8 working blocks, then the 8 blocks ARR SAVE keeps, then 8 flags */
 #define CHANGED 0x1001614cu          /* one bit a slot: changed since written */
-#define RECORD 0x100f8f10u           /* the module's battery-RAM record (battery-ram.json): magic, book, sum */
+#define RECORD 0x100f8f10u           /* the module's battery-RAM record (battery-ram.json): magic, book, backup, sum, serial */
 #define CHANGE_WINDOW 0x400c0b40u    /* ARR > CHANGE's window; 0 while closed */
 #define PLAYING 0x800065b8u          /* the transport */
 
@@ -90,6 +90,7 @@ struct as_state {
     uint8_t failed;          /* the card task could not finish a switch: the UI task says so */
     uint8_t backup;          /* arr01.bak .. arr08.bak hold book 1 as it was left */
     uint8_t ready;           /* the battery record was read since install */
+    uint32_t seq;            /* the serial this copy last wrote into the record: another one there means another build ran */
     uint8_t damaged;         /* a file of the book in the slots did not read: write back only what is edited */
     uint8_t redraw;          /* a switch finished: the UI task chooses the book's arrangement and redraws the list */
     uint8_t last[BOOKS];     /* the arrangement last chosen in each book, this session (0 = arrangement 1) */
@@ -104,6 +105,9 @@ static struct as_state *volatile st_at = &st;
 
 #ifdef AS_HOST
 void as_host_reinstall(void) { st_at->magic = 0; } /* a fresh install: the module's memory is new */
+static struct as_state saved_st;
+void as_host_keep_memory(void) { saved_st = st; }     /* another build runs a trial over this one ... */
+void as_host_back_memory(void) { st = saved_st; }     /* ... and this one comes back with its memory as it was */
 #endif
 
 static struct as_state *ready(void)
@@ -198,6 +202,8 @@ static uint32_t slots_sum(void)
 
 static void remember(struct as_state *s)
 {
+    s->seq = rd32(RECORD + 12) + 1u;
+    wr32(RECORD + 12, s->seq);
     wr32(RECORD, REC_MAGIC);
     wr8(RECORD + 4, s->book);
     wr8(RECORD + 5, s->backup);
@@ -343,11 +349,14 @@ unsigned as_project_reloaded(void)
     return 0;
 }
 
-/* Installed (or the set changed): which book do the slots hold? The record's, when the slots still match it. */
+/* Installed (or the set changed): which book do the slots hold? This copy's own memory, when the record still carries
+ * the serial it last wrote (nothing else ran since); otherwise the record's, when the slots still match it. A build
+ * whose memory survived another build's trial would otherwise trust a book the slots no longer hold, and its next
+ * switch would save one book's arrangements as another's (the developer's MKI, 18 November 2026). */
 unsigned as_modules_ready(void)
 {
     struct as_state *s = ready();
-    if (s->ready) return 0;
+    if (s->ready && rd32(RECORD) == REC_MAGIC && rd32(RECORD + 12) == s->seq) return 0;
     s->ready = 1;
     if (rd32(RECORD) == REC_MAGIC && rd8(RECORD + 4) < BOOKS && rd32(RECORD + 8) == slots_sum()) {
         s->book = (uint8_t)rd8(RECORD + 4);

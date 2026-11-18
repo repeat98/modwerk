@@ -18,6 +18,8 @@ unsigned as_project_stored(void);
 unsigned as_project_reloaded(void);
 unsigned as_modules_ready(void);
 void as_host_reinstall(void);
+void as_host_keep_memory(void);
+void as_host_back_memory(void);
 
 #define LEFT 0x34
 #define RIGHT 0x21
@@ -248,6 +250,22 @@ int main(void)
 
     as_project_load(); mark(0x10); as_project_loaded();
     check("a project load: book 1", book() == 0);
+
+    /* a kept build on book 2; a trial of another build switches to book 1; the kept build comes back with its memory */
+    tap(RIGHT); job();
+    check("the kept build on book 2", book() == 1 && marked(0x20));
+    as_host_keep_memory();
+    as_host_reinstall(); as_modules_ready();       /* the trial build */
+    check("the trial build sees book 2", book() == 1);
+    tap(LEFT); job();
+    check("and switches to book 1", book() == 0 && marked(0x10));
+    as_host_back_memory(); as_modules_ready();     /* rolled back: the kept build, its memory saying book 2 */
+    check("the kept build does not trust its old memory: book 1", book() == 0);
+    w = writes;
+    cs1[CHG] = 1; job();
+    check("so a write goes to arr01-08, not book 1's songs into arr09-arr16", stock_writes > 0 && find("/SET/PROJ/arr09.work")->work[50] == (uint8_t)(0x20 + (W(0) + 50) % 7));
+    as_modules_ready();
+    check("with nothing else run since, its own memory stands", book() == 0);
 
     /* SAVE PROJECT and RELOAD PROJECT */
     tap(RIGHT); job();
