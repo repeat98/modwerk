@@ -216,6 +216,10 @@ and framebuffer data are removed by the script.
   ninth of 24 words a frame).
 - Without `--dsp` a session runs about ten times faster, for screens only (the firmware then shows DSP LOAD
   FAILED), and a package that carries a DSP engine (Analog BD) is refused at verify with loader refusal 3. Card samples do not play faithfully under the port, so compare levels against a sample on a unit.
+- A USB trial needs `--dsp --dsp-rt`, or no `--dsp` at all: under plain `--dsp` the session runs slower than real time and
+  `try` stops at "hello was not confirmed … Upload acknowledgement timed out" (Arr Rows' draft, 17 November 2026).
+- On macOS a Unix socket path is limited to 104 characters: with a longer `--usb-host` path (a scratch directory's
+  often is) the emulator logs "cannot listen" and exits. Put the socket in `/tmp`.
 
 ### Capturing the base's own screens
 
@@ -226,6 +230,11 @@ Capture those screens from a development twin (`build_core.py` with the release 
 and `pace on`: `npm run device -- do 'PROJ w500 … png:FILE' --emulator --socket SOCK`, or the emulator's `peek` of the
 `screen` symbol (dev.c's composed frame) while `npm run device -- boot DIR` runs, which shows the real BASE UPDATE screen.
 The startup's last frame comes from `scripts/verify-startup-base.py --png`.
+
+A module's own `module_draw` overlay (marks drawn over a stock page) is missed the same way. Without a development twin,
+rebuild the screen from what the panel link receives: after each `run`, send `tx` and feed its bytes to Octabam's
+`tools/panel/panel_link.py` (`PanelLink.feed`), then save `render_png(scale=6, dark=24, light=240)`, the documentation
+palette. Say so in `capture.json`'s method, as Arr Rows' draft does.
 
 ## Rights and release review
 
@@ -330,7 +339,8 @@ plan; keep it in `capture.json` with the PNG hashes and the built `.syx` hash.
   Send FX's boot plan lost its NO presses
   ([repeat98/modwerk#878](https://github.com/repeat98/modwerk/pull/878)), and a
   FLTR press at 11900M with `--every 100M` looked like a build that failed
-  only past a certain size. The pinned revision runs such an event a few
+  only past a certain size. A dropped key press logs `no key named "SMPL" on
+  this machine` for a key the Rytm has. The pinned revision runs such an event a few
   instructions late instead; plans still place events 3M off the boundaries,
   so they replay on older revisions too.
 - Keep key presses short. From rytm-emu `e914f46` the PIT divides the bus

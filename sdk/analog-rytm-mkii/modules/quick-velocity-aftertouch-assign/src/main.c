@@ -42,6 +42,12 @@
 #include <stdint.h>
 #include "ar2-1.74.h"
 
+// QMA_UI marks functions that run only in the UI task (keys, knobs, screen, parameter
+// text, tick housekeeping), never in the audio block. cold builds them for size, out of the hot
+// code, so the module takes less of the RAM all modules share; the rest stays at -O2. No
+// behaviour change.
+#define QMA_UI __attribute__((cold))
+
 typedef unsigned long word_t;
 typedef word_t (*word0_t)(void);
 typedef word_t (*word1_t)(word_t a);
@@ -156,7 +162,7 @@ static int replaying;               // the held-back tap is going round the key 
 extern int core_key(void *brain, void *event);
 
 // What is on screen: the top view's class, past the popups, which pass keys on.
-static word_t top_view(void)
+QMA_UI static word_t top_view(void)
 {
     char *sentinel = (char *)views + MANAGER_LIST;
     char *node = *(char **)((char *)views + MANAGER_LAST);
@@ -169,13 +175,13 @@ static word_t top_view(void)
     return 0;                           // only popups: no page of ours
 }
 
-static int pad_screen(word_t top)
+QMA_UI static int pad_screen(word_t top)
 {
     return top == PERF_VTABLE || top == PERF_EDIT_VTABLE
         || top == SCENE_VTABLE || top == SCENE_EDIT_VTABLE;
 }
 
-static int on_pages(void)
+QMA_UI static int on_pages(void)
 {
     word_t top;
     if (!views)
@@ -185,17 +191,17 @@ static int on_pages(void)
         || top == MUTE_VTABLE || top == CHROMATIC_VTABLE;
 }
 
-static const char *row(int id)
+QMA_UI static const char *row(int id)
 {
     return (const char *)PARAM_TABLE + id * PARAM_ROW_BYTES;
 }
 
-static int row_word(int id, int offset)
+QMA_UI static int row_word(int id, int offset)
 {
     return *(const int *)(row(id) + offset);
 }
 
-static word_t vcall(word_t object, int slot)
+QMA_UI static word_t vcall(word_t object, int slot)
 {
     return (*(word_t **)object)[slot / 4];
 }
@@ -208,7 +214,7 @@ static word_t vcall(word_t object, int slot)
 #define SOUND_ID_OF(s, i) ((int (*)(word_t, int))vcall(s, SOUND_SET_ID_OF))(s, i)
 #define SET_READ_ID(s, id) ((int (*)(word_t, int))vcall(s, SET_READ))(s, id)
 
-static int any_held(int first, int last)
+QMA_UI static int any_held(int first, int last)
 {
     int k;
     for (k = first; k <= last; k++)
@@ -220,7 +226,7 @@ static int any_held(int first, int last)
 #define ANY_TRIG_HELD() any_held(0, TRIG_KEYS - 1)
 #define ANY_PAD_HELD() any_held(KEY_PAD_FIRST, KEY_PAD_LAST)
 
-static void show(const char *text)
+QMA_UI static void show(const char *text)
 {
     char *p = message;
     while (*text && p < message + sizeof message - 1)
@@ -229,26 +235,26 @@ static void show(const char *text)
     pending = 1;
 }
 
-static int selected_track(void)
+QMA_UI static int selected_track(void)
 {
     return SELECTED_TRACK(PROJECT_SEQ(PROJECT()));
 }
 
-static int sound_track(int track)
+QMA_UI static int sound_track(int track)
 {
     return track >= 0 && track < FX_TRACK;
 }
 
 // The tracks a kind works on: velocity and aftertouch on the sound tracks,
 // the LFO on the FX track too.
-static int kind_track(int kind, int track)
+QMA_UI static int kind_track(int kind, int track)
 {
     return kind == LFO ? track >= 0 && track <= FX_TRACK : sound_track(track);
 }
 
 // The kind held now, NONE without one. A release that never reached ev_key
 // must not leave knobs taken, so the key's own state is asked too.
-static int held_kind(void)
+QMA_UI static int held_kind(void)
 {
     int k;
     for (k = VEL; k < KINDS; k++)
@@ -261,14 +267,14 @@ static int held_kind(void)
 }
 
 // The track's velocity or aftertouch slots.
-static word_t slots_of(int track, int kind)
+QMA_UI static word_t slots_of(int track, int kind)
 {
     word_t sound = KIT_TRACK(PROJECT_KIT(PROJECT()), track);
     return kind == VEL ? TRACK_VEL_CONF(sound) + VEL_SET : TRACK_AT_CONF(sound) + AT_SET;
 }
 
 // The slot whose destination is index, -1 for none.
-static int slot_of(word_t set, int index)
+QMA_UI static int slot_of(word_t set, int index)
 {
     int n = SET_COUNT(set), i;
     for (i = 0; i < n; i++)
@@ -279,7 +285,7 @@ static int slot_of(word_t set, int index)
 
 // The slot that holds index, else the first free one (no destination, or an
 // amount of 0), else -1.
-static int find_slot(word_t set, int index)
+QMA_UI static int find_slot(word_t set, int index)
 {
     int n = SET_COUNT(set), i, free = -1;
     for (i = 0; i < n; i++) {
@@ -293,7 +299,7 @@ static int find_slot(word_t set, int index)
 }
 
 // The track's parameter set: its sound's, or the FX track's.
-static word_t param_set(int track)
+QMA_UI static word_t param_set(int track)
 {
     return KIT_PARAM_SET(PROJECT_KIT(PROJECT()), track);
 }
@@ -301,7 +307,7 @@ static word_t param_set(int track)
 // The logical id stock's destination list gives a parameter's index on this
 // track, 0 when it is no destination or outside stock's id table. The LFO's
 // own parameters are no LFO destination.
-static int dest_id(int kind, int track, int index)
+QMA_UI static int dest_id(int kind, int track, int index)
 {
     int logical;
     if (index <= 0)
@@ -316,7 +322,7 @@ static int dest_id(int kind, int track, int index)
     return PARAM_FLAGS(logical) & FLAG_MOD_DEST ? logical : 0;
 }
 
-static void not_a_destination(int kind)
+QMA_UI static void not_a_destination(int kind)
 {
     show(kind == VEL ? "NOT A VELOCITY DEST"   // DEST, as stock's menus abbreviate it
         : kind == AT ? "NOT AN AFTERTOUCH DEST" : "NOT AN LFO DEST");
@@ -326,7 +332,7 @@ static void not_a_destination(int kind)
 // the parameter's own resolution; 0 only makes sure it has a slot. A fine knob
 // such as TUN turns in fractions, so a change is at least one step, and a fast
 // turn as many as the parameter would move. A popup says why when it cannot.
-static void nudge(int kind, int track, int logical, int change)
+QMA_UI static void nudge(int kind, int track, int logical, int change)
 {
     int index = row_word(logical, ROW_INDEX), slot, amount, steps;   // the byte stock stores
     word_t set = slots_of(track, kind);
@@ -356,25 +362,25 @@ static void nudge(int kind, int track, int logical, int change)
 
 // ---- The LFO's DST and DEP ------------------------------------------------------
 
-static int lfo_read(int track, int id)
+QMA_UI static int lfo_read(int track, int id)
 {
     word_t set = param_set(track);
     return SET_READ_ID(set, id);
 }
 
-static void lfo_write(int track, int id, int value)
+QMA_UI static void lfo_write(int track, int id, int value)
 {
     SET_VALUE(param_set(track), id, value, -1, 0, 1);
 }
 
 // The parameter index the track's LFO modulates, 0 for none.
-static int lfo_dest(int track)
+QMA_UI static int lfo_dest(int track)
 {
     return lfo_read(track, ID_LFO_DST) >> 8;
 }
 
 // The depth as the locker shows it: 8.8, -128.00..+127.99.
-static int lfo_shown(int track)
+QMA_UI static int lfo_shown(int track)
 {
     return (lfo_read(track, ID_LFO_DEP) - DEP_CENTRE) * 2;
 }
@@ -400,7 +406,7 @@ static int encoder_turn;
 static int last_knob = -1;              // the knob of the latest encoder event
 
 // The LFO page's knob accumulator, 0 when the page holder is not found.
-static void *lfo_accumulator(void)
+QMA_UI static void *lfo_accumulator(void)
 {
     char *sentinel, *node;
     word_t view;
@@ -424,7 +430,7 @@ static void *lfo_accumulator(void)
 // (32 + page) * 8, 0x400cbbd6), is on the view stack. There the LFO key stays
 // stock's, so holding it shows the page's values as holding any page key does,
 // and its taps step to a module's page behind it.
-static int lfo_page_shown(void)
+QMA_UI static int lfo_page_shown(void)
 {
     char *sentinel, *node, *holder = 0;
     word_t lfo, fx_lfo;
@@ -450,7 +456,7 @@ static int lfo_page_shown(void)
     return 0;
 }
 
-static void dep_add(int track, int change)
+QMA_UI static void dep_add(int track, int change)
 {
     int dep;
     if (!change)
@@ -464,7 +470,7 @@ static void dep_add(int track, int change)
     redraw = 1;
 }
 
-static void dep_turn(void *event)
+QMA_UI static void dep_turn(void *event)
 {
     word_t record = PARAM_RECORD(ID_LFO_DEP);
     long profile[PROFILE_BYTES / 4];
@@ -492,7 +498,7 @@ static void dep_turn(void *event)
     }
 }
 
-static void dep_drop(void)
+QMA_UI static void dep_drop(void)
 {
     dep_pending = 0;
     pending_knob = -1;
@@ -500,7 +506,7 @@ static void dep_drop(void)
 
 // A turn of the knob of index on track: a new destination takes the LFO at
 // depth 0; the destination's own knob moves DEP by what its turns have made.
-static void lfo_turn(int track, int index)
+QMA_UI static void lfo_turn(int track, int index)
 {
     int change;
     if (lfo_dest(track) != index) {
@@ -521,12 +527,12 @@ static void lfo_turn(int track, int index)
 // Its "param" is a parameter's index, as the slots and LFO DST store it.
 
 // The kind our locker answers for on track, NONE when it has nothing to say.
-static int shown_on(int track)
+QMA_UI static int shown_on(int track)
 {
     return shown != NONE && kind_track(shown, track) ? shown : NONE;
 }
 
-static int locker_has_any(void *self)
+QMA_UI static int locker_has_any(void *self)
 {
     int track = selected_track(), kind = shown_on(track), i, n;
     word_t set;
@@ -546,7 +552,7 @@ static int locker_has_any(void *self)
 // A parameter with a slot (or the LFO's destination), whatever its amount:
 // stock's lock edit makes a new lock (set 0) on the first turn and adds each
 // turn to what get returns, so a link at 0 must read as one.
-static int locker_has(void *self, int track, int param)
+QMA_UI static int locker_has(void *self, int track, int param)
 {
     int kind = shown_on(track);
     (void)self;
@@ -557,7 +563,7 @@ static int locker_has(void *self, int track, int param)
     return slot_of(slots_of(track, kind), param) >= 0;
 }
 
-static int locker_get(void *self, int track, int param)
+QMA_UI static int locker_get(void *self, int track, int param)
 {
     int kind = shown_on(track), slot;
     word_t set;
@@ -573,7 +579,7 @@ static int locker_get(void *self, int track, int param)
 
 // Stock's lock edit turns a knob through here: value is what get returned plus
 // the turn, or 0 to make the lock when has said no.
-static void locker_set(void *self, int track, int param, int value)
+QMA_UI static void locker_set(void *self, int track, int param, int value)
 {
     int kind = shown_on(track), logical, slot, from_encoder = encoder_turn;
     word_t set;
@@ -609,7 +615,7 @@ static void locker_set(void *self, int track, int param, int value)
     nudge(kind, track, logical, slot < 0 ? 0 : value - SET_AMOUNT(set, slot));
 }
 
-static void locker_clear(void *self, int track, int param)
+QMA_UI static void locker_clear(void *self, int track, int param)
 {
     int kind = shown_on(track), slot;
     word_t set;
@@ -629,12 +635,12 @@ static void locker_clear(void *self, int track, int param)
         SET_WRITE_AMOUNT(set, slot, 0);
 }
 
-static void locker_clear_all(void *self)
+QMA_UI static void locker_clear_all(void *self)
 {
     (void)self;                         // never: one gesture must not wipe a sound's links
 }
 
-static void locker_never(void *self)
+QMA_UI static void locker_never(void *self)
 {
     (void)self;                         // the object is static: never destroyed
 }
@@ -649,7 +655,7 @@ static const void *const locker_vtable[] = {
 };
 static struct { const void *const *vtable; } locker = { locker_vtable };
 
-static int ours(void)
+QMA_UI static int ours(void)
 {
     return GET_LOCKER(PARAM_UI()) == (word_t)&locker;
 }
@@ -657,7 +663,7 @@ static int ours(void)
 // Sets our locker for kind if the UI's is free (or already ours), on a track
 // the kind works on. A performance or scene pad, or a trig, that holds it
 // keeps it.
-static void locker_install(int kind)
+QMA_UI static void locker_install(int kind)
 {
     word_t ui = PARAM_UI(), current = GET_LOCKER(ui);
     if (!kind_track(kind, selected_track()) || (current && current != (word_t)&locker))
@@ -668,7 +674,7 @@ static void locker_install(int kind)
     redraw = 1;
 }
 
-static void locker_remove(void)
+QMA_UI static void locker_remove(void)
 {
     word_t ui = PARAM_UI();
     if (GET_LOCKER(ui) == (word_t)&locker)
@@ -682,7 +688,7 @@ static void locker_remove(void)
 // core_params' delta: 1 takes the turn (no stock edit, no lock), 0 passes. With
 // our locker set, stock's lock edit takes the turns before this; this covers a
 // hold whose locker the tick has not set yet.
-static int qma_delta(void *view, int32_t id, int32_t delta, int32_t func)
+QMA_UI static int qma_delta(void *view, int32_t id, int32_t delta, int32_t func)
 {
     int kind = held_kind(), track, index, logical;
     (void)view;
@@ -726,7 +732,7 @@ const struct {
 // mod lets both pass, and the real release then stops here. The mods before
 // this one saw the real press and release already and see the pair again, so
 // every mod ends with the key up.
-static void replay_key(void *brain, int key, unsigned flags)
+QMA_UI static void replay_key(void *brain, int key, unsigned flags)
 {
     long event[KEY_EVENT_BYTES / 4 + 2];
     EVENT_CTOR(event, key, flags, 0, 127);
@@ -734,7 +740,7 @@ static void replay_key(void *brain, int key, unsigned flags)
     EVENT_DTOR(event);
 }
 
-static void replay_lfo(void *brain, unsigned release_flags)
+QMA_UI static void replay_lfo(void *brain, unsigned release_flags)
 {
     replaying = 1;
     replay_key(brain, KEY_LFO, lfo_flags);
@@ -742,7 +748,7 @@ static void replay_lfo(void *brain, unsigned release_flags)
     replaying = 0;
 }
 
-int quick_velocity_aftertouch_assign_key(void *brain, void *event)
+QMA_UI int quick_velocity_aftertouch_assign_key(void *brain, void *event)
 {
     encoder_turn = 0;
     int key = *(int *)((char *)event + EV_KEY);
@@ -833,7 +839,7 @@ int quick_velocity_aftertouch_assign_key(void *brain, void *event)
 // ev_enc: any encoder turned during a hold (LEVEL, or a knob stock takes before
 // the parameter's turn, such as LFO DST) also makes it a hold, not a tap.
 // During an LFO hold it also runs the turn through DEP's accumulator.
-int quick_velocity_aftertouch_assign_enc(void *brain, void *event)
+QMA_UI int quick_velocity_aftertouch_assign_enc(void *brain, void *event)
 {
     int k;
     (void)brain;
@@ -852,7 +858,7 @@ int quick_velocity_aftertouch_assign_enc(void *brain, void *event)
 // so does a track the kind does not work on selected during the hold (the FX
 // track for velocity and aftertouch), whose knobs then edit as on stock; a
 // locker stock set over ours (a pad or a trig) and then cleared gives it back.
-static void keep_locker(void)
+QMA_UI static void keep_locker(void)
 {
     int kind = held_kind();
     if (shown != NONE && (shown != kind || !kind_track(shown, selected_track())))
@@ -888,14 +894,14 @@ static unsigned *bm_words;
 static int bm_w, bm_h, bm_stride;
 
 // Rows count from the top here; the bitmap keeps row 63 - y.
-static unsigned *bm_word(int x, int y, unsigned *bit)
+QMA_UI static unsigned *bm_word(int x, int y, unsigned *bit)
 {
     int r = 63 - y;
     *bit = 0x80000000u >> (r & 31);
     return bm_words + x * bm_stride + (r >> 5);
 }
 
-static int bm_get(int x, int y)
+QMA_UI static int bm_get(int x, int y)
 {
     unsigned bit;
     if (x < 0 || x >= bm_w || y < 0 || y > 63)
@@ -903,7 +909,7 @@ static int bm_get(int x, int y)
     return (*bm_word(x, y, &bit) & bit) != 0;
 }
 
-static void bm_put(int x, int y, int on)
+QMA_UI static void bm_put(int x, int y, int on)
 {
     unsigned bit, *w;
     if (x < 0 || x >= bm_w || y < 0 || y > 63)
@@ -914,7 +920,7 @@ static void bm_put(int x, int y, int on)
 
 // Stock's lock box of kind at knob k: a white outline with black text inside,
 // so a plain white area is no box.
-static int box_at(const struct box_kind *b, int k)
+QMA_UI static int box_at(const struct box_kind *b, int k)
 {
     int x0 = b->x + 32 * (k & 3), y0 = b->top[k >> 2], i, j;
     for (i = 0; i < b->w; i++)
@@ -931,12 +937,12 @@ static int box_at(const struct box_kind *b, int k)
 }
 
 // The kind of box knob k shows, or 0.
-static const struct box_kind *box_on(int k)
+QMA_UI static const struct box_kind *box_on(int k)
 {
     return box_at(&box_kinds[0], k) ? &box_kinds[0] : box_at(&box_kinds[1], k) ? &box_kinds[1] : 0;
 }
 
-void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
+QMA_UI void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
 {
     char text[8], width[8], *p = text;
     const struct box_kind *b = 0;
@@ -1008,7 +1014,7 @@ void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
 
 // Stock's popup for the module's messages, opened from ev_tick so repeats open
 // one, not dozens.
-void quick_velocity_aftertouch_assign_tick(void *ctrl)
+QMA_UI void quick_velocity_aftertouch_assign_tick(void *ctrl)
 {
     ticks++;
     encoder_turn = 0;

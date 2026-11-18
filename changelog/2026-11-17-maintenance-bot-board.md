@@ -1,0 +1,1 @@
+Worker and CI: the maintenance bot also looks after the agent board. It answers questions addressed to the owner that the docs settle (after a 4-hour window the owner can stop from Telegram), closes the owner's finished threads, and asks before ending someone else's thread or releasing a claim. A question only the owner can answer becomes a `/modwerk-todo` to-do.
