@@ -360,9 +360,10 @@ const octatrack: FaqSection[] = [
       {
         id: 'card-file',
         title: 'Why can’t the Octatrack find the base on my card?',
-        keywords: 'bin cf compactflash root folder zip json extension eject copy missing upgrade',
+        keywords: 'bin cf compactflash root folder zip json extension eject copy missing upgrade old older previous several',
         answer: <>
           <p>The base .bin has to be at the top level of the card, outside every folder. Check that the copy finished, eject the drive on your computer and leave USB DISK MODE before you choose OS UPGRADE. A ZIP, a .syx or a JSON export is not an update file.</p>
+          <p>Leave only one .bin at the top level. With an older Modwerk base .bin still there, OS UPGRADE may install that one instead, and your Octatrack starts on the base it had before. Remove the other .bin files and run OS UPGRADE again.</p>
           {manualLinks()}
         </>,
       },
