@@ -25,7 +25,7 @@ When a piece moves, update this table, the [recipe's table](../../../docs/MACHIN
 
 ## The order
 
-1. **Finish the base.** The site builds the Modwerk base on core 1.1. It is done once its exact build has run on more than one unit, its core source comes from elekloader's merged release, and the owner turns downloads on.
+1. **Finish the base.** The site builds the Modwerk base on core 1.1. It is done once its exact build has run on more than one unit and the owner turns downloads on.
 2. **USB link**, in parallel with step 1 on development bases. It starts with identify, status and the unit's log (diagnostics), then adds chunked writes for module packages.
 3. **Loading without a reflash.** Port the runtime loader: review, a trial in RAM, Keep, Undo.
 4. **Base updates over USB.** Two slots and at most one restart. The maker's recovery (FUNC + TRIG 4, then the stock `.syx` over MIDI DIN) stays the floor.
@@ -59,7 +59,6 @@ OS 1.17 offers USB MIDI in all three USB modes (MIDI, Audio/MIDI and Overbridge)
 
 - **Kit data that changes alone.** Does OS 1.17 save a kit when only a module's block changed? The test steps are in the [machine guide](README.md#core-hooks), and any unit owner can run them.
 - **More units.** The pinned base has run on one unit so far.
-- **Upstream drift.** The core 1.1 source is `0df8409`, the reviewed head of the open [elekloader#221](https://github.com/elekloader/elekloader/pull/221). When it merges, take the source again from the release and rebuild the base ([base source](elekloader/README.md)).
 - **A SHARC assembler.** No Modwerk build writes SHARC code yet. The first one to do so brings its toolchain, pinned through `npm run upstream:tools`, and a build check for the rules above.
 
 ## How to join
