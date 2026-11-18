@@ -5,24 +5,62 @@ import { describe, expect, it } from 'vitest'
 import { SubmissionPage } from './SubmissionPage'
 import { cloneCommands, setupPrompt, skillHandoff, STARTER_MACHINES, starterPrompt, starterReading, startersFor, updatePrompt } from './starter-prompts'
 import { DEVELOPER_SKILLS, MAINTAINER_SKILLS, OWNER_SKILLS } from './developer-guidance'
-import { DEVICES, isZd2Pedal } from '../devices/registry'
+import { DEVICES, isZd2Pedal, needsIntegration } from '../devices/registry'
 
 const all = STARTER_MACHINES.flatMap(machine => startersFor(machine.id).map(starter => ({ machine: machine.id, starter })))
 
 describe('starter prompts', () => {
-  it('lists every registered instrument and routes those without an SDK to integration', () => {
+  it('lists every registered instrument and routes those not ready for modules to integration', () => {
     expect(STARTER_MACHINES.map(machine => machine.id)).toEqual(DEVICES.map(device => device.id))
-    for (const device of DEVICES.filter(device => !device.sdk)) {
+    // The Rytm MKI has an SDK guide but no finished core: it is unlocked first, like a machine without one.
+    expect(DEVICES.filter(device => device.sdk && needsIntegration(device)).map(device => device.id)).toContain('analog-rytm-mki')
+    for (const device of DEVICES.filter(needsIntegration)) {
       const starter = startersFor(device.id)[0]
-      expect(starter.id).toBe('integration')
+      expect(startersFor(device.id).map(item => item.id)).toEqual(['integration'])
       const prompt = starterPrompt(device.id, starter, 'A new sound engine')
-      expect(prompt).toContain('no published Modwerk SDK or qualified module builder yet')
+      expect(prompt).toContain(device.sdk ? 'not ready for modules yet' : 'no published Modwerk SDK or qualified module builder yet')
+      expect(updatePrompt(device.id, 'some-module', 'A change')).toContain('its next step toward mods')
       expect(prompt).toContain('docs/ADD_A_MACHINE.md')
+      expect(prompt).toContain('docs/MACHINE_RECIPE.md')
+      expect(prompt).toContain('https://discord.gg/')
       expect(prompt).toContain('sdk/machines/' + device.id + '/machine.json')
       expect(prompt).not.toContain('npm run module:new')
       expect(prompt).not.toContain('core_machines, ids 4–127')
     }
   })
+  it('give the machine\'s next step on its road and the Octatrack\'s stack after it', () => {
+    const syntakt = starterPrompt('syntakt', startersFor('syntakt')[0])
+    expect(syntakt).toContain('4. Core with hooks: started')
+    expect(syntakt).toContain('Next step: Core with hooks')
+    expect(syntakt).toContain('0 of 7 pieces done: Modwerk base (open), USB link (open)')
+    expect(syntakt).toContain('Plan the core as the machine\'s Modwerk base from the start')
+    expect(syntakt).toContain('machine syntakt')
+    expect(syntakt).toContain('sdk/machines/syntakt/README.md')
+    const rytm = starterPrompt('analog-rytm-mki', startersFor('analog-rytm-mki')[0])
+    expect(rytm).toContain('Modwerk base (started)')
+    expect(rytm).toContain('sdk/machines/analog-rytm-mki/README.md')
+    // A Zoom pedal takes the Zoom road: effect files, no core to plan.
+    const pedal = starterPrompt('zoom-ms-60b', startersFor('zoom-ms-60b')[0])
+    expect(pedal).toContain('Next step: Own effect runs')
+    expect(pedal).not.toContain('Plan the core')
+  })
+
+  it('offer the next stack piece wherever a machine that takes mods lacks part of the Octatrack\'s stack', () => {
+    expect(startersFor('octatrack').map(starter => starter.id)).not.toContain('stack')
+    for (const machine of ['digitakt', 'digitakt-ii', 'analog-rytm-mkii', 'zoom-ms-70cdr']) expect(startersFor(machine).at(-1)?.id).toBe('stack')
+    const prompt = starterPrompt('digitakt-ii', startersFor('digitakt-ii').at(-1)!, '', 'octo-dev')
+    expect(prompt).toContain('next piece of the Octatrack\'s stack for the Digitakt II')
+    expect(prompt).toContain('1. Modwerk base: started')
+    expect(prompt).toContain('Next piece: Modwerk base')
+    expect(prompt).toContain('its own pull request for owner review, never inside a module release')
+    expect(prompt).toContain('docs/MACHINE_RECIPE.md')
+    expect(prompt).toContain('machine digitakt-ii')
+    expect(prompt).not.toContain('module:new')
+    expect(prompt).not.toContain('/modwerk-new-module')
+    // The MS-70CDR has its USB setup and status page done, but its base is only started, so the base comes first.
+    expect(starterPrompt('zoom-ms-70cdr', startersFor('zoom-ms-70cdr').at(-1)!)).toContain('Next piece: Modwerk base')
+  })
+
   it('only ask the agent to read files that exist', () => {
     for (const { machine, starter } of all) for (const file of starterReading(machine, starter)) expect(existsSync(file), machine + '/' + starter.id + ': ' + file).toBe(true)
   })
@@ -45,9 +83,9 @@ describe('starter prompts', () => {
   })
 
   it('hands every module prompt to the skill committed with the fork', () => {
-    for (const machine of STARTER_MACHINES.filter(item => DEVICES.find(device => device.id === item.id)?.sdk)) {
+    for (const machine of STARTER_MACHINES.filter(item => !needsIntegration(DEVICES.find(device => device.id === item.id)))) {
       const prompts = {
-        'modwerk-new-module': startersFor(machine.id).map(starter => starterPrompt(machine.id, starter)),
+        'modwerk-new-module': startersFor(machine.id).filter(starter => starter.id !== 'stack').map(starter => starterPrompt(machine.id, starter)),
         'modwerk-update-module': [updatePrompt(machine.id)],
       }
       for (const [skill, list] of Object.entries(prompts)) for (const prompt of list) {
@@ -114,7 +152,7 @@ describe('starter prompts', () => {
     const prompts = [
       starterPrompt('octatrack', startersFor('octatrack')[0], '', 'octo-dev', 'https://github.com/acme/modwerk'),
       updatePrompt('digitakt', 'digi-eq', '', '', 'https://github.com/acme/modwerk', 'octo-dev'),
-      ...DEVICES.filter(device => !device.sdk).map(device => starterPrompt(device.id, startersFor(device.id)[0], '', 'octo-dev', 'https://github.com/acme/modwerk')),
+      ...DEVICES.filter(needsIntegration).map(device => starterPrompt(device.id, startersFor(device.id)[0], '', 'octo-dev', 'https://github.com/acme/modwerk')),
     ]
     for (const prompt of prompts) {
       expect(prompt.startsWith('Read this first: which kind of assistant are you?')).toBe(true)
@@ -243,10 +281,20 @@ describe('start developing page', () => {
     expect(html.indexOf('Community review')).toBeLessThan(html.indexOf('Check it live'))
   })
 
-  it('preselects the machine an overview link names', () => {
+  it('preselects the machine an overview link names and shows its road', () => {
     const html = renderToStaticMarkup(createElement(SubmissionPage, { machine: 'syntakt' }))
     expect(html).toMatch(/<option value="syntakt" selected="">/)
     expect(html).toContain('Instrument integration')
+    expect(html).toContain('<strong>Core with hooks</strong><span>Next, started.')
+    expect(html).toContain('0 of 7 pieces done')
+    expect(html).not.toContain('Build, test, release')
+  })
+
+  it('treats a machine with an SDK guide but no finished core as one to unlock', () => {
+    const html = renderToStaticMarkup(createElement(SubmissionPage, { machine: 'analog-rytm-mki' }))
+    expect(html).toContain('Help unlock the')
+    expect(html).toContain('Instrument integration')
+    expect(html).not.toContain('Build, test, release')
   })
 
   it.each(['miniverb', 'digitakt-digihealth', 'digitone-digihealth'])('prefills the correct update path for %s', moduleId => {

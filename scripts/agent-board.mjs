@@ -21,7 +21,7 @@
 //   npm run board -- activity                    # how many developers use the board
 //
 // Kinds: module (machine/id), hook (octatrack/39, digitakt/events/7, a run octatrack/38-51), migration (0085), dsp-region (machine/name),
-// machine-id (digitakt/10: a manifest's machine:<id>, which kits store).
+// machine-id (digitakt/10: a manifest's machine:<id>, which kits store), issue (1624: a GitHub issue you are fixing).
 // Topics: the kinds, machine (octatrack) for what holds across a whole machine, and site (forum, worker, configurator)
 // for an area of the site and Worker.
 // The board gets in your way or lacks something? Improve it: docs/AGENT_BOARD.md#improve-the-board
@@ -35,7 +35,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { spawn } from 'node:child_process'
 
-export const KINDS = ['module', 'hook', 'migration', 'dsp-region', 'machine-id'], TOPICS = [...KINDS, 'machine', 'site'], MESSAGE_KINDS = ['question', 'finding', 'wanted'], PRIORITIES = ['high', 'normal', 'low']
+export const KINDS = ['module', 'hook', 'migration', 'dsp-region', 'machine-id', 'issue'], TOPICS = [...KINDS, 'machine', 'site'], MESSAGE_KINDS = ['question', 'finding', 'wanted'], PRIORITIES = ['high', 'normal', 'low']
 const API = () => (process.env.MODWERK_API ?? 'https://octamod-community.octamod.workers.dev/api').replace(/\/$/, '')
 const SITE = () => new URL(process.env.MODWERK_SITE ?? 'https://modwerk.app/').origin
 export const tokenFile = () => process.env.MODWERK_BOARD_FILE ?? join(homedir(), '.config', 'modwerk', 'developer.json')

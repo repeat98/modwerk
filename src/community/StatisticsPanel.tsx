@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from './api'
 import { PageTraffic } from './PageTraffic'
+import { SiteCounts } from './SiteCounts'
 import { CommunityInsights } from './CommunityInsights'
 import { HOURLY_ERA_METRICS, hourlyRows, usageCsv, usageInsights, usageMachineBreakdown, usageMetrics } from './statistics-insights'
 import type { UsageMetric } from './statistics-insights'
@@ -76,6 +77,7 @@ export function UsageDashboard({data}: {data: UsageStatistics}) {
       {usageMetrics.slice(1).map(([key,title]) => <div key={key}><dt>{title}</dt><dd>{covered ? format(insights.totals[key]) : '—'}</dd><small>Selected period · includes today</small>{covered && <Comparison value={comparable(key) ? insights.compare(key) : null}/>}</div>)}
     </dl>
     <PageTraffic data={data} />
+    <SiteCounts data={data} />
     {covered ? <>
       <p className="service-note statistics-coverage">{data.from} – {data.to} UTC · Updated {new Date(data.generatedAt).toLocaleTimeString(undefined,{timeZone:'UTC'})} UTC.<br/>{comparisonNote}</p>
       <div className="statistics-analysis">

@@ -1,5 +1,7 @@
 # Testing: Pattern Sample Locks 0.1.9-experimental
 
+The runs below name the base with the Part Edit menu as 0.7.8, its number when they ran. Another base took 0.7.8 first (#1418), so this one is released as 0.7.9, with #1418's changes added. The package `6fea272e…` is unchanged. The tested base builds (`e08c4416…` on the unit, `f429652e…` in the emulator) do not include #1418.
+
 ## Author's check — 0.1.9, 18 November 2026 (reported)
 
 Reported by the author (`twwwy`) on their MKII, on a scratch project, with the exact package `6fea272e…` installed as a

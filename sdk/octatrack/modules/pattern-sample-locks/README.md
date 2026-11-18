@@ -24,7 +24,7 @@ firmware is unsupported and must refuse this module. Card support is deferred.
 
 ## Controls
 
-Level 1 is **FUNC + PART**, the base's Part Edit window (base 0.7.8 or newer). Its left column lists PART (stock's RENAME, RELOAD, SAVE and SAVE ALL), LOCKS (this module) and the rows other modules add; its right column shows the highlighted row's actions. Move to LOCKS with UP/DOWN or LEVEL, press RIGHT or YES, then choose LOCK SAMPLES or CLEAR LOCKS with YES. LEFT goes back; NO closes, as in PROJECT. The window opens where you left it, as PROJECT does: the same row, the same column and each row's last action.
+Level 1 is **FUNC + PART**, the base's Part Edit window (base 0.7.9 or newer). Its left column lists PART (stock's RENAME, RELOAD, SAVE and SAVE ALL), LOCKS (this module) and the rows other modules add; its right column shows the highlighted row's actions. Move to LOCKS with UP/DOWN or LEVEL, press RIGHT or YES, then choose LOCK SAMPLES or CLEAR LOCKS with YES. LEFT goes back; NO closes, as in PROJECT. The window opens where you left it, as PROJECT does: the same row, the same column and each row's last action.
 
 Level 2 always lists eight tracks in two columns: T1–T4 left, T5–T8 right. S means Static and F means Flex. Other machines are greyed out, have no brackets, cannot be selected and are skipped by arrows. Levels 2 and 3 use tall popups, white headers and equal seven-pixel text spacing.
 
@@ -101,7 +101,7 @@ Original source and UI by twwwy, MIT. Small lettering is reused from twwwy's ori
 
 ## Screens and audio
 
-The first six images capture exact version 0.1.9 on an actual MKII (base 0.7.8 development build, 18 November 2026); the last two are 0.1.8's MKII captures of screens 0.1.9 keeps unchanged. The manifest binds each image to its build. [TESTING.md](TESTING.md) records capture limits; [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md) consolidates retired versions. No physical audio recording is supplied.
+The first six images capture exact version 0.1.9 on an actual MKII (a development build of the base with the Part Edit menu, numbered 0.7.8 then and released as 0.7.9, 18 November 2026); the last two are 0.1.8's MKII captures of screens 0.1.9 keeps unchanged. The manifest binds each image to its build. [TESTING.md](TESTING.md) records capture limits; [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md) consolidates retired versions. No physical audio recording is supplied.
 
 Press FUNC + PART: the Part Edit window lists PART and each module's row on the left. Move to LOCKS with UP/DOWN.
 

@@ -314,7 +314,7 @@ describe('module update subscriptions', () => {
     expect(sent[0].html).toContain('<li>Known limitation: hardware reboot persistence is unverified.</li>')
     expect(sent[0].html).not.toContain('<script>')
     expect(sent[0].text).not.toContain('These later changes')
-    expect(sent[0].text).toContain('https://octamod.test/#module/miniverb?tab=changelog')
+    expect(sent[0].text).toContain('https://octamod.test/?utm_source=mail-activity#module/miniverb?tab=changelog')
     expect(await f.items(owner.session)).toHaveLength(2)
     expect(f.db.prepare("SELECT COUNT(*) AS count FROM notifications WHERE kind='module_update' AND emailed=0").get()!.count).toBe(0)
   })
@@ -438,7 +438,7 @@ describe('module update subscriptions', () => {
     expect(await f.digests()).toEqual({ sent: 1 })
     expect(sent[0].text).toContain(published.notes!.changes[0])
     expect(sent[0].html).toContain('<li>' + published.notes!.changes[0] + '</li>')
-    expect(sent[0].text).toContain('https://octamod.test/' + published.href + '?tab=changelog')
+    expect(sent[0].text).toContain('https://octamod.test/?utm_source=mail-activity' + published.href + '?tab=changelog')
   })
 
   it('includes the published version in bell and email, respects the update topic, and exports/deletes follows', async () => {
@@ -448,7 +448,7 @@ describe('module update subscriptions', () => {
     await f.publish(release())
     expect(notificationLines(await f.items(owner.session))[0]).toMatchObject({ text: 'Mini Verb 10.0.0 is now available', href: '#module/miniverb?tab=changelog' })
     expect(await f.digests()).toEqual({ sent: 1 })
-    expect(sent[0].to).toEqual([owner.email]); expect(sent[0].text).toContain('Mini Verb 10.0.0 is now available'); expect(sent[0].text).toContain('https://octamod.test/#module/miniverb')
+    expect(sent[0].to).toEqual([owner.email]); expect(sent[0].text).toContain('Mini Verb 10.0.0 is now available'); expect(sent[0].text).toContain('https://octamod.test/?utm_source=mail-activity#module/miniverb')
     expect(sent[0].text).toContain(release().notes!.changes[0]); expect(sent[0].html).toContain('<li>' + release().notes!.changes[0] + '</li>')
     expect(await f.items(silent.session)).toHaveLength(1)
     expect(await (await f.call('/modules/miniverb/updates', 'GET', undefined, silent.session)).json()).toMatchObject({ enabled: true, emailEnabled: false })

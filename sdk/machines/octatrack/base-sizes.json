@@ -275,35 +275,69 @@
   },
   {
    "base": "0.7.8",
-   "identity": "f429652efd4896f2e525ed72a5a3f08ae3b96cf6da1e6876e921009770c7e709",
+   "identity": "a2c2edb20e06b64e8209091b73a2ca19a3e6730feb6952e2404bd198a8b07392",
    "layouts": {
     "tracks-main-cue": {
-     "main": 1323033,
-     "container": 803140
+     "main": 1320676,
+     "container": 800700
     },
     "tracks": {
-     "main": 1322885,
-     "container": 802992
+     "main": 1320533,
+     "container": 800572
     },
     "tracks-post": {
-     "main": 1324492,
-     "container": 804732
+     "main": 1322139,
+     "container": 802276
     },
     "main-cue": {
-     "main": 1322799,
-     "container": 802952
+     "main": 1320444,
+     "container": 800460
     },
     "main": {
-     "main": 1322663,
-     "container": 802812
+     "main": 1320309,
+     "container": 800320
     },
     "master": {
-     "main": 1322683,
-     "container": 802796
+     "main": 1320334,
+     "container": 800332
     },
     "off": {
-     "main": 1321270,
-     "container": 801164
+     "main": 1318908,
+     "container": 798688
+    }
+   }
+  },
+  {
+   "base": "0.7.9",
+   "identity": "f6367148e442ff13a2d4b39b3c4c979628b22ade9e181eeb041161dbd67d4f82",
+   "layouts": {
+    "tracks-main-cue": {
+     "main": 1323147,
+     "container": 803472
+    },
+    "tracks": {
+     "main": 1323003,
+     "container": 803348
+    },
+    "tracks-post": {
+     "main": 1324612,
+     "container": 805032
+    },
+    "main-cue": {
+     "main": 1322915,
+     "container": 803220
+    },
+    "main": {
+     "main": 1322782,
+     "container": 803040
+    },
+    "master": {
+     "main": 1322800,
+     "container": 803048
+    },
+    "off": {
+     "main": 1321386,
+     "container": 801444
     }
    }
   }
