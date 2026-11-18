@@ -64,6 +64,51 @@ stock_param_code:
         move.l  %d2,-(%sp)
         jmp     0x400da3a8
 
+/* Permission (type, track class): an added type answers as the stock type it stands for. Replays
+ * `move.l %d2,-(%sp); moveq #6,%d2; move.l 8(%sp),%d0`. */
+        .globl  core_machine_permit_entry
+core_machine_permit_entry:
+        move.l  4(%sp),%d0
+        moveq   #7,%d1
+        cmp.l   %d1,%d0
+        bcs.s   1f
+        move.l  %a0,-(%sp)
+        move.l  %a1,-(%sp)
+        move.l  %d0,-(%sp)
+        jsr     core_machine_stands_for
+        addq.l  #4,%sp
+        move.l  (%sp)+,%a1
+        move.l  (%sp)+,%a0
+        tst.l   %d0
+        bmi.s   1f
+        move.l  8(%sp),-(%sp)
+        move.l  %d0,-(%sp)
+        bsr.s   stock_permit
+        addq.l  #8,%sp
+        rts
+1:
+stock_permit:
+        move.l  %d2,-(%sp)
+        moveq   #6,%d2
+        move.l  8(%sp),%d0
+        jmp     0x400da51c
+
+/* The machine menu's list getter (a0: the result vector; one stack argument): run stock, then let the
+ * base append the added types. Replays `lea -24(%sp),%sp; movem.l %d2-%d5/%a2-%a3,(%sp)`. */
+        .globl  core_machine_list_entry
+core_machine_list_entry:
+        move.l  4(%sp),-(%sp)
+        bsr.s   stock_list
+        addq.l  #4,%sp
+        move.l  %d0,-(%sp)
+        jsr     core_machine_list_extend
+        move.l  (%sp)+,%d0
+        rts
+stock_list:
+        lea     -24(%sp),%sp
+        movem.l %d2-%d5/%a2-%a3,(%sp)
+        jmp     0x40052a10
+
 /* The three machine-string lookups (type): name, short name and menu title. An added type answers
  * from its record, others replay `moveq #6,%d1; move.l 4(%sp),%d0` and continue in stock. */
         .macro  STRING_ENTRY label, field, cont

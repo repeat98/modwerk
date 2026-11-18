@@ -26,6 +26,40 @@ int32_t core_machine_stands_for(uint32_t type)
     return machine ? (int32_t)machine->stands_for : -1;
 }
 
+/* The machine menu's list: the stock getter fills a vector of machine types ({begin, end, capacity});
+ * the base appends the added types after the stock ones. The OS builds the list at start-up; the stock
+ * buffer it replaces is a few words and is not freed. */
+struct type_vector {
+    uint32_t *begin, *end, *capacity;
+};
+
+extern void *OP_NEW(uint32_t size);
+
+void core_machine_list_extend(struct type_vector *list)
+{
+    uint32_t added = 0;
+    while (added < DT2_MACHINE_COUNT && dt2_machine_at(DT2_MACHINE_FIRST + added, core_machines)) {
+        ++added;
+    }
+    if (!added || !list || !list->begin) {
+        return;
+    }
+    uint32_t count = (uint32_t)(list->end - list->begin);
+    uint32_t *types = OP_NEW((count + added) * sizeof(uint32_t));
+    if (!types) {
+        return;
+    }
+    for (uint32_t i = 0; i < count; ++i) {
+        types[i] = list->begin[i];
+    }
+    for (uint32_t i = 0; i < added; ++i) {
+        types[count + i] = DT2_MACHINE_FIRST + i;
+    }
+    list->begin = types;
+    list->end = types + count + added;
+    list->capacity = list->end;
+}
+
 /* One of a machine's strings (DT2_MACHINE_NAME, _SHORT or _MENU); call only for a type
  * core_machine_stands_for answers. */
 const char *core_machine_string(uint32_t type, uint32_t field)

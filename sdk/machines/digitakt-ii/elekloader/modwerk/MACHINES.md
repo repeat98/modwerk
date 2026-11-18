@@ -70,9 +70,14 @@ Development base `7edbd8bf` (29 sites; `.run` 10,732 bytes, 284 more than base `
 - In both, the header read ERROR: the machine strings come from 12-byte records at `0x4020ef78` (name, short name, menu title), read by `0x400da6ac`, `0x400da6d2` and `0x400da6f8`, which return ERROR or ERR above type 6. With those three answered too (development base `4485c4c1`, 32 sites, `.run` 11,050 bytes), the header reads the test machine's name and the knobs are unchanged.
 - Emulator only. Sound not checked (the sound chip still skips type 7).
 
+### The machine menu (development base `16de57f4`, 34 sites, `.run` 11,358 bytes)
+
+- The menu's list getter (`0x40052a08`, entered with the result vector in `a0` and one stack argument; two callers) copies a sorted static list of the seven stock types. The base runs it, then appends each added type. The stock buffer it replaces is not freed (a few words, once per list build).
+- The permission check (`0x400da514`, type and track class; above type 6 it refuses) answers an added type as the stock type it stands for. The setter (`0x40051712`) then stores the type byte.
+- Emulator: FUNC+SRC lists TESTGRAIN after MIDI; DOWN to it and YES twice set track 1's type byte to 7; the SRC header then reads Testgrain. The SRC page opened on its second page (the sample view), whose centre is empty for a type above 6: the view's own type test (`0x4005f6bc` callers) knows only 0-6. Still to fix.
+
 ## Still to check
 
-- The machine menu list (built once at start-up) and the type check in the machine setter (`0x400dcab8`, types above 6 refused).
 - Kit and project load: the stock load turns a stored type of 7 or more into 0 (SAMPLE). That is the safe fallback on a unit without the base; with the base installed the load must keep the added types.
 
 - Every reader of the type byte and every per-type table: MIDI CC/NRPN tables, the machine menu list, the per-type parameter-code table, the SRC page view.
