@@ -33,8 +33,8 @@ Battery RAM 0x100f8f06-0x100f8ffc was free; the module claims 0x100f8f10-0x100f8
 
 ## The design
 
-The module steps into the writer's entry. On bank A it runs stock's writer unchanged. On another bank it writes the
-8 slots to the bank's file instead. A pending switch then writes the bank it leaves (bank A to `arrbankA.bak`) and
-reads the next: bank A from that backup, marking all 8 changed so stock's next write puts them back into arr01-08;
-another bank from its file, or 8 cleared arrangements when it has none. Which bank the slots hold survives a reinstall
-in the battery record, valid only while a fingerprint of the slots still matches; a project load always means bank A.
+The module steps into the writer's entry. On book A it runs stock's writer unchanged. On another book it writes the
+8 slots to the book's file instead. A pending switch then writes the book it leaves (book A to `arrbookA.bak`) and
+reads the next: book A from that backup, marking all 8 changed so stock's next write puts them back into arr01-08;
+another book from its file, or 8 cleared arrangements when it has none. Which book the slots hold survives a reinstall
+in the battery record, valid only while a fingerprint of the slots still matches; a project load always means book A.

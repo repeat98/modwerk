@@ -123,7 +123,7 @@ static void check(const char *name, int ok)
     else printf("[PASS] %s\n", name);
 }
 
-/* The 8 slots marked with one byte, so a bank's content can be told apart. */
+/* The 8 slots marked with one byte, so a book's content can be told apart. */
 static void mark(uint8_t m) { for (unsigned i = 0; i < DATA; ++i) cs1[4 + i] = (uint8_t)(m + i % 7); }
 static int marked(uint8_t m) { for (unsigned i = 0; i < DATA; ++i) if (cs1[4 + i] != (uint8_t)(m + i % 7)) return 0; return 1; }
 static int tap(int code) { int t = as_key(code, 1); as_key(code, 0); return t; }
@@ -135,86 +135,86 @@ static void job(void)
     msgword[3] = 0x0c; for (int i = 0; i < 5; ++i) as_tick(0);
     msgword[3] = 0; as_tick(0);
 }
-static unsigned bank_word(void) { struct { volatile uint32_t value; } api = {0}; as_tick((void *)&api); return api.value & 15; }
+static unsigned book_word(void) { struct { volatile uint32_t value; } api = {0}; as_tick((void *)&api); return api.value & 15; }
 
 int main(void)
 {
     as_modules_ready();
-    check("installed with no record: bank A", bank_word() == 0);
+    check("installed with no record: book A", book_word() == 0);
 
-    mark(0x10);                                    /* bank A's songs */
+    mark(0x10);                                    /* book A's songs */
     change_window = 0;
     check("LEFT/RIGHT outside ARR > CHANGE are stock's", tap(RIGHT) == 0 && tap(LEFT) == 0);
     change_window = 0x46c7d384u;
     playing = 1;
-    check("while playing, RIGHT in ARR > CHANGE is taken but changes nothing", tap(RIGHT) == 1 && posted == 0 && !strcmp(last_message, "STOP TO CHANGE BANK"));
+    check("while playing, RIGHT in ARR > CHANGE is taken but changes nothing", tap(RIGHT) == 1 && posted == 0 && !strcmp(last_message, "STOP TO CHANGE BOOK"));
     playing = 0;
-    check("LEFT at bank A changes nothing", tap(LEFT) == 1 && posted == 0);
+    check("LEFT at book A changes nothing", tap(LEFT) == 1 && posted == 0);
     check("RIGHT posts stock's write job", tap(RIGHT) == 1 && posted == 1);
     check("a second press while it runs is ignored", tap(RIGHT) == 1 && posted == 1);
     job();
-    check("the job wrote bank A through stock's writer", stock_writes == 1);
-    check("leaving A kept a backup of it", find("/TESTSET/PROJ/arrbankA.bak") != 0);
-    check("a bank never used starts as 8 cleared arrangements", clears == 8);
-    check("now on bank B, nothing changed", bank_word() == 1 && cs1[CHANGED - 0x10000000u] == 0);
+    check("the job wrote book A through stock's writer", stock_writes == 1);
+    check("leaving A kept a backup of it", find("/TESTSET/PROJ/arrbookA.bak") != 0);
+    check("a book never used starts as 8 cleared arrangements", clears == 8);
+    check("now on book B, nothing changed", book_word() == 1 && cs1[CHANGED - 0x10000000u] == 0);
 
-    mark(0x20); cs1[CHANGED - 0x10000000u] = 0x04;   /* bank B's songs, one changed */
+    mark(0x20); cs1[CHANGED - 0x10000000u] = 0x04;   /* book B's songs, one changed */
     job();
-    check("a background write on bank B writes its file, not arr01-08", stock_writes == 1 && find("/TESTSET/PROJ/arrbankB.work") != 0 && cs1[CHANGED - 0x10000000u] == 0);
+    check("a background write on book B writes its file, not arr01-08", stock_writes == 1 && find("/TESTSET/PROJ/arrbookB.work") != 0 && cs1[CHANGED - 0x10000000u] == 0);
 
     tap(RIGHT); job();                             /* to C, new */
     mark(0x30); cs1[CHANGED - 0x10000000u] = 1;
     tap(LEFT); job();                              /* back to B: C written first */
-    check("back on bank B: its songs are in the slots", bank_word() == 1 && marked(0x20));
-    check("bank C was written before leaving it", find("/TESTSET/PROJ/arrbankC.work") != 0);
+    check("back on book B: its songs are in the slots", book_word() == 1 && marked(0x20));
+    check("book C was written before leaving it", find("/TESTSET/PROJ/arrbookC.work") != 0);
     tap(RIGHT); job();
-    check("bank C's songs come back", bank_word() == 2 && marked(0x30));
+    check("book C's songs come back", book_word() == 2 && marked(0x30));
     tap(LEFT); job(); tap(LEFT); job();
-    check("back on bank A: its songs from the backup", bank_word() == 0 && marked(0x10));
+    check("back on book A: its songs from the backup", book_word() == 0 && marked(0x10));
     check("arriving at A marks all 8 changed, so stock rewrites arr01-08", cs1[CHANGED - 0x10000000u] == 0xff && stock_loads == 0);
     job();
     check("then stock's writer writes them", stock_writes == 2);
 
     post_refuse = 1;
     tap(RIGHT);
-    check("a refused job leaves the bank as it is", bank_word() == 0 && !strcmp(last_message, "CARD BUSY"));
+    check("a refused job leaves the book as it is", book_word() == 0 && !strcmp(last_message, "CARD BUSY"));
     post_refuse = 7;
     tap(RIGHT);
-    check("with no project loaded it says so", bank_word() == 0 && !strcmp(last_message, "NO PROJECT"));
+    check("with no project loaded it says so", book_word() == 0 && !strcmp(last_message, "NO PROJECT"));
     post_refuse = 0;
 
     /* reinstalls and power cycles */
     tap(RIGHT); job();                             /* on B */
-    check("on bank B", bank_word() == 1 && marked(0x20));
+    check("on book B", book_word() == 1 && marked(0x20));
     as_host_reinstall(); as_modules_ready();
-    check("reinstalled without a project load: the slots still hold B, and it knows", bank_word() == 1);
-    mark(0x10);                                    /* a power cycle: stock read arr01-08 (bank A) into the slots */
+    check("reinstalled without a project load: the slots still hold B, and it knows", book_word() == 1);
+    mark(0x10);                                    /* a power cycle: stock read arr01-08 (book A) into the slots */
     as_host_reinstall(); as_modules_ready();
-    check("after a power cycle the slots hold A, and it knows", bank_word() == 0);
+    check("after a power cycle the slots hold A, and it knows", book_word() == 0);
     as_modules_ready();
-    check("a second ev_modules_ready changes nothing", bank_word() == 0);
+    check("a second ev_modules_ready changes nothing", book_word() == 0);
     tap(RIGHT); job();
-    check("from there, B's own songs come back", bank_word() == 1 && marked(0x20));
+    check("from there, B's own songs come back", book_word() == 1 && marked(0x20));
 
     /* a project load with the module installed */
     as_project_load(); mark(0x10); as_project_loaded();
-    check("a project load: bank A", bank_word() == 0);
+    check("a project load: book A", book_word() == 0);
 
     /* SAVE PROJECT and RELOAD PROJECT */
     tap(RIGHT); job();
     int before = file_count();
     as_project_stored();
-    check("SAVE PROJECT copies each bank file and the backup to its .strd", find("/TESTSET/PROJ/arrbankB.strd") && find("/TESTSET/PROJ/arrbankC.strd") && find("/TESTSET/PROJ/arrbankA.bks") && file_count() > before);
-    mark(0x55); cs1[CHANGED - 0x10000000u] = 1; job();   /* bank B edited and written after the save */
+    check("SAVE PROJECT copies each book file and the backup to its .strd", find("/TESTSET/PROJ/arrbookB.strd") && find("/TESTSET/PROJ/arrbookC.strd") && find("/TESTSET/PROJ/arrbookA.bks") && file_count() > before);
+    mark(0x55); cs1[CHANGED - 0x10000000u] = 1; job();   /* book B edited and written after the save */
     as_project_reloaded(); mark(0x10);
-    check("RELOAD PROJECT brings back B's saved file and leaves the slots on A", bank_word() == 0);
+    check("RELOAD PROJECT brings back B's saved file and leaves the slots on A", book_word() == 0);
     tap(RIGHT); job();
-    check("bank B is as saved, not as edited after", bank_word() == 1 && marked(0x20));
+    check("book B is as saved, not as edited after", book_word() == 1 && marked(0x20));
 
-    /* the bank letter in ARR > CHANGE */
+    /* the book letter in ARR > CHANGE */
     memset(lcd, 0, sizeof lcd);
     as_draw(lcd);
-    check("a solid box at the top right with BANK and the bank's letter knocked out", lit(104, 0) && lit(127, 8) && !lit(106, 2) && !lit(123, 2) && !lit(124, 2) && lit(125, 2));
+    check("a solid box at the top right with BOOK and the book's letter knocked out", lit(104, 0) && lit(127, 8) && !lit(106, 2) && !lit(123, 2) && !lit(124, 2) && lit(125, 2));
     memset(lcd, 0xff, sizeof lcd);
     as_draw(lcd);
     check("drawn the same over a lit background (no XOR)", lit(104, 0) && !lit(106, 2));

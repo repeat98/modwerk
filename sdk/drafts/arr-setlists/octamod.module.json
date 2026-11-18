@@ -15,20 +15,20 @@
   "presentation": {
     "label": "128 arrangements per project",
     "family": "Arranger",
-    "summary": "16 banks of 8 arrangements per project: bank A is stock's, banks B to P live in the module's own files beside the project.",
-    "overview": "Arr Setlists turns the Octatrack's 8 arrangements into 16 banks of 8. Bank A is stock's own and stays exactly as it is in arr01 to arr08; banks B to P are files of the module's own in the project folder. In ARR > CHANGE, with the transport stopped, LEFT and RIGHT step through the banks; inside a bank every stock arrangement function works as usual. Setlists of up to 16 songs from any banks follow in a later version.",
+    "summary": "16 books of 8 arrangements per project: book A is stock's, books B to P live in the module's own files beside the project.",
+    "overview": "Arr Setlists turns the Octatrack's 8 arrangements into 16 books of 8. Book A is stock's own and stays exactly as it is in arr01 to arr08; books B to P are files of the module's own in the project folder. In ARR > CHANGE, with the transport stopped, LEFT and RIGHT step through the books; inside a book every stock arrangement function works as usual. Setlists of up to 16 songs from any books follow in a later version.",
     "highlights": [
-      "128 arrangements: 16 banks of 8, bank A untouched.",
-      "Switch banks with LEFT/RIGHT in ARR > CHANGE, stopped.",
-      "Banks are saved, saved as and reloaded with the project.",
-      "A project opens on bank A, also on a unit without the module."
+      "128 arrangements: 16 books of 8, book A untouched.",
+      "Switch books with LEFT/RIGHT in ARR > CHANGE, stopped.",
+      "Books are saved, saved as and reloaded with the project.",
+      "A project opens on book A, also on a unit without the module."
     ],
     "usage": [
       "Open ARR > CHANGE (MKII: ARR, then CHANGE; MKI: FUNC + PATTERN for arrangement mode, FUNC + BANK, then CHANGE), with the transport stopped.",
-      "Press RIGHT or LEFT to step to the next or previous bank (A to P); the bank's letter shows at the top right, and BANK C confirms the switch.",
-      "Pick one of the bank's 8 arrangements as usual and edit, save or chain it: stock's arrangement functions work inside the bank.",
-      "Save the project as usual: every bank is saved with it.",
-      "Before removing the module, step back to bank A."
+      "Press RIGHT or LEFT to step to the next or previous book (A to P); the book's letter shows at the top right, and BOOK C confirms the switch.",
+      "Pick one of the book's 8 arrangements as usual and edit, save or chain it: stock's arrangement functions work inside the book.",
+      "Save the project as usual: every book is saved with it.",
+      "Before removing the module, step back to book A."
     ]
   },
   "controls": [],
@@ -43,9 +43,9 @@
     ],
     "limitations": [
       "OS 1.40C. Not yet tested on a unit.",
-      "Banks change only while the transport is stopped: the switch writes and reads the card, which stock itself does only stopped.",
-      "Switch back to bank A before removing the module: without it, stock's next save writes the bank in use into arr01 to arr08. Bank A is kept in a backup file of the module's own and comes back the next time the module is installed and bank A is chosen.",
-      "A project always opens on bank A, after a power cycle too."
+      "Books change only while the transport is stopped: the switch writes and reads the card, which stock itself does only stopped.",
+      "Switch back to book A before removing the module: without it, stock's next save writes the book in use into arr01 to arr08. Book A is kept in a backup file of the module's own and comes back the next time the module is installed and book A is chosen.",
+      "A project always opens on book A, after a power cycle too."
     ],
     "effectId": null
   },
@@ -91,10 +91,10 @@
     "location": "ARR > CHANGE",
     "steps": [
       "Open ARR > CHANGE (MKII: ARR, then CHANGE; MKI: FUNC + PATTERN for arrangement mode, FUNC + BANK, then CHANGE), with the transport stopped.",
-      "Press RIGHT or LEFT to step to the next or previous bank (A to P); the bank's letter shows at the top right, and BANK C confirms the switch.",
-      "Pick one of the bank's 8 arrangements as usual and edit, save or chain it: stock's arrangement functions work inside the bank.",
-      "Save the project as usual: every bank is saved with it.",
-      "Before removing the module, step back to bank A."
+      "Press RIGHT or LEFT to step to the next or previous book (A to P); the book's letter shows at the top right, and BOOK C confirms the switch.",
+      "Pick one of the book's 8 arrangements as usual and edit, save or chain it: stock's arrangement functions work inside the book.",
+      "Save the project as usual: every book is saved with it.",
+      "Before removing the module, step back to book A."
     ],
     "screenshots": []
   }

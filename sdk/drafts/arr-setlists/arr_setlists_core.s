@@ -21,7 +21,7 @@ as_stock_writer:
 
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .LC0:
-	.string	"/arrbank"
+	.string	"/arrbook"
 .LC1:
 	.string	".strd"
 .LC2:
@@ -33,8 +33,8 @@ as_stock_writer:
 #NO_APP
 	.text
 	.align	2
-	.type	bank_path, @function
-bank_path:
+	.type	book_path, @function
+book_path:
 	move.l %a2,-(%sp)
 	clr.l -(%sp)
 	clr.l -(%sp)
@@ -98,7 +98,7 @@ bank_path:
 	moveq #46,%d0
 	lea .LC3,%a0
 	jra .L9
-	.size	bank_path, .-bank_path
+	.size	book_path, .-book_path
 	.align	2
 	.type	remember, @function
 remember:
@@ -151,8 +151,8 @@ remember:
 	.string	"w"
 	.text
 	.align	2
-	.type	write_bank, @function
-write_bank:
+	.type	write_book, @function
+write_book:
 	lea (-12,%sp),%sp
 	movem.l #1036,(%sp)
 	move.l 16(%sp),%a2
@@ -163,7 +163,7 @@ write_bank:
 	move.l %d3,-(%sp)
 	move.l %a2,%d2
 	add.l #532,%d2
-	jsr bank_path
+	jsr book_path
 	pea 4096.w
 	pea 580(%a2)
 	pea .LC5
@@ -229,14 +229,14 @@ write_bank:
 	movem.l (%sp),#1036
 	lea (12,%sp),%sp
 	rts
-	.size	write_bank, .-write_bank
+	.size	write_book, .-write_book
 	.section	.rodata.str1.1
 .LC6:
 	.string	"r"
 	.text
 	.align	2
-	.type	read_bank, @function
-read_bank:
+	.type	read_book, @function
+read_book:
 	lea (-12,%sp),%sp
 	movem.l #1036,(%sp)
 	move.l 16(%sp),%a2
@@ -247,7 +247,7 @@ read_bank:
 	move.l %d3,-(%sp)
 	move.l %a2,%d2
 	add.l #532,%d2
-	jsr bank_path
+	jsr book_path
 	pea 4096.w
 	pea 580(%a2)
 	pea .LC6
@@ -308,7 +308,7 @@ read_bank:
 	movem.l (%sp),#1036
 	lea (12,%sp),%sp
 	rts
-	.size	read_bank, .-read_bank
+	.size	read_book, .-read_book
 	.align	2
 	.type	glyph.constprop.0, @function
 glyph.constprop.0:
@@ -509,7 +509,7 @@ as_writer:
 	mvz.b %d1,%d1
 	move.l %d1,-(%sp)
 	move.l %a2,-(%sp)
-	jsr write_bank
+	jsr write_book
 	addq.l #8,%sp
 	tst.l %d0
 	jeq .L89
@@ -527,7 +527,7 @@ as_writer:
 	clr.l -(%sp)
 	move.l %a2,-(%sp)
 	move.l %d0,16(%sp)
-	jsr write_bank
+	jsr write_book
 	addq.l #8,%sp
 	move.l 8(%sp),%a0
 	tst.l %d0
@@ -540,7 +540,7 @@ as_writer:
 .L79:
 	clr.l -(%sp)
 	move.l %a2,-(%sp)
-	jsr read_bank
+	jsr read_book
 	addq.l #8,%sp
 	tst.l %d0
 	jne .L83
@@ -565,7 +565,7 @@ as_writer:
 	move.l %d1,-(%sp)
 	move.l %a2,-(%sp)
 	move.l %a0,16(%sp)
-	jsr write_bank
+	jsr write_book
 	addq.l #8,%sp
 	move.l 8(%sp),%a0
 	tst.l %d0
@@ -589,7 +589,7 @@ as_writer:
 .L80:
 	move.l %a0,-(%sp)
 	move.l %a2,-(%sp)
-	jsr read_bank
+	jsr read_book
 	addq.l #8,%sp
 	tst.l %d0
 	jne .L85
@@ -691,7 +691,7 @@ as_project_stored:
 	move.l %a3,%d4
 	move.l %a3,%d3
 	add.l #12,%d4
-	lea bank_path,%a2
+	lea book_path,%a2
 	add.l #272,%d3
 	lea (copy_file.isra.0),%a4
 	mvs.b %d2,%d2
@@ -745,7 +745,7 @@ as_project_reloaded:
 	add.l #12,%d4
 	mov3q.l #1,%d2
 	add.l #272,%d3
-	lea bank_path,%a2
+	lea book_path,%a2
 	lea (copy_file.isra.0),%a4
 .L132:
 	mov3q.l #1,-(%sp)
@@ -887,7 +887,7 @@ as_modules_ready:
 .LC8:
 	.string	"CARD BUSY"
 .LC9:
-	.string	"STOP TO CHANGE BANK"
+	.string	"STOP TO CHANGE BOOK"
 	.text
 	.align	2
 	.globl	as_key
@@ -1037,7 +1037,7 @@ as_key:
 	.size	as_key, .-as_key
 	.section	.rodata.str1.1
 .LC10:
-	.string	"BANK NOT CHANGED"
+	.string	"BOOK NOT CHANGED"
 	.text
 	.align	2
 	.globl	as_tick
@@ -1271,7 +1271,7 @@ as_draw:
 	.type	word.0, @object
 	.size	word.0, 4
 word.0:
-	.base64	"AQANCg=="
+	.base64	"AQ4OCg=="
 	.align	2
 	.type	GLYPH, @object
 	.size	GLYPH, 32
