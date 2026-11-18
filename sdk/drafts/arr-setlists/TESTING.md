@@ -52,6 +52,11 @@ developer's own test.
   book 3 came back on BOOK 3 with book 3's arrangements: the unit keeps them in battery memory, and the module's record
   matched them (not a project load, so not book 1, as I had expected).
 
+Package `c6b2c9a4…`, as the developer reported it: after FUNC + PATTERN (arranger mode off), SYNC and CHANGE the
+project opened in pattern mode (passed); SAVE on book 3, arrangement 5 and RELOAD landed on book 1 (failed). Event
+log: save, reload, stock's new-project step, then arranger mode off/on twice, and no ev_banks_load, where the module
+now read the saved place. Fixed: the RELOAD hook reads it too. `verify.py`: 69 checks.
+
 ## Stock flows
 
 Not tested on the unit. In the emulator, ARR > CHANGE with the module and book 1 behaved as stock: YES chose the

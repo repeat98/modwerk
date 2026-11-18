@@ -352,6 +352,12 @@ int main(void)
     as_project_reloaded(); as_project_load(); mark(0x10);   /* the unit's order: no ev_banks_loaded after a reload */
     settle(); job(); as_tick(0);
     check("RELOAD PROJECT comes back to where it was saved: book 3, arrangement 5", book() == 2 && chosen == 4);
+    /* RELOAD as the unit raised it the second time: the reload, stock's new-project step, and no ev_banks_load */
+    as_project_stored();                           /* saved on book 3, arrangement 5 */
+    tap(LEFT); job(); as_tick(0); chosen = 6; job();
+    as_project_reloaded(); as_project_new(); mark(0x10);
+    settle(); job(); as_tick(0);
+    check("RELOAD without ev_banks_load still comes back: book 3, arrangement 5", book() == 2 && chosen == 4);
     as_project_load(); mark(0x10); as_project_loaded(); settle(); job(); as_tick(0);
     /* saved on book 1: a load stays there, with no job */
     while (book() != 0) { tap(LEFT); job(); as_tick(0); }

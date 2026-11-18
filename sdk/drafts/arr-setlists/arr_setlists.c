@@ -494,7 +494,12 @@ unsigned as_project_reloaded(void)
     s->book = 0;
     s->backup = 0;
     s->damaged = 0;
-
+    /* Where it was saved: RELOAD's own hook, after the copy. On the developer's MKI a RELOAD was followed by stock's
+     * new-project step (which keeps this) and sometimes by no ev_banks_load at all. */
+    int b = read_place(s);
+    s->restore = (int8_t)(b > 0 ? b : -1);
+    s->restore_ticks = 0;
+    if (s->mode_on) wr8(ARR_MODE_WANTED, 1);
     ++s->reloads;
     return 0;
 }
