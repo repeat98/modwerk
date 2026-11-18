@@ -456,6 +456,32 @@ int main(void)
     third.id = 27; CHECK(modwerk_machine_dsp_admit(&none, &third) == RUNTIME_FULL);   /* 27 is held */
     third.module = 0x873d83ccu; third.id = 26; CHECK(modwerk_machine_dsp_admit(&none, &third) == RUNTIME_FULL); /* the map has it at 27 */
     third.pinned = 0;
+    { /* #1720 (MKII, 18 November 2026): Tape Echo, pinned to 15, ran on T1 FX2 and was saved; after a power cycle the restore
+       * and every re-add were refused FULL. A project load had left its handle unnamed while it stayed live, so the save
+       * wrote no line for it, and the next load made the handle an unknown module's. E-Verb, pinned to its catalogue
+       * handle 27, stands in. */
+        for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) release(k);
+        memset(modwerk_test_live_fx, 0, sizeof modwerk_test_live_fx);
+        struct runtime_dsp echo = fx;
+        echo.module = 0x873d83ccu, echo.id = 27, echo.pinned = 1;
+        CHECK(modwerk_machine_dsp_admit(&none, &echo) == RUNTIME_OK && echo.id == 27);
+        modwerk_machine_dsp_switch(&none, &echo);
+        modwerk_fxmap_begin(1); modwerk_fxmap_line("#MODWERK_FX=26:00000047:2:Mod G", 0); modwerk_fxmap_loaded(0); /* without it */
+        for (unsigned i = 0; i < 8u; ++i) rebind_tick();
+        CHECK(owner[27] == 0x873d83ccu && !rebinding && modwerk_fxmap_handle(0x873d83ccu) == 27); /* stays, and is named */
+        modwerk_test_live_fx[8] = 27;                                     /* T1 FX2 picks it; the project is saved */
+        written[0] = 0; modwerk_fxmap_write(7);
+        CHECK(strstr(written, "#MODWERK_FX=27:873d83cc:1:Test FX\r\n") != 0);
+        /* A file saved before the fix lacks that line: after the power cycle the catalogue's module takes its handle. */
+        for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) release(k);
+        modwerk_fxmap_begin(1); modwerk_fxmap_line("#MODWERK_FX=26:00000047:2:Mod G", 0); modwerk_fxmap_loaded(0);
+        CHECK(modwerk_machine_dsp_admit(&none, &echo) == RUNTIME_OK && echo.id == 27);
+        echo.pinned = 0;                       /* unpinned too: before the fix it went elsewhere, and T1 ran dry */
+        CHECK(modwerk_machine_dsp_admit(&none, &echo) == RUNTIME_OK && echo.id == 27);
+        echo.module = 0x4cu;                                              /* another module never takes it */
+        CHECK(modwerk_machine_dsp_admit(&none, &echo) == RUNTIME_OK && echo.id != 27);
+        modwerk_test_live_fx[8] = 0;
+    }
     { /* The MISSING popup names what the loaded project's map names (MKII, 21 October 2026: "MISSING SPECTRUM" when a
        * project came back whose map gave Spectrum's catalogue handle to RINGMOD SC, which was installed). */
         char text[24];
