@@ -2,20 +2,24 @@ import { useEffect, useRef, useState } from 'react'
 import { accountHref } from './member-access'
 import { useCommunity } from './context'
 import { Icon } from '../components/Icon'
+import { countSignInPrompt } from './usage'
+import type { SignInPromptOutcome } from './usage-contract'
 /** The sign-in prompt. Without `action` it is the firmware build gate, which `onSkip` lets a guest pass; with one ("Sign in to like this module") it explains what a free account unlocks. `onAccount`: Sign in or Create account was followed, after `onClose`. */
 export function LoginPromptDialog({next,onClose,action,onSkip,onAccount}:{next:string;onClose:()=>void;action?:string;onSkip?:()=>void;onAccount?:()=>void}) {
   const dialog=useRef<HTMLDialogElement>(null),signIn=useRef<HTMLAnchorElement>(null)
-  const [skipWait,setSkipWait]=useState(5),hasSkip=!!onSkip
+  const [skipWait,setSkipWait]=useState(5),hasSkip=!!onSkip,kind=hasSkip?'gate':'other'
+  useEffect(()=>countSignInPrompt(`${kind}-shown`),[kind])
+  const answer=(outcome:'sign-in'|'create-account'|'skipped'|'closed',then:()=>void)=>()=>{countSignInPrompt(`${kind}-${outcome}` as SignInPromptOutcome);then()}
   useEffect(()=>{const element=dialog.current,previousFocus=document.activeElement;element?.showModal();signIn.current?.focus();return()=>{element?.close();if(previousFocus instanceof HTMLElement)previousFocus.focus()}},[])
   useEffect(()=>{
     if(!hasSkip||!skipWait)return
     const timer=window.setTimeout(()=>setSkipWait(skipWait-1),1000)
     return()=>window.clearTimeout(timer)
   },[hasSkip,skipWait])
-  return <dialog ref={dialog} className="app-dialog login-prompt-dialog" aria-labelledby="login-prompt-title" aria-describedby="login-prompt-message login-prompt-notice login-prompt-privacy" onCancel={event=>{event.preventDefault();onClose()}} onKeyDown={event=>event.stopPropagation()}>
+  return <dialog ref={dialog} className="app-dialog login-prompt-dialog" aria-labelledby="login-prompt-title" aria-describedby="login-prompt-message login-prompt-notice login-prompt-privacy" onCancel={event=>{event.preventDefault();answer('closed',onClose)()}} onKeyDown={event=>event.stopPropagation()}>
     <header className="login-prompt-header">
       <h2 id="login-prompt-title">{action??'Sign in to build firmware'}</h2>
-      <button type="button" className="icon-button" aria-label="Cancel" onClick={onClose}><Icon name="close" size={18}/></button>
+      <button type="button" className="icon-button" aria-label="Cancel" onClick={answer('closed',onClose)}><Icon name="close" size={18}/></button>
     </header>
     <p id="login-prompt-message">Sign in or create a free Modwerk account to continue.</p>
     <div id="login-prompt-notice" className="login-prompt-notice">
@@ -24,10 +28,10 @@ export function LoginPromptDialog({next,onClose,action,onSkip,onAccount}:{next:s
     </div>
     <p id="login-prompt-privacy">{action?'You come back to this page after signing in.':'Your configuration will be waiting when you return. Your firmware stays on this device.'}</p>
     <div className="dialog-actions">
-      <a ref={signIn} className="button button-primary" href={accountHref('login',next)} onClick={()=>{onClose();onAccount?.()}}>Sign in</a>
-      <a className="button button-quiet" href={accountHref('register',next)} onClick={()=>{onClose();onAccount?.()}}>Create account</a>
+      <a ref={signIn} className="button button-primary" href={accountHref('login',next)} onClick={answer('sign-in',()=>{onClose();onAccount?.()})}>Sign in</a>
+      <a className="button button-quiet" href={accountHref('register',next)} onClick={answer('create-account',()=>{onClose();onAccount?.()})}>Create account</a>
     </div>
-    {onSkip&&<button type="button" className="text-button login-prompt-skip" disabled={skipWait>0} onClick={onSkip}>{skipWait?`Skip for now (${skipWait}s)`:'Skip for now'}</button>}
+    {onSkip&&<button type="button" className="text-button login-prompt-skip" disabled={skipWait>0} onClick={answer('skipped',onSkip)}>{skipWait?`Skip for now (${skipWait}s)`:'Skip for now'}</button>}
   </dialog>
 }
 /** Lets a visitor press a member-only control: `prompt` opens the dialog instead of the action, and `next` (or a per-action

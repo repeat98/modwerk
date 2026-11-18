@@ -308,6 +308,9 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .card-set-base { margin: 0; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
 .card-set-base b { color: var(--text-secondary); font-family: var(--mono, ui-monospace, monospace); font-weight: 500; }
 .card-set-dialog .dialog-actions { margin-top: 18px; }
+.card-set-mismatch { margin: 18px 0 0; }
+.card-set-mismatch strong { display: block; margin-bottom: 4px; }
+.card-set-mismatch p { margin: 0; }
 .hub-account-note, .base-install-account { color: var(--muted); font-size: 13px; }
 .base-install-account { margin-top: 12px; }
 .hub-view .configuration-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
@@ -448,7 +451,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .base-install-stage .risk-acceptance { margin-top: 20px; font-size: 14px; }
 .base-install-stage .risk-acceptance p, .base-install-stage .risk-acceptance label { font-size: 14px; line-height: 1.65; }
 .base-install-stage .risk-acceptance label { min-height: 44px; }
-.base-install-stage .base-install-warning { display: flex; gap: 12px; margin-top: 20px; padding: 14px 16px; border: 1px solid #715235; border-radius: 8px; background: #382d23; color: #f0c792; font-size: 14px; line-height: 1.65; }
+.base-install-stage .base-install-warning, .base-install-route { display: flex; gap: 12px; margin-top: 20px; padding: 14px 16px; border: 1px solid #715235; border-radius: 8px; background: #382d23; color: #f0c792; font-size: 14px; line-height: 1.65; }
 .base-install-warning svg { flex-shrink: 0; margin-top: 3px; }
 .base-install-warning strong, .base-install-warning a { color: #ffe0b8; }
 .base-install-stage .base-install-note { margin-top: 24px; padding: 16px; border-left: 2px solid var(--accent); background: var(--surface-raised); }

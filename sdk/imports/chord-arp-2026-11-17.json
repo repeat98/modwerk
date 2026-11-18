@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt-ii/chord-arp",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-17",
+  "changes": [
+    "First release on Digitakt II OS 1.17 with the Modwerk core 1.1 base."
+  ],
+  "runtimeSourceSha256": "37293d76a4fc676eaa1940f4cae7d01bf886eb937424e2ec56dfad06ddf64169",
+  "packages": [
+    {
+      "os": "1.17",
+      "path": "sdk/imports/packages/chord-arp/chord-arp-0.1.0-experimental-os1.17.elemod",
+      "sha256": "376ef286e47c7c2ad4402321b235913d6ad8a08898a7b8ec2d2519857b4d9e81"
+    }
+  ],
+  "stockPolicy": "The package contains authored module code and needs the owner’s stock OS 1.17 to build a firmware image.",
+  "evidence": "sdk/digitakt-ii/modules/chord-arp/TESTING.md",
+  "requires": []
+}

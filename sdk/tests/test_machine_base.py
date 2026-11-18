@@ -170,6 +170,30 @@ class MachineBases(unittest.TestCase):
                 with tempfile.TemporaryDirectory() as work, self.assertRaisesRegex(ValueError, "redo the copy"):
                     machine_base.stage(machine, stale, pathlib.Path(work))
 
+    def test_digitakt_ii_kit_data_ends_where_the_project_archive_starts(self):
+        # Core's kit data (KIT_PAD, KIT_ROOM) and the base's project archive (the last CHUNK_BYTES + 4 bytes of each
+        # kit record) share each serialized kit record. Overlapping, core's save zeroed the archive: with a kit-data
+        # module and an archive module together, the archive module's settings came back off after a power cycle.
+        config = json.loads((APP / "sdk/machines/digitakt-ii/elekloader/base.json").read_text())
+        with tempfile.TemporaryDirectory() as work:
+            core = machine_base.stage("digitakt-ii", config, pathlib.Path(work))
+            defsym = json.loads((core / "mod.json").read_text())["defsym"]
+            store = (core / "store.c").read_text()
+        archive = (APP / "sdk/machines/digitakt-ii/elekloader/modwerk/project-archive.c").read_text()
+        constant = lambda name: int(re.search(r"\b%s = (0x[0-9a-fA-F]+|\d+)" % name, archive).group(1), 0)
+        stride = int(defsym["FW_STARTUP_KIT_STRIDE"], 0)
+        self.assertEqual(constant("KIT_RECORD_SIZE"), stride)
+        self.assertEqual(constant("KIT_RECORDS"), int(defsym["FW_STARTUP_KITS_OFFSET"], 0))
+        kit_end = int(defsym["KIT_PAD"], 0) + int(defsym["KIT_ROOM"], 0)
+        archive_start = stride - (constant("CHUNK_BYTES") + 4)
+        self.assertLessEqual(kit_end, archive_start, "core's kit data runs into the project archive")
+        self.assertLessEqual(int(defsym["KIT_ROOM"], 0), int(re.search(r"#define ROOM_MAX (\d+)", store).group(1)))
+        # The copy differs from the imported recipe in the kit-data room alone.
+        imported = json.loads(imported_recipe("digitakt-ii", config).read_text())
+        copied = json.loads((APP / "sdk/machines/digitakt-ii/elekloader/copies/core-dt2/mod.json").read_text())
+        self.assertEqual(dict(copied, defsym=dict(copied["defsym"], KIT_ROOM=None)),
+                         dict(imported, defsym=dict(imported["defsym"], KIT_ROOM=None)))
+
     def test_retarget_replaces_the_recipe_and_refuses_anything_else(self):
         mod = {"device": "a", "defsym": {"X": "1"}, "sites": [{"a": 1}], "sources": ["a.s"]}
         out = machine_base.retarget(dict(mod), {"device": "b", "defsym": {"Y": "2"}, "sites": [], "sources": ["b.s"]}, [{"b": 2}])
@@ -223,7 +247,7 @@ class MachineBases(unittest.TestCase):
         with self.assertRaises(ValueError):
             machine_base.variants({"variants": {"bad": {"add": False, "leave": ["bus_*"]}}})
 
-    def test_the_rytm_voices_variant_stages_add_without_the_send_bus(self):
+    def test_the_rytm_voices_variant_stages_add_without_the_send_bus_or_its_lock_words(self):
         config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
         variants = {name: (add, leave) for name, add, leave in machine_base.variants(config)}
         staged = {}
@@ -233,13 +257,20 @@ class MachineBases(unittest.TestCase):
                 core = machine_base.stage("analog-rytm-mkii", config, pathlib.Path(work), add=add, leave=leave)
                 staged[name] = json.loads((core / "mod.json").read_text())
         bus, voices = staged["send-bus"], staged["voices"]
-        for source in ("../base/clock.c", "../base/sendbus.c", "../base/sendbus.s"):
+        for source in ("../base/locks.c", "../base/locks.s", "../base/clock.c", "../base/sendbus.c", "../base/sendbus.s"):
             self.assertIn(source, bus["sources"])
             self.assertNotIn(source, voices["sources"])
-        for source in ("../base/locks.c", "../base/locks.s", "../base/voice.c", "../base/voice.s"):
+        for source in ("../base/voice.c", "../base/voice.s"):
             self.assertIn(source, voices["sources"])
         names = json.dumps(voices)
         self.assertNotIn("mw_send_", names)
+        # the FX track's lock words, which only the send bus writes: their three sites stay on send-bus with it
+        targets = {name: [site["target"] for site in machine_base.parts(config, add=variants[name][0], leave=variants[name][1])["sites"] if "target" in site]
+                   for name in ("send-bus", "voices")}
+        self.assertEqual([t for t in targets["send-bus"] if t.startswith("core_lk_")],
+                         ["core_lk_save_one", "core_lk_save_all", "core_lk_load"])
+        self.assertEqual([t for t in targets["voices"] if t.startswith("core_lk_")], [])
+        self.assertIn("mw_voice_applied_gate", targets["voices"])
         self.assertNotIn("mw_fx", voices["collections"])
         for name in ("mw_voices", "ev_sound_applied"):
             self.assertIn(name, voices["collections"])

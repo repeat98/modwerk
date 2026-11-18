@@ -64,7 +64,7 @@ MATCH_WINDOW = 64           # a reply is looked for this far ahead: sequence num
 FUNC_TURN_AT = 0x417e32b8   # OS 1.74: 1 while the last turn that moved a value was with FUNC
 IDENT_NUM = ('link', 'armed', 'human', 'human_count', 'posted', 'refused', 'drops', 'received', 'ticks',
              'boot_rsr', 'playing', 'boot')
-IDENT_TEXT = ('label', 'os_build', 'boot_text', 'depack_crc', 'image_crc')
+IDENT_TEXT = ('label', 'os_build', 'boot_text', 'depack_crc', 'image_crc', 'diag')
 NOTE_MS, NOTE_VEL = 100, 100    # a `note` without a length or a velocity
 AUDIO_MAX_MS = 30000
 AUDIO_RATE = 48000
