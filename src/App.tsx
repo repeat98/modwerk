@@ -128,6 +128,7 @@ const OwnerNoteGate = lazy(() => import('./components/OwnerNote').then(module =>
 const OwnerNotePreview = lazy(() => import('./components/OwnerNote').then(module => ({ default: module.OwnerNotePreview })))
 const OctatrackWelcome = lazy(() => import('./components/OctatrackWelcome').then(module => ({ default: module.OctatrackWelcome })))
 const BetaJoinPrompt = lazy(() => import('./components/BetaJoinPrompt').then(module => ({ default: module.BetaJoinPrompt })))
+const MoreModsPrompt = lazy(() => import('./components/MoreModsPrompt').then(module => ({ default: module.MoreModsPrompt })))
 const BetaModuleSets = lazy(() => beta().then(module => ({ default: module.BetaModuleSets })))
 const FirmwareFeedbackPreview = import.meta.env.DEV ? lazy(() => import('./components/FirmwareFeedbackPreview')) : () => null
 const firmwareFeedbackPreview = import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === 'firmware-feedback'
@@ -535,6 +536,7 @@ export default function App() {
       {welcome.open && <Suspense fallback={null}><OctatrackWelcome link={usbLink ?? null} usbBrowser={usbBrowser} savedSets={configurationsFor('octatrack').some(set => set.moduleIds.length > 0)}
         onLater={welcome.close} onSetUp={() => { welcome.close(); window.location.hash = 'octatrack'; setBaseInstall('manual') }} /></Suspense>}
       {session.available && !sessionLoading && !betaAccess && !welcome.due && !welcome.shown && !touchOnly && !mobileWorkspace && !accountRoute && !faqRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route) && <Suspense fallback={null}><BetaJoinPrompt /></Suspense>}
+      {(machineView === 'library' || !!zoomHub) && currentDevice.status === 'preview' && !welcome.due && !welcome.shown && <Suspense fallback={null}><MoreModsPrompt key={currentDevice.id} device={currentDevice} count={overview.machines.find(machine => machine.device.id === currentDevice.id)?.count} /></Suspense>}
       {betaAccess && <Suspense fallback={null}><OwnerNoteGate key={session.user!.id} link={usbLink ?? null} enabled={!accountRoute && !faqRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route)} /></Suspense>}
       {import.meta.env.DEV && usbPreview === 'beta-note' && <Suspense fallback={null}><OwnerNotePreview /></Suspense>}
       <Suspense fallback={null}>
