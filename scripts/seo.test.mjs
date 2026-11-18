@@ -20,7 +20,7 @@ it.each(['./', '/octamod/'])('builds crawlable content and a sitemap matching th
   const bundle = { 'index.html': { type: 'asset', fileName: 'index.html', source: builtHtml }, '404.html': { type: 'asset', fileName: '404.html', source: notFoundPageHtml(builtHtml, base) } }
   for (const module of MODULES) bundle['module/' + module.id + '/index.html'] = { type: 'asset', fileName: 'module/' + module.id + '/index.html', source: modulePageHtml(builtHtml, module, 'x.jpg', base) }
   for (const mod of DIGI_MODS) bundle[`${mod.device}/module/${mod.id}/index.html`] = { type: 'asset', fileName: `${mod.device}/module/${mod.id}/index.html`, source: digiModulePageHtml(builtHtml, mod, 'x.jpg', base) }
-  bundle['submit/index.html'] = { type: 'asset', fileName: 'submit/index.html', source: sitePageHtml(builtHtml, SITE_PAGES[0], 'x.jpg', base) }
+  bundle['submit/index.html'] = { type: 'asset', fileName: 'submit/index.html', source: sitePageHtml(builtHtml, SITE_PAGES[0], base) }
   const forum = forumThreadPageHtml(builtHtml, thread, base)
   bundle['forum/thread/public-topic/index.html'] = { type: 'asset', fileName: 'forum/thread/public-topic/index.html', source: forum }
   bundle['forum/thread/alias/index.html'] = { type: 'asset', fileName: 'forum/thread/alias/index.html', source: forum }

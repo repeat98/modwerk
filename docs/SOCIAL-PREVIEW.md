@@ -10,13 +10,28 @@ only the directory's promotional artwork; project cards use the projects' own
 GitHub repository previews and retain their authorship.
 
 The editable source is [social-preview/projects.svg](social-preview/projects.svg).
-Re-export under Node 24 with `node scripts/render-projects-preview.mjs`.
+Re-export under Node 24 with `node scripts/render-page-preview.mjs projects`.
 The renderer inserts the current mark and uses the existing Sharp dependency.
 The static directory page sets both Open Graph and Twitter metadata to this
 image, with its own canonical URL and alt text. Client navigation uses the same
 image; other pages retain their existing cards. Change the versioned filename
 and `PROJECT_PREVIEW_IMAGE` when replacing published artwork to avoid stale
 sharing-service caches.
+
+## Start developing
+
+`/submit/` has its own artwork in the same layout at
+`public/submit-social-preview-v1.jpg`: “For developers”, “Make your own mod.” and
+four numbered steps from the page (plan, build, test on your unit, release) drawn
+as a chat with a check, a ninth tile sliding into the module grid, a generic
+instrument on a USB cable and a merged pull request. They are original
+explanatory drawings, not interface captures or a picture of any maker's hardware.
+The editable source is [social-preview/submit.svg](social-preview/submit.svg);
+re-export with `node scripts/render-page-preview.mjs submit`. The source asks for
+Helvetica Neue, then Ubuntu Sans, so an export on Linux differs from one on macOS.
+Its image and alt text are `SUBMIT_PREVIEW_IMAGE` and `SUBMIT_PREVIEW_ALT` in
+`src/community/developer-guidance.ts`; bump the filename's version when the
+artwork changes.
 
 ## Original Octamod artwork
 
@@ -192,16 +207,17 @@ the public card changes after these files are deployed.
 
 ## Per-page cards
 
-Module pages, forum thread pages and the Start developing page carry their own
-`og:image`. Modules use their artwork (`module-thumbnails/`). A forum thread uses
-its first picture when it has one; otherwise the build draws a 1200 × 630 card
-(`forum-thumbnails/`) with the topic, the title (up to three lines), the author and
-the reply count over the Modwerk mark. The Start developing page is served at
-`submit/` with its own card (`page-thumbnails/`). Cards are rendered with Sharp at
-build time by `scripts/social-cards.ts`, so a thread's card updates on the next
-deploy.
+Module pages, forum thread pages, Start developing (`submit/`) and Other projects
+(`projects/`) carry their own `og:image`. Modules use their artwork
+(`module-thumbnails/`). A forum thread uses its first picture when it has one;
+otherwise the build draws a 1200 × 630 card (`forum-thumbnails/`) with the topic,
+the title (up to three lines), the author and the reply count over the Modwerk
+mark. Thread cards are rendered with Sharp at build time by
+`scripts/social-cards.ts`, so a thread's card updates on the next deploy. The two
+site pages use their drawn artwork above.
 
-To give another page a card, add it to `SITE_PAGES` in `scripts/site-pages.ts` and
-make its path a route in `src/routing.ts`. Pages that are only hash routes (builder,
+To give another page a card, draw its artwork, add the page with its image and alt
+text to `SITE_PAGES` in `scripts/site-pages.ts`, pass the same image to
+`setPageMetadata` in `src/App.tsx` and make its path a route in `src/routing.ts`. Pages that are only hash routes (builder,
 forum index, SDK) cannot have their own card, because crawlers ignore the part of
 the URL after `#`; they show the site card.

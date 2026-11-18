@@ -1,3 +1,7 @@
+export const SUBMIT_DESCRIPTION = 'Build a mod for Elektron instruments: write it with the SDK, submit it through GitHub and get it reviewed for the Modwerk library.'
+export const SUBMIT_PREVIEW_IMAGE = 'submit-social-preview-v1.jpg'
+export const SUBMIT_PREVIEW_ALT = 'Make your own mod on Modwerk. For developers: plan, build, test on your unit and release, with original chat, module, instrument and pull request illustrations.'
+
 /** The release flow shown on the Start developing page. The prompts hand the work to the module skills, and the rules behind each step live in the repository (AGENTS.md, docs/DEVELOPER_WORKFLOW.md), which every coding agent reads. */
 export type DeveloperTask = 'create' | 'update'
 export type DeveloperStage = 'plan' | 'build' | 'test' | 'submit' | 'review' | 'publish'
