@@ -5,7 +5,7 @@ import type { OctatrackLink, LinkDiagnostic } from '../engine/elekloader/octatra
 import type { LoadReading } from '../engine/elekloader/upload-wire'
 import { browserRequestsPrivacy, countOctatrackAction } from './usage'
 import { diagnosticClient } from './diagnostic-client'
-import { OCTATRACK_DIAGNOSTICS_VERSION, DIAGNOSTICS_GUEST, DIAGNOSTIC_USB_EVENTS, type PreLinkFailure, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, type SiteDiagnosticEvent, type DiagnosticConsent, type DiagnosticLive, type OctatrackDiagnostic } from './octatrack-diagnostics-contract'
+import { OCTATRACK_DIAGNOSTICS_VERSION, DIAGNOSTICS_GUEST, syncFailureReason, DIAGNOSTIC_USB_EVENTS, type PreLinkFailure, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, type SiteDiagnosticEvent, type DiagnosticConsent, type DiagnosticLive, type OctatrackDiagnostic } from './octatrack-diagnostics-contract'
 import { subscribeSiteDiagnosticEvents, collectBrowserDiagnosticEvents } from './site-diagnostic-events'
 
 /** A visitor's random ID (DIAGNOSTICS_GUEST): made only when they agree to share, removed when they stop, kept in this
@@ -145,7 +145,9 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
     if (event.event === 'link_failed') { if (event.failure) linkFailed(event.failure); return } // the link's own report of the same
     if (event.event === 'sync_started') { activeSync = true; countOctatrackAction('usb_sync_started') }
     else if (activeSync && ['kept','undone','sync_failed','disconnected'].includes(event.event)) {
-      countOctatrackAction(event.event === 'kept' ? 'usb_sync_kept' : event.event === 'undone' ? 'usb_sync_undone' : 'usb_sync_failed'); activeSync = false
+      if (event.event === 'kept' || event.event === 'undone') countOctatrackAction(event.event === 'kept' ? 'usb_sync_kept' : 'usb_sync_undone')
+      else countOctatrackAction('usb_sync_failed', syncFailureReason(event))
+      activeSync = false
     }
     if (['sync_started','kept','undone','sync_failed','disconnected'].includes(event.event)) flushLoad()
     void send(event)

@@ -15,7 +15,7 @@ import { useBuildGate } from './community/MemberGate'
 import { ForumPage } from './community/ForumPage'
 import { ForumShoutbox } from './community/ForumShoutbox'
 import './community/forum.css'
-import { countBaseGuide, trackPageView, trackUsage } from './community/usage'
+import { countBaseGuide, countBaseGuideStep, trackPageView, trackUsage } from './community/usage'
 import { useDiagnosticsStepNeeded } from './community/diagnostics-sharing'
 import { DIAGNOSTICS_GUEST } from './community/octatrack-diagnostics-contract'
 import { useOctatrackWelcome } from './hooks/useOctatrackWelcome'
@@ -63,9 +63,9 @@ import { ShareModuleButton } from './community/ShareModuleButton'
 import { useBaseInstallPrompt } from './hooks/useBaseInstallPrompt'
 import { OctatrackLinkContext, useInventory, useMissing } from './hooks/useOctatrackLink'
 import { recordLoad } from './hooks/useOctatrackLoad'
-import { pendingBaseInstall } from './config/octatrack-progress'
+import { baseGuideToReopen, forgetBaseGuideReopen, pendingBaseInstall } from './config/octatrack-progress'
 import { digiDownloadsEnabled, isCoreBuildPreview } from './engine/elekloader/protocol'
-import { USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
+import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
 import { downloadSelection, parseSelection } from './config/selection'
 import { Icon } from './components/Icon'
 import { ModuleDetail } from './components/ModuleDetail'
@@ -210,10 +210,16 @@ export default function App() {
   const [openModule, setOpenModule] = useState<string>()
   // Another USB Audio layout a module set asked the base installer for (base-variants.ts). Otherwise the installer
   // takes the layout of the set being synced or edited (loadingTarget ?? active), or USB Audio off.
-  const [baseLayoutWanted, setBaseLayoutWanted] = useState<BaseLayout>()
-  const [baseInstall, setBaseInstall] = useState<'manual' | 'preview' | null>(() => usbPreview === 'diagnostics' ? null : usbPreview === 'base-install' ? 'preview' : pendingBaseInstall() ? 'manual' : null)
+  // The guide's own Reload page (a deploy since the page opened) opens it again here, as it was opened (baseGuideToReopen).
+  const [reopenGuide] = useState(() => usbPreview ? undefined : baseGuideToReopen())
+  useEffect(() => { if (reopenGuide) forgetBaseGuideReopen() }, [reopenGuide])
+  const [baseLayoutWanted, setBaseLayoutWanted] = useState<BaseLayout | undefined>(() => {
+    const layout = reopenGuide?.layout
+    return layout === 'off' || USB_AUDIO_LAYOUTS.some(item => item.id === layout) ? layout as BaseLayout : undefined
+  })
+  const [baseInstall, setBaseInstall] = useState<'manual' | 'preview' | null>(() => usbPreview === 'diagnostics' ? null : usbPreview === 'base-install' ? 'preview' : pendingBaseInstall() || reopenGuide ? 'manual' : null)
   // The module set the guided load dialog is open for: the only way anything goes onto the unit.
-  const [loadingSet, setLoadingSet] = useState<string | undefined>(() => pendingBaseInstall()?.returnSetId)
+  const [loadingSet, setLoadingSet] = useState<string | undefined>(() => pendingBaseInstall()?.returnSetId ?? reopenGuide?.returnSetId)
   // The guided load's Install from the card: the set page with the card install open.
   // The base install guide opens on the Your Octatrack page (hubRoute, below) until the unit or the account says there is
   // a base; an older base is updated from the sync, never by a prompt. Never on account, sign-in, admin and legal
@@ -547,7 +553,7 @@ export default function App() {
         const state = unitState(openModule, selectedIds, inventory)
         return module && <ModuleDialog title={module.name} index={index >= 0 ? index : undefined} total={order.length} prev={step(index - 1)} next={step(index + 1)} status={state && <StateChip state={state}>{UNIT_STATE[state]}</StateChip>} actions={<ShareModuleButton id={module.id} title={module.name} />} onClose={() => setOpenModule(undefined)}><ModuleDetail key={module.id} modal module={module} selected={selectedIds.includes(module.id)} addBlock={addBlockMap[module.id]} onSwap={removeIds => swapModule(module.id, removeIds)} usbAudio={active?.usbAudio} configurationName={active?.name} configurationId={active?.id} onConfigureUsbAudio={configureUsbAudio} onToggle={() => toggleModule(module.id)} /></ModuleDialog> })()}
       {usbKit && loadingTarget && !baseInstall && !baseInstallPrompt.open && <LoadDialog key={loadingTarget.id} link={usbKit.link} set={{ name: loadingTarget.name, moduleIds: loadingTarget.moduleIds, removedStockFx: loadingTarget.removedStockFx, usbAudio: loadingTarget.usbAudio }} putBack={putBackId === loadingTarget.id} comesBackOn={putBackId === loadingTarget.id ? putBackOff : undefined} inventory={inventory} prepareUpdate={usbKit.prepareUpdate} onClose={() => { setLoadingSet(undefined); setPutBackId(undefined) }} onInstallBase={layout => { setBaseLayoutWanted(layout); setBaseInstall('manual') }} onEdit={() => { setLoadingSet(undefined); changeConfiguration(loadingTarget.id) }} onReport={() => { setLoadingSet(undefined); setReportingConfiguration({ machine: 'octatrack', id: loadingTarget.id }) }} />}
-      {usbLink && (baseInstall || baseInstallPrompt.open) && <BaseInstallDialog link={usbLink} returnSetId={loadingSet} launch={!baseInstall || baseInstall === 'preview'} account={!session.user ? 'visitor' : !session.user.verified ? 'unverified' : undefined} gate={buildGate.passed ? undefined : { next: route, skip: buildGate.skip }} onAccount={leaveGuideForAccount} diagnosticsStep={baseGuideDiagnosticsStep} onStage={onBaseGuideStage} firmwareReady={!!firmware} firmwareError={fileError} onChooseFirmware={file => void readFile(file)} layout={baseLayoutWanted} set={loadingTarget ?? active} buildBase={(layout, step) => workspace.firmwareClient.current?.buildBase(layout, step) ?? Promise.reject(new Error('Reload the page.'))} onClose={() => { setBaseLayoutWanted(undefined); if (baseInstall) setBaseInstall(null); else baseInstallPrompt.close() }} onReady={() => { setBaseLayoutWanted(undefined); setBaseInstall(null); baseInstallPrompt.close(); window.location.hash = 'configuration' }}/>}
+      {usbLink && (baseInstall || baseInstallPrompt.open) && <BaseInstallDialog link={usbLink} returnSetId={loadingSet} launch={!baseInstall || baseInstall === 'preview'} account={!session.user ? 'visitor' : !session.user.verified ? 'unverified' : undefined} gate={buildGate.passed ? undefined : { next: route, skip: buildGate.skip }} onAccount={leaveGuideForAccount} diagnosticsStep={baseGuideDiagnosticsStep} onStage={onBaseGuideStage} onStep={countBaseGuideStep} firmwareReady={!!firmware} firmwareError={fileError} onChooseFirmware={file => void readFile(file)} layout={baseLayoutWanted} set={loadingTarget ?? active} buildBase={(layout, step) => workspace.firmwareClient.current?.buildBase(layout, step) ?? Promise.reject(new Error('Reload the page.'))} onClose={() => { setBaseLayoutWanted(undefined); if (baseInstall) setBaseInstall(null); else baseInstallPrompt.close() }} onReady={() => { setBaseLayoutWanted(undefined); setBaseInstall(null); baseInstallPrompt.close(); window.location.hash = 'configuration' }}/>}
       {zoomLink && zoomInstall && <ZoomBaseDialog link={zoomLink} device={DEVICES_BY_ID['zoom-ms-70cdr']} onClose={() => setZoomInstall(false)} />}
       </Suspense>
       {supportOpen && <SupportDialog url={SUPPORT_URL} onClose={() => setSupportOpen(false)} />}

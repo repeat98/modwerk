@@ -153,7 +153,7 @@ function octatrackStep(body: Record<string, unknown>, keys: string): { event: Oc
   if (!details.length) return keys === 'event' ? { event, detail: '' } : undefined
   if (keys !== 'detail,event' || typeof body.detail !== 'string' || body.detail.length > 32) return undefined
   if (details.includes(body.detail)) return { event, detail: body.detail }
-  return event === 'base_install_failed' ? { event, detail: 'other' } : undefined
+  return details.includes('other') ? { event, detail: 'other' } : undefined // base_install_failed, usb_sync_failed_reason
 }
 /** Called hourly by the Worker and available to other backend adapters. */
 export async function cleanupUsage(db: Database, now = new Date()) {
