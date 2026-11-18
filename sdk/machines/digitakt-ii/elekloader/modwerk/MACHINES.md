@@ -27,6 +27,12 @@ Read from the decoded main image (load address `0x40000400`) on 18 November 2026
 
 Start-up code (from `0x401c4aa6`) fills each 44-byte machine descriptor with the machine's name, a second label and eight parameter codes, one per knob A-H, then a final word. SAMPLE's knob C code is 0 (no parameter), as on every stock machine. Each code is a row of the parameter table at `0x4020f59c`, which holds the knob's name, short name, range, default and formatter.
 
+Layout read from the start-up code: `+0x00` the name and `+0x04` the second label (each set by a string routine from a C string), `+0x08` to `+0x24` the eight parameter codes for knobs A-H, `+0x28` a final word.
+
+### The parameter table cannot grow in place
+
+The 275 rows at `0x4020f59c` are image data. 53 absolute references load the table and about 45 bound checks compare a code with 275 (`cmpi.l #0x113`: 24 with `d0`, 2 with `d1`, 10 with `d2`) or 274 (9 with `d0`), many inline. New knob names therefore need the table relocated: a copy in the base's memory with rows appended, a pointer site at each reference and a bytes site at each bound. The Elekloader builder supports both kinds of site (`ptr` and `bytes`, and relocatable data copies). The base owns them all; no module may patch them. First step before that: a test machine whose knobs use stock rows, to prove the descriptor and parameter-code hooks in the emulator.
+
 ## The record a module contributes (draft)
 
 One `core_machines` entry per machine:
