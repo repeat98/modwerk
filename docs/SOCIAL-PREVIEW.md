@@ -27,8 +27,11 @@ as a chat with a check, a ninth tile sliding into the module grid, a generic
 instrument on a USB cable and a merged pull request. They are original
 explanatory drawings, not interface captures or a picture of any maker's hardware.
 The editable source is [social-preview/submit.svg](social-preview/submit.svg);
-re-export with `node scripts/render-page-preview.mjs submit`. The source asks for
-Helvetica Neue, then Ubuntu Sans, so an export on Linux differs from one on macOS.
+it is set in Archivo and JetBrains Mono like the homepage card. Download their
+OFL TTFs from [google/fonts](https://github.com/google/fonts) (`ofl/archivo`,
+`ofl/jetbrainsmono`) into a folder outside the repository and re-export with
+`node scripts/render-page-preview.mjs submit --fonts <folder>`; without the folder
+the system's fallback fonts show.
 Its image and alt text are `SUBMIT_PREVIEW_IMAGE` and `SUBMIT_PREVIEW_ALT` in
 `src/community/developer-guidance.ts`; bump the filename's version when the
 artwork changes.
