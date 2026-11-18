@@ -67,6 +67,27 @@ describe('elemod linker', () => {
     expect((await linkMods([on(core), on(mod('one', 0x40000100))], image)).order).toEqual(['core 1.0', 'one 1.0'])
   })
 
+  it('gives a set too big for the area the first larger one it may use, and leaves every other set where it was', async () => {
+    const wide: LinkDevice = { ...device, ddrMore: [{ area: [0x40ffc000, 0x41001000] }, { area: [0x40ffc000, 0x41009000], unless: 'fixed_end' }] }
+    const on = (doc: Record<string, unknown>) => parseElemod(doc, String(doc.id), [wide])
+    const sized = (id: string, addr: number, bss: number, extra: Record<string, unknown> = {}) => mod(id, addr, { sections: { '.run': { parts: [['hex', '4e75']] }, '.bss': { size: bss } }, ...extra })
+    const small = await linkMods([on(core), on(mod('one', 0x40000100))], image)
+    expect(small.layout.ddr[0]).toBe(0x41000000)
+    expect(small.image).toEqual((await linkMods([parse(core), parse(mod('one', 0x40000100))], image)).image)
+    const big = sized('big', 0x40000200, 0x2000)
+    const linked = await linkMods([on(core), on(mod('one', 0x40000100)), on(big)], image)
+    expect(linked.layout.ddr[0]).toBe(0x40ffc000)
+    expect(linked.layout.ddrSpare).toBe(0x41001000 - linked.layout.bss[1])
+    expect(new DataView(linked.image.buffer).getUint32(0x100 + 2)).toBeGreaterThanOrEqual(0x40ffc000)
+    await expect(linkMods([parse(core), parse(mod('one', 0x40000100)), parse(big)], image)).rejects.toThrow('bytes over')
+    const huge = await linkMods([on(core), on(sized('huge', 0x40000300, 0x8000))], image)
+    expect(huge.layout.ddr[0]).toBe(0x40ffc000)
+    expect(huge.layout.ddrSpare).toBe(0x41009000 - huge.layout.bss[1])
+    await expect(linkMods([on(core), on(sized('fixed', 0x40000300, 0x8000, { imports: ['fixed_end'] })), on(mod('ends', 0x40000400, { symbols: { handler: ['.run', 0], fixed_end: ['.run', 0] }, exports: ['fixed_end'] }))], image))
+      .rejects.toThrow(/past 0x41001000 .*fixed 1\.0 cannot use the 53248 bytes at 0x40ffc000-0x41009000/)
+    await expect(linkMods([on(core), on(sized('vast', 0x40000300, 0x10000))], image)).rejects.toThrow('past 0x41009000')
+  })
+
   it('applies a single whole build and refuses two', async () => {
     const whole = (id: string) => ({ elemod: 1, id, version: '1.0', target, sites: [], blob: { load: '0x40001000', len: 2, sha256: sha(Uint8Array.from([0x4e, 0x75])), parts: [['hex', '4e75']] } })
     expect((await applyWholeBuilds([parse(whole('os'))], image)).length).toBe(image.length + 2)

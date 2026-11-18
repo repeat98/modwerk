@@ -51,7 +51,7 @@
     "ui:AMP page envelope picture HLD",
     "ui:SOUND SETTINGS ENV RESET values",
     "audio:filter attack rate table",
-    "audio:amp hold table",
+    "audio:amp hold compare",
     "audio:amp decay table",
     "audio:filter decay and release table",
     "audio:amp overdrive CV"
@@ -82,11 +82,20 @@
           "target": "improved_amp_flt_atk"
         },
         {
-          "addr": "0x40109bc4",
+          "addr": "0x40109bc2",
+          "len": 6,
+          "stockSha256": "59a77cf76235e19ba4a955201228253e4d8fc95ecbdf031bbdfd67078d178e56",
+          "op": "bytes",
+          "new": "207c7fffffff",
+          "kind": "code"
+        },
+        {
+          "addr": "0x40109bce",
           "len": 4,
-          "stockSha256": "a93a6f0c7e9387b5bf90a027d5678b11c90d555082736705d44faca3b73d46b6",
-          "op": "ptr",
-          "target": "improved_amp_hold"
+          "stockSha256": "694768dad26811dabde41d9cd7c5eccca40bb771a1fb34dcda4ce256a8e5ef5a",
+          "op": "bytes",
+          "new": "4a81b288",
+          "kind": "code"
         },
         {
           "addr": "0x40109bf0",

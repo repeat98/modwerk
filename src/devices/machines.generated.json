@@ -690,8 +690,8 @@
         {
           "name": "Core image with the digital voices",
           "unit": "bytes",
-          "value": 19460,
-          "note": "The base's voices variant (e241e031), for a set with a digital voice machine and no send effect: send-bus's lock words and digital voices without the send bus, its pages, its clock or the FX list, 16,116 bytes .run plus 3,344 bytes .bss."
+          "value": 17708,
+          "note": "The base's voices variant (dd771eae), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 14,876 bytes .run plus 2,832 bytes .bss."
         }
       ]
     }
@@ -703,7 +703,7 @@
     "name": "Analog Rytm",
     "family": "elektron",
     "status": "research",
-    "summary": "OS 1.74 rebuilt in the browser builder (ELE2); marked builds boot, stock restores, DIN recovery works; the MKII base built for the MKI passed on a unit.",
+    "summary": "OS 1.74 rebuilt in the browser builder (ELE2); the Modwerk base passed on a unit and ten MKII modules ran on it; site builds wait for an Elekloader release with the MKI.",
     "steps": {
       "format": "done",
       "rebuild": "done",
@@ -755,7 +755,32 @@
         "url": "https://github.com/mischa85/elektron-firmware-tool",
         "note": "Documents the SysEx transport, ELE2 container and aPLib codec that Modwerk's ele2.ts reads and rebuilds (docs/RYTM_MKI_OS_RESEARCH.md). No firmware hosted."
       }
-    ]
+    ],
+    "sdk": {
+      "platform": "elemod",
+      "modules": "sdk/analog-rytm-mki/modules",
+      "catalog": null,
+      "guide": "sdk/machines/analog-rytm-mki/README.md",
+      "core": {
+        "version": "0.7",
+        "path": "sdk/analog-rytm-mki/core-profile"
+      },
+      "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder with the Analog Rytm MKI device (elekloader/elekloader#351, awaiting a release): Modwerk's MKI base, from core-ar2 0.7's source at the MKI's addresses, and the owner's exact MKI OS 1.74 .syx.",
+      "budgets": [
+        {
+          "name": "Shared mod memory",
+          "unit": "bytes",
+          "value": 131072,
+          "note": "DDR 0x47BE0000–0x47C00000, shared by the core and every mod; a boot-time canary over 0x47B00000–0x47F00000 read back intact on a unit (MW02, 8 November 2026)."
+        },
+        {
+          "name": "Core image",
+          "unit": "bytes",
+          "value": 12064,
+          "note": "Modwerk's MKI base, plain variant: 10,696 bytes .run plus 1,368 bytes .bss in the shared area, and a 100-byte .boot copier. The link check measures each selected module set."
+        }
+      ]
+    }
   },
   {
     "schemaVersion": 1,
