@@ -18,7 +18,7 @@ import { connect } from 'node:net'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, dirname, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import { CPU_PRICE_PENDING_PATH, CPU_PRICE_RECORD, machineDescriptors, measuredPrice } from './module-cpu-price.mjs'
+import { CPU_PRICE_PENDING_PATH, CPU_PRICE_RECORD, machineDescriptors, manifestJson, measuredPrice } from './module-cpu-price.mjs'
 
 const mean = values => values.reduce((sum, value) => sum + value, 0) / values.length, tenth = value => Math.round(value * 10) / 10
 /** One reading from the session's `guard` line and `stats` lines: percent of a frame, percent of the meter, per mille of a DSP. */
@@ -52,9 +52,8 @@ export function writePrice({ root, result, base, scene, seconds, measuredAt }) {
       '; CPU meter ' + before.cpu + ' % before, ' + atRest.cpu + ' % at rest' + (inUse ? ', ' + inUse.cpu + ' % in use' : '') + '.').slice(0, 1000),
     source: CPU_PRICE_RECORD }
   // shortcut: a hand-formatted manifest (an object on one line) comes back as plain two-space JSON; keep it if review asks.
-  let json = JSON.stringify(document, null, 2) + '\n'
-  if (/\\u[0-9a-fA-F]{4}/.test(text)) json = json.replace(/[\u007f-\uffff]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')) // the file's own escaping
-  writeFileSync(manifest, json)
+  // modules:check strips the price with the same serialiser to see that nothing else changed (manifestWithoutPrice).
+  writeFileSync(manifest, manifestJson(document, text))
   const pendingPath = resolve(root, CPU_PRICE_PENDING_PATH), pending = existsSync(pendingPath) ? JSON.parse(readFileSync(pendingPath, 'utf8')) : null
   const wasPending = Boolean(pending?.pending?.[id])
   if (wasPending) { delete pending.pending[id]; writeFileSync(pendingPath, JSON.stringify(pending, null, 1) + '\n') }

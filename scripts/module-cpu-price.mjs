@@ -14,6 +14,18 @@ export const CPU_PRICE_PENDING_REASON = 'price not yet measured'
 const PORTS = 'sdk/machines/octatrack/module-adapters'
 // device:price --write keeps its readings here, in the module's folder; the checks recompute the price from them.
 export const CPU_PRICE_RECORD = 'evidence/cpu-price.json'
+/** A manifest as device:price --write writes it: two-space JSON, \u-escaped when the text it came from was. */
+export function manifestJson(document, originalText) {
+  const json = JSON.stringify(document, null, 2) + '\n'
+  return /\\u[0-9a-fA-F]{4}/.test(originalText) ? json.replace(/[\u007f-\uffff]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')) : json
+}
+/** A manifest's text as it read before --write gave it a price; null when it names none. */
+export function manifestWithoutPrice(text) {
+  const document = JSON.parse(text)
+  if (!document.resources?.cpuPrice) return null
+  delete document.resources.cpuPrice
+  return manifestJson(document, text)
+}
 
 /** The price a device:price reading gives: the larger of what the module added at rest and in use, never below 0. */
 export const measuredPrice = result => Math.max(0, result.atRestAdds.frame, result.inUseAdds?.frame ?? 0)
