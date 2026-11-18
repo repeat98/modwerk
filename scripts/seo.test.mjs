@@ -52,7 +52,27 @@ it.each(['./', '/octamod/'])('builds crawlable content and a sitemap matching th
   // The Octatrack's own page of a paused module; another machine may list a module with the same id (the Rytm's Temp Save).
   for (const id of PAUSED_MODULE_IDS) expect(sitemap).not.toContain(`<loc>${appUrl.href}module/${id}/</loc>`)
   expect(sitemap).not.toMatch(/404|profile\/|#|index\.html/)
-  expect(emitted.find(asset => asset.fileName === 'robots.txt').source).toBe(`User-agent: *\nAllow: /\nSitemap: ${appUrl.href}sitemap.xml\n`)
+  const robots = emitted.find(asset => asset.fileName === 'robots.txt').source
+  expect(robots).toBe(readFileSync(new URL('../public/robots.txt', import.meta.url), 'utf8').trimEnd() + `\n\nSitemap: ${appUrl.href}sitemap.xml\n`)
+  expect(robots.match(/^Sitemap:/gm)).toHaveLength(1)
+})
+
+/** Each crawler's rule from its own group in robots.txt, the way crawlers read consecutive User-agent lines. */
+function robotsRules(text) {
+  const rules = new Map()
+  let agents = [], open = false
+  for (const line of text.split('\n').map(line => line.replace(/#.*/, '').trim()).filter(Boolean)) {
+    const [field, ...rest] = line.split(':'), value = rest.join(':').trim()
+    if (/^user-agent$/i.test(field)) { if (!open) agents = []; agents.push(value.toLowerCase()); open = true }
+    else if (/^(allow|disallow)$/i.test(field)) { for (const agent of agents) rules.set(agent, `${field.toLowerCase()} ${value}`); open = false }
+  }
+  return rules
+}
+
+it('lets search engines and AI answer tools in, and keeps AI training crawlers out', () => {
+  const rules = robotsRules(readFileSync(new URL('../public/robots.txt', import.meta.url), 'utf8'))
+  for (const agent of ['googlebot', 'bingbot', 'duckduckbot', 'oai-searchbot', 'chatgpt-user', 'claude-searchbot', 'claude-user', 'perplexitybot', 'perplexity-user', '*']) expect(rules.get(agent)).toBe('allow /')
+  for (const agent of ['gptbot', 'claudebot', 'google-extended', 'ccbot', 'meta-externalagent']) expect(rules.get(agent)).toBe('disallow /')
 })
 
 it('omits external, private, missing and fragment routes, and works without the community API', () => {

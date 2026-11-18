@@ -1,5 +1,5 @@
 import { apiUrl } from '../hosting'
-import { BASE_INSTALL_COUNTS, BASE_INSTALL_FAILURES, DIAGNOSTIC_INVITATION_PLACEMENTS, INVITATION_COUNTS, type BaseInstallStage, type DiagnosticInvitationOutcome, type DiagnosticInvitationPlacement, type OctatrackCount, type OctatrackStepCount } from './octatrack-diagnostics-contract'
+import { BASE_GUIDE_STEPS, BASE_INSTALL_COUNTS, BASE_INSTALL_FAILURES, SYNC_FAILURE_REASONS, type BaseGuideStep, type SyncFailureReason, DIAGNOSTIC_INVITATION_PLACEMENTS, INVITATION_COUNTS, type BaseInstallStage, type DiagnosticInvitationOutcome, type DiagnosticInvitationPlacement, type OctatrackCount, type OctatrackStepCount } from './octatrack-diagnostics-contract'
 import type { AnnouncementCountEvent, UsageDevice, UsageEvent } from './usage-contract'
 import { usagePage } from './usage-pages'
 import { USAGE_CONSENT_VERSION } from '../legal/policy'
@@ -43,8 +43,18 @@ export function setAnonymousCountsAllowed(enabled: boolean) {
 function countAnonymously(body: {event: UsageEvent; device?: UsageDevice; page?: string} | {event: OctatrackCount} | {event: OctatrackStepCount; detail?: string} | {event: 'module_download'; moduleId: string} | {event: AnnouncementCountEvent; announcementId: string}) {
   try {void fetch(apiUrl('/usage/count'),{method:'POST',credentials:'omit',redirect:'error',referrerPolicy:'no-referrer',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(()=>{})} catch { /* Counts never block device work. */ }
 }
-/** A fixed action counter, independent of optional technical diagnostics. Never pass device data here. */
-export function countOctatrackAction(event: OctatrackCount) { if (anonymousCountsAllowed()) countAnonymously({event}) }
+/** A fixed action counter, independent of optional technical diagnostics. Never pass device data here. A failed sync
+ * also counts its one fixed reason (`usb_sync_failed_reason`, syncFailureReason), anything outside the list as `other`. */
+export function countOctatrackAction(event: OctatrackCount, reason?: SyncFailureReason) {
+  if (!anonymousCountsAllowed()) return
+  countAnonymously({event})
+  if (event === 'usb_sync_failed' && reason) countAnonymously({event: 'usb_sync_failed_reason', detail: (SYNC_FAILURE_REASONS as readonly string[]).includes(reason) ? reason : 'other'})
+}
+/** How far a run of the install guide got (BASE_GUIDE_STEPS), through the same identifier-free path: the step's fixed
+ * name only. */
+export function countBaseGuideStep(step: BaseGuideStep) {
+  if (anonymousCountsAllowed() && (BASE_GUIDE_STEPS as readonly string[]).includes(step)) countAnonymously({event: 'base_guide_step', detail: step})
+}
 /** The base install guide's steps, through the same identifier-free path: only the step's fixed name and, for
  * `failed`, one fixed reason (anything else is sent as `other`). Never pass device, module or error text here. */
 export function countBaseInstall(stage: BaseInstallStage, detail?: string) {
