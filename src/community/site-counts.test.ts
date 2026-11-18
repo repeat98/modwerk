@@ -44,6 +44,13 @@ describe('site counts in the browser', () => {
     expect(request.mock.calls[0][1]).toMatchObject({ credentials: 'omit', referrerPolicy: 'no-referrer' })
     expect(localStorage.length).toBe(0)
   })
+  it('drops campaign tags from the address once read, keeping the route and other parameters', () => {
+    history.replaceState(null, '', '/module/fm-synth/?tab=sound&utm_source=mail-news&utm_medium=email#forum?category=introductions')
+    usage.countVisitSource('', location.search, location.origin)
+    expect(sent()).toEqual([['/api/usage/count', { event: 'visit_source', detail: 'mail-news' }]])
+    expect(location.pathname + location.search + location.hash).toBe('/module/fm-synth/?tab=sound#forum?category=introductions')
+    history.replaceState(null, '', '/')
+  })
   it('counts nothing after an objection to identifier-free counts', () => {
     usage.setAnonymousCountsAllowed(false)
     usage.countVisitSource('https://www.google.com/', '', origin); usage.countSignInPrompt('gate-shown')

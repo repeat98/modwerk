@@ -1,4 +1,5 @@
 import type { Database, Env } from './platform'
+import { tagMailLinks } from './mail-links'
 import { digest, HttpError, jsonBody, response } from './security'
 import { throttle } from './auth'
 import { mailLimits, reserveMailBudget } from './mail-budget'
@@ -32,7 +33,7 @@ async function deliver(env: Env, campaign: Content, member: { id: string; email:
   const app = new URL(env.APP_URL!), settings = new URL(app); settings.hash = 'account/notifications'
   const urls = { app: app.href, settings: settings.href }
   if (campaign.template_version !== (campaign.beta_invitation ? BETA_NEWS_EMAIL_VERSION : NEWS_EMAIL_VERSION)) throw new HttpError(409, 'This email template version is unavailable.')
-  const message = campaign.beta_invitation ? renderBetaNewsEmail(campaign, urls) : renderNewsEmail(campaign, urls)
+  const message = tagMailLinks(campaign.beta_invitation ? renderBetaNewsEmail(campaign, urls) : renderNewsEmail(campaign, urls), env.APP_URL, 'news')
   const token = await unsubscribeToken(env.AUTH_SECRET!, 'news', member.id)
   const oneClick = env.AUTH_BASE_URL ? new URL('/api/news/unsubscribe?token=' + encodeURIComponent(token), env.AUTH_BASE_URL).href : null
   const result = await fetch('https://api.resend.com/emails', {

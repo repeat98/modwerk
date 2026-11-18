@@ -96,12 +96,22 @@ let sourceCounted = false
 export function countVisitSource(referrer = document.referrer, search = location.search, origin = location.origin) {
   if (sourceCounted) return
   sourceCounted = true
+  const source = visitSource(referrer, search, origin)
+  forgetCampaignTags()
   if (!anonymousCountsAllowed()) return
   let navigation: string | undefined
   try { navigation = (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined)?.type } catch { /* counted as a new load */ }
   if (navigation === 'reload' || navigation === 'back_forward') return
-  const source = visitSource(referrer, search, origin)
   if (source) countAnonymously({event: 'visit_source', detail: source})
+}
+/** Drops `utm_…` from the address once read, so a copied, bookmarked or shared link does not credit the campaign again. */
+function forgetCampaignTags() {
+  try {
+    const url = new URL(location.href), tags = [...url.searchParams.keys()].filter(key => key.startsWith('utm_'))
+    if (!tags.length) return
+    for (const key of tags) url.searchParams.delete(key)
+    history.replaceState(history.state, '', url.pathname + url.search + url.hash)
+  } catch { /* the address keeps its tags */ }
 }
 /** How the sign-in prompt was answered, by whether it guarded a firmware build. */
 export function countSignInPrompt(outcome: SignInPromptOutcome) {

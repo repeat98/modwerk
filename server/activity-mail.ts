@@ -1,4 +1,5 @@
 import type { Database, Env } from './platform'
+import { tagMailLinks } from './mail-links'
 import { digest, HttpError } from './security'
 import { mailLimits, reserveMailBudget } from './mail-budget'
 import { emailReady, recordMail } from './email'
@@ -81,7 +82,7 @@ export async function sendActivityDigests(env: Env, db: Database, now = new Date
       return release?.notes ? { ...item, releaseNotes: parseReleaseNotes(JSON.parse(release.notes), item.module_id!) } : item
     }))
     const urls = { app: app.href, notifications: inbox.href, settings: settings.href, unsubscribe: page.href }
-    const message = catchupIds.size ? renderModuleUpdateCatchup(mailItems, urls) : renderActivityEmail(mailItems, urls, bundled.length - included.length)
+    const message = tagMailLinks(catchupIds.size ? renderModuleUpdateCatchup(mailItems, urls) : renderActivityEmail(mailItems, urls, bundled.length - included.length), env.APP_URL, 'activity')
     const oneClick = env.AUTH_BASE_URL ? new URL('/api/notifications/unsubscribe?token=' + encodeURIComponent(token), env.AUTH_BASE_URL).href : null
     // Stay below the provider's default two requests per second, as the welcome and news mailers do.
     if (requested) await new Promise(resolve => setTimeout(resolve, 550))

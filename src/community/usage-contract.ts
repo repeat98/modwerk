@@ -38,7 +38,7 @@ export type UsageStatistics = { generatedAt: string; collectionStarted: string |
   siteCountsStarted?: string | null }
 /** Where a page load came from: one fixed category from the link's `utm_source` or the referring site's domain
  * (visit-source.ts). The address itself never leaves the browser. */
-export const VISIT_SOURCES = ['direct', 'google', 'bing', 'duckduckgo', 'brave', 'ecosia', 'other-search', 'chatgpt', 'claude', 'perplexity', 'gemini', 'copilot', 'reddit', 'youtube', 'instagram', 'facebook', 'x', 'discord', 'github', 'elektronauts', 'gearnews', 'synthtopia', 'cdm', 'musicradar', 'synthanatomy', 'bonedo', 'mail', 'other'] as const
+export const VISIT_SOURCES = ['direct', 'google', 'bing', 'duckduckgo', 'brave', 'ecosia', 'other-search', 'chatgpt', 'claude', 'perplexity', 'gemini', 'copilot', 'reddit', 'youtube', 'instagram', 'facebook', 'x', 'discord', 'github', 'elektronauts', 'gearnews', 'synthtopia', 'cdm', 'musicradar', 'synthanatomy', 'bonedo', 'mail', 'mail-news', 'mail-activity', 'mail-welcome', 'mail-beta', 'other'] as const
 export type VisitSource = typeof VISIT_SOURCES[number]
 /** How the sign-in prompt was answered: `gate-…` before a firmware build (it can be skipped), `other-…` before a
  * member action such as a like, a follow or a reply. */

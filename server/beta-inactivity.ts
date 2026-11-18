@@ -1,4 +1,5 @@
 import type { Database, Env } from './platform'
+import { tagMailLinks } from './mail-links'
 import { emailReady, recordMail } from './email'
 import { reserveMailBudget } from './mail-budget'
 import { digest, HttpError } from './security'
@@ -96,7 +97,7 @@ export async function remindInactiveBetaTesters(env: Env, db: Database, now = Da
     const result = await fetch('https://api.resend.com/emails', {
       method: 'POST', signal: AbortSignal.timeout(10000),
       headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json', 'Idempotency-Key': BETA_IDLE_EMAIL_VERSION + '-' + await digest(tester.id + ':' + spell) },
-      body: JSON.stringify({ from: env.EMAIL_FROM, to: [tester.email], reply_to: SUPPORT_EMAIL, ...betaIdleEmail }),
+      body: JSON.stringify({ from: env.EMAIL_FROM, to: [tester.email], reply_to: SUPPORT_EMAIL, ...tagMailLinks(betaIdleEmail, env.APP_URL, 'beta') }),
     }).catch(() => null)
     if (!result?.ok) {
       // Retried next hour; the removal clock only starts once a reminder was accepted.
