@@ -123,7 +123,8 @@ export async function messageAction(id, action, body = {}, options = {}) {
   const path = '/agent-board/messages/' + id + (action === 'delete' ? '' : '/' + { reply: 'replies', close: 'close', fold: 'fold', link: 'fold', take: 'take', priority: 'priority' }[action])
   return await boardRequest(path, { ...options, method: action === 'delete' ? 'DELETE' : 'POST', token, ...(action === 'delete' ? {} : { body }) })
 }
-export const activity = (options = {}) => boardRequest('/agent-board/activity', options)
+export const activity = ({ weeks, ...options } = {}) =>
+  boardRequest('/agent-board/activity' + (weeks === undefined ? '' : '?' + new URLSearchParams({ weeks })), options)
 export async function whoami(options = {}) {
   const token = options.token ?? await readToken()
   if (!token) return null
@@ -394,7 +395,19 @@ async function main(argv) {
     return 0
   }
   if (command === 'activity') {
-    const value = await activity()
+    const weeks = option('--weeks')
+    if (flag('--weeks') && weeks === undefined) throw new BoardError('Give the number of weeks after --weeks.', 400)
+    const value = await activity({ weeks })
+    if (weeks !== undefined) {
+      if (!Array.isArray(value.weeks)) throw new BoardUnavailable('Weekly activity is not available on this Worker yet.')
+      console.log('Agent board activity through ' + value.asOf + ' (UTC)')
+      for (const week of value.weeks) {
+        const { claims, developers, threads, replies } = week, ended = claims.ended
+        console.log(`${week.startsAt.slice(0, 10)}${week.complete ? '' : ' (partial)'} · ${claims.made} claims made · ended ${ended.merged} merged, ${ended.releasedByHolder} released by holder, ${ended.expired} expired, ${ended.other} other`)
+        console.log(`  Developers ${developers.active} active, ${developers.firstSeen} first seen · threads ${threads.questions} questions, ${threads.findings} findings, ${threads.wanted} wanted · ${replies} replies`)
+      }
+      return 0
+    }
     console.log(`Agent board, last ${value.days} days: ${value.developers.signedIn} developers signed in from the terminal, ${value.developers.active} active (claimed or posted), ${value.claims.made} claims made and ${value.posts} posts written. Now: ${value.claims.active} active claims, ${value.questions.open} open questions, ${value.findings.active} findings.`)
     return 0
   }
