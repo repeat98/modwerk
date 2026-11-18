@@ -46,6 +46,12 @@ The person at the unit then held UP, tapped NO, and power cycled. They report th
 
 The person at the unit then held UP and tapped NO. They report that the expected behaviour was correct: the page came back, and the chord no longer blanks the screen. A later inventory on the same base named the modules that were already kept, and did not name `screen-off`: Mini Verb, Tape Echo, Euclid, Repitch, TapeHead, Air Chorus, Analog BD, FM Synth, Preview Vol, Play Modes, Mute Modes, Quant Live Rec, DirectJmp Kyoti, Arp Key Locks, beat-slicer, Slow LFO, Bar LED, tiempos, syntiz, Track Solo, Amiga, Kits. No SAVE, no flash, no power cycle.
 
+## Try, then undo
+
+18 November 2026. The live site cannot try this unpublished draft, and a Sync on the site keeps a set at once, so nobody pressed Undo there. The same check was `npm run device -- try` of package SHA-256 `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`, without `--accept`, on `OCTATRACK 1.40C`, base `931a91bd7e571216…`. The trial ran 5 s. The tick word stayed `0x0`, the slot stayed running, and refusals stayed at 0. The verdict was no crash, stall, freeze or skipped track. It printed `rolled back` and left upload mode in 5 ms, then `normal, generation 3, active 9993a6d3bd0f59c4…`.
+
+A later status answered the same line, `normal, generation 3, active 9993a6d3bd0f59c4…`, with tick word `65536` (`0x10000`) and refusals at 0. The inventory on that base named the modules that were already kept, and did not name `screen-off`: Mini Verb, Tape Echo, Euclid, Repitch, TapeHead, Air Chorus, Analog BD, FM Synth, Preview Vol, Play Modes, Mute Modes, Quant Live Rec, DirectJmp Kyoti, Arp Key Locks, beat-slicer, Slow LFO, Bar LED, tiempos, syntiz, Track Solo, Amiga, Kits. No SAVE, no flash, no power cycle, no Keep.
+
 ## Not tested
 
 - An MKI, and a card install. The MKII chord above is a report from the person at the unit, on 7 November and again on 16 November, both RAM trials of package `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`.
