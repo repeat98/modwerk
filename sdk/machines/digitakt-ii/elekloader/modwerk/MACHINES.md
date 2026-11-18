@@ -23,6 +23,23 @@ Read from the decoded main image (load address `0x40000400`) on 18 November 2026
 | `0x400c89c6` | A second per-type lookup with six entries (bound 5), 44-byte records at `0x4293b858`; callers `0x40041fde`, `0x4006a5d2`, `0x40074888`. | To identify. |
 | `0x400c898a` | Page descriptor lookup (ids up to 32, 44-byte records at `0x4293ba94`). | Already the base's (Mixer pages); the machine list must share that entry. |
 
+### The stock descriptor
+
+Start-up code (from `0x401c4aa6`) fills each 44-byte machine descriptor with the machine's name, a second label and eight parameter codes, one per knob A-H, then a final word. SAMPLE's knob C code is 0 (no parameter), as on every stock machine. Each code is a row of the parameter table at `0x4020f59c`, which holds the knob's name, short name, range, default and formatter.
+
+## The record a module contributes (draft)
+
+One `core_machines` entry per machine:
+
+| Field | Meaning |
+| --- | --- |
+| name, short name | As the machine menu and the SRC page header show them (stock lengths). |
+| five knob rows | Knobs B, C, E, F and G: name, short name, minimum, maximum, default, and a formatter (the stock ones, or the module's). Knob A stays TUNE, D the sample slot, H the track level. |
+| sample flag | Whether knob D selects a sample (a sampler) or is unused (a synth). |
+| sound-chip routines | Note-on and render for one voice, in the module's sound-chip package, with the voice's note, the five knob values and, for a sampler, its slot record. |
+
+The base gives each entry a machine type after the stock seven in contribution order, answers the descriptor lookup (`0x400c89a4`), the parameter-code lookup (`0x400da3a2`) and the parameter-row reads for those types, and dispatches the voice at `0x1c6550`. Type numbers are saved in kits, so each machine also claims a fixed id on the agent board and keeps it once released, as `core_machines` ids do on the Digitakt.
+
 ## Sound-chip sites (SHARC section 7, short-word addresses)
 
 Static reads on 18 November 2026; not yet traced.
