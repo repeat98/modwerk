@@ -35,6 +35,8 @@ static uint8_t rec[16];                  /* 0x100f8f10 */
 static uint8_t misc[0x2000];             /* 0x80004f00 .. */
 static uint32_t change_window, playing;
 static uint8_t chosen;               /* 0x100b14d1: the arrangement chosen */
+static uint8_t msg_up;               /* 0x460d1e70's low byte: a message box is open */
+static int closes;
 static uint8_t list[16];             /* 0x400c0ba0: the CHANGE list's first row shown, then its cursor */
 static int failures, checks;
 
@@ -46,6 +48,8 @@ uint8_t host_rd8(uint32_t a)
     if (a >= 0x800065b8u && a < 0x800065bcu) return (uint8_t)(playing >> (8 * (3 - (a - 0x800065b8u))));
     if (a >= 0x80004f00u && a < 0x80004f00u + sizeof misc) return misc[a - 0x80004f00u];
     if (a == 0x100b14d1u) return chosen;
+    if (a == 0x460d1e73u) return msg_up;
+    if (a >= 0x460d1e70u && a < 0x460d1e73u) return 0;
     if (a >= 0x400c0ba0u && a < 0x400c0bb0u) return list[a - 0x400c0ba0u];
     fprintf(stderr, "read of 0x%08x\n", a);
     return 0;
@@ -111,6 +115,7 @@ void host_clear_arr(unsigned slot) { ++clears; memset(&cs1[W(slot)], 0, BLOCK); 
 void host_message(const char *t) { snprintf(last_message, sizeof last_message, "%s", t); }
 static int list_draws;
 void host_draw_change(void) { ++list_draws; }
+int host_close_message(void) { msg_up = 0; ++closes; return 0; }
 void host_select_arr(unsigned n) { chosen = (uint8_t)n; }
 /* Stock's writer: each changed slot (or one with no file yet) to arr0N.work. */
 int host_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
@@ -128,6 +133,14 @@ int host_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
 static unsigned char lcd[1024];
 void host_set(unsigned char *frame, int x, int y, int on) { unsigned char *b = frame + x * 8 + 7 - (y >> 3), m = (unsigned char)(1u << (y & 7)); if (on) *b |= m; else *b &= (unsigned char)~m; }
 static int lit(int x, int y) { return lcd[x * 8 + 7 - (y >> 3)] >> (y & 7) & 1; }
+int host_pixel(const unsigned char *frame, int x, int y) { return frame[x * 8 + 7 - (y >> 3)] >> (y & 7) & 1; }
+/* The main screen's arrangement row as stock draws it: a black bar, the icon's three white lines, then the name. */
+static void main_screen(void)
+{
+    memset(lcd, 0, sizeof lcd);
+    for (int x = 42; x < 128; ++x) for (int y = 32; y <= 38; ++y) host_set(lcd, x, y, 1);
+    for (int x = 45; x <= 49; ++x) for (int y = 33; y <= 37; y += 2) host_set(lcd, x, y, 0);
+}
 
 static void check(const char *name, int ok)
 {
@@ -181,6 +194,11 @@ int main(void)
     as_tick(0);
     check("the open list is drawn again with the new book's names, once", list_draws == 1 && (as_tick(0), list_draws == 1));
     check("a book never visited starts on arrangement 1", chosen == 0);
+    msg_up = 1; as_tick(0);
+    check("the job's NOW SAFE TO EJECT! is closed as it opens", msg_up == 0 && closes == 1);
+    msg_up = 1; as_tick(0);
+    check("only that one: a later message stays", msg_up == 1);
+    msg_up = 0;
     check("now on book 2, nothing changed, nothing written as arr09 yet", book() == 1 && cs1[CHG] == 0 && !find("/SET/PROJ/arr09.work"));
 
     mark(0x20); cs1[CHG] = 0x04;                   /* book 2's songs, one changed */
@@ -288,6 +306,9 @@ int main(void)
     check("RELOAD PROJECT leaves the slots on book 1", book() == 0);
     tap(RIGHT); job();
     check("book 2 is as saved, not as edited after", book() == 1 && marked(0x20));
+    { uint32_t cw = change_window; change_window = 0; main_screen(); as_draw(lcd);
+      check("main screen, book 2: a 2 over the icon", !lit(46, 33) && !lit(48, 33) && lit(47, 34) && lit(44, 35));
+      change_window = cw; }
 
     /* a project load comes back to the book and arrangement it was left on */
     while (book() != 2) { tap(book() < 2 ? RIGHT : LEFT); job(); as_tick(0); }
@@ -332,6 +353,10 @@ int main(void)
     memset(lcd, 0, sizeof lcd);
     as_draw(lcd);
     check("nothing drawn outside ARR > CHANGE", !lit(99, 0) && !lit(127, 8));
+    main_screen(); as_draw(lcd);
+    check("main screen, book 16: 1 and 6 over the arranger icon", !lit(45, 33) && lit(44, 33) && !lit(48, 33) && !lit(50, 37) && lit(49, 34));
+    memset(lcd, 0, sizeof lcd); as_draw(lcd);
+    check("no icon there: nothing drawn", !lit(44, 33) && !lit(48, 33));
     int d = list_draws;
     post_refuse = 0; change_window = 0x46c7d384u; tap(LEFT); change_window = 0; job(); as_tick(0);
     check("a switch that ends with the list closed draws nothing", list_draws == d);

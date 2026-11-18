@@ -49,7 +49,7 @@ unless you edit that arrangement.
 ## Compatibility and limitations
 
 - **Takes:** LEFT and RIGHT in ARR > CHANGE (stock does nothing with them there), the top right corner of that list
-  for the label, and stock's arrangement writer, which it steps into at its entry: on book 1 stock writes arr01 to
+  for the label, the arranger icon on the main screen (books 2 to 16 only; book 1 shows stock's), and stock's arrangement writer, which it steps into at its entry: on book 1 stock writes arr01 to
   arr08 exactly as always, on another book that book's 8 files are written instead. No other module or base hook uses
   that site (`npm run modules:compat`).
 - **Stopped only.** A switch writes and reads the card through stock's own SYNC TO CARD job, which stock runs only
@@ -58,7 +58,7 @@ unless you edit that arrangement.
   arrangements in battery memory). LOAD PROJECT returns to the book and arrangement of the last switch, SYNC TO CARD
   or SAVE PROJECT, and RELOAD PROJECT to those of the last SAVE PROJECT, as stock does for its own files: the module
   keeps them in `arrbook.work` (and `arrbook.strd`). Stock first loads book 1; on another book the module then
-  switches as LEFT/RIGHT do, so stock's NOW SAFE TO EJECT! follows the load. Without the module a project opens on
+  switches as LEFT/RIGHT do. Without the module a project opens on
   book 1.
 - **Switch back to book 1 before removing the module.** Without the module, stock's next save writes whatever book is
   in its 8 slots into arr01 to arr08. Leaving book 1 always keeps a backup of it (`arr01.bak` to `arr08.bak`, stock
@@ -80,6 +80,8 @@ Original module by Andrey Sidorkin, MIT (LICENSE). No firmware, stock code or st
 ## Screens and audio
 
 ![ARR > CHANGE on book 1](media/ot-change-book.png)
+
+![The main screen on book 2](media/ot-main-book.png)
 
 Emulator capture (ot_emu), not the unit. No audio: the module makes no sound.
 

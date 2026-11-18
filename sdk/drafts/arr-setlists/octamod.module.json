@@ -39,7 +39,8 @@
     "uiClaims": [
       "key:LEFT@ARR CHANGE",
       "key:RIGHT@ARR CHANGE",
-      "screen:ARR CHANGE"
+      "screen:ARR CHANGE",
+      "screen:MAIN"
     ],
     "limitations": [
       "OS 1.40C. Not yet tested on a unit.",

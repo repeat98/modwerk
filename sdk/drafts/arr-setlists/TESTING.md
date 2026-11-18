@@ -94,3 +94,14 @@ arrangement the project was saved on instead, as stock does for its arrangement.
 `arrbook.strd` and RELOAD back, and after a load the module switches to that book once stock's job queue frees.
 `verify.py` (59 checks) covers LOAD, RELOAD, waiting while stock loads and a project left on book 1. Not run under
 ot_emu (its project loads differ from the unit's); on the unit: not yet.
+
+### Coming back after RELOAD failed on the unit; the job's message; the book on the main screen
+
+On the unit (package `017d8541…`), as the developer reported it: saved on book 3, arrangement 5, then RELOAD PROJECT
+landed on book 1, arrangement 7. Not yet explained; the next build waits up to 5 minutes (not 10 s) for stock to finish
+a load before switching back (a reload also reads samples), and its diagnostic word shows the return's state.
+The developer asked to drop NOW SAFE TO EJECT! after each switch and to show the book before the arrangement's name on
+the main screen. Built: after a switch of its own the module closes the job's message box with stock's own close
+(0x40056bec), and on books 2-16 draws the number over stock's arranger icon when exactly that icon is on screen.
+Under ot_emu: one second after RIGHT, BOOK 2 and no message box; the main screen on book 2 showed `2` before the name.
+`verify.py`: 64 checks.

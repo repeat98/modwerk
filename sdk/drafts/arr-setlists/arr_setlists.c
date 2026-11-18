@@ -51,6 +51,8 @@
 #define ARR_READ 0x4008b4d4u         /* (fo, slot, 0) -> < 0 failed: one file into a slot */
 #define CLEAR_ARR 0x400a041cu        /* clear_arr(slot): empty rows, no saved copy, default name */
 #define MESSAGE 0x4005a2b8u          /* message(text, 0x30), UI task only */
+#define MESSAGE_UP 0x460d1e70u       /* stock's message box window, 0 while none is open */
+#define MESSAGE_CLOSE 0x40056bec     /* closes it (stock's own, before it opens another) */
 #define DRAW_CHANGE 0x40036e18u      /* draws ARR > CHANGE's list into its open window (stock: once, when it opens) */
 #define SELECT_ARR 0x400a03a0u       /* select_arr(n): stock's choice of arrangement n (index, pointer, playback reset) */
 #define INDEX 0x100b14d1u            /* the arrangement chosen, 0-7 */
@@ -101,6 +103,9 @@ struct as_state {
     uint8_t last[BOOKS];     /* the arrangement last chosen in each book (0 = arrangement 1), kept in arrbook.work */
     int8_t restore;          /* a project was loaded on this book: the UI task switches to it once stock is done, -1 none */
     uint16_t restore_ticks;
+    uint8_t hush;            /* frames after a switch of ours in which the job's NOW SAFE TO EJECT! is closed */
+    int8_t restore_rc;       /* the last answer to posting the return after a load, for the diagnostic word */
+    uint8_t loads, reloads;  /* project loads and reloads seen, for the diagnostic word */
     uint8_t place[24];       /* arrbook.work: magic, book, the 16 last choices */
     uint16_t ticks;
     char path[260];
@@ -138,6 +143,8 @@ static void clear_arr(unsigned slot) { host_clear_arr(slot); }
 static void message(const char *t) { host_message(t); }
 void host_draw_change(void);
 static void draw_change(void) { host_draw_change(); }
+int host_close_message(void);
+static void close_message(void) { host_close_message(); }
 void host_select_arr(unsigned n);
 static void select_arr(unsigned n) { host_select_arr(n); }
 static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { return host_stock_writer(a1, a2, a3, a4); }
@@ -152,6 +159,7 @@ static const char *projdir(void) { return ((const char *(*)(int, int))PROJDIR)(0
 static void clear_arr(unsigned slot) { ((void (*)(int))CLEAR_ARR)((int)slot); }
 static void message(const char *t) { ((void (*)(const char *, int))MESSAGE)(t, 0x30); }
 static void draw_change(void) { ((void (*)(void))DRAW_CHANGE)(); }
+static void close_message(void) { ((void (*)(void))MESSAGE_CLOSE)(); }
 static void select_arr(unsigned n) { ((int (*)(int))SELECT_ARR)((int)n); }
 int as_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4); /* below: stock's writer, entered past the site */
 static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { return as_stock_writer(a1, a2, a3, a4); }
@@ -337,6 +345,7 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
             }
             s->book = (uint8_t)to;                            /* the slots hold the new book now, even after a fault */
             s->redraw = 1;
+            s->hush = (uint8_t)ok;
             s->damaged = (uint8_t)!ok;
             if (!ok) s->failed = 1;
         } else s->failed = 1;
@@ -390,6 +399,7 @@ unsigned as_project_loaded(void)
     s->backup = 0;
     s->damaged = 0;
     read_place(s, "work");
+    ++s->loads;
     remember(s);
     return 0;
 }
@@ -425,6 +435,7 @@ unsigned as_project_reloaded(void)
     s->backup = 0;
     s->damaged = 0;
     read_place(s, "work");                                /* where it was saved */
+    ++s->reloads;
     return 0;
 }
 
@@ -478,7 +489,8 @@ void as_tick(void *api)
 {
     struct as_state *s = ready();
     if (api) ((struct as_api *)api)->value = (uint32_t)s->book | (uint32_t)(s->pending < 0 ? 0 : s->pending + 1) << 4
-        | (uint32_t)s->failed << 9 | (uint32_t)s->backup << 10;
+        | (uint32_t)s->failed << 9 | (uint32_t)s->backup << 10 | (uint32_t)(s->restore + 1) << 11
+        | (uint32_t)(uint8_t)s->restore_rc << 16 | (uint32_t)(s->loads & 15u) << 24 | (uint32_t)(s->reloads & 15u) << 28;
     /* Stock draws the list's names once, when it opens: after a switch, draw them again from the new book. */
     if (s->redraw && s->pending < 0) {
         s->redraw = 0;
@@ -494,12 +506,19 @@ void as_tick(void *api)
         else if (stopped()) {
             s->pending = s->restore;
             int rc = post_write();
+            s->restore_rc = (int8_t)rc;
             if (rc >= 0) s->restore = -1;
             else {
-                s->pending = -1;
-                if (rc == -7 || ++s->restore_ticks > 600) s->restore = -1;  /* no project, or still busy after 10 s */
+                s->pending = -1;                          /* stock still busy (a reload reads its samples): again */
+                if (rc == -7 || ++s->restore_ticks > 18000) s->restore = -1;  /* no project, or busy for 5 minutes */
             }
         }
+    }
+    /* The borrowed SYNC job ends with stock's NOW SAFE TO EJECT!: a switch of ours closes it as it opens (about a
+     * second; any other message stays). */
+    if (s->hush && s->pending < 0) {
+        if (rd32(MESSAGE_UP)) { close_message(); s->hush = 0; }
+        else if (++s->hush > 90) s->hush = 0;
     }
     if (s->failed) { s->failed = 0; message("BOOK FILE ERROR"); }
     if (s->book && s->pending < 0 && ++s->ticks >= 120) { s->ticks = 0; remember(s); }
@@ -532,10 +551,36 @@ static void glyph(unsigned char *frame, int x, int y, unsigned g)
 }
 
 /* In ARR > CHANGE: "BOOK 12" knocked out of a solid box at the screen's top right, over whatever stock drew there. */
+#ifdef AS_HOST
+int host_pixel(const unsigned char *frame, int x, int y);
+static int get(const unsigned char *frame, int x, int y) { return host_pixel(frame, x, y); }
+#else
+static int get(const unsigned char *frame, int x, int y) { return frame[x * 8 + 7 - (y >> 3)] >> (y & 7) & 1; }
+#endif
+
+/* The main screen's arrangement row: a black bar on rows 32-38 with stock's arranger icon, three white lines at x
+ * 45-49 on rows 33, 35 and 37, just left of the arrangement's name (measured, OS 1.40C). Found only exactly there. */
+static int arranger_icon(const unsigned char *frame)
+{
+    for (int x = 44; x <= 51; ++x) if (!get(frame, x, 32) || !get(frame, x, 38)) return 0;
+    for (int x = 45; x <= 49; ++x)
+        for (int y = 33; y <= 37; ++y) if (get(frame, x, y) != !(y & 1)) return 0;  /* white on 33, 35, 37 */
+    return get(frame, 44, 35) && get(frame, 50, 35);
+}
+
 void as_draw(unsigned char *frame)
 {
     struct as_state *s = ready();
-    if (!rd32(CHANGE_WINDOW)) return;
+    if (!rd32(CHANGE_WINDOW)) {
+        /* Books 2-16: the book's number over stock's arranger icon, white on its black bar, before the name. */
+        if (s->book && arranger_icon(frame)) {
+            unsigned n = s->book + 1u;
+            for (int y = 33; y <= 37; ++y) for (int x = 44; x <= 50; ++x) put(frame, x, y, 1);
+            if (n >= 10) { glyph(frame, 44, 33, n / 10); glyph(frame, 48, 33, n % 10); }
+            else glyph(frame, 46, 33, n);
+        }
+        return;
+    }
     unsigned n = s->book + 1u;
     int digits = n >= 10 ? 2 : 1;
     int dx = 124 - 4 * (digits - 1), bx = dx - 19;          /* right-aligned: BOOK, a space, the number */
