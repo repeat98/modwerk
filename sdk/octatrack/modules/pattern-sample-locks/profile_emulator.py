@@ -3,8 +3,8 @@
 def start(port):
     symbols=getattr(port,'profile_symbols',None)
     if not symbols:return None
-    target=int.from_bytes(port.peek(0x4002dc6a,4),'big')
-    base=target-symbols['psl_open']
+    import stress_emulator as fixture
+    base=fixture.module_base(port,symbols)
     begin=base+symbols['begin'];ends={base+n for n in symbols['ends']}
     commit=symbols.get('performanceFunctions',{}).get('psl_native_commit')
     points=[begin,*sorted(ends)]

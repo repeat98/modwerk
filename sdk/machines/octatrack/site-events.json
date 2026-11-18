@@ -280,6 +280,13 @@
    "kind": "table",
    "room": 1,
    "record": 16
+  },
+  {
+   "index": 53,
+   "event": "ot_part_menu",
+   "kind": "table",
+   "room": 7,
+   "record": 24
   }
  ]
 }
