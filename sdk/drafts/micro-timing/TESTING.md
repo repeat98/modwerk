@@ -40,9 +40,11 @@ Unmeasured. One ColdFire unit, thirteen detours, one LEVEL pointer and the row-i
 
 From 0.1.1 the 2048 remembered bytes are `mt_table` in this unit. The loader clears that table when the module loads. A power cycle drops the unit, so the row starts on grid again. It is not battery RAM. The battery ledger no longer names this draft.
 
-Host assemble, 18 November 2026, WSL `m68k-elf-as -mcpu=5475` of this `microtiming.s`: text 1076, data 0, bss 2048. `mt_table` is a bss symbol. That is the object file only. It is not a boot, a package or a power cycle.
+Host assemble, 18 November 2026, WSL `m68k-elf-as -mcpu=5475` of this `microtiming.s`: text 1076, data 0, bss 2048. `mt_table` is a bss symbol. That is the object file only.
 
-Power-off of this package, on a unit or in `ot_emu --cs1-in`: not tested. No image of this source was booted.
+Development package of this source, same day, not installed. WSL `python3 -B scripts/module-dev-package.py micro-timing` with `m68k-elf` binutils, written outside the checkout: 2,926 bytes, SHA-256 `f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292`, module `36200ffc`, 1,076 bytes of code and data, 2,048 of bss, 2 relocations, 39 stock-code sites. The bss size is the remembered table. The package was not booted in `ot_emu` and was not sent to a unit.
+
+Power-off of this package, on a unit or in `ot_emu --cs1-in`: not tested. No image of this source was booted. `ot_emu` was not already running, and booting this package there needs a base image and a scratch card that this pass did not start.
 
 ## Hardware
 
