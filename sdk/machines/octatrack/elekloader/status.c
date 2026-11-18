@@ -753,7 +753,9 @@ static char *number(char *s, uint32_t v)
 #define FONT 0x400ba876u     /* the small UI font, 5 px capitals (Octabam's PANEL.md) */
 #define SURFACE 0x400bf10au  /* the UI's surface descriptor: copied, with the frame as its picture */
 #define DRAW_TEXT ((void (*)(uint32_t, void *, int, int, int, const char *))0x40012bd8u)
-static uint32_t surface[7];
+#ifndef MODWERK_HOST
+static uint32_t surface[7];          /* only the device build draws through stock's text call */
+#endif
 #ifdef MODWERK_HOST
 /* The host has no stock font: its own text calls, so the transfer screens can be drawn and checked there. */
 void host_draw_text(unsigned char *frame, int x, int top, const char *t);
