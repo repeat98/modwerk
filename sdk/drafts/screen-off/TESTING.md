@@ -40,6 +40,12 @@ The same package was tried again without `--accept`, from 21:08:12. The slot was
 
 The person at the unit then held UP, tapped NO, and power cycled. They report that the expected behaviour was correct: the screen came back on, and the module was still installed. A read after that answered `normal, generation 0, active 931a91bd7e571216…`, tick word `0x4` (2 toggles, blank off). The inventory still named those modules, including `screen-off`. No SAVE, no flash.
 
+## Removal while the screen is black
+
+18 November 2026. The same package, SHA-256 `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`, was removed with `npm run device -- remove` and `--accept` on `OCTATRACK 1.40C`, base `931a91bd7e571216…`, while the person at the unit had the screen black. The trial ran 5 s. The tick word read `0x10000`, the slot stayed running, and refusals stayed at 0. The verdict was no crash, stall, freeze or skipped track. It printed `accepted` and left upload mode in 395 ms, then `normal, generation 1, active 9993a6d3bd0f59c4…`.
+
+The person at the unit then held UP and tapped NO. They report that the expected behaviour was correct: the page came back, and the chord no longer blanks the screen. A later inventory on the same base named the modules that were already kept, and did not name `screen-off`: Mini Verb, Tape Echo, Euclid, Repitch, TapeHead, Air Chorus, Analog BD, FM Synth, Preview Vol, Play Modes, Mute Modes, Quant Live Rec, DirectJmp Kyoti, Arp Key Locks, beat-slicer, Slow LFO, Bar LED, tiempos, syntiz, Track Solo, Amiga, Kits. No SAVE, no flash, no power cycle.
+
 ## Not tested
 
 - An MKI, and a card install. The MKII chord above is a report from the person at the unit, on 7 November and again on 16 November, both RAM trials of package `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`.
