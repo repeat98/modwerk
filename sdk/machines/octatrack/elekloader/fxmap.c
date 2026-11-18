@@ -194,6 +194,13 @@ int modwerk_fxmap_describe(unsigned id, uint32_t *module, uint16_t *layout, char
     else for (unsigned i = 0; i < modwerk_fx_legacy_count; ++i) if (modwerk_fx_legacy[i].id == id) *module = modwerk_fx_legacy[i].module;
     return *module != 0;
 }
+/* Who may take a handle the project uses (dsp.c): the module MISSING names there, so a line a save lost (#1720) still
+ * finds the catalogue's module. */
+uint32_t modwerk_fxmap_named(unsigned id)
+{
+    uint32_t module; uint16_t layout; char name[16];
+    return modwerk_fxmap_describe(id, &module, &layout, name) ? module : 0;
+}
 /* A module took handle `id` (dsp.c, at its switch): the map names it there. */
 void modwerk_fxmap_assign(unsigned id, uint32_t module, unsigned layout, const char *name)
 {
