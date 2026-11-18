@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceCommit": "ed4f006094266efdf576fda7ad65ea9ccc7b3c1f",
+  "sourceCommit": "026184a96b0c4fba106bbae507b436236e7ea622",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
-    "euclid": "0.1.4-experimental",
+    "euclid": "0.1.5-experimental",
     "repitch": "0.2.1-experimental",
     "tapehead": "0.1.2-experimental",
     "airwindows-chorus": "0.1.3-experimental",
