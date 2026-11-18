@@ -13,6 +13,7 @@ void as_tick(void *api);
 void as_draw(unsigned char *frame);
 int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4);
 void as_project_load(void);
+void as_project_new(void);
 unsigned as_project_loaded(void);
 unsigned as_project_stored(void);
 unsigned as_project_reloaded(void);
@@ -325,9 +326,12 @@ int main(void)
     check("then it goes back to book 3, on arrangement 5", book() == 2 && marked(0x30) && chosen == 4);
     check("left in pattern mode: it stays in pattern mode", arr_mode == 0);
     arr_mode = 1; job();                           /* SYNC in arranger mode */
-    as_project_load(); mark(0x10); arr_mode = 0; as_tick(0); job(); as_tick(0); as_tick(0);
-    check("left in arranger mode: after LOAD, arranger mode again, on book 3", arr_mode == 1 && book() == 2);
-    check("and the mode stock applies at the end of the load says arranger too", mode_wanted == 1);
+    mode_wanted = 0; arr_mode = 0;                 /* LOAD switches it off and clears the byte as it starts */
+    as_project_load();
+    check("left in arranger mode: during the load, the byte stock applies at its end says arranger", mode_wanted == 1);
+    mark(0x10); arr_mode = mode_wanted;            /* stock's end of the load applies it */
+    as_tick(0); job(); as_tick(0); as_tick(0);
+    check("after LOAD: arranger mode, on book 3", arr_mode == 1 && book() == 2);
     /* RELOAD PROJECT: where it was saved, not where it was left after */
     as_project_stored();                           /* saved on book 3, arrangement 5 */
     tap(LEFT); job(); as_tick(0); chosen = 6; job();  /* book 2, arrangement 7, SYNC */
@@ -340,7 +344,7 @@ int main(void)
     job();
     int p0 = posted;
     as_project_load(); mark(0x10); as_tick(0); job(); as_tick(0);
-    check("left on book 1: one job reads where it was left, and it stays on book 1", book() == 0 && posted == p0 + 1 && marked(0x10));
+    check("left on book 1: it stays on book 1, with no job", book() == 0 && posted == p0 && marked(0x10));
     tap(RIGHT); job(); as_tick(0);                 /* book 2 again for the label checks */
 
     /* the label in ARR > CHANGE */

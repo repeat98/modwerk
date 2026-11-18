@@ -135,3 +135,11 @@ Package `fbae1e9b…`, as the developer reported it: LOAD came back on book 2, a
 mode for a moment, then pattern mode. Stock's end of a load (0x4002390a) applies the mode in 0x80000010, which LOAD
 leaves at 0, after the module's job. Fixed: the module's job also sets 0x80000010 when the project was left in
 arranger mode, so stock's own end of the load turns it on. `verify.py`: 65 checks.
+
+Package `1b4942bf…`, as the developer reported it: still pattern mode after LOAD, and the pattern (its LEVEL) changed
+during the load. Stock's LOAD request (0x40023b68) switches arranger mode off and clears 0x80000010 as it starts,
+then posts the load job, whose end applies 0x80000010; the module set it only in its own job after that, and its
+fallback switched arranger mode on (changing the pattern) before something turned it off again. Fixed: the module
+reads arrbook.work in ev_banks_load, inside stock's load job and from the project being loaded, and sets 0x80000010
+there; a project left on book 1 needs no job of the module's at all. New projects have their own handler, which reads
+nothing. `verify.py`: 65 checks.

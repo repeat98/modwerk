@@ -63,7 +63,6 @@
 #define LIST_CURSOR 0x400c0ba4u      /* ARR > CHANGE: the cursor's row (stock opens the list with it on the choice) */
 
 #define REC_MAGIC 0x41534231u        /* "ASB1" */
-#define FIND_PLACE 0x7f               /* restore/pending: read arrbook.work in the job to learn the book */
 #define PLACE_MAGIC 0x41534250u      /* "ASBP": arrbook.work, the book in use and each book's last choice */
 #define F_READ 0x40016564u           /* (fo, dst, n) -> 1 done */
 #define F_WRITE 0x400166b8u          /* (fo, src, n) -> 1 done */
@@ -342,11 +341,6 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
     struct as_state *s = ready();
     int rc = 0;
     if (s->pending >= 0) s->hush = 1;                     /* our job: its NOW SAFE TO EJECT! is closed after */
-    if (s->pending == FIND_PLACE) {                       /* after a project load: where was it left? */
-        int b = read_place(s);
-        s->pending = (int8_t)(b > 0 ? b : -1);            /* book 1 (or no record): stay; stock restored the choice */
-        if (s->mode_on) wr8(ARR_MODE_WANTED, 1);          /* stock's end of the load then turns arranger mode on */
-    }
     if (s->book == 0) rc = stock_writer(a1, a2, a3, a4);     /* book 1: arr01-08 as always */
     else if ((a2 & 0xffu) || rd8(CHANGED)) {
         /* Another book: its 8 files together, whenever stock asks for any (as stock's writer does with its mask: the
@@ -413,11 +407,27 @@ void as_project_load(void)
     ev(1);
     s->book = 0;
     s->pending = -1;
-    /* Once stock has loaded, the module's own job reads arrbook.work (on RELOAD, already the saved one) and goes back
-     * to that book. Read there, not in ev_banks_loaded: the developer's MKI raised none after LOAD or RELOAD. */
+    /* Where was the project left? Read here, in stock's load job on its card task, from the project being loaded (on
+     * RELOAD, already the saved copy): ev_banks_loaded never came on the developer's MKI. Arranger mode goes into the
+     * byte stock applies when the load ends (LOAD clears it as it starts), so stock itself turns the mode back on.
+     * The book is switched to once stock has finished. */
     for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = 0;
-    s->restore = FIND_PLACE;
+    int b = read_place(s);
+    s->restore = (int8_t)(b > 0 ? b : -1);
     s->restore_ticks = 0;
+    if (s->mode_on) wr8(ARR_MODE_WANTED, 1);
+    s->ready = 1;
+}
+
+/* A new project: empty, on book 1; nothing of the last one is read. */
+void as_project_new(void)
+{
+    struct as_state *s = ready();
+    s->book = 0;
+    s->pending = -1;
+    s->restore = -1;
+    s->mode_on = 0;
+    for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = 0;
     s->ready = 1;
 }
 
@@ -426,8 +436,7 @@ void as_project_load(void)
 unsigned as_project_loaded(void)
 {
     struct as_state *s = ready();
-    ev(2);
-    for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = 0;
+    ev(2);                                                /* the choices were read as the load began */
     s->book = 0;
     s->backup = 0;
     s->damaged = 0;
