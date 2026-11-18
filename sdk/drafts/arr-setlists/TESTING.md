@@ -168,3 +168,6 @@ mode on. Stock's LOAD is several jobs, and after the banks it also runs its new-
 resets the arrangements to book 1 again; the module's switch had slipped in between. Fixed: the module switches only
 after two seconds without a project event, and a new-project step within a load keeps the pending return.
 `verify.py`: 68 checks; without the wait four of them fail.
+
+Package `c6b2c9a4…`, as the developer reported it: synced in arranger mode on book 2, arrangement 7; LOAD (PROJECT >
+CHANGE) of the same project came back on book 2, arrangement 7, in arranger mode.
