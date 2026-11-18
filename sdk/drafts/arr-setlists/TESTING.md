@@ -57,6 +57,10 @@ project opened in pattern mode (passed); SAVE on book 3, arrangement 5 and RELOA
 log: save, reload, stock's new-project step, then arranger mode off/on twice, and no ev_banks_load, where the module
 now read the saved place. Fixed: the RELOAD hook reads it too. `verify.py`: 69 checks.
 
+Package `da945df5…`, as the developer reported it: SAVE on book 3, arrangement 5 and RELOAD showed book 1, then
+came back to book 3, arrangement 5 (passed); SYNC in arranger mode on book 2 and CHANGE to the same project came back
+on that book and arrangement in arranger mode (passed).
+
 ## Stock flows
 
 Not tested on the unit. In the emulator, ARR > CHANGE with the module and book 1 behaved as stock: YES chose the
