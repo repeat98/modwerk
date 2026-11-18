@@ -1,1 +1,2 @@
 - The maintenance bot keeps the owner's to-do list shorter: a question only the owner can answer comes to Telegram as the reply it recommends, posted with one Approve; it can start a first-time contributor's waiting checks the same way, answers factual questions itself, files one to-do per cause and drops to-dos it sees settled.
+- The maintenance bot's Telegram command menu now updates with each morning report, so a new command such as `/todos` shows up without running setup again.
