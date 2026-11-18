@@ -196,7 +196,10 @@ not isolated: verify each held-row transition and stock modifier release, and st
 - **Grid recording.** REC toggles, and a remote REC can be lost: press one trig and read the track's mask in the
   pattern (`+0x6 + 0x91a * track` from the pattern's start, two bytes for steps 1 to 16) before placing the rest.
 - **Effects.** FUNC+FX1/FX2 opens the chooser (the left list; its right side are the effect's setup knobs).
-  Moving the cursor does not pick; YES does. NO closes. LEVEL scrolls. `pick:` does all of it.
+  Moving the cursor does not pick; YES does. NO closes. LEVEL scrolls. `pick:` does all of it. A DSP FULL, DSP MEMORY
+  FULL or NO ROOM box can offer another slot on the same four tracks ("T3 FX2 DARK REV", "YES: THAT TO NONE"): YES
+  there, half a second or more after the box shows, sets that slot to NONE and makes the pick; an earlier YES does
+  nothing, and the box waits for an answer. Close a refusal with NO when the test does not mean it.
 - **Parts.** Holding PART shows the selector: UP Part 1, RIGHT 2, DOWN 3, LEFT 4. A switch also assigns that Part to the
   current pattern (stock), so switch back to the pattern's own Part (the byte in the table below) before you leave. **Never FUNC+PLAY there
   (`PART+FUNC+PLAY`): it CLEARS the Part**, both working and saved copies, its knobs, machines and name

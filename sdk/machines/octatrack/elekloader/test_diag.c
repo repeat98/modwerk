@@ -21,6 +21,8 @@ volatile uint32_t modwerk_status[5], modwerk_runtime_ticks, dl_frames;
 void modwerk_track_machines(volatile uint8_t *out) { for (unsigned i = 0; i < 24u; ++i) out[i] = (uint8_t)(i + 1u); }
 volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks; /* machine_registry.c's frame guard */
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget */
+volatile uint32_t modwerk_status_dsp_refusals, modwerk_status_dsp_last; /* status.c: DSP refusals */
+volatile uint32_t modwerk_status_swaps, modwerk_status_swaps_ended, modwerk_status_swap_last; /* ... and MAKE ROOM's swaps */
 
 static volatile struct diag_incident *last(void) { return &LOG->incident[(LOG->incidents - 1u) % DIAG_INCIDENTS]; }
 static void restart(void) { started = 0, ticks = 0, n = cpu_sum = cpu_peak = played = hot_run = hot_count = hot_at = 0; modwerk_diag_tick(); }
@@ -113,6 +115,19 @@ int main(void)
     CHECK(LOG->incidents == before + 1u && last()->kind == DIAG_CPU && last()->a == (0x08u << 24 | 2u));
     tick();
     CHECK(LOG->incidents == before + 1u);
+    /* A pick refused for DSP time on T2 FX2 (slot 9), twice: one incident with why, slot and count. */
+    before = LOG->incidents;
+    modwerk_status_dsp_refusals = 2u, modwerk_status_dsp_last = 1u << 4 | 9u;
+    tick();
+    CHECK(LOG->incidents == before + 1u && last()->kind == DIAG_DSP && last()->a == (0x19u << 24 | 2u));
+    modwerk_status_dsp_refusals = 3u; tick();
+    CHECK(LOG->incidents == before + 1u);                              /* then none for ten minutes */
+    /* The box's offer taken: each swap that ends, how (1 made) and how many began. */
+    modwerk_status_swaps = 1u, modwerk_status_swap_last = 1u, modwerk_status_swaps_ended = 1u;
+    tick();
+    CHECK(LOG->incidents == before + 2u && last()->kind == DIAG_SWAP && last()->a == (1u << 24 | 1u));
+    tick();
+    CHECK(LOG->incidents == before + 2u);
 
     /* The UI stands still for six seconds while frames run, then moves again. */
     modwerk_status[0] = 100u;

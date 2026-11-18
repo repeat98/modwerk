@@ -82,7 +82,9 @@ export type DiagnosticErrorKind = typeof DIAGNOSTIC_ERROR_KINDS[number]
 export interface DiagnosticLive { samples: number; cpu?: [number, number]; dsp1to4?: [number, number]; dsp5to8?: [number, number] }
 export const DIAGNOSTIC_UNRESPONSIVE = ['usb', 'ui'] as const
 /** `device_log`: records from the unit's own log (diag.h), uploaded at the next connection. */
-export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base', 'shed', 'cpu'] as const
+/** diag.h's kinds, in order: dsp is a pick the DSP refused (why << 28 | slot << 24 | count), swap one the refusal box's
+ * offer made (how it ended << 24 | swaps begun; 1 made, 2 refused and put back, 3 gave up). */
+export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base', 'shed', 'cpu', 'dsp', 'swap'] as const
 /** `frameGap`: the window's longest time between two audio frames, µs (log version 2); `tickGap` its longest run of
  * frames without a UI tick. */
 export interface DeviceLoad { seq: number; boot: number; minute: number; cpu: [number, number]; dsp1to4: [number, number]; dsp5to8: [number, number]; samples: number; playing: number; frameGap?: number; tickGap?: number }

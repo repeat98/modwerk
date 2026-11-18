@@ -207,8 +207,13 @@ __attribute__((weak)) void modwerk_machine_voice_shed(unsigned track) { modwerk_
  * voices from its last track down until it does. Such a track renders the stock silent source, and the machine
  * registry claims it again each tick, with the DSP FULL box, until there is room. A pick the bank does not name never
  * takes a voice's room: it is refused as before. */
+/* manager.c's dl_dry_fits (status.c's offer after a refused pick) runs the allocator's prepare on copies: no voice gives
+ * way for a set that is only being judged. */
+static int planning_dry;
+void modwerk_dsp_planning_dry(int on) { planning_dry = on; }
 static void make_way(const uint32_t was[16])
 {
+    if (planning_dry) return;
     for (unsigned c = 0; c < 2u; ++c) {
         uint32_t bank = bank_booking(was, c), allowance = c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0;
         for (unsigned t = c ? 4u : 8u; t-- > (c ? 0u : 4u) && bank + modwerk_dsp_source_charge(c) > allowance;)
@@ -615,6 +620,9 @@ int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
     return 1;
 }
 
+/* status.c's offer: what an effect costs on the DSP (its catalogue cycles a sample), to offer the cheapest slot that
+ * makes room. */
+uint32_t modwerk_dsp_cycles(unsigned id) { return id < MODWERK_FX_IDS ? dl_catalog[id].cycles : 0u; }
 uint32_t modwerk_dsp_booked(unsigned core)
 {
     uint32_t allowance = core ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0, charge = slot_booking(core & 1u) + modwerk_dsp_source_charge(core);

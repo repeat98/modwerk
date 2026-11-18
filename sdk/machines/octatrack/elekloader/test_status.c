@@ -158,6 +158,135 @@ unsigned modwerk_modset_off_list(uint8_t *out, unsigned first, unsigned most)
 }
 volatile uint32_t modwerk_modset_switch_result;
 int modwerk_modset_switch(uint32_t id, int on) { asked_id = id, asked_on = (unsigned)on, modwerk_modset_switch_result = MODSET_SWITCH_PENDING; return 1; }
+/* MAKE ROOM: manager.c's dry run (`fits_mask`: a bit for each slot that, set to NONE first, lets the pick through),
+ * dsp.c's pick queue and effect costs, fxpage.c's chooser rows (NONE row 0, else 100 x kind + id), the manager idle,
+ * selection.c's refusals and the current track. */
+uint8_t dl_refused_ids[16];
+static unsigned fits_mask, dry_asks;
+int dl_dry_fits(unsigned clear) { ++dry_asks; return (int)(fits_mask >> clear & 1u); }
+uint32_t modwerk_dsp_cycles(unsigned id) { return 10u * id; }
+static uint32_t queued[8]; static unsigned queued_count; static int queue_full;
+int modwerk_dsp_pick(unsigned slot, unsigned track, unsigned row)
+{
+    if (queue_full || queued_count >= 8u) return 0;
+    queued[queued_count++] = slot << 16 | track << 8 | row;
+    return 1;
+}
+unsigned modwerk_fxpage_row(unsigned kind, unsigned id) { return id ? 100u * kind + id : 0u; }
+static int manager_idle = 1;
+int dl_publication_idle(void) { return manager_idle; }
+volatile uint32_t dl_selection_refused;
+uint8_t modwerk_test_track;
+uint32_t modwerk_test_cursor[2];
+/* A DSP FULL of E-Verb (27) on T2 FX2 (slot 9, core 1: T1-T4) over what the tracks run: T2 FX1 FILTER (4), T1 FX2 module
+ * MB (21), T3 FX2 module MA (20), T5 FX2 (core 0) module MA. */
+static void make_room_refusal(void)
+{
+    static const uint8_t live[16] = {0, 4, 0, 0, 0, 0, 0, 0, 21, 22, 20, 0, 20, 0, 0, 0};
+    memcpy(modwerk_test_live_fx, live, 16), memcpy(dl_refused_ids, live, 16), dl_refused_ids[9] = 27;
+    dl_refusal[0] = 1, dl_refusal[1] = 9, dl_refusal[2] = 27, dl_refusal[3] = 22, dl_refusal[4] = 327;
+    queued_count = 0, dry_asks = 0;
+}
+/* The status tick's parts these use (the whole tick reads the frame timer). */
+static void room_tick(void) { memory_tick(); offer_tick(); swap_tick(); }
+static void arm(void) { for (unsigned i = 0; i <= OFFER_ARM; ++i) room_tick(); } /* the offer shown long enough for YES */
+static void make_room_checks(void)
+{
+    installed = 2; /* modules MA (20) and MB (21) */
+    modwerk_test_track = 1, modwerk_test_cursor[0] = 4u, modwerk_test_cursor[1] = 127u;
+    /* The box looks one slot a tick, the pick's core only, the same track's other slot first, and offers the cheapest
+     * that makes room: MA on T3 FX2 (200) before MB on T1 FX2 (210); T5's MA is on the other core and never asked. */
+    make_room_refusal(); fits_mask = 1u << 8 | 1u << 10 | 1u << 12;
+    CHECK(modwerk_status_refused(3) && open == REFUSED && offer == -1);
+    strcpy(refused_name, "E-VERB");                                     /* the unit names it from its descriptor */
+    CHECK(offer_count == 7 && offer_order[0] == 1);                    /* T2 FX1 first */
+    CHECK(!*shows());                                                   /* nothing drawn while it looks: it would change */
+    for (unsigned i = 0; i < 7u; ++i) room_tick();
+    CHECK(offer == 10 && !strcmp(offer_name, "MA") && dry_asks == 3);  /* T2 FX1, T1 FX2, T3 FX2: the empty slots are not asked */
+    /* The slot that can give way, with what runs there, and the answer, instead of the bars (host text: 5 px a letter). */
+    CHECK(strstr(shows(), "|E-VERB NEEDS +") && strstr(said, "|T3 FX2 MA|") && strstr(said, "|YES: TO NONE|") && !strstr(said, "|DSP|"));
+    /* YES right after it shows (a second tap meant for the FX list) does nothing, and the box stays. */
+    CHECK(modwerk_status_key(YES, 1) && open == REFUSED && queued_count == 0 && modwerk_status_key(YES, 0));
+    /* No timer while it waits for an answer. */
+    for (unsigned i = 0; i < 400u; ++i) room_tick();
+    CHECK(open == REFUSED && offer_shown >= OFFER_ARM);
+    /* YES: that slot to NONE through dsp.c's queue (FX2, T3, NONE's row), the box closes and the key is taken. */
+    CHECK(modwerk_status_key(YES, 1) && open == CLOSED && modwerk_status_key(YES, 0));
+    CHECK(queued_count == 1 && queued[0] == (1u << 16 | 2u << 8 | 0u) && swap.phase == SWAP_CLEAR && modwerk_status_swaps == 1u);
+    room_tick(); CHECK(swap.phase == SWAP_CLEAR && queued_count == 1); /* not taken yet */
+    modwerk_test_live_fx[10] = 0; manager_idle = 0; room_tick(); CHECK(swap.phase == SWAP_CLEAR); /* the manager still busy */
+    manager_idle = 1; room_tick();
+    CHECK(swap.phase == SWAP_PICK && queued_count == 2 && queued[1] == (1u << 16 | 1u << 8 | 127u)); /* then the pick: FX2, T2, E-Verb */
+    modwerk_test_live_fx[9] = 27; room_tick();
+    CHECK(swap.phase == SWAP_IDLE && modwerk_status_swap_last == 1u && modwerk_test_track == 1);
+    CHECK(modwerk_test_cursor[0] == 4u && modwerk_test_cursor[1] == 127u && modwerk_status_swaps_ended == 1u);
+    /* The same track's other slot, when it makes room, is offered at once and the rest is not asked. */
+    make_room_refusal(); fits_mask = 1u << 1 | 1u << 10;
+    CHECK(modwerk_status_refused(3));
+    room_tick(); CHECK(offer == 1 && dry_asks == 1);
+    for (unsigned i = 0; i < 6u; ++i) room_tick();
+    CHECK(offer == 1 && dry_asks == 1 && strstr(shows(), "|T2 FX1 |"));    /* a stock effect: its name is the descriptor's on the unit */
+    /* The pick refused all the same: the slot gets its effect back, and the selection returns to the track played. */
+    make_room_refusal(); fits_mask = 1u << 10; modwerk_status_key(NO, 1), modwerk_status_key(NO, 0);
+    CHECK(modwerk_status_refused(3));
+    for (unsigned i = 0; i < 7u; ++i) room_tick();
+    arm(); CHECK(offer == 10 && modwerk_status_key(YES, 1)); modwerk_status_key(YES, 0);
+    modwerk_test_live_fx[10] = 0; modwerk_test_track = 2, modwerk_test_cursor[1] = 0u; room_tick(); CHECK(swap.phase == SWAP_PICK);
+    ++dl_selection_refused;
+    CHECK(modwerk_status_refused(3) && offer == -1 && offer_count == 0); /* its own box again, without an offer */
+    room_tick();
+    CHECK(swap.phase == SWAP_BACK && queued[queued_count - 1] == (1u << 16 | 2u << 8 | 120u)); /* MA back on T3 FX2 */
+    modwerk_test_live_fx[10] = 20; room_tick();
+    CHECK(swap.phase == SWAP_IDLE && modwerk_status_swap_last == 2u && modwerk_test_track == 1 && modwerk_test_cursor[1] == 127u);
+    /* A first step that never lands gives up after five seconds, the selection and cursors back as they were. */
+    modwerk_status_key(NO, 1), modwerk_status_key(NO, 0);
+    make_room_refusal(); fits_mask = 1u << 10;
+    CHECK(modwerk_status_refused(3));
+    for (unsigned i = 0; i < 7u; ++i) room_tick();
+    arm(); CHECK(modwerk_status_key(YES, 1) && swap.phase == SWAP_CLEAR); modwerk_status_key(YES, 0);
+    modwerk_test_track = 2, modwerk_test_cursor[1] = 0u;
+    for (unsigned i = 0; i <= SWAP_TICKS; ++i) room_tick();
+    CHECK(swap.phase == SWAP_IDLE && modwerk_status_swap_last == 3u && modwerk_test_track == 1 && modwerk_test_cursor[1] == 127u);
+    modwerk_status_key(NO, 1), modwerk_status_key(NO, 0);
+    /* An offer that no longer holds (the slot changed meanwhile) does nothing; nothing that fits, nothing is offered. */
+    make_room_refusal(); fits_mask = 1u << 10;
+    CHECK(modwerk_status_refused(3));
+    for (unsigned i = 0; i < 7u; ++i) room_tick();
+    arm(); modwerk_test_live_fx[10] = 21;
+    CHECK(modwerk_status_key(YES, 1) && queued_count == 0 && swap.phase == SWAP_IDLE); modwerk_status_key(YES, 0);
+    make_room_refusal(); fits_mask = 0;
+    CHECK(modwerk_status_refused(3));
+    for (unsigned i = 0; i < 7u; ++i) room_tick();
+    CHECK(offer == -1 && strstr(shows(), "|DSP|"));                     /* the bars, as before */
+    CHECK(modwerk_status_key(YES, 1) && open == CLOSED && queued_count == 0); modwerk_status_key(YES, 0); /* YES only closes it */
+    /* A CPU box never carries an offer; it names the tracks whose machines hold the budget. */
+    make_room_refusal(); fits_mask = 1u << 10;
+    CHECK(modwerk_status_refused(3));
+    for (unsigned i = 0; i < 7u; ++i) room_tick();
+    CHECK(offer == 10); modwerk_status_key(NO, 1), modwerk_status_key(NO, 0);
+    modwerk_status_cpu_refused(3, "Poly8", 800, 266);
+    CHECK(offer == -1 && strstr(shows(), "|CHANGE ONE FIRST|"));
+    modwerk_status_cpu_holders(0x07u);
+    CHECK(strstr(shows(), "|HELD BY T1 T2 T3|"));
+    modwerk_status_cpu_holders(0x7fu);
+    CHECK(strstr(shows(), "|HELD BY T1234567|"));                       /* seven: too wide spaced out */
+    modwerk_status_key(NO, 1), modwerk_status_key(NO, 0);
+    modwerk_status_cpu_holders(0x01u); CHECK(refused_holders == 0x7fu); /* only while its box shows */
+    /* A machine changed while stopped moves the figure a stopped unit is judged by; playing, the meter will. */
+    cpu_played = 900u; transport_stopped = 1;
+    modwerk_status_cpu_change(-120); CHECK(cpu_played == 780u);
+    modwerk_status_cpu_change(180); CHECK(cpu_played == 960u);
+    modwerk_status_cpu_change(-2000); CHECK(cpu_played == 1u);         /* never 0: that reads as never played */
+    transport_stopped = 0; modwerk_status_cpu_change(-1); CHECK(cpu_played == 1u);
+    cpu_played = 0; transport_stopped = 1; modwerk_status_cpu_change(-120); CHECK(cpu_played == 0u); /* never played: as it stands */
+    /* Diagnostics count every DSP refusal, the box or not. */
+    uint32_t refusals = modwerk_status_dsp_refusals;
+    modwerk_load_menu(0); dl_refusal[0] = 3, dl_refusal[1] = 9;
+    CHECK(!modwerk_status_refused(2) && modwerk_status_dsp_refusals == refusals + 1u && modwerk_status_dsp_last == (3u << 4 | 9u));
+    modwerk_status_key(NO, 1), modwerk_status_key(NO, 0);
+    installed = 0, modwerk_test_track = 0;
+    memset(modwerk_test_live_fx, 0, 16), memset(dl_refused_ids, 0, 16);
+}
 int main(void)
 {
     uint8_t load_out[MODWERK_LOAD_BYTES];
@@ -513,6 +642,7 @@ int main(void)
     CHECK(switch_cursor == 6 && switch_top == 2);                       /* seven modules, five rows */
     CHECK(!modwerk_status_key(PLAY, 1) && !modwerk_status_key(PLAY, 0) && open == SWITCHES); /* PLAY reaches stock, it stays */
     CHECK(modwerk_status_key(NO, 1) && modwerk_status_key(NO, 0) && open == CLOSED);
+    make_room_checks();
     if (failures) return 1;
     puts("status keys: ok");
     return 0;

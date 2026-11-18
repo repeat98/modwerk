@@ -282,6 +282,8 @@ async function pick(track, slot, wanted) {
   let no = false
   const ok = await until(async () => (await mem(0x80000ec4 + 8 * (slot - 1) + track, 1))[0] === id || (no = (await statusWords())(21) !== refused))
   if (no) { // the refusal's reason is on the screen (DSP MEMORY FULL, cycles, ...): keep it before NO clears it
+    // The box shows once it has looked for a slot that can make room (status.c's offer, about 0.1 s after the refusal)
+    await new Promise(resolve => setTimeout(resolve, 400))
     const shot = join(tmpdir(), `modwerk-refused-T${track + 1}-FX${slot}.png`)
     await screen(shot)
     await keys('NO'); throw new Error(wanted + ' refused on T' + (track + 1) + ' FX' + slot + ' (the loader said no; its screen: ' + shot + ')')

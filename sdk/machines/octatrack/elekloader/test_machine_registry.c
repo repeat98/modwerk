@@ -123,6 +123,10 @@ void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t book
 static uint32_t cpu_now; static unsigned hot_boxes, hot_box_track = 99; static uint32_t hot_box_cpu;
 uint32_t modwerk_status_cpu_load(void) { return cpu_now; }
 void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu) { (void)label; ++hot_boxes, hot_box_track = track, hot_box_cpu = cpu; }
+/* The box's culprits after a budget refusal, and what the stopped unit's played figure was moved by (per mille). */
+static unsigned cpu_holders_seen = 0xffu; static int32_t cpu_change_sum;
+void modwerk_status_cpu_holders(unsigned tracks) { cpu_holders_seen = tracks; }
+void modwerk_status_cpu_change(int32_t mille) { cpu_change_sum += mille; }
 void modwerk_dsp_source_release(unsigned track) { voices &= (uint8_t)~(1u << track); voice_of[track] = 0; ++releases; }
 void modwerk_dsp_source_engine_off(uint32_t module)
 {
@@ -413,7 +417,7 @@ static void check_cpu_budget(void)
      * load; the same machine on its own track asks nothing, and the pick passes once the load is under the line. */
     extern volatile uint32_t mw_cpu_hot, mw_cpu_refusals;
     { uint32_t refusals = mw_cpu_refusals; unsigned was = cpu_boxes;
-      cpu_now = mw_cpu_hot;
+      cpu_now = mw_cpu_hot; cpu_change_sum = 0;
       CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 1 && hot_box_track == 7 && hot_box_cpu == mw_cpu_hot);
       CHECK(mw_cpu_refusals == refusals + 1 && cpu_boxes == was && !mw_cpu_booked);
       cpu_now = mw_cpu_hot - 120u; /* its price (12 % of a frame, unpriced) would take the meter to the line */
@@ -430,12 +434,16 @@ static void check_cpu_budget(void)
     CHECK(mw_assign(part0(), 0, 5) == 1 && mw_assign(part0(), 1, 5) == 1 && mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes);
     CHECK(mw_assign(part0(), 3, 5) == (unsigned)-1 && part0()[60 + 90] == 0);  /* a fourth at 12: 48 of 45, nothing written */
     CHECK(cpu_boxes == boxes + 1 && cpu_box_track == 3 && cpu_box_booked == 800 && cpu_box_add == 266);
+    CHECK(cpu_holders_seen == 0x07u);                                          /* the box names T1-T3, which hold it */
     CHECK(mw_assign(part0(), 3, 6) == (unsigned)-1);                           /* nor the dear one */
     CHECK(mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes + 2);            /* the same machine again asks nothing */
     CHECK(mw_assign(part0(), 2, 6) == (unsigned)-1);                           /* its own 12 back, 30 more: 54 */
     CHECK(mw_assign(part0(), 1, 1) == 1 && mw_assign(part0(), 2, 6) == 1);     /* a track freed: 12 + 30 */
     mw_ui_tick();
     CHECK(mw_cpu_booked == 42 && !mw_cpu_refused);
+    /* Each change moved the stopped unit's figure by the prices' difference: T8 12 on and off, T1-T3 3 x 12, T2 back to
+     * stock, T3 12 -> 30; refusals and the same machine again moved nothing. */
+    CHECK(cpu_change_sum == 120 - 120 + 360 - 120 + 180);
     /* Tracks that became machines without a pick (a load, a Part change, a paste): past the allowance they render
      * stock's silent source, and the box says so once; they play when room is made. */
     part0()[60 + 150] = part0()[60 + 180] = 'A', part0()[61 + 150] = part0()[61 + 180] = 'B', part0()[62 + 150] = part0()[62 + 180] = 1;

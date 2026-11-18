@@ -1066,11 +1066,13 @@ REFUSAL_EDITS = {
          ' * effects running on that core and slot kind (at most [7]), [7] that kind\'s usable blocks on the core. */\n'
          'volatile uint32_t dl_refusal[8];\n'
          'static void running(uint8_t out[16]);\n'
+         'uint8_t dl_refused_ids[16]; /* the set refused last, for status.c\'s offer (dl_dry_fits) */\n'
          'static void refusal_note(unsigned why) {\n'
          '    /* The slot the set changes from what the tracks run: a pick\'s own slot (the committed set can lag them). */\n'
          '    uint8_t now[16];\n'
          '    unsigned slot=16;\n'
          '    running(now);\n'
+         '    for(unsigned i=0;i<16;++i) dl_refused_ids[i]=desired[i];\n'
          '    for(unsigned i=0;i<16;++i) if(desired[i]!=now[i]) { slot=i; break; }\n'
          '    /* Short of code memory, blame a changed slot that asks for words on a core whose target does not fit, else one\n'
          '     * that asks for words, else the first changed (on the owner\'s MKII the box named T1\'s TapeHead for T5-8\'s reverbs). */\n'
@@ -1106,7 +1108,48 @@ REFUSAL_EDITS = {
          '        if(r<0) {\n            refusal_note(r==DL_ALLOC_CYCLES ? 1u : r==DL_ALLOC_MEMORY || r==DL_ALLOC_TRANSITION ? 2u : 0u);\n'
          '            report(r==DL_ALLOC_MEMORY || r==DL_ALLOC_TRANSITION ? DL_SELECT_MEMORY :'),
         ('                dl_allocator_cancel(&allocator,current);\n                report(DL_SELECT_MEMORY); phase=0; return;',
-         '                dl_allocator_cancel(&allocator,current);\n                refusal_note(3u); report(DL_SELECT_MEMORY); phase=0; return;')),
+         '                dl_allocator_cancel(&allocator,current);\n                refusal_note(3u); report(DL_SELECT_MEMORY); phase=0; return;'),
+        # The offer after a refused pick (status.c; owner, 18 November 2026): one other slot to NONE first, then the pick,
+        # judged by this prepare itself on copies, so the box never offers what would be refused again.
+        ('static void report(int error) {',
+         '/* status.c\'s offer: whether the set refused last (dl_refused_ids) would pass this prepare once slot `clear` (FX1\n'
+         ' * T1-T8, then FX2) ran NONE first. The offer\'s two picks in turn, as the selector would ask them: `clear` to\n'
+         ' * NONE, taken and retired, then the refused set with that slot NONE too. Each through the allocator and the Y\n'
+         ' * buffer plan, on copies, with no other Part\'s code kept: the last way a prepare tries (ON_DEMAND_EDITS), so what\n'
+         ' * fits here fits there. 1 it fits; 0 it does not, or not now (a transaction under way). dsp.c lets no machine voice\n'
+         ' * give way meanwhile (modwerk_dsp_planning_dry). Copies, not the stack: the allocator is kilobytes. */\n'
+         '__attribute__((weak)) void modwerk_dsp_planning_dry(int on) { (void)on; } /* dsp.c\'s; a harness without it has no voices */\n'
+         'static struct dl_allocator dry_allocator;\n'
+         'static struct dl_buffers dry_buffers;\n'
+         'int dl_dry_fits(unsigned clear) {\n'
+         '    uint8_t now[16],ids[16],reads[DL_PACKAGES];\n'
+         '    if(phase || !initialized || allocator.phase || buffers.open || clear>15u) return 0;\n'
+         '    running(now);\n'
+         '    if(!now[clear] || dl_refused_ids[clear]!=now[clear]) return 0; /* NONE there already, or the pick\'s own slot */\n'
+         '    for(unsigned p=0;p<DL_PACKAGES;++p) reads[p]=dl_catalog[p].buffer;\n'
+         '    for(unsigned i=0;i<16;++i) ids[i]=i==clear ? 0u : dl_refused_ids[i];\n'
+         '    bytes(&dry_allocator,&allocator,sizeof dry_allocator); bytes(&dry_buffers,&buffers,sizeof dry_buffers);\n'
+         '    dry_allocator.keep[0]=dry_allocator.keep[1]=(fx_set){{0}};\n'
+         '    uint32_t token=allocator.token+1u;\n'
+         '    if(!token) token=1u;\n'
+         '    uint8_t first[16];\n'
+         '    for(unsigned i=0;i<16;++i) first[i]=now[i];\n'
+         '    first[clear]=0;\n'
+         '    modwerk_dsp_planning_dry(1);\n'
+         '    int fits=dl_allocator_prepare(&dry_allocator,first,token)==DL_ALLOC_OK &&\n'
+         '             dl_buffers_prepare(&dry_buffers,now,first,reads)==DL_BUF_OK;\n'
+         '    if(fits) { /* the first pick taken: what the second meets */\n'
+         '        dry_allocator.ready=dry_allocator.required;\n'
+         '        fits=dl_allocator_commit(&dry_allocator,token)==DL_ALLOC_OK && dl_allocator_retire(&dry_allocator,token)==DL_ALLOC_OK;\n'
+         '        dl_buffers_retire(&dry_buffers); now[clear]=0;\n'
+         '        if(++token==0u) token=1u;\n'
+         '    }\n'
+         '    if(fits) fits=dl_allocator_prepare(&dry_allocator,ids,token)==DL_ALLOC_OK &&\n'
+         '                  dl_buffers_prepare(&dry_buffers,now,ids,reads)==DL_BUF_OK;\n'
+         '    modwerk_dsp_planning_dry(0);\n'
+         '    return fits;\n'
+         '}\n'
+         'static void report(int error) {')),
     # A busy unit takes no further module effect (status.c, mw_cpu_hot): refused in the guard, before stock writes the
     # pick, with status.c's own box and no modal. selection.c links after the write-lease entries.
     'selection.c': (

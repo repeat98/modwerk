@@ -40,7 +40,8 @@ const OCTATRACK_SCREENS: Screen[] = [
 const OCTATRACK_ALSO: [string, string][] = [
   ['MISSING', 'modules the open project uses that the Octatrack doesn’t have or has switched off, machines included, with where each is used, such as BANK A SAVED PART 2 T5, and YES to switch the ones that are off back on. Their tracks say so, MISSING POLY8 or POLY8 IS OFF, instead of going quiet without a word.'],
   ['MODWERK SYNC', 'a small box with a bar while a sync from this site sends your modules and starts them.'],
-  ['CPU FULL', 'when a machine or effect pick would overload the Octatrack, the base refuses it and says why, instead of overloading it. Stock machines, stock effects and NONE are never refused.'],
+  ['CPU FULL', 'when a machine or effect pick would overload the Octatrack, the base refuses it and says why, instead of overloading it, and names the tracks whose machines take the room. Stock machines, stock effects and NONE are never refused.'],
+  ['DSP FULL', 'when an effect needs more DSP time or memory than its four tracks have left. Where setting one other effect on those tracks to NONE makes room, the box names it, such as T3 FX2 DARK REV, and YES does both: that one to NONE, then yours. Nothing changes without YES, and RELOAD PART brings the saved Part back.'],
 ]
 
 const RYTM_SCREENS: Screen[] = [

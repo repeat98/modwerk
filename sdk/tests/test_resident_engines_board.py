@@ -181,6 +181,7 @@ void test_fx(unsigned p, unsigned n)
     dl_catalog[p] = (struct dl_package){(uint16_t)n, 1, 100, 3, 0, 1, 0};
     dl_codes[0][p] = dl_codes[1][p] = (struct code){fx_words[p], 0, (uint16_t)n, 0, 1, 0};
 }
+void test_fx_cycles(unsigned p, uint32_t cycles) { dl_catalog[p].cycles = cycles; } /* its DSP time, chip cycles a sample */
 /* One Part switch through the actual selection route: prepare, poll to READY, commit, retire. */
 static uint32_t select_token = 1;
 int test_select(const uint8_t ids[16], void (*pump)(void))
@@ -1817,6 +1818,59 @@ int main(int argc, char **argv)
         bank_module = 0; ++board_bank;
         run(400);
         assert(slot_for(AB, MW_CTL_RETIRING)); unplaced(0, 4); unplaced(1, 4);
+    } else if (mode == 67) {
+        /* MAKE ROOM (status.c's offer, owner 18 November 2026): after a refused pick, dl_dry_fits says for each slot
+         * whether setting it to NONE first lets the pick through. Its answer must be what the two real picks then do:
+         * that slot to NONE, then the refused set with it NONE too. On core A (T5-T8), code memory (1,936 words) and
+         * then DSP time (3,120 cycles); each with a slot whose room is enough and one whose room is not. The dry runs
+         * leave the live plan as it was. */
+        int dl_dry_fits(unsigned clear); extern uint8_t dl_refused_ids[16];
+        uint8_t live[16], pick[16], step[16];
+        test_fx(10, 500); test_fx(11, 700); test_fx(13, 900); test_fx(14, 300);
+        memset(live, 0, 16); live[4] = 11; live[5] = 10; live[7] = 14;  /* 1,500 words */
+        memset(test_parts, 0, sizeof test_parts); memcpy(test_parts[0], live, 16);
+        assert(test_select(live, pump) == 1);
+        memcpy(pick, live, 16); pick[6] = 13;                              /* +900: 2,400 */
+        assert(test_select(pick, pump) == DL_SELECT_MEMORY && !memcmp(dl_refused_ids, pick, 16));
+        int at11 = test_live(0, 11), at10 = test_live(0, 10), at14 = test_live(0, 14);
+        /* Where the code sits: T8 FX1's 300 words at 0, T6 FX1's 500 at 736, T5 FX1's 700 at 1,236. NONE on T6 FX1 leaves a
+         * gap of 936 words for E's 900; on T5 FX1 700 words come free, but no 900 of them in one piece, so the real pick
+         * is refused as well; on T8 FX1 there is not enough at all. */
+        assert(at14 == 0 && at10 == 736 && at11 == 1236);
+        assert(dl_dry_fits(5) == 1 && dl_dry_fits(4) == 0 && dl_dry_fits(7) == 0);
+        assert(dl_dry_fits(6) == 0 && dl_dry_fits(0) == 0 && dl_dry_fits(12) == 0); /* the pick's own slot; NONE already */
+        assert(test_live(0, 11) == at11 && test_live(0, 10) == at10 && test_live(0, 14) == at14 && test_idle());
+        static const uint8_t cleared[3] = {7, 4, 5};
+        for (unsigned k = 0; k < 3u; ++k) { /* the real picks: that slot to NONE, then the pick with it NONE too */
+            memcpy(step, live, 16); step[cleared[k]] = 0;
+            assert(test_select(step, pump) == 1);
+            memcpy(step, pick, 16); step[cleared[k]] = 0;
+            assert(test_select(step, pump) == (k < 2u ? DL_SELECT_MEMORY : 1)); /* as the dry run said */
+            if (k < 2u) assert(test_select(live, pump) == 1);                   /* that slot's effect back */
+        }
+        assert(test_live(0, 13) >= 0);
+        /* DSP time on FX2 T5-T8: 1,500 + 1,200 running, 900 more refused; NONE on the 1,500 or the 1,200 makes room,
+         * on the 100 it does not. */
+        memset(live, 0, 16);
+        assert(test_select(live, pump) == 1);
+        test_fx(15, 100); test_fx(16, 100); test_fx(17, 100); test_fx(18, 100);
+        void test_fx_cycles(unsigned p, uint32_t cycles);
+        test_fx_cycles(15, 1500); test_fx_cycles(16, 1200); test_fx_cycles(17, 900);
+        live[12] = 15; live[13] = 16; live[15] = 18;                      /* 2,800 of 3,120 */
+        memcpy(test_parts[0], live, 16);
+        assert(test_select(live, pump) == 1);
+        memcpy(pick, live, 16); pick[14] = 17;
+        assert(test_select(pick, pump) == DL_SELECT_PROCESSING && !memcmp(dl_refused_ids, pick, 16));
+        assert(dl_dry_fits(12) == 1 && dl_dry_fits(13) == 1 && dl_dry_fits(15) == 0);
+        memcpy(step, live, 16); step[15] = 0;
+        assert(test_select(step, pump) == 1);
+        memcpy(step, pick, 16); step[15] = 0;
+        assert(test_select(step, pump) == DL_SELECT_PROCESSING);
+        assert(test_select(live, pump) == 1);
+        memcpy(step, live, 16); step[13] = 0;
+        assert(test_select(step, pump) == 1);
+        memcpy(step, pick, 16); step[13] = 0;
+        assert(test_select(step, pump) == 1);
     } else assert(0);
     return 0;
 }
@@ -1933,7 +1987,7 @@ def build(work):
 
 @unittest.skipUnless(shutil.which('cc'), 'host C compiler unavailable')
 class ResidentEnginesBoard(unittest.TestCase):
-    MODES = 67
+    MODES = 68
 
     def test_place_switch_run_disable_unswitch_free_and_their_refusals(self):
         with tempfile.TemporaryDirectory() as temp:

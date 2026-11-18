@@ -63,6 +63,8 @@ static uint32_t be16(const uint8_t *p) { return (uint32_t)p[0] << 8 | p[1]; }
 static uint32_t be32(const uint8_t *p) { return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3]; }
 static void put32(uint8_t *p, uint32_t v) { p[0] = (uint8_t)(v >> 24), p[1] = (uint8_t)(v >> 16), p[2] = (uint8_t)(v >> 8), p[3] = (uint8_t)v; }
 
+/* status.c's offer: the row an id has in a chooser (kind 0 FX1, 1 FX2), as dsp.c's pick queue takes it; NONE is 0. */
+unsigned modwerk_fxpage_row(unsigned kind, unsigned id) { return id < MODWERK_FX_IDS ? TABLE(2u + (kind & 1u))[id] : 0u; }
 /* Both choosers: the stock rows, then each listed module page in id order; each id's descriptor and row. */
 static void rows(void)
 {

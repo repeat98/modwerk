@@ -96,6 +96,15 @@ describe('the unit’s diagnostics log, version 2', () => {
     // An entry in the window long before the stop is not what stopped it.
     expect(describeStallFrames(trace([513, 520], [213, 100], ...Array.from({ length: 8 }, (): [number, number] => [363, 100])))).toMatch(/so not the late entry$/)
   })
+  it('reads a refused DSP pick and the refusal box’s swap (diag.h’s kinds 10 and 11)', () => {
+    const parsed = parseDeviceLog(log2(view => {
+      const d = V2_INCIDENTS, s = V2_INCIDENTS + 92
+      view.setUint32(d, 2); view.setUint32(d + 4, 3); view.setUint32(d + 8, 40); view.setUint32(d + 12, (0x19 << 24 | 2) >>> 0); view.setUint16(d + 16, 10)
+      view.setUint32(s, 3); view.setUint32(s + 4, 3); view.setUint32(s + 8, 44); view.setUint32(s + 12, 1 << 24 | 1); view.setUint16(s + 16, 11)
+    }))!
+    expect(parsed.incidents.map(r => [r.kind, r.a])).toEqual([['dsp', 0x19 << 24 | 2], ['swap', 1 << 24 | 1]])
+  })
+
   it('reads the frames kept with the stall record, in µs, and no other stall’s', () => {
     const traced = (count: number) => {
       const data = new Uint8Array(DEVICE_LOG_PAGES * DEVICE_LOG_PAGE)

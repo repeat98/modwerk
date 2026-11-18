@@ -1,0 +1,5 @@
+Octatrack base: when an effect doesn't fit (DSP FULL, DSP MEMORY FULL or NO ROOM), the box now looks for one other effect on the same four tracks that would make room, and names it, such as "T3 FX2 DARK REV" with "YES: THAT TO NONE". YES sets that slot to NONE and adds your effect in one go; NO or any other key leaves everything as it was. The offer waits for your answer, and a YES pressed in the first half second does nothing, so a double tap in the FX list never changes another track. The base checks the swap with the same planning that refused the pick, so it never offers one that would be refused again; if the pick is refused all the same, the other slot gets its effect back. The saved Part keeps both (RELOAD PART).
+
+CPU FULL for a machine now names the tracks whose machines hold the room ("HELD BY T2 T5"); machines are never changed for you. Changing a track's machine while stopped now counts at once in what the next pick is judged by, so a Part made lighter takes a module again without playing first.
+
+Diagnostics now record picks the DSP refused and how the box's offer ended, so we can see how often each happens.

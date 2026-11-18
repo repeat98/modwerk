@@ -64,6 +64,8 @@ void modwerk_dsp_source_engine_off(uint32_t module);
 void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add); /* status.c: the CPU FULL box, per mille of the allowance */
 uint32_t modwerk_status_cpu_load(void); /* status.c: the CPU meter's mean over its last four seconds, per mille; stopped, what it last read playing if that was more */
 void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu); /* status.c: the CPU FULL box for a unit already busy */
+void modwerk_status_cpu_holders(unsigned tracks); /* status.c: the CPU FULL box names the tracks that hold the budget */
+void modwerk_status_cpu_change(int32_t mille);   /* status.c: a machine changed while stopped, its price's difference */
 #ifndef MW_HOST
 __attribute__((weak)) int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, uint32_t engine, uint8_t kind)
 { (void)track; (void)module; (void)voice; (void)engine; (void)kind; return RUNTIME_CYCLES; }
@@ -73,6 +75,8 @@ __attribute__((weak)) void modwerk_dsp_source_engine_off(uint32_t module) { (voi
 __attribute__((weak)) void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
 { (void)track; (void)label; (void)booked; (void)add; }
 __attribute__((weak)) uint32_t modwerk_status_cpu_load(void) { return 0; }
+__attribute__((weak)) void modwerk_status_cpu_holders(unsigned tracks) { (void)tracks; }
+__attribute__((weak)) void modwerk_status_cpu_change(int32_t mille) { (void)mille; }
 __attribute__((weak)) void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu) { (void)track; (void)label; (void)cpu; }
 #endif
 /* Each track of the current Part: the priced machine its voice is charged to, or 0. A word each, so the render
@@ -205,6 +209,21 @@ static void cpu_refuse(unsigned track, const Machine *who, unsigned booked)
 {
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
     modwerk_status_cpu_refused(track, who->label, cpu_mille(booked), cpu_mille(cpu_price(who)));
+}
+/* The Part's other tracks whose machines its bill counts (a bit a track), for the box to name (owner, 18 November 2026:
+ * name the culprit; a machine is never changed to make room). */
+static unsigned cpu_holders(const Machine *const *m, unsigned n, const Part *part, unsigned skip)
+{
+    unsigned tracks = 0; const Machine *who;
+    for (unsigned t = 0; t < 8u; ++t) if (t != skip && owner(m, n, part, t, &who) && cpu_price(who)) tracks |= 1u << t;
+    return tracks;
+}
+/* A track's machine went from `was` to `now` (0: a stock machine): the figure a stopped unit is judged by moves by the
+ * difference of their prices (status.c), so a Part made lighter while stopped takes a module again without playing. */
+static void cpu_moved(const Machine *was, const Machine *now)
+{
+    int32_t mille = 10 * ((int32_t)(now ? cpu_price(now) : 0u) - (int32_t)(was ? cpu_price(was) : 0u));
+    if (mille) modwerk_status_cpu_change(mille);
 }
 /* The PROTECT machines this base knows by signature (module-adapters/machine-ports.json; sdk/tests checks the list).
  * Their tracks keep their 12 bytes from stock's validator while the machine is absent too: the boot's battery
@@ -461,11 +480,12 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
             uint8_t over; unsigned booked = cpu_bill(m, n, part, track, &over);
             if (booked + cpu_price(next) > mw_cpu_allowance) {
                 cpu_refuse(track, next, booked);
+                modwerk_status_cpu_holders(cpu_holders(m, n, part, track));
                 return (unsigned)-1;
             }
         }
         if (next->source_kind && old != next && !claim(track, next)) return (unsigned)-1;
-        if (old != next) mc_assigned(next);
+        if (old != next) mc_assigned(next), cpu_moved(old, next);
         if (old && old != next) leave(part, mirror, track, old);
         if (absent) flex_defaults(part, mirror, track);
         if (next->assign) return next->assign(part, track, 1);
@@ -485,11 +505,11 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
         const Machine *still; owner(m, n, part, track, &still);
         if (still == old) return pool;
         hush(part, track, row < 5 ? row : 1);
-        leave(part, mirror, track, old);
+        leave(part, mirror, track, old), cpu_moved(old, 0);
         return relive(part, offset, track, row < 5 ? row : 1);
     } else if (old || absent) {
         hush(part, track, row < 5 ? row : 1);
-        if (old) leave(part, mirror, track, old);
+        if (old) leave(part, mirror, track, old), cpu_moved(old, 0);
         else flex_defaults(part, mirror, track);
         unsigned sig = SIG + 30 * track; for (unsigned k = 0; k < 3; ++k) part[sig + k] = mirror[sig + k] = 0;
         return relive(part, offset, track, row < 5 ? row : 1);

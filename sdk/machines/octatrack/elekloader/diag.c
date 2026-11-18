@@ -23,6 +23,8 @@ extern volatile uint32_t dl_frames;
 void modwerk_track_machines(volatile uint8_t *out); /* machine_registry.c */
 extern volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks; /* machine_registry.c: the frame guard's skips */
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget's refusals */
+extern volatile uint32_t modwerk_status_dsp_refusals, modwerk_status_dsp_last; /* status.c: DSP refusals, the last one's why and slot */
+extern volatile uint32_t modwerk_status_swaps, modwerk_status_swaps_ended, modwerk_status_swap_last; /* status.c: MAKE ROOM */
 extern const uint8_t modwerk_base_digest[32];       /* the base's identity (build_core.py) */
 
 #ifdef MODWERK_HOST /* test_diag.c models the unit's memory */
@@ -75,7 +77,8 @@ static unsigned installed(uint32_t *ids, unsigned most)
 static volatile uint8_t keys[16];
 static volatile uint32_t key_count;
 static volatile uint32_t started, ticks;
-static uint32_t n, cpu_sum, cpu_peak, d0_sum, d0_peak, d1_sum, d1_peak, played, hot_run, hot_count, hot_at, sheds, shed_at, cpu_refusals, cpu_at;
+static uint32_t n, cpu_sum, cpu_peak, d0_sum, d0_peak, d1_sum, d1_peak, played, hot_run, hot_count, hot_at, sheds, shed_at, cpu_refusals, cpu_at,
+                dsp_refusals, dsp_at, swaps_ended;
 static volatile uint32_t frame_gap, tick_gap; /* the frame interrupt's window maxima: DTCN3 counts between frames, frames without a tick */
 static volatile uint16_t trace[DIAG_TRACE_FRAMES][2]; /* the last frames (diag.h's struct diag_trace), in ordinary memory */
 static volatile uint32_t traced;
@@ -214,6 +217,14 @@ static void diag_tick(void)
     uint32_t refusals = mw_cpu_refusals; /* the CPU budget refused a machine: the tracks and the count, as the skips */
     if (refusals != cpu_refusals && (!cpu_at || ticks - cpu_at >= HOT_GAP))
         add(l, DIAG_CPU, (mw_cpu_refusal_tracks & 0xffu) << 24 | (refusals & 0xffffffu), 1), cpu_at = ticks, cpu_refusals = refusals;
+    /* A pick refused for the DSP (DSP FULL, DSP MEMORY FULL, NO ROOM): the last one's why and slot and the count, as the
+     * CPU's; and each swap the refusal box's offer made (MAKE ROOM), how it ended, so the diagnostics say whether the
+     * offer is taken and works (owner, 18 November 2026: these refusals were not in the diagnostics at all). */
+    uint32_t dsp = modwerk_status_dsp_refusals;
+    if (dsp != dsp_refusals && (!dsp_at || ticks - dsp_at >= HOT_GAP))
+        add(l, DIAG_DSP, (modwerk_status_dsp_last & 0xffu) << 24 | (dsp & 0xffffffu), 1), dsp_at = ticks, dsp_refusals = dsp;
+    if (modwerk_status_swaps_ended != swaps_ended)
+        add(l, DIAG_SWAP, (modwerk_status_swap_last & 0xffu) << 24 | (modwerk_status_swaps & 0xffffffu), 1), swaps_ended = modwerk_status_swaps_ended;
     if (ticks % 30u) return; /* twice a second, as status.c's meter */
     uint32_t cpu = modwerk_status[0], d0p = modwerk_status[2], d1p = modwerk_status[4];
     ++n, cpu_sum += cpu, d0_sum += modwerk_status[1], d1_sum += modwerk_status[3], played += PLAYING;

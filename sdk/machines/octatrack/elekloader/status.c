@@ -106,6 +106,8 @@ static void missing_check(void);
 static void missing_on_tick(void);
 static void switches_tick(void);
 static void memory_tick(void);
+static void offer_tick(void);
+static void swap_tick(void);
 static void status_tick(void);
 void modwerk_fxpage_missing(void); /* fxpage.c: once, unlisted module handles show MISSING, not NONE */
 void modwerk_status_tick(void)
@@ -118,6 +120,8 @@ static void status_tick(void)
     modwerk_status_close_menu();
     transfer_tick();
     memory_tick();
+    offer_tick();
+    swap_tick();
     modwerk_fxpage_missing(); /* the first tick builds it; after that it returns at once */
     missing_on_tick();
     if (++ticks % 30u) return; /* twice a second */
@@ -405,6 +409,13 @@ static unsigned memory_left; /* ticks the box still shows */
  * buffer blocks. A snapshot at the refusal (manager.c's dl_refusal, build_core.py), for three seconds; a key closes it. */
 extern volatile uint32_t dl_refusal[8];
 static unsigned refused_left, refused_reason, refused_core, refused_machine, refused_elsewhere;
+static uint8_t refused_holders; /* CPU FULL: the other tracks whose machines hold the budget (machine_registry.c) */
+static int offer = -1; /* the box's offer to make room: the slot it would set to NONE, -1 none (below, MAKE ROOM) */
+/* YES takes the offer only once it has shown OFFER_ARM ticks (critique, 18 November 2026): until now YES only closed
+ * this box, and a second YES tapped in the FX list must not set another track's effect to NONE. Earlier, YES does
+ * nothing and the box stays. */
+#define OFFER_ARM 30u
+static unsigned offer_shown;
 void modwerk_dsp_source_refusal(unsigned *core, uint32_t *add); /* dsp.c: the last machine voice refused for cycles */
 static uint32_t refused[8], refused_booked, refused_words, refused_arena;
 static char refused_name[17];
@@ -428,7 +439,7 @@ static void memory_tick(void)
     completed = dl_selection_completed, accepted = modwerk_boot_accepted;
     if ((picked || over_usb) && (open == CLOSED || open == MEMORY)) open = MEMORY, memory_left = 90u;
     if (open == MEMORY && memory_left && !--memory_left) open = CLOSED;
-    if (open == REFUSED && refused_left && !--refused_left) open = CLOSED;
+    if (open == REFUSED && offer < 0 && refused_left && !--refused_left) open = CLOSED; /* an offer waits for YES or NO */
     if (open != MEMORY) words_before[0] = dl_residency_words[0], words_before[1] = dl_residency_words[1];
 }
 /* MODULE COST (owner, 12 October 2026: "load per module"): each installed module effect, with what its instances
@@ -609,6 +620,7 @@ volatile uint32_t modwerk_status_key_at; /* modwerk_runtime_ticks at the last ke
  * 2026: MISSING hid MINI VERB LEFT OUT until it timed out). */
 int modwerk_status_dialog(void);
 int modwerk_status_dialog(void) { return open != CLOSED || transfer != T_NONE; }
+static void swap_begin(void);
 int modwerk_status_key(int code, int pressed)
 {
     static int cue;
@@ -653,6 +665,11 @@ int modwerk_status_key(int code, int pressed)
     if (open == MISSING && code == YES && (on_count || missing_offs)) { /* switch on what is off; NO closes */
         if (!on_count) missing_on_start();
         taken = code;
+        return 1;
+    }
+    if (open == REFUSED && code == YES && offer >= 0) { /* the box's offer: that slot to NONE, then the pick */
+        if (offer_shown >= OFFER_ARM) swap_begin(), open = CLOSED;
+        taken = code; /* too soon after it showed: a second tap meant for the FX list, so nothing */
         return 1;
     }
     int closes = code == NO || code == YES; /* the popup after a pick: YES only closes it (owner, 14 October 2026) */
@@ -991,9 +1008,33 @@ static void memory_box(unsigned char *frame)
         percent(89u, y, used[i]);
     }
 }
+/* An effect's name as the chooser lists it, in capitals (17 bytes): a module's from MODULE COST's list, a stock one's from
+ * its descriptor in the slot's chooser (FX1 T1-T8, then FX2). */
+static void effect_name(unsigned slot, unsigned id, char *out)
+{
+    for (unsigned i = 0; i < 17u; ++i) out[i] = 0; /* a shorter name after a longer one */
+    for (unsigned k = 0, n = modules_count(); k < n; ++k)
+        if (modules[k].id == id) for (unsigned i = 0; i < 16u; ++i) out[i] = modules[k].name[i];
+#ifndef MODWERK_HOST
+    if (!out[0] && id < 32u) { /* a stock effect: its descriptor's name, as the chooser lists it */
+        const char *d = *(const char *const *)(uintptr_t)((slot < 8u ? 0x400d5f58u : 0x400d5fdcu) + 4u * id);
+        for (unsigned i = 0; d && i < 16u && d[9 + i] >= ' '; ++i) out[i] = d[9 + i];
+    }
+#else
+    (void)slot;
+#endif
+    out[16] = 0;
+    for (char *t = out; *t; ++t) if (*t >= 'a' && *t <= 'z') *t = (char)(*t - 32);
+}
+static void offer_begin(void); /* below: the box looks for a slot that can make room */
+/* DSP refusals, for diagnostics (diag.c's DIAG_DSP): how many, and the last one's why (dl_refusal[0]: 1 DSP time, 2 code
+ * memory, 3 a Y buffer) and slot. Counted whether or not the box can show. */
+volatile uint32_t modwerk_status_dsp_refusals, modwerk_status_dsp_last;
 /* transfer.c's dl_ui, reason 2 (DSP MEMORY FULL) or 3 (DSP FULL): 1 when the box shows instead of the bare popup. */
 int modwerk_status_refused(unsigned reason)
 {
+    modwerk_status_dsp_refusals = modwerk_status_dsp_refusals + 1u;
+    modwerk_status_dsp_last = (dl_refusal[0] & 15u) << 4 | (dl_refusal[1] & 15u);
     if ((open != CLOSED && open != MEMORY) || dl_refusal[1] > 15u || (reason == 3u) != (dl_refusal[0] == 1u)) return 0;
     for (unsigned i = 0; i < 8u; ++i) refused[i] = dl_refusal[i];
     unsigned slot = refused[1], id = refused[2], c = (slot & 7u) < 4u ? 1u : 0u;
@@ -1002,19 +1043,110 @@ int modwerk_status_refused(unsigned reason)
     refused_elsewhere = refused[0] == 3u && !modwerk_dsp_reads_buffer(id);
     refused_reason = reason, refused_core = c, refused_booked = modwerk_dsp_booked(c), refused_words = dl_residency_words[c];
     refused_arena = c ? modwerk_status[ARENA] >> 16 : modwerk_status[ARENA] & 0xffffu; /* the arena as the page reads it */
-    for (unsigned i = 0; i < sizeof refused_name; ++i) refused_name[i] = 0; /* a shorter name after a longer one */
-    for (unsigned k = 0, n = modules_count(); k < n; ++k)
-        if (modules[k].id == id) for (unsigned i = 0; i < 16u; ++i) refused_name[i] = modules[k].name[i];
-#ifndef MODWERK_HOST
-    if (!refused_name[0] && id < 32u) { /* a stock effect: its descriptor's name, as the chooser lists it */
-        const char *d = *(const char *const *)(uintptr_t)((slot < 8u ? 0x400d5f58u : 0x400d5fdcu) + 4u * id);
-        for (unsigned i = 0; d && i < 16u && d[9 + i] >= ' '; ++i) refused_name[i] = d[9 + i];
-    }
-#endif
-    refused_name[16] = 0;
-    for (char *t = refused_name; *t; ++t) if (*t >= 'a' && *t <= 'z') *t = (char)(*t - 32);
+    effect_name(slot, id, refused_name);
     open = REFUSED, refused_left = 180u;
+    offer_begin();
     return 1;
+}
+/* MAKE ROOM (owner, 18 November 2026: adding an effect over the budget should be smoother, "maybe allow automatic
+ * removal from another track"). After DSP FULL, DSP MEMORY FULL or NO ROOM the box looks for one other slot on the
+ * pick's core that, set to NONE first, lets the pick through, and offers it: "T3 FX2 DARK REV", "YES: THAT TO NONE".
+ * manager.c's dl_dry_fits judges each slot by the prepare's own plans, on copies, so the box never offers what would be
+ * refused again; one slot a tick, so the panel never waits on it. The same track's other slot first, else the one
+ * whose effect costs least. YES makes both picks through dsp.c's queue and the selector's own path, as the panel
+ * would: that slot to NONE, then the pick. Nothing changes without a YES (owner: a track losing its effect unasked,
+ * mid-set, is worse than a refusal), the saved Part keeps both (RELOAD), and a pick refused all the same gives the
+ * slot its effect back. Machines are never changed for room: their CPU FULL box names the tracks that hold it. */
+int dl_dry_fits(unsigned clear);           /* manager.c (build_core.py's REFUSAL_EDITS) */
+extern uint8_t dl_refused_ids[16];         /* manager.c: the set refused last */
+uint32_t modwerk_dsp_cycles(unsigned id);  /* dsp.c: an effect's catalogue cycles a sample */
+int modwerk_dsp_pick(unsigned slot, unsigned track, unsigned row); /* dsp.c: 0 FX1, 1 FX2, a chooser row */
+unsigned modwerk_fxpage_row(unsigned kind, unsigned id);           /* fxpage.c: the row id has in the chooser */
+int dl_publication_idle(void);             /* manager.c: no transaction under way */
+extern volatile uint32_t dl_selection_refused; /* selection.c */
+#ifdef MODWERK_HOST
+extern uint8_t modwerk_test_track;
+extern uint32_t modwerk_test_cursor[2];
+#define CURRENT_TRACK (*(volatile uint8_t *)&modwerk_test_track)
+#define CURSOR(kind) (*(volatile uint32_t *)&modwerk_test_cursor[kind])
+#else
+#define CURRENT_TRACK (*(volatile uint8_t *)0x80000000u) /* the current track, as the selectors read it (dsp.c) */
+#define CURSOR(kind) (*(volatile uint32_t *)((kind) ? 0x460d5ca8u : 0x460d5c94u)) /* each chooser's cursor (dsp.c) */
+#endif
+/* offer (above): the slot the box offers to set to NONE; -1: none */
+static uint8_t offer_order[8], offer_count, offer_at, offer_pick, offer_was;
+static uint32_t offer_cost;
+static char offer_name[17];
+/* The swap the YES started, a phase a step: CLEAR the slot to NONE, then PICK, else BACK when the pick was refused. */
+enum { SWAP_IDLE, SWAP_CLEAR, SWAP_PICK, SWAP_BACK };
+static struct { uint8_t phase, slot, id, victim, was, track; uint32_t refusals, ticks, cursor[2]; } swap;
+#define SWAP_TICKS 300u /* five seconds a step: an upload of the pick's code fits well inside */
+/* For diagnostics (diag.c's DIAG_SWAP): swaps begun, and how the last ended (1 made, 2 refused and put back, 3 gave up). */
+volatile uint32_t modwerk_status_swaps, modwerk_status_swaps_ended, modwerk_status_swap_last;
+static unsigned core_of_slot(unsigned i) { return (i & 7u) < 4u ? 1u : 0u; }
+static void offer_begin(void)
+{
+    offer = -1, offer_count = offer_at = 0, offer_shown = 0;
+    if (swap.phase) return; /* the swap's own pick was refused: it puts the slot back, no new offer */
+    unsigned pick = 16u;
+    for (unsigned i = 0; i < 16u && pick > 15u; ++i) if (dl_refused_ids[i] != LIVE[i]) pick = i;
+    if (pick > 15u) return;
+    offer_pick = (uint8_t)pick;
+    offer_order[offer_count++] = (uint8_t)(pick ^ 8u); /* the same track's other slot first */
+    for (unsigned i = 0; i < 16u; ++i)
+        if (i != pick && i != (pick ^ 8u) && core_of_slot(i) == core_of_slot(pick)) offer_order[offer_count++] = (uint8_t)i;
+}
+/* One slot a tick while the box shows: whether it makes room, and the cheapest that does. */
+static void offer_tick(void)
+{
+    if (open == REFUSED && offer >= 0 && offer_at >= offer_count && offer_shown < OFFER_ARM) ++offer_shown; /* from when it shows */
+    if (open != REFUSED || refused_machine || offer_at >= offer_count) return;
+    unsigned i = offer_order[offer_at++], id = LIVE[i];
+    if (!id || !dl_dry_fits(i)) return;
+    uint32_t cost = modwerk_dsp_cycles(id);
+    if (offer >= 0 && cost >= offer_cost) return;
+    offer = (int)i, offer_cost = cost, offer_was = (uint8_t)id;
+    effect_name(i, id, offer_name);
+    if (i == (offer_pick ^ 8u)) offer_at = offer_count; /* the same track's: no need to look further */
+}
+/* The picks moved the selection to each slot's track and the choosers' cursors to each row: both back as they were. */
+static void swap_end(unsigned how)
+{
+    CURRENT_TRACK = swap.track, CURSOR(0) = swap.cursor[0], CURSOR(1) = swap.cursor[1];
+    modwerk_status_swap_last = how, swap.phase = SWAP_IDLE;
+    modwerk_status_swaps_ended = modwerk_status_swaps_ended + 1u;
+}
+/* YES on the offer: only while what it named still holds. */
+static void swap_begin(void)
+{
+    unsigned v = (unsigned)offer, s = offer_pick, id = dl_refused_ids[s];
+    if (swap.phase || LIVE[v] != offer_was || LIVE[s] == id) return;
+    swap.slot = (uint8_t)s, swap.id = (uint8_t)id, swap.victim = (uint8_t)v, swap.was = offer_was;
+    swap.track = CURRENT_TRACK, swap.cursor[0] = CURSOR(0), swap.cursor[1] = CURSOR(1), swap.ticks = 0;
+    modwerk_status_swaps = modwerk_status_swaps + 1u;
+    if (!modwerk_dsp_pick(v >= 8u, v & 7u, modwerk_fxpage_row(v >= 8u, 0))) { swap_end(3u); return; }
+    swap.phase = SWAP_CLEAR;
+}
+static void swap_tick(void)
+{
+    if (!swap.phase) return;
+    int settled = dl_publication_idle(), late = ++swap.ticks > SWAP_TICKS;
+    if (swap.phase == SWAP_CLEAR) {
+        if (LIVE[swap.victim] == 0u && settled) {
+            swap.phase = SWAP_PICK, swap.ticks = 0, swap.refusals = dl_selection_refused;
+            if (!modwerk_dsp_pick(swap.slot >= 8u, swap.slot & 7u, modwerk_fxpage_row(swap.slot >= 8u, swap.id))) swap.ticks = SWAP_TICKS;
+        } else if (late) swap_end(3u);
+        return;
+    }
+    if (swap.phase == SWAP_PICK) {
+        if (LIVE[swap.slot] == swap.id && settled) { swap_end(1u); return; }
+        if (dl_selection_refused == swap.refusals && !late) return;
+        /* Refused all the same, or it never came: the slot gets its effect back. */
+        swap.phase = SWAP_BACK, swap.ticks = 0;
+        if (!modwerk_dsp_pick(swap.victim >= 8u, swap.victim & 7u, modwerk_fxpage_row(swap.victim >= 8u, swap.was))) swap_end(3u);
+        return;
+    }
+    if ((LIVE[swap.victim] == swap.was && settled) || late) swap_end(LIVE[swap.victim] == swap.was ? 2u : 3u);
 }
 /* machine_registry.c's claim(): the track's machine voice did not fit its core. The box as an effect's DSP FULL has it,
  * on "Tn SRC", with what the voice asks for; the track renders stock's silent source until room is made. Not over a
@@ -1023,6 +1155,7 @@ void modwerk_status_machine_refused(unsigned track, const char *label)
 {
     if ((open != CLOSED && open != MEMORY) || track > 7u) return; /* a page or a box already shows: not over it */
     unsigned c; uint32_t add;
+    offer = -1, offer_count = offer_at = 0; /* a machine's voice: no slot is offered */
     modwerk_dsp_source_refusal(&c, &add);
     for (unsigned i = 0; i < 8u; ++i) refused[i] = 0;
     refused[0] = 1u, refused[1] = track, refused[4] = add;
@@ -1041,10 +1174,27 @@ void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t book
     if ((open != CLOSED && open != MEMORY) || track > 7u) return;
     for (unsigned i = 0; i < 8u; ++i) refused[i] = 0;
     refused[0] = 4u, refused[1] = track, refused[4] = add, refused_booked = booked;
-    refused_machine = 1u, refused_reason = 4u;
+    refused_machine = 1u, refused_reason = 4u, refused_holders = 0;
+    offer = -1, offer_count = offer_at = 0; /* CPU: no slot is offered */
     for (unsigned i = 0; i < sizeof refused_name; ++i) refused_name[i] = 0;
     for (unsigned i = 0; label && i < 16u && label[i]; ++i) refused_name[i] = label[i] >= 'a' && label[i] <= 'z' ? (char)(label[i] - 32) : label[i];
     open = REFUSED, refused_left = 180u;
+}
+/* machine_registry.c, right after a CPU budget refusal: the other tracks whose machines the Part's bill counts (a bit a
+ * track). The box names them where it said CHANGE ONE FIRST (owner, 18 November 2026: name the culprit; a machine is
+ * never changed to make room, so this is all it offers). */
+void modwerk_status_cpu_holders(unsigned tracks)
+{
+    if (open == REFUSED && refused[0] == 4u) refused_holders = (uint8_t)tracks;
+}
+/* machine_registry.c: a track's machine changed while the unit is stopped (`mille`: the new machine's price less the
+ * old one's, per mille of the meter). The figure a stopped unit is judged by (cpu_played) moves with it, so a Part made
+ * lighter while stopped takes a module again without playing first; heavier, the next pick is judged with it. */
+void modwerk_status_cpu_change(int32_t mille)
+{
+    if (!modwerk_machine_stopped() || !cpu_played) return;
+    int32_t next = (int32_t)cpu_played + mille;
+    cpu_played = next > 1 ? (uint32_t)next : 1u; /* 0 would read as a unit that never played */
 }
 /* machine_registry.c: the unit is already busy (the meter's last four seconds), whatever this machine would add. The
  * same box: the measured CPU in the bar, no price. */
@@ -1082,10 +1232,33 @@ int modwerk_status_effect_busy(unsigned slot, unsigned id)
         refused[0] = 5u, refused[1] = slot, refused_machine = 0, refused_played = cpu > recent_mean();
     return 1;
 }
+/* CPU FULL's last line: the tracks whose machines hold the budget ("HELD BY T2 T5 T6", or "HELD BY T2567" when that is
+ * too wide), else what it said before. */
+static void holders_line(void)
+{
+    char line[32] = "HELD BY ", tight[24] = "HELD BY T", *e = line + 8, *f = tight + 9; /* 8 + 7 x 3 at most */
+    for (unsigned t = 0; t < 8u; ++t)
+        if (refused_holders >> t & 1u) {
+            if (e > line + 8) *e++ = ' ';
+            *e++ = 'T', *e++ = (char)('1' + t), *f++ = (char)('1' + t);
+        }
+    *e = *f = 0;
+    label(23u, 42u, !refused_holders ? "CHANGE ONE FIRST" : TEXT_WIDTH(FONT, -1, line) <= 82 ? line : tight);
+}
+/* MAKE ROOM's two lines in the box: the slot that can give way with what it runs, and the answer. */
+static void offer_lines(void)
+{
+    char line[24] = {'T', (char)('1' + (offer & 7)), ' ', 'F', 'X', (char)(offer < 8 ? '1' : '2'), ' '}, *e = line + 7;
+    for (const char *t = offer_name; *t && e < line + sizeof line - 1; ) *e++ = *t++;
+    *e = 0;
+    while (e > line + 7 && TEXT_WIDTH(FONT, -1, line) > 82) *--e = 0; /* a long name: as much as fits */
+    label(23u, 34u, line);
+    label(23u, 42u, TEXT_WIDTH(FONT, -1, "YES: THAT TO NONE") <= 82 ? "YES: THAT TO NONE" : "YES: TO NONE");
+}
+static void canvas(unsigned char *frame); /* below */
 static void refused_box(unsigned char *frame)
 {
-    for (unsigned i = 0; i < 7u; ++i) surface[i] = ((const volatile uint32_t *)SURFACE)[i];
-    surface[3] = (uint32_t)(uintptr_t)frame;
+    canvas(frame); /* the host test draws it too */
     fill(frame, 18u, 12u, 109u, 50u, 0);
     outline(frame, 18u, 12u, 109u, 50u);
     unsigned slot = refused[1], c = refused_core;
@@ -1098,6 +1271,12 @@ static void refused_box(unsigned char *frame)
     char need[32], *e = need;
     for (const char *t = refused_name[0] ? refused_name : "THIS EFFECT"; *t && e < need + 16; ) *e++ = *t++;
     const uint32_t allowance = c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0;
+    const int offering = offer >= 0 && !refused_machine && refused_reason != 4u; /* MAKE ROOM: a slot that can give way */
+    if (refused[0] == 3u && offering) { /* delay memory: the effect, then the slot whose buffer it can have */
+        *e = 0, label(23u, 26u, need);
+        offer_lines();
+        return;
+    }
     if (refused[0] == 3u && refused_elsewhere) { /* not this effect's doing, and no track of these four need be at fault */
         label(23u, 26u, "A MODULE EFFECT");
         label(23u, 34u, "IS IN THE WAY:");
@@ -1131,7 +1310,7 @@ static void refused_box(unsigned char *frame)
         *e++ = '+', e = number(e, (refused[4] + 5u) / 10u), *e++ = '%', *e = 0;
         label(23u, 26u, need);
         label(23u, 34u, "CPU"), share_bar(frame, 45u, 34u, 40, 6, refused_booked + refused[4], refused[4]), percent(89u, 34u, refused_booked + refused[4]);
-        label(23u, 42u, "CHANGE ONE FIRST");
+        holders_line();
         return;
     }
     const int32_t add = (int32_t)refused[4];
@@ -1142,6 +1321,7 @@ static void refused_box(unsigned char *frame)
     while (*t) *e++ = *t++;
     *e++ = '+', e = number(e, ((refused[0] == 1u ? dsp_add : mem_add) + 5u) / 10u), *e++ = '%', *e = 0;
     label(23u, 26u, need);
+    if (offering) { offer_lines(); return; } /* the slot that can give way, instead of the bars */
     label(23u, 34u, "DSP"), share_bar(frame, 45u, 34u, 40, 6, dsp, dsp_add), percent(89u, 34u, dsp);
     label(23u, 42u, "MEM"), share_bar(frame, 45u, 42u, 40, 6, mem, mem_add), percent(89u, 42u, mem);
 }
@@ -1247,7 +1427,10 @@ static void status_draw(unsigned char *frame)
 {
     if (transfer == T_SYNC || transfer == T_SYNC_START) { sync_box(frame); return; }
     if (transfer != T_NONE) { update_screen(frame); return; }
-    if (open == REFUSED) { refused_box(frame); return; }
+    if (open == REFUSED) { /* not while the box still looks for a slot (a few ticks): it would change under the reader */
+        if (offer_at >= offer_count || refused_machine) refused_box(frame);
+        return;
+    }
     if (open == MEMORY) { memory_box(frame); return; }
     if (open == MISSING) { missing_page(frame); return; }
     if (open == TEST) { test_page(frame); return; }
