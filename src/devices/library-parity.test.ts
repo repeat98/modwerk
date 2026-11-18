@@ -126,6 +126,21 @@ describe('All machines library parity', () => {
 })
 
 
+describe('download periods in the library', () => {
+  it('shows the period beside Most downloaded and counts that period on the cards', () => {
+    const statistics = [{module_id: 'miniverb', average: 4.5, count: 2, likes: 7, downloads: 12, downloads7: 0, downloads30: 3, downloads90: 9, worksReports: 5, downloadsStarted: null, dailyStarted: '2026-10-06T21:44:12Z'}]
+    const html = renderToStaticMarkup(createElement(AllMachinesLibrary, {...props, statistics, sort: 'downloaded-30'}))
+    expect(html).toContain('<option value="downloaded" selected="">Most downloaded</option>')
+    expect(html).toContain('<option value="downloaded-30" selected="">Last 30 days</option>')
+    expect(html).toContain('3<span class="sr-only"> downloads in the last 30 days</span>')
+    expect(html).toContain('Counts firmware download requests in the last 30 days.')
+    const plain = renderToStaticMarkup(createElement(AllMachinesLibrary, {...props, statistics, sort: 'liked'}))
+    expect(plain).not.toContain('Last 30 days')
+    expect(plain).toContain('12<span class="sr-only"> downloads</span>')
+  })
+})
+
+
 describe('Digi library parity', () => {
   it('selects Recently updated and sorts releases consistently in both libraries without popularity data', () => {
     const releases = new Map(DIGI_MODS.map(mod => [mod, mod.updatedAt]))

@@ -1,0 +1,1 @@
+Site: when TARS asks a question on your bug report's GitHub issue, you now get it like any other reply, in your notifications and by email if you have report emails on. Until now those questions only appeared on GitHub, so reporters never heard about them.
