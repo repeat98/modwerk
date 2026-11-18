@@ -12,7 +12,7 @@ This is the Octatrack's stack on the Digitakt II ([machine recipe](../../../docs
 
 | Piece | State | Where to look |
 | --- | --- | --- |
-| Base | Started. The site builds the pinned Modwerk base `e88273ed` on core 1.1 (#1571). Project and kit data survived Save Project, a cold boot and KIT Save and Load on one unit. Downloads stay off | [base source](elekloader/README.md); #1582 adds the shared Mixer and a guarded pre-send render |
+| Base | Started. The site builds the pinned Modwerk base `8650bb8a` on core 1.1: `e88273ed` (#1571) with the kit data ended before the project archive. On `e88273ed`, project and kit data survived Save Project, a cold boot and KIT Save and Load on one unit. Downloads stay off | [base source](elekloader/README.md); #1582 adds the shared Mixer and a guarded pre-send render |
 | Hooks | Core 1.1's UI hooks, frame values, key LEDs, and project and kit data, plus the base's sequencer phrase hook and project archive. The base's pitch and grid collections are not in the contract yet | [core hooks](README.md#core-hooks), [sequencer hooks](elekloader/modwerk/README.md) |
 | USB link | Being scoped: SysEx over the stock USB MIDI first | [USB link](#usb-link) below |
 | Loading without a reflash | Not started | [porting the runtime loader](../../runtime/loader/README.md#porting-to-another-machine) |
@@ -48,7 +48,7 @@ OS 1.17 offers USB MIDI in all three USB modes (MIDI, Audio/MIDI and Overbridge)
 
 - **Only your own code.** Nothing can come in that is derived from digikit, because its AGPL and UI credit terms would bind every build. Ideas and research findings are welcome: write the code yourself and describe it in its own terms. The imported core keeps its GPL-2.0-or-later licence and its provenance in `sdk/imports/`.
 - **Sequencer, LFO and voice sites go through the base.** A module never patches one of these sites. It proposes a base hook first ([propose a hook](../../../docs/module-guides/README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)).
-- **What modules share belongs to the base.** That includes Mixer pages, a send bus, a sample pool and per-kit state. A kit record holds 191 bytes of kit data for all mods together.
+- **What modules share belongs to the base.** That includes Mixer pages, a send bus, a sample pool and per-kit state. A kit record holds 143 bytes of kit data for all mods together.
 - **SHARC code** follows the [SHARC code rules](README.md#sharc-code-rules), and only a unit run proves it.
 - **No raw block writes to the +Drive** (`fw_card_write`). The preflight refuses a build that uses one.
 - **Only a unit qualifies a build.** Record the image's SHA-256 and what you saw. Emulator runs are for iteration only.
@@ -58,7 +58,7 @@ OS 1.17 offers USB MIDI in all three USB modes (MIDI, Audio/MIDI and Overbridge)
 ## Open questions
 
 - **Kit data that changes alone.** Does OS 1.17 save a kit when only a module's block changed? The test steps are in the [machine guide](README.md#core-hooks), and any unit owner can run them.
-- **More units.** The pinned base `e88273ed` has run on one unit so far.
+- **More units.** The pinned base has run on one unit so far.
 - **Upstream drift.** The core 1.1 source is `0df8409`, the reviewed head of the open [elekloader#221](https://github.com/elekloader/elekloader/pull/221). When it merges, take the source again from the release and rebuild the base ([base source](elekloader/README.md)).
 - **A SHARC assembler.** No Modwerk build writes SHARC code yet. The first one to do so brings its toolchain, pinned through `npm run upstream:tools`, and a build check for the rules above.
 
