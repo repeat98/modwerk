@@ -76,9 +76,14 @@ Development base `7edbd8bf` (29 sites; `.run` 10,732 bytes, 284 more than base `
 - The permission check (`0x400da514`, type and track class; above type 6 it refuses) answers an added type as the stock type it stands for. The setter (`0x40051712`) then stores the type byte.
 - Emulator: FUNC+SRC lists TESTGRAIN after MIDI; DOWN to it and YES twice set track 1's type byte to 7; the SRC header then reads Testgrain. The SRC page opened on its second page (the sample view), whose centre is empty for a type above 6: the view's own type test (`0x4005f6bc` callers) knows only 0-6. Still to fix.
 
+### Saved kits and projects (development base `e31255b2`, 35 sites, `.run` 11,466 bytes)
+
+- Save copies the runtime type byte (sound `+0xa2`) to the stored sound record (`+0xd2`) unchanged (`0x400dbb3c`).
+- Load (`0x400db476`) keeps a stored type only if it is 0-6 or `0xff` and turns anything else into 0 (SAMPLE). The base replaces the 16-byte test at `0x400db47a`: it also keeps an added type whose machine is installed. A type with no installed machine still becomes SAMPLE, as on the stock OS.
+- Emulator, digikit's persistence card image: choose the test machine for track 1, SAVE PROJECT, set the type byte to 0, LOAD PROJECT. With the hook the type reads 7 again and the SRC page shows the test machine; with the previous development base (`16de57f4`, no load hook) it reads 0. So the project round trip keeps the machine only with the hook. A stock OS opening the same project would load it as SAMPLE (static read; not run).
+
 ## Still to check
 
-- Kit and project load: the stock load turns a stored type of 7 or more into 0 (SAMPLE). That is the safe fallback on a unit without the base; with the base installed the load must keep the added types.
 
 - Every reader of the type byte and every per-type table: MIDI CC/NRPN tables, the machine menu list, the per-type parameter-code table, the SRC page view.
 - Kit and project save and load of an added type, and the stock OS's behaviour when it loads one.

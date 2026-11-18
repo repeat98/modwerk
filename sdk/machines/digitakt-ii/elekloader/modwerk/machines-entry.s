@@ -109,6 +109,21 @@ stock_list:
         movem.l %d2-%d5/%a2-%a3,(%sp)
         jmp     0x40052a10
 
+/* Sound load (0x400db47a, 16 bytes): d0 holds the stored type byte. Stock keeps 0-6 and 0xff and turns
+ * anything else into 0; the base also keeps an installed added type. Leaves d2 = 7, as the replaced
+ * code does, and stores nothing itself: stock stores d0 at 0x400db48a. */
+        .globl  core_machine_kit_type_entry
+core_machine_kit_type_entry:
+        move.l  %a0,-(%sp)
+        move.l  %a1,-(%sp)
+        move.l  %d0,-(%sp)
+        jsr     core_machine_kit_type
+        addq.l  #4,%sp
+        move.l  (%sp)+,%a1
+        move.l  (%sp)+,%a0
+        moveq   #7,%d2
+        jmp     0x400db48a
+
 /* The three machine-string lookups (type): name, short name and menu title. An added type answers
  * from its record, others replay `moveq #6,%d1; move.l 4(%sp),%d0` and continue in stock. */
         .macro  STRING_ENTRY label, field, cont

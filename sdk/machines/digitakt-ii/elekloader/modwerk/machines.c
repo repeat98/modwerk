@@ -60,6 +60,17 @@ void core_machine_list_extend(struct type_vector *list)
     list->capacity = list->end;
 }
 
+/* A sound's stored machine type as a load keeps it: stock types and 0xff as stock does, an added type
+ * whose machine is installed, and SAMPLE (0) for anything else, as the stock OS does. */
+uint32_t core_machine_kit_type(uint32_t stored)
+{
+    uint32_t type = stored & 0xff;
+    if ((uint8_t)(type + 1) < DT2_MACHINE_FIRST + 1) {
+        return type;
+    }
+    return dt2_machine_at(type, core_machines) ? type : 0;
+}
+
 /* One of a machine's strings (DT2_MACHINE_NAME, _SHORT or _MENU); call only for a type
  * core_machine_stands_for answers. */
 const char *core_machine_string(uint32_t type, uint32_t field)
