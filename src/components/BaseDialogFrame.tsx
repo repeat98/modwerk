@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import { Icon, type IconName } from './Icon'
 import './link-hero.css'
 import './octatrack-link.css'
+import { useDesktopProgress } from '../desktop-shell'
 
 /** The modal: it focuses its title, and each stage's as `focus` changes; closes only when `canClose`; and while `busy`
  * the browser asks before the page is left. `finishedRef` is set by whoever closes it on purpose, so the browser's own
@@ -83,6 +84,7 @@ export function StagePlan({ stages, run, progressLabel, compact = false }: { sta
  * framed track, with its percentage beside it when `percent`. Without a `value` its length isn't known and it runs
  * along; `busy` keeps a sheen moving over a bar that stands still, so a long step never looks hung. */
 export function ProgressBar({ value, label, busy = false, percent = false }: { value?: number; label: string; busy?: boolean; percent?: boolean }) {
+  useDesktopProgress(value) // the desktop app's taskbar button or Dock icon fills with it
   const part = value === undefined ? undefined : Math.round(100 * Math.min(1, Math.max(0, value)))
   return <div className="progress-row">
     <div className={'progress-bar' + (part === undefined ? ' is-indeterminate' : busy ? ' is-busy' : '')} role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={part}>
