@@ -3,7 +3,7 @@
   "id": "micro-timing",
   "key": "MICRO T",
   "name": "Micro Timing per track",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "category": "system",
   "author": {
     "github": "jonathanwardle1992-beep",
@@ -59,7 +59,7 @@
     ],
     "limitations": [
       "OS 1.40C. The reported pass is a private MICRO T9 card, not a build of this package. USB Keep/Undo is untested. Headless ot_emu captured TRACK TRIG EDIT only, from a private image built before commit 13d33940.",
-      "One byte is kept per bank, the pattern on the screen, and track. Audio and MIDI share it. It is battery RAM, so power-off clears it. It is not stored in the project. Rewritten trigs stay in the pattern.",
+      "One byte is kept per bank, the pattern on the screen, and track, in this module's unit. Audio and MIDI share it. A power cycle drops the unit, so the row starts on grid again. It is not battery RAM and it is not stored in the project. Rewritten trigs stay in the pattern.",
       "The next LEVEL turn sets all 64 steps, including empty ones. An individual trig edit does not move the row."
     ]
   },
@@ -100,14 +100,14 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "One ColdFire unit plus the module's battery table. mt_ensure clears 0x200 longs, which is 2048 bytes at 0x100f9000 through 0x100f97ff, plus the 4-byte magic at 0x100f8ffc. Power-off drops them. There is no declaration slot for a draft's battery words, so the addresses are named in the source and in this rationale.",
+        "rationale": "One ColdFire unit, including 2048 bytes in that unit for the remembered row. The loader clears those bytes when the module loads. A power cycle drops the unit. No battery RAM.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Author reported the private MICRO T9 card working for audio and MIDI separately. Headless ot_emu captured TRACK TRIG EDIT: MICRO T on grid, and REC.TRG scrolled into the four-row window. This package has not been flashed or tried over USB.",
+    "summary": "Author reported the private MICRO T9 card working for audio and MIDI separately. Headless ot_emu captured TRACK TRIG EDIT: MICRO T on grid, and REC.TRG scrolled into the four-row window. From 0.1.1 the remembered row is in the module unit. This package has not been flashed, power-cycled or tried over USB.",
     "hardwareStatus": "reported",
     "evidenceRevision": "3220ad034c7c55a356ee8ab1d7118495d85ec279",
     "gates": [

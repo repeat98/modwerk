@@ -26,7 +26,7 @@ Not tested on a module build. Intended checks once a package or card of this sou
 2. Turn LEVEL on an audio track: the MICRO TIMING page for that track's steps shows the same fraction. MIDI tracks are unchanged.
 3. Turn the MIDI button on and turn LEVEL: the MIDI track's micro timing follows. The audio track is unchanged.
 4. Individual trig edits do not change the row. The next LEVEL turn sets all 64 steps to the new absolute value.
-5. Power off: the remembered row number is gone. Trig values already written stay in the pattern.
+5. Power off: the remembered row number is gone, because it lives in this module's unit and a power cycle drops that unit. Trig values already written stay in the pattern.
 
 ## Performance
 
@@ -35,6 +35,14 @@ Not run. There is no `evidence/performance.json`. New-module performance evidenc
 ## Resources
 
 Unmeasured. One ColdFire unit, thirteen detours, one LEVEL pointer and the row-index pokes. No DSP memory.
+
+## Remembered row
+
+From 0.1.1 the 2048 remembered bytes are `mt_table` in this unit. The loader clears that table when the module loads. A power cycle drops the unit, so the row starts on grid again. It is not battery RAM. The battery ledger no longer names this draft.
+
+Host assemble, 18 November 2026, WSL `m68k-elf-as -mcpu=5475` of this `microtiming.s`: text 1076, data 0, bss 2048. `mt_table` is a bss symbol. That is the object file only. It is not a boot, a package or a power cycle.
+
+Power-off of this package, on a unit or in `ot_emu --cs1-in`: not tested. No image of this source was booted.
 
 ## Hardware
 

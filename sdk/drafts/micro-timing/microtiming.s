@@ -6,14 +6,11 @@
 | per-trig writer. MIDI button off writes the audio field. MIDI button
 | on writes the MIDI field. The other side is left alone. The footer
 | uses the stock fractions. The lane is dashes, a centre 0, and a cursor.
-| The remembered number lives in battery RAM until power-off. The trigs
-| stay in the pattern. This unit does not keep its own clock.
-|
-| The module's battery table. The magic long 0x4d54494d is at 0x100f8ffc.
-| The table is 2048 bytes at 0x100f9000 through 0x100f97ff.
-
-    .equ MT_MAGIC, 0x100f8ffc
-    .equ MT_TABLE, 0x100f9000
+| The remembered number lives in this unit: 2048 bytes, one per bank,
+| the pattern on the screen and the track. The loader clears them when
+| the module loads, and a power cycle drops the unit, so the row starts
+| on grid again. The trigs stay in the pattern. This unit does not keep
+| its own clock.
 
     .text
 
@@ -92,7 +89,6 @@ mt_format:
     jsr mt_write_metric
     rts
 mt_current:
-    jsr mt_ensure
     moveq #0x0, %d0
     move.b 0x800065bd, %d0
     andi.l #0xf, %d0
@@ -106,25 +102,11 @@ mt_current:
     move.b 0x100b14cc, %d1
     andi.l #0x7, %d1
     add.l %d1, %d0
-    lea MT_TABLE, %a0
+    lea mt_table, %a0
     adda.l %d0, %a0
     move.b (%a0), %d0
     ext.w %d0
     ext.l %d0
-    rts
-mt_ensure:
-    move.l MT_MAGIC, %d0
-    cmpi.l #0x4d54494d, %d0
-    beq.w mt_ensure_ok
-    lea MT_TABLE, %a0
-    move.l #0x200, %d0
-mt_ensure_loop:
-    clr.l (%a0)+
-    subq.l #0x1, %d0
-    bne.w mt_ensure_loop
-    move.l #0x4d54494d, %d0
-    move.l %d0, MT_MAGIC
-mt_ensure_ok:
     rts
 mt_apply:
     cmpi.l #0x17, %d2
@@ -383,3 +365,8 @@ mt_names:
     .long 0x400b4af9
     .long 0x400b4b3d
     .long 0x400b73bf
+
+    .section .bss
+    .align 4
+mt_table:
+    .space 2048

@@ -1,6 +1,6 @@
 # Micro Timing per track
 
-Version: `0.1.0-experimental` · author: [@jonathanwardle1992-beep](https://github.com/jonathanwardle1992-beep)
+Version: `0.1.1-experimental` · author: [@jonathanwardle1992-beep](https://github.com/jonathanwardle1992-beep)
 
 **TRACK TRIG EDIT gains a MICRO T row.** LEVEL sets the micro timing of every step on the selected track, in the stock fraction, as the pot turns.
 
@@ -14,7 +14,7 @@ LEVEL writes the stock per-trig micro timing of all 64 steps on the current trac
 
 The footer shows the stock fraction next to the track (`MT1:+1/384`, or `MT1:ON GRID`). The lane is sixteen dashes, a 0 fixed at the centre, and a cursor on that 0 when the value is on grid. Editing one trig in the MICRO TIMING page does not move the row. The next turn of LEVEL sets every step to the row's value.
 
-The module does not run a clock of its own. Playback uses the trig words the stock writer stored, so tempo, track speed and swing stay the instrument's. The remembered number is battery RAM and is lost at power-off. It is not stored in the project. Trigs already rewritten stay in the pattern, including on a build that does not include this module.
+The module does not run a clock of its own. Playback uses the trig words the stock writer stored, so tempo, track speed and swing stay the instrument's. The remembered number lives in this module's unit, one byte per bank, the pattern on the screen and the track. The loader clears it when the module loads, and a power cycle drops the unit, so the row starts on grid again. It is not battery RAM and it is not stored in the project. Trigs already rewritten stay in the pattern, including on a build that does not include this module.
 
 No effect slot. Leaving the module out of the build removes the row and leaves the pattern as it was saved.
 
@@ -47,8 +47,7 @@ To stop using it, leave the module out of the build. There is no separate off sw
 ## Compatibility and limitations
 
 - OS 1.40C. The reported pass is a private MICRO T9 card, not a build of this package. USB Keep/Undo is untested. Headless `ot_emu` captured TRACK TRIG EDIT only, from a private image built before commit `13d33940`.
-- One byte is kept per bank, the pattern on the screen, and track. Audio and MIDI share it. Power-off clears it, and it is not in the project file.
-- The battery table is named in the source. There is no declaration slot for a draft's battery words, so the memory rationale records the addresses and the 2048-byte clear.
+- One byte is kept per bank, the pattern on the screen, and track, in this module's unit. Audio and MIDI share it. A power cycle drops the unit, so the row starts on grid again. It is not battery RAM and it is not in the project file.
 - An individual trig edit does not update the row. The next LEVEL turn overwrites all 64 steps, including empty ones.
 - MKI opens the same menu with FUNCTION. That path is untested on this package.
 
