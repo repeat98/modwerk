@@ -4,11 +4,11 @@ This is the common context for the **Start developing** page and its coding-agen
 
 ## Choose an instrument
 
-The instrument dropdown lists every profile in `sdk/machines/<id>/machine.json`, through the generated registry. A listing is not evidence that a module builder exists. Octatrack, Digitakt mk1, Digitone mk1/Keys and Analog Rytm MKII have SDK guides and library modules; the Analog Four MKII and Digitakt II have research guides and no module yet. Other instruments enter the integration flow: research the stock format/rebuild/recovery, integrate the SDK/core/toolchain/browser builder, qualify the exact build on hardware, and obtain owner review before publishing modules. Read the selected profile and its credited research. Do not apply another instrument's core slots, hooks, build commands or memory budgets by analogy.
+The instrument dropdown comes from the profiles in `sdk/machines/<id>/machine.json`. Open the selected machine's page to find its guide and current development step. The [machine recipe](MACHINE_RECIPE.md#where-each-machine-stands) tracks builder, base, USB and emulator support. Follow the [integration guide](ADD_A_MACHINE.md) for a machine still in research. Use the selected machine's own core contract, build commands and memory budgets.
 
 ## Check what already exists
 
-Before planning a new module, look at the library on modwerk.app or, in an up-to-date checkout (`git fetch upstream`), `sdk/catalog.json` (Octatrack), `sdk/<machine>/modules/` (Digitakt, Digitone, Rytm) and `sdk/drafts/`, plus the open pull requests (`gh pr list`) and the [agent board](AGENT_BOARD.md)'s claims (`npm run board -- list module`) and findings (`npm run board -- messages --machine <machine>`). If a module already does the job, a port is already listed or someone has claimed it, extend it through [the update workflow](#update-or-fix-an-approved-module), with [its author's OK](#ask-the-author-first), instead of building a duplicate. A new module goes ahead only when it is clearly different, and the proposal says how.
+Before planning a new module, check the machine's library and its profile's `sdk.modules` folder in a current checkout. Fetch `upstream` in a fork or `origin` in a direct clone. Also check `sdk/catalog.json` for Octatrack listings, `sdk/drafts/`, open pull requests (`gh pr list`) and the [agent board](AGENT_BOARD.md)'s claims (`npm run board -- list module`) and findings (`npm run board -- messages --machine <machine>`). If a module already does the job, a port is already listed or someone has claimed it, follow [the update workflow](#update-or-fix-an-approved-module) with [its author's OK](#ask-the-author-first). A proposal for a new module says how it differs.
 
 ## Refuse infringing work
 
