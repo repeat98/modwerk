@@ -64,6 +64,9 @@ for (const todo of (Array.isArray(proposals.todos) ? proposals.todos : []).slice
   todos.push({ id: actionId('todo', number, command), target: number, command, note, urgent: todo.urgent === true })
 }
 if (todos.length) await bot('/todos', 'POST', { todos })
+// The model may drop an open to-do it saw settled (answered, superseded, moved on); only ids that are open count.
+const open = new Set((await bot('/todos')).todos.map(todo => todo.id))
+for (const id of (Array.isArray(proposals.drop) ? proposals.drop : []).slice(0, 30)) if (open.has(id)) await bot('/todos/' + id + '/status', 'POST', { status: 'dropped' })
 
 // Watchers that need no model. A red run on main becomes an urgent to-do (the Worker tells the owner at once).
 const latest = new Map(), today = new Date().toISOString().slice(0, 10)
@@ -144,7 +147,7 @@ async function carryOut(action) {
   const now = await fresh(payload.number)
   if (now.state !== 'open') return ['expired', 'it was closed in the meantime']
   if ((payload.pin?.head ?? '') !== now.head) return ['expired', 'new commits arrived']
-  if (payload.kind !== 'merge' && payload.kind !== 'label' && payload.pin?.comments !== now.comments) return ['expired', 'someone replied in the meantime']
+  if (payload.kind !== 'merge' && payload.kind !== 'label' && payload.kind !== 'approve_run' && payload.pin?.comments !== now.comments) return ['expired', 'someone replied in the meantime']
   const n = payload.number
   switch (payload.kind) {
     case 'label':
@@ -164,6 +167,12 @@ async function carryOut(action) {
       let result
       try { result = await bot('/merge', 'POST', { number: n, sha: payload.head, method: payload.method }) } catch (error) { return ['failed', error.message.slice(0, 200)] }
       return ['done', 'merged ' + String(result.sha).slice(0, 9)]
+    }
+    case 'approve_run': {
+      const runs = (await api('/actions/runs?status=action_required&head_sha=' + now.head + '&per_page=30')).workflow_runs ?? []
+      if (!runs.length) return ['expired', 'no run waits any more']
+      for (const run of runs) await api('/actions/runs/' + run.id + '/approve', 'POST')
+      return ['done', runs.length + ' run' + (runs.length === 1 ? '' : 's') + ' started']
     }
     case 'close':
       if (payload.body) await api('/issues/' + n + '/comments', 'POST', { body: payload.body + '\n\n' + MARKER })
