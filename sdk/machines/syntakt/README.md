@@ -24,7 +24,7 @@ Interface 0.1 ([sdk/syntakt/core/interface.json](../../syntakt/core/interface.js
 | Boot stub space | appended to the main OS, up to 16 KB | 2,256 bytes of image fill exist, but the stub lives in the appended tail | Inside the BSS-clear range: valid only until the clear, which the hook runs before. |
 | SDRAM for mods | none | 0 | Not proven. Candidates: 128 KB above a lowered initial stack (0x47fe0000–0x48000000, data patch at 0x400004f4) or the first 64 KB block of the OS heap. Either needs the owner's decision and a hardware stress run with every sample slot loaded. |
 | In-place depack margin | — | 16,679 bytes (1.42) and 84,063 bytes (1.40) on the probe builds; 96,357 and 160,989 on the stock files | The repository packer compresses section 3 better than Elektron's, which narrows the margin. Every build is checked exactly; a tail that compresses badly consumes it. |
-| Container | — | 2 MB | The in-OS upgrade receive buffer; 67,760 bytes of stored growth remain on 1.42, 204,864 on 1.40. |
+| Container | — | 2 MB | The in-OS upgrade receive buffer; it also keeps the flash end at 0x280000, below the unit's calibration record at 0x300000. 67,760 bytes of stored growth remain on 1.42, 204,864 on 1.40. |
 
 ## Build
 
@@ -37,6 +37,8 @@ Links the boot probe into the owner's stock file, checks every stock write, veri
 ## Flash and recover
 
 Flash with Elektron Transfer over USB (MIDI IN and OUT set to the Syntakt, drop the `.syx`, confirm on the unit). To recover a unit that does not boot: hold FUNC while powering on, press TRIG 4 (OS UPGRADE) and send the stock `.syx` from Transfer's legacy OS-upgrade page over MIDI DIN; USB does not work there. Public reports (Synthack-OS) describe this path, and it recovered a unit on OS 1.42 through a generic USB-to-MIDI cable ([record](../../../docs/verification/2026-11-04-syntakt-boot-probe-on-unit.md)). Keep the stock file and a DIN interface ready before flashing any build.
+
+Never send a Syntakt a container that hasn't passed the builder's size check. The OS upgrade (Transfer or the startup menu) checks only checksums: it copies the image into a 2 MB RAM buffer without checking that it fits, then erases and programs the NOR from 0x80000 for as many bytes as the image says it has. The same NOR holds the unit's own analog calibration record at 0x300000, so an image longer than 0x280000 bytes would erase it, and no other unit's backup restores it. The builder caps the container at 2 MB (flash end 0x280000), and `src/engine/elektron/syntakt.test.ts` keeps the limit below 0x300000. This was traced in the receiver's code, not tried on a unit.
 
 ## Credits
 

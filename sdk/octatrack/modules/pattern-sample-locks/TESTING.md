@@ -380,7 +380,7 @@ candidate extent and USB/whole-set overlap against fixed base reservations. It
 reconfirms the exact 10,832-byte extent, but does not close total memory,
 replacement admission for an arbitrary inventory, or stack demand.
 
-The [current-base memory layout](evidence/qualification-progress-20261104.md#current-base-shared-memory-layout)
+The [current-base memory layout](evidence/qualification-progress-20261104.md#private-reconstruction-shared-memory-layout)
 also accounts for the base's fixed, shared upload stage and loader ledgers.
 The stage includes a 1,310,720-byte image buffer; the candidate's 10,048-byte
 package occupies part of that existing buffer while staged. The base separately
