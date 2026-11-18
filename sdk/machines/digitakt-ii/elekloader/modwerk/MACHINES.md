@@ -67,12 +67,11 @@ Development base `7edbd8bf` (29 sites; `.run` 10,732 bytes, 284 more than base `
 
 - Type 7 with the hooks: the SRC page shows SAMPLE's knobs (TUNE, PLAY, SAMP, LEV; STRT, LEN, LOOP, LEV). No fault.
 - Type 7 on base `0e3cbcd0` (control): the SRC page shows the default descriptor's knobs (SLICE, LEN). So the two hooks are what changed the page.
-- In both, the header reads ERROR: the machine name comes from another per-type table, still to find.
+- In both, the header read ERROR: the machine strings come from 12-byte records at `0x4020ef78` (name, short name, menu title), read by `0x400da6ac`, `0x400da6d2` and `0x400da6f8`, which return ERROR or ERR above type 6. With those three answered too (development base `4485c4c1`, 32 sites, `.run` 11,050 bytes), the header reads the test machine's name and the knobs are unchanged.
 - Emulator only. Sound not checked (the sound chip still skips type 7).
 
 ## Still to check
 
-- The machine name shown in the SRC header and the machine menu.
 - The machine menu list (built once at start-up) and the type check in the machine setter (`0x400dcab8`, types above 6 refused).
 - Kit and project load: the stock load turns a stored type of 7 or more into 0 (SAMPLE). That is the safe fallback on a unit without the base; with the base installed the load must keep the added types.
 

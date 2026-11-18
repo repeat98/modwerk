@@ -25,3 +25,11 @@ int32_t core_machine_stands_for(uint32_t type)
     const struct dt2_machine *machine = dt2_machine_at(type, core_machines);
     return machine ? (int32_t)machine->stands_for : -1;
 }
+
+/* One of a machine's strings (DT2_MACHINE_NAME, _SHORT or _MENU); call only for a type
+ * core_machine_stands_for answers. */
+const char *core_machine_string(uint32_t type, uint32_t field)
+{
+    const struct dt2_machine *machine = dt2_machine_at(type, core_machines);
+    return machine && field <= DT2_MACHINE_MENU ? machine->strings[field] : 0;
+}
