@@ -99,7 +99,7 @@
       "limitations": [
         "Official OS reopening, multi-trig editing, microtiming and RESET modes passed on earlier builds and were not repeated on QH17.",
         "All 32 slots were checked on reload in the Digikit emulator only. The physical tests checked one locked trig per track.",
-        "Beside Track Names, recall after save and power cycle passed. Beside Euclidean Scale, Chord Arp settings reset after save and power cycle on base e88273ed, because core kit data overlaps the project archive; a separate base fix addresses it.",
+        "Beside Track Names, recall after save and power cycle passed. Beside Euclidean Scale, Chord Arp settings reset on base e88273ed because core kit data overlapped the project archive; on the fixed base 8650bb8a (#1713) the KR17 image kept ARP and a lock after save and power cycle. Only those two were checked.",
         "Chord Arp supports audio tracks. MIDI tracks were not tested."
       ]
     },

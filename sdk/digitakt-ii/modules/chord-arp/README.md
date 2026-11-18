@@ -74,9 +74,9 @@ The rhythm engine derives straight, dotted and triplet divisions from stock trac
 
 ## Compatibility and limitations
 
-Chord Arp requires the Modwerk Digitakt II base with phrase and project archive support from PR #1548. It requires the reviewed core 1.1 browser base. The module runs on audio tracks and can use the stock Euclidean sequencer. It plays alongside Track Names and Euclidean Scale.
+Chord Arp requires the Modwerk Digitakt II base with phrase and project archive support from PR #1548. It requires the reviewed core 1.1 browser base. The module runs on audio tracks and can use the stock Euclidean sequencer. It plays alongside Track Names and Euclidean Scale, and both keep their settings beside it after Save Project and a power cycle.
 
-Known issue: on the current Digitakt II base, a module that saves kit data, such as Euclidean Scale, overwrites the bytes where Chord Arp saves its project settings. With both installed, Chord Arp's track settings and locks reset to ARP OFF after Save Project and a power cycle. Your patterns, sounds and Euclidean Scale settings are not affected, and the official OS still opens the project. A base fix is in progress.
+Base `e88273ed` let a module that saves kit data, such as Euclidean Scale, overwrite the bytes where Chord Arp saves its project settings. On that base, Chord Arp's settings and locks reset to ARP OFF after a power cycle when both modules were installed. The base from [#1713](https://github.com/repeat98/modwerk/pull/1713) fixes this, and the browser builder uses it.
 
 ## Tests and measurements
 
