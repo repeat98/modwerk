@@ -17,6 +17,10 @@ Read from the decoded main image (load address `0x40000400`) on 18 November 2026
 | `0x400c89a4` | Machine descriptor lookup: types 0-6 return a 44-byte record at `0x4293b960 + type * 44`; any other type returns a default record at `0x4293ba68`. Six absolute references (`0x40017cf2`, `0x40042004`, `0x40049b72`, `0x40049fa4`, `0x4006217e`, `0x4006a5ae`). | The base answers added types here, as the Mixer already does for page ids at `0x400c898a`. |
 | `0x4293b960` | The seven machine descriptors, built at start-up (`0x401c4aae` and `0x401c515e`/`0x401c519e`). | RAM, not image data. |
 | `0x4020f59c` | Parameter table, `0x3c`-byte rows, formatter pointer at row `+0x34`; 53 absolute references, so rows cannot be appended in place. | Added machines' parameter rows need a lookup hook, not a longer table. |
+| `0x400da3a2` | Parameter code for (sound slot, machine type): slots 25-34 with a type up to 6 read a per-type table; a higher type returns 0 (no parameter). Six references (`0x4000ffa8`, `0x4003a960`, `0x400430cc`, `0x40050b4c`, `0x40050d1c`, `0x400e650c`). | The base answers the five knob slots for added types here. |
+| `0x4005f6bc` | The SRC page view's machine type for the current track (three callers in the SRC view: `0x4001702c`, `0x40017736`, `0x40017bd2`). | Decides the SRC page's second page (sample view) per type. |
+| `0x400dab9e`, `0x400dac80` | MIDI CC (up to 127) and NRPN (up to 398) to parameter mapping, five callers each. | Added machines' knobs must answer MIDI like stock knobs. |
+| `0x400c89c6` | A second per-type lookup with six entries (bound 5), 44-byte records at `0x4293b858`; callers `0x40041fde`, `0x4006a5d2`, `0x40074888`. | To identify. |
 | `0x400c898a` | Page descriptor lookup (ids up to 32, 44-byte records at `0x4293ba94`). | Already the base's (Mixer pages); the machine list must share that entry. |
 
 ## Sound-chip sites (SHARC section 7, short-word addresses)
@@ -30,9 +34,9 @@ Static reads on 18 November 2026; not yet traced.
 | `0x1c4afe` | Per-voice sample setter, called three times from the loop (`0x1c65f4`, `0x1c6774`, `0x1c6982`) every block: step from note and TUNE, direction, loop flag, START/LEN positions. | What Mikrotakt replaces or reads around. |
 | `0x1c3f78` | Sample slot lookup: slot numbers up to `0x400`, 20-byte rows (address fields, length, rate, stereo). Ten callers, including the trigger-time load in `0x1c3289`. | How a module machine finds its sample's memory. |
 
-## Design choice still open
+## Decision: an added machine is its own type
 
-Mikrotakt either stands in for the stock sample machine (the stock setup loads the slot and positions, the module replaces only the playback) or takes its own type with its own setup. Standing in keeps sample choice, the sample view and stock behaviour; its own type gives a clean voice. To decide after a trace in the emulator.
+Decided with the developer on 18 November 2026: each added machine gets its own machine type after the stock seven, with its own voice setup, rather than standing in for a stock machine. The base dispatches added types at `0x1c6550`; the module's voice routine loads its sample through the slot lookup at trigger time and renders the voice. A machine that plays a sample keeps knob D as its sample slot, so sample choice works as on stock machines.
 
 ## Still to check
 
