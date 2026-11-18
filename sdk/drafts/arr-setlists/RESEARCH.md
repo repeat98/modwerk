@@ -50,8 +50,9 @@ differing from stock's arr01 in 9 bytes (rows and checksum).
 ## Project hooks, as the unit raised them
 
 RELOAD PROJECT: ev_project_reloaded, then ev_banks_load, and no ev_banks_loaded (observed on the developer's MKI with
-the module's event log, 18 November 2026). LOAD PROJECT: ev_banks_load and no ev_banks_loaded either (same log). The module therefore learns where a project was
-left in its own job after the load, not in ev_banks_loaded.
+the module's event log, 18 November 2026). LOAD PROJECT: ev_banks_load and no ev_banks_loaded either (same log). LOAD then also raises ev_project_new (stock's new-project step)
+after the banks, and reads book 1 again: a load is several jobs, and the module waits two quiet seconds after the last
+project event before switching back.
 
 ## Card jobs
 

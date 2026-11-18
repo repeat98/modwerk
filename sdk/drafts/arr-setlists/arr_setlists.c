@@ -112,6 +112,7 @@ struct as_state {
     uint8_t mode_pref;       /* arranger mode as the musician left it: off only after their own FUNC + PATTERN */
     uint8_t func_down, mode_key, mode_key_ticks, mode_seen;
     uint8_t quiet;           /* frames since the last job, switch or mode change, after a load */
+    uint16_t since_hook;     /* frames since stock's last project event: a load is several jobs */
     uint8_t hush;            /* frames after a switch of ours in which the job's NOW SAFE TO EJECT! is closed */
     int8_t restore_rc;       /* the last answer to posting the return after a load, for the diagnostic word */
     uint8_t loads, reloads;  /* project loads and reloads seen, for the diagnostic word */
@@ -153,6 +154,7 @@ static struct as_state *ready(void)
     evlog = rd32(RECORD + 16);                           /* the events before a power cycle */
     s->restore = -1;
     s->mode_pref = rd32(ARR_MODE) ? 1 : 0;
+    s->since_hook = 1000;
     return s;
 }
 
@@ -412,6 +414,7 @@ void as_project_load(void)
 {
     struct as_state *s = ready();
     ev(1);
+    s->since_hook = 0;
     s->book = 0;
     s->pending = -1;
     /* Where was the project left? Read here, in stock's load job on its card task, from the project being loaded (on
@@ -433,10 +436,14 @@ void as_project_new(void)
     ev(0xe);
     s->book = 0;
     s->pending = -1;
+    s->ready = 1;
+    /* LOAD runs this step too, after the banks are read (the developer's MKI): a load's pending return stays. */
+    int loading = s->since_hook < 600;
+    s->since_hook = 0;
+    if (loading) return;
     s->restore = -1;
     s->mode_on = 0;
     for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = 0;
-    s->ready = 1;
 }
 
 /* Stock has read the banks; it reads arr01-08 next, so the slots will hold book 1. Where the project was left is read
@@ -444,7 +451,8 @@ void as_project_new(void)
 unsigned as_project_loaded(void)
 {
     struct as_state *s = ready();
-    ev(2);                                                /* the choices were read as the load began */
+    ev(2);
+    s->since_hook = 0;                                                /* the choices were read as the load began */
     s->book = 0;
     s->backup = 0;
     s->damaged = 0;
@@ -474,6 +482,7 @@ unsigned as_project_reloaded(void)
 {
     struct as_state *s = ready();
     ev(3);
+    s->since_hook = 0;
     for (unsigned n = SLOTS + 1; n <= BOOKS * SLOTS; ++n) {
         arr_path(s->path, n, "strd");
         arr_path(s->path2, n, "work");
@@ -553,8 +562,10 @@ void as_tick(void *api)
         }
     }
     /* After a project load: back to the book it was left on, once stock has finished loading (its job queue frees). */
+    if (s->since_hook < 1000) ++s->since_hook;
     if (s->restore >= 0 && s->pending < 0) {
-        if (stopped()) {
+        if (s->since_hook < 120) { }                     /* stock still in its load: two quiet seconds first */
+        else if (stopped()) {
             s->pending = s->restore;
             int rc = post_write();
             s->restore_rc = (int8_t)rc;

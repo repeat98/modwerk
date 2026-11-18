@@ -161,3 +161,10 @@ Package `d77c3802…`, as the developer reported it: synced on book 2, arrangeme
 mode off, switch done, mode on (the module's fallback), mode off (stock, later). The module then reported book 1
 without a logged load: the next build logs a new project (E) and the install handler's fallback to book 1 (F), and
 turns arranger mode back on only after two seconds without a job, switch or mode change.
+
+Package `da247771…`, as the developer reported it: synced on book 2, arrangement 6; LOAD landed on book 1,
+arrangement 6, pattern mode. Event log: book 2 read, return posted, load done, mode off, switch done, new project (E),
+mode on. Stock's LOAD is several jobs, and after the banks it also runs its new-project step (0x400909d8), which
+resets the arrangements to book 1 again; the module's switch had slipped in between. Fixed: the module switches only
+after two seconds without a project event, and a new-project step within a load keeps the pending return.
+`verify.py`: 68 checks; without the wait four of them fail.
