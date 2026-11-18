@@ -170,7 +170,8 @@ PAGE_MAGIC = b'MWPG'
 def page_section(module_id):
     """(image, relocations): the Octatrack effect page recipe scripts/octatrack-module-page.mjs makes, laid out
     for the base's fxpage.c (big-endian): 'MWPG', the donor descriptor's address and SHA-256, the slots whose
-    enable bits it inherits, the counts, a word the base keeps (where the fixups point), the integer patches
+    enable bits it inherits, the counts, a pad byte, its CPU price (tenths of a percent of a frame, 0 none; the base
+    admits a pick by it), a word the base keeps (where the fixups point), the integer patches
     (offset, width, value), the text patches (offset, width, length, text), the formatters (slot, fixups,
     clear-widget, wide-dial maximum (0 none), code pointer, code length, fixup offsets), then each formatter's code. No stock bytes."""
     out = subprocess.run(['node', str(Path(__file__).resolve().parents[3] / 'scripts/octatrack-module-page.mjs'), module_id],
@@ -180,7 +181,7 @@ def page_section(module_id):
     page = json.loads(out.stdout)
     inherited = sum(1 << slot for slot in page['inheritedEnable'])
     head = PAGE_MAGIC + struct.pack('>I', page['donor']) + bytes.fromhex(page['donorSha256']) + struct.pack(
-        '>HBBBBHI', inherited, len(page['integers']), len(page['strings']), len(page['formatters']), 0, 0, 0)
+        '>HBBBBHI', inherited, len(page['integers']), len(page['strings']), len(page['formatters']), 0, page.get('cpuPrice', 0), 0)
     body = b''.join(struct.pack('>HBBI', f['offset'], f['width'], 0, f['value']) for f in page['integers'])
     for f in page['strings']:
         text = f['value'].encode('latin-1')
