@@ -267,8 +267,8 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
 async function inbox(db: Database, user: { id: string; github_login: string }, nowMs: number) {
   const now = new Date(nowMs).toISOString(), live = cutoffs(nowMs)
   // Addressed to you, or to nobody about something you hold; and the last word is not yours.
-  const waiting = (await db.prepare(MESSAGE_SELECT + " WHERE m.parent_id IS NULL AND m.kind='question' AND " + LIVE + ' AND m.user_id<>? AND (m.to_login=? OR (m.to_login IS NULL AND EXISTS(SELECT 1 FROM agent_claims c WHERE c.user_id=? AND c.kind=m.topic_kind AND c.claim_key=m.topic_key AND c.released_at IS NULL AND (c.expires_at IS NULL OR c.expires_at>?)))) AND ' + LAST_WORD + '<>? ORDER BY m.active_at LIMIT 50').bind(...live, user.id, user.github_login, user.id, now, user.id).all<MessageRow>()).results
-  const replies = (await db.prepare(MESSAGE_SELECT + ' WHERE m.parent_id IS NULL AND m.user_id=? AND ' + LIVE + ' AND ' + LAST_WORD + '<>? ORDER BY m.active_at DESC LIMIT 50').bind(user.id, ...live, user.id).all<MessageRow>()).results
+  const waiting = (await db.prepare(MESSAGE_SELECT + " WHERE m.parent_id IS NULL AND m.kind='question' AND " + LIVE + ' AND m.user_id<>? AND (m.to_login=? OR (m.to_login IS NULL AND EXISTS(SELECT 1 FROM agent_claims c WHERE c.user_id=? AND c.kind=m.topic_kind AND c.claim_key=m.topic_key AND c.released_at IS NULL AND (c.expires_at IS NULL OR c.expires_at>?)))) AND ' + LAST_WORD + '<>? ORDER BY m.active_at, m.rowid LIMIT 50').bind(...live, user.id, user.github_login, user.id, now, user.id).all<MessageRow>()).results
+  const replies = (await db.prepare(MESSAGE_SELECT + ' WHERE m.parent_id IS NULL AND m.user_id=? AND ' + LIVE + ' AND ' + LAST_WORD + '<>? ORDER BY m.active_at DESC, m.rowid DESC LIMIT 50').bind(user.id, ...live, user.id).all<MessageRow>()).results
   return { login: user.github_login, waiting: await threads(db, waiting, nowMs), replies: await threads(db, replies, nowMs) }
 }
 
