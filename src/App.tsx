@@ -75,6 +75,7 @@ import { CreditsPage } from './components/CreditsPage'
 import { BasePage } from './components/BasePage'
 import { ProjectsPage } from './projects/ProjectsPage'
 import { PROJECT_DESCRIPTION, PROJECT_TITLE, PROJECT_PREVIEW_IMAGE, PROJECT_PREVIEW_ALT } from './projects/projects'
+import { SUBMIT_DESCRIPTION, SUBMIT_PREVIEW_IMAGE, SUBMIT_PREVIEW_ALT } from './community/developer-guidance'
 import { MobileMenu } from './components/MobileMenu'
 import { MachineSwitcher } from './devices/MachineSwitcher'
 import { AccountMenu } from './community/AccountMenu'
@@ -369,7 +370,7 @@ export default function App() {
     else if (zoomEffect) setPageMetadata({ title: pageTitle(zoomEffect.name + ' for Zoom ' + currentDevice.name), description: zoomEffect.presentation.summary, url: new URL(deviceHref(zoomEffect.machine, 'module/' + zoomEffect.id), appUrl).href })
     else if (digiMod) setPageMetadata({ title: pageTitle(digiMod.title + ' for Elektron ' + currentDevice.name), description: digiMod.summary, url: new URL(deviceHref(digiMod.device, 'module/' + digiMod.id), appUrl).href })
     else if (projectsRoute) setPageMetadata({ title: pageTitle(PROJECT_TITLE), description: PROJECT_DESCRIPTION, url: new URL('projects/', appUrl).href, image: PROJECT_PREVIEW_IMAGE, imageAlt: PROJECT_PREVIEW_ALT })
-    else if (route === 'submit') setPageMetadata({ title: pageTitle('Start developing'), description: 'Build a mod for Elektron instruments: write it with the SDK, submit it through GitHub and get it reviewed for the Modwerk library.', url: new URL('submit/', appUrl).href })
+    else if (route === 'submit') setPageMetadata({ title: pageTitle('Start developing'), description: SUBMIT_DESCRIPTION, url: new URL('submit/', appUrl).href, image: SUBMIT_PREVIEW_IMAGE, imageAlt: SUBMIT_PREVIEW_ALT })
     // A public thread owns its title and description, supplied by its static page and refreshed after loading.
     else if (!route.startsWith('forum/thread/')) {
       const title = overviewRoute || allRoute || route === 'library' ? HOME_TITLE : pageTitle(zoomHubName?'Your '+zoomHubName:hubRoute?'Your Octatrack':machineView==='configuration'?currentDevice.name+' '+w.set:machineView?currentDevice.name+' modules':forumRoute?'Forum':accountRoute?(betaInvitationRoute?'Join the beta':'Account'):developerRoute?(developer?.user&&!route.startsWith('developer/complete')?'Creator settings':'Account'):faqRoute?'FAQ':route==='credits'?'Credits':route==='base'?'Base firmware':route==='privacy'?'Privacy':route==='impressum'?'Impressum':route==='community-rules'?'Community rules':route==='modding-guidelines'?'Modding guidelines':route==='report-content'?'Report content':route==='configuration'?w.Set:route.startsWith('submit')?'Start developing':(route==='review'||route==='admin')?'Admin workspace':route.startsWith('module-set')?'Module sets':'Module library')
