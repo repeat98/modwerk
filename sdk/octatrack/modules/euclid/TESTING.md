@@ -1,6 +1,20 @@
 # Euclid testing
 
-Version: 0.1.2-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
+Version: 0.1.5-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
+
+## 0.1.5-experimental — 18 November 2026 (#1690)
+
+Fix: the filter path clears AMP's gain (`x:(r7+$26)`) with the three filter tap weights. Before it, TYPE passing AMP
+(on the way from HP to NOTCH) left the dry signal mixed into every later filter type.
+
+- **Emulator, not hardware:** `test_filter_type_history.py` assembles `filter.asm` and runs it under the vendored
+  DSP56300 interpreter on a stereo 440 Hz sine, FREQ mid, MIX fully wet: LP for 200 blocks against LP, one AMP
+  block, LP. On 0.1.4 the AMP gain stayed at `0x400000` and the settled output differed by up to half its peak
+  (-6.2 dB); on 0.1.5 the gain is 0 and the output is identical, sample for sample. The test fails on 0.1.4's file.
+- **Not tested:** this version on a unit (owner-approved update, `sdk/approvals/euclid-build-approval.json`), chip
+  cycles (one instruction a block more), BP, HP and NOTCH after AMP (the same cleared weight serves them).
+
+## Earlier versions
 
 This revision updates author credits only. The historical evidence below is retained; no new hardware or DSP qualification is claimed.
 
