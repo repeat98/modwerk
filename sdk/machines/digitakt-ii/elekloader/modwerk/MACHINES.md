@@ -61,7 +61,20 @@ Static reads on 18 November 2026; not yet traced.
 
 Decided with the developer on 18 November 2026: each added machine gets its own machine type after the stock seven, with its own voice setup, rather than standing in for a stock machine. The base dispatches added types at `0x1c6550`; the module's voice routine loads its sample through the slot lookup at trigger time and renders the voice. A machine that plays a sample keeps knob D as its sample slot, so sample choice works as on stock machines.
 
+## Emulator check of the first hooks (18 November 2026)
+
+Development base `7edbd8bf` (29 sites; `.run` 10,732 bytes, 284 more than base `0e3cbcd0`) with one test machine at type 7 standing for SAMPLE, linked into a private OS 1.17 image (RAM `0x47f00000`-`0x47f050e4`, 241,436 bytes spare; fast SRAM unused). Digikit `panel_persist_probe` booted it, opened track 1's SRC page, set track 1's type byte (`0x4265338e`, active kit `+0x34 + 0xa2`) to 7 and opened SRC again.
+
+- Type 7 with the hooks: the SRC page shows SAMPLE's knobs (TUNE, PLAY, SAMP, LEV; STRT, LEN, LOOP, LEV). No fault.
+- Type 7 on base `0e3cbcd0` (control): the SRC page shows the default descriptor's knobs (SLICE, LEN). So the two hooks are what changed the page.
+- In both, the header reads ERROR: the machine name comes from another per-type table, still to find.
+- Emulator only. Sound not checked (the sound chip still skips type 7).
+
 ## Still to check
+
+- The machine name shown in the SRC header and the machine menu.
+- The machine menu list (built once at start-up) and the type check in the machine setter (`0x400dcab8`, types above 6 refused).
+- Kit and project load: the stock load turns a stored type of 7 or more into 0 (SAMPLE). That is the safe fallback on a unit without the base; with the base installed the load must keep the added types.
 
 - Every reader of the type byte and every per-type table: MIDI CC/NRPN tables, the machine menu list, the per-type parameter-code table, the SRC page view.
 - Kit and project save and load of an added type, and the stock OS's behaviour when it loads one.
