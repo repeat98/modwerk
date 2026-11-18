@@ -34,6 +34,12 @@ The same package was tried again without `--accept`, from 21:08:12. The slot was
 
 16 November 2026. A later RAM trial of the same package, SHA-256 `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`, was running without `--accept` on `OCTATRACK 1.40C`, base `3ee0515a0f474149…`. It was not kept. The person at the unit reported that hold UP, tap NO works as it should in a list, the sample editor, the arranger, the Modwerk status page, and beside Tiempos. The tick word is `(toggles << 1) | blank`. The log stayed `0x0` through 30 s. The first non-zero was `0x4` at 31 s: 2 toggles, blank off. The latest line read while this note was written was `0x54` at 432 s: 42 toggles, blank off. The trial process was still running. No SAVE, no flash, no power cycle, no Keep.
 
+## Keep and power cycle
+
+18 November 2026. The same package, SHA-256 `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c` (352 bytes), source `7105ec60e`, was added with `npm run device -- set` and `--accept` on `OCTATRACK 1.40C`, base `931a91bd7e571216…`. The offer was one change. The trial ran 5 s, the tick word stayed `0x0`, and the verdict was no crash, stall, freeze or skipped track. It printed `accepted` and left upload mode in 392 ms, then `normal, generation 1, active 9eba3924f12be60e…`. The inventory named the modules that were already kept, plus `screen-off`.
+
+The person at the unit then held UP, tapped NO, and power cycled. They report that the expected behaviour was correct: the screen came back on, and the module was still installed. A read after that answered `normal, generation 0, active 931a91bd7e571216…`, tick word `0x4` (2 toggles, blank off). The inventory still named those modules, including `screen-off`. No SAVE, no flash.
+
 ## Not tested
 
 - An MKI, and a card install. The MKII chord above is a report from the person at the unit, on 7 November and again on 16 November, both RAM trials of package `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`.
@@ -41,4 +47,4 @@ The same package was tried again without `--accept`, from 21:08:12. The slot was
 - The stock screen saver while this blank is on, and while a pattern plays.
 - Whether the MKII panel can be powered down as well as painted black.
 - Whether the MKI backlight stays lit behind the blank glass.
-- Part save, project save and a power cycle. The blank is only a byte in the module's RAM, so a power cycle should turn the screen back on. That has not been seen.
+- Part save and project save. A power cycle on 18 November brought the screen back on, as the person at the unit reported, with the module still installed.

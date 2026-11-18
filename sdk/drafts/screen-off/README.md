@@ -49,7 +49,7 @@ The blank clears the pixels of the composed frame. On a MKII that leaves the OLE
 
 The blank is forgotten when you power off. It is not part of the Part or the project. The stock saver still dims and switches off on its own schedule when this blank is off.
 
-The author reports that on a MKII the chord blanks the screen and brings it back. An MKI, the stock saver and a power cycle are not tried.
+The author reports that on a MKII the chord blanks the screen and brings it back, and that after a power cycle the screen comes back on with the module still installed. An MKI and the stock saver are not tried.
 
 ## Tests and measurements
 
