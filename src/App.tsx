@@ -15,7 +15,7 @@ import { useBuildGate } from './community/MemberGate'
 import { ForumPage } from './community/ForumPage'
 import { ForumShoutbox } from './community/ForumShoutbox'
 import './community/forum.css'
-import { countBaseGuide, countBaseGuideStep, trackPageView, trackUsage } from './community/usage'
+import { countBaseGuide, countBaseGuideStep, countVisitSource, trackPageView, trackUsage } from './community/usage'
 import { useDiagnosticsStepNeeded } from './community/diagnostics-sharing'
 import { DIAGNOSTICS_GUEST } from './community/octatrack-diagnostics-contract'
 import { useOctatrackWelcome } from './hooks/useOctatrackWelcome'
@@ -274,6 +274,7 @@ export default function App() {
   const hubRoute = octatrackUi && (route === 'octatrack' || route.startsWith('octatrack/') || route === 'configuration')
   // The Octatrack page's list: the unit's own pages (#octatrack is Status), and #configuration for the set you edit.
   const hubView: HubView = route === 'configuration' ? 'set' : (['backups', 'setup', 'diagnostics'] as const).find(view => route === 'octatrack/' + view) ?? 'status'
+  useEffect(countVisitSource, []) // where this page load came from, once
   useEffect(() => {
     // Wait for access/catalog resolution; redirecting unit routes do not render a page.
     if (!sessionLoading && !((route === 'octatrack' || route.startsWith('octatrack/')) && !octatrackUi)) trackPageView(route, missingRoute && !pausedModule)

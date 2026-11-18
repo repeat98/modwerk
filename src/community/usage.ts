@@ -1,6 +1,7 @@
 import { apiUrl } from '../hosting'
 import { BASE_GUIDE_STEPS, BASE_INSTALL_COUNTS, BASE_INSTALL_FAILURES, SYNC_FAILURE_REASONS, type BaseGuideStep, type SyncFailureReason, DIAGNOSTIC_INVITATION_PLACEMENTS, INVITATION_COUNTS, type BaseInstallStage, type DiagnosticInvitationOutcome, type DiagnosticInvitationPlacement, type OctatrackCount, type OctatrackStepCount } from './octatrack-diagnostics-contract'
-import type { AnnouncementCountEvent, UsageDevice, UsageEvent } from './usage-contract'
+import type { AnnouncementCountEvent, SignInPromptOutcome, SiteCount, UsageDevice, UsageEvent } from './usage-contract'
+import { visitSource } from './visit-source'
 import { usagePage } from './usage-pages'
 import { USAGE_CONSENT_VERSION } from '../legal/policy'
 import { canTrackModuleDownload } from './module-downloads'
@@ -40,7 +41,7 @@ export function anonymousCountsAllowed() {
 export function setAnonymousCountsAllowed(enabled: boolean) {
   try { if(enabled)localStorage.removeItem(anonymousOffKey); else localStorage.setItem(anonymousOffKey,'1'); return true } catch { return false }
 }
-function countAnonymously(body: {event: UsageEvent; device?: UsageDevice; page?: string} | {event: OctatrackCount} | {event: OctatrackStepCount; detail?: string} | {event: 'module_download'; moduleId: string} | {event: AnnouncementCountEvent; announcementId: string}) {
+function countAnonymously(body: {event: UsageEvent; device?: UsageDevice; page?: string} | {event: OctatrackCount} | {event: OctatrackStepCount; detail?: string} | {event: 'module_download'; moduleId: string} | {event: AnnouncementCountEvent; announcementId: string} | {event: SiteCount; detail: string}) {
   try {void fetch(apiUrl('/usage/count'),{method:'POST',credentials:'omit',redirect:'error',referrerPolicy:'no-referrer',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(()=>{})} catch { /* Counts never block device work. */ }
 }
 /** A fixed action counter, independent of optional technical diagnostics. Never pass device data here. A failed sync
@@ -88,6 +89,23 @@ function visitor() {
     if(record?.day === day && typeof record.value === 'string' && uuid.test(record.value))return record.value
     const value=crypto.randomUUID();localStorage.setItem(visitorKey,JSON.stringify({day,value}));return value
   } catch {return null}
+}
+let sourceCounted = false
+/** Once per page load, where it came from as one fixed category (visit-source.ts): never the address, and nothing for a
+ * reload, back or forward, or a page reached from this site. Nothing is stored on the device. */
+export function countVisitSource(referrer = document.referrer, search = location.search, origin = location.origin) {
+  if (sourceCounted) return
+  sourceCounted = true
+  if (!anonymousCountsAllowed()) return
+  let navigation: string | undefined
+  try { navigation = (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined)?.type } catch { /* counted as a new load */ }
+  if (navigation === 'reload' || navigation === 'back_forward') return
+  const source = visitSource(referrer, search, origin)
+  if (source) countAnonymously({event: 'visit_source', detail: source})
+}
+/** How the sign-in prompt was answered, by whether it guarded a firmware build. */
+export function countSignInPrompt(outcome: SignInPromptOutcome) {
+  if (anonymousCountsAllowed()) countAnonymously({event: 'sign_in_prompt', detail: outcome})
 }
 /** After consent, the only outbound fields are a closed event name, two random identifiers and, for builds and downloads,
  * which supported building machine it was. Page views may name a fixed page key. Never pass build/configuration data. */
