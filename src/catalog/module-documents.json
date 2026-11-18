@@ -13569,7 +13569,7 @@
           "dsp": {
             "level": "minimal",
             "basis": "source-estimate",
-            "rationale": "No DSP code.",
+            "rationale": "No DSP code: it runs on the ColdFire only, in the UI task.",
             "source": "manifest.py"
           },
           "memory": {
