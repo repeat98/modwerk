@@ -38,7 +38,14 @@ developer's own test.
   was stale: stock draws it once, when it opens.
 - Fixed in the next build: after a switch the module has stock draw the open list again (0x40036e18). Under ot_emu,
   names SONG ALPHA, BRAVO, CHARLIE on book 1: RIGHT showed an empty list with BOOK 2 at once, LEFT the three names.
-  On the unit: not yet.
+  On the unit (package `caab80cb…`, kept): books 3 and up showed empty lists at once; book 2 showed book 1's names.
+  As the developer reported it, a clean run on books 3 and 4 then passed: rows added on book 3 came back after book 4,
+  book 1 was unchanged, book 4 stayed empty. Book 2's copy of book 1 dates from the first test, before the fix;
+  how it was written is not known.
+- The developer asked that each book come back on the arrangement last chosen in it. Built with stock's own choice,
+  select_arr (0x400a03a0), and the list's cursor moved onto it. Under ot_emu: book 1 on arrangement 3, book 2 then on
+  1, arrangement 2 chosen there, book 1 back on 3, book 2 on 2, a new book on 1; after a switch DOWN and YES chose the
+  row below the remembered one. On the unit: not yet.
 
 ## Stock flows
 

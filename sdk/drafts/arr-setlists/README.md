@@ -23,7 +23,9 @@ later book can be moved into book 1 on a computer by renaming its file (`arr37.w
 | ARR > CHANGE, stopped | LEFT | The same, to the book before (down to 1) |
 | ARR > CHANGE, playing | LEFT / RIGHT | Nothing changes; it says STOP TO CHANGE BOOK |
 
-A book never used starts as 8 empty arrangements. Switching takes about as long as stock's SYNC TO CARD and ends with
+A book never used starts as 8 empty arrangements. Each book comes back on the arrangement you last chose in it (a
+book not visited yet on arrangement 1), with the list's cursor on it; loading a project or a power cycle starts every
+book but book 1 on arrangement 1 again (stock keeps book 1's choice in the project). Switching takes about as long as stock's SYNC TO CARD and ends with
 its NOW SAFE TO EJECT! message. Without a project loaded it says NO PROJECT; while the card is busy, CARD BUSY. If an
 arrangement file does not read, it says BOOK FILE ERROR, that arrangement shows empty, and its file is left as it is
 unless you edit that arrangement.

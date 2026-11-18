@@ -51,6 +51,10 @@
 #define CLEAR_ARR 0x400a041cu        /* clear_arr(slot): empty rows, no saved copy, default name */
 #define MESSAGE 0x4005a2b8u          /* message(text, 0x30), UI task only */
 #define DRAW_CHANGE 0x40036e18u      /* draws ARR > CHANGE's list into its open window (stock: once, when it opens) */
+#define SELECT_ARR 0x400a03a0u       /* select_arr(n): stock's choice of arrangement n (index, pointer, playback reset) */
+#define INDEX 0x100b14d1u            /* the arrangement chosen, 0-7 */
+#define LIST_TOP 0x400c0ba0u         /* ARR > CHANGE: the first row shown */
+#define LIST_CURSOR 0x400c0ba4u      /* ARR > CHANGE: the cursor's row (stock opens the list with it on the choice) */
 
 #define REC_MAGIC 0x41534231u        /* "ASB1" */
 #define IOB_LEN 0x1000u
@@ -86,7 +90,8 @@ struct as_state {
     uint8_t backup;          /* arr01.bak .. arr08.bak hold book 1 as it was left */
     uint8_t ready;           /* the battery record was read since install */
     uint8_t damaged;         /* a file of the book in the slots did not read: write back only what is edited */
-    uint8_t redraw;          /* a switch finished: the UI task redraws the open list with the new book's names */
+    uint8_t redraw;          /* a switch finished: the UI task chooses the book's arrangement and redraws the list */
+    uint8_t last[BOOKS];     /* the arrangement last chosen in each book, this session (0 = arrangement 1) */
     uint16_t ticks;
     char path[260];
     char path2[260];
@@ -119,6 +124,8 @@ static void clear_arr(unsigned slot) { host_clear_arr(slot); }
 static void message(const char *t) { host_message(t); }
 void host_draw_change(void);
 static void draw_change(void) { host_draw_change(); }
+void host_select_arr(unsigned n);
+static void select_arr(unsigned n) { host_select_arr(n); }
 static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { return host_stock_writer(a1, a2, a3, a4); }
 static int arr_write(struct as_state *s, unsigned slot) { return host_arr_write(s->path, slot) >= 0; }
 static int arr_read(struct as_state *s, unsigned slot) { return host_arr_read(s->path, slot); }
@@ -129,6 +136,7 @@ static const char *projdir(void) { return ((const char *(*)(int, int))PROJDIR)(0
 static void clear_arr(unsigned slot) { ((void (*)(int))CLEAR_ARR)((int)slot); }
 static void message(const char *t) { ((void (*)(const char *, int))MESSAGE)(t, 0x30); }
 static void draw_change(void) { ((void (*)(void))DRAW_CHANGE)(); }
+static void select_arr(unsigned n) { ((int (*)(int))SELECT_ARR)((int)n); }
 int as_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4); /* below: stock's writer, entered past the site */
 static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { return as_stock_writer(a1, a2, a3, a4); }
 
@@ -245,6 +253,7 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
     if (s->pending >= 0) {
         unsigned to = (unsigned)s->pending;
         if (rc >= 0) {
+            s->last[s->book] = (uint8_t)(rd8(INDEX) & 7u);     /* the book left: which arrangement was chosen */
             if (s->book == 0) s->backup = !s->damaged && write_book(s, 0);   /* leaving book 1: its backup */
             int ok;
             if (to == 0 && s->backup && read_book(s, 0, "bak")) {
@@ -298,6 +307,7 @@ void as_project_load(void)
 unsigned as_project_loaded(void)
 {
     struct as_state *s = ready();
+    for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = 0;
     s->book = 0;
     s->backup = 0;
     s->damaged = 0;
@@ -381,7 +391,14 @@ void as_tick(void *api)
     if (api) ((struct as_api *)api)->value = (uint32_t)s->book | (uint32_t)(s->pending < 0 ? 0 : s->pending + 1) << 4
         | (uint32_t)s->failed << 9 | (uint32_t)s->backup << 10;
     /* Stock draws the list's names once, when it opens: after a switch, draw them again from the new book. */
-    if (s->redraw && s->pending < 0) { s->redraw = 0; if (rd32(CHANGE_WINDOW)) draw_change(); }
+    if (s->redraw && s->pending < 0) {
+        s->redraw = 0;
+        select_arr(s->last[s->book]);                     /* the book's own last choice, as YES in the list makes it */
+        if (rd32(CHANGE_WINDOW)) {
+            if (rd32(LIST_TOP) == 0) wr32(LIST_CURSOR, s->last[s->book]);  /* the cursor on it, as stock opens the list */
+            draw_change();
+        }
+    }
     if (s->failed) { s->failed = 0; message("BOOK FILE ERROR"); }
     if (s->book && s->pending < 0 && ++s->ticks >= 120) { s->ticks = 0; remember(s); }
 }

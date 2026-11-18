@@ -32,6 +32,8 @@ static uint8_t cs1[0x16200];             /* 0x10000000 .. : the slots, their fla
 static uint8_t rec[16];                  /* 0x100f8f10 */
 static uint8_t misc[0x2000];             /* 0x80004f00 .. */
 static uint32_t change_window, playing;
+static uint8_t chosen;               /* 0x100b14d1: the arrangement chosen */
+static uint8_t list[16];             /* 0x400c0ba0: the CHANGE list's first row shown, then its cursor */
 static int failures, checks;
 
 uint8_t host_rd8(uint32_t a)
@@ -41,6 +43,8 @@ uint8_t host_rd8(uint32_t a)
     if (a >= 0x400c0b40u && a < 0x400c0b44u) return (uint8_t)(change_window >> (8 * (3 - (a - 0x400c0b40u))));
     if (a >= 0x800065b8u && a < 0x800065bcu) return (uint8_t)(playing >> (8 * (3 - (a - 0x800065b8u))));
     if (a >= 0x80004f00u && a < 0x80004f00u + sizeof misc) return misc[a - 0x80004f00u];
+    if (a == 0x100b14d1u) return chosen;
+    if (a >= 0x400c0ba0u && a < 0x400c0bb0u) return list[a - 0x400c0ba0u];
     fprintf(stderr, "read of 0x%08x\n", a);
     return 0;
 }
@@ -48,6 +52,7 @@ void host_wr8(uint32_t a, uint8_t v)
 {
     if (a >= 0x10000000u && a < 0x10000000u + sizeof cs1) { cs1[a - 0x10000000u] = v; return; }
     if (a >= 0x100f8f10u && a < 0x100f8f20u) { rec[a - 0x100f8f10u] = v; return; }
+    if (a >= 0x400c0ba0u && a < 0x400c0bb0u) { list[a - 0x400c0ba0u] = v; return; }
     fprintf(stderr, "write of 0x%08x\n", a);
 }
 
@@ -102,6 +107,7 @@ void host_clear_arr(unsigned slot) { ++clears; memset(&cs1[W(slot)], 0, BLOCK); 
 void host_message(const char *t) { snprintf(last_message, sizeof last_message, "%s", t); }
 static int list_draws;
 void host_draw_change(void) { ++list_draws; }
+void host_select_arr(unsigned n) { chosen = (uint8_t)n; }
 /* Stock's writer: each changed slot (or one with no file yet) to arr0N.work. */
 int host_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
 {
@@ -170,6 +176,7 @@ int main(void)
     check("a book never used starts as 8 cleared arrangements", clears == 8);
     as_tick(0);
     check("the open list is drawn again with the new book's names, once", list_draws == 1 && (as_tick(0), list_draws == 1));
+    check("a book never visited starts on arrangement 1", chosen == 0);
     check("now on book 2, nothing changed, nothing written as arr09 yet", book() == 1 && cs1[CHG] == 0 && !find("/SET/PROJ/arr09.work"));
 
     mark(0x20); cs1[CHG] = 0x04;                   /* book 2's songs, one changed */
@@ -187,6 +194,11 @@ int main(void)
     check("book 3 went to arr17-arr24", find("/SET/PROJ/arr17.work") && find("/SET/PROJ/arr24.work"));
     tap(RIGHT); job();
     check("book 3's songs come back", book() == 2 && marked(0x30));
+    chosen = 5; tap(LEFT); job(); as_tick(0);                       /* arrangement 6 chosen in book 3, then to book 2 */
+    check("book 2 comes back on its own last choice, not book 3's", book() == 1 && chosen == 0);
+    chosen = 2; tap(RIGHT); job(); as_tick(0);
+    check("and book 3 on arrangement 6 again", book() == 2 && chosen == 5);
+    check("with the list's cursor on it", list[7] == 5 && list[4] == 0);
     tap(LEFT); job(); tap(LEFT); job();
     check("back on book 1: its songs from the backup", book() == 0 && marked(0x10));
     check("arriving at book 1 marks all 8 changed, so stock rewrites arr01-08", cs1[CHG] == 0xff);
