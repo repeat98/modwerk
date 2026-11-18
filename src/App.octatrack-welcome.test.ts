@@ -138,7 +138,7 @@ describe('the welcome to modules over USB', () => {
     delete (navigator as { usb?: unknown }).usb
     await open('library')
     await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
-    expect(welcome()!.textContent).toContain('This browser can’t use USB, so modules go onto the card as a file. For USB sync, use Chrome or Edge on a computer.')
+    expect(welcome()!.textContent).toContain('This browser can’t use USB, so modules go onto the card as a file. For USB sync, use Chrome, Edge or another Chromium browser on a computer.')
     expect(welcome()!.textContent).toContain('Sync over USB or the card')
     expect(welcome()!.textContent).toContain('Send them over USB from Chrome or Edge, or copy MODWERK0.SET to the card and restart.')
     expect(button(welcome()!, 'Set up my Octatrack')).toBeDefined()

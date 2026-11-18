@@ -3,6 +3,7 @@ import { SYSTEM_AUTHOR } from './module-threads'
 import { modulePath } from '../src/catalog/module-links'
 import { MODULES } from '../src/catalog/modules'
 import { postExcerpt, profilePath, threadPath } from '../src/community/forum-links'
+import { tagSiteText } from './site-link-tags'
 
 /** A thread as the public pages, feed and sitemap see it: visible, member-created, by a member in good standing, never a private report. */
 export type PublicThread = { id: string; title: string; category: string; machine: string | null; module: string | null; username: string; created_at: string; updated_at: string; replies: number; excerpt: string; image: string | null }
@@ -41,12 +42,14 @@ export async function forumPublic(request: Request, env: Env, db: Database): Pro
       publicThreads(db, api, 'created_at', 30),
       db.prepare('SELECT module_id,version,name,href,detected_at FROM module_releases ORDER BY detected_at DESC,module_id LIMIT 10').all<{ module_id: string; version: string; name: string; href: string; detected_at: string }>().then(result => result.results),
     ])
+    // Links a reader opens say they came from the feed; entry ids stay untagged so readers keep recognising them.
+    const feedLink = (href: string) => tagSiteText(href, app.href, 'forum-feed')
     const entries = [
-      ...threads.map(thread => ({ at: iso(thread.created_at), xml: `<entry><title>${escapeXml(thread.title)}</title><link href="${escapeXml(new URL(threadPath(thread.id, thread.title), app).href)}"/><id>${escapeXml(new URL(threadPath(thread.id), app).href)}</id><published>${iso(thread.created_at)}</published><updated>${iso(thread.updated_at)}</updated><author><name>@${escapeXml(thread.username)}</name><uri>${escapeXml(new URL(profilePath(thread.username), app).href)}</uri></author><category term="${escapeXml(thread.category)}"/>${thread.machine ? `<category term="${escapeXml(thread.machine)}"/>` : ''}<summary>${escapeXml(thread.excerpt || thread.replies + (thread.replies === 1 ? ' reply' : ' replies'))}</summary></entry>` })),
-      ...releases.map(release => ({ at: iso(release.detected_at), xml: `<entry><title>${escapeXml(release.name + ' ' + release.version)} released</title><link href="${escapeXml(releaseUrl(app, release.href))}"/><id>${escapeXml(releaseUrl(app, release.href) + '#v' + release.version)}</id><published>${iso(release.detected_at)}</published><updated>${iso(release.detected_at)}</updated><author><name>Modwerk</name></author><category term="release"/><summary>${escapeXml(release.name + ' ' + release.version)} is available in the module library.</summary></entry>` })),
+      ...threads.map(thread => ({ at: iso(thread.created_at), xml: `<entry><title>${escapeXml(thread.title)}</title><link href="${escapeXml(feedLink(new URL(threadPath(thread.id, thread.title), app).href))}"/><id>${escapeXml(new URL(threadPath(thread.id), app).href)}</id><published>${iso(thread.created_at)}</published><updated>${iso(thread.updated_at)}</updated><author><name>@${escapeXml(thread.username)}</name><uri>${escapeXml(new URL(profilePath(thread.username), app).href)}</uri></author><category term="${escapeXml(thread.category)}"/>${thread.machine ? `<category term="${escapeXml(thread.machine)}"/>` : ''}<summary>${escapeXml(thread.excerpt || thread.replies + (thread.replies === 1 ? ' reply' : ' replies'))}</summary></entry>` })),
+      ...releases.map(release => ({ at: iso(release.detected_at), xml: `<entry><title>${escapeXml(release.name + ' ' + release.version)} released</title><link href="${escapeXml(feedLink(releaseUrl(app, release.href)))}"/><id>${escapeXml(releaseUrl(app, release.href) + '#v' + release.version)}</id><published>${iso(release.detected_at)}</published><updated>${iso(release.detected_at)}</updated><author><name>Modwerk</name></author><category term="release"/><summary>${escapeXml(release.name + ' ' + release.version)} is available in the module library.</summary></entry>` })),
     ].sort((a, b) => b.at.localeCompare(a.at))
     const updated = entries[0]?.at ?? new Date().toISOString()
-    return xml(`<?xml version="1.0" encoding="utf-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom"><title>Modwerk community</title><subtitle>New forum threads and module releases</subtitle><link href="${escapeXml(new URL('#forum', app).href)}"/><link rel="self" type="application/atom+xml" href="${escapeXml(new URL('forum/feed.xml', api).href)}"/><id>${escapeXml(app.href)}</id><updated>${updated}</updated>\n${entries.map(entry => entry.xml).join('\n')}\n</feed>\n`, 'application/atom+xml')
+    return xml(`<?xml version="1.0" encoding="utf-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom"><title>Modwerk community</title><subtitle>New forum threads and module releases</subtitle><link href="${escapeXml(feedLink(new URL('#forum', app).href))}"/><link rel="self" type="application/atom+xml" href="${escapeXml(new URL('forum/feed.xml', api).href)}"/><id>${escapeXml(app.href)}</id><updated>${updated}</updated>\n${entries.map(entry => entry.xml).join('\n')}\n</feed>\n`, 'application/atom+xml')
   }
   const [threads, profiles] = await Promise.all([
     publicThreads(db, api, 'updated_at', 5000),

@@ -13,6 +13,7 @@ A claim has a kind and a key, and each key has one holder at a time:
 | `migration` | D1 migration number | `0085` |
 | `dsp-region` | machine and DSP memory claim name; no file declares these yet, so they are claimed by hand | `octatrack/fx2-delay-line` |
 | `machine-id` | machine and the id a manifest takes in `platform.claims` (`machine:<id>`); kits store it, so like a hook index it is never renumbered | `digitakt/10` |
+| `issue` | the number of a GitHub issue you are fixing; an issue stays open until the owner has checked the live site, so its claim, and the pull request linked to it, show others it is taken | `1624` |
 
 A claim also records the holder's GitHub login, the branch, the pull request once there is one, and a note of at most 120 characters of plain prose: the server refuses links, paths, addresses, hashes, code and anything token-like in it.
 
@@ -88,4 +89,4 @@ Reads are public except the inbox; writes need the `X-Modwerk-Developer` token f
 - `GET /api/agent-board/messages/<id>`, `GET /api/agent-board/inbox` (`{waiting, replies}`) and `GET /api/agent-board/activity`.
 - `POST /api/agent-board/messages` `{kind: question|finding|wanted, topic, key, body, to?, pullRequest?, priority?}`; `POST …/messages/<id>/replies` `{body, pullRequest?}`, `…/close`, `…/fold` `{pullRequest}` (the author, or whom it is to), `…/take` `{pullRequest?}` and `…/priority` `{priority}` (the author or an administrator); `DELETE …/messages/<id>`. A wanted task's `to` is its holder.
 
-The tables are `agent_claims` (migration 0084) and `agent_messages` (0085), rebuilt in 0086 for machine ids and in 0088 for wanted tasks and site topics, with a wanted task's priority since 0095, in `server/agent-board.ts`; the client is `scripts/agent-board.mjs`.
+The tables are `agent_claims` (migration 0084) and `agent_messages` (0085), rebuilt in 0086 for machine ids and in 0088 for wanted tasks and site topics, with a wanted task's priority since 0095 and issues as a kind and topic since 0096, in `server/agent-board.ts`; the client is `scripts/agent-board.mjs`.

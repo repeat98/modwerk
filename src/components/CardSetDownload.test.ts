@@ -12,7 +12,7 @@ import { CardSetDownload } from './UnitPanel'
 
 let root: Root, container: HTMLDivElement
 beforeEach(() => { vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true); HTMLDialogElement.prototype.showModal = function () { this.open = true }; HTMLDialogElement.prototype.close = function () { this.open = false }; container = document.createElement('div'); document.body.append(container); root = createRoot(container) })
-afterEach(async () => { await act(() => root.unmount()); container.remove(); vi.clearAllMocks(); vi.unstubAllGlobals() })
+afterEach(async () => { await act(() => root.unmount()); container.remove(); localStorage.clear(); vi.clearAllMocks(); vi.unstubAllGlobals() })
 const button = () => container.querySelector<HTMLButtonElement>('button')!
 const set = { name: 'Live set', moduleIds: ['everb', 'euclid'], removedStockFx: [] }
 
@@ -40,6 +40,40 @@ describe('loading a module set from the card', () => {
     await act(() => root.render(createElement(CardSetDownload, { set })))
     await act(async () => { button().click() })
     expect(container.querySelector('[role="alert"]')?.textContent).toContain('Tuner can’t be loaded onto the base yet'); expect(mocked.save).not.toHaveBeenCalled(); expect(mocked.count).not.toHaveBeenCalled(); expect(mocked.follow).not.toHaveBeenCalled()
+  })
+  it('warns when the base this browser last downloaded is another one, and leads to the base the file is for', async () => {
+    const base = 'd891acb3' + '0'.repeat(56), onInstall = vi.fn()
+    localStorage.setItem('modwerk.octatrack.base-download', JSON.stringify({ base: 'aaaaaaaa' + '0'.repeat(56), at: '2026-11-01T10:00:00.000Z' }))
+    mocked.prepare.mockResolvedValue({ base, layout: 'off', modules: ['E-Verb'], file: new Uint8Array(512) })
+    await act(() => root.render(createElement(CardSetDownload, { set, onInstall })))
+    await act(async () => { button().click() })
+    const dialog = container.querySelector('dialog.card-set-dialog')!
+    expect(dialog.querySelector('[role="alert"]')?.textContent).toContain('This file is for another base')
+    expect(dialog.textContent).toContain('The base you last downloaded here is aaaaaaaa. This file only loads on d891acb3')
+    const install = [...dialog.querySelectorAll('button')].find(item => item.textContent === 'Install base d891acb3')!
+    expect(install.className).toContain('button-primary')
+    await act(async () => { install.click() })
+    expect(onInstall).toHaveBeenCalledWith('off'); expect(container.querySelector('dialog')).toBeNull()
+  })
+  it('warns from the base it last read over USB when that is newer than the last download', async () => {
+    const base = 'd891acb3' + '0'.repeat(56)
+    localStorage.setItem('modwerk.octatrack.base-download', JSON.stringify({ base, at: '2026-11-01T10:00:00.000Z' }))
+    localStorage.setItem('modwerk.octatrack.last-seen', JSON.stringify({ ['bbbbbbbb' + '0'.repeat(56)]: { moduleIds: [], removedStockFx: [], at: '2026-11-10T10:00:00.000Z' } }))
+    mocked.prepare.mockResolvedValue({ base, layout: 'off', modules: ['E-Verb'], file: new Uint8Array(512) })
+    await act(() => root.render(createElement(CardSetDownload, { set, onInstall: vi.fn() })))
+    await act(async () => { button().click() })
+    expect(container.querySelector('dialog')?.textContent).toContain('Your Octatrack last ran bbbbbbbb.')
+  })
+  it('offers the base quietly when the file fits the base this browser knows', async () => {
+    const base = 'd891acb3' + '0'.repeat(56)
+    localStorage.setItem('modwerk.octatrack.base-download', JSON.stringify({ base, at: '2026-11-01T10:00:00.000Z' }))
+    mocked.prepare.mockResolvedValue({ base, layout: 'off', modules: ['E-Verb'], file: new Uint8Array(512) })
+    await act(() => root.render(createElement(CardSetDownload, { set, onInstall: vi.fn() })))
+    await act(async () => { button().click() })
+    const dialog = container.querySelector('dialog.card-set-dialog')!
+    expect(dialog.querySelector('[role="alert"]')).toBeNull()
+    expect([...dialog.querySelectorAll('button')].find(item => item.textContent === 'Install base d891acb3')!.className).toContain('button-quiet')
+    expect([...dialog.querySelectorAll('button')].find(item => item.textContent === 'Done')!.className).toContain('button-primary')
   })
   it('has nothing to write for a set without modules', async () => {
     await act(() => root.render(createElement(CardSetDownload, { set: { ...set, moduleIds: [] } })))
