@@ -138,9 +138,9 @@ Verify GitHub status, Modwerk synchronization and reporter notification. Publish
 | --- | --- |
 | Octabam | Octatrack source modules and native firmware remixer |
 | Modwerk | Reviewed catalogue and browser firmware builder |
-| Elekloader | Its own loader/shop/frontends, its cores and the reusable builder kit. Mods for its shop go there; core work for Modwerk's machines happens in their bases here ([CONTRIBUTING](../CONTRIBUTING.md#elekloader-mods-and-cores)) |
+| Elekloader | Its own loader/shop/frontends, its cores and the reusable builder kit Modwerk vendors. Contributions to Modwerk stay here ([CONTRIBUTING](../CONTRIBUTING.md#contributions-stay-here)) |
 
-Publishing in one catalogue does not automatically list the module in another. Submit or port directly to Modwerk through a PR; an Elekloader shop listing is optional. Authors can keep research/source in their own repository and submit a pinned release to Modwerk when ready. Users of published modules just select modules, build locally from their own stock OS, save the firmware and flash their unit; they need not develop modules.
+Publishing in one catalogue does not automatically list the module in another. Submit or port directly to Modwerk through a PR. Authors can keep research/source in their own repository and submit a pinned release to Modwerk when ready. Users of published modules just select modules, build locally from their own stock OS, save the firmware and flash their unit; they need not develop modules.
 
 Today Modwerk's Octatrack path uses Octabam-derived tooling, and Digitakt/Digitone use the vendored Elekloader builder kit. Sharing builder code does not combine catalogues or retire Elekloader's frontend.
 

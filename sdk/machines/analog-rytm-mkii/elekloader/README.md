@@ -34,7 +34,7 @@ send effect needs it, or that module would not link on plain; a voice machine us
 ## Beside elekloader's core-ar2
 
 This base is Modwerk's, not elekloader's core-ar2, and its core work happens here
-([contributing](../../../../CONTRIBUTING.md#elekloader-mods-and-cores)). It stays on 0.7's source:
+([contributing](../../../../CONTRIBUTING.md#contributions-stay-here)). It stays on 0.7's source:
 
 - **No core-ar2 0.8 or later.** core-ar2 0.8 (elekloader v0.9.0) jumps from the same two lock sites the lock words
   use, `0x40008f98` (row load) and `0x40009216` (lock rebuild). This base cannot take it, an elekloader mod that needs
