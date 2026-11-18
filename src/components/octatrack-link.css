@@ -308,6 +308,9 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .card-set-base { margin: 0; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
 .card-set-base b { color: var(--text-secondary); font-family: var(--mono, ui-monospace, monospace); font-weight: 500; }
 .card-set-dialog .dialog-actions { margin-top: 18px; }
+.card-set-mismatch { margin: 18px 0 0; }
+.card-set-mismatch strong { display: block; margin-bottom: 4px; }
+.card-set-mismatch p { margin: 0; }
 .hub-account-note, .base-install-account { color: var(--muted); font-size: 13px; }
 .base-install-account { margin-top: 12px; }
 .hub-view .configuration-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
