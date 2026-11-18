@@ -18,7 +18,7 @@ Decline a machine, effect or other module that breaks the [modding guidelines](.
 
 Most work runs through three things: the developer MCP for the site, the instrument itself, and the emulators when the instrument is not at hand.
 
-The setup prompt on the Start developing page sets this up for any instrument: git, the GitHub CLI, Node 24 and `npm ci` in the developer's fork, the developer MCP, the board login and the skills, linked into the agent's own skills folder. `npm run check` and `pr:ready` need Python 3.10+ on PATH as `python3` for every change, even outside the SDK (macOS ships 3.9). Octatrack native builds also need Python 3.12+, Docker with the toolchain image (`docker build --file sdk/build/Dockerfile --tag modwerk-source-tools .`) and the developer's own OS 1.40C update file, kept outside the repository.
+The setup prompt on the Start developing page sets this up for any instrument: git, the GitHub CLI, Node 24 and `npm ci` in the developer's fork, the developer MCP, the board login and the skills, linked into the agent's own skills folder. `npm run check` and `pr:ready` need Python 3.10+ on PATH as `python3` for every change, even outside the SDK (macOS ships 3.9). On macOS, `sdk:check`'s host C tests run under AddressSanitizer with the selected developer tools' clang: with Xcode 16.4's clang 17 on macOS 26.5 every ASan program hangs at start (seen 18 November 2026), so `sdk:check` never finishes. Select current tools first: `sudo xcode-select -s /Library/Developer/CommandLineTools`, or update Xcode. Octatrack native builds also need Python 3.12+, Docker with the toolchain image (`docker build --file sdk/build/Dockerfile --tag modwerk-source-tools .`) and the developer's own OS 1.40C update file, kept outside the repository.
 
 **The developer MCP.** `npm run --silent mcp -- --data-dir PRIVATE_DIR` starts a local MCP server that gives a coding agent the site's own code: the catalogue and module pages, compatibility and USB package checks, saved configurations, the API (reads by default, writes only with `--allow-api-writes`) and saved firmware downloads. Register it with the agent as described in [the MCP guide](FRONTEND_MCP.md). It runs on macOS, Linux and WSL; native Windows is refused for now.
 
@@ -138,9 +138,9 @@ Verify GitHub status, Modwerk synchronization and reporter notification. Publish
 | --- | --- |
 | Octabam | Octatrack source modules and native firmware remixer |
 | Modwerk | Reviewed catalogue and browser firmware builder |
-| Elekloader | Its own loader/shop/frontends, its cores and the reusable builder kit. Mods for its shop and changes to its cores go there ([CONTRIBUTING](../CONTRIBUTING.md#elekloader-mods-and-cores)) |
+| Elekloader | Its own loader/shop/frontends, its cores and the reusable builder kit Modwerk vendors. Contributions to Modwerk stay here ([CONTRIBUTING](../CONTRIBUTING.md#contributions-stay-here)) |
 
-Publishing in one catalogue does not automatically list the module in another. Submit or port directly to Modwerk through a PR; an Elekloader shop listing is optional. Authors can keep research/source in their own repository and submit a pinned release to Modwerk when ready. Users of published modules just select modules, build locally from their own stock OS, save the firmware and flash their unit; they need not develop modules.
+Publishing in one catalogue does not automatically list the module in another. Submit or port directly to Modwerk through a PR. Authors can keep research/source in their own repository and submit a pinned release to Modwerk when ready. Users of published modules just select modules, build locally from their own stock OS, save the firmware and flash their unit; they need not develop modules.
 
 Today Modwerk's Octatrack path uses Octabam-derived tooling, and Digitakt/Digitone use the vendored Elekloader builder kit. Sharing builder code does not combine catalogues or retire Elekloader's frontend.
 

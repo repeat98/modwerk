@@ -6,8 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 static uint8_t record[8][PSL_TRACK_BYTES];
-static unsigned native_cursor,popup=1,context_ok=1,commits,redraws;
-static unsigned native_menu_draws;
+static unsigned popup,context_ok=1,commits,redraws;
 static unsigned last_include,last_counts[8],last_action,last_selection;
 static unsigned available=0xa5,transport;
 static int commit_result=PSL_INVALID;
@@ -21,21 +20,11 @@ int psl_native_source(struct psl_source *s)
 }
 int psl_native_context(uint32_t b,unsigned p,unsigned part){return context_ok && b==bank && p==0 && part==0;}
 int psl_native_popup(void){return (int)popup;}
-unsigned psl_native_cursor(void){return native_cursor;}
-void psl_native_set_cursor(unsigned row){assert(row<4);native_cursor=row;}
-void psl_native_close_popup(void){popup=0;}
 void psl_native_redraw(void){++redraws;}
 void psl_native_text(unsigned char *frame,unsigned x,unsigned top,const char *text)
 {
     /* Host rendering stand-in; native-font rasters are checked in ot_emu. */
     psl_font_small_text(frame,x,top,text);
-}
-void psl_native_part_menu_draw(unsigned char *frame,unsigned count,unsigned cursor,const char *const *rows)
-{
-    assert(frame && count==6 && cursor<count);
-    assert(!strcmp(rows[0],"RENAME") && !strcmp(rows[3],"SAVE ALL"));
-    assert(!strcmp(rows[4],"LOCK SAMPLES TO PATTERN") && !strcmp(rows[5],"CLEAR SAMPLE LOCKS"));
-    ++native_menu_draws;
 }
 int psl_native_commit(struct psl_plan *p){assert(p->ready);last_include=p->replace;last_action=p->action;last_selection=p->selected;
 for(unsigned t=0;t<8;++t){last_counts[t]=0;if(p->selected&(1u<<t))for(unsigned step=0;step<64;++step)last_counts[t]+=p->before[t][step]!=p->after[t][step];}
@@ -43,10 +32,8 @@ for(unsigned t=0;t<8;++t){last_counts[t]=0;if(p->selected&(1u<<t))for(unsigned s
 static int tap(int code){int answer=module_key(code,1);assert(module_key(code,0)==answer);return answer;}
 static void open_action(unsigned clear)
 {
-    popup=1;native_cursor=0;psl_ui_open();
-    for(unsigned i=0;i<6;++i)assert(tap(0x33));
-    for(unsigned i=0;i<4+clear;++i)assert(tap(0x20));
-    assert(tap(0x31));assert(psl_ui_phase()==2 && !popup);
+    /* The base's Part Edit menu has closed stock's popup and calls choose(clear). */
+    popup=0;psl_ui_start(clear);assert(psl_ui_phase()==2);
 }
 static void bounds(void)
 {
@@ -64,13 +51,12 @@ int main(void)
     memset(record,255,sizeof record);
     for(unsigned t=0;t<8;++t){memset(record[t],0,8);record[t][7]=(uint8_t)((1u<<(t+1u))-1u);}
     struct modwerk_runtime_api api={0};
-    psl_ui_open();
-    uint8_t menu_frame[1024]={0};module_draw(menu_frame);
-    assert(native_menu_draws==1); /* level one delegates to the stock-font adapter */
-    /* Level 1 has no title bar; its first item starts below this plain band. */
-    for(unsigned x=7;x<121;++x)assert(!(menu_frame[x*8+7]&(1u<<4)));
-    assert(!tap(0x31) && !psl_ui_phase()); /* native RENAME */
-    popup=1;native_cursor=0;psl_ui_open();assert(!tap(0x32) && !psl_ui_phase());
+    /* Closed: no key, knob or drawing is taken. */
+    assert(!tap(0x31) && !module_enc(6,4) && !psl_ui_phase());
+    /* The record the base's Part Edit menu reads (ot_part_menu). */
+    assert(psl_part_menu.abi==MODWERK_PART_MENU_ABI && !strcmp(psl_part_menu.label,"LOCKS") && psl_part_menu.icon && psl_part_menu.icon[4]==0x01fc0 && psl_part_menu.count==2);
+    assert(!strcmp(psl_part_menu.actions[0],"LOCK SAMPLES") && !strcmp(psl_part_menu.actions[1],"CLEAR LOCKS"));
+    psl_part_menu.choose(1);assert(psl_ui_phase()==2);tap(0x32);assert(!psl_ui_phase());
     open_action(0);bounds();
     uint8_t frame[1024]={0};module_draw(frame);
     /* Header background is white, its title glyphs are dark. */
@@ -106,7 +92,6 @@ int main(void)
     open_action(1);assert(!tap(0x28) && !psl_ui_phase()); /* PLAY retires before passing */
     open_action(0);context_ok=0;module_tick(&api);assert(!psl_ui_phase());context_ok=1;
     open_action(0);popup=2;module_tick(&api);assert(!psl_ui_phase());
-    popup=1;native_cursor=0;psl_ui_open();popup=2;module_tick(&api);assert(!psl_ui_phase());
     available=0;open_action(0);bounds();
     tap(0x20);tap(0x21);module_enc(0,1);module_enc(1,1);module_tick(&api);
     assert(((api.value>>16)&255)==0);tap(0x31);assert(psl_ui_phase()==2);tap(0x32);
@@ -135,27 +120,27 @@ int main(void)
     available=0xa5;open_action(0);module_enc(0,1);module_enc(2,1);
     tap(0x21);tap(0x20);tap(0x20);tap(0x31);tap(0x31);
     assert(!psl_ui_phase() && last_action==PSL_LOCK && last_include==1 && last_selection==0xa5);
-    /* Reopening highlights the last successful action. ALL adapts to the new
-     * eligible set; B still targets remembered T8. Cancel preserves prefs. */
-    available=255;popup=1;psl_ui_open();tap(0x31);assert(psl_ui_phase()==2);
+    /* Reopening Lock: ALL adapts to the new eligible set; B still targets
+     * remembered T8. Cancel preserves prefs. */
+    available=255;psl_ui_start(0);assert(psl_ui_phase()==2);
     module_tick(&api);assert(((api.value>>16)&255)==255);
     module_enc(1,-1);module_tick(&api);assert(((api.value>>16)&255)==127);tap(0x32);
     open_action(0);tap(0x31);tap(0x31);assert(last_include==1 && last_selection==255);
     /* Clear keeps its own custom T3 profile, independent of Lock. */
     available=0xa5;open_action(1);module_enc(0,-1);tap(0x34);for(unsigned i=0;i<4;++i)tap(0x33);tap(0x20);module_enc(1,1);
     tap(0x31);tap(0x31);assert(last_action==PSL_CLEAR && last_selection==4 && last_include==0);
-    popup=1;psl_ui_open();tap(0x31);module_tick(&api);assert(((api.value>>16)&255)==4);
+    psl_ui_start(1);module_tick(&api);assert(((api.value>>16)&255)==4);
     module_enc(2,1);tap(0x31);tap(0x31);assert(last_action==PSL_CLEAR && last_include==0);
     /* Disabled saved tracks are filtered without selecting a substitute. */
     available=0xa1;open_action(1);module_tick(&api);assert(((api.value>>16)&255)==0);tap(0x32);
     available=0xa5;open_action(1);module_tick(&api);assert(((api.value>>16)&255)==4);tap(0x32);
     /* Refused/stale operations and drafts must not overwrite either profile
-     * or the remembered level-one action. */
+     * profile. */
     commit_result=PSL_STALE;open_action(0);module_enc(0,-1);module_enc(1,1);module_enc(2,-1);
     tap(0x31);tap(0x31);assert(psl_ui_phase()==4);bounds();tap(0x32);
-    popup=1;psl_ui_open();tap(0x31);module_tick(&api);assert(((api.value>>16)&255)==4);tap(0x32);
+    psl_ui_start(1);module_tick(&api);assert(((api.value>>16)&255)==4);tap(0x32);
     commit_result=PSL_OK;open_action(0);tap(0x31);tap(0x31);
     assert(last_action==PSL_LOCK && last_include==1 && last_selection==0xa5);
     assert(redraws>0);
-    puts("PASS popup UI: playback unchanged, recording refusal, direct close, successful-operation RAM profiles, eligible filtering and native-font layout");
+    puts("PASS popup UI: playback unchanged, recording refusal, direct close, base Part Edit menu entry, successful-operation RAM profiles, eligible filtering and native-font layout");
 }
