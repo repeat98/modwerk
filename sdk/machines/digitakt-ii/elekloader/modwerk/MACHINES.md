@@ -123,7 +123,8 @@ Coupled runs (digikit `sharc_live`, `NOTE_EVENTS=trig` on track 1, the sidechain
 What it changes:
 
 - A machine that plays its sample the stock way needs no sound-chip hook: the ColdFire side alone (menu, name, knobs, saving) already gives it working sound in the emulator.
-- A machine with its own sound (Mikrotakt's grains) needs the sound chip to tell its voices apart. Next: find where the ColdFire turns the type into the DSP's value (the per-track words of the DSP frame) and send a distinct value for an added type, then the render hook at `0x1c6ae8`.
+- A machine with its own sound (Mikrotakt's grains) needs the sound chip to tell its voices apart. It can: the ColdFire sends the raw type, and the translation happens on the sound chip (static read, 19 November 2026). In `0x1c24e9`, `M2 = DM(0x255970 + track)` loads the track's raw machine type (`0x1c26d4`), and `S2 = DM(0x2567c0 + type)` (`0x1c273c`, table address set at `0x1c2731`) reads one word per type from a seven-entry table and stores it as the track's selector. A type of 7 reads the word after the table, which held a SAMPLE selector in the run above; higher types read whatever data follows.
+- So the base needs, on the sound chip: a longer selector table in its own L2 (the seven stock words, then one per added machine: SAMPLE's for a sample-backed machine) with the address at `0x1c2731` pointed at it, so no added type reads past the table; and a render hook at `0x1c6ae8` that reads the raw type (`DM(0x255970 + track)`) to call an added machine's own render.
 - Any sound-chip detour must preserve every register and the sticky status it touches, including registers the displaced instruction only reads (`R0` here).
 
 ## Still to check
