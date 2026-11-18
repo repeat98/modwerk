@@ -705,6 +705,23 @@
       "module": "d4582ab2",
       "bytes": 3446,
       "sha256": "f311dd620daf296dc6caff7f442533fe6e7262e2a1834bbfbc237fc4d3ff1631"
+    },
+    {
+      "id": "butter-fingers",
+      "octabam": true,
+      "unitName": "Butter Fingers",
+      "usbOnly": true,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/butter-fingers/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Butter Fingers",
+      "module": "5cf69df3",
+      "bytes": 652,
+      "sha256": "c470e87aefa7c8e2c87dd7b1429a265e5353430b74331adb53158055269c9655"
     }
   ]
 }

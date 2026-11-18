@@ -2,6 +2,7 @@
   "schema": 1,
   "module": "butter-fingers",
   "version": "0.1.0-experimental",
+  "sourceSha256": "8a18c5c1e3231770a4899ff611cfa65a4ce93a1057109a1b6471589e19e6e29f",
   "kind": "coldfire",
   "trigger": "key",
   "cycles": {

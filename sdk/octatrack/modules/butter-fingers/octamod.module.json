@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 2,
+  "id": "butter-fingers",
+  "key": "BUTTER FINGERS",
+  "name": "Butter Fingers",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "author": {
+    "github": "jankolkmeier",
+    "name": "Jan Kolkmeier",
+    "credits": [
+      "Jan Kolkmeier: the module, its tests and documentation, and the thumbnail."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "No stray locks after removing one",
+    "family": "Editing",
+    "summary": "Removing a parameter or scene lock with a knob press no longer writes a new lock when the knob slips a detent.",
+    "overview": "On the MKII, pressing a DATA ENTRY knob while holding a trig (or SCENE A/B) removes that lock when you let go. A finger that nudges the knob while pressed turns the removal into a coarse x7 jump, and one that nudges it on release writes a new lock. Butter Fingers ignores the first slipped detent while the knob is pressed and every detent for 150 ms after its release, only while a lock is being edited. Deliberate coarse edits still work, one detent later.",
+    "highlights": [
+      "Only while a TRIG key or SCENE A/B is held, and only for the pressed knob: everything else behaves as stock.",
+      "The release window is 150 ms; a deliberate turn right after it is not delayed.",
+      "Press + turn still makes stock's coarse x7 edit, starting from the second detent.",
+      "No setting, no stock code patched, nothing stored in the project."
+    ],
+    "usage": [
+      "Hold a TRIG key with a parameter lock and press the DATA ENTRY knob of the locked parameter; let go. The lock is removed, as in stock.",
+      "Let go of the knob carelessly, nudging it a detent as you lift your finger: with Butter Fingers the lock stays removed instead of a new lock being written.",
+      "For a deliberate coarse edit, keep the knob pressed and turn it: the first detent is ignored, from the second on it moves in stock's coarse steps (x7).",
+      "Scene locks work the same way: hold SCENE A or B and press the knob to remove that scene's lock."
+    ]
+  },
+  "access": {
+    "location": "Every page with DATA ENTRY knobs, while a TRIG key or SCENE A/B is held",
+    "steps": [
+      "Hold a TRIG key with a parameter lock and press the DATA ENTRY knob of the locked parameter; let go. The lock is removed, as in stock.",
+      "Let go of the knob carelessly, nudging it a detent as you lift your finger: with Butter Fingers the lock stays removed instead of a new lock being written.",
+      "For a deliberate coarse edit, keep the knob pressed and turn it: the first detent is ignored, from the second on it moves in stock's coarse steps (x7).",
+      "Scene locks work the same way: hold SCENE A or B and press the knob to remove that scene's lock."
+    ],
+    "screenshots": [],
+    "noUiReason": "It draws nothing and has no page or setting: it only drops a slipped knob detent while a lock is being edited."
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Project sequencer",
+    "conflicts": [],
+    "uiClaims": [
+      "key:TRIG+PUSHA",
+      "key:TRIG+PUSHB",
+      "key:TRIG+PUSHC",
+      "key:TRIG+PUSHD",
+      "key:TRIG+PUSHE",
+      "key:TRIG+PUSHF"
+    ],
+    "limitations": [
+      "OS 1.40C, MKII (the MKI has no knob presses). Tested on one MKII.",
+      "Changes a stock gesture while a parameter or scene lock is edited: the first detent of press + turn and every detent for 150 ms after the knob's release are ignored. Remove the module to restore stock behaviour.",
+      "A detent turned just before the press registers reaches the firmware; the press then removes the lock it wrote.",
+      "LEVEL and press + turn outside lock editing are untouched."
+    ]
+  },
+  "resources": {
+    "recorded": "17 November 2026; ot_emu, not hardware",
+    "storage": {
+      "label": "Runtime package",
+      "display": "544 B code and data + 44 B state",
+      "value": 544,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "sdk/runtime/loader/build.py --octabam, one ColdFire unit, three runtime hooks, 4 relocations, no stock-code sites, no DSP code.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, per key, knob turn and UI tick",
+      "display": "At most 46 instructions per event of its own; no frame-interrupt or audio work",
+      "value": 46,
+      "unit": "instructions/event",
+      "method": "emulator",
+      "conditions": "Adapted ot_emu, base 771f160f, package c470e87a: dearest own path bf_key 46, bf_enc 30, bf_tick 8 instructions; dearest whole call 28,352 with a frame interrupt inside it (evidence/performance.json).",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "UI task: key and encoder events and the 60 Hz tick.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "measured-comparison",
+        "rationale": "At most 46 instructions of its own per key or knob event and 8 per UI tick, in the UI task; nothing in the frame interrupt or audio path (ot_emu).",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "A 652-byte package: 544 bytes of code and data and 42 bytes of state.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host gate (verify.py, 20 checks); ot_emu: lock removal against stock, cycles of each handler and 21 rounds of the dearest gesture while playing with STOP and Part change, no hang. On one MKII over USB (base 0.7.1 dd683f35, beside FM Synth 0.1.3) the author checked trig and scene lock removal, press + turn, untouched controls and a power cycle.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "a6cf919d08c3c0ffe3586470ad74dae8563d2ba5",
+    "gates": [
+      "modules/butter-fingers/verify.py"
+    ],
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: remove a lock without a stray one",
+        "steps": [
+          "Hold a TRIG key with a parameter lock and press the DATA ENTRY knob of the locked parameter; let go. The lock is removed, as in stock.",
+          "Let go of the knob carelessly, nudging it a detent as you lift your finger: with Butter Fingers the lock stays removed instead of a new lock being written.",
+          "For a deliberate coarse edit, keep the knob pressed and turn it: the first detent is ignored, from the second on it moves in stock's coarse steps (x7).",
+          "Scene locks work the same way: hold SCENE A or B and press the knob to remove that scene's lock."
+        ]
+      },
+      "screenshots": [],
+      "screenshotStyle": "black-and-white"
+    },
+    "qualification": {
+      "moduleVersion": "0.1.0-experimental",
+      "sourceSha256": "c4004a318b325207506a556bd9b7a16615ca1bdbb5cfef1f3cd10841020a20d5",
+      "imageSha256": "c470e87aefa7c8e2c87dd7b1429a265e5353430b74331adb53158055269c9655",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 46,
+          "maxConfiguration": 28352,
+          "maxInstances": 1,
+          "budget": 26600000,
+          "unit": "cycles/event",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "Every branch of the three handlers: TRIG 1, SCENE A and SCENE B held in turn and nothing held; knobs A, D and F pressed and released; a first single detent, later detents and turns inside and after the 150 ms window; every knob pressed and turned with nothing held.",
+            "parameterModulation": "Not applicable: no parameter of its own; LFOs, locks, scenes and MIDI CC do not pass the knob hooks. It only drops a knob detent.",
+            "modeSwitching": "21 rounds of PLAY, the dearest gesture, STOP and a Part change (PART + UP or DOWN), with the sequencer playing during the gesture.",
+            "maxLoad": "One global instance in the UI task. Executed instructions in Modwerk's adapted ot_emu with frames and both DSP cores running: own paths bf_key 46, bf_enc 30, bf_tick 8; the dearest whole call, 28,352, is one bf_enc call a frame interrupt landed in (evidence/performance.json). Budget: the key-trigger budget of perf:audit.",
+            "inputConditions": "Audio content is not read; cost depends only on panel events. Counted instructions, not chip cycles; stock callees and interrupts included in the whole-call figure."
+          },
+          "report": "TESTING.md"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "Linked code and data (one unit, butter_fingers_core.s)",
+            "space": "sdram",
+            "words": 544,
+            "wordBits": 8,
+            "bytes": 544,
+            "scope": "shared"
+          },
+          {
+            "name": "State (bf, zeroed on first use by its magic word)",
+            "space": "sdram",
+            "words": 42,
+            "wordBits": 8,
+            "bytes": 42,
+            "scope": "shared"
+          },
+          {
+            "name": "Largest module-owned stack path (one saved register)",
+            "space": "sdram",
+            "words": 4,
+            "wordBits": 8,
+            "bytes": 4,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 590,
+        "maxInstances": 1,
+        "totalBytes": 590,
+        "conditions": "From the assembled unit (m68k-elf, .text + .data 544 bytes, .comm bf 42 bytes) and the 652-byte package c470e87a with 4 relocations and 3 hooks. No heap; the handlers push one register on the caller's stack. Loader records and stock's stack are the base's and not counted.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-11-18",
+        "tester": "jankolkmeier",
+        "sourceRevision": "a6cf919d08c3c0ffe3586470ad74dae8563d2ba5",
+        "imageSha256": "c470e87aefa7c8e2c87dd7b1429a265e5353430b74331adb53158055269c9655",
+        "summary": "On the author's MKII, OS 1.40C, flashed Modwerk base 0.7.1 dd683f35, package c470e87a kept beside FM Synth 0.1.3, sequencer stopped and playing: with a TRIG held, set a lock and removed it by pressing the knob, letting the knob slip, with no stray lock; press + turn about seven times on several knobs still made the coarse edit; the same with SCENE A and SCENE B; plain knob turns, TEMPO and LEVEL unchanged; after a power cycle lock removal worked again. The agent read the kept set back from the device (FM Synth, Butter Fingers) before and after.",
+        "limitations": [
+          "Author-reported panel observations; nothing timed on the unit.",
+          "Not checked: MKI, MIDI tracks with MIDI Scenes, beside Arp Key Locks, MIDI CC input."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial: remove a lock without a stray one",
+          "steps": [
+            "Hold a TRIG key with a parameter lock and press the DATA ENTRY knob of the locked parameter; let go. The lock is removed, as in stock.",
+            "Let go of the knob carelessly, nudging it a detent as you lift your finger: with Butter Fingers the lock stays removed instead of a new lock being written.",
+            "For a deliberate coarse edit, keep the knob pressed and turn it: the first detent is ignored, from the second on it moves in stock's coarse steps (x7).",
+            "Scene locks work the same way: hold SCENE A or B and press the knob to remove that scene's lock."
+          ]
+        },
+        "screenshots": [],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original module by Jan Kolkmeier, MIT. No firmware, extracted stock code or built images are included."
+  },
+  "media": []
+}
