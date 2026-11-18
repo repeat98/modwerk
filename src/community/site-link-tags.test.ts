@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { tagMailLinks } from '../../server/mail-links'
+import { tagDiscordLinks, tagMailLinks } from '../../server/site-link-tags'
 import { welcomeEmail } from '../../server/welcome-email-template'
 import { VISIT_SOURCES } from './usage-contract'
 import { visitSource } from './visit-source'
@@ -33,5 +33,17 @@ describe('tagging site links in Modwerk mail', () => {
     expect(links.length).toBeGreaterThan(3)
     for (const link of links) { const url = new URL(link); expect(visitSource('', url.search, 'https://modwerk.app')).toBe('mail-welcome') }
     expect(VISIT_SOURCES).toContain('mail-welcome')
+  })
+})
+
+describe('tagging site links in TARS replies', () => {
+  it('tags links to the site in Discord markdown and leaves the rest of the reply as written', () => {
+    expect(tagDiscordLinks('Try <https://modwerk.app/#module/fm-synth>, the [guide](https://modwerk.app/octatrack-setup/) or https://github.com/repeat98/modwerk.'))
+      .toBe('Try <https://modwerk.app/?utm_source=discord-bot#module/fm-synth>, the [guide](https://modwerk.app/octatrack-setup/?utm_source=discord-bot) or https://github.com/repeat98/modwerk.')
+    expect(visitSource('', '?utm_source=discord-bot', 'https://modwerk.app')).toBe('discord-bot')
+  })
+  it('keeps a reply as written when the tags would take it past 2000 characters', () => {
+    const near = 'x'.repeat(1970) + ' https://modwerk.app/'
+    expect(tagDiscordLinks(near)).toBe(near)
   })
 })

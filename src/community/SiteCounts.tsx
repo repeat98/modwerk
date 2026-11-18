@@ -4,7 +4,7 @@ import type { UsageStatistics } from './usage-contract'
 
 const format = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 1 })
 const percent = (part: number, whole: number) => whole ? Math.round(part / whole * 100) + ' %' : '—'
-const SOURCE_LABELS: Record<string, string> = { direct: 'Direct or unknown', 'other-search': 'Other search engines', chatgpt: 'ChatGPT', claude: 'Claude', github: 'GitHub', youtube: 'YouTube', duckduckgo: 'DuckDuckGo', cdm: 'CDM', x: 'X / Twitter', mail: 'Email (webmail)', 'mail-news': 'Modwerk news mail', 'mail-activity': 'Modwerk activity mail', 'mail-welcome': 'Modwerk welcome mail', 'mail-beta': 'Modwerk beta mail', other: 'Other sites' }
+const SOURCE_LABELS: Record<string, string> = { direct: 'Direct or unknown', 'other-search': 'Other search engines', chatgpt: 'ChatGPT', claude: 'Claude', github: 'GitHub', youtube: 'YouTube', duckduckgo: 'DuckDuckGo', cdm: 'CDM', x: 'X / Twitter', 'discord-bot': 'Discord (TARS replies)', mail: 'Email (webmail)', 'mail-news': 'Modwerk news mail', 'mail-activity': 'Modwerk activity mail', 'mail-welcome': 'Modwerk welcome mail', 'mail-beta': 'Modwerk beta mail', other: 'Other sites' }
 const label = (source: string) => SOURCE_LABELS[source] ?? source[0].toUpperCase() + source.slice(1)
 /** Where page loads came from and how the sign-in prompt was answered. */
 export function SiteCounts({ data }: { data: UsageStatistics }) {

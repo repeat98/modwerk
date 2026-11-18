@@ -1,5 +1,5 @@
 import type { Database, Env } from './platform'
-import { tagMailLinks } from './mail-links'
+import { tagMailLinks } from './site-link-tags'
 import { emailReady, recordMail } from './email'
 import { reserveMailBudget } from './mail-budget'
 import { digest, HttpError } from './security'
