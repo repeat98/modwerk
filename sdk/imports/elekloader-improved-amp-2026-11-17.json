@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "improved-amp-2026-11-17",
+  "about": "Modwerk source-only improved-amp package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/improved-amp.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "improved-amp-0.1.2-experimental-os1.74.elemod",
+      "sha256": "1e006bd5503704102484d910f4a0a4955202ce1bb56db9dc6714692ac0dbd882",
+      "id": "improved-amp",
+      "version": "0.1.2-experimental",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-only",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "2accfcc61e5b90eeecbd85fd8aa1e2181eac67b3",
+        "path": "sdk/imports/packages/improved-amp/improved-amp-0.1.2-experimental-os1.74.elemod"
+      },
+      "title": "Improved AMP",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [
+        "env-reset-amp"
+      ],
+      "summary": "The AMP page reworked: HLD from no hold to AUTO, in steps that follow the tempo; ATK, DEC and REL in fine steps from 0.2 ms, shown as times; a finer OVR; and ENV RESET AMP without a click.",
+      "description": "Always on while installed. AMP HLD runs from no hold (0) to AUTO (127), never cuts the attack and is a length in steps of the track that follows the tempo and the track's speed; FUNC + turn stops on the step grid from 0.125 to 64 steps. AMP and FILTER ATK, DEC and REL move in 0.2 ms steps up to 5 ms and read as times. AMP OVR keeps its 0 to 127 number and is finer at its low end. SOUND SETTINGS > ENV RESET gains AMP and AMP+FILT: a sequenced trig or retrig of such a sound is faded out just before it, so the envelope restarts from silence without a click. Saved sounds play their HLD, ATK, DEC, REL and OVR values on the new curves while it is installed. It carries Env Reset Amp's ENV RESET values and cannot be installed with it.",
+      "category": "Sound",
+      "author": "npp1993",
+      "needs_core": "0.7",
+      "on_unit": "On an Analog Rytm MKII on OS 1.74, by the author's automated USB test rig on 17 November 2026: this version alone on a development build of the Modwerk base with a USB test link, loaded to RAM (IA18). With a looped sample on BD every hold measured as for 0.1.1 (HLD 42 135.0 ms, 57 308.0, AUTO 509.5 for a 500 ms note, 42 at 90 BPM 176.0), and env-reset, filter-times, hld, hld-func, ovr, save, times, prefade-swing and first-trig pass; the pre-fade's other cases ran without a ringing sound and did not measure it (its code is byte-identical to 0.1.1's, TESTING.md). This package has not been flashed from the site."
+    }
+  ]
+}

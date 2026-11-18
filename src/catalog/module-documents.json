@@ -921,7 +921,7 @@
       "id": "repitch",
       "key": "REPITCH",
       "name": "Repitch",
-      "version": "0.2.0-experimental",
+      "version": "0.2.1-experimental",
       "category": "playback",
       "access": {
         "location": "STATIC or FLEX track SRC SETUP: TSTR = RPCH. The sample attribute route also offers TIMESTRETCH = REPITCH.",
@@ -1014,6 +1014,15 @@
             "rationale": "The described contribution is a playback-speed and menu patch, reusing the existing sample renderer and storage. Minimal estimates added module storage; recorder and slice cases are explicitly unmeasured in the source record.",
             "source": "README.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0.8,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price",
+          "date": "2026-11-17",
+          "conditions": "Measured by the owner's session: MKII, development twin of base 0.7.8 (98637a13), the owner's project bank C pattern C01 playing three static loops on T2-T4, TSTR OFF where a loop carries REPITCH, so Repitch acted on no track (increments read at unity), 8 s per reading. Two runs alternating: this package (sha256 4b927846) added +0.8 and +0.8 points, the published 0.2.0 +1.2 and +1.2. A track with REPITCH in force was measured only as a whole set (same package +0.8 with two REPITCH tracks), not per track.",
+          "source": "TESTING.md"
         }
       },
       "tests": {
@@ -3176,6 +3185,362 @@
     },
     {
       "schemaVersion": 2,
+      "id": "vibrato",
+      "key": "VIBRATO",
+      "name": "Vibrato",
+      "version": "0.1.0-experimental",
+      "category": "effects",
+      "source": {
+        "repository": "https://github.com/sambanks/octabam",
+        "revision": "e85f54e0d570bd74bfd70b9d5467b35c01b9c468",
+        "path": "modules/vibrato"
+      },
+      "access": {
+        "location": "Audio track FX1 or FX2 SETUP: VIBRATO in the effect chooser. The screenshots use FX2.",
+        "steps": [
+          "Select an audio track with its TRACK key.",
+          "Hold FUNC and press FX1 (or FX2) to open its SETUP page.",
+          "Turn LEVEL to VIBRATO and press YES to assign it; SHP appears on the SETUP page.",
+          "Press FX1 (or FX2) for the main page: SPD, DEP, SLEW, WID and MIX."
+        ],
+        "screenshots": [
+          "media/ot-setup.png",
+          "media/ot-main.png",
+          "media/ot-deep.png",
+          "media/ot-shape-sqr.png"
+        ]
+      },
+      "author": {
+        "github": "bryantysinger",
+        "name": "Bryan T",
+        "credits": [
+          "Bryan T (bryantysinger): VIBRATO's design, Faust prototype, DSP56300 code, float reference, tables, declaration, render gate and hardware testing, contributed to octabam (pull request 1045, 5 November 2026) with his SPD and DEP glide of the same day.",
+          "Sam Banks: the octabam SDK, schema and render harness the module is written against.",
+          "Modwerk: the port (no SLOTS setting, live on FX1 and FX2, one random seed for both cores), README, TESTING.md, octamod.module.json and thumbnail."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "PITCH VIBRATO",
+        "family": "Modulation",
+        "summary": "A pitch vibrato with its depth in cents: sine, triangle, a two-note trill or stepped random pitch, on FX1 or FX2.",
+        "overview": "VIBRATO bends the pitch of its track with one short modulated delay per channel. DEP sets the swing in cents and holds it as SPD moves, so a faster vibrato is not a deeper one. SHP picks the shape: SINE and TRI for a sung or played vibrato, SQR for a trill between two notes, RND for a new random pitch every half cycle. SLEW rounds any shape into a glide, WID moves the right channel ahead for a wide stereo vibrato, and MIX blends the dry track back in for a chorus-like shimmer.",
+        "highlights": [
+          "Depth in cents, from a few cents to a whole-tone trill at DEP 127",
+          "Four shapes: SINE, TRI, SQR (two-note trill) and RND (stepped random pitch)",
+          "SPD from 0.25 to 15.5 Hz; SPD and DEP glide, so a fast twist or an LFO stays smooth",
+          "WID for stereo width; SLEW to round the shape",
+          "Runs on FX1 or FX2, on any audio track"
+        ],
+        "usage": [
+          "On an audio track that plays a sustained sound, hold FUNC and press FX2 (or FX1), turn LEVEL to VIBRATO and press YES.",
+          "Press FX2 for the main page. The defaults are a gentle sine vibrato of about 14 cents at 3.4 Hz, the vibrato alone (MIX 127).",
+          "Turn DEP up for a deeper vibrato, SPD for a faster one. Set SHP to SQR on the SETUP page for a trill, then DEP 127 for a whole tone.",
+          "Turn MIX down to blend the dry sound back in; MIX 0 is the dry track, unchanged."
+        ]
+      },
+      "controls": [
+        {
+          "name": "SPD",
+          "default": 80,
+          "count": 128,
+          "doc": "Rate, 0.25 Hz at 0 to 15.5 Hz at 127, exponential: 2 Hz at 64, 3.4 Hz at 80, 5.3 Hz at 94. Glides, so a twist or an LFO moves smoothly.",
+          "labels": null
+        },
+        {
+          "name": "DEP",
+          "default": 48,
+          "count": 128,
+          "doc": "Peak pitch deviation, 100 x (DEP/127)^2 cents: 6 at 32, 14 at 48, 25 at 64, 100 at 127 (a whole-tone trill in SQR). Holds as SPD moves; very slow and very deep settings run out of delay line first. Glides.",
+          "labels": null
+        },
+        {
+          "name": "SLEW",
+          "default": 0,
+          "count": 128,
+          "doc": "Rounds the shape: 0 is none, 127 a quarter-cycle smoothing. Turns SQR's steps into a glide; also lowers the peak a little.",
+          "labels": null
+        },
+        {
+          "name": "WID",
+          "default": 0,
+          "count": 128,
+          "doc": "Stereo width: the right channel's vibrato leads by up to half a cycle (64 is a quarter cycle, 127 opposite). On RND it makes the right channel's random pitch independent of the left's.",
+          "labels": null
+        },
+        {
+          "name": "MIX",
+          "default": 127,
+          "count": 128,
+          "doc": "Dry/wet: 127 is the vibrato alone, 0 is the dry track, bit for bit. Glides over about 3 ms.",
+          "labels": null
+        },
+        {
+          "name": "SHP",
+          "default": 0,
+          "count": 4,
+          "doc": "Pitch shape: SINE, TRI, SQR (a two-note trill) or RND (a new random pitch every half cycle). A change fades the vibrato out and back in, without a click.",
+          "labels": [
+            "SINE",
+            "TRI",
+            "SQR",
+            "RND"
+          ]
+        }
+      ],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": 11,
+        "location": "FX1 / FX2",
+        "conflicts": [],
+        "uiClaims": [],
+        "limitations": [
+          "One random seed for both DSP cores: RND on the same slot of a track on each core (track 1 and track 5, say) draws the same random sequence. Every other pair of slots differs. octabam seeds each core differently.",
+          "Very slow, very deep settings are limited by the 1,024-sample delay lines: the depth then falls short of DEP's cents.",
+          "Tested on one MKII over USB on a development twin of base 0.7.7, as a trial in RAM: not yet listened to there, and not kept through a power cycle; scenes, MIDI and an MKI were not tried."
+        ]
+      },
+      "resources": {
+        "recorded": "2026-11-17",
+        "storage": {
+          "label": "DSP program / table",
+          "display": "696 words per core",
+          "value": 696,
+          "unit": "words",
+          "method": "static",
+          "conditions": "The USB package: 696 DSP words per core (program and the 103-word P table), 64 words of state per instance in its r7 block, two 1,024-word delay lines out of the effect slot's own buffer (2,048 Y words, inside an FX1 slot's 3,072).",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "DSP chip cycles a slot",
+          "display": "249 cycles/sample on an MKII (SPRING REV 339)",
+          "value": 249,
+          "unit": "cycles/sample",
+          "method": "hardware",
+          "conditions": "scripts/octatrack-measure.py on an MKII, development twin 945cc074 of base 0.7.7, FX2 of T1 (core 1) and T5 (core 0), playing: 248.9 and 240.8 chip cycles a sample above NONE as picked, 244.5 and 236.4 with every knob at its maximum; peak frame 297.3 and 318.3. Stock SPRING REV the same way: 338.5 and 327.0. In dsp_host: worst 156.25 executed instructions a sample (SPRING REV 314.19), static count 108.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "One instance on FX2 of one track, playing, on an MKII.",
+          "cpu": {
+            "level": "minimal",
+            "basis": "measured-comparison",
+            "rationale": "No ColdFire code beyond a cloned descriptor and a label formatter: the frame interrupt read 27.3 % before, installed and in use alike (npm run device:price and the same steps by hand).",
+            "source": "TESTING.md"
+          },
+          "dsp": {
+            "level": "moderate",
+            "basis": "measured-comparison",
+            "rationale": "249 chip cycles a sample on an MKII against 339 for stock SPRING REV and 5.5 points of its core over DELAY; half of SPRING REV in dsp_host (156 against 314 executed instructions a sample). Bryan T's MKII ran sixteen at once, FX1 and FX2 of every track.",
+            "source": "TESTING.md"
+          },
+          "memory": {
+            "level": "low",
+            "basis": "source-estimate",
+            "rationale": "696 program-memory words on each DSP core, 64 state words per instance in its existing r7 block, and 2,048 words of its own slot's buffer for the two delay lines.",
+            "source": "TESTING.md"
+          }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price",
+          "date": "2026-11-17",
+          "conditions": "MKII, base 0.7.7 development twin 945cc074, bank C pattern C01 Part 1 (STATIC loops in slots 2 and 3) playing, 8 s per reading: frame interrupt 27.3 % before and installed on no track (device:price); on T1 FX2 in place of DELAY, by hand with device:price's steps (it prices a slot only for a listed package), 27.3 % as well. CPU meter 38.8 % before, 39.4 % in use; T1-4's DSP core 38.6 % to 44.1 %.",
+          "source": "TESTING.md"
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "0.1.0-experimental: Bryan T's VIBRATO ported with its DSP unchanged in sound (live on FX1 and FX2, one random seed for both cores). On an MKII over USB (development twin 945cc074 of base 0.7.7), as a trial in RAM: npm run device:test passed (self-test with it installed, picked alone on T1 and T5, on every track while the pattern played, its knobs swept, twelve Part switches, a bank change and back, inventory unchanged); chip cycles 249 a sample against SPRING REV's 339; frame interrupt +0.0. In dsp_host: the author's render gate 63 of 63, worst 156.25 executed instructions a sample, a 16-instance stress run clean, fx:audit clean with modulation off. Not listened to on the unit; no Keep or power cycle.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "e85f54e0d570bd74bfd70b9d5467b35c01b9c468",
+        "gates": [
+          "verify_vibrato.py: the author's render gate adapted to the FX1+FX2 build, 63 dsp_host checks on payload A, all passed",
+          "perf.py bench and stress (Modwerk's tool): worst 156.25 executed instructions a sample; 16 instances under LFOs, locks and trig splits, no hang or clobber",
+          "npm run fx:audit: clean with modulation off; with it on, only the vibrato's own sidebands",
+          "npm run device:test on an MKII twin of base 0.7.7: passed"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial: a vibrato, then a trill",
+              "steps": [
+                "On an audio track that plays a sustained sound, hold FUNC and press FX2, turn LEVEL to VIBRATO and press YES. (FX1 works the same way.)",
+                "Press FX2 for the main page. At the defaults the track has a gentle sine vibrato of about 14 cents at 3.4 Hz. Turn DEP (encoder B) to 80 for a deep, singing vibrato, and SPD (encoder A) to 100 for a faster one.",
+                "Hold FUNC and press FX2 again, turn SHP (encoder A) to SQR, then turn DEP to 127 on the main page: the track now trills a whole tone. Turn MIX to 0 for the dry track, or pick NONE in FX2 SETUP to take VIBRATO off."
+              ]
+            },
+            "screenshots": [
+              "media/ot-setup.png",
+              "media/ot-main.png",
+              "media/ot-deep.png",
+              "media/ot-shape-sqr.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "e07e231362955f1d2f6fe7fcf5182354669509da1a44404ffe175f60e1a03a6a",
+          "imageSha256": "461a4a2a7430a0e7a4955f9e207a576d7f6f462fc58038d63a737c1d2fd6aa02",
+          "cycles": [
+            {
+              "processor": "dsp",
+              "worstCase": 249,
+              "maxConfiguration": 1992,
+              "maxInstances": 8,
+              "budget": 3120,
+              "unit": "cycles/sample",
+              "method": "hardware",
+              "conditions": {
+                "parameterExtremes": "scripts/octatrack-measure.py read VIBRATO as picked, with every main and SETUP knob at its minimum and at its maximum on T1 (core 1) and T5 (core 0): 248.9 / 240.8, 248.9 / 240.8 and 244.5 / 236.4 chip cycles a sample above NONE; peak frame 297.3 / 318.3. perf.py bench in dsp_host: worst 156.25 executed instructions a sample (moving knobs, trig split at frame 1); every knob 127 in SINE, TRI, SQR and RND 144.44, 144.25, 143.25 and 155.50.",
+                "parameterModulation": "The moving pattern in dsp_host changes every slot each 16-sample block; the stress run adds three LFOs per track and a new value on every slot each sixteenth. On the unit device:test swept every main-page knob from minimum to maximum in eight steps while the pattern played. Parameter locks and scenes were not tried on a unit.",
+                "modeSwitching": "The stress run redraws SHP every sixteenth, so the shapes switch under load with the duck; the render gate checks the duck for clicks. On the unit the knob sweep and the SETUP knobs at their extremes changed SHP; twelve Part switches each ran their own effects within 3 s.",
+                "maxLoad": "Eight instances on a core (FX1 and FX2 of its four tracks) would be 8 x 249 = 1,992 of 3,120 usable chip cycles a sample; dsp_host's gate ran eight on one core, each bit-identical to one alone. On the unit with the package's earlier emulator declaration (157 executed, charged 275), the base admitted three a core on FX2 beside FILTER on every FX1 while the pattern played: core peaks 471 and 558 per mille. Bryan T's MKII ran sixteen at once, FX1 and FX2 of every track, cores at 59 % and 51 % (octabam build). Streaming, USB and MIDI load are not in the model.",
+                "inputConditions": "Stress stems: drums with full-scale clicks, a full-level chord, noise bursts and silence, a 20 Hz-20 kHz sweep, a full-scale square, impulses, DC steps and plucks. The sample loop has no signal-dependent branch; RND draws once a half cycle."
+              },
+              "report": "TESTING.md"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "Program and P table (INC, PERW, DEV8, FACW): 696 words on each DSP core",
+                "space": "dsp-p",
+                "words": 1392,
+                "wordBits": 24,
+                "bytes": 4176,
+                "scope": "shared"
+              },
+              {
+                "name": "State: r7 +00..3f",
+                "space": "dsp-x",
+                "words": 64,
+                "wordBits": 24,
+                "bytes": 192,
+                "scope": "instance"
+              },
+              {
+                "name": "Delay lines: two 1,024-word lines in the slot's own buffer",
+                "space": "dsp-y",
+                "words": 2048,
+                "wordBits": 24,
+                "bytes": 6144,
+                "scope": "instance"
+              },
+              {
+                "name": "Descriptor clone, label formatter and package glue",
+                "space": "cpu-ram",
+                "words": 496,
+                "wordBits": 8,
+                "bytes": 496,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 6336,
+            "sharedBytes": 4672,
+            "maxInstances": 16,
+            "totalBytes": 106048,
+            "conditions": "The USB package (module d4582ab2): 696 DSP words per core, 496 bytes of ColdFire code and data. Each instance's state is its existing r7 block, which init zeroes; its two delay lines are 2,048 words of the slot buffer the base hands it (an FX1 slot gives 3,072, an FX2 slot 16,384), which init clears once. Sixteen instances are FX1 and FX2 of all eight tracks.",
+            "report": "TESTING.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKII",
+            "testedOn": "2026-11-17",
+            "tester": "repeat98",
+            "sourceRevision": "e85f54e0d570bd74bfd70b9d5467b35c01b9c468",
+            "imageSha256": "461a4a2a7430a0e7a4955f9e207a576d7f6f462fc58038d63a737c1d2fd6aa02",
+            "summary": "Over USB on the owner's Octatrack MKII, OS 1.40C, RAM-booted into development twin 945cc074 of base 0.7.7 (MAIN.raw 461a4a2a…), driven by the agent session: the USB package 73db0ee3… (module d4582ab2, 696 DSP words) as a trial in RAM, rolled back after each run. npm run device:test passed: the self-test with it installed (1 of 1 intact and ran; CPU peak 34.8 %, cores 35.9 % and 49.2 %); VIBRATO picked alone on FX2 of T1 and T5 (admitted in 115 and 141 ms; peaks 382 and 463 per mille); on FX2 of every track while the pattern played, three a core admitted; its knobs swept; twelve Part switches, a bank change and back; no crash or stall; inventory unchanged. octatrack-measure.py: 249 / 241 chip cycles a sample above NONE (SPRING REV 339 / 327). device:price: frame interrupt +0.0 installed and in use.",
+            "limitations": [
+              "Not listened to on the unit: how it sounds there rests on the dsp_host renders and the author's own listening on his MKII.",
+              "A RAM-booted development twin, as trials: no Keep, no power cycle, so reboot persistence and Part or project reload with VIBRATO saved were not run.",
+              "FX1 on the unit, scenes, parameter locks, MIDI and an MKI were not tried; FX1 ran only in dsp_host.",
+              "One MKII, the owner's; the runs were the port's agent session's, with nobody at the unit."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "VIBRATO is Bryan T's work, contributed to octabam and distributed under octabam's MIT licence (Copyright (c) 2026 Sam Banks), whose full text is in LICENSE and upstream/LICENSE. No Elektron firmware, extracted routine or table is included; the stock sine table is read from the unit's own memory at run time."
+      },
+      "media": [
+        {
+          "path": "media/ot-setup.png",
+          "captureType": "emulator",
+          "caption": "Hold FUNC and press FX2, turn LEVEL to VIBRATO and press YES. The SETUP page then shows SHP, the pitch shape, on encoder A.",
+          "alt": "FX2 SETUP with VIBRATO highlighted under NONE in the effect list; the SHP knob on the right.",
+          "credit": "Modwerk contributors (headless capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "FX2 SETUP",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "d0a645f292f0f1c9ad34ce44dab6383a56eb7d1f444aebf4c87c6ff9d6caef56",
+            "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; private native build of VIBRATO alone beside the stock effects (octabam e85f54e0 with Modwerk's changes); 128×64 LCD at integer scale 6."
+          }
+        },
+        {
+          "path": "media/ot-main.png",
+          "captureType": "emulator",
+          "caption": "Press FX2 for the main page: SPD, DEP and SLEW above WID and MIX. The defaults give a gentle sine vibrato of about 14 cents at 3.4 Hz.",
+          "alt": "FX2 main page of VIBRATO with SPD, DEP and SLEW above WID and MIX.",
+          "credit": "Modwerk contributors (headless capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "FX2 main",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "d0a645f292f0f1c9ad34ce44dab6383a56eb7d1f444aebf4c87c6ff9d6caef56",
+            "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; private native build of VIBRATO alone beside the stock effects (octabam e85f54e0 with Modwerk's changes); 128×64 LCD at integer scale 6."
+          }
+        },
+        {
+          "path": "media/ot-deep.png",
+          "captureType": "emulator",
+          "caption": "Turn encoder B to raise DEP: at 127 the pitch swings a whole semitone either side of the note.",
+          "alt": "FX2 main page of VIBRATO with DEP turned to 127.",
+          "credit": "Modwerk contributors (headless capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "FX2 main",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "d0a645f292f0f1c9ad34ce44dab6383a56eb7d1f444aebf4c87c6ff9d6caef56",
+            "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; private native build of VIBRATO alone beside the stock effects (octabam e85f54e0 with Modwerk's changes); 128×64 LCD at integer scale 6."
+          }
+        },
+        {
+          "path": "media/ot-shape-sqr.png",
+          "captureType": "emulator",
+          "caption": "Back on the SETUP page, turn encoder A to set SHP to SQR: the vibrato becomes a trill between two notes. Pick NONE in the list to take VIBRATO off the track.",
+          "alt": "FX2 SETUP with VIBRATO selected and SHP set to SQR.",
+          "credit": "Modwerk contributors (headless capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "FX2 SETUP",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "d0a645f292f0f1c9ad34ce44dab6383a56eb7d1f444aebf4c87c6ff9d6caef56",
+            "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; private native build of VIBRATO alone beside the stock effects (octabam e85f54e0 with Modwerk's changes); 128×64 LCD at integer scale 6."
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
       "id": "analog-bassdrum",
       "key": "ANALOG BD",
       "name": "Analog BD",
@@ -3963,7 +4328,7 @@
       "id": "synth",
       "key": "SYNTH MACHINE",
       "name": "FM Synth",
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -4003,7 +4368,7 @@
         "label": "Two-operator FM",
         "family": "Synth machines",
         "summary": "Two-operator FM with a dedicated track machine, one to four voices, chords and glide.",
-        "overview": "FM SYNTH provides one to four paraphonic FM voices through the stock AMP and effects. Version 0.1.3 makes the render path cheaper on the CPU with no change of function; 0.1.2 preserved the MIDI chromatic drawer stack and added 18.06 dB source headroom. Software regression and native/browser composition checks pass. The owner approved release without current hardware validation; chip timing and complete memory bounds remain unknown. The original static symptom remains unconfirmed on hardware.",
+        "overview": "FM SYNTH provides one to four paraphonic FM voices through the stock AMP and effects. Version 0.1.4 names its CPU price for the base's CPU budget, 6 % of a frame a track; 0.1.3 made the render path cheaper on the CPU with no change of function; 0.1.2 preserved the MIDI chromatic drawer stack and added 18.06 dB source headroom. Software regression and native/browser composition checks pass. The owner approved release without current hardware validation; chip timing and complete memory bounds remain unknown. The original static symptom remains unconfirmed on hardware.",
         "highlights": [
           "Dedicated machine chooser entry; no sample required.",
           "Pitch, ratio, index, fine tuning, feedback and index decay on SRC.",
@@ -4206,11 +4571,20 @@
             "rationale": "The native platform reserves a shared 10 MiB audio arena plus synth/quantizer state and page clones.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 6,
+          "unit": "percent-of-frame",
+          "measure": "machine-render",
+          "tool": "npm run device -- do 'PLAY w2500 guard w6000 guard STOP'",
+          "date": "2026-11-17",
+          "conditions": "Octatrack MKII, development twin 945cc074 of base 0.7.7, FM Synth 0.1.3 with SYNTIZ, Amiga and POLY8 installed, one FM Synth track at its default sound with a trig on every step of a 16-step pattern, seven empty STATIC tracks: the frame interrupt's share was 36.8 % against 32.2 % without the trigs, 4.6 points, priced 6 with room for longer notes",
+          "source": "TESTING.md"
         }
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "0.1.3 changes only the render path's cost (measured on an MKII, TESTING.md). Owner-approved experimental 0.1.2: MIDI selector regression passes; mono and four-voice output have 18.06 dB more headroom. Current hardware remains untested; chip timing and complete memory bounds remain unmeasured. See TESTING.md and evidence/regressions.json.",
+        "summary": "0.1.4 differs from 0.1.3 only in its descriptor's CPU price, measured on an MKII with 0.1.3 (TESTING.md). 0.1.3 changes only the render path's cost (measured on an MKII, TESTING.md). Owner-approved experimental 0.1.2: MIDI selector regression passes; mono and four-voice output have 18.06 dB more headroom. Current hardware remains untested; chip timing and complete memory bounds remain unmeasured. See TESTING.md and evidence/regressions.json.",
         "hardwareStatus": "untested",
         "evidenceRevision": "73490ef77f36bf523bc28f2b385d62e331ec7c5c",
         "gates": [

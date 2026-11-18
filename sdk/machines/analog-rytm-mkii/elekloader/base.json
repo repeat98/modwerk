@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top: in every variant (common) the machine list's sections (mw_machine_sections) and the FX track's edit save of words 38 to 41, which stock writes over the delay's TIME (base/fxguard.s), and in send-bus (add) the FX track's lock words, the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to, and digital voices (mw_voices) with the hook ev_sound_applied. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. It comes in three variants: send-bus (the default, with add), voices (add without what its leave names: the send bus, its pages, its clock and the FX list, so a set with a digital voice machine and no send effect keeps the lock words and the voices and pays nothing for a bus it does not use) and plain (core-ar2 0.7's source with common alone, for a build with neither, which then pays none of add's cost). npm run machine:base -- analog-rytm-mkii --dev also builds each variant with dev on top: the development link over USB MIDI (base/link.c), for test images only, never a release.",
+  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top: in every variant (common) the machine list's sections (mw_machine_sections) and the FX track's edit save of words 38 to 41, which stock writes over the delay's TIME (base/fxguard.s), and in send-bus (add) the FX track's lock words, the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to, and digital voices (mw_voices) with the hook ev_sound_applied. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. It comes in three variants: send-bus (the default, with add), voices (add without what its leave names: the FX track's lock words, the send bus, its pages, its clock and the FX list, so a set with a digital voice machine and no send effect keeps the voices and pays nothing for a bus it does not use; only the send bus writes those words, so on voices a pattern's send-FX locks are not kept: one saved with them on send-bus plays without them, and stock's next save of all its locks frees their lanes, while word 0 keeps marking those controls locked, so back on send-bus they play the kit's stored words instead, as after a trip through plain) and plain (core-ar2 0.7's source with common alone, for a build with neither, which then pays none of add's cost). npm run machine:base -- analog-rytm-mkii --dev also builds each variant with dev on top: the development link over USB MIDI (base/link.c), for test images only, never a release.",
   "core": "core-ar2",
   "include": "sdk/machines/analog-rytm-mkii/include",
   "os": "1.74",
@@ -16,6 +16,9 @@
     "voices": {
       "add": true,
       "leave": [
+        "../base/locks.c",
+        "../base/locks.s",
+        "core_lk_*",
         "../base/clock.c",
         "../base/sendbus.c",
         "../base/sendbus.s",

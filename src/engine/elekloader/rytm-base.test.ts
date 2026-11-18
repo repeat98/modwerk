@@ -37,7 +37,7 @@ describe('the Rytm sets\' Modwerk base', () => {
     expect(plain.storage).toBeUndefined()
     expect(plain.sections['.bss'].len ?? plain.sections['.bss'].size).toBeLessThan(2048)
   })
-  it('gives the voices variant send-bus\'s digital voices and lock words, and none of the send bus, its clock or the FX list', () => {
+  it('gives the voices variant send-bus\'s digital voices, and none of the send bus, its lock words, its clock or the FX list', () => {
     const voices = variantPackage('voices'), bus = variantPackage('send-bus')
     for (const name of ['mw_voices', 'ev_sound_applied']) {
       expect(Object.keys(voices.collections), name).toContain(name)
@@ -49,10 +49,12 @@ describe('the Rytm sets\' Modwerk base', () => {
     // the voice type keeps send-bus's field, so a lockfile carries it between the two; the bus's fields stay behind
     expect(voices.storage).toEqual(bus.storage.filter((field: { sym: string }) => !field.sym.startsWith('mw_send_')))
     expect(voices.storage).toEqual([{ sym: 'mw_voice_type', scope: 'sound', bits: 3 }])
-    // the FX track's lock words: the same sites in both
+    // the FX track's lock words, which only the send bus writes, stay on send-bus with it; the voices' site is in both
     const sites = (pack: { sites: { addr: string }[] }) => pack.sites.map(site => site.addr)
-    for (const addr of ['0x4000940c', '0x40009216', '0x40008f98', '0x4011f654']) expect(sites(voices), addr).toContain(addr)
-    for (const addr of ['0x4010ee66', '0x401c5324', '0x401c5358']) expect(sites(voices), addr).not.toContain(addr)
+    for (const addr of ['0x4000940c', '0x40009216', '0x40008f98', '0x4010ee66', '0x401c5324', '0x401c5358', '0x4011f654']) expect(sites(bus), addr).toContain(addr)
+    expect(sites(voices)).toContain('0x4011f654')
+    for (const addr of ['0x4000940c', '0x40009216', '0x40008f98', '0x4010ee66', '0x401c5324', '0x401c5358']) expect(sites(voices), addr).not.toContain(addr)
+    expect((voices.exports as string[]).filter(name => name.includes('lk_'))).toEqual([])
     const run = (pack: { sections: Record<string, { len?: number; size?: number }> }) => pack.sections['.run'].len ?? pack.sections['.run'].size ?? 0
     expect(run(voices)).toBeLessThan(run(bus) - 12_000)
   })

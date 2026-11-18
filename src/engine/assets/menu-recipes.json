@@ -656,6 +656,33 @@
           "sha256": "64930e3c966c8621732e4c28422236697dc30739c96f102f7615ee9628e78393"
         }
       ]
+    },
+    {
+      "id": "vibrato",
+      "key": "VIBRATO",
+      "author": "bryantysinger",
+      "slot": 6,
+      "name": "SHP",
+      "labels": [
+        "SINE",
+        "TRI",
+        "SQR",
+        "RND"
+      ],
+      "renames": {},
+      "wideMaximum": null,
+      "proofs": [
+        {
+          "namesAddress": 1074621238,
+          "bytes": 66,
+          "sha256": "03d924967bad03a1e25e7ccc96f618614b187a8be1452522cf421c8bc81fe55e"
+        },
+        {
+          "namesAddress": 1074623350,
+          "bytes": 66,
+          "sha256": "03d924967bad03a1e25e7ccc96f618614b187a8be1452522cf421c8bc81fe55e"
+        }
+      ]
     }
   ],
   "repitchPatches": [
@@ -994,22 +1021,23 @@
       "caveLimit": 1074625596
     }
   ],
-  "sourceCommit": "274f9a7a1179cdf4e034e39121c8e57a547341d5",
+  "sourceCommit": "ed4f006094266efdf576fda7ad65ea9ccc7b3c1f",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
     "euclid": "0.1.4-experimental",
-    "repitch": "0.2.0-experimental",
+    "repitch": "0.2.1-experimental",
     "tapehead": "0.1.2-experimental",
     "airwindows-chorus": "0.1.3-experimental",
     "everb": "0.1.2-experimental",
     "bbd": "0.1.2-experimental",
     "lofi2": "0.1.1-experimental",
     "ring-sc": "0.2.1-experimental",
+    "vibrato": "0.1.0-experimental",
     "analog-bassdrum": "0.1.7-experimental",
     "usb-audio-out-tracks-main-cue": "0.2.0-experimental",
     "quantizer": "0.1.4-experimental",
-    "synth": "0.1.3-experimental",
+    "synth": "0.1.4-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
     "sidechain-compressor": "0.2.2-experimental",

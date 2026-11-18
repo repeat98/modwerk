@@ -132,8 +132,9 @@ def glue(name, entry):
                        m['sig'][0], m['sig'][1], m['lo'], m['hi'], sum(FLAGS[f] for f in m['flags']), m['fields'].get('defaults', 0)))
         out += ['        .long   %s\n' % (m['fields'].get(f) or 0) for f in FIELDS]
         price = entry.get('price')
-        out.append('        .word   %d, %d\n        .byte   %d, 0, 0, 0\n' % (
-            (price['voice'], price['engine'], KINDS[price['kind']]) if price else (0, 0, 0)))
+        # reserved[0]: the machine's CPU price, a whole percent of a frame (docs/MODULE_PERFORMANCE.md); 0 names none.
+        out.append('        .word   %d, %d\n        .byte   %d, %d, 0, 0\n' % (
+            ((price['voice'], price['engine'], KINDS[price['kind']]) if price else (0, 0, 0)) + (entry.get('cpuPrice', 0),)))
         if 'SETUP_PAGE' in m['flags']:  # the record goes on: struct modwerk_machine_setup (EVENTS.md ot_machines)
             out += ['        .long   %s\n' % (m['fields'].get(f) or 0) for f in SETUP_FIELDS]
         unknown = set(m['fields']) - set(FIELDS) - {'defaults'} - (set(SETUP_FIELDS) if 'SETUP_PAGE' in m['flags'] else set())
