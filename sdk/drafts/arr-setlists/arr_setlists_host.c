@@ -32,7 +32,7 @@ void as_host_back_memory(void);
 #define CHG 0x1614cu
 
 static uint8_t cs1[0x16200];             /* 0x10000000 .. : the slots, their flags, the changed mask */
-static uint8_t rec[16];                  /* 0x100f8f10 */
+static uint8_t rec[20];                  /* 0x100f8f10 */
 static uint8_t misc[0x2000];             /* 0x80004f00 .. */
 static uint32_t change_window, playing;
 static uint8_t chosen;               /* 0x100b14d1: the arrangement chosen */
@@ -46,7 +46,7 @@ static int failures, checks;
 uint8_t host_rd8(uint32_t a)
 {
     if (a >= 0x10000000u && a < 0x10000000u + sizeof cs1) return cs1[a - 0x10000000u];
-    if (a >= 0x100f8f10u && a < 0x100f8f20u) return rec[a - 0x100f8f10u];
+    if (a >= 0x100f8f10u && a <= 0x100f8f23u) return rec[a - 0x100f8f10u];
     if (a >= 0x400c0b40u && a < 0x400c0b44u) return (uint8_t)(change_window >> (8 * (3 - (a - 0x400c0b40u))));
     if (a >= 0x800065b8u && a < 0x800065bcu) return (uint8_t)(playing >> (8 * (3 - (a - 0x800065b8u))));
     if (a >= 0x80004f00u && a < 0x80004f00u + sizeof misc) return misc[a - 0x80004f00u];
@@ -62,7 +62,7 @@ uint8_t host_rd8(uint32_t a)
 void host_wr8(uint32_t a, uint8_t v)
 {
     if (a >= 0x10000000u && a < 0x10000000u + sizeof cs1) { cs1[a - 0x10000000u] = v; return; }
-    if (a >= 0x100f8f10u && a < 0x100f8f20u) { rec[a - 0x100f8f10u] = v; return; }
+    if (a >= 0x100f8f10u && a <= 0x100f8f23u) { rec[a - 0x100f8f10u] = v; return; }
     if (a == 0x80000010u) { mode_wanted = v; return; }
     if (a >= 0x400c0ba0u && a < 0x400c0bb0u) { list[a - 0x400c0ba0u] = v; return; }
     fprintf(stderr, "write of 0x%08x\n", a);
@@ -264,7 +264,7 @@ int main(void)
     tap(RIGHT); job();                             /* book 2 */
     fail_read = 1;
     tap(LEFT); job();
-    check("a file that will not read is reported", (diag() >> 9 & 1) && !strcmp(last_message, "BOOK FILE ERROR"));
+    check("a file that will not read is reported", (as_tick(0), !strcmp(last_message, "BOOK FILE ERROR")));
     fail_read = 0;
     tap(RIGHT); job(); tap(LEFT); job();
     check("nothing marked changed after it, so arr01-08 stay as they are", cs1[CHG] == 0 && find("/SET/PROJ/arr04.work")->work[9] == (uint8_t)(0x10 + (W(3) + 9) % 7));

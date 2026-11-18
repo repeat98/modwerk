@@ -38,7 +38,7 @@
 #define BLOCK 5652u                  /* one arrangement in battery RAM: a 20-byte header, 256 rows of 22 bytes */
 #define WORKING 0x10000004u          /* the 8 working blocks, then the 8 blocks ARR SAVE keeps, then 8 flags */
 #define CHANGED 0x1001614cu          /* one bit a slot: changed since written */
-#define RECORD 0x100f8f10u           /* the module's battery-RAM record (battery-ram.json): magic, book, backup, sum, serial */
+#define RECORD 0x100f8f10u           /* the module's battery-RAM record (battery-ram.json): magic, book, backup, sum, serial, events */
 #define CHANGE_WINDOW 0x400c0b40u    /* ARR > CHANGE's window; 0 while closed */
 #define PLAYING 0x800065b8u          /* the transport */
 
@@ -110,7 +110,7 @@ struct as_state {
     uint16_t restore_ticks;
     uint8_t mode_on;         /* after a load: the project was left in arranger mode, so turn it on again */
     uint8_t mode_pref;       /* arranger mode as the musician left it: off only after their own FUNC + PATTERN */
-    uint8_t func_down, mode_key, mode_key_ticks;
+    uint8_t func_down, mode_key, mode_key_ticks, mode_seen;
     uint8_t hush;            /* frames after a switch of ours in which the job's NOW SAFE TO EJECT! is closed */
     int8_t restore_rc;       /* the last answer to posting the return after a load, for the diagnostic word */
     uint8_t loads, reloads;  /* project loads and reloads seen, for the diagnostic word */
@@ -124,13 +124,12 @@ struct as_state {
 static struct as_state st;
 /* The last four project events, newest lowest (the diagnostic word's top half): 1 load begins, 2 load done, 3 reload
  * done, 4 save done, 5 arrbook read (then its book), 6 arrbook missing, 7 return posted, 8 refused, 9 switch done,
- * A write without a switch, B nothing to return to. */
+ * A write without a switch, B nothing to return to, C arranger mode went on, D it went off. */
 static uint32_t evlog;
 static void ev(unsigned code)
 {
     evlog = evlog << 4 | (code & 15u);
-    wr8(RECORD + 6, evlog >> 8);                         /* kept through a power cycle, to read it back after */
-    wr8(RECORD + 7, evlog);
+    wr32(RECORD + 16, evlog);                            /* kept through a power cycle, to read it back after */
 }
 static struct as_state *volatile st_at = &st;
 
@@ -149,7 +148,7 @@ static struct as_state *ready(void)
     for (unsigned i = 0; i < sizeof *s; ++i) p[i] = 0;
     s->magic = MAGIC;
     s->pending = -1;
-    evlog = (uint32_t)rd8(RECORD + 6) << 8 | rd8(RECORD + 7);  /* the events before a power cycle */
+    evlog = rd32(RECORD + 16);                           /* the events before a power cycle */
     s->restore = -1;
     s->mode_pref = rd32(ARR_MODE) ? 1 : 0;
     return s;
@@ -539,8 +538,8 @@ struct as_api { volatile uint32_t value; };
 void as_tick(void *api)
 {
     struct as_state *s = ready();
-    if (api) ((struct as_api *)api)->value = (uint32_t)s->book | (uint32_t)(s->pending < 0 ? 0 : s->pending + 1) << 4
-        | (uint32_t)s->failed << 9 | (uint32_t)s->backup << 10 | (uint32_t)(s->restore + 1) << 11 | (evlog & 0xffffu) << 16;
+    if (api) ((struct as_api *)api)->value = (uint32_t)s->book  /* the book, then the last seven events, newest lowest */
+        | (evlog & 0x0fffffffu) << 4;
     /* Stock draws the list's names once, when it opens: after a switch, draw them again from the new book. */
     if (s->redraw && s->pending < 0) {
         s->redraw = 0;
@@ -572,6 +571,7 @@ void as_tick(void *api)
     }
     /* Arranger mode as the musician leaves it. Stock's LOAD switches it off and saves that before it loads; only a
      * FUNC + PATTERN of the musician's own records it as off. */
+    { uint8_t now = rd32(ARR_MODE) ? 1 : 0; if (now != s->mode_seen) { s->mode_seen = now; ev(now ? 0xcu : 0xdu); } }
     if (rd32(ARR_MODE)) s->mode_pref = 1;
     else if (s->mode_key) { s->mode_pref = 0; s->mode_key = 0; }
     if (s->mode_key && ++s->mode_key_ticks > 60) s->mode_key = 0;

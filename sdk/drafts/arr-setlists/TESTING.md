@@ -150,3 +150,8 @@ ARRANGEMENT_MODE, and the module's arrbook.work, both now "off") and loads it, s
 project in pattern mode, and the module read "off" too. Fixed: the module keeps the mode as the musician left it,
 following arranger mode on by any means but off only after the musician's own FUNC + PATTERN, and records that.
 `verify.py` (67 checks) replays LOAD's order: off, save, load.
+
+Package `493e5207…`, as the developer reported it: on LOAD the parameters changed (arranger mode came on), then
+arranger mode went off. Event log, oldest first: book 2 read during the load, return posted, ev_banks_loaded (it does
+come on LOAD, after the module's post), switch done. Not enough to see who switched the mode off: the next build logs
+seven events and arranger mode going on (C) and off (D), kept in a record grown to 0x100f8f24.
