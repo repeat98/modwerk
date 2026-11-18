@@ -5,7 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**', '.wrangler/**', 'vendor/**', '.claude/**'] }, // agent worktrees nest under .claude/worktrees
+  { ignores: ['dist/**', 'node_modules/**', 'desktop/dist/**', '.wrangler/**', 'vendor/**', '.claude/**'] }, // agent worktrees nest under .claude/worktrees
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -25,7 +25,12 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.browser, ...globals.serviceworker } },
   },
   {
-    files: ['*.{js,ts}', 'scripts/**/*.mjs'],
+    files: ['*.{js,ts}', 'scripts/**/*.mjs', 'desktop/**/*.mjs'],
     languageOptions: { globals: globals.node },
+  },
+  {
+    files: ['desktop/**/*.cjs'], // Electron's sandboxed preload is CommonJS
+    languageOptions: { sourceType: 'commonjs', globals: globals.node },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
 )

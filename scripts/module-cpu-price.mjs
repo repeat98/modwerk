@@ -16,7 +16,7 @@ const PORTS = 'sdk/machines/octatrack/module-adapters'
 /** How to measure the price of a machine (true) or of any other module (false), for the messages. */
 export function cpuPriceHowTo(id, machine) {
   return machine
-    ? 'measure its worst render on a unit with npm run device -- cpu (one track, both passes, every voice playing; docs/OCTATRACK_DRIVING.md), then write resources.cpuPrice with "measure": "machine-render" in octamod.module.json and the same percent as reserved[0] of its machine descriptor (docs/MODULE_PERFORMANCE.md)'
+    ? 'measure what one track of it adds to the frame interrupt on a unit with npm run device -- do and guard (a trig on every step, every voice sounding, against the same pattern without those trigs; docs/MODULE_PERFORMANCE.md), then write resources.cpuPrice with "measure": "machine-render" in octamod.module.json and the same percent as reserved[0] of its machine descriptor (docs/MODULE_PERFORMANCE.md)'
     : 'measure it on a unit with npm run device:price -- ' + id + ' (the frame interrupt\'s share it adds, installed and, for an effect, on one slot; docs/OCTATRACK_DRIVING.md), then write resources.cpuPrice with "measure": "frame-interrupt" in octamod.module.json (docs/MODULE_PERFORMANCE.md)'
 }
 
@@ -116,14 +116,14 @@ export function cpuPriceStatus({ root, document, pending, glue = null }) {
     return { state: 'pending', detail: CPU_PRICE_PENDING_REASON + ' (on ' + CPU_PRICE_PENDING_PATH + ', which only shrinks). To name it: ' + howTo }
   }
   if (!declared) return { state: 'fail', detail: 'it names no CPU price (resources.cpuPrice)', fix: howTo }
-  if (machine && declared.measure !== 'machine-render') return { state: 'fail', detail: 'it is a machine, so its price is its worst render ("measure": "machine-render"), not ' + declared.measure, fix: howTo }
+  if (machine && declared.measure !== 'machine-render') return { state: 'fail', detail: 'it is a machine, so its price is what one playing track adds ("measure": "machine-render"), not ' + declared.measure, fix: howTo }
   if (!machine && declared.measure !== 'frame-interrupt') return { state: 'fail', detail: 'it is not a machine, so its price is the frame interrupt\'s share ("measure": "frame-interrupt"); only a machine\'s descriptor carries a render price', fix: howTo }
   const disagree = descriptors.find(item => item.price !== declared.value)
   if (disagree) return {
     state: 'fail',
     detail: 'it names ' + declared.value + ' % of a frame but ' + disagree.symbol + '\'s reserved[0] is ' + disagree.price + ' (' + disagree.where + ')' + (disagree.price ? '' : ', so the base charges its default instead'),
     fix: disagree.port
-      ? 'a ported machine\'s descriptor comes from machine_ports.py, which writes reserved[0] = 0: the generator has to write the port\'s price first, in its own pull request'
+      ? 'a ported machine\'s descriptor comes from machine_ports.py: write "cpuPrice": ' + declared.value + ' in its entry of ' + PORTS + '/machine-ports.json'
       : 'write .reserved = {' + declared.value + '} in ' + disagree.symbol + ', the same percent as resources.cpuPrice',
   }
   const what = declared.value + ' % of a frame (' + declared.measure + ', ' + declared.tool + ', ' + declared.date + ')'

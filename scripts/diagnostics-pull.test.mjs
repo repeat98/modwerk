@@ -129,6 +129,16 @@ describe('diagnostics pull', () => {
     expect(lines.filter(l => l.includes('freeze')).map(l => [l.match(/#(\d+)/)[1], l.endsWith(note)])).toEqual(
       [['3', true], ['4', false], ['7', false], ['8', false], ['9', true], ['10', false]])
   })
+  it('calls a stopped freeze after PROJ … YES YES before a start on the same base a likely OS upgrade of that base', () => {
+    const walk = [...Array(12).fill(255), 0x1c, 0x20, 0x31, 0x31], other = [...Array(12).fill(255), 0x1c, 0x20, 0x31, 0x32]
+    const at = (seq, boot, kind, a = 0, more = {}) => ({ seq, boot, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
+      fx: Array(16).fill(0), keys: walk, screen: 0, tempo24: 0, playing: false, ...more })
+    const note = ' (likely an OS upgrade of the same base: PROJ … YES YES before it; not a hang)'
+    const lines = unitLines([at(1, 1, 'base', 0x049efc39), at(2, 2, 'base', 0x049efc39), at(3, 1, 'freeze'), at(4, 1, 'freeze', 0, { keys: other }),
+      at(5, 1, 'freeze', 0, { playing: true }), at(6, 1, 'freeze', 25919), at(7, 2, 'freeze')])
+    expect(lines.filter(l => l.includes('freeze')).map(l => [l.match(/#(\d+)/)[1], l.endsWith(note)])).toEqual(
+      [['3', true], ['4', false], ['5', false], ['6', false], ['7', false]])
+  })
   it('names a crash incident’s program counter from the symbols kept for its base, and from no other base’s', () => {
     const at = (seq, kind, a) => ({ seq, boot: 1, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
       fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 0, playing: false })

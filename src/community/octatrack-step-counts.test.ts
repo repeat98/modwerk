@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DatabaseSync } from 'node:sqlite'
 import { testServer } from './test-server'
 import { cleanupOctatrackDiagnostics } from '../../server/octatrack-diagnostics'
-import { BASE_INSTALL_FAILURES, BASE_INSTALL_STAGES, DIAGNOSTIC_INVITATION_PLACEMENTS } from './octatrack-diagnostics-contract'
+import { BASE_GUIDE_STEPS, BASE_INSTALL_FAILURES, BASE_INSTALL_STAGES, DIAGNOSTIC_INVITATION_PLACEMENTS, SYNC_FAILURE_REASONS, syncFailureReason } from './octatrack-diagnostics-contract'
 import type { BaseGuideFailure } from '../components/BaseInstallDialog'
 import { handleCommunity } from '../../server/transport'
 
@@ -43,6 +43,32 @@ describe('identifier-free install-guide and invitation counts in the browser', (
     expect(sent().map(([, body]) => body.event)).toEqual(['base_guide_opened', 'base_guide_opened', 'base_file_downloaded', 'base_guide_opened'])
     expect(values.get('modwerk.octatrack.base-guide-counted')).toBe('bb')
   })
+  it('counts each guide step by its fixed name, and a failed sync with its fixed reason beside the plain count', () => {
+    usage.countBaseGuideStep('card-copy'); usage.countBaseGuideStep('C:\\Users\\someone' as never)
+    usage.countOctatrackAction('usb_sync_failed', 'refused-7'); usage.countOctatrackAction('usb_sync_failed', 'refused-99' as never)
+    usage.countOctatrackAction('usb_sync_failed'); usage.countOctatrackAction('usb_sync_kept', 'refused-7')
+    expect(sent().map(([, body]) => body)).toEqual([
+      { event: 'base_guide_step', detail: 'card-copy' },
+      { event: 'usb_sync_failed' }, { event: 'usb_sync_failed_reason', detail: 'refused-7' },
+      { event: 'usb_sync_failed' }, { event: 'usb_sync_failed_reason', detail: 'other' },
+      { event: 'usb_sync_failed' }, { event: 'usb_sync_kept' },
+    ])
+  })
+  it('names a failed sync’s reason from the link’s diagnostic, from a fixed list only', () => {
+    expect(syncFailureReason({ event: 'sync_failed', error: 'device', result: 'rejected', refusal: 7 })).toBe('refused-7')
+    expect(syncFailureReason({ event: 'sync_failed', error: 'device', result: 'rejected', refusal: 40 })).toBe('other')
+    expect(syncFailureReason({ event: 'sync_failed', error: 'device', result: 'rejected' })).toBe('refused')
+    expect(syncFailureReason({ event: 'sync_failed', error: 'device', result: 'unsafe', step: 'stage' })).toBe('unsafe')
+    expect(syncFailureReason({ event: 'sync_failed', error: 'device', result: 'hash' })).toBe('device')
+    expect(syncFailureReason({ event: 'sync_failed', error: 'transport', step: 'stage' })).toBe('transport-stage')
+    expect(syncFailureReason({ event: 'sync_failed', error: 'transport' })).toBe('transport')
+    expect(syncFailureReason({ event: 'sync_failed', error: 'cancelled' })).toBe('cancelled')
+    expect(syncFailureReason({ event: 'sync_failed', error: 'save' })).toBe('save')
+    expect(syncFailureReason({ event: 'sync_failed', error: 'input' })).toBe('other')
+    expect(syncFailureReason({ event: 'disconnected' })).toBe('disconnected')
+    for (const reason of SYNC_FAILURE_REASONS) expect(reason.length).toBeLessThanOrEqual(32)
+    for (const step of BASE_GUIDE_STEPS) expect(step.length).toBeLessThanOrEqual(32)
+  })
   it('counts invitation answers by placement and stops for an objection or a browser privacy signal', () => {
     usage.countDiagnosticsInvitation('shown', 'guide'); usage.countDiagnosticsInvitation('not-now', 'after-failure')
     usage.countDiagnosticsInvitation('shared', 'nowhere' as never)
@@ -63,11 +89,14 @@ describe('identifier-free install-guide and invitation counts on the server', ()
     const { call, db } = await server()
     for (const event of ['base_guide_opened', 'base_file_downloaded', 'base_first_connection', 'base_usb_update_done']) expect((await call('/usage/count', 'POST', { event })).status).toBe(200)
     for (const detail of [...BASE_INSTALL_FAILURES, 'link-timeout', 'something new']) expect((await call('/usage/count', 'POST', { event: 'base_install_failed', detail })).status).toBe(200)
+    for (const detail of BASE_GUIDE_STEPS) expect((await call('/usage/count', 'POST', { event: 'base_guide_step', detail })).status).toBe(200)
+    for (const detail of [...SYNC_FAILURE_REASONS, 'refused-99']) expect((await call('/usage/count', 'POST', { event: 'usb_sync_failed_reason', detail })).status).toBe(200)
     for (const placement of DIAGNOSTIC_INVITATION_PLACEMENTS) for (const event of ['diagnostics_invite_shown', 'diagnostics_invite_shared', 'diagnostics_invite_not_now'])
       expect((await call('/usage/count', 'POST', { event, detail: placement })).status).toBe(200)
     for (const bad of [
       { event: 'base_guide_opened', detail: 'guide' }, { event: 'base_install_failed' }, { event: 'base_install_failed', detail: 3 }, { event: 'base_install_failed', detail: 'x'.repeat(33) },
-      { event: 'diagnostics_invite_shown' }, { event: 'diagnostics_invite_shown', detail: 'banner' }, { event: 'diagnostics_invite_shared', detail: 'guide', userId: 'member' },
+      { event: 'diagnostics_invite_shown' }, { event: 'diagnostics_invite_shown', detail: 'banner' },
+      { event: 'base_guide_step' }, { event: 'base_guide_step', detail: 'somewhere' }, { event: 'usb_sync_failed_reason' }, { event: 'usb_sync_failed_reason', detail: 'x'.repeat(33) }, { event: 'diagnostics_invite_shared', detail: 'guide', userId: 'member' },
       { event: 'base_first_connection', base: 'a'.repeat(64) }, { event: 'base_guide_opened', page: 'forum' }, { event: 'base_guide_opened', device: 'octatrack' }, { event: 'base_unknown' },
     ]) expect((await call('/usage/count', 'POST', bad)).status, JSON.stringify(bad)).toBe(400)
     const rows = db.prepare('SELECT event,detail,count FROM octatrack_count_daily ORDER BY event,detail').all() as { event: string; detail: string; count: number }[]
@@ -77,6 +106,8 @@ describe('identifier-free install-guide and invitation counts on the server', ()
       { event: 'base_install_failed', detail: 'update-failed', count: 1 }, { event: 'base_install_failed', detail: 'update-refused', count: 1 }, { event: 'base_install_failed', detail: 'wrong-base', count: 1 }])
     expect(rows.find(row => row.event === 'base_guide_opened')).toEqual({ event: 'base_guide_opened', detail: '', count: 1 })
     expect(rows.filter(row => row.event.startsWith('diagnostics_invite_'))).toHaveLength(12)
+    expect(rows.filter(row => row.event === 'base_guide_step')).toHaveLength(BASE_GUIDE_STEPS.length)
+    expect(rows.find(row => row.event === 'usb_sync_failed_reason' && row.detail === 'other')?.count).toBe(2)
   })
   it('stores nothing about who: no visitor digest, no identifier column, and browser privacy signals stop it', async () => {
     const { call, db, env } = await server()

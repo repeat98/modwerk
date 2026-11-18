@@ -1,0 +1,1 @@
+SDK: the Octatrack hook reference now says in which order a real unit raises the project hooks: PROJECT > CHANGE raises ev_banks_load, ev_banks_loaded and then ev_project_new, and RELOAD PROJECT raises ev_project_reloaded and ev_project_new but not ev_banks_loaded, so a module that must act after a load waits until stock's card jobs are done.

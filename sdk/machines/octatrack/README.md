@@ -22,3 +22,19 @@ Recovery: hold FUNC while powering on, choose MIDI UPGRADE and send the stock .s
 The beta base carries the [sample-editor service](SAMPLE_EDITOR.md) for the AED
 SLICE menu (`ot_sample_editor_actions`, index 36). Beat Slicer is its first
 contributor.
+
+## Shared scale
+
+[`modwerk_scale.s`](modwerk_scale.s) holds octabam's 52-ID scale catalogue and one pure snap,
+`modwerk_scale_snap(note, id, root)`: the nearest note in the scale, the lower one on a tie, the rule Scale
+Quantizer plays. It keeps no state, so the base and a card build each pass the scale and root they keep. C modules
+include [`include/modwerk_scale.h`](include/modwerk_scale.h); assembly modules push the three longs and `jsr`.
+Link the file into the build; it reads its table PC-relative and has no stock address. On card builds, link it as a Linked unit: a source CavePatch keeps only `.text` and would drop the table.
+
+- IDs are octabam's (`modules/scales`, vendored at `vendor/octabam-scales/`,
+  `sdk/imports/octabam-scales-755a02ac.json`): an ID never changes meaning, and a new scale takes the next one.
+- Scale Quantizer saves SCALE as its own index 1..24. `modwerk_scale_from_quantizer[n]` gives the catalogue ID with
+  the same mask: IDs 1..7 are the same, 8..24 differ. Read an old project's SCALE through it.
+- `sdk/tests/test_shared_scale.py` checks the table against the vendored file. With ColdFire binutils and Unicorn,
+  it also runs the snap against Scale Quantizer's `qz_msnap` and octabam's `sc_snap`, note for note.
+- A shared file doesn't lift the FM Synth and Scale Quantizer conflict on card builds.

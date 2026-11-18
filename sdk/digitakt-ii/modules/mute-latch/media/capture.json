@@ -1,0 +1,32 @@
+{
+ "schemaVersion": 1,
+ "machine": "digitakt-ii",
+ "moduleId": "mute-latch",
+ "moduleVersion": "0.1.0-experimental",
+ "imageSha256": "f9c5077602350efc836800ad3eef8357fcf1247ea96c049ed93ebb9ef255f248",
+ "firmware": "1.17",
+ "build": "core-dt2 1.0 (elekloader, toonst/digitakt2-perform v1.0) + mute-latch built from this folder with Debian-style m68k-linux-gnu-gcc 13 (not the pinned toolchain), no stock site patched, elekloader.patch --version 2.0b",
+ "emulator": "digikit panel_drive (ColdFire only, SSI clock 96 kHz), 128x64 frame shown 3x without interpolation",
+ "capturedAt": "2026-11-02",
+ "setup": "Stock project of the emulator's card; PLAY started, Mute Mode entered with FUNC+TRK, FUNC released and held again, TRIG 1 and TRIG 3 chosen.",
+ "captures": [
+  {
+   "path": "media/prep-mutes.png",
+   "sha256": "8e73c6e7aebd22e4ecad93b04a2b793be6d1f18924e5282d90c176728ffc89ee",
+   "plan": "panel_drive IMAGE --ssi-hz 96000 --steps tap:12,wait:20M,tap:20,wait:200M,press:17,tap:16,release:17,wait:20M,press:17,wait:20M,tap:25,tap:27,wait:20M,frame:s1",
+   "frame": "PREP MUTES with TRIG 1 and 3 chosen"
+  },
+  {
+   "path": "media/mutes-armed.png",
+   "sha256": "a421134ee533508faf0cbca09a773da642d532d74821ac6e18e6e60a445ac440",
+   "plan": "panel_drive IMAGE --ssi-hz 96000 --steps tap:12,wait:20M,tap:20,wait:200M,press:17,tap:16,release:17,wait:20M,press:17,wait:20M,tap:25,tap:27,wait:20M,tap:7,wait:20M,frame:s2",
+   "frame": "after one PERFORM press: MUTES ARMED, loop icon, 1"
+  },
+  {
+   "path": "media/mutes-armed-3.png",
+   "sha256": "786cd1d8e3205823ff94ea7fcb65d39b3c423ab20bccf957bd267e79dfe2f146",
+   "plan": "panel_drive IMAGE --ssi-hz 96000 --steps tap:12,wait:20M,tap:20,wait:200M,press:17,tap:16,release:17,wait:20M,press:17,wait:20M,tap:25,tap:27,wait:20M,tap:7,wait:20M,tap:7,wait:20M,tap:7,wait:20M,frame:s3",
+   "frame": "after three PERFORM presses: the loop icon and 3"
+  }
+ ]
+}

@@ -16,10 +16,20 @@ words (`locks.c`, `locks.s`) and the send bus (`sendbus.c`, `sendbus.s`, `fx-tab
 build fills them from your OS. `dev` goes only into development bases (`npm run machine:base -- analog-rytm-mkii --dev`,
 never recorded or released): the USB link (`link.c`, `link.s`; [LINK.md](../LINK.md)).
 
-The base comes in two variants (`base.json`'s `variants`): **send-bus**, the default, with `common` and everything `add`
-names, and **plain**, the imported recipe with `common` alone. The site builds a set with a send effect on send-bus and
-any other set on plain, so a set with no send effect pays none of the bus's cost (below). Put a hook in `common` when a
-module that is no send effect needs it, or that module would not link on plain. The full OS file sent with Transfer stays the fallback.
+The base comes in three variants (`base.json`'s `variants`): **send-bus**, the default, with `common` and everything `add`
+names; **voices**, `common` and `add` without what the variant's `leave` names (the FX track's lock words `locks.c`,
+`locks.s` and their three `core_lk_*` sites, the send bus's sources `clock.c`, `sendbus.c`, `sendbus.s`, its sites,
+subscriptions, pages and storage, all `mw_send_*`, and the FX list `mw_fx`), so it keeps the digital voices alone. Only the
+send bus writes the lock words, so on voices a pattern's send-FX locks are not kept: one saved with them on send-bus plays
+without them, and stock's next save of all its locks frees their lanes. Word 0 keeps marking those controls locked, so
+back on send-bus such a step plays the kit's stored words 38-41 for them (and shows 127), as after a trip through plain;
+and **plain**, the imported recipe with `common` alone. The site builds a set
+with a send effect on send-bus, one with a digital voice machine and no send effect on voices, and any other set on
+plain, so each pays only for what it uses (below). A `leave` entry is a shell pattern over a source or cflag itself, a
+site's `addr` or `target`, a subscription's `fn`, a contribution's symbols, a storage field's `sym`, or a `defsym` or
+collection name; one that matches nothing in `add` fails the build. Put a hook in `common` when a module that is no
+send effect needs it, or that module would not link on plain; a voice machine uses none of the send bus's code
+(`npm run modules:check` refuses `mw_send_*`, `mw_fx_clock` and its helpers there), or it would not link on voices. The full OS file sent with Transfer stays the fallback.
 
 ## Beside elekloader's core-ar2
 
@@ -81,7 +91,9 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD"
 The send-bus variant (`3ece243b`) has 33,006 bytes of `.run` and 4,172 of `.bss` (4,140 and 1,464 more since
 the digital voices), 62 of the kit's 64 storage bits and 3 bits of each sound (a voice machine's type): about 92 KiB of the
 128 KiB mod area stays for modules and the effect that runs, whose work area is the RAM they leave free (`sendbus.c`),
-against about 116 KiB on plain.
+against about 116 KiB on plain. The voices variant (`dd771eae`) has 14,876 bytes of `.run` and 2,832 of `.bss`
+(1,240 and 512 less since the lock words left it): with Analog BD 0.2.1 linked, `ramSpare` is 95,792 B on voices
+against 76,272 B on send-bus, 19,520 B more for modules.
 
 The release records its sources but not its compiler, and none of these reproduces its compiled code byte for byte.
 The 22 functions that change size are all compiled C: 21 from `store.c`, 1 from `machines.c`. The sites, the

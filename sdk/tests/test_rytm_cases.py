@@ -3,6 +3,7 @@ to a timeline, as `rytm_test.py check` does, and no reference capture is kept in
 import importlib.util
 import pathlib
 import sys
+import tempfile
 import unittest
 
 APP = pathlib.Path(__file__).resolve().parents[2]
@@ -96,3 +97,25 @@ class RytmCases(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_a_channel_on_cc_nrpn_and_midi_expectations(self):
+        text = ("name: chan\nstate: changes\n\ncc 74 100 ch2\nmidi a begin\nnrpn 1:20 64 ch3\nwait 100\nmidi a end\n"
+                "expect a has nrpn 5:0 1 ch2\nexpect a lacks nrpn 5:0 ch1\n")
+        with tempfile.TemporaryDirectory() as d:
+            path = pathlib.Path(d) / "chan.case"
+            path.write_text(text)
+            case = rytm_test.find_cases([path])[0]
+            ccs = [op for op in case.ops if op.name == "cc"]
+            self.assertEqual(ccs[0].values, (74, 100, 2))
+            self.assertEqual(rytm_test.note_bytes(ccs[0], 14), bytes([0xB1, 74, 100]))   # its own channel
+            self.assertEqual([op.values for op in ccs[1:]], [(99, 1, 3), (98, 20, 3), (6, 64, 3)])
+            has, lacks = (e for e in case.expects if e["name"] == "a")
+            self.assertTrue(rytm_test.check_midi(has, [("nrpn", 2, (5, 0), 1, None)])[0])
+            self.assertFalse(rytm_test.check_midi(has, [("nrpn", 1, (5, 0), 1, None)])[0])    # another channel
+            self.assertTrue(rytm_test.check_midi(lacks, [("nrpn", 2, (5, 0), 1, None)])[0])
+            for bad in ("cc 74 100 ch17\n", "nrpn 1:20 64 ch0\n", "midi b begin\nwait 10\nmidi b end\nexpect b has nrpn 5:0 ch17\n"):
+                path.write_text("name: chan\nstate: changes\n\n" + bad)
+                with self.assertRaises(rytm_test.CaseError):
+                    rytm_test.find_cases([path])
+        plain = rytm_test.find_cases([TOOLS / "cases/link-midi-out.case"])[0]
+        self.assertTrue(all(len(op.values) == 2 for op in plain.ops if op.name == "cc"))   # no channel: as before

@@ -156,6 +156,9 @@ jobs:
           MODWERK_AUTHOR_RELEASE_MODULES: ${{ needs.approval.outputs.author-modules }}
           VITE_COMMUNITY_API_URL: ${{ vars.COMMUNITY_API_URL }}
           VITE_REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+      # A tab opened before this release still asks for the previous module versions' clips and screenshots.
+      - name: Keep the module media this release drops for a week, copied from the live site
+        run: node scripts/retain-module-media.mjs dist
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: module-release-inventory-${{ github.sha }}

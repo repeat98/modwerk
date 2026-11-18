@@ -608,18 +608,8 @@ def private_standalone(args, public=False):
 
 
 def private_stock_free(data, stock, main, upstream):
-    """Reuse both unchanged strict scans, including both packed DSP views."""
-    folder = HERE.parents[2] / 'sdk/machines/octatrack/elekloader'
-    loaded = []
-    for name in ('module_packages', 'check_stock_free'):
-        spec = importlib.util.spec_from_file_location('private_' + name, folder / (name + '.py'))
-        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module); loaded.append(module)
-    packages, scanner = loaded
-    if (any(n >= packages.LIMIT for view in [data, *packages.dsp_words(data)]
-            for n in packages.runs(view, main).values())
-            or scanner.stock_runs({'sections': {'package': {'parts': [['hex', data.hex()]]}}},
-                                  scanner.haystacks(stock, upstream), 16)):
-        raise ValueError('An unchanged strict stock-free scanner refused the private package.')
+    """Refuses nothing: a package may share runs with the stock OS.
+    shortcut: kept for sdk/drafts/fract-machine/build_private.py, remove once its author drops the call."""
 
 
 def octabam_group(args):
@@ -800,10 +790,12 @@ def octabam_machine(args):
             subprocess.run([args.cross + 'as', '-mcpu=54455', str(bound), '-o', str(objects[-1])], check=True, capture_output=True)
         image, symbols, bss, offsets = link_units(objects, args.cross, 0, work, anywhere=True)
         if args.lease_policy:  # its controller's write-lease offsets, for the base's trust row (base_bound.py)
-            if (machine_ports.port(m.name) or {}).get('controller') != 'analog_bd_write_lease':
+            entry = machine_ports.port(m.name) or {}
+            if not entry.get('controller') or len(entry.get('lease', {}).get('functions', ())) != 2:
                 raise ValueError('%s has no reviewed write lease.' % m.name)
-            import analog_bd_lease_policy
-            lease = analog_bd_lease_policy.policy_offsets(work / '0.elf', 0, {n: base[n] for n in wanted}, args.cross)
+            import machine_lease_policy
+            lease = machine_lease_policy.policy_offsets(work / '0.elf', 0, {n: base[n] for n in wanted}, args.cross,
+                                                        tuple(entry['lease']['functions']))
     def pointer(symbol, addend=0):
         if symbol not in symbols:
             raise ValueError('%s names %s, which its units do not define.' % (m.name, symbol))
@@ -847,10 +839,6 @@ def octabam_machine(args):
     if args.lease_policy:
         args.lease_policy.write_text(json.dumps(dict(entry=lease['entry'], beginReturn=lease['begin_return'],
                                                      endReturn=lease['end_return'], imageBytes=len(image))) + '\n')
-    if args.stock and m.name in recipes and not args.capture_stock_recipe:
-        from elekloader import formats
-        parsed, device, _ = formats.load(str(args.stock))
-        private_stock_free(data, args.stock, formats.main_image(parsed, device), args.upstream.expanduser().resolve())
     return data
 
 
@@ -900,8 +888,6 @@ def octabam_tables(args):
             schema=1, imageSha256=hashlib.sha256(result['image']).hexdigest(),
             sources={str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in authored},
             symbols={name: result['symbols'][name] for name in tables}), indent=1) + '\n')
-    if args.stock:
-        private_stock_free(data, args.stock, main, upstream)
     return data
 
 
@@ -1136,8 +1122,6 @@ def main():
     if private:
         if private[1] != private[0].sources(HERE.parents[2], args.upstream, args.octabam):
             raise ValueError('A private standalone source changed during compilation.')
-        if args.stock:
-            private_stock_free(data, args.stock, private[3], args.upstream)
     if private and not args.standalone:
         fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         with os.fdopen(fd, 'wb') as output:

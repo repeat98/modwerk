@@ -16,7 +16,7 @@ Who is asking decides the flow:
   - Resolving the report is for the module's registered author (`/modwerk resolve`) or the owner's flow, once the live download is verified.
 
 Then, in every flow:
-1. **Read the report in full** (`gh issue view <n> --json body,comments`).
+1. **Read the report in full** (`gh issue view <n> --json body,comments`), then check that nobody fixed it already: an issue stays open until the owner has checked the live site, so look for open and merged pull requests too (`gh pr list --state all --search "<n>"`). One that covers it ends the task; say which. Then read the issue's claim (`npm run board -- list issue <n>`): someone holding it is fixing it now, so ask them (`npm run board -- ask issue <n> "…"`) and settle it before you go on. Otherwise claim it from your fix branch (`npm run board -- claim issue <n>`); the board links the pull request on that branch itself.
 2. **Reproduce it before you change anything,** on the reported build and with the reported steps:
    - on the unit, as stage 1 of `/modwerk-test-on-unit` (the developer's OK first, trials only), for sound, timing, load, USB and anything only the instrument shows;
    - in the emulator for screens, menus, crashes and freezes, or where there is no unit.

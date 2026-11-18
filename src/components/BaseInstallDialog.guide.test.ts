@@ -38,7 +38,7 @@ async function connected(kind: 'stock' | 'base' | 'none', base?: string) {
 }
 type Props = Partial<Parameters<typeof BaseInstallDialog>[0]> & { link: OctatrackLink }
 function open(props: Props) {
-  const handlers = { onClose: vi.fn(), onReady: vi.fn(), onStage: vi.fn(), onChooseFirmware: vi.fn() }
+  const handlers = { onClose: vi.fn(), onReady: vi.fn(), onStage: vi.fn(), onStep: vi.fn(), onChooseFirmware: vi.fn() }
   const buildBase = vi.fn(async () => ({ buffer: new Uint8Array([1, 2]).buffer, sha256: 'ab'.repeat(32), base: expected }))
   const render = () => act(() => root.render(createElement(BaseInstallDialog, { firmwareReady: true, buildBase, ...handlers, ...props })))
   return { ...handlers, buildBase, render }
@@ -75,6 +75,8 @@ describe('the guided first install, for a member on the original OS', () => {
     expect(container.querySelector('#base-stage-title')?.textContent).toBe('Copy the file to your card')
     expect(container.textContent).toContain('USB DISK MODE')
     expect(container.textContent).toContain('put it in a card reader')
+    // An older .bin left on the card can be the one OS UPGRADE installs (issue 1624).
+    expect(container.textContent).toContain('remove every other .bin there')
     click(buttonNamed('File copied')!)
     expect(container.querySelector('#base-stage-title')?.textContent).toBe('Install it on your Octatrack')
     expect(container.textContent).toContain('PROJECT → SYSTEM → OS UPGRADE')
@@ -85,6 +87,21 @@ describe('the guided first install, for a member on the original OS', () => {
     await open({ link }).render()
     expect(container.querySelector('#base-stage-title')?.textContent).toBe('Install it on your Octatrack')
     expect(pendingBaseInstall()?.expectedBase).toBe(expected)
+  })
+  it('counts each step a run reaches once, from the Download step to Connect pressed', async () => {
+    const { link } = await connected('stock')
+    const guide = open({ link, firmwareReady: false }); await guide.render()
+    await act(() => root.render(createElement(BaseInstallDialog, { link, firmwareReady: false, firmwareError: 'This is not the original OS 1.40C.', buildBase: guide.buildBase, onClose: guide.onClose, onReady: guide.onReady, onStage: guide.onStage, onStep: guide.onStep, onChooseFirmware: guide.onChooseFirmware })))
+    await act(() => root.render(createElement(BaseInstallDialog, { link, firmwareReady: true, buildBase: guide.buildBase, onClose: guide.onClose, onReady: guide.onReady, onStage: guide.onStage, onStep: guide.onStep, onChooseFirmware: guide.onChooseFirmware })))
+    click(container.querySelector('.risk-accept input')!); click(container.querySelector('.risk-accept input')!); click(container.querySelector('.risk-accept input')!)
+    click(buttonNamed('Download base .bin')!); await settle(); await settle()
+    click(buttonNamed('File copied')!); click(buttonNamed('Back')!); click(buttonNamed('File copied')!) // a step met twice counts once
+    click(buttonNamed('Octatrack has started')!)
+    expect(container.textContent).toContain('Press Connect Octatrack and choose your Octatrack')
+    expect(container.textContent).toContain('Your Octatrack isn’t in the list?')
+    vi.spyOn(link, 'retry').mockResolvedValue(undefined)
+    click(buttonNamed('Connect Octatrack')!); click(buttonNamed('Connect Octatrack')!)
+    expect(guide.onStep.mock.calls.map(call => call[0])).toEqual(['card-download', 'os-file-refused', 'os-file-ready', 'risk-accepted', 'card-copy', 'card-install', 'card-connect', 'connect-pressed'])
   })
   it('builds the first install in the layout of a set with the USB Audio module, else with USB Audio off, and says nothing of USB Audio going off', async () => {
     const { link } = await connected('stock')
@@ -131,6 +148,21 @@ describe('the guided first install, for a member on the original OS', () => {
     await vi.waitFor(() => expect(guide.onReady).toHaveBeenCalledOnce())
     expect(guide.onStage.mock.calls.map(call => call[0])).toEqual(['opened', 'first-connection'])
   })
+  it('says to remove other .bin files when the unit comes back on the base it ran before (issue 1624)', async () => {
+    const previous = 'cc'.repeat(32)
+    const { unit, link } = await connected('base', previous)
+    waitForBaseInstall('ab'.repeat(32), expected, previous)
+    const guide = open({ link }); await guide.render()
+    // OS UPGRADE took an older Modwerk .bin left on the card, so the unit restarts on the base it had.
+    unit.unplug(); unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().identity?.base).toBe(previous))
+    await settle()
+    const note = container.querySelector('.base-install-note')?.textContent
+    expect(note).toContain('still runs the base it had before')
+    expect(note).toContain('Remove every other .bin')
+    expect(guide.onReady).not.toHaveBeenCalled()
+    expect(pendingBaseInstall()?.expectedBase).toBe(expected)
+  })
   it('closes by itself when the unit turns out to run the current base already', async () => {
     const { unit, link } = await connected('none')
     const guide = open({ link, launch: true }); await guide.render()
@@ -152,13 +184,30 @@ describe('the guided first install, for a member on the original OS', () => {
 })
 
 describe('a browser without WebUSB', () => {
-  it('lets the member prepare the base, and reports the missing WebUSB once as the guide’s failure and the link’s', async () => {
+  it('says first that USB needs a Chromium browser on a computer and leads through the card, and reports the missing WebUSB once', async () => {
     const link = new OctatrackLink(null), seen: string[] = []
     link.subscribeDiagnostics(event => seen.push(event.event + ':' + event.failure))
     const guide = open({ link }); await guide.render(); await settle()
-    expect(container.textContent).toContain('You can install the base from here. Afterwards your modules go onto the Octatrack as a file on the card')
+    // Before the steps, as a note: the card route is this browser's way, not a failure.
+    const route = container.querySelector('.base-install-route')!
+    expect(route.getAttribute('role')).toBe('note')
+    expect(route.textContent).toContain('USB needs Chrome, Edge or another Chromium browser on a computer.')
+    expect(route.textContent).toContain('install the base from the card in the steps below, then load your modules as one file on the card')
+    expect(route.compareDocumentPosition(container.querySelector('.base-install-progress')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(container.querySelector('[role=alert]')).toBeNull()
+    expect([...container.querySelectorAll('.base-install-progress li')].map(item => item.textContent)).toEqual(['1Download', '2Copy', '3Install', '4Load modules'])
     expect(guide.onStage.mock.calls).toEqual([['opened', undefined], ['failed', 'no-webusb']])
     expect(seen).toEqual(['link_failed:no-webusb'])
+    click(container.querySelector('.risk-accept input')!); click(buttonNamed('Download base .bin')!); await settle(); await settle()
+    click(buttonNamed('File copied')!); click(buttonNamed('Octatrack has started')!)
+    expect(container.querySelector('#base-stage-title')?.textContent).toBe('Now load your modules from the card')
+    expect(buttonNamed('Connect Octatrack')).toBeUndefined(); expect(buttonNamed('Open Setup')).toBeDefined()
+    expect(guide.onStep.mock.calls.map(call => call[0])).toEqual(['card-download', 'os-file-ready', 'risk-accepted', 'card-copy', 'card-install', 'card-load-from-card'])
+  })
+  it('says it on the first view too, as a note instead of a failure', async () => {
+    await open({ link: new OctatrackLink(null), launch: true }).render(); await settle()
+    expect(container.querySelector('.base-install-route')?.textContent).toContain('USB needs Chrome, Edge or another Chromium browser on a computer.')
+    expect(container.querySelector('.link-needs.is-missing')).toBeNull(); expect(container.querySelector('[role=alert]')).toBeNull()
   })
 })
 

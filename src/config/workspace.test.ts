@@ -29,13 +29,13 @@ describe('persistent configuration version pins',()=>{
 describe('modules removed from the library',()=>{
  it('drops a removed module and its pin from a saved configuration and keeps the rest',()=>{
   const current=newConfiguration('Live set',['miniverb','euclid'])
-  const saved={...current,moduleIds:['spectrum','miniverb','euclid','midi-scenes'],moduleVersions:{...current.moduleVersions,spectrum:'0.1.1-experimental','midi-scenes':'0.2.5-experimental'}}
+  const saved={...current,moduleIds:['spectrum','miniverb','euclid','modulation'],moduleVersions:{...current.moduleVersions,spectrum:'0.1.1-experimental',modulation:'0.1.1-experimental'}}
   expect(validateConfiguration(saved)).toEqual(current)
   const only={...current,moduleIds:['character','modulation'],moduleVersions:{character:'0.1.1-experimental'}}
   expect(validateConfiguration(only)).toMatchObject({moduleIds:[],moduleVersions:{}})
  })
  it('leaves a removed module out of a copied or imported configuration',()=>{
-  const copy=newConfiguration('Copy',['midi-scenes','repitch'],true,{'midi-scenes':'0.2.5-experimental',repitch:'0.1.1-experimental'})
+  const copy=newConfiguration('Copy',['modulation','repitch'],true,{modulation:'0.1.1-experimental',repitch:'0.1.1-experimental'})
   expect(copy.moduleIds).toEqual(['repitch'])
   expect(copy.moduleVersions).toEqual(pinModuleVersions(['repitch']))
   expect(pinModuleVersions(['spectrum','repitch'])).toEqual(pinModuleVersions(['repitch']))

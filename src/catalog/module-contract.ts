@@ -9,8 +9,8 @@ export type ResourceLoadLevel = 'minimal' | 'low' | 'moderate' | 'high'
 export type ResourceLoadEstimate = { level: ResourceLoadLevel; basis: 'source-estimate' | 'measured-comparison'; rationale: string; source: string }
 export type ModuleResourceImpact = { conditions: string; cpu: ResourceLoadEstimate; dsp: ResourceLoadEstimate; memory: ResourceLoadEstimate }
 // What a module costs the Octatrack's ColdFire, measured on a unit (docs/MODULE_PERFORMANCE.md, "Every module names its CPU price").
-// machine-render: a machine's worst render on one track, both passes of a frame, every voice playing (npm run device -- cpu); the
-// value is its descriptor's reserved[0], so a whole percent from 1. frame-interrupt: the share of the frame interrupt a module adds
+// machine-render: the share of the frame interrupt one track of a machine adds while it plays, a trig on every step and every voice
+// sounding (its mean cost; npm run device -- do with guard); the value is its descriptor's reserved[0], so a whole percent from 1. frame-interrupt: the share of the frame interrupt a module adds
 // installed and in use (npm run device:price), to a tenth of a point. scripts/module-cpu-price.mjs requires one of every module.
 export const MODULE_CPU_PRICE_MEASURES = ['machine-render', 'frame-interrupt'] as const
 export type ModuleCpuPrice = { value: number; unit: 'percent-of-frame'; measure: typeof MODULE_CPU_PRICE_MEASURES[number]; tool: string; date: string; conditions: string; source: string }
@@ -180,7 +180,7 @@ export function parseModuleCpuPrice(value: unknown, path='resources.cpuPrice'): 
   const v=p.value
   if(measure==='machine-render'&&(typeof v!=='number'||!Number.isInteger(v)||v<1||v>100)) fail(path+'.value','a machine\'s render price is its descriptor\'s reserved[0]: a whole percent of a frame from 1 to 100')
   if(measure==='frame-interrupt'&&(typeof v!=='number'||!Number.isFinite(v)||v<0||v>100||Math.abs(Math.round(v*10)-v*10)>1e-9)) fail(path+'.value','expected the measured share from 0 to 100, to a tenth of a point')
-  const tool=text(p.tool,path+'.tool',200), expected=measure==='machine-render'?'npm run device -- cpu':'npm run device:price'
+  const tool=text(p.tool,path+'.tool',200), expected=measure==='machine-render'?'npm run device -- do':'npm run device:price'
   if(!tool.startsWith(expected)) fail(path+'.tool','a '+measure+' price is read with '+expected)
   const date=text(p.date,path+'.date',10)
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date+'T00:00:00Z'))) fail(path+'.date','expected the day it was measured, YYYY-MM-DD')

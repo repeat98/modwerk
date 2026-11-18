@@ -195,11 +195,11 @@ struct modwerk_machine_start {
 };
 #define MODWERK_MACHINE_START_ABI 1u
 
-/* ev_banks_load (0x40090504): a project load is about to read every bank from the card. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A notification before stock's load: what a module keeps per project is about to be replaced, so it marks its own copy stale here and reads its file at ev_banks_loaded. d2-d7/a2-a6 must be kept, as C keeps them. */
+/* ev_banks_load (0x40090504): a project load is about to read every bank from the card. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A notification before stock's load: what a module keeps per project is about to be replaced, so it marks its own copy stale here and reads its file at ev_banks_loaded. d2-d7/a2-a6 must be kept, as C keeps them. Seen on an MKI (OS 1.40C, 18 November 2026): PROJECT > CHANGE raises it, then ev_banks_loaded, then ev_project_new; RELOAD PROJECT raised it once and once not at all. */
 #define MODWERK_EV_BANKS_LOAD 38
 typedef void modwerk_ev_banks_load(void);
 
-/* ev_banks_loaded (raised by the base): stock has read every bank of the project; no stock site: the base raises it when the routine at 0x40090504 returns. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). The project's banks are in memory: a module reads its own file from the project directory now. The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them. */
+/* ev_banks_loaded (raised by the base): stock has read every bank of the project; no stock site: the base raises it when the routine at 0x40090504 returns. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). The project's banks are in memory: a module reads its own file from the project directory now. The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them. Seen on an MKI (OS 1.40C, 18 November 2026): stock reads the arrangements (arr01-08) after this, and RELOAD PROJECT did not raise it; a module that must act after a whole load waits until stock's card jobs are done. */
 #define MODWERK_EV_BANKS_LOADED 39
 typedef unsigned modwerk_ev_banks_loaded(void);
 
@@ -211,7 +211,7 @@ typedef void modwerk_ev_bank_load(unsigned mask, uint32_t caller);
 #define MODWERK_EV_BANK_LOADED 41
 typedef unsigned modwerk_ev_bank_loaded(void);
 
-/* ev_project_new (0x400909d8): stock makes a new, empty project, before it initialises it. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A notification: a module empties what it keeps per project, so nothing of the last project reaches the new one. d2-d7/a2-a6 must be kept, as C keeps them. */
+/* ev_project_new (0x400909d8): stock makes a new, empty project, before it initialises it. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A notification: a module empties what it keeps per project, so nothing of the last project reaches the new one. d2-d7/a2-a6 must be kept, as C keeps them. Seen on an MKI (OS 1.40C, 18 November 2026): PROJECT > CHANGE and RELOAD PROJECT both raise it after their own hooks, as part of the load, not only for a new project. */
 #define MODWERK_EV_PROJECT_NEW 42
 typedef void modwerk_ev_project_new(void);
 
@@ -235,7 +235,7 @@ typedef unsigned modwerk_ev_project_stored(void);
 #define MODWERK_EV_PROJECT_RELOAD 47
 typedef void modwerk_ev_project_reload(void);
 
-/* ev_project_reloaded (raised by the base): RELOAD PROJECT has copied the project's .strd files back to .work; no stock site: the base raises it when the routine at 0x4008f180 returns. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A module copies its own .strd file back to its .work file; stock's bank loads follow (ev_bank_load). The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them. */
+/* ev_project_reloaded (raised by the base): RELOAD PROJECT has copied the project's .strd files back to .work; no stock site: the base raises it when the routine at 0x4008f180 returns. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A module copies its own .strd file back to its .work file; stock's bank loads follow (ev_bank_load). The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them. Seen on an MKI (OS 1.40C, 18 November 2026): ev_project_new follows, and ev_banks_loaded did not. */
 #define MODWERK_EV_PROJECT_RELOADED 48
 typedef unsigned modwerk_ev_project_reloaded(void);
 
@@ -250,5 +250,14 @@ typedef void modwerk_ev_part_clear(unsigned part);
 /* ev_modules_ready (raised by the base): the installed modules changed (the restore after a power-up, a set installed, kept or undone over USB) and the unit can use the card: nothing plays or records; no stock site: the base raises it from its engine-task service. The engine task, with the card free: a handler may call stock's file routines, and must not draw or open a window. Every installed module's handler runs each time, so a handler first checks whether it has loaded its state already. A module installed into a running project reads its file from the project directory here, since no project load will tell it. The result is ignored: return 0. d2-d7/a2-a6 must be kept, as C keeps them. */
 #define MODWERK_EV_MODULES_READY 51
 typedef unsigned modwerk_ev_modules_ready(void);
+
+/* ot_sample_memory (table, contribute {"to": "ot_sample_memory", "order", "data"}): a module borrows sample memory while it is installed: the base takes its pages from stock's sample pool on the engine task, before it raises ev_modules_ready, and returns them once the module is removed. The engine task (take and return); the module reads at from any task. Contribute one struct modwerk_sample_memory. The base takes that many whole pages from the top of the sample pool's free list as stock's track recorders do, so the unit's FREE MEM, sample loads and recorders see that much less, and writes their address to at; until then, and when the pool has not that many free pages in one run, at stays 0 and the module must leave stock alone. The pages keep their contents through LOAD PROJECT, a new project and REFORMAT FLEX RAM, but not through a power cycle. A replacement of the same module, same pages, keeps them; removal zeroes them and hands them back. One module at a time. */
+#define MODWERK_OT_SAMPLE_MEMORY 52
+struct modwerk_sample_memory {
+    uint16_t abi;                       /* 1 */
+    uint16_t pages;                     /* 6,144-byte pages of sample memory wanted, 1-400 */
+    uint8_t *volatile at;               /* the base writes the pages' address once they are taken; 0 until then, and while refused */
+    uint32_t reserved[2];               /* 0 */
+};
 
 #endif

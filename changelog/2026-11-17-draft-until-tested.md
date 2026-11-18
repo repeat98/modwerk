@@ -1,0 +1,1 @@
+Development: a pull request that changes what runs on an instrument (a built module package or base) now opens as a draft until its exact build has run on a unit. `npm run pr:ready` says so instead of "can merge", and CI refuses a ready one whose description does not name the build that ran ("Tested on a unit: …") or say plainly that it was not tested.

@@ -23,9 +23,37 @@ export const DIAGNOSTIC_INVITATION_PLACEMENTS = ['guide', 'after-failure', 'hub'
 export type DiagnosticInvitationPlacement = typeof DIAGNOSTIC_INVITATION_PLACEMENTS[number]
 export const DIAGNOSTIC_INVITATION_OUTCOMES = ['shown', 'shared', 'not-now'] as const
 export type DiagnosticInvitationOutcome = typeof DIAGNOSTIC_INVITATION_OUTCOMES[number]
-/** Each anonymous count with a category, the event name sent and stored, and the categories it takes (none: no category). */
+/** How far a run of the install guide got between opening and a first connection (BaseInstallDialog `onStep`), each at
+ * most once per run, so the next look can see where people stop: the card steps (`card-…`, with `card-load-from-card`
+ * for a browser without WebUSB, whose last step loads modules from the card), the OS file chosen or refused, the risk
+ * accepted, the sign-in prompt asked, Connect pressed, and the USB update shown and started. */
+export const BASE_GUIDE_STEPS = ['card-download', 'os-file-ready', 'os-file-refused', 'risk-accepted', 'sign-in-asked', 'card-copy', 'card-install', 'card-connect', 'card-load-from-card', 'connect-pressed', 'usb-update-shown', 'usb-update-started'] as const
+export type BaseGuideStep = typeof BASE_GUIDE_STEPS[number]
+/** Why a USB sync failed (octatrack-link.ts `sync_failed`, or the unit going away mid-sync), as one fixed reason for the
+ * identifier-free counts: the base's refusal by its code (sdk/runtime/loader-refusals.json), a refusal without one,
+ * playback that would not stop (`unsafe`), a transfer the unit did not confirm by the sync step it stopped in, and the
+ * link's other error labels. Anything else is `other`. */
+export const SYNC_FAILURE_REASONS = [
+  'disconnected', 'cancelled', 'stale', 'save', 'selftest', 'rollback', 'unknown', 'unsafe', 'device',
+  'refused', 'refused-1', 'refused-2', 'refused-3', 'refused-4', 'refused-5', 'refused-6', 'refused-7', 'refused-8', 'refused-9', 'refused-10', 'refused-11',
+  'transport', 'transport-session', 'transport-baseline', 'transport-encode', 'transport-stage', 'transport-activate', 'transport-trial',
+  'other',
+] as const
+export type SyncFailureReason = typeof SYNC_FAILURE_REASONS[number]
+/** The fixed reason for a failed sync from the link's own diagnostic (`sync_failed`) or a disconnect mid-sync. */
+export function syncFailureReason(event: { event: string; error?: string; step?: string; result?: string; refusal?: number }): SyncFailureReason {
+  const known = (reason: string) => (SYNC_FAILURE_REASONS as readonly string[]).includes(reason) ? reason as SyncFailureReason : 'other'
+  if (event.event === 'disconnected') return 'disconnected'
+  if (event.error === 'device') return event.refusal !== undefined && event.refusal > 0 ? known(`refused-${event.refusal}`)
+    : event.result === 'unsafe' ? 'unsafe' : event.result === 'rejected' || event.result === 'backend' ? 'refused' : 'device'
+  if (event.error === 'transport') return event.step ? known(`transport-${event.step}`) : 'transport'
+  return event.error ? known(event.error) : 'other'
+}
+/** Each anonymous count with a category, the event name sent and stored, and the categories it takes (none: no category).
+ * A count whose list ends in `other` stores any other category as `other`; the rest refuse it. */
 export const OCTATRACK_STEP_COUNTS = {
   base_guide_opened: [], base_file_downloaded: [], base_first_connection: [], base_usb_update_done: [], base_install_failed: BASE_INSTALL_FAILURES,
+  base_guide_step: BASE_GUIDE_STEPS, usb_sync_failed_reason: SYNC_FAILURE_REASONS,
   diagnostics_invite_shown: DIAGNOSTIC_INVITATION_PLACEMENTS, diagnostics_invite_shared: DIAGNOSTIC_INVITATION_PLACEMENTS, diagnostics_invite_not_now: DIAGNOSTIC_INVITATION_PLACEMENTS,
 } as const satisfies Record<string, readonly string[]>
 export type OctatrackStepCount = keyof typeof OCTATRACK_STEP_COUNTS
@@ -148,7 +176,15 @@ export const DIAGNOSTIC_USB_ERRORS = ['device', 'selftest', 'transport', 'cancel
  * loading it, or starting the trial. */
 export const DIAGNOSTIC_SYNC_STEPS = ['session', 'baseline', 'encode', 'stage', 'activate', 'trial'] as const
 export type DiagnosticSyncStep = typeof DIAGNOSTIC_SYNC_STEPS[number]
-export const DIAGNOSTIC_BUILD_KINDS = ['octatrack-firmware', 'octatrack-base', 'elekloader'] as const
+/** The type of build. An elekloader build names its machine, so a failure says which machine it was for; plain
+ * `elekloader` is what records sent before that say, and what a machine missing from the list falls back to. */
+export const DIAGNOSTIC_ELEKLOADER_MACHINES = ['digitakt', 'digitakt-ii', 'digitone', 'analog-rytm-mkii'] as const
+export const DIAGNOSTIC_BUILD_KINDS = ['octatrack-firmware', 'octatrack-base', 'elekloader',
+  ...DIAGNOSTIC_ELEKLOADER_MACHINES.map(machine => `elekloader-${machine}` as const)] as const
+/** The build kind of an elekloader build for `machine`: its own value, else plain `elekloader`. */
+export function elekloaderBuildKind(machine: string): DiagnosticBuildKind {
+  return (DIAGNOSTIC_ELEKLOADER_MACHINES as readonly string[]).includes(machine) ? `elekloader-${machine as typeof DIAGNOSTIC_ELEKLOADER_MACHINES[number]}` : 'elekloader'
+}
 export const DIAGNOSTIC_BUILD_PHASES = ['preparing', 'composing', 'packing', 'verifying', 'building'] as const
 export const DIAGNOSTIC_BUILD_ERRORS = ['input', 'selection', 'build', 'cancelled', 'unknown'] as const
 export type DiagnosticBuildKind = typeof DIAGNOSTIC_BUILD_KINDS[number]
@@ -187,6 +223,9 @@ export interface OctatrackDiagnostic {
    * submission), OtherError (a reply that did not confirm the step). Never a message. */
   kind?: DiagnosticErrorKind
   step?: DiagnosticSyncStep
+  /** A `transport` sync failure's change in the base's EP0 counters over the sync (DIAG version 3, ep0.c): frames
+   * received, refusals, bus resets, data stages primed, completed and abandoned. */
+  usb?: number[]
   live?: DiagnosticLive
   reason?: typeof DIAGNOSTIC_UNRESPONSIVE[number]
   log?: { loads: DeviceLoad[]; incidents: DeviceIncident[]; crash?: DeviceCrash; stall?: DeviceStall }

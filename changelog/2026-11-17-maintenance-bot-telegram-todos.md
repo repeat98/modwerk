@@ -1,0 +1,1 @@
+Worker: the maintenance bot's Telegram chat answers `/todos` with the owner's open to-do list, urgent ones first, each with its issue or pull request number and the command that does it. Before, the list was only at the computer (`/modwerk-todo`).

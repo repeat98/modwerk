@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // The agent board (docs/AGENT_BOARD.md): claims every developer's agent can read before it ports a module or takes a
-// hook, table or migration number, and the questions, findings, wanted tasks and replies agents leave each other. Reads are public;
+// hook, table or migration number or fixes an issue, and the questions, findings, wanted tasks and replies agents leave each other. Reads are public;
 // a write needs a GitHub-linked developer or board session.
 import type { Database, Env } from './platform'
 import { throttle } from './auth'
 import { digest, HttpError, jsonBody, response } from './security'
 import { githubConfig } from './github'
 
-export const CLAIM_KINDS = ['module', 'hook', 'migration', 'dsp-region', 'machine-id'] as const
+export const CLAIM_KINDS = ['module', 'hook', 'migration', 'dsp-region', 'machine-id', 'issue'] as const
 export type ClaimKind = typeof CLAIM_KINDS[number]
 const NAME = '[a-z0-9]+(?:-[a-z0-9]+)*'
 /** What a key looks like for each kind: the machine first, except for D1 migrations, which are one sequence. */
@@ -20,6 +20,8 @@ export const CLAIM_KEYS: Record<ClaimKind, RegExp> = {
   'dsp-region': new RegExp(`^${NAME}/[a-z0-9_-]{1,64}$`),
   // A machine id a module's manifest takes (machine:<id> in platform.claims): kits store it, so it is never renumbered.
   'machine-id': new RegExp(`^${NAME}/\\d{1,3}$`),
+  // A GitHub issue someone is fixing, by its number.
+  issue: /^[1-9]\d{0,6}$/,
 }
 export const CLAIM_DAYS = 14, CLAIM_LIMIT = 10, CLAIM_WRITES_PER_HOUR = 30, NOTE_LIMIT = 120, RELEASED_KEPT_DAYS = 90
 const DAY = 86400000
@@ -29,6 +31,8 @@ export const TOPIC_KINDS = [...CLAIM_KINDS, 'machine', 'site'] as const
 export type TopicKind = typeof TOPIC_KINDS[number]
 export const MESSAGE_KINDS = ['question', 'finding', 'wanted'] as const
 export type MessageKind = typeof MESSAGE_KINDS[number]
+// A wanted task's priority: its author sets it, and its author or an administrator changes it.
+export const PRIORITIES = ['high', 'normal', 'low'] as const
 export const MESSAGE_LIMIT = 500, QUESTION_DAYS = 30, ANSWERED_DAYS = 7, FINDING_DAYS = 90, OPEN_THREADS = 20, REPLY_LIMIT = 50, ACTIVITY_DAYS = 30
 
 /** Board text reaches other developers' agents, so it is plain prose on one line: no links, paths, addresses, code,
@@ -65,7 +69,7 @@ export function hookSpan(key: string) {
   return { list, first: Number(first), last: Number(last ?? first) }
 }
 function claimKey(kind: ClaimKind, value: unknown): string {
-  if (typeof value !== 'string' || value.length > 120 || !CLAIM_KEYS[kind].test(value) || (kind === 'hook' && /-\d+$/.test(value) && hookSpan(value).last <= hookSpan(value).first)) throw new HttpError(400, `That is not a ${kind} key (for example ${{ module: 'octatrack/tape-echo', hook: 'octatrack/39', migration: '0085', 'dsp-region': 'octatrack/fx2-delay-line', 'machine-id': 'digitakt/10' }[kind]}).`)
+  if (typeof value !== 'string' || value.length > 120 || !CLAIM_KEYS[kind].test(value) || (kind === 'hook' && /-\d+$/.test(value) && hookSpan(value).last <= hookSpan(value).first)) throw new HttpError(400, `That is not a ${kind} key (for example ${{ module: 'octatrack/tape-echo', hook: 'octatrack/39', migration: '0085', 'dsp-region': 'octatrack/fx2-delay-line', 'machine-id': 'digitakt/10', issue: '1624' }[kind]}).`)
   return value
 }
 function topicOf(kind: unknown, key: unknown): { kind: TopicKind; key: string } {
@@ -75,6 +79,11 @@ function topicOf(kind: unknown, key: unknown): { kind: TopicKind; key: string } 
   }
   if (!CLAIM_KINDS.includes(kind as ClaimKind)) throw new HttpError(400, 'Choose a topic: ' + TOPIC_KINDS.join(', ') + '.')
   return { kind: kind as ClaimKind, key: claimKey(kind as ClaimKind, key) }
+}
+function priorityOf(value: unknown) {
+  if (value === undefined || value === null || value === '') return 'normal'
+  if (!PRIORITIES.includes(value as typeof PRIORITIES[number])) throw new HttpError(400, 'Choose a priority: ' + PRIORITIES.join(', ') + '.')
+  return value as typeof PRIORITIES[number]
 }
 function githubLogin(value: unknown): string | null {
   if (value === undefined || value === null || value === '') return null
@@ -113,9 +122,9 @@ async function expireKey(db: Database, kind: ClaimKind, key: string, now: string
 }
 const expiry = (now: number, linked: boolean) => linked ? null : new Date(now + CLAIM_DAYS * DAY).toISOString()
 
-type MessageRow = { id: string; kind: MessageKind | 'reply'; parent_id: string | null; topic_kind: TopicKind; topic_key: string; user_id: string; github_login: string; to_login: string | null; body: string; pull_request: number | null; created_at: string; active_at: string; ended_at: string | null; ended_reason: string | null }
+type MessageRow = { id: string; kind: MessageKind | 'reply'; parent_id: string | null; topic_kind: TopicKind; topic_key: string; user_id: string; github_login: string; to_login: string | null; body: string; pull_request: number | null; priority: string | null; created_at: string; active_at: string; ended_at: string | null; ended_reason: string | null }
 // A suspended account's posts disappear at once; the hourly run deletes them.
-const MESSAGE_SELECT = 'SELECT m.id,m.kind,m.parent_id,m.topic_kind,m.topic_key,m.user_id,u.github_login,m.to_login,m.body,m.pull_request,m.created_at,m.active_at,m.ended_at,m.ended_reason FROM agent_messages m JOIN users u ON u.id=m.user_id AND u.suspended=0'
+const MESSAGE_SELECT = 'SELECT m.id,m.kind,m.parent_id,m.topic_kind,m.topic_key,m.user_id,u.github_login,m.to_login,m.body,m.pull_request,m.priority,m.created_at,m.active_at,m.ended_at,m.ended_reason FROM agent_messages m JOIN users u ON u.id=m.user_id AND u.suspended=0'
 // Who wrote a thread's last post: a question waits for whoever did not.
 const LAST_WORD = 'COALESCE((SELECT r.user_id FROM agent_messages r WHERE r.parent_id=m.id ORDER BY r.created_at DESC,r.rowid DESC LIMIT 1),m.user_id)'
 // A question lapses 30 days after its last post, or 7 once someone other than its asker has the last word: an answer the asker
@@ -129,6 +138,7 @@ function threadView(row: MessageRow, replies: MessageRow[], now: number) {
   const lapses = Date.parse(row.kind === 'question' ? row.active_at : row.created_at) + (row.kind === 'question' ? (answered ? ANSWERED_DAYS : QUESTION_DAYS) : FINDING_DAYS) * DAY
   const ended = row.ended_at ?? (lapses <= now ? new Date(lapses).toISOString() : null)
   return { id: row.id, kind: row.kind, topic: { kind: row.topic_kind, key: row.topic_key }, author: row.github_login, to: row.to_login, body: row.body, pullRequest: row.pull_request, createdAt: row.created_at, activeAt: row.active_at,
+    ...(row.kind === 'wanted' ? { priority: row.priority ?? 'normal' } : {}),
     ...(ended ? { endedAt: ended, endedReason: row.ended_reason ?? 'expired' } : { endsAt: new Date(lapses).toISOString() }),
     replies: replies.map(reply => ({ id: reply.id, author: reply.github_login, body: reply.body, createdAt: reply.created_at })) }
 }
@@ -145,6 +155,20 @@ async function liveThread(db: Database, id: string, now: number) {
   return await db.prepare(MESSAGE_SELECT + ' WHERE m.id=? AND m.parent_id IS NULL AND ' + LIVE).bind(id, ...cutoffs(now)).first<MessageRow>()
 }
 
+/** One reply to an open thread; the maintenance bot posts the owner's through here too (server/maintenance-bot.ts). */
+export async function boardReply(db: Database, userId: string, id: string, value: unknown, pr: number | null, nowMs: number) {
+  if (!await liveThread(db, id, nowMs)) throw new HttpError(404, 'No open board thread has that id.')
+  const count = await db.prepare('SELECT COUNT(*) AS n FROM agent_messages WHERE parent_id=?').bind(id).first<{ n: number }>()
+  if ((count?.n ?? 0) >= REPLY_LIMIT) throw new HttpError(409, `This thread has ${REPLY_LIMIT} replies. Start a new question.`)
+  const text = messageBody(value), now = new Date(nowMs).toISOString()
+  // A reply keeps a question open for another 30 days; one that names the pull request ("sent as #1311") links it.
+  await db.batch([
+    db.prepare("INSERT INTO agent_messages(id,kind,parent_id,user_id,body,created_at,active_at) VALUES(?,'reply',?,?,?,?,?)").bind(crypto.randomUUID(), id, userId, text, now, now),
+    db.prepare('UPDATE agent_messages SET active_at=?,pull_request=COALESCE(?,pull_request),checked_at=CASE WHEN ? IS NULL THEN checked_at END WHERE id=?').bind(now, pr, pr, id),
+  ])
+  return await thread(db, id, nowMs)
+}
+
 /** Questions, findings, wanted tasks and replies (docs/AGENT_BOARD.md, "Questions and findings"). */
 async function messageRoutes(request: Request, url: URL, env: Env, db: Database, adminId: string | null, nowMs: number): Promise<Response> {
   const path = url.pathname, now = new Date(nowMs).toISOString(), live = cutoffs(nowMs)
@@ -158,7 +182,7 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
     if (machine) { if (!new RegExp(`^${NAME}$`).test(machine) || machine.length > 40) throw new HttpError(400, 'Name the machine (for example octatrack).'); where.push("m.topic_kind<>'site' AND (m.topic_key=? OR m.topic_key LIKE ?)"); binds.push(machine, machine + '/%') }
     if (to) { where.push('m.to_login=?'); binds.push(githubLogin(to)) }
     if (author) { where.push('u.github_login=?'); binds.push(githubLogin(author)) }
-    const messages = await threads(db, (await db.prepare(MESSAGE_SELECT + ' WHERE ' + [...where, LIVE].join(' AND ') + ' ORDER BY m.active_at DESC LIMIT 100').bind(...binds, ...live).all<MessageRow>()).results, nowMs)
+    const messages = await threads(db, (await db.prepare(MESSAGE_SELECT + ' WHERE ' + [...where, LIVE].join(' AND ') + " ORDER BY CASE m.priority WHEN 'high' THEN 0 WHEN 'low' THEN 2 ELSE 1 END,m.active_at DESC LIMIT 100").bind(...binds, ...live).all<MessageRow>()).results, nowMs)
     const ended = value('ended') === '1' ? await threads(db, (await db.prepare(MESSAGE_SELECT + ' WHERE ' + [...where, ENDED].join(' AND ') + ' ORDER BY COALESCE(m.ended_at,m.active_at) DESC LIMIT 50').bind(...binds, ...live).all<MessageRow>()).results, nowMs) : undefined
     return response({ messages, ...(ended ? { ended } : {}) })
   }
@@ -169,6 +193,7 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
     if (!MESSAGE_KINDS.includes(body.kind as MessageKind)) throw new HttpError(400, 'Choose question, finding or wanted.')
     const kind = body.kind as MessageKind, about = topicOf(body.topic, body.key), text = messageBody(body.body), pr = pullRequest(body.pullRequest)
     let to = githubLogin(body.to)
+    if (kind !== 'wanted' && body.priority !== undefined) throw new HttpError(400, 'Only a wanted task has a priority.')
     if (kind !== 'question' && to) throw new HttpError(400, `A ${kind === 'wanted' ? 'wanted task' : 'finding'} is for everyone. To address someone, ask a question.`)
     if (to === user.github_login) throw new HttpError(400, 'That question is addressed to you.')
     // A question about something someone holds goes to its holder unless it names someone else.
@@ -182,10 +207,10 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
     const open = await db.prepare('SELECT COUNT(*) AS n FROM agent_messages m WHERE m.user_id=? AND m.parent_id IS NULL AND ' + LIVE).bind(user.id, ...live).first<{ n: number }>()
     if ((open?.n ?? 0) >= OPEN_THREADS) throw new HttpError(409, `You have ${OPEN_THREADS} open questions, findings and wanted tasks. Close one you no longer need first (npm run board -- close <id>).`)
     const id = crypto.randomUUID()
-    await db.prepare('INSERT INTO agent_messages(id,kind,topic_kind,topic_key,user_id,to_login,body,pull_request,created_at,active_at) VALUES(?,?,?,?,?,?,?,?,?,?)').bind(id, kind, about.kind, about.key, user.id, to, text, pr, now, now).run()
+    await db.prepare('INSERT INTO agent_messages(id,kind,topic_kind,topic_key,user_id,to_login,body,pull_request,priority,created_at,active_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)').bind(id, kind, about.kind, about.key, user.id, to, text, pr, kind === 'wanted' ? priorityOf(body.priority) : null, now, now).run()
     return response({ message: await thread(db, id, nowMs) }, 201)
   }
-  const match = path.match(/^\/api\/agent-board\/messages\/([0-9a-f-]{36})(?:\/(replies|close|fold|take))?$/)
+  const match = path.match(/^\/api\/agent-board\/messages\/([0-9a-f-]{36})(?:\/(replies|close|fold|take|priority))?$/)
   if (!match) throw new HttpError(404, 'Board route not found.')
   const [, id, action] = match
   if (!action && request.method === 'GET') {
@@ -210,16 +235,8 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
   // The thread's author, or whoever it is to (a question's addressee, a wanted task's taker), links the pull request that ends it.
   const linker = !user || row.user_id === user.id || row.to_login === user.github_login
   if (action === 'replies') {
-    const count = await db.prepare('SELECT COUNT(*) AS n FROM agent_messages WHERE parent_id=?').bind(id).first<{ n: number }>()
-    if ((count?.n ?? 0) >= REPLY_LIMIT) throw new HttpError(409, `This thread has ${REPLY_LIMIT} replies. Start a new question.`)
-    const text = messageBody(body.body)
     if (pr && !linker) throw new HttpError(403, 'Only the thread\'s author, or the one it is to, links its pull request.')
-    // A reply keeps a question open for another 30 days; one that names the pull request ("sent as #1311") links it.
-    await db.batch([
-      db.prepare("INSERT INTO agent_messages(id,kind,parent_id,user_id,body,created_at,active_at) VALUES(?,'reply',?,?,?,?,?)").bind(crypto.randomUUID(), id, user!.id, text, now, now),
-      db.prepare('UPDATE agent_messages SET active_at=?,pull_request=COALESCE(?,pull_request),checked_at=CASE WHEN ? IS NULL THEN checked_at END WHERE id=?').bind(now, pr, pr, id),
-    ])
-    return response({ message: await thread(db, id, nowMs) }, 201)
+    return response({ message: await boardReply(db, user!.id, id, body.body, pr, nowMs) }, 201)
   }
   if (action === 'take') {
     // A wanted task has one holder at a time, named in to_login; taking it again renews it, and --pr links its pull request.
@@ -230,6 +247,11 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
     return response({ message: taken })
   }
   if (action === 'fold' ? !linker : user && row.user_id !== user.id) throw new HttpError(404, 'You wrote no open board thread with that id.')
+  if (action === 'priority') {
+    if (row.kind !== 'wanted') throw new HttpError(400, 'Only a wanted task has a priority.')
+    await db.prepare('UPDATE agent_messages SET priority=? WHERE id=?').bind(priorityOf(body.priority), id).run()
+    return response({ message: await thread(db, id, nowMs) })
+  }
   if (action === 'close') {
     await db.prepare('UPDATE agent_messages SET ended_at=?,ended_reason=? WHERE id=? AND ended_at IS NULL').bind(now, user ? 'author' : 'administrator', id).run()
     return response({ message: await thread(db, id, nowMs) })
@@ -245,8 +267,8 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
 async function inbox(db: Database, user: { id: string; github_login: string }, nowMs: number) {
   const now = new Date(nowMs).toISOString(), live = cutoffs(nowMs)
   // Addressed to you, or to nobody about something you hold; and the last word is not yours.
-  const waiting = (await db.prepare(MESSAGE_SELECT + " WHERE m.parent_id IS NULL AND m.kind='question' AND " + LIVE + ' AND m.user_id<>? AND (m.to_login=? OR (m.to_login IS NULL AND EXISTS(SELECT 1 FROM agent_claims c WHERE c.user_id=? AND c.kind=m.topic_kind AND c.claim_key=m.topic_key AND c.released_at IS NULL AND (c.expires_at IS NULL OR c.expires_at>?)))) AND ' + LAST_WORD + '<>? ORDER BY m.active_at LIMIT 50').bind(...live, user.id, user.github_login, user.id, now, user.id).all<MessageRow>()).results
-  const replies = (await db.prepare(MESSAGE_SELECT + ' WHERE m.parent_id IS NULL AND m.user_id=? AND ' + LIVE + ' AND ' + LAST_WORD + '<>? ORDER BY m.active_at DESC LIMIT 50').bind(user.id, ...live, user.id).all<MessageRow>()).results
+  const waiting = (await db.prepare(MESSAGE_SELECT + " WHERE m.parent_id IS NULL AND m.kind='question' AND " + LIVE + ' AND m.user_id<>? AND (m.to_login=? OR (m.to_login IS NULL AND EXISTS(SELECT 1 FROM agent_claims c WHERE c.user_id=? AND c.kind=m.topic_kind AND c.claim_key=m.topic_key AND c.released_at IS NULL AND (c.expires_at IS NULL OR c.expires_at>?)))) AND ' + LAST_WORD + '<>? ORDER BY m.active_at, m.rowid LIMIT 50').bind(...live, user.id, user.github_login, user.id, now, user.id).all<MessageRow>()).results
+  const replies = (await db.prepare(MESSAGE_SELECT + ' WHERE m.parent_id IS NULL AND m.user_id=? AND ' + LIVE + ' AND ' + LAST_WORD + '<>? ORDER BY m.active_at DESC, m.rowid DESC LIMIT 50').bind(user.id, ...live, user.id).all<MessageRow>()).results
   return { login: user.github_login, waiting: await threads(db, waiting, nowMs), replies: await threads(db, replies, nowMs) }
 }
 
