@@ -6,11 +6,27 @@ import { ForumPage } from './ForumPage'
 import { ModuleIssueNotice } from './ModuleIssueNotice'
 import { ForumThreadView } from './ForumThreadView'
 import { communityModule, moduleIssueHref, moduleThreadId } from './modules'
+import { newConfiguration, type Configuration } from '../config/workspace'
 
-function renderForum(route: string, member = true) {
+function renderForum(route: string, member = true, configurations: Configuration[] = []) {
   const session = member ? { available: true, admin: false, user: { id: 'member', displayName: 'Member', username: 'member', verified: true } } : emptySession
-  return renderToStaticMarkup(createElement(CommunityContext.Provider, { value: { session, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } }, createElement(ForumPage, { route, configurations: [], onCopy: () => {} })))
+  return renderToStaticMarkup(createElement(CommunityContext.Provider, { value: { session, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } }, createElement(ForumPage, { route, configurations, onCopy: () => {} })))
 }
+
+describe('shared configuration links', () => {
+  it('opens the sharing form for a Zoom set and links back to the pedal workspace', () => {
+    const set = newConfiguration('Stereo loop set', ['loop'], false, undefined, 'zoom-ms-70cdr')
+    const html = renderForum('forum/new?category=configs&machine=zoom-ms-70cdr', true, [set])
+    expect(html).toContain('<h2>Stereo loop set</h2>')
+    expect(html).toContain('href="#zoom-ms-70cdr/pedal/set"')
+  })
+
+  it('opens shared configurations with a usable machine when the link names none', () => {
+    const set = newConfiguration('Studio set', ['miniverb'])
+    const html = renderForum('forum/new?category=configs', true, [set])
+    expect(html).toContain('<h2>Studio set</h2>')
+  })
+})
 
 describe('module issue entry points', () => {
   it('keeps bug reports out of discussion categories and offers the selected module’s report form', () => {
