@@ -71,3 +71,12 @@ switch saved them as book 2. Fixed: the record carries a serial each copy writes
 own memory only while the serial is still its own; otherwise it rereads the record and checks it against the
 arrangements. `verify.py` (52 checks) replays that order; against the old logic it fails, writing book 1's songs into
 arr09. On the unit: not yet.
+
+### Cleared arrangements coming back (found on the unit, 18 November 2026)
+
+As the developer reported it: arrangements cleared with FUNC + PLAY in ARR > CHANGE on book 2 sometimes came back after
+book 1 and back; copied and pasted ones stayed. Cause: the list's FUNC + PLAY clears with stock's undo (0x400610ee)
+and does not mark the arrangement changed, and the module wrote a book other than book 1 only when something was
+marked changed. Stock's own SYNC job writes all 8 files every time. Fixed: the module writes a book's 8 files
+whenever stock's writer asks for any (its mask argument), as stock does. `verify.py` (54 checks) clears one without the
+mark and leaves the book; against the old rule it fails. On the unit: not yet.

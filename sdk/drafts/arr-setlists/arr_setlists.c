@@ -253,7 +253,10 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
     struct as_state *s = ready();
     int rc = 0;
     if (s->book == 0) rc = stock_writer(a1, a2, a3, a4);     /* book 1: arr01-08 as always */
-    else if (rd8(CHANGED)) {                                  /* another book: its 8 files together */
+    else if ((a2 & 0xffu) || rd8(CHANGED)) {
+        /* Another book: its 8 files together, whenever stock asks for any (as stock's writer does with its mask: the
+         * SYNC job, and so every switch, asks for all 8). Not only when something is marked changed: the list's
+         * FUNC + PLAY clears an arrangement without marking it (0x400610ee), and stock saves it all the same. */
         if (s->damaged ? write_changed(s, s->book) : write_book(s, s->book)) wr8(CHANGED, 0);
         else rc = -1;
     }

@@ -187,7 +187,15 @@ int main(void)
     check("a write on book 2 writes all 8 of arr09-arr16, not arr01-08", stock_writes == 1 && writes == w + 8 && find("/SET/PROJ/arr09.work") && find("/SET/PROJ/arr16.work") && cs1[CHG] == 0);
     w = writes;
     job();
-    check("nothing changed: nothing written", writes == w);
+    check("the SYNC job asks for all 8: all 8 written again, as stock does", writes == w + 8);
+    w = writes;
+    as_writer(0x100b14f0u, 0, 0, 0);
+    check("a job asking for none, with nothing changed: nothing written", writes == w);
+    /* the list's FUNC + PLAY: an arrangement cleared without being marked changed */
+    host_clear_arr(4); cs1[CHG] = 0;
+    tap(LEFT); job(); as_tick(0); tap(RIGHT); job(); as_tick(0);
+    check("a clear the list did not mark changed stays cleared after leaving the book", book() == 1 && cs1[W(4) + 30] == 0 && cs1[W(3) + 30] != 0);
+    mark(0x20); job();                             /* book 2 as before, for the checks below */
 
     tap(RIGHT); job();                             /* to book 3, new */
     mark(0x30); cs1[CHG] = 1;
@@ -203,9 +211,10 @@ int main(void)
     check("with the list's cursor on it", list[7] == 5 && list[4] == 0);
     tap(LEFT); job(); tap(LEFT); job();
     check("back on book 1: its songs from the backup", book() == 0 && marked(0x10));
+    int sw = stock_writes;
     check("arriving at book 1 marks all 8 changed, so stock rewrites arr01-08", cs1[CHG] == 0xff);
     job();
-    check("then stock's writer writes them", stock_writes == 2 && cs1[CHG] == 0);
+    check("then stock's writer writes them", stock_writes == sw + 1 && cs1[CHG] == 0);
 
     /* arr01-08 overwritten while the module was away: book 1 comes back from the backup and repairs them */
     tap(RIGHT); job();                             /* to book 2; the backup is fresh */
