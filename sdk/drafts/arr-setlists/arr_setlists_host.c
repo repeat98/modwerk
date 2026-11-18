@@ -306,9 +306,7 @@ int main(void)
     check("RELOAD PROJECT leaves the slots on book 1", book() == 0);
     tap(RIGHT); job();
     check("book 2 is as saved, not as edited after", book() == 1 && marked(0x20));
-    { uint32_t cw = change_window; change_window = 0; main_screen(); as_draw(lcd);
-      check("main screen, book 2: a 2 over the icon", !lit(46, 33) && !lit(48, 33) && lit(47, 34) && lit(44, 35));
-      change_window = cw; }
+
 
     /* a project load comes back to the book and arrangement it was left on */
     while (book() != 2) { tap(book() < 2 ? RIGHT : LEFT); job(); as_tick(0); }
@@ -354,9 +352,7 @@ int main(void)
     as_draw(lcd);
     check("nothing drawn outside ARR > CHANGE", !lit(99, 0) && !lit(127, 8));
     main_screen(); as_draw(lcd);
-    check("main screen, book 16: 1 and 6 over the arranger icon", !lit(45, 33) && lit(44, 33) && !lit(48, 33) && !lit(50, 37) && lit(49, 34));
-    memset(lcd, 0, sizeof lcd); as_draw(lcd);
-    check("no icon there: nothing drawn", !lit(44, 33) && !lit(48, 33));
+    check("the main screen's mode icon is left alone", lit(44, 33) && !lit(45, 33) && lit(45, 34));
     int d = list_draws;
     post_refuse = 0; change_window = 0x46c7d384u; tap(LEFT); change_window = 0; job(); as_tick(0);
     check("a switch that ends with the list closed draws nothing", list_draws == d);

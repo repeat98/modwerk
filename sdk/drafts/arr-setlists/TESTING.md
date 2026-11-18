@@ -105,3 +105,9 @@ the main screen. Built: after a switch of its own the module closes the job's me
 (0x40056bec), and on books 2-16 draws the number over stock's arranger icon when exactly that icon is on screen.
 Under ot_emu: one second after RIGHT, BOOK 2 and no message box; the main screen on book 2 showed `2` before the name.
 `verify.py`: 64 checks.
+
+On the unit (package `22591f16…`, kept), as the developer reported it: RELOAD still landed on book 1 (arrangement 5),
+and the book number sat over the main screen's mode icon (Tracks, Chromatic, ...), shown only in Tracks mode: I had
+taken the mode icon for an arranger icon. Removed. The kept build's diagnostic word then read 0x10000000: one reload
+seen, no load, no return pending, none posted. A diagnostic trial could not observe the kept copy's events, so the
+next build logs its last four project events in the top half of its own diagnostic word.

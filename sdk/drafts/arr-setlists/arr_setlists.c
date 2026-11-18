@@ -114,6 +114,11 @@ struct as_state {
     uint8_t iob[IOB_LEN];
 };
 static struct as_state st;
+/* The last four project events, newest lowest (the diagnostic word's top half): 1 load begins, 2 load done, 3 reload
+ * done, 4 save done, 5 arrbook read (then its book), 6 arrbook missing, 7 return posted, 8 refused, 9 switch done,
+ * A write without a switch, B nothing to return to. */
+static uint32_t evlog;
+static void ev(unsigned code) { evlog = evlog << 4 | (code & 15u); }
 static struct as_state *volatile st_at = &st;
 
 #ifdef AS_HOST
@@ -252,7 +257,9 @@ static void write_place(struct as_state *s)
 static int read_place(struct as_state *s, const char *ext)
 {
     place_path(s->path, ext);
-    if (!get_place(s) || s->place[0] != 'A' || s->place[1] != 'S' || s->place[2] != 'B' || s->place[3] != 'P'
+    if (!get_place(s)) { ev(6); return 0; }
+    ev(5); ev(s->place[4]);
+    if (s->place[0] != 'A' || s->place[1] != 'S' || s->place[2] != 'B' || s->place[3] != 'P'
         || s->place[4] >= BOOKS) return 0;
     for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = (uint8_t)(s->place[5 + b] & 7u);
     s->restore = (int8_t)s->place[4];
@@ -351,6 +358,7 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
         } else s->failed = 1;
         s->pending = -1;
     }
+    ev(switched ? 9u : 0xau);
     if (!switched) s->last[s->book] = (uint8_t)(rd8(INDEX) & 7u);   /* the choice in the book in use, as saved */
     write_place(s);                                       /* where the project is: a load comes back here */
     remember(s);
@@ -382,6 +390,7 @@ __asm__(
 void as_project_load(void)
 {
     struct as_state *s = ready();
+    ev(1);
     s->book = 0;
     s->pending = -1;
     s->restore = -1;
@@ -394,6 +403,7 @@ void as_project_load(void)
 unsigned as_project_loaded(void)
 {
     struct as_state *s = ready();
+    ev(2);
     for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = 0;
     s->book = 0;
     s->backup = 0;
@@ -408,6 +418,7 @@ unsigned as_project_loaded(void)
 unsigned as_project_stored(void)
 {
     struct as_state *s = ready();
+    ev(4);
     for (unsigned n = SLOTS + 1; n <= BOOKS * SLOTS; ++n) {
         arr_path(s->path, n, "work");
         arr_path(s->path2, n, "strd");
@@ -423,6 +434,7 @@ unsigned as_project_stored(void)
 unsigned as_project_reloaded(void)
 {
     struct as_state *s = ready();
+    ev(3);
     for (unsigned n = SLOTS + 1; n <= BOOKS * SLOTS; ++n) {
         arr_path(s->path, n, "strd");
         arr_path(s->path2, n, "work");
@@ -489,8 +501,7 @@ void as_tick(void *api)
 {
     struct as_state *s = ready();
     if (api) ((struct as_api *)api)->value = (uint32_t)s->book | (uint32_t)(s->pending < 0 ? 0 : s->pending + 1) << 4
-        | (uint32_t)s->failed << 9 | (uint32_t)s->backup << 10 | (uint32_t)(s->restore + 1) << 11
-        | (uint32_t)(uint8_t)s->restore_rc << 16 | (uint32_t)(s->loads & 15u) << 24 | (uint32_t)(s->reloads & 15u) << 28;
+        | (uint32_t)s->failed << 9 | (uint32_t)s->backup << 10 | (uint32_t)(s->restore + 1) << 11 | (evlog & 0xffffu) << 16;
     /* Stock draws the list's names once, when it opens: after a switch, draw them again from the new book. */
     if (s->redraw && s->pending < 0) {
         s->redraw = 0;
@@ -502,11 +513,12 @@ void as_tick(void *api)
     }
     /* After a project load: back to the book it was left on, once stock has finished loading (its job queue frees). */
     if (s->restore >= 0 && s->pending < 0) {
-        if (s->restore == (int8_t)s->book) s->restore = -1;   /* book 1: stock itself restores its choice */
+        if (s->restore == (int8_t)s->book) { s->restore = -1; ev(0xb); }  /* book 1: stock restores its choice */
         else if (stopped()) {
             s->pending = s->restore;
             int rc = post_write();
             s->restore_rc = (int8_t)rc;
+            ev(rc >= 0 ? 7u : 8u);
             if (rc >= 0) s->restore = -1;
             else {
                 s->pending = -1;                          /* stock still busy (a reload reads its samples): again */
@@ -551,36 +563,10 @@ static void glyph(unsigned char *frame, int x, int y, unsigned g)
 }
 
 /* In ARR > CHANGE: "BOOK 12" knocked out of a solid box at the screen's top right, over whatever stock drew there. */
-#ifdef AS_HOST
-int host_pixel(const unsigned char *frame, int x, int y);
-static int get(const unsigned char *frame, int x, int y) { return host_pixel(frame, x, y); }
-#else
-static int get(const unsigned char *frame, int x, int y) { return frame[x * 8 + 7 - (y >> 3)] >> (y & 7) & 1; }
-#endif
-
-/* The main screen's arrangement row: a black bar on rows 32-38 with stock's arranger icon, three white lines at x
- * 45-49 on rows 33, 35 and 37, just left of the arrangement's name (measured, OS 1.40C). Found only exactly there. */
-static int arranger_icon(const unsigned char *frame)
-{
-    for (int x = 44; x <= 51; ++x) if (!get(frame, x, 32) || !get(frame, x, 38)) return 0;
-    for (int x = 45; x <= 49; ++x)
-        for (int y = 33; y <= 37; ++y) if (get(frame, x, y) != !(y & 1)) return 0;  /* white on 33, 35, 37 */
-    return get(frame, 44, 35) && get(frame, 50, 35);
-}
-
 void as_draw(unsigned char *frame)
 {
     struct as_state *s = ready();
-    if (!rd32(CHANGE_WINDOW)) {
-        /* Books 2-16: the book's number over stock's arranger icon, white on its black bar, before the name. */
-        if (s->book && arranger_icon(frame)) {
-            unsigned n = s->book + 1u;
-            for (int y = 33; y <= 37; ++y) for (int x = 44; x <= 50; ++x) put(frame, x, y, 1);
-            if (n >= 10) { glyph(frame, 44, 33, n / 10); glyph(frame, 48, 33, n % 10); }
-            else glyph(frame, 46, 33, n);
-        }
-        return;
-    }
+    if (!rd32(CHANGE_WINDOW)) return;
     unsigned n = s->book + 1u;
     int digits = n >= 10 ? 2 : 1;
     int dx = 124 - 4 * (digits - 1), bx = dx - 19;          /* right-aligned: BOOK, a space, the number */
