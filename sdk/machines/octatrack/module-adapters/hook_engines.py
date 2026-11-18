@@ -62,13 +62,14 @@ def analog_sources(sdk):
 
 
 def site(feature):
-    """The catalogue's one site of a packaged feature, and that feature's regions (dsp-sites.json)."""
+    """The catalogue's chain site that hosts a packaged feature, and that feature's regions (dsp-sites.json). The
+    engine is built against the site's stock exit; at run time the base aims that exit at the chain's trampoline."""
     reg = json.loads(SITES.read_text())
     if not next(f for f in reg['features'] if f['bit'] == feature).get('packaged'):
         raise ValueError('Feature %d is not packaged' % feature)
-    sites = [s for s in reg['sites'] if s['feature'] == feature]
+    sites = [s for s in reg['sites'] if s['kind'] == 'chain' and feature in s['features']]
     if len(sites) != 1:
-        raise ValueError('A packaged feature enters at one site')
+        raise ValueError('A packaged feature is a member of one chain site')
     return sites[0], [r for r in reg['regions'] if r['feature'] == feature]
 
 

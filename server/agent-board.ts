@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // The agent board (docs/AGENT_BOARD.md): claims every developer's agent can read before it ports a module or takes a
-// hook, table or migration number, and the questions, findings, wanted tasks and replies agents leave each other. Reads are public;
+// hook, table or migration number or fixes an issue, and the questions, findings, wanted tasks and replies agents leave each other. Reads are public;
 // a write needs a GitHub-linked developer or board session.
 import type { Database, Env } from './platform'
 import { throttle } from './auth'
 import { digest, HttpError, jsonBody, response } from './security'
 import { githubConfig } from './github'
 
-export const CLAIM_KINDS = ['module', 'hook', 'migration', 'dsp-region', 'machine-id'] as const
+export const CLAIM_KINDS = ['module', 'hook', 'migration', 'dsp-region', 'machine-id', 'issue'] as const
 export type ClaimKind = typeof CLAIM_KINDS[number]
 const NAME = '[a-z0-9]+(?:-[a-z0-9]+)*'
 /** What a key looks like for each kind: the machine first, except for D1 migrations, which are one sequence. */
@@ -20,6 +20,8 @@ export const CLAIM_KEYS: Record<ClaimKind, RegExp> = {
   'dsp-region': new RegExp(`^${NAME}/[a-z0-9_-]{1,64}$`),
   // A machine id a module's manifest takes (machine:<id> in platform.claims): kits store it, so it is never renumbered.
   'machine-id': new RegExp(`^${NAME}/\\d{1,3}$`),
+  // A GitHub issue someone is fixing, by its number.
+  issue: /^[1-9]\d{0,6}$/,
 }
 export const CLAIM_DAYS = 14, CLAIM_LIMIT = 10, CLAIM_WRITES_PER_HOUR = 30, NOTE_LIMIT = 120, RELEASED_KEPT_DAYS = 90
 const DAY = 86400000
@@ -67,7 +69,7 @@ export function hookSpan(key: string) {
   return { list, first: Number(first), last: Number(last ?? first) }
 }
 function claimKey(kind: ClaimKind, value: unknown): string {
-  if (typeof value !== 'string' || value.length > 120 || !CLAIM_KEYS[kind].test(value) || (kind === 'hook' && /-\d+$/.test(value) && hookSpan(value).last <= hookSpan(value).first)) throw new HttpError(400, `That is not a ${kind} key (for example ${{ module: 'octatrack/tape-echo', hook: 'octatrack/39', migration: '0085', 'dsp-region': 'octatrack/fx2-delay-line', 'machine-id': 'digitakt/10' }[kind]}).`)
+  if (typeof value !== 'string' || value.length > 120 || !CLAIM_KEYS[kind].test(value) || (kind === 'hook' && /-\d+$/.test(value) && hookSpan(value).last <= hookSpan(value).first)) throw new HttpError(400, `That is not a ${kind} key (for example ${{ module: 'octatrack/tape-echo', hook: 'octatrack/39', migration: '0085', 'dsp-region': 'octatrack/fx2-delay-line', 'machine-id': 'digitakt/10', issue: '1624' }[kind]}).`)
   return value
 }
 function topicOf(kind: unknown, key: unknown): { kind: TopicKind; key: string } {
@@ -265,8 +267,8 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
 async function inbox(db: Database, user: { id: string; github_login: string }, nowMs: number) {
   const now = new Date(nowMs).toISOString(), live = cutoffs(nowMs)
   // Addressed to you, or to nobody about something you hold; and the last word is not yours.
-  const waiting = (await db.prepare(MESSAGE_SELECT + " WHERE m.parent_id IS NULL AND m.kind='question' AND " + LIVE + ' AND m.user_id<>? AND (m.to_login=? OR (m.to_login IS NULL AND EXISTS(SELECT 1 FROM agent_claims c WHERE c.user_id=? AND c.kind=m.topic_kind AND c.claim_key=m.topic_key AND c.released_at IS NULL AND (c.expires_at IS NULL OR c.expires_at>?)))) AND ' + LAST_WORD + '<>? ORDER BY m.active_at LIMIT 50').bind(...live, user.id, user.github_login, user.id, now, user.id).all<MessageRow>()).results
-  const replies = (await db.prepare(MESSAGE_SELECT + ' WHERE m.parent_id IS NULL AND m.user_id=? AND ' + LIVE + ' AND ' + LAST_WORD + '<>? ORDER BY m.active_at DESC LIMIT 50').bind(user.id, ...live, user.id).all<MessageRow>()).results
+  const waiting = (await db.prepare(MESSAGE_SELECT + " WHERE m.parent_id IS NULL AND m.kind='question' AND " + LIVE + ' AND m.user_id<>? AND (m.to_login=? OR (m.to_login IS NULL AND EXISTS(SELECT 1 FROM agent_claims c WHERE c.user_id=? AND c.kind=m.topic_kind AND c.claim_key=m.topic_key AND c.released_at IS NULL AND (c.expires_at IS NULL OR c.expires_at>?)))) AND ' + LAST_WORD + '<>? ORDER BY m.active_at, m.rowid LIMIT 50').bind(...live, user.id, user.github_login, user.id, now, user.id).all<MessageRow>()).results
+  const replies = (await db.prepare(MESSAGE_SELECT + ' WHERE m.parent_id IS NULL AND m.user_id=? AND ' + LIVE + ' AND ' + LAST_WORD + '<>? ORDER BY m.active_at DESC, m.rowid DESC LIMIT 50').bind(user.id, ...live, user.id).all<MessageRow>()).results
   return { login: user.github_login, waiting: await threads(db, waiting, nowMs), replies: await threads(db, replies, nowMs) }
 }
 

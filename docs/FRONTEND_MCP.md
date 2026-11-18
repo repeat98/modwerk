@@ -92,7 +92,8 @@ identity/hash receipt. This public-release builder does not bypass beta gates.
 
 ## Then test the connected device
 
-Start the existing USB bridge with permission to access the connected Octatrack:
+Start the existing USB bridge with permission to access the connected Octatrack
+(or turn on the [desktop app](DESKTOP_APP.md#the-agent-bridge)'s agent bridge, which serves the same protocol):
 
 ```sh
 python -B scripts/octatrack-usb-bridge.py /private/path/modwerk-ot.sock

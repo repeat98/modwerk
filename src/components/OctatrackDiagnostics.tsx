@@ -53,6 +53,8 @@ export function OctatrackDiagnosticsAdmin() {
     {steps && <details><summary>Base install and sharing, last 30 days (everyone, no identifiers)</summary>
       {steps.funnel.map(row=><p key={row.event}>{STEP_NAMES[row.event]}: {row.count}</p>)}
       <p>Failed: {steps.failures.length ? steps.failures.map(row=>row.detail+' '+row.count).join(' · ') : 'none'}</p>
+      {steps.guideSteps.length > 0 && <p>Guide steps reached (runs): {steps.guideSteps.map(row=>row.step+' '+row.count).join(' · ')}</p>}
+      {steps.syncFailures.length > 0 && <p>Failed syncs by reason: {steps.syncFailures.map(row=>row.detail+' '+row.count).join(' · ')}</p>}
       {steps.invitations.map(row=><p key={row.placement}>Invitation, {row.placement}: shown {row.shown} · shared {row.shared} · not now {row.notNow}{row.rate !== null && <> · {row.rate} % shared</>}</p>)}
     </details>}
     {data && <><details><summary>Daily sync counts</summary>{data.counts.map(row=><p key={row.day+row.event}>{row.day} · {row.event}: {row.count}</p>)}</details>{data.events.length ? data.events.map(entry=><details key={entry.eventId+entry.username}><summary>{entry.createdAt} · {entry.username?.startsWith('guest:') ? entry.username : '@'+entry.username} · {entry.data.event}</summary><pre className="diagnostic-json">{JSON.stringify(entry.data,null,2)}</pre></details>) : <p>No shared diagnostics yet.</p>}</>}
