@@ -82,6 +82,14 @@ Development base `7edbd8bf` (29 sites; `.run` 10,732 bytes, 284 more than base `
 - Load (`0x400db476`) keeps a stored type only if it is 0-6 or `0xff` and turns anything else into 0 (SAMPLE). The base replaces the 16-byte test at `0x400db47a`: it also keeps an added type whose machine is installed. A type with no installed machine still becomes SAMPLE, as on the stock OS.
 - Emulator, digikit's persistence card image: choose the test machine for track 1, SAVE PROJECT, set the type byte to 0, LOAD PROJECT. With the hook the type reads 7 again and the SRC page shows the test machine; with the previous development base (`16de57f4`, no load hook) it reads 0. So the project round trip keeps the machine only with the hook. A stock OS opening the same project would load it as SAMPLE (static read; not run).
 
+## Sound-chip hook: design (not built)
+
+- **Site.** The type test in the per-voice loop (short-word PC `0x1c654e`-`0x1c6561`; section-7 byte address `0x28000000 + 2 * PC`, so `0x2838ca9c` onwards). Today a type of 6 or more skips the per-type setup and an added type plays nothing. The base replaces one 48-bit instruction there with a jump to its machine dispatcher, guarded by SHA-256 like the render and receive sites.
+- **Dispatcher.** A base-owned SHARC routine: for a type below 7 it replays the displaced instruction and returns to stock; for an added type with a sound-chip routine it saves the registers the voice loop keeps, calls the module's voice routine with the voice record, and resumes at the shared continuation (`0x1c65fe`) so the stock filter, amp envelope and panning still process the voice.
+- **Module routines.** Each machine package carries its sound-chip code in L2 (the free range `0x2001ab7c`-`0x200fa000`, as the render subscribers do) and names a note-on and a render entry; the base keeps a table of them by machine type.
+- **Builder.** `src/engine/elektron/dt2-sharc.ts` patches exactly two fixed sites (render and receive). It needs a list of base sites and per-machine allocations, in the same verified way.
+- **Still to trace in the emulator (SHARC):** where a per-type setup hands the voice to the sample renderer (`0x1c4f81` has no direct caller, so it is reached through a pointer, probably the table at `0x8055c840`), which buffer a voice renders into, which registers the loop keeps live across `0x1c6550`-`0x1c65fe`, and the cost per voice. A module's voice routine must stay inside the block's time budget with all 16 tracks playing.
+
 ## Still to check
 
 
