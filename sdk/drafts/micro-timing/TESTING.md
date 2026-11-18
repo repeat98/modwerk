@@ -2,7 +2,7 @@
 
 ## Commands and exact revision
 
-Stock guards for the TRACK TRIG EDIT sites in `manifest.py` match original OS 1.40C (`section_3_MAIN_OS.bin` SHA-256 `164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e`) as hashed locally from the developer's own extract. Those bytes are not in this folder. `npm run module:verify` has not been run. No USB package has been built.
+Stock guards for the TRACK TRIG EDIT sites in `manifest.py` match original OS 1.40C (`section_3_MAIN_OS.bin` SHA-256 `164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e`) as hashed locally from the developer's own extract. Those bytes are not in this folder. `npm run module:verify` has not been run. A USB package of commit `dbc0652b4` was built on 18 November 2026 and is not in this folder.
 
 ## What was reported
 
@@ -20,7 +20,7 @@ Earlier private cards failed as the author reported them: a crash from a stub in
 
 ## Stock flows
 
-Not tested on a module build. Intended checks once a package or card of this source exists:
+Not tested on a module build, except the power-off footer in Keep and power cycle. Intended checks:
 
 1. With the row at 0, existing trig micro timing is unchanged until LEVEL moves.
 2. Turn LEVEL on an audio track: the MICRO TIMING page for that track's steps shows the same fraction. MIDI tracks are unchanged.
@@ -42,13 +42,19 @@ From 0.1.1 the 2048 remembered bytes are `mt_table` in this unit. The loader cle
 
 Host assemble, 18 November 2026, WSL `m68k-elf-as -mcpu=5475` of this `microtiming.s`: text 1076, data 0, bss 2048. `mt_table` is a bss symbol. That is the object file only.
 
-Development package of this source, same day, not installed. WSL `python3 -B scripts/module-dev-package.py micro-timing` with `m68k-elf` binutils, written outside the checkout: 2,926 bytes, SHA-256 `f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292`, module `36200ffc`, 1,076 bytes of code and data, 2,048 of bss, 2 relocations, 39 stock-code sites. The bss size is the remembered table. The package was not booted in `ot_emu` and was not sent to a unit.
+Development package of commit `dbc0652b4`, built 18 November 2026 with WSL `python3 -B scripts/module-dev-package.py micro-timing` and `m68k-elf` binutils, written outside the checkout: 2,926 bytes, SHA-256 `f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292`, module `36200ffc`, 1,076 bytes of code and data, 2,048 of bss, 2 relocations, 39 stock-code sites. The bss size is the remembered table. `ot_emu` was not booted.
 
-Power-off of this package, on a unit or in `ot_emu --cs1-in`: not tested. No image of this source was booted. `ot_emu` was not already running, and booting this package there needs a base image and a scratch card that this pass did not start.
+## Keep and power cycle
+
+18 November 2026, MKII, OCTATRACK 1.40C, flashed base `931a91bd7e571216`, the package above. `set` with `--accept` added it beside the 22 modules already on the card. The trial `12584fe66e3d7ba1` ran 5 seconds, tick word `0x10000`, slot running, refusals 0, verdict clean, and was kept. Generation 4, active `12584fe66e3d7ba1`.
+
+The person set MICRO T off grid. The fraction they stopped on was not reported. They powered the unit off and on. The unit came back normal, generation 0, active `931a91bd7e571216`, ticks 6047, and the inventory still listed Micro Timing (`36200ffc`) with those 22 modules. They reported the footer `MT1:ON GRID`, as expected. A step's own MICRO TIMING page was not reported.
+
+Removing the module while TRACK TRIG EDIT's key layer was still up was refused, loader refusal 11 `RUNTIME_UI_OPEN`, including after the list had been left for the grid. A second power cycle with the menus left closed, then `remove` of this package with `--accept`: trial `3e59fbf8c133ef4f`, 5 seconds, tick word `0x10000`, refusals 0, verdict clean, kept. Generation 1, active `3e59fbf8c133ef4f`. The inventory was the same 22 modules and no Micro Timing.
 
 ## Hardware
 
-Reported on the private MICRO T9 card only, as above. USB Keep/Undo of this package is untested. The LCD captures below are emulator frames, not a hardware result.
+Reported on the private MICRO T9 card, as above, and for this package the power-cycle footer in Keep and power cycle. USB removal needs that key layer closed. The LCD captures below are emulator frames, not a hardware result.
 
 ## OT UI capture evidence
 

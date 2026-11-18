@@ -4,7 +4,7 @@ Version: `0.1.1-experimental` · author: [@jonathanwardle1992-beep](https://gith
 
 **TRACK TRIG EDIT gains a MICRO T row.** LEVEL sets the micro timing of every step on the selected track, in the stock fraction, as the pot turns.
 
-**Experimental.** The author reported this behaviour on a private MICRO T9 card. This module package has not been built, flashed or tried over USB.
+**Experimental.** The author reported the LEVEL behaviour on a private MICRO T9 card. On 18 November 2026 this package was kept over USB on an MKII, and after a power cycle the person reported the footer on grid. It has not been flashed as a card image.
 
 ## Overview
 
@@ -46,14 +46,14 @@ To stop using it, leave the module out of the build. There is no separate off sw
 
 ## Compatibility and limitations
 
-- OS 1.40C. The reported pass is a private MICRO T9 card, not a build of this package. USB Keep/Undo is untested. Headless `ot_emu` captured TRACK TRIG EDIT only, from a private image built before commit `13d33940`.
+- OS 1.40C. The LEVEL behaviour was reported on a private MICRO T9 card. This package's USB Keep and power-cycle footer are in TESTING.md. Headless `ot_emu` captured TRACK TRIG EDIT only, from a private image built before commit `13d33940`.
 - One byte is kept per bank, the pattern on the screen, and track, in this module's unit. Audio and MIDI share it. A power cycle drops the unit, so the row starts on grid again. It is not battery RAM and it is not in the project file.
 - An individual trig edit does not update the row. The next LEVEL turn overwrites all 64 steps, including empty ones.
 - MKI opens the same menu with FUNCTION. That path is untested on this package.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). The reported pass is the private card. This package is untested.
+See [TESTING.md](TESTING.md). The LEVEL pass is the private card. This package's power-cycle footer was reported on a unit.
 
 ## Authorship and licences
 
