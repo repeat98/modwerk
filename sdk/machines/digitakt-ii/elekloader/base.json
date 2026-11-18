@@ -36,6 +36,8 @@
       "../modwerk/project-kitdata.c",
       "../modwerk/mixer.c",
       "../modwerk/mixer-entry.s",
+      "../modwerk/machines.c",
+      "../modwerk/machines-entry.s",
       "../modwerk/fw-bindings.s"
     ],
     "defsym": {
@@ -67,6 +69,8 @@
       {"addr":"0x40066e02","len":6,"stockSha256":"210b33b627af0389b1bddbc2f87f7980cacebd89ef5ac3ba7c4646a7800bc064","op":"jmp","target":"core_mixer_list_entry"},
       {"addr":"0x400c898a","len":6,"stockSha256":"4804747ca9c54fb6cf82b4a21415559c390b2b2f9fc4f3cea86546d00ee4dc72","op":"jmp","target":"core_mixer_descriptor_entry"},
       {"addr":"0x400763ac","len":8,"stockSha256":"f884edfcc4fdbe8c922f8080094cae67fdc2e7e87655c90c4eb6b79282f65f60","op":"jmp","target":"core_mixer_draw_entry"},
+      {"addr":"0x400c89a4","len":6,"stockSha256":"90d4add99e5a31399efe8b6d7879deb65375e21f97ebcdfd761b45d0fa6f5b13","op":"jmp","target":"core_machine_descriptor_entry"},
+      {"addr":"0x400da3a2","len":6,"stockSha256":"7004f7c54162426867d6e17e181d3ea5de00a97027c223cf901c7be0b6a6a967","op":"jmp","target":"core_machine_param_entry"},
       {
         "addr": "0x40041b52",
         "len": 6,
@@ -130,7 +134,15 @@
       "ev_seq_audio_phrase": 4,
       "core_mixer_pages": 4,
       "ev_audio_frame": 4,
-      "core_project_archive": 4
+      "core_project_archive": 4,
+      "core_machines": 4
     }
+  },
+  "dev": {
+    "about": "A development base adds one test machine (type 7) that stands for SAMPLE, to check the machine hooks in the emulator. Never released.",
+    "sources": ["../modwerk/tests/machines-fixture.c"],
+    "contribute": [
+      {"to": "core_machines", "order": 50, "data": "00000000", "relocs": [[0, "abs32", "sym:dt2_test_machine", 0]]}
+    ]
   }
 }
