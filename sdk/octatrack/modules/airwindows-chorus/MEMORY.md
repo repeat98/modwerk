@@ -1,4 +1,4 @@
-# Air Chorus memory inventory — 0.1.2-experimental
+# Air Chorus memory inventory — 0.1.3-experimental
 
 Exact module reservations, maximum eight FX2 instances across both cores.
 Logical DSP words are 24 bits; this inventory counts hardware-visible words
@@ -10,16 +10,16 @@ FX occupies the slot. Air Chorus reuses them and creates no sample heap.
 | --- | --- | ---: | ---: |
 | Entire reserved X state slot (132 used by Chorus, 124 stock words untouched) | per instance | 256 × 24 | 768 |
 | Reserved FX2 Y slot (16,312 used) | per instance | 16,384 × 24 | 49,152 |
-| DSP P program, both cores | shared | 1,078 × 24 | 3,234 |
+| DSP P program, both cores | shared | 1,176 × 24 | 3,528 |
 | Lossless quarter-sine second differences, both cores | shared | 512 × 24 | 1,536 |
-| Packed module P words in MAIN firmware, both cores | shared | 4,770 × 8 | 4,770 |
+| Packed module P words in MAIN firmware, both cores | shared | 5,064 × 8 | 5,064 |
 | ColdFire descriptor contents | shared | 402 × 8 | 402 |
 | Descriptor stride padding | shared | 14 × 8 | 14 |
 | Full common long-chooser reservation (shared with companions) | shared | 128 × 8 | 128 |
 | Both complete DSP hardware stacks, 16 × 48-bit entries each | shared | 64 × 24 | 192 |
 
-Per instance: **49,920 bytes**. Charged shared reservations: **10,276 bytes**.
-Eight-instance maximum: **409,636 bytes**. These are reservations/occupied
+Per instance: **49,920 bytes**. Charged shared reservations: **10,864 bytes**.
+Eight-instance maximum: **410,224 bytes**. These are reservations/occupied
 word data across different memory spaces, not additional sample RAM or a
 single contiguous allocation. Flash P words are stored then uploaded into
 DSP P; both lifetimes/allocations are counted. The stack/chooser charge is
@@ -31,8 +31,8 @@ Existing record headers and firmware containers belong to the stock/common
 packager, not another runtime allocation by Air Chorus.
 
 Native compact placement: core A table P:0x1000..0x10ff, program
-P:0x1100..0x131a; core B table P:0x0dc0..0x0ebf, program P:0x0ec0..0x10da.
-1,929 harvested donor P words remain per core. Shared-builder relocation
+P:0x1100..0x134b; core B table P:0x0dc0..0x0ebf, program P:0x0ec0..0x110b.
+1,880 harvested donor P words remain per core. Shared-builder relocation
 and refusal proofs are recorded separately; the shared loader/logger arena
 is charged by its existing composition planner, not recreated by this module.
 
@@ -65,8 +65,8 @@ writes an FX2-sized buffer. Bus owners are rejected by composition claims.
 
 Analog BD shares none of these X/Y state regions. Its 997-word engine and
 35-word relocated stock helper reserve most of Spring. Air Chorus's 256-word
-lossless sine-difference table and 539-word program can be placed separately
-when a contiguous 795-word run is unavailable. Four independent origin pairs
+lossless sine-difference table and 588-word program can be placed separately
+when a contiguous 844-word run is unavailable. Four independent origin pairs
 are proved against fresh native assembly; stock-helper and overlap checks
 cover both physical spans. The smaller package permits E-Verb and additional
 Analog BD companion combinations. Crowded combinations still fail placement.

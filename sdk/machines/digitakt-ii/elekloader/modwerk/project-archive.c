@@ -38,9 +38,9 @@ static uint32_t checksum(const uint8_t *bytes, unsigned int size)
     return hash;
 }
 
-void core_project_archive_save(uint8_t *file, uint32_t flags, uintptr_t project)
+void core_project_archive_write(uint8_t *file)
 {
-    if (project != ACTIVE_PROJECT || !(flags & 2u) || !core_project_archive[0]) {
+    if (!core_project_archive[0]) {
         return;
     }
     uint8_t *const bytes = (uint8_t *)archive;
@@ -75,6 +75,13 @@ void core_project_archive_save(uint8_t *file, uint32_t flags, uintptr_t project)
         uint32_t *const slot = chunk(file, i);
         slot[0] = CHUNK_MAGIC;
         fw_memcpy(slot + 1, bytes + i * CHUNK_BYTES, CHUNK_BYTES);
+    }
+}
+
+void core_project_archive_save(uint8_t *file, uint32_t flags, uintptr_t project)
+{
+    if (project == ACTIVE_PROJECT && (flags & 2u)) {
+        core_project_archive_write(file);
     }
 }
 

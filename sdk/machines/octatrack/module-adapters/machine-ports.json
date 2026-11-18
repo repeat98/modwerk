@@ -497,6 +497,7 @@
      "render": "sy_render"
     }
    },
+   "cpuPrice": 6,
    "sequencer": {
     "rows": [
      [

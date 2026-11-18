@@ -187,6 +187,9 @@ export interface OctatrackDiagnostic {
    * submission), OtherError (a reply that did not confirm the step). Never a message. */
   kind?: DiagnosticErrorKind
   step?: DiagnosticSyncStep
+  /** A `transport` sync failure's change in the base's EP0 counters over the sync (DIAG version 3, ep0.c): frames
+   * received, refusals, bus resets, data stages primed, completed and abandoned. */
+  usb?: number[]
   live?: DiagnosticLive
   reason?: typeof DIAGNOSTIC_UNRESPONSIVE[number]
   log?: { loads: DeviceLoad[]; incidents: DeviceIncident[]; crash?: DeviceCrash; stall?: DeviceStall }

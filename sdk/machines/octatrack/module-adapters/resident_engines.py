@@ -418,14 +418,14 @@ static unsigned keybus_at(unsigned c, uint32_t module)
     for (unsigned e = 0; e < SOURCE_ENGINES; ++e) if (source_engine[c][e].module == module) return e;
     return SOURCE_ENGINES;
 }
-/* 1: already charged on both cores, or it would fit beside every slot and source of each core now. */
+/* 1: already charged on both cores, or it would fit beside each core's slots, as voices book them, and its sources now. */
 int modwerk_dsp_keybus_fits(void)
 {
     uint32_t e = charged(MW_DSP_KEYBUS_HARDWARE, RUNTIME_HARDWARE);
     for (unsigned c = 0; c < 2u; ++c) {
         if (keybus_at(c, KEYBUS_MODULE) < SOURCE_ENGINES) continue;
         if (keybus_at(c, 0) == SOURCE_ENGINES ||
-            slot_charge(c) + modwerk_dsp_source_charge(c) + e > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) return 0;
+            voice_slots(c) + modwerk_dsp_source_charge(c) + e > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) return 0;
     }
     return 1;
 }
@@ -462,9 +462,9 @@ def allocator(text):
                    'uint32_t modwerk_dsp_source_charge(unsigned);\n' + PENDING +
                    'volatile uint32_t dl_cycles_core=2; /* the core the last DL_ALLOC_CYCLES ran out on */\n',
                    'allocator declaration')
-    text = _change(text, '    uint32_t steady[2]={modwerk_dsp_source_charge(0),modwerk_dsp_source_charge(1)};\n',
-                   '    uint32_t steady[2]={modwerk_dsp_source_charge(0)+modwerk_controller_keybus_pending(0,ids),\n'
-                   '                        modwerk_dsp_source_charge(1)+modwerk_controller_keybus_pending(1,ids)};\n',
+    text = _change(text, '    steady[0]=modwerk_dsp_source_charge(0); steady[1]=modwerk_dsp_source_charge(1); /* after the voices made way */\n',
+                   '    steady[0]=modwerk_dsp_source_charge(0)+modwerk_controller_keybus_pending(0,ids); /* after the voices made way */\n'
+                   '    steady[1]=modwerk_dsp_source_charge(1)+modwerk_controller_keybus_pending(1,ids);\n',
                    'allocator key bus price')
     text = _change(text, '    if(steady[0]>a->allowance[0] || steady[1]>a->allowance[1]) return DL_ALLOC_CYCLES;',
                    '    if(steady[0]>a->allowance[0] || steady[1]>a->allowance[1]) {\n'

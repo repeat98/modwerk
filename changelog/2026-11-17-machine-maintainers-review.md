@@ -1,0 +1,1 @@
+Site: a machine can now have maintainers, named by the owner in its profile, who review and merge the first releases of its modules. The base, the shared SDK, new machines, waivers and questions under the modding guidelines stay with the owner.

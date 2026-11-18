@@ -40,6 +40,23 @@ class RytmLink(unittest.TestCase):
         self.assertEqual(rytm_link.get32(msg, 13), 8)
         self.assertEqual(rytm_link.get32(rytm_link.u32(0xffffffff), 0), 0xffffffff)
 
+    def test_the_gates_diagnostics_lie_outside_every_mod_area_and_ident_names_them(self):
+        """link.c's DIAG (15 words) and MARK (2) must not sit in RAM the linker gives the mods (elemod.ts's ddr and
+        ddrMore for the Rytm MKII), and the tool reads them where ident says, or at the old place for an older base."""
+        diag, mark = (int(re.search(r"#define %s \(\(volatile uint32_t \*\)(0x[0-9a-f]+)\)" % n, LINK_C).group(1), 0) for n in ("DIAG", "MARK"))
+        profile = re.search(r"key: 'analog-rytm-mk2'.*?\n  \},", (APP / "src/engine/elektron/elemod.ts").read_text(), re.S).group(0)
+        areas = [(int(a, 0), int(b, 0)) for a, b in re.findall(r"\[(0x[0-9a-f]+), (0x[0-9a-f]+)\]", profile)]
+        self.assertGreaterEqual(len(areas), 3)
+        top = max(hi for _, hi in areas)
+        self.assertGreaterEqual(diag, top)
+        self.assertEqual(mark, diag + 15 * 4)
+        self.assertLessEqual(mark + 8, 0x47ff0000)          # 64 KB under the boot stack's top, as far as a unit's fill reached
+        self.assertIn("p = put32(p, (uint32_t)DIAG);", LINK_C)
+        old = bytes(78)
+        self.assertNotIn("diag", rytm_link.ident_text(old))
+        self.assertEqual(rytm_link.ident_text(old + rytm_link.u32(diag))["diag"], "%08x" % diag)
+        self.assertEqual(rytm_link.DIAG_OLD, 0x47bfffbc)
+
     def test_parse_takes_a_reply_and_refuses_anything_else(self):
         reply = rytm_link.HEADER + bytes([5, 0x21 | 0x40, 0]) + b"\x00\x7f" + b"\xF7"
         self.assertEqual(rytm_link.parse(reply), (5, 0x21, 0, b"\x00\x7f"))
