@@ -155,3 +155,9 @@ Package `493e5207…`, as the developer reported it: on LOAD the parameters chan
 arranger mode went off. Event log, oldest first: book 2 read during the load, return posted, ev_banks_loaded (it does
 come on LOAD, after the module's post), switch done. Not enough to see who switched the mode off: the next build logs
 seven events and arranger mode going on (C) and off (D), kept in a record grown to 0x100f8f24.
+
+Package `d77c3802…`, as the developer reported it: synced on book 2, arrangement 6; LOAD came back on arrangement 6
+(stock's own, from project.work) but on book 1, in pattern mode. Event log: book 2 read, return posted, load done,
+mode off, switch done, mode on (the module's fallback), mode off (stock, later). The module then reported book 1
+without a logged load: the next build logs a new project (E) and the install handler's fallback to book 1 (F), and
+turns arranger mode back on only after two seconds without a job, switch or mode change.

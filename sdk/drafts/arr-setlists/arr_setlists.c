@@ -111,6 +111,7 @@ struct as_state {
     uint8_t mode_on;         /* after a load: the project was left in arranger mode, so turn it on again */
     uint8_t mode_pref;       /* arranger mode as the musician left it: off only after their own FUNC + PATTERN */
     uint8_t func_down, mode_key, mode_key_ticks, mode_seen;
+    uint8_t quiet;           /* frames since the last job, switch or mode change, after a load */
     uint8_t hush;            /* frames after a switch of ours in which the job's NOW SAFE TO EJECT! is closed */
     int8_t restore_rc;       /* the last answer to posting the return after a load, for the diagnostic word */
     uint8_t loads, reloads;  /* project loads and reloads seen, for the diagnostic word */
@@ -124,7 +125,8 @@ struct as_state {
 static struct as_state st;
 /* The last four project events, newest lowest (the diagnostic word's top half): 1 load begins, 2 load done, 3 reload
  * done, 4 save done, 5 arrbook read (then its book), 6 arrbook missing, 7 return posted, 8 refused, 9 switch done,
- * A write without a switch, B nothing to return to, C arranger mode went on, D it went off. */
+ * A write without a switch, B nothing to return to, C arranger mode went on, D it went off, E a new project,
+ * F the install handler fell back to book 1. */
 static uint32_t evlog;
 static void ev(unsigned code)
 {
@@ -428,6 +430,7 @@ void as_project_load(void)
 void as_project_new(void)
 {
     struct as_state *s = ready();
+    ev(0xe);
     s->book = 0;
     s->pending = -1;
     s->restore = -1;
@@ -499,7 +502,7 @@ unsigned as_modules_ready(void)
     if (rd32(RECORD) == REC_MAGIC && rd8(RECORD + 4) < BOOKS && rd32(RECORD + 8) == slots_sum()) {
         s->book = (uint8_t)rd8(RECORD + 4);
         s->backup = (uint8_t)rd8(RECORD + 5);
-    } else s->book = 0;
+    } else { s->book = 0; ev(0xf); }
     remember(s);
     return 0;
 }
@@ -571,15 +574,19 @@ void as_tick(void *api)
     }
     /* Arranger mode as the musician leaves it. Stock's LOAD switches it off and saves that before it loads; only a
      * FUNC + PATTERN of the musician's own records it as off. */
-    { uint8_t now = rd32(ARR_MODE) ? 1 : 0; if (now != s->mode_seen) { s->mode_seen = now; ev(now ? 0xcu : 0xdu); } }
+    { uint8_t now = rd32(ARR_MODE) ? 1 : 0; if (now != s->mode_seen) { s->mode_seen = now; s->quiet = 0; ev(now ? 0xcu : 0xdu); } }
     if (rd32(ARR_MODE)) s->mode_pref = 1;
     else if (s->mode_key) { s->mode_pref = 0; s->mode_key = 0; }
     if (s->mode_key && ++s->mode_key_ticks > 60) s->mode_key = 0;
     /* After a load: stock's LOAD starts in pattern mode; a project left in arranger mode gets it back, once its book
      * and arrangement are chosen (RELOAD keeps the mode, and then this does nothing). */
-    if (s->mode_on && s->pending < 0 && !s->redraw) {
-        s->mode_on = 0;
-        if (!rd32(ARR_MODE)) arr_mode_on();
+    if (s->mode_on) {
+        if (s->pending >= 0 || s->restore >= 0 || s->redraw || s->hush) s->quiet = 0;
+        else if (++s->quiet >= 120) {                     /* two seconds of quiet: stock is done with the load */
+            s->mode_on = 0;
+            s->quiet = 0;
+            if (s->mode_pref && !rd32(ARR_MODE)) arr_mode_on();
+        }
     }
     if (s->failed) { s->failed = 0; message("BOOK FILE ERROR"); }
     if (s->book && s->pending < 0 && ++s->ticks >= 120) { s->ticks = 0; remember(s); }
