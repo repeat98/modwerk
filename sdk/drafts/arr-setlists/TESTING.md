@@ -123,3 +123,10 @@ arrangement 5 while loading (the return works). LOAD PROJECT after SYNC on book 
 arrangement 7. Event log: 1 7 9 1, the last a load beginning with nothing after it: the unit raised no ev_banks_loaded
 after LOAD either. Fixed: a load only marks "find where it was left"; once stock is done, the module's own job reads
 arrbook.work on stock's card task and switches there. `verify.py`: 62 checks.
+
+Package `862fef47…`, as the developer reported it: LOAD (PROJECT > CHANGE) of the project synced on book 2,
+arrangement 7 came back on book 2, arrangement 7, but in pattern mode although it was synced in arranger mode. RELOAD
+came back on book 3, arrangement 5 in arranger mode, as saved. A project synced on book 1 loaded on book 1,
+arrangement 5, also in pattern mode: so stock's LOAD itself starts in pattern mode. The developer asked for arranger
+mode to come back too. Built: arrbook.work records arranger mode, and after a load the module turns it on with stock's
+own routine (0x4005200c, FUNC + PATTERN's) when the project was left in it. `verify.py`: 64 checks.

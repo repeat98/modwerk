@@ -52,6 +52,13 @@ unless you edit that arrangement.
   for the label, and stock's arrangement writer, which it steps into at its entry: on book 1 stock writes arr01 to
   arr08 exactly as always, on another book that book's 8 files are written instead. No other module or base hook uses
   that site (`npm run modules:compat`).
+- **A change to a stock flow: LOAD PROJECT and arranger mode.** Stock's LOAD (PROJECT > CHANGE) opens a project in
+  pattern mode, while RELOAD keeps the mode. With the module, a project that was left (switched, synced or saved) in
+  arranger mode opens in arranger mode again, after its book and arrangement are restored; one left in pattern mode
+  opens as on stock. Why: a project of songs is reopened to play them, and the developer asked for it. Instead
+  considered: leaving it to the musician (FUNC + PATTERN after every load). The module turns arranger mode on with
+  stock's own routine (FUNC + PATTERN's) and never off. Only while the module is installed. Checked beside it: RELOAD,
+  and a project left on book 1.
 - **Stopped only.** A switch writes and reads the card through stock's own SYNC TO CARD job, which stock runs only
   stopped.
 - **A project comes back where it was left.** A power cycle keeps the book in use (the Octatrack keeps its

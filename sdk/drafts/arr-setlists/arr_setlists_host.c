@@ -35,6 +35,7 @@ static uint8_t rec[16];                  /* 0x100f8f10 */
 static uint8_t misc[0x2000];             /* 0x80004f00 .. */
 static uint32_t change_window, playing;
 static uint8_t chosen;               /* 0x100b14d1: the arrangement chosen */
+static uint8_t arr_mode;             /* 0x460d1aec's low byte: arranger mode */
 static uint8_t msg_up;               /* 0x460d1e70's low byte: a message box is open */
 static int closes;
 static uint8_t list[16];             /* 0x400c0ba0: the CHANGE list's first row shown, then its cursor */
@@ -48,6 +49,8 @@ uint8_t host_rd8(uint32_t a)
     if (a >= 0x800065b8u && a < 0x800065bcu) return (uint8_t)(playing >> (8 * (3 - (a - 0x800065b8u))));
     if (a >= 0x80004f00u && a < 0x80004f00u + sizeof misc) return misc[a - 0x80004f00u];
     if (a == 0x100b14d1u) return chosen;
+    if (a == 0x460d1aefu) return arr_mode;
+    if (a >= 0x460d1aecu && a < 0x460d1aefu) return 0;
     if (a == 0x460d1e73u) return msg_up;
     if (a >= 0x460d1e70u && a < 0x460d1e73u) return 0;
     if (a >= 0x400c0ba0u && a < 0x400c0bb0u) return list[a - 0x400c0ba0u];
@@ -115,6 +118,7 @@ void host_clear_arr(unsigned slot) { ++clears; memset(&cs1[W(slot)], 0, BLOCK); 
 void host_message(const char *t) { snprintf(last_message, sizeof last_message, "%s", t); }
 static int list_draws;
 void host_draw_change(void) { ++list_draws; }
+void host_arr_mode_on(void) { arr_mode = 1; }
 int host_close_message(void) { msg_up = 0; ++closes; return 0; }
 void host_select_arr(unsigned n) { chosen = (uint8_t)n; }
 /* Stock's writer: each changed slot (or one with no file yet) to arr0N.work. */
@@ -317,6 +321,10 @@ int main(void)
     check("while stock is still loading, it waits", book() == 0 && cs1[CHG] == 0);
     post_refuse = 0; as_tick(0); job(); as_tick(0);
     check("then it goes back to book 3, on arrangement 5", book() == 2 && marked(0x30) && chosen == 4);
+    check("left in pattern mode: it stays in pattern mode", arr_mode == 0);
+    arr_mode = 1; job();                           /* SYNC in arranger mode */
+    as_project_load(); mark(0x10); arr_mode = 0; as_tick(0); job(); as_tick(0); as_tick(0);
+    check("left in arranger mode: after LOAD, arranger mode again, on book 3", arr_mode == 1 && book() == 2);
     /* RELOAD PROJECT: where it was saved, not where it was left after */
     as_project_stored();                           /* saved on book 3, arrangement 5 */
     tap(LEFT); job(); as_tick(0); chosen = 6; job();  /* book 2, arrangement 7, SYNC */

@@ -56,6 +56,8 @@
 #define DRAW_CHANGE 0x40036e18u      /* draws ARR > CHANGE's list into its open window (stock: once, when it opens) */
 #define SELECT_ARR 0x400a03a0u       /* select_arr(n): stock's choice of arrangement n (index, pointer, playback reset) */
 #define INDEX 0x100b14d1u            /* the arrangement chosen, 0-7 */
+#define ARR_MODE 0x460d1aecu         /* arranger mode on (FUNC + PATTERN) */
+#define ARR_MODE_ON 0x4005200cu      /* stock's switch into arranger mode (FUNC + PATTERN's, 0x4006103e); nothing if on */
 #define LIST_TOP 0x400c0ba0u         /* ARR > CHANGE: the first row shown */
 #define LIST_CURSOR 0x400c0ba4u      /* ARR > CHANGE: the cursor's row (stock opens the list with it on the choice) */
 
@@ -104,6 +106,7 @@ struct as_state {
     uint8_t last[BOOKS];     /* the arrangement last chosen in each book (0 = arrangement 1), kept in arrbook.work */
     int8_t restore;          /* a project was loaded on this book: the UI task switches to it once stock is done, -1 none */
     uint16_t restore_ticks;
+    uint8_t mode_on;         /* after a load: the project was left in arranger mode, so turn it on again */
     uint8_t hush;            /* frames after a switch of ours in which the job's NOW SAFE TO EJECT! is closed */
     int8_t restore_rc;       /* the last answer to posting the return after a load, for the diagnostic word */
     uint8_t loads, reloads;  /* project loads and reloads seen, for the diagnostic word */
@@ -155,6 +158,8 @@ static void clear_arr(unsigned slot) { host_clear_arr(slot); }
 static void message(const char *t) { host_message(t); }
 void host_draw_change(void);
 static void draw_change(void) { host_draw_change(); }
+void host_arr_mode_on(void);
+static void arr_mode_on(void) { host_arr_mode_on(); }
 int host_close_message(void);
 static void close_message(void) { host_close_message(); }
 void host_select_arr(unsigned n);
@@ -171,6 +176,7 @@ static const char *projdir(void) { return ((const char *(*)(int, int))PROJDIR)(0
 static void clear_arr(unsigned slot) { ((void (*)(int))CLEAR_ARR)((int)slot); }
 static void message(const char *t) { ((void (*)(const char *, int))MESSAGE)(t, 0x30); }
 static void draw_change(void) { ((void (*)(void))DRAW_CHANGE)(); }
+static void arr_mode_on(void) { ((void (*)(void))ARR_MODE_ON)(); }
 static void close_message(void) { ((void (*)(void))MESSAGE_CLOSE)(); }
 static void select_arr(unsigned n) { ((int (*)(int))SELECT_ARR)((int)n); }
 int as_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4); /* below: stock's writer, entered past the site */
@@ -256,6 +262,7 @@ static void write_place(struct as_state *s)
     s->place[0] = 'A'; s->place[1] = 'S'; s->place[2] = 'B'; s->place[3] = 'P';
     s->place[4] = s->book;
     for (unsigned b = 0; b < BOOKS; ++b) s->place[5 + b] = s->last[b];
+    s->place[21] = rd32(ARR_MODE) ? 1 : 0;
     place_path(s->path, "work");
     put_place(s);
 }
@@ -269,6 +276,7 @@ static int read_place(struct as_state *s)
     if (s->place[0] != 'A' || s->place[1] != 'S' || s->place[2] != 'B' || s->place[3] != 'P'
         || s->place[4] >= BOOKS) return -1;
     for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = (uint8_t)(s->place[5 + b] & 7u);
+    s->mode_on = s->place[21] == 1;
     return s->place[4];
 }
 
@@ -542,6 +550,12 @@ void as_tick(void *api)
     if (s->hush && s->pending < 0) {
         if (rd32(MESSAGE_UP)) { close_message(); s->hush = 0; }
         else if (++s->hush > 90) s->hush = 0;
+    }
+    /* After a load: stock's LOAD starts in pattern mode; a project left in arranger mode gets it back, once its book
+     * and arrangement are chosen (RELOAD keeps the mode, and then this does nothing). */
+    if (s->mode_on && s->pending < 0 && !s->redraw) {
+        s->mode_on = 0;
+        if (!rd32(ARR_MODE)) arr_mode_on();
     }
     if (s->failed) { s->failed = 0; message("BOOK FILE ERROR"); }
     if (s->book && s->pending < 0 && ++s->ticks >= 120) { s->ticks = 0; remember(s); }
