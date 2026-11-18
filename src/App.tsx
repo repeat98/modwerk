@@ -68,6 +68,7 @@ import { digiDownloadsEnabled, isCoreBuildPreview } from './engine/elekloader/pr
 import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
 import { downloadSelection, parseSelection } from './config/selection'
 import { Icon } from './components/Icon'
+import { desktopShell, openAppMenu, useDesktopCommands } from './desktop-shell'
 import { ModuleDetail } from './components/ModuleDetail'
 import { useModuleUpdates } from './hooks/useModuleUpdates'
 import { FaqPage } from './components/FaqPage'
@@ -137,6 +138,7 @@ const firmwareFeedbackPreview = import.meta.env.DEV && typeof window !== 'undefi
 const usbPreview = import.meta.env.DEV && typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('preview') : null
 const usbLinkPreview = usbPreview === 'usb-link' || usbPreview === 'base-install'
 // Phones and tablets get no USB workflow (iOS has no WebUSB, and the card install needs a computer anyway).
+const desktop = desktopShell() // the desktop app (desktop/): its menu opens from the toolbar
 const touchOnly = typeof window !== 'undefined' && window.matchMedia('(hover: none) and (pointer: coarse)').matches
 function subscribeRoute(callback: () => void) {
   window.addEventListener('hashchange', callback)
@@ -345,6 +347,7 @@ export default function App() {
   // Phones show search as an icon; open it within the tap so the keyboard appears.
   function openSearch() { flushSync(() => setSearchOpen(true)); searchRef.current?.focus() }
   function closeSearch() { setQuery(''); flushSync(() => setSearchOpen(false)); searchToggleRef.current?.focus() }
+  const findPending = useRef(false) // the desktop app's Find from another page: search once the library shows
   const [family,setFamily]=useState(initialBrowse?.family ?? 'all'),[sort,setSort]=useState(initialBrowse?.sort ?? DEFAULT_MODULE_SORT),[comparison,setComparison]=useState<string[]>([]),[compareOpen,setCompareOpen]=useState(false)
   const [statistics,setStatistics]=useState<ModuleStatistics[]|null>(null)
   useEffect(()=>{let cancelled=false,latest=0;function read(path:string){if(!session.available)return;const request=++latest;void api<ModuleStatistics[]>(path).then(value=>{if(!cancelled&&request===latest)setStatistics(value)}).catch(()=>{if(!cancelled&&request===latest)setStatistics(null)})}
@@ -464,6 +467,11 @@ export default function App() {
 
   // Routes that browse a library: they get the search field and, on phones, the category chips under the app bar.
   const libraryNav = onLibrary || route === 'module-sets'
+  useDesktopCommands(command => {
+    if (command.go && /^[a-z-]+$/.test(command.go)) window.location.hash = '#' + command.go
+    if (command.find) { if (libraryNav) openSearch(); else { findPending.current = true; window.location.hash = '#library' } }
+  })
+  useEffect(() => { if (findPending.current && libraryNav) { findPending.current = false; requestAnimationFrame(openSearch) } }, [libraryNav])
   const firmwareVerified = !allMachines && currentDevice.id === 'octatrack' && !!firmware
   const machineStatus = allMachines ? 'All machines' : currentDevice.id !== 'octatrack' ? currentDevice.name + (machineHasMods ? digiDownloadsEnabled(currentDevice.id) ? ' · local builds' : ' · builds in preview' : machineBuildPreview ? ' · core build preview' : ' · no mods yet') : firmware ? 'OS 1.40C verified' : 'No base firmware selected'
   const saveStatus = workspace.saving ? "Saving…" : workspace.storageError ? "Changes not saved" : "Workspace saved on device"
@@ -571,6 +579,7 @@ export default function App() {
             <NotificationBell next={route} />
             <a className={'configuration-button' + (configurationCount ? '' : ' is-empty')} href={configurationHref} aria-label={"Open " + w.set + ", " + configurationCount + " modules selected"} aria-current={configuration || machineView === 'configuration' ? 'page' : undefined}><Icon name="sliders" size={16} /><span>{octatrackUi ? activeFor(configurationTarget)?.name ?? w.Set : w.Set}</span><span className="toolbar-count">{configurationCount}</span></a>
             <MobileMenu onConfigurations={() => octatrackUi ? window.location.assign('#module-sets') : setConfigurationsOpen(true)} route={route} online={online} selectedCount={configurationCount} configurationHref={configurationHref} admin={session.admin} developer={!!developer?.user} highlightDevelop={DEVELOP_HIGHLIGHT} onSupport={SUPPORT_URL ? () => setSupportOpen(true) : undefined} />
+            {desktop && <button type="button" className="desktop-menu-button" aria-label="App menu" title="App menu" onClick={event => openAppMenu(desktop, event.currentTarget)}><Icon name="more" size={18} /></button>}
           </div>
         </header>
         <main className="workspace-content" id="main-content" ref={mainRef} tabIndex={-1}>
