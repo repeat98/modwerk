@@ -118,7 +118,12 @@ static struct as_state st;
  * done, 4 save done, 5 arrbook read (then its book), 6 arrbook missing, 7 return posted, 8 refused, 9 switch done,
  * A write without a switch, B nothing to return to. */
 static uint32_t evlog;
-static void ev(unsigned code) { evlog = evlog << 4 | (code & 15u); }
+static void ev(unsigned code)
+{
+    evlog = evlog << 4 | (code & 15u);
+    wr8(RECORD + 6, evlog >> 8);                         /* kept through a power cycle, to read it back after */
+    wr8(RECORD + 7, evlog);
+}
 static struct as_state *volatile st_at = &st;
 
 #ifdef AS_HOST
@@ -136,6 +141,7 @@ static struct as_state *ready(void)
     for (unsigned i = 0; i < sizeof *s; ++i) p[i] = 0;
     s->magic = MAGIC;
     s->pending = -1;
+    evlog = (uint32_t)rd8(RECORD + 6) << 8 | rd8(RECORD + 7);  /* the events before a power cycle */
     s->restore = -1;
     return s;
 }
