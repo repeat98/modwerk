@@ -31,5 +31,5 @@ MODULE = Module(
     linked=(
         Linked("butterfingers", os.path.join(_HERE, "butter_fingers_core.s")),
     ),
-    gates=(Gate(os.path.join(_HERE, "verify.py"), remix_arg=False),),
+    gates=(Gate("modules/butter-fingers/verify.py", remix_arg=False),),
 )

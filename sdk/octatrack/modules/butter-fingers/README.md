@@ -1,4 +1,4 @@
-# Butter Fingers — 0.1.0 experimental (draft)
+# Butter Fingers — 0.1.0 experimental
 
 ## Overview
 
@@ -18,6 +18,10 @@ It has no page, no setting and stores nothing in the project. It patches no stoc
 - **Turning while pressed is a coarse edit, ×7 per detent, and cancels the toggle.** One slipped detent therefore turns a removal into a jump of 7.
 - **A detent turned after the release is an ordinary edit:** with the trig still held, it writes a new lock.
 
+## Controls
+
+None: no page, no menu row, no knob of its own and no effect slot. Remove the module to turn it off.
+
 ## Usage
 
 Butter Fingers acts only while a TRIG key or SCENE A/B is held, and only on the pressed knob (A–F).
@@ -26,7 +30,7 @@ Butter Fingers acts only while a TRIG key or SCENE A/B is held, and only on the 
 
 1. Hold a TRIG key with a parameter lock and press the DATA ENTRY knob of the locked parameter; let go. The lock is removed, as in stock.
 2. Let go of the knob carelessly, nudging it a detent as you lift your finger: with Butter Fingers the lock stays removed instead of a new lock being written.
-3. For a deliberate coarse edit, keep the knob pressed and turn it: the first detent is ignored, from the second on it moves in stock's coarse steps (×7).
+3. For a deliberate coarse edit, keep the knob pressed and turn it: the first detent is ignored, from the second on it moves in stock's coarse steps (x7).
 4. Scene locks work the same way: hold SCENE A or B and press the knob to remove that scene's lock.
 
 ## Change to a stock flow
@@ -59,11 +63,19 @@ The module guide asks for this entry (`docs/module-guides/README.md`, "minor cha
 ## Compatibility and limitations
 
 - OS 1.40C on the MKII; the MKI's knobs cannot be pressed. ColdFire only: no DSP code, no effect slot, no stock-code site.
-- It claims the turns of knobs A–F while a TRIG key or SCENE A/B is held (`compatibility.uiClaims`). Another module taking those turns while a lock is edited would need a decision; none of the current catalogue does.
+- It declares the knob presses A–F while a TRIG key is held (`compatibility.uiClaims`). It never takes a press, only a slipped detent, so it also works beside modules that act on a pressed knob. With SCENE A/B held it acts the same way but claims nothing there: MIDI Scenes clears its MIDI scene locks with that press, so Butter Fingers should keep that clear from slipping too (not tested together).
 - A detent that reaches the firmware just before the press registers is not caught. The press then removes the lock it wrote.
 - Panel turns are coalesced into one event when they come fast: such an event of two or more detents counts as a deliberate turn and passes.
-- Hardware: reported working on one MKII over USB; no owner-verified qualification yet. See [TESTING.md](TESTING.md).
+- Hardware: tested by the author on one MKII over USB (base 0.7.1); no owner-verified qualification yet. See [TESTING.md](TESTING.md).
 
-## Authorship and licence
+## Tests and measurements
+
+Host gate, emulator comparison against stock, emulator cycle and stress records, and the author's hardware sessions: see [TESTING.md](TESTING.md).
+
+## Authorship and licences
 
 Jan Kolkmeier: the module, its tests, documentation and thumbnail. MIT, see [LICENSE](LICENSE). No firmware, extracted stock code or built images are included; the knob and key codes and the gesture's behaviour are from octabam's public firmware notes and ot_emu measurements.
+
+## Screens and audio
+
+It draws nothing on the screen and makes no sound, so it has no screenshots.
