@@ -70,7 +70,8 @@ the rollback brought the kept build back with its memory still saying book 2 ove
 switch saved them as book 2. Fixed: the record carries a serial each copy writes, and on install a copy trusts its
 own memory only while the serial is still its own; otherwise it rereads the record and checks it against the
 arrangements. `verify.py` (52 checks) replays that order; against the old logic it fails, writing book 1's songs into
-arr09. On the unit: not yet.
+arr09. On the unit, package `06f593e3…` kept on book 2: a 2-minute trial of a second copy saw book 2 (value 0x401),
+the developer switched to book 1 in it (0x400), and after the rollback the kept copy reported book 1 (1024), not book 2.
 
 ### Cleared arrangements coming back (found on the unit, 18 November 2026)
 
@@ -79,4 +80,6 @@ book 1 and back; copied and pasted ones stayed. Cause: the list's FUNC + PLAY cl
 and does not mark the arrangement changed, and the module wrote a book other than book 1 only when something was
 marked changed. Stock's own SYNC job writes all 8 files every time. Fixed: the module writes a book's 8 files
 whenever stock's writer asks for any (its mask argument), as stock does. `verify.py` (54 checks) clears one without the
-mark and leaves the book; against the old rule it fails. On the unit: not yet.
+mark and leaves the book; against the old rule it fails. On the unit (package `06f593e3…`), as the developer
+reported it: cleared arrangements on book 2 stayed cleared after book 1 and back, and a clear undone with a second
+FUNC + PLAY came back as before.
