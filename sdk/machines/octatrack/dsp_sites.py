@@ -46,10 +46,23 @@ def load(path=REGISTRY):
                                           isinstance(f.get('evidence'), str))) or \
                 f.get('packaged', False) not in (True, False):
             raise ValueError('dsp-sites.json: feature ' + f['name'] + ' has bad cores or implies')
+    packaged = {f['bit']: f for f in reg['features'] if f.get('packaged')}
+    chained = []
     for n, s in enumerate(reg['sites']):
-        if s['index'] != n or s['feature'] not in bits or s['kind'] != 'exclusive' or s['words'] != 2:
-            raise ValueError('dsp-sites.json: site %d is out of order, has an unknown feature, or is not one exclusive '
-                             'two-word instruction' % n)
+        if s['index'] != n or s['words'] != 2 or s['kind'] not in ('exclusive', 'chain') or \
+                ('feature' in s) == ('features' in s) or ('features' in s) != (s['kind'] == 'chain'):
+            raise ValueError('dsp-sites.json: site %d is out of order, or is not one two-word instruction with one '
+                             '"feature" (exclusive) or a "features" list (a chain)' % n)
+        if s['kind'] == 'exclusive' and (s['feature'] not in bits or s['feature'] in packaged):
+            raise ValueError('dsp-sites.json: exclusive site %d has an unknown or a packaged feature' % n)
+        # A chain: the base's stub calls each listed packaged feature's engine in turn, so every one of them must run
+        # on each payload the site exists on, and leave through its exit.
+        if s['kind'] == 'chain' and (not s['features'] or len(set(s['features'])) != len(s['features']) or
+                                     any(f not in packaged or set(packaged[f]['cores']) != {'A', 'B'} & set(s)
+                                         for f in s['features']) or 'exit' not in s):
+            raise ValueError('dsp-sites.json: chain site %d lists a feature that is not packaged, runs on other '
+                             'payloads than the site, or appears twice; or it has no exit' % n)
+        chained += s.get('features', [])
         if not {'A', 'B'} & set(s) or len(s['guardSha256']) != 64:
             raise ValueError('dsp-sites.json: site %s names no payload or no guard' % s['name'])
         for tag in ('A', 'B'):
@@ -58,6 +71,8 @@ def load(path=REGISTRY):
         if 'exit' in s and (set(s['exit']) != {'A', 'B'} & set(s) or
                             not all(0 <= _int(v, s['name']) < 0x2000 for v in s['exit'].values())):
             raise ValueError('dsp-sites.json: site %s has an exit outside stock P or for a payload it lacks' % s['name'])
+    if sorted(chained) != sorted(packaged):
+        raise ValueError('dsp-sites.json: every packaged feature is in exactly one chain site, and only those are')
     for r in reg['regions']:
         start, words = _int(r['start'], 'start'), _int(r['words'], 'words')
         if r['feature'] not in bits or r['space'] not in ('x', 'y') or not words:
@@ -69,6 +84,19 @@ def load(path=REGISTRY):
         if not r.get('shared') and start + words > 0x30000:
             raise ValueError('dsp-sites.json: a core region reaches the shared window')
     return reg
+
+
+def site_features(site):
+    """The features a site's stub serves, in call order: its one feature, or a chain's list."""
+    return list(site['features']) if site['kind'] == 'chain' else [site['feature']]
+
+
+def chain_of(reg, feature):
+    """The chain site that hosts packaged `feature`, and the feature's position in its call order."""
+    for s in reg['sites']:
+        if s['kind'] == 'chain' and feature in s['features']:
+            return s, s['features'].index(feature)
+    raise ValueError('dsp-sites.json: feature %d is in no chain site' % feature)
 
 
 def implied(reg, features):
@@ -172,13 +200,15 @@ def header(reg):
         lines.append('    {%uu, %uu, %uu, 0, 0x%xu, 0x%xu}, /* %s */' % (feature, core, 1 if space == 'x' else 2, address, words,
                                                                    names[feature].lower()))
     lines += ['};', '#define MW_DSP_REGIONS (sizeof mw_dsp_regions / sizeof mw_dsp_regions[0])', '',
-              '/* The sites, by index (a package\'s hook entry names one): its feature, and per core its stock P continuation',
+              '/* The sites, by index (a package\'s hook entry names one): the features its stub serves (one, or a chain\'s:',
+              ' * the base\'s stub calls each enabled one\'s engine in turn, chain 1), and per core its stock P continuation',
               ' * after the hooked code when it has an exit (0: none, or no such payload). */',
-              'struct mw_dsp_site { uint8_t feature, pad; uint16_t exit[2]; };',
+              'struct mw_dsp_site { uint8_t feature, chain; uint16_t exit[2]; };',
               'static const struct mw_dsp_site mw_dsp_sites[] = {']
     for s in reg['sites']:
         exits = [_int(s['exit'][tag], s['name']) if tag in s.get('exit', {}) else 0 for tag in ('A', 'B')]
-        lines.append('    {%uu, 0, {0x%xu, 0x%xu}}, /* %d %s */' % (s['feature'], exits[0], exits[1], s['index'], s['name']))
+        lines.append('    {%uu, %du, {0x%xu, 0x%xu}}, /* %d %s */' % (sum(site_features(s)), s['kind'] == 'chain',
+                                                                    exits[0], exits[1], s['index'], s['name']))
     lines += ['};', '#define MW_DSP_SITES (sizeof mw_dsp_sites / sizeof mw_dsp_sites[0])', '', '#endif', '']
     return '\n'.join(lines)
 

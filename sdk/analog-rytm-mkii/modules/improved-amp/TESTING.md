@@ -1,10 +1,60 @@
 # Improved AMP: testing
 
-Improved AMP 0.1.1-experimental (0.1.0-experimental from "The package's own image flashed: IA15" down), Analog Rytm MKII OS 1.74, on the Modwerk base (core-ar2 0.7) with the
+Improved AMP 0.1.2-experimental (0.1.1-experimental from "0.1.1: the UI task's functions built cold" down, 0.1.0-experimental from "The package's own image flashed: IA15" down), Analog Rytm MKII OS 1.74, on the Modwerk base (core-ar2 0.7) with the
 amp record hook. The sections from "Unit, ED02" down record the module's builds under its earlier name,
 Improved Envelopes (symbols `envelopes_*`, now `improved_amp_*`; HLD then read in ms). "ENV RESET AMP
 pre-fade" records the pre-fade's builds from before it moved into this module. The test builds' `.syx`
 files stayed on the tester's computer.
+
+## 0.1.2: stock's hold compare without a table, 17 Nov 2026
+
+The change: stock's hold compare in `amp_env_commands` (0x40109bc2..0x40109bd1, every block of state 2:
+the hold counter against the entry for the knob's value in the hold table) no longer reads the
+module's 512-byte table of 0x7fffffff, which a `ptr` site pointed it at. Two byte sites make it compare
+the counter with 0x7fffffff held in a0: the table's lea becomes `movea.l #0x7fffffff,%a0` (6 bytes) and
+the indexed compare `tst.l %d1; cmp.l %a0,%d1` (4 bytes). The compare sets the same flags as before
+for every counter and every HLD value, so the branch after it, the state and the counter move as
+before; a0 is scratch from there to the loop head, which loads it again (the record hook's entries may
+use it). No change in behaviour is intended. Fingerprint (as below, the same seven files):
+`ff15f650…e13c`, `evidence.sourceSha256`. The test builds' `.syx` files stayed on the tester's
+computer.
+
+- **Reading.** Stock OS 1.74 read from the tester's own copy: the only code that writes the voices'
+  amp states and hold counters is `amp_env_commands` (no other absolute reference to them); the hold
+  table was read only at this compare. The two sites overlap no other site of this module or the base, and a scan of the whole
+  image finds no stock branch into them after their first byte.
+- **Package.** `.run` 8,364 bytes (0.1.1: 8,876), 512 fewer; it is 0.1.1's `.run` with the table taken
+  out, byte for byte, and its relocations the same moved by the table's length. `.bss` unchanged
+  (160). Linked alone on the plain base (IA17, sha256 `32787aac…f6e0`) the module takes 8,716 bytes of
+  the shared mod area (ramSpare 110,288; 0.1.1's package on the same base, IB11: 109,776). Beside the
+  two sites, the image differs from IB11 only in addresses that moved with the table and in the
+  base's count of the `.run` length.
+- **rytm-emu** (`2ac0f1f`, the author's local build). IA17 against IB11 from cold boot, the same input:
+  BD pad hits with HLD turned through 0, one step, 16 steps, 126 and AUTO, turned to and from AUTO
+  inside a hold and a gate, ATK raised, SD and CH hits and a fast series inside an 8-step hold: the
+  analog voices' recording and every DAC word the same, and voice 0's state and hold counter, read
+  every million instructions (4,300 readings, through states 1, 2 and 3), the same. With voice 0 put in
+  state 2 and its counter poked to 0x7fffffff, 0x7ffffff0, 0x80000000 and 0, both images move it the
+  same way. The screenshot plans: all 89 AMP page frames and 18 ENV RESET frames the same bytes as
+  IB11's, and the three captures the same as those committed since 0.1.0.
+- **Host.** The pre-fade scan's host test passes (68 checks); `improved_amp_voice` and the pre-fade are
+  byte-identical to 0.1.1's, so their earlier host results stand.
+- **On the unit.** IA18 (sha256 `d41c5c59…f4cc`, unpacked CRC `8acf944e`): this version on the
+  development base with the USB test link (`8e336c94`) alone, linked on RB08's store lock (ramSpare
+  94,896; 0.1.1's package on the same base and lock, IB12: 94,384). Loaded to RAM on the author's
+  Analog Rytm MKII (RB08 in flash) and run by the automated test rig with the author's go, 17 Nov
+  2026, in a scratch project, 120 BPM. With a looped sample on BD, the two hold cases measure every
+  hold as 0.1.1 and 0.1.0 did (len20 at HLD 0 8.5 ms; HLD 15 19.0, 31 60.5, 42 135.0 for a short and a
+  long note, 57 308.0; 42 at 90 BPM 176.0; AUTO 108.5 for a 100 ms note and 509.5 for 500 ms; 42 at
+  the track's faster speed 92.5 and back 134.5): every sound check of `sound-hld` and
+  `sound-hld-speed` passes. Their screen compares of stock's SCALE page fail on its speed digit, as
+  for 0.1.1. Of the other cases env-reset, filter-times, hld, hld-func, ovr, save, times,
+  prefade-swing and first-trig pass. The rest (the pre-fade's and the other sound cases) ran without a
+  sound that rang through them: the BD's sample was cleared or quietened by the rig's cases
+  part-way through (a rig fault, not traced), so they measure the sound, not the module; their code
+  is byte-identical to 0.1.1's. The author also played holds by ear on IA18 and heard nothing wrong.
+- **Not run for 0.1.2:** the package flashed, a project save and load, a power cycle, the audio load,
+  the pre-fade cases with a ringing sound.
 
 ## 0.1.1: the UI task's functions built cold, 16 Nov 2026
 

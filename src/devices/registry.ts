@@ -79,6 +79,9 @@ export function readyForMods(device: Pick<DeviceProfile, 'family' | 'steps' | 's
   return device.steps[device.family === 'zoom' ? 'load' : 'core'] === 'done' && !!device.sdk
 }
 
+// A machine Start developing sends to integration rather than to module prompts.
+export const needsIntegration = (device: DeviceProfile | undefined) => !device || !readyForMods(device)
+
 // Machines come from sdk/machines/<id>/machine.json through scripts/machines.mjs; the UI keeps a compact shape.
 export const DEVICES: DeviceProfile[] = (MACHINES as MachineProfile[]).map(machine => ({
   id: machine.id, name: machine.name, family: machine.family, variants: machine.variants, status: machine.status, summary: machine.summary,

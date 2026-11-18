@@ -10,7 +10,7 @@ import { AgentBoard } from './AgentBoard'
 import { DEVELOPER_SKILLS, type DeveloperTask } from './developer-guidance'
 import '../components/developer-release-guide.css'
 import './develop-intro.css'
-import { DEVICES_BY_ID, readyForMods, type DeviceProfile } from '../devices/registry'
+import { DEVICES_BY_ID, needsIntegration, type DeviceProfile } from '../devices/registry'
 
 // A machine without a core has to be unlocked first: reverse engineering, which needs programming experience.
 function unlockNote(device: DeviceProfile | undefined) {
@@ -28,7 +28,7 @@ export function SubmissionPage({ moduleId = '', machine: initialMachine }: { mod
   const [task, setTask] = useState<DeveloperTask>(module ? 'update' : 'create')
   const [machine, setMachine] = useState<StarterMachine>(() => STARTER_MACHINES.find(item => item.id === (module?.machine ?? initialMachine))?.id ?? 'octatrack')
   const clone = cloneCommands(repository, login), setup = setupPrompt(repository)
-  const device = DEVICES_BY_ID[machine], locked = !module && !(device && readyForMods(device)), machineName = STARTER_MACHINES.find(item => item.id === machine)?.name ?? machine
+  const device = DEVICES_BY_ID[machine], locked = !module && needsIntegration(device), machineName = STARTER_MACHINES.find(item => item.id === machine)?.name ?? machine
 
   return <div className="community-page contribution-page start-developing">
     <BackLink href={moduleId ? '#developer' : '#library'}>{moduleId ? 'Creator settings' : 'Module library'}</BackLink>

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import type { Plugin, ResolvedConfig } from 'vite'
 import { siteUrls } from './module-pages.ts'
 import { pageContentHtml, pageMetadataHtml, escapeHtml } from './page-html.ts'
@@ -20,6 +21,11 @@ export function sitemapXml(htmlPages: readonly string[], appUrl: URL) {
     urls.add(url.href)
   }
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...urls].sort().map(url => `  <url><loc>${escapeHtml(url)}</loc></url>`).join('\n')}\n</urlset>\n`
+}
+
+/** The crawler policy in public/robots.txt plus this build's same-origin sitemap. */
+export function robotsTxt(appUrl: URL) {
+  return readFileSync(new URL('../public/robots.txt', import.meta.url), 'utf8').trimEnd() + `\n\nSitemap: ${new URL('sitemap.xml', appUrl).href}\n`
 }
 
 /** Runs after the module, developer and forum page generators. Firmware and private community data are never inputs. */
@@ -46,7 +52,8 @@ export function seo(): Plugin {
       const forum = discussions.size ? '<h2>Community discussions</h2><ul>' + [...discussions].slice(0, 30).map(([url, title]) => `<li><a href="${escapeHtml(url)}">${title}</a></li>`).join('') + '</ul>' : ''
       index.source = pageContentHtml(home, homeContent(appUrl) + forum)
       this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemapXml([String(index.source), ...pages], appUrl) })
-      this.emitFile({ type: 'asset', fileName: 'robots.txt', source: `User-agent: *\nAllow: /\nSitemap: ${new URL('sitemap.xml', appUrl).href}\n` })
+      // public/robots.txt holds the crawler policy; emitting this asset replaces the copied file, so keep its rules.
+      this.emitFile({ type: 'asset', fileName: 'robots.txt', source: robotsTxt(appUrl) })
     },
   }
 }

@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { BaseDialogFrame, BaseIntro, StagePlan, type BasePromise } from './BaseDialogFrame'
 import { LinkHero } from './LinkHero'
 import { Icon } from './Icon'
-import { BASE_RECOVERY_NOTICE } from '../firmware-notices'
+import { BASE_RECOVERY_NOTICE, USB_BROWSERS } from '../firmware-notices'
 import { CARD_SET_FILE } from '../engine/elekloader/card-set'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
@@ -41,7 +41,7 @@ export function OctatrackWelcome({ link, usbBrowser, savedSets = false, onSetUp,
     <BaseIntro hero={<LinkHero label="USB" />} title="Modules now load over USB, for everyone" promises={NEW} beta={false}
       intro="Send modules to your Octatrack straight from this page. It takes one install of the Modwerk base."
       needs="You need your original OS 1.40C file and a CompactFlash card for the first install."
-      missing={usb ? undefined : 'This browser can’t use USB, so modules go onto the card as a file. For USB sync, use Chrome or Edge on a computer.'} />
+      route={usb ? undefined : <>This browser can’t use USB, so modules go onto the card as a file. For USB sync, use {USB_BROWSERS}.</>} />
     <section className="base-install-stage" aria-labelledby="welcome-steps-title">
       <h3 id="welcome-steps-title">How it works</h3>
       <StagePlan stages={JOURNEY} progressLabel="How it works" />

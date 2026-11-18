@@ -243,7 +243,7 @@ const octatrack: FaqSection[] = [
             <li>Copy it to the top folder of the card, outside every folder.</li>
             <li>Switch the Octatrack off and on. It starts with your modules.</li>
           </ol>
-          <p>The file fits the base it was written for. After a base update, download it again.</p>
+          <p>The file only loads on the base it was written for; on any other base the Octatrack starts without modules. After a base update, download it again. When the base you last downloaded or last synced from this browser is another one, the window after the download says so and offers the right base.</p>
         </>,
       },
       {

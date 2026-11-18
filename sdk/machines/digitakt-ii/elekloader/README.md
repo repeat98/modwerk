@@ -30,6 +30,8 @@ that toolchain, the kit-pinned Elekloader SDK and your local copy of the exact s
 npm run machine:base -- digitakt-ii --stock /private/Digitakt_II_OS1.17.syx --out /private/dt2-base
 ```
 
+The base builds from a copy of core's `mod.json` ([copies](copies/core-dt2/mod.json)) that differs in one value: `KIT_ROOM` is 146, not 194, so core's kit data ends where the [project archive](modwerk/README.md#phrase-continuation-and-project-archives) starts, 48 bytes before the end of each kit record. `sdk/tests/test_machine_base.py` refuses an overlap.
+
 ## Results
 
 - The pinned base has 22 sites. See [base-binding.json](../base-binding.json) for its package hash and memory footprint.
@@ -44,3 +46,7 @@ On QF17 with base `e88273ed`, Claptom-music verified that Chord Arp remained ena
 With base `e88273ed`, the site's builder and preflight under Node passed for the base alone, Track Names, both Perform modules together, and Mute Latch.
 
 On QK17 with the same base and Euclidean Scale, Claptom-music verified that Save Project and a cold boot preserved SCF, LO, HI and the saved RNN melody. Standalone KIT Save and Load restored the saved bounds and melody after changes. Image SHA-256 `4a87420a08ff3be4f526dd80012807661b53908fa2a2e50c4d4e2dd3437f0441`.
+
+On a base `e88273ed` image with Chord Arp, Euclidean Scale and Track Names, Claptom-music reported that Euclidean Scale kept its settings but Chord Arp's ARP came back OFF after Save Project and a power cycle. Core's kit data overlapped the project archive. Base `8650bb8a` differs from `e88273ed` in that one value (`KIT_ROOM`, one byte of the package); two isolated builds reproduced it.
+
+On KR17 with base `8650bb8a`, Chord Arp, Euclidean Scale and Track Names, Claptom-music reported that after Save Project and a power cycle Euclidean Scale kept its settings on a stock Euclidean track where Chord Arp ran with ROOT=TRIG, Chord Arp stayed on with its lock on a track of ordinary trigs, and official OS 1.17 opened the project. Image SHA-256 `3cbe6f35ae3ad4aa76a005837c89cf29f59b238bc8f91ae047c12191ff3f6d19`.

@@ -28,6 +28,7 @@
     ],
     "usage": [
       "In SETTINGS > MIDI CONFIG > CHANNELS, set TRACK H CHANNEL to OFF and FX CONTROL CH to 16, so no track listens on that channel.",
+      "In SETTINGS > MIDI CONFIG > PORT CONFIG, tick RECEIVE CC/NRPN and set INPUT FROM to MIDI, USB or both, so the effects take the messages.",
       "Open SETTINGS and tick FX TRACK.",
       "Select MIDI track H (TRK + trig 16). On its SRC page press FUNC + knob A to switch CHAN on and set it to 16.",
       "On the AMP page (CC Select) set SEL1 to 85 (delay TIME) and SEL2 to 88 (delay FDBK), or any effects CC from the list.",
@@ -112,6 +113,7 @@
         "title": "Quick tutorial: MIDI track H as an effects track",
         "steps": [
           "In SETTINGS > MIDI CONFIG > CHANNELS, set TRACK H CHANNEL to OFF and FX CONTROL CH to 16, so no track listens on that channel.",
+          "In SETTINGS > MIDI CONFIG > PORT CONFIG, tick RECEIVE CC/NRPN and set INPUT FROM to MIDI, USB or both, so the effects take the messages.",
           "Open SETTINGS and tick FX TRACK.",
           "Select MIDI track H (TRK + trig 16). On its SRC page press FUNC + knob A to switch CHAN on and set it to 16.",
           "On the AMP page (CC Select) set SEL1 to 85 (delay TIME) and SEL2 to 88 (delay FDBK), or any effects CC from the list.",
