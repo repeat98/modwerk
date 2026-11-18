@@ -130,6 +130,9 @@ struct arr_state {
     uint32_t undo_n;           /* the rows it wrote, and in the high half the rows it replaced */
     int32_t undo_cursor;       /* the cursor when it was made: pressing again there undoes it */
     uint32_t undo_sum;         /* the rows as that edit left them: any other change since forgets the undo */
+    uint32_t halt_arr;         /* FUNC + DOWN on a HALT: the arrangement, */
+    int16_t halt_row;          /* the HALT's row (-1 none), */
+    uint16_t halt_count;       /* and the row count before stock's insert */
     char text[24];
     uint8_t clip[ROWS * ROW_BYTES];
     uint8_t snap[ROWS * ROW_BYTES]; /* the rows before the last edit */
@@ -145,6 +148,7 @@ static struct arr_state *ready(void)
     uint8_t *p = (uint8_t *)s;
     for (unsigned i = 0; i < sizeof *s; ++i) p[i] = 0;
     s->magic = MAGIC;
+    s->halt_row = -1;
     s->anchor = -1;
     return s;
 }
@@ -169,7 +173,7 @@ static int editor_on_top(void)
 static int func_held(void) { return rd32(KEYS + K_STOP * 0x18u) == EDITOR_FUNC_KEYS; }
 static int cue_held(void) { return rd32(CUE_HELD) || rd32(KEYS + K_T1 * 0x18u) == CUE_KEYS; }
 
-enum { DID_NOTHING, DID_COPY, DID_CLEAR, DID_PASTE, DID_INSERT, DID_REFUSE, DID_UNDO, DID_PASS, DID_MOVE };
+enum { DID_NOTHING, DID_COPY, DID_CLEAR, DID_PASTE, DID_INSERT, DID_REFUSE, DID_UNDO, DID_PASS, DID_MOVE, DID_HALT };
 
 static void forget_selection(struct arr_state *s) { s->anchor = -1; }
 
@@ -433,6 +437,39 @@ static void move_rows(struct arr_state *s, unsigned lo, unsigned hi, int dir)
     redraw();
 }
 
+/* FUNC + DOWN with the cursor on a HALT (#1668, the owner's OK): stock duplicates the row and leaves the original,
+ * moved one down, pointing at the copy: an endless LOOP. The module lets stock insert, then on the next frame points
+ * the moved HALT at its own row again, so both rows are HALTs. Only when stock really inserted there: one row more and
+ * the moved row as it was. Every other FUNC + DOWN, and FUNC + UP, stays stock's. */
+static void note_halt(struct arr_state *s)
+{
+    uint32_t a = arr();
+    unsigned c = (unsigned)cursor(), have = count(a);
+    s->halt_row = -1;
+    if (c >= have) return;
+    uint32_t row = row_at(a, c);
+    if (rd8(row) != TYPE_JUMP || rd8(row + 3) != c) return;
+    s->halt_arr = a;
+    s->halt_row = (int16_t)c;
+    s->halt_count = (uint16_t)have;
+}
+
+static void keep_halt(struct arr_state *s)
+{
+    if (s->halt_row < 0) return;
+    unsigned p = (unsigned)s->halt_row;
+    s->halt_row = -1;
+    uint32_t a = arr();
+    if (a != s->halt_arr || count(a) != s->halt_count + 1u || p + 1u >= ROWS) return;
+    uint32_t copy = row_at(a, p), moved = row_at(a, p + 1);
+    if (rd8(copy) != TYPE_JUMP || rd8(copy + 3) != p || rd8(moved) != TYPE_JUMP || rd8(moved + 3) != p) return;
+    for (unsigned i = 0; i < ROW_BYTES; ++i) if (i != 3 && rd8(copy + i) != rd8(moved + i)) return;
+    wr8(moved + 3, p + 1);
+    s->last = DID_HALT;
+    changed(a);
+    redraw();
+}
+
 int arr_key(int code, int pressed)
 {
     struct arr_state *s = ready();
@@ -450,7 +487,11 @@ int arr_key(int code, int pressed)
     unsigned lo, hi;
     int selected = selection(s, &lo, &hi);
     if (code == K_UP || code == K_DOWN) {
-        if (func) { forget_selection(s); return 0; }       /* stock's insert and delete */
+        if (func) {                                        /* stock's insert and delete */
+            forget_selection(s);
+            if (code == K_DOWN) note_halt(s);              /* stock's insert on a HALT: fixed after it, in arr_tick */
+            return 0;
+        }
         if (cue) {
             if (s->anchor < 0) {
                 uint32_t a = arr();
@@ -492,11 +533,12 @@ struct arr_api { volatile uint32_t value; }; /* modwerk_runtime_api: npm run dev
 
 /* The selection ends when the editor closes or another window covers it. The diagnostic word, read with `try`:
  * bit 0 editor on top, 1 CUE and 2 FUNC as stock sees them, 3-6 the last thing done (1 copy, 2 clear, 3 paste,
- * 4 insert, 5 refused, 6 undo, 7 REC/PLAY/STOP left to stock, 8 move), 7 unused, 8-15 the key events after which the
+ * 4 insert, 5 refused, 6 undo, 7 REC/PLAY/STOP left to stock, 8 move, 9 a HALT kept after stock's insert), 7 unused, 8-15 the key events after which the
  * module's own count of CUE and FUNC differed from stock's, 16-23 the cursor row, 24-31 the selection's first row (255: none). */
 void arr_tick(void *api)
 {
     struct arr_state *s = ready();
+    keep_halt(s);
     int on_top = editor_on_top();
     if (s->anchor >= 0 && !on_top) forget_selection(s);
     if (!api) return;

@@ -110,6 +110,16 @@ static void fill(unsigned n)
     set_rows(n);
     for (unsigned r = 0; r < n; ++r) { row(r)[0] = 0; row(r)[1] = (uint8_t)(r + 1); row(r)[5] = (uint8_t)(0x40 + r); }
 }
+/* Stock's FUNC + DOWN as measured (0x4009e4c8, RESEARCH.md): row p is duplicated, the rows from p move down, every
+ * LOOP/JUMP target past p moves with them; a target equal to p stays, so the original HALT now points at the copy. */
+static void stock_insert(unsigned p)
+{
+    unsigned n = rows();
+    if (n >= 256 || p >= n) return;
+    memmove(row(p + 1), row(p), (n - p) * ROWB);
+    set_rows(n + 1);
+    for (unsigned r = 0; r <= n; ++r) if (row(r)[0] == 1 && row(r)[3] > p) row(r)[3]++;
+}
 static int same(unsigned r, unsigned as) { return row(r)[1] == (uint8_t)(as + 1) && row(r)[5] == (uint8_t)(0x40 + as); }
 
 int main(void)
@@ -453,6 +463,41 @@ int main(void)
     set_cursor(9);
     hold(CUE, 1); tap(RIGHT); hold(CUE, 0);
     check("at the bottom, CUE + RIGHT changes nothing", same(9, 9) && cursor() == 9 && rows() == 10);
+
+    /* FUNC + DOWN on a HALT (#1668): stock inserts, the module keeps both rows HALTs */
+    fill(8);
+    row(3)[0] = 1; row(3)[2] = 0; row(3)[3] = 3;   /* a HALT on row 3 */
+    row(6)[0] = 1; row(6)[2] = 2; row(6)[3] = 5;   /* a LOOP to row 5, below it */
+    row(1)[0] = 1; row(1)[2] = 0; row(1)[3] = 3;   /* a JUMP to the HALT */
+    set_cursor(3);
+    hold(FUNC, 1);
+    check("FUNC + DOWN on a HALT goes to stock", tap(DOWN) == 0);
+    stock_insert(3);
+    hold(FUNC, 0);
+    arr_tick(0);
+    check("after stock's insert both rows are HALTs", rows() == 9 && row(3)[3] == 3 && row(4)[0] == 1 && row(4)[3] == 4);
+    check("other targets stay as stock left them", row(7)[3] == 6 && row(1)[3] == 3);
+    arr_tick(0);
+    check("once only", row(4)[3] == 4);
+    /* not a HALT: stock's insert untouched */
+    set_cursor(7);                                 /* the LOOP, now on row 7 to row 6 */
+    hold(FUNC, 1); tap(DOWN); stock_insert(7); hold(FUNC, 0);
+    arr_tick(0);
+    check("FUNC + DOWN on a LOOP is stock's alone", rows() == 10 && row(7)[3] == 6 && row(8)[3] == 6);
+    /* stock did not insert (a full arrangement): nothing is changed */
+    fill(8);
+    row(2)[0] = 1; row(2)[3] = 2;
+    row(3)[0] = 1; row(3)[3] = 2;                  /* looks like stock's result, but no row was added */
+    set_cursor(2);
+    hold(FUNC, 1); tap(DOWN); hold(FUNC, 0);
+    arr_tick(0);
+    check("no insert, no change", rows() == 8 && row(3)[3] == 2);
+    /* FUNC + UP (stock's delete) is never touched */
+    row(5)[0] = 1; row(5)[3] = 5;
+    set_cursor(5);
+    hold(FUNC, 1); tap(UP); hold(FUNC, 0);
+    arr_tick(0);
+    check("FUNC + UP is stock's alone", row(5)[3] == 5 && rows() == 8);
 
     printf("%d checks, %d failed\n", checks, failures);
     return failures != 0;

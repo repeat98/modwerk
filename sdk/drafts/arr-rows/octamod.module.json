@@ -65,6 +65,7 @@
       "key:FUNC+PLAY@ARRANGER",
       "key:FUNC+STOP@ARRANGER",
       "key:CUE+FUNC+STOP@ARRANGER",
+      "key:FUNC+DOWN@ARRANGER",
       "screen:ARRANGEMENT EDITOR"
     ],
     "limitations": [
