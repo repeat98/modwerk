@@ -3,7 +3,7 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // What a module costs an Octatrack, measured on a unit: the frame interrupt's share, the CPU meter and both DSPs,
 // before the module, with it installed but used nowhere (at rest), and for an effect on one slot (in use).
-//   npm run device:price -- [--out FILE.json] [--base ID --scene TEXT] [--seconds 8] [--slot T1] ID|FILE.mwrm…   (none: every USB package)
+//   npm run device:price -- [--out FILE.json] [--base ID --scene TEXT] [--seconds 8] [--slot T1] [--fx-name ID=NAME…] ID|FILE.mwrm…   (none: every USB package)
 //   --write (needs --base and --scene): each module measured cleanly gets its price in octamod.module.json (resources.cpuPrice) and
 //   its readings in evidence/cpu-price.json, and leaves the pending list; modules:check recomputes the price from those readings.
 // It needs a development twin of the base (the guard request) behind `npm run device -- serve --share
@@ -30,6 +30,8 @@ export function reading(text) {
     cpu: tenth(mean(stats.map(m => m[1] / 10))), dsp1to4: tenth(mean(stats.map(m => m[2] / 10))), dsp5to8: tenth(mean(stats.map(m => m[3] / 10))) }
 }
 /** What the second reading added to the first, in points, one decimal. */
+/** What went wrong with a pick, from the session's reply (device.mjs pick's errors), or null when the slot runs it. */
+export const pickFailure = reply => /error|refused|not admitted|timed out/i.test(reply) ? reply.trim().split('\n').find(line => /error|refused|not admitted|timed out/i.test(line)).slice(0, 200) : null
 export const added = (before, after) => Object.fromEntries(['frame', 'cpu', 'dsp1to4', 'dsp5to8'].map(key => [key, tenth(after[key] - before[key])]))
 
 /** --write for one module's result: its price into its manifest, its readings beside it, its line off the pending list. What it did. */
@@ -61,8 +63,9 @@ export function writePrice({ root, result, base, scene, seconds, measuredAt }) {
 
 if (import.meta.filename === process.argv[1]) {
   const { values: args, positionals } = parseArgs({ allowPositionals: true, options: { out: { type: 'string' }, seconds: { type: 'string', default: '8' },
-    slot: { type: 'string', default: 'T1' }, base: { type: 'string' }, scene: { type: 'string' }, write: { type: 'boolean' }, socket: { type: 'string', default: '/tmp/modwerk-dev.sock' }, share: { type: 'string', default: '/tmp/modwerk-share.sock' } } })
+    slot: { type: 'string', default: 'T1' }, 'fx-name': { type: 'string', multiple: true }, base: { type: 'string' }, scene: { type: 'string' }, write: { type: 'boolean' }, socket: { type: 'string', default: '/tmp/modwerk-dev.sock' }, share: { type: 'string', default: '/tmp/modwerk-share.sock' } } })
   const root = resolve(import.meta.dirname, '..'), seconds = Number(args.seconds), measuredAt = new Date().toISOString()
+  const fxNames = new Map((args['fx-name'] ?? []).map(pair => { const at = pair.indexOf('='); if (at < 1) throw new Error('--fx-name takes ID=NAME, the name the FX chooser shows'); return [pair.slice(0, at), pair.slice(at + 1)] }))
   if (args.write && !(args.base && args.scene)) throw new Error('--write needs --base and --scene: the price names the base and what played (model, project, pattern)')
   const catalogue = JSON.parse(readFileSync(resolve(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8')).packages
   // An ID is a catalogue row; a path to a .mwrm is that file, for a build that is not published yet. In the order given.
@@ -110,7 +113,10 @@ if (import.meta.filename === process.argv[1]) {
       if (fx) try { // an effect: on the slot, measured, and the slot's own effect picked back
         const was = (await slotNames())[Number(fx)]
         if (!was) throw new Error('could not read what ' + args.slot + ' FX' + fx + ' runs, so nothing was picked')
-        await send(`pick:${args.slot}:FX${fx}:${row.name.replaceAll(' ', '_')}`)
+        // The chooser shows the effect descriptor's name, which can differ from the package's (Ring SC: "RINGMOD SC", its
+        // package "SC Ringmod"): --fx-name ID=NAME names it. A pick that fails must not be measured as the effect in use.
+        const name = fxNames.get(row.id) ?? row.name, failed = pickFailure(await send(`pick:${args.slot}:FX${fx}:${name.replaceAll(' ', '_')}`))
+        if (failed) throw new Error('picking ' + name + ': ' + failed)
         result.inUse = await measure(); result.inUseAdds = added(before, result.inUse); result.inUseOn = args.slot + ' FX' + fx
         const back = await send(`pick:${args.slot}:FX${fx}:${was.replaceAll(' ', '_')}`)
         if (/error|refus|timed out/i.test(back)) result.restore = 'picking ' + was + ' back: ' + back.trim().slice(0, 120)

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { expect, it } from 'vitest'
-import { added, reading, writePrice } from './octatrack-price.mjs'
+import { added, pickFailure, reading, writePrice } from './octatrack-price.mjs'
 
 it('reads the guard window and the mean of the meter readings, and what a module added', () => {
   const guard = share => `frame max 112.2 %, latest start 12.2 %, in the frame interrupt ${share} % over 22000 frames, skipped 2 on T1 T3, share 80.0 %\n`
@@ -39,4 +39,10 @@ it('writes a clean reading as the module\'s price, its readings beside it, and t
     writeFileSync(manifest, JSON.stringify({ id: 'echo', version: '0.2.0', compatibility: { location: 'Track machine' }, resources: {} }))
     expect(write({})).toMatch(/machine-render/)
   } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
+it('takes a failed pick for a failure, so the slot is not measured as the effect in use', () => {
+  expect(pickFailure('error: No SC Ringmod in the FX2 chooser.\n')).toBe('error: No SC Ringmod in the FX2 chooser.')
+  expect(pickFailure('error: RINGMOD SC refused on T1 FX2 (the loader said no; its screen: /tmp/x.png)\n')).toContain('refused')
+  expect(pickFailure('T1 FX2 RINGMOD SC (running 119 ms after YES)\n')).toBeNull()
 })
