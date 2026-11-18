@@ -16,24 +16,34 @@ const L2_START = 0x2001ab7c, L2_END = 0x200fa000
 
 type Block = { offset: number; flags: number; address: number; count: number; argument: number; end: number }
 type Allocation = { address: number; bytes: Uint8Array }
+/** A base-owned site: one whole 48-bit instruction at a loader byte address, replaced only over its stock guard. */
+export type Dt2SharcSite = { address: number; guard: string; instruction: Uint8Array }
 export type Dt2RenderPlan = {
-  renderInstruction: Uint8Array
+  renderInstruction?: Uint8Array
   receiveInstruction?: Uint8Array
+  /** Further base-owned sites, such as the machine selector table's base (`planDt2MachineSelectors`). */
+  sites?: readonly Dt2SharcSite[]
   allocations: readonly Allocation[]
 }
 
 const equal = (a: Uint8Array, b: Uint8Array) => a.length === b.length && a.every((byte, i) => byte === b[i])
 
-function sites(plan: Dt2RenderPlan) {
-  return [
-    { address: RENDER_ADDRESS, guard: RENDER_GUARD, instruction: plan.renderInstruction },
+function sites(plan: Dt2RenderPlan): Dt2SharcSite[] {
+  const all = [
+    ...(plan.renderInstruction ? [{ address: RENDER_ADDRESS, guard: RENDER_GUARD, instruction: plan.renderInstruction }] : []),
     ...(plan.receiveInstruction ? [{ address: RECEIVE_ADDRESS, guard: RECEIVE_GUARD, instruction: plan.receiveInstruction }] : []),
+    ...(plan.sites ?? []),
   ]
+  const starts = all.map(site => site.address).sort((a, b) => a - b)
+  if (!all.length || starts.some((address, i) => !Number.isInteger(address) || address % 2 || (i > 0 && address < starts[i - 1] + 6))) {
+    throw new Error('Invalid SHARC patch site')
+  }
+  return all
 }
 
-function siteOffset(original: readonly Block[], address: number): number {
+function siteOffset(original: readonly Block[], address: number, length = 6): number {
   const matches = original.filter(block => !(block.flags & (FIRST | FINAL | FILL)) &&
-    address >= block.address && address + 6 <= block.address + block.count)
+    address >= block.address && address + length <= block.address + block.count)
   if (matches.length !== 1) throw new Error('Invalid SHARC patch site')
   return matches[0].offset + HEADER + address - matches[0].address
 }
@@ -102,7 +112,7 @@ function blocks(bytes: Uint8Array): Block[] {
 /** Validate a depacked OS 1.17 section against a trusted base link plan. */
 export async function verifyDt2RenderSection(stock: Uint8Array, built: Uint8Array, plan: Dt2RenderPlan): Promise<void> {
   if (await sha256Hex(stock) !== STOCK_SECTION) throw new Error('Unsupported Digitakt II SHARC image')
-  if (built.length > DT2_SHARC_SECTION_LIMIT || plan.renderInstruction.length !== 6 || !plan.allocations.length) {
+  if (built.length > DT2_SHARC_SECTION_LIMIT || !plan.allocations.length) {
     throw new Error('Invalid SHARC render plan size')
   }
   checkAllocations(plan.allocations)
@@ -140,7 +150,7 @@ export async function buildDt2RenderSection(stock: Uint8Array, plan: Dt2RenderPl
   const original = blocks(stock)
   const final = original[original.length - 1]
   const growth = plan.allocations.reduce((length, allocation) => length + HEADER + allocation.bytes.length, 0)
-  if (stock.length + growth > DT2_SHARC_SECTION_LIMIT || plan.renderInstruction.length !== 6 || !plan.allocations.length) {
+  if (stock.length + growth > DT2_SHARC_SECTION_LIMIT || !plan.allocations.length) {
     throw new Error('Invalid SHARC render plan size')
   }
   checkAllocations(plan.allocations)
@@ -169,6 +179,53 @@ export async function buildDt2RenderSection(stock: Uint8Array, plan: Dt2RenderPl
   await verifyDt2RenderSection(stock, output, plan)
   return output
 }
+// The machine selector lookup (in the track setup, short-word PC 0x1c2731) loads the base of a seven-word table that
+// maps machine types 0-6 to the voice selector; a higher type reads past it. The base points it at a longer copy.
+const SELECTOR_SITE = 0x28000000 + 2 * 0x1c2731
+const SELECTOR_GUARD = '6b6ef0ae1d21cc3860bb1fd860658c94652341826da44eeec9227d59be29c3af'
+const SELECTOR_TABLE = 0x28000000 + 0x2567c0 // the stock table's loader byte address (normal word 0x2567c0)
+const STOCK_SELECTORS = [0, 1, 2, 3, 4, 0, 5]
+const I3 = 0x13
+
+function readStored(stock: Uint8Array, address: number, length: number): Uint8Array {
+  const offset = siteOffset(blocks(stock), address, length)
+  return stock.subarray(offset, offset + length)
+}
+
+/** A plan fragment giving added machine types (7 and up, in order) their voice selector: a copy of the stock table
+ * with `added` appended, placed at `tableAddress` in free L2, and the lookup's base pointed at it. */
+export async function planDt2MachineSelectors(stock: Uint8Array, tableAddress: number, added: readonly number[]): Promise<Dt2RenderPlan> {
+  if (await sha256Hex(stock) !== STOCK_SECTION) throw new Error('Unsupported Digitakt II SHARC image')
+  if (!added.length || added.some(value => !STOCK_SELECTORS.includes(value))) throw new Error('Invalid machine selector')
+  if (await sha256Hex(readStored(stock, SELECTOR_SITE, 6)) !== SELECTOR_GUARD) throw new Error('SHARC selector guard mismatch')
+  const view = new DataView(Uint8Array.from(readStored(stock, SELECTOR_TABLE, 4 * STOCK_SELECTORS.length)).buffer)
+  if (STOCK_SELECTORS.some((value, index) => view.getUint32(4 * index, true) !== value)) throw new Error('Unexpected SHARC selector table')
+  const words = [...STOCK_SELECTORS, ...added]
+  const table = new Uint8Array(4 * words.length)
+  words.forEach((value, index) => new DataView(table.buffer).setUint32(4 * index, value, true))
+  const allocations = [{ address: tableAddress, bytes: table }]
+  checkAllocations(allocations)
+  // Type 17a, I3 = the table's normal-word address (L2 byte address / 4).
+  return { sites: [{ address: SELECTOR_SITE, guard: SELECTOR_GUARD, instruction: instruction(0x0f00 | I3, tableAddress / 4) }], allocations }
+}
+
+/** One plan from several fragments (a render plan and the machine selectors, say). */
+export function combineDt2Plans(...plans: readonly (Dt2RenderPlan | null)[]): Dt2RenderPlan | null {
+  const present = plans.filter((plan): plan is Dt2RenderPlan => plan !== null)
+  if (!present.length) return null
+  const pick = (key: 'renderInstruction' | 'receiveInstruction') => {
+    const found = present.filter(plan => plan[key])
+    if (found.length > 1) throw new Error('Two SHARC plans set the same site')
+    return found[0]?.[key]
+  }
+  return {
+    renderInstruction: pick('renderInstruction'),
+    receiveInstruction: pick('receiveInstruction'),
+    sites: present.flatMap(plan => plan.sites ?? []),
+    allocations: present.flatMap(plan => plan.allocations),
+  }
+}
+
 const RENDER_RESUME = 0x1c18a9
 const RENDER_REGISTERS = [
   ...Array.from({ length: 16 }, (_, index) => index), // R0–R15
