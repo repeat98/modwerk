@@ -25,13 +25,6 @@ export const RELEASE_STEPS: Record<DeveloperTask, { id: DeveloperStage; title: s
   ],
 }
 
-export const INSTRUMENT_STEPS = [
-  { title: 'Research the instrument', summary: 'Establish the stock format, exact rebuild and safe recovery.' },
-  { title: 'Integrate SDK and builder', summary: 'Add the profile, hooks, toolchain and measured resource budgets.' },
-  { title: 'Qualify on hardware', summary: 'Test the exact build and record actual results and remaining gaps.' },
-  { title: 'Owner review, then modules', summary: 'Instrument integration needs owner review before module publication.' },
-]
-
 /** The skills the setup prompt installs, in a developer's words. Every folder in .claude/skills/ is in one of these lists (starter-prompts.test.ts). */
 export const DEVELOPER_SKILLS = [
   { name: 'modwerk-start', summary: 'Start here' },
