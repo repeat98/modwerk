@@ -128,6 +128,14 @@ What it changes:
 - So the base needs, on the sound chip: a longer selector table in its own L2 (the seven stock words, then one per added machine: SAMPLE's for a sample-backed machine) with the address at `0x1c2731` pointed at it, so no added type reads past the table; and a render hook at `0x1c6ae8` that reads the raw type (`DM(0x255970 + track)`) to call an added machine's own render.
 - Any sound-chip detour must preserve every register and the sticky status it touches, including registers the displaced instruction only reads (`R0` here).
 
+### A longer selector table on the sound chip (local test, 19 November 2026)
+
+A local emulator-only DSP image changed one instruction: the table base at `0x1c2731` (`I3 = 0x2567c0`, SHA-256 of the six stock bytes `6b6ef0ae...`) now loads `0x8030040`, the normal-word address of a copy in free L2 (loader byte `0x200c0100`): the seven stock words, then 0 (SAMPLE's selector) for types 7 to 10. Same scripted runs as above, each started from a ready point saved with that DSP image (a saved point carries its own copy of the DSP's code and data, so a run restored from a point saved with the stock image does not see a patch at all):
+
+- Track 1 on SAMPLE: PCM byte-identical to the stock DSP image (`da40d90b...`). The copied table changes nothing for stock types.
+- Test machine chosen through the menu: PCM byte-identical to the same run on the stock DSP image (`2129ca6e...`). So selector word 7 (1 in stock, 0 here) is not what makes the test machine differ from SAMPLE by -25 dB; that difference comes from somewhere else (the ColdFire's per-type tables or the parameter values it sends are the next suspects).
+- The base still needs the longer table for safety (types 8 and up would read data addresses as selectors); this test shows the relocation itself is harmless.
+
 ## Still to check
 
 
