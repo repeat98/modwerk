@@ -83,3 +83,14 @@ whenever stock's writer asks for any (its mask argument), as stock does. `verify
 mark and leaves the book; against the old rule it fails. On the unit (package `06f593e3…`), as the developer
 reported it: cleared arrangements on book 2 stayed cleared after book 1 and back, and a clear undone with a second
 FUNC + PLAY came back as before.
+
+### SAVE, RELOAD and LOAD PROJECT, and coming back to the saved place
+
+On the unit (package `06f593e3…`), as the developer reported it: on book 2 an edit, SAVE PROJECT, another edit and
+RELOAD PROJECT landed on book 1, and book 2 then held the saved version; LOAD PROJECT of the same project from book 3
+landed on book 1, with book 3's arrangements kept. All passed. The developer asked to land on the book and
+arrangement the project was saved on instead, as stock does for its arrangement. Built: the module writes
+`arrbook.work` (book, each book's last choice) whenever stock writes arrangements, SAVE PROJECT copies it to
+`arrbook.strd` and RELOAD back, and after a load the module switches to that book once stock's job queue frees.
+`verify.py` (59 checks) covers LOAD, RELOAD, waiting while stock loads and a project left on book 1. Not run under
+ot_emu (its project loads differ from the unit's); on the unit: not yet.

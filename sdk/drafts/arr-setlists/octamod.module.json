@@ -45,7 +45,7 @@
       "OS 1.40C. Not yet tested on a unit.",
       "Books change only while the transport is stopped: the switch writes and reads the card, which stock itself does only stopped.",
       "Switch back to book 1 before removing the module: without it, stock's next save writes the book in use into arr01 to arr08. Book 1 is kept in a backup (arr01.bak to arr08.bak) and comes back the next time the module is installed and book 1 is chosen.",
-      "A power cycle keeps the book in use; loading a project opens it on book 1.",
+      "A project comes back to the book and arrangement it was saved or left on; a power cycle keeps the book in use. Without the module a project opens on book 1.",
       "Stock's project copy functions copy book 1 only; copying the project folder copies every book."
     ],
     "effectId": null
@@ -73,7 +73,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate (verify.py, 46 checks); book switching, stock's file format for arr09 and up, the list redraw and per-book choice under ot_emu; switching, per-book choice, the playing refusal, ARR SAVE/RELOAD and a power cycle on the developer's MKI.",
+    "summary": "Host gate (verify.py, 59 checks); book switching, stock's file format for arr09 and up, the list redraw and per-book choice under ot_emu; switching, per-book choice, the playing refusal, ARR SAVE/RELOAD and a power cycle on the developer's MKI.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [

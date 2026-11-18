@@ -58,6 +58,9 @@
 #define LIST_CURSOR 0x400c0ba4u      /* ARR > CHANGE: the cursor's row (stock opens the list with it on the choice) */
 
 #define REC_MAGIC 0x41534231u        /* "ASB1" */
+#define PLACE_MAGIC 0x41534250u      /* "ASBP": arrbook.work, the book in use and each book's last choice */
+#define F_READ 0x40016564u           /* (fo, dst, n) -> 1 done */
+#define F_WRITE 0x400166b8u          /* (fo, src, n) -> 1 done */
 #define IOB_LEN 0x1000u
 #define SUM_LEN (2u * SLOTS * BLOCK + SLOTS)
 
@@ -69,6 +72,8 @@ const char *host_projdir(void);
 int host_arr_write(const char *path, unsigned slot);
 int host_arr_read(const char *path, unsigned slot);
 int host_copy(const char *to, const char *from);
+int host_put(const char *path, const void *src, unsigned n);
+int host_get(const char *path, void *dst, unsigned n);
 void host_clear_arr(unsigned slot);
 void host_message(const char *text);
 int host_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4);
@@ -93,7 +98,10 @@ struct as_state {
     uint32_t seq;            /* the serial this copy last wrote into the record: another one there means another build ran */
     uint8_t damaged;         /* a file of the book in the slots did not read: write back only what is edited */
     uint8_t redraw;          /* a switch finished: the UI task chooses the book's arrangement and redraws the list */
-    uint8_t last[BOOKS];     /* the arrangement last chosen in each book, this session (0 = arrangement 1) */
+    uint8_t last[BOOKS];     /* the arrangement last chosen in each book (0 = arrangement 1), kept in arrbook.work */
+    int8_t restore;          /* a project was loaded on this book: the UI task switches to it once stock is done, -1 none */
+    uint16_t restore_ticks;
+    uint8_t place[24];       /* arrbook.work: magic, book, the 16 last choices */
     uint16_t ticks;
     char path[260];
     char path2[260];
@@ -118,6 +126,7 @@ static struct as_state *ready(void)
     for (unsigned i = 0; i < sizeof *s; ++i) p[i] = 0;
     s->magic = MAGIC;
     s->pending = -1;
+    s->restore = -1;
     return s;
 }
 
@@ -135,6 +144,8 @@ static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { re
 static int arr_write(struct as_state *s, unsigned slot) { return host_arr_write(s->path, slot) >= 0; }
 static int arr_read(struct as_state *s, unsigned slot) { return host_arr_read(s->path, slot); }
 static int copy_file(struct as_state *s) { return host_copy(s->path2, s->path); }
+static int put_place(struct as_state *s) { return host_put(s->path, s->place, sizeof s->place); }
+static int get_place(struct as_state *s) { return host_get(s->path, s->place, sizeof s->place); }
 #else
 static int post_write(void) { return ((int (*)(int))POST_WRITE)(0); }
 static const char *projdir(void) { return ((const char *(*)(int, int))PROJDIR)(0, 0); }
@@ -148,6 +159,22 @@ static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { re
 typedef int f_open_t(void *, const char *, const char *, void *, unsigned);
 static int f_open(struct as_state *s, const char *mode) { return ((f_open_t *)F_OPEN)(s->fo, s->path, mode, s->iob, IOB_LEN); }
 static int f_close(struct as_state *s) { return ((int (*)(void *))F_CLOSE)(s->fo); }
+typedef int f_io_t(void *, void *, unsigned);
+
+/* s->place to s->path / from it, through the module's own buffer. 1 when done. */
+static int put_place(struct as_state *s)
+{
+    if (f_open(s, "w") < 0) return 0;
+    int ok = ((f_io_t *)F_WRITE)(s->fo, s->place, sizeof s->place) == 1;
+    return f_close(s) >= 0 && ok;
+}
+static int get_place(struct as_state *s)
+{
+    if (f_open(s, "r") < 0) return 0;
+    int ok = ((f_io_t *)F_READ)(s->fo, s->place, sizeof s->place) == 1;
+    f_close(s);
+    return ok;
+}
 
 /* One slot to s->path, by stock's own writer. 1 when written and closed. */
 static int arr_write(struct as_state *s, unsigned slot)
@@ -191,6 +218,39 @@ static void arr_path(char *out, unsigned number, const char *ext)
 }
 
 static unsigned arr_number(unsigned book, unsigned slot) { return book * SLOTS + slot + 1; }
+
+/* "<project>/arrbook.<ext>": where the project was left, so a load comes back to it. */
+static void place_path(char *out, const char *ext)
+{
+    const char *dir = projdir();
+    char *t = out;
+    while (*dir && t < out + 240) *t++ = *dir++;
+    const char *name = "/arrbook.";
+    while (*name) *t++ = *name++;
+    while (*ext) *t++ = *ext++;
+    *t = 0;
+}
+
+static void write_place(struct as_state *s)
+{
+    s->place[0] = 'A'; s->place[1] = 'S'; s->place[2] = 'B'; s->place[3] = 'P';
+    s->place[4] = s->book;
+    for (unsigned b = 0; b < BOOKS; ++b) s->place[5 + b] = s->last[b];
+    place_path(s->path, "work");
+    put_place(s);
+}
+
+/* arrbook.<ext> into the memory of choices, and the book to come back to. 1 when there was one. */
+static int read_place(struct as_state *s, const char *ext)
+{
+    place_path(s->path, ext);
+    if (!get_place(s) || s->place[0] != 'A' || s->place[1] != 'S' || s->place[2] != 'B' || s->place[3] != 'P'
+        || s->place[4] >= BOOKS) return 0;
+    for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = (uint8_t)(s->place[5 + b] & 7u);
+    s->restore = (int8_t)s->place[4];
+    s->restore_ticks = 0;
+    return 1;
+}
 
 /* A fingerprint of the slots: the working blocks, the saved blocks and their flags. */
 static uint32_t slots_sum(void)
@@ -260,8 +320,10 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
         if (s->damaged ? write_changed(s, s->book) : write_book(s, s->book)) wr8(CHANGED, 0);
         else rc = -1;
     }
+    int switched = 0;
     if (s->pending >= 0) {
         unsigned to = (unsigned)s->pending;
+        switched = 1;
         if (rc >= 0) {
             s->last[s->book] = (uint8_t)(rd8(INDEX) & 7u);     /* the book left: which arrangement was chosen */
             if (s->book == 0) s->backup = !s->damaged && write_book(s, 0);   /* leaving book 1: its backup */
@@ -280,6 +342,8 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
         } else s->failed = 1;
         s->pending = -1;
     }
+    if (!switched) s->last[s->book] = (uint8_t)(rd8(INDEX) & 7u);   /* the choice in the book in use, as saved */
+    write_place(s);                                       /* where the project is: a load comes back here */
     remember(s);
     return rc;
 }
@@ -311,9 +375,13 @@ void as_project_load(void)
     struct as_state *s = ready();
     s->book = 0;
     s->pending = -1;
+    s->restore = -1;
+    for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = 0;
     s->ready = 1;
 }
 
+/* Stock has read the banks; it reads arr01-08 next, so the slots will hold book 1. Where the project was left is read
+ * here, and the UI task goes back to it once stock is done (a switch as LEFT/RIGHT makes it). */
 unsigned as_project_loaded(void)
 {
     struct as_state *s = ready();
@@ -321,6 +389,7 @@ unsigned as_project_loaded(void)
     s->book = 0;
     s->backup = 0;
     s->damaged = 0;
+    read_place(s, "work");
     remember(s);
     return 0;
 }
@@ -334,6 +403,9 @@ unsigned as_project_stored(void)
         arr_path(s->path2, n, "strd");
         copy_file(s);
     }
+    place_path(s->path, "work");
+    place_path(s->path2, "strd");
+    copy_file(s);
     return 0;
 }
 
@@ -346,9 +418,13 @@ unsigned as_project_reloaded(void)
         arr_path(s->path2, n, "work");
         copy_file(s);
     }
+    place_path(s->path, "strd");
+    place_path(s->path2, "work");
+    copy_file(s);
     s->book = 0;
     s->backup = 0;
     s->damaged = 0;
+    read_place(s, "work");                                /* where it was saved */
     return 0;
 }
 
@@ -410,6 +486,19 @@ void as_tick(void *api)
         if (rd32(CHANGE_WINDOW)) {
             if (rd32(LIST_TOP) == 0) wr32(LIST_CURSOR, s->last[s->book]);  /* the cursor on it, as stock opens the list */
             draw_change();
+        }
+    }
+    /* After a project load: back to the book it was left on, once stock has finished loading (its job queue frees). */
+    if (s->restore >= 0 && s->pending < 0) {
+        if (s->restore == (int8_t)s->book) s->restore = -1;   /* book 1: stock itself restores its choice */
+        else if (stopped()) {
+            s->pending = s->restore;
+            int rc = post_write();
+            if (rc >= 0) s->restore = -1;
+            else {
+                s->pending = -1;
+                if (rc == -7 || ++s->restore_ticks > 600) s->restore = -1;  /* no project, or still busy after 10 s */
+            }
         }
     }
     if (s->failed) { s->failed = 0; message("BOOK FILE ERROR"); }

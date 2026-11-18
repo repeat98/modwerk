@@ -54,8 +54,12 @@ unless you edit that arrangement.
   that site (`npm run modules:compat`).
 - **Stopped only.** A switch writes and reads the card through stock's own SYNC TO CARD job, which stock runs only
   stopped.
-- **A power cycle keeps the book in use**: the Octatrack keeps its arrangements in battery memory, and the module
-  recognises them. **Loading a project opens it on book 1**: stock reads arr01 to arr08 then.
+- **A project comes back where it was left.** A power cycle keeps the book in use (the Octatrack keeps its
+  arrangements in battery memory). LOAD PROJECT returns to the book and arrangement of the last switch, SYNC TO CARD
+  or SAVE PROJECT, and RELOAD PROJECT to those of the last SAVE PROJECT, as stock does for its own files: the module
+  keeps them in `arrbook.work` (and `arrbook.strd`). Stock first loads book 1; on another book the module then
+  switches as LEFT/RIGHT do, so stock's NOW SAFE TO EJECT! follows the load. Without the module a project opens on
+  book 1.
 - **Switch back to book 1 before removing the module.** Without the module, stock's next save writes whatever book is
   in its 8 slots into arr01 to arr08. Leaving book 1 always keeps a backup of it (`arr01.bak` to `arr08.bak`, stock
   files too), and arriving at book 1 loads that backup and writes it back into arr01 to arr08; so if it happens,
