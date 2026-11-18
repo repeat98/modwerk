@@ -143,9 +143,7 @@ describe('Digitone II linker profile', () => {
     expect(dn2.sysexId).toBe(ELE3_DEVICES['digitone-ii'].sysexId)
     expect(dn2.releases.map(release => [release.version, release.syxSha256])).toEqual(DN2_PROFILE.firmware.releases.map(release => [release.version, release.files[0].sha256]))
     // the same staging, flash window and seal as the Digitakt II's
-    const { sysexId: _dn2Id, ...dn2Container } = ELE3_DEVICES['digitone-ii']
-    const { sysexId: _dt2Id, ...dt2Container } = ELE3_DEVICES['digitakt-ii']
-    expect(dn2Container).toEqual(dt2Container)
+    expect({ ...ELE3_DEVICES['digitone-ii'], sysexId: 0 }).toEqual({ ...ELE3_DEVICES['digitakt-ii'], sysexId: 0 })
     // the main OS and the mod area are the ones the research records
     const research = readFileSync(new URL('../../../docs/DIGITONE_II_OS_RESEARCH.md', import.meta.url), 'utf8')
     for (const release of dn2.releases) expect(research).toContain(release.mainSha256)
