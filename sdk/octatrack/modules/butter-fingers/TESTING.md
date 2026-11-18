@@ -60,7 +60,16 @@ From the assembled unit (`m68k-elf-as -mcpu=5407`, `m68k-elf-size -A`): `.text` 
 
 ## CPU price
 
-Not measured. `npm run device:price` needs a development twin of the base. A development twin of the current base (`build_core.py --dev`, from this branch) was built on 18 November 2026, but the RAM boot did not reach the author's unit: on the flashed base `dd683f35` the upload stopped after 5 frames of 4 KB (not confirmed, no refusal) and, before a power cycle, after about 100 frames of 1 KB (refused). The handlers run in the UI task only, so the frame interrupt's share should not move; this is not a measurement.
+`npm run device:price -- butter-fingers` on 18 November 2026: the author's MKII, RAM-booted into a development twin of the current base (`build_core.py` with the beta flags but the controller rows, plus `--dev`; base `37319f9a`) with `npm run device -- boot DIR --chunk 1024`, then `npm run device -- serve --share /tmp/modwerk-share.sock`. Scene: the author's scratch project, a pattern with STATIC and FLEX tracks playing; 8 s per reading; installed as a trial and used nowhere (it has no slot).
+
+| Run | Frame interrupt before → installed | CPU meter before → installed | Skipped |
+|---|---|---|---|
+| 1 | 39.3 → 39.4 % (+0.1) | 55.9 → 55.8 % | 0 |
+| 2 | 39.5 → 39.5 % (+0.0) | 56.3 → 55.8 % | 0 |
+
+Recorded price: +0.1 points (`resources.cpuPrice`). Both trials were rolled back.
+
+The boot needed more patience than the client gives: on the flashed base `dd683f35` the unit refused a frame for over a second at times while staging the 1.3 MB image, and the client's 8 retries (about 0.1 s) gave up. With the retries raised to 300 for that run only (a local change, reverted), the image staged in about three minutes. 4 KB frames stalled on this base.
 
 ## Hardware (reported, not verified)
 

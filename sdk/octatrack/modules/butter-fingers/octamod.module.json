@@ -103,11 +103,20 @@
         "rationale": "A 652-byte package: 544 bytes of code and data and 42 bytes of state.",
         "source": "TESTING.md"
       }
+    },
+    "cpuPrice": {
+      "value": 0.1,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price",
+      "date": "2026-11-18",
+      "conditions": "MKII, development twin 37319f9a of the current base (RAM-booted over USB), the author's scratch project with STATIC and FLEX tracks playing, installed as a trial and used nowhere, 8 s per reading. Two runs: frame interrupt +0.1 and +0.0 points (39.3 to 39.4 % and 39.5 to 39.5 %), CPU meter -0.1 and -0.5 (noise), no skipped frame; both trials rolled back.",
+      "source": "TESTING.md"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate (verify.py, 20 checks); ot_emu: lock removal against stock, cycles of each handler and 21 rounds of the dearest gesture while playing with STOP and Part change, no hang. On one MKII over USB (base 0.7.1 dd683f35, beside FM Synth 0.1.3) the author checked trig and scene lock removal, press + turn, untouched controls and a power cycle.",
+    "summary": "Host gate (verify.py, 20 checks); ot_emu: lock removal against stock, cycles of each handler and 21 rounds of the dearest gesture while playing with STOP and Part change, no hang. CPU price +0.1 points of the frame interrupt (device:price on a development twin). On one MKII over USB (base 0.7.1 dd683f35, beside FM Synth 0.1.3) the author checked trig and scene lock removal, press + turn, untouched controls and a power cycle.",
     "hardwareStatus": "reported",
     "evidenceRevision": "a6cf919d08c3c0ffe3586470ad74dae8563d2ba5",
     "gates": [
