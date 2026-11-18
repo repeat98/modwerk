@@ -1,3 +1,7 @@
 Desktop app: a first desktop app for Windows, macOS and Linux (in development, no installers yet). It shows modwerk.app in a window of its own with the USB link and Web MIDI, so syncing your Octatrack no longer needs Chrome. It looks like an app: no browser title or menu bar, the window's controls on Modwerk's own toolbar with the app menu beside them, native right-click menus, its own icon and a page of its own when you are offline. Developers can turn on an agent bridge that lets their coding agent reach the unit, without Python. See docs/DESKTOP_APP.md.
 
 Site: inside the desktop app the toolbar makes room for the window's controls and drags the window; in a browser nothing changes.
+
+Desktop app: the desktop shows through the sidebar (Mica on Windows 11, the sidebar material on macOS). A sync or base install fills the taskbar button or Dock icon and flashes it when it finishes while Modwerk is in the background. A Go menu opens the main places with Ctrl or Cmd and 1 to 5, and Ctrl or Cmd+F searches modules from any page. modwerk:// links open their page in the app, and signing in with Google, GitHub or Discord now happens in your usual browser, which then hands you back to the app.
+
+Worker: a social sign-in can say it was started in the desktop app; the provider then returns to a page that hands the one-use code back to the app, still bound to the app's own verifier (migration 0098).

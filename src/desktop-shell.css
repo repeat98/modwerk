@@ -16,3 +16,12 @@
 .desktop-menu-button { display: none; }
 :root[data-shell='desktop'] .desktop-menu-button { display: inline-grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); }
 :root[data-shell='desktop'] .desktop-menu-button:hover { background: #ffffff10; color: var(--text); }
+
+/* The desktop through the sidebar (data-material: Mica on Windows 11, vibrancy on macOS): the window is see-through,
+   the workspace paints itself, and the sidebar keeps a tint so its text stays as readable as on the solid colour. */
+:root[data-material='true'] { background: transparent; }
+:root[data-material='true'] .workspace { background: var(--background); }
+:root[data-material='true'] .sidebar { background: color-mix(in srgb, var(--sidebar) 55%, transparent); }
+
+/* An app doesn't rubber-band past its edges. */
+:root[data-shell='desktop'], :root[data-shell='desktop'] :is(body, .workspace-content, .sidebar) { overscroll-behavior: none; }

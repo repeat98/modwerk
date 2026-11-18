@@ -57,10 +57,50 @@ export const WINDOW_COLOR = '#212124'
 
 /** No title bar of its own: the site's toolbar and sidebar header carry the window's controls and drag it
  * (src/desktop-shell.css). macOS keeps its traffic lights inset over the sidebar. */
-export function windowChrome(platform) {
-  if (platform === 'darwin') return { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 18, y: 20 } }
-  return { titleBarStyle: 'hidden', titleBarOverlay: { color: WINDOW_COLOR, symbolColor: '#b9bac8', height: 40 } }
+export function windowChrome(platform, material = windowMaterial(platform)) {
+  // Behind a material the window itself is see-through; the site paints everything but its sidebar (src/desktop-shell.css).
+  const behind = material ? { backgroundColor: '#00000000', ...material } : { backgroundColor: WINDOW_COLOR }
+  if (platform === 'darwin') return { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 18, y: 20 }, ...behind }
+  return { titleBarStyle: 'hidden', titleBarOverlay: { color: WINDOW_COLOR, symbolColor: '#b9bac8', height: 40 }, ...behind }
 }
+
+/** The desktop showing through the sidebar, as in Finder and Explorer: macOS's sidebar vibrancy, or Mica on
+ * Windows 11 22H2 (build 22621) and later. None on Linux or older Windows, where the window stays solid. */
+export function windowMaterial(platform, version = '') {
+  if (platform === 'darwin') return { vibrancy: 'sidebar', visualEffectState: 'followWindow' }
+  if (platform === 'win32' && Number(version.split('.')[2]) >= 22621) return { backgroundMaterial: 'mica' }
+  return null
+}
+
+/** The Go menu: the site's main places, on Ctrl or Cmd with 1 to 5. */
+export const PLACES = [
+  { label: 'Library', route: 'library' },
+  { label: 'Octatrack', route: 'octatrack' },
+  { label: 'Forum', route: 'forum' },
+  { label: 'Help & FAQ', route: 'faq' },
+  { label: 'Account', route: 'account' },
+]
+
+/** A modwerk:// link (from the browser, Discord or email) as the site page it names, or null.
+ * modwerk://open/#forum and modwerk://open/octatrack/module/x/ open those pages of the site. */
+export function siteLink(value, site) {
+  const url = parse(value)
+  if (!url || url.protocol !== 'modwerk:' || (url.host && url.host !== 'open')) return null
+  const target = parse(new URL((url.pathname || '/').replace(/^\/*/, '/') + url.search + url.hash, site).href)
+  return target && target.origin === site.origin ? target : null
+}
+
+/** A social sign-in start link the site asks to open in the default browser: the API's /auth/sso/start/<ticket>
+ * on the site's domain or a subdomain of it (the API may live on its own), and nothing else. */
+export function signInUrl(value, site) {
+  const url = parse(value)
+  if (!url || !/\/api\/auth\/sso\/start\/[a-f0-9]{64}$/.test(url.pathname) || url.search || url.hash) return null
+  if (url.origin === site.origin) return url
+  return url.protocol === 'https:' && (url.hostname === site.hostname || url.hostname.endsWith('.' + site.hostname)) ? url : null
+}
+
+/** The first modwerk:// link among a process's arguments (Windows and Linux hand links over this way). */
+export const linkArgument = argv => argv.find(arg => typeof arg === 'string' && arg.startsWith('modwerk:')) ?? null
 
 /** The first window: most of the screen, so the site's fitted pages (dialogs drop their art below 760 px) open whole. */
 export function initialSize(area) {

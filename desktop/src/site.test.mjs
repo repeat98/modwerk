@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from 'vitest'
-import { allowPermission, defaultBridgeAddress, elektronDevices, initialSize, navigation, offlinePage, siteUrl, userAgent, windowChrome } from './site.mjs'
+import { allowPermission, defaultBridgeAddress, elektronDevices, initialSize, linkArgument, navigation, offlinePage, signInUrl, siteLink, siteUrl, userAgent, windowChrome, windowMaterial, PLACES } from './site.mjs'
 
 const site = siteUrl()
 
@@ -46,7 +46,8 @@ describe('what the desktop window lets the site do', () => {
   it('puts the window controls on the site toolbar, and opens the first window large enough for fitted pages', () => {
     expect(windowChrome('win32')).toMatchObject({ titleBarStyle: 'hidden', titleBarOverlay: { color: '#212124', height: 40 } })
     expect(windowChrome('linux').titleBarStyle).toBe('hidden')
-    expect(windowChrome('darwin')).toEqual({ titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 18, y: 20 } })
+    expect(windowChrome('darwin')).toMatchObject({ titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 18, y: 20 }, vibrancy: 'sidebar', backgroundColor: '#00000000' })
+    expect(windowChrome('win32', null).backgroundColor).toBe('#212124')
     expect(initialSize({ width: 1920, height: 1032 })).toEqual({ width: 1440, height: 929 })
     expect(initialSize({ width: 1366, height: 728 })).toEqual({ width: 1161, height: 655 })
     expect(initialSize({ width: 640, height: 480 })).toEqual({ width: 720, height: 520 })
@@ -58,6 +59,43 @@ describe('what the desktop window lets the site do', () => {
     expect(page).toContain('href="https://modwerk.app/"')
     expect(page).toContain('net::ERR_&lt;script&gt;')
     expect(page).not.toContain('ERR_<script>')
+  })
+
+  it('lets the desktop show through only where the system has a material for it', () => {
+    expect(windowMaterial('win32', '10.0.26200')).toEqual({ backgroundMaterial: 'mica' })
+    expect(windowMaterial('win32', '10.0.22621')).toEqual({ backgroundMaterial: 'mica' })
+    expect(windowMaterial('win32', '10.0.22000')).toBeNull() // Windows 11 21H2 and Windows 10 stay solid
+    expect(windowMaterial('win32', '10.0.19045')).toBeNull()
+    expect(windowMaterial('linux', '6.8.0')).toBeNull()
+    expect(windowChrome('win32', windowMaterial('win32', '10.0.26200'))).toMatchObject({ backgroundMaterial: 'mica', backgroundColor: '#00000000' })
+  })
+
+  it('opens modwerk:// links as pages of the site and nothing else', () => {
+    expect(siteLink('modwerk://open/#forum', site)?.href).toBe('https://modwerk.app/#forum')
+    expect(siteLink('modwerk://open/#account/sso/' + 'a'.repeat(64), site)?.hash).toBe('#account/sso/' + 'a'.repeat(64))
+    expect(siteLink('modwerk://open/octatrack/module/tape-echo/', site)?.href).toBe('https://modwerk.app/octatrack/module/tape-echo/')
+    expect(siteLink('modwerk:///#faq', site)?.href).toBe('https://modwerk.app/#faq')
+    expect(siteLink('modwerk://open//evil.example/', site)?.origin).toBe('https://modwerk.app')
+    expect(siteLink('modwerk://evil.example/#forum', site)).toBeNull()
+    expect(siteLink('https://modwerk.app/#forum', site)).toBeNull()
+    expect(linkArgument(['electron.exe', '.', '--url', 'x', 'modwerk://open/#forum'])).toBe('modwerk://open/#forum')
+    expect(linkArgument(['Modwerk.exe'])).toBeNull()
+  })
+
+  it('opens only the site\'s own sign-in start links in the browser', () => {
+    const ticket = 'b'.repeat(64)
+    expect(signInUrl('https://modwerk.app/api/auth/sso/start/' + ticket, site)?.href).toBe('https://modwerk.app/api/auth/sso/start/' + ticket)
+    expect(signInUrl('https://api.modwerk.app/api/auth/sso/start/' + ticket, site)).not.toBeNull()
+    expect(signInUrl('https://modwerk.app.evil.example/api/auth/sso/start/' + ticket, site)).toBeNull()
+    expect(signInUrl('http://api.modwerk.app/api/auth/sso/start/' + ticket, site)).toBeNull()
+    expect(signInUrl('https://modwerk.app/api/auth/sso/start/xyz', site)).toBeNull()
+    expect(signInUrl('https://modwerk.app/api/auth/sso/start/' + ticket + '?next=evil', site)).toBeNull()
+    expect(signInUrl('file:///C:/Windows/System32/calc.exe', site)).toBeNull()
+  })
+
+  it('offers each place once in the Go menu', () => {
+    expect(new Set(PLACES.map(place => place.route)).size).toBe(PLACES.length)
+    expect(PLACES.every(place => /^[a-z-]+$/.test(place.route))).toBe(true)
   })
 
   it('serves the bridge where scripts/device.mjs looks by default', () => {

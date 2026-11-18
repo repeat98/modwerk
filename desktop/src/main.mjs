@@ -2,35 +2,56 @@
 // Modwerk's desktop app: modwerk.app in a window of its own, with WebUSB and Web
 // MIDI for the site in every operating system's build (no Chrome needed), and the
 // agent bridge for coding agents. docs/DESKTOP_APP.md describes it.
-import { BrowserWindow, Menu, app, clipboard, dialog, ipcMain, screen, session, shell } from 'electron'
+import { BrowserWindow, Menu, app, clipboard, dialog, ipcMain, nativeTheme, screen, session, shell } from 'electron'
 import { readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { UnitHolder, startBridge } from './bridge.mjs'
 import {
-  allowPermission, defaultBridgeAddress, elektronDevices, initialSize, navigation, offlinePage, sameOrigin, siteUrl, userAgent, windowChrome,
-  SITE, WINDOW_COLOR,
+  allowPermission, defaultBridgeAddress, elektronDevices, initialSize, linkArgument, navigation, offlinePage, sameOrigin, signInUrl, siteLink, siteUrl,
+  userAgent, windowChrome, windowMaterial, PLACES, SITE,
 } from './site.mjs'
 
 const GUIDE = 'https://github.com/repeat98/modwerk/blob/main/docs/DESKTOP_APP.md'
 const file = path => fileURLToPath(new URL(path, import.meta.url))
 const { values: flags } = parseArgs({
   args: process.argv.slice(app.isPackaged ? 1 : 2),
-  options: { bridge: { type: 'boolean' }, 'bridge-socket': { type: 'string' }, url: { type: 'string' } },
+  options: { bridge: { type: 'boolean' }, 'bridge-socket': { type: 'string' }, url: { type: 'string' }, 'register-links': { type: 'boolean' } },
   strict: false, allowPositionals: true,
 })
 // Another site only in development: a packaged app gives USB to modwerk.app alone.
 const site = siteUrl(app.isPackaged ? SITE : flags.url ?? process.env.MODWERK_DESKTOP_URL ?? SITE)
 const bridgeAddress = flags['bridge-socket'] ?? process.env.MODWERK_BRIDGE_SOCKET ?? defaultBridgeAddress(process.platform)
 const mac = process.platform === 'darwin'
+const material = windowMaterial(process.platform, process.getSystemVersion())
+nativeTheme.themeSource = 'dark' // the site is dark: menus, dialogs and the material follow it
 
 let window = null
 let bridge = null
 
 const primary = app.requestSingleInstanceLock()
 if (!primary) app.quit()
-app.on('second-instance', () => { if (window) { if (window.isMinimized()) window.restore(); window.focus() } })
+
+// modwerk:// links open the site's page in this window. A packaged app registers the scheme on its first start;
+// a development run only with --register-links, which points the scheme at this checkout's Electron.
+if (app.isPackaged) app.setAsDefaultProtocolClient('modwerk')
+else if (flags['register-links']) app.setAsDefaultProtocolClient('modwerk', process.execPath, [resolve(process.argv[1])])
+let pendingLink = linkArgument(process.argv)
+function openLink(value) {
+  const target = siteLink(value, site)
+  if (!target) return
+  if (!window) { pendingLink = value; return }
+  if (window.isMinimized()) window.restore()
+  window.focus()
+  void window.loadURL(target.href)
+}
+app.on('open-url', (event, url) => { event.preventDefault(); openLink(url) }) // macOS
+app.on('second-instance', (_, argv) => {
+  if (window) { if (window.isMinimized()) window.restore(); window.focus() }
+  const link = linkArgument(argv) // Windows and Linux start a second copy with the link
+  if (link) openLink(link)
+})
 
 const statePath = () => join(app.getPath('userData'), 'window.json')
 function readBounds() {
@@ -128,7 +149,19 @@ function buildMenu() {
       { label: 'Forward', accelerator: mac ? 'Cmd+]' : 'Alt+Right', click: () => window?.webContents.navigationHistory.goForward() },
       { type: 'separator' },
       { role: 'reload' }, { role: 'toggleDevTools' }, { type: 'separator' },
-      { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' }, { type: 'separator' }, { role: 'togglefullscreen' },
+      { label: 'Actual Size', accelerator: 'CmdOrCtrl+0', click: () => zoom(0) },
+      { label: 'Zoom In', accelerator: 'CmdOrCtrl+Plus', click: () => zoom(1) },
+      { label: 'Zoom Out', accelerator: 'CmdOrCtrl+-', click: () => zoom(-1) },
+      // The same on every keyboard: Electron reads Plus as US Shift+=, which a German + key never sends.
+      ...[['CmdOrCtrl+=', 1], ['CmdOrCtrl+numadd', 1], ['CmdOrCtrl+numsub', -1], ['CmdOrCtrl+num0', 0]].map(([accelerator, step]) =>
+        ({ label: 'Zoom', accelerator, visible: false, acceleratorWorksWhenHidden: true, click: () => zoom(step) })),
+      { type: 'separator' }, { role: 'togglefullscreen' },
+    ] },
+    { label: 'Go', submenu: [
+      ...PLACES.map(({ label, route }, i) => ({ label, accelerator: 'CmdOrCtrl+' + (i + 1), click: () => command({ go: route }) })),
+      { type: 'separator' },
+      { label: 'Find modules', accelerator: 'CmdOrCtrl+F', click: () => command({ find: true }) },
+      { label: 'Settings', accelerator: 'CmdOrCtrl+,', click: () => command({ go: 'account' }) },
     ] },
     { label: 'Developer', submenu: [
       { label: 'Agent bridge', type: 'checkbox', checked: Boolean(bridge), click: () => void setBridge(!bridge) },
@@ -144,30 +177,57 @@ function buildMenu() {
   ]))
 }
 
+// What the site may ask of the app (preload.cjs), answered for modwerk.app in this window only.
+const fromSite = event => Boolean(window) && event.sender === window.webContents && sameOrigin(event.senderFrame?.url ?? '', site)
+ipcMain.on('modwerk:material', event => { event.returnValue = Boolean(material) && fromSite(event) })
 // The site's toolbar opens the app menu (Windows and Linux have no menu bar; macOS keeps its own).
 ipcMain.on('modwerk:menu', (event, at) => {
-  if (!window || event.sender !== window.webContents || !sameOrigin(event.senderFrame?.url ?? '', site)) return
-  Menu.getApplicationMenu()?.popup({ window, x: at?.x ?? 0, y: at?.y ?? 0 })
+  if (fromSite(event)) Menu.getApplicationMenu()?.popup({ window, x: at?.x ?? 0, y: at?.y ?? 0 })
 })
+// A sync or base install fills the taskbar button or the Dock icon: 0 to 1, 2 running, -1 none.
+ipcMain.on('modwerk:progress', (event, value) => {
+  if (fromSite(event) && typeof value === 'number' && Number.isFinite(value)) window.setProgressBar(value, { mode: value < 0 ? 'none' : value > 1 ? 'indeterminate' : 'normal' })
+})
+// It finished or needs you while Modwerk is in the background: flash the taskbar button or bounce the Dock icon.
+ipcMain.on('modwerk:attention', event => {
+  if (!fromSite(event) || window.isFocused()) return
+  if (mac) app.dock?.bounce('informational')
+  else window.flashFrame(true)
+})
+// Social sign-in runs in the default browser (providers refuse embedded windows) and returns through a modwerk:// link.
+ipcMain.on('modwerk:sign-in', (event, value) => {
+  const url = fromSite(event) ? signInUrl(value, site) : null
+  if (url) void shell.openExternal(url.href)
+})
+const command = value => window?.webContents.send('modwerk:command', value)
+/** Half a level per step, as Chrome's 10 % steps, between 50 % and 250 %; 0 resets. Chromium keeps it per site. */
+function zoom(step) {
+  const contents = window?.webContents
+  if (contents) contents.setZoomLevel(step === 0 ? 0 : Math.max(-3.8, Math.min(5, contents.getZoomLevel() + step * 0.5)))
+}
 
 function createWindow() {
   const { maximized, ...bounds } = readBounds()
   window = new BrowserWindow({
     width: 1280, height: 860, ...bounds, minWidth: 720, minHeight: 520,
-    title: title(), backgroundColor: WINDOW_COLOR, show: false, ...windowChrome(process.platform),
+    title: title(), show: false, ...windowChrome(process.platform, material),
     ...(mac ? {} : { icon: file('../build/icon.png') }),
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, spellcheck: false, preload: file('./preload.cjs') },
   })
   if (maximized) window.maximize()
   window.once('ready-to-show', () => window.show())
   window.on('page-title-updated', event => event.preventDefault())
+  window.on('focus', () => { if (!mac) window.flashFrame(false) })
+  window.webContents.on('zoom-changed', (_, direction) => zoom(direction === 'in' ? 1 : -1)) // Ctrl or Cmd with the wheel
   window.on('close', saveBounds)
   window.on('closed', () => { window = null })
   window.webContents.on('did-fail-load', (_, code, reason, url, mainFrame) => {
     if (!mainFrame || code === -3) return // -3: a navigation the page replaced
     void window.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(offlinePage(site, reason || 'error ' + code)))
   })
-  void window.loadURL(site.href)
+  const link = pendingLink && siteLink(pendingLink, site)
+  pendingLink = null
+  void window.loadURL((link || site).href)
 }
 
 app.on('web-contents-created', (_, contents) => contain(contents))
