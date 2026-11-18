@@ -338,15 +338,7 @@
       "bytes": 2636,
       "sha256": "6cf9892ded68b89660aed1d3c77028530722a734a0587036ae76eb74b45409b6",
       "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
-<<<<<<< HEAD
-<<<<<<< HEAD
       "requiredBase": "f6367148e442ff13a2d4b39b3c4c979628b22ade9e181eeb041161dbd67d4f82"
-=======
-      "requiredBase": "a186b54c652370310c90b7b566ff150d577c7dfb98245e1d8de29272dfdc0825"
->>>>>>> pr/1742
-=======
-      "requiredBase": "7214d65f04c301fffed718a380835391390a0ab5cb994872137eb7285b4fae6e"
->>>>>>> pr/1711
     },
     {
       "id": "output-matrix",
@@ -362,15 +354,7 @@
       "bytes": 3740,
       "sha256": "d67e9a432c59f8f430b20f3ada22f74317209169062941f5290f6b66f6d3e4e2",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-<<<<<<< HEAD
-<<<<<<< HEAD
       "requiredBase": "f6367148e442ff13a2d4b39b3c4c979628b22ade9e181eeb041161dbd67d4f82"
-=======
-      "requiredBase": "a186b54c652370310c90b7b566ff150d577c7dfb98245e1d8de29272dfdc0825"
->>>>>>> pr/1742
-=======
-      "requiredBase": "7214d65f04c301fffed718a380835391390a0ab5cb994872137eb7285b4fae6e"
->>>>>>> pr/1711
     },
     {
       "id": "cc-map",
@@ -386,15 +370,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-<<<<<<< HEAD
-<<<<<<< HEAD
       "requiredBase": "f6367148e442ff13a2d4b39b3c4c979628b22ade9e181eeb041161dbd67d4f82"
-=======
-      "requiredBase": "a186b54c652370310c90b7b566ff150d577c7dfb98245e1d8de29272dfdc0825"
->>>>>>> pr/1742
-=======
-      "requiredBase": "7214d65f04c301fffed718a380835391390a0ab5cb994872137eb7285b4fae6e"
->>>>>>> pr/1711
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -472,15 +448,7 @@
       "bytes": 1818,
       "sha256": "490a4c1c615331be73ea3f4653e59f868ca0f29486ee5ce81a27be84e8a3aa52",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-<<<<<<< HEAD
-<<<<<<< HEAD
       "requiredBase": "f6367148e442ff13a2d4b39b3c4c979628b22ade9e181eeb041161dbd67d4f82"
-=======
-      "requiredBase": "a186b54c652370310c90b7b566ff150d577c7dfb98245e1d8de29272dfdc0825"
->>>>>>> pr/1742
-=======
-      "requiredBase": "7214d65f04c301fffed718a380835391390a0ab5cb994872137eb7285b4fae6e"
->>>>>>> pr/1711
     },
     {
       "id": "analog-bassdrum",
@@ -496,15 +464,7 @@
       "bytes": 26172,
       "sha256": "40b2d12280b56bfeb3db925a668bc759019f8db45b58580ad3f5389249df1baf",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-<<<<<<< HEAD
-<<<<<<< HEAD
       "requiredBase": "f6367148e442ff13a2d4b39b3c4c979628b22ade9e181eeb041161dbd67d4f82",
-=======
-      "requiredBase": "a186b54c652370310c90b7b566ff150d577c7dfb98245e1d8de29272dfdc0825",
->>>>>>> pr/1742
-=======
-      "requiredBase": "7214d65f04c301fffed718a380835391390a0ab5cb994872137eb7285b4fae6e",
->>>>>>> pr/1711
       "requires": 0,
       "claims": 1,
       "entries": 1
