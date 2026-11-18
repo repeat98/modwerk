@@ -25,7 +25,20 @@ Not hardware evidence. Package `arr-setlists.mwrm` built from this folder, trial
 
 ## On the unit
 
-Not tested.
+Andrey Sidorkin's MKI, flashed base `6c189889…`, scratch project, 18 November 2026. The development base did not
+upload over USB that day (four attempts dropped at 10-20 %), so my driven stage 1 could not run: a 10-second and a
+15-second trial of package `101941a7…` logged no crash, stall, freeze or skipped track, and it was kept for the
+developer's own test.
+
+- As the developer reported it: the label stepped BOOK 1 to BOOK 16 in about half a second a press, but ARR > CHANGE's
+  list kept book 1's names, and an arrangement opened straight from it still showed book 1's rows. Leaving to the main
+  screen showed the new book's (empty) arrangement; reopening CHANGE showed its names.
+- A 2-minute trial of a diagnostic build counted, on the unit: each switch to a new book cleared all 8 arrangements
+  (arrangement 1 then had 0 rows); book 1 read its 8 backup files back. So the switch worked and only the open list
+  was stale: stock draws it once, when it opens.
+- Fixed in the next build: after a switch the module has stock draw the open list again (0x40036e18). Under ot_emu,
+  names SONG ALPHA, BRAVO, CHARLIE on book 1: RIGHT showed an empty list with BOOK 2 at once, LEFT the three names.
+  On the unit: not yet.
 
 ## Stock flows
 

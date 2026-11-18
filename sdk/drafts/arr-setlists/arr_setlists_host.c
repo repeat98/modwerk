@@ -100,6 +100,8 @@ int host_post_write(void) { if (post_refuse) return post_refuse == 7 ? -7 : -3; 
 const char *host_projdir(void) { return "/SET/PROJ"; }
 void host_clear_arr(unsigned slot) { ++clears; memset(&cs1[W(slot)], 0, BLOCK); memset(&cs1[S(slot)], 0, BLOCK); cs1[FLAGS + slot] = 0; }
 void host_message(const char *t) { snprintf(last_message, sizeof last_message, "%s", t); }
+static int list_draws;
+void host_draw_change(void) { ++list_draws; }
 /* Stock's writer: each changed slot (or one with no file yet) to arr0N.work. */
 int host_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
 {
@@ -166,6 +168,8 @@ int main(void)
     check("the job wrote book 1 through stock's writer", stock_writes == 1);
     check("leaving book 1 kept its backup, arr01.bak .. arr08.bak", find("/SET/PROJ/arr01.bak") && find("/SET/PROJ/arr08.bak"));
     check("a book never used starts as 8 cleared arrangements", clears == 8);
+    as_tick(0);
+    check("the open list is drawn again with the new book's names, once", list_draws == 1 && (as_tick(0), list_draws == 1));
     check("now on book 2, nothing changed, nothing written as arr09 yet", book() == 1 && cs1[CHG] == 0 && !find("/SET/PROJ/arr09.work"));
 
     mark(0x20); cs1[CHG] = 0x04;                   /* book 2's songs, one changed */
@@ -263,6 +267,9 @@ int main(void)
     memset(lcd, 0, sizeof lcd);
     as_draw(lcd);
     check("nothing drawn outside ARR > CHANGE", !lit(99, 0) && !lit(127, 8));
+    int d = list_draws;
+    post_refuse = 0; change_window = 0x46c7d384u; tap(LEFT); change_window = 0; job(); as_tick(0);
+    check("a switch that ends with the list closed draws nothing", list_draws == d);
 
     printf("%d checks, %d failed\n", checks, failures);
     return failures != 0;

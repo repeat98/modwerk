@@ -8,7 +8,7 @@ songs from any book follow in a later version. OS 1.40C, MKI and MKII.
 Stock keeps 8 arrangements per project, in `arr01.work` to `arr08.work`. Arr Setlists makes them book 1 of 16
 books of 8: book 2 is `arr09` to `arr16`, book 3 `arr17` to `arr24`, and so on up to book 16, `arr121` to `arr128`.
 In ARR > CHANGE, with the transport stopped, LEFT and RIGHT step to the book before or after, and BOOK 2 (and so on)
-shows at the screen's top right. Inside a book, every stock arrangement function works as usual: edit, ARR SAVE,
+shows at the screen's top right; the list shows the new book's names at once. Inside a book, every stock arrangement function works as usual: edit, ARR SAVE,
 RELOAD, COPY, CLEAR, chaining and playback.
 
 The Octatrack's own code writes and reads every one of these files, so they are stock arrangement files in every
@@ -72,7 +72,7 @@ Original module by Andrey Sidorkin, MIT (LICENSE). No firmware, stock code or st
 
 ## Screens and audio
 
-![ARR > CHANGE on book 2](media/ot-change-book.png)
+![ARR > CHANGE on book 1](media/ot-change-book.png)
 
 Emulator capture (ot_emu), not the unit. No audio: the module makes no sound.
 

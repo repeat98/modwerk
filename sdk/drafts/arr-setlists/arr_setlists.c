@@ -50,6 +50,7 @@
 #define ARR_READ 0x4008b4d4u         /* (fo, slot, 0) -> < 0 failed: one file into a slot */
 #define CLEAR_ARR 0x400a041cu        /* clear_arr(slot): empty rows, no saved copy, default name */
 #define MESSAGE 0x4005a2b8u          /* message(text, 0x30), UI task only */
+#define DRAW_CHANGE 0x40036e18u      /* draws ARR > CHANGE's list into its open window (stock: once, when it opens) */
 
 #define REC_MAGIC 0x41534231u        /* "ASB1" */
 #define IOB_LEN 0x1000u
@@ -85,6 +86,7 @@ struct as_state {
     uint8_t backup;          /* arr01.bak .. arr08.bak hold book 1 as it was left */
     uint8_t ready;           /* the battery record was read since install */
     uint8_t damaged;         /* a file of the book in the slots did not read: write back only what is edited */
+    uint8_t redraw;          /* a switch finished: the UI task redraws the open list with the new book's names */
     uint16_t ticks;
     char path[260];
     char path2[260];
@@ -115,6 +117,8 @@ static int post_write(void) { return host_post_write(); }
 static const char *projdir(void) { return host_projdir(); }
 static void clear_arr(unsigned slot) { host_clear_arr(slot); }
 static void message(const char *t) { host_message(t); }
+void host_draw_change(void);
+static void draw_change(void) { host_draw_change(); }
 static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { return host_stock_writer(a1, a2, a3, a4); }
 static int arr_write(struct as_state *s, unsigned slot) { return host_arr_write(s->path, slot) >= 0; }
 static int arr_read(struct as_state *s, unsigned slot) { return host_arr_read(s->path, slot); }
@@ -124,6 +128,7 @@ static int post_write(void) { return ((int (*)(int))POST_WRITE)(0); }
 static const char *projdir(void) { return ((const char *(*)(int, int))PROJDIR)(0, 0); }
 static void clear_arr(unsigned slot) { ((void (*)(int))CLEAR_ARR)((int)slot); }
 static void message(const char *t) { ((void (*)(const char *, int))MESSAGE)(t, 0x30); }
+static void draw_change(void) { ((void (*)(void))DRAW_CHANGE)(); }
 int as_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4); /* below: stock's writer, entered past the site */
 static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { return as_stock_writer(a1, a2, a3, a4); }
 
@@ -250,6 +255,7 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
                 wr8(CHANGED, 0);
             }
             s->book = (uint8_t)to;                            /* the slots hold the new book now, even after a fault */
+            s->redraw = 1;
             s->damaged = (uint8_t)!ok;
             if (!ok) s->failed = 1;
         } else s->failed = 1;
@@ -374,6 +380,8 @@ void as_tick(void *api)
     struct as_state *s = ready();
     if (api) ((struct as_api *)api)->value = (uint32_t)s->book | (uint32_t)(s->pending < 0 ? 0 : s->pending + 1) << 4
         | (uint32_t)s->failed << 9 | (uint32_t)s->backup << 10;
+    /* Stock draws the list's names once, when it opens: after a switch, draw them again from the new book. */
+    if (s->redraw && s->pending < 0) { s->redraw = 0; if (rd32(CHANGE_WINDOW)) draw_change(); }
     if (s->failed) { s->failed = 0; message("BOOK FILE ERROR"); }
     if (s->book && s->pending < 0 && ++s->ticks >= 120) { s->ticks = 0; remember(s); }
 }

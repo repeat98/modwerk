@@ -14,6 +14,7 @@ code is copied here.
 | 8 "has a saved copy" flags | 0x10016144 |
 | Changed mask, one bit an arrangement, cleared when written | 0x1001614c |
 | ARR > CHANGE's window word, nonzero only while the list is open | 0x400c0b40 |
+| ARR > CHANGE's list drawn into that window: stock calls it once, from the open routine 0x40058abc | 0x40036e18 |
 
 Battery RAM 0x100f8f06-0x100f8ffc was free; the module claims 0x100f8f10-0x100f8f20 (battery-ram.json).
 
