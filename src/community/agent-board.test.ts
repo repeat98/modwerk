@@ -235,6 +235,18 @@ describe('agent board questions and findings', () => {
     expect((await inbox(ada)).waiting.map((item: { id: string }) => item.id)).toEqual([id.message.id, issue.message.id])
   })
 
+  it('lists questions asked in the same millisecond in the order they were asked', async () => {
+    const { boardLogin, claim, post, inbox } = await fixture()
+    const ada = await boardLogin('ada'), bo = await boardLogin('bo')
+    await claim(ada, { kind: 'module', key: 'octatrack/tape-echo', branch: 'module/tape-echo' })
+    await claim(ada, { kind: 'issue', key: '1624' })
+    vi.useFakeTimers({ now: Date.now(), toFake: ['Date'] })  // the clock stands still: every question shares one active_at
+    const asked: string[] = []
+    for (const [topic, key] of [['module', 'octatrack/tape-echo'], ['issue', '1624'], ['module', 'octatrack/tape-echo'], ['issue', '1624']])
+      asked.push((await (await post(bo, { kind: 'question', topic, key, body: 'Question ' + asked.length })).json()).message.id)
+    expect((await inbox(ada)).waiting.map((item: { id: string }) => item.id)).toEqual(asked)
+  })
+
   it('keeps findings for everyone, about a machine or anything under it, until a guide carries them', async () => {
     const { env, call, boardLogin, post } = await fixture()
     const ada = await boardLogin('ada'), bo = await boardLogin('bo')
