@@ -138,7 +138,8 @@ function NewThread({configuration:active,configurations,query}:{configuration?:C
   const composer=useRef<HTMLFormElement>(null),[pendingForm,setPendingForm]=useState<HTMLFormElement|null>(null)
   const modules=machine?machineModules(machine):COMMUNITY_MODULES
   const choices=configurations.filter(item=>configurationDevice(item)===machine)
-  const configuration=choices.find(item=>item.id===configId)??choices[0]
+  const chosen = choices.find(item => item.id === configId) ?? choices.find(item => item.id === active?.id)
+  const configuration = chosen ?? [...choices].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]
   function changeMachine(value:string){setMachine(value);if(value&&communityModule(moduleId)?.machine!==value)setModuleId('')}
   function changeCategory(value:ForumCategory){setCategory(value);if(value==='configs'&&!machineModules(machine).length)changeMachine(fallbackShareMachine)}
   function requestSubmit(form:HTMLFormElement){if(moduleId||category==='modules')setPendingForm(form);else void submit(form)}

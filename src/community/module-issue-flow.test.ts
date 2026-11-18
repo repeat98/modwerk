@@ -8,9 +8,9 @@ import { ForumThreadView } from './ForumThreadView'
 import { communityModule, moduleIssueHref, moduleThreadId } from './modules'
 import { newConfiguration, type Configuration } from '../config/workspace'
 
-function renderForum(route: string, member = true, configurations: Configuration[] = []) {
+function renderForum(route: string, member = true, configurations: Configuration[] = [], configuration?: Configuration) {
   const session = member ? { available: true, admin: false, user: { id: 'member', displayName: 'Member', username: 'member', verified: true } } : emptySession
-  return renderToStaticMarkup(createElement(CommunityContext.Provider, { value: { session, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } }, createElement(ForumPage, { route, configurations, onCopy: () => {} })))
+  return renderToStaticMarkup(createElement(CommunityContext.Provider, { value: { session, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } }, createElement(ForumPage, { route, configurations, configuration, onCopy: () => {} })))
 }
 
 describe('shared configuration links', () => {
@@ -25,6 +25,15 @@ describe('shared configuration links', () => {
     const set = newConfiguration('Studio set', ['miniverb'])
     const html = renderForum('forum/new?category=configs', true, [set])
     expect(html).toContain('<h2>Studio set</h2>')
+  })
+
+  it('defaults to the same set as the machine workspace', () => {
+    const first = { ...newConfiguration('Older Digitakt set', ['digihealth'], false, undefined, 'digitakt'), updatedAt: '2026-11-17T12:00:00.000Z' }
+    const recent = { ...newConfiguration('Current Digitakt set', ['digihealth'], false, undefined, 'digitakt'), updatedAt: '2026-11-18T12:00:00.000Z' }
+    const octatrack = newConfiguration('Octatrack set')
+    const route = 'forum/new?category=configs&machine=digitakt', configurations = [first, recent, octatrack]
+    expect(renderForum(route, true, configurations, octatrack)).toContain('<h2>Current Digitakt set</h2>')
+    expect(renderForum(route, true, configurations, first)).toContain('<h2>Older Digitakt set</h2>')
   })
 })
 
