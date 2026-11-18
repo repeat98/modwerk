@@ -1095,15 +1095,26 @@ uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
  * picks made stopped at 62 to 74 % left a Part that played at 87 to 97 %, where a knob turn waits 0.1 to 0.2 s for
  * its redraw. The kept figure goes stale when the unit is made lighter while stopped (a stock pick, another
  * project): four seconds of playing replace it. */
+static unsigned load_was_played(void) { return modwerk_machine_stopped() && cpu_played > recent_mean(); }
+/* status.s leaves out the delay routine's ring transfers on a track whose delay is quiet: 7.4 meter points with all
+ * eight (MKII, 16 November 2026: 41.2 % to 33.8 % stopped), all of it back from the frame a scene opens the sends. The
+ * 85 % line was set from bases that always paid it, so a pick is judged as if every delay were awake: the skip buys
+ * margin and is never spent. */
+#define DELAY_WAKE 10u /* per mille a quiet track */
+static uint32_t delays_asleep(void)
+{
+    uint32_t n = 0;
+    for (unsigned t = 0; t < 8u; ++t) n += ((volatile uint32_t *)mw_delay)[17u + t] != 0; /* status.s: no read this frame */
+    return n * DELAY_WAKE;
+}
 uint32_t modwerk_status_cpu_load(void)
 {
-    uint32_t now = recent_mean();
-    return modwerk_machine_stopped() && cpu_played > now ? cpu_played : now;
+    return (load_was_played() ? cpu_played : recent_mean()) + delays_asleep();
 }
 void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu)
 {
     modwerk_status_cpu_refused(track, label, cpu, 0);
-    if (open == REFUSED && refused_reason == 4u && refused[1] == track) refused[0] = 5u, refused_played = cpu > recent_mean();
+    if (open == REFUSED && refused_reason == 4u && refused[1] == track) refused[0] = 5u, refused_played = load_was_played();
 }
 /* selection.c's guard (build_core.py's edit), before stock writes an FX pick: 1 when the pick asks for a module's
  * effect (`id`, on slot 0-15: FX1 T1-T8, then FX2) while the unit is busy, and the pick is then not made. A module
@@ -1120,7 +1131,7 @@ int modwerk_status_effect_busy(unsigned slot, unsigned id)
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
     modwerk_status_cpu_refused(slot & 7u, name, cpu, 0);
     if (open == REFUSED && refused_reason == 4u && refused[0] == 4u)
-        refused[0] = 5u, refused[1] = slot, refused_machine = 0, refused_played = cpu > recent_mean();
+        refused[0] = 5u, refused[1] = slot, refused_machine = 0, refused_played = load_was_played();
     return 1;
 }
 static void refused_box(unsigned char *frame)
