@@ -36,6 +36,7 @@ static uint8_t misc[0x2000];             /* 0x80004f00 .. */
 static uint32_t change_window, playing;
 static uint8_t chosen;               /* 0x100b14d1: the arrangement chosen */
 static uint8_t arr_mode;             /* 0x460d1aec's low byte: arranger mode */
+static uint8_t mode_wanted;          /* 0x80000010: the mode stock applies when a load ends */
 static uint8_t msg_up;               /* 0x460d1e70's low byte: a message box is open */
 static int closes;
 static uint8_t list[16];             /* 0x400c0ba0: the CHANGE list's first row shown, then its cursor */
@@ -61,6 +62,7 @@ void host_wr8(uint32_t a, uint8_t v)
 {
     if (a >= 0x10000000u && a < 0x10000000u + sizeof cs1) { cs1[a - 0x10000000u] = v; return; }
     if (a >= 0x100f8f10u && a < 0x100f8f20u) { rec[a - 0x100f8f10u] = v; return; }
+    if (a == 0x80000010u) { mode_wanted = v; return; }
     if (a >= 0x400c0ba0u && a < 0x400c0bb0u) { list[a - 0x400c0ba0u] = v; return; }
     fprintf(stderr, "write of 0x%08x\n", a);
 }
@@ -325,6 +327,7 @@ int main(void)
     arr_mode = 1; job();                           /* SYNC in arranger mode */
     as_project_load(); mark(0x10); arr_mode = 0; as_tick(0); job(); as_tick(0); as_tick(0);
     check("left in arranger mode: after LOAD, arranger mode again, on book 3", arr_mode == 1 && book() == 2);
+    check("and the mode stock applies at the end of the load says arranger too", mode_wanted == 1);
     /* RELOAD PROJECT: where it was saved, not where it was left after */
     as_project_stored();                           /* saved on book 3, arrangement 5 */
     tap(LEFT); job(); as_tick(0); chosen = 6; job();  /* book 2, arrangement 7, SYNC */

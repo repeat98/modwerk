@@ -57,6 +57,7 @@
 #define SELECT_ARR 0x400a03a0u       /* select_arr(n): stock's choice of arrangement n (index, pointer, playback reset) */
 #define INDEX 0x100b14d1u            /* the arrangement chosen, 0-7 */
 #define ARR_MODE 0x460d1aecu         /* arranger mode on (FUNC + PATTERN) */
+#define ARR_MODE_WANTED 0x80000010u  /* the mode stock applies when a load ends (0x4002390a); LOAD leaves it 0 */
 #define ARR_MODE_ON 0x4005200cu      /* stock's switch into arranger mode (FUNC + PATTERN's, 0x4006103e); nothing if on */
 #define LIST_TOP 0x400c0ba0u         /* ARR > CHANGE: the first row shown */
 #define LIST_CURSOR 0x400c0ba4u      /* ARR > CHANGE: the cursor's row (stock opens the list with it on the choice) */
@@ -344,6 +345,7 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
     if (s->pending == FIND_PLACE) {                       /* after a project load: where was it left? */
         int b = read_place(s);
         s->pending = (int8_t)(b > 0 ? b : -1);            /* book 1 (or no record): stay; stock restored the choice */
+        if (s->mode_on) wr8(ARR_MODE_WANTED, 1);          /* stock's end of the load then turns arranger mode on */
     }
     if (s->book == 0) rc = stock_writer(a1, a2, a3, a4);     /* book 1: arr01-08 as always */
     else if ((a2 & 0xffu) || rd8(CHANGED)) {

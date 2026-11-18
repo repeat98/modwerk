@@ -130,3 +130,8 @@ came back on book 3, arrangement 5 in arranger mode, as saved. A project synced 
 arrangement 5, also in pattern mode: so stock's LOAD itself starts in pattern mode. The developer asked for arranger
 mode to come back too. Built: arrbook.work records arranger mode, and after a load the module turns it on with stock's
 own routine (0x4005200c, FUNC + PATTERN's) when the project was left in it. `verify.py`: 64 checks.
+
+Package `fbae1e9b…`, as the developer reported it: LOAD came back on book 2, arrangement 7; the screen showed arranger
+mode for a moment, then pattern mode. Stock's end of a load (0x4002390a) applies the mode in 0x80000010, which LOAD
+leaves at 0, after the module's job. Fixed: the module's job also sets 0x80000010 when the project was left in
+arranger mode, so stock's own end of the load turns it on. `verify.py`: 65 checks.
