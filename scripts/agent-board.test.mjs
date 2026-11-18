@@ -128,6 +128,8 @@ describe('questions and findings in the commands', () => {
     const token = 'a'.repeat(64)
     expect(await board.inboxNotes({ token, fetch: async () => Response.json({ login: 'ada', waiting: [thread({})], replies: [thread({ author: 'ada', to: 'bo' }), thread({ author: 'ada', kind: 'finding' })] }) })).toEqual([expect.stringMatching(/^Board: 1 question waits for your answer and 2 of your questions and findings have a reply\. .*npm run board -- inbox/)])
     expect(await board.inboxNotes({ token, fetch: async () => Response.json({ login: 'ada', waiting: [], replies: [] }) })).toEqual([])
+    const expiring = [{ kind: 'issue', key: '1620' }]
+    expect(await board.inboxNotes({ token, fetch: async () => Response.json({ login: 'ada', waiting: [], replies: [], expiring }) })).toEqual(['You have 1 board claim expiring within three days. Run npm run board -- inbox to see which claims to review.'])
     expect(await board.inboxNotes({ token, fetch: async () => Response.json({ error: 'Sign in for the board first' }, { status: 401 }) })).toEqual([])
     expect(await board.inboxNotes({ token, fetch: async () => { throw new TypeError('fetch failed') } })).toEqual([])
   })

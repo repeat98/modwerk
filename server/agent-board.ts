@@ -24,7 +24,7 @@ export const CLAIM_KEYS: Record<ClaimKind, RegExp> = {
   issue: /^[1-9]\d{0,6}$/,
 }
 export const CLAIM_DAYS = 14, CLAIM_LIMIT = 10, CLAIM_WRITES_PER_HOUR = 30, NOTE_LIMIT = 120, RELEASED_KEPT_DAYS = 90
-const DAY = 86400000
+const DAY = 86400000, CLAIM_EXPIRY_NOTICE_DAYS = 3
 
 // machine: what holds across one instrument; site: an area of the site and Worker (forum, worker, configurator).
 export const TOPIC_KINDS = [...CLAIM_KINDS, 'machine', 'site'] as const
@@ -263,13 +263,15 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
   return response({ message: await thread(db, id, nowMs) })
 }
 
-/** Questions waiting for the signed-in developer, and replies to what they wrote. */
+/** Questions, replies and claims nearing expiry for the signed-in developer. */
 async function inbox(db: Database, user: { id: string; github_login: string }, nowMs: number) {
   const now = new Date(nowMs).toISOString(), live = cutoffs(nowMs)
   // Addressed to you, or to nobody about something you hold; and the last word is not yours.
   const waiting = (await db.prepare(MESSAGE_SELECT + " WHERE m.parent_id IS NULL AND m.kind='question' AND " + LIVE + ' AND m.user_id<>? AND (m.to_login=? OR (m.to_login IS NULL AND EXISTS(SELECT 1 FROM agent_claims c WHERE c.user_id=? AND c.kind=m.topic_kind AND c.claim_key=m.topic_key AND c.released_at IS NULL AND (c.expires_at IS NULL OR c.expires_at>?)))) AND ' + LAST_WORD + '<>? ORDER BY m.active_at, m.rowid LIMIT 50').bind(...live, user.id, user.github_login, user.id, now, user.id).all<MessageRow>()).results
   const replies = (await db.prepare(MESSAGE_SELECT + ' WHERE m.parent_id IS NULL AND m.user_id=? AND ' + LIVE + ' AND ' + LAST_WORD + '<>? ORDER BY m.active_at DESC, m.rowid DESC LIMIT 50').bind(user.id, ...live, user.id).all<MessageRow>()).results
-  return { login: user.github_login, waiting: await threads(db, waiting, nowMs), replies: await threads(db, replies, nowMs) }
+  const expiresBy = new Date(nowMs + CLAIM_EXPIRY_NOTICE_DAYS * DAY).toISOString()
+  const { results: expiring } = await db.prepare(SELECT + ' WHERE c.user_id=? AND c.released_at IS NULL AND c.pull_request IS NULL AND c.expires_at>? AND c.expires_at<=? ORDER BY c.expires_at, c.id').bind(user.id, now, expiresBy).all<ClaimRow>()
+  return { login: user.github_login, waiting: await threads(db, waiting, nowMs), replies: await threads(db, replies, nowMs), expiring: expiring.map(view) }
 }
 
 /** How many developers use the board: counts only, no names. */

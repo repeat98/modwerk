@@ -57,6 +57,33 @@ describe('agent board', () => {
     expect((await call('/developer/auth/start?port=80&challenge=' + 'a'.repeat(64))).status).toBe(400)
   })
 
+  it('lists only the holder’s active unlinked claims expiring within three days, soonest first', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    const now = Date.parse('2026-11-18T10:00:00.000Z'), day = 86400000
+    vi.setSystemTime(now)
+    const { call, boardLogin, claim, inbox, db } = await fixture()
+    const ada = await boardLogin('ada'), bo = await boardLogin('bo')
+    async function add(key: string, time: number, holder = ada, pullRequest?: number) {
+      const response = await claim(holder, { kind: 'issue', key, pullRequest })
+      expect(response.status).toBe(201)
+      const { claim: row } = await response.json()
+      const expiresAt = new Date(time).toISOString()
+      db.prepare('UPDATE agent_claims SET expires_at=? WHERE id=?').run(expiresAt, row.id)
+      return { ...row, expiresAt }
+    }
+    const boundary = await add('1', now + 3 * day)
+    const soonest = await add('2', now + 1)
+    await add('3', now + 3 * day + 1)
+    await add('4', now)
+    await add('5', now + day, ada, 101)
+    const released = await add('6', now + day)
+    expect((await call('/agent-board/claims/' + released.id, 'DELETE', undefined, ada)).status).toBe(200)
+    const other = await add('7', now + day, bo)
+    expect((await call('/agent-board/inbox')).status).toBe(401)
+    expect((await inbox(ada)).expiring).toEqual([soonest, boundary])
+    expect((await inbox(bo)).expiring).toEqual([other])
+  })
+
   it('shows claims to everyone and gives each key one holder', async () => {
     const { call, boardLogin, claim } = await fixture()
     const ada = await boardLogin('ada'), bo = await boardLogin('bo')
