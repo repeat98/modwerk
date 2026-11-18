@@ -70,7 +70,8 @@ def declaration(root, filename):
     root = Path(root).resolve()
     filename = Path(filename).resolve()
     folder = filename.parent
-    if folder.parent not in (root / 'sdk/drafts', root / 'sdk/octabam/modules'):
+    if folder.parent not in (root / 'sdk/drafts', root / 'sdk/octatrack/modules',
+                             root / 'sdk/octabam/modules'):
         raise ValueError('A runtime build recipe must be in its own module folder')
     doc = json.loads(filename.read_text())
     required = {'schema', 'id', 'title', 'layout', 'sources', 'includes', 'defines',
@@ -356,8 +357,6 @@ def build(root, filename, output, cross='m68k-elf-', stock=None, upstream=None, 
                 rebuilt[offset:offset + n] = bytes([value]) * n
             if bytes(rebuilt) != authored:
                 raise ValueError('Reconstruction differs from the authored image')
-        if stock:
-            pack.private_stock_free(data, Path(stock), stock_main, Path(upstream))
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_bytes(data)
         report = {'schema': 1, 'id': doc['id'], 'bytes': len(data), 'imageBytes': len(image),

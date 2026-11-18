@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include "loader.h"
 #include "modwerk_events.h"
+#include "status.h" /* MODWERK_MACHINE_MAP and the machine map's calls */
 #ifndef MW_HOST /* test_machine_registry.c maps these onto a model of the unit's memory */
 #define U8(a) (*(volatile uint8_t *)(uintptr_t)(a))
 #define U32(a) (*(volatile uint32_t *)(uintptr_t)(a))
@@ -60,12 +61,19 @@ int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, ui
 void modwerk_dsp_source_release(unsigned track);
 void modwerk_status_machine_refused(unsigned track, const char *label); /* status.c: the DSP FULL box for a machine */
 void modwerk_dsp_source_engine_off(uint32_t module);
+void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add); /* status.c: the CPU FULL box, per mille of the allowance */
+uint32_t modwerk_status_cpu_load(void); /* status.c: the CPU meter's mean over its last four seconds, per mille; stopped, what it last read playing if that was more */
+void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu); /* status.c: the CPU FULL box for a unit already busy */
 #ifndef MW_HOST
 __attribute__((weak)) int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, uint32_t engine, uint8_t kind)
 { (void)track; (void)module; (void)voice; (void)engine; (void)kind; return RUNTIME_CYCLES; }
 __attribute__((weak)) void modwerk_dsp_source_release(unsigned track) { (void)track; }
 __attribute__((weak)) void modwerk_status_machine_refused(unsigned track, const char *label) { (void)track; (void)label; }
 __attribute__((weak)) void modwerk_dsp_source_engine_off(uint32_t module) { (void)module; }
+__attribute__((weak)) void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
+{ (void)track; (void)label; (void)booked; (void)add; }
+__attribute__((weak)) uint32_t modwerk_status_cpu_load(void) { return 0; }
+__attribute__((weak)) void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu) { (void)track; (void)label; (void)cpu; }
 #endif
 /* Each track of the current Part: the priced machine its voice is charged to, or 0. A word each, so the render
  * reads it whole without a mask. */
@@ -86,13 +94,37 @@ static void release(unsigned track)
     charged[track] = 0; modwerk_dsp_source_release(track);
     if (!charges(old)) modwerk_dsp_source_engine_off(key(old));
 }
+/* dsp.c's make_way: a bank or project load needs the room this track's voice booked (#1542). The track renders the
+ * stock silent source until charge() claims it again, with the DSP FULL box while it does not fit. */
+void modwerk_machine_voice_shed(unsigned track);
+void modwerk_machine_voice_shed(unsigned track) { if (track < 8u) release(track); }
 /* Charge `who`'s voice on the track, replacing what was charged there; 0 when its core cannot carry it (nothing
  * changes). The machine the track was charged to keeps its engine only while another track still is. */
+/* Its price per voice: its module's engine's when its package carries one (ABI 10: the header's cycles and kind,
+ * outside the controller digest, so a new price ships in the package and never changes the base's trust row), else
+ * its record's. A record priced in its engine keeps 0 there, and a per-core cost of its own (source_engine) is of the
+ * engine's kind. 0 with no per-core cost: unpriced, never admitted. */
+static int price(const Machine *who, uint32_t *voice, uint8_t *kind)
+{
+    struct runtime_owner o;
+    *voice = who->source_voice, *kind = who->source_kind;
+    if (modwerk_runtime_owner_at((uintptr_t)who, &o) == 1)
+        for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
+            const struct runtime_module *m = modwerk_runtime_module(i);
+            if (!m || m->dsp.module != o.module || !m->dsp.engine_count) continue;
+            if (who->source_voice || (who->source_engine && m->dsp.kind != who->source_kind)) return 0;
+            *voice = m->dsp.cycles, *kind = m->dsp.kind;
+            break;
+        }
+    return *voice || who->source_engine;
+}
 static int claim(unsigned track, const Machine *who)
 {
     const Machine *old = charged[track];
     if (old == who) return 1;
-    int refused = modwerk_dsp_source_claim(track, key(who), who->source_voice, who->source_engine, who->source_kind);
+    uint32_t voice; uint8_t kind;
+    int refused = price(who, &voice, &kind) ? modwerk_dsp_source_claim(track, key(who), voice, who->source_engine, kind)
+                                            : RUNTIME_MALFORMED;
     if (refused) {
         if (refused == RUNTIME_CYCLES && !(warned & 1u << track)) warned |= (uint8_t)(1u << track), modwerk_status_machine_refused(track, who->label);
         return 0;
@@ -127,6 +159,52 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
     for (unsigned k = 0; k < n; ++k)
         if (s[0] == m[k]->sig[0] && s[1] == m[k]->sig[1] && s[2] >= m[k]->sig_lo && s[2] <= m[k]->sig_hi) { *who = m[k]; return 5u + k; }
     return 0;
+}
+/* The CPU budget. A machine that renders on the ColdFire takes its time from the frame interrupt, which the frame
+ * guard below keeps under its share by dropping renders: a dropout nobody was told about. So a Part's machines are
+ * admitted before they play, as the DSP budget admits effects: each track of a machine costs its descriptor's price
+ * (percent of a frame; CPU_DEFAULT for a machine that names none, nothing for a DSP voice that names none), and a Part
+ * carries mw_cpu_allowance of them: the guard's share less the interrupt at rest and a typical load of stock tracks.
+ * Nothing is kept: the bill is the Part's tracks in order, added up again at each pick and each UI tick, so a track
+ * that left makes room at once. A pick past the allowance is refused with the CPU FULL box; a track past it after a
+ * project load, a Part change or a paste renders stock's silent source (cpu_refused) and says so once. The guard
+ * stays for what a price cannot know: stock's own peaks and a machine dearer than it declared.
+ * shortcut: CPU_DEFAULT and the allowance are estimates from the 24 October 2026 MKII runs (rest 23 %, POLY8 at its
+ * cap about 45 %), to be set from `npm run device -- cpu` on a unit before a release. */
+#define CPU_DEFAULT 12u
+/* The prices cover a machine's renders. They do not cover what else an installed set costs the ColdFire: modules'
+ * hooks, effects' control code, a DSP voice's glue, a USB recording. So a pick is also refused while the unit is
+ * measured busy: the CPU meter (status.c: all the time main's idle loop did not get) at mw_cpu_hot or more over its
+ * last four seconds. That is where the panel starts to lag: on 32 units' logs (30 October to 13 November 2026) a
+ * five-minute window at 85 % or more had a UI gap past 100 ms more often than not, and under 65 % one in twenty did.
+ * Stopped, it goes by what the meter read while the unit last played (status.c, modwerk_status_cpu_load): a Part
+ * put together stopped is judged as it will play. A unit that has not played since its start is judged as it is.
+ * A machine is judged with its price on top (a percent of a frame is a percent of the meter): one admitted just
+ * under the line played over it, and the frame guard then dropped its renders (shared diagnostics, 11 to 14
+ * November 2026: 166 skip records on 24 units beside 5 refusals). */
+volatile uint32_t mw_cpu_hot = 850u; /* per mille; development bases may change it */
+volatile uint32_t mw_cpu_allowance = 45u, mw_cpu_booked; /* percent of a frame; development bases may change the allowance */
+volatile uint8_t mw_cpu_refused;    /* the current Part's tracks past the allowance: the frame interrupt reads it whole */
+static uint8_t cpu_warned;          /* ... whose box already showed, as `warned` */
+static unsigned cpu_price(const Machine *m) { return m->reserved[0] ? m->reserved[0] : m->source_kind ? 0u : CPU_DEFAULT; }
+/* The Part's bill without track `skip` (8: none), tracks in order; *over gets the tracks that did not fit. */
+static unsigned cpu_bill(const Machine *const *m, unsigned n, const Part *part, unsigned skip, uint8_t *over)
+{
+    unsigned sum = 0; const Machine *who;
+    *over = 0;
+    for (unsigned t = 0; t < 8; ++t) {
+        unsigned p = t != skip && owner(m, n, part, t, &who) ? cpu_price(who) : 0u;
+        if (sum + p > mw_cpu_allowance) *over |= (uint8_t)(1u << t); else sum += p;
+    }
+    return sum;
+}
+volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* for diagnostics, as the guard's skips */
+static void cpu_refuse(unsigned track, const Machine *who, unsigned booked);
+static uint32_t cpu_mille(unsigned percent) { return mw_cpu_allowance ? percent * 1000u / mw_cpu_allowance : 1000u; }
+static void cpu_refuse(unsigned track, const Machine *who, unsigned booked)
+{
+    mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
+    modwerk_status_cpu_refused(track, who->label, cpu_mille(booked), cpu_mille(cpu_price(who)));
 }
 /* The PROTECT machines this base knows by signature (module-adapters/machine-ports.json; sdk/tests checks the list).
  * Their tracks keep their 12 bytes from stock's validator while the machine is absent too: the boot's battery
@@ -336,6 +414,13 @@ static void charge(const Machine *const *m, unsigned n)
         if (!who) warned &= (uint8_t)~(1u << t);
         if (who ? charged[t] != who && !claim(t, who) : charged[t] != 0) release(t);
     }
+    uint8_t over; unsigned booked = cpu_bill(m, n, part, 8, &over);
+    for (unsigned t = 0; t < 8; ++t)
+        if (over & ~cpu_warned & 1u << t && owner(m, n, part, t, &who)) { /* the first new one: the box shows one at a time */
+            cpu_refuse(t, who, booked);
+            break;
+        }
+    mw_cpu_refused = cpu_warned = over, mw_cpu_booked = booked;
 }
 /* Stock loads a track's live parameters from its Part (0x40001f18: bank, Part, track) where a commit changes the
  * stored type. A module machine is FLEX underneath, so FLEX <-> machine keeps the type and the live copy would stay on
@@ -345,6 +430,7 @@ static unsigned relive(const Part *part, uint32_t offset, unsigned track, unsign
     if (part[0x22 + track] == type) STOCK(void (*)(unsigned, unsigned, unsigned), 0x40001f18u)(U8(0x100b14ceu), offset / PART_STRIDE, track);
     return type;
 }
+static void mc_assigned(const Machine *who); /* the machine map, below: a track takes an installed machine */
 /* A machine's admission precedes every mutation; -1 refuses. */
 extern volatile uint32_t modwerk_machine_assigned; /* controller_board.c: it reads the bank's machines again after an assignment */
 unsigned mw_assign(Part *part, unsigned track, unsigned row)
@@ -363,7 +449,23 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
     if (next) {
         if (next->admit_track && !next->admit_track(part, track)) return (unsigned)-1;
         warned &= (uint8_t)~(1u << track); /* a pick is a new ask: say so again if it is refused again */
+        if (old != next) { /* a unit this machine's renders would make busy does not take it */
+            uint32_t cpu = modwerk_status_cpu_load();
+            if (cpu + 10u * cpu_price(next) >= mw_cpu_hot) {
+                mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
+                modwerk_status_cpu_hot(track, next->label, cpu);
+                return (unsigned)-1;
+            }
+        }
+        if (old != next && cpu_price(next)) { /* before the DSP claim: nothing to give back */
+            uint8_t over; unsigned booked = cpu_bill(m, n, part, track, &over);
+            if (booked + cpu_price(next) > mw_cpu_allowance) {
+                cpu_refuse(track, next, booked);
+                return (unsigned)-1;
+            }
+        }
         if (next->source_kind && old != next && !claim(track, next)) return (unsigned)-1;
+        if (old != next) mc_assigned(next);
         if (old && old != next) leave(part, mirror, track, old);
         if (absent) flex_defaults(part, mirror, track);
         if (next->assign) return next->assign(part, track, 1);
@@ -653,6 +755,8 @@ volatile uint32_t mw_frame_t0, mw_frame_share = FRAME / 5u * 4u; /* development 
 /* For diagnostics: the longest frame interrupt, the latest start past the frame's time, the time spent in it (/256)
  * over its frames, the skips and their tracks. */
 volatile uint32_t mw_frame_max, mw_frame_late_max, mw_frame_busy, mw_frame_count, mw_frame_sheds, mw_frame_shed_tracks;
+volatile uint32_t mw_frame_last; /* how long the frame interrupt last ran: diag.c's trace of the frames before a stall */
+volatile uint32_t mw_frame_cost_max[16]; /* each guarded render's longest time since the last read: what a machine's `cpu` is set from */
 static int32_t credit;
 static uint32_t late, cost[16], after[16], end_at[16], timed; /* [track], then a track's second render [8 + track] */
 static uint16_t skipped[16];
@@ -662,6 +766,7 @@ void mw_frame_exit(void)
 {
     uint32_t now = DTCN3, d = now - mw_frame_t0, due = d + late;
     if (d > mw_frame_max) mw_frame_max = d;
+    mw_frame_last = d;
     late = due > FRAME ? due - FRAME : 0;
     if (late > mw_frame_late_max) mw_frame_late_max = late;
     int32_t c = credit + (int32_t)mw_frame_share - (int32_t)d;
@@ -695,6 +800,7 @@ static int guarded(Render *f, Render *instead, unsigned track, unsigned ping, un
         r = f(track, ping, start, end);
         uint32_t c = DTCN3 - at, fall = cost[k] - (cost[k] >> 3);
         cost[k] = back || c > fall ? c : fall; /* a rise at once, a fall by an eighth a frame; after skips, as measured */
+        if (c > mw_frame_cost_max[k]) mw_frame_cost_max[k] = c;
     }
     end_at[k] = DTCN3, timed |= 1u << k, next[k] = made++;
     return r;
@@ -770,6 +876,10 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
             if (native_flex) stop_stock(track);
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
         }
+        if (mw_cpu_refused >> track & 1u) { /* past the CPU budget (charge()) */
+            if (native_flex) stop_stock(track);
+            return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
+        }
         Render *f = who->render ? who->render : STOCK(Render *, 0x40004008u); /* POLY8's voices render inside stock's */
         return who->source_kind ? f(track, ping, start, end) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
     } else if (kind == ORPHAN) { /* its bytes are the absent machine's, not FLEX's */
@@ -786,4 +896,262 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
     }
     if (flex_machine) return guarded(flex_machine->render, STOCK(Render *, 0x40004008u), track, ping, start, end);
     return STOCK(Render *, 0x40004008u)(track, ping, start, end);
+}
+/* A renderer a module put into a track's slots itself, from the frame builder's two calls (machine_registry.s).
+ * FM Synth 0.1.2 writes its own over the STATIC entry and at the slot copy (0x4000d514), so its tracks never came
+ * through mw_source_render and neither the frame guard nor the CPU budget saw them (an MKII, 12 November 2026: three
+ * FM Synth tracks beside a busy stock pattern, PLAY, the unit froze). Its machine's track is refused or guarded here
+ * like any other machine's; a STATIC or FLEX track nobody owns keeps stock's sample render when the module's would
+ * overdraw the frame. */
+Render *volatile mw_foreign_fn; /* the renderer of this call, set by mw_render_call */
+int mw_foreign_render(unsigned track, unsigned ping, unsigned start, unsigned end)
+{
+    Render *f = mw_foreign_fn; const Machine *who = 0;
+    if (track >= 8u) return f(track, ping, start, end);
+    unsigned kind = look(track, &who);
+    if (kind == NOBODY) /* THRU, NEIGHBOR and PICKUP have no stand-in here */
+        return frame_part && frame_part[0x22 + track] <= 1u
+            ? guarded(f, STOCK(Render *, 0x40004008u), track, ping, start, end) : f(track, ping, start, end);
+    if (kind == ORPHAN || start_refused[track] == who || mw_cpu_refused >> track & 1u ||
+        (who->source_kind && charged[track] != who))
+        return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
+    return who->source_kind ? f(track, ping, start, end) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
+}
+
+/* ---- The machines a project uses (owner, 16 November 2026: machines in the project map) ------------------------------
+ * A Part names a machine only by its signature: two letters and a version at 60 + 30 * track. That names no module, so
+ * with the machine absent (switched off on MODULES, removed, or never installed on this unit) nothing could say which
+ * one the track wants: POLY8's tracks just read as FLEX. This map remembers, for each machine the project uses, its
+ * signature and version range, its module and its name: in battery RAM, so a power cycle keeps it, and in project.work
+ * as '#MODWERK_MC=' lines (fxmap.c writes and reads them), so the project carries it to another unit. An installed
+ * machine is noted when a track takes it, when a project loads or saves and when the installed set changes. MISSING
+ * lists the entries the project names that no installed machine serves (dsp.c), and a track of one says so when it is
+ * selected. The UI task works that out twice a second (modwerk_machine_map_refresh); the USB request and the page only
+ * read the result, so neither scans a bank nor holds the machine table. */
+struct mc_entry { uint32_t module; uint8_t sig[2], lo, hi; char name[16]; };
+struct mc_map { uint32_t magic, generation; struct mc_entry e[MODWERK_MACHINE_MAP]; uint32_t sum; };
+#define MC_MAGIC 0x4d574d43u /* 'MWMC' */
+#ifdef MW_HOST
+static struct mc_map host_mc_map;
+#define MCMAP (&host_mc_map)
+#ifndef MW_BANKS
+#define MW_BANKS 1u
+#define MW_BANK_AT(b) (0x46000000u + 0u * (b)) /* the model holds one bank */
+#endif
+#else
+/* Battery RAM after diag.c's trace of the frames before a stall (sdk/machines/octatrack/battery-ram.json). */
+#define MCMAP ((volatile struct mc_map *)0x100ffd40u)
+typedef char mc_map_fits[0x100ffd40u + sizeof(struct mc_map) <= 0x100fff00u ? 1 : -1];
+#define MW_BANKS 16u
+#define MW_BANK_AT(b) (0x400e21e0u + (b) * 0x9b340u) /* all 16 banks stay in RAM (fxmap.c's PART_FX) */
+#endif
+static uint32_t mc_checksum(void)
+{
+    const volatile uint8_t *p = (const volatile uint8_t *)MCMAP;
+    uint32_t sum = 0x6d63u;
+    for (unsigned i = 0; i < sizeof(struct mc_map) - 4u; ++i) sum = sum * 31u + p[i];
+    return sum;
+}
+static void mc_seal(void) { MCMAP->magic = MC_MAGIC, MCMAP->generation = MCMAP->generation + 1u, MCMAP->sum = mc_checksum(); }
+/* A map this base can read, or an empty one: a fresh battery, or damage. */
+static void mc_valid(void)
+{
+    if (MCMAP->magic == MC_MAGIC && MCMAP->sum == mc_checksum()) return;
+    volatile uint8_t *p = (volatile uint8_t *)MCMAP;
+    for (unsigned i = 0; i < sizeof(struct mc_map); ++i) p[i] = 0;
+    mc_seal();
+}
+static void mc_put(volatile struct mc_entry *e, uint32_t module, const uint8_t *sig, unsigned lo, unsigned hi, const char *name)
+{
+    e->module = module, e->sig[0] = sig[0], e->sig[1] = sig[1], e->lo = (uint8_t)lo, e->hi = (uint8_t)hi;
+    unsigned i = 0;
+    for (; name && i < 15u && name[i]; ++i) e->name[i] = name[i];
+    for (; i < 16u; ++i) e->name[i] = 0;
+}
+/* Each machine-signed track of every bank's Parts, working and saved: `found` gets, per entry, whether one names it,
+ * and `mine` (installed machines m[0..n), may be 0) whether one of them owns it. */
+static uint32_t mc_scan(const Machine *const *m, unsigned n, uint32_t *mine)
+{
+    uint32_t found = 0, owned = 0;
+    if (!valid_bank()) { if (mine) *mine = 0; return 0; }
+    for (unsigned b = 0; b < MW_BANKS; ++b)
+        for (unsigned p = 0; p < 8u; ++p) {
+            const Part *part = AT(MW_BANK_AT(b) + (p < 4u ? PART_OFF : SAVED_OFF - 4u * PART_STRIDE) + p * PART_STRIDE);
+            for (unsigned t = 0; t < 8u; ++t) {
+                if (part[0x22 + t] > 1u) continue;
+                const Part *s = part + SIG + 30u * t;
+                if (!s[0]) continue;
+                for (unsigned k = 0; k < MODWERK_MACHINE_MAP; ++k) {
+                    const volatile struct mc_entry *e = &MCMAP->e[k];
+                    if (e->module && s[0] == e->sig[0] && s[1] == e->sig[1] && s[2] >= e->lo && s[2] <= e->hi) found |= 1u << k;
+                }
+                for (unsigned k = 0; mine && k < n; ++k)
+                    if (s[0] == m[k]->sig[0] && s[1] == m[k]->sig[1] && s[2] >= m[k]->sig_lo && s[2] <= m[k]->sig_hi) owned |= 1u << k;
+            }
+        }
+    if (mine) *mine = owned;
+    return found;
+}
+/* An installed machine into the map, by its module: its entry kept up to date, or a free one, or one the project does
+ * not name. 1 when the map changed. */
+static int mc_note(const Machine *who)
+{
+    struct runtime_owner o;
+    if (!who || modwerk_runtime_owner_at((uintptr_t)who, &o) != 1 || !o.module) return 0;
+    volatile struct mc_entry *free_one = 0;
+    for (unsigned k = 0; k < MODWERK_MACHINE_MAP; ++k) {
+        volatile struct mc_entry *e = &MCMAP->e[k];
+        if (e->module == o.module) {
+            int same = e->sig[0] == who->sig[0] && e->sig[1] == who->sig[1] && e->lo == who->sig_lo && e->hi == who->sig_hi;
+            for (unsigned i = 0; same && i < 15u; ++i) {
+                char c = who->label ? who->label[i] : 0;
+                same = e->name[i] == c;
+                if (!c) break;
+            }
+            if (same) return 0;
+            mc_put(e, o.module, who->sig, who->sig_lo, who->sig_hi, who->label);
+            return 1;
+        }
+        if (!e->module && !free_one) free_one = e;
+    }
+    if (!free_one) {
+        uint32_t named = mc_scan(0, 0, 0);
+        for (unsigned k = 0; k < MODWERK_MACHINE_MAP && !free_one; ++k) if (!(named >> k & 1u)) free_one = &MCMAP->e[k];
+    }
+    if (!free_one) return 0; /* sixteen machines the project uses: the rest go unnamed */
+    mc_put(free_one, o.module, who->sig, who->sig_lo, who->sig_hi, who->label);
+    return 1;
+}
+/* Every installed machine the project names into the map. */
+static void mc_note_named(void)
+{
+    const Machine *m[ROWS - 5u]; unsigned n = machines(m), changed = 0;
+    uint32_t mine;
+    (void)mc_scan(m, n, &mine);
+    for (unsigned k = 0; k < n; ++k) if (mine >> k & 1u) changed |= (unsigned)mc_note(m[k]);
+    if (changed) mc_seal();
+}
+static volatile uint32_t mc_absent; /* the entries the project names that no installed machine serves: the UI task's */
+static uint32_t mc_epoch, mc_refreshes;
+static uint8_t mc_epoch_seen, mc_stale = 1;
+/* status.c's tick, twice a second (the UI task): the map's check, a newly installed set's machines, and the absent
+ * entries, worked out again every two seconds or at once after a change. */
+void modwerk_machine_map_refresh(void)
+{
+    if (!(++mc_refreshes & 7u) || MCMAP->magic != MC_MAGIC) mc_valid(); /* the whole check every four seconds */
+    uint32_t epoch = modwerk_runtime_owner_epoch();
+    if (!mc_epoch_seen || epoch != mc_epoch) mc_epoch = epoch, mc_epoch_seen = 1, mc_note_named(), mc_stale = 1;
+    static uint32_t generation;
+    if (MCMAP->generation != generation) generation = MCMAP->generation, mc_stale = 1;
+    if (!mc_stale && (mc_refreshes & 3u)) return;
+    mc_stale = 0;
+    const Machine *m[ROWS - 5u]; unsigned n = machines(m);
+    uint32_t named = mc_scan(0, 0, 0), absent = 0;
+    for (unsigned k = 0; k < MODWERK_MACHINE_MAP; ++k) {
+        const volatile struct mc_entry *e = &MCMAP->e[k];
+        if (!(named >> k & 1u)) continue;
+        unsigned served = 0;
+        for (unsigned i = 0; i < n && !served; ++i)
+            served = m[i]->sig[0] == e->sig[0] && m[i]->sig[1] == e->sig[1] && m[i]->sig_lo <= e->hi && m[i]->sig_hi >= e->lo;
+        if (!served) absent |= 1u << k;
+    }
+    mc_absent = absent;
+}
+/* dsp.c's MISSING list: entry k when the project names it and no installed machine serves it. Reads the refresh's
+ * result only, so the USB request may ask. */
+int modwerk_machine_absent(unsigned k, uint32_t *module, char *name)
+{
+    if (k >= MODWERK_MACHINE_MAP || !(mc_absent >> k & 1u) || MCMAP->magic != MC_MAGIC) return 0;
+    const volatile struct mc_entry *e = &MCMAP->e[k];
+    if (!e->module) return 0;
+    *module = e->module;
+    for (unsigned i = 0; i < 16u; ++i) name[i] = i < 15u ? e->name[i] : 0;
+    return 1;
+}
+/* dsp.c's notice when a track is selected: the absent machine the current Part's track t is signed for. */
+int modwerk_machine_track_absent(unsigned t, uint32_t *module, char *name)
+{
+    if (t >= 8u || !valid_bank() || MCMAP->magic != MC_MAGIC) return 0;
+    const Part *part = current_part(), *s = part + SIG + 30u * t;
+    if (part[0x22 + t] > 1u || !s[0]) return 0;
+    for (unsigned k = 0; k < MODWERK_MACHINE_MAP; ++k) {
+        const volatile struct mc_entry *e = &MCMAP->e[k];
+        if (e->module && s[0] == e->sig[0] && s[1] == e->sig[1] && s[2] >= e->lo && s[2] <= e->hi)
+            return modwerk_machine_absent(k, module, name);
+    }
+    return 0;
+}
+/* status.c's MISSING page: where the project names entry k first, as fxmap.c's modwerk_fxmap_where says it for an
+ * effect: the current bank first, its working Parts before the saved copies, then the other banks in order. */
+int modwerk_machine_where(unsigned k, unsigned *bank, unsigned *part_index, unsigned *track)
+{
+    if (k >= MODWERK_MACHINE_MAP || !valid_bank() || MCMAP->magic != MC_MAGIC || !MCMAP->e[k].module) return 0;
+    const volatile struct mc_entry *e = &MCMAP->e[k];
+    unsigned now = MW_BANKS > 1u ? (U32(BANK) - MW_BANK_AT(0)) / (MW_BANKS > 1u ? MW_BANK_AT(1) - MW_BANK_AT(0) : 1u) : 0u;
+    if (now >= MW_BANKS) now = 0;
+    for (unsigned b = 0; b < MW_BANKS; ++b) {
+        unsigned at = !b ? now : b - 1u < now ? b - 1u : b;
+        for (unsigned p = 0; p < 8u; ++p) {
+            const Part *part = AT(MW_BANK_AT(at) + (p < 4u ? PART_OFF : SAVED_OFF - 4u * PART_STRIDE) + p * PART_STRIDE);
+            for (unsigned t = 0; t < 8u; ++t) {
+                const Part *s = part + SIG + 30u * t;
+                if (part[0x22 + t] <= 1u && s[0] == e->sig[0] && s[1] == e->sig[1] && s[2] >= e->lo && s[2] <= e->hi) {
+                    *bank = at, *part_index = p & 3u, *track = t;
+                    return p < 4u ? 1 : 2;
+                }
+            }
+        }
+    }
+    return 0;
+}
+/* status.c's MODULES page, a machine just switched off: where the project still names it, by its module. */
+int modwerk_machine_where_module(uint32_t module, unsigned *bank, unsigned *part_index, unsigned *track)
+{
+    for (unsigned k = 0; module && k < MODWERK_MACHINE_MAP && MCMAP->magic == MC_MAGIC; ++k)
+        if (MCMAP->e[k].module == module) return modwerk_machine_where(k, bank, part_index, track);
+    return 0;
+}
+/* fxmap.c, a project load: its '#MODWERK_MC=' lines, then the end. A project with lines names its machines; one
+ * without (saved before them) keeps the map there is. Either way the installed machines it names are noted. */
+static struct mc_entry mc_staged[MODWERK_MACHINE_MAP];
+static unsigned mc_staged_count;
+void modwerk_machine_map_begin(void) { mc_staged_count = 0; }
+void modwerk_machine_map_stage(const uint8_t *sig, unsigned lo, unsigned hi, uint32_t module, const char *name)
+{
+    if (!module || !sig[0] || lo > hi || hi > 255u || mc_staged_count >= MODWERK_MACHINE_MAP) return;
+    for (unsigned k = 0; k < mc_staged_count; ++k) if (mc_staged[k].module == module) return;
+    mc_put(&mc_staged[mc_staged_count++], module, sig, lo, hi, name);
+}
+void modwerk_machine_map_loaded(int ok)
+{
+    mc_valid();
+    if (ok && mc_staged_count) {
+        for (unsigned k = 0; k < MODWERK_MACHINE_MAP; ++k) {
+            const struct mc_entry *s = &mc_staged[k];
+            if (k < mc_staged_count) mc_put(&MCMAP->e[k], s->module, s->sig, s->lo, s->hi, s->name);
+            else { static const uint8_t none[2]; mc_put(&MCMAP->e[k], 0, none, 0, 0, 0); }
+        }
+        mc_seal();
+    }
+    mc_staged_count = 0;
+    mc_note_named();
+    mc_stale = 1;
+}
+/* fxmap.c, a project save: entry k's line when the project names it, after the installed machines it names are noted. */
+static uint32_t mc_written_named;
+int modwerk_machine_map_line(unsigned k, uint8_t *sig, unsigned *lo, unsigned *hi, uint32_t *module, char *name)
+{
+    if (!k) mc_valid(), mc_note_named(), mc_written_named = mc_scan(0, 0, 0);
+    if (k >= MODWERK_MACHINE_MAP || !(mc_written_named >> k & 1u)) return 0;
+    const volatile struct mc_entry *e = &MCMAP->e[k];
+    if (!e->module) return 0;
+    sig[0] = e->sig[0], sig[1] = e->sig[1], *lo = e->lo, *hi = e->hi, *module = e->module;
+    for (unsigned i = 0; i < 16u; ++i) name[i] = i < 15u ? e->name[i] : 0;
+    return 1;
+}
+static void mc_assigned(const Machine *who)
+{
+    mc_valid();
+    if (mc_note(who)) mc_seal();
+    mc_stale = 1;
 }

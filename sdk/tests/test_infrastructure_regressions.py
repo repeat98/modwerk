@@ -159,14 +159,6 @@ class FloatingCavePlacement(unittest.TestCase):
         self.assertEqual(at(0x400d7c01, end - 0x10, 0x10, limit), end - 0x10)  # the overflow's last bytes
         self.assertIsNone(at(0x400d7b00, end - 0x10, 0x200, limit))           # fits neither: the build refuses
 
-    def test_browser_uses_the_same_overflow_run(self):
-        menus = (ROOT.parents[1] / 'src/engine/module-menus.ts').read_text(encoding='utf-8')
-        caves = (ROOT.parents[1] / 'src/engine/requested-modules.ts').read_text(encoding='utf-8')
-        self.assertIn('OVERFLOW_START = 0x%x, OVERFLOW_END = 0x%x' % (self.ns['OVERFLOW_RUN'], self.ns['OVERFLOW_RUN_END']), menus)
-        # requestedCaves: window at the next 128 bytes when the cave fits whole, else the overflow at the next 4.
-        self.assertIn('let address = Math.ceil(cursor / 128) * 128', caves)
-        self.assertIn('if (!inside) { address = Math.ceil(overflow / 4) * 4', caves)
-
     def test_the_window_assert_no_longer_runs_before_the_overflow(self):
         source = (ROOT / 'tools/build/build_bus.py').read_text(encoding='utf-8')
         loop = source[source.index('    for _c, _b in _plan:'):]

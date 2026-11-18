@@ -1,6 +1,6 @@
 # FRACT source draft
 
-Version 0.1.0-experimental · author @ex1010
+Version 0.1.2-experimental · author @ex1010
 
 ## Overview
 
@@ -9,7 +9,9 @@ left to right; SIZE expands the grain span around that center and wraps at the
 sample edges. It uses native FLEX for pitch and voice playback. This replaces
 the earlier FX2/SPACE proposal in the consolidated draft submission #926.
 
-This folder is source staging, not a selectable module or qualified download.
+This folder stages an unlisted release candidate. It is not yet a selectable
+module or qualified public download. The prospective package is reproducible
+without firmware; `release/README.md` lists the remaining publication steps.
 The source provenance baseline is ex1010/modwerk commit
 `5b5aa328c1bbed129ab6b1a65efb9353b93ede8f`, with accepted uncommitted
 centered-SIZE/UI edits and the consolidation changes in this branch. That pin
@@ -40,7 +42,7 @@ active SPACE processor or FX2 effect.
 On a compatible private paired build, select one track T1–T4, open SRC SETUP and
 choose FRACT. Open its sample browser and select a loaded FLEX-pool sample.
 Return to MAIN for POS/SIZE and the remaining controls. Only one FRACT owner is
-admitted at a time. The instructions describe the private prototype interface;
+admitted at a time. These controls are present in the tested private candidate;
 this source draft cannot be installed from the public configurator.
 
 ## Quick tutorial
@@ -56,17 +58,20 @@ current FRACT admission policy allows one owner on T1–T4 only. This is an
 intentional private prototype limit, not eight simultaneous instances.
 
 START dispatch from #1029 is merged. The inherited native-FLEX reader fix is
-included with the source and media in #926; #1108 is to be superseded after
-consolidation. The base keeps FR:1 at boot (`known[]`, added in #926). On 5 November 2026,
-the owner completed the short physical check on base `9b3ba417` with a private
+included with the source and media in merged #926; #1108 was closed as
+superseded by that consolidation. The base keeps FR:1 at boot (`known[]`, added in #926). On 5 November 2026,
+the author completed the short physical check on base `9b3ba417` with a private
 paired FRACT build; USB confirmed that exact base and module set after power-on.
-See TESTING.md for identities, reported observations and limits. No catalogue
-entry, listed USB/card package, compatibility pair proof or listed-release
-hardware qualification exists.
+See TESTING.md for identities, reported observations and limits. No active catalogue entry or public package exists. The earlier 0.1.1 candidate has the 6 November functional hardware report in
+TESTING.md. The current 0.1.2 candidate follows the merged base-aware builder
+and has a named-build functional hardware report; timing/stress and full release
+qualification remain pending. Publication remains incomplete.
 
-Part/project reload, cold boot, Keep/Undo, replacement/removal, missing-module
-fallback, live-trigger deletion, stress and companion-module qualification remain
-open for the exact public build. Do not infer these from host tests or previews.
+Historical 0.1.1 results remain in TESTING.md. The current candidate's Part and
+project reload, lifecycle and cold boot are scoped in
+[the 10 November report](release/hardware-20261110.md). Standalone missing-module
+Part reload, live-trigger deletion, full timing/stress and companion-module
+qualification remain open.
 
 ## Tests and measurements
 
@@ -109,9 +114,51 @@ independence is limited to the frozen implementation files.
 
 ## Screens and audio
 
-[Artwork and three emulator previews](../../../docs/media/fract/README.md) show
-selection, sample loading and playback. These private-prototype captures do not
-qualify this source tree or hardware audio. Artwork is MIT; screenshots retain
-the underlying interface rights described beside them. No sample audio is
-included. Full release capture provenance and all required control pages remain
-pending; the manifest's screenshot list is intentionally empty for this draft.
+The current candidate has three actual emulator captures:
+[SRC SETUP and selection](media/ot-setup.png), [MAIN](media/ot-main.png) and
+[playing MAIN](media/ot-playing.png). Follow the captions in the manifest and
+the Quick tutorial above. SETUP includes PAN/SRNG; MAIN includes all six grain
+controls. The stored fixture shows SIZE 106 and PTCH +3.0, not fresh defaults;
+neutral PTCH is raw 64, displayed 0.0.
+
+[Capture provenance](media/capture.json) binds these pixels to package6ff/base72
+and records the completed real renderer before export. The original
+[artwork and prototype previews](../../../docs/media/fract/README.md) remain
+historical. Artwork is MIT; the capture declaration preserves underlying
+interface rights. No sample audio is included. UI evidence does not qualify
+hardware sound or timing.
+
+## Named-build candidate — 10 November 2026
+
+`runtime-build.json` consumes the merged host recipe compiler. Base imports
+follow the committed base; the recipe reviews only import names/run origin.
+No base digest is compiled or read by the machine. The prospective package row
+carries `requiredBase`, matching base `72defb09` for this build. A base refresh
+relinks imports through the same reviewed reconstruction recipe. The machine
+and START records, grain engine, controls and UI are unchanged.
+
+The new `0.1.2-experimental` package has canonical runtime identity `fract-machine`.
+The private `grnyv1` package must be replaced as a controlled set; do not install
+both identities together. The historical package54ca test remains in TESTING.md.
+The [named-build hardware report](release/hardware-20261110.md) records functional
+checks and exact-set restoration after a physical reboot. The full emulator
+also exercises START, three moving heads and retrigger on these exact bytes;
+hardware performance and remaining release qualification are pending.
+
+```sh
+python3.12 -B scripts/source-runtime-package.py --recipe sdk/drafts/fract-machine/runtime-build.json --check
+python3.12 -B -m unittest discover -s sdk/tests -p 'test_source_runtime_package.py'
+```
+
+Tests cover source confinement, current exports, actual-machine base relinking,
+absence of embedded IDs, requiredBase/proof agreement and exact package
+reproduction without firmware. Original-OS reconstruction and both strict scans
+also pass locally. Resource and remaining release work are in release/README.md.
+
+[The remaining review work](release/review-20261112.md) follows repeat98’s
+12 November request: final relinking and timing wait for #1418 and then #1165.
+The 10 November evidence stays bound to its original package.
+
+[The offline measurement kit](qualification/README.md) documents the separate
+private probe, matched project generator, read-only collector and their limits.
+Preparing these tools does not install them or supply physical timing results.

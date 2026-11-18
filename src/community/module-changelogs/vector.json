@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.3.2-experimental",
+    "date": "2026-11-13",
+    "changes": [
+      "Fixes projects coming back reset after a power cycle (every track on STATIC, the trigs gone) when a VECTOR track had SPAN at 8 or higher, which is the default (#1533, #596).",
+      "Install this update with your project open, then save: VECTOR repairs its saved settings in the open bank. Your SPAN values stay the same.",
+      "A project that already came back reset: do not save it. Switch the Octatrack off and on once more and the bank comes back; set SPAN again.",
+      "A track switched back to STATIC or FLEX with an older version and SPAN 8 or higher is not repaired: choose VECTOR on it once.",
+      "Known issue: tested on one unit with restarts from RAM; a power cycle with 0.3.2 kept is not yet tested."
+    ]
+  },
+  {
     "version": "0.3.1-experimental",
     "date": "2026-11-08",
     "changes": [

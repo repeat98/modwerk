@@ -51,6 +51,12 @@ static struct {
 #define SET_ROWS 0u
 #define SET_CAPABILITY 0u
 #endif
+/* 1024: the machine refuses to retire a module whose window, page or key layer is still open (RUNTIME_UI_OPEN). */
+#ifdef MODWERK_RUNTIME_UI_ROOTS
+#define UI_ROOTS_CAPABILITY 1024u
+#else
+#define UI_ROOTS_CAPABILITY 0u
+#endif
 int modwerk_runtime_set_busy(void) { return SET_ROWS != 0; }
 #ifndef MODWERK_RUNTIME_JOURNAL_EXTERNAL
 __attribute__((weak)) int modwerk_machine_journal_enabled(void) { return 0; }
@@ -118,7 +124,7 @@ unsigned modwerk_runtime_capabilities(uint8_t *out)
 {
     out[0] = 'M'; out[1] = 'W'; out[2] = 'C'; out[3] = 'P';
     out[4] = 1; out[5] = RUNTIME_ABI;
-    unsigned flags = RUNTIME_CAPABILITY_FLAGS | (RUNTIME_SITE_EVENTS ? 128u : 0u) | SET_CAPABILITY;
+    unsigned flags = RUNTIME_CAPABILITY_FLAGS | (RUNTIME_SITE_EVENTS ? 128u : 0u) | SET_CAPABILITY | UI_ROOTS_CAPABILITY;
     out[6] = (uint8_t)(flags >> 8); out[7] = (uint8_t)flags;
     out[8] = (uint8_t)(RUNTIME_SITES >> 8); out[9] = (uint8_t)RUNTIME_SITES;
     out[10] = (uint8_t)(RUNTIME_COPIES >> 8); out[11] = (uint8_t)RUNTIME_COPIES;
@@ -751,7 +757,7 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
     if (abi >= 9) dsp.requires = (uint16_t)be16(data + 76), dsp.claim_count = (uint8_t)claims;
     /* ABI 10: DSP words with no slot are an engine for the base's hook sites, not an effect. */
     const int engine = abi >= 10u && dsp.count && !dsp.slots;
-    if (image > RUNTIME_IMAGE_BYTES || bss > RUNTIME_IMAGE_BYTES - image || hooks > (abi >= 8u ? RUNTIME_HOOKS : RUNTIME_EVENTS) ||
+    if (image > RUNTIME_IMAGE_BYTES || bss > RUNTIME_MODULE_BYTES - image || hooks > (abi >= 8u ? RUNTIME_HOOKS : RUNTIME_EVENTS) ||
         count > RUNTIME_RELOCATIONS || sites > RUNTIME_SITES || copies > RUNTIME_COPIES || fills > RUNTIME_FILLS ||
         claims > RUNTIME_DSP_CLAIMS || entries > RUNTIME_DSP_HOOK_ENTRIES || length < at + image + 4u * count)
         return refuse(RUNTIME_MALFORMED);
@@ -876,7 +882,8 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
     if (dsp.count > RUNTIME_DSP_WORDS || dsp.relocation_count > RUNTIME_DSP_RELOCATIONS ||
         left != 4u * dsp.count + 2u * dsp.relocation_count + 4u * init_words || (!dsp.count && dsp.relocation_count) ||
         (dsp.count && !engine && (dsp.init >= dsp.count || dsp.proc >= dsp.count || !dsp.slots || dsp.slots > 3u)) ||
-        (engine && (dsp.init || dsp.proc || dsp.cycles || dsp.kind || dsp.state || dsp.buffer || dsp.id || !entries)))
+        (engine && (dsp.init || dsp.proc || !dsp.cycles || (dsp.kind != RUNTIME_EXECUTED && dsp.kind != RUNTIME_HARDWARE) ||
+                    dsp.state || dsp.buffer || dsp.id || !entries)))
         return refuse(RUNTIME_MALFORMED);
     for (uint32_t i = 0; i < dsp.count; ++i) if (be32(words + 4u * i) > 0xffffffu) return refuse(RUNTIME_MALFORMED);
     for (uint32_t i = 0; i < init_words; ++i) if (be32(init + 4u * i) > 0xffffffu) return refuse(RUNTIME_MALFORMED);

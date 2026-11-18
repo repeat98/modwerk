@@ -37,11 +37,12 @@ Do not put OS files, stock effects, memory dumps, disassembly listings or extrac
 
 ## Update a machine's progress
 
-Open a pull request that edits the machine's profile:
+A machine Modwerk does not list yet starts with `npm run machine:new -- <id> --name "<Name>" [--family zoom|erica]`: a profile with its family's steps and the stack's pieces, all open, and a guide that points at the recipe. Then open a pull request that edits the machine's profile:
 
 - Set a step to `started` or `done` and add a `research` entry crediting the public work it relies on (repository, notes, author).
 - Move `status` from `open` to `research` once any step has started.
 - Run `npm run machines:check`; the contract rejects inconsistent claims.
+- Leave `maintainers` alone: only the owner names who reviews a machine's first releases ([who](DEVELOPER_WORKFLOW.md#who-reviews-a-first-release)).
 
 A pull request that marks steps done includes the evidence in its description: links to the public writer, emulator or boot reports. It never includes firmware.
 
@@ -83,3 +84,5 @@ Run `npm run check` before opening the pull request. A new machine, platform or 
 ## Aim for the Octatrack's interface
 
 Every machine ends up with the Octatrack's stack, so a module installs, runs beside the others and is tested the same way everywhere: a Modwerk base that owns shared sites as hooks and admits modules by their budgets, a USB link, loading without a reflash (review, trial, self-test, Keep, Undo), base updates over USB, the MCP's device tools and the site's machine page, beta-only behind `hasBetaUi`. The base is Modwerk's, started from an upstream core's source where one exists. [MACHINE_RECIPE.md](MACHINE_RECIPE.md) lists each piece with its Octatrack files and where every machine stands; keep its table current when a piece moves.
+
+The profile's `stack` records it piece by piece (`base`, `link`, `flash`, `loader`, `status`, `diagnostics`, `tools`, each `open`, `started` or `done`; one left out is open), and the machine page shows it as the road after the first mod. A piece is `done` once its exact build has passed on more than one unit and the owner has released it; until then it stays `started`. A machine with mods stays `preview` until every piece is done: the contract refuses `available` before that.

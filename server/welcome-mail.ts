@@ -1,4 +1,5 @@
 import type { Database, Env } from './platform'
+import { tagMailLinks } from './site-link-tags'
 import { emailReady, recordMail } from './email'
 import { reserveMailBudget } from './mail-budget'
 import { digest, HttpError } from './security'
@@ -53,7 +54,7 @@ export async function sendMemberWelcomes(env: Env, db: Database, now = new Date(
     const result = await fetch('https://api.resend.com/emails', {
       method: 'POST', signal: AbortSignal.timeout(10000),
       headers: { Authorization: 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json', 'Idempotency-Key': pending.template_version + '-' + await digest(member.id) },
-      body: JSON.stringify({ from: env.EMAIL_FROM, to: [member.email], reply_to: SUPPORT_EMAIL, ...message }),
+      body: JSON.stringify({ from: env.EMAIL_FROM, to: [member.email], reply_to: SUPPORT_EMAIL, ...tagMailLinks(message, env.APP_URL, 'welcome') }),
     }).catch(() => null)
     if (result?.ok) {
       // Persist acceptance before aggregate counters so a counter failure cannot resend this welcome.

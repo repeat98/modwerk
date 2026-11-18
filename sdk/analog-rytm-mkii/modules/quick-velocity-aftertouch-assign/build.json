@@ -21,6 +21,11 @@
       "event": "ev_tick",
       "fn": "quick_velocity_aftertouch_assign_tick",
       "order": 50
+    },
+    {
+      "event": "ev_draw",
+      "fn": "quick_velocity_aftertouch_assign_draw",
+      "order": 50
     }
   ],
   "contribute": [
@@ -44,7 +49,9 @@
   "claims": [
     "ui:FIX + knob on the sound pages",
     "ui:SAMPLER + knob on the sound pages",
-    "ui:FIX tap toggles fixed velocity on the release"
+    "ui:FIX tap toggles fixed velocity on the release",
+    "ui:LFO + knob on the sound pages and the FX track",
+    "ui:LFO page key shows its page on the release"
   ],
   "requires": [],
   "derive": null,

@@ -48,7 +48,7 @@ async function fixture() {
 describe('local firmware release verification', () => {
   it('rejects filesystem injection, paused machines and missing risk acceptance', () => {
     for (const override of [{ outputDir: '/tmp/elsewhere' }, { stockPath: '/etc/passwd' }, { machine: 'digitakt-ii' }, { riskAccepted: false }, { moduleIds: ['digimono', 'digimono'] }]) expect(() => parseBuildRequest({ ...request, ...override })).toThrow()
-    expect(() => parseBuildRequest({ machine: 'octatrack', os: '1.40C', moduleIds: ['quantizer'], riskAccepted: true })).not.toThrow()
+    expect(() => parseBuildRequest({ machine: 'octatrack', os: '1.40C', moduleIds: ['quantizer'], riskAccepted: true })).toThrow('Octatrack modules go through the Modwerk base')
     expect(() => parseBuildRequest({ ...request, expectedSha256: 'not a hash' })).toThrow()
     expect(() => siteBase('http://example.com')).toThrow()
     expect(() => siteBase('https://user:secret@example.com')).toThrow()

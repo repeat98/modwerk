@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.4-experimental",
+    "date": "2026-11-13",
+    "changes": [
+      "Fixed assignments going missing after a power cycle: they now stay without loading the project again.",
+      "New: a knob can control a MIDI track's CC (tracks 9-16). Set the CC up on its own page, then assign it; the knob sends the stored value plus its offset and sends the stored value back when it lets go.",
+      "CC knobs show the slot's name, including names set with CC Names.",
+      "Fixed knob names showing ERR when CC Names is installed."
+    ]
+  },
+  {
     "version": "0.1.3-experimental",
     "date": "2026-11-11",
     "changes": [

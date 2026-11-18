@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.2.2-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "When the Rytm is working hard (BD ANALOG playing), retrig hits it cannot take at once now wait and are recorded late, on the step you played, instead of being dropped.",
+      "Uses about 3.6 KB more of the module memory.",
+      "Recording, Retrig Grid and the RTRG key work as in 0.2.1."
+    ]
+  },
+  {
     "version": "0.2.1-experimental",
     "date": "2026-11-06",
     "changes": [

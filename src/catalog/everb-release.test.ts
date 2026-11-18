@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { resolve } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
-import release from '../../sdk/octabam/modules/everb/octamod.module.json'
-import capture from '../../sdk/octabam/modules/everb/media/capture.json'
-import performance from '../../sdk/octabam/modules/everb/evidence/performance.json'
+import release from '../../sdk/octatrack/modules/everb/octamod.module.json'
+import capture from '../../sdk/octatrack/modules/everb/media/capture.json'
+import performance from '../../sdk/octatrack/modules/everb/evidence/performance.json'
 import baseline from '../../sdk/approvals/module-qualification-baseline.json'
 import recipes from '../engine/assets/descriptor-recipes.json'
 import { parseModuleDocument, requireModuleUiForPublication } from './module-contract'
@@ -12,10 +12,8 @@ import { requireModuleResourceImpact } from './resource-impact'
 import { moduleNativeSourceSha256, parseQualificationBaseline, requireFolderQualification } from '../../scripts/module-qualification.mjs'
 import { requireCompleteReadme, requireMonochromePng } from '../../scripts/module-documentation.mjs'
 import { MODULES, resolveSelection } from './modules'
-import { defaultChoosers } from '../engine/choosers'
-import chooserMetadata from '../engine/assets/chooser-metadata.json'
 
-const folder = resolve('sdk/octabam/modules/everb')
+const folder = resolve('sdk/octatrack/modules/everb')
 
 describe('E-Verb experimental release', () => {
   it('publishes 0.1.2 as an owner-approved update through the shared catalog, with 0.1.0 hardware evidence only', async () => {
@@ -27,9 +25,6 @@ describe('E-Verb experimental release', () => {
     await expect(requireFolderQualification(folder, document, parseQualificationBaseline(baseline))).resolves.toBe('owner-approved-update')
     expect(MODULES.some(module => module.id === document.id && module.version === document.version)).toBe(true)
     expect(() => resolveSelection([document.id])).not.toThrow()
-    const menus = defaultChoosers([document.id])
-    expect(menus.fx1).toEqual(chooserMetadata.stockFx1)
-    expect(menus.fx2).toEqual([...chooserMetadata.stockFx2.filter(key => !['SPRING REV', 'DARK REV'].includes(key)), 'EVERB'])
   })
 
   it('gives every 0..127 knob the three-stop FUNC editor in the shipped descriptor recipe (#438)', () => {

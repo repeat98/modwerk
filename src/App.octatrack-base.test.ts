@@ -8,6 +8,7 @@ import { CommunityContext } from './community/context'
 import { DEVICES, isZd2Pedal } from './devices/registry'
 import { isZoomSetDevice } from './devices/zoom-effects'
 import { fakeUnit } from './dev/octatrack-link-fake'
+import { asBeta } from './catalog/beta-fixture'
 
 // A production build (not a dev build) with the Octatrack base path's switch flipped per test.
 const release = vi.hoisted(() => {
@@ -39,7 +40,7 @@ async function open(hash: string) {
 }
 
 describe('releasing the Octatrack base path to a member who is not a beta tester', () => {
-  it('opens the Octatrack page and module sets, and keeps beta-only Zoom pages and beta modules closed', async () => {
+  it('opens the Octatrack page and module sets, and keeps beta-only Zoom pages and beta modules closed', () => asBeta(async () => {
     release.on = true
     await open('octatrack')
     await vi.waitFor(() => expect(document.title).toContain('Your Octatrack'))
@@ -51,13 +52,13 @@ describe('releasing the Octatrack base path to a member who is not a beta tester
     await act(async () => root.unmount()); root = createRoot(container)
     await open('module/airwindows-chorus')
     await vi.waitFor(() => expect(container.textContent).toContain('Module temporarily unavailable'))
-  })
-  it('refuses a USB-only module at the add, saying where USB works, only in a browser that can’t reach the unit', async () => {
+  }))
+  it('offers a USB-only module in every browser: without USB it reaches the unit as the card file', async () => {
     release.on = true
     await open('module/ring-sc') // RINGMOD SC: its package needs the key bus, so only the base loads it
     await vi.waitFor(() => expect(container.querySelector('.module-configure-action')).not.toBeNull())
-    expect(container.querySelector('.module-configure-action.is-blocked .add-block-label')?.textContent).toBe('USB only')
-    expect(container.querySelector('.add-block-detail')?.textContent).toMatch(/ needs the Modwerk base, which this browser can’t reach\. Open Modwerk in Chrome or Edge on a computer\.$/)
+    expect(container.querySelector('.module-configure-action.is-blocked')).toBeNull()
+    expect(container.querySelector('.add-block-detail')).toBeNull()
     await act(async () => root.unmount()); root = createRoot(container)
     // Chrome or Edge on a computer: offered as usual, synced over USB.
     vi.stubGlobal('isSecureContext', true); Object.defineProperty(navigator, 'usb', { value: fakeUnit('none').usb, configurable: true })

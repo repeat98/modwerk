@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.2.2-experimental",
+    "date": "2026-11-17",
+    "changes": [
+      "Takes less of the Rytm's processing time while nothing moves, stopped or playing, leaving more room for other modules.",
+      "Uses about 0.35 KB more of the module memory.",
+      "Nothing else changes from 0.2.1."
+    ]
+  },
+  {
+    "version": "0.2.1-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Uses about 1.9 KB less of the module memory, leaving more room for other modules beside it.",
+      "Nothing else changes from 0.2.0."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-11-05",
     "changes": [

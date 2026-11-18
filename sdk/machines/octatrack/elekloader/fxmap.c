@@ -17,6 +17,24 @@ struct fx_legacy { uint32_t module; uint32_t id; char name[16]; };
  * dropped on purpose, not by a checksum that happens to fail. */
 #define MAGIC (MODWERK_FX_IDS == 32u ? 0x4d574658u : 0x4d574600u | MODWERK_FX_IDS)
 #define LINE "#MODWERK_FX="
+/* The machines the project uses (machine_registry.c's map; owner, 16 November 2026): "#MODWERK_MC=504c:1:1:9fa85eef:POLY8",
+ * the signature's two bytes in hex, its version range, the module and the name. Stock skips them as it skips ours. */
+#define MC_LINE "#MODWERK_MC="
+void modwerk_machine_map_begin(void);
+void modwerk_machine_map_stage(const uint8_t *sig, unsigned lo, unsigned hi, uint32_t module, const char *name);
+void modwerk_machine_map_loaded(int ok);
+int modwerk_machine_map_line(unsigned k, uint8_t *sig, unsigned *lo, unsigned *hi, uint32_t *module, char *name);
+#ifndef MODWERK_HOST /* a base without the machine registry has no machine map */
+__attribute__((weak)) void modwerk_machine_map_begin(void) {}
+__attribute__((weak)) void modwerk_machine_map_stage(const uint8_t *sig, unsigned lo, unsigned hi, uint32_t module, const char *name)
+{ (void)sig, (void)lo, (void)hi, (void)module, (void)name; }
+__attribute__((weak)) void modwerk_machine_map_loaded(int ok) { (void)ok; }
+__attribute__((weak)) int modwerk_machine_map_line(unsigned k, uint8_t *sig, unsigned *lo, unsigned *hi, uint32_t *module, char *name)
+{ (void)k, (void)sig, (void)lo, (void)hi, (void)module, (void)name; return 0; }
+#endif
+#ifndef MODWERK_MACHINE_MAP
+#define MODWERK_MACHINE_MAP 16u /* status.h's */
+#endif
 
 extern const struct fx_legacy modwerk_fx_legacy[];     /* identity.c: today's catalogue assignments */
 extern const uint32_t modwerk_fx_legacy_count;
@@ -207,8 +225,9 @@ int modwerk_fxmap_assign_checked(unsigned id,uint32_t module,unsigned layout,con
  * and the map takes it once the engine says the load succeeded. */
 static struct fx_entry staged[MODWERK_FX_IDS];
 static int staging;
-static unsigned lines;
+static unsigned lines, machine_lines; /* machine lines apart: a project without effect lines still reads the catalogue's */
 volatile uint32_t modwerk_fxmap_read, modwerk_fxmap_written; /* lines the last load took, the last save wrote */
+volatile uint32_t modwerk_fxmap_machines_read, modwerk_fxmap_machines_written; /* the same for '#MODWERK_MC=' lines */
 /* Nonzero from the loader's first pass until the load's end has sealed its map: the tracks may already run the loading
  * project's handles under the last project's map (dsp.c's MISSING popup waits). Another task reads it. */
 static volatile int loading;
@@ -218,7 +237,8 @@ void modwerk_fxmap_begin(uint32_t storing)
     loading = 1;
     if (!storing) return;
     for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) put(&staged[k], 0, 0, 0);
-    staging = 1, lines = 0;
+    staging = 1, lines = 0, machine_lines = 0;
+    modwerk_machine_map_begin();
 }
 static const char *number(const char *s, unsigned base, uint32_t *out)
 {
@@ -232,9 +252,24 @@ static const char *number(const char *s, unsigned base, uint32_t *out)
     *out = v;
     return digits && digits <= 8u && *s == ':' ? s + 1 : 0;
 }
+/* A machine's line into the machine map's staging: 1 when the line is one, whole or not. */
+static int machine_line(const char *line)
+{
+    for (unsigned i = 0; MC_LINE[i]; ++i) if (line[i] != MC_LINE[i]) return 0;
+    uint32_t sig, lo, hi, module;
+    const char *s = line + sizeof MC_LINE - 1u;
+    if (!(s = number(s, 16, &sig)) || !(s = number(s, 10, &lo)) || !(s = number(s, 10, &hi)) || !(s = number(s, 16, &module)) ||
+        sig > 0xffffu || lo > hi || hi > 255u || !module)
+        return 1;
+    const uint8_t bytes[2] = {(uint8_t)(sig >> 8), (uint8_t)sig};
+    modwerk_machine_map_stage(bytes, lo, hi, module, s);
+    ++machine_lines;
+    return 1;
+}
 void modwerk_fxmap_line(const char *line, uint32_t parse_only)
 {
     if (parse_only || !staging) return;
+    if (machine_line(line)) return;
     for (unsigned i = 0; LINE[i]; ++i) if (line[i] != LINE[i]) return;
     uint32_t id, module, layout;
     const char *s = line + sizeof LINE - 1u;
@@ -247,8 +282,9 @@ void modwerk_fxmap_loaded(int32_t result)
 {
     if (!staging) { loading = 0; return; }
     staging = 0;
+    modwerk_machine_map_loaded(result >= 0); /* its lines, then the installed machines the project names */
     if (result < 0) { loading = 0; return; } /* a failed load keeps the project that is still there */
-    modwerk_fxmap_read = lines;
+    modwerk_fxmap_read = lines, modwerk_fxmap_machines_read = machine_lines;
     if (lines) for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) put(&MAP->e[k], staged[k].module, staged[k].layout, staged[k].name);
     else {
         for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) put(&MAP->e[k], 0, 0, 0);
@@ -285,5 +321,31 @@ void modwerk_fxmap_write(uint32_t file)
         line[n++] = '\r', line[n++] = '\n';
         WRITE(file, line, n);
         modwerk_fxmap_written = modwerk_fxmap_written + 1u;
+    }
+    /* Then each machine the project uses: "#MODWERK_MC=504c:1:1:9fa85eef:POLY8". */
+    modwerk_fxmap_machines_written = 0;
+    for (unsigned k = 0; k < MODWERK_MACHINE_MAP; ++k) {
+        uint8_t sig[2];
+        unsigned lo, hi;
+        uint32_t module;
+        char name[16], line[64];
+        if (!modwerk_machine_map_line(k, sig, &lo, &hi, &module, name)) continue;
+        unsigned n = 0;
+        for (const char *p = MC_LINE; *p; ++p) line[n++] = *p;
+        for (int shift = 12; shift >= 0; shift -= 4) line[n++] = "0123456789abcdef"[(unsigned)(sig[0] << 8 | sig[1]) >> shift & 15u];
+        for (unsigned part = 0; part < 2u; ++part) {
+            unsigned v = part ? hi : lo, d = 0;
+            char digits[4];
+            line[n++] = ':';
+            do { digits[d++] = (char)('0' + v % 10u); v /= 10u; } while (v);
+            while (d) line[n++] = digits[--d];
+        }
+        line[n++] = ':';
+        for (int shift = 28; shift >= 0; shift -= 4) line[n++] = "0123456789abcdef"[module >> shift & 15u];
+        line[n++] = ':';
+        for (unsigned i = 0; i < 15u && name[i]; ++i) line[n++] = name[i];
+        line[n++] = '\r', line[n++] = '\n';
+        WRITE(file, line, n);
+        modwerk_fxmap_machines_written = modwerk_fxmap_machines_written + 1u;
     }
 }

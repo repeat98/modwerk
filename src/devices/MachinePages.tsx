@@ -26,6 +26,7 @@ import { LibraryResultsBar } from '../components/LibraryResultsBar'
 import { compareModules, downloadCoverage, type ModuleStatistics } from '../community/module-statistics'
 import { DeviceImage, PhotoCredit } from './DeviceImage'
 import { ALL_MACHINES, DEVICES, DEVICES_BY_ID, STATUS_LABELS, deviceHref, deviceSteps, deviceTitle, readyForMods, stepsDone, type DeviceProfile } from './registry'
+import { MACHINE_STACK } from './machine-contract'
 import { isCoreBuildPreview } from '../engine/elekloader/protocol'
 import { DIGI_CORES, DIGI_DEVICES, DIGI_MODS, estimateCombination, type DigiMod } from './digi-mods'
 import { ZOOM_EFFECTS, isZoomSetDevice, matchesZoomEffect, zoomEffectAuthor, zoomEffectReleasedAt } from './zoom-effects'
@@ -218,6 +219,7 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
       {!total && <div className="no-results"><Icon name={term || libraryFamily !== 'all' ? 'search' : category === 'standalone' ? 'lock' : 'grid'} size={30} /><h2>{term || libraryFamily !== 'all' ? 'No modules found' : 'No ' + (category ? LIBRARY_CATEGORY_LABELS[category].toLowerCase() : 'modules') + ' here yet'}</h2><p>{term || libraryFamily !== 'all' ? 'Try another name, type or author.' : 'Be the first to publish one: every machine follows the same SDK.'}</p>{onClearSearch && (term || libraryFamily !== 'all') ? <button className="button button-quiet" onClick={() => clearFilter(onClearSearch)}>{libraryFamily !== 'all' ? 'Clear filters' : 'Clear search'}</button> : <a className="button button-quiet" href={term || libraryFamily !== 'all' ? deviceHref(device?.id ?? ALL_MACHINES) : issueRepository() + '/blob/main/docs/SDK.md'}>Browse modules</a>}</div>}
       {children}
       {device && <div className="library-note"><span className="status-dot" /><p>{device.id === 'octatrack' ? 'This catalog follows an experimental build. Review each module before preparing a ' + w.set + '.' : 'Built from each author’s pinned public release, with credit and licence.'}</p></div>}
+      {device && device.id !== 'octatrack' && <StackLadder device={device} />}
       {!device && <section className="machine-section"><div className="library-subheading"><span>No mods yet</span><span className="subtle">Help open the next machine</span></div><div className="machine-chips">{DEVICES.filter(machine => machine.status === 'research' || machine.status === 'open').map(machine => <a key={machine.id} href={deviceHref(machine.id)} className={'machine-chip is-' + machine.status}>{machine.name}{machine.variants && <small> {machine.variants.join(' · ')}</small>}</a>)}</div></section>}
     </> : device && <EmptyMachine device={device} embedded />}
   </div>
@@ -290,6 +292,14 @@ function Hero({ device, children, embedded = false }: { device: DeviceProfile; c
   )
 }
 
+// Where a machine stands on the way to the Octatrack's stack (docs/MACHINE_RECIPE.md): the road after the first mod.
+function StackLadder({ device }: { device: DeviceProfile }) {
+  return <section className="configuration-section" aria-labelledby="stack-title">
+    <div className="section-title"><h2 id="stack-title">Road to the Octatrack’s stack</h2><span className="subtle">{MACHINE_STACK.filter(piece => device.stack[piece.id] === 'done').length} of {MACHINE_STACK.length} done · <a href={issueRepository() + '/blob/main/docs/MACHINE_RECIPE.md'} target="_blank" rel="noreferrer">the recipe</a></span></div>
+    <ol className="device-ladder">{MACHINE_STACK.map((piece, index) => { const state = device.stack[piece.id]; return <li key={piece.id} className={'is-' + state}><span className="device-ladder-marker">{state === 'done' ? <Icon name="check" size={14} /> : index + 1}</span><span><strong>{piece.title}</strong><small>{piece.description}</small></span><span className={'device-step-state is-' + state}>{STEP_LABELS[state]}</span></li> })}</ol>
+  </section>
+}
+
 // Machines without mods: the library page becomes an invitation to open the first one.
 export function EmptyMachine({ device, machinePicker, embedded = false }: { device: DeviceProfile; machinePicker?: ReactNode; embedded?: boolean }) {
   const repository = issueRepository(), mobile = useMobileWorkspace()
@@ -303,6 +313,7 @@ export function EmptyMachine({ device, machinePicker, embedded = false }: { devi
         <div className="section-title"><h2 id="ladder-title">Road to the first mod</h2><span className="subtle">{stepsDone(device)} of {steps.length} done</span></div>
         <ol className="device-ladder">{steps.map((step, index) => { const state = device.steps[step.id] ?? 'open'; return <li key={step.id} className={'is-' + state}><span className="device-ladder-marker">{state === 'done' ? <Icon name="check" size={14} /> : index + 1}</span><span><strong>{step.title}</strong><small>{step.description}</small></span><span className={'device-step-state is-' + state}>{STEP_LABELS[state]}</span></li> })}</ol>
       </section>
+      <StackLadder device={device} />
       {device.research?.length ? <section className="configuration-section" aria-labelledby="research-title"><div className="section-title"><h2 id="research-title">Public research</h2><span className="subtle">Credit to its authors</span></div><ul className="device-research">{device.research.map(item => <li key={item.url}><a href={item.url} target="_blank" rel="noreferrer"><strong>{item.label}</strong><Icon name="arrow" size={13} /></a><p>{item.note}</p></li>)}</ul></section> : null}
       <section className="configuration-section" aria-labelledby="start-title"><div className="section-title"><h2 id="start-title">How to start</h2></div>
         <ol className="device-start">

@@ -22,6 +22,12 @@
 
 #include "ar2-1.74.h"
 
+// CIA_UI marks functions that run only in the UI task (keys, knobs, screen, parameter
+// text, tick housekeeping), never in the audio block. cold builds them for size, out of the hot
+// code, so the module takes less of the RAM all modules share; the rest stays at -O2. No
+// behaviour change.
+#define CIA_UI __attribute__((cold))
+
 #define KEY_MUTE 0x11
 #define KEY_CHRO 0x12
 #define KEY_SCNE 0x13
@@ -53,7 +59,6 @@ typedef unsigned word_t;
 typedef void (*settings_t)(int port, void *record);
 typedef void (*event_ctor_t)(void *event, int key, int flags, int when, int velocity);
 typedef void (*event_dtor_t)(void *event);
-typedef int (*dispatch_t)(void *brain, void *event);
 typedef word_t (*singleton_t)(void);
 typedef unsigned char (*live_rec_t)(void *app);
 typedef void (*grid_rec_set_t)(void *app, int on);
@@ -62,6 +67,7 @@ typedef void (*hline_t)(void *screen, int x1, int y, int x2, int colour);
 typedef void (*vline_t)(void *screen, int x, int y1, int y2, int colour);
 typedef void (*invalidate_t)(void *view);
 typedef long (*to_result_t)(int port, int mv);
+typedef int (*dispatch_t)(void *brain, void *event);
 typedef void *(*queue_t)(void);
 typedef void (*post_t)(void *queue, const void *message);
 
@@ -153,6 +159,19 @@ static void *brain(void)
     return *(void **)BRAIN_AT;
 }
 
+// core-ar2's ev_key site (core.s): every mod's ev_key handler in order, then
+// stock's Brain::key, as for a key from the panel. Every core-ar2 0.7 and
+// Modwerk base build exports it.
+extern int core_key(void *brain, void *event);
+
+static int sending;                         // a key of ours is going round the key chain
+
+// A key as from the panel. MUTE, the mode keys and FILL go through the whole
+// key chain, so the mods that follow pages and held keys (Loop Sync's page,
+// the base's send pages, Quick Mod Assign) see them too; this mod's own
+// handler lets them pass. PLAY, the transport, goes to stock alone: a mod that
+// takes PLAY as part of a gesture (QPER + PLAY clears in QPER Live Rec) must
+// not read the input's PLAY as the musician's.
 static void press(int key, int flags)
 {
     long event[KEY_EVENT_BYTES / 4 + 2];
@@ -160,7 +179,13 @@ static void press(int key, int flags)
     if (!b)
         return;
     EVENT_CTOR(event, key, flags, 0, 127);
-    DISPATCH(b, event);
+    if (key == KEY_PLAY)
+        DISPATCH(b, event);
+    else {
+        sending++;
+        core_key(b, event);
+        sending--;
+    }
     EVENT_DTOR(event);
 }
 
@@ -337,7 +362,7 @@ static void end_holds(int port)
 // Whether the input counts as pressed, from the two learned levels and
 // whether it did: past their middle toward the higher one, with hysteresis.
 // REVERSE DIRECTION swaps the levels, so the lower one is pressed.
-static int pressed(int low, int high, int level, int was)
+CIA_UI static int pressed(int low, int high, int level, int was)
 {
     int middle = (low + high) / 2;
     int band = (high > low ? high - low : low - high) / 8;
@@ -353,14 +378,14 @@ static int pressed(int low, int high, int level, int was)
 }
 
 // The bar's row for a level: the EXPR bars' scale, -0.5 V to 5.5 V over 45 rows.
-static int bar_row(int mv)
+CIA_UI static int bar_row(int mv)
 {
     int row = (mv + 500) * 45 / 6000;
     return (row < 0 ? 0 : row > 45 ? 45 : row) + 3;
 }
 
 // A learned level: the bar shaded from it to the bar's end, bracketed beside.
-static void mark(void *screen, int row, int end)
+CIA_UI static void mark(void *screen, int row, int end)
 {
     FILL(screen, 4, row, 15, end, 1);
     HLINE(screen, 18, row, 19, 1);
@@ -406,7 +431,7 @@ static void learned(int port, char *view, int learn)
 
 // Each draw of the CONTROL INPUT view, in EXPR or ACTION: which learn is
 // open, and the view to draw again. The port, or -1.
-static int watch(char *view)
+CIA_UI static int watch(char *view)
 {
     int port = *(long *)(view + VIEW_PORT);
     int learn;
@@ -424,7 +449,7 @@ static int watch(char *view)
 }
 
 // EXPR mode's draw, before stock's bars (draw.S).
-void control_in_actions_expr(char *view)
+CIA_UI void control_in_actions_expr(char *view)
 {
     watch(view);
 }
@@ -433,7 +458,7 @@ void control_in_actions_expr(char *view)
 // bars: the input's level against the two learned levels, which ACTION LEARN
 // moves as it runs, then a line at the box's far end while the input counts
 // as pressed, as EXPR's output line.
-void control_in_actions_draw(char *view, void *screen, int mv)
+CIA_UI void control_in_actions_draw(char *view, void *screen, int mv)
 {
     int port = watch(view);
     int low, high;
@@ -573,7 +598,7 @@ void control_in_actions_audio(void)
 // the record mode, for a live recording that RECORD + PLAY may start (which
 // turns grid and step recording off). Released with no live recording, it
 // was a toggle or RECORD + STOP, and the note goes.
-static void record_key(unsigned flags)
+CIA_UI static void record_key(unsigned flags)
 {
     if (flags & EV_REPEAT)
         return;
@@ -584,11 +609,13 @@ static void record_key(unsigned flags)
 
 // The key message, on the UI task: play what the interrupt saw, and keep it
 // from every other key handler and stock.
-int control_in_actions_key(void *brain, char *event)
+CIA_UI int control_in_actions_key(void *brain, char *event)
 {
     int port;
     long key = *(long *)(event + EV_KEY);
     (void)brain;
+    if (sending)
+        return 0;                           // our own key, for the rest of the chain
     if (key == KEY_REC)
         record_key(*(unsigned *)(event + EV_FLAGS));
     if (key != CIA_KEY)

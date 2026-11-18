@@ -9,13 +9,15 @@
 // (scripts/author-update-git.mjs).
 import { execFileSync, spawnSync } from 'node:child_process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { alternation, moduleFolders } from './machine-folders.mjs'
+import { instrumentFiles } from './pr-body.mjs'
 
-const GENERATORS = [['licenses:generate'], ['machines:generate'], ['modules:generate'], ['modules:pairs', '--', '--write']]
+const GENERATORS = [['licenses:generate'], ['machines:generate'], ['modules:generate']]
 
 // The checks that judge a module. A module pull request never edits them: a red check names the fix, and a wrong check is its own
 // Fix: pull request (AGENTS.md, "Setup and checks"). A module release still carries its builder list, assets, comparisons and test lists.
-const MODULE_FOLDER = /^sdk\/(?:octabam|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/]+\/|^sdk\/drafts\/[^/]+\//
-const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates)\.py$|scripts\/(?:modules|module-doctor|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|change-scope|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates)\.py$)/
+const MODULE_FOLDER = new RegExp(`^sdk\\/(?:${alternation(moduleFolders())})\\/modules\\/[^/]+\\/|^sdk\\/drafts\\/[^/]+\\/`)
+const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates|dsp_register_contract)\.py$|scripts\/(?:modules|module-doctor|module-cpu-price|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|change-scope|machine-folders|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates|dsp-register-contract)\.py$)/
 /** The gate files a change edits while it also adds or changes a module; [] when it changes no module. */
 export function gateEdits(files) {
   return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(file => GATE.test(file)) : []
@@ -44,7 +46,7 @@ const gateProblem = files => 'This pull request changes a module and also ' + fi
 const baseProblem = files => 'This pull request changes a module and also the base: ' + files.join(', ') + '. A base change is its own owner-reviewed pull request, merged before the module uses it (docs/module-guides/README.md#propose-a-hook). Move these files to a pull request of their own, then base the module on main once it has merged.'
 
 /** Why the checks cannot run on this Python, or null. npm run check runs the module gates in Python 3.10+: an older python3
- * (macOS's own is 3.9) crashes inside scripts/module-pairs.py while it loads the Octatrack manifests, with no word on why. */
+ * (macOS's own is 3.9) crashes inside scripts/module-compat.py while it loads the Octatrack manifests, with no word on why. */
 export function pythonProblem({ command = 'python3', version = null, error = null } = {}) {
   const [major, minor] = (version ?? '').split('.').map(Number)
   if (!error && (major > 3 || (major === 3 && minor >= 10))) return null
@@ -53,7 +55,7 @@ export function pythonProblem({ command = 'python3', version = null, error = nul
 }
 
 /** The verdict from what was found; every problem says what to do. */
-export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], compiled = null, board = null }) {
+export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], instrument = [], compiled = null, board = null }) {
   const problems = [...board?.problems ?? []], notes = [...board?.notes ?? []]
   if (python) problems.push(python)
   if (gateEdits.length) problems.push(gateProblem(gateEdits))
@@ -73,8 +75,11 @@ export function readiness({ python = null, dirty = [], behind = false, remote = 
   notes.push('What did the guides lack or get wrong while you did this? ' + (guideEdits.length
     ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix. If a developer working now could hit it before this merges, post it on the agent board yourself: npm run board -- finding <topic> <key> "…" --pr <n>.'
     : 'No guide edit is on this branch: fix it where a reader would look (docs/, AGENTS.md, the machine guide; for a module release, a separate Docs: PR), or write "nothing" in the PR.'))
-  notes.push('Then push, open or update the PR with a description in the template\'s shape (CI checks it says what changed and answers the guides question), and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
-  return { ok: problems.length === 0, problems, notes }
+  // Ready means the checks pass, not that anything ran on a unit (#1694 went up ready to merge after only development twins had).
+  if (instrument.length) notes.push('This changes what runs on an instrument (' + instrument.slice(0, 3).join(', ') + (instrument.length > 3 ? ` and ${instrument.length - 3} more` : '') +
+    '): open the pull request as a draft (gh pr create --draft) and mark it ready only after the developer has tested the exact build on a unit. The description then names it on a line of its own ("Tested on a unit: base 8d1db124 (or the package\'s sha256), MKII, what ran", or "Not tested on a unit: <why>" for the owner to decide); CI refuses a ready one without it.')
+  notes.push('Then push, open or update the PR with a description in the template\'s shape (CI checks it says what changed and answers the guides question; `node scripts/pr-body.mjs FILE.md` checks a description in a file the same way before you open the PR), and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
+  return { ok: problems.length === 0, problems, notes, instrument: instrument.length > 0 }
 }
 
 /** Claim on the agent board what this branch adds (a module, a hook or table index, a migration), so two developers never
@@ -154,11 +159,13 @@ async function main(argv) {
   const boardModule = !dirty.length && !behind ? await import('./agent-board.mjs') : null
   const claimed = boardModule && await boardClaims(root, base, boardModule), waiting = boardModule ? await boardModule.inboxNotes() : []
   const board = claimed || waiting.length ? { problems: claimed?.problems ?? [], notes: [...claimed?.notes ?? [], ...waiting] } : null
-  const verdict = readiness({ python, dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), compiled, board })
+  const verdict = readiness({ python, dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
   for (const line of verdict.notes) console.log('· ' + line)
-  console.log(verdict.ok ? 'Ready: this PR can merge without the owner repairing it.' : 'Not ready yet.')
+  console.log(!verdict.ok ? 'Not ready yet.' : verdict.instrument
+    ? 'Ready to open as a draft: the checks pass. Mark it ready for review once the exact build has run on a unit (above).'
+    : 'Ready: this PR can merge without the owner repairing it.')
   return verdict.ok ? 0 : 1
 }
 

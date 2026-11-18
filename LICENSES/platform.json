@@ -47,6 +47,7 @@
     "src/config/octatrack-base.ts",
     "src/config/support.ts",
     "src/config/usb-audio.ts",
+    "src/dev/address-names.ts",
     "src/devices/registry.ts",
     "src/hosting.ts",
     "src/legal/policy.ts",
@@ -74,8 +75,7 @@
     "scripts/push-keys.mjs",
     "scripts/push-runtime.test.mjs",
     "scripts/sync-module-releases.mjs",
-    "scripts/sync-module-releases.test.mjs",
-    "scripts/verify-placement-diagnostics.mjs"
+    "scripts/sync-module-releases.test.mjs"
   ],
   "dataFiles": [
     ".github/module-authors.json",

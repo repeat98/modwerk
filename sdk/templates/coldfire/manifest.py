@@ -1,14 +1,16 @@
 """<Module name> -- one line on what it changes in the firmware.
 
 THE SKELETON OF A COLDFIRE MODULE: code the build links and places for
-you, reached from stock code by detours you name by SYMBOL. Copy this
-directory to modules/<yourname>/ and edit. Directories starting with `_`
-are skipped by the registry, so this file is never built.
+you, reached from stock code by detours you name by SYMBOL.
+`npm run module:new` made this draft under sdk/drafts/. It builds as it is:
+`npm run module:dev -- <id>` tries it on your unit over USB, and
+`npm run module:doctor -- --draft <id>` checks it.
 
-modules/repitch/ is a finished one (one linked unit, detours, pokes);
-modules/midi-scenes/ another (units built from the author's repository as
-a submodule). docs/remixer/MODULES.md "Declaring a ColdFire
-module" is the guide; docs/remixer/PLACEMENT.md says where the bytes go.
+sdk/octatrack/modules/repitch/ is a finished one (one linked unit, detours,
+pokes); sdk/octatrack/modules/quantizer/ another (units built from the
+author's source, kept under upstream/). sdk/octabam/docs/remixer/MODULES.md
+"Declaring a ColdFire module" is the guide; sdk/octabam/docs/remixer/PLACEMENT.md
+says where the bytes go; docs/OCTATRACK_API.md lists the hooks.
 
 Say what the module is, which stock routines it changes, what is measured
 and what is inferred. Delete every comment below once answered.
@@ -23,7 +25,7 @@ MODULE = Module(
     name="_template_cf",
     key="TEMPLATE CF",
     kind=Kind.CF_PATCH,             # no DSP code, no chooser row
-    doc="One line, shown by `make modules`.",
+    doc="One line, shown in the build report.",
     category=Category.TRACK, author="__AUTHOR__", author_url="https://github.com/__AUTHOR__",
     proof=Proof.UNTESTED, proof_note="Development scaffold; no module behavior has been verified.",
 

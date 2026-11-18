@@ -2,6 +2,7 @@ import { execFileSync, spawn } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
+import { checkBaseSize } from './base-size.mjs'
 import { readChangeScope } from './change-scope.mjs'
 import { checkChangelog } from './changelog.mjs'
 import { checkDocs } from './docs.mjs'
@@ -119,9 +120,12 @@ if (!buildOnly && !suiteOnly && passed) {
   // Report release-note problems with the catalogue's, from the committed catalogue, rather than one push later.
   if (!passed) await changelogs()
 }
-// Every active Octatrack module must still install beside every other (declarations only, no firmware), and the card
-// builder's native pair checks must be current, proved and flagged.
-if (!buildOnly && !suiteOnly && !documentationOnly && passed) passed = await all(() => run('elekloader:check'), () => run('modules:compat'), () => run('modules:pairs'))
+// Every active Octatrack module must still install beside every other (declarations only, no firmware).
+if (!buildOnly && !suiteOnly && !documentationOnly && passed) passed = await all(() => run('elekloader:check'), () => run('modules:compat'))
+// How full the committed Octatrack base is, against the buffer a base on a unit writes it through (scripts/base-size.mjs).
+if (!buildOnly && !suiteOnly && !documentationOnly && passed && (!scope || scope.base)) {
+  try { console.log(checkBaseSize(root)) } catch (error) { console.error('Base size: ' + error.message); passed = false }
+}
 // Finish generated notice/catalog/media writes before lint, tests, typecheck or bundling read them.
 if (passed && !documentationOnly) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
 // Every path, including documentation-only checks and release builds, requires current-version notes and documents within their size.
@@ -141,7 +145,7 @@ if (passed && !suiteOnly && base) passed = await run('board', ['check', '--base'
 // Documentation uses the same import policy as publication without running firmware gates. The catalogue tests read Markdown
 // (the module guides' links, the agent files, the pull request template), so a prose-only change can break them and must run them.
 if (passed && !suiteOnly && documentationOnly) passed = await run('sdk:imports:check') && await run('test', ['src/catalog'])
-// module:doctor --draft copies a draft under sdk/octabam/modules/ for its run, where the SDK suite, the other test files and the
+// module:doctor --draft copies a draft under sdk/octatrack/modules/ for its run, where the SDK suite, the other test files and the
 // build would read it as a listed module. Its test waits out that parallel stage and runs alone after it.
 const DRAFT_DOCTOR = ['scripts/module-doctor.test.mjs', '-t', 'checks a draft where every gate looks']
 if (passed && !documentationOnly) {

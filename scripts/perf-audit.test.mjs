@@ -1,13 +1,46 @@
 import { describe, expect, it } from 'vitest'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { judgeRecord, selfTest, templateRecord, ownerWaivedPerformanceRow } from './perf-audit-analysis.mjs'
+import { judgeRecord, selfTest, templateRecord, ownerWaivedPerformanceRow, stampVerdict } from './perf-audit-analysis.mjs'
+import { modulePerformanceSourceSha256 } from './module-qualification.mjs'
+import { parseModuleDocument } from '../src/catalog/module-contract.ts'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const audit = (...args) => spawnSync(process.execPath, ['scripts/perf-audit.mjs', ...args], { cwd: root, encoding: 'utf8' })
+
+describe('performance stamp', () => {
+  const now = 'a'.repeat(64), before = 'b'.repeat(64)
+  it('passes numbers taken on this source, fails other source, and asks only new modules for a stamp', () => {
+    expect(stampVerdict({ sourceSha256: now }, now, true).state).toBe('ok')
+    expect(stampVerdict({ sourceSha256: before }, now, false)).toMatchObject({ state: 'fail', detail: expect.stringContaining('measured on other source') })
+    expect(stampVerdict({}, now, true).state).toBe('fail')
+    expect(stampVerdict({}, now, false).state).toBe('note')
+  })
+
+  it('stamps a passing record with the source it sits beside, and the stamp does not change that source', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'perf-stamp-')), folder = join(dir, 'pattern-sample-locks'), file = join(folder, 'evidence/performance.json')
+    try {
+      cpSync(join(root, 'sdk/octatrack/modules/pattern-sample-locks'), folder, { recursive: true })
+      const document = parseModuleDocument(JSON.parse(readFileSync(join(folder, 'octamod.module.json'), 'utf8')))
+      const stamped = audit('check', file, '--stamp')
+      expect(stamped.status, stamped.stdout + stamped.stderr).toBe(0)
+      const record = JSON.parse(readFileSync(file, 'utf8'))
+      expect(Object.keys(record).slice(0, 4)).toEqual(['schema', 'module', 'version', 'sourceSha256'])
+      expect(record.sourceSha256).toBe(await modulePerformanceSourceSha256(folder, document))
+      expect(audit('check', file, '--stamp').status).toBe(0)
+      expect(JSON.parse(readFileSync(file, 'utf8')).sourceSha256).toBe(record.sourceSha256)
+      // A code change after the numbers were taken: the doctor's verdict fails until they are measured and stamped again.
+      writeFileSync(join(folder, 'native.c'), readFileSync(join(folder, 'native.c'), 'utf8') + '\n/* changed */\n')
+      expect(stampVerdict(record, await modulePerformanceSourceSha256(folder, document), false).state).toBe('fail')
+      // A record for another version is never stamped.
+      writeFileSync(file, JSON.stringify({ ...record, version: '9.9.9' }))
+      expect(audit('check', file, '--stamp').stderr).toContain('Not stamped')
+    } finally { rmSync(dir, { recursive: true, force: true }) }
+  })
+})
 
 describe('perf audit', () => {
   it('proves its judgement on known-good and known-bad records', () => {

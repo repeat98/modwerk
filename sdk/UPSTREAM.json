@@ -4,19 +4,14 @@
   "sourceRepository": "https://github.com/repeat98/octamad",
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
   "scope": [
-    "character",
     "euclid",
     "miniverb",
-    "modulation",
     "repitch",
-    "spectrum",
     "tapeecho",
     "analog-bassdrum",
-    "midi-scenes",
     "usb-audio-out-tracks-main-cue",
     "quantizer",
     "cc-map",
-    "octakit",
     "previewvol"
   ],
   "transforms": [
@@ -78,7 +73,6 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "modules": [
         "analog-bassdrum",
-        "midi-scenes",
         "usb-audio-out-tracks-main-cue",
         "quantizer"
       ],
@@ -97,17 +91,6 @@
       "internalDependencies": [],
       "root": "octabam/modules/cc-map",
       "status": "0.1.2-experimental software-verified release; owner waiver for physical stress/chip timing; exact source/version pin"
-    },
-    {
-      "record": "imports/octakit-8d0ad6f.json",
-      "repository": "https://github.com/sambanks/octabam",
-      "revision": "8d0ad6f4f82c2efbc10e1c65eefbce0ad1cec4bf",
-      "modules": [
-        "octakit"
-      ],
-      "internalDependencies": [],
-      "root": "drafts/octakit",
-      "status": "draft; thumbnail, documentation/tutorial and actual MKII LCD captures supplied; qualification, owner review and browser/native integration pending"
     },
     {
       "record": "imports/previewvol-906fc354.json",

@@ -14,7 +14,7 @@ describe('machine profiles', () => {
   it('validates every machine and matches the generated registry', () => {
     const parsed = profiles.map(parseMachineProfile).sort((a, b) => a.order - b.order)
     expect(parsed.map(profile => profile.id)).toEqual(GENERATED.map(profile => profile.id))
-    expect(parsed.filter(profile => profile.sdk).map(profile => profile.id)).toEqual(['octatrack', 'digitakt', 'digitone', 'digitakt-ii', 'analog-rytm-mkii', 'analog-four-mkii', 'zoom-ms-70cdr'])
+    expect(parsed.filter(profile => profile.sdk).map(profile => profile.id)).toEqual(['octatrack', 'digitakt', 'digitone', 'digitakt-ii', 'analog-rytm-mkii', 'analog-rytm-mki', 'analog-four-mkii', 'zoom-ms-70cdr'])
   })
 
   it('keeps status, steps and SDK claims consistent', () => {
@@ -22,8 +22,19 @@ describe('machine profiles', () => {
     expect(() => parseMachineProfile({ ...octatrack(), steps: { ...octatrack().steps, core: 'started' } })).toThrow('every step done')
     expect(() => parseMachineProfile({ ...syntakt(), steps: { ...syntakt().steps, mods: 'done' } })).toThrow('only machines with mods')
     expect(() => parseMachineProfile({ ...syntakt(), status: 'research' })).toThrow('at least one started step')
+    // Maintainers review the machine's first releases: GitHub logins, each once.
+    expect(parseMachineProfile({ ...syntakt(), maintainers: ['octo-dev'] }).maintainers).toEqual(['octo-dev'])
+    expect(() => parseMachineProfile({ ...syntakt(), maintainers: ['@octo-dev'] })).toThrow('expected a GitHub login')
+    expect(() => parseMachineProfile({ ...syntakt(), maintainers: ['octo-dev', 'Octo-Dev'] })).toThrow('lists a login twice')
     expect(() => parseMachineProfile({ ...syntakt(), status: 'research', steps: { ...syntakt().steps, format: 'started' } })).toThrow('credit the research')
     expect(() => parseMachineProfile({ ...syntakt(), steps: { ...syntakt().steps, format: 'done' } })).toThrow('in research')
+  })
+
+  it('records the stack, open by default, and releases a machine only with all of it', () => {
+    expect(parseMachineProfile(syntakt()).stack).toEqual({ base: 'open', link: 'open', flash: 'open', loader: 'open', status: 'open', diagnostics: 'open', tools: 'open' })
+    expect(parseMachineProfile({ ...syntakt(), stack: { link: 'started' } }).stack.link).toBe('started')
+    expect(() => parseMachineProfile({ ...syntakt(), stack: { emulator: 'done' } })).toThrow('unknown field')
+    expect(() => parseMachineProfile({ ...octatrack(), stack: { ...octatrack().stack, diagnostics: 'started' } })).toThrow('every piece of the stack done')
   })
 
   it('accepts only hashes and safe paths, never firmware contents', () => {

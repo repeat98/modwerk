@@ -1,0 +1,20 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "41ba6b7bfa8d116843171cf07802a076f1094dc0e79b63fc221d569eaf8a4071",
+  "packageSha256": "f38ae755bbf3c3a6a675209b1421292e5806f0e8c1ac44bbd7a0d55e1ff546d5",
+  "capturedOn": "2026-11-16",
+  "method": "hardware",
+  "setup": "The owner's MKII over USB, 16 November 2026: a development twin of Modwerk base 0.7.4 (MAIN SHA-256 in imageSha256) booted from RAM, MIDI Scenes 0.3.0 installed as a 60-second trial (package SHA-256 f38ae755…), the owner's project on pattern A01, MIDI track 1, scene 1 on A and scene 9 on B, stopped transport. The unit's LCD framebuffer read over USB (npm run device session, png step), 256 x 128, two pixels a dot. The locks were cleared and the trial rolled back afterwards.",
+  "plan": [
+    "T1 SRC",
+    "hold SCENE B, encoder A +12, encoder B +20",
+    "capture ot-scene-lock.png",
+    "release SCENE B",
+    "capture ot-released.png",
+    "hold SCENE B, press encoders A and B (the locks cleared), release"
+  ],
+  "files": {
+    "ot-scene-lock.png": "91a6c3dee995c8f67fde03bde947adf822598bda87a6c626a6a20264596a9d3a",
+    "ot-released.png": "2f224bc1f1084aa28082f98a0f9f77be0ecbf3ca5f5f67c10c227f3c2e877f4b"
+  }
+}

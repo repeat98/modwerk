@@ -46,12 +46,17 @@ Measured statically in MAIN OS 1.74:
 - The bootstrap stages the packed stream at `0x40200000` and unpacks it in place to `0x40000400` (calls at bootstrap offsets `0x1FE`/`0x204`). A denser pack narrows the gap between writer and reader ([trap](ADD_A_MACHINE.md#research-a-coldfire-os-image)), so it is checked for every build.
 - NOR flash use by the OS: the bootstrap below `0x20000`, the OS container from `0x20000` (stock ends at `0x15A258`), and calibration records (`RBOW`) read at `0x780000`, `0x7C0000` and `0x7F0000`; no other flash address turned up between them. Its reads near `0x100000` go to the +Drive by 512-byte sector, not to the NOR.
 
-Rules for every modified MKI build (`ELE2_DEVICES['analog-rytm-mki']` enforces the first and the last):
+Reported, not yet checked on a Modwerk 1.74 image (re-check both before any MKI release):
 
-1. Keep `0x40000592–0x400005D8` (the OS entry's compare and upgrade call) and `0x4028C768–0x402A1B84` (the bootstrap and its version) **byte-identical** to stock.
+- BOOTSTRAP UPGRADE ends at `0x4011AA7A`, and the flash erase and program routines every flash write uses lie at `0x40096A6C–0x40096B3E` (two erases, from `0x40096A6C` and `0x40096AC2`, and the program routine from `0x40096AF6`). Calling any of them can damage the boot sectors and with them the recovery menu.
+- The in-OS upgrade decodes the file into a fixed 2 MiB buffer at `0x40366570`, with other statics right after it, so the decoded update (8-byte preamble and container) must stay at or below `0x1F0000`. An oversized file can crash the unit before or during the container write; the bootstrap's MIDI DIN recovery survives that.
+
+Rules for every modified MKI build (`ELE2_DEVICES['analog-rytm-mki']` enforces the first, the last and the update cap):
+
+1. Keep `0x40000592–0x400005D8` (the OS entry's compare and upgrade call), `0x4028C768–0x402A1B84` (the bootstrap and its version) and the boot-flash writers above **byte-identical** to stock. No mod may reference or copy those writers (`noLink`, refused by the linker once the MKI links mods).
 2. Flash only units that have booted the stock OS 1.74 once, so the installed bootstrap is at `0x0602` and the upgrade path never runs from a modified image.
 3. Never set the version above stock, mark a modified build in the version field, and never ship a modified bootstrap ([modding guidelines](../MODDING_GUIDELINES.md#keep-a-way-back)).
-4. Keep the container below the calibration records at `0x780000`, and the in-place margin above zero.
+4. Keep the container below the calibration records at `0x780000`, the decoded update at or below `0x1F0000`, and the in-place margin above zero.
 
 ## 4. Recovery: MIDI DIN only
 
@@ -110,6 +115,15 @@ On draadpiraat's unit, 8 November 2026, each flashed with Transfer:
 | MW02, a canary of Modwerk's own: `0x47B00000–0x47F00000` filled at boot with `address ^ 0xC0DEF00D`, checked 16 KB per UI tick | `P90 E0 0` with the sample memory full, sound locks, playback and a save: never written. After a power cycle the fill and count start again |
 | MW03, core.s's hook bus with a counter per event | `MW03 1349 K132 E74 S1`, `R102601 O102601`: every event, GLOBAL built once, render in and out equal; sound and timing as on stock |
 | MW06, this base (no modules), linked by Modwerk's linker and written by `ele2.ts` | a scratch project loads, plays, saves and reloads; GLOBAL and the pages as on stock; it survives a power cycle; stock 1.74 then loads the same project |
+| MW32 (9 November 2026), this base with ten MKII modules rebuilt for the MKI: CTRL ALL, Filter Hz, Pad Pressure Fix, Velocity Humanise, Quick Velocity Assign, Temp Save, Slice Loop, Euclid Accents, Sample Playback Rate and LFO RND; image SHA-256 `abce1832…39c16d5` | linked with no overlapping sites; each module's own steps passed together on the unit. Sample Playback Rate's audio was deliberately not listened to |
+
+### Facts the machine guide relies on
+
+How each was found. Addresses are OS 1.74's; no stock bytes are given.
+
+- **The active kit is at project + 232** (the MKII's + 352). Stock's accessors for the working kit add 232 to the project singleton (`0x40155738`); the first is at `0x400AB772`, next to the sequencer at project + 48 (`0x400AB73A`), and the kit reload `0x400AC3B0` uses the same offset. Temp Save saves and reloads the kit through it, and passed on the unit in MW32.
+- **Knob records.** Each parameter id has an 88-byte record in RAM, from `0x416A6AA4` (id x 88), copies of the image's parameter records. Stock's turn path (`0x400376D4`) takes the fine step at +4 and, with the encoder pushed, the coarse step at +8; the knob's drawing is the function at +48 and +52. Read in the image and in rytm-emu while building the MKI send bus's stock-drawn pages (9 November 2026).
+- **The voices' ring.** Stock's send routine (`0x40107610`) reads its input from `0x401078DC`, which returns `0x8000CF34` + index x 40 and advances the block index at `0x402ACD70` by 32 frames (224 frames, back to 0 after 192). `0x40107914` fills the ring from the codec's DMA: words 0-7 the eight voices in voice order (BD BT SD LT HH MT CY RS), words 8-9 AUDIO IN L/R, each negated as the sends read them. MAIN L/R are not in it. Found by following the delay's and the reverb's input back from the send routine; a second ring at `0x8000B334` (8-word frames) is read only by the DAC and return mixers.
 
 `npm run machine:base` builds this base once Elekloader's kit knows the MKI (its device and the ELE2 reader, proposed upstream); with the device registered privately it gives MW06's package section for section.
 

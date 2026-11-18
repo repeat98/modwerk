@@ -19,6 +19,9 @@ trap 'rm -rf "$staging_dir"' EXIT
 # Mount ONLY tracked source. A developer checkout may contain ignored firmware,
 # credentials and outputs, which must never be visible to the container.
 git -C "$source_dir" archive "$source_commit" | tar -x -C "$staging_dir"
+# The Octatrack's modules live in sdk/octatrack/modules; octabam's tools look for them beside tools/ (scripts/mirror-octatrack-modules.mjs).
+# The archive carries no mirror, so the staged tree gets its copy here.
+cp -R "$staging_dir/sdk/octatrack/modules" "$staging_dir/sdk/octabam/modules"
 # Copy only this commit object and its exact source tree, not repository history.
 git -C "$staging_dir" init -q
 git -C "$source_dir" cat-file commit "$source_commit" | git -C "$staging_dir" hash-object -t commit -w --stdin > /dev/null

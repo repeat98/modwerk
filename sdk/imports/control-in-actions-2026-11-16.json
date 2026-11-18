@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/control-in-actions",
+  "version": "0.1.5-experimental",
+  "date": "2026-11-16",
+  "changes": [
+    "Functions that run only in the UI task (the draws, the key handler and their helpers) are built cold, for size, so the module takes 380 bytes less of the shared mod RAM. The tick, the key play and the audio path stay at -O2. No behaviour change."
+  ],
+  "runtimeSourceSha256": "198abecbe92a44f03f07276cc1d38bafdf8813b4696edcc0f5ee6f25d7b38ddc",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/control-in-actions/control-in-actions-0.1.5-experimental-os1.74.elemod",
+      "sha256": "59f69448f26e0b8e722e3a6dd8460da93ca27c7d6527343f63206eef4b705922"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/control-in-actions/TESTING.md",
+  "requires": []
+}

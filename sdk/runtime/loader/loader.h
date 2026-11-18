@@ -12,7 +12,8 @@
 #define RUNTIME_CAPABILITY_FLAGS 7u     /* CF sites, hash-backed stock copies, authored constant fills; and 128, site events, when the machine has them (64 is the volatile journal) */
 #define RUNTIME_HEADER_BYTES 80u        /* ABI 9 and 10: ABI 8 (76) plus requires u16, claim and hook-entry counts u8;
                                          * older headers: 76, 72, 68, 50, 32, 28 */
-#define RUNTIME_IMAGE_BYTES 131072u      /* one module's image and bss (Tape Echo's tone table is 86 KiB) */
+#define RUNTIME_IMAGE_BYTES 131072u      /* one module's image (Tape Echo's tone table is 86 KiB) */
+#define RUNTIME_MODULE_BYTES 294912u     /* one module's image and bss (MIDI Scenes' locks: 64 Parts of 4 KiB) */
 #define RUNTIME_RELOCATIONS 2048u
 #define RUNTIME_SITES 128u
 #define RUNTIME_SITE_BYTES 32u
@@ -91,7 +92,8 @@ struct runtime_dsp {
     const struct runtime_dsp_claim *claims;
     /* ABI 10: an engine instead of an effect (the package's slots 0): DSP words for the base's hook sites, at base 0,
      * each relocation an index (| 0x8000: the word holds a fixed P address, value - base; else an offset, value +
-     * base); count 0 here, so nothing takes it for an effect. Kept in its pool extent, as the claims are. */
+     * base); count 0 here, so nothing takes it for an effect. Kept in its pool extent, as the claims are. Its `cycles`
+     * and `kind` are its price per voice (never 0, executed or hardware), outside the controller digest. */
     uint32_t engine_count, init_count;  /* init_count: every init claim's words, in claim order (`initial`) */
     uint16_t engine_relocation_count;
     uint8_t entry_count, pad;
@@ -137,7 +139,9 @@ enum runtime_refusal { RUNTIME_OK, RUNTIME_MALFORMED, RUNTIME_MEMORY, RUNTIME_CO
                        RUNTIME_STOCK /* ABI 7: the bytes under a site are not the stock bytes its hash names */,
                        RUNTIME_EVENT /* a site or copy meets a stock site the base owns as an event: subscribe to it */,
                        RUNTIME_FEATURE /* ABI 9: a base feature the package requires cannot come up this boot (on the
-                                        * Octatrack, the key bus with a DSP core's state lost): restart, then retry */ };
+                                        * Octatrack, the key bus with a DSP core's state lost): restart, then retry */,
+                       RUNTIME_UI_OPEN /* a window, page or key layer of the module it would replace or remove is still
+                                        * open (capability 1024): close it, then retry */ };
 /* ABI 9 refusals use the codes above: a feature the base does not have, a claim another live module's claim meets
  * (either writing), and (ABI 9) any hook entry are RUNTIME_CONFLICT. ABI 10: an engine the machine does not admit
  * (modwerk_machine_dsp_engine_admit) answers the machine's refusal. */

@@ -1,0 +1,1 @@
+Checks: `npm run elekloader:check` now refuses a Digitakt, Digitone, Digitakt II or Analog Rytm MKII package whose `jsr` or `jmp` to an absolute address has an odd target. The real CPU stops there with an address error while the emulators run on, so a routine linked to an odd offset or a mistyped stock address passed every emulator test. Every package in the catalogue passes.

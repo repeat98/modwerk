@@ -125,7 +125,7 @@ class SidechainCompressor(unittest.TestCase):
         text = json.dumps(document['compatibility']) + (FOLDER / 'README.md').read_text()
         for phrase in ('Frozen WIP', 'select no companion', 'refuses all fourteen', 'No Core Logger is appended'):
             self.assertNotIn(phrase, text)
-        self.assertEqual(document['compatibility']['conflicts'], ['midi-scenes', 'analog-bassdrum'])
+        self.assertEqual(document['compatibility']['conflicts'], ['analog-bassdrum'])
         for path in ['sdk/octabam/modules/sidechain-compressor/README.md']:
             self.assertTrue((APP / path).exists())
 

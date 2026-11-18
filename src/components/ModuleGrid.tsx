@@ -21,11 +21,12 @@ const octatrackModule = (id: string): GridModule | undefined => { const module =
  * module limit (set-limit.ts): over it, its count and what to remove; full, Keep and Add say why they add nothing.
  */
 export function ModuleGrid({ ids, inventory, describe, onOpen, onRemove, onKeep, onSaveUnit, module: find = octatrackModule, add = { href: '#library', label: 'Add modules' }, machine = 'octatrack' }: { ids: string[]; inventory?: Inventory; describe: (id: string) => string; onOpen?: (id: string) => void; onRemove: (id: string) => void; onKeep: (id: string) => void; onSaveUnit?: () => void; module?: (id: string) => GridModule | undefined; add?: { href: string; label: string }; machine?: string }) {
-  const leaving = inventory ? inventory.moduleIds.filter(id => !ids.includes(id)) : []
+  // On the unit and not in the set, running or switched off there (PROJECT > MODWERK > MODULES): the next sync removes them.
+  const leaving = inventory ? [...new Set([...inventory.moduleIds, ...inventory.offIds ?? []])].filter(id => !ids.includes(id)) : []
   const tiles = [...ids, ...leaving].map(id => ({ id, state: unitState(id, ids, inventory) }))
   // State and actions sit below the artwork, where they cannot cover its labels.
   const changing = tiles.some(tile => tile.state === 'load' || tile.state === 'leaving')
-  const chip: Record<UnitState, string> = { on: changing ? 'Stays' : 'On it', load: 'Adds', leaving: 'Leaves' }
+  const chip: Record<UnitState, string> = { on: changing ? 'Stays' : 'On it', load: 'Adds', leaving: 'Leaves', off: 'Off on it' }
   const tooMany = overLimitMessage(ids, 'sync', machine), full = atLimit(ids, machine)
   return <>
     {tooMany && <p className="service-note module-grid-limit" role="note">{tooMany}</p>}

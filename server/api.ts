@@ -24,6 +24,7 @@ import { membersOnline, sitePresenceRoute } from './presence'
 import { adminInsights } from './admin-insights'
 import { adminAccounts } from './admin-accounts'
 import { adminActivity, unansweredThreads } from './admin-activity'
+import { adminOctatrack } from './admin-octatrack'
 import { adminAnnouncements, publicAnnouncementItems, publicAnnouncementRoutes } from './announcements'
 import { adminNews, newsUnsubscribe } from './news-mail'
 import recipes from '../src/catalog/module-sets.json'
@@ -39,6 +40,7 @@ import { createConfigurationReport } from './configuration-reports'
 import { octatrackDiagnosticRoutes } from './octatrack-diagnostics'
 import { remoteSessionRoutes } from './remote-sessions'
 import { agentBoardRoutes } from './agent-board'
+import { maintenanceBotRoutes } from './maintenance-bot'
 import { IssueInputError, validateIssueContext, validateLogMissing } from '../src/community/issue-context'
 import { OT_LOG_MAX_BYTES, OtLogError, parseOtLog } from '../src/community/ot-log'
 
@@ -69,6 +71,11 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (path === '/api/news/unsubscribe' && request.method === 'POST') {
       if (!env.DB) throw new HttpError(503,'Community services are not connected yet.')
       return await newsUnsubscribe(request,env,env.DB)
+    }
+    // Telegram and the maintenance bot's GitHub job call these server-to-server: a webhook secret or bearer key authenticates them.
+    if (path.startsWith('/api/maintenance-bot/')) {
+      if (!env.DB) throw new HttpError(503,'Community services are not connected yet.')
+      return (await maintenanceBotRoutes(request,env,env.DB,path))!
     }
     checkOrigin(request,env)
     const auth = await authentication(request,env,path)
@@ -266,6 +273,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       const news = await adminNews(request, env, db, path, adminId)
       if (news) return news
       if (path === '/api/admin/insights' && request.method === 'GET') return response(await adminInsights(db))
+      if (path === '/api/admin/octatrack' && request.method === 'GET') return response(await adminOctatrack(db))
       if (path === '/api/admin/unanswered-threads' && request.method === 'GET') return response(await unansweredThreads(db,new Date(),url.searchParams))
       if (path === '/api/admin/activity' && request.method === 'GET') return response(await adminActivity(db,new Date(),Number(url.searchParams.get('days') ?? 30)))
       if (path === '/api/admin/accounts' && request.method === 'GET') return response(await adminAccounts(db,new Date(),Number(url.searchParams.get('days') ?? 30)))

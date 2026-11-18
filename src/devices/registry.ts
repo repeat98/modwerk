@@ -29,6 +29,7 @@ export type DeviceProfile = {
   // file: the newest release's stock OS file; Zoom releases list none (the OS is never modified).
   firmware?: { releases: string[]; file?: string; flash: string; recovery: string }
   steps: Partial<Record<DeviceStepId, StepState>>
+  stack: MachineProfile['stack']
   research?: { label: string; url: string; note: string }[]
   sdk?: string
   art: DeviceArt
@@ -78,6 +79,9 @@ export function readyForMods(device: Pick<DeviceProfile, 'family' | 'steps' | 's
   return device.steps[device.family === 'zoom' ? 'load' : 'core'] === 'done' && !!device.sdk
 }
 
+// A machine Start developing sends to integration rather than to module prompts.
+export const needsIntegration = (device: DeviceProfile | undefined) => !device || !readyForMods(device)
+
 // Machines come from sdk/machines/<id>/machine.json through scripts/machines.mjs; the UI keeps a compact shape.
 export const DEVICES: DeviceProfile[] = (MACHINES as MachineProfile[]).map(machine => ({
   id: machine.id, name: machine.name, family: machine.family, variants: machine.variants, status: machine.status, summary: machine.summary,
@@ -86,7 +90,7 @@ export const DEVICES: DeviceProfile[] = (MACHINES as MachineProfile[]).map(machi
     file: machine.firmware.releases[machine.firmware.releases.length - 1].files[0]?.name,
     flash: machine.firmware.flash, recovery: machine.firmware.recovery,
   },
-  steps: machine.steps, research: machine.research, sdk: machine.sdk?.guide, art: machine.art,
+  steps: machine.steps, stack: machine.stack, research: machine.research, sdk: machine.sdk?.guide, art: machine.art,
 }))
 
 export const DEVICES_BY_ID: Record<string, DeviceProfile> = Object.fromEntries(DEVICES.map(device => [device.id, device]))

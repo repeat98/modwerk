@@ -5,7 +5,7 @@ import type { OctatrackLink, LinkDiagnostic } from '../engine/elekloader/octatra
 import type { LoadReading } from '../engine/elekloader/upload-wire'
 import { browserRequestsPrivacy, countOctatrackAction } from './usage'
 import { diagnosticClient } from './diagnostic-client'
-import { OCTATRACK_DIAGNOSTICS_VERSION, DIAGNOSTICS_GUEST, DIAGNOSTIC_USB_EVENTS, type PreLinkFailure, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, type SiteDiagnosticEvent, type DiagnosticConsent, type DiagnosticLive, type OctatrackDiagnostic } from './octatrack-diagnostics-contract'
+import { OCTATRACK_DIAGNOSTICS_VERSION, DIAGNOSTICS_GUEST, syncFailureReason, DIAGNOSTIC_USB_EVENTS, type PreLinkFailure, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, type SiteDiagnosticEvent, type DiagnosticConsent, type DiagnosticLive, type OctatrackDiagnostic } from './octatrack-diagnostics-contract'
 import { subscribeSiteDiagnosticEvents, collectBrowserDiagnosticEvents } from './site-diagnostic-events'
 
 /** A visitor's random ID (DIAGNOSTICS_GUEST): made only when they agree to share, removed when they stop, kept in this
@@ -26,8 +26,8 @@ const guestHeaders = (member: string | null): Record<string, string> => member =
 export interface DiagnosticPreference { accountId: string | null; available: boolean; enabled: boolean; ready: boolean; busy: boolean; error: string; notice: string; hasChoice: boolean; saved: boolean; lastSent: string | null }
 const listeners = new Set<() => void>()
 const locallyStopped = new Set<string>()
-/** `hasChoice`: a choice under the current text that hasn't expired, so the invitation stays away. `saved`: any earlier choice, whose reports can still be deleted. */
-const choice = (saved: DiagnosticConsent) => ({ hasChoice: saved.version === OCTATRACK_DIAGNOSTICS_VERSION && !!saved.changedAt && Date.parse(saved.expiresAt ?? '') > Date.now(), saved: !!saved.changedAt })
+/** `hasChoice`: a choice that hasn't expired, under any text version, so the invitation stays away. `saved`: any earlier choice, whose reports can still be deleted. */
+const choice = (saved: DiagnosticConsent) => ({ hasChoice: !!saved.changedAt && Date.parse(saved.expiresAt ?? '') > Date.now(), saved: !!saved.changedAt })
 let snapshot: DiagnosticPreference = {accountId:null,available:false,enabled:false,ready:false,busy:false,error:'',notice:'',hasChoice:false,saved:false,lastSent:null}
 let owner: string | null = null, blocked = false, expires = 0
 let preferenceRevision = 0
@@ -101,7 +101,7 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
       if (!current() || snapshot.busy || preferenceRevision !== revision) return false
       if (saved.accountId !== memberId) { publish({enabled:false,ready:false,error:'Your sign-in changed. Refresh this page to manage diagnostics.'}); return false }
       expires = Date.parse(saved.expiresAt ?? '')
-      publish({enabled:saved.enabled && saved.version === OCTATRACK_DIAGNOSTICS_VERSION && !blocked,ready:true,available:true,...choice(saved)})
+      publish({enabled:saved.enabled && !blocked,ready:true,available:true,...choice(saved)})
       if (!saved.enabled) { transfer?.abort(); healthRead?.abort() }
       return true
     } catch { if (current() && preferenceRevision === revision && !snapshot.busy) publish({enabled:false,ready:true,available:false}) }
@@ -145,7 +145,9 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
     if (event.event === 'link_failed') { if (event.failure) linkFailed(event.failure); return } // the link's own report of the same
     if (event.event === 'sync_started') { activeSync = true; countOctatrackAction('usb_sync_started') }
     else if (activeSync && ['kept','undone','sync_failed','disconnected'].includes(event.event)) {
-      countOctatrackAction(event.event === 'kept' ? 'usb_sync_kept' : event.event === 'undone' ? 'usb_sync_undone' : 'usb_sync_failed'); activeSync = false
+      if (event.event === 'kept' || event.event === 'undone') countOctatrackAction(event.event === 'kept' ? 'usb_sync_kept' : 'usb_sync_undone')
+      else countOctatrackAction('usb_sync_failed', syncFailureReason(event))
+      activeSync = false
     }
     if (['sync_started','kept','undone','sync_failed','disconnected'].includes(event.event)) flushLoad()
     void send(event)

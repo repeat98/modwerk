@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
-import { LINK_DEVICES, ModError, applyWholeBuilds, linkMods, parseElemod, type LinkDevice } from './elemod'
+import { LINK_DEVICES, ModError, applyWholeBuilds, checkLinkable, linkMods, parseElemod, type LinkDevice } from './elemod'
+import { ELE2_DEVICES } from './ele2'
 import { ELE3_DEVICES } from './ele3'
 import A4_PROFILE from '../../../sdk/machines/analog-four-mkii/machine.json'
 import { fromImage } from '../../../vendor/elekloader/kit/src/store.ts'
@@ -44,6 +45,47 @@ describe('elemod linker', () => {
     const changed = image.slice(); changed[0x101] = 0
     await expect(linkMods([parse(core), parse(mod('one', 0x40000100))], changed)).rejects.toThrow('stock main OS')
     await expect(linkMods([parse(core), parse(mod('big', 0x40000100, { sections: { '.run': { parts: [['hex', '4e75']] }, '.bss': { size: 8192 } } }))], image)).rejects.toThrow('need RAM')
+  })
+
+  it('refuses a mod that references or copies a routine the device keeps unlinkable', async () => {
+    const guarded: LinkDevice = { ...device, noLink: [...ELE2_DEVICES['analog-rytm-mki'].noLink, [0x40000400, 0x40000410, 'a test routine']] }
+    const on = (doc: Record<string, unknown>) => parseElemod(doc, String(doc.id), [guarded])
+    const run = { '.run': { parts: [['hex', '4e7500000000']] }, '.bss': { size: 16 } }
+    const mods = [core,
+      mod('caller', 0x40000100, { symbols: { handler: ['.run', 0], flash_program: ['abs', '0x40096af6'] }, exports: ['flash_program'] }),
+      mod('jumper', 0x40000200, { sections: run, relocs: [['.run', 2, 'abs32', 'abs', 0x4011a7a4]] }),
+      mod('user', 0x40000300, { sections: run, imports: ['flash_program'], relocs: [['.run', 2, 'pc32', 'sym:flash_program', 2]] }),
+      mod('copier', 0x40000500, { sections: { '.run': { parts: [['stock', '0x40000408', 4]] }, '.bss': { size: 16 } } })].map(on)
+    const refused = (await checkLinkable(mods, image)).filter(problem => problem.includes('no mod may link to it'))
+    expect(refused).toEqual([
+      'caller 1.0: symbol flash_program reaches 0x40096af6-0x40096b3e, the flash program routine every flash write uses: no mod may link to it on the Test machine',
+      'jumper 1.0: a reference to 0x4011a7a4 reaches 0x4011a7a4-0x4011aa7a, BOOTSTRAP UPGRADE, which rewrites the boot flash: no mod may link to it on the Test machine',
+      'user 1.0: a reference to 0x40096af8 reaches 0x40096af6-0x40096b3e, the flash program routine every flash write uses: no mod may link to it on the Test machine',
+      'copier 1.0: a stock copy from 0x40000408 reaches 0x40000400-0x40000410, a test routine: no mod may link to it on the Test machine',
+    ])
+    await expect(linkMods(mods, image)).rejects.toThrow('no mod may link to it')
+    expect((await linkMods([on(core), on(mod('one', 0x40000100))], image)).order).toEqual(['core 1.0', 'one 1.0'])
+  })
+
+  it('gives a set too big for the area the first larger one it may use, and leaves every other set where it was', async () => {
+    const wide: LinkDevice = { ...device, ddrMore: [{ area: [0x40ffc000, 0x41001000] }, { area: [0x40ffc000, 0x41009000], unless: 'fixed_end' }] }
+    const on = (doc: Record<string, unknown>) => parseElemod(doc, String(doc.id), [wide])
+    const sized = (id: string, addr: number, bss: number, extra: Record<string, unknown> = {}) => mod(id, addr, { sections: { '.run': { parts: [['hex', '4e75']] }, '.bss': { size: bss } }, ...extra })
+    const small = await linkMods([on(core), on(mod('one', 0x40000100))], image)
+    expect(small.layout.ddr[0]).toBe(0x41000000)
+    expect(small.image).toEqual((await linkMods([parse(core), parse(mod('one', 0x40000100))], image)).image)
+    const big = sized('big', 0x40000200, 0x2000)
+    const linked = await linkMods([on(core), on(mod('one', 0x40000100)), on(big)], image)
+    expect(linked.layout.ddr[0]).toBe(0x40ffc000)
+    expect(linked.layout.ddrSpare).toBe(0x41001000 - linked.layout.bss[1])
+    expect(new DataView(linked.image.buffer).getUint32(0x100 + 2)).toBeGreaterThanOrEqual(0x40ffc000)
+    await expect(linkMods([parse(core), parse(mod('one', 0x40000100)), parse(big)], image)).rejects.toThrow('bytes over')
+    const huge = await linkMods([on(core), on(sized('huge', 0x40000300, 0x8000))], image)
+    expect(huge.layout.ddr[0]).toBe(0x40ffc000)
+    expect(huge.layout.ddrSpare).toBe(0x41009000 - huge.layout.bss[1])
+    await expect(linkMods([on(core), on(sized('fixed', 0x40000300, 0x8000, { imports: ['fixed_end'] })), on(mod('ends', 0x40000400, { symbols: { handler: ['.run', 0], fixed_end: ['.run', 0] }, exports: ['fixed_end'] }))], image))
+      .rejects.toThrow(/past 0x41001000 .*fixed 1\.0 cannot use the 53248 bytes at 0x40ffc000-0x41009000/)
+    await expect(linkMods([on(core), on(sized('vast', 0x40000300, 0x10000))], image)).rejects.toThrow('past 0x41009000')
   })
 
   it('applies a single whole build and refuses two', async () => {

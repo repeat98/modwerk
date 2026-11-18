@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-14",
+  "source": "npp1993 (Nathaniel Pavel, Modwerk maintainer), on their own unit; results as reported by the tester",
+  "reporter": "npp1993",
+  "statement": "Hardware, OS 1.74: FZ78, the released core-ar2 0.3 with Filter Hz 1.2.1 alone, booted from RAM over USB on an Analog Rytm MKII on 2026-11-14, passed all four steps: with FRQ locked on a held trig at 440Hz, 1.11kHz, 2.22kHz and 21.1kHz the white box stayed the same width and covered the whole value; a locked RES showed its box as before; unlocked FRQ read 13.8Hz fully left and 21.1kHz fully right; about a minute of playback while turning FRQ had no freezes or dropouts.",
+  "status": "hardware-tested-reported",
+  "scope": "filter-hz 1.2.1 alone with the released core-ar2 0.3 (FZ78), booted from RAM in a scratch project.",
+  "modules": [
+    {
+      "id": "filter-hz",
+      "version": "1.2.1"
+    },
+    {
+      "id": "core",
+      "version": "0.3"
+    }
+  ],
+  "builds": [
+    {
+      "label": "FZ78",
+      "testedOn": "2026-11-14",
+      "os": "1.74",
+      "syxSha256": "3554efa8d84a384bc18c8f0cf5336d493ca2b26137091432d3ebc610a946a93f",
+      "mainSha256": "37c3e0de92eb9fa6db8a95fc7fbe16bee4c3389e00a98b39092dcffabacf2d92",
+      "content": "Modwerk's linker on stock 1.74: elekloader's released core-ar2 0.3 (6b97dfb3…3e58) + Filter Hz 1.2.1 from this folder (source c4ec14ab…), --version FZ78.",
+      "loaded": "RAM boot over USB from a flashed Modwerk base image with a RAM-boot gate; the flash was not written, and a power cycle returns to the flashed OS."
+    }
+  ],
+  "limitations": [
+    "Tested by a maintainer, not by the module's author.",
+    "Booted from RAM, not flashed; the screen shows the flashed image's label.",
+    "Playback was not timed exactly (about a minute). Filter types other than LP2, other pages' locks and other modules beside it were not tried."
+  ]
+}

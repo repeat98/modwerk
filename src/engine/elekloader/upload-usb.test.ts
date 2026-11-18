@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  findVendorInterface, parseInventory, parseMissing, parseRuntimeCapabilities, parseVendorIdentity, parseVendorResult, UsbVendorTransport, VendorTransportError, type ControlDevice,
+  findVendorInterface, parseInventory, parseMissing, parseOff, parseRuntimeCapabilities, parseVendorIdentity, parseVendorResult, UsbVendorTransport, VendorTransportError, type ControlDevice,
   VENDOR_CLASS, VENDOR_PROTOCOL, VENDOR_RESULT_BYTES, VENDOR_SUBCLASS,
 } from './upload-usb'
 
@@ -205,5 +205,34 @@ describe('the modules a project names that are not installed', () => {
     })
     expect(await new UsbVendorTransport(unit(false), 6).inventory()).toEqual([{ handle: 0xff, layout: 0, module: '0000002a', name: '' }])
     expect(await new UsbVendorTransport(unit(true), 6).inventory()).toBeUndefined() // a base from before INVENTORY
+  })
+  it('reads OFF, the modules switched off on the unit, in pages of 5 ("MWO"), asking again while the list moves', async () => {
+    const reply = (ids: number[], count: number) => {
+      const view = new DataView(new ArrayBuffer(8 + 56 * ids.length))
+      ;[0x4d, 0x57, 0x4f, ids.length, count >> 8, count & 255].forEach((b, i) => view.setUint8(i, b))
+      ids.forEach((id, i) => { const at = 8 + 56 * i
+        view.setUint8(at, 0xff); view.setUint16(at + 2, 3); view.setUint32(at + 4, id)
+        ;[...'Tape Echo'].forEach((c, k) => view.setUint8(at + 8 + k, c.charCodeAt(0)))
+        for (let k = 0; k < 32; k++) view.setUint8(at + 24 + k, id + k & 255) })
+      return view
+    }
+    expect(parseOff(reply([0x2a], 1))).toEqual({ count: 1, modules: [{ handle: 0xff, layout: 3, module: '0000002a', name: 'Tape Echo',
+      sha256: Array.from({ length: 32 }, (_, k) => (0x2a + k).toString(16).padStart(2, '0')).join('') }] })
+    expect(() => parseOff(new DataView(new ArrayBuffer(8)))).toThrow(VendorTransportError)
+    expect(() => parseInventory(reply([0x2a], 1))).toThrow(VendorTransportError)
+    const asked: number[] = []
+    let stalls = 2
+    const unit = (older: boolean): ControlDevice => ({
+      async controlTransferOut() { throw new Error('read-only') },
+      async controlTransferIn(setup, length) {
+        expect(setup).toMatchObject({ request: 40 }); expect(length).toBe(288)
+        if (older || stalls-- > 0) return { status: 'stall' }
+        asked.push(setup.value)
+        return { status: 'ok', data: setup.value ? reply([6, 7], 7) : reply([1, 2, 3, 4, 5], 7) }
+      },
+    })
+    expect((await new UsbVendorTransport(unit(false), 6).off())!.map(module => module.module)).toEqual([1, 2, 3, 4, 5, 6, 7].map(id => id.toString(16).padStart(8, '0')))
+    expect(asked).toEqual([0, 5])
+    expect(await new UsbVendorTransport(unit(true), 6).off()).toBeUndefined() // a base from before the MODULES page
   })
 })

@@ -27,11 +27,11 @@ Follow `docs/ADD_A_MODULE.md` and the rules in `AGENTS.md`, in this order.
    - An Octatrack module scaffolds into `sdk/drafts/<id>/`, where it stays until it is qualified. `npm run module:dev -- <id>` builds it and tries it on the unit (`--watch` on every save); `npm run module:doctor -- --draft <id>` judges it as experimental, and `--release` as a release.
    - `module:new` claims the module on the agent board for the signed-in developer (`npm run board -- login` once) and refuses one someone else holds; the doctor's `board claim` line stays red until the claim is theirs.
    - A new hook, table or migration number gets its claim as soon as you pick it: `npm run board -- claim hook <machine>/<index>` or `claim migration <number>` (`docs/AGENT_BOARD.md`).
-7. **Test** on their unit (`/modwerk-try-on-unit`) or in the emulator. Record only what was observed, on the named build.
+7. **Test** with `/modwerk-test-on-unit`: your own tests on their unit first, then theirs; without a unit, in the emulator. Record only what was observed, on the named build.
 8. **Finish,** once the developer says testing is done (until then, commit without pushing):
    - docs, credits, and a thumbnail in the shared style (`docs/ADD_A_MODULE.md#module-thumbnail-style`);
    - release notes in `src/community/module-changelogs/`;
    - review it as the owner will, against the pull request worker's checklist and the rules contributions most often break (`docs/MAINTENANCE.md#pull-request-worker`), and fix what applies;
    - then `/modwerk-pr-ready` and the pull request.
 
-   A new module ships in a pull request of its own, and the owner reviews its first release. A push, merge or "Firmware ready" is not a release: after the merge, verify the live version and a saved download.
+   A new module ships in a pull request of its own, and a maintainer of its machine or the owner reviews its first release (`docs/DEVELOPER_WORKFLOW.md#who-reviews-a-first-release`). A push, merge or "Firmware ready" is not a release: after the merge, verify the live version and a saved download.

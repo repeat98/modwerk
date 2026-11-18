@@ -10,8 +10,10 @@ The site emits `firmware-builder.json`, a fingerprint of the engine, catalogue,
 build policies and dependency lock. The tool rejects a different local builder,
 unpublished/paused/beta modules, incompatible selections, a stock OS mismatch,
 changed live inputs during a build, and unexpected release or image hashes.
-Digitakt II downloads remain disabled. Octatrack, Digitakt mk1 and Digitone
-mk1/Keys use their existing builders and stock verification.
+Digitakt II downloads remain disabled. Digitakt mk1 and Digitone mk1/Keys use
+their existing builders and stock verification. The Octatrack has no firmware
+build with modules in it: its modules go through the Modwerk base, over USB or
+as the module file for the card.
 
 This verifies a **saved local build from published inputs**. It does not test
 browser controls, account/download tracking, physical flashing or hardware
@@ -49,10 +51,7 @@ npm run firmware:download -- \
   --request /tmp/digi-download.json
 ```
 
-For Octatrack, set `machine` to `octatrack`, `os` to `1.40C`, choose native
-module IDs, and omit `version` (the published display version is ELEKLOADER).
-Optional `keepStockFx2` and `usbAudio` settings use the browser engine's existing
-validation. For Digitone, use `digitone`, its supported stock OS, native module
+For Digitone, use `digitone`, its supported stock OS, native module
 IDs and a four-character ASCII display version.
 
 Every success creates a fresh private output folder, saves the firmware and

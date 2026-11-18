@@ -2012,7 +2012,6 @@ default frames; that has not been tried.
 | --- | --- |
 | Mandatory infrastructure | The [private base source recipe](../sdk/machines/octatrack/elekloader/README.md) extends upstream core 0.3 with logger/startup and the unwired upload controller. Qualify its guarded stock replay, retained/I/O memory and bootstrap; integrate exact selected-module identity. Old source-specific exceptions do not qualify a different core. |
 | Mute Modes | The pinned converter and its native check append tables, while this module inserts the PERSONALIZE row at index 2. The private recipe explicitly refuses that unsupported layout. Its callable `Linked.reference` also reaches a tuple-only path. Support and independently verify both contracts before accepting the port. |
-| MIDI Scenes | Its writes inside the bootloader-copy range are refused. Port the source to a safe layout; do not weaken the protected-range rules. |
 | Poly8 | Conversion emits a package, but native linking fails on unresolved dependencies. Supply explicit source dependencies and remove duplicate shared implementations. |
 | DSP / FX | The converter refuses custom DSP/FX-menu modules. Extend upstream's existing DSP linker/bus with stock-free source recipes, general P/X/Y resource accounting, per-track dispatch, descriptors and choosers on both cores. Do not run the old composer behind an `.elemod`. |
 | USB Audio | The private source port now registers the internal USB MIDI dependency and uses upstream's guarded descriptor clone. Static parity and the adapted emulator USB checks pass; hardware, cache, real-host audio/MIDI/storage compatibility and the module-update transport still require implementation/qualification. |
@@ -2460,7 +2459,7 @@ Not the loader's doing: on 14 October 2026 (dev twin of base `362fb24d`, `octatr
   refused. Since then (owner's choice, beta finding 34) each slot is charged at least the dearest stock effect its bank's
   Parts name there (this table's figures, DELAY and NONE 0), so a Part switch or a RELOAD never needs room it was not
   given. A stock pick dearer than its bank uses in that slot is refused (DSP FULL) when it would take what runs or
-  another Part of the bank past the allowance. Machine voices and engines, which a bank change keeps, still book 342 a slot.
+  another Part of the bank past the allowance. Machine voices booked 342 a slot until 17 November 2026 (#1542).
 - **Modules.** A module carrying an emulator figure is charged 7/4 of it until it carries a hardware figure.
 - **Effect.** With 342 a slot, one ~665-cycle module fit on core 0 beside anything stock, two on core 1. In a bank of
   FILTER and DELAY, three Mini Verbs (720 charged) fit on core 1 and two on core 0 (owner's MKII, 24 October 2026, twin of
