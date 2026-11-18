@@ -19,6 +19,7 @@ code is copied here.
 | select_arr(n): stock's choice of arrangement n (index, pointer, playback reset; -1 while the arranger is busy) | 0x400a03a0 |
 | The arrangement chosen, 0-7 | 0x100b14d1 |
 | Arranger mode, and stock's switch into it (FUNC + PATTERN's; nothing if already on) | 0x460d1aec, 0x4005200c |
+| project.work's ARRANGEMENT_MODE line sets 0x80000010 and 0x100b14dc when a project is read (0x40087e20); LOAD's request saves the current project after switching arranger mode off, so reopening the same project starts in pattern mode | 0x40087e20 |
 | The mode stock applies at the end of a load (0x4002390a calls 0x40055fd8 with it). LOAD's request 0x40023b68 switches arranger mode off and clears it before posting the load job | 0x80000010 |
 
 Battery RAM 0x100f8f06-0x100f8ffc was free; the module claims 0x100f8f10-0x100f8f20 (battery-ram.json).

@@ -30,6 +30,8 @@
 
 #define K_RIGHT 0x21
 #define K_LEFT 0x34
+#define K_FUNC 0x2d
+#define K_PATTERN 0x2e
 
 #define BOOKS 16u
 #define SLOTS 8u
@@ -107,6 +109,8 @@ struct as_state {
     int8_t restore;          /* a project was loaded on this book: the UI task switches to it once stock is done, -1 none */
     uint16_t restore_ticks;
     uint8_t mode_on;         /* after a load: the project was left in arranger mode, so turn it on again */
+    uint8_t mode_pref;       /* arranger mode as the musician left it: off only after their own FUNC + PATTERN */
+    uint8_t func_down, mode_key, mode_key_ticks;
     uint8_t hush;            /* frames after a switch of ours in which the job's NOW SAFE TO EJECT! is closed */
     int8_t restore_rc;       /* the last answer to posting the return after a load, for the diagnostic word */
     uint8_t loads, reloads;  /* project loads and reloads seen, for the diagnostic word */
@@ -147,6 +151,7 @@ static struct as_state *ready(void)
     s->pending = -1;
     evlog = (uint32_t)rd8(RECORD + 6) << 8 | rd8(RECORD + 7);  /* the events before a power cycle */
     s->restore = -1;
+    s->mode_pref = rd32(ARR_MODE) ? 1 : 0;
     return s;
 }
 
@@ -262,7 +267,7 @@ static void write_place(struct as_state *s)
     s->place[0] = 'A'; s->place[1] = 'S'; s->place[2] = 'B'; s->place[3] = 'P';
     s->place[4] = s->book;
     for (unsigned b = 0; b < BOOKS; ++b) s->place[5 + b] = s->last[b];
-    s->place[21] = rd32(ARR_MODE) ? 1 : 0;
+    s->place[21] = s->mode_pref;                         /* not stock's flag: LOAD clears it before its own save */
     place_path(s->path, "work");
     put_place(s);
 }
@@ -277,6 +282,7 @@ static int read_place(struct as_state *s)
         || s->place[4] >= BOOKS) return -1;
     for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = (uint8_t)(s->place[5 + b] & 7u);
     s->mode_on = s->place[21] == 1;
+    s->mode_pref = s->mode_on;
     return s->place[4];
 }
 
@@ -510,6 +516,8 @@ static int stopped(void)
 int as_key(int code, int pressed)
 {
     struct as_state *s = ready();
+    if (code == K_FUNC) s->func_down = (uint8_t)!!pressed;
+    if (code == K_PATTERN && pressed && s->func_down) { s->mode_key = 1; s->mode_key_ticks = 0; }  /* stock's again */
     if (code != K_LEFT && code != K_RIGHT) return 0;
     if (!rd32(CHANGE_WINDOW)) return 0;                      /* only in ARR > CHANGE */
     if (!pressed) return 1;                                   /* its release is ours too */
@@ -562,6 +570,11 @@ void as_tick(void *api)
         if (rd32(MESSAGE_UP)) { close_message(); s->hush = 0; }
         else if (++s->hush > 90) s->hush = 0;
     }
+    /* Arranger mode as the musician leaves it. Stock's LOAD switches it off and saves that before it loads; only a
+     * FUNC + PATTERN of the musician's own records it as off. */
+    if (rd32(ARR_MODE)) s->mode_pref = 1;
+    else if (s->mode_key) { s->mode_pref = 0; s->mode_key = 0; }
+    if (s->mode_key && ++s->mode_key_ticks > 60) s->mode_key = 0;
     /* After a load: stock's LOAD starts in pattern mode; a project left in arranger mode gets it back, once its book
      * and arrangement are chosen (RELOAD keeps the mode, and then this does nothing). */
     if (s->mode_on && s->pending < 0 && !s->redraw) {

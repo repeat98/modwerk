@@ -325,13 +325,21 @@ int main(void)
     post_refuse = 0; as_tick(0); job(); as_tick(0);
     check("then it goes back to book 3, on arrangement 5", book() == 2 && marked(0x30) && chosen == 4);
     check("left in pattern mode: it stays in pattern mode", arr_mode == 0);
-    arr_mode = 1; job();                           /* SYNC in arranger mode */
-    mode_wanted = 0; arr_mode = 0;                 /* LOAD switches it off and clears the byte as it starts */
+    arr_mode = 1; as_tick(0); job();               /* arranger mode on, SYNC */
+    mode_wanted = 0; arr_mode = 0; as_tick(0);     /* LOAD switches it off and clears the byte as it starts ... */
+    job();                                         /* ... and saves the project before loading it */
     as_project_load();
     check("left in arranger mode: during the load, the byte stock applies at its end says arranger", mode_wanted == 1);
     mark(0x10); arr_mode = mode_wanted;            /* stock's end of the load applies it */
     as_tick(0); job(); as_tick(0); as_tick(0);
     check("after LOAD: arranger mode, on book 3", arr_mode == 1 && book() == 2);
+    as_key(0x2d, 1); as_key(0x2e, 1); as_key(0x2e, 0); as_key(0x2d, 0); arr_mode = 0; as_tick(0);  /* FUNC + PATTERN: off */
+    job();                                         /* SYNC in pattern mode */
+    mode_wanted = 0; as_tick(0); job();            /* LOAD: off, save, load */
+    as_project_load();
+    check("switched off by the musician: LOAD leaves pattern mode", mode_wanted == 0);
+    mark(0x10); as_tick(0); job(); as_tick(0); as_tick(0);
+    check("and nothing turns it on", arr_mode == 0 && book() == 2);
     /* RELOAD PROJECT: where it was saved, not where it was left after */
     as_project_stored();                           /* saved on book 3, arrangement 5 */
     tap(LEFT); job(); as_tick(0); chosen = 6; job();  /* book 2, arrangement 7, SYNC */

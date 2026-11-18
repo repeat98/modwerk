@@ -143,3 +143,10 @@ fallback switched arranger mode on (changing the pattern) before something turne
 reads arrbook.work in ev_banks_load, inside stock's load job and from the project being loaded, and sets 0x80000010
 there; a project left on book 1 needs no job of the module's at all. New projects have their own handler, which reads
 nothing. `verify.py`: 65 checks.
+
+Package `f216cb9c…`, as the developer reported it: still pattern mode after LOAD. Cause, from stock's code: LOAD's
+request (0x40023b68) switches arranger mode off, then its job saves the current project (project.work's
+ARRANGEMENT_MODE, and the module's arrbook.work, both now "off") and loads it, so stock alone always reopens the same
+project in pattern mode, and the module read "off" too. Fixed: the module keeps the mode as the musician left it,
+following arranger mode on by any means but off only after the musician's own FUNC + PATTERN, and records that.
+`verify.py` (67 checks) replays LOAD's order: off, save, load.
