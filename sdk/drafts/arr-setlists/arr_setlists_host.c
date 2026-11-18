@@ -328,8 +328,8 @@ int main(void)
     while (book() != 0) { tap(LEFT); job(); as_tick(0); }
     job();
     int p0 = posted;
-    as_project_load(); mark(0x10); as_project_loaded(); as_tick(0); as_tick(0);
-    check("left on book 1: a load stays on book 1, nothing posted", book() == 0 && posted == p0);
+    as_project_load(); mark(0x10); as_tick(0); job(); as_tick(0);
+    check("left on book 1: one job reads where it was left, and it stays on book 1", book() == 0 && posted == p0 + 1 && marked(0x10));
     tap(RIGHT); job(); as_tick(0);                 /* book 2 again for the label checks */
 
     /* the label in ARR > CHANGE */

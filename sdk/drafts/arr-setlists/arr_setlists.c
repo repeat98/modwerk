@@ -60,6 +60,7 @@
 #define LIST_CURSOR 0x400c0ba4u      /* ARR > CHANGE: the cursor's row (stock opens the list with it on the choice) */
 
 #define REC_MAGIC 0x41534231u        /* "ASB1" */
+#define FIND_PLACE 0x7f               /* restore/pending: read arrbook.work in the job to learn the book */
 #define PLACE_MAGIC 0x41534250u      /* "ASBP": arrbook.work, the book in use and each book's last choice */
 #define F_READ 0x40016564u           /* (fo, dst, n) -> 1 done */
 #define F_WRITE 0x400166b8u          /* (fo, src, n) -> 1 done */
@@ -103,7 +104,6 @@ struct as_state {
     uint8_t last[BOOKS];     /* the arrangement last chosen in each book (0 = arrangement 1), kept in arrbook.work */
     int8_t restore;          /* a project was loaded on this book: the UI task switches to it once stock is done, -1 none */
     uint16_t restore_ticks;
-    uint8_t reloaded;        /* RELOAD PROJECT has read where it was saved: the load that follows keeps it */
     uint8_t hush;            /* frames after a switch of ours in which the job's NOW SAFE TO EJECT! is closed */
     int8_t restore_rc;       /* the last answer to posting the return after a load, for the diagnostic word */
     uint8_t loads, reloads;  /* project loads and reloads seen, for the diagnostic word */
@@ -260,18 +260,16 @@ static void write_place(struct as_state *s)
     put_place(s);
 }
 
-/* arrbook.<ext> into the memory of choices, and the book to come back to. 1 when there was one. */
-static int read_place(struct as_state *s, const char *ext)
+/* arrbook.work into the memory of choices: the book the project was left on, or -1 when it has none. */
+static int read_place(struct as_state *s)
 {
-    place_path(s->path, ext);
-    if (!get_place(s)) { ev(6); return 0; }
+    place_path(s->path, "work");
+    if (!get_place(s)) { ev(6); return -1; }
     ev(5); ev(s->place[4]);
     if (s->place[0] != 'A' || s->place[1] != 'S' || s->place[2] != 'B' || s->place[3] != 'P'
-        || s->place[4] >= BOOKS) return 0;
+        || s->place[4] >= BOOKS) return -1;
     for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = (uint8_t)(s->place[5 + b] & 7u);
-    s->restore = (int8_t)s->place[4];
-    s->restore_ticks = 0;
-    return 1;
+    return s->place[4];
 }
 
 /* A fingerprint of the slots: the working blocks, the saved blocks and their flags. */
@@ -334,6 +332,11 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
 {
     struct as_state *s = ready();
     int rc = 0;
+    if (s->pending >= 0) s->hush = 1;                     /* our job: its NOW SAFE TO EJECT! is closed after */
+    if (s->pending == FIND_PLACE) {                       /* after a project load: where was it left? */
+        int b = read_place(s);
+        s->pending = (int8_t)(b > 0 ? b : -1);            /* book 1 (or no record): stay; stock restored the choice */
+    }
     if (s->book == 0) rc = stock_writer(a1, a2, a3, a4);     /* book 1: arr01-08 as always */
     else if ((a2 & 0xffu) || rd8(CHANGED)) {
         /* Another book: its 8 files together, whenever stock asks for any (as stock's writer does with its mask: the
@@ -400,13 +403,11 @@ void as_project_load(void)
     ev(1);
     s->book = 0;
     s->pending = -1;
-    /* RELOAD PROJECT raises its hook before this load, and no ev_banks_loaded follows it (the developer's MKI): keep
-     * what the reload read. Any other load starts afresh and reads arrbook.work once the banks are in. */
-    if (s->reloaded) s->reloaded = 0;
-    else {
-        s->restore = -1;
-        for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = 0;
-    }
+    /* Once stock has loaded, the module's own job reads arrbook.work (on RELOAD, already the saved one) and goes back
+     * to that book. Read there, not in ev_banks_loaded: the developer's MKI raised none after LOAD or RELOAD. */
+    for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = 0;
+    s->restore = FIND_PLACE;
+    s->restore_ticks = 0;
     s->ready = 1;
 }
 
@@ -420,7 +421,6 @@ unsigned as_project_loaded(void)
     s->book = 0;
     s->backup = 0;
     s->damaged = 0;
-    read_place(s, "work");
     ++s->loads;
     remember(s);
     return 0;
@@ -458,7 +458,7 @@ unsigned as_project_reloaded(void)
     s->book = 0;
     s->backup = 0;
     s->damaged = 0;
-    s->reloaded = (uint8_t)read_place(s, "work");         /* where it was saved */
+
     ++s->reloads;
     return 0;
 }
@@ -525,8 +525,7 @@ void as_tick(void *api)
     }
     /* After a project load: back to the book it was left on, once stock has finished loading (its job queue frees). */
     if (s->restore >= 0 && s->pending < 0) {
-        if (s->restore == (int8_t)s->book) { s->restore = -1; ev(0xb); }  /* book 1: stock restores its choice */
-        else if (stopped()) {
+        if (stopped()) {
             s->pending = s->restore;
             int rc = post_write();
             s->restore_rc = (int8_t)rc;

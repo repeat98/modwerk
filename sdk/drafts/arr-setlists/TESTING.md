@@ -117,3 +117,9 @@ book 1. Its last four events: 3 (reload done), 5 2 (arrbook read: book 3), 1 (a 
 ev_project_reloaded before stock reloads the project, and no ev_banks_loaded follows; the module's load-begins handler
 then dropped the return the reload had just read. Fixed: a load right after a reload keeps it. `verify.py` (62 checks)
 now replays the unit's order; the previous code fails it.
+
+Package `ddc3933f…`, as the developer reported it: RELOAD PROJECT showed book 1, arrangement 5, then book 3,
+arrangement 5 while loading (the return works). LOAD PROJECT after SYNC on book 2, arrangement 7 landed on book 1,
+arrangement 7. Event log: 1 7 9 1, the last a load beginning with nothing after it: the unit raised no ev_banks_loaded
+after LOAD either. Fixed: a load only marks "find where it was left"; once stock is done, the module's own job reads
+arrbook.work on stock's card task and switches there. `verify.py`: 62 checks.
