@@ -48,7 +48,7 @@ The base gives each entry a machine type after the stock seven in contribution o
 
 ## Sound-chip sites (SHARC section 7, short-word addresses)
 
-Static reads on 18 November 2026; not yet traced.
+Static reads on 18 November 2026, confirmed by the coupled trace below.
 
 | Site | What it does | Use |
 | --- | --- | --- |
@@ -88,12 +88,32 @@ Development base `7edbd8bf` (29 sites; `.run` 10,732 bytes, 284 more than base `
 - **Dispatcher.** A base-owned SHARC routine: for a type below 7 it replays the displaced instruction and returns to stock; for an added type with a sound-chip routine it saves the registers the voice loop keeps, calls the module's voice routine with the voice record, and resumes at the shared continuation (`0x1c65fe`) so the stock filter, amp envelope and panning still process the voice.
 - **Module routines.** Each machine package carries its sound-chip code in L2 (the free range `0x2001ab7c`-`0x200fa000`, as the render subscribers do) and names a note-on and a render entry; the base keeps a table of them by machine type.
 - **Builder.** `src/engine/elektron/dt2-sharc.ts` patches exactly two fixed sites (render and receive). It needs a list of base sites and per-machine allocations, in the same verified way.
-- **Still to trace in the emulator (SHARC):** where a per-type setup hands the voice to the sample renderer (`0x1c4f81` has no direct caller, so it is reached through a pointer, probably the table at `0x8055c840`), which buffer a voice renders into, which registers the loop keeps live across `0x1c6550`-`0x1c65fe`, and the cost per voice. A module's voice routine must stay inside the block's time budget with all 16 tracks playing.
+- **Traced (below).** The type dispatch only sets a voice up; rendering is a separate pass that does not look at the type. So an added type most likely plays nothing today because its voice is never set up (no step, no START/LEN), not because the renderer skips it (inferred from the stock trace; type 7 not traced yet).
+
+### Sound-chip trace of one SAMPLE voice (18 November 2026)
+
+Coupled emulator run (ColdFire and SHARC together, digikit `sharc_live`, interpreter only: `SHARC_AOT=0`, no fast regions) of the stock OS 1.17 from a card-ready snapshot with one 1 s, 48 kHz mono test tone on the card, `NOTE_EVENTS=trig` (track 1 trig). Register dumps (`SHARC_PCDUMP`) at the sites, then every instruction of the note-on block. The run's audio hash matched the same run with the fast tiers on, so the trace is of the normal behaviour. Emulator only; instruction counts are emulator instructions, not silicon cycles.
+
+The per-voice loop (`0x1c642a`) runs once per 32-sample block and walks 32 voice slots in three passes:
+
+| Pass | What happens | Cost per block |
+| --- | --- | --- |
+| 1. Setup, `0x1c654c`-`0x1c6ad1` | Per voice: on a trig, the note-on reset `0x1c4eaf` (called at `0x1c6582`, before the type test, so it runs for every type). Then the type test `0x1c6550`-`0x1c6561` (type in `R6`) and the jump at `0x1c6579` through `0x8055c840` (indexed by type; type 0 lands at `0x1c65bd`), which calls the sample setter `0x1c4afe` with the voice state in `R4`. All types meet at `0x1c65fe` for the parameter work that follows (about 530 instructions). | About 1,000 instructions per voice (1,440 on the trig), 33,400 for 32 voices |
+| 2. Render, `0x1c6ae8`-`0x1c6b09` | Per voice: a per-voice flag word (bit 1) picks `0x1c5576` or `0x1c4ecf`; the SAMPLE voices took `0x1c4ecf`. It tests the voice's playing bit (state word at `+0x1b8`, test at `0x1c4f21`-`0x1c4f25`) and branches to `0x1c4f81` only when the voice plays: that is how the "uncalled" renderer is reached. No machine-type test in this pass. | 109 instructions for a silent voice, about 3,600 for a playing one |
+| 3. Per-voice processing, `0x1c6b0f` onwards | Six routines for every voice slot, playing or not (`0x1cdd8b`, `0x1cb3d8`, `0x1cdecb`, `0x1ccbd8`, `0x1cdbb2`, `0x1cbb57`). The third dispatch at `0x1c6c10`-`0x1c6c19` (value below 7, table `0x8055c874`) reads a different per-voice field (1 for every voice in this kit), not the machine type; probably the filter type. Then `0x1c71ec` once per track (16), then the mix `0x1c308a`. | About 55,500 for 32 voices; 8,100 per 16 tracks; 81,000 for the mix |
+
+- **Records.** Voice parameter record in `I14`, 32 records of `0xdc` bytes from `0x250738`. Voice state record of `0x1d8` bytes from `0x2412cc` (`I15` points `0x188` into it; the setter and the renderer get its start in `R4`).
+- **Render path of a playing voice.** `0x1c4f81` reads the sample from external memory (`0x84xxxxxx` in this run) and stages 64 words in the voice state record (loop `0x1c5099`-`0x1c5101`, about 2,500 instructions), then calls the interpolator `0xb80000` (32 iterations of about 27 instructions) and returns through `0x1c4f56`.
+- **Output buffer.** Each voice writes its 32 samples, one 32-bit word each, to its own slot of a shared area: voice 0 at `0x8045b3c0`, voice 1 at `0x8045b440`, so `0x8045b3c0 + 0x80 * voice` up to `0x8045c3c0` (pass 3 loads `0x8045c3c0` just after). One trig on track 1 played two voice slots (0 and 1), both rendering for the whole note.
+- **Registers across the dispatch.** The continuation at `0x1c65fe` reads, before writing them, the frame and stack (`I6`, `I7`), both voice pointers (`I14`, `I15`), `I0`-`I3`, `I5`, `I8`-`I11`, the modify registers (`M1`-`M3`, `M5`-`M11`, `M13`), `MODE1` and the float registers `F0`, `F1`, `F6`-`F10`, `F12`-`F15`. The type of 6 or more already reaches it straight from `0x1c6561` with what the code before the test left, so the dispatcher's rule is: for an added type, save every register, run the module's setup, restore them all and jump to `0x1c65fe`, exactly like the skip path. The setup leaves its results in the voice state record, as `0x1c4afe` does, not in registers.
+- **Cost and budget.** The block is 666,667 instructions (`DSP_PERIOD`); stock with one note used about 199,000 to 211,000 (median busy 210,896; 68% idle). A playing SAMPLE voice costs about 3,500 more per block than a silent one, about 110 per output sample; 32 playing voices would add about 112,000. So an added machine's render can cost about as much as a SAMPLE voice without trouble, but the real unit's cycle count (external memory waits) is still to measure.
+- **What this means for the hook.** Two sites, not one: the setup dispatch at `0x1c6550` (an added type gets its own setup, or SAMPLE's when its machine plays samples the stock way) and, for a machine that renders its own sound, the render choice at `0x1c6ae8`-`0x1c6afd`, where the base would call the module's render for an added type's voice and write into the same voice slot at `0x8045b3c0 + 0x80 * voice`. The third dispatch (`0x1c6c10`) is not by machine type and needs nothing.
+- **Line input.** Not reached in this trace: the block's own work (passes 1-3 and the mix) reads no input buffer that could be told apart. Finding where the input arrives each block (for a SOURCE = SAMPLE or INPUT setting) needs a run with audio on the input, watching the mix `0x1c308a`.
 
 ## Still to check
 
 
 - Every reader of the type byte and every per-type table: MIDI CC/NRPN tables, the machine menu list, the per-type parameter-code table, the SRC page view.
 - Kit and project save and load of an added type, and the stock OS's behaviour when it loads one.
-- The sound chip's per-voice dispatch and the sample slot record it passes.
+- The sample slot record the setup passes, and which per-voice flag picks `0x1c5576` over `0x1c4ecf` in the render pass.
 - Free sound-chip time per block on a real unit, and whether an inactive track's voice still costs time (decides LINK).
