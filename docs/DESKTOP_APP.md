@@ -1,6 +1,6 @@
 # Desktop app
 
-`desktop/` holds Modwerk's desktop app for Windows, macOS and Linux: modwerk.app in an Electron window. It brings the site's USB link (WebUSB) and Web MIDI to people who don't use Chrome, and the agent bridge to developers. It is a separate package with its own lock file, so the site's `npm ci` does not download Electron.
+`desktop/` holds Modwerk's desktop app for Windows, macOS and Linux: modwerk.app in an Electron window. It is made for musicians first: choosing mods, syncing them to the unit and keeping it up to date, with the site's USB link (WebUSB) and Web MIDI in every operating system, not only Chrome. The same app also comes with the developer tools for making mods ([plan](#every-developer-tool-in-the-app)); a musician never sees them unless they turn on Developer mode. Today that is the agent bridge. It is a separate package with its own lock file, so the site's `npm ci` does not download Electron.
 
 ## Run it
 
@@ -58,7 +58,7 @@ Untested on hardware and on each operating system; no icons, code signing, notar
 - **Direct card access.** Write `MODWERK0.SET` and base files, back up sets and projects, and move samples, in every operating system's file system, not only Chrome's File System Access API.
 - **Running in the background.** A tray icon showing the unit, its base version and whether an update is due; it reconnects after a power cycle and notifies when a module you use has an update.
 
-**Every developer tool in the app**
+### Every developer tool in the app
 
 The aim: install the app, turn on Developer mode, and have everything [Your development setup](DEVELOPER_WORKFLOW.md#your-development-setup) asks for today. The tools themselves stay in the developer's checkout: `pr:ready`, the doctor, the generators and the MCP are versioned with the repository, and a frozen copy in the app would drift from what CI checks. The app supplies everything around them and runs them. Musicians download none of it: Developer mode fetches it on demand.
 
