@@ -1,0 +1,1 @@
+Desktop app: a first desktop app for Windows, macOS and Linux (in development, no installers yet). It shows modwerk.app in its own window with the USB link and Web MIDI, so syncing your Octatrack no longer needs Chrome. Developers can turn on an agent bridge that lets their coding agent reach the unit, without Python. See docs/DESKTOP_APP.md.

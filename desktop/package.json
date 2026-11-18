@@ -1,0 +1,46 @@
+{
+  "name": "modwerk-desktop",
+  "productName": "Modwerk",
+  "description": "Modwerk's desktop app: modwerk.app with the USB link in every operating system, and the agent bridge.",
+  "version": "0.1.0",
+  "private": true,
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "main": "src/main.mjs",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "usb": "3.2.1"
+  },
+  "devDependencies": {
+    "electron": "45.2.2",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "app.modwerk.desktop",
+    "productName": "Modwerk",
+    "files": [
+      "src/**/*.mjs",
+      "!src/**/*.test.mjs",
+      "package.json"
+    ],
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
+    "buildDependenciesFromSource": true,
+    "mac": {
+      "category": "public.app-category.music",
+      "target": ["dmg"]
+    },
+    "win": {
+      "target": ["nsis"]
+    },
+    "linux": {
+      "category": "Audio",
+      "target": ["AppImage", "deb"]
+    }
+  }
+}
