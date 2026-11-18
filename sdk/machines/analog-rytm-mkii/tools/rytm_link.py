@@ -157,6 +157,8 @@ def ident_text(p):
         d['depack_crc'] = '%08x' % get32(p, 68)
     if len(p) >= 78:                                # the unpacked CRC32 of a RAM-booted image, else 0
         d['image_crc'] = '%08x' % get32(p, 73)
+    if len(p) >= 83:                                # where the gate keeps its diagnostics (DIAG_OLD before that)
+        d['diag'] = '%08x' % get32(p, 78)
     return d
 
 
@@ -413,7 +415,7 @@ def ramboot_args(syx):
     return len(image), zlib.crc32(image) & 0xffffffff, len(c), zlib.crc32(c) & 0xffffffff
 
 
-DIAG = 0x47bfffbc
+DIAG_OLD = 0x47bfffbc                               # a base whose ident names no place: the old mod area's top
 DIAG_STAGES = {1: 'the command was taken', 2: "stock's job reached the flash call", 3: "stock's wait returned",
                4: 'the drain returned', 5: 'the data cache was off'}
 
@@ -649,7 +651,8 @@ def main():
     elif a.cmd == 'mem':
         print(link.mem(a.addr, a.count).hex(' '))
     elif a.cmd == 'diag':
-        print(diag_text(link.mem(DIAG, 60), open(a.image, 'rb').read() if a.image else None))
+        at = int(link.ident().get('diag', '%x' % DIAG_OLD), 16)
+        print(diag_text(link.mem(at, 60), open(a.image, 'rb').read() if a.image else None))
     elif a.cmd == 'steps':
         try:
             run_steps(link, a.text)
