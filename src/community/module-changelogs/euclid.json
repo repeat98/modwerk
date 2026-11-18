@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.1.5-experimental",
+    "date": "2026-11-18",
+    "changes": [
+      "Fixes the dry signal staying mixed in after TYPE passed AMP: turning TYPE to NOTCH and back left part of the unfiltered sound playing alongside LP, BP, HP or NOTCH (#1690)."
+    ]
+  },
+  {
     "version": "0.1.4-experimental",
     "date": "2026-10-07",
     "changes": [
