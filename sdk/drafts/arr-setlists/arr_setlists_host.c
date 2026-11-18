@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: MIT
  * Copyright (C) 2026 Andrey Sidorkin
  *
- * ARR SETLISTS on the host: arr_setlists.c (built with -DAS_HOST) against simulated battery RAM, a simulated file
- * layer and stock's job, writer, loader and clear as stubs. verify.py runs it. */
+ * ARR SETLISTS on the host: arr_setlists.c (built with -DAS_HOST) against simulated battery RAM and simulated stock
+ * routines: the per-file arrangement writer and reader (a file holds one slot's working and saved blocks and all 8
+ * flags, as stock's do), the file copy, the project job's writer, clear and the message box. verify.py runs it. */
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -22,15 +23,15 @@ void as_host_reinstall(void);
 #define RIGHT 0x21
 #define BLOCK 5652u
 #define SLOTS 8u
-#define WORKING 0x10000004u
-#define DATA (2u * SLOTS * BLOCK + SLOTS)
-#define CHANGED 0x1001614cu
+#define W(n) (4u + (n) * BLOCK)                  /* offsets into cs1 */
+#define S(n) (4u + (SLOTS + (n)) * BLOCK)
+#define FLAGS (4u + 2u * SLOTS * BLOCK)
+#define CHG 0x1614cu
 
 static uint8_t cs1[0x16200];             /* 0x10000000 .. : the slots, their flags, the changed mask */
 static uint8_t rec[16];                  /* 0x100f8f10 */
-static uint8_t misc[0x2000];             /* 0x80004f1e.. 0x80006600 and two words */
+static uint8_t misc[0x2000];             /* 0x80004f00 .. */
 static uint32_t change_window, playing;
-static uint8_t msgword[4];          /* 0x460d1e70: a stock message box is up */
 static int failures, checks;
 
 uint8_t host_rd8(uint32_t a)
@@ -40,7 +41,6 @@ uint8_t host_rd8(uint32_t a)
     if (a >= 0x400c0b40u && a < 0x400c0b44u) return (uint8_t)(change_window >> (8 * (3 - (a - 0x400c0b40u))));
     if (a >= 0x800065b8u && a < 0x800065bcu) return (uint8_t)(playing >> (8 * (3 - (a - 0x800065b8u))));
     if (a >= 0x80004f00u && a < 0x80004f00u + sizeof misc) return misc[a - 0x80004f00u];
-    if (a >= 0x460d1e70u && a < 0x460d1e74u) return msgword[a - 0x460d1e70u];
     fprintf(stderr, "read of 0x%08x\n", a);
     return 0;
 }
@@ -51,67 +51,68 @@ void host_wr8(uint32_t a, uint8_t v)
     fprintf(stderr, "write of 0x%08x\n", a);
 }
 
-/* ---- a file layer: up to 40 files of DATA + 16 bytes, one open at a time */
-struct file { char path[260]; uint8_t data[DATA + 16]; unsigned len; int used; };
-static struct file files[40];
-static struct file *open_file;
-static unsigned pos;
-static int writing;
-static int file_count(void) { int n = 0; for (int i = 0; i < 40; ++i) n += files[i].used; return n; }
+/* ---- stock's arrangement files: one slot's two blocks and all 8 flags */
+struct file { char path[64]; uint8_t work[BLOCK], saved[BLOCK], flags[SLOTS]; int used; };
+static struct file files[300];
+static int writes, reads, fail_read;
 static struct file *find(const char *path)
 {
-    for (int i = 0; i < 40; ++i) if (files[i].used && !strcmp(files[i].path, path)) return &files[i];
+    for (int i = 0; i < 300; ++i) if (files[i].used && !strcmp(files[i].path, path)) return &files[i];
     return 0;
 }
-int host_open(const char *path, int write)
+static struct file *create(const char *path)
 {
     struct file *f = find(path);
-    if (!f && !write) return -1;
-    if (!f) for (int i = 0; i < 40 && !f; ++i) if (!files[i].used) { f = &files[i]; f->used = 1; snprintf(f->path, sizeof f->path, "%s", path); }
-    if (write) f->len = 0;
-    open_file = f; pos = 0; writing = write;
+    for (int i = 0; i < 300 && !f; ++i) if (!files[i].used) { f = &files[i]; f->used = 1; snprintf(f->path, sizeof f->path, "%s", path); }
+    return f;
+}
+static int file_count(void) { int n = 0; for (int i = 0; i < 300; ++i) n += files[i].used; return n; }
+int host_arr_write(const char *path, unsigned slot)
+{
+    struct file *f = create(path);
+    memcpy(f->work, &cs1[W(slot)], BLOCK); memcpy(f->saved, &cs1[S(slot)], BLOCK); memcpy(f->flags, &cs1[FLAGS], SLOTS);
+    ++writes;
     return 0;
 }
-int host_read_buf(void *dst, unsigned n)
+int host_arr_read(const char *path, unsigned slot)
 {
-    if (!open_file || pos + n > open_file->len) return 0;
-    memcpy(dst, open_file->data + pos, n); pos += n;
+    struct file *f = find(path);
+    if (!f) return 0;
+    if (fail_read) return -1;
+    memcpy(&cs1[W(slot)], f->work, BLOCK); memcpy(&cs1[S(slot)], f->saved, BLOCK); memcpy(&cs1[FLAGS], f->flags, SLOTS);
+    cs1[CHG] &= (uint8_t)~(1u << slot);
+    ++reads;
     return 1;
 }
-int host_read(uint32_t dst, unsigned n)
-{
-    if (!open_file || pos + n > open_file->len) return 0;
-    for (unsigned i = 0; i < n; ++i) host_wr8(dst + i, open_file->data[pos + i]);
-    pos += n;
-    return 1;
-}
-int host_write_buf(const void *src, unsigned n) { memcpy(open_file->data + open_file->len, src, n); open_file->len += n; return 1; }
-int host_write(uint32_t src, unsigned n)
-{
-    for (unsigned i = 0; i < n; ++i) open_file->data[open_file->len + i] = host_rd8(src + i);
-    open_file->len += n;
-    return 1;
-}
-void host_close(void) { open_file = 0; }
-int host_copy(const char *from, const char *to)
+int host_copy(const char *to, const char *from)
 {
     struct file *f = find(from);
     if (!f) return 0;
-    host_open(to, 1);
-    memcpy(open_file->data, f->data, f->len); open_file->len = f->len;
-    host_close();
+    struct file *t = create(to);
+    memcpy(t->work, f->work, BLOCK); memcpy(t->saved, f->saved, BLOCK); memcpy(t->flags, f->flags, SLOTS);
     return 1;
 }
 
-/* ---- stock */
-static int posted, post_refuse, stock_writes, stock_loads, clears;
+/* ---- the rest of stock */
+static int posted, post_refuse, stock_writes, clears;
 static char last_message[32];
 int host_post_write(void) { if (post_refuse) return post_refuse == 7 ? -7 : -3; ++posted; return 1; }
-const char *host_projdir(void) { return "/TESTSET/PROJ"; }
-void host_clear_arr(unsigned slot) { ++clears; memset(&cs1[4 + slot * BLOCK + 20], 0, BLOCK - 20); cs1[4 + slot * BLOCK + 0x12] = cs1[4 + slot * BLOCK + 0x13] = 0; }
+const char *host_projdir(void) { return "/SET/PROJ"; }
+void host_clear_arr(unsigned slot) { ++clears; memset(&cs1[W(slot)], 0, BLOCK); memset(&cs1[S(slot)], 0, BLOCK); cs1[FLAGS + slot] = 0; }
 void host_message(const char *t) { snprintf(last_message, sizeof last_message, "%s", t); }
-int host_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { (void)a1; (void)a2; (void)a3; (void)a4; ++stock_writes; return 0; }
-int host_stock_loader(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { (void)a1; (void)a2; (void)a3; (void)a4; ++stock_loads; return 0; }
+/* Stock's writer: each changed slot (or one with no file yet) to arr0N.work. */
+int host_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
+{
+    (void)a1; (void)a2; (void)a3; (void)a4;
+    char p[64];
+    for (unsigned n = 0; n < SLOTS; ++n) {
+        snprintf(p, sizeof p, "/SET/PROJ/arr%02u.work", n + 1);
+        if ((cs1[CHG] >> n & 1) || !find(p)) host_arr_write(p, n);
+    }
+    cs1[CHG] = 0;
+    ++stock_writes;
+    return 0;
+}
 static unsigned char lcd[1024];
 void host_set(unsigned char *frame, int x, int y, int on) { unsigned char *b = frame + x * 8 + 7 - (y >> 3), m = (unsigned char)(1u << (y & 7)); if (on) *b |= m; else *b &= (unsigned char)~m; }
 static int lit(int x, int y) { return lcd[x * 8 + 7 - (y >> 3)] >> (y & 7) & 1; }
@@ -123,105 +124,145 @@ static void check(const char *name, int ok)
     else printf("[PASS] %s\n", name);
 }
 
-/* The 8 slots marked with one byte, so a book's content can be told apart. */
-static void mark(uint8_t m) { for (unsigned i = 0; i < DATA; ++i) cs1[4 + i] = (uint8_t)(m + i % 7); }
-static int marked(uint8_t m) { for (unsigned i = 0; i < DATA; ++i) if (cs1[4 + i] != (uint8_t)(m + i % 7)) return 0; return 1; }
-static int tap(int code) { int t = as_key(code, 1); as_key(code, 0); return t; }
-/* The card task runs the posted job; stock's own message shows and goes; the UI ticks on. */
-static void job(void)
+/* The 8 slots marked with one byte, so a book's content can be told apart; flags too. */
+static void mark(uint8_t m)
 {
-    as_writer(0x100b14f0u, 0xff, 0, 0);
-    as_tick(0);
-    msgword[3] = 0x0c; for (int i = 0; i < 5; ++i) as_tick(0);
-    msgword[3] = 0; as_tick(0);
+    for (unsigned i = 4; i < FLAGS; ++i) cs1[i] = (uint8_t)(m + i % 7);
+    for (unsigned n = 0; n < SLOTS; ++n) cs1[FLAGS + n] = (uint8_t)((m + n) & 1);
 }
-static unsigned book_word(void) { struct { volatile uint32_t value; } api = {0}; as_tick((void *)&api); return api.value & 15; }
+static int marked(uint8_t m)
+{
+    for (unsigned i = 4; i < FLAGS; ++i) if (cs1[i] != (uint8_t)(m + i % 7)) return 0;
+    for (unsigned n = 0; n < SLOTS; ++n) if (cs1[FLAGS + n] != (uint8_t)((m + n) & 1)) return 0;
+    return 1;
+}
+static void put_arr01_08(void)
+{
+    char p[64];
+    for (unsigned n = 0; n < SLOTS; ++n) { snprintf(p, sizeof p, "/SET/PROJ/arr%02u.work", n + 1); host_arr_write(p, n); }
+}
+static int tap(int code) { int t = as_key(code, 1); as_key(code, 0); return t; }
+static void job(void) { as_writer(0x100b14f0u, 0xff, 0, 0); }   /* the card task runs the posted job */
+static unsigned diag(void) { struct { volatile uint32_t value; } api = {0}; as_tick((void *)&api); return api.value; }
+static unsigned book(void) { return diag() & 15; }
 
 int main(void)
 {
     as_modules_ready();
-    check("installed with no record: book A", book_word() == 0);
+    check("installed with no record: book 1", book() == 0);
 
-    mark(0x10);                                    /* book A's songs */
+    mark(0x10);                                    /* book 1's songs, already on the card */
+    put_arr01_08();
     change_window = 0;
     check("LEFT/RIGHT outside ARR > CHANGE are stock's", tap(RIGHT) == 0 && tap(LEFT) == 0);
     change_window = 0x46c7d384u;
     playing = 1;
     check("while playing, RIGHT in ARR > CHANGE is taken but changes nothing", tap(RIGHT) == 1 && posted == 0 && !strcmp(last_message, "STOP TO CHANGE BOOK"));
     playing = 0;
-    check("LEFT at book A changes nothing", tap(LEFT) == 1 && posted == 0);
+    check("LEFT at book 1 changes nothing", tap(LEFT) == 1 && posted == 0);
     check("RIGHT posts stock's write job", tap(RIGHT) == 1 && posted == 1);
     check("a second press while it runs is ignored", tap(RIGHT) == 1 && posted == 1);
     job();
-    check("the job wrote book A through stock's writer", stock_writes == 1);
-    check("leaving A kept a backup of it", find("/TESTSET/PROJ/arrbookA.bak") != 0);
+    check("the job wrote book 1 through stock's writer", stock_writes == 1);
+    check("leaving book 1 kept its backup, arr01.bak .. arr08.bak", find("/SET/PROJ/arr01.bak") && find("/SET/PROJ/arr08.bak"));
     check("a book never used starts as 8 cleared arrangements", clears == 8);
-    check("now on book B, nothing changed", book_word() == 1 && cs1[CHANGED - 0x10000000u] == 0);
+    check("now on book 2, nothing changed, nothing written as arr09 yet", book() == 1 && cs1[CHG] == 0 && !find("/SET/PROJ/arr09.work"));
 
-    mark(0x20); cs1[CHANGED - 0x10000000u] = 0x04;   /* book B's songs, one changed */
+    mark(0x20); cs1[CHG] = 0x04;                   /* book 2's songs, one changed */
+    int w = writes;
     job();
-    check("a background write on book B writes its file, not arr01-08", stock_writes == 1 && find("/TESTSET/PROJ/arrbookB.work") != 0 && cs1[CHANGED - 0x10000000u] == 0);
+    check("a write on book 2 writes all 8 of arr09-arr16, not arr01-08", stock_writes == 1 && writes == w + 8 && find("/SET/PROJ/arr09.work") && find("/SET/PROJ/arr16.work") && cs1[CHG] == 0);
+    w = writes;
+    job();
+    check("nothing changed: nothing written", writes == w);
 
-    tap(RIGHT); job();                             /* to C, new */
-    mark(0x30); cs1[CHANGED - 0x10000000u] = 1;
-    tap(LEFT); job();                              /* back to B: C written first */
-    check("back on book B: its songs are in the slots", book_word() == 1 && marked(0x20));
-    check("book C was written before leaving it", find("/TESTSET/PROJ/arrbookC.work") != 0);
+    tap(RIGHT); job();                             /* to book 3, new */
+    mark(0x30); cs1[CHG] = 1;
+    tap(LEFT); job();                              /* back to book 2: book 3 written first */
+    check("back on book 2: its songs and flags are in the slots", book() == 1 && marked(0x20) && cs1[CHG] == 0);
+    check("book 3 went to arr17-arr24", find("/SET/PROJ/arr17.work") && find("/SET/PROJ/arr24.work"));
     tap(RIGHT); job();
-    check("book C's songs come back", book_word() == 2 && marked(0x30));
+    check("book 3's songs come back", book() == 2 && marked(0x30));
     tap(LEFT); job(); tap(LEFT); job();
-    check("back on book A: its songs from the backup", book_word() == 0 && marked(0x10));
-    check("arriving at A marks all 8 changed, so stock rewrites arr01-08", cs1[CHANGED - 0x10000000u] == 0xff && stock_loads == 0);
+    check("back on book 1: its songs from the backup", book() == 0 && marked(0x10));
+    check("arriving at book 1 marks all 8 changed, so stock rewrites arr01-08", cs1[CHG] == 0xff);
     job();
-    check("then stock's writer writes them", stock_writes == 2);
+    check("then stock's writer writes them", stock_writes == 2 && cs1[CHG] == 0);
+
+    /* arr01-08 overwritten while the module was away: book 1 comes back from the backup and repairs them */
+    tap(RIGHT); job();                             /* to book 2; the backup is fresh */
+    mark(0x66);
+    put_arr01_08();
+    mark(0x20);
+    tap(LEFT); job();
+    check("damaged arr01-08: book 1 still comes back from its backup", book() == 0 && marked(0x10));
+    job();
+    { struct file *f = find("/SET/PROJ/arr03.work"); check("and stock's next write repairs arr01-08", f && f->work[100] == cs1[W(2) + 100]); }
 
     post_refuse = 1;
     tap(RIGHT);
-    check("a refused job leaves the book as it is", book_word() == 0 && !strcmp(last_message, "CARD BUSY"));
+    check("a refused job leaves the book as it is", book() == 0 && !strcmp(last_message, "CARD BUSY"));
     post_refuse = 7;
     tap(RIGHT);
-    check("with no project loaded it says so", book_word() == 0 && !strcmp(last_message, "NO PROJECT"));
+    check("with no project loaded it says so", book() == 0 && !strcmp(last_message, "NO PROJECT"));
     post_refuse = 0;
 
-    /* reinstalls and power cycles */
-    tap(RIGHT); job();                             /* on B */
-    check("on book B", book_word() == 1 && marked(0x20));
-    as_host_reinstall(); as_modules_ready();
-    check("reinstalled without a project load: the slots still hold B, and it knows", book_word() == 1);
-    mark(0x10);                                    /* a power cycle: stock read arr01-08 (book A) into the slots */
-    as_host_reinstall(); as_modules_ready();
-    check("after a power cycle the slots hold A, and it knows", book_word() == 0);
-    as_modules_ready();
-    check("a second ev_modules_ready changes nothing", book_word() == 0);
-    tap(RIGHT); job();
-    check("from there, B's own songs come back", book_word() == 1 && marked(0x20));
+    tap(RIGHT); job();                             /* book 2 */
+    fail_read = 1;
+    tap(LEFT); job();
+    check("a file that will not read is reported", (diag() >> 9 & 1) && !strcmp(last_message, "BOOK FILE ERROR"));
+    fail_read = 0;
+    tap(RIGHT); job(); tap(LEFT); job();
+    check("nothing marked changed after it, so arr01-08 stay as they are", cs1[CHG] == 0 && find("/SET/PROJ/arr04.work")->work[9] == (uint8_t)(0x10 + (W(3) + 9) % 7));
+    tap(RIGHT); job(); tap(LEFT); job();
+    check("and book 1 comes back from arr01-08, the backup left alone", book() == 0 && marked(0x10));
 
-    /* a project load with the module installed */
+    /* reinstalls and power cycles */
+    tap(RIGHT); job();
+    check("on book 2", book() == 1 && marked(0x20));
+    as_host_reinstall(); as_modules_ready();
+    check("reinstalled without a project load: the slots still hold book 2, and it knows", book() == 1);
+    mark(0x10);                                    /* a power cycle: stock read arr01-08 (book 1) into the slots */
+    as_host_reinstall(); as_modules_ready();
+    check("after a power cycle the slots hold book 1, and it knows", book() == 0);
+    as_modules_ready();
+    check("a second ev_modules_ready changes nothing", book() == 0);
+    tap(RIGHT); job();
+    check("from there, book 2's own songs come back", book() == 1 && marked(0x20));
+
     as_project_load(); mark(0x10); as_project_loaded();
-    check("a project load: book A", book_word() == 0);
+    check("a project load: book 1", book() == 0);
 
     /* SAVE PROJECT and RELOAD PROJECT */
     tap(RIGHT); job();
     int before = file_count();
     as_project_stored();
-    check("SAVE PROJECT copies each book file and the backup to its .strd", find("/TESTSET/PROJ/arrbookB.strd") && find("/TESTSET/PROJ/arrbookC.strd") && find("/TESTSET/PROJ/arrbookA.bks") && file_count() > before);
-    mark(0x55); cs1[CHANGED - 0x10000000u] = 1; job();   /* book B edited and written after the save */
+    check("SAVE PROJECT copies arr09-arr24 to .strd, and nothing past them", find("/SET/PROJ/arr09.strd") && find("/SET/PROJ/arr24.strd") && !find("/SET/PROJ/arr25.strd") && file_count() == before + 16);
+    mark(0x55); cs1[CHG] = 1; job();               /* book 2 edited and written after the save */
     as_project_reloaded(); mark(0x10);
-    check("RELOAD PROJECT brings back B's saved file and leaves the slots on A", book_word() == 0);
+    check("RELOAD PROJECT leaves the slots on book 1", book() == 0);
     tap(RIGHT); job();
-    check("book B is as saved, not as edited after", book_word() == 1 && marked(0x20));
+    check("book 2 is as saved, not as edited after", book() == 1 && marked(0x20));
 
-    /* the book letter in ARR > CHANGE */
+    /* the label in ARR > CHANGE */
     memset(lcd, 0, sizeof lcd);
     as_draw(lcd);
-    check("a solid box at the top right with BOOK and the book's letter knocked out", lit(104, 0) && lit(127, 8) && !lit(106, 2) && !lit(123, 2) && !lit(124, 2) && lit(125, 2));
+    check("BOOK 2 knocked out of a solid box at the top right", lit(103, 0) && !lit(102, 0) && lit(127, 8) && !lit(105, 2) && !lit(124, 2) && !lit(126, 2) && lit(120, 2));
+    for (int i = 0; i < 10; ++i) { tap(RIGHT); job(); }
+    memset(lcd, 0, sizeof lcd);
+    as_draw(lcd);
+    check("book 12: two digits, 1 then 2, the box wider", book() == 11 && lit(99, 0) && !lit(101, 2) && lit(120, 2) && !lit(121, 2) && !lit(120, 3) && !lit(124, 2) && !lit(126, 2));
+    for (int i = 0; i < 4; ++i) { tap(RIGHT); job(); }
+    check("book 16 is the last", book() == 15 && tap(RIGHT) == 1 && book() == 15);
+    mark(0x77); cs1[CHG] = 1; job();
+    check("book 16 is arr121-arr128", find("/SET/PROJ/arr121.work") && find("/SET/PROJ/arr128.work"));
     memset(lcd, 0xff, sizeof lcd);
     as_draw(lcd);
-    check("drawn the same over a lit background (no XOR)", lit(104, 0) && !lit(106, 2));
+    check("drawn the same over a lit background", lit(99, 0) && !lit(101, 2));
     change_window = 0;
     memset(lcd, 0, sizeof lcd);
     as_draw(lcd);
-    check("nothing drawn outside ARR > CHANGE", !lit(104, 0));
+    check("nothing drawn outside ARR > CHANGE", !lit(99, 0) && !lit(127, 8));
 
     printf("%d checks, %d failed\n", checks, failures);
     return failures != 0;

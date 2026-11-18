@@ -1,16 +1,16 @@
 """ARR SETLISTS -- 128 arrangements per project, as 16 books of 8 (setlists follow in a later version).
 
-Book A is stock's: the 8 arrangements in battery RAM and arr01-arr08, which the module never makes hold another book.
-Books B-P are files of its own in the project directory (arrbookB.work .. arrbookP.work, and .strd copies), each the
-8 arrangements as stock keeps them in battery RAM. In ARR > CHANGE, stopped, LEFT/RIGHT step the book.
+Book 1 is stock's arr01-arr08; book 2 is arr09-arr16, and so on to book 16, arr121-arr128: ordinary stock
+arrangement files in the project directory, written and read by stock's own routines. In ARR > CHANGE, stopped,
+LEFT/RIGHT step the book.
 
 A switch posts stock's own "write the project" job (SYNC TO CARD's, 0x40022cd4) and does its card work inside it, in
-stock's card task: the module steps into stock's arrangement writer at its entry (0x400915ac, the one site it
-patches; no hook or other module uses it). On book A stock writes arr01-08 as always; on another book the book's file
-is written instead; then the new book is loaded. Leaving A keeps a backup (arrbookA.bak); arriving at A loads it and
-marks all 8 changed, so arr01-08 are rewritten from it. SAVE/RELOAD PROJECT, project loads and the install use the
-base's project hooks (runtime.json). Which book the slots hold is kept in the module's battery-RAM range with a
-fingerprint of the slots. OS 1.40C addresses in arr_setlists.c and RESEARCH.md.
+stock's card task: the module steps into stock's per-arrangement writer at its entry (0x400915ac, the one site it
+patches; no hook or other module uses it). On book 1 stock writes arr01-08 as always; on another book the book's 8
+files are written instead; then the next book is loaded. Leaving book 1 keeps a backup (arr01.bak .. arr08.bak);
+arriving at book 1 loads it and marks all 8 changed, so arr01-08 are rewritten from it. SAVE/RELOAD PROJECT, project
+loads and the install use the base's project hooks (runtime.json). Which book the slots hold is kept in the module's
+battery-RAM range with a fingerprint of the slots. OS 1.40C addresses in arr_setlists.c and RESEARCH.md.
 """
 
 import os
@@ -30,11 +30,11 @@ MODULE = Module(
     author_url="https://github.com/Andrey-Sidorkin",
     proof=Proof.UNTESTED,
     proof_note="Host gate; stock's arrangement storage and jobs measured under ot_emu; not yet on a unit.",
-    doc="128 arrangements per project as 16 books of 8; book A stays stock's, B-P are files of the module's own.",
+    doc="128 arrangements per project as 16 books of 8, all stock arrangement files: arr01-arr08 stay book 1.",
     linked=(Linked("arrsetlists", os.path.join(_HERE, "arr_setlists_core.s")),),
     detours=(Detour(WRITER, stock_guard(WRITER, 8, "b692e058a2f3049810c18b0571d61c085c3daba589a09b531fed42f528b96012"),
                     "arrsetlists", "as_writer_entry",
-                    "stock's arrangement writer: on book A stock's own, on another book the book's file; a switch's load",
+                    "stock's arrangement writer: on book 1 stock's own, on another book its arr files; a switch's load",
                     kind="jmp", pad_to=8),),
     gates=(Gate("modules/arr-setlists/verify.py", remix_arg=False),),
 )
