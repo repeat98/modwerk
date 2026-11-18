@@ -191,7 +191,7 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
   const sites: [number, number][] = []
   for (let i = 0; i < want.sites; i++) {
     if (end + 8 > data.length) fail()
-    const address = view.getUint32(end), bytes = abi >= 7 ? view.getUint8(end + 4) : view.getUint16(end + 4)
+    const address = view.getUint32(end), bytes = abi >= 7 ? view.getUint8(end + 4) & 0x7f : view.getUint16(end + 4) // bit 7: the site rests with its module (loader.h RUNTIME_SITE_RESTS)
     const keep = abi >= 7 ? view.getUint8(end + 5) : 0, checked = abi >= 7 ? view.getUint8(end + 6) : bytes
     const local = abi >= 7 ? view.getUint8(end + 7) : view.getUint16(end + 6), held = abi >= 7 ? 32 : bytes
     const length = 8 + held + bytes + 2 * local

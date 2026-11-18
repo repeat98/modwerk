@@ -125,11 +125,11 @@ How each was found. Addresses are OS 1.74's; no stock bytes are given.
 - **Knob records.** Each parameter id has an 88-byte record in RAM, from `0x416A6AA4` (id x 88), copies of the image's parameter records. Stock's turn path (`0x400376D4`) takes the fine step at +4 and, with the encoder pushed, the coarse step at +8; the knob's drawing is the function at +48 and +52. Read in the image and in rytm-emu while building the MKI send bus's stock-drawn pages (9 November 2026).
 - **The voices' ring.** Stock's send routine (`0x40107610`) reads its input from `0x401078DC`, which returns `0x8000CF34` + index x 40 and advances the block index at `0x402ACD70` by 32 frames (224 frames, back to 0 after 192). `0x40107914` fills the ring from the codec's DMA: words 0-7 the eight voices in voice order (BD BT SD LT HH MT CY RS), words 8-9 AUDIO IN L/R, each negated as the sends read them. MAIN L/R are not in it. Found by following the delay's and the reverb's input back from the send routine; a second ring at `0x8000B334` (8-word frames) is read only by the DAC and return mixers.
 
-`npm run machine:base` builds this base once Elekloader's kit knows the MKI (its device and the ELE2 reader, proposed upstream); with the device registered privately it gives MW06's package section for section.
+`npm run machine:base` builds this base once Modwerk's builder knows the MKI (its device and the ELE2 reader); with the device registered privately it gives MW06's package section for section.
 
 ## 7. Next
 
-- The MKI in Elekloader (device, ELE2 reader, storage profile), then `base-binding.json` and the MKI in the site's linker (`LINK_DEVICES`).
+- The MKI in Modwerk's builder (device, ELE2 reader, storage profile), then `base-binding.json` and the MKI in the site's linker (`LINK_DEVICES`).
 - The send bus, and MKII modules rebuilt for the MKI: each module's own stock addresses found again.
 - ELE2 in the site's firmware flow, next to ELE3, once a build boots.
 - Later, as on the other machines: the USB link and loading modules without a reflash.
