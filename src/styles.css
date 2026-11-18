@@ -72,7 +72,8 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .skip-link:focus { top: 12px; }
 /* `clip`, not just `hidden`: a hidden box can still be scrolled by scrollIntoView, which pushed the toolbar off screen. Only .workspace-content scrolls. */
 .app-shell { --sidebar-width: 264px; display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); position: fixed; inset: 0; min-height: 0; overflow: hidden; overflow: clip; }
-.sidebar { overflow-y: auto; scrollbar-width: thin; background: var(--sidebar); border-right: 1px solid var(--line); padding: 20px 13px 0; display: flex; flex-direction: column; min-height: 0; }
+.sidebar { overflow-y: auto; scrollbar-width: none; background: var(--sidebar); border-right: 1px solid var(--line); padding: 20px 13px 0; display: flex; flex-direction: column; min-height: 0; }
+.sidebar::-webkit-scrollbar { display: none; } /* it scrolls without a bar popping up beside the navigation */
 .sidebar > * { flex-shrink: 0; }
 .app-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; margin-bottom: 39px; }
 .app-brand > span { font-size: 17px; font-weight: 650; letter-spacing: -.3px; }

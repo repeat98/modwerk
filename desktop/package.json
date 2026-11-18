@@ -25,7 +25,9 @@
     "productName": "Modwerk",
     "files": [
       "src/**/*.mjs",
+      "src/**/*.cjs",
       "!src/**/*.test.mjs",
+      "build/icon.png",
       "package.json"
     ],
     "npmRebuild": false,
@@ -33,14 +35,21 @@
     "buildDependenciesFromSource": true,
     "mac": {
       "category": "public.app-category.music",
-      "target": ["dmg"]
+      "target": [
+        "dmg"
+      ]
     },
     "win": {
-      "target": ["nsis"]
+      "target": [
+        "nsis"
+      ]
     },
     "linux": {
       "category": "Audio",
-      "target": ["AppImage", "deb"]
+      "target": [
+        "AppImage",
+        "deb"
+      ]
     }
   }
 }

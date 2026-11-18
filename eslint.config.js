@@ -28,4 +28,9 @@ export default tseslint.config(
     files: ['*.{js,ts}', 'scripts/**/*.mjs', 'desktop/**/*.mjs'],
     languageOptions: { globals: globals.node },
   },
+  {
+    files: ['desktop/**/*.cjs'], // Electron's sandboxed preload is CommonJS
+    languageOptions: { sourceType: 'commonjs', globals: globals.node },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
 )

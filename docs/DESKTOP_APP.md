@@ -6,11 +6,12 @@
 
 ```sh
 cd desktop
-npm ci
+npm ci                                       # on Windows npm 11 may skip Electron's download: node node_modules/electron/install.js
 npm start                                    # modwerk.app
 npm start -- --url http://127.0.0.1:5173/    # a local Vite server (not in a packaged app)
 npm start -- --bridge                        # start with the agent bridge on
 npx electron-builder                         # an installer for this computer, unsigned
+npx electron scripts/icon.mjs                # redraw build/icon.png from public/modwerk-mark.svg
 ```
 
 The bridge and window rules are tested by the site's `npm test` (`desktop/src/*.test.mjs`); the window itself is not.
@@ -23,7 +24,11 @@ The rules live in [`desktop/src/site.mjs`](../desktop/src/site.mjs), apart from 
 - **Navigation.** The site and the sign-in providers (GitHub, Google, Discord) stay in the window; every other link opens in the default browser; anything else is blocked. The user agent names `ModwerkDesktop` instead of Electron so providers treat the window as Chrome.
 - **Permissions.** MIDI with SysEx, clipboard writes, full screen and notifications, for the site's origin only. USB goes to the site only, only for Elektron devices, and only while the agent bridge is off.
 - **The device chooser.** The site's own filters pick the Octatrack. With one unit the app hands it over without a chooser; with several it asks which one.
-- **No Node in the page.** Context isolation and the sandbox are on, there is no preload, and webviews are refused.
+- **No Node in the page.** Context isolation and the sandbox are on and webviews are refused. The preload ([`preload.cjs`](../desktop/src/preload.cjs)) gives the page `window.modwerkDesktop`: its operating system and `showMenu`, which the main process answers for the site's origin only.
+
+## Looking like an app
+
+The window has no title bar or menu bar of its own. The site's toolbar carries the window's controls (Windows and Linux: Electron's title bar overlay in the toolbar's colour; macOS: the traffic lights inset over the sidebar) and, with the sidebar's header, drags the window. In the app the site marks the page (`data-shell="desktop"`, [`src/desktop-shell.ts`](../src/desktop-shell.ts)) and [`src/desktop-shell.css`](../src/desktop-shell.css) makes room for the controls, adds the ⋯ app menu button on Windows and Linux, and keeps app chrome unselectable, undraggable and on the arrow cursor; in a browser nothing changes. The window is called Modwerk, opens at most of the screen (the site's fitted dialogs drop their art below 760 px), has native right-click menus for fields, selections and links, and shows its own page when modwerk.app can't be reached, which retries once the computer is online. The icon is the mark on a dark tile (`build/icon.png`).
 
 The link itself is the site's: the same `OctatrackLink`, sync and base install as in Chrome. The operating system's limits stay: Linux needs the udev rule (Setup → Can't connect?), and on Windows WinUSB binds only to the base's interface, so a unit on the original OS can't be opened over USB.
 
@@ -41,15 +46,16 @@ The site and the bridge never share the unit: turning the bridge on or off reloa
 
 ## Not done yet
 
-Untested on hardware and on each operating system; no icons, code signing, notarization, auto-update or CI build. The installer does not set up the Linux udev rule.
+Run on Windows only, not yet against a unit; no code signing, notarization, auto-update or CI build. The installer does not set up the Linux udev rule.
 
 ## Plan
 
 **Next for the desktop app**
 
 1. A first run on each operating system against a unit: sync, base install, bridge with `npm run device -- status` and the MCP.
-2. Icons, code signing (an Apple Developer ID and a Windows certificate, an owner decision because both cost money) and auto-update from GitHub Releases.
+2. Code signing (an Apple Developer ID and a Windows certificate, an owner decision because both cost money) and auto-update from GitHub Releases.
 3. A CI build for `desktop/` (a workflow, so an owner-reviewed change).
+4. Once the app is released, the site's USB and MIDI copy names it beside Chrome and Edge (about 15 places, e.g. `USB_BROWSERS` in `src/firmware-notices.ts`, the FAQ, the welcome and Zoom pages).
 
 **Things the browser can't do**
 

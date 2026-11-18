@@ -68,6 +68,7 @@ import { digiDownloadsEnabled, isCoreBuildPreview } from './engine/elekloader/pr
 import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
 import { downloadSelection, parseSelection } from './config/selection'
 import { Icon } from './components/Icon'
+import { desktopShell, openAppMenu } from './desktop-shell'
 import { ModuleDetail } from './components/ModuleDetail'
 import { useModuleUpdates } from './hooks/useModuleUpdates'
 import { FaqPage } from './components/FaqPage'
@@ -137,6 +138,7 @@ const firmwareFeedbackPreview = import.meta.env.DEV && typeof window !== 'undefi
 const usbPreview = import.meta.env.DEV && typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('preview') : null
 const usbLinkPreview = usbPreview === 'usb-link' || usbPreview === 'base-install'
 // Phones and tablets get no USB workflow (iOS has no WebUSB, and the card install needs a computer anyway).
+const desktop = desktopShell() // the desktop app (desktop/): its menu opens from the toolbar
 const touchOnly = typeof window !== 'undefined' && window.matchMedia('(hover: none) and (pointer: coarse)').matches
 function subscribeRoute(callback: () => void) {
   window.addEventListener('hashchange', callback)
@@ -571,6 +573,7 @@ export default function App() {
             <NotificationBell next={route} />
             <a className={'configuration-button' + (configurationCount ? '' : ' is-empty')} href={configurationHref} aria-label={"Open " + w.set + ", " + configurationCount + " modules selected"} aria-current={configuration || machineView === 'configuration' ? 'page' : undefined}><Icon name="sliders" size={16} /><span>{octatrackUi ? activeFor(configurationTarget)?.name ?? w.Set : w.Set}</span><span className="toolbar-count">{configurationCount}</span></a>
             <MobileMenu onConfigurations={() => octatrackUi ? window.location.assign('#module-sets') : setConfigurationsOpen(true)} route={route} online={online} selectedCount={configurationCount} configurationHref={configurationHref} admin={session.admin} developer={!!developer?.user} highlightDevelop={DEVELOP_HIGHLIGHT} onSupport={SUPPORT_URL ? () => setSupportOpen(true) : undefined} />
+            {desktop && <button type="button" className="desktop-menu-button" aria-label="App menu" title="App menu" onClick={event => openAppMenu(desktop, event.currentTarget)}><Icon name="more" size={18} /></button>}
           </div>
         </header>
         <main className="workspace-content" id="main-content" ref={mainRef} tabIndex={-1}>
