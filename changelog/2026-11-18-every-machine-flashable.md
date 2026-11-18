@@ -1,0 +1,1 @@
+Docs: every machine's page is to flash its Modwerk base over USB and read the unit's diagnostics, as the Octatrack's does, and core work for every machine, the Digitone II and Analog Four MKII included, happens in its Modwerk base. The Digitone II has a goal page with the order of its pieces.
