@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // The maintenance bot's morning report (docs/MAINTENANCE_BOT.md). The owner reads it on a phone, so it counts
 // rather than lists, names only failures, and points at /modwerk-todo for the work at the computer.
-const NOUNS = { label: ['label', 'labels'], comment: ['reply', 'replies'], review: ['review', 'reviews'], merge: ['merge', 'merges'], close: ['closure', 'closures'] }
+const NOUNS = { label: ['label', 'labels'], comment: ['reply', 'replies'], review: ['review', 'reviews'], merge: ['merge', 'merges'], close: ['closure', 'closures'], approve_run: ['started check', 'started checks'] }
 export function dailyReport(actions, todos = [], date = new Date()) {
   const count = (status, tier) => actions.filter(a => a.status === status && (!tier || a.tier === tier)).length
   const kinds = {}

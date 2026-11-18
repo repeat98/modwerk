@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode, type Ref } from 'react'
+import { useContext, useRef, useState, type ReactNode, type Ref } from 'react'
 import { isBetaModule } from '../catalog/availability'
 import { moduleCaution } from '../catalog/module-cautions'
 import type { AddBlock } from '../catalog/add-blocks'
@@ -7,7 +7,8 @@ import { moduleBuildPending } from '../catalog/build-support'
 import { moduleHardwareEvidence } from '../catalog/module-evidence'
 import { moduleStability, type ModuleStability } from '../catalog/module-stability'
 import type { FirmwareModule } from '../catalog/modules'
-import { downloadCoverage, type ModuleStatistics } from '../community/module-statistics'
+import { downloadNote, downloadsIn, type ModuleStatistics } from '../community/module-statistics'
+import { DownloadPeriodContext } from '../community/download-period'
 import { moduleHref } from '../routing'
 import { Icon } from './Icon'
 import { ModulePreview } from './ModulePreview'
@@ -56,11 +57,13 @@ export function AddButton({ name, selected, onToggle, configure = false, conflic
 
 // Working reports, likes and downloads on one line, strongest signal first. An unavailable count shows a dash so a
 // loaded zero stays distinct from a service that did not answer.
+// Sorted by downloads over a period, the card counts that period, so the numbers read in the order shown.
 export function CardStats({ statistics: stats, children }: { statistics?: ModuleStatistics; children?: ReactNode }) {
+  const days = useContext(DownloadPeriodContext), downloads = downloadsIn(stats, days)
   return <div className="card-stats">
     <ModuleWorksCount count={stats?.worksReports} compact/>
     <span className="card-stat"><Icon name="heart" size={12} />{stats ? stats.likes.toLocaleString() : '—'}<span className="sr-only"> {stats?.likes === 1 ? 'like' : 'likes'}</span></span>
-    <span className="card-stat is-downloads" title={downloadCoverage(stats?.downloadsStarted)}><Icon name="download" size={12} />{stats?.downloads === undefined ? '—' : stats.downloads.toLocaleString()}<span className="sr-only"> {stats?.downloads === 1 ? 'download' : 'downloads'}</span></span>
+    <span className="card-stat is-downloads" title={downloadNote(days, stats)}><Icon name="download" size={12} />{downloads === undefined ? '—' : downloads.toLocaleString()}<span className="sr-only"> {downloads === 1 ? 'download' : 'downloads'}{days ? ' in the last ' + days + ' days' : ''}</span></span>
     {children}
   </div>
 }

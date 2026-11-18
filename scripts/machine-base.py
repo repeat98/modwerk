@@ -31,7 +31,8 @@ A machine whose OS shares another's base names that machine in source: its elekl
 with this machine's own folders beside it. recipe then replaces the imported recipe's device, defsym and sites
 (sites named by length and SHA-256, as add's) and adds sources. copies lays files of this machine's copies/ folder
 over the staged ones; each names the file it was made from and that file's SHA-256, and the build refuses once the
-original has changed, so a copy is redone rather than silently left behind.
+original has changed, so a copy is redone rather than silently left behind. A machine's own base uses copies too,
+where the imported core must differ, so the imported files stay exact (the Digitakt II's kit-data room).
 """
 import argparse
 import fnmatch
@@ -234,7 +235,7 @@ def stage(machine, config, root, sites=None, add=True, recipe_sites=None, dev=Fa
     source = APP / 'sdk/machines' / config.get('source', machine) / 'elekloader'
     mods = root / 'mods'
     for item in source.iterdir():
-        if item.is_dir():
+        if item.is_dir() and item.name != 'copies':
             shutil.copytree(item, mods / item.name)
     if source != own:
         for item in own.iterdir():

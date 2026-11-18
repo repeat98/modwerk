@@ -80,6 +80,21 @@ candidate engine) prints its counts instead of enforcing the table.
 wrong ADDRESS for a symbolic operand (both tools decode the bytes dsp_asm
 wrote), the label-prefix trap: that one is still read by hand.
 
+`mac` has the same hole as `mpy` (8 Nov 2026): `mac x0,y0` and `mac -x0,y0`
+came out wrong while `mac y0,x0` and `mac x1,y0` are right, and `mpy y1,y1`
+came out as `mpysu` (use `mpy y0,y0`); the round-trip check stopped the build
+on each.
+
+`dsp_host` can crash on the code's layout alone. On 8 Nov 2026 an effect
+change that passed every other case made `dsp_host` segfault in
+`op_ResolveCache` on one case only (one mode, core 1), with the PC outside P
+memory. One added `nop` and no other change made the same case run,
+bit-exact against the effect's reference model; the same had happened once
+before on the same effect. When `dsp_host` crashes in its cache code on an
+effect whose other cases match the model, shift the code by one word before
+hunting a bug in the effect, and comment the padding so nobody removes it as
+dead code. Not seen on hardware; an image places the code elsewhere anyway.
+
 ## 2. Acquiring and unpacking an OS
 
 No Elektron binary lives in this repository; every build derives from the

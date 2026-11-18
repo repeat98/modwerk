@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Derive the reviewed write-lease offsets of a linked Analog BD image.
+"""Derive the reviewed write-lease offsets of a linked machine image (a packaged DSP machine's controller).
 
 controller_write_lease.c grants a lease only when Begin's argument is the
 policy entry and both actual return PCs equal the policy's continuations in
 the same owned image. This reads them from the linked ELF instead of trusting
-a hand-written row: exactly one Begin call (inside ab_render) and one End call
-(inside ab_lease_end) must exist. Identity fields (encoded/source SHA-256,
+a hand-written row: exactly one Begin call (inside the renderer its machine port's
+"lease" names first, Analog BD's ab_render) and one End call (inside the second,
+ab_lease_end) must exist. Identity fields (encoded/source SHA-256,
 module, revisions) belong to the encoded package and are not derived here.
 """
 from pathlib import Path
@@ -24,7 +25,7 @@ def _symbols(elf, cross):
     return table
 
 
-def policy_offsets(elf, origin, imports, cross='m68k-elf-'):
+def policy_offsets(elf, origin, imports, cross='m68k-elf-', functions=('ab_render', 'ab_lease_end')):
     """Offsets from `origin` of entry, Begin return and End return; refuses ambiguity."""
     if set(imports) != set(IMPORTS):
         raise ValueError('The lease policy needs exactly the two strong lease imports.')
@@ -43,11 +44,11 @@ def policy_offsets(elf, origin, imports, cross='m68k-elf-'):
     if any(len(found) != 1 for found in calls.values()):
         raise ValueError('Each lease function needs exactly one call site: %r' % {k: len(v) for k, v in calls.items()})
     begin, end = calls[IMPORTS[0]][0], calls[IMPORTS[1]][0]
-    for name, ret in (('ab_render', begin), ('ab_lease_end', end)):
+    for name, ret in ((functions[0], begin), (functions[1], end)):
         start, size = symbols.get(name, (None, 0))
         if start is None or not start < ret <= start + size:
             raise ValueError('A lease call lies outside its reviewed function: ' + name)
-    entry = symbols['ab_render'][0]
+    entry = symbols[functions[0]][0]
     if (entry | begin | end) & 1 or begin == end or min(entry, begin, end) < origin:
         raise ValueError('Lease offsets are not even, distinct image offsets.')
     return dict(entry=entry - origin, begin_return=begin - origin, end_return=end - origin)

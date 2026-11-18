@@ -61,3 +61,4 @@ docs/HANDOFF-*.md
 src/catalog/machine-modules.json
 src/community/module-changelogs.json
 vendor/elekloader/catalog/catalog.json
+desktop/dist/

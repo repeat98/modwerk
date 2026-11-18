@@ -43,7 +43,8 @@ export async function readTarget(api, number) {
   if (!target.isPull) return target
   const pull = await api('/pulls/' + number)
   const files = await pages(api, '/pulls/' + number + '/files')
-  return { ...target, draft: !!pull.draft, head: pull.head.sha, files: files.flatMap(file => [file.filename, file.previous_filename].filter(Boolean)), firstTime: ['FIRST_TIMER', 'FIRST_TIME_CONTRIBUTOR', 'NONE'].includes(pull.author_association), checksGreen: (await checkSummary(api, pull.head.sha)) === 'green' }
+  const waitingRuns = ((await api('/actions/runs?status=action_required&head_sha=' + pull.head.sha + '&per_page=30')).workflow_runs ?? []).length
+  return { ...target, waitingRuns, draft: !!pull.draft, head: pull.head.sha, files: files.flatMap(file => [file.filename, file.previous_filename].filter(Boolean)), firstTime: ['FIRST_TIMER', 'FIRST_TIME_CONTRIBUTOR', 'NONE'].includes(pull.author_association), checksGreen: (await checkSummary(api, pull.head.sha)) === 'green' }
 }
 
 /** The agent board's public reads (threads and claims need no sign-in). */

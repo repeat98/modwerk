@@ -33,6 +33,15 @@ The legacy `page-not-found` bucket mixed missing pages with valid routes, includ
 
 The existing opt-out, DNT/GPC, origin checks, omitted credentials/referrer and abuse limits apply. Opted-in event retries update global and page counts atomically and only once, even if a retry changes its page. The bilingual notice and usage-consent version are updated; existing opt-ins require a new choice for the expanded payload. Apply the migration and deploy the Worker before the frontend; older identifier-free clients can still send unnamed views, and the dashboard supports older responses.
 
+## Visit sources and the sign-in prompt
+
+`site_count_daily` (migration 0097) holds identifier-free daily totals through `/usage/count`: an event from `SITE_COUNTS` (`usage-contract.ts`) and exactly one category from its list. The server refuses anything else rather than storing it, and keeps 90 days.
+
+- `visit_source`: where a page load came from. `visit-source.ts` maps the link's `utm_source`, or else the referring site's domain, to a fixed category in the browser. The address never leaves the browser. A page reached from the site itself, a reload and back/forward count nothing; an empty referrer counts as `direct`. To credit a campaign, tag its links with `utm_source` set to a listed source (or an alias such as `newsletter` → `mail`); the site drops `utm_…` from the address once read. Modwerk's own mails (news, activity, welcome, beta) tag every site link `mail-<kind>` when sent, TARS's Discord replies tag theirs `discord-bot` (`server/site-link-tags.ts`), the forum feed's links `forum-feed`, the thread Share button `forum-share`, push notifications (`public/push-sw.js`) `push` and the repository README `github-readme`; account mail is never tagged.
+- `sign_in_prompt`: how `LoginPromptDialog` was answered, `gate-…` before a firmware build (it can be skipped) and `other-…` before a member action.
+
+The admin statistics show both under "Where visits come from". The consent version is unchanged: nothing joins the consented payload, and the privacy page names both counts.
+
 ## Machine attribution
 
 Migration `0083_usage_machine_coverage.sql` preserves existing machine totals and expands the closed machine enum to Digitakt II and Analog Rytm MKII. Apply it before deploying the Worker, then publish the frontend. Local build outcomes count even when a research machine's download gate is closed; counting must never change release approval or download availability.
