@@ -1,0 +1,1 @@
+Pattern Sample Locks: three links in its notes work again: the testing guide reaches the shared memory layout record under its current heading, and the reconstruction and scanner notes reach the Octatrack reconstruction guide and the standalone runtime adapter, one folder further up since the module moved to sdk/octatrack/modules/.
