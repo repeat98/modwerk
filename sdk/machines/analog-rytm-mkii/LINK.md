@@ -271,8 +271,9 @@ since, the link has not.
   reads a software reset (the supercap), a minute off reads power-on.
 - Unit, RAM boot: flashed gate base, another image uploaded: boot 1, that image's CRC, still
   armed; the same image over itself: sent in 5.6 s, back after 13.2 s, about 19 s to `ident`.
-  RAM boots afterwards took 16 to 21 s. A RAM-booted image's own `ramboot` does not land (the
-  request is the running image's, the gate the flashed one's). Two earlier gates whose mailbox
+  RAM boots afterwards took 16 to 21 s. A RAM-booted image's own `ramboot` did not land then (the
+  request is the running image's, the gate the flashed one's); on 17 November 2026 four in a row did,
+  each image built from the base of that day and RAM-booted over the one before, the flash on RB08. Two earlier gates whose mailbox
   went through the cache came back as the flashed OS: why the cache-off reset exists.
 - Rytm module tests driven through the link on the unit: Improved AMP (25 cases), Quick Mod
   Assign (6), Improved SMPL (7).
