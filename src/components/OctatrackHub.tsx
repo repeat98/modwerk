@@ -126,7 +126,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
   const onUnit = sets.find(same), lastSync = lastSuccessfulSync(identity?.base ?? last?.base)
   const lastName = onUnit?.name ?? (last && lastSync && sameModules(last.moduleIds, lastSync.moduleIds) ? lastSync.name : undefined)
   // The hero: the unit's state in one line and the one action it needs, on every page.
-  const [line, action]: [ReactNode, ReactNode] = !usb ? ['This browser can’t use USB', <CardSetButton key="card" set={selected && { name: selected.name, moduleIds: selected.moduleIds, removedStockFx: selected.removedStockFx, usbAudio: selected.usbAudio }} />]
+  const [line, action]: [ReactNode, ReactNode] = !usb ? ['This browser can’t use USB', <CardSetButton key="card" set={selected && { name: selected.name, moduleIds: selected.moduleIds, removedStockFx: selected.removedStockFx, usbAudio: selected.usbAudio }} onInstall={onInstall} />]
     : busy ? [state.module || status !== 'testing' ? 'Syncing…' : 'Self-test running…', null]
     : connected && stopped ? [DSP_STOPPED, null]
     : connected ? [<>Connected · {inventory ? modules(inventory.moduleIds.length) + ' on it' : 'reading what’s on it…'}{onUnit && <> · same as <b>{onUnit.name}</b></>}</>, null]

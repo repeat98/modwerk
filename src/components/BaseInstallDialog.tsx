@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { BaseDialogFrame, BaseIntro, ProgressBar, StagePlan, StageProgress, type BasePromise } from './BaseDialogFrame'
 import { saveFirmware } from '../config/firmware-filename'
+import { rememberBaseDownload } from '../config/base-download'
 import { BASE_INSTALL_NEEDS, BASE_RECOVERY_NOTICE, MODULE_SKIP_HINT, REPORT_PROBLEMS, USB_BROWSERS } from '../firmware-notices'
 import { finishBaseInstall, pendingBaseInstall, reopenBaseGuideAfterReload, waitForBaseInstall } from '../config/octatrack-progress'
 import { BaseTooBigError, explainLinkError, LINK_BUSY, type BaseUpdateStep, type OctatrackLink } from '../engine/elekloader/octatrack-link'
@@ -271,7 +272,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
     if (await siteUpdated()) return setOutdated(true)
     setDownload('building')
     try {
-      const image = await buildBase!(installLayout); saveFirmware(image.buffer, 'base', image.base)
+      const image = await buildBase!(installLayout); saveFirmware(image.buffer, 'base', image.base); rememberBaseDownload(image.base)
       const previousBase = link.getState().identity?.base
       waitForBaseInstall(image.sha256, image.base, previousBase, returnSetId)
       setPending({ sha256: image.sha256, expectedBase: image.base, previousBase, returnSetId }); setDownload('done'); setStage('copy')
