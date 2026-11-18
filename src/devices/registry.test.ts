@@ -55,6 +55,19 @@ describe('digi combination estimate', () => {
     expect(estimateCombination('digitakt', ['digislicer', 'digineighbor', 'digisophie', 'digihealth']).fits).toBe(false)
   })
 
+  it('fits a Rytm set over 128 KiB in the 3.7 MiB its base 0.7.1 gives, and refuses one past that', () => {
+    const rytm = DIGI_MODS.filter(mod => mod.device === 'analog-rytm-mkii'), ids = rytm.map(mod => mod.id)
+    const estimate = estimateCombination('analog-rytm-mkii', ids)
+    expect(estimate.areaBytes).toBe(0x47f00000 - 0x47b50000)
+    expect(estimate.usedBytes).toBeGreaterThan(131072)   // the whole library's code and data, which the 128 KiB did not hold
+    // memory alone: storage bits, conflicts and flash still decide which modules go together (estimate.clashes, the build)
+    expect(estimate.fits).toBe(true)
+    expect(estimateCombination('analog-rytm-mkii', ['filter-hz', 'loop-sync']).fits).toBe(true)
+    const huge = { ...rytm[0], id: 'huge-buffer', ramBytes: 4 * 1048576, claims: [], conflicts: [], requires: [] }
+    DIGI_MODS.push(huge)
+    try { expect(estimateCombination('analog-rytm-mkii', ['huge-buffer'])).toMatchObject({ fits: false, areaBytes: 3866624 }) } finally { DIGI_MODS.pop() }
+  })
+
   it('keeps machine slots apart between slicer and neighbor', () => {
     const estimate = estimateCombination('digitakt', ['digislicer', 'digineighbor'])
     expect(estimate.clashes).toEqual([])

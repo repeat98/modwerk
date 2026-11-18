@@ -82,7 +82,7 @@ const FAMILY_PAGE: Record<DeviceProfile['family'], { invite: string; unlock: str
   },
 }
 
-function kib(bytes: number) { return (bytes / 1024).toFixed(bytes < 10240 ? 1 : 0) + ' KiB' }
+function kib(bytes: number) { return bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + ' MiB' : (bytes / 1024).toFixed(bytes < 10240 ? 1 : 0) + ' KiB' }
 
 function DigiModCard({ mod, selected, statistics, compared, canCompare, onToggle, onCompare, onBrowse }: { mod: DigiMod; selected: boolean; statistics?: ModuleStatistics; compared: boolean; canCompare: boolean; onToggle: () => void; onCompare: () => void; onBrowse?: () => void }) {
   const href = deviceHref(mod.device, 'module/' + mod.id)

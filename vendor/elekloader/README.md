@@ -25,7 +25,7 @@ The `.elemod` files carry each author's own bytes. Stock instructions are refere
 
 ## Replaced kit files
 
-Four kit files hold a one-line re-export of Modwerk's own implementation instead of the upstream code:
+Five kit files hold a one-line re-export of a Modwerk module instead of the upstream code:
 
 | kit file | Modwerk's module |
 | --- | --- |
@@ -33,8 +33,11 @@ Four kit files hold a one-line re-export of Modwerk's own implementation instead
 | `src/codec/elz.ts` | [`src/engine/elektron/codec/depack.ts`](../../src/engine/elektron/codec/depack.ts), the section depacker |
 | `src/codec/transport.ts` | [`src/engine/elektron/codec/transport.ts`](../../src/engine/elektron/codec/transport.ts), the SysEx transport |
 | `src/isa/coldfire.ts` | [`src/engine/elektron/codec/coldfire-kit.ts`](../../src/engine/elektron/codec/coldfire-kit.ts), the ColdFire decoder with the kit's op names |
+| `src/devices.ts` | [`src/engine/elektron/kit-devices.ts`](../../src/engine/elektron/kit-devices.ts), the kit's device profiles with Modwerk's own lines |
 
-They keep the kit's API and its output byte for byte: the packer writes the same streams, so every build and base keeps its identity. `KIT_REPLACEMENTS` in `scripts/elekloader-vendor.ts` lists them. The lock keeps each upstream file's SHA-256 under `kit.replaced`, `npm run elekloader:check` refuses any other content in those paths, and `npm run elekloader:update` writes the re-exports into a new kit before locking it and says when upstream changed one of them, so check that Modwerk's module still offers what the kit uses. The shipped notice (`vendor/licenses/elekloader.txt`) is the kit NOTICE whole, after a note naming the replaced files: its section on those files' origins stays, since Modwerk's implementation keeps their formats and was checked against outputs recorded from them.
+The first four are Modwerk's own implementations. They keep the kit's API and its output byte for byte: the packer writes the same streams, so every build and base keeps its identity.
+
+`kit-devices.ts` is the kit's own file, by irpina, with the lines Modwerk adds or changes marked `MODWERK`: the Analog Rytm MKII's `coreDdr`, which gives a set on Modwerk's base 0.7.1 or later the 3.7 MiB mod area ([its guide](../../sdk/machines/analog-rytm-mkii/README.md#memory-and-budgets)) while a 0.7 base keeps the 128 KiB (owner, [#1719](https://github.com/repeat98/modwerk/issues/1719)). `kit-devices.test.ts` checks that the file without the marked lines is the upstream one the lock names, so after a kit update that changes `src/devices.ts`, copy the new upstream file over it and put the marked lines back. Add a line there only for a fact about Modwerk's own base; a fact about the instrument or about elekloader's cores goes to elekloader. `KIT_REPLACEMENTS` in `scripts/elekloader-vendor.ts` lists them. The lock keeps each upstream file's SHA-256 under `kit.replaced`, `npm run elekloader:check` refuses any other content in those paths, and `npm run elekloader:update` writes the re-exports into a new kit before locking it and says when upstream changed one of them, so check that Modwerk's module still offers what the kit uses. The shipped notice (`vendor/licenses/elekloader.txt`) is the kit NOTICE whole, after a note naming the replaced files: its section on those files' origins stays, since Modwerk's implementation keeps their formats and was checked against outputs recorded from them.
 
 ## Updating
 
