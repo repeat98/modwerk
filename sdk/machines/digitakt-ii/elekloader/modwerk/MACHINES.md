@@ -145,7 +145,19 @@ A local DSP image pointed that call at a dispatcher in free L2 (code at loader b
 - Track 1 on SAMPLE: PCM byte-identical to stock (`da40d90b...`). Every stock voice goes through the dispatcher and plays exactly as before.
 - Test machine chosen through the menu: track 1 is silent for both notes (PCM `7a0ecce5...`), no halt, no missing blocks; the same run without the hook plays the tone. The dispatcher picks out the added machine's voices and hands them to their own player, and the render loop carries on after it returns.
 
-Next: a table of voice players by machine type in place of the fixed type 7, the player contract (inputs, the voice slot it writes, how it reports a finished note), and the dispatcher as a `planDt2*` site in `dt2-sharc.ts`.
+In the builder: `planDt2MachinePlayers` in `dt2-sharc.ts` generates the dispatcher for up to four added types (7-10), each with its player's entry, and returns it as a guarded site plus two L2 allocations. With the stand-in player as a separate allocation at the test's address, the built section loads the same bytes as the emulator-tested image at the call site, the dispatcher and its data (it differs only in having the player as a block of its own). It refuses a stock type, more than four players and an entry outside L2.
+
+### The voice player contract (draft)
+
+What an added machine's sound-chip player gets and must do, taken from the stock player it stands in for (`0x1c4ecf`); the parts marked open are still to trace.
+
+- **Entry.** Called once per voice per block (32-sample block, 32 voices) by the render pass, exactly as the stock player: a linked call with the caller's frame (`I6`, `I7`); `R4` holds the voice state record (`0x1d8` bytes from `0x2412cc`), `R8` the per-voice word the render pass read, `R12` = `R15`. Open: the meaning of `R8` and `R12`.
+- **Registers.** Keep every register the stock player keeps (it saves `R3`, `R5`-`R7`, `R9`-`R11`, `R13`-`R15`, `M1`-`M3`, `B3`, `I0`-`I3`, `I5` in its frame and restores them). Never leave a stock register changed (lesson of the setup detour above).
+- **Return.** `I12 = DM(I6, M7)`, then the `RETURN` and return-frame pair, as the stock epilogue (`0x1c4f56`, `0x1c4f7c`-`0x1c4f80`).
+- **Output.** 32 samples, one word each, into the voice's slot of the shared area (`0x8045b3c0 + 0x80 * voice`). Open: whether the slot address arrives in a register or must be computed, and the sample format the stock interpolator writes.
+- **Playing state.** The stock player renders only while the voice's playing bit (state word at `+0x1b8`) is set, and at the end of a sample clears it and fades the last block. Open: how a player that is never "finished" (a held grain cloud) ends with the amp envelope.
+- **Cost.** A playing stock voice costs about 3,500 emulator instructions per block. A player should stay near that until the real unit's spare time per block is measured.
+
 
 ## Still to check
 

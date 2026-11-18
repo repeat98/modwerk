@@ -209,6 +209,77 @@ export async function planDt2MachineSelectors(stock: Uint8Array, tableAddress: n
   return { sites: [{ address: SELECTOR_SITE, guard: SELECTOR_GUARD, instruction: instruction(0x0f00 | I3, tableAddress / 4) }], allocations }
 }
 
+// The render pass calls the stock sample voice player once per voice (a type 25a CALL); R14 counts the 32 voices
+// down, voice v belongs to track v >> 1, and the track's raw machine type is the word DM(TRACK_TYPES + track).
+const PLAYER_CALL = 0x28000000 + 2 * 0x1c6b00
+const PLAYER_CALL_GUARD = '4e25f0a1e4197c2c190ef606f09623a9ecf94e7274608038c39d0f09514b6621'
+const STOCK_PLAYER = 0x1c4ecf
+const TRACK_TYPES = 0x255970
+const FIRST_ADDED_TYPE = 7, MAX_ADDED_TYPES = 4
+// Universal register codes, and the 32-bit instructions the dispatcher uses (parcels, little-endian bytes).
+const R0 = 0x00, R1 = 0x01, I0 = 0x10, M0 = 0x20, ASTATX = 0x76, STKYX = 0x78
+const SAVED = [R0, R1, I0, M0, ASTATX, STKYX]
+const parcels = (...words: number[]) => Uint8Array.from(words.flatMap(word => [word & 255, word >>> 8]))
+const M0_FROM_R0 = parcels(0x703e, 0x103f)
+const I0_FROM_R1 = parcels(0x703e, 0x883f)
+const M0_ZERO = parcels(0x0fa0, 0x0000)
+const R1_FROM_I0_M0 = parcels(0x403e, 0x00bf) // R1 = DM(M0, I0), no update
+
+/** A machine's own voice player: the program counter (short word) of its entry in L2. */
+export type Dt2MachinePlayer = { type: number; entry: number }
+
+/** A plan fragment that sends every voice of an added machine type to that machine's player and every other voice
+ * to the stock player, unchanged: a dispatcher at `codeAddress` (free L2) in place of the render pass's call, with
+ * its save area and voice table at `dataAddress`. A player is entered and returns exactly as the stock player. */
+export async function planDt2MachinePlayers(
+  stock: Uint8Array, codeAddress: number, dataAddress: number, players: readonly Dt2MachinePlayer[],
+): Promise<Dt2RenderPlan> {
+  if (await sha256Hex(stock) !== STOCK_SECTION) throw new Error('Unsupported Digitakt II SHARC image')
+  if (!players.length || players.length > MAX_ADDED_TYPES || new Set(players.map(p => p.type)).size !== players.length ||
+      players.some(p => !Number.isInteger(p.type) || p.type < FIRST_ADDED_TYPE || p.type >= FIRST_ADDED_TYPE + MAX_ADDED_TYPES ||
+        !Number.isInteger(p.entry) || p.entry < 0xb80000 || p.entry >= 0xc00000)) {
+    throw new Error('Invalid machine player')
+  }
+  if (await sha256Hex(readStored(stock, PLAYER_CALL, 6)) !== PLAYER_CALL_GUARD) throw new Error('SHARC player call guard mismatch')
+  const save = dataAddress / 4, table = save + 8
+  const data = new Uint8Array(4 * (8 + 32))
+  for (let voice = 0; voice < 32; voice++) new DataView(data.buffer).setUint32(4 * (8 + voice), TRACK_TYPES + (voice >> 1), true)
+
+  const pc = programCounter(codeAddress)
+  const parts: Uint8Array[] = []
+  let at = pc // short words
+  const emit = (bytes: Uint8Array) => { parts.push(bytes); at += bytes.length / 2 }
+  const restore = () => SAVED.forEach((reg, index) => emit(instruction(0x1000 | reg, save + index)))
+  SAVED.forEach((reg, index) => emit(instruction(0x1100 | reg, save + index)))
+  emit(instruction(0x0f00 | R0, 32))
+  emit(instruction(0x013e, 0x200e))            // R0 = R0 - R14: the voice
+  emit(M0_FROM_R0)
+  emit(instruction(0x0f00 | I0, table))
+  emit(R1_FROM_I0_M0)                          // its track's type word address
+  emit(I0_FROM_R1)
+  emit(M0_ZERO)
+  emit(R1_FROM_I0_M0)                          // the track's raw machine type
+  const branches: number[] = []
+  for (const player of players) {
+    emit(instruction(0x0f00 | R0, player.type))
+    emit(instruction(0x013e, 0x2010))          // R0 = R1 - R0
+    branches.push(parts.length)
+    emit(new Uint8Array(6))                    // IF EQ JUMP, filled in below
+  }
+  restore()
+  emit(instruction(0x063e, STOCK_PLAYER))
+  players.forEach((player, index) => {
+    parts[branches[index]] = instruction(0x0600, at)
+    restore()
+    emit(instruction(0x063e, player.entry))
+  })
+  const code = new Uint8Array((parts.reduce((n, part) => n + part.length, 0) + 3) & ~3)
+  parts.reduce((offset, part) => { code.set(part, offset); return offset + part.length }, 0)
+  const allocations = [{ address: codeAddress, bytes: code }, { address: dataAddress, bytes: data }]
+  checkAllocations(allocations)
+  return { sites: [{ address: PLAYER_CALL, guard: PLAYER_CALL_GUARD, instruction: instruction(0x1804, pc) }], allocations }
+}
+
 /** One plan from several fragments (a render plan and the machine selectors, say). */
 export function combineDt2Plans(...plans: readonly (Dt2RenderPlan | null)[]): Dt2RenderPlan | null {
   const present = plans.filter((plan): plan is Dt2RenderPlan => plan !== null)
