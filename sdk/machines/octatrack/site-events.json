@@ -287,6 +287,11 @@
    "kind": "table",
    "room": 7,
    "record": 24
+  },
+  {
+   "index": 54,
+   "event": "ev_in_use",
+   "kind": "call"
   }
  ]
 }

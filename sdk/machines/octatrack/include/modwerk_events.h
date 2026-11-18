@@ -18,15 +18,15 @@
  * entry returns with rts); 0: stock runs at once and no later record is asked. */
 struct modwerk_take { int (*claims)(unsigned arg); const void *entry; };
 
-/* ev_play_increment (0x40004100): the increment builder recomputes a track's playback increment (Q26, 0x04000000 = unity), after stock applied PTCH and RATE and before it stores it; when the builder reuses the stored increment no handler runs. The audio render, at interrupt level: short, no firmware call that can block, the EMAC kept as found. Change *increment to change what the track plays at. Return nonzero to take the track: no later handler runs. The base stores *increment either way. The builder's d2-d7/a2-a6 are intact in a handler (a3 the track's 40-byte state, d6 the shift just applied) and must be kept, as C keeps them. */
+/* ev_play_increment (0x40004100, rests: left out while the module answers ev_in_use 0): the increment builder recomputes a track's playback increment (Q26, 0x04000000 = unity), after stock applied PTCH and RATE and before it stores it; when the builder reuses the stored increment no handler runs. The audio render, at interrupt level: short, no firmware call that can block, the EMAC kept as found. Change *increment to change what the track plays at. Return nonzero to take the track: no later handler runs. The base stores *increment either way. The builder's d2-d7/a2-a6 are intact in a handler (a3 the track's 40-byte state, d6 the shift just applied) and must be kept, as C keeps them. */
 #define MODWERK_EV_PLAY_INCREMENT 4
 typedef int modwerk_ev_play_increment(uint32_t *increment, unsigned track);
 
-/* ev_voice_bind (0x40006820): before stock stops a track's voice and binds it fresh; track 8 or more means every track, and stock then comes back here once per track. The frame interrupt or a task: short, no firmware call that can block. Return 0 to pass. 1 drops this reset: stock does nothing and the call returns. 2 runs stock's reset at once: no later ev_voice_bind handler and no ev_voice_bind_run handler. Any other nonzero acts as 2. d2-d7/a2-a6 are the caller's and must be kept. */
+/* ev_voice_bind (0x40006820, rests: left out while the module answers ev_in_use 0): before stock stops a track's voice and binds it fresh; track 8 or more means every track, and stock then comes back here once per track. The frame interrupt or a task: short, no firmware call that can block. Return 0 to pass. 1 drops this reset: stock does nothing and the call returns. 2 runs stock's reset at once: no later ev_voice_bind handler and no ev_voice_bind_run handler. Any other nonzero acts as 2. d2-d7/a2-a6 are the caller's and must be kept. */
 #define MODWERK_EV_VOICE_BIND 5
 typedef int modwerk_ev_voice_bind(unsigned track);
 
-/* ev_voice_bind_run (0x40006820): every ev_voice_bind handler passed: stock's reset runs next. As ev_voice_bind. A notification: every handler runs; none can stop the reset. d2-d7/a2-a6 are the caller's and must be kept. */
+/* ev_voice_bind_run (0x40006820, rests: left out while the module answers ev_in_use 0): every ev_voice_bind handler passed: stock's reset runs next. As ev_voice_bind. A notification: every handler runs; none can stop the reset. d2-d7/a2-a6 are the caller's and must be kept. */
 #define MODWERK_EV_VOICE_BIND_RUN 6
 typedef void modwerk_ev_voice_bind_run(unsigned track);
 
@@ -149,7 +149,7 @@ struct modwerk_sequencer_row {
 };
 struct modwerk_sequencer_rows { uint32_t count; struct modwerk_sequencer_row row[]; };
 
-/* ev_tail_kill (0x40004d0c): STOP's tail kill (STOP, STOP, STOP) holds a track: each frame, for each held track, before stock tests the track's FX2 against its three reverbs and clears theirs. The frame interrupt: short, no firmware call that can block. A notification: every handler runs, then stock's own test. record is the track's 64-byte frame record its DSP instances read (32 halfwords): the halfword at +56 is the FX2 id stock tests, the byte at +53 FX2 SETUP's slot 11, which stock zeroes for its reverbs while the kill holds. A handler may zero its own effect's bytes there the same way (check +56 first). d2-d7/a2-a6 are the builder's and must be kept. */
+/* ev_tail_kill (0x40004d0c, rests: left out while the module answers ev_in_use 0): STOP's tail kill (STOP, STOP, STOP) holds a track: each frame, for each held track, before stock tests the track's FX2 against its three reverbs and clears theirs. The frame interrupt: short, no firmware call that can block. A notification: every handler runs, then stock's own test. record is the track's 64-byte frame record its DSP instances read (32 halfwords): the halfword at +56 is the FX2 id stock tests, the byte at +53 FX2 SETUP's slot 11, which stock zeroes for its reverbs while the kill holds. A handler may zero its own effect's bytes there the same way (check +56 first). d2-d7/a2-a6 are the builder's and must be kept. */
 #define MODWERK_EV_TAIL_KILL 30
 typedef void modwerk_ev_tail_kill(uint8_t *record, unsigned track);
 
@@ -271,5 +271,9 @@ struct modwerk_part_menu {
     const uint32_t *icon;               /* 0, or its icon beside the label: 9 rows, bit 18 the leftmost of 19 columns */
 };
 #define MODWERK_PART_MENU_ABI 1u
+
+/* ev_in_use (asked by the base): the base's UI tick asks each module that subscribes, on its own, whether it acts on a track now; no stock site and no row walk: the base calls the module's handler and keeps its answer. The UI tick (a task, never the frame interrupt): short, no firmware call that can block. Return nonzero while this module acts on at least one track of the current Part (a machine: a track runs it; a feature: its setting is on somewhere), 0 while it acts on none. While it answers 0 the module rests: the base leaves its handlers out of every hook that rests (HOOKS.md's kind column), so the frame interrupt never enters its code there, and keeps every other hook, table and its setup UI, so the musician can still turn it on. The first nonzero answer puts it back in its (order, module id) place, from the next tick on, so a note that starts in the gap before that tick runs without it: answer for every Part a pattern change could bring in while playing, and start any per-track state afresh when the module wakes. A module that does not subscribe never rests; installing, replacing or removing a module wakes its position until the next answer. d2-d7/a2-a6 must be kept. */
+#define MODWERK_EV_IN_USE 54
+typedef unsigned modwerk_ev_in_use(void);
 
 #endif

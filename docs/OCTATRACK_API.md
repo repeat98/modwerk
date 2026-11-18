@@ -52,6 +52,7 @@ The base owns every stock site that more than one module needs and shares it as 
 
 - **Playback:** `ev_play_increment` (Repitch changes a track's playback rate), `ev_voice_bind`, `ev_voice_bind_run`.
 - **Mutes and stops:** `ev_mute_keep` and `ev_trig_muted` (raised), `ev_tail_kill`.
+- **Resting:** `ev_in_use`, which the base asks each module from the UI tick: while a module answers 0 it is left out of the hooks marked `rests`.
 - **MIDI and the keyboard:** `ev_midi_note_on`, `ev_midi_note_off`, `ev_midi_note_key`, `ev_octave_key`, `ev_octave_number`, `ev_keyboard_draw`, the `ev_chromatic_*` hooks, `ev_arp_setup_knob`, `ev_arp_setup_text`.
 - **Editing:** `ev_plock_store` (a lock byte is stored), `ev_knob_store` (a knob turn stores a Part byte).
 - **Projects and settings:** `ev_project_load`, `ev_project_line`, `ev_project_write`, `ev_project_defaults`, `ev_settings_sanitise`.
