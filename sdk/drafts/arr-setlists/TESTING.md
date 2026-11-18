@@ -1,5 +1,9 @@
 # Arr Setlists testing
 
+Version 0.1.0-experimental. Host gate, emulator runs and the developer's own tests on their MKI (flashed base
+`6c189889…`), each on the named build below; the last build tested on the unit is package `da945df5…` (source
+`c5027552c`).
+
 ## Host gate
 
 `verify.py`: 40 checks of arr_setlists.c against simulated battery RAM and simulated stock file routines: switching
