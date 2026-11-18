@@ -24,8 +24,8 @@ later book can be moved into book 1 on a computer by renaming its file (`arr37.w
 | ARR > CHANGE, playing | LEFT / RIGHT | Nothing changes; it says STOP TO CHANGE BOOK |
 
 A book never used starts as 8 empty arrangements. Each book comes back on the arrangement you last chose in it (a
-book not visited yet on arrangement 1), with the list's cursor on it; loading a project or a power cycle starts every
-book but book 1 on arrangement 1 again (stock keeps book 1's choice in the project). Switching takes about as long as stock's SYNC TO CARD and ends with
+book not visited yet on arrangement 1), with the list's cursor on it; after a power cycle or a project load every book
+but the one in use starts on arrangement 1 again. Switching takes about as long as stock's SYNC TO CARD and ends with
 its NOW SAFE TO EJECT! message. Without a project loaded it says NO PROJECT; while the card is busy, CARD BUSY. If an
 arrangement file does not read, it says BOOK FILE ERROR, that arrangement shows empty, and its file is left as it is
 unless you edit that arrangement.
@@ -54,7 +54,8 @@ unless you edit that arrangement.
   that site (`npm run modules:compat`).
 - **Stopped only.** A switch writes and reads the card through stock's own SYNC TO CARD job, which stock runs only
   stopped.
-- **A project opens on book 1,** after a project load and a power cycle too: stock reads arr01 to arr08 then.
+- **A power cycle keeps the book in use**: the Octatrack keeps its arrangements in battery memory, and the module
+  recognises them. **Loading a project opens it on book 1**: stock reads arr01 to arr08 then.
 - **Switch back to book 1 before removing the module.** Without the module, stock's next save writes whatever book is
   in its 8 slots into arr01 to arr08. Leaving book 1 always keeps a backup of it (`arr01.bak` to `arr08.bak`, stock
   files too), and arriving at book 1 loads that backup and writes it back into arr01 to arr08; so if it happens,

@@ -19,7 +19,8 @@
  * Every arrangement file stores all 8 slots' "has a saved copy" flags, and reading one sets all 8: the module always
  * writes a book's 8 files together, so whichever is read last holds the book's own flags.
  *
- * A project load (power-up included) makes stock read arr01-08 into the slots again, so the slots then hold book 1.
+ * A project load makes stock read arr01-08 into the slots again, so the slots then hold book 1. A power cycle does not
+ * (the developer's MKI kept book 3 through one): the slots keep the book they held.
  * After an install the module learns which book the slots hold from a fingerprint of the slots it keeps in battery RAM
  * (battery-ram.json): matching, they still hold the book it last loaded; otherwise book 1.
  *
@@ -295,7 +296,7 @@ __asm__(
     "\tjmp 0x400915b4\n");
 #endif
 
-/* A project load (power-up included) or a new project: stock reads arr01-08 into the slots, so they hold book 1. */
+/* A project load or a new project: stock reads arr01-08 into the slots, so they hold book 1. */
 void as_project_load(void)
 {
     struct as_state *s = ready();

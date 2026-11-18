@@ -32,7 +32,8 @@ Battery RAM 0x100f8f06-0x100f8ffc was free; the module claims 0x100f8f10-0x100f8
   `arrNN.work` and calls 0x40089644. Its entry is two instructions, 8 bytes (`link.w %fp,#-324; movem.l
   %d2-%d7/%a2-%a5,(%sp)`, SHA-256 b692e058…); nothing branches into 0x400915ae-0x400915b4, and no module or base hook
   patches it.
-- `0x4008fd28(dir, mask)` reads the masked slots' files (project loads, the power-up one too).
+- `0x4008fd28(dir, mask)` reads the masked slots' files when a project is loaded. A power cycle does not: on the
+  developer's MKI the arrangements in battery RAM came back as they were (book 3 stayed book 3).
 - `0x40016388(to, from, 0)` copies a file; SAVE and RELOAD PROJECT use it for arr01-08 (-12: no such file).
 - File layer: open 0x40016864 `(file, path, mode, buffer, size)`, close 0x4001677c; the project directory
   0x40025230(0, 0); `clear_arr` 0x400a041c(n).

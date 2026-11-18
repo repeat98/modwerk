@@ -45,7 +45,12 @@ developer's own test.
 - The developer asked that each book come back on the arrangement last chosen in it. Built with stock's own choice,
   select_arr (0x400a03a0), and the list's cursor moved onto it. Under ot_emu: book 1 on arrangement 3, book 2 then on
   1, arrangement 2 chosen there, book 1 back on 3, book 2 on 2, a new book on 1; after a switch DOWN and YES chose the
-  row below the remembered one. On the unit: not yet.
+  row below the remembered one.
+- On the unit, package `351f45ab…` kept, as the developer reported it: book 1 on arrangement 3 to book 3 on 1;
+  arrangement 2 chosen there; book 1 came back on 3 and book 3 on 2. While playing, LEFT/RIGHT said STOP TO CHANGE
+  BOOK and nothing changed. ARR SAVE, an edit and ARR RELOAD in book 3 brought the saved version back. A power cycle on
+  book 3 came back on BOOK 3 with book 3's arrangements: the unit keeps them in battery memory, and the module's record
+  matched them (not a project load, so not book 1, as I had expected).
 
 ## Stock flows
 
