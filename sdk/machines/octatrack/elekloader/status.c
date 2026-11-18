@@ -105,9 +105,8 @@ static void cpu_note_played(void)
     else if (++play_readings >= 8u) cpu_played = recent_mean(), frame_played = frame_mean();
 }
 /* The frame interrupt's share of each frame, per mille, from the frame guard's own sums (machine_registry.c): what a
- * module effect's CPU price (fxpage.c, the share `npm run device:price` measured) adds to. The meter above is all of
- * the ColdFire, averaged; the guard drops renders frame by frame once this share passes its own, so a pick is judged
- * by this one too (owner's MKII, 17 November 2026: a third Tape Echo, the meter at 72 %, the guard dropped 4,782
+ * module effect's CPU price (`npm run device:price`) is measured in. The meter above is all of the ColdFire, averaged;
+ * the guard drops renders frame by frame once this share passes its own, so the pick box shows this one (owner's MKII, 17 November 2026: a third Tape Echo, the meter at 72 %, the guard dropped 4,782
  * Amiga renders, 70 a second). The guard's development read clears its sums: that reading is left out. */
 extern volatile uint32_t mw_frame_busy, mw_frame_count; /* machine_registry.c: frame lengths >> 8, frames */
 #ifndef MW_FRAME_LINE
@@ -115,8 +114,8 @@ extern volatile uint32_t mw_frame_busy, mw_frame_count; /* machine_registry.c: f
 #endif
 /* The line: on an MKII (17 November 2026, Amiga and three Tape Echos playing, the frame interrupt's mean 44 % of a frame)
  * the guard at its 80 % skipped nothing with its share at 65 % and 114 renders in 5 s at 60 %: it drops renders once
- * the mean comes within about 16 points of its share, so a pick may take the mean to 60 % and no further. */
-volatile uint32_t mw_frame_line = MW_FRAME_LINE; /* per mille of a frame: a priced pick past it is CPU FULL */
+ * the mean comes within about 16 points of its share, so 60 % is a full bar. */
+volatile uint32_t mw_frame_line = MW_FRAME_LINE; /* per mille of a frame: the pick box's CPU bar is full at it */
 static uint32_t last_busy, last_frame_count;
 static uint32_t frame_mean(void)
 {
@@ -449,16 +448,8 @@ static int budget_slot = -1; /* the slot the pick put a module on; -1: an accept
  * shortcut: a second pick within the box's 1.5 s counts from before the first, until the box closes. */
 static uint32_t words_before[2];
 /* The pick's CPU (owner, 17 November 2026: the box showed the DSP an effect took, not the CPU): the frame share as it
- * stood, and what the effect's price adds, less the price of the module effect it replaced. */
-unsigned modwerk_fxpage_price(unsigned id); /* fxpage.c: per mille of a frame, 0 when its package names none */
-static uint32_t pick_load, pick_add;
-static unsigned pick_priced, pick_minus;
-static void cpu_pick(unsigned old, unsigned id)
-{
-    uint32_t was = modwerk_fxpage_price(old), now = modwerk_fxpage_price(id);
-    pick_priced = was || now, pick_minus = now < was, pick_add = now < was ? was - now : now - was;
-    pick_load = modwerk_status_frame_load(); /* windows that ended before the pick, but for the last half second */
-}
+ * stood, from windows that ended before the pick but for the last half second. */
+static uint32_t pick_load;
 static void memory_tick(void)
 {
     static uint32_t completed, accepted;
@@ -467,7 +458,7 @@ static void memory_tick(void)
     if (dl_selection_completed != completed) { /* a pick changes one slot; a Part change, usually many: no box then */
         unsigned changed = 0, module = 0, at = 0;
         for (unsigned i = 0; i < 16u; ++i) if (LIVE[i] != before[i]) ++changed, at = i, module |= (unsigned)fx_in(modwerk_fx_modules, LIVE[i]);
-        if (changed == 1u && module) picked = 1, budget_slot = (int)at, cpu_pick(before[at], LIVE[at]);
+        if (changed == 1u && module) picked = 1, budget_slot = (int)at, pick_load = modwerk_status_frame_load();
     }
     if (over_usb && !picked) budget_slot = -1;
     if (dl_selection_completed != completed || over_usb) for (unsigned i = 0; i < 16u; ++i) before[i] = LIVE[i];
@@ -1027,12 +1018,9 @@ static void memory_box(unsigned char *frame)
         label(23u, 26u, "DSP"), share_bar(frame, 45u, 26u, 40, 6, dsp, dsp_part), plus(89u, 26u, dsp_part, 0);
         label(23u, 34u, "MEM"), share_bar(frame, 45u, 34u, 40, 6, mem, mem > before ? mem - before : 0);
         plus(89u, 34u, mem > before ? mem - before : before - mem, mem < before);
-        /* CPU: the frame share against the line a priced pick may not pass, and what this one adds, or frees */
-        const uint32_t load = share(pick_load, mw_frame_line), part = share(pick_add, mw_frame_line),
-                       cpu = pick_minus ? (load > part ? load - part : 0) : (load + part < 1000u ? load + part : 1000u);
-        label(23u, 42u, "CPU"), share_bar(frame, 45u, 42u, 40, 6, cpu, pick_minus ? 0 : part);
-        if (pick_priced) plus(89u, 42u, part, (int)pick_minus);
-        else percent(89u, 42u, cpu); /* its package names no price: the share alone */
+        /* CPU: the frame share against the line where the frame guard starts dropping renders */
+        const uint32_t cpu = share(pick_load, mw_frame_line);
+        label(23u, 42u, "CPU"), bar(frame, 45u, 42u, 40, 6, cpu, 0), percent(89u, 42u, cpu);
         return;
     }
     label((unsigned)(64 - TEXT_WIDTH(FONT, -1, "MEMORY USED") / 2), 15u, "MEMORY USED");
@@ -1118,26 +1106,16 @@ void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu)
     if (open == REFUSED && refused_reason == 4u && refused[1] == track) refused[0] = 5u, refused_played = cpu > recent_mean();
 }
 /* selection.c's guard (build_core.py's edit), before stock writes an FX pick: 1 when the pick asks for a module's
- * effect (`id`, on slot 0-15: FX1 T1-T8, then FX2) while the unit is busy, or when its price, less the price of the
- * module effect the slot runs now, would take the frame share past mw_frame_line; the pick is then not made. A module
- * effect's control code, hooks and frame work are ColdFire time no DSP budget covers. Stock's effects and NONE always
- * pass, so a busy unit can always be made lighter. The box names the slot as an effect's ("Tn FXn"). */
+ * effect (`id`, on slot 0-15: FX1 T1-T8, then FX2) while the unit is busy, and the pick is then not made. A module
+ * effect's control code, hooks and frame work are ColdFire time no price covers. Stock's effects and NONE always pass,
+ * so a busy unit can always be made lighter. The box names the slot as an effect's ("Tn FXn"). */
 extern volatile uint32_t mw_cpu_hot, mw_cpu_refusals, mw_cpu_refusal_tracks; /* machine_registry.c */
 void modwerk_fxmap_name(unsigned id, char *out); /* fxmap.c: 16 bytes */
 int modwerk_status_effect_busy(unsigned slot, unsigned id)
 {
     uint32_t cpu = modwerk_status_cpu_load();
-    if (slot > 15u || !fx_in(modwerk_fx_modules, id)) return 0;
+    if (slot > 15u || !fx_in(modwerk_fx_modules, id) || cpu < mw_cpu_hot) return 0;
     char name[16];
-    if (cpu < mw_cpu_hot) {
-        uint32_t price = modwerk_fxpage_price(id), was = modwerk_fxpage_price(LIVE[slot]), frame = modwerk_status_frame_load();
-        if (price <= was || frame + price - was < mw_frame_line) return 0;
-        modwerk_fxmap_name(id, name);
-        mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
-        modwerk_status_cpu_refused(slot & 7u, name, share(frame, mw_frame_line), share(price - was, mw_frame_line));
-        if (open == REFUSED && refused_reason == 4u && refused[0] == 4u) refused[1] = slot, refused_machine = 0;
-        return 1;
-    }
     modwerk_fxmap_name(id, name);
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
     modwerk_status_cpu_refused(slot & 7u, name, cpu, 0);

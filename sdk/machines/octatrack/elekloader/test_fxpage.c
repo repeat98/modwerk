@@ -64,13 +64,7 @@ int main(void)
     CHECK(be32(image + 128 + 8) == ADDR(pages[26]) + 0x16 && pages[26][3] == 26);
     CHECK(modwerk_fx1_list[3] == ADDR(pages[26]) && modwerk_fx2_list[4] == ADDR(pages[26]) &&
           modwerk_fx2_list[5] == ADDR(pages[27]) && TABLE(3)[27] == 5);
-    /* Its CPU price: the recipe's bytes 46-47, per mille of a frame; none named is 0, and a dropped page has none. */
-    unsigned modwerk_fxpage_price(unsigned id);
-    CHECK(!modwerk_fxpage_price(26) && !modwerk_fxpage_price(27));
-    bytes = recipe(); image[46] = 0x01, image[47] = 0x2c; CHECK(modwerk_fxpage_build(26, image, bytes, 3));
-    CHECK(modwerk_fxpage_price(26) == 300u && !modwerk_fxpage_price(27) && !modwerk_fxpage_price(200));
     modwerk_fxpage_drop(26);
-    CHECK(!modwerk_fxpage_price(26));
     CHECK(!modwerk_fx1_list[3] && modwerk_fx2_list[4] == ADDR(d) && TABLE(1)[26] == 0x1000 && !TABLE(3)[26]);
     /* Refused: another donor's bytes, a fixup past its code, the image cut short, a stock effect's id. */
     bytes = recipe(); image[8] ^= 1; CHECK(!modwerk_fxpage_build(26, image, bytes, 2));

@@ -59,12 +59,5 @@ if (units[id]) {
   const at0 = link(0, 0)
   formatters.push({ slot, code: hex(at0), relocations: differing(at0, link(D, 0), D), fixups: symbol ? differing(at0, link(0, D), D) : [], clearWidget: true })
 }
-// Its CPU price (resources.cpuPrice: percent of a frame, `npm run device:price`) in tenths, rounded up: what the base
-// admits a pick by (status.c). 0 when the manifest names none.
-const { existsSync } = await import('node:fs')
-const manifest = ['sdk/octatrack/modules', 'sdk/drafts'].map(dir => new URL(`../${dir}/${id}/octamod.module.json`, import.meta.url)).find(existsSync)
-const price = manifest && JSON.parse(readFileSync(manifest, 'utf8')).resources?.cpuPrice
-const cpuPrice = price?.measure === 'frame-interrupt' ? Math.ceil(price.value * 10 - 1e-6) : 0
-if (!(cpuPrice >= 0 && cpuPrice <= 1000)) throw new Error(id + ': resources.cpuPrice.value must be 0-100 % of a frame.')
 console.log(JSON.stringify({ id, donor: recipe.donorAddress, donorSha256: recipe.donorSha256, integers: recipe.integers,
-  strings: recipe.strings, inheritedEnable: recipe.inheritedEnable ?? [], formatters, cpuPrice }))
+  strings: recipe.strings, inheritedEnable: recipe.inheritedEnable ?? [], formatters }))

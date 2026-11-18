@@ -125,8 +125,6 @@ int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
     return 1;
 }
 volatile uint32_t mw_frame_busy, mw_frame_count; /* machine_registry.c's: the frame guard's sums */
-static unsigned prices[32];                      /* fxpage.c's: each id's CPU price, per mille of a frame */
-unsigned modwerk_fxpage_price(unsigned id) { return id < 32u ? prices[id] : 0u; }
 uint32_t modwerk_dsp_booked(unsigned core) { return core; } /* draws only */
 unsigned modwerk_dsp_reads_buffer(unsigned id) { return id == 27u; } /* E-Verb reads one; Tape Echo (15) none */
 /* dsp.c's MODULE COST list: `installed` modules. */
@@ -351,22 +349,19 @@ int main(void)
     for (unsigned i = 0; i < 90u; ++i) memory_tick();
     CHECK(open == CLOSED);                                             /* gone after a second and a half */
     /* The pick's CPU (owner, 17 November 2026: the box showed the DSP Tape Echo took, not the CPU): the frame share as
-     * it stood against the line, and what the effect's price adds less the price of the module effect it replaced. */
+     * it stood, against the line where the guard starts dropping renders, in place of POOL. */
     { budget_on = 1;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 300u;        /* half the line (600) */
-      prices[29] = 60u;                                                /* Euclid: 6 % of a frame, a tenth of the line */
       modwerk_test_live_fx[13] = 29; ++dl_selection_completed; memory_tick();
-      CHECK(open == MEMORY && budget_slot == 13 && pick_load == 300u && pick_add == 60u && pick_priced && !pick_minus);
-      CHECK(strstr(shows(), "|CPU|+10%|") && !strstr(said, "POOL"));
+      CHECK(open == MEMORY && budget_slot == 13 && pick_load == 300u);
+      CHECK(strstr(shows(), "|CPU|50%|") && !strstr(said, "POOL"));
       modwerk_status_key(0, 1), modwerk_status_key(0, 0);
-      modwerk_test_live_fx[13] = 27; ++dl_selection_completed; memory_tick(); /* E-Verb, no price, in its place */
-      CHECK(open == MEMORY && pick_priced && pick_minus && pick_add == 60u && strstr(shows(), "|CPU|-10%|"));
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 700u;        /* past the line: a full bar, no more */
+      modwerk_test_live_fx[13] = 27; ++dl_selection_completed; memory_tick();
+      CHECK(open == MEMORY && pick_load == 700u && strstr(shows(), "|CPU|100%|"));
       modwerk_status_key(0, 1), modwerk_status_key(0, 0);
-      modwerk_test_live_fx[14] = 27; ++dl_selection_completed; memory_tick(); /* neither priced: the share alone */
-      CHECK(open == MEMORY && !pick_priced && strstr(shows(), "|CPU|50%|"));
-      modwerk_status_key(0, 1), modwerk_status_key(0, 0);
-      modwerk_test_live_fx[13] = modwerk_test_live_fx[14] = 0; ++dl_selection_completed; memory_tick();
-      budget_on = 0, prices[29] = 0;
+      modwerk_test_live_fx[13] = 0; ++dl_selection_completed; memory_tick();
+      budget_on = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
     /* DSP FULL with numbers (owner, 20 October 2026): the refused effect's slot and need, instead of the bare popup. */
     dl_refusal[0] = 1, dl_refusal[1] = 9, dl_refusal[2] = 27, dl_refusal[3] = 22, dl_refusal[4] = 327, dl_refusal[5] = 1602;
@@ -481,35 +476,14 @@ int main(void)
       CHECK(frame_recent[2] == 77u);
       mw_frame_count = 1010u, mw_frame_busy = 1000u + 187u * 500u; frame_note(2);
       CHECK(frame_recent[2] == 500u); }
-    /* A priced pick (owner, 17 November 2026: a third Tape Echo at a meter of 72 % made the guard drop 70 renders a
-     * second): refused when the frame share and its price, less the price of the module effect the slot runs, reach
-     * the line, with the CPU FULL box on its slot. A pick no dearer than what runs, a stock effect and NONE pass. */
-    { uint32_t before = mw_cpu_refusals;
-      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 540u, cpu_recent[i] = 720u; /* the meter under its line */
-      prices[29] = 60u, modwerk_test_live_fx[11] = 8u;                 /* T4 FX2 runs stock's DELAY */
-      CHECK(modwerk_status_effect_busy(11, 29) == 1 && open == REFUSED && refused[0] == 4 && refused[1] == 11 && !refused_machine);
-      CHECK(refused_booked == 900u && refused[4] == 100u && mw_cpu_refusals == before + 1 && mw_cpu_refusal_tracks & 1u << 3);
-      CHECK(strstr(shows(), "CPU FULL|") && strstr(said, "T4 FX2|") && strstr(said, "NEEDS +10%"));
-      for (unsigned i = 0; i < 180u; ++i) memory_tick();
-      CHECK(!modwerk_status_effect_busy(11, 27) && open == CLOSED);    /* no price: the meter alone judges it */
-      modwerk_test_live_fx[11] = 29;
-      CHECK(!modwerk_status_effect_busy(11, 29) && open == CLOSED);    /* the same price again adds nothing */
-      modwerk_test_live_fx[11] = 8u;
-      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 539u;
-      CHECK(!modwerk_status_effect_busy(11, 29) && open == CLOSED && mw_cpu_refusals == before + 1); /* 599: under */
-      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 540u;
-      CHECK(modwerk_status_effect_busy(11, 29) == 1);                  /* 600: the line */
-      for (unsigned i = 0; i < 180u; ++i) memory_tick();
-      CHECK(!modwerk_status_effect_busy(11, 8) && !modwerk_status_effect_busy(11, 0) && open == CLOSED);
-      /* Stopped: the frame share of the last play, when it was more. */
-      transport_stopped = 1, frame_played = 540u;
+    /* Stopped, the box shows the frame share of the last play, when it was more; playing, the share now. */
+    { transport_stopped = 1, frame_played = 540u;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 200u;
-      CHECK(modwerk_status_frame_load() == 540u && modwerk_status_effect_busy(11, 29) == 1 && refused_booked == 900u);
-      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      CHECK(modwerk_status_frame_load() == 540u);
       transport_stopped = 0;
-      CHECK(modwerk_status_frame_load() == 200u && !modwerk_status_effect_busy(11, 29) && open == CLOSED);
-      transport_stopped = 1, frame_played = 0, prices[29] = 0, modwerk_test_live_fx[11] = 0;
-      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = cpu_recent[i] = 0; }
+      CHECK(modwerk_status_frame_load() == 200u);
+      transport_stopped = 1, frame_played = 0;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
     modwerk_load_menu(0); modwerk_status_cpu_refused(2, "Poly8", 800, 266);
     CHECK(open == SHOWN);
     CHECK(strstr(shows(), "MODWERK BASE 0.7|"));                       /* the status page names the base by its version */
