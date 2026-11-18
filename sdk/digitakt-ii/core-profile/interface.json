@@ -108,7 +108,7 @@
       "since": "1.1",
       "entry": 4,
       "room": 4,
-      "purpose": "Pointers to core_kitdata_t descriptors {tag[4], size, data, changed}: each mod's block per kit (128 kits), after each kit record's end mark, saved with the project and SAVE KIT, loaded back and copied with the firmware's kit copies. All mods share 191 bytes a kit record (core_kitdata_room()); a block that does not fit is left out. Reader: core's store. A mod claims kitdata:<tag>.",
+      "purpose": "Pointers to core_kitdata_t descriptors {tag[4], size, data, changed}: each mod's block per kit (128 kits), after each kit record's end mark, saved with the project and SAVE KIT, loaded back and copied with the firmware's kit copies. All mods share 143 bytes a kit record (core_kitdata_room()); the record's last 48 bytes hold the base's project archive; a block that does not fit is left out. Reader: core's store. A mod claims kitdata:<tag>.",
       "sites": [
         {
           "os": "1.17",
@@ -170,7 +170,7 @@
       "name": "core_kitdata_room",
       "since": "1.1",
       "prototype": "uint32_t core_kitdata_room(void)",
-      "purpose": "Bytes a kit record holds for the mods' blocks (191)."
+      "purpose": "Bytes a kit record holds for the mods' blocks (143)."
     },
     {
       "name": "core_store_conflicts",

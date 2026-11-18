@@ -43,7 +43,7 @@ describe('safe Digi reader observations', () => {
       expect(create).toHaveBeenCalledTimes(1)
       await expect(client.inspect('digitakt', file)).rejects.toBe(original)
       expect(inspect).toHaveBeenCalledWith('digitakt', file)
-      expect(receive).toHaveBeenCalledWith({ event: 'build_failed', phase: 'preparing', buildKind: 'elekloader', error: 'input' })
+      expect(receive).toHaveBeenCalledWith({ event: 'build_failed', phase: 'preparing', buildKind: 'elekloader-digitakt', error: 'input' })
     } finally { client.dispose(); stop() }
     expect(dispose).toHaveBeenCalledTimes(1)
   })

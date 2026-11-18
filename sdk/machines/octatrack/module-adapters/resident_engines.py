@@ -21,10 +21,15 @@ runtime is resident-runtime/resident_engines.c; docs/OCTATRACK_RESIDENT_ENGINES_
   arena; `dsp` also tells the evacuation when code may move (`modwerk_dsp_moves_idle`).
 """
 import hashlib
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import resident_dsp  # noqa: E402
 
 CORES = ('A', 'B')
-FEATURES = (1, 2, 4, 8)  # resident_dsp.FEATURES: Sidechain, Output Matrix, Analog BD, the key bus
-PACKAGED = 4             # resident_dsp.PACKAGED: Analog BD's engine is its package's
+FEATURES = resident_dsp.FEATURES  # the ledger's: Sidechain, Output Matrix, Analog BD, the key bus, then packaged machines
+PACKAGED = resident_dsp.PACKAGED  # the features whose engine is their package's (dsp-sites.json "packaged")
 PACKAGED_WORDS = 2048    # resident_engines.h MW_ENGINE_PACKAGED_WORDS
 
 
@@ -74,7 +79,22 @@ def data_c(bundles):
     lines.append('const struct mw_engine_unit mw_engine_units[2][MW_ENGINE_FEATURES] = {%s};' % ', '.join(rows))
     lines += ['static uint32_t mw_engine_buffer_%d[%d];' % (core, most) for core, most in enumerate(largest)]
     lines.append('uint32_t *const mw_engine_buffer[2] = {mw_engine_buffer_0, mw_engine_buffer_1};')
+    lines += exits_c(bundles)
     return '\n'.join(lines) + '\n'
+
+
+def exits_c(bundles):
+    """mw_engine_exit_of: each chain site's exit trampoline per core (resident_dsp.chain_exits), 0 for other sites."""
+    sites = resident_dsp.LEDGER['sites']
+    table = []
+    for tag in CORES:
+        exits = resident_dsp.chain_exits(bundles[tag])
+        if any(not 0 < at < 0x2000 for at in exits.values()):
+            raise ValueError('Payload %s: a chain\'s exit trampoline lies outside private P' % tag)
+        table.append('{%s}' % ', '.join('%du' % exits.get(s['index'], 0) for s in sites))
+    return ['static const uint16_t mw_engine_exits[2][%d] = {%s};' % (len(sites), ', '.join(table)),
+            'uint16_t mw_engine_exit_of(unsigned site, unsigned core) { return site < %du && core < 2u ? '
+            'mw_engine_exits[core][site] : 0u; }' % len(sites)]
 
 
 INIT_BLOCK = '''        if(!initialized) {

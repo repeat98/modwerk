@@ -3,7 +3,7 @@ import type { DatabaseSync } from 'node:sqlite'
 import { testServer } from './test-server'
 import { handleCommunity } from '../../server/transport'
 import { digest } from '../../server/security'
-import { chunks, dispatchMaintenance, dispatchSlot, failureKey } from '../../server/maintenance-bot'
+import { TELEGRAM_COMMANDS, chunks, dispatchMaintenance, dispatchSlot, failureKey } from '../../server/maintenance-bot'
 
 const KEY = 'k'.repeat(64), SECRET = 's'.repeat(40), CHAT = '4242'
 const databases: DatabaseSync[] = []
@@ -279,6 +279,8 @@ describe('maintenance bot ledger', () => {
     expect((await (await bot('/state')).json()).fingerprint).toBe('f'.repeat(64))
     await bot('/report', 'POST', { text: ('line\n').repeat(2000) })
     expect(sent.filter(item => item.method === 'sendMessage').length).toBe(3)
+    // The daily report keeps the chat's command menu current, so a new command shows without running setup again.
+    expect(sent.find(item => item.method === 'setMyCommands')?.body.commands).toEqual(TELEGRAM_COMMANDS)
     expect(chunks('x'.repeat(9000)).map(part => part.length)).toEqual([4000, 4000, 1000])
   })
 })
