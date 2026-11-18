@@ -1,6 +1,7 @@
 import { RELEASE_STEPS, type DeveloperTask } from './developer-guidance'
 import type { StarterMachine } from './starter-prompts'
-import { DEVICES_BY_ID, deviceHref, machineRoad, needsIntegration, type DeviceProfile } from '../devices/registry'
+import { DEVICES_BY_ID, deviceHref, needsIntegration, type DeviceProfile } from '../devices/registry'
+import { machineRoad } from '../devices/machine-road'
 
 export function DeveloperReleaseGuide({ task, machine }: { task: DeveloperTask; machine: StarterMachine }) {
   const device = DEVICES_BY_ID[machine]

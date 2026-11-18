@@ -1,6 +1,7 @@
 /** Copyable prompts that start a coding agent on a new module in a contributor's fork. */
 import { DEVELOPMENT_DISCORD_URL } from '../config/development-discord'
-import { DEVICES, DEVICES_BY_ID, deviceTitle, isZd2Pedal, machineRoad, needsIntegration, type DeviceProfile } from '../devices/registry'
+import { machineRoad } from '../devices/machine-road'
+import { DEVICES, DEVICES_BY_ID, deviceTitle, isZd2Pedal, needsIntegration, type DeviceProfile } from '../devices/registry'
 
 export type StarterMachine = DeviceProfile['id']
 
@@ -87,9 +88,17 @@ const INTEGRATION: Starter[] = [{
   task: 'Research and prepare Modwerk support for this instrument: {idea}',
 }]
 
+// Shared SDK work rather than a module: offered on a machine that takes mods until it has the whole Octatrack stack.
+const STACK: Starter = {
+  id: 'stack', title: 'The next stack piece', summary: 'Bring the machine closer to the Octatrack: its base, USB link, loading without a reflash, status page or device tools.', guides: [], example: '',
+  task: 'Build the next piece of the Octatrack\'s stack for this machine: {idea}',
+}
+
 export function startersFor(machine: StarterMachine) {
-  if (needsIntegration(DEVICES_BY_ID[machine])) return INTEGRATION
-  return machine === 'octatrack' ? OCTATRACK : machine === 'analog-rytm-mkii' ? RYTM : machine === 'analog-four-mkii' ? FOUR : DEVICES_BY_ID[machine].family === 'zoom' ? ZOOM : DIGI
+  const device = DEVICES_BY_ID[machine]
+  if (needsIntegration(device)) return INTEGRATION
+  const modules = machine === 'octatrack' ? OCTATRACK : machine === 'analog-rytm-mkii' ? RYTM : machine === 'analog-four-mkii' ? FOUR : device.family === 'zoom' ? ZOOM : DIGI
+  return machineRoad(device).nextPiece ? [...modules, STACK] : modules
 }
 
 const REPOSITORY = 'https://github.com/repeat98/modwerk'
@@ -136,6 +145,7 @@ export function starterReading(machine: StarterMachine, starter: Starter) {
   const files = [...GENERAL_READING, ...starter.guides.map(guide => 'docs/module-guides/' + guide)]
   const device = DEVICES_BY_ID[machine]
   const zoomReading = device?.family === 'zoom' ? isZd2Pedal(device) ? ZD2_READING : ZOOM_READING : []
+  if (starter.id === 'stack') return ['AGENTS.md', 'docs/MACHINE_RECIPE.md', 'docs/ADD_A_MACHINE.md', 'docs/FRONTEND_MCP.md', ...zoomReading, device.sdk!, 'sdk/machines/' + machine + '/machine.json']
   if (starter.id === 'integration') return [...files, 'docs/ADD_A_MACHINE.md', 'docs/MACHINE_RECIPE.md', 'sdk/machines/README.md', ...zoomReading, ...(device?.sdk ? [device.sdk] : []), 'sdk/machines/' + machine + '/machine.json']
   return machine === 'octatrack' ? [...files, 'sdk/octabam/AGENTS.md'] : [...files, ...(device.family === 'zoom' && !isZd2Pedal(device) ? ZOOM_READING : []), device.sdk!]
 }
@@ -172,6 +182,7 @@ function zd2Guidance() {
 
 export function starterPrompt(machine: StarterMachine, starter: Starter, idea = '', login = '', repository = REPOSITORY) {
   if (needsIntegration(DEVICES_BY_ID[machine])) return integrationPrompt(machine, idea, login, '', '', repository)
+  if (starter.id === 'stack') return stackPrompt(machine, idea, login, repository)
   const name = STARTER_MACHINES.find(item => item.id === machine)!.name
   const author = login.trim().replace(/^@/, '') || '<your-github-login>'
   const description = idea.trim() || (starter.port ? PORT_PLACEHOLDER : IDEA_PLACEHOLDER)
@@ -204,6 +215,32 @@ export function updatePrompt(machine: StarterMachine, module = '', idea = '', is
     'My GitHub login is ' + author + '.',
     '',
     skillHandoff('modwerk-update-module'),
+  ], repository, login)
+}
+
+/** For a machine that takes mods but lacks part of the Octatrack's stack: its next piece, as shared SDK work (docs/MACHINE_RECIPE.md). */
+function stackPrompt(machine: StarterMachine, idea = '', login = '', repository = REPOSITORY) {
+  const device = DEVICES_BY_ID[machine]
+  const name = deviceTitle(device)
+  const road = machineRoad(device)
+  return withSetup([
+    'I am working in my Modwerk fork. Help me build the next piece of the Octatrack\'s stack for the ' + name + '.',
+    'Goal: ' + (idea.trim() || '<the piece you want to work on, or leave it to the next one below>'),
+    ...(login.trim() ? ['My GitHub login: ' + login.trim().replace(/^@/, '')] : []),
+    '',
+    'This is shared SDK work, not a module: it goes in its own pull request for owner review, never inside a module release.',
+    'Before changing code, read:', ...starterReading(machine, STACK).map(file => '- ' + file + (file === device.sdk ? ' (its Modwerk stack section first)' : '')),
+    'Then sdk/machines/' + machine + '/GOAL.md, where it exists.',
+    '',
+    'The ' + name + '\'s stack, as its profile and machine page record it (' + road.stack.filter(piece => piece.state === 'done').length + ' of ' + road.stack.length + ' done):',
+    ...road.stack.map((piece, index) => `${index + 1}. ${piece.title}: ${piece.state}`),
+    'Next piece: ' + road.nextPiece!.title + ' (' + road.nextPiece!.description + ') The "Next" column for this machine in docs/MACHINE_RECIPE.md says what that means here.',
+    'Extend the Octatrack\'s pieces, listed with their files in the recipe: add this machine\'s glue, addresses and pages to the loader, link, builder, device tools and machine page rather than designing new ones. The base is Modwerk\'s and owns what several modules share; a hook costs nothing while no module uses it.',
+    '',
+    'Check the agent board (`npm run board`: claims, questions and findings on machine ' + machine + ') and open pull requests for the ' + name + ' first. Pick up the next piece rather than a parallel one, and ask whoever is on it before starting.',
+    'Use Node 24 and npm ci. Work on that piece only: establish what the machine already has for it, propose a scoped plan and wait for my approval before implementation.',
+    'Develop for USB and test the exact build on my unit through the developer MCP\'s device tools; emulators are for iteration, never evidence. A piece is done once its exact build passed on more than one unit and the owner released it; until then it stays started.',
+    'When the piece moves, update the profile\'s stack, the machine\'s guide and the table in docs/MACHINE_RECIPE.md in the same pull request. Keep stock firmware and extracted bytes private, and never edit generated files by hand.',
   ], repository, login)
 }
 

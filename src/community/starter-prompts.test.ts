@@ -45,6 +45,22 @@ describe('starter prompts', () => {
     expect(pedal).not.toContain('Plan the core')
   })
 
+  it('offer the next stack piece wherever a machine that takes mods lacks part of the Octatrack\'s stack', () => {
+    expect(startersFor('octatrack').map(starter => starter.id)).not.toContain('stack')
+    for (const machine of ['digitakt', 'digitakt-ii', 'analog-rytm-mkii', 'zoom-ms-70cdr']) expect(startersFor(machine).at(-1)?.id).toBe('stack')
+    const prompt = starterPrompt('digitakt-ii', startersFor('digitakt-ii').at(-1)!, '', 'octo-dev')
+    expect(prompt).toContain('next piece of the Octatrack\'s stack for the Digitakt II')
+    expect(prompt).toContain('1. Modwerk base: started')
+    expect(prompt).toContain('Next piece: Modwerk base')
+    expect(prompt).toContain('its own pull request for owner review, never inside a module release')
+    expect(prompt).toContain('docs/MACHINE_RECIPE.md')
+    expect(prompt).toContain('machine digitakt-ii')
+    expect(prompt).not.toContain('module:new')
+    expect(prompt).not.toContain('/modwerk-new-module')
+    // The MS-70CDR has its USB setup and status page done, but its base is only started, so the base comes first.
+    expect(starterPrompt('zoom-ms-70cdr', startersFor('zoom-ms-70cdr').at(-1)!)).toContain('Next piece: Modwerk base')
+  })
+
   it('only ask the agent to read files that exist', () => {
     for (const { machine, starter } of all) for (const file of starterReading(machine, starter)) expect(existsSync(file), machine + '/' + starter.id + ': ' + file).toBe(true)
   })
@@ -69,7 +85,7 @@ describe('starter prompts', () => {
   it('hands every module prompt to the skill committed with the fork', () => {
     for (const machine of STARTER_MACHINES.filter(item => !needsIntegration(DEVICES.find(device => device.id === item.id)))) {
       const prompts = {
-        'modwerk-new-module': startersFor(machine.id).map(starter => starterPrompt(machine.id, starter)),
+        'modwerk-new-module': startersFor(machine.id).filter(starter => starter.id !== 'stack').map(starter => starterPrompt(machine.id, starter)),
         'modwerk-update-module': [updatePrompt(machine.id)],
       }
       for (const [skill, list] of Object.entries(prompts)) for (const prompt of list) {

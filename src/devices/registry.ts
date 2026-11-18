@@ -3,7 +3,7 @@
 // Every machine Modwerk knows about (Elektron instruments, Zoom MultiStomp pedals and the Erica Synths LXR-02), with what is known about modding it.
 // Facts about devices other than the Octatrack come from public research projects and are linked from each profile.
 import MACHINES from './machines.generated.json'
-import { MACHINE_STACK, type MachineFamily, type MachineProfile } from './machine-contract'
+import type { MachineFamily, MachineProfile } from './machine-contract'
 import { assetUrl } from '../hosting'
 
 export type DeviceStatus = 'available' | 'preview' | 'research' | 'open'
@@ -81,14 +81,6 @@ export function readyForMods(device: Pick<DeviceProfile, 'family' | 'steps' | 's
 
 // A machine Start developing sends to integration rather than to module prompts.
 export const needsIntegration = (device: DeviceProfile | undefined) => !device || !readyForMods(device)
-
-// Where a machine stands on its road, as its machine page shows it: its family's steps to the first mod, then the
-// Octatrack's stack (docs/MACHINE_RECIPE.md), each with its state and the first one not done yet.
-export function machineRoad(device: Pick<DeviceProfile, 'family' | 'steps' | 'stack'>) {
-  const steps = deviceSteps(device).map(step => ({ ...step, state: device.steps[step.id] ?? 'open' }))
-  const stack = MACHINE_STACK.map(piece => ({ ...piece, state: device.stack[piece.id] ?? 'open' }))
-  return { steps, next: steps.find(step => step.state !== 'done'), stack, nextPiece: stack.find(piece => piece.state !== 'done') }
-}
 
 // Machines come from sdk/machines/<id>/machine.json through scripts/machines.mjs; the UI keeps a compact shape.
 export const DEVICES: DeviceProfile[] = (MACHINES as MachineProfile[]).map(machine => ({
