@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { tagDiscordLinks, tagMailLinks } from '../../server/site-link-tags'
 import { welcomeEmail } from '../../server/welcome-email-template'
@@ -54,5 +55,13 @@ describe('the forum Share button', () => {
     expect(shareLink('forum/thread/abc/reverb/', 'https://modwerk.app/#forum')).toBe('https://modwerk.app/forum/thread/abc/reverb/?utm_source=forum-share')
     expect(visitSource('https://www.reddit.com/', '?utm_source=forum-share', 'https://modwerk.app')).toBe('forum-share')
     expect(shareLink('https://example.org/x', 'https://modwerk.app/')).toBe('https://example.org/x')
+  })
+})
+
+describe('the repository README', () => {
+  it('links to the site with a source the site counts as the README', () => {
+    const links = [...readFileSync(new URL('../../README.md', import.meta.url), 'utf8').matchAll(/\]\((https:\/\/modwerk\.app[^)\s]*)\)/g)].map(match => match[1])
+    expect(links.length).toBeGreaterThan(0)
+    for (const link of links) expect(visitSource('https://github.com/repeat98/modwerk', new URL(link).search, 'https://modwerk.app')).toBe('github-readme')
   })
 })
