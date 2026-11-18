@@ -3,6 +3,7 @@
 // Step 3 of a maintenance bot pass (docs/MAINTENANCE_BOT.md). Runs from main with write access and no model:
 // it holds the model's proposals to the policy, files them in the Worker's ledger, carries out what is due and
 // not stopped, and on the daily run sends the report to Telegram.
+import { tagDiscordLinks } from '../../server/site-link-tags.ts'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { TODO_COMMAND, actionId, classify } from './policy.mjs'
@@ -129,7 +130,7 @@ async function carryOut(action) {
     const now = await readDiscordTarget(chat, payload.channel, payload.message)
     if (!now || now.state !== 'open') return ['expired', 'someone answered in the meantime']
     // No pings of any kind: not @everyone, not roles, not the person replied to beyond Discord's reply marker.
-    await chat('/channels/' + payload.channel + '/messages', 'POST', { content: payload.body, message_reference: { message_id: payload.message, channel_id: payload.channel, fail_if_not_exists: false }, allowed_mentions: { parse: [], replied_user: false } })
+    await chat('/channels/' + payload.channel + '/messages', 'POST', { content: tagDiscordLinks(payload.body), message_reference: { message_id: payload.message, channel_id: payload.channel, fail_if_not_exists: false }, allowed_mentions: { parse: [], replied_user: false } })
     return ['done', '']
   }
   if (payload.kind.startsWith('board_')) {

@@ -60,3 +60,10 @@ export function forumHashRoute(path: string) {
   const match = /^forum\/(thread|profile)\/([^/?]+)\/(\?.*)?$/.exec(path)
   return match ? '#forum/' + match[1] + '/' + (match[1] === 'thread' ? threadIdFromSegment(match[2]) : match[2]) + (match[3] ?? '') : undefined
 }
+/** The address the Share button hands out: the thread's public page, tagged so the site counts a visit through it as one
+ * from a shared forum link (visit-source.ts), which the site then drops from the address bar. */
+export function shareLink(href: string, base: string) {
+  const link = new URL(href, base)
+  if (link.origin === new URL(base).origin) link.searchParams.set('utm_source', 'forum-share')
+  return link.href
+}
