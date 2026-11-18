@@ -84,11 +84,11 @@ Development base `7edbd8bf` (29 sites; `.run` 10,732 bytes, 284 more than base `
 
 ## Sound-chip hook: design (not built)
 
-- **Site.** The type test in the per-voice loop (short-word PC `0x1c654e`-`0x1c6561`; section-7 byte address `0x28000000 + 2 * PC`, so `0x2838ca9c` onwards). Today a type of 6 or more skips the per-type setup and an added type plays nothing. The base replaces one 48-bit instruction there with a jump to its machine dispatcher, guarded by SHA-256 like the render and receive sites.
+- **Site.** The type test in the per-voice loop (short-word PC `0x1c654e`-`0x1c6561`; section-7 byte address `0x28000000 + 2 * PC`, so `0x2838ca9c` onwards). On the sound chip a type of 6 or more skips the per-type setup, but an added type never arrives there as itself (below). The base replaces one 48-bit instruction there with a jump to its machine dispatcher, guarded by SHA-256 like the render and receive sites.
 - **Dispatcher.** A base-owned SHARC routine: for a type below 7 it replays the displaced instruction and returns to stock; for an added type with a sound-chip routine it saves the registers the voice loop keeps, calls the module's voice routine with the voice record, and resumes at the shared continuation (`0x1c65fe`) so the stock filter, amp envelope and panning still process the voice.
 - **Module routines.** Each machine package carries its sound-chip code in L2 (the free range `0x2001ab7c`-`0x200fa000`, as the render subscribers do) and names a note-on and a render entry; the base keeps a table of them by machine type.
 - **Builder.** `src/engine/elektron/dt2-sharc.ts` patches exactly two fixed sites (render and receive). It needs a list of base sites and per-machine allocations, in the same verified way.
-- **Traced (below).** The type dispatch only sets a voice up; rendering is a separate pass that does not look at the type. So an added type most likely plays nothing today because its voice is never set up (no step, no START/LEN), not because the renderer skips it (inferred from the stock trace; type 7 not traced yet).
+- **Traced (below).** The type dispatch only sets a voice up; rendering is a separate pass that does not look at the type. An added type does not reach the sound chip as itself: it arrives as 0 and plays as SAMPLE (emulator check below).
 
 ### Sound-chip trace of one SAMPLE voice (18 November 2026)
 
@@ -109,6 +109,22 @@ The per-voice loop (`0x1c642a`) runs once per 32-sample block and walks 32 voice
 - **Cost and budget.** The block is 666,667 instructions (`DSP_PERIOD`); stock with one note used about 199,000 to 211,000 (median busy 210,896; 68% idle). A playing SAMPLE voice costs about 3,500 more per block than a silent one, about 110 per output sample; 32 playing voices would add about 112,000. So an added machine's render can cost about as much as a SAMPLE voice without trouble, but the real unit's cycle count (external memory waits) is still to measure.
 - **What this means for the hook.** Two sites, not one: the setup dispatch at `0x1c6550` (an added type gets its own setup, or SAMPLE's when its machine plays samples the stock way) and, for a machine that renders its own sound, the render choice at `0x1c6ae8`-`0x1c6afd`, where the base would call the module's render for an added type's voice and write into the same voice slot at `0x8045b3c0 + 0x80 * voice`. The third dispatch (`0x1c6c10`) is not by machine type and needs nothing.
 - **Line input.** Not reached in this trace: the block's own work (passes 1-3 and the mix) reads no input buffer that could be told apart. Finding where the input arrives each block (for a SOURCE = SAMPLE or INPUT setting) needs a run with audio on the input, watching the mix `0x1c308a`.
+
+### Emulator check: an added type on the sound chip (19 November 2026)
+
+Coupled runs (digikit `sharc_live`, `NOTE_EVENTS=trig` on track 1, the sidechain work's test card and DSP state, `SAVE_QUIET_FRAMES=200` so the trig comes after the card's samples have loaded; without that wait every run, stock included, was silent). Development base with the test machine; for the forced runs a local, uncommitted ev_tick fixture kept track 1's type byte at 7.
+
+| Run | Result |
+| --- | --- |
+| Base, track 1 left on SAMPLE (type 0), stock sound-chip code | The test tone plays; PCM since ready is byte-identical to the stock OS run (`164c7c67...`). The base changes nothing in normal playback. |
+| Track 1 forced to type 7, stock sound-chip code | The tone plays at the same level (peak 0.063, RMS 0.04). The sound chip's register at the type test held 0 for every voice: the ColdFire sends the DSP a translated machine value, and type 7 arrives as 0. |
+| Track 1 forced to type 7, a local sound-chip detour at `0x1c6553` (type 7 to 0, then the displaced instruction) | Almost silent. The displaced instruction (`compu`) does not write `R0`; `R0` still holds 128.0 from `0x1c6550` and is used after `0x1c6556`. The detour used `R0` as scratch (and left the integer-overflow sticky bits set), which broke the voice. |
+
+What it changes:
+
+- A machine that plays its sample the stock way needs no sound-chip hook: the ColdFire side alone (menu, name, knobs, saving) already gives it working sound in the emulator.
+- A machine with its own sound (Mikrotakt's grains) needs the sound chip to tell its voices apart. Next: find where the ColdFire turns the type into the DSP's value (the per-track words of the DSP frame) and send a distinct value for an added type, then the render hook at `0x1c6ae8`.
+- Any sound-chip detour must preserve every register and the sticky status it touches, including registers the displaced instruction only reads (`R0` here).
 
 ## Still to check
 
