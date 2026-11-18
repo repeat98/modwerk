@@ -103,6 +103,7 @@ struct as_state {
     uint8_t last[BOOKS];     /* the arrangement last chosen in each book (0 = arrangement 1), kept in arrbook.work */
     int8_t restore;          /* a project was loaded on this book: the UI task switches to it once stock is done, -1 none */
     uint16_t restore_ticks;
+    uint8_t reloaded;        /* RELOAD PROJECT has read where it was saved: the load that follows keeps it */
     uint8_t hush;            /* frames after a switch of ours in which the job's NOW SAFE TO EJECT! is closed */
     int8_t restore_rc;       /* the last answer to posting the return after a load, for the diagnostic word */
     uint8_t loads, reloads;  /* project loads and reloads seen, for the diagnostic word */
@@ -399,8 +400,13 @@ void as_project_load(void)
     ev(1);
     s->book = 0;
     s->pending = -1;
-    s->restore = -1;
-    for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = 0;
+    /* RELOAD PROJECT raises its hook before this load, and no ev_banks_loaded follows it (the developer's MKI): keep
+     * what the reload read. Any other load starts afresh and reads arrbook.work once the banks are in. */
+    if (s->reloaded) s->reloaded = 0;
+    else {
+        s->restore = -1;
+        for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = 0;
+    }
     s->ready = 1;
 }
 
@@ -452,7 +458,7 @@ unsigned as_project_reloaded(void)
     s->book = 0;
     s->backup = 0;
     s->damaged = 0;
-    read_place(s, "work");                                /* where it was saved */
+    s->reloaded = (uint8_t)read_place(s, "work");         /* where it was saved */
     ++s->reloads;
     return 0;
 }

@@ -111,3 +111,9 @@ and the book number sat over the main screen's mode icon (Tracks, Chromatic, ...
 taken the mode icon for an arranger icon. Removed. The kept build's diagnostic word then read 0x10000000: one reload
 seen, no load, no return pending, none posted. A diagnostic trial could not observe the kept copy's events, so the
 next build logs its last four project events in the top half of its own diagnostic word.
+
+Package `4fb46079…` (the log kept in the battery record): saved on book 3, arrangement 5, RELOAD PROJECT, landed on
+book 1. Its last four events: 3 (reload done), 5 2 (arrbook read: book 3), 1 (a project load begins). RELOAD raises
+ev_project_reloaded before stock reloads the project, and no ev_banks_loaded follows; the module's load-begins handler
+then dropped the return the reload had just read. Fixed: a load right after a reload keeps it. `verify.py` (62 checks)
+now replays the unit's order; the previous code fails it.

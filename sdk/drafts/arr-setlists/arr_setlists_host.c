@@ -320,7 +320,7 @@ int main(void)
     /* RELOAD PROJECT: where it was saved, not where it was left after */
     as_project_stored();                           /* saved on book 3, arrangement 5 */
     tap(LEFT); job(); as_tick(0); chosen = 6; job();  /* book 2, arrangement 7, SYNC */
-    as_project_reloaded(); as_project_load(); mark(0x10); as_project_loaded();
+    as_project_reloaded(); as_project_load(); mark(0x10);   /* the unit's order: no ev_banks_loaded after a reload */
     as_tick(0); job(); as_tick(0);
     check("RELOAD PROJECT comes back to where it was saved: book 3, arrangement 5", book() == 2 && chosen == 4);
     as_project_load(); mark(0x10); as_project_loaded(); as_tick(0); job(); as_tick(0);

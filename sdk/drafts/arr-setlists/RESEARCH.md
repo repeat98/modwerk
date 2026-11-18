@@ -44,6 +44,11 @@ Battery RAM 0x100f8f06-0x100f8ffc was free; the module claims 0x100f8f10-0x100f8
 Under ot_emu (card written back with `--card-rw`) the module's arr09-arr16 came out 11,336 bytes with stock's header,
 differing from stock's arr01 in 9 bytes (rows and checksum).
 
+## Project hooks, as the unit raised them
+
+RELOAD PROJECT: ev_project_reloaded, then ev_banks_load, and no ev_banks_loaded (observed on the developer's MKI with
+the module's event log, 18 November 2026). LOAD PROJECT: ev_banks_load, ev_banks_loaded, then stock reads arr01-08.
+
 ## Card jobs
 
 `0x40022cd4(0)` posts job 7, SYNC TO CARD's "write the project". It returns a negative code without posting: -7 with
