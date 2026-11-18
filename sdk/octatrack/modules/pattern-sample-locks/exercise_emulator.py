@@ -29,9 +29,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     def samples(blob):return [blob[0x78+32*i] for i in range(64)]
     def tracks():return read(u32(0x46c82456),8*0x91a)
     def menu(clear,replace=False):
-        port.command('key 0x25 32');run(80);tap(0x23,32)
-        port.command('key 0x25 0');run(80)
-        encoder(6,-24);encoder(6,20 if clear else 16);key('YES')
+        fixture.open_action(port,run,tap,key,clear)
         encoder(0,-4);encoder(1,4) # T1 only
         if replace:encoder(2,4)
         key('YES')

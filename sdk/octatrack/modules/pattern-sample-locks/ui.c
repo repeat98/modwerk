@@ -8,36 +8,24 @@
 #define DOWN 0x20
 #define LEFT 0x34
 #define RIGHT 0x21
-enum { CLOSED, PART_MENU, TRACKS, CONFIRM, RESULT };
+enum { CLOSED, PART_MENU_RETIRED, TRACKS, CONFIRM, RESULT }; /* 1 was the old Part Edit list: phases keep their numbers */
 struct psl_preferences {uint8_t valid,selected,cursor,replace,all;};
 static struct psl_preferences preferences[2];
-static unsigned last_action,remembered,select_all;
+static unsigned select_all;
 static unsigned phase, cursor, selected, replace, action, eligible;
 static struct psl_plan plan;
 static struct psl_source captured;
 static const char *message;
 static uint32_t consumed[2];
 static int encoder_residual;
-static const char *const part_rows[] = {"RENAME", "RELOAD", "SAVE", "SAVE ALL",
-    "LOCK SAMPLES TO PATTERN", "CLEAR SAMPLE LOCKS"};
 static void close_view(void)
 { phase=CLOSED; plan.ready=0; encoder_residual=0; psl_native_redraw(); }
 unsigned psl_ui_phase(void) { return phase; }
-void psl_ui_open(void)
-{
-    phase=PART_MENU; cursor=remembered?last_action+4u:psl_native_cursor();
-    if(cursor>5u)cursor=0;
-    selected=replace=0;plan.ready=0;encoder_residual=0;psl_native_redraw();
-}
 /* Track numbers remain spatial: 1-4 left, 5-8 right. Disabled
  * tracks are visible but never become the cursor or selection target. */
 static void move(int code)
 {
-    if(phase==PART_MENU) {
-        if(code==UP && cursor)--cursor;
-        if(code==DOWN && cursor<5u)++cursor;
-        psl_native_set_cursor(cursor<4u?cursor:3u);
-    } else if(phase==TRACKS && eligible) {
+    if(phase==TRACKS && eligible) {
         unsigned row=cursor%4u,col=cursor/4u;
         if(code==UP || code==DOWN) {
             int step=code==UP?-1:1;
@@ -60,10 +48,10 @@ static void move(int code)
     }
     psl_native_redraw();
 }
-static void start_action(void)
+/* The base's Part Edit menu (ot_part_menu) has closed stock's popup before it calls this. */
+void psl_ui_start(unsigned which)
 {
-    action=cursor==4?PSL_LOCK:PSL_CLEAR;
-    psl_native_close_popup();
+    action=which?PSL_CLEAR:PSL_LOCK;encoder_residual=0;
     if(!psl_native_source(&captured)) {
         message="ACTIVE PATTERN ONLY";phase=RESULT;psl_native_redraw();return;
     }
@@ -106,14 +94,13 @@ static void finish_action(void)
         struct psl_preferences *saved=&preferences[action];
         saved->valid=1;saved->selected=(uint8_t)selected;saved->cursor=(uint8_t)cursor;
         saved->replace=(uint8_t)(action==PSL_LOCK && replace);saved->all=(uint8_t)select_all;
-        last_action=action;remembered=1;close_view();return;
+        close_view();return;
     }
     message=result==PSL_STALE?"SOURCE CHANGED - REOPEN":"REFUSED - NO CHANGES";
     plan.ready=0;phase=RESULT;psl_native_redraw();
 }
 void module_tick(struct modwerk_runtime_api *api)
 {
-    if(phase==PART_MENU && psl_native_popup()!=1)close_view();
     if(phase>=TRACKS && phase!=RESULT &&
        (!psl_native_context(captured.bank,captured.pattern,captured.part) || psl_native_popup()))close_view();
     api->value=(uint32_t)phase<<24 | (uint32_t)selected<<16 | plan.changed;
@@ -128,15 +115,11 @@ int module_key(int code,int pressed)
     /* Retire before letting transport, recorder and project gestures through.
      * No modal remains armed when those stock actions can change its source. */
     if(code!=YES && code!=NO && code!=UP && code!=DOWN && code!=LEFT && code!=RIGHT){close_view();return 0;}
-    if(phase==PART_MENU && ((code==YES && cursor<4u) || code==NO)) {
-        close_view();return 0; /* Original callback and cursor stay stock. */
-    }
     consumed[group]|=bit;
     if(code==NO) {
         if(phase==CONFIRM){phase=TRACKS;plan.ready=0;message=0;psl_native_redraw();}
         else close_view();
     } else if(code==UP || code==DOWN || code==LEFT || code==RIGHT)move(code);
-    else if(phase==PART_MENU)start_action();
     else if(phase==TRACKS){message=0;choose();}
     else if(phase==CONFIRM) {
         unsigned transport=psl_native_transport();
@@ -158,13 +141,6 @@ int module_enc(int encoder,int delta)
         if(delta && encoder==2 && action==PSL_LOCK)replace=delta>0;
         message=0;psl_native_redraw();return 1;
     }
-    if(phase!=PART_MENU || encoder!=6)return 1;
-    if((encoder_residual<0 && delta>0)||(encoder_residual>0 && delta<0))encoder_residual=0;
-    int steps=delta/4;
-    encoder_residual+=delta%4;steps+=encoder_residual/4;encoder_residual%=4;
-    if(steps>6)steps=6;
-    if(steps<-6)steps=-6;
-    while(steps>0){move(DOWN);--steps;}while(steps<0){move(UP);++steps;}
     return 1;
 }
 static char *number(char *out,unsigned value)
@@ -199,9 +175,6 @@ static void dim(unsigned char *frame,unsigned x,unsigned y,unsigned w,unsigned h
 void module_draw(unsigned char *frame)
 {
     if(!phase || !frame)return;
-    if(phase==PART_MENU) {
-        psl_native_part_menu_draw(frame,6u,cursor,part_rows);return;
-    }
     unsigned expanded=phase==TRACKS || phase==CONFIRM;
     unsigned top=expanded?2u:3u,height=expanded?60u:58u;
     unsigned title_y=top+3u;
@@ -235,3 +208,10 @@ void module_draw(unsigned char *frame)
     /* Last pixel is a completion marker for paused emulator captures. */
     psl_font_box(frame,6,top,116,height);
 }
+
+/* The parent row PATTERN SAMPLE LOCKS adds to the base's Part Edit menu (runtime.json: ot_part_menu). */
+static const char *const psl_actions[2] = {"LOCK SAMPLES", "CLEAR LOCKS"};
+static void psl_choose(unsigned which) { psl_ui_start(which); }
+/* A padlock, drawn for this module: 9 rows, bit 18 the leftmost of 19 columns. */
+static const uint32_t psl_icon[9] = {0x00000, 0x00700, 0x00880, 0x00880, 0x01fc0, 0x01dc0, 0x01dc0, 0x01fc0, 0x00000};
+struct modwerk_part_menu psl_part_menu = {MODWERK_PART_MENU_ABI, "LOCKS", 2u, psl_actions, psl_choose, psl_icon};

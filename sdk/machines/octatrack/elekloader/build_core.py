@@ -1532,6 +1532,8 @@ def main():
                         help='Private fixed-two-file read-only recovery snapshot. No card writes.')
     parser.add_argument('--site-events', action='store_true',
                         help='own the stock sites of sdk/machines/octatrack/events.json and dispatch their events to subscribed modules')
+    parser.add_argument('--part-menu', action='store_true',
+                        help='The Part Edit menu table (events.json ot_part_menu, part_menu.c); needs site events.')
     parser.add_argument('--sample-editor', action='store_true',
                         help='Private staged AED sample-editor service; needs site events and the ordinary DSP loader. Not a released base capability.')
     parser.add_argument('--table-owners', type=Path,
@@ -1570,6 +1572,8 @@ def main():
                         help='with --dsp-loader: the base\'s effect ids (fxids.h, the dispatch and chooser tables; '
                              'docs/OCTATRACK_MORE_EFFECT_IDS.md). 32, the old width, only to bisect a fault.')
     args = parser.parse_args()
+    if args.part_menu and not args.site_events:
+        parser.error('--part-menu needs --site-events.')
     if args.sample_editor and (not args.site_events or not args.dsp_loader or args.dsp_probe or args.dsp_burn):
         parser.error('--sample-editor needs --site-events and the ordinary --dsp-loader, without probes/burn.')
     if args.usb_audio_profiles and (not args.usb_midi or not args.usb_audio or not args.dsp_loader or args.dev or args.controller_policies):
@@ -1701,7 +1705,8 @@ def main():
             usb_profiles = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb_profiles)
     for name in ('ep0.c', 'fxids.h', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s', 'flash.c', 'flash.h', 'slots.c', 'slots.h', 'modset.c', 'boot_anim.c', 'boot_anim.s', 'crash.c', 'crash.s', 'run_unpack.s') + (('dev.c',) if args.dev else ()) + (
             ('runtime_events.h', 'runtime_events.s', 'machine_registry.c', 'machine_registry.s', 'midi_generators.c',
-             'midi_generators.s', 'sample_memory.c') if args.site_events else ()):
+             'midi_generators.s', 'sample_memory.c') if args.site_events else ()) + (
+            ('part_menu.c', 'part_menu.s') if args.part_menu else ()):
         shutil.copyfile(HERE / name, source / name)
     # The boot stub's sector, which flash.c writes when it converts a unit to two slots (build_stub.py: stub_body.c).
     sys.path.insert(0, str(HERE))
@@ -2146,6 +2151,8 @@ modwerk_retained_end:
         for s in EVENTS.owned_sites():
             if s['table']=='ot_sample_editor_actions' and not args.sample_editor:
                 continue  # knowing the staged registry entry does not enable its stock sites
+            if s['table']=='ot_part_menu' and not args.part_menu:
+                continue
             addr, n = s['site'], s['length']
             stock = image[addr - device.main_load:addr - device.main_load + n]
             if sha(stock) != s['guard']:
@@ -2203,6 +2210,12 @@ modwerk_retained_end:
         recipe['sources'].append('sample_editor_hooks.s')
         recipe['subscribe'] += [dict(event='ev_tick', fn='mw_sample_ui_tick', order=89),
                                 dict(event='ev_key', fn='mw_sample_ui_key', order=87)]
+    if args.part_menu:  # part_menu.c: the two-column Part Edit window, over the popup and the modules' drawing
+        recipe['sources'].append('part_menu.s')
+        recipe['subscribe'] += [dict(event='ev_key', fn='mw_part_menu_key', order=89),
+                                dict(event='ev_enc', fn='mw_part_menu_enc', order=89),
+                                dict(event='ev_tick', fn='mw_part_menu_tick', order=86),
+                                dict(event='ev_draw', fn='mw_part_menu_draw', order=91)]
     recipe['subscribe'].append(dict(event='ev_draw', fn='modwerk_boot_draw', order=10))  # boot_anim.c, while it runs
     # The host time limit counts on the same tick (ep0.c).
     recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_ep0_tick', order=91))

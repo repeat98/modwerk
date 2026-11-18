@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "about": "Modwerk's Analog Rytm MKI base, built by npm run machine:base -- analog-rytm-mki: the MKII base's core-ar2 0.7 source (source names that folder) with the MKI's own sites and addresses (recipe), MKI copies of four of its files (copies: each names the core-ar2 file and SHA-256 it was made from, and the build refuses when that file has changed), the MKI's settings and render-out variants (mki/), and the MKII base's machine list sections (common). No send bus yet: one variant, plain. Every site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. Addresses and differences: docs/RYTM_MKI_OS_RESEARCH.md.",
-  "pending": "No base-binding.json yet: the pinned Elekloader kit has no analog-rytm-mk1 device or ELE2 reader (proposed upstream), so npm run machine:base cannot build this base. Built with a privately registered device, it gave the package that passed on a unit (MW06, 8 November 2026).",
+  "pending": "No base-binding.json yet: the pinned Elekloader kit has no analog-rytm-mk1 device or ELE2 reader, so npm run machine:base cannot build this base until Modwerk's builder carries them. Built with a privately registered device, it gave the package that passed on a unit (MW06, 8 November 2026).",
   "source": "analog-rytm-mkii",
   "core": "core-ar2",
   "include": "sdk/machines/analog-rytm-mkii/include",

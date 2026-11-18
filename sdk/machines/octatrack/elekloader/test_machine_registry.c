@@ -60,6 +60,8 @@ static void *host_stock(uint32_t a)
 
 void mg_tick(void); /* midi_generators.c, checked by test_midi_generators.c */
 void mg_tick(void) {}
+static unsigned rest_polls; /* the loader's resting poll, checked by sdk/runtime/loader/tests/events_test.c */
+int modwerk_runtime_rest_poll(void) { return ++rest_polls, 0; }
 /* The loader's side: the table rows and the machine glue. */
 #include "loader.h"
 volatile uint32_t modwerk_machine_assigned; /* controller_board.c's, not linked here */
@@ -407,7 +409,7 @@ static void check_cpu_budget(void)
     const void *both[] = {&A, &P};
     rows(both, 2, 0, 0);
     for (unsigned t = 0; t < 8; ++t) { part0()[0x22 + t] = 1; for (unsigned k = 0; k < 3; ++k) part0()[60 + 30 * t + k] = 0; }
-    fresh(); a_admit = 1; mw_cpu_allowance = 45; mw_ui_tick();
+    fresh(); a_admit = 1; mw_cpu_allowance = 45; { unsigned polls = rest_polls; mw_ui_tick(); CHECK(rest_polls == polls + 1u); }
     CHECK(!mw_cpu_refused && !mw_cpu_booked);
     /* A busy unit (the meter at mw_cpu_hot or more) takes no further machine, with its own box and the measured
      * load; the same machine on its own track asks nothing, and the pick passes once the load is under the line. */
