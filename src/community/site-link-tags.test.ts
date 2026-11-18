@@ -3,6 +3,7 @@ import { tagDiscordLinks, tagMailLinks } from '../../server/site-link-tags'
 import { welcomeEmail } from '../../server/welcome-email-template'
 import { VISIT_SOURCES } from './usage-contract'
 import { visitSource } from './visit-source'
+import { shareLink } from './forum-links'
 
 const app = 'https://modwerk.app/'
 describe('tagging site links in Modwerk mail', () => {
@@ -45,5 +46,13 @@ describe('tagging site links in TARS replies', () => {
   it('keeps a reply as written when the tags would take it past 2000 characters', () => {
     const near = 'x'.repeat(1970) + ' https://modwerk.app/'
     expect(tagDiscordLinks(near)).toBe(near)
+  })
+})
+
+describe('the forum Share button', () => {
+  it('hands out the thread page tagged as a shared forum link, and leaves other sites alone', () => {
+    expect(shareLink('forum/thread/abc/reverb/', 'https://modwerk.app/#forum')).toBe('https://modwerk.app/forum/thread/abc/reverb/?utm_source=forum-share')
+    expect(visitSource('https://www.reddit.com/', '?utm_source=forum-share', 'https://modwerk.app')).toBe('forum-share')
+    expect(shareLink('https://example.org/x', 'https://modwerk.app/')).toBe('https://example.org/x')
   })
 })
