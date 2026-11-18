@@ -64,15 +64,16 @@ The aim: install the app, turn on Developer mode, and have everything [Your deve
 
 1. **One-click setup.** Sign in to GitHub in the browser, fork and clone (or choose an existing checkout), then a managed folder outside the repository with pinned Node 24, Python 3.12, the m68k GCC 16.2 toolchain and `dsp_asm`, each checked by hash; `npm ci`, the board login and the skills; the MCP registered with Claude Code and Codex. It replaces the setup prompt's manual steps and Docker for the dev loop.
 2. **The MCP and the bridge as one.** The app starts `frontend-mcp.mjs` from the checkout with the bridge's socket, so an agent connects with one config line and nobody starts processes by hand.
-3. **A Developer page.** The unit (status, trial, Keep or Undo, screen, keys, log), the doctor's verdict for the module being worked on, emulator runs and the pull request's `pr:ready` state, as buttons over the same commands an agent runs.
-4. **The emulators.** `ot_emu`, rytm-emu and Ziddle built for each operating system at the pins `npm run upstream:tools` uses, running the developer's own OS file. An app download that runs stock firmware sits closer to Elektron's concerns than building from source, so this ships only with their OK.
-5. **Remote debug sessions** (#725). A member consents and a maintainer reads their unit live; an app keeps that link up more reliably than a tab.
+3. **A Developer page.** The unit (status, trial, Keep or Undo, screen, keys, log), the doctor's verdict for the module being worked on and the pull request's `pr:ready` state, as buttons over the same commands an agent runs.
+4. **Remote debug sessions** (#725). A member consents and a maintainer reads their unit live; an app keeps that link up more reliably than a tab.
 
 What decides how far this goes:
 
 - **Reproducible builds.** Reviewed packages must rebuild byte for byte with the pinned toolchain. The native copy on Linux matches the Docker image (verified 26 October 2026); a macOS or Windows build of GCC needs the same proof before its output counts, and until then Docker or Linux stays the reference.
 - **Windows.** The SDK tests and native builds run on Linux and macOS, and the MCP refuses native Windows until its private-file permissions are done. The proven combination is the one in use today: the tools in WSL, set up by the app, and USB on Windows through the bridge.
-- **Licences.** Shipped as separate programs, each under its own licence with its source offered: GCC and `dsp_asm` (GPL-3.0), Elekloader (GPL-2.0), octabam's tools (MIT), rytm-emu and Ziddle (to check). The ELv2 pipeline scripts run from the checkout, never inside the GPL app.
+- **Licences.** Shipped as separate programs, each under its own licence with its source offered: GCC and `dsp_asm` (GPL-3.0), Elekloader (GPL-2.0), octabam's build tools (MIT). The ELv2 pipeline scripts run from the checkout, never inside the GPL app.
+
+**No emulation in the app** (owner, 18 November 2026). The app never runs stock firmware: no emulator ships in it, Developer mode does not fetch or start one, and the Developer page works on the unit. The emulators stay developer tools built from source with `npm run upstream:tools`.
 
 **Later**
 
