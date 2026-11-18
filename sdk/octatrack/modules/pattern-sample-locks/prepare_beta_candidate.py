@@ -64,7 +64,7 @@ def main():
         extra,chain=max(options,key=lambda item:item[0]+(4 if item[1] else 0))
         return nodes[name]['frameBytes']+extra+(4 if chain else 0),[nodes[name]['function'],*chain]
     stacks={entry:dict(zip(('authoredOnlyBytes','path'),bound(entry))) for entry in
-            ('module_key','module_draw','module_tick','module_enc','psl_open')}
+            ('module_key','module_draw','module_tick','module_enc','psl_part_menu')}
     (audit/'symbols.json').write_text(json.dumps(symbols,indent=2)+'\n')
     # Component oracles for the browser's GNU-compatible card linker. These do
     # not claim that a stock-only card supplies the module's four core UI hooks.
@@ -72,7 +72,7 @@ def main():
     for base in (0x41000000,0x41003080,0x42000000):
         stem=audit/('card-%08x'%base)
         elf=stem.with_suffix('.elf');binary=stem.with_suffix('.bin')
-        run(['m68k-elf-ld','-Ttext=%#x'%base,'-e','psl_open','-o',elf,audit/'unit.o'])
+        run(['m68k-elf-ld','-Ttext=%#x'%base,'-e','module_key','-o',elf,audit/'unit.o'])
         run(['m68k-elf-objcopy','-O','binary',elf,binary])
         exports={row[2]:int(row[0],16) for line in run(['m68k-elf-nm','-g',elf]).splitlines()
                  if len(row:=line.split())==3 and row[1]!='U'}

@@ -46,9 +46,9 @@ def main():
         # Emulator hit records expose D0/D1 followed by A0/A1, SP and five
         # stack words, then D2..D7. They do not expose the current SR.
         saved_field=2+saved_register if saved_register<2 else 10+saved_register
-        result={'psl_open':symbols['psl_open'],'begin':begin[0],'ends':ends,
+        result={'psl_part_menu':symbols['psl_part_menu'],'begin':begin[0],'ends':ends,
             'savedSrHitField':saved_field,'publicationMaskFromAssembly':7,
-            'symbols':{n:symbols[n] for n in ('psl_open','psl_guard_max','psl_guard_spans','__image_end','__bss_end','phase','cursor','selected','replace','select_all','preferences','last_action','remembered')},
+            'symbols':{n:symbols[n] for n in ('psl_part_menu','psl_guard_max','psl_guard_spans','__image_end','__bss_end','phase','cursor','selected','replace','select_all','preferences')},
             'performanceFunctions':{},'monitorPoints':[0x400a1e0c],
             'objectSha256':hashlib.sha256(a.object.read_bytes()).hexdigest(),
             'packageSha256':hashlib.sha256(a.package.read_bytes()).hexdigest()}
