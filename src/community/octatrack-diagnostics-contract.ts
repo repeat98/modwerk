@@ -176,7 +176,15 @@ export const DIAGNOSTIC_USB_ERRORS = ['device', 'selftest', 'transport', 'cancel
  * loading it, or starting the trial. */
 export const DIAGNOSTIC_SYNC_STEPS = ['session', 'baseline', 'encode', 'stage', 'activate', 'trial'] as const
 export type DiagnosticSyncStep = typeof DIAGNOSTIC_SYNC_STEPS[number]
-export const DIAGNOSTIC_BUILD_KINDS = ['octatrack-firmware', 'octatrack-base', 'elekloader'] as const
+/** The type of build. An elekloader build names its machine, so a failure says which machine it was for; plain
+ * `elekloader` is what records sent before that say, and what a machine missing from the list falls back to. */
+export const DIAGNOSTIC_ELEKLOADER_MACHINES = ['digitakt', 'digitakt-ii', 'digitone', 'analog-rytm-mkii'] as const
+export const DIAGNOSTIC_BUILD_KINDS = ['octatrack-firmware', 'octatrack-base', 'elekloader',
+  ...DIAGNOSTIC_ELEKLOADER_MACHINES.map(machine => `elekloader-${machine}` as const)] as const
+/** The build kind of an elekloader build for `machine`: its own value, else plain `elekloader`. */
+export function elekloaderBuildKind(machine: string): DiagnosticBuildKind {
+  return (DIAGNOSTIC_ELEKLOADER_MACHINES as readonly string[]).includes(machine) ? `elekloader-${machine as typeof DIAGNOSTIC_ELEKLOADER_MACHINES[number]}` : 'elekloader'
+}
 export const DIAGNOSTIC_BUILD_PHASES = ['preparing', 'composing', 'packing', 'verifying', 'building'] as const
 export const DIAGNOSTIC_BUILD_ERRORS = ['input', 'selection', 'build', 'cancelled', 'unknown'] as const
 export type DiagnosticBuildKind = typeof DIAGNOSTIC_BUILD_KINDS[number]
