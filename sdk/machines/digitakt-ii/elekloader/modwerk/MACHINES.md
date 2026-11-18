@@ -136,6 +136,17 @@ A local emulator-only DSP image changed one instruction: the table base at `0x1c
 - Test machine chosen through the menu: PCM byte-identical to the same run on the stock DSP image (`2129ca6e...`). So selector word 7 (1 in stock, 0 here) is not what makes the test machine differ from SAMPLE by -25 dB; that difference comes from somewhere else (the ColdFire's per-type tables or the parameter values it sends are the next suspects).
 - The base still needs the longer table for safety (types 8 and up would read data addresses as selectors); this test shows the relocation itself is harmless.
 
+### The render hook (local test, 19 November 2026)
+
+Facts used: the render pass calls the stock sample voice player once per voice (`CALL 0x1c4ecf` at `0x1c6b00`, a 48-bit type 25a call, SHA-256 of the stock bytes `4e25f0a1...`; `R14` counts the 32 voices down, so the voice is `32 - R14`); voices come in pairs per track (voice `v` belongs to track `v >> 1`); the track's raw machine type is the word `DM(0x255970 + track)` (a register dump of `0x1c273c` showed the lookup's index `M4` running 0-15 over the tracks each block). The stock player returns with `I12 = DM(I6, M7)`, `RETURN` and the return-frame slot (`0x1c4f56`, `0x1c4f7c`-`0x1c4f80`).
+
+A local DSP image pointed that call at a dispatcher in free L2 (code at loader byte `0x200c1000`, data at `0x200c2000`): it saves `R0`, `R1`, `I0`, `M0`, `ASTATX` and `STKYX`, finds the voice's track type through a 32-word voice-to-address table, restores everything and jumps either to the stock player or, for type 7, to a stand-in player that returns at once without writing (silence). Scripted coupled runs from a ready point saved with that image:
+
+- Track 1 on SAMPLE: PCM byte-identical to stock (`da40d90b...`). Every stock voice goes through the dispatcher and plays exactly as before.
+- Test machine chosen through the menu: track 1 is silent for both notes (PCM `7a0ecce5...`), no halt, no missing blocks; the same run without the hook plays the tone. The dispatcher picks out the added machine's voices and hands them to their own player, and the render loop carries on after it returns.
+
+Next: a table of voice players by machine type in place of the fixed type 7, the player contract (inputs, the voice slot it writes, how it reports a finished note), and the dispatcher as a `planDt2*` site in `dt2-sharc.ts`.
+
 ## Still to check
 
 
