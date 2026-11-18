@@ -1,0 +1,1 @@
+Digitone II: Modwerk's own linker now knows OS 1.12. It links core-dn2 0.3 and 0.4, alone and with elekloader's examples, to exactly the main OS elekloader builds, and takes the core's DSP bridge while refusing mods that bring DSP code, which it cannot write yet. The site cannot build Digitone II firmware yet: its builder kit does not know the machine.

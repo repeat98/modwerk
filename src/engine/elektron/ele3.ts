@@ -11,7 +11,7 @@ const OFFSET_BIAS = 767, FAR_OFFSET = 3328
 
 export type DigiMachine = 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii'
 // Machines with a container and linker profile; the app's firmware flow covers DigiMachine only.
-export type ElemodMachine = DigiMachine | 'syntakt' | 'analog-four-mkii'
+export type ElemodMachine = DigiMachine | 'syntakt' | 'analog-four-mkii' | 'digitone-ii'
 export type Ele3Device = { mainSection: number; mainLoad: number; stage: number; flashAt: number; flashLimit: number; sysexId: number; seal?: 'hmac' }
 
 // Facts about each machine's container and loader, from public research (elekloader device profiles).
@@ -19,6 +19,9 @@ export const ELE3_DEVICES: Record<ElemodMachine, Ele3Device> = {
   digitakt: { mainSection: 3, mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x80000, flashLimit: 0x380000, sysexId: 0x0a },
   'digitakt-ii': { mainSection: 3, mainLoad: 0x40000400, stage: 0x40400000, flashAt: 0x80000, flashLimit: 0x380000, sysexId: 0x14, seal: 'hmac' },
   digitone: { mainSection: 3, mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x80000, flashLimit: 0x380000, sysexId: 0x0d },
+  // The Digitone II is the Digitakt II's platform (docs/DIGITONE_II_OS_RESEARCH.md): the same staging, flash window and
+  // seal, with its own SysEx id.
+  'digitone-ii': { mainSection: 3, mainLoad: 0x40000400, stage: 0x40400000, flashAt: 0x80000, flashLimit: 0x380000, sysexId: 0x15, seal: 'hmac' },
   // The Analog Rytm MKII's OS keeps its own store at 0x300000, so the main OS must end below it.
   'analog-rytm-mkii': { mainSection: 3, mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x80000, flashLimit: 0x300000, sysexId: 0x0c },
   // The Analog Four MKII is the Rytm's platform; its OS keeps the voice calibration record at 0x300000.

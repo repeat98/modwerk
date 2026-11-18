@@ -13,7 +13,7 @@ This is the Octatrack's stack ([machine recipe](../../../docs/MACHINE_RECIPE.md)
 | Piece | State | Where to look |
 | --- | --- | --- |
 | Machine steps | Format, rebuild and boot done: modified OS 1.12 builds (toonst's core-dn2 0.3) booted on two units, and stock 1.12 restored them | [OS research](../../../docs/DIGITONE_II_OS_RESEARCH.md#step-3-on-a-unit) |
-| Build path | Not started. Neither the site's builder (`LINK_DEVICES`) nor the pinned Elekloader kit that `npm run machine:base` runs on knows the Digitone II | [`elemod.ts`](../../../src/engine/elektron/elemod.ts), [`machine-base.py`](../../../scripts/machine-base.py) |
+| Build path | Started: Modwerk's linker (`LINK_DEVICES`, `ELE3_DEVICES`) knows OS 1.12 and links core-dn2 0.3 and 0.4, alone and with elekloader's examples, to the same main OS as elekloader, byte for byte. It takes the core's DSP bridge and refuses mods with DSP code. The pinned Elekloader kit, which the site and `npm run machine:base` build through, does not know the Digitone II yet; Elekloader 0.11.0's kit does | [`elemod.ts`](../../../src/engine/elektron/elemod.ts), [`machine-base.py`](../../../scripts/machine-base.py) |
 | Base | Not started | the Rytm MKI's [`base.json`](../analog-rytm-mki/elekloader/base.json) is the model |
 | Flashing from the site | Not started. Today the owner sends a `.syx` with Elektron Transfer | the MS-70CDR's [`ZoomBaseDialog.tsx`](../../../src/components/ZoomBaseDialog.tsx) in [`BaseDialogFrame.tsx`](../../../src/components/BaseDialogFrame.tsx) |
 | USB link and diagnostics | Not started | the Rytm's [link](../analog-rytm-mkii/LINK.md), the Octatrack's [`diag.c`](../octatrack/elekloader/diag.c) and [`device-log.ts`](../../../src/engine/elekloader/device-log.ts) |
