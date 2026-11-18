@@ -149,7 +149,7 @@ The host wrapper supports an ordinary ColdFire package's SDK-owned recipe in
 provenance inputs, shared SDK sources, the original image
 and the complete tested package. Existing standalone admission and all
 base-pinned SDK files remain unchanged. See the
-[builder contract](../../../docs/OCTATRACK_RECONSTRUCTION.md).
+[builder contract](../../../../docs/OCTATRACK_RECONSTRUCTION.md).
 
 `verify_public_package.py` stages a disposable SDK/catalogue fixture outside Git
 and calls the normal public CLI, rather than the lower-level preparation API.
