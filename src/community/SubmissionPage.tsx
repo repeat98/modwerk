@@ -1,17 +1,24 @@
 import { useState } from 'react'
 import { BackLink } from '../components/BackLink'
 import { CopyButton, StarterPrompts } from './StarterPrompts'
-import { cloneCommands, STARTER_MACHINES, type StarterMachine } from './starter-prompts'
+import { cloneCommands, setupPrompt, STARTER_MACHINES, type StarterMachine } from './starter-prompts'
 import { assetUrl, sourceRepository } from '../hosting'
 import { communityModule } from './modules'
 import { DEVELOPMENT_DISCORD_URL } from '../config/development-discord'
-import { DeveloperReleaseGuide } from './DeveloperReleaseGuide'
+import { DeveloperLinks, DeveloperReleaseGuide } from './DeveloperReleaseGuide'
 import { AgentBoard } from './AgentBoard'
-import type { DeveloperTask } from './developer-guidance'
+import { DEVELOPER_SKILLS, type DeveloperTask } from './developer-guidance'
 import '../components/developer-release-guide.css'
 import './develop-intro.css'
-import { Icon } from '../components/Icon'
-import { DEVICES_BY_ID, readyForMods } from '../devices/registry'
+import { DEVICES_BY_ID, readyForMods, type DeviceProfile } from '../devices/registry'
+
+// A machine without a core has to be unlocked first: reverse engineering, which needs programming experience.
+function unlockNote(device: DeviceProfile | undefined) {
+  const first = device?.family === 'erica' ? 'Its firmware source is public, but a Modwerk build has to boot from the SD card and give mods a place to run first.'
+    : device?.family === 'zoom' ? 'Its effect files have to be understood and loaded on the stock firmware first.'
+    : 'Its firmware has to be understood, rebuilt and booted first.'
+  return first + ' Your agent helps, but you need to read and judge code.'
+}
 
 // machine: preselected from #submit?machine=<id>, as the overview's Start developing links do.
 export function SubmissionPage({ moduleId = '', machine: initialMachine }: { moduleId?: string; machine?: string }) {
@@ -20,63 +27,51 @@ export function SubmissionPage({ moduleId = '', machine: initialMachine }: { mod
   const [login, setLogin] = useState('')
   const [task, setTask] = useState<DeveloperTask>(module ? 'update' : 'create')
   const [machine, setMachine] = useState<StarterMachine>(() => STARTER_MACHINES.find(item => item.id === (module?.machine ?? initialMachine))?.id ?? 'octatrack')
-  const clone = cloneCommands(repository, login)
-  // A machine without a core has to be unlocked first: reverse engineering, which needs programming experience.
+  const clone = cloneCommands(repository, login), setup = setupPrompt(repository)
   const device = DEVICES_BY_ID[machine], locked = !module && !(device && readyForMods(device)), machineName = STARTER_MACHINES.find(item => item.id === machine)?.name ?? machine
 
   return <div className="community-page contribution-page start-developing">
     <BackLink href={moduleId ? '#developer' : '#library'}>{moduleId ? 'Creator settings' : 'Module library'}</BackLink>
-    <header className="page-heading developer-heading">
-      <div><p className="page-kicker">MODWERK / DEVELOPERS</p><h1>{module ? 'Update ' + module.name : locked ? <>Help unlock the {machineName}. <span>Programming experience needed.</span></> : <>Make a mod for your machine. <span>Describe it, paste one prompt, build it together.</span></>}</h1>
-        <p>{module ? 'Current version ' + module.version + '. One prompt for your agent. Four steps to publication.' : locked ? (device?.family === 'erica' ? 'Its firmware source is public, so nothing has to be reverse engineered. Before anyone can build mods for it here, a marked build has to boot from the SD card, a Modwerk base has to give mods a place to run, and Modwerk needs a module contract for them. An AI coding assistant helps, but you need to read and judge code yourself.' : (device?.family === 'zoom' ? 'Before anyone can build mods for it here, its effect files have to be understood and loaded on the stock firmware, and Modwerk needs a module contract for them.' : 'Before anyone can build mods for it, its firmware file has to be understood, rebuilt and booted, and a core has to give mods a place to run.') + ' That is reverse-engineering work. An AI coding assistant helps, but you need to read and judge code yourself.') + ' The starter prompt below sets up the machine integration with you.' : 'An AI coding assistant writes and checks the code. You bring the idea, try it on your machine and decide when it’s ready. The starter prompt below sets everything up with you and guides you through every step.'}</p>
-      </div>
-      <div className="developer-heading-links">
-        <a className="button development-discord-button" href={DEVELOPMENT_DISCORD_URL} target="_blank" rel="noreferrer" aria-label="Join Discord for module development (opens in a new tab)">
-          <img src={assetUrl('auth/discord.svg')} width={20} height={15} alt="" aria-hidden="true" /><span>Join Discord</span><span aria-hidden="true">↗</span>
-        </a>
-        <a className="developer-repository-link" href={repository} target="_blank" rel="noreferrer" aria-label="Modwerk repository on GitHub (opens in a new tab)">Modwerk on GitHub <span aria-hidden="true">↗</span></a>
-      </div>
+    <header className="developer-hero">
+      <h1>{module ? 'Update ' + module.name : locked ? <>Help unlock the {machineName}. <span>Programming experience needed.</span></> : 'Make a mod for your machine.'}</h1>
+      <p className="developer-intro">{module ? 'Current version ' + module.version + '.' : locked ? unlockNote(device) : 'Your coding agent writes the code. You bring the idea and try it on your machine.'}</p>
     </header>
-    {!module && !locked && <DevelopIntro />}
 
-    <section className="configuration-section developer-start" aria-labelledby="agent-start-title">
-      <div className="developer-section-heading"><h2 id="agent-start-title">Your starter prompt</h2><span className="subtle">{module ? 'Open your agent in your Modwerk fork' : 'Paste it into your AI assistant or straight into your coding agent'}</span></div>
-      <div className="developer-task-choice" role="group" aria-label="Development task">
-        <button type="button" aria-pressed={task === 'create'} onClick={() => setTask('create')}><strong>New module or port</strong><span>First release</span></button>
-        <button type="button" aria-pressed={task === 'update'} onClick={() => setTask('update')}><strong>Fix or update</strong><span>Existing module</span></button>
-      </div>
-      <StarterPrompts login={login} repository={repository} task={task} machine={machine} onMachine={setMachine} initialModule={module?.sourcePath} />
-      <details className="developer-guide-details developer-setup">
-        <summary>Need to set up your fork?</summary>
-        <div className="developer-setup-content"><div><p>Fork, clone and open the folder in your coding agent. No GitHub account or agent yet? Paste the prompt into your AI assistant and it walks you through setup. Node 24; Octatrack native builds also need Python 3.10+, Docker and your own OS 1.40C.</p>
-          <p>Test on your own unit where you can: on the Octatrack your agent drives it over USB through the <a href={repository + '/blob/main/docs/DEVELOPER_WORKFLOW.md#your-development-setup'} target="_blank" rel="noreferrer">developer MCP ↗</a>, which also reaches the site. Without a unit, the emulators get you started, though they only approximate the instrument.</p>
-          <a className="button button-quiet" href={repository + '/fork'} target="_blank" rel="noreferrer">Fork on GitHub ↗</a>
+    <ol className="developer-path">
+      <li aria-labelledby="setup-title">
+        <h2 id="setup-title">Set up your computer</h2>
+        <p className="developer-lead">Paste this into Claude Code or Codex. It sets everything up and asks before it installs anything.</p>
+        <CopyButton text={setup} label="Copy setup prompt" primary />
+        <p className="developer-hint">No coding agent yet? Paste it into ChatGPT or Gemini, and it helps you get one.</p>
+        <details className="starter-prompt"><summary>Show the prompt</summary><pre tabIndex={0} aria-label="Setup prompt">{setup}</pre></details>
+        <details className="developer-setup">
+          <summary>Set it up by hand</summary>
+          <p>Fork Modwerk, clone your fork and open the folder in your coding agent. <a href={repository + '/blob/main/docs/DEVELOPER_WORKFLOW.md#your-development-setup'} target="_blank" rel="noreferrer">What each instrument needs ↗</a></p>
           <label className="starter-field"><span>Your GitHub login <small>optional</small></span><input value={login} onChange={event => setLogin(event.target.value)} placeholder="your-github-login" autoCapitalize="off" autoCorrect="off" spellCheck={false} /></label>
-        </div><div className="start-code"><pre>{clone}</pre><CopyButton text={clone} label="Copy clone commands" /></div></div>
-      </details>
+          <div className="start-code"><pre>{clone}</pre></div>
+          <div className="developer-setup-actions"><CopyButton text={clone} label="Copy clone commands" /><a className="button button-quiet" href={repository + '/fork'} target="_blank" rel="noreferrer">Fork on GitHub ↗</a></div>
+        </details>
+      </li>
+      <li aria-labelledby="agent-start-title">
+        <h2 id="agent-start-title">{locked ? 'Start the integration' : task === 'update' ? 'Describe the change' : 'Describe your idea'}</h2>
+        <div className="developer-task-choice" role="group" aria-label="Development task">
+          <button type="button" aria-pressed={task === 'create'} onClick={() => setTask('create')}>New module or port</button>
+          <button type="button" aria-pressed={task === 'update'} onClick={() => setTask('update')}>Fix or update</button>
+        </div>
+        <StarterPrompts login={login} repository={repository} task={task} machine={machine} onMachine={setMachine} initialModule={module?.sourcePath} />
+      </li>
+      <li aria-labelledby="developer-workflow-title"><DeveloperReleaseGuide task={task} machine={machine} /></li>
+    </ol>
+
+    <section className="developer-more" aria-label="More for developers">
+      <h2 id="commands-title">Commands in your agent</h2>
+      <ul className="developer-skills" aria-labelledby="commands-title">{DEVELOPER_SKILLS.map(skill => <li key={skill.name}><code>/{skill.name}</code><span>{skill.summary}</span></li>)}</ul>
+      <nav className="developer-help" aria-label="Help and guides">
+        <a className="button development-discord-button" href={DEVELOPMENT_DISCORD_URL} target="_blank" rel="noreferrer" aria-label="Join Discord for module development (opens in a new tab)"><img src={assetUrl('auth/discord.svg')} width={20} height={15} alt="" aria-hidden="true" /><span>Join Discord</span><span aria-hidden="true">↗</span></a>
+        <a href={repository} target="_blank" rel="noreferrer">Modwerk on GitHub ↗</a>
+        <DeveloperLinks repository={repository} machine={machine} />
+      </nav>
+      <AgentBoard repository={repository} />
     </section>
-
-    <DeveloperReleaseGuide repository={repository} task={task} machine={machine} />
-    <AgentBoard repository={repository} />
   </div>
-}
-
-// For someone who has never programmed: what it takes and who does what, before the prompt itself.
-function DevelopIntro() {
-  return <section className="develop-intro" aria-label="Before you start">
-    <div><h2>What you need</h2>
-      <ul className="develop-needs">
-        <li><span className="develop-need-icon"><Icon name="message" /></span><strong>An AI coding assistant</strong><small>Modules are built with large language models (LLMs). The assistant writes and checks the code with you.</small></li>
-        <li><span className="develop-need-icon"><Icon name="file" /></span><strong>A free GitHub account</strong><small>Where your module lives. The prompt helps you create one if you don’t have it yet.</small></li>
-        <li className="is-optional"><span className="develop-need-icon"><Icon name="sliders" /></span><strong>Your machine</strong><small>To try your mod for real. You can start in an emulator without one.</small></li>
-      </ul>
-    </div>
-    <div><h2>How it works <span className="subtle">You decide, the assistant does the coding</span></h2>
-      <ol className="develop-steps">
-        <li><span className="develop-step-number">01</span><h3>Describe your idea</h3><p>Choose your machine and say what the mod should do, in plain words. Below, this page turns it into your starter prompt.</p><span className="develop-step-who">You · 2 minutes</span></li>
-        <li><span className="develop-step-number">02</span><h3>Paste it into your AI assistant</h3><p>It asks which computer you use, then sets up GitHub, your copy of Modwerk and the coding assistant with you, one step at a time. No terminal experience assumed.</p><span className="develop-step-who">The chat guides you</span></li>
-        <li><span className="develop-step-number">03</span><h3>Build and test together</h3><p>The assistant writes the module, runs the checks and helps you test it. Then it opens the pull request, and your first release is reviewed before it goes live.</p><span className="develop-step-who">The assistant codes, you test</span></li>
-      </ol>
-    </div>
-  </section>
 }

@@ -46,7 +46,7 @@ class MachineBases(unittest.TestCase):
         self.assertEqual({name: imported[name] for name in release["build"]["sources"]}, release["build"]["sources"])
 
     def test_digitakt_ii_base_source_is_core_dt2_1_1_unchanged(self):
-        record = json.loads((APP / "sdk/imports/core-dt2-source-3d7c2e3.json").read_text())
+        record = json.loads((APP / "sdk/imports/core-dt2-source-0df8409.json").read_text())
         self.assertRegex(record["revision"], r"^[0-9a-f]{40}$")
         for item in record["files"]:
             self.assertEqual(sha(APP / item["to"]), item["sha256"], item["to"])
@@ -56,7 +56,7 @@ class MachineBases(unittest.TestCase):
         mod = json.loads((folder / "mod.json").read_text())
         for source in mod["sources"]:
             self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), imported, source)
-        self.assertIn("sdk/machines/digitakt-ii/include/mk2/core.h", imported)
+        self.assertIn("sdk/machines/digitakt-ii/include/digitakt-mk2/core.h", imported)
 
     def test_digitakt_ii_proposed_hooks_name_the_sites_the_source_patches(self):
         interface = json.loads((APP / "sdk/digitakt-ii/core-profile/interface.json").read_text())
@@ -90,6 +90,16 @@ class MachineBases(unittest.TestCase):
             self.assertEqual(binding["built"]["toolchain"], config["toolchain"], machine)
             self.assertEqual(binding["built"]["stock"], machine_base.stock_sha(machine, config["os"]), machine)
 
+    def test_profiles_budget_the_bound_base_footprint(self):
+        # The machine page shows machine.json's budgets; one of them is the bound package's .run plus .bss.
+        for machine, config in bases():
+            binding = binding_of(machine, config)
+            if binding is None:
+                continue
+            footprint = binding["sections"][".run"] + binding["sections"][".bss"]
+            budgets = json.loads((APP / "sdk/machines" / machine / "machine.json").read_text())["sdk"]["budgets"]
+            self.assertIn(footprint, [budget["value"] for budget in budgets if budget["unit"] == "bytes"], machine)
+
     def test_staging_lays_out_every_source_and_header_mod_json_names(self):
         for machine, config in bases():
             with tempfile.TemporaryDirectory() as work:
@@ -112,14 +122,14 @@ class MachineBases(unittest.TestCase):
 
     def test_variants_stage_with_or_without_add_and_bindings_record_each(self):
         for machine, config in bases():
-            names = [name for name, _ in machine_base.variants(config)]
+            names = [name for name, _, _ in machine_base.variants(config)]
             binding = binding_of(machine, config)
             if "variants" in config and binding is not None:
                 self.assertEqual(list(binding["variants"]), names, machine)
                 self.assertEqual(binding["identity"], binding["variants"][names[0]], machine)
-            for name, add in machine_base.variants(config):
+            for name, add, leave in machine_base.variants(config):
                 with tempfile.TemporaryDirectory() as work:
-                    core = machine_base.stage(machine, config, pathlib.Path(work), add=add)
+                    core = machine_base.stage(machine, config, pathlib.Path(work), add=add, leave=leave)
                     staged = (core / "mod.json").read_bytes()
                 imported = imported_recipe(machine, config).read_bytes()
                 if "recipe" in config:
@@ -197,14 +207,62 @@ class MachineBases(unittest.TestCase):
         with self.assertRaises(ValueError):
             machine_base.parts({"add": {"defsym": {"D": "1"}}, "dev": {"defsym": {"D": "1"}}}, dev=True)
 
+    def test_a_variant_leaves_out_of_add_what_its_patterns_name_and_keeps_the_rest_in_order(self):
+        add = {"sources": ["a.c", "bus.c", "v.c"], "cflags": ["-DX=1"],
+               "sites": [{"addr": "0x10", "target": "bus_gate"}, {"addr": "0x20", "op": "bytes"}, {"addr": "0x30", "target": "v_gate"}],
+               "subscribe": [{"event": "ev_tick", "fn": "bus_tick"}, {"event": "ev_tick", "fn": "v_tick"}],
+               "contribute": [{"to": "pages", "relocs": [[0, "abs32", "sym:bus_page", 0]]}, {"to": "params", "relocs": [[0, "abs32", "sym:v_params", 0]]}],
+               "defsym": {"bus_resume": "0x40"}, "collections": {"bus_fx": 4, "v_list": 4},
+               "storage": [{"sym": "bus_send", "scope": "sound", "bits": 7}, {"sym": "v_type", "scope": "sound", "bits": 3}]}
+        self.assertEqual(machine_base.leave_out(add, ["bus.c", "bus_*", "0x20"]), {
+            "sources": ["a.c", "v.c"], "cflags": ["-DX=1"], "sites": [{"addr": "0x30", "target": "v_gate"}],
+            "subscribe": [{"event": "ev_tick", "fn": "v_tick"}], "contribute": [add["contribute"][1]],
+            "collections": {"v_list": 4}, "storage": [add["storage"][1]]})
+        with self.assertRaises(ValueError):
+            machine_base.leave_out(add, ["bus_*", "no_such_*"])
+        with self.assertRaises(ValueError):
+            machine_base.variants({"variants": {"bad": {"add": False, "leave": ["bus_*"]}}})
+
+    def test_the_rytm_voices_variant_stages_add_without_the_send_bus_or_its_lock_words(self):
+        config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
+        variants = {name: (add, leave) for name, add, leave in machine_base.variants(config)}
+        staged = {}
+        for name in ("send-bus", "voices"):
+            with tempfile.TemporaryDirectory() as work:
+                add, leave = variants[name]
+                core = machine_base.stage("analog-rytm-mkii", config, pathlib.Path(work), add=add, leave=leave)
+                staged[name] = json.loads((core / "mod.json").read_text())
+        bus, voices = staged["send-bus"], staged["voices"]
+        for source in ("../base/locks.c", "../base/locks.s", "../base/clock.c", "../base/sendbus.c", "../base/sendbus.s"):
+            self.assertIn(source, bus["sources"])
+            self.assertNotIn(source, voices["sources"])
+        for source in ("../base/voice.c", "../base/voice.s"):
+            self.assertIn(source, voices["sources"])
+        names = json.dumps(voices)
+        self.assertNotIn("mw_send_", names)
+        # the FX track's lock words, which only the send bus writes: their three sites stay on send-bus with it
+        targets = {name: [site["target"] for site in machine_base.parts(config, add=variants[name][0], leave=variants[name][1])["sites"] if "target" in site]
+                   for name in ("send-bus", "voices")}
+        self.assertEqual([t for t in targets["send-bus"] if t.startswith("core_lk_")],
+                         ["core_lk_save_one", "core_lk_save_all", "core_lk_load"])
+        self.assertEqual([t for t in targets["voices"] if t.startswith("core_lk_")], [])
+        self.assertIn("mw_voice_applied_gate", targets["voices"])
+        self.assertNotIn("mw_fx", voices["collections"])
+        for name in ("mw_voices", "ev_sound_applied"):
+            self.assertIn(name, voices["collections"])
+        self.assertEqual([field["sym"] for field in voices["storage"]], ["mw_voice_type"])
+        # what remains is send-bus's, in send-bus's order
+        self.assertEqual([s for s in bus["sources"] if s in voices["sources"]], voices["sources"])
+        self.assertEqual([s for s in bus["subscribe"] if s in voices["subscribe"]], voices["subscribe"])
+
     def test_development_bases_stage_dev_on_every_variant_and_releases_never_carry_it(self):
         for machine, config in bases():
             if "dev" not in config:
                 continue
-            for name, add in machine_base.variants(config):
+            for name, add, leave in machine_base.variants(config):
                 for dev in (False, True):
                     with tempfile.TemporaryDirectory() as work:
-                        core = machine_base.stage(machine, config, pathlib.Path(work), add=add, dev=dev)
+                        core = machine_base.stage(machine, config, pathlib.Path(work), add=add, dev=dev, leave=leave)
                         mod = json.loads((core / "mod.json").read_text())
                     for source in config["dev"]["sources"]:
                         (self.assertIn if dev else self.assertNotIn)(source, mod["sources"], (name, dev))

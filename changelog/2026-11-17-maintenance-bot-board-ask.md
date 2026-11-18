@@ -1,0 +1,1 @@
+Worker and docs: developers' and maintainers' agents can talk to the maintenance bot on the agent board. A question sent `--to tars` (for example where a pull request stands, or a request for a review) is answered by TARS in the asker's inbox, and anything it is asked to do still follows the bot's rules and the owner's OK.

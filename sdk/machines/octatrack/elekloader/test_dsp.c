@@ -132,6 +132,11 @@ uint32_t dl_slot_cycles(unsigned i) { return slot_cycles[i]; }
 static void sources(void)
 {
     const uint32_t a = 0xab, b = 0xbb; /* two machine modules' runtime ids */
+    uint8_t live[16], *had_bank = modwerk_test_bank;
+    const uint32_t dj = dl_catalog[13].cycles;
+    memcpy(live, modwerk_test_live_fx, 16);
+    modwerk_test_bank = 0, dl_catalog[13].cycles = MODWERK_DSP_RESERVE; /* no project: what the tracks run counts */
+    for (unsigned i = 0; i < 16u; ++i) modwerk_test_live_fx[i] = 13; /* DJ EQ, the dearest stock effect, everywhere */
     /* Core 0 (tracks 5-8) keeps 3120 - 8 x 342 = 384 cycles; core 1 (tracks 1-4) 3565 - 2736 = 829. */
     CHECK(modwerk_dsp_source_claim(4, a, 411, 3, RUNTIME_EXECUTED) == RUNTIME_CYCLES); /* 720 + 6 > 384 */
     { unsigned rc; uint32_t ra; modwerk_dsp_source_refusal(&rc, &ra); CHECK(rc == 0 && ra == 726); } /* what the box shows */
@@ -164,6 +169,29 @@ static void sources(void)
     CHECK(modwerk_dsp_source_claim(0, a, 1, 1, 0) == RUNTIME_MALFORMED);
     CHECK(modwerk_dsp_source_claim(0, a, 1, 1, RUNTIME_HARDWARE + 1) == RUNTIME_MALFORMED);
     CHECK(modwerk_dsp_source_charge(0) == 0 && modwerk_dsp_source_charge(1) == 0 && modwerk_dsp_source_charge(2) == 0);
+    /* Voices book the slots as the bank uses them (#1542), not at the stock reserve: with nothing on core 0's slots,
+     * four voices at 720 and one engine at 6 fit its 3120. */
+    for (unsigned i = 0; i < 16u; ++i) modwerk_test_live_fx[i] = (i & 7u) < 4u ? 13 : 0;
+    for (unsigned t = 4; t < 8u; ++t) CHECK(modwerk_dsp_source_claim(t, a, 411, 3, RUNTIME_EXECUTED) == RUNTIME_OK);
+    CHECK(modwerk_dsp_source_charge(0) == 4u * 720u + 6u);
+    CHECK(modwerk_dsp_source_claim(0, b, 400, 0, RUNTIME_HARDWARE) == RUNTIME_OK);     /* core 1: 2736 + 400 */
+    /* A bank load whose Part 1 names DJ EQ on both of T5's slots: 684 + 2886 > 3120. Before the allocator plans it,
+     * core 0 drops voices from T8 down until the bank fits (2166 + 684); core 1, which fits, keeps its voice. */
+    static uint8_t loaded[0x9504a + 4 * 6322];
+    modwerk_test_bank = loaded, loaded[0x8ed80 + 4] = loaded[0x8ed80 + 12] = 13;
+    uint8_t ids[16]; uint32_t least[16];
+    memcpy(ids, loaded + 0x8ed80, 16);
+    for (unsigned i = 0; i < 16u; ++i) modwerk_test_live_fx[i] = ids[i];
+    CHECK(!modwerk_dsp_slot_floors(ids, least) && least[4] == 342 && least[12] == 342); /* the bank is never refused */
+    CHECK(modwerk_dsp_source_charge(0) == 3u * 720u + 6u && !source_owner[7] && source_owner[6] == a);
+    CHECK(modwerk_dsp_source_charge(1) == 400);
+    CHECK(modwerk_dsp_source_claim(7, a, 411, 3, RUNTIME_EXECUTED) == RUNTIME_CYCLES); /* T8 asks again: no room */
+    /* A pick the bank does not name never takes a voice's room: DJ EQ on T6 FX1 is refused, the voices stay. */
+    ids[5] = 13;
+    CHECK(modwerk_dsp_slot_floors(ids, least) == 1u && modwerk_dsp_source_charge(0) == 3u * 720u + 6u);
+    modwerk_dsp_source_engine_off(a), modwerk_dsp_source_engine_off(b);
+    loaded[0x8ed80 + 4] = loaded[0x8ed80 + 12] = 0;
+    modwerk_test_bank = had_bank, dl_catalog[13].cycles = dj, memcpy(modwerk_test_live_fx, live, 16);
 }
 
 /* All handles held: FULL; past 32 ids the fixture's third handle, 40, is still free and goes to the newcomer. */

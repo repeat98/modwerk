@@ -88,14 +88,12 @@ export async function authentication(request:Request,env:Env,path:string):Promis
   await db.prepare('INSERT OR IGNORE INTO member_base_install_prompts(user_id) VALUES(?)').bind(member.id).run()
   return response({ok:true})
  }
- // Shown until the member closes it, then never again on any browser or device. A new beta note needs a new id here and in
- // src/components/OwnerNote.tsx; a new statement for every visitor (OwnerStatement.tsx) here and in src/config/owner-statement.ts.
- const ownerNote=path==='/api/auth/owner-note'?'2026-10-16-beta-3':path==='/api/auth/owner-statement'?'2026-11-16-future':null
- if(ownerNote){
-  const member=needMember(await accountUser(request,env,db))
-  if(request.method==='GET')return response({show:!await db.prepare('SELECT 1 FROM member_owner_notes WHERE user_id=? AND note=?').bind(member.id,ownerNote).first()})
+ // Shown until the member closes it, then never again on any browser or device. A new note needs a new id here and in src/components/OwnerNote.tsx.
+ if(path==='/api/auth/owner-note'){
+  const OWNER_NOTE='2026-10-16-beta-3',member=needMember(await accountUser(request,env,db))
+  if(request.method==='GET')return response({show:!await db.prepare('SELECT 1 FROM member_owner_notes WHERE user_id=? AND note=?').bind(member.id,OWNER_NOTE).first()})
   if(request.method!=='POST')throw new HttpError(405,'Use GET or POST for the note.')
-  await db.prepare('INSERT OR IGNORE INTO member_owner_notes(user_id,note) VALUES(?,?)').bind(member.id,ownerNote).run()
+  await db.prepare('INSERT OR IGNORE INTO member_owner_notes(user_id,note) VALUES(?,?)').bind(member.id,OWNER_NOTE).run()
   return response({ok:true})
  }
  if(path==='/api/auth/build-access'&&request.method==='POST'){

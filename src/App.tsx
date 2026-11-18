@@ -102,6 +102,7 @@ import { ConfigurationDialog } from './components/ConfigurationDialog'
 import { ConfigurationReportDialog } from './community/ConfigurationReport'
 import { PageError } from './components/PageError'
 import { RenderBoundary } from './components/RenderBoundary'
+import { UnreadableSetsNote } from './components/UnreadableSetsNote'
 // The beta interface's own views and the USB link load on demand (components/beta.ts), so other visitors never download them.
 const beta = () => import('./components/beta')
 const InstrumentItem = lazy(() => beta().then(module => ({ default: module.InstrumentItem })))
@@ -125,8 +126,6 @@ const DiagnosticsGuideStep = lazy(() => import('./components/DiagnosticsInvitati
 const RemoteSessionGate = lazy(() => import('./components/RemoteSession').then(module => ({ default: module.RemoteSessionGate })))
 const OwnerNoteGate = lazy(() => import('./components/OwnerNote').then(module => ({ default: module.OwnerNoteGate })))
 const OwnerNotePreview = lazy(() => import('./components/OwnerNote').then(module => ({ default: module.OwnerNotePreview })))
-const OwnerStatementGate = lazy(() => import('./components/OwnerStatement').then(module => ({ default: module.OwnerStatementGate })))
-const OwnerStatementPreview = lazy(() => import('./components/OwnerStatement').then(module => ({ default: module.OwnerStatementPreview })))
 const OctatrackWelcome = lazy(() => import('./components/OctatrackWelcome').then(module => ({ default: module.OctatrackWelcome })))
 const BetaJoinPrompt = lazy(() => import('./components/BetaJoinPrompt').then(module => ({ default: module.BetaJoinPrompt })))
 const BetaModuleSets = lazy(() => beta().then(module => ({ default: module.BetaModuleSets })))
@@ -538,9 +537,6 @@ export default function App() {
       {session.available && !sessionLoading && !betaAccess && !welcome.due && !welcome.shown && !touchOnly && !mobileWorkspace && !accountRoute && !faqRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route) && <Suspense fallback={null}><BetaJoinPrompt /></Suspense>}
       {betaAccess && <Suspense fallback={null}><OwnerNoteGate key={session.user!.id} link={usbLink ?? null} enabled={!accountRoute && !faqRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route)} /></Suspense>}
       {import.meta.env.DEV && usbPreview === 'beta-note' && <Suspense fallback={null}><OwnerNotePreview /></Suspense>}
-      {/* Jannik's statement, once for every visitor; it waits for any other dialog to close first. */}
-      {session.available && !usbPreview && <Suspense fallback={null}><OwnerStatementGate enabled={!accountRoute && !faqRoute && !developerRoute && !['admin', 'privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route)} /></Suspense>}
-      {import.meta.env.DEV && usbPreview === 'owner-statement' && <Suspense fallback={null}><OwnerStatementPreview /></Suspense>}
       <Suspense fallback={null}>
       {usbLink && !hubRoute && !loadingTarget && <OctatrackActivity link={usbLink}/>}
       {openModule && (() => {
@@ -573,7 +569,7 @@ export default function App() {
           {!accountRoute && !developerRoute && !configuration && machineView !== 'configuration' && !['admin', 'privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route) && <HardwareFeedbackReminder />}
           {!phoneLayout && !hubRoute && projectNotice}
           {workspace.storageError && <div className="file-error" role="alert">{workspace.storageError} Export important configurations before closing this tab.</div>}
-          {workspace.unreadable > 0 && <p className="service-note" role="status">{workspace.unreadable === 1 ? 'One saved ' + w.set + ' uses' : workspace.unreadable + ' saved ' + w.sets + ' use'} a module or setting this version of Modwerk cannot open. {workspace.unreadable === 1 ? 'It stays' : 'They stay'} on this device and will reappear once it can.</p>}
+          {(configuration || machineView === 'configuration' || route.startsWith('module-set')) && <UnreadableSetsNote sets={workspace.unreadable} set={w.set} plural={w.sets} />}
           <RenderBoundary resetKey={route} fallback={error => <PageError error={error} />}>
           {projectsRoute ? <ProjectsPage key={`projects-page:${route}`} route={route} /> :  faqRoute ? <FaqPage key={route} open={faqEntry} machine={currentDevice.id} /> : route === 'credits' ? <CreditsPage /> : route === 'base' ? <BasePage key={currentDevice.id} machine={currentDevice.id} /> : overviewRoute ? <OverviewPage overview={overview} /> : !ready ? <div className="loading-panel" role="status">Opening your workspace…</div> : <>
           {onLibrary ? <MachineLibrary buildHref={configurationHref} buildLabel={isZoomSetDevice(configurationTarget) ? 'Open your ' + DEVICES_BY_ID[configurationTarget].name + ' and sync your set to it' : 'Build firmware for ' + DEVICES_BY_ID[configurationTarget].name} octatrackCatalogue={accessibleModules} onClearQuery={() => setQuery('')} onBrowse={rememberBrowse} device={allMachines ? undefined : currentDevice} machinePicker={phoneLayout ? undefined : machinePicker} phone={phoneLayout} resultsSlot={resultsSlot} query={query} category={libraryCategory as ModuleCategory | undefined} octatrackModules={visibleModules} family={family} onFamilyChange={setFamily} sort={sort} onSortChange={setSort} statistics={statistics} octatrackConflicts={conflicts} octatrackBlocks={addBlockMap} onSwapOctatrack={swapModule} comparison={comparison} onCompare={toggleComparison} onOpenComparison={() => setCompareOpen(true)} viewedModuleVersions={viewedModuleVersions} moduleBaseline={moduleBaseline} octatrackSelected={selectedIds} onToggleOctatrack={toggleModule} digiSelected={digiSelected} onToggleDigi={(device, id) => workspace.toggleModule(id, device)} zoomSelected={zoomSelected} onToggleZoom={(device, id) => workspace.toggleModule(id, device)} onClearSearch={() => { setQuery(''); setFamily('all') }}>

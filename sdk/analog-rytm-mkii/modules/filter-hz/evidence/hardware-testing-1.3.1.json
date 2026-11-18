@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-16",
+  "source": "npp1993 (Nathaniel Pavel, Modwerk maintainer), on their own unit: screens read back from the unit by an automated test link run with npp1993's go, not judged by a person",
+  "reporter": "npp1993",
+  "statement": "Hardware, OS 1.74: CA02, a Modwerk development base with the dev link + Filter Hz with this version's cold code + Improved AMP, Quick Mod Assign and Control In Actions, on the store lock of the unit's flashed build, booted from RAM over USB on an Analog Rytm MKII on 2026-11-16. Its Filter Hz source differs from this folder's only in the comment text that explains the macro. All seven Filter Hz rig cases ran (six in a first pass, scene-edit later). Every Hz and kHz readout on the unit equals the emulator's, for example 79.0Hz and 1.44kHz on DELAY and 5.85kHz on REVERB FRQ. The screen compares were made against CB00's emulator screens, since Filter Hz has no references recorded on the unit, and the scratch project on the unit set other knobs (REV, DEC, GAI, X) differently from the emulator's default kit; the compares flagged only those knobs. The cases are therefore counted as not a pass: only the readouts were seen to match.",
+  "status": "hardware-tested",
+  "scope": "filter-hz 1.3.1's code in a Modwerk development base with three other modules (CA02), booted from RAM in a scratch project.",
+  "modules": [
+    {
+      "id": "filter-hz",
+      "version": "1.3.1"
+    }
+  ],
+  "builds": [
+    {
+      "label": "CA02",
+      "testedOn": "2026-11-16",
+      "os": "1.74",
+      "syxSha256": "8c73268710d8d0d7ebfb2d6e13349a6bbc1a67ecf6a6b7d7cee40d8e5fe6b7b5",
+      "imageCrc32": "c06360e8",
+      "content": "Modwerk's linker on stock 1.74: a Modwerk development base with the dev link (a private tree that leaves out the send bus) + Filter Hz (this version's code), Improved AMP, Quick Mod Assign and Control In Actions, on the store lock of the unit's flashed build.",
+      "loaded": "RAM boot over USB from the flashed image; the flash was not written, and a power cycle returns to the flashed OS."
+    }
+  ],
+  "limitations": [
+    "Tested by a maintainer, not by the module's porter.",
+    "The rig's screen compares did not pass: the unit's project differed from the emulator's kit on other knobs. Only the Hz and kHz readouts were checked as equal.",
+    "Booted from RAM in a development base beside three other modules, not flashed, and not with core-ar2 0.3 alone.",
+    "No audio was measured for Filter Hz; saving and reloading a project and a power cycle were not tried."
+  ]
+}

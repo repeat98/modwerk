@@ -9,6 +9,7 @@ import { newConfiguration } from '../config/workspace'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import { SET_MODULE_LIMIT } from '../catalog/set-limit'
 import { isModuleAvailable } from '../catalog/availability'
+import { asBeta } from '../catalog/beta-fixture'
 import { CommunityContext, emptySession } from '../community/context'
 import type { Session } from '../community/api'
 import { LoadDialog } from './LoadDialog'
@@ -104,14 +105,14 @@ describe('syncing a set over the module limit', () => {
 describe('a beta module in a saved set', () => {
   const chorus = newConfiguration('Chorus', ['airwindows-chorus'])
   beforeEach(() => review.mockReturnValue({ changes: { ...noChanges, add: ['airwindows-chorus'] }, updates: [], needsSync: true, problem: undefined }))
-  it('is paused for a member who is not a beta tester', async () => {
+  it('is paused for a member who is not a beta tester', () => asBeta(async () => {
     await open(chorus)
     expect(container.textContent).toMatch(/Air Chorus is paused for now/)
     expect(button('Sync to Octatrack')?.disabled).toBe(true)
-  })
-  it('syncs for a beta tester', async () => {
+  }))
+  it('syncs for a beta tester', () => asBeta(async () => {
     await open(chorus, tester)
     expect(container.textContent).not.toMatch(/paused for now/)
     expect(button('Sync to Octatrack')?.disabled).toBe(false)
-  })
+  }))
 })

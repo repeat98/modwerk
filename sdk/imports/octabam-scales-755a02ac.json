@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "recorded": "2026-11-07",
+  "decision": "octabam's scale catalogue (modules/scales, MIT) re-vendored for the shared scale (#1145): scales.s and octabam's LICENSE copied unchanged into vendor/octabam-scales/, so sdk:imports:check pins the file the 52 masks come from. sdk/machines/octatrack/modwerk_scale.s carries the sc_masks words as its own table, by ID from 1, and sdk/tests/test_shared_scale.py checks them word for word against this copy and runs this copy's sc_snap against the shared snap. Nothing else from scales.s is built: its chooser, keys, KEY field and scales.work stay octabam's.",
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "755a02accbfa450b7fecfc38ad8b7bd58c6c33b0",
+  "license": "MIT",
+  "files": [
+    { "from": "LICENSE", "to": "vendor/octabam-scales/LICENSE", "sourceGitBlob": "112114d5d319dc4a789dacf1e84b867420a03614", "sha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113" },
+    { "from": "modules/scales/scales.s", "to": "vendor/octabam-scales/scales.s", "sourceGitBlob": "31b6c63e33eef4a9cfbb7abab2784ce4c6587bd1", "sha256": "e0d4bb6220db0102f17938d4bb0393fb0975da676b842ee1e89373e7d0867d70" }
+  ]
+}

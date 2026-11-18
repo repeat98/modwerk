@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/improved-amp",
+  "version": "0.1.2-experimental",
+  "date": "2026-11-17",
+  "changes": [
+    "Takes 512 bytes less of the shared mod area (8,716 bytes, was 9,228): stock's hold compare is kept from ending a hold by two byte sites (0x40109bc2, 0x40109bce) that compare its counter with 0x7fffffff, in place of a ptr site to a 512-byte table of that value. The same flags for every counter and HLD value; the rest of .run byte-identical. No change in behaviour."
+  ],
+  "runtimeSourceSha256": "4fa49a95cf2d258b0263b038a935b1917446f8df58d5caeafeb0ecf347911901",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/improved-amp/improved-amp-0.1.2-experimental-os1.74.elemod",
+      "sha256": "1e006bd5503704102484d910f4a0a4955202ce1bb56db9dc6714692ac0dbd882"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/improved-amp/TESTING.md",
+  "requires": []
+}
