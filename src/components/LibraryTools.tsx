@@ -1,7 +1,7 @@
 import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
 import type { ReactNode } from 'react'
 import { Icon } from './Icon'
-import { MODULE_SORTS } from '../community/module-statistics'
+import { DOWNLOAD_PERIODS, downloadPeriod, MODULE_SORTS, sortOption } from '../community/module-statistics'
 import { useOctatrackBase } from '../hooks/useOctatrackLink'
 import { MODULE_COMPARE_ENABLED } from './module-compare'
 
@@ -27,10 +27,12 @@ export function LibraryTools({ family, families, onFamilyChange, sort, onSortCha
   // On the Octatrack base path, loading happens from the Octatrack hub's guided load, not a .bin;
   // #configuration opens it on the set you edit.
   const usb = useOctatrackBase() && buildHref === '#configuration', mobile = useMobileWorkspace()
+  const days = downloadPeriod(sort)
   return <div className="discovery-tools">
     {machine}
     <label>Type<select value={family} disabled={disabled} onChange={event=>onFamilyChange(event.target.value)}><option value="all">All types</option>{families.map(value=><option key={value}>{value}</option>)}</select></label>
-    <label>Sort<select value={sort} disabled={disabled} onChange={event=>onSortChange(event.target.value)}>{MODULE_SORTS.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+    <label>Sort<select value={sortOption(sort).value} disabled={disabled} onChange={event=>onSortChange(event.target.value)}>{MODULE_SORTS.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+    {days !== undefined && <label className="discovery-period">Period<select value={sort} disabled={disabled} onChange={event=>onSortChange(event.target.value)}>{DOWNLOAD_PERIODS.map(period=><option key={period.value} value={period.value}>{period.label}</option>)}</select></label>}
     <div className="discovery-actions">
       {MODULE_COMPARE_ENABLED && <button className="button button-quiet" disabled={comparisonCount<2} onClick={onCompare}>Compare{comparisonCount?' ('+comparisonCount+')':''}</button>}
       {build && <a className="button button-primary" href={buildHref ?? undefined} aria-disabled={!buildHref || undefined} tabIndex={buildHref ? undefined : -1} aria-label={mobile || usb ? undefined : buildLabel} title={mobile || usb ? undefined : buildLabel}><Icon name="sliders" size={16}/>{buildText ?? (mobile ? 'Open configuration' : usb ? 'Your Octatrack' : 'Build firmware')}</a>}

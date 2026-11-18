@@ -263,12 +263,12 @@
       "sites": 3,
       "copies": 7,
       "fills": 0,
-      "version": "0.1.4-experimental",
+      "version": "0.1.5-experimental",
       "name": "Euclid",
       "module": "d54f5fed",
-      "bytes": 10096,
-      "sha256": "649f26704bda30f0bb3be0dc1b5ad863ff7a3a4064256b051af07e9fd575e7ce",
-      "path": "octatrack-modules/euclid/0.1.4-experimental.mwrm"
+      "bytes": 10100,
+      "sha256": "69a5ecd307334b5f9e9e5d9806336653162a915ccd31b596d0bab4a598a65c88",
+      "path": "octatrack-modules/euclid/0.1.5-experimental.mwrm"
     },
     {
       "id": "bbd",
