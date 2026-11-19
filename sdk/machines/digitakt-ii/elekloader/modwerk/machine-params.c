@@ -5,9 +5,12 @@
  * references and bounded by 56 checks against 275 or 274. The table has no spare rows for new machines, so the base
  * keeps its own copy, core_params: at boot, before the OS reads it (core_boot_init, from core.s's .boot), it copies
  * the stock rows from the running image and appends DT2_MACHINE_KNOBS rows per added machine type. base.json points
- * every reference at the copy and raises every bound by the rows added. A row is built from the stock SAMPLE level
- * row (a plain 0-127 knob): the knob's own name, label and range, the sound slot it edits, owner 0x40 (the OS's
- * table builders skip owners from 33 up, so no stock per-type or MIDI table takes the row) and no MIDI CC or NRPN.
+ * every reference at the copy and raises every bound by the rows added, except the three loops that walk every row
+ * (0x4003d98e, 0x4004ffc2, 0x400dab7a): they stay at the stock 275, so the per-type and MIDI tables they build never
+ * take an added row (the MIDI-map builder would file it under its owner and replace the stand-in's own knob). A row
+ * is built from the stock SAMPLE level row (a plain 0-127 knob): the knob's own name, label and range, the sound slot
+ * it edits, the stand-in machine as its owner (the value path dispatches on the owner; an unknown owner faults) and
+ * no MIDI CC or NRPN.
  */
 #include <stdint.h>
 #include <mk2/machines.h>
@@ -46,7 +49,7 @@ void core_boot_init(void)
             for (uint32_t w = 0; w < ROW_WORDS; ++w) {
                 row[w] = template[w];
             }
-            row[0] = ADDED_OWNER;
+            row[0] = machine ? machine->stands_for : 0;
             row[1] = KNOB_SLOT[knob];
             row[6] = 0xffffffff;           /* +0x18 CC and +0x1a: none */
             row[7] = 0xffffffff;           /* +0x1c NRPN: none */
