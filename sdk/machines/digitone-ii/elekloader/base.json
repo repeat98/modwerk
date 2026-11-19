@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "about": "Modwerk's Digitone II OS 1.12 base, built by npm run machine:base -- digitone-ii: the Digitakt II base's core-dt2 1.1 source (source names that folder) with the Digitone II's addresses and sites (recipe), and Digitone II copies of three of its files (copies: each names the core-dt2 file and SHA-256 it was made from, and the build refuses when that file has changed): mod.json for OS 1.12 without the .fast area, since SRAM is not qualified on this OS; store.s, whose kit load has its registers the other way round; and store.c, whose kit room is larger. The addresses are the ones core-dn2 0.3 (toonst's elekloader fork at 3d7c2e3, GPL-2.0-or-later) builds this source with, and its images ran on a unit (docs/verification/2026-11-18-digitone-ii-core-on-a-unit.md). One variant, plain: none of the Digitakt II base's sequencer and project additions, whose Digitone II sites are not found yet. The device is carried by Modwerk's builder (device.json). Every site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS.",
-  "pending": "No base-binding.json yet: the exact build has not run on a unit. Its identity and the profile's budget are recorded with that test, as the Digitakt II's were.",
+  "pending": "No base-binding.json yet: the base ran on a unit (docs/verification/2026-11-19-digitone-ii-base-on-a-unit.md), linked and packed by Elekloader 0.11's patcher, because images the pinned kit packs exceed the unit's update limit. The binding and the profile's SDK budgets come with the machine's SDK profile.",
   "source": "digitakt-ii",
   "core": "core-dt2",
   "include": "sdk/machines/digitakt-ii/include",

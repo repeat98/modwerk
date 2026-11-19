@@ -1,1 +1,1 @@
-Digitone II: the first Modwerk base for OS 1.12. It reuses the Digitakt II base's source at the Digitone II's addresses and builds from your own OS file with `npm run machine:base`. It is not released yet: it waits for a run on a unit.
+Digitone II: the first Modwerk base for OS 1.12. It reuses the Digitakt II base's source at the Digitone II's addresses and builds from your own OS file with `npm run machine:base`. It ran on a unit with its hooks, and projects kept their changes across a power cycle. It is not on the site yet.
