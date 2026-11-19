@@ -155,7 +155,7 @@
         .globl  kits_partkey, kits_savekey, kits_mkisave, kits_level
         .globl  kits_lcopy, kits_lpaste, kits_lclear, kits_pcopy, kits_psnap, kits_pstore_ptn
         .globl  kits_fright, kits_ptrig, kits_status, kits_freload
-        .globl  kits_pages, KSTATE
+        .globl  kits_pages, kits_part_menu, KSTATE
 
 | ============================================================ the hooks ====
 
@@ -401,17 +401,27 @@ kits_partkey:
         bra.w   load_menu
 2:      rts
 
-| 0x4002dc9c: the Part edit menu (MKII FUNC+PART): SAVE KIT.
+| 0x4002dc9c: the Part edit menu's opener (MKII FUNC+PART). With PASTE held
+| after a pattern paste: the paste clone; else stock's opener, whose popup
+| call is the base's Part Edit menu (ot_part_menu), where KITS > SAVE KIT is.
 kits_savekey:
         tstl    READY
-        bne.s   1f
-        mvzb    0x100b14cf,%d0          | displaced
-        jmp     0x4002dca2
-1:      bsr.w   paste_clone             | MKII FUNC+PASTE+PART
+        beq.s   1f
+        bsr.w   paste_clone             | MKII FUNC+PASTE+PART
         tstl    %d0
         bne.s   2f
-        bra.w   save_menu
+1:      mvzb    0x100b14cf,%d0          | displaced
+        jmp     0x4002dca2
 2:      rts
+
+| ot_part_menu's choose (action): KITS > SAVE KIT in the base's Part Edit
+| menu, which has closed stock's popup already. C convention: save_menu
+| keeps d2-d7/a2-a6.
+kits_pm_choose:
+        tstl    READY
+        bne.w   save_menu
+        lea     T_KOFF,%a0              | the base lent no pages: Kits is off
+        bra.w   toast
 
 | 0x40058a64: the MKI FUNC+BANK dispatch. With the LOAD KIT list open:
 | SAVE KIT in its place (Octakit's FUNC+MIDI, then FUNC+BANK); with the
@@ -3630,12 +3640,23 @@ T_PCOPY:   .asciz  "PATTERN COPIED"
 T_PPASTE:  .asciz  "PATTERN PASTED"
 T_PCLEAR:  .asciz  "PATTERN CLEARED"
 T_NOPCOPY: .asciz  "COPY A PATTERN FIRST"
+T_KOFF:    .asciz  "KITS NOT ACTIVE"
+T_KITS:    .asciz  "KITS"
 
 | State: .data, as the package loads it at every install.
         .section .data
         .align  4
 | ot_sample_memory (hook 52, include/modwerk_events.h): abi 1, the pages,
 | at (the base writes the pages' address here), two reserved longs.
+| ot_part_menu (hook 53, include/modwerk_events.h): abi 1, the parent row,
+| one action, its rows, choose, the icon.
+kits_part_menu:
+        .long   1, T_KITS, 1, kits_pm_rows, kits_pm_choose, kits_pm_icon
+kits_pm_rows:
+        .long   T_SAVEKIT
+| A chest of drawers, drawn for Kits: 9 rows, bit 18 the leftmost of 19.
+kits_pm_icon:
+        .long   0x00000, 0x07ff0, 0x04010, 0x04710, 0x07ff0, 0x04010, 0x04710, 0x07ff0, 0x00000
 kits_pages:
         .word   1, PAGES
         .long   0

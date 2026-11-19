@@ -658,7 +658,7 @@
       "id": "kits",
       "octabam": true,
       "usbOnly": true,
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "abi": 8,
       "features": 129,
       "sites": 15,
@@ -666,9 +666,9 @@
       "fills": 0,
       "name": "Kits",
       "module": "9ea848b6",
-      "bytes": 12954,
-      "sha256": "f1c13a071b299906dccd7eee60c8b01e82dea9212921f5d7fb28ca14b5932c0b",
-      "path": "octatrack-modules/kits/0.1.0-experimental.mwrm"
+      "bytes": 13082,
+      "sha256": "8ce226a5444631e547da2a7ac7ca43fe5d8a7c557cec99317d5628d0c7db1463",
+      "path": "octatrack-modules/kits/0.1.1-experimental.mwrm"
     },
     {
       "id": "tuner",

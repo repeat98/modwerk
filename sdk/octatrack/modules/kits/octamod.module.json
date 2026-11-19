@@ -3,7 +3,7 @@
   "id": "kits",
   "key": "KITS",
   "name": "Kits",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "category": "scenes",
   "author": {
     "github": "sambanks",
@@ -50,13 +50,10 @@
     "firmware": "1.40C",
     "effectId": null,
     "location": "Project sequencer",
-    "conflicts": [
-      "pattern-sample-locks"
-    ],
+    "conflicts": [],
     "uiClaims": [
       "key:PART",
       "key:FUNC+MIDI",
-      "key:FUNC+PART",
       "key:FUNC+CUE",
       "key:STOP+PART",
       "key:FUNC+STOP+PART",
@@ -70,19 +67,17 @@
       "key:FUNC+STOP@KITS",
       "key:FUNC+PLAY@KITS",
       "key:FUNC+BANK@KITS",
-      "key:LEVEL@KITS",
-      "screen:PART EDIT"
+      "key:LEVEL@KITS"
     ],
     "limitations": [
       "OS 1.40C on the Modwerk base with the sample-memory loan (ot_sample_memory), over USB only: card firmware cannot include it. Not yet run on a unit or in the emulator.",
       "Borrows 331 pages (about 2 MB) of sample memory while installed: about 23 s less of 16-bit mono sample time. When the pool cannot spare them, Kits stays off and the unit behaves as stock.",
-      "FUNC+PART opens SAVE KIT, so the stock Part Edit window and the rows other modules add there cannot be opened while Kits is installed.",
+      "SAVE KIT is in the Part Edit window (FUNC+PART), under KITS: it needs a base with the Part Edit menu (ot_part_menu). On an older base it is not offered.",
       "No quick save with FUNC+YES in SAVE KIT: save with YES and the name editor. FUNC+YES in either list does what it does elsewhere.",
       "A Kit carries no MIDI scene locks, and a kits.work from an octabam image with MIDI SCENES (version 2) is not read: that project then plays its Parts as stock.",
       "A damaged kits.work is never overwritten: that project then plays its Parts as stock and keeps no Kits. Rename or delete the file on the card to start over.",
       "Keep Kits installed while you save, reload or copy a project that uses it: without it, kits.work is not saved or reloaded with the project.",
-      "The first time Kits reads a project without kits.work it writes one (1.6 MB): installing Kits into a running project does this at once.",
-      "Not offered with Pattern Sample Locks: Kits' SAVE KIT takes FUNC+PART, the Part edit menu Pattern Sample Locks adds its rows to."
+      "The first time Kits reads a project without kits.work it writes one (1.6 MB): installing Kits into a running project does this at once."
     ]
   },
   "resources": {
