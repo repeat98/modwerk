@@ -28,11 +28,14 @@ enum {
     DT2_MACHINE_KNOBS = 5,
 };
 
-/* A knob: name as the popups show it, and label (up to four capitals) as the page shows it. A null name keeps the
- * stand-in machine's knob and name (for knob C on SAMPLE: no knob). */
+/* A knob: name as the popups show it, label (up to four capitals) as the page shows it, and optionally the names of
+ * its values (a null-terminated list indexed by the stand-in parameter's value, up to five characters each, as
+ * "FWD.L"; a value past the list shows as the stand-in shows it). A null name keeps the stand-in machine's knob and
+ * name (for knob C on SAMPLE: no knob). */
 struct dt2_machine_knob {
     const char *name;
     const char *label;
+    const char *const *values;
 };
 
 /* stands_for names the stock type (0-6) whose descriptor, voice setup and other knobs the machine borrows.
@@ -44,8 +47,8 @@ struct dt2_machine {
     struct dt2_machine_knob knobs[DT2_MACHINE_KNOBS];
 };
 
-/* The audio-frame tail words the base sends the sound chip for machine players (machine-frame.c): the magic, then
- * the samples per sixteenth step at the pattern's tempo. */
+/* The audio-frame tail words the base sends the sound chip for machine players (machine-frame.c): the magic, the
+ * samples per sixteenth step at the pattern's tempo (1X), then each of the 16 tracks' step at its speed. */
 enum {
     DT2_MACHINE_WIRE = 16,
 };

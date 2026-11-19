@@ -287,11 +287,13 @@ export async function planDt2MachinePlayers(
 const RECEIVE_RESUME = (RECEIVE_ADDRESS - 0x28000000) / 2 + 3
 const TAIL = 0x804
 export const DT2_MACHINE_WIRE = 16, DT2_MACHINE_WIRE_MAGIC = 0x4d4b0001
+const STEP_WORDS = 17 // the 1X step, then tracks 1-16 at their speeds
 
 /** A plan fragment for the base's machine wire: at the receive site, a receiver at `codeAddress` (free L2) copies the
- * samples per sixteenth step the ColdFire base writes into frame-tail words DT2_MACHINE_WIRE.. (after its magic) to the
- * word at `dataAddress + 0x20`, where machine players read it (6,000, 120 BPM, until the first frame), then replays
- * the displaced instruction and resumes. It keeps every register it touches. */
+ * step words the ColdFire base writes into the frame tail after its magic (DT2_MACHINE_WIRE: the samples per sixteenth
+ * step at 1X, then each track's at its speed) to the words from `dataAddress + 0x20`, where machine players read them
+ * (6,000, 120 BPM, until the first frame), then replays the displaced instruction and resumes. It keeps every
+ * register it touches. */
 export async function planDt2MachineWire(stock: Uint8Array, codeAddress: number, dataAddress: number): Promise<Dt2RenderPlan> {
   if (await sha256Hex(stock) !== STOCK_SECTION) throw new Error('Unsupported Digitakt II SHARC image')
   const displaced = await dt2DisplacedInstruction(stock, 'receive')
@@ -304,6 +306,11 @@ export async function planDt2MachineWire(stock: Uint8Array, codeAddress: number,
   DM(${save + 3}) = M0
   DM(${save + 4}) = ASTATX
   DM(${save + 5}) = STKYX
+  DM(${save + 6}) = I1
+  DM(${save + 7}) = L0
+  DM(${save + 25}) = L1
+  L0 = 0
+  L1 = 0
   R0 = I3
   R1 = ${TAIL}
   R0 = R0 + R1
@@ -314,8 +321,13 @@ export async function planDt2MachineWire(stock: Uint8Array, codeAddress: number,
   COMP(R0, R1)
   IF NE JUMP absent
   M0 = ${DT2_MACHINE_WIRE + 1}
-  R0 = DM(M0, I0)
-  DM(${save + 8}) = R0
+  R0 = DM(I0, M0)
+  I1 = ${dataAddress + 0x20}
+  M0 = 1
+  LCNTR = ${STEP_WORDS}, DO copied UNTIL LCE
+  R0 = DM(I0, M0)
+  NOP
+copied: DM(I1, M0) = R0
 absent:
   R0 = DM(${save})
   R1 = DM(${save + 1})
@@ -323,13 +335,16 @@ absent:
   M0 = DM(${save + 3})
   ASTATX = DM(${save + 4})
   STKYX = DM(${save + 5})
+  I1 = DM(${save + 6})
+  L0 = DM(${save + 7})
+  L1 = DM(${save + 25})
 displaced: NOP
   JUMP ${RECEIVE_RESUME}
 `)
   const code = blocks[0].bytes
   code.set(displaced, (symbols.get('displaced')! - programCounter(codeAddress)) * 2)
-  const data = new Uint8Array(4 * 9)
-  new DataView(data.buffer).setUint32(4 * 8, 6000, true)
+  const data = new Uint8Array(4 * (8 + STEP_WORDS + 1))
+  for (let word = 0; word < STEP_WORDS; word++) new DataView(data.buffer).setUint32(4 * (8 + word), 6000, true)
   const allocations = [{ address: codeAddress, bytes: code }, { address: dataAddress, bytes: data }]
   checkAllocations(allocations)
   return { receiveInstruction: instruction(0x063e, programCounter(codeAddress)), allocations }

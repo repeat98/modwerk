@@ -46,7 +46,8 @@ export async function buildDt2RenderFirmware(
 export type Dt2SharcPart = { module: string; allocations: { address: number; bytes: Uint8Array }[]; players: Dt2MachinePlayer[] }
 
 // L2 the base keeps for its own machine parts: the selector table, the player dispatcher and its data, and the
-// machine wire's receiver and data. A player reads the samples per sixteenth step at `stepSamples` (a word).
+// machine wire's receiver and data. A player reads the samples per sixteenth step at `stepSamples`: the 1X step, then
+// tracks 1-16 at their speeds (17 words).
 export const DT2_BASE_SHARC = {
   selectors: 0x200c0100, dispatcher: 0x200c1000, dispatcherData: 0x200c2000, wire: 0x200c2800, wireData: 0x200c2c00,
   stepSamples: 0x200c2c20, end: 0x200c3000,

@@ -6,8 +6,9 @@
  * sidechain prototype): DT2_MACHINE_WIRE_MAGIC, then the samples per sixteenth step at the pattern's tempo. The tempo
  * is the one the sequencer uses: with patterns as its source (seq-note-bridge.c's rule), the current pattern's word at
  * +0x1db70, in BPM * 120 (14,400 for 120 BPM; the OS points its active tempo there, 0x400d7f4c). Otherwise, or with a
- * value out of range, the last tempo stays. The base's receiver on the sound chip copies the step where machine
- * players read it (DT2_BASE_SHARC.stepSamples in the builder). Track speed is not applied: the step is a 1X step.
+ * value out of range, the last tempo stays. Then sixteen words: each track's step at its speed. The base's receiver
+ * on the sound chip copies the seventeen step words where machine players read them (DT2_BASE_SHARC.stepSamples in
+ * the builder: the 1X step, then tracks 1-16).
  */
 #include <stdint.h>
 #include <mk2/machines.h>
@@ -20,6 +21,14 @@
 #define TEMPO_MIN (30u * 120u)
 #define TEMPO_MAX (300u * 120u)
 #define STEP_SAMPLES_TIMES_TEMPO (48000u * 60u / 4u * 120u) /* samples per sixteenth = this / (BPM * 120) */
+#define TRACKS 16u
+#define TRACK_STRIDE 0x6a5u
+#define PATTERN_TRACK_MODE 0x1db79u        /* nonzero: each track has its own length and speed */
+#define PATTERN_SPEED 0x1db7au
+#define TRACK_SPEED 0x48fu
+#define SPEED_PULSES ((const uint32_t *)0x4020e28cu) /* 2X, 3/2X, 1X, 3/4X, 1/2X, 1/4X, 1/8X: 3, 4, 6, 8, 12, 24, 48 */
+#define SPEED_1X 2u
+#define SPEED_SLOWEST 6u
 #define DSP_QUEUE 0x400cd48cu              /* the transfer's halfword queue */
 #define FIRST_TAIL_HALF 0x402u
 
@@ -41,7 +50,8 @@ void core_machine_frame(unsigned int data_bytes, const void *data, unsigned int 
         return;
     }
     const uintptr_t pattern = STOCK_WORD(CURRENT_PATTERN);
-    if (STOCK_WORD(SEQ_SOURCE) == PATTERN_SOURCE && pattern) {
+    const int playing_patterns = STOCK_WORD(SEQ_SOURCE) == PATTERN_SOURCE && pattern;
+    if (playing_patterns) {
         const uint32_t tempo = STOCK_WORD(pattern + PATTERN_TEMPO);
         if (tempo >= TEMPO_MIN && tempo <= TEMPO_MAX) {
             core_machine_samples_per_step = STEP_SAMPLES_TIMES_TEMPO / tempo;
@@ -50,4 +60,17 @@ void core_machine_frame(unsigned int data_bytes, const void *data, unsigned int 
     volatile uint16_t *tail = (volatile uint16_t *)(STOCK_WORD(DSP_QUEUE) + 4 * FIRST_TAIL_HALF + 2);
     put(tail, DT2_MACHINE_WIRE, DT2_MACHINE_WIRE_MAGIC);
     put(tail, DT2_MACHINE_WIRE + 1, core_machine_samples_per_step);
+    /* Each track's step at its speed: the pattern's speed, or the track's own in per-track mode (seq-note-bridge.c's
+     * offsets), as pulses per step against 1X's six. */
+    const uint8_t *p = (const uint8_t *)pattern;
+    for (unsigned int track = 0; track < TRACKS; ++track) {
+        uint32_t speed = SPEED_1X;
+        if (playing_patterns) {
+            speed = p[PATTERN_TRACK_MODE] ? p[track * TRACK_STRIDE + TRACK_SPEED] : p[PATTERN_SPEED];
+            if (speed > SPEED_SLOWEST) {
+                speed = SPEED_1X;
+            }
+        }
+        put(tail, DT2_MACHINE_WIRE + 2 + track, core_machine_samples_per_step * SPEED_PULSES[speed] / SPEED_PULSES[SPEED_1X]);
+    }
 }
