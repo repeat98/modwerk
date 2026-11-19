@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { api, post } from './api'
+import { api, apiFetch, post } from './api'
+import { sendAll, sendAllNote } from './diagnostics-mail-send-all'
 
 type Mail = { id: string; username: string; kind: 'problem' | 'fixed'; cause: string; subject: string; body: string; status: 'draft' | 'sending' | 'sent' | 'discarded' | 'failed'; created_at: string; sent_at: string | null; eligible: number }
 type Overview = { emailAvailable: boolean; canSend: boolean; mails: Mail[] }
@@ -22,6 +23,20 @@ export function DiagnosticsMailPanel() {
     void run(() => post('/admin/diagnostics-mail/' + mail.id + '/send', {}), 'Sent.')
   }
   const discard = (mail: Mail) => void run(() => post('/admin/diagnostics-mail/' + mail.id, {}, 'DELETE'), 'Discarded.')
+  const sendOne = async (id: string) => {
+    const result = await apiFetch('/admin/diagnostics-mail/' + id + '/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+    return { status: result.status, error: ((await result.json().catch(() => ({}))) as { error?: string }).error }
+  }
+  const [progress, setProgress] = useState('')
+  async function sendEvery(list: Mail[]) {
+    if (!window.confirm(`Send all ${list.length} drafts that can still be sent? Each goes to its member now.`)) return
+    setBusy(true); setError(''); setNote('')
+    try {
+      const result = await sendAll(list.map(mail => mail.id), sendOne, (done, total) => setProgress(`Sending ${done} of ${total}…`))
+      ;(result.stopped ? setError : setNote)(sendAllNote(result))
+      await load()
+    } finally { setProgress(''); setBusy(false) }
+  }
   const drafts = overview?.mails.filter(mail => mail.status === 'draft') ?? [], done = overview?.mails.filter(mail => mail.status !== 'draft') ?? []
   return <section className="configuration-section">
     <h2>Diagnostics emails</h2>
@@ -31,6 +46,10 @@ export function DiagnosticsMailPanel() {
     {note && <p className="success-note" role="status">{note}</p>}
     {error && <p className="file-error" role="alert">{error}</p>}
     {overview && !drafts.length && <p>No drafts.</p>}
+    {drafts.filter(mail => mail.eligible).length > 1 && <div className="button-row">
+      <button className="button button-primary" disabled={busy || !overview?.canSend || !overview.emailAvailable} onClick={() => void sendEvery(drafts.filter(mail => mail.eligible))}>Send all {drafts.filter(mail => mail.eligible).length} drafts</button>
+      {progress && <span className="service-note" role="status">{progress}</span>}
+    </div>}
     {drafts.map(mail => <article key={mail.id} className="admin-card">
       <p className="service-note"><strong>@{mail.username}</strong> · {KIND[mail.kind]}{mail.cause && ' · ' + mail.cause} · drafted {when(mail.created_at)}{!mail.eligible && ' · can no longer be sent: they stopped sharing diagnostics or these emails'}</p>
       <h3>{mail.subject}</h3>

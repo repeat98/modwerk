@@ -12,7 +12,8 @@ import { DIAGNOSTIC_CONSENT_DAYS } from '../src/community/octatrack-diagnostics-
 /** A personal email to a member whose shared Octatrack diagnostics show a problem (`problem`), and the follow-up once its
  * fix ships (`fixed`). The diagnostics consent says reports may lead to one (OCTATRACK_DIAGNOSTICS_VERSION 2026-11-19.1;
  * owner, 19 Nov 2026: everyone sharing may get one, nobody is asked again). An agent or the owner drafts it with the
- * administrator key; only an administrator signed in with their own account sends it, one at a time (docs/MAINTENANCE.md). */
+ * administrator key; only an administrator signed in with their own account sends it, one at a time or all listed drafts
+ * in one run from the admin page, each through the send route (docs/MAINTENANCE.md). */
 export const DIAGNOSTICS_MAIL_VERSION = 'modwerk-diagnostics-mail-001'
 export const DIAGNOSTICS_MAIL_KINDS = ['problem', 'fixed'] as const
 const LISTED = 100
@@ -34,7 +35,9 @@ export function diagnosticsMailUnsubscribe(request: Request, env: Env, db: Datab
 export function renderDiagnosticsMail(mail: { subject: string; body: string }, username: string, stop: string) {
   const paragraphs = mail.body.trim().split(/\n\s*\n/).map(part => part.trim()).filter(Boolean)
   const why = 'You’re getting this because you share Octatrack diagnostics with Modwerk.'
-  const text = [`Hey ${username},`, ...paragraphs, 'Thank you,\nJannik', `${why} Stop these emails: ${stop}`].join('\n\n')
+  // A generated name (member_ and hex) is no way to greet someone: a plain hello instead.
+  const greeting = /^member_[0-9a-f]+$/i.test(username) ? 'Hey,' : `Hey ${username},`
+  const text = [greeting, ...paragraphs, 'Thank you,\nJannik', `${why} Stop these emails: ${stop}`].join('\n\n')
   const p = (value: string) => `<p style="margin:0 0 16px;color:#c4c4ce;font-size:15px;line-height:25px;">${escape(value).replace(/\n/g, '<br>')}</p>`
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape(mail.subject)}</title></head>
@@ -44,7 +47,7 @@ export function renderDiagnosticsMail(mail: { subject: string; body: string }, u
 <tr><td style="padding:0 8px 24px;font-size:26px;font-weight:bold;letter-spacing:-1px;color:#ffffff;">Modwerk<span style="color:#c7a16c;"> ▪</span></td></tr>
 <tr><td bgcolor="#c7a16c" height="3" style="height:3px;line-height:3px;font-size:0;">&nbsp;</td></tr>
 <tr><td bgcolor="#232327" style="padding:32px 28px;border:1px solid #36363e;border-top:0;border-radius:0 0 12px 12px;">
-${p(`Hey ${username},`)}
+${p(greeting)}
 ${paragraphs.map(p).join('\n')}
 <p style="margin:10px 0 0;color:#f4f4f8;font-size:15px;line-height:25px;">Thank you,<br><strong>Jannik</strong></p>
 </td></tr>
@@ -106,7 +109,7 @@ export async function adminDiagnosticsMail(request: Request, env: Env, db: Datab
   // The owner approves each one by sending it while signed in; the administrator key that agents use can only draft.
   if (adminId === ADMIN_ACTOR) throw new HttpError(403, 'Sign in with your administrator account to send a diagnostics email.')
   if (!ready) throw new HttpError(503, 'Email is not connected yet.')
-  await throttle(db, 'admin-diagnostics-mail-send', 30)
+  await throttle(db, 'admin-diagnostics-mail-send', 120) // an hour: room for one Send all of a pass's drafts
   const mail = await db.prepare("UPDATE diagnostics_mail SET status='sending',sent_by=? WHERE id=? AND status='draft' RETURNING id,user_id,kind,cause,subject,body,status").bind(adminId, match[1]).first<Mail>()
   if (!mail) throw new HttpError(409, 'This email was already sent, failed or was discarded.')
   const back = () => db.prepare("UPDATE diagnostics_mail SET status='draft',sent_by=NULL WHERE id=? AND status='sending'").bind(mail.id).run()
