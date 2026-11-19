@@ -16,9 +16,9 @@ When the developer answers "always" or "never", save it with `npm run session --
 
 Only the conversation: the developer's prompts, the agent's replies, and one line per tool call (the command or file it touched, and whether it failed). The script finds the session's transcript (Claude Code's in `~/.claude/projects/`, Codex's in `~/.codex/sessions/`) and removes, before anything is sent:
 
-- every tool output, the agent's thinking, injected context (skill bodies, hook output, compaction summaries, context files) and subagent turns;
+- every tool output (including the output of commands the developer ran with `!`, which keep only the command), the agent's thinking, injected context (skill bodies, hook output, compaction summaries, context files) and subagent turns;
 - code blocks longer than 12 lines, hex dumps, runs of hex values and long data blobs;
-- secrets (tokens, keys, passwords, bearer headers), email addresses, IP addresses, home folders, the computer's user and host name.
+- secrets (tokens, keys, passwords, bearer headers), email addresses, IP addresses, home folders, the computer's user and host name, and the developer's names as git knows them (`user.name`, and `user.email` before the @).
 
 What remains still looking like firmware or stock code (disassembly, long hex or number tables) stops the upload: the script names the entries, and `--skip 3,7` leaves them out. `npm run session -- preview` writes what would be sent to `~/.cache/modwerk/session-preview.json` without sending anything; offer it when the developer wants to look first. The Worker runs the same checks again and refuses what fails them.
 
@@ -28,14 +28,14 @@ Only the developer who shared it and the site's administrators. The owner may an
 
 ## The owner's side
 
-`npm run session -- pull`, signed in for the board with the administrator account, saves every shared session into `~/.cache/modwerk-local/sessions/` with an `INDEX.md`. Developers' names and quotes stay there and in chat, like diagnostics ([MAINTENANCE.md](MAINTENANCE.md)). What a session shows becomes a guide edit, a check or a fix, written without names.
+`npm run session -- pull` saves every shared session into `~/.cache/modwerk-local/sessions/` with an `INDEX.md`. It signs in to the owner's Modwerk account, the one with the administrator role, as the site's sign-in does: email and password at a prompt (the password hidden), or from `MODWERK_EMAIL` and `MODWERK_PASSWORD` for that one command. The password is never stored, and the pull signs out when it is done. A board session never reads other developers' sessions, even on an administrator's account. The owner runs it in their own terminal, so the password never passes through an agent. Developers' names and quotes stay there and in chat, like diagnostics ([MAINTENANCE.md](MAINTENANCE.md)). What a session shows becomes a guide edit, a check or a fix, written without names.
 
 ## API
 
 Writes need the board session (`X-Modwerk-Developer`) and the site's `Origin`.
 
 - `POST /api/agent-sessions` `{consent, data}`: `data` is the session JSON, gzip, base64, at most 1 MB packed. `consent` is `SESSION_CONSENT_VERSION`; a stale client is refused.
-- `GET /api/agent-sessions`: your own; `?all=1` everyone's, for administrators.
+- `GET /api/agent-sessions`: your own; `?all=1` everyone's, for administrators (`X-Octamod-Admin` from `POST /api/auth/admin`, or a member account with the administrator role).
 - `GET /api/agent-sessions/<id>` and `DELETE /api/agent-sessions/<id>`: yours, or any for administrators.
 
 The format, the scrubbing and the checks are in `src/community/agent-sessions.ts`, shared by the client (`scripts/agent-session.mjs`) and the Worker (`server/agent-sessions.ts`); the table is `agent_sessions` (migration 0099).

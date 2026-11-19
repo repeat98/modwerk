@@ -1,5 +1,7 @@
 import { issueStatusStatements } from './issue-notifications'
-import type { Database, User } from './platform'
+import { publicContributions } from '../src/community/member-standing'
+import { contributionBadges } from './contribution-roles'
+import type { Database, Env, User } from './platform'
 import { ADMIN_ACTOR, needMember, throttle } from './auth'
 import { HttpError, jsonBody, required, response } from './security'
 import { FORUM_CATEGORIES, forumMachine, REQUEST_STATUSES, sharedConfiguration } from '../src/community/forum-contract'
@@ -52,7 +54,7 @@ async function moduleId(db: Database, value: unknown) {
   if (!communityModule(value)) { try { await ensureDiscussionThread(db,value) } catch(error) { if(error instanceof HttpError&&error.status===404)throw new HttpError(400,'Choose a known module.'); throw error } }
   return value
 }
-export async function forum(request: Request, db: Database, user: User|null, admin: boolean, adminId: string|null = admin ? ADMIN_ACTOR : null): Promise<Response|null> {
+export async function forum(request: Request, db: Database, user: User|null, admin: boolean, adminId: string|null = admin ? ADMIN_ACTOR : null, env?: Env): Promise<Response|null> {
   const url = new URL(request.url), path = url.pathname
   if (!path.startsWith('/api/forum') && !path.startsWith('/api/admin/forum')) return null
   const chat = await shoutbox(request,db,user,admin)
@@ -180,7 +182,7 @@ export async function forum(request: Request, db: Database, user: User|null, adm
     return Response.json(await forumHighlights(db),{headers:{'Cache-Control':'public, max-age=300','X-Content-Type-Options':'nosniff'}})
   }
   if ((match=path.match(/^\/api\/forum\/profiles\/([a-z0-9_]{3,24})$/)) && request.method === 'GET') {
-    const profile = await memberProfile(db,match[1])
+    const profile = await memberProfile(db,match[1],env)
     if (!profile) throw new HttpError(404,'Profile not found.')
     return response(profile)
   }
@@ -202,8 +204,9 @@ export async function forum(request: Request, db: Database, user: User|null, adm
     if(reader&&last)await recordThreadRead(db,reader,thread.id,last.id).run()
     const request=(thread.section??thread.category)==='requests'
     const canSetRequestStatus=request&&!!user?.email_verified&&!user.suspended&&(admin||await maintainsModule(db,thread.module_id,user.id))
-    const [attachments,roles,betaTesters] = await Promise.all([postAttachments(db,posts.slice(0,30).filter(post=>admin||!post.hidden).map(post=>post.id)),memberRoles(db,posts.slice(0,30).filter(post=>!post.hidden&&post.user_id!==SYSTEM_AUTHOR).map(post=>post.user_id)),betaTesterIds(db,posts.slice(0,30).filter(post=>!post.hidden&&post.user_id!==SYSTEM_AUTHOR).map(post=>post.user_id))])
-    return response({thread:summary,posts:posts.slice(0,30).map(post=>({attachments:attachments.get(post.id)??[],canRemoveMedia:!post.hidden&&post.user_id===user?.id&&!!user?.email_verified,id:post.id,body:post.hidden&&!admin?'':post.body,username:post.hidden&&!admin?null:post.username,avatar:post.hidden&&!admin?null:post.avatar,displayName:post.hidden&&!admin?null:post.displayName,created_at:post.created_at,edited_at:post.edited_at,hidden:post.hidden,likes:post.hidden?0:post.likes,liked:!post.hidden&&!!post.liked,canEdit:!thread.locked&&!post.hidden&&post.user_id===user?.id&&!!user?.email_verified,official:post.user_id===SYSTEM_AUTHOR,maintainer:!post.hidden&&!!post.maintainer,role:roles.get(post.user_id)??null,betaTester:betaTesters.has(post.user_id),...(admin?{user_id:post.user_id}:{})})),configuration:thread.configuration_json?JSON.parse(thread.configuration_json):null,issue:thread.issue_json?JSON.parse(thread.issue_json):null,following,bookmarked,voted:!!voted,canSetRequestStatus,hasMore:posts.length>30,...(reader?{firstUnread:unreadId?{id:unreadId,page:unreadPage??0}:null}:{})})
+    const members = posts.slice(0,30).filter(post=>!post.hidden&&post.user_id!==SYSTEM_AUTHOR).map(post=>post.user_id)
+    const [attachments,roles,betaTesters,badges] = await Promise.all([postAttachments(db,posts.slice(0,30).filter(post=>admin||!post.hidden).map(post=>post.id)),memberRoles(db,members),betaTesterIds(db,members),contributionBadges(db,members,env)])
+    return response({thread:summary,posts:posts.slice(0,30).map(post=>({attachments:attachments.get(post.id)??[],canRemoveMedia:!post.hidden&&post.user_id===user?.id&&!!user?.email_verified,id:post.id,body:post.hidden&&!admin?'':post.body,username:post.hidden&&!admin?null:post.username,avatar:post.hidden&&!admin?null:post.avatar,displayName:post.hidden&&!admin?null:post.displayName,created_at:post.created_at,edited_at:post.edited_at,hidden:post.hidden,likes:post.hidden?0:post.likes,liked:!post.hidden&&!!post.liked,canEdit:!thread.locked&&!post.hidden&&post.user_id===user?.id&&!!user?.email_verified,official:post.user_id===SYSTEM_AUTHOR,maintainer:!post.hidden&&!!post.maintainer,contributions:post.hidden?undefined:publicContributions(badges.get(post.user_id),roles.get(post.user_id)),role:roles.get(post.user_id)??null,betaTester:betaTesters.has(post.user_id),...(admin?{user_id:post.user_id}:{})})),configuration:thread.configuration_json?JSON.parse(thread.configuration_json):null,issue:thread.issue_json?JSON.parse(thread.issue_json):null,following,bookmarked,voted:!!voted,canSetRequestStatus,hasMore:posts.length>30,...(reader?{firstUnread:unreadId?{id:unreadId,page:unreadPage??0}:null}:{})})
   }
   const member = needMember(user)
   await throttle(db,'forum:'+member.id,60)

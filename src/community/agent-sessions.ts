@@ -19,7 +19,9 @@ export type SessionAgent = typeof SESSION_AGENTS[number]
 export type SessionEntry = { who: 'developer' | 'agent' | 'tool'; text: string; at?: string; failed?: true }
 export type SessionRemoved = { toolOutputs: number; thinking: number; codeBlocks: number; hexLines: number; blobs: number; secrets: number; skipped: number; trimmed: number }
 export type SessionDocument = { format: 1; agent: SessionAgent; branch?: string; startedAt?: string; endedAt?: string; note: string; entries: SessionEntry[]; removed: SessionRemoved }
-export type ScrubContext = { user?: string; host?: string; home?: string }
+/** What identifies the developer on this computer: the system user and host, the home folder, and names (from git's
+ * user.name and the parts of user.email before the @), each scrubbed wherever it stands as a word. */
+export type ScrubContext = { user?: string; host?: string; home?: string; names?: string[] }
 
 const ENTRY_TEXT_LIMIT = 20_000
 const CODE_BLOCK_LINES = 12
@@ -57,7 +59,10 @@ function count(text: string, pattern: RegExp) { return (text.match(pattern) ?? [
 
 /** Removes what must not leave the developer's computer from one piece of text, and counts what it removed. */
 export function scrubText(input: string, context: ScrubContext = {}, removed: SessionRemoved = emptyRemoved()): string {
-  let text = input.replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, '').replace(/<local-command-std(?:out|err)>[\s\S]*?<\/local-command-std(?:out|err)>/g, '')
+  // Injected context, and the output of slash commands and of commands the developer ran with ! (bash-stdout), which is
+  // tool output like any other: a login's one-time code, a listing of their files.
+  let text = input.replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, '')
+    .replace(/<(local-command-std(?:out|err)|bash-std(?:out|err))>[\s\S]*?(?:<\/\1>|$)/g, () => { removed.toolOutputs++; return '' })
   text = text.replace(FENCE, block => {
     const lines = block.split('\n').length - 2
     if (lines <= CODE_BLOCK_LINES) return block
@@ -68,12 +73,17 @@ export function scrubText(input: string, context: ScrubContext = {}, removed: Se
   for (const pattern of SECRET_PATTERNS) text = text.replace(pattern, () => { removed.secrets++; return '[secret removed]' })
   for (const pattern of [ASSIGNED_PASSWORD, ASSIGNED_TOKEN]) text = text.replace(pattern, (_all, key: string, joint: string) => { removed.secrets++; return key + joint + '[secret removed]' })
   text = text.replace(BEARER, (_all, scheme: string) => { removed.secrets++; return scheme + ' [secret removed]' })
+  // A sign-in's one-time device code (GitHub's ABCD-1234), when an agent quotes it for the developer to type.
+  text = text.replace(/(\b[Cc]ode\b[^\n]{0,40}?)\b[A-Z0-9]{4}-[A-Z0-9]{4}\b/g, (_all, before: string) => { removed.secrets++; return before + '[code removed]' })
   text = text.replace(BLOB, () => { removed.blobs++; return '[data removed]' })
   text = text.replace(EMAIL, '[email]').replace(HOME, '~').replace(IPV4, '[address]')
   // The home folder as Claude Code names its project folders (-home-alice-modwerk, C--Users-alice-Dev), which saved tool outputs' paths carry.
   if (context.home) { const folder = claudeProjectFolder(context.home); if (folder.replace(/-/g, '').length >= 4) text = text.split(folder).join('~') }
   if (context.user && context.user.length >= 3) text = text.replace(new RegExp(`\\b${escape(context.user)}\\b`, 'gi'), '[user]')
   if (context.host && context.host.length >= 3) text = text.replace(new RegExp(`\\b${escape(context.host)}\\b`, 'gi'), '[host]')
+  // Names as whole words in any script (Ilse, Aßfalg, Šimek), longest first so a full name goes before its parts.
+  for (const name of [...new Set(context.names ?? [])].filter(name => name.trim().length >= 3).sort((a, b) => b.length - a.length))
+    text = text.replace(new RegExp(`(?<![\\p{L}\\p{N}])${escape(name.trim())}(?![\\p{L}\\p{N}])`, 'giu'), '[name]')
   return text.replace(/\n{3,}/g, '\n\n').trim()
 }
 
@@ -133,6 +143,8 @@ export function readClaudeTranscript(lines: string[]): Omit<SessionDocument, 'no
       // A slash command arrives as tags: keep the command and its arguments.
       const command = /<command-name>([^<]*)<\/command-name>/.exec(text)
       if (command) text = (command[1].trim() + ' ' + (/<command-args>([^<]*)<\/command-args>/.exec(text)?.[1] ?? '')).trim()
+      // A command the developer ran with ! keeps the command; its output goes like any tool output (scrubText).
+      text = text.replace(/<bash-input>([\s\S]*?)<\/bash-input>/g, (_all, input: string) => '! ' + input.trim())
       if (text.trim()) entries.push({ who: 'developer', text, ...(at ? { at } : {}) })
       if (blocks.some(block => block.type === 'image')) entries.push({ who: 'developer', text: '[image]', ...(at ? { at } : {}) })
       continue
