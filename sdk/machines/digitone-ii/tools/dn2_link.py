@@ -7,7 +7,7 @@
     dn2_link.py screen [--png F]     # the frame on the screen, as text (and a PNG), read through mem
     dn2_link.py press KEY [KEY...]   # press and let go, one after the other (FUNC, PLAY, STOP, TRIG1-16 or an id)
     dn2_link.py hold KEY / let KEY   # press, or let go of, one key (FUNC + TRIG: hold FUNC, press TRIG1, let FUNC)
-    dn2_link.py turn ENC DELTA       # an encoder (A-H, LEVEL) by DELTA steps
+    dn2_link.py turn ENC DELTA       # an encoder (A-H, LEVEL) by DELTA detents, up to 8 a message
     dn2_link.py release / disarm     # let go of every key the link holds / and turn the arm off
 Keys and turns need SETTINGS > REMOTE CTRL on (it is at every boot); a person at the panel stops them for 3 s.
 
@@ -165,9 +165,11 @@ def main():
         return
     if a.cmd == 'turn':
         enc = ENCODERS[a.enc.upper()] if a.enc.upper() in ENCODERS else int(a.enc, 0)
-        step = 1 if a.delta > 0 else -1
-        for _ in range(abs(a.delta)):
+        left = a.delta                  # in turns of up to 8, as the panel sends a fast turn (it went to 11)
+        while left:
+            step = max(-8, min(8, left))
             ok('enc', enc, step & 0xffffffff, port=a.port)
+            left -= step
             time.sleep(0.06)
         return
     if a.cmd in ('release', 'disarm'):
