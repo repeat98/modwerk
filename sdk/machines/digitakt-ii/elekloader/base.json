@@ -222,6 +222,27 @@
         "stockSha256": "9123093562f982f533c055b957ef510dd2438a23b5bd8ed1470024b218b90344",
         "op": "jsr",
         "target": "core_project_created"
+      },
+      {
+        "addr": "0x4001702c",
+        "len": 6,
+        "stockSha256": "73d543c9d8084fc2debabd899a5bc3a7f4907dd2f070831e0ea5b8a61800905c",
+        "op": "jsr",
+        "target": "core_machine_view_type_entry"
+      },
+      {
+        "addr": "0x40017736",
+        "len": 6,
+        "stockSha256": "73d543c9d8084fc2debabd899a5bc3a7f4907dd2f070831e0ea5b8a61800905c",
+        "op": "jsr",
+        "target": "core_machine_view_type_entry"
+      },
+      {
+        "addr": "0x40017bd2",
+        "len": 6,
+        "stockSha256": "73d543c9d8084fc2debabd899a5bc3a7f4907dd2f070831e0ea5b8a61800905c",
+        "op": "jsr",
+        "target": "core_machine_view_type_entry"
       }
     ],
     "collections": {
@@ -237,7 +258,7 @@
   "dev": {
     "about": "A development base adds one test machine (type 7) that stands for SAMPLE, to check the machine hooks in the emulator. Never released.",
     "sources": [
-      "machines-fixture.c"
+      "../base/machines-fixture.c"
     ],
     "contribute": [
       {

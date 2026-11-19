@@ -129,6 +129,31 @@ core_machine_kit_type_entry:
         moveq   #7,%d2
         jmp     0x400db48a
 
+/* The SRC view's machine type (0x4005f6bc, called at 0x4001702c, 0x40017736 and 0x40017bd2): the view opens
+ * its second page (SAMPLE's sample view and the like) by the type it answers and none for a type above 6, so
+ * an added type answers as the stock type it stands for there. */
+        .globl  core_machine_view_type_entry
+core_machine_view_type_entry:
+        move.l  4(%sp),-(%sp)
+        jsr     0x4005f6bc
+        addq.l  #4,%sp
+        moveq   #7,%d1
+        cmp.l   %d1,%d0
+        bcs.s   1f
+        move.l  %a0,-(%sp)
+        move.l  %a1,-(%sp)
+        move.l  %d0,-(%sp)
+        move.l  %d0,-(%sp)
+        jsr     core_machine_stands_for
+        addq.l  #4,%sp
+        move.l  (%sp)+,%d1
+        move.l  (%sp)+,%a1
+        move.l  (%sp)+,%a0
+        tst.l   %d0
+        bpl.s   1f
+        move.l  %d1,%d0
+1:      rts
+
 /* The three machine-string lookups (type): name, short name and menu title. An added type answers
  * from its record, others replay `moveq #6,%d1; move.l 4(%sp),%d0` and continue in stock. */
         .macro  STRING_ENTRY label, field, cont
