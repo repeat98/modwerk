@@ -40,6 +40,7 @@ import { createConfigurationReport } from './configuration-reports'
 import { octatrackDiagnosticRoutes } from './octatrack-diagnostics'
 import { remoteSessionRoutes } from './remote-sessions'
 import { agentBoardRoutes } from './agent-board'
+import { agentSessionRoutes } from './agent-sessions'
 import { maintenanceBotRoutes } from './maintenance-bot'
 import { IssueInputError, validateIssueContext, validateLogMissing } from '../src/community/issue-context'
 import { OT_LOG_MAX_BYTES, OtLogError, parseOtLog } from '../src/community/ot-log'
@@ -110,6 +111,8 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (remote) return remote
     const board = await agentBoardRoutes(request,env,db,adminId)
     if (board) return board
+    const sessions = await agentSessionRoutes(request,env,db,adminId)
+    if (sessions) return sessions
     const push = await pushRoutes(request,env,db,user,admin)
     if(push)return push
     const signedDeveloper = await developerUser(request,env,db)
