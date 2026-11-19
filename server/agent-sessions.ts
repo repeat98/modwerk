@@ -2,7 +2,8 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // Shared agent sessions (docs/AGENT_SESSIONS.md). A developer signed in for the board sends the conversation of one
 // coding-agent session, scrubbed on their computer; the Worker checks it again with the same rules and keeps it for the
-// owner for 90 days. Only the developer who shared it and administrators read it; the developer deletes it at any time.
+// owner for 90 days. Only the developer who shared it and administrators (through the admin sign-in) read it; the developer
+// deletes it at any time.
 import type { Database, Env } from './platform'
 import { throttle } from './auth'
 import { HttpError, jsonBody, response } from './security'
@@ -42,17 +43,13 @@ async function gunzip(bytes: Uint8Array<ArrayBuffer>) {
   return new TextDecoder().decode(all)
 }
 
-/** A board user who is also a site administrator: the owner reads shared sessions from the terminal with their board session. */
-async function adminBoardUser(db: Database, userId: string) {
-  return !!await db.prepare('SELECT 1 FROM users WHERE id=? AND is_admin=1 AND email_verified=1 AND suspended=0').bind(userId).first()
-}
-
 export async function agentSessionRoutes(request: Request, env: Env, db: Database, adminId: string | null): Promise<Response | null> {
   const url = new URL(request.url), path = url.pathname
   if (path !== '/api/agent-sessions' && !path.startsWith('/api/agent-sessions/')) return null
   const user = await boardUser(request, env, db)
   if (!user && !adminId) throw new HttpError(401, 'Sign in for the board first: npm run board -- login')
-  const admin = !!adminId || (!!user && await adminBoardUser(db, user.id))
+  // Administrators read through the site's admin sign-in (X-Octamod-Admin, or a member account with the role), never a board session.
+  const admin = !!adminId
 
   if (path === '/api/agent-sessions' && request.method === 'POST') {
     if (!user) throw new HttpError(401, 'Share a session from the terminal: npm run session -- share')
