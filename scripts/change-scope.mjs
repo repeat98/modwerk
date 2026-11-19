@@ -147,7 +147,7 @@ export function classifyChanges(changes) {
 // Site, Worker and release-note paths the SDK suite (sdk:check) never reads: no test, builder or script it runs names
 // them (change-scope.test.mjs enforces it), and an audited run (26 Oct 2026) opened none. Everything else reaches it,
 // src/engine, src/catalog and src/config included. Keep the list short and certain; a path left off only costs time.
-const outsideSdkSuite = /^(?:src\/(?:components|hooks|devices|projects|legal|overview|storage)\/|src\/community\/(?!module-|ot-log|octatrack-diagnostics)|src\/[^/]+\.(?:tsx|css|test\.ts)$|server\/|worker\.ts$|changelog\/|docs\/.+\.md$)/
+const outsideSdkSuite = /^(?:src\/(?:components|hooks|projects|legal|overview|storage)\/|src\/community\/(?!module-|ot-log|octatrack-diagnostics)|src\/(?:devices\/)?[^/]+\.(?:tsx|css|test\.ts)$|server\/|worker\.ts$|changelog\/|docs\/.+\.md$)/
 export const reachesSdkSuite = path => !outsideSdkSuite.test(path)
 
 /** Compare exact Git trees; local checks also include unstaged and untracked edits. */

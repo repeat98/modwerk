@@ -40,10 +40,11 @@ Submit only what the owner can merge as it is, and what the bot merges on its ow
 
 ```sh
 npm run pr:ready                       # a new module or any other change
+npm run pr:ready -- --commit "Message" # check and commit fully staged work in one pass
 npm run pr:ready -- --author <login>   # a registered author's update: also the bot's merge scope
 ```
 
-It fetches Modwerk's `main` (from `upstream` when your fork has it, else `origin`), refuses uncommitted changes and a branch that does not contain current `main`, and runs the same `npm run check -- --base <main>` CI runs; when that fails, it regenerates the catalogues and licence notices and names any that were stale, for you to commit. With `--author` it also runs the scope inspection the author-update bot runs and says whether the bot can merge the update, and if not, why. Fix what it names until it says **Ready**, then push and watch the PR with `gh pr checks <number> --watch` until every check is green. A test that times out but passes alone usually starved because other checks ran on the same computer, for example from another worktree: run it again once they are done, and leave the test as it is.
+It fetches current `main` from `upstream` or `origin` and runs `npm run check -- --base <main>`. With `--commit`, stage the whole change first. A passing check commits that tree with your normal Git hooks, verifies the resulting tree and parent, and checks the committed PR scope and board claims. A failed check leaves the change staged. The default checks a clean, committed branch and regenerates stale catalogues or notices after a failure. Add `--author` for the publication bot's scope check. Once **Ready**, push and watch `gh pr checks <number> --watch` until green. If a test times out under load but passes alone, rerun when the competing checks finish.
 
 These stumbling blocks have each cost a contributor and the owner a repair round:
 
