@@ -20,18 +20,19 @@ enum {
 };
 
 /* The five SRC knobs a machine names itself: B, C, E, F and G (A stays TUNE, D the sample slot, H the level).
- * Each edits the sound's machine slot the stock SAMPLE machine uses for that knob (26, 27, 31, 32, 33), so its
- * value is saved, parameter-locked and recorded like a stock knob's. */
+ * Each is the stand-in machine's own parameter at that knob, shown under the machine's name while a track plays the
+ * machine: its range, value, saving, trig locks, live recording, MIDI and the value the sound chip receives are the
+ * stand-in's. Standing for SAMPLE: B play mode, C crossfade (slot 27, which SAMPLE does not show), E start,
+ * F length, G loop position. */
 enum {
     DT2_MACHINE_KNOBS = 5,
 };
 
-/* A knob: name as the popups show it, label (up to four capitals) as the page shows it, and its range and default
- * in the usual 0-127 steps. A null name keeps the stand-in machine's knob. */
+/* A knob: name as the popups show it, and label (up to four capitals) as the page shows it. A null name keeps the
+ * stand-in machine's knob and name (for knob C on SAMPLE: no knob). */
 struct dt2_machine_knob {
     const char *name;
     const char *label;
-    uint8_t min, max, def, pad;
 };
 
 /* stands_for names the stock type (0-6) whose descriptor, voice setup and other knobs the machine borrows.

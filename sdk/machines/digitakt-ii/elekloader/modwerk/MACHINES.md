@@ -4,7 +4,7 @@ The Digitakt II base will let modules add track machines beside the seven stock 
 
 ## Plan
 
-1. **ColdFire side.** A base table `core_machines` (four entries to start) of records naming the machine, its five knob labels, parameter ranges and formatters. The base maps each record to a machine type after the stock ones, so the machine menu lists it, the SRC page draws its knobs and kits save it. Its values live in the track's ten machine-parameter slots (sound slots 25-34), so parameter locks, live recording and the LFO work as on stock machines. A kit that names a type no installed module provides falls back to the stock sample machine.
+1. **ColdFire side.** A base table `core_machines` (four entries to start) of records naming the machine and its five knobs. The base maps each record to a machine type after the stock ones, so the machine menu lists it, the SRC page draws its knobs and kits save it. Its values live in the track's ten machine-parameter slots (sound slots 25-34), so parameter locks, live recording and the LFO work as on stock machines. A kit that names a type no installed module provides falls back to the stock sample machine.
 2. **Sound-chip side.** For a track whose type is an added machine, the voice loop calls the module's routine instead of the stock sample renderer, with the track's sample slot record, its note and its knob values. The stock filter, amp envelope and LFO still process the output. Mono first; stereo is a separate decision.
 3. **Mikrotakt** subscribes to both, as its own module pull request.
 
@@ -16,7 +16,7 @@ Read from the decoded main image (load address `0x40000400`) on 18 November 2026
 | --- | --- | --- |
 | `0x400c89a4` | Machine descriptor lookup: types 0-6 return a 44-byte record at `0x4293b960 + type * 44`; any other type returns a default record at `0x4293ba68`. Six absolute references (`0x40017cf2`, `0x40042004`, `0x40049b72`, `0x40049fa4`, `0x4006217e`, `0x4006a5ae`). | The base answers added types here, as the Mixer already does for page ids at `0x400c898a`. |
 | `0x4293b960` | The seven machine descriptors, built at start-up (`0x401c4aae` and `0x401c515e`/`0x401c519e`). | RAM, not image data. |
-| `0x4020f59c` | Parameter table, `0x3c`-byte rows, formatter pointer at row `+0x34`; 53 absolute references, so rows cannot be appended in place. | Added machines' parameter rows need a lookup hook, not a longer table. |
+| `0x4020f59c` | Parameter table, `0x3c`-byte rows, formatter pointer at row `+0x34`; 53 absolute references, so rows cannot be appended in place. | Added machines show the stand-in's rows under their own names (see Own knob names); the table keeps its 275 rows. |
 | `0x400da3a2` | Parameter code for (sound slot, machine type): slots 25-34 with a type up to 6 read a per-type table; a higher type returns 0 (no parameter). Six references (`0x4000ffa8`, `0x4003a960`, `0x400430cc`, `0x40050b4c`, `0x40050d1c`, `0x400e650c`). | The base answers the five knob slots for added types here. |
 | `0x4005f6bc` | The SRC page view's machine type for the current track (three callers in the SRC view: `0x4001702c`, `0x40017736`, `0x40017bd2`). | Decides the SRC page's second page (sample view) per type. |
 | `0x400dab9e`, `0x400dac80` | MIDI CC (up to 127) and NRPN (up to 398) to parameter mapping, five callers each. | Added machines' knobs must answer MIDI like stock knobs. |
@@ -31,7 +31,7 @@ Layout read from the start-up code: `+0x00` the name and `+0x04` the second labe
 
 ### The parameter table cannot grow in place
 
-The 275 rows at `0x4020f59c` are image data. 53 absolute references load the table and about 45 bound checks compare a code with 275 (`cmpi.l #0x113`: 24 with `d0`, 2 with `d1`, 10 with `d2`) or 274 (9 with `d0`), many inline. New knob names therefore need the table relocated: a copy in the base's memory with rows appended, a pointer site at each reference and a bytes site at each bound. The Elekloader builder supports both kinds of site (`ptr` and `bytes`, and relocatable data copies). The base owns them all; no module may patch them. First step before that: a test machine whose knobs use stock rows, to prove the descriptor and parameter-code hooks in the emulator.
+The 275 rows at `0x4020f59c` are image data, reached by 56 absolute references and guarded by 56 checks against 275 or 274, and the OS keeps other per-code arrays of 275 entries beside it. An added machine therefore takes no new rows: it shows its stand-in's parameters under its own names (Own knob names, below).
 
 ## The record a module contributes (draft)
 
@@ -40,7 +40,7 @@ One `core_machines` entry per machine:
 | Field | Meaning |
 | --- | --- |
 | name, short name | As the machine menu and the SRC page header show them (stock lengths). |
-| five knob rows | Knobs B, C, E, F and G: name, short name, minimum, maximum, default, and a formatter (the stock ones, or the module's). Knob A stays TUNE, D the sample slot, H the track level. |
+| five knob names | Knobs B, C, E, F and G: name and short name, for the stand-in's parameters at those knobs (range, value and behaviour stay the stand-in's). Knob A stays TUNE, D the sample slot, H the track level. |
 | sample flag | Whether knob D selects a sample (a sampler) or is unused (a synth). |
 | sound-chip routines | Note-on and render for one voice, in the module's sound-chip package, with the voice's note, the five knob values and, for a sampler, its slot record. |
 
@@ -186,14 +186,13 @@ A machine module carries its player in its package as `build.dt2_sharc` version 
 
 Local end-to-end check: OS 1.17, the development base `37b4db44` linked by Elekloader, and a stand-in module part (the silent player at `0x200d0000`, type 7). The composed image passed the preflight: sections 2, 4, 5 and 8 byte for byte stock, section 7 verified against the plan, 36 changed ranges and 11,632 appended bytes in the main OS (the base), flash headroom 1,395,888 bytes. Not yet run in the emulator as a whole file (the emulator runs so far used the DSP images directly).
 
-### Own knob names: the parameter table copy (work in progress, 19 November 2026)
+### Own knob names (19 November 2026)
 
-The OS 1.17 parameter table (275 rows of `0x3c` at `0x4020f59c`) has no spare machine rows: every row for the machine slots belongs to a stock machine (only SAMPLE's CFADE row, code `0xcc`, is never shown). Rows: `+0x00` owner (machine 0-6, other groups up to 32), `+0x04` sound slot, `+0x08`/`+0x0c`/`+0x10` min, max, default (value << 8), `+0x18`/`+0x1a` CC halfwords and `+0x1c` NRPN (negative: none), `+0x28` name, `+0x2c` a routine every row loop calls, `+0x30` label, `+0x34` formatter. The MIDI-map builder (`0x400da8bc` loop) files a row under its owner and skips owners from 33 up.
+An added machine's knobs are its stand-in's own parameters, shown under the machine's names. `machine-knobs.c`: the descriptor lookup's entry (`0x400c89a4`) calls `core_machine_knob_names(type)` for every type a page asks for; for an added machine with knob names it points the names of the stand-in's parameter rows at those knobs (row `+0x28` name, `+0x30` short name, in the OS's own table at `0x4020f59c`, which is in RAM) and puts the stock names back when a page asks for any other machine. Knob C, which SAMPLE does not show (its descriptor has code 0 there), gets SAMPLE's crossfade parameter (code `0xcc`, sound slot 27) when a machine standing for SAMPLE names it; the parameter-code lookup answers an added type as its stand-in, which gives slot 27 that same code. Saving, trig locks, live recording, MIDI and the values the sound chip receives are the stand-in's, unchanged.
 
-`machine-params.c` keeps a copy, `core_params` (275 + 20 rows): `core_boot_init` (core.s `.boot`, `BOOT_INIT`) copies the stock rows from the running image and appends five rows per added type, built from SAMPLE's level row (`0xd1`) with owner `0x40`, the knob's slot (26, 27, 31, 32, 33 for knobs B, C, E, F, G), its name, label and range, and no CC or NRPN. `base.json` has 56 `ptr` sites (every absolute reference, three of them at an offset) and 56 `bytes` sites (every `cmpi.l #275`/`#274` against a code) found by a scan of the image (`table_sites.py`, local). An added machine's descriptor is a copy of its stand-in's with the five knobs' codes replaced (`core_machine_descriptor`), and the parameter-code lookup answers those slots with the new codes (`core_machine_slot_code`).
+Emulator (panel probe, development base `d26c8874`, test machine naming all five knobs): the type-7 SRC page shows TMOD, TSIZ (knob C), TPOS, TLEN and TSPR with the stand-in's knob graphics, a turned knob shows its value, and back on SAMPLE the page shows PLAY, STRT, LEN, LOOP and no knob C again. No fault.
 
-Emulator (panel probe, ColdFire only): with the copy and the raised bounds but a test machine without own knobs, boot and the SRC page of SAMPLE and of type 7 are as before. With own knobs (codes 275-279), opening the type-7 SRC page faults (`UnsupportedGuestPc(0x00000001)`): something indexes per-code data beyond 275 that the scan did not find (no 16-bit bound matches). Register records at every table reference (panel probe `--regs-at`, replayed from a saved boot state so the 4,096-record buffer covers the fault) showed the last reads with code 278 in `0x40045582`, which dispatches on the row's owner: owners 24 and 31 one way, 18-23 another, any other to `0x40036216` (the track's record), whose caller then calls through an object. With owner `0x40` that faults. Two changes: an added row's owner is now its stand-in machine, and the three loops that walk every row (`0x4003d990`, `0x4004ffc4`, `0x400dab7c`: their bounds are the immediates followed by `bne`) stay at 275, so the MIDI-map builder never files an added row under SAMPLE. Opening the type-7 SRC page still faults the same way. Likely cause: the loop at `0x4004ff36` builds a per-row object through the row's `+0x2c` routine, and an added row, outside that loop, has none. Next: run that routine for the added rows too (after the loop, in the base) or let that one loop see them, and check what it registers. Until then the development fixture uses the stand-in's knobs.
-
+Why not new parameter rows (the first attempt, a copy of the table with five rows per added machine, 56 pointer sites and 56 bound checks raised): opening the type-7 SRC page jumped to address 1. The lookup `0x400c892e` returns code `c`'s object at `0x4293c040 + 0x44 * c`, an array of 275 per-code objects in RAM built at start-up; with its bound raised, code 278 read past the array. Of the 56 bound checks, 17 guard arrays other than the parameter table (local disassembly of each), so new codes would need every such array grown. Reusing the stand-in's parameters needs none of them.
 ## Still to check
 
 
