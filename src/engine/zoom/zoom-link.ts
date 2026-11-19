@@ -12,7 +12,7 @@ const locked = <T>(work: () => Promise<T>): Promise<T> => {
 }
 
 export type ZoomLinkStatus = 'unsupported' | 'idle' | 'connecting' | 'ready' | 'reading' | 'writing'
-export type ZoomFile = { name: string; size: number; effect?: { gid: number; fxid: number; version: string } }
+export type ZoomFile = { name: string; size: number; inEffectList?: boolean; effect?: { gid: number; fxid: number; version: string } }
 export type ZoomLinkState = {
   readonly status: ZoomLinkStatus
   readonly identity?: ZoomIdentity
@@ -251,8 +251,10 @@ export class ZoomLink {
   // Which effect files can hold an effect of group `gid`: those the effect list puts in that group, and any it doesn't
   // name (its group is the header's, seen on all 158 of an MS-70CDR). A header costs six round trips and a pedal holds
   // about 160 effects, most in other groups. Without a readable list, every effect file.
-  private inGroup(files: ZoomFile[], gid: number, list: number[]) {
-    const groups = list.length === EFFECT_LIST_SIZE ? new Map(listRecords(list).map(r => [r.name.toUpperCase(), r.gid])) : undefined
+  private effectGroups(list: number[]) {
+    return list.length === EFFECT_LIST_SIZE ? new Map(listRecords(list).map(r => [r.name.toUpperCase(), r.gid])) : undefined
+  }
+  private inGroup(files: ZoomFile[], gid: number, groups?: Map<string, number>) {
     return files.filter(f => /\.zdl$/i.test(f.name) && (groups?.get(f.name.toUpperCase()) ?? gid) === gid)
   }
   private async head(file: ZoomFile) {
@@ -368,7 +370,7 @@ export class ZoomLink {
       }
       return { previousList: undefined, unchanged: false, moved }
     }
-    const list = await this.effectList(), effects = this.inGroup(files, info.gid, list), taken = new Map<number, string>()
+    const list = await this.effectList(), effects = this.inGroup(files, info.gid, this.effectGroups(list)), taken = new Map<number, string>()
     for (const [i, f] of effects.entries()) {
       this.progress('Checking effect IDs on the pedal', i + 1, effects.length)
       const head = await this.head(f)
@@ -412,10 +414,13 @@ export class ZoomLink {
   /** Every file on the pedal; with versions, the effect files that can be added effects (group 8) also get their group, effect id and version (slower). */
   readonly listFiles = ({ versions = false } = {}) => this.exclusive('Reading the file list', async () => {
     const files = await this.list()
-    const effects = versions ? this.inGroup(files, LOCAL_IDS.gid, files.some(f => f.name.toUpperCase() === EFFECT_LIST) ? await this.read(EFFECT_LIST) : []) : []
+    if (!versions) return files
+    const groups = files.some(f => f.name.toUpperCase() === EFFECT_LIST) ? this.effectGroups(await this.read(EFFECT_LIST)) : undefined
+    const effects = this.inGroup(files, LOCAL_IDS.gid, groups)
     for (const [i, file] of effects.entries()) {
       this.progress('Reading effect versions', i + 1, effects.length)
       file.effect = await this.head(file)
+      file.inEffectList = groups?.has(file.name.toUpperCase()) ?? false
     }
     return files
   })

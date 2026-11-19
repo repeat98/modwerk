@@ -106,7 +106,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
   const selected = sets?.find(item => item.id === selectedId) ?? sets?.[0]
   const plan = selected && files ? zoomSyncPlan(listed, selected.moduleIds, files) : undefined
   // installFile keeps 8 KB free when it writes a new file; removals go first.
-  const fitsIn = (plan?: { install: unknown[]; adds: number }, free?: number) => !plan?.install.length || free === undefined || free >= plan.adds + 8192, fits = fitsIn(plan, free)
+  const fitsIn = (plan?: { needsSpace: boolean; adds: number }, free?: number) => !plan?.needsSpace || free === undefined || free >= plan.adds + 8192, fits = fitsIn(plan, free)
   const [syncing, setSyncing] = useState<{ what: string; step: number; steps: number }>()
   // A set's LED: the pedal holds exactly its effects (current) and no other listed ones.
   const holdsSet = (item: Configuration) => !!files && item.moduleIds.length > 0 && (({ install, remove }) => !install.length && !remove.length)(zoomSyncPlan(listed, item.moduleIds, files))
