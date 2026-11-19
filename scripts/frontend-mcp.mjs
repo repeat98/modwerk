@@ -89,6 +89,25 @@ export function validateApiPath(path) {
   return path
 }
 
+/** Whether a process with this PID is running (EPERM: running, under another user). */
+const running = pid => { try { process.kill(pid, 0); return true } catch (error) { return error.code === 'EPERM' } }
+/** Takes the workspace's lock directory. A lock whose recorded process has ended is taken over: an MCP client's health
+ * check (claude mcp add, claude mcp get) starts the server and kills it while it is still loading, and a crash leaves
+ * one too. A running owner's lock is refused with its PID, since one workspace serves one process. */
+export async function takeLease(lease, { alive = running, now = Date.now } = {}) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try { await mkdir(lease, { mode: 0o700 }); return } catch (error) { if (error.code !== 'EEXIST') throw error }
+    const owner = await readFile(join(lease, 'owner.json'), 'utf8').then(JSON.parse, () => null)
+    const pid = Number.isSafeInteger(owner?.pid) && owner.pid > 0 ? owner.pid : null
+    if (pid && alive(pid)) throw new Error(`This MCP workspace is in use by a running MCP server (PID ${pid}), usually another agent session's. Close that session, or stop it with kill ${pid}, then reconnect.`)
+    // No owner yet: another process may be between creating the lock and writing its owner.
+    if (!pid) { const info = await lstat(lease).catch(() => null); if (info && now() - info.mtimeMs < 10_000) throw new Error('Another MCP server is starting in this workspace. Try again in a few seconds.') }
+    await rm(lease, { recursive: true, force: true })
+    console.error(`Took over a stale MCP lock${pid ? ` left by PID ${pid}, which is no longer running` : ''}.`)
+  }
+  throw new Error('This MCP workspace is already locked.')
+}
+
 export async function createFrontendTools(options, injected, dependencies = {}) {
   assertMcpPrivateHost()
   const { root = ROOT, dataDir, apiBase = 'http://127.0.0.1:8788/api', site = 'https://modwerk.app/' } = options
@@ -118,7 +137,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
   if (activeWorkspace) throw new Error('Use a separate MCP process for each workspace.')
   const lease = join(dataDir, '.mcp-lock')
   activeWorkspace = true
-  try { await mkdir(lease, { mode: 0o700 }) } catch (error) { activeWorkspace = false; if (error.code === 'EEXIST') throw new Error('This MCP workspace is already locked. Check its owner PID before recovering a stale lock.', { cause: error }); throw error }
+  try { await takeLease(lease, dependencies.lease) } catch (error) { activeWorkspace = false; throw error }
   try {
   await writeFile(join(lease, 'owner.json'), JSON.stringify({ pid: process.pid, started: new Date().toISOString() }), { mode: 0o600, flag: 'wx' })
   let frontend = injected
@@ -153,7 +172,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       globalThis.localStorage.setItem((key === 'session' ? 'octamod.community.session:' : 'modwerk.developer.session:') + api.href, value)
     }
   }
-  let bench, link, release, trial, closed = false, remote, zoom
+  let bench, link, release, trial, closed = false, closing, remote, zoom
   // Remote sessions call admin routes; the Worker checks Origin on writes, so name the site it trusts (--site).
   const adminApi = async (path, method = 'GET', body) => {
     const response = await frontend.apiFetch(path, { method, redirect: 'error', signal: AbortSignal.timeout(30000), headers: { Origin: deployment.origin, ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) })
@@ -457,7 +476,9 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       running = true
       try { return await handlers[name](args) } finally { running = false }
     },
-    async close() { if (closed) return; closed = true; try { if (trial) { try { await link.undo() } catch { /* Unaccepted trials also recover through device timeout. */ } } remote?.relay.end(); release?.(); bench?.socket.destroy(); zoom?.access.close?.() } finally { activeWorkspace = false; await rm(lease, { recursive: true, force: true }) } },
+    // Every caller gets the same promise: on SIGTERM both the closed input and the signal handler close, and the handler
+    // exits only after the lock is removed (an early return here once let the process exit with the lock still there).
+    close() { return closing ??= (async () => { closed = true; try { if (trial) { try { await link.undo() } catch { /* Unaccepted trials also recover through device timeout. */ } } remote?.relay.end(); release?.(); bench?.socket.destroy(); zoom?.access.close?.() } finally { activeWorkspace = false; await rm(lease, { recursive: true, force: true }) } })() },
   }
   } catch (error) { activeWorkspace = false; await rm(lease, { recursive: true, force: true }); throw error }
 }
