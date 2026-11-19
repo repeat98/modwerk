@@ -30,6 +30,7 @@
 .equ PREC0, 0x250738            ; voice 0's parameter record (byte address); 0xdc bytes per voice
 .equ PRECB, 0xdc
 .equ PREC_SIZE, 0x28            ; knob C (SAMPLE's crossfade) as 0-1
+.equ PREC_SPREAD, 0x27          ; knob G (SAMPLE's loop position) as 0-1
 
 .equ VARS, 0x200d4400
 .equ V, VARS / 4                ; variables as normal words
@@ -295,9 +296,17 @@ copy_record: DM(I1, M0) = R0
   M1 = ENDW
   R0 = DM(M1, I0)
   F5 = FLOAT R0                 ; the sample's length in words
-  M2 = 4
-  R0 = DM(M2, I2)               ; spread 0-127
-  F0 = FLOAT R0
+  ; SPREAD is knob G (SAMPLE's loop position, word 0x27 of the voice's parameter record, 0-1)
+  R0 = DM(V_VOICE)
+  R2 = PRECB
+  R0 = R0 * R2 (SSI)
+  R2 = PREC0
+  R0 = R0 + R2
+  I3 = R0
+  M3 = PREC_SPREAD
+  R0 = DM(M3, I3)
+  F1 = 127.0
+  F0 = F0 * F1                  ; spread 0-127
   M2 = 0
   R11 = DM(M2, I2)              ; mode
   R2 = MODE_HAZE
