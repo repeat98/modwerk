@@ -44,6 +44,13 @@ struct dt2_machine {
     struct dt2_machine_knob knobs[DT2_MACHINE_KNOBS];
 };
 
+/* The audio-frame tail words the base sends the sound chip for machine players (machine-frame.c): the magic, then
+ * the samples per sixteenth step at the pattern's tempo. */
+enum {
+    DT2_MACHINE_WIRE = 16,
+};
+#define DT2_MACHINE_WIRE_MAGIC UINT32_C(0x4d4b0001)
+
 /* The record for a machine type, or 0 when the type is stock or no valid record names it. */
 const struct dt2_machine *dt2_machine_at(
     uint32_t type, const struct dt2_machine *const machines[DT2_MACHINE_COUNT]);

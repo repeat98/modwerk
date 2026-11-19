@@ -48,6 +48,7 @@
       "../modwerk/mixer-entry.s",
       "../modwerk/machines.c",
       "../modwerk/machine-knobs.c",
+      "../modwerk/machine-frame.c",
       "../modwerk/machines-entry.s",
       "../modwerk/fw-bindings.s"
     ],

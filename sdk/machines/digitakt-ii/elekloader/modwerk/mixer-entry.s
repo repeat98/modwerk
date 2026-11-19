@@ -7,6 +7,12 @@
 
 core_audio_frame_entry:
         move.l  %a2,-(%sp)
+        move.l  20(%sp),-(%sp)          | the base's own frame words first (machine-frame.c)
+        move.l  20(%sp),-(%sp)
+        move.l  20(%sp),-(%sp)
+        move.l  20(%sp),-(%sp)
+        jsr     core_machine_frame
+        lea     16(%sp),%sp
         lea     ev_audio_frame,%a2
 1:      move.l  (%a2)+,%d0
         beq.s   2f

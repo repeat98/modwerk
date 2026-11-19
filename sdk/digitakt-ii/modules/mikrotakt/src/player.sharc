@@ -25,6 +25,8 @@
 .equ FRAC, 0x6c                 ; record word: its fraction
 .equ ENDW, 0x69                 ; record word: the sample's length in words
 .equ PLAYING, 0x6e              ; record word: nonzero while the stock player renders it
+; The base's machine wire (DT2_BASE_SHARC.stepSamples in src/engine/elekloader/dt2-render-build.ts).
+.equ STEP_SAMPLES, 0x200c2c20 / 4
 .equ PREC0, 0x250738            ; voice 0's parameter record (byte address); 0xdc bytes per voice
 .equ PRECB, 0xdc
 .equ PREC_SIZE, 0x28            ; knob C (SAMPLE's crossfade) as 0-1
@@ -197,8 +199,7 @@ same_note:
   I3 = density_steps
   M3 = R0
   R1 = DM(M3, I3)
-  M2 = 5
-  R0 = DM(M2, I2)               ; samples per step
+  R0 = DM(STEP_SAMPLES)         ; samples per sixteenth step at the pattern's tempo (the base's machine wire)
   F0 = FLOAT R0
   F0 = F0 * F1
   R0 = FIX F0
@@ -601,7 +602,7 @@ size_inverses:
   .float 0.00014880952, 0.00010416667, 0.000074404762, 0.000052083333, 0.000037202381, 0.000026041667, 0.000020833333, 0.000013888889
 
 .data 0x200d4a00
-; per track: mode, position, size, density, spread, samples per step (120 BPM), two spare words
+; per track: mode, position, size, density, spread, samples per step (unused: the base's wire gives the tempo), spare
 track_settings:
   .word 0, 64, 64, 64, 32, 6000, 0, 0
   .word 0, 64, 64, 64, 32, 6000, 0, 0
