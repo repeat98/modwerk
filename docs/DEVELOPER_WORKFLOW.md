@@ -104,6 +104,14 @@ Open a PR against Modwerk `main` and include the two exact opt-in checkboxes fro
 
 Follow checks, the author publisher and deployments; then verify the live version and an actual saved compatible download. For a reported fix, obtain actual version-matched results from the author's unit before resolution. Use `Related to #<number>` in PRs rather than merge-time closing keywords.
 
+## Change a base
+
+A base update carries several developers' changes onto players' instruments at once, so it ships as one release and only after a long run on hardware. Each machine has one cumulative draft pull request from `base/<machine>-next`, and the owner decides when it ships (owner, 18 and 19 November 2026).
+
+- **Join it.** Commit your base change to that branch, or open your pull request against it (`gh pr create --base base/<machine>-next`); it is merged in with your authorship. A base pull request against `main` is sent there. With none open for the machine, open it as a draft from `base/<machine>-next`.
+- **Share the branch.** Several developers commit to it: fetch first, add your commits on top, merge `main` into it, and never rebase or force-push it. Update the description's list of what is in it so far.
+- **It stays a draft** until the base has been tested extensively on a unit. Record each build that ran, on which unit, and what ran on it; `pr:ready` saying Ready means the checks pass, not that it was tested. Only the owner marks it ready and ships it.
+
 ## Manage reports on GitHub
 
 Public reports and GitHub replies share a thread, with replies/status synchronized to Modwerk. Report handling needs no fork, coding agent, repository write access or owner review. Registered authors can act immediately. Other declared maintainers verify their GitHub identity and claim the module once in **Creator settings**; that permits triage and ordinary closure, while release completion retains its registered-author check. Post commands as **new comments** on mapped public reports:

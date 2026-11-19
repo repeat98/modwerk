@@ -167,6 +167,17 @@ describe('questions and findings in the commands', () => {
   })
 })
 
+it('requests weekly board activity only when a week count is supplied', async () => {
+  const api = 'https://board.test/api', requested = []
+  const fetch = async url => {
+    requested.push(url)
+    return Response.json(url.endsWith('?weeks=8') ? { weeks: [] } : { days: 30 })
+  }
+  expect(await board.activity({ api, fetch, weeks: 8 })).toEqual({ weeks: [] })
+  expect(await board.activity({ api, fetch })).toEqual({ days: 30 })
+  expect(requested).toEqual([api + '/agent-board/activity?weeks=8', api + '/agent-board/activity'])
+})
+
 describe('pr:ready and the board', () => {
   const needed = [{ kind: 'migration', key: '0084', why: 'new migration' }, { kind: 'hook', key: 'octatrack/37', why: 'new entry' }]
   const fake = ({ login = 'ada', claims = [], fail, refuseNotes } = {}) => {
