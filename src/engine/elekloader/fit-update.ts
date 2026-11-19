@@ -7,7 +7,7 @@
 import { load, mainImage, parse, verify, write, type Parsed } from '../../../vendor/elekloader/kit/src/formats.ts'
 import type { Device } from '../../../vendor/elekloader/kit/src/devices.ts'
 import { packSectionOptimal } from '../elektron/codec/pack.ts'
-import { UPDATE_LIMITS } from './carried-devices.ts'
+import { UPDATE_LIMITS } from './carried-devices'
 
 export type Fitted = { syx: Uint8Array; decoded: number; limit: number | null; repacked: boolean }
 
@@ -33,4 +33,29 @@ export async function fitUpdate(built: Uint8Array, stockRaw: Uint8Array): Promis
     throw new Error(`This build holds ${decoded} bytes once decoded, and the ${device.name} takes at most ${limit}: leave a module out.`)
   }
   return { syx: outputs.syx, decoded, limit, repacked: true }
+}
+
+type Output = { name: string; path: string; bytes: number; sha256: string; data: ArrayBuffer }
+type BuiltFiles = { device: string; files: Output[]; sha256: string; bytes: number }
+
+/** A site build's result with every .syx fitted to its device's limit (fitUpdate); a device with no known limit keeps
+ * the result as it is, so other machines' builds do not change. The top-level sha256 and bytes follow the .syx. */
+export async function fitBuilt<T extends BuiltFiles>(result: T, stockRaw: Uint8Array): Promise<T> {
+  if (!(result.device in UPDATE_LIMITS)) return result
+  const files: Output[] = []
+  let top = { sha256: result.sha256, bytes: result.bytes }
+  for (const file of result.files) {
+    if (!file.name.toLowerCase().endsWith('.syx')) { files.push(file); continue }
+    const fitted = await fitUpdate(new Uint8Array(file.data), stockRaw)
+    if (!fitted.repacked) { files.push(file); continue }
+    const data = fitted.syx.slice().buffer, sha256 = await sha256Hex(fitted.syx)
+    if (file.sha256 === result.sha256) top = { sha256, bytes: fitted.syx.length }
+    files.push({ ...file, data, sha256, bytes: fitted.syx.length })
+  }
+  return { ...result, files, ...top }
+}
+
+async function sha256Hex(data: Uint8Array): Promise<string> {
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', data))
+  return Array.from(digest, b => b.toString(16).padStart(2, '0')).join('')
 }
