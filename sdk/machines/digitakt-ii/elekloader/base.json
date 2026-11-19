@@ -237,7 +237,7 @@
   "dev": {
     "about": "A development base adds one test machine (type 7) that stands for SAMPLE, to check the machine hooks in the emulator. Never released.",
     "sources": [
-      "../modwerk/tests/machines-fixture.c"
+      "machines-fixture.c"
     ],
     "contribute": [
       {
