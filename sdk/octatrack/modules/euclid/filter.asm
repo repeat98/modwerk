@@ -92,11 +92,15 @@ eu_filter_setup:
 ; while g is actually ramping.
         bsr     eu_denominator
 ; Select the wet tap. NOTCH is LP + HP; the existing accumulator saturates
-; the sum safely. AMP branched around the entire SVF above.
+; the sum safely. AMP branched around the entire SVF above. Clear AMP's gain
+; too: the tap sum below adds dry * $26, and turning TYPE from HP to NOTCH
+; passes AMP, which left its gain mixing the dry signal into every filter
+; type (#1690).
         clr     a
         move    a,x:(r7+$23)
         move    a,x:(r7+$24)
         move    a,x:(r7+$25)
+        move    a,x:(r7+$26)
         move    x:(r7+$22),a
         move    #>$4,x0
         cmp     x0,a

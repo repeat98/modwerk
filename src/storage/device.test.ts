@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { deviceStore, openDeviceDatabase } from './device'
 import { newConfiguration, validateConfiguration, pinModuleVersions } from '../config/workspace'
 import { moduleHasUpdate, moduleIsNew, moduleViewsToRemember } from '../catalog/module-updates'
@@ -73,9 +73,38 @@ describe('device persistence', () => {
     const restored = deviceStore(restoredDb)
     expect((await restored.listConfigurations()).map(item => [item.name, item.moduleIds])).toEqual([['Live set II', ['euclid']], ['Ambient', ['miniverb', 'repitch']]])
     expect(await restored.activeConfiguration()).toBe(b.id)
-    await restored.deleteConfiguration(a.id)
+    await restored.deleteConfiguration(a.id, b.id)
     expect((await restored.listConfigurations()).map(item => item.id)).toEqual([b.id])
     restoredDb.close()
+  })
+  it('rolls back creating and selecting a set together if the save is interrupted', async () => {
+    const db = await openDeviceDatabase('test-' + crypto.randomUUID()), store = deviceStore(db)
+    const old = newConfiguration('Live'), next = newConfiguration('Studio')
+    await store.saveConfiguration(old, { makeActive: true })
+    const transactions = vi.spyOn(db, 'transaction')
+    const saving = store.saveConfiguration(next, { makeActive: true })
+    transactions.mock.results[0].value.abort()
+    transactions.mockRestore()
+    await expect(saving).rejects.toThrow()
+    expect(await store.listConfigurations()).toEqual([old])
+    expect(await store.activeConfiguration()).toBe(old.id)
+    db.close()
+  })
+  it('rolls back deleting the last set, creating its replacement and selecting it together', async () => {
+    const db = await openDeviceDatabase('test-' + crypto.randomUUID()), store = deviceStore(db)
+    const old = newConfiguration('Only set'), next = newConfiguration('My configuration')
+    await store.saveConfiguration(old, { makeActive: true })
+    const transactions = vi.spyOn(db, 'transaction')
+    const deleting = store.deleteConfiguration(old.id, next)
+    transactions.mock.results[0].value.abort()
+    transactions.mockRestore()
+    await expect(deleting).rejects.toThrow()
+    expect(await store.listConfigurations()).toEqual([old])
+    expect(await store.activeConfiguration()).toBe(old.id)
+    await store.deleteConfiguration(old.id, next)
+    expect(await store.listConfigurations()).toEqual([next])
+    expect(await store.activeConfiguration()).toBe(next.id)
+    db.close()
   })
   it('skips a configuration this version cannot read, reports it and keeps it stored', async () => {
     const db = await openDeviceDatabase('test-' + crypto.randomUUID())

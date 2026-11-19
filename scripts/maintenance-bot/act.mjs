@@ -3,10 +3,11 @@
 // Step 3 of a maintenance bot pass (docs/MAINTENANCE_BOT.md). Runs from main with write access and no model:
 // it holds the model's proposals to the policy, files them in the Worker's ledger, carries out what is due and
 // not stopped, and on the daily run sends the report to Telegram.
+import { tagDiscordLinks } from '../../server/site-link-tags.ts'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { TODO_COMMAND, actionId, classify } from './policy.mjs'
-import { MARKER, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
+import { MARKER, approveRun, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
 import { dailyReport } from './report.mjs'
 
 const daily = process.env.BOT_MODE === 'daily', dir = process.env.BOT_DIR ?? 'bot'
@@ -63,6 +64,9 @@ for (const todo of (Array.isArray(proposals.todos) ? proposals.todos : []).slice
   todos.push({ id: actionId('todo', number, command), target: number, command, note, urgent: todo.urgent === true })
 }
 if (todos.length) await bot('/todos', 'POST', { todos })
+// The model may drop an open to-do it saw settled (answered, superseded, moved on); only ids that are open count.
+const open = new Set((await bot('/todos')).todos.map(todo => todo.id))
+for (const id of (Array.isArray(proposals.drop) ? proposals.drop : []).slice(0, 30)) if (open.has(id)) await bot('/todos/' + id + '/status', 'POST', { status: 'dropped' })
 
 // Watchers that need no model. A red run on main becomes an urgent to-do (the Worker tells the owner at once).
 const latest = new Map(), today = new Date().toISOString().slice(0, 10)
@@ -129,7 +133,7 @@ async function carryOut(action) {
     const now = await readDiscordTarget(chat, payload.channel, payload.message)
     if (!now || now.state !== 'open') return ['expired', 'someone answered in the meantime']
     // No pings of any kind: not @everyone, not roles, not the person replied to beyond Discord's reply marker.
-    await chat('/channels/' + payload.channel + '/messages', 'POST', { content: payload.body, message_reference: { message_id: payload.message, channel_id: payload.channel, fail_if_not_exists: false }, allowed_mentions: { parse: [], replied_user: false } })
+    await chat('/channels/' + payload.channel + '/messages', 'POST', { content: tagDiscordLinks(payload.body), message_reference: { message_id: payload.message, channel_id: payload.channel, fail_if_not_exists: false }, allowed_mentions: { parse: [], replied_user: false } })
     return ['done', '']
   }
   if (payload.kind.startsWith('board_')) {
@@ -143,7 +147,7 @@ async function carryOut(action) {
   const now = await fresh(payload.number)
   if (now.state !== 'open') return ['expired', 'it was closed in the meantime']
   if ((payload.pin?.head ?? '') !== now.head) return ['expired', 'new commits arrived']
-  if (payload.kind !== 'merge' && payload.kind !== 'label' && payload.pin?.comments !== now.comments) return ['expired', 'someone replied in the meantime']
+  if (payload.kind !== 'merge' && payload.kind !== 'label' && payload.kind !== 'approve_run' && payload.pin?.comments !== now.comments) return ['expired', 'someone replied in the meantime']
   const n = payload.number
   switch (payload.kind) {
     case 'label':
@@ -163,6 +167,12 @@ async function carryOut(action) {
       let result
       try { result = await bot('/merge', 'POST', { number: n, sha: payload.head, method: payload.method }) } catch (error) { return ['failed', error.message.slice(0, 200)] }
       return ['done', 'merged ' + String(result.sha).slice(0, 9)]
+    }
+    case 'approve_run': {
+      const runs = (await api('/actions/runs?status=action_required&head_sha=' + now.head + '&per_page=30')).workflow_runs ?? []
+      if (!runs.length) return ['expired', 'no run waits any more']
+      for (const run of runs) await approveRun(api, run.id)
+      return ['done', runs.length + ' run' + (runs.length === 1 ? '' : 's') + ' started']
     }
     case 'close':
       if (payload.body) await api('/issues/' + n + '/comments', 'POST', { body: payload.body + '\n\n' + MARKER })

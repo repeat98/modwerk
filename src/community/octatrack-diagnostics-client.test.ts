@@ -28,7 +28,7 @@ describe('beta diagnostic collection',()=>{
     emit({event:'sync_failed',phase:'sending',error:'device',refusal:3})
     await vi.advanceTimersByTimeAsync(30000)
     expect(health).not.toHaveBeenCalled();expect(apiFetch).not.toHaveBeenCalled()
-    expect(countOctatrackAction).toHaveBeenNthCalledWith(1,'usb_sync_started');expect(countOctatrackAction).toHaveBeenNthCalledWith(2,'usb_sync_failed')
+    expect(countOctatrackAction).toHaveBeenNthCalledWith(1,'usb_sync_started');expect(countOctatrackAction).toHaveBeenNthCalledWith(2,'usb_sync_failed','refused-3')
   })
   it('collects numeric status after consent and stops on remote revocation',async()=>{
     const {health}=await fixture();await changeDiagnosticSharing(true)

@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "module": "butter-fingers",
+  "version": "0.1.0-experimental",
+  "sourceSha256": "8a18c5c1e3231770a4899ff611cfa65a4ce93a1057109a1b6471589e19e6e29f",
+  "kind": "coldfire",
+  "trigger": "key",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": 28352,
+    "budget": 26600000,
+    "method": "Emulator, not hardware (17 November 2026): executed instructions in Modwerk's adapted ot_emu (scripts/octatrack-emulator/build.py on octabam f7d72906, sha256 ca1755b8...) from entry to return of each handler, watched with ot_emu's watch/hits, stock callees and interrupts included. Package c470e87a... installed over emulated USB on the beta base 771f160f... (0.7.3, built locally from main), MKII panel, --dsp --frame. Gestures: with TRIG 1, SCENE A and SCENE B held in turn, knobs A, D and F turned to set a lock, pressed, turned while pressed and within 150 ms after release, then every knob pressed and turned with nothing held. Dearest call 28,352 (one bf_enc call that a frame interrupt landed in); the handlers' own dearest paths: bf_key 46 (48 calls), bf_enc 30 (66 calls), bf_tick 8 (474 calls)."
+  },
+  "stress": {
+    "events": 21,
+    "playing": true,
+    "hangs": 0,
+    "method": "Emulator, not hardware (17 November 2026), same emulator, base and package as above: 21 rounds, each PLAY (all eight tracks' run flags set), the dearest gesture (TRIG 1 held, knob A turned, pressed, turned while pressed and after release; about 1,546 audio frames during it), STOP, then a Part change (PART held + DOWN or UP; the Part index changed every round). Playing again afterwards: frames still advancing (216,045). No hang."
+  }
+}

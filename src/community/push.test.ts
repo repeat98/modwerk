@@ -247,7 +247,7 @@ it('shows visible notifications and restricts clicks to the installed app scope'
   let pending: Promise<unknown> = Promise.resolve()
   listeners.get('push')!({ data: { json: () => ({ title: 'Signup', body: 'A member joined.', href: 'https://evil.test/' }) }, waitUntil(value: Promise<unknown>) { pending = value } })
   await pending
-  expect(shown.mock.calls[0]).toEqual(['Signup', expect.objectContaining({ data: { href: 'https://modwerk.app/project/#account' } })])
+  expect(shown.mock.calls[0]).toEqual(['Signup', expect.objectContaining({ data: { href: 'https://modwerk.app/project/?utm_source=push#account' } })])
   listeners.get('notificationclick')!({ notification: { close() {}, data: { href: 'https://evil.test/' } }, waitUntil(value: Promise<unknown>) { pending = value } })
   await pending; expect(openWindow).not.toHaveBeenCalled()
   listeners.get('notificationclick')!({ notification: { close() {}, data: { href: 'https://modwerk.app/project/#admin' } }, waitUntil(value: Promise<unknown>) { pending = value } })

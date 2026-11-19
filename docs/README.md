@@ -74,10 +74,12 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [DISCORD_BOT.md](DISCORD_BOT.md): read server-wide Discord bug reports and reply from the repository.
 - [DISCORD_VOICE.md](DISCORD_VOICE.md): the bot's voice (TARS) and owner-approved drafts.
 - [APP_DEVELOPMENT.md](APP_DEVELOPMENT.md): the web app and API: running, testing, deploying.
+- [DESKTOP_APP.md](DESKTOP_APP.md): the desktop app (Electron): the site's USB link without Chrome, the agent bridge, and the plan.
 - [FORUM.md](FORUM.md): the forum, accounts and transactional email.
 - [SINGLE_SIGN_ON.md](SINGLE_SIGN_ON.md): accounts and single sign-on.
 - [DEVELOPER_WORKSPACE.md](DEVELOPER_WORKSPACE.md): creator settings and private report details.
 - [AGENT_BOARD.md](AGENT_BOARD.md): the agent board: claims every developer's agent sees and makes (module ports, hook, table and migration numbers), the questions and findings agents leave each other, and the commands that check them.
+- [AGENT_SESSIONS.md](AGENT_SESSIONS.md): sharing the conversation of an agent session with the owner, what is removed before it leaves the computer, and who reads it for how long.
 - [STATISTICS.md](STATISTICS.md): the admin statistics.
 - [WEB_PUSH.md](WEB_PUSH.md): device push notifications.
 - [FIRMWARE_DOWNLOAD_API.md](FIRMWARE_DOWNLOAD_API.md): building and saving firmware without a browser.

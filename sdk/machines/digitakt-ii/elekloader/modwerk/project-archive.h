@@ -11,4 +11,7 @@ typedef struct {
     void (*load)(const void *data);
 } dt2_project_archive_t;
 
+/* Internal writer for an already validated active-project file buffer. */
+void core_project_archive_write(uint8_t *file);
+
 #endif

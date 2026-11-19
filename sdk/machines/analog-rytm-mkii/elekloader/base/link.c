@@ -152,8 +152,11 @@
 // DIAG, by the gate: 0-7 the mailbox as found, 8-11 the staged struct's first words,
 // 12-13 MARK as found, 14 RSR. MARK, on the way to a RAM boot's reset: 0 DIAG_MARK +
 // flags, 1 DIAG_STAGE + how far it came; the gate clears both.
-#define DIAG ((volatile uint32_t *)0x47bfffbc)
-#define MARK ((volatile uint32_t *)0x47bffff8)
+// Both sit above every area the linker gives the mods (to 0x47f00000 at most) and 64 KB under the boot stack's top,
+// in RAM stock never uses (README, "Shared mod memory"). ident carries DIAG's address: a base before this kept them
+// in the top 68 bytes of the 128 KB mod area (0x47bfffbc).
+#define DIAG ((volatile uint32_t *)0x47feffbc)
+#define MARK ((volatile uint32_t *)0x47fefff8)
 #define DIAG_MARK 0x4d570000            // + panel events << 8 (8 bits) + due (bits 0-1), 4 armed, 8 stock's struct is STAGED, 16 its length matches
 #define DIAG_STAGE 0x4d575400           // + 1 the command was taken, 2 stock's job reached the site, 3 its wait
                                         //   returned, 4 the drain returned, 5 written with the data cache off
@@ -474,6 +477,7 @@ static void COLD act(const uint8_t *m, int len)
         p = put32(p, boot_status);
         p = put32(p, boot_depack_crc);
         p = put32(p, boot_image);
+        p = put32(p, (uint32_t)DIAG);
         send(p);
         return;
     case CMD_DISARM:

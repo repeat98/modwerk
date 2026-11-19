@@ -1,4 +1,117 @@
-# Testing: Pattern Sample Locks 0.1.8-experimental
+# Testing: Pattern Sample Locks 0.1.9-experimental
+
+The runs below name the base with the Part Edit menu as 0.7.8, its number when they ran. Another base took 0.7.8 first (#1418), so this one is released as 0.7.9, with #1418's changes added. The package `6fea272e…` is unchanged. The tested base builds (`e08c4416…` on the unit, `f429652e…` in the emulator) do not include #1418.
+
+## Author's check — 0.1.9, 18 November 2026 (reported)
+
+Reported by the author (`twwwy`) on their MKII, on a scratch project, with the exact package `6fea272e…` installed as a
+timed trial on the development build of base 0.7.8 (`e08c4416…`): LOCK SAMPLES (opened with FUNC+PART, LOCKS, RIGHT)
+and CLEAR LOCKS both applied as expected, and playback kept playing during an action. Recorded as the author reported
+it; the agent did not observe the screens.
+
+## Hardware release run — 0.1.9, 18 November 2026
+
+The author's MKII, a development build of base 0.7.8 with the Part Edit menu (`e08c4416…`) booted from RAM, bank I pattern 1 (its Part had no unsaved edits), transport stopped; run by Claude Code over USB with the author's OK. Agent's run, not the author's observation.
+
+#### Qualification run, 2026-11-18
+
+Command: `npm run device:qualify -- --keeps-ok --testing-entry <entry file> public/octatrack-modules/pattern-sample-locks/0.1.9-experimental.mwrm`
+
+- Package `0.1.9-experimental.mwrm`, SAMPLE LOCKS, SHA-256 `6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3`
+- All at once, playing (): CPU 355, T1-4 peak 338, T5-8 peak 286 per mille
+- Part switches: 12 of 12 ran their own effects within 3 s
+- Crash test: not run
+- Result: passed
+
+Not covered by this run: listening to the sound, the power cycle and what survives it, MIDI, scenes and recording, modules beside other installed modules.
+
+Afterwards: inventory empty, back on I01, loader 0 rejected, 0 rollbacks. Not covered by this run: a Lock or Clear applied (the author's check above), MKI, audio, a power cycle.
+
+## Worst key press and press stress on the emulator — 0.1.9, 17–18 November 2026
+
+Emulator only (`ot_emu` `b087c97f…`), not hardware. Octatrack base 0.7.8 with the Part Edit menu (`f429652e…`, a
+local build), exact package `6fea272e…`, DSP running, in the arm64 toolchain container, the same card as 0.1.8's
+run (`be0b309d…`). Each action is opened as a player does: FUNC+PART, LOCKS, then the action. Recorded in
+[evidence/performance.json](evidence/performance.json).
+
+| Check | Result |
+| --- | --- |
+| record | key-press coldfire record for pattern-sample-locks@0.1.9-experimental |
+| cycles | worst event 307,343 of 26,600,000 (1 %) |
+| stock benchmark | none: a key-press module adds nothing to the frame interrupt |
+| stress | 40 presses of the dearest event while playing, no hang |
+
+The dearest press is still CLEAR SAMPLE LOCKS confirmed on 8 tracks × 64 steps (512 fields): 307,343 instructions
+from `module_key` entry to return (0.1.8: 333,805), the commit alone 276,410; LOCK on the same fixture 96,682
+(0.1.8: 134,167); 2 fields: 32,240 and 14,187. Every case verified the written fields and the lock index. The
+emulator's CPU meter read 1000 ‰ closed with the module, while selecting tracks and closed after removal alike: no
+difference to report from it.
+
+Stress: 20 rounds, each PLAY, LOCK then CLEAR on 512 fields, every write and the battery copy verified, playback still
+running and audio frames advancing (at least 6,379 per action); then STOP and a Part change (all four Parts visited).
+Removal afterwards left the base's `ot_part_menu` row empty.
+
+```sh
+python3 -B sdk/octatrack/modules/pattern-sample-locks/profile_symbols.py --object unit.o \
+  --package public/octatrack-modules/pattern-sample-locks/0.1.9-experimental.mwrm --out profile.json
+python3 -B sdk/octatrack/modules/pattern-sample-locks/capture_emulator.py --emulator ot_emu --base <base 0.7.8 build> \
+  --card <disposable card> --package <0.1.9 package> --profile-symbols profile.json --out <new dir> --performance
+# the same with --press-stress for the stress rounds
+npm run perf:audit -- check sdk/octatrack/modules/pattern-sample-locks/evidence/performance.json
+```
+
+The harness now finds the module through the base's `ot_part_menu` row and opens the actions through the base's
+window; on a base 0.7.8 build it needs `--max 4000000000` (now in the command) and, in a container, an output folder
+whose USB socket path is short.
+
+## Pattern Sample Locks 0.1.9-experimental: the base's Part Edit menu, unit run of 17 November 2026
+
+Build: source `598edfaa4`; a development twin of base 0.7.6
+(`build_core.py` with the beta flags and `--dev`, without the resident controller rows), MAIN booted from RAM as
+`812ac544…`. Packages: Pattern Sample Locks 0.1.9 `b79de4b9…`, Kits 0.1.1 `af773397…`, installed together as one timed
+trial (`npm run device -- set A,B --seconds 600`, no Keep) on the developer's MKII, project on bank K, transport
+stopped. Screens read with `png:` over USB. The trial was interrupted after about 82 s and rolled back (inventory empty
+afterwards, active base still the twin; loader 0 rejected, 0 rollbacks). Agent's run, not the developer's.
+
+- FUNC+PART draws the two-column window: PART, SAMPLE LOCKS, KITS on the left; RENAME, RELOAD, SAVE, SAVE ALL on the
+  right. DOWN on the left shows SAMPLE LOCKS' LOCK SAMPLES and CLEAR LOCKS; RIGHT moves into them, DOWN moves the
+  cursor; LEFT goes back; KITS shows SAVE KIT.
+- YES on LOCK SAMPLES opens LOCK SAMPLES TO PATTERN (the track screen, as 0.1.8); NO closes it.
+- YES on SAVE KIT shows KITS NOT ACTIVE: during a trial Kits gets no pages, as its README says. The SAVE KIT list
+  itself was not reached (it needs a Keep).
+- FUNC+PART again opens on KITS, the module row chosen last.
+- PART's actions open on stock's remembered row (SAVE here), as stock's Part Edit does: YES there ran stock's Part
+  Save (`PART 1 SAVED`) by the agent's mistake. The Part's working and saved copies read the same bytes before and
+  after (`mem`), and its edited flag stayed set.
+- Seen on the twin, not traced to these packages: a DSP stall record about 57 s after the RAM boot (tick 3119), before
+  either package was installed, after which T5-T8 showed no effects; a crash record (address error, PC `0x40d52f64`)
+  from an earlier boot; a 1.5 s UI tick gap in minute 5, around the trial's install.
+
+Not tested: the SAVE KIT list and a Kit saved from it, CLEAR LOCKS and a Lock or Clear applied, MKI, playing
+transport, a Keep, a power cycle, sound.
+
+Kept run, the same day, same twin and packages, with the developer's OK to Keep (and to save one Kit):
+`npm run device -- set A,B --accept` installed both (loader 0 rejected); Kits became active (status line `033 ONE`).
+
+- FUNC+PART > KITS > SAVE KIT opens the SAVE KIT list on the current Kit (033). LEVEL scrolled to the first empty Kit,
+  065; YES opened KIT NAME (NEW KIT); YES saved: `KIT SAVED`, status line `065 NEW KIT`. Saving also named the Part
+  NEW KIT (it was ONE) and wrote kits.work, as Kits does.
+- FUNC+PART then opened on KITS (chosen last); SAMPLE LOCKS > CLEAR LOCKS opened CLEAR SAMPLE LOCKS; NO closed it.
+- PART's actions opened on SAVE (stock's remembered row); LEFT went back, NO closed the window. No PART action run.
+- Both removed with a second Keep (`set -- -A,-B --accept`): inventory empty, and FUNC+PART then showed stock's own
+  one-column Part Edit popup.
+
+Not tested: FUNC+PASTE+PART, a Lock or Clear applied, playing transport, MKI, a power cycle, sound.
+
+Restyled window, the same day: a development twin of base 0.7.6 booted from RAM as `9173ba81…`, Pattern Sample Locks
+`6fea272e…` and Kits `8ce226a5…` as one timed trial (no Keep), rolled back afterwards (inventory empty). Agent's run.
+
+- FUNC+PART draws the window as PROJ draws its menu: the title bar PART EDIT, icons beside PART, LOCKS and KITS, the
+  rule, the track strips left and right still showing; compared by screenshot with PROJ on the same unit.
+- In LOCKS' actions on CLEAR LOCKS, NO closed the window; FUNC+PART reopened it there (right column, CLEAR LOCKS);
+  LEFT went back to the left column; NO closed it. PROJ on the same unit reopened in the SYSTEM list on CARD TOOLS after
+  NO, the behaviour this copies.
+
 
 10 November 2026 (Taipei) · twwwy · first release, submitted for owner review.
 
@@ -267,7 +380,7 @@ candidate extent and USB/whole-set overlap against fixed base reservations. It
 reconfirms the exact 10,832-byte extent, but does not close total memory,
 replacement admission for an arbitrary inventory, or stack demand.
 
-The [current-base memory layout](evidence/qualification-progress-20261104.md#current-base-shared-memory-layout)
+The [current-base memory layout](evidence/qualification-progress-20261104.md#private-reconstruction-shared-memory-layout)
 also accounts for the base's fixed, shared upload stage and loader ledgers.
 The stage includes a 1,310,720-byte image buffer; the candidate's 10,048-byte
 package occupies part of that existing buffer while staged. The base separately

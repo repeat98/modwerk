@@ -150,9 +150,16 @@ async function recent(db: Database, hours: number) {
   return { ...(await state(db)), actions: rows.map(publicRow) }
 }
 
+/** The chat's command menu. The daily report sets it again, so a command added here shows without running setup. */
+export const TELEGRAM_COMMANDS = [
+  { command: 'status', description: 'What is waiting and what was done' }, { command: 'todos', description: 'Your open to-do list' },
+  { command: 'pause', description: 'Stop all actions until /resume' }, { command: 'resume', description: 'Start again' },
+]
+
 async function report(env: Env, body: Record<string, unknown>) {
   if (typeof body.text !== 'string' || !body.text.trim() || body.text.length > 30000) throw new HttpError(400, 'A report is 1 to 30000 characters.')
   const { chat } = configured(env)
+  await telegram(env, 'setMyCommands', { commands: TELEGRAM_COMMANDS }).catch(() => undefined)
   for (const text of chunks(body.text)) await telegram(env, 'sendMessage', { chat_id: chat, text, link_preview_options: { is_disabled: true } })
   return { ok: true }
 }
@@ -191,8 +198,13 @@ async function command(env: Env, db: Database, text: string) {
     const count = (status: string) => actions.filter(action => action.status === status).length
     const last = JSON.parse((await db.prepare("SELECT value FROM maintenance_bot_state WHERE key='dispatch'").first<{ value: string }>())?.value ?? 'null') as { slot: string; ok: boolean } | null
     reply = (paused ? 'Paused.' : 'Running.') + (last ? ' Last start: ' + last.slot.slice(11) + ' UTC' + (last.ok ? '' : ' (failed)') + '.' : '') + ' Waiting: ' + count('pending') + '. Done today: ' + count('done') + (count('failed') ? ', failed: ' + count('failed') : '') + '.'
+  } else if (word === '/todos' || word === '/todo') {
+    const { todos } = await openTodos(db)
+    reply = todos.length
+      ? todos.length + ' open to-dos, for /modwerk-todo at your computer:\n' + todos.map(todo => (todo.urgent ? '⚠️ ' : '• ') + (todo.target ? '#' + todo.target + ' ' : '') + todo.note + '\n   ' + todo.command).join('\n')
+      : 'No open to-dos.'
   } else return
-  await telegram(env, 'sendMessage', { chat_id: chat, text: reply })
+  for (const text of chunks(reply)) await telegram(env, 'sendMessage', { chat_id: chat, text, link_preview_options: { is_disabled: true } })
 }
 
 /** Telegram's webhook. It retries anything but a 200, so only a wrong secret is refused. */
@@ -380,7 +392,7 @@ export async function dispatchMaintenance(env: Env, db: Database, now = new Date
  * The site publishes only owner merges (scripts/release-approval.mjs), and an owner merge starts the push workflows.
  * GitHub refuses unless the head is still exactly the commit the bot checked.
  */
-async function mergeAsOwner(env: Env, body: Record<string, unknown>) {
+async function mergeAsOwner(env: Env, body: Record<string, unknown>, message?: string) {
   const token = env.MAINTENANCE_BOT_GITHUB_TOKEN?.trim(), { number, sha, method } = body
   if (!token) throw new HttpError(503, 'The bot has no GitHub token to merge with.')
   if (!Number.isSafeInteger(number) || (number as number) < 1 || typeof sha !== 'string' || !/^[a-f0-9]{40}$/.test(sha) || (method !== 'merge' && method !== 'squash')) throw new HttpError(400, 'A merge needs a number, the checked commit and merge or squash.')
@@ -388,11 +400,64 @@ async function mergeAsOwner(env: Env, body: Record<string, unknown>) {
   const reply = await fetch('https://api.github.com/repos/' + repository + '/pulls/' + number + '/merge', {
     method: 'PUT', redirect: 'manual', signal: AbortSignal.timeout(20000),
     headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'User-Agent': 'modwerk-maintenance-bot', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sha, merge_method: method }),
+    body: JSON.stringify({ sha, merge_method: method, ...(message ? { commit_message: message } : {}) }),
   })
   const result = await reply.json().catch(() => null) as { merged?: boolean; sha?: string; message?: string } | null
   if (!reply.ok || !result?.merged || !result.sha) throw new HttpError(409, 'GitHub refused the merge: ' + (result?.message ?? 'HTTP ' + reply.status))
   return { merged: true, sha: result.sha }
+}
+
+/** Save the human approval before sending the merge to GitHub. */
+async function reviewedMerge(env: Env, db: Database, body: Record<string, unknown>) {
+  if (!body.review || typeof body.review !== 'object') throw new HttpError(400, 'A review receipt is required.')
+  const review = body.review as Record<string, unknown>, number = Number(body.number)
+  const { base, id, actorId, role, login, checkRun } = review
+  if (!Number.isSafeInteger(number) || number < 1 || body.method !== 'merge' || !/^[a-f0-9]{40}$/.test(String(base)) ||
+    !/^[a-f0-9]{40}$/.test(String(body.sha)) || ![id, actorId, checkRun].every(n => Number.isSafeInteger(n) && Number(n) > 0) ||
+    !/^[a-z0-9-]{1,39}$/i.test(String(login)) || !['maintainer','device-reviewer'].includes(String(role))) throw new HttpError(400, 'Invalid review receipt.')
+  if ((await state(db)).paused) throw new HttpError(409, 'Maintenance is paused.')
+  const veto = await db.prepare("SELECT 1 FROM maintenance_bot_actions WHERE target=? AND kind='merge' AND status='vetoed' AND json_extract(payload_json,'$.head')=?").bind(number,body.sha).first()
+  if (veto) throw new HttpError(409, 'The owner stopped this merge.')
+  const key = (await digest('github-review:' + number + ':' + id)).slice(0,16), stamp = now()
+  const summary = 'Merge #' + number + ' approved by @' + login
+  const claim = await db.prepare(`INSERT INTO maintenance_bot_actions(id,kind,target,tier,summary,reason,payload_json,status,due_at,decided_at,created_at,updated_at)
+    VALUES(?,'review_merge',?,'notify',?,?,?,'running',?,?,?,?)
+    ON CONFLICT(id) DO UPDATE SET status='running',updated_at=excluded.updated_at WHERE status='failed' OR (status='running' AND updated_at<?)`)
+    .bind(key,number,summary,String(role),JSON.stringify(body),stamp,stamp,stamp,stamp,stamp-300).run()
+  if (!claim.meta.changes) {
+    const row = await db.prepare('SELECT status,result FROM maintenance_bot_actions WHERE id=?').bind(key).first<ActionRow>()
+    if (row?.status === 'done') return { merged: true, sha: row.result }
+    throw new HttpError(409, 'This review is being processed.')
+  }
+  const message = ['Modwerk reviewed merge', 'Base: ' + base, 'Head: ' + body.sha, 'Review: ' + id, 'Approved by: ' + login + ' (' + actorId + ', ' + role + ')'].join('\n')
+  const read = async (path: string) => {
+    const token = env.MAINTENANCE_BOT_GITHUB_TOKEN?.trim()
+    if (!token) throw new HttpError(503, 'The bot has no GitHub token to merge with.')
+    const repo = env.GITHUB_REPOSITORY?.trim() || 'repeat98/modwerk'
+    const reply = await fetch('https://api.github.com/repos/' + repo + path, { headers: { Authorization: 'Bearer ' + token, 'User-Agent': 'modwerk-maintenance-bot' }, redirect: 'error', signal: AbortSignal.timeout(15000) })
+    if (!reply.ok) throw new HttpError(502, 'Unable to verify reviewed merge on GitHub.')
+    return reply.json()
+  }
+  try {
+    const pull = await read('/pulls/' + number) as { state: string; draft: boolean; merged: boolean; merge_commit_sha: string; head: { sha: string }; base: { ref: string; sha: string } }
+    let result
+    if (pull.merged) {
+      // Recover a successful GitHub write if the Worker stopped before recording its result.
+      const commit = await read('/git/commits/' + pull.merge_commit_sha) as { message: string; parents: { sha: string }[] }
+      if (!commit.message.endsWith('\n\n' + message) || commit.parents.length !== 2 || commit.parents[0].sha !== base || commit.parents[1].sha !== body.sha) throw new HttpError(409, 'This PR was merged under a different decision.')
+      result = { merged: true, sha: pull.merge_commit_sha }
+    } else {
+      if (pull.state !== 'open' || pull.draft || pull.base.ref !== 'main' || pull.base.sha !== base || pull.head.sha !== body.sha) throw new HttpError(409, 'The reviewed PR changed before merge.')
+      const decision = await read('/pulls/' + number + '/reviews/' + id) as { state: string; commit_id: string; user: { id: number } }
+      if (decision.state !== 'APPROVED' || decision.commit_id !== body.sha || decision.user.id !== actorId) throw new HttpError(409, 'The GitHub approval changed before merge.')
+      result = await mergeAsOwner(env, body, message)
+    }
+    await db.prepare("UPDATE maintenance_bot_actions SET status='done',result=?,updated_at=? WHERE id=?").bind(result.sha,now(),key).run()
+    return result
+  } catch (error) {
+    await db.prepare("UPDATE maintenance_bot_actions SET status='failed',result=?,updated_at=? WHERE id=?").bind(String(error).slice(0,200),now(),key).run()
+    throw error
+  }
 }
 
 /** Routes under /api/maintenance-bot/. They run server-to-server, before the Origin check. */
@@ -408,6 +473,7 @@ export async function maintenanceBotRoutes(request: Request, env: Env, db: Datab
   if (route === '/todos' && method === 'POST') return response(await addTodos(env, db, await jsonBody(request, 64 * 1024)))
   if (route === '/diagnostics' && method === 'GET') return response(await diagnostics(db))
   if (route === '/merge' && method === 'POST') return response(await mergeAsOwner(env, await jsonBody(request)))
+  if (route === '/merge/reviewed' && method === 'POST') return response(await reviewedMerge(env, db, await jsonBody(request)))
   if (route === '/forum' && method === 'GET') return response(await forumActivity(env, db))
   // TARS's profile picture, through the site's own avatar upload (size, type and storage checks included).
   if (route === '/tars/avatar' && method === 'POST') {

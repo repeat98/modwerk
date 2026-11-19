@@ -22,6 +22,9 @@ describe('phone library results bar', () => {
     expect(changed).toContain('<span>Downloads</span>')
     expect(changed).toContain('<span>Scenes</span>')
     expect(changed.match(/is-set/g)).toHaveLength(2)
+    const period = renderToStaticMarkup(createElement(LibraryResultsBar, { ...bar, sort: 'downloaded-7' }))
+    expect(period).toContain('aria-label="Sort: Most downloaded, last 7 days"')
+    expect(period).toContain('<span>Downloads · 7 days</span>')
   })
 
   it('leaves out sort and type on a machine without modules', () => {

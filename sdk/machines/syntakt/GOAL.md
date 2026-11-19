@@ -56,6 +56,7 @@ The stock OS speaks USB MIDI, so the link starts as SysEx over it. That needs no
 - **The hardware can't fence memory.** The MMU is off and the access-control windows are 16 MB wide, so the linker is the fence. Modules get their regions from the linker, never raw addresses.
 - **UI, audio and sequencer sites go through the base.** A module never patches one. It proposes a base hook first ([propose a hook](../../../docs/module-guides/README.md#propose-a-hook)).
 - **Mind the build's margins.** The in-place depack margin is 16,679 bytes on the 1.42 probe and the container may not exceed 2 MB. Every build checks both, and a depack overrun hangs the unit at the logo.
+- **The flash holds the unit's calibration.** The OS upgrade checks no size, and the NOR keeps each unit's analog calibration at 0x300000; an image past 0x280000 bytes erases it for good. Only the builder's 2 MB bound protects it, so never flash a container built any other way ([flash and recover](README.md#flash-and-recover)).
 - **Recovery needs MIDI DIN.** Before you flash any build, have the stock `.syx`, a MIDI DIN interface and Transfer's legacy OS-upgrade page ready ([flash and recover](README.md#flash-and-recover)). USB does not work in the startup menu.
 - **Only a unit qualifies a build.** Record the image's SHA-256 and what you saw. digiemu's Syntakt port (an open upstream pull request) boots to the UI without the FPGA or the analog tracks, so it is for iteration only.
 - **Firmware stays on your computer.** Never commit the OS file, extracted stock code or built images.
@@ -65,7 +66,7 @@ The stock OS speaks USB MIDI, so the link starts as SysEx over it. That needs no
 
 - **Is the gap free while the unit runs?** #1411's check answers it for 1.42.
 - **Which releases?** The base targets 1.42. Whether the analysed 1.40 file stays supported is the owner's decision, and 1.40A and 1.41 are refused until someone analyses them ([report §5.1](../../../docs/SYNTAKT_OS_RESEARCH.md#51-the-other-two-releases-140a-141-container-survey-only)).
-- **The flash limit.** The 2 MB bound comes from the upgrade's receive buffer. Reading the flash geometry from a unit would confirm it.
+- **The flash limit.** The 2 MB bound is the upgrade's receive buffer and ends 512 KB below the calibration record. Reading the flash geometry from a unit would confirm nothing else sits in between.
 - **Recovery from a unit that doesn't boot.** The DIN path has recovered a working unit, but not yet one that fails to boot.
 - **More units.** So far the boot probe and the stack-gap build have each run on one unit.
 

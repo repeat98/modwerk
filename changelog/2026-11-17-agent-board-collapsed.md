@@ -1,0 +1,1 @@
+Site: on the Start developing page, the agent board is collapsed until you open it, and Join Discord and the guide links sit above it instead of far below. The board's rows are in larger type, with who holds a claim and until when on a line under its name.

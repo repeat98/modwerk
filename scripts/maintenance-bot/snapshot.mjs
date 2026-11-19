@@ -17,6 +17,8 @@ for (const pull of pulls) {
   prs.push({
     number: pull.number, title: pull.title, author: pull.user?.login, association: pull.author_association, draft: pull.draft,
     head: pull.head.sha, labels: pull.labels.map(label => label.name), updated: pull.updated_at, checks: await checkSummary(api, pull.head.sha),
+    // A first-time contributor's checks that wait for a maintainer to start them (approve_run).
+    waitingRuns: ((await api('/actions/runs?status=action_required&head_sha=' + pull.head.sha + '&per_page=30')).workflow_runs ?? []).length,
   })
 }
 const issues = items.filter(item => !item.pull_request).map(item => ({
@@ -74,7 +76,7 @@ if (run && chat) {
 }
 
 mkdirSync(dir, { recursive: true })
-writeFileSync(join(dir, 'context.json'), JSON.stringify({ mode: daily ? 'daily' : 'pass', now: new Date().toISOString(), prs, issues, board: { threads, claims }, discord: conversations, forum: site.threads, shoutbox: site.shouts, mainRed: red, ledger: recent.actions.map(({ payload, ...action }) => ({ ...action, body: payload?.body?.slice(0, 400), thread: payload?.thread, claim: payload?.claim, message: payload?.message, shout: payload?.shout })) }, null, 1))
+writeFileSync(join(dir, 'context.json'), JSON.stringify({ mode: daily ? 'daily' : 'pass', now: new Date().toISOString(), prs, issues, board: { threads, claims }, discord: conversations, forum: site.threads, shoutbox: site.shouts, mainRed: red, todos: run ? (await bot('/todos')).todos.map(({ id, target, command, note, urgent }) => ({ id, target, command, note, urgent })) : [], ledger: recent.actions.map(({ payload, ...action }) => ({ ...action, body: payload?.body?.slice(0, 400), thread: payload?.thread, claim: payload?.claim, message: payload?.message, shout: payload?.shout })) }, null, 1))
 const output = process.env.GITHUB_OUTPUT
 if (output) appendFileSync(output, 'run=' + run + '\nfingerprint=' + fingerprint + '\n')
 console.log((state.paused ? 'Paused. ' : '') + prs.length + ' open pull requests, ' + issues.length + ' open issues, ' + threads.length + ' board threads, ' + claims.length + ' claims, ' + rooms.length + ' Discord rooms' + (red.length ? ', main red in ' + red.length + ' workflow(s)' : '') + '; ' + (run ? 'the model runs.' : 'nothing changed, the model is skipped.'))

@@ -107,8 +107,8 @@
       {
         "name": "Core image with the digital voices",
         "unit": "bytes",
-        "value": 19460,
-        "note": "The base's voices variant (e241e031), for a set with a digital voice machine and no send effect: send-bus's lock words and digital voices without the send bus, its pages, its clock or the FX list, 16,116 bytes .run plus 3,344 bytes .bss."
+        "value": 17708,
+        "note": "The base's voices variant (dd771eae), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 14,876 bytes .run plus 2,832 bytes .bss."
       }
     ]
   },

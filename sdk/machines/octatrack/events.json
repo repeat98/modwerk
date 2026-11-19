@@ -558,7 +558,8 @@
      "evidence": "sdk/octabam/modules/repitch/repitch.s rate_hook and rate_gate"
     }
    ],
-   "orderEvidence": "sdk/octabam/modules/poly8/composition.json replaces Repitch's 0x40004100 detour with POLY8's mr_rate_hook, which takes POLY tracks first and passes the others to rate_hook. POLY8 also forces a POLY track's live TSTR off (poly_config_tstr), so REPITCH never acts on one."
+   "orderEvidence": "sdk/octabam/modules/poly8/composition.json replaces Repitch's 0x40004100 detour with POLY8's mr_rate_hook, which takes POLY tracks first and passes the others to rate_hook. POLY8 also forces a POLY track's live TSTR off (poly_config_tstr), so REPITCH never acts on one.",
+   "rests": true
   },
   {
    "event": "ev_voice_bind",
@@ -594,7 +595,8 @@
      "evidence": "sdk/octabam/modules/mute-modes/patch_softmute.s fresh_bind (hook 10)"
     }
    ],
-   "orderEvidence": "POLY8's mr_stop_voice checks its renderer state before anything else, then Mute Modes' gate (its mr_mute_suppressed, a copy of fresh_bind's test, when fresh_bind is linked), and only then discards the track's extension voices (ev_voice_bind_run)."
+   "orderEvidence": "POLY8's mr_stop_voice checks its renderer state before anything else, then Mute Modes' gate (its mr_mute_suppressed, a copy of fresh_bind's test, when fresh_bind is linked), and only then discards the track's extension voices (ev_voice_bind_run).",
+   "rests": true
   },
   {
    "event": "ev_voice_bind_run",
@@ -619,7 +621,8 @@
      "evidence": "sdk/octabam/modules/poly8/polyphony.s poly_stop_voice .psv_stock (pm_clear_extensions)"
     }
    ],
-   "orderEvidence": "In POLY8 + Mute Modes the extension voices are discarded only when the reset is not dropped (mr_mute_suppressed returns first)."
+   "orderEvidence": "In POLY8 + Mute Modes the extension voices are discarded only when the reset is not dropped (mr_mute_suppressed returns first).",
+   "rests": true
   },
   {
    "event": "ev_mute_keep",
@@ -1806,7 +1809,8 @@
      "evidence": "sdk/octabam/modules/bbd/stopkill.s bbd_kill_hook (the card build's detour at the same site); on the owner's MKII 15 Oct 2026 (dev twin e429b787): slot 11 0 while held, 127 after T1's next trig, the tail cut to -132 dBFS"
     }
    ],
-   "orderEvidence": "Every handler acts only on a track whose FX2 runs its own effect id, so no order is needed between them."
+   "orderEvidence": "Every handler acts only on a track whose FX2 runs its own effect id, so no order is needed between them.",
+   "rests": true
   },
   {
    "event": "ot_midi_generators",
@@ -2018,7 +2022,7 @@
    "results": "notify",
    "when": "a project load is about to read every bank from the card",
    "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
-   "contract": "A notification before stock's load: what a module keeps per project is about to be replaced, so it marks its own copy stale here and reads its file at ev_banks_loaded. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "contract": "A notification before stock's load: what a module keeps per project is about to be replaced, so it marks its own copy stale here and reads its file at ev_banks_loaded. d2-d7/a2-a6 must be kept, as C keeps them. Seen on an MKI (OS 1.40C, 18 November 2026): PROJECT > CHANGE raises it, then ev_banks_loaded, then ev_project_new; RELOAD PROJECT raised it once and once not at all.",
    "order": "lower first, then module id; every handler runs. 10-90.",
    "subscribers": [],
    "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
@@ -2032,7 +2036,7 @@
    "results": "or",
    "when": "stock has read every bank of the project; no stock site: the base raises it when the routine at 0x40090504 returns",
    "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
-   "contract": "The project's banks are in memory: a module reads its own file from the project directory now. The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "contract": "The project's banks are in memory: a module reads its own file from the project directory now. The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them. Seen on an MKI (OS 1.40C, 18 November 2026): stock reads the arrangements (arr01-08) after this, and RELOAD PROJECT did not raise it; a module that must act after a whole load waits until stock's card jobs are done.",
    "order": "lower first, then module id; every handler runs. 10-90.",
    "subscribers": [],
    "raisers": [],
@@ -2083,7 +2087,7 @@
    "results": "notify",
    "when": "stock makes a new, empty project, before it initialises it",
    "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
-   "contract": "A notification: a module empties what it keeps per project, so nothing of the last project reaches the new one. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "contract": "A notification: a module empties what it keeps per project, so nothing of the last project reaches the new one. d2-d7/a2-a6 must be kept, as C keeps them. Seen on an MKI (OS 1.40C, 18 November 2026): PROJECT > CHANGE and RELOAD PROJECT both raise it after their own hooks, as part of the load, not only for a new project.",
    "order": "lower first, then module id; every handler runs. 10-90.",
    "subscribers": [],
    "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
@@ -2174,7 +2178,7 @@
    "results": "or",
    "when": "RELOAD PROJECT has copied the project's .strd files back to .work; no stock site: the base raises it when the routine at 0x4008f180 returns",
    "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
-   "contract": "A module copies its own .strd file back to its .work file; stock's bank loads follow (ev_bank_load). The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "contract": "A module copies its own .strd file back to its .work file; stock's bank loads follow (ev_bank_load). The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them. Seen on an MKI (OS 1.40C, 18 November 2026): ev_project_new follows, and ev_banks_loaded did not.",
    "order": "lower first, then module id; every handler runs. 10-90.",
    "subscribers": [],
    "raisers": [],
@@ -2257,6 +2261,63 @@
      "what": "the sample pool's cold init (LOAD PROJECT, a new project, REFORMAT FLEX RAM, boot) clears the arena through this call: the base clears around the borrowed pages and keeps them out of the free list"
     }
    ]
+  },
+  {
+   "event": "ot_part_menu",
+   "index": 53,
+   "kind": "table",
+   "site": null,
+   "length": 0,
+   "record": 24,
+   "key": null,
+   "room": 7,
+   "declaration": "struct modwerk_part_menu {\n    uint32_t abi;                       /* MODWERK_PART_MENU_ABI */\n    const char *label;                  /* its parent row in the left column: up to 7 characters */\n    uint32_t count;                     /* its actions, 1-6 */\n    const char *const *actions;         /* each action's row in the right column: up to 14 characters */\n    void (*choose)(unsigned action);    /* YES on action 0..count-1, after the base has closed the Part Edit window */\n    const uint32_t *icon;               /* 0, or its icon beside the label: 9 rows, bit 18 the leftmost of 19 columns */\n};\n#define MODWERK_PART_MENU_ABI 1u",
+   "when": "FUNC+PART (MKII), or another of stock's three Part Edit openers, opens the Part Edit window as stock does; with a contribution installed the base draws it as PROJ's menu draws its categories, in two columns: the parents on the left (PART, stock's RENAME, RELOAD, SAVE and SAVE ALL, then one row per contribution) and the highlighted parent's actions on the right",
+   "context": "the UI task: choose is short and may open a window of its own",
+   "contract": "Contribute one struct modwerk_part_menu (every field set). UP/DOWN (and LEVEL) move in the focused column, RIGHT or YES on a parent moves into its actions, LEFT goes back, NO closes the window from either column, as PROJ's menu does. YES on one of PART's actions is stock's; YES on a contribution's action closes the Part Edit window, then calls choose(action) once: the module opens what it needs itself and must not close or reopen stock's Part Edit window. The window opens where it was left, as PROJ's menu does: the same parent, the same column and each parent's last action row, also after NO. Labels are read each time the window is drawn: keep them in the image, printable capitals: a parent label at most 7 characters (the left column fits 7 beside an icon), an action at most 14. An icon is optional. A record with a wrong abi, no label, no choose or a count outside 1-6 is skipped. With no contribution the window is stock's.",
+   "order": "lower first, then module id: the left column's order under PART. 50-90.",
+   "subscribers": [],
+   "orderEvidence": "Pattern Sample Locks (LOCK, CLEAR) and Kits (SAVE KIT) are the first planned contributors, each with its own parent row; neither reads the other's.",
+   "sites": [
+    {
+     "site": "0x4002dc68",
+     "length": 6,
+     "guard": "d35bfe797abb5bb27e98ec6d4cb422e20c44f307e5d6597af674380832f8dbdf",
+     "op": "jmp",
+     "target": "mw_part_menu_at_4002dc68",
+     "what": "a Part Edit opener (0x4002dc4c)'s call of the popup 0x4006d94c(4, row, 0x460d101c, labels 0x400b9b14, callbacks 0x400b9b04): the base's opener in its place"
+    },
+    {
+     "site": "0x4002dc90",
+     "length": 6,
+     "guard": "d35bfe797abb5bb27e98ec6d4cb422e20c44f307e5d6597af674380832f8dbdf",
+     "op": "jmp",
+     "target": "mw_part_menu_at_4002dc90",
+     "what": "a second Part Edit opener (0x4002dc74)'s popup call, the same arguments: the base's opener in its place"
+    },
+    {
+     "site": "0x4002dcc4",
+     "length": 6,
+     "guard": "d35bfe797abb5bb27e98ec6d4cb422e20c44f307e5d6597af674380832f8dbdf",
+     "op": "jmp",
+     "target": "mw_part_menu_at_4002dcc4",
+     "what": "FUNC+PART's Part Edit opener (MKII; 0x4002dc9c stores the current Part first): the base's opener in its place"
+    }
+   ]
+  },
+  {
+   "event": "ev_in_use",
+   "index": 54,
+   "site": null,
+   "prototype": "unsigned f(void)",
+   "args": [],
+   "results": "each",
+   "when": "the base's UI tick asks each module that subscribes, on its own, whether it acts on a track now; no stock site and no row walk: the base calls the module's handler and keeps its answer",
+   "context": "the UI tick (a task, never the frame interrupt): short, no firmware call that can block",
+   "contract": "Return nonzero while this module acts on at least one track of the current Part (a machine: a track runs it; a feature: its setting is on somewhere), 0 while it acts on none. While it answers 0 the module rests: the base leaves its handlers out of every hook that rests (HOOKS.md's kind column), so the frame interrupt never enters its code there, and keeps every other hook, table and its setup UI, so the musician can still turn it on. The first nonzero answer puts it back in its (order, module id) place, from the next tick on, so a note that starts in the gap before that tick runs without it: answer for every Part a pattern change could bring in while playing, and start any per-track state afresh when the module wakes. A module that does not subscribe never rests; installing, replacing or removing a module wakes its position until the next answer. d2-d7/a2-a6 must be kept.",
+   "order": "any: the base asks every subscriber on its own and nothing is OR'd, so the order changes nothing.",
+   "subscribers": [],
+   "orderEvidence": "Each module answers only for itself. No module subscribes yet. Resting takes out handlers only, never a module's own stock-site detours: on an MKII (17 November 2026) a test handler of 400 loop passes cost 12.5 frame points on no track and 1.0 resting, while Repitch 0.2.1 cost 2.4 either way."
   }
  ]
 }

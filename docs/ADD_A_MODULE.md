@@ -4,7 +4,7 @@ For contributors and their coding agents: read this, then your machine's section
 
 Start with the [developer workflow and distribution context](DEVELOPER_WORKFLOW.md) for submission, release verification, report handling and catalogue boundaries. Instruments without an SDK follow [Add a machine](ADD_A_MACHINE.md) before module scaffolding.
 
-For an existing published module, start with [author updates](MODULE_AUTHOR_UPDATES.md). Telling a coding agent “fix issue <link>” in your fork starts the guided fix, version, hardware-test and release flow. The owner approves first releases; registered authors can publish their own later updates after checks pass.
+For an existing published module, start with [author updates](MODULE_AUTHOR_UPDATES.md). Telling a coding agent “fix issue <link>” in your fork starts the guided fix, version, hardware-test and release flow. Device reviewers or repository maintainers approve first releases; registered authors can publish their own later updates after checks pass.
 
 ## Read the guide for your category first
 
@@ -28,7 +28,7 @@ Every module follows [the guide for its category](module-guides/README.md): effe
 - Ask the author first. Before you change the code, behaviour or wording of a module that names someone else as its author, get their OK on GitHub or Discord and link it in the pull request ([Ask the author first](DEVELOPER_WORKFLOW.md#ask-the-author-first)). When you import someone's module, @mention them on the pull request (or open an issue on their repository) before it merges. Say what was imported or changed and give them a chance to review: Modwerk lists them as the author, and users bring their problems to them. The licence may not require it; do it anyway.
 - Code or behaviour changes inside a module folder need a higher semantic `version` in its manifest, and the same version in `sdk/catalog.json` once listed. Documentation/media/prose-only edits need a version bump only when requesting automatic author publication.
 - No module depends on another. Each builds, installs and works when it is the only module chosen: no `requires`, no hooks into another module's code, no "needs X" selection rule, no pull request stacked on another module's. Shared code goes into the base or the shared SDK first, or the features ship as one module. Review refuses a dependent module, with no exception ([cross-compatibility](module-guides/README.md#cross-compatibility)).
-- One module per pull request. The owner approves the first release and changes beyond the registered author's scope. Later scoped updates can use automatic author publication after evidence verification and required checks.
+- One module per pull request. An assigned device reviewer or repository maintainer approves the first release. Later scoped updates can use automatic author publication after evidence verification and required checks.
 
 ## Persistence and multiple instances
 
@@ -175,7 +175,7 @@ Its folder, `sdk/<platform>/modules/<id>/`, holds:
 - `media/` with real black-and-white screenshots of where the module is selected and of its control pages, and their provenance in `capture.json`. A module that draws nothing of its own gives `access.noUiReason` instead ([rule](MODULE_UI_CAPTURES.md#manifest-contract));
 - an original 320×192 SVG thumbnail: `presentation/thumbnail.svg` on the Octatrack, `media/thumbnail.svg` on the elemod machines, where `npm run pr:ready` refuses the template's placeholder.
 
-The checks reject missing sections, coloured screenshots and a version that did not increase. They cannot tell whether the documentation is true; the owner reviews first releases and registered authors verify their scoped updates.
+The checks reject missing sections, coloured screenshots and a version that did not increase. They cannot tell whether the documentation is true; a device reviewer or repository maintainer reviews first releases and registered authors verify their scoped updates.
 
 ## Module thumbnail style
 
@@ -298,8 +298,7 @@ In the toolchain image set `ELEKLOADER_DSP_ASM`; restore old versions it deletes
 It binds the native source hash: every file in the folder but `octamod.module.json`, `media/`, Markdown and licences,
 so `evidence/performance.json`, the thumbnail and `manifest.py` are final before the owner signs. Without it
 `modules:generate` refuses the module, and the package builder takes the display name from the generated documents:
-folder complete, approval, `modules:generate`, then the package. List the module in `module-set.test.ts`'s
-published packages, `module-qualification.test.ts`'s owner-approved releases and `resource-indicators.test.ts`'s
+folder complete, approval, `modules:generate`, then the package. List the module in `module-qualification.test.ts`'s owner-approved releases and `resource-indicators.test.ts`'s
 exceptions. A module back after removal counts as new: one changelog entry. Taking an id off `REMOVED_MODULE_IDS`
 moves `src/catalog/modules.ts`, which Tape Echo's and Euclid's standalone recipes pin.
 
@@ -324,7 +323,7 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
 3. **Measure and test.**
    - Record the worst-case cycles for each processor and the exact memory regions and totals. New FX should aim for DSP cost in the same ballpark as worst-case stock SPRING REV. Plan around that reference before implementation and compare expensive types/settings, moving controls and trigger splits under matched conditions on both cores. This is a design target without a fixed ratio or hard per-effect ceiling; substantially higher cost needs optimization and review of the remaining headroom.
    - For an effect, also check how it sounds: aliasing, clipping, DC and idle behaviour (`npm run fx:audit`, [effects guide](module-guides/effects.md#sound-quality)). Paste the table into TESTING.md, or write "not tested". No gate in CI runs it.
-   - Name its CPU price in `resources.cpuPrice`, measured on a unit: a machine's worst render with `npm run device -- cpu`, written also as its descriptor's `reserved[0]`; any other module's frame-interrupt share with `npm run device:price`. `modules:check` refuses a module without one ([format](MODULE_PERFORMANCE.md)).
+   - Name its CPU price in `resources.cpuPrice`, measured on a unit: what one playing track of a machine adds (`npm run device -- do`, `guard`), also its descriptor's `reserved[0]`; any other module's frame-interrupt share with `npm run device:price`. `modules:check` refuses a module without one ([format](MODULE_PERFORMANCE.md)).
    - Add a hardware report from a real unit, stating its model, how long it ran, what was tested and the limitations. There is no minimum duration or track count.
    - A fix for a stock bug can be regressed in the emulator: `ot_emu`'s `call <address> [args]` runs a stock routine on a booted image, after `poke` has set up the state (Direct Jump Kyoti's `verify.py`, part 6, runs the MIDI Plays-Free stall on the original OS and on the module image).
    - If you could not test on hardware, say so in the pull request. Only the owner can waive this, for one exact version.
@@ -348,7 +347,7 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
 
 Firmware for these machines is built by elekloader's builder, vendored unchanged and run in the browser ([vendor/elekloader](../vendor/elekloader/README.md)). It decides which mods combine, so there is no comparison with a native builder to run.
 
-Every new library version passes the publication gate: at least `author-hardware` evidence, measured `resources.memoryBytes` and load, and screenshots of where the mod appears ([SDK.md](SDK.md)). Modwerk imports released `.elemod` files; it does not package mods for elekloader. To list a mod in elekloader's shop, including one Modwerk's library does not take, follow elekloader's [shop guide](https://github.com/elekloader/elekloader/blob/main/docs/SHOP.md) ([elekloader mods and cores](../CONTRIBUTING.md#elekloader-mods-and-cores)).
+Every new library version passes the publication gate: at least `author-hardware` evidence, measured `resources.memoryBytes` and load, and screenshots of where the mod appears ([SDK.md](SDK.md)). Modwerk imports released `.elemod` files; it does not package mods for elekloader.
 
 **Porting an elekloader mod:**
 

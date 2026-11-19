@@ -1,0 +1,1 @@
+Docs: every machine's page is to flash its Modwerk base over USB and read the unit's diagnostics, as the Octatrack's does, and every contribution, core work for every machine included, comes to Modwerk as a pull request here. The Digitone II has a goal page with the order of its pieces. Start developing no longer links out to other projects' repositories.

@@ -1,0 +1,1 @@
+Site: Most downloaded in the module library can now count the last 7, 30 or 90 days as well as all time. Pick the period beside the sort, or under the sorts on a phone; the cards then show the downloads for that period, so the numbers match the order.

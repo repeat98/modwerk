@@ -23,7 +23,8 @@ import { LIMIT_REACHED } from '../catalog/set-limit'
 import { SelectionWarning } from '../components/SelectionWarning'
 import { LibraryTools } from '../components/LibraryTools'
 import { LibraryResultsBar } from '../components/LibraryResultsBar'
-import { compareModules, downloadCoverage, type ModuleStatistics } from '../community/module-statistics'
+import { compareModules, downloadCoverage, downloadPeriod, periodCoverage, type ModuleStatistics } from '../community/module-statistics'
+import { DownloadPeriodContext } from '../community/download-period'
 import { DeviceImage, PhotoCredit } from './DeviceImage'
 import { ALL_MACHINES, DEVICES, DEVICES_BY_ID, STATUS_LABELS, deviceHref, deviceSteps, deviceTitle, readyForMods, stepsDone, type DeviceProfile } from './registry'
 import { MACHINE_STACK } from './machine-contract'
@@ -197,7 +198,8 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
   const onlyGroup = !device && shownGroups.length === 1 ? shownGroups[0].device : undefined
   const resultsSummary = !hasMods ? 'No modules yet · ' + device?.name : term ? total + ' ' + (total === 1 ? 'result' : 'results') + ' for “' + query.trim() + '”' : total + ' ' + (total === 1 ? 'module' : 'modules') + ' · ' + ((device ?? onlyGroup)?.name ?? 'All machines')
   function clearFilter(clear: () => void) { clear(); heading.current?.focus({ preventScroll: true }) }
-  return <div className="library-page">
+  const days = downloadPeriod(sort) ?? 0
+  return <DownloadPeriodContext.Provider value={days}><div className="library-page">
     <div className="page-heading"><div><p className="page-kicker">MODWERK / {device?.name.toUpperCase() ?? 'ALL MACHINES'}</p><h1 ref={heading} tabIndex={-1}>{category ? LIBRARY_CATEGORY_LABELS[category] : device ? 'Module library' : 'All mods'}</h1><p>{category === 'standalone' ? STANDALONE_NOTE : 'Explore modules for your instruments.'}</p></div><span className="library-total">{total} modules</span></div>
     {device && projectMachineForDevice(device.id) && <p className="machine-external-projects"><a href={assetUrl('projects/') + '?machine=' + projectMachineForDevice(device.id)}>Other projects for {device.name} <Icon name="arrow" size={14} /></a></p>}
     {!!warnings.length && <SelectionWarning warnings={warnings.map(warning => ({id: warning.device.id, title: warning.device.name + ': your selection needs a change', description: warning.description, href: deviceHref(warning.device.id, 'configuration')}))} />}
@@ -215,14 +217,14 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
       <div className="module-grid">{group.cards}</div>
     </section>)}
     {hasMods ? <>
-      <p className="popularity-note">{statistics ? downloadCoverage(statistics[0]?.downloadsStarted) : 'Popularity counts are currently unavailable.'}{' ' + STABILITY_NOTE}{device && sort === 'recent' && device.id !== 'octatrack' && ' Addition dates are not available yet; this sort uses name order.'}</p>
+      <p className="popularity-note">{statistics ? days ? periodCoverage(days, statistics[0]?.dailyStarted) : downloadCoverage(statistics[0]?.downloadsStarted) : 'Popularity counts are currently unavailable.'}{' ' + STABILITY_NOTE}{device && sort === 'recent' && device.id !== 'octatrack' && ' Addition dates are not available yet; this sort uses name order.'}</p>
       {!total && <div className="no-results"><Icon name={term || libraryFamily !== 'all' ? 'search' : category === 'standalone' ? 'lock' : 'grid'} size={30} /><h2>{term || libraryFamily !== 'all' ? 'No modules found' : 'No ' + (category ? LIBRARY_CATEGORY_LABELS[category].toLowerCase() : 'modules') + ' here yet'}</h2><p>{term || libraryFamily !== 'all' ? 'Try another name, type or author.' : 'Be the first to publish one: every machine follows the same SDK.'}</p>{onClearSearch && (term || libraryFamily !== 'all') ? <button className="button button-quiet" onClick={() => clearFilter(onClearSearch)}>{libraryFamily !== 'all' ? 'Clear filters' : 'Clear search'}</button> : <a className="button button-quiet" href={term || libraryFamily !== 'all' ? deviceHref(device?.id ?? ALL_MACHINES) : issueRepository() + '/blob/main/docs/SDK.md'}>Browse modules</a>}</div>}
       {children}
       {device && <div className="library-note"><span className="status-dot" /><p>{device.id === 'octatrack' ? 'This catalog follows an experimental build. Review each module before preparing a ' + w.set + '.' : 'Built from each author’s pinned public release, with credit and licence.'}</p></div>}
       {device && device.id !== 'octatrack' && <StackLadder device={device} />}
       {!device && <section className="machine-section"><div className="library-subheading"><span>No mods yet</span><span className="subtle">Help open the next machine</span></div><div className="machine-chips">{DEVICES.filter(machine => machine.status === 'research' || machine.status === 'open').map(machine => <a key={machine.id} href={deviceHref(machine.id)} className={'machine-chip is-' + machine.status}>{machine.name}{machine.variants && <small> {machine.variants.join(' · ')}</small>}</a>)}</div></section>}
     </> : device && <EmptyMachine device={device} embedded />}
-  </div>
+  </div></DownloadPeriodContext.Provider>
 }
 
 export function DigiConfiguration({ device, configuration, configurations, onSelect, onDialog, onToggle, onImport, onStorageLock, onReport }: { device: DigiDevice; onReport: () => void; configuration?: Configuration; configurations: Configuration[]; onSelect: (id: string) => void; onDialog: (mode: 'create' | 'rename' | 'duplicate' | 'delete') => void; onToggle: (id: string) => void; onImport: (configuration: ReturnType<typeof parseDigiSelection>) => void; onStorageLock: (id: string, lock: StorageLock) => void }) {
@@ -268,7 +270,7 @@ export function DigiConfiguration({ device, configuration, configurations, onSel
         </div>
         <div className="configuration-checkout">
           <section className={'compatibility-panel compatibility-' + (estimate.fits && !estimate.clashes.length ? 'clear' : 'conflict')} aria-live="polite" aria-labelledby="digi-compatibility-title"><div className="compatibility-heading"><span className="compatibility-icon"><Icon name={estimate.fits && !estimate.clashes.length ? 'shield' : 'sliders'} size={20}/></span><div><h2 id="digi-compatibility-title">{!estimate.fits || estimate.clashes.length ? 'Your selection needs a change' : selection.length ? 'No declared conflicts' : 'Choose your modules'}</h2><p>{!estimate.fits || estimate.clashes.length ? 'Review the resources below and choose a compatible set.' : selection.length ? mobile ? 'Module claims were checked. Placement checks happen on a computer with your base firmware.' : 'Choose your base firmware for placement checks.' : 'Add a module from the library, or build the core alone. Compatibility updates as you make changes.'}</p></div></div></section>
-          <div className="checkout-card">{mobile ? <ConfigurationHandoff onExport={() => { if (configuration) { downloadDigiSelection(configuration, device.id); setExported(exportKey) } }} exported={exported === exportKey} canExport={!!configuration} /> : <MemberGate action="build firmware" next={device.id+'/configuration'}><DigiBuildPanel device={device} firmware={firmware} moduleIds={ids} storage={configuration && { lock: configuration.storageLock, save: lock => onStorageLock(configuration.id, lock) }} onExport={() => { if (configuration) { downloadDigiSelection(configuration, device.id); setExported(exportKey) } }} exported={exported===exportKey} canExport={!!configuration} results={buildResults}/></MemberGate>}</div>
+          <div className="checkout-card">{mobile ? <ConfigurationHandoff onExport={() => { if (configuration) { downloadDigiSelection(configuration, device.id); setExported(exportKey) } }} exported={exported === exportKey} canExport={!!configuration} /> : <MemberGate action="build firmware" next={device.id+'/configuration'}><DigiBuildPanel key={configuration?.id} device={device} firmware={firmware} moduleIds={ids} storage={configuration && { lock: configuration.storageLock, save: lock => onStorageLock(configuration.id, lock) }} onExport={() => { if (configuration) { downloadDigiSelection(configuration, device.id); setExported(exportKey) } }} exported={exported===exportKey} canExport={!!configuration} results={buildResults}/></MemberGate>}</div>
           <p className="builder-credit">Powered by <a href={BUILDER_SOURCE.repository} target="_blank" rel="noreferrer">elekloader ↗</a></p>
         </div>
       </div>

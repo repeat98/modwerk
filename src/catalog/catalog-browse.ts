@@ -3,10 +3,11 @@ import { LIBRARY_CATEGORIES } from './modules'
 import { DIGI_MODS } from '../devices/digi-mods'
 import { DEVICES_BY_ID, deviceHref } from '../devices/registry'
 import { moduleHref } from '../routing'
+import { MODULE_SORT_VALUES } from '../community/module-statistics'
 
 export type CatalogBrowse = { route: string; query: string; family: string; sort: string; ids: readonly string[] }
 const STORAGE_KEY = 'modwerk.catalog-browse'
-const sorts = ['updated', 'recent', 'collection', 'name', 'author', 'working', 'liked', 'downloaded']
+const sorts = MODULE_SORT_VALUES
 
 function validLibraryRoute(route: string) {
   if (route === 'library' || LIBRARY_CATEGORIES.includes(route as typeof LIBRARY_CATEGORIES[number])) return true
