@@ -16,8 +16,11 @@ Choose a dedicated private directory (0700 on Unix). The server stores only
 configuration metadata in `sets.json` (0600); it neither opens nor changes a
 browser profile. Each developer/account runs a separate process and directory.
 An exclusive `.mcp-lock` records the owning process and prevents concurrent set
-overwrites. Normal exit removes it. After a crash, check `owner.json` and remove
-the lock only after confirming that its recorded process is no longer running.
+overwrites. Normal exit and SIGTERM remove it. A lock whose recorded process has
+ended (a crash, or an MCP client's health check such as `claude mcp get` killing
+the server while it loads) is taken over at the next start. A lock held by a
+running server is refused with its PID: one workspace serves one agent session
+at a time, so close the other session or stop that PID.
 Use Node directly when registering the server with an MCP client, because npm's
 startup banner is not MCP JSON:
 
@@ -63,6 +66,21 @@ with `--api` (default `http://127.0.0.1:8788/api`). It must be HTTPS or localhos
 requests cannot select hosts, credentials, arbitrary headers or filesystem paths.
 Normal session and base-install-prompt reads are supported. The frontend's
 build-access check uses POST, so it also needs the API-write opt-in and confirmation.
+With Claude Code, register it once from inside the checkout with Node 24 active.
+This records absolute paths, uses the live site's Worker (the default `--api` is
+a local Worker on 127.0.0.1:8788) and the board sign-in from `npm run board -- login`:
+
+```sh
+mkdir -m 700 -p "$HOME/.modwerk"
+claude mcp add --scope user modwerk -- "$(command -v node)" "$PWD/scripts/frontend-mcp.mjs" \
+  --data-dir "$HOME/.modwerk" --api https://octamod-community.octamod.workers.dev/api \
+  --session-file "$HOME/.config/modwerk/developer.json"
+```
+
+Run it again after nvm switches Node versions. For a unit on the USB bridge, add
+`--device-socket "$HOME/.modwerk/modwerk-ot.sock"` (below). Board posts and other
+writes need `--allow-api-writes`; add it only when the developer wants that.
+
 Authentication and secret-management mutations are excluded. OAuth/sign-in and
 file-upload UI are separate workflows.
 
