@@ -37,5 +37,6 @@
   .credits-nav button, .credit-links a { min-height: 44px; }
   .credits-section { margin-top: 28px; }
   .credits-section-heading { gap: 10px; }
+  .credits-section-heading h2 { scroll-margin-top: calc(72px + env(safe-area-inset-top)); }
   .credit-project { padding: 18px 20px; }
 }
