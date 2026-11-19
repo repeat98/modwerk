@@ -140,6 +140,14 @@ describe('pr:ready verdict', () => {
       expect(git(checkout, 'rev-parse', 'origin/main')).toBe(current)
       git(checkout, 'merge', '--ff-only', 'origin/main')
       expect(git(checkout, 'rev-parse', 'HEAD')).toBe(current)
+      git(checkout, 'add', 'scripts', 'src')
+      git(checkout, 'commit', '-m', 'Track the local check fixture')
+      writeFileSync(join(checkout, 'new-helper.ts'), 'export const enabled = true\n')
+      const dirty = spawnSync(process.execPath, [script], { cwd: checkout,
+        env: { ...env, npm_execpath: join(directory, 'never-run-npm.mjs') }, encoding: 'utf8' })
+      expect(dirty.status, dirty.stderr).toBe(1)
+      expect(dirty.stdout).toContain('new-helper.ts')
+      expect(dirty.stdout).not.toContain('Your branch does not contain current main')
     } finally { rmSync(directory, { recursive: true, force: true }) }
   }, 20_000)
 })

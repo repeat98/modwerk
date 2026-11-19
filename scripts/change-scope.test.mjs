@@ -148,6 +148,12 @@ describe('documentation and firmware scheduling', () => {
       const base = git('rev-parse', 'HEAD')
       writeFileSync(resolve(root, 'README.md'), 'Better'); git('add', '.'); git('commit', '-m', 'docs')
       expect(readChangeScope({ root, base, head: 'HEAD' }).documentation).toBe(true)
+      const zoom = 'sdk/zoom/modules/demo/modwerk.module.json'
+      mkdirSync(dirname(resolve(root, zoom)), { recursive: true })
+      writeFileSync(resolve(root, zoom), JSON.stringify({ ...digi, machine: 'zoom-ms-70cdr' }))
+      git('add', zoom); git('commit', '-m', 'Zoom release')
+      expect(readChangeScope({ root, base, head: 'HEAD' })).toMatchObject({ worker: true, modules: false, elemod: false })
+      expect(readChangeScope({ root, base: 'HEAD', head: base }).worker).toBe(true)
       mkdirSync(resolve(root, 'sdk/digitakt/modules/demo/src'), { recursive: true })
       writeFileSync(resolve(root, 'sdk/digitakt/modules/demo/src/demo.c'), 'void demo(void) {}')
       expect(readChangeScope({ root, base }).elemod).toBe(true)
@@ -222,6 +228,26 @@ describe('module version rule', () => {
 })
 
 describe('release export reproduction', () => {
+  it('schedules the compiler for the internal imports of its builder and release verifier', () => {
+    const files = new Set(), pending = ['scripts/build-elemod-packages.mjs', 'scripts/verify-elemod-release-exports.mjs']
+    while (pending.length) {
+      const path = pending.pop()
+      if (files.has(path)) continue
+      files.add(path)
+      const source = readFileSync(resolve(repository, path), 'utf8')
+      for (const [, spec] of source.matchAll(/^(?:import|export)\s+(?!type\b)[^'";]*?from\s*['"](\.[^'"]+)['"]/gm)) {
+        pending.push(relative(repository, resolve(repository, dirname(path), spec)).replaceAll('\\', '/'))
+      }
+    }
+    expect(files.has('scripts/elemod-compiler-flags.mjs')).toBe(true)
+    expect([...files].filter(path => !scope(change(path)).elemod)).toEqual([])
+  })
+  it.each(['sdk/machines/octatrack/base-binding.json', 'sdk/machines/octatrack/module-adapters/base_bound.py',
+    'public/octatrack-modules/cc-map/test.mwrm', 'sdk/tests/test_base_bound.py', 'vendor/elekloader/kit/kit.json'])(
+    'runs the pinned Octatrack rebuild for %s', path => expect(scope(change(path)).modules).toBe(true))
+  it('reproduces a changed committed Elemod export', () => {
+    expect(scope(change('sdk/imports/packages/demo/demo-1.0.0-os1.54.elemod')).elemod).toBe(true)
+  })
   it.each(['scripts/package-elemod-recipe.mjs', 'scripts/verify-elemod-release-exports.mjs'])('recompiles the elemod sources for %s', path =>
     expect(scope(change(path)).elemod).toBe(true))
 })

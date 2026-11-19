@@ -85,12 +85,18 @@ function nativeChange(change, machine) {
   }
   const common = /^sdk\/(build|runtime)\//.test(path)
   if (machine === 'octatrack') return common || /^sdk\/octatrack\/modules\//.test(path) || /^sdk\/octabam\/(platform|tools|dsp|licenses)\//.test(path)
+    || /^sdk\/(?:machines\/octatrack|firmware_codec)\//.test(path) || /^public\/octatrack-modules\//.test(path)
+    || ['sdk/tests/test_base_bound.py', 'vendor/elekloader/kit/kit.json', 'scripts/test-base-bound.sh', 'scripts/mirror-octatrack-modules.mjs'].includes(path)
     || path === 'sdk/catalog.json' || /^src\/engine\/assets\/(?!elemod\/)/.test(path)
     || /^scripts\/(build-module-packages\.py|build-utility-packages\.py|build-usb-audio-packages\.py|build-modules-isolated\.sh|import-module-build\.mjs|module-source\.mjs)$/.test(path)
   return common || new RegExp(`^sdk\\/(${ELEMOD}|elemod|machines)\\/`).test(path) || /^vendor\/elekloader\/(catalog\/|elekloader\.lock\.json$|upstream-catalog\.json$)/.test(path) || /^sdk\/imports\/elekloader-[^/]+\.json$/.test(path)
     || /^sdk\/octabam\/(scripts\/vendor\.sh|tools\/patches\/|tools\/harness\/dsp_host)/.test(path)
     || /^scripts\/(build-elemod[^/]*|elemod-elf\.mjs|verify-elemod-source-parity\.mjs|package-elemod-recipe\.mjs|verify-elemod-release-exports\.mjs)$/.test(path)
-    || /^src\/engine\/assets\/elemod\//.test(path)
+    || /^src\/engine\/(assets\/elemod|elektron)\//.test(path) || /^vendor\/elekloader\/kit\//.test(path)
+    || /^sdk\/imports\/packages\/.*\.elemod$/.test(path)
+    || /^src\/catalog\/(?:module-contract(?:-v3)?|module-folder|module-authors|versions|zoom-effect-ids|elemod-site-recipe)\.ts$/.test(path)
+    || /^src\/devices\/(?:machine-contract\.ts|machines\.generated\.json)$/.test(path)
+    || /^scripts\/(?:elemod-compiler-flags|elemod-dependencies|machine-folders)\.mjs$/.test(path)
 }
 function compilerJob(text, name) {
   const lines = text?.split('\n') ?? [], start = lines.indexOf('  ' + name + ':')
@@ -163,7 +169,7 @@ export function readChangeScope({ root, base, head = null }) {
   const sdk = names.length === 0 || names.some(reachesSdkSuite)
   return { ...classifyChanges([...new Set(names)].map(path => {
     // Only manifests/catalogs/workflows need their contents; never dump image or firmware bytes.
-    const inspect = manifest.test(path) || catalogs.has(path) || path === 'sdk/catalog.json' || /^\.github\/workflows\/(module-pr|pages)\.yml$/.test(path)
+    const inspect = manifest.test(path) || digiManifest.test(path) || catalogs.has(path) || path === 'sdk/catalog.json' || /^\.github\/workflows\/(module-pr|pages)\.yml$/.test(path)
     if (!inspect) return { path, before: '', after: '', regular: true }
     const before = read(commit, path), after = read(head, path)
     return { path, before: before.text, after: after.text, regular: before.regular && after.regular }
