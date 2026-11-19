@@ -45,7 +45,7 @@ export function resolveZoomSelection(device: string, ids: readonly string[]): Zo
   return effects.filter(effect => ids.includes(effect.id))
 }
 
-type PedalFile = { name: string; size: number; effect?: { gid: number; fxid: number; version: string } }
+type PedalFile = import('../engine/zoom/zoom-link').ZoomFile
 /**
  * What a sync does to bring the pedal to the set: install the set's effects that are missing or another version, and
  * remove listed effects the set no longer has. A file is a listed effect only by its name and its header's group and ID:
@@ -55,11 +55,12 @@ type PedalFile = { name: string; size: number; effect?: { gid: number; fxid: num
 export function zoomSyncPlan(listed: readonly ZoomEffect[], setIds: readonly string[], files: readonly PedalFile[], given: Record<string, string> = givenIds()) {
   const fileOf = (effect: ZoomEffect) => files.find(file => { const name = effect.platform.file.toUpperCase(), id = file.effect
     return file.name.toUpperCase() === name && id?.gid === effect.platform.effectId.gid && (id.fxid === effect.platform.effectId.fxid || given[id.fxid] === name) })
-  const current = (effect: ZoomEffect) => { const file = fileOf(effect); return !!file && file.size === effect.platform.binary.bytes && file.effect?.version === effect.platform.effectVersion }
+  const current = (effect: ZoomEffect) => { const file = fileOf(effect); return file?.inEffectList === true && file.size === effect.platform.binary.bytes && file.effect?.version === effect.platform.effectVersion }
   const set = listed.filter(effect => setIds.includes(effect.id)), install = set.filter(effect => !current(effect))
   const remove = listed.filter(effect => !setIds.includes(effect.id) && fileOf(effect)), size = (effect: ZoomEffect) => fileOf(effect)?.size ?? 0
   return {
     keep: set.filter(current), install, remove,
+    needsSpace: install.some(effect => !fileOf(effect) || effect.platform.binary.bytes > size(effect)),
     /** Bytes the pedal's storage gains: the new files, less the ones they replace and the ones removed. */
     adds: install.reduce((sum, effect) => sum + effect.platform.binary.bytes - size(effect), 0) - remove.reduce((sum, effect) => sum + size(effect), 0),
   }
