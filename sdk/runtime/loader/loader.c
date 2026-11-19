@@ -407,6 +407,21 @@ static int reachable(const struct runtime_module *m)
 #endif
     return m == candidate || m == previous;
 }
+int modwerk_runtime_restorable(uint32_t generation)
+{
+    if (!generation) return 0;
+    for (unsigned i = 0; i < owners; ++i) {
+        if (owner_identity[i].generation != generation) continue;
+        const struct runtime_module *m = owned[i];
+        if (m == previous) return 1;
+        for (unsigned k = 0; k < journal.progress.records; ++k) if (journal.row[k].before == m) return 1;
+#ifdef MODWERK_RUNTIME_SETS
+        for (unsigned k = 0; k < change_set.count; ++k) if (change_set.row[k].before == m) return 1;
+#endif
+        return 0;
+    }
+    return 0;
+}
 /* Locked: free every extent that no position, the transaction or a paused
  * task's stack or saved registers can reach. Unknown task state frees nothing. */
 static void reclaim(const struct runtime_context *context)
