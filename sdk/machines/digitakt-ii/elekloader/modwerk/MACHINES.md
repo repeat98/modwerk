@@ -151,7 +151,7 @@ In the builder: `planDt2MachinePlayers` in `dt2-sharc.ts` generates the dispatch
 
 What an added machine's sound-chip player gets and must do, taken from the stock player it stands in for (`0x1c4ecf`); the parts marked open are still to trace.
 
-- **Entry.** Called once per voice per block (32-sample block, 32 voices) by the render pass, exactly as the stock player: a linked call with the caller's frame (`I6`, `I7`); `R8` holds the address of the voice's output slot (register dump of the stock player on a playing voice: `0x8045b3c0` for voice 0, `0x8045b440` for voice 1), `R4` and `R13` its voice state record, `R14` the voice counter (voice `32 - R14`). Open: the meaning of `R12` (0 in the dump).
+- **Entry.** Called once per voice per block (32-sample block, 32 voices) by the render pass, exactly as the stock player: a linked call with the caller's frame (`I6`, `I7`); `R8` holds the address of the voice's output slot (register dump of the stock player on a playing voice: `0x8045b3c0` for voice 0, `0x8045b440` for voice 1), `R4` and `R13` its voice state record, `R14` the voice counter (voice `32 - R14`), `R12` the samples per block (32; see "Grains through the stock player").
 - **Registers.** Keep every register the stock player keeps (it saves `R3`, `R5`-`R7`, `R9`-`R11`, `R13`-`R15`, `M1`-`M3`, `B3`, `I0`-`I3`, `I5` in its frame and restores them). Never leave a stock register changed (lesson of the setup detour above).
 - **Return.** `I12 = DM(I6, M7)`, then the `RETURN` and return-frame pair, as the stock epilogue (`0x1c4f56`, `0x1c4f7c`-`0x1c4f80`).
 - **Output.** 32 samples as 32-bit floats into the slot at `R8`, one word apart (post-modify by 1; a modifier of 4 wrote every fourth word and spilled into the next voices' slots). The stock filter, amp envelope and level then process them.
@@ -162,6 +162,17 @@ What an added machine's sound-chip player gets and must do, taken from the stock
 ### A test tone from an added machine's own player (19 November 2026)
 
 Local DSP image: the dispatcher above with, for type 7, a player that saves the four registers it uses, writes a square wave (16 samples at +0.1, 16 at -0.1) into the slot at `R8`, restores them and returns as the stock player. Test machine chosen through the menu, two trigs on track 1 (scripted coupled run from a ready point saved with that image): the tone appears with each note at 1,498 Hz by zero crossings (expected 1,500: one period per 32-sample block), follows the amp envelope down, peak 0.024 at the output; no halt, no missing blocks. So an added machine's player makes the sound of its voices, and the stock voice chain after it still shapes that sound.
+
+### Grains through the stock player (19 November 2026)
+
+The stock player's arguments (its prologue at `0x1c4ecf` and the render loop at `0x1c6afd`): `R4` is the voice's record (a byte address, `0x2412cc + 0x1d8 * voice`), `R8` the output slot, `R12` the samples per block (32). It renders only when the record's word 0 (the sample address) and word `0x6e` (playing) are nonzero, and writes silence otherwise. Record words (emulator memory dump of voice 0 over 150 blocks of a one-second 48 kHz test sample): `0` sample address (external memory), `1`-`0x40` and `0x45`-`0x50` the player's working state (64 interpolated values per block and history), `0x41`-`0x44` constants, `0x61`/`0x62` length in samples, `0x69` length in words, `0x6a`/`0x6b` step (fraction, words), `0x6c`/`0x6d` play position (fraction, words; one word holds two 16-bit samples, so the position advances 16 per block at the original pitch), `0x6e` playing. A new note starts with words `1`-`0x50` and the position at zero.
+
+So a grain is a record of its own: a copy of the voice's record with its own position, kept in free L2 at a fixed offset from the voice's record, rendered by calling the stock player with `R4` pointing at it. Local test player (type 7, called by the render hook): when a note starts it copies the voice's 118-word record to grain B and sets B's position; every block it re-copies the voice's settings (words `0`, `0x41`-`0x44`, `0x51`-`0x6b`, `0x6f`-`0x75`) but not B's play state, calls the stock player for the voice (into the slot) and for B (into a scratch buffer), and writes a weighted sum into the slot. Scripted coupled runs, test machine through the menu, two notes of a 220 Hz test sample:
+
+- A and B at one half each, B half a second ahead (a whole number of cycles, so in phase): the first half second equals stock; when B reaches the sample's end the level drops to exactly half (peak 0.0464 to 0.0232) for the rest of the note.
+- B alone, a quarter second ahead: each note plays as stock and ends a quarter second early (last quarter second silent where stock still sounds).
+
+No halt and no missing blocks; stock voices on other tracks are untouched. The stock player clobbers `R0`-`R2`, `R4`, `R8`, `R12`, `I4`, `I12`, `I13`, `M4`, `B4`, `L3` and `L4`, so a player keeps what it needs across calls in its own memory.
 
 ### Machine modules' sound-chip parts in the build (19 November 2026)
 
