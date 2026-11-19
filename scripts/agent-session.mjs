@@ -104,7 +104,7 @@ export async function buildSession({ file, agent, note = '', skip = [] }) {
   const read = agent === 'codex' ? readCodexRollout(lines) : readClaudeTranscript(lines)
   let user = ''
   try { user = userInfo().username } catch { /* none */ }
-  return prepareSession(read, note, { user, host: hostname().split('.')[0] }, skip)
+  return prepareSession(read, note, { user, host: hostname().split('.')[0], home: homedir() }, skip)
 }
 
 function summary(session, file) {

@@ -82,6 +82,12 @@ describe('scrubbing', () => {
     expect(removed.secrets).toBeGreaterThanOrEqual(6)
   })
 
+  it('removes the home folder in the form Claude Code names its project folders', () => {
+    const text = scrubText('Read ~/.claude/projects/C--Users-jan-doe-Dev/abc/tool-results/x.txt and /home/alice/.claude/projects/-home-alice-modwerk/y.jsonl', { home: 'C:\\Users\\jan.doe' })
+    expect(text).toBe('Read ~/.claude/projects/~-Dev/abc/tool-results/x.txt and ~/.claude/projects/-home-alice-modwerk/y.jsonl')
+    expect(scrubText('-home-alice-modwerk', { home: '/home/alice' })).toBe('~-modwerk')
+  })
+
   it('removes hex dumps, hex tables and long code blocks, and keeps short snippets', () => {
     const removed = { toolOutputs: 0, thinking: 0, codeBlocks: 0, hexLines: 0, blobs: 0, secrets: 0, skipped: 0, trimmed: 0 }
     const long = '```c\n' + Array.from({ length: 20 }, (_, i) => `line ${i};`).join('\n') + '\n```'

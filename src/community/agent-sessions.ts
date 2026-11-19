@@ -19,7 +19,7 @@ export type SessionAgent = typeof SESSION_AGENTS[number]
 export type SessionEntry = { who: 'developer' | 'agent' | 'tool'; text: string; at?: string; failed?: true }
 export type SessionRemoved = { toolOutputs: number; thinking: number; codeBlocks: number; hexLines: number; blobs: number; secrets: number; skipped: number; trimmed: number }
 export type SessionDocument = { format: 1; agent: SessionAgent; branch?: string; startedAt?: string; endedAt?: string; note: string; entries: SessionEntry[]; removed: SessionRemoved }
-export type ScrubContext = { user?: string; host?: string }
+export type ScrubContext = { user?: string; host?: string; home?: string }
 
 const ENTRY_TEXT_LIMIT = 20_000
 const CODE_BLOCK_LINES = 12
@@ -70,6 +70,8 @@ export function scrubText(input: string, context: ScrubContext = {}, removed: Se
   text = text.replace(BEARER, (_all, scheme: string) => { removed.secrets++; return scheme + ' [secret removed]' })
   text = text.replace(BLOB, () => { removed.blobs++; return '[data removed]' })
   text = text.replace(EMAIL, '[email]').replace(HOME, '~').replace(IPV4, '[address]')
+  // The home folder as Claude Code names its project folders (-home-alice-modwerk, C--Users-alice-Dev), which saved tool outputs' paths carry.
+  if (context.home) { const folder = claudeProjectFolder(context.home); if (folder.replace(/-/g, '').length >= 4) text = text.split(folder).join('~') }
   if (context.user && context.user.length >= 3) text = text.replace(new RegExp(`\\b${escape(context.user)}\\b`, 'gi'), '[user]')
   if (context.host && context.host.length >= 3) text = text.replace(new RegExp(`\\b${escape(context.host)}\\b`, 'gi'), '[host]')
   return text.replace(/\n{3,}/g, '\n\n').trim()
