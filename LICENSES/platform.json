@@ -20,6 +20,7 @@
     "src/catalog/modules.ts",
     "src/catalog/set-limit.ts",
     "src/catalog/versions.ts",
+    "src/community/agent-sessions.ts",
     "src/community/configuration-report.ts",
     "src/community/creator-support.ts",
     "src/community/digi-issue-context.ts",

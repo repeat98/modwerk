@@ -20,6 +20,8 @@ const member: Session = { available: true, admin: false, user: { id: 'plain', di
 const visitor: Session = { available: true, admin: false, user: null }
 let root: Root, container: HTMLDivElement, neverHadBase = true, placesLeft = 0
 beforeEach(() => {
+  // The welcome, install guide and beta invitation poll for an open dialog. Keep USB and IndexedDB callbacks on real timers.
+  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
   release.on = true; neverHadBase = true; placesLeft = 0
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   vi.stubGlobal('isSecureContext', true)
@@ -37,6 +39,7 @@ beforeEach(() => {
 })
 afterEach(async () => {
   await act(() => root.unmount()); container.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals()
+  vi.useRealTimers()
   delete (navigator as { usb?: unknown }).usb; sessionStorage.clear(); localStorage.clear()
 })
 
@@ -44,11 +47,19 @@ async function open(hash: string, session = member) {
   window.location.hash = hash
   const value = { session, loading: false, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} }
   await act(async () => root.render(createElement(CommunityContext.Provider, { value }, createElement(App))))
+  await act(() => vi.dynamicImportSettled())
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 100)) })
 }
 /** The next visit: the page loads again. */
 async function reload(hash: string, session = member) { await act(async () => root.unmount()); root = createRoot(container); await open(hash, session) }
-const wait = (ms: number) => act(async () => { await new Promise(resolve => setTimeout(resolve, ms)) })
+const wait = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms))
+async function expectWelcome() {
+  // The first visit may still be loading its route and reading the unit when the clock first advances.
+  await vi.waitFor(async () => {
+    await wait(1500)
+    expect(welcome()).toBeDefined()
+  }, { timeout: 4000 })
+}
 const welcome = () => [...document.querySelectorAll<HTMLDialogElement>('dialog.base-install-dialog[open]')].find(dialog => dialog.querySelector('h2')?.textContent === 'Modules now load over USB, for everyone')
 const guide = () => [...document.querySelectorAll<HTMLDialogElement>('dialog.base-install-dialog[open]')].find(dialog => dialog !== welcome())
 const button = (dialog: HTMLElement, text: string) => [...dialog.querySelectorAll('button')].find(item => item.textContent === text)
@@ -56,7 +67,7 @@ const button = (dialog: HTMLElement, text: string) => [...dialog.querySelectorAl
 describe('the welcome to modules over USB', () => {
   it('greets a member who never had the base once, and Later keeps it away, on this visit and the next', async () => {
     await open('library')
-    await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
+    await expectWelcome()
     expect(welcome()!.textContent).toContain('Install the base once')
     expect(welcome()!.textContent).toContain('From the card, with your original OS file.')
     expect(welcome()!.textContent).toContain('Sync over USB or the card') // both ways, in a WebUSB browser too
@@ -73,14 +84,14 @@ describe('the welcome to modules over USB', () => {
   it('greets a visitor whose browser never read a base, once', async () => {
     Object.defineProperty(navigator, 'usb', { value: fakeUnit('none').usb, configurable: true })
     await open('library', visitor)
-    await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
+    await expectWelcome()
     await act(async () => button(welcome()!, 'Later')!.click())
     await reload('library', visitor); await wait(2000)
     expect(welcome()).toBeUndefined()
   }, 15000)
   it('greets on another machine’s pages too, with a way out for whoever has no Octatrack, but not on account pages', async () => {
     await open('digitakt')
-    await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
+    await expectWelcome()
     expect(welcome()!.textContent).toContain('No Octatrack? Close this and it won’t come back.')
     await act(async () => button(welcome()!, 'Later')!.click())
     localStorage.clear()
@@ -103,7 +114,7 @@ describe('the welcome to modules over USB', () => {
   }, 15000)
   it('“Set up my Octatrack” lands on Your Octatrack with the install guide open at its first step', async () => {
     await open('library')
-    await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
+    await expectWelcome()
     await act(async () => button(welcome()!, 'Set up my Octatrack')!.click())
     expect(window.location.hash).toBe('#octatrack')
     await vi.waitFor(() => expect(guide()?.querySelector('#base-stage-title')?.textContent).toBe('Download the base'))
@@ -114,11 +125,12 @@ describe('the welcome to modules over USB', () => {
     // The library's own button (Your Octatrack), the sidebar and the phone dock all lead to #configuration.
     expect(container.querySelector<HTMLAnchorElement>('.discovery-actions a.button-primary')?.getAttribute('href')).toBe('#configuration')
     await reload('configuration')
-    await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
+    await expectWelcome()
     expect(guide()).toBeUndefined()
     await act(async () => button(welcome()!, 'Later')!.click())
     // Not again: the next visit to the same button gets the guide, as before the welcome.
     await reload('configuration')
+    await wait(1500)
     await vi.waitFor(() => expect(guide()).toBeDefined(), { timeout: 4000 })
     expect(welcome()).toBeUndefined()
   }, 20000)
@@ -137,7 +149,7 @@ describe('the welcome to modules over USB', () => {
   it('in a browser without WebUSB, still names both ways to sync and says the card is this browser’s', async () => {
     delete (navigator as { usb?: unknown }).usb
     await open('library')
-    await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
+    await expectWelcome()
     expect(welcome()!.textContent).toContain('This browser can’t use USB, so modules go onto the card as a file. For USB sync, use Chrome, Edge or another Chromium browser on a computer.')
     expect(welcome()!.textContent).toContain('Sync over USB or the card')
     expect(welcome()!.textContent).toContain('Send them over USB from Chrome or Edge, or copy MODWERK0.SET to the card and restart.')
@@ -146,7 +158,7 @@ describe('the welcome to modules over USB', () => {
   }, 15000)
   it('can be read again from Setup', async () => {
     await open('octatrack/setup')
-    await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
+    await expectWelcome()
     await act(async () => button(welcome()!, 'Later')!.click())
     const again = [...container.querySelectorAll('button')].find(item => item.textContent === 'What’s new: modules over USB')!
     await act(async () => again.click())
@@ -155,12 +167,13 @@ describe('the welcome to modules over USB', () => {
   it('and the beta invitation never open together', async () => {
     placesLeft = 5
     await open('library')
-    await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
+    await expectWelcome()
     expect(document.querySelector('dialog.beta-join')).toBeNull()
     await act(async () => button(welcome()!, 'Later')!.click())
     await wait(2000)
     expect(document.querySelector('dialog.beta-join')).toBeNull() // not on the visit the welcome opened
-    await reload('library'); await vi.waitFor(() => expect(document.querySelector('dialog.beta-join[open]')).not.toBeNull(), { timeout: 4000 })
+    await reload('library'); await wait(1500)
+    expect(document.querySelector('dialog.beta-join[open]')).not.toBeNull()
     expect(welcome()).toBeUndefined()
   }, 20000)
 })

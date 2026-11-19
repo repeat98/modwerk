@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// All machine integrations use the unchanged Elekloader kit. A machine extends its catalogue/core, not its builder.
+// All machine integrations use the unchanged Elekloader kit. A machine extends its catalogue/core, not its builder;
+// a device the pinned kit lacks is carried by Modwerk's builder (carried-devices.ts), in the page and in the worker.
 import CATALOG_JSON from '../../../vendor/elekloader/catalog/catalog.json' with { type: 'json' }
 import KIT from '../../../vendor/elekloader/kit/kit.json' with { type: 'json' }
 import DT2_BASE from '../../../sdk/machines/digitakt-ii/base-binding.json' with { type: 'json' }
@@ -13,18 +14,20 @@ import {
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { checkLock, type Lock } from '../../../vendor/elekloader/kit/src/store.ts'
 import type { BuilderResult } from './protocol'
+import { carryDevices } from './carried-devices'
 
 export { buildStep } from '../../../vendor/elekloader/kit/src/kit/index.ts'
 export type { Builder }
 export const MACHINE_DEVICE = { octatrack: 'octatrack', digitakt: 'digitakt-mk1', 'digitakt-ii': 'digitakt-mk2', digitone: 'digitone-mk1', 'analog-rytm-mkii': 'analog-rytm-mk2' } as const
 export type ElekloaderMachine = keyof typeof MACHINE_DEVICE
+carryDevices()
 export const BUILDER_CATALOG: Catalog = parseCatalog(CATALOG_JSON)
 export const BUILDER_SOURCE = { repository: 'https://github.com/irpina/elekloader', commit: KIT.commit, version: KIT.version, protocol: KIT.protocol, catalogRevision: BUILDER_CATALOG.revision }
 
 export function createMachineBuilder(): Builder {
   return createBuilder({
     base: new URL('elekloader/', document.baseURI).href,
-    worker: () => new Worker(new URL('../../../vendor/elekloader/kit/src/kit/worker.ts', import.meta.url), { type: 'module' }),
+    worker: () => new Worker(new URL('./kit-worker.ts', import.meta.url), { type: 'module' }),
   })
 }
 

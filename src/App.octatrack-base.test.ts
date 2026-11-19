@@ -39,6 +39,74 @@ async function open(hash: string) {
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 100)) })
 }
 
+describe('desktop navigation', () => {
+  it('opens the narrow sidebar as a drawer and restores the previous results position after reviewing a set', async () => {
+    const matchMedia = window.matchMedia
+    vi.spyOn(window, 'matchMedia').mockImplementation(query => ({ ...matchMedia(query), matches: query === '(max-width: 1024px)' }))
+    vi.stubGlobal('Worker', class { terminate = vi.fn() })
+    await open('digitakt')
+    const drawer = container.querySelector<HTMLDialogElement>('#navigation-drawer')!
+    // jsdom exposes the open attribute but doesn't implement the native dialog methods.
+    drawer.showModal = () => { drawer.open = true }
+    drawer.close = () => { drawer.open = false }
+    expect(drawer.open).toBe(false)
+    await act(() => container.querySelector<HTMLButtonElement>('button[aria-label="Open navigation"]')!.click())
+    expect(drawer.open).toBe(true)
+    expect(drawer.querySelector('details')?.open).toBe(true)
+    await act(() => drawer.querySelector<HTMLAnchorElement>('.primary-nav [aria-current]')!.click())
+    expect(drawer.open).toBe(false)
+
+    const main = container.querySelector('main')!
+    const scrollTo = vi.fn()
+    Object.defineProperty(main, 'scrollTo', { value: scrollTo })
+    main.scrollTop = 840
+    main.dispatchEvent(new Event('scroll'))
+    await open('digitakt/configuration')
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 0 })
+    await open('digitakt')
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 840 })
+    await open('digitone')
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 0 })
+  })
+
+  it('returns from a machine library to the overview through the topbar', async () => {
+    await open('analog-rytm-mkii')
+    expect(container.querySelector('[aria-label="Project independence"]')).toBeNull()
+    const breadcrumb = container.querySelector<HTMLElement>('.app-toolbar nav[aria-label="Breadcrumb"]')!
+    expect(breadcrumb.querySelector('[aria-current="page"]')?.textContent).toBe('Modules')
+    const home = breadcrumb.querySelector<HTMLAnchorElement>('a[aria-label="Overview"]')!
+    expect(home.getAttribute('href')).toBe('#overview')
+    await act(async () => {
+      home.click()
+      await vi.waitFor(() => expect(window.location.hash).toBe('#overview'))
+    })
+    expect(breadcrumb.querySelector('[aria-current="page"]')).toBe(home)
+    expect(container.querySelector('main h1')?.textContent).toBe('Choose your machine')
+    expect(container.querySelectorAll('main [aria-label="Project independence"]')).toHaveLength(1)
+  })
+
+  it('keeps global destinations in the sidebar and category links with the library results', async () => {
+    await open('effects')
+    const sidebar = container.querySelector('aside[aria-label="App sidebar"]')!
+    const main = container.querySelector('main')!
+    const primary = sidebar.querySelector('nav[aria-label="Main navigation"]')!
+    expect(Array.from(primary.querySelectorAll('a'), link => link.textContent)).toEqual(['Overview', 'Module library', 'Forum'])
+    expect(main.querySelector('nav[aria-label="Module library"] [aria-current="page"]')?.getAttribute('href')).toBe('#effects')
+    expect(sidebar.querySelector('a[href="#effects"]')).toBeNull()
+    expect(sidebar.querySelector('a[href="#base"] .sidebar-feature-new')?.textContent).toBe('New')
+    expect(sidebar.querySelector('.sidebar-online')?.textContent).toContain('online')
+    const resources = sidebar.querySelector('details')!
+    expect(resources.open).toBe(true)
+    resources.open = false
+    await open('library')
+    expect(resources.open).toBe(false)
+
+    await open('credits')
+    expect(sidebar.querySelector('details')?.open).toBe(true)
+    expect(sidebar.querySelector('nav[aria-label="Resources"] [aria-current="page"]')?.textContent).toContain('Credits')
+  })
+})
+
 describe('releasing the Octatrack base path to a member who is not a beta tester', () => {
   it('opens the Octatrack page and module sets, and keeps beta-only Zoom pages and beta modules closed', () => asBeta(async () => {
     release.on = true
@@ -57,6 +125,7 @@ describe('releasing the Octatrack base path to a member who is not a beta tester
     release.on = true
     await open('module/ring-sc') // RINGMOD SC: its package needs the key bus, so only the base loads it
     await vi.waitFor(() => expect(container.querySelector('.module-configure-action')).not.toBeNull())
+    expect(container.querySelector('[aria-label="Project independence"]')).toBeNull()
     expect(container.querySelector('.module-configure-action.is-blocked')).toBeNull()
     expect(container.querySelector('.add-block-detail')).toBeNull()
     await act(async () => root.unmount()); root = createRoot(container)

@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-18",
+    "changes": [
+      "The remembered MICRO T value now lives with the module. A power cycle clears it, and the row starts on grid again.",
+      "Offsets already written on the trigs stay in the pattern.",
+      "On a unit, a power cycle brought the MICRO T footer back to on grid."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-11-01",
     "changes": [

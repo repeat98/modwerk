@@ -59,8 +59,8 @@ describe('deleting a configuration',()=>{
  const ot=newConfiguration('Octatrack set'),digi=(name:string)=>newConfiguration(name,[],true,undefined,'digitakt')
  it('opens another configuration for the same machine first, then any other',()=>{
   const a=digi('A'),b=digi('B')
-  expect(afterDeleting([ot,a,b],a.id)).toEqual({remaining:[ot,b],next:b})
-  expect(afterDeleting([ot,a],a.id)).toEqual({remaining:[ot],next:ot})
+  expect(afterDeleting([ot,a,b],a.id)).toEqual({remaining:[ot,b],next:b,created:false})
+  expect(afterDeleting([ot,a],a.id)).toEqual({remaining:[ot],next:ot,created:false})
  })
  it('replaces a machine’s only configuration with an empty one for that machine',()=>{
   const only=digi('Only'),{remaining,next}=afterDeleting([only],only.id)

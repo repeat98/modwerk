@@ -31,8 +31,10 @@ export type Configuration = { id: string; name: string; device?: string; moduleI
 export function afterDeleting(configurations: Configuration[], id: string) {
   const deleted = configurations.find(item => item.id === id), device = deleted ? configurationDevice(deleted) : DEFAULT_DEVICE
   const remaining = configurations.filter(item => item.id !== id)
-  const next = remaining.find(item => configurationDevice(item) === device) ?? remaining[0] ?? newConfiguration('My configuration', [], DSP_LOADER, undefined, device)
-  return { remaining: remaining.includes(next) ? remaining : [...remaining, next], next }
+  const existing = remaining.find(item => configurationDevice(item) === device) ?? remaining[0]
+  if (existing) return { remaining, next: existing, created: false }
+  const next = newConfiguration('My configuration', [], DSP_LOADER, undefined, device)
+  return { remaining: [next], next, created: true }
 }
 export function newConfiguration(name: string, moduleIds: string[] = [], keepStockFx2 = DSP_LOADER, moduleVersions?: Record<string,string>, device = DEFAULT_DEVICE, usbAudio?: UsbAudioConfiguration): Configuration {
   const now = new Date().toISOString()
