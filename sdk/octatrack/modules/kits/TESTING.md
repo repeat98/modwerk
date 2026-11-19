@@ -1,5 +1,35 @@
 # Kits testing
 
+## Kits 0.1.1-experimental on base 0.7.9: agent's run, 19 November 2026
+
+Build: source `f8e443f33` (branch `module/kits-0.1.1`, base sources as `main` `7b2f35abb`). A development twin of base
+0.7.9 (`build_core.py` with the beta flags and `--dev`, without the controller rows) booted from RAM as `87830783…`
+on the developer's MKII; the flashed base `27c9d36f…` stays in flash. Packages: Kits 0.1.1 `8ce226a5…` (the same
+bytes as the 17 November restyled-window run's), Pattern Sample Locks 0.1.9 `6fea272e…`. Bank H, pattern 1, Part 1,
+transport stopped unless named. Every install was a timed trial without a Keep and was rolled back (inventory empty
+afterwards). Screens read with `png:` over USB. Agent's run, not the developer's.
+
+- `npm run device:test` (Kits 0.1.1), twice: installed, self-test, meters (CPU 372, core 1 peak 357, core 0 peak 233
+  with Kits alone; 369 before), twelve Part switches with PART+arrow all landed, a queued change to bank A and back
+  landed. The next Part switch (PART+RIGHT) did not become active and the run stopped there; verdict both times: no
+  crash, stall, freeze or skipped track. Kits 0.1.0 `main` package fails at the same step; Pattern Sample Locks
+  0.1.9 passes it. With Kits active, PART is LOAD KIT and the pattern plays its Kit's slot, so the script's PART+arrow
+  Part switch does not apply to Kits (design, not a fault of 0.1.1).
+- Kits alone, as a trial on this base: Kits is active (the base lent the pages). PART opens LOAD KIT (026 TWO to
+  029 ONE), the status line shows `029 ONE`. FUNC+PART draws the Part Edit window with PART and KITS; KITS shows
+  SAVE KIT; YES on it showed `SAVE PART FIRST!` (bank H's Parts have no saved copy). NO closed each screen.
+- Kits with Pattern Sample Locks, one 110 s trial: FUNC+PART draws PART, LOCKS and KITS with their icons; the window
+  reopened in LOCKS' actions; DOWN moved to CLEAR LOCKS; LEFT, DOWN, RIGHT showed KITS > SAVE KIT. Kits was not
+  active in this trial: PART opened stock's Part window (ONE to FOUR) and YES on SAVE KIT returned to the main screen.
+  Verdict: no crash, stall, freeze or skipped track.
+- After the Kits 0.1.0 run, its KIT NAME editor was still on screen with no module installed; NO closed it, no new
+  crash record (crash 1 and stall 13 on the unit predate this run).
+- The tracks of bank H Part 1 showed MISSING effects after the trials; its working and saved copies were equal and
+  no Part of the bank was marked unsaved. Not established whether those are the Part's own references to modules
+  the twin lacks.
+
+Not tested: a Kit saved, LOAD KIT applied, FUNC+PASTE+PART, MKI, a Keep, a power cycle, sound.
+
 ## Kits 0.1.1-experimental: the base's Part Edit menu, unit run of 17 November 2026
 
 Build: source `598edfaa4`; a development twin of base 0.7.6
