@@ -1,0 +1,1 @@
+Fix: an unanswered Octatrack USB diagnostics read could leave Sync stuck, even after Cancel, or delay recovery after a lost upload reply. Modwerk now stops waiting for the read, reopens the USB connection and continues Sync or recovery when the connection is back.

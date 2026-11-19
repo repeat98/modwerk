@@ -32,8 +32,9 @@ class LoaderTests(unittest.TestCase):
         if not cc:
             self.skipTest('no host C compiler')
         octatrack = ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u')
-        # the default, the Octatrack's, and both with build_core.py --cached-modules
-        for defines in ((), octatrack, ('-DMODWERK_CACHED_MODULES',), octatrack + ('-DMODWERK_CACHED_MODULES',),
+        # Force the 32-bit stock/pool address collision in one cached build, where both kinds of flush run.
+        cached_overlap = ('-DMODWERK_CACHED_MODULES', '-DMODWERK_HOST_OVERLAP_STOCK')
+        for defines in ((), octatrack, cached_overlap, octatrack + ('-DMODWERK_CACHED_MODULES',),
                         octatrack + ('-DMODWERK_RUNTIME_SETS',),
                         octatrack + ('-DMODWERK_RUNTIME_SETS', '-DMODWERK_CACHED_MODULES')):
             with self.subTest(defines), tempfile.TemporaryDirectory() as temp:

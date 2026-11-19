@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { availableMemory, holders, slotCount, slotDirectory, takeSlot, workersFor } from './machine-slots.mjs'
+import { appStagesFit, availableMemory, holders, slotCount, slotDirectory, takeSlot, vitestWorkerBytes, workersFor } from './machine-slots.mjs'
 
 const GB = 1024 ** 3
 const goneProcess = () => Number(spawnSync(process.execPath, ['-e', 'process.stdout.write(String(process.pid))'], { encoding: 'utf8' }).stdout)
@@ -27,6 +27,13 @@ describe('machine slots', () => {
     expect(workersFor({ most: 4, each: GB, keep: GB, available: 3.5 * GB, cores: 12 })).toBe(2)
     expect(workersFor({ most: 4, each: GB, keep: GB, available: 0.5 * GB, cores: 12 })).toBe(1)
     expect(workersFor({ most: 4, each: GB, keep: GB, available: 64 * GB, cores: 2 })).toBe(2)
+  })
+
+  it('budgets for lint, the build and each simultaneous test worker', () => {
+    expect(appStagesFit(1, 3 * GB)).toBe(false)
+    expect(appStagesFit(2, 4 * GB + vitestWorkerBytes)).toBe(false)
+    expect(appStagesFit(2, 4 * GB + 2 * vitestWorkerBytes)).toBe(true)
+    expect(appStagesFit(0, 4 * GB)).toBe(true)
   })
 
   it('makes a second check wait until the first is done', async () => {
