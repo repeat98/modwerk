@@ -15,12 +15,10 @@ import { LIBRARY_CATEGORY_LABELS, STANDALONE_NOTE, type FirmwareModule, type Mod
 import { DETAILS } from '../catalog/details'
 import type { CatalogBrowse } from '../catalog/catalog-browse'
 import { AVAILABLE_MODULES } from '../catalog/availability'
-import type { SelectionConflict } from '../catalog/selection-conflicts'
 import type { AddBlock } from '../catalog/add-blocks'
 import { moduleStability, STABILITY_NOTE } from '../catalog/module-stability'
 import { AddButton, CardProof, CardStats, ModuleCard } from '../components/ModuleCard'
 import { LIMIT_REACHED } from '../catalog/set-limit'
-import { SelectionWarning } from '../components/SelectionWarning'
 import { LibraryTools } from '../components/LibraryTools'
 import { LibraryResultsBar } from '../components/LibraryResultsBar'
 import { compareModules, downloadCoverage, downloadPeriod, periodCoverage, type ModuleStatistics } from '../community/module-statistics'
@@ -125,7 +123,6 @@ type AllMachinesLibraryProps = {
   sort: string
   onSortChange: (value: string) => void
   statistics: readonly ModuleStatistics[] | null
-  octatrackConflicts: readonly SelectionConflict[]
   // What adding each Octatrack module would do to the current configuration, by module id.
   octatrackBlocks?: Record<string, AddBlock>
   onSwapOctatrack?: (id: string, removeIds: readonly string[]) => void
@@ -144,7 +141,7 @@ type MachineLibraryProps = AllMachinesLibraryProps & {
   buildHref?: string; buildLabel?: string
 }
 
-export function MachineLibrary({ device, query, category, octatrackModules: octatrack, octatrackSelected, onToggleOctatrack, digiSelected, onToggleDigi, zoomSelected = {}, onToggleZoom, family, onFamilyChange, sort, onSortChange, statistics, octatrackConflicts, octatrackBlocks, onSwapOctatrack, comparison, onCompare, onOpenComparison, viewedModuleVersions, moduleBaseline, machinePicker, children, onClearSearch, onClearQuery, onBrowse, phone = false, resultsSlot, octatrackCatalogue = AVAILABLE_MODULES, buildHref, buildLabel }: MachineLibraryProps) {
+export function MachineLibrary({ device, query, category, octatrackModules: octatrack, octatrackSelected, onToggleOctatrack, digiSelected, onToggleDigi, zoomSelected = {}, onToggleZoom, family, onFamilyChange, sort, onSortChange, statistics, octatrackBlocks, onSwapOctatrack, comparison, onCompare, onOpenComparison, viewedModuleVersions, moduleBaseline, machinePicker, children, onClearSearch, onClearQuery, onBrowse, phone = false, resultsSlot, octatrackCatalogue = AVAILABLE_MODULES, buildHref, buildLabel }: MachineLibraryProps) {
   const w = useSetWords()
   const heading = useRef<HTMLHeadingElement>(null)
   const term = query.toLowerCase().trim()
@@ -162,13 +159,6 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
     ...ZOOM_EFFECTS.filter(effect => (!device || effect.machine === device.id) && (!category || effect.category === category) && matchesZoomEffect(effect, query)).map(effect => effect.presentation.family),
   ]
   const typeCounts = families.map(value => ({ value, count: scopeFamilies.filter(item => item === value).length })).filter(option => option.count || option.value === libraryFamily)
-  const warnings = [
-    ...((!device || device.id === 'octatrack') && octatrackConflicts.length ? [{device: DEVICES_BY_ID.octatrack, description: 'Some modules cannot run together. Choose a compatible set in your ' + w.set + '.'}] : []),
-    ...DIGI_DEVICES.filter(id => !device || device.id === id).flatMap(id => {
-      const estimate = estimateCombination(id, digiSelected[id])
-      return !estimate.fits || estimate.clashes.length ? [{device: DEVICES_BY_ID[id], description: !estimate.fits ? 'The selected mods need more memory than this machine shares with mods.' : 'The selected mods cannot be used together.'}] : []
-    }),
-  ]
   const digiGroups = DIGI_DEVICES.filter(id => !device || device.id === id).map(id => ({
     id,
     mods: DIGI_MODS.filter(mod => mod.device === id && (!category || mod.libraryCategory === category) && (libraryFamily === 'all' || mod.category === libraryFamily) && digiMatchesQuery(mod, query))
@@ -202,7 +192,6 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
   return <DownloadPeriodContext.Provider value={days}><div className="library-page">
     <div className="page-heading"><div><p className="page-kicker">MODWERK / {device?.name.toUpperCase() ?? 'ALL MACHINES'}</p><h1 ref={heading} tabIndex={-1}>{category ? LIBRARY_CATEGORY_LABELS[category] : device ? 'Module library' : 'All mods'}</h1><p>{category === 'standalone' ? STANDALONE_NOTE : 'Explore modules for your instruments.'}</p></div><span className="library-total">{total} modules</span></div>
     {device && projectMachineForDevice(device.id) && <p className="machine-external-projects"><a href={assetUrl('projects/') + '?machine=' + projectMachineForDevice(device.id)}>Other projects for {device.name} <Icon name="arrow" size={14} /></a></p>}
-    {!!warnings.length && <SelectionWarning warnings={warnings.map(warning => ({id: warning.device.id, title: warning.device.name + ': your selection needs a change', description: warning.description, href: deviceHref(warning.device.id, 'configuration')}))} />}
     {phone ? resultsSlot && createPortal(<LibraryResultsBar summary={resultsSummary} sort={sort} onSortChange={onSortChange} family={libraryFamily} onFamilyChange={onFamilyChange} families={typeCounts} allCount={scopeFamilies.length} disabled={!hasMods} />, resultsSlot) : <LibraryTools family={libraryFamily} families={families} onFamilyChange={onFamilyChange} sort={sort} onSortChange={onSortChange} comparisonCount={comparison.length} onCompare={onOpenComparison} buildHref={hasMods ? buildHref ?? deviceHref(device?.id ?? 'octatrack', 'configuration') : null} buildLabel={hasMods ? buildLabel ?? 'Build firmware for ' + (device?.name ?? 'Octatrack') : 'No modules to build yet'} machine={machinePicker} disabled={!hasMods} build={device?.family !== 'zoom' || isZoomSetDevice(device.id)} buildText={device?.family === 'zoom' ? 'Your ' + device.name : undefined} />}
     {hasMods && (term || libraryFamily !== 'all') && <div className="library-active-filters" role="group" aria-label="Active filters">
       <span>Filtered by</span>
