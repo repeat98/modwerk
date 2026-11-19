@@ -169,6 +169,14 @@ A machine module carries its player in its package as `build.dt2_sharc` version 
 
 Local end-to-end check: OS 1.17, the development base `37b4db44` linked by Elekloader, and a stand-in module part (the silent player at `0x200d0000`, type 7). The composed image passed the preflight: sections 2, 4, 5 and 8 byte for byte stock, section 7 verified against the plan, 36 changed ranges and 11,632 appended bytes in the main OS (the base), flash headroom 1,395,888 bytes. Not yet run in the emulator as a whole file (the emulator runs so far used the DSP images directly).
 
+### Own knob names: the parameter table copy (work in progress, 19 November 2026)
+
+The OS 1.17 parameter table (275 rows of `0x3c` at `0x4020f59c`) has no spare machine rows: every row for the machine slots belongs to a stock machine (only SAMPLE's CFADE row, code `0xcc`, is never shown). Rows: `+0x00` owner (machine 0-6, other groups up to 32), `+0x04` sound slot, `+0x08`/`+0x0c`/`+0x10` min, max, default (value << 8), `+0x18`/`+0x1a` CC halfwords and `+0x1c` NRPN (negative: none), `+0x28` name, `+0x2c` a routine every row loop calls, `+0x30` label, `+0x34` formatter. The MIDI-map builder (`0x400da8bc` loop) files a row under its owner and skips owners from 33 up.
+
+`machine-params.c` keeps a copy, `core_params` (275 + 20 rows): `core_boot_init` (core.s `.boot`, `BOOT_INIT`) copies the stock rows from the running image and appends five rows per added type, built from SAMPLE's level row (`0xd1`) with owner `0x40`, the knob's slot (26, 27, 31, 32, 33 for knobs B, C, E, F, G), its name, label and range, and no CC or NRPN. `base.json` has 56 `ptr` sites (every absolute reference, three of them at an offset) and 56 `bytes` sites (every `cmpi.l #275`/`#274` against a code) found by a scan of the image (`table_sites.py`, local). An added machine's descriptor is a copy of its stand-in's with the five knobs' codes replaced (`core_machine_descriptor`), and the parameter-code lookup answers those slots with the new codes (`core_machine_slot_code`).
+
+Emulator (panel probe, ColdFire only): with the copy and the raised bounds but a test machine without own knobs, boot and the SRC page of SAMPLE and of type 7 are as before. With own knobs (codes 275-279), opening the type-7 SRC page faults (`UnsupportedGuestPc(0x00000001)`): something indexes per-code data beyond 275 that the scan did not find (no 16-bit bound matches). Next: record registers along the SRC page's knob drawing (`--regs-at`) to find the reader, or try codes inside the 275 (reusing SAMPLE's unshown CFADE row `0xcc` for one knob) to confirm.
+
 ## Still to check
 
 
