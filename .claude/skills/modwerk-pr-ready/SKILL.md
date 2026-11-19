@@ -15,3 +15,4 @@ Follow `docs/DEVELOPER_WORKFLOW.md#make-it-mergeable`.
    - Watch `gh pr checks <n> --watch` until green. For a red job, read `gh run view <id> --log-failed`.
    - If `main` moves before the merge, start again at 1.
 5. **Answer what pr:ready asks:** a guide edit for what you learned, or "nothing" in the pull request.
+6. **Offer to share the session** when pr:ready prints the session-sharing line: ask the developer once whether to share this session with the owner, and on a yes run `npm run session -- share --note "…"` with a few sentences on what got in the way. "Always" or "never" from the developer goes into `npm run session -- prefer always|never` (`docs/AGENT_SESSIONS.md`).

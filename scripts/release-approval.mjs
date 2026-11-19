@@ -11,7 +11,18 @@ export async function fetchReleaseApproval(repository, commit, ownerId, token = 
   const api = githubApi(repository, token), root = options.root ?? fileURLToPath(new URL('../', import.meta.url))
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim()
   for (let attempt = 1; attempt <= attempts; attempt++) {
-    try { return await fetchOwnerApproval(repository, commit, ownerId, token, 1, 0) }
+    try {
+      const approval = await fetchOwnerApproval(repository, commit, ownerId, token, 1, 0)
+      // The Worker merges in the owner's name. A base advance during GitHub's merge must stop publication.
+      const message = git('show', '-s', '--format=%b', commit)
+      if (message.startsWith('Modwerk reviewed merge\n')) {
+        const parents = git('show', '-s', '--format=%P', commit).split(' ')
+        const receipt = /^Modwerk reviewed merge\nBase: ([0-9a-f]{40})\nHead: ([0-9a-f]{40})\nReview: (\d+)\nApproved by: ([a-z\d-]+) \((\d+), (maintainer|device-reviewer)\)$/i.exec(message)
+        if (!receipt || parents.length !== 2 || parents[0] !== receipt[1] || parents[1] !== receipt[2]) throw new Error('Reviewed merge parents differ from the authorized base and head.')
+        return { ...approval, authorization: receipt[6], reviewId: Number(receipt[3]), reviewerId: Number(receipt[5]), checkedBase: parents[0], checkedHead: parents[1] }
+      }
+      return approval
+    }
     catch (error) { if (!error.message.startsWith('No owner-merged PR')) throw error }
     const pulls = await pages(api, '/commits/' + commit + '/pulls')
     for (const item of pulls) {
