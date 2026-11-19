@@ -16,3 +16,24 @@ The runtime column is the median of three 3-second `profile:3` windows, each abo
 The set comprised LOFI2, Preview Vol, Apply Scene, Repitch, POLY8, Scale Quantizer, Play Modes, Mute Modes, Quant Live Rec, DirectJmp Kyoti, Deja Vu, Arp Key Locks, Beat Slicer, Temp Save, Slow LFO, Bar LED, Tiempos, Syntiz, Track Solo, Sample Locks, Amiga, MIDI Scenes, Tuner and Butter Fingers. Seven packages registered a tick handler, three a draw handler, five a key handler and five an encoder handler. Both trials verified the package hashes before installation and returned to the starting inventory and active identity on Undo.
 
 After each run, the four Parts' working and saved hashes matched the starting hashes, with Part 1 and track 3 selected again. After the developer power-cycled the unit, USB reported the original flashed base `dfa43813` and the same ten modules. The developer reported their usual pattern sounded normal after the reboot.
+
+## POLY8 installed on no track
+
+On the same MKII and OS 1.40C, development build `06e08f35` ran pattern A01 with saved Part 4, track 3 selected and no POLY8 machine assigned. This Part had a different saved hash from the earlier comparison. Four whole-set trials used 23, 24, 24 and 23 packages in that order. Each used the packages above at the same hashes. The only difference between sets was POLY8 0.3.3-experimental (`1d9e9eca`). Each Undo restored the starting inventory and active identity.
+
+| Measure | 23 stopped | 24 stopped | 23 playing | 24 playing |
+| --- | ---: | ---: | ---: | ---: |
+| Time in frame interrupt, % | 32.0 | 34.1 | 55.3 | 58.4 |
+| CPU meter, % | 43.3 | 45.6 | 61.2 | 64.0 |
+
+Both runs of each set gave the same frame-interrupt share to one decimal place, across at least 53,000 frames per reading. The CPU meter is the mean of 20 readings per cell. Installing unused POLY8 added 2.1 percentage points of frame time stopped and 3.1 playing. The longest frames during the two 24-package playback runs reached 103.1% and 103.5% of one frame. The guard reported zero skipped renders in all four trials.
+
+After these four trials, the starting pattern, selected Part and track, and all four Parts’ working and saved hashes matched their initial values.
+
+## Micro Timing and whole-set Undo
+
+On development build `06e08f35`, the MKII ran the draft Micro Timing package `f5b96821` in RAM. With MICRO T highlighted in TRACK TRIG EDIT, the trial expired and Undo waited in recovery. Closing the page and running `device recover` restored the original inventory and base identity without restarting. The test left LEVEL untouched and the pattern hash was identical before and after.
+
+The MKII then booted release build `694ddc855858d8a6f23503a230f0f24ef95dc9ae92c3377844878258f3725a40` into RAM. The 24-package set above and the same set with Micro Timing added each installed and rolled back as a single trial. Both ended with the starting inventory and active identity. The device logged no crash, stall, freeze or skipped track in either trial. The release tests covered installation and Undo while stopped. Playback with all eight delay sends open, Part switches during playback and audible Analog BD rollback remain unverified on this build.
+
+A USB RAM boot of the original 0.7.9 base (`dfa43813`) restored the ten starting modules. Every module ID, name, handle and layout matched the inventory recorded before the first boot. All trials used RAM and the test did not use Keep.
