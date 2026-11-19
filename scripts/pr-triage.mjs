@@ -2,6 +2,7 @@
 // no PR checkout, dependency or code runs here.
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
+import { moduleFolders } from './machine-folders.mjs'
 import { githubApi, pages } from './author-release-api.mjs'
 
 export const NEEDS_WORK = 'needs-work', ONE_AT_A_TIME = 'one-at-a-time', CLOSE_AFTER_DAYS = 14
@@ -49,17 +50,29 @@ export function queuedPulls(pulls, registered) {
   return waiting
 }
 
+/** Published authors and maintainers, plus accounts registered to release updates. */
+export function publishedContributors() {
+  const repositoryRoot = new URL('../', import.meta.url)
+  const json = path => JSON.parse(readFileSync(new URL(path, repositoryRoot), 'utf8'))
+  const documents = [...json('src/catalog/module-documents.json').modules]
+  for (const machine of moduleFolders().filter(machine => machine !== 'octatrack')) {
+    const directory = new URL('sdk/' + machine + '/modules/', repositoryRoot)
+    if (!existsSync(directory)) continue
+    for (const name of readdirSync(directory)) {
+      const manifest = new URL(name + '/modwerk.module.json', directory)
+      if (!name.startsWith('_') && existsSync(manifest)) documents.push(JSON.parse(readFileSync(manifest, 'utf8')))
+    }
+  }
+  const contributors = documents.flatMap(doc => [doc.author?.github, ...(doc.maintainers ?? [])])
+  return new Set([...Object.keys(json('.github/module-authors.json').accounts), ...contributors].filter(Boolean).map(login => login.toLowerCase()))
+}
+
 async function main() {
   const repository = process.env.GITHUB_REPOSITORY, api = githubApi(repository, process.env.GITHUB_TOKEN), owner = repository.split('/')[0].toLowerCase()
   // PR_TRIAGE_DRY_RUN=1 reads the live repository and prints the writes instead of making them.
   const write = process.env.PR_TRIAGE_DRY_RUN === '1' ? async (path, method) => console.log('dry run: ' + method + ' ' + path) : api
   // Anyone with a published module (author or maintainer) or release authority skips the queue.
-  const json = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'))
-  const documents = [...json('src/catalog/module-documents.json').modules, ...['digitakt', 'digitone', 'analog-rytm-mkii', 'zoom'].flatMap(machine => {
-    const folder = 'sdk/' + machine + '/modules/'
-    return readdirSync(new URL('../' + folder, import.meta.url)).filter(id => existsSync(new URL('../' + folder + id + '/modwerk.module.json', import.meta.url))).map(id => json(folder + id + '/modwerk.module.json'))
-  })]
-  const registered = new Set([...Object.keys(json('.github/module-authors.json').accounts), ...documents.flatMap(doc => [doc.author?.github, ...(doc.maintainers ?? [])])].filter(Boolean).map(login => login.toLowerCase()))
+  const registered = publishedContributors()
   for (const [name, color] of [[NEEDS_WORK, 'b60205'], [ONE_AT_A_TIME, 'fbca04']]) {
     try { await write('/labels', 'POST', { name, color, description: name === NEEDS_WORK ? 'A required check failed; out of the review queue until green' : 'Waits for the contributor’s earlier module PR' }) }
     catch (error) { if (!/HTTP 422/.test(error.message)) throw error }

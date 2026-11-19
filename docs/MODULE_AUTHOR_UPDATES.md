@@ -1,6 +1,6 @@
 # Publishing updates as a module author
 
-A maintainer of its machine or the owner approves a module's first release by reviewing and merging its addition ([who](DEVELOPER_WORKFLOW.md#who-reviews-a-first-release)). After that, its registered author can request automatic merge and publication of their own updates. Open a pull request against `repeat98/modwerk` `main`; pushing to a personal upstream repository does not submit an update to Modwerk. Ownership changes, shared SDK/compiler changes and release exceptions still need owner review.
+A machine maintainer or the owner reviews a module's first release. The owner merges the approved addition ([who](DEVELOPER_WORKFLOW.md#who-reviews-a-first-release)). After that, its registered author can request automatic merge and publication of their own updates. Open a pull request against `repeat98/modwerk` `main`; pushing to a personal upstream repository does not submit an update to Modwerk. Ownership changes, shared SDK/compiler changes and release exceptions still need owner review.
 
 ## Start with an issue
 
