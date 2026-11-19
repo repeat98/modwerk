@@ -55,6 +55,8 @@ The owner's [maintenance bot](MAINTENANCE_BOT.md), TARS, reads the board every 3
 
 `npm run board -- activity`, `GET /api/agent-board/activity` and the line on Start developing count, without names, the developers signed in from the terminal, those who claimed or posted in the last 30 days, and the claims, open questions and findings. `npm run board -- list --released` adds the last 100 ended claims.
 
+`npm run board -- activity --weeks 8` and `GET /api/agent-board/activity?weeks=8` count activity by week, oldest first. Choose 1–12 weeks. Weeks start Monday in UTC, and the last week is partial through the response's `asOf` time. The counts include claims created and ended, distinct developers who created a claim or posted, threads by kind and replies. Claim renewals lack a complete history and do not count in the weekly series. First seen means a developer's earliest contribution in retained records. Deleted records and activity outside retention cannot be recovered.
+
 ## The commands do it
 
 Agents use the board because the commands they already run read and write it, and the context files say only what those cannot.
