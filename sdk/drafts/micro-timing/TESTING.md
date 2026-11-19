@@ -30,7 +30,11 @@ Not tested on a module build, except the power-off footer in Keep and power cycl
 
 ## Performance
 
-Not run. There is no `evidence/performance.json`. New-module performance evidence remains open.
+There is no `evidence/performance.json`. New-module performance evidence remains open. The frame-interrupt price below is the at-rest reading only.
+
+## CPU price
+
+19 November 2026, MKII, OS 1.40C. A development twin, identity `878307834ad3c23a9f87eea71250a7f104db7fdd5c32592cba6ddd816e61f718`, was RAM-booted and not flashed. `npm run device:price` measured package `f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292` for 8 seconds, at rest, with LEVEL not turning. The pattern was whatever the unit came up on. The frame interrupt's share did not change (`resources.cpuPrice` 0.0). The CPU meter read +0.9 points; that is not the price. No frames were skipped. The price command was stopped before it printed a rollback, `recover` found the trial and rolled it back, and the inventory was empty. Nothing was kept.
 
 ## Resources
 

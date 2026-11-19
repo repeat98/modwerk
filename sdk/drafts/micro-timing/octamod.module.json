@@ -103,6 +103,15 @@
         "rationale": "One ColdFire unit, including 2048 bytes in that unit for the remembered row. The loader clears those bytes when the module loads. A power cycle drops the unit. No battery RAM.",
         "source": "TESTING.md"
       }
+    },
+    "cpuPrice": {
+      "value": 0.0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price",
+      "date": "2026-11-19",
+      "conditions": "MKII, OS 1.40C, development twin 878307834ad3c23a RAM-booted (no controller rows, not flashed). Package f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292 of commit dbc0652b4, built before this twin. One 8 s reading, pattern left as the unit came up, transport stopped beforehand, module installed and LEVEL not turning. Frame interrupt +0.0 points. The CPU meter read +0.9 and is not this price.",
+      "source": "TESTING.md"
     }
   },
   "tests": {
