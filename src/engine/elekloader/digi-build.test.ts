@@ -3,10 +3,11 @@ import { DIGI_MODS } from '../../devices/digi-mods'
 import MACHINES from '../../devices/machines.generated.json'
 import { BUILDER_CATALOG, BUILDER_SOURCE, buildLogText, buildStep, builderReleases, planBuild, prepareBuild, type Builder } from './digi-build'
 import type { Catalog } from '../../../vendor/elekloader/kit/src/kit/catalog'
-import { DIGI_DOWNLOADS_ENABLED, digiDownloadsEnabled } from './protocol'
+import { DIGI_DOWNLOADS_ENABLED, digiDownloadsEnabled, isCoreBuildPreview } from './protocol'
 import { baseVariant, rytmVariant } from './machine-build'
 import DT2_BASE from '../../../sdk/machines/digitakt-ii/base-binding.json'
 import RYTM_BASE from '../../../sdk/machines/analog-rytm-mkii/base-binding.json'
+import DN2_BASE from '../../../sdk/machines/digitone-ii/base-binding.json'
 
 const PLAIN = 'modwerk-base-analog-rytm-mkii-' + RYTM_BASE.variants.plain.slice(0, 8) + '.elemod'
 const SEND_BUS = 'modwerk-base-analog-rytm-mkii-' + RYTM_BASE.variants['send-bus'].slice(0, 8) + '.elemod'
@@ -360,8 +361,9 @@ describe('the vendored elekloader catalog', () => {
     })
   })
   it('keeps download approval specific to each device', () => {
-    expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': true })
+    expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': true, 'digitone-ii': false })
     expect(digiDownloadsEnabled('digitakt-ii')).toBe(false)
+    expect(digiDownloadsEnabled('digitone-ii')).toBe(false)
     expect(digiDownloadsEnabled('analog-rytm-mkii')).toBe(true)
     expect(digiDownloadsEnabled('unknown-device')).toBe(false)
     expect(digiDownloadsEnabled('constructor')).toBe(false)
@@ -448,5 +450,13 @@ describe('the build log', () => {
     expect(text).toContain('Mods: core-dn1-2.0a.elemod, digihealth-1.1.elemod\n')
     expect(text).toContain('Result: failed: the output failed verification: section 3\n')
     expect(text.trimEnd().split('\n').at(-1)).toBe('   0.01 s  mod core 2.1                 39 sites  (file sha256 f38b0c193677a060)')
+  })
+})
+
+describe('the Digitone II core build preview', () => {
+  it('is offered to beta users only, and builds on the base that ran on a unit', () => {
+    expect(isCoreBuildPreview('digitone-ii')).toBe(false)
+    expect(isCoreBuildPreview('digitone-ii', true)).toBe(true)
+    expect(planBuild('digitone-ii', '1.12', [])).toMatchObject({ core: { sha256: DN2_BASE.identity } })
   })
 })
