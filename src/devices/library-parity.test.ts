@@ -34,7 +34,10 @@ const props = {
 describe('machine switching layout', () => {
   it.each(['octatrack', 'digitakt', 'digitone', 'syntakt'])('keeps the search tools and build action in the %s library without the local-build banner', id => {
     const html = renderToStaticMarkup(createElement(MachineLibrary, {...props, device: DEVICES_BY_ID[id]}))
-    expect(html.indexOf('class="discovery-tools"')).toBeLessThan(html.indexOf('class="library-subheading"'))
+    const results = html.indexOf(id === 'syntakt' ? 'class="device-page"' : 'class="module-grid"')
+    expect(html).toContain('class="discovery-tools"')
+    expect(html.indexOf('class="discovery-tools"')).toBeLessThan(results)
+    expect(html).not.toContain('Explore the collection')
     expect(html).toMatch(/<h1[^>]*>Module library<\/h1>/)
     expect(html).toContain('Collection order')
     expect(html).toContain('Build firmware</a>')
