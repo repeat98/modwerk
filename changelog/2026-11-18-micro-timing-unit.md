@@ -1,0 +1,1 @@
+Development: the Micro Timing draft no longer holds a battery-RAM range. The remembered row is 2048 bytes in the module's own unit, which the loader clears when the module loads and a power cycle drops. `sdk/machines/octatrack/battery-ram.json` no longer lists that draft.

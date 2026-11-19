@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import catalog from '../../../sdk/catalog.json' with { type: 'json' }
 import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
 import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
@@ -14,7 +15,8 @@ const empty = { moduleIds: [], removedStockFx: [] }
 
 describe('the site’s runtime packages', () => {
   it('publishes each listed module with its checked runtime identity, ABI and record counts', () => {
-    expect(USB_MODULE_IDS).toEqual(['everb', 'miniverb', 'tapehead', 'airwindows-chorus', 'lofi2', 'ring-sc', 'previewvol', 'apply-scene', 'repitch', 'poly8', 'vector', 'synth', 'quantizer', 'tapeecho', 'euclid', 'bbd', 'playmodes', 'mute-modes', 'sidechain-compressor', 'output-matrix', 'cc-map', 'quantize-live-rec-toggle', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'recorder-loop-fix', 'analog-bassdrum', 'beat-slicer', 'temp-save', 'slow-lfo', 'bar-led', 'tiempos', 'syntiz', 'track-solo', 'pattern-sample-locks', 'amiga', 'midi-scenes', 'kits', 'tuner', 'vibrato', 'butter-fingers', 'usb-audio-out-tracks-main-cue'])
+    // Stem Recorder is the catalog's retained card-only module. New USB releases must appear in both inventories.
+    expect([...USB_MODULE_IDS].sort()).toEqual(catalog.modules.map(module => module.id).filter(id => id !== 'stem-rec').sort())
     for (const entry of manifest.packages) {
       const data = file(entry.path), view = new DataView(data.buffer), abi = view.getUint16(4)
       expect(entry.path).toBe(`octatrack-modules/${entry.id}/${entry.version}.mwrm`)

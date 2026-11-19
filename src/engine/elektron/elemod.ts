@@ -54,6 +54,16 @@ export const LINK_DEVICES: LinkDevice[] = [
     ddr: [0x47f00000, 0x47f40000], sramCode: [0x8000f100, 0x80010000], fastTable: 'core_fast', protected: [],
   },
   {
+    // The Digitakt II's platform on OS 1.12 (docs/DIGITONE_II_OS_RESEARCH.md): mods run in the same 256 KB of DDR, which
+    // nothing in the OS names and a canary fill kept intact. SRAM is not qualified for code, so there is no .fast area.
+    key: 'digitone-mk2', machine: 'digitone-ii', name: 'Digitone II', sysexId: 0x15, mainLoad: 0x40000400,
+    releases: [
+      { version: '1.12', syxSha256: '7e5b8a733d4ab1fdf7e5d22757f7d8eddaa3cbf71d0858874a791844c02ceb35', mainSha256: 'a098f620019b2ad38fd7e0397df39501fb1cf6bc26d0283915f34c49446fdf1a', mainLength: 3196288 },
+    ],
+    areas: { ddr: [0x47f00000, 0x47f40000] },
+    ddr: [0x47f00000, 0x47f40000], sramCode: [0, 0], fastTable: '', protected: [],
+  },
+  {
     key: 'analog-rytm-mk2', machine: 'analog-rytm-mkii', name: 'Analog Rytm MKII', sysexId: 0x0c, mainLoad: 0x40000400,
     releases: [
       { version: '1.74', syxSha256: 'cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123', mainSha256: '34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b', mainLength: 3005432 },
@@ -93,6 +103,9 @@ export type ParsedMod = {
   sections: Partial<Record<SectionName, Section>>; symbols: Map<string, [SectionName | 'abs', number]>; exports: string[]; imports: string[]; weak: Set<string>
   relocs: (Reloc & { section: SectionName })[]; collections: Map<string, number>; contribute: Contribution[]; copied: [number, number, number][]
   storage: [string, string, number][]   // mod storage fields: [symbol, scope, bits] (elekloader's store.ts)
+  // Digitone II: the DSP payload a format-2 mod declares for the SHARC program (section 7): its ABI. Only the core's
+  // bridge is accepted, and only while no other mod brings DSP code: this linker writes the main OS alone.
+  sharc: string | null
 }
 
 const COMMON = ['elemod', 'dtmod', 'id', 'version', 'title', 'description', 'category', 'author', 'license', 'target', 'sites', 'resources', 'requires', 'conflicts', 'build', 'signature', 'notes']
@@ -173,7 +186,7 @@ function parseResources(doc: Record<string, unknown>, name: string, device: Link
 export function parseElemod(doc: Record<string, unknown>, name = '<mod>', devices: readonly LinkDevice[] = LINK_DEVICES): ParsedMod {
   const format = (doc.elemod ?? doc.dtmod) as number
   if (format !== 1 && format !== 2) throw new ModError(name + ': not a .elemod file')
-  const allowed = format === 1 ? [...COMMON, 'ele3_version', 'blob'] : [...COMMON, 'sections', 'symbols', 'exports', 'imports', 'weak', 'relocs', 'collections', 'contribute', 'copied', 'storage']
+  const allowed = format === 1 ? [...COMMON, 'ele3_version', 'blob'] : [...COMMON, 'sections', 'symbols', 'exports', 'imports', 'weak', 'relocs', 'collections', 'contribute', 'copied', 'storage', 'sharc']
   const extra = Object.keys(doc).filter(key => !allowed.includes(key))
   if (extra.length) throw new ModError(name + ': unknown fields ' + extra.sort().join(', '))
   for (const key of format === 1 ? ['id', 'version', 'target', 'sites'] : ['id', 'version', 'target', 'sections']) if (!(key in doc)) throw new ModError(name + ': no "' + key + '"')
@@ -181,7 +194,7 @@ export function parseElemod(doc: Record<string, unknown>, name = '<mod>', device
   const mod: ParsedMod = {
     format, id: String(doc.id), version: String(doc.version), device, release, sites: [], ...parseResources(doc, name, device),
     requires: ((doc.requires as unknown[]) ?? []).map(String), conflicts: ((doc.conflicts as unknown[]) ?? []).map(String),
-    blob: null, shownVersion: null, sections: {}, symbols: new Map(), exports: [], imports: [], weak: new Set(), relocs: [], collections: new Map(), contribute: [], copied: [], storage: [],
+    blob: null, shownVersion: null, sections: {}, symbols: new Map(), exports: [], imports: [], weak: new Set(), relocs: [], collections: new Map(), contribute: [], copied: [], storage: [], sharc: null,
   }
   if (format === 1) {
     mod.sites = parseSites(doc, name, device, release, false)
@@ -198,6 +211,12 @@ export function parseElemod(doc: Record<string, unknown>, name = '<mod>', device
       mod.blob = { load, length, sha256: String(blob.sha256 ?? '').toLowerCase(), parts }
     }
     return mod
+  }
+  if (doc.sharc !== undefined) {
+    const payload = doc.sharc as Record<string, unknown> | null
+    if (device.machine !== 'digitone-ii') throw new ModError(name + ': a SHARC payload is only for the Digitone II')
+    if (!payload || typeof payload !== 'object' || typeof payload.abi !== 'string' || !payload.abi) throw new ModError(name + ': sharc needs its abi')
+    mod.sharc = payload.abi
   }
   for (const [section, value] of Object.entries(doc.sections as Record<string, Record<string, unknown>>)) {
     if (!SECTIONS.includes(section as SectionName)) throw new ModError(name + ': unknown section ' + section)
@@ -347,6 +366,9 @@ export async function linkMods(mods: ParsedMod[], image: Uint8Array, lock: store
   if (problems.length) throw new ModError('the mods do not combine:\n  ' + problems.join('\n  '))
   const end = imageEnd(mods[0]), [fastBase, fastEnd] = device.sramCode
   const core = mods.find(mod => mod.sections['.boot'])!
+  // The core's DSP bridge goes into section 7 only for a mod with DSP code, and this linker writes the main OS alone.
+  const dsp = mods.filter(mod => mod !== core && mod.sharc).map(label)
+  if (dsp.length) throw new ModError(dsp.join(', ') + ' bring' + (dsp.length === 1 ? 's' : '') + ' DSP code for the ' + device.name + "'s SHARC program, which this linker does not write yet")
   const order = [core, ...mods.filter(mod => mod !== core).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))]
   const tables = new Map<string, [ParsedMod, number]>()
   for (const mod of order) for (const [table, entry] of mod.collections) tables.set(table, [mod, entry])
