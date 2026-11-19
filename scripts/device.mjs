@@ -339,6 +339,9 @@ async function missing() {
  * profile, profile:N (development bases: each UI tick hook's µs over N seconds, from the symbols of the build `boot` started)
  * health (development bases: one JSON line of DSP frames, loader stalls and errors, ticks, CPU, crash and stall record counts; scripts/octatrack-soak.mjs)
  * (spaces in NAME as _; it waits until the track runs it). */
+/** Steps that only read: run() leaves out the 60 ms it puts after every other step (a health read cost 80 ms, 60 of
+ * them this pause). Not `gap`, `guard` or `cpu`: their reads restart a window or can set a value. */
+export const READ_ONLY = /^(health|state|stats|ui|loader|crash|stall|saved|inventory|missing|screen|png:\S+|mem:0x[0-9a-f]+:\d+)$/i
 async function run(sequence, until = Infinity) { // serve: past its time limit a sequence stops before its next step
   for (const step of sequence.trim().split(/\s+/)) {
     if (Date.now() > until) throw new Error('stopped at the time limit before ' + step)
@@ -493,7 +496,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     }
     else if (step === 'stats') { const w = await statusWords(); console.log(`stats cpu ${w(66)} T1-4 ${w(69)}/${w(70)} T5-8 ${w(67)}/${w(68)} passes ${(w(76) / 1024).toFixed(1)} ${(w(77) / 1024).toFixed(1)}`) }
     else { const [, spec, times] = /^(.+?)(?:\*(\d+))?$/.exec(step); for (let i = 0; i < Number(times ?? 1); i++) await keys(spec) }
-    await wait(60)
+    if (!READ_ONLY.test(step)) await wait(60) // room between presses and changes; a read changes nothing, so it needs none
   }
 }
 const state = s => `${s.phase}, generation ${s.generation}, active ${s.active?.slice(0, 16) ?? 'unknown'}…`

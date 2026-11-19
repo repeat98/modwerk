@@ -82,7 +82,7 @@ def output(name):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('port', nargs='?', type=int, default=47812)
+    ap.add_argument('port', nargs='?', type=int, default=50124)
     ap.add_argument('--name', default='Octatrack')
     ap.add_argument('--list', action='store_true')
     a = ap.parse_args()

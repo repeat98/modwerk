@@ -10,7 +10,7 @@
 //
 // Needs `npm run device -- serve` (in its loop) on a development base, which answers the `health` step
 // (MODWERK_DEV_SOCKET, default /tmp/modwerk-dev.sock), and scripts/octatrack-midi-bridge.py on the computer the unit is
-// plugged into (--midi HOST:PORT, default 127.0.0.1:47812). The project's MIDI settings: track channels 1-8 (stock's
+// plugged into (--midi HOST:PORT, default 127.0.0.1:50124). The project's MIDI settings: track channels 1-8 (stock's
 // default), PROG CH RECEIVE on the channel --pc-channel names, CC and transport receive on. A program change while
 // playing lands at the pattern's end, so short patterns at a high tempo give the most transitions a minute
 // (docs/OCTATRACK_DRIVING.md, "A fast soak"). Nothing is installed, kept or flashed; --shrink RAM-boots DIR (a
@@ -240,7 +240,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     seconds: { type: 'string', default: '180' }, rate: { type: 'string', default: '20' }, seed: { type: 'string' },
     profile: { type: 'string', default: 'mix' }, programs: { type: 'string', default: '0-3' },
     'pc-channel': { type: 'string', default: '1' }, 'auto-channel': { type: 'string', default: '1' },
-    midi: { type: 'string', default: '127.0.0.1:47812' }, log: { type: 'string' }, replay: { type: 'string' }, until: { type: 'string' },
+    midi: { type: 'string', default: '127.0.0.1:50124' }, log: { type: 'string' }, replay: { type: 'string' }, until: { type: 'string' },
     shrink: { type: 'boolean' }, reset: { type: 'string' }, hold: { type: 'string', default: '26' }, settle: { type: 'string', default: '2' },
   } })
   const socket = process.env.MODWERK_DEV_SOCKET ?? '/tmp/modwerk-dev.sock'

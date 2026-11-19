@@ -128,7 +128,9 @@ scripts/device-send.py 'part2 pick:T1:FX2:E-Verb stats'
 perl -e 'alarm 10; exec @ARGV' scripts/device-send.py ui   # with a time limit
 ```
 
-One line, steps separated by spaces, the reply printed. A request has a 20 s limit; the session answers an
+One line, steps separated by spaces, the reply printed. After each step that presses, turns or changes something
+the session waits 60 ms; after a read (`health`, `state`, `stats`, `ui`, `mem:`, `crash`, `stall` and the like) it
+does not, so a read costs a few milliseconds (`state` 3 ms, `health` 20 ms over the Windows bridge, 19 November 2026). A request has a 20 s limit; the session answers an
 error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 
 | Step | What it does |
@@ -176,7 +178,8 @@ every operation, so `--replay LOG [--until N]` plays the same run again. The def
 second, about as many operations as an hour at a player's pace.
 
 - MIDI goes through `scripts/octatrack-midi-bridge.py` on the computer the unit is plugged into (on Windows the device
-  venv's Python, through winmm; port 47812). Start it before the run and stop it after: while it runs it holds the
+  venv's Python, through winmm; port 50124, beside the USB bridge's: on a Windows host with WSL's mirrored
+  networking 47812 refused the bind, 19 November 2026). Start it before the run and stop it after: while it runs it holds the
   unit's MIDI port.
 - The project: track channels 1-8, PROG CH RECEIVE on the channel `--pc-channel` names (default 1), CC and transport
   receive on, effects of the modules under test on the Parts that `--programs` reaches. A program change while playing
