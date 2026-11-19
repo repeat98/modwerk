@@ -33,9 +33,9 @@ describe('pr:ready verdict', () => {
     expect(refused.ok).toBe(false)
     expect(refused.problems[0]).toContain('Licence text changes require owner review.')
   })
-  it('tells everyone else that the owner merges once CI is green, and to rerun when main moves', () => {
+  it('tells everyone else who reviews first releases, and to rerun when main moves', () => {
     const { notes } = readiness({})
-    expect(notes[0]).toContain('owner reviews it and merges it with one click')
+    expect(notes[0]).toContain('device reviewer or repository maintainer to review and merge')
     expect(notes.at(-1)).toContain('If main moves before the merge, run this again')
   })
   it('says a change to what runs on an instrument opens as a draft until the exact build ran on a unit', () => {

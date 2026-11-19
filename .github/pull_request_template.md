@@ -22,7 +22,7 @@ Registered module authors can opt into [automatic publication](../docs/MODULE_AU
 - [ ] Automatically merge and publish my module update after checks pass.
 - [ ] I verified the source, licences, UI and qualification reports, including instance isolation and Part/project/reboot persistence where applicable; no required acceptance check is failed or untested.
 
-Reviewer (a maintainer of its machine or the owner for a first release, the registered author for their own update):
+Reviewer (an assigned device reviewer or a repository maintainer for a first release, the registered author for their own update):
 
 - [ ] I checked the cycle and memory reports against the worst case, the attributed hardware evidence against the submitted source and build, and the screenshots, tutorial and access steps against the current UI.
 

@@ -60,6 +60,17 @@ describe('reading a transcript', () => {
     expect(read.removed).toMatchObject({ toolOutputs: 1, thinking: 1, skipped: 1 })
   })
 
+  it('keeps a command the developer ran with ! and drops its output', () => {
+    const read = readClaudeTranscript([
+      line({ type: 'user', origin: { kind: 'human' }, timestamp: '2026-11-19T10:00:00.000Z', message: { role: 'user', content: '<bash-input>gh auth login</bash-input>' } }),
+      line({ type: 'user', origin: { kind: 'human' }, timestamp: '2026-11-19T10:00:01.000Z', message: { role: 'user', content: '<bash-stdout>! One-time code (ABCD-1234) copied to clipboard</bash-stdout><bash-stderr></bash-stderr>' } }),
+    ])
+    const session = prepareSession(read, '')
+    expect(session.entries.map(entry => entry.text)).toEqual(['! gh auth login'])
+    expect(JSON.stringify(session)).not.toMatch(/ABCD-1234|One-time/)
+    expect(session.removed.toolOutputs).toBe(2)
+  })
+
   it('names the folder Claude Code keeps a checkout\'s transcripts in', () => {
     expect(claudeProjectFolder('/home/jannik/modwerk')).toBe('-home-jannik-modwerk')
     expect(claudeProjectFolder('c:\\Users\\jannik.aßfalg\\Dev')).toBe('c--Users-jannik-a-falg-Dev')
@@ -80,6 +91,17 @@ describe('scrubbing', () => {
     expect(text).toContain('The token: expired, so I signed in again.')
     expect(text).toContain('~/modwerk/AGENTS.md')
     expect(removed.secrets).toBeGreaterThanOrEqual(6)
+  })
+
+  it('removes a sign-in\'s one-time device code an agent quotes, and leaves other ids alone', () => {
+    expect(scrubText('Paste the one-time code **WDJB-MJHT** on github.com/login/device.')).toBe('Paste the one-time code **[code removed]** on github.com/login/device.')
+    expect(scrubText('Your code: 7E2A-15FF')).toBe('Your code: [code removed]')
+    expect(scrubText('The MKII-1234 board and issue 1736-1737 stay.')).toBe('The MKII-1234 board and issue 1736-1737 stay.')
+  })
+
+  it('removes the developer\'s names as whole words in any script, and leaves longer words alone', () => {
+    const text = scrubText('Greta Šimek checked it. greta.simek wrote back, and Gretas review and Šimeková stay.', { names: ['Greta Šimek', 'Greta', 'Šimek', 'simek'] })
+    expect(text).toBe('[name] checked it. [name].[name] wrote back, and Gretas review and Šimeková stay.')
   })
 
   it('removes the home folder in the form Claude Code names its project folders', () => {
@@ -121,12 +143,13 @@ describe('scrubbing', () => {
 async function fixture() {
   const server = await testServer(); databases.push(server.db)
   Object.assign(server.env, { GITHUB_OAUTH_CLIENT_ID: 'test-client', GITHUB_OAUTH_CLIENT_SECRET: 'only-a-test-client-secret', GITHUB_OAUTH_CALLBACK_URL: 'https://api.example.test/api/developer/auth/callback' })
-  const call = (path: string, method = 'GET', body?: unknown, developer = '', { origin = 'https://octamod.test' as string | null, cookie = '' } = {}) => {
+  const call = (path: string, method = 'GET', body?: unknown, developer = '', { origin = 'https://octamod.test' as string | null, cookie = '', admin = '' } = {}) => {
     const headers = new Headers({ 'CF-Connecting-IP': '192.0.2.1' })
     if (origin) headers.set('Origin', origin)
     if (body !== undefined) headers.set('Content-Type', 'application/json')
     if (developer) headers.set('X-Modwerk-Developer', developer)
     if (cookie) headers.set('Cookie', cookie)
+    if (admin) headers.set('X-Octamod-Admin', admin)
     return handleCommunity(new Request('https://api.example.test/api' + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) }), server.env)
   }
   let next = 300
@@ -152,8 +175,10 @@ const session = () => prepareSession(readClaudeTranscript(claudeTranscript), 'Th
 describe('shared agent sessions on the Worker', () => {
   it('stores a session for its developer and the owner, and nobody else', async () => {
     const { call, boardLogin, share, db } = await fixture()
-    const developer = await boardLogin('first-porter'), stranger = await boardLogin('someone-else'), owner = await boardLogin('repeat98')
+    const developer = await boardLogin('first-porter'), stranger = await boardLogin('someone-else'), ownerBoard = await boardLogin('repeat98')
+    // The owner reads through the admin sign-in. Their board session alone opens nothing else, even on an administrator account.
     db.prepare("UPDATE users SET is_admin=1,email_verified=1 WHERE github_login='repeat98'").run()
+    const admin = (await (await call('/auth/admin', 'POST', { key: 'e'.repeat(64) })).json() as { token: string }).token
 
     const shared = await share(developer, session())
     expect(shared.status).toBe(201)
@@ -168,9 +193,10 @@ describe('shared agent sessions on the Worker', () => {
     expect((await call('/agent-sessions/' + id, 'DELETE', undefined, stranger)).status).toBe(404)
     expect((await call('/agent-sessions', 'GET')).status).toBe(401)
 
-    const all = await (await call('/agent-sessions?all=1', 'GET', undefined, owner)).json() as { sessions: { id: string; login: string }[] }
+    expect((await call('/agent-sessions?all=1', 'GET', undefined, ownerBoard)).status).toBe(403)
+    const all = await (await call('/agent-sessions?all=1', 'GET', undefined, '', { admin })).json() as { sessions: { id: string; login: string }[] }
     expect(all.sessions).toMatchObject([{ id, login: 'first-porter' }])
-    const read = await (await call('/agent-sessions/' + id, 'GET', undefined, owner)).json() as { session: { entries: { text: string }[] } }
+    const read = await (await call('/agent-sessions/' + id, 'GET', undefined, '', { admin })).json() as { session: { entries: { text: string }[] } }
     expect(read.session.entries[0].text).toBe('Port the tape echo to the Digitakt.')
 
     expect((await call('/agent-sessions/' + id, 'DELETE', undefined, developer)).status).toBe(200)
