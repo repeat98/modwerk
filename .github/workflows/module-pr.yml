@@ -3,7 +3,7 @@
 name: Module PR checks
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, edited, synchronize, reopened, ready_for_review, converted_to_draft]
     branches: [main, 'modwerk/**', 'codex/modwerk-*']
 permissions:
   contents: read
@@ -35,6 +35,27 @@ jobs:
         env:
           OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
         run: node scripts/change-scope.mjs --base "$OCTAMOD_PR_BASE" --head HEAD >> "$GITHUB_OUTPUT"
+  describe:
+    if: github.base_ref == 'main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      # Read changed paths from the exact event trees. Run the validator from the trusted PR base.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Check the description and hardware evidence
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_DRAFT: ${{ github.event.pull_request.draft }}
+        run: |
+          PR_FILES="$(git diff --name-only --no-renames "$PR_BASE...$PR_HEAD")"
+          export PR_FILES
+          git checkout --detach "$PR_BASE"
+          node scripts/pr-body.mjs
   module-contract:
     needs: scope
     runs-on: ubuntu-24.04
@@ -219,6 +240,8 @@ jobs:
         run: |
           image=$(docker image inspect modwerk-source-tools --format '{{.Id}}')
           bash scripts/build-modules-isolated.sh "$GITHUB_WORKSPACE" "$RUNNER_TEMP/octatrack-source" "$image"
+      - name: Rebuild base-bound packages and verify their published bytes
+        run: bash scripts/test-base-bound.sh "$(docker image inspect modwerk-source-tools --format '{{.Id}}')"
       - name: Compile the freestanding upload controller with the pinned ColdFire tools
         run: |
           image=$(docker image inspect modwerk-source-tools --format '{{.Id}}')
@@ -240,7 +263,7 @@ jobs:
   # A job the scope skips counts as passed; a failed, cancelled or unrun job does not.
   module-pr-ok:
     if: always()
-    needs: [scope, module-contract, module-suites, module-paths-windows, core-logger-host, elemod-source, octatrack-source]
+    needs: [scope, describe, module-contract, module-suites, module-paths-windows, core-logger-host, elemod-source, octatrack-source]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     permissions: {}
