@@ -19,6 +19,8 @@ python3 sdk/machines/digitone-ii/tools/dn2_link.py turn A 8        # encoders A-
 | `key ID FLAGS` | 0x10 | armed: a panel key message, flags 0x01 press, 0x10 release; a held key reads as held to stock's is_key_held |
 | `enc N DELTA` | 0x11 | armed: an encoder turn, 1-8 A-H, 9 LEVEL |
 | `release` | 0x12 | armed: lets go of every key the link holds |
+| `diag` | 0x22 | the diagnostics log's address and size, frame interrupts and UI ticks so far |
+| `freeze N` | 0x23 | armed: the next UI tick stands still N frames (at most 15 s), to test FREEZE logging |
 | `mem ADDR N` | 0x21 | the address, then up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
 
 `screen` is the host's: it reads stock's frame pointer and the frame through `mem` (no command of its own on the unit),
@@ -46,4 +48,9 @@ Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at t
 - **Arm.** SETTINGS > REMOTE CTRL, ON at every boot of a development base. Keys and turns need it; reads do not. A
   press or turn from a person at the panel refuses the host for about three seconds and lets go of what it held;
   the YES that turns the row on does not count. OFF stops the host until the next boot.
-- **Not yet.** The Rytm link's remote YES and RAM boot.
+- **Diagnostics.** The Octatrack's log ([`diag.c`](elekloader/base/diag.c), its layout `diag.h` byte for byte), so
+  the site reads it with `device-log.ts`: a START at each start, a FREEZE when the UI tick stands still five seconds
+  while the frame interrupt goes on (1,500 a second, measured), each with the last 16 keys, and a load window every
+  five minutes with the longest run of frames without a tick. No meters, machines or tempo yet, and the log lives in
+  .bss, so it starts empty at every start ([record](../../../docs/verification/2026-11-19-digitone-ii-diagnostics-on-a-unit.md)).
+- **Not yet.** The Rytm link's remote YES and RAM boot; the diagnostics' upload from the page.
