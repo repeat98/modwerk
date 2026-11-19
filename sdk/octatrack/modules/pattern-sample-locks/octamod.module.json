@@ -3,7 +3,7 @@
   "id": "pattern-sample-locks",
   "key": "PATTERN SAMPLE LOCKS",
   "name": "Pattern Sample Locks",
-  "version": "0.1.8-experimental",
+  "version": "0.1.9-experimental",
   "category": "system",
   "author": {
     "github": "twwwy",
@@ -36,9 +36,7 @@
     "firmware": "1.40C",
     "location": "Flex / Static",
     "conflicts": [],
-    "uiClaims": [
-      "screen:PART EDIT"
-    ],
+    "uiClaims": [],
     "limitations": [
       "Experimental: tested on one MKII over USB; no MKI, no audio checks on this base.",
       "Under a high-load development run, SAMPLE fields on one pattern changed without explanation; the cause is unknown.",
@@ -94,31 +92,31 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "On the author's MKII (OS 1.40C, public beta base 9b3ba417) over USB, 8 Nov 2026, exact package 3e13c46f: with 20 kept published modules plus Sample Locks, FUNC + PART showed both actions; Lock on two patterns wrote SAMPLE locks and kept a manual SAMPLE lock and a non-SAMPLE lock; native save and reload kept both; Keep of the 21-module set survived a physical power cycle with both patterns' locks; Clear on one pattern removed its SAMPLE locks, kept the non-SAMPLE lock and stayed clear after save and reload. Earlier the same day the menu rows did not appear on a long-running unit until a power cycle (cause not found). 3 Nov: Replace OFF kept an existing lock and filled an empty field; Clear kept non-SAMPLE locks. Emulator: dearest press (Clear on 512 fields) 333,805 instructions; 40 presses while playing, no hang. Not run: MKI, audio, live-recording refusal on this base, a static cycle or stack bound. Known issue: one unexplained SAMPLE change in a high-load development run.",
+    "summary": "On the author's MKII over USB, 18 Nov 2026, exact package 6fea272e on a development build of base 0.7.8: device:qualify passed (Keep, four Parts three times round, bank change, Part reload checked byte for byte, removal; no crash, stall or loader error). 17 Nov: FUNC+PART drew the base's two-column Part Edit window, LOCKS opened Lock and Clear, NO and LEFT as in PROJECT. Emulator: dearest press (Clear on 512 fields) 307,343 instructions; 40 presses while playing, no hang. The author reports Lock and Clear applied correctly on a scratch project, playback kept playing. Not run for 0.1.9: MKI, audio, a power cycle. Known issue: one unexplained SAMPLE change in a high-load development run (0.1.8).",
     "hardwareStatus": "reported",
     "gates": [
       "modules/pattern-sample-locks/verify.py"
     ],
-    "evidenceRevision": "5a15ac390dac2475df3fb3b2ef64154e174b4182",
+    "evidenceRevision": "e8fa91d4c71b040eb530d66e22e003c0577428e2",
     "qualification": {
-      "moduleVersion": "0.1.8-experimental",
-      "sourceSha256": "800a3ac6a6ac8c523ffa9d19232fc358372bed8697e0b71bbdf77418d62abdcd",
-      "imageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+      "moduleVersion": "0.1.9-experimental",
+      "sourceSha256": "4552f4fe2f2807755a1d5d8fe3bac64cc32fa168c4f09fc8ec08c93020414263",
+      "imageSha256": "6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3",
       "cycles": [
         {
           "processor": "coldfire",
-          "worstCase": 333805,
-          "maxConfiguration": 333805,
+          "worstCase": 307343,
+          "maxConfiguration": 307343,
           "maxInstances": 1,
           "budget": 26600000,
           "unit": "cycles/event",
           "method": "emulator",
           "conditions": {
-            "parameterExtremes": "The dearest input: CLEAR SAMPLE LOCKS confirmed on 8 tracks x 64 steps, 512 SAMPLE fields. Five cases measured (2, 64 and three 512-field fixtures); the next dearest was 326,556.",
+            "parameterExtremes": "The dearest input: CLEAR SAMPLE LOCKS confirmed on 8 tracks x 64 steps, 512 SAMPLE fields; LOCK on the same fixture 96,682; 2 fields 32,240 and 14,187.",
             "parameterModulation": "Not applicable: no continuous parameters. Encoders and arrows change bounded UI state; each change costs one redraw.",
-            "modeSwitching": "Lock and Clear, Replace existing on and off, stopped and playing; 20 rounds of Lock then Clear on 512 fields while playing, with STOP and a Part change between (40 events, no hang).",
+            "modeSwitching": "Lock and Clear opened through FUNC+PART > LOCKS, stopped and playing; 20 rounds of Lock then Clear on 512 fields while playing, with STOP and a Part change between (40 events, all four Parts, no hang).",
             "maxLoad": "One instance per module ID. The event is one module_key call on the UI task, not an interrupt. Budget: the key-press template's 26,600,000 cycles (100 ms at 266 MHz), owner-waived static bound for this version.",
-            "inputConditions": "ot_emu, executed instructions from entry to return of module_key, stock callees and interrupts included, DSP running; exact package 3e13c46f on base 9b3ba417. Instructions, not cycles: the figure is a count of executed instructions; even at ten cycles each it stays under 13 % of the budget. Not measured on hardware."
+            "inputConditions": "ot_emu b087c97f, executed instructions from entry to return of module_key, stock callees and interrupts included, DSP running; exact package 6fea272e on Octatrack base 0.7.8 (f429652e, with ot_part_menu). Instructions, not cycles: even at ten cycles each it stays under 12 % of the budget. Not measured on hardware."
           },
           "report": "evidence/performance.json"
         }
@@ -128,44 +126,44 @@
           {
             "name": "ColdFire code and initialized data (package image)",
             "space": "sdram",
-            "words": 8748,
+            "words": 7868,
             "wordBits": 8,
-            "bytes": 8748,
+            "bytes": 7868,
             "scope": "shared"
           },
           {
-            "name": "State (bss): menu, selections and edit plan",
+            "name": "State (bss): action screens, selections and edit plan",
             "space": "sdram",
-            "words": 1328,
+            "words": 1316,
             "wordBits": 8,
-            "bytes": 1328,
+            "bytes": 1316,
             "scope": "shared"
           },
           {
-            "name": "Runtime module header, three site records and alignment in the base's pool",
+            "name": "Runtime module header and alignment in the base's pool (no site records)",
             "space": "sdram",
-            "words": 756,
+            "words": 672,
             "wordBits": 8,
-            "bytes": 756,
+            "bytes": 672,
             "scope": "shared"
           }
         ],
         "perInstanceBytes": 0,
-        "sharedBytes": 10832,
+        "sharedBytes": 9856,
         "maxInstances": 1,
-        "totalBytes": 10832,
-        "conditions": "From the exact package 3e13c46f (10,048 bytes, 167 relocations) and the base's loader layout: one 10,832-byte extent in the shared 768 KiB runtime pool; during a replacement the old and new extents can both be held (21,664 bytes for two copies of this package). No DSP memory, no heap, no battery storage, no card files. Stack: the key path's source-derived subtotal is 916 bytes on the shared sys task, excluding interrupts; not measured on hardware.",
+        "totalBytes": 9856,
+        "conditions": "From the exact package 6fea272e (8,740 bytes, 145 relocations, no stock sites) and base 0.7.8's loader layout (a 672-byte module header): one 9,856-byte extent in the shared 768 KiB runtime pool; during a replacement the old and new extents can both be held (19,712 bytes for two copies). Its Part Edit row is a 24-byte record inside the image, read by the base. No DSP memory, no heap, no battery storage, no card files. Stack: not re-derived for 0.1.9; the key path is unchanged from 0.1.8's 916-byte source-derived subtotal less the removed list, not measured on hardware.",
         "report": "TESTING.md"
       },
       "hardware": {
         "kind": "functional",
         "status": "reported",
         "model": "MKII",
-        "testedOn": "2026-11-08",
+        "testedOn": "2026-11-18",
         "tester": "twwwy",
-        "sourceRevision": "5a15ac390dac2475df3fb3b2ef64154e174b4182",
-        "imageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
-        "summary": "The author's MKII, OS 1.40C, flashed public Modwerk beta base 9b3ba417, driven over USB by Claude Code with whole-set offers. 8 Nov 2026, exact package 3e13c46f beside the 20 published modules the unit keeps (set 42fcda34): FUNC + PART on a Flex track's SRC page showed LOCK SAMPLES TO PATTERN and CLEAR SAMPLE LOCKS; Lock on two patterns wrote SAMPLE locks and kept a manual SAMPLE lock and a non-SAMPLE lock; native save and reload kept both; Keep of the 21-module set (self-test 21 intact, 6 DSP effects ran, 0 failed) then a physical power cycle restored all 21 records and both patterns' locks; Clear on one pattern removed its SAMPLE locks, kept the non-SAMPLE lock, and stayed clear after native save and reload while the other pattern kept its locks. 3 Nov 2026, same package in a RAM trial: Replace OFF kept an existing manual SAMPLE lock and filled an empty field; Clear removed selected SAMPLE locks and kept a non-SAMPLE lock; rollback restored the set.",
+        "sourceRevision": "e8fa91d4c71b040eb530d66e22e003c0577428e2",
+        "imageSha256": "6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3",
+        "summary": "The author's MKII, OS 1.40C, a development build of Modwerk base 0.7.8 with the Part Edit menu (e08c4416) booted from RAM, driven over USB by Claude Code with the author's OK. 18 Nov 2026, exact package 6fea272e: npm run device:qualify passed (installed and kept, the four Parts switched three times round, a bank change and back, the Part reloaded from its saved copy byte for byte, removed; loader 0 rejected, 0 rollbacks, no crash or stall). 17 Nov, packages of the same source on a 0.7.6 development base: FUNC+PART drew the two-column window like PROJECT, LOCKS > LOCK SAMPLES and CLEAR LOCKS opened their screens, NO, LEFT and reopening behaved as PROJECT. The author then reported, on a scratch project on the same base with the exact package as a trial: LOCK SAMPLES and CLEAR LOCKS applied correctly through the new window, and playback kept playing during an action. Not run for 0.1.9: MKI, audio, a power cycle.",
         "limitations": [
           "One MKII; no MKI.",
           "Panel results are the author's reports; the USB readings (set identity, self-test, status word) were observed by the session.",
@@ -181,17 +179,17 @@
           "title": "Quick tutorial",
           "steps": [
             "Create a disposable pattern with sample trigs and an existing SAMPLE lock.",
-            "Open Lock, select a track and leave Replace existing OFF. Confirm: empty SAMPLE fields on sample trigs receive the Part assignment; existing locks remain unchanged.",
-            "Open Clear and select tracks. Review **INCLUDES MANUAL LOCKS** and the counts. Confirm to remove every selected SAMPLE lock. Other parameter locks remain.",
+            "Press FUNC + PART, move to LOCKS, press RIGHT and choose LOCK SAMPLES. Select a track and leave Replace existing OFF. Confirm: empty SAMPLE fields on sample trigs receive the Part assignment; existing locks remain unchanged.",
+            "Open CLEAR LOCKS the same way and select tracks. Review **INCLUDES MANUAL LOCKS** and the counts. Confirm to remove every selected SAMPLE lock. Other parameter locks remain.",
             "Use ordinary Save Project to save the pattern. Nothing saves implicitly."
           ]
         },
         "screenshots": [
-          "media/mkii-part-menu.png",
-          "media/mkii-lock-replace-on.png",
-          "media/live-removal-open-tracks.png",
-          "media/v018-mkii-live512-confirm.png",
-          "media/live-512-clear-confirm.png"
+          "media/v019-part-edit.png",
+          "media/v019-locks-actions.png",
+          "media/v019-lock-tracks.png",
+          "media/v019-lock-confirm.png",
+          "media/v019-clear-confirm.png"
         ],
         "screenshotStyle": "black-and-white"
       }
@@ -203,6 +201,108 @@
     "declaration": "Original MIT source by twwwy. Original small lettering reused from twwwy’s Beat Slicer under MIT. No stock firmware or extracted tables are included."
   },
   "media": [
+    {
+      "path": "media/v019-part-edit.png",
+      "captureType": "hardware",
+      "caption": "Press FUNC + PART: the Part Edit window lists PART and each module's row on the left. Move to LOCKS with UP/DOWN; its actions show on the right.",
+      "alt": "Physical Octatrack Part Edit window in two columns, LOCKS highlighted on the left, LOCK SAMPLES and CLEAR LOCKS on the right.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Part Edit",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.9-experimental",
+        "imageSha256": "6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3",
+        "setup": "Actual MKII LCD read over the development USB interface on a RAM-booted development build of Modwerk base 0.7.8 with the Part Edit menu (e08c44168c5abb0d), 18 November 2026. Exact package 6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3 as a timed trial, rolled back; pattern I01, which has no sample trigs, so the confirmations plan no change; each was left with NO."
+      }
+    },
+    {
+      "path": "media/v019-locks-actions.png",
+      "captureType": "hardware",
+      "caption": "Press RIGHT or YES to move into LOCKS' actions, choose LOCK SAMPLES or CLEAR LOCKS with UP/DOWN and press YES. LEFT goes back; NO closes.",
+      "alt": "Physical Octatrack Part Edit window with LOCK SAMPLES highlighted in the right column.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Part Edit, LOCKS",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.9-experimental",
+        "imageSha256": "6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3",
+        "setup": "Actual MKII LCD read over the development USB interface on a RAM-booted development build of Modwerk base 0.7.8 with the Part Edit menu (e08c44168c5abb0d), 18 November 2026. Exact package 6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3 as a timed trial, rolled back; pattern I01, which has no sample trigs, so the confirmations plan no change; each was left with NO."
+      }
+    },
+    {
+      "path": "media/v019-lock-tracks.png",
+      "captureType": "hardware",
+      "caption": "LOCK SAMPLES TO PATTERN: turn A to select all eligible tracks or clear them; B selects the highlighted track; C sets Replace existing.",
+      "alt": "Physical Octatrack Lock track selection with eligible tracks selected.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Lock selection",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.9-experimental",
+        "imageSha256": "6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3",
+        "setup": "Actual MKII LCD read over the development USB interface on a RAM-booted development build of Modwerk base 0.7.8 with the Part Edit menu (e08c44168c5abb0d), 18 November 2026. Exact package 6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3 as a timed trial, rolled back; pattern I01, which has no sample trigs, so the confirmations plan no change; each was left with NO."
+      }
+    },
+    {
+      "path": "media/v019-lock-confirm.png",
+      "captureType": "hardware",
+      "caption": "YES shows the planned changes per track before anything is written; YES applies, NO returns. This pattern has no sample trigs, so it plans none.",
+      "alt": "Physical Octatrack Lock confirmation listing per-track counts and EXISTING LOCKS: KEEP.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Lock confirmation",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.9-experimental",
+        "imageSha256": "6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3",
+        "setup": "Actual MKII LCD read over the development USB interface on a RAM-booted development build of Modwerk base 0.7.8 with the Part Edit menu (e08c44168c5abb0d), 18 November 2026. Exact package 6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3 as a timed trial, rolled back; pattern I01, which has no sample trigs, so the confirmations plan no change; each was left with NO."
+      }
+    },
+    {
+      "path": "media/v019-clear-tracks.png",
+      "captureType": "hardware",
+      "caption": "CLEAR SAMPLE LOCKS: select tracks the same way; Clear removes every SAMPLE lock on them, manual ones too.",
+      "alt": "Physical Octatrack Clear track selection with eligible tracks selected.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Clear selection",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.9-experimental",
+        "imageSha256": "6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3",
+        "setup": "Actual MKII LCD read over the development USB interface on a RAM-booted development build of Modwerk base 0.7.8 with the Part Edit menu (e08c44168c5abb0d), 18 November 2026. Exact package 6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3 as a timed trial, rolled back; pattern I01, which has no sample trigs, so the confirmations plan no change; each was left with NO."
+      }
+    },
+    {
+      "path": "media/v019-clear-confirm.png",
+      "captureType": "hardware",
+      "caption": "Clear's confirmation warns that manual locks are included; YES applies, NO returns. This pattern has no sample trigs, so it plans none.",
+      "alt": "Physical Octatrack Clear confirmation listing per-track counts and INCLUDES MANUAL LOCKS.",
+      "credit": "twwwy; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Clear confirmation",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.9-experimental",
+        "imageSha256": "6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3",
+        "setup": "Actual MKII LCD read over the development USB interface on a RAM-booted development build of Modwerk base 0.7.8 with the Part Edit menu (e08c44168c5abb0d), 18 November 2026. Exact package 6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3 as a timed trial, rolled back; pattern I01, which has no sample trigs, so the confirmations plan no change; each was left with NO."
+      }
+    },
     {
       "path": "media/v018-mkii-live512-confirm.png",
       "captureType": "hardware",
@@ -221,23 +321,6 @@
       }
     },
     {
-      "path": "media/mkii-part-menu.png",
-      "captureType": "hardware",
-      "caption": "Press FUNC + PART, then choose Lock Samples to Pattern or Clear Sample Locks with YES. Both actions appear below the four stock Part Edit rows.",
-      "alt": "Physical Octatrack Part Edit menu with Lock Samples to Pattern and Clear Sample Locks.",
-      "credit": "twwwy; Elektron Octatrack UI",
-      "license": "LicenseRef-OT-UI-Documentation",
-      "source": "original",
-      "otUi": {
-        "page": "Part Edit",
-        "shows": "location",
-        "firmware": "1.40C",
-        "moduleVersion": "0.1.8-experimental",
-        "imageSha256": "c0b988cbff0050b19961590d1203f5263b0a3d298216e234361bf0fdc3c1c28c",
-        "setup": "Actual MKII on RAM development base 9056dbbd; hardware receipt media/v018-mkii-qualification.json. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
-      }
-    },
-    {
       "path": "media/mkii-lock-replace-on.png",
       "captureType": "hardware",
       "caption": "Use arrows to move among eligible tracks. Turn A clockwise to select all and counterclockwise to clear them; B clockwise selects the highlighted track and counterclockwise clears it. This actual MKII screen shows C: Replace existing ON; turn it OFF to keep every existing SAMPLE lock.",
@@ -253,97 +336,12 @@
         "imageSha256": "c0b988cbff0050b19961590d1203f5263b0a3d298216e234361bf0fdc3c1c28c",
         "setup": "Actual MKII on RAM development base 9056dbbd; hardware receipt media/v018-mkii-qualification.json. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
       }
-    },
-    {
-      "path": "media/live-removal-open-tracks.png",
-      "captureType": "emulator",
-      "caption": "Turn A clockwise to select all eligible tracks or counterclockwise to clear them; turn B clockwise/counterclockwise to select/clear the highlighted track. Arrows skip non-Flex/Static tracks; Clear has no replacement setting and includes manual SAMPLE locks. This is an emulator capture.",
-      "alt": "Clear track selector, all eight tracks selected, A: All and B: Track.",
-      "credit": "twwwy; Elektron Octatrack UI",
-      "license": "LicenseRef-OT-UI-Documentation",
-      "source": "original",
-      "otUi": {
-        "page": "Clear selection",
-        "shows": "controls",
-        "firmware": "1.40C",
-        "moduleVersion": "0.1.8-experimental",
-        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
-      }
-    },
-    {
-      "path": "media/live-lock-confirm.png",
-      "captureType": "emulator",
-      "caption": "On the Lock confirmation, press YES to apply 63 planned changes on T1 or NO to return to selection. Existing locks are kept in this emulator example.",
-      "alt": "Lock confirmation with 63 changes on T1 and Existing locks: Keep.",
-      "credit": "twwwy; Elektron Octatrack UI",
-      "license": "LicenseRef-OT-UI-Documentation",
-      "source": "original",
-      "otUi": {
-        "page": "Lock confirmation, T1",
-        "shows": "controls",
-        "firmware": "1.40C",
-        "moduleVersion": "0.1.8-experimental",
-        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
-      }
-    },
-    {
-      "path": "media/live-clear-confirm.png",
-      "captureType": "emulator",
-      "caption": "On the Clear confirmation, the 64 T1 count includes manual locks; press YES to remove them or NO to return. This emulator screen shows the plan, not a completed edit.",
-      "alt": "Clear confirmation with 64 changes on T1 and Includes manual locks.",
-      "credit": "twwwy; Elektron Octatrack UI",
-      "license": "LicenseRef-OT-UI-Documentation",
-      "source": "original",
-      "otUi": {
-        "page": "Clear confirmation, T1",
-        "shows": "controls",
-        "firmware": "1.40C",
-        "moduleVersion": "0.1.8-experimental",
-        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
-      }
-    },
-    {
-      "path": "media/live-512-lock-confirm.png",
-      "captureType": "emulator",
-      "caption": "The Lock confirmation lists 64 planned changes per track with Replace existing: Yes. Press YES to apply or NO to return; this is an emulator pre-apply screen.",
-      "alt": "Lock confirmation with 64 changes on each track and Replace existing: Yes.",
-      "credit": "twwwy; Elektron Octatrack UI",
-      "license": "LicenseRef-OT-UI-Documentation",
-      "source": "original",
-      "otUi": {
-        "page": "Lock confirmation, all tracks",
-        "shows": "controls",
-        "firmware": "1.40C",
-        "moduleVersion": "0.1.8-experimental",
-        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
-      }
-    },
-    {
-      "path": "media/live-512-clear-confirm.png",
-      "captureType": "emulator",
-      "caption": "Clear's confirmation lists 64 planned removals per track and warns that manual locks are included. Press YES to apply or NO to return; this screenshot is from the emulator.",
-      "alt": "Clear confirmation with 64 removals on each track and Includes manual locks.",
-      "credit": "twwwy; Elektron Octatrack UI",
-      "license": "LicenseRef-OT-UI-Documentation",
-      "source": "original",
-      "otUi": {
-        "page": "Clear confirmation, all tracks",
-        "shows": "controls",
-        "firmware": "1.40C",
-        "moduleVersion": "0.1.8-experimental",
-        "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
-        "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
-      }
     }
   ],
   "access": {
-    "location": "MKII: Part Edit",
+    "location": "MKII: Part Edit (FUNC + PART), LOCKS",
     "steps": [
-      "FUNC + PART opens level 1; select an action with YES.",
+      "FUNC + PART opens the Part Edit window; move to LOCKS, press RIGHT or YES, then choose LOCK SAMPLES or CLEAR LOCKS with YES. LEFT goes back; NO closes, as in PROJECT.",
       "Level 2 always shows T1-4 left and T5-8 right. Arrows skip greyed-out non-Flex/Static tracks.",
       "Turn A clockwise to select all eligible tracks or counterclockwise to clear selection. B sets the highlighted track in the same way.",
       "For Lock, C sets Replace existing; OFF preserves every existing SAMPLE lock. Clear always includes all SAMPLE locks.",
@@ -352,14 +350,12 @@
       "Successful operations remember each action’s tracks and cursor, plus Lock replacement policy. Cancelling keeps the previous settings. Module reload or power cycling resets them."
     ],
     "screenshots": [
-      "media/v018-mkii-live512-confirm.png",
-      "media/mkii-part-menu.png",
-      "media/mkii-lock-replace-on.png",
-      "media/live-removal-open-tracks.png",
-      "media/live-lock-confirm.png",
-      "media/live-clear-confirm.png",
-      "media/live-512-lock-confirm.png",
-      "media/live-512-clear-confirm.png"
+      "media/v019-part-edit.png",
+      "media/v019-locks-actions.png",
+      "media/v019-lock-tracks.png",
+      "media/v019-lock-confirm.png",
+      "media/v019-clear-tracks.png",
+      "media/v019-clear-confirm.png"
     ]
   }
 }

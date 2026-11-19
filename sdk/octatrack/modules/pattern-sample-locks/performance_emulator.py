@@ -17,7 +17,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     assert not reboot
     exact=port.profile_symbols
     assert exact and exact['packageSha256']
-    base=int.from_bytes(port.peek(0x4002dc6a,4),'big')-exact['psl_open']
+    base=fixture.module_base(port,exact)
     symbols=port.base_symbols
     def u32(at):return int.from_bytes(port.peek(at,4),'big')
     def meter():
@@ -35,9 +35,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
                     for name in ('cpuPermille','dsp0Permille','dsp1Permille')},
                     dspReadAdvance=rows[-1]['freshDspReads']-rows[0]['freshDspReads'])
     def menu(clear,all_tracks,confirm=True):
-        port.command('key 0x25 32');run(80);tap(0x23,32)
-        port.command('key 0x25 0');run(80)
-        encoder(6,-24);encoder(6,20 if clear else 16);key('YES')
+        fixture.open_action(port,run,tap,key,clear)
         encoder(0,4 if all_tracks else -4)
         if not all_tracks:encoder(1,4)
         if confirm:key('YES')

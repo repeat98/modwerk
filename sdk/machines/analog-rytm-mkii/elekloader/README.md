@@ -33,8 +33,8 @@ send effect needs it, or that module would not link on plain; a voice machine us
 
 ## Beside elekloader's core-ar2
 
-This base is Modwerk's, not elekloader's core-ar2, and a change to core-ar2 goes to elekloader
-([contributing](../../../../CONTRIBUTING.md#elekloader-mods-and-cores)). It stays on 0.7's source:
+This base is Modwerk's, not elekloader's core-ar2, and its core work happens here
+([contributing](../../../../CONTRIBUTING.md#contributions-stay-here)). It stays on 0.7's source:
 
 - **Version 0.7.1** (`base.json`'s `version`, in place of the imported recipe's 0.7; 18 November 2026). The builder
   picks a base's mod area by its version (the kit's `coreDdr`), so the version moves when the layout does: 0.7.1 on

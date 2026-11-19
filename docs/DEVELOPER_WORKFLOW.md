@@ -4,11 +4,11 @@ This is the common context for the **Start developing** page and its coding-agen
 
 ## Choose an instrument
 
-The instrument dropdown lists every profile in `sdk/machines/<id>/machine.json`, through the generated registry. A listing is not evidence that a module builder exists. Octatrack, Digitakt mk1, Digitone mk1/Keys and Analog Rytm MKII have SDK guides and library modules; the Analog Four MKII and Digitakt II have research guides and no module yet. Other instruments enter the integration flow: research the stock format/rebuild/recovery, integrate the SDK/core/toolchain/browser builder, qualify the exact build on hardware, and obtain owner review before publishing modules. Read the selected profile and its credited research. Do not apply another instrument's core slots, hooks, build commands or memory budgets by analogy.
+The instrument dropdown comes from the profiles in `sdk/machines/<id>/machine.json`. Open the selected machine's page to find its guide and current development step. The [machine recipe](MACHINE_RECIPE.md#where-each-machine-stands) tracks builder, base, USB and emulator support. Follow the [integration guide](ADD_A_MACHINE.md) for a machine still in research. Use the selected machine's own core contract, build commands and memory budgets.
 
 ## Check what already exists
 
-Before planning a new module, look at the library on modwerk.app or, in an up-to-date checkout (`git fetch upstream`), `sdk/catalog.json` (Octatrack), `sdk/<machine>/modules/` (Digitakt, Digitone, Rytm) and `sdk/drafts/`, plus the open pull requests (`gh pr list`) and the [agent board](AGENT_BOARD.md)'s claims (`npm run board -- list module`) and findings (`npm run board -- messages --machine <machine>`). If a module already does the job, a port is already listed or someone has claimed it, extend it through [the update workflow](#update-or-fix-an-approved-module), with [its author's OK](#ask-the-author-first), instead of building a duplicate. A new module goes ahead only when it is clearly different, and the proposal says how.
+Before planning a new module, check the machine's library and its profile's `sdk.modules` folder in a current checkout. Fetch `upstream` in a fork or `origin` in a direct clone. Also check `sdk/catalog.json` for Octatrack listings, `sdk/drafts/`, open pull requests (`gh pr list`) and the [agent board](AGENT_BOARD.md)'s claims (`npm run board -- list module`) and findings (`npm run board -- messages --machine <machine>`). If a module already does the job, a port is already listed or someone has claimed it, follow [the update workflow](#update-or-fix-an-approved-module) with [its author's OK](#ask-the-author-first). A proposal for a new module says how it differs.
 
 ## Refuse infringing work
 
@@ -18,7 +18,7 @@ Decline a machine, effect or other module that breaks the [modding guidelines](.
 
 Most work runs through three things: the developer MCP for the site, the instrument itself, and the emulators when the instrument is not at hand.
 
-The setup prompt on the Start developing page sets this up for any instrument: git, the GitHub CLI, Node 24 and `npm ci` in the developer's fork, the developer MCP, the board login and the skills, linked into the agent's own skills folder. `npm run check` and `pr:ready` need Python 3.10+ on PATH as `python3` for every change, even outside the SDK (macOS ships 3.9). Octatrack native builds also need Python 3.12+, Docker with the toolchain image (`docker build --file sdk/build/Dockerfile --tag modwerk-source-tools .`) and the developer's own OS 1.40C update file, kept outside the repository.
+The setup prompt on the Start developing page sets this up for any instrument: git, the GitHub CLI, Node 24 and `npm ci` in the developer's fork, the developer MCP, the board login and the skills, linked into the agent's own skills folder. `npm run check` and `pr:ready` need Python 3.10+ on PATH as `python3` for every change, even outside the SDK (macOS ships 3.9). On macOS, `sdk:check`'s host C tests run under AddressSanitizer with the selected developer tools' clang: with Xcode 16.4's clang 17 on macOS 26.5 every ASan program hangs at start (seen 18 November 2026), so `sdk:check` never finishes. Select current tools first: `sudo xcode-select -s /Library/Developer/CommandLineTools`, or update Xcode. Octatrack native builds also need Python 3.12+, Docker with the toolchain image (`docker build --file sdk/build/Dockerfile --tag modwerk-source-tools .`) and the developer's own OS 1.40C update file, kept outside the repository.
 
 **The developer MCP.** `npm run --silent mcp -- --data-dir PRIVATE_DIR` starts a local MCP server that gives a coding agent the site's own code: the catalogue and module pages, compatibility and USB package checks, saved configurations, the API (reads by default, writes only with `--allow-api-writes`) and saved firmware downloads. Register it with the agent as described in [the MCP guide](FRONTEND_MCP.md). It runs on macOS, Linux and WSL; native Windows is refused for now.
 
@@ -138,9 +138,9 @@ Verify GitHub status, Modwerk synchronization and reporter notification. Publish
 | --- | --- |
 | Octabam | Octatrack source modules and native firmware remixer |
 | Modwerk | Reviewed catalogue and browser firmware builder |
-| Elekloader | Its own loader/shop/frontends, its cores and the reusable builder kit. Mods for its shop and changes to its cores go there ([CONTRIBUTING](../CONTRIBUTING.md#elekloader-mods-and-cores)) |
+| Elekloader | Its own loader/shop/frontends, its cores and the reusable builder kit Modwerk vendors. Contributions to Modwerk stay here ([CONTRIBUTING](../CONTRIBUTING.md#contributions-stay-here)) |
 
-Publishing in one catalogue does not automatically list the module in another. Submit or port directly to Modwerk through a PR; an Elekloader shop listing is optional. Authors can keep research/source in their own repository and submit a pinned release to Modwerk when ready. Users of published modules just select modules, build locally from their own stock OS, save the firmware and flash their unit; they need not develop modules.
+Publishing in one catalogue does not automatically list the module in another. Submit or port directly to Modwerk through a PR. Authors can keep research/source in their own repository and submit a pinned release to Modwerk when ready. Users of published modules just select modules, build locally from their own stock OS, save the firmware and flash their unit; they need not develop modules.
 
 Today Modwerk's Octatrack path uses Octabam-derived tooling, and Digitakt/Digitone use the vendored Elekloader builder kit. Sharing builder code does not combine catalogues or retire Elekloader's frontend.
 

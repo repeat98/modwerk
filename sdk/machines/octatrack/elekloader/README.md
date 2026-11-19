@@ -342,6 +342,8 @@ filter never comes back to exact zero after a send, so this drops a residue belo
 bit-identical. A send that opens starts from silent taps. A module that takes the routine's seam before it (Tape Echo,
 `0x4000361a`) restarts the count. The A/B harness and the unit figures are in `delay-harness/`.
 
+`status.c` also keeps the frame interrupt's share of each frame from the frame guard's sums, over the last four seconds (the last play's while stopped), and the box after a pick shows it in its CPU row against `mw_frame_line`, the share where the guard starts to drop renders.
+
 `status.c` measures, all the time, the ColdFire's load (main's idle spin, timed on DTIM3, `status.s`), each
 DSP core's mean and peak load (core 0's own idle count, core 1's counted wait for core 0, `dsp_receiver.asm`),
 each core's code arena, the delay-buffer blocks and the module pool. CUE + PROJ shows it as a dialog (NO closes it),

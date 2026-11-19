@@ -194,7 +194,7 @@
     },
     {
       "id": "pattern-sample-locks",
-      "version": "0.1.8-experimental",
+      "version": "0.1.9-experimental",
       "addedAt": "2026-11-10T12:00:00Z"
     },
     {
@@ -211,6 +211,11 @@
       "id": "kits",
       "version": "0.1.0-experimental",
       "addedAt": "2026-11-16T21:00:00Z"
+    },
+    {
+      "id": "butter-fingers",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-18T16:04:00Z"
     }
   ]
 }
