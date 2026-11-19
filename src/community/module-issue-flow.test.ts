@@ -6,11 +6,36 @@ import { ForumPage } from './ForumPage'
 import { ModuleIssueNotice } from './ModuleIssueNotice'
 import { ForumThreadView } from './ForumThreadView'
 import { communityModule, moduleIssueHref, moduleThreadId } from './modules'
+import { newConfiguration, type Configuration } from '../config/workspace'
 
-function renderForum(route: string, member = true) {
+function renderForum(route: string, member = true, configurations: Configuration[] = [], configuration?: Configuration) {
   const session = member ? { available: true, admin: false, user: { id: 'member', displayName: 'Member', username: 'member', verified: true } } : emptySession
-  return renderToStaticMarkup(createElement(CommunityContext.Provider, { value: { session, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } }, createElement(ForumPage, { route, configurations: [], onCopy: () => {} })))
+  return renderToStaticMarkup(createElement(CommunityContext.Provider, { value: { session, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } }, createElement(ForumPage, { route, configurations, configuration, onCopy: () => {} })))
 }
+
+describe('shared configuration links', () => {
+  it('opens the sharing form for a Zoom set and links back to the pedal workspace', () => {
+    const set = newConfiguration('Stereo loop set', ['loop'], false, undefined, 'zoom-ms-70cdr')
+    const html = renderForum('forum/new?category=configs&machine=zoom-ms-70cdr', true, [set])
+    expect(html).toContain('<h2>Stereo loop set</h2>')
+    expect(html).toContain('href="#zoom-ms-70cdr/pedal/set"')
+  })
+
+  it('opens shared configurations with a usable machine when the link names none', () => {
+    const set = newConfiguration('Studio set', ['miniverb'])
+    const html = renderForum('forum/new?category=configs', true, [set])
+    expect(html).toContain('<h2>Studio set</h2>')
+  })
+
+  it('defaults to the same set as the machine workspace', () => {
+    const first = { ...newConfiguration('Older Digitakt set', ['digihealth'], false, undefined, 'digitakt'), updatedAt: '2026-11-17T12:00:00.000Z' }
+    const recent = { ...newConfiguration('Current Digitakt set', ['digihealth'], false, undefined, 'digitakt'), updatedAt: '2026-11-18T12:00:00.000Z' }
+    const octatrack = newConfiguration('Octatrack set')
+    const route = 'forum/new?category=configs&machine=digitakt', configurations = [first, recent, octatrack]
+    expect(renderForum(route, true, configurations, octatrack)).toContain('<h2>Current Digitakt set</h2>')
+    expect(renderForum(route, true, configurations, first)).toContain('<h2>Older Digitakt set</h2>')
+  })
+})
 
 describe('module issue entry points', () => {
   it('keeps bug reports out of discussion categories and offers the selected module’s report form', () => {

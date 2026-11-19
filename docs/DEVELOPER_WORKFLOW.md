@@ -4,11 +4,11 @@ This is the common context for the **Start developing** page and its coding-agen
 
 ## Choose an instrument
 
-The instrument dropdown lists every profile in `sdk/machines/<id>/machine.json`, through the generated registry. A listing is not evidence that a module builder exists. Octatrack, Digitakt mk1, Digitone mk1/Keys and Analog Rytm MKII have SDK guides and library modules; the Analog Four MKII and Digitakt II have research guides and no module yet. Other instruments enter the integration flow: research the stock format/rebuild/recovery, integrate the SDK/core/toolchain/browser builder, qualify the exact build on hardware, and obtain owner review before publishing modules. Read the selected profile and its credited research. Do not apply another instrument's core slots, hooks, build commands or memory budgets by analogy.
+The instrument dropdown comes from the profiles in `sdk/machines/<id>/machine.json`. Open the selected machine's page to find its guide and current development step. The [machine recipe](MACHINE_RECIPE.md#where-each-machine-stands) tracks builder, base, USB and emulator support. Follow the [integration guide](ADD_A_MACHINE.md) for a machine still in research. Use the selected machine's own core contract, build commands and memory budgets.
 
 ## Check what already exists
 
-Before planning a new module, look at the library on modwerk.app or, in an up-to-date checkout (`git fetch upstream`), `sdk/catalog.json` (Octatrack), `sdk/<machine>/modules/` (Digitakt, Digitone, Rytm) and `sdk/drafts/`, plus the open pull requests (`gh pr list`) and the [agent board](AGENT_BOARD.md)'s claims (`npm run board -- list module`) and findings (`npm run board -- messages --machine <machine>`). If a module already does the job, a port is already listed or someone has claimed it, extend it through [the update workflow](#update-or-fix-an-approved-module), with [its author's OK](#ask-the-author-first), instead of building a duplicate. A new module goes ahead only when it is clearly different, and the proposal says how.
+Before planning a new module, check the machine's library and its profile's `sdk.modules` folder in a current checkout. Fetch `upstream` in a fork or `origin` in a direct clone. Also check `sdk/catalog.json` for Octatrack listings, `sdk/drafts/`, open pull requests (`gh pr list`) and the [agent board](AGENT_BOARD.md)'s claims (`npm run board -- list module`) and findings (`npm run board -- messages --machine <machine>`). If a module already does the job, a port is already listed or someone has claimed it, follow [the update workflow](#update-or-fix-an-approved-module) with [its author's OK](#ask-the-author-first). A proposal for a new module says how it differs.
 
 ## Refuse infringing work
 
@@ -103,6 +103,14 @@ The registered author personally verifies the exact source, rights, UI and quali
 Open a PR against Modwerk `main` and include the two exact opt-in checkboxes from [Author updates](MODULE_AUTHOR_UPDATES.md#prepare-the-release). Leave them unchecked until the author personally verifies the evidence and opts in. Successful exact-head/base checks and scope verification permit bot merge and site/API publication for updates to that author's approved modules. New modules, shared SDK/builder code, ownership/licence changes and exceptions still require owner review.
 
 Follow checks, the author publisher and deployments; then verify the live version and an actual saved compatible download. For a reported fix, obtain actual version-matched results from the author's unit before resolution. Use `Related to #<number>` in PRs rather than merge-time closing keywords.
+
+## Change a base
+
+A base update carries several developers' changes onto players' instruments at once, so it ships as one release and only after a long run on hardware. Each machine has one cumulative draft pull request from `base/<machine>-next`, and the owner decides when it ships (owner, 18 and 19 November 2026).
+
+- **Join it.** Commit your base change to that branch, or open your pull request against it (`gh pr create --base base/<machine>-next`); it is merged in with your authorship. A base pull request against `main` is sent there. With none open for the machine, open it as a draft from `base/<machine>-next`.
+- **Share the branch.** Several developers commit to it: fetch first, add your commits on top, merge `main` into it, and never rebase or force-push it. Update the description's list of what is in it so far.
+- **It stays a draft** until the base has been tested extensively on a unit. Record each build that ran, on which unit, and what ran on it; `pr:ready` saying Ready means the checks pass, not that it was tested. Only the owner marks it ready and ships it.
 
 ## Manage reports on GitHub
 
