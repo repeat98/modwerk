@@ -128,6 +128,9 @@ int modwerk_runtime_owner_valid(const struct runtime_owner *);
  * its code runs from (owned_extent), and that allocation's canonical extent:
  * the pool's own base plus its offset, checked against the pool's ends. */
 int modwerk_runtime_owner_at(uintptr_t address,struct runtime_owner *);
+/* Stable lock held. `out` holds `length` bytes read at `address` (physical); the bytes that fall inside a site of
+ * the live module whose image is `image` become that site's stock bytes, as its switch out will leave them. */
+void modwerk_runtime_site_view(const void *image,uint32_t address,uint8_t *out,uint32_t length);
 int modwerk_runtime_owner_canonical(const struct runtime_owner *,uintptr_t *extent);
 /* Stable lock held. modwerk_runtime_owner_valid, trying the entry *hint first and leaving where it was found
  * there: one check while the ledger is unchanged. */
