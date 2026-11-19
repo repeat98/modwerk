@@ -17,3 +17,4 @@ Modwerk's Digitone II base (`sdk/machines/digitone-ii/elekloader/`, #1760) on OS
 
 - **Image:** the refused kit-packed base + `hello-marker-dn2` + `hooks-check-dn2` image, put through `fitUpdate`: its main OS packed again by `packOptimal`, which uses the offset-reuse code as Elektron's stock stream does; written and sealed by the kit's writer, the kit's verify passed. 2,002,808 bytes decoded (limit 2,097,152); `.syx` `ed19b2f9c80286b801ae59f09df6c1726e595a7c40119316f29c0af5168bca44`; main OS `699e1698…`, the same as the image above.
 - **On the unit:** Transfer sent it whole and the unit booted it. The marker showed; key presses grew the first bar, and before arming TEMPO did too; HOOK TEST in SETTINGS and PERSONALIZE ran and grew their bars, and after PERSONALIZE TEMPO grew its bar; sound normal.
+- **Stock 1.12** flashed back over USB afterwards and the unit ran normally.
