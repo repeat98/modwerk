@@ -15,6 +15,6 @@
     "events": null,
     "playing": null,
     "hangs": null,
-    "method": "Not accepted. Under the same ot_emu image, 21 UP+NO chords advanced toggles from 0 to 21 and the tick kept running, with STOP sent between two groups of 10. No project was loaded, the Part byte at 0x80000003 stayed 0, and the sequencer was not observed playing."
+    "method": "Not accepted. On ot_emu, development twin 878307834ad3c23a, set OCTABAM, project ONEAUX, pattern 0, internal clock: PLAY set transport 0x800065b8 to 1, ten UP+NO chords ran while it stayed 1, STOP cleared it, and ten more ran after PLAY again (toggles 0 to 20). The trial reached 100 s with refusals 0 and no fault logged; it noted the CPU at 90% or more for 1 s. The Part byte stayed 0: PART+RIGHT, PART+DOWN and the PART menu did not move it, and stock's selector 0x4004a8a4(1) returned 0 because the base's part guard refused it."
   }
 }
