@@ -94,7 +94,7 @@ describe('live library selection details', () => {
   it('updates the Octatrack count and reports saved stock FX choices', async () => {
     const set = newConfiguration('Live set', ['everb', USB_AUDIO_MODULE])
     const render = (moduleIds: string[], removedStockFx?: string[]) => act(() => root.render(
-      createElement(LibrarySelection, { sets: [{ ...set, moduleIds, removedStockFx }], betaAccess: false, phone: false }),
+      createElement(LibrarySelection, { sets: [{ ...set, moduleIds, removedStockFx }], betaAccess: false, phone: true }),
     ))
     await render(set.moduleIds)
     const status = container.querySelector('[role="status"]')!
@@ -114,7 +114,7 @@ describe('live library selection details', () => {
   it('distinguishes a full Octatrack set from a saved set already over the limit', async () => {
     const ids = AVAILABLE_MODULES.map(module => module.id).filter(countsTowardLimit).slice(0, SET_MODULE_LIMIT + 1)
     const render = (moduleIds: string[]) => act(() => root.render(
-      createElement(LibrarySelection, { sets: [newConfiguration('Live set', moduleIds)], betaAccess: false, phone: false }),
+      createElement(LibrarySelection, { sets: [newConfiguration('Live set', moduleIds)], betaAccess: false, phone: true }),
     ))
     await render(ids.slice(0, SET_MODULE_LIMIT))
     expect(container.textContent).toContain('Your set is full')
