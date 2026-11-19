@@ -83,6 +83,21 @@ describe('the agent bridge line protocol', () => {
     expect(units.unit).toBeNull()
   })
 
+  it('drains a late USB open on shutdown and skips its queued transfers', async () => {
+    const unit = fakeUnit(), started = Promise.withResolvers(), opening = Promise.withResolvers()
+    const units = new UnitHolder(() => { started.resolve(); return opening.promise })
+    const bridge = await startBridge({ address: '0', units })
+    const socket = createConnection(bridge.port, '127.0.0.1')
+    socket.write('setup c120010002000400\nin 0 64\nsetup c120010002000400\nin 0 64\n')
+    await started.promise
+    const closing = bridge.close()
+    opening.resolve(unit)
+    await closing
+    expect(unit.transfers).toEqual([])
+    expect(unit.closed).toBe(1)
+    expect(units.unit).toBeNull()
+  })
+
   it('serves the repository bench client on a TCP port of this computer', async () => {
     const unit = fakeUnit()
     const bridge = await startBridge({ address: '0', units: new UnitHolder(async () => unit), timeoutMs: 100 })

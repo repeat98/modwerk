@@ -55,6 +55,7 @@ export async function profileRoutes(request: Request, env: Env, db: Database, pa
     db.prepare('DELETE FROM member_beta_discord_invites WHERE user_id=?').bind(owner.id),
     db.prepare('DELETE FROM octatrack_diagnostic_events WHERE user_id=?').bind(owner.id),
     db.prepare('DELETE FROM octatrack_diagnostic_consent WHERE user_id=?').bind(owner.id),
+    db.prepare('DELETE FROM agent_sessions WHERE user_id=?').bind(owner.id),
     db.prepare('DELETE FROM remote_session_tickets WHERE session_id IN (SELECT id FROM remote_sessions WHERE member_id=?)').bind(owner.id),
     db.prepare('DELETE FROM remote_sessions WHERE member_id=?').bind(owner.id),
     db.prepare('DELETE FROM module_working_reports WHERE user_id=?').bind(owner.id),

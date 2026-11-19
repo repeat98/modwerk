@@ -1,0 +1,1 @@
+The developer MCP no longer leaves its workspace lock behind: SIGTERM removes it, and a lock left by an ended process (a crash, or a health check like claude mcp get) is taken over at the next start. FRONTEND_MCP.md gives the claude mcp add command to copy.
