@@ -62,7 +62,13 @@ A later status answered the same line, `normal, generation 3, active 9993a6d3bd0
 
 The same session sent 21 UP+NO chords with no project loaded. `toggles` went from 0 to 21 and the tick kept running, with STOP sent between two groups of 10. The Part byte at `0x80000003` stayed 0, and the sequencer was not observed playing.
 
-A later run on the same twin loaded set OCTABAM, project ONEAUX, pattern 0, on the internal clock. PLAY set the transport byte `0x800065b8` to 1. Ten UP+NO chords while it stayed 1 took `toggles` from 0 to 10. STOP set it back to 0. PART+RIGHT, PART+DOWN and the PART menu left the Part byte at 0. A popup at `0x46c7d34c` owned the screen from boot, flag `0x21`, and YES and NO did not clear it. Stock's part selector `0x4004a8a4(1)` returned 0 and the byte stayed 0: the base's part guard refused it. PLAY again set the transport to 1 and ten more chords took `toggles` to 20. The trial ran to 100 s, refusals stayed 0, and it rolled back. The verdict was a note that the CPU was at 90 % or more for 1 s around 60 s, and no fault was logged. The stress fields stay empty because the Part did not change.
+A later run on the same twin, with the DSP cores on (`--dsp --dsp-rt`), loaded set OCTABAM, project ONEAUX, pattern 0, on the internal clock. YES cleared SET DATE/TIME. Without the DSP cores that dialog stays up as DSP LOAD FAILED and the Part byte does not move. PLAY set the transport byte `0x800065b8` to 1. Ten UP+NO chords while it stayed 1 took `toggles` from 0 to 10. STOP set the transport to 0. PART+RIGHT changed the Part byte from 0 to 1. PLAY set the transport to 1 and ten more chords took `toggles` to 20. The diagnostic log at `0x100fc000` was read before the presses and after them: it stayed at 3 incidents (start, base, set), `crash_seen` 0, `stall_seen` 0, `freeze_state` 0. The trial was not kept. `evidence/performance.json` records 20 presses, playing, and no hang.
+
+| row | result |
+|---|---|
+| cycles | worst event 25033 of 26600000 |
+| stock benchmark | none for a key-press module |
+| stress | 20 presses of the dearest event while playing, no hang |
 
 ## Not tested
 
