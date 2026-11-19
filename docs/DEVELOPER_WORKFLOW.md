@@ -74,9 +74,13 @@ These stumbling blocks have each cost a contributor and the owner a repair round
 3. **Submit:** commit, push and open a Modwerk PR. Follow checks and fix failures. A maintainer of its machine or the owner reviews every new module ([who](#who-reviews-a-first-release)); the first approved release registers its GitHub author for later scoped updates. Website sign-in or claiming does not grant release authority.
 4. **Publish and verify:** after the merge, follow the exact commit's site/API deployments. Confirm the live version, save a compatible firmware download, and verify its version/source identity and deterministic hash where applicable. A push, merge or ready/download-requested state alone does not prove a saved release download.
 
+The Octatrack compiler job rebuilds every base-bound package with the pinned Elekloader sources and compares its bytes with the published package. To repeat that check from the repository root, run `bash scripts/test-base-bound.sh <compiler-image-id> [local-elekloader-checkout]`. It uses the committed tree. The SDK summary lists other skipped checks and their prerequisites.
+
+The required PR check includes the description and hardware-evidence verdict. Editing the description or changing draft status runs it again. The branch must be current with main to merge.
+
 ### Who reviews a first release
 
-A machine's maintainers review and merge the first releases of its modules; the owner can always do so too. They are the GitHub logins under `maintainers` in `sdk/machines/<id>/machine.json`. Only the owner names or removes one, in a pull request of the owner's own, and gives them the repository access a merge needs; a machine without maintainers stays with the owner. A maintainer reviews by the [pull request worker's checklist](MAINTENANCE.md#pull-request-worker), never reviews their own module, and hands these to the owner instead of deciding them:
+The GitHub logins under `maintainers` in `sdk/machines/<id>/machine.json` review that machine's first releases and hand approved pull requests to the owner. The owner merges each first release from their own GitHub account so publication can verify the merge. Only the owner names or removes one, in a pull request of the owner's own, and assigns them review access. The owner reviews releases for machines without maintainers. A maintainer reviews by the [pull request worker's checklist](MAINTENANCE.md#pull-request-worker), never reviews their own module, and hands these to the owner instead of deciding them:
 
 - anything beyond the module's own folder and catalogue rows: the base, a hook, the shared SDK, a builder, a check, another machine;
 - any question under the [modding guidelines](../MODDING_GUIDELINES.md): a port's permission or licence, a source that is unclear, a likeness to a maker's product;

@@ -110,7 +110,7 @@ describe('starter prompts', () => {
     expect(create).toContain('#your-development-setup')
     expect(create).toContain('a maintainer of its machine or the owner reviews its first release')
     expect(readFileSync('docs/DEVELOPER_WORKFLOW.md', 'utf8')).toContain('### Who reviews a first release')
-    expect(readFileSync('AGENTS.md', 'utf8')).toContain('[Machine maintainers](docs/DEVELOPER_WORKFLOW.md#who-reviews-a-first-release) or the owner merge')
+    expect(readFileSync('AGENTS.md', 'utf8')).toContain('[Machine maintainers](docs/DEVELOPER_WORKFLOW.md#who-reviews-a-first-release) or the owner review a module\'s first release. The owner merges it')
     expect(readFileSync('docs/DEVELOPER_WORKFLOW.md', 'utf8')).toContain('Only the owner names or removes one')
     expect(create).toContain('verify the live version and a saved download')
     for (const skill of [create, update]) expect(skill).toMatch(/Record only (what was observed|the results they report)/)

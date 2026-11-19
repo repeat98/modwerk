@@ -27,7 +27,26 @@
 .stock-effect-toggles input { accent-color: var(--accent); }
 button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--line); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .octatrack-status-bar { display: flex; align-items: center; gap: 7px; }
-.octatrack-activity { position: fixed; right: 20px; bottom: 48px; z-index: 20; display: flex; align-items: center; gap: 10px; max-width: min(460px, calc(100vw - 40px)); padding: 10px 12px 10px 16px; border: 1px solid var(--accent-line); border-radius: 12px; background: var(--surface-raised); box-shadow: 0 12px 40px #0008; font-size: 13px; }
+/* The corner the sync pill and the load widget share, stacked so neither covers the other. */
+.octatrack-float { position: fixed; right: 20px; bottom: 48px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }
+.octatrack-float > * { pointer-events: auto; }
+.load-widget { display: flex; align-items: center; gap: 14px; padding: 8px 12px 8px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-raised); box-shadow: 0 8px 28px #0007; color: var(--text); font-size: 12px; text-decoration: none; }
+.load-widget:hover { border-color: var(--line-hover); background: var(--surface-hover); }
+.load-widget:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.load-widget > svg { color: var(--muted); }
+.load-widget-item { display: grid; grid-template-columns: auto 34px; grid-template-rows: auto 3px; column-gap: 6px; row-gap: 3px; align-items: baseline; }
+.load-widget-label { color: var(--muted); }
+.load-widget-item strong { grid-row: 1 / 3; grid-column: 2; align-self: center; text-align: right; font-variant-numeric: tabular-nums; }
+.load-widget-bar { grid-column: 1; height: 3px; overflow: hidden; border-radius: 2px; background: var(--line); }
+.load-widget-bar span { display: block; height: 100%; background: var(--accent); transition: width .3s ease-out; }
+.load-widget-item.is-near strong { color: var(--issue-confirmed); }
+.load-widget-item.is-near .load-widget-bar span { background: var(--issue-confirmed); }
+.load-widget.is-near { border-color: color-mix(in srgb, var(--issue-confirmed) 45%, var(--line)); }
+.load-widget.is-stopped { gap: 8px; border-color: #6a4348; }
+.load-widget.is-stopped > svg:first-child { color: var(--issue-confirmed); }
+@media (prefers-reduced-motion: reduce) { .load-widget-bar span { transition: none; } }
+@media (max-width: 600px) { .load-widget { display: none; } }
+.octatrack-activity { display: flex; align-items: center; gap: 10px; max-width: min(460px, calc(100vw - 40px)); padding: 10px 12px 10px 16px; border: 1px solid var(--accent-line); border-radius: 12px; background: var(--surface-raised); box-shadow: 0 12px 40px #0008; font-size: 13px; }
 .octatrack-activity.is-error { border-color: #6a4348; }
 .octatrack-activity .button { min-height: 30px; padding: 5px 10px; }
 @keyframes link-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
