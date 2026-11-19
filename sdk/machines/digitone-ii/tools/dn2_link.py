@@ -4,12 +4,16 @@
 
     dn2_link.py ident                # link version, messages received and dropped, ticks
     dn2_link.py mem 0x47f00000 64    # up to 128 bytes of DDR or SRAM, as hex
+    dn2_link.py screen [--png F]     # the frame on the screen, as text (and a PNG), read through mem
 
 Needs a development base on the unit (npm run machine:base -- digitone-ii --dev) and mido with a MIDI backend.
 The wire format is the Analog Rytm MKII link's (sdk/machines/analog-rytm-mkii/LINK.md)."""
 import argparse
+import binascii
+import struct
 import sys
 import time
+import zlib
 
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
 CMD = {'ident': 0x01, 'mem': 0x21}
@@ -31,6 +35,30 @@ def unpack7(b):
         for k, c in enumerate(b[i + 1:i + 8]):
             out.append(c | (0x80 if top & (0x40 >> k) else 0))
     return bytes(out)
+
+
+# Stock keeps two frame pointers side by side (OS 1.12): it sends the one it drew (0x402a10c8) to the display, then
+# swaps them (0x40131fd2), so the frame on the screen is the second. A frame is 128x64 pixels, 1 bit each, 1024 bytes.
+FRAME_POINTERS = 0x402a10c8
+FRAME_BYTES = 1024
+
+
+def frame_rows(fb):
+    """The 1024-byte frame as 64 rows of 128 pixels, top row first (the Analog Rytm MKII's layout)."""
+    return [[(fb[(7 - y // 8) + 8 * x] >> (y % 8)) & 1 for x in range(128)] for y in range(64)]
+
+
+def ascii_art(rows):
+    chars = {(1, 1): '\u2588', (1, 0): '\u2580', (0, 1): '\u2584', (0, 0): ' '}
+    return '\n'.join(''.join(chars[(a, b)] for a, b in zip(rows[y], rows[y + 1])) for y in range(0, len(rows), 2))
+
+
+def png(rows, scale=3):
+    raw = b''.join((bytes([0]) + bytes(255 if px else 0 for px in row for _ in range(scale))) * scale for row in rows)
+    def chunk(t, d):
+        return struct.pack('>I', len(d)) + t + d + struct.pack('>I', binascii.crc32(t + d) & 0xffffffff)
+    head = struct.pack('>IIBBBBB', len(rows[0]) * scale, len(rows) * scale, 8, 0, 0, 0, 0)
+    return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', head) + chunk(b'IDAT', zlib.compress(raw, 9)) + chunk(b'IEND', b'')
 
 
 def request(seq, name, *values):
@@ -68,6 +96,19 @@ def ask(name, *values, port='Digitone II', timeout=2.0):
     sys.exit('No answer: is a development base with the link on the unit, and USB MIDI connected?')
 
 
+def mem(addr, n, port):
+    _, _, status, p = ask('mem', addr, n, port=port)
+    if status:
+        sys.exit('refused: ' + STATUS.get(status, str(status)))
+    return unpack7(p[5:])[:n]
+
+
+def screen(port):
+    """The frame on the screen: its pointer, then the frame in eight reads (a draw between them can tear it)."""
+    front = int.from_bytes(mem(FRAME_POINTERS + 4, 4, port), 'big')
+    return b''.join(mem(front + at, 128, port) for at in range(0, FRAME_BYTES, 128))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--port', default='Digitone II')
@@ -76,7 +117,15 @@ def main():
     mem = sub.add_parser('mem')
     mem.add_argument('addr', type=lambda s: int(s, 0))
     mem.add_argument('n', type=int)
+    shot = sub.add_parser('screen')
+    shot.add_argument('--png', help='also write the frame as a PNG here')
     a = parser.parse_args()
+    if a.cmd == 'screen':
+        rows = frame_rows(screen(a.port))
+        print(ascii_art(rows))
+        if a.png:
+            open(a.png, 'wb').write(png(rows))
+        return
     if a.cmd == 'ident':
         _, _, status, p = ask('ident', port=a.port)
         if status:

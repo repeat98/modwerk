@@ -7,12 +7,18 @@ development bases only (`npm run machine:base -- digitone-ii --dev`, base.json's
 ```sh
 python3 sdk/machines/digitone-ii/tools/dn2_link.py ident
 python3 sdk/machines/digitone-ii/tools/dn2_link.py mem 0x47f00000 64
+python3 sdk/machines/digitone-ii/tools/dn2_link.py screen --png screen.png
 ```
 
 | Request | cmd | What comes back |
 | --- | --- | --- |
 | `ident` | 0x01 | link version, link messages received, dropped (ring full or too long), ticks |
 | `mem ADDR N` | 0x21 | the address, then up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
+
+`screen` is the host's: it reads stock's frame pointer and the frame through `mem` (no command of its own on the unit),
+so a draw between its reads can tear a frame. Stock keeps two frame pointers side by side at 0x402a10c8 and sends the
+first to the display, then swaps them (0x40131fd2), so the frame on the screen is the second; 128x64 pixels, 1 bit each,
+in the Analog Rytm MKII's layout.
 
 Status 0 ok, 2 bad request, 4 out of range. USB only: a link message from DIN is never acted on.
 
