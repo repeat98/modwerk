@@ -3,7 +3,7 @@
   "id": "beat-slicer",
   "key": "BEAT SLICER",
   "name": "Beat Slicer",
-  "version": "0.1.66-experimental",
+  "version": "0.1.68-experimental",
   "category": "system",
   "author": {
     "github": "twwwy",
@@ -21,7 +21,9 @@
       "Record without planning an exact number of bars; stop between bar boundaries.",
       "Use the original sample BPM or the captured project BPM.",
       "Choose 1, 2, 4, 16, 32 or 64 beats per slice.",
-      "Create grids for Flex, Static and completed recorder buffers during playback."
+      "SNAP ON moves each boundary to the nearest zero crossing; OFF keeps exact beat positions.",
+      "Create grids for Flex, Static and completed recorder buffers during playback.",
+      "FUNC+AED opens stock CREATE SLICE GRID; press it again to switch to CREATE BEAT GRID."
     ],
     "usage": [
       "Start recording on a downbeat. Begin recording on the first beat of a bar so the audio is aligned with the musical grid.",
@@ -56,6 +58,16 @@
         "32 BEATS",
         "64 BEATS"
       ]
+    },
+    {
+      "name": "SNAP",
+      "default": 0,
+      "count": 2,
+      "doc": "OFF keeps exact beat positions; ON moves each boundary to the nearest zero crossing after the stock YES. Starts OFF and is not saved.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
     }
   ],
   "compatibility": {
@@ -73,9 +85,9 @@
       "The grid starts at the current trim start. A final fragment shorter than the stock 64-frame minimum is included in the preceding slice.",
       "Recording must be stopped for the buffer being edited; unrelated recording and pattern playback may continue.",
       "Not offered together with Recorder Loop Fix 0.1.0: that module can make recorder-buffer slice 1 miss, also with stock CREATE SLICE GRID and without Beat Slicer (sambanks/octabam#908).",
-      "Exact metadata grid only: no PCM analysis, smoothing or click-free playback claim. No project or sample-settings save is implicit.",
+      "SNAP OFF writes an exact metadata grid; SNAP ON reads the sample to find zero crossings after the stock YES. Zero-crossing alignment alone does not promise click-free playback, especially when only one stereo channel crosses. No project or sample-settings save is implicit.",
       "Not yet tested on the MKI. Slices kept through a project save and a power cycle, Static machines and recorder buffers were not run on this exact package (an earlier build was, by the author).",
-      "While the CREATE BEAT GRID popup is open its drawing takes about 6 % of the ColdFire (owner's MKII); the frame interrupt was unaffected and no machine render was skipped."
+      "0.1.66's popup drawing took about 6 % of the ColdFire on the owner's MKII; 0.1.68 caches the drawing and has not been measured yet."
     ],
     "effectId": null
   },

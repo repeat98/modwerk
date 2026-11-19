@@ -1,5 +1,13 @@
 # Beat Slicer testing
 
+## 0.1.68-experimental, 20 November 2026 (not yet tested on a unit)
+
+Ported from the private candidate in [sdk/drafts/beat-slicer/zero-cross/](../../../drafts/beat-slicer/zero-cross/README.md) onto Octatrack base 0.7.10, which carries SNAP's `replace_options` and the FUNC+AED cycle (pull request #1165). The module now uses the base's own `modwerk_sample_editor.h` instead of the draft's temporary declaration.
+
+- Host: `test_device_module.py` passes (the controller against the base's sample-editor service with sanitizers, an uncached renderer compared pixel for pixel, and the ColdFire package's action record).
+- Unit: **not tested** on this exact package and base. To run on the author's MKII: SNAP OFF and ON, FUNC+AED through the cycle, and an Undo.
+- The draft's earlier MKII results were on measurement base `20ed7910…` and do not qualify this build.
+
 ## Release run, 27 October 2026
 
 The published package `6650ef77…` ran on the owner's MKII over USB: on a development twin of the beta base, slicing, re-slicing while playing, both BPM sources, NO, self-test and rollback, plus the draw cost while the popup is open; on the exact beta base `903f8ed6…`, a trial, self-test and rollback. Results and what was not run: [evidence/hardware.md](evidence/hardware.md) and [evidence/performance.json](evidence/performance.json).

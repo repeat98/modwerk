@@ -338,7 +338,7 @@
       "bytes": 2636,
       "sha256": "7aedb56f64cc17732efd367a3a1e4a85f73196924e4bf362411fa23217639408",
       "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
-      "requiredBase": "3de925cc0da13ccc4b2991a89e07e382731d12c86472f0ae503b2b96787d2c14"
+      "requiredBase": "ba1e864b90e368a60ed9ac6de0a7a470fe0d361d89dc95f854bffa3b370103aa"
     },
     {
       "id": "output-matrix",
@@ -354,7 +354,7 @@
       "bytes": 3740,
       "sha256": "0304acd09210badf33e888c09f111a887f221a3842aaeb781ecd20147044203b",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "3de925cc0da13ccc4b2991a89e07e382731d12c86472f0ae503b2b96787d2c14"
+      "requiredBase": "ba1e864b90e368a60ed9ac6de0a7a470fe0d361d89dc95f854bffa3b370103aa"
     },
     {
       "id": "cc-map",
@@ -370,7 +370,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "3de925cc0da13ccc4b2991a89e07e382731d12c86472f0ae503b2b96787d2c14"
+      "requiredBase": "ba1e864b90e368a60ed9ac6de0a7a470fe0d361d89dc95f854bffa3b370103aa"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -446,9 +446,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "71bd73bdab4b32b9a4fdbc48d0f89ab07f8dada0213f6a76216f8f1aebbad8bd",
+      "sha256": "16fcc02a5628e32c0cdd09e414360a76cf30169892ad96686e9541d0bb27daa8",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "3de925cc0da13ccc4b2991a89e07e382731d12c86472f0ae503b2b96787d2c14"
+      "requiredBase": "ba1e864b90e368a60ed9ac6de0a7a470fe0d361d89dc95f854bffa3b370103aa"
     },
     {
       "id": "analog-bassdrum",
@@ -464,7 +464,7 @@
       "bytes": 26172,
       "sha256": "99581aece3500d9a7c5d1b389afc8ff1697086d323bd28dbf01b4def22acacbc",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "3de925cc0da13ccc4b2991a89e07e382731d12c86472f0ae503b2b96787d2c14",
+      "requiredBase": "ba1e864b90e368a60ed9ac6de0a7a470fe0d361d89dc95f854bffa3b370103aa",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -479,8 +479,8 @@
       "subscribe": [
         "ot_sample_editor_actions:bs_sample_action:50"
       ],
-      "version": "0.1.66-experimental",
-      "path": "octatrack-modules/beat-slicer/0.1.66-experimental.mwrm",
+      "version": "0.1.68-experimental",
+      "path": "octatrack-modules/beat-slicer/0.1.68-experimental.mwrm",
       "abi": 8,
       "features": 128,
       "sites": 0,
@@ -488,8 +488,8 @@
       "fills": 0,
       "name": "beat-slicer",
       "module": "c8d078f2",
-      "bytes": 5780,
-      "sha256": "6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d"
+      "bytes": 5332,
+      "sha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643"
     },
     {
       "id": "temp-save",

@@ -21,15 +21,53 @@ class DeviceModule(unittest.TestCase):
     def test_actual_controller_with_shared_service(self):
         with tempfile.TemporaryDirectory() as folder:
             executable = Path(folder) / 'fixture'
-            sources = [ADAPTERS / 'sample_editor_service.c', HERE / 'test_device_module.c',
-                       *[HERE / name for name in ('device_module.c', 'device_font.c', 'grid_preview.c')]]
+            # Run an uncached renderer beside the cached controller through every
+            # input in the fixture. Pixel equality catches missed invalidations.
+            fixture = Path(folder) / 'fixture.c'
+            original = (HERE / 'test_device_module.c').read_text()
+            original = original.replace('module_draw', 'checked_module_draw')
+            # Add a read-only uncached entry to the same controller for pixel
+            # comparison; running a second controller would duplicate writes.
+            oracle = Path(folder) / 'oracle.c'
+            oracle_source = (HERE / 'device_module.c').read_text()
+            oracle_source += r'''
+void bs_uncached_draw(unsigned char *frame) {
+    if(!active || !frame)return;
+    unsigned char picture[1024],mask[1024];
+    render_popup(picture,mask);
+    const unsigned char *home=bs_device_home();
+    for(unsigned i=0;i<1024u;++i)
+        frame[i]=(unsigned char)((home[i]&~mask[i])|(picture[i]&mask[i]));
+}
+'''
+            oracle_source = oracle_source.replace('#include "', '#include "' + str(HERE) + '/')
+            oracle.write_text(oracle_source)
+            fixture.write_text(original + r'''
+#include <stdlib.h>
+void module_draw(unsigned char *);
+void bs_uncached_draw(unsigned char *);
+void checked_module_draw(unsigned char *frame) {
+    if(!frame){module_draw(frame);return;}
+    unsigned char expected[1024];memcpy(expected,frame,sizeof expected);
+    unsigned saved=renders;bs_uncached_draw(expected);renders=saved;
+    module_draw(frame);
+    if(memcmp(expected,frame,sizeof expected))abort();
+}
+''')
+            sources = [ADAPTERS / 'sample_editor_service.c', fixture, oracle, HERE / 'grid_preview.c']
+            # Count popup builds using explicit portable UI stand-ins; exact native UI
+            # pixels and writes are checked separately against the stock CPU renderer.
+            font = Path(folder) / 'font.o'
+            subprocess.run([shutil.which('cc'), '-std=c99', *SANITIZE,
+                            '-Dbs_device_popup=bs_uncounted_popup', '-c',
+                            str(HERE / 'test_ui_host.c'), '-o', str(font)], check=True)
             result = subprocess.run([
                 shutil.which('cc'), '-std=c99', '-Wall', '-Wextra', '-Werror', *SANITIZE,
                 *[flag for directory in (ROOT / 'sdk/runtime/loader', ROOT / 'sdk/runtime/upload',
                                          ROOT / 'sdk/machines/octatrack/include',
                                          ROOT / 'sdk/machines/octatrack/elekloader', ADAPTERS)
                   for flag in ('-I', str(directory))],
-                *map(str, sources), '-o', str(executable),
+                *map(str, sources), str(font), '-o', str(executable),
             ], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             result = subprocess.run([str(executable)], capture_output=True, text=True)
