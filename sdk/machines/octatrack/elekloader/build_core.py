@@ -2275,6 +2275,12 @@ modwerk_retained_end:
     if not CODEGEN.check_mcf54455(sorted((out/'package').glob('*.work/*.c.o')), args.cross + 'objdump'):
         raise ValueError('The base build left no C objects to check.')
     document = json.loads(Path(path).read_text())
+    # IDENTIFY's digest stays authored bytes (octatrack-base.ts baseIdentity reads it from the package). The package
+    # writer stores any run equal to stock as a stock reference, and a configuration hash can end in bytes that, with
+    # the zeros after it, match stock: base 0.7.10's tracks layout did. Make those bytes literal again.
+    section, offset = document['symbols']['modwerk_base_digest']
+    document['sections'][section]['parts'] = replace_literal(document['sections'][section]['parts'], offset,
+                                                             bytes.fromhex(identity), bytes.fromhex(identity), stock_at)
     for key in ('idle', 'job', 'transport', 'open', 'read', 'write', 'close'):
         section, offset = document['symbols']['olog_replay_' + key]
         guard = guards[key]; n = guard.get('patchLength', guard['length'])
