@@ -1,0 +1,1 @@
+The owner pulls shared agent sessions by signing in to their Modwerk account with the administrator role (`npm run session -- pull`), instead of with a board session. The password is never stored and the pull signs out when it is done.

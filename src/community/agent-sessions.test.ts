@@ -121,12 +121,13 @@ describe('scrubbing', () => {
 async function fixture() {
   const server = await testServer(); databases.push(server.db)
   Object.assign(server.env, { GITHUB_OAUTH_CLIENT_ID: 'test-client', GITHUB_OAUTH_CLIENT_SECRET: 'only-a-test-client-secret', GITHUB_OAUTH_CALLBACK_URL: 'https://api.example.test/api/developer/auth/callback' })
-  const call = (path: string, method = 'GET', body?: unknown, developer = '', { origin = 'https://octamod.test' as string | null, cookie = '' } = {}) => {
+  const call = (path: string, method = 'GET', body?: unknown, developer = '', { origin = 'https://octamod.test' as string | null, cookie = '', admin = '' } = {}) => {
     const headers = new Headers({ 'CF-Connecting-IP': '192.0.2.1' })
     if (origin) headers.set('Origin', origin)
     if (body !== undefined) headers.set('Content-Type', 'application/json')
     if (developer) headers.set('X-Modwerk-Developer', developer)
     if (cookie) headers.set('Cookie', cookie)
+    if (admin) headers.set('X-Octamod-Admin', admin)
     return handleCommunity(new Request('https://api.example.test/api' + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) }), server.env)
   }
   let next = 300
@@ -152,8 +153,10 @@ const session = () => prepareSession(readClaudeTranscript(claudeTranscript), 'Th
 describe('shared agent sessions on the Worker', () => {
   it('stores a session for its developer and the owner, and nobody else', async () => {
     const { call, boardLogin, share, db } = await fixture()
-    const developer = await boardLogin('first-porter'), stranger = await boardLogin('someone-else'), owner = await boardLogin('repeat98')
+    const developer = await boardLogin('first-porter'), stranger = await boardLogin('someone-else'), ownerBoard = await boardLogin('repeat98')
+    // The owner reads through the admin sign-in. Their board session alone opens nothing else, even on an administrator account.
     db.prepare("UPDATE users SET is_admin=1,email_verified=1 WHERE github_login='repeat98'").run()
+    const admin = (await (await call('/auth/admin', 'POST', { key: 'e'.repeat(64) })).json() as { token: string }).token
 
     const shared = await share(developer, session())
     expect(shared.status).toBe(201)
@@ -168,9 +171,10 @@ describe('shared agent sessions on the Worker', () => {
     expect((await call('/agent-sessions/' + id, 'DELETE', undefined, stranger)).status).toBe(404)
     expect((await call('/agent-sessions', 'GET')).status).toBe(401)
 
-    const all = await (await call('/agent-sessions?all=1', 'GET', undefined, owner)).json() as { sessions: { id: string; login: string }[] }
+    expect((await call('/agent-sessions?all=1', 'GET', undefined, ownerBoard)).status).toBe(403)
+    const all = await (await call('/agent-sessions?all=1', 'GET', undefined, '', { admin })).json() as { sessions: { id: string; login: string }[] }
     expect(all.sessions).toMatchObject([{ id, login: 'first-porter' }])
-    const read = await (await call('/agent-sessions/' + id, 'GET', undefined, owner)).json() as { session: { entries: { text: string }[] } }
+    const read = await (await call('/agent-sessions/' + id, 'GET', undefined, '', { admin })).json() as { session: { entries: { text: string }[] } }
     expect(read.session.entries[0].text).toBe('Port the tape echo to the Digitakt.')
 
     expect((await call('/agent-sessions/' + id, 'DELETE', undefined, developer)).status).toBe(200)
