@@ -10,6 +10,8 @@
 //   key     0x10 ID FLAGS -> a panel key message (flags bit 0 down, 0x10 a release), armed only
 //   enc     0x11 N DELTA -> an encoder turn (1-8 A-H, 9 LEVEL), armed only
 //   release 0x12 -> lets go of every key the link holds, armed only
+//   ramboot 0x14 ULEN UCRC CLEN CCRC -> armed: YES for stock's UPGRADE OS NOW?, and where stock would erase and write
+//                   the flash the base resets into the staged image instead (LINK.md, RAM boot). Nothing writes the flash.
 //   mem     0x21 ADDR N -> up to 128 bytes of DDR (0x40000000-0x47ffffff) or SRAM (0x80000000-0x8000ffff)
 //   diag    0x22 -> the diagnostics log's address and size (read it with mem), frame interrupts and UI ticks so far
 //   freeze  0x23 N -> armed: the next UI tick stands still N frames (at most 15 s), audio goes on: a FREEZE test
@@ -54,6 +56,9 @@
 #define CMD_KEY 0x10
 #define CMD_ENC 0x11
 #define CMD_RELEASE_ALL 0x12
+#define CMD_RAMBOOT 0x14                // armed: YES at UPGRADE OS NOW?, and the staged image is booted from RAM, never flashed
+#define KEY_YES 0x0a
+#define CARRY_TICKS 1800                // a minute: a RAM boot asked for and not reached is cancelled
 #define CMD_MEM 0x21
 #define CMD_DIAG 0x22                   // the diagnostics log (diag.c): its address and size, frames and ticks
 #define CMD_FREEZE_TEST 0x23            // armed: the next UI tick stands still N frames (diag.c), to see a FREEZE logged
@@ -213,8 +218,20 @@ static int release_all(void)            // -> 1 when any key was held; one the q
     return any;
 }
 
+// ---- RAM boot state ----------------------------------------------------------------
+int mw_link_ramboot_due;                // link.s reads it where stock's job would flash: 0 flash, 1 RAM boot, 2 cancelled
+static uint32_t ramboot[4];             // from the host: unpacked length and CRC, container length and CRC
+static uint32_t ramboot_ticks;          // ticks since the request; it is cancelled after a minute, forgotten after two
+static uint32_t boot_status, boot_image;
+static void ramboot_cancel(void)
+{
+    if (mw_link_ramboot_due)
+        mw_link_ramboot_due = 2;        // the job's call then resets without a mailbox: nothing flashed, nothing booted
+}
+
 static void disarm(void)
 {
+    ramboot_cancel();
     unsigned k;
     if (armed)
         release_all();
@@ -239,6 +256,7 @@ static int ours(int kind, int id, int value)    // the next event the link poste
 static int human(void)                  // a person pressed or turned something; -> 1 takes that first press
 {
     human_count++;
+    ramboot_cancel();                   // never a flash where the host asked for a RAM boot
     if (!armed)
         return 0;
     human_ticks = 0;
@@ -297,6 +315,9 @@ static void COLD act(const uint8_t *m, int len)
         p = put32(p, human_count);
         p = put32(p, posted_count);
         p = put32(p, refused_count);
+        p = put32(p, boot_status);
+        p = put32(p, boot_image);
+        p = put32(p, (uint32_t)DIAG);
         send(p);
         return;
     case CMD_DIAG:
@@ -321,6 +342,29 @@ static void COLD act(const uint8_t *m, int len)
     case CMD_DISARM:
         disarm();
         send(begin(seq, cmd, ST_OK));
+        return;
+    case CMD_RAMBOOT:
+        if (!armed)
+            status = ST_NOT_ARMED;
+        else if (human_ticks >= 0 && human_ticks < HUMAN_TICKS)
+            status = ST_HUMAN;
+        else if (n < 20)
+            status = ST_BAD;
+        else if (pend_head - pend_tail > PENDING - 2)
+            status = ST_BUSY;
+        else {
+            int i;
+            for (i = 0; i < 4; i++)
+                ramboot[i] = get32(m + HEADER + 5 * i);
+            mw_link_ramboot_due = 1;
+            ramboot_ticks = 0;
+            MARK[1] = DIAG_STAGE | 1;
+            post(MSG_KEY, KEY_YES, KEY_DOWN);
+            post(MSG_KEY, KEY_YES, KEY_RELEASE);
+        }
+        if (status != ST_OK)
+            refused_count++;
+        send(begin(seq, cmd, status));
         return;
     case CMD_KEY:
     case CMD_ENC:
@@ -378,6 +422,13 @@ void mw_link_tick(void)
         human_ticks++;
     if (release_due)
         release_all();
+    if (mw_link_ramboot_due && ++ramboot_ticks >= CARRY_TICKS) {
+        if (mw_link_ramboot_due == 1)
+            mw_link_ramboot_due = 2;    // no reset came: a second minute as cancelled, so a slow job still never flashes
+        else
+            mw_link_ramboot_due = 0;
+        ramboot_ticks = 0;
+    }
     // A posted event the loop never passed to ev_key/ev_enc would hold the head of pend for good, and every later
     // event of the link would count as a person's: give it up after about a second.
     if (pend_head == pend_tail || pend_tail != pend_seen) {
@@ -425,4 +476,249 @@ static const void *const row[4] = {
 void COLD mw_link_settings(void *menu)
 {
     core_additem(menu, row);
+}
+
+// ---- RAM boot (LINK.md): the Analog Rytm MKII link's, at OS 1.12's addresses --------------
+// Stock's upload buffer (0x40122574): a 32-byte header, then the upload's struct (its length, then the container from
+// +8). The mailbox is written over that header, which the receiver is done with once the job runs. Unlike the Rytm's,
+// the staged upload cannot stay where it is across the reset: the bootstrap reads the flashed image's packed MAIN OS
+// to 0x40400000 on every start, inside it. So before the reset the container is copied to COPY, in DDR that neither
+// the bootstrap nor stock's start (it clears 0x402fb000-0x466b8c50 after the gate) touches; the CRCs stand guard.
+#define MAILBOX ((volatile uint32_t *)0x4038bec0)
+#define STAGED ((const uint32_t *)0x4038bee0)
+#define COPY ((uint8_t *)0x47000000)
+#define MB_ASKED 0x4d574254             // 'MWBT': boot the copied image
+#define MB_SPENT 0x4d574255             // 'MWBU': the unpack began
+#define MB_BOOTED 0x4d574253            // 'MWBS': the unpacked image checked out and was entered
+#define MB_CHECK 0x52794c6b             // the check word's seed
+#define OS_BASE 0x40000400              // MAIN OS: its first long is the entry
+#define IMAGE_MAX 0x38bac0              // the unpacked OS must end below the mailbox
+#define CONTAINER_MAX 0x300000          // COPY + this stays below the mod area (0x47f00000)
+#define MAIN_OS 3
+// Diagnostics of the reset, outside the mod area and 64 KB under the boot stack's top, as the Rytm's: DIAG by the
+// gate (0-7 the mailbox as found, 8-11 the staged struct's first words, 12-13 MARK as found, 14 RSR); MARK on the way
+// to a RAM boot's reset (0 DIAG_MARK + flags, 1 DIAG_STAGE + how far it came). Written only at boot, before stock
+// runs, and on the way to the reset, so stock may use this RAM in between.
+#define DIAG ((volatile uint32_t *)0x47feffbc)
+#define MARK ((volatile uint32_t *)0x47fefff8)
+#define DIAG_MARK 0x4d570000            // + person presses << 8 + due (bits 0-1), 4 armed, 8 stock's struct is STAGED, 16 its length matches
+#define DIAG_STAGE 0x4d575400           // + 1 the command was taken, 2 stock's job reached the site, 3 its wait returned,
+                                        //   4 the drain returned, 5 written with the data cache off, 6 copied
+#define RSR (*(volatile uint8_t *)0xEC090001)      // reset status: bit 5 software reset
+#define RSR_SOFT 0x20
+#define BOOT_ARG (*(const uint32_t *)0x40287a60)   // what the bootstrap passed the OS entry (0x400004ec)
+#define STOCK_DELAY ((void (*)(int))0x4013492c)    // stock's wait before its reset (0x401391e6)
+#define STOCK_DRAIN ((void (*)(void))0x400023f6)   // what stock calls with interrupts masked before its reset
+
+#define BOOT_FLASH 0                    // no request: the flashed OS
+#define BOOT_RAM 1                      // this image was booted from RAM
+#define BOOT_NOT_SOFT 2                 // a request, but not after a software reset
+#define BOOT_BAD_CHECK 3
+#define BOOT_BAD_BOUNDS 4
+#define BOOT_BAD_CRC 5                  // the copy did not survive the reset
+#define BOOT_NO_OS 6
+#define BOOT_FAILED 8                   // the unpacked image was wrong: reset, and this is the flashed OS
+
+extern void mw_cache_push(void);
+extern void mw_cache_off(void);
+extern void mw_link_reset(void) __attribute__((noreturn));
+extern void mw_boot_enter(uint32_t arg) __attribute__((noreturn));
+
+static uint32_t mb_check(const volatile uint32_t *mb)
+{
+    return (mb[1] ^ mb[2]) + (mb[3] ^ mb[4]) + MB_CHECK;
+}
+
+// From link.s, in stock's upgrade job where it would erase and write the flash, when the host asked for a RAM boot:
+// stock has validated the upload and saved the working state. As stock's routine ends: its wait, the drain, then the
+// reset; before it every dirty line out and the data cache off, so the copy and the mailbox go straight to DDR. An
+// upload that is not the one the host described is not booted: the reset brings the flashed OS back, nothing written.
+void COLD mw_link_ramboot_go(const uint32_t *st)
+{
+    volatile uint32_t *mb = MAILBOX;
+    uint32_t i, clen = ramboot[2];
+    MARK[1] = DIAG_STAGE | 2;
+    mw_cache_push();
+    STOCK_DELAY(3000000);
+    MARK[1] = DIAG_STAGE | 3;
+    mw_cache_push();
+    __asm__ volatile("move.w #0x2700, %sr");
+    STOCK_DRAIN();
+    MARK[1] = DIAG_STAGE | 4;
+    MARK[0] = DIAG_MARK | (human_count & 0xff) << 8 | (mw_link_ramboot_due & 3) | (armed ? 4 : 0)
+        | (st == STAGED ? 8 : 0) | (st == STAGED && st[0] == clen ? 16 : 0);
+    mw_cache_off();
+    MARK[1] = DIAG_STAGE | 5;
+    if (mw_link_ramboot_due == 1 && st == STAGED && st[0] == clen && clen <= CONTAINER_MAX && armed) {
+        const uint8_t *from = (const uint8_t *)(st + 2);
+        for (i = 0; i < clen; i++)
+            COPY[i] = from[i];
+        MARK[1] = DIAG_STAGE | 6;
+        mb[1] = clen;
+        mb[2] = ramboot[3];
+        mb[3] = ramboot[0];
+        mb[4] = ramboot[1];
+        mb[5] = mb_check(mb);
+        mb[0] = MB_ASKED;
+    }
+    mw_link_reset();
+}
+
+static uint32_t __attribute__((noinline)) crc32(const uint8_t *p, uint32_t n)  // zlib's
+{
+    uint32_t c = ~0u;
+    int k;
+    while (n--) {
+        c ^= *p++;
+        for (k = 0; k < 8; k++)
+            c = (c >> 1) ^ (0xedb88320 & -(c & 1));
+    }
+    return ~c;
+}
+
+static uint32_t be32(const uint8_t *p)
+{
+    return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3];
+}
+
+// The Rytm link's depacker, the format src/engine/elektron/codec/depack.ts reads: a u32 stream length, a u32 sum,
+// then the stream; 0 for a stream that is wrong, does not end at its length or would pass max.
+#define INLINE static inline __attribute__((always_inline))
+struct bits { const uint8_t *p, *end; uint32_t tag; int bad; };
+INLINE uint32_t dp_byte(struct bits *s)
+{
+    if (s->p >= s->end) {
+        s->bad = 1;
+        return 0;
+    }
+    return *s->p++;
+}
+INLINE uint32_t dp_bit(struct bits *s)
+{
+    if (!(s->tag & 0xff))
+        s->tag = dp_byte(s) << 1 | 1;
+    s->tag <<= 1;
+    return s->tag >> 9 & 1;
+}
+INLINE uint32_t dp_gamma(struct bits *s)
+{
+    uint32_t v = 1;
+    for (;;) {
+        v = v << 1 | dp_bit(s);
+        if (dp_bit(s))
+            return v;
+        if (v > 0x2000000 || s->bad) {
+            s->bad = 1;
+            return v;
+        }
+    }
+}
+#define DP_BIAS 767
+#define DP_REUSE 2
+#define DP_FAR 3328
+static uint32_t __attribute__((noinline, hot)) depack(const uint8_t *sec, uint32_t plen, uint8_t *out, uint32_t max)
+{
+    struct bits s;
+    uint32_t n = 0, last = 1, off, count, g, len = be32(sec);
+    if (plen < 8 || len > plen - 8)
+        return 0;
+    s.p = sec + 8;
+    s.end = s.p + len;
+    s.tag = 0;
+    s.bad = 0;
+    for (;;) {
+        if (dp_bit(&s)) {
+            if (n >= max)
+                return 0;
+            out[n++] = dp_byte(&s);
+        } else {
+            g = dp_gamma(&s);
+            if (g == DP_REUSE)
+                off = last;
+            else {
+                off = (g << 8) + dp_byte(&s);
+                if (off == DP_BIAS)
+                    break;
+                off = last = off - DP_BIAS;
+            }
+            count = dp_bit(&s) << 1;
+            count |= dp_bit(&s);
+            if (!count)
+                count = dp_gamma(&s) + 2;
+            if (off > DP_FAR)
+                count++;
+            count++;
+            if (off == 0 || off > n || count > max - n)
+                return 0;
+            do {
+                out[n] = out[n - off];
+                n++;
+            } while (--count);
+        }
+        if (s.bad)
+            return 0;
+    }
+    return s.bad || s.p != s.end ? 0 : n;
+}
+
+// From link.s at boot (0x4000053e): after the core's boot hook, before stock fills SRAM and clears its RAM, with the
+// data cache off. Returns to boot the image that is running; does not return when it unpacks and enters the copied one.
+void COLD mw_boot_gate(void)
+{
+    volatile uint32_t *mb = MAILBOX;
+    const uint8_t *c = COPY, *e;
+    uint32_t magic = mb[0], clen, ulen, off, plen, i, count, arg;
+    if (magic != MB_BOOTED) {
+        volatile uint32_t *d = DIAG;
+        for (i = 0; i < 12; i++)
+            d[i] = mb[i];
+        d[12] = MARK[0];
+        d[13] = MARK[1];
+        MARK[0] = MARK[1] = 0;
+        d[14] = RSR;
+    }
+    if (magic != MB_ASKED && magic != MB_SPENT && magic != MB_BOOTED)
+        return;
+    mb[0] = 0;                          // one shot, whatever happens next
+    boot_status = BOOT_NOT_SOFT;        // a mailbox DDR kept over a power cycle says nothing
+    if (!(RSR & RSR_SOFT))
+        return;
+    boot_status = BOOT_FAILED;
+    if (magic == MB_BOOTED) {
+        boot_status = BOOT_RAM;
+        boot_image = mb[4];
+    }
+    if (magic != MB_ASKED)
+        return;
+    clen = mb[1];
+    ulen = mb[3];
+    boot_status = BOOT_BAD_CHECK;
+    if (mb[5] != mb_check(mb))
+        return;
+    boot_status = BOOT_BAD_BOUNDS;
+    if (ulen - 1 >= IMAGE_MAX || clen < 0x30 || clen > CONTAINER_MAX)
+        return;
+    boot_status = BOOT_BAD_CRC;
+    if (crc32(c, clen) != mb[2])
+        return;
+    boot_status = BOOT_NO_OS;
+    count = be32(c + 0x1c);
+    for (i = 0, e = c + 0x20;; i++, e += 16) {
+        if (i >= count || i >= 16 || (uint32_t)(e + 16 - c) > clen)
+            return;
+        if (be32(e) == MAIN_OS)
+            break;
+    }
+    off = be32(e + 4);
+    plen = be32(e + 8);
+    if (be32(e + 12) != OS_BASE || plen < 8 || off > clen || plen > clen - off)
+        return;
+    arg = BOOT_ARG;                     // inside the image the unpack overwrites
+    __asm__ volatile("move.w #0x2700, %sr");
+    mb[0] = MB_SPENT;                   // from here the running image is gone: enter the new one or reset
+    if (depack(c + off, plen, (uint8_t *)OS_BASE, ulen) == ulen && crc32((const uint8_t *)OS_BASE, ulen) == mb[4]) {
+        mb[0] = MB_BOOTED;
+        mw_boot_enter(arg);
+    }
+    mw_link_reset();
 }
