@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "machine": "digitakt-ii",
   "interface": "1.1",
-  "status": "Upstream elekloader core-dt2 1.0 for Digitakt II OS 1.17 is what the site builds with. The entries marked since 1.1 are proposed for Modwerk's Digitakt II base (core-dt2 1.1's source, sdk/machines/digitakt-ii/elekloader/); a module that needs one waits for the base, and the machine's core version stays 1.0 until it ships.",
+  "status": "Modwerk's Digitakt II base for OS 1.17, built from the pinned core-dt2 1.1 source and selected by the SHA-256 in sdk/machines/digitakt-ii/base-binding.json.",
   "events": [
     {
       "name": "ev_tick",
@@ -59,6 +59,19 @@
         "sha256": "cea65d5607761da9df8c0c7d7017d3552f7d8fa860ee8a93172c993bb01290d2"
       },
       "order": "lower order first (shipped mods use 10-90); the first handler to set an LED keeps it"
+    },
+    {
+      "name": "ev_seq_audio_phrase",
+      "since": "1.1",
+      "when": "On supported audio note trigs after pitch resolution, and on later empty steps when requested. Subscribers are visited in ascending contribution order.",
+      "handler": "uint32_t handler(const struct dt2_seq_grid_window *window, uint32_t pitch, uint32_t velocity, struct dt2_seq_phrase_note *notes); write at most eight notes to notes and return their count. Zero passes through or ends continuation. REST is silent. OR CARRY into the count to request empty steps. Use the read-only stock deadlines, keep work bounded, and leave the stock queue untouched."
+    },
+    {
+      "name": "ev_seq_note",
+      "since": "1.1",
+      "when": "After the OS constructs a supported audio note, on PLAY and subsequent steps, before the note enters the stock queue.",
+      "handler": "int32_t handler(const struct dt2_seq_note_context *context, uint32_t pitch); return a pitch from 0 through 127, or leave the current pitch unchanged with an out-of-range result. The context is read-only.",
+      "order": "Four slots, in ascending contribution order. Each callback sees the previous accepted pitch."
     }
   ],
   "tables": [
@@ -95,7 +108,7 @@
       "since": "1.1",
       "entry": 4,
       "room": 4,
-      "purpose": "Pointers to core_kitdata_t descriptors {tag[4], size, data, changed}: each mod's block per kit (128 kits), after each kit record's end mark, saved with the project and SAVE KIT, loaded back and copied with the firmware's kit copies. All mods share 191 bytes a kit record (core_kitdata_room()); a block that does not fit is left out. Reader: core's store. A mod claims kitdata:<tag>.",
+      "purpose": "Pointers to core_kitdata_t descriptors {tag[4], size, data, changed}: each mod's block per kit (128 kits), after each kit record's end mark, saved with the project and SAVE KIT, loaded back and copied with the firmware's kit copies. All mods share 143 bytes a kit record (core_kitdata_room()); the record's last 48 bytes hold the base's project archive; a block that does not fit is left out. Reader: core's store. A mod claims kitdata:<tag>.",
       "sites": [
         {
           "os": "1.17",
@@ -119,9 +132,23 @@
           "role": "memcpy: follows kit copies in RAM (pattern copy and paste, PASTE KIT, undo)"
         }
       ]
+    },
+    {
+      "name": "core_project_archive",
+      "since": "1.1",
+      "order": "ascending",
+      "purpose": "Pointers to fixed-size project save/load descriptors.",
+      "entry": 4,
+      "room": 4
     }
   ],
   "exports": [
+    {
+      "name": "core_project_archive",
+      "since": "1.1",
+      "prototype": "Contribute a pointer to a const dt2_project_archive_t with a unique tag, four-byte-aligned size, save(void *data), and load(const void *data).",
+      "purpose": "Runs on full active-project save and load, in ascending contribution order. The archive shares 5632 bytes including its eight-byte header and eight bytes per block. A contribution may write only its own save block and read only its own load block. Load receives null for missing data or a new project. Oversized contributions are skipped and counted as conflicts."
+    },
     {
       "name": "core_additem",
       "prototype": "void core_additem(menu, row)",
@@ -134,34 +161,16 @@
       "purpose": "Add a PERSONALIZE or SETTINGS row that shows a label and, on the right as LED INTENSITY does, values[get()]; from ev_personalize or ev_settings."
     },
     {
-      "name": "core_notice",
-      "since": "1.1",
-      "prototype": "void core_notice(const char *msg)",
-      "purpose": "Show a message in the header, as a page's title (UI task)."
-    },
-    {
-      "name": "core_view_top",
-      "since": "1.1",
-      "prototype": "uint32_t core_view_top(void)",
-      "purpose": "The vtable of the view on top of the stack."
-    },
-    {
       "name": "core_kit_on",
       "since": "1.1",
       "prototype": "int core_kit_on(void)",
       "purpose": "The kit on (the pattern on's), -1 for none."
     },
     {
-      "name": "core_kit_index",
-      "since": "1.1",
-      "prototype": "int core_kit_index(const void *kit)",
-      "purpose": "A kit in RAM's number, -1 when it is not one of the project's."
-    },
-    {
       "name": "core_kitdata_room",
       "since": "1.1",
       "prototype": "uint32_t core_kitdata_room(void)",
-      "purpose": "Bytes a kit record holds for the mods' blocks (191)."
+      "purpose": "Bytes a kit record holds for the mods' blocks (143)."
     },
     {
       "name": "core_store_conflicts",
@@ -172,8 +181,8 @@
     {
       "name": "fw_*",
       "since": "1.1",
-      "prototype": "mk2/core.h: fw_fillrect, fw_textf, fw_led_set, fw_key_down, fw_toast and the other firmware routines and data",
-      "purpose": "Firmware locations as exports, by address and without stock bytes, so a mod calls the OS's drawing, keys, LEDs, card and strings without its own copy of each address. The raw block write fw_card_write is not for mods: the build preflight refuses a mod file that refers to it."
+      "prototype": "digitakt-mk2/core.h: fw_led_set. mk2/core.h: Modwerk's drawing and view bindings.",
+      "purpose": "Firmware locations for the LED frame and module pages. Track selection uses fw_pattern_ui (0x44f370a0), fw_track_at (0x4004abb8), and fw_select_track (0x40077308). Use these from the UI task. Build preflight rejects the raw +Drive block write."
     }
   ],
   "claims": [],

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { tagDiscordLinks } from '../../server/site-link-tags.ts'
 import { ChannelType, PermissionFlagsBits, Routes } from 'discord.js'
 import { snowflake } from './config.mjs'
 
@@ -29,7 +30,9 @@ export async function readHistory(rest, store, { guildId, channelId, limit, befo
   return { messages, nextBefore: messages[0]?.id || null }
 }
 
-export function replyBody({ guildId, channelId, replyTo, content }) {
+export function replyBody({ guildId, channelId, replyTo, content: draft }) {
+  // Links to the site say they came from the bot, so the site's visit counts can credit it (server/site-link-tags.ts).
+  const content = typeof draft === 'string' ? tagDiscordLinks(draft) : draft
   snowflake(channelId, '--channel')
   snowflake(replyTo, '--reply-to')
   if (!content.trim() || content.length > 2000) throw new Error('A reply must contain 1–2000 characters. Split longer replies into separate drafts.')

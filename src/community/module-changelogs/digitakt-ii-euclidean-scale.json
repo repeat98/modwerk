@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-17",
+    "changes": [
+      "Follow the pattern scale on stock Euclidean audio tracks with SCF.",
+      "Reroll a repeating in-scale melody with RNN.",
+      "Set separate low and high octave bounds for each pattern and track.",
+      "Save the scale follow settings, octave bounds and melody with the project."
+    ]
+  }
+]

@@ -2,10 +2,11 @@ import { execFileSync, spawn } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
+import { checkBaseSize } from './base-size.mjs'
 import { readChangeScope } from './change-scope.mjs'
 import { checkChangelog } from './changelog.mjs'
 import { checkDocs } from './docs.mjs'
-import { takeSlot, workersFor } from './machine-slots.mjs'
+import { appStagesFit, takeSlot, vitestWorkerBytes, workersFor } from './machine-slots.mjs'
 import { checkModuleChangelogs } from './module-changelogs.mjs'
 import { moduleScopeProblems } from './pr-ready.mjs'
 
@@ -15,6 +16,10 @@ if (!npmCli) throw new Error('Run this script through npm run check or npm run b
 
 const children = new Set()
 let interrupted = false
+const buildOnly = process.argv.includes('--build')
+const requested = performance.now()
+await takeSlot(buildOnly ? 'npm run build' : 'npm run check')
+const started = performance.now()
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
   interrupted = true
   for (const child of children) child.kill(signal)
@@ -64,12 +69,7 @@ async function build() {
   return await run('typecheck') && await run('build:bundle')
 }
 
-const buildOnly = process.argv.includes('--build')
-// One full check at a time per slot on this computer, whichever worktree or session starts it (scripts/machine-slots.mjs);
-// then Vitest gets as many workers as the free memory carries, unless MODWERK_TEST_WORKERS says.
-await takeSlot(buildOnly ? 'npm run build' : 'npm run check')
-process.env.MODWERK_TEST_WORKERS ??= String(workersFor({ most: 4, each: 700 * 1024 ** 2, keep: 2 * 1024 ** 3 }))
-const started = performance.now()
+process.env.MODWERK_TEST_WORKERS ??= String(workersFor({ most: 4, each: vitestWorkerBytes, keep: 2 * 1024 ** 3 }))
 const baseIndex = process.argv.indexOf('--base'), base = baseIndex < 0 ? null : process.argv[baseIndex + 1]
 if (baseIndex >= 0 && !base) throw new Error('--base requires a Git commit/ref')
 // CI runs one check as parallel jobs (module-pr.yml): --part contract is everything but the two long suites, --part test:1/2
@@ -88,8 +88,8 @@ const carried = new Set(process.argv.includes('--rerun-failed') && previous?.bas
 if (process.argv.includes('--rerun-failed') && !carried.size) console.log('No earlier run against this base to carry: running every check.')
 const scope = !buildOnly && base ? readChangeScope({ root, base }) : null
 const documentationOnly = !!scope?.documentation
-// The SDK suite takes minutes. Locally, a change it cannot read (site, Worker, release notes) skips it; CI always runs it.
-const sdkSuite = !scope || scope.sdk || !!process.env.CI
+// Match the PR matrix: an unscoped run or a change that can reach the SDK always exercises it.
+const sdkSuite = !scope || scope.sdk
 async function changelogs() {
   let passed = true
   try {
@@ -121,6 +121,10 @@ if (!buildOnly && !suiteOnly && passed) {
 }
 // Every active Octatrack module must still install beside every other (declarations only, no firmware).
 if (!buildOnly && !suiteOnly && !documentationOnly && passed) passed = await all(() => run('elekloader:check'), () => run('modules:compat'))
+// How full the committed Octatrack base is, against the buffer a base on a unit writes it through (scripts/base-size.mjs).
+if (!buildOnly && !suiteOnly && !documentationOnly && passed && (!scope || scope.base)) {
+  try { console.log(checkBaseSize(root)) } catch (error) { console.error('Base size: ' + error.message); passed = false }
+}
 // Finish generated notice/catalog/media writes before lint, tests, typecheck or bundling read them.
 if (passed && !documentationOnly) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
 // Every path, including documentation-only checks and release builds, requires current-version notes and documents within their size.
@@ -145,13 +149,25 @@ if (passed && !suiteOnly && documentationOnly) passed = await run('sdk:imports:c
 const DRAFT_DOCTOR = ['scripts/module-doctor.test.mjs', '-t', 'checks a draft where every gate looks']
 if (passed && !documentationOnly) {
   const tests = (args = []) => run('test', args, { MODWERK_DEFER_DRAFT_DOCTOR: '1' })
-  const sdk = () => sdkSuite ? run('sdk:check') : skip('sdk:check', 'no changed path reaches it; CI runs it')
+  const sdk = () => sdkSuite ? run('sdk:check') : skip('sdk:check', 'no changed path reaches it')
+  async function appChecks() {
+    const steps = [() => run('lint'), build]
+    // The SDK runs after Vitest even if a test failed so the check reports both suites' results.
+    if (!part) steps.push(async () => {
+      const tested = await tests()
+      const sdkPassed = await sdk()
+      return tested && sdkPassed
+    })
+    if (!process.env.CI && !appStagesFit(part ? 0 : Number(process.env.MODWERK_TEST_WORKERS))) {
+      console.log('Running the app check stages one at a time to fit available memory.')
+      return all(...steps)
+    }
+    return (await Promise.all(steps.map(step => step()))).every(Boolean)
+  }
   const results = buildOnly ? [await build()]
-    : part === 'sdk' ? [await sdk()]
+    : part === 'sdk' ? [await run('sdk:check')]
     : suiteOnly ? [await tests(['--shard=' + part.slice(5)])]
-    // The SDK suite starts once the app tests are done, whatever their result: its processes beside Vitest's workers starved
-    // Vitest's five-second tests.
-    : await Promise.all([run('lint'), part || tests().then(async tested => await sdk() && tested), build()])
+    : [await appChecks()]
   if (!buildOnly && !suiteOnly) results.push(await run('test', DRAFT_DOCTOR))
   passed = results.every(Boolean) && !interrupted
 }
@@ -160,6 +176,7 @@ try {
   mkdirSync(fileURLToPath(new URL('../node_modules/.cache/', import.meta.url)), { recursive: true })
   writeFileSync(record, JSON.stringify({ base, build: buildOnly, passed: [...new Set(passedNow)] }) + '\n')
 } catch { /* the record only speeds up a rerun */ }
-console.log(`${buildOnly ? 'Build' : documentationOnly ? 'Documentation check' : 'Check'} ${passed ? 'passed' : 'FAILED'} in ${((performance.now() - started) / 1000).toFixed(2)}s`)
+const queued = (started - requested) / 1000
+console.log(`${buildOnly ? 'Build' : documentationOnly ? 'Documentation check' : 'Check'} ${passed ? 'passed' : 'FAILED'} in ${((performance.now() - requested) / 1000).toFixed(2)}s${queued >= 1 ? ` (including ${queued.toFixed(1)}s waiting for a slot)` : ''}`)
 if (skipped.length) console.log(`Rerun: ${skipped.join(', ')} passed in the last run and did not run now. Run the full check (or pr:ready) before you push.`)
 if (!passed && !process.exitCode) process.exitCode = 1

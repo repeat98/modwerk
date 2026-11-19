@@ -5,6 +5,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { manifestBuildFields } from './module-source.mjs'
 import { alternation, moduleFolders } from './machine-folders.mjs'
+import { touchesBaseSize } from './base-size.mjs'
 
 // The machine registry names each machine's module folder: the Octatrack's, the elemod machines' (compiled firmware)
 // and the Zoom pedals' (prebuilt effect files, no compile job).
@@ -84,12 +85,18 @@ function nativeChange(change, machine) {
   }
   const common = /^sdk\/(build|runtime)\//.test(path)
   if (machine === 'octatrack') return common || /^sdk\/octatrack\/modules\//.test(path) || /^sdk\/octabam\/(platform|tools|dsp|licenses)\//.test(path)
+    || /^sdk\/(?:machines\/octatrack|firmware_codec)\//.test(path) || /^public\/octatrack-modules\//.test(path)
+    || ['sdk/tests/test_base_bound.py', 'vendor/elekloader/kit/kit.json', 'scripts/test-base-bound.sh', 'scripts/mirror-octatrack-modules.mjs'].includes(path)
     || path === 'sdk/catalog.json' || /^src\/engine\/assets\/(?!elemod\/)/.test(path)
     || /^scripts\/(build-module-packages\.py|build-utility-packages\.py|build-usb-audio-packages\.py|build-modules-isolated\.sh|import-module-build\.mjs|module-source\.mjs)$/.test(path)
   return common || new RegExp(`^sdk\\/(${ELEMOD}|elemod|machines)\\/`).test(path) || /^vendor\/elekloader\/(catalog\/|elekloader\.lock\.json$|upstream-catalog\.json$)/.test(path) || /^sdk\/imports\/elekloader-[^/]+\.json$/.test(path)
     || /^sdk\/octabam\/(scripts\/vendor\.sh|tools\/patches\/|tools\/harness\/dsp_host)/.test(path)
     || /^scripts\/(build-elemod[^/]*|elemod-elf\.mjs|verify-elemod-source-parity\.mjs|package-elemod-recipe\.mjs|verify-elemod-release-exports\.mjs)$/.test(path)
-    || /^src\/engine\/assets\/elemod\//.test(path)
+    || /^src\/engine\/(assets\/elemod|elektron)\//.test(path) || /^vendor\/elekloader\/kit\//.test(path)
+    || /^sdk\/imports\/packages\/.*\.elemod$/.test(path)
+    || /^src\/catalog\/(?:module-contract(?:-v3)?|module-folder|module-authors|versions|zoom-effect-ids|elemod-site-recipe)\.ts$/.test(path)
+    || /^src\/devices\/(?:machine-contract\.ts|machines\.generated\.json)$/.test(path)
+    || /^scripts\/(?:elemod-compiler-flags|elemod-dependencies|machine-folders)\.mjs$/.test(path)
 }
 function compilerJob(text, name) {
   const lines = text?.split('\n') ?? [], start = lines.indexOf('  ' + name + ':')
@@ -129,7 +136,7 @@ export function classifyChanges(changes) {
     if (change.path === '.github/workflows/pages.yml') scope.modules ||= compilerJob(change.before, 'source-packages') !== compilerJob(change.after, 'source-packages')
     scope.worker ||= workerChange(change)
     scope.logger ||= change.path.startsWith('sdk/runtime/logging/') && !isDocumentationPath(change.path)
-    scope.windows ||= /^src\/catalog\/module-folder\.|^scripts\/(modules|machine-modules|module-qualification)\.mjs$/.test(change.path)
+    scope.windows ||= /^src\/catalog\/module-folder\.|^scripts\/(modules|module-cpu-price|machine-modules|module-qualification)\.mjs$/.test(change.path)
       || /^scripts\/(prepare-runtime-spans|runtime_private_paths)\.py$|^sdk\/tests\/test_runtime_spans\.py$/.test(change.path)
       || /^scripts\/frontend-mcp(?:-private-host)?\.mjs$|^sdk\/tests\/test_frontend_mcp_host\.py$/.test(change.path)
   }
@@ -140,7 +147,7 @@ export function classifyChanges(changes) {
 // Site, Worker and release-note paths the SDK suite (sdk:check) never reads: no test, builder or script it runs names
 // them (change-scope.test.mjs enforces it), and an audited run (26 Oct 2026) opened none. Everything else reaches it,
 // src/engine, src/catalog and src/config included. Keep the list short and certain; a path left off only costs time.
-const outsideSdkSuite = /^(?:src\/(?:components|hooks|devices|projects|legal|overview|storage)\/|src\/community\/(?!module-|ot-log|octatrack-diagnostics)|src\/[^/]+\.(?:tsx|css|test\.ts)$|server\/|worker\.ts$|changelog\/|docs\/.+\.md$)/
+const outsideSdkSuite = /^(?:src\/(?:components|hooks|projects|legal|overview|storage)\/|src\/community\/(?!module-|ot-log|octatrack-diagnostics)|src\/(?:devices\/)?[^/]+\.(?:tsx|css|test\.ts)$|server\/|worker\.ts$|changelog\/|docs\/.+\.md$)/
 export const reachesSdkSuite = path => !outsideSdkSuite.test(path)
 
 /** Compare exact Git trees; local checks also include unstaged and untracked edits. */
@@ -162,11 +169,11 @@ export function readChangeScope({ root, base, head = null }) {
   const sdk = names.length === 0 || names.some(reachesSdkSuite)
   return { ...classifyChanges([...new Set(names)].map(path => {
     // Only manifests/catalogs/workflows need their contents; never dump image or firmware bytes.
-    const inspect = manifest.test(path) || catalogs.has(path) || path === 'sdk/catalog.json' || /^\.github\/workflows\/(module-pr|pages)\.yml$/.test(path)
+    const inspect = manifest.test(path) || digiManifest.test(path) || catalogs.has(path) || path === 'sdk/catalog.json' || /^\.github\/workflows\/(module-pr|pages)\.yml$/.test(path)
     if (!inspect) return { path, before: '', after: '', regular: true }
     const before = read(commit, path), after = read(head, path)
     return { path, before: before.text, after: after.text, regular: before.regular && after.regular }
-  })), sdk }
+  })), sdk, base: names.some(touchesBaseSize) }
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

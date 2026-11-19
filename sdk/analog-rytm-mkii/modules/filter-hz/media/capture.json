@@ -2,13 +2,13 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "moduleId": "filter-hz",
-  "moduleVersion": "1.2.1",
+  "moduleVersion": "1.3.1",
   "firmware": "1.74",
-  "capturedAt": "2026-11-14T15:30:05Z",
-  "imageSha256": "3554efa8d84a384bc18c8f0cf5336d493ca2b26137091432d3ebc610a946a93f",
-  "mainSha256": "37c3e0de92eb9fa6db8a95fc7fbe16bee4c3389e00a98b39092dcffabacf2d92",
+  "capturedAt": "2026-11-16T12:00:00Z",
+  "imageSha256": "deaaec5660c69ea6c2ea83d14ecb3d1e25ee7b6d5682a6ff54dc8584340bfdb6",
+  "mainSha256": "0d20744fe5929c2a26c92e8247009163ecf386ef592f6fd2cb2c13de87d2fbba",
   "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
-  "build": "Modwerk's linker: the released core-ar2 0.3 (6b97dfb3…3e58) + Filter Hz 1.2.1 from this folder, --version FZ78",
+  "build": "Modwerk's linker: the released core-ar2 0.3 (6b97dfb3…3e58) + Filter Hz 1.3.1 from this folder, --version FZ81",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
@@ -16,7 +16,7 @@
     "binary": "dtboot (cargo build --release)",
     "settings": "no card image, JIT on"
   },
-  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; FLTR opens the FILTER page of track BD; encoder 4 (FRQ) is turned down from 127 to 60 and back to 127. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified. 1.2.1 (2026-11-14): this plan in rytm-emu c5732f0 gives the three 1.2.0 frames byte for byte on FZ78, as on FZ74 (1.2.0 rebuilt from main, main OS 2d8aead1…948d): 1.2.1 changes nothing unlocked. frq-locked.png is new: rytm-emu 2ac0f1f (c5732f0 did not take the held-trig lock), cold boot, FRQ set to 127 by CC 74, GRID RECORDING, trig 1 held and knob E nudged once, which locks the value; frame taken with the trig held. On FZ74 the same plan shows 21.1kHz sticking out of stock's 27-pixel box. The 1.2.0 frames were first captured (2026-10-14) with rytm-emu 3c4c42c on FZ01, an OS 1.73 build.",
+  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; FLTR opens the FILTER page of track BD; encoder 4 (FRQ) is turned down from 127 to 60 and back to 127. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified. 1.2.1 (2026-11-14): this plan in rytm-emu c5732f0 gives the three 1.2.0 frames byte for byte on FZ78, as on FZ74 (1.2.0 rebuilt from main, main OS 2d8aead1…948d): 1.2.1 changes nothing unlocked. frq-locked.png is new: rytm-emu 2ac0f1f (c5732f0 did not take the held-trig lock), cold boot, FRQ set to 127 by CC 74, GRID RECORDING, trig 1 held and knob E nudged once, which locks the value; frame taken with the trig held. On FZ74 the same plan shows 21.1kHz sticking out of stock's 27-pixel box. The 1.2.0 frames were first captured (2026-10-14) with rytm-emu 3c4c42c on FZ01, an OS 1.73 build. 1.3.0 (2026-11-14): the four plans above on FZ79 give the four frames byte for byte: FILTER FRQ is unchanged. reverb-frq.png and delay-locked.png are new, rytm-emu 2ac0f1f: cold boot, NO four times, FX, then SMPL (REVERB) or SRC (DELAY), snapshot at 9000M; REVERB: FRQ set to 63 by CC 26 on channel 13, knob C nudged up once (the value shows as it is turned); DELAY: HPF 0 and LPF 40 by CC 20 and 21 on channel 13, GRID RECORDING, trig 1 held, knob E nudged up 40 times (HPF lock 39), then knob F once (LPF lock 40), frame with the trig held. 1.3.0, LPF's box and text two pixels right (2026-11-15): the six plans on FZ80 (`b9bedf5e…f55f`) give the first five frames byte for byte; delay-locked.png is recaptured, its LPF box now apart from HPF's. 1.3.1 (2026-11-16): the six plans on FZ81 (`deaaec56…bdb6`), the first three in rytm-emu c5732f0 and the other three in 2ac0f1f as before, give all six frames byte for byte: the cold build changes nothing on screen.",
   "captures": [
     {
       "path": "media/filter-page.png",
@@ -41,6 +41,18 @@
       "sha256": "cc30e4acfb0ef452651352f2bbb8b94c992ca7adfe005a5c5bf52706eb279307",
       "frame": "end frame (DTBOOT_END_PNG)",
       "plan": "DTBOOT_END_PNG=frq-locked.png dtboot fz.syx --instr 9500M --every 1000M --press NO@4550M:12M --press NO@5350M:12M --press NO@6150M:12M --press NO@6950M:12M --press FLTR@7550M:12M --midi b04a7f@9020M --press RECORD@9100M:12M --press T1@9200M:700M --nudge 4:1@9300M (rytm-emu 2ac0f1f)"
+    },
+    {
+      "path": "media/reverb-frq.png",
+      "sha256": "e95a805d6cd6143333ffbf81c51a1fac453e7fa973bab20c6039b4f754a242d4",
+      "frame": "end frame (DTBOOT_END_PNG)",
+      "plan": "dtboot fz.syx --instr 9000M --every 1000M --press NO@4550M:12M --press NO@5350M:12M --press NO@6150M:12M --press NO@6950M:12M --press FX@7550M:12M --press SMPL@7900M:12M --save fx.snap; DTBOOT_END_PNG=reverb-frq.png dtboot fz.syx --load fx.snap --instr 500M --every 100000M --midi bc1a3f@9020M --nudge 2:1@9300M (rytm-emu 2ac0f1f)"
+    },
+    {
+      "path": "media/delay-locked.png",
+      "sha256": "6e3079133882b3d4ed6eb8ea0785d1baa7ff5c0b0623c651a5a48d6e85377700",
+      "frame": "end frame (DTBOOT_END_PNG)",
+      "plan": "dtboot fz.syx --instr 9000M --every 1000M --press NO@4550M:12M --press NO@5350M:12M --press NO@6150M:12M --press NO@6950M:12M --press FX@7550M:12M --press SRC@7900M:12M --save fx.snap; DTBOOT_END_PNG=delay-locked.png dtboot fz.syx --load fx.snap --instr 1100M --every 100000M --midi bc1400@9010M --midi bc1528@9020M --press RECORD@9100M:12M --press T1@9200M:1000M --nudge 4:1@9300Mx40/10M --nudge 5:1@9900M (rytm-emu 2ac0f1f)"
     }
   ]
 }

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Icon } from '../components/Icon'
 import { DeviceImage, MachinePhotoCredits } from '../devices/DeviceImage'
 import { DEVICE_STEPS, deviceSteps } from '../devices/registry'
+import { INDEPENDENCE_NOTICE } from '../firmware-notices'
+import { assetUrl } from '../hosting'
 import type { Overview, OverviewKind, OverviewMachine } from './overview'
 import './overview.css'
 
@@ -23,9 +25,9 @@ export function OverviewPage({ overview }: { overview: Overview }) {
     <header className="overview-heading">
       <div>
         <h1>Choose your machine</h1>
-        <p><span><b>{overview.modules}</b> modules by <b>{overview.creators}</b> developers</span><span className="overview-key" aria-label="Modules by category">{overview.categories.map(item => <span key={item.category}><i className={'is-' + item.category} aria-hidden="true" /><b>{item.count}</b> {item.label}</span>)}</span></p>
+        <p><b>{overview.modules}</b> modules by <b>{overview.creators}</b> developers</p>
       </div>
-      <div className="overview-chips" role="group" aria-label="Show machines">{FILTERS.map(item => <button key={item.id} type="button" className={'overview-chip is-' + item.id} aria-pressed={filter === item.id} onClick={() => setFilter(item.id)}>{item.id !== 'all' && <i aria-hidden="true" />}<span className="overview-chip-label">{item.label}</span>{item.short !== item.label && <span className="overview-chip-short" aria-hidden="true">{item.short}</span>}<small>{count(item.id)}</small></button>)}</div>
+      <div className="overview-chips" role="group" aria-label="Show machines">{FILTERS.map(item => <button key={item.id} type="button" className={'overview-chip is-' + item.id} aria-pressed={filter === item.id} onClick={() => setFilter(item.id)}><span className="overview-chip-label">{item.label}</span>{item.short !== item.label && <span className="overview-chip-short" aria-hidden="true">{item.short}</span>}<small>{count(item.id)}</small></button>)}</div>
     </header>
     <div className="machine-grid">
       {shown.filter(machine => machine.kind === 'mods').map(machine => <MachineTile key={machine.device.id} machine={machine} />)}
@@ -33,7 +35,15 @@ export function OverviewPage({ overview }: { overview: Overview }) {
       {shown.filter(machine => machine.kind !== 'mods').map(machine => <MachineTile key={machine.device.id} machine={machine} />)}
       {(filter === 'all' || filter === 'open') && <><FridgeTile /><AddMachineTile /></>}
     </div>
+    <details className="overview-breakdown">
+      <summary>Modules by category</summary>
+      <ul>{overview.categories.map(item => <li key={item.category}><b>{item.count}</b> {item.label}</li>)}</ul>
+    </details>
     <MachinePhotoCredits />
+    <aside className="overview-project-notice" aria-label="Project independence">
+      <p>{INDEPENDENCE_NOTICE}</p>
+      <a href={assetUrl('licenses/THIRD_PARTY_NOTICES.html')} target="_blank" rel="noreferrer">Copyright &amp; licence notices</a>
+    </aside>
   </div>
 }
 
@@ -104,9 +114,8 @@ function MachineTile({ machine }: { machine: OverviewMachine }) {
     <div className="overview-tile-body">
       <div className="overview-tile-line">
         <h2 className="overview-tile-name">{device.name}{variants && <small>{variants}</small>}</h2>
-        <span className="overview-state">{stateLabel(machine)}</span>
+        <span className="overview-state" title={machine.categories.map(item => item.count + ' ' + item.label).join(' · ')}>{stateLabel(machine)}</span>
       </div>
-      <span className="overview-mix" aria-hidden="true">{machine.categories.map(item => <span key={item.category} className={'is-' + item.category} style={{ flexGrow: item.count }} title={item.label + ': ' + item.count} />)}</span>
     </div>
   </a>
 }

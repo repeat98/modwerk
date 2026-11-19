@@ -24,6 +24,8 @@ describe('Syntakt profile', () => {
     expect(ELE3_DEVICES.syntakt).toMatchObject({ mainSection: 3, mainLoad: 0x40000400, stage: 0x40200000, sysexId: 0x16 })
     expect(ELE3_DEVICES.syntakt.flashAt + stockMap.releases['1.42'].containerBytes).toBeLessThanOrEqual(ELE3_DEVICES.syntakt.flashLimit)
     expect(ELE3_DEVICES.syntakt.flashLimit - ELE3_DEVICES.syntakt.flashAt).toBe(0x200000)
+    // The OS upgrade checks no size; past 0x300000 it would erase the unit's own calibration record.
+    expect(ELE3_DEVICES.syntakt.flashLimit).toBeLessThanOrEqual(0x300000)
   })
 
   it('keeps the probe guards, the hook and the protected map consistent for every release', () => {

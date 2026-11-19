@@ -1,6 +1,6 @@
 # Pattern Sample Locks
 
-Version: 0.1.8-experimental · author: @twwwy · category: system
+Version: 0.1.9-experimental · author: @twwwy · category: system
 
 ## Overview
 
@@ -24,7 +24,7 @@ firmware is unsupported and must refuse this module. Card support is deferred.
 
 ## Controls
 
-Level 1 is **FUNC + PART**. The headerless stock list keeps RENAME, RELOAD, SAVE and SAVE ALL, then appends the two actions.
+Level 1 is **FUNC + PART**, the base's Part Edit window (base 0.7.9 or newer). Its left column lists PART (stock's RENAME, RELOAD, SAVE and SAVE ALL), LOCKS (this module) and the rows other modules add; its right column shows the highlighted row's actions. Move to LOCKS with UP/DOWN or LEVEL, press RIGHT or YES, then choose LOCK SAMPLES or CLEAR LOCKS with YES. LEFT goes back; NO closes, as in PROJECT. The window opens where you left it, as PROJECT does: the same row, the same column and each row's last action.
 
 Level 2 always lists eight tracks in two columns: T1–T4 left, T5–T8 right. S means Static and F means Flex. Other machines are greyed out, have no brackets, cannot be selected and are skipped by arrows. Levels 2 and 3 use tall popups, white headers and equal seven-pixel text spacing.
 
@@ -42,19 +42,19 @@ Level 3 identifies the pattern and shows a count for each selected track; unsele
 
 Final YES keeps playback as it was: playing continues and stopped stays stopped. Active live recording or a sampler recorder refuses the operation without changing transport. Transport, recorder and project gestures close an armed menu before reaching stock controls.
 
-After a successful operation, each action remembers its own selected tracks and highlighted cursor; Lock also remembers Replace existing. Level one highlights the last successfully used action. Selecting All with A remembers that intention for the next pattern’s eligible tracks; a custom selection is intersected with currently eligible tracks. Cancelled and refused operations keep the previous saved settings. Preferences live only in module RAM: they survive pattern/bank changes and project reload while the module stays loaded, and reset on module reload or power cycling. First-use selection is empty and Replace existing is OFF.
+After a successful operation, each action remembers its own selected tracks and highlighted cursor; Lock also remembers Replace existing. Selecting All with A remembers that intention for the next pattern’s eligible tracks; a custom selection is intersected with currently eligible tracks. Cancelled and refused operations keep the previous saved settings. Preferences live only in module RAM: they survive pattern/bank changes and project reload while the module stays loaded, and reset on module reload or power cycling. First-use selection is empty and Replace existing is OFF.
 
 ## Usage
 
-On MKII press FUNC + PART, choose an action with YES. Navigate with arrows, select with A/B and review the Lock replacement policy on C. Press YES to review counts, then YES to apply or NO to return. NO in level 2 closes.
+On MKII press FUNC + PART, move to LOCKS, press RIGHT and choose an action with YES. Navigate with arrows, select with A/B and review the Lock replacement policy on C. Press YES to review counts, then YES to apply or NO to return. NO in level 2 closes.
 
 Only ordinary Flex/Static tracks are eligible. Current PL/AB/FM/S2 contributed-machine signatures are excluded. MKI controls and hardware behavior remain untested.
 
 ## Quick tutorial
 
 1. Create a disposable pattern with sample trigs and an existing SAMPLE lock.
-2. Open Lock, select a track and leave Replace existing OFF. Confirm: empty SAMPLE fields on sample trigs receive the Part assignment; existing locks remain unchanged.
-3. Open Clear and select tracks. Review **INCLUDES MANUAL LOCKS** and the counts. Confirm to remove every selected SAMPLE lock. Other parameter locks remain.
+2. Press FUNC + PART, move to LOCKS, press RIGHT and choose LOCK SAMPLES. Select a track and leave Replace existing OFF. Confirm: empty SAMPLE fields on sample trigs receive the Part assignment; existing locks remain unchanged.
+3. Open CLEAR LOCKS the same way and select tracks. Review **INCLUDES MANUAL LOCKS** and the counts. Confirm to remove every selected SAMPLE lock. Other parameter locks remain.
 4. Use ordinary Save Project to save the pattern. Nothing saves implicitly.
 
 ## Lock and Clear rules
@@ -101,38 +101,36 @@ Original source and UI by twwwy, MIT. Small lettering is reused from twwwy's ori
 
 ## Screens and audio
 
-All images capture exact version 0.1.8; the manifest records whether each image is from the MKII or emulator and binds its build identity. The first five images form the usage walkthrough. [TESTING.md](TESTING.md) records capture limits; [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md) consolidates retired versions. Generated test tones and emulator audio captures remain private fixture artifacts; no physical audio recording is supplied.
+The first six images capture exact version 0.1.9 on an actual MKII (a development build of the base with the Part Edit menu, numbered 0.7.8 then and released as 0.7.9, 18 November 2026); the last two are 0.1.8's MKII captures of screens 0.1.9 keeps unchanged. The manifest binds each image to its build. [TESTING.md](TESTING.md) records capture limits; [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md) consolidates retired versions. No physical audio recording is supplied.
 
-Press FUNC + PART, then choose Lock Samples to Pattern or Clear Sample Locks with YES. Both actions appear below the four stock Part Edit rows.
+Press FUNC + PART: the Part Edit window lists PART and each module's row on the left. Move to LOCKS with UP/DOWN.
 
-![Part Edit, actual MKII](media/mkii-part-menu.png)
+![Part Edit window, actual MKII](media/v019-part-edit.png)
 
-Use the arrows to move among eligible tracks. Turn A clockwise to select all and counterclockwise to clear them; B clockwise selects the highlighted track and counterclockwise clears it. This actual MKII screen shows C: Replace existing ON; turn it OFF to keep every existing SAMPLE lock.
+Press RIGHT or YES to move into LOCKS' actions, choose LOCK SAMPLES or CLEAR LOCKS and press YES. LEFT goes back; NO closes.
 
-![Lock selection and replacement, actual MKII](media/mkii-lock-replace-on.png)
+![LOCKS' actions, actual MKII](media/v019-locks-actions.png)
 
-Turn A clockwise to select all eligible tracks or counterclockwise to clear them; turn B clockwise/counterclockwise to select/clear the highlighted track. Arrows skip non-Flex/Static tracks; Clear has no replacement setting and includes manual SAMPLE locks. This is an emulator capture.
+Turn A clockwise to select all eligible tracks or counterclockwise to clear them; B selects or clears the highlighted track; C sets Replace existing for Lock.
 
-![Clear selection, 0.1.8 emulator](media/live-removal-open-tracks.png)
+![Lock selection, actual MKII](media/v019-lock-tracks.png)
 
-After selecting tracks, press YES to review planned Lock changes. This actual MKII screen lists 64 per track with existing locks kept; press YES to apply or NO to return. It is a pre-apply confirmation, not an edit result.
+YES shows the planned changes per track before anything is written; YES applies, NO returns. This pattern has no sample trigs, so it plans none.
 
-![Maximum Lock confirmation, actual MKII](media/v018-mkii-live512-confirm.png)
+![Lock confirmation, actual MKII](media/v019-lock-confirm.png)
 
-Clear's confirmation lists 64 planned removals per track and warns that manual locks are included. Press YES to apply or NO to return; this screenshot is from the emulator.
+Clear works the same way and removes every SAMPLE lock on the selected tracks, manual ones too.
 
-![Maximum Clear confirmation, 0.1.8 emulator](media/live-512-clear-confirm.png)
+![Clear selection, actual MKII](media/v019-clear-tracks.png)
 
-### More screenshots
+![Clear confirmation, actual MKII](media/v019-clear-confirm.png)
 
-On the Lock confirmation, press YES to apply 63 planned changes on T1 or NO to return to selection. Existing locks are kept in this emulator example.
+### Earlier captures (0.1.8, unchanged screens)
 
-![T1 Lock confirmation, 0.1.8 emulator](media/live-lock-confirm.png)
+Replace existing ON, actual MKII:
 
-On the Clear confirmation, the 64 T1 count includes manual locks; press YES to remove them or NO to return. This emulator screen shows the plan, not a completed edit.
+![Lock selection and replacement, 0.1.8, actual MKII](media/mkii-lock-replace-on.png)
 
-![T1 Clear confirmation, 0.1.8 emulator](media/live-clear-confirm.png)
+A maximum Lock confirmation, 64 planned changes on each track, actual MKII:
 
-The Lock confirmation lists 64 planned changes per track with Replace existing: Yes. Press YES to apply or NO to return; this is an emulator pre-apply screen.
-
-![Maximum replacement confirmation, 0.1.8 emulator](media/live-512-lock-confirm.png)
+![Maximum Lock confirmation, 0.1.8, actual MKII](media/v018-mkii-live512-confirm.png)

@@ -3,9 +3,16 @@
 
 // Closed, versioned diagnostics: no arbitrary text, project data, USB serials, firmware or memory dumps.
 /** 2026-11-11.1 adds each report's browser and OS family (`client`) and why a connection failed before it existed (`link_failed`).
+ * 2026-11-19.1 says reports may lead to a personal email about a problem they show and its fix (server/diagnostics-mail.ts);
+ * the owner chose to let it cover everyone already sharing (19 Nov 2026).
  * A consent given under an earlier version keeps sharing (owner, 14 Nov 2026): a new version is what new choices record,
  * never a reason to ask members again. */
-export const OCTATRACK_DIAGNOSTICS_VERSION = '2026-11-11.1'
+export const OCTATRACK_DIAGNOSTICS_VERSION = '2026-11-19.1'
+/** The versions the server takes reports and choices under: the current one and the one before, so a page still open on
+ * the previous text keeps sending after a deploy instead of being refused until it is reloaded. */
+export const OCTATRACK_DIAGNOSTICS_ACCEPTED: readonly string[] = [OCTATRACK_DIAGNOSTICS_VERSION, '2026-11-11.1']
+/** The invitation's Not now is remembered under this version, not the current one, so a new text never asks again. */
+export const DIAGNOSTICS_INVITATION_VERSION = '2026-11-11.1'
 export const DIAGNOSTIC_RETENTION_DAYS = 30
 export const DIAGNOSTIC_CONSENT_DAYS = 90
 export const OCTATRACK_COUNTS = ['usb_sync_started', 'usb_sync_kept', 'usb_sync_undone', 'usb_sync_failed'] as const
@@ -23,9 +30,37 @@ export const DIAGNOSTIC_INVITATION_PLACEMENTS = ['guide', 'after-failure', 'hub'
 export type DiagnosticInvitationPlacement = typeof DIAGNOSTIC_INVITATION_PLACEMENTS[number]
 export const DIAGNOSTIC_INVITATION_OUTCOMES = ['shown', 'shared', 'not-now'] as const
 export type DiagnosticInvitationOutcome = typeof DIAGNOSTIC_INVITATION_OUTCOMES[number]
-/** Each anonymous count with a category, the event name sent and stored, and the categories it takes (none: no category). */
+/** How far a run of the install guide got between opening and a first connection (BaseInstallDialog `onStep`), each at
+ * most once per run, so the next look can see where people stop: the card steps (`card-…`, with `card-load-from-card`
+ * for a browser without WebUSB, whose last step loads modules from the card), the OS file chosen or refused, the risk
+ * accepted, the sign-in prompt asked, Connect pressed, and the USB update shown and started. */
+export const BASE_GUIDE_STEPS = ['card-download', 'os-file-ready', 'os-file-refused', 'risk-accepted', 'sign-in-asked', 'card-copy', 'card-install', 'card-connect', 'card-load-from-card', 'connect-pressed', 'usb-update-shown', 'usb-update-started'] as const
+export type BaseGuideStep = typeof BASE_GUIDE_STEPS[number]
+/** Why a USB sync failed (octatrack-link.ts `sync_failed`, or the unit going away mid-sync), as one fixed reason for the
+ * identifier-free counts: the base's refusal by its code (sdk/runtime/loader-refusals.json), a refusal without one,
+ * playback that would not stop (`unsafe`), a transfer the unit did not confirm by the sync step it stopped in, and the
+ * link's other error labels. Anything else is `other`. */
+export const SYNC_FAILURE_REASONS = [
+  'disconnected', 'cancelled', 'stale', 'save', 'selftest', 'rollback', 'unknown', 'unsafe', 'device',
+  'refused', 'refused-1', 'refused-2', 'refused-3', 'refused-4', 'refused-5', 'refused-6', 'refused-7', 'refused-8', 'refused-9', 'refused-10', 'refused-11',
+  'transport', 'transport-session', 'transport-baseline', 'transport-encode', 'transport-stage', 'transport-activate', 'transport-trial',
+  'other',
+] as const
+export type SyncFailureReason = typeof SYNC_FAILURE_REASONS[number]
+/** The fixed reason for a failed sync from the link's own diagnostic (`sync_failed`) or a disconnect mid-sync. */
+export function syncFailureReason(event: { event: string; error?: string; step?: string; result?: string; refusal?: number }): SyncFailureReason {
+  const known = (reason: string) => (SYNC_FAILURE_REASONS as readonly string[]).includes(reason) ? reason as SyncFailureReason : 'other'
+  if (event.event === 'disconnected') return 'disconnected'
+  if (event.error === 'device') return event.refusal !== undefined && event.refusal > 0 ? known(`refused-${event.refusal}`)
+    : event.result === 'unsafe' ? 'unsafe' : event.result === 'rejected' || event.result === 'backend' ? 'refused' : 'device'
+  if (event.error === 'transport') return event.step ? known(`transport-${event.step}`) : 'transport'
+  return event.error ? known(event.error) : 'other'
+}
+/** Each anonymous count with a category, the event name sent and stored, and the categories it takes (none: no category).
+ * A count whose list ends in `other` stores any other category as `other`; the rest refuse it. */
 export const OCTATRACK_STEP_COUNTS = {
   base_guide_opened: [], base_file_downloaded: [], base_first_connection: [], base_usb_update_done: [], base_install_failed: BASE_INSTALL_FAILURES,
+  base_guide_step: BASE_GUIDE_STEPS, usb_sync_failed_reason: SYNC_FAILURE_REASONS,
   diagnostics_invite_shown: DIAGNOSTIC_INVITATION_PLACEMENTS, diagnostics_invite_shared: DIAGNOSTIC_INVITATION_PLACEMENTS, diagnostics_invite_not_now: DIAGNOSTIC_INVITATION_PLACEMENTS,
 } as const satisfies Record<string, readonly string[]>
 export type OctatrackStepCount = keyof typeof OCTATRACK_STEP_COUNTS
@@ -62,8 +97,10 @@ export interface DeviceLoad { seq: number; boot: number; minute: number; cpu: [n
 export interface DeviceCrash { count: number; vector: number; pc: number; sr: number; sp: number; d: number[]; a: number[]; stack: number[]; code: number[]; memory: number[] }
 /** dsp.c's record of the last DSP stall: why (1 frames stopped, 2 eDMA refused, 0 a test), the tick, the loader's report words.
  * `frames`: the frames before it, oldest first, two numbers each in µs (diag.h's trace): the time since the frame before
- * began (363 on time) and how long the frame interrupt before it ran. Bases without the trace send none. */
-export interface DeviceStall { count: number; reason: number; ticks: number; report: number[]; frames?: number[] }
+ * began (363 on time) and how long the frame interrupt before it ran. Bases without the trace send none.
+ * `packets`: each core's last loader packet header, eight 16-bit words (the record's tx[2][8]); sites before
+ * 16 November 2026 sent none. */
+export interface DeviceStall { count: number; reason: number; ticks: number; report: number[]; frames?: number[]; packets?: number[][] }
 const FRAME_US = 363, LATE_WINDOW = [110, 190] as const, LATE_TAIL = 6
 /** How late each of a stall's frames began against the DSP's frame grid, in µs: the lateness before it plus its gap
  * less one frame, never under 0. Past a whole frame (or within 20 µs of one) the DSP has skipped that frame, and a gap
@@ -77,10 +114,13 @@ export function stallLateness(frames: number[]): number[] {
     return late
   })
 }
-/** A stall's frames in a line: the last gaps, the longest with the run before it, and whether one of the last frames
- * began in the late entry's window (docs/MODULE_PERFORMANCE.md: about 150 µs late after a long frame). '' without a trace. */
-export function describeStallFrames(frames: number[] | undefined): string {
-  if (!frames?.length) return ''
+/** A stall in a line: its frames (the last gaps, the longest with the run before it, and whether one of the last frames
+ * began in the late entry's window, docs/MODULE_PERFORMANCE.md: about 150 µs late after a long frame), then each core's
+ * last packet and whether a publication was under way (describeStallPackets). '' when the record holds none of these. */
+export function describeStallFrames(frames: number[] | undefined, stall?: Pick<DeviceStall, 'packets' | 'report'>): string {
+  return [frames?.length ? stallFrames(frames) : '', describeStallPackets(stall)].filter(Boolean).join('; ')
+}
+function stallFrames(frames: number[]): string {
   const gaps = frames.filter((_, i) => i % 2 === 0), runs = frames.filter((_, i) => i % 2 === 1), longest = gaps.indexOf(Math.max(...gaps))
   const late = stallLateness(frames), from = Math.max(0, late.length - LATE_TAIL)
   const hit = late.reduce((found, us, i) => i >= from && us >= LATE_WINDOW[0] && us <= LATE_WINDOW[1] ? i : found, -1)
@@ -88,6 +128,35 @@ export function describeStallFrames(frames: number[] | undefined): string {
     `after a frame interrupt of ${runs[longest]} us (the longest ran ${Math.max(...runs)} us); the last began ${late.slice(-LATE_TAIL).join(' ')} us late: ` +
     (hit < 0 ? `none ${LATE_WINDOW[0]} to ${LATE_WINDOW[1]} us late, so not the late entry`
       : `one ${late[hit]} us late, ${late.length - 1 - hit} before the last, after a frame interrupt of ${runs[hit]} us: fits the late entry (${LATE_WINDOW[0]} to ${LATE_WINDOW[1]} us)`)
+}
+/** The loader's packet opcodes (header word 2): 1 and 3-9 from dsp_receiver.asm's packet comment and its dispatch at
+ * `coldops`, 2 STAGE from the transport's transfer.h enum, 10 PLACE and 11 the fixed reset from the resident transport
+ * (module-adapters/resident_dsp.py receiver_place, resident_driver.py transport). */
+const PACKET_KINDS = ['', 'PROBE', 'STAGE', 'WRITE', 'BIND', 'UNBIND', 'BYPASS', 'BASE', 'PEEK', 'SUM', 'PLACE', 'RESET'], PACKET_MAGIC = 0x4c44
+/** The manager's phases (the transport's manager.c advance): what it sends in each. */
+const MANAGER_PHASES = ['', 'planning', 'writing', 'binding', 'bypassing', 'ready', 'unbinding the old', 'rolling back', 'writing tables', 'restoring tables']
+/** One core's last packet from its header (dsp_receiver.asm: 0 magic, 1 sequence, 2 opcode, 3 core, 4 count or id,
+ * 5 offset or init, 6 checksum, 7 proc, a WRITE's sum or a RESET's feature). The ColdFire clears the magic once the core
+ * answers or after 64 frames without an answer (transfer.c dl_frame); the record is taken before anything else clears
+ * it (dsp.c recover), so a magic still there is a packet in flight when the frames stopped: sent in their last frames.
+ * Only dl_frame writes the header, so it is the last packet before the stop even when the record came later. */
+export function describeStallPacket(header: number[]): string {
+  if (header.length < 8 || header.every(word => !word)) return 'none'
+  const [magic, , op, , a, b, , c] = header, kind = PACKET_KINDS[op]
+  const what = op === 3 || op === 9 ? `${kind} ${a} words at table offset ${b}` : op === 4 ? `BIND id ${a}, init ${b} proc ${c}`
+    : op === 5 || op === 6 ? `${kind} id ${a}` : op === 7 ? `BASE entry ${a}` : op === 8 ? `PEEK P:$${b.toString(16)}`
+      : op === 10 ? `PLACE feature ${a} at table offset ${b}` : op === 11 ? `RESET feature ${c}, ${a} words at table offset ${b}` : kind || `opcode ${op} (unknown)`
+  return what + (magic === PACKET_MAGIC ? ', in flight when the frames stopped' : magic ? `, magic $${magic.toString(16)}` : ', answered or timed out')
+}
+/** Each core's last packet, and whether the loader's manager was publishing (a pick, a Part change or an install) when
+ * the stall was found: the report's `manager` word, phase in its low byte (0 idle). The watchdog finds a stall only
+ * while a job waits (OCTATRACK_HARDWARE_TRAPS.md), so a publication may have begun after the frames stopped. */
+export function describeStallPackets(stall: Pick<DeviceStall, 'packets' | 'report'> | undefined): string {
+  const lines = (stall?.packets ?? []).map((header, core) => `core ${core} last packet: ${describeStallPacket(header)}`)
+  const manager = (stall?.report?.[0] ?? 0) >= 11 ? stall?.report?.[DSP_REPORT_NAMES.indexOf('manager')] : undefined
+  const phase = (manager ?? 0) & 0xff
+  if (manager !== undefined) lines.push(phase ? `a pick, Part change or install under way when it was found (manager phase ${phase}${MANAGER_PHASES[phase] ? ', ' + MANAGER_PHASES[phase] : ''})` : 'no pick, Part change or install under way when it was found')
+  return lines.join('; ')
 }
 /** The loader's report words, as the stall record and the development report (scripts/device.mjs) carry them
  * (dsp.c modwerk_dsp_report, version 11; version 12 adds the effect masks' further words and a pad at the end). */
@@ -114,7 +183,15 @@ export const DIAGNOSTIC_USB_ERRORS = ['device', 'selftest', 'transport', 'cancel
  * loading it, or starting the trial. */
 export const DIAGNOSTIC_SYNC_STEPS = ['session', 'baseline', 'encode', 'stage', 'activate', 'trial'] as const
 export type DiagnosticSyncStep = typeof DIAGNOSTIC_SYNC_STEPS[number]
-export const DIAGNOSTIC_BUILD_KINDS = ['octatrack-firmware', 'octatrack-base', 'elekloader'] as const
+/** The type of build. An elekloader build names its machine, so a failure says which machine it was for; plain
+ * `elekloader` is what records sent before that say, and what a machine missing from the list falls back to. */
+export const DIAGNOSTIC_ELEKLOADER_MACHINES = ['digitakt', 'digitakt-ii', 'digitone', 'analog-rytm-mkii'] as const
+export const DIAGNOSTIC_BUILD_KINDS = ['octatrack-firmware', 'octatrack-base', 'elekloader',
+  ...DIAGNOSTIC_ELEKLOADER_MACHINES.map(machine => `elekloader-${machine}` as const)] as const
+/** The build kind of an elekloader build for `machine`: its own value, else plain `elekloader`. */
+export function elekloaderBuildKind(machine: string): DiagnosticBuildKind {
+  return (DIAGNOSTIC_ELEKLOADER_MACHINES as readonly string[]).includes(machine) ? `elekloader-${machine as typeof DIAGNOSTIC_ELEKLOADER_MACHINES[number]}` : 'elekloader'
+}
 export const DIAGNOSTIC_BUILD_PHASES = ['preparing', 'composing', 'packing', 'verifying', 'building'] as const
 export const DIAGNOSTIC_BUILD_ERRORS = ['input', 'selection', 'build', 'cancelled', 'unknown'] as const
 export type DiagnosticBuildKind = typeof DIAGNOSTIC_BUILD_KINDS[number]
@@ -153,6 +230,9 @@ export interface OctatrackDiagnostic {
    * submission), OtherError (a reply that did not confirm the step). Never a message. */
   kind?: DiagnosticErrorKind
   step?: DiagnosticSyncStep
+  /** A `transport` sync failure's change in the base's EP0 counters over the sync (DIAG version 3, ep0.c): frames
+   * received, refusals, bus resets, data stages primed, completed and abandoned. */
+  usb?: number[]
   live?: DiagnosticLive
   reason?: typeof DIAGNOSTIC_UNRESPONSIVE[number]
   log?: { loads: DeviceLoad[]; incidents: DeviceIncident[]; crash?: DeviceCrash; stall?: DeviceStall }

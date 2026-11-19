@@ -370,3 +370,87 @@ hardware waiver cover this continued fix and requested wider compatibility.
 `sdk/airwindows-chorus-build-approval.json` binds the exception to this exact
 0.1.2 source. Hardware remains **untested**; no physical audio, worst-case chip
 timing, Part/project reload or reboot pass is claimed.
+
+## Beta 0.1.3 — bit-identical efficiency pass
+
+16 November 2026. Software only: **not tested on hardware**. All runs used
+this checkout's `dsp_host` (SHA-256 `786bb3a6...`, in `evidence/stress.json`)
+built in the reviewed toolchain image.
+
+- **Parity.** `verify_optimization.py --baseline <0.1.2 source>`: 30 fixtures,
+  983,040 stereo frames, every output word identical to 0.1.2
+  (`evidence/optimization-parity.json`). The fixtures run one instance on a
+  private buffer; `verify_shared_buffer.py` covers the shared T3 and T7 buffers
+  at splits 0/1/8/15, with the stock Y words and the stock X tail preserved
+  and the audio identical to the isolated render.
+- **Gates.** `verify.py`, `verify_controls.py`, `verify_instances.py`,
+  `verify_sine.py`, `verify_shared_buffer.py` and `verify_bounds.py` pass;
+  their records are rewritten for this source.
+- **Cost against stock.** `benchmark.py` on private native images of 0.1.2
+  and 0.1.3 (null stub subtracted, both cores, all splits 0..15, executed
+  instructions per sample, not chip cycles):
+
+  | Effect | No split, fixed | No split, moving | Split, moving (worst) |
+  | --- | ---: | ---: | ---: |
+  | Stock CHORUS | 253.5 | 253.625 | 292.875 |
+  | Stock SPRING REV | 257.4375 | 257.5 | 314 |
+  | Air Chorus 0.1.2 | 388.4375 | 390.5625 | 394.625 |
+  | Air Chorus 0.1.3 | 339.375 | 358.375 | 362.375 |
+
+  The 0.1.2 figure reproduces its own record exactly.
+- **Static bound.** 737 modeled units per sample (0.1.2: 732). The model
+  charges the start-up path of the left ring, which this pass did not shorten.
+- **Stress.** `verify_stress.py`: eight instances, four per core, 31 s, dirty
+  state, guards clean (`evidence/stress.json`).
+- **`npm run perf:audit -- check evidence/performance.json`:** no check failed.
+  It notes 4 x 737 = 2948 of 3120 static units per core, as before (2928).
+- **Size.** 588 program words per core (0.1.2: 539), 844 with the table; the
+  private single-module build leaves 1,880 donor words free per core. Module
+  combinations at the new size were not rebuilt natively.
+- Not tested in this software pass: physical timing, audio on a unit, Part/project reload, reboot.
+
+### On the unit — 17 November 2026
+
+The owner's MKII on a development twin of base 0.7.6 (`5412b595…`), the USB
+package `1307d719…` (3,962 bytes), three RAM trials of 300 s with
+`npm run device -- try --seconds 300`. Each rolled back by itself and the unit
+reported `normal` on the base afterwards. Audio was read from the unit's
+20-channel USB audio (each track's own pair, 44.1 kHz) instead of by ear.
+
+- **Four instances, stopped, project LIVE/Agata (silent pattern).** Air Chorus
+  on FX2 of T1, T3, T5 and T7 at SPD, RNG and MIX 127. The base first refused
+  T1 with NO ROOM (FX2 ON T1-4 FULL: DARK REV and PLATE REV on T3 and T4), and
+  T7 until stock CHORUS on T6 and DELAY on T8 were set to NONE. That is the
+  base's placement at work, not the module. Ten `stats` readings each:
+  core means 602‰ (T1-4) and 666‰ (T5-8) with Air Chorus, 347‰ and 419‰ with
+  those four slots on NONE. Two instances per core add about 255‰ and 247‰.
+  0.1.2 on 16 November reached 705‰ on T5-8 from the same 419‰ base: 0.1.3
+  adds about 14% less there.
+- **Silent input, playing, 10 s.** T3 and T7, the slots beside the stock T3
+  mailbox and the T7 parameter data, output exact digital zero for all
+  441,000 frames. T1 and T5 carry a constant floor of one LSB (−138.5 dBFS).
+  A corrupted ring would show as non-zero output here.
+- **Project Tresor Prep.** The base refused every Air Chorus pick with its CPU
+  guard ("CPU FULL", 88%, WAS BUSY PLAYING): that Part plays at 88% on this
+  unit, over the 85% line. No instance was placed.
+- **Music, project MODWERK-TEST2 (bank A pattern 1, sound on T2 and T3, CPU
+  meter 64% playing).** Air Chorus on T3 and T4, the pair of the clicking
+  report, and on T7 and T8. T3 at SPD, RNG and MIX 64, with all three turned
+  during the 24 s take; T4, T7 and T8 at 127 with silent input. Ten readings
+  while playing: CPU meter 63-65% (stock Part 64%), DSP 623-651‰ (T1-4) and
+  725-743‰ (T5-8).
+- **Clicks.** The largest second difference against its local level
+  (±512 samples) on T3 was 8.1 left and 7.9 right; the stock take of the same
+  Part read 7.6 and 7.1; neither had a sample over 10. A −26 dBFS step added
+  to the stock take reads 10.7. T4 output exact zero for the whole take; T7
+  and T8 a constant one-LSB floor, their input's own floor.
+- **CPU price.** `npm run device:price -- airwindows-chorus --slot T3` on
+  the same Part, playing, 8 s per reading: the frame interrupt stayed at
+  35.1% before, installed and in use (price 0.0); the CPU meter moved from
+  51.3% to 51.6% in use; one instance raised its DSP core from 40.3% to 51.1%.
+- The four slots were set back to NONE before each trial ended; nothing was
+  saved to a project.
+- Not tested: listening by ear, Part or project save and reload with
+  Air Chorus saved, persistence across a reboot, eight instances on the unit,
+  chip cycle timing.
+

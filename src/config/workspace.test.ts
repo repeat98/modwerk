@@ -29,13 +29,13 @@ describe('persistent configuration version pins',()=>{
 describe('modules removed from the library',()=>{
  it('drops a removed module and its pin from a saved configuration and keeps the rest',()=>{
   const current=newConfiguration('Live set',['miniverb','euclid'])
-  const saved={...current,moduleIds:['spectrum','miniverb','euclid','midi-scenes'],moduleVersions:{...current.moduleVersions,spectrum:'0.1.1-experimental','midi-scenes':'0.2.5-experimental'}}
+  const saved={...current,moduleIds:['spectrum','miniverb','euclid','modulation'],moduleVersions:{...current.moduleVersions,spectrum:'0.1.1-experimental',modulation:'0.1.1-experimental'}}
   expect(validateConfiguration(saved)).toEqual(current)
   const only={...current,moduleIds:['character','modulation'],moduleVersions:{character:'0.1.1-experimental'}}
   expect(validateConfiguration(only)).toMatchObject({moduleIds:[],moduleVersions:{}})
  })
  it('leaves a removed module out of a copied or imported configuration',()=>{
-  const copy=newConfiguration('Copy',['midi-scenes','repitch'],true,{'midi-scenes':'0.2.5-experimental',repitch:'0.1.1-experimental'})
+  const copy=newConfiguration('Copy',['modulation','repitch'],true,{modulation:'0.1.1-experimental',repitch:'0.1.1-experimental'})
   expect(copy.moduleIds).toEqual(['repitch'])
   expect(copy.moduleVersions).toEqual(pinModuleVersions(['repitch']))
   expect(pinModuleVersions(['spectrum','repitch'])).toEqual(pinModuleVersions(['repitch']))
@@ -59,8 +59,8 @@ describe('deleting a configuration',()=>{
  const ot=newConfiguration('Octatrack set'),digi=(name:string)=>newConfiguration(name,[],true,undefined,'digitakt')
  it('opens another configuration for the same machine first, then any other',()=>{
   const a=digi('A'),b=digi('B')
-  expect(afterDeleting([ot,a,b],a.id)).toEqual({remaining:[ot,b],next:b})
-  expect(afterDeleting([ot,a],a.id)).toEqual({remaining:[ot],next:ot})
+  expect(afterDeleting([ot,a,b],a.id)).toEqual({remaining:[ot,b],next:b,created:false})
+  expect(afterDeleting([ot,a],a.id)).toEqual({remaining:[ot],next:ot,created:false})
  })
  it('replaces a machine’s only configuration with an empty one for that machine',()=>{
   const only=digi('Only'),{remaining,next}=afterDeleting([only],only.id)

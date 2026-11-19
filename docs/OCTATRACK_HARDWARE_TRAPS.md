@@ -564,20 +564,20 @@ such a leftover call at once instead of on a later install.
 
 **The boot validates the bank before any module is back.** At power-up and
 RAM boot stock restores the current bank from its battery-backed Part copies
-(`0x40025770`) and runs the Part validator on each first; the saved module set
-reinstalls modules only about 3 s later. One value the validator has to fix
+(`0x40025770`) and runs the Part validator on each first; the saved set
+reinstalls modules about 3 s later. One value the validator has to fix
 refuses the whole restore: the bank is never copied in or applied, every Part
 reads STATIC with stock defaults, no track is ever bound (renderer slots stay
 `0x400047f0`) and the unit is silent. A module whose Part bytes stock would reject must be kept
-from the validator by the base itself, before the module is installed (beta
-finding 24: Analog BD). That includes a module that gives a stock effect's slots new
+from the validator by the base, before the module is installed (beta
+finding 24: Analog BD). So must a module that gives a stock effect's slots new
 meanings: Sidechain Compressor's KEY, KFLT and KGN in COMPRESSOR's page-2 slots
-8-11 wiped testers' current banks at every power-on (finding 47). The restore also runs a
-pattern validator (`0x4009a670`, not hooked) on all 16 patterns, so pattern
-bytes a module writes need the same care. To test a module for this, set it up
-in a scratch project's current bank and RAM-boot: the restore and both
-validators run as at power-up. A refused restore has already written its fixes
-into the battery copy, so the next boot restores the bank with those values
+8-11 wiped testers' current banks at power-on (finding 47). It also caps stock
+fields, holds XVOL at 127 and runs on every bank read
+([register](../sdk/octabam/docs/remixer/FAILURE_MODES.md#the-part-validator-caps-stock-fields-and-runs-on-every-bank-read)).
+A pattern validator (`0x4009a670`, not hooked) checks all 16 too. To test,
+RAM-boot with the module set up in a scratch bank. A refused restore has written its fixes
+into the battery copy, so the next boot restores the bank with them
 changed (Sidechain's KFLT 64 became 1). To recover a bank lost this way, do not
 save or edit: power-cycle once more, or PROJECT > RELOAD the last save from the
 card.
@@ -716,14 +716,13 @@ ask what an interrupt handler reads while the producer is mid-update.
 
 ## Octabam's register
 
-Octabam's register is vendored unchanged: [sdk/octabam/AGENTS.md](../sdk/octabam/AGENTS.md) (to 30 September 2026), then [sdk/octabam/docs/TRAPS.md](../sdk/octabam/docs/TRAPS.md) (to 11 November 2026, with anchors), [FAILURE_MODES.md](../sdk/octabam/docs/FAILURE_MODES.md), [HARDWARE_MATRIX.md](../sdk/octabam/docs/HARDWARE_MATRIX.md) (a one-cable USB test, stock per-slot DSP costs) and [MIDI_TRACKS.md](../sdk/octabam/docs/MIDI_TRACKS.md); `sdk/imports/octabam-docs-*.json` pins each. Entries that reach Modwerk (`brclr`, descriptor names, label prefixes and `rep` are above or in the effects guide):
+The register is vendored unchanged and frozen: [its AGENTS.md](../sdk/octabam/AGENTS.md) (to 30 September 2026), then [TRAPS.md](../sdk/octabam/docs/TRAPS.md) (to 11 November 2026, with anchors), [FAILURE_MODES.md](../sdk/octabam/docs/FAILURE_MODES.md), [HARDWARE_MATRIX.md](../sdk/octabam/docs/HARDWARE_MATRIX.md) (a one-cable USB test, stock per-slot DSP costs) and [MIDI_TRACKS.md](../sdk/octabam/docs/MIDI_TRACKS.md); `sdk/imports/octabam-docs-*.json` pins each, and newer traps go into Modwerk's own docs ([upstream worker](MAINTENANCE.md#upstream-worker)). Entries that reach Modwerk (`brclr`, descriptor names, label prefixes and `rep` are above or in the effects guide):
 
 - **A DSP counter past $7fffff saturates in `move a,nN`** (TRAPS.md, "A frame count past $7fffff"): A2 keeps its sign through `and`, so a frame-counter index stopped the frame engine after 50.7 minutes. Mask the count to 23 bits.
 - **A zero CS1 with a valid settings tail boots stock's settings as zeros** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-cs1-zero)): a base variant reading run-time settings from the CS1 early block treats an all-zero block as none.
 - **Same-named labels across DRAM units bind by nm table order**: keep local labels unique across one runtime's units.
-- **A card-write completion that runs before its bookkeeping** is the race above; ATA WRITE GUARD keeps the first sector and its pointer update atomic.
 - **A persistent slot that init does not clear holds the previous effect's words**: init zeroes every slot the sample loop reads. `dsp_host -dirty` reproduces it, `-pword` a knob under an LFO (bits 8-15 set).
-- **Window code costs 2x and is zeroed at boot** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-window-zero), [record](OCTATRACK_DSP_WINDOW.md)): the base copies the receiver's packet operations to `P:0x37e00`/`0x3fe00` at the first frame; FX2 block 3 takes no buffer past `0x3e00`.
+- **Window code costs 2x and is zeroed at boot** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-window-zero), [record](OCTATRACK_DSP_WINDOW.md), with a lead on core 1's frame head): the base copies the receiver's packet operations to `P:0x37e00`/`0x3fe00` at the first frame; FX2 block 3 takes no buffer past `0x3e00`.
 - **A host write at the frame interrupt's entry is lost every other frame** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-host-mask); under the port, open on a unit): payload B rewrites the host handlers' masks each frame. Stream to core B on ping-0 frames, or check every word arrived.
 - **`dsp_asm` does not assemble a backward `bra`, or a `jmp` to a window address** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-bra-back)): put a trampoline before the code it enters, or `jmp (rN)`; dispatch entries keep `init < proc <= init + 256`.
 - **A module's id is the remix's, not the manifest's** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-module-id)): a tool reading the preferred `fx2_id`, a literal id or `0x400d5fdc` is right only for the stock layout, which [more than 32 effect ids](OCTATRACK_MORE_EFFECT_IDS.md) change.

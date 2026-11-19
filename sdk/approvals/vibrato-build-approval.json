@@ -1,0 +1,13 @@
+{
+  "kind": "owner-approved-update",
+  "id": "vibrato",
+  "version": "0.1.0-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-17",
+  "waived": [
+    "current-build-hardware"
+  ],
+  "sourceSha256": "e07e231362955f1d2f6fe7fcf5182354669509da1a44404ffe175f60e1a03a6a",
+  "ownerStatement": "Let's release it. (The owner, in the porting session on 17 November 2026, after the unit trial; recorded on his word.)",
+  "reason": "A port of Bryan T's VIBRATO (MIT, his offer on Discord on 17 November 2026) with its DSP unchanged in sound. On the owner's MKII (a development twin of base 0.7.7, 17 November 2026) its package ran as trials: device:test passed (self-test, T1 and T5, every track while playing, knob sweep, twelve Part switches, a bank change, no crash or stall), 249 chip cycles a sample against SPRING REV's 339, frame interrupt +0.0. The published package declares that hardware figure where the tested one declared 157 executed cycles; the DSP words are the same, so the exact release package was not run on a unit, and device:qualify did not run. Not listened to on the unit."
+}

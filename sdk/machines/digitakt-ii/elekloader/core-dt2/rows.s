@@ -1,11 +1,11 @@
 | SPDX-License-Identifier: GPL-2.0-or-later
-| core-dt2 1.1 and core-dn2 0.3: value rows (core_addvalue, rows.c). ColdFire
-| V4; assemble with -mcpu=54455.
+| core-dt2 1.1: value rows (core_addvalue, rows.c). ColdFire V4; assemble
+| with -mcpu=54455. OS 1.17.
 |
 | core_addrow(menu, row, payload): core_additem's MenuItem (settings.s), with
 | one payload in all four std::function objects: each callback finds it as
 | the first word of the storage it is given.
-        .text
+        .section .run, "ax"
         .globl  core_addrow, core_value_label
 core_addrow:
         link    %a6, #-64

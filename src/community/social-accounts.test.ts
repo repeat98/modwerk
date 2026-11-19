@@ -38,9 +38,9 @@ async function fixture() {
     if(url==='https://api.resend.com/emails') return Response.json({id:'synthetic-mail'})
     throw new Error('Unexpected provider request: '+url)
   }))
-  async function begin(provider: SocialProvider, mode: 'login'|'register' = 'register', username = 'member', newsletter = false) {
+  async function begin(provider: SocialProvider, mode: 'login'|'register' = 'register', username = 'member', newsletter = false, client?: string) {
     const verifier = 'a'.repeat(64)
-    const initial = await call('/auth/sso','POST',{provider,mode,username,newsletter,rulesVersion:COMMUNITY_RULES_VERSION,challenge:await digest(verifier)},'','',new URL(env.APP_URL!).origin)
+    const initial = await call('/auth/sso','POST',{provider,mode,username,newsletter,rulesVersion:COMMUNITY_RULES_VERSION,challenge:await digest(verifier),...(client?{client}:{})},'','',new URL(env.APP_URL!).origin)
     expect(initial.status).toBe(200)
     const {url} = await initial.json(), start = await handleCommunity(new Request(url),env)
     expect(start.status).toBe(302)
@@ -114,6 +114,21 @@ describe('social account sign-in',()=>{
     expect(cookies.some(value=>value.includes('HttpOnly')&&value.includes('Secure'))).toBe(true)
     const request=new Request('https://api.example.test/api/auth/build-access',{method:'POST',headers:{Origin:'https://api.example.test',Cookie:cookies.map(value=>value.split(';')[0]).join('; '),'Content-Type':'application/json'},body:'{}'})
     expect((await handleCommunity(request,f.env)).status).toBe(200)
+  })
+  it('returns a sign-in the desktop app started to its modwerk:// hand-off page, still bound to the app\'s verifier',async()=>{
+    const {begin,call,env,db}=await fixture()
+    const refused=await call('/auth/sso','POST',{provider:'github',mode:'login',challenge:await digest('b'.repeat(64)),client:'tablet'},'','',new URL(env.APP_URL!).origin)
+    expect(refused.status).toBe(400)
+    const pending=await begin('github','register','member',false,'desktop')
+    const callback=await handleCommunity(new Request(pending.callback,{headers:{Cookie:pending.cookie}}),env)
+    const location=new URL(callback.headers.get('Location')!)
+    expect(location.hash).toMatch(/^#account\/sso-app\/[a-f0-9]{64}$/)
+    const code=location.hash.split('/')[2]
+    const row=db.prepare('SELECT client,expires FROM social_flows WHERE token_hash=?').get(await digest(code)) as {client:string;expires:number}
+    expect(row.client).toBe('desktop')
+    expect(row.expires-Math.floor(Date.now()/1000)).toBeGreaterThan(240) // time for the browser's "Open Modwerk?" prompt
+    expect((await call('/auth/sso/exchange','POST',{code,verifier:'c'.repeat(64)})).status).toBe(400) // a code caught from the link is useless alone
+    expect((await call('/auth/sso/exchange','POST',{code,verifier:pending.verifier})).status).toBe(200)
   })
   it('rejects missing state cookies, handoff theft, replay and expiry',async()=>{
     const {begin,complete,call,env,db}=await fixture(),start=await begin('github')
@@ -341,7 +356,7 @@ describe('social onboarding from either account entry point',()=>{
     f.db.exec('UPDATE social_pending_accounts SET expires=0; UPDATE social_flows SET expires=0')
     expect((await f.call('/auth/sso/exchange','POST',{code:pending.code,verifier:pending.verifier})).status).toBe(400)
     await cleanupAccounts(f.env.DB!)
-    expect(f.db.prepare("SELECT COUNT(*) AS count FROM users WHERE id NOT IN ('administrator','modwerk')").get()).toEqual({count:0})
+    expect(f.db.prepare("SELECT COUNT(*) AS count FROM users WHERE id NOT IN ('administrator','modwerk','tars')").get()).toEqual({count:0})
     for(const table of ['social_pending_accounts','auth_users','auth_accounts','auth_sessions','social_flows'])expect(f.db.prepare('SELECT COUNT(*) AS count FROM '+table).get()).toEqual({count:0})
   })
 })

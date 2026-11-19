@@ -15,6 +15,23 @@ def read(port,address,n):
 def put(port,address,data):
     for at in range(0,len(data),4096):port.command(f'poke {address+at:#x} '+data[at:at+4096].hex())
 def u32(port,address):return int.from_bytes(port.peek(address,4),'big')
+PART_MENU_ROW=53-4  # events.json ot_part_menu, less RUNTIME_EVENTS (loader.h: the four core events come first)
+def part_menu_record(port):
+    """The first record in the base's ot_part_menu row: this module's, when it is the only contributor."""
+    row=u32(port,port.base_symbols['modwerk_runtime_event_row']+4*PART_MENU_ROW)
+    return u32(port,row) if row else 0
+def module_base(port,exact):
+    record=part_menu_record(port);assert record,'no ot_part_menu record: module not installed'
+    return record-exact['psl_part_menu']
+def open_action(port,run,tap,key,clear):
+    """FUNC+PART, then LOCKS > LOCK SAMPLES or CLEAR LOCKS in the base's window, wherever it was left."""
+    port.command('key 0x25 32');run(80);tap(0x23,32)
+    port.command('key 0x25 0');run(80)
+    key('LEFT')
+    for _ in range(3):key('UP')
+    key('DOWN');key('RIGHT');key('UP')
+    if clear:key('DOWN')
+    key('YES')
 def call_idle(port,address,*args):
     for _ in range(200):
         try:return port.command('call '+hex(address)+' '+' '.join(map(str,args)))
@@ -195,8 +212,6 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
 def after_undo(port,out):
     # No allocation belonging to the removed module is used after removal.
     # Ordinary project files are independently loaded by a fresh stock session.
-    manifest=Path(__file__).with_name('manifest.py').read_text()
-    addresses=(0x4002dc68,0x4002dc90,0x4002dcc4)
-    guard="d35bfe797abb5bb27e98ec6d4cb422e20c44f307e5d6597af674380832f8dbdf"
-    assert all(hashlib.sha256(port.peek(at,6)).hexdigest()==guard for at in addresses)
-    return dict(allDeclaredSitesRestored=True,onlyThreePartOpenersPatched=True)
+    # The module patches no stock site; its one trace is its ot_part_menu record, gone after removal.
+    assert part_menu_record(port)==0,'ot_part_menu still holds a record after removal'
+    return dict(partMenuRecordRemoved=True,noStockSitesPatched=True)

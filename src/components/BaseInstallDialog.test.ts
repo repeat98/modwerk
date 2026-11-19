@@ -9,6 +9,7 @@ import { BaseInstallDialog } from './BaseInstallDialog'
 import { layoutIdentity } from '../engine/elekloader/base-variants'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import type { InventoryTarget } from '../config/inventory'
+import { baseGuideToReopen, forgetBaseGuideReopen } from '../config/octatrack-progress'
 
 let root: Root, container: HTMLDivElement
 beforeEach(() => {
@@ -97,6 +98,28 @@ describe('the base dialog for a unit on an older base', () => {
     expect(container.querySelector('.base-update-hands-off')).toBeNull()
     expect(buttonNamed('Continue')).toBeDefined()
   })
+  it('asks for a power cycle in place of hands off once a restart is not back, and says which base starts', async () => {
+    const { update } = await older(true)
+    let next = () => {}
+    update.mockImplementation(async (_bin, _base, report) => {
+      report?.('starting'); report?.('starting', undefined, true)
+      await new Promise<void>(resolve => { next = resolve })
+      report?.('restarting', undefined, true)
+      await new Promise<void>(resolve => { next = resolve })
+      report?.('done')
+    })
+    click(container.querySelector('.risk-accept input')!); click(buttonNamed('Update over USB')!)
+    await vi.waitFor(() => expect(container.querySelector('.base-update-hands-off')?.textContent).toContain('Switch your Octatrack off and on'))
+    const box = container.querySelector('.base-update-hands-off')!
+    expect(box.getAttribute('role')).toBe('alert')
+    expect(box.textContent).toContain('Nothing is saved yet, so it starts your current base')
+    expect(box.textContent).not.toContain('no power switch')
+    await act(async () => next()); await settle()
+    expect(container.querySelector('.base-update-hands-off')!.textContent).toContain('The new base is saved and checked, so it starts on the new base')
+    await act(async () => next()); await settle()
+    expect(container.querySelector('.base-update-hands-off')).toBeNull()
+    expect(container.textContent).toContain('Done. The new base is saved')
+  })
   // A base writing another base's container quiesces stock, and a stall then hung units (30 October 2026): on two slots
   // the new base also starts from RAM and saves itself.
   it('on two slots, names Send, Restart, Save as with one copy', async () => {
@@ -162,6 +185,25 @@ describe('the base dialog for a unit on an older base', () => {
       expect(buttonNamed('Update over USB')).toBeUndefined(); expect(buttonNamed('Reload page')).toBeDefined()
       expect(update).not.toHaveBeenCalled()
     } finally { script.remove() }
+  })
+  it('opens again after its own Reload page, with the layout and set it was opened for', async () => {
+    const script = Object.assign(document.createElement('script'), { type: 'module' }); script.setAttribute('src', './assets/index-old.js'); document.head.append(script)
+    const reload = vi.fn()
+    try {
+      vi.stubGlobal('fetch', async () => new Response('<script type="module" crossorigin src="./assets/index-new.js"></script>'))
+      vi.stubGlobal('location', { pathname: '/', reload })
+      const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit), 300)
+      unit.base = 'cc'.repeat(32); link.start(); await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+      await act(() => root.render(createElement(BaseInstallDialog, { link, layout: 'main', returnSetId: 'set-1', firmwareReady: true, onChooseFirmware: () => {}, buildBase: vi.fn(), onClose: () => {}, onReady: () => {} })))
+      await settle()
+      expect(baseGuideToReopen()).toBeUndefined()
+      click(buttonNamed('Reload page')!)
+      expect(reload).toHaveBeenCalledOnce()
+      expect(baseGuideToReopen()).toEqual({ layout: 'main', returnSetId: 'set-1' })
+      // Only a reload right after: two minutes later the page opens as usual.
+      expect(baseGuideToReopen(Date.now() + 121_000)).toBeUndefined()
+      forgetBaseGuideReopen(); expect(baseGuideToReopen()).toBeUndefined()
+    } finally { script.remove(); sessionStorage.clear() }
   })
   // The previous base's default (500cdb6f…) ran USB Audio in tracks-main-cue; its `off` variant ran none.
   const previousDefault = '500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7', previousOff = '05b7f09031bc3892626e7c2576810386faeb01bd3a3101353a56c56c96d82a4a'

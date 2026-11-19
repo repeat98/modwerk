@@ -1,0 +1,1 @@
+CI: the maintenance bot's job log now says how each model run ended (finished, turn limit or error), how many turns it took and its token counts, still without any of its text, so a failed run can be diagnosed from the public log.

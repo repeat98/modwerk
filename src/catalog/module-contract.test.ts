@@ -10,6 +10,14 @@ describe('module folder contract',()=>{
   expect(claims(['key:UP+TEMPO','key:FUNC+LEFT@CHROMATIC','key:CUE+LEVEL','screen:TEMPO'])).toEqual(['key:UP+TEMPO','key:FUNC+LEFT@CHROMATIC','key:CUE+LEVEL','screen:TEMPO'])
   for(const invalid of [['key:UP+TMPO'],['key:up+TEMPO'],['TEMPO'],['screen:tempo'],'key:UP'])expect(()=>claims(invalid)).toThrow('compatibility.uiClaims')
  })
+ it('accepts encoder presses apart from turns, up to 24 claims',()=>{
+  const claims=(uiClaims:unknown)=>parseModuleDocument({...example,compatibility:{...example.compatibility,uiClaims}}).compatibility.uiClaims
+  const presses=['TRIG','SCENEA','SCENEB'].flatMap(held=>['A','B','C','D','E','F'].map(knob=>`key:${held}+PUSH${knob}`))
+  expect(claims(presses)).toEqual(presses)
+  expect(()=>claims(['key:TRIG+PUSHG'])).toThrow('compatibility.uiClaims')
+  expect(()=>claims(['key:TRIG+PUSH'])).toThrow('compatibility.uiClaims')
+  expect(()=>claims(Array(25).fill('key:TRIG+PUSHA'))).toThrow('compatibility.uiClaims')
+ })
  it('accepts the transport REC key, apart from the recorder keys REC1 to REC3',()=>{
   const claims=(uiClaims:unknown)=>parseModuleDocument({...example,compatibility:{...example.compatibility,uiClaims}}).compatibility.uiClaims
   expect(claims(['key:UP+REC','key:REC+PLAY','key:TRACK+REC1'])).toEqual(['key:UP+REC','key:REC+PLAY','key:TRACK+REC1'])

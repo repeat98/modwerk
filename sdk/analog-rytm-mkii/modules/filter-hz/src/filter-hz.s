@@ -14,15 +14,30 @@
         | Modwerk 1.2.1 adds filter_hz_box: stock inverts a fixed 27-pixel box
         | behind a locked value, and a kHz value is up to 31 pixels wide, so for
         | FRQ the box is 33 pixels, the same for every value.
+        |
+        | Modwerk 1.3.0 sends the FX track's DELAY HPF/LPF and REVERB FRQ/HPF/LPF
+        | (ids 76..87) to filter_hz_fx_text (fx-hz.c) and gives them the same box,
+        | LPF's two pixels right with its text so neighbouring boxes stay apart.
 
         .include "../include/ar2-1.74.inc"
 
         .equ    PARAM_ID_FRQ,   47
+        .equ    PARAM_ID_FX_LO, 76                | DELAY HPF; fx-hz.c picks its ids
+        .equ    PARAM_ID_FX_HI, 87                | REVERB LPF
 
         | Stock's knob value routine (0x40037a56), where it pushes the lock box's
         | rectangle for a value in the label row: x-13..x+13, y-14..y-8.
         .equ    knob_box_resume, 0x40037bfe       | move.l %d3,-(%sp); jsr (%a0)
         .equ    KNOB_PARAM_ARG,  88               | the parameter id, from %sp there
+        .equ    knob_text_resume, 0x40037ba6      | jsr: the text's font
+        .equ    knob_text_font,  0x417e389c       | its argument
+
+        | A row of `boxes` (below): the id, the box's half widths left and right
+        | of the knob's x, and how far right the locked text moves.
+        .equ    BOX_ROW,        4
+        .equ    BOX_LEFT,       1
+        .equ    BOX_RIGHT,      2
+        .equ    BOX_TEXT,       3
 
         .text
 
@@ -44,7 +59,20 @@ filter_hz_gate:
         moveq   #PARAM_ID_FRQ,%d0
         cmp.l   %d4,%d0
         beq.s   1f
-        lea     %a2@(20),%a0                      | displaced
+        moveq   #PARAM_ID_FX_LO,%d0               | 1.3.0: the FX filters
+        cmp.l   %d0,%d4
+        blt.s   0f
+        moveq   #PARAM_ID_FX_HI,%d0
+        cmp.l   %d0,%d4
+        bgt.s   0f
+        move.l  %d3,-(%sp)                        | buf
+        move.l  %d2,-(%sp)                        | value, 8.8
+        move.l  %d4,-(%sp)                        | id
+        jsr     filter_hz_fx_text                 | keeps d2-d7/a2-a6
+        lea     12(%sp),%sp
+        tst.l   %d0
+        bne.w   7f                                | written
+0:      lea     %a2@(20),%a0                      | displaced
         move.l  %d3,%sp@(32)                      | displaced
         jmp     param_value_text_invoke_resume
 
@@ -103,7 +131,7 @@ filter_hz_gate:
 6:      move.b  #'H',(%a1)+
         move.b  #'z',(%a1)+
         clr.b   (%a1)
-        movem.l (%sp),%d2-%d4/%a2-%a3             | param_value_text's epilogue
+7:      movem.l (%sp),%d2-%d4/%a2-%a3             | param_value_text's epilogue
         lea     20(%sp),%sp
         rts
 
@@ -144,23 +172,84 @@ ranges:
         | Stock's box is x-13..x+13, 27 pixels. FRQ text is up to 31 pixels wide
         | ("2.22kHz"), centred on x, so for FRQ the box is always x-16..x+16,
         | 33 pixels: one pixel either side of the widest value, the same size
-        | for every value. Every other parameter gets stock's box.
+        | for every value. 1.3.0: the same for the FX filters, whose texts are
+        | as wide at most ("12.0kHz", "14.0kHz"). Every other parameter gets
+        | stock's box.
+        |
+        | Knobs are 32 pixels apart, and stock inverts the box after drawing the
+        | text, so two 33-pixel boxes side by side share a column, inverted twice:
+        | a black divider that took LPF's left margin (HPF and LPF are knobs E
+        | and F). 1.3.0 moves LPF's box and its text two pixels right, box
+        | x-14..x+18, so a natural black column parts the boxes and every text
+        | keeps a pixel of white each side. LPF's right neighbours have no box
+        | there (DELAY's REV is a slider whose lock marks its icon; REVERB's
+        | knob G is empty).
         | ------------------------------------------------------------------
         .globl  filter_hz_box
         .align  2
 filter_hz_box:
-        moveq   #13,%d1                           | stock's half width
-        movea.l KNOB_PARAM_ARG(%sp),%a1
-        cmpa.l  #PARAM_ID_FRQ,%a1
-        bne.s   1f
-        moveq   #16,%d1                           | FRQ's half width
-1:      move.l  %a2,%d0
-        add.l   %d1,%d0                           | right: x + half
-        neg.l   %d1
-        add.l   %a2,%d1                           | left: x - half
+        move.l  KNOB_PARAM_ARG(%sp),%d0
+        bsr.s   box_record
+        moveq   #0,%d1
+        move.b  BOX_RIGHT(%a1),%d1
+        add.l   %a2,%d1                           | right: x + its half
+        moveq   #0,%d0
+        move.b  BOX_LEFT(%a1),%d0
+        neg.l   %d0
+        add.l   %a2,%d0                           | left: x - its half
         pea     -1                                | colour, as stock
         pea     -8(%a3)                           | bottom
-        move.l  %d0,-(%sp)                        | right
+        move.l  %d1,-(%sp)                        | right
         pea     -14(%a3)                          | top
-        move.l  %d1,-(%sp)                        | left
+        move.l  %d0,-(%sp)                        | left
         jmp     knob_box_resume
+
+        | ------------------------------------------------------------------
+        | The same routine where it has placed the value's text: %d4 is its left
+        | edge (x minus half its width), and the next instructions read the
+        | colour and the font. %d5 set means the value is shown locked, %d6 that
+        | it sits in the label row: then the text moves with its box (LPF's two
+        | pixels). Unlocked values stay where stock puts them.
+        | Replaced: `move.l 44(%sp),%d7; pea 0x417e389c` (10 bytes).
+        | ------------------------------------------------------------------
+        .globl  filter_hz_text_x
+        .align  2
+filter_hz_text_x:
+        move.l  44(%sp),%d7                       | displaced
+        tst.b   %d5
+        beq.s   9f
+        tst.b   %d6
+        beq.s   9f
+        move.l  KNOB_PARAM_ARG(%sp),%d0
+        bsr.s   box_record
+        moveq   #0,%d1
+        move.b  BOX_TEXT(%a1),%d1
+        add.l   %d1,%d4                           | the text's left edge, moved
+9:      pea     knob_text_font                    | displaced
+        jmp     knob_text_resume
+
+        | box_record(d0 = id): %a1 = its row of boxes, or the last row (stock's
+        | box) for every other id. Clobbers %d1.
+box_record:
+        lea     boxes,%a1
+        cmp.l   #255,%d0                          | ids above a byte: stock's box
+        bhi.s   2f
+1:      move.b  (%a1),%d1                         | 0 ends the table
+        beq.s   3f
+        cmp.b   %d1,%d0
+        beq.s   3f
+        addq.l  #BOX_ROW,%a1
+        bra.s   1b
+2:      lea     boxes_stock,%a1
+3:      rts
+
+        | One row an id (BOX_ROW bytes).
+boxes:
+        .byte   PARAM_ID_FRQ, 16, 16, 0           | FILTER FRQ
+        .byte   76, 16, 16, 0                     | DELAY HPF
+        .byte   77, 14, 18, 2                     | DELAY LPF
+        .byte   84, 16, 16, 0                     | REVERB FRQ
+        .byte   86, 16, 16, 0                     | REVERB HPF
+        .byte   87, 14, 18, 2                     | REVERB LPF
+boxes_stock:
+        .byte   0, 13, 13, 0                      | every other id: stock's box

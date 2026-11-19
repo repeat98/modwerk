@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
-import { LINK_DEVICES, ModError, applyWholeBuilds, linkMods, parseElemod, type LinkDevice } from './elemod'
+import { LINK_DEVICES, ModError, applyWholeBuilds, checkLinkable, linkMods, parseElemod, type LinkDevice } from './elemod'
+import { ELE2_DEVICES } from './ele2'
 import { ELE3_DEVICES } from './ele3'
 import A4_PROFILE from '../../../sdk/machines/analog-four-mkii/machine.json'
+import DN2_PROFILE from '../../../sdk/machines/digitone-ii/machine.json'
+import { readFileSync } from 'node:fs'
 import { fromImage } from '../../../vendor/elekloader/kit/src/store.ts'
 
 // A synthetic machine whose "stock" image is 4 KiB of NOPs: no Elektron firmware involved.
@@ -46,6 +49,47 @@ describe('elemod linker', () => {
     await expect(linkMods([parse(core), parse(mod('big', 0x40000100, { sections: { '.run': { parts: [['hex', '4e75']] }, '.bss': { size: 8192 } } }))], image)).rejects.toThrow('need RAM')
   })
 
+  it('refuses a mod that references or copies a routine the device keeps unlinkable', async () => {
+    const guarded: LinkDevice = { ...device, noLink: [...ELE2_DEVICES['analog-rytm-mki'].noLink, [0x40000400, 0x40000410, 'a test routine']] }
+    const on = (doc: Record<string, unknown>) => parseElemod(doc, String(doc.id), [guarded])
+    const run = { '.run': { parts: [['hex', '4e7500000000']] }, '.bss': { size: 16 } }
+    const mods = [core,
+      mod('caller', 0x40000100, { symbols: { handler: ['.run', 0], flash_program: ['abs', '0x40096af6'] }, exports: ['flash_program'] }),
+      mod('jumper', 0x40000200, { sections: run, relocs: [['.run', 2, 'abs32', 'abs', 0x4011a7a4]] }),
+      mod('user', 0x40000300, { sections: run, imports: ['flash_program'], relocs: [['.run', 2, 'pc32', 'sym:flash_program', 2]] }),
+      mod('copier', 0x40000500, { sections: { '.run': { parts: [['stock', '0x40000408', 4]] }, '.bss': { size: 16 } } })].map(on)
+    const refused = (await checkLinkable(mods, image)).filter(problem => problem.includes('no mod may link to it'))
+    expect(refused).toEqual([
+      'caller 1.0: symbol flash_program reaches 0x40096af6-0x40096b3e, the flash program routine every flash write uses: no mod may link to it on the Test machine',
+      'jumper 1.0: a reference to 0x4011a7a4 reaches 0x4011a7a4-0x4011aa7a, BOOTSTRAP UPGRADE, which rewrites the boot flash: no mod may link to it on the Test machine',
+      'user 1.0: a reference to 0x40096af8 reaches 0x40096af6-0x40096b3e, the flash program routine every flash write uses: no mod may link to it on the Test machine',
+      'copier 1.0: a stock copy from 0x40000408 reaches 0x40000400-0x40000410, a test routine: no mod may link to it on the Test machine',
+    ])
+    await expect(linkMods(mods, image)).rejects.toThrow('no mod may link to it')
+    expect((await linkMods([on(core), on(mod('one', 0x40000100))], image)).order).toEqual(['core 1.0', 'one 1.0'])
+  })
+
+  it('gives a set too big for the area the first larger one it may use, and leaves every other set where it was', async () => {
+    const wide: LinkDevice = { ...device, ddrMore: [{ area: [0x40ffc000, 0x41001000] }, { area: [0x40ffc000, 0x41009000], unless: 'fixed_end' }] }
+    const on = (doc: Record<string, unknown>) => parseElemod(doc, String(doc.id), [wide])
+    const sized = (id: string, addr: number, bss: number, extra: Record<string, unknown> = {}) => mod(id, addr, { sections: { '.run': { parts: [['hex', '4e75']] }, '.bss': { size: bss } }, ...extra })
+    const small = await linkMods([on(core), on(mod('one', 0x40000100))], image)
+    expect(small.layout.ddr[0]).toBe(0x41000000)
+    expect(small.image).toEqual((await linkMods([parse(core), parse(mod('one', 0x40000100))], image)).image)
+    const big = sized('big', 0x40000200, 0x2000)
+    const linked = await linkMods([on(core), on(mod('one', 0x40000100)), on(big)], image)
+    expect(linked.layout.ddr[0]).toBe(0x40ffc000)
+    expect(linked.layout.ddrSpare).toBe(0x41001000 - linked.layout.bss[1])
+    expect(new DataView(linked.image.buffer).getUint32(0x100 + 2)).toBeGreaterThanOrEqual(0x40ffc000)
+    await expect(linkMods([parse(core), parse(mod('one', 0x40000100)), parse(big)], image)).rejects.toThrow('bytes over')
+    const huge = await linkMods([on(core), on(sized('huge', 0x40000300, 0x8000))], image)
+    expect(huge.layout.ddr[0]).toBe(0x40ffc000)
+    expect(huge.layout.ddrSpare).toBe(0x41009000 - huge.layout.bss[1])
+    await expect(linkMods([on(core), on(sized('fixed', 0x40000300, 0x8000, { imports: ['fixed_end'] })), on(mod('ends', 0x40000400, { symbols: { handler: ['.run', 0], fixed_end: ['.run', 0] }, exports: ['fixed_end'] }))], image))
+      .rejects.toThrow(/past 0x41001000 .*fixed 1\.0 cannot use the 53248 bytes at 0x40ffc000-0x41009000/)
+    await expect(linkMods([on(core), on(sized('vast', 0x40000300, 0x10000))], image)).rejects.toThrow('past 0x41009000')
+  })
+
   it('applies a single whole build and refuses two', async () => {
     const whole = (id: string) => ({ elemod: 1, id, version: '1.0', target, sites: [], blob: { load: '0x40001000', len: 2, sha256: sha(Uint8Array.from([0x4e, 0x75])), parts: [['hex', '4e75']] } })
     expect((await applyWholeBuilds([parse(whole('os'))], image)).length).toBe(image.length + 2)
@@ -87,5 +131,44 @@ describe('Analog Four MKII linker profile', () => {
     expect(a4).toMatchObject({ key: 'analog-four-mk2', sysexId: ELE3_DEVICES['analog-four-mkii'].sysexId, mainLoad: ELE3_DEVICES['analog-four-mkii'].mainLoad, ddr: [0x47be0000, 0x47c00000] })
     expect(a4.releases.map(release => [release.version, release.syxSha256])).toEqual(A4_PROFILE.firmware.releases.map(release => [release.version, release.files[0].sha256]))
     expect(a4.ddr[1] - a4.ddr[0]).toBe(A4_PROFILE.sdk.budgets.find(budget => budget.name === 'Shared mod memory')!.value)
+  })
+})
+
+describe('Digitone II linker profile', () => {
+  it('matches the machine profile, the OS research and the Digitakt II platform', () => {
+    const dn2 = LINK_DEVICES.find(item => item.machine === 'digitone-ii')!
+    const dt2 = LINK_DEVICES.find(item => item.machine === 'digitakt-ii')!
+    // elekloader's device key, which the browser builder and catalog pins use
+    expect(dn2).toMatchObject({ key: 'digitone-mk2', sysexId: 0x15, mainLoad: dt2.mainLoad, ddr: dt2.ddr, sramCode: [0, 0], fastTable: '' })
+    expect(dn2.sysexId).toBe(ELE3_DEVICES['digitone-ii'].sysexId)
+    expect(dn2.releases.map(release => [release.version, release.syxSha256])).toEqual(DN2_PROFILE.firmware.releases.map(release => [release.version, release.files[0].sha256]))
+    // the same staging, flash window and seal as the Digitakt II's
+    expect({ ...ELE3_DEVICES['digitone-ii'], sysexId: 0 }).toEqual({ ...ELE3_DEVICES['digitakt-ii'], sysexId: 0 })
+    // the main OS and the mod area are the ones the research records
+    const research = readFileSync(new URL('../../../docs/DIGITONE_II_OS_RESEARCH.md', import.meta.url), 'utf8')
+    for (const release of dn2.releases) expect(research).toContain(release.mainSha256)
+    expect(research).toContain('3,196,288 bytes')
+    expect(research.toLowerCase().replaceAll('`', '')).toContain('ddr 0x47f00000–0x47f40000')
+  })
+})
+
+describe('Digitone II SHARC payloads', () => {
+  // A synthetic Digitone II: the same stock NOPs, under the device's machine.
+  const dn2: LinkDevice = { ...device, key: 'test-dn2', machine: 'digitone-ii', name: 'Test Digitone II', sysexId: 0x15 }
+  const dn2Target = { device: 'test-dn2', os: '1.0', syx_sha256: 'a'.repeat(64) }
+  const parseDn2 = (doc: Record<string, unknown>) => parseElemod(doc, String(doc.id), [dn2])
+  const bridge = { abi: 'test-abi', segments: [], zero: [], entries: {}, stack_bytes: 0 }
+
+  it('links a core that carries the DSP bridge, and refuses a mod that brings DSP code', async () => {
+    const linked = await linkMods([parseDn2({ ...core, target: dn2Target, sharc: bridge }), parseDn2({ ...mod('one', 0x40000100), target: dn2Target })], image)
+    expect(linked.order).toEqual(['core 1.0', 'one 1.0'])
+    const dsp = parseDn2({ ...mod('dsp', 0x40000100), target: dn2Target, sharc: bridge })
+    expect(dsp.sharc).toBe('test-abi')
+    await expect(linkMods([parseDn2({ ...core, target: dn2Target, sharc: bridge }), dsp], image)).rejects.toThrow('does not write yet')
+  })
+
+  it('takes a SHARC payload only on the Digitone II, and only with its ABI', () => {
+    expect(() => parse({ ...core, sharc: bridge })).toThrow('only for the Digitone II')
+    expect(() => parseDn2({ ...core, target: dn2Target, sharc: { segments: [] } })).toThrow('needs its abi')
   })
 })

@@ -23,26 +23,42 @@ export async function openDeviceDatabase(name = DATABASE): Promise<IDBDatabase> 
   })
 }
 export function deviceStore(db: IDBDatabase) {
-  function transaction<T>(store: string, mode: IDBTransactionMode, operation: (table: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+  function transaction<T>(stores: string | string[], mode: IDBTransactionMode, operation: (table: IDBObjectStore, tx: IDBTransaction) => IDBRequest<T>): Promise<T> {
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(store, mode)
-      const request = operation(tx.objectStore(store))
+      const tx = db.transaction(stores, mode)
+      let request: IDBRequest<T>
+      try { request = operation(tx.objectStore(typeof stores === 'string' ? stores : stores[0]), tx) }
+      catch (error) { tx.abort(); reject(error); return }
       tx.oncomplete = () => resolve(request.result)
-      tx.onabort = tx.onerror = () => reject(tx.error ?? request.error ?? new Error('Could not save on this device.'))
+      // Safari aborts transactions without any error, for example while it suspends a home-screen app.
+      tx.onabort = () => reject(tx.error ?? request.error ?? new Error(mode === 'readonly' ? 'The browser stopped reading its storage without giving a reason.' : 'The browser stopped this save without giving a reason.'))
     })
   }
   return {
     /** Readable configurations. A record this version cannot read, such as one naming a module the catalog dropped,
      * is skipped and reported, never deleted, so it comes back once the catalog can read it again. */
-    async listConfigurations(unreadable?: (error: unknown) => void) {
+    async listConfigurations(unreadable?: (error: unknown, record: unknown) => void) {
       const items: unknown[] = await transaction('configurations', 'readonly', store => store.getAll())
-      return items.flatMap(item => { try { return [validateConfiguration(item)] } catch (error) { unreadable?.(error); return [] } })
+      return items.flatMap(item => { try { return [validateConfiguration(item)] } catch (error) { unreadable?.(error, item); return [] } })
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     },
-    async saveConfiguration(item: Configuration) {
-      await transaction('configurations', 'readwrite', store => store.put(validateConfiguration(item)))
+    async saveConfiguration(item: Configuration, { makeActive = false } = {}) {
+      const saved = validateConfiguration(item)
+      await transaction(makeActive ? ['configurations', 'settings'] : 'configurations', 'readwrite', (store, tx) => {
+        const request = store.put(saved)
+        if (makeActive) tx.objectStore('settings').put(saved.id, 'active')
+        return request
+      })
     },
-    async deleteConfiguration(id: string) { await transaction('configurations', 'readwrite', store => store.delete(id)) },
+    async deleteConfiguration(id: string, next: string | Configuration) {
+      const replacement = typeof next === 'string' ? undefined : validateConfiguration(next)
+      const nextId = typeof next === 'string' ? next : next.id
+      await transaction(['configurations', 'settings'], 'readwrite', (store, tx) => {
+        if (replacement) store.put(replacement)
+        tx.objectStore('settings').put(nextId, 'active')
+        return store.delete(id)
+      })
+    },
     async activeConfiguration(): Promise<string | undefined> { return transaction('settings', 'readonly', store => store.get('active')) },
     async setActiveConfiguration(id: string) { await transaction('settings', 'readwrite', store => store.put(id, 'active')) },
     async readModuleBaseline(): Promise<string[] | undefined> {

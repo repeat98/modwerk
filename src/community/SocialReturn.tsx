@@ -32,3 +32,15 @@ export function SocialReturn({code}:{code:string}) {
     </form>{error&&<p className="file-error" role="alert">{error}</p>}</>:error?<><p className="file-error" role="alert">{error}</p><a className="button button-primary" href="#account/login">Start sign-in again</a></>:<p role="status">Please wait…</p>}
   </section></div>
 }
+
+/** A sign-in the desktop app started, back from the provider in the default browser: hand its one-use code to the app
+ * through a modwerk:// link. The app's window holds the verifier, so the code is no use to anything else. */
+export function SocialAppReturn({code}:{code:string}) {
+  const link=/^[a-f0-9]{64}$/.test(code)?'modwerk://open/#account/sso/'+code:null
+  useEffect(()=>{history.replaceState(null,'','#account/sso-app');if(link)window.location.assign(link)},[link])
+  return <div className="community-page account-page"><section className="configuration-section">
+    <h1>{link?'Back to the Modwerk app':'Start sign-in again'}</h1>
+    {link?<><p role="status">You signed in for the Modwerk app. It opens again by itself; when your browser asks, allow it to open Modwerk. Then you can close this tab.</p><a className="button button-primary" href={link}>Open Modwerk</a></>
+      :<p className="file-error" role="alert">This sign-in link is invalid or was already used. Start again in the Modwerk app.</p>}
+  </section></div>
+}

@@ -5,6 +5,7 @@
     npm run machine:base -- analog-rytm-mkii --stock /private/Analog-Rytm_MKII_OS1.74.syx
     npm run machine:base -- analog-rytm-mkii --stock ... --out /private/NEW-DIR   # keep each .elemod
     npm run machine:base -- analog-rytm-mkii --stock ... --write                  # record a new identity
+    npm run machine:base -- analog-rytm-mkii --stock ... --dev --out /private/DIR # development bases, never released
 
 sdk/machines/<id>/elekloader/base.json names the core folder beside it (mod.json and its sources), the SDK
 headers, the OS and the reviewed toolchain (sdk/build/Dockerfile's GCC and binutils for m68k-elf). The SDK is the
@@ -17,16 +18,26 @@ the fields base.json lists under reference.keeps. It is identified by the SHA-25
 in sdk/machines/<id>/base-binding.json; without --write a different identity fails. The stock OS is read where it
 lies and never copied into the repository.
 base.json's variants name the layouts the base comes in, the first the default: a variant with "add": false leaves
-add's parts out, so a build that needs none of them does not pay for them. base.json's common holds what every
+add's parts out, so a build that needs none of them does not pay for them, and one with "leave" takes add without the
+items those names match (shell patterns, each of which must match something): a source or cflag itself, a site's addr or
+target, a subscription's fn, a contribution's symbols, a storage field's sym, a defsym's or collection's name. What
+remains keeps add's order, so the variant with all of add is built as before. base.json's common holds what every
 variant carries (the same keys as add), merged before add; with neither, a variant is the imported recipe alone.
 Each variant is built and checked the same way, and the binding records every variant's identity under variants, the default's as identity.
+base.json's dev holds what only development bases carry (the same keys as add, and its own about), such as a USB
+link any host may drive with no hand on the unit: --dev builds every variant with dev merged after add, writes them
+as modwerk-base-<id>-dev-<sha>.elemod and checks them against no binding, so they can never be recorded or released.
 A machine whose OS shares another's base names that machine in source: its elekloader folder is staged instead,
 with this machine's own folders beside it. recipe then replaces the imported recipe's device, defsym and sites
 (sites named by length and SHA-256, as add's) and adds sources. copies lays files of this machine's copies/ folder
 over the staged ones; each names the file it was made from and that file's SHA-256, and the build refuses once the
-original has changed, so a copy is redone rather than silently left behind.
+original has changed, so a copy is redone rather than silently left behind. A machine's own base uses copies too,
+where the imported core must differ, so the imported files stay exact (the Digitakt II's kit-data room).
+A recipe's device the pinned kit lacks is carried by Modwerk's builder (owner, 19 November 2026): a machine's
+elekloader/device.json holds its facts, and the build registers it with the kit's SDK before it starts.
 """
 import argparse
+import fnmatch
 import hashlib
 import json
 import os
@@ -84,6 +95,38 @@ def check_upstream(path):
     return commit
 
 
+def carried_devices():
+    """{key: device facts} of the devices Modwerk's builder carries where the pinned kit has none: each machine's
+    elekloader/device.json (owner, 19 November 2026). Hex numbers are strings there."""
+    found = {}
+    for path in sorted((APP / 'sdk/machines').glob('*/elekloader/device.json')):
+        facts = json.loads(path.read_text())['device']
+        found[facts['key']] = facts
+    return found
+
+
+def carry_device(devices, key):
+    """Register the carried device `key` with the kit's Python SDK, unless the kit knows it. -> whether it is known now."""
+    if any(d.key == key for d in devices.devices()):
+        return True
+    facts = carried_devices().get(key)
+    if facts is None:
+        return False
+    num = lambda value: int(value, 16) if isinstance(value, str) else value
+    span = lambda pair: (num(pair[0]), num(pair[1]))
+    releases = {r['version']: devices.Release(version=r['version'], syx_sha256=r['syx_sha256'],
+                                              main_sha256=r['main_sha256'], main_len=r['main_len'])
+                for r in facts['releases']}
+    devices.devices().append(devices.Device(
+        key=facts['key'], name=facts['name'], sysex_id=num(facts['sysex_id']), releases=releases,
+        main_section=facts['main_section'], main_load=num(facts['main_load']), stage=num(facts['stage']),
+        flash_at=num(facts['flash_at']), flash_limit=num(facts['flash_limit']), trailer=facts['trailer'],
+        hmac_key_from=(facts['hmac_key_from'][0], facts['hmac_key_from'][1].encode()), isa=facts['isa'],
+        areas={name: span(area) for name, area in facts['areas'].items()}, ddr=span(facts['ddr']),
+        recovery=facts['recovery'], toolchain=facts['toolchain']))
+    return True
+
+
 def check_toolchain(toolchain):
     """The reviewed compiler: another GCC or binutils links a different base."""
     cross = toolchain['cross']
@@ -136,21 +179,65 @@ def stock_sites(sites, stock):
 
 
 def variants(config):
-    """[(name, with add)] in base.json's order, the default first; a base without variants is one layout with add."""
-    return [(name, bool(variant['add'])) for name, variant in config.get('variants', {'base': {'add': True}}).items()]
+    """[(name, with add, what it leaves out of add)] in base.json's order, the default first; a base without variants
+    is one layout with add."""
+    out = []
+    for name, variant in config.get('variants', {'base': {'add': True}}).items():
+        leave = list(variant.get('leave', []))
+        if leave and not variant['add']:
+            raise ValueError('base.json variant %s: leave names parts of add, which it does not take.' % name)
+        out.append((name, bool(variant['add']), leave))
+    return out
 
 
-def parts(config, add=True):
-    """What a variant merges into the recipe: base.json's common, then add when the variant takes it. Lists are
-    joined; a name both define is refused."""
+def item_names(item):
+    """The names an item of add answers to, for a variant's leave: a source or cflag itself, a site's addr and target,
+    a subscription's fn, a storage field's sym, and the symbols a contribution's relocations point at."""
+    if isinstance(item, str):
+        return [item]
+    names = [item[key] for key in ('addr', 'target', 'fn', 'sym') if isinstance(item.get(key), str)]
+    return names + [reloc[2][4:] for reloc in item.get('relocs', [])
+                    if isinstance(reloc[2], str) and reloc[2].startswith('sym:')]
+
+
+def leave_out(add, leave):
+    """add without the items `leave`'s patterns match, in add's order. A pattern that matches nothing is refused, so an
+    item renamed in add does not stay in the variant unnoticed."""
+    used = set()
+
+    def left(names):
+        hit = [pattern for pattern in leave if any(fnmatch.fnmatchcase(name, pattern) for name in names)]
+        used.update(hit)
+        return bool(hit)
     out = {}
-    for part in [config.get('common', {})] + ([config.get('add', {})] if add else []):
+    for key, value in add.items():
+        if key == 'about':
+            out[key] = value
+        elif key in DICTS:
+            out[key] = {name: item for name, item in value.items() if not left([name])}
+        else:
+            out[key] = [item for item in value if not left(item_names(item))]
+    out = {key: value for key, value in out.items() if value}   # a key left empty is left out, as if add had none
+    unused = [pattern for pattern in leave if pattern not in used]
+    if unused:
+        raise ValueError('base.json: a variant\'s leave names %s, which add does not hold.' % ', '.join(unused))
+    return out
+
+
+def parts(config, add=True, dev=False, leave=()):
+    """What a variant merges into the recipe: base.json's common, then add when the variant takes it (without what
+    `leave` matches), then dev for a development base. Lists are joined; a name two of them define is refused."""
+    out = {}
+    taken = [leave_out(config.get('add', {}), leave) if leave else config.get('add', {})] if add else []
+    for part in [config.get('common', {})] + taken + ([config['dev']] if dev else []):
         for key, value in part.items():
+            if key == 'about':
+                continue
             if key in DICTS:
                 merged = dict(out.get(key, {}))
                 for name, item in value.items():
                     if name in merged:
-                        raise ValueError('base.json: %s %s is in both common and add.' % (key, name))
+                        raise ValueError('base.json: %s %s is defined twice (common, add, dev).' % (key, name))
                     merged[name] = item
                 out[key] = merged
             else:
@@ -171,17 +258,18 @@ def retarget(mod, recipe, sites):
     return mod
 
 
-def stage(machine, config, root, sites=None, add=True, recipe_sites=None):
+def stage(machine, config, root, sites=None, add=True, recipe_sites=None, dev=False, leave=()):
     """The core folder and its sibling sources as mod.json expects them, with the SDK headers beside mod.json
     (the SDK compiles with -I on the mod's own folder first), and base.json's additions merged into the staged
     mod.json, so the imported files stay exact. Without `sites` (no stock OS at hand) the sites are left out;
     without `add` (a variant that leaves them out) only common is merged, and with no common either the imported
-    recipe is staged alone."""
+    recipe is staged alone; `leave` takes add without what its patterns match. `dev` merges base.json's dev on top,
+    for a development base."""
     own = APP / 'sdk/machines' / machine / 'elekloader'
     source = APP / 'sdk/machines' / config.get('source', machine) / 'elekloader'
     mods = root / 'mods'
     for item in source.iterdir():
-        if item.is_dir():
+        if item.is_dir() and item.name != 'copies':
             shutil.copytree(item, mods / item.name)
     if source != own:
         for item in own.iterdir():
@@ -195,7 +283,7 @@ def stage(machine, config, root, sites=None, add=True, recipe_sites=None):
     core = mods / config['core']
     for item in (APP / config['include']).iterdir():
         shutil.copytree(item, core / item.name)
-    add = parts(config, add)
+    add = parts(config, add, dev, leave)
     if sites is None:
         add.pop('sites', None)
     recipe = dict(config.get('recipe', {}))
@@ -233,8 +321,10 @@ def sizes(package):
     return {name: section.get('len', section.get('size', 0)) for name, section in package['sections'].items()}
 
 
-def build(machine, stock, upstream, out):
+def build(machine, stock, upstream, out, dev=False):
     config = json.loads((APP / 'sdk/machines' / machine / 'elekloader/base.json').read_text())
+    if dev and 'dev' not in config:
+        raise ValueError('base.json of %s has no dev: this machine has no development base yet.' % machine)
     if sha(stock.read_bytes()) != stock_sha(machine, config['os']):
         raise ValueError('%s is not the original OS %s file machine.json names.' % (stock, config['os']))
     kit = check_upstream(upstream)
@@ -248,16 +338,18 @@ def build(machine, stock, upstream, out):
     from elekloader import devices
     device = config.get('recipe', {}).get('device')
     if device and not any(d.key == device for d in devices.devices()):
-        raise ValueError('The pinned Elekloader kit has no %s device yet, so this base cannot be built with it.' % device)
+        if not carry_device(devices, device):
+            raise ValueError('The pinned Elekloader kit has no %s device yet, so this base cannot be built with it.' % device)
     os.environ['ELEKLOADER_CROSS'] = config['toolchain']['cross']
     built = []
     if out:
         out.mkdir(parents=True)
-    for name, add in variants(config):
+    for name, add, leave in variants(config):
         with tempfile.TemporaryDirectory(prefix='modwerk-base-') as work:
             root = Path(work)
-            core = stage(machine, config, root, stock_sites(parts(config, add).get('sites', []), stock), add,
-                         stock_sites(config['recipe']['sites'], stock) if 'sites' in config.get('recipe', {}) else None)
+            core = stage(machine, config, root, stock_sites(parts(config, add, dev, leave).get('sites', []), stock), add,
+                         stock_sites(config['recipe']['sites'], stock) if 'sites' in config.get('recipe', {}) else None,
+                         dev, leave)
             try:
                 sdk.build(str(core), str(stock), str(root / 'out'))
             except sdk.BuildError as error:
@@ -278,7 +370,7 @@ def build(machine, stock, upstream, out):
                              % (name, reference['file'], ', '.join(missing)))
         if out:
             # the name the site's catalog serves it under: one file per variant, told apart by its identity
-            (out / ('modwerk-base-%s-%s.elemod' % (machine, sha(data)[:8]))).write_bytes(data)
+            (out / ('modwerk-base-%s%s-%s.elemod' % (machine, '-dev' if dev else '', sha(data)[:8]))).write_bytes(data)
         built.append((name, sha(data), packages[0].name, package))
     _, identity, file, package = built[0]
     binding = {
@@ -302,18 +394,26 @@ def main():
     parser.add_argument('--upstream', type=Path, default=DEFAULT_UPSTREAM, help='the kit-pinned Elekloader checkout')
     parser.add_argument('--out', type=Path, help='a new folder outside Git to keep each built .elemod in')
     parser.add_argument('--write', action='store_true', help='record the built identity in base-binding.json')
+    parser.add_argument('--dev', action='store_true', help="build development bases (base.json's dev on top): never "
+                        'recorded or released')
     args = parser.parse_args()
+    if args.dev and args.write:
+        parser.error('--dev builds development bases, which are never recorded: leave out --write.')
     binding_path = APP / 'sdk/machines' / args.machine / 'base-binding.json'
     if args.out and (args.out.exists() or inside_git(args.out)):
         parser.error('--out must be a new folder outside every Git work tree: %s' % args.out)
     try:
         binding, reference, layouts = build(args.machine, args.stock.expanduser().resolve(), args.upstream.expanduser().resolve(),
-                                   args.out.expanduser().resolve() if args.out else None)
+                                   args.out.expanduser().resolve() if args.out else None, args.dev)
     except (ValueError, OSError, KeyError) as error:
         parser.error(str(error))
     for name, identity, sections, sites in layouts:
-        print('%s base %s (%s): %s' % (args.machine, binding['package'], name, identity))
+        print('%s base %s (%s%s): %s' % (args.machine, binding['package'], name, ', dev' if args.dev else '', identity))
         print('  sections %s, %d sites (the release it started from: %s)' % (sections, sites, reference))
+    if args.dev:
+        print('Development bases: for test images only, never released; not checked against %s.'
+              % binding_path.relative_to(APP))
+        return
     if args.write:
         binding_path.write_text(json.dumps(binding, indent=2) + '\n')
         print('Recorded in ' + str(binding_path.relative_to(APP)))

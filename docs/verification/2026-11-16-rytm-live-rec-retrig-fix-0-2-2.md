@@ -1,0 +1,8 @@
+# Analog Rytm MKII: Live Rec Retrig Fix 0.2.2-experimental — 16 November 2026
+
+Nathaniel Pavel's (@npp1993) Live Rec Retrig Fix (id `live-rec-retrig-fix`), 0.2.2: under heavy load (BD ANALOG playing) retrig hits wait in stock's UI queue and are recorded late instead of dropped. A slot is freed once the UI task has taken its message and a later one, so only the module's own waiting events count; 128 slots, module RAM 13,756 B. Recording, Retrig Grid and the RTRG key are as in 0.2.1. Its source-only OS 1.74 package is pinned in `sdk/imports/elekloader-live-rec-retrig-fix-2026-11-16.json` (commit `4d1cbd5e2`), replacing 0.2.1's pin.
+
+- **Build:** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (image `3d0d46b0…`) from a clean checkout of the source the package commit carries. Exported with `package-elemod-recipe.mjs`; `verify-elemod-release-exports.mjs` reproduced all current exports from that build, this one included.
+- **Package:** `live-rec-retrig-fix-0.2.2-experimental-os1.74.elemod` `6db99dec…e7b9`. Earlier source-only packages stay in `sdk/imports`.
+- **Host model and emulator:** a model of stock's queue with the module's code reused no slot early in 200 seeded runs; rytm-emu 2ac0f1f: a 61-hit roll records pattern A01 byte for byte as 0.2.1; media frames byte-identical to 0.2.1's (LR24).
+- **On a unit:** the author's Analog Rytm MKII, OS 1.74, from RAM with test-only counters: LQ04 (BD ANALOG + this source), 145 hits, 0 dropped, every hit on its step as the author reports; LQ05 (13 modules), stock's own UI queue overflowed and the unit lagged, the module dropped none and freed every slot afterwards. Details in the module's TESTING.md.
