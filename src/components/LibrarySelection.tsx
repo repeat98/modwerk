@@ -36,7 +36,7 @@ function selectionDetails(set: Configuration, betaAccess: boolean) {
   }
 }
 
-export function LibrarySelection({ sets, betaAccess, phone }: { sets: readonly Configuration[]; betaAccess: boolean; phone: boolean }) {
+export function LibrarySelection({ sets, betaAccess, collapsible = false }: { sets: readonly Configuration[]; betaAccess: boolean; collapsible?: boolean }) {
   const entries = sets.flatMap(set => {
     if (!set.moduleIds.length && !set.removedStockFx?.length) return []
     const details = selectionDetails(set, betaAccess)
@@ -54,7 +54,7 @@ export function LibrarySelection({ sets, betaAccess, phone }: { sets: readonly C
 
   return <>
     <p className="sr-only" role="status">{entries.length ? entries.map(entry => [`${DEVICES_BY_ID[entry.device].name}, ${entry.resources}.`, entry.effects, ...entry.issues].filter(Boolean).join(' ')).join(' ') : 'No selections to check.'}</p>
-    {entries.length > 0 && (phone ? <details className="library-selection">
+    {entries.length > 0 && (collapsible ? <details className="library-selection">
       <summary>Selection details{issueCount > 0 && <> <span>{issueCount} {issueCount === 1 ? 'issue' : 'issues'}</span></>}</summary>
       <div className="library-selection-list">{content}</div>
     </details> : <a className={'load-widget selection-widget' + (issueCount > 0 ? ' is-near' : '')} href={deviceHref(entries[0].device, 'configuration')}

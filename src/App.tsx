@@ -408,13 +408,14 @@ export default function App() {
   }, [overviewRoute, projectsRoute, faqRoute, route,detailModule,digiMod,zoomEffect,forumRoute,accountRoute,betaInvitationRoute,developerRoute,developer?.user,allRoute,machineView,currentDevice.name,w,hubRoute,zoomHubName])
   const availabilityError = moduleAvailabilityError(selectedIds, betaAccess)
   const { blocks: addBlockMap } = withSetLimit<{ blocks: Record<string, AddBlock> }>({ blocks: {} }, selectedIds)
-  const showSelection = (onLibrary && (allMachines || currentDevice.id === 'octatrack' || isDigiDevice(currentDevice.id)))
-    || (!phoneLayout && !!(detailModule || digiMod))
+  const showSelection = !mobileWorkspace && (
+    (onLibrary && (allMachines || currentDevice.id === 'octatrack' || isDigiDevice(currentDevice.id)))
+    || !!(detailModule || digiMod)
+  )
   const browsingSets = ready && showSelection
     ? (allMachines ? ['octatrack', ...DIGI_DEVICES] : [currentDevice.id]).flatMap(device => activeFor(device) ?? [])
     : []
-  // On desktop the selection is a meter card in the corner; phones and the drawer layout keep the collapsible panel.
-  const cornerSelection = showSelection && !phoneLayout && !drawerLayout
+  const cornerSelection = showSelection && !drawerLayout
   const libraryFilter = allRoute ? allCategory ?? 'all' : filter
   const libraryFamily = allRoute || accessibleModules.some(module=>DETAILS[module.id].family===family) ? family : 'all'
   const visibleModules = accessibleModules.filter((module) =>
@@ -561,7 +562,6 @@ export default function App() {
         {phoneLayout ? <>
           <div className="library-nav-row">{phoneLibrary && machinePicker()}{categoryNav}</div>
           {phoneLibrary && <div className="library-results-slot" ref={setResultsSlot} />}
-          {showSelection && <LibrarySelection sets={browsingSets} betaAccess={betaAccess} phone={phoneLayout} />}
         </> : <>
           <div className="sidebar-brand">
             <a className="app-brand" href="#overview"><img src={import.meta.env.BASE_URL + 'modwerk-mark.svg'} width="34" height="34" alt="" /><BrandName session={session} /><small>Community-built firmware</small></a>
@@ -636,7 +636,7 @@ export default function App() {
       {/* The sync pill and the live load share the corner; the load stays off Status, which shows it in full, and off the
           forum, whose chat opens in the same corner. */}
       {(usbLink || cornerSelection) && <div className="octatrack-float">
-        {cornerSelection && <LibrarySelection sets={browsingSets} betaAccess={betaAccess} phone={false} />}
+        {cornerSelection && <LibrarySelection sets={browsingSets} betaAccess={betaAccess} />}
         {usbLink && !hubRoute && !loadingTarget && <OctatrackActivity link={usbLink}/>}
         {usbLink && octatrackUi && !(hubRoute && hubView === 'status') && !forumRoute && <OctatrackLoadWidget link={usbLink}/>}
       </div>}
@@ -700,7 +700,7 @@ export default function App() {
           {legalLinks}
         </footer> : <footer className="status-bar">
           <div className="workspace-status">
-            {drawerLayout && showSelection && <LibrarySelection sets={browsingSets} betaAccess={betaAccess} phone />}
+            {drawerLayout && showSelection && <LibrarySelection sets={browsingSets} betaAccess={betaAccess} collapsible />}
             <span><span className={'status-dot ' + (firmwareVerified ? 'verified' : '')} />{machineStatus}</span>
             <span role="status">{saveStatus}</span>
             {usbLink && <Suspense fallback={null}><OctatrackStatus link={usbLink} /></Suspense>}
