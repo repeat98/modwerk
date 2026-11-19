@@ -211,7 +211,9 @@ export async function planDt2MachineSelectors(stock: Uint8Array, tableAddress: n
 }
 
 // The render pass calls the stock sample voice player once per voice (a type 25a CALL); R14 counts the 32 voices
-// down, voice v belongs to track v >> 1, and the track's raw machine type is the word DM(TRACK_TYPES + track).
+// down, voice v belongs to track v >> 1, and the track's raw machine type is the word at byte address TRACK_TYPES +
+// 4 * track (stock reads it as DM(M = track, I = TRACK_TYPES); the modifier is scaled, the address is in bytes).
+// Track 1 alone has the same word at TRACK_TYPES + track, so a test on track 1 cannot tell the two apart.
 const PLAYER_CALL = 0x28000000 + 2 * 0x1c6b00
 const PLAYER_CALL_GUARD = '4e25f0a1e4197c2c190ef606f09623a9ecf94e7274608038c39d0f09514b6621'
 const STOCK_PLAYER = 0x1c4ecf
@@ -244,7 +246,7 @@ export async function planDt2MachinePlayers(
   if (await sha256Hex(readStored(stock, PLAYER_CALL, 6)) !== PLAYER_CALL_GUARD) throw new Error('SHARC player call guard mismatch')
   const save = dataAddress / 4, table = save + 8
   const data = new Uint8Array(4 * (8 + 32))
-  for (let voice = 0; voice < 32; voice++) new DataView(data.buffer).setUint32(4 * (8 + voice), TRACK_TYPES + (voice >> 1), true)
+  for (let voice = 0; voice < 32; voice++) new DataView(data.buffer).setUint32(4 * (8 + voice), TRACK_TYPES + 4 * (voice >> 1), true)
 
   const pc = programCounter(codeAddress)
   const parts: Uint8Array[] = []
