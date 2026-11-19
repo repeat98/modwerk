@@ -309,7 +309,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-empty-set p { margin: 0 0 14px; color: var(--muted); font-size: 14px; line-height: 1.55; }
 .hub-empty-set .button { min-height: 44px; }
 /* Setup: the base and the module file for the card. */
-.card-set-steps { margin: 10px 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: 1.7; }
+.card-set-steps { margin: 10px 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: var(--reading-line-height); }
 .card-set-dialog { width: min(440px, calc(100vw - 32px)); }
 .card-set-plan { display: grid; gap: 16px; margin: 22px 0 18px; padding: 0; list-style: none; }
 .card-set-plan li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 12px; align-items: start; }
@@ -450,12 +450,12 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .base-install-progress [aria-current="step"] { color: var(--text); font-weight: 600; }
 .base-install-progress [aria-current="step"] > span { color: var(--field); background: var(--accent); border-color: var(--accent); }
 .base-install-progress .is-past > span { color: var(--accent); border-color: var(--accent-line); }
-.base-install-stage { min-height: 240px; font-size: 15px; line-height: 1.65; color: var(--text-secondary); }
+.base-install-stage { min-height: 240px; font-size: 15px; line-height: var(--reading-line-height); color: var(--text-secondary); }
 .base-install-stage h3 { margin: 0 0 10px; color: var(--text); font-size: 23px; line-height: 1.3; letter-spacing: -.35px; }
 .base-install-stage p { margin: 0 0 16px; }
 .base-install-stage .base-file-ready { display: flex; align-items: center; gap: 8px; color: var(--text); margin-top: 24px; }
 .base-install-stage .risk-acceptance { margin-top: 20px; font-size: 14px; }
-.base-install-stage .risk-acceptance p, .base-install-stage .risk-acceptance label { font-size: 14px; line-height: 1.65; }
+.base-install-stage .risk-acceptance p, .base-install-stage .risk-acceptance label { font-size: 14px; line-height: var(--reading-line-height); }
 .base-install-stage .risk-acceptance label { min-height: 44px; }
 .base-install-stage .base-install-warning, .base-install-route { display: flex; gap: 12px; margin-top: 20px; padding: 14px 16px; border: 1px solid #715235; border-radius: 8px; background: #382d23; color: #f0c792; font-size: 14px; line-height: 1.65; }
 .base-install-warning svg { flex-shrink: 0; margin-top: 3px; }

@@ -56,6 +56,24 @@ it('lists the other instruments without repeating the three that have their own 
   expect(names).toContain('Analog Rytm MKI')
 })
 
+it('shows the newest change for the chosen base and links earlier changes to shipped notes', async () => {
+  await render()
+  for (const [machine, note] of [['Octatrack', 'octatrack'], ['MS-70CDR', 'midistomp'], ['Analog Rytm', 'rytm']]) {
+    await choose(machine)
+    const log = container.querySelector('.base-changelog')!
+    const latest = log.querySelector<HTMLAnchorElement>(':scope > dl a')!
+    expect(latest.href).toContain(note)
+    expect(latest.closest('details')).toBeNull()
+    expect(log.querySelectorAll('details .base-change').length).toBeGreaterThan(0)
+    for (const link of log.querySelectorAll<HTMLAnchorElement>('a')) {
+      const file = new URL(link.href).pathname.split('/changelog/')[1]
+      expect(existsSync(join(process.cwd(), 'changelog', file)), file).toBe(true)
+    }
+  }
+  await choose('Others')
+  expect(container.querySelector('.base-changelog')).toBeNull()
+})
+
 it('puts setup and recovery prerequisites before the optional Octatrack references', async () => {
   await render()
   expect(container.querySelector('.base-device a')?.getAttribute('href')).toBe('#octatrack/setup')
