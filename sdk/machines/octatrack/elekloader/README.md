@@ -176,8 +176,10 @@ hashes; Octabam's DSP DYNLOAD STOCK is the reference for the layout. It
 needs Octabam's patched `dsp_asm` (`ELEKLOADER_DSP_ASM`), with
 `dsp56kDisassemble` built beside it in the same tree (`make setup` in
 `~/.cache/modwerk-upstream/octabam`, or `cmake --build` of its
-`vendor/dsp56300` with the `dsp_asm` and `dsp56kDisassemble` targets), and
-Node 24 for Modwerk's chooser composer ([`octatrack-base-choosers.mjs`](../../../../scripts/octatrack-base-choosers.mjs)).
+`vendor/dsp56300` with the `dsp_asm` and `dsp56kDisassemble` targets). The
+base builds its choosers on the unit; building a module FX package
+(`sdk/runtime/loader/build.py --dsp`) needs Node 24 for its FX page recipe
+([`octatrack-module-page.mjs`](../../../../scripts/octatrack-module-page.mjs)).
 The module FX with a chooser row (`MODULES` in `dsp_loader.py`) as packages. The
 figures are each module's own: cycles per sample and instance with their kind
 (executed worst cases for E-Verb and AIR CHORUS, static bounds, modeled, for the rest),
@@ -330,6 +332,17 @@ removal package any module gets (`sdk/tests/runtime_card_guard.c`: the loader ta
 
 `status.s` also gates stock's time-stretch helper task (`mw_ts_gate`): it skips a track whose TSTR is OFF, since only
 time-stretch reads its splice search and only BEAT reads its transient markers.
+
+`status.s` also shortens stock's delay routine (`mw_delay_read0`, `mw_delay_read`, `mw_delay_idle`). Stock reads,
+filters, mixes and writes back all eight tracks' delay rings every frame, whatever their FX2 and however silent the
+ring; nearly all of its time is the ring transfers. Once a track's taps and filter state have stayed within 2,048
+counts of zero (-120 dBFS) with its send gain at zero for 16,384 frames in a row (no DELAY on the track, or a DELAY
+whose echoes have died), its read and write are left out and only the dry gain is applied, as stock ramps it. Stock's
+filter never comes back to exact zero after a send, so this drops a residue below -120 dBFS rather than being
+bit-identical. A send that opens starts from silent taps. A module that takes the routine's seam before it (Tape Echo,
+`0x4000361a`) restarts the count. The A/B harness and the unit figures are in `delay-harness/`.
+
+`status.c` also keeps the frame interrupt's share of each frame from the frame guard's sums, over the last four seconds (the last play's while stopped), and the box after a pick shows it in its CPU row against `mw_frame_line`, the share where the guard starts to drop renders.
 
 `status.c` measures, all the time, the ColdFire's load (main's idle spin, timed on DTIM3, `status.s`), each
 DSP core's mean and peak load (core 0's own idle count, core 1's counted wait for core 0, `dsp_receiver.asm`),

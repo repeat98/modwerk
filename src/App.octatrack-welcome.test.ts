@@ -7,7 +7,6 @@ import App from './App'
 import { CommunityContext } from './community/context'
 import type { Session } from './community/api'
 import { fakeUnit } from './dev/octatrack-link-fake'
-import { OWNER_STATEMENT_KEY } from './config/owner-statement'
 
 // A production build with the Octatrack base path's switch flipped per test, on a computer.
 const release = vi.hoisted(() => {
@@ -35,8 +34,6 @@ beforeEach(() => {
   vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {})
   for (const name of ['scrollTo', 'scrollIntoView']) Object.defineProperty(HTMLElement.prototype, name, { configurable: true, value: () => {} })
   container = document.createElement('div'); document.body.append(container); root = createRoot(container)
-  // These tests count the welcome's own dialogs; the once-only owner statement has its own tests.
-  localStorage.setItem(OWNER_STATEMENT_KEY, 'seen')
 })
 afterEach(async () => {
   await act(() => root.unmount()); container.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals()
@@ -141,7 +138,7 @@ describe('the welcome to modules over USB', () => {
     delete (navigator as { usb?: unknown }).usb
     await open('library')
     await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
-    expect(welcome()!.textContent).toContain('This browser can’t use USB, so modules go onto the card as a file. For USB sync, use Chrome or Edge on a computer.')
+    expect(welcome()!.textContent).toContain('This browser can’t use USB, so modules go onto the card as a file. For USB sync, use Chrome, Edge or another Chromium browser on a computer.')
     expect(welcome()!.textContent).toContain('Sync over USB or the card')
     expect(welcome()!.textContent).toContain('Send them over USB from Chrome or Edge, or copy MODWERK0.SET to the card and restart.')
     expect(button(welcome()!, 'Set up my Octatrack')).toBeDefined()

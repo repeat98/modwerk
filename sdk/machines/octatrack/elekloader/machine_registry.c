@@ -94,6 +94,10 @@ static void release(unsigned track)
     charged[track] = 0; modwerk_dsp_source_release(track);
     if (!charges(old)) modwerk_dsp_source_engine_off(key(old));
 }
+/* dsp.c's make_way: a bank or project load needs the room this track's voice booked (#1542). The track renders the
+ * stock silent source until charge() claims it again, with the DSP FULL box while it does not fit. */
+void modwerk_machine_voice_shed(unsigned track);
+void modwerk_machine_voice_shed(unsigned track) { if (track < 8u) release(track); }
 /* Charge `who`'s voice on the track, replacing what was charged there; 0 when its core cannot carry it (nothing
  * changes). The machine the track was charged to keeps its engine only while another track still is. */
 /* Its price per voice: its module's engine's when its package carries one (ABI 10: the header's cycles and kind,
@@ -494,9 +498,10 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
 }
 static void ui_tick(void);
 void mg_tick(void); /* midi_generators.c: the MIDI tracks' generators */
+/* The UI tick, a task: also where a module that no track uses rests (loader.h modwerk_runtime_rest_poll; HOOKS.md). */
 void mw_ui_tick(void)
 {
-    MW_STAMP(14); ui_tick(); MW_STAMP(24); mg_tick(); MW_STAMP(25); MW_STAMP(15);
+    MW_STAMP(14); ui_tick(); MW_STAMP(24); mg_tick(); MW_STAMP(25); modwerk_runtime_rest_poll(); MW_STAMP(15);
 }
 static void ui_tick(void)
 {

@@ -1,8 +1,8 @@
 {
-  "programWords": 539,
-  "assembledSha256": "03469c86e11d0aca51b98501293074cd7140339cc8664e39376507339a322daa",
+  "programWords": 588,
+  "assembledSha256": "4bb74803178a809892e542d78608265a3a682892e26ac29ac87e63aa44835a0f",
   "floatOraclePeakError": 0.0011729174929883332,
-  "maxInstructionsPerSample": 423.0,
+  "maxInstructionsPerSample": 372.9,
   "results": [
     {
       "name": "signed multiply encodings",

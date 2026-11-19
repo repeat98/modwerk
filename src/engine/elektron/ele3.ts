@@ -23,8 +23,8 @@ export const ELE3_DEVICES: Record<ElemodMachine, Ele3Device> = {
   'analog-rytm-mkii': { mainSection: 3, mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x80000, flashLimit: 0x300000, sysexId: 0x0c },
   // The Analog Four MKII is the Rytm's platform; its OS keeps the voice calibration record at 0x300000.
   'analog-four-mkii': { mainSection: 3, mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x80000, flashLimit: 0x300000, sysexId: 0x0b },
-  // Syntakt (docs/SYNTAKT_OS_RESEARCH.md): the container is read from host SPI flash at 0x80000; the limit is the 2 MB
-  // in-OS upgrade receive buffer, the only size bound seen (inferred), so a build never exceeds a stock-sized container by more.
+  // Syntakt (docs/SYNTAKT_OS_RESEARCH.md): the container is read from host SPI flash at 0x80000. The upgrade receiver
+  // checks no size, and the unit's own analog calibration record sits at 0x300000, so this bound is the only guard for it.
   syntakt: { mainSection: 3, mainLoad: 0x40000400, stage: 0x40200000, flashAt: 0x80000, flashLimit: 0x280000, sysexId: 0x16 },
 }
 

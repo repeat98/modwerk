@@ -61,7 +61,7 @@ No matched firmware bytes or extracted disassembly are committed.
 
 ## Packaging route to evaluate
 
-The existing [standalone runtime adapter](../../machines/octatrack/module-adapters/standalone_runtime.py)
+The existing [standalone runtime adapter](../../../machines/octatrack/module-adapters/standalone_runtime.py)
 already handles authored-code coincidences for Play Modes, Tape Echo and Euclid.
 Its source/image-bound recipes remove the coincident spans from shipped literal
 bytes. At installation, hash-guarded copies from the user's own OS reconstruct

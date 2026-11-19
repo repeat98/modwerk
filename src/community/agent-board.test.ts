@@ -80,7 +80,8 @@ describe('agent board', () => {
     expect((await claim(bo, { kind: 'hook', key: 'digitakt/events/7' })).status).toBe(201)
     expect((await claim(bo, { kind: 'migration', key: '0085' })).status).toBe(201)
     expect((await claim(bo, { kind: 'machine-id', key: 'digitakt/10' })).status).toBe(201)
-    for (const [kind, key] of [['hook', 'octatrack/0x40'], ['migration', '85'], ['module', 'Octatrack/Echo'], ['machine-id', 'digitakt/1000'], ['nope', 'x']]) expect((await claim(bo, { kind, key })).status).toBe(400)
+    expect((await claim(bo, { kind: 'issue', key: '1624' })).status).toBe(201)
+    for (const [kind, key] of [['hook', 'octatrack/0x40'], ['migration', '85'], ['module', 'Octatrack/Echo'], ['machine-id', 'digitakt/1000'], ['issue', '#1624'], ['issue', '0'], ['nope', 'x']]) expect((await claim(bo, { kind, key })).status).toBe(400)
   })
 
   it('keeps notes to short plain prose', () => {
@@ -228,6 +229,22 @@ describe('agent board questions and findings', () => {
     await claim(ada, { kind: 'machine-id', key: 'digitakt/10' })
     const id = await (await post(bo, { kind: 'question', topic: 'machine-id', key: 'digitakt/10', body: 'May my kick take id 10 as well?' })).json()
     expect((await inbox(ada)).waiting.map((item: { id: string }) => item.id)).toEqual([id.message.id])
+    // So is an issue someone is fixing: a second agent asks its holder instead of fixing it too.
+    await claim(ada, { kind: 'issue', key: '1624' })
+    const issue = await (await post(bo, { kind: 'question', topic: 'issue', key: '1624', body: 'Are you still on this one?' })).json()
+    expect((await inbox(ada)).waiting.map((item: { id: string }) => item.id)).toEqual([id.message.id, issue.message.id])
+  })
+
+  it('lists questions asked in the same millisecond in the order they were asked', async () => {
+    const { boardLogin, claim, post, inbox } = await fixture()
+    const ada = await boardLogin('ada'), bo = await boardLogin('bo')
+    await claim(ada, { kind: 'module', key: 'octatrack/tape-echo', branch: 'module/tape-echo' })
+    await claim(ada, { kind: 'issue', key: '1624' })
+    vi.useFakeTimers({ now: Date.now(), toFake: ['Date'] })  // the clock stands still: every question shares one active_at
+    const asked: string[] = []
+    for (const [topic, key] of [['module', 'octatrack/tape-echo'], ['issue', '1624'], ['module', 'octatrack/tape-echo'], ['issue', '1624']])
+      asked.push((await (await post(bo, { kind: 'question', topic, key, body: 'Question ' + asked.length })).json()).message.id)
+    expect((await inbox(ada)).waiting.map((item: { id: string }) => item.id)).toEqual(asked)
   })
 
   it('keeps findings for everyone, about a machine or anything under it, until a guide carries them', async () => {
@@ -352,6 +369,26 @@ describe('agent board questions and findings', () => {
     await syncAgentClaims(env, env.DB!)
     expect(db.prepare('SELECT id, ended_reason AS reason FROM agent_messages WHERE parent_id IS NULL ORDER BY id').all())
       .toEqual([{ id: settled.id, reason: 'expired' }, { id: followed.id, reason: null }].sort((a, b) => a.id < b.id ? -1 : 1))
+  })
+
+  it('lists wanted tasks most urgent first; their author sets the priority, and the author or an administrator changes it', async () => {
+    const { call, boardLogin, post } = await fixture()
+    const ada = await boardLogin('ada'), bo = await boardLogin('bo')
+    const task = async (body: Record<string, unknown>) => (await (await post(ada, { kind: 'wanted', topic: 'site', key: 'forum', ...body })).json()).message
+    const later = await task({ body: 'Tidy the forum footer.', priority: 'low' }), plain = await task({ body: 'Show module versions on threads.' }), urgent = await task({ body: 'Fix the broken thread links.', priority: 'high' })
+    expect([later.priority, plain.priority, urgent.priority]).toEqual(['low', 'normal', 'high'])
+    for (const body of [{ kind: 'wanted', priority: 'urgent' }, { kind: 'finding', priority: 'high' }]) expect((await post(ada, { topic: 'site', key: 'forum', body: 'A task', ...body })).status).toBe(400)
+    const order = async () => (await (await call('/agent-board/messages?kind=wanted')).json()).messages.map((item: { id: string }) => item.id)
+    expect(await order()).toEqual([urgent.id, plain.id, later.id])
+    const prioritise = (id: string, priority: string, developer: string, admin = '') => call('/agent-board/messages/' + id + '/priority', 'POST', { priority }, developer, { admin })
+    expect((await prioritise(later.id, 'high', bo)).status).toBe(404)
+    expect((await (await prioritise(later.id, 'high', ada)).json()).message.priority).toBe('high')
+    const admin = (await (await call('/auth/admin', 'POST', { key: 'e'.repeat(64) })).json()).token as string
+    expect((await (await prioritise(urgent.id, 'low', '', admin)).json()).message.priority).toBe('low')
+    expect(await order()).toEqual([later.id, plain.id, urgent.id])
+    const { message: question } = await (await post(bo, { kind: 'question', topic: 'site', key: 'forum', to: 'ada', body: 'Which comes first?' })).json()
+    expect((await prioritise(question.id, 'high', bo)).status).toBe(400)
+    expect(question.priority).toBeUndefined()
   })
 
   it('lets authors take back their posts, administrators remove any, and drops a suspended account\'s', async () => {

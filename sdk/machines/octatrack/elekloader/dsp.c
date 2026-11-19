@@ -22,9 +22,10 @@ struct code { const uint32_t *words; const uint16_t *relocations; uint16_t count
 /* Stock first: each slot is charged at least the dearest stock effect its bank's Parts name there
  * (modwerk_dsp_slot_floors; owner, 24 October 2026, beta finding 34), so a Part switch or a RELOAD never needs room it
  * was not given, and eight stock slots of any bank fit a core (the dearest, MODWERK_DSP_RESERVE, eight times): only a
- * module, or a stock pick dearer than its bank's Parts use there, is refused. Machine voices and engines, which a bank
- * change keeps, still book each slot at MODWERK_DSP_RESERVE. All in chip cycles per sample (build_core.py). A module is
- * admitted before its tracks are known, so against the smaller core's allowance. */
+ * module, or a stock pick dearer than its bank's Parts use there, is refused. Machine voices and engines book the slots
+ * the same way, and give way when a bank or project load needs more (make_way; owner, 17 November 2026, #1542). All in
+ * chip cycles per sample (build_core.py). A module is admitted before its tracks are known, so against the smaller
+ * core's allowance. */
 #define MODWERK_DSP_ALLOWANCE (MODWERK_DSP_ALLOWANCE0 < MODWERK_DSP_ALLOWANCE1 ? MODWERK_DSP_ALLOWANCE0 : MODWERK_DSP_ALLOWANCE1)
 typedef char stock_always_fits[8u * MODWERK_DSP_RESERVE <= MODWERK_DSP_ALLOWANCE ? 1 : -1];
 /* An instance's chip cycles. A claim from the emulator (executed instructions, modeled cycles) ran 1.42-1.74 times
@@ -33,21 +34,16 @@ static uint32_t charged(uint32_t cycles, uint8_t kind) { return kind == RUNTIME_
 static uint32_t chip_cycles(const struct runtime_dsp *d) { return charged(d->cycles, d->kind); }
 /* Source stage: a machine whose DSP voice replaces a track's stock source declares a price per voice (each track it
  * renders) and per core while its engine is on, in its own figure kind. Both are charged before every FX slot (the
- * allocator starts each core's sum at modwerk_dsp_source_charge), and a claim fits beside each slot's committed or
- * pending charge, at least the stock reserve, so a stock pick still never needs admission. Machine lock held. */
+ * allocator starts each core's sum at modwerk_dsp_source_charge), and a claim fits beside the bank's slots as the
+ * allocator books them (voice_slots), so a Part switch or a stock pick the bank already names never needs room the
+ * voices took. A bank or project load that needs more takes it back from the voices (make_way). Machine lock held. */
 #define SOURCE_ENGINES 8u
 uint32_t dl_slot_cycles(unsigned slot); /* manager.c (build_core.py): a slot's committed or pending charge */
 static uint32_t source_voice[8], source_owner[8];
 static volatile uint8_t source_frozen; /* the self-test runs: no voice is charged anew until it ends (beta finding 63) */
 static struct { uint32_t module, cycles; } source_engine[2][SOURCE_ENGINES];
 static unsigned source_core(unsigned track) { return track < 4u ? 1u : 0u; } /* the allocator's core_of: tracks 1-4 on core 1 */
-static uint32_t slot_charge(unsigned core) /* each of the core's eight slots at least the stock reserve: for voices */
-{
-    uint32_t sum = 0;
-    for (unsigned i = 0; i < 16u; ++i)
-        if (source_core(i & 7u) == core) { uint32_t x = dl_slot_cycles(i); sum += x > MODWERK_DSP_RESERVE ? x : MODWERK_DSP_RESERVE; }
-    return sum;
-}
+static uint32_t voice_slots(unsigned core); /* below: the core's slots as a voice books them */
 uint32_t modwerk_dsp_source_charge(unsigned core)
 {
     uint32_t sum = 0;
@@ -73,8 +69,11 @@ int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, ui
     for (unsigned e = 0; at == SOURCE_ENGINES && e < SOURCE_ENGINES; ++e) if (!source_engine[c][e].module) at = e;
     if (at == SOURCE_ENGINES) return RUNTIME_FULL;
     uint32_t v = charged(voice, kind), e = charged(engine, kind), old = source_engine[c][at].module ? source_engine[c][at].cycles : 0;
+#ifdef MODWERK_MEASURE_VOICES
+    v = e = 0; /* a development twin measuring a voice (build_core.py --measure-voices): admitted uncharged */
+#endif
     uint32_t keep = old > e ? old : e;
-    uint32_t total = slot_charge(c) + modwerk_dsp_source_charge(c) - source_voice[track] - old + v + keep;
+    uint32_t total = voice_slots(c) + modwerk_dsp_source_charge(c) - source_voice[track] - old + v + keep;
     if (total > (c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0)) { refused_core = c, refused_add = v + keep - old; return RUNTIME_CYCLES; }
     source_voice[track] = v, source_owner[track] = module;
     source_engine[c][at].module = module, source_engine[c][at].cycles = keep;
@@ -140,6 +139,7 @@ fx_set modwerk_fxmap_used(void);
 uint32_t modwerk_fxmap_generation(void);
 void modwerk_fxmap_assign(unsigned id, uint32_t module, unsigned layout, const char *name);
 void modwerk_fxmap_name(unsigned id, char *out);
+uint32_t modwerk_fxmap_named(unsigned id);
 int modwerk_fxmap_loading(void);
 extern volatile uint32_t modwerk_fxmap_read, modwerk_fxmap_written;
 extern volatile uint32_t modwerk_modset_generation, modwerk_modset_count, modwerk_modset_result; /* modset.c */
@@ -189,6 +189,33 @@ static uint32_t bank_booking(const uint32_t least[16], unsigned core)
     return most;
 }
 static const uint8_t no_target[16] = {255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255};
+/* A voice's view of the core's slots: the bank's dearest set as the allocator books it (each slot at least the dearest
+ * stock effect the bank's Parts or the tracks name there), and each slot's committed or pending charge where that is
+ * dearer, so a pick under way is not undercut. */
+static uint32_t voice_slots(unsigned core)
+{
+    uint32_t least[16];
+    floors(no_target, least);
+    for (unsigned i = 0; i < 16u; ++i) { uint32_t x = dl_slot_cycles(i); if (x > least[i]) least[i] = x; }
+    return bank_booking(least, core);
+}
+/* machine_registry.c: the track's voice gives way (its charge, and its engine when no other track holds it). A harness
+ * without machines frees the charge only. */
+void modwerk_machine_voice_shed(unsigned track);
+__attribute__((weak)) void modwerk_machine_voice_shed(unsigned track) { modwerk_dsp_source_release(track); }
+/* The bank first (owner, 17 November 2026, #1542): before the allocator plans the tracks' effects, a core whose bank
+ * (`was`: what its Parts and the tracks name) no longer fits beside its voices, after a bank or project load, drops
+ * voices from its last track down until it does. Such a track renders the stock silent source, and the machine
+ * registry claims it again each tick, with the DSP FULL box, until there is room. A pick the bank does not name never
+ * takes a voice's room: it is refused as before. */
+static void make_way(const uint32_t was[16])
+{
+    for (unsigned c = 0; c < 2u; ++c) {
+        uint32_t bank = bank_booking(was, c), allowance = c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0;
+        for (unsigned t = c ? 4u : 8u; t-- > (c ? 0u : 4u) && bank + modwerk_dsp_source_charge(c) > allowance;)
+            if (source_owner[t]) modwerk_machine_voice_shed(t);
+    }
+}
 /* The allocator's prepare (`ids` its target): each slot's floor into `least`, and 1 + the core where the target's raised
  * floors (a stock pick dearer than its bank's Parts use there) take what runs or a Part of the bank past the allowance
  * beside the machines' voices, else 0, so a Part switch is never refused for a stock effect (owner, 24 October 2026, beta
@@ -198,6 +225,7 @@ unsigned modwerk_dsp_slot_floors(const uint8_t ids[16], uint32_t least[16])
     uint32_t was[16];
     unsigned raised = 0;
     floors(no_target, was); /* the Parts once: the target only adds its own stock effects */
+    make_way(was);
     for (unsigned i = 0; i < 16u; ++i) {
         unsigned p = ids[i];
         uint32_t x = p < MODWERK_FX_IDS && !owner[p] ? dl_catalog[p].cycles : 0u;
@@ -231,7 +259,7 @@ static int free_for(unsigned k, uint32_t module, fx_set used)
 #ifdef MODWERK_RUNTIME_SETS
     if (modwerk_runtime_handle_reserved(module,k)) return 0;
 #endif
-    uint32_t named = modwerk_fxmap_module(k);
+    uint32_t named = modwerk_fxmap_named(k); /* the map, else the catalogue, as MISSING names it: a lost line (#1720) */
     return named == module || !fx_in(used, k); /* a handle the project uses for an unknown module stays its own */
 }
 static int choose(uint32_t module, unsigned preferred, int pinned)
@@ -505,7 +533,11 @@ static int rebind_tick(void) /* 1: the handles follow the map's current generati
             if (!owner[k]) continue;
             int want = modwerk_fxmap_handle(owner[k]);
             uint32_t named = modwerk_fxmap_module(k);
-            if (want == (int)k || (want < 0 && (!named || named == owner[k] || !fx_in(used, k)))) continue;
+            if (want == (int)k) continue;
+            if (want < 0 && (!named || named == owner[k] || !fx_in(used, k))) { /* it stays: named, so a save keeps it (#1720) */
+                modwerk_fxmap_assign(k, owner[k], owner_layout[k], owner_name[k]);
+                continue;
+            }
             moving[moving_count].package = dl_catalog[k];
             moving[moving_count].code[0] = dl_codes[0][k], moving[moving_count].code[1] = dl_codes[1][k];
             moving[moving_count].module = owner[k], moving[moving_count].layout = owner_layout[k];

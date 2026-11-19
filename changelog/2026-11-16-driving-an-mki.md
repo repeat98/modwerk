@@ -1,0 +1,1 @@
+Docs: driving an Octatrack MKI over USB. The session's key names are the MKII panel's codes, so on an MKI the track keys work but PROJ, FUNC + MIXER and the arrows do nothing; the png step shows stock's menus; and removing a table owner such as Mute Modes while its menu is open is refused with refusal 7, whose text speaks of tracks.

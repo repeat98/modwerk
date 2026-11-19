@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {"event": "module_key", "fn": "arr_key"},
+    {"event": "module_tick", "fn": "arr_tick"},
+    {"event": "module_draw", "fn": "arr_draw"}
+  ]
+}

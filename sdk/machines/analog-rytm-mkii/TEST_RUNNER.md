@@ -16,7 +16,7 @@ this file is the reference.
 - rytm-emu from `npm run upstream:tools`, built once with `cargo build --release` in its checkout: `dtboot` is the
   binary (`--emu` or `RYTM_EMU`).
 - A test image: a development base (`npm run machine:base -- analog-rytm-mkii --stock STOCK.syx --dev --out DIR`,
-  the send-bus one unless the set has no send effect), linked with your module and those it must be tested beside by
+  the variant the site would pick for the set: send-bus with a send effect, voices with a voice machine, else plain), linked with your module and those it must be tested beside by
   `node scripts/link-image.mjs --stock STOCK.syx --version XX01 --out IMAGE.syx --elemod DEV.elemod --module
   analog-rytm-mkii:<id> --lock-in RUNNING.store-lock.json --lock-out XX01.store-lock.json`. A new four-character label
   for every build; `ramSpare` 68 B or more. Images, lockfiles, reports and recordings stay outside Git.
