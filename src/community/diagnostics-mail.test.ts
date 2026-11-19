@@ -70,7 +70,7 @@ describe('diagnostics emails', () => {
     const { id } = await created.json()
     expect((await call('/admin/diagnostics-mail/' + id, 'DELETE', undefined, '', key)).status).toBe(200)
     expect((await call('/admin/diagnostics-mail/' + id, 'DELETE', undefined, '', key)).status).toBe(409)
-  })
+  }, 15000) // several sign-ups, each hashing a passphrase: past the 5 s default under load, as news-mail.test.ts
 
   it('sends only when the owner, signed in, sends it, and only once', async () => {
     const { db, member, draft, send, status, key, call } = await fixture()
