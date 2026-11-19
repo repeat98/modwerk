@@ -24,7 +24,7 @@ export const CLAIM_KEYS: Record<ClaimKind, RegExp> = {
   issue: /^[1-9]\d{0,6}$/,
 }
 export const CLAIM_DAYS = 14, CLAIM_LIMIT = 10, CLAIM_WRITES_PER_HOUR = 30, NOTE_LIMIT = 120, RELEASED_KEPT_DAYS = 90
-const DAY = 86400000
+const DAY = 86400000, CLAIM_EXPIRY_NOTICE_DAYS = 3
 
 // machine: what holds across one instrument; site: an area of the site and Worker (forum, worker, configurator).
 export const TOPIC_KINDS = [...CLAIM_KINDS, 'machine', 'site'] as const
@@ -263,13 +263,15 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
   return response({ message: await thread(db, id, nowMs) })
 }
 
-/** Questions waiting for the signed-in developer, and replies to what they wrote. */
+/** Questions, replies and claims nearing expiry for the signed-in developer. */
 async function inbox(db: Database, user: { id: string; github_login: string }, nowMs: number) {
   const now = new Date(nowMs).toISOString(), live = cutoffs(nowMs)
   // Addressed to you, or to nobody about something you hold; and the last word is not yours.
   const waiting = (await db.prepare(MESSAGE_SELECT + " WHERE m.parent_id IS NULL AND m.kind='question' AND " + LIVE + ' AND m.user_id<>? AND (m.to_login=? OR (m.to_login IS NULL AND EXISTS(SELECT 1 FROM agent_claims c WHERE c.user_id=? AND c.kind=m.topic_kind AND c.claim_key=m.topic_key AND c.released_at IS NULL AND (c.expires_at IS NULL OR c.expires_at>?)))) AND ' + LAST_WORD + '<>? ORDER BY m.active_at, m.rowid LIMIT 50').bind(...live, user.id, user.github_login, user.id, now, user.id).all<MessageRow>()).results
   const replies = (await db.prepare(MESSAGE_SELECT + ' WHERE m.parent_id IS NULL AND m.user_id=? AND ' + LIVE + ' AND ' + LAST_WORD + '<>? ORDER BY m.active_at DESC, m.rowid DESC LIMIT 50').bind(user.id, ...live, user.id).all<MessageRow>()).results
-  return { login: user.github_login, waiting: await threads(db, waiting, nowMs), replies: await threads(db, replies, nowMs) }
+  const expiresBy = new Date(nowMs + CLAIM_EXPIRY_NOTICE_DAYS * DAY).toISOString()
+  const { results: expiring } = await db.prepare(SELECT + ' WHERE c.user_id=? AND c.released_at IS NULL AND c.pull_request IS NULL AND c.expires_at>? AND c.expires_at<=? ORDER BY c.expires_at, c.id').bind(user.id, now, expiresBy).all<ClaimRow>()
+  return { login: user.github_login, waiting: await threads(db, waiting, nowMs), replies: await threads(db, replies, nowMs), expiring: expiring.map(view) }
 }
 
 /** How many developers use the board: counts only, no names. */
@@ -286,13 +288,62 @@ async function activity(db: Database, nowMs: number) {
   return { days: ACTIVITY_DAYS, developers: { signedIn: row?.signedIn ?? 0, active: row?.active ?? 0 }, claims: { active: row?.claims ?? 0, made: row?.claimsMade ?? 0 }, questions: { open: row?.questions ?? 0 }, findings: { active: row?.findings ?? 0 }, posts: row?.posts ?? 0 }
 }
 
+const WEEK = 7 * DAY, ACTIVITY_WEEK_LIMIT = Math.floor(RELEASED_KEPT_DAYS / 7)
+
+/** Counts by UTC week from the retained claim and message records. No author IDs leave the database. */
+async function weeklyActivity(db: Database, nowMs: number, requested: string) {
+  const weeks = Number(requested)
+  if (!/^[1-9]\d?$/.test(requested) || weeks > ACTIVITY_WEEK_LIMIT) throw new HttpError(400, `Choose 1 to ${ACTIVITY_WEEK_LIMIT} weeks.`)
+  const monday = new Date(nowMs)
+  monday.setUTCHours(0, 0, 0, 0)
+  monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7)
+  const start = monday.getTime() - (weeks - 1) * WEEK
+  const from = new Date(start).toISOString(), asOf = new Date(nowMs).toISOString()
+  const { results } = await db.prepare(`WITH contributions AS (
+      SELECT created_at AS at, user_id, 'claim' AS kind FROM agent_claims
+      UNION ALL
+      SELECT created_at, user_id, CASE WHEN parent_id IS NULL THEN kind ELSE 'reply' END FROM agent_messages
+    ), events AS (
+      SELECT at, user_id, kind FROM contributions
+      UNION ALL
+      SELECT MIN(at), NULL, 'first' FROM contributions GROUP BY user_id
+      UNION ALL
+      SELECT CASE WHEN released_reason='expired' THEN COALESCE(expires_at,released_at) ELSE COALESCE(released_at,expires_at) END,
+        NULL, CASE WHEN released_at IS NULL OR released_reason='expired' THEN 'expired'
+          WHEN released_reason='merged' THEN 'merged' WHEN released_reason='holder' THEN 'holder' ELSE 'other' END
+      FROM agent_claims WHERE released_at IS NOT NULL OR expires_at<=?
+    )
+    SELECT CAST((julianday(at)-julianday(?))/7 AS INTEGER) AS week,
+      COUNT(*) FILTER (WHERE kind='claim') AS claimsMade,
+      COUNT(*) FILTER (WHERE kind='merged') AS merged, COUNT(*) FILTER (WHERE kind='holder') AS releasedByHolder,
+      COUNT(*) FILTER (WHERE kind='expired') AS expired, COUNT(*) FILTER (WHERE kind='other') AS other,
+      COUNT(DISTINCT user_id) AS active, COUNT(*) FILTER (WHERE kind='first') AS firstSeen,
+      COUNT(*) FILTER (WHERE kind='question') AS questions, COUNT(*) FILTER (WHERE kind='finding') AS findings,
+      COUNT(*) FILTER (WHERE kind='wanted') AS wanted, COUNT(*) FILTER (WHERE kind='reply') AS replies
+    FROM events WHERE at>=? AND at<=? GROUP BY week`).bind(asOf, from, from, asOf).all<Record<string, number>>()
+  const byWeek = new Map(results.map(row => [row.week, row]))
+  return { asOf, weeks: Array.from({ length: weeks }, (_, index) => {
+    const startsAt = start + index * WEEK, endsAt = startsAt + WEEK, row = byWeek.get(index)
+    return {
+      startsAt: new Date(startsAt).toISOString(), endsAt: new Date(endsAt).toISOString(), complete: endsAt <= nowMs,
+      claims: { made: row?.claimsMade ?? 0, ended: { merged: row?.merged ?? 0, releasedByHolder: row?.releasedByHolder ?? 0, expired: row?.expired ?? 0, other: row?.other ?? 0 } },
+      developers: { active: row?.active ?? 0, firstSeen: row?.firstSeen ?? 0 },
+      threads: { questions: row?.questions ?? 0, findings: row?.findings ?? 0, wanted: row?.wanted ?? 0 },
+      replies: row?.replies ?? 0,
+    }
+  }) }
+}
+
 export async function agentBoardRoutes(request: Request, env: Env, db: Database, adminId: string | null): Promise<Response | null> {
   const url = new URL(request.url), path = url.pathname
   if (!path.startsWith('/api/agent-board/')) return null
   const nowMs = Date.now(), now = new Date(nowMs).toISOString()
   if (path === '/api/agent-board/me' && request.method === 'GET') return response({ login: needBoardUser(await boardUser(request, env, db)).github_login })
   if (path === '/api/agent-board/inbox' && request.method === 'GET') return response(await inbox(db, needBoardUser(await boardUser(request, env, db)), nowMs))
-  if (path === '/api/agent-board/activity' && request.method === 'GET') return response(await activity(db, nowMs))
+  if (path === '/api/agent-board/activity' && request.method === 'GET') {
+    const weeks = url.searchParams.get('weeks')
+    return response(weeks === null ? await activity(db, nowMs) : await weeklyActivity(db, nowMs, weeks))
+  }
   if (path === '/api/agent-board/messages' || path.startsWith('/api/agent-board/messages/')) return await messageRoutes(request, url, env, db, adminId, nowMs)
   if (path === '/api/agent-board/claims' && request.method === 'GET') {
     const kind = url.searchParams.get('kind'), key = url.searchParams.get('key'), holder = url.searchParams.get('holder')?.replace(/^@/, '').toLowerCase()

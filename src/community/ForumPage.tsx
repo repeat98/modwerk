@@ -28,6 +28,8 @@ import { ForumThreadList } from './ForumThreadList'
 import { RichTextEditor } from './ForumEditor'
 import { DEVICES, DEVICES_BY_ID, deviceHref, deviceTitle } from '../devices/registry'
 import { DeviceImage } from '../devices/DeviceImage'
+import { isZoomSetDevice } from '../devices/zoom-effects'
+import { zoomHubHref } from '../devices/zoom-hub-route'
 import { MediaPicker } from './ForumMedia'
 import { mediaBusy, readyAttachments, type PendingMedia } from './forum-media-client'
 import { ModuleIssueNotice } from './ModuleIssueNotice'
@@ -125,17 +127,21 @@ function ForumList({query,profile,machineHint}:{query:URLSearchParams;profile?:s
 function NewThread({configuration:active,configurations,query}:{configuration?:Configuration;configurations:Configuration[];query:URLSearchParams}){
   const {session}=useCommunity()
   const initialCategory=(Object.hasOwn(FORUM_CATEGORIES,query.get('category')??'')?query.get('category'):'general') as ForumCategory
-  const requestedMachine=DEVICES_BY_ID[query.get('machine')??'']?query.get('machine')!:communityModule(query.get('module')??'')?.machine??(initialCategory==='configs'&&active?configurationDevice(active):'')
-  const initialMachine=initialCategory==='issues'&&requestedMachine&&!machineModules(requestedMachine).length?'':requestedMachine
+  const requestedMachine=DEVICES_BY_ID[query.get('machine')??'']?query.get('machine')!:communityModule(query.get('module')??'')?.machine??''
+  const activeMachine = active ? configurationDevice(active) : ''
+  const fallbackShareMachine = machineModules(activeMachine).length ? activeMachine : 'octatrack'
+  const initialMachine = machineModules(requestedMachine).length ? requestedMachine
+    : initialCategory === 'configs' ? fallbackShareMachine : initialCategory === 'issues' ? '' : requestedMachine
   const [machine,setMachine]=useState(initialMachine),[category,setCategory]=useState(initialCategory),[configId,setConfigId]=useState(active?.id??'')
   const [moduleId,setModuleId]=useState(COMMUNITY_MODULES.some(module=>module.id===query.get('module')&&(!initialMachine||module.machine===initialMachine))?query.get('module')!:'')
   const [error,setError]=useState(''),[busy,setBusy]=useState(false),[media,setMedia]=useState<PendingMedia[]>([]),[body,setBody]=useState('')
   const composer=useRef<HTMLFormElement>(null),[pendingForm,setPendingForm]=useState<HTMLFormElement|null>(null)
   const modules=machine?machineModules(machine):COMMUNITY_MODULES
   const choices=configurations.filter(item=>configurationDevice(item)===machine)
-  const configuration=choices.find(item=>item.id===configId)??choices[0]
+  const chosen = choices.find(item => item.id === configId) ?? choices.find(item => item.id === active?.id)
+  const configuration = chosen ?? [...choices].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]
   function changeMachine(value:string){setMachine(value);if(value&&communityModule(moduleId)?.machine!==value)setModuleId('')}
-  function changeCategory(value:ForumCategory){setCategory(value);if(value==='configs'&&!['octatrack','digitakt','digitone'].includes(machine))changeMachine(active?configurationDevice(active):'octatrack')}
+  function changeCategory(value:ForumCategory){setCategory(value);if(value==='configs'&&!machineModules(machine).length)changeMachine(fallbackShareMachine)}
   function requestSubmit(form:HTMLFormElement){if(moduleId||category==='modules')setPendingForm(form);else void submit(form)}
   function reportIssue(){
     const title=String(composer.current?new FormData(composer.current).get('title')??'':'')
@@ -162,7 +168,7 @@ function NewThread({configuration:active,configurations,query}:{configuration?:C
     {!!modules.length&&<label>Related module (optional)<select name="moduleId" value={moduleId} onChange={event=>setModuleId(event.target.value)}><option value="">Choose a module</option>{modules.map(module=><option key={module.id} value={module.id}>{module.name}{!machine?' · '+DEVICES_BY_ID[module.machine].name:''}</option>)}</select></label>}
     <ModuleIssueNotice moduleId={moduleId} machine={machine} onReportIssue={reportIssue}/>
     <label>Title<input name="title" aria-label="Title" aria-describedby="forum-title-hint" required maxLength={160} placeholder="Give your discussion a clear title"/><span id="forum-title-hint" className="forum-field-hint">A specific title helps the right people find your thread.</span></label>
-    {category==='configs'&&<aside className="forum-config"><label>Configuration to share<select value={configuration?.id??''} onChange={event=>setConfigId(event.target.value)}>{!choices.length&&<option value="">No configuration for this machine</option>}{choices.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></label><h2>{configuration?.name??'No configuration selected'}</h2><p>{configuration?.moduleIds.map(id=>(nativeModule(machine,id)?.name??id)+' '+configuration.moduleVersions[id]).join(' · ')||'Add modules to a local configuration first.'}</p><p>This publishes a fixed copy of the selected configuration. Firmware stays on your device.</p><a href={deviceHref(machine||'octatrack','configuration')}>Review your configuration →</a></aside>}
+    {category==='configs'&&<aside className="forum-config"><label>Configuration to share<select value={configuration?.id??''} onChange={event=>setConfigId(event.target.value)}>{!choices.length&&<option value="">No configuration for this machine</option>}{choices.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></label><h2>{configuration?.name??'No configuration selected'}</h2><p>{configuration?.moduleIds.map(id=>(nativeModule(machine,id)?.name??id)+' '+configuration.moduleVersions[id]).join(' · ')||'Add modules to a local configuration first.'}</p><p>This publishes a fixed copy of the selected configuration. Firmware stays on your device.</p><a href={isZoomSetDevice(machine) ? zoomHubHref(machine, 'set') : deviceHref(machine, 'configuration')}>Review your configuration →</a></aside>}
     <div className="forum-editor-field"><label htmlFor="forum-new-post">Your post</label><RichTextEditor id="forum-new-post" name="body" label="Your post" value={body} onChange={setBody} disabled={busy} placeholder="Share enough detail for others to join in…"/></div>{session.forumMedia&&<MediaPicker items={media} setItems={setMedia}/>}<p className="service-note">Posts are public. Share only original or properly licensed content, including samples in sound clips. Do not post firmware, dumps, passwords or personal information.</p><button className="button button-primary" disabled={busy||mediaBusy(media)||!body.trim()||body.length>12000||(category==='configs'&&!configuration?.moduleIds.length)}>{busy?'Publishing…':'Publish thread'}<Icon name="arrow" size={15}/></button></form><aside className="forum-compose-tips"><h2>A good conversation starts here</h2><p><strong>Give it context.</strong><br/>Share the module, what you tried, and what you want to explore.</p><p><strong>Make it useful.</strong><br/>Share a useful tip or a configuration others can try. Report module bugs with “Report an issue” on the module page.</p><p><strong>Keep it kind.</strong><br/>Module authors build in their spare time and owe no fix or reply time. Criticise the work, not the person, credit the people behind your ideas and leave room for different approaches. <a href="#community-rules">Community rules</a></p></aside></div>}{pendingForm&&<ModuleDiscussionDialog onClose={()=>setPendingForm(null)} onPost={()=>{const form=pendingForm;setPendingForm(null);void submit(form)}} onReportIssue={reportIssue}/>} {error&&<p className="file-error" role="alert">{error}</p>}</>
 }
 export function ForumPage({route,configuration,configurations,onCopy}:{route:string;configuration?:Configuration;configurations:Configuration[];onCopy:(config:SharedConfiguration)=>void}){
