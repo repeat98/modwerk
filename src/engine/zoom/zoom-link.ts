@@ -12,9 +12,10 @@ const locked = <T>(work: () => Promise<T>): Promise<T> => {
 }
 
 export type ZoomLinkStatus = 'unsupported' | 'idle' | 'connecting' | 'ready' | 'reading' | 'writing'
-export type ZoomFile = { name: string; size: number; effect?: { gid: number; fxid: number; version: string } }
+export type ZoomFile = { name: string; size: number; inEffectList?: boolean; effect?: { gid: number; fxid: number; version: string } }
 export type ZoomLinkState = {
   readonly status: ZoomLinkStatus
+  readonly connection?: number
   readonly identity?: ZoomIdentity
   readonly notice?: { tone: 'error' | 'info'; text: string }
   /** While reading: what, and how far. */
@@ -31,7 +32,10 @@ const PEDAL = /zoom|ms-?(50g|60b|70cdr)/i
 const isPedal = (port: MidiPort) => PEDAL.test(port.name ?? '') && port.state !== 'disconnected'
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
+let nextConnection = 0
+
 export class ZoomLink {
+  private operationConnection?: number
   private state: ZoomLinkState
   private readonly listeners = new Set<() => void>()
   private access?: MidiAccessLike
@@ -92,7 +96,8 @@ export class ZoomLink {
       })
       const identity = reply ? parseIdentity(reply) : undefined
       if (!identity) return this.set({ status: 'idle', notice: { tone: 'error', text: 'The pedal didn’t answer. Close other apps that use it (Zoom Effect Manager, editors), then try again.' } })
-      this.set({ status: 'ready', identity })
+      this.heads.clear()
+      this.set({ status: 'ready', identity, connection: ++nextConnection })
       if (!isUpdateMode(identity)) void this.quiet(() => this.hello())
     } catch {
       this.set({ status: 'idle', notice: { tone: 'error', text: 'This browser didn’t allow MIDI. Allow MIDI with SysEx for this site, then try again.' } })
@@ -143,6 +148,7 @@ export class ZoomLink {
     this.nextSend = t + (bytes.length >= 64 ? 22 : 3)
   }
   private ask(body: number[], timeout = this.timeout): Promise<number[] | null> {
+    if (this.operationConnection !== this.state.connection) throw new Error('The pedal connection changed.')
     const id = this.state.identity?.deviceId
     if (id === undefined || !this.output) return Promise.resolve(null)
     return new Promise(resolve => {
@@ -203,15 +209,18 @@ export class ZoomLink {
 
   /** One file operation at a time, shown as reading while it runs. */
   private exclusive<T>(label: string, work: () => Promise<T>, status: 'reading' | 'writing' = 'reading'): Promise<T> {
+    const connection = this.state.connection
     const run = this.op.then(() => locked(async () => {
-      if (this.state.status !== 'ready') throw new Error('Connect the pedal first.')
+      if (!connection || connection !== this.state.connection || this.state.status !== 'ready') throw new Error('Connect the pedal first.')
       const identity = this.state.identity, stay = (event: Event) => event.preventDefault()
       // Closing the tab mid-write can leave the effect list deleted: the browser asks first.
       if (status === 'writing') globalThis.addEventListener?.('beforeunload', stay)
-      this.set({ status, identity, progress: { label, done: 0, total: 0 } })
+      this.operationConnection = connection
+      this.set({ status, identity, connection, progress: { label, done: 0, total: 0 } })
       try { await this.drain(); return await work() } finally {
         globalThis.removeEventListener?.('beforeunload', stay)
-        if (this.getState().status === status) this.set({ status: 'ready', identity })
+        this.operationConnection = undefined
+        if (this.state.connection === connection && this.getState().status === status) this.set({ status: 'ready', identity, connection })
       }
     }))
     this.op = run.catch(() => undefined)
@@ -251,8 +260,10 @@ export class ZoomLink {
   // Which effect files can hold an effect of group `gid`: those the effect list puts in that group, and any it doesn't
   // name (its group is the header's, seen on all 158 of an MS-70CDR). A header costs six round trips and a pedal holds
   // about 160 effects, most in other groups. Without a readable list, every effect file.
-  private inGroup(files: ZoomFile[], gid: number, list: number[]) {
-    const groups = list.length === EFFECT_LIST_SIZE ? new Map(listRecords(list).map(r => [r.name.toUpperCase(), r.gid])) : undefined
+  private effectGroups(list: number[]) {
+    return list.length === EFFECT_LIST_SIZE ? new Map(listRecords(list).map(r => [r.name.toUpperCase(), r.gid])) : undefined
+  }
+  private inGroup(files: ZoomFile[], gid: number, groups?: Map<string, number>) {
     return files.filter(f => /\.zdl$/i.test(f.name) && (groups?.get(f.name.toUpperCase()) ?? gid) === gid)
   }
   private async head(file: ZoomFile) {
@@ -306,8 +317,9 @@ export class ZoomLink {
     }
   }
   /** Write back an effect list a failed rollback left unwritten (an error's `unrestored`), kept only in this page. */
-  readonly restoreList = (list: number[]) => this.exclusive('Writing the effect list back', async () => {
+  readonly restoreList = (list: number[], connection: number) => this.exclusive('Writing the effect list back', async () => {
     this.refuseWrites()
+    if (connection !== this.state.connection) throw new Error('The pedal connection changed.')
     if (list.length !== EFFECT_LIST_SIZE) throw new Error('That is not an effect list; nothing was written.')
     await this.writeList(list, list)
   }, 'writing')
@@ -368,7 +380,7 @@ export class ZoomLink {
       }
       return { previousList: undefined, unchanged: false, moved }
     }
-    const list = await this.effectList(), effects = this.inGroup(files, info.gid, list), taken = new Map<number, string>()
+    const list = await this.effectList(), effects = this.inGroup(files, info.gid, this.effectGroups(list)), taken = new Map<number, string>()
     for (const [i, f] of effects.entries()) {
       this.progress('Checking effect IDs on the pedal', i + 1, effects.length)
       const head = await this.head(f)
@@ -412,10 +424,13 @@ export class ZoomLink {
   /** Every file on the pedal; with versions, the effect files that can be added effects (group 8) also get their group, effect id and version (slower). */
   readonly listFiles = ({ versions = false } = {}) => this.exclusive('Reading the file list', async () => {
     const files = await this.list()
-    const effects = versions ? this.inGroup(files, LOCAL_IDS.gid, files.some(f => f.name.toUpperCase() === EFFECT_LIST) ? await this.read(EFFECT_LIST) : []) : []
+    if (!versions) return files
+    const groups = files.some(f => f.name.toUpperCase() === EFFECT_LIST) ? this.effectGroups(await this.read(EFFECT_LIST)) : undefined
+    const effects = this.inGroup(files, LOCAL_IDS.gid, groups)
     for (const [i, file] of effects.entries()) {
       this.progress('Reading effect versions', i + 1, effects.length)
       file.effect = await this.head(file)
+      file.inEffectList = groups?.has(file.name.toUpperCase()) ?? false
     }
     return files
   })

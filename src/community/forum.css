@@ -167,7 +167,7 @@
 .forum-role-badge { --role-color: #92bccd; color: var(--role-color); font-size: 10px; font-weight: 600; letter-spacing: .02em; padding: 2px 5px; border: 1px solid color-mix(in srgb, var(--role-color) 45%, transparent); border-radius: 4px; }
 .forum-role-badge[data-role="owner"] { --role-color: #e3c27c; }
 .forum-post time, .forum-post small { font-size: 11px; color: var(--muted); }
-.forum-post-body { overflow-wrap: anywhere; font-size: 15px; line-height: 1.85; color: #dedde8; }
+.forum-post-body { overflow-wrap: anywhere; font-size: 15px; line-height: var(--reading-line-height); color: #dedde8; }
 .forum-post-body p { white-space: pre-wrap; }
 .forum-post-body > * + * { margin-top: 16px; }
 .forum-post-body blockquote { margin: 16px 0; padding: 10px 16px; border-left: 3px solid #696587; border-radius: 0 6px 6px 0; background: #2b2933; color: #bdb7d0; white-space: pre-wrap; }

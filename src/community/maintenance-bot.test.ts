@@ -59,6 +59,25 @@ describe('maintenance bot ledger', () => {
     expect(sent.at(-1)!.body.text).toBe('✅ #7 Merge the thing')
   })
 
+  it.each(['resubmit', 'scheduled pass'])('starts the full veto window on successful delivery by %s', async retry => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-17T10:00:00Z'))
+    const { bot, sent } = await fixture(), id = 'a'.repeat(16)
+    const actions = [action(id, 'window', { windowHours: 2 })]
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json({ ok: false }, { status: 503 }))
+    await bot('/actions', 'POST', { actions })
+    vi.setSystemTime(new Date('2026-11-18T10:00:00Z'))
+    expect((await bot('/actions/' + id + '/claim', 'POST')).status).toBe(409)
+    if (retry === 'resubmit') await bot('/actions', 'POST', { actions: [action(id, 'window', { windowHours: 0 })] })
+    expect((await (await bot('/actions/due')).json()).actions).toEqual([])
+    expect(sent).toHaveLength(1)
+    expect(sent[0].body.text).toContain('13:00')
+    vi.setSystemTime(new Date('2026-11-18T11:59:59Z'))
+    expect((await bot('/actions/' + id + '/claim', 'POST')).status).toBe(409)
+    vi.setSystemTime(new Date('2026-11-18T12:00:00Z'))
+    expect((await bot('/actions/' + id + '/claim', 'POST')).status).toBe(200)
+  })
+
   it('runs a notice at once without a Telegram message, and an ask never without approval', async () => {
     const { bot, sent, press } = await fixture()
     await bot('/actions', 'POST', { actions: [action('b'.repeat(16), 'notify', { kind: 'label' }), action('c'.repeat(16), 'ask')] })
