@@ -336,9 +336,9 @@
       "name": "SIDECHAIN COMP",
       "module": "95cff696",
       "bytes": 2636,
-      "sha256": "d5a5a21308b765dae5319453ef922cf812df70e463e3ba6a07edfe2da8a99db1",
+      "sha256": "7aedb56f64cc17732efd367a3a1e4a85f73196924e4bf362411fa23217639408",
       "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
-      "requiredBase": "a5f1dd2d95c126bbde27c45e6ac1e77c3d793c8a7ad41b7568eb31b1f7a76db8"
+      "requiredBase": "3de925cc0da13ccc4b2991a89e07e382731d12c86472f0ae503b2b96787d2c14"
     },
     {
       "id": "output-matrix",
@@ -352,9 +352,9 @@
       "name": "OUTPUT MATRIX",
       "module": "caf158b5",
       "bytes": 3740,
-      "sha256": "f1c7694f1e86aa5fa642d523f35f833fa2f9022992fa694a88eb6621d14617da",
+      "sha256": "0304acd09210badf33e888c09f111a887f221a3842aaeb781ecd20147044203b",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "a5f1dd2d95c126bbde27c45e6ac1e77c3d793c8a7ad41b7568eb31b1f7a76db8"
+      "requiredBase": "3de925cc0da13ccc4b2991a89e07e382731d12c86472f0ae503b2b96787d2c14"
     },
     {
       "id": "cc-map",
@@ -370,7 +370,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "a5f1dd2d95c126bbde27c45e6ac1e77c3d793c8a7ad41b7568eb31b1f7a76db8"
+      "requiredBase": "3de925cc0da13ccc4b2991a89e07e382731d12c86472f0ae503b2b96787d2c14"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -448,7 +448,7 @@
       "bytes": 1818,
       "sha256": "71bd73bdab4b32b9a4fdbc48d0f89ab07f8dada0213f6a76216f8f1aebbad8bd",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "a5f1dd2d95c126bbde27c45e6ac1e77c3d793c8a7ad41b7568eb31b1f7a76db8"
+      "requiredBase": "3de925cc0da13ccc4b2991a89e07e382731d12c86472f0ae503b2b96787d2c14"
     },
     {
       "id": "analog-bassdrum",
@@ -462,9 +462,9 @@
       "name": "Analog BD",
       "module": "abdb1445",
       "bytes": 26172,
-      "sha256": "b1817c7f86e3e5be332686abffd9895f6334d7e8d71ce5b8f5b5a3fe1b131fed",
+      "sha256": "99581aece3500d9a7c5d1b389afc8ff1697086d323bd28dbf01b4def22acacbc",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "a5f1dd2d95c126bbde27c45e6ac1e77c3d793c8a7ad41b7568eb31b1f7a76db8",
+      "requiredBase": "3de925cc0da13ccc4b2991a89e07e382731d12c86472f0ae503b2b96787d2c14",
       "requires": 0,
       "claims": 1,
       "entries": 1
