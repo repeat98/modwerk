@@ -338,7 +338,7 @@
       "bytes": 2636,
       "sha256": "6cf9892ded68b89660aed1d3c77028530722a734a0587036ae76eb74b45409b6",
       "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
-      "requiredBase": "a2c2edb20e06b64e8209091b73a2ca19a3e6730feb6952e2404bd198a8b07392"
+      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921"
     },
     {
       "id": "output-matrix",
@@ -354,7 +354,7 @@
       "bytes": 3740,
       "sha256": "d67e9a432c59f8f430b20f3ada22f74317209169062941f5290f6b66f6d3e4e2",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "a2c2edb20e06b64e8209091b73a2ca19a3e6730feb6952e2404bd198a8b07392"
+      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921"
     },
     {
       "id": "cc-map",
@@ -370,7 +370,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "a2c2edb20e06b64e8209091b73a2ca19a3e6730feb6952e2404bd198a8b07392"
+      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -446,9 +446,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "490a4c1c615331be73ea3f4653e59f868ca0f29486ee5ce81a27be84e8a3aa52",
+      "sha256": "71bd73bdab4b32b9a4fdbc48d0f89ab07f8dada0213f6a76216f8f1aebbad8bd",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "a2c2edb20e06b64e8209091b73a2ca19a3e6730feb6952e2404bd198a8b07392"
+      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921"
     },
     {
       "id": "analog-bassdrum",
@@ -464,7 +464,7 @@
       "bytes": 26172,
       "sha256": "40b2d12280b56bfeb3db925a668bc759019f8db45b58580ad3f5389249df1baf",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "a2c2edb20e06b64e8209091b73a2ca19a3e6730feb6952e2404bd198a8b07392",
+      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -608,20 +608,19 @@
     {
       "id": "pattern-sample-locks",
       "octabam": true,
-      "reconstruction": true,
       "usbOnly": true,
-      "version": "0.1.8-experimental",
-      "path": "octatrack-modules/pattern-sample-locks/0.1.8-experimental.mwrm",
+      "version": "0.1.9-experimental",
+      "path": "octatrack-modules/pattern-sample-locks/0.1.9-experimental.mwrm",
       "name": "SAMPLE LOCKS",
       "unitName": "SAMPLE LOCKS",
       "abi": 8,
-      "features": 3,
-      "sites": 3,
-      "copies": 9,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
       "fills": 0,
       "module": "4bdbfbf9",
-      "bytes": 10048,
-      "sha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79"
+      "bytes": 8740,
+      "sha256": "6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3"
     },
     {
       "id": "amiga",
@@ -705,6 +704,23 @@
       "module": "d4582ab2",
       "bytes": 3446,
       "sha256": "f311dd620daf296dc6caff7f442533fe6e7262e2a1834bbfbc237fc4d3ff1631"
+    },
+    {
+      "id": "butter-fingers",
+      "octabam": true,
+      "unitName": "Butter Fingers",
+      "usbOnly": true,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/butter-fingers/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Butter Fingers",
+      "module": "5cf69df3",
+      "bytes": 652,
+      "sha256": "c470e87aefa7c8e2c87dd7b1429a265e5353430b74331adb53158055269c9655"
     }
   ]
 }

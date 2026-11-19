@@ -139,6 +139,7 @@ fx_set modwerk_fxmap_used(void);
 uint32_t modwerk_fxmap_generation(void);
 void modwerk_fxmap_assign(unsigned id, uint32_t module, unsigned layout, const char *name);
 void modwerk_fxmap_name(unsigned id, char *out);
+uint32_t modwerk_fxmap_named(unsigned id);
 int modwerk_fxmap_loading(void);
 extern volatile uint32_t modwerk_fxmap_read, modwerk_fxmap_written;
 extern volatile uint32_t modwerk_modset_generation, modwerk_modset_count, modwerk_modset_result; /* modset.c */
@@ -258,7 +259,7 @@ static int free_for(unsigned k, uint32_t module, fx_set used)
 #ifdef MODWERK_RUNTIME_SETS
     if (modwerk_runtime_handle_reserved(module,k)) return 0;
 #endif
-    uint32_t named = modwerk_fxmap_module(k);
+    uint32_t named = modwerk_fxmap_named(k); /* the map, else the catalogue, as MISSING names it: a lost line (#1720) */
     return named == module || !fx_in(used, k); /* a handle the project uses for an unknown module stays its own */
 }
 static int choose(uint32_t module, unsigned preferred, int pinned)
@@ -532,7 +533,11 @@ static int rebind_tick(void) /* 1: the handles follow the map's current generati
             if (!owner[k]) continue;
             int want = modwerk_fxmap_handle(owner[k]);
             uint32_t named = modwerk_fxmap_module(k);
-            if (want == (int)k || (want < 0 && (!named || named == owner[k] || !fx_in(used, k)))) continue;
+            if (want == (int)k) continue;
+            if (want < 0 && (!named || named == owner[k] || !fx_in(used, k))) { /* it stays: named, so a save keeps it (#1720) */
+                modwerk_fxmap_assign(k, owner[k], owner_layout[k], owner_name[k]);
+                continue;
+            }
             moving[moving_count].package = dl_catalog[k];
             moving[moving_count].code[0] = dl_codes[0][k], moving[moving_count].code[1] = dl_codes[1][k];
             moving[moving_count].module = owner[k], moving[moving_count].layout = owner_layout[k];

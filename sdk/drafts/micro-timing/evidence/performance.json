@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "module": "micro-timing",
+  "version": "0.1.1-experimental",
+  "sourceSha256": "143f53b646d6fc10fb814ec537544b493eb7cba925b3feb85c8d18f4c3e6fdc5",
+  "kind": "coldfire",
+  "trigger": "key",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": 788,
+    "budget": 26600000,
+    "method": "ot_emu PC watch on every halfword of the 1076-byte image, so a hit is one instruction of this module. Stock callees, including the 64-step writer at 0x4002d640, produced no hits and are not measured. Development twin 878307834ad3c23a, package f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292, set OCTABAM, project ONEAUX, pattern 0, transport playing, MICRO T selected. One LEVEL +1 on the audio side was 787 hits from mt_level to its jump back to stock. The same turn with the MIDI button on was 788. The trial was not kept."
+  },
+  "stress": {
+    "events": 20,
+    "playing": true,
+    "hangs": 0,
+    "method": "ot_emu --dsp --dsp-rt, development twin 878307834ad3c23a, set OCTABAM, project ONEAUX, pattern 0, internal clock. Package f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292. PLAY set transport 0x800065b8 to 1 with MICRO T selected and the MIDI button on. Ten LEVEL +1 turns while it stayed 1 moved the remembered byte from 0x02 to 0x0c. STOP cleared the transport, PART+RIGHT changed the Part byte from 0 to 1, and the page was opened again. Ten more turns while playing entered mt_level 10 times and moved the byte from 0x0c to 0x16. The diagnostic log at 0x100fc000 stayed at 3 incidents (start, base, set), crash_seen 0, stall_seen 0, freeze_state 0. The trial was not kept."
+  }
+}

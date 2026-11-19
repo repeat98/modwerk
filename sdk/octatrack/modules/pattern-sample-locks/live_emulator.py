@@ -18,10 +18,10 @@ TRACK_BYTES=0x91a
 def exercise(port,run,tap,key,encoder,capture,out,reboot):
     assert not reboot
     exact=port.profile_symbols;assert exact
-    base=fixture.u32(port,0x4002dc6a)-exact['psl_open']
+    base=fixture.module_base(port,exact)
     def u32(at):return fixture.u32(port,at)
     def ui():
-        current_base=u32(0x4002dc6a)-exact['psl_open']
+        current_base=fixture.module_base(port,exact)
         return {n:u32(current_base+exact['symbols'][n]) for n in ('phase','cursor','selected','replace','select_all')}
     def frames():return u32(port.base_symbols['dl_frames'])
     def meter():
@@ -42,7 +42,7 @@ def exercise(port,run,tap,key,encoder,capture,out,reboot):
     def open_part():
         port.command('key 0x25 32');run(80);tap(0x23,32);port.command('key 0x25 0');run(80)
     def menu(clear):
-        open_part();encoder(6,-24);encoder(6,20 if clear else 16);key('YES');assert ui()['phase']==2
+        fixture.open_action(port,run,tap,key,clear);assert ui()['phase']==2
     def go(track):
         if ui()['cursor']//4!=track//4:key('RIGHT' if track//4 else 'LEFT')
         for _ in range(4):key('UP')

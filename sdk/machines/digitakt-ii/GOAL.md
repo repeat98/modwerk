@@ -25,7 +25,7 @@ When a piece moves, update this table, the [recipe's table](../../../docs/MACHIN
 
 ## The order
 
-1. **Finish the base.** The site builds the Modwerk base on core 1.1. It is done once its exact build has run on more than one unit, its core source comes from elekloader's merged release, and the owner turns downloads on.
+1. **Finish the base.** The site builds the Modwerk base on core 1.1. It is done once its exact build has run on more than one unit and the owner turns downloads on.
 2. **USB link**, in parallel with step 1 on development bases. It starts with identify, status and the unit's log (diagnostics), then adds chunked writes for module packages.
 3. **Loading without a reflash.** Port the runtime loader: review, a trial in RAM, Keep, Undo.
 4. **Base updates over USB.** Two slots and at most one restart. The maker's recovery (FUNC + TRIG 4, then the stock `.syx` over MIDI DIN) stays the floor.

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { canonicalRouteUrl, moduleHref, profileHref, routeFromUrl, threadHref } from './routing'
+import { deviceHref } from './devices/registry'
+import { DIGI_MODS } from './devices/digi-mods'
 
 const moduleIds = ['analog-bassdrum', 'miniverb', 'tapeecho', 'synth']
 const threadId = '0f3a1b2c-4d5e-4f60-8a9b-0c1d2e3f4a5b'
@@ -12,19 +14,30 @@ describe.each(['https://modwerk.app/', 'https://example.github.io/octamod/'])('m
     expect(routeFromUrl(new URL('analog-rytm-mkii/module/filter-hz/', appUrl), appUrl)).toBe('analog-rytm-mkii/module/filter-hz')
   })
   it('opens machine-qualified module paths and upgrades legacy Digi hashes', () => {
-    for (const device of ['digitakt', 'digitone']) {
+    for (const [device, id] of [['digitakt', 'digihealth'], ['digitakt-ii', 'track-names'], ['digitone', 'digihealth'], ['analog-rytm-mkii', 'filter-hz']]) {
+      const path = `${device}/module/${id}`
       for (const suffix of ['', 'index.html']) {
-        const url = new URL(`${device}/module/digihealth/${suffix}`, appUrl)
-        expect(routeFromUrl(url, appUrl)).toBe(`${device}/module/digihealth`)
-        expect(canonicalRouteUrl(url, appUrl, moduleIds).href).toBe(`${root}${device}/module/digihealth/`)
+        const url = new URL(`${path}/${suffix}`, appUrl)
+        expect(routeFromUrl(url, appUrl)).toBe(path)
+        expect(canonicalRouteUrl(url, appUrl, moduleIds).href).toBe(`${root}${path}/`)
       }
-      expect(canonicalRouteUrl(new URL(`?utm_source=mail#${device}/module/digihealth`, appUrl), appUrl, moduleIds).href).toBe(`${root}${device}/module/digihealth/?utm_source=mail`)
-      const report = new URL(`${device}/module/digihealth/?report=1`, appUrl)
+      expect(canonicalRouteUrl(new URL(`?utm_source=mail#${path}`, appUrl), appUrl, moduleIds).href).toBe(`${root}${path}/?utm_source=mail`)
+      const report = new URL(`${path}/?report=1`, appUrl)
       expect(canonicalRouteUrl(report, appUrl, moduleIds).href).toBe(report.href)
-      const legacyReport = new URL(`#${device}/module/digihealth?report=1`, appUrl)
+      const legacyReport = new URL(`#${path}?report=1`, appUrl)
       expect(canonicalRouteUrl(legacyReport, appUrl, moduleIds).href).toBe(legacyReport.href)
     }
     expect(canonicalRouteUrl(new URL('#configuration', new URL('digitakt/module/digihealth/?report=1', appUrl)), appUrl, moduleIds).href).toBe(root + '?report=1#configuration')
+  })
+  it('can open every standalone Elekloader module page that the build generates', () => {
+    for (const { device, id } of DIGI_MODS) {
+      const path = `${device}/module/${id}`
+      expect(routeFromUrl(new URL(path + '/', appUrl), appUrl)).toBe(path)
+      expect(deviceHref(device, 'module/' + id)).toMatch('/' + path + '/')
+    }
+    const zoom = 'zoom-ms-70cdr/module/loop'
+    expect(canonicalRouteUrl(new URL('#' + zoom, appUrl), appUrl, moduleIds).href).toBe(root + '#' + zoom)
+    expect(routeFromUrl(new URL(zoom + '/', appUrl), appUrl)).toBeUndefined()
   })
   it('opens FM Synth through its public slug and redirects upstream-ID links', () => {
     for (const path of ['module/fm-synth/', 'module/fm-synth/index.html', 'module/synth/', 'module/synth/index.html', '#module/synth', '#module/fm-synth']) {

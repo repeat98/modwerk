@@ -27,7 +27,7 @@ function IntegrationGuide({ device }: { device: DeviceProfile }) {
   </>
 }
 
-/** Reference links at the foot of the page: the guides and the separate catalogues. */
+/** Reference links at the foot of the page: the guides. */
 export function DeveloperLinks({ repository, machine }: { repository: string; machine: StarterMachine }) {
   const guide = (path: string) => repository + '/blob/main/' + path
   return <>
@@ -35,7 +35,5 @@ export function DeveloperLinks({ repository, machine }: { repository: string; ma
     <a href={guide('docs/MODULE_AUTHOR_UPDATES.md')} target="_blank" rel="noreferrer">Releases & reports ↗</a>
     <a href={guide(DEVICES_BY_ID[machine]?.sdk || 'docs/ADD_A_MACHINE.md')} target="_blank" rel="noreferrer">{DEVICES_BY_ID[machine]?.sdk ? 'Instrument SDK' : 'Instrument integration'} ↗</a>
     <a href="#account/developer">Creator settings & support</a>
-    <a href="https://github.com/sambanks/octabam" target="_blank" rel="noreferrer">Octabam ↗</a>
-    <a href="https://github.com/irpina/elekloader" target="_blank" rel="noreferrer">Elekloader ↗</a>
   </>
 }

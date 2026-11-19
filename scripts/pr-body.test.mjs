@@ -1,8 +1,15 @@
 import { readFileSync } from 'node:fs'
 import { expect, it } from 'vitest'
+import { parse } from 'yaml'
 import { bodyProblems } from './pr-body.mjs'
 
 const template = readFileSync(new URL('../.github/pull_request_template.md', import.meta.url), 'utf8')
+
+it('makes the description part of the required PR verdict on pushes, edits and draft transitions', () => {
+  const workflow = parse(readFileSync(new URL('../.github/workflows/module-pr.yml', import.meta.url), 'utf8'))
+  expect(workflow.jobs['module-pr-ok'].needs).toContain('describe')
+  expect(workflow.on.pull_request.types).toEqual(expect.arrayContaining(['opened', 'synchronize', 'edited', 'converted_to_draft', 'ready_for_review', 'reopened']))
+})
 
 it('refuses an empty description or the template as it came, and asks for the guides answer', () => {
   expect(bodyProblems('', template)).toHaveLength(2)
@@ -47,6 +54,7 @@ it('asks a ready pull request that changes what runs on an instrument to name th
   expect(bodyProblems(described + '\n\nTested on a unit: yes, on my MKII.', template, { files: base })).toEqual([untested])
   expect(bodyProblems(described + '\n\nNot tested on a unit: no unit at hand; the owner decides.', template, { files: base })).toEqual([])
   expect(bodyProblems(described + '\n\nNot tested on a unit:', template, { files: base })).toEqual([untested])
+  expect(bodyProblems(described, template, { files: ['public/zoom-effects/microloom/2.0.0/Microlm.ZDL'] })).toEqual([expect.stringMatching(/Tested on a unit/)])
   // A package counts too; sources, docs and the site do not.
   expect(bodyProblems(described, template, { files: ['public/octatrack-modules/repitch/0.2.1-experimental.mwrm'] })).toHaveLength(1)
   expect(bodyProblems(described, template, { files: ['sdk/octatrack/modules/repitch/repitch.s', 'docs/MODULE_PERFORMANCE.md', 'src/App.tsx'] })).toEqual([])
