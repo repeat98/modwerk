@@ -433,6 +433,21 @@ int modwerk_runtime_owner_canonical(const struct runtime_owner *o,uintptr_t *ext
     *extent = (uintptr_t)pool + (o->owned_extent - lo);
     return 1;
 }
+void modwerk_runtime_site_view(const void *image, uint32_t address, uint8_t *out, uint32_t length)
+{
+    if (!image || !out || !length || address > UINT32_MAX - length) return;
+    for (unsigned p = 0; p < RUNTIME_MODULES; ++p) {
+        const struct runtime_module *m = live[p];
+        if (!m || (const void *)m->dsp.image != image) continue;
+        for (uint32_t i = 0; i < m->sites; ++i) {
+            const struct runtime_site *s = &m->site[i];
+            uint32_t lo = s->address > address ? s->address : address;
+            uint32_t hi = s->address + s->length < address + length ? s->address + s->length : address + length;
+            for (uint32_t a = lo; a < hi; ++a) out[a - address] = s->stock[a - s->address];
+        }
+        return;
+    }
+}
 static int reachable(const struct runtime_module *m)
 {
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) if (live[i] == m) return 1;
