@@ -9,20 +9,23 @@
  * Knobs are SAMPLE's parameters under Mikrotakt's names (the base's knob names), so they keep SAMPLE's job for the
  * play head as well: C SIZE (SAMPLE's crossfade, unused by a one-shot sample), E POS (where the play head starts),
  * F LEN (how long it runs), G SPRD (the grains' random spread; SAMPLE's loop position, which matters only when the
- * play mode loops), B MODE (SAMPLE's play mode: FWD is DRIFT, FWD.L STUTTER, REV REVERSE, REV.L HAZE; the page still
- * shows the play mode's arrows and names).
+ * play mode loops), B MODE (SAMPLE's play mode: FWD is DRIFT, FWD.L STUTTER, REV REVERSE, REV.L HAZE, shown by those
+ * names; the knob's picture still shows the play mode's arrows).
  */
 #include <mk2/machines.h>
+
+/* MODE's value names, by SAMPLE's play mode value: 0 REV, 1 REV.L, 2 FWD.L, 3 FWD. */
+static const char *const modes[] = { "REVRS", "HAZE", "STUTR", "DRIFT", 0 };
 
 const struct dt2_machine mikrotakt_machine = {
     .type = 7,
     .stands_for = 0,
     .strings = { "Mikrotakt", "MKT", 0 },
     .knobs = {
-        [0] = { "Mode", "MODE" },
-        [1] = { "Grain Size", "SIZE" },
-        [2] = { "Position", "POS" },
-        [3] = { "Length", "LEN" },
-        [4] = { "Spread", "SPRD" },
+        [0] = { "Mode", "MODE", modes },
+        [1] = { "Grain Size", "SIZE", 0 },
+        [2] = { "Position", "POS", 0 },
+        [3] = { "Length", "LEN", 0 },
+        [4] = { "Spread", "SPRD", 0 },
     },
 };
