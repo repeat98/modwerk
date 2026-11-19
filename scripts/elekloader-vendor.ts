@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url'
 import type { Plugin } from 'vite'
 import { parseCatalog, type Catalog } from '../vendor/elekloader/kit/src/kit/catalog.ts'
 import { devices } from '../vendor/elekloader/kit/src/devices.ts'
+import { carryDevices } from '../src/engine/elekloader/carried-devices.ts'
 import { oddJumpsInFiles, type PackageFile } from '../src/engine/elektron/odd-jumps.ts'
 
 export const ELEKLOADER_SITE = 'elekloader/'
@@ -128,13 +129,14 @@ export async function readVendoredElekloader(root: string): Promise<{ lock: Lock
   const catalog = parseCatalog(site.catalog)
   const pins = [...catalog.cores, ...catalog.mods], assets: [string, Buffer][] = [[ELEKLOADER_SITE + 'catalog.json', raw]]
   const packages: PackageFile[] = [], odd: string[] = []
+  carryDevices()
   for (const pin of pins) {
     const data = await readFile(resolve(dir, pin.file)).catch(() => undefined)
     if (!data) bad.push('missing: ' + pin.file)
     else if (sha(data) !== pin.sha256) bad.push('not the pinned file: ' + pin.file)
     else {
       assets.push([ELEKLOADER_SITE + pin.file, data])
-      // Where the pin's machine runs code, from the kit's own profile of that firmware.
+      // Where the pin's machine runs code, from the kit's own profile of that firmware, or the one Modwerk's builder carries.
       const device = devices().find(device => device.key === pin.device), release = device?.releases.find(release => release.version === pin.os)
       if (device && release) packages.push({ name: pin.file, bytes: data, firmware: pin.device + ' ' + pin.os, machine: { mainLoad: device.mainLoad, mainLength: release.mainLen, areas: [...Object.values(device.areas), device.ddr, device.sramCode] } })
       else odd.push(pin.file + ': the kit has no profile of ' + pin.device + ' ' + pin.os + ', so its jumps cannot be checked')

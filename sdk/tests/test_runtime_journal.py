@@ -187,8 +187,11 @@ int main(void)
     CHECK(modwerk_modset_result == SAVED && modwerk_modset_generation == 1700000001u);
     boot(); modwerk_modset_service();
     CHECK(modwerk_modset_result == RESTORED && installed == 3 && modwerk_modset_count == 3);
-    /* A changed byte in a package: not whole, so the unit's own newer file stays the set. */
-    copy_to_card(); card[0][HEADER + 9] ^= 1; boot(); modwerk_modset_service();
+    /* Import the old two-module export again at the generation produced by forCardImport in card-set.test.ts. */
+    copy_to_card(); put32(card[0] + 8, 1700000002u); boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 2 && modwerk_modset_generation == 1700000002u);
+    /* Damage that higher-generation import: slot one's saved three-module set is still recoverable. */
+    card[0][HEADER + 9] ^= 1; boot(); modwerk_modset_service();
     CHECK(modwerk_modset_result == RESTORED && installed == 3);
     /* Alone on the card of a unit that runs another base: nothing is installed. */
     memset(card, 0, sizeof card); memset(card_bytes, 0, sizeof card_bytes);

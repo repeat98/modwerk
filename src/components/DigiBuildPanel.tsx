@@ -7,7 +7,8 @@ import { useDownloadFollows } from '../community/useDownloadFollows'
 import { trackFirmwareDownload } from '../community/usage'
 import { DIGI_MODS, type DigiMod } from '../devices/digi-mods'
 import { BUILDER_SOURCE, buildLogText, builtLock, planBuild } from '../engine/elekloader/machine-build'
-import { digiDownloadsEnabled } from '../engine/elekloader/protocol'
+import { digiDownloadsEnabled, usbUpgradeEnabled } from '../engine/elekloader/protocol'
+import { UsbUpgradePanel } from './UsbUpgradePanel'
 import { FIRMWARE_SHARING_NOTICE, FLASHING_RISKS } from '../firmware-notices'
 import { RiskAcceptance } from './ConfigurationLayout'
 import { RecoveryNotice } from './RecoveryNotice'
@@ -27,7 +28,7 @@ const kib = (bytes: number) => (bytes / 1024).toFixed(0) + ' KB'
 
 export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport, exported, canExport, results }: { device: { id: DigiMod['device']; name: string; firmware?: { recovery: string } }; firmware: ReturnType<typeof useDigiFirmware>; moduleIds: readonly string[]; storage?: BuildStorage; onExport: () => void; exported: boolean; canExport: boolean; results: HTMLElement | null }) {
   const w = useSetWords()
-  const downloadsEnabled = digiDownloadsEnabled(device.id)
+  const downloadsEnabled = digiDownloadsEnabled(device.id), usbUpgrade = usbUpgradeEnabled(device.id)
   const ready = firmware.state === 'ready' && !!firmware.file, release = ready ? firmware.firmware?.release : undefined
   const plan = release ? planBuild(device.id, release, moduleIds) : undefined
   const missing = plan?.missing.map(id => DIGI_MODS.find(mod => mod.device === device.id && mod.id === id)?.title ?? id) ?? []
@@ -83,7 +84,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
         {result && downloadsEnabled && <RecoveryNotice machine={device.id} steps={result.recovery || device.firmware?.recovery} checked={knowsRecovery} onChange={checked => setRecoveryKnown(checked ? result.sha256 : '')}/>}
       </div>
       <div className="build-actions">
-        {busy ? <button className="button button-quiet" onClick={cancel}>Cancel build</button> : result && downloadsEnabled ? <button className="button button-primary" disabled={!riskAccepted || !knowsRecovery} onClick={() => { save(result.files[0].data, downloadName); setDownloaded(key); if (state.phase === 'built') { const ids=state.moduleIds.map(id => device.id + '-' + id);trackFirmwareDownload(ids, device.id);if (device.id === 'digitakt' || device.id === 'digitone') followDownloads(ids, { machine: device.name, os: release ?? '', modules: builtModules(ids) }) } }}><Icon name="download" size={16}/>Download .syx</button> : null}
+        {busy ? <button className="button button-quiet" onClick={cancel}>Cancel build</button> : result && downloadsEnabled ? <button className="button button-primary" disabled={!riskAccepted || !knowsRecovery} onClick={() => { save(result.files[0].data, downloadName); setDownloaded(key); if (state.phase === 'built') { const ids=state.moduleIds.map(id => device.id + '-' + id);if (device.id !== 'digitone-ii') trackFirmwareDownload(ids, device.id);if (device.id === 'digitakt' || device.id === 'digitone') followDownloads(ids, { machine: device.name, os: release ?? '', modules: builtModules(ids) }) } }}><Icon name="download" size={16}/>Download .syx</button> : null}
         {!busy && (state.phase === 'ready' || state.phase === 'failed' || state.phase === 'built'
           ? <button className={'button ' + (result ? 'button-quiet' : 'button-primary')} disabled={!!versionError || !riskAccepted} onClick={() => void build(shown)} aria-describedby="digi-build-status"><Icon name="sliders" size={16} />{result ? 'Build again' : 'Build firmware'}</button>
           : <button className="button button-primary" disabled={!ready || !!missing.length || busy} onClick={() => void check()} aria-describedby="digi-build-status"><Icon name="check" size={16} />{state.phase === 'blocked' ? 'Check again' : 'Check selection'}</button>)}
@@ -94,6 +95,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
     {/* The build card stays in the page's sticky column; what follows a build reads in the main column. */}
     {results && createPortal(<>
       {result && <div className="build-facts"><span>Size <strong>{kib(result.bytes)}</strong></span><span>OS version <strong>{result.version}</strong></span><span>Built in <strong>{result.seconds.toFixed(1)} s</strong></span></div>}
+      {result && usbUpgrade && (file => file && <UsbUpgradePanel machine={device.id} name={device.name} syx={new Uint8Array(file.data)} sha256={result.sha256} version={result.version} recovery={result.recovery || device.firmware?.recovery} riskAccepted={riskAccepted} />)(result.files.find(file => /\.syx$/i.test(file.name)))}
       {result && !downloadsEnabled && <aside className="risk-note" role="note"><strong>Downloads open after review</strong><p>The build ran and verified in this browser. Modwerk will offer {device.name} firmware files once their release is approved. Nothing was uploaded.</p></aside>}
       {result && downloadsEnabled && <section className="configuration-section install-guide" aria-labelledby="digi-install-title"><div className="section-title"><h2 id="digi-install-title">Install on your {device.name}</h2><span className="pill">{result.version}</span></div>
         <ol><li>Connect the {device.name} over USB and open Elektron Transfer.</li><li>Select the unit, connect, and drop the .syx onto Transfer.</li><li>Press YES on the unit and keep it powered until the update finishes.</li></ol>

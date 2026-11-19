@@ -1,0 +1,1 @@
+- The simulated MS-70CDR installation checks now compare the complete flashed image faster on busy machines.

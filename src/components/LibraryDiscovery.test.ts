@@ -5,8 +5,12 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AVAILABLE_MODULES, availableModules } from '../catalog/availability'
 import { asBeta } from '../catalog/beta-fixture'
+import { countsTowardLimit, SET_MODULE_LIMIT } from '../catalog/set-limit'
+import { newConfiguration } from '../config/workspace'
+import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import { MachineLibrary } from '../devices/MachinePages'
 import { DEVICES_BY_ID } from '../devices/registry'
+import { LibrarySelection } from './LibrarySelection'
 import { ModuleComparison } from './ModuleComparison'
 
 let container: HTMLDivElement, root: Root
@@ -23,13 +27,30 @@ const buttonNamed = (name: string) => [...document.querySelectorAll('button')].f
 const noop = () => {}
 const library = {
   query: '', octatrackModules: AVAILABLE_MODULES, octatrackSelected: [], onToggleOctatrack: noop,
-  digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [] }, onToggleDigi: noop,
+  digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [], 'digitone-ii': [] }, onToggleDigi: noop,
   family: 'all', onFamilyChange: noop, sort: 'updated', onSortChange: noop, statistics: null,
-  octatrackConflicts: [], comparison: [], onCompare: noop, onOpenComparison: noop,
+  comparison: [], onCompare: noop, onOpenComparison: noop,
   viewedModuleVersions: {}, moduleBaseline: null,
 }
 
 describe('module library discovery', () => {
+  it('opens desktop category and type filters together and returns focus after choosing a type', async () => {
+    const onFamilyChange = vi.fn()
+    const categoryNav = createElement('nav', { 'aria-label': 'Module library' }, createElement('a', { href: '#effects' }, 'Effects'))
+    await act(() => root.render(createElement(MachineLibrary, { ...library, categoryNav, onFamilyChange })))
+    const toggle = container.querySelector<HTMLButtonElement>('.catalog-command')!
+    const panel = container.querySelector<HTMLDivElement>('.catalog-filter-panel')!
+    expect(panel.hidden).toBe(true)
+    await click(toggle)
+    expect(panel.hidden).toBe(false)
+    expect(document.activeElement).toBe(panel.querySelector('a'))
+    const type = panel.querySelector('select')!
+    await act(() => { type.value = 'Delay'; type.dispatchEvent(new Event('change', { bubbles: true })) })
+    expect(onFamilyChange).toHaveBeenCalledWith('Delay')
+    expect(panel.hidden).toBe(true)
+    expect(document.activeElement).toBe(toggle)
+  })
+
   it('uses the active machine’s configuration for the All machines build action', async () => {
     await act(() => root.render(createElement(MachineLibrary, { ...library, buildHref: '#digitakt/configuration', buildLabel: 'Build firmware for Digitakt' })))
     const build = container.querySelector('.discovery-actions a')!
@@ -67,4 +88,61 @@ describe('module library discovery', () => {
     expect(count(false)).toBe(2)
     expect(count(true)).toBe(3)
   }))
+})
+
+describe('live library selection details', () => {
+  it('updates the Octatrack count and reports saved stock FX choices', async () => {
+    const set = newConfiguration('Live set', ['everb', USB_AUDIO_MODULE])
+    const render = (moduleIds: string[], removedStockFx?: string[]) => act(() => root.render(
+      createElement(LibrarySelection, { sets: [{ ...set, moduleIds, removedStockFx }], betaAccess: false, collapsible: true }),
+    ))
+    await render(set.moduleIds)
+    const status = container.querySelector('[role="status"]')!
+    const panel = container.querySelector('.library-selection')!
+    expect(panel.textContent).toContain(`1 of ${SET_MODULE_LIMIT} modules`)
+    expect(panel.textContent).toContain('All stock FX kept')
+    expect(panel.querySelector('a')?.getAttribute('href')).toBe('#configuration')
+    await render([...set.moduleIds, 'tapeecho'], ['SPRING REV'])
+    expect(status.textContent).toContain(`2 of ${SET_MODULE_LIMIT} modules`)
+    expect(panel.textContent).toContain('Spring Reverb is marked off in the stock FX menus')
+    expect(panel.textContent).toContain('USB sync requires all stock FX')
+    await render([])
+    expect(container.querySelector('.library-selection')).toBeNull()
+    expect(status.textContent).toBe('No selections to check.')
+  })
+
+  it('distinguishes a full Octatrack set from a saved set already over the limit', async () => {
+    const ids = AVAILABLE_MODULES.map(module => module.id).filter(countsTowardLimit).slice(0, SET_MODULE_LIMIT + 1)
+    const render = (moduleIds: string[]) => act(() => root.render(
+      createElement(LibrarySelection, { sets: [newConfiguration('Live set', moduleIds)], betaAccess: false, collapsible: true }),
+    ))
+    await render(ids.slice(0, SET_MODULE_LIMIT))
+    expect(container.textContent).toContain('Your set is full')
+    await render(ids)
+    expect(container.textContent).toContain('Remove 1 to sync')
+  })
+
+  it('updates Digi memory and incompatibility details independently of an Octatrack set', async () => {
+    const octatrack = newConfiguration('Live set', ['everb'])
+    const digitakt = newConfiguration('Drums', ['digimono', 'digistring'], false, undefined, 'digitakt')
+    const render = (moduleIds: string[]) => act(() => root.render(
+      createElement(LibrarySelection, { sets: [octatrack, { ...digitakt, moduleIds }], betaAccess: false, collapsible: true }),
+    ))
+    await render(digitakt.moduleIds)
+    const details = container.querySelector('details')!
+    const summary = details.querySelector('summary')!
+    expect(details.open).toBe(false)
+    expect(summary.textContent).toContain('1 issue')
+    expect(details.textContent).toContain('Digi Mono and STRING cannot be used together')
+    expect(details.textContent).toContain('Estimated memory')
+    expect(details.querySelector('a[href="#digitakt/configuration"]')).not.toBeNull()
+    details.open = true
+    await render(['digislicer', 'digineighbor', 'digisophie', 'digihealth'])
+    expect(details.open).toBe(true)
+    expect(details.textContent).toContain('Over the shared memory limit')
+    expect(details.textContent).not.toContain('Digi Mono and STRING')
+    await render(['digislicer', 'digineighbor'])
+    expect(summary.textContent).toBe('Selection details')
+    expect(details.textContent).toContain('All stock FX kept')
+  })
 })

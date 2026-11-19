@@ -239,7 +239,7 @@ const octatrack: FaqSection[] = [
           <p>An Octatrack on the Modwerk base reads its modules from one file on the card. That works from any browser and without the Octatrack at the computer.</p>
           <ol>
             <li>Add modules to your module set.</li>
-            <li>On <a href="#octatrack/setup">Setup</a>, choose <strong>Load from the card</strong> to download <code>{CARD_SET_FILE}</code>.</li>
+            <li>On <a href="#octatrack/setup">Setup</a>, choose <strong>Load from the card</strong>. If the card holds <code>MODWERK1.SET</code>, select it when prompted so the download takes priority and the other slot stays available for recovery.</li>
             <li>Copy it to the top folder of the card, outside every folder.</li>
             <li>Switch the Octatrack off and on. It starts with your modules.</li>
           </ol>
@@ -550,12 +550,12 @@ function syxMachine(machine: 'digi' | 'rytm'): FaqSection[] {
         {
           id: 'digi-recovery',
           title: `How do I recover a ${rytm ? 'Analog Rytm MKII' : 'Digitakt or Digitone'} that will not boot?`,
-          keywords: 'digitakt ii digitone keys analog rytm mkii recovery restore stock startup midi din sysex transfer usb failed boot brick func trig 4',
+          keywords: 'digitakt ii digitone ii keys analog rytm mkii recovery restore stock startup midi din sysex transfer usb failed boot brick func trig 4',
           answer: <>
             <p>While an update is running, keep the power on. If it has finished and the machine doesn’t start, install Elektron’s original OS from the startup menu:</p>
             <ol>
               <li>Connect a MIDI interface to the machine’s DIN MIDI ports. USB can’t carry this update: the startup menu never appears over USB.</li>
-              <li>{rytm ? <>Hold <strong>FUNC</strong> while you switch the machine on and choose <strong>OS UPGRADE</strong> (<strong>TRIG 4</strong>).</> : <>Open the startup menu and choose its OS upgrade, as your model’s manual describes. On a Digitakt II: hold <strong>FUNC</strong> while you switch it on, then choose <strong>OS UPGRADE</strong> (<strong>TRIG 4</strong>).</>}</li>
+              <li>{rytm ? <>Hold <strong>FUNC</strong> while you switch the machine on and choose <strong>OS UPGRADE</strong> (<strong>TRIG 4</strong>).</> : <>Open the startup menu and choose its OS upgrade, as your model’s manual describes. On a Digitakt II or Digitone II: hold <strong>FUNC</strong> while you switch it on, then choose <strong>OS UPGRADE</strong> (<strong>TRIG 4</strong>).</>}</li>
               <li>In Elektron Transfer, open <strong>SYSEX TRANSFER</strong>, choose <strong>OS upgrade via device startup menu</strong> and send the original .syx.</li>
             </ol>
             <p>Recovery is not guaranteed. If the startup menu doesn’t appear or the original OS won’t install, contact <OfficialLink href={ELEKTRON_SUPPORT}>Elektron support</OfficialLink>.</p>

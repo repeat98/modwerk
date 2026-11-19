@@ -1,6 +1,6 @@
 import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
 import { ConfigurationHandoff } from './ConfigurationHandoff'
-import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { MODULES } from '../catalog/modules'
 import { lastInventory, sameModules, type Inventory } from '../config/inventory'
 import { lastSuccessfulSync } from '../config/octatrack-progress'
@@ -87,23 +87,6 @@ function MobileModuleSets({ sets, selectedId, onSelect, onNew, onImport, onSetAc
 
 function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, username, onSelect, onSync, onInstall, onNew, onImport, onSetAction, onFill, onSaveUnit, onReport, onWelcome, header, grid, card }: OctatrackHubProps) {
   const state = useOctatrackLink(link), { status, identity } = state
-  // The page fits the window, so it never scrolls as a whole: the split gets the height left in the app's main area.
-  // shortcut: measured when the window or main area resizes and when the page changes, not when a banner above appears.
-  const split = useRef<HTMLDivElement>(null)
-  useLayoutEffect(() => {
-    const element = split.current, main = element?.closest('main')
-    if (!element || !main || typeof ResizeObserver === 'undefined') return
-    const fit = () => {
-      // Box positions come in zoomed pixels (the desktop app shell has zoom: .9); heights are set in CSS pixels.
-      const box = main.getBoundingClientRect(), scale = box.height / main.offsetHeight || 1
-      const top = (element.getBoundingClientRect().top - box.top) / scale + main.scrollTop
-      element.style.setProperty('--hub-height', Math.max(560, main.clientHeight - top - (parseFloat(getComputedStyle(main).paddingBottom) || 0)) + 'px')
-    }
-    fit()
-    const observer = new ResizeObserver(fit)
-    observer.observe(main)
-    return () => observer.disconnect()
-  }, [view])
   const connected = !!identity?.canSubmit && status === 'ready', busy = BUSY.includes(status), usb = !!link && status !== 'unsupported'
   const last = connected || busy ? undefined : lastInventory()
   const unitIds = connected ? inventory?.moduleIds : last?.moduleIds
@@ -145,16 +128,17 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
     : 'Connect your Octatrack to sync this set.'
   return <div className="configuration-page octatrack-hub">
     {header}
-    <div className="hub-split" ref={split}>
+    <div className="hub-split">
       <header className="hub-hero">
         <DeviceImage device={DEVICES_BY_ID.octatrack} eager />
         <div><h2 className="hub-view-title">{model}</h2>
           <p role="status"><span className={'unit-led is-' + led} aria-hidden="true" />{line}</p>
-          {/* Without WebUSB: the browser to move to comes first, the card file is the way until then (owner, 12 November 2026). */}
-          {!usb && <div className="hub-browser-note" role="note"><Icon name="warn" size={18} /><div>
-            <strong>Open Modwerk in {USB_BROWSERS}</strong>
-            <span>There your modules sync over USB in seconds, without the card and without a restart. In this browser they go onto the card as a file.</span>
-          </div></div>}
+          {!usb && <div className="hub-browser-note" role="note">
+            <Icon name="warn" size={16} />
+            <div><strong>Open Modwerk in {USB_BROWSERS}</strong>
+              <span>Sync modules over USB without removing the card or restarting. In this browser, load your set from the card.</span>
+            </div>
+          </div>}
           {(connected || lastSync) && <dl className="hub-facts">
             {connected && <div><dt>Base</dt><dd title={identity!.base}>{baseVersion(identity!.base) ?? <code>{identity!.base.slice(0, 8)}</code>}</dd></div>}
             {lastSync && <div><dt>Last sync from this browser</dt><dd><b>{lastSync.name}</b> · <time dateTime={lastSync.at}>{when(lastSync.at)}</time></dd></div>}
