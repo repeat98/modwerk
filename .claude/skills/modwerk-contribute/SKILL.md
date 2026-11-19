@@ -1,11 +1,11 @@
 ---
 name: modwerk-contribute
-description: Find something worth fixing or improving in Modwerk and send it as a small pull request the owner can merge or decline on its own. Use when a developer wants to help or contribute but has no task or idea of their own.
+description: Find something worth fixing or improving in Modwerk and send it as a small pull request a repository maintainer can review independently. Use when a developer wants to help or contribute but has no task or idea of their own.
 ---
 
 # /modwerk-contribute [instrument or area]
 
-You find the work, the developer picks, and each change goes out as its own small pull request. The owner merges what fits and declines the rest, so a pull request must stand alone and be quick to judge.
+You find the work, the developer picks, and each change goes out as its own small pull request. A repository maintainer reviews the contributor's PR. A modder submitting a first module uses `/modwerk-new-module` and asks a device reviewer or maintainer to review it.
 
 1. **Ask, in one message:** how they test (their unit over USB, the emulator, or neither yet), and whether they want an instrument or area (the site, the tools, the guides) or leave it to you. Check the setup and sign them in for the board as `/modwerk-start` step 2 does.
 2. **Gather candidates** on current `main` (`git fetch upstream` in a fork), in this order:

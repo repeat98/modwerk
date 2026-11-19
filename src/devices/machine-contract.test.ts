@@ -24,6 +24,10 @@ describe('machine profiles', () => {
     expect(() => parseMachineProfile({ ...syntakt(), status: 'research' })).toThrow('at least one started step')
     // Maintainers review the machine's first releases: GitHub logins, each once.
     expect(parseMachineProfile({ ...syntakt(), maintainers: ['octo-dev'] }).maintainers).toEqual(['octo-dev'])
+    expect(parseMachineProfile({ ...syntakt(), deviceReviewers: [42] }).deviceReviewers).toEqual([42])
+    for (const deviceReviewers of [[42,42], ['42'], [0]]) {
+      expect(() => parseMachineProfile({ ...syntakt(), deviceReviewers })).toThrow('machine.deviceReviewers')
+    }
     expect(() => parseMachineProfile({ ...syntakt(), maintainers: ['@octo-dev'] })).toThrow('expected a GitHub login')
     expect(() => parseMachineProfile({ ...syntakt(), maintainers: ['octo-dev', 'Octo-Dev'] })).toThrow('lists a login twice')
     expect(() => parseMachineProfile({ ...syntakt(), status: 'research', steps: { ...syntakt().steps, format: 'started' } })).toThrow('credit the research')
