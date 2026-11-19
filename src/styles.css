@@ -166,6 +166,12 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .module-card .module-preview { background-color: var(--preview); }
 .module-cover { display: block; position: relative; overflow: hidden; }
 .module-cover:focus-visible { outline-offset: -3px; }
+@media (min-width: 821px) {
+  .module-library { max-width: 70rem; }
+  .module-library .module-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.25rem), 1fr)); gap: 16px; }
+  .module-library .module-card .module-preview { height: 152px; }
+  .module-library .module-card-body { padding: 12px 14px 10px; }
+}
 
 /* Library module cards: cover, name row with Add, one meta line, the description, a stats line, then the hardware
    evidence and Compare. The same block serves the Octatrack and Digi cards. */
