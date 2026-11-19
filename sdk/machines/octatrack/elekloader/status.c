@@ -553,6 +553,7 @@ static const char *switch_why(uint32_t result)
     if (result == MODSET_SWITCH_REFUSED + RUNTIME_CYCLES) return "DSP FULL";
     if (result == MODSET_SWITCH_REFUSED + RUNTIME_CONFLICT) return "CLASHES WITH ANOTHER";
     if (result == MODSET_SWITCH_REFUSED + RUNTIME_FEATURE) return "RESTART, THEN RETRY";
+    if (result == MODSET_SWITCH_REFUSED + RUNTIME_BUFFER) return "MOVE AN FX2 EFFECT";
     if (result == MODSET_SWITCH_BUSY || result == MODSET_SWITCH_REFUSED + RUNTIME_BUSY) return "BUSY: TRY AGAIN";
     return result >= MODSET_SWITCH_REFUSED ? "REFUSED" : 0; /* GONE: a host changed it, and the rows show how */
 }

@@ -144,9 +144,12 @@ enum runtime_refusal { RUNTIME_OK, RUNTIME_MALFORMED, RUNTIME_MEMORY, RUNTIME_CO
                        RUNTIME_FEATURE /* ABI 9: a base feature the package requires cannot come up this boot (on the
                                         * Octatrack, the key bus with a DSP core's state lost): restart, then retry */,
                        RUNTIME_UI_OPEN /* a window, page or key layer of the module it would replace or remove is still
-                                        * open (capability 1024): close it, then retry */ };
+                                        * open (capability 1024): close it, then retry */,
+                       RUNTIME_BUFFER /* ABI 9: a claim meets the delay buffer of an effect a track runs or will run (the
+                                       * machine's buffer census): move that effect to another slot, then retry */ };
 /* ABI 9 refusals use the codes above: a feature the base does not have, a claim another live module's claim meets
- * (either writing), and (ABI 9) any hook entry are RUNTIME_CONFLICT. ABI 10: an engine the machine does not admit
+ * (either writing), and (ABI 9) any hook entry are RUNTIME_CONFLICT; a claim under an effect's delay buffer is
+ * RUNTIME_BUFFER (never RUNTIME_MEMORY, which is the module pool and the DSP's own limits). ABI 10: an engine the machine does not admit
  * (modwerk_machine_dsp_engine_admit) answers the machine's refusal. */
 /* ABI 7's site record (a 32-byte hash for the stock bytes) is never longer than ABI 6's (the stock bytes). */
 #define RUNTIME_PACKAGE_BYTES (RUNTIME_HEADER_BYTES + 4u * RUNTIME_HOOKS + RUNTIME_IMAGE_BYTES + 4u * RUNTIME_RELOCATIONS + \
