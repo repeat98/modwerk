@@ -174,6 +174,12 @@ So a grain is a record of its own: a copy of the voice's record with its own pos
 
 No halt and no missing blocks; stock voices on other tracks are untouched. The stock player clobbers `R0`-`R2`, `R4`, `R8`, `R12`, `I4`, `I12`, `I13`, `M4`, `B4`, `L3` and `L4`, so a player keeps what it needs across calls in its own memory.
 
+### Where a machine's knob values are (19 November 2026)
+
+- **ColdFire, the kit's values.** Track `t`'s sound is at `0x426532ec + 0x450 * t` (the track's type byte at `+0xa2`). Its machine slots 25-34 are big-endian halfwords from `+0x46` (value << 8): slot 31 (START) at `+0x52`, 32 (LENGTH) at `+0x54`, so 26 at `+0x48`, 27 at `+0x4a`, 33 at `+0x56`. Panel probe: turning knob E and F on the SRC page changed exactly those bytes.
+- **Sound chip, per voice.** The voice parameter record (`0xdc` bytes per voice from `0x250738`, byte addresses) holds the SRC values the setup uses: word `0x25` START, `0x26` LENGTH, `0x27` LOOP as floats 0-1, word `0x2a` START and `0x2b` LENGTH as whole numbers, `0x2d` the loop start as a whole number (it followed START when LOOP was 0). PLAY did not change this record. Coupled runs from the same ready point, knobs turned on the SRC page before the note, record dumped at the renderer: these words, and only these, changed. A value that reaches the sound chip with each note, as this one does, is where a trig lock arrives too (not yet tested with a lock).
+- **Turning a knob in a coupled run.** Press SRC first, then send separate small encoder events (`enc 5 100` every 2.5 M instructions; encoder 1-8 are knobs A-H). One large turn (`enc 5 1920`, queued as many packets at once) changed nothing. The encoder accelerates: twenty turns of 100 took START from 0 to 119.
+
 ### Machine modules' sound-chip parts in the build (19 November 2026)
 
 A machine module carries its player in its package as `build.dt2_sharc` version 2: L2 allocations at fixed addresses (claim each range as a dsp-region) and `{type, entry}` for each machine type it plays. The base keeps L2 `0x200c0100`-`0x200c3000` for its own machine parts. After the kit build, `preflightBuiltFile` (Digitakt II only) calls `composeDt2MachineBuild`: it reads every selected package's part, adds the longer selector table, the player dispatcher and the modules' allocations to section 7, and runs the preflight with that plan. A selection with no part leaves the kit build as it is.
