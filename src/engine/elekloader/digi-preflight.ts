@@ -96,9 +96,26 @@ export async function preflightBuiltFile(machine: ElemodMachine, stock: Blob, en
   const built = files.find(file => /\.syx$/i.test(file.name))
   if (!built) throw new PreflightError(['the build has no .syx file to check'])
   const names = enabled.map(path => path.split('/').pop()!)
-  const mods = parseBuildMods(await Promise.all(names.map(async name => ({ name, bytes: await load(name) }))))
+  const modFiles = await Promise.all(names.map(async name => ({ name, bytes: await load(name) })))
+  const mods = parseBuildMods(modFiles)
   const original = new Uint8Array(await stock.arrayBuffer())
   const output = new Uint8Array(built.data)
+  if (machine === 'digitakt-ii') {
+    // Machine modules carry sound-chip parts the kit does not build: add them with the base's, checked against that plan.
+    const { composeDt2MachineBuild } = await import('./dt2-render-build.ts')
+    const documents = modFiles.map(file => ({ name: file.name, document: JSON.parse(new TextDecoder().decode(file.bytes)) as unknown }))
+    let composed: Awaited<ReturnType<typeof composeDt2MachineBuild>>
+    try {
+      composed = await composeDt2MachineBuild(original, output, mods, documents)
+    } catch (error) {
+      if (error instanceof PreflightError) throw error
+      throw new PreflightError([error instanceof Error ? error.message : String(error)])
+    }
+    if (composed) {
+      built.data = composed.output.slice().buffer
+      return composed.facts
+    }
+  }
   return preflightBuild(machine, original, output, mods)
 }
 
