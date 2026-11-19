@@ -35,7 +35,7 @@ export type BaseGuideStep = typeof BASE_GUIDE_STEPS[number]
  * link's other error labels. Anything else is `other`. */
 export const SYNC_FAILURE_REASONS = [
   'disconnected', 'cancelled', 'stale', 'save', 'selftest', 'rollback', 'unknown', 'unsafe', 'device',
-  'refused', 'refused-1', 'refused-2', 'refused-3', 'refused-4', 'refused-5', 'refused-6', 'refused-7', 'refused-8', 'refused-9', 'refused-10', 'refused-11',
+  'refused', 'refused-1', 'refused-2', 'refused-3', 'refused-4', 'refused-5', 'refused-6', 'refused-7', 'refused-8', 'refused-9', 'refused-10', 'refused-11', 'refused-12',
   'transport', 'transport-session', 'transport-baseline', 'transport-encode', 'transport-stage', 'transport-activate', 'transport-trial',
   'other',
 ] as const
