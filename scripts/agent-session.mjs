@@ -1,0 +1,192 @@
+#!/usr/bin/env node
+// SPDX-License-Identifier: Elastic-2.0
+// Copyright (c) 2026 Jannik Aßfalg (repeat98)
+// Share this coding-agent session with the owner (docs/AGENT_SESSIONS.md), so they see where contributing gets in the way.
+//   npm run session -- status                 # whether to ask the developer: ask (the default), always or never
+//   npm run session -- prefer ask|always|never
+//   npm run session -- preview [--skip 3,7]   # what would be sent, written to ~/.cache/modwerk/session-preview.json
+//   npm run session -- share --note "…" [--skip 3,7] [--file <transcript>] [--agent claude-code|codex]
+//   npm run session -- list | get <id> | delete <id>
+//   npm run session -- pull                   # the owner: every shared session into ~/.cache/modwerk-local/sessions/
+// Only the conversation is sent: the developer's prompts, the agent's replies and which tools ran and whether they failed.
+// Tool output, thinking, long code blocks, hex dumps, secrets and home paths stay here. Uses the board sign-in.
+import { chmod, lstat, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { homedir, hostname, userInfo } from 'node:os'
+import { dirname, join } from 'node:path'
+import { execFileSync } from 'node:child_process'
+import { gzipSync } from 'node:zlib'
+import { parseArgs } from 'node:util'
+import { pathToFileURL } from 'node:url'
+import { boardRequest, readToken, BoardError, BoardUnavailable } from './agent-board.mjs'
+import { claudeProjectFolder, firmwareFindings, prepareSession, readClaudeTranscript, readCodexRollout, SESSION_CONSENT_VERSION, SESSION_GZIP_LIMIT, SESSION_NOTE_LIMIT } from '../src/community/agent-sessions.ts'
+
+const PREFERENCES = ['ask', 'always', 'never']
+export const preferenceFile = () => process.env.MODWERK_SESSION_FILE ?? join(homedir(), '.config', 'modwerk', 'session-sharing.json')
+const previewFile = () => join(homedir(), '.cache', 'modwerk', 'session-preview.json')
+
+export async function readPreference(file = preferenceFile()) {
+  try { const value = JSON.parse(await readFile(file, 'utf8')).sharing; return PREFERENCES.includes(value) ? value : 'ask' } catch { return 'ask' }
+}
+async function writePrivate(file, text) {
+  await mkdir(dirname(file), { recursive: true, mode: 0o700 })
+  await writeFile(file, text, { mode: 0o600 }); await chmod(file, 0o600)
+}
+
+/** What the agent should do about sharing at the end of a task, in one line (pr:ready prints it too). */
+export function sharingLine(preference) {
+  return preference === 'never' ? 'Session sharing: never. The developer chose not to be asked; do not offer it.'
+    : preference === 'always' ? 'Session sharing: always. When the task is done, share this session yourself (npm run session -- share --note "…") and tell the developer in a line.'
+      : 'Session sharing: ask. When the task is done, ask the developer once whether to share this session with the owner, so they can remove what got in the way (npm run session -- share --note "…"; only the conversation is sent, docs/AGENT_SESSIONS.md). If they answer always or never, save it with npm run session -- prefer always|never.'
+}
+
+/** The working directories this session may have started in: where npm was called, here, and the checkout's root. */
+function places() {
+  const list = [process.env.INIT_CWD, process.cwd()]
+  try { list.push(execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()) } catch { /* not a checkout */ }
+  return [...new Set(list.filter(Boolean))]
+}
+async function newest(files) {
+  let best = null
+  for (const file of files) {
+    try { const info = await stat(file); if (info.isFile() && (!best || info.mtimeMs > best.mtimeMs)) best = { file, mtimeMs: info.mtimeMs } } catch { /* gone */ }
+  }
+  return best
+}
+async function claudeCandidates() {
+  const root = join(process.env.CLAUDE_CONFIG_DIR ?? join(homedir(), '.claude'), 'projects'), files = []
+  for (const place of places()) {
+    const folder = join(root, claudeProjectFolder(place))
+    try { for (const name of await readdir(folder)) if (name.endsWith('.jsonl')) files.push(join(folder, name)) } catch { /* no sessions here */ }
+  }
+  return files
+}
+async function codexCandidates() {
+  const root = join(process.env.CODEX_HOME ?? join(homedir(), '.codex'), 'sessions'), files = [], wanted = places()
+  // Codex files sessions by day: the last three days hold the current one.
+  for (let back = 0; back < 3; back++) {
+    const day = new Date(Date.now() - back * 86400000), folder = join(root, String(day.getFullYear()), String(day.getMonth() + 1).padStart(2, '0'), String(day.getDate()).padStart(2, '0'))
+    let names
+    try { names = await readdir(folder) } catch { continue }
+    for (const name of names) {
+      if (!name.startsWith('rollout-') || !name.endsWith('.jsonl')) continue
+      const file = join(folder, name), first = (await readFile(file, 'utf8')).split('\n', 1)[0]
+      try { if (wanted.includes(JSON.parse(first).payload?.cwd)) files.push(file) } catch { /* not a rollout */ }
+    }
+  }
+  return files
+}
+/** Claude Code names the running session to the commands it starts; its transcript may sit under any project folder. */
+async function claudeSessionFile(id = process.env.CLAUDE_CODE_SESSION_ID) {
+  if (!id || !/^[0-9a-f-]{36}$/.test(id)) return null
+  const root = join(process.env.CLAUDE_CONFIG_DIR ?? join(homedir(), '.claude'), 'projects')
+  let folders
+  try { folders = await readdir(root) } catch { return null }
+  const found = await newest(folders.map(folder => join(root, folder, id + '.jsonl')))
+  return found?.file ?? null
+}
+/** The transcript of the session running now: Claude Code's by its session id, otherwise the most recently written one
+ * for this checkout. */
+export async function findTranscript({ file, agent } = {}) {
+  if (file) return { file, agent: agent ?? (/[\\/]\.codex[\\/]|rollout-/.test(file) ? 'codex' : 'claude-code') }
+  const current = agent === 'codex' ? null : await claudeSessionFile()
+  if (current) return { file: current, agent: 'claude-code' }
+  const claude = agent === 'codex' ? null : await newest(await claudeCandidates())
+  const codex = agent === 'claude-code' ? null : await newest(await codexCandidates())
+  const pick = claude && (!codex || claude.mtimeMs >= codex.mtimeMs) ? { file: claude.file, agent: 'claude-code' } : codex ? { file: codex.file, agent: 'codex' } : null
+  if (!pick) throw new Error('No Claude Code or Codex transcript found for this checkout. Name it with --file <path>.')
+  return pick
+}
+
+export async function buildSession({ file, agent, note = '', skip = [] }) {
+  const info = await lstat(file)
+  if (!info.isFile()) throw new Error(file + ' is not a transcript file.')
+  const lines = (await readFile(file, 'utf8')).split('\n').filter(Boolean)
+  const read = agent === 'codex' ? readCodexRollout(lines) : readClaudeTranscript(lines)
+  let user = ''
+  try { user = userInfo().username } catch { /* none */ }
+  return prepareSession(read, note, { user, host: hostname().split('.')[0], home: homedir() }, skip)
+}
+
+function summary(session, file) {
+  const first = session.entries.find(entry => entry.who === 'developer')?.text.replace(/\s+/g, ' ').slice(0, 100) ?? '(none)'
+  const counts = ['developer', 'agent', 'tool'].map(who => session.entries.filter(entry => entry.who === who).length)
+  const r = session.removed
+  return [
+    `Transcript: ${file}`,
+    `Kept: ${counts[0]} developer prompts, ${counts[1]} agent replies, ${counts[2]} tool calls (${session.entries.filter(entry => entry.failed).length} failed).`,
+    `Removed: ${r.toolOutputs} tool outputs, ${r.thinking} thinking blocks, ${r.codeBlocks} long code blocks, ${r.hexLines} hex dumps, ${r.blobs} data blobs, ${r.secrets} secrets, ${r.skipped} injected or skipped turns${r.trimmed ? `, ${r.trimmed} entries trimmed to fit` : ''}.`,
+    `First prompt: «${first}»`,
+  ].join('\n')
+}
+
+async function token() {
+  const value = await readToken()
+  if (!value) throw new BoardError('Sign in for the board first: npm run board -- login', 401)
+  return value
+}
+
+export async function main(argv = process.argv.slice(2)) {
+  const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, options: { note: { type: 'string' }, skip: { type: 'string' }, file: { type: 'string' }, agent: { type: 'string' } } })
+  const [command = 'help', arg] = positionals
+  const skip = (values.skip ?? '').split(',').filter(Boolean).map(Number).filter(Number.isInteger)
+  if (command === 'status') { console.log(sharingLine(await readPreference())); return 0 }
+  if (command === 'prefer') {
+    if (!PREFERENCES.includes(arg)) { console.error('Choose ask, always or never.'); return 2 }
+    await writePrivate(preferenceFile(), JSON.stringify({ sharing: arg }) + '\n')
+    console.log(sharingLine(arg)); return 0
+  }
+  if (command === 'preview' || command === 'share') {
+    if ((values.note ?? '').length > SESSION_NOTE_LIMIT) { console.error(`Keep the note to ${SESSION_NOTE_LIMIT} characters.`); return 2 }
+    const found = await findTranscript({ file: values.file, agent: values.agent })
+    const session = await buildSession({ ...found, note: values.note ?? '', skip })
+    await writePrivate(previewFile(), JSON.stringify(session, null, 2) + '\n')
+    console.log(summary(session, found.file))
+    console.log(`What would be sent: ${previewFile()}`)
+    const firmware = firmwareFindings(session.entries)
+    if (firmware.length) {
+      console.error(`✗ Entries ${firmware.map(item => item.index).join(', ')} still look like firmware or stock code (${[...new Set(firmware.map(item => item.reason))].join(', ')}). Firmware never leaves this computer: look at them in the preview, then run this again with --skip ${firmware.map(item => item.index).join(',')}.`)
+      return 1
+    }
+    if (command === 'preview') return 0
+    if (!session.entries.length) { console.error('This session has no conversation to share yet.'); return 1 }
+    const data = gzipSync(JSON.stringify(session))
+    if (data.length > SESSION_GZIP_LIMIT) { console.error('The session is too large to share even trimmed. Leave entries out with --skip.'); return 1 }
+    const result = await boardRequest('/agent-sessions', { method: 'POST', token: await token(), body: { consent: SESSION_CONSENT_VERSION, data: data.toString('base64') } })
+    console.log(`Shared with the owner as ${result.id}, kept until ${result.expiresAt.slice(0, 10)}. Delete it any time: npm run session -- delete ${result.id}`)
+    return 0
+  }
+  if (command === 'list') {
+    const { sessions } = await boardRequest('/agent-sessions', { token: await token() })
+    if (!sessions.length) console.log('You have not shared any sessions.')
+    for (const item of sessions) console.log(`${item.id}  ${item.createdAt.slice(0, 10)}  ${item.agent}  ${item.entries} entries  ${item.branch ?? ''}  kept until ${item.expiresAt.slice(0, 10)}`)
+    return 0
+  }
+  if (command === 'get' || command === 'delete') {
+    if (!arg) { console.error(`Name the session: npm run session -- ${command} <id>`); return 2 }
+    const result = await boardRequest('/agent-sessions/' + encodeURIComponent(arg), { method: command === 'get' ? 'GET' : 'DELETE', token: await token() })
+    console.log(command === 'get' ? JSON.stringify(result, null, 2) : `Deleted ${result.deleted}.`)
+    return 0
+  }
+  if (command === 'pull') {
+    const auth = await token(), { sessions } = await boardRequest('/agent-sessions?all=1', { token: auth })
+    const folder = join(homedir(), '.cache', 'modwerk-local', 'sessions'), index = []
+    await mkdir(folder, { recursive: true, mode: 0o700 })
+    for (const item of sessions) {
+      const name = `${item.createdAt.slice(0, 10)}-${item.login ?? 'deleted'}-${item.id.slice(0, 8)}.json`, file = join(folder, name)
+      try { await stat(file) } catch { await writePrivate(file, JSON.stringify(await boardRequest('/agent-sessions/' + item.id, { token: auth }), null, 2) + '\n') }
+      index.push(`- ${name}: @${item.login ?? 'deleted'}, ${item.agent}, ${item.entries} entries, ${item.branch ?? 'no branch'}${item.note ? ` — «${item.note.replace(/\s+/g, ' ').slice(0, 200)}»` : ''}`)
+    }
+    await writePrivate(join(folder, 'INDEX.md'), `# Shared agent sessions (pulled ${new Date().toISOString().slice(0, 16)}Z)\n\nPrivate: names and quotes stay in this folder and in chat.\n\n${index.join('\n')}\n`)
+    console.log(`${sessions.length} shared sessions in ${folder} (INDEX.md lists them).`)
+    return 0
+  }
+  console.log('npm run session -- status | prefer ask|always|never | preview | share --note "…" [--skip 3,7] [--file <transcript>] | list | get <id> | delete <id> | pull')
+  return command === 'help' ? 0 : 2
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
+  main().then(code => { process.exitCode = code }, error => {
+    console.error(error instanceof BoardError || error instanceof BoardUnavailable ? error.message : error.stack ?? String(error))
+    process.exitCode = 1
+  })
+}
