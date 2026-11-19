@@ -4,7 +4,15 @@
  * them a developer; the owner is set only by migration. */
 export const MEMBER_ROLES = ['user', 'developer', 'owner'] as const
 export type MemberRole = typeof MEMBER_ROLES[number]
-export const ROLE_LABELS: Record<MemberRole, string> = { user: 'Member', developer: 'Developer', owner: 'Owner' }
+export const CONTRIBUTION_LABELS = { contributor: 'Contributor', modder: 'Modder', 'device-reviewer': 'Device reviewer', maintainer: 'Maintainer' } as const
+export type ContributionRoles = { roles: (keyof typeof CONTRIBUTION_LABELS)[]; reviewDevices: string[] }
+export const ROLE_LABELS: Record<MemberRole, string> = { user: 'Member', developer: 'Modder', owner: 'Owner' }
+
+/** Keep previously granted or verified modder badges when showing repository roles. */
+export function publicContributions(badges: ContributionRoles | undefined, role: MemberRole | undefined) {
+  if (!badges || role !== 'developer' || badges.roles.includes('modder')) return badges
+  return { ...badges, roles: ['modder' as const, ...badges.roles.filter(kind => kind !== 'contributor')] }
+}
 export const isMemberRole = (value: unknown): value is MemberRole => MEMBER_ROLES.includes(value as MemberRole)
 /** The role a member shows: the stored role, raised to developer by a confirmed module claim. */
 export const effectiveRole = (stored: string, developer: boolean): MemberRole => stored === 'owner' ? 'owner' : stored === 'developer' || developer ? 'developer' : 'user'

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later OR Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
-import type { MemberRole } from './member-standing'
+import type { ContributionRoles, MemberRole } from './member-standing'
 import { machineModules } from './modules'
 import { compareModuleVersions } from '../catalog/versions'
 import { parseUsbAudioConfiguration, USB_AUDIO_MODULE, type UsbAudioConfiguration } from '../config/usb-audio'
@@ -83,10 +83,10 @@ export type ForumAttachment = {id:string;kind:'image'|'audio';caption:string}
 /** A recent post with images or sound clips, for the Showcase strip. `page` is the thread page that holds it. */
 export type ForumShowcaseItem = {id:string;thread_id:string;created_at:string;username:string|null;avatar?:string|null;official:number;title:string;category:ForumCategory;machine:string|null;page:number;attachments:ForumAttachment[]}
 /** `maintainer` marks a post by a linked maintainer of the thread's module: a claim confirmed by the reviewed catalog and a GitHub sign-in, never the manifest alone. */
-export type ForumPost = {id:string;body:string;username:string|null;avatar?:string|null;displayName?:string|null;user_id?:string;created_at:string;edited_at:string|null;hidden:number;likes:number;liked:boolean;canEdit:boolean;canRemoveMedia?:boolean;official?:boolean;maintainer?:boolean;role?:MemberRole|null;betaTester?:boolean;attachments:ForumAttachment[]}
+export type ForumPost = {id:string;body:string;username:string|null;avatar?:string|null;displayName?:string|null;user_id?:string;created_at:string;edited_at:string|null;hidden:number;likes:number;liked:boolean;canEdit:boolean;canRemoveMedia?:boolean;official?:boolean;maintainer?:boolean;contributions?:ContributionRoles;role?:MemberRole|null;betaTester?:boolean;attachments:ForumAttachment[]}
 /** A reply as a profile or highlight lists it; `page` is the thread page that holds it. */
 export type ForumReplyItem = {id:string;thread_id:string;title:string;excerpt:string;created_at:string;page:number}
-export type MemberProfile = {username:string;displayName:string;bio:string;avatar:string|null;memberSince:string;role:MemberRole;betaTester?:boolean;threads:number;replies:number;likesReceived:number;reports:number;maintains:{id:string;name:string;machine:string;href:string}[];recentReplies:ForumReplyItem[]} & ProfileLinks
+export type MemberProfile = {username:string;displayName:string;bio:string;avatar:string|null;memberSince:string;contributions?:ContributionRoles;role:MemberRole;betaTester?:boolean;threads:number;replies:number;likesReceived:number;reports:number;maintains:{id:string;name:string;machine:string;href:string}[];recentReplies:ForumReplyItem[]} & ProfileLinks
 export type ForumMember = {username:string;avatar:string|null}
 export type ForumHighlights = {since:string;topPosts:(ForumReplyItem&ForumMember&{category:ForumCategory;likes:number})[];topMembers:(ForumMember&{likes:number})[];newMembers:ForumMember[]}
 /** All active site visitors, and consenting member names; `more` includes anonymous and unnamed visitors. */
