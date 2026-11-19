@@ -6,6 +6,7 @@
 // main section change; an upgrade that still does not fit is refused here, before anything is sent.
 import { load, mainImage, parse, verify, write, type Parsed } from '../../../vendor/elekloader/kit/src/formats.ts'
 import type { Device } from '../../../vendor/elekloader/kit/src/devices.ts'
+import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { packSectionOptimal } from '../elektron/codec/pack.ts'
 import { UPDATE_LIMITS } from './carried-devices'
 
@@ -48,14 +49,10 @@ export async function fitBuilt<T extends BuiltFiles>(result: T, stockRaw: Uint8A
     if (!file.name.toLowerCase().endsWith('.syx')) { files.push(file); continue }
     const fitted = await fitUpdate(new Uint8Array(file.data), stockRaw)
     if (!fitted.repacked) { files.push(file); continue }
-    const data = fitted.syx.slice().buffer, sha256 = await sha256Hex(fitted.syx)
+    const data = fitted.syx.slice().buffer, sha256 = sha(fitted.syx)
     if (file.sha256 === result.sha256) top = { sha256, bytes: fitted.syx.length }
     files.push({ ...file, data, sha256, bytes: fitted.syx.length })
   }
   return { ...result, files, ...top }
 }
 
-async function sha256Hex(data: Uint8Array): Promise<string> {
-  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', data))
-  return Array.from(digest, b => b.toString(16).padStart(2, '0')).join('')
-}
