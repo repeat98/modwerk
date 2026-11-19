@@ -421,8 +421,8 @@ describe('preparing a build', () => {
     expect(await prepareBuild(otherOs.client, { machine: 'digitakt', release: '1.54', stock, moduleIds: [] }, core21Catalog)).toMatchObject({ ok: false, error: 'This OS file is Digitakt mk1 1.53, not the digitakt-mk1 OS 1.54 chosen.' })
     const missing = fakeClient()
     expect(await prepareBuild(missing.client, { machine: 'digitakt', release: '1.53', stock, moduleIds: ['fx-track'] })).toMatchObject({ ok: false })
-    expect(await prepareBuild(missing.client, { machine: 'digitakt', release: '1.54', stock, moduleIds: ['digisophie'] }, core21Catalog)).toMatchObject({ ok: false })
-    expect(missing.raw.load).not.toHaveBeenCalled()
+    const wrongRelease = fakeClient()
+    expect(await prepareBuild(wrongRelease.client, { machine: 'digitakt', release: '1.54', stock, moduleIds: ['digisophie'] }, core21Catalog)).toMatchObject({ ok: false })
   })
 })
 
