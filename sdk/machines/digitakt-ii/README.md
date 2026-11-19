@@ -53,11 +53,11 @@ Find a screen from the frame the OS has just drawn, not from UI object pointers:
 
 ### SHARC code rules
 
-No Modwerk build writes SHARC code yet. The first base or module that does follows these rules from Analog Devices' public *SHARC+ Core Programming Reference* and brings a build check for them:
+A machine module's sound-chip player is a `.sharc` source named by `build.sharc` in its `build.json` (`{ "source": "src/player.sharc", "players": [{ "type": 7, "entry": "label" }] }`, each type claimed as `machine:<type>`). Modwerk's own assembler, `src/engine/elektron/sharc-asm.ts`, builds it into the package's `build.dt2_sharc`, and the site composes it into section 7 with the base's machine parts. The assembler takes the instruction syntax of Analog Devices' public *SHARC+ Core Programming Reference* (the forms it lists) and refuses a program that breaks these rules:
 
 - Never store a DAG register (I, M, L or B 0–7) to memory through an index register of the same DAG. It is not a legal encoding, though an assembler or emulator may accept it; route the value through a data register.
 - The last 11 instructions of a hardware loop are 48-bit instructions, never compressed 16-bit ones (the program sequencer's loop restrictions).
-- After writing code to memory, write the data cache back before invalidating the instruction cache.
+- After writing code to memory, write the data cache back before invalidating the instruction cache (the loader's part: a player never writes code).
 - An emulator run never proves SHARC code: these are silicon rules.
 
 ## Memory

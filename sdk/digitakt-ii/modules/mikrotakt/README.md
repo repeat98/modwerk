@@ -6,7 +6,7 @@ Describe what it does, every control, how to reach it on the unit, and a short t
 
 ## Design notes (work in progress)
 
-The player is `src/player.sharc`, assembled by Modwerk's sound-chip assembler (`src/engine/elektron/sharc-asm.ts`). Each voice has a play head and up to six grains:
+The player is `src/player.sharc`, assembled by Modwerk's sound-chip assembler (`src/engine/elektron/sharc-asm.ts`) into the package (`build.sharc` in `build.json`). It uses the sound chip's L2 from loader byte `0x200d0000` to `0x200f8000` (claimed on the agent board as `dsp-region digitakt-ii/mikrotakt-l2`): code, variables, tables, per-track settings, voice and grain state, and the grain records (about 106 KB). Each voice has a play head and up to six grains:
 
 - **Play head.** The voice's own record, played by the stock sample player into a buffer nobody hears. It follows the sample's start, length, loop, play mode and pitch, so a note lasts as a SAMPLE note would.
 - **Grains.** A grain is a copy of the voice's record taken at the play head, moved by the position offset and a random spread, played by the stock player and shaped by a window (`4x(1 - x)`, linear across each 32-sample block). Grains start every interval, a fraction of a sequencer step set by the density. Their gain follows the square root of the overlap, since grains add out of phase.

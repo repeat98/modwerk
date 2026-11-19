@@ -14,5 +14,6 @@
   "claims": ["machine:7"],
   "requires": [],
   "derive": null,
+  "sharc": { "source": "src/player.sharc", "players": [{ "type": 7, "entry": "mikrotakt_player" }] },
   "releases": { "1.17": { "defsym": {}, "cflags": [], "sites": [] } }
 }
