@@ -29,6 +29,7 @@ const member: Session = { available: true, admin: false, user: { id: 'plain', di
 const visitor: Session = { available: true, admin: false, user: null }
 let root: Root, container: HTMLDivElement
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   vi.stubGlobal('isSecureContext', true)
   localStorage.setItem(OCTATRACK_WELCOME_KEY, 'seen')
@@ -44,6 +45,7 @@ beforeEach(() => {
 })
 afterEach(async () => {
   await act(() => root.unmount()); container.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals()
+  vi.useRealTimers()
   delete (navigator as { usb?: unknown }).usb; sessionStorage.clear(); localStorage.clear()
 })
 
@@ -51,10 +53,11 @@ async function open(hash: string, session = member) {
   window.location.hash = hash
   const value = { session, loading: false, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} }
   await act(async () => root.render(createElement(CommunityContext.Provider, { value }, createElement(App))))
+  await act(() => vi.dynamicImportSettled())
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 100)) })
 }
 const guide = () => document.querySelector<HTMLDialogElement>('dialog.base-install-dialog[open]')
-const wait = (ms: number) => act(async () => { await new Promise(resolve => setTimeout(resolve, ms)) })
+const wait = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms))
 
 describe('the Octatrack base path for a member who is not a beta tester', () => {
   it('walks them through the base install from Your Octatrack, not from other pages', async () => {
@@ -65,6 +68,7 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
     expect(guide()).toBeNull()
     await act(async () => root.unmount()); root = createRoot(container)
     await open('octatrack')
+    await wait(1500)
     await vi.waitFor(() => expect(guide()).not.toBeNull(), { timeout: 5000 })
     expect(guide()!.querySelector('h2')?.textContent).toBe('Install the Modwerk base')
     expect(guide()!.textContent).not.toMatch(/beta/i)
@@ -152,8 +156,10 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
   }, 20000)
   it('leads a signed-out visitor on Your Octatrack to sign in', async () => {
     await open('octatrack', visitor)
-    await vi.waitFor(() => expect(container.querySelector('.hub-account-note')).not.toBeNull())
-    expect(container.querySelector('.hub-account-note a')?.getAttribute('href')).toBe('#account/login?next=octatrack')
-    expect(container.querySelector('.hub-account-note')?.textContent).toContain('Your module sets stay in this browser.')
+    const accountLinks = () => container.querySelector('nav[aria-label="Workspace account"]')
+    await vi.waitFor(() => expect(accountLinks()).not.toBeNull())
+    expect(accountLinks()?.querySelector('a')?.getAttribute('href')).toBe('#account/login?next=octatrack')
+    expect(accountLinks()?.querySelector('a:last-child')?.getAttribute('href')).toBe('#account/register?next=octatrack')
+    expect(container.querySelector('.hub-page-heading p')?.textContent).toBe('Your module sets stay in this browser.')
   })
 })

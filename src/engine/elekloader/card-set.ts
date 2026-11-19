@@ -9,12 +9,33 @@ import { SET_CHANGES, SET_MAX_ABI } from './set-package.ts'
 
 /** The name to give the file in the card's top folder. */
 export const CARD_SET_FILE = 'MODWERK0.SET'
+export const CARD_RECOVERY_FILE = 'MODWERK1.SET'
 const HEADER = 84, SECTOR = 512
 const padded = (bytes: number) => Math.ceil(bytes / 4) * 4
 
-/** A generation that outranks a set the unit saved itself (it counts up from 1) and every file written here before:
- * the time in seconds. The unit's later saves count on from it, so they win over this file in turn. */
+/** Initial generation for an export. A card with a second slot needs its own ordering at import time. */
 export const cardSetGeneration = (now = Date.now()) => Math.floor(now / 1000)
+
+/** Prepare an export for slot zero alongside the retained slot one. The generation is outside the payload digest. */
+export function forCardImport(file: Uint8Array, retained?: Uint8Array): Uint8Array<ArrayBuffer> {
+  function header(bytes: Uint8Array) {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+    if (bytes.length < HEADER || view.getUint32(0) !== 0x4d575354 || ![1, 2].includes(view.getUint32(4)) ||
+        view.getUint32(16) < HEADER || view.getUint32(16) > bytes.length)
+      throw new Error('Choose a complete Modwerk set file.')
+    return view
+  }
+  const selected = header(file), used = selected.getUint32(16)
+  if (selected.getUint32(4) !== 1 || used > SAVED_SET_CAPACITY || !sha256(file.subarray(HEADER, used)).every((byte, i) => byte === file[52 + i]))
+    throw new Error('Choose an intact exported module set.')
+  const other = retained && header(retained)
+  const sameBase = retained && file.subarray(20, 52).every((byte, i) => byte === retained[20 + i])
+  const generation = Math.max(selected.getUint32(8), sameBase && other ? other.getUint32(8) + 1 : 1)
+  if (generation > 0xfffffffe) throw new Error('The card generation is full. Back up both slot files outside the top folder before importing.')
+  const copy = Uint8Array.from(file)
+  new DataView(copy.buffer).setUint32(8, generation)
+  return copy
+}
 
 /** The set file for the base `base` (its identity) holding `packages`, each exactly as USB sync would stage it. Whole
  * sectors, as the base writes and reads it; the header carries the length in use. */

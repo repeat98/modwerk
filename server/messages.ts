@@ -40,8 +40,8 @@ export async function messageRoutes(request: Request, db: Database, user: User |
     const rows = (await db.prepare(`SELECT c.id,c.updated_at,u.username,u.display_name AS displayName,u.avatar_id AS avatar,
       (SELECT substr(m.body,1,160) FROM messages m WHERE m.conversation_id=c.id AND m.hidden=0 ORDER BY m.created_at DESC,m.rowid DESC LIMIT 1) AS excerpt,
       (SELECT m.user_id=? FROM messages m WHERE m.conversation_id=c.id AND m.hidden=0 ORDER BY m.created_at DESC,m.rowid DESC LIMIT 1) AS mine,
-      (SELECT COUNT(*) FROM messages m WHERE m.conversation_id=c.id AND m.hidden=0 AND m.user_id<>? AND (me.last_read_at IS NULL OR m.created_at>me.last_read_at)) AS unread
-      FROM conversation_members me JOIN conversations c ON c.id=me.conversation_id
+      (SELECT COUNT(*) FROM messages m WHERE m.conversation_id=c.id AND m.hidden=0 AND m.user_id<>? AND (last.id IS NULL OR (m.created_at,m.rowid)>(last.created_at,last.rowid))) AS unread
+      FROM conversation_members me JOIN conversations c ON c.id=me.conversation_id LEFT JOIN messages last ON last.id=me.last_read_message_id
       JOIN conversation_members them ON them.conversation_id=c.id AND them.user_id<>me.user_id JOIN users u ON u.id=them.user_id
       WHERE me.user_id=? AND u.username IS NOT NULL ORDER BY c.updated_at DESC LIMIT 100`).bind(me.id, me.id, me.id).all()).results
     const settings = await db.prepare('SELECT messages_enabled FROM users WHERE id=?').bind(me.id).first<{messages_enabled: number}>()
@@ -51,12 +51,17 @@ export async function messageRoutes(request: Request, db: Database, user: User |
   if (!match) throw new HttpError(404, 'Not found.')
   const action = match[2], view = await conversationWith(db, me, match[1])
   if (!action && request.method === 'GET') {
-    const messages = view.conversationId ? (await db.prepare('SELECT id,user_id,body,hidden,created_at FROM messages WHERE conversation_id=? ORDER BY created_at DESC,rowid DESC LIMIT ?').bind(view.conversationId, PAGE).all<Row>()).results.reverse() : []
-    // Opening the conversation reads it: the unread count and the bell entries for it clear together.
-    if (view.conversationId) await db.batch([
-      db.prepare('UPDATE conversation_members SET last_read_at=CURRENT_TIMESTAMP WHERE conversation_id=? AND user_id=?').bind(view.conversationId, me.id),
-      db.prepare("UPDATE notifications SET seen=1 WHERE user_id=? AND kind='message' AND seen=0 AND message_id IN (SELECT id FROM messages WHERE conversation_id=?)").bind(me.id, view.conversationId),
-    ])
+    // Read the page, advance to its last message and acknowledge its bell entries in one snapshot.
+    let messages: Row[] = []
+    if (view.conversationId) {
+      const latest = 'FROM messages WHERE conversation_id=? ORDER BY created_at DESC,rowid DESC'
+      const [page] = await db.batch([
+        db.prepare(`SELECT id,user_id,body,hidden,created_at ${latest} LIMIT ?`).bind(view.conversationId, PAGE),
+        db.prepare(`UPDATE conversation_members SET last_read_at=CURRENT_TIMESTAMP,last_read_message_id=(SELECT id ${latest} LIMIT 1) WHERE conversation_id=? AND user_id=?`).bind(view.conversationId, view.conversationId, me.id),
+        db.prepare("UPDATE notifications SET seen=1 WHERE user_id=? AND kind='message' AND seen=0 AND message_id IN (SELECT id FROM messages WHERE conversation_id=?)").bind(me.id, view.conversationId),
+      ]) as [{ results: Row[] }, unknown, unknown]
+      messages = page.results.reverse()
+    }
     return response({ member: { username: view.other.username, displayName: view.other.display_name, avatar: view.other.avatar }, messages: messages.map(item => ({ id: item.id, mine: item.user_id === me.id, body: item.hidden ? '' : item.body, hidden: !!item.hidden, created_at: item.created_at })), blocked: view.blocked, canSend: view.canSend, hasMore: messages.length === PAGE })
   }
   if (request.method !== 'POST') throw new HttpError(405, 'Choose a supported action.')
@@ -89,7 +94,6 @@ export async function messageRoutes(request: Request, db: Database, user: User |
   statements.push(
     db.prepare('INSERT INTO messages(id,conversation_id,user_id,body) VALUES(?,?,?,?)').bind(id, conversationId, me.id, text),
     db.prepare('UPDATE conversations SET updated_at=CURRENT_TIMESTAMP WHERE id=?').bind(conversationId),
-    db.prepare('UPDATE conversation_members SET last_read_at=CURRENT_TIMESTAMP WHERE conversation_id=? AND user_id=?').bind(conversationId, me.id),
     notifyMessage(db, id, conversationId, me.id, view.other.id),
   )
   await db.batch(statements)

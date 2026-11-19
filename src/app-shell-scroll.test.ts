@@ -10,6 +10,11 @@ describe('app shell scrolling', () => {
   it.each(['.app-shell', '.workspace'])('%s cannot be scrolled programmatically, so only the content pane scrolls', selector => {
     expect(rule(selector)).toMatch(/overflow: clip/)
   })
+  it('uses the same header height for the brand and toolbar at native zoom', () => {
+    expect(rule('.workspace')).toContain('grid-template-rows: var(--header-height)')
+    expect(css).toMatch(/\.sidebar-brand \{ height: var\(--header-height\)/)
+    expect(css).not.toMatch(/\.app-shell\s*\{[^}]*\bzoom\s*:/)
+  })
   it('keeps the content pane as the one scroller', () => {
     expect(rule('.workspace-content')).toMatch(/overflow-y: auto/)
   })

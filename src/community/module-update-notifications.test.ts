@@ -10,6 +10,7 @@ import { notificationLines } from './notification-text'
 import { recordModuleReleases, syncModuleReleases } from '../../server/module-updates'
 import { sendActivityDigests } from '../../server/activity-mail'
 import { developerApi } from '../../server/developers'
+import { digest, token } from '../../server/security'
 import type { User } from '../../server/platform'
 import worker from '../../worker'
 
@@ -32,6 +33,14 @@ async function fixture() {
   const server = await testServer(); databases.push(server.db)
   server.env.AUTH_BASE_URL = 'https://api.example.test/api/auth'
   async function member(username: string) {
+    const id = username, email = username + '@example.test', session = token()
+    server.db.prepare('INSERT INTO users(id,display_name,username,email_verified) VALUES(?,?,?,1)').run(id, username, username)
+    server.db.prepare('INSERT INTO auth_users(id,name,email,emailVerified,createdAt,updatedAt) VALUES(?,?,?,1,0,0)').run(id, username, email)
+    server.db.prepare('INSERT INTO sessions(token_hash,user_id,expires) VALUES(?,?,?)').run(await digest(session), id, Math.floor(Date.now() / 1000) + 600)
+    return { id, email, session }
+  }
+  // Exporting and deleting an account also check the password and the Better Auth session.
+  async function registeredMember(username: string) {
     const email = username + '@example.test'
     expect((await server.call('/auth/register', 'POST', { rulesVersion: COMMUNITY_RULES_VERSION, username, email, password })).status).toBe(202)
     const token = [...sent].reverse().find(mail => mail.to[0] === email)!.text.match(/#account\/verify\/([^\s]+)/)![1]
@@ -43,7 +52,7 @@ async function fixture() {
   const admin = async () => (await (await server.call('/auth/admin', 'POST', { key: 'e'.repeat(64) })).json()).token as string
   const publish = (...releases: ModuleRelease[]) => recordModuleReleases(server.env.DB!, releases)
   const digests = async (minutes = 24 * 60 + 15) => { sent.length = 0; return sendActivityDigests(server.env, server.env.DB!, new Date(Date.now() + minutes * 60000)) }
-  return { ...server, member, items, admin, publish, digests }
+  return { ...server, member, registeredMember, items, admin, publish, digests }
 }
 
 describe('module update subscriptions', () => {
@@ -442,7 +451,7 @@ describe('module update subscriptions', () => {
   })
 
   it('includes the published version in bell and email, respects the update topic, and exports/deletes follows', async () => {
-    const f = await fixture(), owner = await f.member('mailfan'), silent = await f.member('silentfan')
+    const f = await fixture(), owner = await f.registeredMember('mailfan'), silent = await f.member('silentfan')
     for (const user of [owner, silent]) await f.call('/modules/miniverb/updates', 'PATCH', { enabled: true }, user.session)
     await f.call('/notifications/preferences', 'PATCH', { updates: false }, silent.session)
     await f.publish(release())
