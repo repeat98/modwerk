@@ -1,0 +1,1 @@
+SDK: octabam's cycle scan is imported at `cc7cffc1` into `sdk/cycle-scan/`. It prices the path an Octatrack DSP effect executes with the DSP56300 manual's instruction cycles and pipeline stalls and names the sites that stall, for Modwerk's modules and the stock effects. It sits outside the module-source fingerprint, so no module package needs a rebuild.
