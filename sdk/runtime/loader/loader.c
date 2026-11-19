@@ -21,6 +21,8 @@ static uint8_t pool[RUNTIME_POOL_BYTES] __attribute__((aligned(16)));
 struct modwerk_runtime_api modwerk_runtime_api;
 volatile uint32_t modwerk_runtime_ticks;
 static struct runtime_module *volatile live[RUNTIME_MODULES];
+/* One bit per position for each of the four UI hooks, lowest position first (ColdFire ff1). */
+static volatile uint32_t ui_positions[RUNTIME_EVENTS][(RUNTIME_MODULES + 31u) / 32u];
 static struct runtime_module *owned[OWNERS]; /* every module holding pool memory */
 static struct runtime_owner owner_identity[OWNERS]; /* never stored in uploaded/mutable module memory */
 static uint32_t owner_generation; /* nonzero, monotonic for this boot; exhaustion refuses */
@@ -105,6 +107,38 @@ __attribute__((weak)) int modwerk_machine_image_validate(const struct runtime_ds
 #endif
 
 const struct runtime_module *modwerk_runtime_module(unsigned i) { return i < RUNTIME_MODULES ? live[i] : 0; }
+/* The engine task is the only writer. Add the new bits before publishing the module and clear its absent
+ * hooks afterwards. A reader can interrupt anywhere: an extra bit just makes it look at the live slot. */
+static void set_live(unsigned position, struct runtime_module *m)
+{
+    unsigned word = position / 32u;
+    uint32_t bit = 0x80000000u >> (position % 32u);
+    for (unsigned e = 0; e < RUNTIME_EVENTS; ++e)
+        if (m && m->hook[e]) ui_positions[e][word] |= bit;
+    live[position] = m;
+    for (unsigned e = 0; e < RUNTIME_EVENTS; ++e)
+        if (!m || !m->hook[e]) ui_positions[e][word] &= ~bit;
+}
+uintptr_t modwerk_runtime_next_hook(enum runtime_event event, unsigned *next)
+{
+    if ((unsigned)event >= RUNTIME_EVENTS) return 0;
+    for (unsigned i = *next; i < RUNTIME_MODULES;) {
+        unsigned word = i / 32u;
+        uint32_t bits = ui_positions[event][word] & (UINT32_MAX >> (i % 32u));
+        if (!bits) {
+            i = (word + 1u) * 32u;
+            continue;
+        }
+        i = word * 32u + (unsigned)__builtin_clz(bits);
+        const struct runtime_module *m = live[i++];
+        uintptr_t handler = m ? m->hook[event] : 0;
+        if (handler) {
+            *next = i;
+            return handler;
+        }
+    }
+    return 0;
+}
 unsigned modwerk_runtime_active(void)
 {
     unsigned n = 0;
@@ -715,7 +749,7 @@ static int switch_locked(unsigned position, struct runtime_module *to, const str
         woken(position, ok ? to : from); /* the rows just staged hold the position awake */
         if (ok) {
             owners_changing();
-            live[position] = to;
+            set_live(position, to);
             owners_changed();
             /* The journal's adapter already owns all DSP jobs and ACKs. Its
              * CF commit observation must not start a second legacy job. */

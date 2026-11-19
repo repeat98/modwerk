@@ -175,6 +175,9 @@ extern struct modwerk_runtime_api modwerk_runtime_api;
  * reclaimed only when no paused task holds an address inside it, so a hook
  * still running old code stays valid. */
 const struct runtime_module *modwerk_runtime_module(unsigned position);
+/* Tick, draw, key or encoder hook at or after *next, or 0. Start at position 0; each call advances
+ * past the handler it returns. Only positions are indexed, so the next call sees any live replacement. */
+uintptr_t modwerk_runtime_next_hook(enum runtime_event event, unsigned *next);
 unsigned modwerk_runtime_active(void);               /* modules live */
 unsigned modwerk_runtime_intact(void);               /* of them, those whose stock-code sites hold their patches */
 uint32_t modwerk_runtime_broken(void);               /* the first live module whose sites do not hold: its id, 0 none */
