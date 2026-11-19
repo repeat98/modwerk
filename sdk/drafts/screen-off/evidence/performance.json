@@ -7,14 +7,14 @@
   "cycles": {
     "unit": "cycles/event",
     "static": null,
-    "measured": null,
+    "measured": 25033,
     "budget": 26600000,
-    "method": "Not measured. The chord and the frame clear have not been counted in ot_emu or timed on a unit."
+    "method": "ot_emu executed instructions from so_draw entry to its rts, interrupts included, on development twin 878307834ad3c23a (MAIN.raw, not a unit). Package 14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c. One UP+NO set off to 1. Of 45 draws, 12 returned in 10 instructions while the blank was still off, 26 cleared the 1024-byte frame in 6157 with no interrupt inside the draw, and the dearest was 25033, the same clear with an interrupt inside it. An earlier run on the same image peaked at 25033 as well."
   },
   "stress": {
     "events": null,
     "playing": null,
     "hangs": null,
-    "method": "Not run. The chord has not been repeated on a playing unit, or under ot_emu, with a STOP and a Part change between presses."
+    "method": "Not accepted. Under the same ot_emu image, 21 UP+NO chords advanced toggles from 0 to 21 and the tick kept running, with STOP sent between two groups of 10. No project was loaded, the Part byte at 0x80000003 stayed 0, and the sequencer was not observed playing."
   }
 }

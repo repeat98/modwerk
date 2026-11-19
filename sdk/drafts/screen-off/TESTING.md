@@ -56,10 +56,16 @@ A later status answered the same line, `normal, generation 3, active 9993a6d3bd0
 
 19 November 2026, MKII, OS 1.40C. A development twin, identity `878307834ad3c23a9f87eea71250a7f104db7fdd5c32592cba6ddd816e61f718`, was RAM-booted and not flashed. `npm run device:price` measured package `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c` for 8 seconds, at rest, with the blank off. The pattern was whatever the unit came up on. The frame interrupt's share did not change (`resources.cpuPrice` 0.0). The CPU meter read +1.7 points; that is not the price. No frames were skipped. The price command was stopped before it printed a rollback, `recover` found the trial and rolled it back, and the inventory was empty. Nothing was kept.
 
+## Draw cost
+
+19 November 2026. ot_emu, the development twin `878307834ad3c23a…` (`MAIN.raw`, not a unit), package `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`. The trial was not kept. `so_draw` was watched from its entry to its `rts`. One UP+NO set the blank on (`off` 1, `toggles` 1). The count is executed instructions, interrupts included. With the blank still off the draw returned in 10. With the blank on, 26 draws cleared the 1024-byte frame in 6157 and did not take an interrupt inside the draw. The dearest of that run was 25033, the same clear with an interrupt inside it. An earlier run on the same image peaked at 25033 as well. `evidence/performance.json` records 25033. The audit calls that unit cycles/event. It is not the frame-interrupt price above, which was taken with the blank off.
+
+The same session sent 21 UP+NO chords. `toggles` went from 0 to 21 and the tick kept running, with STOP sent between two groups of 10. No project was loaded. The Part byte at `0x80000003` stayed 0, and the sequencer was not observed playing, so the stress fields stay empty.
+
 ## Not tested
 
 - An MKI, and a card install. The MKII chord above is a report from the person at the unit, on 7 November and again on 16 November, both RAM trials of package `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`.
-- The package size, the executed instructions of the chord, and the cost of clearing the frame.
+- The package size.
 - The stock screen saver while this blank is on, and while a pattern plays.
 - Whether the MKII panel can be powered down as well as painted black.
 - Whether the MKI backlight stays lit behind the blank glass.
