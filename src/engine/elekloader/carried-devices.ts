@@ -31,6 +31,11 @@ export function carriedDevice(facts: Facts): Device {
 
 export const CARRIED_DEVICES: readonly Device[] = [carriedDevice(DN2_DEVICE.device)]
 
+/** device key -> the most an OS upgrade may hold once decoded (device.json's update_max), where it is known. The
+ * pinned kit's Device has no such field, so Modwerk keeps it beside the device (fit-update.ts). */
+export const UPDATE_LIMITS: Readonly<Record<string, number>> = Object.fromEntries(
+  [DN2_DEVICE.device].filter(facts => 'update_max' in facts).map(facts => [facts.key, num((facts as { update_max: Num }).update_max)]))
+
 /** Add every carried device the kit does not know to its device list. Idempotent; a kit that ships one keeps its own. */
 export function carryDevices(): void {
   const known = devices()

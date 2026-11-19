@@ -1,0 +1,1 @@
+Elektron firmware builds: Modwerk now has a second, smaller packer for the OS, and builds for a unit that refuses large upgrades (the Digitone II, at about 2 MiB) are packed with it so they fit. Other machines' builds do not change.
