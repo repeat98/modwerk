@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { useSyncExternalStore } from 'react'
 import { diagnosticPreference, subscribeDiagnosticPreference, type DiagnosticPreference } from './octatrack-diagnostics'
-import { BASE_GUIDE_STEPS, DIAGNOSTIC_INVITATION_PLACEMENTS, OCTATRACK_DIAGNOSTICS_VERSION } from './octatrack-diagnostics-contract'
+import { BASE_GUIDE_STEPS, DIAGNOSTIC_INVITATION_PLACEMENTS, DIAGNOSTICS_INVITATION_VERSION } from './octatrack-diagnostics-contract'
 import { browserRequestsPrivacy } from './usage'
 
 /** Whether the install guide has a diagnostics step to show: a signed-in member who doesn't share under the current
@@ -13,7 +13,7 @@ export function useDiagnosticsStepNeeded() {
   return diagnosticsStepNeeded(useSyncExternalStore(subscribeDiagnosticPreference,diagnosticPreference,diagnosticPreference))
 }
 
-const invitationKey = (memberId: string) => `modwerk.diagnostics.invitation:${OCTATRACK_DIAGNOSTICS_VERSION}:${memberId}`
+const invitationKey = (memberId: string) => `modwerk.diagnostics.invitation:${DIAGNOSTICS_INVITATION_VERSION}:${memberId}`
 /** Whether this member answered the invitation under the current consent version in this browser (Not now or closed,
  * anywhere it is asked: the first connection, the install guide, the beta note), so it isn't asked again by itself. */
 export function invitationAnswered(memberId: string) { try { return localStorage.getItem(invitationKey(memberId)) === 'dismissed' } catch { return false } }

@@ -7,7 +7,8 @@
 // sizes its own worker count to the memory that is free then (workersFor). MODWERK_SLOTS sets the number of slots
 // (0 turns them off); CI runners are machines of their own and never wait.
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
+import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, watch, writeFileSync } from 'node:fs'
 import { availableParallelism, freemem, tmpdir, totalmem } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -42,6 +43,11 @@ function readVmStat() { try { return execFileSync('vm_stat', { encoding: 'utf8',
 export function workersFor({ most, each, keep = GB, available = availableMemory(), cores = availableParallelism() }) {
   return Math.max(1, Math.min(most, cores, Math.floor((available - keep) / each)))
 }
+
+// Lint and typecheck peaked at 1.1 and 1.3 GiB on a busy WSL host. Reserve room for their children and the system
+// before running them alongside Vitest, using the same per-worker estimate as the check runner.
+export const vitestWorkerBytes = 700 * MB
+export const appStagesFit = (workers, available = availableMemory()) => available >= 4 * GB + workers * vitestWorkerBytes
 
 /** The slot directory, shared by every worktree of this clone (it lives in the clone's common Git directory). */
 export function slotDirectory(cwd = process.cwd()) {
@@ -93,6 +99,20 @@ function tryTake(directory, count, what) {
   return null
 }
 
+// All worktrees see the same tickets. A new arrival cannot take the only slot between an older waiter's polls.
+// The filename identifies the process even if it dies before writing anything.
+function waitingTickets(directory) {
+  let entries
+  try { entries = readdirSync(directory) } catch (error) { if (error.code === 'ENOENT') return []; throw error }
+  return entries.filter(name => {
+    const match = /^wait-\d+-(\d+)-[\da-f-]+$/.exec(name)
+    if (!match) return false
+    if (alive(Number(match[1]))) return true
+    rmSync(join(directory, name), { force: true })
+    return false
+  }).sort()
+}
+
 /**
  * Waits for a slot and returns its release function (also called when the process exits). A check started by a check that
  * already holds a slot (sdk:check inside npm run check) takes none, so it never waits on its own parent.
@@ -101,22 +121,42 @@ export async function takeSlot(what, { directory = slotDirectory(), env = proces
   const count = slotCount({ env })
   if (env.CI || env[HELD] || count === 0) return () => {}
   mkdirSync(directory, { recursive: true })
-  let said = false
-  for (;;) {
-    const slot = tryTake(directory, count, what)
-    if (slot) {
-      env[HELD] = '1'
-      const release = () => rmSync(slot, { recursive: true, force: true })
-      process.once('exit', release)
-      if (said) log(`${what}: got a slot, starting.`)
-      return () => { process.off('exit', release); release(); delete env[HELD] }
+  const since = Date.now(), ticket = `wait-${since}-${process.pid}-${randomUUID()}`
+  const leaveQueue = () => rmSync(join(directory, ticket), { force: true })
+  writeFileSync(join(directory, ticket), JSON.stringify({ what, cwd: process.cwd() }), { flag: 'wx' })
+  process.once('exit', leaveQueue)
+  let said = false, watcher, wake
+  try {
+    // Older runners only remove their slot. Wake on that removal as well as on updated runners leaving the queue.
+    // Keep the timer for dead holders (no filesystem event) and filesystems without directory notifications.
+    try {
+      watcher = watch(directory, { persistent: false }, event => { if (event === 'rename') wake?.() })
+      watcher.on('error', () => watcher.close())
+    } catch { /* polling still works */ }
+    for (;;) {
+      const queue = waitingTickets(directory)
+      const slot = queue[0] === ticket && tryTake(directory, count, what)
+      if (slot) {
+        env[HELD] = '1'
+        const release = () => rmSync(slot, { recursive: true, force: true })
+        process.once('exit', release)
+        if (said) log(`${what}: got a slot after ${Math.round((Date.now() - since) / 1000)}s in the queue.`)
+        return () => { process.off('exit', release); release(); delete env[HELD] }
+      }
+      if (!said) {
+        said = true
+        const busy = holders(directory).map(h => `${h.what} in ${h.cwd} (pid ${h.pid}, ${Math.round((Date.now() - h.since) / 60000)} min)`)
+        log(`${what}: waiting for a free slot (${count} on this computer, ${queue.indexOf(ticket)} ahead in the queue). Running: ${busy.join('; ') || 'starting up'}.`)
+      }
+      await new Promise(done => {
+        const timer = setTimeout(done, poll)
+        wake = () => { clearTimeout(timer); done() }
+      })
     }
-    if (!said) {
-      said = true
-      const busy = holders(directory).map(h => `${h.what} in ${h.cwd} (pid ${h.pid}, ${Math.round((Date.now() - h.since) / 60000)} min)`)
-      log(`${what}: waiting for a free slot (${count} on this computer, MODWERK_SLOTS to change). Running: ${busy.join('; ') || 'starting up'}.`)
-    }
-    await new Promise(done => setTimeout(done, poll))
+  } finally {
+    watcher?.close()
+    process.off('exit', leaveQueue)
+    leaveQueue()
   }
 }
 
@@ -127,4 +167,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   console.log(`${slotCount()} slot(s) for heavy checks on this computer; ${Math.round(availableMemory() / MB)} MB memory available. Slots: ${directory}`)
   for (const h of taken) console.log(`  ${h.slot}  ${Math.round((Date.now() - h.since) / 60000)} min  pid ${h.pid}  ${h.what}  ${h.cwd}`)
   if (!taken.length) console.log('  all free')
+  for (const ticket of waitingTickets(directory)) {
+    const [, since, pid] = ticket.split('-')
+    try {
+      const { what, cwd } = JSON.parse(readFileSync(join(directory, ticket), 'utf8'))
+      console.log(`  waiting  ${Math.round((Date.now() - Number(since)) / 60000)} min  pid ${pid}  ${what}  ${cwd}`)
+    } catch { /* the waiter just joined or took its slot */ }
+  }
 }
