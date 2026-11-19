@@ -22,12 +22,14 @@ jobs:
       windows: ${{ steps.scope.outputs.windows }}
       elemod: ${{ steps.scope.outputs.elemod }}
       documentation: ${{ steps.scope.outputs.documentation }}
+      sdk: ${{ steps.scope.outputs.sdk }}
       logger: ${{ steps.scope.outputs.logger }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          fetch-depth: 0
+          # Scope compares the PR merge tree to its base parent.
+          fetch-depth: 2
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
@@ -69,7 +71,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      - run: npm ci --prefer-offline
       # npm ci empties node_modules, where ESLint (content-hashed, per-file rules), tsc (incremental), Vitest and sdk:check
       # (the order of their files) keep their caches. The newest one, from this pull request or main, lets lint and typecheck
       # redo only what changed.
@@ -91,8 +93,7 @@ jobs:
       # verifies it and explicitly requests automatic publication within the trusted scope.
       # npm run check runs no firmware gates, but it executes submitted manifest.py files: modules:compat
       # and sdk:check load every module's manifest as Python.
-  # The two long suites of npm run check, each on a runner of its own beside module-contract: the SDK suite and Vitest in
-  # two shards. A documentation-only change runs neither, as in the whole check.
+  # Vitest runs in two shards. Allocate an SDK runner unless the exact diff consists entirely of paths the suite cannot read.
   module-suites:
     needs: scope
     if: needs.scope.outputs.documentation != 'true'
@@ -101,7 +102,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        part: [sdk, 'test:1/2', 'test:2/2']
+        part: ${{ fromJSON(needs.scope.outputs.sdk == 'false' && '["test:1/2","test:2/2"]' || '["test:1/2","test:2/2","sdk"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -111,7 +112,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      - run: npm ci --prefer-offline
       # The same path list as module-contract's cache, so main's restores here too (the SDK suite's job order comes from it).
       # A key of its own: module-contract must never restore a suite's cache, which holds no lint or typecheck state.
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

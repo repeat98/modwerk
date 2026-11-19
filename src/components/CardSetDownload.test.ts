@@ -8,6 +8,7 @@ vi.mock('../engine/elekloader/module-set', () => ({ prepareCardSet: mocked.prepa
 vi.mock('./OctatrackBackups', () => ({ save: mocked.save }))
 vi.mock('../community/usage', () => ({ trackModuleDownloads: mocked.count }))
 vi.mock('../community/useDownloadFollows', () => ({ useDownloadFollows: () => ({ followDownloads: mocked.follow, followNotice: '' }) }))
+import { encodeCardSet } from '../engine/elekloader/card-set'
 import { CardSetDownload } from './UnitPanel'
 
 let root: Root, container: HTMLDivElement
@@ -23,6 +24,8 @@ describe('loading a module set from the card', () => {
     expect(button().textContent).toBe('Load from the card'); expect(button().className).toContain('button-primary')
     expect(container.textContent).toContain('It needs the Modwerk base on the Octatrack'); expect(container.querySelector('dialog')).toBeNull()
     await act(async () => { button().click() })
+    expect(mocked.save).not.toHaveBeenCalled()
+    await act(async () => { [...container.querySelectorAll('dialog button')].find(item => item.textContent?.includes('without MODWERK1.SET'))!.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
     expect(mocked.prepare).toHaveBeenCalledWith(set); expect(mocked.save).toHaveBeenCalledWith(file, 'MODWERK0.SET'); expect(mocked.count).toHaveBeenCalledWith(['everb', 'euclid'])
     // As a downloaded build did: update notifications and the hardware feedback reminder, for the versions the base packages hold.
     expect(mocked.follow).toHaveBeenCalledWith(['everb', 'euclid'], { machine: 'Octatrack', os: '1.40C', modules: [expect.objectContaining({ id: 'everb', name: 'E-Verb' }), expect.objectContaining({ id: 'euclid' })] })
@@ -34,6 +37,20 @@ describe('loading a module set from the card', () => {
     expect(dialog.textContent).toContain('Modwerk-octatrack-base-d891acb3.bin installed with OS UPGRADE'); expect(dialog.textContent).toContain('named exactly MODWERK0.SET')
     await act(async () => { [...dialog.querySelectorAll('button')].find(item => item.textContent === 'Done')!.click() })
     expect(container.querySelector('dialog')).toBeNull()
+  })
+  it('downloads a copy ahead of the selected recovery slot', async () => {
+    const base = 'd891acb3' + '0'.repeat(56)
+    const source = encodeCardSet(base, [], 15), recovery = encodeCardSet(base, [], 99)
+    mocked.prepare.mockResolvedValue({ base, layout: 'off', modules: [], file: source })
+    await act(() => root.render(createElement(CardSetDownload, { set })))
+    await act(async () => { button().click() })
+    const input = container.querySelector<HTMLInputElement>('dialog input[type=file]')!
+    Object.defineProperty(input, 'files', { value: [{ name: 'MODWERK1.SET', arrayBuffer: async () => recovery.buffer }] })
+    await act(async () => { input.dispatchEvent(new Event('change', { bubbles: true })) })
+    const [file, name] = mocked.save.mock.calls[0]
+    expect(name).toBe('MODWERK0.SET')
+    expect(new DataView(file.buffer).getUint32(8)).toBe(100)
+    expect(new DataView(recovery.buffer).getUint32(8)).toBe(99)
   })
   it('says why a set can’t be written, and saves nothing', async () => {
     mocked.prepare.mockRejectedValue(new Error('Tuner can’t be loaded onto the base yet. Take it out of the set.'))
