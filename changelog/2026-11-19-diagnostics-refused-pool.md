@@ -1,0 +1,1 @@
+Diagnostics: the invitation and the privacy page now say that the Octatrack's own log also notes a module it couldn't load at start and how much module memory was in use then (base 0.7.10 and later), and the owner's diagnostics pull shows that memory beside the refused module.
