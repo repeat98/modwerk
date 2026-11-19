@@ -163,6 +163,12 @@ What an added machine's sound-chip player gets and must do, taken from the stock
 
 Local DSP image: the dispatcher above with, for type 7, a player that saves the four registers it uses, writes a square wave (16 samples at +0.1, 16 at -0.1) into the slot at `R8`, restores them and returns as the stock player. Test machine chosen through the menu, two trigs on track 1 (scripted coupled run from a ready point saved with that image): the tone appears with each note at 1,498 Hz by zero crossings (expected 1,500: one period per 32-sample block), follows the amp envelope down, peak 0.024 at the output; no halt, no missing blocks. So an added machine's player makes the sound of its voices, and the stock voice chain after it still shapes that sound.
 
+### Machine modules' sound-chip parts in the build (19 November 2026)
+
+A machine module carries its player in its package as `build.dt2_sharc` version 2: L2 allocations at fixed addresses (claim each range as a dsp-region) and `{type, entry}` for each machine type it plays. The base keeps L2 `0x200c0100`-`0x200c3000` for its own machine parts. After the kit build, `preflightBuiltFile` (Digitakt II only) calls `composeDt2MachineBuild`: it reads every selected package's part, adds the longer selector table, the player dispatcher and the modules' allocations to section 7, and runs the preflight with that plan. A selection with no part leaves the kit build as it is.
+
+Local end-to-end check: OS 1.17, the development base `37b4db44` linked by Elekloader, and a stand-in module part (the silent player at `0x200d0000`, type 7). The composed image passed the preflight: sections 2, 4, 5 and 8 byte for byte stock, section 7 verified against the plan, 36 changed ranges and 11,632 appended bytes in the main OS (the base), flash headroom 1,395,888 bytes. Not yet run in the emulator as a whole file (the emulator runs so far used the DSP images directly).
+
 ## Still to check
 
 
