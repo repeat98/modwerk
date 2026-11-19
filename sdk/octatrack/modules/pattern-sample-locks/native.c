@@ -44,9 +44,6 @@ int psl_native_popup(void)
     if(!U32(0x460e5e30u))return 0;
     return U32(0x460e5e28u)==0x400b9b04u && U32(0x460e5e2cu)==0x400b9b14u?1:2;
 }
-unsigned psl_native_cursor(void){return U32(0x460e5e40u);}
-void psl_native_set_cursor(unsigned row){if(row<4u)U32(0x460e5e40u)=row;}
-void psl_native_close_popup(void){((void (*)(void))0x4006d754u)();}
 void psl_native_redraw(void){U32(0x46c7c72cu)=1;}
 void psl_native_text(unsigned char *frame,unsigned x,unsigned top,const char *text)
 {
@@ -56,30 +53,6 @@ void psl_native_text(unsigned char *frame,unsigned x,unsigned top,const char *te
     surface[3]=(uint32_t)(uintptr_t)frame;
     ((void (*)(uint32_t,void *,int,int,int,const char *))0x40012bd8u)
         (0x400ba876u,surface,(int)x,59-(int)top,-1,text);
-}
-/* Use the existing stock UI font directly; no glyph data is copied into the
- * module. The surface descriptor is local and never retained by stock UI. */
-void psl_native_part_menu_draw(unsigned char *frame,unsigned count,unsigned cursor,const char *const *rows)
-{
-    if(!frame || !rows || count!=6u || cursor>=count)return;
-    uint32_t surface[7];
-    for(unsigned i=0;i<7u;++i)surface[i]=U32(0x400bf10au+4u*i);
-    surface[3]=(uint32_t)(uintptr_t)frame;
-    unsigned width=44u;
-    for(unsigned i=0;i<count;++i) {
-        int text=((int (*)(uint32_t,int,const char *))0x40012f30u)(0x400ba876u,-1,rows[i]);
-        if(text>0 && (unsigned)text+6u>width)width=(unsigned)text+6u;
-    }
-    if(width>116u)width=116u;
-    unsigned height=count*7u+4u,left=(128u-width)/2u,top=(64u-height)/2u;
-    psl_font_clear(frame,left,top,width,height);
-    psl_font_box(frame,left,top,width,height);
-    for(unsigned i=0;i<count;++i) {
-        unsigned y=top+3u+7u*i;
-        ((void (*)(uint32_t,void *,int,int,int,const char *))0x40012bd8u)
-            (0x400ba876u,surface,(int)left+3,59-(int)y,-1,rows[i]);
-        if(i==cursor)psl_font_invert(frame,left+2u,y-1u,width-4u,7u);
-    }
 }
 unsigned psl_native_transport(void)
 {
@@ -181,12 +154,3 @@ int psl_native_commit(struct psl_plan *p)
     return result;
 }
 
-void psl_open(unsigned count,unsigned selected,unsigned *cursor,
-              const char *const *labels,void (*const *callbacks)(void))
-{
-    ((void (*)(unsigned,unsigned,unsigned *,const char *const *,void (*const *)(void)))0x4006d94cu)
-        (count,selected,cursor,labels,callbacks);
-    if(count==4 && (uintptr_t)cursor==0x460d101cu &&
-       (uintptr_t)labels==0x400b9b14u && (uintptr_t)callbacks==0x400b9b04u && psl_native_popup()==1)
-        psl_ui_open();
-}

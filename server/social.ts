@@ -26,9 +26,10 @@ export async function socialRoutes(request: Request, env: Env, db: Database, pat
       return redirect(returnUrl(env, reason === 'account_not_linked' ? 'account/sso-error?reason=exists' : 'account/sso-error'))
     }
     const code = token(), payload = await symmetricEncrypt({ key: env.AUTH_SECRET!, data: JSON.stringify({ session, cookies: result.headers.getSetCookie() }) })
-    const flow = await db.prepare("UPDATE social_flows SET token_hash=?,stage='complete',payload=?,expires=? WHERE token_hash=? AND provider=? AND stage='started' AND expires>? RETURNING token_hash").bind(await digest(code), payload, now() + 60, flowHash, callback[1], now()).first()
+    // The desktop app's sign-in returns through the browser's modwerk:// prompt, which may wait for a click: five minutes, not one.
+    const flow = await db.prepare("UPDATE social_flows SET token_hash=?,stage='complete',payload=?,expires=?+CASE client WHEN 'desktop' THEN 300 ELSE 60 END WHERE token_hash=? AND provider=? AND stage='started' AND expires>? RETURNING client").bind(await digest(code), payload, now(), flowHash, callback[1], now()).first<{client: string}>()
     if (!flow) return redirect(returnUrl(env, 'account/sso-error'))
-    return redirect(returnUrl(env, 'account/sso/' + code))
+    return redirect(returnUrl(env, (flow.client === 'desktop' ? 'account/sso-app/' : 'account/sso/') + code))
   }
   if (start) {
     if (request.method !== 'GET') throw new HttpError(405, 'Open this sign-in link in your browser.')
@@ -49,6 +50,7 @@ export async function socialRoutes(request: Request, env: Env, db: Database, pat
   if (path === '/api/auth/sso/complete') return completeSocialOnboarding(env,db,body)
   if (path !== '/api/auth/sso') throw new HttpError(404, 'Sign-in action not found.')
   if (!providers.includes(body.provider as SocialProvider) || (body.mode !== 'login' && body.mode !== 'register') || !hex(body.challenge)) throw new HttpError(400, 'Choose an available sign-in provider.')
+  if (body.client !== undefined && body.client !== 'web' && body.client !== 'desktop') throw new HttpError(400, 'Start sign-in from the site or the Modwerk app.')
   let username: string | null = null
   if (body.mode === 'register' && typeof body.username === 'string' && body.username.trim()) {
     if (env.REGISTRATION_OPEN !== 'true' || env.PRIVACY_READY !== 'true') throw new HttpError(503, 'New registrations are temporarily closed.')
@@ -59,7 +61,7 @@ export async function socialRoutes(request: Request, env: Env, db: Database, pat
     if (await db.prepare('SELECT id FROM users WHERE username=? COLLATE NOCASE').bind(username).first()) throw new HttpError(409, 'This username is already in use.')
   }
   const ticket = token()
-  await db.prepare("INSERT INTO social_flows(token_hash,challenge_hash,provider,mode,username,rules_version,newsletter,stage,expires) VALUES(?,?,?,?,?,?,?,'pending',?)").bind(await digest(ticket), body.challenge, body.provider, body.mode, username, body.mode === 'register' ? COMMUNITY_RULES_VERSION : null, body.mode === 'register' && body.newsletter === true ? 1 : 0, now() + 600).run()
+  await db.prepare("INSERT INTO social_flows(token_hash,challenge_hash,provider,mode,username,rules_version,newsletter,stage,expires,client) VALUES(?,?,?,?,?,?,?,'pending',?,?)").bind(await digest(ticket), body.challenge, body.provider, body.mode, username, body.mode === 'register' ? COMMUNITY_RULES_VERSION : null, body.mode === 'register' && body.newsletter === true ? 1 : 0, now() + 600, body.client === 'desktop' ? 'desktop' : 'web').run()
   const url = new URL(env.AUTH_BASE_URL!); url.pathname = url.pathname.replace(/\/$/, '') + '/sso/start/' + ticket
   return response({ url: url.href })
 }

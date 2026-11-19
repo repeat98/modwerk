@@ -21,6 +21,27 @@ export function finishBaseInstall() {
   try { sessionStorage.removeItem(INSTALL) } catch { /* storage is optional */ }
 }
 
+/** The guide's Reload page (Modwerk was deployed since the page opened): the reloaded page opens the guide again, with the
+ * USB Audio layout and the set it was opened for, instead of leaving the musician to find it. Only for a reload within
+ * two minutes, in this tab. */
+const REOPEN = 'modwerk.octatrack.base-guide-reopen'
+export interface GuideReopen { layout?: string; returnSetId?: string }
+export function reopenBaseGuideAfterReload(value: GuideReopen, now = Date.now()) {
+  try { sessionStorage.setItem(REOPEN, JSON.stringify({ ...value, at: now })) } catch { /* the guide stays in Setup */ }
+}
+/** What the guide reopens with after its own reload, or nothing. Reading keeps it: `forgetBaseGuideReopen` once used. */
+export function baseGuideToReopen(now = Date.now()): GuideReopen | undefined {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(REOPEN) ?? 'null')
+    if (!value || typeof value.at !== 'number' || now - value.at > 120_000 || now < value.at) return undefined
+    const text = (field: unknown) => typeof field === 'string' && field.length > 0 && field.length <= 128 ? field : undefined
+    return { layout: text(value.layout), returnSetId: text(value.returnSetId) }
+  } catch { return undefined }
+}
+export function forgetBaseGuideReopen() {
+  try { sessionStorage.removeItem(REOPEN) } catch { /* storage is optional */ }
+}
+
 /** Record only an acknowledged Keep with a successful save, never a download, trial or Undo. */
 export function rememberSuccessfulSync(value: SuccessfulSync) {
   try { localStorage.setItem(SYNC, JSON.stringify(value)) } catch { /* storage is optional */ }

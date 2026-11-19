@@ -23,7 +23,7 @@ import { saveDiscussionIssueDraft } from './discussion-issue-draft'
 import { useForumReplyDraft } from './forum-reply-draft'
 import { threadHref } from '../routing'
 import { setPageMetadata } from '../page-metadata'
-import { postExcerpt } from './forum-links'
+import { postExcerpt, shareLink } from './forum-links'
 import { ReplyStarters } from './ReplyStarters'
 import { ModuleWorksCount } from './ModuleWorksCount'
 import { MODULE_STATISTICS_CHANGED } from './module-statistics'
@@ -46,7 +46,7 @@ function ShareButton({title,href}:{title:string;href:string}){
   const [state,setState]=useState<''|'copied'|'failed'>('')
   useEffect(()=>{if(!state)return;const timer=window.setTimeout(()=>setState(''),2500);return()=>window.clearTimeout(timer)},[state])
   async function share(){
-    const url=new URL(href,document.baseURI).href
+    const url=shareLink(href,document.baseURI)
     try{
       if(typeof navigator.share==='function'){await navigator.share({title,url});return}
       await navigator.clipboard.writeText(url);setState('copied')

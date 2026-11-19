@@ -150,9 +150,16 @@ async function recent(db: Database, hours: number) {
   return { ...(await state(db)), actions: rows.map(publicRow) }
 }
 
+/** The chat's command menu. The daily report sets it again, so a command added here shows without running setup. */
+export const TELEGRAM_COMMANDS = [
+  { command: 'status', description: 'What is waiting and what was done' }, { command: 'todos', description: 'Your open to-do list' },
+  { command: 'pause', description: 'Stop all actions until /resume' }, { command: 'resume', description: 'Start again' },
+]
+
 async function report(env: Env, body: Record<string, unknown>) {
   if (typeof body.text !== 'string' || !body.text.trim() || body.text.length > 30000) throw new HttpError(400, 'A report is 1 to 30000 characters.')
   const { chat } = configured(env)
+  await telegram(env, 'setMyCommands', { commands: TELEGRAM_COMMANDS }).catch(() => undefined)
   for (const text of chunks(body.text)) await telegram(env, 'sendMessage', { chat_id: chat, text, link_preview_options: { is_disabled: true } })
   return { ok: true }
 }

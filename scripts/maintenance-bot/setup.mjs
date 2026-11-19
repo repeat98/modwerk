@@ -47,7 +47,7 @@ for (let tries = 0; tries < 12 && !ready; tries++) {
 if (!ready) throw new Error('The Worker does not accept the new key yet. Run setup again in a minute.')
 
 await telegram('setWebhook', { url: api + '/maintenance-bot/telegram', secret_token: secret, allowed_updates: ['message', 'callback_query'], drop_pending_updates: true })
-await telegram('setMyCommands', { commands: [{ command: 'status', description: 'What is waiting and what was done' }, { command: 'todos', description: 'Your open to-do list' }, { command: 'pause', description: 'Stop all actions until /resume' }, { command: 'resume', description: 'Start again' }] })
+// The command menu comes from the Worker's daily report (TELEGRAM_COMMANDS in server/maintenance-bot.ts).
 run('gh', ['secret', 'set', 'MAINTENANCE_BOT_KEY'], key)
 run('gh', ['secret', 'set', 'CLAUDE_CODE_OAUTH_TOKEN'], claude)
 run('gh', ['variable', 'set', 'MAINTENANCE_BOT_ENABLED', '--body', 'true'])

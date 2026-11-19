@@ -30,7 +30,7 @@ export function StarterPrompts({ login, machine, onMachine, task, repository, in
         </select>
       </label>
       {task === 'create' ? <>
-        <label className="starter-field"><span>Module type</span>
+        <label className="starter-field"><span>What to build</span>
           <select value={starter.id} onChange={event => setStarterId(event.target.value)}>{starters.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select>
         </label>
         <label className="starter-field starter-field-wide"><span>{starter.port ? 'Module name or source link' : 'Your idea'} <small>optional</small></span>

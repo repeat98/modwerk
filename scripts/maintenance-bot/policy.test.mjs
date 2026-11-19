@@ -108,4 +108,21 @@ describe('maintenance bot policy', () => {
     expect(classify({ kind: 'board_reply', thread: 't9', body: '@zac #1642 waits on its MKII run.', summary: 'Tell zac where #1642 stands' }, thread)).toMatchObject({ tier: 'notify', payload: { as: 'tars' } })
     expect(classify({ kind: 'board_reply', thread: 't9', body: 'Hi', summary: 'x' }, { ...thread, to: 'repeat98' })).toMatchObject({ tier: 'window', payload: { as: 'owner' } })
   })
+
+  it('turns a question only the owner can answer into a recommended reply that waits for Approve', () => {
+    const decision = classify({ kind: 'comment', number: 9, intent: 'decision', body: 'Yes, go ahead with the port.', summary: 'OK the Analog BD port: yes' }, issue())
+    expect(decision).toMatchObject({ tier: 'ask', windowHours: 0, payload: { kind: 'comment', body: 'Yes, go ahead with the port.' } })
+    expect(decision.id).not.toBe(classify({ kind: 'comment', number: 9, body: 'Yes, go ahead with the port.', summary: 'Answer' }, issue()).id)
+    expect(classify({ kind: 'comment', number: 5, intent: 'decision', body: 'Scope exception granted.', summary: 'x' }, pull()).tier).toBe('ask')
+    const thread = { kind: 'thread', id: 't3', number: 0, author: 'twwwy', to: 'repeat98', replies: 0, state: 'open' }
+    expect(classify({ kind: 'board_reply', thread: 't3', intent: 'decision', body: 'Yes, Kits may share the menu.', summary: 'x' }, thread)).toMatchObject({ tier: 'ask', payload: { as: 'owner' } })
+    expect(classify({ kind: 'board_reply', thread: 't3', intent: 'decision', body: 'Yes.', summary: 'x' }, { ...thread, to: 'tars' }).tier).toBe('notify')
+  })
+
+  it('starts a first-time contributor’s waiting checks only with the owner’s Approve', () => {
+    const approve = { kind: 'approve_run', number: 5, summary: 'Start checks' }
+    expect(classify(approve, pull({ waitingRuns: 2, firstTime: true }))).toMatchObject({ tier: 'ask', windowHours: 0, payload: { kind: 'approve_run', pin: { head: 'a1' } } })
+    expect(classify(approve, pull({ waitingRuns: 0 })).reject).toContain('no run waits')
+    expect(classify(approve, issue()).reject).toBeTruthy()
+  })
 })

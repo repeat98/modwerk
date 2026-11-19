@@ -136,7 +136,7 @@ def main():
     emit('improved_amp_flt_dec', flt, 'const uint32_t',
          '// FILTER DEC and REL knob -> coefficient (the filter runs at the OS model\'s speed), read by\n'
          '// stock through the leas at 0x4010d342, 0x4010d3b2 and 0x4010d3da.', lambda w: f'0x{w:05x}')
-    # improved_amp_hold, which stock's own compare reads, is 128 x 0x7fffffff in the source: not from here.
+    # Stock's own hold compare is kept from ending a hold by two byte sites in build.json: no table.
     emit('improved_amp_hold_steps', hld_steps(hold), 'const int32_t',
          '// AMP HLD knob -> hold in steps of the voice\'s track, x 225,000; 13 values on the step grid.',
          lambda w: f'{w}')

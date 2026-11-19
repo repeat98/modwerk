@@ -1,0 +1,1 @@
+Syntakt guide: the OS upgrade checks no image size, and the flash keeps each unit's own analog calibration at 0x300000. The builder's 2 MB bound is what keeps a build clear of it, and a test now pins that bound.

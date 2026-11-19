@@ -6,6 +6,8 @@ Module version 0.1.0-experimental, Digitakt I OS 1.54 (stock file SHA-256 `f78ba
 
 Emulator only so far. Hardware steps for the author are in section 5; no hardware result is recorded yet.
 
+One user report, not an author test: [#1500](https://github.com/repeat98/modwerk/issues/1500) (2026-11-13) has FX Track moving the delay on a Digitakt I, OS 1.54, beside Digi Mono, Euclidean, Digi Utils, Digi Health and Digi Matrix, once RECEIVE CC/NRPN was ticked.
+
 ## How it works (OS 1.54)
 
 **Stock.** The MIDI input's interrupt parses each message and posts it to the MIDI task's queue (one for MIDI IN, one for USB) as a length and a pointer, then wakes the task. For a control change the task checks RECEIVE CC/NRPN and calls the parameter handler once for the effects when the channel equals FX CONTROL CH, and once for every audio or MIDI track whose TRACK CHANNEL matches.
@@ -60,7 +62,7 @@ Emulator note: in pinned digiemu the panel stops redrawing once the MIDI task ha
 Not yet tested. Builds: module alone `a2ba6e80…3eccd8`, and combined with Input Pre-Fader Sends, Digi Health and Digi EQ `de7fb751…35f896`.
 
 1. FX TRACK appears in SETTINGS, unticked.
-2. Setup as in the README tutorial (TRACK H CHANNEL OFF, FX CONTROL CH 16, MIDI track H CHAN 16, SEL1 85, SEL2 88). Unticked: turning VAL1 does not change the delay, and the CC leaves MIDI OUT (if something is connected to see it).
+2. Setup as in the README tutorial (TRACK H CHANNEL OFF, FX CONTROL CH 16, RECEIVE CC/NRPN ticked, INPUT FROM MIDI or USB, MIDI track H CHAN 16, SEL1 85, SEL2 88). Unticked: turning VAL1 does not change the delay, and the CC leaves MIDI OUT (if something is connected to see it).
 3. Ticked: turning VAL1 and VAL2 changes the delay TIME and FEEDBACK, and those CCs no longer leave MIDI OUT.
 4. Parameter locks on VAL1 (lock trigs or normal trigs) change the delay per step while playing.
 5. The MIDI track's LFO on VAL1 modulates the delay TIME.
