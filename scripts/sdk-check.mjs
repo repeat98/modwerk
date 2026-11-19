@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process'
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { availableParallelism, setPriority } from 'node:os'
 import { performance } from 'node:perf_hooks'
+import { skipsOf, skipReport } from './sdk-skips.mjs'
 import { listedModuleTests, moduleTestCommand } from './module-tests.mjs'
 import { fileURLToPath } from 'node:url'
 import { resolve, dirname } from 'node:path'
@@ -23,7 +24,7 @@ if (process.platform !== 'win32') jobs.push(...listedModuleTests(root).map(file 
 // fails itself instead of every later module pull request (they ran only in module-pr.yml's octatrack-source before).
 if (process.platform !== 'win32') jobs.push(
   { name: 'sdk/runtime/upload/tests/run_host.sh', command: 'sh', args: ['sdk/runtime/upload/tests/run_host.sh'], env: {} },
-  { name: 'sdk/machines/octatrack/elekloader/test_recipe.py', command: python, args: ['-B', 'sdk/machines/octatrack/elekloader/test_recipe.py'], env: { PYTHONDONTWRITEBYTECODE: '1' } })
+  { name: 'sdk/machines/octatrack/elekloader/test_recipe.py', command: python, args: ['-B', 'sdk/machines/octatrack/elekloader/test_recipe.py', '-v'], env: { PYTHONDONTWRITEBYTECODE: '1' } })
 // The slowest jobs of the last run start first, so none starts last; a job without a time is new and starts before them.
 const record = resolve(root, 'node_modules/.cache/sdk-check-times.json')
 let times = {}
@@ -39,7 +40,8 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
 // jobs, fewer when free memory is short: a test that starts a compiler or an emulator needs about a gigabyte.
 await takeSlot('npm run sdk:check')
 const workers = workersFor({ most: Math.min(4, availableParallelism()), each: 1024 ** 3 }), started = performance.now(), failed = [], count = jobs.length, taken = {}
-let tests = 0
+let executed = 0
+const skips = []
 async function worker() {
   for (let job; (job = jobs.shift());) {
     const output = [], begun = performance.now()
@@ -58,7 +60,12 @@ async function worker() {
     // Each job's output whole, so concurrent results stay readable. A test may run unittest itself: its own count is the last.
     const text = Buffer.concat(output).toString()
     process.stdout.write(text)
-    tests += Number([...text.matchAll(/^Ran (\d+) tests? in /gm)].at(-1)?.[1] ?? 0)
+    const total = Number([...text.matchAll(/^Ran (\d+) tests? in /gm)].at(-1)?.[1] ?? 0)
+    const skipped = skipsOf(text)
+    // unittest counts fixture skips separately from the individual cases in "Ran N tests".
+    const skippedFixtures = [...text.matchAll(/^(?:setUp|tearDown)(?:Class|Module) .*? \.\.\. skipped /gm)].length
+    executed += Math.max(0, total - skipped.length + skippedFixtures)
+    skips.push(...skipped.map(reason => ({ job: job.name, reason })))
     if (code !== 0) failed.push(job.name)
   }
 }
@@ -67,7 +74,8 @@ try {
   mkdirSync(dirname(record), { recursive: true })
   writeFileSync(record, JSON.stringify(taken) + '\n')
 } catch { /* the record only orders the next run */ }
-console.log(`SDK checks: ${tests} tests in ${count} jobs, ${workers} at a time, in ${((performance.now() - started) / 1000).toFixed(1)}s`)
+for (const line of skipReport(skips).lines) console.log(line)
+console.log(`SDK checks: ${executed} unittest cases executed, ${skips.length} skips in ${count} jobs, ${workers} at a time, in ${((performance.now() - started) / 1000).toFixed(1)}s`)
 if (failed.length) {
   console.error('SDK checks FAILED: ' + failed.join(', '))
   process.exitCode = 1

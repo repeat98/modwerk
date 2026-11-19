@@ -120,14 +120,14 @@ async function main(argv) {
   const npmCli = process.env.npm_execpath
   if (!npmCli) throw new Error('Run this through npm run pr:ready.')
   const npm = (...args) => spawnSync(process.execPath, [npmCli, 'run', ...args], { cwd: root, stdio: 'inherit' }).status === 0
-  const tracked = () => git('status', '--porcelain', '--untracked-files=no').split('\n').filter(Boolean).map(line => line.slice(3))
+  const changedFiles = () => git('status', '--porcelain', '--untracked-files=all').split('\n').filter(Boolean).map(line => line.slice(3))
 
   console.log(`Fetching ${remote}/main`)
   // A single-branch clone may fetch main only into FETCH_HEAD. Update the
   // tracking ref too, so the suggested `git merge <remote>/main` is useful.
   git('fetch', '--no-tags', remote, `refs/heads/main:refs/remotes/${remote}/main`)
   const base = git('rev-parse', 'FETCH_HEAD'), head = git('rev-parse', 'HEAD')
-  const dirty = tracked()
+  const dirty = changedFiles()
   let behind = false
   try { git('merge-base', '--is-ancestor', base, head) } catch { behind = true }
   // The same interpreter the gates call (scripts/modules.mjs).
@@ -142,7 +142,7 @@ async function main(argv) {
     checkPassed = npm('check', '--', '--base', base)
     if (!checkPassed) {
       for (const args of GENERATORS) if (!npm(...args)) break
-      regenerated = tracked()
+      regenerated = changedFiles()
       if (regenerated.length) checkPassed = true
     }
   }
