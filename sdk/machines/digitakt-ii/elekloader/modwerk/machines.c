@@ -4,17 +4,16 @@
 const struct dt2_machine *dt2_machine_at(
     uint32_t type, const struct dt2_machine *const machines[DT2_MACHINE_COUNT])
 {
-    uint32_t slot = type - DT2_MACHINE_FIRST;
-    if (slot >= DT2_MACHINE_COUNT) {
+    if (type < DT2_MACHINE_FIRST || type > DT2_MACHINE_LAST) {
         return 0;
     }
-    for (uint32_t i = 0; i <= slot; ++i) {
-        if (!machines[i]) {
-            return 0;
+    for (uint32_t i = 0; i < DT2_MACHINE_COUNT && machines[i]; ++i) {
+        const struct dt2_machine *machine = machines[i];
+        if (machine->type == type) {
+            return machine->stands_for < DT2_MACHINE_FIRST ? machine : 0;
         }
     }
-    const struct dt2_machine *machine = machines[slot];
-    return machine->stands_for < DT2_MACHINE_FIRST ? machine : 0;
+    return 0;
 }
 
 extern const struct dt2_machine *const core_machines[DT2_MACHINE_COUNT];
@@ -38,8 +37,8 @@ extern void *OP_NEW(uint32_t size);
 void core_machine_list_extend(struct type_vector *list)
 {
     uint32_t added = 0;
-    while (added < DT2_MACHINE_COUNT && dt2_machine_at(DT2_MACHINE_FIRST + added, core_machines)) {
-        ++added;
+    for (uint32_t type = DT2_MACHINE_FIRST; type <= DT2_MACHINE_LAST; ++type) {
+        added += dt2_machine_at(type, core_machines) != 0;
     }
     if (!added || !list || !list->begin) {
         return;
@@ -52,8 +51,11 @@ void core_machine_list_extend(struct type_vector *list)
     for (uint32_t i = 0; i < count; ++i) {
         types[i] = list->begin[i];
     }
-    for (uint32_t i = 0; i < added; ++i) {
-        types[count + i] = DT2_MACHINE_FIRST + i;
+    uint32_t next = count;
+    for (uint32_t type = DT2_MACHINE_FIRST; type <= DT2_MACHINE_LAST; ++type) {
+        if (dt2_machine_at(type, core_machines)) {
+            types[next++] = type;
+        }
     }
     list->begin = types;
     list->end = types + count + added;

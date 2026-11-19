@@ -3,6 +3,7 @@
 #include <mk2/machines.h>
 
 const struct dt2_machine dt2_test_machine = {
+    .type = 7,
     .stands_for = 0,
     .strings = { "Testgrain", "TGR", 0 },
 };

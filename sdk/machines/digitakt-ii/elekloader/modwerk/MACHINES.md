@@ -44,7 +44,7 @@ One `core_machines` entry per machine:
 | sample flag | Whether knob D selects a sample (a sampler) or is unused (a synth). |
 | sound-chip routines | Note-on and render for one voice, in the module's sound-chip package, with the voice's note, the five knob values and, for a sampler, its slot record. |
 
-The base gives each entry a machine type after the stock seven in contribution order, answers the descriptor lookup (`0x400c89a4`), the parameter-code lookup (`0x400da3a2`) and the parameter-row reads for those types, and dispatches the voice at `0x1c6550`. Type numbers are saved in kits, so each machine also claims a fixed id on the agent board and keeps it once released, as `core_machines` ids do on the Digitakt.
+Each entry names its own fixed machine type (7 to 10), claimed on the agent board as `machine-id digitakt-ii/N` and kept once released, since kits save it (a type that followed contribution order would move when another machine module is added or removed). The base answers the descriptor lookup (`0x400c89a4`), the parameter-code lookup (`0x400da3a2`) and the parameter-row reads for those types, and dispatches the voice at `0x1c6550`. Type numbers are saved in kits, so each machine also claims a fixed id on the agent board and keeps it once released, as `core_machines` ids do on the Digitakt.
 
 ## Sound-chip sites (SHARC section 7, short-word addresses)
 

@@ -4,11 +4,13 @@
 
 #include <stdint.h>
 
-/* Machines added after the seven stock types. The linker's collection index owns the type: entry n of
- * core_machines is machine type DT2_MACHINE_FIRST + n. The table ends at its first null entry. */
+/* Machines added after the seven stock types. Each record names its own machine type, a fixed number from
+ * DT2_MACHINE_FIRST to DT2_MACHINE_LAST that kits save: claim it on the agent board (machine-id digitakt-ii/N) and
+ * keep it once released. core_machines holds up to DT2_MACHINE_COUNT records and ends at its first null entry. */
 enum {
     DT2_MACHINE_FIRST = 7,
     DT2_MACHINE_COUNT = 4,
+    DT2_MACHINE_LAST = DT2_MACHINE_FIRST + DT2_MACHINE_COUNT - 1,
 };
 
 enum {
@@ -21,11 +23,12 @@ enum {
  * borrows until the base has its own parameter rows. strings[] follow the DT2_MACHINE_* order; a null
  * string is shown as none. */
 struct dt2_machine {
+    uint32_t type;
     uint32_t stands_for;
     const char *strings[3];
 };
 
-/* The record for a machine type, or 0 when the type is stock or has no complete record. */
+/* The record for a machine type, or 0 when the type is stock or no valid record names it. */
 const struct dt2_machine *dt2_machine_at(
     uint32_t type, const struct dt2_machine *const machines[DT2_MACHINE_COUNT]);
 
