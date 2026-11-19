@@ -46,14 +46,14 @@ To stop using it, leave the module out of the build. There is no separate off sw
 
 ## Compatibility and limitations
 
-- OS 1.40C. The LEVEL behaviour was reported on a private MICRO T9 card. This package's USB Keep and power-cycle footer are in TESTING.md. The pictures are this package on a development twin, and they are not a unit result.
+- OS 1.40C. The LEVEL behaviour was reported on a private MICRO T9 card. This package's USB Keep, power-cycle footer and the 19 November LEVEL footer are in TESTING.md. The pictures are this package on a development twin, and they are not that unit result.
 - One byte is kept per bank, the pattern on the screen, and track, in this module's unit. Audio and MIDI share it. A power cycle drops the unit, so the row starts on grid again. It is not battery RAM and it is not in the project file.
 - An individual trig edit does not update the row. The next LEVEL turn overwrites all 64 steps, including empty ones.
 - MKI opens the same menu with FUNCTION. That path is untested on this package.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). The LEVEL pass on a unit is the private card. This package's power-cycle footer was reported on a unit. On the emulator, one LEVEL step of this package moved the footer from `MT1:ON GRID` to `MT1:+1/384`. The linked image is 1,076 bytes, the remembered table is 2,048, and a LEVEL rewrite pushes 64 bytes on the UI stack.
+See [TESTING.md](TESTING.md). The private card is the earlier LEVEL report. On 19 November 2026 a RAM trial of this package on an MKII, not kept, showed track 8 go from `MT8:ON GRID` to `MT8:+1/384` after one LEVEL step. The per-trig page was not opened. On the emulator, one LEVEL step moved track 1 from `MT1:ON GRID` to `MT1:+1/384`. The linked image is 1,076 bytes, the remembered table is 2,048, and a LEVEL rewrite pushes 64 bytes on the UI stack.
 
 ## Authorship and licences
 
