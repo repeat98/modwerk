@@ -137,7 +137,7 @@ export function useWorkspace() {
     const source = copy && original && configurationDevice(original) === device ? original : undefined
     const item = { ...newConfiguration(name, source?.moduleIds, source?.keepStockFx2 ?? true, source?.moduleVersions, device, source?.usbAudio), ...removedSettings(device, source?.removedStockFx), ...startupSettings(device, source?.classicStartup), ...storageSettings(source?.storageLock) }
     replaceConfigurations([...configsRef.current, item]); changeActive(item.id)
-    persist(async store => { await store.saveConfiguration(item); await store.setActiveConfiguration(item.id) })
+    persist(store => store.saveConfiguration(item, { makeActive: true }))
     if(item.moduleIds.length)trackConfigurationStarted(item.id)
     return item
   }
@@ -145,7 +145,7 @@ export function useWorkspace() {
     const item = { ...newConfiguration(name, ids, keepStockFx2, moduleVersions, device, usbAudio), ...removedSettings(device, removedStockFx), ...startupSettings(device, classicStartup), ...storageSettings(storageLock) }
     replaceConfigurations([...configsRef.current,item]);changeActive(item.id)
     if(item.moduleIds.length)trackConfigurationStarted(item.id)
-    persist(async store => {await store.saveConfiguration(item);await store.setActiveConfiguration(item.id)})
+    persist(store => store.saveConfiguration(item, { makeActive: true }))
     return item.id
   }
   function updateActive(update: Partial<Pick<Configuration, 'name' | 'moduleIds' | 'moduleVersions' | 'keepStockFx2' | 'usbAudio' | 'removedStockFx' | 'classicStartup'>>) {
@@ -205,13 +205,9 @@ export function useWorkspace() {
   }
   function deleteConfiguration() {
     const deleting = activeRef.current
-    const { remaining, next } = afterDeleting(configsRef.current, deleting)
+    const { remaining, next, created } = afterDeleting(configsRef.current, deleting)
     replaceConfigurations(remaining); changeActive(next.id)
-    persist(async store => {
-      await store.saveConfiguration(next)
-      await store.setActiveConfiguration(next.id)
-      await store.deleteConfiguration(deleting)
-    })
+    persist(store => store.deleteConfiguration(deleting, created ? next : next.id))
   }
   async function readFile(file: File) {
     const request = ++generation.current
