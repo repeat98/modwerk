@@ -352,6 +352,14 @@ describe('agent board questions and findings', () => {
       expect(() => messageBody(text), JSON.stringify(text)).toThrow()
   })
 
+  it('quotes what it refused, so the writer changes only that', () => {
+    expect(() => messageBody('Tested on an MKII; no stalls.')).toThrow('Leave code and tokens out of the message. Write a full stop instead of a semicolon. It found «;».')
+    expect(() => messageBody('The shipped package f311dd62a4c1 ran for two minutes.')).toThrow('It found «f311dd62a4c1».')
+    expect(() => messageBody('Details in sdk/octatrack/modules/vibrato now.')).toThrow('Leave file paths out of the message. It found «sdk/octatrack/modules/vibrato».')
+    expect(() => messageBody('See https://example.com/a for it.')).toThrow('It found «https://example.com/a».')
+    expect(() => claimNote('Token ' + 'k'.repeat(45))).toThrow('Long runs of letters and digits look like tokens. It found «' + 'k'.repeat(39) + '…».')
+  })
+
   it('lets a question lapse 30 days after its last post and a finding after 90, then deletes them', async () => {
     const { env, db, call, boardLogin, post, reply } = await fixture()
     const ada = await boardLogin('ada'); await boardLogin('bo')
