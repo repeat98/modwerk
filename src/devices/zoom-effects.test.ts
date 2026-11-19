@@ -6,7 +6,7 @@ const listedEffect = (id: string, file: string, fxid: number, version = '0.03', 
   id, name: id[0].toUpperCase() + id.slice(1), version: '0.1.0', machine: 'zoom-ms-70cdr',
   platform: { kind: 'zdl', file, effectId: { gid: 8, fxid }, effectVersion: version, dspCost: 8, binary: { sha256: 'a'.repeat(64), bytes, release: { repository: 'https://github.com/x/y', tag: 't', asset: file } }, screen: 'static', pedals: [] },
 }) as unknown as ZoomEffect
-const onPedal = (name: string, fxid: number, version = '0.03', size = 1200, gid = 8) => ({ name, size, effect: { gid, fxid, version } })
+const onPedal = (name: string, fxid: number, version = '0.03', size = 1200, gid = 8) => ({ name, size, inEffectList: true, effect: { gid, fxid, version } })
 
 describe('syncing a Zoom set', () => {
   const loop = listedEffect('loop', 'Loop.ZDL', 467), scope = listedEffect('scope', 'Scope.ZDL', 468), dirt = listedEffect('dirt', 'Dirt.ZDL', 469)

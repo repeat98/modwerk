@@ -3,7 +3,7 @@ import { throttle } from './auth'
 import { HttpError, jsonBody, response } from './security'
 
 /** Each kind of link signs its own prefix, so an activity link can never withdraw news consent, or the reverse. */
-const PREFIX = { activity: 'modwerk-activity-unsubscribe-v1:', news: 'modwerk-news-unsubscribe-v1:' } as const
+const PREFIX = { activity: 'modwerk-activity-unsubscribe-v1:', news: 'modwerk-news-unsubscribe-v1:', diagnostics: 'modwerk-diagnostics-mail-unsubscribe-v1:' } as const
 type Purpose = keyof typeof PREFIX
 
 async function signature(secret: string, purpose: Purpose, userId: string) {
