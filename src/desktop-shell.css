@@ -5,7 +5,14 @@
 :root[data-shell='desktop'] :is(.app-toolbar, .sidebar-brand) { app-region: drag; -webkit-app-region: drag; }
 :root[data-shell='desktop'] :is(.app-toolbar, .sidebar-brand) :is(a, button, input, label, select, textarea, [role='button'], [tabindex]) { app-region: no-drag; -webkit-app-region: no-drag; }
 :root[data-shell='desktop'] .app-toolbar { padding-right: calc(16px + var(--window-controls)); }
-:root[data-shell='desktop'][data-platform='darwin'] .sidebar { padding-top: 52px; }
+@media (min-width: 601px) {
+  :root[data-shell='desktop'][data-platform='darwin'] .sidebar-brand { padding-left: 5.5rem; }
+  :root[data-shell='desktop'][data-platform='darwin'] .sidebar-brand .app-brand { display: flex; }
+  :root[data-shell='desktop'][data-platform='darwin'] .sidebar-brand .app-brand > small { display: none; }
+}
+@media (min-width: 601px) and (max-width: 1100px) {
+  :root[data-shell='desktop'][data-platform='darwin'] .sidebar-brand .app-brand > img { display: none; }
+}
 :root[data-shell='desktop'][data-platform='darwin'] .desktop-menu-button { display: none; }
 
 /* An app, not a page: chrome is not selectable or draggable, and its controls keep the arrow cursor. */

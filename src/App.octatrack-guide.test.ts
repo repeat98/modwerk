@@ -152,8 +152,10 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
   }, 20000)
   it('leads a signed-out visitor on Your Octatrack to sign in', async () => {
     await open('octatrack', visitor)
-    await vi.waitFor(() => expect(container.querySelector('.hub-account-note')).not.toBeNull())
-    expect(container.querySelector('.hub-account-note a')?.getAttribute('href')).toBe('#account/login?next=octatrack')
-    expect(container.querySelector('.hub-account-note')?.textContent).toContain('Your module sets stay in this browser.')
+    const accountLinks = () => container.querySelector('nav[aria-label="Workspace account"]')
+    await vi.waitFor(() => expect(accountLinks()).not.toBeNull())
+    expect(accountLinks()?.querySelector('a')?.getAttribute('href')).toBe('#account/login?next=octatrack')
+    expect(accountLinks()?.querySelector('a:last-child')?.getAttribute('href')).toBe('#account/register?next=octatrack')
+    expect(container.querySelector('.hub-page-heading p')?.textContent).toBe('Your module sets stay in this browser.')
   })
 })
