@@ -314,6 +314,10 @@ copy_record: DM(I1, M0) = R0
   IF NE JUMP spread_set
   F0 = 127.0                    ; HAZE: the widest spread
 spread_set:
+  F1 = 0.06299213              ; 8 / 127
+  F10 = F0 * F1
+  F1 = 1.0
+  F10 = MIN(F10, F1)            ; how out of step the grains add: 0 in step (no spread), 1 from an eighth of the spread up
   F1 = 0.003937008             ; 0.5 / 127
   F0 = F0 * F1
   F0 = F0 * F5
@@ -401,6 +405,7 @@ in_range:
   R0 = DM(V_INTERVAL)
   F0 = FLOAT R0
   F0 = F0 * F3                  ; x = interval / length, one over the overlap
+  F6 = PASS F0
   F1 = RSQRTS F0                ; 1/sqrt(x), refined once (Newton)
   F2 = F1 * F1
   F2 = F2 * F0
@@ -411,9 +416,14 @@ in_range:
   F1 = F1 * F2
   F0 = F0 * F1                  ; sqrt(x)
   F1 = 1.2
-  F0 = F0 * F1
+  F0 = F0 * F1                  ; out of step the sum grows as the square root of the overlap: 1.2 sqrt(x)
+  F1 = 1.5
+  F6 = F6 * F1                  ; in step it grows as the overlap (the window averages 2/3): 1.5 x
+  F0 = F0 - F6
+  F0 = F0 * F10
+  F0 = F0 + F6                  ; between the two by the spread
   F1 = 1.0
-  F9 = MIN(F0, F1)              ; gain: grains add out of phase, so the sum grows as the square root of the overlap
+  F9 = MIN(F0, F1)              ; the grain's gain
   R0 = DM(V_GSTATE)
   R2 = 5
   R1 = LSHIFT R15 BY R2
