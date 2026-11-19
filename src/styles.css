@@ -166,6 +166,12 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .module-card .module-preview { background-color: var(--preview); }
 .module-cover { display: block; position: relative; overflow: hidden; }
 .module-cover:focus-visible { outline-offset: -3px; }
+@media (min-width: 821px) {
+  .module-library { max-width: 70rem; }
+  .module-library .module-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.25rem), 1fr)); gap: 16px; }
+  .module-library .module-card .module-preview { height: 152px; }
+  .module-library .module-card-body { padding: 12px 14px 10px; }
+}
 
 /* Library module cards: cover, name row with Add, one meta line, the description, a stats line, then the hardware
    evidence and Compare. The same block serves the Octatrack and Digi cards. */
@@ -2323,6 +2329,10 @@ button.signal-tile[aria-pressed="true"] > svg { fill: currentColor; }
   .library-page .library-subheading { gap: .375rem 1rem; flex-wrap: wrap; }
   .library-page .library-subheading > span:first-child, .library-page .library-subheading > .subtle { white-space: normal; overflow-wrap: anywhere; }
   .library-subheading, .module-card-heading > a { font-size: 1.0625rem; }
+  .module-library .module-card-heading { flex: 1; column-gap: 6px; }
+  .module-library .module-card-heading > a { flex-basis: 100%; font-size: .9375rem; overflow-wrap: anywhere; }
+  .module-library .card-credit { margin-top: 6px; }
+  .module-library .card-bottom { margin-block: 8px; }
   .library-subheading .subtle, .library-total, .card-credit, .card-proof { font-size: .8125rem; }
   .card-version { font-size: .75rem; }
   .detail-tabs { flex-wrap: wrap; gap: .25rem 1.25rem; }
