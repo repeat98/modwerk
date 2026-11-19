@@ -55,3 +55,16 @@ it('lists the other instruments without repeating the three that have their own 
   expect(names.filter(name => name?.startsWith('Octatrack') || name?.includes('MS-70CDR') || name === 'Analog Rytm MKII')).toEqual([])
   expect(names).toContain('Analog Rytm MKI')
 })
+
+it('puts setup and recovery prerequisites before the optional Octatrack references', async () => {
+  await render()
+  expect(container.querySelector('.base-device a')?.getAttribute('href')).toBe('#octatrack/setup')
+  expect(container.querySelector('.base-facts')?.textContent).toContain('OS 1.40C')
+  expect(container.querySelector('.base-facts')?.textContent).toContain('card reader or MIDI interface')
+  expect(container.querySelector('.base-definition')?.textContent).toContain('original operating system')
+  expect(container.querySelector('.base-workflow')?.closest('details')).toBeNull()
+  expect(container.querySelector('.base-workflow')?.textContent).toContain('Sync to Octatrack')
+  const references = [...container.querySelectorAll<HTMLDetailsElement>('.base-reference')]
+  expect(references.every(section => !section.open)).toBe(true)
+  expect(references.find(section => section.querySelector('a[href="#faq/return-to-stock"]'))?.textContent).toContain('hold PROJ')
+})
