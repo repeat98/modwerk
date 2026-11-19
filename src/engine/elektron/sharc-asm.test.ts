@@ -6,8 +6,12 @@ import { assembleSharc, sharcProgramCounter } from './sharc-asm.ts'
 const one = (statement: string) => {
   const { blocks } = assembleSharc(`.code 0x200d0000\nhere: ${statement}`)
   const bytes = blocks[0].bytes
-  return Array.from({ length: bytes.length / 2 }, (_, k) => (bytes[2 * k] | bytes[2 * k + 1] << 8).toString(16).padStart(4, '0')).join('')
+  const text = Array.from({ length: bytes.length / 2 }, (_, k) => (bytes[2 * k] | bytes[2 * k + 1] << 8).toString(16).padStart(4, '0')).join('')
+  expect(bytes.length % 4).toBe(0)
+  return text
 }
+// The loader places whole 32-bit words: a block ending inside one is padded with a zero parcel.
+const padded = (parcels: string) => parcels + '0'.repeat(-parcels.length & 7)
 
 describe('SHARC assembler', () => {
   it.each([
@@ -41,14 +45,14 @@ describe('SHARC assembler', () => {
     ['IF EQ F0 = F1 + F2', '010000081012'],
     ['IF NOT SV JUMP here', '062e00be8000'],
     ['NOP', '000000000000'],
-  ])('%s', (statement, parcels) => expect(one(statement)).toBe(parcels))
+  ])('%s', (statement, parcels) => expect(one(statement)).toBe(padded(parcels)))
 
   it('makes a linked call as the stock render loop does, pushing the return address minus one', () => {
-    expect(one('CCALL 0x1c4ecf')).toBe('1804001c4ecf' + '5ffe81000000' + '9fc000be8008')
+    expect(one('CCALL 0x1c4ecf')).toBe(padded('1804001c4ecf' + '5ffe81000000' + '9fc000be8008'))
   })
 
   it('returns as the stock player does', () => {
-    expect(one('CRET')).toBe('4dfe0e000000' + '000000000000' + '083f343f' + '000000000000' + '1901')
+    expect(one('CRET')).toBe(padded('4dfe0e000000' + '000000000000' + '083f343f' + '000000000000' + '1901'))
   })
 
   it('places code and data, with labels as program counters and byte addresses', () => {
