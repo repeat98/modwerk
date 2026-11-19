@@ -13,5 +13,6 @@ Setup: a development base (test machine as type 7, standing for SAMPLE; base `d2
 | Clicks | Largest sample-to-sample step 2.9% of the peak, as a clean 220 Hz sine (no steps at grain edges). |
 | Pass-through player (the stock player only) in the same build | Plays as SAMPLE. |
 | Base `d26c8874` (own knob names) | Same sound as on `37b4db44`, peak for peak. |
+| Knob C (SIZE) at 0 and at the top, turned on the SRC page before the notes | At 0 the same sound as before, peak for peak; at the top an evener cloud of long grains. Both click-free (largest step 2.9% of the peak). |
 
-Not tested: knob values reaching the player (the settings are defaults until the knob mapping is decided), several Mikrotakt tracks at once, CPU load on a unit, other modules alongside it, saving and reloading a kit with Mikrotakt, hardware.
+Not tested: the other knobs (their grain roles are not decided), trig locks on SIZE, several Mikrotakt tracks at once, CPU load on a unit, other modules alongside it, saving and reloading a kit with Mikrotakt, hardware.

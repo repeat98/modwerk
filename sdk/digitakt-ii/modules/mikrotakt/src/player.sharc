@@ -25,6 +25,9 @@
 .equ FRAC, 0x6c                 ; record word: its fraction
 .equ ENDW, 0x69                 ; record word: the sample's length in words
 .equ PLAYING, 0x6e              ; record word: nonzero while the stock player renders it
+.equ PREC0, 0x250738            ; voice 0's parameter record (byte address); 0xdc bytes per voice
+.equ PRECB, 0xdc
+.equ PREC_SIZE, 0x28            ; knob C (SAMPLE's crossfade) as 0-1
 
 .equ VARS, 0x200d4400
 .equ V, VARS / 4                ; variables as normal words
@@ -361,11 +364,25 @@ in_range:
   M1 = FRAC
   R0 = 0
   DM(M1, I1) = R0
-  ; the grain's length, 1/length and gain
-  M2 = 2
-  R0 = DM(M2, I2)               ; size 0-127
-  R2 = -3
-  R0 = LSHIFT R0 BY R2
+  ; the grain's length, 1/length and gain. SIZE is knob C (SAMPLE's crossfade, word 0x28 of the voice's parameter
+  ; record, 0-1): 0 gives the middle size (140 ms), up to 1.5 s at the top.
+  R0 = DM(V_VOICE)
+  R2 = PRECB
+  R0 = R0 * R2 (SSI)
+  R2 = PREC0
+  R0 = R0 + R2
+  I3 = R0
+  M3 = PREC_SIZE
+  R0 = DM(M3, I3)
+  F1 = 7.49
+  F0 = F0 * F1
+  R0 = FIX F0
+  R2 = 0
+  R0 = MAX(R0, R2)
+  R2 = 7
+  R0 = MIN(R0, R2)
+  R2 = 8
+  R0 = R0 + R2                  ; size index 8-15
   M3 = R0
   I3 = size_lengths
   R5 = DM(M3, I3)
