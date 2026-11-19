@@ -23,6 +23,12 @@ afterEach(() => { for (const root of folders.splice(0)) rmSync(root, { recursive
 const text = bytes => 'x'.repeat(bytes)
 
 describe('documents', () => {
+  it('refuses a relative link in a guide to a file that does not exist', () => {
+    const root = repository({ 'scripts/a.mjs': '', 'AGENTS.md': '[a](scripts/a.mjs), [web](https://example.com), [here](#top)\n', 'docs/G.md': '[a](../scripts/a.mjs#L2)\n```\n[x](gone.md)\n```\n', 'sdk/machines/m/README.md': '[a](../../../scripts/a.mjs)\n' })
+    expect(checkDocs(root)).toEqual({ documents: 2 })
+    write(root, { 'sdk/machines/m/README.md': '[b](../../../scripts/b.mjs)\n' })
+    expect(() => checkDocs(root)).toThrow('sdk/machines/m/README.md links to ../../../scripts/b.mjs, which does not exist.')
+  })
   it('keeps the commands in AGENTS.md and both skill folders one to one', () => {
     const skill = (name, text = '---\nname: ' + name + '\n---\n') => ({ ['.claude/skills/' + name + '/SKILL.md']: text, ['.agents/skills/' + name + '/SKILL.md']: text })
     const root = repository({ 'AGENTS.md': '## Commands\n\nStart with `/modwerk-a <link>`.\n', ...skill('modwerk-a') })

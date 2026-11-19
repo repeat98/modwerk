@@ -100,3 +100,17 @@ str_title:
         .asciz  "Perform Mode"
         .balign 2
 
+
+| ---------------- the TRIG page's body: not drawn under the PERFORM page --------------------------------
+| The TRIG view's draw (0x400368ba) draws its body with "jsr 0x40031802" at 0x400368e0, (view, bmp) on the stack.
+| While the PERFORM page is open over that view the call is skipped: the page covers the body, so drawing it each
+| frame only cost time. Every other view, and the TRIG view at any other time, draws as stock.
+        .balign 2
+        .globl  digiperform_trigbody
+digiperform_trigbody:
+        move.l  digiperform_bodyview, %d0
+        beq.s   1f
+        cmp.l   4(%sp), %d0
+        bne.s   1f
+        rts
+1:      jmp     0x40031802

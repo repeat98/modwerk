@@ -1,0 +1,1 @@
+Agent board: an inbox now lists questions asked in the same millisecond in the order they were asked. Before, two questions sharing a timestamp could come back either way round, which made one board test fail now and then under load.

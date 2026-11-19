@@ -40,7 +40,7 @@ describe('device registry', () => {
       if (!hasMods) expect(device.steps.mods).toBe('open')
     }
     expect(DEVICES_BY_ID['digitakt-ii'].firmware?.releases).toEqual(['1.17'])
-    expect(DEVICES_BY_ID['digitakt-ii'].status).toBe('research')
+    expect(DEVICES_BY_ID['digitakt-ii'].status).toBe('preview')
   })
 
   it('lists digi mods only for digi machines in the registry', () => {

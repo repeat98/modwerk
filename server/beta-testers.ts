@@ -1,8 +1,12 @@
 import type { Database, User } from './platform'
 import { BETA_TESTER_LIMIT } from '../src/config/beta-invitation'
+import { OCTATRACK_BASE_RELEASED } from '../src/config/octatrack-base'
 import { HttpError, jsonBody, required, response } from './security'
 
 export const memberBetaAccess = (member: User) => !!(member.email_verified && !member.suspended && (member.beta_tester || member.is_admin))
+/** The Octatrack base path (the base install prompt): beta testers and administrators, and every verified member once
+ * OCTATRACK_BASE_RELEASED (src/config/octatrack-base.ts) is on. Beta modules keep memberBetaAccess. */
+export const memberOctatrackBase = (member: User, released = OCTATRACK_BASE_RELEASED) => memberBetaAccess(member) || (released && !!member.email_verified && !member.suspended)
 export async function betaTesterIds(db: Database, ids: string[]) {
   const unique = [...new Set(ids)]
   if (!unique.length) return new Set<string>()

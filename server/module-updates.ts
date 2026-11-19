@@ -75,11 +75,15 @@ export async function recordModuleReleases(db: Database, releases: ModuleRelease
   // Validate the whole inventory before advancing any version or subscriber. Old inventories can
   // still be polled during rollout, but an unseen version must wait for its written changelog.
   releases = parseModuleReleases({ format: 'modwerk-module-releases-v1', modules: releases })
+  // Two reads for the whole inventory: a query (and a write) per module took over 20 s for 101 modules, and the
+  // deployment's sync gave up at 30 s (12 November 2026).
+  const recorded = new Map((await db.prepare('SELECT module_id,version FROM module_release_state').all<{ module_id: string; version: string }>()).results.map(row => [row.module_id, row.version]))
+  const noteless = new Set((await db.prepare('SELECT module_id,version FROM module_releases WHERE notes IS NULL').all<{ module_id: string; version: string }>()).results.map(row => row.module_id + '\n' + row.version))
   const states = new Map<string, string | null>()
   for (const release of releases) {
-    const previous = await db.prepare('SELECT version FROM module_release_state WHERE module_id=?').bind(release.id).first<{ version: string }>()
-    states.set(release.id, previous?.version ?? null)
-    if ((!previous || compareModuleVersions(release.version, previous.version) > 0) && !release.notes) throw new Error('Missing release notes for ' + release.id + ' v' + release.version + '.')
+    const previous = recorded.get(release.id)
+    states.set(release.id, previous ?? null)
+    if ((!previous || compareModuleVersions(release.version, previous) > 0) && !release.notes) throw new Error('Missing release notes for ' + release.id + ' v' + release.version + '.')
   }
   let notified = 0, held = 0
   // The first live inventory establishes a baseline; it must not announce the whole existing library.
@@ -88,7 +92,7 @@ export async function recordModuleReleases(db: Database, releases: ModuleRelease
     const previous = states.get(release.id)
     if (previous && compareModuleVersions(release.version, previous) <= 0) {
       // Fill a legacy pending notification's notes without replacing an existing release snapshot.
-      if (release.notes) await db.prepare('UPDATE module_releases SET notes=? WHERE module_id=? AND version=? AND notes IS NULL').bind(JSON.stringify(release.notes), release.id, release.version).run()
+      if (release.notes && noteless.has(release.id + '\n' + release.version)) await db.prepare('UPDATE module_releases SET notes=? WHERE module_id=? AND version=? AND notes IS NULL').bind(JSON.stringify(release.notes), release.id, release.version).run()
       // A catch-up needs an explicit operator action after its content is approved, never an ordinary poll.
       if (compareModuleVersions(release.version, previous) < 0 || !release.notes || !recoverMissed) continue
     }

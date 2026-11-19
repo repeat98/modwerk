@@ -202,7 +202,9 @@ class UsbBaseTests(unittest.TestCase):
         import struct, uuid
         dev, bos, ms = self.usb.device(), self.usb.bos(), self.usb.msos20()
         self.assertEqual(dev[2:4], b'\x10\x02')  # USB 2.10: Windows reads BOS
-        self.assertEqual(dev[:2] + dev[4:], self.usb.STOCK_DEVICE[:2] + self.usb.STOCK_DEVICE[4:])
+        self.assertEqual(dev[12:14], struct.pack('<H', self.usb.BASE_REVISION))  # bcdDevice: never stock's
+        self.assertNotEqual(dev[12:14], self.usb.STOCK_DEVICE[12:14])
+        self.assertEqual(dev[:2] + dev[4:12] + dev[14:], self.usb.STOCK_DEVICE[:2] + self.usb.STOCK_DEVICE[4:12] + self.usb.STOCK_DEVICE[14:])
         self.assertEqual(bos[:5], bytes([5, 0x0f, len(bos), 0, 1]))
         self.assertEqual(bos[9:25], uuid.UUID('D8DD60DF-4589-4CC7-9CD2-659D9E648A9F').bytes_le)
         self.assertEqual(struct.unpack('<IHBB', bos[25:33]), (0x06030000, len(ms), self.usb.MS_VENDOR_CODE, 0))

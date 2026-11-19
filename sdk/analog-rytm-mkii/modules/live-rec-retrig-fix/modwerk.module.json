@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "live-rec-retrig-fix",
   "name": "Live Rec Retrig Fix",
-  "version": "0.2.1-experimental",
+  "version": "0.2.2-experimental",
   "machine": "analog-rytm-mkii",
   "category": "machines",
   "exclusive": false,
@@ -101,25 +101,40 @@
     ]
   },
   "resources": {
-    "memoryBytes": 10192,
+    "memoryBytes": 13756,
     "fastBytes": 0,
     "load": {
-      "display": "Not measured yet",
-      "method": "unmeasured",
-      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+      "display": "About 0.4 % of the audio block idle (0.2.1 measured on a unit; 0.2.2 adds two byte reads)",
+      "method": "static",
+      "conditions": "0.2.1 measured on the author's Analog Rytm MKII with a private telemetry base, sequencer stopped, 16-module set: both render handlers 2.5 us of the 667 us block. 0.2.2's idle entry adds two byte loads and a compare (read from the built package); while its events wait, a short call per block follows the queue. Not remeasured for 0.2.2."
     }
   },
   "evidence": {
-    "tier": "none",
-    "moduleVersion": "0.2.1-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "tier": "author-hardware",
+    "moduleVersion": "0.2.2-experimental",
+    "sourceSha256": "6a947156ed696007c4d7b0fa9c94374aa1c11e2673ed8cf4bb27743d3586b017",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-16",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "0.2.2 ran on npp1993's Analog Rytm MKII, OS 1.74, from RAM in test images with test-only counters. LQ04 (BD ANALOG + this module): RTRG holds at 1/16 in LIVE RECORDING with two BD ANALOG voices playing; the author reports every hit recorded on its step; counters: 145 hits, 0 dropped. LQ05 (13 modules): stock's UI queue overflowed at 1,931 waiting and the unit lagged; the module dropped none (63 hits, at most 104 of 128 slots) and freed every slot once the queue drained; the author heard hits lost.",
+      "limitations": [
+        "Run with test-only counters added; the published base with the development link, not the plain base.",
+        "Under LQ05's overload stock's own UI queue (1024 messages) overwrote unread messages; hits lost there are stock's, and no module can prevent that.",
+        "Load not remeasured for 0.2.2 (see resources.load).",
+        "External MIDI clock not tested."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu c5732f0, scripted pressure: every rate, ALWAYS ON, a press during a roll, rate changes, swing 50 to 66, quantize on and off, the RTRG key's light. On the author's Analog Rytm MKII (OS 1.74), as reported: 0.1.0 RR09 to RR16 pass; 0.2.0 RC07 to RC11 (rates, quantize, short rolls, re-press, the row, a project save and reload) and LD01 (the key's light); 0.2.1 in LP01, a 16-module set (a roll with pad pressure, Retrig Grid, RTRG + YES), its idle handlers 2.5 µs a block against 3.4 µs. Not run alone on a unit. See TESTING.md.",
+    "summary": "rytm-emu, scripted pressure: every rate, ALWAYS ON, re-press, rate changes, swing, quantize, the RTRG key. Unit (author, OS 1.74): 0.1.0 RR09-RR16; 0.2.0 RC07-RC11, LD01; 0.2.1 LP01 (16 modules), idle 2.5 µs a block. 0.2.2: on the unit with two BD ANALOG voices, 145 hits recorded, 0 dropped (LQ04); in a 13-module overload none dropped by the module (LQ05). Host model, rytm-emu A/B byte for byte with 0.2.1. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -163,9 +178,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.1-experimental",
-        "imageSha256": "9f65781f497d832abaa1cbf396a2de8145725ca474bb52d187372dfc4545f000",
-        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR23: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.1-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+        "moduleVersion": "0.2.2-experimental",
+        "imageSha256": "deecc8fc4b74843e0c66461bc147752a920acdc3814b822d411849f087df6439",
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR24: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.2-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
       }
     },
     {
@@ -179,9 +194,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.1-experimental",
-        "imageSha256": "9f65781f497d832abaa1cbf396a2de8145725ca474bb52d187372dfc4545f000",
-        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR23: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.1-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+        "moduleVersion": "0.2.2-experimental",
+        "imageSha256": "deecc8fc4b74843e0c66461bc147752a920acdc3814b822d411849f087df6439",
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR24: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.2-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
       }
     }
   ]

@@ -90,6 +90,16 @@ describe('frontend public replies into GitHub', () => {
     await f.hook({ ...p, comment: { ...p.comment, user: { ...p.comment.user, type: 'Bot' } } })
     expect(f.db.prepare('SELECT user_id,actor_id,kind,excerpt FROM notifications').all()).toEqual([{ user_id: 'reporter', actor_id: 'listener', kind: 'issue_comment', excerpt: f.reply.body }])
   })
+  it('notifies the reporter of the maintenance bot\'s replies as TARS, once, and still ignores other bots', async () => {
+    const f = await fixture(), delivery = crypto.randomUUID()
+    const bot = (login: string, body: string) => ({ ...f.payload(body, 77), comment: { id: 77, body, user: { id: 41898282, login, type: 'Bot' } } })
+    const marked = 'Which OS version is on the unit?\n\n<!-- modwerk-maintenance-bot -->'
+    expect(await (await f.hook(bot('github-actions[bot]', 'CI passed'))).json()).toMatchObject({ handled: false })
+    expect(await (await f.hook(bot('someone-else[bot]', marked))).json()).toMatchObject({ handled: false })
+    expect(await (await f.hook(bot('github-actions[bot]', marked), delivery)).json()).toMatchObject({ handled: true })
+    await f.hook(bot('github-actions[bot]', marked), delivery)
+    expect(f.db.prepare('SELECT user_id,actor_id,kind,excerpt FROM notifications').all()).toEqual([{ user_id: 'listener', actor_id: 'tars', kind: 'issue_comment', excerpt: 'Which OS version is on the unit?' }])
+  })
   it('notifies authenticated report participants of GitHub replies once and opens the public conversation', async () => {
     const f = await fixture(), token = await participant(f)
     const reply = { body: 'I have the same freeze.', requestId: crypto.randomUUID() }

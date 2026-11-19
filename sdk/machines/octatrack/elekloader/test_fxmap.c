@@ -10,6 +10,22 @@ const fx_set modwerk_fx_modules = {{1u << 9, 0, 0, 1u << (99 - 96) | 1u << (100 
 const struct fx_legacy modwerk_fx_legacy[] = {{0x873d83ccu, 27, "E-Verb"}};
 const uint32_t modwerk_fx_legacy_count = 1;
 uint8_t modwerk_test_live_fx[16];
+/* machine_registry.c's map as fxmap.c meets it: map entry 2 is POLY8, the one machine the project uses; a load stages. */
+static unsigned mc_staged, mc_loaded = 99, mc_lo, mc_hi;
+static uint8_t mc_sig[2];
+static uint32_t mc_module;
+static char mc_name[16];
+void modwerk_machine_map_begin(void) { mc_staged = 0; }
+void modwerk_machine_map_stage(const uint8_t *sig, unsigned lo, unsigned hi, uint32_t module, const char *name)
+{ ++mc_staged, mc_sig[0] = sig[0], mc_sig[1] = sig[1], mc_lo = lo, mc_hi = hi, mc_module = module, strncpy(mc_name, name, 15); }
+void modwerk_machine_map_loaded(int ok) { mc_loaded = (unsigned)ok; }
+int modwerk_machine_map_line(unsigned k, uint8_t *sig, unsigned *lo, unsigned *hi, uint32_t *module, char *name)
+{
+    if (k != 2u) return 0;
+    sig[0] = 'P', sig[1] = 'L', *lo = 1, *hi = 1, *module = 0x9fa85eefu;
+    memset(name, 0, 16), strcpy(name, "POLY8");
+    return 1;
+}
 static char written[512];
 static int capture(uint32_t file, const void *data, unsigned length)
 {
@@ -28,14 +44,21 @@ int main(void)
     modwerk_fxmap_assign(100, 0x100u, 2, "Hundred");
     modwerk_fxmap_assign(127, 0x127u, 3, "Last");
     modwerk_fxmap_write(7);
-    CHECK(modwerk_fxmap_written == 4);
+    CHECK(modwerk_fxmap_written == 4 && modwerk_fxmap_machines_written == 1);
     CHECK(!strcmp(written, "#MODWERK_FX=9:00000009:1:Nine\r\n#MODWERK_FX=99:00000099:1:Ninety-nine\r\n"
-                           "#MODWERK_FX=100:00000100:2:Hundred\r\n#MODWERK_FX=127:00000127:3:Last\r\n"));
+                           "#MODWERK_FX=100:00000100:2:Hundred\r\n#MODWERK_FX=127:00000127:3:Last\r\n"
+                           "#MODWERK_MC=504c:1:1:9fa85eef:POLY8\r\n")); /* the machines the project uses, after the effects */
     /* The saved lines, loaded into a cleared map: every handle back where it was. */
     modwerk_fxmap_begin(1);
     for (char *line = written, *end; (end = strstr(line, "\r\n")); line = end + 2) *end = 0, modwerk_fxmap_line(line, 0);
     modwerk_fxmap_line("#MODWERK_FX=1270:00000099:1:Too far", 0); /* past the ids: dropped */
+    modwerk_fxmap_line("#MODWERK_MC=5753:9:3:00000077:Backwards", 0); /* a range that ends before it starts: dropped */
+    modwerk_fxmap_line("#MODWERK_MC=5753:1:15:00000000:No module", 0);
     modwerk_fxmap_loaded(0);
+    /* The machine line staged as written, apart from the effects' lines: a project without effect lines still reads
+     * the catalogue's handles. */
+    CHECK(mc_staged == 1 && mc_loaded == 1 && mc_sig[0] == 'P' && mc_sig[1] == 'L' && mc_lo == 1 && mc_hi == 1);
+    CHECK(mc_module == 0x9fa85eefu && !strcmp(mc_name, "POLY8") && modwerk_fxmap_read == 4 && modwerk_fxmap_machines_read == 1);
     char name[16];
     modwerk_fxmap_name(100, name);
     CHECK(modwerk_fxmap_read == 4 && !strcmp(name, "Hundred") && modwerk_test_map.e[127].layout == 3);

@@ -5,6 +5,7 @@
 // base-bound packages fits each (scripts/octatrack-base.mjs --usb-audio-variants proves it when it writes them).
 // The committed package is the default layout's; each other variant is a line patch against it, checked by hash.
 import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import baseVersions from '../../../sdk/machines/octatrack/base-versions.json' with { type: 'json' }
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { USB_AUDIO_LAYOUTS, type UsbAudioLayout } from '../../config/usb-audio.ts'
 import type { BaseFill } from './octatrack-base.ts'
@@ -17,10 +18,38 @@ export interface BaseVariants { schema: 1; packageSha256: string; variants: Base
 /** Each layout's base identity (what IDENTIFY reports); the default layout's is base-binding.json's identity. */
 const VARIANTS: Partial<Record<BaseLayout, string>> = (baseBinding as { variants?: Partial<Record<BaseLayout, string>> }).variants ?? {}
 export const DEFAULT_LAYOUT: BaseLayout = (Object.entries(VARIANTS).find(([, identity]) => identity === baseBinding.identity)?.[0] as BaseLayout | undefined) ?? 'tracks-main-cue'
+/** The layout a base install or update gets when no module set asks for one (owner, 11 November 2026): USB MIDI alone.
+ * A set with the USB Audio module asks for its layout (module-set.ts setLayout). DEFAULT_LAYOUT stays the committed
+ * package's, which every other layout is a patch against. */
+export const MEMBER_LAYOUT: BaseLayout = 'off'
 const IDENTITIES = new Map<string, BaseLayout>([[baseBinding.identity, DEFAULT_LAYOUT], ...Object.entries(VARIANTS).map(([layout, identity]) => [identity, layout as BaseLayout] as const)])
 
+/** A base's version, as its status page shows it (PROJ > MODWERK > STATUS: "MODWERK BASE 0.7"), by the identity a unit
+ * reports: every published version in each of its layouts (sdk/machines/octatrack/base-versions.json, which
+ * scripts/octatrack-base.mjs writes). Undefined for a base from before versions (16 November 2026) or a development build. */
+const VERSIONS = new Map<string, string>(baseVersions.bases.flatMap(base => base.identities.map(identity => [identity, base.version] as const)))
+export const baseVersion = (identity?: string) => identity === undefined ? undefined : VERSIONS.get(identity)
+/** The version of the base the site publishes. */
+export const CURRENT_BASE_VERSION = baseVersion(baseBinding.identity)
+/** How the site names a base to people: its version, or the start of its identity when it has none. */
+export const baseName = (identity: string) => baseVersion(identity) ?? identity.slice(0, 8)
 /** The layout a published base runs, by its identity; undefined for an older or unknown base. */
 export const baseLayout = (identity?: string) => identity === undefined ? undefined : IDENTITIES.get(identity)
+/** The previous base's identities (`500cdb6f…`, published until 11 November 2026, base-binding.json's `variants` at
+ * that time), for this one transition only: its default was `tracks-main-cue`, the new base's is USB Audio off, so an
+ * update from it says when it turns USB Audio off. Not published any more: never a base the site syncs to. */
+const PREVIOUS_IDENTITIES = new Map<string, BaseLayout>([
+  ['500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7', 'tracks-main-cue'],
+  ['667de8d4054205ff1fd4ef34bee82cd41c1f596f7b5e6b5178240b9e4486c8da', 'tracks'],
+  ['aaa1960781b1c1882e6c26bd3ca6ae7fe3816d9fec9d443b9df9852ab8786951', 'tracks-post'],
+  ['0f2e768bb0a3f47ddcdcca0c520b3ee169d4c11f33630904270e911be6d850c6', 'main-cue'],
+  ['504465978a9e5c03cc877527111d396962399c21d6bc45940867c7757d0ba881', 'main'],
+  ['d16bd599630c2312ad50d0cfb0c4011138154bc5ea3c7f7e09f7a1353f1b8962', 'master'],
+  ['05b7f09031bc3892626e7c2576810386faeb01bd3a3101353a56c56c96d82a4a', 'off'],
+])
+/** The layout a unit's base runs as far as the site knows: a published base's, or the previous base's; undefined for
+ * any other base, which may have had USB Audio. */
+export const runningLayout = (identity?: string) => identity === undefined ? undefined : IDENTITIES.get(identity) ?? PREVIOUS_IDENTITIES.get(identity)
 /** Whether a base is one of the published variants: any of them takes the published packages. */
 export const isPublishedBase = (identity?: string) => baseLayout(identity) !== undefined
 /** The identity of the published base with this layout, when the site publishes it. */
@@ -44,10 +73,10 @@ export function applyVariantPatch(text: string, patch: VariantPatch, sha256: str
 }
 
 /** The variant's package text and fills from the default package, or undefined for the default layout itself. */
-export function variantPackage(defaultText: string, variants: BaseVariants, layout: BaseLayout): { text: string; fills: BaseFill[] } | undefined {
-  if (layout === DEFAULT_LAYOUT) return undefined
+export function variantPackage(defaultText: string, variants: BaseVariants, layout: BaseLayout, base: { defaultLayout: BaseLayout; identity: (layout: BaseLayout) => string | undefined } = { defaultLayout: DEFAULT_LAYOUT, identity: layoutIdentity }): { text: string; fills: BaseFill[] } | undefined {
+  if (layout === base.defaultLayout) return undefined
   const variant = variants.variants.find(item => item.layout === layout)
-  if (variants.schema !== 1 || !variant || variant.identity !== layoutIdentity(layout)) throw new Error('This Modwerk base layout isn’t published.')
+  if (variants.schema !== 1 || !variant || variant.identity !== base.identity(layout)) throw new Error('This Modwerk base layout isn’t published.')
   if (textSha(defaultText) !== variants.packageSha256) throw new Error('The base package and its layouts don’t match. Reload the page.')
   return { text: applyVariantPatch(defaultText, variant.patch, variant.packageSha256), fills: variant.fills }
 }

@@ -1,0 +1,1 @@
+The Octatrack welcome now names both ways to load modules once the base is on: a sync over USB from Chrome or Edge, or MODWERK0.SET copied to the card. Before, it showed only one of them, depending on the browser.

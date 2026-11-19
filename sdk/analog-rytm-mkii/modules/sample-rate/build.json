@@ -2,7 +2,11 @@
   "schemaVersion": 1,
   "sources": [
     "src/rate.c",
-    "src/audio.s"
+    "src/audio.s",
+    "src/pipo.c",
+    "src/snap.c",
+    "src/marks.c",
+    "src/pipo.s"
   ],
   "defsym": {},
   "cflags": [],
@@ -19,14 +23,35 @@
       "order": 50
     }
   ],
-  "contribute": [],
+  "contribute": [
+    {
+      "to": "core_params",
+      "order": 50,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:sample_rate_tun_param",
+          0
+        ]
+      ]
+    }
+  ],
   "collections": {},
   "copied": [],
   "regions": [],
   "claims": [
-    "ui:SOUND SETTINGS row SMP RATE, after SMP:",
-    "ui:a tap on the SAMPLE page's FIN knob (encoder B)",
-    "param:FIN (id 40) label while SMP RATE is on"
+    "param:FIN (id 40) is RATE: its names read RATE and its default is +63",
+    "param:TUN (id 39) turn and value text: fine in cents",
+    "screen:SAMPLE knob page (the SMPL key shows SMPL WAVEFORM only)",
+    "screen:SMPL WAVEFORM layout: one value row and a taller waveform",
+    "ui:SAMPLE page LOP value PIPO and its three-position switch",
+    "param:LOP range OFF/ON/PIPO, its value text and icon",
+    "ui:FUNC + SAMPLE STA turn",
+    "ui:FUNC + SAMPLE END turn",
+    "ui:FUNC + SAMPLE STA/END turn with a trig held",
+    "ui:SMPL WAVEFORM S and E labels on the STA and END lines"
   ],
   "requires": [],
   "derive": null,
@@ -34,33 +59,40 @@
     "1.74": {
       "defsym": {
         "sample_rate_stock_frames": "0x4011bf44",
-        "sample_rate_string": "0x401bcff0",
-        "sample_rate_label_resume": "0x400a900a",
-        "sample_rate_long_resume": "0x400a902c",
-        "sample_rate_menu_resume": "0x400ef522",
-        "sample_rate_vt_scene": "0x401e305c",
-        "sample_rate_vt_perf": "0x401e26c4",
-        "sample_rate_string_end": "0x401bb540",
-        "sample_rate_header": "0x40035fe8",
-        "sample_rate_long_name": "0x400a9022"
+        "sample_rate_add_resume": "0x400a88f2",
+        "sample_rate_label_resume": "0x400d20f6",
+        "sample_rate_vt_sample": "0x401e3420",
+        "pipo_loop_prefetch": "0x4011c1e0",
+        "pipo_loop_stock_frames": "0x4011bf44",
+        "pipo_loop_text_resume": "0x400fb572",
+        "pipo_loop_sprintf": "0x4009866e",
+        "pipo_loop_lop_ctx": "0x419a5760",
+        "pipo_loop_icon_ctx": "0x419a5770",
+        "pipo_loop_icon3": "0x400fef4a",
+        "pipo_loop_icon_frames": "0x419f03cc",
+        "pipo_loop_icon_resume": "0x400fedfa",
+        "pipo_loop_func_resume": "0x4003a246",
+        "pipo_loop_lock_resume": "0x4003a1a2",
+        "pipo_loop_trig_resume": "0x40037f72",
+        "pipo_loop_prof_resume": "0x4003a0e4",
+        "pipo_loop_lop_rec": "0x419a574c",
+        "pipo_loop_marks_resume": "0x4006ce78"
       },
       "cflags": [
         "-DPARAMS_EFF_AT=0x8000f7a8",
         "-DVOICE_REC_AT=0x80005b30",
         "-DVOICE_OWNER_AT=0x40291138",
         "-DTRIG_NEXT_AT=0x8000586c",
-        "-DPROJECT_AT=0x4017fa0a",
-        "-DTRACK_INDEX_OF_AT=0x400b693e",
-        "-DKIT_TRACK_SOUND_AT=0x400a67ca",
-        "-DPARAM_TARGET_AT=0x400af51a",
-        "-DPARAM_SET_AT=0x400a906c",
+        "-DBRAIN_AT=0x419f28f8",
         "-DVIEW_INVALIDATE_AT=0x40078580",
-        "-DCONFIG_CHANGED_INFO=0x401cb88c",
-        "-DBITMAP_DRAW_AT=0x400716e0",
-        "-DCHECK_GLYPHS_AT=0x419f0910",
-        "-DIS_KEY_HELD_AT=0x40081c28",
+        "-DFILLRECT_AT=0x40070726",
+        "-DPAGE_UPDATE_AT=0x400d253a",
+        "-DSAMPLE_SLOTS_AT=0x41329e70",
         "-DLOCK_EDITOR_AT=0x40036636",
-        "-DLIVE_RECORDING_AT=0x40036370"
+        "-DTRACK_INDEX_OF_AT=0x400b693e",
+        "-DLOCK_SLOT_AT=0x40006ea8",
+        "-DIS_KEY_HELD_AT=0x40081c28",
+        "-DLOP_REC_AT=0x419a574c"
       ],
       "sites": [
         {
@@ -85,48 +117,143 @@
           "target": "sample_rate_scale_gate"
         },
         {
-          "addr": "0x4011f642",
-          "len": 6,
-          "stockSha256": "31b0bc52db69aaff8360a124860157c469baaa800d268525283617e06264228a",
-          "op": "jsr",
-          "target": "sample_rate_apply_gate"
+          "addr": "0x400a88ea",
+          "len": 8,
+          "stockSha256": "2562fc04b5ba15cc5bf8909a85a59aa833d1e7e54127597742c740853b77bbc4",
+          "op": "jmp",
+          "target": "sample_rate_add_gate"
         },
         {
-          "addr": "0x400a9000",
-          "len": 10,
-          "stockSha256": "0533f93bdb4d699e3dc69bd0f4d00dece9bdcfd9be8b5555608150161f4e1d42",
+          "addr": "0x400d20ee",
+          "len": 8,
+          "stockSha256": "23a165255925d4083c60ac1e20698da6cc67d4ef53254968ee15680ac74f63bd",
           "op": "jmp",
           "target": "sample_rate_label_gate"
         },
         {
-          "addr": "0x400a9022",
-          "len": 10,
-          "stockSha256": "0533f93bdb4d699e3dc69bd0f4d00dece9bdcfd9be8b5555608150161f4e1d42",
-          "op": "jmp",
-          "target": "sample_rate_long_gate"
+          "addr": "0x401c03c8",
+          "op": "bytes",
+          "len": 4,
+          "new": "00000001",
+          "kind": "data",
+          "stockSha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
         },
         {
-          "addr": "0x400ef51c",
-          "len": 6,
-          "stockSha256": "469424553e58742b9c745be7dd37ed3b5096c6ccf78facb7bd7170aa24a52507",
-          "op": "jmp",
-          "target": "sample_rate_menu_gate"
+          "addr": "0x401c03f8",
+          "op": "bytes",
+          "len": 4,
+          "new": "00007f00",
+          "kind": "data",
+          "stockSha256": "413432a2e4977ca133f00f95e74dcb2af10220ee4bcf9c47ac33ed88a7d7bffa"
         },
         {
-          "addr": "0x4003a5fc",
+          "addr": "0x401c0410",
+          "len": 4,
+          "stockSha256": "1f30203cdd9ad3c971fa8571e2480e7de4cfab7c58266b5f0f861ad6ed9fe773",
+          "op": "ptr",
+          "target": "sample_rate_long_text"
+        },
+        {
+          "addr": "0x401c0418",
+          "len": 4,
+          "stockSha256": "5925c177ed2362ea35a1c610f844e760f96a59dc073544a3ed640a17774eed36",
+          "op": "ptr",
+          "target": "sample_rate_short_text"
+        },
+        {
+          "addr": "0x40121134",
           "len": 6,
-          "stockSha256": "5cb2061dc8e4b71f74f2b6b6ddf6db701a4167e0047a6e5fced6fac9948bc766",
+          "stockSha256": "2e4c18b189c0e55cfb3beeff96e48aa0adee0e73e340c16018c19cc16416b7c8",
           "op": "jsr",
-          "target": "sample_rate_knob_gate"
+          "target": "pipo_loop_gate"
+        },
+        {
+          "addr": "0x400fb56c",
+          "len": 6,
+          "stockSha256": "26c0ee9154cd0bf0cd340066a9b5799a2b7ecdf768354c05d3439f1044ea7581",
+          "op": "jmp",
+          "target": "pipo_loop_text_gate"
+        },
+        {
+          "addr": "0x401c04f8",
+          "len": 4,
+          "stockSha256": "6b1e73a0094b7b812d3b9e22cffb4f8239319847522c4fa103753b6950020f93",
+          "op": "bytes",
+          "new": "00000200",
+          "kind": "data"
+        },
+        {
+          "addr": "0x400fedf4",
+          "len": 6,
+          "stockSha256": "0528305f5347b3808effa560c49adb196e58354efe1c9c8ea8566757ad4ffac3",
+          "op": "jmp",
+          "target": "pipo_loop_icon_gate"
+        },
+        {
+          "addr": "0x4003a0de",
+          "len": 6,
+          "stockSha256": "e88c5d87b784c48d23213d41bd40e3f156f01c147327ad4ba43b3e58d0f848e0",
+          "op": "jmp",
+          "target": "pipo_loop_prof_gate"
+        },
+        {
+          "addr": "0x4003a240",
+          "len": 6,
+          "stockSha256": "8737736787699bee24f07b0561eb3dcb4786d83c7e79ff2d664e8bc838f23e20",
+          "op": "jmp",
+          "target": "pipo_loop_func_gate"
+        },
+        {
+          "addr": "0x4003a19c",
+          "len": 6,
+          "stockSha256": "8b2ff1313c2715f1820d66eaf627a9cd77d6fa05e71bf755e169b313c3e91acf",
+          "op": "jmp",
+          "target": "pipo_loop_lock_gate"
+        },
+        {
+          "addr": "0x40037f6c",
+          "len": 6,
+          "stockSha256": "6bec112e4ad8dc436d8a56fe7dd56a0ebb067ae3ba9c4ab0b3b5009bd36d370e",
+          "op": "jmp",
+          "target": "pipo_loop_trig_gate"
+        },
+        {
+          "addr": "0x4011c58a",
+          "len": 6,
+          "stockSha256": "e3fa31891726e01c1336b2349b39bbfd8b834fa09bc0a03b3d1d74432ce7d2ff",
+          "op": "jsr",
+          "target": "pipo_loop_v0w_gate"
+        },
+        {
+          "addr": "0x4011c5e6",
+          "len": 8,
+          "stockSha256": "196d0dda111b1ae37f88dd571c335bbfd9eb3b527ba8e423e2d1129c21cd7948",
+          "op": "jsr",
+          "target": "pipo_loop_v0m_gate"
+        },
+        {
+          "addr": "0x4011cb2e",
+          "len": 10,
+          "stockSha256": "cea8a71b90dd8a6b4b9ac741ae5acf4dbe46eb367e81086d6aef10c4ea1e5e63",
+          "op": "jsr",
+          "target": "pipo_loop_vnw_gate"
+        },
+        {
+          "addr": "0x4011cb98",
+          "len": 8,
+          "stockSha256": "ddb2c3a57a21875cf6d54c6613cf769cf0ebeada1969bec8020fb662392a2c28",
+          "op": "jsr",
+          "target": "pipo_loop_vnm_gate"
+        },
+        {
+          "addr": "0x4006ce72",
+          "len": 6,
+          "stockSha256": "fd3a7a09db3edb60215e850f1b0a8745b625058384b8deee552f26e1511cb4f0",
+          "op": "jmp",
+          "target": "pipo_loop_marks_gate"
         }
       ]
     }
   },
-  "storage": [
-    {
-      "sym": "sample_rate_on",
-      "scope": "sound",
-      "bits": 1
-    }
-  ]
+  "storage": []
 }

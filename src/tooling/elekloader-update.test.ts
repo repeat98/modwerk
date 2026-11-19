@@ -180,12 +180,12 @@ function fixture() {
     mkdirSync(dirname(join(root, path)), { recursive: true })
     cpSync(join(ROOT, path), join(root, path), { recursive: true })
   }
-  for (const path of [...noticePaths, 'LICENSE', 'LICENSES', 'scripts/elekloader-update.ts', 'scripts/elekloader-vendor.ts', 'scripts/licenses.mjs', 'scripts/license-notices.mjs', 'src/engine/elektron/codec']) copy(path)
+  for (const path of [...noticePaths, 'LICENSE', 'LICENSES', 'scripts/elekloader-update.ts', 'scripts/elekloader-vendor.ts', 'scripts/licenses.mjs', 'scripts/license-notices.mjs', 'src/engine/elektron/codec', 'src/engine/elektron/odd-jumps.ts']) copy(path)
   // The module records that add Modwerk-built pins to the upstream catalog.
   for (const name of readdirSync(join(ROOT, 'sdk/imports')).filter(name => /^elekloader-.*\.json$/.test(name))) copy('sdk/imports/' + name)
   const manifest = JSON.parse(readFileSync(join(root, 'sdk/octabam/licenses/manifest.json'), 'utf8')) as { moduleComponents: Record<string, string[]> }
   for (const id of Object.keys(manifest.moduleComponents)) {
-    const folder = `sdk/octabam/modules/${id}`
+    const folder = `sdk/octatrack/modules/${id}`
     copy(folder + '/octamod.module.json')
     const document = JSON.parse(readFileSync(join(root, folder, 'octamod.module.json'), 'utf8')) as { license: { file: string } }
     copy(folder + '/' + document.license.file)

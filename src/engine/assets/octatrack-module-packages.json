@@ -63,12 +63,12 @@
       "cyclesKind": "executed",
       "state": 132,
       "buffer": 16384,
-      "version": "0.1.2-experimental",
+      "version": "0.1.3-experimental",
       "name": "Air Chorus",
       "module": "496d848e",
-      "bytes": 3758,
-      "sha256": "e0f05d53b4259e0c3b50f5dde05ed1a1ec5d7c5b80bf5efd5ce4e5ab7d6d7ff8",
-      "path": "octatrack-modules/airwindows-chorus/0.1.2-experimental.mwrm",
+      "bytes": 3962,
+      "sha256": "1307d71958a2e5c7a0e4ba8d7f7f53a0afc10bfe404a321936e39a65d229cc08",
+      "path": "octatrack-modules/airwindows-chorus/0.1.3-experimental.mwrm",
       "abi": 6,
       "features": 0,
       "sites": 0,
@@ -161,12 +161,12 @@
       "sites": 14,
       "copies": 0,
       "fills": 0,
-      "version": "0.2.0-experimental",
+      "version": "0.2.1-experimental",
       "name": "Repitch",
       "module": "5c49f0f0",
       "bytes": 1428,
-      "sha256": "052d27edf6cfac091d126beebac18e2b2d0ecaad470d00581a2a08e215bb47c3",
-      "path": "octatrack-modules/repitch/0.2.0-experimental.mwrm"
+      "sha256": "4b9278462747c87b0d25040a759773c1fff0425804d3f940ced69a475c2a70c9",
+      "path": "octatrack-modules/repitch/0.2.1-experimental.mwrm"
     },
     {
       "id": "poly8",
@@ -176,14 +176,12 @@
       "sites": 23,
       "copies": 5,
       "fills": 0,
-      "version": "0.3.1-experimental",
+      "version": "0.3.3-experimental",
       "name": "POLY8",
       "module": "9fa85eef",
-      "bytes": 59308,
-      "sha256": "dc2ce372af73b93ef9e34a1c05c8ad18269631e0f20ed4f94e461310990466b9",
-      "path": "octatrack-modules/poly8/0.3.1-experimental.mwrm",
-      "lagsBehind": "0.3.2-experimental",
-      "lagReason": "0.3.2 changes only the card build's machine chooser (#842, #941, #942); over USB the base owns the chooser, and the package rebuilds byte-identical from 0.3.2's source"
+      "bytes": 59808,
+      "sha256": "1d9e9ecae22a60b592e5cfc8750adcdf0060faad36c826b6e6abb5393bb86c21",
+      "path": "octatrack-modules/poly8/0.3.3-experimental.mwrm"
     },
     {
       "id": "vector",
@@ -191,16 +189,14 @@
       "abi": 8,
       "features": 131,
       "sites": 2,
-      "copies": 8,
+      "copies": 9,
       "fills": 0,
-      "version": "0.2.5-experimental",
+      "version": "0.3.2-experimental",
       "name": "VECTOR",
       "module": "b0d51c58",
-      "bytes": 18354,
-      "sha256": "45c962ca3a202ac697e3d33d97e4b3b94052706a390189e5baf923fa829de577",
-      "path": "octatrack-modules/vector/0.2.5-experimental.mwrm",
-      "lagsBehind": "0.3.1-experimental",
-      "lagReason": "0.3.1 is 0.2.6's code, rolling back 0.3.0 (the MIDI generator becomes its own module): it changes only the card build, whose st_setup_page no longer tests for row 5, which VECTOR's USB adapter already dropped (#972, #1119); the package's control unit source is byte-identical to 0.2.5's"
+      "bytes": 18334,
+      "sha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
+      "path": "octatrack-modules/vector/0.3.2-experimental.mwrm"
     },
     {
       "id": "synth",
@@ -208,14 +204,14 @@
       "abi": 8,
       "features": 131,
       "sites": 24,
-      "copies": 38,
+      "copies": 39,
       "fills": 0,
-      "version": "0.1.2-experimental",
+      "version": "0.1.4-experimental",
       "name": "FM Synth",
       "module": "e8c3e4fa",
-      "bytes": 29810,
-      "sha256": "6e5716540d78b652b272c364ddf398f688eb9dff7e2b926b2895e250341aaca7",
-      "path": "octatrack-modules/synth/0.1.2-experimental.mwrm"
+      "bytes": 30498,
+      "sha256": "7d59f80928cee4690781039ae521c15e5d2bbedf70b0e88616c7bcf2bcecffc3",
+      "path": "octatrack-modules/synth/0.1.4-experimental.mwrm"
     },
     {
       "id": "quantizer",
@@ -267,12 +263,12 @@
       "sites": 3,
       "copies": 7,
       "fills": 0,
-      "version": "0.1.4-experimental",
+      "version": "0.1.5-experimental",
       "name": "Euclid",
       "module": "d54f5fed",
-      "bytes": 10096,
-      "sha256": "649f26704bda30f0bb3be0dc1b5ad863ff7a3a4064256b051af07e9fd575e7ce",
-      "path": "octatrack-modules/euclid/0.1.4-experimental.mwrm"
+      "bytes": 10100,
+      "sha256": "69a5ecd307334b5f9e9e5d9806336653162a915ccd31b596d0bab4a598a65c88",
+      "path": "octatrack-modules/euclid/0.1.5-experimental.mwrm"
     },
     {
       "id": "bbd",
@@ -336,13 +332,13 @@
       "sites": 2,
       "copies": 8,
       "fills": 0,
-      "version": "0.2.1-experimental",
+      "version": "0.2.2-experimental",
       "name": "SIDECHAIN COMP",
       "module": "95cff696",
       "bytes": 2636,
-      "sha256": "fd275bf2f8eb1340228d12224b3b84560584038c6637e6ed9775e50c60914f09",
-      "path": "octatrack-modules/sidechain-compressor/0.2.1-experimental.mwrm",
-      "requiredBase": "c8e6ff0dee46759d499e0d7033348d31af9842b84554de03a6b3b5c0ae7414c5"
+      "sha256": "6cf9892ded68b89660aed1d3c77028530722a734a0587036ae76eb74b45409b6",
+      "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
+      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921"
     },
     {
       "id": "output-matrix",
@@ -356,9 +352,9 @@
       "name": "OUTPUT MATRIX",
       "module": "caf158b5",
       "bytes": 3740,
-      "sha256": "d905f7e04554d9f49c6e8761feffa9e9b6f6187cb8bd2c263cc209e932de2252",
+      "sha256": "d67e9a432c59f8f430b20f3ada22f74317209169062941f5290f6b66f6d3e4e2",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "c8e6ff0dee46759d499e0d7033348d31af9842b84554de03a6b3b5c0ae7414c5"
+      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921"
     },
     {
       "id": "cc-map",
@@ -374,7 +370,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "c8e6ff0dee46759d499e0d7033348d31af9842b84554de03a6b3b5c0ae7414c5"
+      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -450,9 +446,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "8942f4236756861730259f8ddb2412ac248e87ad9e77b8f61a29ab5581ece9ce",
+      "sha256": "71bd73bdab4b32b9a4fdbc48d0f89ab07f8dada0213f6a76216f8f1aebbad8bd",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "c8e6ff0dee46759d499e0d7033348d31af9842b84554de03a6b3b5c0ae7414c5"
+      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921"
     },
     {
       "id": "analog-bassdrum",
@@ -466,9 +462,9 @@
       "name": "Analog BD",
       "module": "abdb1445",
       "bytes": 26172,
-      "sha256": "9a7eb8144ad3a92e3c1908911176d9ebbcdf64304c1c2e49b0b10cd8ac226d40",
+      "sha256": "40b2d12280b56bfeb3db925a668bc759019f8db45b58580ad3f5389249df1baf",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "c8e6ff0dee46759d499e0d7033348d31af9842b84554de03a6b3b5c0ae7414c5",
+      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -494,6 +490,21 @@
       "module": "c8d078f2",
       "bytes": 5780,
       "sha256": "6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d"
+    },
+    {
+      "id": "temp-save",
+      "octabam": true,
+      "version": "0.1.1-experimental",
+      "path": "octatrack-modules/temp-save/0.1.1-experimental.mwrm",
+      "abi": 7,
+      "features": 1,
+      "sites": 2,
+      "copies": 0,
+      "fills": 0,
+      "name": "Temp Save",
+      "module": "84a2f52f",
+      "bytes": 1088,
+      "sha256": "a389aa93c6408ba99f4049247934dc371c2fcad6cee72e039876a8d3df451ea9"
     },
     {
       "id": "slow-lfo",
@@ -543,11 +554,46 @@
       "sha256": "0b54a734258945acbf74551b8920ee4bfa760d390964bd04d2877e4382e990b9"
     },
     {
+      "id": "syntiz",
+      "sources": [
+        "sdk/octabam/modules/syntiz/engine.c",
+        "sdk/octabam/modules/syntiz/machine_map.c",
+        "sdk/octabam/modules/syntiz/machine.c"
+      ],
+      "subscribe": [
+        "ot_machines:wave_machine:50"
+      ],
+      "raise": [
+        "ev_trig_muted"
+      ],
+      "partSignature": {
+        "sig": "WV",
+        "lo": 1,
+        "hi": 15,
+        "flags": [
+          "PROTECT",
+          "POOL",
+          "SETUP_ALL"
+        ]
+      },
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/syntiz/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "syntiz",
+      "module": "970f03ad",
+      "bytes": 54416,
+      "sha256": "f501a6a4ea3c8361427b85302fc77274906b9de2e3dfd6f3c81bc1759767c5e8"
+    },
+    {
       "id": "track-solo",
       "octabam": true,
       "unitName": "Track Solo",
-      "version": "0.2.4-experimental",
-      "path": "octatrack-modules/track-solo/0.2.4-experimental.mwrm",
+      "version": "0.2.5-experimental",
+      "path": "octatrack-modules/track-solo/0.2.5-experimental.mwrm",
       "abi": 8,
       "features": 129,
       "sites": 7,
@@ -556,8 +602,125 @@
       "name": "Track Solo",
       "module": "f92f5dae",
       "bytes": 2156,
-      "sha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
+      "sha256": "5ac64b5ef96567b701a603197c737d5cccd6317da7242d15ca1855ab37da7c1c",
       "usbOnly": true
+    },
+    {
+      "id": "pattern-sample-locks",
+      "octabam": true,
+      "usbOnly": true,
+      "version": "0.1.9-experimental",
+      "path": "octatrack-modules/pattern-sample-locks/0.1.9-experimental.mwrm",
+      "name": "SAMPLE LOCKS",
+      "unitName": "SAMPLE LOCKS",
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "module": "4bdbfbf9",
+      "bytes": 8740,
+      "sha256": "6fea272e2cc6f22afdea9d8561cc2c02e7e45afade5da070c5dafcefb66d3ff3"
+    },
+    {
+      "id": "amiga",
+      "octabam": true,
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "version": "0.3.0-experimental",
+      "name": "Amiga",
+      "module": "d0711972",
+      "bytes": 13248,
+      "sha256": "acae3fef97f85a941c3215e1065353c94967ff44bb9528c22135c611a8edc32e",
+      "path": "octatrack-modules/amiga/0.3.0-experimental.mwrm",
+      "usbOnly": true
+    },
+    {
+      "id": "midi-scenes",
+      "octabam": true,
+      "usbOnly": true,
+      "version": "0.3.0-experimental",
+      "abi": 8,
+      "features": 129,
+      "sites": 33,
+      "copies": 0,
+      "fills": 0,
+      "name": "MIDI Scenes",
+      "module": "21a6ffd7",
+      "bytes": 8560,
+      "sha256": "f38ae755bbf3c3a6a675209b1421292e5806f0e8c1ac44bbd7a0d55e1ff546d5",
+      "path": "octatrack-modules/midi-scenes/0.3.0-experimental.mwrm"
+    },
+    {
+      "id": "kits",
+      "octabam": true,
+      "usbOnly": true,
+      "version": "0.1.0-experimental",
+      "abi": 8,
+      "features": 129,
+      "sites": 15,
+      "copies": 0,
+      "fills": 0,
+      "name": "Kits",
+      "module": "9ea848b6",
+      "bytes": 12954,
+      "sha256": "f1c13a071b299906dccd7eee60c8b01e82dea9212921f5d7fb28ca14b5932c0b",
+      "path": "octatrack-modules/kits/0.1.0-experimental.mwrm"
+    },
+    {
+      "id": "tuner",
+      "octabam": true,
+      "version": "0.1.0-experimental",
+      "requiresCapabilities": 1024,
+      "abi": 7,
+      "features": 1,
+      "sites": 3,
+      "copies": 0,
+      "fills": 0,
+      "name": "Tuner",
+      "module": "fc7a2965",
+      "bytes": 22920,
+      "sha256": "05fef3971afaabec88d5e7238a185b7fd0fce171c91f02ff41ecee7294e9dbd7",
+      "path": "octatrack-modules/tuner/0.1.0-experimental.mwrm"
+    },
+    {
+      "id": "vibrato",
+      "slots": "both",
+      "cycles": 249,
+      "cyclesKind": "hardware",
+      "state": 64,
+      "buffer": 2048,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/vibrato/0.1.0-experimental.mwrm",
+      "abi": 6,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Vibrato",
+      "module": "d4582ab2",
+      "bytes": 3446,
+      "sha256": "f311dd620daf296dc6caff7f442533fe6e7262e2a1834bbfbc237fc4d3ff1631"
+    },
+    {
+      "id": "butter-fingers",
+      "octabam": true,
+      "unitName": "Butter Fingers",
+      "usbOnly": true,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/butter-fingers/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Butter Fingers",
+      "module": "5cf69df3",
+      "bytes": 652,
+      "sha256": "c470e87aefa7c8e2c87dd7b1429a265e5353430b74331adb53158055269c9655"
     }
   ]
 }

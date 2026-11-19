@@ -1,0 +1,1 @@
+Fix: a reporter's reply on a report about a whole configuration no longer notifies or emails the maintainers of every module in it. Like the report itself, it reaches a module's author only once someone narrows it down to that module.

@@ -43,7 +43,7 @@ def main():
     from remix.registry import modules
 
     result = {"schema": 1, "revision": revision, "license": "/licenses/octabam.txt", "packages": [], "excluded": []}
-    wanted = {"spectrum", "modulation", "character", "miniverb", "euclid", "tapeecho"}
+    wanted = {"miniverb", "euclid", "tapeecho"}
     try:
         for mod in sorted(modules().values(), key=lambda module: module.name):
             if mod.name not in wanted:
@@ -73,7 +73,7 @@ def main():
                 "init": init, "proc": proc, "proofs": proofs,
             })
             print(f"{mod.name}: {len(words)} words, {len(relocations)} relocations, four-origin native proof")
-        if {pkg["id"] for pkg in result["packages"]} != wanted - {"character"}:
+        if {pkg["id"] for pkg in result["packages"]} != wanted:
             raise RuntimeError("The native loadable set changed; review it before replacing the catalog.")
         destination.write_text(json.dumps(result, indent=2) + "\n")
     finally:

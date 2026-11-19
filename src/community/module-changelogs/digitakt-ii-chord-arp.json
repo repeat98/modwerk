@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-16",
+    "changes": [
+      "Play monophonic arpeggios from audio trigs and built-in Euclidean hits.",
+      "Shape chords with extensions, note orders, octave limits, rhythm and groove.",
+      "Lock settings per trig and carry phrases across empty steps."
+    ]
+  }
+]

@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "midi-scenes",
+  "version": "0.3.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": null,
+    "budget": null,
+    "method": "No static count and no event counter (waived by the owner, sdk/approvals). On the unit with 480 locks and the crossfader sweeping, the CPU meter moved 0.2 points and no render was skipped (TESTING.md)."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 123.4,
+    "moduleLongestUs": 124.1,
+    "stockIdlePercent": 57.4,
+    "moduleIdlePercent": 57.2,
+    "method": "Hardware, not cfmeter: the owner's MKII on a development twin of base 0.7.4, 16 November 2026, package f38ae755 (the published one). Pattern B16 with a trig on every step of all eight MIDI tracks (channels off), playing, the crossfader swept through 12 positions between readings. Without the module, then with it and 480 scene locks: the frame guard's longest frame interrupt (34.0 % and 34.2 % of a frame) and the CPU meter (42.6 % and 42.8 %; idle taken as 100 less the meter), 10 readings each (TESTING.md)."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": ""
+  }
+}

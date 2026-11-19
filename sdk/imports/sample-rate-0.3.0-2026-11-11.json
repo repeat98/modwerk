@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/sample-rate",
+  "version": "0.3.0-experimental",
+  "date": "2026-11-11",
+  "changes": [
+    "FIN's knob is RATE on every sound: the SMP RATE row, the tap of encoder B and the per-sound storage bit are gone, and so are the apply-sound gate, the switch snap and the two name gates.",
+    "FIN's parameter row names it RATE and Rate (knob, header, LFO destinations) and defaults to +63 (1x). A sound saved with FIN at +0 loads stopped."
+  ],
+  "runtimeSourceSha256": "5cf9596ab9af7d2600769ba7856dfb5c1838446daecdb5a987b0a85d5e3ccffa",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/sample-rate/sample-rate-0.3.0-experimental-os1.74.elemod",
+      "sha256": "5d7a9f6b28f1e638cebd43fa7fd2a91487e87f5620e514a6f05d46d49e33bed9"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/sample-rate/TESTING.md",
+  "requires": []
+}

@@ -70,7 +70,7 @@ static void reset(void)
     owners = slot = 0; prepared = held = 0; candidate = previous = 0; refusal = RUNTIME_OK;
     memset(set, 0, sizeof set); restored = pending = card_slot = 0; card_candidate = 0;
     modwerk_modset_result = 0; modwerk_modset_count = 0; modwerk_test_ticks = 200;
-    modwerk_test_held = 0; modwerk_test_gate = 1; reads = writes = 0;
+    memset(modwerk_test_keys, 0, sizeof modwerk_test_keys); modwerk_test_gate = 1; reads = writes = 0;
 }
 static void make_card(const uint8_t *package, uint32_t n)
 {
@@ -136,6 +136,48 @@ static void proof(uint8_t *package, uint32_t n, uint8_t *expected, uint32_t expe
     CHECK(!modwerk_runtime_active() && !memcmp(original, main_image, main_bytes));
     free(original);
 }
+/* PROJ > MODWERK > MODULES against the actual loader: modset.c's own removal package unloads the module, stock code
+ * as it was, and the shelved package installs again. The pretend card takes no write. */
+static void switching(uint8_t *package, uint32_t n)
+{
+    uint8_t original[1024], off[8 + MODSET_OFF_ENTRY];
+    uint32_t id = be32(package + 28);
+    CHECK(main_bytes == sizeof original); memcpy(original, main_image, sizeof original);
+    memset(&modwerk_test_guard, 0, sizeof modwerk_test_guard); /* a start that settled: the boot guard holds nothing */
+    make_card(package, n); reset(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && modwerk_runtime_active() == 1);
+    CHECK(modwerk_modset_switch(id, 0)); modwerk_modset_service();
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCHED && !modwerk_runtime_active() && !memcmp(original, main_image, sizeof original));
+    CHECK(!modwerk_modset_count && modwerk_modset_off_list(off, 0, 1) == 8 + MODSET_OFF_ENTRY && be32(off + 12) == id);
+    CHECK(modwerk_modset_switch(id, 1)); modwerk_modset_service();
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCH_BUSY && !modwerk_runtime_active()); /* the save has not landed */
+    pending = 0, modwerk_modset_result = SAVED; CHECK(modwerk_modset_switch(id, 1)); modwerk_modset_service(); /* as once it has */
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCHED && modwerk_runtime_active() == 1 && modwerk_runtime_intact() == 1);
+    CHECK(modwerk_modset_count == 1 && modwerk_modset_off_list(off, 0, 1) == 8 && modwerk_runtime_module(0)->id == id);
+    pending = 0, modwerk_modset_result = SAVED; CHECK(modwerk_modset_switch(id, 0)); modwerk_modset_service();
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCHED && !modwerk_runtime_active() && !memcmp(original, main_image, sizeof original));
+    /* A host's removal of the module that is off (the site, for one its set no longer has): the loader takes a removal
+     * for a module that does not run, and the saved set then drops it from the shelf. Alone, and as a whole set. */
+    pending = 0, modwerk_modset_result = SAVED;
+#ifdef MODWERK_RUNTIME_SETS
+    static uint8_t box[RUNTIME_SET_HEADER + 4 + 32];
+    const struct mu_backend *b = &modwerk_runtime_set_backend;
+    uint8_t *gone = box + RUNTIME_SET_HEADER + 4;
+    memcpy(box, "MWMS", 4); box[5] = 1; box[7] = 1; put32(box + 8, sizeof box); memcpy(box + 16, modwerk_base_digest, 32);
+    CHECK(modwerk_runtime_journal_digest(box + 48)); put32(box + RUNTIME_SET_HEADER, 32);
+    const uint8_t *offer = box; uint32_t offer_bytes = sizeof box;
+    memcpy(gone, "MWRM", 4); gone[5] = 4; put32(gone + 28, id);
+    CHECK(modwerk_modset_check_set(box, sizeof box));
+#else
+    static uint8_t gone[32];
+    const struct mu_backend *b = &modwerk_runtime_backend;
+    const uint8_t *offer = gone; uint32_t offer_bytes = sizeof gone;
+    memcpy(gone, "MWRM", 4); gone[5] = 4; put32(gone + 28, id);
+#endif
+    CHECK(b->enter(0) && b->prepare(0, offer, offer_bytes) && b->publish(0) == MU_APPLIED && b->retire(0) && b->leave(0));
+    modwerk_modset_candidate(offer, offer_bytes); modwerk_modset_accepted(); /* as boot.c at prepare and after retire */
+    CHECK(!modwerk_runtime_active() && !modwerk_modset_count && modwerk_modset_off_list(off, 0, 1) == 8);
+}
 static uint8_t *read_file(const char *path, uint32_t *n)
 {
     FILE *f = fopen(path, "rb"); if (!f) exit(2);
@@ -157,6 +199,7 @@ int main(int argc, char **argv)
         memcpy(package, "MWRM", 4); package[5] = 8; put32(package + 8, 4); put32(package + 28, 0x05060708u); put32(package + 68, 1);
         put32(package + 84, 0x4000045eu); package[89] = 4; mu_sha256(expected, 4, package + 92);
         proof(package, sizeof package, expected, sizeof expected);
+        switching(package, sizeof package);
     } else return 2;
     if (failures) return 1;
     puts("Actual loader/card guard: native reconstruction, wrong-arena admission, matching-base card rejection, foreign-base rejection and exact removal passed; no card writes or module execution.");

@@ -1,0 +1,46 @@
+# Filter Hz 1.3.0: scene locks on the FX track's DELAY page show hertz, and LPF follows the
+# scene's HPF lock. SCENE mode, FUNC + BD opens scene 1's edit, BD held: HPF and LPF nudged
+# twice each from 38 and 40. Reference checked against a link image without the module: 40, 42.
+# Clears scene 1 (edit list: <CLEAR>, YES) before and after, so it leaves scene 1 empty. SCNE is
+# tapped three times: mode on, edit off, mode off (edit itself opens with FUNC + BD).
+name: filter-hz-scene-edit
+state: changes
+# FX is a toggle (pressed on the FX track it goes back to the drum track), so BD is selected first.
+hold TRK
+key BD
+release TRK
+key FX
+key SRC
+wait 3500
+cc 20 38
+cc 21 40
+key SCNE
+wait 300
+hold FUNC
+key BD
+release FUNC
+wait 500
+key LEFT x3
+key RIGHT x2
+wait 300
+key YES
+wait 500
+screen cleared
+hold BD
+nudge E +1
+nudge E +1
+nudge F +1
+nudge F +1
+wait 750
+screen scene
+expect scene == ref region 0 40 128 24
+release BD
+wait 300
+key LEFT x3
+key RIGHT x2
+wait 300
+key YES
+wait 500
+key SCNE
+wait 300
+key SCNE

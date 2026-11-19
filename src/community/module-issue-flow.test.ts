@@ -53,7 +53,7 @@ describe('module issue entry points', () => {
   })
 
   it('uses FM Synth links while retaining existing community and configuration IDs', () => {
-    expect(communityModule('synth')).toMatchObject({ id: 'synth', moduleId: 'synth', href: '#module/fm-synth', sourcePath: 'sdk/octabam/modules/synth' })
+    expect(communityModule('synth')).toMatchObject({ id: 'synth', moduleId: 'synth', href: '#module/fm-synth', sourcePath: 'sdk/octatrack/modules/synth' })
     expect(moduleIssueHref('synth')).toBe('#module/fm-synth?report=1')
     expect(moduleThreadId('synth')).toBe('module-synth')
   })

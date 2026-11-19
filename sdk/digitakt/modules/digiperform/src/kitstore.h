@@ -11,6 +11,9 @@
  *   sound + 0x00..0x03   a reserved long, copied to and from the +Drive as is
  *   sound + 0x14..0x15   parameter slot 0, saved like the other parameters; no page edits it
  *
+ * Saved and loaded is not enough for a power cycle: the unit starts from its working image in RAM, which
+ * these bytes reach only through LOAD PROJECT, so perf.c copies each change of its own into it (img_sync).
+ *
  * Measured: zero in all 1024 sound records on the +Drive (kits and the sound pool alike); written,
  * project saved, RAM scrubbed, project loaded - they come back; unchanged by the LEVEL knob, sample
  * changes and every knob of the SRC, FLTR, AMP and LFO pages; and the audio is bit-identical with
@@ -57,10 +60,11 @@ struct kstore {
     unsigned char copy[XB_N];            /* this mod's bytes as of the last tick */
 };
 
-enum { KS_SAME, KS_LOADED, KS_OTHER };
+enum { KS_SAME, KS_LOADED, KS_OTHER, KS_RESTORED };
 
 /* Once per UI frame. mask(n) gives the bits of byte n this mod owns. Returns KS_OTHER for another
- * pattern's kit, KS_LOADED when the whole kit was just loaded in place, else KS_SAME. tmask: bit t is set
+ * pattern's kit, KS_LOADED when the whole kit was just loaded in place, KS_RESTORED when this mod's bytes were
+ * just put back after single sounds were loaded, else KS_SAME. tmask: bit t is set
  * for each track whose marker slot this mod owns (the others are not looked at). */
 static int kstore_tick(struct kstore *s, unsigned char *kit, int slot, unsigned char tmask, unsigned char (*mask)(int))
 {
@@ -76,12 +80,14 @@ static int kstore_tick(struct kstore *s, unsigned char *kit, int slot, unsigned 
         r = KS_OTHER;
     else if (lost == tmask)
         r = KS_LOADED;
-    else if (lost)                                   /* single sounds loaded: this mod's bytes go back */
+    else if (lost) {                                 /* single sounds loaded: this mod's bytes go back */
+        r = KS_RESTORED;
         for (n = 0; n < XB_N; n++) {
             unsigned char m = mask(n);
             if (m && ((lost >> (n / 6)) & 1))
                 XB(kit, n) = (unsigned char)((XB(kit, n) & ~m) | (s->copy[n] & m));
         }
+    }
     for (t = 0; t < 8; t++)
         if ((lost >> t) & 1)
             KS_MARKW(kit, t, slot) = KS_MARK;

@@ -73,6 +73,8 @@ export type MirroredIssue = { id: string; module_id: string; scope?: 'module' | 
 
 export function issueTitle(issue: Pick<MirroredIssue, 'module_id' | 'scope' | 'title'>) { return ('[' + (issue.scope === 'configuration' ? 'configuration' : issue.module_id) + '] ' + issue.title).slice(0, 256) }
 const GITHUB_LOGIN = /^[A-Za-z0-9-]{1,39}$/
+/** Appended to every comment the maintenance bot posts (scripts/maintenance-bot/lib.mjs). */
+const MAINTENANCE_BOT_MARKER = '<!-- modwerk-maintenance-bot -->'
 const appLink = (app: string | undefined, hash: string) => { if (!app) return null; const url = new URL(app); url.hash = hash; return url.href }
 const cell = (text: string) => inert(text).replace(/\|/g, '\\|')
 
@@ -219,8 +221,16 @@ export async function handleGithubWebhook(request: Request, env: Env, db: Databa
   if(await db.prepare('SELECT id FROM github_webhook_deliveries WHERE id=?').bind(delivery).first())return {ok:true,handled:true}
   if (event === 'issue_comment') {
     const comment = payload.comment
-    // Bots (CI, release tooling) talk to developers, not reporters.
-    if (payload.action !== 'created' || typeof comment?.body !== 'string' || comment.user?.type === 'Bot') return { ok: true, handled: false }
+    if (payload.action !== 'created' || typeof comment?.body !== 'string') return { ok: true, handled: false }
+    // Bots (CI, release tooling) talk to developers, not reporters. The maintenance bot's replies
+    // (scripts/maintenance-bot/act.mjs) are the exception: only this repository's workflows comment as
+    // github-actions[bot], and they reach the reporter as replies from TARS.
+    if (comment.user?.type === 'Bot') {
+      if (comment.user.login !== 'github-actions[bot]' || !comment.body.includes(MAINTENANCE_BOT_MARKER)) return { ok: true, handled: false }
+      const text = comment.body.replace(MAINTENANCE_BOT_MARKER, '').trim()
+      await db.batch([publicIssueReplyStatement(db, issue.id, delivery, text, 'tars'), db.prepare('INSERT INTO github_webhook_deliveries(id,issue_id) VALUES(?,?) ON CONFLICT DO NOTHING').bind(delivery, issue.id)])
+      return { ok: true, handled: true }
+    }
     if (/^\s*\/modwerk(?:\s|$)/.test(comment.body)) {
       const result = await handleGithubCommand(env, db, config, issue.id, Number(number), payload)
       await db.prepare('INSERT INTO github_webhook_deliveries(id,issue_id) VALUES(?,?) ON CONFLICT DO NOTHING').bind(delivery, issue.id).run()

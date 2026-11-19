@@ -39,8 +39,6 @@ jobs:
     needs: scope
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    outputs:
-      elemod: ${{ needs.scope.outputs.elemod }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -66,12 +64,51 @@ jobs:
       - name: Require versions, qualification evidence and complete release documentation
         env:
           OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
-        run: npm run check -- --base "$OCTAMOD_PR_BASE"
+        run: npm run check -- --base "$OCTAMOD_PR_BASE" --part contract
       # Qualification records, complete docs/tutorials and monochrome screenshots are mandatory.
       # First release: owner reviews actual evidence. Later releases: registered author
       # verifies it and explicitly requests automatic publication within the trusted scope.
-      # npm run check runs no firmware gates, but it executes submitted manifest.py files: modules:compat, modules:pairs
+      # npm run check runs no firmware gates, but it executes submitted manifest.py files: modules:compat
       # and sdk:check load every module's manifest as Python.
+  # The two long suites of npm run check, each on a runner of its own beside module-contract: the SDK suite and Vitest in
+  # two shards. A documentation-only change runs neither, as in the whole check.
+  module-suites:
+    needs: scope
+    if: needs.scope.outputs.documentation != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [sdk, 'test:1/2', 'test:2/2']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # The same path list as module-contract's cache, so main's restores here too (the SDK suite's job order comes from it).
+      # A key of its own: module-contract must never restore a suite's cache, which holds no lint or typecheck state.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            node_modules/.cache/eslint
+            node_modules/.cache/sdk-check-times.json
+            node_modules/.tmp
+            node_modules/.vite/vitest
+          key: suite-cache-${{ runner.os }}-${{ strategy.job-index }}-${{ github.run_id }}
+          restore-keys: |
+            suite-cache-${{ runner.os }}-${{ strategy.job-index }}-
+            check-cache-${{ runner.os }}-
+      - name: Run one suite of the check
+        env:
+          OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PART: ${{ matrix.part }}
+        run: npm run check -- --base "$OCTAMOD_PR_BASE" --part "$PART"
   module-paths-windows:
     needs: scope
     if: needs.scope.outputs.windows == 'true'
@@ -109,8 +146,8 @@ jobs:
       - name: Check bounded logger ring, controller and card adapter without firmware
         run: sh sdk/runtime/logging/tests/run_host.sh
   elemod-source:
-    needs: module-contract
-    if: needs.module-contract.outputs.elemod == 'true'
+    needs: scope
+    if: needs.scope.outputs.elemod == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
@@ -203,7 +240,7 @@ jobs:
   # A job the scope skips counts as passed; a failed, cancelled or unrun job does not.
   module-pr-ok:
     if: always()
-    needs: [scope, module-contract, module-paths-windows, core-logger-host, elemod-source, octatrack-source]
+    needs: [scope, module-contract, module-suites, module-paths-windows, core-logger-host, elemod-source, octatrack-source]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     permissions: {}

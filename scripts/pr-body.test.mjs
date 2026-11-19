@@ -27,6 +27,27 @@ it('accepts a description in the template\'s own shape and in free form', () => 
   expect(bodyProblems(free + '**Guides:** nothing', template)).toEqual([])
   // A bold question followed only by the next bold question is unanswered.
   expect(bodyProblems(free + '**What the guides lacked**\n\n**Related issues**', template)).toEqual([expect.stringMatching(/^Say what the guides lacked/)])
+  // The question with its answer as a list below it, as #1552 wrote it; with the next question below it, unanswered.
+  expect(bodyProblems(free + '- **What the guides lacked or got wrong, and where I fixed it:**\n  - `docs/ADD_A_MODULE.md` did not say it. Added.', template)).toEqual([])
+  expect(bodyProblems(free + '- **What the guides lacked or got wrong, and where I fixed it:**\n- **Related issues:**\n  - none', template)).toEqual([expect.stringMatching(/^Say what the guides lacked/)])
   // A link to a guide is not an answer.
   expect(bodyProblems('Follows docs/module-guides/effects.md for the new reverb; checked with pr:ready and on an MKII.', template)).toEqual([expect.stringMatching(/^Say what the guides lacked/)])
+})
+
+it('asks a ready pull request that changes what runs on an instrument to name the build that ran on a unit', () => {
+  const described = 'Octatrack base 0.7.8: a module that no track uses rests out of the per-frame hooks; checked with pr:ready.\n\nGuides: HOOKS.md.'
+  const base = ['src/engine/assets/octatrack-base.elemod', 'sdk/runtime/loader/loader.c']
+  const untested = expect.stringMatching(/^This pull request changes what runs on an instrument \(src\/engine\/assets\/octatrack-base\.elemod\)/)
+  // A draft may still be in test; a ready one says what ran, on which build.
+  expect(bodyProblems(described, template, { draft: true, files: base })).toEqual([])
+  expect(bodyProblems(described, template, { files: base })).toEqual([untested])
+  expect(bodyProblems(described + '\n\nTested on a unit: base 8d1db124, MKII, a full set and a power cycle.', template, { files: base })).toEqual([])
+  expect(bodyProblems(described + '\n\n- **Tested on a unit:** `8d1db124797e`, MKII', template, { files: base })).toEqual([])
+  // It must name the build: a hash of 8 hex digits or more.
+  expect(bodyProblems(described + '\n\nTested on a unit: yes, on my MKII.', template, { files: base })).toEqual([untested])
+  expect(bodyProblems(described + '\n\nNot tested on a unit: no unit at hand; the owner decides.', template, { files: base })).toEqual([])
+  expect(bodyProblems(described + '\n\nNot tested on a unit:', template, { files: base })).toEqual([untested])
+  // A package counts too; sources, docs and the site do not.
+  expect(bodyProblems(described, template, { files: ['public/octatrack-modules/repitch/0.2.1-experimental.mwrm'] })).toHaveLength(1)
+  expect(bodyProblems(described, template, { files: ['sdk/octatrack/modules/repitch/repitch.s', 'docs/MODULE_PERFORMANCE.md', 'src/App.tsx'] })).toEqual([])
 })

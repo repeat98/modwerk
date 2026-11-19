@@ -5,7 +5,8 @@ import { packSection } from '../aplib'
 import { ELE3_DEVICES } from '../elektron/ele3'
 import { LINK_DEVICES, type ParsedMod } from '../elektron/elemod'
 import { contentChecksum, encodeSyx } from '../elektron/sysex'
-import { PreflightError, appendLimit, parseBuildMods, preflightBuild } from './digi-preflight'
+import { PreflightError, appendLimit, parseBuildMods, preflightBuild, rawCardWrite } from './digi-preflight'
+import { BUILDER_CATALOG } from './machine-build'
 
 // A synthetic Digitakt II container: invented sections, a main OS of NOPs and a 32-byte tail where a sealed file keeps
 // its trailer. No Elektron firmware is involved.
@@ -88,6 +89,31 @@ describe('Digitakt II build preflight', () => {
     const rytm = mod({ device: LINK_DEVICES.find(device => device.machine === 'analog-rytm-mkii')! })
     expect(await problems(preflightBuild('digitakt-ii', stock, syx(main([[0x40000500, JMP]])), [rytm]))).toContain('core 1.1 is not for this machine')
     expect(await problems(preflightBuild('digitakt-ii', stock, stock, []))).toEqual(['no mod files to check the build against'])
+  })
+
+  it('refuses a mod that reaches the raw card write by the core\'s name or by its address, and passes the core that only defines it', async () => {
+    const built = syx(main([[0x40000500, JMP]], 96)), WRITE = 0x4012e39c, call = [0x4e, 0xb9, 0, 0, 0, 0, 0x4e, 0x75]
+    const run = (bytes: number[]) => ({ '.run': { align: 2, parts: [{ kind: 'hex' as const, bytes: Uint8Array.from(bytes) }], length: bytes.length } })
+    const reloc = (target: string, addend = 0) => [{ section: '.run' as const, offset: 2, type: 'abs32' as const, target, addend }]
+    const saver = (extra: Partial<ParsedMod>) => mod({ id: 'saver', version: '0.1', sites: [], sections: run(call), ...extra })
+    const abs = (values: Record<string, number>): ParsedMod['symbols'] => new Map(Object.entries(values).map(([name, value]) => [name, ['abs', value]]))
+    const core = mod({ symbols: abs({ fw_card_write: WRITE, fw_card_read: 0x4012e1b6 }), exports: ['fw_card_write', 'fw_card_read'] })
+    const refusal = (how: string) => ['saver 0.1 ' + how + ', the raw block write to the +Drive, which no mod may use: keep a mod\'s data in the project and its kits (core_projdata, core_kitdata)']
+    const refused = (extra: Partial<ParsedMod>) => problems(preflightBuild('digitakt-ii', stock, built, [core, saver(extra)]))
+    expect(await refused({ imports: ['fw_card_write'], relocs: reloc('sym:fw_card_write') })).toEqual(refusal('refers to fw_card_write'))
+    expect(await refused({ symbols: abs({ SAVE: WRITE }), relocs: reloc('sym:SAVE') })).toEqual(refusal('names 0x4012e39c'))
+    expect(await refused({ relocs: reloc('abs', WRITE) })).toEqual(refusal('names 0x4012e39c'))
+    expect(await refused({ sections: run([0x4e, 0xb9, 0x40, 0x12, 0xe3, 0x9c, 0x4e, 0x75]) })).toEqual(refusal('names 0x4012e39c'))
+    expect(await refused({ sites: [{ ...site(0x40000600, 6), bytes: Uint8Array.from([0x4e, 0xf9, 0x40, 0x12, 0xe3, 0x9c]) }] })).toEqual(refusal('names 0x4012e39c'))
+    expect(await refused({ imports: ['fw_card_read'], relocs: reloc('sym:fw_card_read') })).toEqual([])
+    expect(rawCardWrite(saver({ device: LINK_DEVICES.find(device => device.machine === 'digitakt')!, sections: run([0x40, 0x12, 0xe3, 0x9c]) }))).toBeNull()
+  })
+
+  it('finds no Digitakt II package in the builder catalogue that reaches the raw card write', () => {
+    const files = [...BUILDER_CATALOG.cores, ...BUILDER_CATALOG.mods].filter(pin => pin.device === DT2.key).map(pin => pin.file)
+    const mods = parseBuildMods(files.map(name => ({ name, bytes: readFileSync(new URL('../../../vendor/elekloader/catalog/' + name, import.meta.url)) })))
+    expect(mods.length).toBeGreaterThan(1)
+    expect(mods.filter(rawCardWrite).map(found => found.id + ' ' + found.version)).toEqual([])
   })
 
   it('counts the mod-storage lockfile at the end of the build as appended by the mods', () => {

@@ -13,7 +13,7 @@ A module's category is the `category` field of its manifest (`octamod.module.jso
 | `effects` | [effects.md](effects.md) | processes the audio its FX1 or FX2 slot receives, on the DSP | Mini Verb, Tape Echo, Euclid, Sidechain Compressor |
 | `machines` | [machines.md](machines.md) | makes or replaces a track's sound (a track machine, in `ot_machines`), or changes the sequencer project-wide | Analog BD, POLY8, Scale Quantizer |
 | `playback` | [playback.md](playback.md) | changes how a stock machine plays its sample: pitch, rate, timestretch, preview | Repitch, Preview Vol |
-| `scenes` | [scenes.md](scenes.md) | changes scenes, the crossfader or per-track state recall | MIDI Scenes |
+| `scenes` | [scenes.md](scenes.md) | changes scenes, the crossfader or per-track state recall | Apply Scene |
 | `midi-usb` | [midi-usb.md](midi-usb.md) | makes, changes or maps MIDI (generators in `ot_midi_generators`, MIDI effects), or USB | CC Map, USB Audio |
 | `system` | [system.md](system.md) | changes project and system menus and settings | Mute Modes, Output Matrix |
 | `standalone` | [standalone.md](standalone.md) | replaces the whole OS | none yet |
@@ -26,21 +26,21 @@ A module's category is the `category` field of its manifest (`octamod.module.jso
 3. Walk the guide's checklists: **Behave like the instrument** and **Integrate**, and for an effect **Sound quality** (aliasing, clipping, DC, idle behaviour). Tick an item only when you did it.
 4. Measure the [performance](#performance) and write `evidence/performance.json`: worst-case cycles, a benchmark against stock and a stress run. `npm run perf:audit -- check <that file>` must pass.
 5. Run `npm run module:doctor -- <id>` until every line is green. It reads the repository and the agent board (no firmware runs) and names the fix for each red line: octabam's DSP source gates, a missing performance record, an effect rendering on the ColdFire, someone else's claim.
-6. Run `npm run check`, and `npm run module:verify -- <id> --os <your 1.40C update>` for an Octatrack module.
+6. Run `npm run check`.
 7. If you learned something the next developer needs and no guide says, write it into the guide that fits, as its own docs-only pull request ([Share what you learn](../DEVELOPER_WORKFLOW.md#share-what-you-learn)).
 
 ## Rules for every module
 
-**Integrate with what exists.** A module is built by the shared builder beside other modules, listed from `sdk/catalog.json`, compared with native octabam and released by the same pipeline as every other. Do not write module-specific builder, library or CI code. If your module has a shape no earlier module had, change the shared code once (`src/engine/`, `sdk/octabam/tools/build/build_bus.py`) and let `module:verify` prove it.
+**Integrate with what exists.** A module is built by the shared builder beside other modules, listed from `sdk/catalog.json`, packaged for the Modwerk base and released by the same pipeline as every other. Do not write module-specific builder, library or CI code. If your module has a shape no earlier module had, the shared code changes once, in its own owner-reviewed pull request.
 
-- *Build beside others.* `npm run module:verify` builds your module alone, beside every other offered module, in the fullest selections and in a fixed sample, with and without the stock FX2 effects. A refusal is fine when it is the right one; it must match native octabam's.
+- *Install beside others.* `npm run modules:compat` checks your module's declarations against every other module and the base, and the unit admits each package when a set is synced.
 - *Declare conflicts; never hope.* Put what you cannot share in `compatibility.conflicts` and in the resource claims (FX2 ids, caves, hook sites, DSP data ranges). The ledger refuses collisions by name. A declared conflict never makes an overlap with another module acceptable: the [cross-compatibility gate](#cross-compatibility) refuses it anyway. Analog BD admits only its reviewed DSP companions (`analogBdCompanions`), subject to actual placement; an effect that builds beside the stock FX2 effects is named in `FITS_BESIDE_STOCK_FX2` (`src/catalog/selection-conflicts.ts`). The library reads the same conflicts to flag a module on its card, and offer a swap, before anyone adds it (`src/catalog/add-blocks.ts`), so a declared conflict needs no extra interface work.
 - *Appear everywhere from the manifest.* The `sdk/catalog.json` entry (`id`, `version`, `addedAt`) puts the module in the library, the configurator and its module page. Add `presentation/thumbnail.svg` (320×192) or hand-drawn art in `ModulePreview.tsx`, and `resources.impact`.
 - *Survive saved work.* Saved configurations pin module versions, and saved Octatrack projects store knob bytes. A new version must load what an old one saved, or the README says exactly what breaks and how to migrate.
 - *Use the same documentation contract.* README sections, a tutorial of at least three steps, TESTING.md, real black-and-white screenshots. See [MODULE_QUALIFICATION.md](../MODULE_QUALIFICATION.md).
 - *Ship by the same CI.* Every PR gets the quick check. Only code changes get the Docker compile, the Windows check and a version bump; documentation and media edits need none.
 
-**Octatrack USB is part of the module.** Follow [the base and USB lifecycle requirements](../ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle): plan and prove common companion ownership on both cores, browser/runtime packages and their stock-free scans, install/self-test/Keep/Undo, removal/missing fallbacks and persistence. Native builds and isolated packages alone do not finish integration. A beta-set selection must have a working USB path; unavoidable limits need explicit owner review. Pending loader/ABI adapters remain staging and keep their real hardware qualification gaps.
+**Octatrack USB is part of the module.** Follow [the base and USB lifecycle requirements](../ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle): plan and prove common companion ownership on both cores, browser/runtime packages, install/self-test/Keep/Undo, removal/missing fallbacks and persistence. Native builds and isolated packages alone do not finish integration. A beta-set selection must have a working USB path; unavoidable limits need explicit owner review. Pending loader/ABI adapters remain staging and keep their real hardware qualification gaps.
 
 **Sequence with what exists.** A module that acts in time uses the instrument's own transport, tempo, track speed, track scale and length, and swing, as Euclid does. It never keeps a second clock. See [sequencing.md](sequencing.md).
 
@@ -90,7 +90,7 @@ The only exceptions are the reviewed entries in `sdk/machines/octatrack/compatib
 
 An entry fails once a named module is no longer active or nothing meets at a listed site, so the file stays exact. A new entry needs owner review, and is the last resort: propose a hook instead. The base's own exceptions are `BASE_OWNS` in `sdk/machines/octatrack/elekloader/build_core.py`.
 
-The gate does not prove runtime behaviour, DSP placement, cycles or hardware compatibility. `module:verify` and the qualification steps still cover those.
+The gate does not prove runtime behaviour, DSP placement, cycles or hardware compatibility. The qualification steps on a unit cover those.
 
 ### Choose how a module hooks in
 
@@ -98,13 +98,13 @@ A module reaches the musician and the instrument through an entry point: a key g
 
 1. **Look at what exists first.** List what the base or core already offers on this machine: its hooks ([HOOKS.md](../../sdk/machines/octatrack/HOOKS.md) on the Octatrack, the core hooks in the machine's SDK guide elsewhere), newer upstream core releases not yet pinned, and how the modules already there place their pages and controls. Use what fits.
 2. **Decide it with the developer.** Before you build, set out where a musician would look for the controls, how they get there with stock gestures, and what happens when a second and a third module want the same key, page or site. Bring the options with their trade-offs and let the developer choose, and the owner for a new machine. A gesture only one module can hold, such as a second press on a stock page key, leaves no room for the next one. On a machine just being unlocked the first modules set the pattern every later one copies.
-3. **Add a base or core hook only when many modules will use it.** A hook is code every unit carries, an ABI that is never renumbered, and an owner-reviewed base or upstream core release. It pays off for an entry point or site many modules will share, such as a list of pages behind a stock key. When only your module needs a site, patch it in the module and declare it (`compatibility.uiClaims` on the Octatrack, `platform.claims` on the elemod machines); the module that needs it second proposes a shared hook ([Octatrack](#propose-a-hook), [elemod](#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)).
+3. **Add a base or core hook only when many modules will use it.** A hook is code every unit carries, an ABI that is never renumbered, and an owner-reviewed base release. It pays off for an entry point or site many modules will share, such as a list of pages behind a stock key. When only your module needs a site, patch it in the module and declare it (`compatibility.uiClaims` on the Octatrack, `platform.claims` on the elemod machines); the module that needs it second proposes a shared hook ([Octatrack](#propose-a-hook), [elemod](#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)).
 
 ### UI claims
 
 Build your module to work with everything else: that is the default. Two modules must not take the same key gesture or the same stock screen, because the musician would get whichever one runs first. Declare what yours takes in `compatibility.uiClaims` in `octamod.module.json`, and the gate compares it with every active module:
 
-- `key:HELD+PRESSED`: the keys held, in any order, then the key pressed or the encoder turned, for example `key:UP+TEMPO` or `key:CUE+LEVEL`. Add `@PAGE` when it only works on one page (`key:FUNC+LEFT@CHROMATIC`); without it, the gesture counts on every page. `TRACK` and `TRIG` stand for any track or trig key, `A`-`F` and `LEVEL` for turning an encoder. The contract lists every name.
+- `key:HELD+PRESSED`: the keys held, in any order, then the key pressed or the encoder turned, for example `key:UP+TEMPO` or `key:CUE+LEVEL`. Add `@PAGE` when it only works on one page (`key:FUNC+LEFT@CHROMATIC`); without it, the gesture counts on every page. `TRACK` and `TRIG` stand for any track or trig key, `A`-`F` and `LEVEL` for turning an encoder, `PUSHA`-`PUSHF` for pressing one (`key:TRIG+PUSHD`: a trig held, knob D pressed). The contract lists every name.
 - `screen:NAME`: a stock window or page your module draws over or replaces, for example `screen:TEMPO`.
 - `[]` when it takes neither. What it adds through the base's FX list, machine list or menu rows is not a claim: the base shares those.
 
@@ -145,7 +145,7 @@ Machine modules whose native source predates these hooks declare the same subscr
 
 Propose a hook, or a table, when the gate says two module hooks meet, when you need a site that another module or the base already patches, or when many modules will need it. A site only your module uses needs no shared hook ([choose how a module hooks in](#choose-how-a-module-hooks-in)):
 
-1. Open a pull request that adds one entry at the end of `sdk/machines/octatrack/events.json`, then regenerate its outputs with `python3 -B sdk/machines/octatrack/events.py --write`. A hook needs its name (`ev_` and what happens), its kind, its stock site (address, length in whole instructions and a SHA-256 guard), or none for a raised hook, when it runs, its C prototype and its order rule. A table needs an `ot_` name, its record size and C declaration, its room and the sites its reader owns. Addresses, lengths and hashes only: no stock bytes. A [take hook](../../sdk/machines/octatrack/elekloader/README.md#take-hooks) needs a stock tail, not a prototype. CI has no firmware: rebuild the base with your OS. `pr:ready` claims its index on the [agent board](../AGENT_BOARD.md).
+1. Open a pull request that adds one entry at the end of `sdk/machines/octatrack/events.json`, then regenerate its outputs with `python3 -B sdk/machines/octatrack/events.py --write`. A hook needs its name (`ev_` and what happens), its kind, its stock site (address, length in whole instructions and a SHA-256 guard), or none for a raised hook, when it runs, its C prototype and its order rule. A table needs an `ot_` name, its record size and C declaration, its room and the sites its reader owns. Addresses, lengths and hashes only: no stock bytes. A [take hook](../../sdk/machines/octatrack/elekloader/README.md#take-hooks) needs a stock tail, not a prototype. CI has no firmware: rebuild the base with your OS. `pr:ready` claims its index on the [agent board](../AGENT_BOARD.md). A new hook needs a user that subscribes, raises or contributes (a module, draft, adapter or test), or a line in `sdk/machines/octatrack/unused-hooks.json` saying why it waits; `sdk/tests/test_hook_coverage.py` fails otherwise, and on a line whose hook has found its user.
 2. Say which modules patch that site today. Until they subscribe, list each such pair in `compatibility.json` as `pending-migration`, with the hook and `until`.
 3. The owner reviews the entry. Every later module subscribes or contributes instead of patching.
 
@@ -155,7 +155,7 @@ On the elemod machines (also the Rytm and the Analog Four) the core owns the sha
 
 1. Write the proposal as one pull request, before the module. For each hook: its name (`ev_` and what happens), the stock site (OS release, address, length in whole instructions and a SHA-256 guard; addresses, lengths and hashes only, no stock bytes), when it runs and in which context (UI tick, key, sequencer, render), its C prototype, what a nonzero result means and its order rule. For shared state: a named table with its record size, room and reader. Hook indices are an ABI: a released one is never renumbered; `pr:ready` claims new ones on the [agent board](../AGENT_BOARD.md).
 2. Say which mods patch that site or hold that state privately today, and what each would subscribe to instead. On the Digitakt mk1 the SRC machines share the SRC page, render and LFO destination sites, so a proposal there covers them together.
-3. The owner reviews it. On the Digitakt and Digitone (Modwerk's own cores), the Rytm and the Digitakt II the hook goes into Modwerk's core or base in this repository; Modwerk does not wait for an upstream core release (owner, 28 October 2026; [recipe](../MACHINE_RECIPE.md)). Where Modwerk has no base, such as the Digitone II or the Analog Four MKII, a core hook belongs to elekloader's core: propose it there ([contributing](../../CONTRIBUTING.md#elekloader-mods-and-cores)). The module pull request follows, subscribing in `build.json`, and it builds and runs on its own: a mod that shares another mod's state or code is refused ([no module depends on another](#cross-compatibility)).
+3. The owner reviews it. The hook goes into the machine's Modwerk core or base in this repository, started from the pinned core's source while the base does not exist yet; Modwerk does not wait for an upstream core release (owner, 28 October and 18 November 2026; [recipe](../MACHINE_RECIPE.md)). The module pull request follows, subscribing in `build.json`, and it builds and runs on its own: a mod that shares another mod's state or code is refused ([no module depends on another](#cross-compatibility)).
 
 ### Flag every incompatibility
 
@@ -163,10 +163,10 @@ Build your module to work beside everything else. Machine lists, effect lists an
 
 Collisions are caught automatically, so nothing ships incompatible without its author deciding:
 
-- **Card builds.** `npm run modules:pairs` runs octabam's ledger on every catalogue module alone and beside every other, in each context POLY8's shared machine list creates, and writes `src/catalog/compatibility-pairs.json`. A pair the ledger refuses that neither module flags fails the check. It also refuses an effect whose declared FX2 buffer reaches a range another module declares in that slot (Sidechain Compressor's key window); over USB the base refuses that buffer per block at run time, so only card builds need that flag. The configurator refuses every refused or flagged pair by itself, so no rule is written by hand. The table grows with the square of the number of modules, and the same check proves with the full ledger that pairs decide every larger selection.
 - **USB sets.** `npm run modules:compat` still refuses every byte collision, flagged or not: beta sets install whatever is chosen, so subscribe to a hook or [propose one](#propose-a-hook).
 - **Digitakt and Digitone.** `npm run modules:check` refuses two mods that patch overlapping bytes on a release both support unless one names the other in `compatibility.conflicts`. The website already refused those pairs; the flag makes the author's decision explicit.
 - **Who flags.** The module whose change makes the pair collide flags it in its own manifest: the newer module, or the one being updated, and it fixes the collision instead when that is no big refactor. Nobody edits another author's module to add a flag. A flag names an existing module id of the same machine; the check refuses any other. Changing only `compatibility.conflicts` needs no new module version, but still runs every check and needs a marked note in the module's changelog.
+- **Folding one module into another.** The absorbing module flags the absorbed one while both are listed, since they patch the same sites. On the elemod machines that flag is built into its package, so retiring the absorbed module later needs a new version only to drop it: retire it in the same pull request as the fold (Improved SMPL 0.6.0 and 0.6.1, #1649 and #1650).
 - **What no gate sees.** A flag can also name a limit the ledger cannot see, such as DSP placement or behaviour. Say why in the README's Compatibility section. `npm run module:doctor -- <id>` lists the collisions the ledger finds, so a flag that no longer applies can go at the next version.
 
 ### Shared sites still to build
@@ -178,6 +178,7 @@ The more of these the base owns, the more modules combine. Each is a hook to [pr
 | Track machine list (SRC SETUP) | Base table `ot_machines`; on the card, POLY8's shared machine list |
 | Effect lists (FX1, FX2) | USB: the base has 128 effect ids, 109 of them for modules, and gives each installed effect module its own ([wider ids](../OCTATRACK_MORE_EFFECT_IDS.md)); card: stock's 32, 13 of them for modules, pinned |
 | SEQUENCER rows | Base table `ot_sequencer_rows` |
+| Part Edit window (FUNC+PART) rows | Base table `ot_part_menu`: a parent row and its actions, in two columns |
 | MIDI generators on a MIDI track (MIDI NOTE SETUP's list, the ARP page) | Base table `ot_midi_generators`; on the card, VECTOR's own registry ([midi-usb.md](midi-usb.md#midi-generators-and-midi-effects)) |
 | MIDI effects on a MIDI track's notes | Pitch: take hook `ev_midi_note_key`. Velocity, timing, added notes: not built |
 | Stock DSP effects a module hooks (Sidechain Compressor, Output Matrix) | Not built: DSP-side taps, one owner per stock site |
@@ -202,8 +203,10 @@ Each problem is one line naming the modules, the byte ranges and what each one p
 
 ## Performance
 
-A module that is slow, or that only works when it is the only thing running, takes the room of every other module and of the stock instrument. So every new module carries `evidence/performance.json`: worst-case cycles, a benchmark against the closest stock effect and a stress run, which `npm run perf:audit` judges and `module:doctor` requires. A new FX aims for the cost of stock SPRING REV at its worst settings. Read [MODULE_PERFORMANCE.md](../MODULE_PERFORMANCE.md) before you measure.
+A module that is slow, or that only works when it is the only thing running, takes the room of every other module and of the stock instrument. So every new module carries `evidence/performance.json`: worst-case cycles, a benchmark against the closest stock effect and a stress run, which `npm run perf:audit` judges and `module:doctor` requires. A new FX aims for the cost of stock SPRING REV at its worst settings. Every Octatrack module also names its CPU price (`resources.cpuPrice`), measured on a unit; a machine's is its descriptor's `reserved[0]` too, and `modules:check` refuses a module without one. Read [MODULE_PERFORMANCE.md](../MODULE_PERFORMANCE.md) before you measure.
 
 ## Digitakt and Digitone
 
 Mods there are linked by one core per machine and built by elekloader's builder in the browser, so there is no native octabam comparison. Start from [the Digitakt guide](../../sdk/machines/digitakt/README.md) for the core hooks, budgets and claims, and test a two-mod build, since combinations are the point.
+
+On these machines, the Digitakt II and the Analog Rytm MKII, `npm run elekloader:check` refuses a package whose `jsr` or `jmp` to an absolute address has an odd target: the real CPU stops there with an address error, while the emulators run on. Keep every routine on an even address (`.balign 2` after byte data) and check a stock address you typed; the message names the package, the offset and the target.

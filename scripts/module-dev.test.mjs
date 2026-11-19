@@ -20,8 +20,8 @@ describe('module:dev', () => {
     const missing = dev('no-such-module', '--build-only')
     expect(missing.status).toBe(2)
     expect(missing.stderr).toContain('npm run module:new')
-    // midi-scenes is listed, and its next version is a draft: staging the draft would hide the listed folder.
-    const both = dev('midi-scenes', '--build-only')
+    // recorder-loop-fix is listed, and its next version is a draft: staging the draft would hide the listed folder.
+    const both = dev('recorder-loop-fix', '--build-only')
     expect(both.status).toBe(2)
     expect(both.stderr).toContain('--listed')
   })
@@ -39,7 +39,7 @@ describe('module:dev', () => {
   // A draft has no committed page recipe, so module-dev-package.py derives one from its manifest. Derived for listed effects, it must
   // equal their committed recipes, and its packing must equal build.py's.
   it.skipIf(!tools)('derives and packs an effect page exactly as the catalogue build and build.py do', () => {
-    for (const id of ['airwindows-chorus', 'miniverb', 'spectrum', 'everb', 'lofi2']) {
+    for (const id of ['airwindows-chorus', 'miniverb', 'everb', 'lofi2']) {
       const result = spawnSync(python, ['-B', 'scripts/module-dev-package.py', id, '-o', '/dev/null', '--check-page', id], { cwd: root, encoding: 'utf8' })
       expect(result.stdout.trim().split('\n').at(-1), id + ': ' + result.stderr).toBe('packing identical recipe identical')
     }

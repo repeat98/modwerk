@@ -1,0 +1,1 @@
+Your Octatrack on a phone: a tidier page. The module set picker now carries the set's menu, New, Import and Starting points sit in one row of links, module tiles stay two to a row with Remove beside the name, and Report a problem and the export to a computer take less room.

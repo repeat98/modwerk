@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Digitakt II OS 1.17 base candidate. The Modwerk sources add audio sequencer pitch, grid and phrase collections and active project generation to the unchanged core-dt2 1.1 bus.",
+  "about": "Modwerk's Digitakt II OS 1.17 base candidate. Modwerk adds audio sequencer pitch, grid and phrase collections, active project generation and the firmware bindings used by those hooks and module pages to the core-dt2 sources from Elekloader PR #221. Its copy of core-dt2's mod.json (copies) differs in one value: KIT_ROOM is 146, so core's kit data ends at 0x57d0 of each 0x5800-byte kit record, where the base's project archive takes the last 48 bytes.",
   "core": "core-dt2",
   "include": "sdk/machines/digitakt-ii/include",
   "os": "1.17",
@@ -14,6 +14,13 @@
     "sha256": "95303655a9358f581b485acb68b884b394a577f5d0b373f0a3e5957c8d0ca72c",
     "keeps": ["id", "sites", "exports", "imports", "weak", "contribute", "collections", "requires", "conflicts"]
   },
+  "copies": [
+    {
+      "path": "core-dt2/mod.json",
+      "from": "core-dt2/mod.json",
+      "sha256": "c5de5851c1e01343f5287a27c3d2707e3b811b3003e5e6040d5ee7a69b01d9b1"
+    }
+  ],
   "add": {
     "sources": [
       "../modwerk/seq-note-entry.s",
@@ -23,9 +30,57 @@
       "../modwerk/seq-phrase.c",
       "../modwerk/seq-phrase-entry.s",
       "../modwerk/project-generation.s",
-      "../modwerk/project-kitdata.c"
+      "../modwerk/startup-kitdata.s",
+      "../modwerk/startup-kitdata-refresh.c",
+      "../modwerk/project-archive.c",
+      "../modwerk/project-kitdata.c",
+      "../modwerk/fw-bindings.s"
     ],
+    "defsym": {
+      "FW_FILLRECT": "0x401131ae",
+      "FW_TEXTF": "0x40113dc8",
+      "FW_FONT": "0x44d2e70c",
+      "FW_FONT_NARROW": "0x44d2e6f4",
+      "FW_KEY_DOWN": "0x4011e150",
+      "FW_ENC_INIT": "0x40111b68",
+      "FW_ENC_LIST": "0x40111e42",
+      "FW_PATTERN_UI": "0x44f370a0",
+      "FW_TRACK_AT": "0x4004abb8",
+      "FW_SELECT_TRACK": "0x40077308",
+      "FW_ENC_PARAM": "0x44d2e654",
+      "FW_UI_STATES": "0x401998c0",
+      "FW_BRAIN": "0x40198c24",
+      "FW_VT_MAIN": "0x40216f14",
+      "FW_VT_FUNC": "0x401f9208",
+      "FW_PATTERNS": "0x41776cb8",
+      "FW_PATTERN_SIZE": "0x1db8c",
+      "FW_STARTUP_PROJECT_FILE": "0x4099d698",
+      "FW_ACTIVE_PROJECT": "0x41776c9c",
+      "FW_STARTUP_KITS_OFFSET": "0xae0200",
+      "FW_STARTUP_KIT_STRIDE": "0x5800"
+    },
     "sites": [
+      {
+        "addr": "0x40041b52",
+        "len": 6,
+        "stockSha256": "68e887a69b3099a79e0defe6aa56f93a434d5d01ab0f05f1074caea323945d12",
+        "op": "jsr",
+        "target": "core_startup_serialize"
+      },
+      {
+        "addr": "0x400df938",
+        "len": 6,
+        "stockSha256": "1a4f590b6150643d45e52f347f5e32771feeeb47a764c2337fc4d6faefdfeb8f",
+        "op": "jsr",
+        "target": "core_project_archive_save_entry"
+      },
+      {
+        "addr": "0x400d633a",
+        "len": 6,
+        "stockSha256": "63d46be24be33e65936ad35cb9ac775aeb3ee91df521112af7c09eba3abd278c",
+        "op": "jsr",
+        "target": "core_seq_phrase_start"
+      },
       {
         "addr": "0x400d82f8",
         "len": 6,
@@ -65,7 +120,8 @@
     "collections": {
       "ev_seq_note": 4,
       "ev_seq_grid": 4,
-      "ev_seq_audio_phrase": 4
+      "ev_seq_audio_phrase": 4,
+      "core_project_archive": 4
     }
   }
 }

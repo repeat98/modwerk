@@ -3,8 +3,9 @@
 // stock-write checker rather than the builder that made it. It re-reads the owner's stock file and the build and refuses
 // unless every section but the main OS is byte for byte stock, the container fits the flash, and every changed byte of
 // the main OS lies inside a site that one of the build's own mod files declares and guards, with only the mods' code
-// and data appended. It reads the two files and the mod files; nothing runs and nothing is sent anywhere. The builder's
-// own verification (framing, checksums, the seal, the in-place depack) still runs first; this adds what it does not.
+// and data appended, and no mod file refers to the raw block write to the +Drive. It reads the two files and the mod
+// files; nothing runs and nothing is sent anywhere. The builder's own verification (framing, checksums, the seal, the
+// in-place depack) still runs first; this adds what it does not.
 import { ELE3_DEVICES, mainImage, readEle3Syx, type Ele3Device, type ElemodMachine } from '../elektron/ele3.ts'
 import { LINK_DEVICES, parseElemod, type ParsedMod } from '../elektron/elemod.ts'
 import { sha256Hex } from '../elektron/hash.ts'
@@ -43,6 +44,27 @@ const sectionSize = (section: ParsedMod['sections'][keyof ParsedMod['sections']]
 /** The mods' declared sites in the stock-write checker's form, each named for its mod. */
 export function declaredSites(mods: readonly ParsedMod[]): DeclaredSite[] {
   return mods.flatMap(mod => mod.sites.map(site => ({ addr: site.addr, length: site.length, kind: site.kind, stockSha256: site.stockSha256, owner: mod.id + ' ' + mod.version })))
+}
+
+/** The +Drive's raw block write (Digitakt II OS 1.17), which the base's source exports to mods as fw_card_write. It writes
+ * under the mounted file system, so one wrong block costs a musician projects and samples: no mod of a build may refer to it. */
+export const RAW_CARD_WRITE: Partial<Record<ElemodMachine, { symbol: string; address: number }>> = { 'digitakt-ii': { symbol: 'fw_card_write', address: 0x4012e39c } }
+
+/** How `mod` reaches its machine's raw card write, or null: by the name the core exports, by a relocation that resolves to
+ * its address, or by the address among the mod's own bytes. Defining the name, as the core does, is not a reference. */
+export function rawCardWrite(mod: ParsedMod): string | null {
+  const routine = RAW_CARD_WRITE[mod.device.machine]
+  if (!routine) return null
+  const { symbol, address } = routine
+  const relocs = [...mod.relocs, ...mod.sites.flatMap(site => site.relocs), ...mod.contribute.flatMap(entry => entry.relocs)]
+  if (!mod.symbols.has(symbol) && (mod.imports.includes(symbol) || relocs.some(reloc => reloc.target === 'sym:' + symbol))) return 'refers to ' + symbol
+  const resolved = relocs.some(reloc => {
+    const at = reloc.target === 'abs' ? 0 : reloc.target.startsWith('sym:') && mod.symbols.get(reloc.target.slice(4))?.[0] === 'abs' ? mod.symbols.get(reloc.target.slice(4))![1] : null
+    return at !== null && ((at + reloc.addend) >>> 0) === address
+  })
+  const own = [...Object.values(mod.sections).flatMap(section => 'parts' in section ? section.parts.flatMap(part => part.kind === 'hex' ? [part.bytes] : []) : []), ...mod.sites.map(site => site.bytes), ...mod.contribute.map(entry => entry.data)]
+  const named = own.some(bytes => bytes.some((_, i) => i + 4 <= bytes.length && ((bytes[i] << 24 | bytes[i + 1] << 16 | bytes[i + 2] << 8 | bytes[i + 3]) >>> 0) === address))
+  return resolved || named ? 'names ' + hex32(address) : null
 }
 
 /** Bytes after the stock main OS the linked mods may account for: the core's boot code (16-aligned), the RAM image of
@@ -102,6 +124,8 @@ export async function preflightBuild(machine: ElemodMachine, stockSyx: Uint8Arra
   for (const mod of mods) {
     if (mod.device.machine !== machine) problems.push(mod.id + ' ' + mod.version + ' is not for this machine')
     if (mod.format !== 2) problems.push(mod.id + ' ' + mod.version + ' is a whole build, which the preflight does not check')
+    const reach = rawCardWrite(mod)
+    if (reach) problems.push(mod.id + ' ' + mod.version + ' ' + reach + ', the raw block write to the +Drive, which no mod may use: keep a mod\'s data in the project and its kits (core_projdata, core_kitdata)')
   }
   const stockMain = mainImage(stock, device), builtMain = mainImage(built, device)
   const sites = declaredSites(mods)

@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators; sources: every file under src/",
+  "sha256": "63172f54d98bfe0083bca644df2f6d6029d1352b52359342922d2ed9dc790f8f",
+  "sources": {
+    "src/digitakt-mk1/stock_knob.h": "4603423988cda7fa13e9344dda1b9bb606d65bf3e31d4978661a4e8ba8ae5171",
+    "src/xfade.c": "81246a9137f69e906f3d540d316130d85729b2f7e76088ce13260bd0a82cdf94",
+    "src/xfade_glue.s": "9e25e8603b719a2ebbce96b298956275452532fa369b6b96e8ab0e4f66c52b9c",
+    "src/xfade_store.c": "0ab7d8f4446d74234f37ed8151f668aef7fd7ad0f7af5a8890f470909bc364e3"
+  },
+  "build": {
+    "schemaVersion": 1,
+    "sources": [
+      "src/xfade_glue.s",
+      "src/xfade.c",
+      "src/xfade_store.c"
+    ],
+    "defsym": {},
+    "cflags": [
+      "-std=c99",
+      "-Os",
+      "-msoft-float",
+      "-fno-common",
+      "-fno-asynchronous-unwind-tables",
+      "-Wextra",
+      "-Werror"
+    ],
+    "weak": [],
+    "subscribe": [
+      {
+        "event": "ev_settings",
+        "fn": "cxf_settings",
+        "order": 60
+      },
+      {
+        "event": "ev_draw",
+        "fn": "cxf_draw",
+        "order": 60
+      },
+      {
+        "event": "ev_tick",
+        "fn": "cxf_uitick",
+        "order": 60
+      },
+      {
+        "event": "ev_key",
+        "fn": "cxf_key",
+        "order": 60
+      },
+      {
+        "event": "ev_enc",
+        "fn": "cxf_enc",
+        "order": 60
+      }
+    ],
+    "contribute": [],
+    "collections": {},
+    "copied": [],
+    "regions": [],
+    "claims": [
+      "settings:CROSSFADER",
+      "ui:Internal Mixer page:LEVEL (the fader)",
+      "ui:track pages:LEVEL on FADER ON tracks (the fader)",
+      "ui:Internal Mixer page:LEVEL push",
+      "ui:track pages:LEVEL push on FADER ON tracks",
+      "midi:FX CONTROL CH:the fader CC",
+      "drive:/cfw/xfade.a",
+      "drive:/cfw/xfade.b"
+    ],
+    "requires": [],
+    "derive": null,
+    "releases": {
+      "1.54": {
+        "defsym": {},
+        "cflags": [],
+        "sites": [
+          {
+            "addr": "0x40030930",
+            "len": 6,
+            "stockSha256": "e84f69da3752f168fb13858328ab536865283d736440546f4342eef7bf447df4",
+            "op": "jsr",
+            "target": "cxf_titlehook"
+          },
+          {
+            "addr": "0x400d4cec",
+            "len": 6,
+            "stockSha256": "122f9ea763ec1094a64dcf753a7b1b4a3bf87de4491f8cc0b6700a4d2b5e3e83",
+            "op": "jsr",
+            "target": "cxf_cchook"
+          },
+          {
+            "addr": "0x40071d86",
+            "len": 6,
+            "stockSha256": "66b0f0098720f74dbe53e27cae7abf5bae08e27ebc7ba86d4691c8be4d3887d6",
+            "op": "jsr",
+            "target": "cxf_mixhook"
+          },
+          {
+            "addr": "0x400c9ce4",
+            "len": 6,
+            "stockSha256": "b61f0b51edb18e2f814611848bb0f9c01922a7ff3cd7840cbe1ed79299284d8c",
+            "op": "jsr",
+            "target": "cxf_showhook"
+          }
+        ]
+      }
+    }
+  }
+}

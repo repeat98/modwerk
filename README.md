@@ -20,7 +20,7 @@
   </p>
 </div>
 
-Anyone who owns an instrument can start here: open its machine page on [modwerk.app](https://modwerk.app), see how far it has come, and take the next step with your coding agent. Each step stands on its own, from a documented file format to a first boot, a hook or a module, and what one person learns lands where the next one looks. Musicians get the results as mods built in the browser from their own OS file. What Modwerk is for, and what comes first when goals pull apart, is at the top of [AGENTS.md](AGENTS.md).
+Anyone who owns an instrument can start here: open its machine page on [modwerk.app](https://modwerk.app/?utm_source=github-readme), see how far it has come, and take the next step with your coding agent. Each step stands on its own, from a documented file format to a first boot, a hook or a module, and what one person learns lands where the next one looks. Musicians get the results as mods built in the browser from their own OS file. What Modwerk is for, and what comes first when goals pull apart, is at the top of [AGENTS.md](AGENTS.md).
 
 For Octatrack modules, write DSP effects in **DSP56300 assembly** or playback and system patches in **ColdFire assembly**, with Python manifests describing their controls, placement and compatibility. Source, documentation and module metadata live together in this repository.
 
@@ -65,7 +65,7 @@ The scaffold is untested: choose an unused effect ID for DSP modules and replace
 
 ## Develop and validate
 
-The whole process, including porting from octabam or elekloader, is in [Add or port a module](docs/ADD_A_MODULE.md). For the native code, follow [Writing a module](sdk/octabam/docs/remixer/MODULES.md), using [Character](sdk/octabam/modules/character/) for a DSP example or [Repitch](sdk/octabam/modules/repitch/) for ColdFire. Keep native controls and module metadata synchronized, and record actual measurements in `TESTING.md`.
+The whole process, including porting from octabam or elekloader, is in [Add or port a module](docs/ADD_A_MODULE.md). For the native code, follow [Writing a module](sdk/octabam/docs/remixer/MODULES.md), using [Mini Verb](sdk/octatrack/modules/miniverb/) for a DSP example or [Repitch](sdk/octatrack/modules/repitch/) for ColdFire. Keep native controls and module metadata synchronized, and record actual measurements in `TESTING.md`.
 
 Run these from the repository root:
 

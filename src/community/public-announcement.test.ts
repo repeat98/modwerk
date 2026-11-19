@@ -38,7 +38,7 @@ describe('quiet public announcements', () => {
     const guide = renderToStaticMarkup(createElement(FaqPage, { previewGuide: true }))
     expect(guide).toContain('Add an audio preview')
     expect(guide).toContain('class="faq-question" open=""')
-    for (const instruction of ['Previews', 'verified account', 'WAV, MP3 or Ogg', '90 seconds', '12 MB', 'credit', 'caption', 'permission', 'Remove preview']) expect(guide).toContain(instruction)
+    for (const instruction of ['Previews', 'verified account', 'WAV, MP3 or Ogg', '12 MB', 'credit', 'caption', 'permission', 'Remove preview']) expect(guide).toContain(instruction)
     expect(guide).not.toContain('How do I flash an Octatrack')
     expect(renderToStaticMarkup(createElement(FaqPage))).toContain('How do I add an audio preview?')
   })

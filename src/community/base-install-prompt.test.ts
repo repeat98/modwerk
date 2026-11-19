@@ -2,6 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { COMMUNITY_RULES_VERSION } from '../legal/policy'
 import { testServer } from './test-server'
 
+// The Worker before the release (the switch off); base-install-prompt-released.test.ts has it on, as it is now.
+vi.mock('../config/octatrack-base', () => ({ OCTATRACK_BASE_RELEASED: false }))
+
 const databases: Array<{ close(): void }> = []
 const password = 'a base install prompt test password'
 beforeEach(() => { vi.stubGlobal('fetch', vi.fn(async () => Response.json({ id: 'test-email' }))) })

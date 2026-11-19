@@ -1,4 +1,4 @@
-// A device page's module sets (the beta's Octatrack page, and the Zoom pedal page): the list beside the device's own
+// A device page's module sets (Your Octatrack, and the Zoom pedal page): the list beside the device's own
 // pages, each set's actions, and the open set's header. Each page supplies what a set holds and whether it is on the device.
 import type { ReactNode } from 'react'
 import type { Configuration } from '../config/workspace'

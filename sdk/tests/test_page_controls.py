@@ -54,6 +54,19 @@ class PageControls(unittest.TestCase):
         # Two values without words of their own read OFF and ON; a slot past the twelfth writes nothing.
         self.assertEqual(lines[-1], 'o 4003c14c ee ee')
 
+    @unittest.skipUnless(shutil.which('m68k-elf-gcc'), 'm68k-elf-gcc unavailable')
+    def test_the_widget_lookup_is_no_list_of_stock_addresses(self):
+        # A list of the widget addresses repeats stock's own page descriptors, which no package may (#1471).
+        with tempfile.TemporaryDirectory() as folder:
+            source = Path(folder) / 'widget.c'
+            source.write_text('#include "modwerk_page.h"\nuint32_t widget(unsigned count) { return modwerk_page_widget(count); }\n')
+            built = subprocess.run(['m68k-elf-gcc', '-mcpu=5475', '-msoft-float', '-O2', '-ffreestanding', '-fno-builtin', '-fno-common',
+                                    '-fno-jump-tables', '-I', str(ROOT / 'sdk/machines/octatrack/include'), '-S', str(source), '-o', '-'],
+                                   capture_output=True, text=True)
+        self.assertEqual(built.returncode, 0, built.stderr)
+        for address in (0x40046f10, 0x40046c28, 0x40046ab4):
+            self.assertNotIn('.long\t%d' % address, built.stdout)
+
 
 if __name__ == '__main__':
     unittest.main()

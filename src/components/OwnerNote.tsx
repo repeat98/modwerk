@@ -7,6 +7,10 @@ import { api, post } from '../community/api'
 import { useCommunity } from '../community/context'
 import { diagnosticPreference, subscribeDiagnosticPreference, type DiagnosticPreference } from '../community/octatrack-diagnostics'
 import { browserRequestsPrivacy } from '../community/usage'
+import { invitationAnswered, rememberInvitationAnswer } from '../community/diagnostics-sharing'
+import { OCTATRACK_BASE_RELEASED } from '../config/octatrack-base'
+import { mayAsk } from '../community/diagnostics-reask'
+import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 
 // A new note needs a new id here and in server/auth.ts (OWNER_NOTE).
 const KEY = 'modwerk.owner-note:2026-10-16-beta-3'
@@ -20,12 +24,19 @@ export function closeOwnerNote() {
   closedThisVisit = true
   try { localStorage.setItem(KEY, 'seen') } catch { /* Stays closed for this visit when storage is blocked. */ }
 }
-/** The required diagnostics step follows the note, even if the invitation was dismissed before, unless sharing is already on or impossible here. */
+/** The diagnostics step follows the note, even if the invitation was dismissed before, unless sharing is already on or
+ * impossible here. It is an offer with Not now, never a condition of the beta or of the Octatrack base path. */
 export const askForDiagnostics = (preference: DiagnosticPreference, privacy: boolean) => preference.available && !preference.enabled && !privacy
 /** A tester past the note whose consent predates the current version (#657 reset everyone's) shares nothing until asked again.
  * One who turned sharing off under the current version made that choice; it isn't asked here. */
 export const diagnosticsLapsed = (preference: DiagnosticPreference, memberId: string, privacy: boolean) =>
   preference.accountId === memberId && preference.ready && !preference.hasChoice && askForDiagnostics(preference, privacy)
+
+/** What leaving the beta takes away: beta modules and beta-only pages, and, until the Octatrack base path is released
+ * to everyone (OCTATRACK_BASE_RELEASED), that path too. */
+export const leaveBeta = (released = OCTATRACK_BASE_RELEASED) => released
+  ? 'Leave the beta? Beta modules and the beta-only pages go away for your account. Your Octatrack page, the base and USB sync stay. If you want back in later, just ask me on Discord.'
+  : 'Leave the beta? The beta modules and the Octatrack USB page go away for your account. If you want back in later, just ask me on Discord.'
 
 export function OwnerNote({ username, onJoin, onLeave }: { username: string; onJoin: () => void; onLeave: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null), open = useRef(false), [wait, setWait] = useState(WAIT), [accepted, setAccepted] = useState(false)
@@ -50,17 +61,17 @@ export function OwnerNote({ username, onJoin, onLeave }: { username: string; onJ
       <h2 id="owner-note-title" tabIndex={-1}>Hey guys, please read this before you flash</h2>
       <div id="owner-note-message">
         <p>thanks a lot for testing the beta! Even if you've seen my last note, please read this one carefully. It stays open until you choose: <strong>accept it and join us on Discord</strong>, or <strong>leave the beta</strong>.</p>
-        <p className="owner-note-warning"><Icon name="warn" size={18} /><span><strong>Don't flash the beta unless you can recover without USB.</strong> A tester just reported that after flashing the beta, their Octatrack no longer connected over USB: USB DISK MODE did nothing and Chrome found no device. I don't know the cause yet. Without USB you can't reach the card from your computer, so before you flash, have a <strong>CompactFlash card reader</strong>, and ideally a <strong>MIDI interface</strong> to send Elektron's original OS .syx through the startup menu. Keep the original OS 1.40C .bin and .syx on your computer. <a href="#faq" target="_blank" rel="noreferrer">Recovery steps in the FAQ</a></span></p>
+        <p className="owner-note-warning"><Icon name="warn" size={18} /><span><strong>Don't install the Modwerk base unless you can recover without USB.</strong> A tester reported that after installing the base, their Octatrack no longer connected over USB: USB DISK MODE did nothing and Chrome found no device. Without USB you can't reach the card from your computer, so before you install it, have a <strong>CompactFlash card reader</strong> to put the original OS on the card, or a <strong>MIDI interface</strong> to send Elektron's original OS .syx through the startup menu. Keep the original OS 1.40C .bin and .syx on your computer. <a href="#faq" target="_blank" rel="noreferrer">Recovery steps in the FAQ</a></span></p>
         <ul className="owner-note-asks">
-          <li><strong>Be on Discord and stay active there</strong> – report bugs only in the <strong>#beta-testers</strong> channel, right when you run into them. <strong>Please don't use the report forms on this site</strong> for the beta: I follow beta bugs on Discord only.</li>
+          <li><strong>Be on Discord and stay active there</strong> – report bugs in beta modules and beta pages only in the <strong>#beta-testers</strong> channel, right when you run into them. <strong>Please don't use the report forms on this site</strong> for those: I follow beta bugs on Discord only.</li>
           <li><strong>Use the same name on Discord as here</strong> (<strong>@{username}</strong>) – so I know who's who.</li>
-          <li><strong>Share diagnostics</strong> – I'll ask you right after this note. It helps me see where a build or sync went wrong.</li>
+          <li><strong>Share diagnostics if you can</strong> – I'll ask you right after this note. It's optional, and it helps me see where a build or sync went wrong.</li>
         </ul>
-        <p>The beta is limited to 50 people, so if you're not active on Discord, I'll pass your place on to someone else. This firmware is still <strong>highly experimental</strong>.</p>
+        <p>The beta is limited to 50 people, so if you're not active on Discord, I'll pass your place on to someone else. Beta modules are still <strong>highly experimental</strong>.</p>
         <p>If this doesn't work for you, you can leave the beta below.</p>
         <p className="owner-note-sign">Thank you,<br /><strong>Jannik</strong></p>
       </div>
-      <label className="risk-accept owner-note-accept"><input type="checkbox" checked={accepted} onChange={event => setAccepted(event.target.checked)} /><span>I've read this. I won't flash the beta without a CompactFlash card reader (ideally also a MIDI interface) at hand. I'll join #beta-testers on Discord, stay active there and report beta bugs only there, not on this site.</span></label>
+      <label className="risk-accept owner-note-accept"><input type="checkbox" checked={accepted} onChange={event => setAccepted(event.target.checked)} /><span>I've read this. I won't install the Modwerk base without a CompactFlash card reader or a MIDI interface at hand. I'll join #beta-testers on Discord, stay active there and report beta bugs only there, not on this site.</span></label>
     </div>
     <footer className="owner-note-actions">
       <button type="button" className="owner-note-close" disabled={!!wait} onClick={onLeave}>Leave beta</button>
@@ -71,8 +82,12 @@ export function OwnerNote({ username, onJoin, onLeave }: { username: string; onJ
 
 /** Beta testers only (App.tsx), on every device until they accept the note and join Discord, or leave the beta.
  * It can't be put off: it opens on top of any other dialog as soon as the tab is visible, on every page but the FAQ, the account and the legal pages.
- * The required diagnostics step follows; until it is done, and after a new consent version, it comes back on its own, without the note. */
-export function OwnerNoteGate({ enabled }: { enabled: boolean }) {
+ * The diagnostics step follows as an offer (Not now, no Leave beta); after a new consent version it is offered once more,
+ * without the note, as the ordinary invitation: a Not now to it, or to the invitation anywhere else, is remembered in this
+ * browser (invitationAnswered). That offer waits, as the welcome and the re-ask do, while another dialog is open or
+ * something runs on the unit (`link`): a lapsed consent and a due base update come on the same visit. Nothing on the
+ * site depends on the answer. */
+export function OwnerNoteGate({ enabled, link = null }: { enabled: boolean; link?: OctatrackLink | null }) {
   const { session, refresh } = useCommunity(), memberId = session.user!.id
   const [step, setStep] = useState<'note' | 'diagnostics'>(), [serverDue, setServerDue] = useState<boolean>()
   useEffect(() => {
@@ -84,21 +99,24 @@ export function OwnerNoteGate({ enabled }: { enabled: boolean }) {
   }, [memberId])
   const preference = useSyncExternalStore(subscribeDiagnosticPreference, diagnosticPreference, diagnosticPreference)
   const due = serverDue === true && !ownerNoteSeen()
-  const lapsed = !due && (ownerNoteSeen() || serverDue === false) && diagnosticsLapsed(preference, memberId, browserRequestsPrivacy())
+  // Not now ends the offer for this visit, so it never comes back every second.
+  const [declined, setDeclined] = useState(false)
+  const lapsed = !due && !declined && (ownerNoteSeen() || serverDue === false) && diagnosticsLapsed(preference, memberId, browserRequestsPrivacy()) && !invitationAnswered(memberId)
   useEffect(() => {
     if (!enabled || step || !due && !lapsed) return
-    const show = () => { if (document.visibilityState === 'visible') setStep(due ? 'note' : 'diagnostics') }
+    // The note opens over anything; the offer alone waits its turn (mayAsk).
+    const show = () => { if (due ? document.visibilityState === 'visible' : mayAsk(link?.getState())) setStep(due ? 'note' : 'diagnostics') }
     show()
     const timer = window.setInterval(show, 1000)
     return () => window.clearInterval(timer)
-  }, [enabled, step, due, lapsed])
+  }, [enabled, step, due, lapsed, link])
   const done = () => setStep(undefined)
   async function leave() {
-    if (!window.confirm('Leave the beta? The beta modules and the Octatrack USB page go away for your account. If you want back in later, just ask me on Discord.')) return
+    if (!window.confirm(leaveBeta())) return
     try { await post('/auth/beta-leave', {}) } catch (failure) { window.alert(failure instanceof Error ? failure.message : 'Couldn’t leave the beta. Please try again.'); return }
     setStep(undefined); await refresh()
   }
-  if (step === 'diagnostics') return <DiagnosticsInvitation onClose={done} onLeave={() => void leave()} />
+  if (step === 'diagnostics') return <DiagnosticsInvitation onClose={shared => { if (!shared) rememberInvitationAnswer(memberId); setDeclined(true); done() }} />
   return step === 'note' ? <OwnerNote username={session.user!.username!} onLeave={() => void leave()} onJoin={() => {
     // Accepting is recorded at once: a reload or a failed share before diagnostics are on brings back only the diagnostics step (lapsed), never the note.
     closeOwnerNote(); void post('/auth/owner-note', {}).catch(() => {}); void post('/auth/beta-discord-invite', {}).catch(() => {})
@@ -106,9 +124,9 @@ export function OwnerNoteGate({ enabled }: { enabled: boolean }) {
   }} /> : null
 }
 
-/** Dev preview (?preview=beta-note): the note, then the required diagnostics step. Nothing is sent. */
+/** Dev preview (?preview=beta-note): the note, then the diagnostics offer. Nothing is sent. */
 export function OwnerNotePreview() {
   const [step, setStep] = useState<'note' | 'diagnostics'>('note'), [closed, setClosed] = useState(false)
   if (closed) return null
-  return step === 'note' ? <OwnerNote username="yourname" onJoin={() => setStep('diagnostics')} onLeave={() => setClosed(true)} /> : <DiagnosticsInvitation preview onClose={() => setClosed(true)} onLeave={() => setClosed(true)} />
+  return step === 'note' ? <OwnerNote username="yourname" onJoin={() => setStep('diagnostics')} onLeave={() => setClosed(true)} /> : <DiagnosticsInvitation preview onClose={() => setClosed(true)} />
 }

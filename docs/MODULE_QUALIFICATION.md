@@ -127,7 +127,7 @@ import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parseModuleDocument } from './src/catalog/module-contract.ts'
 import { moduleNativeSourceSha256 } from './scripts/module-qualification.mjs'
-const folder = resolve('sdk/octabam/modules/my-module')
+const folder = resolve('sdk/octatrack/modules/my-module')
 const document = parseModuleDocument(JSON.parse(await readFile(resolve(folder, 'octamod.module.json'), 'utf8')))
 console.log(await moduleNativeSourceSha256(folder, document))
 JS
@@ -183,7 +183,7 @@ null when unreported), `testedOn`, credited `tester`, exact `sourceRevision`,
 `imageSha256`, `summary`, nonempty `limitations`, and a local `report` path.
 Set `tests.hardwareStatus: "reported"`. Source and image must agree with the
 qualification identities; retain the actual contributor statement and how the
-reviewer verified it (the owner on first release, the registered author on a scoped update). Describe unreported duration, track/instance counts, model
+reviewer verified it (a machine maintainer or the owner on first release, the registered author on a scoped update). Describe unreported duration, track/instance counts, model
 and untested cases explicitly. Do not fill them with guesses or upgrade an
 author report to a measured stress pass. A reproduced image must match the
 reported hardware image hash; packaging-only version changes are separate.
@@ -192,7 +192,7 @@ Detailed hardware records remain supported. Their project fingerprint, actual
 duration, track counts, maximum instance count, conditions and continuity,
 transport, controls, memory-integrity and recovery checks must describe the
 test actually performed. Pending/failed checks still block that form. There is
-no minimum duration or eight-active-track requirement. The owner reviews first releases and exceptions. For a scoped update the registered author verifies the
+no minimum duration or eight-active-track requirement. A machine maintainer or the owner reviews first releases; the owner, exceptions. For a scoped update the registered author verifies the
 evidence, explicitly requests publication and passes the author-release checks.
 
 DSP static counts must include expensive branches, parameter updates, trigger
@@ -255,4 +255,4 @@ The owner approved POLY8@0.2.5-experimental with current-build physical hardware
 
 ## POLY8 0.2.6 exact experimental release exception — 9 October 2026
 
-The owner reported “works like a charm” on the exact POLY8T10 MKII image and explicitly approved “Approve this scoped experimental release” for 0.2.6-experimental. [The source-bound report](../sdk/octabam/modules/poly8/evidence/owner-release-t10.md) retains the delivered image hashes, actual statement and unreported coverage. `sdk/approvals/poly8-build-approval.json` now binds only the exact T10 native source. Chip worst-case timing, complete memory-bound qualification and separately reported Part/project/reboot tests remain waived and unverified. The historical 0.2.5 approval remains in Git history and the report; it does not authorize this update. Documentation, licence, native/browser parity and release checks remain mandatory.
+The owner reported “works like a charm” on the exact POLY8T10 MKII image and explicitly approved “Approve this scoped experimental release” for 0.2.6-experimental. [The source-bound report](../sdk/octatrack/modules/poly8/evidence/owner-release-t10.md) retains the delivered image hashes, actual statement and unreported coverage. `sdk/approvals/poly8-build-approval.json` now binds only the exact T10 native source. Chip worst-case timing, complete memory-bound qualification and separately reported Part/project/reboot tests remain waived and unverified. The historical 0.2.5 approval remains in Git history and the report; it does not authorize this update. Documentation, licence, native/browser parity and release checks remain mandatory.

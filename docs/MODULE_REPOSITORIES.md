@@ -2,7 +2,7 @@
 
 Existing published module authors may use the [automatic author-update workflow](MODULE_AUTHOR_UPDATES.md): verified ownership, changes confined to their modules, explicit evidence review and successful checks on the exact source/base permit bot merge and publication. Other changes retain owner review. Existing qualification gates and exact-version owner exceptions are unchanged.
 
-A module is a folder under `sdk/octabam/modules/<id>/` containing native source, `manifest.py`, `octamod.module.json`, README, TESTING, licence and real OT UI screenshots (audio is optional). The steps are in [Add or port a module](ADD_A_MODULE.md); this page is the field reference for `octamod.module.json`. Submissions and all updates use PRs; merging the PR is owner approval. No direct module upload or separate website approval remains.
+A module is a folder under `sdk/octatrack/modules/<id>/` containing native source, `manifest.py`, `octamod.module.json`, README, TESTING, licence and real OT UI screenshots (audio is optional). The steps are in [Add or port a module](ADD_A_MODULE.md); this page is the field reference for `octamod.module.json`. Submissions and all updates use PRs; merging the PR is owner approval. No direct module upload or separate website approval remains.
 
 ## Schema version 2
 
@@ -31,7 +31,7 @@ These display fields retain existing-module evidence and may describe an incompl
 
 ## Build and version checks
 
-`npm run modules:generate` validates source folders and writes `src/catalog/module-documents.json`. `npm run modules:pairs -- --write` writes `src/catalog/compatibility-pairs.json`, the native ledger's verdict on every module alone and in every pair, which the configurator and the firmware worker read ([flag every incompatibility](module-guides/README.md#flag-every-incompatibility)). The module library, pages, controls and resource explanations consume that generated content. `sdk/catalog.json` lists the modules the site offers, each at an exact version. Its `sourceRevision` is the native composition pin; per-module `source` pins identify imports separately. New source folders do not silently enter the configurator.
+`npm run modules:generate` validates source folders and writes `src/catalog/module-documents.json`. The module library, pages, controls and resource explanations consume that generated content. `sdk/catalog.json` lists the modules the site offers, each at an exact version. Its `sourceRevision` is the native composition pin; per-module `source` pins identify imports separately. New source folders do not silently enter the configurator.
 
 `npm run modules:check` rejects stale generated content and missing local documentation/media. `--base origin/main` also requires a strictly greater semantic version whenever the module's code changes (source, native manifest, licences or the manifest's build fields); documentation and media edits need none. PR CI runs it against the exact base SHA. New or changed module folders and modules newly added to the catalog also require version-matched real OT UI location/control captures and access instructions; unchanged legacy publications remain readable. Verified editorial updates may retain real UI captures with their original tested-version/build provenance. See [the capture workflow](MODULE_UI_CAPTURES.md). Sources, docs and media are reviewed together. No `.bin` or `.syx` file belongs in the source or media folder. No symlink may escape the folder.
 
@@ -39,7 +39,7 @@ Qualification is enforced even without `--base`, during generation and release v
 
 ## Temporary frontend availability
 
-As of 1 October 2026, Spectrum, Modulation and Character are temporarily hidden because of reported audio crackling. `src/catalog/availability.ts` controls this suspension. The original seven modules, source provenance and saved configuration pins remain intact. Suspended modules cannot be added or validated for a build through the frontend; older configurations remain readable and identify the modules that must be removed. Reinstatement requires a verified fix and owner approval.
+`src/catalog/availability.ts` controls temporary suspensions (`PAUSED_MODULE_IDS`). A suspended module keeps its source provenance and saved configuration pins. Suspended modules cannot be added or validated for a build through the frontend; older configurations remain readable and identify the modules that must be removed. Reinstatement requires a verified fix and owner approval.
 
 ## Publication
 

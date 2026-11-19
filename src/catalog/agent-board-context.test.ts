@@ -21,7 +21,10 @@ describe('the agent board stays in the context agents read and the commands they
       expect(read(folder + '/modwerk-update-module/SKILL.md')).toContain('npm run board -- claim module')
       expect(read(folder + '/modwerk-review-prs/SKILL.md')).toContain('the agent board')
       expect(read(folder + '/modwerk-fix-issue/SKILL.md')).toContain('npm run board -- list module')
+      expect(read(folder + '/modwerk-fix-issue/SKILL.md')).toContain('npm run board -- claim issue')
       expect(read(folder + '/modwerk-triage-issues/SKILL.md')).toContain('npm run board -- list module')
+      expect(read(folder + '/modwerk-contribute/SKILL.md')).toContain('npm run board -- messages --kind wanted')
+      expect(read(folder + '/modwerk-contribute/SKILL.md')).toContain('npm run board -- take')
       for (const skill of ['modwerk-new-module', 'modwerk-start', 'modwerk-pr-ready', 'modwerk-update-module', 'modwerk-fix-issue']) expect(read(folder + '/' + skill + '/SKILL.md')).not.toMatch(/only with (?:their words|what the developer says)|show them to the developer/)
     }
     expect(read('docs/DEVELOPER_WORKFLOW.md')).toContain('npm run board -- list module')

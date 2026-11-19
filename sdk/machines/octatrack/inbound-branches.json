@@ -1,0 +1,4 @@
+{
+  "about": "Stock entries into a patched site that were shown to be data, never code (npm run stock:branches). Each row: the site, the target inside it and the source, as addresses, with the reason. No stock bytes. A new row needs owner review.",
+  "reviewed": []
+}

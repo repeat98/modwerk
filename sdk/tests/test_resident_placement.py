@@ -89,7 +89,7 @@ class ResidentPlacement(unittest.TestCase):
                    '-DMODWERK_RESIDENT_STOCK_HOOKS','-DMODWERK_FX_IDS=64',
                    '-DMODWERK_DSP_ALLOWANCE0=3120','-DMODWERK_DSP_ALLOWANCE1=3565','-DMODWERK_DSP_RESERVE=342']
             flags+=['-DMODWERK_DSP_%s%d=4096'%(name,c) for name in ('TABLE','WORDS','MISS','METER') for c in (0,1)]
-            includes=['-I'+str(p) for p in (work,ELEK,RUNTIME,ROOT/'sdk/runtime/loader',ROOT/'sdk/runtime/upload')]
+            includes=['-I'+str(p) for p in (work,ELEK,RUNTIME,ADAPTER/'controller-policy',ROOT/'sdk/runtime/loader',ROOT/'sdk/runtime/upload')]
             objects=[]
             for source in (work/'dsp.c',RUNTIME/'stock_hooks.c',RUNTIME/'stock_hook_driver.c',
                            RUNTIME/'stock_hook_resources.c',RUNTIME/'test_stock_hook_binding.c'):
@@ -134,7 +134,8 @@ class ResidentPlacement(unittest.TestCase):
         self.assertIn('!modwerk_saved_set_busy() && dl_hook_buffer_ranges_idle(feature)',source)
         self.assertIn('struct mw_hook_buffer_claim claim = mw_hook_default_claim(kind, id < 32u && !fx_in(modwerk_fx_modules, id)), exact = {0};',source)
         self.assertIn('if (modwerk_stock_hook_buffer_policy(core, id, &exact)) claim = exact;',source)
-        self.assertIn('mw_hook_buffer_permitted_held(mw_stock_hooks_held(&stock_hook_driver.leases) | modwerk_controller_held(),',source)
+        self.assertIn('mw_hook_buffer_permitted_held(mw_stock_hooks_held(&stock_hook_driver.leases) | controller_reserved(),',source)
+        self.assertIn('return modwerk_controller_held() | live;',source)
         self.assertIn('if (enable) return MW_HOOK_STATE;',source) # preparation never opens controller admission
         entries=board_entries(source)
         self.assertNotIn('static int stock_hook_tick',entries)
