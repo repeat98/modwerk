@@ -16,9 +16,9 @@ When the developer answers "always" or "never", save it with `npm run session --
 
 Only the conversation: the developer's prompts, the agent's replies, and one line per tool call (the command or file it touched, and whether it failed). The script finds the session's transcript (Claude Code's in `~/.claude/projects/`, Codex's in `~/.codex/sessions/`) and removes, before anything is sent:
 
-- every tool output, the agent's thinking, injected context (skill bodies, hook output, compaction summaries, context files) and subagent turns;
+- every tool output (including the output of commands the developer ran with `!`, which keep only the command), the agent's thinking, injected context (skill bodies, hook output, compaction summaries, context files) and subagent turns;
 - code blocks longer than 12 lines, hex dumps, runs of hex values and long data blobs;
-- secrets (tokens, keys, passwords, bearer headers), email addresses, IP addresses, home folders, the computer's user and host name.
+- secrets (tokens, keys, passwords, bearer headers), email addresses, IP addresses, home folders, the computer's user and host name, and the developer's names as git knows them (`user.name`, and `user.email` before the @).
 
 What remains still looking like firmware or stock code (disassembly, long hex or number tables) stops the upload: the script names the entries, and `--skip 3,7` leaves them out. `npm run session -- preview` writes what would be sent to `~/.cache/modwerk/session-preview.json` without sending anything; offer it when the developer wants to look first. The Worker runs the same checks again and refuses what fails them.
 

@@ -104,7 +104,20 @@ export async function buildSession({ file, agent, note = '', skip = [] }) {
   const read = agent === 'codex' ? readCodexRollout(lines) : readClaudeTranscript(lines)
   let user = ''
   try { user = userInfo().username } catch { /* none */ }
-  return prepareSession(read, note, { user, host: hostname().split('.')[0], home: homedir() }, skip)
+  return prepareSession(read, note, { user, host: hostname().split('.')[0], home: homedir(), names: developerNames() }, skip)
+}
+
+/** A note with nothing of the session in it: missing, or only dots, ellipses, quotes and spaces. */
+export const placeholderNote = note => !/[\p{L}\p{N}]/u.test(note ?? '')
+
+// Parts of an email address that are roles or services, not a person: never scrubbed as names.
+const NOT_NAMES = new Set(['info', 'mail', 'email', 'contact', 'hello', 'admin', 'office', 'studio', 'music', 'noreply', 'users', 'github', 'dev'])
+/** The developer's names as git knows them: user.name in full and in parts, and the parts of user.email before the @. */
+export function developerNames(read = key => execFileSync('git', ['config', '--get', key], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()) {
+  const value = key => { try { return read(key) } catch { return '' } }
+  const name = value('user.name'), local = value('user.email').split('@')[0].replace(/^\d+\+/, '')
+  const parts = [...name.split(/\s+/), ...local.split(/[._+-]+/)].filter(part => part.length >= 3 && /\p{L}/u.test(part) && !NOT_NAMES.has(part.toLowerCase()))
+  return [...new Set([name.trim(), ...parts].filter(part => part.length >= 3))]
 }
 
 function summary(session, file) {
@@ -137,6 +150,8 @@ export async function main(argv = process.argv.slice(2)) {
   }
   if (command === 'preview' || command === 'share') {
     if ((values.note ?? '').length > SESSION_NOTE_LIMIT) { console.error(`Keep the note to ${SESSION_NOTE_LIMIT} characters.`); return 2 }
+    // The note is what the owner reads first; an agent once sent the instructions' "…" placeholder as it was.
+    if (command === 'share' && placeholderNote(values.note)) { console.error('Write the note: a few sentences on what got in the way in this session (--note "The board refused … until …").'); return 2 }
     const found = await findTranscript({ file: values.file, agent: values.agent })
     const session = await buildSession({ ...found, note: values.note ?? '', skip })
     await writePrivate(previewFile(), JSON.stringify(session, null, 2) + '\n')
