@@ -54,6 +54,8 @@ export type MachineProfile = {
   research?: { label: string; url: string; note: string }[]
   /** GitHub logins the owner named to review first releases of this machine's modules (docs/DEVELOPER_WORKFLOW.md#who-reviews-a-first-release). */
   maintainers?: string[]
+  /** Immutable GitHub user IDs empowered to merge first releases on this device. */
+  deviceReviewers?: number[]
   sdk?: {
     platform: MachinePlatform
     modules: string
@@ -102,7 +104,7 @@ function https(value: unknown, path: string): string {
 }
 
 export function parseMachineProfile(value: unknown): MachineProfile {
-  const item = object(value, 'machine', ['schemaVersion', 'id', 'order', 'name', 'status', 'summary', 'steps', 'art'], ['family', 'variants', 'firmware', 'research', 'sdk', 'stack', 'maintainers'])
+  const item = object(value, 'machine', ['schemaVersion', 'id', 'order', 'name', 'status', 'summary', 'steps', 'art'], ['family', 'variants', 'firmware', 'research', 'sdk', 'stack', 'maintainers', 'deviceReviewers'])
   if (item.schemaVersion !== 1) fail('machine.schemaVersion', 'expected 1')
   const id = text(item.id, 'machine.id', 40)
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id) || id === 'all') fail('machine.id', 'expected a lowercase kebab-case id other than "all"')
@@ -124,6 +126,11 @@ export function parseMachineProfile(value: unknown): MachineProfile {
     return { label: text(research.label, path + '.label', 80), url: https(research.url, path + '.url'), note: text(research.note, path + '.note', 300) }
   })
   if (item.sdk !== undefined) profile.sdk = parseSdk(item.sdk)
+  if (item.deviceReviewers !== undefined) {
+    profile.deviceReviewers = list(item.deviceReviewers, 'machine.deviceReviewers', 0, 8)
+      .map(id => integer(id, 'machine.deviceReviewers', 1, Number.MAX_SAFE_INTEGER))
+    if (new Set(profile.deviceReviewers).size !== profile.deviceReviewers.length) fail('machine.deviceReviewers', 'duplicate GitHub ID')
+  }
   if (item.maintainers !== undefined) {
     profile.maintainers = list(item.maintainers, 'machine.maintainers', 1, 8).map((login, index) => {
       const name = text(login, 'machine.maintainers[' + index + ']', 39)
