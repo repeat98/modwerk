@@ -235,7 +235,14 @@
         "len": 6,
         "stockSha256": "73d543c9d8084fc2debabd899a5bc3a7f4907dd2f070831e0ea5b8a61800905c",
         "op": "jsr",
-        "target": "core_machine_sample_view_entry"
+        "target": "core_machine_view_type_entry"
+      },
+      {
+        "addr": "0x40017ada",
+        "len": 6,
+        "stockSha256": "2001dd6b8e36e960a9c43babf34e205b422dc6e19c770075056fc34e193c7a6f",
+        "op": "jsr",
+        "target": "core_machine_sample_draw_entry"
       },
       {
         "addr": "0x40017bd2",

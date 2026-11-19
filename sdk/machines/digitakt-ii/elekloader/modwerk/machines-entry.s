@@ -167,11 +167,15 @@ core_machine_kit_type_entry:
 /* The SRC view's machine type (0x4005f6bc, called at 0x4001702c, 0x40017736 and 0x40017bd2): the view opens
  * its second page (SAMPLE's sample view and the like) by the type it answers and none for a type above 6, so
  * an added type answers as the stock type it stands for there. */
-        .globl  core_machine_view_type_entry, core_machine_sample_view_entry, core_machine_sample_views
-/* 0x40017736 asks while the sample view draws (every frame composed with the second page showing, and in no other
- * frame: emulator call counts, MACHINES.md), so it also counts the frames a module's ev_draw handler can draw over. */
-core_machine_sample_view_entry:
+        .globl  core_machine_view_type_entry, core_machine_sample_draw_entry, core_machine_sample_views
+/* The sample view's own draw call (0x40017ada: `move.l %a2,(%sp); jsr 0x40017728`), which runs in every frame composed
+ * with the second page showing: it counts the frame for a module's ev_draw handler, then makes the stock call with
+ * the caller's return. The routine it calls has other callers that run on any page while notes play (MACHINES.md). */
+core_machine_sample_draw_entry:
+        move.l  %a2,4(%sp)
         addq.l  #1,core_machine_sample_views
+        jmp     0x40017728
+
 core_machine_view_type_entry:
         move.l  4(%sp),-(%sp)
         jsr     0x4005f6bc
