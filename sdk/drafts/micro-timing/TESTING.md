@@ -18,15 +18,13 @@ Reported for that card:
 
 Earlier private cards failed as the author reported them: a crash from a stub in the trailing pad, no visible row, both list counts at five so REC.TRG sat outside the border, LEVEL dead on audio, the cursor one step off grid, and a pot turn that wrote both audio and MIDI. Do not treat those cards as a pass. MICRO T9 is the reported pass. This module package has not been flashed.
 
-## LEVEL on this package
+## Trial on the development twin
 
-19 November 2026, MKII, OS 1.40C. The development twin `878307834ad3c23a` was RAM-booted and not flashed. Package `f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292` was installed as a trial and not accepted. The screen was read from the unit.
-
-Grid record, then FUNC+BANK, opened TRACK TRIG EDIT with TRIGS highlighted. One DOWN highlighted MICRO T. The row word at `0x460e73e4` was 1. The footer read `MT8:ON GRID` and the cursor sat on the centre mark. One LEVEL step left the row word at 1, moved the cursor one mark to the right, and the footer read `MT8:+1/384`. The MIDI button was not pressed. A step's MICRO TIMING page was not opened, so this is the footer and the lane, not a trig-page pass. The trial's log showed no crash, stall, freeze or skipped track. The rollback was not confirmed: the unit answered needs-recovery and then went away. Nothing was kept.
+19 November 2026, MKII, OS 1.40C. Development twin `878307834ad3c23a` was RAM-booted and not flashed. Package `f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292` ran as a trial for about 180 seconds and was not accepted. The diagnostic value stayed `0x0`. One refusal appeared near the end. The verdict was no crash, stall, freeze or skipped track. Rollback was refused with needs-recovery, and the USB cable was unplugged. This is not a LEVEL pass on this package. Afterwards the unit was back on the flashed base `c889442d9b119d5f`, generation 0, with the same 24 kept modules and neither this module nor Screen Off.
 
 ## Stock flows
 
-Not tested on a module build, except the power-off footer in Keep and power cycle, and the LEVEL footer above. Intended checks:
+Not tested on a module build, except the power-off footer in Keep and power cycle. Intended checks:
 
 1. With the row at 0, existing trig micro timing is unchanged until LEVEL moves.
 2. Turn LEVEL on an audio track: the MICRO TIMING page for that track's steps shows the same fraction. MIDI tracks are unchanged.
@@ -91,7 +89,7 @@ Removing the module while TRACK TRIG EDIT's key layer was still up was refused, 
 
 ## Hardware
 
-Reported on the private MICRO T9 card, as above. On this package: the power-cycle footer in Keep and power cycle, and the LEVEL footer in LEVEL on this package. USB removal needs that key layer closed. The LCD captures below are emulator frames, not this unit result.
+Reported on the private MICRO T9 card, as above, and for this package the power-cycle footer in Keep and power cycle. The development-twin trial above is not a LEVEL pass. USB removal needs that key layer closed. The LCD captures below are emulator frames, not a hardware result.
 
 ## OT UI capture evidence
 
