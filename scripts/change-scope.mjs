@@ -185,13 +185,13 @@ export function readChangeScope({ root, base, head = null, includeFiles = false 
   })), sdk, base: names.some(touchesBaseSize), ...(includeFiles ? { files, wide } : {}) }
 }
 
+export function scopeFromArgs(args, includeFiles = false) {
+  const get = flag => args[args.indexOf(flag) + 1]
+  if (!args.includes('--base') || !get('--base')) throw new Error('Pass --base <commit> [--head <commit>]')
+  const root = fileURLToPath(new URL('..', import.meta.url))
+  return readChangeScope({ root, base: get('--base'), head: args.includes('--head') ? get('--head') : null, includeFiles })
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const args = process.argv.slice(2), get = flag => args[args.indexOf(flag) + 1]
-  if (!args.includes('--base') || !get('--base')) throw new Error('Usage: change-scope.mjs --base <commit> [--head <commit>]')
-  const { files, wide, ...scope } = readChangeScope({ includeFiles: args.includes('--pr'), root: resolve(fileURLToPath(new URL('..', import.meta.url))), base: get('--base'), head: args.includes('--head') ? get('--head') : null })
-  if (files) {
-    const { planPrChecks } = await import('./pr-check-plan.mjs')
-    console.log('parts=' + JSON.stringify(planPrChecks({ ...scope, files, wide }).parts))
-  }
-  for (const [key, value] of Object.entries(scope)) console.log(key + '=' + value)
+  for (const [key, value] of Object.entries(scopeFromArgs(process.argv.slice(2)))) console.log(key + '=' + value)
 }

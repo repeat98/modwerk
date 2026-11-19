@@ -4,7 +4,8 @@ import { basename, relative, resolve } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
 
-import { isDocumentationPath, reachesSdkSuite } from './change-scope.mjs'
+import { fileURLToPath } from 'node:url'
+import { isDocumentationPath, reachesSdkSuite, scopeFromArgs } from './change-scope.mjs'
 
 const sdkIndependent = new Set(['desktop', 'repository tools', 'site tooling', 'site assets', 'styles', 'database', 'documentation', 'tests', 'release note'])
 const testFile = /^(?:src\/.*\.test\.ts|(?:scripts|desktop\/src)\/.*\.test\.mjs)$/
@@ -119,4 +120,11 @@ export function filesForShard(files, part) {
   const [index, count] = part.slice(5).split('/').map(Number)
   if (index < 1 || index > count) throw new Error('Invalid test shard: ' + part)
   return files.filter((_, i) => i % count === index - 1)
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const scope = scopeFromArgs(process.argv.slice(2), true)
+  const { parts } = planPrChecks(scope)
+  console.log('parts=' + JSON.stringify(parts))
+  for (const key of ['modules', 'windows', 'elemod', 'logger']) console.log(key + '=' + scope[key])
 }

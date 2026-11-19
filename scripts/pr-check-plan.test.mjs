@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { expect, it } from 'vitest'
 import { classifyChanges, readChangeScope } from './change-scope.mjs'
 import { affectedTests, filesForShard, planPrChecks } from './pr-check-plan.mjs'
@@ -100,4 +101,15 @@ it('assigns each affected test to one CI job, including a single-file selection'
   expect(filesForShard(['a'], 'test:2/2')).toEqual([])
   expect(filesForShard(['a', 'b', 'c'], 'test:1/2')).toEqual(['a', 'c'])
   expect(filesForShard(['a', 'b', 'c'], 'test:2/2')).toEqual(['b'])
+})
+
+it('starts the workflow’s scope command as a fresh Node process', () => {
+  const root = fileURLToPath(new URL('..', import.meta.url))
+  const workflow = readFileSync(join(root, '.github/workflows/module-pr.yml'), 'utf8')
+  const command = workflow.match(/run: node (scripts\/[\w.-]+) --base "\$OCTAMOD_PR_BASE" --head HEAD >> "\$GITHUB_OUTPUT"/)
+  expect(command).toBeTruthy()
+  const output = execFileSync(process.execPath, [command[1], '--base', 'HEAD', '--head', 'HEAD'], { cwd: root, encoding: 'utf8' })
+  expect(output.trim().split('\n')).toEqual([
+    'parts=["test:1/2","test:2/2","sdk"]', 'modules=false', 'windows=false', 'elemod=false', 'logger=false',
+  ])
 })

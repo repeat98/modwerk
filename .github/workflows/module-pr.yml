@@ -35,7 +35,7 @@ jobs:
       - id: scope
         env:
           OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
-        run: node scripts/change-scope.mjs --pr --base "$OCTAMOD_PR_BASE" --head HEAD >> "$GITHUB_OUTPUT"
+        run: node scripts/pr-check-plan.mjs --base "$OCTAMOD_PR_BASE" --head HEAD >> "$GITHUB_OUTPUT"
   describe:
     if: github.base_ref == 'main'
     runs-on: ubuntu-24.04
