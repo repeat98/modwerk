@@ -20,3 +20,24 @@ mw_link_router:
         lea     16(%sp), %sp
         lea     SYSEX_TABLE, %a3        | the instruction the site replaced
         rts
+
+| ---- SETTINGS > REMOTE CTRL's label: a std::function returning a std::string --------
+| The string to build is at a0; d0 returns a0.
+        .globl  mw_link_row_label
+mw_link_row_label:
+        link    %a6, #-4
+        lea     -8(%sp), %sp            | ColdFire's movem takes (An) only
+        movem.l %d2/%a2, (%sp)
+        move.l  %a0, %d2
+        jsr     mw_link_row_text        | d0 = the text, as an integer
+        movea.l %d0, %a2
+        pea     -1(%a6)                 | the allocator, unused
+        move.l  %a2, -(%sp)
+        move.l  %d2, -(%sp)
+        jsr     FW_STR_NEW              | stock (string, text, allocator), from the recipe
+        lea     12(%sp), %sp
+        move.l  %d2, %d0
+        movea.l %d2, %a0
+        movem.l (%sp), %d2/%a2
+        unlk    %a6
+        rts

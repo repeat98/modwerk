@@ -5,6 +5,11 @@
     dn2_link.py ident                # link version, messages received and dropped, ticks
     dn2_link.py mem 0x47f00000 64    # up to 128 bytes of DDR or SRAM, as hex
     dn2_link.py screen [--png F]     # the frame on the screen, as text (and a PNG), read through mem
+    dn2_link.py press KEY [KEY...]   # press and let go, one after the other (FUNC, PLAY, STOP, TRIG1-16 or an id)
+    dn2_link.py hold KEY / let KEY   # press, or let go of, one key (FUNC + TRIG: hold FUNC, press TRIG1, let FUNC)
+    dn2_link.py turn ENC DELTA       # an encoder (A-H, LEVEL) by DELTA steps
+    dn2_link.py release / disarm     # let go of every key the link holds / and turn the arm off
+Keys and turns need SETTINGS > REMOTE CTRL on (it is at every boot); a person at the panel stops them for 3 s.
 
 Needs a development base on the unit (npm run machine:base -- digitone-ii --dev) and mido with a MIDI backend.
 The wire format is the Analog Rytm MKII link's (sdk/machines/analog-rytm-mkii/LINK.md)."""
@@ -16,8 +21,13 @@ import time
 import zlib
 
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
-CMD = {'ident': 0x01, 'mem': 0x21}
-STATUS = {0: 'ok', 2: 'bad request', 4: 'out of range'}
+CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'mem': 0x21}
+STATUS = {0: 'ok', 1: 'not armed (SETTINGS > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range',
+          5: 'a person is at the unit'}
+# Panel key ids and encoders as stock's messages carry them (OS 1.12, seen on a unit).
+KEYS = {'FUNC': 0x11, 'PLAY': 0x14, 'STOP': 0x15, **{'TRIG%d' % (i + 1): 0x19 + i for i in range(16)}}
+ENCODERS = {**{chr(ord('A') + i): i + 1 for i in range(8)}, 'LEVEL': 9}
+DOWN, RELEASE = 0x01, 0x10
 
 
 def u32(v):
@@ -109,6 +119,17 @@ def screen(port):
     return b''.join(mem(front + at, 128, port) for at in range(0, FRAME_BYTES, 128))
 
 
+def ok(name, *values, port):
+    _, _, status, p = ask(name, *values, port=port)
+    if status:
+        sys.exit('%s: %s' % (name, STATUS.get(status, str(status))))
+    return p
+
+
+def key_id(name):
+    return KEYS[name.upper()] if name.upper() in KEYS else int(name, 0)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--port', default='Digitone II')
@@ -117,6 +138,13 @@ def main():
     mem = sub.add_parser('mem')
     mem.add_argument('addr', type=lambda s: int(s, 0))
     mem.add_argument('n', type=int)
+    for name in ('press', 'hold', 'let'):
+        sub.add_parser(name).add_argument('keys', nargs='+')
+    turn = sub.add_parser('turn')
+    turn.add_argument('enc')
+    turn.add_argument('delta', type=int)
+    sub.add_parser('release')
+    sub.add_parser('disarm')
     shot = sub.add_parser('screen')
     shot.add_argument('--png', help='also write the frame as a PNG here')
     a = parser.parse_args()
@@ -126,11 +154,34 @@ def main():
         if a.png:
             open(a.png, 'wb').write(png(rows))
         return
+    if a.cmd in ('press', 'hold', 'let'):
+        for name in a.keys:
+            if a.cmd != 'let':
+                ok('key', key_id(name), DOWN, port=a.port)
+            if a.cmd != 'hold':
+                time.sleep(0.08)
+                ok('key', key_id(name), RELEASE, port=a.port)
+            time.sleep(0.15)
+        return
+    if a.cmd == 'turn':
+        enc = ENCODERS[a.enc.upper()] if a.enc.upper() in ENCODERS else int(a.enc, 0)
+        step = 1 if a.delta > 0 else -1
+        for _ in range(abs(a.delta)):
+            ok('enc', enc, step & 0xffffffff, port=a.port)
+            time.sleep(0.06)
+        return
+    if a.cmd in ('release', 'disarm'):
+        ok(a.cmd, port=a.port)
+        return
     if a.cmd == 'ident':
         _, _, status, p = ask('ident', port=a.port)
         if status:
             sys.exit('refused: ' + STATUS.get(status, str(status)))
-        print('link %d, received %d, dropped %d, ticks %d' % tuple(get32(p, 5 * i) for i in range(4)))
+        v = [get32(p, 5 * i) for i in range(len(p) // 5)]
+        line = 'link %d, received %d, dropped %d, ticks %d' % tuple(v[:4])
+        if len(v) >= 9:
+            line += ', armed %d, person %d, presses by a person %d, posted %d, refused %d' % tuple(v[4:9])
+        print(line)
     else:
         _, _, status, p = ask('mem', a.addr, a.n, port=a.port)
         if status:
