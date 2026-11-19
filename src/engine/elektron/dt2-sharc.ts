@@ -287,12 +287,21 @@ export async function planDt2MachinePlayers(
 const RECEIVE_RESUME = (RECEIVE_ADDRESS - 0x28000000) / 2 + 3
 const TAIL = 0x804
 export const DT2_MACHINE_WIRE = 16, DT2_MACHINE_WIRE_MAGIC = 0x4d4b0001
-const STEP_WORDS = 17 // the 1X step, then tracks 1-16 at their speeds
+const STEP_WORDS = 18 // the 1X step, tracks 1-16 at their speeds, then the view track (16: none)
+const VIEW_NONE = 16
+// The machine view: 32 words a machine player writes about the view track's voice (its own magic first, then the
+// track it describes), copied every transfer into words DT2_MACHINE_VIEW.. of both reply records the transmit DMA
+// alternates between. The stock OS changes only words 0, 5 and 679 of a record (emulator reply watch). The ColdFire
+// receives a record as 16-bit units, each word low half first (machine-frame.c).
+export const DT2_MACHINE_VIEW = 600
+const VIEW_WORDS = 32, VIEW_AT = 26, VIEW_SAVE = VIEW_AT + VIEW_WORDS, L1_SAVE = VIEW_SAVE + 2
+const REPLY_RECORDS = [0x266220, 0x267220] // L1 byte addresses
 
 /** A plan fragment for the base's machine wire: at the receive site, a receiver at `codeAddress` (free L2) copies the
  * step words the ColdFire base writes into the frame tail after its magic (DT2_MACHINE_WIRE: the samples per sixteenth
- * step at 1X, then each track's at its speed) to the words from `dataAddress + 0x20`, where machine players read them
- * (6,000, 120 BPM, until the first frame), then replays the displaced instruction and resumes. It keeps every
+ * step at 1X, each track's at its speed, then the view track) to the words from `dataAddress + 0x20`, where machine
+ * players read them (6,000, 120 BPM, and no view track until the first frame), copies the machine view from
+ * `dataAddress + 4 * 26` into both reply records, then replays the displaced instruction and resumes. It keeps every
  * register it touches. */
 export async function planDt2MachineWire(stock: Uint8Array, codeAddress: number, dataAddress: number): Promise<Dt2RenderPlan> {
   if (await sha256Hex(stock) !== STOCK_SECTION) throw new Error('Unsupported Digitakt II SHARC image')
@@ -308,7 +317,7 @@ export async function planDt2MachineWire(stock: Uint8Array, codeAddress: number,
   DM(${save + 5}) = STKYX
   DM(${save + 6}) = I1
   DM(${save + 7}) = L0
-  DM(${save + 25}) = L1
+  DM(${save + L1_SAVE}) = L1
   L0 = 0
   L1 = 0
   R0 = I3
@@ -329,6 +338,19 @@ export async function planDt2MachineWire(stock: Uint8Array, codeAddress: number,
   NOP
 copied: DM(I1, M0) = R0
 absent:
+  DM(${save + VIEW_SAVE}) = I2
+  DM(${save + VIEW_SAVE + 1}) = L2
+  L2 = 0
+  I1 = ${dataAddress + 4 * VIEW_AT}
+  I0 = ${REPLY_RECORDS[0] + 4 * DT2_MACHINE_VIEW}
+  I2 = ${REPLY_RECORDS[1] + 4 * DT2_MACHINE_VIEW}
+  M0 = 1
+  LCNTR = ${VIEW_WORDS}, DO viewed UNTIL LCE
+  R0 = DM(I1, M0)
+  DM(I0, M0) = R0
+viewed: DM(I2, M0) = R0
+  I2 = DM(${save + VIEW_SAVE})
+  L2 = DM(${save + VIEW_SAVE + 1})
   R0 = DM(${save})
   R1 = DM(${save + 1})
   I0 = DM(${save + 2})
@@ -337,14 +359,17 @@ absent:
   STKYX = DM(${save + 5})
   I1 = DM(${save + 6})
   L0 = DM(${save + 7})
-  L1 = DM(${save + 25})
+  L1 = DM(${save + L1_SAVE})
 displaced: NOP
   JUMP ${RECEIVE_RESUME}
 `)
   const code = blocks[0].bytes
   code.set(displaced, (symbols.get('displaced')! - programCounter(codeAddress)) * 2)
-  const data = new Uint8Array(4 * (8 + STEP_WORDS + 1))
-  for (let word = 0; word < STEP_WORDS; word++) new DataView(data.buffer).setUint32(4 * (8 + word), 6000, true)
+  const data = new Uint8Array(4 * (L1_SAVE + 1))
+  for (let word = 0; word < STEP_WORDS - 1; word++) new DataView(data.buffer).setUint32(4 * (8 + word), 6000, true)
+  new DataView(data.buffer).setUint32(4 * (8 + STEP_WORDS - 1), VIEW_NONE, true)
+  // The view block until a player writes it: no player's magic, a recognisable pattern.
+  for (let word = 0; word < VIEW_WORDS; word++) new DataView(data.buffer).setUint32(4 * (VIEW_AT + word), 0x4d4b5600 + word, true)
   const allocations = [{ address: codeAddress, bytes: code }, { address: dataAddress, bytes: data }]
   checkAllocations(allocations)
   return { receiveInstruction: instruction(0x063e, programCounter(codeAddress)), allocations }

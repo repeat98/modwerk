@@ -6,9 +6,10 @@
  * sidechain prototype): DT2_MACHINE_WIRE_MAGIC, then the samples per sixteenth step at the pattern's tempo. The tempo
  * is the one the sequencer uses: with patterns as its source (seq-note-bridge.c's rule), the current pattern's word at
  * +0x1db70, in BPM * 120 (14,400 for 120 BPM; the OS points its active tempo there, 0x400d7f4c). Otherwise, or with a
- * value out of range, the last tempo stays. Then sixteen words: each track's step at its speed. The base's receiver
- * on the sound chip copies the seventeen step words where machine players read them (DT2_BASE_SHARC.stepSamples in
- * the builder: the 1X step, then tracks 1-16).
+ * value out of range, the last tempo stays. Then sixteen words: each track's step at its speed, and the view track a
+ * module's page set. The base's receiver on the sound chip copies these eighteen words where machine players read them
+ * (DT2_BASE_SHARC.stepSamples in the builder: the 1X step, tracks 1-16, the view track), and puts the machine view a
+ * player posted into its reply, which comes back here with the next transfer.
  */
 #include <stdint.h>
 #include <mk2/machines.h>
@@ -32,7 +33,12 @@
 #define DSP_QUEUE 0x400cd48cu              /* the transfer's halfword queue */
 #define FIRST_TAIL_HALF 0x402u
 
+#define REPLY_VIEW 600u                    /* the reply word where the receiver puts the machine view */
+
 uint32_t core_machine_samples_per_step = 6000; /* 120 BPM until a pattern's tempo is read */
+volatile uint32_t core_machine_view_track = DT2_MACHINE_VIEW_NONE;
+volatile uint32_t core_machine_view[DT2_MACHINE_VIEW_WORDS];
+volatile uint32_t core_machine_sample_views; /* counted by machines-entry.s's core_machine_sample_view_entry */
 
 static __attribute__((noinline)) void put(volatile uint16_t *halves, unsigned int word, uint32_t value)
 {
@@ -72,5 +78,15 @@ void core_machine_frame(unsigned int data_bytes, const void *data, unsigned int 
             }
         }
         put(tail, DT2_MACHINE_WIRE + 2 + track, core_machine_samples_per_step * SPEED_PULSES[speed] / SPEED_PULSES[SPEED_1X]);
+    }
+    const uint32_t view_track = core_machine_view_track;
+    put(tail, DT2_MACHINE_WIRE + 18, view_track < TRACKS ? view_track : DT2_MACHINE_VIEW_NONE);
+    /* The machine view the sound chip's receiver put in the last reply (words 600-631): the reply arrives as 16-bit
+     * units, each sound-chip word low half first. */
+    if (reply) {
+        const volatile uint16_t *halves = (const volatile uint16_t *)reply + 2 * REPLY_VIEW;
+        for (unsigned int k = 0; k < DT2_MACHINE_VIEW_WORDS; ++k) {
+            core_machine_view[k] = (uint32_t)halves[2 * k + 1] << 16 | halves[2 * k];
+        }
     }
 }

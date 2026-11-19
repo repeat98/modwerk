@@ -132,7 +132,11 @@ core_machine_kit_type_entry:
 /* The SRC view's machine type (0x4005f6bc, called at 0x4001702c, 0x40017736 and 0x40017bd2): the view opens
  * its second page (SAMPLE's sample view and the like) by the type it answers and none for a type above 6, so
  * an added type answers as the stock type it stands for there. */
-        .globl  core_machine_view_type_entry
+        .globl  core_machine_view_type_entry, core_machine_sample_view_entry, core_machine_sample_views
+/* 0x40017736 asks while the sample view draws (every frame composed with the second page showing, and in no other
+ * frame: emulator call counts, MACHINES.md), so it also counts the frames a module's ev_draw handler can draw over. */
+core_machine_sample_view_entry:
+        addq.l  #1,core_machine_sample_views
 core_machine_view_type_entry:
         move.l  4(%sp),-(%sp)
         jsr     0x4005f6bc

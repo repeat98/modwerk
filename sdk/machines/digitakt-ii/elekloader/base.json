@@ -235,7 +235,7 @@
         "len": 6,
         "stockSha256": "73d543c9d8084fc2debabd899a5bc3a7f4907dd2f070831e0ea5b8a61800905c",
         "op": "jsr",
-        "target": "core_machine_view_type_entry"
+        "target": "core_machine_sample_view_entry"
       },
       {
         "addr": "0x40017bd2",

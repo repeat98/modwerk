@@ -47,10 +47,11 @@ export type Dt2SharcPart = { module: string; allocations: { address: number; byt
 
 // L2 the base keeps for its own machine parts: the selector table, the player dispatcher and its data, and the
 // machine wire's receiver and data. A player reads the samples per sixteenth step at `stepSamples`: the 1X step, then
-// tracks 1-16 at their speeds (17 words).
+// tracks 1-16 at their speeds (17 words), then `viewTrack` (0-15, 16 for none): the track whose voice a player posts
+// in the 32 words at `view` (its own magic first, then that track), which reach the ColdFire as core_machine_view.
 export const DT2_BASE_SHARC = {
   selectors: 0x200c0100, dispatcher: 0x200c1000, dispatcherData: 0x200c2000, wire: 0x200c2800, wireData: 0x200c2c00,
-  stepSamples: 0x200c2c20, end: 0x200c3000,
+  stepSamples: 0x200c2c20, viewTrack: 0x200c2c64, view: 0x200c2c68, end: 0x200c3000,
 }
 
 const base64 = (text: string) => Uint8Array.from(atob(text), c => c.charCodeAt(0))
