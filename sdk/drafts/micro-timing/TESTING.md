@@ -46,9 +46,26 @@ The same run then sent twenty LEVEL steps with the MIDI button on, ten while pla
 
 19 November 2026, MKII, OS 1.40C. A development twin, identity `878307834ad3c23a9f87eea71250a7f104db7fdd5c32592cba6ddd816e61f718`, was RAM-booted and not flashed. `npm run device:price` measured package `f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292` for 8 seconds, at rest, with LEVEL not turning. The pattern was whatever the unit came up on. The frame interrupt's share did not change (`resources.cpuPrice` 0.0). The CPU meter read +0.9 points; that is not the price. No frames were skipped. The price command was stopped before it printed a rollback, `recover` found the trial and rolled it back, and the inventory was empty. Nothing was kept.
 
+## Memory
+
+19 November 2026. Package `f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292`, 2,926 bytes, ABI 7. Its header says the linked image is 1,076 bytes and the bss is 2,048. The image's own SHA-256 is `08b92351ea2097a9b26578eeebe72968b22df25c650f2a60fbcdd816bc103fbc`. Disassembled with `m68k-elf-objdump -D -b binary -m m68k`, the image is 1,030 bytes of code ending at the `rts` before the label, then `MICRO T` and its zero (8 bytes), the 16-byte footer buffer, the centre `0` and its zero (2 bytes), and the 20-byte name table. 1,030 + 8 + 16 + 2 + 20 = 1,076. The 2,048 bss bytes are `mt_table`. The image length is a multiple of 4, so the table's alignment adds nothing. Nothing else is allocated: no heap, no DSP memory.
+
+The dearest stack use is a LEVEL rewrite. `lea %sp@(-44),%sp` at image `0x14` holds the saved registers, `mt_rewrite` pushes 4 bytes across its call into `mt_steps`, and `mt_steps` pushes 16 bytes across the jump to the stock writer at `0x4002d640`. That is 64 bytes of this module, on the UI task's stack. The footer path pushes 36, and the lane path pushes 24. The stock routines under those jumps are not measured. No hardware canary was set.
+
+| region | bytes |
+|---|---|
+| ColdFire code | 1030 |
+| `MICRO T` label | 8 |
+| footer buffer | 16 |
+| centre `0` | 2 |
+| name table | 20 |
+| remembered row (`mt_table`, bss) | 2048 |
+| LEVEL rewrite on the UI stack | 64 |
+| total, one instance | 3188 |
+
 ## Resources
 
-Unmeasured. One ColdFire unit, thirteen detours, one LEVEL pointer and the row-index pokes. No DSP memory.
+The byte total is the Memory section. One ColdFire unit, the menu detours, one LEVEL pointer and the row-index pokes. No DSP memory.
 
 ## Remembered row
 
@@ -56,7 +73,7 @@ From 0.1.1 the 2048 remembered bytes are `mt_table` in this unit. The loader cle
 
 Host assemble, 18 November 2026, WSL `m68k-elf-as -mcpu=5475` of this `microtiming.s`: text 1076, data 0, bss 2048. `mt_table` is a bss symbol. That is the object file only.
 
-Development package of commit `dbc0652b4`, built 18 November 2026 with WSL `python3 -B scripts/module-dev-package.py micro-timing` and `m68k-elf` binutils, written outside the checkout: 2,926 bytes, SHA-256 `f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292`, module `36200ffc`, 1,076 bytes of code and data, 2,048 of bss, 2 relocations, 39 stock-code sites. The bss size is the remembered table. `ot_emu` was not booted.
+Development package of commit `dbc0652b4`, built 18 November 2026 with WSL `python3 -B scripts/module-dev-package.py micro-timing` and `m68k-elf` binutils, written outside the checkout: 2,926 bytes, SHA-256 `f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292`, module `36200ffc`, 1,076 bytes of code and data, 2,048 of bss, 2 relocations, 39 stock-code sites. The bss size is the remembered table. The image split is in Memory. The emulator runs are in Performance and OT UI capture evidence.
 
 ## Keep and power cycle
 
@@ -72,10 +89,10 @@ Reported on the private MICRO T9 card, as above, and for this package the power-
 
 ## OT UI capture evidence
 
-Headless `ot_emu` (SHA-256 `54cc5664b893b68dd12fc52678d8cd8b0c11dea7ca907b804b606b89842e46f0`), MKII panel, `--dsp --frame`, empty scratch card, stopped transport, 3 November 2026. Private MAIN OS SHA-256 `2388ec30162fa38aae071704c6f65f6312b96c879e3175003a1ba17276b884cf`, file written `2026-11-03T00:21:03Z`, before commit `13d33940` (the signed lower clamp). That image is not in this folder.
+19 November 2026. Headless `ot_emu` (SHA-256 `6920f2385726304a11a699d709d0565afcae8e0a8d5a5ef88546b805d28f1aa7`), MKII panel, `--dsp --dsp-rt --frame`, stopped transport. Development twin `MAIN.raw`, SHA-256 `5e359bf64919555125f0225744b5bb886a5661bed0e00279065b7ea38f99597b`. Package `f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292` installed over the emulator USB link. The trial was not kept. A local card was mounted and is not in this folder. Palette on 240, off 24, scaled by 6. The earlier pictures, from a private image built before commit `13d33940`, are replaced.
 
-Plan, recorded in `media/capture.json`: dismiss the date prompt, press REC, FUNC+BANK, DOWN onto MICRO T, capture `media/ot-micro-t.png`, then three DOWN presses and capture `media/ot-rec-trg.png`. Key interval 150 ms. Palette on 240, off 24, scaled by 6.
+Plan, recorded in `media/capture.json`: YES, REC, FUNC+BANK, DOWN onto MICRO T, capture `media/ot-micro-t.png`, one LEVEL +1, capture `media/ot-micro-t-step.png`, MIDI, capture `media/ot-micro-t-midi.png`, MIDI again, three DOWN presses, capture `media/ot-rec-trg.png`.
 
-Observed on those frames: MICRO T is highlighted under TRIGS, the lane cursor sits on the centre mark, and the footer reads `MT1:ON GRID`. After the scroll, TRIGS is off the top and REC.TRG is the bottom row.
+Observed on those frames: MICRO T is highlighted under TRIGS, the cursor sits on the centre mark, and the footer reads `MT1:ON GRID`. After one LEVEL step the cursor is one mark to the right and the footer reads `MT1:+1/384`. The remembered byte moved from 0 to 1. MIDI changes the title to MIDI TRIG EDIT and hides SLIDE; LEVEL was not turned again, so the footer stays `MT1:+1/384`. After the scroll, TRIGS is off the top and REC.TRG is the bottom row.
 
-Not captured: a LEVEL turn (offset fraction), the MIDI button, audio and MIDI trig pages, and any frame of the source at `13d33940`. Never commit firmware, dumps or cards.
+Not captured: the audio or MIDI trig pages, and any frame on the unit. This is not a hardware result. Never commit firmware, dumps or cards.
