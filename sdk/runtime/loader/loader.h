@@ -180,6 +180,10 @@ unsigned modwerk_runtime_list(uint8_t *out, unsigned first, unsigned most); /* I
 enum runtime_refusal modwerk_runtime_refusal(void);
 void modwerk_runtime_refused(enum runtime_refusal why); /* a machine check that refuses before the loader (Octatrack modset.c) */
 unsigned modwerk_runtime_refused_event(void);         /* after RUNTIME_EVENT: that event's hook index */
+/* Which admission check refused the last prepare, so one refusal code from several checks can be told apart
+ * (RUNTIME_MEMORY: the pool, a claim meeting the machine's buffers, or the DSP's limits). None for every other refusal. */
+enum runtime_check { RUNTIME_CHECK_NONE, RUNTIME_CHECK_POOL, RUNTIME_CHECK_CLAIMS, RUNTIME_CHECK_METADATA, RUNTIME_CHECK_DSP };
+enum runtime_check modwerk_runtime_refused_check(void);
 #if RUNTIME_SITE_EVENTS
 /* Each site event's handlers in (order, module id) order, then 0: the base's dispatch (runtime_events.s,
  * modwerk_events_code up to modwerk_events_code_end) walks them. Rewritten masked, only while no paused
