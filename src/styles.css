@@ -1275,12 +1275,6 @@ h1 { font-size: 28px; }
 .library-selection-device p, .library-selection-device ul { margin: 6px 0 0; color: var(--text-secondary); }
 .library-selection-device ul { padding-inline-start: 17px; color: #f0c792; }
 .library-selection-device li + li { margin-top: 4px; }
-@media (max-width: 600px) {
-  .library-selection { margin: 0 16px 8px; }
-  .library-selection summary { min-height: 44px; padding-block: 11px; cursor: pointer; }
-  .library-selection summary > span { margin-inline-start: 8px; color: #f0c792; }
-  .library-selection-device > a { min-height: 44px; }
-}
 
 .firmware-help { margin-top: 16px; font-size: 12px; line-height: 1.7; }
 .firmware-help a { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); }
