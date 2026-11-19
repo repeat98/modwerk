@@ -5,6 +5,8 @@
  * it. SYNTHETIC: no card, file system, loader or module code is established here. */
 #include "sha256.c"
 #include "modset.c"
+uint32_t modwerk_runtime_free(uint32_t *largest) { if (largest) *largest = RUNTIME_POOL_BYTES; return RUNTIME_POOL_BYTES; }
+enum runtime_check modwerk_runtime_refused_check(void) { return RUNTIME_CHECK_NONE; }
 #include <setjmp.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,7 +16,7 @@ static unsigned failures;
 const uint8_t modwerk_base_digest[32] = {4, 5, 6};
 uint8_t modwerk_test_card_io[512];
 void modwerk_diag_set(void) {}
-void modwerk_diag_refused(uint32_t module, uint32_t refusal) { (void)module; (void)refusal; }
+void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint32_t largest, uint32_t check) { (void)module; (void)refusal; (void)used; (void)largest; (void)check; }
 enum runtime_refusal modwerk_runtime_refusal(void) { return RUNTIME_BUSY; }
 void modwerk_runtime_refused(enum runtime_refusal why) { (void)why; }
 
