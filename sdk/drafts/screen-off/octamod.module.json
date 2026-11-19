@@ -97,6 +97,15 @@
         "rationale": "One small ColdFire unit and 12 bytes of state.",
         "source": "screen_off.c"
       }
+    },
+    "cpuPrice": {
+      "value": 0.0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price",
+      "date": "2026-11-19",
+      "conditions": "MKII, OS 1.40C, development twin 878307834ad3c23a RAM-booted (no controller rows, not flashed). Package 14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c, built before this twin. One 8 s reading, pattern left as the unit came up, transport stopped beforehand, module installed and the blank off. Frame interrupt +0.0 points. The CPU meter read +1.7 and is not this price.",
+      "source": "TESTING.md"
     }
   },
   "tests": {

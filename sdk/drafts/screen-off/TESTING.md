@@ -52,6 +52,10 @@ The person at the unit then held UP and tapped NO. They report that the expected
 
 A later status answered the same line, `normal, generation 3, active 9993a6d3bd0f59c4…`, with tick word `65536` (`0x10000`) and refusals at 0. The inventory on that base named the modules that were already kept, and did not name `screen-off`: Mini Verb, Tape Echo, Euclid, Repitch, TapeHead, Air Chorus, Analog BD, FM Synth, Preview Vol, Play Modes, Mute Modes, Quant Live Rec, DirectJmp Kyoti, Arp Key Locks, beat-slicer, Slow LFO, Bar LED, tiempos, syntiz, Track Solo, Amiga, Kits. No SAVE, no flash, no power cycle, no Keep.
 
+## CPU price
+
+19 November 2026, MKII, OS 1.40C. A development twin, identity `878307834ad3c23a9f87eea71250a7f104db7fdd5c32592cba6ddd816e61f718`, was RAM-booted and not flashed. `npm run device:price` measured package `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c` for 8 seconds, at rest, with the blank off. The pattern was whatever the unit came up on. The frame interrupt's share did not change (`resources.cpuPrice` 0.0). The CPU meter read +1.7 points; that is not the price. No frames were skipped. The price command was stopped before it printed a rollback, `recover` found the trial and rolled it back, and the inventory was empty. Nothing was kept.
+
 ## Not tested
 
 - An MKI, and a card install. The MKII chord above is a report from the person at the unit, on 7 November and again on 16 November, both RAM trials of package `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`.
