@@ -120,6 +120,7 @@ const CardSetDownload = lazy(() => beta().then(module => ({ default: module.Card
 const OctatrackStatus = lazy(() => beta().then(module => ({ default: module.OctatrackStatus })))
 const OctatrackSidebarStatus = lazy(() => beta().then(module => ({ default: module.OctatrackSidebarStatus })))
 const OctatrackActivity = lazy(() => beta().then(module => ({ default: module.OctatrackActivity })))
+const OctatrackLoadWidget = lazy(() => beta().then(module => ({ default: module.OctatrackLoadWidget })))
 const BaseInstallDialog = lazy(() => beta().then(module => ({ default: module.BaseInstallDialog })))
 const PutBackModules = lazy(() => beta().then(module => ({ default: module.PutBackModules })))
 const OctatrackDiagnosticsCollector = lazy(() => import('./components/OctatrackDiagnostics').then(module => ({ default: module.OctatrackDiagnosticsCollector })))
@@ -556,7 +557,12 @@ export default function App() {
       {betaAccess && <Suspense fallback={null}><OwnerNoteGate key={session.user!.id} link={usbLink ?? null} enabled={!accountRoute && !faqRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route)} /></Suspense>}
       {import.meta.env.DEV && usbPreview === 'beta-note' && <Suspense fallback={null}><OwnerNotePreview /></Suspense>}
       <Suspense fallback={null}>
-      {usbLink && !hubRoute && !loadingTarget && <OctatrackActivity link={usbLink}/>}
+      {/* The sync pill and the live load share the corner; the load stays off Status, which shows it in full, and off the
+          forum, whose chat opens in the same corner. */}
+      {usbLink && <div className="octatrack-float">
+        {!hubRoute && !loadingTarget && <OctatrackActivity link={usbLink}/>}
+        {octatrackUi && !(hubRoute && hubView === 'status') && !forumRoute && <OctatrackLoadWidget link={usbLink}/>}
+      </div>}
       {openModule && (() => {
         // Page through the grid's order: the set's modules, then the ones leaving the unit.
         const order = [...selectedIds, ...(inventory?.moduleIds.filter(id => !selectedIds.includes(id)) ?? [])].filter(id => MODULES.some(item => item.id === id))
