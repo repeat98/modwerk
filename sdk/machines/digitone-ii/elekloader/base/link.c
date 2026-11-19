@@ -12,6 +12,7 @@
 //   release 0x12 -> lets go of every key the link holds, armed only
 //   mem     0x21 ADDR N -> up to 128 bytes of DDR (0x40000000-0x47ffffff) or SRAM (0x80000000-0x8000ffff)
 //   diag    0x22 -> the diagnostics log's address and size (read it with mem), frame interrupts and UI ticks so far
+//   freeze  0x23 N -> armed: the next UI tick stands still N frames (at most 15 s), audio goes on: a FREEZE test
 // Keys and turns go on the UI task's queue (0x4013747a, queue_put 0x40001896) as the panel's messages do, so the UI
 // loop plays them through the core's ev_key/ev_enc sites and stock: modules see them too. A key the link holds reads
 // as held to stock's is_key_held (0x4011fac4, which base.json points at mw_link_held). Arm: SETTINGS > REMOTE CTRL, ON
@@ -55,6 +56,7 @@
 #define CMD_RELEASE_ALL 0x12
 #define CMD_MEM 0x21
 #define CMD_DIAG 0x22                   // the diagnostics log (diag.c): its address and size, frames and ticks
+#define CMD_FREEZE_TEST 0x23            // armed: the next UI tick stands still N frames (diag.c), to see a FREEZE logged
 #define SLOTS 40                        // posted messages, reused in turn (more than PENDING)
 #define PENDING 32                      // posted events not yet seen at ev_key/ev_enc
 #define HUMAN_TICKS 60                  // about 3 s
@@ -147,6 +149,7 @@ static void send(uint8_t *end)
 
 extern const volatile void *mw_diag_log_at(void);
 extern uint32_t mw_diag_log_bytes(void), mw_diag_frames(void);
+extern volatile uint32_t mw_diag_test_freeze;
 
 // ---- arm, the person at the unit, the posted events ---------------------------
 static int armed = 1, human_ticks = -1, release_due;
@@ -303,6 +306,17 @@ static void COLD act(const uint8_t *m, int len)
         p = put32(p, mw_diag_frames());
         p = put32(p, ticks);
         send(p);
+        return;
+    case CMD_FREEZE_TEST:
+        if (!armed)
+            status = ST_NOT_ARMED;
+        else if (n < 5 || get32(m + HEADER) > 15u * 1500u)
+            status = ST_BAD;
+        else
+            mw_diag_test_freeze = get32(m + HEADER);
+        if (status != ST_OK)
+            refused_count++;
+        send(begin(seq, cmd, status));
         return;
     case CMD_DISARM:
         disarm();

@@ -10,6 +10,7 @@
     dn2_link.py turn ENC DELTA       # an encoder (A-H, LEVEL) by DELTA detents, up to 8 a message
     dn2_link.py release / disarm     # let go of every key the link holds / and turn the arm off
     dn2_link.py diag [--save F]      # the diagnostics log (the Octatrack's layout): where it is, and its bytes into F
+    dn2_link.py freeze SECONDS       # armed: the UI stands still that long (audio goes on), to test FREEZE logging
 Keys and turns need SETTINGS > REMOTE CTRL on (it is at every boot); a person at the panel stops them for 3 s.
 
 Needs a development base on the unit (npm run machine:base -- digitone-ii --dev) and mido with a MIDI backend.
@@ -22,7 +23,7 @@ import time
 import zlib
 
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
-CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'mem': 0x21, 'diag': 0x22}
+CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'mem': 0x21, 'diag': 0x22, 'freeze': 0x23}
 STATUS = {0: 'ok', 1: 'not armed (SETTINGS > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range',
           5: 'a person is at the unit'}
 # Panel key ids and encoders as stock's messages carry them (OS 1.12, seen on a unit).
@@ -142,9 +143,9 @@ def main():
     parser.add_argument('--port', default='Digitone II')
     sub = parser.add_subparsers(dest='cmd', required=True)
     sub.add_parser('ident')
-    mem = sub.add_parser('mem')
-    mem.add_argument('addr', type=lambda s: int(s, 0))
-    mem.add_argument('n', type=int)
+    memory = sub.add_parser('mem')
+    memory.add_argument('addr', type=lambda s: int(s, 0))
+    memory.add_argument('n', type=int)
     for name in ('press', 'hold', 'let'):
         sub.add_parser(name).add_argument('keys', nargs='+')
     turn = sub.add_parser('turn')
@@ -153,6 +154,7 @@ def main():
     sub.add_parser('release')
     sub.add_parser('disarm')
     sub.add_parser('keys')
+    sub.add_parser('freeze').add_argument('seconds', type=float)
     diag = sub.add_parser('diag')
     diag.add_argument('--save', help='write the log, read through mem, to this file')
     shot = sub.add_parser('screen')
@@ -163,6 +165,9 @@ def main():
         print(ascii_art(rows))
         if a.png:
             open(a.png, 'wb').write(png(rows))
+        return
+    if a.cmd == 'freeze':
+        ok('freeze', int(a.seconds * 1500), port=a.port)
         return
     if a.cmd == 'diag':
         p = ok('diag', port=a.port)

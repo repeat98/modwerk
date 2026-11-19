@@ -16,8 +16,8 @@
 #include <stdint.h>
 #include "diag.h"                       // the Octatrack's, byte for byte (sdk/tests/test_dn2_link.py checks it)
 
-#define FRAME_HZ FRAME_HZ_MEASURED          // frame interrupts a second (measured on a unit, base.json's cflags)
-#define TICK_HZ TICK_HZ_MEASURED            // UI ticks a second (the same)
+#define FRAME_HZ FRAME_HZ_MEASURED          // frame interrupts a second: 1,501.6 measured on a unit over 30 s, 48 kHz / 32
+                                            // (base.json's cflags); the UI tick ran 30.03 a second, one in 50 frames
 #define FREEZE_FRAMES (5u * FRAME_HZ)       // five seconds without a UI tick: longer than a project load
 #define WINDOW_FRAMES (300u * FRAME_HZ)     // a load window: five minutes
 
@@ -25,9 +25,19 @@ static struct diag_log mw_diag_log;          // .bss: cleared at every start
 static volatile uint8_t keys[16];
 static volatile uint32_t key_count;
 static volatile uint32_t frames, since_tick, window_ticks, window_gap, window_start;
-static uint32_t ticks, started;
+static uint32_t started;
 
 uint32_t mw_diag_frames(void) { return frames; }
+
+// The link's freeze test (development bases, armed): the next UI tick stands still this many frames while the frame
+// interrupt and audio go on, as the Octatrack's dev.c FREEZE TEST does, so a FREEZE incident can be seen end to end.
+volatile uint32_t mw_diag_test_freeze;
+static void test_freeze(void)
+{
+    uint32_t n = mw_diag_test_freeze, from = frames;
+    mw_diag_test_freeze = 0;
+    while (n && frames - from < n) {}
+}
 const volatile void *mw_diag_log_at(void) { return &mw_diag_log; }
 uint32_t mw_diag_log_bytes(void) { return sizeof mw_diag_log; }
 
@@ -99,9 +109,11 @@ static void start(volatile struct diag_log *l)
 void mw_diag_tick(void)
 {
     volatile struct diag_log *l = &mw_diag_log;
-    uint32_t stood = since_tick;
+    uint32_t stood;
+    test_freeze();
+    stood = since_tick;
     since_tick = 0;
-    ++ticks, ++window_ticks;
+    ++window_ticks;
     if (!started) {
         started = 1;
         start(l);
