@@ -41,7 +41,7 @@ MACHINE_TRUST_SOURCES = ('machine_admission.c', 'machine_admission.h',
     'table_admission.c', 'table_admission.h', 'table_declarations.c', 'table_declarations.h',
     'machine_contributors.c', 'machine_contributors.h',
     'sample_editor_actions.c', 'sample_editor_actions.h')
-SAMPLE_EDITOR_SOURCES = ('sample_editor_service.c', 'sample_editor_service.h',
+SAMPLE_EDITOR_SOURCES = ('sample_editor_service.c', 'sample_editor_service.h', 'sample_editor_snap.h',
     'sample_editor_board.c', 'sample_editor_board.h', 'sample_editor_menu.c', 'sample_editor_hooks.s')
 RETIREMENT_SOURCES = tuple('analog-bd-parts/' + n for n in ('analog_bd_part_restore.c', 'analog_bd_part_restore.h',
                                                           'analog_bd_part_board.c', 'analog_bd_part_board.h'))
@@ -2209,7 +2209,9 @@ modwerk_retained_end:
         recipe['cflags'].append('-DMODWERK_SAMPLE_EDITOR')
         recipe['sources'].append('sample_editor_hooks.s')
         recipe['subscribe'] += [dict(event='ev_tick', fn='mw_sample_ui_tick', order=89),
-                                dict(event='ev_key', fn='mw_sample_ui_key', order=87)]
+                                dict(event='ev_key', fn='mw_sample_ui_key', order=87),
+                                dict(event='ev_enc', fn='mw_sample_ui_enc', order=87),
+                                dict(event='ev_key', fn='mw_sample_ui_shortcut_key', order=91)]
     if args.part_menu:  # part_menu.c: the two-column Part Edit window, over the popup and the modules' drawing
         recipe['sources'].append('part_menu.s')
         recipe['subscribe'] += [dict(event='ev_key', fn='mw_part_menu_key', order=89),
