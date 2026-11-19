@@ -24,6 +24,9 @@ One variant, `plain`: none of the Digitakt II base's sequencer and project addit
 are not found yet. No DSP bridge either: the base links mods for the ColdFire only, and Modwerk's linker refuses a mod
 that brings DSP code.
 
+A development base (`--dev`) also carries the read-only development link ([LINK.md](../LINK.md)): `base/link.c` and
+`link.s`, at stock's SysEx router.
+
 ## Build it
 
 ```sh

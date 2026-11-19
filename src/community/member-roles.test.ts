@@ -93,6 +93,7 @@ describe('member roles', () => {
   }))
 
   it('shows Owner and Developer beside posts, including developers by confirmed module claim', async () => {
+    expect(contributionRoles([42],new Set([42]),[{ id:'digitone',deviceReviewers:[42] }])).toEqual({roles:['device-reviewer','maintainer'],reviewDevices:['digitone']})
     const f = await fixture(), maker = await f.member('maker'), owner = await f.member('ownername'), plain = await f.member('plain')
     f.db.prepare("UPDATE users SET role='owner' WHERE id=?").run(owner.id)
     const author = communityModule('miniverb')!.author
@@ -118,7 +119,11 @@ describe('member roles', () => {
     const profile = async (name: string) => (await (await f.call('/forum/profiles/' + name)).json()) as { role: string; threads: number; likesReceived: number; reports: number }
     expect(await profile('alice')).toMatchObject({ role: 'user', threads: 1, likesReceived: 1, reports: 1 })
     expect((await profile('ownername')).role).toBe('owner')
+    expect(await profile('alice')).toMatchObject({ contributions:{roles:['contributor'],reviewDevices:[]} })
+    f.db.prepare("INSERT INTO auth_accounts(id,accountId,providerId,userId,createdAt,updatedAt) VALUES('authorLink','67785539','github',?,0,0)").run(alice.id)
+    expect(await profile('alice')).toMatchObject({ contributions:{roles:['modder'],reviewDevices:[]} })
     expect((await f.call('/admin/forum/roles/alice', 'PUT', { role: 'developer', reason: 'Builds modules' }, '', await f.admin())).status).toBe(200)
     expect((await profile('alice')).role).toBe('developer')
   })
 })
+import { contributionRoles } from '../../server/contribution-roles'

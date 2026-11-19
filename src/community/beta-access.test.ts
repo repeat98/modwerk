@@ -17,9 +17,9 @@ describe('beta tester class', () => {
     expect(hasBetaAccess({ ...emptySession, user: { ...member, verified: false, betaTester: true } })).toBe(false)
     expect(hasBetaAccess({ ...emptySession, admin: true, user: member })).toBe(true)
   })
-  it('keeps the developer badge alongside beta tester membership', () => {
+  it('keeps the modder badge alongside beta tester membership', () => {
     const html = renderToStaticMarkup(createElement(ForumRoleBadge, { role: 'developer', betaTester: true }))
-    expect(html).toContain('Developer'); expect(html).toContain('Beta tester')
+    expect(html).toContain('Modder'); expect(html).toContain('Beta tester')
   })
   it('shows no Beta badge on Air Chorus since its release to everyone', () => {
     const card = renderToStaticMarkup(createElement(ModuleCard, { module: MODULES.find(module => module.id === 'airwindows-chorus')!, selected: false, baseline: null, compared: false, canCompare: true, onToggle() {}, onCompare() {} }))

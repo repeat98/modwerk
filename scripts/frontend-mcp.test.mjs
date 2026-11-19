@@ -154,7 +154,7 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     const script = fileURLToPath(new URL('./frontend-mcp.mjs', import.meta.url))
     try {
       await expect(createFrontendTools({ dataDir: other })).rejects.toThrow('separate MCP process')
-      await expect(promisify(execFile)(process.execPath, [script, '--data-dir', folder])).rejects.toThrow('already locked')
+      await expect(promisify(execFile)(process.execPath, [script, '--data-dir', folder])).rejects.toThrow('in use by a running MCP server')
       const candidate = join(other, 'candidate'), workspace = join(other, 'state')
       await mkdir(candidate)
       // Candidate checkouts may predate the MCP itself. Read their real source,
