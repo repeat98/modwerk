@@ -11,6 +11,7 @@
 //   enc     0x11 N DELTA -> an encoder turn (1-8 A-H, 9 LEVEL), armed only
 //   release 0x12 -> lets go of every key the link holds, armed only
 //   mem     0x21 ADDR N -> up to 128 bytes of DDR (0x40000000-0x47ffffff) or SRAM (0x80000000-0x8000ffff)
+//   diag    0x22 -> the diagnostics log's address and size (read it with mem), frame interrupts and UI ticks so far
 // Keys and turns go on the UI task's queue (0x4013747a, queue_put 0x40001896) as the panel's messages do, so the UI
 // loop plays them through the core's ev_key/ev_enc sites and stock: modules see them too. A key the link holds reads
 // as held to stock's is_key_held (0x4011fac4, which base.json points at mw_link_held). Arm: SETTINGS > REMOTE CTRL, ON
@@ -53,6 +54,7 @@
 #define CMD_ENC 0x11
 #define CMD_RELEASE_ALL 0x12
 #define CMD_MEM 0x21
+#define CMD_DIAG 0x22                   // the diagnostics log (diag.c): its address and size, frames and ticks
 #define SLOTS 40                        // posted messages, reused in turn (more than PENDING)
 #define PENDING 32                      // posted events not yet seen at ev_key/ev_enc
 #define HUMAN_TICKS 60                  // about 3 s
@@ -142,6 +144,9 @@ static void send(uint8_t *end)
     *end++ = 0xF7;
     SYSEX_SEND(reply, end - reply, 0, USB);
 }
+
+extern const volatile void *mw_diag_log_at(void);
+extern uint32_t mw_diag_log_bytes(void), mw_diag_frames(void);
 
 // ---- arm, the person at the unit, the posted events ---------------------------
 static int armed = 1, human_ticks = -1, release_due;
@@ -289,6 +294,14 @@ static void COLD act(const uint8_t *m, int len)
         p = put32(p, human_count);
         p = put32(p, posted_count);
         p = put32(p, refused_count);
+        send(p);
+        return;
+    case CMD_DIAG:
+        p = begin(seq, cmd, ST_OK);
+        p = put32(p, (uint32_t)mw_diag_log_at());
+        p = put32(p, mw_diag_log_bytes());
+        p = put32(p, mw_diag_frames());
+        p = put32(p, ticks);
         send(p);
         return;
     case CMD_DISARM:

@@ -72,3 +72,10 @@ class Dn2Keys(unittest.TestCase):
         enc = link.request(3, "enc", 1, -8 & 0xffffffff)
         self.assertEqual(link.get32(enc, 13) & 0xff, 0xF8)
         self.assertTrue(all(b < 0x80 for b in enc[1:-1]))
+
+
+class Dn2Diagnostics(unittest.TestCase):
+    def test_the_log_layout_is_the_octatracks_byte_for_byte(self):
+        mine = (APP / "sdk/machines/digitone-ii/elekloader/base/diag.h").read_bytes()
+        self.assertEqual(mine, (APP / "sdk/machines/octatrack/elekloader/diag.h").read_bytes(),
+                         "diag.h is the Octatrack's: copy it again (the site reads both logs with device-log.ts)")

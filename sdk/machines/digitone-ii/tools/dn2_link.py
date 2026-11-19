@@ -9,6 +9,7 @@
     dn2_link.py hold KEY / let KEY   # press, or let go of, one key (FUNC + TRIG: hold FUNC, press TRIG1, let FUNC)
     dn2_link.py turn ENC DELTA       # an encoder (A-H, LEVEL) by DELTA detents, up to 8 a message
     dn2_link.py release / disarm     # let go of every key the link holds / and turn the arm off
+    dn2_link.py diag [--save F]      # the diagnostics log (the Octatrack's layout): where it is, and its bytes into F
 Keys and turns need SETTINGS > REMOTE CTRL on (it is at every boot); a person at the panel stops them for 3 s.
 
 Needs a development base on the unit (npm run machine:base -- digitone-ii --dev) and mido with a MIDI backend.
@@ -21,7 +22,7 @@ import time
 import zlib
 
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
-CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'mem': 0x21}
+CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'mem': 0x21, 'diag': 0x22}
 STATUS = {0: 'ok', 1: 'not armed (SETTINGS > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range',
           5: 'a person is at the unit'}
 # Panel key ids and encoders as stock's messages carry them (OS 1.12, seen on a unit).
@@ -152,6 +153,8 @@ def main():
     sub.add_parser('release')
     sub.add_parser('disarm')
     sub.add_parser('keys')
+    diag = sub.add_parser('diag')
+    diag.add_argument('--save', help='write the log, read through mem, to this file')
     shot = sub.add_parser('screen')
     shot.add_argument('--png', help='also write the frame as a PNG here')
     a = parser.parse_args()
@@ -160,6 +163,15 @@ def main():
         print(ascii_art(rows))
         if a.png:
             open(a.png, 'wb').write(png(rows))
+        return
+    if a.cmd == 'diag':
+        p = ok('diag', port=a.port)
+        at, size, frames, ticks = (get32(p, 5 * i) for i in range(4))
+        print('log at 0x%08x, %d bytes; %d frames, %d ticks' % (at, size, frames, ticks))
+        if a.save:
+            data = b''.join(mem(at + o, min(128, size - o), a.port) for o in range(0, size, 128))
+            open(a.save, 'wb').write(data)
+            print('saved %d bytes to %s' % (len(data), a.save))
         return
     if a.cmd == 'keys':
         print(' '.join(sorted(KEYS, key=KEYS.get)) + '; encoders ' + ' '.join(ENCODERS))
