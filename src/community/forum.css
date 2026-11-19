@@ -167,7 +167,7 @@
 .forum-role-badge { --role-color: #92bccd; color: var(--role-color); font-size: 10px; font-weight: 600; letter-spacing: .02em; padding: 2px 5px; border: 1px solid color-mix(in srgb, var(--role-color) 45%, transparent); border-radius: 4px; }
 .forum-role-badge[data-role="owner"] { --role-color: #e3c27c; }
 .forum-post time, .forum-post small { font-size: 11px; color: var(--muted); }
-.forum-post-body { overflow-wrap: anywhere; font-size: 15px; line-height: 1.85; color: #dedde8; }
+.forum-post-body { overflow-wrap: anywhere; font-size: 15px; line-height: var(--reading-line-height); color: #dedde8; }
 .forum-post-body p { white-space: pre-wrap; }
 .forum-post-body > * + * { margin-top: 16px; }
 .forum-post-body blockquote { margin: 16px 0; padding: 10px 16px; border-left: 3px solid #696587; border-radius: 0 6px 6px 0; background: #2b2933; color: #bdb7d0; white-space: pre-wrap; }
@@ -369,6 +369,10 @@
 .forum-page button:disabled, .account-page button:disabled { opacity: .5; }
 .forum-page a:focus-visible, .forum-page summary:focus-visible, .account-page a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .forum-page .forum-categories a:focus-visible { outline-offset: -3px; border-radius: 3px; }
+@media (min-width: 601px) {
+  .forum-post time, .forum-post small, .forum-meta, .forum-recent .forum-meta { font-size: .8125rem; }
+  .forum-post-action { font-size: .875rem; }
+}
 @media (max-width: 1100px) {
   .forum-compose-layout { grid-template-columns: minmax(0, 1fr); }
   .forum-compose-tips { display: none; }
@@ -603,9 +607,9 @@ li[data-status="error"] .forum-media-status { color: #f0a6ad; }
 .forum-post-body hr { border: 0; border-top: 1px solid var(--line); }
 @media (max-width: 1100px) {
   .forum-search-field { flex-basis: 100%; }
-  .forum-topic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .forum-topic-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
   .forum-activity-layout { grid-template-columns: minmax(0, 1fr); }
-  .forum-recent { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; }
+  .forum-recent { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 0 20px; }
   .forum-recent > .forum-list-heading, .forum-recent > .service-note { grid-column: 1 / -1; }
 }
 @media (max-width: 600px) {

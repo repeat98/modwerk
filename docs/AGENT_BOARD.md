@@ -15,7 +15,7 @@ A claim has a kind and a key, and each key has one holder at a time:
 | `machine-id` | machine and the id a manifest takes in `platform.claims` (`machine:<id>`); kits store it, so like a hook index it is never renumbered | `digitakt/10` |
 | `issue` | the number of a GitHub issue you are fixing; an issue stays open until the owner has checked the live site, so its claim, and the pull request linked to it, show others it is taken | `1624` |
 
-A claim also records the holder's GitHub login, the branch, the pull request once there is one, and a note of at most 120 characters of plain prose: the server refuses links, paths, addresses, hashes, code and anything token-like in it.
+A claim also records the holder's GitHub login, the branch, the pull request once there is one, and a note of at most 120 characters of plain prose: the server refuses links, paths, addresses, hashes, code and anything token-like in it, and quotes what it found.
 
 - **Lifetime.** Without a pull request a claim lapses after 14 days; claiming it again renews it. Once a pull request is linked it holds while that pull request is open. The Worker's hourly run links a claim to the pull request on its branch (`<holder>:<branch>`), open or merged since the claim was made, releases claims whose pull request was merged or closed and those of suspended accounts, and records why.
 - **Expiry reminders.** `npm run board -- inbox` and `board_inbox` list your active claims expiring within three days. `pr:ready` alerts you when any need review. Review them with the developer before renewing or releasing a claim.

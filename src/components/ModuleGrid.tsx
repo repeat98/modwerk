@@ -25,6 +25,10 @@ export function ModuleGrid({ ids, inventory, describe, onOpen, onRemove, onKeep,
   const leaving = inventory ? [...new Set([...inventory.moduleIds, ...inventory.offIds ?? []])].filter(id => !ids.includes(id)) : []
   const tiles = [...ids, ...leaving].map(id => ({ id, state: unitState(id, ids, inventory) }))
   // State and actions sit below the artwork, where they cannot cover its labels.
+  if (!tiles.length) return <div className="module-grid-empty">
+    <p>Choose what to add to this set from the library.</p>
+    <a className="button button-primary" href={add.href}><Icon name="plus" size={16} />{add.label}</a>
+  </div>
   const changing = tiles.some(tile => tile.state === 'load' || tile.state === 'leaving')
   const chip: Record<UnitState, string> = { on: changing ? 'Stays' : 'On it', load: 'Adds', leaving: 'Leaves', off: 'Off on it' }
   const tooMany = overLimitMessage(ids, 'sync', machine), full = atLimit(ids, machine)
