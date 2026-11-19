@@ -34,6 +34,23 @@ const library = {
 }
 
 describe('module library discovery', () => {
+  it('opens desktop category and type filters together and returns focus after choosing a type', async () => {
+    const onFamilyChange = vi.fn()
+    const categoryNav = createElement('nav', { 'aria-label': 'Module library' }, createElement('a', { href: '#effects' }, 'Effects'))
+    await act(() => root.render(createElement(MachineLibrary, { ...library, categoryNav, onFamilyChange })))
+    const toggle = container.querySelector<HTMLButtonElement>('.catalog-command')!
+    const panel = container.querySelector<HTMLDivElement>('.catalog-filter-panel')!
+    expect(panel.hidden).toBe(true)
+    await click(toggle)
+    expect(panel.hidden).toBe(false)
+    expect(document.activeElement).toBe(panel.querySelector('a'))
+    const type = panel.querySelector('select')!
+    await act(() => { type.value = 'Delay'; type.dispatchEvent(new Event('change', { bubbles: true })) })
+    expect(onFamilyChange).toHaveBeenCalledWith('Delay')
+    expect(panel.hidden).toBe(true)
+    expect(document.activeElement).toBe(toggle)
+  })
+
   it('uses the active machine’s configuration for the All machines build action', async () => {
     await act(() => root.render(createElement(MachineLibrary, { ...library, buildHref: '#digitakt/configuration', buildLabel: 'Build firmware for Digitakt' })))
     const build = container.querySelector('.discovery-actions a')!

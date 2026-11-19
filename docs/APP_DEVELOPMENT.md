@@ -158,7 +158,7 @@ WaveSurfer's full BSD notice is included by `npm run licenses:generate`.
 
 The Ko-fi page is configured in `src/config/support.ts`. Set it to an empty string to hide the support entry.
 
-A quiet “Support Octamod” entry with a small heart appears below the desktop sidebar’s privacy note and at the bottom of the mobile menu. It opens a personal note from the site maintainer, crediting the collaborative work of octabam, module authors and contributors, and explains that tips support site maintenance, module curation and community moderation. The visitor then chooses whether to open Ko-fi in a new tab. This site-support flow embeds no payment scripts and collects no donor information. Opening the dialog and clicking its Ko-fi button, or a bell entry that links to Ko-fi, are counted as site statistics like page views (see [STATISTICS.md](STATISTICS.md)); nothing about the tip itself reaches Modwerk.
+“Support Modwerk” appears under Resources in the desktop sidebar and in the mobile menu. Its “Contribute to Modwerk” dialog credits octabam and module authors, and links to Discord, the testing and bug-report forum, the code contribution guide and Ko-fi. Ko-fi opens in a new tab and handles the payment. Modwerk counts dialog opens and Ko-fi link clicks, including clicks from bell notifications, as site statistics. See [site statistics](STATISTICS.md).
 
 ## Module creator support
 
