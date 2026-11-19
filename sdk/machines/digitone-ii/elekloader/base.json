@@ -1,0 +1,175 @@
+{
+  "schema": 1,
+  "about": "Modwerk's Digitone II OS 1.12 base, built by npm run machine:base -- digitone-ii: the Digitakt II base's core-dt2 1.1 source (source names that folder) with the Digitone II's addresses and sites (recipe), and Digitone II copies of three of its files (copies: each names the core-dt2 file and SHA-256 it was made from, and the build refuses when that file has changed): mod.json for OS 1.12 without the .fast area, since SRAM is not qualified on this OS; store.s, whose kit load has its registers the other way round; and store.c, whose kit room is larger. The addresses are the ones core-dn2 0.3 (toonst's elekloader fork at 3d7c2e3, GPL-2.0-or-later) builds this source with, and its images ran on a unit (docs/verification/2026-11-18-digitone-ii-core-on-a-unit.md). One variant, plain: none of the Digitakt II base's sequencer and project additions, whose Digitone II sites are not found yet. The device is carried by Modwerk's builder (device.json). Every site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS.",
+  "pending": "No base-binding.json yet: the exact build has not run on a unit. Its identity and the profile's budget are recorded with that test, as the Digitakt II's were.",
+  "source": "digitakt-ii",
+  "core": "core-dt2",
+  "include": "sdk/machines/digitakt-ii/include",
+  "os": "1.12",
+  "toolchain": {
+    "cross": "m68k-elf-",
+    "gcc": "16.2.0",
+    "binutils": "2.47"
+  },
+  "variants": {
+    "plain": {
+      "add": false
+    }
+  },
+  "copies": [
+    {
+      "path": "core-dt2/mod.json",
+      "from": "core-dt2/mod.json",
+      "sha256": "c5de5851c1e01343f5287a27c3d2707e3b811b3003e5e6040d5ee7a69b01d9b1"
+    },
+    {
+      "path": "core-dt2/store.s",
+      "from": "core-dt2/store.s",
+      "sha256": "541a32f664c9a2554e26fb63c610189a4deb158528c5698b2946d0a56c6b51c0"
+    },
+    {
+      "path": "core-dt2/store.c",
+      "from": "core-dt2/store.c",
+      "sha256": "9bed2c3bceabfd7abf377d3f060061d02394fff367be7866aa166f2c271d4f9b"
+    }
+  ],
+  "recipe": {
+    "device": "digitone-mk2",
+    "defsym": {
+      "DRAWALL": "0x4011d60a",
+      "KEYDISP": "0x4002c5c8",
+      "ENCDISP": "0x4002c55c",
+      "OP_NEW": "0x40120544",
+      "ITEM_CTOR": "0x401173b8",
+      "MENU_ADD": "0x40116bee",
+      "FN_MGR": "0x4018de3e",
+      "SETTINGS_RET": "0x4009ff8e",
+      "NO_DTIM0": "1",
+      "VBR_FN": "0x400019b0",
+      "FW_TEXTBOX": "0x40115948",
+      "FW_FONT_MENU": "0x40294710",
+      "FW_INVALIDATE": "0x4011ca9a",
+      "FW_LED_SET": "0x4002c318",
+      "FW_STR_NEW": "0x401ceab8",
+      "MEMCPY": "0x40134770",
+      "FW_KITS": "0x4210d08c",
+      "KIT_SIZE": "0x5d71",
+      "KIT_PAD": "0x28af",
+      "KIT_ROOM": "337",
+      "PATTERN_OBJ": "0x446488d0",
+      "MODS_STOCK": "0x400db390",
+      "LEDS_CLEAR": "0x4002c3c6",
+      "FRAME_STRIDE": "101"
+    },
+    "sites": [
+      {
+        "addr": "0x40000538",
+        "len": 6,
+        "stockSha256": "f0c5fc0afd892b3ec3f8803e1d875a2a22c6bb4e2cb987adc582cf8dea48c28a",
+        "op": "jsr",
+        "target": "boot"
+      },
+      {
+        "addr": "0x4002e464",
+        "len": 6,
+        "stockSha256": "8abc5b3d8941b94f9ec93c348112bcaf09510582ab72977a407b9ce1e213a459",
+        "op": "jsr",
+        "target": "core_tick"
+      },
+      {
+        "addr": "0x4002e4ca",
+        "len": 6,
+        "stockSha256": "51e3665db347990c1500cab5b2766706e47605e08a3a01c721fc1958f75c27ab",
+        "op": "jsr",
+        "target": "core_draw"
+      },
+      {
+        "addr": "0x4002f20c",
+        "len": 6,
+        "stockSha256": "d1e1f5dd2afbbcebc50c89fdcf5fd704a0a26f28becdcada110ab0c2d14626fc",
+        "op": "jsr",
+        "target": "core_key"
+      },
+      {
+        "addr": "0x4002f256",
+        "len": 6,
+        "stockSha256": "786bc53e108e78a53f3bfc32fc57bd91569f6702c55a9566747386c873b91d4a",
+        "op": "jsr",
+        "target": "core_enc"
+      },
+      {
+        "addr": "0x4009ff88",
+        "len": 6,
+        "stockSha256": "c7589861366d298dd3e07f1f5ebce25db0435f9cad638eae321d68e7542f6c74",
+        "op": "jmp",
+        "target": "core_settings"
+      },
+      {
+        "addr": "0x400987a2",
+        "len": 6,
+        "stockSha256": "10552f30e94896a18c635b43b0f16452187a5e3db5b661ba3255c1ecb054fd50",
+        "op": "jmp",
+        "target": "core_personalize"
+      },
+      {
+        "addr": "0x40027196",
+        "len": 6,
+        "stockSha256": "8f4626d425f213c0f0f9f81054e40a51bad034eaa6b154d51fe969ae4a521a8d",
+        "op": "jsr",
+        "target": "core_frame"
+      },
+      {
+        "addr": "0x4002c87a",
+        "len": 6,
+        "stockSha256": "3988e55cba5c51c557dcb530885eba6f789018b4345baccd49ebce731fd6f68e",
+        "op": "jsr",
+        "target": "core_key_leds"
+      },
+      {
+        "addr": "0x400de0d4",
+        "len": 6,
+        "stockSha256": "1a4f590b6150643d45e52f347f5e32771feeeb47a764c2337fc4d6faefdfeb8f",
+        "op": "jsr",
+        "target": "core_kit_save"
+      },
+      {
+        "addr": "0x400ddddc",
+        "len": 6,
+        "stockSha256": "1a4f590b6150643d45e52f347f5e32771feeeb47a764c2337fc4d6faefdfeb8f",
+        "op": "jsr",
+        "target": "core_kit_load"
+      },
+      {
+        "addr": "0x400e18be",
+        "len": 6,
+        "stockSha256": "be28bf581aa32f87a3306f04738f1dbdb4b28489865cd0d88145466f2740333c",
+        "op": "jsr",
+        "target": "core_proj_save"
+      },
+      {
+        "addr": "0x400e1928",
+        "len": 6,
+        "stockSha256": "39d8feaa0cf09fbdc868baea4e44be238666cbfcbf350883559c99085034a789",
+        "op": "jsr",
+        "target": "core_proj_load"
+      },
+      {
+        "addr": "0x40134770",
+        "len": 12,
+        "stockSha256": "a48eab821488cf202e892b5cad063488c972824e57c3d851ab402463dc0f5657",
+        "op": "jmp",
+        "target": "core_memcpy"
+      }
+    ]
+  },
+  "reference": {
+    "file": "vendor/elekloader/catalog/core-1.0.elemod",
+    "sha256": "95303655a9358f581b485acb68b884b394a577f5d0b373f0a3e5957c8d0ca72c",
+    "keeps": [
+      "id",
+      "weak",
+      "requires",
+      "conflicts"
+    ]
+  }
+}
