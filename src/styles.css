@@ -2329,6 +2329,10 @@ button.signal-tile[aria-pressed="true"] > svg { fill: currentColor; }
   .library-page .library-subheading { gap: .375rem 1rem; flex-wrap: wrap; }
   .library-page .library-subheading > span:first-child, .library-page .library-subheading > .subtle { white-space: normal; overflow-wrap: anywhere; }
   .library-subheading, .module-card-heading > a { font-size: 1.0625rem; }
+  .module-library .module-card-heading { flex: 1; column-gap: 6px; }
+  .module-library .module-card-heading > a { flex-basis: 100%; font-size: .9375rem; overflow-wrap: anywhere; }
+  .module-library .card-credit { margin-top: 6px; }
+  .module-library .card-bottom { margin-block: 8px; }
   .library-subheading .subtle, .library-total, .card-credit, .card-proof { font-size: .8125rem; }
   .card-version { font-size: .75rem; }
   .detail-tabs { flex-wrap: wrap; gap: .25rem 1.25rem; }
