@@ -60,6 +60,17 @@ describe('reading a transcript', () => {
     expect(read.removed).toMatchObject({ toolOutputs: 1, thinking: 1, skipped: 1 })
   })
 
+  it('keeps a command the developer ran with ! and drops its output', () => {
+    const read = readClaudeTranscript([
+      line({ type: 'user', origin: { kind: 'human' }, timestamp: '2026-11-19T10:00:00.000Z', message: { role: 'user', content: '<bash-input>gh auth login</bash-input>' } }),
+      line({ type: 'user', origin: { kind: 'human' }, timestamp: '2026-11-19T10:00:01.000Z', message: { role: 'user', content: '<bash-stdout>! One-time code (ABCD-1234) copied to clipboard</bash-stdout><bash-stderr></bash-stderr>' } }),
+    ])
+    const session = prepareSession(read, '')
+    expect(session.entries.map(entry => entry.text)).toEqual(['! gh auth login'])
+    expect(JSON.stringify(session)).not.toMatch(/ABCD-1234|One-time/)
+    expect(session.removed.toolOutputs).toBe(2)
+  })
+
   it('names the folder Claude Code keeps a checkout\'s transcripts in', () => {
     expect(claudeProjectFolder('/home/jannik/modwerk')).toBe('-home-jannik-modwerk')
     expect(claudeProjectFolder('c:\\Users\\jannik.aßfalg\\Dev')).toBe('c--Users-jannik-a-falg-Dev')
@@ -80,6 +91,17 @@ describe('scrubbing', () => {
     expect(text).toContain('The token: expired, so I signed in again.')
     expect(text).toContain('~/modwerk/AGENTS.md')
     expect(removed.secrets).toBeGreaterThanOrEqual(6)
+  })
+
+  it('removes a sign-in\'s one-time device code an agent quotes, and leaves other ids alone', () => {
+    expect(scrubText('Paste the one-time code **WDJB-MJHT** on github.com/login/device.')).toBe('Paste the one-time code **[code removed]** on github.com/login/device.')
+    expect(scrubText('Your code: 7E2A-15FF')).toBe('Your code: [code removed]')
+    expect(scrubText('The MKII-1234 board and issue 1736-1737 stay.')).toBe('The MKII-1234 board and issue 1736-1737 stay.')
+  })
+
+  it('removes the developer\'s names as whole words in any script, and leaves longer words alone', () => {
+    const text = scrubText('Greta Šimek checked it. greta.simek wrote back, and Gretas review and Šimeková stay.', { names: ['Greta Šimek', 'Greta', 'Šimek', 'simek'] })
+    expect(text).toBe('[name] checked it. [name].[name] wrote back, and Gretas review and Šimeková stay.')
   })
 
   it('removes the home folder in the form Claude Code names its project folders', () => {
