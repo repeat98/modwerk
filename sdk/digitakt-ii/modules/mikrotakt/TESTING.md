@@ -18,4 +18,7 @@ Setup: a development base (test machine as type 7, standing for SAMPLE; base `d2
 | Knobs named (SIZE, POS, LEN, SPRD on C, E, F, G); SPRD read from knob G, at 0 (base `41a864e2`) | Plays, no halt; peak 0.0997, about 4 dB above SAMPLE: without spread the grains add in step, while the gain assumed they add out of step. Fixed in the next row. |
 | Gain between the in-step rule (no spread) and the out-of-step rule (an eighth of the spread and up) | SPRD at 0: peak 0.064, RMS about 0.04, as SAMPLE (0.063, 0.04). SPRD turned up: peak 0.052. Largest step 3.3% and 2.9% of the peak (no clicks). |
 
-Not tested: the other knobs (their grain roles are not decided), trig locks on SIZE, several Mikrotakt tracks at once, CPU load on a unit, other modules alongside it, saving and reloading a kit with Mikrotakt, hardware.
+| MODE on knob B (SAMPLE's play mode), base `140611` | Play mode REV: the player reads MODE 2 (REVERSE) and plays at SAMPLE's level (a steady test tone sounds the same reversed). REV.L: MODE 3 (HAZE), peak up to 0.082, about 2 dB above SAMPLE. FWD.L (STUTTER) not reached in the run. |
+| Tempo | The step word follows the pattern's tempo word: 7,058 samples per step in the coupled test project (102 BPM). Not checked by changing the tempo. |
+
+Not tested: STUTTER, a reversed recording heard reversed, (their grain roles are not decided), trig locks on SIZE, several Mikrotakt tracks at once, CPU load on a unit, other modules alongside it, saving and reloading a kit with Mikrotakt, hardware.
