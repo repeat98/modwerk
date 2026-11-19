@@ -6,7 +6,7 @@ import { checkBaseSize } from './base-size.mjs'
 import { readChangeScope } from './change-scope.mjs'
 import { checkChangelog } from './changelog.mjs'
 import { checkDocs } from './docs.mjs'
-import { takeSlot, workersFor } from './machine-slots.mjs'
+import { appStagesFit, takeSlot, vitestWorkerBytes, workersFor } from './machine-slots.mjs'
 import { checkModuleChangelogs } from './module-changelogs.mjs'
 import { moduleScopeProblems } from './pr-ready.mjs'
 
@@ -69,7 +69,7 @@ async function build() {
   return await run('typecheck') && await run('build:bundle')
 }
 
-process.env.MODWERK_TEST_WORKERS ??= String(workersFor({ most: 4, each: 700 * 1024 ** 2, keep: 2 * 1024 ** 3 }))
+process.env.MODWERK_TEST_WORKERS ??= String(workersFor({ most: 4, each: vitestWorkerBytes, keep: 2 * 1024 ** 3 }))
 const baseIndex = process.argv.indexOf('--base'), base = baseIndex < 0 ? null : process.argv[baseIndex + 1]
 if (baseIndex >= 0 && !base) throw new Error('--base requires a Git commit/ref')
 // CI runs one check as parallel jobs (module-pr.yml): --part contract is everything but the two long suites, --part test:1/2
@@ -150,12 +150,24 @@ const DRAFT_DOCTOR = ['scripts/module-doctor.test.mjs', '-t', 'checks a draft wh
 if (passed && !documentationOnly) {
   const tests = (args = []) => run('test', args, { MODWERK_DEFER_DRAFT_DOCTOR: '1' })
   const sdk = () => sdkSuite ? run('sdk:check') : skip('sdk:check', 'no changed path reaches it')
+  async function appChecks() {
+    const steps = [() => run('lint'), build]
+    // The SDK runs after Vitest even if a test failed so the check reports both suites' results.
+    if (!part) steps.push(async () => {
+      const tested = await tests()
+      const sdkPassed = await sdk()
+      return tested && sdkPassed
+    })
+    if (!process.env.CI && !appStagesFit(part ? 0 : Number(process.env.MODWERK_TEST_WORKERS))) {
+      console.log('Running the app check stages one at a time to fit available memory.')
+      return all(...steps)
+    }
+    return (await Promise.all(steps.map(step => step()))).every(Boolean)
+  }
   const results = buildOnly ? [await build()]
     : part === 'sdk' ? [await run('sdk:check')]
     : suiteOnly ? [await tests(['--shard=' + part.slice(5)])]
-    // The SDK suite starts once the app tests are done, whatever their result: its processes beside Vitest's workers starved
-    // Vitest's five-second tests.
-    : await Promise.all([run('lint'), part || tests().then(async tested => await sdk() && tested), build()])
+    : [await appChecks()]
   if (!buildOnly && !suiteOnly) results.push(await run('test', DRAFT_DOCTOR))
   passed = results.every(Boolean) && !interrupted
 }
