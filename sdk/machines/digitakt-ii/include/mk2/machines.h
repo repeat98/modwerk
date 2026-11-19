@@ -69,7 +69,8 @@ extern volatile uint32_t core_machine_view[DT2_MACHINE_VIEW_WORDS];
 
 /* Counts the SRC page's sample view (the second page) as it draws, in every frame composed while it shows and in no
  * other: an ev_draw handler that sees it changed since its last call draws over a frame showing the sample view, of
- * the current track. The view spans the whole sample from x 25 to x 121, rows 26-54 (centre row 39). */
+ * the current track. The view spans the whole sample from x 25 to x 121, rows 26-54 from the top (centre row 39); the
+ * frame bitmap counts rows from the bottom, so fw_fillrect takes row 63 - y. */
 extern volatile uint32_t core_machine_sample_views;
 
 /* The record for a machine type, or 0 when the type is stock or no valid record names it. */
