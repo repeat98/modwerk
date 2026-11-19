@@ -24,4 +24,18 @@ Modwerk's adaptations, both recorded: the scanner finds the octabam tree at `sdk
 and, since Modwerk has no SEND module (FX2 id 0x09 is LOFI2's), its scratch image is the module beside the stock
 effects with no fallback, as the modules' own `perf.py` build theirs.
 
+## Records and the check
+
+```bash
+node scripts/cycle-scan.mjs record lofi2 vibrato   # on your computer; OCTABAM_ROOT names a built tree other than sdk/octabam
+node scripts/cycle-scan.mjs check                  # anywhere; npm run check runs it through scripts/cycle-scan.test.mjs
+```
+
+`record` scans the module and the stock effect its `performance.json` compares it with, and writes `records/<id>.json`:
+the dearest setting's instructions, cycles and stalls, bound to the module's source by the hash `performance.json`'s
+`sourceSha256` uses. It writes nothing when the tree it scans holds other module source than this repository. `check` fails
+a record whose module source has changed since (scan it again) and a `performance.json` recording fewer than 90 % of the
+instructions the scan saw executing; it lists the DSP modules without a record, without failing them. The records sit
+here, not in the module folders, which belong to their authors.
+
 It is a model, not a measurement: the unit stays the judge ([MODULE_PERFORMANCE.md](../../docs/MODULE_PERFORMANCE.md)).
