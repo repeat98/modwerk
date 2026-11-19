@@ -53,9 +53,13 @@ const REFUSALS = Object.assign(['no refusal', 'malformed', 'module memory', 'con
 /** An incident from the unit's own log (diag.c): when in its session, what, and what the unit was doing. */
 const ids = r => [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean)
 const STATELESS = ['crash', 'stall', 'set', 'base'] // records that carry no cpu, keys or screen
-/** A refused restore's set record from base 0.7.10 on: the module pool when it was refused, in 16-byte units (diag.c: cpu the
- * bytes used, dsp0 the largest free run; the site reads dsp0 as dsp5to8). Older bases leave both 0. */
-const refusedPool = r => r.cpu || r.dsp5to8 ? `, module memory ${Math.round(r.cpu / 64)} KiB used, largest free block ${(r.dsp5to8 / 64).toFixed(1)} KiB` : ''
+/** A refused restore's set record from base 0.7.10 on (diag.c): the loader's check that refused it (dsp1, read as dsp1to4;
+ * loader.h runtime_check) and the module pool then, in 16-byte units (cpu the bytes used, dsp0 the largest free run, read as
+ * dsp5to8). Older bases leave all three 0. A module-memory refusal by the claims check is a DSP claim meeting a delay buffer. */
+const REFUSED_CHECKS = ['', 'the module pool', 'its DSP claims', 'the machine metadata', 'the DSP limits']
+const refusedPool = r => !(r.cpu || r.dsp5to8 || r.dsp1to4) ? '' :
+  (r.dsp1to4 ? `, by ${r.tempo24 === 2 && r.dsp1to4 === 2 ? 'its DSP claims meeting a delay buffer' : REFUSED_CHECKS[r.dsp1to4] ?? 'check ' + r.dsp1to4}` : '') +
+  `, module memory ${Math.round(r.cpu / 64)} KiB used, largest free block ${(r.dsp5to8 / 64).toFixed(1)} KiB`
 const incident = r => `#${r.seq} start ${r.boot} +${Math.floor(r.second / 60)}m${r.second % 60}s ${r.kind}` +
   (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` +
     (r.tempo24 === 0x101 ? '; all held: the last start crashed or froze' : r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24}${refusedPool(r)})` : '') : '') +

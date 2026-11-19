@@ -111,9 +111,11 @@ describe('diagnostics pull', () => {
     const set = { seq: 4, boot: 3, second: 5, kind: 'set', a: 1, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: [0x3c, 0xbe, 0xdc, 0x9c, ...Array(20).fill(0)],
       fx: Array(16).fill(0), keys: Array(16).fill(0), screen: 0x773c84aa, tempo24: 5, playing: false }
     expect(unitLines([set])[0]).toContain('1 installed: Mini Verb; refused SC Ringmod (busy)')
-    // Base 0.7.10 adds the module pool at the refusal, in 16-byte units: 760 KiB used, a 1.5 KiB largest free block.
-    expect(unitLines([{ ...set, tempo24: 2, cpu: 48640, dsp5to8: 96 }])[0])
-      .toContain('refused SC Ringmod (module memory, module memory 760 KiB used, largest free block 1.5 KiB)')
+    // Base 0.7.10 adds the loader's check that refused it and the module pool then, in 16-byte units.
+    expect(unitLines([{ ...set, tempo24: 2, dsp1to4: 2, cpu: 10084, dsp5to8: 39068 }])[0])
+      .toContain('refused SC Ringmod (module memory, by its DSP claims meeting a delay buffer, module memory 158 KiB used, largest free block 610.4 KiB)')
+    expect(unitLines([{ ...set, tempo24: 2, dsp1to4: 1, cpu: 48640, dsp5to8: 96 }])[0])
+      .toContain('refused SC Ringmod (module memory, by the module pool, module memory 760 KiB used, largest free block 1.5 KiB)')
   })
   it('calls a stall found at a start on another base an OS upgrade, and one on the same base nothing', () => {
     const at = (seq, boot, kind, a = 0) => ({ seq, boot, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
