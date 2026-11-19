@@ -97,20 +97,14 @@ function proposal(value: unknown) {
 /** Records new proposals once; a proposal the bot already made (same id) keeps its first decision. */
 async function propose(env: Env, db: Database, body: Record<string, unknown>) {
   if (!Array.isArray(body.actions) || body.actions.length > 50) throw new HttpError(400, 'Send at most 50 actions.')
-  const items = body.actions.map(proposal), created: string[] = [], { chat } = configured(env), at = now()
+  const items = body.actions.map(proposal), created: string[] = [], at = now()
   for (const item of items) {
     const status = item.tier === 'notify' ? 'approved' : 'pending'
     const due = item.tier === 'window' ? at + Math.round(item.hours * 3600) : at
     const inserted = await db.prepare('INSERT INTO maintenance_bot_actions(id,kind,target,tier,summary,reason,payload_json,status,due_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING RETURNING id')
       .bind(item.id, item.kind, item.target, item.tier, item.summary, item.reason, item.json, status, due, at, at).first()
-    if (!inserted) continue
-    created.push(item.id)
-    if (item.tier === 'notify') continue
-    // A lost Telegram message must not lose the action: the daily report lists every pending one again.
-    try {
-      const sent = await telegram(env, 'sendMessage', { chat_id: chat, text: actionText({ ...item, due_at: due }), reply_markup: buttons(item), link_preview_options: { is_disabled: true } })
-      if (sent?.message_id) await db.prepare('UPDATE maintenance_bot_actions SET telegram_message_id=? WHERE id=?').bind(sent.message_id, item.id).run()
-    } catch (error) { console.error('Maintenance bot could not send action ' + item.id + ': ' + (error instanceof Error ? error.message : String(error))) }
+    if (inserted) created.push(item.id)
+    if (!inserted || item.tier !== 'notify') await deliverNotice(env, db, item.id)
   }
   return { created }
 }
@@ -118,16 +112,42 @@ async function propose(env: Env, db: Database, body: Record<string, unknown>) {
 const PUBLIC = 'id,kind,target,tier,summary,reason,payload_json,status,due_at,decided_at,result,created_at,updated_at'
 const publicRow = ({ payload_json, ...row }: Omit<ActionRow, 'telegram_message_id'>) => ({ ...row, payload: JSON.parse(payload_json) as unknown })
 
-async function due(db: Database) {
+// Before delivery, due_at - created_at holds the original proposal's window, including for older rows.
+// Reserve the send briefly so overlapping passes share one notice. A stalled sender can be retried.
+async function deliverNotice(env: Env, db: Database, id: string) {
+  const at = now(), lease = at + 90
+  const row = await db.prepare(`UPDATE maintenance_bot_actions SET updated_at=? WHERE id=? AND status='pending'
+    AND tier IN ('ask','window') AND telegram_message_id IS NULL AND updated_at<=? RETURNING ${PUBLIC}`)
+    .bind(lease, id, at).first<ActionRow>()
+  if (!row) return
+  const seconds = row.due_at - row.created_at
+  try {
+    const sent = await telegram(env, 'sendMessage', { chat_id: configured(env).chat, text: actionText({ ...row, due_at: at + seconds }), reply_markup: buttons(row), link_preview_options: { is_disabled: true } })
+    if (!sent?.message_id) throw new Error('Missing Telegram message ID')
+    const delivered = now()
+    await db.prepare('UPDATE maintenance_bot_actions SET telegram_message_id=?,due_at=?,updated_at=? WHERE id=? AND updated_at=? AND telegram_message_id IS NULL')
+      .bind(sent.message_id, delivered + seconds, delivered, id, lease).run()
+  } catch (error) {
+    await db.prepare('UPDATE maintenance_bot_actions SET updated_at=? WHERE id=? AND updated_at=? AND telegram_message_id IS NULL').bind(now(), id, lease).run()
+    console.error('Maintenance bot could not send action ' + id + ': ' + (error instanceof Error ? error.message : String(error)))
+  }
+}
+
+const eligible = "status='approved' OR (status='pending' AND tier='window' AND telegram_message_id IS NOT NULL AND due_at<=?)"
+
+async function due(env: Env, db: Database) {
   if ((await state(db)).paused) return { paused: true, actions: [] }
-  const rows = (await db.prepare(`SELECT ${PUBLIC} FROM maintenance_bot_actions WHERE status='approved' OR (status='pending' AND tier='window' AND due_at<=?) ORDER BY created_at LIMIT 50`).bind(now()).all<ActionRow>()).results
+  const pending = await db.prepare(`SELECT id FROM maintenance_bot_actions WHERE status='pending' AND tier IN ('ask','window')
+    AND telegram_message_id IS NULL AND updated_at<=? ORDER BY updated_at,id LIMIT 8`).bind(now()).all<{ id: string }>()
+  for (const row of pending.results) await deliverNotice(env, db, row.id)
+  const rows = (await db.prepare(`SELECT ${PUBLIC} FROM maintenance_bot_actions WHERE ${eligible} ORDER BY created_at LIMIT 50`).bind(now()).all<ActionRow>()).results
   return { paused: false, actions: rows.map(publicRow) }
 }
 
 /** One executor at a time: a run claims an action before acting, so two overlapping runs never post twice. */
 async function claim(db: Database, id: string) {
   const at = now()
-  const row = await db.prepare(`UPDATE maintenance_bot_actions SET status='running',updated_at=? WHERE id=? AND (status='approved' OR (status='pending' AND tier='window' AND due_at<=?)) RETURNING id`).bind(at, id, at).first()
+  const row = await db.prepare(`UPDATE maintenance_bot_actions SET status='running',updated_at=? WHERE id=? AND (${eligible}) RETURNING id`).bind(at, id, at).first()
   if (!row) throw new HttpError(409, 'That action was decided, claimed or is not due.')
   return { ok: true }
 }
@@ -495,7 +515,7 @@ export async function maintenanceBotRoutes(request: Request, env: Env, db: Datab
     return response({ ok: true })
   }
   if (route === '/actions' && method === 'POST') return response(await propose(env, db, await jsonBody(request, 256 * 1024)))
-  if (route === '/actions/due' && method === 'GET') return response(await due(db))
+  if (route === '/actions/due' && method === 'GET') return response(await due(env, db))
   if (route === '/actions/recent' && method === 'GET') return response(await recent(db, Number(new URL(request.url).searchParams.get('hours') ?? 24) || 24))
   const item = route.match(/^\/actions\/([a-f0-9]{16})\/(claim|result)$/)
   if (item && method === 'POST') return response(item[2] === 'claim' ? await claim(db, item[1]) : await finish(env, db, item[1], await jsonBody(request)))
