@@ -170,16 +170,19 @@ describe('documentation and firmware scheduling', () => {
 
 describe('SDK suite reach', () => {
   it.each(['src/components/ModuleCard.tsx', 'src/community/Forum.tsx', 'src/hooks/useSheetFocus.ts', 'src/App.tsx', 'src/styles.css',
-    'src/routing.test.ts', 'server/community/routes.ts', 'worker.ts', 'changelog/2026-10-26-forum.md', 'docs/APP_DEVELOPMENT.md'])('skips the SDK suite locally for %s', path => {
+    'src/devices/MachinePages.tsx', 'src/devices/library-parity.test.ts', 'src/routing.test.ts', 'server/community/routes.ts', 'worker.ts',
+    'changelog/2026-10-26-forum.md', 'docs/APP_DEVELOPMENT.md'])('skips the SDK suite for %s', path => {
     expect(reachesSdkSuite(path)).toBe(false)
   })
   it.each(['sdk/tests/test_base_bound.py', 'src/engine/rom-package.ts', 'src/catalog/modules.ts', 'src/config/usb-audio.ts',
     'src/community/module-changelogs.json', 'src/community/module-release-notes.ts', 'src/routing.ts', 'scripts/module-pairs.py',
-    'public/octatrack-modules/euclid/0.1.4-experimental.mwrm', 'docs/media/startup/verification.json', 'package-lock.json'])('runs the SDK suite for %s', path => {
+    'public/octatrack-modules/euclid/0.1.4-experimental.mwrm', 'docs/media/startup/verification.json', 'package-lock.json',
+    'src/devices/machines.generated.json', 'src/devices/machine-contract.ts'])('runs the SDK suite for %s', path => {
     expect(reachesSdkSuite(path)).toBe(true)
   })
   it('runs it for every site path the suite itself names', () => {
-    const files = execFileSync('git', ['ls-files', '-z', '--', 'sdk', 'scripts/*.py', 'scripts/octatrack-module-page.mjs', 'scripts/sdk-imports.mjs'], { cwd: repository, encoding: 'utf8' })
+    const files = execFileSync('git', ['ls-files', '-z', '--', 'sdk', 'scripts/*.py', 'scripts/octatrack-module-page.mjs', 'scripts/sdk-imports.mjs',
+      'scripts/sdk-check.mjs', 'scripts/module-tests.mjs', 'scripts/machine-folders.mjs'], { cwd: repository, encoding: 'utf8' })
       .split('\0').filter(path => /\.(py|sh|mjs|cpp|c|h)$/.test(path))
     const named = files.flatMap(path => [...readFileSync(resolve(repository, path), 'utf8').matchAll(/(?<![\w./-])(?:src|server|changelog)\/[\w./-]+|(?<![\w./-])worker\.ts\b/g)].map(match => match[0]))
     expect(named.length).toBeGreaterThan(0)
@@ -196,8 +199,12 @@ describe('SDK suite reach', () => {
       expect(readChangeScope({ root, base }).sdk).toBe(true)
       writeFileSync(resolve(root, 'src/components/Card.tsx'), 'new')
       expect(readChangeScope({ root, base }).sdk).toBe(false)
+      git('add', '.'); git('commit', '-m', 'UI')
+      expect(readChangeScope({ root, base, head: 'HEAD' }).sdk).toBe(false)
       writeFileSync(resolve(root, 'sdk/tests/test_new.py'), 'untracked')
       expect(readChangeScope({ root, base }).sdk).toBe(true)
+      git('add', '.'); git('commit', '-m', 'SDK')
+      expect(readChangeScope({ root, base, head: 'HEAD' }).sdk).toBe(true)
     } finally { rmSync(root, { recursive: true, force: true }) }
   })
 })
