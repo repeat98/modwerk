@@ -1,0 +1,12 @@
+# Digitone II: the development link plays panel keys and encoders, 19 November 2026
+
+Stage two of the Digitone II development link (`sdk/machines/digitone-ii/LINK.md`) on OS 1.12. Contributor's Digitone II (@prodbysmolec), on the unit of the [stage one record](2026-11-19-digitone-ii-link-on-a-unit.md), flashed over USB with the OS upgrade protocol of `os-upgrade.ts` (the developer pressed YES on the unit).
+
+- **Found on the unit first, with stage one's `mem`:** the UI queue's getter (0x4013747a) holds 0x4059e214; the queue keeps 1,024 message pointers at 0x405c6a34. With the developer pressing and turning, the panel's messages read as the Analog Rytm MKII's: kind 0 a key (its id, flags 0x01 press and 0x10 release, a time), kind 1 an encoder (its number, the delta in the top byte). Keys: FUNC 0x11, PLAY 0x14, STOP 0x15, TRIG 1 0x19 to TRIG 16 0x28. Encoders: A to H 1 to 8, LEVEL 9, each read alone. is_key_held is 0x4011fac4 with its tables at 0x401f3d10 (111 ids) and 0x445a2e30.
+- **Build:** `npm run machine:base -- digitone-ii --dev`, development package `300c83be199c70fca8f31b6203953fdd1a2b92938415020d0fa855c4d18fe4b1` (.run 6,629, .bss 4,364 bytes; 16 sites; no jump to an odd address), linked with `hello-marker-dn2` 1.0 by Elekloader 0.11.0's patcher and verified (sections 2, 4, 5, 7 and 8 byte for byte, the in-place depack): `.syx` `4fd37eac11d36a393163975e9cd98ec2baa1fa841c68e63670839202a0f48249`. It flashed and booted; `ident` read armed at boot.
+- **Encoders:** `turn A 3` showed ATK's value change; turns of one detent each moved Attack Time about a fifth of a step (530 to 117), turns of up to 8 a message moved it faster, as the panel's fast turns do: up to Attack Time=127, then down to 0, each read on the screen through `screen`.
+- **Keys:** `press PLAY`, four seconds, `press STOP`: the pattern ran and stopped (the developer).
+- **The link's own events:** after 650 posted keys and turns, `ident` counted no person and refused none.
+- **Arm:** SETTINGS ended with REMOTE CTRL: ON. The developer pressed YES on it: REMOTE CTRL: OFF, and `press STOP` came back not armed. YES again turned it on.
+- **A person at the unit:** the developer pressed a key while armed; the link's next key came back "a person is at the unit" (status 5), and one 3.5 s later went through.
+- **Not tested:** holding a key from the host with a second key (FUNC + TRIG) and is_key_held seeing it, a module's replayed key, keys and turns while the queue is full (the link answers busy), long sessions.

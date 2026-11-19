@@ -60,3 +60,14 @@ class Dn2Screen(unittest.TestCase):
         idat = data.index(b"IDAT")
         size = struct.unpack(">I", data[idat - 4:idat])[0]
         self.assertEqual(len(zlib.decompress(data[idat + 4:idat + 4 + size])), 128 * (1 + 256))
+
+
+class Dn2Keys(unittest.TestCase):
+    def test_key_and_encoder_names_are_the_panels_ids(self):
+        self.assertEqual([link.key_id(n) for n in ("FUNC", "play", "TRIG1", "TRIG16", "0x30")], [0x11, 0x14, 0x19, 0x28, 0x30])
+        self.assertEqual([link.ENCODERS[n] for n in ("A", "H", "LEVEL")], [1, 8, 9])
+
+    def test_a_negative_turn_reaches_the_link_as_its_low_byte(self):
+        enc = link.request(3, "enc", 1, -8 & 0xffffffff)
+        self.assertEqual(link.get32(enc, 13) & 0xff, 0xF8)
+        self.assertTrue(all(b < 0x80 for b in enc[1:-1]))

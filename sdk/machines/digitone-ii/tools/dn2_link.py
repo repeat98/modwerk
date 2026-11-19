@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The Digitone II development link's host, stage one: read-only (sdk/machines/digitone-ii/elekloader/base/link.c).
+"""The Digitone II development link's host (sdk/machines/digitone-ii/elekloader/base/link.c).
 
     dn2_link.py ident                # link version, messages received and dropped, ticks
     dn2_link.py mem 0x47f00000 64    # up to 128 bytes of DDR or SRAM, as hex
