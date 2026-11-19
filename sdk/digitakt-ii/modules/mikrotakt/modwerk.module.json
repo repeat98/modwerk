@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 3,
+  "id": "mikrotakt",
+  "name": "Mikrotakt",
+  "version": "0.1.0-experimental",
+  "machine": "digitakt-ii",
+  "category": "machines",
+  "exclusive": false,
+  "author": { "github": "Claptom-music", "credits": ["Claptom-music"] },
+  "maintainers": ["Claptom-music"],
+  "presentation": {
+    "label": "MIKROTAKT",
+    "family": "Machine",
+    "summary": "A grain sampler machine: it plays a track's sample as clouds of grains, locked to the pattern's tempo.",
+    "overview": "Mikrotakt is a new machine in the track's machine list. It reads grains from the track's sample and spreads, repeats or reverses them in time with the sequencer; the Digitakt's own filter, amp envelope, LFO and level shape the result like any machine. Work in progress: the grain engine is being built.",
+    "highlights": ["Its own machine type, saved with the kit.", "Grains from the track's own sample, shaped by the stock sound chain."],
+    "usage": ["Put Mikrotakt on a track with a long sample and play notes or trigs to hear the grains."]
+  },
+  "access": { "location": "The machine list of a track (FUNC + SRC), after the stock machines.", "steps": ["Select a track.", "Hold FUNC and press SRC to open the machine list.", "Scroll down past MIDI to MIKROTAKT and press YES."], "screenshots": [] },
+  "controls": [],
+  "compatibility": { "releases": ["1.17"], "requires": [], "conflicts": [], "limitations": [] },
+  "platform": { "kind": "elemod", "core": "1.1", "build": "build.json", "events": [], "claims": ["machine:7"] },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": { "display": "Not measured yet", "method": "unmeasured", "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting." }
+  },
+  "evidence": { "tier": "none", "moduleVersion": "0.1.0-experimental", "sourceSha256": null, "reports": [], "hardware": null, "verifiedBy": null },
+  "tests": { "report": "TESTING.md", "summary": "Not tested yet." },
+  "license": { "spdx": "GPL-3.0-or-later", "file": "LICENSE", "declaration": "Original work by the author. Replace if you choose another GPL-compatible licence." },
+  "media": [
+    { "path": "media/thumbnail.svg", "kind": "thumbnail", "caption": "Mikrotakt thumbnail", "alt": "Placeholder thumbnail for Mikrotakt", "credit": "Claptom-music", "license": "GPL-3.0-or-later", "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork." }
+  ]
+}
