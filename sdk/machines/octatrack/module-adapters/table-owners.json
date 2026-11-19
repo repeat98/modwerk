@@ -8,7 +8,7 @@
    "declaration": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes.declaration.json",
    "recipe": "sdk/machines/octatrack/module-adapters/table-owners/mute-modes.recipe.json",
    "reviewedSha256": "334e32907136c79f53c0b732d739ba3f5368a53fc03dde675f3bf6475cc92f4d",
-   "approval": "PENDING: Mute Modes 0.2.3 awaits repeat98's review of this declaration; the base is rebuilt with it after #1418"
+   "approval": "repeat98, 18 Nov 2026: Mute Modes 0.2.3 table owner approved for package d460c7e2, declaration 334e3290 (https://github.com/repeat98/modwerk/pull/1652#issuecomment-6971850708); the base is rebuilt with it after #1418"
   }
  ]
 }
