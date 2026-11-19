@@ -64,7 +64,7 @@
     ]
   },
   "resources": {
-    "recorded": "1 November 2026; source only, unmeasured",
+    "recorded": "19 November 2026",
     "storage": {
       "label": "ROM unit, menu detours and row-index pokes",
       "display": "Unmeasured",
@@ -76,11 +76,11 @@
     },
     "processing": {
       "label": "ColdFire, while LEVEL turns on MICRO T",
-      "display": "Unmeasured",
-      "value": null,
-      "unit": "instructions/event",
-      "method": "unmeasured",
-      "conditions": "Runs in the TRACK TRIG EDIT LEVEL handler when MICRO T is selected, then calls the stock per-trig writer for 64 steps. Nothing per sample.",
+      "display": "788 instructions",
+      "value": 788,
+      "unit": "cycles/event",
+      "method": "emulator",
+      "conditions": "ot_emu PC watch of the 1076-byte image, 19 November 2026. One LEVEL step with the MIDI button on was 788 instructions of this module. The audio side was 787. The stock 64-step writer is not in the number.",
       "source": "TESTING.md"
     },
     "impact": {

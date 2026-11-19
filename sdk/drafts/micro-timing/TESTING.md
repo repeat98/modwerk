@@ -30,7 +30,17 @@ Not tested on a module build, except the power-off footer in Keep and power cycl
 
 ## Performance
 
-There is no `evidence/performance.json`. New-module performance evidence remains open. The frame-interrupt price below is the at-rest reading only.
+19 November 2026. ot_emu with the DSP cores, development twin `878307834ad3c23a`, set OCTABAM, project ONEAUX, pattern 0. Package `f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292`. The trial was not kept.
+
+A watch on every halfword of the 1076-byte image counts only this module's instructions. The stock writer at `0x4002d640` is not in the number. With MICRO T selected and the transport playing, one LEVEL step on the audio side was 787 instructions from `mt_level` to its jump back to stock. The same step with the MIDI button on was 788. `evidence/performance.json` records 788.
+
+The same run then sent twenty LEVEL steps with the MIDI button on, ten while playing, STOP, a Part change from 1 to 2, the page opened again, and ten more while playing. The remembered byte moved from `0x02` to `0x0c`, then to `0x16`. The second ten entered `mt_level` ten times. The diagnostic log at `0x100fc000` stayed at 3 incidents (start, base, set), with no crash, stall or freeze. The stress fields record 20 presses, playing, and no hang.
+
+| row | result |
+|---|---|
+| cycles | worst event 788 of 26600000, this module's instructions only |
+| stock benchmark | none for a key-press record |
+| stress | 20 LEVEL steps while playing, no hang |
 
 ## CPU price
 
