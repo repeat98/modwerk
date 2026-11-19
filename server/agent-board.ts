@@ -45,10 +45,15 @@ function plainText(value: unknown, limit: number, what: string): string {
   // eslint-disable-next-line no-control-regex
   if (/[\u0000-\u001f\u007f]/.test(text)) throw new HttpError(400, `The ${what} must be one line of text.`)
   if (/[\u00ad\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]/.test(text)) throw new HttpError(400, `Leave invisible characters out of the ${what}.`)
-  if (/https?:|www\.|\b[a-z0-9-]+\.(?:com|org|net|app|io|dev)\b/i.test(text)) throw new HttpError(400, `Leave links out of the ${what}; give a pull request or issue number instead.`)
-  if (/~\/|\S*\/\S*\/|\\/.test(text)) throw new HttpError(400, `Leave file paths out of the ${what}.`)
-  if (/0x[0-9a-f]{3,}|\b[0-9a-f]{12,}\b/i.test(text)) throw new HttpError(400, `Leave addresses and hashes out of the ${what}.`)
-  if (/[`{}<>;$]|[A-Za-z0-9_+=-]{32,}/.test(text)) throw new HttpError(400, `Leave code and tokens out of the ${what}.`)
+  // Each refusal quotes what it found, so the writer's agent changes that and nothing else instead of guessing.
+  const refuse = (pattern: RegExp, message: (found: string) => string) => {
+    const found = pattern.exec(text)?.[0]
+    if (found) throw new HttpError(400, message(found) + ` It found «${found.length > 40 ? found.slice(0, 39) + '…' : found}».`)
+  }
+  refuse(/https?:\S*|www\.\S*|\b[a-z0-9-]+\.(?:com|org|net|app|io|dev)\b/i, () => `Leave links out of the ${what}. Give a pull request or issue number instead.`)
+  refuse(/~\/\S*|\S*\/\S*\/\S*|\S*\\\S*/, () => `Leave file paths out of the ${what}.`)
+  refuse(/0x[0-9a-f]{3,}|\b[0-9a-f]{12,}\b/i, () => `Leave addresses and hashes out of the ${what}. Name a version or a pull request instead.`)
+  refuse(/[`{}<>;$]|[A-Za-z0-9_+=-]{32,}/, found => `Leave code and tokens out of the ${what}.` + (found === ';' ? ' Write a full stop instead of a semicolon.' : found.length > 1 ? ' Long runs of letters and digits look like tokens.' : ''))
   return text
 }
 /** A claim's note: at most 120 characters of plain prose. */
@@ -288,13 +293,62 @@ async function activity(db: Database, nowMs: number) {
   return { days: ACTIVITY_DAYS, developers: { signedIn: row?.signedIn ?? 0, active: row?.active ?? 0 }, claims: { active: row?.claims ?? 0, made: row?.claimsMade ?? 0 }, questions: { open: row?.questions ?? 0 }, findings: { active: row?.findings ?? 0 }, posts: row?.posts ?? 0 }
 }
 
+const WEEK = 7 * DAY, ACTIVITY_WEEK_LIMIT = Math.floor(RELEASED_KEPT_DAYS / 7)
+
+/** Counts by UTC week from the retained claim and message records. No author IDs leave the database. */
+async function weeklyActivity(db: Database, nowMs: number, requested: string) {
+  const weeks = Number(requested)
+  if (!/^[1-9]\d?$/.test(requested) || weeks > ACTIVITY_WEEK_LIMIT) throw new HttpError(400, `Choose 1 to ${ACTIVITY_WEEK_LIMIT} weeks.`)
+  const monday = new Date(nowMs)
+  monday.setUTCHours(0, 0, 0, 0)
+  monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7)
+  const start = monday.getTime() - (weeks - 1) * WEEK
+  const from = new Date(start).toISOString(), asOf = new Date(nowMs).toISOString()
+  const { results } = await db.prepare(`WITH contributions AS (
+      SELECT created_at AS at, user_id, 'claim' AS kind FROM agent_claims
+      UNION ALL
+      SELECT created_at, user_id, CASE WHEN parent_id IS NULL THEN kind ELSE 'reply' END FROM agent_messages
+    ), events AS (
+      SELECT at, user_id, kind FROM contributions
+      UNION ALL
+      SELECT MIN(at), NULL, 'first' FROM contributions GROUP BY user_id
+      UNION ALL
+      SELECT CASE WHEN released_reason='expired' THEN COALESCE(expires_at,released_at) ELSE COALESCE(released_at,expires_at) END,
+        NULL, CASE WHEN released_at IS NULL OR released_reason='expired' THEN 'expired'
+          WHEN released_reason='merged' THEN 'merged' WHEN released_reason='holder' THEN 'holder' ELSE 'other' END
+      FROM agent_claims WHERE released_at IS NOT NULL OR expires_at<=?
+    )
+    SELECT CAST((julianday(at)-julianday(?))/7 AS INTEGER) AS week,
+      COUNT(*) FILTER (WHERE kind='claim') AS claimsMade,
+      COUNT(*) FILTER (WHERE kind='merged') AS merged, COUNT(*) FILTER (WHERE kind='holder') AS releasedByHolder,
+      COUNT(*) FILTER (WHERE kind='expired') AS expired, COUNT(*) FILTER (WHERE kind='other') AS other,
+      COUNT(DISTINCT user_id) AS active, COUNT(*) FILTER (WHERE kind='first') AS firstSeen,
+      COUNT(*) FILTER (WHERE kind='question') AS questions, COUNT(*) FILTER (WHERE kind='finding') AS findings,
+      COUNT(*) FILTER (WHERE kind='wanted') AS wanted, COUNT(*) FILTER (WHERE kind='reply') AS replies
+    FROM events WHERE at>=? AND at<=? GROUP BY week`).bind(asOf, from, from, asOf).all<Record<string, number>>()
+  const byWeek = new Map(results.map(row => [row.week, row]))
+  return { asOf, weeks: Array.from({ length: weeks }, (_, index) => {
+    const startsAt = start + index * WEEK, endsAt = startsAt + WEEK, row = byWeek.get(index)
+    return {
+      startsAt: new Date(startsAt).toISOString(), endsAt: new Date(endsAt).toISOString(), complete: endsAt <= nowMs,
+      claims: { made: row?.claimsMade ?? 0, ended: { merged: row?.merged ?? 0, releasedByHolder: row?.releasedByHolder ?? 0, expired: row?.expired ?? 0, other: row?.other ?? 0 } },
+      developers: { active: row?.active ?? 0, firstSeen: row?.firstSeen ?? 0 },
+      threads: { questions: row?.questions ?? 0, findings: row?.findings ?? 0, wanted: row?.wanted ?? 0 },
+      replies: row?.replies ?? 0,
+    }
+  }) }
+}
+
 export async function agentBoardRoutes(request: Request, env: Env, db: Database, adminId: string | null): Promise<Response | null> {
   const url = new URL(request.url), path = url.pathname
   if (!path.startsWith('/api/agent-board/')) return null
   const nowMs = Date.now(), now = new Date(nowMs).toISOString()
   if (path === '/api/agent-board/me' && request.method === 'GET') return response({ login: needBoardUser(await boardUser(request, env, db)).github_login })
   if (path === '/api/agent-board/inbox' && request.method === 'GET') return response(await inbox(db, needBoardUser(await boardUser(request, env, db)), nowMs))
-  if (path === '/api/agent-board/activity' && request.method === 'GET') return response(await activity(db, nowMs))
+  if (path === '/api/agent-board/activity' && request.method === 'GET') {
+    const weeks = url.searchParams.get('weeks')
+    return response(weeks === null ? await activity(db, nowMs) : await weeklyActivity(db, nowMs, weeks))
+  }
   if (path === '/api/agent-board/messages' || path.startsWith('/api/agent-board/messages/')) return await messageRoutes(request, url, env, db, adminId, nowMs)
   if (path === '/api/agent-board/claims' && request.method === 'GET') {
     const kind = url.searchParams.get('kind'), key = url.searchParams.get('key'), holder = url.searchParams.get('holder')?.replace(/^@/, '').toLowerCase()

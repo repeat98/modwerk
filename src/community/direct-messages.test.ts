@@ -50,6 +50,12 @@ describe('direct messages', () => {
     expect(view.messages.map((item: Message) => [item.body, item.mine])).toEqual([['Hello Bravo', false], ['Second line', false]])
     expect((await (await f.call('/forum/messages', 'GET', undefined, b.session)).json()).conversations[0].unread).toBe(0)
     expect((await (await f.call('/notifications/unread', 'GET', undefined, b.session)).json()).unread).toBe(0)
+    // A reply in the exact second of the read must appear in both counters.
+    const readTime = f.db.prepare('SELECT last_read_at FROM conversation_members WHERE user_id=?').get(b.id)!.last_read_at
+    await f.call('/forum/messages/bravo', 'POST', { body: 'After opening' }, a.session)
+    f.db.prepare("UPDATE messages SET created_at=? WHERE body='After opening'").run(readTime)
+    expect((await (await f.call('/notifications/unread', 'GET', undefined, b.session)).json()).unread).toBe(1)
+    expect((await (await f.call('/forum/messages', 'GET', undefined, b.session)).json()).conversations[0].unread).toBe(1)
     // The reply notifies the first sender and shows as theirs on the other side.
     expect((await f.call('/forum/messages/alpha', 'POST', { body: 'Hi Alpha' }, b.session)).status).toBe(201)
     expect((await (await f.call('/notifications', 'GET', undefined, a.session)).json()).items[0]).toMatchObject({ kind: 'message', actor: 'bravo' })

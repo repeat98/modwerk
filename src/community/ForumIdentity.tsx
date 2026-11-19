@@ -2,7 +2,7 @@ import { FORUM_CATEGORIES, type ForumCategory } from './forum-contract'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { apiUrl, assetUrl } from '../hosting'
 import { profileHref } from '../routing'
-import { ROLE_LABELS, type MemberRole } from './member-standing'
+import { CONTRIBUTION_LABELS, ROLE_LABELS, type ContributionRoles, type MemberRole } from './member-standing'
 
 export function ForumCategoryBadge({ category }: { category: ForumCategory }) {
   return <span className="forum-category-badge" data-category={category}><span aria-hidden="true" />{FORUM_CATEGORIES[category]}</span>
@@ -26,11 +26,18 @@ export function ForumAuthorName({ username, official, missing = 'Deleted member'
 }
 
 // Only a claim confirmed on both sides earns this: the reviewed catalog names the GitHub handle and the member verified it.
-export function ForumMaintainerBadge({ profile }: { profile?: boolean }) {
-  return <span className="forum-author-badge forum-maintainer-badge" title="Linked maintainer, confirmed through the module catalog and a GitHub sign-in">{profile ? 'Module maintainer' : 'Maintainer'}</span>
+export function ForumMaintainerBadge() {
+  return <span className="forum-author-badge forum-maintainer-badge" title="Linked maintainer, confirmed through the module catalog and a GitHub sign-in">Module maintainer</span>
 }
 
 // Member roles and the independent beta tester class carry their own badges.
-export function ForumRoleBadge({ role, betaTester }: { role?: MemberRole | null; betaTester?: boolean }) {
-  return <>{role && role !== 'user' && <span className="forum-role-badge" data-role={role}>{ROLE_LABELS[role]}</span>}{betaTester && <span className="forum-role-badge" data-role="beta-tester">Beta tester</span>}</>
+export function ForumRoleBadge({ role, betaTester, contributions }: { role?: MemberRole | null; betaTester?: boolean; contributions?: ContributionRoles }) {
+  const showSiteRole = role && role !== 'user' && !(role === 'developer' && contributions?.roles.includes('modder'))
+  return <>
+    {contributions?.roles.map(kind => <span key={kind} className="forum-role-badge" data-role={kind}>
+      {CONTRIBUTION_LABELS[kind]}{kind === 'device-reviewer' && ' · ' + contributions.reviewDevices.map(id => DEVICES_BY_ID[id]?.name ?? id).join(', ')}
+    </span>)}
+    {showSiteRole && <span className="forum-role-badge" data-role={role}>{ROLE_LABELS[role]}</span>}
+    {betaTester && <span className="forum-role-badge" data-role="beta-tester">Beta tester</span>}
+  </>
 }

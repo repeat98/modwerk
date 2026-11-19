@@ -29,9 +29,9 @@ function answersGuides(line, next) {
   return /:\s*\S/.test(text) || ((isHeading(line) || open(line)) && !!next && !isHeading(next) && !open(next))
 }
 
-// What reaches an instrument: a built module package or a base (.mwrm, .elemod). Sources alone change nothing on a unit, and CI rebuilds
+// What reaches an instrument: a built module package or a base (.mwrm, .elemod, or a Zoom .ZDL effect). Sources alone change nothing on a unit, and CI rebuilds
 // the packages from them, so a source change that matters always carries a changed package.
-export const INSTRUMENT = /\.(?:mwrm|elemod)$/
+export const INSTRUMENT = /\.(?:mwrm|elemod|zdl)$/i
 /** The changed files that run on an instrument. */
 export const instrumentFiles = files => (files ?? []).filter(file => INSTRUMENT.test(file))
 // "Tested on a unit: base 8d1db124, MKII, …" names the build by a hash (a base identity or a package's sha256, 8 hex digits or more);

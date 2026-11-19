@@ -352,6 +352,14 @@ describe('agent board questions and findings', () => {
       expect(() => messageBody(text), JSON.stringify(text)).toThrow()
   })
 
+  it('quotes what it refused, so the writer changes only that', () => {
+    expect(() => messageBody('Tested on an MKII; no stalls.')).toThrow('Leave code and tokens out of the message. Write a full stop instead of a semicolon. It found «;».')
+    expect(() => messageBody('The shipped package f311dd62a4c1 ran for two minutes.')).toThrow('It found «f311dd62a4c1».')
+    expect(() => messageBody('Details in sdk/octatrack/modules/vibrato now.')).toThrow('Leave file paths out of the message. It found «sdk/octatrack/modules/vibrato».')
+    expect(() => messageBody('See https://example.com/a for it.')).toThrow('It found «https://example.com/a».')
+    expect(() => claimNote('Token ' + 'k'.repeat(45))).toThrow('Long runs of letters and digits look like tokens. It found «' + 'k'.repeat(39) + '…».')
+  })
+
   it('lets a question lapse 30 days after its last post and a finding after 90, then deletes them', async () => {
     const { env, db, call, boardLogin, post, reply } = await fixture()
     const ada = await boardLogin('ada'); await boardLogin('bo')
@@ -453,6 +461,63 @@ describe('agent board questions and findings', () => {
     await post(bo, { kind: 'question', topic: 'module', key: 'octatrack/tape-echo', body: 'Room for a chorus?' })
     await post(bo, { kind: 'finding', topic: 'machine', key: 'octatrack', body: 'Loads go to RAM.' })
     expect(await (await call('/agent-board/activity', 'GET', undefined, '', { origin: null })).json()).toEqual({ days: 30, developers: { signedIn: 3, active: 2 }, claims: { active: 1, made: 1 }, questions: { open: 1 }, findings: { active: 1 }, posts: 2 })
+  })
+
+  it('counts retained board contributions and claim endings in UTC weeks', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    const now = '2026-11-18T12:00:00.000Z'
+    vi.setSystemTime(new Date(now))
+    const { call, boardLogin, claim, post, reply, db } = await fixture()
+    const ada = await boardLogin('ada'), bo = await boardLogin('bo'), cy = await boardLogin('cy')
+    async function addClaim(token: string, key: string, made: string, { ended, reason, expires }: { ended?: string; reason?: string; expires?: string }) {
+      const response = await claim(token, { kind: 'issue', key })
+      expect(response.status).toBe(201)
+      const { claim: row } = await response.json()
+      db.prepare('UPDATE agent_claims SET created_at=?,released_at=?,released_reason=?,expires_at=? WHERE id=?').run(made, ended ?? null, reason ?? null, expires ?? null, row.id)
+    }
+    await addClaim(ada, '1', '2026-11-09T00:00:00.000Z', { ended: '2026-11-10T00:00:00.000Z', reason: 'holder' })
+    await addClaim(ada, '2', '2026-11-15T23:59:59.999Z', { ended: '2026-11-16T09:00:00.000Z', reason: 'merged' })
+    await addClaim(ada, '3', '2026-11-02T00:00:00.000Z', { expires: '2026-11-16T00:00:00.000Z' })
+    await addClaim(bo, '4', '2026-11-16T00:00:00.000Z', { ended: '2026-11-17T08:00:00.000Z', reason: 'closed' })
+    await addClaim(ada, '5', '2026-11-01T23:59:59.999Z', { expires: '2026-11-15T23:59:59.999Z', ended: '2026-11-16T00:05:00.000Z', reason: 'expired' })
+    async function addThread(token: string, kind: string, at: string) {
+      const response = await post(token, { kind, topic: 'site', key: 'board', body: 'Board activity for the weekly report.', ...(kind === 'question' ? { to: 'ada' } : {}) })
+      expect(response.status).toBe(201)
+      const { message } = await response.json()
+      db.prepare('UPDATE agent_messages SET created_at=? WHERE id=?').run(at, message.id)
+      return message.id
+    }
+    const question = await addThread(cy, 'question', '2026-11-10T12:00:00.000Z')
+    await addThread(ada, 'finding', '2026-11-11T12:00:00.000Z')
+    await addThread(cy, 'wanted', '2026-11-16T12:00:00.000Z')
+    expect((await reply(ada, question, 'Here is the first reply.')).status).toBe(201)
+    db.prepare('UPDATE agent_messages SET created_at=? WHERE parent_id=?').run('2026-11-12T12:00:00.000Z', question)
+    expect((await reply(cy, question, 'Here is the latest reply.')).status).toBe(201)
+
+    const response = await call('/agent-board/activity?weeks=2', 'GET', undefined, '', { origin: null })
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ asOf: now, weeks: [
+      {
+        startsAt: '2026-11-09T00:00:00.000Z', endsAt: '2026-11-16T00:00:00.000Z', complete: true,
+        claims: { made: 2, ended: { merged: 0, releasedByHolder: 1, expired: 1, other: 0 } },
+        developers: { active: 2, firstSeen: 1 }, threads: { questions: 1, findings: 1, wanted: 0 }, replies: 1,
+      },
+      {
+        startsAt: '2026-11-16T00:00:00.000Z', endsAt: '2026-11-23T00:00:00.000Z', complete: false,
+        claims: { made: 1, ended: { merged: 1, releasedByHolder: 0, expired: 1, other: 1 } },
+        developers: { active: 2, firstSeen: 1 }, threads: { questions: 0, findings: 0, wanted: 1 }, replies: 1,
+      },
+    ] })
+  })
+
+  it('fills empty weeks and rejects requests outside the retained window', async () => {
+    const { call } = await fixture()
+    const response = await call('/agent-board/activity?weeks=12')
+    expect(response.status).toBe(200)
+    const { weeks } = await response.json()
+    expect(weeks).toHaveLength(12)
+    expect(weeks.every((week: { claims: { made: number }; developers: { active: number }; replies: number }) => week.claims.made === 0 && week.developers.active === 0 && week.replies === 0)).toBe(true)
+    for (const invalid of ['', '0', '13', '1.5', '-3', 'eight']) expect((await call('/agent-board/activity?weeks=' + invalid)).status).toBe(400)
   })
 })
 
