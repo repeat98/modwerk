@@ -15,6 +15,7 @@ export type ZoomLinkStatus = 'unsupported' | 'idle' | 'connecting' | 'ready' | '
 export type ZoomFile = { name: string; size: number; effect?: { gid: number; fxid: number; version: string } }
 export type ZoomLinkState = {
   readonly status: ZoomLinkStatus
+  readonly connection?: number
   readonly identity?: ZoomIdentity
   readonly notice?: { tone: 'error' | 'info'; text: string }
   /** While reading: what, and how far. */
@@ -31,7 +32,10 @@ const PEDAL = /zoom|ms-?(50g|60b|70cdr)/i
 const isPedal = (port: MidiPort) => PEDAL.test(port.name ?? '') && port.state !== 'disconnected'
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
+let nextConnection = 0
+
 export class ZoomLink {
+  private operationConnection?: number
   private state: ZoomLinkState
   private readonly listeners = new Set<() => void>()
   private access?: MidiAccessLike
@@ -92,7 +96,8 @@ export class ZoomLink {
       })
       const identity = reply ? parseIdentity(reply) : undefined
       if (!identity) return this.set({ status: 'idle', notice: { tone: 'error', text: 'The pedal didn’t answer. Close other apps that use it (Zoom Effect Manager, editors), then try again.' } })
-      this.set({ status: 'ready', identity })
+      this.heads.clear()
+      this.set({ status: 'ready', identity, connection: ++nextConnection })
       if (!isUpdateMode(identity)) void this.quiet(() => this.hello())
     } catch {
       this.set({ status: 'idle', notice: { tone: 'error', text: 'This browser didn’t allow MIDI. Allow MIDI with SysEx for this site, then try again.' } })
@@ -143,6 +148,7 @@ export class ZoomLink {
     this.nextSend = t + (bytes.length >= 64 ? 22 : 3)
   }
   private ask(body: number[], timeout = this.timeout): Promise<number[] | null> {
+    if (this.operationConnection !== this.state.connection) throw new Error('The pedal connection changed.')
     const id = this.state.identity?.deviceId
     if (id === undefined || !this.output) return Promise.resolve(null)
     return new Promise(resolve => {
@@ -203,15 +209,18 @@ export class ZoomLink {
 
   /** One file operation at a time, shown as reading while it runs. */
   private exclusive<T>(label: string, work: () => Promise<T>, status: 'reading' | 'writing' = 'reading'): Promise<T> {
+    const connection = this.state.connection
     const run = this.op.then(() => locked(async () => {
-      if (this.state.status !== 'ready') throw new Error('Connect the pedal first.')
+      if (!connection || connection !== this.state.connection || this.state.status !== 'ready') throw new Error('Connect the pedal first.')
       const identity = this.state.identity, stay = (event: Event) => event.preventDefault()
       // Closing the tab mid-write can leave the effect list deleted: the browser asks first.
       if (status === 'writing') globalThis.addEventListener?.('beforeunload', stay)
-      this.set({ status, identity, progress: { label, done: 0, total: 0 } })
+      this.operationConnection = connection
+      this.set({ status, identity, connection, progress: { label, done: 0, total: 0 } })
       try { await this.drain(); return await work() } finally {
         globalThis.removeEventListener?.('beforeunload', stay)
-        if (this.getState().status === status) this.set({ status: 'ready', identity })
+        this.operationConnection = undefined
+        if (this.state.connection === connection && this.getState().status === status) this.set({ status: 'ready', identity, connection })
       }
     }))
     this.op = run.catch(() => undefined)
@@ -306,8 +315,9 @@ export class ZoomLink {
     }
   }
   /** Write back an effect list a failed rollback left unwritten (an error's `unrestored`), kept only in this page. */
-  readonly restoreList = (list: number[]) => this.exclusive('Writing the effect list back', async () => {
+  readonly restoreList = (list: number[], connection: number) => this.exclusive('Writing the effect list back', async () => {
     this.refuseWrites()
+    if (connection !== this.state.connection) throw new Error('The pedal connection changed.')
     if (list.length !== EFFECT_LIST_SIZE) throw new Error('That is not an effect list; nothing was written.')
     await this.writeList(list, list)
   }, 'writing')

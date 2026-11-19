@@ -235,7 +235,7 @@ describe('installing and removing on the pedal page', () => {
     expect(unload()).toBe(false)
     await idle(fake.link)
   })
-  it('says when the effect list is missing, and writes back one a failed rollback left unwritten', async () => {
+  it.each([false, true])('offers rollback recovery only on its original connection (replace pedal: %s)', async replace => {
     vi.stubGlobal('confirm', () => true)
     const list = fakeEffectList({ 8: ['LOOP.ZDL'] }).data, fake = fakeZoomPedal({ files: [fakeEffect('LOOP.ZDL', 8, 480, '0.03')] }), link = new ZoomLink(() => Promise.resolve(fake.access), 200)
     await link.connect()
@@ -247,6 +247,21 @@ describe('installing and removing on the pedal page', () => {
     Object.defineProperty(input, 'files', { value: [new File([Uint8Array.from(fakeEffect('NAM1SMOK.ZDL', 8, 900, '0.26').data)], 'NAM1SMOK.ZDL')], configurable: true })
     await act(() => { input.dispatchEvent(new Event('change', { bubbles: true })) })
     await until(() => !!button('Write the effect list back'))
+    if (replace) {
+      const originalConnection = link.getState().connection!
+      const other = fakeZoomPedal({ files: [fakeEffectList({ 8: ['OTHER.ZDL'] })] })
+      const before = other.files[0].data.slice()
+      fake.input.state = fake.output.state = 'disconnected'
+      Object.assign(fake.access, { inputs: other.access.inputs, outputs: other.access.outputs })
+      await act(() => fake.access.onstatechange?.({}))
+      await until(() => link.getState().status === 'ready')
+      expect(button('Write the effect list back')).toBeUndefined()
+      expect(open().querySelector('a[download]')).toBeTruthy()
+      await idle(link)
+      await expect(link.restoreList(list, originalConnection)).rejects.toThrow(/connection changed/)
+      expect(other.files[0].data).toEqual(before)
+      return
+    }
     await click(button('Write the effect list back'))
     await until(() => /effect list from before is back/.test(open().textContent ?? '') && !open().querySelector('.hub-error'))
     expect(fake.files.find(f => f.name === 'FLST_SEQ.ZDT')?.data).toEqual(list)
