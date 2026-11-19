@@ -4,6 +4,7 @@ import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
 import { checkBaseSize } from './base-size.mjs'
 import { readChangeScope } from './change-scope.mjs'
+import { affectedTests, filesForShard, planPrChecks } from './pr-check-plan.mjs'
 import { checkChangelog } from './changelog.mjs'
 import { checkDocs } from './docs.mjs'
 import { appStagesFit, takeSlot, vitestWorkerBytes, workersFor } from './machine-slots.mjs'
@@ -86,21 +87,23 @@ let previous = null
 try { previous = JSON.parse(readFileSync(record, 'utf8')) } catch { /* no earlier run */ }
 const carried = new Set(process.argv.includes('--rerun-failed') && previous?.base === base && previous?.build === buildOnly ? previous.passed : [])
 if (process.argv.includes('--rerun-failed') && !carried.size) console.log('No earlier run against this base to carry: running every check.')
-const scope = !buildOnly && base ? readChangeScope({ root, base }) : null
-const documentationOnly = !!scope?.documentation
-// Match the PR matrix: an unscoped run or a change that can reach the SDK always exercises it.
-const sdkSuite = !scope || scope.sdk
+const scope = !buildOnly && base ? readChangeScope({ root, base, head: part && process.env.GITHUB_ACTIONS ? 'HEAD' : null, includeFiles: true }) : null
+const plan = planPrChecks(scope)
+const documentationOnly = plan.docs
+if (scope) console.log('PR check scope: ' + (plan.full ? 'full (shared, removed or unknown inputs)' : plan.areas.join(', ')))
 async function changelogs() {
   let passed = true
   try {
-    const notes = await checkModuleChangelogs(root, base)
-    console.log(`Module changelogs: ${notes.modules} modules, ${notes.releases} releases`)
+    if (plan.metadata) {
+      const notes = await checkModuleChangelogs(root, base)
+      console.log(`Module changelogs: ${notes.modules} modules, ${notes.releases} releases`)
+    }
   } catch (error) { console.error(`Module changelogs: ${error.message}`); passed = false }
   try {
     console.log(`Application changelog: ${checkChangelog(root, base).entries} entries in changelog/`)
   } catch (error) { console.error(`Application changelog: ${error.message}`); passed = false }
   try {
-    console.log(`Documents: ${checkDocs(root, base).documents} within the size limit, frozen logs unchanged`)
+    if (plan.guides) console.log(`Documents: ${checkDocs(root, base).documents} within the size limit, frozen logs unchanged`)
   } catch (error) { console.error(`Documents: ${error.message}`); passed = false }
   return passed
 }
@@ -115,18 +118,18 @@ async function all(...steps) {
 let passed = await run('prepare')
 // Reject stale notices/catalog before generation can overwrite the evidence of staleness.
 if (!buildOnly && !suiteOnly && passed) {
-  passed = await all(() => run('licenses:check'), () => run('machines:check'), () => run('modules:check', base ? ['--base', base] : []))
+  if (plan.metadata) passed = await all(() => run('licenses:check'), () => run('machines:check'), () => run('modules:check', base ? ['--base', base] : []))
   // Report release-note problems with the catalogue's, from the committed catalogue, rather than one push later.
   if (!passed) await changelogs()
 }
 // Every active Octatrack module must still install beside every other (declarations only, no firmware).
-if (!buildOnly && !suiteOnly && !documentationOnly && passed) passed = await all(() => run('elekloader:check'), () => run('modules:compat'))
+if (!buildOnly && !suiteOnly && plan.native && passed) passed = await all(() => run('elekloader:check'), () => run('modules:compat'))
 // How full the committed Octatrack base is, against the buffer a base on a unit writes it through (scripts/base-size.mjs).
 if (!buildOnly && !suiteOnly && !documentationOnly && passed && (!scope || scope.base)) {
   try { console.log(checkBaseSize(root)) } catch (error) { console.error('Base size: ' + error.message); passed = false }
 }
 // Finish generated notice/catalog/media writes before lint, tests, typecheck or bundling read them.
-if (passed && !documentationOnly) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
+if (passed && !documentationOnly && plan.metadata) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
 // Every path, including documentation-only checks and release builds, requires current-version notes and documents within their size.
 if (passed && !suiteOnly) passed = await changelogs()
 // In a pull request's CI run, a contributor's module pull request carries no check that judges modules and no base change;
@@ -143,15 +146,25 @@ if (passed && !suiteOnly && base && process.env.GITHUB_EVENT_PATH) {
 if (passed && !suiteOnly && base) passed = await run('board', ['check', '--base', base])
 // Documentation uses the same import policy as publication without running firmware gates. The catalogue tests read Markdown
 // (the module guides' links, the agent files, the pull request template), so a prose-only change can break them and must run them.
-if (passed && !suiteOnly && documentationOnly) passed = await run('sdk:imports:check') && await run('test', ['src/catalog'])
+if (passed && !suiteOnly && plan.docContracts && !plan.sdk) passed = await run('sdk:imports:check')
+if (passed && !suiteOnly && documentationOnly) passed = await run('test', ['src/catalog'])
 // module:doctor --draft copies a draft under sdk/octatrack/modules/ for its run, where the SDK suite, the other test files and the
 // build would read it as a listed module. Its test waits out that parallel stage and runs alone after it.
 const DRAFT_DOCTOR = ['scripts/module-doctor.test.mjs', '-t', 'checks a draft where every gate looks']
 if (passed && !documentationOnly) {
-  const tests = (args = []) => run('test', args, { MODWERK_DEFER_DRAFT_DOCTOR: '1' })
-  const sdk = () => sdkSuite ? run('sdk:check') : skip('sdk:check', 'no changed path reaches it')
+  const tests = async (args = []) => {
+    const files = plan.full ? [] : filesForShard(await affectedTests(root, scope, plan), part)
+    if (!plan.full && !files.length) return skip('test', 'no affected Vitest files')
+    if (!plan.full) console.log('Affected Vitest files (' + files.length + '): ' + files.join(', '))
+    return run('test', plan.full ? args : files, { MODWERK_DEFER_DRAFT_DOCTOR: '1' })
+  }
+  const sdk = () => plan.sdk ? run('sdk:check') : skip('sdk:check', 'no changed path reaches it')
   async function appChecks() {
-    const steps = [() => run('lint'), build]
+    const steps = []
+    if (plan.lint) steps.push(() => run('lint', plan.full ? [] : plan.lintFiles))
+    if (plan.types || plan.bundle) steps.push(async () =>
+      (!plan.types || await run('typecheck')) && (!plan.bundle || await run('build:bundle')))
+    if (part === 'contract' && plan.inline) steps.push(() => tests())
     // The SDK runs after Vitest even if a test failed so the check reports both suites' results.
     if (!part) steps.push(async () => {
       const tested = await tests()
@@ -168,7 +181,7 @@ if (passed && !documentationOnly) {
     : part === 'sdk' ? [await run('sdk:check')]
     : suiteOnly ? [await tests(['--shard=' + part.slice(5)])]
     : [await appChecks()]
-  if (!buildOnly && !suiteOnly) results.push(await run('test', DRAFT_DOCTOR))
+  if (!buildOnly && !suiteOnly && plan.doctor) results.push(await run('test', DRAFT_DOCTOR))
   passed = results.every(Boolean) && !interrupted
 }
 const passedNow = [...carried, ...[...results].filter(([, ok]) => ok).map(([key]) => key)].filter(key => results.get(key) !== false)
