@@ -16,6 +16,8 @@ python3 sdk/machines/digitone-ii/tools/dn2_link.py mem 0x47f00000 64
 
 Status 0 ok, 2 bad request, 4 out of range. USB only: a link message from DIN is never acted on.
 
+`ident`, `mem` and the out-of-range refusal answered on a unit over USB ([19 November 2026](../../../docs/verification/2026-11-19-digitone-ii-link-on-a-unit.md)).
+
 ## Where it runs (OS 1.12)
 
 - **Receive.** `link.s` observes stock's SysEx router at 0x4012197a (MIDI task), the site core-dn2 0.3's `ev_sysex`
