@@ -84,8 +84,6 @@ export function useDigiBuild(machine: BuilderMachine, file: File | undefined, re
       })
       // A unit that refuses large upgrades gets its build packed to fit (fit-update.ts); other machines' are unchanged.
       const result = built.ok && file ? await fitBuilt(built, new Uint8Array(await file.arrayBuffer())) : built
-      const lock = builtLock(result)
-      if (lock && storage && JSON.stringify(lock) !== JSON.stringify(storage.lock)) storage.save(lock)
       if (operation.current !== request) return
       if (!result.ok) emitSiteDiagnosticEvent({ event: 'build_failed', phase: step, buildKind: elekloaderBuildKind(machine), error: 'build' }, context)
       // A second, independent check before the page offers the file (digi-preflight.ts): a refusal is a failed build.
@@ -101,6 +99,8 @@ export function useDigiBuild(machine: BuilderMachine, file: File | undefined, re
         }
         if (operation.current !== request) return
       }
+      const lock = builtLock(result)
+      if (lock && storage && JSON.stringify(lock) !== JSON.stringify(storage.lock)) storage.save(lock)
       setView(result.ok ? { phase: 'built', key, enabled, device, moduleIds: [...moduleIds], result, preflight } : { phase: 'failed', key, enabled, device, error: result.error, result })
       trackUsage(result.ok ? 'build_succeeded' : 'build_failed', usageMachine)
     } catch (error) {
