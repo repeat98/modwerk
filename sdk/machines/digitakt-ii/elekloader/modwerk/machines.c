@@ -25,6 +25,23 @@ int32_t core_machine_stands_for(uint32_t type)
     return machine ? (int32_t)machine->stands_for : -1;
 }
 
+/* The SRC page's per-type byte (the sample slot parameter's code, 0xcd for SAMPLE, 0 for none) from the stock table at
+ * 0x401eda30, which the SRC page reads at seven places for types 0-6 only, answering 0 above. An added machine answers
+ * as its stand-in, so its sample list scrolls and chooses (machines-entry.s, SLOT_ENTRY). */
+#define SAMPLE_SLOT_CODES ((const volatile uint8_t *)0x401eda30u)
+
+uint32_t core_machine_sample_slot(uint32_t type)
+{
+    if (type >= DT2_MACHINE_FIRST) {
+        const int32_t stands_for = core_machine_stands_for(type);
+        if (stands_for < 0) {
+            return 0;
+        }
+        type = (uint32_t)stands_for;
+    }
+    return SAMPLE_SLOT_CODES[type];
+}
+
 /* The machine menu's list: the stock getter fills a vector of machine types ({begin, end, capacity});
  * the base appends the added types after the stock ones. The OS builds the list at start-up; the stock
  * buffer it replaces is a few words and is not freed. */

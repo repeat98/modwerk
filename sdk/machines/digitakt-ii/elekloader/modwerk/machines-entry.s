@@ -98,6 +98,41 @@ stock_permit:
         move.l  8(%sp),%d0
         jmp     0x400da51c
 
+/* The SRC page's sample slot code by type (core_machine_sample_slot in machines.c): each site replaces the stock
+ * `cmp.l type,six; bcs.s none; lea 0x401eda30,aX` and resumes after the stock `mvz.b (aX,type),result; bra.s; clr.l`
+ * with the result register set and every other register as it was. \slot is the result's offset in the saved block
+ * (d0 at 0, d1 at 4). */
+        .macro  SLOT_ENTRY label, type, slot, resume
+        .globl  \label
+\label:
+        lea     -16(%sp),%sp
+        movem.l %d0-%d1/%a0-%a1,(%sp)
+        move.l  \type,-(%sp)
+        jsr     core_machine_sample_slot
+        addq.l  #4,%sp
+        move.l  %d0,\slot(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a1
+        lea     16(%sp),%sp
+        jmp     \resume
+        .endm
+
+        SLOT_ENTRY core_machine_slot_entry_16cec, %d1, 4, 0x40016cfe
+        SLOT_ENTRY core_machine_slot_entry_16da6, %d0, 4, 0x40016db8
+        SLOT_ENTRY core_machine_slot_entry_17748, %d5, 0, 0x4001775a
+        SLOT_ENTRY core_machine_slot_entry_17f74, %d3, 4, 0x40017f86
+        SLOT_ENTRY core_machine_slot_entry_183f4, %d4, 4, 0x40018406
+        SLOT_ENTRY core_machine_slot_entry_1844c, %d4, 4, 0x4001845e
+
+/* The same lookup as a function (type at 4(%sp)), from 0x40017d50: replaces `cmp.l %d0,%d1; bcs.s; lea`. */
+        .globl  core_machine_slot_entry_17d56
+core_machine_slot_entry_17d56:
+        move.l  %a1,-(%sp)
+        move.l  %d0,-(%sp)
+        jsr     core_machine_sample_slot
+        addq.l  #4,%sp
+        move.l  (%sp)+,%a1
+        rts
+
 /* The machine menu's list getter (a0: the result vector; one stack argument): run stock, then let the
  * base append the added types. Replays `lea -24(%sp),%sp; movem.l %d2-%d5/%a2-%a3,(%sp)`. */
         .globl  core_machine_list_entry

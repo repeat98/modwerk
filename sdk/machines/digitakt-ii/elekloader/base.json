@@ -243,6 +243,55 @@
         "stockSha256": "73d543c9d8084fc2debabd899a5bc3a7f4907dd2f070831e0ea5b8a61800905c",
         "op": "jsr",
         "target": "core_machine_view_type_entry"
+      },
+      {
+        "addr": "0x40016cec",
+        "len": 10,
+        "stockSha256": "3c3a5a4fc3004501c92d5cc476f354ca4508c5d36072f4810557a56b775d6ada",
+        "op": "jmp",
+        "target": "core_machine_slot_entry_16cec"
+      },
+      {
+        "addr": "0x40016da6",
+        "len": 10,
+        "stockSha256": "d581632ccbce8164087b12b726317861af8d3d64a124ca78e757781e69f3c3d4",
+        "op": "jmp",
+        "target": "core_machine_slot_entry_16da6"
+      },
+      {
+        "addr": "0x40017748",
+        "len": 10,
+        "stockSha256": "b1677fa1491e6ad567c2224c89d3c2bf5a64e819a6625a625869e59c491f1858",
+        "op": "jmp",
+        "target": "core_machine_slot_entry_17748"
+      },
+      {
+        "addr": "0x40017d56",
+        "len": 10,
+        "stockSha256": "d581632ccbce8164087b12b726317861af8d3d64a124ca78e757781e69f3c3d4",
+        "op": "jmp",
+        "target": "core_machine_slot_entry_17d56"
+      },
+      {
+        "addr": "0x40017f74",
+        "len": 10,
+        "stockSha256": "dfa0725ffa418b84f677f9b4207f8a2869883512e1328ca10171f4d0f99459bd",
+        "op": "jmp",
+        "target": "core_machine_slot_entry_17f74"
+      },
+      {
+        "addr": "0x400183f4",
+        "len": 10,
+        "stockSha256": "0cc58e5b9df3c576d226ba5b85c3c68ba0b42a51d78db6c8253f6903705a4dde",
+        "op": "jmp",
+        "target": "core_machine_slot_entry_183f4"
+      },
+      {
+        "addr": "0x4001844c",
+        "len": 10,
+        "stockSha256": "0166e13a30fefeb32317b7893a65d1b7f86a9432659ec84c3b1b1982262375f3",
+        "op": "jmp",
+        "target": "core_machine_slot_entry_1844c"
       }
     ],
     "collections": {
