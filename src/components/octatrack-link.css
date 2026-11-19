@@ -27,25 +27,6 @@
 .stock-effect-toggles input { accent-color: var(--accent); }
 button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--line); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .octatrack-status-bar { display: flex; align-items: center; gap: 7px; }
-/* The corner the sync pill and the load widget share, stacked so neither covers the other. */
-.octatrack-float { position: fixed; right: 20px; bottom: 48px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }
-.octatrack-float > * { pointer-events: auto; }
-.load-widget { display: flex; align-items: center; gap: 14px; padding: 8px 12px 8px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-raised); box-shadow: 0 8px 28px #0007; color: var(--text); font-size: 12px; text-decoration: none; }
-.load-widget:hover { border-color: var(--line-hover); background: var(--surface-hover); }
-.load-widget:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.load-widget > svg { color: var(--muted); }
-.load-widget-item { display: grid; grid-template-columns: auto 34px; grid-template-rows: auto 3px; column-gap: 6px; row-gap: 3px; align-items: baseline; }
-.load-widget-label { color: var(--muted); }
-.load-widget-item strong { grid-row: 1 / 3; grid-column: 2; align-self: center; text-align: right; font-variant-numeric: tabular-nums; }
-.load-widget-bar { grid-column: 1; height: 3px; overflow: hidden; border-radius: 2px; background: var(--line); }
-.load-widget-bar span { display: block; height: 100%; background: var(--accent); transition: width .3s ease-out; }
-.load-widget-item.is-near strong { color: var(--issue-confirmed); }
-.load-widget-item.is-near .load-widget-bar span { background: var(--issue-confirmed); }
-.load-widget.is-near { border-color: color-mix(in srgb, var(--issue-confirmed) 45%, var(--line)); }
-.load-widget.is-stopped { gap: 8px; border-color: #6a4348; }
-.load-widget.is-stopped > svg:first-child { color: var(--issue-confirmed); }
-@media (prefers-reduced-motion: reduce) { .load-widget-bar span { transition: none; } }
-@media (max-width: 600px) { .load-widget { display: none; } }
 .octatrack-activity { display: flex; align-items: center; gap: 10px; max-width: min(460px, calc(100vw - 40px)); padding: 10px 12px 10px 16px; border: 1px solid var(--accent-line); border-radius: 12px; background: var(--surface-raised); box-shadow: 0 12px 40px #0008; font-size: 13px; }
 .octatrack-activity.is-error { border-color: #6a4348; }
 .octatrack-activity .button { min-height: 30px; padding: 5px 10px; }
@@ -328,7 +309,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-empty-set p { margin: 0 0 14px; color: var(--muted); font-size: 14px; line-height: 1.55; }
 .hub-empty-set .button { min-height: 44px; }
 /* Setup: the base and the module file for the card. */
-.card-set-steps { margin: 10px 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: 1.7; }
+.card-set-steps { margin: 10px 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: var(--reading-line-height); }
 .card-set-dialog { width: min(440px, calc(100vw - 32px)); }
 .card-set-plan { display: grid; gap: 16px; margin: 22px 0 18px; padding: 0; list-style: none; }
 .card-set-plan li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 12px; align-items: start; }
@@ -469,12 +450,12 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .base-install-progress [aria-current="step"] { color: var(--text); font-weight: 600; }
 .base-install-progress [aria-current="step"] > span { color: var(--field); background: var(--accent); border-color: var(--accent); }
 .base-install-progress .is-past > span { color: var(--accent); border-color: var(--accent-line); }
-.base-install-stage { min-height: 240px; font-size: 15px; line-height: 1.65; color: var(--text-secondary); }
+.base-install-stage { min-height: 240px; font-size: 15px; line-height: var(--reading-line-height); color: var(--text-secondary); }
 .base-install-stage h3 { margin: 0 0 10px; color: var(--text); font-size: 23px; line-height: 1.3; letter-spacing: -.35px; }
 .base-install-stage p { margin: 0 0 16px; }
 .base-install-stage .base-file-ready { display: flex; align-items: center; gap: 8px; color: var(--text); margin-top: 24px; }
 .base-install-stage .risk-acceptance { margin-top: 20px; font-size: 14px; }
-.base-install-stage .risk-acceptance p, .base-install-stage .risk-acceptance label { font-size: 14px; line-height: 1.65; }
+.base-install-stage .risk-acceptance p, .base-install-stage .risk-acceptance label { font-size: 14px; line-height: var(--reading-line-height); }
 .base-install-stage .risk-acceptance label { min-height: 44px; }
 .base-install-stage .base-install-warning, .base-install-route { display: flex; gap: 12px; margin-top: 20px; padding: 14px 16px; border: 1px solid #715235; border-radius: 8px; background: #382d23; color: #f0c792; font-size: 14px; line-height: 1.65; }
 .base-install-warning svg { flex-shrink: 0; margin-top: 3px; }

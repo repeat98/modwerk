@@ -1,0 +1,1 @@
+Developers can check, commit and prepare a staged change for review with one full local run. Checks queue in arrival order and report the wait. Site and Worker pull requests skip the SDK runner when their changes cannot affect it.

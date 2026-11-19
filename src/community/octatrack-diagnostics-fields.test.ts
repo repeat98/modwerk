@@ -54,7 +54,7 @@ describe('browser family and pre-link failures in opted-in reports', () => {
     expect(db.prepare('SELECT count(*) AS n FROM octatrack_diagnostic_events').get()).toEqual({ n: 0 })
   })
   it('keeps an earlier consent sharing, the newer fields included, and records its text with each report', async () => {
-    expect(version).toBe('2026-11-11.1')
+    expect(version).toBe('2026-11-19.1')
     const { db, call, token, consent, send } = await fixture(), earlier = '2026-10-15.1', changedAt = new Date(Date.now() - 86400000).toISOString()
     db.prepare('INSERT INTO octatrack_diagnostic_consent(user_id,enabled,version,changed_at) VALUES(?,?,?,?)').run('member', 1, earlier, changedAt)
     db.prepare('INSERT INTO octatrack_diagnostic_events(user_id,event_id,consent_version,data_json,created_at) VALUES(?,?,?,?,?)').run('member', 'old', earlier, JSON.stringify({ id: 'old', event: 'connected', phase: 'ready' }), changedAt)
