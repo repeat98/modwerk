@@ -80,7 +80,13 @@ The required PR check includes the description and hardware-evidence verdict. Ed
 
 ### Who reviews a first release
 
-The GitHub logins under `maintainers` in `sdk/machines/<id>/machine.json` review that machine's first releases and hand approved pull requests to the owner. The owner merges each first release from their own GitHub account so publication can verify the merge. Only the owner names or removes one, in a pull request of the owner's own, and assigns them review access. The owner reviews releases for machines without maintainers. A maintainer reviews by the [pull request worker's checklist](MAINTENANCE.md#pull-request-worker), never reviews their own module, and hands these to the owner instead of deciding them:
+A **contributor** can submit a PR with `/modwerk-contribute` or a new module with `/modwerk-new-module`. A **modder** builds modules. A registered modder can release updates to their own published modules. Existing verified module claims and granted developer badges display as Modder. A **device reviewer** (`device-reviewer`) can approve and merge another author's first release on an assigned device. A **maintainer** is a GitHub collaborator with write, maintain or admin access and can handle submissions across devices. A person can hold several roles.
+
+Assign device reviewers by adding their numeric GitHub IDs to `deviceReviewers` in `sdk/machines/<id>/machine.json` through a maintainer-reviewed PR and running `npm run machines:generate`. Get the ID with `gh api users/LOGIN --jq .id`. Assignments take effect on main. Old `maintainers` login lists and forum badges grant no merge permission. For a new modder, include only their lowercase login and numeric ID in the existing accounts map in `.github/module-authors.json`, in the same PR as their first module.
+
+Review the exact commit with `/modwerk-review-prs` and [merge the first release](MODULE_AUTHOR_UPDATES.md#merge-a-first-release). Another reviewer or maintainer handles your own module.
+
+Send these to a repository maintainer or the owner:
 
 - anything beyond the module's own folder and catalogue rows: the base, a hook, the shared SDK, a builder, a check, another machine;
 - any question under the [modding guidelines](../MODDING_GUIDELINES.md): a port's permission or licence, a source that is unclear, a likeness to a maker's product;
@@ -138,7 +144,7 @@ A beta report from a USB sync has no device log (its build fingerprint reads "No
 
 Use `resolve` only after the exact published download and hardware fix have actually been verified. Other closure reasons are `configuration`, `duplicate`, `not_reproducible`, `insufficient_information` and `withdrawn`; each needs an explanation and claims no firmware fix. Private reports offer the same triage and closure choices on their access-controlled page. GitHub-only issues use authorized native GitHub closure. Private details remain access-controlled and consent-based.
 
-Routine updates to an author's approved modules use the existing automatic PR workflow: prepare the fix, pass CI, personally verify the evidence and check both publication boxes. The bot merges and starts site/API publication without an owner review. First releases, shared code, ownership/licence changes and exceptions still need owner review. See [Author updates](MODULE_AUTHOR_UPDATES.md).
+Routine updates to an author's approved modules use the existing automatic PR workflow: prepare the fix, pass CI, personally verify the evidence and check both publication boxes. The bot merges and starts site/API publication without an owner review. Device reviewers or maintainers review first releases. Shared code, ownership/licence changes and exceptions go to a maintainer or the owner. See [Author updates](MODULE_AUTHOR_UPDATES.md).
 
 For a specific GitHub reply, check its signed webhook delivery, each intended recipient's bell entry, and that member's email/push preferences and digest due time. A successful webhook response proves processing, not that every participant received a notification; check members who joined through Modwerk separately, and never route by a typed GitHub mention of a Modwerk username. The `emailed` flag also settles read or expired entries and turned-off topics, so it is not a delivery receipt. Aggregate provider-acceptance counters cannot prove that a particular message arrived in an inbox.
 
