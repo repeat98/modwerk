@@ -44,6 +44,11 @@ export function workersFor({ most, each, keep = GB, available = availableMemory(
   return Math.max(1, Math.min(most, cores, Math.floor((available - keep) / each)))
 }
 
+// Lint and typecheck peaked at 1.1 and 1.3 GiB on a busy WSL host. Reserve room for their children and the system
+// before running them alongside Vitest, using the same per-worker estimate as the check runner.
+export const vitestWorkerBytes = 700 * MB
+export const appStagesFit = (workers, available = availableMemory()) => available >= 4 * GB + workers * vitestWorkerBytes
+
 /** The slot directory, shared by every worktree of this clone (it lives in the clone's common Git directory). */
 export function slotDirectory(cwd = process.cwd()) {
   try {
