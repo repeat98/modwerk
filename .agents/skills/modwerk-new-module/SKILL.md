@@ -34,4 +34,4 @@ Follow `docs/ADD_A_MODULE.md` and the rules in `AGENTS.md`, in this order.
    - review it as the owner will, against the pull request worker's checklist and the rules contributions most often break (`docs/MAINTENANCE.md#pull-request-worker`), and fix what applies;
    - then `/modwerk-pr-ready` and the pull request.
 
-   A new module ships in a pull request of its own, and a maintainer of its machine or the owner reviews its first release (`docs/DEVELOPER_WORKFLOW.md#who-reviews-a-first-release`). A push, merge or "Firmware ready" is not a release: after the merge, verify the live version and a saved download.
+   A new module ships in a pull request of its own, and a device reviewer or repository maintainer reviews and merges its first release. For a new modder, include the submitting author's verified numeric GitHub ID in `.github/module-authors.json` (`docs/DEVELOPER_WORKFLOW.md#who-reviews-a-first-release`). A push, merge or "Firmware ready" is not a release: after the merge, verify the live version and a saved download.
