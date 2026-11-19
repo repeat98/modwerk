@@ -28,14 +28,14 @@ Only the developer who shared it and the site's administrators. The owner may an
 
 ## The owner's side
 
-`npm run session -- pull`, signed in for the board with the administrator account, saves every shared session into `~/.cache/modwerk-local/sessions/` with an `INDEX.md`. Developers' names and quotes stay there and in chat, like diagnostics ([MAINTENANCE.md](MAINTENANCE.md)). What a session shows becomes a guide edit, a check or a fix, written without names.
+`npm run session -- pull` saves every shared session into `~/.cache/modwerk-local/sessions/` with an `INDEX.md`. It signs in to the owner's Modwerk account, the one with the administrator role, as the site's sign-in does: email and password at a prompt (the password hidden), or from `MODWERK_EMAIL` and `MODWERK_PASSWORD` for that one command. The password is never stored, and the pull signs out when it is done. A board session never reads other developers' sessions, even on an administrator's account. The owner runs it in their own terminal, so the password never passes through an agent. Developers' names and quotes stay there and in chat, like diagnostics ([MAINTENANCE.md](MAINTENANCE.md)). What a session shows becomes a guide edit, a check or a fix, written without names.
 
 ## API
 
 Writes need the board session (`X-Modwerk-Developer`) and the site's `Origin`.
 
 - `POST /api/agent-sessions` `{consent, data}`: `data` is the session JSON, gzip, base64, at most 1 MB packed. `consent` is `SESSION_CONSENT_VERSION`; a stale client is refused.
-- `GET /api/agent-sessions`: your own; `?all=1` everyone's, for administrators.
+- `GET /api/agent-sessions`: your own; `?all=1` everyone's, for administrators (`X-Octamod-Admin` from `POST /api/auth/admin`, or a member account with the administrator role).
 - `GET /api/agent-sessions/<id>` and `DELETE /api/agent-sessions/<id>`: yours, or any for administrators.
 
 The format, the scrubbing and the checks are in `src/community/agent-sessions.ts`, shared by the client (`scripts/agent-session.mjs`) and the Worker (`server/agent-sessions.ts`); the table is `agent_sessions` (migration 0099).
