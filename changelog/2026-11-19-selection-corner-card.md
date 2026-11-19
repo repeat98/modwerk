@@ -1,0 +1,1 @@
+While you browse the library on a desktop, your selection now shows as a small card in the bottom right corner, in the style of the live load card: one bar per machine for modules toward the set limit, or memory use on Digi machines. The bar turns amber when the selection needs a change; hover for the details, click to open the configuration. On a phone it stays in the menu.

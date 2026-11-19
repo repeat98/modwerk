@@ -130,7 +130,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if(messages)return messages
     const pages = await forumPublic(request,env,db)
     if(pages)return pages
-    const discussion = await forum(request,db,user,admin,adminId)
+    const discussion = await forum(request,db,user,admin,adminId,env)
     if(discussion)return discussion
     const notifications = await notificationRoutes(request,env,db,user)
     if(notifications)return notifications

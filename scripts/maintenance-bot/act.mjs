@@ -7,7 +7,7 @@ import { tagDiscordLinks } from '../../server/site-link-tags.ts'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { TODO_COMMAND, actionId, classify } from './policy.mjs'
-import { MARKER, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
+import { MARKER, approveRun, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
 import { dailyReport } from './report.mjs'
 
 const daily = process.env.BOT_MODE === 'daily', dir = process.env.BOT_DIR ?? 'bot'
@@ -171,7 +171,7 @@ async function carryOut(action) {
     case 'approve_run': {
       const runs = (await api('/actions/runs?status=action_required&head_sha=' + now.head + '&per_page=30')).workflow_runs ?? []
       if (!runs.length) return ['expired', 'no run waits any more']
-      for (const run of runs) await api('/actions/runs/' + run.id + '/approve', 'POST')
+      for (const run of runs) await approveRun(api, run.id)
       return ['done', runs.length + ' run' + (runs.length === 1 ? '' : 's') + ' started']
     }
     case 'close':

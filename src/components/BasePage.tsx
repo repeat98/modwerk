@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { assetUrl } from '../hosting'
-import { DEVICES, deviceHref, deviceTitle, type DeviceProfile } from '../devices/registry'
+import { DeviceImage } from '../devices/DeviceImage'
+import { DEVICES, DEVICES_BY_ID, deviceHref, deviceTitle, type DeviceProfile } from '../devices/registry'
 import { zoomHubHref } from '../devices/zoom-hub-route'
 import { CARD_SET_FILE } from '../engine/elekloader/card-set'
 import { MODULE_SKIP_HINT } from '../firmware-notices'
@@ -53,17 +54,17 @@ const RYTM_SCREENS: Screen[] = [
 ]
 
 const OCTATRACK_STEPS: Step[] = [
-  { icon: 'download', title: 'Install once, from the card',
-    text: <>The original OS has no USB link for Modwerk, so the first install is an OS update: <a href="#octatrack/setup">Setup</a> builds the base .bin in your browser from your own OS 1.40C file, you copy it to the card and run <strong>PROJECT › SYSTEM › OS UPGRADE</strong>.</> },
-  { icon: 'swap', title: 'Then add modules, over USB or from the card',
-    text: <>Pick modules into a set and choose <strong>Sync to Octatrack</strong> in Chrome or Edge. They load in seconds, without the card and without a restart, and come back every time the Octatrack starts. The card works too, in any browser: <strong>Load from the card</strong> on Setup gives you a <code>{CARD_SET_FILE}</code> file. Copy it to the top folder of the card and switch the Octatrack off and on (<a href="#faq/card-set">steps</a>).</> },
-  { icon: 'arrow', title: 'Updates come over USB',
-    text: <>When your set needs a newer base, the site offers <strong>Install latest base</strong>. The new base runs as a trial first and only then saves itself, with at most one restart. After a base change, sync once to put your modules back.</> },
-  { icon: 'back', title: 'Go back whenever you like',
-    text: <>Install Elektron’s original OS from the card with OS UPGRADE, like any update, and the Octatrack is stock again (<a href="#faq/return-to-stock">steps</a>).</> },
+  { icon: 'download', title: 'Install the base once',
+    text: <>Setup builds a .bin from your original OS 1.40C file. Copy it to the card, then choose <strong>PROJECT › SYSTEM › OS UPGRADE</strong> on the Octatrack.</> },
+  { icon: 'swap', title: 'Choose a module set',
+    text: <>Pick modules in the library and choose <strong>Sync to Octatrack</strong>. They load over USB and come back after a restart. You can also <a href="#faq/card-set">load {CARD_SET_FILE} from the card</a>.</> },
+  { icon: 'arrow', title: 'Update or return to stock',
+    text: <>When your set needs a newer base, Setup offers <strong>Install latest base</strong>. Sync your set again after updating. To go back, <a href="#faq/return-to-stock">reinstall Elektron’s original OS</a>.</> },
 ]
 
 const SAFETY: Step[] = [
+  { icon: 'back', title: 'Restore the original OS',
+    text: <>Install Elektron’s original OS from the card with OS UPGRADE. <a href="#faq/return-to-stock">Return to stock instructions</a></> },
   { icon: 'shield', title: 'Two copies of the base', text: 'An update writes only the spare copy. A power cut or a pulled cable during an update leaves the base you had, and a new base that fails to start twice goes back to the previous one by itself.' },
   { icon: 'warn', title: 'A module that crashes is left out', text: 'If the Octatrack crashes or freezes while it loads modules at startup, the next start leaves that module out and says so.' },
   { icon: 'play', title: 'Start without your modules', text: MODULE_SKIP_HINT },
@@ -106,17 +107,23 @@ function ScreenGallery({ screens, label }: { screens: Screen[]; label: string })
   </li>)}</ul>
 }
 
-function Steps({ steps, className = '' }: { steps: Step[]; className?: string }) {
-  return <ol className={'base-steps ' + className}>{steps.map(step => <li key={step.title}>
+function Steps({ steps }: { steps: Step[] }) {
+  return <ul className="base-steps">{steps.map(step => <li key={step.title}>
     <span className="base-step-icon" aria-hidden="true"><Icon name={step.icon} size={17} /></span>
     <div><h4>{step.title}</h4><p>{step.text}</p></div>
-  </li>)}</ol>
+  </li>)}</ul>
 }
 
-function SectionHeading({ id, title, status, children }: { id: string; title: string; status: string; children: React.ReactNode }) {
-  return <header className="base-section-heading">
-    <h2 id={'base-' + id}>{title} <span className="base-status">{status}</span></h2>
-    <p>{children}</p>
+function SectionHeading({ id, title, status, picture, caption, action, children }: {
+  id: string; title: string; status: string; picture: React.ReactNode; caption?: string; action: React.ReactNode; children: React.ReactNode
+}) {
+  return <header className="base-section-heading base-device">
+    <div>
+      <h2 id={'base-' + id}>{title} <span className="base-status">{status}</span></h2>
+      <p>{children}</p>
+      <div className="base-actions">{action}</div>
+    </div>
+    <figure className="base-device-picture">{picture}{caption && <figcaption>{caption}</figcaption>}</figure>
   </header>
 }
 
@@ -133,78 +140,66 @@ export function BasePage({ machine: device }: { machine?: string }) {
   const [machine, setMachine] = useState(() => baseMachine(device))
   const others = DEVICES.filter(device => !COVERED.has(device.id) && (device.status !== 'open' || device.stack.base !== 'open'))
   return <div className="base-page">
-    <div className="page-heading faq-heading base-heading"><div>
-      <p className="page-kicker">MODWERK / BASE</p>
+    <header className="base-heading">
       <h1>Base firmware</h1>
-      <p>The base is your instrument’s own OS with a few things added: a module loader, the lists and pages modules share, and the screens that show what they do. Choose your machine to see what its base adds and how it is installed.</p>
-    </div>
       <div className="faq-machines" role="group" aria-label="Machine">{BASE_MACHINES.map(item =>
         <button type="button" key={item.id} aria-pressed={item.id === machine} onClick={() => setMachine(item.id)}>{item.label}</button>)}</div>
-    </div>
-
-    <section className="base-intro" aria-labelledby="base-intro-title">
-      <h2 id="base-intro-title" className="sr-only">How the base works</h2>
-      <div className="base-intro-grid">
-        <div><span className="base-eyebrow">BUILT FROM YOUR FILE</span><p>Your browser builds the base from the original OS file you download from the maker. The file never leaves your computer, and Modwerk hosts no firmware.</p></div>
-        <div><span className="base-eyebrow">SHARED BY EVERY MODULE</span><p>The base owns what modules have in common, such as the machine and effect lists, so any set of modules runs side by side.</p></div>
-        <div><span className="base-eyebrow">ALWAYS REVERSIBLE</span><p>The maker’s original OS puts the instrument back as it was, installed the same way as any OS update.</p></div>
-      </div>
-    </section>
+      <p className="base-definition">Base firmware is your instrument’s original operating system with support for mods built in. The base gives modules a place to run. Each module adds a feature, such as an effect or a drum machine.</p>
+    </header>
 
     {machine === 'octatrack' && <section className="base-section" aria-labelledby="base-octatrack">
-      <SectionHeading id="octatrack" title="Octatrack MKI and MKII" status="Released">
-        For everyone, on the original OS 1.40C. Modules load over USB and stay on the Octatrack’s card.
+      <SectionHeading id="octatrack" title="Octatrack MKI and MKII" status="Released"
+        picture={<img src={screen('ot-status.png')} alt={OCTATRACK_SCREENS[2].alt} />} caption="CPU and DSP load on the Octatrack"
+        action={<a className="button button-primary" href="#octatrack/setup">Set up your Octatrack <Icon name="arrow" size={15} /></a>}>
+        Module machines and effects appear alongside the stock choices in the track menus. Open <strong>PROJ › MODWERK</strong> to see how much processing power they use or switch individual modules on and off.
       </SectionHeading>
-      <h3 className="base-subhead">What you see on the Octatrack</h3>
-      <ScreenGallery screens={OCTATRACK_SCREENS} label="Octatrack base screens" />
-      <dl className="base-also">{OCTATRACK_ALSO.map(([name, text]) => <div key={name}><dt>{name}</dt><dd>{text}</dd></div>)}</dl>
-      <div className="base-columns">
-        <div><h3 className="base-subhead">Install, update, remove</h3><Steps steps={OCTATRACK_STEPS} /></div>
-        <div><h3 className="base-subhead">What keeps it safe</h3><Steps steps={SAFETY} className="is-quiet" /></div>
-      </div>
-      <p className="base-actions"><a className="button button-primary" href="#octatrack/setup">Set up your Octatrack <Icon name="arrow" size={14} /></a><a className="button button-quiet" href="#faq/risks">What can go wrong?</a></p>
+      <dl className="base-facts">
+        <div><dt>What you need</dt><dd>Original OS 1.40C and a CompactFlash card. For USB sync, use a USB cable and Chrome or Edge on a computer.</dd></div>
+        <div><dt>Before installing</dt><dd>Keep the original OS and a card reader or MIDI interface ready so you can recover if USB stops working. <a href="#faq/risks">Installation risks</a></dd></div>
+      </dl>
+      <section className="base-workflow"><h3>From the original OS to a module set</h3><Steps steps={OCTATRACK_STEPS} /></section>
+      <details className="base-reference"><summary>Recovery and returning to stock</summary><Steps steps={SAFETY} /></details>
+      <details className="base-reference"><summary>Octatrack screen guide</summary>
+        <ScreenGallery screens={OCTATRACK_SCREENS} label="Octatrack base screens" />
+        <dl className="base-also">{OCTATRACK_ALSO.map(([name, text]) => <div key={name}><dt>{name}</dt><dd>{text}</dd></div>)}</dl>
+      </details>
     </section>}
 
     {machine === 'zoom' && <section className="base-section" aria-labelledby="base-zoom">
-      <SectionHeading id="zoom" title="Zoom MS-70CDR" status="Beta">
-        The MS-70CDR’s base is Luca Matturro’s <a href="https://github.com/matujuice/zoom-ms-midistomp" target="_blank" rel="noreferrer">MIDISTOMP</a>: Zoom’s own firmware 2.10, patched in your browser from Zoom’s updater.
+      <SectionHeading id="zoom" title="Zoom MS-70CDR" status="Beta"
+        picture={<DeviceImage device={DEVICES_BY_ID['zoom-ms-70cdr']} />}
+        action={<a className="button button-primary" href={zoomHubHref('zoom-ms-70cdr')}>Open the MS-70CDR page <Icon name="arrow" size={15} /></a>}>
+        Luca Matturro’s <a href="https://github.com/matujuice/zoom-ms-midistomp" target="_blank" rel="noreferrer">MIDISTOMP</a> adds MIDI control, clock sync and a mixer to Zoom firmware 2.10.
       </SectionHeading>
-      <h3 className="base-subhead">What it adds</h3>
-      <Steps steps={ZOOM_ADDS} className="base-grid-steps" />
-      <div className="base-note">
-        <p><strong>Install:</strong> on the pedal page, with Zoom’s MS-70CDR 2.10 updater for Mac (the .zip works on any computer) and Chrome or Edge. Hold Up and Down while you plug the pedal in, then the site flashes it over USB in about a minute.</p>
-        <p><strong>Go back:</strong> run Zoom’s own 2.10 updater. It also rewrites the effects area, so back up your effects first. The pedal’s bootloader is never written, so it can always be flashed again.</p>
-      </div>
-      <p className="base-actions"><a className="button button-primary" href={zoomHubHref('zoom-ms-70cdr')}>Open the MS-70CDR page <Icon name="arrow" size={14} /></a></p>
+      <dl className="base-facts">
+        <div><dt>What you need</dt><dd>Zoom’s MS-70CDR 2.10 Mac updater (.zip) and Chrome or Edge. The zip works on any computer.</dd></div>
+        <div><dt>Before restoring</dt><dd>Back up your effects. Zoom’s original updater rewrites the effects area.</dd></div>
+      </dl>
+      <section className="base-workflow"><h3>Install or restore firmware</h3>
+        <p>Hold Up and Down while plugging in the pedal, then use the pedal page to install over USB. The transfer takes about a minute. To restore the original firmware, run Zoom’s 2.10 updater.</p>
+      </section>
+      <section className="base-workflow base-features"><h3>What MIDISTOMP adds</h3><Steps steps={ZOOM_ADDS} /></section>
     </section>}
 
     {machine === 'rytm' && <section className="base-section" aria-labelledby="base-rytm">
-      <SectionHeading id="rytm" title="Analog Rytm MKII" status="Preview">
-        The Rytm’s base comes inside the OS file you build for a set. When the set holds a send effect, the base adds a send bus; otherwise it adds only the room for module machines in the machine list.
+      <SectionHeading id="rytm" title="Analog Rytm MKII" status="Preview"
+        picture={<img src={screen('rytm-send-fx.png')} alt={RYTM_SCREENS[1].alt} />} caption="Send effect on the FX track"
+        action={<a className="button button-primary" href={deviceHref('analog-rytm-mkii')}>Open the Rytm library <Icon name="arrow" size={15} /></a>}>
+        The OS file you build for each set includes the base. New drum machines appear in the track’s machine list. Add a send effect and each track gets a SEND FX page, with the effect controls on the FX track.
       </SectionHeading>
-      <h3 className="base-subhead">What you see on the Rytm</h3>
-      <ScreenGallery screens={RYTM_SCREENS} label="Analog Rytm base screens" />
-      <div className="base-note">
-        <p><strong>Install:</strong> send the .syx you built with Elektron Transfer and confirm on the Rytm. There is no separate base to install, and no USB sync yet: a new set means a new OS file.</p>
-        <p><strong>Go back:</strong> send Elektron’s original .syx the same way.</p>
-      </div>
-      <p className="base-actions"><a className="button button-quiet" href={deviceHref('analog-rytm-mkii')}>Open the Analog Rytm MKII page <Icon name="arrow" size={14} /></a></p>
+      <dl className="base-facts">
+        <div><dt>Installation</dt><dd>Each set needs a new OS file. Send the .syx with Elektron Transfer and confirm on the Rytm.</dd></div>
+        <div><dt>Return to stock</dt><dd>Send Elektron’s original .syx with Elektron Transfer.</dd></div>
+      </dl>
+      <details className="base-reference"><summary>Analog Rytm screen guide</summary><ScreenGallery screens={RYTM_SCREENS} label="Analog Rytm base screens" /></details>
     </section>}
 
     {machine === 'others' && <section className="base-section" aria-labelledby="base-others">
-      <SectionHeading id="others" title="Other instruments" status="In the works">
-        Every instrument grows the same base as the Octatrack, one step at a time. Each machine page shows how far it has come and the next step anyone can take.
-      </SectionHeading>
-      <ul className="base-machines">{others.map(device => <li key={device.id}>
-        <a href={device.family === 'zoom' ? zoomHubHref(device.id) : deviceHref(device.id)}>
-          <strong>{deviceTitle(device)}</strong>
-          <span>{baseState(device)}</span>
-        </a>
-      </li>)}</ul>
+      <header className="base-section-heading"><h2 id="base-others">Other instruments</h2><p>Choose a machine to see its firmware support and development progress.</p></header>
+      <ul className="base-machines">{others.map(device => <li key={device.id}><a href={device.family === 'zoom' ? zoomHubHref(device.id) : deviceHref(device.id)}>
+        <strong>{deviceTitle(device)}</strong><span>{baseState(device)}</span><Icon name="arrow" size={15} />
+      </a></li>)}</ul>
     </section>}
-
-    <footer className="base-footer">
-      <p>Modwerk is an independent, unofficial project. The base is built from the maker’s firmware on your own computer; do not share the files it makes. Questions not answered here are in <a href="#faq">Help &amp; FAQ</a>.</p>
-    </footer>
+    <footer className="base-footer">Firmware is built locally from your own OS file. Share your set as JSON and keep firmware files on your computer. <a href="#faq">Help &amp; FAQ</a></footer>
   </div>
 }

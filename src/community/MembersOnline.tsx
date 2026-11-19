@@ -15,7 +15,8 @@ export function MembersOnlineList({ presence }: { presence: Presence }) {
 }
 
 /** The sidebar's online count. */
-export function MembersOnlineChip({ presence }: { presence: Presence }) {
+export function MembersOnlineChip({ presence }: { presence: Presence | null }) {
+  if (!presence) return <span className="sidebar-online is-unknown" title="Online count unavailable"><span aria-hidden="true">— online</span><span className="sr-only">Online count unavailable</span></span>
   return <span className="sidebar-online" title={onlineLabel(presence.online) + ' · active in the last 5 minutes'}><span className="online-dot" aria-hidden="true" />{presence.online} online</span>
 }
 
