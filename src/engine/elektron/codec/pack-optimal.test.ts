@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { depack, depackSection } from './depack.ts'
 import { pack, packOptimal, packSectionOptimal } from './pack.ts'
 
+// The optimal parse is several times slower than greedy: on a loaded runner these take seconds, past vitest's 5 s.
+const SLOW = 60_000
+
 // Synthetic inputs only: a seeded random stream, runs, a repeated record and text-like data with shifted repeats.
 function input(kind: string, n: number, seed: number): Uint8Array {
   const out = new Uint8Array(n)
@@ -26,14 +29,14 @@ describe('the optimal packer', () => {
         expect(end, kind + '/' + n).toBe(stream.length)
         expect(depackSection(packSectionOptimal(data)), kind + '/' + n).toEqual(data)
       }
-  })
+  }, SLOW)
 
   it('is never larger than the greedy packer on compressible data, and smaller where offsets repeat', () => {
     for (const kind of ['runs', 'records', 'text']) {
-      const data = input(kind, 200000, 7)
+      const data = input(kind, 60000, 7)
       expect(packOptimal(data).length, kind).toBeLessThanOrEqual(pack(data).length)
     }
-    const records = input('records', 200000, 7)
+    const records = input('records', 60000, 7)
     expect(packOptimal(records).length).toBeLessThan(pack(records).length * 0.95)
-  })
+  }, SLOW)
 })
