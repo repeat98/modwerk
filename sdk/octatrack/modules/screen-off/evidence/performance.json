@@ -2,7 +2,7 @@
   "schema": 1,
   "module": "screen-off",
   "version": "0.1.0-experimental",
-  "sourceSha256": "95af4000fc856711818874d839a2d7da4bf120e36390642c263061ed86dd4d1f",
+  "sourceSha256": "acc15987dd945a652288edfca2671299ef8921719ebc0457a686e1e5d8beffc7",
   "kind": "coldfire",
   "trigger": "key",
   "cycles": {
