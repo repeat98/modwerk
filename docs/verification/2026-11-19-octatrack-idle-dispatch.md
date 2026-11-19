@@ -37,3 +37,18 @@ On development build `06e08f35`, the MKII ran the draft Micro Timing package `f5
 The MKII then booted release build `694ddc855858d8a6f23503a230f0f24ef95dc9ae92c3377844878258f3725a40` into RAM. The 24-package set above and the same set with Micro Timing added each installed and rolled back as a single trial. Both ended with the starting inventory and active identity. The device logged no crash, stall, freeze or skipped track in either trial. The release tests covered installation and Undo while stopped. Playback with all eight delay sends open, Part switches during playback and audible Analog BD rollback remain unverified on this build.
 
 A USB RAM boot of the original 0.7.9 base (`dfa43813`) restored the ten starting modules. Every module ID, name, handle and layout matched the inventory recorded before the first boot. All trials used RAM and the test did not use Keep.
+
+## Track-machine lookups on the UI tick
+
+On the MKII running OS 1.40C, baseline twin `06e08f35` repeated the empty and 24-package comparison twice on the saved Part used in the POLY8 comparison above. All eight tracks used FLEX, with SPRING REV on T1 and SPATIALIZER on T5. Installing the 24 packages increased frame-interrupt time by 4.0 percentage points stopped and by 6.3 and 6.4 points during playback. Both empty readings were 30.1% stopped and 52.0–52.1% playing. Both full readings were 34.1% and 58.4%.
+
+The registry used to resolve each track's machine separately for the CPU budget and the DSP voice charge. A host fixture with two installed machines and eight FLEX tracks counted 16 lookups per charge pass. Reusing the owners within that tick brought it to eight. The next tick reads the Part again.
+
+With the same 24 unused packages, two alternating trials on each development twin used five seconds of playback and four seconds stopped before taking measurements. Each table cell contains the medians for two trials, each from three `profile:3` windows.
+
+| Development twin | Module UI tick stopped, µs | Module UI tick playing, µs |
+| --- | ---: | ---: |
+| Baseline `06e08f35` | 54.7, 54.6 | 69.3, 71.2 |
+| Reused owners `ed563610` | 50.0, 50.1 | 63.6, 63.4 |
+
+All four trials returned to the starting active identity and empty inventory and restored both pattern hashes and all four Parts' working and saved hashes. The guard counted zero skipped renders in the measured windows. The longest playback frame reached 103.5% of one frame. These timings cover the profiler's module UI tick section, which includes the machine registry. The whole-chain timing varied between runs.
