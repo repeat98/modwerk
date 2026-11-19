@@ -92,6 +92,13 @@
       "purpose": "Null-terminated pointers to dt2_mixer_extension descriptors, each holding a native page descriptor and void draw(void *view, void *bitmap). The UI reads the table when constructing the Mixer page list and dispatches draw for the active registered page. Lower contribution order first, ties by module ID and contribution order. The renderer may draw into its own page bitmap and update module-owned state; the view is borrowed and stock navigation and page state are read-only."
     },
     {
+      "name": "core_machines",
+      "since": "1.1",
+      "entry": 4,
+      "room": 4,
+      "purpose": "Null-terminated pointers to struct dt2_machine records (mk2/machines.h): track machines added after the seven stock types, each with its own machine type 7-10 (claimed as machine:<type>, saved with kits), the stock type it stands for, its names and its five knob names on the stand-in's parameters. The base lists them in the machine menu, keeps them through kit load, shows their knob names while a page shows that machine and, when the module's package carries a build.sharc player, sends their voices to it on the sound chip."
+    },
+    {
       "name": "core_fast",
       "entry": 4,
       "purpose": "Copy-table entries used to move linked .fast code into the Digitakt II SRAM tail on the first UI tick."
