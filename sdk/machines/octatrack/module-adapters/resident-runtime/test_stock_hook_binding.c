@@ -78,7 +78,7 @@ int main(void) {
     assert(modwerk_machine_dsp_claims_admit(8u,&bus,1)==RUNTIME_OK && modwerk_machine_dsp_claims_admit(0,&bus,1)==RUNTIME_CONFLICT);
     bus.access=RUNTIME_CLAIM_WRITE; assert(modwerk_machine_dsp_claims_admit(8u,&bus,1)==RUNTIME_CONFLICT);
     assert(modwerk_machine_dsp_claims_admit(0,&mine,1)==RUNTIME_OK);
-    claims_idle=0; assert(modwerk_machine_dsp_claims_admit(0,&mine,1)==RUNTIME_MEMORY);
+    claims_idle=0; assert(modwerk_machine_dsp_claims_admit(0,&mine,1)==RUNTIME_BUFFER); /* a buffer under it: named, not memory */
     claims_idle=-1; assert(modwerk_machine_dsp_claims_admit(0,&mine,1)==RUNTIME_BUSY);
     claims_idle=1; saved=1; assert(modwerk_machine_dsp_claims_admit(0,&mine,1)==RUNTIME_BUSY); saved=0;
     assert(modwerk_stock_hook_export_idle());

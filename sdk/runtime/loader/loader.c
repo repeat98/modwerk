@@ -34,6 +34,7 @@ static unsigned owners, slot;                /* slot: the transaction's position
 static struct runtime_module *candidate, *previous;
 static int prepared, held;
 static enum runtime_refusal refusal;
+static enum runtime_check refused_check; /* which admission check said `refusal` */
 struct journal_row { struct runtime_module *before,*after; uint32_t before_generation,after_generation,module; uint16_t position; uint8_t published,touched,needs_restore; uint8_t package_sha256[MU_DIGEST_BYTES]; };
 struct runtime_journal { struct journal_row row[RUNTIME_JOURNAL_ROWS]; struct runtime_journal_progress progress; uint8_t preparing; };
 static struct runtime_journal journal;
@@ -111,7 +112,8 @@ unsigned modwerk_runtime_active(void)
     return n;
 }
 enum runtime_refusal modwerk_runtime_refusal(void) { return refusal; }
-void modwerk_runtime_refused(enum runtime_refusal why) { refusal = why; }
+void modwerk_runtime_refused(enum runtime_refusal why) { refusal = why, refused_check = RUNTIME_CHECK_NONE; }
+enum runtime_check modwerk_runtime_refused_check(void) { return refused_check; }
 uint32_t modwerk_runtime_value(void) { return modwerk_runtime_api.value; }
 uint32_t modwerk_runtime_calls(void) { return modwerk_runtime_ticks; }
 
@@ -130,7 +132,8 @@ unsigned modwerk_runtime_capabilities(uint8_t *out)
     out[10] = (uint8_t)(RUNTIME_COPIES >> 8); out[11] = (uint8_t)RUNTIME_COPIES;
     return 12u;
 }
-static int refuse(enum runtime_refusal why) { refusal = why; return 0; }
+static int refuse(enum runtime_refusal why) { refusal = why, refused_check = RUNTIME_CHECK_NONE; return 0; }
+static int refuse_at(enum runtime_check check, enum runtime_refusal why) { refuse(why), refused_check = check; return 0; }
 /* ABI 9: the base features a package may require (loader.h). None unless the machine says so. */
 #ifndef MODWERK_RUNTIME_FEATURES_EXTERNAL
 __attribute__((weak)) unsigned modwerk_machine_dsp_features(void) { return 0; }
@@ -406,6 +409,21 @@ static int reachable(const struct runtime_module *m)
         if (change_set.row[i].before==m || change_set.row[i].after==m) return 1;
 #endif
     return m == candidate || m == previous;
+}
+int modwerk_runtime_restorable(uint32_t generation)
+{
+    if (!generation) return 0;
+    for (unsigned i = 0; i < owners; ++i) {
+        if (owner_identity[i].generation != generation) continue;
+        const struct runtime_module *m = owned[i];
+        if (m == previous) return 1;
+        for (unsigned k = 0; k < journal.progress.records; ++k) if (journal.row[k].before == m) return 1;
+#ifdef MODWERK_RUNTIME_SETS
+        for (unsigned k = 0; k < change_set.count; ++k) if (change_set.row[k].before == m) return 1;
+#endif
+        return 0;
+    }
+    return 0;
 }
 /* Locked: free every extent that no position, the transaction or a paused
  * task's stack or saved registers can reach. Unknown task state frees nothing. */
@@ -861,7 +879,7 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
 #ifdef MODWERK_RUNTIME_SETS
     if(change_set.count && !change_set.preparing) return refuse(RUNTIME_BUSY);
 #endif
-    candidate = 0; prepared = 0; refusal = RUNTIME_OK;
+    candidate = 0; prepared = 0; refusal = RUNTIME_OK, refused_check = RUNTIME_CHECK_NONE;
     if (length < 28u || data[0] != 'M' || data[1] != 'W' || data[2] != 'R' || data[3] != 'M' || be16(data + 4) < 3u ||
         be16(data + 4) > RUNTIME_ABI || be16(data + 6) & ~(be16(data + 4) >= 8u ? 7u : be16(data + 4) >= 6u ? 3u : 0u)) return refuse(RUNTIME_MALFORMED);
     uint32_t abi = be16(data + 4), header = abi >= 9 ? RUNTIME_HEADER_BYTES : abi == 8 ? 76u : abi == 7 ? 72u : abi == 6 ? 68u : abi == 5 ? 50u : abi == 4 ? 32u : 28u;
@@ -1046,11 +1064,12 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
     for (uint32_t i = 0; i < sites; ++i) if (claimed(slot, address[i], size[i])) return refuse(RUNTIME_CONFLICT);
     if (claims_taken(slot, claim, claims)) return refuse(RUNTIME_CONFLICT); /* another live module's claim */
     uint32_t admission_lock = modwerk_machine_lock();
+    enum runtime_check check = RUNTIME_CHECK_CLAIMS;
     int why = engine ? modwerk_machine_dsp_engine_admit(&dsp) : modwerk_machine_dsp_claims_admit(dsp.requires, claim, claims);
-    if (!why) why = modwerk_machine_metadata_admit(dsp_of(live[slot]), &dsp, context, RUNTIME_METADATA_PREPARE);
-    if (!why) why = modwerk_machine_dsp_admit(dsp_of(live[slot]), &dsp);
+    if (!why) check = RUNTIME_CHECK_METADATA, why = modwerk_machine_metadata_admit(dsp_of(live[slot]), &dsp, context, RUNTIME_METADATA_PREPARE);
+    if (!why) check = RUNTIME_CHECK_DSP, why = modwerk_machine_dsp_admit(dsp_of(live[slot]), &dsp);
     modwerk_machine_unlock(admission_lock);
-    if (why) return refuse((enum runtime_refusal)why);
+    if (why) return refuse_at(check, (enum runtime_refusal)why);
     if (image || sites || dsp.count || engine) {
         if (owner_generation == UINT32_MAX) return refuse(RUNTIME_FULL);
         reclaim(context);
@@ -1060,7 +1079,7 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
                  init_at = entries_at + (uint32_t)sizeof(struct runtime_dsp_entry) * entries,
                  tail = (init_at + 4u * init_words + 15u) & ~15u;
         struct runtime_module *m = take(head + code + tail);
-        if (!m) return refuse(RUNTIME_MEMORY);
+        if (!m) return refuse_at(RUNTIME_CHECK_POOL, RUNTIME_MEMORY);
         struct runtime_site *site = (struct runtime_site *)(void *)(m + 1);
         uint8_t *to = (uint8_t *)m + head;
         uint32_t base = (uint32_t)(uintptr_t)to;

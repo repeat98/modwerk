@@ -466,6 +466,7 @@ int main(void)
         ++fitted;
     }
     CHECK(fitted > 0 && modwerk_runtime_refusal() == RUNTIME_MEMORY && modwerk_runtime_active() == 2 + fitted);
+    CHECK(modwerk_runtime_refused_check() == RUNTIME_CHECK_POOL); /* the pool itself is full */
     CHECK(modwerk_runtime_module(1) == two && stock[64] == 0x4e);
     /* Small modules fill every position; one more is refused. */
     for (; id < 1000 && modwerk_runtime_active() < RUNTIME_MODULES; ++id) {
@@ -742,6 +743,7 @@ int main(void)
     id = 94; begin9(4, 0); claim9(1, 1, RUNTIME_CLAIM_READ, 0x2840, 4); dsp_words9(4);
     unsigned seen = claims_seen;
     CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_MEMORY && modwerk_runtime_free(0) == free && claims_seen == seen + 1);
+    CHECK(modwerk_runtime_refused_check() == RUNTIME_CHECK_CLAIMS); /* the same code, told apart from a full pool */
     claims_why = 0;
     for (id = 90; id <= 92; ++id) {
         begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
