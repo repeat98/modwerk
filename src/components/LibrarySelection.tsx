@@ -12,6 +12,7 @@ function selectionDetails(set: Configuration, betaAccess: boolean) {
     const limitIssue = overLimitMessage(set.moduleIds, 'sync') || (atLimit(set.moduleIds) ? LIMIT_REACHED : '')
     const removed = (set.removedStockFx ?? []).map(key => STOCK_EFFECT_NAMES[key] ?? key)
     return {
+      meter: { fill: limitedCount(set.moduleIds) / SET_MODULE_LIMIT, text: `${limitedCount(set.moduleIds)}/${SET_MODULE_LIMIT}` },
       resources: `${limitedCount(set.moduleIds)} of ${SET_MODULE_LIMIT} modules toward the set limit`,
       effects: removed.length ? `${removed.join(', ')} ${removed.length === 1 ? 'is' : 'are'} marked off in the stock FX menus.` : 'All stock FX kept.',
       issues: [
@@ -25,6 +26,7 @@ function selectionDetails(set: Configuration, betaAccess: boolean) {
     const estimate = estimateCombination(device, set.moduleIds)
     const kib = (bytes: number) => (bytes / 1024).toFixed(1)
     return {
+      meter: { fill: estimate.usedBytes / estimate.areaBytes, text: `${Math.round(100 * estimate.usedBytes / estimate.areaBytes)}%` },
       resources: `Estimated memory use is ${kib(estimate.usedBytes)} of ${kib(estimate.areaBytes)} KiB`,
       issues: [
         ...(!estimate.fits ? ['Over the shared memory limit. Remove a module.'] : []),
@@ -55,9 +57,15 @@ export function LibrarySelection({ sets, betaAccess, phone }: { sets: readonly C
     {entries.length > 0 && (phone ? <details className="library-selection">
       <summary>Selection details{issueCount > 0 && <> <span>{issueCount} {issueCount === 1 ? 'issue' : 'issues'}</span></>}</summary>
       <div className="library-selection-list">{content}</div>
-    </details> : <section className="library-selection" aria-label="Selection details">
-      <h2>Selection details</h2>
-      <div className="library-selection-list">{content}</div>
-    </section>)}
+    </details> : <a className={'load-widget selection-widget' + (issueCount > 0 ? ' is-near' : '')} href={deviceHref(entries[0].device, 'configuration')}
+      aria-label={`Review ${DEVICES_BY_ID[entries[0].device].name} configuration${entries.length > 1 ? 's' : ''}`}
+      title={entries.map(entry => [entry.resources, entry.effects, ...entry.issues].filter(Boolean).join(' ')).join('\n')}>
+      {entries.map(entry => <span key={entry.device} className={'load-widget-item' + (entry.issues.length ? ' is-near' : '')} aria-hidden="true">
+        <span className="load-widget-label">{DEVICES_BY_ID[entry.device].name}</span>
+        <span className="load-widget-bar"><span style={{ width: `${Math.min(100, entry.meter.fill * 100)}%` }} /></span>
+        <strong>{entry.meter.text}</strong>
+      </span>)}
+      <Icon name="arrow" size={12} />
+    </a>)}
   </>
 }
