@@ -13,6 +13,9 @@
 
 #define LINK_VERSION 1
 #define SYSEX_SEND ((int (*)(const uint8_t *, int, const uint8_t *, int))SYSEX_SEND_AT)   // stock, OS 1.12
+// The status byte of stock's USB MIDI receive parser (OS 1.12, 0x4011f3c0, which the USB driver is given): 0xF0
+// while a SysEx message is arriving on USB. One byte here; the Rytm's is a word.
+#define USB_SYSEX_STATE (*(volatile uint8_t *)USB_SYSEX_STATE_AT)
 
 #define USB 2
 #define AUTO_USB 4
@@ -158,6 +161,8 @@ void mw_link_tick(void)
     ticks++;
     for (done = 0; done < PER_TICK && ring_tail != ring_head; done++) {
         uint32_t t = ring_tail;
+        if (USB_SYSEX_STATE == 0xF0)
+            break;                      // stock is mid-SysEx on USB: next tick
         act(ring[t % RING], ring_len[t % RING]);
         ring_tail = t + 1;
     }

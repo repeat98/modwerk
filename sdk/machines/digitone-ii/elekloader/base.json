@@ -188,7 +188,8 @@
       }
     ],
     "cflags": [
-      "-DSYSEX_SEND_AT=0x401236d2"
+      "-DSYSEX_SEND_AT=0x401236d2",
+        "-DUSB_SYSEX_STATE_AT=0x445090ac"
     ],
     "defsym": {
       "SYSEX_TABLE": "0x40207f9e"

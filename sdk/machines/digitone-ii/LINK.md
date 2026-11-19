@@ -24,6 +24,6 @@ Status 0 ok, 2 bad request, 4 out of range. USB only: a link message from DIN is
   uses: the message in a1, its length in d1, the source in d2 (2 or 4 USB). The link copies its own messages
   (`F0 7D 'MWL'`) into a ring; every register comes back as it was and stock routes every message as before.
 - **Work.** `ev_tick` (UI task) answers up to four a tick through stock's `sysex_send` (0x401236d2) on USB.
-- **Not yet.** The Rytm link's keys, encoders, screen, remote YES and RAM boot; a wait while stock is mid-SysEx on
-  USB (the Rytm's `USB_SYSEX_STATE`), whose Digitone II address is not found yet, so keep other SysEx traffic quiet
-  while the link answers.
+- **Waits for stock.** A tick answers nothing while stock is mid-SysEx on USB: the status byte of stock's USB MIDI
+  receive parser (0x4011f3c0, the function the USB driver is given) at 0x445090ac reads 0xF0 then. The Rytm's is a word.
+- **Not yet.** The Rytm link's keys, encoders, screen, remote YES and RAM boot.
