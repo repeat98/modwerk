@@ -33,6 +33,8 @@ with this machine's own folders beside it. recipe then replaces the imported rec
 over the staged ones; each names the file it was made from and that file's SHA-256, and the build refuses once the
 original has changed, so a copy is redone rather than silently left behind. A machine's own base uses copies too,
 where the imported core must differ, so the imported files stay exact (the Digitakt II's kit-data room).
+A recipe's device the pinned kit lacks is carried by Modwerk's builder (owner, 19 November 2026): a machine's
+elekloader/device.json holds its facts, and the build registers it with the kit's SDK before it starts.
 """
 import argparse
 import fnmatch
@@ -91,6 +93,38 @@ def check_upstream(path):
     if run(git + ['status', '--porcelain', '--untracked-files=no']).stdout.strip():
         raise ValueError('%s has local edits; keep your own work out of this checkout.' % path)
     return commit
+
+
+def carried_devices():
+    """{key: device facts} of the devices Modwerk's builder carries where the pinned kit has none: each machine's
+    elekloader/device.json (owner, 19 November 2026). Hex numbers are strings there."""
+    found = {}
+    for path in sorted((APP / 'sdk/machines').glob('*/elekloader/device.json')):
+        facts = json.loads(path.read_text())['device']
+        found[facts['key']] = facts
+    return found
+
+
+def carry_device(devices, key):
+    """Register the carried device `key` with the kit's Python SDK, unless the kit knows it. -> whether it is known now."""
+    if any(d.key == key for d in devices.devices()):
+        return True
+    facts = carried_devices().get(key)
+    if facts is None:
+        return False
+    num = lambda value: int(value, 16) if isinstance(value, str) else value
+    span = lambda pair: (num(pair[0]), num(pair[1]))
+    releases = {r['version']: devices.Release(version=r['version'], syx_sha256=r['syx_sha256'],
+                                              main_sha256=r['main_sha256'], main_len=r['main_len'])
+                for r in facts['releases']}
+    devices.devices().append(devices.Device(
+        key=facts['key'], name=facts['name'], sysex_id=num(facts['sysex_id']), releases=releases,
+        main_section=facts['main_section'], main_load=num(facts['main_load']), stage=num(facts['stage']),
+        flash_at=num(facts['flash_at']), flash_limit=num(facts['flash_limit']), trailer=facts['trailer'],
+        hmac_key_from=(facts['hmac_key_from'][0], facts['hmac_key_from'][1].encode()), isa=facts['isa'],
+        areas={name: span(area) for name, area in facts['areas'].items()}, ddr=span(facts['ddr']),
+        recovery=facts['recovery'], toolchain=facts['toolchain']))
+    return True
 
 
 def check_toolchain(toolchain):
@@ -304,7 +338,8 @@ def build(machine, stock, upstream, out, dev=False):
     from elekloader import devices
     device = config.get('recipe', {}).get('device')
     if device and not any(d.key == device for d in devices.devices()):
-        raise ValueError('The pinned Elekloader kit has no %s device yet, so this base cannot be built with it.' % device)
+        if not carry_device(devices, device):
+            raise ValueError('The pinned Elekloader kit has no %s device yet, so this base cannot be built with it.' % device)
     os.environ['ELEKLOADER_CROSS'] = config['toolchain']['cross']
     built = []
     if out:

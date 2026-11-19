@@ -6,6 +6,8 @@ import { githubApi, pages } from '../author-release-api.mjs'
 export { pages }
 export const MARKER = '<!-- modwerk-maintenance-bot -->'
 
+export const approveRun = (api, id) => api('/actions/runs/' + id + '/approve', 'POST')
+
 export function github() {
   const repository = process.env.GITHUB_REPOSITORY, token = process.env.GITHUB_TOKEN
   if (!repository || !token) throw new Error('GITHUB_REPOSITORY and GITHUB_TOKEN are required.')

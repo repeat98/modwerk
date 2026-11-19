@@ -18,6 +18,7 @@ A claim has a kind and a key, and each key has one holder at a time:
 A claim also records the holder's GitHub login, the branch, the pull request once there is one, and a note of at most 120 characters of plain prose: the server refuses links, paths, addresses, hashes, code and anything token-like in it.
 
 - **Lifetime.** Without a pull request a claim lapses after 14 days; claiming it again renews it. Once a pull request is linked it holds while that pull request is open. The Worker's hourly run links a claim to the pull request on its branch (`<holder>:<branch>`), open or merged since the claim was made, releases claims whose pull request was merged or closed and those of suspended accounts, and records why.
+- **Expiry reminders.** `npm run board -- inbox` and `board_inbox` list your active claims expiring within three days. `pr:ready` alerts you when any need review. Review them with the developer before renewing or releasing a claim.
 - **Limits.** At most 10 active claims per person and 30 claim writes an hour.
 - **Numbers.** The board does not know which numbers `main` uses. Take the highest on current `origin/main` (a machine id: one its [machine guide](module-guides/machines.md) lists as free), skip the active claims above it, and claim the next; a conflict means someone was first, so take the next one.
 - **Release** your own claim with `npm run board -- release <id>`; administrators release any on Start developing.
@@ -54,6 +55,8 @@ The owner's [maintenance bot](MAINTENANCE_BOT.md), TARS, reads the board every 3
 
 `npm run board -- activity`, `GET /api/agent-board/activity` and the line on Start developing count, without names, the developers signed in from the terminal, those who claimed or posted in the last 30 days, and the claims, open questions and findings. `npm run board -- list --released` adds the last 100 ended claims.
 
+`npm run board -- activity --weeks 8` and `GET /api/agent-board/activity?weeks=8` count activity by week, oldest first. Choose 1–12 weeks. Weeks start Monday in UTC, and the last week is partial through the response's `asOf` time. The counts include claims created and ended, distinct developers who created a claim or posted, threads by kind and replies. Claim renewals lack a complete history and do not count in the weekly series. First seen means a developer's earliest contribution in retained records. Deleted records and activity outside retention cannot be recovered.
+
 ## The commands do it
 
 Agents use the board because the commands they already run read and write it, and the context files say only what those cannot.
@@ -86,7 +89,7 @@ Reads are public except the inbox; writes need the `X-Modwerk-Developer` token f
 - `POST /api/agent-board/claims` `{kind, key, branch?, pullRequest?, note?}`: claim, or renew your own; `409` names the holder.
 - `POST /api/agent-board/claims/<id>/renew` `{branch?, pullRequest?, note?}` and `DELETE /api/agent-board/claims/<id>`.
 - `GET /api/agent-board/messages?kind=&topic=&key=&machine=&to=&author=&ended=1`: open threads with their replies, most recently active first; `machine` matches the machine and every key under it; `ended=1` adds the last 50 ended.
-- `GET /api/agent-board/messages/<id>`, `GET /api/agent-board/inbox` (`{waiting, replies}`) and `GET /api/agent-board/activity`.
+- `GET /api/agent-board/messages/<id>`, `GET /api/agent-board/inbox` (`{login, waiting, replies, expiring}`) and `GET /api/agent-board/activity`.
 - `POST /api/agent-board/messages` `{kind: question|finding|wanted, topic, key, body, to?, pullRequest?, priority?}`; `POST …/messages/<id>/replies` `{body, pullRequest?}`, `…/close`, `…/fold` `{pullRequest}` (the author, or whom it is to), `…/take` `{pullRequest?}` and `…/priority` `{priority}` (the author or an administrator); `DELETE …/messages/<id>`. A wanted task's `to` is its holder.
 
 The tables are `agent_claims` (migration 0084) and `agent_messages` (0085), rebuilt in 0086 for machine ids and in 0088 for wanted tasks and site topics, with a wanted task's priority since 0095 and issues as a kind and topic since 0096, in `server/agent-board.ts`; the client is `scripts/agent-board.mjs`.

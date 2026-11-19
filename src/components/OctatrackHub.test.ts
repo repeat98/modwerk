@@ -8,7 +8,7 @@ import { moduleSetReview } from '../engine/elekloader/module-set'
 import type { LinkState, OctatrackLink } from '../engine/elekloader/octatrack-link'
 import type { DiagnosticReading } from '../community/octatrack-diagnostics-contract'
 import { OctatrackHub, type HubView } from './OctatrackHub'
-import { OctatrackActivity, OctatrackSidebarStatus } from './OctatrackStatus'
+import { OctatrackActivity, OctatrackLoadWidget, OctatrackSidebarStatus } from './OctatrackStatus'
 import { recordLoad } from '../hooks/useOctatrackLoad'
 import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 import { MODULE_SKIP_HINT } from '../firmware-notices'
@@ -210,5 +210,28 @@ describe('the sidebar Octatrack step', () => {
     expect(onInstall).toHaveBeenCalledOnce()
     await render(ready)
     expect(container.querySelector('.instrument-action')).toBeNull()
+  })
+})
+
+describe('the load widget', () => {
+  const widget = () => container.querySelector<HTMLAnchorElement>('.load-widget')
+  it('shows the recorded load in the corner, marks CPU near its limit and opens Status', async () => {
+    const reading = { ticks: 1, frames: 1, cpu: 873, tracks1to4: 331, tracks5to8: null, peak1to4: 400, peak5to8: null }
+    const link = { ...unit(), liveLoad: vi.fn(async () => reading) } as unknown as OctatrackLink
+    const stop = recordLoad(link); await act(async () => {})
+    await act(() => root.render(createElement(OctatrackLoadWidget, { link })))
+    expect(widget()?.getAttribute('href')).toBe('#octatrack')
+    expect([...widget()!.querySelectorAll('strong')].map(item => item.textContent)).toEqual(['87%', '33%', '—'])
+    expect(widget()?.getAttribute('aria-label')).toBe('Octatrack load: CPU 87.3%, DSP tracks 1–4 33.1%, DSP tracks 5–8 —. Open Status.')
+    expect(widget()?.classList.contains('is-near')).toBe(true)
+    stop()
+  })
+  it('stays away without live load and while a sync has the unit', async () => {
+    const old = unit(), stop = recordLoad(old); await act(async () => {})
+    await act(() => root.render(createElement(OctatrackLoadWidget, { link: old })))
+    expect(widget()).toBeNull()
+    stop()
+    await act(() => root.render(createElement(OctatrackLoadWidget, { link: unit({ ...ready, status: 'sending', progress: .4 }) })))
+    expect(widget()).toBeNull()
   })
 })

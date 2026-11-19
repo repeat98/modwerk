@@ -123,9 +123,9 @@ In a second terminal, run `npm run dev` and open http://127.0.0.1:5173. Vite pro
 
 ## Search indexing
 
-The production build includes HTML summaries: the homepage links to available modules on all three supported machines, module pages use their current catalogue documentation, and `/submit/` describes the shared developer workflow. Public forum pages include their existing public excerpt. A small same-origin, parser-blocking script in the head hides these summaries before the body can paint, preventing a text flash while React loads. React replaces them with the interactive app. With JavaScript disabled, or if the app script fails to load or execute before mounting, the summaries remain readable. Firmware and private account/report data are never prerender inputs.
+The production build includes HTML summaries for the homepage, module pages, `/submit/` and public forum excerpts. A same-origin script in the head hides these summaries before the body can paint. React replaces them with the interactive app. The summaries stay readable if JavaScript is disabled or the app fails to mount. Firmware and private account or report data stay out of the prerender.
 
-Octatrack modules use `/module/<slug>/`; Digitakt and Digitone modules use `/<machine>/module/<id>/`. Old module hash links still open and are normalized to public paths. Direct pages carry one canonical URL, a descriptive instrument-specific title, descriptions and share cards. Client navigation updates the page metadata as well. Library filters, configurations and account views retain their existing hash navigation.
+Octatrack modules use `/module/<slug>/`. Elekloader modules use `/<machine>/module/<id>/` on machines with available or preview modules. Legacy module hash links still open and redirect to public paths. Direct pages carry one canonical URL, instrument-specific titles, descriptions and share cards. Client navigation updates the page metadata. Library filters, configurations and account views use hash navigation.
 
 `scripts/seo.ts` runs after the page generators and emits `/sitemap.xml` from canonical HTML pages actually present in the build. It deduplicates aliases and omits paused modules, noindex/404 pages, query strings, fragments and profiles without static pages. `/robots.txt` is `public/robots.txt` plus this sitemap; edit the crawler policy there. The site still builds without the community API; only successfully fetched public thread pages enter that build's sitemap. For a Pages project path, all URLs keep the configured base. After deployment, submit the sitemap in the site's verified Google Search Console property and inspect representative homepage/module URLs.
 
@@ -158,7 +158,7 @@ WaveSurfer's full BSD notice is included by `npm run licenses:generate`.
 
 The Ko-fi page is configured in `src/config/support.ts`. Set it to an empty string to hide the support entry.
 
-A quiet “Support Octamod” entry with a small heart appears below the desktop sidebar’s privacy note and at the bottom of the mobile menu. It opens a personal note from the site maintainer, crediting the collaborative work of octabam, module authors and contributors, and explains that tips support site maintenance, module curation and community moderation. The visitor then chooses whether to open Ko-fi in a new tab. This site-support flow embeds no payment scripts and collects no donor information. Opening the dialog and clicking its Ko-fi button, or a bell entry that links to Ko-fi, are counted as site statistics like page views (see [STATISTICS.md](STATISTICS.md)); nothing about the tip itself reaches Modwerk.
+“Support Modwerk” appears under Resources in the desktop sidebar and in the mobile menu. Its “Contribute to Modwerk” dialog credits octabam and module authors, and links to Discord, the testing and bug-report forum, the code contribution guide and Ko-fi. Ko-fi opens in a new tab and handles the payment. Modwerk counts dialog opens and Ko-fi link clicks, including clicks from bell notifications, as site statistics. See [site statistics](STATISTICS.md).
 
 ## Module creator support
 

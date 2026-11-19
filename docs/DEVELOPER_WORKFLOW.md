@@ -4,11 +4,11 @@ This is the common context for the **Start developing** page and its coding-agen
 
 ## Choose an instrument
 
-The instrument dropdown lists every profile in `sdk/machines/<id>/machine.json`, through the generated registry. A listing is not evidence that a module builder exists. Octatrack, Digitakt mk1, Digitone mk1/Keys and Analog Rytm MKII have SDK guides and library modules; the Analog Four MKII and Digitakt II have research guides and no module yet. Other instruments enter the integration flow: research the stock format/rebuild/recovery, integrate the SDK/core/toolchain/browser builder, qualify the exact build on hardware, and obtain owner review before publishing modules. Read the selected profile and its credited research. Do not apply another instrument's core slots, hooks, build commands or memory budgets by analogy.
+The instrument dropdown comes from the profiles in `sdk/machines/<id>/machine.json`. Open the selected machine's page to find its guide and current development step. The [machine recipe](MACHINE_RECIPE.md#where-each-machine-stands) tracks builder, base, USB and emulator support. Follow the [integration guide](ADD_A_MACHINE.md) for a machine still in research. Use the selected machine's own core contract, build commands and memory budgets.
 
 ## Check what already exists
 
-Before planning a new module, look at the library on modwerk.app or, in an up-to-date checkout (`git fetch upstream`), `sdk/catalog.json` (Octatrack), `sdk/<machine>/modules/` (Digitakt, Digitone, Rytm) and `sdk/drafts/`, plus the open pull requests (`gh pr list`) and the [agent board](AGENT_BOARD.md)'s claims (`npm run board -- list module`) and findings (`npm run board -- messages --machine <machine>`). If a module already does the job, a port is already listed or someone has claimed it, extend it through [the update workflow](#update-or-fix-an-approved-module), with [its author's OK](#ask-the-author-first), instead of building a duplicate. A new module goes ahead only when it is clearly different, and the proposal says how.
+Before planning a new module, check the machine's library and its profile's `sdk.modules` folder in a current checkout. Fetch `upstream` in a fork or `origin` in a direct clone. Also check `sdk/catalog.json` for Octatrack listings, `sdk/drafts/`, open pull requests (`gh pr list`) and the [agent board](AGENT_BOARD.md)'s claims (`npm run board -- list module`) and findings (`npm run board -- messages --machine <machine>`). If a module already does the job, a port is already listed or someone has claimed it, follow [the update workflow](#update-or-fix-an-approved-module) with [its author's OK](#ask-the-author-first). A proposal for a new module says how it differs.
 
 ## Refuse infringing work
 
@@ -74,9 +74,19 @@ These stumbling blocks have each cost a contributor and the owner a repair round
 3. **Submit:** commit, push and open a Modwerk PR. Follow checks and fix failures. A maintainer of its machine or the owner reviews every new module ([who](#who-reviews-a-first-release)); the first approved release registers its GitHub author for later scoped updates. Website sign-in or claiming does not grant release authority.
 4. **Publish and verify:** after the merge, follow the exact commit's site/API deployments. Confirm the live version, save a compatible firmware download, and verify its version/source identity and deterministic hash where applicable. A push, merge or ready/download-requested state alone does not prove a saved release download.
 
+The Octatrack compiler job rebuilds every base-bound package with the pinned Elekloader sources and compares its bytes with the published package. To repeat that check from the repository root, run `bash scripts/test-base-bound.sh <compiler-image-id> [local-elekloader-checkout]`. It uses the committed tree. The SDK summary lists other skipped checks and their prerequisites.
+
+The required PR check includes the description and hardware-evidence verdict. Editing the description or changing draft status runs it again. The branch must be current with main to merge.
+
 ### Who reviews a first release
 
-A machine's maintainers review and merge the first releases of its modules; the owner can always do so too. They are the GitHub logins under `maintainers` in `sdk/machines/<id>/machine.json`. Only the owner names or removes one, in a pull request of the owner's own, and gives them the repository access a merge needs; a machine without maintainers stays with the owner. A maintainer reviews by the [pull request worker's checklist](MAINTENANCE.md#pull-request-worker), never reviews their own module, and hands these to the owner instead of deciding them:
+A **contributor** can submit a PR with `/modwerk-contribute` or a new module with `/modwerk-new-module`. A **modder** builds modules. A registered modder can release updates to their own published modules. Existing verified module claims and granted developer badges display as Modder. A **device reviewer** (`device-reviewer`) can approve and merge another author's first release on an assigned device. A **maintainer** is a GitHub collaborator with write, maintain or admin access and can handle submissions across devices. A person can hold several roles.
+
+Assign device reviewers by adding their numeric GitHub IDs to `deviceReviewers` in `sdk/machines/<id>/machine.json` through a maintainer-reviewed PR and running `npm run machines:generate`. Get the ID with `gh api users/LOGIN --jq .id`. Assignments take effect on main. Old `maintainers` login lists and forum badges grant no merge permission. For a new modder, include only their lowercase login and numeric ID in the existing accounts map in `.github/module-authors.json`, in the same PR as their first module.
+
+Review the exact commit with `/modwerk-review-prs` and [merge the first release](MODULE_AUTHOR_UPDATES.md#merge-a-first-release). Another reviewer or maintainer handles your own module.
+
+Send these to a repository maintainer or the owner:
 
 - anything beyond the module's own folder and catalogue rows: the base, a hook, the shared SDK, a builder, a check, another machine;
 - any question under the [modding guidelines](../MODDING_GUIDELINES.md): a port's permission or licence, a source that is unclear, a likeness to a maker's product;
@@ -104,6 +114,14 @@ Open a PR against Modwerk `main` and include the two exact opt-in checkboxes fro
 
 Follow checks, the author publisher and deployments; then verify the live version and an actual saved compatible download. For a reported fix, obtain actual version-matched results from the author's unit before resolution. Use `Related to #<number>` in PRs rather than merge-time closing keywords.
 
+## Change a base
+
+A base update carries several developers' changes onto players' instruments at once, so it ships as one release and only after a long run on hardware. Each machine has one cumulative draft pull request from `base/<machine>-next`, and the owner decides when it ships (owner, 18 and 19 November 2026).
+
+- **Join it.** Commit your base change to that branch, or open your pull request against it (`gh pr create --base base/<machine>-next`); it is merged in with your authorship. A base pull request against `main` is sent there. With none open for the machine, open it as a draft from `base/<machine>-next`.
+- **Share the branch.** Several developers commit to it: fetch first, add your commits on top, merge `main` into it, and never rebase or force-push it. Update the description's list of what is in it so far.
+- **It stays a draft** until the base has been tested extensively on a unit. Record each build that ran, on which unit, and what ran on it; `pr:ready` saying Ready means the checks pass, not that it was tested. Only the owner marks it ready and ships it.
+
 ## Manage reports on GitHub
 
 Public reports and GitHub replies share a thread, with replies/status synchronized to Modwerk. Report handling needs no fork, coding agent, repository write access or owner review. Registered authors can act immediately. Other declared maintainers verify their GitHub identity and claim the module once in **Creator settings**; that permits triage and ordinary closure, while release completion retains its registered-author check. Post commands as **new comments** on mapped public reports:
@@ -126,7 +144,7 @@ A beta report from a USB sync has no device log (its build fingerprint reads "No
 
 Use `resolve` only after the exact published download and hardware fix have actually been verified. Other closure reasons are `configuration`, `duplicate`, `not_reproducible`, `insufficient_information` and `withdrawn`; each needs an explanation and claims no firmware fix. Private reports offer the same triage and closure choices on their access-controlled page. GitHub-only issues use authorized native GitHub closure. Private details remain access-controlled and consent-based.
 
-Routine updates to an author's approved modules use the existing automatic PR workflow: prepare the fix, pass CI, personally verify the evidence and check both publication boxes. The bot merges and starts site/API publication without an owner review. First releases, shared code, ownership/licence changes and exceptions still need owner review. See [Author updates](MODULE_AUTHOR_UPDATES.md).
+Routine updates to an author's approved modules use the existing automatic PR workflow: prepare the fix, pass CI, personally verify the evidence and check both publication boxes. The bot merges and starts site/API publication without an owner review. Device reviewers or maintainers review first releases. Shared code, ownership/licence changes and exceptions go to a maintainer or the owner. See [Author updates](MODULE_AUTHOR_UPDATES.md).
 
 For a specific GitHub reply, check its signed webhook delivery, each intended recipient's bell entry, and that member's email/push preferences and digest due time. A successful webhook response proves processing, not that every participant received a notification; check members who joined through Modwerk separately, and never route by a typed GitHub mention of a Modwerk username. The `emailed` flag also settles read or expired entries and turned-off topics, so it is not a delivery receipt. Aggregate provider-acceptance counters cannot prove that a particular message arrived in an inbox.
 

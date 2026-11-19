@@ -67,7 +67,7 @@ export function readiness({ python = null, dirty = [], behind = false, remote = 
   if (author) {
     if (scope?.error) problems.push(`This is not an automatic author update (${scope.error}). Keep the PR to your own module's folder and its changelog entry, or ask the owner for a review.`)
     else if (scope) notes.push('Automatic merge: the bot can merge this update to ' + scope.modules.join(', ') + ' once both release boxes are ticked and CI is green.')
-  } else notes.push('Without --author this is a new module or a shared change: the owner reviews it and merges it with one click once CI is green.')
+  } else notes.push('For a first release, ask a device reviewer or repository maintainer to review and merge once CI is green. Shared changes go to a maintainer.')
   // pr:ready has no toolchain, so it can only say which packages CI rebuilds in Docker and how to reproduce them first (DEVELOPER_WORKFLOW.md, "Compiled packages").
   if (compiled?.octatrack) notes.push('CI rebuilds the Octatrack packages (octatrack-source) and requires the committed ones to match. pr:ready cannot run that: before you push, reproduce them with bash scripts/build-modules-isolated.sh <clean checkout> <new dir> <image id> from a clean, committed tree ("Compiled packages" in docs/DEVELOPER_WORKFLOW.md).')
   if (compiled?.elemod) notes.push('CI rebuilds the Digitakt, Digitone, Rytm and Four packages (elemod-source) and requires the committed ones to match. pr:ready cannot run that: before you push, run bash scripts/build-elemod-isolated.sh and node scripts/verify-elemod-release-exports.mjs <dir> from a clean, committed tree ("Compiled packages" in docs/DEVELOPER_WORKFLOW.md).')
@@ -120,14 +120,14 @@ async function main(argv) {
   const npmCli = process.env.npm_execpath
   if (!npmCli) throw new Error('Run this through npm run pr:ready.')
   const npm = (...args) => spawnSync(process.execPath, [npmCli, 'run', ...args], { cwd: root, stdio: 'inherit' }).status === 0
-  const tracked = () => git('status', '--porcelain', '--untracked-files=no').split('\n').filter(Boolean).map(line => line.slice(3))
+  const changedFiles = () => git('status', '--porcelain', '--untracked-files=all').split('\n').filter(Boolean).map(line => line.slice(3))
 
   console.log(`Fetching ${remote}/main`)
   // A single-branch clone may fetch main only into FETCH_HEAD. Update the
   // tracking ref too, so the suggested `git merge <remote>/main` is useful.
   git('fetch', '--no-tags', remote, `refs/heads/main:refs/remotes/${remote}/main`)
   const base = git('rev-parse', 'FETCH_HEAD'), head = git('rev-parse', 'HEAD')
-  const dirty = tracked()
+  const dirty = changedFiles()
   let behind = false
   try { git('merge-base', '--is-ancestor', base, head) } catch { behind = true }
   // The same interpreter the gates call (scripts/modules.mjs).
@@ -142,7 +142,7 @@ async function main(argv) {
     checkPassed = npm('check', '--', '--base', base)
     if (!checkPassed) {
       for (const args of GENERATORS) if (!npm(...args)) break
-      regenerated = tracked()
+      regenerated = changedFiles()
       if (regenerated.length) checkPassed = true
     }
   }
@@ -162,6 +162,8 @@ async function main(argv) {
   const verdict = readiness({ python, dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
+  // Once the work is ready, the agent asks whether to share the session with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
+  if (verdict.ok) { const sharing = await import('./agent-session.mjs'), preference = await sharing.readPreference(); if (preference !== 'never') verdict.notes.push(sharing.sharingLine(preference)) }
   for (const line of verdict.notes) console.log('· ' + line)
   console.log(!verdict.ok ? 'Not ready yet.' : verdict.instrument
     ? 'Ready to open as a draft: the checks pass. Mark it ready for review once the exact build has run on a unit (above).'

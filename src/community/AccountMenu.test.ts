@@ -27,9 +27,9 @@ describe('sidebar account row', () => {
     expect(html).toContain('aria-expanded="false"')
     expect(html).not.toContain('Sign out')
   })
-  it('names the admin and developer roles and marks account pages as current', () => {
+  it('names the admin and modder roles and marks account pages as current', () => {
     const html = render({ ...member, admin: true }, 'developer', { available: true, user: { login: 'member' } })
-    expect(html).toContain('Admin · Developer')
+    expect(html).toContain('Admin · Modder')
     expect(html).toContain('sidebar-account-row active')
   })
 })
