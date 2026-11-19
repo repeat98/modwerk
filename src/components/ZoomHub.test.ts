@@ -275,13 +275,14 @@ describe('syncing the set to the pedal', () => {
   const listed = async (id: string, file: string, fxid: number, data: number[]) => ({ id, name: id, version: '0.1.0', machine: device.id, presentation: { summary: '' }, media: [{ kind: 'thumbnail', path: 'thumbnail.svg' }],
     platform: { kind: 'zdl', file, effectId: { gid: 8, fxid }, effectVersion: '0.03', dspCost: 8, binary: { sha256: await sha(data), bytes: data.length, release: { repository: 'https://github.com/x/y', tag: 't', asset: file } }, screen: 'static', pedals: [] } }) as unknown as ZoomEffect
 
-  it('installs the set’s effects, replaces an older version, removes listed ones it dropped and leaves the rest', async () => {
+  it.each([false, true])('repairs a set with a missing or unlisted file (unlisted: %s)', async orphan => {
     vi.stubGlobal('confirm', () => true)
     const loop = fakeEffect('LOOP.ZDL', 8, 467, '0.03', 1300), scope = fakeEffect('SCOPE.ZDL', 8, 468, '0.03', 900), dirt = fakeEffect('DIRT.ZDL', 8, 469, '0.03', 700)
     const effects = [await listed('loop', 'Loop.ZDL', 467, loop.data), await listed('scope', 'Scope.ZDL', 468, scope.data), await listed('dirt', 'Dirt.ZDL', 469, dirt.data)]
     const served: Record<string, number[]> = { 'Loop.ZDL': loop.data, 'Scope.ZDL': scope.data, 'Dirt.ZDL': dirt.data }
     vi.stubGlobal('fetch', async (url: string) => new Response(Uint8Array.from(served[url.split('/').pop()!])))
     const files = [fakeEffect('DELAY.ZDL', 7, 16, '1.00'), fakeEffect('LOOP.ZDL', 8, 467, '0.02', 1300), dirt, fakeEffectList({ 7: ['DELAY.ZDL'], 8: ['LOOP.ZDL', 'DIRT.ZDL'] })]
+    if (orphan) files.push(scope)
     const fake = fakeZoomPedal({ files }), link = new ZoomLink(() => Promise.resolve(fake.access), 200)
     await link.connect()
     const live = { id: 'live', name: 'Live', device: device.id, moduleIds: ['loop', 'scope'], moduleVersions: {}, keepStockFx2: false, createdAt: '2026-11-09T00:00:00Z', updatedAt: '2026-11-09T00:00:00Z' }
@@ -289,7 +290,7 @@ describe('syncing the set to the pedal', () => {
     expect(open().querySelector('h2')?.textContent).toBe('Live')
     expect(container.querySelector('.hub-set-open strong')?.textContent).toBe('Live')
     for (let i = 0; i < 100 && !/Installs/.test(open().textContent ?? ''); i++) await settle()
-    expect(open().querySelector('.hub-sync p')?.textContent).toBe('Installs 2 · Removes 1 · needs 1 KB of 391 KB free')
+    expect(open().querySelector('.hub-sync p')?.textContent).toBe(orphan ? 'Installs 2 · Removes 1 · 391 KB free' : 'Installs 2 · Removes 1 · needs 1 KB of 391 KB free')
     expect([...open().querySelectorAll('.module-tile:not(.is-add)')].map(tile => tile.querySelector('strong')?.textContent + ' ' + tile.querySelector('.module-tile-state')?.textContent)).toEqual(['loop Adds', 'scope Adds', 'dirt Leaves'])
     await click(button('Sync to MS-70CDR'))
     for (let i = 0; i < 200 && !/has your set/.test(open().textContent ?? ''); i++) await settle()
