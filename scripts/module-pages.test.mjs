@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { expect, it } from 'vitest'
+import { expect, it, onTestFinished, vi } from 'vitest'
 import sharp from 'sharp'
 import { MODULES } from '../src/catalog/modules.ts'
 import { digiModulePageHtml, digiModuleThumbnail, modulePageHtml, modulePages, moduleThumbnail, notFoundPageHtml } from './module-pages.ts'
@@ -35,11 +35,22 @@ it('keeps canonical URLs, thumbnails and app assets under a Pages project base',
   expect(page).toContain('content="https://modwerk.app/octamod/module-thumbnails/analog.jpg"')
 })
 
-it('builds the FM Synth canonical page and keeps the old URL loadable', async () => {
+it('builds the canonical and legacy module pages with at most two thumbnail renders in flight', async () => {
   const plugin = modulePages()
   plugin.configResolved({ root: fileURLToPath(new URL('../', import.meta.url)), base: './' })
   const assets = []
+  const toBuffer = sharp.prototype.toBuffer
+  let active = 0, peak = 0
+  const render = vi.spyOn(sharp.prototype, 'toBuffer').mockImplementation(async function (...args) {
+    active++
+    peak = Math.max(peak, active)
+    try { return await toBuffer.apply(this, args) }
+    finally { active-- }
+  })
+  onTestFinished(() => render.mockRestore())
   await plugin.generateBundle.call({ emitFile(asset) { assets.push(asset) } }, {}, { 'index.html': { type: 'asset', source: html } })
+  expect(peak).toBeGreaterThan(0)
+  expect(peak).toBeLessThanOrEqual(2)
   const canonical = assets.find(asset => asset.fileName === 'module/fm-synth/index.html')
   const legacy = assets.find(asset => asset.fileName === 'module/synth/index.html')
   expect(assets.find(asset => asset.fileName === '404.html').source).toContain('<base href="https://modwerk.app/" />')
