@@ -28,7 +28,7 @@
   },
   ".run": {
    "align": 4,
-   "len": 12773,
+   "len": 12821,
    "parts": [
     [
      "hex",
@@ -1323,7 +1323,16 @@
     ],
     [
      "hex",
-     "4ef940052a102f082f092f004eb900000000588f225f205f74074ef9400db48a202f00047207b08165322f082f092f004eb900000000588f4a806b182f3c000000002f2f00104eb900000000508f225f205f4e75225f205f202f000472064ef9400da6b2202f00047207b08165322f082f092f004eb900000000588f4a806b182f3c000000012f2f00104eb900000000508f225f205f4e75225f205f202f000472064ef9400da6d8202f00047207b08165322f082f092f004eb900000000588f4a806b182f3c000000022f2f00104eb900000000508f225f205f4e75225f205f202f000472064ef9400da6fe000017700000102120423063408450a560c670e781089129a14ab16bc18cd1ade1cef1ef123102103273225252b5429472f762d693398318b37ba35ad3bdc39cf3ffe3de246234430420140164e674c744a45485a56ab54b85289509e5eef5cfc5acd58d365326721611063076d766f6569546b4b75ba77a97198738f7dfe7fed79dc7bc48c458e5688678a70840186128023823c9ccd9ede98ef9af89489969a90ab92b5af54ad47ab76a961a710a503a332a12dbfdcbdcfbbfeb9e9b798b58bb3bab1a6ca67c874ce45cc52c223c030c601c41edaefd8fcdecddcdad2abd0b8d689d497e976eb65ed54ef43e132e321e510e70ff9fefbedfddcffcbf1baf3a9f598f78918881a9b1caa1ebd10cc12df14ee16f108000a130c220e3500440257046606783b99398a3fbb3dac33dd31ce37ff35e02b1129022f332d24235521462777256b5eaa5cb95a88589f56ee54fd52cc50d34e224c314a004817466644754244405a7dbb7fa879997b8e75ff77ec71dd73c26d336f2069116b06657767646155634d94cc96df90ee92f99c889e9b98aa9ab584448657806682718c008e1388228a3cb7ddb5ceb3ffb1e8bf99bd8abbbbb9a4a755a546a377a160af11ad02ab33a92fd2eed0fdd6ccd4dbdaaad8b9de88dc97c266c075c644c453ca22c831ce00cc1ef1fff3ecf5ddf7caf9bbfba8fd99ff86e177e364e555e742e933eb20ed11ef0000000000000000000000000000000000000000000000000000000000000"
+     "4ef940052a102f082f092f004eb900000000588f225f205f74074ef9400db48a2f2f00044eb94005f6bc588f7207b081651c2f082f092f002f004eb900000000588f221f225f205f4a806a02"
+    ],
+    [
+     "stock",
+     "0x400c892a",
+     8
+    ],
+    [
+     "hex",
+     "7207b08165322f082f092f004eb900000000588f4a806b182f3c000000002f2f00104eb900000000508f225f205f4e75225f205f202f000472064ef9400da6b2202f00047207b08165322f082f092f004eb900000000588f4a806b182f3c000000012f2f00104eb900000000508f225f205f4e75225f205f202f000472064ef9400da6d8202f00047207b08165322f082f092f004eb900000000588f4a806b182f3c000000022f2f00104eb900000000508f225f205f4e75225f205f202f000472064ef9400da6fe000017700000102120423063408450a560c670e781089129a14ab16bc18cd1ade1cef1ef123102103273225252b5429472f762d693398318b37ba35ad3bdc39cf3ffe3de246234430420140164e674c744a45485a56ab54b85289509e5eef5cfc5acd58d365326721611063076d766f6569546b4b75ba77a97198738f7dfe7fed79dc7bc48c458e5688678a70840186128023823c9ccd9ede98ef9af89489969a90ab92b5af54ad47ab76a961a710a503a332a12dbfdcbdcfbbfeb9e9b798b58bb3bab1a6ca67c874ce45cc52c223c030c601c41edaefd8fcdecddcdad2abd0b8d689d497e976eb65ed54ef43e132e321e510e70ff9fefbedfddcffcbf1baf3a9f598f78918881a9b1caa1ebd10cc12df14ee16f108000a130c220e3500440257046606783b99398a3fbb3dac33dd31ce37ff35e02b1129022f332d24235521462777256b5eaa5cb95a88589f56ee54fd52cc50d34e224c314a004817466644754244405a7dbb7fa879997b8e75ff77ec71dd73c26d336f2069116b06657767646155634d94cc96df90ee92f99c889e9b98aa9ab584448657806682718c008e1388228a3cb7ddb5ceb3ffb1e8bf99bd8abbbbb9a4a755a546a377a160af11ad02ab33a92fd2eed0fdd6ccd4dbdaaad8b9de88dc97c266c075c644c453ca22c831ce00cc1ef1fff3ecf5ddf7caf9bbfba8fd99ff86e177e364e555e742e933eb20ed11ef0000000000000000000000000000000000000000000000000000000000000"
     ],
     [
      "stock",
@@ -1576,7 +1585,7 @@
   ],
   "callbacks": [
    ".run",
-   12732
+   12780
   ],
   "start_stock": [
    ".run",
@@ -1700,11 +1709,11 @@
   ],
   "KNOB_POSITION": [
    ".run",
-   12768
+   12816
   ],
   "FORMATTERS": [
    ".run",
-   12748
+   12796
   ],
   "put": [
    ".run",
@@ -1729,6 +1738,10 @@
   "fw_key_down": [
    "abs",
    1074913616
+  ],
+  "core_machine_view_type_entry": [
+   ".run",
+   12012
   ],
   "core_mixer_list_entry": [
    ".run",
@@ -1772,7 +1785,7 @@
   ],
   "core_machine_name_entry": [
    ".run",
-   12012
+   12060
   ],
   "core_seq_note_step": [
    ".run",
@@ -1836,7 +1849,7 @@
   ],
   "core_machine_samples_per_step": [
    ".run",
-   12216
+   12264
   ],
   "core_machine_kit_type_entry": [
    ".run",
@@ -1992,7 +2005,7 @@
   ],
   "core_machine_short_entry": [
    ".run",
-   12080
+   12128
   ],
   "core_settings": [
    ".run",
@@ -2076,7 +2089,7 @@
   ],
   "core_machine_menu_entry": [
    ".run",
-   12148
+   12196
   ],
   "core_seq_note_bridge": [
    ".run",
@@ -2190,6 +2203,7 @@
   "core_machine_short_entry",
   "core_machine_stands_for",
   "core_machine_string",
+  "core_machine_view_type_entry",
   "core_memcpy",
   "core_mixer_count_entry",
   "core_mixer_descriptor",
@@ -2472,7 +2486,7 @@
    1024,
    "abs32",
    "sec:.run",
-   12220
+   12268
   ],
   [
    ".run",
@@ -2969,7 +2983,7 @@
    3160,
    "abs32",
    "sec:.run",
-   12732
+   12780
   ],
   [
    ".run",
@@ -3900,7 +3914,7 @@
    11044,
    "abs32",
    "sec:.run",
-   12768
+   12816
   ],
   [
    ".run",
@@ -3921,7 +3935,7 @@
    11188,
    "abs32",
    "sec:.run",
-   12748
+   12796
   ],
   [
    ".run",
@@ -3942,21 +3956,21 @@
    11390,
    "abs32",
    "sec:.run",
-   12216
+   12264
   ],
   [
    ".run",
    11610,
    "abs32",
    "sec:.run",
-   12216
+   12264
   ],
   [
    ".run",
    11686,
    "abs32",
    "sec:.run",
-   12216
+   12264
   ],
   [
    ".run",
@@ -4002,105 +4016,112 @@
   ],
   [
    ".run",
-   12030,
+   12040,
    "abs32",
    "sec:.run",
    10010
   ],
   [
    ".run",
-   12052,
-   "abs32",
-   "sec:.run",
-   10396
-  ],
-  [
-   ".run",
-   12098,
+   12078,
    "abs32",
    "sec:.run",
    10010
   ],
   [
    ".run",
-   12120,
+   12100,
    "abs32",
    "sec:.run",
    10396
   ],
   [
    ".run",
-   12166,
+   12146,
    "abs32",
    "sec:.run",
    10010
   ],
   [
    ".run",
-   12188,
+   12168,
    "abs32",
    "sec:.run",
    10396
   ],
   [
    ".run",
-   12732,
+   12214,
+   "abs32",
+   "sec:.run",
+   10010
+  ],
+  [
+   ".run",
+   12236,
+   "abs32",
+   "sec:.run",
+   10396
+  ],
+  [
+   ".run",
+   12780,
    "abs32",
    "sec:.run",
    878
   ],
   [
    ".run",
-   12736,
+   12784,
    "abs32",
    "sec:.run",
    2936
   ],
   [
    ".run",
-   12740,
+   12788,
    "abs32",
    "sec:.run",
    3028
   ],
   [
    ".run",
-   12744,
+   12792,
    "abs32",
    "sec:.run",
    2938
   ],
   [
    ".run",
-   12748,
+   12796,
    "abs32",
    "sec:.run",
    10604
   ],
   [
    ".run",
-   12752,
+   12800,
    "abs32",
    "sec:.run",
    10624
   ],
   [
    ".run",
-   12756,
+   12804,
    "abs32",
    "sec:.run",
    10646
   ],
   [
    ".run",
-   12760,
+   12808,
    "abs32",
    "sec:.run",
    10668
   ],
   [
    ".run",
-   12764,
+   12812,
    "abs32",
    "sec:.run",
    10690
@@ -4631,6 +4652,51 @@
      0
     ]
    ]
+  },
+  {
+   "addr": "0x4001702c",
+   "len": 6,
+   "stock_sha256": "73d543c9d8084fc2debabd899a5bc3a7f4907dd2f070831e0ea5b8a61800905c",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_machine_view_type_entry",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40017736",
+   "len": 6,
+   "stock_sha256": "73d543c9d8084fc2debabd899a5bc3a7f4907dd2f070831e0ea5b8a61800905c",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_machine_view_type_entry",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40017bd2",
+   "len": 6,
+   "stock_sha256": "73d543c9d8084fc2debabd899a5bc3a7f4907dd2f070831e0ea5b8a61800905c",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_machine_view_type_entry",
+     0
+    ]
+   ]
   }
  ],
  "collections": {
@@ -4738,7 +4804,7 @@
    "machines.c": "2e7fa17deeefa0b5cd2c0f9293c0059d705804a9c86be9b5cd36c3e40b021c32",
    "machine-knobs.c": "8c9fb21f1f9e0f44ca2877d7dfdfc408de6d270ac14b478f6ce2cfd23425ae20",
    "machine-frame.c": "12d2b9e3a00c7574e9263707264a8f27a4413b8af6254b9e1ce029d416af7d2c",
-   "machines-entry.s": "046c0f406e824efbb2c38666d93792a93d98234c39ee6452bc297534fe83740e",
+   "machines-entry.s": "927489021a6b6dd4470fbbd7dd9dade7f925cb2f6b74aacae9b94cd4d9b58c65",
    "fw-bindings.s": "f831c9f4099170c8390d510ee2ab09a610f8a142ba84363c8c90f51c0ad6187e"
   }
  },
