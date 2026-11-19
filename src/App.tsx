@@ -413,6 +413,8 @@ export default function App() {
   const browsingSets = ready && showSelection
     ? (allMachines ? ['octatrack', ...DIGI_DEVICES] : [currentDevice.id]).flatMap(device => activeFor(device) ?? [])
     : []
+  // On desktop the selection is a meter card in the corner; phones and the drawer layout keep the collapsible panel.
+  const cornerSelection = showSelection && !phoneLayout && !drawerLayout
   const libraryFilter = allRoute ? allCategory ?? 'all' : filter
   const libraryFamily = allRoute || accessibleModules.some(module=>DETAILS[module.id].family===family) ? family : 'all'
   const visibleModules = accessibleModules.filter((module) =>
@@ -582,7 +584,6 @@ export default function App() {
                 <div className="sidebar-section-label configuration-label"><span>Configurations</span><button className="icon-button" aria-label={'New ' + (machineCanConfigure ? currentDevice.name : 'Octatrack') + ' configuration'} disabled={!ready} onClick={() => newConfiguration(machineCanConfigure ? currentDevice.id : 'octatrack')}><Icon name="plus" size={18} /></button></div>
                 <div className="configuration-launcher"><button type="button" className="configuration-browse" onClick={event => { event.currentTarget.focus(); setConfigurationsOpen(true) }}><Icon name="file" size={17} /><span>Browse configurations</span><small>{workspace.configurations.length}</small></button><button type="button" className="configuration-recent" disabled={!sidebarConfiguration} onClick={() => { const item = allMachines ? storedActive : machineActive; if (item) changeConfiguration(item.id) }}>{sidebarConfiguration ? <><span>{sidebarConfiguration.name}</span><small>{DEVICES_BY_ID[configurationDevice(sidebarConfiguration)].name} · current</small></> : <><span>No configuration yet</span><small>Saved on this device</small></>}</button></div>
               </>}
-              {showSelection && !drawerLayout && <LibrarySelection sets={browsingSets} betaAccess={betaAccess} phone={phoneLayout} />}
               {mobileWorkspace ? <a className="sidebar-build" href={configurationHref}><Icon name="sliders" size={16} /><span className="sidebar-build-copy"><strong>Open configuration</strong><small>Edit and share your modules.</small></span></a> : octatrackUi && usbLink && currentDevice.id === 'octatrack' ? null : allMachines ? <div className="sidebar-build"><span className="status-dot" /><span className="sidebar-build-copy"><strong>Builds are per machine</strong><small>Choose a machine in the library to build its firmware.</small></span></div> : currentDevice.id === 'octatrack' ? <a className="sidebar-build" href="#octatrack/setup">
                 <span className="status-dot" />
                 <span className="sidebar-build-copy"><strong>Set up your Octatrack</strong><small>Install the base once, then sync modules over USB.</small></span>
@@ -634,9 +635,10 @@ export default function App() {
       <Suspense fallback={null}>
       {/* The sync pill and the live load share the corner; the load stays off Status, which shows it in full, and off the
           forum, whose chat opens in the same corner. */}
-      {usbLink && <div className="octatrack-float">
-        {!hubRoute && !loadingTarget && <OctatrackActivity link={usbLink}/>}
-        {octatrackUi && !(hubRoute && hubView === 'status') && !forumRoute && <OctatrackLoadWidget link={usbLink}/>}
+      {(usbLink || cornerSelection) && <div className="octatrack-float">
+        {cornerSelection && <LibrarySelection sets={browsingSets} betaAccess={betaAccess} phone={false} />}
+        {usbLink && !hubRoute && !loadingTarget && <OctatrackActivity link={usbLink}/>}
+        {usbLink && octatrackUi && !(hubRoute && hubView === 'status') && !forumRoute && <OctatrackLoadWidget link={usbLink}/>}
       </div>}
       {openModule && (() => {
         // Page through the grid's order: the set's modules, then the ones leaving the unit.
