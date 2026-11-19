@@ -192,7 +192,7 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
   const countLabel = total + (total === 1 ? ' module' : ' modules') + (device?.firmware ? ' · OS ' + device.firmware.releases.join(' / ') : '')
   const projectMachine = device && projectMachineForDevice(device.id)
   const projectLink = device && projectMachine && <p className="machine-external-projects"><a href={assetUrl('projects/') + '?machine=' + projectMachine}>Other projects for {device.name} <Icon name="arrow" size={14} /></a></p>
-  return <DownloadPeriodContext.Provider value={days}><div className="library-page">
+  return <DownloadPeriodContext.Provider value={days}><div className="library-page module-library">
     <header className={machinePicker || phone ? 'sr-only' : 'page-heading catalog-heading'}>
       <h1 ref={heading} tabIndex={-1}>{category ? LIBRARY_CATEGORY_LABELS[category] : device ? 'Module library' : 'All mods'}</h1>
       {!machinePicker && !phone && <span className="catalog-count">{countLabel}</span>}

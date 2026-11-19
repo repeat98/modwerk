@@ -25,6 +25,7 @@ REFUSED_FROM, which the owner sets (None: report only), as scripts/dsp-source-ga
 
   python3 -B scripts/dsp-register-contract.py             # every package; exit 1 only on a refusal
   python3 -B scripts/dsp-register-contract.py --json <id>  # one module's findings as JSON (module:doctor)
+  python3 -B scripts/dsp-register-contract.py --json-modules <id>...  # summaries keyed by module ID
 """
 import importlib.util
 import json
@@ -336,27 +337,37 @@ def refused(module, dates):
 
 
 def run(only=None):
+    if isinstance(only, str):
+        only = {only}
     tool = disassembler()
     if not tool:
         return None
     sites = {s['index']: s for s in json.loads(SITES.read_text())['sites']}
     with tempfile.TemporaryDirectory(prefix='modwerk-dsp-contract.') as work:
         return [check(m, v, w, r, e, sites, tool, work, label) for m, v, w, r, e, label in published()
-                if only is None or m == only]
+                if only is None or m in only]
 
 
 def main(argv):
     dates = added()
-    if '--json' in argv:
-        module = argv[argv.index('--json') + 1]
-        reports = run(module)
-        if reports is None:
-            print(json.dumps(dict(module=module, skipped='no dsp56kDisassemble: build it beside ELEKLOADER_DSP_ASM (npm run upstream:tools)')))
-            return 0
-        found = [f for r in reports for f in findings(r)]
-        print(json.dumps(dict(module=module, packages=len(reports), entries=sum(len(r['entries']) for r in reports),
-                              refused=refused(module, dates), refusedFrom=REFUSED_FROM,
-                              findings=['%s: %s' % f for f in found], reports=reports)))
+    if '--json' in argv or '--json-modules' in argv:
+        batch = '--json-modules' in argv
+        ids = argv[argv.index('--json-modules') + 1:] if batch else [argv[argv.index('--json') + 1]]
+        reports = run(set(ids))
+        by_module = {module: [] for module in ids}
+        for report in reports or []:
+            by_module[report['module']].append(report)
+        results = {}
+        for module, items in by_module.items():
+            if reports is None:
+                results[module] = dict(module=module, skipped='no dsp56kDisassemble: build it beside ELEKLOADER_DSP_ASM (npm run upstream:tools)')
+                continue
+            results[module] = dict(module=module, packages=len(items), entries=sum(len(r['entries']) for r in items),
+                                   refused=refused(module, dates), refusedFrom=REFUSED_FROM,
+                                   findings=['%s: %s' % f for r in items for f in findings(r)])
+            if not batch:
+                results[module]['reports'] = items
+        print(json.dumps(results if batch else results[ids[0]]))
         return 0
     reports = run()
     if reports is None:
