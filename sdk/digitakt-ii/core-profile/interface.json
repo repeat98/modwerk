@@ -48,15 +48,6 @@
       "order": "lower order first (shipped mods use 10-90); every handler sees the values the earlier ones left"
     },
     {
-      "name": "ev_audio_frame",
-      "since": "1.1",
-      "when": "on the ColdFire audio frame path, immediately before the stock DSP transfer",
-      "handler": "void f(unsigned int data_bytes, const void *data, unsigned int frame_bytes, const void *reply)",
-      "order": "lower subscription order first; linker breaks ties by module ID and contribution order",
-      "room": 4,
-      "purpose": "The arguments are the original stock transfer arguments and are borrowed for this call. A subscriber may update its own preallocated state and its explicitly reserved DSP frame-tail data words only. Preserve stock data, command words and reply storage. Do not allocate, block or retain the pointers."
-    },
-    {
       "name": "ev_key_leds",
       "since": "1.1",
       "when": "every UI frame, after the frame clears the key LEDs and before the stock views set theirs (UI task)",
@@ -81,16 +72,18 @@
       "when": "After the OS constructs a supported audio note, on PLAY and subsequent steps, before the note enters the stock queue.",
       "handler": "int32_t handler(const struct dt2_seq_note_context *context, uint32_t pitch); return a pitch from 0 through 127, or leave the current pitch unchanged with an out-of-range result. The context is read-only.",
       "order": "Four slots, in ascending contribution order. Each callback sees the previous accepted pitch."
+    },
+    {
+      "name": "ev_audio_frame",
+      "since": "1.1",
+      "when": "on the ColdFire audio frame path, immediately before the stock DSP transfer",
+      "handler": "void f(unsigned int data_bytes, const void *data, unsigned int frame_bytes, const void *reply)",
+      "order": "lower subscription order first; linker breaks ties by module ID and contribution order",
+      "room": 4,
+      "purpose": "The arguments are the original stock transfer arguments and are borrowed for this call. A subscriber may update its own preallocated state and its explicitly reserved DSP frame-tail data words only. Preserve stock data, command words and reply storage. Do not allocate, block or retain the pointers."
     }
   ],
   "tables": [
-    {
-      "name": "core_mixer_pages",
-      "since": "1.1",
-      "entry": 4,
-      "room": 4,
-      "purpose": "Null-terminated pointers to dt2_mixer_extension descriptors, each holding a native page descriptor and void draw(void *view, void *bitmap). The UI reads the table when constructing the Mixer page list and dispatches draw for the active registered page. Lower contribution order first, ties by module ID and contribution order. The renderer may draw into its own page bitmap and update module-owned state; the view is borrowed and stock navigation and page state are read-only."
-    },
     {
       "name": "core_fast",
       "entry": 4,
@@ -156,6 +149,13 @@
       "purpose": "Pointers to fixed-size project save/load descriptors.",
       "entry": 4,
       "room": 4
+    },
+    {
+      "name": "core_mixer_pages",
+      "since": "1.1",
+      "entry": 4,
+      "room": 4,
+      "purpose": "Null-terminated pointers to dt2_mixer_extension descriptors, each holding a native page descriptor and void draw(void *view, void *bitmap). The UI reads the table when constructing the Mixer page list and dispatches draw for the active registered page. Lower contribution order first, ties by module ID and contribution order. The renderer may draw into its own page bitmap and update module-owned state; the view is borrowed and stock navigation and page state are read-only."
     }
   ],
   "exports": [
