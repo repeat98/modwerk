@@ -39,8 +39,9 @@ export function sharedConfiguration(value: unknown): SharedConfiguration {
   if (Object.keys(item).some(key => !['name','device','moduleIds','moduleVersions','keepStockFx2','usbAudio'].includes(key))) throw new Error('Only configuration names, machine, module choices, versions and settings can be shared. Firmware and other files are not accepted.')
   const device = item.device ?? 'octatrack'
   if (item.device !== undefined && typeof item.device !== 'string') throw new Error('Choose a valid configuration machine.')
-  if (typeof device !== 'string' || !['octatrack','digitakt','digitone'].includes(device)) throw new Error('Choose a machine with configurable modules.')
-  if (typeof item.name !== 'string' || !item.name.trim() || item.name.length > 80 || typeof item.keepStockFx2 !== 'boolean' || !Array.isArray(item.moduleIds) || !item.moduleIds.length || item.moduleIds.length > 100 || new Set(item.moduleIds).size !== item.moduleIds.length || item.moduleIds.some(id => typeof id !== 'string' || !machineModules(device).some(module => module.moduleId === id))) throw new Error('This configuration has invalid module choices or settings.')
+  const modules = machineModules(device)
+  if (!modules.length) throw new Error('Choose a machine with configurable modules.')
+  if (typeof item.name !== 'string' || !item.name.trim() || item.name.length > 80 || typeof item.keepStockFx2 !== 'boolean' || !Array.isArray(item.moduleIds) || !item.moduleIds.length || item.moduleIds.length > 100 || new Set(item.moduleIds).size !== item.moduleIds.length || item.moduleIds.some(id => typeof id !== 'string' || !modules.some(module => module.moduleId === id))) throw new Error('This configuration has invalid module choices or settings.')
   if (!item.moduleVersions || typeof item.moduleVersions !== 'object' || Array.isArray(item.moduleVersions) || Object.keys(item.moduleVersions).length !== item.moduleIds.length || Object.keys(item.moduleVersions).some(id => !item.moduleIds.includes(id))) throw new Error('Include the exact version of every module.')
   for (const id of item.moduleIds) {
     const version = item.moduleVersions[id]
