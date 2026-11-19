@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 2,
+  "id": "arr-setlists",
+  "key": "ARR SETLISTS",
+  "name": "Arr Setlists",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "author": {
+    "github": "Andrey-Sidorkin",
+    "credits": [
+      "Andrey-Sidorkin: the module, its research, tests and documentation."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "128 arrangements per project",
+    "family": "Arranger",
+    "summary": "16 books of 8 arrangements per project, every one a stock arrangement file: book 1 is arr01 to arr08, book 16 is arr121 to arr128.",
+    "overview": "Arr Setlists turns the Octatrack's 8 arrangements into 16 books of 8. Book 1 is stock's own arr01 to arr08 and stays exactly as it is; book 2 is arr09 to arr16, and so on up to arr128, all ordinary stock arrangement files in the project folder, written and read by the Octatrack's own code. In ARR > CHANGE, with the transport stopped, LEFT and RIGHT step through the books; inside a book every stock arrangement function works as usual. Setlists of up to 16 songs from any books follow in a later version.",
+    "highlights": [
+      "128 arrangements: 16 books of 8, book 1 untouched.",
+      "Every arrangement is a stock file, arr01 to arr128.",
+      "Switch books with LEFT/RIGHT in ARR > CHANGE, stopped.",
+      "A project opens on book 1, also on a unit without the module."
+    ],
+    "usage": [
+      "Open ARR > CHANGE (MKII: ARR, then CHANGE; MKI: FUNC + PATTERN for arrangement mode, FUNC + BANK, then CHANGE), with the transport stopped.",
+      "Press RIGHT or LEFT to step to the next or previous book (1 to 16); BOOK 2 and so on shows at the top right.",
+      "Pick one of the book's 8 arrangements as usual and edit, save or chain it: stock's arrangement functions work inside the book.",
+      "Save the project as usual: every book is saved with it.",
+      "Before removing the module, step back to book 1."
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Project sequencer",
+    "conflicts": [],
+    "uiClaims": [
+      "key:LEFT@ARR CHANGE",
+      "key:RIGHT@ARR CHANGE",
+      "screen:ARR CHANGE"
+    ],
+    "limitations": [
+      "OS 1.40C. Not yet tested on a unit.",
+      "Books change only while the transport is stopped: the switch writes and reads the card, which stock itself does only stopped.",
+      "Switch back to book 1 before removing the module: without it, stock's next save writes the book in use into arr01 to arr08. Book 1 is kept in a backup (arr01.bak to arr08.bak) and comes back the next time the module is installed and book 1 is chosen.",
+      "A project comes back to the book and arrangement it was saved or left on; a power cycle keeps the book in use. Without the module a project opens on book 1.",
+      "Stock's project copy functions copy book 1 only; copying the project folder copies every book."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Not measured",
+    "storage": {
+      "label": "Storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host gate (verify.py, 59 checks); book switching, stock's file format for arr09 and up, the list redraw and per-book choice under ot_emu; switching, per-book choice, the playing refusal, ARR SAVE/RELOAD and a power cycle on the developer's MKI.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
+    "gates": [
+      "Worst-case cycles under parameter modulation and maximum load",
+      "Exact memory region and maximum-instance totals",
+      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original module by Andrey Sidorkin, MIT. No firmware, extracted stock code or built images are included."
+  },
+  "media": [],
+  "access": {
+    "location": "ARR > CHANGE",
+    "steps": [
+      "Open ARR > CHANGE (MKII: ARR, then CHANGE; MKI: FUNC + PATTERN for arrangement mode, FUNC + BANK, then CHANGE), with the transport stopped.",
+      "Press RIGHT or LEFT to step to the next or previous book (1 to 16); BOOK 2 and so on shows at the top right.",
+      "Pick one of the book's 8 arrangements as usual and edit, save or chain it: stock's arrangement functions work inside the book.",
+      "Save the project as usual: every book is saved with it.",
+      "Before removing the module, step back to book 1."
+    ],
+    "screenshots": []
+  }
+}

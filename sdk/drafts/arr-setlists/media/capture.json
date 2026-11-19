@@ -1,0 +1,38 @@
+{
+ "schemaVersion": 1,
+ "captured": "2026-11-18",
+ "moduleId": "arr-setlists",
+ "moduleVersion": "0.1.0-experimental",
+ "packageSha256": "c6b2c9a40b82cae9b0c31dbc3c36c9eb0e160ac5ff7977df130ec6b7a16054df",
+ "sourceRevision": "5319d52b3",
+ "firmware": "1.40C",
+ "imageSha256": "9c861d6f30aa6adeab6d536ae91b2a926405857495e16b422b5e74acd4d3cc24",
+ "emulatorSha256": "5d4323b7b29c20d9b1d6251df39a668923bf17788eacb1f60ac9b61c7f43d29c",
+ "setup": "Headless ot_emu (octabam f7d72906, the adapted emulator), MKI panel, --dsp --dsp-rt, stopped transport; the Modwerk beta base 0.7.5 built from the developer's own 1.40C with the package installed over the emulated USB; a project created on an empty Set, arrangements 1-3 of book 1 named SONG ALPHA, BRAVO and CHARLIE through the emulator's memory poke; the LCD as the panel link carries it (module_draw included), 128x64 at integer scale 6.",
+ "palette": {
+  "on": [
+   240,
+   240,
+   240
+  ],
+  "off": [
+   24,
+   24,
+   24
+  ]
+ },
+ "keyMs": 60,
+ "stockOs": {
+  "release": "1.40C",
+  "updateSha256": "34695b606eb00e1b4dded5fd0c4b66f3a460522a632e47d7416dbd220599e1ad",
+  "mainOsSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e"
+ },
+ "captureMethod": "A private ot_emu session (--interactive --usb-host): npm run device -- try <package> --accept --emulator, panel keys as key rows, the screen rebuilt from UART A's transmit bytes with octabam's tools/panel/panel_link.py (capture-module-ui.py reads stock's LCD plane, which misses module_draw).",
+ "plan": "ARR > CHANGE on book 1, arrangement 3 chosen; RIGHT to book 2; LEFT back to book 1.",
+ "screenshots": [
+  {
+   "file": "ot-change-book.png",
+   "shows": "ARR > CHANGE after returning to book 1: BOOK 1 at the top right, the list redrawn with book 1's names, arrangement 3 chosen with the cursor on it."
+  }
+ ]
+}
