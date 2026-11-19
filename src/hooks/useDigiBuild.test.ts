@@ -125,17 +125,21 @@ describe('consent-bound Elekloader preparation and builds', () => {
   })
   it('offers a Digitakt II build only after the preflight passes, and fails one it refuses', async () => {
     machine = 'digitakt-ii'
+    const save = vi.fn(), verifiedLock = { id: 'bbbbbbbb' }, refusedLock = { id: 'cccccccc' }
+    storage = { save }
     await act(async () => { root.render(createElement(Harness)); await flush() })
     await check()
     const receive = subscribe(), files = [{ name: 'PRIVATE.syx', data: new ArrayBuffer(1) }]
-    mocked.build.mockResolvedValueOnce({ ok: true, files, log: [] })
+    mocked.build.mockResolvedValueOnce({ ok: true, files, log: [], store: verifiedLock })
     await build()
     expect(mocked.preflight).toHaveBeenCalledWith('digitakt-ii', file, ['PRIVATE path'], files)
     expect(hook.state).toMatchObject({ phase: 'built', preflight: { unchangedSections: [2, 4] } })
+    expect(save).toHaveBeenCalledWith(verifiedLock)
     const { PreflightError } = await import('../engine/elekloader/digi-preflight')
     mocked.preflight.mockRejectedValueOnce(new PreflightError(['PRIVATE section 4 is not byte for byte stock']))
-    mocked.build.mockResolvedValueOnce({ ok: true, files, log: [] })
+    mocked.build.mockResolvedValueOnce({ ok: true, files, log: [], store: refusedLock })
     await build()
+    expect(save).toHaveBeenCalledTimes(1)
     expect(hook.state).toMatchObject({ phase: 'failed', problems: ['PRIVATE section 4 is not byte for byte stock'] })
     expect(receive).toHaveBeenLastCalledWith({ event: 'build_failed', phase: 'verifying', buildKind: 'elekloader-digitakt-ii', error: 'build' })
     expect(JSON.stringify(receive.mock.calls)).not.toContain('PRIVATE')
@@ -145,6 +149,25 @@ describe('consent-bound Elekloader preparation and builds', () => {
     await act(async () => { root.render(createElement(Harness)); await flush() })
     await check(); mocked.build.mockResolvedValueOnce({ ok: true, files, log: [] }); await build()
     expect(mocked.preflight).not.toHaveBeenCalled(); expect(hook.state.phase).toBe('built')
+  })
+  it('keeps the saved storage layout when a build is cancelled during preflight', async () => {
+    machine = 'digitakt-ii'
+    const save = vi.fn()
+    storage = { save }
+    await act(async () => { root.render(createElement(Harness)); await flush() })
+    await check()
+    let finishPreflight!: (value: unknown) => void
+    mocked.preflight.mockImplementationOnce(() => new Promise(resolve => { finishPreflight = resolve }))
+    mocked.build.mockResolvedValueOnce({ ok: true, files: [], log: [], store: { id: 'bbbbbbbb' } })
+    let pending!: Promise<void>
+    await act(async () => { pending = hook.build('PRIVATE version'); await flush() })
+    await act(async () => {
+      hook.cancel()
+      finishPreflight({ unchangedSections: [2, 4] })
+      await pending
+    })
+    expect(save).not.toHaveBeenCalled()
+    expect(hook.state.phase).toBe('idle')
   })
   it('starts a configuration without a lockfile from a new layout and saves nothing for a failed build', async () => {
     const save = vi.fn()
