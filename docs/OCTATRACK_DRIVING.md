@@ -141,6 +141,7 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 | `part1`-`part4` | switch Parts (PART + an arrow), done once the Part changed |
 | `ui` | each track's FX1/FX2 as they run, the current track, Part, transport |
 | `stats` | CPU, each core's mean/peak per mille, idle passes. One reading is not a measurement: on 27 October 2026 (MKII, a dev twin, stopped, nothing changing) it swung between 41 % and 60 % within ten seconds. Take ten readings in each state, or time the hook itself with `modwerk_cost` (`profile`) |
+| `health` | one JSON line for scripts: the DSP frames, the loader's stalls and errors, the UI tick's watch count, CPU, the crash and stall records' counts (battery RAM, so earlier ones stay counted) and the transport. Development bases. [A fast soak](#a-fast-soak) reads it after every operation |
 | `loader` | packets accepted, rejected, errors, jobs, selections, commits, rollbacks, code words per core |
 | `mem:0x80000ec4:16` | RAM in hex, read-only, any length, within 0x40000400-0x40cfffff (short of the pool's end and the loader's statics), 0x46000000-0x46ffffff, 0x80000000-0x8000ffff and the battery RAM's records 0x100f0000-0x100fffff (`dev.c`); the battery-RAM Part copies are outside it |
 | (any sequence) | answers within 20 s beyond its own `w` waits, else an error, and the next request runs |
@@ -164,6 +165,26 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 STATE's `recording` bit reports sampler recorders. Check live-sequencer recording
 separately when qualifying an edit's recording refusal; that bit alone does not
 establish whether live recording started or stopped.
+
+## A fast soak
+
+`node scripts/octatrack-soak.mjs` plays a seeded run of USB MIDI at the unit (program changes and bursts of them,
+START and STOP, the crossfader, scenes, mutes, levels and FX knobs, transitions weighted most) and reads `health` after
+every operation. It stops at the first failure: a new crash or stall record, a loader stall or error, DSP frames still
+for 0.6 s, or the UI tick still for 1.5 s. Then it reads `stall`, `crash` and `diaglog` into the run's log, which holds
+every operation, so `--replay LOG [--until N]` plays the same run again. The default is three minutes at 20 operations a
+second, about as many operations as an hour at a player's pace.
+
+- MIDI goes through `scripts/octatrack-midi-bridge.py` on the computer the unit is plugged into (on Windows the device
+  venv's Python, through winmm; port 47812). Start it before the run and stop it after: while it runs it holds the
+  unit's MIDI port.
+- The project: track channels 1-8, PROG CH RECEIVE on the channel `--pc-channel` names (default 1), CC and transport
+  receive on, effects of the modules under test on the Parts that `--programs` reaches. A program change while playing
+  lands at the pattern's end, so short patterns at a high tempo give the most transitions.
+- `--replay LOG --shrink --reset DIR` finds the shortest prefix of a failed run that still fails: before each replay it
+  RAM-boots `DIR` (a development twin; serve in its loop) and waits out the base's 25 s panel hold, so each try costs
+  about a minute, and halving needs about a dozen tries for two thousand operations.
+- Nothing is installed, kept or flashed. A run that leaves the unit off USB needs the owner's power cycle, as always.
 
 ## The panel, as it behaves
 
