@@ -36,6 +36,8 @@ describe('SHARC assembler', () => {
     ['F3 = MAX(F4, F5)', '013e000e2345'],
     ['F3 = FLOAT R4', '013e000ca340'],
     ['R3 = FIX F4', '013e000c9340'],
+    ['F3 = RECIPS F4', '013e000c4340'],
+    ['F3 = RSQRTS F4', '013e000c5340'],
     ['IF EQ F0 = F1 + F2', '010000081012'],
     ['IF NOT SV JUMP here', '062e00be8000'],
     ['NOP', '000000000000'],

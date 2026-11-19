@@ -6,6 +6,15 @@ Describe what it does, every control, how to reach it on the unit, and a short t
 
 ## Design notes (work in progress)
 
+The player is `src/player.sharc`, assembled by Modwerk's sound-chip assembler (`src/engine/elektron/sharc-asm.ts`). Each voice has a play head and up to six grains:
+
+- **Play head.** The voice's own record, played by the stock sample player into a buffer nobody hears. It follows the sample's start, length, loop, play mode and pitch, so a note lasts as a SAMPLE note would.
+- **Grains.** A grain is a copy of the voice's record taken at the play head, moved by the position offset and a random spread, played by the stock player and shaped by a window (`4x(1 - x)`, linear across each 32-sample block). Grains start every interval, a fraction of a sequencer step set by the density. Their gain follows the square root of the overlap, since grains add out of phase.
+- **Modes.** DRIFT: grains around the moving play head. STUTTER: four grains from the same spot, then the spot moves to the play head, with a sixteenth of the spread. HAZE: the widest spread. REVERSE plays as DRIFT until reversed playback through the stock player is traced.
+- **Settings.** Per track, in the player's own memory: mode, position, size, density, spread and samples per step. They have defaults (DRIFT, at the play head, 140 ms grains, four grain starts per step at 120 BPM, a quarter spread) until the base passes the knob values and the tempo to the sound chip.
+
+Emulator check (19 November 2026, OS 1.17, development base `37b4db44` with the test machine as type 7, the player composed by `composeDt2MachineBuild`, scripted coupled run, two notes of a 220 Hz test sample): the build passes the preflight; the notes play as clouds of grains at 220 Hz, peak 0.03-0.06 against 0.063 for SAMPLE, no halt, no missing blocks. The largest sample-to-sample step is 2.9% of the peak, what a clean 220 Hz sine gives (no clicks at grain edges). A pass-through player (the stock player only) in the same build plays as SAMPLE.
+
 The grain player runs on the sound chip in place of the stock sample player for Mikrotakt's voices (the base's machine player dispatcher). Plan: each block, for each active grain, call the stock sample player with the voice's play position set to the grain's position and its output pointed at a scratch buffer, then add the grain through a window into the voice's slot. The stock player keeps doing the sample reading, interpolation and pitch, so grains sound like the Digitakt's own sample playback.
 
 Each grain is a record of its own: a copy of the voice's stock record with its own play position (word `0x6d`, in pairs of samples, and its fraction `0x6c`), kept in Mikrotakt's L2 range and rendered by calling the stock player with `R4` pointing at it. The voice's settings (sample, pitch, length) are copied into every grain record each block; the grain's play state is its own. The base's notes on the record and the emulator tests are in `sdk/machines/digitakt-ii/elekloader/modwerk/MACHINES.md` ("Grains through the stock player").

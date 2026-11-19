@@ -15,7 +15,7 @@
  *   .data 0x200d8000          data from this loader byte address (labels are byte addresses)
  *   .equ NAME, expression     a constant
  *   .word e, e, ...           32-bit words (data)        .float 0.5, -1.0   32-bit floats (data)
- *   .space bytes              zero bytes (data)
+ *   .space bytes              zero words, loaded with the program (data)
  *   label:
  *
  *   ureg = expression                      type 17a      ureg = DM(expression) / DM(expression) = ureg   type 14a
@@ -25,7 +25,8 @@
  *   [IF cond] compute                      type 2a: Rn = Rx + Ry, Rx - Ry, Rx AND/OR/XOR Ry, PASS Rx, -Rx, Rx + 1,
  *                                          Rx - 1, ABS Rx, MIN(Rx, Ry), MAX(Rx, Ry), COMP(Rx, Ry), Rx * Ry (SSI),
  *                                          LSHIFT Rx BY Ry, ASHIFT Rx BY Ry; Fn = Fx + Fy, Fx - Fy, Fx * Fy, PASS Fx,
- *                                          -Fx, ABS Fx, MIN(Fx, Fy), MAX(Fx, Fy), COMP(Fx, Fy), FLOAT Rx; Rn = FIX Fx
+ *                                          -Fx, ABS Fx, MIN(Fx, Fy), MAX(Fx, Fy), COMP(Fx, Fy), FLOAT Rx, RECIPS Fx,
+ *                                          RSQRTS Fx (the reference's seeds, about 8 bits); Rn = FIX Fx
  *   [IF cond] ureg = ureg                  type 5b (32-bit: never in the last 11 instructions of a loop)
  *   [IF cond] JUMP target                  type 8a, absolute, not delayed
  *   LCNTR = count, DO label UNTIL LCE      type 12a (label: the loop's last instruction)
@@ -139,6 +140,7 @@ function computation(text: string): number | null {
     return x === null || y === null ? null : alu((float ? 0xe0 : 0x60) + (r[1] === 'MIN' ? 1 : 2), n, x, y)
   }
   if ((r = /^FLOAT (R\d+)$/.exec(rhs)) && float) { const x = reg(r[1], 'R'); return x === null ? null : alu(0xca, n, x) }
+  if ((r = /^(RECIPS|RSQRTS) (F\d+)$/.exec(rhs)) && float) { const x = reg(r[2], 'F'); return x === null ? null : alu(r[1] === 'RECIPS' ? 0xc4 : 0xc5, n, x) }
   if ((r = /^FIX (F\d+)$/.exec(rhs)) && !float) { const x = reg(r[1], 'F'); return x === null ? null : alu(0xc9, n, x) }
   if ((r = /^(LSHIFT|ASHIFT) (R\d+) BY (R\d+)$/.exec(rhs)) && !float) {
     const x = reg(r[2], 'R'), y = reg(r[3], 'R')
@@ -187,7 +189,14 @@ export function assembleSharc(source: string): SharcProgram {
         continue
       }
       if (section !== 'data') throw new SourceError(line, `.${name} belongs in a .data block`)
-      if (name === 'space') { address += evaluate(rest, symbols, line); continue }
+      if (name === 'space') {
+        // Zero words that are part of the block: memory the player owns is loaded with the program, never assumed.
+        const bytes = evaluate(rest, symbols, line)
+        if (!Number.isInteger(bytes) || bytes < 0 || bytes % 4) throw new SourceError(line, '.space takes a whole number of words, in bytes')
+        for (let k = 0; k < bytes; k += 4) items.push({ kind: 'data', address: address + k, line, build: () => 0 })
+        address += bytes
+        continue
+      }
       if (name === 'word' || name === 'float') {
         for (const part of rest.split(',')) {
           const expr = part.trim(), at = address
@@ -378,6 +387,14 @@ function layout(items: Item[], symbols: Map<string, number>): SharcBlock[] {
       joined.set(last.bytes); joined.set(piece.bytes, last.bytes.length)
       last.bytes = joined
     } else blocks.push({ address: piece.address, bytes: piece.bytes })
+  }
+  // The loader places whole 32-bit words: pad a block that ends inside one (code ends on a 16-bit parcel).
+  for (const [index, block] of blocks.entries()) {
+    if (block.bytes.length % 4 === 0) continue
+    const padded = new Uint8Array(block.bytes.length + 4 - block.bytes.length % 4)
+    padded.set(block.bytes)
+    if (blocks[index + 1] && blocks[index + 1].address < block.address + padded.length) throw new Error(`overlapping code or data at ${blocks[index + 1].address.toString(16)}`)
+    block.bytes = padded
   }
   return blocks
 }
