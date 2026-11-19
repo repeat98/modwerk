@@ -5,7 +5,7 @@
     dn2_link.py ident                # link version, messages received and dropped, ticks
     dn2_link.py mem 0x47f00000 64    # up to 128 bytes of DDR or SRAM, as hex
     dn2_link.py screen [--png F]     # the frame on the screen, as text (and a PNG), read through mem
-    dn2_link.py press KEY [KEY...]   # press and let go, one after the other (FUNC, PLAY, STOP, TRIG1-16 or an id)
+    dn2_link.py press KEY [KEY...]   # press and let go, one after the other (dn2_link.py keys lists them, or an id)
     dn2_link.py hold KEY / let KEY   # press, or let go of, one key (FUNC + TRIG: hold FUNC, press TRIG1, let FUNC)
     dn2_link.py turn ENC DELTA       # an encoder (A-H, LEVEL) by DELTA detents, up to 8 a message
     dn2_link.py release / disarm     # let go of every key the link holds / and turn the arm off
@@ -25,7 +25,10 @@ CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12,
 STATUS = {0: 'ok', 1: 'not armed (SETTINGS > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range',
           5: 'a person is at the unit'}
 # Panel key ids and encoders as stock's messages carry them (OS 1.12, seen on a unit).
-KEYS = {'FUNC': 0x11, 'PLAY': 0x14, 'STOP': 0x15, **{'TRIG%d' % (i + 1): 0x19 + i for i in range(16)}}
+KEYS = {'YES': 0x0a, 'UP': 0x0b, 'NO': 0x0c, 'LEFT': 0x0d, 'DOWN': 0x0e, 'RIGHT': 0x0f, 'TRK': 0x10, 'FUNC': 0x11,
+        'KBSETUP': 0x12, 'REC': 0x13, 'PLAY': 0x14, 'STOP': 0x15, 'PAGE': 0x16, 'PTN': 0x17, 'SONG': 0x18,
+        'ARP': 0x33, 'TRANSPOSE+': 0x34, 'NOTEEDIT': 0x35, 'TRANSPOSE-': 0x36,
+        **{'TRIG%d' % (i + 1): 0x19 + i for i in range(16)}}
 ENCODERS = {**{chr(ord('A') + i): i + 1 for i in range(8)}, 'LEVEL': 9}
 DOWN, RELEASE = 0x01, 0x10
 
@@ -145,6 +148,7 @@ def main():
     turn.add_argument('delta', type=int)
     sub.add_parser('release')
     sub.add_parser('disarm')
+    sub.add_parser('keys')
     shot = sub.add_parser('screen')
     shot.add_argument('--png', help='also write the frame as a PNG here')
     a = parser.parse_args()
@@ -153,6 +157,9 @@ def main():
         print(ascii_art(rows))
         if a.png:
             open(a.png, 'wb').write(png(rows))
+        return
+    if a.cmd == 'keys':
+        print(' '.join(sorted(KEYS, key=KEYS.get)) + '; encoders ' + ' '.join(ENCODERS))
         return
     if a.cmd in ('press', 'hold', 'let'):
         for name in a.keys:

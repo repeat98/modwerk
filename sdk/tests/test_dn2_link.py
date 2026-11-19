@@ -66,6 +66,7 @@ class Dn2Keys(unittest.TestCase):
     def test_key_and_encoder_names_are_the_panels_ids(self):
         self.assertEqual([link.key_id(n) for n in ("FUNC", "play", "TRIG1", "TRIG16", "0x30")], [0x11, 0x14, 0x19, 0x28, 0x30])
         self.assertEqual([link.ENCODERS[n] for n in ("A", "H", "LEVEL")], [1, 8, 9])
+        self.assertEqual(len(set(link.KEYS.values())), len(link.KEYS))
 
     def test_a_negative_turn_reaches_the_link_as_its_low_byte(self):
         enc = link.request(3, "enc", 1, -8 & 0xffffffff)
