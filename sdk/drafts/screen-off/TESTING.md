@@ -70,10 +70,24 @@ A later run on the same twin, with the DSP cores on (`--dsp --dsp-rt`), loaded s
 | stock benchmark | none for a key-press module |
 | stress | 20 presses of the dearest event while playing, no hang |
 
+## Memory
+
+19 November 2026. The same package, SHA-256 `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`, 352 bytes, ABI 8. Its header says the linked image is 256 bytes and the bss is 12. The image's own SHA-256 is `42ddce28b94139986074dfbdf2dad1b11aee557689d23301daf8e28ce06ff028`. Disassembled with `m68k-elf-objdump -D -b binary -m m68k`, the image is 250 bytes of code, 2 zero bytes of alignment, and the 4-byte `so_at` pointer at image offset `0xFC` (one of the two relocations; the other is at `0x2`). The 12 bss bytes are `struct so`. Nothing else is allocated: no heap, no table, no DSP memory. The 1024-byte frame and the held-key row are stock's.
+
+The only stack push in the image is `pea` of the redraw argument, 4 bytes, on the UI task's stack, and only on the chord that toggles. `so_key`, `so_draw` and `so_tick` allocate no frame of their own. The stock call at `0x4004d948` and the UI task's own stack below that are not measured. No hardware canary was set.
+
+| region | bytes |
+|---|---|
+| ColdFire code | 250 |
+| alignment before `so_at` | 2 |
+| `so_at` | 4 |
+| `struct so` (bss) | 12 |
+| redraw argument on the UI stack | 4 |
+| total, one instance | 272 |
+
 ## Not tested
 
 - An MKI, and a card install. The MKII chord above is a report from the person at the unit, on 7 November and again on 16 November, both RAM trials of package `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`.
-- The package size.
 - The stock screen saver while this blank is on, and while a pattern plays.
 - Whether the MKII panel can be powered down as well as painted black.
 - Whether the MKI backlight stays lit behind the blank glass.

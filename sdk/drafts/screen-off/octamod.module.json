@@ -58,23 +58,23 @@
     ]
   },
   "resources": {
-    "recorded": "6 November 2026",
+    "recorded": "19 November 2026",
     "storage": {
       "label": "ColdFire unit",
-      "display": "Not measured",
-      "value": null,
+      "display": "272 bytes",
+      "value": 272,
       "unit": "bytes",
-      "method": "unmeasured",
-      "conditions": "screen_off.c, one key hook, one draw hook and one tick hook. No stock site, no DSP code.",
+      "method": "static",
+      "conditions": "Package 14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c. Linked image 256 bytes (250 of code, 2 of alignment, the 4-byte so_at pointer) plus 12 bytes of bss. The redraw path pushes 4 bytes on the UI stack. No heap and no DSP memory. The composed frame is stock's.",
       "source": "TESTING.md"
     },
     "processing": {
       "label": "ColdFire, per key and per composed frame",
-      "display": "Not measured",
-      "value": null,
+      "display": "25033 cycles",
+      "value": 25033,
       "unit": "cycles/event",
-      "method": "unmeasured",
-      "conditions": "A short compare on each key. While the blank is on, 1024 bytes cleared on each composed frame, in the UI task.",
+      "method": "emulator",
+      "conditions": "ot_emu executed instructions from so_draw's entry to its rts, interrupts included, blank on. 26 clears of the frame took 6157 with no interrupt inside the draw. The dearest was 25033. This is not a chip wall-clock count.",
       "source": "TESTING.md"
     },
     "impact": {
@@ -94,7 +94,7 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "One small ColdFire unit and 12 bytes of state.",
+        "rationale": "256 bytes of linked image, 12 bytes of state, and a 4-byte push on the redraw path. No heap and no DSP memory.",
         "source": "screen_off.c"
       }
     },
@@ -110,12 +110,116 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate on screen_off.c. The author reports that on a MKII the chord blanks the screen and brings it back. An MKI and a power cycle were not tried.",
-    "hardwareStatus": "untested",
-    "evidenceRevision": "fe9e689d3043f215ea4d621613706454c7062cc0",
+    "summary": "Host gate on screen_off.c. The author reports that on a MKII the chord blanks the screen and brings it back, and that a power cycle brought the screen back on with the module still installed. An MKI was not tried.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "7105ec60ecfdda0a00f31ce7f76f2091580644cf",
     "gates": [
       "modules/screen-off/verify.py"
-    ]
+    ],
+    "qualification": {
+      "moduleVersion": "0.1.0-experimental",
+      "sourceSha256": "b5a8e11969e0001ffc9065a8a73a3d915ee773aadda76d9e6fc3573d4ca2aadc",
+      "imageSha256": "14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 25033,
+          "maxConfiguration": 25033,
+          "maxInstances": 1,
+          "budget": 26600000,
+          "unit": "cycles/event",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "There is no parameter. The blank is off or on, and the dearest draw is the clear of the 1024-byte frame.",
+            "parameterModulation": "No LFO, p-lock, MIDI CC or scene reaches this module. The chord is the only control, and it was the event that was counted.",
+            "modeSwitching": "One UP+NO turned the blank on. A later run sent STOP and PART+RIGHT, which changed the Part byte from 0 to 1, then PLAY, between two groups of the same chord.",
+            "maxLoad": "One instance. It takes no track, no FX slot and no DSP core. The count is one draw, not a sum across tracks.",
+            "inputConditions": "With the blank off the draw returned in 10 instructions. With it on, 26 clears took 6157 and the dearest, the same clear with an interrupt inside it, took 25033. That count is executed instructions, not chip wall-clock cycles, and it does not bound the stock redraw call."
+          },
+          "report": "TESTING.md"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "ColdFire code",
+            "space": "cpu-ram",
+            "words": 250,
+            "wordBits": 8,
+            "bytes": 250,
+            "scope": "shared"
+          },
+          {
+            "name": "Alignment before so_at",
+            "space": "cpu-ram",
+            "words": 2,
+            "wordBits": 8,
+            "bytes": 2,
+            "scope": "shared"
+          },
+          {
+            "name": "so_at pointer",
+            "space": "cpu-ram",
+            "words": 4,
+            "wordBits": 8,
+            "bytes": 4,
+            "scope": "shared"
+          },
+          {
+            "name": "struct so",
+            "space": "cpu-ram",
+            "words": 12,
+            "wordBits": 8,
+            "bytes": 12,
+            "scope": "shared"
+          },
+          {
+            "name": "Redraw argument on the UI stack",
+            "space": "sdram",
+            "words": 4,
+            "wordBits": 8,
+            "bytes": 4,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 272,
+        "maxInstances": 1,
+        "totalBytes": 272,
+        "conditions": "ABI 8 package 14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c, image 256 bytes and bss 12, one instance. The 4-byte figure is the only push in the image. Stock's stack under the redraw call, the composed frame and the held-key row are not this module's. No heap, no table, no DSP memory. Hardware canaries were not measured.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-11-18",
+        "tester": "jonathanwardle1992-beep",
+        "sourceRevision": "7105ec60ecfdda0a00f31ce7f76f2091580644cf",
+        "imageSha256": "14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c",
+        "summary": "On a MKII, OS 1.40C, the author reports that hold UP, tap NO blanks the screen and the same chord brings it back, including in a list, the sample editor, the arranger and the status page. On 18 November 2026 the same package was kept, the author powered the unit off and on, and they report the screen came back on with the module still installed. Removal while the screen was black brought the page back and the chord no longer blanked it. A try without keeping rolled back. No SAVE and no flash.",
+        "limitations": [
+          "The blank and the restore are the author's report. The log shows the tick word, not a photograph of the glass.",
+          "An MKI was not tried. A card install was not tried.",
+          "The stock screen saver, the OLED power-off command and the MKI backlight were not tried.",
+          "Part save and project save were not tried. The blank is not stored.",
+          "No audio was measured. This module writes no samples."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial",
+          "steps": [
+            "Hold UP and tap NO. The screen goes black. Let go of both keys.",
+            "Press PLAY, or turn a knob. The Octatrack does it, and the screen stays black. The trig lamps still show the pattern.",
+            "Hold UP and tap NO again. The screen returns to the page you left."
+          ]
+        },
+        "screenshots": [],
+        "screenshotStyle": "black-and-white"
+      }
+    }
   },
   "license": {
     "spdx": "MIT",
