@@ -47,5 +47,6 @@ Each value was found in the stock OS and checked on a unit (20 November 2026).
 
 [20 November 2026](../../../docs/verification/2026-11-20-digitone-ii-runtime-loader-on-a-unit.md): a trial, a rollback,
 Keep, a removal and the rollback of a host that went away, each with the base booted from RAM; a refusal while the
-sequencer played; the tick, draw, key and encoder hooks. Not yet: a module with stock-code sites or stock copies, and a
-package converted from a catalogue mod.
+sequencer played; the tick, draw, key and encoder hooks; a stock-code site patched, run and restored, ten times over.
+Not yet: stock copies, a switch while another task is paused inside a site, and a package converted from a catalogue
+mod.
