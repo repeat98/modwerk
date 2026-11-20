@@ -39,7 +39,9 @@
 #define SET_BYTES (RUNTIME_POOL_BYTES + 0x1000u) /* the pool's worth of packages, and the header */
 extern const uint8_t modwerk_base_digest[32];
 void modwerk_diag_set(void); /* diag.c: the installed set, into the unit's log */
-void modwerk_diag_refused(uint32_t module, uint32_t refusal); /* diag.c: ... and the restore's first refused package */
+void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint32_t largest, uint32_t check); /* diag.c: ... and
+                                                       * the restore's first refused package, with the module pool then and the
+                                                       * loader's check that refused it */
 extern const struct mu_backend modwerk_runtime_backend;
 struct file_object { uint32_t word[6]; };
 #ifdef MODWERK_HOST
@@ -468,7 +470,9 @@ static int whole(int n)
 #define RESTORE_TRIES 20u
 static uint8_t restore_outcome[RUNTIME_MODULES]; /* per package of set[]: 0 to try, 1 installed, 2 left out */
 static unsigned restore_tries;
-static uint32_t left_out, left_why; /* the first package left out and the loader's refusal, for the log */
+static uint32_t left_out, left_why, left_used, left_largest, left_check; /* the first package left out, the loader's refusal,
+                                                              * the module pool at that moment (used, largest free run) and the
+                                                              * loader's check that refused it, for the log */
 static char guard_text[24]; /* "<NAME> LEFT OUT": at most 20 characters, as long as a stock popup's line */
 /* At the restore, before anything installs: what the last start left in the guard. 1: hold every module this start. */
 static int guard_check(uint32_t newest)
@@ -537,7 +541,8 @@ static void restore_pass(void)
         if (open) (void)b6->discard(b6->user);
         if (why == RUNTIME_BUSY && !last) { ++waiting; continue; }
         restore_outcome[count] = 2;
-        if (!left_out) left_out = id, left_why = why;
+        if (!left_out) left_out = id, left_why = why, left_used = RUNTIME_POOL_BYTES - modwerk_runtime_free(&left_largest),
+                       left_check = open ? (uint32_t)modwerk_runtime_refused_check() : 0;
     }
     if (STALLS == g->stalls) g->loading = 0; /* between installs, nothing to blame */
     if (open) (void)b6->leave(b6->user);
@@ -554,7 +559,7 @@ static void restore_pass(void)
         }
         at += step;
     }
-    if (left_out) modwerk_diag_refused(left_out, left_why);
+    if (left_out) modwerk_diag_refused(left_out, left_why, left_used, left_largest, left_check);
     if (installed != count) seal(installed, end);
     modwerk_modset_generation = be32(set + 8), modwerk_modset_count = installed;
     modwerk_modset_result = installed == count ? RESTORED : guarded ? LEFT_OUT : REFUSED;
@@ -583,7 +588,7 @@ static void restore(void)
         put32(set + 8, ga > gb ? ga : gb);
         if (held) { modwerk_modset_result = SKIPPED; SAY("MODULES SKIPPED"); return; }
         modwerk_modset_result = HELD, notice_at = TICKS, notice_after = GUARD_NOTICE, notice = "MODULES HELD";
-        modwerk_diag_refused(0, GUARD_HELD), modwerk_diag_set();
+        modwerk_diag_refused(0, GUARD_HELD, 0, 0, 0), modwerk_diag_set();
         return;
     }
     if (!wa && !wb) {
@@ -596,7 +601,7 @@ static void restore(void)
     slot = wb && (!wa || gb > ga) ? 1u : 0u; /* the newer one; the next save goes to the other */
     if (!slot && (int)load(0) != a) { modwerk_modset_result = DAMAGED; off_bytes = 0; return; }
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) restore_outcome[i] = 0;
-    restored = 0, left_out = left_why = 0;
+    restored = 0, left_out = left_why = left_used = left_largest = left_check = 0;
     restore_pass();
 }
 /* ep0.c's tick (sys task, as the board's): the restore's notice, once its engines run or its time is up and no dialog of

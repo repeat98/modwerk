@@ -466,6 +466,18 @@ int main(void)
       CHECK(!modwerk_status_effect_busy(11, 27) && open == CLOSED);      /* 70 % playing, 62 % now: passes */
       cpu_played = 0, play_readings = 0;
       for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0; }
+    /* A quiet delay (status.s left its read out) counts as awake: a pick is judged at what the unit costs once a
+     * scene opens the sends, and the box does not call that figure the last play's. */
+    { for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 780u;
+      mw_delay[17] = mw_delay[20] = mw_delay[24] = 1;
+      CHECK(modwerk_status_cpu_recent() == 780u && modwerk_status_cpu_load() == 810u);
+      CHECK(!modwerk_status_effect_busy(11, 27));                        /* 81 %: passes */
+      for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 1;
+      CHECK(modwerk_status_cpu_load() == 860u);
+      CHECK(modwerk_status_effect_busy(11, 27) == 1 && refused_booked == 860 && !refused_played); /* 78 % now, 86 % awake */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 0;
+      for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0; }
     /* The frame share: the frame guard's sums between two readings, per mille of a frame. The guard's development read
      * clears them: that reading is left out. */
     { mw_frame_count = 1000u, mw_frame_busy = 187u * 600u; frame_note(0);
