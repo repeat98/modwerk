@@ -7,7 +7,7 @@
   "mods": [
     {
       "file": "kitbank-0.2.0-experimental-os1.44.elemod",
-      "sha256": "4eb689a968d29038fe20516fb3729c7e58e1c99dc2ee428f7c5353887d1e7d9d",
+      "sha256": "2f1784acc1fc40d5cf4a1240a131150547c20dfbd5dad0a324a16f9bb69acd42",
       "id": "kitbank",
       "version": "0.2.0-experimental",
       "device": "digitone-mk1",
@@ -15,7 +15,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "aac54b3ce6197a672091a4c4eac21e022e3b8d0b",
+        "commit": "59c80be281dda64b7b3dcf868634a9455ae8bb61",
         "path": "sdk/imports/packages/kitbank/kitbank-0.2.0-experimental-os1.44.elemod"
       },
       "title": "Kit per bank",
@@ -28,7 +28,7 @@
       "category": "Sequencer",
       "author": "ZOGV",
       "needs_core": "2.0a",
-      "on_unit": "The author ran this exact build (core dn1 2.0a + kitbank 0.2.0-experimental, XX07) on a Digitone, OS 1.44 (2026-11-14) with a nine-step test list and reported that it worked. Reported as one statement: which steps were tried and for how long is not recorded."
+      "on_unit": "Build XX08 (core dn1 2.0a + kitbank 0.2.0-experimental, OS 1.44, .syx SHA-256 6c94a77e…) waits for the author's run on a Digitone; this line is updated with what ran once it is done."
     }
   ]
 }
