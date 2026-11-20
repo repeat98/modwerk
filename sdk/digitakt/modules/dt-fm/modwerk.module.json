@@ -131,9 +131,9 @@
     "memoryBytes": 0,
     "fastBytes": 0,
     "load": {
-      "display": "Not measured in Modwerk yet",
-      "method": "unmeasured",
-      "conditions": "A one-time six-track performance observation is recorded in TESTING.md, but per-module CPU/DSP load and worst-case conditions remain unmeasured. Measure on the original Digitakt with OS 1.53 and 1.54 at the heaviest voice and routing mix."
+      "display": "6 tracks before aggregate CPU reached 100% (one OS 1.54 run)",
+      "method": "hardware",
+      "conditions": "One approximately 5-minute maintainer-reported Digitakt 1 OS 1.54 run with FAST AUDIO, Digi Health, Digi Utils and Machine Pages; six DT-FM tracks played before System Info showed 100% CPU. Aggregate threshold only: no repeat/project details or per-module/worst-case DSP measurement. OS 1.53 untested. See TESTING.md."
     }
   },
   "evidence": {

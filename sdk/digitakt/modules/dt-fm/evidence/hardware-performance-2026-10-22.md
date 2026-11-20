@@ -4,7 +4,7 @@
 - **Device:** Digitakt 1
 - **OS:** 1.54
 - **Duration:** approximately 5 minutes
-- **Firmware:** Modwerk-built with DT-FM, Digi Health, Digi Utils and Machine Pages
+- **Firmware:** Modwerk-built with DT-FM 1.2.1, Digi Health, Digi Utils and Machine Pages
 - **Mode:** FAST audio enabled
 - **Result:** six simultaneous DT-FM tracks played before Digi Health's System Info showed CPU usage at 100%.
 

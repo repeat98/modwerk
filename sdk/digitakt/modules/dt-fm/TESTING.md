@@ -16,7 +16,7 @@ This Modwerk import carries over the upstream DT-FM source and Modwerk build met
 
 ## Modwerk hardware performance observation
 
-On 22 October 2026, the module maintainer reports testing a Modwerk-built Digitakt 1 OS 1.54 firmware with DT-FM, Digi Health, Digi Utils and Machine Pages installed. With FAST audio enabled, six simultaneous DT-FM tracks played before Digi Health's System Info showed CPU usage at 100%. The reported test lasted about five minutes. The source identity is recorded in [the hardware performance report](evidence/hardware-performance-2026-10-22.md), bound to the DT-FM `src/` files and `build.json`.
+On 22 October 2026, the module maintainer reports testing a Modwerk-built Digitakt 1 OS 1.54 firmware with DT-FM 1.2.1, Digi Health, Digi Utils and Machine Pages installed. With FAST audio enabled, six simultaneous DT-FM tracks played before Digi Health's System Info showed CPU usage at 100%. The reported test lasted about five minutes. The source identity is recorded in [the hardware performance report](evidence/hardware-performance-2026-10-22.md), bound to the DT-FM `src/` files and `build.json`.
 
 This is evidence of a limited performance run on that device and module combination. No test-project details, repeated runs, or exact firmware hash were retained. The System Info CPU threshold is not a per-module DSP-cycle or worst-case load measurement. OS 1.53, other module combinations, persistence, reboot, sampling and broader hardware behavior remain untested. See [the hardware performance report](evidence/hardware-performance-2026-10-22.md).
 
