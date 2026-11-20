@@ -1,0 +1,9 @@
+[
+  {
+    "version": "0.3.0",
+    "date": "2026-11-20",
+    "changes": [
+      "A granular delay: short grains sprayed from the last 2.5 s, with pitch steps and patterns, scan, randomness and feedback. Feedback at 100 freezes the buffer."
+    ]
+  }
+]

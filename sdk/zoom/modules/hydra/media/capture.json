@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "hydra",
+  "moduleVersion": "1.0.0",
+  "imageSha256": "5e93e918f46005be8e73557c01fc7f51d266b7e3ffc0a0b2937a21b35bc5a519",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "7fea336548c8d123e20bd8719e16ad21f9c2d7bfd7949ca0672c106a71106cef",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}
