@@ -1,0 +1,9 @@
+[
+  {
+    "version": "1.0.0",
+    "date": "2026-11-20",
+    "changes": [
+      "A loop you hold that keeps spiralling: two grains half a window apart make it unity-gain, so Decay at 0 holds for ever and Rise climbs or sinks it each pass."
+    ]
+  }
+]

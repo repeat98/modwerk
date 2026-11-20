@@ -1,0 +1,9 @@
+[
+  {
+    "version": "0.3.0",
+    "date": "2026-11-20",
+    "changes": [
+      "A spinning ring that follows your signal, full screen. Passes the sound through."
+    ]
+  }
+]
