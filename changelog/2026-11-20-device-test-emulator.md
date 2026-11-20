@@ -1,0 +1,1 @@
+Development: `npm run device:emulator` runs an Octatrack emulator session the unit's tools drive like a unit, paced to the wall clock, and runs a command inside it, so `npm run test:procedure` and `device:test` finish their cases on `ot_emu`. Results there are labelled as emulator results, and the checks the emulator cannot answer are listed as not run.

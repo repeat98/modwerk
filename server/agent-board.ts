@@ -24,7 +24,7 @@ export const CLAIM_KEYS: Record<ClaimKind, RegExp> = {
   issue: /^[1-9]\d{0,6}$/,
 }
 export const CLAIM_DAYS = 14, CLAIM_LIMIT = 10, CLAIM_WRITES_PER_HOUR = 30, NOTE_LIMIT = 120, RELEASED_KEPT_DAYS = 90
-const DAY = 86400000, CLAIM_EXPIRY_NOTICE_DAYS = 3
+const DAY = 86400000, CLAIM_EXPIRY_NOTICE_DAYS = 3, FOLLOWUP_DAYS = 3
 
 // machine: what holds across one instrument; site: an area of the site and Worker (forum, worker, configurator).
 export const TOPIC_KINDS = [...CLAIM_KINDS, 'machine', 'site'] as const
@@ -302,7 +302,8 @@ async function recentBoardActivity(db: Database, login: string, now: number) {
     .bind(login, since, since, Math.floor((now + 23 * DAY) / 1000), Math.floor(now / DAY) - 6).first()
 }
 
-/** The first unanswered post from the asker sets the clock. Only the addressee can answer it. */
+/** The first unanswered post from the asker sets the clock. Only the addressee can answer it. A recipient the board has not
+ * seen for seven days gets the draft at once: through 20 November 2026 nobody asked that way had answered on the board. */
 async function followups(db: Database, now: number, askerId?: string) {
   const { results } = await db.prepare(`WITH waiting AS (
     SELECT m.id,m.topic_kind,m.topic_key,m.to_login,u.github_login AS asker,
@@ -313,11 +314,19 @@ async function followups(db: Database, now: number, askerId?: string) {
           WHERE r.parent_id=m.id AND a.github_login=m.to_login),0)) AS since
     FROM agent_messages m JOIN users u ON u.id=m.user_id WHERE u.suspended=0 AND m.kind='question'
       ${askerId ? 'AND m.user_id=?' : ''} AND m.to_login IS NOT NULL AND m.to_login<>'tars' AND ${LIVE})
-    SELECT * FROM waiting WHERE since<=? ORDER BY since,id`)
-    .bind(...(askerId ? [askerId] : []), ...cutoffs(now), new Date(now - 3 * DAY).toISOString()).all<{
+    SELECT * FROM waiting WHERE since IS NOT NULL ORDER BY since,id`)
+    .bind(...(askerId ? [askerId] : []), ...cutoffs(now)).all<{
       id: string; asker: string; to_login: string; topic_kind: TopicKind; topic_key: string; pr: number | null; since: string
     }>()
-  return results.map(row => ({
+  const waited = new Date(now - FOLLOWUP_DAYS * DAY).toISOString(), seen = new Map<string, boolean>(), due = []
+  for (const row of results) {
+    if (row.since > waited) {
+      if (!seen.has(row.to_login)) seen.set(row.to_login, !!await recentBoardActivity(db, row.to_login, now))
+      if (seen.get(row.to_login)) continue
+    }
+    due.push(row)
+  }
+  return due.map(row => ({
     id: row.id, since: row.since, to: row.to_login,
     target: row.pr ? 'pull/' + row.pr : row.topic_kind === 'issue' ? 'issues/' + row.topic_key : 'issues/new',
     draft: `@${row.to_login}, @${row.asker} has a question on the Modwerk agent board about ${row.topic_kind} ${row.topic_key}. Could you check your board inbox and reply to thread ${row.id}?`,
