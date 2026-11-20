@@ -125,6 +125,27 @@ class MachineEventTests(unittest.TestCase):
             subprocess.run(['m68k-elf-as', '-mcpu=5475', OT / 'elekloader/machine_registry.s', '-o', temp + '/s.o'],
                            check=True, capture_output=True)
 
+    def test_assignment_counter_is_defined_once_with_or_without_the_controller_board(self):
+        """mw_assign counts into modwerk_machine_assigned. controller_board.c defines it, but only a base built with
+        --resident-stock-hooks links that file, so a base without it (the minimal dev base) failed its core link.
+        machine_registry.c defines it exactly when MODWERK_RESIDENT_ON_DEMAND (which comes with those hooks) is off."""
+        gcc, nm = shutil.which('m68k-elf-gcc'), shutil.which('m68k-elf-nm')
+        if not gcc or not nm:
+            self.skipTest('no ColdFire compiler')
+        with tempfile.TemporaryDirectory() as temp:
+            for on_demand, kind in ((False, 'defined'), (True, 'U')):
+                with self.subTest(resident_on_demand=on_demand):
+                    out = temp + '/registry.o'
+                    subprocess.run([gcc, '-mcpu=54455', '-msoft-float', '-O2', '-std=c99', '-ffreestanding', '-fno-builtin',
+                                    '-DMODWERK_RUNTIME_EVENTS', '-DRUNTIME_MODULES=128u',
+                                    *(['-DMODWERK_RESIDENT_ON_DEMAND'] if on_demand else []), *INCLUDES, '-c',
+                                    OT / 'elekloader/machine_registry.c', '-o', out], check=True, capture_output=True)
+                    symbols = {line.split()[-1]: line.split()[-2] for line in
+                               subprocess.check_output([nm, out], text=True).splitlines() if line.strip()}
+                    found = symbols.get('modwerk_machine_assigned')
+                    self.assertIsNotNone(found)
+                    self.assertEqual(found == 'U', kind == 'U', found)
+
     def test_ports_are_bound_to_the_sources_they_were_reviewed_against(self):
         for name in FIVE:
             with self.subTest(name):

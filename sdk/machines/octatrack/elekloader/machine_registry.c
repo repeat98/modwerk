@@ -438,7 +438,11 @@ static unsigned relive(const Part *part, uint32_t offset, unsigned track, unsign
 }
 static void mc_assigned(const Machine *who); /* the machine map, below: a track takes an installed machine */
 /* A machine's admission precedes every mutation; -1 refuses. */
+#ifdef MODWERK_RESIDENT_ON_DEMAND
 extern volatile uint32_t modwerk_machine_assigned; /* controller_board.c: it reads the bank's machines again after an assignment */
+#else
+volatile uint32_t modwerk_machine_assigned; /* no controller_board.c in this base (it comes with --resident-stock-hooks) */
+#endif
 unsigned mw_assign(Part *part, unsigned track, unsigned row)
 {
     modwerk_machine_assigned = modwerk_machine_assigned + 1u;

@@ -75,6 +75,16 @@ hooks, table owners, the resident engines on demand, the controllers, module set
 npm run octatrack:base -- --stock /private/OCTATRACK_OS1.40C.bin --beta --write
 ```
 
+`octatrack:base` always compares what it builds with the committed beta base, so a smaller development base (the
+minimal one CPU baselines compare against: site hooks and table owners) is built with `build_core.py` itself, into a
+folder outside the repository. `test_machine_events.py` keeps that flag set linking:
+
+```sh
+python3 -B sdk/machines/octatrack/elekloader/build_core.py --stock /private/OCTATRACK_OS1.40C.bin \
+  --upstream ~/.cache/modwerk-upstream/elekloader --output /private/minimal-base --dsp-loader --site-events \
+  --table-owners sdk/machines/octatrack/module-adapters/table-owners.json --dev
+```
+
 Without the reviewed GCC on the host (Linux, 24 October 2026), build the toolchain image once with
 `docker build -f sdk/build/Dockerfile -t modwerk-toolchain:local .` (it compiles binutils and GCC, about half an
 hour) and run the same script in it. The image has `node` but no `npm`, and its home is not yours, so call the
