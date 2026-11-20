@@ -334,7 +334,9 @@ if __name__ == '__main__':
     except SystemExit as result:
         if result.code not in (None, 0):
             raise
-    if '--prepare-ports' not in sys.argv:
+    release_catalog = json.loads((APP / 'sdk/catalog.json').read_text())
+    if '--prepare-ports' not in sys.argv and any(
+            row['id'] == 'usb-audio-out-tracks-main-cue' for row in release_catalog['modules']):
         # The configurable USB function owns one package outside the ordinary
         # effect list. Rebuild its bytes and binding with the same release.
         from argparse import ArgumentParser

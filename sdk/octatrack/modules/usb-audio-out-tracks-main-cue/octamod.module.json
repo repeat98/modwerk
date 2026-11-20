@@ -2,7 +2,76 @@
   "schemaVersion": 2,
   "version": "0.3.0-experimental",
   "nativeManifest": "manifest.py",
-  "media": [],
+  "media": [
+    {
+      "path": "media/ot-settings.png",
+      "captureType": "emulator",
+      "caption": "Open PROJ, choose MODWERK and open SETTINGS. Highlight USB AUDIO and press YES.",
+      "alt": "SETTINGS lists USB AUDIO with a right-facing selection arrow and YES OPEN.",
+      "credit": "Modwerk, Octatrack MKII emulator capture",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SETTINGS",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "4f322f666f1e9111ab5e0d5aaa11e2e4d2262274d8e329bc30c30c6e1935cbc7",
+        "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+      }
+    },
+    {
+      "path": "media/ot-usb-audio.png",
+      "captureType": "emulator",
+      "caption": "Open SEND TO to choose a computer or Outbox 8. Open LAYOUT to choose which tracks or mixes to send.",
+      "alt": "USB AUDIO shows SEND TO set to OUTBOX 8, LAYOUT to 20 CH, TRACK TAP to PRE LEVEL and OUTPUT MODE to ALL.",
+      "credit": "Modwerk, Octatrack MKII emulator capture",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "USB AUDIO",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "4f322f666f1e9111ab5e0d5aaa11e2e4d2262274d8e329bc30c30c6e1935cbc7",
+        "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+      }
+    },
+    {
+      "path": "media/ot-track-tap.png",
+      "captureType": "emulator",
+      "caption": "On either track layout, open TRACK TAP. Choose PRE LEVEL for stems before track level, or POST LEVEL to record level changes.",
+      "alt": "TRACK TAP shows PRE LEVEL selected and POST LEVEL below it.",
+      "credit": "Modwerk, Octatrack MKII emulator capture",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "TRACK TAP",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "4f322f666f1e9111ab5e0d5aaa11e2e4d2262274d8e329bc30c30c6e1935cbc7",
+        "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+      }
+    },
+    {
+      "path": "media/ot-outbox-pairs.png",
+      "captureType": "emulator",
+      "caption": "With OUTBOX 8 selected, open each output pair and choose its source. Here the first two pairs carry Main, the third is silent and the last carries Cue.",
+      "alt": "USB AUDIO shows OUT 1/2 MAIN, OUT 3/4 MAIN, OUT 5/6 OFF and OUT 7/8 CUE, with OUT 7/8 highlighted.",
+      "credit": "Modwerk, Octatrack MKII emulator capture",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "USB AUDIO outputs",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "4f322f666f1e9111ab5e0d5aaa11e2e4d2262274d8e329bc30c30c6e1935cbc7",
+        "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+      }
+    }
+  ],
   "id": "usb-audio-out-tracks-main-cue",
   "key": "USB AUDIO OUT TRACKS MAIN CUE",
   "name": "USB Audio",
@@ -108,7 +177,12 @@
           "In the Outbox app assign the four USB pairs to their corresponding physical outputs. You can now change the source for each pair on the Octatrack."
         ]
       },
-      "screenshots": [],
+      "screenshots": [
+        "media/ot-settings.png",
+        "media/ot-usb-audio.png",
+        "media/ot-track-tap.png",
+        "media/ot-outbox-pairs.png"
+      ],
       "screenshotStyle": "black-and-white"
     }
   },
@@ -129,6 +203,11 @@
       "For a computer, choose COMPUTER and a layout. TRACK TAP offers PRE LEVEL and POST LEVEL for the 16- and 20-channel track layouts.",
       "For Outbox 8, choose OUTBOX 8 and assign the four stereo pairs. In the Outbox app, map USB pairs 1–4 to the four desired physical output pairs. Subsequent source changes take place on the Octatrack."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/ot-settings.png",
+      "media/ot-usb-audio.png",
+      "media/ot-track-tap.png",
+      "media/ot-outbox-pairs.png"
+    ]
   }
 }

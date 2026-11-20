@@ -1,0 +1,178 @@
+{
+  "firmware": "1.40C",
+  "sourceRevision": "2dbf332e58bc5263082f32b53ab53787c45a9f59",
+  "moduleVersion": "0.3.0-experimental",
+  "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6\u00d7 integer scale.",
+  "output": "Decoded LCD blocks from the emulator panel transmit stream using Octabam PanelLink.",
+  "imageSha256": "4f322f666f1e9111ab5e0d5aaa11e2e4d2262274d8e329bc30c30c6e1935cbc7",
+  "emulatorSha256": "a2151c36f1f1f4e04b9eb9a43c61a4a36079c6384092fa2547e45709418b32dc",
+  "cardSha256": "82b3bfa1f75176bfc1232fa76832b91c67b1b8b978f1a05522523f6acdbcf067",
+  "keyMs": 150,
+  "plan": [
+    {
+      "wait": 3000
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 3000
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "MENU"
+      ]
+    },
+    {
+      "wait": 200
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "RIGHT"
+      ]
+    },
+    {
+      "wait": 200
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-settings.png"
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-usb-audio.png"
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-track-tap.png"
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-outbox-pairs.png"
+    }
+  ],
+  "screenshots": {
+    "ot-settings.png": "470c542f70e1121220d954b5c44f1972f6420d5dca7dfadfc801e02ff3307e0b",
+    "ot-usb-audio.png": "eab450c221d757813f9d23987466566454e252dfcee9316199ae21eebce0c5de",
+    "ot-track-tap.png": "bfaa7930eb1f537ec6b4069a0c5c22e4c3f74d2c70ba258dd7f836cd7846a461",
+    "ot-outbox-pairs.png": "a0fc17d440e47a71a08feb3f8f7d83dfe25c64a39620d04f8ac5c9519e8cfd74"
+  }
+}
