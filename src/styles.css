@@ -162,8 +162,6 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 18px; }
 .module-card { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; overflow: hidden; box-shadow: 0 3px 10px #00000025; transition: background .15s, box-shadow .15s; }
 .module-card:hover { background: var(--surface-raised); box-shadow: 0 5px 14px #00000035; }
-.module-card.is-selected { border-color: var(--accent-line); }
-.module-card.is-selected .module-card-body { background: var(--surface-raised); }
 .module-card .module-preview { background-color: var(--preview); }
 .module-cover { display: block; position: relative; overflow: hidden; }
 .module-cover:focus-visible { outline-offset: -3px; }
