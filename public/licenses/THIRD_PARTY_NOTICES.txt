@@ -59,6 +59,7 @@ Shared helpers (GPL-3.0-or-later OR Elastic-2.0):
 src/catalog/availability.ts
 src/catalog/build-support.ts
 src/catalog/documents.ts
+src/catalog/library-classification.ts
 src/catalog/module-authors.ts
 src/catalog/module-contract.ts
 src/catalog/module-links.ts
