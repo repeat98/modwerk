@@ -4,7 +4,7 @@
 - **What this changes:**
 - **How I checked it:** (`npm run pr:ready` and anything else you ran)
 - **Tested on a unit:** (a change to a built package or base: the exact build, the model and what ran; keep the pull request a draft until then, or write "Not tested on a unit:" and why)
-- **Edge cases:** (a change to a built package or base: below this line a table with one row a case, `| Case | Why this change makes it a risk | How run | Result |`, each result pass, fail or "not run: why"; or "none, because …". [How to find them](../docs/TEST_PROCEDURE.md#edge-cases))
+- **Edge cases:** (a change to a built package or base, draft or ready: below this line a table with one row a case, `| Case | Why this change makes it a risk | How run | Result |`, each result pass, fail or "not run: why" (a draft says what it has not run yet); or "none, because …". [How to find them](../docs/TEST_PROCEDURE.md#edge-cases))
 - **What the guides lacked or got wrong, and where I fixed it:** ("nothing" is a fine answer)
 
 **A module or module update:** describe the change in behaviour, module version(s), compatibility and source/media attribution. Run it through [the test procedure](../docs/TEST_PROCEDURE.md) and give its "Tested on a unit" line and its edge-case table under a line "Edge cases". Then say what the guides lacked or got wrong while you built it and link the `Docs:` pull request that fixes it, or write "nothing"; the module release itself stays free of guide edits.
@@ -25,7 +25,7 @@ Registered module authors can opt into [automatic publication](../docs/MODULE_AU
 
 Reviewer (an assigned device reviewer or a repository maintainer for a first release, the registered author for their own update):
 
-- [ ] I checked the cycle and memory reports against the worst case, the attributed hardware evidence against the submitted source and build, and the screenshots, tutorial and access steps against the current UI.
+- [ ] I checked the cycle and memory reports against the worst case, the attributed hardware evidence against the submitted source and build, and the screenshots, tutorial and access steps against the current UI. I read the submitter's test record ([the test procedure](../docs/TEST_PROCEDURE.md#who-runs-it)) against the diff and did not have to test it myself; a missing or unexplained step goes back to the submitter.
 
 Validation commands and results:
 

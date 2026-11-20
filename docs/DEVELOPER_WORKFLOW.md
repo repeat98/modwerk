@@ -71,7 +71,7 @@ These stumbling blocks have each cost a contributor and the owner a repair round
 ## Submit a first release
 
 1. **Prepare:** fork Modwerk, branch from current `main`, and build or port the module. Keep source pins, credits and licences; prepare the manifest/version/catalog, README/tutorial, release notes, real UI captures and matching packages.
-2. **Verify:** follow the machine/category guide, regenerate metadata, run `module:doctor` and `npm run check -- --base origin/main`, and qualify the exact private source/build. Give the contributor concrete hardware steps and record only their actual results. Test different simultaneous instances and track/FX-slot/DSP-core isolation and Part/project/physical-reboot persistence where applicable. Emulator project loading is not physical reboot evidence.
+2. **Verify:** you test, not the reviewer: run [the test procedure](TEST_PROCEDURE.md) on the exact build, edge cases included, and record only actual results. Test instances, slot and core isolation and Part/project/physical-reboot persistence where applicable. Emulator project loading is not reboot evidence.
 3. **Submit:** commit, push and open a Modwerk PR. Follow checks and fix failures. A maintainer of its machine or the owner reviews every new module ([who](#who-reviews-a-first-release)); the first approved release registers its GitHub author for later scoped updates. Website sign-in or claiming does not grant release authority.
 4. **Publish and verify:** after the merge, follow the exact commit's site/API deployments. Confirm the live version, save a compatible firmware download, and verify its version/source identity and deterministic hash where applicable. A push, merge or ready/download-requested state alone does not prove a saved release download.
 
@@ -85,7 +85,7 @@ A **contributor** can submit a PR with `/modwerk-contribute` or a new module wit
 
 Assign device reviewers by adding their numeric GitHub IDs to `deviceReviewers` in `sdk/machines/<id>/machine.json` through a maintainer-reviewed PR and running `npm run machines:generate`. Get the ID with `gh api users/LOGIN --jq .id`. Assignments take effect on main. Old `maintainers` login lists and forum badges grant no merge permission. For a new modder, include only their lowercase login and numeric ID in the existing accounts map in `.github/module-authors.json`, in the same PR as their first module.
 
-Review the exact commit with `/modwerk-review-prs` and [merge the first release](MODULE_AUTHOR_UPDATES.md#merge-a-first-release). Another reviewer or maintainer handles your own module.
+Review the exact commit and its test record with `/modwerk-review-prs`; a reviewer is never required to test it ([who runs it](TEST_PROCEDURE.md#who-runs-it)). Then [merge it](MODULE_AUTHOR_UPDATES.md#merge-a-first-release). Another reviewer or maintainer handles your own module.
 
 Send these to a repository maintainer or the owner:
 
@@ -121,7 +121,7 @@ A base update carries several developers' changes onto players' instruments at o
 
 - **Join it.** Commit your base change to that branch, or open your pull request against it (`gh pr create --base base/<machine>-next`); it is merged in with your authorship. A base pull request against `main` is sent there. With none open for the machine, open it as a draft from `base/<machine>-next`.
 - **Share the branch.** Several developers commit to it: fetch first, add your commits on top, merge `main` into it, and never rebase or force-push it. Update the description's list of what is in it so far.
-- **It stays a draft** until the base has been tested extensively on a unit. Record each build that ran, on which unit, and what ran on it; `pr:ready` saying Ready means the checks pass, not that it was tested. Only the owner marks it ready and ships it.
+- **It stays a draft** until the base has been tested extensively on a unit. Each submitter tests their change before it joins and adds their [record](TEST_PROCEDURE.md#what-a-base-adds): build, unit, what ran. Ready from `pr:ready` is not tested. Only the owner marks it ready and ships it.
 
 ## Manage reports on GitHub
 

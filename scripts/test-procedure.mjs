@@ -29,7 +29,8 @@ export const ROOT = resolve(import.meta.dirname, '..')
 const SOAK_TOOL = 'scripts/octatrack-soak.mjs', SCAN_TOOL = 'scripts/cycle-scan.mjs'
 const DEFAULT_SCENE = 'the bank, pattern and Part the unit was on, transport stopped (test:procedure)'
 
-/** What the developer judges at the unit, after the agent's steps passed on this build (modwerk-test-on-unit, stage 2). */
+/** What the developer, the submitter, judges at their own unit after the agent's steps passed on this build (modwerk-test-on-unit,
+ * stage 2). The reviewer reads the record and never has to repeat it (docs/TEST_PROCEDURE.md#who-runs-it). */
 export const DEVELOPER = {
   module: ['how it sounds and plays, and timing by ear', 'MIDI, scenes and recording with it', 'it beside the other modules installed on their unit',
     'two instances with different settings, on both FX slots and both DSP cores where it can (docs/MODULE_QUALIFICATION.md)',
@@ -41,7 +42,7 @@ export const DEVELOPER = {
 export const BY_HAND = {
   module: ['every control and screen by the README\'s button steps, a png: screenshot of each, compared with the README and its UI claims',
     'MAIN and CUE recorded over USB (rec) with a sustained sound, checked for dropouts (runs of exact zeros, a block played twice)'],
-  base: ['RAM boot into the candidate and back to the starting base, only with the developer\'s OK for each restart; the starting modules back after it',
+  base: ['RAM boot the candidate\'s development build and back to the starting base, and check the starting modules came back (nothing is kept; a Keep, a flash or a power cycle needs the developer\'s yes)',
     'USB captures of MAIN with the large set installed, across Part switches and pattern changes, checked for dropouts'],
 }
 
@@ -58,7 +59,7 @@ export const STEPS = [
   { id: 'cost-unit', title: 'Cost on the unit', applies: 'both', unit: true },
   { id: 'restore', title: 'Put back', applies: 'both', unit: true },
   { id: 'by-hand', title: 'Agent by hand', applies: 'both', hand: true },
-  { id: 'developer', title: 'Developer\'s stage', applies: 'both', hand: true },
+  { id: 'developer', title: 'Submitter\'s own stage', applies: 'both', hand: true },
 ]
 
 export const titleOf = (step, ctx) => (ctx.kind === 'base' && step.baseTitle) || step.title
@@ -259,7 +260,7 @@ export function recordMarkdown(record) {
     'Derive them from what the change touches and run each one (docs/TEST_PROCEDURE.md#edge-cases). A start, from the manifest and the changed files:', '',
     ...(record.edgeCases.suggested.length ? record.edgeCases.suggested.map(s => `- ${s.touches}: ${s.ask} (docs/${s.see})`) : ['- nothing matched: read the diff']), '',
     '| Case | Why this change makes it a risk | How run | Result |', '|---|---|---|---|', '| | | | |', '',
-    '#### Left for the developer', '', ...DEVELOPER[target.kind].map(item => '- ' + item), '',
+    '#### Left for the submitter at their unit', '', ...DEVELOPER[target.kind].map(item => '- ' + item), '',
     '#### For the pull request', '',
     unitRan && sha ? `Tested on a unit: package ${sha.slice(0, 12)}, <model and OS>, test:procedure steps ${steps.map((s, i) => s.unit && s.status === 'passed' ? i + 1 : null).filter(Boolean).join(', ')}; the developer's stage <done or not yet>.`
       : emulated ? 'Not tested on a unit: steps 6 to 10 ran on the emulator only (--target emulator), which is not hardware evidence.'

@@ -11,6 +11,16 @@ it('makes the description part of the required PR verdict on pushes, edits and d
   expect(workflow.on.pull_request.types).toEqual(expect.arrayContaining(['opened', 'synchronize', 'edited', 'converted_to_draft', 'ready_for_review', 'reopened']))
 })
 
+it('checks the description of a pull request into a cumulative base draft too, and nothing else there', () => {
+  const workflow = parse(readFileSync(new URL('../.github/workflows/module-pr.yml', import.meta.url), 'utf8'))
+  expect(workflow.on.pull_request.branches).toContain('base/*-next')
+  expect(workflow.jobs.describe.if).toMatch(/github\.base_ref == 'main'/)
+  expect(workflow.jobs.describe.if).toMatch(/startsWith\(github\.base_ref, 'base\/'\) && endsWith\(github\.base_ref, '-next'\)/)
+  // Every other job hangs off scope, which a pull request into base/ skips; the verdict counts skipped as passed.
+  expect(workflow.jobs.scope.if).toMatch(/!startsWith\(github\.base_ref, 'base\/'\)/)
+  for (const [name, job] of Object.entries(workflow.jobs)) if (!['scope', 'describe', 'module-pr-ok'].includes(name)) expect([job.needs].flat(), name).toContain('scope')
+})
+
 it('refuses an empty description or the template as it came, and asks for the guides answer', () => {
   expect(bodyProblems('', template)).toHaveLength(2)
   expect(bodyProblems(null, template)).toHaveLength(2)
@@ -68,9 +78,11 @@ it('asks a ready pull request that changes what runs on an instrument for its ed
   const incomplete = expect.stringMatching(/lacks its case or its result/)
   const table = '\n\n## Edge cases\n\n| Case | Why this change makes it a risk | How run | Result |\n|---|---|---|---|\n'
   const row = '| A module resting while its page is open | resting skips its tick | trial, open the page, stop the transport | pass |\n'
-  // A draft, or a change that runs nowhere, needs none.
-  expect(bodyProblems(described, template, { draft: true, files })).toEqual([])
+  // A change that runs nowhere needs none; a draft does, and may say honestly what it has not run yet.
   expect(bodyProblems(described, template, { files: ['src/App.tsx'] })).toEqual([])
+  expect(bodyProblems(described, template, { draft: true, files })).toEqual([missing])
+  expect(bodyProblems(described + table + '| Undo with the page open | the change moved the page | trial, Undo | not run: waiting for the unit |\n', template, { draft: true, files })).toEqual([])
+  expect(bodyProblems(described + '\n\nEdge cases: none, because the change renames a symbol the build strips.', template, { draft: true, files })).toEqual([])
   expect(bodyProblems(described, template, { files })).toEqual([missing])
   expect(bodyProblems(described + table + row, template, { files })).toEqual([])
   expect(bodyProblems(described + table + row + '| Undo with the page open | the same | trial, Undo | not run: no MKI at hand |\n', template, { files })).toEqual([])

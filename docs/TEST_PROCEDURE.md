@@ -2,6 +2,14 @@
 
 Every change to a module or a base goes through these steps, in this order, on one named build. Then it runs the edge cases its own change asks for. The other testing guides hold the detail of each step; this page holds the order.
 
+## Who runs it
+
+**The submitter tests; the reviewer reads.** The author of the change, or their agent, runs the whole procedure on their own unit, the change's own edge cases included, and delivers the record with the pull request (owner, 20 November 2026).
+
+- A reviewer or maintainer reads the record and checks it against the diff: is it on the named build, did the fixed steps run or say why not, do the edge cases match what the diff touches. They are never required to run the procedure, repeat a step or test on their own unit.
+- A pull request that changes what runs on an instrument and comes without the record, or with a "not run" that does not say why, goes back to its submitter. The reviewer does not test it in their place.
+- A reviewer may still choose to test. The owner's own qualification of a cumulative base before he ships it is his choice, not a duty this procedure puts on him.
+
 ```sh
 npm run test:procedure -- <module id>          # a module, built from its source
 npm run test:procedure -- <module id> --plan   # the steps and their commands, nothing run
@@ -29,7 +37,7 @@ Every step applies to modules and bases alike; what differs for a base is in eac
 | 9 | Cost on the unit | unit | `npm run device:price -- --out price.json PKG`; a base: every USB package | it reads | `price.json`: frame interrupt, CPU meter, both DSPs, at rest and in use |
 | 10 | Put back | unit or emulator | `do inventory` again | equal to step 6 | its log |
 | 11 | Agent by hand | unit or emulator | inside a trial (`npm run module:dev -- <id>` or the MCP) | what you saw matches the README | screenshots, captures |
-| 12 | Developer's stage | unit | their hands and ears | what they report | their words, as they said them |
+| 12 | Submitter's own stage | unit | their hands and ears | what they report | their words, as they said them |
 
 Each step proves only what it ran. Steps 1 to 5 prove the code paths they exercised, never audio, timing, a saved project or a power cycle. Steps 6 to 11 on the unit are hardware evidence for what they measured, never for the sound or for persistence; on the emulator they are not hardware evidence at all. Step 12 is the developer's.
 
@@ -70,22 +78,22 @@ Every result is labelled emulator, the unit queue is left alone, and step 9 is n
 - **4.** The check fails a cycle-scan record whose module source changed since its scan. After changing a module's DSP code, scan it again on a computer with the scan's tools: `node scripts/cycle-scan.mjs record <id>` ([sdk/cycle-scan](../sdk/cycle-scan/README.md), [MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md)).
 - **5.** Start `ot_emu` with `--usb-host SOCK` on a development twin of the base, from [the adapted emulator builder](../scripts/octatrack-emulator/build.py) (the plain port refused the trial with loader refusal 5, 20 November 2026). A ColdFire module needs no `--dsp`, which runs about ten times faster; give the base 20 s after the socket appears. What passes here can still fail on the unit: read [what `ot_emu` does not show](OCTATRACK_HARDWARE_TRAPS.md#the-emulator-and-the-tools).
 - **6-10.** The unit steps go through the device commands and keep [the driving rules](OCTATRACK_DRIVING.md): a development base, transport stopped, a bank and Part whose working copy equals its saved one. Nothing is kept: every install is a trial that rolls back. When the repository has the unit queue (its `unit` script), the runner takes the unit for steps 6 to 10 as one turn.
-- **8.** Until the fast seeded soak is merged ([#1770](https://github.com/repeat98/modwerk/pull/1770)), a module soaks inside step 7 (`device:test --soak 120`) and a base's soak is not run.
+- **8.** The fast seeded soak needs the MIDI bridge on the computer the unit is plugged into (`scripts/octatrack-midi-bridge.py`) and the project's MIDI receive settings ([A fast soak](OCTATRACK_DRIVING.md)). A failure prints the seed and a log that replays it (`--replay FILE`). In a checkout without `scripts/octatrack-soak.mjs`, a module soaks inside step 7 (`device:test --soak 120`) instead.
 - **9.** "At rest" is the module installed and used nowhere: what every player pays for having it. Judge both figures against [MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md); a base-bound package is left out, since a development twin does not trust it.
 - **11.** Reach every control and screen by the README's button steps and take a `png:` screenshot of each. Record MAIN and CUE over USB with a sustained sound and look for runs of exact zeros or a block played twice. Then Undo and check the inventory again ([/modwerk-test-on-unit](../.claude/skills/modwerk-test-on-unit/SKILL.md)).
-- **12.** Only after 1 to 11 passed on this build. Give the developer the button steps and what they should see or hear for each item the record lists: the sound, timing by ear, MIDI and scenes, two instances, Part and project reload, the Keep and the power cycle. The Keep, the power cycle, a flash and listening are theirs; the agent never does them without their OK. A fault they find is fixed, and the procedure starts again on the new build.
+- **12.** The developer here is the submitter: the person whose agent ran steps 1 to 11, at their own unit, not a reviewer. Only after 1 to 11 passed on this build. Give the developer the button steps and what they should see or hear for each item the record lists: the sound, timing by ear, MIDI and scenes, two instances, Part and project reload, the Keep and the power cycle. The Keep, the power cycle, a flash and listening are theirs; the agent never does them without their OK. A fault they find is fixed, and the procedure starts again on the new build.
 
 A machine without a USB link runs steps 1 to 3 and its emulator; step 12 then carries all the hardware evidence ([/modwerk-test-on-unit](../.claude/skills/modwerk-test-on-unit/SKILL.md)).
 
 ## What a base adds
 
-A base carries every installed module, so it is tested as a set ([Change a base](DEVELOPER_WORKFLOW.md#change-a-base)):
+A base carries every installed module, so it is tested as a set ([Change a base](DEVELOPER_WORKFLOW.md#change-a-base)). Each submitter runs these for their own change, on their own unit, before it joins the machine's cumulative draft, and adds their record to it:
 
 - step 1 is the SDK suite and step 2 every module against every other;
 - step 7 installs every USB package in one whole-set trial (a base with feature 512), and Undo must bring back the starting inventory and active identity (step 10);
 - step 9 prices every package at rest on the new base, the figure a base change can move for everyone;
-- by hand, with the developer's OK for each restart: RAM boot into the candidate, run the steps, RAM boot back to the starting base, and check its modules came back;
-- the record goes to `docs/verification/<YYYY-MM-DD>-<topic>.md` and the machine's cumulative draft. That draft stays a draft until the owner says the base was tested enough.
+- by hand: RAM boot the development build of the candidate, run the steps, RAM boot back to the starting base, and check its modules came back. Nothing is kept by a RAM boot; a Keep, a flash or a power cycle still needs the developer's yes, and on someone else's computer say beforehand how many restarts are coming;
+- the record goes to `docs/verification/<YYYY-MM-DD>-<topic>.md` and the machine's cumulative draft. That draft stays a draft until the base has been tested extensively on a unit, through the records its submitters bring; only the owner marks it ready and merges it.
 
 ## Edge cases
 
@@ -126,8 +134,8 @@ When the change cannot behave differently on an instrument (a package rebuilt to
 
 ## Where the record goes
 
-- **A module:** `procedure.md` with the edge-case table filled in, as an entry in the module's `TESTING.md`, followed by the developer's results apart from yours.
+- **A module:** `procedure.md` with the edge-case table filled in, as an entry in the module's `TESTING.md`, followed by the submitter's own results apart from their agent's.
 - **A base:** a dated record in `docs/verification/`, linked from the cumulative draft's description.
-- **The pull request:** the record's last lines, "Tested on a unit: …" (or "Not tested on a unit: why") and the edge-case table under a line "Edge cases". A ready pull request that changes a `.mwrm`, `.elemod` or `.ZDL` file fails its description check without both ([the check](../scripts/pr-body.mjs)); a draft may still be in test.
+- **The pull request:** the record's last lines, "Tested on a unit: …" (or "Not tested on a unit: why") and the edge-case table under a line "Edge cases". A ready pull request that changes a `.mwrm`, `.elemod` or `.ZDL` file fails its description check without both ([the check](../scripts/pr-body.mjs)). A draft may still be in test, so it needs no unit line yet, but it lists its edge cases from the start, each "not run: why" until it ran. Pull requests into a cumulative `base/<machine>-next` draft are checked the same way.
 
 "Not tested" is a valid result, and it stays visible. An emulator result never counts as hardware evidence. A tester's report stays labelled as reported.
