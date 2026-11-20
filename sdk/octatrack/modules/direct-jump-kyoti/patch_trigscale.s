@@ -1,5 +1,5 @@
 | SPDX-License-Identifier: MIT
-| SPDX-FileCopyrightText: 2026 Zac-Kyoti
+| SPDX-FileCopyrightText: 2026 Zac Kyoti
 | patch_trigscale -- fix the MIDI manual-trig stall (Plays Free + Direct + Per-Track scale)
 |
 | Root cause (NOTES.md "Session 5 part 3"): FUN_4009b5c8's SCALE_MODE("Per Track")-gated
@@ -45,8 +45,8 @@ ts_cave:
     | ---- audio track (0..7): unchanged behaviour ----
     move.l  #AUDIO_STRIDE,%d0
     muls.l  %d3,%d0
-    movea.l %d1,%a0                 | MODWERK: before the add.l, so the USB package does not repeat
-    add.l   %d2,%d0                 | the 18 stock bytes this replays; same d0, a0 and flags
+    add.l   %d2,%d0
+    movea.l %d1,%a0
     lea     (AUDIO_SCALE_OFF,%a0,%d0.l),%a0
     jmp     BACK
 
