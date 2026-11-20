@@ -50,10 +50,13 @@ Two things it found in the emulator shape the rest:
 
 ### Still to design
 
-1. **The audio frame.** The producer runs in the frame interrupt (`audio_frame_shim` at `0x4000d9a0`, one of
-   `usb_base.py`'s `AUDIO_DETOURS`). Either the base owns that site and raises a `call, rests` event, as
-   `ev_play_increment` and `ev_tail_kill` do, or the package carries the site as its own. The base-owned event is
-   preferred: a second module may want the frame, and a resting hook lets the loader remove the module safely.
+1. **The audio frame: `ev_usb_frame`** (added to the prototype on 20 November 2026, emulator only). The producer
+   runs in the frame interrupt (`audio_frame_shim` at `0x4000d9a0`, one of `usb_base.py`'s `AUDIO_DETOURS`). A
+   base that takes a module's function owns that site with its own shim and raises the hook there, every
+   16-sample block. It is raised by the base, not declared as a stock site with `rests`: every published base
+   still links USB Audio in, whose producer patches the same site, and a site has one owner. So the handler runs
+   every block and must return at once while the host has not opened the stream; measure that idle cost on a
+   unit. Once no base links USB Audio in, the site can become an ordinary resting site event.
 2. **SET_INTERFACE and GET_INTERFACE.** The prototype leaves them as stock sites of the function's own
    (`0x4001dd04`, `0x4001d824`, and the EP0 page at `0x4001d4b2`). Decide per site: base-owned event or the package's.
 3. **Memory.** The module's bss (the ring, up to 96 KiB) comes from the 768 KiB runtime pool. Check the
