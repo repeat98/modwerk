@@ -1,0 +1,1 @@
+Digitone II: the development link can now play panel keys and encoder turns from the computer over USB while SETTINGS > REMOTE CTRL is on, and stops for a few seconds when someone at the unit presses a key. Release bases do not have it.

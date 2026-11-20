@@ -25,14 +25,18 @@ const args = process.argv.slice(2), positional = []
 const options = {}
 for (let i = 0; i < args.length; i++) {
   if (!args[i].startsWith('--')) positional.push(args[i])
-  else if (['--mono'].includes(args[i])) options[args[i].slice(2)] = true
-  else if (['--tail', '--alias-limit', '--dc-limit', '--idle-limit', '--mono-limit', '--same-limit'].includes(args[i]) && args[i + 1] !== undefined && Number.isFinite(Number(args[i + 1]))) options[args[i].slice(2)] = Number(args[++i])
+  else if (['--mono', '--explain', '--expect-identical'].includes(args[i])) options[args[i].slice(2)] = true
+  else if (['--tail', '--alias-limit', '--dc-limit', '--idle-limit', '--mono-limit', '--same-limit', '--block-frames'].includes(args[i]) && args[i + 1] !== undefined && Number.isFinite(Number(args[i + 1]))) options[args[i].slice(2)] = Number(args[++i])
   else usage(args[i] + ' is not an option, or lacks its number')
 }
 const [command, ...paths] = positional
+const blockFrames = options['block-frames']
+const explain = options.explain || options['expect-identical'] || blockFrames !== undefined
+if (explain && command !== 'compare') usage('Render comparison options require compare')
+if (blockFrames !== undefined && !(Number.isSafeInteger(blockFrames) && blockFrames > 0)) usage('--block-frames needs a positive integer')
 
 function usage(problem) {
-  console.error((problem ? problem + '\n' : '') + 'Usage: npm run fx:audit -- plan <dir> [--tail <seconds>]\n       npm run fx:audit -- check <dir> <renders> [--mono] [--alias-limit <dBc>] [--dc-limit <dBFS>] [--idle-limit <dBFS>] [--mono-limit <dB>]\n       npm run fx:audit -- compare <render> <render>... [--mono] [--same-limit <dB>]\n       npm run fx:audit -- selftest')
+  console.error((problem ? problem + '\n' : '') + 'Usage: npm run fx:audit -- plan <dir> [--tail <seconds>]\n       npm run fx:audit -- check <dir> <renders> [--mono] [--alias-limit <dBc>] [--dc-limit <dBFS>] [--idle-limit <dBFS>] [--mono-limit <dB>]\n       npm run fx:audit -- compare <render> <render>... [--mono] [--same-limit <dB>] [--explain] [--block-frames N] [--expect-identical]\n       npm run fx:audit -- selftest')
   process.exit(2)
 }
 
@@ -84,16 +88,34 @@ if (command === 'plan' && paths.length === 1) {
 } else if (command === 'compare' && paths.length >= 2) {
   const limit = options['same-limit'] ?? SAME_LIMIT, missing = paths.filter(path => !existsSync(resolve(path)))
   if (missing.length) usage('No render at: ' + missing.join(', '))
-  const renders = paths.map(path => ({ name: basename(path), audio: readAudio(resolve(path), { channels: options.mono ? 1 : 2 }) }))
+  let renders
+  try {
+    renders = paths.map(path => ({ name: basename(path), audio: readAudio(resolve(path), { channels: options.mono ? 1 : 2, strict: explain }) }))
+  } catch (error) {
+    if (explain) usage(error.message)
+    throw error
+  }
   const width = Math.max(...renders.map(render => render.name.length)) + 2
   console.log('render'.padEnd(width) + 'against'.padEnd(width) + 'difference'.padStart(11) + 'level'.padStart(10) + 'peak diff'.padStart(11) + 'first diff'.padStart(12) + '  verdict')
   const counts = {}
   for (let i = 0; i < renders.length; i++) for (let j = i + 1; j < renders.length; j++) {
-    const result = compareRenders(renders[i].audio, renders[j].audio, limit)
-    counts[result.verdict] = (counts[result.verdict] ?? 0) + 1
+    const result = compareRenders(renders[i].audio, renders[j].audio, limit, { explain })
     const lengths = result.frames[0] === result.frames[1] ? '' : '  (lengths ' + result.frames.join(' and ') + ': compared over the shorter)'
+    const shapeMismatch = explain && (result.details.channels[0] !== result.details.channels[1] || result.frames[0] !== result.frames[1])
+    const verdict = shapeMismatch ? 'shape mismatch' : result.verdict
+    counts[verdict] = (counts[verdict] ?? 0) + 1
     console.log(renders[i].name.padEnd(width) + renders[j].name.padEnd(width) + (fixed(result.differenceDb, 8) + ' dB').padStart(11) + (result.levelDb === null ? '-' : (result.levelDb >= 0 ? '+' : '') + result.levelDb.toFixed(2) + ' dB').padStart(10)
-      + (fixed(result.peakDbfs, 6) + ' dBFS').padStart(11) + (result.firstSeconds === null ? '-' : result.firstSeconds.toFixed(4) + ' s').padStart(12) + '  ' + result.verdict + lengths)
+      + (fixed(result.peakDbfs, 6) + ' dBFS').padStart(11) + (result.firstSeconds === null ? '-' : result.firstSeconds.toFixed(4) + ' s').padStart(12) + '  ' + verdict + lengths)
+    if (explain) {
+      const { frames, channels, firstByChannel, shift } = result.details
+      console.log('  Compared frames [0, ' + frames + ') at ' + SAMPLE_RATE + ' Hz, channel counts ' + channels.join(' and '))
+      for (const [channel, first] of firstByChannel.entries()) {
+        const block = first !== null && blockFrames ? ' (block ' + Math.floor(first / blockFrames) + ', frame ' + first % blockFrames + ')' : ''
+        console.log('  Channel ' + (channel + 1) + (first === null ? ' matches in the window' : ' first differs at frame ' + first + block))
+      }
+      console.log('  Shift: ' + shift)
+    }
+    if (options['expect-identical'] && result.verdict !== 'identical') process.exitCode = 1
   }
   console.log('\ndifference: the two renders\' difference in dB to the louder one, worst channel. level: the second render\'s level against the first\'s.'
     + '\nidentical: every sample equal. same: at or below ' + limit + ' dB'

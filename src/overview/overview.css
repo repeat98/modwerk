@@ -6,23 +6,20 @@
 /* Heading: the title, one line of numbers and the filters in a single row */
 .overview-heading { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; margin-bottom: 18px; }
 .overview-heading h1 { font-size: 28px; line-height: 1.15; letter-spacing: -.6px; }
-.overview-heading p { margin-top: 6px; color: var(--muted); font-size: 13px; }
-.overview-heading p { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
-.overview-heading p b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
-.overview-key { display: flex; flex-wrap: wrap; gap: 4px 14px; }
-.overview-key > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-.overview-key b { font-weight: 500; color: var(--text-secondary); }
-.overview-key i { width: 8px; height: 8px; border-radius: 2px; }
-.overview-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.overview-chip { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 11px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--muted); font-size: 12.5px; white-space: nowrap; transition: background .15s, border-color .15s, color .15s; }
-.overview-chip:hover { background: var(--surface); color: var(--text-secondary); }
-.overview-chip[aria-pressed="true"] { border-color: var(--accent-line); background: var(--accent-soft); color: var(--text); }
-.overview-chip small { color: var(--faint); font-size: 12px; font-variant-numeric: tabular-nums; }
-.overview-chip i { width: 6px; height: 6px; border-radius: 50%; }
-.overview-chip.is-mods i { background: var(--done); }
-.overview-chip.is-research i { background: var(--accent); }
-.overview-chip.is-open i { border: 1.5px dashed #8a8a98; width: 4px; height: 4px; }
+.overview-heading p { margin: .25rem 0 0; color: var(--muted); font-size: .875rem; }
+.overview-heading p b { font-weight: 550; font-variant-numeric: tabular-nums; }
+.overview-chips { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 3px; border-radius: 8px; background: var(--sidebar); }
+.overview-chip { display: inline-flex; align-items: center; gap: .4rem; min-height: 2.125rem; padding: .25rem .625rem; border: 0; border-radius: 5px; background: transparent; color: var(--muted); font-size: .8125rem; white-space: nowrap; }
+.overview-chip:hover { background: var(--surface); color: var(--text); }
+.overview-chip[aria-pressed="true"] { background: var(--surface-hover); color: var(--text); font-weight: 600; }
+.overview-chip small { color: var(--faint); font-size: .75rem; font-variant-numeric: tabular-nums; }
 .overview-chip-short { display: none; }
+.overview-breakdown { margin: 1.25rem 0 .5rem; color: var(--muted); font-size: .8125rem; }
+.overview-breakdown summary { width: fit-content; padding-block: .375rem; cursor: pointer; }
+.overview-breakdown ul { display: flex; flex-wrap: wrap; gap: .375rem 1rem; list-style: none; margin: .5rem 0; padding: 0; }
+.overview-breakdown b { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.overview-project-notice { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .375rem 1.25rem; margin-top: 1rem; color: var(--muted); font-size: .8125rem; line-height: 1.5; }
+.overview-project-notice a { text-decoration: underline; text-underline-offset: .2em; }
 
 /* Machine cards: a dark panel rather than a grey box. A faint top-lit surface, a hairline edge that barely separates
    it from the page and a thin highlight along the top. Every card is the same size; on hover the panel brightens one
@@ -77,17 +74,8 @@
 .overview-tile.is-open .overview-state { color: var(--muted); }
 .overview-tile.is-open .overview-state::before { width: 4px; height: 4px; background: transparent; border: 1.5px dashed #8a8a98; }
 
-/* The bar under each name: modules by category, or one segment per research step */
-.overview-page .is-effects { background: #83c7bc; }
-.overview-page .is-machines { background: #e9ab83; }
-.overview-page .is-playback { background: #d5bd96; }
-.overview-page .is-midi-usb { background: #79b5f8; }
-.overview-page .is-system { background: #c09be9; }
-.overview-page .is-scenes { background: #9eb4ed; }
-.overview-page .is-standalone { background: #b5a0ff; }
-.overview-mix, .overview-ladder { display: flex; gap: 2px; height: 2px; opacity: .7; }
-.overview-mix { border-radius: 1px; overflow: hidden; }
-.overview-mix span { display: block; flex-basis: 0; height: 100%; }
+/* Research progress is shown only on machines with an unfinished research path. */
+.overview-ladder { display: flex; gap: 2px; height: 2px; opacity: .7; }
 .overview-ladder i { flex: 1; border-radius: 1px; background: #3a3a42; }
 .overview-ladder i.is-done { background: var(--done); }
 .overview-ladder i.is-started { background: var(--accent); }
@@ -127,13 +115,9 @@
   .sidebar .sidebar-home, .develop-card { display: none; }
   .overview-heading { gap: 12px; margin-bottom: 14px; }
   .overview-heading h1 { font-size: 24px; }
-  /* Phones: the filters become one segmented control with short labels; the colour key and bars stay on larger screens */
-  .overview-heading p { display: block; }
-  .overview-key, .overview-mix { display: none; }
-  .overview-chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; width: 100%; padding: 3px; border: 1px solid var(--line); border-radius: 9px; }
+  .overview-chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; }
   .overview-chip { justify-content: center; gap: 5px; min-height: 36px; padding: 0 4px; border: 0; border-radius: 6px; }
-  .overview-chip i { display: none; }
-  .overview-chip-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .overview-chip-label:has(+ .overview-chip-short) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .overview-chip-short { display: inline; }
   .machine-grid { grid-template-columns: 1fr; gap: 14px; }
   .overview-tile-body { padding: 4px 16px 16px; }

@@ -126,6 +126,17 @@ describe('independent author release verification', () => {
     const f = fixture(); github(f, { owner: true, withdraw: true })
     expect(await fetchReleaseApproval(repository, f.merge, ownerId, 'fixture', 1, 0, { root: f.root })).toMatchObject({ moduleApproverId: ownerId, mergedBy: 'repeat98' })
   })
+  it('publishes a worker merge only with the recorded base and head as its two parents', async () => {
+    const f = fixture(), tree = f.git('rev-parse', f.head + '^{tree}')
+    for (const base of [f.base, 'f'.repeat(40)]) {
+      const message = 'Modwerk reviewed merge\nBase: ' + base + '\nHead: ' + f.head + '\nReview: 81\nApproved by: tester (42, device-reviewer)'
+      f.merge = f.git('commit-tree',tree,'-p',f.base,'-p',f.head,'-m','Merge reviewed PR','-m',message)
+      github(f, { owner:true })
+      const evidence = fetchReleaseApproval(repository,f.merge,ownerId,'fixture',1,0,{ root:f.root })
+      if (base === f.base) await expect(evidence).resolves.toMatchObject({ authorization:'device-reviewer', reviewerId:42, reviewId:81 })
+      else await expect(evidence).rejects.toThrow('parents differ')
+    }
+  })
   it.each([{ botId: 1 }, { withdraw: true }, { head: 'f'.repeat(40) }, { author: { ...author, id: 1 } }, { conclusion: 'failure' }, { base: 'f'.repeat(40) }])('keeps the previous release when GitHub evidence is invalid: %j', async options => {
     const f = fixture(); github(f, options)
     await expect(fetchReleaseApproval(repository, f.merge, ownerId, 'fixture', 1, 0, { root: f.root })).rejects.toThrow()

@@ -45,10 +45,15 @@ function plainText(value: unknown, limit: number, what: string): string {
   // eslint-disable-next-line no-control-regex
   if (/[\u0000-\u001f\u007f]/.test(text)) throw new HttpError(400, `The ${what} must be one line of text.`)
   if (/[\u00ad\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]/.test(text)) throw new HttpError(400, `Leave invisible characters out of the ${what}.`)
-  if (/https?:|www\.|\b[a-z0-9-]+\.(?:com|org|net|app|io|dev)\b/i.test(text)) throw new HttpError(400, `Leave links out of the ${what}; give a pull request or issue number instead.`)
-  if (/~\/|\S*\/\S*\/|\\/.test(text)) throw new HttpError(400, `Leave file paths out of the ${what}.`)
-  if (/0x[0-9a-f]{3,}|\b[0-9a-f]{12,}\b/i.test(text)) throw new HttpError(400, `Leave addresses and hashes out of the ${what}.`)
-  if (/[`{}<>;$]|[A-Za-z0-9_+=-]{32,}/.test(text)) throw new HttpError(400, `Leave code and tokens out of the ${what}.`)
+  // Each refusal quotes what it found, so the writer's agent changes that and nothing else instead of guessing.
+  const refuse = (pattern: RegExp, message: (found: string) => string) => {
+    const found = pattern.exec(text)?.[0]
+    if (found) throw new HttpError(400, message(found) + ` It found «${found.length > 40 ? found.slice(0, 39) + '…' : found}».`)
+  }
+  refuse(/https?:\S*|www\.\S*|\b[a-z0-9-]+\.(?:com|org|net|app|io|dev)\b/i, () => `Leave links out of the ${what}. Give a pull request or issue number instead.`)
+  refuse(/~\/\S*|\S*\/\S*\/\S*|\S*\\\S*/, () => `Leave file paths out of the ${what}.`)
+  refuse(/0x[0-9a-f]{3,}|\b[0-9a-f]{12,}\b/i, () => `Leave addresses and hashes out of the ${what}. Name a version or a pull request instead.`)
+  refuse(/[`{}<>;$]|[A-Za-z0-9_+=-]{32,}/, found => `Leave code and tokens out of the ${what}.` + (found === ';' ? ' Write a full stop instead of a semicolon.' : found.length > 1 ? ' Long runs of letters and digits look like tokens.' : ''))
   return text
 }
 /** A claim's note: at most 120 characters of plain prose. */
