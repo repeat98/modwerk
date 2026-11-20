@@ -34,7 +34,7 @@ const library = {
 }
 
 describe('module library discovery', () => {
-  it('opens desktop category and type filters together and returns focus after choosing a type', async () => {
+  it('lets desktop users change type directly and dismiss the separate category menu with Escape', async () => {
     const onFamilyChange = vi.fn()
     const categoryNav = createElement('nav', { 'aria-label': 'Module library' }, createElement('a', { href: '#effects' }, 'Effects'))
     await act(() => root.render(createElement(MachineLibrary, { ...library, categoryNav, onFamilyChange })))
@@ -44,18 +44,26 @@ describe('module library discovery', () => {
     await click(toggle)
     expect(panel.hidden).toBe(false)
     expect(document.activeElement).toBe(panel.querySelector('a'))
-    const type = panel.querySelector('select')!
-    await act(() => { type.value = 'Delay'; type.dispatchEvent(new Event('change', { bubbles: true })) })
-    expect(onFamilyChange).toHaveBeenCalledWith('Delay')
+    expect(panel.querySelector('select')).toBeNull()
+    await act(() => { document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })) })
     expect(panel.hidden).toBe(true)
     expect(document.activeElement).toBe(toggle)
+    const type = container.querySelector<HTMLSelectElement>('.catalog-sort-group select')!
+    await act(() => { type.focus(); type.value = 'Delay'; type.dispatchEvent(new Event('change', { bubbles: true })) })
+    expect(onFamilyChange).toHaveBeenCalledWith('Delay')
+    expect(panel.hidden).toBe(true)
+    expect(document.activeElement).toBe(type)
   })
 
-  it('uses the active machine’s configuration for the All machines build action', async () => {
-    await act(() => root.render(createElement(MachineLibrary, { ...library, buildHref: '#digitakt/configuration', buildLabel: 'Build firmware for Digitakt' })))
+  it.each([
+    { buildHref: '#digitakt/configuration', buildLabel: 'Build firmware for Digitakt', buildText: undefined },
+    { buildHref: '#zoom-ms-70cdr/pedal/set', buildLabel: 'Open your MS-70CDR and sync your set to it', buildText: 'Your MS-70CDR' },
+  ])('uses the active machine’s destination and action label for $buildHref in All machines', async ({ buildHref, buildLabel, buildText }) => {
+    await act(() => root.render(createElement(MachineLibrary, { ...library, buildHref, buildLabel, buildText })))
     const build = container.querySelector('.discovery-actions a')!
-    expect(build.getAttribute('href')).toBe('#digitakt/configuration')
-    expect(build.getAttribute('aria-label')).toBe('Build firmware for Digitakt')
+    expect(build.getAttribute('href')).toBe(buildHref)
+    expect(build.getAttribute('aria-label')).toBe(buildLabel)
+    expect(build.textContent).toBe(buildText ?? 'Build firmware')
   })
   it('finds Digi modules with combined instrument and type words', async () => {
     await act(() => root.render(createElement(MachineLibrary, { ...library, octatrackModules: [], query: 'digitakt midi' })))
@@ -94,7 +102,7 @@ describe('live library selection details', () => {
   it('updates the Octatrack count and reports saved stock FX choices', async () => {
     const set = newConfiguration('Live set', ['everb', USB_AUDIO_MODULE])
     const render = (moduleIds: string[], removedStockFx?: string[]) => act(() => root.render(
-      createElement(LibrarySelection, { sets: [{ ...set, moduleIds, removedStockFx }], betaAccess: false, phone: true }),
+      createElement(LibrarySelection, { sets: [{ ...set, moduleIds, removedStockFx }], betaAccess: false, collapsible: true }),
     ))
     await render(set.moduleIds)
     const status = container.querySelector('[role="status"]')!
@@ -114,7 +122,7 @@ describe('live library selection details', () => {
   it('distinguishes a full Octatrack set from a saved set already over the limit', async () => {
     const ids = AVAILABLE_MODULES.map(module => module.id).filter(countsTowardLimit).slice(0, SET_MODULE_LIMIT + 1)
     const render = (moduleIds: string[]) => act(() => root.render(
-      createElement(LibrarySelection, { sets: [newConfiguration('Live set', moduleIds)], betaAccess: false, phone: true }),
+      createElement(LibrarySelection, { sets: [newConfiguration('Live set', moduleIds)], betaAccess: false, collapsible: true }),
     ))
     await render(ids.slice(0, SET_MODULE_LIMIT))
     expect(container.textContent).toContain('Your set is full')
@@ -126,7 +134,7 @@ describe('live library selection details', () => {
     const octatrack = newConfiguration('Live set', ['everb'])
     const digitakt = newConfiguration('Drums', ['digimono', 'digistring'], false, undefined, 'digitakt')
     const render = (moduleIds: string[]) => act(() => root.render(
-      createElement(LibrarySelection, { sets: [octatrack, { ...digitakt, moduleIds }], betaAccess: false, phone: true }),
+      createElement(LibrarySelection, { sets: [octatrack, { ...digitakt, moduleIds }], betaAccess: false, collapsible: true }),
     ))
     await render(digitakt.moduleIds)
     const details = container.querySelector('details')!

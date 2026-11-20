@@ -138,10 +138,10 @@ type AllMachinesLibraryProps = {
 type MachineLibraryProps = AllMachinesLibraryProps & {
   device?: DeviceProfile; children?: ReactNode; categoryNav?: ReactNode; onClearSearch?: () => void; onClearQuery?: () => void
   phone?: boolean; resultsSlot?: HTMLElement | null; octatrackCatalogue?: readonly FirmwareModule[]
-  buildHref?: string; buildLabel?: string
+  buildHref?: string; buildLabel?: string; buildText?: string
 }
 
-export function MachineLibrary({ device, query, category, octatrackModules: octatrack, octatrackSelected, onToggleOctatrack, digiSelected, onToggleDigi, zoomSelected = {}, onToggleZoom, family, onFamilyChange, sort, onSortChange, statistics, octatrackBlocks, onSwapOctatrack, comparison, onCompare, onOpenComparison, viewedModuleVersions, moduleBaseline, machinePicker, categoryNav, children, onClearSearch, onClearQuery, onBrowse, phone = false, resultsSlot, octatrackCatalogue = AVAILABLE_MODULES, buildHref, buildLabel }: MachineLibraryProps) {
+export function MachineLibrary({ device, query, category, octatrackModules: octatrack, octatrackSelected, onToggleOctatrack, digiSelected, onToggleDigi, zoomSelected = {}, onToggleZoom, family, onFamilyChange, sort, onSortChange, statistics, octatrackBlocks, onSwapOctatrack, comparison, onCompare, onOpenComparison, viewedModuleVersions, moduleBaseline, machinePicker, categoryNav, children, onClearSearch, onClearQuery, onBrowse, phone = false, resultsSlot, octatrackCatalogue = AVAILABLE_MODULES, buildHref, buildLabel, buildText }: MachineLibraryProps) {
   const w = useSetWords()
   const heading = useRef<HTMLHeadingElement>(null)
   const term = query.toLowerCase().trim()
@@ -192,14 +192,14 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
   const countLabel = total + (total === 1 ? ' module' : ' modules') + (device?.firmware ? ' · OS ' + device.firmware.releases.join(' / ') : '')
   const projectMachine = device && projectMachineForDevice(device.id)
   const projectLink = device && projectMachine && <p className="machine-external-projects"><a href={assetUrl('projects/') + '?machine=' + projectMachine}>Other projects for {device.name} <Icon name="arrow" size={14} /></a></p>
-  return <DownloadPeriodContext.Provider value={days}><div className="library-page">
+  return <DownloadPeriodContext.Provider value={days}><div className="library-page module-library">
     <header className={machinePicker || phone ? 'sr-only' : 'page-heading catalog-heading'}>
       <h1 ref={heading} tabIndex={-1}>{category ? LIBRARY_CATEGORY_LABELS[category] : device ? 'Module library' : 'All mods'}</h1>
       {!machinePicker && !phone && <span className="catalog-count">{countLabel}</span>}
     </header>
     {category === 'standalone' && <p className="service-note">{STANDALONE_NOTE}</p>}
     {phone && projectLink}
-    {phone ? resultsSlot && createPortal(<LibraryResultsBar summary={resultsSummary} sort={sort} onSortChange={onSortChange} family={libraryFamily} onFamilyChange={onFamilyChange} families={typeCounts} allCount={scopeFamilies.length} disabled={!hasMods} />, resultsSlot) : <LibraryTools family={libraryFamily} families={families} onFamilyChange={onFamilyChange} sort={sort} onSortChange={onSortChange} comparisonCount={comparison.length} onCompare={onOpenComparison} buildHref={hasMods ? buildHref ?? deviceHref(device?.id ?? 'octatrack', 'configuration') : null} buildLabel={hasMods ? buildLabel ?? 'Build firmware for ' + (device?.name ?? 'Octatrack') : 'No modules to build yet'} categoryNav={categoryNav} categoryLabel={category && LIBRARY_CATEGORY_LABELS[category]} machine={typeof machinePicker === 'function' ? machinePicker(countLabel) : machinePicker} disabled={!hasMods} build={device?.family !== 'zoom' || isZoomSetDevice(device.id)} buildText={device?.family === 'zoom' ? 'Your ' + device.name : undefined} />}
+    {phone ? resultsSlot && createPortal(<LibraryResultsBar summary={resultsSummary} sort={sort} onSortChange={onSortChange} family={libraryFamily} onFamilyChange={onFamilyChange} families={typeCounts} allCount={scopeFamilies.length} disabled={!hasMods} />, resultsSlot) : <LibraryTools family={libraryFamily} families={typeCounts.map(option => option.value)} onFamilyChange={onFamilyChange} sort={sort} onSortChange={onSortChange} comparisonCount={comparison.length} onCompare={onOpenComparison} buildHref={hasMods ? buildHref ?? deviceHref(device?.id ?? 'octatrack', 'configuration') : null} buildLabel={hasMods ? buildLabel ?? 'Build firmware for ' + (device?.name ?? 'Octatrack') : 'No modules to build yet'} categoryNav={categoryNav} categoryLabel={category && LIBRARY_CATEGORY_LABELS[category]} machine={typeof machinePicker === 'function' ? machinePicker(countLabel) : machinePicker} disabled={!hasMods} build={device?.family !== 'zoom' || isZoomSetDevice(device.id)} buildText={buildText ?? (device?.family === 'zoom' ? 'Your ' + device.name : undefined)} />}
     {hasMods && (term || libraryFamily !== 'all') && <div className="library-active-filters" role="group" aria-label="Active filters">
       <span>Filtered by</span>
       {term && onClearQuery && <button type="button" aria-label={'Remove search “' + query.trim() + '”'} onClick={() => clearFilter(onClearQuery)}><span>Search: {query.trim()}</span><Icon name="close" size={14} /></button>}

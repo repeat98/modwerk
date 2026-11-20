@@ -44,7 +44,7 @@ export class UnitHolder {
 }
 
 /** One client's conversation: each line in, one reply line out. */
-export function session(units, { timeoutMs = TRANSFER_TIMEOUT_MS } = {}) {
+export function session(units, { timeoutMs = TRANSFER_TIMEOUT_MS, active = () => true } = {}) {
   let held = null
   return async function reply(line) {
     const words = line.trim().split(/\s+/)
@@ -64,6 +64,7 @@ export function session(units, { timeoutMs = TRANSFER_TIMEOUT_MS } = {}) {
       if (data !== null && !/^([0-9a-f]{2})*$/i.test(data)) return 'err malformed data: ' + line
       let unit
       try { unit = await units.get() } catch (error) { return 'err could not open the unit: ' + message(error) }
+      if (!active()) return 'err the bridge connection closed'
       if (!unit) return 'err the unit is away'
       try {
         const setup = webUsbSetup(held.setup)
@@ -103,12 +104,14 @@ async function clearStaleSocket(path) {
 export async function startBridge({ address, units, timeoutMs, log = () => {} }) {
   const where = endpoint(address)
   if (where.path) await clearStaleSocket(where.path)
-  let client = null
+  let client = null, closing = false, closePromise, queue = Promise.resolve()
   const server = createServer(socket => {
+    if (closing) { socket.destroy(); return }
     if (client) { socket.end('err another client is using the bridge\n'); return }
     client = socket
-    const reply = session(units, { timeoutMs })
-    let buffer = '', queue = Promise.resolve()
+    const active = () => !closing && !socket.destroyed
+    const reply = session(units, { timeoutMs, active })
+    let buffer = ''
     socket.setEncoding('utf8')
     socket.on('data', chunk => {
       buffer += chunk
@@ -117,7 +120,11 @@ export async function startBridge({ address, units, timeoutMs, log = () => {} })
         const line = buffer.slice(0, i)
         buffer = buffer.slice(i + 1)
         if (!line.trim()) continue
-        queue = queue.then(() => reply(line)).then(answer => { if (!socket.destroyed) socket.write(answer + '\n') })
+        queue = queue.then(async () => {
+          if (!active()) return
+          const answer = await reply(line)
+          if (active()) socket.write(answer + '\n')
+        }).catch(() => socket.destroy())
       }
     })
     socket.on('error', () => {}) // a client hanging up (Windows resets the socket)
@@ -129,12 +136,16 @@ export async function startBridge({ address, units, timeoutMs, log = () => {} })
   return {
     address,
     port: where.path ? undefined : server.address().port,
-    async close() {
-      client?.destroy()
-      await new Promise(resolve => server.close(() => resolve()))
-      if (where.path) await unlink(where.path).catch(() => {})
-      await units.drop()
-      log('agent bridge off')
+    close() {
+      closing = true
+      return closePromise ??= (async () => {
+        client?.destroy()
+        await new Promise(resolve => server.close(() => resolve()))
+        await queue
+        if (where.path) await unlink(where.path).catch(() => {})
+        await units.drop()
+        log('agent bridge off')
+      })()
     },
   }
 }

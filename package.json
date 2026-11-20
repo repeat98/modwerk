@@ -16,7 +16,7 @@
     "firmware:download": "node scripts/firmware-download.mjs",
     "firmware:api": "node scripts/firmware-api.mjs",
     "mcp": "node scripts/frontend-mcp.mjs",
-    "lint": "eslint . --cache --cache-strategy content --cache-location node_modules/.cache/eslint/",
+    "lint": "eslint --cache --cache-strategy content --cache-location node_modules/.cache/eslint/",
     "test": "vitest run",
     "board": "node scripts/agent-board.mjs",
     "session": "node scripts/agent-session.mjs",
