@@ -186,7 +186,7 @@
     "report": "TESTING.md",
     "summary": "On the MKII the optimized package played six stereo grains. Three paired settings added 31.4–32.5 CPU points with zero skipped renders. The normal ten-module set passed a 20-second install and rollback trial. Host tests compare audio and cursors on 1,600 paged blocks and check the compiled SRC and SETUP lanes on every track. TESTING.md lists the remaining release checks.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "f5664c187d869bc4638d554d8fafe420fd4b8566",
+    "evidenceRevision": "3351b427a31ef1cd7d5710024700ce80049987f8",
     "gates": [
       "python3 -B test_grain.py",
       "python3 -B generate.py --check"
