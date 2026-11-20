@@ -113,6 +113,35 @@ def check_scan(cpu, symbols, lane, packet):
         if (whole << 16) + fraction != expected_cursor:
             raise AssertionError(f"SCAN {value} advanced to {whole}+{fraction}/65536, expected Q16 {expected_cursor}")
 
+    # The track recorders use eight independent rows of 14,602 physical page numbers.
+    # Ordinary slot zero above and the recorder rows below point to the same test PCM.
+    recorder_map = 0x46010000
+    total = 14602
+    cpu.mem_map(recorder_map, 0x48000)
+    cpu.mem_write(0x80006914, struct.pack(">I", recorder_map))
+    ctx, first, length = display + 32, display + 48, display + 52
+
+    def locate(slot, start, frame, physical):
+        cpu.mem_write(ctx, struct.pack(">2I", slot, 1024))
+        cpu.mem_write(page_indices + slot * 4, struct.pack(">I", start))
+        if physical is not None:
+            cpu.mem_write(recorder_map + 2 * (start + frame // 1024), struct.pack(">H", physical))
+        call("flex_page", ctx, frame, first, length)
+        return cpu.reg_read(m68k_const.UC_M68K_REG_D0)
+
+    for recorder in range(8):
+        slot = 128 + recorder
+        start = (recorder + 2) * total
+        for frame in (0, 1024, 2001):
+            assert locate(slot, start, frame, total) == arena + total * 6144
+            assert struct.unpack(">2I", cpu.mem_read(first, 8)) == (frame & ~1023, 1024)
+        assert locate(slot, start, 0, 0) == 0
+        assert locate(slot, start, 0, total + 1) == 0
+        assert locate(slot, start + 1, 0, None) == 0
+        assert locate(slot, start, total * 1024, None) == 0
+    assert locate(0, 2, 0, 1) == arena + 6144
+    assert locate(0, total + 1, 0, None) == 0
+
 
 def check_stereo(image, symbols):
     """Exercise the packed big-endian read and ADDX carry in the shipped instructions."""

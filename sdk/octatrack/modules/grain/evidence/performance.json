@@ -6,25 +6,25 @@
   "cycles": {
     "unit": "cycles/event",
     "static": null,
-    "measured": 34402,
+    "measured": 35690,
     "budget": 95782,
-    "method": "MKII on OS 1.40C, RAM base 06e08f35c62c02ce, Grain package ff105b4615e339742a60241c7ab7b1c10e68bc3dd585cf33a3a9a13fa9d49d5f. A render is one guarded T1 call inside a 16-sample frame. At 264 MHz the whole-frame deadline is 95,782 cycles. Reset the track timers with cpu and read mw_frame_cost_max[0] and [8] after each six-second window. Across three triggered settings the longest first call took 14,628 ticks and the longest second call took 17,201 ticks at 132 MHz (34,402 CPU cycles). These elapsed times include the stock Flex render, Grain and any interrupts. This is an observed maximum for one stereo 16-bit sample. For the later SCAN candidate, TESTING.md records a static bound on module instructions and physical timings for a 24-bit stereo RAM probe. Its full playing-track worst-case cycle bound remains open."
+    "method": "MKII OS 1.40C, RAM base 06e08f35c62c02ce, package 0c5632f6. The longest guarded render in the six-voice 24-bit T1/T5 sequencer and MIDI windows was 17,845 ticks at 132 MHz in the T1 Part-switch trace. Times include stock Flex and interruptions. The static calculation bounds Grain-owned instructions. Its zero-wait-state model excludes SDRAM stalls and interrupts, so a full elapsed-cycle upper bound remains unmeasured."
   },
   "load": {
     "frameUs": 362.8,
-    "stockLongestUs": null,
-    "moduleLongestUs": null,
-    "stockIdlePercent": null,
-    "moduleIdlePercent": null,
-    "method": "MKII B16 Part 1, T1 SYNC at 140 BPM with a stereo 16-bit, 88,200-frame sample. All eight tracks had both FX slots set to NONE throughout each comparison. With all 16 trigs removed and then restored, mean frame-interrupt load was 26.6/58.0% (SQR), 26.7/58.4% (NORM) and 26.7/59.2% (shorter NORM). The guard reported zero skips. The previous package measured 26.7/60.3% in the matched SQR setup. The loaded package was present in both windows. On the later SCAN candidate, the paired stock Flex MIDI windows in TESTING.md compare empty inventory with Grain installed and unassigned. The comparison with Grain playing remains open."
+    "stockLongestUs": 255.0,
+    "moduleLongestUs": 337.4,
+    "stockIdlePercent": 0,
+    "moduleIdlePercent": 0,
+    "method": "Same 12-second USB MIDI trace on the 100 BPM card-free Part, stereo R3 on T1 and T5. Empty-inventory Flex peaked at 70.3% of a frame. One six-voice Grain on T1 or T5 peaked at 89.6% or 93.0% respectively. All three windows showed a median 100% CPU meter and zero new skipped renders. Opening 20-channel USB audio separately produced skips on both Grain tracks. See evidence/timing/recorder.json."
   },
   "stress": {
-    "floodMessagesPerSecond": null,
-    "clockBpm": null,
-    "seconds": null,
+    "floodMessagesPerSecond": 1104,
+    "clockBpm": 240,
+    "seconds": 12,
     "stuckNotes": null,
-    "hangs": null,
+    "hangs": 0,
     "dropped": null,
-    "droppedExplanation": "No MIDI path. Two Grain tracks played for several minutes on the author's MKI with the pattern running and parameters turned, scenes and the crossfader moved and LFOs on the SRC knobs, with no hang reported and no skipped render counted by the base's frame guard. The author reported this without a fixed duration. The later MKII run in TESTING.md records a 12-second trace over USB MIDI with stock Flex voices active and a separate Grain engine timing probe."
+    "droppedExplanation": "One trace submitted 13,249 USB MIDI events in 12 seconds. Receive errors, transmit drops and render skips held steady in the MIDI-only windows, including a completed Part 2/1 change. End-to-end message delivery and stuck notes were not counted. The 20-channel audio capture had render drops, counted separately in evidence/timing/recorder.json."
   }
 }

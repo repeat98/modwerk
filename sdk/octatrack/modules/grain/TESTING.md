@@ -2,6 +2,31 @@
 
 Grain 0.1.0-experimental · by A Force Truly Evil.
 
+## Card-free 24-bit playback, render timing and USB recording
+
+On 20 November 2026 a queued Octatrack MKII running OS 1.40C and RAM base `06e08f35c62c02ce` recorded 37,800 stereo frames into recorder 3 at 24 bits. Normalization in the audio editor produced a source with distinct left and right samples and nonzero low bytes. Stock Flex played that recording through MAIN. The CF card was physically out throughout. [Run measurements](evidence/timing/recorder.json)
+
+The SCAN package `371e2e19` triggered grains but returned silence from recorder 3. It treated the physical arena limit of 14,602 pages as a limit on the entire page map. Recorder 3 starts at map index 58,408. Each of the eight recorders has its own row. The repair checks the row, the sample offset and the resulting physical page separately. The compiled regression exercises all eight recorder rows, ordinary Flex slots and invalid mappings.
+
+The six-voice candidate below is `0c5632f677aecd873b11ae71a82ac5d72c3357d1dd43ccdb1dfc545cd3a5f38a`. It keeps pan selection outside the constant-gain 24-bit loop, skips the silent span of a grain that has left the sample, and reuses the flat portion of the square window. The reference checks preserve PCM and cursors. A 100 BPM Part with both FX slots empty and six untriggered THRU tracks had room for one 35-point Grain. The chooser refused the second instance against the 45-point allowance. Each track was measured separately. Both produced stereo on their own USB stem and on MAIN.
+
+| Physical window | Peak / mean frame load | New skipped renders |
+| --- | ---: | ---: |
+| Stock Flex on T1 and T5, 12 s MIDI trace, empty inventory | 70.3% / 50.9% | 0 |
+| Grain on T1, Flex on T5, same trace | 89.6% / 68.1% | 0 |
+| Flex on T1, Grain on T5, same trace | 93.0% / 67.9% | 0 |
+| T1 Grain, trace with Part 2 then Part 1 | 87.8% / 58.7% | 0 |
+| T1 Grain, 70 s sequencer soak, SCAN +2.00 | 86.4% / 60.2% | 0 |
+| T5 Grain, 70 s sequencer soak, SCAN −2.00 | 85.9% / 61.9% | 0 |
+
+Each soak reached six voices with SIZE, DENS, SPRY and PAN at 127, SYNC, fractional pitch and a trig on every step. The trace delivered 288 note-ons, 288 note-offs, 11,520 CC119s, 1,152 clocks at 240 BPM and a STOP to the host MIDI endpoint. The receive-error and transmit-drop counters held steady. The highest single guarded callback in these six-voice windows was 17,845 timer ticks (135.2 µs or 35,690 core cycles). The whole interrupt has 362.8 µs. A median 100% CPU meter during the flood, including on stock, leaves no measured panel headroom.
+
+**20-channel USB recording still drops renders.** The same stock Flex control added zero skips. The six-voice candidate added 724 on T1 and 755 on T5 from stream open through settling after STOP. During the 4.6-second sustained portion alone the counts were 566 and 376. T5 had added 913 in that portion on the silent SCAN build and 726 with just the page-map repair. The repaired stereo MAIN response and the cumulative skip deltas were measured independently. The 120-second soaks on the earlier SCAN package exercised a silent output path. The intermediate recorder repair `9471a4cc` produced stereo and completed a 120-second T5 soak with zero new skips outside USB audio capture.
+
+For the six-voice binary, the static bounds for 16 and 32 source frames are 66,757 and 128,421 Grain-owned instructions. The zero-wait-state core model gives 536,744 and 1,027,368 cycles. These are conservative model bounds. External SDRAM service and interrupt interference remain outside the calculation. The release still needs a clean USB capture, full qualification, a musician's listening check and a reboot check on the chosen package. [Bound calculation](evidence/timing/bound.py)
+
+Rollback returned the original base `dfa438130710fea9` with zero saved and zero live modules, matching card-free preflight. All eight working track machine and sample assignments, FX choices, grid masks and 140 BPM were checked. Recorder RAM returned to 16-bit and all buffers were empty. The saved Part copy matched. A full fingerprint of the starting card-free working Part and pattern was unavailable. The T4 recorder input menu ended on summed input pairs; its starting screen showed stereo pairs. The test issued no project Save, Keep or flash.
+
 ## Physical 24-bit engine timing and stock Flex MIDI comparison, 20 November 2026
 
 The queued MKII ran OS 1.40C and development base `06e08f35c62c02ce`. The SCAN package was `371e2e19169814750c4bf844a2b907b1871328f8919fd32b5bddd869859c60b0`. All eight loaded Flex samples were stereo 16-bit and all eight recorder buffers were empty and set to 16-bit stereo. The current bank's four working Parts and four saved copies had no Grain assignment. Elektron documents that edits to an active project are cached to CompactFlash and that entering the set-change menu syncs it. The run used a generated sample entirely in private RAM. [Octatrack MKII manual, sections 4.12 and 7.1](https://www.elektron.se/wp-content/uploads/2024/09/Octatrack-MKII-User-Manual_ENG_OS1.40A_210414.pdf)
@@ -38,7 +63,7 @@ Both voices were observed in both windows and the USB receive-error and transmit
 
 All four working Parts, four saved Parts and the active pattern matched their starting fingerprints through the four-window comparison. A later check after RAM restarts found a different checksum for **working Part 1**. All four saved Parts and the other three working Parts still matched. The comparison did not identify the changed field or its cause. The original base `dfa438130710fea9` returned with its complete original inventory and all ten modules saved and live. The run issued no project Save, Reload, Keep, flash or card-file commands.
 
-The host reproducer below uses the SDK toolchain, Python with SciPy for the bound and a native C compiler for the reference. The probe's SHA-256 is `ad52e8af91b33cdd97531ff7d390e57162d20b0cf259ce788e54d7d02037d652`.
+At commit `4987a977` the commands below reproduce this historical probe and bound. On the current checkout they build and bound the current catalogue ELF. The host reproducer uses the SDK toolchain, Python with SciPy for the bound and a native C compiler for the reference. The probe's SHA-256 is `ad52e8af91b33cdd97531ff7d390e57162d20b0cf259ce788e54d7d02037d652`.
 
 ```sh
 out=$(mktemp -d)

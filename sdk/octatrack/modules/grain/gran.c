@@ -213,15 +213,15 @@ static inline int gran_fetch(GranPage *pg, const GranSample *s, uint32_t idx, in
 /* Stereo grains use complementary pan coefficients. Factoring out the unity term leaves one
  * signed product per sample. The two shifts for left pan retain the original floor rounding. */
 static inline void mix_stereo(int32_t *mid, int32_t *side, int32_t l, int32_t r, int32_t window,
-                              int32_t pan)
+                              int32_t pan, int sign)
 {
     int32_t vm = (((l + r) >> 1) * window) >> 15;
     int32_t vs = (((l - r) >> 1) * window) >> 15;
-    if (pan > 0) {
+    if (sign > 0) {
         int32_t change = (-(vm + vs) * pan) >> 15;
         vm += change;
         vs += change;
-    } else if (pan < 0) {
+    } else if (sign < 0) {
         int32_t product = (vm - vs) * pan;
         vm += product >> 15;
         vs += -product >> 15;
@@ -246,7 +246,7 @@ static inline void advance_cursor(uint32_t *index, uint32_t *fraction, uint32_t 
  * page lookup state. The Q32.32 cursor carries into the sample index on the ColdFire. */
 static inline __attribute__((always_inline)) void stereo_loop(GranGrain *grain, const uint8_t *page,
         unsigned bytes, uint32_t first, uint32_t whole, uint32_t frac, const uint16_t *win,
-        int32_t *mid, int32_t *side, unsigned n, int fixed_gain)
+        int32_t *mid, int32_t *side, unsigned n, int fixed_gain, int pan_sign)
 {
     uint32_t index = grain->idx - first, fraction = grain->fr;
     uint32_t phase = grain->ph, phase_step = grain->phs;
@@ -267,7 +267,8 @@ static inline __attribute__((always_inline)) void stereo_loop(GranGrain *grain, 
             r = GRAN_RD16(q + bytes);
         }
         if (!fixed_gain) gain = win[(phase >> 16) & 255u];
-        mix_stereo(mid + i, side + i, l, r, gain, pan);
+        mix_stereo(mid + i, side + i, l, r, gain, pan,
+                   pan_sign == 2 ? (pan > 0) - (pan < 0) : pan_sign);
         if (__builtin_constant_p(frac) && frac == 0) {
             index += whole;
         } else {
@@ -283,18 +284,27 @@ static inline __attribute__((always_inline)) void stereo_loop(GranGrain *grain, 
 static __attribute__((noinline)) void stereo_page(GranGrain *g, const uint8_t *page, unsigned bytes,
         uint32_t first, uint32_t whole, uint32_t frac, const uint16_t *win, int32_t *mid, int32_t *side, unsigned n)
 {
-    int constant = (g->ph >> 16) == ((g->ph + (n - 1u) * g->phs) >> 16);
+    unsigned begin = g->ph >> 16, end = (g->ph + (n - 1u) * g->phs) >> 16;
+    int constant = begin == end || (win == gran_sq && begin >= 8 && end < 248);
     if (bytes == 2 && constant) {
         if (!frac)
-            stereo_loop(g, page, 2, first, whole, 0, win, mid, side, n, 1);
+            stereo_loop(g, page, 2, first, whole, 0, win, mid, side, n, 1, 2);
         else
-            stereo_loop(g, page, 2, first, whole, frac, win, mid, side, n, 1);
+            stereo_loop(g, page, 2, first, whole, frac, win, mid, side, n, 1, 2);
     } else if (bytes == 2)
-        stereo_loop(g, page, 2, first, whole, frac, win, mid, side, n, 0);
-    else if (constant)
-        stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 1);
+        stereo_loop(g, page, 2, first, whole, frac, win, mid, side, n, 0, 2);
+    else if (constant) {
+        /* A grain's pan is fixed until its next trigger. Keep that choice outside the sample loop. */
+        int sign = g->pan / 2;
+        if (sign > 0)
+            stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 1, 1);
+        else if (sign < 0)
+            stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 1, -1);
+        else
+            stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 1, 0);
+    }
     else
-        stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 0);
+        stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 0, 2);
 }
 
 void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranSample *s, int32_t whole, uint32_t frac,
@@ -333,6 +343,18 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
         if (g->rev) {               /* el paso negado en 64 bits */
             w = -w - (f != 0);
             f = 0u - f;
+        }
+        /* Spray and reverse can leave a grain outside the sample for its remaining
+         * lifetime. Advance its two cursors once when no frame can reach PCM.
+         * Keep the scalar path if the unsigned index could wrap back into range. */
+        if (idx >= count && w >= -4 && w <= 4 &&
+            (w < 0 ? idx - count >= m * (uint32_t)-w : UINT32_MAX - idx >= m * ((uint32_t)w + 1u))) {
+            uint32_t low = (fr & 65535u) + m * (f & 65535u);
+            uint32_t high = (fr >> 16) + m * (f >> 16) + (low >> 16);
+            g->fr = (high << 16) | (low & 65535u);
+            g->idx = idx + m * (uint32_t)w + (high >> 16);
+            g->ph = ph + m * phs;
+            continue;
         }
         cs = -g->pan / 2;
         cm = 32768 - (g->pan < 0 ? -g->pan : g->pan) / 2;

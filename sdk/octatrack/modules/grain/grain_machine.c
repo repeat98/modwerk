@@ -48,9 +48,16 @@ static uintptr_t flex_page(const void *ctx, uint32_t frame, uint32_t *first, uin
      * El tope es el total de paginas del arena, 14602. */
     uint32_t total = 14602u, index, page;
     if (((bases - 0x46000000u) | (map - 0x46000000u)) >= 0x02000000u) return 0;
-    uint32_t sample_page = frame / p->perpage;
-    index = U32(bases + 4u * p->slot) + sample_page;
-    if (index > total || !(page = U16(map + 2u * index)) || page > total) return 0;
+    uint32_t sample_page = p->perpage == 1024u ? frame >> 10 : frame / p->perpage;
+    uint32_t start = U32(bases + 4u * p->slot);
+    if (p->slot >= 128u) {
+        /* Each track recorder owns a separate row in the page map. Its physical
+         * pages still come from the same arena as ordinary Flex samples. */
+        if (p->slot >= 136u || start != (p->slot - 126u) * total || sample_page >= total) return 0;
+    } else if (start > total || sample_page > total - start) return 0;
+    index = start + sample_page;
+    page = U16(map + 2u * index);
+    if (!page || page > total) return 0;
     *first = sample_page * p->perpage; *count = p->perpage;
     return U32(0x4000045eu) + page * 6144u;
 }

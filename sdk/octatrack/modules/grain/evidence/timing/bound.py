@@ -18,7 +18,7 @@ def disassemble(elf):
         flat = Path(directory) / "image"
         subprocess.run(["m68k-elf-objcopy", "-O", "binary", "-j", ".image", elf, flat], check=True)
         raw = flat.read_bytes()
-    if hashlib.sha256(raw).hexdigest() != "e38456abc91ec3ab13bef12139130294b092a179bf3f85f9359ae7f315f21062":
+    if hashlib.sha256(raw).hexdigest() != "69057062014215198d49a4d9772dd77d755a53ffc25f25c27de15dd3cb81986c":
         raise ValueError("The executable differs from the analyzed package image")
     listing = subprocess.check_output(["m68k-elf-objdump", "-d", "--no-show-raw-insn", elf], text=True)
     functions = {}
@@ -57,7 +57,7 @@ def edges_and_calls(name, instructions):
                     calls[pc] = target[2].split("+")[0]
                 elif not target:
                     # gran_render's indirect GranSample.locate is flex_page in the machine.
-                    if name != "gran_render" or pc not in (0x2d2a, 0x304e):
+                    if name != "gran_render" or pc not in (0x327a, 0x2fea):
                         raise ValueError(f"Unclassified indirect call at {pc:x}")
                     calls[pc] = "flex_page"
                 elif int(target[1], 16) not in (0x40004008, 0x4000f450):
@@ -66,26 +66,29 @@ def edges_and_calls(name, instructions):
     return edges, calls
 
 
-def visit_limits(name, n):
+def visit_limits(name, n, instructions):
     # Caps apply to one invocation. Branches may take infeasible combinations, so
     # the relaxed maximum is deliberately conservative. No loop trip count is inferred
     # from a sampled run. Multiple addresses can belong to mutually exclusive kernels.
     if name == "view_open":
-        return {0x110: 6, 0x12a: 6}  # Six SRC words, six SETUP bytes.
+        return {0x17c: 6, 0x196: 6}  # Six SRC words, six SETUP bytes.
     if name == "grain_start":
-        return {0x1178: 6, 0x1194: 6}
+        return {0x11e4: 6, 0x1200: 6}
     if name == "grain_render":
-        return {0x3924: 6, 0x393a: 6, 0x39d2: 4, 0x3b5c: 6, 0x3e0a: 2*n}
+        return {0x3b7e: 6, 0x3b94: 6, 0x3c2c: 4, 0x3db6: 6, 0x4064: 2*n}
     if name == "stereo_page":
-        return {pc: n for pc in (0x1fe0, 0x2092, 0x21c8, 0x22ca, 0x23d0, 0x23e6)}
+        # One call mixes part of one grain. Each source sample passes through
+        # exactly one inner kernel, so each instruction can be visited at most n times.
+        return {pc: n for pc in instructions}
     if name == "gran_render":
-        return {
-            0x29d8: n, 0x29fc: n,                 # Clear and output one stereo packet.
-            0x2b58: n, 0x2b64: 6*n, 0x3242: 6,   # Spacing >= 1, six slots, at most six births.
-            0x2c48: 6, 0x31e4: 6,                # Six voices, at most one fast kernel per voice.
-            0x2e2a: 6*n, 0x3616: 6*n, 0x3746: 6*n, 0x3510: 6*n,
-            0x2fbe: 6*n, 0x2fdc: 6*(n+1),       # Fallback cursor advance and bounds check.
-        }
+        # The scheduler makes at most n attempts and searches six slots per
+        # attempt. Each of six voices walks at most n samples, including the
+        # end test. The tighter limits name the clear, output, spawn, voice
+        # and one-kernel-per-voice sites in this specific ELF.
+        limits = {pc: 6 * (n + 1) for pc in instructions}
+        limits.update({0x2b68: n, 0x2b8c: n, 0x2ce8: n, 0x2cf4: 6*n,
+                       0x347e: 6, 0x2dd8: 6, 0x343a: 6})
+        return limits
     if name in ("flex_page", "recorder_idle", "gran_params"):
         return {}
     raise ValueError(f"Missing function bounds for {name}")
@@ -117,7 +120,7 @@ def analyze(functions):
         pcs = sorted(ops)
         index = {pc: i for i, pc in enumerate(pcs)}
         edges, calls = edges_and_calls(name, ops)
-        limits = visit_limits(name, n)
+        limits = visit_limits(name, n, ops)
         if not set(limits).issubset(ops):
             raise ValueError("Instruction layout changed")
         caps = list(limits)

@@ -178,13 +178,13 @@
       "measure": "machine-render",
       "tool": "npm run device -- do (guard)",
       "date": "2026-11-20",
-      "conditions": "Carried forward from package ff105b46. MKII 1.40C, base 06e08f35, B16 Part 1, 140 BPM. A stereo 16-bit Flex sample played on T1 in SYNC with DENS, SPRY and PAN 127. Across paired six-second windows with zero and 16 trigs, SQR and long grains added 31.4 points, NORM and long grains 31.7, and NORM and shorter grains 32.5. All reached six voices with zero skips. The reservation retains headroom for other samples and Parts; 24-bit hardware timing is outstanding.",
+      "conditions": "Carried forward from package ff105b46. MKII 1.40C, base 06e08f35, B16 Part 1, 140 BPM. A stereo 16-bit Flex sample played on T1 in SYNC with DENS, SPRY and PAN 127. Across paired six-second windows with zero and 16 trigs, SQR and long grains added 31.4 points, NORM and long grains 31.7, and NORM and shorter grains 32.5. All reached six voices with zero skips. On package 0c5632f6 the 24-bit stereo MIDI trace peaked at 89.6% of a frame on T1 and 93.0% on T5, against 70.3% for stock Flex. Both Grain tracks dropped renders with 20-channel USB audio capture.",
       "source": "TESTING.md"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "For the SCAN endpoint package, all 256 raw values match the linked label and read head. T1 and T5 each rendered 120 seconds of six-voice 24-bit stereo on a ColdFire emulator with sample-exact agreement to the portable reference. The physical MKII ran the package for 180 seconds beside ten modules and restored its original inventory. Sounding hardware and admission checks remain open.",
+    "summary": "The compiled SCAN endpoint and stereo kernels match the reference. On the card-free MKII, package 0c5632f6 played a 24-bit stereo recorder buffer on T1 and T5. The six-voice sequencer soaks and MIDI-only traces logged zero skipped renders. Opening 20-channel USB audio capture caused skipped renders on both tracks.",
     "hardwareStatus": "reported",
     "evidenceRevision": "709574328062586802e80578c3d7fcb30c8f3143",
     "gates": [

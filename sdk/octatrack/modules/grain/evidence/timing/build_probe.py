@@ -23,8 +23,7 @@ PROBE = "ad52e8af91b33cdd97531ff7d390e57162d20b0cf259ce788e54d7d02037d652"
 def assemble(out):
     out.mkdir(parents=True, exist_ok=True)
     package = (ROOT / "public/octatrack-modules/grain/0.1.0-experimental.mwrm").read_bytes()
-    if hashlib.sha256(package).hexdigest() != CANDIDATE:
-        raise ValueError("The package differs from the measured version")
+    historical = hashlib.sha256(package).hexdigest() == CANDIDATE
     cross = "m68k-elf-"
     grain, fixture = out / "grain.o", out / "bench.o"
     subprocess.run([cross + "as", "-mcpu=54455", "--defsym", "MODWERK_EVENTS=1",
@@ -33,6 +32,9 @@ def assemble(out):
     if package.count(image) != 1:
         raise ValueError("Linked Grain image differs from the catalogue package")
     (out / "0.elf").replace(out / "grain.elf")
+    if not historical:
+        print("Wrote the current catalogue ELF for bound.py. The physical timing probe belongs to the earlier SCAN package.")
+        return
     subprocess.run([cross + "gcc", *build.CFLAGS, *m68k_codegen.FLAGS,
                     "-I" + str(GRAIN), "-c", HERE / "bench.c", "-o", fixture], check=True)
     m68k_codegen.check_mcf54455([grain, fixture], cross + "objdump")
