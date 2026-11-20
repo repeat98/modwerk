@@ -204,8 +204,8 @@ async function main(argv) {
   const verdict = readiness({ python, dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
-  // Once the work is ready, the agent asks whether to share the session with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
-  if (verdict.ok) { const sharing = await import('./agent-session.mjs'), preference = await sharing.readPreference(); if (preference !== 'never') verdict.notes.push(sharing.sharingLine(preference)) }
+  // Once the work is ready, the agent reviews its session and asks whether to share it with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
+  if (verdict.ok) { const sharing = await import('./agent-session.mjs'), preference = await sharing.readPreference(); verdict.notes.push(sharing.reviewLine); if (preference !== 'never') verdict.notes.push(sharing.sharingLine(preference)) }
   for (const line of verdict.notes) console.log('· ' + line)
   console.log(!verdict.ok ? 'Not ready yet.' : verdict.instrument
     ? 'Ready to open as a draft: the checks pass. Mark it ready for review once the exact build has run on a unit (above).'
