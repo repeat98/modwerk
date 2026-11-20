@@ -55,10 +55,10 @@ saved in the project as `#` lines, which a stock unit skips.
 The module adds ColdFire control hooks and no continuous DSP audio engine. RATE
 is not a semitone control.
 
-FM Synth carries its own copy of this quantizer. Released FM Synth 0.1.2 and 0.1.3
+FM Synth carries its own copy of this quantizer. Released FM Synth 0.1.2 to 0.1.4
 still declare a conflict with Scale Quantizer, so do not force that pair into an
 installation. Scale Quantizer 0.1.5 leaves out the two panel hooks that FM Synth's
-copy needs. FM Synth 0.1.4 is planned to drop the conflict in its own update
+copy needs. A later FM Synth release is planned to drop the conflict in its own update
 ([#1146](https://github.com/repeat98/modwerk/issues/1146)). This module's own
 `conflicts` list remains empty.
 

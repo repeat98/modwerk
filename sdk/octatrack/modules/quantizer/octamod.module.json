@@ -240,7 +240,7 @@
       "Sample pitch quantization works on Flex, Static and Pickup; RATE is not a semitone control.",
       "SCALE, ROOT and GLIDE are shared project settings; TRACK and FOLLOW switch single tracks off.",
       "The module adds five SEQUENCER rows (SCALE, ROOT, GLIDE, TRACK, FOLLOW), within the eight the Modwerk base gives over USB; card builds show the same five.",
-      "FM Synth carries its own copy of this quantizer (the same source). From 0.1.5 this package no longer hooks the two panel publication sites that FM Synth's copy needs (without FM Synth they only replayed stock), so the two packages share no stock byte; FM Synth 0.1.2 and 0.1.3 still declare a conflict with this module, which FM Synth's next release drops. Synth polyphony and synth-specific tuning and glide need FM Synth.",
+      "FM Synth carries its own copy of this quantizer (the same source). From 0.1.5 this package no longer hooks the two panel publication sites that FM Synth's copy needs (without FM Synth they only replayed stock), so the two packages share no stock byte; Released FM Synth (0.1.2 to 0.1.4) still declares a conflict with this module, which a later FM Synth release drops. Synth polyphony and synth-specific tuning and glide need FM Synth.",
       "Historical 0.1.4 hardware reports: the author reported the same card-image bytes working on his MKI on 30 October and 1 November 2026 (TESTING.md), including rows, FOLLOW, SAVE and power-cycle. Those reports do not qualify 0.1.5. Current emulator measurements are relative pitch and functional observations; hardware, chip timing and complete memory bounds remain unmeasured for this update."
     ]
   },
