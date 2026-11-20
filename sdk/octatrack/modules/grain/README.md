@@ -62,7 +62,7 @@ Everything Grain stores in a Part is a value stock's own power-on check accepts:
 
 ## Screens and audio
 
-See `media/`: the machine list, the SRC page, SRC SETUP and the full-screen page, captured from the headless emulator's framebuffer and labelled as such. There is no audio preview yet.
+See `media/`: the machine list, the SRC page, SRC SETUP and the full-screen page, captured from the headless emulator's framebuffer and labelled as such. Audio preview: `media/audio-preview.mp3`, a 45 second recording of Grain on the author's Octatrack MKI (a supplied recording, not an offline render). It adds no hardware qualification by itself; the origin of the sample used is not stated, and its rights are to be confirmed before merge.
 
 ## Credits
 
