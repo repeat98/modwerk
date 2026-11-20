@@ -358,6 +358,11 @@ def manager(text):
     # The evacuation is a transaction of its own: advance() hands its phase to it, and nothing else starts meanwhile.
     text = _change(text, '    if(!phase) return;\n    if(phase==1) {\n',
                    '    if(!phase) return;\n    if(phase==10) { engine_evacuate(); return; }\n    if(phase==1) {\n', 'manager evacuation')
+    text = _change(text, '    unsigned changed=!observed_valid;\n',
+                   '    int mw_project_fx_wait(const uint8_t ids[16]);\n'
+                   '    int project=mw_project_fx_wait(ids);\n'
+                   '    if(project<0) return;\n'
+                   '    unsigned changed=project || !observed_valid;\n', 'saved project effect priority')
     body = MANAGER.replace('static uint16_t engine_reserved[2];\n', '', 1)
     return _change(text, 'unsigned dl_arena(unsigned c) { return c<2 ? allocator.capacity[c] : 0; }\n',
                    'unsigned dl_arena(unsigned c) { return c<2 ? allocator.capacity[c] : 0; }\n' + body, 'manager arena')

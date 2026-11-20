@@ -275,6 +275,9 @@ int modwerk_dsp_keybus_charge(int on)
  * (Sidechain) or a reader's effect (every module holds handle 63 here), and the features whose controllers ask for the
  * write lease each frame (Analog BD's renderer, for each track carrying its machine). Everything is used unless a mode
  * says (modes 54-58). */
+volatile uint32_t modwerk_project_loaded;
+int modwerk_fxmap_loading(void) { return 0; }
+const uint16_t modwerk_dsp_arena[2] = {MODWERK_DSP_WORDS0 - 64u, MODWERK_DSP_WORDS1 - 64u};
 static uint32_t board_bank = 1;
 static unsigned names_compressor = 1, names_reader = 1, leasing = 0xffu;
 volatile uint8_t modwerk_controller_lease_seen;
@@ -584,6 +587,47 @@ int main(int argc, char **argv)
     (void)kb;
     test_none(); test_fx(3, 900); test_fx(5, 400); test_fx(6, 400); test_fx(7, 400); test_fx(8, 400); test_fx(9, 300);
     run(2);
+    if (mode == 69) {
+        uint8_t light[16] = {0}, heavy[16] = {0};
+        leasing = 0;
+        assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
+        run(400);
+        assert(slot_for(SC, MW_CTL_ACTIVE) && dsp_mask[0] == 9 && dsp_mask[1] == 9);
+        unsigned starts = cas_count;
+        ++modwerk_project_loaded;
+        assert(mw_project_fx_wait(light) == 0);
+        run(100);
+        assert(cas_count == starts && !mw_project_sidechain_notice());
+        test_fx(4, 900); test_fx(5, 970);
+        heavy[4] = heavy[6] = 4; heavy[5] = 5; /* the repeated effect costs its code once */
+        memcpy(test_parts[0], heavy, 16);
+        transport_running = 1;
+        ++modwerk_project_loaded;
+        assert(mw_project_fx_wait(heavy) == 0 && mw_project_sidechain_used(24u));
+        transport_running = 0;
+        heavy[0] = 4; heavy[1] = 5; heavy[2] = 6; /* core 1 exceeds even its full arena */
+        ++modwerk_project_loaded;
+        assert(mw_project_fx_wait(heavy) == 0 && mw_project_sidechain_used(24u));
+        heavy[0] = heavy[1] = heavy[2] = 0;
+        ++modwerk_project_loaded;
+        assert(mw_project_fx_wait(heavy) < 0);
+        int ready = -1;
+        for (unsigned tick = 0; tick < 600 && ready < 0; ++tick) {
+            run(1); ready = mw_project_fx_wait(heavy);
+        }
+        assert(ready == 1 && !mw_project_sidechain_notice());
+        assert(test_select(heavy, pump) == 1 && mw_project_fx_wait(heavy) == 0);
+        run(600);
+        assert(test_active(4) == 4 && test_active(5) == 5 && test_active(6) == 4);
+        assert(slot_for(SC, MW_CTL_BOUND) && !dsp_mask[0] && !dsp_mask[1]);
+        assert(mw_project_sidechain_notice() && !mw_project_sidechain_notice());
+        ++modwerk_project_loaded;
+        memcpy(test_parts[0], light, 16);
+        assert(mw_project_fx_wait(light) == 0 && test_select(light, pump) == 1);
+        run(600);
+        assert(slot_for(SC, MW_CTL_ACTIVE) && dsp_mask[0] == 9 && dsp_mask[1] == 9 && !sc_before_bus);
+        return 0;
+    }
     if (mode == 0) {
         /* Place, switch on, run, switch off, unplace, free. */
         assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
@@ -2007,7 +2051,7 @@ def build(work, sets=False):
     sources = [work / 'fixture.c', board, POLICY / 'controller_transport.c',
                POLICY / 'controller_association.c', ROOT / 'sdk/runtime/loader/loader.c', ROOT / 'sdk/runtime/upload/sha256.c',
                ADAPTER / 'machine_lifetime.c', work / 'manager_unit.c', work / 'allocator.c', work / 'buffers.c',
-               RUNTIME / 'stock_hooks.c', RUNTIME / 'stock_hook_resources.c', RUNTIME / 'resident_engines.c',
+               RUNTIME / 'stock_hooks.c', RUNTIME / 'stock_hook_resources.c', RUNTIME / 'resident_engines.c', RUNTIME / 'project_fx.c',
                work / 'resident-engines-data.c', *([ROOT / 'sdk/runtime/upload/upload.c'] if sets else [])]
     return out, subprocess.run(['cc', *flags, *map(str, sources), '-o', str(out)], capture_output=True, text=True)
 
@@ -2022,7 +2066,7 @@ class ResidentEnginesBoard(unittest.TestCase):
             generated(work, bundles())
             binary, result = build(work)
             self.assertEqual(result.returncode, 0, result.stderr)
-            for mode in range(self.MODES):
+            for mode in (*range(self.MODES), 69):
                 with self.subTest(mode=mode):
                     result = subprocess.run([str(binary), str(mode)], capture_output=True, text=True)
                     self.assertEqual(result.returncode, 0, result.stderr)
