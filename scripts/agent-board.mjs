@@ -465,6 +465,14 @@ async function main(argv) {
     if (command === 'delete') console.log('Deleted ' + result.deleted + '.'); else console.log(describeThread(result.message).join('\n'))
     return 0
   }
+  if (command === 'claim-collection') {
+    if (rest[0] !== 'zoom-multistomp') throw new Error('Usage: npm run board -- claim-collection zoom-multistomp')
+    const token = await readToken()
+    if (!token) throw new BoardError('Sign in for the board first: npm run board -- login', 401)
+    const result = await boardRequest('/agent-board/collections/zoom-multistomp', { method: 'POST', token, body: {} })
+    console.log(result.claims.length + ' Zoom effects reserved on ' + result.claims[0].branch + '.')
+    return 0
+  }
   if (command === 'claim') {
     const [kind, key] = rest
     if (!KINDS.includes(kind) || !key) throw new Error('Usage: npm run board -- claim <' + KINDS.join('|') + '> <key> [--note "…"] [--pr <n>] [--branch <name>]')
