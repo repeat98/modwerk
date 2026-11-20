@@ -454,6 +454,10 @@ static uint32_t frame_seen;         /* bit t: looked[t] was checked this frame; 
 /* Masked, right after the loader rewrote the rows (loader.h): nothing stock reads may still name a module that left. */
 void modwerk_machine_tables_changed(void)
 {
+#ifdef MODWERK_USB_FUNCTIONS
+    void modwerk_usb_functions_changed(void); /* usb_function.c: a function that left is off its endpoint at once */
+    modwerk_usb_functions_changed();
+#endif
     unsigned n = 0;
     looked_up = 0, frame_seen = 0;
     for (uintptr_t volatile *row = modwerk_runtime_event_row[MACHINES]; *row && n < ROWS - 5u; ++row)

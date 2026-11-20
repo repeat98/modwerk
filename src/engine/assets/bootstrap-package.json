@@ -16,7 +16,7 @@
   "reserveBytes": 10487808,
   "uncachedAlias": 134217728,
   "stageAlignment": 4096,
-  "sourceCommit": "a74105c1aa14e12a73bfc6964bdf0e34329714e6",
+  "sourceCommit": "d55bb5f4df08451efa4fe6f9feac2f23c985a2a2",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
@@ -30,7 +30,7 @@
     "ring-sc": "0.2.1-experimental",
     "vibrato": "0.1.0-experimental",
     "analog-bassdrum": "0.1.7-experimental",
-    "usb-audio-out-tracks-main-cue": "0.2.0-experimental",
+    "usb-audio-out-tracks-main-cue": "0.3.0-experimental",
     "quantizer": "0.1.4-experimental",
     "synth": "0.1.4-experimental",
     "previewvol": "0.1.2-experimental",
