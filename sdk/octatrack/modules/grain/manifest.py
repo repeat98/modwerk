@@ -22,10 +22,10 @@ MODULE = Module(
     author="AForceTrulyEvil",
     author_url="https://github.com/AForceTrulyEvil",
     proof=Proof.HARDWARE,
-    proof_note="Host gate on the engine; played on one MKI on a base built from this repository's sources (TESTING.md).",
+    proof_note="Host tests cover this engine. The author played an earlier build on an MKI (TESTING.md).",
     doc="Track machine: six-grain granular on the Flex sample, with a waveform view and a full-screen page.",
     linked=(
         Linked("grain", "modules/grain/grain_core.s", cpu="5475", dram=True),
     ),
-    gates=(Gate("modules/grain/verify.py", remix_arg=False),),
+    gates=(Gate("modules/grain/test_grain.py", remix_arg=False),),
 )

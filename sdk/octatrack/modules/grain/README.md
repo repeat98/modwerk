@@ -1,6 +1,6 @@
 # Grain
 
-Version 0.1.0-experimental · by A Force Truly Evil (@AForceTrulyEvil) · experimental: played and measured on one MKI; the list of what was not tried is in [TESTING.md](TESTING.md).
+Version 0.1.0-experimental · by A Force Truly Evil (@AForceTrulyEvil). The author played an earlier build on an MKI. The [test record](TESTING.md) identifies the build for each result.
 
 ## Overview
 
@@ -8,7 +8,7 @@ Grain is a track machine that plays the track's Flex sample as a cloud of short 
 
 The SRC page shows the sample's waveform with a line at POS and the grains as they play. A third page made for the Octatrack, a third press of PLAYBACK, shows the waveform much larger with the six knobs and their values beside their names, which makes precise work far more comfortable. The track's AMP, LFOs, effects, scenes and parameter locks follow as for any sample.
 
-The grain engine started from Model-TG by TinyGregAudio (MIT) and is extended well beyond it: random pan per grain, SYNC, DIR, SCAN, POS in fine steps, many optimizations, and the screens. The connection to the Octatrack follows AMIGA by Jannik Aßfalg (MIT). See [Credits](#credits).
+The grain engine started from Model-TG by TinyGregAudio (MIT) and is extended well beyond it: random pan per grain, SYNC, DIR, SCAN, POS in fine steps, many optimizations, and the screens. The connection to the Octatrack follows AMIGA by Jannik Aßfalg (MIT). See [Authorship and licences](#authorship-and-licences).
 
 ## Controls
 
@@ -40,11 +40,12 @@ SRC SETUP (knobs A to D):
 
 ## Quick tutorial
 
-1. Put a trig on a Grain track and play. Press SRC and turn POS: the grains move through the sample, and the waveform shows where.
-2. Turn SIZE down for a fine mist and up for long overlapping grains. Turn SPRY up to scatter the grains around POS and DENS up to thicken the cloud.
-3. Turn SCAN to let the read head run through the sample by itself.
-4. On SRC SETUP, turn PAN for a spread across the stereo field and DIR for a share of backward grains. Try SHAP PERC with a low DENS for a rhythmic pluck, and MODE SYNC to lock the grains to the tempo.
-5. Press SRC once more for the full-screen page, with a larger waveform and every value beside its name, for precise settings.
+1. Double-tap a track key, choose GRAIN in the machine list and press YES, then double-tap again and pick a Flex sample.
+2. Put a trig on the track and play. Press SRC and turn POS: the grains move through the sample, and the waveform shows where. Turn SIZE down for a fine mist and up for long overlapping grains.
+3. Turn SPRY up to scatter the grains around POS, and DENS up to thicken the cloud. Turn SCAN to let the read head run through the sample by itself.
+4. Press SRC twice for SRC SETUP: turn PAN for a spread across the stereo field, DIR for a share of backward grains, SHAP to change the grain window, and MODE to SYNC to lock the grains to the tempo.
+5. Press SRC once more from SRC SETUP for the full-screen page, with a larger waveform and every value beside its name, for precise settings.
+6. Press SRC again to leave the full-screen page. Press STOP to stop playback.
 
 ## Changes to stock flows
 
@@ -62,9 +63,22 @@ Everything Grain stores in a Part is a value stock's own power-on check accepts:
 
 ## Screens and audio
 
-See `media/`: the machine list, the SRC page, SRC SETUP and the full-screen page, captured from the headless emulator's framebuffer and labelled as such. There is no audio preview yet.
+The author captured these screens on an MKII emulator during development.
 
-## Credits
+- [Grain in the machine list](media/grain-machine-list.png)
+- [SRC waveform and position](media/grain-src.png)
+- [SRC SETUP controls](media/grain-src-setup.png)
+- [Full-screen waveform](media/grain-full-screen.png)
+
+## Compatibility and limitations
+
+Grain uses a Modwerk base for Octatrack OS 1.40C and plays the selected track's Flex sample. Up to six grains can sound on each admitted track. An unreadable or loading sample plays silence. Replacing a sample during a note takes effect on the next trig. POS parameter locks use whole numbers.
+
+## Tests and measurements
+
+The host suite compares mono and stereo renders and checks the frame that a new grain reads, from a one-frame sample through the maximum Flex sample length. The author recorded CPU-meter values on an MKI with an earlier build. See [TESTING.md](TESTING.md) for the package hash, commands and outstanding measurements.
+
+## Authorship and licences
 
 - **Grain**: A Force Truly Evil (@AForceTrulyEvil), written together with Claude (Anthropic) as programming assistant.
 - **Engine seed**: Model-TG by TinyGregAudio (MIT). Grain starts from its granular mode only. The window tables, the SIZE and DENS tables and the grain scheduling come from it.

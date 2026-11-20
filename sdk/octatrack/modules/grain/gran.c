@@ -38,6 +38,19 @@ static const uint8_t gran_div[11] = { 1, 2, 4, 6, 8, 12, 16, 24, 32, 48, 64 };
 static inline uint32_t lcg(uint32_t *s) { return *s = *s * 1664525u + 1013904223u; }
 static inline int32_t clamp16(int32_t x) { return x > 32767 ? 32767 : x < -32768 ? -32768 : x; }
 
+/* (value * factor) >> shift, split before multiplying so the ColdFire only
+ * needs 32-bit products. Here shift is 9 or 11 and factor fits in 16 bits. */
+static inline uint32_t scaled_product(uint32_t value, uint32_t factor, unsigned shift)
+{
+    uint32_t remainder = value & ((1u << shift) - 1u);
+    return (value >> shift) * factor + ((remainder * factor) >> shift);
+}
+
+static inline uint32_t gran_position(uint32_t count, uint32_t word)
+{
+    return scaled_product(count >> 6, word, 9);
+}
+
 void gran_init(GranEngine *e)
 {
     uint8_t *p = (uint8_t *)e;
@@ -62,8 +75,9 @@ void gran_params(GranEngine *e, unsigned track, const GranParams *p, const GranS
         return;
     }
     /* Position y Spray: la palabra del mando (dial << 8) escalada a todo el sample, sin division (sw_g_pos, sw_g_spr) */
-    t->pos = ((count >> 6) * (p->pos > 127 ? 127u << 8 : (uint32_t)p->pos << 8 | p->posf)) >> 9;
-    t->spray = ((count >> 6) * ((uint32_t)(p->spray > 127 ? 127 : p->spray) << 8)) >> 9;
+    uint32_t pos_word = p->pos > 127 ? 127u << 8 : ((uint32_t)p->pos << 8) | p->posf;
+    t->pos = gran_position(count, pos_word);
+    t->spray = gran_position(count, (uint32_t)(p->spray > 127 ? 127 : p->spray) << 8);
     t->count = count;
     t->len = gran_size[p->size > 127 ? 127 : p->size];
     d = p->dens > 127 ? 127 : p->dens;
@@ -118,7 +132,7 @@ static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const G
             }
             if (t->spray) {
                 uint32_t r = lcg(&e->seed) >> 16;
-                at += (int32_t)((r * (t->spray >> 5)) >> 11);
+                at += (int32_t)scaled_product(t->spray >> 5, r, 11);
                 at -= (int32_t)(t->spray >> 1);
                 if (at < 0)
                     at = 0;

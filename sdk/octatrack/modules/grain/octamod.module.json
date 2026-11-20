@@ -168,7 +168,7 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "A package of about 18 KiB, within the 128 KiB the loader allows a module, with the engine's state for eight tracks. No sample RAM is taken and no stock buffer is reused: the grains are read from the track's own sample where stock keeps it.",
+        "rationale": "The 23,948-byte package contains 22,692 bytes of loaded code and data and declares 2,124 bytes of zero-initialized state. It reads sample data from the existing Flex pages. Stack and loader overhead are separate.",
         "source": "TESTING.md"
       }
     },
@@ -184,11 +184,11 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate on the engine (verify.py: the optimized read paths against the plain ones on mono and stereo, at several pitches, with and without PAN, forwards, backwards and in SYNC, and reference renders), emulator runs of the pages and of a power cycle on a base that knows nothing of Grain, and play on one MKI. TESTING.md lists what was not tried.",
+    "summary": "Host checks cover reference renders, optimized mono and stereo reads, and position and scatter up to the maximum Flex sample length. The author's MKI observations and emulator captures cover earlier builds. TESTING.md identifies the corrected package and outstanding checks.",
     "hardwareStatus": "reported",
     "evidenceRevision": "e106348f4f6b11e1e474ac4da3d30bb52e588f9d",
     "gates": [
-      "python3 -B verify.py",
+      "python3 -B test_grain.py",
       "python3 -B generate.py --check"
     ],
     "documentation": {
@@ -199,7 +199,8 @@
           "Put a trig on the track and play. Press SRC and turn POS: the grains move through the sample, and the waveform shows where. Turn SIZE down for a fine mist and up for long overlapping grains.",
           "Turn SPRY up to scatter the grains around POS, and DENS up to thicken the cloud. Turn SCAN to let the read head run through the sample by itself.",
           "Press SRC twice for SRC SETUP: turn PAN for a spread across the stereo field, DIR for a share of backward grains, SHAP to change the grain window, and MODE to SYNC to lock the grains to the tempo.",
-          "Press SRC once more from SRC SETUP for the full-screen page, with a larger waveform and every value beside its name, for precise settings."
+          "Press SRC once more from SRC SETUP for the full-screen page, with a larger waveform and every value beside its name, for precise settings.",
+          "Press SRC again to leave the full-screen page. Press STOP to stop playback."
         ]
       },
       "screenshots": [

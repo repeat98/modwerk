@@ -677,7 +677,7 @@ static void wave_area(unsigned t, volatile uint8_t *part, int x0, int x1, int to
     /* POS: linea de puntos y triangulito, FIJA donde esta POS; con SCAN son los granos los que corren (author, 18/11).
      * POS de lo que suena (con escenas y LFOs) mientras suena; si no, el de la Part; misma cuenta que el motor */
     uint32_t step = s->count / (uint32_t)width + 1u, pw = live ? live_w[t][1] : part_pos(part, t);
-    uint32_t at = ((s->count >> 6) * (pw > 0x7fffu ? 0x7fffu : pw)) >> 9;
+    uint32_t at = gran_position(s->count, pw > 0x7fffu ? 0x7fffu : pw);
     int px = x0 + (int)(at / step);
     for (int y = top + 3; y <= bot; y += 2)          /* en inverso: se ve tambien encima de la onda */
         if ((unsigned)px <= 127u && (unsigned)y <= 63u) fbp[px * 8 + 7 - (y >> 3)] ^= (unsigned char)(1u << (y & 7));

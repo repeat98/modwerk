@@ -1,0 +1,10 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-20",
+    "changes": [
+      "Play a Flex sample as a cloud of up to six grains per track.",
+      "Set POS and SPRY across the full sample, including long recordings, and see the position on the waveform."
+    ]
+  }
+]

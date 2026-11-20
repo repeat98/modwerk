@@ -724,6 +724,7 @@
     },
     {
       "id": "grain",
+      "unitName": "Grain",
       "octabam": true,
       "usbOnly": true,
       "version": "0.1.0-experimental",
@@ -735,8 +736,8 @@
       "fills": 0,
       "name": "Grain",
       "module": "2c224021",
-      "bytes": 23868,
-      "sha256": "dc203ec20b790e7942614ee25a55812e7ee7f4333e899fc9a4fa7e8ab4b90b8b"
+      "bytes": 23948,
+      "sha256": "51f3abe9d750f53b372c953d44279e3b4f150807ddedba151f99f259a64ada68"
     }
   ]
 }
