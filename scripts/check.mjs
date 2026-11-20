@@ -129,7 +129,8 @@ if (!buildOnly && !suiteOnly && !documentationOnly && passed && (!scope || scope
   try { console.log(checkBaseSize(root)) } catch (error) { console.error('Base size: ' + error.message); passed = false }
 }
 // Finish generated notice/catalog/media writes before lint, tests, typecheck or bundling read them.
-if (passed && !documentationOnly && plan.metadata) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
+// The bundle imports the generated media too, so a frontend-only change needs the writes as much as a module change does.
+if (passed && !documentationOnly && (plan.metadata || plan.bundle)) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
 // Every path, including documentation-only checks and release builds, requires current-version notes and documents within their size.
 if (passed && !suiteOnly) passed = await changelogs()
 // In a pull request's CI run, a contributor's module pull request carries no check that judges modules and no base change;
