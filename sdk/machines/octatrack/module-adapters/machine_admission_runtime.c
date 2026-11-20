@@ -5,10 +5,29 @@
 #include "table_admission.h"
 #include "machine_contributors.h"
 #include "sample_editor_actions.h"
+#if RUNTIME_SITE_EVENTS
+#include "modwerk_events.h"
+#endif
+/* A module's USB function (ot_usb_functions): the base that puts it into its configuration checks the record
+ * (elekloader/usb_function.c); any other base refuses the package, whose own USB sites would have no owner. */
+static int usb_function_admission(const struct runtime_dsp *d,unsigned operation)
+{
+#if RUNTIME_SITE_EVENTS && defined(MODWERK_USB_FUNCTIONS)
+    int modwerk_usb_function_admit(const struct runtime_dsp *,unsigned);
+    return modwerk_usb_function_admit(d,operation);
+#elif RUNTIME_SITE_EVENTS && defined(MODWERK_OT_USB_FUNCTIONS)
+    (void)operation;
+    return d && d->present && d->hook_offset[MODWERK_OT_USB_FUNCTIONS]!=RUNTIME_NONE?RUNTIME_CONFLICT:RUNTIME_OK;
+#else
+    (void)d;(void)operation;return RUNTIME_OK;
+#endif
+}
 int modwerk_machine_image_validate(const struct runtime_dsp *d)
 {
     /* Pure format/address validation. Do not run SWITCH admission here: it can retire saved Part signatures. */
-    return machine_contributor_validate(d,RUNTIME_METADATA_SWITCH);
+    int why=machine_contributor_validate(d,RUNTIME_METADATA_SWITCH);
+    if(!why) why=usb_function_admission(d,RUNTIME_METADATA_SWITCH);
+    return why;
 }
 static int board_read(void *context,uint32_t address,void *out,uint32_t length)
 {
@@ -59,6 +78,10 @@ int modwerk_machine_metadata_admit(const struct runtime_dsp *from,struct runtime
 #endif
     {
         int why=mw_sample_action_admission(from,to,operation);
+        if(why) return why;
+    }
+    {
+        int why=usb_function_admission(to,operation);
         if(why) return why;
     }
     /* Also examines START-only and truncated declarations: they must not bypass admission just because they have

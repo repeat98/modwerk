@@ -276,4 +276,65 @@ struct modwerk_part_menu {
 #define MODWERK_EV_IN_USE 54
 typedef unsigned modwerk_ev_in_use(void);
 
+/* ev_usb_isr (raised by the base): the USB interrupt's transfer path, after the base's USB MIDI work and before it polls its vendor data stage and stock reads a new SETUP and walks its completions; no stock site: the base raises it from its own shims at 0x4001e606. The USB interrupt: short, no firmware call that can block. Every handler runs; the answers are ignored. Retire your own endpoint's completions here (write its ENDPTCOMPLETE bit back) before stock's completion loop sees them, and take a control data stage you primed yourself. Leave endpoints 0 to 2 and their completions alone. d2-d7/a2-a6 must be kept. */
+#define MODWERK_EV_USB_ISR 55
+typedef unsigned modwerk_ev_usb_isr(void);
+
+/* ev_usb_bus_end (raised by the base): a USB bus reset or the end of the USB session (the cable pulled, or the base's own reconnect after ot_usb_functions changed), before the base ends USB MIDI's session and stock resets or stops the controller; no stock site: the base raises it from its own shims at 0x4001e91c and 0x4001e952. The USB interrupt: short, no firmware call that can block. Every handler runs; the answers are ignored. Put your interfaces back to alternate setting 0 and stop queueing on your endpoint: the host configures the unit afresh afterwards. d2-d7/a2-a6 must be kept. */
+#define MODWERK_EV_USB_BUS_END 56
+typedef unsigned modwerk_ev_usb_bus_end(void);
+
+/* ev_usb_control (raised by the base): a control request that neither stock nor the base's vendor interface answers, before stock stalls it; no stock site: the base raises it from its own shim at stock's unknown-request tail (0x4001de64). The USB interrupt: short, no firmware call that can block. Read the SETUP packet at 0x46c8ce08. Return 0 when the request is not yours: with every answer 0 stock stalls it, as before. Otherwise answer it yourself before you return (stock's usb_ep0_send for an IN reply, a data stage you prime and finish in ev_usb_isr, or a stall of both directions) and return nonzero: the base then leaves through stock's done path and neither sends nor stalls. Claim only requests addressed to your own interfaces and entities: every handler runs, so two that answered one request would both act. d2-d7/a2-a6 must be kept. */
+#define MODWERK_EV_USB_CONTROL 57
+typedef unsigned modwerk_ev_usb_control(void);
+
+/* ot_usb_functions (table, contribute {"to": "ot_usb_functions", "order", "data"}): the base builds the USB configuration descriptors a host reads: its own functions (mass storage, the vendor interface, USB MIDI), then the contributed function's interfaces. The loader's switch (masked) and the sys task's tick; the record is copied, never called. Contribute one struct modwerk_usb_function. The base checks the whole record at admission (ABI and size, 1-4 interfaces, endpoint 3 alone, four blocks of `length` bytes inside the package's initialized image, the configuration within its 512-byte slot) and refuses the package otherwise; a base that links USB Audio in (a development twin) refuses every function. When the table changes the host has to read the descriptors again, so the base reconnects by itself: it waits until the control endpoint is idle, takes the unit off the bus for half a second, rewrites the four configurations and comes back. ABI 2 extends the record with a profile count (1–8) and requested and active indices. The base validates every profile, then switches the active format off the bus with playback stopped. A sync or trial stays open across that reconnect (the base's own disconnect undoes nothing), and the host has 20 s to speak to the vendor interface again before it counts as unplugged. A function that leaves has its endpoint flushed and disabled at the switch, before its memory can be reused. Its interrupt, bus-end and class-request work goes through ev_usb_isr, ev_usb_bus_end and ev_usb_control. SET_INTERFACE, GET_INTERFACE and the audio frame are not hooks yet: a function patches those stock sites itself, as its own. */
+#define MODWERK_OT_USB_FUNCTIONS 58
+struct modwerk_usb_function {
+    uint32_t abi, bytes;      /* MODWERK_USB_FUNCTION_ABI, sizeof this record (32 on target) */
+    uint16_t interfaces;      /* the interfaces it adds, numbered from MODWERK_USB_FUNCTION_INTERFACE: 1-4 */
+    uint16_t length;          /* bytes of each of the four descriptor blocks below */
+    uint32_t endpoints;       /* its endpoints as ENDPTFLUSH bits (bit n: OUT n, bit 16 + n: IN n): only endpoint MODWERK_USB_FUNCTION_ENDPOINT */
+    const uint8_t *fs, *hs, *os_fs, *os_hs; /* its interface association and interfaces as they follow the base's own: in the configuration at full and at high speed, and in OTHER_SPEED_CONFIGURATION describing full and high speed */
+};
+#define MODWERK_USB_FUNCTION_ABI 1u
+#define MODWERK_USB_PROFILES_ABI 2u
+struct modwerk_usb_profiles {
+    struct modwerk_usb_function function; /* size 36. Each speed points at count consecutive equal-length blocks. */
+    uint16_t count;
+    volatile uint8_t requested, active; /* base sets active while detached */
+};
+#define MODWERK_USB_FUNCTION_INTERFACE 4u /* the base's own: 0 mass storage, 1 its vendor interface, 2 and 3 USB MIDI */
+#define MODWERK_USB_FUNCTION_ENDPOINT 3u  /* 0 control, 1 mass storage, 2 USB MIDI */
+
+/* ev_usb_frame (raised by the base): every 16-sample block of the frame interrupt, at the point where USB Audio's producer runs when it is linked into a base, before stock clears its word at 0x46104d4e; no stock site: the base raises it from its own shim at 0x4000d9a0, in a base that takes a module's USB function. The frame interrupt: short, no firmware call that can block, the EMAC kept as found. Every handler runs; the answers are ignored. A USB function produces its block here: it reads the frame's read-back words, fills its ring and primes its own endpoint. Return at once while the host has not opened your stream: this runs every block, playing or not. d2-d7/a2-a6 must be kept, as C keeps them; the base keeps d0-d1/a0-a1. */
+#define MODWERK_EV_USB_FRAME 59
+typedef unsigned modwerk_ev_usb_frame(void);
+
+/* ot_settings (table, contribute {"to": "ot_settings", "order", "data"}): PROJ > MODWERK > SETTINGS lists the contributed settings in table order. YES opens a row and shows its choices with the active one marked. UP and DOWN browse, YES applies the highlighted choice, and NO returns to the list. The UI task: apply is short and must not draw or open a window. Contribute one struct modwerk_setting (every field set) for a choice the player makes on the unit, not in a project: it holds for the whole instrument. The base calls apply(choice) when the player takes a choice and, within a tick, after every change of the installed modules (a power-up, a sync, an Undo, a switch in MODULES), so the module starts as with its first choice and needs no storage of its own. The base keeps the choice through a power cycle under the label, so an update of the module, or another build of it with the same label, keeps the setting; give a label no other module uses. A kept choice this record does not offer is the first one until the player chooses again. A grouped record (ABI 2) points choices at struct modwerk_setting_pages and provides a field list for MODWERK_SETTING_FIELDS or the options of one listed field, and converts a confirmed selection to its saved word. The module must handle an initial zero and older saved values. Labels and names are read each time the page is drawn: keep them in the image, printable capitals. */
+#define MODWERK_OT_SETTINGS 60
+struct modwerk_setting {
+    uint32_t abi;                       /* MODWERK_SETTING_ABI */
+    const char *label;                  /* its row on the page: up to 15 characters */
+    uint32_t count;                     /* its choices, 2-6 */
+    const char *const *choices;         /* each choice's name: up to 15 characters; the first is the one a new unit starts with */
+    void (*apply)(unsigned choice);     /* put choice 0..count-1 in force */
+    uint32_t reserved;                  /* ABI 3: install preset, 0 for the instrument default */
+};
+#define MODWERK_SETTING_ABI 1u
+#define MODWERK_SETTING_GROUP_ABI 2u
+#define MODWERK_SETTING_PRESET_ABI 3u
+#define MODWERK_SETTING_FIELDS UINT32_MAX
+#define MODWERK_SETTING_PAGE_ROOM 11u
+struct modwerk_choice_page {
+    const char *label;
+    unsigned count, active;
+    const char *names[MODWERK_SETTING_PAGE_ROOM];
+    const char *values[MODWERK_SETTING_PAGE_ROOM]; /* optional short current values on the field list */
+};
+struct modwerk_setting_pages { /* ABI 2: row.choices points here, row.count is zero */
+    void (*page)(uint32_t saved, unsigned field, struct modwerk_choice_page *out);
+    uint32_t (*choose)(uint32_t saved, unsigned field, unsigned choice);
+};
+
 #endif
