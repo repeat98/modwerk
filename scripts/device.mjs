@@ -88,7 +88,9 @@ if (command !== 'serve' && !values.emulator && (DRIVES.includes(command) || comm
     expectMs: ['try', 'set', 'remove'].includes(command) ? (seconds + 120) * 1000 : command === 'flash' ? 600000 : command === 'boot' ? 300000 : 120000 })
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
-if (command === 'serve' && !await new Promise(resolve => { const c = createConnection(benchEndpoint(values.socket), () => { c.end(); resolve(true) }); c.on('error', () => resolve(false)) })) {
+// Is a bridge already listening? Not asked of an emulator: ot_emu takes one connection and stops when it hangs up, so serve --emulator
+// keeps its one link for the session (docs/TEST_PROCEDURE.md, the same steps on either target).
+if (command === 'serve' && !values.emulator && !await new Promise(resolve => { const c = createConnection(benchEndpoint(values.socket), () => { c.end(); resolve(true) }); c.on('error', () => resolve(false)) })) {
   const bridge = spawn(process.env.MODWERK_PYTHON ?? join(homedir(), '.cache/modwerk-upstream/venv/bin/python'),
     ['-B', 'scripts/octatrack-usb-bridge.py', values.socket], { stdio: ['ignore', 'pipe', 'inherit'] })
   await new Promise((resolve, reject) => { bridge.stdout.on('data', d => /ready/.test(d) && resolve()); bridge.once('exit', code => reject(new Error('bridge exited ' + code))) })
