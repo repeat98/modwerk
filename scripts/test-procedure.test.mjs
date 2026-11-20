@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { context, plan, record, recordMarkdown, runProcedure, STEPS, suggestEdgeCases } from './test-procedure.mjs'
+import { context, LAYER, plan, record, recordMarkdown, runProcedure, STEPS, suggestEdgeCases } from './test-procedure.mjs'
 import { bodyProblems } from './pr-body.mjs'
 
 const INVENTORY = '[{"name":"KITS","version":"0.2.0"}]'
@@ -12,17 +12,18 @@ const moduleCtx = (extra = {}) => ({ kind: 'module', id: 'vibrato', version: '0.
 
 /** Fake tools: every command passes and device.mjs's inventory prints the same set, unless `fail` or `inventories` say otherwise. */
 function fakeDeps({ fail = [], inventories = [INVENTORY, INVENTORY], files = {}, trialOutput = 'trial: 1234… running\nrolled back (pass --accept to keep it)' } = {}) {
-  const ran = [], started = []
+  const ran = [], started = [], envs = []
   let clock = 0, inventory = 0
   return {
-    ran, started,
+    ran, started, envs,
     now: () => (clock += 1000),
     exists: path => path in files || path.endsWith('.mwrm') || path.endsWith('.elemod'),
     read: path => files[path],
     sha256: () => 'ab'.repeat(32),
-    exec: async argv => {
+    exec: async (argv, log, env) => {
       const line = argv.join(' ')
       ran.push(line)
+      envs.push(env)
       if (argv[2] === 'unit' && files.onQueue) files.onQueue(argv)
       const code = fail.some(part => line.includes(part)) ? 1 : 0
       return { code, output: line.endsWith('do inventory --socket /tmp/share.sock') ? inventories[inventory++] : 'ok' }
@@ -160,7 +161,9 @@ describe('the record', () => {
     const md = recordMarkdown(rec)
     expect(md).toContain('### Test procedure: vibrato 0.1.0, 2026-11-20')
     expect(md).toContain('SHA-256 `' + 'ab'.repeat(32) + '`')
-    expect(md).toContain('| 7 | Scripted unit pass | not run: no unit session on /tmp/share.sock |')
+    expect(md).toContain('| 7 | Scripted unit pass | unit | not run: no unit session on /tmp/share.sock |')
+    expect(md).toContain('| 1 | Software checks | host | passed |')
+    expect(md).toContain('| 2 | Beside every other module | contract | passed |')
     expect(md).toContain('| Case | Why this change makes it a risk | How run | Result |\n|---|---|---|---|\n| | | | |')
     expect(md).toContain('Not tested on a unit: no unit session on /tmp/share.sock.')
     expect(md).toContain('Emulator results are not hardware evidence')
@@ -198,5 +201,38 @@ describe('the record', () => {
     expect(base.pkg).toMatch(/octatrack-base\.elemod$/)
     expect(base.setPackages.length).toBeGreaterThan(20)
     expect(() => context(root, { out }, ['no-such-module'], {})).toThrow(/No module named no-such-module/)
+  })
+})
+
+describe('the target switch', () => {
+  it('runs the same unit steps against an emulator session, labelled emulator, outside the unit queue', async () => {
+    const deps = fakeDeps()
+    const ctx = moduleCtx({ target: 'emulator', share: '/tmp/share.sock', env: { MODWERK_UNIT: 'emulator', MODWERK_DEV_SOCKET: '/tmp/emu-dev.sock' }, tools: { cycleScan: false, soak: false, unitQueue: true } })
+    const steps = await runProcedure(ctx, deps)
+    expect(deps.ran.some(line => line.startsWith('npm run unit'))).toBe(false)
+    // The same commands as on the unit, with the emulator's session and no queue turn.
+    expect(deps.ran).toContain('npm run device:test -- --share /tmp/share.sock --testing-entry /out/device-test.md --soak 120 /out/vibrato.mwrm')
+    expect(deps.envs.at(-1)).toEqual({ MODWERK_UNIT: 'emulator', MODWERK_DEV_SOCKET: '/tmp/emu-dev.sock' })
+    expect(steps.filter(step => step.unit).every(step => step.emulator)).toBe(true)
+    expect(steps.find(step => step.id === 'cost-unit')).toMatchObject({ status: 'not run', reason: expect.stringMatching(/load figures are not the unit's/) })
+    expect(steps.find(step => step.id === 'emulator')).toMatchObject({ status: 'not run', reason: expect.stringMatching(/--target emulator/) })
+    const md = recordMarkdown(record(ctx, steps, { started: 0, finished: 1000, command: 'npm run test:procedure -- vibrato --target emulator' }))
+    expect(md).toContain('| 7 | Scripted unit pass (emulator) | emulator | passed |')
+    expect(md).toContain('Not tested on a unit: steps 6 to 10 ran on the emulator only')
+    expect(md).not.toMatch(/^Tested on a unit/m)
+  })
+
+  it('reads --target and --dev-socket from the arguments, and refuses another target', () => {
+    const root = join(import.meta.dirname, '..'), out = mkdtempSync(join(tmpdir(), 'procedure-'))
+    const emu = context(root, { out, target: 'emulator', share: '/nonexistent.sock', 'dev-socket': '/tmp/d.sock' }, ['vibrato'], {})
+    expect(emu).toMatchObject({ target: 'emulator', env: { MODWERK_UNIT: 'emulator', MODWERK_DEV_SOCKET: '/tmp/d.sock' }, unit: { available: false } })
+    expect(emu.unit.reason).toMatch(/no emulator session on \/nonexistent.sock .*serve --emulator/)
+    expect(context(root, { out }, ['vibrato'], {})).toMatchObject({ target: 'unit', env: {} })
+    expect(() => context(root, { out, target: 'rack' }, ['vibrato'], {})).toThrow(/--target is unit or emulator/)
+  })
+
+  it('names the pyramid layer of every step', () => {
+    expect(Object.keys(LAYER)).toEqual(STEPS.map(step => step.id))
+    expect(new Set(Object.values(LAYER))).toEqual(new Set(['host', 'contract', 'emulator', 'target', 'unit']))
   })
 })

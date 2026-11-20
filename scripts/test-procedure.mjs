@@ -10,7 +10,9 @@
 //   npm run test:procedure -- … --share SOCKET          # the unit session (npm run device -- serve --share SOCKET); default
 //                                                       # MODWERK_SHARE_SOCKET or /tmp/modwerk-share.sock. Without one: no unit steps
 //   npm run test:procedure -- … --no-unit               # leave the unit alone even when a session is shared
-//   npm run test:procedure -- … --emulator-socket SOCK  # an ot_emu USB bench (--usb-host) running a development base
+//   npm run test:procedure -- … --emulator-socket SOCK  # step 5: an ot_emu USB bench (--usb-host) running a development base
+//   npm run test:procedure -- … --target emulator --share SOCK --dev-socket SOCK   # steps 6 to 10 against an emulator session
+//                                                       # (npm run device -- serve --emulator): the same cases, never hardware evidence
 //   npm run test:procedure -- … --out DIR --soak-seconds 120 --scene "A01, Part 1, stopped"
 //
 // With the unit queue (`npm run unit`, when the repository has it) the unit steps run as one turn of it, so no other session
@@ -65,10 +67,14 @@ export const shown = argv => argv.map(q).join(' ')
 const npmRun = (script, ...args) => ['npm', 'run', script, ...(args.length ? ['--', ...args] : [])]
 const node = (...args) => ['node', ...args]
 
-/** The commands each step runs for this target, or why it is not run. Pure: everything it reads is in ctx. */
 /** Where the build step writes a package built from source. */
 export const builtPackage = ctx => join(ctx.out, (ctx.id ?? 'base') + (ctx.kind === 'module' ? '.mwrm' : '.elemod'))
+/** The layer of the test pyramid a step stands on (docs/TEST_PROCEDURE.md): a claim is proven on the lowest layer that can prove it. */
+export const LAYER = { software: 'host', compat: 'contract', build: 'host', 'cost-model': 'contract', emulator: 'emulator', 'unit-read': 'target',
+  'unit-pass': 'target', soak: 'target', 'cost-unit': 'unit', restore: 'target', 'by-hand': 'target', developer: 'unit' }
+const EMULATOR_FIGURES = 'the emulator\'s load figures are not the unit\'s (DMA is instant, no DSP timing): docs/OCTATRACK_HARDWARE_TRAPS.md#the-emulator-and-the-tools'
 
+/** The commands each step runs for this target, or why it is not run. Pure: everything it reads is in ctx. */
 export function plan(step, ctx) {
   const module = ctx.kind === 'module', pkg = ctx.pkg ?? builtPackage(ctx)
   const set = (ctx.setPackages ?? []).join(',')
@@ -93,6 +99,7 @@ export function plan(step, ctx) {
       if (!ctx.tools?.cycleScan) return { skip: 'the DSP cycle scan (' + SCAN_TOOL + ') is not in this checkout: merge main' }
       return { commands: [node(SCAN_TOOL, 'check')] }
     case 'emulator':
+      if (ctx.target === 'emulator') return { skip: 'steps 6 to 10 run on the emulator (--target emulator)' }
       if (!ctx.emulatorSocket) return { skip: 'no emulator session (--emulator-socket SOCK, an ot_emu with --usb-host on a development base)' }
       return { commands: [module ? node('scripts/device.mjs', 'try', pkg, '--seconds', '20', '--emulator', '--socket', ctx.emulatorSocket)
         : node('scripts/device.mjs', 'set', set, '--seconds', '20', '--emulator', '--socket', ctx.emulatorSocket)], emulator: true }
@@ -103,6 +110,7 @@ export function plan(step, ctx) {
       return { commands: [npmRun('device:test', '--share', ctx.share, '--testing-entry', join(ctx.out, 'device-test.md'),
         ...(ctx.tools?.soak ? [] : ['--soak', String(ctx.soakSeconds)]), pkg)] }
     case 'soak': {
+      if (ctx.target === 'emulator' && ctx.tools?.soak) return { skip: 'the fast soak sends USB MIDI to the unit\'s port, which the emulator has not' }
       if (!ctx.tools?.soak) return module ? { inside: 'unit-pass', note: 'ran inside the scripted pass as device:test --soak ' + ctx.soakSeconds + '; the fast seeded soak (' + SOAK_TOOL + ', pull request #1770) is not in this checkout yet' }
         : { skip: 'the fast seeded soak (' + SOAK_TOOL + ', pull request #1770) is not in this checkout yet' }
       const soak = node(SOAK_TOOL, '--seconds', String(ctx.soakSeconds), '--log', join(ctx.out, 'soak.json'))
@@ -110,6 +118,7 @@ export function plan(step, ctx) {
       return module ? { commands: [soak], trial: node('scripts/device.mjs', 'try', pkg, '--seconds', String(ctx.soakSeconds + 300), '--socket', ctx.share) } : { commands: [soak] }
     }
     case 'cost-unit':
+      if (ctx.target === 'emulator') return { skip: EMULATOR_FIGURES }
       if (module && ctx.baseBound) return { skip: 'a base-bound package: device:price leaves it out, since a development twin does not trust it' }
       return { commands: [npmRun('device:price', '--share', ctx.share, '--out', join(ctx.out, 'price.json'), '--scene', ctx.scene ?? DEFAULT_SCENE, ...(module ? [pkg] : ctx.priceModules ?? []))] }
     case 'restore':
@@ -131,7 +140,8 @@ export function lastJson(text) {
 export async function runSteps(ids, ctx, deps, results = []) {
   const failed = () => results.find(result => result.status === 'failed')
   for (const step of STEPS.filter(step => ids.includes(step.id))) {
-    const result = { id: step.id, title: titleOf(step, ctx), unit: !!step.unit, status: 'not run', commands: [], seconds: 0 }
+    const result = { id: step.id, title: titleOf(step, ctx), layer: LAYER[step.id], unit: !!step.unit, status: 'not run', commands: [], seconds: 0 }
+    if (step.unit && ctx.target === 'emulator') result.emulator = true
     results.push(result)
     const stop = failed()
     const p = plan(step, ctx)
@@ -153,13 +163,13 @@ export async function runSteps(ids, ctx, deps, results = []) {
     try {
       let trial
       if (p.trial) {
-        trial = deps.start(p.trial, log)
+        trial = deps.start(p.trial, log, ctx.env)
         await trial.waitFor(/^trial:.*running$/m, 60000)
       }
       const outputs = []
       let code = 0
       for (const argv of p.commands) {
-        const run = await deps.exec(argv, log)
+        const run = await deps.exec(argv, log, ctx.env)
         outputs.push(run.output ?? '')
         if (run.code !== 0) { code = run.code; result.reason = `exit ${run.code}: ${shown(argv)}`; break }
       }
@@ -194,11 +204,11 @@ export async function runProcedure(ctx, deps) {
   const unit = STEPS.filter(step => step.unit).map(step => step.id)
   const results = await runSteps(local, ctx, deps)
   const blocked = results.some(result => result.status === 'failed')
-  if (!blocked && ctx.unit?.available && ctx.tools?.unitQueue) {
+  if (!blocked && ctx.unit?.available && ctx.tools?.unitQueue && ctx.target !== 'emulator') {
     const file = join(ctx.out, 'unit-steps.json')
     const argv = ['npm', 'run', 'unit', '--', 'run', '--note', `test:procedure ${ctx.id ?? 'base'} ${ctx.build.revision.slice(0, 8)}`, '--expect', ctx.kind === 'base' ? '45m' : '15m', '--',
       'node', 'scripts/test-procedure.mjs', ...(ctx.kind === 'base' ? ['--base'] : [ctx.id]), '--package', ctx.pkg, '--share', ctx.share, '--out', ctx.out,
-      '--soak-seconds', String(ctx.soakSeconds), ...(ctx.scene ? ['--scene', ctx.scene] : []), '--unit-phase', file]
+      '--soak-seconds', String(ctx.soakSeconds), ...(ctx.scene ? ['--scene', ctx.scene] : []), ...(ctx.devSocket ? ['--dev-socket', ctx.devSocket] : []), '--unit-phase', file]
     const started = deps.now(), run = await deps.exec(argv, join(ctx.out, 'logs', 'unit-queue.log'))
     const inner = deps.exists(file) ? JSON.parse(deps.read(file)) : null
     if (inner) results.push(...inner)
@@ -238,12 +248,13 @@ const cell = text => String(text ?? '').replaceAll('|', '\\|').replaceAll('\n', 
 export function recordMarkdown(record) {
   const { target, build, steps } = record, sha = build.package?.sha256
   const what = target.kind === 'base' ? `${target.machine} base ${target.version ?? ''}`.trim() : `${target.id} ${target.version ?? ''}`.trim()
-  const unitRan = steps.some(step => step.unit && step.status === 'passed')
+  const unitRan = steps.some(step => step.unit && step.status === 'passed' && !step.emulator)
+  const emulated = steps.some(step => step.unit && step.status === 'passed' && step.emulator)
   const lines = [`### Test procedure: ${what}, ${record.date}`, '',
     `Build: revision \`${build.revision.slice(0, 12)}\`${build.dirty ? ' with uncommitted changes' : ''}, ${build.package ? `package \`${basename(build.package.path)}\` SHA-256 \`${sha}\`` : 'no package named'}. ` +
     `\`${record.command}\`, ${record.seconds} s. Emulator results are not hardware evidence; only what ran on the unit is.`, '',
-    '| # | Step | Result | Command | Evidence |', '|---|---|---|---|---|',
-    ...steps.map((step, index) => `| ${index + 1} | ${step.title}${step.emulator ? ' (emulator)' : ''} | ${STATUS_WORD[step.status]}${step.reason ? ': ' + cell(step.reason) : ''} | ${step.commands.map(c => '`' + cell(c) + '`').join('<br>')} | ${step.log ?? ''} |`),
+    '| # | Step | Layer | Result | Command | Evidence |', '|---|---|---|---|---|---|',
+    ...steps.map((step, index) => `| ${index + 1} | ${step.title}${step.emulator ? ' (emulator)' : ''} | ${step.layer === 'target' ? (step.emulator ? 'emulator' : 'unit') : step.layer ?? ''} | ${STATUS_WORD[step.status]}${step.reason ? ': ' + cell(step.reason) : ''} | ${step.commands.map(c => '`' + cell(c) + '`').join('<br>')} | ${step.log ?? ''} |`),
     '', '#### Edge cases for this change', '',
     'Derive them from what the change touches and run each one (docs/TEST_PROCEDURE.md#edge-cases). A start, from the manifest and the changed files:', '',
     ...(record.edgeCases.suggested.length ? record.edgeCases.suggested.map(s => `- ${s.touches}: ${s.ask} (docs/${s.see})`) : ['- nothing matched: read the diff']), '',
@@ -251,6 +262,7 @@ export function recordMarkdown(record) {
     '#### Left for the developer', '', ...DEVELOPER[target.kind].map(item => '- ' + item), '',
     '#### For the pull request', '',
     unitRan && sha ? `Tested on a unit: package ${sha.slice(0, 12)}, <model and OS>, test:procedure steps ${steps.map((s, i) => s.unit && s.status === 'passed' ? i + 1 : null).filter(Boolean).join(', ')}; the developer's stage <done or not yet>.`
+      : emulated ? 'Not tested on a unit: steps 6 to 10 ran on the emulator only (--target emulator), which is not hardware evidence.'
       : `Not tested on a unit: ${steps.find(step => step.unit)?.reason ?? 'the unit steps did not run'}.`,
     'Edge cases: the table above, one row a case (or "Edge cases: none, because …").', '']
   return lines.join('\n')
@@ -280,16 +292,21 @@ const catalogue = root => JSON.parse(readFileSync(join(root, 'src/engine/assets/
 export function context(root, values, positionals, env = process.env) {
   const git = (...args) => { try { return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim() } catch { return '' } }
   const share = values.share ?? env.MODWERK_SHARE_SOCKET ?? '/tmp/modwerk-share.sock'
+  const target = values.target ?? 'unit'
+  if (!['unit', 'emulator'].includes(target)) throw new Error('--target is unit or emulator')
+  const devSocket = values['dev-socket']
   const scripts = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts ?? {}
   const rows = catalogue(root)
-  let ctx = { kind: values.base ? 'base' : 'module', share, soakSeconds: Number(values['soak-seconds'] ?? 120), scene: values.scene, emulatorSocket: values['emulator-socket'],
+  let ctx = { kind: values.base ? 'base' : 'module', share, target, devSocket,
+    // The session's line socket for device:test's steps; an emulator takes no turn of the unit queue.
+    env: { ...(devSocket ? { MODWERK_DEV_SOCKET: devSocket } : {}), ...(target === 'emulator' ? { MODWERK_UNIT: 'emulator' } : {}) }, soakSeconds: Number(values['soak-seconds'] ?? 120), scene: values.scene, emulatorSocket: values['emulator-socket'],
     tools: { cycleScan: existsSync(join(root, SCAN_TOOL)), soak: existsSync(join(root, SOAK_TOOL)), unitQueue: !!scripts.unit },
     build: { revision: git('rev-parse', 'HEAD') || 'unknown', dirty: !!git('status', '--porcelain', '--untracked-files=no') } }
-  const target = positionals[0]
+  const named = positionals[0]
   if (ctx.kind === 'module') {
-    if (!target) throw new Error('Name a module id or a package: npm run test:procedure -- <module id> | FILE.mwrm | --base')
-    const file = target.endsWith('.mwrm') ? resolve(target) : null
-    const id = file ? (basename(dirname(file)) !== 'modwerk-dev' && existsSync(join(root, 'sdk/octatrack/modules', basename(dirname(file)))) ? basename(dirname(file)) : basename(file, '.mwrm')) : target
+    if (!named) throw new Error('Name a module id or a package: npm run test:procedure -- <module id> | FILE.mwrm | --base')
+    const file = named.endsWith('.mwrm') ? resolve(named) : null
+    const id = file ? (basename(dirname(file)) !== 'modwerk-dev' && existsSync(join(root, 'sdk/octatrack/modules', basename(dirname(file)))) ? basename(dirname(file)) : basename(file, '.mwrm')) : named
     ctx = { ...ctx, id, ...moduleContext(root, id) }
     const row = rows.find(r => r.id === id)
     ctx.baseBound = !!row?.requiredBase
@@ -307,7 +324,8 @@ export function context(root, values, positionals, env = process.env) {
   ctx.out = resolve(values.out ?? join(tmpdir(), 'modwerk-procedure', `${ctx.id ?? 'octatrack-base'}-${stamp}-${ctx.build.revision.slice(0, 8)}`))
   ctx.unit = values['no-unit'] ? { available: false, reason: 'left alone with --no-unit' }
     : /^\d+$/.test(share) || existsSync(share) ? { available: true }
-      : { available: false, reason: `no unit session on ${share} (npm run device -- serve --share ${share}, with the developer's OK)` }
+      : target === 'emulator' ? { available: false, reason: `no emulator session on ${share} (ot_emu --usb-host EMU, then MODWERK_DEV_SOCKET=DEV npm run device -- serve --emulator --socket EMU --share ${share}, and --dev-socket DEV here)` }
+        : { available: false, reason: `no unit session on ${share} (npm run device -- serve --share ${share}, with the developer's OK)` }
   ctx.files = git('diff', '--name-only', 'origin/main...HEAD').split('\n').filter(Boolean)
   return ctx
 }
@@ -317,19 +335,19 @@ export function record(ctx, steps, { started, finished, command }) {
   return { procedure: 1, command, date: new Date(started).toISOString().slice(0, 10), started: new Date(started).toISOString(), finished: new Date(finished).toISOString(),
     seconds: Math.round((finished - started) / 1000),
     target: ctx.kind === 'base' ? { kind: 'base', machine: ctx.machine, version: ctx.version } : { kind: 'module', id: ctx.id, version: ctx.version, machine: ctx.machine, draft: !!ctx.draft },
-    build: ctx.build, unit: { ...ctx.unit, share: ctx.share },
+    build: ctx.build, unit: { ...ctx.unit, share: ctx.share, target: ctx.target ?? 'unit' },
     steps, edgeCases: { suggested: suggestEdgeCases({ kind: ctx.kind, manifest: ctx.manifest, files: ctx.files ?? [] }), cases: [] },
     developer: { status: 'to do', items: DEVELOPER[ctx.kind] } }
 }
 
 function realDeps(root) {
   const npm = argv => argv[0] === 'npm' && process.env.npm_execpath ? [process.execPath, process.env.npm_execpath, ...argv.slice(1)] : argv[0] === 'node' ? [process.execPath, ...argv.slice(1)] : argv
-  const launch = (argv, log) => {
+  const launch = (argv, log, env = {}) => {
     mkdirSync(dirname(log), { recursive: true })
     appendFileSync(log, '$ ' + shown(argv) + '\n')
     console.log('\n$ ' + shown(argv))
     const [command, ...args] = npm(argv)
-    const child = spawn(command, args, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] })
+    const child = spawn(command, args, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, ...env } })
     const state = { output: '' }
     const take = chunk => { const text = chunk.toString(); state.output += text; process.stdout.write(text); appendFileSync(log, text) }
     child.stdout.on('data', take); child.stderr.on('data', take)
@@ -341,9 +359,9 @@ function realDeps(root) {
     exists: path => existsSync(path),
     read: path => readFileSync(path, 'utf8'),
     sha256: path => createHash('sha256').update(readFileSync(path)).digest('hex'),
-    exec: async (argv, log) => { const { state } = launch(argv, log); const code = await state.done; return { code, output: state.output } },
-    start: (argv, log) => {
-      const { child, state } = launch(argv, log)
+    exec: async (argv, log, env) => { const { state } = launch(argv, log, env); const code = await state.done; return { code, output: state.output } },
+    start: (argv, log, env) => {
+      const { child, state } = launch(argv, log, env)
       let ended = false
       state.done.then(() => { ended = true })
       return {
@@ -367,13 +385,13 @@ function realDeps(root) {
 
 const OPTIONS = { base: { type: 'boolean' }, package: { type: 'string' }, published: { type: 'boolean' }, plan: { type: 'boolean' }, out: { type: 'string' },
   share: { type: 'string' }, 'no-unit': { type: 'boolean' }, 'emulator-socket': { type: 'string' }, 'soak-seconds': { type: 'string' }, scene: { type: 'string' },
-  'price-modules': { type: 'string' }, 'unit-phase': { type: 'string' }, help: { type: 'boolean', short: 'h' } }
+  'price-modules': { type: 'string' }, target: { type: 'string' }, 'dev-socket': { type: 'string' }, 'unit-phase': { type: 'string' }, help: { type: 'boolean', short: 'h' } }
 
 async function main() {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: OPTIONS })
   if (values.help || (!values.base && !positionals.length)) {
     console.log('Usage: npm run test:procedure -- <module id> | FILE.mwrm | --base  [--plan] [--package FILE] [--published] [--share SOCKET] [--no-unit]\n' +
-      '         [--emulator-socket SOCK] [--out DIR] [--soak-seconds 120] [--scene TEXT] [--price-modules a,b]   (docs/TEST_PROCEDURE.md)')
+      '         [--target unit|emulator] [--dev-socket SOCK] [--emulator-socket SOCK] [--out DIR] [--soak-seconds 120] [--scene TEXT] [--price-modules a,b]   (docs/TEST_PROCEDURE.md)')
     process.exit(values.help ? 0 : 2)
   }
   let ctx
@@ -386,11 +404,11 @@ async function main() {
     process.exit(results.some(result => result.status === 'failed') ? 1 : 0)
   }
   if (values.plan) {
-    console.log(`The test procedure for ${ctx.kind === 'base' ? 'the Octatrack base' : ctx.id} (docs/TEST_PROCEDURE.md). Unit: ${ctx.unit.available ? 'a session on ' + ctx.share : ctx.unit.reason}.`)
+    console.log(`The test procedure for ${ctx.kind === 'base' ? 'the Octatrack base' : ctx.id} (docs/TEST_PROCEDURE.md). Steps 6 to 10 on the ${ctx.target}: ${ctx.unit.available ? 'a session on ' + ctx.share : ctx.unit.reason}.`)
     STEPS.forEach((step, index) => {
       const p = plan(step, ctx)
       const how = p.todo ? 'by hand: ' + p.todo.join('; ') : p.skip ? 'not run: ' + p.skip : step.unit && !ctx.unit.available ? 'not run: ' + ctx.unit.reason : p.inside ? p.note : [...(p.trial ? [p.trial] : []), ...(p.commands ?? [])].map(shown).join('  then  ') || 'hash ' + (ctx.pkg ?? 'the built package')
-      console.log(`${String(index + 1).padStart(2)}. ${titleOf(step, ctx)}: ${how}`)
+      console.log(`${String(index + 1).padStart(2)}. ${titleOf(step, ctx)} [${LAYER[step.id] === 'target' ? ctx.target : LAYER[step.id]}]: ${how}`)
     })
     return
   }

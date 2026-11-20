@@ -10,26 +10,60 @@ npm run test:procedure -- --base               # the Octatrack base, with every 
 
 It runs the steps below with the tools that already do them and stops at the first failure. Without a unit session it records the unit steps as not run, with the command each would have run. It ends with a record for the build: `procedure.md`, a `TESTING.md` entry with an empty edge-case table, and `procedure.json` for programs. A module's automated part takes under a minute without a unit (temp-save, 20 November 2026: 9 to 18 s for steps 1 to 4, 32 s with the emulator) and a few minutes with one.
 
-Options: `--package FILE` tests that package instead of building one, `--published` the catalogue's, `--share SOCKET` names the unit session, `--no-unit` leaves the unit alone, `--emulator-socket SOCK` adds the emulator, `--out DIR` puts the record there (default: the system's temporary folder), `--soak-seconds` and `--scene` go to the soak and the price.
+Options: `--package FILE` tests that package instead of building one, `--published` the catalogue's, `--share SOCKET` names the unit session, `--no-unit` leaves the unit alone, `--emulator-socket SOCK` adds the emulator rehearsal, `--target emulator` runs steps 6 to 10 on an emulator session ([below](#one-set-of-cases-two-targets)), `--out DIR` puts the record there (default: the system's temporary folder), `--soak-seconds` and `--scene` go to the soak and the price.
 
 ## The steps
 
-| # | Step | Command | Passes when | Evidence | For |
-|---|---|---|---|---|---|
-| 1 | Software checks | `npm run module:doctor -- <id>` (a draft: `--draft <id>`); a base: `npm run sdk:check` | green | its log | both |
-| 2 | Beside every other module | `npm run modules:compat -- <id>`; a base: `npm run modules:compat` | 0 problems | its log | both |
-| 3 | Name the build | `npm run module:dev -- <id> --build-only`; a base: its `.elemod` | a package exists | revision and SHA-256 | both |
-| 4 | DSP cost model | `node scripts/cycle-scan.mjs check` | every record current | its log | both |
-| 5 | Emulator rehearsal | `node scripts/device.mjs try PKG --emulator --socket SOCK`; a base: `set` with every package | the trial rolls back with no fault logged | its log, labelled emulator | both |
-| 6 | Read the unit | `node scripts/device.mjs status` and `do inventory` on the session | it answers | the starting inventory | both |
-| 7 | Scripted unit pass | `npm run device:test -- --testing-entry FILE PKG`; a base: `node scripts/device.mjs set A,B,… --seconds 30`, every USB package at once | no crash, stall, freeze or skipped track; the set rolls back | `device-test.md`, its log | both |
-| 8 | Soak | `node scripts/octatrack-soak.mjs`, a module inside a trial of its own | no new crash, stall or frozen frame | `soak.json` | both |
-| 9 | Cost on the unit | `npm run device:price -- --out price.json PKG`; a base: every USB package | it reads | `price.json`: frame interrupt, CPU meter, both DSPs, at rest and in use | both |
-| 10 | Put back | `do inventory` again | equal to step 6 | its log | both |
-| 11 | Agent by hand | inside a trial (`npm run module:dev -- <id>` or the MCP) | what you saw matches the README | screenshots, captures | both |
-| 12 | Developer's stage | their hands and ears | what they report | their words, as they said them | both |
+Every step applies to modules and bases alike; what differs for a base is in each row and [below](#what-a-base-adds).
 
-Each step proves only what it ran. Steps 1 to 5 prove the code paths they exercised, never audio, timing, a saved project or a power cycle. Steps 6 to 11 are hardware evidence for what they measured, never for the sound or for persistence. Step 12 is the developer's.
+| # | Step | Layer | Command | Passes when | Evidence |
+|---|---|---|---|---|---|
+| 1 | Software checks | host | `npm run module:doctor -- <id>` (a draft: `--draft <id>`); a base: `npm run sdk:check` | green | its log |
+| 2 | Beside every other module | contract | `npm run modules:compat -- <id>`; a base: `npm run modules:compat` | 0 problems | its log |
+| 3 | Name the build | host | `npm run module:dev -- <id> --build-only`; a base: its `.elemod` | a package exists | revision and SHA-256 |
+| 4 | DSP cost model | contract | `node scripts/cycle-scan.mjs check` | every record current | its log |
+| 5 | Emulator rehearsal | emulator | `node scripts/device.mjs try PKG --emulator --socket SOCK`; a base: `set` with every package | the trial rolls back with no fault logged | its log, labelled emulator |
+| 6 | Read the unit | unit or emulator | `node scripts/device.mjs status` and `do inventory` on the session | it answers | the starting inventory |
+| 7 | Scripted unit pass | unit or emulator | `npm run device:test -- --testing-entry FILE PKG`; a base: `node scripts/device.mjs set A,B,… --seconds 30`, every USB package at once | no crash, stall, freeze or skipped track; the set rolls back | `device-test.md`, its log |
+| 8 | Soak | unit or emulator | `node scripts/octatrack-soak.mjs`, a module inside a trial of its own | no new crash, stall or frozen frame | `soak.json` |
+| 9 | Cost on the unit | unit | `npm run device:price -- --out price.json PKG`; a base: every USB package | it reads | `price.json`: frame interrupt, CPU meter, both DSPs, at rest and in use |
+| 10 | Put back | unit or emulator | `do inventory` again | equal to step 6 | its log |
+| 11 | Agent by hand | unit or emulator | inside a trial (`npm run module:dev -- <id>` or the MCP) | what you saw matches the README | screenshots, captures |
+| 12 | Developer's stage | unit | their hands and ears | what they report | their words, as they said them |
+
+Each step proves only what it ran. Steps 1 to 5 prove the code paths they exercised, never audio, timing, a saved project or a power cycle. Steps 6 to 11 on the unit are hardware evidence for what they measured, never for the sound or for persistence; on the emulator they are not hardware evidence at all. Step 12 is the developer's.
+
+## The layers
+
+**Prove each claim on the lowest layer that can prove it.** The emulator and the unit are slow and scarce: keep them for what the layers below cannot show. A check that a host test or the contract already makes is not repeated per module in the emulator or on the unit.
+
+| Layer | What it proves | Steps | How fast |
+|---|---|---|---|
+| host | the module's own code and the shared code, against fakes: the module's `test_*.py`, its `dsp_host` render gate, the SDK's loader and runtime tests | 1, 3 | seconds |
+| contract | what every module shares, checked once for all of them from their declarations | 2, 4 (and CI's package rebuild) | seconds |
+| emulator | the code paths that ran on the real stock code: install, run, rollback, screens | 5, or 6 to 11 with `--target emulator` | minutes; `ot_emu` runs below real time with `--dsp`, about ten times faster without |
+| unit | timing, load, audio, USB, persistence, what a person hears | 6 to 12 | minutes, one session at a time |
+
+**The contract covers these; do not test them again per module:**
+
+- installing beside every other active module and the base: no two modules claim the same stock site, FX id, DSP hook, private Y range, buffer region, data range, key gesture or stock screen unless the base owns the site or the module declares the conflict (`modules:compat`, step 2);
+- the manifest, version, catalogue pin, release notes, documentation, screenshots, resource gauges and qualification record (`modules:check`, in step 1 and CI's `module-contract` job);
+- that the committed packages rebuild byte for byte from source (CI's `octatrack-source` job), and that a cycle-scan record matches the source it scanned (step 4);
+- the loader's install, replace, remove, Undo and rollback, and the restoring of every patched site after removal: shared base code, tested once in the SDK suite and in the emulator's `sites` scenario (`scripts/verify-octatrack-dsp-loader.mjs`), not per module.
+
+**A module still proves on its own:** its own code (host tests, the render gate, its cycles), its controls and screens against its README, what it does at its own sites with stock running (step 7 and by hand), its cost (step 9), and the edge cases its change creates.
+
+## One set of cases, two targets
+
+Steps 6 to 10 talk to a session, not to a device. `npm run device -- serve --share SOCK` opens one link and shares it; `device:test`, `device.mjs` and the MCP drive the session. Started with `--emulator` on an `ot_emu` bench, the same session runs the same cases on the emulator:
+
+```sh
+ot_emu --image MAIN.raw --usb-host /tmp/emu.sock --mkii &        # a development twin, from the adapted build
+MODWERK_DEV_SOCKET=/tmp/emu-dev.sock npm run device -- serve --emulator --socket /tmp/emu.sock --share /tmp/emu-share.sock &
+npm run test:procedure -- <id> --target emulator --share /tmp/emu-share.sock --dev-socket /tmp/emu-dev.sock
+```
+
+Every result is labelled emulator, the unit queue is left alone, and step 9 is not run: the emulator's load figures are not the unit's. The switch runs the same cases on both targets; it never replaces the unit. On 20 November 2026 temp-save's steps 6 and the trial of step 7 ran this way; `device:test` then stopped at a Part switch on its 40 s request timeout, which is set for the unit, so the emulator target is a rehearsal until `device:test` takes slower targets.
 
 - **1-2.** The doctor runs the module's host tests, the contract, the performance record and the compatibility lines. A draft is judged beside every other module by the doctor itself.
 - **3. A rebuild starts again at step 1.** The record names the source revision (and says when the tree had uncommitted changes) and the package's SHA-256. Every later result is about this build only.
