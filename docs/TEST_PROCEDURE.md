@@ -1,0 +1,99 @@
+# Test procedure
+
+Every change to a module or a base goes through these steps, in this order, on one named build. Then it runs the edge cases its own change asks for. The other testing guides hold the detail of each step; this page holds the order.
+
+```sh
+npm run test:procedure -- <module id>          # a module, built from its source
+npm run test:procedure -- <module id> --plan   # the steps and their commands, nothing run
+npm run test:procedure -- --base               # the Octatrack base, with every USB package
+```
+
+It runs the steps below with the tools that already do them and stops at the first failure. Without a unit session it records the unit steps as not run, with the command each would have run. It ends with a record for the build: `procedure.md`, a `TESTING.md` entry with an empty edge-case table, and `procedure.json` for programs. A module's automated part takes under a minute without a unit (temp-save, 20 November 2026: 9 s for steps 1 to 3, 32 s with the emulator) and a few minutes with one.
+
+Options: `--package FILE` tests that package instead of building one, `--published` the catalogue's, `--share SOCKET` names the unit session, `--no-unit` leaves the unit alone, `--emulator-socket SOCK` adds the emulator, `--out DIR` puts the record there (default: the system's temporary folder), `--soak-seconds` and `--scene` go to the soak and the price.
+
+## The steps
+
+| # | Step | Command | Passes when | Evidence | For |
+|---|---|---|---|---|---|
+| 1 | Software checks | `npm run module:doctor -- <id>` (a draft: `--draft <id>`); a base: `npm run sdk:check` | green | its log | both |
+| 2 | Beside every other module | `npm run modules:compat -- <id>`; a base: `npm run modules:compat` | 0 problems | its log | both |
+| 3 | Name the build | `npm run module:dev -- <id> --build-only`; a base: its `.elemod` | a package exists | revision and SHA-256 | both |
+| 4 | DSP cost model | `node scripts/cycle-scan.mjs check` | every record current | its log | both |
+| 5 | Emulator rehearsal | `node scripts/device.mjs try PKG --emulator --socket SOCK`; a base: `set` with every package | the trial rolls back with no fault logged | its log, labelled emulator | both |
+| 6 | Read the unit | `node scripts/device.mjs status` and `do inventory` on the session | it answers | the starting inventory | both |
+| 7 | Scripted unit pass | `npm run device:test -- --testing-entry FILE PKG`; a base: `node scripts/device.mjs set A,B,… --seconds 30`, every USB package at once | no crash, stall, freeze or skipped track; the set rolls back | `device-test.md`, its log | both |
+| 8 | Soak | `node scripts/octatrack-soak.mjs`, a module inside a trial of its own | no new crash, stall or frozen frame | `soak.json` | both |
+| 9 | Cost on the unit | `npm run device:price -- --out price.json PKG`; a base: every USB package | it reads | `price.json`: frame interrupt, CPU meter, both DSPs, at rest and in use | both |
+| 10 | Put back | `do inventory` again | equal to step 6 | its log | both |
+| 11 | Agent by hand | inside a trial (`npm run module:dev -- <id>` or the MCP) | what you saw matches the README | screenshots, captures | both |
+| 12 | Developer's stage | their hands and ears | what they report | their words, as they said them | both |
+
+Each step proves only what it ran. Steps 1 to 5 prove the code paths they exercised, never audio, timing, a saved project or a power cycle. Steps 6 to 11 are hardware evidence for what they measured, never for the sound or for persistence. Step 12 is the developer's.
+
+- **1-2.** The doctor runs the module's host tests, the contract, the performance record and the compatibility lines. A draft is judged beside every other module by the doctor itself.
+- **3. A rebuild starts again at step 1.** The record names the source revision (and says when the tree had uncommitted changes) and the package's SHA-256. Every later result is about this build only.
+- **4.** Until the cycle scan is merged ([#1798](https://github.com/repeat98/modwerk/pull/1798)) this step is not run; the doctor's performance line covers instruction counts ([MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md)).
+- **5.** Start `ot_emu` with `--usb-host SOCK` on a development twin of the base, from [the adapted emulator builder](../scripts/octatrack-emulator/build.py) (the plain port refused the trial with loader refusal 5, 20 November 2026). A ColdFire module needs no `--dsp`, which runs about ten times faster; give the base 20 s after the socket appears. What passes here can still fail on the unit: read [what `ot_emu` does not show](OCTATRACK_HARDWARE_TRAPS.md#the-emulator-and-the-tools).
+- **6-10.** The unit steps go through the device commands and keep [the driving rules](OCTATRACK_DRIVING.md): a development base, transport stopped, a bank and Part whose working copy equals its saved one. Nothing is kept: every install is a trial that rolls back. When the repository has the unit queue (its `unit` script), the runner takes the unit for steps 6 to 10 as one turn.
+- **8.** Until the fast seeded soak is merged ([#1770](https://github.com/repeat98/modwerk/pull/1770)), a module soaks inside step 7 (`device:test --soak 120`) and a base's soak is not run.
+- **9.** "At rest" is the module installed and used nowhere: what every player pays for having it. Judge both figures against [MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md); a base-bound package is left out, since a development twin does not trust it.
+- **11.** Reach every control and screen by the README's button steps and take a `png:` screenshot of each. Record MAIN and CUE over USB with a sustained sound and look for runs of exact zeros or a block played twice. Then Undo and check the inventory again ([/modwerk-test-on-unit](../.claude/skills/modwerk-test-on-unit/SKILL.md)).
+- **12.** Only after 1 to 11 passed on this build. Give the developer the button steps and what they should see or hear for each item the record lists: the sound, timing by ear, MIDI and scenes, two instances, Part and project reload, the Keep and the power cycle. The Keep, the power cycle, a flash and listening are theirs; the agent never does them without their OK. A fault they find is fixed, and the procedure starts again on the new build.
+
+A machine without a USB link runs steps 1 to 3 and its emulator; step 12 then carries all the hardware evidence ([/modwerk-test-on-unit](../.claude/skills/modwerk-test-on-unit/SKILL.md)).
+
+## What a base adds
+
+A base carries every installed module, so it is tested as a set ([Change a base](DEVELOPER_WORKFLOW.md#change-a-base)):
+
+- step 1 is the SDK suite and step 2 every module against every other;
+- step 7 installs every USB package in one whole-set trial (a base with feature 512), and Undo must bring back the starting inventory and active identity (step 10);
+- step 9 prices every package at rest on the new base, the figure a base change can move for everyone;
+- by hand, with the developer's OK for each restart: RAM boot into the candidate, run the steps, RAM boot back to the starting base, and check its modules came back;
+- the record goes to `docs/verification/<YYYY-MM-DD>-<topic>.md` and the machine's cumulative draft. That draft stays a draft until the owner says the base was tested enough.
+
+## Edge cases
+
+Every change also runs the edge cases it creates. The steps above test what every change shares; these test what this change touched. Derive them before you test, run each one, and record each one.
+
+1. **List what the change touches.** Read the diff, not the description. For each item, name the kind:
+   - a hook or stock site, and who else uses it (another module, the base);
+   - a page, a menu row or a key gesture, and the windows it can be pressed in;
+   - memory: the module pool, a delay buffer, DSP words, battery RAM;
+   - timing: tempo, track speed, swing, pattern and bank changes, the arranger;
+   - persistence: the Part, the project, the card's set, battery RAM;
+   - the loader: install, replace, remove, Undo, a refused set, a trial that expires;
+   - the USB link, load and admission (the CPU meter, the guard), boot and the restore.
+2. **Find its boundaries and its neighbours.** Boundaries: the smallest and largest value, empty and full, the first and last track, one instance and eight, both FX slots and both DSP cores, MKI and MKII. Neighbours: what runs beside it at the moment it changes (a Part change while playing, the trial's end, Undo, a power cycle) and the modules that share its hook, gesture or memory.
+3. **Seed the list** from what has gone wrong before. The record suggests a start from the manifest and the changed files:
+
+   | It touches | Start from |
+   |---|---|
+   | an effect slot | two instances, both slots, both cores ([qualification](MODULE_QUALIFICATION.md#essential-persistence-and-instance-checks--8-october-2026)) |
+   | a key gesture or a page | [key gestures in windows](OCTATRACK_MODULE_EDGE_CASES.md#key-gestures-in-windows); a page open when the trial ends |
+   | a project, Part or save | [projects](OCTATRACK_MODULE_EDGE_CASES.md#projects-and-the-installed-modules), [copying and saving](OCTATRACK_MODULE_EDGE_CASES.md#copying-and-saving), [boot and power](OCTATRACK_MODULE_EDGE_CASES.md#boot-and-power) |
+   | playback | [while playing](OCTATRACK_MODULE_EDGE_CASES.md#while-playing), [sequencing](module-guides/sequencing.md) |
+   | stock code | [patching stock code](OCTATRACK_HARDWARE_TRAPS.md#patching-stock-code) |
+   | DSP code or load | [the DSP loader](OCTATRACK_HARDWARE_TRAPS.md#dsp-loader-dynamic-dsp-code), [ColdFire and DSP load](OCTATRACK_HARDWARE_TRAPS.md#coldfire-and-dsp-load) |
+   | the USB link | [USB and EP0](OCTATRACK_HARDWARE_TRAPS.md#usb-and-ep0) |
+   | RAM boot, NOR, cold starts | [RAM boot](OCTATRACK_HARDWARE_TRAPS.md#ram-boot), [cold starts](OCTATRACK_HARDWARE_TRAPS.md#cold-starts-and-card-writes) |
+
+4. **Run each case** on the unit when it depends on the instrument, in the emulator only to rehearse it. A case only the developer can judge (a sound, a power cycle) goes to them with its steps.
+5. **Record each case** in one row of the record's table, in the pull request and in `TESTING.md`:
+
+   | Case | Why this change makes it a risk | How run | Result |
+   |---|---|---|---|
+   | (an example) two instances, on FX2 of T1 and T5 | the change moved the state block | `npm run device -- do 'pick:T1:FX2:… pick:T5:FX2:… stats'` during the trial | pass |
+
+   The result is `pass`, `fail: what happened` or `not run: why`. A case not run stays in the table.
+
+When the change cannot behave differently on an instrument (a package rebuilt to the same bytes, say), write `Edge cases: none, because …` instead.
+
+## Where the record goes
+
+- **A module:** `procedure.md` with the edge-case table filled in, as an entry in the module's `TESTING.md`, followed by the developer's results apart from yours.
+- **A base:** a dated record in `docs/verification/`, linked from the cumulative draft's description.
+- **The pull request:** the record's last lines, "Tested on a unit: …" (or "Not tested on a unit: why") and the edge-case table under a line "Edge cases". A ready pull request that changes a `.mwrm`, `.elemod` or `.ZDL` file fails its description check without both ([the check](../scripts/pr-body.mjs)); a draft may still be in test.
+
+"Not tested" is a valid result, and it stays visible. An emulator result never counts as hardware evidence. A tester's report stays labelled as reported.
