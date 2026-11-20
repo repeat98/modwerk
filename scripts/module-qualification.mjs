@@ -10,6 +10,7 @@ import { requireRetainedEvidence } from './retained-evidence.mjs'
 import { requireModuleQualificationForPublication, requireModuleUiForPublication } from '../src/catalog/module-contract.ts'
 import { compareModuleVersions } from '../src/catalog/versions.ts'
 import { requireModuleDocumentation } from './module-documentation.mjs'
+import { CPU_PRICE_RECORD, manifestWithoutPrice } from './module-cpu-price.mjs'
 
 export const BASELINE_PATH = 'sdk/approvals/module-qualification-baseline.json'
 export const WAIVERS_PATH = 'sdk/approvals/module-release-waivers.json'
@@ -32,13 +33,24 @@ async function fingerprint(folder, paths) {
   return sha(JSON.stringify(hashes))
 }
 export async function moduleFolderSha256(folder) { return fingerprint(folder,await inventory(folder)) }
+// A measured CPU price changes no module (owner, 18 November 2026): the folder without the price's readings and its
+// manifest without resources.cpuPrice must still be the folder that was qualified; modules:check recomputes the price
+// from those readings itself (module-cpu-price.mjs).
+export async function modulePricelessFolderSha256(folder) {
+  const hashes={}
+  for(const path of (await inventory(folder)).filter(path=>path!==CPU_PRICE_RECORD)) {
+    const bytes=await readFile(resolve(folder,path))
+    hashes[path]=sha(path==='octamod.module.json'?manifestWithoutPrice(bytes.toString('utf8'))??bytes:bytes)
+  }
+  return sha(JSON.stringify(hashes))
+}
 export function qualificationReports(document) {
   const q=document.tests.qualification
   return q?[...new Set([...q.cycles.map(c=>c.report),q.memory.report,q.hardware.report])]:document.tests.releaseWaiver?[document.tests.releaseWaiver.report]:[]
 }
 async function nativePaths(folder, document) {
   const reports=new Set(qualificationReports(document))
-  return (await inventory(folder)).filter(path=>!['octamod.module.json','qualification.example.json'].includes(path)&&!path.startsWith('media/')&&!/\.md$/i.test(path)&&!/(^|\/)(LICENSE|LICENCE|COPYING)(\.|$)/i.test(path)&&!reports.has(path))
+  return (await inventory(folder)).filter(path=>!['octamod.module.json','qualification.example.json',CPU_PRICE_RECORD].includes(path)&&!path.startsWith('media/')&&!/\.md$/i.test(path)&&!/(^|\/)(LICENSE|LICENCE|COPYING)(\.|$)/i.test(path)&&!reports.has(path))
 }
 export async function moduleNativeSourceSha256(folder, document) {
   return fingerprint(folder,await nativePaths(folder,document))
@@ -99,12 +111,12 @@ export async function requireFolderQualification(folder, document, baseline, wai
     return requireRetainedEvidence(root,folder,document,baseline,waivers,requireFolderQualification,options)
   }
   const existing=baseline.get(document.id)
-  if(existing?.version===document.version&&existing.folderSha256===await moduleFolderSha256(folder)) return 'retained'
+  if(existing?.version===document.version&&(existing.folderSha256===await moduleFolderSha256(folder)||existing.folderSha256===await modulePricelessFolderSha256(folder))) return 'retained'
   const declaration=document.tests.releaseWaiver
   if(document.id==='synth'&&document.version==='0.1.1-experimental'&&declaration?.approvedOn==='2026-10-06') return requireSynthRelease(options.root??fileURLToPath(new URL('../',import.meta.url)),folder,document,moduleNativeSourceSha256)
   const waiver=waivers.get(document.id)
   if(waiver?.version===document.version&&declaration) {
-    if(declaration.moduleVersion!==document.version||declaration.sourceSha256!==waiver.sourceSha256||await moduleNativeSourceSha256(folder,document)!==waiver.sourceSha256||await moduleFolderSha256(folder)!==waiver.folderSha256) throw new Error(document.id+': owner waiver does not cover this exact source and complete module folder')
+    if(declaration.moduleVersion!==document.version||declaration.sourceSha256!==waiver.sourceSha256||await moduleNativeSourceSha256(folder,document)!==waiver.sourceSha256||await moduleFolderSha256(folder)!==waiver.folderSha256&&await modulePricelessFolderSha256(folder)!==waiver.folderSha256) throw new Error(document.id+': owner waiver does not cover this exact source and complete module folder')
     if(document.tests.hardwareStatus!=='untested'||document.tests.qualification||document.build||document.resources.processing.value!==null||document.resources.processing.method!=='unmeasured') throw new Error(document.id+': owner-waived hardware and chip timing must remain explicitly untested/unmeasured')
     const report=JSON.parse(await readFile(resolve(folder,declaration.report),'utf8'))
     if(report.schemaVersion!==1||report.id!==document.id||report.moduleVersion!==document.version||report.sourceSha256!==waiver.sourceSha256||report.imageSha256!==declaration.imageSha256||report.hardwareStatus!=='untested'||report.chipWorstCaseCycles!==null||report.nativeBrowserParity?.status!=='passed'||report.nativeBrowserParity.selections!==1024||report.nativeBrowserParity.exactImages!==522||report.nativeBrowserParity.matchingRefusals!==502||report.nativePackaging?.status!=='passed'||report.nativePackaging.exactContainersAndUpgrades!==8||report.rejections?.status!=='passed'||!report.memory?.romBytes) throw new Error(document.id+': incomplete or stale software verification report')

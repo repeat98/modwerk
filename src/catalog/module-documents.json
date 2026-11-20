@@ -151,6 +151,15 @@
             "rationale": "Inherited 16K Y allocation, of which the ring uses 15,870 words, and the X reservation; 402,972 logical bytes for eight instances including both programs and full hardware stack capacity. Complete runtime bounds and hardware canaries remain unverified.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41.2 % before, 41.1 % installed and used nowhere, 41 % on T1 FX2; CPU meter 63.1 % before, 63.9 % at rest, 60.8 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -372,6 +381,15 @@
             "rationale": "The module adds 200 bytes of state per track plus code and coefficient tables, while reusing stock delay rings. The common 10 MiB DRAM platform arena is shared rather than additive per instance. Moderate is an incremental footprint estimate.",
             "source": "README.md"
           }
+        },
+        "cpuPrice": {
+          "value": 7.7,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41.4 % installed and used nowhere, 48.7 % on T1 FX2; CPU meter 60.3 % before, 60.3 % at rest, 70.3 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -837,6 +855,15 @@
             "rationale": "The README states DSP state is private to each instance and no audio buffer is allocated. Small rhythm/control state, code and tables remain; low is an estimate, not an exact total memory claim.",
             "source": "README.md"
           }
+        },
+        "cpuPrice": {
+          "value": 7.2,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 43.5 % installed and used nowhere, 48.2 % on T1 FX2; CPU meter 59.5 % before, 61.8 % at rest, 64.9 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -1229,6 +1256,15 @@
             "rationale": "422 words of DSP program per payload and 31 words of state in each instance's existing r7 block. No allocator buffer, tables or Y memory, where SPRING REV takes 1,063 words and a 16,384-word instance buffer.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41.3 % before, 41.1 % installed and used nowhere, 41 % on T1 FX2; CPU meter 63.5 % before, 63.8 % at rest, 61.3 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -1854,6 +1890,15 @@
             "rationale": "1,602 program words per core in two given-up stock reverbs' space, a 132-word X block per instance, and 15,870 words of the 16K-word FX2 delay buffer every reverb already gets.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41 % installed and used nowhere, 41 % on T1 FX2; CPU meter 60.8 % before, 60.6 % at rest, 61.2 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -2165,6 +2210,15 @@
             "rationale": "1,112 program words per core in the space of SPRING REV and PLATE REV, a 91-word X block per instance, the 16K-word FX2 delay buffer every delay already gets.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 40.9 % installed and used nowhere, 41 % on T1 FX2; CPU meter 60 % before, 59.5 % at rest, 61.1 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -2581,6 +2635,15 @@
             "rationale": "1,354 contiguous program-memory words on each DSP core (838 code, 516 table), more than any single stock reverb's span (SPRING REV 1,063, DARK REV 1,067), so a static build gives up two adjacent reverbs. 132 state words per instance in the existing r7 block; no buffer.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41 % installed and used nowhere, 41 % on T1 FX2; CPU meter 60.5 % before, 59.4 % at rest, 60.9 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -2979,6 +3042,15 @@
             "rationale": "351 words of DSP program per core and 22 words of state in each instance's existing block; the key bus's memory is the base's.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41 % installed and used nowhere, 41 % on T1 FX2; CPU meter 60.5 % before, 59.5 % at rest, 60.8 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -4181,6 +4253,15 @@
             "rationale": "The card build has a 255-byte ROM core/stub/trampoline footprint plus small settings. DRAM code, menus and loader overhead are additional. Minimal is a relative source estimate, not a claim that total memory is only 255 bytes.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41 % installed and used nowhere; CPU meter 60.4 % before, 59.5 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -4861,6 +4942,15 @@
             "rationale": "36 authored ROM bytes, up to 127 alignment bytes, no newly allocated heap or persistent RAM. Existing stock state is reused.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 40.9 % before, 40.9 % installed and used nowhere; CPU meter 60.4 % before, 59.4 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -7823,6 +7913,15 @@
             "rationale": "208 bytes of ROM; no RAM or audio memory of its own.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 40.9 % installed and used nowhere; CPU meter 59.5 % before, 60.6 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -8115,6 +8214,15 @@
             "rationale": "2,062 bytes of ColdFire code and state (101 bytes of it state: the YES press and the TRIG + SCENE chord); no DSP memory and no saved data of its own.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41 % installed and used nowhere; CPU meter 60.6 % before, 60.5 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -8475,6 +8583,15 @@
             "rationale": "2,078 bytes of ColdFire code and state in the DRAM reserve (62 bytes of state) and 28 bytes of stock writes; no DSP memory and no saved data.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0.1,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 40.9 % before, 41 % installed and used nowhere; CPU meter 60.6 % before, 60.5 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -8751,6 +8868,15 @@
             "rationale": "2,784 bytes of code and tables and 2,784 bytes of state in the DRAM reserve, plus 32 bytes of stock writes; no DSP memory and no saved data.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 40.9 % before, 40.9 % installed and used nowhere; CPU meter 59.4 % before, 60.5 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -9517,6 +9643,15 @@
             "rationale": "A 42,892-byte buffer for one pattern and one Part, plus 892 bytes of code: on USB about a sixth of the 256 KB module pool all modules share; no saved data.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 40.9 % installed and used nowhere; CPU meter 59.5 % before, 60.7 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -10003,6 +10138,15 @@
             "rationale": "One global sample ring and detector workspace; no per-track allocation or new sample storage. Current linked allocation, loader overhead and stack maximum are unmeasured.",
             "source": "upstream/tuner.s"
           }
+        },
+        "cpuPrice": {
+          "value": 0.1,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41.1 % installed and used nowhere; CPU meter 60.8 % before, 60.6 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -10627,6 +10771,15 @@
             "rationale": "64 bytes of code and state.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 40.9 % installed and used nowhere; CPU meter 60.4 % before, 59.6 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -11336,6 +11489,15 @@
             "rationale": "2,892 bytes of ColdFire code, data and state in DRAM, from the package header.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0.1,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 40.9 % before, 41 % installed and used nowhere; CPU meter 60.4 % before, 59.7 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -12257,6 +12419,15 @@
             "rationale": "A 1,500-byte image with 44 writable bytes, zero BSS, and a 2,544-byte loader extent, with no buffers or per-track allocation.",
             "source": "evidence/resource-accounting.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0.3,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41.3 % installed and used nowhere; CPU meter 59.5 % before, 60.9 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
