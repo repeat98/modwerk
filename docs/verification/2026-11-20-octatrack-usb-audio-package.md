@@ -77,6 +77,10 @@ ASSIGN IN ORDER restored the first four sources. The agent restored COMPUTER, 20
 
 Host tests exercised the packaged descriptor blocks at both speeds, the grouped settings and saved values, exact left/right channel order with distinct test samples, duplicated and silent pairs, and the full-speed stereo fallback. macOS denied the development bridge direct access to the audio class interface. In the emulator, the same package accepted SET_CUR at 44.1 kHz, rejected 48 kHz, sent whole 20-channel frames and produced the expected silent samples for OFF and MAIN + CUE ONLY. It also sent whole frames at 16 and 20 channels in POST, eight routed Outbox channels and stereo on a simulated full-speed host. Undo restored the original USB configuration. Across menu changes and interrupted host polling the emulator counted 11 overruns and 52 underruns. Continuous-stream timing needs a separate measurement.
 
+After merging the cumulative base, the release build caught a difference in the module link addresses between the USB MIDI and linked-audio layouts. The base now reads the native USB configuration from a fixed-size record in its USB reserve. The package rebuilt byte-for-byte to the SHA-256 in the unit trial above. On a MIDI-only base built from `ce5435093` (identity `220d9ce231d00830`), the emulator installed that package, received all 16 requested high-speed packets with zero overruns and underruns, and returned to the four original interfaces after Undo.
+
+The cumulative 0.7.11 build (`61a2c3b75a848dec`) reproduced its native OS byte-for-byte with the browser builder on all seven legacy layouts. All seven shared the same controller links and module addresses. The five existing base-bound module entries now name this beta base. All 41 published package files matched their recorded hashes after rebuilding.
+
 ## Remaining verification
 
 A physical full-speed host, Windows/WASAPI after a channel-count change, and a Keep/removal lifecycle remain open. The full-set regression, soak and listening stages also remain open. The published site continues to use its existing base variants.
