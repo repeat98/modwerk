@@ -72,9 +72,9 @@ these limits:
   same base, module versions, patterns and steps. Never install a package, OS
   image or project a tester attached.
 - The emulator first for screens, menus, crashes and freezes; the unit for
-  sound, timing, load and USB. On the unit, only trials that roll back
-  (`npm run device:test`, or `npm run device -- try` without `--accept`): no
-  SAVE, Keep or flash, and ask the owner for a power cycle.
+  sound, timing, load and USB. On the unit, trials that roll back
+  (`npm run device:test`, or `npm run device -- try` without `--accept`); a
+  Keep as `docs/OWNER_OPERATIONS.md` says; no SAVE or flash, and ask the owner for a power cycle.
 - A read-only remote session on the tester's own unit
   (`docs/FRONTEND_MCP.md#a-members-unit-through-a-remote-session`) reads its
   status, load and log. Its reason reaches the tester word for word, so the
