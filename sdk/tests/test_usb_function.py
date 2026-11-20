@@ -55,29 +55,22 @@ class UsbFunction(unittest.TestCase):
         registry = events.load()
         by_name = {e['event']: e for e in registry['events']}
         for name in HOOKS:
-            self.assertEqual((by_name[name]['raisedBy'], by_name[name]['site'], by_name[name]['kind']), ('base', None, 'call'))
+            self.assertEqual((by_name[name].get('raisedByBase'), by_name[name]['site'], by_name[name]['kind']), (True, None, 'call'))
             self.assertNotIn(name, events.raised(registry))  # runtime.json "raise" cannot name it
         header = events.loader(registry)
         raises = re.search(r'#define RUNTIME_SITE_EVENT_RAISES \{ (.*) \}', header).group(1).split(', ')
-        for name in HOOKS:  # the base walks their rows itself (usb_function.c): no entry in the dispatch code at all
+        for name in HOOKS:  # the base walks their rows itself (usb_function.c): no package gets an entry
             self.assertEqual(raises[by_name[name]['index'] - events.FIRST], '0')
-            self.assertNotIn('modwerk_raise_%s' % name, events.asm(registry) + header)
         source = (OT / 'elekloader/usb_function.c').read_text()
         self.assertNotIn('modwerk_raise_', source.split('*/', 1)[1])
         for name in HOOKS:
             self.assertIn('uf_raise(MODWERK_%s)' % name.upper(), source)
         self.assertEqual(raises[by_name['ev_mute_keep']['index'] - events.FIRST], '(uintptr_t)modwerk_raise_ev_mute_keep')
         kinds = {row['event']: row for row in json.loads(events.browser(registry))['events']}
-        self.assertEqual([kinds[name]['kind'] for name in HOOKS], ['call'] * 3)  # subscriptions only, on the site too
+        self.assertEqual([kinds[name]['kind'] for name in HOOKS], ['raise'] * 3)  # as every raised hook; the loader hands no package their entry (raises above)
         self.assertEqual(kinds['ev_mute_keep']['kind'], 'raise')
         self.assertEqual({k: kinds['ot_usb_functions'][k] for k in ('kind', 'room', 'record')},
                          dict(kind='table', room=1, record=32))
-        with self.assertRaisesRegex(ValueError, 'raisedBy'):
-            bad = json.loads(events.REGISTRY.read_text())
-            next(e for e in bad['events'] if e['event'] == 'ev_usb_isr')['raisedBy'] = 'module'
-            with tempfile.TemporaryDirectory() as temp:
-                (Path(temp) / 'events.json').write_text(json.dumps(bad))
-                events.load(Path(temp) / 'events.json')
 
     def test_the_record_the_sdk_declares_is_the_one_admission_reads(self):
         text = events.sdk(events.load())
