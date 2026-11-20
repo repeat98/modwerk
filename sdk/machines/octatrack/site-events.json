@@ -319,6 +319,13 @@
    "index": 59,
    "event": "ev_usb_frame",
    "kind": "raise"
+  },
+  {
+   "index": 60,
+   "event": "ot_settings",
+   "kind": "table",
+   "room": 8,
+   "record": 24
   }
  ]
 }

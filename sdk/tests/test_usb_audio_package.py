@@ -53,6 +53,16 @@ class UsbAudioPackage(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Not built as a package yet'):
             builder.build('USB AUDIO IN')
 
+    def test_the_setting_offers_main_and_cue_only_in_the_twenty_channel_layout(self):
+        twenty, tracks = builder.source(functions, usb, LAYOUT), builder.source(functions, usb, 'USB AUDIO OUT TRACKS')
+        self.assertIn('    .long 1, mwua_set_label, 3, mwua_set_choices, mwua_setting_apply, 0', twenty)
+        self.assertIn('    .long 1, mwua_set_label, 2, mwua_set_choices, mwua_setting_apply, 0', tracks)
+        for text in (twenty, tracks):  # OFF is the second choice everywhere: the kept choice means the same
+            self.assertIn('mwua_set_0: .asciz "ALL CHANNELS"\nmwua_set_1: .asciz "OFF"\n', text)
+            self.assertIn('    tstb    modwerk_usb_audio_off   | the player\'s OFF', text)
+        self.assertIn('mwua_set_2: .asciz "MAIN + CUE ONLY"', twenty)
+        self.assertNotIn('mwua_set_2', tracks)
+
     def test_tracks_post_takes_the_computed_sine_and_no_stock_table(self):
         usb_post = load('usb_post', OT / 'elekloader/usb_post.py')
         curve = builder.sine_curve(usb_post)
@@ -77,7 +87,7 @@ class UsbAudioPackage(unittest.TestCase):
         words = struct.unpack_from('>%dI' % hooks, data, 76)
         by_name = {e['event']: e['index'] for e in events.load()['events']}
         subscribed = {name for name, index in by_name.items() if index < hooks and words[index] != 0xffffffff}
-        self.assertEqual(subscribed, {'ot_usb_functions', 'ev_usb_isr', 'ev_usb_bus_end', 'ev_usb_control', 'ev_usb_frame'})
+        self.assertEqual(subscribed, {'ot_usb_functions', 'ev_usb_isr', 'ev_usb_bus_end', 'ev_usb_control', 'ev_usb_frame', 'ot_settings'})
         self.assertTrue(all(w == 0xffffffff for w in words[:4]))  # no tick, draw, key or encoder handler
 
 

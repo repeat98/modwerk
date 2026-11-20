@@ -1708,6 +1708,9 @@ def main():
              'midi_generators.s', 'sample_memory.c') if args.site_events else ()) + (
             ('part_menu.c', 'part_menu.s') if args.part_menu else ()):
         shutil.copyfile(HERE / name, source / name)
+    if args.site_events and args.dsp_loader:  # PROJ > MODWERK > SETTINGS (events.json ot_settings; status.c's page)
+        for name in ('settings.c', 'settings.h'):
+            shutil.copyfile(HERE / name, source / name)
     # A module may add one USB function to the base's configuration (events.json ot_usb_functions, usb_function.c).
     usb_function_slots = bool(usb_functions) and not usb_profiles and args.site_events
     if usb_function_slots:
@@ -2060,7 +2063,8 @@ def main():
             raise ValueError('PROJ\'s root menu is not the four stock rows; review the MODWERK category.')
         stock_rows = image[ROOT_ROWS - device.main_load:][:4 * 24]
         columns = [sum(1 << r for r in range(8) if ICON[r][c] == '#') << 24 for c in range(19)]
-        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'), ('switches', 'switches'))
+        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'), ('switches', 'switches')) + (
+            (('settings', 'settings'),) if args.site_events else ())  # settings.c: the settings modules contribute
         definitions += ('struct menu_row { const void *label, *window, *action, *value, *child; uint32_t page; };\n'
                         'extern char modwerk_menu_label[], %s;\nvoid %s;\n' % (
                             ', '.join('modwerk_%s_label[]' % label for label, _ in leaves),
@@ -2133,6 +2137,8 @@ modwerk_retained_end:
         recipe['cflags'].append('-DMODWERK_RUNTIME_SETS')
     if args.module_ui_roots:  # loader.c's capability 1024, machine_admission_runtime.c
         recipe['cflags'].append('-DMODWERK_RUNTIME_UI_ROOTS')
+    if args.site_events and args.dsp_loader:
+        recipe['cflags'].append('-DMODWERK_SETTINGS')
     if usb_function_slots:  # a base with USB Audio linked in (a development twin) has the table and refuses every function
         recipe['cflags'] += ['-DMODWERK_USB_FUNCTIONS'] + (['-DMODWERK_USB_AUDIO_LINKED'] if args.usb_audio else [])
     if args.saved_set_export:

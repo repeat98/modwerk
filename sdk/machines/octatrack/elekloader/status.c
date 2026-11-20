@@ -10,6 +10,9 @@
  * frame is 72,520 cycles. */
 #include <stdint.h>
 #include "loader.h"
+#ifdef MODWERK_SETTINGS
+#include "settings.h"
+#endif
 #include "selftest.h"
 #include "status.h"
 #include "fxids.h"
@@ -149,6 +152,9 @@ static void transfer_tick(void);
 static void status_tick(void)
 {
     modwerk_status_close_menu();
+#ifdef MODWERK_SETTINGS
+    modwerk_settings_tick(); /* settings.c: the kept choices, after the installed modules changed */
+#endif
     transfer_tick();
     memory_tick();
     modwerk_fxpage_missing(); /* the first tick builds it; after that it returns at once */
@@ -192,7 +198,7 @@ static void status_tick(void)
  * screen it covered is back as it was. CUE + PROJ toggles the status from anywhere; PROJ's MODWERK category (the
  * fifth root row build_core.py adds, owner 12 October 2026) opens each page: STATUS, MODULE COST, MISSING, SELF TEST, MODULES (renamed from LOAD and MODULE LOAD, owner,
  * 16 November 2026: they read like loading modules). */
-enum { CLOSED, SHOWN, TEST, MISSING, MEMORY, MODULE_LOAD, REFUSED, SWITCHES };
+enum { CLOSED, SHOWN, TEST, MISSING, MEMORY, MODULE_LOAD, REFUSED, SWITCHES, SETTINGS };
 static int open, taken = -1; /* which shows; a key press the handler took, whose release it takes too (-1: none; TRIG 1 is 0) */
 /* What a host is doing to the unit, on its own screen (owner, 13 November 2026: a sync shows a dialog with a progress
  * bar, and a base update takes the whole screen and the panel until it is saved). The step is worked out each tick
@@ -628,6 +634,29 @@ static void switches_tick(void)
     }
     if (switch_stale || ticks - switch_read_at >= 60u) switches_read();
 }
+#ifdef MODWERK_SETTINGS
+/* SETTINGS (settings.c, events.json ot_settings; owner, 20 November 2026): one row a module that has a choice to
+ * make on the unit, its label and under it the choice in force. UP and DOWN move, YES takes the next choice, which
+ * holds at once and through a power cycle; NO closes. */
+#define SETTING_ROWS 2u /* two lines a setting */
+char modwerk_settings_label[] = "SETTINGS";
+static unsigned setting_cursor, setting_top;
+void modwerk_settings_menu(int unused)
+{
+    (void)unused;
+    if (menu_open()) open = SETTINGS, setting_cursor = setting_top = 0, close_menu = 1;
+}
+static void settings_key(int code)
+{
+    unsigned n = modwerk_settings_count();
+    if (setting_cursor >= n) setting_cursor = n ? n - 1u : 0;
+    if (code == UP && setting_cursor) --setting_cursor;
+    if (code == DOWN && setting_cursor + 1u < n) ++setting_cursor;
+    if (setting_top > setting_cursor) setting_top = setting_cursor;
+    if (setting_cursor >= setting_top + SETTING_ROWS) setting_top = setting_cursor + 1u - SETTING_ROWS;
+    if (code == YES && setting_cursor < n) modwerk_settings_next(setting_cursor);
+}
+#endif
 void modwerk_switches_menu(int unused)
 {
     (void)unused;
@@ -669,6 +698,13 @@ int modwerk_status_key(int code, int pressed)
         taken = code;
         return 1;
     }
+#ifdef MODWERK_SETTINGS
+    if (open == SETTINGS && (code == UP || code == DOWN || code == YES)) {
+        settings_key(code);
+        taken = code;
+        return 1;
+    }
+#endif
     if (open == SWITCHES && (code == UP || code == DOWN || code == YES)) {
         if (code == UP && switch_cursor) --switch_cursor;
         if (code == DOWN && switch_cursor + 1u < switch_count) ++switch_cursor;
@@ -1295,6 +1331,26 @@ void modwerk_status_draw(unsigned char *frame)
 {
     MW_STAMP(22); status_draw(frame); MW_STAMP(13);
 }
+#ifdef MODWERK_SETTINGS
+static void settings_page(unsigned char *frame)
+{
+    unsigned n = modwerk_settings_count();
+    dialog(frame, "SETTINGS");
+    if (!n) label(X0 + 6u, Y0 + 17u, "NO MODULE HAS A SETTING.");
+    if (setting_cursor >= n) setting_cursor = n ? n - 1u : 0;
+    if (setting_top > setting_cursor) setting_top = setting_cursor;
+    for (unsigned i = 0; i < SETTING_ROWS && setting_top + i < n; ++i) {
+        unsigned top = Y0 + 13u + 17u * i;
+        if (setting_top + i == setting_cursor) for (unsigned k = 0; k < 3u; ++k) fill(frame, X0 + 3u + k, top + k, X0 + 3u + k, top + 4u - k, 1);
+        label(X0 + 9u, top, modwerk_settings_name(setting_top + i));
+        label(X0 + 15u, top + 8u, modwerk_settings_choice(setting_top + i));
+    }
+    if (setting_top) arrow(frame, X1 - 10u, Y0 + 14u, 1);
+    if (setting_top + SETTING_ROWS < n) arrow(frame, X1 - 10u, Y0 + 14u + 17u * (SETTING_ROWS - 1u) + 8u, 0);
+    if (n) button(frame, X0 + 4u, Y1 - 10u, "YES"), label(X0 + 34u, Y1 - 8u, "CHANGE");
+    button(frame, X1 - 24u, Y1 - 10u, "NO");
+}
+#endif
 static void status_draw(unsigned char *frame)
 {
     if (transfer == T_SYNC || transfer == T_SYNC_START) { sync_box(frame); return; }
@@ -1305,6 +1361,9 @@ static void status_draw(unsigned char *frame)
     if (open == TEST) { test_page(frame); return; }
     if (open == MODULE_LOAD) { modules_page(frame); return; }
     if (open == SWITCHES) { switches_page(frame); return; }
+#ifdef MODWERK_SETTINGS
+    if (open == SETTINGS) { settings_page(frame); return; }
+#endif
     if (open != SHOWN) return;
     /* The title names the base by its version (owner, 16 November 2026: a number a player can read and say). */
     static char title[24] = "MODWERK BASE ";

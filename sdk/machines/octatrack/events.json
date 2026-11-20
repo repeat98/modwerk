@@ -2400,6 +2400,23 @@
    "raisers": [],
    "raisedByBase": true,
    "orderEvidence": "A function owns its ring and endpoint alone (ot_usb_functions holds one function). No module subscribes yet: USB Audio's audio_frame_shim does this work at the same site when it is linked into a base, and such a base leaves the site to it."
+  },
+  {
+   "event": "ot_settings",
+   "index": 60,
+   "kind": "table",
+   "site": null,
+   "length": 0,
+   "record": 24,
+   "key": null,
+   "room": 8,
+   "declaration": "struct modwerk_setting {\n    uint32_t abi;                       /* MODWERK_SETTING_ABI */\n    const char *label;                  /* its row on the page: up to 15 characters */\n    uint32_t count;                     /* its choices, 2-6 */\n    const char *const *choices;         /* each choice's name: up to 15 characters; the first is the one a new unit starts with */\n    void (*apply)(unsigned choice);     /* put choice 0..count-1 in force */\n    uint32_t reserved;                  /* 0 */\n};\n#define MODWERK_SETTING_ABI 1u",
+   "when": "PROJ > MODWERK > SETTINGS lists one row per contributed setting, in table order, with the name of the choice in force; YES on a row takes its next choice",
+   "context": "the UI task: apply is short and must not draw or open a window",
+   "contract": "Contribute one struct modwerk_setting (every field set) for a choice the player makes on the unit, not in a project: it holds for the whole instrument. The base calls apply(choice) when the player takes a choice and, within a tick, after every change of the installed modules (a power-up, a sync, an Undo, a switch in MODULES), so the module starts as with its first choice and needs no storage of its own. The base keeps the choice through a power cycle under the label, so an update of the module, or another build of it with the same label, keeps the setting; give a label no other module uses. A kept choice this record does not offer is the first one until the player chooses again. Labels and names are read each time the page is drawn: keep them in the image, printable capitals.",
+   "order": "lower first, then module id: the page's row order. 50-90.",
+   "subscribers": [],
+   "orderEvidence": "Each setting is its module's own and no row reads another's. USB Audio is the first to contribute (ALL CHANNELS, OFF, and MAIN + CUE ONLY in the twenty-channel layout: issue 1512); until its package is published no module does."
   }
  ]
 }

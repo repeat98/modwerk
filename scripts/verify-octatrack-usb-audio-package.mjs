@@ -9,6 +9,10 @@
 // with AudioControl and AudioStreaming behind the base's own interfaces, the clock source answers its sample rate,
 // alternate setting 1 opens the stream and EP3 IN sends packets of whole frames of the layout at the high-speed rate;
 // alternate setting 0 closes it; a rollback takes the function out again and the configuration is the first one.
+// With `setting`, on a development base (--dev) booted with a card (ot_emu --card): the panel opens PROJ > MODWERK >
+// SETTINGS, YES takes OFF and, in the twenty-channel layout, MAIN + CUE ONLY; each choice is in the base's battery-RAM
+// store, and the stream goes on under it with whole packets: of zeros under OFF, with silent track channels under
+// MAIN + CUE ONLY.
 // Emulator evidence of the package's and the base's code only: no host driver, no audio content check, no hardware.
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -18,8 +22,8 @@ import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloade
 import { diagnostics } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { Bench, device } from './usb-bench.mjs'
 
-const [socket, file, frame = '80'] = process.argv.slice(2)
-if (!socket || !file || ![8, 16, 64, 80].includes(Number(frame))) throw new Error('Usage: verify-octatrack-usb-audio-package.mjs BENCH-SOCKET usb-audio.mwrm [FRAME-BYTES: 80 (default, 20 channels), 64 TRACKS, 16 MAIN CUE, 8 MASTER or MAIN]')
+const [socket, file, frame = '80', setting] = process.argv.slice(2)
+if (!socket || !file || ![8, 16, 64, 80].includes(Number(frame)) || (setting && setting !== 'setting')) throw new Error('Usage: verify-octatrack-usb-audio-package.mjs BENCH-SOCKET usb-audio.mwrm [FRAME-BYTES: 80 (default, 20 channels), 64 TRACKS, 16 MAIN CUE, 8 MASTER or MAIN] [setting]')
 const AC = 4, AS = 5, CLOCK = 0x10, FRAME_BYTES = Number(frame) // a frame: 4 bytes a sample for each channel of the layout
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const bench = new Bench(socket)
@@ -89,6 +93,31 @@ assert.equal((await bench.controlIn(0xa1, 2, 0x0100, CLOCK << 8 | AC, 14))?.suba
 assert.equal(await bench.controlIn(0xa1, 1, 0x0300, CLOCK << 8 | AC, 1), null)
 assert.equal((await transport.identify()).base, identity.base)
 
+// dev.c: keys as the panel reports them (request 5), RAM read-only (15 and 16).
+const dev = async (request, value, length) => {
+  const reply = await unit.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request, value, index }, length)
+  assert.equal(reply.status, 'ok', 'a development base answers request ' + request)
+  return new Uint8Array(reply.data.buffer, reply.data.byteOffset, reply.data.byteLength)
+}
+const KEY = { DOWN: 0x20, RIGHT: 0x21, YES: 0x31, NO: 0x32, PROJ: 0x1c }
+const press = async (...names) => { for (const name of names) { await dev(5, KEY[name] | 0x100, 1); await wait(120); await dev(5, KEY[name], 1); await wait(1200) } }
+const STORE = 0x100f9000 // settings.c: 'MWS1', then eight entries of a label's hash and its choice
+const kept = async () => { await dev(15, STORE >>> 16, 1); const m = Buffer.from(await dev(16, STORE & 0xffff, 68)); return m }
+let hash = 2166136261
+for (const c of 'USB AUDIO') hash = Math.imul(hash ^ c.charCodeAt(0), 16777619) >>> 0
+const choice = async () => { const m = await kept(); if (m.readUInt32BE(0) !== 0x4d575331) return undefined
+  for (let i = 0; i < 8; ++i) if (m.readUInt32BE(4 + 8 * i) === hash) return m.readUInt32BE(8 + 8 * i) }
+/** YES on the open page, then the kept choice once it is `want`: the emulated panel runs far below real time. */
+const take = async (want, label) => {
+  await press('YES')
+  for (const start = Date.now(); Date.now() - start < 60000; await wait(500)) if (await choice() === want) return
+  assert.equal(await choice(), want, label)
+}
+if (setting) { // the page is opened before the stream: it never holds the panel, and stays open under it
+  assert.equal(await choice(), undefined, 'nothing kept before the player chooses')
+  await press('PROJ', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'RIGHT', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'YES') // MODWERK, its sixth row
+}
+
 // The stream: alternate setting 1, then EP3 IN at the high-speed poll rate.
 assert.equal(await alternate(), 0)
 await bench.command('isohz 4000')
@@ -107,6 +136,32 @@ for (let i = 0; i < 256 && nonempty < 16; ++i) {
 }
 assert.equal(nonempty, 16, 'sixteen packets with audio frames; lengths ' + lengths.join(','))
 console.log(`  stream: ${lengths.length} polls, 16 packets of ${[...new Set(lengths.filter(Boolean))].sort().join(' or ')} bytes`)
+const first16 = async label => {
+  const packets = []
+  for (let i = 0; i < 256 && packets.length < 16; ++i) {
+    const packet = Buffer.from((await bench.command('in 3 1024'))[2] ?? '', 'hex')
+    if (!packet.length) continue
+    assert.ok(packet.length % FRAME_BYTES === 0 && [10, 11, 12].includes(packet.length / FRAME_BYTES), `${label}: a packet of ${packet.length} bytes`)
+    packets.push(packet)
+  }
+  assert.equal(packets.length, 16, label + ': sixteen packets')
+  return packets
+}
+if (setting) {
+  await take(1, 'YES on the page keeps OFF')
+  for (const packet of await first16('OFF')) assert.ok(packet.every(byte => byte === 0), 'OFF sends packets of zeros')
+  console.log('  setting: OFF kept in battery RAM; 16 whole packets of zeros')
+  if (FRAME_BYTES === 80) {
+    await take(2, 'the twenty-channel layout offers MAIN + CUE ONLY')
+    for (const packet of await first16('MAIN + CUE ONLY')) for (let at = 0; at < packet.length; at += 80)
+      assert.ok(packet.subarray(at, at + 64).every(byte => byte === 0), 'MAIN + CUE ONLY: the sixteen track channels are silent')
+    console.log('  setting: MAIN + CUE ONLY kept; 16 whole packets with silent track channels')
+  }
+  await take(0, 'after the last choice comes ALL CHANNELS')
+  await first16('ALL CHANNELS')
+  await press('NO')
+  console.log('  setting: back to ALL CHANNELS; the stream goes on')
+}
 const counters = await bench.controlIn(0xc0, 0x55, 0, 0, 60)
 assert.equal(counters?.length, 60)
 console.log(`  counters: consumed ${counters.readUInt32BE(0)}, overruns ${counters.readUInt32BE(8)}, underruns ${counters.readUInt32BE(12)}`)

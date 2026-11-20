@@ -305,4 +305,16 @@ struct modwerk_usb_function {
 #define MODWERK_EV_USB_FRAME 59
 typedef unsigned modwerk_ev_usb_frame(void);
 
+/* ot_settings (table, contribute {"to": "ot_settings", "order", "data"}): PROJ > MODWERK > SETTINGS lists one row per contributed setting, in table order, with the name of the choice in force; YES on a row takes its next choice. The UI task: apply is short and must not draw or open a window. Contribute one struct modwerk_setting (every field set) for a choice the player makes on the unit, not in a project: it holds for the whole instrument. The base calls apply(choice) when the player takes a choice and, within a tick, after every change of the installed modules (a power-up, a sync, an Undo, a switch in MODULES), so the module starts as with its first choice and needs no storage of its own. The base keeps the choice through a power cycle under the label, so an update of the module, or another build of it with the same label, keeps the setting; give a label no other module uses. A kept choice this record does not offer is the first one until the player chooses again. Labels and names are read each time the page is drawn: keep them in the image, printable capitals. */
+#define MODWERK_OT_SETTINGS 60
+struct modwerk_setting {
+    uint32_t abi;                       /* MODWERK_SETTING_ABI */
+    const char *label;                  /* its row on the page: up to 15 characters */
+    uint32_t count;                     /* its choices, 2-6 */
+    const char *const *choices;         /* each choice's name: up to 15 characters; the first is the one a new unit starts with */
+    void (*apply)(unsigned choice);     /* put choice 0..count-1 in force */
+    uint32_t reserved;                  /* 0 */
+};
+#define MODWERK_SETTING_ABI 1u
+
 #endif
