@@ -16,6 +16,11 @@ voice renderer away from TSTR 4, a value only Repitch adds. Needs a base with `e
   `ev_in_use`), `rate_gate` and `pitch_gate` flagged resting. The published package and its row are not regenerated yet.
 - **Known gap:** the answer reads the live Part. A Part or bank change that brings a REPITCH track in while playing
   meets Repitch resting for up to one UI tick: that track plays at stock speed and pitch, rendered dry, until it wakes.
+  Closing it means answering for every Part of the project, as the base does for machines: Repitch would read each
+  Part's SRC SETUP TSTR byte and, for AUTO, the TSMODE of the sample slot the Part names. No code in the repository
+  names those Part offsets yet (the registry reads only the type byte and the signature), so they are to be found on the
+  unit first (diff a Part with `mem` while turning TSTR and changing the slot), then scanned every two seconds like the
+  machine map. Until then the gap stays, and the release notes say so.
 - **Test procedure:** not run; the unit was off USB, then held by another session, on 20 November 2026. The
   performance record's `sourceSha256` is stale until it is measured again.
 
