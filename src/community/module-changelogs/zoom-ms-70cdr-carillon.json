@@ -1,0 +1,9 @@
+[
+  {
+    "version": "0.4.0",
+    "date": "2026-11-20",
+    "changes": [
+      "A resonant filter bank: 32 narrow filters from C2 to C8, snapped to a key and scale. A filter at low Decay, ringing bells turned up."
+    ]
+  }
+]

@@ -1,0 +1,216 @@
+{
+  "schemaVersion": 3,
+  "id": "oxide",
+  "name": "Oxide",
+  "version": "1.1.0",
+  "machine": "zoom-ms-70cdr",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "themanro",
+    "name": "Roman Rusinov",
+    "credits": [
+      "Roman Rusinov and the ZoomMultistompZDL contributors; Airwindows / Chris Johnson (source or inspiration)",
+      "Roman Rusinov and the MultiStomp Editor contributors, editor artwork",
+      "Leemuzhko, effect runtime",
+      "Jannik Aßfalg, ZoomMultistompZDL toolchain"
+    ]
+  },
+  "maintainers": [
+    "themanro",
+    "repeat98"
+  ],
+  "source": {
+    "repository": "https://github.com/themanro/ZoomMultistompZDL",
+    "revision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+    "path": "src/airwindows/totape9"
+  },
+  "presentation": {
+    "label": "OXIDE",
+    "family": "Tape saturation",
+    "summary": "Airwindows ToTape9: tape saturation with Dolby-style tilt, bias, flutter and head bump.",
+    "overview": "Airwindows ToTape9: tape saturation with Dolby-style tilt, bias, flutter and head bump.",
+    "highlights": [
+      "Play softly, then hard. Listen for changes in tape colour and drive."
+    ],
+    "usage": [
+      "Add Oxide from the Delay group to a spare patch.",
+      "Play softly, then hard. Listen for changes in tape colour and drive.",
+      "Use the page buttons to reach the remaining controls."
+    ]
+  },
+  "access": {
+    "location": "Delay group in the MS-70CDR effect list, under Oxide.",
+    "steps": [
+      "Add Oxide from the Delay group to a spare patch.",
+      "Play softly, then hard. Listen for changes in tape colour and drive."
+    ],
+    "screenshots": [
+      "media/cover.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Input",
+      "default": 50,
+      "doc": "Input drive: 50 = unity, 100 = 4x into tape. Above unity, automatic compensation reduces level lift; Output independently trims the wet signal. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Tilt",
+      "default": 50,
+      "doc": "Dolby-style encode/decode balance: sets pre-emphasis against de-emphasis, which drives both tape drive and the wet/dry blend. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Shape",
+      "default": 50,
+      "doc": "Weights how much of Tilt's encode vs decode lands (0.35..1.0 each way). Subtle by construction, and it was invisible while the x7.14 scaling pinned it. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Flutr",
+      "default": 30,
+      "doc": "Airwindows D. Flutter depth in samples at 44.1 kHz. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "FlSpd",
+      "default": 50,
+      "doc": "Airwindows E. Flutter sweep speed. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Bias",
+      "default": 50,
+      "doc": "Asymmetric even-harmonic drive: biased = x + k*x^2, k bipolar around centre. The k curve is quartic below centre and cubic above, so the distortion character genuinely changes at different points of travel rather than just getting louder. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "HBump",
+      "default": 25,
+      "doc": "Low-frequency head-bump resonance amount; frequency fixed near 60 Hz in the active full kernel. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Out",
+      "default": 50,
+      "doc": "Wet output trim 0..2x, unity at 50, after automatic input-drive compensation and before Mix. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Mix",
+      "default": 50,
+      "doc": "Dry/wet crossfade. Renamed from 'Output' so every effect in the pack ends with the same control. Range 0–100.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "2.10"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Hardware untested on the original MS-70CDR with OS 2.10.",
+      "This build has startup knob initialization disabled. Check saved settings after recalling a patch."
+    ]
+  },
+  "platform": {
+    "kind": "zdl",
+    "file": "Oxide.ZDL",
+    "effectId": {
+      "gid": 8,
+      "fxid": 403
+    },
+    "effectVersion": "1.01",
+    "dspCost": 20.0,
+    "binary": {
+      "sha256": "8f07a8b6d226e980157c45b5b3ebaa1e8ce1f9461d42b9833cbcbdb6daa7d172",
+      "bytes": 13862,
+      "release": {
+        "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+        "tag": "oxide-1.01",
+        "asset": "Oxide.ZDL"
+      }
+    },
+    "screen": "static",
+    "pedals": [
+      {
+        "machine": "zoom-ms-70cdr",
+        "firmware": "2.10",
+        "status": "untested",
+        "report": null
+      }
+    ]
+  },
+  "resources": {
+    "memoryBytes": 13862,
+    "fastBytes": null,
+    "load": {
+      "display": "DSP 20 of 225 per patch",
+      "method": "static",
+      "conditions": "The effect descriptor declares this cost. Audio load on the pedal is unmeasured."
+    }
+  },
+  "evidence": {
+    "tier": "emulator",
+    "moduleVersion": "1.1.0",
+    "sourceSha256": "8f07a8b6d226e980157c45b5b3ebaa1e8ce1f9461d42b9833cbcbdb6daa7d172",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Ziddle passed the loader check and rendered 22,050 stereo frames. The compiled file passed the stock-code scan and MS-70CDR size limits. Hardware untested.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Add Oxide from the Delay group to a spare patch.",
+          "Play softly, then hard. Listen for changes in tape colour and drive.",
+          "Use the page buttons to reach the remaining controls."
+        ]
+      },
+      "screenshots": [
+        "media/cover.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "MIT AND BSD-3-Clause",
+    "file": "LICENSE",
+    "declaration": "Effect source and artwork are MIT licensed. The runtime uses MIT and BSD-3-Clause components. See LICENSE for the applicable notices and credits."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.png",
+      "kind": "thumbnail",
+      "caption": "Oxide in the MultiStomp Editor",
+      "alt": "Oxide editor illustration",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "https://github.com/themanro/ZoomMultistompZDL/blob/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/graphics/fx/oxide.webp"
+    },
+    {
+      "path": "media/cover.png",
+      "kind": "screenshot",
+      "caption": "Oxide embedded cover",
+      "alt": "The monochrome effect cover for Oxide",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling.",
+      "capture": {
+        "type": "emulator",
+        "release": "2.10",
+        "moduleVersion": "1.1.0",
+        "imageSha256": "8f07a8b6d226e980157c45b5b3ebaa1e8ce1f9461d42b9833cbcbdb6daa7d172",
+        "setup": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+      }
+    }
+  ]
+}

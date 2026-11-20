@@ -1,3 +1,4 @@
+import zoomApprovals from '../../sdk/approvals/zoom-release-waivers.json'
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -129,6 +130,28 @@ describe('module contract v3, zdl (Zoom effect files)', () => {
     const document = parse(zdl())
     expect(document.platform).toMatchObject({ kind: 'zdl', file: 'Loop.ZDL', effectId: { gid: 8, fxid: 467 }, screen: 'live' })
     expect(() => requireModwerkPublication(document)).not.toThrow()
+  })
+  it('limits the MS-70CDR release exception to the approved source, version, file and reported evidence', () => {
+    const value = zdl()
+    const hash = '7982e70502a23cf3f7862f7f5c4e83a2aaf8a26e115444a98e97db47d75ffd71'
+    Object.assign(value, { id: 'spiral', version: '1.0.0', source: {
+      repository: 'https://github.com/themanro/ZoomMultistompZDL', path: 'src/custom/spiral',
+      revision: 'aee98c53d7b568cbb55bb927aefbdc9b4e739f3e',
+    } })
+    Object.assign(value.evidence, { tier: 'emulator', moduleVersion: value.version, hardware: null, verifiedBy: null, sourceSha256: hash })
+    value.platform.binary.sha256 = hash
+    value.platform.pedals = [{ machine: value.machine, firmware: '2.10', status: 'untested', report: null }]
+    const document = parse(value)
+    expect(() => requireModwerkPublication(document)).toThrow('author-hardware')
+    expect(() => requireModwerkPublication(document, zoomApprovals)).not.toThrow()
+    for (const change of [
+      { id: 'other' }, { version: '1.0.1' }, { source: { ...value.source, revision: '0'.repeat(40) } },
+      { source: { ...value.source, path: 'src/custom/other' } }, { source: { ...value.source, repository: 'https://github.com/other/effects' } },
+      { platform: { ...value.platform, binary: { ...value.platform.binary, sha256: sha } } },
+      { evidence: { ...value.evidence, sourceSha256: sha } }, { evidence: { ...value.evidence, tier: 'none' } },
+      { platform: { ...value.platform, pedals: [{ ...value.platform.pedals[0], firmware: '1.00' }] } },
+      { resources: { ...value.resources, memoryBytes: null } },
+    ]) expect(() => requireModwerkPublication({ ...document, ...change } as ModwerkModule, zoomApprovals)).toThrow()
   })
   it('refuses what the pedal can’t take or Modwerk can’t list', () => {
     const with_ = (change: (value: ReturnType<typeof template>) => void) => { const value = zdl(); change(value); return () => parse(value) }
