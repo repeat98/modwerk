@@ -32,9 +32,15 @@ static uint32_t assign(uint32_t w, unsigned pair, unsigned value)
     unsigned shift = 8u + 4u * pair;
     return (w & ~(15u << shift)) | (value << shift);
 }
+extern const volatile struct modwerk_setting mwua_setting;
 static uint32_t restore(uint32_t w)
 {
-    if (!(w & SAVED)) return DEFAULT | (w <= 2u ? w : 0u); /* previous single-choice module */
+    if (!(w & SAVED)) {
+        uint32_t preset = mwua_setting.reserved;
+        if (!(preset & SAVED) || layout(preset) >= LAYOUTS) preset = DEFAULT;
+        /* OFF is valid in every layout. The older bus-only choice needs both buses. */
+        return (preset & ~3u) | (w == 1u || (w == 2u && layout(preset) == TRACKS_MIX) ? w : 0u);
+    }
     if (layout(w) >= LAYOUTS || (w & 3u) > 2u) return DEFAULT;
     return w;
 }
@@ -123,11 +129,13 @@ static uint32_t audio_choose(uint32_t saved, unsigned field, unsigned choice)
     }
     /* With default routing, keep the original mode word so rolling back to
      * the single-choice package can still restore OFF or MAIN + CUE ONLY. */
-    return (w & ~3u) == DEFAULT ? w & 3u : w;
+    return !mwua_setting.reserved && (w & ~3u) == DEFAULT ? w & 3u : w;
 }
 
 extern volatile uint8_t mwua_requested, mwua_active;
-static volatile uint32_t configuration[PROFILES];
+/* The USB function initially exposes its classic descriptors. An imported
+ * layout only owns the audio path after the controller latches that profile. */
+static volatile uint32_t configuration[PROFILES] = {DEFAULT};
 static void audio_apply(unsigned saved)
 {
     uint32_t w = restore(saved);
@@ -136,7 +144,7 @@ static void audio_apply(unsigned saved)
     mwua_requested = (uint8_t)profile;
 }
 static const struct modwerk_setting_pages pages = {audio_page, audio_choose};
-const struct modwerk_setting mwua_setting = {MODWERK_SETTING_GROUP_ABI, "USB AUDIO", 0,
+const volatile struct modwerk_setting mwua_setting = {MODWERK_SETTING_PRESET_ABI, "USB AUDIO", 0,
     (const char *const *)(const void *)&pages, audio_apply, 0};
 
 uint8_t mwua_post, mwua_off, mwua_fs_sum = 1, mwua_fs_pair = SUM, mwua_pairs = 10, mwua_direct;
@@ -145,7 +153,7 @@ static uint32_t last;
 void mwua_begin_frame(void)
 {
     unsigned profile = mwua_active;
-    uint32_t w = restore(configuration[profile]);
+    uint32_t w = configuration[profile];
     if (w == last) return;
     last = w;
     unsigned l = layout(w), mode = w & 3u;

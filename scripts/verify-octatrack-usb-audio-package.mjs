@@ -24,9 +24,10 @@ import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
 import { diagnostics } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { Bench, device } from './usb-bench.mjs'
+import registry from '../sdk/machines/octatrack/events.json' with { type: 'json' }
 
 const [socket, file, frame = '80', setting] = process.argv.slice(2)
-if (!socket || !file || ![8, 16, 64, 80].includes(Number(frame)) || (setting && setting !== 'setting')) throw new Error('Usage: verify-octatrack-usb-audio-package.mjs BENCH-SOCKET usb-audio.mwrm [FRAME-BYTES: 80 (default, 20 channels), 64 TRACKS, 16 MAIN CUE, 8 MASTER or MAIN] [setting]')
+if (!socket || !file || ![8, 16, 32, 64, 80].includes(Number(frame)) || (setting && setting !== 'setting')) throw new Error('Usage: verify-octatrack-usb-audio-package.mjs BENCH-SOCKET usb-audio.mwrm [FRAME-BYTES: 80 (default, 20 channels), 64 TRACKS, 32 OUTBOX, 16 MAIN CUE, 8 MASTER or MAIN] [setting]')
 const AC = 4, AS = 5, CLOCK = 0x10, FRAME_BYTES = Number(frame) // a frame: 4 bytes a sample for each channel of the layout
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const bench = new Bench(socket)
@@ -90,6 +91,24 @@ const session = await UploadSession.connect(transport, identity.base, { timeoutM
 await session.stage(pkg); await session.activate(); await session.startTrial()
 let now = await settle('trial', 1)
 assert.equal(now.count, 6)
+if (configurable) {
+  const bytes = Buffer.from(data), hook = registry.events.find(event => event.event === 'ot_settings').index
+  const record = 76 + 4*bytes.readUInt32BE(20) + (bytes.readUInt32BE(76 + 4*hook) & 0xffffff)
+  if (bytes.readUInt32BE(record) === 3) {
+    const expected = bytes.readUInt32BE(record + 20)
+    let initial
+    for (let i=0; i<100 && initial === undefined; ++i) {
+      initial = (await transport.settingPresets())?.get(0x8c3a257f)
+      if (initial === undefined) await wait(80)
+    }
+    assert.equal(initial, expected, 'the release base reports the installed set preset')
+    const records=[]
+    for (let at=0; at<now.cfg.length; at+=now.cfg[at]) { assert.ok(now.cfg[at]>=2); records.push(now.cfg.subarray(at,at+now.cfg[at])) }
+    const stream = records.find(r=>r[0]===16 && r[1]===0x24 && r[2]===1)
+    assert.equal(stream[10], FRAME_BYTES/4, 'the USB descriptor matches the imported layout')
+    console.log('  migrated preset', expected.toString(16), 'channels', stream[10])
+  }
+}
 assert.ok(now.total > first.total && now.other.length === now.total)
 assert.equal(now.cfg.subarray(5, first.total).toString('hex'), first.cfg.subarray(5).toString('hex'), 'the base’s own part is unchanged')
 const audio = now.interfaces.filter(i => i.interfaceNumber >= AC)

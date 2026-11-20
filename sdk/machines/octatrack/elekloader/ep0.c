@@ -15,6 +15,9 @@
  * The controller's backend is boot.c's: the runtime loader's for module
  * packages, plus whole OS images for a RAM boot. */
 #include "status.h"
+#ifdef MODWERK_SETTINGS
+#include "settings.h"
+#endif
 #ifdef MODWERK_DSP_LOADER
 #include "selftest.h"
 #include "fxids.h"
@@ -381,6 +384,16 @@ uint32_t modwerk_ep0_dispatch(void)
         SETUP[4] == MODWERK_VENDOR_INTERFACE && !SETUP[5] && SETUP[6] == MODWERK_USB_FUNCTION_STATUS_BYTES && !SETUP[7]) {
         modwerk_ep0_reply = out;
         return modwerk_usb_function_status(out);
+    }
+#endif
+#ifdef MODWERK_SETTINGS
+    /* Read-only install presets. The current panel choice remains private to the unit. */
+    if (r.action == MV_STALL && SETUP[0] == MV_RESULT_TYPE && SETUP[1] == 42u && !SETUP[2] && !SETUP[3] &&
+        SETUP[4] == MODWERK_VENDOR_INTERFACE && !SETUP[5] && SETUP[6] == 4 + 8 * MODWERK_SETTINGS_ROOM && !SETUP[7]) {
+        unsigned n = modwerk_settings_presets(out);
+        if (!n) return MODWERK_EP0_REFUSE;
+        modwerk_ep0_reply = out;
+        return n;
     }
 #endif
 #ifdef MODWERK_RUNTIME_SETS

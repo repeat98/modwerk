@@ -32,6 +32,7 @@ rings and DMA buffers go to bss. For a package, at guarded seams:
 """
 import argparse
 import hashlib
+import json
 import math
 import importlib.util
 import struct
@@ -402,7 +403,39 @@ def _records(data):
         at += data[at]
 
 
-def build(layout, cross='m68k-elf-'):
+RECIPE = HERE / 'usb-audio-reconstruction.json'
+
+
+def capture_release(loader, image, protected, sources, stock, upstream):
+    from elekloader import formats
+    parsed, device, original = formats.load(str(stock))
+    main = formats.main_image(parsed, device)
+    if device.key != 'octatrack' or original.version != '1.40C' or hashlib.sha256(main).hexdigest() != original.main_sha256:
+        raise ValueError('Original Octatrack 1.40C required')
+    packages = load('usb_audio_runs', HERE.parent / 'elekloader/module_packages.py')
+    scanner = load('usb_audio_stock_runs', HERE.parent / 'elekloader/check_stock_free.py')
+    source_runtime = load('usb_audio_source_runtime', ROOT / 'scripts/source-runtime-package.py')
+    spans = set()
+    for at, counted in packages.runs(image, main).items():
+        if counted >= packages.LIMIT:
+            spans.update(range(at, at + packages.SEED))
+    for _, at, n, _ in scanner.stock_runs({'sections': {'image': {'parts': [['hex', image.hex()]]}}},
+                                          scanner.haystacks(stock, upstream), 16):
+        spans.update(range(at, at + n))
+    for word in protected:
+        spans.difference_update(range(word, word + 4))
+    copies = []
+    for at in sorted(spans):
+        if copies and at == copies[-1]['offset'] + copies[-1]['length']:
+            copies[-1]['length'] += 1
+        else:
+            copies.append(dict(offset=at, length=1, address=0))
+    base = json.loads((ROOT / 'src/engine/assets/octatrack-base.elemod').read_text())
+    recipe = dict(schema=1, imageSha256=hashlib.sha256(image).hexdigest(), sources=sources, copies=copies, fills=[])
+    return source_runtime.bounded_capture(recipe, image, main, device.main_load, base, loader.site_events())
+
+
+def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None, upstream=None):
     if layout is not None and layout not in SUPPORTED:
         raise ValueError('Not built as a package yet: ' + layout)
     sys.path.insert(0, str(ROOT / 'sdk/runtime/loader'))
@@ -431,11 +464,11 @@ def build(layout, cross='m68k-elf-'):
                             str(HERE / 'usb_audio_settings.c'), '-o', str(objects[-1])], check=True)
         image, symbols, bss, offsets = loader.link_units(objects, cross, 0, tmp, anywhere=True)
     sites = []
-    for address, stock, shim in usb.AUDIO_DETOURS:
+    for address, guard, shim in usb.AUDIO_DETOURS:
         if shim == 'audio_frame_shim':  # the base's own site on a base with function slots: ev_usb_frame
             continue
         code = loader.OPCODES['jmp'] + struct.pack('>I', symbols[shim])
-        sites.append((address, hashlib.sha256(bytes.fromhex(stock)).digest(), code, [2], 0, len(stock) // 2))
+        sites.append((address, hashlib.sha256(bytes.fromhex(guard)).digest(), code, [2], 0, len(guard) // 2))
     if len(sites) != 3:
         raise ValueError('USB Audio\'s own stock sites changed.')
     loader.unevented(sites)
@@ -445,8 +478,65 @@ def build(layout, cross='m68k-elf-'):
     hooks = loader.subscribe([loader.NONE] * len(loader.HANDLERS), entries, symbols)
     # Inventory kind 7 is the configurable package. Kinds 1-6 identify the older
     # fixed layouts so the site can still select their exact Undo package.
+    copies, fills = [], []
+    if release or capture:
+        if layout is not None:
+            raise ValueError('The release package configures every layout.')
+        sources = {'generatedAssembly': hashlib.sha256(text.encode()).hexdigest()}
+        for path in (HERE / 'usb_audio_settings.c', HERE.parent / 'include/modwerk_events.h'):
+            sources[str(path.relative_to(ROOT))] = hashlib.sha256(path.read_bytes()).hexdigest()
+        preset = symbols['mwua_setting'] + 20
+        if capture:
+            if capture.exists() or not stock or not upstream:
+                raise ValueError('Capture requires original stock, upstream tools and a new recipe path.')
+            loader.firmware_codec.use_elekloader(upstream.resolve())
+            recipe = capture_release(loader, image, [*offsets, preset], sources, stock, upstream)
+            for item in recipe['copies']:
+                at = item['offset']
+                labels = [(address, name) for name, address in symbols.items() if address <= at and name[0].islower()]
+                address, label = max(labels)
+                item['purpose'] = f'Authored {label} + {at - address} in the USB Audio image'
+            capture.write_text(json.dumps(recipe, indent=2) + '\n')
+        else:
+            recipe = json.loads(RECIPE.read_text())
+        authored = image
+        recipe_api = load('usb_audio_reconstruction', HERE / 'stock_recipe.py')
+        image, copies, fills = recipe_api.apply(image, [*offsets, preset], recipe, sources)
+        loader.unevented(sites, copies)
+        base = json.loads((ROOT / 'src/engine/assets/octatrack-base.elemod').read_text())
+        for _, address, n, _ in copies:
+            if address < 0x40000400 or address + n > 0x400de1e0 or any(
+                    address < int(site['addr'], 16) + site['len'] and int(site['addr'], 16) < address + n
+                    for site in base['sites']):
+                raise ValueError('USB Audio reconstruction requires unmodified, readable stock data.')
+        if stock:
+            loader.check_stock(sites, stock, upstream)
+            from elekloader import formats
+            parsed, device, original = formats.load(str(stock))
+            main = formats.main_image(parsed, device)
+            if device.key != 'octatrack' or original.version != '1.40C' or hashlib.sha256(main).hexdigest() != original.main_sha256:
+                raise ValueError('Original Octatrack 1.40C required')
+            rebuilt = bytearray(image)
+            for at, address, n, digest in copies:
+                start = address - device.main_load
+                block = main[start:start + n]
+                if start < 0 or len(block) != n or hashlib.sha256(block).digest() != digest:
+                    raise ValueError('The original OS differs from the reconstruction record.')
+                rebuilt[at:at + n] = block
+            for at, n, value in fills:
+                rebuilt[at:at + n] = bytes([value])*n
+            if rebuilt != authored:
+                raise ValueError('The installed image differs from the compiled module.')
     data = loader.package(image, bss, hooks, offsets, sites, name=MODULE, hashed=True, title=TITLE, abi=8,
+                          copies=copies, fills=fills,
                           layout=7 if layout is None else functions.AUDIO_LAYOUTS[layout] + 1)
+    if release and stock:
+        packages = load('usb_audio_package_scan', HERE.parent / 'elekloader/module_packages.py')
+        scanner = load('usb_audio_image_scan', HERE.parent / 'elekloader/check_stock_free.py')
+        runs = packages.runs(data, main)
+        if max(runs.values(), default=0) >= packages.LIMIT or scanner.stock_runs(
+                {'sections': {'package': {'parts': [['hex', data.hex()]]}}}, scanner.haystacks(stock, upstream), 16):
+            raise ValueError('The USB Audio release contains a stock span.')
     return data, dict(image=len(image), bss=bss, relocations=len(offsets), sites=[hex(s[0]) for s in sites],
                       block=block_length, stock_sites=sites)
 
@@ -458,8 +548,10 @@ def main():
     parser.add_argument('--cross', default='m68k-elf-')
     parser.add_argument('--stock', type=Path, help='check the three sites\' guards against this OS file')
     parser.add_argument('--upstream', type=Path, help='the Elekloader checkout --stock is read with')
+    parser.add_argument('--release', action='store_true', help='build from the reviewed stock reconstruction recipe')
+    parser.add_argument('--capture-recipe', type=Path, help='record hash-only reconstruction data for review')
     args = parser.parse_args()
-    data, facts = build(args.layout, args.cross)
+    data, facts = build(args.layout, args.cross, release=args.release, capture=args.capture_recipe, stock=args.stock, upstream=args.upstream)
     if args.stock:
         if not args.upstream:
             parser.error('--stock needs --upstream')

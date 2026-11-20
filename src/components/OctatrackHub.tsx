@@ -94,7 +94,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
   // USB Audio is on the unit when its base runs the set's layout (base-variants.ts); the inventory lists packages only.
   const same = (set: Configuration) => set.moduleIds.length > 0 && !!unitIds && sameModules(set.moduleIds.filter(id => !comesWithBase(id)), unitIds) &&
     (setLayout(set) === undefined || connected && baseLayout(identity?.base) === setLayout(set))
-  const review = connected && inventory && selected ? moduleSetReview(selected, inventory, identity?.capabilities, identity?.base) : undefined
+  const review = connected && inventory && selected ? moduleSetReview({ ...selected, usbAudio: selected.usbAudio }, inventory, identity?.capabilities, identity?.base) : undefined
   const changes = review?.changes, updates = review?.updates ?? []
   const needsBase = review?.problem instanceof BaseUpdateRequired || connected && baseOutdated(identity?.base)
   const wantedLayout = review?.problem instanceof BaseLayoutRequired ? review.problem.layout : undefined

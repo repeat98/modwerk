@@ -55,7 +55,7 @@ import type { HubView, SetAction } from './components/OctatrackHub'
 import type { OctatrackLink } from './engine/elekloader/octatrack-link'
 import type { BaseLayout } from './engine/elekloader/base-variants'
 import type { BaseGuideFailure, BaseGuideStage } from './components/BaseInstallDialog'
-import { missingFromProject, sameModules, UNIT_STATE, unitState, type LastSeen } from './config/inventory'
+import { inventoryUsbAudio, missingFromProject, sameModules, UNIT_STATE, unitState, type LastSeen } from './config/inventory'
 import { ShareModuleButton } from './community/ShareModuleButton'
 import { useBaseInstallPrompt } from './hooks/useBaseInstallPrompt'
 import { OctatrackLinkContext, useInventory, useMissing } from './hooks/useOctatrackLink'
@@ -450,8 +450,10 @@ export default function App() {
   const [putBackId, setPutBackId] = useState<string>(), [putBackOff, setPutBackOff] = useState<string[]>([])
   function putBack(last: LastSeen) {
     setPutBackOff(last.offIds ?? [])
-    const id = configurationsFor('octatrack').find(set => sameModules(set.moduleIds.filter(module => !comesWithBase(module)), last.moduleIds))?.id
-      ?? workspace.importConfiguration('From my Octatrack', last.moduleIds, true, undefined, 'octatrack', undefined, last.removedStockFx)
+    const matches = configurationsFor('octatrack').filter(set => sameModules(set.moduleIds.filter(module => !comesWithBase(module)), last.moduleIds) &&
+      (!last.usbAudio || (set.usbAudio?.layout ?? 'tracks-main-cue') === last.usbAudio.layout))
+    const id = (matches.find(set => set.id === active?.id) ?? matches[0])?.id
+      ?? workspace.importConfiguration('From my Octatrack', last.moduleIds, true, undefined, 'octatrack', last.usbAudio, last.removedStockFx)
     setPutBackId(id); setLoadingSet(id)
   }
   // Replaces the modules a new one cannot run beside. Adding last goes through toggleModule, which also opens USB setup.
@@ -493,7 +495,13 @@ export default function App() {
     if (action === 'share') window.location.hash = 'forum/new?category=configs&machine=' + configurationDevice(item)
     else setConfigDialog(action)
   }
-  function saveUnitAsSet() { if (inventory) { workspace.importConfiguration('From my Octatrack', inventory.moduleIds, true, undefined, 'octatrack', undefined, inventory.removedStockFx); openEditedSet('octatrack') } }
+  function saveUnitAsSet() {
+    if (!inventory) return
+    const audio = inventoryUsbAudio(usbLink?.getState().identity?.base, inventory.usbAudioInstallPreset)
+    const ids = audio ? [...new Set([...inventory.moduleIds, USB_AUDIO_MODULE])] : inventory.moduleIds
+    workspace.importConfiguration('From my Octatrack', ids, true, undefined, 'octatrack', audio, inventory.removedStockFx)
+    openEditedSet('octatrack')
+  }
 
   // Routes that browse a library: they get the search field and, on phones, the category chips under the app bar.
   const libraryNav = onLibrary || route === 'module-sets'

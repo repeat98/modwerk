@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.3.0-experimental",
+    "date": "2026-11-20",
+    "changes": [
+      "Install USB Audio once and choose layouts in PROJ > MODWERK > SETTINGS > USB AUDIO.",
+      "Switch eight track stems between pre-LEVEL and post-LEVEL in both the 16- and 20-channel layouts.",
+      "Route any available source or silence to each of the four Outbox 8 USB pairs.",
+      "Loading an existing set restores its saved destination, layout and pair assignments."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-10-08",
     "changes": [

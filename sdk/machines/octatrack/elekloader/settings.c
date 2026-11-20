@@ -28,6 +28,10 @@
 #endif
 #define ST_MAGIC 0x4d575331u /* "MWS1" */
 typedef struct modwerk_setting StEntry;
+static int st_group(const StEntry *e)
+{
+    return e->abi == MODWERK_SETTING_GROUP_ABI || e->abi == MODWERK_SETTING_PRESET_ABI;
+}
 
 /* Masked, so a table change is never seen half-way (midi_generators.c's mg_generators). */
 static unsigned st_entries(const StEntry **out)
@@ -37,7 +41,7 @@ static unsigned st_entries(const StEntry **out)
     for (uintptr_t volatile *row = ST_ROW(); *row && n < MODWERK_SETTINGS_ROOM; ++row) {
         const StEntry *e = (const StEntry *)*row;
         if (!e->label || !e->label[0] || !e->apply) continue;
-        if (e->abi == MODWERK_SETTING_GROUP_ABI && !e->count && e->choices) {
+        if (st_group(e) && !e->count && e->choices) {
             const struct modwerk_setting_pages *group = (const void *)e->choices;
             if (group->page && group->choose) out[n++] = e;
         } else if (e->abi == MODWERK_SETTING_ABI && e->choices && e->count >= 2u && e->count <= MODWERK_SETTING_OPTIONS)
@@ -80,14 +84,34 @@ static void st_keep(uint32_t key, uint32_t choice)
     s[2u + 2u * at] = choice; /* the value first: a power cut between the two leaves the entry's old key or a free one */
     s[1u + 2u * at] = key;
 }
+#include "setting_presets.h"
 /* The choice in force for this record: the kept one when the record offers it. */
 static unsigned st_choice(const StEntry *e)
 {
-    uint32_t kept = st_kept(st_key(e->label));
-    return e->abi == MODWERK_SETTING_GROUP_ABI || kept < e->count ? (unsigned)kept : 0u;
+    uint32_t key = st_key(e->label), kept = st_kept(key);
+    if (e->abi == MODWERK_SETTING_PRESET_ABI && e->reserved)
+        return st_preset_choice(key, e->reserved, kept);
+    return st_group(e) || kept < e->count ? (unsigned)kept : 0u;
 }
 
 static uint32_t st_seen = 1u; /* the owner epoch the choices were last applied for; odd: never */
+/* Cached by the UI task whenever the installed table changes. EP0 reads only
+ * copied integers and refuses a snapshot from before the latest switch. */
+static volatile uint32_t st_preset_epoch = 1u;
+static uint32_t st_preset_keys[MODWERK_SETTINGS_ROOM], st_preset_values[MODWERK_SETTINGS_ROOM];
+static unsigned st_preset_count;
+unsigned modwerk_settings_presets(uint8_t *out)
+{
+    uint32_t epoch = ST_EPOCH();
+    if ((epoch & 1u) || st_preset_epoch != epoch) return 0;
+    out[0] = 'M'; out[1] = 'W'; out[2] = 'P'; out[3] = (uint8_t)st_preset_count;
+    for (unsigned i = 0; i < st_preset_count; ++i)
+        for (unsigned j = 0; j < 4; ++j) {
+            out[4 + 8*i + j] = (uint8_t)(st_preset_keys[i] >> (24 - 8*j));
+            out[8 + 8*i + j] = (uint8_t)(st_preset_values[i] >> (24 - 8*j));
+        }
+    return 4u + 8u * st_preset_count;
+}
 void modwerk_settings_tick(void)
 {
     const StEntry *e[MODWERK_SETTINGS_ROOM];
@@ -96,7 +120,17 @@ void modwerk_settings_tick(void)
     unsigned n = st_entries(e);
     if (ST_EPOCH() != epoch) return; /* it moved while the rows were read: the next tick */
     st_seen = epoch;
-    for (unsigned i = 0; i < n; ++i) e[i]->apply(st_choice(e[i]));
+    unsigned count = 0;
+    for (unsigned i = 0; i < n; ++i) {
+        if (e[i]->abi == MODWERK_SETTING_PRESET_ABI) {
+            st_preset_keys[count] = st_key(e[i]->label);
+            st_preset_values[count++] = e[i]->reserved;
+        }
+        e[i]->apply(st_choice(e[i]));
+    }
+    st_preset_count = count;
+    __asm__ volatile ("" ::: "memory");
+    st_preset_epoch = epoch;
 }
 unsigned modwerk_settings_count(void)
 {
@@ -120,7 +154,7 @@ unsigned modwerk_settings_field(unsigned i, unsigned field, struct modwerk_setti
     view->epoch = epoch;
     view->fields = 0;
     view->count = 0;
-    if (e->abi == MODWERK_SETTING_GROUP_ABI) {
+    if (st_group(e)) {
         const struct modwerk_setting_pages *group = (const void *)e->choices;
         struct modwerk_choice_page page = {0};
         group->page(st_choice(e), field, &page);
@@ -155,11 +189,13 @@ void modwerk_settings_choose(unsigned i, uint32_t epoch, unsigned field, unsigne
         choice >= view.count || i >= st_entries(entries) || ST_EPOCH() != epoch) return;
     const StEntry *e = entries[i];
     uint32_t value = choice;
-    if (e->abi == MODWERK_SETTING_GROUP_ABI) {
+    if (st_group(e)) {
         const struct modwerk_setting_pages *group = (const void *)e->choices;
         value = group->choose(st_choice(e), field, choice);
     }
-    st_keep(st_key(e->label), value);
+    if (e->abi == MODWERK_SETTING_PRESET_ABI && e->reserved)
+        st_save_preset(st_key(e->label), e->reserved, value);
+    else st_keep(st_key(e->label), value);
     e->apply(value);
 }
 void modwerk_settings_select(unsigned i, uint32_t epoch, unsigned choice)

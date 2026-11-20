@@ -319,10 +319,11 @@ struct modwerk_setting {
     uint32_t count;                     /* its choices, 2-6 */
     const char *const *choices;         /* each choice's name: up to 15 characters; the first is the one a new unit starts with */
     void (*apply)(unsigned choice);     /* put choice 0..count-1 in force */
-    uint32_t reserved;                  /* 0 */
+    uint32_t reserved;                  /* ABI 3: install preset, 0 for the instrument default */
 };
 #define MODWERK_SETTING_ABI 1u
 #define MODWERK_SETTING_GROUP_ABI 2u
+#define MODWERK_SETTING_PRESET_ABI 3u
 #define MODWERK_SETTING_FIELDS UINT32_MAX
 #define MODWERK_SETTING_PAGE_ROOM 11u
 struct modwerk_choice_page {

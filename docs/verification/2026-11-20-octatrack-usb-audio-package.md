@@ -81,6 +81,19 @@ After merging the cumulative base, the release build caught a difference in the 
 
 The cumulative 0.7.11 build (`61a2c3b75a848dec`) reproduced its native OS byte-for-byte with the browser builder on all seven legacy layouts. All seven shared the same controller links and module addresses. The five existing base-bound module entries now name this beta base. All 41 published package files matched their recorded hashes after rebuilding.
 
+## Migrated sets on the 0.3 release candidate
+
+The MKII RAM-booted base 0.7.11 `a2ae64eb82bcb93430ef62b80e4b80b738fb982c4a4594e50b051dcb6aed868f`. The native and browser-built OS had SHA-256 `cb5779ae78920845e4dd467eee45155eb7a93a4ea863401bade6db2368efce52`. The default 0.3.0-experimental module had SHA-256 `0ac4d6a58a437706e85ab8b577da26dfe88c5c866c5d7a008665fbe2fefcf11f`. Each trial used the installer to encode a saved 0.2 configuration into that module. The live preset, module inventory and host USB descriptor matched both saved configurations.
+
+| Saved configuration | Installed preset | Core Audio on macOS at 44.1 kHz | Undo |
+| --- | --- | --- | --- |
+| Outbox 8 with Main, Main, Off, Cue | `80a09940` | 89,600 eight-channel frames. Both Main pairs matched sample for sample and the Off pair was silent. Playback was stopped. | The original four interfaces and empty trial baseline returned. |
+| Computer with eight post-LEVEL stereo stems | `80432124` | 89,600 sixteen-channel frames. | **Failed.** Rollback and leaving upload mode were acknowledged. The stable set checksum returned to the empty baseline, then the device disappeared from USB and its panel froze. |
+
+Boot 725 retained freeze event 6477 at 191 seconds. The UI tick stopped for at least five seconds while the audio frame interrupt continued. The recorded loads were CPU 38.4%, DSP tracks 1–4 39.3%, and DSP tracks 5–8 38.1%. The record does not identify the instruction that stalled.
+
+The owner cold-started with USB disconnected, confirmed that the panel responded, then reconnected USB. The flashed base, all ten module identities, and the complete saved-set checksum matched the pre-trial record. Both trials ran in RAM. The Keep and power-on persistence tests for the candidate are pending. A physical Outbox 8 was unavailable. The freeze blocks release.
+
 ## Remaining verification
 
 A physical full-speed host, Windows/WASAPI after a channel-count change, and a Keep/removal lifecycle remain open. The full-set regression, soak and listening stages also remain open. The published site continues to use its existing base variants.

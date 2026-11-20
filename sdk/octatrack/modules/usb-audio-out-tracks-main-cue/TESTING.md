@@ -1,4 +1,12 @@
-# USB Audio 0.2 testing
+# USB Audio testing
+
+## 0.3.0-experimental release candidate, 20 November 2026
+
+**Hardware qualification failed during Undo.** Two saved 0.2 configurations restored the selected destination, layout and routing on an Octatrack MKII. macOS recorded 89,600 frames each on eight and sixteen channels. Undo restored USB after the Outbox trial. After the sixteen-channel post-LEVEL trial the panel froze and USB disappeared. A cold start restored the responsive instrument and all ten original modules. Keep and cold-start persistence of the candidate are still untested.
+
+Build identities, retained freeze diagnostics and the recovery check are in the [unit verification record](../../../../docs/verification/2026-11-20-octatrack-usb-audio-package.md#migrated-sets-on-the-03-release-candidate).
+
+## Historical 0.2 testing
 
 Version: `0.2.0-experimental`. Selected-layout source revision:
 `7b2984c859732ae6c797ae49c7d61d250b1b6519`.

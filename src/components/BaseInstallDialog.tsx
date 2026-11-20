@@ -60,7 +60,7 @@ const STILL_PREVIOUS_BASE = 'Your Octatrack still runs the base it had before, s
 /** Even the step base does not fit the unit's base: only the card is left. */
 const TOO_OLD_FOR_USB = 'The base on your Octatrack is too old to take this update over USB. Update from the card.'
 /** Before an update that installs USB Audio off over a base that had it, or may have had it. */
-const AUDIO_OFF_NOTE = 'USB Audio is off in this base by default. To keep using it, add the USB Audio module to your module set first; the update then installs your layout.'
+const AUDIO_OFF_NOTE = 'Load your module set after the base update to restore USB Audio. It will use the layout and Outbox assignments saved in your set. You can change them on the Octatrack under PROJ > MODWERK > SETTINGS > USB AUDIO.'
 /** Said before anything else in a browser without WebUSB (Safari, Firefox, any phone): the card is its way, not a failure. */
 const CARD_ROUTE = <><strong>USB needs {USB_BROWSERS}.</strong> This browser can’t connect to the Octatrack, so the card is your way here: install the base from the card in the steps below, then load your modules as one file on the card. To sync over USB later, open Modwerk in one of those browsers.</>
 /** Folded away below the update: what to do when it goes wrong. */

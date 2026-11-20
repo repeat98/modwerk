@@ -11,7 +11,7 @@ import { MODULES } from '../../catalog/modules.ts'
 import { inventoryChanges, type Inventory, type InventoryTarget } from '../../config/inventory.ts'
 import type { OctatrackLink, SetChange } from './octatrack-link.ts'
 import { RuntimeFeature, type MissingModule, type RuntimeCapabilities } from './upload-usb.ts'
-import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioPackageKind } from '../../config/usb-audio.ts'
+import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, USB_AUDIO_PACKAGED, usbAudioInstallPreset, usbAudioLayout, type UsbAudioPackageKind } from '../../config/usb-audio.ts'
 import { baseLayout, isPublishedBase, layoutIdentity, layoutName, MEMBER_LAYOUT, type BaseLayout } from './base-variants.ts'
 import { cardSetGeneration, encodeCardSet } from './card-set.ts'
 import { SET_MAX_ABI } from './set-package.ts'
@@ -21,7 +21,7 @@ import { overLimitMessage } from '../../catalog/set-limit.ts'
 export class ModuleSetError extends Error {}
 export interface RuntimePackage {
   bytes: number; sha256: string; path: string; name?: string
-  abi?: number; features?: number; sites?: number; copies?: number; fills?: number
+  abi?: number; features?: number; sites?: number; copies?: number; fills?: number; installPresets?: boolean
   /** ABI 9: the base DSP features the package's DSP code needs (BASE_DSP_FEATURES) and its count of DSP claims. */
   requires?: number; claims?: number
   /** ABI 10: its hook entries, which only an engine for the base's hook sites has (a base-bound controller's). */
@@ -45,6 +45,7 @@ export interface RuntimePackageManifest {
 }
 /** The layout number a USB Audio package carries (usb_audio_package.py: its source's layout define, plus one). */
 export const usbAudioLayoutNumber = (kind: UsbAudioPackageKind) => kind === 'configurable' ? 7 : usbAudioLayout(kind).define + 1
+const USB_AUDIO_SETTING_KEY = 0x8c3a257f // settings.c st_key("USB AUDIO")
 const LAYOUT_BY_NUMBER = new Map<number, UsbAudioPackageKind>(USB_AUDIO_LAYOUTS.map(item => [item.define + 1, item.id]))
 LAYOUT_BY_NUMBER.set(usbAudioLayoutNumber('configurable'), 'configurable')
 export class BaseUpdateRequired extends ModuleSetError {
@@ -71,8 +72,8 @@ export class SetLimitError extends ModuleSetError {}
 export const CURRENT_BASE: string = baseBinding.identity
 export const baseOutdated = (base?: string) => !!base && !isPublishedBase(base)
 /** The USB Audio layout a set asks of the base; undefined when it leaves USB Audio out (any layout's base takes it). */
-export const setLayout = (target: InventoryTarget): BaseLayout | undefined =>
-  target.moduleIds.includes(USB_AUDIO_MODULE) ? target.usbAudio?.layout ?? 'tracks-main-cue' : undefined
+export const setLayout = (target: InventoryTarget, packaged = USB_AUDIO_PACKAGED): BaseLayout | undefined =>
+  !packaged && target.moduleIds.includes(USB_AUDIO_MODULE) ? target.usbAudio?.layout ?? 'tracks-main-cue' : undefined
 
 /** A module's runtime id (sdk/runtime/loader/build.py module_id): the first four bytes of the SHA-256 of its catalogue
  * id, hex. The inventory names a module the catalogue does not know by this id. */
@@ -353,8 +354,13 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
         throw new ModuleSetError('This site doesn’t have the USB Audio package currently on your Octatrack, so it can’t safely replace it or undo that change.')
       if (wanted && wanted !== 'configurable' && !entry(wanted)) throw new ModuleSetError(`${layoutName(wanted)} isn’t published as a module package yet. Choose another USB Audio setup.`)
       const switchedOff = installed && !current.moduleIds.includes(USB_AUDIO_MODULE)
-      if (wanted && installed && wanted !== current.usbAudioLayout && !switchedOff) updates.push(USB_AUDIO_MODULE)
-      if (wanted !== current.usbAudioLayout || !installed) {
+      const changePreset = wanted === 'configurable' && current.usbAudioLayout === wanted && !!audio.configurable?.installPresets &&
+        Object.hasOwn(target, 'usbAudio') && current.usbAudioInstallPreset !== usbAudioInstallPreset(target.usbAudio)
+      if (current.usbAudioLayout === 'configurable' && audio.configurable?.installPresets &&
+          current.usbAudioInstallPreset === undefined && !switchedOff && (!wanted || changePreset))
+        throw new ModuleSetError('Reconnect the Octatrack to read the USB Audio routing before changing its installation.')
+      if (wanted && installed && (wanted !== current.usbAudioLayout || changePreset) && !switchedOff) updates.push(USB_AUDIO_MODULE)
+      if (wanted !== current.usbAudioLayout || !installed || changePreset) {
         if (wanted && (!installed || !switchedOff)) audioSteps.push({ id: USB_AUDIO_MODULE, name: name(USB_AUDIO_MODULE), add: entry(wanted), undo: installed ? entry(current.usbAudioLayout) : undefined })
         else if (!wanted && installed) audioSteps.push({ id: USB_AUDIO_MODULE, name: name(USB_AUDIO_MODULE), undo: entry(current.usbAudioLayout) })
       }
@@ -408,7 +414,7 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
   /** The base layout the set needs, when the connected base runs another (or isn't a published base at all). */
   function requireLayout(target: InventoryTarget, base?: string) {
     if (audioPackages) return // USB Audio is a package: its layout is the package's
-    const layout = setLayout(target)
+    const layout = setLayout(target, false)
     if (layout === undefined || base === undefined || baseLayout(base) === layout) return
     throw layoutIdentity(layout) ? new BaseLayoutRequired(layout) : new ModuleSetError(`${layoutName(layout)} can’t be installed over USB yet.`)
   }
@@ -427,7 +433,7 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     }
   }
   return {
-    ids, inventory, review, audioPackages,
+    ids, inventory, review, audioPackages, installPresets: !!audio.configurable?.installPresets,
     problem: (target: InventoryTarget, current: Inventory, capabilities?: RuntimeCapabilities, base?: string) => review(target, current, capabilities, base).problem,
     async prepare(full: InventoryTarget, current: Inventory, load = fetchPackage, capabilities?: RuntimeCapabilities, base?: string): Promise<{ name: string; changes: SetChange[] }> {
       const target = packagedTarget(full), { steps } = plan(target, current); requireBase(steps, capabilities, base); requireLayout(full, base)
@@ -440,12 +446,36 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
       })))
       // A removal, or a machine package replacing the one on the unit (it has the previous one as its undo), changes what a
       // track may be using; a new module cannot be in use yet.
-      return { name: target.name, changes: steps.map(step => ({ module: step.name, data: step.add ? packages.get(step.add)! : removalPackage(step.id),
-        undo: step.undo ? packages.get(step.undo)! : step.add ? removalPackage(step.id) : undefined, ...(!step.add || step.undo ? { replaces: true } : {}),
+      function configured(entry: RuntimePackage, preset: number) {
+        const data = packages.get(entry)!
+        return entry === audio.configurable && entry.installPresets ? audioWithPreset(data, preset) : data
+      }
+      return { name: target.name, changes: steps.map(step => ({ module: step.name, data: step.add ? configured(step.add, step.add === audio.configurable ? usbAudioInstallPreset(target.usbAudio) : 0) : removalPackage(step.id),
+        // A switched-off package is already held byte-for-byte in the unit's shelf.
+        // The atomic set transaction preserves it for rollback without a host copy.
+        undo: step.undo === audio.configurable && step.undo?.installPresets && current.offIds?.includes(step.id) &&
+          current.usbAudioInstallPreset === undefined ? undefined : step.undo ? configured(step.undo, current.usbAudioInstallPreset ?? 0) : step.add ? removalPackage(step.id) : undefined, ...(!step.add || step.undo ? { replaces: true } : {}),
         // USB Audio's package changes the unit's USB configuration: the base reconnects once (usb_function.c).
         ...(audioPackages && step.id === USB_AUDIO_MODULE ? { reconnects: true } : {}) })) }
     },
   }
+}
+
+/** Only the four-byte preset field of the installed settings record varies between sets.
+ * prepare() has already checked the complete canonical package against its manifest. */
+function audioWithPreset(data: Uint8Array, preset: number) {
+  if (!preset) return data
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength)
+  const index = siteEvents.events.find(event => event.event === 'ot_settings')?.index
+  const hooks = view.getUint32(20), header = HEADERS[view.getUint16(4)]
+  if (index === undefined || index < 4 || hooks <= index) throw invalidPackage()
+  const offset = view.getUint32(header + index * 4) & 0xffffff
+  const record = header + 4 * hooks + offset
+  if (offset + 24 > view.getUint32(8) || view.getUint32(record) !== 3 || view.getUint32(record + 20) !== 0)
+    throw invalidPackage()
+  const seeded = Uint8Array.from(data)
+  new DataView(seeded.buffer).setUint32(record + 20, preset)
+  return seeded
 }
 
 const catalogue = createRuntimeCatalogue(manifest)
@@ -482,7 +512,18 @@ export function moduleSetKit(link: OctatrackLink) {
     if (!modules) throw new ModuleSetError('This Octatrack’s base doesn’t list its modules. Install the latest Modwerk base, then try again.')
     // Undefined from a base before PROJ > MODWERK > MODULES, and when the list can't be read where the modules could
     // (a remote read-only session's scope has no OFF request): the unit's modules are still known, the off ones are not.
-    return inventoryFrom(modules, await link.off().catch(() => undefined))
+    const inventory: Inventory = inventoryFrom(modules, await link.off().catch(() => undefined))
+    if (inventory.usbAudioLayout === 'configurable' && inventory.moduleIds.includes(USB_AUDIO_MODULE)) {
+      if (catalogue.installPresets) {
+        for (let attempt = 0; attempt < 4; ++attempt) {
+          const presets = await link.settingPresets()
+          inventory.usbAudioInstallPreset = presets?.get(USB_AUDIO_SETTING_KEY)
+          if (inventory.usbAudioInstallPreset !== undefined) break
+          if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 80))
+        }
+      }
+    }
+    return inventory
   }
   return { readInventory, prepareUpdate: async (target: InventoryTarget) => {
     const limit = overLimitMessage(target.moduleIds, 'sync')

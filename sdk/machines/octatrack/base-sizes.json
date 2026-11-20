@@ -377,35 +377,11 @@
   },
   {
    "base": "0.7.11",
-   "identity": "61a2c3b75a848decfc29f5065127687e5c0f37582564d8b085696274f6dc6ed4",
+   "identity": "a2ae64eb82bcb93430ef62b80e4b80b738fb982c4a4594e50b051dcb6aed868f",
    "layouts": {
-    "tracks-main-cue": {
-     "main": 1330756,
-     "container": 811876
-    },
-    "tracks": {
-     "main": 1330609,
-     "container": 811776
-    },
-    "tracks-post": {
-     "main": 1332215,
-     "container": 813420
-    },
-    "main-cue": {
-     "main": 1330527,
-     "container": 811668
-    },
-    "main": {
-     "main": 1330387,
-     "container": 811496
-    },
-    "master": {
-     "main": 1330415,
-     "container": 811496
-    },
     "off": {
-     "main": 1329018,
-     "container": 809960
+     "main": 1329526,
+     "container": 810600
     }
    }
   }

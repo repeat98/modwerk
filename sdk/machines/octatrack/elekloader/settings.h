@@ -12,6 +12,7 @@
 void modwerk_settings_tick(void);
 /* The settings installed now, in table order: at most MODWERK_SETTINGS_ROOM. The page reads them once a draw or key. */
 unsigned modwerk_settings_count(void);
+unsigned modwerk_settings_presets(uint8_t *out);
 /* A single draw's copy of an installed setting. Do not retain pointers into module images across an Undo. */
 #define MODWERK_SETTING_OPTIONS 6u
 struct modwerk_setting_view {

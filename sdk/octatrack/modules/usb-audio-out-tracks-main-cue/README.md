@@ -1,6 +1,17 @@
-# USB Audio 0.2
+# USB Audio
 
-## Overview
+## Configurable module in the 0.3 release candidate
+
+On the Octatrack open **PROJ → MODWERK → SETTINGS**, highlight **USB AUDIO** and press **YES**. Each field opens a list of its choices. Use the arrows to browse, **YES** to select, and **NO** to go back.
+
+- **SEND TO** selects Computer or Outbox 8.
+- **LAYOUT** selects Tracks + Main + Cue, Tracks, Main + Cue, Main, or Track 8/Master. On the two track layouts, **TRACK TAP** offers PRE LEVEL and POST LEVEL. Main and Cue keep their original channel pairs.
+- **OUTPUT MODE** controls which channels send audio. OFF silences the stream.
+- For Outbox 8, assign a source to each of the four USB stereo pairs. You can send one source to several pairs, or set a pair to OFF. Map those USB pairs to the desired physical pairs once in Elektron's Outbox app. Afterward, choose the sources on the Octatrack.
+
+The installer reads existing sets' saved layouts, tap, destination and assignments. A classic set with no saved USB setup starts with eight pre-LEVEL track pairs plus Main and Cue. The 0.3 candidate is awaiting a fix for a freeze during Undo on the MKII. See the [hardware results](TESTING.md).
+
+## Released 0.2 workflow
 
 Send Octatrack audio over class-compliant USB at 44.1 kHz, 24 bits. Choose
 Computer for recording, or Outbox 8 for physical outputs. This experimental

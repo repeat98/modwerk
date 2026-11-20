@@ -12,6 +12,8 @@ static uintptr_t volatile table_row[12];
 static uint32_t host_mask(void) { CHECK(!masked); masked = 1; return 7u; }
 static void host_unmask(uint32_t m) { CHECK(masked && m == 7u); masked = 0; }
 static uint32_t host_epoch(void) { return epoch; }
+static uint32_t preset_store[1 + 3*32];
+#define ST_PRESETS preset_store
 #define ST_STORE ((volatile uint32_t *)store)
 #define ST_MASK() host_mask()
 #define ST_UNMASK(m) host_unmask(m)
@@ -150,6 +152,19 @@ int main(void)
     table_row[0] = (uintptr_t)&many[7];
     CHECK(modwerk_settings_read(0, &view) && view.active == 1u);
 
+    /* Two imported sets of the same installed module can remember distinct
+     * panel edits. Returning to the initial set recovers its own edit. */
+    table_row[0] = (uintptr_t)&group; table_row[1] = 0;
+    group.abi = MODWERK_SETTING_PRESET_ABI; group.reserved = 0x80000100u;
+    uint8_t presets[68]; epoch += 2;
+    CHECK(!modwerk_settings_presets(presets));
+    modwerk_settings_tick();
+    CHECK(modwerk_settings_presets(presets) == 12 && presets[3] == 1 && presets[8] == 0x80 && presets[10] == 1);
+    st_save_preset(st_key(group.label), group.reserved, 0x80123400u);
+    CHECK(st_choice(&group) == 0x80123400u);
+    group.reserved += 0x100; CHECK(st_choice(&group) < MODWERK_SETTING_OPTIONS);
+    st_save_preset(st_key(group.label), group.reserved, 0x80567800u);
+    group.reserved -= 0x100; CHECK(st_choice(&group) == 0x80123400u);
     if (failures) return 1;
     puts("settings: rows, kept choices and their application pass");
     return 0;
