@@ -442,6 +442,10 @@ int main(void)
     const uint32_t one_size = one->size;
     CHECK(modwerk_runtime_active() == 2 && one->id == 1 && two->id == 2 && stock[32] == 0x4e && stock[64] == 0x4e);
     CHECK(word(STOCK + 34) == (uint32_t)(uintptr_t)one->hook[RUNTIME_TICK] && word(STOCK + 66) == (uint32_t)(uintptr_t)two->hook[RUNTIME_TICK]);
+    unsigned next = 0;
+    CHECK(modwerk_runtime_next_hook(RUNTIME_TICK, &next) == one->hook[RUNTIME_TICK] && next == 1);
+    CHECK(modwerk_runtime_next_hook(RUNTIME_TICK, &next) == two->hook[RUNTIME_TICK] && next == 2);
+    CHECK(!modwerk_runtime_next_hook(RUNTIME_TICK, &next));
     /* A third patching bytes module 1 patches is refused before anything changes. */
     id = 3; begin(8, 0, 0, 0, 0, 1, 0xd3); site(STOCK + 34, 6);
     free = modwerk_runtime_free(0);
@@ -452,10 +456,14 @@ int main(void)
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED);
     CHECK(bytes_at(STOCK + 32, original + 32, 2) && stock[34] == 0x4e && modwerk_runtime_module(1) == two && stock[64] == 0x4e);
     CHECK(b->restore(0) && modwerk_runtime_module(0) == one && stock[32] == 0x4e && bytes_at(STOCK + 38, original + 38, 2));
+    next = 0;
+    CHECK(modwerk_runtime_next_hook(RUNTIME_TICK, &next) == one->hook[RUNTIME_TICK]);
     /* Removing module 1 leaves module 2 live; a new module takes the free position. */
     begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
     CHECK(!modwerk_runtime_module(0) && modwerk_runtime_module(1) == two && bytes_at(STOCK + 30, original + 30, 10) && stock[64] == 0x4e);
+    next = 0;
+    CHECK(modwerk_runtime_next_hook(RUNTIME_TICK, &next) == two->hook[RUNTIME_TICK] && next == 2);
     uint32_t largest;
     CHECK(modwerk_runtime_free(&largest) == RUNTIME_POOL_BYTES - two->size && largest == RUNTIME_POOL_BYTES - two->size - one_size); /* module 1 left a hole below 2 */
     id = 4; begin(8, 0, 0, 0, 0, 0, 0xd5);

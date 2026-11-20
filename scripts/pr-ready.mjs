@@ -20,7 +20,7 @@ const GENERATORS = [['licenses:generate'], ['machines:generate'], ['modules:gene
 // The checks that judge a module. A module pull request never edits them: a red check names the fix, and a wrong check is its own
 // Fix: pull request (AGENTS.md, "Setup and checks"). A module release still carries its builder list, assets, comparisons and test lists.
 const MODULE_FOLDER = new RegExp(`^sdk\\/(?:${alternation(moduleFolders())})\\/modules\\/[^/]+\\/|^sdk\\/drafts\\/[^/]+\\/`)
-const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates|dsp_register_contract)\.py$|scripts\/(?:modules|module-doctor|module-cpu-price|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|change-scope|machine-folders|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates|dsp-register-contract)\.py$)/
+const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates|dsp_register_contract)\.py$|scripts\/(?:modules|module-doctor|module-cpu-price|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|pr-check-plan|change-scope|machine-folders|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates|dsp-register-contract)\.py$)/
 /** The gate files a change edits while it also adds or changes a module; [] when it changes no module. */
 export function gateEdits(files) {
   return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(file => GATE.test(file)) : []
@@ -204,8 +204,8 @@ async function main(argv) {
   const verdict = readiness({ python, dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
-  // Once the work is ready, the agent asks whether to share the session with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
-  if (verdict.ok) { const sharing = await import('./agent-session.mjs'), preference = await sharing.readPreference(); if (preference !== 'never') verdict.notes.push(sharing.sharingLine(preference)) }
+  // Once the work is ready, the agent reviews its session and asks whether to share it with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
+  if (verdict.ok) { const sharing = await import('./agent-session.mjs'), preference = await sharing.readPreference(); verdict.notes.push(sharing.reviewLine); if (preference !== 'never') verdict.notes.push(sharing.sharingLine(preference)) }
   for (const line of verdict.notes) console.log('· ' + line)
   console.log(!verdict.ok ? 'Not ready yet.' : verdict.instrument
     ? 'Ready to open as a draft: the checks pass. Mark it ready for review once the exact build has run on a unit (above).'

@@ -128,6 +128,9 @@ int modwerk_runtime_owner_valid(const struct runtime_owner *);
  * its code runs from (owned_extent), and that allocation's canonical extent:
  * the pool's own base plus its offset, checked against the pool's ends. */
 int modwerk_runtime_owner_at(uintptr_t address,struct runtime_owner *);
+/* Stable lock held. `out` holds `length` bytes read at `address` (physical); the bytes that fall inside a site of
+ * the live module whose image is `image` become that site's stock bytes, as its switch out will leave them. */
+void modwerk_runtime_site_view(const void *image,uint32_t address,uint8_t *out,uint32_t length);
 int modwerk_runtime_owner_canonical(const struct runtime_owner *,uintptr_t *extent);
 /* Stable lock held. modwerk_runtime_owner_valid, trying the entry *hint first and leaving where it was found
  * there: one check while the ledger is unchanged. */
@@ -175,6 +178,9 @@ extern struct modwerk_runtime_api modwerk_runtime_api;
  * reclaimed only when no paused task holds an address inside it, so a hook
  * still running old code stays valid. */
 const struct runtime_module *modwerk_runtime_module(unsigned position);
+/* Tick, draw, key or encoder hook at or after *next, or 0. Start at position 0; each call advances
+ * past the handler it returns. Only positions are indexed, so the next call sees any live replacement. */
+uintptr_t modwerk_runtime_next_hook(enum runtime_event event, unsigned *next);
 unsigned modwerk_runtime_active(void);               /* modules live */
 unsigned modwerk_runtime_intact(void);               /* of them, those whose stock-code sites hold their patches */
 uint32_t modwerk_runtime_broken(void);               /* the first live module whose sites do not hold: its id, 0 none */

@@ -284,6 +284,9 @@ hook capacity and the production DSP/controller safety checks can refuse or
 delay a change. This does not enable the separate experimental volatile DSP
 journal or relax its trust and reclamation gates.
 
+On the Octatrack, close a module’s page before Undo. If a trial expires with
+the page open, close it and run `npm run device -- recover` to finish Undo.
+
 Octatrack request **38** returns a cached 40-byte `MWSD v1` baseline record
 (`magic, version, known, count u16, digest[32]`). The engine computes it; EP0
 only copies a complete record for the current owner epoch, otherwise stalls
