@@ -2,7 +2,7 @@
 import { DIGITAKT_MK2 } from '../../../vendor/elekloader/kit/src/devices.ts'
 import { Syx, packMain, verify, write } from '../../../vendor/elekloader/kit/src/syx.ts'
 import {
-  buildDt2RenderSection, combineDt2Plans, planDt2MachinePlayers, planDt2MachineSelectors, planDt2MachineWire, unpackDt2SharcSection,
+  buildDt2RenderSection, combineDt2Plans, DT2_MACHINE_TYPES_AT, planDt2MachinePlayers, planDt2MachineSelectors, planDt2MachineWire, unpackDt2SharcSection,
   type Dt2MachinePlayer, type Dt2RenderPlan,
 } from '../elektron/dt2-sharc.ts'
 import { ELE3_DEVICES } from '../elektron/ele3.ts'
@@ -51,7 +51,8 @@ export type Dt2SharcPart = { module: string; allocations: { address: number; byt
 // in the 32 words at `view` (its own magic first, then that track), which reach the ColdFire as core_machine_view.
 export const DT2_BASE_SHARC = {
   selectors: 0x200c0100, dispatcher: 0x200c1000, dispatcherData: 0x200c2000, wire: 0x200c2800, wireData: 0x200c2c00,
-  stepSamples: 0x200c2c20, viewTrack: 0x200c2c64, view: 0x200c2c68, end: 0x200c3000,
+  stepSamples: 0x200c2c20, viewTrack: 0x200c2c64, view: 0x200c2c68, trackTypes: 0x200c2c00 + 4 * DT2_MACHINE_TYPES_AT,
+  end: 0x200c3000,
 }
 
 const base64 = (text: string) => Uint8Array.from(atob(text), c => c.charCodeAt(0))
@@ -91,7 +92,8 @@ export async function planDt2MachineParts(sharc: Uint8Array, parts: readonly Dt2
   if (new Set(types).size !== types.length) throw new Error('Two modules add a player for the same machine type')
   const selectors = await planDt2MachineSelectors(sharc, DT2_BASE_SHARC.selectors, [0, 0, 0, 0])
   const dispatcher = players.length
-    ? await planDt2MachinePlayers(sharc, DT2_BASE_SHARC.dispatcher, DT2_BASE_SHARC.dispatcherData, players)
+    ? await planDt2MachinePlayers(sharc, DT2_BASE_SHARC.dispatcher, DT2_BASE_SHARC.dispatcherData, players,
+      DT2_BASE_SHARC.trackTypes)
     : null
   const wire = players.length ? await planDt2MachineWire(sharc, DT2_BASE_SHARC.wire, DT2_BASE_SHARC.wireData) : null
   return combineDt2Plans(selectors, dispatcher, wire, ...parts.map(part => ({ allocations: part.allocations })))

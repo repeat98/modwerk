@@ -211,13 +211,14 @@ export async function planDt2MachineSelectors(stock: Uint8Array, tableAddress: n
 }
 
 // The render pass calls the stock sample voice player once per voice (a type 25a CALL); R14 counts the 32 voices
-// down, voice v belongs to track v >> 1, and the track's raw machine type is the word at byte address TRACK_TYPES +
-// 4 * track (stock reads it as DM(M = track, I = TRACK_TYPES); the modifier is scaled, the address is in bytes).
-// Track 1 alone has the same word at TRACK_TYPES + track, so a test on track 1 cannot tell the two apart.
+// down, and voice v belongs to track v >> 1 (the setup loop at 0x1c2c94 sets up voices 2t and 2t + 1 from track t).
+// A voice's machine type is its track's word in the types the base's wire brings from the kit (`typesAddress`, a
+// byte address in L2). Not the sound chip's own word at 0x255970: that block is copied whole from each transfer
+// (0x1c3069) and held the added type for track 1 only, so a dispatcher reading it reached the player on track 1 alone
+// (a unit run with Mikrotakt on track 9 played SAMPLE).
 const PLAYER_CALL = 0x28000000 + 2 * 0x1c6b00
 const PLAYER_CALL_GUARD = '4e25f0a1e4197c2c190ef606f09623a9ecf94e7274608038c39d0f09514b6621'
 const STOCK_PLAYER = 0x1c4ecf
-const TRACK_TYPES = 0x255970
 const FIRST_ADDED_TYPE = 7, MAX_ADDED_TYPES = 4
 // Universal register codes, and the 32-bit instructions the dispatcher uses (parcels, little-endian bytes).
 const R0 = 0x00, R1 = 0x01, I0 = 0x10, M0 = 0x20, ASTATX = 0x76, STKYX = 0x78
@@ -235,7 +236,7 @@ export type Dt2MachinePlayer = { type: number; entry: number }
  * to the stock player, unchanged: a dispatcher at `codeAddress` (free L2) in place of the render pass's call, with
  * its save area and voice table at `dataAddress`. A player is entered and returns exactly as the stock player. */
 export async function planDt2MachinePlayers(
-  stock: Uint8Array, codeAddress: number, dataAddress: number, players: readonly Dt2MachinePlayer[],
+  stock: Uint8Array, codeAddress: number, dataAddress: number, players: readonly Dt2MachinePlayer[], typesAddress: number,
 ): Promise<Dt2RenderPlan> {
   if (await sha256Hex(stock) !== STOCK_SECTION) throw new Error('Unsupported Digitakt II SHARC image')
   if (!players.length || players.length > MAX_ADDED_TYPES || new Set(players.map(p => p.type)).size !== players.length ||
@@ -246,7 +247,7 @@ export async function planDt2MachinePlayers(
   if (await sha256Hex(readStored(stock, PLAYER_CALL, 6)) !== PLAYER_CALL_GUARD) throw new Error('SHARC player call guard mismatch')
   const save = dataAddress / 4, table = save + 8
   const data = new Uint8Array(4 * (8 + 32))
-  for (let voice = 0; voice < 32; voice++) new DataView(data.buffer).setUint32(4 * (8 + voice), TRACK_TYPES + 4 * (voice >> 1), true)
+  for (let voice = 0; voice < 32; voice++) new DataView(data.buffer).setUint32(4 * (8 + voice), typesAddress + 4 * (voice >> 1), true)
 
   const pc = programCounter(codeAddress)
   const parts: Uint8Array[] = []
@@ -297,6 +298,9 @@ const VIEW_NONE = 16
 // receives a record as 16-bit units, each word low half first (machine-frame.c).
 export const DT2_MACHINE_VIEW = 600
 const VIEW_WORDS = 32, VIEW_AT = 26, VIEW_SAVE = VIEW_AT + VIEW_WORDS, L1_SAVE = VIEW_SAVE + 2
+// Each track's machine type from the kit (tail words after the step words), where the player dispatcher reads them.
+export const DT2_MACHINE_TYPES_AT = L1_SAVE + 1
+const TYPE_WORDS = 16
 const REPLY_RECORDS = [0x266220, 0x267220] // L1 byte addresses
 
 /** A plan fragment for the base's machine wire: at the receive site, a receiver at `codeAddress` (free L2) copies the
@@ -339,6 +343,11 @@ export async function planDt2MachineWire(stock: Uint8Array, codeAddress: number,
   R0 = DM(I0, M0)
   NOP
 copied: DM(I1, M0) = R0
+  I1 = ${dataAddress + 4 * DT2_MACHINE_TYPES_AT}
+  LCNTR = ${TYPE_WORDS}, DO typed UNTIL LCE
+  R0 = DM(I0, M0)
+  NOP
+typed: DM(I1, M0) = R0
 absent:
   DM(${save + VIEW_SAVE}) = I2
   DM(${save + VIEW_SAVE + 1}) = L2
@@ -367,7 +376,7 @@ displaced: NOP
 `)
   const code = blocks[0].bytes
   code.set(displaced, (symbols.get('displaced')! - programCounter(codeAddress)) * 2)
-  const data = new Uint8Array(4 * (L1_SAVE + 1))
+  const data = new Uint8Array(4 * (DT2_MACHINE_TYPES_AT + TYPE_WORDS))
   for (let word = 0; word < STEP_WORDS - 1; word++) new DataView(data.buffer).setUint32(4 * (8 + word), 6000, true)
   new DataView(data.buffer).setUint32(4 * (8 + STEP_WORDS - 1), VIEW_NONE, true)
   // The view block until a player writes it: no player's magic, a recognisable pattern.

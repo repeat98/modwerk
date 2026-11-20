@@ -31,6 +31,7 @@
 #define SPEED_1X 2u
 #define SPEED_SLOWEST 6u
 #define DSP_QUEUE 0x400cd48cu              /* the transfer's halfword queue */
+#define SOUND_TYPE(track) (*(const volatile uint8_t *)(0x426532ecu + 0x450u * (track) + 0xa2u)) /* the kit's track sound */
 #define FIRST_TAIL_HALF 0x402u
 
 #define REPLY_VIEW 600u                    /* the reply word where the receiver puts the machine view */
@@ -81,6 +82,11 @@ void core_machine_frame(unsigned int data_bytes, const void *data, unsigned int 
     }
     const uint32_t view_track = core_machine_view_track;
     put(tail, DT2_MACHINE_WIRE + 18, view_track < TRACKS ? view_track : DT2_MACHINE_VIEW_NONE);
+    /* Each track's machine type, from the kit (the type byte of track t's sound), for the sound chip's player
+     * dispatcher: the sound chip's own copy of the types is not a table it keeps per track (MACHINES.md). */
+    for (unsigned int track = 0; track < TRACKS; ++track) {
+        put(tail, DT2_MACHINE_WIRE + 19 + track, SOUND_TYPE(track));
+    }
     /* The machine view the sound chip's receiver put in the last reply (words 600-631): the reply arrives as 16-bit
      * units, each sound-chip word low half first. */
     if (reply) {

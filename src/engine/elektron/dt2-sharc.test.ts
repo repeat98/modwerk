@@ -26,7 +26,7 @@ describe('Digitakt II SHARC plans', () => {
 
   it('refuses a SHARC section that is not the pinned stock image before reading it', async () => {
     await expect(planDt2MachineSelectors(new Uint8Array(64), 0x200c0100, [0])).rejects.toThrow('Unsupported Digitakt II SHARC image')
-    await expect(planDt2MachinePlayers(new Uint8Array(64), 0x200c1000, 0x200c2000, [{ type: 7, entry: 0xbe0858 }]))
+    await expect(planDt2MachinePlayers(new Uint8Array(64), 0x200c1000, 0x200c2000, [{ type: 7, entry: 0xbe0858 }], 0x200c2cf4))
       .rejects.toThrow('Unsupported Digitakt II SHARC image')
   })
 })
