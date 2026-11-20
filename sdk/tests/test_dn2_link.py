@@ -136,7 +136,7 @@ class Dn2Upload(unittest.TestCase):
         v = {flag[2:].split("=")[0]: int(flag.split("=")[1].rstrip("u"), 0) for flag in cflags if "=" in flag}
         pool, staging = (v["RUNTIME_POOL_AT"], v["RUNTIME_POOL_BYTES"]), (v["STAGING_AT"], v["STAGING_BYTES"])
         for at, size in (pool, staging):
-            self.assertGreaterEqual(at, 0x466b8c50)        # above what stock clears and uses (LOADER.md)
+            self.assertGreaterEqual(at, 0x46709400)        # above stock's DMA buffers and ring, either alias (LOADER.md)
             self.assertLessEqual(at + size, v["RAMBOOT_COPY_AT"])   # below the RAM boot's copy
         self.assertLessEqual(pool[0] + pool[1], staging[0])
 
