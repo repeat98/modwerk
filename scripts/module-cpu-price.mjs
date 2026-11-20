@@ -12,12 +12,29 @@ export const CPU_PRICE_PENDING_PATH = 'sdk/module-cpu-prices-pending.json'
 export const CPU_PRICE_PENDING_LISTED_BEFORE = '2026-11-17'
 export const CPU_PRICE_PENDING_REASON = 'price not yet measured'
 const PORTS = 'sdk/machines/octatrack/module-adapters'
+// device:price --write keeps its readings here, in the module's folder; the checks recompute the price from them.
+export const CPU_PRICE_RECORD = 'evidence/cpu-price.json'
+/** A manifest as device:price --write writes it: two-space JSON, \u-escaped when the text it came from was. */
+export function manifestJson(document, originalText) {
+  const json = JSON.stringify(document, null, 2) + '\n'
+  return /\\u[0-9a-fA-F]{4}/.test(originalText) ? json.replace(/[\u007f-\uffff]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')) : json
+}
+/** A manifest's text as it read before --write gave it a price; null when it names none. */
+export function manifestWithoutPrice(text) {
+  const document = JSON.parse(text)
+  if (!document.resources?.cpuPrice) return null
+  delete document.resources.cpuPrice
+  return manifestJson(document, text)
+}
+
+/** The price a device:price reading gives: the larger of what the module added at rest and in use, never below 0. */
+export const measuredPrice = result => Math.max(0, result.atRestAdds.frame, result.inUseAdds?.frame ?? 0)
 
 /** How to measure the price of a machine (true) or of any other module (false), for the messages. */
 export function cpuPriceHowTo(id, machine) {
   return machine
     ? 'measure what one track of it adds to the frame interrupt on a unit with npm run device -- do and guard (a trig on every step, every voice sounding, against the same pattern without those trigs; docs/MODULE_PERFORMANCE.md), then write resources.cpuPrice with "measure": "machine-render" in octamod.module.json and the same percent as reserved[0] of its machine descriptor (docs/MODULE_PERFORMANCE.md)'
-    : 'measure it on a unit with npm run device:price -- ' + id + ' (the frame interrupt\'s share it adds, installed and, for an effect, on one slot; docs/OCTATRACK_DRIVING.md), then write resources.cpuPrice with "measure": "frame-interrupt" in octamod.module.json (docs/MODULE_PERFORMANCE.md)'
+    : 'measure it on a unit with npm run device:price -- --write --base ID --scene TEXT ' + id + ' (the frame interrupt\'s share it adds, installed and, for an effect, on one slot; docs/OCTATRACK_DRIVING.md), which writes resources.cpuPrice ("measure": "frame-interrupt") and its readings in ' + CPU_PRICE_RECORD + ' (docs/MODULE_PERFORMANCE.md)'
 }
 
 /** The pending list: Map id -> reason. Throws on a list that is not plain. */
@@ -118,6 +135,11 @@ export function cpuPriceStatus({ root, document, pending, glue = null }) {
   if (!declared) return { state: 'fail', detail: 'it names no CPU price (resources.cpuPrice)', fix: howTo }
   if (machine && declared.measure !== 'machine-render') return { state: 'fail', detail: 'it is a machine, so its price is what one playing track adds ("measure": "machine-render"), not ' + declared.measure, fix: howTo }
   if (!machine && declared.measure !== 'frame-interrupt') return { state: 'fail', detail: 'it is not a machine, so its price is the frame interrupt\'s share ("measure": "frame-interrupt"); only a machine\'s descriptor carries a render price', fix: howTo }
+  if (declared.source.endsWith('.json')) { // a price device:price wrote: recomputed from its readings, never taken on trust
+    const record = readJson(resolve(root, 'sdk/octatrack/modules', id, declared.source))
+    if (record?.module !== id || !record.result?.atRestAdds) return { state: 'fail', detail: 'its price names ' + declared.source + ' as its source, which holds no device:price reading of ' + id, fix: howTo }
+    if (measuredPrice(record.result) !== declared.value) return { state: 'fail', detail: 'it names ' + declared.value + ' % of a frame, but the reading in ' + declared.source + ' gives ' + measuredPrice(record.result), fix: 'write the price with npm run device:price -- --write, never by hand' }
+  }
   const disagree = descriptors.find(item => item.price !== declared.value)
   if (disagree) return {
     state: 'fail',

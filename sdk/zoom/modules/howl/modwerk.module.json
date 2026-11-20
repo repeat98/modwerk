@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 3,
+  "id": "howl",
+  "name": "Howl",
+  "version": "2.0.0",
+  "machine": "zoom-ms-70cdr",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "themanro",
+    "name": "Roman Rusinov",
+    "credits": [
+      "Roman Rusinov and the ZoomMultistompZDL contributors",
+      "Roman Rusinov and the MultiStomp Editor contributors, editor artwork",
+      "Leemuzhko, effect runtime",
+      "Jannik Aßfalg, ZoomMultistompZDL toolchain"
+    ]
+  },
+  "maintainers": [
+    "themanro",
+    "repeat98"
+  ],
+  "source": {
+    "repository": "https://github.com/themanro/ZoomMultistompZDL",
+    "revision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+    "path": "src/custom/howl"
+  },
+  "presentation": {
+    "label": "HOWL",
+    "family": "Feedback",
+    "summary": "A Total Sonic Annihilation-style feedback loop that self-oscillates on demand.",
+    "overview": "A Total Sonic Annihilation-style feedback loop that self-oscillates on demand.",
+    "highlights": [
+      "Use short notes and bring feedback up gradually to hear when it starts sustaining."
+    ],
+    "usage": [
+      "Add Howl from the Delay group to a spare patch.",
+      "Use short notes and bring feedback up gradually to hear when it starts sustaining.",
+      "Compare the effect with bypass using the footswitch."
+    ]
+  },
+  "access": {
+    "location": "Delay group in the MS-70CDR effect list, under Howl.",
+    "steps": [
+      "Add Howl from the Delay group to a spare patch.",
+      "Use short notes and bring feedback up gradually to hear when it starts sustaining."
+    ],
+    "screenshots": [
+      "media/cover.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Tune",
+      "default": 17,
+      "doc": "params[5]. Oscillation/resonant frequency. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Anhil",
+      "default": 34,
+      "doc": "params[6]. Pole radius: short ring -> long howl. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Mix",
+      "default": 50,
+      "doc": "Dry/wet crossfade. Renamed from 'Level' so every effect in the pack ends with the same control. Range 0–100.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "2.10"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Hardware untested on the original MS-70CDR with OS 2.10.",
+      "This build has startup knob initialization disabled. Check saved settings after recalling a patch."
+    ]
+  },
+  "platform": {
+    "kind": "zdl",
+    "file": "Howl.ZDL",
+    "effectId": {
+      "gid": 8,
+      "fxid": 458
+    },
+    "effectVersion": "2.00",
+    "dspCost": 20.0,
+    "binary": {
+      "sha256": "2f8a67f2fc75d1bc37961c7f02db4ef24493362c80786c6e6400b1810254a341",
+      "bytes": 6274,
+      "release": {
+        "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+        "tag": "howl-2.00",
+        "asset": "Howl.ZDL"
+      }
+    },
+    "screen": "static",
+    "pedals": [
+      {
+        "machine": "zoom-ms-70cdr",
+        "firmware": "2.10",
+        "status": "untested",
+        "report": null
+      }
+    ]
+  },
+  "resources": {
+    "memoryBytes": 6274,
+    "fastBytes": null,
+    "load": {
+      "display": "DSP 20 of 225 per patch",
+      "method": "static",
+      "conditions": "The effect descriptor declares this cost. Audio load on the pedal is unmeasured."
+    }
+  },
+  "evidence": {
+    "tier": "emulator",
+    "moduleVersion": "2.0.0",
+    "sourceSha256": "2f8a67f2fc75d1bc37961c7f02db4ef24493362c80786c6e6400b1810254a341",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Ziddle passed the loader check and rendered 22,050 stereo frames. The compiled file passed the stock-code scan and MS-70CDR size limits. Hardware untested.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Add Howl from the Delay group to a spare patch.",
+          "Use short notes and bring feedback up gradually to hear when it starts sustaining.",
+          "Compare the effect with bypass using the footswitch."
+        ]
+      },
+      "screenshots": [
+        "media/cover.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "MIT AND BSD-3-Clause",
+    "file": "LICENSE",
+    "declaration": "Effect source and artwork are MIT licensed. The runtime uses MIT and BSD-3-Clause components. See LICENSE for the applicable notices and credits."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.png",
+      "kind": "thumbnail",
+      "caption": "Howl in the MultiStomp Editor",
+      "alt": "Howl editor illustration",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "https://github.com/themanro/ZoomMultistompZDL/blob/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/graphics/fx/howl.webp"
+    },
+    {
+      "path": "media/cover.png",
+      "kind": "screenshot",
+      "caption": "Howl embedded cover",
+      "alt": "The monochrome effect cover for Howl",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling.",
+      "capture": {
+        "type": "emulator",
+        "release": "2.10",
+        "moduleVersion": "2.0.0",
+        "imageSha256": "2f8a67f2fc75d1bc37961c7f02db4ef24493362c80786c6e6400b1810254a341",
+        "setup": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+      }
+    }
+  ]
+}

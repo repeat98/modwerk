@@ -7,12 +7,12 @@ import type { AudioPreviewClip } from './audio-preview'
 import './audio-preview.css'
 
 /** The dock is a sibling of the cover link, so seeking never opens the module page. */
-export function ModuleAudioCardCover({ id, name, href, onBrowse, inert, prepare, onPrepare, clip, children }: {
-  id: string; name: string; href: string; onBrowse?: () => void; inert?: boolean; prepare: boolean
+export function ModuleAudioCardCover({ id, name, summary, href, onBrowse, inert, prepare, onPrepare, clip, children }: {
+  id: string; name: string; summary: string; href: string; onBrowse?: () => void; inert?: boolean; prepare: boolean
   onPrepare: () => void; clip: AudioPreviewClip; children: ReactNode
 }) {
   return <div className="module-cover module-audio-cover" data-module={id} inert={inert} onPointerEnter={event => { if (event.pointerType !== 'touch') onPrepare() }} onFocus={onPrepare}>
-    <a className="module-audio-cover-link" href={href} onClick={onBrowse} onAuxClick={onBrowse} aria-label={'View ' + name + ' (audio preview available)'}>{children}</a>
+    <a className="module-audio-cover-link" href={href} onClick={onBrowse} onAuxClick={onBrowse} title={summary} aria-label={'View ' + name + ' (audio preview available)'}>{children}</a>
     <span className="audio-preview-hint" aria-hidden="true"><span className="audio-preview-hint-idle"><Icon name="play" size={13}/></span><span className="audio-preview-hint-playing"><Icon name="wave" size={13}/></span></span>
     <div className="audio-preview-dock"><AudioPreviewPlayer key={clip.id} clip={clip} name={name} prepare={prepare} variant="dock"/></div>
   </div>

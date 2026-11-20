@@ -32,7 +32,7 @@ export function trialVerdict(before: LogReading, after: LogReading, names?: (add
   const incidents = (after?.incidents ?? []).filter((incident: DeviceIncident) => incident.seq > seen && (FAILS.has(incident.kind) || WARNS.has(incident.kind)))
   const lines = incidents.map(incident => {
     const name = incident.kind === 'crash' && names?.(incident.a)
-    return `${FAILS.has(incident.kind) ? 'FAIL' : 'note'} +${incident.second}s ${SAID[incident.kind](incident.a)}${name ? ' (' + name + ')' : ''}`
+    return `${FAILS.has(incident.kind) ? 'FAIL' : 'note'} (boot ${incident.boot} +${incident.second}s) ${SAID[incident.kind](incident.a)}${name ? ' (' + name + ')' : ''}`
   })
   // A crash or stall record whose count moved, when no incident of its kind says so (a log that wrapped, or a record kept before its incident).
   const crash = after?.crash, stall = after?.stall

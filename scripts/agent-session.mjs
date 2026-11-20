@@ -7,6 +7,7 @@
 //   npm run session -- preview [--skip 3,7]   # what would be sent, written to ~/.cache/modwerk/session-preview.json
 //   npm run session -- share --note "…" [--skip 3,7] [--file <transcript>] [--agent claude-code|codex]
 //   npm run session -- list | get <id> | delete <id>
+//   npm run session -- review [--file <transcript>]   # where this session spent its time; printed here, nothing is sent
 //   npm run session -- pull                   # the owner: every shared session into ~/.cache/modwerk-local/sessions/,
 //                                             # signed in with the owner's site account (prompt, or MODWERK_EMAIL/PASSWORD)
 // Only the conversation is sent: the developer's prompts, the agent's replies and which tools ran and whether they failed.
@@ -19,6 +20,7 @@ import { gzipSync } from 'node:zlib'
 import { parseArgs } from 'node:util'
 import { pathToFileURL } from 'node:url'
 import { boardRequest, readToken, BoardError, BoardUnavailable } from './agent-board.mjs'
+import { formatReview, readCalls, reviewSession } from './agent-session-review.mjs'
 import { claudeProjectFolder, firmwareFindings, prepareSession, readClaudeTranscript, readCodexRollout, SESSION_CONSENT_VERSION, SESSION_GZIP_LIMIT, SESSION_NOTE_LIMIT } from '../src/community/agent-sessions.ts'
 
 const PREFERENCES = ['ask', 'always', 'never']
@@ -33,11 +35,14 @@ async function writePrivate(file, text) {
   await writeFile(file, text, { mode: 0o600 }); await chmod(file, 0o600)
 }
 
+/** What the agent does before its final message, whatever the developer chose about sharing (pr:ready prints it). */
+export const reviewLine = 'Session review: before your final message, run npm run session -- review, add what its figures cannot show, and tell the developer at most three things that cost time, each with its fix. A concrete fix goes in its own "Workflow: …" pull request (docs/AGENT_SESSIONS.md#review-the-session-first).'
+
 /** What the agent should do about sharing at the end of a task, in one line (pr:ready prints it too). */
 export function sharingLine(preference) {
   return preference === 'never' ? 'Session sharing: never. The developer chose not to be asked; do not offer it.'
     : preference === 'always' ? 'Session sharing: always. When the task is done, share this session yourself (npm run session -- share --note "…") and tell the developer in a line.'
-      : 'Session sharing: ask. When the task is done, ask the developer once whether to share this session with the owner, so they can remove what got in the way (npm run session -- share --note "…"; only the conversation is sent, docs/AGENT_SESSIONS.md). If they answer always or never, save it with npm run session -- prefer always|never.'
+      : 'Session sharing: ask. When the task is done, ask the developer once whether to share this session with the owner, and say why it helps: what slowed this session down stays in it unless it is shared, and the owner turns it into a guide edit, a check or a fix that spares their next session and every other developer (npm run session -- share --note "…"; only the conversation is sent, docs/AGENT_SESSIONS.md). If they answer always or never, save it with npm run session -- prefer always|never.'
 }
 
 /** The working directories this session may have started in: where npm was called, here, and the checkout's root. */
@@ -203,6 +208,11 @@ export async function main(argv = process.argv.slice(2)) {
   const [command = 'help', arg] = positionals
   const skip = (values.skip ?? '').split(',').filter(Boolean).map(Number).filter(Number.isInteger)
   if (command === 'status') { console.log(sharingLine(await readPreference())); return 0 }
+  if (command === 'review') {
+    const found = await findTranscript({ file: values.file, agent: values.agent })
+    for (const line of formatReview(reviewSession(readCalls((await readFile(found.file, 'utf8')).split('\n').filter(Boolean), found.agent)))) console.log(line)
+    return 0
+  }
   if (command === 'prefer') {
     if (!PREFERENCES.includes(arg)) { console.error('Choose ask, always or never.'); return 2 }
     await writePrivate(preferenceFile(), JSON.stringify({ sharing: arg }) + '\n')
@@ -256,7 +266,7 @@ export async function main(argv = process.argv.slice(2)) {
     console.log(`${count} shared sessions in ${folder} (INDEX.md lists them).`)
     return 0
   }
-  console.log('npm run session -- status | prefer ask|always|never | preview | share --note "…" [--skip 3,7] [--file <transcript>] | list | get <id> | delete <id> | pull')
+  console.log('npm run session -- review | status | prefer ask|always|never | preview | share --note "…" [--skip 3,7] [--file <transcript>] | list | get <id> | delete <id> | pull')
   return command === 'help' ? 0 : 2
 }
 

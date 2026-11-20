@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "module": "everb",
+  "version": "0.1.2-experimental",
+  "sourceSha256": "79eefc04afbab19f28a002d8b2031919d93ba42b598d1c613c80708e782b4f9f",
+  "scanRevision": "cc7cffc1a675a763c5b8d6fbe1659f2b322cc540",
+  "model": "DSP56300FM Table A-1 cycles and the A.2 and 3.5 stalls on one steady block of each --sweep setting; a model, not a measurement",
+  "dearest": {
+    "setting": "REV=ON/dear",
+    "settings": 8,
+    "instructions": 369.06,
+    "cycles": 664.88,
+    "stalls": 132.81,
+    "stallsByKind": {
+      "agu": 25.44,
+      "agu-lua": 29.94,
+      "arith": 74.75,
+      "arith-tcc": 1.56,
+      "transfer": 1.13
+    }
+  },
+  "stock": {
+    "comparator": "DARK REV",
+    "setting": "defaults/max",
+    "instructions": 197.44,
+    "cycles": 253.25,
+    "stalls": 14.69
+  }
+}

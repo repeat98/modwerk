@@ -9,7 +9,7 @@ import { checkChangelog } from './changelog.mjs'
 import { checkDocs } from './docs.mjs'
 import { appStagesFit, takeSlot, vitestWorkerBytes, workersFor } from './machine-slots.mjs'
 import { checkModuleChangelogs } from './module-changelogs.mjs'
-import { moduleScopeProblems } from './pr-ready.mjs'
+import { localPythonProblem, moduleScopeProblems } from './pr-ready.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const npmCli = process.env.npm_execpath
@@ -116,6 +116,11 @@ async function all(...steps) {
 
 // The combined module list and changelog are generated, never committed; write them as npm ci does before anything reads them.
 let passed = await run('prepare')
+// The module gates run in Python 3.10+; an older python3 (macOS's own is 3.9) would crash inside them with no word on why.
+if (!buildOnly && !suiteOnly && passed && (plan.metadata || plan.native)) {
+  const python = localPythonProblem(root)
+  if (python) { console.error(python); passed = false }
+}
 // Reject stale notices/catalog before generation can overwrite the evidence of staleness.
 if (!buildOnly && !suiteOnly && passed) {
   if (plan.metadata) passed = await all(() => run('licenses:check'), () => run('machines:check'), () => run('modules:check', base ? ['--base', base] : []))
@@ -129,7 +134,8 @@ if (!buildOnly && !suiteOnly && !documentationOnly && passed && (!scope || scope
   try { console.log(checkBaseSize(root)) } catch (error) { console.error('Base size: ' + error.message); passed = false }
 }
 // Finish generated notice/catalog/media writes before lint, tests, typecheck or bundling read them.
-if (passed && !documentationOnly && plan.metadata) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
+// The bundle imports the generated media too, so a frontend-only change needs the writes as much as a module change does.
+if (passed && !documentationOnly && (plan.metadata || plan.bundle)) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
 // Every path, including documentation-only checks and release builds, requires current-version notes and documents within their size.
 if (passed && !suiteOnly) passed = await changelogs()
 // In a pull request's CI run, a contributor's module pull request carries no check that judges modules and no base change;

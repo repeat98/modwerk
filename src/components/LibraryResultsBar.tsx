@@ -29,7 +29,10 @@ export function LibraryResultsBar({ summary, sort, onSortChange, family, onFamil
   const sortShort = period && period.days ? sortOption.short + ' · ' + period.short : sortOption.short
   const close = useCallback(() => { setOpen(null); trigger.current?.focus() }, [])
   function show(sheet: 'sort' | 'type', button: HTMLButtonElement) { trigger.current = button; setOpen(sheet) }
-  const typeOptions: SheetOption[] = [{ value: 'all', label: 'All types', count: allCount }, ...families.map(option => ({ value: option.value, label: option.value, count: option.count }))]
+  const typeOptions: SheetOption[] = [
+    { value: 'all', label: 'All types', count: allCount },
+    ...[...families].sort((a, b) => a.value.localeCompare(b.value)).map(option => ({ ...option, label: option.value })),
+  ]
   return <div className="library-results-bar">
     <span className="library-results-summary" aria-live="polite">{summary}</span>
     {!disabled && <>
