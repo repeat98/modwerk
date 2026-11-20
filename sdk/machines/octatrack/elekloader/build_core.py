@@ -995,7 +995,12 @@ TRANSITION_EDITS = {
         # request's kind, and an automatic one commits before the stock setter publishes the pick.
         ('    if(phase) { bytes(queued_ids,s->target,16); queued_token=token; return DL_SELECT_WAIT; }\n',
          '    if(phase) { bytes(queued_ids,s->target,16); queued_token=token; queued_auto=0; return DL_SELECT_WAIT; }\n'),
-        ('    reinit();\n    if(phase) return;\n', '    reinit();\n    if(phase || queued_token) return;\n'),
+        ('    reinit();\n    if(phase) return;\n',
+         '    reinit();\n'
+         '    /* Stock rewrites the live slots and the bank during a project load. Keep unbound slots dry,\n'
+         '     * then plan their residency from the completed project rather than from intermediate Parts. */\n'
+         '    int modwerk_fxmap_loading(void);\n'
+         '    if(phase || queued_token || modwerk_fxmap_loading()) return;\n'),
     ),
 }
 for _name, _edits in TRANSITION_EDITS.items():
