@@ -17,6 +17,8 @@
     dn2_link.py try MODULE.mwrm [--seconds N] [--keep]
                                      # armed, stopped: load a module to RAM for a trial, watch it N seconds (the
                                      # test value), then roll it back, or with --keep keep it until a power cycle
+    dn2_link.py remove MODULE.mwrm [--seconds N] [--keep]
+                                     # the same as a trial of that module's removal: --keep removes it for good
     dn2_link.py keep / undo          # keep, or roll back, the open trial (a trial a host leaves for 10 s rolls back)
 Keys and turns need SETTINGS > REMOTE CTRL on (it is at every boot); a person at the panel stops them for 3 s.
 
@@ -221,6 +223,14 @@ CHUNK = 2048                            # bytes a frame: about 2.4 KB of SysEx, 
 FIELDS = ('result', 'phase', 'known', 'generation', 'last', 'current', 'received', 'capacity')
 
 
+def removal(module):
+    """The package that removes a module: ABI 4 with no image, hooks or sites, and the module's id
+    (sdk/runtime/loader/README.md), taken from an ABI 4 file of it."""
+    if len(module) < 32 or module[:4] != b'MWRM' or struct.unpack('>H', module[4:6])[0] < 4:
+        raise ValueError('not an ABI 4 runtime module')
+    return b'MWRM' + struct.pack('>H', 4) + bytes(22) + module[28:32]
+
+
 def frame(command, transaction, session, body=b''):
     return b'MWUP' + struct.pack('>HHII', 1, MU[command], transaction, len(body)) + session + body
 
@@ -321,10 +331,11 @@ def main():
     sub.add_parser('ramboot').add_argument('image')
     sub.add_parser('bootdiag')
     sub.add_parser('loader')
-    trial = sub.add_parser('try')
-    trial.add_argument('module')
-    trial.add_argument('--seconds', type=float, default=5)
-    trial.add_argument('--keep', action='store_true')
+    for name in ('try', 'remove'):
+        trial = sub.add_parser(name)
+        trial.add_argument('module')
+        trial.add_argument('--seconds', type=float, default=5)
+        trial.add_argument('--keep', action='store_true')
     sub.add_parser('keep')
     sub.add_parser('undo')
     diag = sub.add_parser('diag')
@@ -378,10 +389,12 @@ def main():
         r = finish(a.cmd == 'keep', a.port)
         print('%s: phase %s, live set %s' % ('kept' if a.cmd == 'keep' else 'rolled back', MU_PHASE[r['phase']], r['active'].hex()[:16]))
         return
-    if a.cmd == 'try':
+    if a.cmd in ('try', 'remove'):
         package = open(a.module, 'rb').read()
+        if a.cmd == 'remove':
+            package = removal(package)
         load(package, a.port)
-        print('trial: %s is live (%d bytes)' % (a.module, len(package)))
+        print('trial: %s %s' % (a.module, 'is live (%d bytes)' % len(package) if a.cmd == 'try' else 'is removed'))
         end = time.time() + a.seconds
         while True:
             _, _, _, p = ask('ident', port=a.port)
@@ -393,7 +406,8 @@ def main():
                 break
             time.sleep(1.0)
         r = finish(a.keep, a.port)
-        print('%s; phase %s' % ('kept until a power cycle' if a.keep else 'rolled back', MU_PHASE[r['phase']]))
+        done = ('removed until a power cycle brings the flashed base back' if a.cmd == 'remove' else 'kept until a power cycle') if a.keep else 'rolled back'
+        print('%s; phase %s' % (done, MU_PHASE[r['phase']]))
         return
     if a.cmd == 'freeze':
         ok('freeze', int(a.seconds * 1500), port=a.port)

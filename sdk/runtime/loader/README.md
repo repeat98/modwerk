@@ -375,7 +375,12 @@ A machine provides, next to its base:
   and calls its hook.
 
 The Octatrack's glue is
-[`sdk/machines/octatrack/elekloader/runtime.c`](../../machines/octatrack/elekloader/runtime.c).
+[`sdk/machines/octatrack/elekloader/runtime.c`](../../machines/octatrack/elekloader/runtime.c), the Digitone II's
+[`sdk/machines/digitone-ii/elekloader/base/runtime.c`](../../machines/digitone-ii/elekloader/base/runtime.c)
+([LOADER.md](../../machines/digitone-ii/LOADER.md)). A base whose area cannot hold the pool names RAM nothing else
+uses with `RUNTIME_POOL_AT`, and a base built by `npm run machine:base` stages these sources beside its own with
+base.json's dev `shared`. Find every task the kernel creates from its task-creation calls, not from the ready lists:
+a waiting task is in none of them.
 Key codes, encoder numbers, the frame layout and stock code addresses are the
 machine's own, so a module is built for one machine and OS.
 

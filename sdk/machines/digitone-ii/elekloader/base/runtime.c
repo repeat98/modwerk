@@ -154,8 +154,9 @@ void mw_runtime_draw(void *bmp, void *ctrl)
         if (f) ((void (*)(unsigned char *))f)((unsigned char *)bmp);
     }
 }
-/* ev_key, ev_enc: f(brain, event); the key or encoder at event + 12, a key's flags (1 press, 0x10 release) or an
- * encoder's delta (its top byte) at + 16. */
+/* ev_key, ev_enc: f(brain, event); the key or encoder at event + 12, and at + 16 a key's flags (1 press, 0x10
+ * release) or a turn's delta in the encoder's raw counts, as the Digitakt II's mods read it (euclidean-scale): the
+ * UI loop has made it a plain int32 by then. A module's module_enc gets those counts. */
 int mw_runtime_key(void *brain, char *event)
 {
     int code = *(int32_t *)(event + 12), pressed = *(int32_t *)(event + 16) & 1;
@@ -168,7 +169,7 @@ int mw_runtime_key(void *brain, char *event)
 }
 int mw_runtime_enc(void *brain, char *event)
 {
-    int encoder = *(int32_t *)(event + 12), delta = *(int32_t *)(event + 16) >> 24;
+    int encoder = *(int32_t *)(event + 12), delta = *(int32_t *)(event + 16);
     (void)brain;
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
         uintptr_t f = hook(i, RUNTIME_ENC);

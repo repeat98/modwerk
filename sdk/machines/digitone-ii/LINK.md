@@ -14,7 +14,7 @@ python3 sdk/machines/digitone-ii/tools/dn2_link.py turn A 8        # encoders A-
 
 | Request | cmd | What comes back |
 | --- | --- | --- |
-| `ident` | 0x01 | link version, link messages received, dropped (ring full or too long), ticks, armed, a person at the unit, presses and turns by a person, events posted, requests refused |
+| `ident` | 0x01 | link version, link messages received, dropped (ring full or too long), ticks, armed, a person at the unit, presses and turns by a person, events posted, requests refused, RAM boot status and image, the boot record's address, modules live, the address of the modules' test value |
 | `disarm` | 0x02 | lets go of every key the link holds and turns the arm off |
 | `key ID FLAGS` | 0x10 | armed: a panel key message, flags 0x01 press, 0x10 release; a held key reads as held to stock's is_key_held |
 | `enc N DELTA` | 0x11 | armed: an encoder turn, 1-8 A-H, 9 LEVEL |
@@ -23,6 +23,7 @@ python3 sdk/machines/digitone-ii/tools/dn2_link.py turn A 8        # encoders A-
 | `freeze N` | 0x23 | armed: the next UI tick stands still N frames (at most 15 s), to test FREEZE logging |
 | `ramboot ULEN UCRC CLEN CCRC` | 0x14 | armed: YES at UPGRADE OS NOW?, and the staged image boots from RAM instead of being flashed (below) |
 | `mem ADDR N` | 0x21 | the address, then up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
+| `upload FRAME` | 0x30 | armed: one frame of the runtime loader's upload controller, 7-bit packed; the reply holds its response, packed ([LOADER.md](LOADER.md)) |
 
 `screen` is the host's: it reads stock's frame pointer and the frame through `mem` (no command of its own on the unit),
 so a draw between its reads can tear a frame. Stock keeps two frame pointers side by side at 0x402a10c8 and sends the

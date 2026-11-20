@@ -38,9 +38,6 @@ class Dn2Link(unittest.TestCase):
         self.assertIsNone(link.parse(link.request(9, "mem", 0, 1)))   # a request is not a reply
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class Dn2Screen(unittest.TestCase):
     def test_frame_rows_reads_the_frame_column_by_column_top_row_first(self):
@@ -88,3 +85,61 @@ class Dn2Diagnostics(unittest.TestCase):
         self.assertEqual(link.IMAGE_MAX, recipe["UPLOAD_AT"] - 0x40000400)
         self.assertEqual(link.CONTAINER_MAX, recipe["CONTAINER_MAX"])
         self.assertLessEqual(recipe["RAMBOOT_COPY_AT"] + recipe["CONTAINER_MAX"], 0x47f00000)   # below the mod area
+
+
+class Dn2Upload(unittest.TestCase):
+    """The runtime loader's upload controller over the link's upload command (link.c, runtime.c)."""
+
+    def test_a_frame_is_the_controllers_wire_v1_and_crosses_the_link_packed(self):
+        session = bytes(range(32))
+        frame = link.frame("chunk", 7, session, b"\x00\x00\x00\x00" + bytes(range(256)))
+        self.assertEqual(frame[:4], b"MWUP")
+        self.assertEqual(frame[4:16], bytes([0, 1, 0, 3, 0, 0, 0, 7, 0, 0, 1, 4]))
+        self.assertEqual(frame[16:48], session)
+        request = link.request(3, "upload", raw=link.pack7(frame))
+        self.assertEqual(request[7], 0x30)
+        self.assertTrue(all(b < 0x80 for b in request[1:-1]))
+        self.assertEqual(link.unpack7(request[8:-1])[:len(frame)], frame)
+
+    def test_the_largest_frame_fits_the_links_upload_slot(self):
+        import re
+        source = (APP / "sdk/machines/digitone-ii/elekloader/base/link.c").read_text()
+        self.assertIn("#define UPLOAD_IN (HEADER + PACKED(MU_WIRE_MAX) + 1)", source)
+        wire_max = 48 + 4 + 4096                           # sdk/runtime/upload/wire.h: MU_WIRE_MAX
+        self.assertIn("#define MU_WIRE_MAX (MU_WIRE_HEADER + 4u + MU_MAX_CHUNK)", (APP / "sdk/runtime/upload/wire.h").read_text())
+        largest = len(link.request(0, "upload", raw=link.pack7(link.frame("chunk", 1, bytes(32), bytes(4 + link.CHUNK)))))
+        self.assertLessEqual(largest, 8 + (wire_max + 6) // 7 * 8 + 1)
+        self.assertLessEqual(largest, 8192)                # stock passed 8192-byte link messages on a unit
+        self.assertTrue(re.search(r"#define HOST_TICKS 300\b", source))
+
+    def test_a_response_reads_its_fields(self):
+        import struct
+        data = b"MWUR" + struct.pack(">HHII", 1, 5, 7, 128) + struct.pack(">8I", 12, 7, 0, 3, 6, 7, 88, 262144) + bytes(96)
+        r = link.response(data)
+        self.assertEqual((r["command"], r["result"], r["phase"], r["received"], r["capacity"]), (5, 12, 7, 88, 262144))
+        with self.assertRaises(ValueError):
+            link.response(b"MWUP" + bytes(140))
+
+    def test_a_removal_is_an_empty_abi_4_package_with_the_modules_id(self):
+        module = b"MWRM" + bytes([0, 4]) + bytes(22) + bytes([0x6c, 0x99, 0x7e, 0x9d]) + bytes(56)
+        gone = link.removal(module)
+        self.assertEqual(len(gone), 32)
+        self.assertEqual(gone[:6], b"MWRM\x00\x04")
+        self.assertEqual(gone[6:28], bytes(22))
+        self.assertEqual(gone[28:], bytes([0x6c, 0x99, 0x7e, 0x9d]))
+        with self.assertRaises(ValueError):
+            link.removal(b"MWRM" + bytes([0, 3]) + bytes(26))
+
+    def test_the_pool_and_staging_lie_in_ddr_stock_leaves_alone_and_apart(self):
+        import json
+        cflags = json.loads((APP / "sdk/machines/digitone-ii/elekloader/base.json").read_text())["dev"]["cflags"]
+        v = {flag[2:].split("=")[0]: int(flag.split("=")[1].rstrip("u"), 0) for flag in cflags if "=" in flag}
+        pool, staging = (v["RUNTIME_POOL_AT"], v["RUNTIME_POOL_BYTES"]), (v["STAGING_AT"], v["STAGING_BYTES"])
+        for at, size in (pool, staging):
+            self.assertGreaterEqual(at, 0x466b8c50)        # above what stock clears and uses (LOADER.md)
+            self.assertLessEqual(at + size, v["RAMBOOT_COPY_AT"])   # below the RAM boot's copy
+        self.assertLessEqual(pool[0] + pool[1], staging[0])
+
+
+if __name__ == "__main__":
+    unittest.main()
