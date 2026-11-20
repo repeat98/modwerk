@@ -3,7 +3,7 @@
  * 2026: one SETTINGS row for every module, and the base keeps the choice through a power cycle).
  *
  * A module contributes one struct modwerk_setting: a label, two to six choice names and apply(choice). The base lists
- * the settings (status.c's page), calls apply when the player takes the next choice, and keeps the choice in battery
+ * the settings (status.c's page), calls apply when the player confirms a choice, and keeps the choice in battery
  * RAM under the label's hash, so a module replaced by a newer version or by another build of itself (USB Audio in
  * another layout) keeps its setting, and one that is removed and installed again finds it. After every change of the
  * installed modules each setting's kept choice is applied again: a module starts with its first choice until then,
@@ -27,7 +27,6 @@
 #define ST_ROW() modwerk_runtime_event_row[ST_TABLE]
 #endif
 #define ST_MAGIC 0x4d575331u /* "MWS1" */
-#define ST_CHOICES 6u
 typedef struct modwerk_setting StEntry;
 
 /* Masked, so a table change is never seen half-way (midi_generators.c's mg_generators). */
@@ -37,7 +36,7 @@ static unsigned st_entries(const StEntry **out)
     uint32_t mask = ST_MASK();
     for (uintptr_t volatile *row = ST_ROW(); *row && n < MODWERK_SETTINGS_ROOM; ++row) {
         const StEntry *e = (const StEntry *)*row;
-        if (e->abi == MODWERK_SETTING_ABI && e->label && e->label[0] && e->choices && e->apply && e->count >= 2u && e->count <= ST_CHOICES)
+        if (e->abi == MODWERK_SETTING_ABI && e->label && e->label[0] && e->choices && e->apply && e->count >= 2u && e->count <= MODWERK_SETTING_OPTIONS)
             out[n++] = e;
     }
     ST_UNMASK(mask);
@@ -100,23 +99,34 @@ unsigned modwerk_settings_count(void)
     const StEntry *e[MODWERK_SETTINGS_ROOM];
     return st_entries(e);
 }
-const char *modwerk_settings_name(unsigned i)
+static void st_text(char out[16], const char *name)
 {
-    const StEntry *e[MODWERK_SETTINGS_ROOM];
-    return i < st_entries(e) ? e[i]->label : "";
+    unsigned j = 0;
+    while (name && j < 15u && name[j]) { out[j] = name[j]; ++j; }
+    out[j] = 0;
 }
-const char *modwerk_settings_choice(unsigned i)
+unsigned modwerk_settings_read(unsigned i, struct modwerk_setting_view *view)
 {
-    const StEntry *e[MODWERK_SETTINGS_ROOM];
-    if (i >= st_entries(e)) return "";
-    const char *name = e[i]->choices[st_choice(e[i])];
-    return name ? name : "";
+    const StEntry *entries[MODWERK_SETTINGS_ROOM];
+    uint32_t epoch = ST_EPOCH();
+    if ((epoch & 1u) || i >= st_entries(entries)) return 0;
+    uint32_t mask = ST_MASK();
+    if (epoch != ST_EPOCH()) { ST_UNMASK(mask); return 0; }
+    const StEntry *e = entries[i];
+    view->epoch = epoch;
+    view->count = e->count;
+    view->active = st_choice(e);
+    st_text(view->label, e->label);
+    for (unsigned j = 0; j < e->count; ++j) st_text(view->choices[j], e->choices[j]);
+    ST_UNMASK(mask);
+    return 1;
 }
-void modwerk_settings_next(unsigned i)
+void modwerk_settings_select(unsigned i, uint32_t epoch, unsigned choice)
 {
-    const StEntry *e[MODWERK_SETTINGS_ROOM];
-    if (i >= st_entries(e)) return;
-    unsigned next = (st_choice(e[i]) + 1u) % e[i]->count;
-    st_keep(st_key(e[i]->label), next);
-    e[i]->apply(next);
+    const StEntry *entries[MODWERK_SETTINGS_ROOM];
+    if ((epoch & 1u) || i >= st_entries(entries) || epoch != ST_EPOCH()) return;
+    const StEntry *e = entries[i];
+    if (choice >= e->count) return;
+    st_keep(st_key(e->label), choice);
+    e->apply(choice);
 }

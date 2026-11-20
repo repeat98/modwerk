@@ -134,7 +134,7 @@ Keep one uploader owner throughout a retained trial. A second
 first transport retains its cached counter. That can make its next ENTER reuse
 the second client's sequence and receive a stale HELLO result. Shared observers
 may read identity, inventory and load or drive panel requests; do not SUBMIT
-another upload frame while the first client retains ownership.
+another upload frame while the first client retains ownership. Close paired Modwerk browser tabs before a native USB Audio trial. When the unit reconnects with new audio interfaces, a paired tab can claim the vendor interface and run its unfinished-sync recovery.
 
 After an unplug, a crash restart or a RAM boot, the bridge can hold a dead handle; `pkill -f usb_bridge;
 pkill -f '^node scripts/device.mjs serve'` and the loop starts both again. Anchor the pattern: without `^` it also

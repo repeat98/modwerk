@@ -120,7 +120,7 @@ d = await diag()
 assert.deepEqual([d.value >>> 16 & 0xff, d.value >>> 8 & 0xff], [1, 2], 'ev_usb_control: asked twice, answered once')
 assert.equal((await transport.identify()).base, identity.base) // the control endpoint answers after the function's stall
 await stopping(() => session.holdTrial()); await stopping(() => session.rollback())
-;({ seen, now } = await settle('rollback', 0))
+;({ now } = await settle('rollback', 0))
 describes(now, false)
 assert.equal(now.cfg.toString('hex'), first.cfg.toString('hex'))
 await session.leaveUploadMode()

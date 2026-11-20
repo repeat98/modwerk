@@ -1,8 +1,9 @@
 # Octatrack: USB Audio as a module (design, for owner review)
 
-Status, 20 November 2026: decided ([decision](decisions/2026-11-20-usb-audio-is-a-module.md)), not built into any
-published base. A base-side prototype from 12 November sits on the unpushed branch `base/usb-audio-module`; it ran
-in the emulator only, and nothing here was seen on a unit. Addresses are OS 1.40C.
+Status, 20 November 2026: [decision](decisions/2026-11-20-usb-audio-is-a-module.md), development branch
+`base/usb-audio-module`, draft #1848. The 20-channel trial recorded on a real MKII with macOS. The four-channel
+trial rolled back during enumeration on two runs ([unit record](verification/2026-11-20-octatrack-usb-audio-package.md)).
+Players still use the published base variants. Addresses are OS 1.40C.
 
 ## Today
 
@@ -77,7 +78,8 @@ Two things it found in the emulator shape the rest:
   module id; changing it replaces the package and reconnects.
 - **The player switches it on the Octatrack, in the Modwerk settings** (owner, 20 November 2026). The base has one
   row, PROJ > MODWERK > SETTINGS, for every module that has a setting (table `ot_settings`, `settings.c`): each
-  setting shows its label and the choice in force, and YES takes the next choice at once. The base keeps the
+  module has its own row. YES opens USB AUDIO and shows every available choice with the active one marked. UP and
+  DOWN browse, YES applies the highlighted choice, and NO returns to SETTINGS. The base keeps the
   choice in battery RAM under the label, through power cycles and module updates, and applies it again after
   every change of the installed modules. USB Audio offers ALL CHANNELS and OFF in every layout and MAIN + CUE ONLY
   in the twenty-channel one, read by the producer through #1517's seams. None of them changes a descriptor, so
@@ -120,7 +122,9 @@ every module. A set that names a layout keeps naming it.
 
 ## Steps
 
-Steps 1 to 3 are built and seen in the emulator only (20 November 2026, draft #1848); none ran on a unit.
+Steps 1 to 3 ran in the emulator. On the Octatrack MKII, all six layouts recorded on macOS and Undo restored the
+original configuration. Main + Cue passed three repeats with one USB client after two earlier rollbacks with a paired
+browser open. The [hardware record](verification/2026-11-20-octatrack-usb-audio-package.md) includes the package hashes and settings measurements.
 
 1. Bring `base/usb-audio-module` onto current `main`, add the frame event, and run its emulator verifier.
 2. Build USB Audio (20 channels first) as a package against a development twin; verify in the emulator, then on a

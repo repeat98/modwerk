@@ -1,1 +1,2 @@
-Development only, nothing changes for players yet: a development base can take a module's USB function (the table ot_usb_functions and the hooks ev_usb_isr, ev_usb_bus_end, ev_usb_control and ev_usb_frame) and reconnects on USB by itself when one comes or goes, and `usb_audio_package.py` builds each of USB Audio's six output layouts as a runtime package for it. Seen in the emulator only; the published base and its USB Audio layouts are unchanged.
+The Octatrack development base can load USB Audio as a module in any of its six output layouts.
+In PROJ > MODWERK > SETTINGS, open USB AUDIO to see the available options and the current selection. Use UP or DOWN to browse, YES to apply, and NO to go back. Other modules can add their own rows here.

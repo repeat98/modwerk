@@ -2,6 +2,7 @@
  * Host check of status.c's keys: with the dialog closed every key reaches stock, TRIG 1 (code 0) included
  * (a release swallowed there left bank changes to pattern 1 undone on the unit, 11 October 2026); CUE +
  * PROJ opens it and takes PROJ's release; NO closes it and takes its own. */
+#define MODWERK_SETTINGS
 #include "status.c"
 #include <stdio.h>
 #include <string.h>
@@ -166,8 +167,69 @@ unsigned modwerk_modset_off_list(uint8_t *out, unsigned first, unsigned most)
 }
 volatile uint32_t modwerk_modset_switch_result;
 int modwerk_modset_switch(uint32_t id, int on) { asked_id = id, asked_on = (unsigned)on, modwerk_modset_switch_result = MODSET_SWITCH_PENDING; return 1; }
+/* Fixture for the panel tests. test_settings.c exercises the real table and battery store. */
+static struct modwerk_setting_view settings_fixture[] = {
+    { 2, 3, 0, "USB AUDIO", {"ALL CHANNELS", "OFF", "MAIN + CUE ONLY"} },
+    { 2, 6, 5, "OTHER MOD", {"ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"} }
+};
+static unsigned fixture_rows, selections;
+void modwerk_settings_tick(void) {}
+unsigned modwerk_settings_count(void) { return fixture_rows; }
+unsigned modwerk_settings_read(unsigned i, struct modwerk_setting_view *v)
+{
+    if (i >= fixture_rows) return 0;
+    *v = settings_fixture[i];
+    return 1;
+}
+void modwerk_settings_select(unsigned i, uint32_t epoch, unsigned choice)
+{
+    CHECK(i < fixture_rows && epoch == settings_fixture[i].epoch && choice < settings_fixture[i].count);
+    settings_fixture[i].active = choice;
+    ++selections;
+}
+static void settings_press(int key)
+{
+    CHECK(modwerk_status_key(key, 1));
+    CHECK(modwerk_status_key(key, 0));
+}
+static void check_settings_panel(void)
+{
+    modwerk_test_menu_open = 1;
+    modwerk_settings_menu(0);
+    CHECK(strstr(shows(), "NO MODULE HAS A SETTING."));
+    fixture_rows = 1u;
+    CHECK(strstr(shows(), "SETTINGS|USB AUDIO|") && !strstr(said, "ALL CHANNELS"));
+    settings_press(YES);
+    CHECK(strstr(shows(), "USB AUDIO|ALL CHANNELS|OFF|MAIN + CUE ONLY|"));
+    settings_press(DOWN);
+    (void)shows();
+    CHECK(!selections && lit(X0 + 11u, Y0 + 15u) && !lit(X0 + 11u, Y0 + 23u)); /* active remains on ALL */
+    settings_press(NO);
+    CHECK(strstr(shows(), "SETTINGS|USB AUDIO|") && !selections);
+    settings_press(YES);
+    CHECK(setting_option.row == 0u);
+    settings_press(DOWN);
+    settings_press(YES);
+    (void)shows();
+    CHECK(selections == 1u && !lit(X0 + 11u, Y0 + 15u) && lit(X0 + 11u, Y0 + 23u));
+    settings_press(NO);
+    fixture_rows = 2u;
+    CHECK(strstr(shows(), "SETTINGS|USB AUDIO|OTHER MOD|"));
+    settings_press(DOWN);
+    settings_press(YES);
+    CHECK(strstr(shows(), "OTHER MOD|TWO|THREE|FOUR|FIVE|SIX|") && setting_option.row == 5u);
+    settings_press(UP);
+    ++settings_fixture[1].epoch;
+    settings_press(YES);
+    CHECK(selections == 1u && strstr(shows(), "SETTINGS|USB AUDIO|OTHER MOD|"));
+    settings_press(NO);
+    CHECK(open == CLOSED);
+    fixture_rows = 0;
+    modwerk_test_menu_open = close_menu = 0;
+}
 int main(void)
 {
+    check_settings_panel();
     uint8_t load_out[MODWERK_LOAD_BYTES];
     CHECK(modwerk_status_load(load_out) == 48u && load_out[5] == 0u);
     modwerk_status[0] = 123u; modwerk_status[1] = 456u; modwerk_status[2] = 789u;

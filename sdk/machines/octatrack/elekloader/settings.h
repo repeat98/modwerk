@@ -8,9 +8,14 @@
 void modwerk_settings_tick(void);
 /* The settings installed now, in table order: at most MODWERK_SETTINGS_ROOM. The page reads them once a draw or key. */
 unsigned modwerk_settings_count(void);
-/* Setting i's label and the name of its choice in force; "" for a row that left meanwhile. */
-const char *modwerk_settings_name(unsigned i);
-const char *modwerk_settings_choice(unsigned i);
-/* YES on setting i: its next choice (the first after the last), applied and kept through a power cycle. */
-void modwerk_settings_next(unsigned i);
+/* A single draw's copy of an installed setting. Do not retain pointers into module images across an Undo. */
+#define MODWERK_SETTING_OPTIONS 6u
+struct modwerk_setting_view {
+    uint32_t epoch;
+    unsigned count, active;
+    char label[16], choices[MODWERK_SETTING_OPTIONS][16];
+};
+unsigned modwerk_settings_read(unsigned i, struct modwerk_setting_view *view);
+/* Apply the highlighted index only while the same installation is still on screen. */
+void modwerk_settings_select(unsigned i, uint32_t epoch, unsigned choice);
 #endif

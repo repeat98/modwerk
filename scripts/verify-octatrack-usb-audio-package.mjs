@@ -10,7 +10,7 @@
 // alternate setting 1 opens the stream and EP3 IN sends packets of whole frames of the layout at the high-speed rate;
 // alternate setting 0 closes it; a rollback takes the function out again and the configuration is the first one.
 // With `setting`, on a development base (--dev) booted with a card (ot_emu --card): the panel opens PROJ > MODWERK >
-// SETTINGS, YES takes OFF and, in the twenty-channel layout, MAIN + CUE ONLY; each choice is in the base's battery-RAM
+// SETTINGS, open USB AUDIO and select OFF and, in the twenty-channel layout, MAIN + CUE ONLY; each choice is in the base's battery-RAM
 // store, and the stream goes on under it with whole packets: of zeros under OFF, with silent track channels under
 // MAIN + CUE ONLY.
 // The emulated unit runs as the bench drives it, so the key presses and RAM reads between the bursts advance its
@@ -102,7 +102,7 @@ const dev = async (request, value, length) => {
   assert.equal(reply.status, 'ok', 'a development base answers request ' + request)
   return new Uint8Array(reply.data.buffer, reply.data.byteOffset, reply.data.byteLength)
 }
-const KEY = { DOWN: 0x20, RIGHT: 0x21, YES: 0x31, NO: 0x32, PROJ: 0x1c }
+const KEY = { UP: 0x33, DOWN: 0x20, RIGHT: 0x21, YES: 0x31, NO: 0x32, PROJ: 0x1c }
 const press = async (...names) => { for (const name of names) { await dev(5, KEY[name] | 0x100, 1); await wait(120); await dev(5, KEY[name], 1); await wait(1200) } }
 const STORE = 0x100f9000 // settings.c: 'MWS1', then eight entries of a label's hash and its choice
 const kept = async () => { await dev(15, STORE >>> 16, 1); const m = Buffer.from(await dev(16, STORE & 0xffff, 68)); return m }
@@ -118,7 +118,7 @@ const take = async (want, label) => {
 }
 if (setting) { // the page is opened before the stream: it never holds the panel, and stays open under it
   assert.equal(await choice(), undefined, 'nothing kept before the player chooses')
-  await press('PROJ', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'RIGHT', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'YES') // MODWERK, its sixth row
+  await press('PROJ', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'RIGHT', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'YES', 'YES') // MODWERK, SETTINGS, USB AUDIO
 }
 
 // The stream: alternate setting 1, then EP3 IN at the high-speed poll rate.
@@ -151,18 +151,23 @@ const first16 = async label => {
   return packets
 }
 if (setting) {
-  await take(1, 'YES on the page keeps OFF')
+  await press('DOWN')
+  assert.equal(await choice(), undefined, 'browsing leaves the stored choice untouched')
+  await take(1, 'selecting OFF stores it')
   for (const packet of await first16('OFF')) assert.ok(packet.every(byte => byte === 0), 'OFF sends packets of zeros')
   console.log('  setting: OFF kept in battery RAM; 16 whole packets of zeros')
   if (FRAME_BYTES === 80) {
+    await press('DOWN')
     await take(2, 'the twenty-channel layout offers MAIN + CUE ONLY')
     for (const packet of await first16('MAIN + CUE ONLY')) for (let at = 0; at < packet.length; at += 80)
       assert.ok(packet.subarray(at, at + 64).every(byte => byte === 0), 'MAIN + CUE ONLY: the sixteen track channels are silent')
     console.log('  setting: MAIN + CUE ONLY kept; 16 whole packets with silent track channels')
   }
-  await take(0, 'after the last choice comes ALL CHANNELS')
+  await press('UP')
+  if (FRAME_BYTES === 80) await press('UP')
+  await take(0, 'select ALL CHANNELS')
   await first16('ALL CHANNELS')
-  await press('NO')
+  await press('NO', 'NO')
   console.log('  setting: back to ALL CHANNELS; the stream goes on')
 }
 const counters = await bench.controlIn(0xc0, 0x55, 0, 0, 60)

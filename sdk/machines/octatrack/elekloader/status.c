@@ -635,26 +635,49 @@ static void switches_tick(void)
     if (switch_stale || ticks - switch_read_at >= 60u) switches_read();
 }
 #ifdef MODWERK_SETTINGS
-/* SETTINGS (settings.c, events.json ot_settings; owner, 20 November 2026): one row a module that has a choice to
- * make on the unit, its label and under it the choice in force. UP and DOWN move, YES takes the next choice, which
- * holds at once and through a power cycle; NO closes. */
-#define SETTING_ROWS 2u /* two lines a setting */
+/* SETTINGS lists modules. Open a row to browse its choices without changing the sound. */
+#define SETTING_ROWS 5u
 char modwerk_settings_label[] = "SETTINGS";
-static unsigned setting_cursor, setting_top;
+struct settings_cursor { unsigned row, top; };
+static struct settings_cursor setting_module, setting_option;
+static int choosing_setting;
+static uint32_t setting_epoch;
+static void settings_move(struct settings_cursor *c, unsigned count, int code)
+{
+    if (c->row >= count) c->row = count ? count - 1u : 0;
+    if (code == UP && c->row) --c->row;
+    if (code == DOWN && c->row + 1u < count) ++c->row;
+    if (c->top > c->row) c->top = c->row;
+    if (c->row >= c->top + SETTING_ROWS) c->top = c->row + 1u - SETTING_ROWS;
+}
 void modwerk_settings_menu(int unused)
 {
     (void)unused;
-    if (menu_open()) open = SETTINGS, setting_cursor = setting_top = 0, close_menu = 1;
+    if (!menu_open()) return;
+    open = SETTINGS;
+    setting_module = (struct settings_cursor){0, 0};
+    choosing_setting = 0;
+    close_menu = 1;
 }
 static void settings_key(int code)
 {
-    unsigned n = modwerk_settings_count();
-    if (setting_cursor >= n) setting_cursor = n ? n - 1u : 0;
-    if (code == UP && setting_cursor) --setting_cursor;
-    if (code == DOWN && setting_cursor + 1u < n) ++setting_cursor;
-    if (setting_top > setting_cursor) setting_top = setting_cursor;
-    if (setting_cursor >= setting_top + SETTING_ROWS) setting_top = setting_cursor + 1u - SETTING_ROWS;
-    if (code == YES && setting_cursor < n) modwerk_settings_next(setting_cursor);
+    struct modwerk_setting_view view;
+    if (choosing_setting) {
+        if (code == NO || !modwerk_settings_read(setting_module.row, &view) || view.epoch != setting_epoch) {
+            choosing_setting = 0;
+            return;
+        }
+        settings_move(&setting_option, view.count, code);
+        if (code == YES) modwerk_settings_select(setting_module.row, setting_epoch, setting_option.row);
+        return;
+    }
+    settings_move(&setting_module, modwerk_settings_count(), code);
+    if (code == YES && modwerk_settings_read(setting_module.row, &view)) {
+        choosing_setting = 1;
+        setting_epoch = view.epoch;
+        setting_option = (struct settings_cursor){view.active, 0};
+        settings_move(&setting_option, view.count, 0);
+    }
 }
 #endif
 void modwerk_switches_menu(int unused)
@@ -699,7 +722,7 @@ int modwerk_status_key(int code, int pressed)
         return 1;
     }
 #ifdef MODWERK_SETTINGS
-    if (open == SETTINGS && (code == UP || code == DOWN || code == YES)) {
+    if (open == SETTINGS && (code == UP || code == DOWN || code == YES || (code == NO && choosing_setting))) {
         settings_key(code);
         taken = code;
         return 1;
@@ -1334,20 +1357,30 @@ void modwerk_status_draw(unsigned char *frame)
 #ifdef MODWERK_SETTINGS
 static void settings_page(unsigned char *frame)
 {
-    unsigned n = modwerk_settings_count();
-    dialog(frame, "SETTINGS");
-    if (!n) label(X0 + 6u, Y0 + 17u, "NO MODULE HAS A SETTING.");
-    if (setting_cursor >= n) setting_cursor = n ? n - 1u : 0;
-    if (setting_top > setting_cursor) setting_top = setting_cursor;
-    for (unsigned i = 0; i < SETTING_ROWS && setting_top + i < n; ++i) {
-        unsigned top = Y0 + 13u + 17u * i;
-        if (setting_top + i == setting_cursor) for (unsigned k = 0; k < 3u; ++k) fill(frame, X0 + 3u + k, top + k, X0 + 3u + k, top + 4u - k, 1);
-        label(X0 + 9u, top, modwerk_settings_name(setting_top + i));
-        label(X0 + 15u, top + 8u, modwerk_settings_choice(setting_top + i));
+    struct modwerk_setting_view view;
+    if (choosing_setting && (!modwerk_settings_read(setting_module.row, &view) || view.epoch != setting_epoch))
+        choosing_setting = 0;
+    struct settings_cursor *cursor = choosing_setting ? &setting_option : &setting_module;
+    unsigned count = choosing_setting ? view.count : modwerk_settings_count();
+    settings_move(cursor, count, 0);
+    dialog(frame, choosing_setting ? view.label : "SETTINGS");
+    if (!count) label(X0 + 6u, Y0 + 17u, "NO MODULE HAS A SETTING.");
+    for (unsigned i = 0; i < SETTING_ROWS && cursor->top + i < count; ++i) {
+        unsigned row = cursor->top + i, top = Y0 + 13u + 8u * i;
+        if (row == cursor->row) for (unsigned k = 0; k < 3u; ++k)
+            fill(frame, X0 + 3u + k, top + k, X0 + 3u + k, top + 4u - k, 1);
+        if (choosing_setting) {
+            outline(frame, X0 + 9u, top, X0 + 13u, top + 4u);
+            if (row == view.active) fill(frame, X0 + 10u, top + 1u, X0 + 12u, top + 3u, 1);
+            label(X0 + 17u, top, view.choices[row]);
+        } else if (modwerk_settings_read(row, &view)) label(X0 + 9u, top, view.label);
     }
-    if (setting_top) arrow(frame, X1 - 10u, Y0 + 14u, 1);
-    if (setting_top + SETTING_ROWS < n) arrow(frame, X1 - 10u, Y0 + 14u + 17u * (SETTING_ROWS - 1u) + 8u, 0);
-    if (n) button(frame, X0 + 4u, Y1 - 10u, "YES"), label(X0 + 34u, Y1 - 8u, "CHANGE");
+    if (cursor->top) arrow(frame, X1 - 9u, Y0 + 13u, 1);
+    if (cursor->top + SETTING_ROWS < count) arrow(frame, X1 - 9u, Y0 + 45u, 0);
+    if (count) {
+        button(frame, X0 + 4u, Y1 - 10u, "YES");
+        label(X0 + 30u, Y1 - 8u, choosing_setting ? "SELECT" : "OPEN");
+    }
     button(frame, X1 - 24u, Y1 - 10u, "NO");
 }
 #endif
