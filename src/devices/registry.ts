@@ -95,6 +95,12 @@ export const DEVICES: DeviceProfile[] = (MACHINES as MachineProfile[]).map(machi
 
 export const DEVICES_BY_ID: Record<string, DeviceProfile> = Object.fromEntries(DEVICES.map(device => [device.id, device]))
 
+// The build generates standalone pages for the library's Elekloader modules.
+const deviceModulePages = new Set((MACHINES as MachineProfile[])
+  .filter(machine => machine.sdk?.platform === 'elemod' && (machine.status === 'available' || machine.status === 'preview'))
+  .map(machine => machine.id))
+export const hasDeviceModulePages = (id: string) => deviceModulePages.has(id)
+
 export const STATUS_LABELS: Record<DeviceStatus, string> = {
   available: 'Mods available',
   preview: 'Mods in preview',
@@ -140,6 +146,6 @@ export function parseDeviceRoute(route: string): DeviceRoute | undefined {
 export function deviceHref(id: string, path = '') {
   if (id === 'octatrack') return '#' + (path || 'library')
   if (id === ALL_MACHINES) return '#all'
-  if ((id === 'digitakt' || id === 'digitone') && /^module\/[a-z0-9-]+$/.test(path)) return assetUrl(`${id}/${path}/`)
+  if (hasDeviceModulePages(id) && /^module\/[a-z0-9-]+$/.test(path)) return assetUrl(`${id}/${path}/`)
   return '#' + id + (path ? '/' + path : '')
 }

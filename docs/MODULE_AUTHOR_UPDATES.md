@@ -1,6 +1,10 @@
 # Publishing updates as a module author
 
-A maintainer of its machine or the owner approves a module's first release by reviewing and merging its addition ([who](DEVELOPER_WORKFLOW.md#who-reviews-a-first-release)). After that, its registered author can request automatic merge and publication of their own updates. Open a pull request against `repeat98/modwerk` `main`; pushing to a personal upstream repository does not submit an update to Modwerk. Ownership changes, shared SDK/compiler changes and release exceptions still need owner review.
+A device reviewer or repository maintainer can review and merge a module's first release and register the submitting modder ([first releases](DEVELOPER_WORKFLOW.md#who-reviews-a-first-release)). After that, its registered author can request automatic merge and publication of their own updates. Open a pull request against `repeat98/modwerk` `main`; pushing to a personal upstream repository does not submit an update to Modwerk. Ownership changes, shared SDK/compiler changes and release exceptions still need owner review.
+
+## Merge a first release
+
+Use `/modwerk-review-prs <number>` and the [review checklist](MAINTENANCE.md#pull-request-worker). When the reviewer chooses merge, submit an approving GitHub review for the exact commit inspected. Post a new PR comment containing `/modwerk merge <full-reviewed-head-sha>` from the same account. The **Merge a reviewed submission** workflow in GitHub Actions verifies the live review, scope and CI. If GitHub holds the first contributor's CI, the command starts only the reviewed Module PR checks. Wait for green and post the same command again. The maintenance worker records the reviewer and merges that commit. If the PR changes, review its new head. If main advances, merge main into the PR and rerun checks. For your own first release, ask another assigned reviewer or a maintainer.
 
 ## Start with an issue
 
