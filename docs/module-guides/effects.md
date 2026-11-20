@@ -92,6 +92,21 @@ npm run fx:audit -- check out/fx out/fx-renders
 npm run fx:audit -- compare out/fx-noise/*.wav
 ```
 
+**Locate a render regression.** Add `--explain` to see the shared frame window and the first differing frame on each channel. Add `--block-frames 16` for a harness that processes 16-frame blocks. Frame and block numbers start at zero in the capture. The shift estimate checks up to 64 frames in either direction for an exact overlap across all channels, retaining at least eight frames and half the capture. A positive shift means the second render is late. Silence or several matching offsets gives an indeterminate result.
+
+For an automated assertion, capture both histories in the same format and use `--expect-identical`. It includes the explanation and exits 1 if any pair differs in length, channel count or sample value, or falls below the audit's silence floor. The assertion always uses the original samples, including when a shift explains the difference.
+
+To reproduce Euclid's TYPE-history regression, set `ELEKLOADER_DSP_ASM` to the assembler executable and `ELEKLOADER_DSP56300` to the built interpreter's source tree. Run each revision separately from the repository root.
+
+```sh
+python3 -B scripts/capture-euclid-filter.py 0e168b32c5  # 0.1.4, expected failure
+python3 -B scripts/capture-euclid-filter.py 47271cab7   # 0.1.5, expected pass
+# Set capture to the temporary directory printed by either run.
+npm run fx:audit -- compare "$capture/low-pass.raw" "$capture/via-amp.raw" --block-frames 16 --expect-identical
+```
+
+The fixture compares low-pass throughout with low-pass after one AMP block. Each directory holds its own two renders and a `capture.json` with the source and runner digests, capture format, frame range, gain words and test outcome. The final four stereo blocks cover frames 3136–3199 of the run. A missing tool produces a visible skip and exit 77.
+
 Render with every knob at its dearest setting and any modulation off, so that sidebands do not read as aliasing; render a modulated read separately with its modulation on and read the *residual* column, which holds sidebands and noise. The signals are mono and the effect sees them on both channels. `dsp_host` reads the `.raw` files with `-in` (mono is copied to both channels) and writes interleaved stereo int32 words with `-out`; `verify_knob_clicks.py`'s `render()` builds that command for a module. `rig_render.py` reads the `.wav` files as stems and writes `T1.wav`; `--mixer off --amp 1.0` makes the level in the table the level the effect sees (with the mixer model on, a 0 dBFS stem enters the effect at 0.254 FS):
 
 ```sh

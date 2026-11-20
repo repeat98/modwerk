@@ -1,7 +1,7 @@
 import { BackLink } from '../components/BackLink'
 import { ForumAvatar } from './ForumIdentity'
 import { NewsPreferences } from './NewsPreferences'
-import { NotificationPreferences, Unsubscribe } from './NotificationPreferences'
+import { DiagnosticsMailUnsubscribe, NotificationPreferences, Unsubscribe } from './NotificationPreferences'
 import { AccountRemovalRequest } from './AccountRequests'
 import { useEffect, useState } from 'react'
 import { PrivateIssueDetail } from './PrivateIssueDetail'
@@ -108,4 +108,4 @@ function AccountContent({route}:{route:string}) {
   </div>
 }
 
-export function AccountPage({route}:{route:string}) { return route==='account/sso-app'||route.startsWith('account/sso-app/')?<SocialAppReturn code={route.split('/')[2]??''}/>:route==='account/sso'||route.startsWith('account/sso/')?<SocialReturn code={route.split('/')[2]??''}/>:route.startsWith('account/unsubscribe/')?<Unsubscribe token={route.split('/')[2]??''}/>:<AccountContent route={route}/> }
+export function AccountPage({route}:{route:string}) { return route==='account/sso-app'||route.startsWith('account/sso-app/')?<SocialAppReturn code={route.split('/')[2]??''}/>:route==='account/sso'||route.startsWith('account/sso/')?<SocialReturn code={route.split('/')[2]??''}/>:route.startsWith('account/unsubscribe/')?<Unsubscribe token={route.split('/')[2]??''}/>:route.startsWith('account/diagnostics-mail-off/')?<DiagnosticsMailUnsubscribe token={route.split('/')[2]??''}/>:<AccountContent route={route}/> }
