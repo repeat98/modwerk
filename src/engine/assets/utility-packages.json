@@ -3,7 +3,7 @@
   "kind": "authored-utility-packages",
   "stockRead": false,
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceCommit": "026184a96b0c4fba106bbae507b436236e7ea622",
+  "sourceCommit": "6b55d952db1017d8cb62ef39f39227fda4cb290e",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
@@ -18,7 +18,7 @@
     "vibrato": "0.1.0-experimental",
     "analog-bassdrum": "0.1.7-experimental",
     "usb-audio-out-tracks-main-cue": "0.2.0-experimental",
-    "quantizer": "0.1.4-experimental",
+    "quantizer": "0.1.5-experimental",
     "synth": "0.1.4-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
