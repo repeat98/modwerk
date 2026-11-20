@@ -109,8 +109,10 @@ describe('preparing a module set', () => {
     await expect(prepareModuleSet(target, empty, fetched, { ...events, maxSites: 1 })).rejects.toBeInstanceOf(BaseUpdateRequired)
     await expect(prepareModuleSet(target, empty, fetched, events, 'b'.repeat(64))).rejects.toBeInstanceOf(BaseUpdateRequired) // an older base
     expect(fetched).not.toHaveBeenCalled()
+    const audio = (manifest as { usbAudio?: { configurable?: { name: string } } }).usbAudio?.configurable
+    const extraNames = audio ? [audio.name] : []
     const result = await prepareModuleSet(target, empty, fetched, events, baseBinding.identity)
-    expect(result.changes.map(change => change.module)).toEqual(manifest.packages.map(entry => entry.name))
+    expect(result.changes.map(change => change.module)).toEqual([...manifest.packages.map(entry => entry.name), ...extraNames])
     expect(result.changes.every(change => change.undo?.length === 32)).toBe(true)
     // An ABI 8 loader still takes every package but the ABI 9 and 10 ones (RINGMOD SC, Analog BD's engine package),
     // which ask for the base update.
@@ -118,7 +120,7 @@ describe('preparing a module set', () => {
     expect([...abi9].sort()).toEqual(['analog-bassdrum', 'ring-sc'])
     for (const id of abi9) await expect(prepareModuleSet({ name: id, moduleIds: [id] }, empty, fetched, { ...events, abi: 8 }, baseBinding.identity)).rejects.toBeInstanceOf(BaseUpdateRequired)
     const older = await prepareModuleSet({ name: 'ABI 8', moduleIds: USB_MODULE_IDS.filter(id => !abi9.includes(id)) }, empty, fetched, { ...events, abi: 8 }, baseBinding.identity)
-    expect(older.changes.map(change => change.module)).toEqual(manifest.packages.filter(entry => !abi9.includes(entry.id)).map(entry => entry.name))
+    expect(older.changes.map(change => change.module)).toEqual([...manifest.packages.filter(entry => !abi9.includes(entry.id)).map(entry => entry.name), ...extraNames])
   })
   it('refuses hook words a subscriber’s manifest does not declare, or more than the base dispatches', async () => {
     const entry = manifest.packages.find(item => item.id === 'repitch')!, data = file(entry.path)

@@ -104,7 +104,7 @@ function device(outs: ('ok' | 'stall' | 'throw')[], results: (sent: number[]) =>
       expect(setup).toMatchObject({ requestType: 'vendor', recipient: 'interface', request: 1, index: 6 })
       sent.push(setup.value)
       const outcome = outs.shift() ?? 'ok'
-      if (outcome === 'throw') throw new Error('transfer error')
+      if (outcome === 'throw') throw new DOMException('transfer error', 'NetworkError')
       return outcome === 'ok' ? { status: 'ok', bytesWritten: data.length } : { status: 'stall', bytesWritten: 0 }
     },
     async controlTransferIn(setup, length) {
@@ -142,7 +142,7 @@ describe('vendor transport', () => {
   })
   it('stops when a failed transfer has no positive refusal', async () => {
     const d = device(['throw'], () => [Uint8Array.from(header(3, 0x1234))])
-    await expect(exchange(d)).rejects.toMatchObject({ name: 'VendorTransportError', notExecuted: false })
+    await expect(exchange(d)).rejects.toMatchObject({ name: 'VendorTransportError', notExecuted: false, cause: { name: 'NetworkError' } })
     expect(d.sent).toEqual([0xffff])
   })
   it('stops on another submission, a dropped frame or repeated refusals', async () => {

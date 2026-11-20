@@ -9,7 +9,7 @@ import { checkChangelog } from './changelog.mjs'
 import { checkDocs } from './docs.mjs'
 import { appStagesFit, takeSlot, vitestWorkerBytes, workersFor } from './machine-slots.mjs'
 import { checkModuleChangelogs } from './module-changelogs.mjs'
-import { moduleScopeProblems } from './pr-ready.mjs'
+import { localPythonProblem, moduleScopeProblems } from './pr-ready.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const npmCli = process.env.npm_execpath
@@ -116,6 +116,11 @@ async function all(...steps) {
 
 // The combined module list and changelog are generated, never committed; write them as npm ci does before anything reads them.
 let passed = await run('prepare')
+// The module gates run in Python 3.10+; an older python3 (macOS's own is 3.9) would crash inside them with no word on why.
+if (!buildOnly && !suiteOnly && passed && (plan.metadata || plan.native)) {
+  const python = localPythonProblem(root)
+  if (python) { console.error(python); passed = false }
+}
 // Reject stale notices/catalog before generation can overwrite the evidence of staleness.
 if (!buildOnly && !suiteOnly && passed) {
   if (plan.metadata) passed = await all(() => run('licenses:check'), () => run('machines:check'), () => run('modules:check', base ? ['--base', base] : []))
