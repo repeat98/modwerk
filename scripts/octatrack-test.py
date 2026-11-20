@@ -5,7 +5,7 @@
   npm run device:test -- [--seconds 30] [--soak SECONDS] [--hold SECONDS] [--share SOCKET] [--testing-entry FILE] PKG.mwrm
 
 The run of `npm run device:qualify` (the module alone on T1 and T5 with the load meters, an effect in its FX slot and a
-machine through SRC SETUP's machine list with its render against its CPU price, then on every track while the
+machine through SRC SETUP's machine list with its sequenced peak and its triggered mean cost against its CPU price, then on every track while the
 pattern plays, its knobs swept, the Parts and a bank switched, an optional soak, the Part restored, the loader, crash
 and stall counters compared), with these differences:
 - The package goes in as a trial in RAM through `npm run device -- try` on the session's shared socket, without
