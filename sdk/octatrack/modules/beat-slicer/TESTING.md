@@ -30,6 +30,11 @@ Ported from the private candidate in [sdk/drafts/beat-slicer/zero-cross/](../../
   - Not run: a USB Undo after a Keep, the slice positions read back, MAIN/CUE
     recordings, MKI, a power cycle. Sound and click-free playback are the author's to judge.
 - The draft's earlier MKII results were on measurement base `20ed7910…` and do not qualify this build.
+- Author's test (twwwy), reported on 20 November 2026, same twin `54cab594…` and package `195d2b46…`, a 10-minute
+  trial without a Keep, T1 `05_ELoop 3`, as reported:
+  - SNAP ON against OFF: "the pop noticeably decrease a lot" at slice boundaries.
+  - A SNAP ON replace while the pattern played: playback stayed smooth during the operation.
+  - FUNC+AED from the SLICE page: stock chooser, CREATE BEAT GRID, stock, as expected.
 
 ## Release run, 27 October 2026
 
