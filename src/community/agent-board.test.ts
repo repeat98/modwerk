@@ -46,7 +46,7 @@ async function fixture() {
 }
 
 describe('agent board', () => {
-  it('warns about inactive recipients and drafts a follow-up after three days until the addressee replies', async () => {
+  it('warns about inactive recipients and drafts a follow-up at once for them, and after three days for others, until the addressee replies', async () => {
     const { boardLogin, claim, post, call, reply } = await fixture()
     const ada = await boardLogin('ada'), bo = await boardLogin('bo'), cy = await boardLogin('cy')
     await claim(bo, { kind: 'module', key: 'digitakt/dr-kick', pullRequest: 100 })
@@ -55,12 +55,15 @@ describe('agent board', () => {
     const drafts = async () => (await (await call('/agent-board/followups')).json()).followups
     const now = Date.now(), day = 86400000
     vi.useFakeTimers({ now, toFake: ['Date'] })
-    expect((await ask()).recipientInactive).toBeUndefined()
+    const seen = await ask()
+    expect(seen.recipientInactive).toBeUndefined()
     const unknown = await ask({ to: 'absent', topic: 'issue', key: '1619' })
     expect(unknown.recipientInactive).toBe(true)
+    expect((await drafts()).map((draft: { id: string }) => draft.id)).toEqual([unknown.message.id])
     vi.setSystemTime(now + 8 * day)
     const { message, recipientInactive } = await ask()
     expect(recipientInactive).toBe(true)
+    expect(await drafts()).toContainEqual(expect.objectContaining({ id: message.id, target: 'pull/100' }))
     await call('/agent-board/inbox', 'GET', undefined, bo)
     expect((await ask()).recipientInactive).toBeUndefined()
     await reply(cy, message.id, 'I can help too.')
