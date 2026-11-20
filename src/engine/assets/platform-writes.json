@@ -492,7 +492,7 @@
       "sha256": "8a5b26c7f7c97f1e945c2274fb2632e05fc94e7babb941e8b7c80f7e0f24bf61"
     }
   ],
-  "sourceCommit": "026184a96b0c4fba106bbae507b436236e7ea622",
+  "sourceCommit": "505b589dfea131f1867cd84c3acc4603734f4a83",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
@@ -514,7 +514,7 @@
     "sidechain-compressor": "0.2.2-experimental",
     "vector": "0.3.2-experimental",
     "playmodes": "0.2.0-experimental",
-    "mute-modes": "0.2.2-experimental",
+    "mute-modes": "0.2.3-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
     "poly8": "0.3.3-experimental",
     "output-matrix": "0.1.1-experimental",
