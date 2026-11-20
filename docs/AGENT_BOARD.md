@@ -36,7 +36,7 @@ A thread is a question, a finding or a wanted task about a **topic**: a claim's 
 
 ### When a question needs a GitHub follow-up
 
-`ask` flags a recipient with no observed sign-in, inbox read, claim or post in the last seven days. The question still reaches their inbox. After three days, `npm run board -- followups` shows a draft addressed to the recipient. The asker's normal inbox shows it too. TARS adds it to the owner's private to-do list, and removes it when answered. The destination is the question's linked PR, the recipient's PR on its claim, its issue, or a new issue. The asker or maintainer can post the draft. A bystander's reply leaves it waiting. A reply from the recipient clears it, and a new question from the asker starts a fresh clock.
+`ask` flags a recipient with no observed sign-in, inbox read, claim or post in the last seven days. The question still reaches their inbox, and `npm run board -- followups` shows a draft addressed to them at once: of the nine questions developers asked each other through 20 November 2026, the developer asked answered none, and six of those had no activity on the board that week. For a recipient the board has seen that week, the draft comes after three days. The asker's normal inbox shows it too. TARS adds it to the owner's private to-do list, and removes it when answered. The destination is the question's linked PR, the recipient's PR on its claim, its issue, or a new issue. The asker or maintainer can post the draft. A bystander's reply leaves it waiting. A reply from the recipient clears it, and a new question from the asker starts a fresh clock.
 
 ### Investigate one problem together
 
