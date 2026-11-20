@@ -321,6 +321,8 @@ def assembly(base, descriptors, audio=None, slots=False):
         if not audio:  # code first: the slots and tables follow it
             text += FRAME_SHIM
         text += '    .balign 4\n    .global modwerk_cfg_len\nmodwerk_cfg_len:\n    .long %d\n' % length
+        text += ('    .global modwerk_cfg_native\nmodwerk_cfg_native:\n    .short %d\n    .byte %d, %d\n'
+                 % (length, blobs['modwerk_cfg_fs'][4], int(audio is not None)))
         for name, blob in blobs.items():
             text += '    .balign %d\n    .global %s\n%s:\n    .byte %s\n    .space %d\n' % (
                 SLOT, name, name, ', '.join('0x%02x' % byte for byte in blob), SLOT - len(blob))

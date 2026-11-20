@@ -35,7 +35,6 @@
 #include "usb_function.h"
 
 #ifndef MW_HOST /* test_usb_function.c maps these onto a model of the controller and of the unit's memory */
-#include "usb_base.h" /* MODWERK_USB_CFG_BYTES, MODWERK_USB_CFG_INTERFACES: this base's own configuration */
 #define UF_REG(a) (*(volatile uint32_t *)(uintptr_t)(a))
 #define UF_UNCACHED(p) ((volatile uint8_t *)((uintptr_t)(p) + 0x08000000u))
 #define UF_IMAGE_ADDRESS(p) ((uint32_t)(uintptr_t)(p))
@@ -54,15 +53,15 @@ int modwerk_machine_usb_disk(void); /* runtime.c: stock's USB DISK MODE is open 
 #define UF_EP0_STATE 0x460bb3ecu   /* stock's control transfer state: 11 idle */
 #define UF_EP0_AWAITED 0x460bb3f4u /* stock waits for an OUT stage */
 
-#ifdef MODWERK_USB_AUDIO_LINKED /* build_core.py: this base links USB Audio in (a development twin) */
-#define UF_LINKED 1
-#else
-#define UF_LINKED 0
-#endif
+/* Generated alongside the descriptors in usb_base.s. Keep the layout-specific
+ * values in the USB reserve so the shared code and all base-bound module
+ * addresses are identical for the linked-audio and MIDI-only variants. */
+struct uf_base_configuration { uint16_t bytes; uint8_t interfaces, audio_linked; };
+extern const struct uf_base_configuration modwerk_cfg_native;
 #define UF_TABLE (MODWERK_OT_USB_FUNCTIONS - RUNTIME_EVENTS)
 #define UF_RECORD 32u
 #define UF_SLOT 512u
-#define UF_ROOM (UF_SLOT - MODWERK_USB_CFG_BYTES)
+#define UF_ROOM (UF_SLOT - modwerk_cfg_native.bytes)
 #define UF_ENDPOINTS 0x00080008u   /* endpoint 3, OUT and IN, as ENDPTFLUSH bits */
 #define UF_GRACE 60u               /* ticks, 60 a second */
 #define UF_PATIENCE 600u
@@ -125,7 +124,7 @@ int modwerk_usb_function_admit(const struct runtime_dsp *d, unsigned operation)
     if (!d || !d->present) return RUNTIME_OK;
     uint32_t at = d->hook_offset[MODWERK_OT_USB_FUNCTIONS];
     if (at == RUNTIME_NONE) return RUNTIME_OK;
-    if (UF_LINKED) return RUNTIME_CONFLICT; /* its configuration already holds USB Audio, on these interfaces and this endpoint */
+    if (modwerk_cfg_native.audio_linked) return RUNTIME_CONFLICT; /* its configuration already holds USB Audio, on these interfaces and this endpoint */
     if (operation != RUNTIME_METADATA_PREPARE && operation != RUNTIME_METADATA_SWITCH) return RUNTIME_MALFORMED;
     if (!d->image || (at & 1u) || at > d->image_bytes || d->image_bytes - at < UF_RECORD) return RUNTIME_MALFORMED;
     const uint8_t *record = d->image + at;
@@ -195,15 +194,15 @@ static void uf_compose(void)
     uint8_t *const slot[4] = {modwerk_cfg_fs, modwerk_cfg_hs, modwerk_cfg_os_fs, modwerk_cfg_os_hs};
     const uint8_t *const block[4] = {f ? f->fs : 0, f ? f->hs : 0, f ? f->os_fs : 0, f ? f->os_hs : 0};
     unsigned length = f && f->length <= UF_ROOM ? f->length : 0u, interfaces = length ? f->interfaces : 0u;
-    unsigned total = MODWERK_USB_CFG_BYTES + length;
+    unsigned total = modwerk_cfg_native.bytes + length;
     live_profile = (uint8_t)uf_requested();
     if (f && f->abi == MODWERK_USB_PROFILES_ABI)
         ((struct modwerk_usb_profiles *)row_record)->active = live_profile;
     for (unsigned k = 0; k < 4u; ++k) {
         volatile uint8_t *to = UF_UNCACHED(slot[k]);
         to[2] = (uint8_t)total, to[3] = (uint8_t)(total >> 8);
-        to[4] = (uint8_t)(MODWERK_USB_CFG_INTERFACES + interfaces);
-        for (unsigned i = 0; i < length; ++i) to[MODWERK_USB_CFG_BYTES + i] = block[k][live_profile * length + i];
+        to[4] = (uint8_t)(modwerk_cfg_native.interfaces + interfaces);
+        for (unsigned i = 0; i < length; ++i) to[modwerk_cfg_native.bytes + i] = block[k][live_profile * length + i];
     }
     modwerk_cfg_len = total;
     live_serial = length ? row_serial : 0u;

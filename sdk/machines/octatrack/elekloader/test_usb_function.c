@@ -67,6 +67,14 @@ static uintptr_t volatile *const host_rows[RUNTIME_SITE_EVENTS] = {
     [MODWERK_OT_USB_FUNCTIONS - RUNTIME_EVENTS] = function_row, [MODWERK_EV_USB_ISR - RUNTIME_EVENTS] = isr_row,
     [MODWERK_EV_USB_BUS_END - RUNTIME_EVENTS] = bus_end_row, [MODWERK_EV_USB_CONTROL - RUNTIME_EVENTS] = control_row, [MODWERK_EV_USB_FRAME - RUNTIME_EVENTS] = frame_row};
 #include "usb_function.c"
+const struct uf_base_configuration modwerk_cfg_native = {
+    MODWERK_USB_CFG_BYTES, MODWERK_USB_CFG_INTERFACES,
+#ifdef MODWERK_USB_AUDIO_LINKED
+    1
+#else
+    0
+#endif
+};
 #undef modwerk_runtime_event_row
 
 /* An audio-like function: an association over interfaces 4 and 5, a control interface, a streaming interface with
@@ -220,7 +228,7 @@ static void leave(void) { function_row[0] = 0; modwerk_usb_functions_changed(); 
 int main(void)
 {
     admission();
-    if (!UF_LINKED) profile_admission();
+    if (!modwerk_cfg_native.audio_linked) profile_admission();
 #ifdef MODWERK_USB_AUDIO_LINKED
     if (failures) return 1;
     puts("usb function: a base with USB Audio linked in refuses every function");

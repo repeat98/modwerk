@@ -108,6 +108,9 @@ class UsbFunction(unittest.TestCase):
         audio = 'USB AUDIO OUT TRACKS MAIN CUE'  # a development twin links USB Audio in: its slot holds that function
         self.assertEqual(functions.header(base, descriptors, audio),
                          '#define MODWERK_USB_CFG_BYTES 259u\n#define MODWERK_USB_CFG_INTERFACES 6u\n')
+        for layout, size, interfaces, linked in [(None, length, 4, 0), (audio, 259, 6, 1)]:
+            shape = 'modwerk_cfg_native:\n    .short %d\n    .byte %d, %d\n' % (size, interfaces, linked)
+            self.assertIn(shape, functions.assembly(base, descriptors, layout, slots=True))
         self.assertIn('    .space %d\n' % (512 - 259), functions.assembly(base, descriptors, audio, slots=True))
 
     def test_slots_assemble_with_the_live_clamp(self):
