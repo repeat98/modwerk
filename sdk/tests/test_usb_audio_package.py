@@ -1,0 +1,74 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""USB Audio as a runtime package (module-adapters/usb_audio_package.py): what the builder makes of the authored source."""
+import importlib.util
+import shutil
+import struct
+import sys
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+OT = ROOT / 'sdk/machines/octatrack'
+sys.path.insert(0, str(OT))
+import events  # noqa: E402
+
+
+def load(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    return module
+
+
+builder = load('usb_audio_package', OT / 'module-adapters/usb_audio_package.py')
+usb = load('modwerk_usb_base', OT / 'elekloader/usb_base.py')
+functions = load('modwerk_base_usb_functions', OT / 'module-adapters/base_usb_functions.py')
+LAYOUT = 'USB AUDIO OUT TRACKS MAIN CUE'
+
+
+class UsbAudioPackage(unittest.TestCase):
+    def test_the_function_block_is_what_a_linked_base_sends_behind_its_own_interfaces(self):
+        descriptors = load('descriptors', usb.audio_paths(LAYOUT)[1])
+        blocks = [builder.function_block(functions, usb, descriptors, LAYOUT, hs, other)
+                  for hs, other in ((False, False), (True, False), (False, True), (True, True))]
+        self.assertEqual(len({len(b) for b in blocks}), 1)
+        for (hs, other), block in zip(((False, False), (True, False), (False, True), (True, True)), blocks):
+            without = functions.configuration(usb, descriptors, hs, other, None)
+            whole = functions.configuration(usb, descriptors, hs, other, LAYOUT)
+            self.assertEqual(without[9:] + block, whole[9:])
+            self.assertLessEqual(len(without) + len(block), functions.SLOT)
+            records = list(builder._records(block))
+            self.assertEqual(sum(len(r) for r in records), len(block))
+            self.assertEqual(records[0][:4], bytes([8, 11, 4, 2]))  # the association: two interfaces from 4
+            self.assertEqual(sorted({r[2] for r in records if r[1] == 4}), [4, 5])
+            self.assertEqual([r[2] for r in records if r[1] == 5], [0x83])  # endpoint 3 IN alone
+        self.assertIn('.short 2, %d' % len(blocks[0]), builder.record(blocks))
+
+    def test_the_source_keeps_the_import_and_changes_only_its_guarded_seams(self):
+        text = builder.source(functions, usb, LAYOUT)
+        self.assertNotIn('usbmidi_rx_isr_shim', text.split('| ---- the package', 1)[0].split('audio_isr_shim:', 1)[1].split('\n\n', 1)[0])
+        self.assertNotIn('jmp     0x4000d9a6', text)       # the base replays the frame site's displaced clear
+        self.assertNotIn('#(aud_dtds+UNCACHED),', text)    # every use reads the run-time boundary
+        self.assertEqual(text.count('moveal  mwua_dtds,'), 3)
+        self.assertIn('.set UAC2_AC_IFACE,  4 ', text)
+        with self.assertRaisesRegex(ValueError, 'Not built as a package yet'):
+            builder.build('USB AUDIO OUT MASTER')
+
+    def test_the_package_subscribes_to_the_four_hooks_and_carries_three_guarded_sites(self):
+        if not shutil.which('m68k-elf-as'):
+            self.skipTest('no m68k-elf-as')
+        data, facts = builder.build(LAYOUT)
+        self.assertEqual((data[:4], struct.unpack_from('>H', data, 4)[0]), (b'MWRM', 8))
+        self.assertEqual(facts['sites'], ['0x4001dd04', '0x4001d824', '0x4001d4b2'])
+        self.assertLess(facts['image'], 8192)
+        self.assertLess(facts['image'] + facts['bss'], 128 * 1024)
+        image, bss, relocations, hooks, sites = struct.unpack_from('>IIIII', data, 8)
+        self.assertEqual((image, bss, relocations, sites), (facts['image'], facts['bss'], facts['relocations'], 3))
+        words = struct.unpack_from('>%dI' % hooks, data, 76)
+        by_name = {e['event']: e['index'] for e in events.load()['events']}
+        subscribed = {name for name, index in by_name.items() if index < hooks and words[index] != 0xffffffff}
+        self.assertEqual(subscribed, {'ot_usb_functions', 'ev_usb_isr', 'ev_usb_bus_end', 'ev_usb_control', 'ev_usb_frame'})
+        self.assertTrue(all(w == 0xffffffff for w in words[:4]))  # no tick, draw, key or encoder handler
+
+
+if __name__ == '__main__':
+    unittest.main()
