@@ -34,6 +34,16 @@ describe('diagnostics pull', () => {
     expect(text).toContain(`${when(failed.createdAt)} @other sync_failed sending error=device refusal=3 poly8@0.3.0`)
     expect(text).toContain('2026-10-15  failed 1')
   })
+  it('lists failures before a USB connection with the reported reason and optional client', () => {
+    const link = (n, failure, client) => entry(n, 'tester', { event: 'link_failed', phase: 'idle', failure, client })
+    const text = summary({ events: [link(1, 'no-device'), entry(2), link(3, 'claim-failed', { browser: 'chrome', major: 150, os: 'linux' })], counts: [] })
+    const problems = text.split('Problems (')[1]
+    expect(problems.split('\n').slice(0, 3)).toEqual([
+      '2, newest first, up to 30):',
+      `  ${when(entry(3).createdAt)} @tester link_failed idle failure=claim-failed chrome 150/linux`,
+      `  ${when(entry(1).createdAt)} @tester link_failed idle failure=no-device`,
+    ])
+  })
   it('counts restarts from the unit’s log and names what each boot’s restore did, once per change', () => {
     const base = 'a'.repeat(64)
     const start = (seq, boot) => ({ seq, boot, second: 0, kind: 'start', a: 0, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: [], fx: [], keys: [], screen: 0, tempo24: 0, playing: false })
