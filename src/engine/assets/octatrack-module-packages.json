@@ -721,6 +721,23 @@
       "module": "5cf69df3",
       "bytes": 652,
       "sha256": "c470e87aefa7c8e2c87dd7b1429a265e5353430b74331adb53158055269c9655"
+    },
+    {
+      "id": "screen-off",
+      "sources": [
+        "sdk/octabam/modules/screen-off/package.c"
+      ],
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/screen-off/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "screen-off",
+      "module": "66166c56",
+      "bytes": 352,
+      "sha256": "14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c"
     }
   ]
 }

@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-19",
+    "changes": [
+      "Hold UP and tap NO to blank the screen. The same chord brings it back.",
+      "Other keys and knobs keep working while the screen stays black.",
+      "Known issue: an MKI and the stock screen saver are not tried."
+    ]
+  }
+]
