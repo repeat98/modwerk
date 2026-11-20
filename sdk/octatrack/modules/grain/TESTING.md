@@ -8,6 +8,14 @@ Antonio’s correction at `d75b1ecc651cfae491214c3f5f7bd8fb2db41611` maps knob 1
 
 `verify_lanes.py` executes the linked ColdFire formatter, START and render with a synthetic 1,024-frame 24-bit stereo Flex sample. Across all 128 knob positions and 128 out-of-range legacy values the displayed speed and read head agreed with the expected mapping. The top step now displays +2.00 and advances 32 source frames in 16 output frames. At 126 it advances 31 frames (+1.93 on the display). At 104 it advances 20 (+1.25), at 64 it holds, and at zero it wraps backwards by 32 frames (−2.00). Legacy values above 127 hold position. The real-time measurements below identify the preceding package. The 35-point reservation carries forward pending verification.
 
+### Stereo engine soak and physical RAM trial
+
+On the host, the linked ColdFire engine rendered 120 seconds of 24-bit stereo on T1 and another 120 seconds on T5. Each track rendered 330,750 blocks at 16 frames each and reached all six voices. The deterministic two-second stereo sample used native 1,024-frame Flex pages. The test varied the grain shape, direction, PAN spread, pitch, positive and negative SCAN, RAND/SYNC and tempo (140 and 240 BPM). Every PCM word matched the portable reference compiled with both fast paths disabled. The SHA-256 of the 5,292,000 big-endian stereo frames on each track was `7f45ce08b48ea409323cd4bad3df6088283e31d1ab628d0f7a7e4b8e8979bb47`. This isolates the engine from stock playback, track admission and hardware timing.
+
+On the physical MKII, OS 1.40C, base `dfa438130710fea9`, the exact package ran as a 180-second USB trial beside the original ten modules. The unit logged no crash, stall, freeze or skipped track. Automatic rollback restored the starting active identity. The inventory, including handles and saved/live counts, matched the preflight. The test issued no project edits, Save, Keep or flash commands.
+
+The normal base declined the development-only sample and timing reads. The physical trial measured installation and rollback. Physical 24-bit playback, guarded T1/T5 assignment and a sounding soak need a project that already has the relevant assignments or a write-protected test setup. Octatrack project edits are automatically cached to CompactFlash (MKII manual, section 4.12).
+
 ## Optimized stereo renderer, 20 November 2026
 
 The 25,544-byte package tested on the MKII has SHA-256 `ff105b4615e339742a60241c7ab7b1c10e68bc3dd585cf33a3a9a13fa9d49d5f`. Both builders produced this package. All catalogue packages matched a rebuild with local OS 1.40C.

@@ -184,9 +184,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The compiled SCAN label and read head agree at 128 knob settings and 128 legacy byte values, including double speed at the top step. Compiled stereo tests cover 16/24-bit PCM and all six grain cursors. The preceding build ran on an MKII and returned the original ten-module inventory. TESTING.md identifies each build and its qualification status.",
+    "summary": "For the SCAN endpoint package, all 256 raw values match the linked label and read head. T1 and T5 each rendered 120 seconds of six-voice 24-bit stereo on a ColdFire emulator with sample-exact agreement to the portable reference. The physical MKII ran the package for 180 seconds beside ten modules and restored its original inventory. Sounding hardware and admission checks remain open.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "3351b427a31ef1cd7d5710024700ce80049987f8",
+    "evidenceRevision": "709574328062586802e80578c3d7fcb30c8f3143",
     "gates": [
       "python3 -B test_grain.py",
       "python3 -B generate.py --check"
