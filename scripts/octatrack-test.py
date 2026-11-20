@@ -12,6 +12,8 @@ and stall counters compared), with these differences:
   --accept, and SIGINT rolls it back at the end. Nothing is kept: the card's set and the flashed base's modules stay
   as they were, so no --keeps-ok.
 - It reads the self-test with the package installed, and checks that the inventory at the end equals the one before.
+- The trial's own verdict, from the unit's log, fails the run too: a crash, DSP stall, frozen UI or skipped track logged
+  during it (scripts/device.mjs, src/dev/trial-verdict.ts). Its notes, such as a hot CPU, do not.
 - One package a run (bases without whole-set trials take one change), and no crash test (a restart ends the trial
   outside the run).
 
@@ -62,6 +64,16 @@ class Trial:
         self.started.wait(seconds)
         if not self.running(): raise RuntimeError('the trial did not start: ' + ' / '.join(self.lines[-5:] or ['no output']))
 
+    def faults(self):
+        """The FAIL lines of the trial's verdict: `verdict: ` and the indented lines after it (scripts/device.mjs). A note
+        (a hot CPU) is not one."""
+        found, inside = [], False
+        for line in self.lines:
+            if line.startswith('verdict: '): inside, line = True, line[len('verdict: '):]
+            elif not line.startswith('  '): inside = False
+            if inside and line.strip().startswith('FAIL'): found.append(line.strip())
+        return found
+
     def end(self, failures):
         """Roll the trial back (SIGINT, as Ctrl-C does) and check that it says so."""
         if self.proc.poll() is None: self.proc.send_signal(signal.SIGINT)
@@ -76,6 +88,7 @@ class Trial:
         if 'accepted' in self.lines: failures.append('the trial process says accepted: the package was kept')
         elif self.running() and not any(l.startswith('rolled back') for l in self.lines):
             failures.append('the trial did not report its rollback: ' + ' / '.join(self.lines[-3:]))
+        failures.extend('the unit logged during the trial: ' + fault for fault in self.faults())
 
 
 def main():
