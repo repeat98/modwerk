@@ -3,6 +3,7 @@
 // Is the pull request described? Reviewers asked one module PR in nine to fill in its description, and half the merged PRs skipped the
 // guides question AGENTS.md asks of every PR ("Fold what you learn back"). And does a ready one that changes what runs on an instrument
 // name the exact build that ran on a unit? A base went up ready to merge after only development twins had run (#1694, 17 November 2026).
+// And does it, draft or ready, list the edge cases the change risks, each with what it showed (docs/TEST_PROCEDURE.md, 20 November 2026)?
 // Reads only the description, the template, the draft flag and the changed file names: no PR code runs.
 //
 //   PR_BODY="$(gh pr view <n> --json body --jq .body)" PR_DRAFT=false PR_FILES="$(gh pr diff <n> --name-only)" node scripts/pr-body.mjs
@@ -40,15 +41,48 @@ const TESTED = /^tested on (?:a|the|an?) (?:unit|instrument)\b[^:]*:.*\b[0-9a-f]
 const UNTESTED = /^not tested on (?:a|the|an?) (?:unit|instrument)\b[^:]*:\s*\S/i
 const plain = line => line.replaceAll('**', '').replaceAll('`', '').replace(/^(?:[-*]|#+)\s*/, '').trim()
 
+// The edge cases the change risks (docs/TEST_PROCEDURE.md#edge-cases), under a line or heading "Edge cases": a table with one row a case,
+// | Case | Why this change makes it a risk | How run | Result |, the result "pass", "fail: …" or "not run: why"; or "Edge cases: none,
+// because …". A table under another heading does not count, nor the template's empty row.
+const EDGE = /^edge cases?\b/i
+const EDGE_NONE = /^edge cases?\b[^:]*:\s*none\b[\s,.;:–—-]*because\s+\S/i
+const cells = row => row.replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim())
+/** true when the description lists its edge cases, else what is wrong; `own` tells the author's lines from the template's. */
+export function edgeCases(lines, own) {
+  let incomplete = null
+  for (let index = 0; index < lines.length; index++) {
+    if (!EDGE.test(plain(lines[index]))) continue
+    if (own(lines[index]) && EDGE_NONE.test(plain(lines[index]))) return true
+    let rows = 0
+    for (const next of lines.slice(index + 1)) {
+      if (!next.startsWith('|')) {
+        if ((next && rows) || isHeading(next) || /^(?:[-*]\s+)?\*\*/.test(next)) break
+        continue
+      }
+      const row = cells(next)
+      if (!own(next) || row.every(cell => /^:?-*:?$/.test(cell)) || /^case$/i.test(row[0])) continue
+      if (row.length < 4 || !row[0] || !row.at(-1) || /^not run\W*$/i.test(row.at(-1))) { incomplete ??= row[0] || next; continue }
+      rows++
+    }
+    if (rows && !incomplete) return true
+  }
+  return incomplete ? 'incomplete' : 'missing'
+}
+
 /** What the description still lacks; [] when it is described, answers the guides question, and (ready, changing what runs on an
- * instrument) names the build that ran on a unit. A draft may still be in test. */
+ * instrument) names the build that ran on a unit. A draft may still be in test, but lists its edge cases already. */
 export function bodyProblems(body, template, { draft = false, files = [] } = {}) {
   const templateLines = new Set(template.split('\n').map(line => line.trim()).filter(Boolean))
-  const own = (body ?? '').split('\n').map(line => line.trim()).filter(line => line && !templateLines.has(line) && !NOT_OWN.test(line))
+  const isOwn = line => !!line && !templateLines.has(line) && !NOT_OWN.test(line)
+  const lines = (body ?? '').split('\n').map(line => line.trim()), own = lines.filter(isOwn)
   const problems = []
   if (own.join(' ').length < OWN_TEXT) problems.push('Describe the change in your own words: what was wrong or hard, what this changes and how you checked it (the pull request template asks for each).')
   const instrument = instrumentFiles(files)
   if (!draft && instrument.length && !own.some(line => TESTED.test(plain(line)) || UNTESTED.test(plain(line)))) problems.push('This pull request changes what runs on an instrument (' + instrument.slice(0, 3).join(', ') + (instrument.length > 3 ? ` and ${instrument.length - 3} more` : '') + '). Keep it a draft until the exact build ran on a unit, then name it on a line of its own: "Tested on a unit: base 8d1db124 (or the package\'s sha256), MKII, what ran". If it cannot be tested, write "Not tested on a unit: <why>" for the owner to decide. `npm run pr:ready` saying Ready means the checks pass, not that it was tested.')
+  // Drafts too: a draft opened early lists what it will run, each case "not run: why" until it ran (owner, 20 November 2026).
+  const edge = instrument.length ? edgeCases(lines, isOwn) : true
+  if (edge !== true) problems.push('This pull request changes what runs on an instrument, so it lists the edge cases this change risks and what each showed (docs/TEST_PROCEDURE.md#edge-cases). Under a line "Edge cases", add a table with one row a case: | Case | Why this change makes it a risk | How run | Result |, the result "pass", "fail: what happened" or "not run: why". `npm run test:procedure` writes the empty table. With none, say why: "Edge cases: none, because …".' +
+    (edge === 'incomplete' ? ' A row there lacks its case or its result, or says "not run" without why.' : ''))
   if (!own.some((line, index) => answersGuides(line, own[index + 1]))) problems.push('Say what the guides lacked or got wrong while you did this, and where you fixed it, on a line of its own, for example "Guides: nothing". It is how the next developer\'s agent learns what you did (AGENTS.md, Pull requests).')
   return problems
 }

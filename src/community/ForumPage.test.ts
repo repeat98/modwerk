@@ -33,6 +33,33 @@ afterEach(async () => { await act(() => root.unmount()); container.remove(); vi.
 const render = (route = 'forum') => act(async () => root.render(createElement(CommunityContext.Provider, { value: { session, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } }, createElement(ForumPage, { route, configurations: [], onCopy: () => {} }))))
 const banner = () => container.querySelector('.forum-since-visit')
 
+it('waits for a stored session before building the page under its heading', async () => {
+  await act(async () => root.render(createElement(CommunityContext.Provider, { value: { session: { available: false, admin: false, user: null }, settled: false, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } }, createElement(ForumPage, { route: 'forum', configurations: [], onCopy: () => {} }))))
+  expect(container.querySelector('h1')?.textContent).toBe('Community forum')
+  expect(container.querySelector('.forum-pending')).not.toBeNull()
+  // No visitor toolbar or sign-in note to rearrange once the member arrives.
+  expect(container.querySelector('.forum-toolbar')).toBeNull()
+  expect(container.textContent).not.toContain('Sign in')
+  await render()
+  expect(container.querySelector('.forum-pending')).toBeNull()
+  expect(container.querySelector('.forum-toolbar')?.textContent).toContain('Following')
+})
+
+it('shows the visit banner together with the discussions, above them', async () => {
+  let answer!: (value: ForumVisit) => void
+  const pendingVisit = new Promise<ForumVisit>(resolve => { answer = resolve })
+  vi.mocked(api).mockImplementation(async path => path === '/forum/visit' ? pendingVisit : { threads: [], hasMore: false })
+  await render()
+  // The threads are in, but the list waits for the banner so the banner never pushes it down.
+  expect(container.querySelector('.forum-thread-list[aria-busy="true"]')).not.toBeNull()
+  expect(banner()).toBeNull()
+  await act(async () => answer({ ...caughtUp, newThreads: 2 }))
+  expect(container.querySelector('.forum-thread-list[aria-busy="true"]')).toBeNull()
+  const section = container.querySelector('.forum-discussions')!
+  expect(section.contains(banner())).toBe(true)
+  expect(banner()!.compareDocumentPosition(section.querySelector('.forum-empty')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+})
+
 it('reloads discussions that failed during an outage once the service answers again', async () => {
   const offline = new Error('Couldn’t reach the Modwerk community service.')
   vi.mocked(api).mockImplementation(async path => { if (path === '/forum/visit') return visit; throw offline })

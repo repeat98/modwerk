@@ -38,7 +38,7 @@
 // the base rolls back any module that was not accepted.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { deflateSync, crc32 } from 'node:zlib'
-import { join, resolve } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 import { createConnection, createServer } from 'node:net'
 import { spawn, spawnSync } from 'node:child_process'
 import { homedir, tmpdir } from 'node:os'
@@ -57,6 +57,7 @@ import { describeRefusal } from './loader-refusals.mjs'
 import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
 import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
+import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
   socket: { type: 'string', default: '/tmp/modwerk-ot.sock' },
@@ -76,8 +77,20 @@ if (!['serve', 'status', 'stats', 'try', 'set', 'recover', 'remove', 'lifecycle'
   process.exit(2)
 }
 
+// The unit's turn (scripts/unit-queue.mjs): a command that drives the unit waits in line for it and gives it back when it
+// exits. `serve` is the shared link and takes none. Reads (IDENTIFY, RAM, the report, the screen, a read-only `do`) go
+// beside another session's turn; `status` does not, since its HELLO moves on the upload session another process may be
+// in the middle of (docs/OCTATRACK_DRIVING.md). An emulator needs no turn.
+const DRIVES = ['status', 'try', 'set', 'recover', 'remove', 'lifecycle', 'boot', 'flash', 'key', 'enc', 'fader', 'probe', 'meter']
+if (command !== 'serve' && !values.emulator && (DRIVES.includes(command) || command === 'do' && sequenceDrives(file)))
+  await takeUnitTurn({ note: `device ${command}${command === 'do' ? ` '${file.slice(0, 80)}'` : file ? ' ' + basename(file) : ''}`,
+    command: 'npm run device -- ' + process.argv.slice(2).join(' ').slice(0, 300),
+    expectMs: ['try', 'set', 'remove'].includes(command) ? (seconds + 120) * 1000 : command === 'flash' ? 600000 : command === 'boot' ? 300000 : 120000 })
+
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
-if (command === 'serve' && !await new Promise(resolve => { const c = createConnection(benchEndpoint(values.socket), () => { c.end(); resolve(true) }); c.on('error', () => resolve(false)) })) {
+// Is a bridge already listening? Not asked of an emulator: ot_emu takes one connection and stops when it hangs up, so serve --emulator
+// keeps its one link for the session (docs/TEST_PROCEDURE.md, the same steps on either target).
+if (command === 'serve' && !values.emulator && !await new Promise(resolve => { const c = createConnection(benchEndpoint(values.socket), () => { c.end(); resolve(true) }); c.on('error', () => resolve(false)) })) {
   const bridge = spawn(process.env.MODWERK_PYTHON ?? join(homedir(), '.cache/modwerk-upstream/venv/bin/python'),
     ['-B', 'scripts/octatrack-usb-bridge.py', values.socket], { stdio: ['ignore', 'pipe', 'inherit'] })
   await new Promise((resolve, reject) => { bridge.stdout.on('data', d => /ready/.test(d) && resolve()); bridge.once('exit', code => reject(new Error('bridge exited ' + code))) })
@@ -580,7 +593,8 @@ if (command === 'serve') {
       const [verb, arg, chunk] = line.trim().split(/\s+/)
       if (verb === 'boot' || verb === 'flash') { // the unit reboots and this link goes with it: hand the bridge to a one-shot boot or flash, then exit (run serve in a loop)
         bench.socket.end(); await wait(300)
-        const r = spawnSync(process.execPath, [process.argv[1], verb, arg, '--socket', values.socket, ...(chunk ? ['--chunk', chunk] : [])], { encoding: 'utf8', timeout: 400000 })
+        // MODWERK_UNIT=served: whoever sent this line took the unit's turn for it (device-send.py), so the boot waits for none
+        const r = spawnSync(process.execPath, [process.argv[1], verb, arg, '--socket', values.socket, ...(chunk ? ['--chunk', chunk] : [])], { encoding: 'utf8', timeout: 400000, env: { ...process.env, MODWERK_UNIT: 'served' } })
         out.push(r.stdout, r.stderr, 'serve exits; the loop restarts it'); setTimeout(() => process.exit(0), 200)
       } else if (verb === 'recover') { // a transaction left behind (an install whose reply went missing): undo it, as the site does
         const session = await UploadSession.connect(transport, identity.base, { timeoutMs: 10000 })

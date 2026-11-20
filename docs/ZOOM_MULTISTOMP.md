@@ -41,7 +41,7 @@ without a pedal. It is a developer tool: never hardware evidence, and the site
 never bundles it or offers it to musicians, so it cannot stand in for a pedal
 (owner, 31 October 2026).
 
-`npm run upstream:tools` keeps its source at the archive pinned in
+`npm run upstream:tools -- --for zoom` gets the source archive pinned in
 `sdk/upstream-tools.json`; build it there with
 `cargo build --release --locked -p ziddle-cli` (Rust 1.88 or newer). Modwerk
 uses only the emulator, on your own effect files: `ziddle effect check

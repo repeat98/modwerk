@@ -34,6 +34,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [SDK.md](SDK.md): machine profiles, module contract v3, evidence tiers and the shared commands.
 - [OCTATRACK_API.md](OCTATRACK_API.md): what an Octatrack module builds against: entry points, hooks, state, what stays stable.
 - [MODULE_REPOSITORIES.md](MODULE_REPOSITORIES.md): the module folder and its manifest fields.
+- [TEST_PROCEDURE.md](TEST_PROCEDURE.md): the steps every module or base change is tested through, in order, and its own edge cases (`npm run test:procedure`).
 - [MODULE_QUALIFICATION.md](MODULE_QUALIFICATION.md): qualification gates: cycles, memory, hardware, exceptions.
 - [MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md): how to measure a module before it is listed: worst-case cycles, a benchmark against stock and a stress run.
 - [MODULE_RESOURCE_GAUGES.md](MODULE_RESOURCE_GAUGES.md): the CPU, DSP and memory gauges a release needs.
@@ -52,6 +53,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [OCTATRACK_MODULE_EDGE_CASES.md](OCTATRACK_MODULE_EDGE_CASES.md): what can go wrong across projects, Parts and power cycles.
 - [OCTATRACK_MORE_EFFECT_IDS.md](OCTATRACK_MORE_EFFECT_IDS.md): more than 32 effect ids.
 - [OCTATRACK_PACKAGE_DSP_HOOKS.md](OCTATRACK_PACKAGE_DSP_HOOKS.md): design: stock-DSP hooks and DSP memory claims that packages carry.
+- [OCTATRACK_USB_AUDIO_MODULE.md](OCTATRACK_USB_AUDIO_MODULE.md): design: USB Audio as a module package instead of a base variant per layout.
 - [OCTATRACK_RECONSTRUCTION.md](OCTATRACK_RECONSTRUCTION.md): source-bound USB packaging and explicit USB-only distribution.
 - [OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md](OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md): design: resident engines loaded on demand.
 - [OCTATRACK_DSP_WINDOW.md](OCTATRACK_DSP_WINDOW.md): record: the DSP receiver's packet operations in the shared window, FX2 swaps keeping their block (28 October 2026).

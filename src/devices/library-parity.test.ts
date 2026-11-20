@@ -121,8 +121,8 @@ describe('All machines library parity', () => {
       octatrackModules: [], family: 'Sampling', sort: 'name',
     }))
     expect(html).toContain('DIGISLICER')
-    expect(html).toContain('NEIGHBOR')
-    expect(html.indexOf('View DIGISLICER')).toBeLessThan(html.indexOf('View NEIGHBOR'))
+    expect(html).toContain('RAM Record and Playback')
+    expect(html.indexOf('View DIGISLICER')).toBeLessThan(html.indexOf('View RAM Record and Playback'))
     expect(html).not.toContain('View SOPHIE')
     expect(html).not.toContain('View digihealth')
   })
@@ -217,11 +217,11 @@ describe('Digi library parity', () => {
 
   it('filters type together with search and sorts the Digi library by name', () => {
     const html = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Sampling', sort: 'name'}))
-    expect(html.indexOf('View DIGISLICER')).toBeLessThan(html.indexOf('View NEIGHBOR'))
+    expect(html.indexOf('View DIGISLICER')).toBeLessThan(html.indexOf('View RAM Record and Playback'))
     expect(html).not.toContain('View SOPHIE')
     expect(html).not.toContain('View digihealth')
-    const search = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Sampling', query: 'neighbor'}))
-    expect(search).toContain('View NEIGHBOR')
+    const search = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Sampling', query: 'ram record'}))
+    expect(search).toContain('View RAM Record and Playback')
     expect(search).not.toContain('View DIGISLICER')
     const switched = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Octatrack-only type'}))
     expect(switched).toContain('View SOPHIE')
