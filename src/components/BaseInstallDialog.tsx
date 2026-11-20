@@ -8,6 +8,7 @@ import { BaseTooBigError, explainLinkError, LINK_BUSY, type BaseUpdateStep, type
 import { UploadDeviceError, UploadUnconfirmedError } from '../engine/elekloader/upload-session'
 import { siteUpdated, unitForPrompt } from '../hooks/useBaseInstallPrompt'
 import { baseLayout, isPublishedBase, layoutName, MEMBER_LAYOUT, runningLayout, type BaseLayout } from '../engine/elekloader/base-variants'
+import { USB_AUDIO_PACKAGED } from '../config/usb-audio'
 import { setLayout } from '../engine/elekloader/module-set'
 import type { InventoryTarget } from '../config/inventory'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
@@ -176,12 +177,12 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   // The current base in another USB Audio layout: the same update over USB, to the variant the module set needs.
   // Both are read from the unit until an update over USB starts, then kept: mid-update the unit runs the new base,
   // which would turn the dialog into the first install's.
-  const live = { older: !pending && unitForPrompt(state) === 'older', switching: !pending && layout !== undefined && isPublishedBase(state.identity?.base) && baseLayout(state.identity?.base) !== layout, from: state.identity?.base }
+  const live = { older: !pending && unitForPrompt(state) === 'older', switching: !pending && !USB_AUDIO_PACKAGED && layout !== undefined && isPublishedBase(state.identity?.base) && baseLayout(state.identity?.base) !== layout, from: state.identity?.base }
   const [began, setBegan] = useState(live)
   const { older, switching, from } = usb ? began : live, running = baseLayout(from), usbStages = USB_STAGES
   // What gets built: the layout asked for, else the set's own (an update keeps what the set asks for, in one go), else
   // USB Audio off. An update to off from a base that had USB Audio, or one the site can't tell, says so before it runs.
-  const installLayout = layout ?? (set ? setLayout(set) : undefined)
+  const installLayout = USB_AUDIO_PACKAGED ? undefined : layout ?? (set ? setLayout(set) : undefined)
   const turnsAudioOff = older && (installLayout ?? MEMBER_LAYOUT) === 'off' && runningLayout(from) !== 'off'
   // Over USB from any older base (every base RAM-boots the new one, which writes itself: flash.c); the card stays for
   // the first install and as the fallback after an error.

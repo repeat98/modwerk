@@ -1,3 +1,4 @@
+import { USB_AUDIO_PACKAGED } from '../config/usb-audio'
 import { inspectBaseFirmware } from './base'
 import { decodeFirmware } from './elek'
 import { recoverStockDsp } from './stock-dsp'
@@ -33,7 +34,8 @@ export function createEngineSession(reply: (response: EngineResponse, transfer?:
         // Another USB Audio layout is the default package with its reviewed patch (base-variants.ts). Without a layout
         // from a module set, a member gets MEMBER_LAYOUT: USB MIDI alone. The step base is built the same way from
         // its own three assets, each checked against its pin.
-        const step = request.step === true, layout = request.layout ?? MEMBER_LAYOUT
+        const step = request.step === true
+        const layout = USB_AUDIO_PACKAGED && !step ? DEFAULT_LAYOUT : request.layout ?? MEMBER_LAYOUT
         const asset = async (url: string, pin: string | undefined, what: string) => {
           const response = await fetch(url)
           if (!response.ok) throw new Error(what + ' did not load. Reload the page and try again.')
