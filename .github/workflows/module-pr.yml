@@ -4,7 +4,8 @@ name: Module PR checks
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened, ready_for_review, converted_to_draft]
-    branches: [main, 'modwerk/**', 'codex/modwerk-*']
+    # base/<machine>-next: a base change joining its machine's cumulative draft gets the description check only (below).
+    branches: [main, 'modwerk/**', 'codex/modwerk-*', 'base/*-next']
 permissions:
   contents: read
 concurrency:
@@ -15,6 +16,8 @@ jobs:
   # source/build inputs; app changes retain lint, tests, types and the bundle.
   scope:
     name: scope / ${{ github.event.pull_request.base.sha }} / ${{ github.event.pull_request.head.sha }}
+    # Into a cumulative base draft only the description is checked; the draft's own pull request into main runs the rest.
+    if: ${{ !startsWith(github.base_ref, 'base/') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
@@ -37,7 +40,7 @@ jobs:
           OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
         run: node scripts/pr-check-plan.mjs --base "$OCTAMOD_PR_BASE" --head HEAD >> "$GITHUB_OUTPUT"
   describe:
-    if: github.base_ref == 'main'
+    if: github.base_ref == 'main' || (startsWith(github.base_ref, 'base/') && endsWith(github.base_ref, '-next'))
     runs-on: ubuntu-24.04
     timeout-minutes: 3
     steps:
