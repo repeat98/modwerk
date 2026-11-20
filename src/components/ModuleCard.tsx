@@ -96,7 +96,7 @@ export function ModuleCard({ module, selected, statistics, viewedVersion, baseli
   const trigger = useRef<HTMLButtonElement>(null)
   const prompt = useAddBlockPrompt(pending, trigger)
   return <article className={'module-card ' + (selected ? 'is-selected' : '')}>
-    {clips[0] ? <ModuleAudioCardCover id={module.id} name={module.name} href={moduleHref(module.id)} onBrowse={onBrowse} inert={prompt.open} prepare={audioReady} onPrepare={() => setAudioReady(true)} clip={clips[0]}><ModulePreview id={module.id}/></ModuleAudioCardCover> : <a href={moduleHref(module.id)} onClick={onBrowse} onAuxClick={onBrowse} className="module-cover" aria-label={'View ' + module.name} inert={prompt.open}>
+    {clips[0] ? <ModuleAudioCardCover id={module.id} name={module.name} summary={module.description} href={moduleHref(module.id)} onBrowse={onBrowse} inert={prompt.open} prepare={audioReady} onPrepare={() => setAudioReady(true)} clip={clips[0]}><ModulePreview id={module.id}/></ModuleAudioCardCover> : <a href={moduleHref(module.id)} onClick={onBrowse} onAuxClick={onBrowse} className="module-cover" aria-label={'View ' + module.name} inert={prompt.open}>
       <ModulePreview id={module.id} />
       <div className="hover-info"><span>{module.description}</span><strong>Explore module <Icon name="arrow" size={15} /></strong></div>
     </a>}
@@ -107,7 +107,6 @@ export function ModuleCard({ module, selected, statistics, viewedVersion, baseli
       </div>
       {module.id === USB_AUDIO_MODULE && <span className="module-compatibility-badge module-card-compatibility"><Icon name="wave" size={12} />Outbox 8 compatible</span>}
       <div className="card-credit"><ModuleAuthors name={module.authorName} url={module.authorUrl} contributors={module.contributors}/><span>{module.detail}</span></div>
-      <p className="card-description">{module.description}</p>
       <div className="card-bottom">{pending ? <AddBlockChip block={pending} /> : <span>{DETAILS[module.id].family}</span>}<CardStats statistics={statistics} /></div>
       <CardProof stability={moduleStability(statistics, { buildPending: moduleBuildPending(module.id), hardware: moduleHardwareEvidence(module.id) })} statistics={statistics} name={module.name} compared={compared} canCompare={canCompare} onCompare={onCompare} />
     </div>

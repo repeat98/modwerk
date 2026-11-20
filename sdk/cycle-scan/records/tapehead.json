@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "module": "tapehead",
+  "version": "0.1.2-experimental",
+  "sourceSha256": "9b005a4f1a186cc7731c5bf973d59ebef9538190ac63fddba26f0e60c96c8646",
+  "scanRevision": "cc7cffc1a675a763c5b8d6fbe1659f2b322cc540",
+  "model": "DSP56300FM Table A-1 cycles and the A.2 and 3.5 stalls on one steady block of each --sweep setting; a model, not a measurement",
+  "dearest": {
+    "setting": "COLOR=BRGT/def",
+    "settings": 12,
+    "instructions": 274.13,
+    "cycles": 425.5,
+    "stalls": 67.13,
+    "stallsByKind": {
+      "agu": 5.81,
+      "arith": 54.56,
+      "transfer": 6.75
+    }
+  }
+}
