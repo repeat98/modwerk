@@ -19,7 +19,7 @@ A claim also records the holder's GitHub login, the branch, the pull request onc
 
 - **Lifetime.** Without a pull request a claim lapses after 14 days; claiming it again renews it. Once a pull request is linked it holds while that pull request is open. The Worker's hourly run links a claim to the pull request on its branch (`<holder>:<branch>`), open or merged since the claim was made, releases claims whose pull request was merged or closed and those of suspended accounts, and records why.
 - **Expiry reminders.** `npm run board -- inbox` and `board_inbox` list your active claims expiring within three days. `pr:ready` alerts you when any need review. Review them with the developer before renewing or releasing a claim.
-- **Limits.** At most 10 active claims per person and 30 claim writes an hour.
+- **Limits.** At most 10 active claims per person and 30 claim writes an hour. For the approved MS-70CDR import, the owner runs `npm run board -- claim-collection zoom-multistomp` to reserve its 28 named effects together on `codex/zoom-multistomp-effects`. Each has an exclusive key and the collection takes one slot.
 - **Numbers.** The board does not know which numbers `main` uses. Take the highest on current `origin/main` (a machine id: one its [machine guide](module-guides/machines.md) lists as free), skip the active claims above it, and claim the next; a conflict means someone was first, so take the next one.
 - **Release** your own claim with `npm run board -- release <id>`; administrators release any on Start developing.
 

@@ -1,0 +1,9 @@
+[
+  {
+    "version": "2.0.0",
+    "date": "2026-11-20",
+    "changes": [
+      "A Korg-style random sample-and-hold step filter: the \"Digital Bath\" sound."
+    ]
+  }
+]

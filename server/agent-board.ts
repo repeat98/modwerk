@@ -7,6 +7,8 @@ import type { Database, Env } from './platform'
 import { throttle } from './auth'
 import { digest, HttpError, jsonBody, response } from './security'
 import { githubConfig } from './github'
+import zoomRelease from '../sdk/approvals/zoom-release-waivers.json'
+import authors from '../.github/module-authors.json'
 
 export const CLAIM_KINDS = ['module', 'hook', 'migration', 'dsp-region', 'machine-id', 'issue'] as const
 export type ClaimKind = typeof CLAIM_KINDS[number]
@@ -116,9 +118,9 @@ const held = (row: ClaimRow) => `${row.kind} ${row.claim_key} is claimed by @${r
 export async function boardUser(request: Request, env: Env, db: Database) {
   const value = request.headers.get('X-Modwerk-Developer') ?? ''
   if (!env.GITHUB_OAUTH_CLIENT_ID || !env.GITHUB_OAUTH_CLIENT_SECRET || !/^[a-f0-9]{64}$/.test(value)) return null
-  return await db.prepare('SELECT u.id,u.github_login FROM users u JOIN developer_sessions s ON s.user_id=u.id WHERE s.token_hash=? AND s.client_hash=? AND s.expires>? AND u.suspended=0 AND u.github_id IS NOT NULL AND u.github_login IS NOT NULL').bind(await digest(value), await digest(env.GITHUB_OAUTH_CLIENT_ID + ':' + env.GITHUB_OAUTH_CLIENT_SECRET), Math.floor(Date.now() / 1000)).first<{ id: string; github_login: string }>()
+  return await db.prepare('SELECT u.id,u.github_login,u.github_id FROM users u JOIN developer_sessions s ON s.user_id=u.id WHERE s.token_hash=? AND s.client_hash=? AND s.expires>? AND u.suspended=0 AND u.github_id IS NOT NULL AND u.github_login IS NOT NULL').bind(await digest(value), await digest(env.GITHUB_OAUTH_CLIENT_ID + ':' + env.GITHUB_OAUTH_CLIENT_SECRET), Math.floor(Date.now() / 1000)).first<{ id: string; github_login: string; github_id: string }>()
 }
-function needBoardUser(user: { id: string; github_login: string } | null) {
+function needBoardUser(user: Awaited<ReturnType<typeof boardUser>>) {
   if (!user) throw new HttpError(401, 'Sign in for the board first: npm run board -- login')
   return user
 }
@@ -126,6 +128,40 @@ async function expireKey(db: Database, kind: ClaimKind, key: string, now: string
   await db.prepare("UPDATE agent_claims SET released_at=?,released_reason='expired' WHERE kind=? AND claim_key=? AND released_at IS NULL AND expires_at IS NOT NULL AND expires_at<=?").bind(now, kind, key, now).run()
 }
 const expiry = (now: number, linked: boolean) => linked ? null : new Date(now + CLAIM_DAYS * DAY).toISOString()
+
+// Each effect keeps its own unique board key. Only this named release on its owner's branch shares a quota slot.
+const zoomBranch = 'codex/zoom-multistomp-effects'
+const zoomKeys = Object.keys(zoomRelease.modules).map(id => 'zoom/' + id)
+const jsonZoomKeys = JSON.stringify(zoomKeys)
+const zoomMember = "kind='module' AND branch=? AND claim_key IN (SELECT value FROM json_each(?))"
+const activeClaim = 'released_at IS NULL AND (expires_at IS NULL OR expires_at>?)'
+
+async function reserveZoomCollection(db: Database, userId: string, now: string, nowMs: number) {
+  const keys = 'SELECT value FROM json_each(?)'
+  const other = await db.prepare(SELECT + ` WHERE c.kind='module' AND c.claim_key IN (${keys}) AND c.released_at IS NULL
+    AND (c.expires_at IS NULL OR c.expires_at>?) AND (c.user_id<>? OR c.branch IS NOT ?) LIMIT 1`)
+    .bind(jsonZoomKeys, now, userId, zoomBranch).first<ClaimRow>()
+  if (other) throw new HttpError(409, held(other))
+
+  // One transaction expires stale rows and acquires every missing key. A racing holder rolls back the entire insert.
+  const members = JSON.stringify(zoomKeys.map(key => ({ key, id: crypto.randomUUID() })))
+  const capacity = `(SELECT COUNT(*) FROM agent_claims WHERE user_id=? AND ${activeClaim}
+    AND NOT (kind='module' AND branch IS ? AND claim_key IN (${keys}))) < ?`
+  await db.batch([
+    db.prepare(`UPDATE agent_claims SET released_at=?,released_reason='expired' WHERE kind='module' AND claim_key IN (${keys})
+      AND released_at IS NULL AND expires_at<=?`).bind(now, jsonZoomKeys, now),
+    db.prepare(`INSERT INTO agent_claims(id,kind,claim_key,user_id,branch,note,created_at,renewed_at,expires_at)
+      SELECT json_extract(m.value,'$.id'),'module',json_extract(m.value,'$.key'),?,?,
+      'MS-70CDR collection release',?,?,? FROM json_each(?) m WHERE ${capacity} AND NOT EXISTS
+      (SELECT 1 FROM agent_claims c WHERE c.kind='module' AND c.claim_key=json_extract(m.value,'$.key')
+      AND c.released_at IS NULL AND c.user_id=? AND c.branch=?)`)
+      .bind(userId, zoomBranch, now, now, expiry(nowMs, false), members, userId, now, zoomBranch, jsonZoomKeys, CLAIM_LIMIT, userId, zoomBranch),
+  ]).catch(() => { throw new HttpError(409, 'The collection could not be reserved. Check its individual claims and try again.') })
+  const { results } = await db.prepare(SELECT + ` WHERE c.user_id=? AND ${zoomMember} AND c.released_at IS NULL`)
+    .bind(userId, zoomBranch, jsonZoomKeys).all<ClaimRow>()
+  if (results.length !== zoomKeys.length) throw new HttpError(409, 'The collection needs one free claim slot.')
+  return response({ claims: results.map(view) })
+}
 
 type Outcome = 'reproduced' | 'different-result'
 type MessageRow = { id: string; kind: MessageKind | 'reply'; parent_id: string | null; topic_kind: TopicKind; topic_key: string; user_id: string; github_login: string; to_login: string | null; body: string; pull_request: number | null; priority: string | null; created_at: string; active_at: string; ended_at: string | null; ended_reason: string | null; parent_issue: number | null; parent_claim: string | null; outcome: Outcome | null; evidence: number | null }
@@ -422,6 +458,12 @@ export async function agentBoardRoutes(request: Request, env: Env, db: Database,
     return response(weeks === null ? await activity(db, nowMs) : await weeklyActivity(db, nowMs, weeks))
   }
   if (path === '/api/agent-board/messages' || path.startsWith('/api/agent-board/messages/')) return await messageRoutes(request, url, env, db, adminId, nowMs)
+  if (path === '/api/agent-board/collections/zoom-multistomp' && request.method === 'POST') {
+    const user = needBoardUser(await boardUser(request, env, db))
+    if (user.github_id !== String(authors.accounts.repeat98)) throw new HttpError(403, 'This reservation belongs to the release owner.')
+    await throttle(db, 'agent-board:' + user.id, CLAIM_WRITES_PER_HOUR)
+    return await reserveZoomCollection(db, user.id, now, nowMs)
+  }
   if (path === '/api/agent-board/claims' && request.method === 'GET') {
     const kind = url.searchParams.get('kind'), key = url.searchParams.get('key'), holder = url.searchParams.get('holder')?.replace(/^@/, '').toLowerCase()
     const where: string[] = [], binds: unknown[] = []
@@ -456,7 +498,10 @@ export async function agentBoardRoutes(request: Request, env: Env, db: Database,
       await db.prepare('UPDATE agent_claims SET renewed_at=?,branch=COALESCE(?,branch),pull_request=COALESCE(?,pull_request),note=CASE WHEN ?=1 THEN ? ELSE note END,expires_at=CASE WHEN COALESCE(?,pull_request) IS NULL THEN ? ELSE NULL END WHERE id=?').bind(now, branch, pr, body.note === undefined ? 0 : 1, note, pr, expiry(nowMs, false), current.id).run()
       return response({ claim: view((await db.prepare(SELECT + ' WHERE c.id=?').bind(current.id).first<ClaimRow>())!), renewed: true })
     }
-    const count = await db.prepare('SELECT COUNT(*) AS n FROM agent_claims WHERE user_id=? AND released_at IS NULL AND (expires_at IS NULL OR expires_at>?)').bind(user.id, now).first<{ n: number }>()
+    const count = user.github_id === String(authors.accounts.repeat98)
+      ? await db.prepare(`SELECT COUNT(DISTINCT CASE WHEN ${zoomMember} THEN 'zoom-release' ELSE id END) AS n
+        FROM agent_claims WHERE user_id=? AND ${activeClaim}`).bind(zoomBranch, jsonZoomKeys, user.id, now).first<{ n: number }>()
+      : await db.prepare(`SELECT COUNT(*) AS n FROM agent_claims WHERE user_id=? AND ${activeClaim}`).bind(user.id, now).first<{ n: number }>()
     if ((count?.n ?? 0) >= CLAIM_LIMIT) throw new HttpError(409, `You hold ${CLAIM_LIMIT} claims. Release one you no longer need first (npm run board -- release <id>).`)
     const id = crypto.randomUUID()
     try {

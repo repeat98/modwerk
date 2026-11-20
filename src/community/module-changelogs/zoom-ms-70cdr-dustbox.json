@@ -1,0 +1,9 @@
+[
+  {
+    "version": "1.0.0",
+    "date": "2026-11-20",
+    "changes": [
+      "A Buzz Box-style fuzz with a flip-flop sub-octave. Contributed by Marcelo Fuentes (MIT)."
+    ]
+  }
+]

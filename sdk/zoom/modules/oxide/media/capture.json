@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "oxide",
+  "moduleVersion": "1.1.0",
+  "imageSha256": "8f07a8b6d226e980157c45b5b3ebaa1e8ce1f9461d42b9833cbcbdb6daa7d172",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "be729684c28a7aa677570d4bdcd9d2627bc52c33727261cb3ea97d4309545de7",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}
