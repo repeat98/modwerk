@@ -12,7 +12,7 @@ export const publishedPackages = {
   packages: currentPackages.packages.map(current => {
     const linked = linkedById.get(current.id)
     const entry = !USB_AUDIO_PACKAGED && linked ? linked : current
-    if (linked && linked.path === current.path && linked.sha256 !== current.sha256) {
+    if (USB_AUDIO_PACKAGED && linked?.version === current.version && linked.sha256 !== current.sha256) {
       return { ...entry, path: 'octatrack-base-packages/' + entry.sha256 + '.mwrm' }
     }
     return entry

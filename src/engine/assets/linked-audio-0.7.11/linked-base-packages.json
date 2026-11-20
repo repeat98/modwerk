@@ -60,7 +60,7 @@
     "module": "823e0f45",
     "bytes": 1818,
     "sha256": "16fcc02a5628e32c0cdd09e414360a76cf30169892ad96686e9541d0bb27daa8",
-    "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
+    "path": "octatrack-base-packages/16fcc02a5628e32c0cdd09e414360a76cf30169892ad96686e9541d0bb27daa8.mwrm",
     "requiredBase": "a08a1557c5bd7d04b6b0615361f059ac99ba2bc40f8a7e3b86842db2ccbbb5bd"
   },
   {
