@@ -31,6 +31,8 @@ describe('paging through catalog results', () => {
     expect(restored).toEqual({ ...browse, family: 'Utilities' })
     expect(parseCatalogBrowse(JSON.stringify({ ...browse, route: 'effects', ids: ['miniverb'] }))?.route).toBe('effects')
     expect(parseCatalogBrowse(JSON.stringify({ ...browse, route: 'digitakt/system' }))?.route).toBe('digitakt/system')
+    expect(parseCatalogBrowse(JSON.stringify({ ...browse, route: 'all/scenes', family: 'Scenes' }))).toMatchObject({ route: 'all/performance', family: 'Scenes' })
+    expect(parseCatalogBrowse(JSON.stringify({ ...browse, route: 'analog-rytm-mkii/scenes' }))?.route).toBe('analog-rytm-mkii/performance')
   })
 
   it('preserves the recently updated default and captured order after reload', () => {
