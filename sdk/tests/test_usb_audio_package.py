@@ -4,6 +4,8 @@ import importlib.util
 import shutil
 import struct
 import sys
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -26,6 +28,36 @@ LAYOUT = 'USB AUDIO OUT TRACKS MAIN CUE'
 
 
 class UsbAudioPackage(unittest.TestCase):
+    def test_configurable_packet_router_and_saved_settings(self):
+        with tempfile.TemporaryDirectory() as temp:
+            exe = Path(temp) / 'router'
+            subprocess.run(['cc', '-std=c99', '-Wall', '-Wextra', '-Werror', '-I', OT / 'include',
+                            OT / 'elekloader/test_usb_audio_settings.c', '-o', exe], check=True)
+            subprocess.run([exe], check=True)
+
+    @unittest.skipUnless(shutil.which('m68k-elf-gcc'), 'no ColdFire toolchain')
+    def test_one_configurable_package_describes_every_output_width(self):
+        data, facts = builder.build(None)
+        self.assertEqual(struct.unpack_from('>H', data, 66)[0], 7)
+        self.assertLess(facts['image'] + facts['bss'], 128 * 1024)
+        hook_count = struct.unpack_from('>I', data, 20)[0]
+        hook_index = next(e['index'] for e in events.load()['events'] if e['event'] == 'ot_usb_functions')
+        function = struct.unpack_from('>I', data, 76 + hook_index * 4)[0] & 0xffffff
+        image_at = 76 + hook_count * 4
+        image = data[image_at:image_at + facts['image']]
+        self.assertGreater(hook_count, hook_index)
+        self.assertEqual(struct.unpack_from('>IIHHI', image, function), (2, 36, 2, facts['block'], 0x80000))
+        self.assertEqual(struct.unpack_from('>HBB', image, function+32), (5,0,0))
+        for speed, offset in enumerate(struct.unpack_from('>4I', image, function+16)):
+            for i, width in enumerate([20,16,4,2,8]):
+                at = offset + i*facts['block']
+                descriptors = list(builder._records(image[at:at+facts['block']]))
+                channels = width if speed % 2 else 2
+                self.assertEqual(next(r[8] for r in descriptors if r[:3] == bytes([17,0x24,2])), channels)
+                self.assertEqual(next(r[10] for r in descriptors if r[:3] == bytes([16,0x24,1])), channels)
+                endpoint = next(r for r in descriptors if r[:3] == bytes([7,5,0x83]))
+                self.assertEqual(int.from_bytes(endpoint[4:6], 'little'), channels * 4 * (12 if speed % 2 else 45))
+
     def test_the_function_block_is_what_a_linked_base_sends_behind_its_own_interfaces(self):
         descriptors = load('descriptors', usb.audio_paths(LAYOUT)[1])
         blocks = [builder.function_block(functions, usb, descriptors, LAYOUT, hs, other)

@@ -639,8 +639,13 @@ static void switches_tick(void)
 #define SETTING_ROWS 5u
 char modwerk_settings_label[] = "SETTINGS";
 struct settings_cursor { unsigned row, top; };
-static struct settings_cursor setting_module, setting_option;
+static struct settings_cursor setting_module, setting_option, setting_field;
+enum { SETTING_ROOT, SETTING_MODULE, SETTING_FIELD };
 static int choosing_setting;
+static unsigned settings_field_index(void)
+{
+    return choosing_setting == SETTING_FIELD ? setting_field.row : MODWERK_SETTING_FIELDS;
+}
 static uint32_t setting_epoch;
 static void settings_move(struct settings_cursor *c, unsigned count, int code)
 {
@@ -663,17 +668,30 @@ static void settings_key(int code)
 {
     struct modwerk_setting_view view;
     if (choosing_setting) {
-        if (code == NO || !modwerk_settings_read(setting_module.row, &view) || view.epoch != setting_epoch) {
-            choosing_setting = 0;
+        if (!modwerk_settings_field(setting_module.row, settings_field_index(), &view) || view.epoch != setting_epoch) {
+            choosing_setting = SETTING_ROOT;
             return;
         }
-        settings_move(&setting_option, view.count, code);
-        if (code == YES) modwerk_settings_select(setting_module.row, setting_epoch, setting_option.row);
+        if (code == NO) {
+            choosing_setting = choosing_setting == SETTING_FIELD ? SETTING_MODULE : SETTING_ROOT;
+            return;
+        }
+        struct settings_cursor *cursor = view.fields ? &setting_field : &setting_option;
+        settings_move(cursor, view.count, code);
+        if (code == YES && view.fields) {
+            if (modwerk_settings_field(setting_module.row, setting_field.row, &view) && view.epoch == setting_epoch) {
+                choosing_setting = SETTING_FIELD;
+                setting_option = (struct settings_cursor){view.active, 0};
+            }
+        } else if (code == YES) {
+            modwerk_settings_choose(setting_module.row, setting_epoch, settings_field_index(), setting_option.row);
+        }
         return;
     }
     settings_move(&setting_module, modwerk_settings_count(), code);
     if (code == YES && modwerk_settings_read(setting_module.row, &view)) {
-        choosing_setting = 1;
+        choosing_setting = SETTING_MODULE;
+        setting_field = (struct settings_cursor){0, 0};
         setting_epoch = view.epoch;
         setting_option = (struct settings_cursor){view.active, 0};
         settings_move(&setting_option, view.count, 0);
@@ -1358,9 +1376,9 @@ void modwerk_status_draw(unsigned char *frame)
 static void settings_page(unsigned char *frame)
 {
     struct modwerk_setting_view view;
-    if (choosing_setting && (!modwerk_settings_read(setting_module.row, &view) || view.epoch != setting_epoch))
+    if (choosing_setting && (!modwerk_settings_field(setting_module.row, settings_field_index(), &view) || view.epoch != setting_epoch))
         choosing_setting = 0;
-    struct settings_cursor *cursor = choosing_setting ? &setting_option : &setting_module;
+    struct settings_cursor *cursor = choosing_setting ? (view.fields ? &setting_field : &setting_option) : &setting_module;
     unsigned count = choosing_setting ? view.count : modwerk_settings_count();
     settings_move(cursor, count, 0);
     dialog(frame, choosing_setting ? view.label : "SETTINGS");
@@ -1369,7 +1387,14 @@ static void settings_page(unsigned char *frame)
         unsigned row = cursor->top + i, top = Y0 + 13u + 8u * i;
         if (row == cursor->row) for (unsigned k = 0; k < 3u; ++k)
             fill(frame, X0 + 3u + k, top + k, X0 + 3u + k, top + 4u - k, 1);
-        if (choosing_setting) {
+        if (choosing_setting && view.fields) {
+            label(X0 + 9u, top, view.choices[row]);
+            const char *value = view.values[row];
+            int width = TEXT_WIDTH(FONT, -1, value);
+            int edge = count > SETTING_ROWS ? X1 - 12 : X1 - 4;
+            if (*value && edge - width >= (int)(X0 + 12u) + TEXT_WIDTH(FONT, -1, view.choices[row]))
+                label((unsigned)(edge - width), top, value);
+        } else if (choosing_setting) {
             outline(frame, X0 + 9u, top, X0 + 13u, top + 4u);
             if (row == view.active) fill(frame, X0 + 10u, top + 1u, X0 + 12u, top + 3u, 1);
             label(X0 + 17u, top, view.choices[row]);
@@ -1379,7 +1404,7 @@ static void settings_page(unsigned char *frame)
     if (cursor->top + SETTING_ROWS < count) arrow(frame, X1 - 9u, Y0 + 45u, 0);
     if (count) {
         button(frame, X0 + 4u, Y1 - 10u, "YES");
-        label(X0 + 30u, Y1 - 8u, choosing_setting ? "SELECT" : "OPEN");
+        label(X0 + 30u, Y1 - 8u, choosing_setting && !view.fields ? "SELECT" : "OPEN");
     }
     button(frame, X1 - 24u, Y1 - 10u, "NO");
 }

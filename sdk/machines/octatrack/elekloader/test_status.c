@@ -169,21 +169,34 @@ volatile uint32_t modwerk_modset_switch_result;
 int modwerk_modset_switch(uint32_t id, int on) { asked_id = id, asked_on = (unsigned)on, modwerk_modset_switch_result = MODSET_SWITCH_PENDING; return 1; }
 /* Fixture for the panel tests. test_settings.c exercises the real table and battery store. */
 static struct modwerk_setting_view settings_fixture[] = {
-    { 2, 3, 0, "USB AUDIO", {"ALL CHANNELS", "OFF", "MAIN + CUE ONLY"} },
-    { 2, 6, 5, "OTHER MOD", {"ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"} }
+    { 2, 3, 0, "USB AUDIO", {"ALL CHANNELS", "OFF", "MAIN + CUE ONLY"}, 0, {{0}} },
+    { 2, 6, 5, "OTHER MOD", {"ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"}, 0, {{0}} }
 };
-static unsigned fixture_rows, selections;
+static unsigned fixture_rows, selections, grouped_fixture;
 void modwerk_settings_tick(void) {}
 unsigned modwerk_settings_count(void) { return fixture_rows; }
 unsigned modwerk_settings_read(unsigned i, struct modwerk_setting_view *v)
 {
     if (i >= fixture_rows) return 0;
     *v = settings_fixture[i];
+    if (grouped_fixture && !i) {
+        v->fields = 1; v->count = 2; v->active = 0;
+        strcpy(v->choices[0], "LAYOUT"); strcpy(v->choices[1], "TRACK TAP"); strcpy(v->values[1], "POST LEVEL");
+    }
     return 1;
 }
-void modwerk_settings_select(unsigned i, uint32_t epoch, unsigned choice)
+unsigned modwerk_settings_field(unsigned i, unsigned field, struct modwerk_setting_view *v)
 {
-    CHECK(i < fixture_rows && epoch == settings_fixture[i].epoch && choice < settings_fixture[i].count);
+    if (field == MODWERK_SETTING_FIELDS) return modwerk_settings_read(i,v);
+    if (!grouped_fixture || i || field != 1) return 0;
+    *v = settings_fixture[0];
+    strcpy(v->label,"TRACK TAP");
+    strcpy(v->choices[0],"PRE LEVEL"); strcpy(v->choices[1],"POST LEVEL");
+    v->count=2; return 1;
+}
+void modwerk_settings_choose(unsigned i, uint32_t epoch, unsigned field, unsigned choice)
+{
+    CHECK((field == MODWERK_SETTING_FIELDS || (grouped_fixture && field == 1)) && i < fixture_rows && epoch == settings_fixture[i].epoch && choice < settings_fixture[i].count);
     settings_fixture[i].active = choice;
     ++selections;
 }
@@ -224,6 +237,20 @@ static void check_settings_panel(void)
     CHECK(selections == 1u && strstr(shows(), "SETTINGS|USB AUDIO|OTHER MOD|"));
     settings_press(NO);
     CHECK(open == CLOSED);
+    grouped_fixture = 1;
+    modwerk_settings_menu(0);
+    settings_press(YES);
+    CHECK(strstr(shows(),"USB AUDIO|LAYOUT|TRACK TAP|POST LEVEL|"));
+    settings_press(DOWN); settings_press(YES);
+    CHECK(strstr(shows(),"TRACK TAP|PRE LEVEL|POST LEVEL|"));
+    settings_press(UP); settings_press(YES);
+    CHECK(selections == 2 && !settings_fixture[0].active);
+    settings_press(NO);
+    CHECK(strstr(shows(),"USB AUDIO|LAYOUT|TRACK TAP|POST LEVEL|"));
+    settings_press(NO);
+    CHECK(strstr(shows(),"SETTINGS|USB AUDIO|OTHER MOD|"));
+    settings_press(NO);
+    grouped_fixture = 0;
     fixture_rows = 0;
     modwerk_test_menu_open = close_menu = 0;
 }

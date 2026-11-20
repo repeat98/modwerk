@@ -1,8 +1,7 @@
 # Octatrack: USB Audio as a module (design, for owner review)
 
 Status, 20 November 2026: [decision](decisions/2026-11-20-usb-audio-is-a-module.md), development branch
-`base/usb-audio-module`, draft #1848. The 20-channel trial recorded on a real MKII with macOS. The four-channel
-trial rolled back during enumeration on two runs ([unit record](verification/2026-11-20-octatrack-usb-audio-package.md)).
+`base/usb-audio-module`, draft #1848. The six single-layout prototypes recorded on a real MKII with macOS. The configurable package is under test ([unit record](verification/2026-11-20-octatrack-usb-audio-package.md)).
 Players still use the published base variants. Addresses are OS 1.40C.
 
 ## Today
@@ -49,7 +48,7 @@ Two things it found in the emulator shape the rest:
 - **The base walks these hooks' rows itself.** Through the loader's dispatch code the USB interrupt left module
   addresses on the stack at every transfer, and the loader then refused a rollback for good.
 
-### Still to design
+### Base and migration work
 
 1. **The audio frame: `ev_usb_frame`** (added to the prototype on 20 November 2026, emulator only). The producer
    runs in the frame interrupt (`audio_frame_shim` at `0x4000d9a0`, one of `usb_base.py`'s `AUDIO_DETOURS`). A
@@ -74,31 +73,23 @@ Two things it found in the emulator shape the rest:
 ## The module
 
 - One catalogue module, the present id `usb-audio-out-tracks-main-cue`, so sets, reports and changelogs keep working.
-- The layout is a setting of the set on the site, as today. Each layout is its own package build of the same
-  module id; changing it replaces the package and reconnects.
-- **The player switches it on the Octatrack, in the Modwerk settings** (owner, 20 November 2026). The base has one
-  row, PROJ > MODWERK > SETTINGS, for every module that has a setting (table `ot_settings`, `settings.c`): each
-  module has its own row. YES opens USB AUDIO and shows every available choice with the active one marked. UP and
-  DOWN browse, YES applies the highlighted choice, and NO returns to SETTINGS. The base keeps the
-  choice in battery RAM under the label, through power cycles and module updates, and applies it again after
-  every change of the installed modules. USB Audio offers ALL CHANNELS and OFF in every layout and MAIN + CUE ONLY
-  in the twenty-channel one, read by the producer through #1517's seams. None of them changes a descriptor, so
-  nothing reconnects and the host keeps its channel count. The 13 November measurements in #1517 are the baseline.
+- Install one package. Open PROJ > MODWERK > SETTINGS, then USB AUDIO. Choose COMPUTER or OUTBOX 8, an output layout, and PRE LEVEL or POST LEVEL for the eight stems in either track layout. Main and Cue keep their existing taps.
+- In OUTBOX 8, choose the source for each of four stereo USB pairs. Each pair can carry a source from the selected layout or silence. Duplicate assignments are allowed. Set up the matching physical outputs once in Elektron’s app.
+- The base saves these settings through a power cycle. A change of USB format reconnects the device. Changes to sources and stem tap within the current format can keep a recording open.
 - The imported producer source stays exact; the adapter inserts at guarded seams, as `base_usb_functions.py` does.
 
 ## Sync
 
-- Adding, removing or changing the layout ends in a reconnect. The site's link already waits for a unit to come
+- Adding, removing or changing the advertised channel format ends in a reconnect. The site's link already waits for a unit to come
   back after a base update; here it reads USB FUNCTION, waits for the reconnect to settle and goes on with the
   self-test, Keep or Undo on the same trial.
 - An Undo, a failed self-test and a power cycle each put the earlier configuration back, with a reconnect of
   their own.
-- The reconnect waits for an idle control endpoint and for the transport to be stopped, as a load does.
+- A panel format change waits until playback stops and the card leaves USB Disk Mode.
 
 ## Site
 
-Remove the special cases listed under Today. The layout stays in `usbAudio` on the set; `setLayout` picks the
-package instead of a base. The module counts toward `SET_MODULE_LIMIT`: a set that holds 24 others and USB
+Remove the special cases listed under Today. Each layout installs the same package. Existing sets retain their layout for migration. The module counts toward `SET_MODULE_LIMIT`: a set that holds 24 others and USB
 Audio then loads and shows but is not synced until trimmed, as any set over the limit. `base-variants.ts` keeps
 only what the transition needs.
 

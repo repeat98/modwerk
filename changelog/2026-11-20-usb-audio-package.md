@@ -1,2 +1,3 @@
-The Octatrack development base can load USB Audio as a module in any of its six output layouts.
-In PROJ > MODWERK > SETTINGS, open USB AUDIO to see the available options and the current selection. Use UP or DOWN to browse, YES to apply, and NO to go back. Other modules can add their own rows here.
+The Octatrack development build installs USB Audio once. Open PROJ > MODWERK > SETTINGS > USB AUDIO to choose the destination and layout.
+Choose PRE LEVEL or POST LEVEL on the eight track stems in the 16- and 20-channel layouts. Main and Cue keep their own stereo pairs.
+OUTBOX 8 sends your choice of source or silence on each of four stereo USB pairs. Map the matching physical outputs once in Elektron’s app.

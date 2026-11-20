@@ -56,6 +56,8 @@ static unsigned host_call(uintptr_t handler)
 static int locked, usb_disk;
 uint32_t modwerk_machine_lock(void) { CHECK(!locked); locked = 1; return 4; }
 void modwerk_machine_unlock(uint32_t s) { CHECK(locked && s == 4); locked = 0; }
+static int stopped = 1;
+int modwerk_machine_stopped(void) { return stopped; }
 int modwerk_machine_usb_disk(void) { return usb_disk; }
 uint8_t modwerk_cfg_fs[512], modwerk_cfg_hs[512], modwerk_cfg_os_fs[512], modwerk_cfg_os_hs[512];
 volatile uint32_t modwerk_cfg_len = MODWERK_USB_CFG_BYTES;
@@ -156,6 +158,37 @@ static void admission(void)
     CHECK(modwerk_usb_function_admit(&d, RUNTIME_METADATA_PREPARE) == RUNTIME_MALFORMED); /* an odd offset */
 }
 
+static void profile_admission(void)
+{
+    uint8_t bytes[BLOCKS_AT + 8u * BLOCK];
+    struct runtime_dsp d = candidate();
+    d.image = bytes;
+    d.image_bytes = sizeof bytes;
+    for (unsigned relocated = 0; relocated <= 1; ++relocated) {
+        uint32_t base = relocated ? UF_IMAGE_ADDRESS(bytes) : 0;
+        unsigned operation = relocated ? RUNTIME_METADATA_SWITCH : RUNTIME_METADATA_PREPARE;
+        package(base);
+        memcpy(bytes,image,BLOCKS_AT);
+        uint8_t *record = bytes+RECORD_AT;
+        put32(record,MODWERK_USB_PROFILES_ABI); put32(record+4,36); put16(record+32,2);
+        record[34] = 1; record[35] = 0;
+        for (unsigned k=0; k<4; ++k) {
+            put32(record+16+4*k,base+BLOCKS_AT+2*k*BLOCK);
+            memcpy(bytes+BLOCKS_AT+2*k*BLOCK,block,BLOCK);
+            memcpy(bytes+BLOCKS_AT+(2*k+1)*BLOCK,block,BLOCK);
+        }
+        CHECK(modwerk_usb_function_admit(&d,operation) == RUNTIME_OK);
+        record[34] = 2;
+        CHECK(modwerk_usb_function_admit(&d,operation) == RUNTIME_MALFORMED);
+        record[34] = 0;
+        --d.image_bytes;
+        CHECK(modwerk_usb_function_admit(&d,operation) == RUNTIME_MALFORMED);
+        ++d.image_bytes;
+        bytes[BLOCKS_AT+7*BLOCK] = 1;
+        CHECK(modwerk_usb_function_admit(&d,operation) == RUNTIME_MALFORMED);
+    }
+}
+
 static unsigned status(unsigned k) { uint8_t out[8]; CHECK(modwerk_usb_function_status(out) == 8u); return out[k]; }
 static unsigned ticks(unsigned n, int quiet) { unsigned lapsed = 0; while (n--) lapsed += (unsigned)modwerk_usb_function_tick(quiet); return lapsed; }
 static int attached(void) { return (int)(UF_REG(USBCMD) & 1u); }
@@ -187,6 +220,7 @@ static void leave(void) { function_row[0] = 0; modwerk_usb_functions_changed(); 
 int main(void)
 {
     admission();
+    if (!UF_LINKED) profile_admission();
 #ifdef MODWERK_USB_AUDIO_LINKED
     if (failures) return 1;
     puts("usb function: a base with USB Audio linked in refuses every function");
@@ -291,6 +325,30 @@ int main(void)
     CHECK(isrs == 1u);
     modwerk_usb_function_frame(), modwerk_usb_function_frame();  /* the frame interrupt's block */
     CHECK(frames == 2u && isrs == 1u && !locked);
+    /* A format selected on the panel changes both descriptors and the producer
+     * only while detached. A class-only host can finish this reconnect. */
+    static uint8_t choices[2][BLOCK];
+    memcpy(choices[0], block, BLOCK);
+    memcpy(choices[1], block, BLOCK);
+    choices[1][BLOCK-3] = 96u;
+    struct modwerk_usb_profiles profiles = {
+        {MODWERK_USB_PROFILES_ABI,36,2,BLOCK,0x80000u,choices[0],choices[0],choices[0],choices[0]}, 2,0,0};
+    function_row[0] = (uintptr_t)&profiles;
+    modwerk_usb_functions_changed();
+    stock_state = 11u; UF_REG(FLUSH) = UF_REG(COMPLETE) = UF_REG(STAT) = UF_REG(SETUPSTAT) = 0;
+    ticks(100,1); back();
+    profiles.requested = 1;
+    stopped = 0;
+    ticks(2000,1);
+    CHECK(attached() && profiles.active == 0 && status(0) == 1u);
+    stopped = 1;
+    ticks(1,1);
+    CHECK(!attached() && profiles.active == 1 && !memcmp(modwerk_cfg_hs+MODWERK_USB_CFG_BYTES,choices[1],BLOCK));
+    ticks(31,1);
+    answer = 1; control_row[0] = H_CONTROL;
+    modwerk_usb_function_bus_end(); modwerk_usb_function_control();
+    CHECK(attached() && !status(0) && !ticks(1300,1));
+
     if (failures) return 1;
     puts("usb function: admission, slots, reconnect and its holds pass");
     return 0;

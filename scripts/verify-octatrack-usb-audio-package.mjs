@@ -33,8 +33,8 @@ const bench = new Bench(socket)
 await bench.ready()
 const unit = device(bench)
 
-async function enumerate() {
-  await bench.command('speed hs'); await bench.command('reset'); await wait(300)
+async function enumerate(speed = 'hs') {
+  await bench.command('speed ' + speed); await bench.command('reset'); await wait(300)
   assert.equal((await bench.controlIn(0x80, 6, 0x0100, 0, 18))?.length, 18)
   await bench.transaction(async () => { await bench.setup(0x00, 5, 1, 0, 0); await bench.command('in 0 64') })
   const header = await bench.controlIn(0x80, 6, 0x0200, 0, 9)
@@ -55,18 +55,20 @@ const usb = async () => { const reply = await bench.controlIn(0xc1, 41, 0, index
 assert.deepEqual(await usb(), [0, 0, 0, 0, 0, 0, 0, 0])
 const data = new Uint8Array(readFileSync(file)), pkg = { base: identity.base, data, sha256: sha(data) }
 
+const configurable = Buffer.from(data).readUInt16BE(66) === 7
+
 async function stopping(step) {
   for (const start = Date.now(); ; await wait(200)) {
     try { return await step() } catch (error) { if (!['unsafe', 'needs-recovery'].includes(error.status?.result) || Date.now() - start > 5000) throw error }
   }
 }
-async function settle(label, live) {
+async function settle(label, live, speed = 'hs') {
   const seen = []
   let now
   for (const start = Date.now(); Date.now() - start < 240000; await wait(20)) {
     const s = await usb(), key = JSON.stringify(s?.slice(0, 5))
     if (seen.at(-1) !== key) { seen.push(key); console.log(`  ${label}: USB FUNCTION ${key}`) }
-    if (s?.[0] === 3 && !now) now = await enumerate()
+    if (s?.[0] === 3 && !now) now = await enumerate(speed)
     if (s?.[0] === 0 && s[1] === live) { assert.ok(now, label + ': the unit went off the bus and came back'); return now }
   }
   throw new Error(label + ': the reconnect did not settle')
@@ -94,6 +96,15 @@ assert.equal((await bench.controlIn(0xa1, 1, 0x0100, CLOCK << 8 | AC, 4))?.toStr
 assert.equal((await bench.controlIn(0xa1, 1, 0x0200, CLOCK << 8 | AC, 1))?.toString('hex'), '01')
 assert.equal((await bench.controlIn(0xa1, 2, 0x0100, CLOCK << 8 | AC, 14))?.subarray(0, 2).toString('hex'), '0100')
 assert.equal(await bench.controlIn(0xa1, 1, 0x0300, CLOCK << 8 | AC, 1), null)
+if (configurable) {
+  const setRate = rate => {
+    const payload = Buffer.alloc(4)
+    payload.writeUInt32LE(rate)
+    return bench.controlOut(0x21, 1, 0x0100, CLOCK << 8 | AC, payload)
+  }
+  assert.equal(await setRate(44100), true, 'fixed clock acknowledges its supported rate')
+  assert.equal(await setRate(48000), false, 'fixed clock stalls an unsupported rate')
+}
 assert.equal((await transport.identify()).base, identity.base)
 
 // dev.c: keys as the panel reports them (request 5), RAM read-only (15 and 16).
@@ -119,6 +130,7 @@ const take = async (want, label) => {
 if (setting) { // the page is opened before the stream: it never holds the panel, and stays open under it
   assert.equal(await choice(), undefined, 'nothing kept before the player chooses')
   await press('PROJ', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'RIGHT', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'YES', 'YES') // MODWERK, SETTINGS, USB AUDIO
+  if (configurable) await press('DOWN', 'DOWN', 'DOWN', 'YES') // OUTPUT MODE
 }
 
 // The stream: alternate setting 1, then EP3 IN at the high-speed poll rate.
@@ -139,12 +151,12 @@ for (let i = 0; i < 256 && nonempty < 16; ++i) {
 }
 assert.equal(nonempty, 16, 'sixteen packets with audio frames; lengths ' + lengths.join(','))
 console.log(`  stream: ${lengths.length} polls, 16 packets of ${[...new Set(lengths.filter(Boolean))].sort().join(' or ')} bytes`)
-const first16 = async label => {
+const first16 = async (label, bytes = FRAME_BYTES, sizes = [10, 11, 12]) => {
   const packets = []
   for (let i = 0; i < 256 && packets.length < 16; ++i) {
     const packet = Buffer.from((await bench.command('in 3 1024'))[2] ?? '', 'hex')
     if (!packet.length) continue
-    assert.ok(packet.length % FRAME_BYTES === 0 && [10, 11, 12].includes(packet.length / FRAME_BYTES), `${label}: a packet of ${packet.length} bytes`)
+    assert.ok(packet.length % bytes === 0 && sizes.includes(packet.length / bytes), `${label}: a packet of ${packet.length} bytes`)
     packets.push(packet)
   }
   assert.equal(packets.length, 16, label + ': sixteen packets')
@@ -167,6 +179,33 @@ if (setting) {
   if (FRAME_BYTES === 80) await press('UP')
   await take(0, 'select ALL CHANNELS')
   await first16('ALL CHANNELS')
+  if (configurable) {
+    const openFormat = async (channels, speed) => {
+      const { cfg } = await settle('panel format', 1, speed)
+      const records = []
+      for (let i = 0; i < cfg.length; i += cfg[i]) { assert.ok(cfg[i] >= 2); records.push(cfg.subarray(i, i + cfg[i])) }
+      assert.equal(records.find(r => r[0] === 16 && r[1] === 0x24 && r[2] === 1)[10], channels)
+      await bench.command('isohz ' + (speed === 'fs' ? 1000 : 4000))
+      assert.ok(await noData(0x01, 11, 1, AS))
+      await first16('panel format', channels * 4, speed === 'fs' ? [43,44,45] : [10,11,12])
+    }
+    await press('NO', 'UP', 'YES', 'DOWN')
+    await take(0x80432120, 'POST LEVEL on 20 channels')
+    await first16('20 channels post')
+    await press('NO', 'UP', 'YES', 'DOWN', 'YES')
+    await openFormat(16, 'hs')
+    assert.equal(await choice(), 0x80432124, 'same eight post-level stems in the 16-channel layout')
+    await press('NO', 'UP', 'YES', 'DOWN', 'YES')
+    await openFormat(8, 'hs')
+    await press('NO', 'DOWN', 'DOWN', 'DOWN', 'DOWN', 'YES', 'UP')
+    await take(0x80432064, 'Outbox pair 1 set to OFF')
+    for (const packet of await first16('Outbox pair 1 off', 32)) {
+      for (let i = 0; i < packet.length; i += 32) assert.ok(packet.subarray(i,i+8).every(b => b === 0))
+    }
+    await press('NO', 'UP', 'UP', 'UP', 'UP', 'YES', 'UP', 'YES')
+    await openFormat(2, 'fs')
+    console.log('  same package: 20 and 16 post, 8 routed Outbox channels, stereo at full speed')
+  }
   await press('NO', 'NO')
   console.log('  setting: back to ALL CHANNELS; the stream goes on')
 }

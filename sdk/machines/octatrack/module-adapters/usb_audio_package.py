@@ -5,7 +5,8 @@
     python3 -B sdk/machines/octatrack/module-adapters/usb_audio_package.py -o usb-audio.mwrm \\
         [--layout 'USB AUDIO OUT TRACKS MAIN CUE'] [--stock OS.bin --upstream ELEKLOADER]
 
-Development only: emulator evidence, never run on a unit. The package holds no stock bytes (its three stock
+Development only. Single-layout trial evidence and qualification status are in
+docs/verification/2026-11-20-octatrack-usb-audio-package.md. The package holds no stock bytes (its three stock
 sites carry SHA-256 guards) and needs a base with ot_usb_functions and the four USB hooks (events.json,
 elekloader/usb_function.c); a base that links USB Audio in refuses it.
 
@@ -241,6 +242,10 @@ def source(functions, usb, layout):
         text = functions.packet_readiness(text)
     text = functions.audio_storage_source(audio_switch(text, layout, functions.AUDIO_LAYOUTS))
     text = once(text, '    .include "remix.inc"', include, 'its include')
+    return package_hooks(text) + setting(functions.AUDIO_LAYOUTS[layout] == 0)
+
+
+def package_hooks(text):
     # The hooks: each shim at a site the base owns returns to the base instead of chaining or rejoining stock.
     text = once(text, '    jmp     usbmidi_rx_isr_shim      | USB MIDI\'s shim, whose detour this one stands in for',
                 '    moveq   #0,%d0                  | package: ev_usb_isr, the base goes on to USB MIDI itself\n    rts',
@@ -254,7 +259,7 @@ def source(functions, usb, layout):
         raise ValueError('The authored USB Audio source names its transfer descriptors elsewhere; review the alignment.')
     text = text.replace(aligned, '    moveal  mwua_dtds,')
     text = once(text, 'aud_dtds:          .space NSLOT*32 ', 'aud_dtds:          .space NSLOT*32+32 ', 'its transfer descriptors')
-    return text + HANDLERS + setting(functions.AUDIO_LAYOUTS[layout] == 0)
+    return text + HANDLERS
 
 
 HANDLERS = '''
@@ -398,22 +403,33 @@ def _records(data):
 
 
 def build(layout, cross='m68k-elf-'):
-    if layout not in SUPPORTED:
+    if layout is not None and layout not in SUPPORTED:
         raise ValueError('Not built as a package yet: ' + layout)
     sys.path.insert(0, str(ROOT / 'sdk/runtime/loader'))
     import build as loader
     usb = load('modwerk_usb_base', ROOT / 'sdk/machines/octatrack/elekloader/usb_base.py')
     functions = load('modwerk_base_usb_functions', HERE / 'base_usb_functions.py')
-    descriptors = load('modwerk_authored_usb_descriptors', usb.audio_paths(layout)[1])
-    blocks = [function_block(functions, usb, descriptors, layout, hs, other)
-              for hs, other in ((False, False), (True, False), (False, True), (True, True))]
-    text = source(functions, usb, layout) + record(blocks)
+    if layout is None:
+        configurable = load('modwerk_usb_configurable', HERE / 'usb_audio_configurable.py')
+        descriptors, block_length = configurable.records(ROOT, MODULE, SUPPORTED, functions, usb, function_block, _records)
+        text = configurable.source(ROOT, MODULE, SUPPORTED[0], functions, load, sine_curve, package_hooks) + descriptors
+    else:
+        descriptors = load('modwerk_authored_usb_descriptors', usb.audio_paths(layout)[1])
+        blocks = [function_block(functions, usb, descriptors, layout, hs, other)
+                  for hs, other in ((False, False), (True, False), (False, True), (True, True))]
+        block_length = len(blocks[0])
+        text = source(functions, usb, layout) + record(blocks)
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         (tmp / 'usbaudio.s').write_text(text)
         subprocess.run([cross + 'as', '-mcpu=54455', '--defsym', 'MW_USB_EP0_SEND=%#x' % USB_EP0_SEND,
                         str(tmp / 'usbaudio.s'), '-o', str(tmp / 'usbaudio.o')], check=True)
-        image, symbols, bss, offsets = loader.link_units([tmp / 'usbaudio.o'], cross, 0, tmp, anywhere=True)
+        objects = [tmp / 'usbaudio.o']
+        if layout is None:
+            objects.append(tmp / 'settings.o')
+            subprocess.run([cross + 'gcc', *loader.CFLAGS, '-I', str(HERE.parent / 'include'), '-c',
+                            str(HERE / 'usb_audio_settings.c'), '-o', str(objects[-1])], check=True)
+        image, symbols, bss, offsets = loader.link_units(objects, cross, 0, tmp, anywhere=True)
     sites = []
     for address, stock, shim in usb.AUDIO_DETOURS:
         if shim == 'audio_frame_shim':  # the base's own site on a base with function slots: ev_usb_frame
@@ -427,18 +443,18 @@ def build(layout, cross='m68k-elf-'):
                dict(event='ev_usb_bus_end', fn='mwua_bus_end', order=50), dict(event='ev_usb_control', fn='mwua_control', order=50),
                dict(event='ev_usb_frame', fn='mwua_frame', order=50), dict(event='ot_settings', fn='mwua_setting', order=50)]
     hooks = loader.subscribe([loader.NONE] * len(loader.HANDLERS), entries, symbols)
-    # The layout number the unit's inventory reports for it, so the site knows which layout is on the unit
-    # (src/engine/elekloader/module-set.ts usbAudioLayoutNumber): the source's layout define, plus one.
+    # Inventory kind 7 is the configurable package. Kinds 1-6 identify the older
+    # fixed layouts so the site can still select their exact Undo package.
     data = loader.package(image, bss, hooks, offsets, sites, name=MODULE, hashed=True, title=TITLE, abi=8,
-                          layout=functions.AUDIO_LAYOUTS[layout] + 1)
+                          layout=7 if layout is None else functions.AUDIO_LAYOUTS[layout] + 1)
     return data, dict(image=len(image), bss=bss, relocations=len(offsets), sites=[hex(s[0]) for s in sites],
-                      block=len(blocks[0]), stock_sites=sites)
+                      block=block_length, stock_sites=sites)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     parser.add_argument('-o', '--output', type=Path, required=True)
-    parser.add_argument('--layout', default=SUPPORTED[0])
+    parser.add_argument('--layout', choices=SUPPORTED, help='build a legacy single-layout comparison package')
     parser.add_argument('--cross', default='m68k-elf-')
     parser.add_argument('--stock', type=Path, help='check the three sites\' guards against this OS file')
     parser.add_argument('--upstream', type=Path, help='the Elekloader checkout --stock is read with')
@@ -452,7 +468,7 @@ def main():
         loader.check_stock(facts['stock_sites'], args.stock, args.upstream)
     args.output.write_bytes(data)
     print('%s: %s, %d bytes of code and data, %d of bss, %d relocations, sites %s, a %d-byte function block' % (
-        args.output, args.layout, facts['image'], facts['bss'], facts['relocations'], ', '.join(facts['sites']), facts['block']))
+        args.output, args.layout or 'configurable USB Audio', facts['image'], facts['bss'], facts['relocations'], ', '.join(facts['sites']), facts['block']))
 
 
 if __name__ == '__main__':

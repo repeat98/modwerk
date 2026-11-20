@@ -41,6 +41,7 @@
 #define UF_IMAGE_ADDRESS(p) ((uint32_t)(uintptr_t)(p))
 #define UF_CALL(handler) (((unsigned (*)(void))(handler))())
 #endif
+int modwerk_machine_stopped(void);
 int modwerk_machine_usb_disk(void); /* runtime.c: stock's USB DISK MODE is open */
 
 #define UF_USBCMD 0xfc0b0140u      /* bit 0, run/stop: the pull-up */
@@ -80,7 +81,7 @@ static volatile uint32_t row_endpoints; /* its endpoints */
 static volatile uint32_t row_serial;    /* 0 for none; a new number for every function that arrives */
 static volatile uint8_t dirty;
 static uint32_t serials, live_serial;   /* live: the function the slots describe */
-static uint8_t state, reconnects, forced;
+static uint8_t state, reconnects, forced, live_profile, panel_reconnect;
 static volatile uint8_t reset_seen; /* BACK: the host has reset the bus since the unit came back */
 static uint16_t timer, waited;
 
@@ -130,15 +131,22 @@ int modwerk_usb_function_admit(const struct runtime_dsp *d, unsigned operation)
     const uint8_t *record = d->image + at;
     unsigned interfaces = uf_half(record + 8), length = uf_half(record + 10);
     uint32_t endpoints = uf_word(record + 12);
-    if (uf_word(record) != MODWERK_USB_FUNCTION_ABI || uf_word(record + 4) != UF_RECORD || interfaces < 1u ||
+    unsigned profiles = 1, abi = uf_word(record);
+    if (abi == MODWERK_USB_PROFILES_ABI) {
+        if (d->image_bytes - at < 36u || uf_word(record + 4) != 36u) return RUNTIME_MALFORMED;
+        profiles = uf_half(record + 32);
+        if (!profiles || profiles > 8u || record[34] >= profiles || record[35] >= profiles) return RUNTIME_MALFORMED;
+    } else if (abi != MODWERK_USB_FUNCTION_ABI || uf_word(record + 4) != UF_RECORD) return RUNTIME_MALFORMED;
+    if (interfaces < 1u ||
         interfaces > 4u || length < 9u || length > UF_ROOM || !endpoints || (endpoints & ~UF_ENDPOINTS))
         return RUNTIME_MALFORMED;
     /* PREPARE runs before relocation: the pointer words still hold image offsets (machine_contributors.c). */
     uint32_t base = operation == RUNTIME_METADATA_PREPARE ? 0u : UF_IMAGE_ADDRESS(d->image);
     for (unsigned k = 0; k < 4u; ++k) {
         uint32_t block = uf_word(record + 16u + 4u * k);
-        if (block < base || block - base > d->image_bytes || d->image_bytes - (block - base) < length ||
-            !uf_block(d->image + (block - base), length, interfaces)) return RUNTIME_MALFORMED;
+        if (block < base || block - base > d->image_bytes || d->image_bytes - (block - base) < profiles * length) return RUNTIME_MALFORMED;
+        for (unsigned i = 0; i < profiles; ++i)
+            if (!uf_block(d->image + (block - base) + i * length, length, interfaces)) return RUNTIME_MALFORMED;
     }
     return RUNTIME_OK;
 }
@@ -171,6 +179,15 @@ static int uf_idle(void)
            !(UF_REG(UF_SETUPSTAT) & 1u) && UF_REG(UF_EP0_STATE) == 11u && !UF_REG(UF_EP0_AWAITED);
 }
 
+/* Read under the machine lock. ABI 1 has a single immutable profile. */
+static unsigned uf_requested(void)
+{
+    const struct modwerk_usb_profiles *p = (const void *)row_record;
+    if (!p || p->function.abi != MODWERK_USB_PROFILES_ABI) return 0;
+    unsigned index = p->requested;
+    return index < p->count ? index : 0u;
+}
+
 /* The USB interrupt held off and the unit off the bus. Through the uncached alias: the controller reads memory. */
 static void uf_compose(void)
 {
@@ -179,11 +196,14 @@ static void uf_compose(void)
     const uint8_t *const block[4] = {f ? f->fs : 0, f ? f->hs : 0, f ? f->os_fs : 0, f ? f->os_hs : 0};
     unsigned length = f && f->length <= UF_ROOM ? f->length : 0u, interfaces = length ? f->interfaces : 0u;
     unsigned total = MODWERK_USB_CFG_BYTES + length;
+    live_profile = (uint8_t)uf_requested();
+    if (f && f->abi == MODWERK_USB_PROFILES_ABI)
+        ((struct modwerk_usb_profiles *)row_record)->active = live_profile;
     for (unsigned k = 0; k < 4u; ++k) {
         volatile uint8_t *to = UF_UNCACHED(slot[k]);
         to[2] = (uint8_t)total, to[3] = (uint8_t)(total >> 8);
         to[4] = (uint8_t)(MODWERK_USB_CFG_INTERFACES + interfaces);
-        for (unsigned i = 0; i < length; ++i) to[MODWERK_USB_CFG_BYTES + i] = block[k][i];
+        for (unsigned i = 0; i < length; ++i) to[MODWERK_USB_CFG_BYTES + i] = block[k][live_profile * length + i];
     }
     modwerk_cfg_len = total;
     live_serial = length ? row_serial : 0u;
@@ -194,10 +214,10 @@ int modwerk_usb_function_tick(int quiet)
     uint32_t lock;
     switch (state) {
     case UF_SETTLED:
-        if (!dirty) break;
+        if (!dirty && !row_record) break;
         lock = modwerk_machine_lock();
         dirty = 0;
-        if (row_serial != live_serial) state = UF_WAIT, timer = UF_GRACE, waited = 0;
+        if (row_serial != live_serial || uf_requested() != live_profile) state = UF_WAIT, timer = UF_GRACE, waited = 0;
         modwerk_machine_unlock(lock);
         break;
     case UF_WAIT:
@@ -205,11 +225,14 @@ int modwerk_usb_function_tick(int quiet)
         if (modwerk_machine_usb_disk()) break; /* never under a mounted card, however long it stays */
         lock = modwerk_machine_lock();
         dirty = 0;
-        if (row_serial == live_serial) state = UF_SETTLED; /* it came and went before the host saw it */
+        if (row_serial == live_serial && uf_requested() == live_profile) state = UF_SETTLED; /* it came and went before the host saw it */
+        else if (!modwerk_machine_stopped() && row_serial == live_serial) { /* defer a panel format change */ }
         else if ((quiet && uf_idle()) || waited >= UF_PATIENCE) {
             if (!(quiet && uf_idle())) ++forced;
             (void)uf_raise(MODWERK_EV_USB_BUS_END);
             UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) & ~1u;
+            panel_reconnect = row_serial == live_serial;
+            if (panel_reconnect && row_endpoints) uf_retire(row_endpoints);
             uf_compose();
             state = UF_OFF, timer = UF_DOWN;
         } else ++waited;
@@ -218,11 +241,11 @@ int modwerk_usb_function_tick(int quiet)
     case UF_OFF:
         if (timer) { --timer; break; }
         lock = modwerk_machine_lock();
-        UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) | 1u;
-        modwerk_machine_unlock(lock);
-        ++reconnects;
         reset_seen = 0;
         state = UF_BACK, timer = UF_LEASE;
+        UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) | 1u;
+        ++reconnects;
+        modwerk_machine_unlock(lock);
         break;
     default:
         if (timer && --timer) break;
@@ -242,7 +265,14 @@ void modwerk_usb_function_bus_end(void)
     if (state == UF_BACK) reset_seen = 1;
     (void)uf_raise(MODWERK_EV_USB_BUS_END);
 }
-unsigned modwerk_usb_function_control(void) { return uf_raise(MODWERK_EV_USB_CONTROL); }
+unsigned modwerk_usb_function_control(void)
+{
+    unsigned answered = uf_raise(MODWERK_EV_USB_CONTROL);
+    /* A standalone audio host enumerating a panel change can acknowledge its
+     * class interface. A package upload retains the vendor reconnect lease. */
+    if (answered && panel_reconnect && state == UF_BACK && reset_seen) state = UF_SETTLED;
+    return answered;
+}
 /* The frame interrupt's block (usb_base.s modwerk_usb_frame_shim), in a base that does not link USB Audio in. */
 void modwerk_usb_function_frame(void) { (void)uf_raise(MODWERK_EV_USB_FRAME); }
 

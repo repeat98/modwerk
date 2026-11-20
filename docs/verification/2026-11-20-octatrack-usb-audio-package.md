@@ -47,6 +47,14 @@ The owner closed the paired browser tabs. On the same development image, with th
 
 On the original development build, the previous ALL CHANNELS entry was present before any package installation. With the 20-channel trial open, the agent selected OFF on the instrument and read back the saved value 1. After Undo and an owner-confirmed power cycle, the ten flashed modules returned. The agent RAM-booted the same image, found value 1 before installation, reinstalled the same package, and observed OFF on the LCD before changing the choice. The agent restored ALL CHANNELS (value 0), undid the trial, and verified the starting bank, pattern and both Part copies. After the owner's final power cycle the flashed inventory matched all ten original rows.
 
+## Two-level SETTINGS on the Octatrack MKII
+
+On local revision `91d603d98bc8` the development base identity was `753a8d9c9d11966dc1b918629f546f523238e40fc6e91cc61a2b4b4a2c296ab3`. The RAM image SHA-256 was `173d990bd44f819634f28aed20557445ec25b85b8f322ec2e2d985973908c485`. The 20-channel module package was byte-identical to the one above.
+
+The agent opened SETTINGS with only USB AUDIO installed and captured the module list, then its options page. The LCD showed ALL CHANNELS, OFF and MAIN + CUE ONLY together. DOWN moved the cursor to OFF while the active mark and saved value stayed on ALL CHANNELS. NO returned to the module list. YES reopened USB AUDIO with ALL CHANNELS highlighted. Selecting MAIN + CUE ONLY, OFF and then ALL CHANNELS stored 2, 1 and 0 respectively. Undo restored the original descriptors, set and scratch Part.
+
+A separate four-channel trial on this base rolled back during its add reconnect. macOS again recorded a paired browser trying to claim the interface. These records establish contention but do not identify an Undo command. The run stopped there. The owner power-cycled and all ten original flashed inventory rows matched after the project loaded.
+
 ## Remaining verification
 
 A direct change from one installed layout to another, a physical full-speed host, Windows/WASAPI after a channel-count change, and a Keep/removal lifecycle remain open. The full-set regression, soak and listening stages also remain open. The published site continues to use its existing base variants.

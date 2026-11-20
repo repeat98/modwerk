@@ -36,7 +36,11 @@ static unsigned st_entries(const StEntry **out)
     uint32_t mask = ST_MASK();
     for (uintptr_t volatile *row = ST_ROW(); *row && n < MODWERK_SETTINGS_ROOM; ++row) {
         const StEntry *e = (const StEntry *)*row;
-        if (e->abi == MODWERK_SETTING_ABI && e->label && e->label[0] && e->choices && e->apply && e->count >= 2u && e->count <= MODWERK_SETTING_OPTIONS)
+        if (!e->label || !e->label[0] || !e->apply) continue;
+        if (e->abi == MODWERK_SETTING_GROUP_ABI && !e->count && e->choices) {
+            const struct modwerk_setting_pages *group = (const void *)e->choices;
+            if (group->page && group->choose) out[n++] = e;
+        } else if (e->abi == MODWERK_SETTING_ABI && e->choices && e->count >= 2u && e->count <= MODWERK_SETTING_OPTIONS)
             out[n++] = e;
     }
     ST_UNMASK(mask);
@@ -80,7 +84,7 @@ static void st_keep(uint32_t key, uint32_t choice)
 static unsigned st_choice(const StEntry *e)
 {
     uint32_t kept = st_kept(st_key(e->label));
-    return kept < e->count ? (unsigned)kept : 0u;
+    return e->abi == MODWERK_SETTING_GROUP_ABI || kept < e->count ? (unsigned)kept : 0u;
 }
 
 static uint32_t st_seen = 1u; /* the owner epoch the choices were last applied for; odd: never */
@@ -105,7 +109,7 @@ static void st_text(char out[16], const char *name)
     while (name && j < 15u && name[j]) { out[j] = name[j]; ++j; }
     out[j] = 0;
 }
-unsigned modwerk_settings_read(unsigned i, struct modwerk_setting_view *view)
+unsigned modwerk_settings_field(unsigned i, unsigned field, struct modwerk_setting_view *view)
 {
     const StEntry *entries[MODWERK_SETTINGS_ROOM];
     uint32_t epoch = ST_EPOCH();
@@ -114,19 +118,51 @@ unsigned modwerk_settings_read(unsigned i, struct modwerk_setting_view *view)
     if (epoch != ST_EPOCH()) { ST_UNMASK(mask); return 0; }
     const StEntry *e = entries[i];
     view->epoch = epoch;
-    view->count = e->count;
-    view->active = st_choice(e);
-    st_text(view->label, e->label);
-    for (unsigned j = 0; j < e->count; ++j) st_text(view->choices[j], e->choices[j]);
+    view->fields = 0;
+    view->count = 0;
+    if (e->abi == MODWERK_SETTING_GROUP_ABI) {
+        const struct modwerk_setting_pages *group = (const void *)e->choices;
+        struct modwerk_choice_page page = {0};
+        group->page(st_choice(e), field, &page);
+        if (page.count && page.count <= MODWERK_SETTING_PAGE_ROOM && page.active < page.count) {
+            view->fields = field == MODWERK_SETTING_FIELDS;
+            view->active = page.active;
+            view->count = page.count;
+            st_text(view->label, view->fields ? e->label : page.label);
+            for (unsigned j = 0; j < page.count; ++j) {
+                st_text(view->choices[j], page.names[j]);
+                if (view->fields) st_text(view->values[j], page.values[j]);
+            }
+        }
+    } else if (field == MODWERK_SETTING_FIELDS) {
+        view->count = e->count;
+        view->active = st_choice(e);
+        st_text(view->label, e->label);
+        for (unsigned j = 0; j < e->count; ++j) st_text(view->choices[j], e->choices[j]);
+    }
     ST_UNMASK(mask);
-    return 1;
+    return view->count != 0;
+}
+unsigned modwerk_settings_read(unsigned i, struct modwerk_setting_view *view)
+{
+    return modwerk_settings_field(i, MODWERK_SETTING_FIELDS, view);
+}
+void modwerk_settings_choose(unsigned i, uint32_t epoch, unsigned field, unsigned choice)
+{
+    struct modwerk_setting_view view;
+    const StEntry *entries[MODWERK_SETTINGS_ROOM];
+    if (!modwerk_settings_field(i, field, &view) || view.fields || view.epoch != epoch ||
+        choice >= view.count || i >= st_entries(entries) || ST_EPOCH() != epoch) return;
+    const StEntry *e = entries[i];
+    uint32_t value = choice;
+    if (e->abi == MODWERK_SETTING_GROUP_ABI) {
+        const struct modwerk_setting_pages *group = (const void *)e->choices;
+        value = group->choose(st_choice(e), field, choice);
+    }
+    st_keep(st_key(e->label), value);
+    e->apply(value);
 }
 void modwerk_settings_select(unsigned i, uint32_t epoch, unsigned choice)
 {
-    const StEntry *entries[MODWERK_SETTINGS_ROOM];
-    if ((epoch & 1u) || i >= st_entries(entries) || epoch != ST_EPOCH()) return;
-    const StEntry *e = entries[i];
-    if (choice >= e->count) return;
-    st_keep(st_key(e->label), choice);
-    e->apply(choice);
+    modwerk_settings_choose(i, epoch, MODWERK_SETTING_FIELDS, choice);
 }

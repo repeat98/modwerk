@@ -25,6 +25,24 @@ static void apply1(unsigned c) { CHECK(!masked); applied[1] = c, ++calls[1]; }
 static void apply2(unsigned c) { CHECK(!masked); applied[2] = c, ++calls[2]; }
 static const char *const three[] = {"ALL CHANNELS", "OFF", "MAIN + CUE ONLY"}, *const two[] = {"ALL CHANNELS", "OFF"};
 
+static void group_page(uint32_t saved, unsigned field, struct modwerk_choice_page *view)
+{
+    if (field == MODWERK_SETTING_FIELDS) {
+        view->count = 1;
+        view->names[0] = "TRACK TAP";
+    } else if (field == 0) {
+        view->label = "TRACK TAP";
+        view->count = 2;
+        view->active = saved >> 31;
+        view->names[0] = "PRE LEVEL";
+        view->names[1] = "POST LEVEL";
+    }
+}
+static uint32_t group_choose(uint32_t saved, unsigned field, unsigned choice)
+{
+    CHECK(!field && choice < 2);
+    return (saved & 0x7fffffffu) | ((uint32_t)choice << 31);
+}
 int main(void)
 {
     struct modwerk_setting usb = {MODWERK_SETTING_ABI, "USB AUDIO", 3, three, apply0, 0},
@@ -97,6 +115,23 @@ int main(void)
     CHECK(modwerk_settings_count() == 1u);
     table_row[0] = (uintptr_t)&usb;
 
+    /* Upgrade a single choice to grouped fields under the same saved key.
+     * Preserve every bit, including the old choice, across the next cold tick. */
+    const struct modwerk_setting_pages pages = {group_page,group_choose};
+    struct modwerk_setting group = {MODWERK_SETTING_GROUP_ABI,"USB AUDIO",0,
+        (const char *const *)(const void *)&pages,apply2,0};
+    table_row[0] = (uintptr_t)&group; epoch += 2;
+    modwerk_settings_tick();
+    CHECK(applied[2] == 2 && modwerk_settings_read(0,&view) && view.fields && view.count == 1);
+    CHECK(modwerk_settings_field(0,0,&view) && !view.fields && !view.active && !strcmp(view.choices[1],"POST LEVEL"));
+    CHECK(!modwerk_settings_field(0,2,&view));
+    modwerk_settings_choose(0,epoch,0,1);
+    CHECK(applied[2] == 0x80000002u && modwerk_settings_field(0,0,&view) && view.active == 1);
+    st_seen = 1;
+    modwerk_settings_tick();
+    CHECK(applied[2] == 0x80000002u);
+    modwerk_settings_choose(0,epoch-2,0,0);
+    CHECK(applied[2] == 0x80000002u);
     /* A full store: a ninth setting takes the entry its hash names, and the others keep theirs. */
     struct modwerk_setting many[8];
     char names[8][4];
