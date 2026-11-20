@@ -721,6 +721,22 @@
       "module": "5cf69df3",
       "bytes": 652,
       "sha256": "c470e87aefa7c8e2c87dd7b1429a265e5353430b74331adb53158055269c9655"
+    },
+    {
+      "id": "grain",
+      "octabam": true,
+      "usbOnly": true,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/grain/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Grain",
+      "module": "2c224021",
+      "bytes": 23868,
+      "sha256": "dc203ec20b790e7942614ee25a55812e7ee7f4333e899fc9a4fa7e8ab4b90b8b"
     }
   ]
 }
