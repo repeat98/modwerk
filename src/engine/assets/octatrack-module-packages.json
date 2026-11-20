@@ -338,7 +338,7 @@
       "bytes": 2636,
       "sha256": "7aedb56f64cc17732efd367a3a1e4a85f73196924e4bf362411fa23217639408",
       "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
-      "requiredBase": "dd7e684c9540e50f5eadaaf090983acadcdb984b59281d7abeac0763952caa01"
+      "requiredBase": "c7eba65fa9ece225c518771c4134afce964e1bd8488264268f1605224f30440f"
     },
     {
       "id": "output-matrix",
@@ -354,7 +354,7 @@
       "bytes": 3740,
       "sha256": "0304acd09210badf33e888c09f111a887f221a3842aaeb781ecd20147044203b",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "dd7e684c9540e50f5eadaaf090983acadcdb984b59281d7abeac0763952caa01"
+      "requiredBase": "c7eba65fa9ece225c518771c4134afce964e1bd8488264268f1605224f30440f"
     },
     {
       "id": "cc-map",
@@ -370,7 +370,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "dd7e684c9540e50f5eadaaf090983acadcdb984b59281d7abeac0763952caa01"
+      "requiredBase": "c7eba65fa9ece225c518771c4134afce964e1bd8488264268f1605224f30440f"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -448,7 +448,7 @@
       "bytes": 1818,
       "sha256": "5323b0ca58ddd34504c386e2a621815784e86730539b46fcc3ece624fdaaf0e6",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "dd7e684c9540e50f5eadaaf090983acadcdb984b59281d7abeac0763952caa01"
+      "requiredBase": "c7eba65fa9ece225c518771c4134afce964e1bd8488264268f1605224f30440f"
     },
     {
       "id": "analog-bassdrum",
@@ -464,7 +464,7 @@
       "bytes": 26172,
       "sha256": "99581aece3500d9a7c5d1b389afc8ff1697086d323bd28dbf01b4def22acacbc",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "dd7e684c9540e50f5eadaaf090983acadcdb984b59281d7abeac0763952caa01",
+      "requiredBase": "c7eba65fa9ece225c518771c4134afce964e1bd8488264268f1605224f30440f",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -736,7 +736,7 @@
       "copies": 3,
       "fills": 0,
       "installPresets": true,
-      "requiredBase": "dd7e684c9540e50f5eadaaf090983acadcdb984b59281d7abeac0763952caa01"
+      "requiredBase": "c7eba65fa9ece225c518771c4134afce964e1bd8488264268f1605224f30440f"
     }
   }
 }

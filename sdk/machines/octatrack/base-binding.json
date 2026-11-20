@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "identity": "dd7e684c9540e50f5eadaaf090983acadcdb984b59281d7abeac0763952caa01",
+ "identity": "c7eba65fa9ece225c518771c4134afce964e1bd8488264268f1605224f30440f",
  "arena": 1089742304,
  "pool": 1087870480,
  "symbols": {
@@ -15,6 +15,6 @@
   "analog-bassdrum": "1d7057407595fc5b1c6a853d6cce2b24de5b8673ec345a5e1cea96a5d2557c99"
  },
  "variants": {
-  "off": "dd7e684c9540e50f5eadaaf090983acadcdb984b59281d7abeac0763952caa01"
+  "off": "c7eba65fa9ece225c518771c4134afce964e1bd8488264268f1605224f30440f"
  }
 }
