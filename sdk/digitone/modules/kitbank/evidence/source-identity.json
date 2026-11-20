@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators",
-  "sha256": "4ce013124db4dc95970e302d7ee016bd1f6cb1fb97448a33d5cc2298d1dc00a3",
+  "sha256": "39c58b6f3fd96ff7783dc7a3bfc17e2b75dfcc09db7cd78d9e3183c449f9f559",
   "sources": {
-    "src/kitbank.S": "4d7ef02df5194d02f9f91ddf0627ca956a89e0bc24826a0ea88c364c8b8239b1"
+    "src/kitbank.S": "d294d9d6cf06b0cead0ae7315126c303dc9aaae6f392d7d020405e7c966ccfc9"
   },
   "build": {
     "schemaVersion": 1,
@@ -31,7 +31,8 @@
     "regions": [],
     "claims": [
       "settings:KIT PER BANK",
-      "projdata:KBLK"
+      "projdata:KBLK",
+      "key:PTN+YES"
     ],
     "requires": [],
     "derive": null,

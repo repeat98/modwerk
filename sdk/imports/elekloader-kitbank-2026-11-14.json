@@ -28,7 +28,7 @@
       "category": "Sequencer",
       "author": "ZOGV",
       "needs_core": "2.0a",
-      "on_unit": "Build XX08 (core dn1 2.0a + kitbank 0.2.0-experimental, OS 1.44, .syx SHA-256 6c94a77e…) waits for the author's run on a Digitone; this line is updated with what ran once it is done."
+      "on_unit": "The author ran this exact build (core dn1 2.0a + kitbank 0.2.0-experimental, XX08, SHA-256 6c94a77e…) on a Digitone, OS 1.44 (2026-11-20, about 10 minutes): the switch off and on, an edit shared by the bank, a chain built with PTN+trigs and YES, a lock kept through a project save, a power cycle and a reload, and an older project opening with the switch off. Not tried on the unit: queued changes, FUNC+YES/NO, paste, song mode."
     }
   ]
 }

@@ -4,7 +4,20 @@ Everything below describes one build, the one submitted: core-dn1 2.0a + kitbank
 
 ## Hardware (author-reported)
 
-HARDWARE_XX08
+Build XX08 (SHA-256 `6c94a77e…`, above), flashed with Transfer's protocol on the author's Digitone, OS 1.44, on 2026-11-20. The author (ZOGV) went through the steps one at a time and reported each one; about 10 minutes in all (the author's estimate). Recorded in [evidence/hardware-testing.json](evidence/hardware-testing.json).
+
+| Step on the unit | Reported |
+| --- | --- |
+| Power-on with the author's current project, saved by the author's own always-on kit-per-bank OS (which writes kitbank's record with the switch on) | KIT PER BANK ticked, as that record says |
+| Switch unticked, A02's filter closed: A01 | unchanged: OK |
+| Switch ticked, then A01 and A02 | A02 plays A01's sound: OK |
+| Switch unticked again, A02 | muffled again: OK |
+| Switch ticked, a filter knob turned on A02, then A01 | A01 has the change too: OK |
+| Stopped on A01; PTN held, trigs 5 then 6, YES, PTN released, PLAY | A05 A06 A05 A06, nothing added: OK |
+| A03 locked with PTN+YES (KIT LOCKED); project saved as new; power off and on; project reloaded | KIT PER BANK still ticked; PTN+YES on A03 then shows KIT SHARED, so it was still locked: OK |
+| An older project loaded | KIT PER BANK unticked, plays as before: OK |
+
+Not tried on the unit in this run: queued pattern changes while playing, FUNC+YES / FUNC+NO, copy and paste of a locked pattern, song mode (emulator only, below). The XX07 run of 2026-11-14 (one statement, "it worked") is not evidence for this build.
 
 ## Emulator
 
@@ -53,4 +66,4 @@ For under a second after PTN+YES, a knob turn can be ignored while the OS reload
 
 ## Not tested
 
-Undo of a paste; OS 1.43; the Digitone Keys.
+Undo of a paste; OS 1.43; the Digitone Keys. On the unit (emulator only): queued pattern changes while playing, FUNC+YES / FUNC+NO, copy and paste of a locked pattern, song mode.

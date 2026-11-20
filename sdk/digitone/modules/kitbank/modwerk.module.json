@@ -106,7 +106,7 @@
   "evidence": {
     "tier": "author-hardware",
     "moduleVersion": "0.2.0-experimental",
-    "sourceSha256": "4ce013124db4dc95970e302d7ee016bd1f6cb1fb97448a33d5cc2298d1dc00a3",
+    "sourceSha256": "39c58b6f3fd96ff7783dc7a3bfc17e2b75dfcc09db7cd78d9e3183c449f9f559",
     "reports": [
       "evidence/hardware-testing.json",
       "evidence/source-identity.json",
@@ -115,14 +115,14 @@
     "hardware": {
       "model": "Digitone",
       "release": "1.44",
-      "testedOn": "2026-11-14",
+      "testedOn": "2026-11-20",
       "tester": "ZOGV",
-      "durationMinutes": null,
-      "summary": "The author flashed the module-alone build (core dn1 2.0a + kitbank 0.2.0-experimental, XX07, SHA-256 30e54a81…) on their Digitone, OS 1.44, with a list of nine steps: the KIT PER BANK switch, bank kits while playing, an edit shared by the bank, PTN+YES lock and share, project save and power cycle, paste and song mode. The author reported that it worked.",
+      "durationMinutes": 10,
+      "summary": "The author flashed the submitted build (core dn1 2.0a + kitbank 0.2.0-experimental, XX08, SHA-256 6c94a77e…) on their Digitone, OS 1.44, and went through it step by step for about 10 minutes: the KIT PER BANK switch off and on with a different sound on A02, an edit on A02 heard on A01, a chain built with PTN+trigs and YES (A05 A06, nothing added), a pattern locked with PTN+YES kept through a project save, a power cycle and a reload with the switch still ticked, and an older project opening with the switch off and playing as before. All passed.",
       "limitations": [
-        "The result was reported as one statement, not step by step: which of the nine listed steps were tried is not recorded.",
-        "The duration was not reported.",
-        "The same redirections ran earlier on the author's unit as an always-on build outside Modwerk; that build is not part of this evidence."
+        "About 10 minutes, as estimated by the author.",
+        "Queued changes while playing, FUNC+YES/NO, copy and paste of a locked pattern and song mode were not tried on the unit in this run; they are covered by the emulator runs only.",
+        "The earlier XX07 run (2026-11-14, reported as one statement) is not evidence for this build."
       ]
     },
     "verifiedBy": null
