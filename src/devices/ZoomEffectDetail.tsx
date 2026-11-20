@@ -15,15 +15,21 @@ import MACHINES from './machines.generated.json'
 import { DEVICES_BY_ID, deviceHref, type DeviceProfile } from './registry'
 import { zoomEffectAuthor, zoomEffectRepository, zoomEffectThumbnail, zoomEffectUrl, type ZoomEffect } from './zoom-effects'
 
+const animations = import.meta.glob<string>('./zoom-previews/*.webp', { eager: true, query: '?url', import: 'default' })
+
 const kib = (bytes: number) => (bytes / 1024).toFixed(1) + ' KiB'
 const documentUrl = (effect: ZoomEffect, path: string) => issueRepository() + '/blob/main/sdk/zoom/modules/' + effect.id + '/' + path
 const budget = (effect: ZoomEffect, name: string) => (MACHINES as MachineProfile[]).find(machine => machine.id === effect.machine)?.sdk?.budgets.find(entry => entry.name === name)?.value
 const tested = (effect: ZoomEffect) => effect.platform.pedals.filter(pedal => pedal.status === 'confirmed').map(pedal => DEVICES_BY_ID[pedal.machine].name + ' ' + pedal.firmware)
 
 export function ZoomEffectPreview({ effect, compact = false }: { effect: ZoomEffect; compact?: boolean }) {
+  const animation = animations['./zoom-previews/' + effect.id + '.webp']
   return <div className={'module-preview' + (compact ? ' compact-preview' : '')} data-module="zoom-effect" aria-hidden="true">
     <div className="preview-label"><span>{effect.name}</span><span className="preview-led" /></div>
-    <svg viewBox="0 0 320 192" className="signal-art" fill="none"><image className="saved-thumbnail" href={zoomEffectThumbnail(effect)} width="320" height="192" /></svg>
+    <picture className="signal-art zoom-preview-art">
+      {animation && <source media="(prefers-reduced-motion: no-preference)" srcSet={animation} type="image/webp" />}
+      <img src={zoomEffectThumbnail(effect)} alt="" loading="lazy" />
+    </picture>
   </div>
 }
 
