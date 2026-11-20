@@ -4,7 +4,8 @@
 
   npm run device:test -- [--seconds 30] [--soak SECONDS] [--hold SECONDS] [--share SOCKET] [--testing-entry FILE] PKG.mwrm
 
-The run of `npm run device:qualify` (the module alone on T1 and T5 with the load meters, then on every track while the
+The run of `npm run device:qualify` (the module alone on T1 and T5 with the load meters, an effect in its FX slot and a
+machine through SRC SETUP's machine list with its render against its CPU price, then on every track while the
 pattern plays, its knobs swept, the Parts and a bank switched, an optional soak, the Part restored, the loader, crash
 and stall counters compared), with these differences:
 - The package goes in as a trial in RAM through `npm run device -- try` on the session's shared socket, without
@@ -15,7 +16,8 @@ and stall counters compared), with these differences:
   outside the run).
 
 Start the session with `npm run device -- serve --share /tmp/modwerk-share.sock`, on a development base, transport
-stopped, on a bank and Part whose working copy equals its saved one (docs/OCTATRACK_DRIVING.md). --testing-entry FILE
+stopped, on a bank and Part whose working copy equals its saved one (docs/OCTATRACK_DRIVING.md); for a machine, one
+with trigs on T1 and T5, since it renders only on trigs. --testing-entry FILE
 writes what the run saw, and what it leaves to the developer at the unit, as a TESTING.md entry. Prints one JSON
 summary; exit status 1 on a failure. If this process dies mid-trial, unplug USB: the base rolls back what was not kept."""
 import argparse, importlib.util, os, pathlib, shutil, signal, subprocess, threading
