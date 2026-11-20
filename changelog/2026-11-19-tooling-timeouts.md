@@ -1,0 +1,1 @@
+- Checking the full module library now reuses the loaded manifests and runs each DSP check once across the catalog. Busy machines also have more time to finish the full-library check.
