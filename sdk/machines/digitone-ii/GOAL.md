@@ -19,7 +19,7 @@ This is the Octatrack's stack ([machine recipe](../../../docs/MACHINE_RECIPE.md)
 | USB link and diagnostics | Not started | the Rytm's [link](../analog-rytm-mkii/LINK.md), the Octatrack's [`diag.c`](../octatrack/elekloader/diag.c) and [`device-log.ts`](../../../src/engine/elekloader/device-log.ts) |
 | Loading without a reflash | Not started | [porting the runtime loader](../../runtime/loader/README.md#porting-to-another-machine) |
 | Base updates over USB | Not started | [two-slot base](../../../docs/OCTATRACK_TWO_SLOT_BASE.md) |
-| MCP device tools, machine page | Not started; the page shows status only | [device tools](../../../docs/FRONTEND_MCP.md#then-test-the-connected-device), [`OctatrackHub.tsx`](../../../src/components/OctatrackHub.tsx) |
+| MCP device tools, machine page | Started: the developer MCP reads a development base's link and diagnostics log over MIDI and trials, keeps or undoes a runtime package (`--digitone-midi`), read on a unit and the trial path run on one (20 November 2026). The page shows status only | [Digitone II tools](../../../docs/FRONTEND_MCP.md#a-digitone-ii-over-midi), [`OctatrackHub.tsx`](../../../src/components/OctatrackHub.tsx) |
 
 When a piece moves, update this table, the [recipe's table](../../../docs/MACHINE_RECIPE.md#where-each-machine-stands) and `machine.json`'s `stack` in the same pull request.
 
