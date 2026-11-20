@@ -51,7 +51,18 @@ class UsbAudioPackage(unittest.TestCase):
         self.assertEqual(text.count('moveal  mwua_dtds,'), 3)
         self.assertIn('.set UAC2_AC_IFACE,  4 ', text)
         with self.assertRaisesRegex(ValueError, 'Not built as a package yet'):
-            builder.build('USB AUDIO OUT TRACKS POST')
+            builder.build('USB AUDIO IN')
+
+    def test_tracks_post_takes_the_computed_sine_and_no_stock_table(self):
+        usb_post = load('usb_post', OT / 'elekloader/usb_post.py')
+        curve = builder.sine_curve(usb_post)
+        self.assertEqual((len(curve), curve[0], curve[1], curve[255]), (256, 0, 51472, 8388449))
+        self.assertEqual(curve, sorted(set(curve)))
+        text = builder.source(functions, usb, usb.POST_LAYOUT)
+        self.assertIn('.set USB_LAYOUT, 5', text)
+        self.assertIn('.macro POST_XLV_TABLE\n    .long 0x000000\n    .long 0x00c910\n', text)
+        self.assertNotIn('MW_AUDIO_READY', text)  # the 20-channel packet watermark is not POST's
+        self.assertEqual(text.count('moveal  mwua_dtds,'), 3)
 
     def test_the_package_subscribes_to_the_four_hooks_and_carries_three_guarded_sites(self):
         if not shutil.which('m68k-elf-as'):

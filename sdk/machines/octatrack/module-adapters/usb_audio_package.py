@@ -20,10 +20,15 @@ rings and DMA buffers go to bss. For a package, at guarded seams:
 - its descriptors are the block ot_usb_functions takes, cut from the same composed configuration a linked base sends;
 - SET_INTERFACE, GET_INTERFACE and the EP0 page fix stay its own stock sites, which no base without it patches;
 - its transfer descriptors are aligned at run time: a package's image sits at a 16-byte boundary of the pool, and
-  the controller needs 32.
+  the controller needs 32;
+- USB AUDIO OUT TRACKS POST takes its gain curve as the computed quarter sine (owner, 20 November 2026), not as
+  the stock DSP table a linked base reads from the owner's OS: a package carries no stock data. The stock table
+  is that sine to within 64 of 2^23 (usb_post.py refuses any other), so a stem's level differs from a linked
+  base's by at most that.
 """
 import argparse
 import hashlib
+import math
 import importlib.util
 import struct
 import subprocess
@@ -36,7 +41,7 @@ ROOT = HERE.parents[3]
 MODULE = 'usb-audio-out-tracks-main-cue'
 TITLE = 'USB AUDIO'
 SUPPORTED = ('USB AUDIO OUT TRACKS MAIN CUE', 'USB AUDIO OUT TRACKS', 'USB AUDIO OUT MASTER', 'USB AUDIO OUT MAIN CUE',
-             'USB AUDIO OUT MAIN')  # USB AUDIO OUT TRACKS POST needs its stock gain curve: not built as a package yet
+             'USB AUDIO OUT MAIN', 'USB AUDIO OUT TRACKS POST')
 USB_EP0_SEND = 0x4001d498  # stock: usb_ep0_send(length, buffer), the routine EP0_SEND_TAIL (0x4001de5c) calls
 
 
@@ -63,11 +68,22 @@ def function_block(functions, usb, descriptors, layout, high_speed, other_speed)
     return block
 
 
+def sine_curve(usb_post):
+    """The first quarter of a 1024-step sine in 24 bits: the curve usb_post.py checks the stock table against."""
+    return usb_post.validate(round(math.sin(2 * math.pi * i / 1024) * 0x7fffff) for i in range(usb_post.COUNT))
+
+
 def source(functions, usb, layout):
-    """The adapted unit: the authored source, the linked base's three adaptations, the package seams, the handlers."""
+    """The adapted unit: the authored source, the linked base's adaptations, the package seams, the handlers."""
     path, _ = usb.audio_paths(layout)
-    text = functions.audio_storage_source(functions.packet_readiness(functions.audio_source(path.read_text())))
-    text = once(text, '    .include "remix.inc"', functions.audio_include(layout), 'its include')
+    text, include = functions.audio_source(path.read_text()), functions.audio_include(layout)
+    if layout == usb.POST_LAYOUT:
+        usb_post = load('modwerk_usb_post', ROOT / 'sdk/machines/octatrack/elekloader/usb_post.py')
+        include += usb_post.include(sine_curve(usb_post))
+    else:
+        text = functions.packet_readiness(text)
+    text = functions.audio_storage_source(text)
+    text = once(text, '    .include "remix.inc"', include, 'its include')
     # The hooks: each shim at a site the base owns returns to the base instead of chaining or rejoining stock.
     text = once(text, '    jmp     usbmidi_rx_isr_shim      | USB MIDI\'s shim, whose detour this one stands in for',
                 '    moveq   #0,%d0                  | package: ev_usb_isr, the base goes on to USB MIDI itself\n    rts',
