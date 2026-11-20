@@ -38,15 +38,27 @@ detours rest only once its package marks them `"rests"`, a POLY8 release of its 
 0.3.3 with those 11 marked (same module id and image) was built for the unit run below and is not published.
 
 The other five modules in the table are not machines: each needs its own `ev_in_use` answer (HOOKS.md) to rest.
+Effect modules (DSP code) are answered for by the base as well: they rest while no slot of the project names their
+effect id and no live slot runs it. Euclid (2.5 points at rest in its own record, base 0.7.8, the Tresor Prep scene,
+18 November) and Tape Echo (0.4) were not in the 24-package set; their figures are the same measure on another base
+and scene, and come from their ColdFire detours in the frame, which their next releases mark resting.
 
 ## Not yet on the unit
 
-The after-twin of this change (`a7085bbd`) was built and queued at 10:32. The unit had been off USB since about 10:30
-(another session's RAM boot that did not come back), so none of its steps ran and nothing on this branch reached the
-unit. The planned run: the empty and 24-package readings above against the after-twin, the 24 with the development
-POLY8, POLY8 alone, a pick of the resting POLY8 on T8 while playing (the frame guard over the window holding the wake,
-beside a STATIC pick as control), the same with a USB capture checked for zero runs, a self-test with the 24 installed,
-a 120 s soak at 20 operations a second, and `npm run test:procedure -- --base` steps 6 to 10.
+No after-figure exists yet. On 20 November 2026 the unit was off USB from about 10:30 (another session's RAM boot) until
+the owner's power cycle, then held by other sessions. At 15:02 the run of `block2.sh` RAM-booted the before twin of 0.7.11
+(`12108493`, base/octatrack-next without this change); the boot tool reported it had not come back within 60 s, the
+script stopped there as written, and the unit was in fact up on that twin a few seconds later. No trial ran. At 15:07 the
+flashed image the unit started on (`dfa43813`, 0.7.9) was RAM-booted back: identity `dfa43813`, the same ten kept
+modules in the same order (Tape Echo, Air Chorus, Vibrato, VECTOR, BBD Delay, Mini Verb, E-Verb, Euclid, TapeHead,
+Analog BD). That base answers no development requests, so the Part was not read; no step of the run changed one.
+
+The after twin of this change on 0.7.11 is `4a6060b6`. The planned run, in `block2.sh`: empty, the 24 published and the
+other 12 packages (every USB package in sets that fit, at most 32 modules a set and the pool) on both twins, the 24 with
+the development POLY8 (11 detours resting), POLY8 alone, picks of resting POLY8, SYNTIZ and Amiga on T8 while playing
+(the frame guard over the window holding the wake, a STATIC pick as control: the wake cost and its spread), the same
+with a USB capture checked for zero runs, a self-test with the 24, a 120 s soak at 20 operations a second, and the
+test procedure's unit steps by hand.
 
 ## Host checks
 
