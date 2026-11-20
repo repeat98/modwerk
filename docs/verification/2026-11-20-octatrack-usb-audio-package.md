@@ -92,9 +92,13 @@ Software checks imported all six saved 0.2 layouts, including Outbox assignments
 | Outbox 8 with Main, Main, Off, Cue | `80a09940` | 89,600 eight-channel frames. Both Main pairs matched sample for sample and the Off pair was silent. Playback was stopped. | The original four interfaces and empty trial baseline returned. |
 | Computer with eight post-LEVEL stereo stems | `80432124` | 89,600 sixteen-channel frames. | **Failed.** Rollback and leaving upload mode were acknowledged. The stable set checksum returned to the empty baseline, then the device disappeared from USB and its panel froze. |
 
-Boot 725 retained freeze event 6477 at 191 seconds. The UI tick stopped for at least five seconds while the audio frame interrupt continued. The recorded loads were CPU 38.4%, DSP tracks 1–4 39.3%, and DSP tracks 5–8 38.1%. The record does not identify the instruction that stalled.
+Boot 725 retained freeze event 6477 at 191 seconds. The UI tick stopped for at least five seconds while the audio frame interrupt continued. The recorded loads were CPU 38.4%, DSP tracks 1–4 39.3%, and DSP tracks 5–8 38.1%. On the successful eight-channel Undo the Mac saw a disconnect and re-enumerated the device in 0.77 seconds. During the failed sixteen-channel Undo the macOS mass-storage driver requested a port reset. The hub reported that the reset failed to enable the port. The device log identifies a stalled UI tick and the host log identifies a failed reset. Neither locates the instruction that stalled.
 
 The owner cold-started with USB disconnected, confirmed that the panel responded, then reconnected USB. The flashed base, all ten module identities, and the complete saved-set checksum matched the pre-trial record. Both trials ran in RAM. The Keep and power-on persistence tests for the candidate are pending. A physical Outbox 8 was unavailable. The freeze blocks release.
+
+### Reconnect regression in the controller model
+
+On the failed build, only the UI tick could turn the USB controller back on after the descriptor change. A host test removed the module, withheld UI ticks while continuing audio frames, and observed that the controller stayed disconnected. With a one-second fallback in the existing audio-frame interrupt, the same test restored the pull-up and original configuration. The host reset and a subsequent vendor request settled the reconnect exactly once, including when UI ticks resumed. This covers the controller state machine. The rebuilt 0.7.11 base identity is `e0cbd7173d0bc1bc5e9ba2f297c104b886035531c05cb93f070a61f7ba07fa9c`. The native and browser-built OS are byte-identical (SHA-256 `b14ff34b3628aa3dc4d694f77f3cc435737f542242cb81eac151794ecf997336`). The five configured module fixtures, including both hardware trial presets, retain their original SHA-256. Whether the change recovers the physical front panel still requires a fresh MKII trial.
 
 ## Remaining verification
 

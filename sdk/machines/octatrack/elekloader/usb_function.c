@@ -12,7 +12,8 @@
  *   WAIT (tick)  a second for the host to read the sync's result, then until the control endpoint is idle, no
  *                vendor data stage is open and stock's USB DISK MODE is closed. Then ev_usb_bus_end, USBCMD.RS off
  *                and, at once, the slots and their length rewritten: nothing reads them off the bus
- *   OFF (tick)   half a second off the bus, then RS on again
+ *   OFF (tick)   half a second off the bus, then RS on again. If the UI tick stops during the
+ *                disconnect, the independent frame interrupt reconnects after one second.
  *   BACK (tick)  the host resets the bus and enumerates. That reset is the base's own disconnect: ep0.c undoes
  *                no open sync or trial for it. The reconnect is over when the host, after a reset, reaches the
  *                vendor interface; without that for 20 s it counts as unplugged
@@ -65,6 +66,7 @@ extern const struct uf_base_configuration modwerk_cfg_native;
 #define UF_ENDPOINTS 0x00080008u   /* endpoint 3, OUT and IN, as ENDPTFLUSH bits */
 #define UF_GRACE 60u               /* ticks, 60 a second */
 #define UF_PATIENCE 600u
+#define UF_FRAME_TIMEOUT ((44100u + 15u) / 16u) /* one second in 16-sample blocks */
 #define UF_DOWN 30u
 #define UF_LEASE 1200u
 #define UF_FLUSH_SPINS 2000u
@@ -80,9 +82,11 @@ static volatile uint32_t row_endpoints; /* its endpoints */
 static volatile uint32_t row_serial;    /* 0 for none; a new number for every function that arrives */
 static volatile uint8_t dirty;
 static uint32_t serials, live_serial;   /* live: the function the slots describe */
-static uint8_t state, reconnects, forced, live_profile, panel_reconnect;
+static volatile uint8_t state, reconnects;
+static uint8_t forced, live_profile, panel_reconnect;
 static volatile uint8_t reset_seen; /* BACK: the host has reset the bus since the unit came back */
-static uint16_t timer, waited;
+static volatile uint16_t timer, frames_to_attach;
+static uint16_t waited;
 
 /* Every handler of a hook the base raises, in the row's order (lower first, then module id); their answers OR'd.
  * From the USB or the frame interrupt, or with them held off. */
@@ -208,6 +212,17 @@ static void uf_compose(void)
     live_serial = length ? row_serial : 0u;
 }
 
+/* Called with the USB interrupt held off by the frame interrupt or by the tick's full mask.
+ * The configuration slots have already been written. Allow the host to reset as soon as RS is set. */
+static void uf_attach(void)
+{
+    reset_seen = 0;
+    timer = UF_LEASE;
+    state = UF_BACK;
+    UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) | 1u;
+    ++reconnects;
+}
+
 int modwerk_usb_function_tick(int quiet)
 {
     uint32_t lock;
@@ -233,18 +248,20 @@ int modwerk_usb_function_tick(int quiet)
             panel_reconnect = row_serial == live_serial;
             if (panel_reconnect && row_endpoints) uf_retire(row_endpoints);
             uf_compose();
-            state = UF_OFF, timer = UF_DOWN;
+            timer = UF_DOWN;
+            frames_to_attach = UF_FRAME_TIMEOUT;
+            state = UF_OFF; /* publish last to the frame interrupt */
         } else ++waited;
         modwerk_machine_unlock(lock);
         break;
     case UF_OFF:
-        if (timer) { --timer; break; }
-        lock = modwerk_machine_lock();
-        reset_seen = 0;
-        state = UF_BACK, timer = UF_LEASE;
-        UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) | 1u;
-        ++reconnects;
-        modwerk_machine_unlock(lock);
+        /* The frame interrupt can complete this transition between the switch and the mask. */
+        lock = modwerk_machine_mask();
+        if (state == UF_OFF) {
+            if (timer) --timer;
+            else uf_attach();
+        }
+        modwerk_machine_unmask(lock);
         break;
     default:
         if (timer && --timer) break;
@@ -273,7 +290,11 @@ unsigned modwerk_usb_function_control(void)
     return answered;
 }
 /* The frame interrupt's block (usb_base.s modwerk_usb_frame_shim), in a base that does not link USB Audio in. */
-void modwerk_usb_function_frame(void) { (void)uf_raise(MODWERK_EV_USB_FRAME); }
+void modwerk_usb_function_frame(void)
+{
+    if (state == UF_OFF && !--frames_to_attach) uf_attach();
+    (void)uf_raise(MODWERK_EV_USB_FRAME);
+}
 
 unsigned modwerk_usb_function_status(uint8_t *out)
 {

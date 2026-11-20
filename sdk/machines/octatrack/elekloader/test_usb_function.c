@@ -56,6 +56,9 @@ static unsigned host_call(uintptr_t handler)
 static int locked, usb_disk;
 uint32_t modwerk_machine_lock(void) { CHECK(!locked); locked = 1; return 4; }
 void modwerk_machine_unlock(uint32_t s) { CHECK(locked && s == 4); locked = 0; }
+static int masked;
+uint32_t modwerk_machine_mask(void) { CHECK(!masked); masked = 1; return 7; }
+void modwerk_machine_unmask(uint32_t s) { CHECK(masked && s == 7); masked = 0; }
 static int stopped = 1;
 int modwerk_machine_stopped(void) { return stopped; }
 int modwerk_machine_usb_disk(void) { return usb_disk; }
@@ -356,6 +359,25 @@ int main(void)
     answer = 1; control_row[0] = H_CONTROL;
     modwerk_usb_function_bus_end(); modwerk_usb_function_control();
     CHECK(attached() && !status(0) && !ticks(1300,1));
+
+    /* A host can reset during the disconnect. If the UI tick then stalls while audio
+     * frames run, the prepared original configuration must still come back on USB. */
+    leave();
+    UF_REG(FLUSH) = UF_REG(COMPLETE) = 0;
+    ticks(62, 1);
+    CHECK(!attached() && status(0) == 2u);
+    unsigned prior_reconnects = status(3);
+    modwerk_usb_function_bus_end();
+    for (unsigned n = 0; n < 2756u; ++n) modwerk_usb_function_frame();
+    CHECK(!attached());
+    modwerk_usb_function_frame();
+    CHECK(attached() && status(0) == 3u && status(3) == prior_reconnects + 1u);
+    describes(0);
+    modwerk_usb_function_host(); /* The reset before reattachment cannot settle it. */
+    CHECK(status(0) == 3u);
+    modwerk_usb_function_bus_end();
+    modwerk_usb_function_host();
+    CHECK(!status(0) && !ticks(1300, 1) && status(3) == prior_reconnects + 1u);
 
     if (failures) return 1;
     puts("usb function: admission, slots, reconnect and its holds pass");
