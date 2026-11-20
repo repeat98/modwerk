@@ -41,7 +41,10 @@ the same image booted one-shot came back. Everything else here was done on the o
   `a408c505`, twin `8dc7692c`). A base with no set of its own on the card saves first to `/MODWERK1.SET`, then to each
   other file in turn (`modset.c` `slot`), so one Keep on a twin replaces only that file. The kept set's whole-set identity
   (USB request 38, order-free: `journal.h` `runtime_journal_set_digest`) names its exact packages: hash candidate files
-  the same way to find them before a twin overwrites anything (flashed `dfa43813`, 20 November 2026). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
+  the same way to find them before a twin overwrites anything (flashed `dfa43813`, 20 November 2026). A twin's RAM boot
+  that restores its kept set took 72 s to answer on USB after a power-cycled start, past `boot`'s 60 s wait, and 18 s
+  later; keep polling `status`. Boot into a kept twin from another image: the one boot from a twin into itself, seconds
+  after its Keep, never enumerated (Windows, `a328967d`, same day). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
   ones (Analog BD, Output Matrix) must be the copies bound to that base, from the commit that built it. Afterwards,
   power-cycle and `try` each again. `npm run device -- lifecycle` is such a pair too: it accepts a test module, then
   its removal. It is not a read; never run it on a unit whose kept set matters (30 October 2026, MKII, twin `04e94075`).
