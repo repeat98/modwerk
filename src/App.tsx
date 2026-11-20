@@ -62,7 +62,7 @@ import { OctatrackLinkContext, useInventory, useMissing } from './hooks/useOctat
 import { recordLoad } from './hooks/useOctatrackLoad'
 import { baseGuideToReopen, forgetBaseGuideReopen, pendingBaseInstall } from './config/octatrack-progress'
 import { digiDownloadsEnabled, isCoreBuildPreview } from './engine/elekloader/protocol'
-import { comesWithBase, USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
+import { comesWithBase, USB_AUDIO_PACKAGED, USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
 import { downloadSelection, parseSelection } from './config/selection'
 import { Icon } from './components/Icon'
 import { desktopShell, openAppMenu, useDesktopCommands } from './desktop-shell'
@@ -431,7 +431,7 @@ export default function App() {
 
   function toggleComparison(id: string) { setComparison(current=>current.includes(id)?current.filter(value=>value!==id):current.length<3?[...current,id]:current) }
   function toggleModule(id: string) {
-    if (id === USB_AUDIO_MODULE && !selectedIds.includes(id)) {
+    if (!USB_AUDIO_PACKAGED && id === USB_AUDIO_MODULE && !selectedIds.includes(id)) {
       setCompareOpen(false)
       window.history.pushState(null, '', new URL(moduleHref(id) + '?setup=1', document.baseURI))
       window.dispatchEvent(new Event('hashchange'))

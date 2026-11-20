@@ -322,10 +322,12 @@ export class OctatrackLink {
     const { status, module } = this.state
     this.diagnostic('disconnected')
     this.stopKeepalive(); this.abort?.abort()
+    const candidate = this.session?.status
     this.device = this.index = this.transport = this.session = this.slotsRead = undefined
     // The base's own reconnect after a change that adds, removes or changes a module's USB function: the trial stays
     // open on the unit, and the page waits for it to come back (opening resumes it).
-    if (this.expectReconnect && (status === 'trial' || status === 'sending' && this.step === 'trial') && !this.state.reconnecting) {
+    if (this.audioTrial && (status === 'trial' || status === 'sending' && this.step === 'trial') && !this.state.reconnecting) {
+      this.reconnectCandidate = candidate
       clearTimeout(this.reconnectTimer)
       this.reconnectTimer = setTimeout(() => {
         if (!this.state.reconnecting) return
@@ -381,7 +383,10 @@ export class OctatrackLink {
         // keeps until it is kept or undone, so nobody finishes it. The base would undo it only after 10 s without
         // any USB request, which this page's own reads prevent: undo it now, as the base would have.
         // Back after the base's own reconnect: this page's trial is still open on the unit. Adopt it and carry on.
-        if (resuming && session && ['pending', 'trial'].includes(session.status.phase)) {
+        const candidate = this.reconnectCandidate
+        if (resuming && candidate?.active && session && session.status.active === candidate.active &&
+            identity.base === candidate.base && session.status.currentTransaction === candidate.currentTransaction &&
+            session.status.generation === candidate.generation && ['pending', 'trial'].includes(session.status.phase)) {
           session.adopt()
           if (session.status.phase === 'pending') await session.startTrial()
           this.live(connection)
@@ -394,6 +399,17 @@ export class OctatrackLink {
           notice = { tone: 'error', text: `The Octatrack reconnected, but ${module ?? 'the sync'} was no longer open there, so nothing changed. Sync again.` }
         }
         if (!resumed && session && session.status.phase !== 'normal') {
+          // A native client can own a trial across USB Audio's interface change. A browser tab lock only
+          // covers this origin. Release the interface and give an abandoned trial its full idle timeout.
+          const external = resuming || await this.transport.hasUsbFunctionChanges()
+          this.live(connection)
+          if (external) {
+            this.set({ status: 'busy', identity })
+            setTimeout(() => {
+              if (connection === this.connection && this.state.status === 'busy') void this.open(device)
+            }, 15000)
+            return
+          }
           const staged = session.status.phase !== 'ready', undone = await this.cleanUp(session).catch(() => false)
           this.live(connection)
           notice = !undone ? { tone: 'error', text: UNPLUG } : staged ? { tone: 'success', text: 'The last sync wasn’t finished, so the Octatrack undid it.' } : undefined
@@ -487,7 +503,7 @@ export class OctatrackLink {
     const abort = this.abort = new AbortController(), total = changes.reduce((sum, change) => sum + change.data.length, 0)
     this.rows = changes.length
     this.replaced = changes.filter(change => change.replaces).map(change => change.module)
-    this.expectReconnect = changes.some(change => change.reconnects)
+    this.audioTrial = this.expectReconnect = changes.some(change => change.reconnects)
     this.set({ status: 'sending', identity: this.state.identity, active: this.state.active, module, progress: 0 })
     this.diagnostic('sync_started', {packages: changes.map(change => ({sha256:sha(change.data),bytes:change.data.length}))})
     let usb: number[] | undefined, session: LinkSession | undefined
@@ -881,6 +897,8 @@ export class OctatrackLink {
       (await this.transport?.selftest(false).catch(() => undefined))?.refusal === 5
   }
   private expectReconnect = false
+  private audioTrial = false
+  private reconnectCandidate?: LinkSession['status']
   private reconnectTimer?: ReturnType<typeof setTimeout>
   private startKeepalive() {
     this.stopKeepalive()

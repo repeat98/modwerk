@@ -11,7 +11,7 @@ import { MODULES } from '../../catalog/modules.ts'
 import { inventoryChanges, type Inventory, type InventoryTarget } from '../../config/inventory.ts'
 import type { OctatrackLink, SetChange } from './octatrack-link.ts'
 import { RuntimeFeature, type MissingModule, type RuntimeCapabilities } from './upload-usb.ts'
-import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioLayout } from '../../config/usb-audio.ts'
+import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioPackageKind } from '../../config/usb-audio.ts'
 import { baseLayout, isPublishedBase, layoutIdentity, layoutName, MEMBER_LAYOUT, type BaseLayout } from './base-variants.ts'
 import { cardSetGeneration, encodeCardSet } from './card-set.ts'
 import { SET_MAX_ABI } from './set-package.ts'
@@ -38,14 +38,15 @@ export interface MachineVariant extends RuntimePackage {
 export interface RuntimePackageManifest {
   packages: (RuntimePackage & { id: string; name: string; octabam?: boolean })[]
   groups?: { id: string; name: string; variants: MachineVariant[] }[]
-  /** USB Audio as a module (docs/OCTATRACK_USB_AUDIO_MODULE.md): one package a layout, all under its catalogue id,
+  /** USB Audio as a module (docs/OCTATRACK_USB_AUDIO_MODULE.md): the configurable package and any older layouts needed for Undo,
    * each with the layout's number (usbAudioLayoutNumber) in its header, as the unit's inventory reports it. While no
    * layout is listed, USB Audio comes with the base in its layout (base-variants.ts), as before. */
-  usbAudio?: Partial<Record<UsbAudioLayout, RuntimePackage>>
+  usbAudio?: Partial<Record<UsbAudioPackageKind, RuntimePackage>>
 }
 /** The layout number a USB Audio package carries (usb_audio_package.py: its source's layout define, plus one). */
-export const usbAudioLayoutNumber = (layout: UsbAudioLayout) => usbAudioLayout(layout).define + 1
-const LAYOUT_BY_NUMBER = new Map<number, UsbAudioLayout>(USB_AUDIO_LAYOUTS.map(item => [item.define + 1, item.id]))
+export const usbAudioLayoutNumber = (kind: UsbAudioPackageKind) => kind === 'configurable' ? 7 : usbAudioLayout(kind).define + 1
+const LAYOUT_BY_NUMBER = new Map<number, UsbAudioPackageKind>(USB_AUDIO_LAYOUTS.map(item => [item.define + 1, item.id]))
+LAYOUT_BY_NUMBER.set(usbAudioLayoutNumber('configurable'), 'configurable')
 export class BaseUpdateRequired extends ModuleSetError {
   constructor(message = 'Update to the latest Modwerk base to sync this module set. Your selected modules will stay here.') { super(message) }
 }
@@ -294,8 +295,8 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     }
   }
   // USB Audio: a package for each layout the manifest lists, or else with the base, in its layouts (base-variants.ts).
-  const audio = document.usbAudio ?? {}, audioLayouts = Object.keys(audio) as UsbAudioLayout[], audioPackages = audioLayouts.length > 0
-  if (audioLayouts.some(layout => !USB_AUDIO_LAYOUTS.some(item => item.id === layout)) || published.has(USB_AUDIO_MODULE)) throw invalidPackage()
+  const audio = document.usbAudio ?? {}, audioLayouts = Object.keys(audio) as UsbAudioPackageKind[], audioPackages = audioLayouts.length > 0
+  if (audioLayouts.some(layout => layout !== 'configurable' && !USB_AUDIO_LAYOUTS.some(item => item.id === layout)) || published.has(USB_AUDIO_MODULE)) throw invalidPackage()
   for (const layout of audioLayouts) requirements(audio[layout]!)
   const audioEntry = new Map<RuntimePackage, number>(audioLayouts.map(layout => [audio[layout]!, usbAudioLayoutNumber(layout)]))
   /** What the runtime packages must make the unit match: the set, without USB Audio while the base provides it. */
@@ -340,16 +341,17 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     for (const id of current.moduleIds) if (members.has(id) && !inGroup(id) && target.moduleIds.includes(id)) removals.push(id)
     if (removals.some(id => members.has(id)))
       throw new ModuleSetError('This site can’t identify the exact individual machine package on your Octatrack, so it can’t safely replace it or undo that change.')
-    // USB Audio's package is the set's layout's; another layout on the unit is replaced, with its own package as the
-    // Undo. The unit names the installed layout by number (inventory's usbAudioLayout).
+    // Once published, every set installs the same configurable package. Legacy variants supply exact Undo data.
     const audioSteps: Step[] = []
     if (audioPackages) {
-      const wanted: UsbAudioLayout | undefined = target.moduleIds.includes(USB_AUDIO_MODULE) ? target.usbAudio?.layout ?? 'tracks-main-cue' : undefined
+      const wanted: UsbAudioPackageKind | undefined = target.moduleIds.includes(USB_AUDIO_MODULE)
+        ? audio.configurable ? 'configurable' : target.usbAudio?.layout ?? 'tracks-main-cue'
+        : undefined
       const installed = current.moduleIds.includes(USB_AUDIO_MODULE) || current.offIds?.includes(USB_AUDIO_MODULE)
-      const entry = (layout: UsbAudioLayout | undefined) => layout && audio[layout]
+      const entry = (layout: UsbAudioPackageKind | undefined) => layout && audio[layout]
       if (installed && !entry(current.usbAudioLayout) && !(wanted && wanted === current.usbAudioLayout))
         throw new ModuleSetError('This site doesn’t have the USB Audio package currently on your Octatrack, so it can’t safely replace it or undo that change.')
-      if (wanted && !entry(wanted)) throw new ModuleSetError(`${layoutName(wanted)} isn’t published as a module package yet. Choose another USB Audio setup.`)
+      if (wanted && wanted !== 'configurable' && !entry(wanted)) throw new ModuleSetError(`${layoutName(wanted)} isn’t published as a module package yet. Choose another USB Audio setup.`)
       const switchedOff = installed && !current.moduleIds.includes(USB_AUDIO_MODULE)
       if (wanted && installed && wanted !== current.usbAudioLayout && !switchedOff) updates.push(USB_AUDIO_MODULE)
       if (wanted !== current.usbAudioLayout || !installed) {

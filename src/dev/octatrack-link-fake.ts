@@ -51,6 +51,7 @@ export interface FakeUnit {
   staged?: boolean
   /** A published candidate whose page closed during its trial (its digest): only a session that adopts it can roll it back. */
   orphan?: string
+  orphanTransaction?: number
   /** Previews only: a passed self-test with the set saved on the card, and live meters (requests 21 and 30). */
   status?: boolean
   /** The loader refuses the next load with this reason (loader.h runtime_refusal), as the base's record reports it. */
@@ -182,7 +183,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
   return async (_transport?: unknown, _base?: string, options: { timeoutMs?: number } = {}): Promise<LinkSession> => {
     if ((options.timeoutMs ?? 0) > UPLOAD_TIMEOUT_MAX_MS) throw new Error('Upload timeout must be at most ' + UPLOAD_TIMEOUT_MAX_MS + ' ms.') // as UploadSession.connect
     let status: UploadStatus = { command: 'hello', transaction: 0, result: 'ok', phase: unit.staged ? 'receiving' : unit.orphan ? 'trial' : 'normal', activeKnown: true, generation: unit.orphan ? 1 : 0,
-      lastTransaction: unit.orphan ? 7 : 0, currentTransaction: unit.orphan ? 7 : 0, received: 0, capacity: unit.capacity ?? 262144, base: unit.base, session: '00'.repeat(32),
+      lastTransaction: unit.orphan ? unit.orphanTransaction ?? 7 : 0, currentTransaction: unit.orphan ? unit.orphanTransaction ?? 7 : 0, received: 0, capacity: unit.capacity ?? 262144, base: unit.base, session: '00'.repeat(32),
       active: unit.orphan ?? unit.active }
     let staged = unit.active, owned = false, data: Uint8Array | undefined
     // The base a staged container holds: its section's image. A base before the two slots writes only itself.
@@ -219,7 +220,7 @@ export function fakeSession(unit: FakeUnit, delay = 0) {
           throw new UploadUnconfirmedError('The activation reply was lost.', status)
         }
         // Publication makes the staged package the active one (upload.c mu_publish), a base's container as well.
-        const published = status = { ...await step('pending'), active: staged }
+        const published = status = { ...await step('pending'), active: staged, generation: status.generation + 1, currentTransaction: 7, lastTransaction: 7 }
         // A RAM boot image (boot.c): the unit restarts half a second on. Only the flashed base's gate reads the mailbox, so
         // armed from a base running out of RAM it comes back on the flashed one; from that one, on the image's base.
         if (data && data.length >= 4 && new DataView(data.buffer, data.byteOffset).getUint32(0) === 0x4fefffe4) {

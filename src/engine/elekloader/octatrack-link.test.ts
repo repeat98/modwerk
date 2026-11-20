@@ -612,6 +612,43 @@ describe('a sync that changes the unit’s USB configuration', () => {
     await link.undo()
     expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'success', text: 'Undone. Your Octatrack is back to how it was.' } })
   })
+  it('leaves another client’s USB Audio trial running when the paired page opens', async () => {
+    const unit = fakeUnit(), candidate = '79'.repeat(32)
+    unit.orphan = candidate
+    const probe = vi.spyOn(UsbVendorTransport.prototype, 'hasUsbFunctionChanges').mockResolvedValue(true)
+    const link = new OctatrackLink(unit.usb, fakeSession(unit)), stop = link.start()
+    try {
+      await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+      expect(unit.orphan).toBe(candidate)
+      expect(probe).toHaveBeenCalledOnce()
+    } finally { stop(); probe.mockRestore() }
+  })
+  it('releases a different trial that appeared while this page was waiting for its USB Audio trial', async () => {
+    const { unit, link } = await reconnecting()
+    unit.orphan = 'a8'.repeat(32)
+    unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+    expect(unit.orphan).toBe('a8'.repeat(32))
+  })
+  it('leaves a newer trial of the same USB Audio package with its owner', async () => {
+    const { unit, link } = await reconnecting()
+    const candidate = unit.orphan
+    unit.orphanTransaction = 8
+    unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+    expect(unit.orphan).toBe(candidate)
+  })
+  it('resumes the same USB Audio trial after a second format change from the panel', async () => {
+    const { unit, link } = await reconnecting()
+    for (let i=0; i<2; i++) {
+      unit.plug('base')
+      await vi.waitFor(() => expect(link.getState().reconnecting).toBeUndefined())
+      expect(link.getState().status).toBe('trial')
+      if (!i) unit.unplug()
+    }
+    await link.undo()
+    expect(link.getState().status).toBe('ready')
+  })
   it('says so when the unit came back with the sync no longer open', async () => {
     const { unit, link } = await reconnecting()
     unit.orphan = undefined // the base undid it: the host did not reach it in time

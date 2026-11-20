@@ -5,13 +5,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
-import { USB_AUDIO_MODULE, USB_AUDIO_PACKAGED, type UsbAudioLayout } from '../../config/usb-audio'
+import { USB_AUDIO_MODULE, USB_AUDIO_PACKAGED, type UsbAudioLayout, type UsbAudioPackageKind } from '../../config/usb-audio'
 import { countsTowardLimit, limitedCount } from '../../catalog/set-limit'
 import { BaseLayoutRequired, createRuntimeCatalogue, ModuleSetError, removalPackage, runtimeId, usbAudioLayoutNumber, type RuntimePackage } from './module-set'
 
 const capable = { abi: 8, features: 0xffff, maxSites: 128, maxCopies: 128 }
 const empty = { moduleIds: [], removedStockFx: [] }
-function audioPackage(layout: UsbAudioLayout, number = usbAudioLayoutNumber(layout)) {
+function audioPackage(layout: UsbAudioPackageKind, number = usbAudioLayoutNumber(layout)) {
   // An ABI 8 header, three two-byte guarded sites (as module-set.test.ts groupPackage) and nothing else: enough for the site's checks, not a module.
   const data = new Uint8Array(76 + 3 * 42), v = new DataView(data.buffer)
   v.setUint32(0, 0x4d57524d); v.setUint16(4, 8); v.setUint32(24, 3); v.setUint32(28, Number.parseInt(runtimeId(USB_AUDIO_MODULE), 16)); v.setUint16(66, number)
@@ -21,16 +21,28 @@ function audioPackage(layout: UsbAudioLayout, number = usbAudioLayoutNumber(layo
   const entry: RuntimePackage = { abi: 8, features: 0, sites: 3, copies: 0, fills: 0, bytes: data.length, sha256: sha(data), path: `test/usb-${layout}.mwrm`, name: 'USB Audio' }
   return { entry, data }
 }
-function audioCatalogue(layouts: UsbAudioLayout[]) {
+function audioCatalogue(layouts: UsbAudioPackageKind[]) {
   const packages = new Map(layouts.map(layout => [layout, audioPackage(layout)]))
   const catalogue = createRuntimeCatalogue({ packages: [], usbAudio: Object.fromEntries([...packages].map(([layout, item]) => [layout, item.entry])) })
   const fetched = vi.fn(async (entry: { path: string }) => [...packages.values()].find(item => item.entry.path === entry.path)!.data)
   const on = (layout: number) => catalogue.inventory([{ handle: 255, layout, module: runtimeId(USB_AUDIO_MODULE), name: 'USB AUDIO' }])
-  return { catalogue, fetched, on, data: (layout: UsbAudioLayout) => packages.get(layout)!.data }
+  return { catalogue, fetched, on, data: (layout: UsbAudioPackageKind) => packages.get(layout)!.data }
 }
 const set = (layout?: UsbAudioLayout) => ({ name: 'Set', moduleIds: layout ? [USB_AUDIO_MODULE] : [], ...(layout ? { usbAudio: { layout } } : {}) })
 
 describe('USB Audio as a module package', () => {
+  it('installs the same configurable package for every set and keeps panel choices on a later sync', async () => {
+    const { catalogue, fetched, data, on } = audioCatalogue(['main', 'configurable'])
+    for (const layout of ['tracks', 'master', 'main-cue'] as const) {
+      const result = await catalogue.prepare(set(layout), empty, fetched, capable)
+      expect(result.changes[0].data).toEqual(data('configurable'))
+      expect(catalogue.review(set(layout), on(7), capable).needsSync).toBe(false)
+    }
+    const migration = await catalogue.prepare(set('main'), on(5), fetched, capable)
+    expect(migration.changes[0]).toMatchObject({ data: data('configurable'), undo: data('main'), reconnects: true })
+    const removal = await catalogue.prepare(set(), on(7), fetched, capable)
+    expect(removal.changes[0].undo).toEqual(data('configurable'))
+  })
   it('numbers each layout by its source define plus one', () => {
     expect(['tracks-main-cue', 'tracks', 'master', 'main-cue', 'main', 'tracks-post'].map(layout => usbAudioLayoutNumber(layout as UsbAudioLayout))).toEqual([1, 2, 3, 4, 5, 6])
   })

@@ -33,6 +33,7 @@ export function parseRuntimeCapabilities(view: DataView): RuntimeCapabilities {
   return { abi: view.getUint8(5), features: view.getUint16(6), maxSites: view.getUint16(8), maxCopies: view.getUint16(10) }
 }
 export const VENDOR_SLOTS = 39 // the base's two-slot layout (sdk/machines/octatrack/elekloader/flash.h); older bases stall it
+export const VENDOR_USB_FUNCTION = 41
 export const VENDOR_OFF = 40 // the modules switched off on the unit (elekloader/modset.c's shelf); older bases stall it
 export const OFF_PAGE = 5 // entries an OFF reply holds; wValue is the first (elekloader/status.h)
 export const OFF_BYTES = 8 + 56 * OFF_PAGE
@@ -209,6 +210,14 @@ export class UsbVendorTransport implements UploadTransport {
     if (reply.status === 'stall') return undefined
     if (reply.status !== 'ok' || !reply.data) throw new VendorTransportError('The Octatrack did not answer the loader capabilities request.')
     return parseRuntimeCapabilities(reply.data)
+  }
+  /** The runtime USB function is being added, is live, or has reconnected in this boot. */
+  async hasUsbFunctionChanges(): Promise<boolean> {
+    const reply = await this.device.controlTransferIn(this.setup(VENDOR_USB_FUNCTION, 0), 8)
+    if (reply.status === 'stall') return false
+    const status = reply.data
+    if (reply.status !== 'ok' || status?.byteLength !== 8) throw new VendorTransportError('The Octatrack did not answer the USB function status request.')
+    return status.getUint32(0) !== 0
   }
   /** Read-only, from the interrupt: undefined from a base before the two slots (it stalls), null before its first look. */
   async slots(signal?: AbortSignal): Promise<BaseSlots | null | undefined> {
