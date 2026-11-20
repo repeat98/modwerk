@@ -15,7 +15,7 @@ import { spawnSync } from 'node:child_process'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { availableModules, PAUSED_MODULE_IDS, isBetaModule } from '../src/catalog/availability.ts'
-import { LIBRARY_CATEGORIES } from '../src/catalog/modules.ts'
+import { MODULE_V3_CATEGORIES } from '../src/catalog/module-contract-v3.ts'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
 import { moduleSourceFingerprint } from './module-source.mjs'
 import { ANALOG_BD_DSP_COMPANIONS } from '../src/engine/analog-bd-layout.ts'
@@ -72,11 +72,10 @@ const rulesProblem = rules.status === 0 ? '' : (ruleLines.find(line => /^\w*Erro
 // Cross-compatibility of every active Octatrack module with every other and the base (scripts/module-compat.py): run once.
 // A single run also compares the module asked about when the catalogue does not list it yet (a draft, a new folder) or pauses it.
 const withId = !all && exists('sdk/octatrack/modules/' + ids[0]) ? ['--with', ids[0]] : []
-const compat = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/module-compat.py', '--json', ...withId], { cwd: root, encoding: 'utf8' })
+const compat = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/module-compat.py', '--json', '--native-params', ...withId], { cwd: root, encoding: 'utf8' })
 const compatResult = (() => { try { return JSON.parse(compat.stdout) } catch { return null } })(), compatProblems = compatResult?.problems
-// Each module's native knob declarations (scripts/module-native-params.py): run once, for the controls line.
-const nativeRun = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/module-native-params.py', ...withId], { cwd: root, encoding: 'utf8' })
-const nativeParams = (() => { try { return JSON.parse(nativeRun.stdout) } catch { return null } })()
+// The controls line uses the same native manifests the compatibility check already loaded.
+const nativeParams = compatResult?.nativeParams
 
 // The modules listed before every module had to name its CPU price, which wait for a measurement.
 const cpuPending = readCpuPricePending(root)
@@ -105,12 +104,12 @@ function octatrack(id) {
   else if (entry && !availableModules(true).some(module => module.id === id)) fail('library', 'the library does not offer it', 'run npm run modules:generate')
   else if (entry) ok('library', isBetaModule(id) ? 'offered to beta testers in the library and configurator' : 'offered in the library and the configurator')
 
-  if (!LIBRARY_CATEGORIES.includes(document.category)) fail('category guide', 'category ' + document.category + ' is not a library category', 'use one of ' + LIBRARY_CATEGORIES.join(', '))
+  if (!MODULE_V3_CATEGORIES.includes(document.category)) fail('category guide', 'category ' + document.category + ' is not a manifest category', 'use one of ' + MODULE_V3_CATEGORIES.join(', '))
   else if (!exists('docs/module-guides/' + document.category + '.md')) fail('category guide', 'docs/module-guides/' + document.category + '.md is missing', 'write the guide for this category')
   else ok('category guide', 'walk docs/module-guides/' + document.category + '.md (and sequencing.md if it acts in time)')
   // The knobs the build writes into the instrument (manifest.py) and the ones the site describes (controls[]) are one list.
   const knobs = nativeParams?.[id]
-  if (!nativeParams) fail('controls', 'the native knob declarations could not be read: ' + (nativeRun.stderr.trim().split('\n').at(-1) ?? 'scripts/module-native-params.py failed').slice(0, 200), 'fix what manifest.py reports, then run this again')
+  if (!nativeParams) fail('controls', 'the native knob declarations could not be read: ' + (compat.stderr || compat.error?.message || 'missing compatibility report').trim().split('\n').at(-1).slice(0, 200), 'fix what manifest.py reports, then run this again')
   else if (knobs?.length) {
     const problems = controlProblems(knobs, document.controls)
     if (problems.length) fail('controls', problems.slice(0, 3).join('; ') + (problems.length > 3 ? '; and ' + (problems.length - 3) + ' more' : ''), 'make controls[] in octamod.module.json say what manifest.py declares (name, default, count), then npm run modules:generate')
@@ -171,9 +170,8 @@ function octatrack(id) {
   else if (sources.some(([, text]) => text.includes('modwerk_page.h'))) ok('page controls', 'built with modwerk_page_control(): two to five values draw as stock\'s switch, more as a knob')
 
   // The two DSP source gates (octabam's norep and nolabelprefix, sdk/octabam/docs/TRAPS.md): a label prefix is always refused; a rep is refused in a module listed from 2026-10-23.
-  const gates = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/dsp-source-gates.py', '--json', id], { cwd: root, encoding: 'utf8' })
-  const found = gates.status === 0 ? JSON.parse(gates.stdout) : null
-  if (!found) fail('dsp sources', 'the gates did not run: ' + (gates.stderr || gates.error?.message || '').trim().split('\n').pop(), 'python3 -B scripts/dsp-source-gates.py --json ' + id)
+  const found = sourceGates.modules?.[id]
+  if (!found) fail('dsp sources', 'the gates did not run: ' + (sourceGates.error ?? 'missing module report'), 'python3 -B scripts/dsp-source-gates.py --json ' + id)
   else if (found.errors.length) fail('dsp sources', found.errors[0], 'rewrite it as the message says, then npm run modules:check')
   else if (found.warnings.length) info('dsp sources', found.warnings[0].replace(/^sdk\/octatrack\/modules\/[^/]+\//, '') + '. Not refused in a module listed before 2026-10-23; a new rep is')
   else if (found.files) ok('dsp sources', found.files + ' DSP source' + (found.files === 1 ? '' : 's') + ': no rep, no label that prefixes another')
@@ -181,10 +179,9 @@ function octatrack(id) {
 
   // The register contract of its DSP package's entries, read from the assembled words (scripts/dsp-register-contract.py): a hook entry writes only its
   // site's clobbers, an init keeps r1/n1/m1. Reported until the owner sets REFUSED_FROM there; from then a module listed on or after it is refused.
-  const registers = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/dsp-register-contract.py', '--json', id], { cwd: root, encoding: 'utf8' })
-  const contract = registers.status === 0 ? JSON.parse(registers.stdout) : null, more = contract?.findings?.length > 1 ? ' (and ' + (contract.findings.length - 1) + ' more)' : ''
+  const contract = registerContracts.modules?.[id], more = contract?.findings?.length > 1 ? ' (and ' + (contract.findings.length - 1) + ' more)' : ''
   const registersFix = 'keep what the contract names, or widen the site\'s clobbers in a base pull request; python3 -B scripts/dsp-register-contract.py --json ' + id
-  if (!contract) fail('dsp registers', 'the check did not run: ' + (registers.stderr || registers.error?.message || '').trim().split('\n').pop(), 'python3 -B scripts/dsp-register-contract.py --json ' + id)
+  if (!contract) fail('dsp registers', 'the check did not run: ' + (registerContracts.error ?? 'missing module report'), 'python3 -B scripts/dsp-register-contract.py --json ' + id)
   else if (contract.skipped) info('dsp registers', 'not checked: ' + contract.skipped)
   else if (contract.findings.length && contract.refused) fail('dsp registers', contract.findings[0] + more, registersFix)
   else if (contract.findings.length) info('dsp registers', contract.findings[0] + more + '. Reported, not refused: the owner sets the date it is refused from')
@@ -254,7 +251,7 @@ function machineModule({ id, machine, folder, zdl = false }) {
   if (!manifest) lines.push({ state: 'fail', name: 'manifest', detail: folder + '/modwerk.module.json is missing', fix: 'npm run module:new -- <id> --machine ' + machine + ' --author <login>' })
   else {
     lines.push({ state: 'ok', name: 'manifest', detail: manifest.version })
-    if (!LIBRARY_CATEGORIES.includes(manifest.category)) lines.push({ state: 'fail', name: 'category guide', detail: 'category ' + manifest.category + ' is not a library category', fix: 'use one of ' + LIBRARY_CATEGORIES.join(', ') })
+    if (!MODULE_V3_CATEGORIES.includes(manifest.category)) lines.push({ state: 'fail', name: 'category guide', detail: 'category ' + manifest.category + ' is not a manifest category', fix: 'use one of ' + MODULE_V3_CATEGORIES.join(', ') })
     else if (!exists('docs/module-guides/' + manifest.category + '.md')) lines.push({ state: 'fail', name: 'category guide', detail: 'docs/module-guides/' + manifest.category + '.md is missing', fix: 'write the guide for this category' })
     else lines.push({ state: 'ok', name: 'category guide', detail: 'walk docs/module-guides/' + manifest.category + '.md' + (zdl ? ' and "Create an effect" in sdk/machines/' + machine + '/README.md' : ', and the Digitakt and Digitone section in it') })
   }
@@ -306,10 +303,20 @@ function report(title, lines, tiered = false) {
 
 // The agent board (docs/AGENT_BOARD.md): one read per run; a new module needs your claim, and someone else's claim stops it.
 // Open questions and findings on the module or its machine are a line to read, never a red one.
-const board = await import('./agent-board.mjs'), boardView = await board.boardSnapshot({ kind: 'module' }, { messages: {} })
+const board = await import('./agent-board.mjs'), boardView = await board.boardSnapshot({ kind: 'module' }, { messages: { moduleContext: true } })
 const boardLines = (machine, id, folder) => [board.moduleClaimLine({ root, machine, id, folder, ...boardView }), board.moduleMessagesLine({ machine, id, ...boardView })].filter(Boolean)
 let green = true
 const octatrackIds = all ? catalog.modules.map(item => item.id) : ids.filter(id => exists('sdk/octatrack/modules/' + id))
+function dspReports(script) {
+  if (!octatrackIds.length) return { modules: {} }
+  const result = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', script, '--json-modules', ...octatrackIds], {
+    cwd: root, encoding: 'utf8', maxBuffer: octatrackIds.length * 1024 * 1024,
+  })
+  if (result.status === 0) return { modules: JSON.parse(result.stdout) }
+  return { error: (result.stderr || result.error?.message || 'missing report').trim().split('\n').pop() }
+}
+const sourceGates = dspReports('scripts/dsp-source-gates.py')
+const registerContracts = dspReports('scripts/dsp-register-contract.py')
 for (const id of octatrackIds) {
   const document = parseModuleDocument(json('sdk/octatrack/modules/' + id + '/octamod.module.json'))
   nativeHashes.set(id, await moduleNativeSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))

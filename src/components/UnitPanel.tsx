@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CARD_SET_FILE } from '../engine/elekloader/card-set'
+import { CARD_SET_FILE, CARD_RECOVERY_FILE, forCardImport } from '../engine/elekloader/card-set'
 import { firmwareFilename } from '../config/firmware-filename'
 import { prepareCardSet } from '../engine/elekloader/module-set'
 import { baseName, layoutName, runningLayout, type BaseLayout } from '../engine/elekloader/base-variants'
@@ -28,21 +28,19 @@ export function CardSetButton({ set, onInstall }: { set?: InventoryTarget; onIns
     setState({ busy: true })
     try {
       const made = await prepareCardSet(set)
-      save(made.file, CARD_SET_FILE)
       // What a downloaded build got: the count, update notifications and the hardware feedback reminder.
       const ids = set.moduleIds.filter(id => id !== USB_AUDIO_MODULE)
-      trackModuleDownloads(ids); followDownloads(ids, installedOnOctatrack(ids))
       const known = knownBase()
-      setState({ written: { base: made.base, layout: made.layout, ...known && known.base !== made.base ? { other: known } : {} } })
+      setState({ written: { file: made.file, ids, base: made.base, layout: made.layout, ...known && known.base !== made.base ? { other: known } : {} } })
     } catch (error) { setState({ error: error instanceof Error ? error.message : 'Couldn’t write the module file.' }) }
   }
   return <>
     <button type="button" className="button button-primary" disabled={!modules || state.busy} title={modules ? undefined : 'Add modules to your set first.'} onClick={() => void download()}><Icon name="download" size={16} />{state.busy ? 'Writing the file…' : 'Load from the card'}</button>
-    {(state.written || state.error) && <CardSetDialog name={set?.name} written={state.written} error={state.error} notice={followNotice} onInstall={onInstall} onClose={() => setState({})} />}
+    {(state.written || state.error) && <CardSetDialog name={set?.name} written={state.written} error={state.error} notice={followNotice} onDownload={ids => { trackModuleDownloads(ids); followDownloads(ids, installedOnOctatrack(ids)) }} onInstall={onInstall} onClose={() => setState({})} />}
   </>
 }
 
-interface Written { base: string; layout: BaseLayout; other?: { base: string; from: 'unit' | 'download' } }
+interface Written { file: Uint8Array; ids: string[]; base: string; layout: BaseLayout; other?: { base: string; from: 'unit' | 'download' } }
 /** A base by its version, with its USB Audio layout when the version alone doesn't tell two bases apart. */
 const describeBase = (base: string, other: string) => {
   const layout = runningLayout(base)
@@ -50,7 +48,18 @@ const describeBase = (base: string, other: string) => {
 }
 
 /** After the download: where the file goes, which base it is for, and a way to that base. */
-function CardSetDialog({ name, written, error, notice, onInstall, onClose }: { name?: string; written?: Written; error?: string; notice?: string; onInstall?: (layout: BaseLayout) => void; onClose: () => void }) {
+function CardSetDialog({ name, written, error, notice, onDownload, onInstall, onClose }: { name?: string; written?: Written; error?: string; notice?: string; onDownload: (ids: string[]) => void; onInstall?: (layout: BaseLayout) => void; onClose: () => void }) {
+  const [saved, setSaved] = useState(false), [problem, setProblem] = useState(''), [reading, setReading] = useState(false)
+  async function download(retained?: File) {
+    if (!written) return
+    setReading(true); setProblem('')
+    try {
+      if (retained && retained.name.toUpperCase() !== CARD_RECOVERY_FILE) throw new Error('Choose ' + CARD_RECOVERY_FILE + ' from the top folder of this card.')
+      const file = retained ? forCardImport(written.file, new Uint8Array(await retained.arrayBuffer())) : written.file
+      save(file, CARD_SET_FILE); setSaved(true); onDownload(written.ids)
+    } catch (failure) { setProblem(failure instanceof Error ? failure.message : 'Couldn’t prepare the card file.') }
+    finally { setReading(false) }
+  }
   const dialog = useRef<HTMLDialogElement>(null), done = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     const element = dialog.current, previous = document.activeElement
@@ -59,7 +68,7 @@ function CardSetDialog({ name, written, error, notice, onInstall, onClose }: { n
   }, [])
   return <dialog ref={dialog} className="app-dialog card-set-dialog" aria-labelledby="card-set-dialog-title" onCancel={event => { event.preventDefault(); onClose() }} onKeyDown={event => event.stopPropagation()}>
     <header className="login-prompt-header">
-      <h2 id="card-set-dialog-title">{written ? 'Put ' + CARD_SET_FILE + ' on the card' : 'The module file couldn’t be written'}</h2>
+      <h2 id="card-set-dialog-title">{written ? saved ? 'Put ' + CARD_SET_FILE + ' on the card' : 'Prepare the file for your card' : 'The module file couldn’t be written'}</h2>
       <button type="button" className="icon-button" aria-label="Close" onClick={onClose}><Icon name="close" size={18} /></button>
     </header>
     {written ? <>
@@ -67,11 +76,17 @@ function CardSetDialog({ name, written, error, notice, onInstall, onClose }: { n
         <strong>This file is for another base</strong>
         <p>{written.other.from === 'unit' ? 'Your Octatrack last ran' : 'The base you last downloaded here is'} <b>{describeBase(written.other.base, written.base)}</b>. This file only loads on <b>{describeBase(written.base, written.other.base)}</b>; on any other base the Octatrack ignores it and starts without modules. Install that base first, then copy this file.</p>
       </div>}
-      <ol className="card-set-plan">
+      {saved ? <ol className="card-set-plan">
         <li><span aria-hidden="true">1</span><div><strong>Copy the file to the card</strong><p>Top folder, replacing the one there, named exactly {CARD_SET_FILE}: if your browser added a number to the name, take it out. Card reader or USB DISK MODE.</p></div></li>
         <li><span aria-hidden="true">2</span><div><strong>Switch the Octatrack off and on</strong><p>It reads the file when it starts.</p></div></li>
         <li><span aria-hidden="true">3</span><div><strong>Play</strong><p>{name ? <>It starts with the modules of <b>{name}</b>.</> : 'It starts with your modules.'}</p></div></li>
-      </ol>
+      </ol> : <fieldset disabled={reading}>
+        <legend>Check the top folder of your card</legend>
+        <p>If it contains <b>{CARD_RECOVERY_FILE}</b>, choose that file here. The download will load ahead of it, and the original stays on the card for recovery.</p>
+        <label>Choose {CARD_RECOVERY_FILE} <input type="file" accept=".set" onChange={event => { const file = event.target.files?.[0]; if (file) void download(file) }} /></label>
+        <p><button type="button" className="button button-quiet" onClick={() => void download()}>Download for a card without {CARD_RECOVERY_FILE}</button></p>
+        {problem && <p className="file-error" role="alert">{problem}</p>}
+      </fieldset>}
       <p className="card-set-base">Needs the Modwerk base <b title={written.base}>{baseName(written.base)}</b> ({layoutName(written.layout)}) on the Octatrack, the file <b>{firmwareFilename('base', written.base)}</b> installed with OS UPGRADE. On any other OS or base the Octatrack ignores this file.{notice && <> {notice}</>}</p>
     </> : <p className="file-error" role="alert">{error}</p>}
     <div className="dialog-actions">

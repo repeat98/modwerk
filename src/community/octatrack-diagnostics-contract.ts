@@ -3,9 +3,16 @@
 
 // Closed, versioned diagnostics: no arbitrary text, project data, USB serials, firmware or memory dumps.
 /** 2026-11-11.1 adds each report's browser and OS family (`client`) and why a connection failed before it existed (`link_failed`).
+ * 2026-11-19.1 says reports may lead to a personal email about a problem they show and its fix (server/diagnostics-mail.ts);
+ * the owner chose to let it cover everyone already sharing (19 Nov 2026).
  * A consent given under an earlier version keeps sharing (owner, 14 Nov 2026): a new version is what new choices record,
  * never a reason to ask members again. */
-export const OCTATRACK_DIAGNOSTICS_VERSION = '2026-11-11.1'
+export const OCTATRACK_DIAGNOSTICS_VERSION = '2026-11-19.1'
+/** The versions the server takes reports and choices under: the current one and the one before, so a page still open on
+ * the previous text keeps sending after a deploy instead of being refused until it is reloaded. */
+export const OCTATRACK_DIAGNOSTICS_ACCEPTED: readonly string[] = [OCTATRACK_DIAGNOSTICS_VERSION, '2026-11-11.1']
+/** The invitation's Not now is remembered under this version, not the current one, so a new text never asks again. */
+export const DIAGNOSTICS_INVITATION_VERSION = '2026-11-11.1'
 export const DIAGNOSTIC_RETENTION_DAYS = 30
 export const DIAGNOSTIC_CONSENT_DAYS = 90
 export const OCTATRACK_COUNTS = ['usb_sync_started', 'usb_sync_kept', 'usb_sync_undone', 'usb_sync_failed'] as const
@@ -35,7 +42,7 @@ export type BaseGuideStep = typeof BASE_GUIDE_STEPS[number]
  * link's other error labels. Anything else is `other`. */
 export const SYNC_FAILURE_REASONS = [
   'disconnected', 'cancelled', 'stale', 'save', 'selftest', 'rollback', 'unknown', 'unsafe', 'device',
-  'refused', 'refused-1', 'refused-2', 'refused-3', 'refused-4', 'refused-5', 'refused-6', 'refused-7', 'refused-8', 'refused-9', 'refused-10', 'refused-11',
+  'refused', 'refused-1', 'refused-2', 'refused-3', 'refused-4', 'refused-5', 'refused-6', 'refused-7', 'refused-8', 'refused-9', 'refused-10', 'refused-11', 'refused-12',
   'transport', 'transport-session', 'transport-baseline', 'transport-encode', 'transport-stage', 'transport-activate', 'transport-trial',
   'other',
 ] as const

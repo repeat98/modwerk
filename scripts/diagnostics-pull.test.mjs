@@ -34,6 +34,16 @@ describe('diagnostics pull', () => {
     expect(text).toContain(`${when(failed.createdAt)} @other sync_failed sending error=device refusal=3 poly8@0.3.0`)
     expect(text).toContain('2026-10-15  failed 1')
   })
+  it('lists failures before a USB connection with the reported reason and optional client', () => {
+    const link = (n, failure, client) => entry(n, 'tester', { event: 'link_failed', phase: 'idle', failure, client })
+    const text = summary({ events: [link(1, 'no-device'), entry(2), link(3, 'claim-failed', { browser: 'chrome', major: 150, os: 'linux' })], counts: [] })
+    const problems = text.split('Problems (')[1]
+    expect(problems.split('\n').slice(0, 3)).toEqual([
+      '2, newest first, up to 30):',
+      `  ${when(entry(3).createdAt)} @tester link_failed idle failure=claim-failed chrome 150/linux`,
+      `  ${when(entry(1).createdAt)} @tester link_failed idle failure=no-device`,
+    ])
+  })
   it('counts restarts from the unit’s log and names what each boot’s restore did, once per change', () => {
     const base = 'a'.repeat(64)
     const start = (seq, boot) => ({ seq, boot, second: 0, kind: 'start', a: 0, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: [], fx: [], keys: [], screen: 0, tempo24: 0, playing: false })
@@ -111,6 +121,11 @@ describe('diagnostics pull', () => {
     const set = { seq: 4, boot: 3, second: 5, kind: 'set', a: 1, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: [0x3c, 0xbe, 0xdc, 0x9c, ...Array(20).fill(0)],
       fx: Array(16).fill(0), keys: Array(16).fill(0), screen: 0x773c84aa, tempo24: 5, playing: false }
     expect(unitLines([set])[0]).toContain('1 installed: Mini Verb; refused SC Ringmod (busy)')
+    // Base 0.7.10 adds the loader's check that refused it and the module pool then, in 16-byte units.
+    expect(unitLines([{ ...set, tempo24: 2, dsp1to4: 2, cpu: 10084, dsp5to8: 39068 }])[0])
+      .toContain('refused SC Ringmod (module memory, by its DSP claims meeting a delay buffer, module memory 158 KiB used, largest free block 610.4 KiB)')
+    expect(unitLines([{ ...set, tempo24: 2, dsp1to4: 1, cpu: 48640, dsp5to8: 96 }])[0])
+      .toContain('refused SC Ringmod (module memory, by the module pool, module memory 760 KiB used, largest free block 1.5 KiB)')
   })
   it('calls a stall found at a start on another base an OS upgrade, and one on the same base nothing', () => {
     const at = (seq, boot, kind, a = 0) => ({ seq, boot, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),

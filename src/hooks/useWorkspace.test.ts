@@ -48,6 +48,21 @@ describe('opening the workspace', () => {
     expect((await deviceStore(reopened).listConfigurations()).map(item => item.name)).toEqual(['Live', 'Studio B'])
     reopened.close()
   })
+  it('deletes the active set without overwriting the next set edited in another tab', async () => {
+    const db = await openDeviceDatabase(), otherTab = deviceStore(db)
+    const live = newConfiguration('Live'), studio = newConfiguration('Studio')
+    await otherTab.saveConfiguration(live, { makeActive: true })
+    await otherTab.saveConfiguration(studio)
+    await act(async () => root.render(createElement(Probe, { onRender: value => { workspace = value } })))
+    await vi.waitFor(() => expect(workspace.ready).toBe(true))
+    const edited = { ...studio, name: 'Studio B' }
+    await otherTab.saveConfiguration(edited)
+    await act(() => workspace.deleteConfiguration())
+    await vi.waitFor(() => expect(workspace.saving).toBe(false))
+    expect(await otherTab.listConfigurations()).toEqual([edited])
+    expect(await otherTab.activeConfiguration()).toBe(studio.id)
+    db.close()
+  })
 })
 
 describe('when Safari drops device storage', () => {

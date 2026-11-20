@@ -1,0 +1,1 @@
+An agent now looks back at its own session before it finishes: `npm run session -- review` shows where the time went, what failed and what was repeated, and the agent names up to three things that cost time. A fix for one goes in its own pull request titled `Workflow: …`, labelled `workflow`. When it asks whether to share the session, it says why that helps.

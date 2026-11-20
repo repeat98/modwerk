@@ -1,0 +1,1 @@
+Octatrack base 0.7.10, the Part Edit window (FUNC+PART): a module that is inactive can leave its row out, and a module that takes over what PART's rows act on can leave PART out while it does. With PART left out and one module's row left, FUNC+PART opens stock's popup with that module's actions in PART's place. Nothing changes until a module asks: Kits is the first planned to.

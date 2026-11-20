@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import catalog from '../../../sdk/catalog.json' with { type: 'json' }
 import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
 import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
@@ -14,7 +15,8 @@ const empty = { moduleIds: [], removedStockFx: [] }
 
 describe('the site’s runtime packages', () => {
   it('publishes each listed module with its checked runtime identity, ABI and record counts', () => {
-    expect(USB_MODULE_IDS).toEqual(['everb', 'miniverb', 'tapehead', 'airwindows-chorus', 'lofi2', 'ring-sc', 'previewvol', 'apply-scene', 'repitch', 'poly8', 'vector', 'synth', 'quantizer', 'tapeecho', 'euclid', 'bbd', 'playmodes', 'mute-modes', 'sidechain-compressor', 'output-matrix', 'cc-map', 'quantize-live-rec-toggle', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'recorder-loop-fix', 'analog-bassdrum', 'beat-slicer', 'temp-save', 'slow-lfo', 'bar-led', 'tiempos', 'syntiz', 'track-solo', 'pattern-sample-locks', 'amiga', 'midi-scenes', 'kits', 'tuner', 'vibrato', 'butter-fingers', 'usb-audio-out-tracks-main-cue'])
+    // Stem Recorder is the catalog's retained card-only module. New USB releases must appear in both inventories.
+    expect([...USB_MODULE_IDS].sort()).toEqual(catalog.modules.map(module => module.id).filter(id => id !== 'stem-rec').sort())
     for (const entry of manifest.packages) {
       const data = file(entry.path), view = new DataView(data.buffer), abi = view.getUint16(4)
       expect(entry.path).toBe(`octatrack-modules/${entry.id}/${entry.version}.mwrm`)
@@ -107,8 +109,10 @@ describe('preparing a module set', () => {
     await expect(prepareModuleSet(target, empty, fetched, { ...events, maxSites: 1 })).rejects.toBeInstanceOf(BaseUpdateRequired)
     await expect(prepareModuleSet(target, empty, fetched, events, 'b'.repeat(64))).rejects.toBeInstanceOf(BaseUpdateRequired) // an older base
     expect(fetched).not.toHaveBeenCalled()
+    const audio = (manifest as { usbAudio?: { configurable?: { name: string } } }).usbAudio?.configurable
+    const extraNames = audio ? [audio.name] : []
     const result = await prepareModuleSet(target, empty, fetched, events, baseBinding.identity)
-    expect(result.changes.map(change => change.module)).toEqual(manifest.packages.map(entry => entry.name))
+    expect(result.changes.map(change => change.module)).toEqual([...manifest.packages.map(entry => entry.name), ...extraNames])
     expect(result.changes.every(change => change.undo?.length === 32)).toBe(true)
     // An ABI 8 loader still takes every package but the ABI 9 and 10 ones (RINGMOD SC, Analog BD's engine package),
     // which ask for the base update.
@@ -116,7 +120,7 @@ describe('preparing a module set', () => {
     expect([...abi9].sort()).toEqual(['analog-bassdrum', 'ring-sc'])
     for (const id of abi9) await expect(prepareModuleSet({ name: id, moduleIds: [id] }, empty, fetched, { ...events, abi: 8 }, baseBinding.identity)).rejects.toBeInstanceOf(BaseUpdateRequired)
     const older = await prepareModuleSet({ name: 'ABI 8', moduleIds: USB_MODULE_IDS.filter(id => !abi9.includes(id)) }, empty, fetched, { ...events, abi: 8 }, baseBinding.identity)
-    expect(older.changes.map(change => change.module)).toEqual(manifest.packages.filter(entry => !abi9.includes(entry.id)).map(entry => entry.name))
+    expect(older.changes.map(change => change.module)).toEqual([...manifest.packages.filter(entry => !abi9.includes(entry.id)).map(entry => entry.name), ...extraNames])
   })
   it('refuses hook words a subscriber’s manifest does not declare, or more than the base dispatches', async () => {
     const entry = manifest.packages.find(item => item.id === 'repitch')!, data = file(entry.path)

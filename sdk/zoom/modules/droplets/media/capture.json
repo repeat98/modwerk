@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "droplets",
+  "moduleVersion": "0.3.0",
+  "imageSha256": "8f04eef9234caef2427aa62866fd89e4fdf0440e9ac1a04aafdaa61a49e909ef",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "0c4bc36a7d86f1e53cd2bec7e965424e1555f1d6f8ecbece9e09ce52edc64dbf",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}

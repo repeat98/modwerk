@@ -1,11 +1,11 @@
 .credits-page { width: 100%; max-width: 1060px; margin: 0 auto; }
 .credits-heading { margin-bottom: 26px; }
-.credits-heading > div > p:last-child { max-width: 660px; font-size: 14px; line-height: 1.8; }
+.credits-heading > div > p:last-child { max-width: 660px; font-size: 14px; line-height: var(--reading-line-height); }
 .credits-origin { padding: 28px 30px; border: 1px solid #555974; border-radius: 10px; background: linear-gradient(120deg, #929bff0e, transparent 75%), var(--surface); }
 .credits-eyebrow { color: var(--accent); font: 11px/1.6 var(--mono); letter-spacing: 1.2px; }
 .credits-origin h2 { margin-top: 11px; font-size: 24px; line-height: 1.4; letter-spacing: -.4px; }
 .credit-author { margin-top: 7px; color: var(--muted); font-size: 12px; line-height: 1.7; }
-.credits-origin-copy { margin-top: 18px; max-width: 790px; color: #c6c6d2; font-size: 14px; line-height: 1.85; }
+.credits-origin-copy { margin-top: 18px; max-width: 790px; color: #c6c6d2; font-size: 14px; line-height: var(--reading-line-height); }
 .credit-links { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 20px; margin-top: 16px; }
 .credit-links a { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; color: var(--accent); font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
 .credit-links a:hover { color: #c5cbff; text-decoration: underline; text-underline-offset: 3px; }
@@ -18,14 +18,14 @@
 .credits-section-heading > span { flex-shrink: 0; }
 .credits-section-heading h2 { font-size: 18px; line-height: 1.5; scroll-margin-top: 16px; }
 .credits-section-heading h2:focus { outline: none; }
-.credits-section-heading p { margin-top: 5px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+.credits-section-heading p { margin-top: 5px; color: var(--muted); font-size: 13px; line-height: var(--reading-line-height); }
 .credits-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .credit-project { display: flex; flex-direction: column; min-width: 0; padding: 20px 22px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 .credit-project h3 { margin: 0; color: #e1e1eb; font-size: 15px; font-weight: 600; line-height: 1.5; letter-spacing: -.1px; }
-.credit-description { margin-top: 12px; margin-bottom: 12px; color: #bcbcca; font-size: 13px; line-height: 1.8; }
+.credit-description { margin-top: 12px; margin-bottom: 12px; color: #bcbcca; font-size: 13px; line-height: var(--reading-line-height); }
 .credit-project .credit-links { margin-top: auto; }
 .credits-research { margin-top: 36px; padding: 24px 0; border-top: 1px solid var(--line); }
-.credits-research p, .credits-footer p { margin-top: 12px; max-width: 840px; color: var(--muted); font-size: 13px; line-height: 1.85; }
+.credits-research p, .credits-footer p { margin-top: 12px; max-width: 840px; color: var(--muted); font-size: 13px; line-height: var(--reading-line-height); }
 .credits-footer { border-top: 1px solid var(--line); padding-top: 24px; padding-bottom: 8px; }
 @media (max-width: 900px) {
   .credits-grid { grid-template-columns: minmax(0, 1fr); }
@@ -37,5 +37,6 @@
   .credits-nav button, .credit-links a { min-height: 44px; }
   .credits-section { margin-top: 28px; }
   .credits-section-heading { gap: 10px; }
+  .credits-section-heading h2 { scroll-margin-top: calc(72px + env(safe-area-inset-top)); }
   .credit-project { padding: 18px 20px; }
 }

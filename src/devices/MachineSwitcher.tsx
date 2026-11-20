@@ -15,11 +15,11 @@ const GROUPS = [
   { title: 'Erica Synths', match: (device: DeviceProfile) => device.family === 'erica' },
 ]
 
-type MachineSwitcherProps = { current: DeviceProfile; all: boolean; counts: Record<string, number>; compact?: boolean; active?: boolean }
+type MachineSwitcherProps = { current: DeviceProfile; all: boolean; counts: Record<string, number>; summary?: string; compact?: boolean; active?: boolean }
 
 // The library's machine menu, at the start of its filter row (on phones, pinned before the category chips, picture only):
 // switching swaps the library, its counts and the build panel.
-export function MachineSwitcher({ current, all, counts, compact = false, active = false }: MachineSwitcherProps) {
+export function MachineSwitcher({ current, all, counts, summary, compact = false, active = false }: MachineSwitcherProps) {
   const total = Object.values(counts).reduce((sum, count) => sum + count, 0)
   const [open, setOpen] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -71,11 +71,12 @@ export function MachineSwitcher({ current, all, counts, compact = false, active 
   </div>
   return (
     <div className={compact ? 'library-machine-switcher' : 'machine-switcher'}>
-      <button ref={buttonRef} type="button" className={compact ? 'library-machine-button' + (active ? ' active' : '') : 'sidebar-device'} aria-label={compact ? (all ? 'All mods' : current.name) + ', choose machine' : undefined} aria-current={compact && active ? 'page' : undefined} aria-haspopup={compact ? 'dialog' : undefined} aria-expanded={open} aria-controls={open ? panelId : undefined} onClick={toggleMenu} onKeyDown={event => { if (!open && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) { event.preventDefault(); toggleMenu() } }}>
-        {all ? <AllMachinesArt /> : <DeviceImage device={current} eager />}
-        {!compact && <span><small>Machine</small><strong>{all ? 'All machines' : current.name}</strong></span>}
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+      <button ref={buttonRef} type="button" className={compact ? 'library-machine-button' + (active ? ' active' : '') : summary ? 'catalog-machine-trigger' : 'sidebar-device'} aria-label={compact || summary ? (all ? (compact ? 'All mods' : 'All machines') : current.name) + ', choose machine' + (summary ? ', ' + summary : '') : undefined} aria-current={compact && active ? 'page' : undefined} aria-haspopup={compact ? 'dialog' : undefined} aria-expanded={open} aria-controls={open ? panelId : undefined} onClick={toggleMenu} onKeyDown={event => { if (!open && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) { event.preventDefault(); toggleMenu() } }}>
+        {!summary && (all ? <AllMachinesArt /> : <DeviceImage device={current} eager />)}
+        {!compact && (summary ? <strong>{all ? 'All machines' : current.name}</strong> : <span><small>Machine</small><strong>{all ? 'All machines' : current.name}</strong></span>)}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
       </button>
+      {summary && <small className="catalog-machine-summary">{summary}</small>}
       {open && (compact ? createPortal(<><div className="sheet-scrim" aria-hidden="true" />{menu}</>, document.body) : menu)}
     </div>
   )

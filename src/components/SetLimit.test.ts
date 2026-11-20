@@ -46,6 +46,15 @@ describe('adding to a full Octatrack set', () => {
     expect(html).toContain('>Added<')
   })
 
+  it('offers a compact first action only when the set and the unit have no tiles', () => {
+    const grid = (unit: string[]) => renderToStaticMarkup(createElement(ModuleGrid, { ids: [], inventory: { moduleIds: unit, removedStockFx: [] }, describe: () => '', onRemove: none, onKeep: none }))
+    expect(grid([])).toContain('class="module-grid-empty"')
+    expect(grid([])).toContain('href="#library"')
+    const leaving = grid(['miniverb'])
+    expect(leaving).not.toContain('module-grid-empty')
+    expect(leaving).toContain('Keep Mini Verb')
+  })
+
   it('shows the set’s count over the limit in its tiles, and Keep and Add as unavailable when full', () => {
     const grid = (set: string[], unit: string[] = []) => renderToStaticMarkup(createElement(ModuleGrid, { ids: set, inventory: { moduleIds: unit, removedStockFx: [] }, describe: () => '', onRemove: none, onKeep: none }))
     expect(grid(ids.slice(0, over))).toContain(`This set has ${over} modules; ${SET_MODULE_LIMIT} is the limit for now. Remove 3 to sync.`)

@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 3,
+  "id": "arrakis",
+  "name": "Arrakis",
+  "version": "2.0.0",
+  "machine": "zoom-ms-70cdr",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "themanro",
+    "name": "Roman Rusinov",
+    "credits": [
+      "Roman Rusinov and the ZoomMultistompZDL contributors",
+      "Roman Rusinov and the MultiStomp Editor contributors, editor artwork",
+      "Leemuzhko, effect runtime",
+      "Jannik Aßfalg, ZoomMultistompZDL toolchain"
+    ]
+  },
+  "maintainers": [
+    "themanro",
+    "repeat98"
+  ],
+  "source": {
+    "repository": "https://github.com/themanro/ZoomMultistompZDL",
+    "revision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+    "path": "src/custom/arrakis"
+  },
+  "presentation": {
+    "label": "ARRAKIS",
+    "family": "Suboctave",
+    "summary": "A Dune-style detuned sub-octave drone: two subs beating against each other.",
+    "overview": "A Dune-style detuned sub-octave drone: two subs beating against each other.",
+    "highlights": [
+      "Play a sustained single note and listen for the beating suboctave layer."
+    ],
+    "usage": [
+      "Add Arrakis from the Delay group to a spare patch.",
+      "Play a sustained single note and listen for the beating suboctave layer.",
+      "Compare the effect with bypass using the footswitch."
+    ]
+  },
+  "access": {
+    "location": "Delay group in the MS-70CDR effect list, under Arrakis.",
+    "steps": [
+      "Add Arrakis from the Delay group to a spare patch.",
+      "Play a sustained single note and listen for the beating suboctave layer."
+    ],
+    "screenshots": [
+      "media/cover.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Detun",
+      "default": 63,
+      "doc": "params[5]. Beat spread between the two detuned voices. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Mix",
+      "default": 50,
+      "doc": "params[6]. Dry/wet. Default 45 (not ~0) so the effect is AUDIBLE the moment a patch loads — custom effects read params as 0 until a knob is touched, so this default is the on-load value. Range 0–100.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "2.10"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Hardware untested on the original MS-70CDR with OS 2.10.",
+      "This build has startup knob initialization disabled. Check saved settings after recalling a patch."
+    ]
+  },
+  "platform": {
+    "kind": "zdl",
+    "file": "Arrakis.ZDL",
+    "effectId": {
+      "gid": 8,
+      "fxid": 473
+    },
+    "effectVersion": "2.00",
+    "dspCost": 20.0,
+    "binary": {
+      "sha256": "5c7957d9d2970378439adcada6dc504dba07118597c70fb7370a13d257294a32",
+      "bytes": 5890,
+      "release": {
+        "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+        "tag": "arrakis-2.00",
+        "asset": "Arrakis.ZDL"
+      }
+    },
+    "screen": "static",
+    "pedals": [
+      {
+        "machine": "zoom-ms-70cdr",
+        "firmware": "2.10",
+        "status": "untested",
+        "report": null
+      }
+    ]
+  },
+  "resources": {
+    "memoryBytes": 5890,
+    "fastBytes": null,
+    "load": {
+      "display": "DSP 20 of 225 per patch",
+      "method": "static",
+      "conditions": "The effect descriptor declares this cost. Audio load on the pedal is unmeasured."
+    }
+  },
+  "evidence": {
+    "tier": "emulator",
+    "moduleVersion": "2.0.0",
+    "sourceSha256": "5c7957d9d2970378439adcada6dc504dba07118597c70fb7370a13d257294a32",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Ziddle passed the loader check and rendered 22,050 stereo frames. The compiled file passed the stock-code scan and MS-70CDR size limits. Hardware untested.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Add Arrakis from the Delay group to a spare patch.",
+          "Play a sustained single note and listen for the beating suboctave layer.",
+          "Compare the effect with bypass using the footswitch."
+        ]
+      },
+      "screenshots": [
+        "media/cover.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "MIT AND BSD-3-Clause",
+    "file": "LICENSE",
+    "declaration": "Effect source and artwork are MIT licensed. The runtime uses MIT and BSD-3-Clause components. See LICENSE for the applicable notices and credits."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.png",
+      "kind": "thumbnail",
+      "caption": "Arrakis in the MultiStomp Editor",
+      "alt": "Arrakis editor illustration",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "https://github.com/themanro/ZoomMultistompZDL/blob/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/graphics/fx/arrakis.webp"
+    },
+    {
+      "path": "media/cover.png",
+      "kind": "screenshot",
+      "caption": "Arrakis embedded cover",
+      "alt": "The monochrome effect cover for Arrakis",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling.",
+      "capture": {
+        "type": "emulator",
+        "release": "2.10",
+        "moduleVersion": "2.0.0",
+        "imageSha256": "5c7957d9d2970378439adcada6dc504dba07118597c70fb7370a13d257294a32",
+        "setup": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+      }
+    }
+  ]
+}

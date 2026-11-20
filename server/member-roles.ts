@@ -39,7 +39,7 @@ export async function adminRoleRoutes(request: Request, db: Database, path: stri
   const match = path.match(/^\/api\/admin\/forum\/roles\/([a-z0-9_]{3,24})$/)
   if (!match || request.method !== 'PUT') return null
   const body = await jsonBody(request), reason = required(body.reason, 'Reason', 1000)
-  if (!isMemberRole(body.role) || body.role === 'owner') throw new HttpError(400, 'Choose Member or Developer.')
+  if (!isMemberRole(body.role) || body.role === 'owner') throw new HttpError(400, 'Choose Member or Modder.')
   const member = await db.prepare('SELECT id,role FROM users WHERE username=? AND suspended=0').bind(match[1]).first<{ id: string; role: string }>()
   if (!member) throw new HttpError(404, 'Member not found.')
   if (member.role === 'owner') throw new HttpError(409, 'The owner role cannot be changed here.')

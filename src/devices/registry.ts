@@ -95,6 +95,12 @@ export const DEVICES: DeviceProfile[] = (MACHINES as MachineProfile[]).map(machi
 
 export const DEVICES_BY_ID: Record<string, DeviceProfile> = Object.fromEntries(DEVICES.map(device => [device.id, device]))
 
+// The build generates standalone pages for the library's Elekloader modules.
+const deviceModulePages = new Set((MACHINES as MachineProfile[])
+  .filter(machine => machine.sdk?.platform === 'elemod' && (machine.status === 'available' || machine.status === 'preview'))
+  .map(machine => machine.id))
+export const hasDeviceModulePages = (id: string) => deviceModulePages.has(id)
+
 export const STATUS_LABELS: Record<DeviceStatus, string> = {
   available: 'Mods available',
   preview: 'Mods in preview',
@@ -110,7 +116,7 @@ export function stepsDone(device: DeviceProfile) {
   return deviceSteps(device).filter(step => device.steps[step.id] === 'done').length
 }
 
-const DEVICE_KEY = 'modwerk.device'
+const DEVICE_KEY = 'modwerk.device', MACHINE_KEY = 'modwerk.machine'
 
 // 'all' is the All machines library; anything else is a machine id.
 export const ALL_MACHINES = 'all'
@@ -119,8 +125,19 @@ export function rememberedDevice() {
   try { const id = localStorage.getItem(DEVICE_KEY); return id && (id === ALL_MACHINES || DEVICES_BY_ID[id]) ? id : undefined } catch { return undefined }
 }
 
+/** The last machine whose pages were open. All machines and the overview do not replace it, so they can still show it. */
+export function lastMachine() {
+  try {
+    const id = localStorage.getItem(MACHINE_KEY) ?? localStorage.getItem(DEVICE_KEY)
+    return id && DEVICES_BY_ID[id] ? id : undefined
+  } catch { return undefined }
+}
+
 export function rememberDevice(id: string) {
-  try { localStorage.setItem(DEVICE_KEY, id) } catch { /* the choice is a convenience only */ }
+  try {
+    localStorage.setItem(DEVICE_KEY, id)
+    if (DEVICES_BY_ID[id]) localStorage.setItem(MACHINE_KEY, id)
+  } catch { /* the choice is a convenience only */ }
 }
 
 // Library and configuration views keep hash routes; Digitakt/Digitone module pages have public paths.
@@ -140,6 +157,6 @@ export function parseDeviceRoute(route: string): DeviceRoute | undefined {
 export function deviceHref(id: string, path = '') {
   if (id === 'octatrack') return '#' + (path || 'library')
   if (id === ALL_MACHINES) return '#all'
-  if ((id === 'digitakt' || id === 'digitone') && /^module\/[a-z0-9-]+$/.test(path)) return assetUrl(`${id}/${path}/`)
+  if (hasDeviceModulePages(id) && /^module\/[a-z0-9-]+$/.test(path)) return assetUrl(`${id}/${path}/`)
   return '#' + id + (path ? '/' + path : '')
 }

@@ -16,9 +16,9 @@ const noop = () => {}
 // The all-machines library is the machine library without a device; a Digi library is the same view with that machine's selection.
 const AllMachinesLibrary = MachineLibrary
 type DigiDevice = NonNullable<Parameters<typeof MachineLibrary>[0]['device']> & { id: DigiMod['device'] }
-type DigiProps = { device: DigiDevice; selectedIds: string[]; onToggle: (id: string) => void } & Omit<Parameters<typeof MachineLibrary>[0], 'device' | 'octatrackModules' | 'octatrackSelected' | 'onToggleOctatrack' | 'digiSelected' | 'onToggleDigi' | 'octatrackConflicts' | 'viewedModuleVersions' | 'moduleBaseline'>
+type DigiProps = { device: DigiDevice; selectedIds: string[]; onToggle: (id: string) => void } & Omit<Parameters<typeof MachineLibrary>[0], 'device' | 'octatrackModules' | 'octatrackSelected' | 'onToggleOctatrack' | 'digiSelected' | 'onToggleDigi' | 'viewedModuleVersions' | 'moduleBaseline'>
 function DigiLibrary({ device, selectedIds, onToggle, ...rest }: DigiProps) {
-  return createElement(MachineLibrary, { ...rest, device, octatrackModules: [], octatrackSelected: [], onToggleOctatrack: noop, digiSelected: { digitakt: device.id === 'digitakt' ? selectedIds : [], 'digitakt-ii': device.id === 'digitakt-ii' ? selectedIds : [], digitone: device.id === 'digitone' ? selectedIds : [], 'analog-rytm-mkii': device.id === 'analog-rytm-mkii' ? selectedIds : [] }, onToggleDigi: (_: string, id: string) => onToggle(id), octatrackConflicts: [], viewedModuleVersions: {}, moduleBaseline: null })
+  return createElement(MachineLibrary, { ...rest, device, octatrackModules: [], octatrackSelected: [], onToggleOctatrack: noop, digiSelected: { digitakt: device.id === 'digitakt' ? selectedIds : [], 'digitakt-ii': device.id === 'digitakt-ii' ? selectedIds : [], digitone: device.id === 'digitone' ? selectedIds : [], 'analog-rytm-mkii': device.id === 'analog-rytm-mkii' ? selectedIds : [] }, onToggleDigi: (_: string, id: string) => onToggle(id), viewedModuleVersions: {}, moduleBaseline: null })
 }
 // Likes and downloads show the number beside an icon; the word is there for screen readers only.
 const count = (value: string, word: string) => value + '<span class="sr-only"> ' + word + '</span>'
@@ -27,14 +27,17 @@ const props = {
   onToggleOctatrack: noop, digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [] }, onToggleDigi: noop,
   family: 'all', onFamilyChange: noop, sort: 'collection', onSortChange: noop,
   statistics: [{module_id: 'miniverb', average: 4.5, count: 2, likes: 7, downloads: 12, worksReports: 5, downloadsStarted: null}],
-  octatrackConflicts: [], comparison: ['miniverb'], onCompare: noop, onOpenComparison: noop,
+  comparison: ['miniverb'], onCompare: noop, onOpenComparison: noop,
   viewedModuleVersions: {}, moduleBaseline: AVAILABLE_MODULES.map(module=>module.id),
 }
 
 describe('machine switching layout', () => {
   it.each(['octatrack', 'digitakt', 'digitone', 'syntakt'])('keeps the search tools and build action in the %s library without the local-build banner', id => {
     const html = renderToStaticMarkup(createElement(MachineLibrary, {...props, device: DEVICES_BY_ID[id]}))
-    expect(html.indexOf('class="discovery-tools"')).toBeLessThan(html.indexOf('class="library-subheading"'))
+    const results = html.indexOf(id === 'syntakt' ? 'class="device-page"' : 'class="module-grid"')
+    expect(html).toContain('class="discovery-tools"')
+    expect(html.indexOf('class="discovery-tools"')).toBeLessThan(results)
+    expect(html).not.toContain('Explore the collection')
     expect(html).toMatch(/<h1[^>]*>Module library<\/h1>/)
     expect(html).toContain('Collection order')
     expect(html).toContain('Build firmware</a>')
@@ -118,8 +121,8 @@ describe('All machines library parity', () => {
       octatrackModules: [], family: 'Sampling', sort: 'name',
     }))
     expect(html).toContain('DIGISLICER')
-    expect(html).toContain('NEIGHBOR')
-    expect(html.indexOf('View DIGISLICER')).toBeLessThan(html.indexOf('View NEIGHBOR'))
+    expect(html).toContain('RAM Record and Playback')
+    expect(html.indexOf('View DIGISLICER')).toBeLessThan(html.indexOf('View RAM Record and Playback'))
     expect(html).not.toContain('View SOPHIE')
     expect(html).not.toContain('View digihealth')
   })
@@ -214,11 +217,11 @@ describe('Digi library parity', () => {
 
   it('filters type together with search and sorts the Digi library by name', () => {
     const html = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Sampling', sort: 'name'}))
-    expect(html.indexOf('View DIGISLICER')).toBeLessThan(html.indexOf('View NEIGHBOR'))
+    expect(html.indexOf('View DIGISLICER')).toBeLessThan(html.indexOf('View RAM Record and Playback'))
     expect(html).not.toContain('View SOPHIE')
     expect(html).not.toContain('View digihealth')
-    const search = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Sampling', query: 'neighbor'}))
-    expect(search).toContain('View NEIGHBOR')
+    const search = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Sampling', query: 'ram record'}))
+    expect(search).toContain('View RAM Record and Playback')
     expect(search).not.toContain('View DIGISLICER')
     const switched = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Octatrack-only type'}))
     expect(switched).toContain('View SOPHIE')

@@ -63,17 +63,19 @@ const context={machine:'digitakt',model:'mk1',flash:'not-flashed',os:'1.53',modu
 
 describe('machine-aware community',()=>{
   it('keeps same-named modules on separate machines and validates immutable snapshots',async()=>{
-    const {call,member}=await fixture(),reporter=await member()
+    const {call,member}=await fixture()
     expect(COMMUNITY_MODULES.filter(module=>module.moduleId==='digihealth').map(module=>module.id)).toEqual(['digitakt-digihealth','digitone-digihealth'])
-    for(const device of ['digitakt','digitone']){
-      const configuration={name:'Shared '+device,device,moduleIds:['digihealth'],moduleVersions:{digihealth:'1.0.1-experimental'},keepStockFx2:true}
-      const result=await call('/forum/threads','POST',{title:configuration.name,body:'Settings to try.',category:'configs',machine:device,moduleId:device+'-digihealth',configuration},reporter.token)
+    for(const [device,id] of [['digitakt','digihealth'],['digitone','digihealth'],['digitakt-ii','track-names'],['analog-rytm-mkii','chorus'],['zoom-ms-70cdr','loop']]){
+      const reporter=await member(device.replaceAll('-','_'))
+      const moduleId=device+'-'+id
+      const configuration={name:'Shared '+device,device,moduleIds:[id],moduleVersions:{[id]:'1.0.1-experimental'},keepStockFx2:true}
+      const result=await call('/forum/threads','POST',{title:configuration.name,body:'Settings to try.',category:'configs',machine:device,moduleId,configuration},reporter.token)
       expect(await result.clone().json()).not.toHaveProperty('error');expect(result.status).toBe(201)
-      const {id}=await result.json(),snapshot=(await(await call('/forum/threads/'+id)).json()).configuration
+      const {id:threadId}=await result.json(),snapshot=(await(await call('/forum/threads/'+threadId)).json()).configuration
       expect(snapshot).toEqual(configuration)
       const local=newConfiguration(snapshot.name,snapshot.moduleIds,snapshot.keepStockFx2,snapshot.moduleVersions,snapshot.device)
-      expect(configurationDevice(local)).toBe(device);expect(local.moduleIds).toEqual(['digihealth'])
-      expect((await(await call('/forum/threads?machine='+device+'&module='+device+'-digihealth')).json()).threads.filter((item:{official:number})=>!item.official)).toHaveLength(1)
+      expect(configurationDevice(local)).toBe(device);expect(local.moduleIds).toEqual([id])
+      expect((await(await call('/forum/threads?machine='+device+'&module='+moduleId)).json()).threads.filter((item:{official:number})=>!item.official)).toHaveLength(1)
       expect((await call('/forum/threads','POST',{title:'Wrong machine',body:'Text',category:'modules',machine:device,moduleId:'miniverb'},reporter.token)).status).toBe(400)
       expect((await call('/forum/threads','POST',{title:'Wrong snapshot',body:'Text',category:'configs',machine:device==='digitakt'?'digitone':'digitakt',configuration},reporter.token)).status).toBe(400)
     }

@@ -6,7 +6,7 @@ import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
 import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, StaleLoadError, inUseHint, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
-import { UsbVendorTransport, parseBaseSlots } from './upload-usb'
+import { UsbVendorTransport, VendorTransportError, parseBaseSlots } from './upload-usb'
 
 const settle = () => new Promise(resolve => setTimeout(resolve, 0))
 const deferred = () => { let resolve!: () => void; const promise = new Promise<void>(done => { resolve = done }); return { promise, resolve } }
@@ -240,7 +240,9 @@ describe('sending a module', () => {
     expect(failures).toEqual([{ error: 'device', step: 'stage', refusal: 7 }])
   })
   it('reports what stopped a sync whose transfer was never confirmed, with the base’s EP0 counters over it', async () => {
-    const causes = [new DOMException('private text', 'NetworkError'), Object.assign(new Error('private text'), { name: 'TimeoutError' }), undefined], failures: unknown[] = []
+    const networkError = new DOMException('private text', 'NetworkError')
+    const causes = [networkError, Object.assign(new Error('private text'), { name: 'TimeoutError' }), undefined,
+      new VendorTransportError('unconfirmed OUT', false, networkError), new VendorTransportError('device refusal')], failures: unknown[] = []
     for (const [i, cause] of causes.entries()) {
       const unit = fakeUnit(), base = fakeSession(unit)
       if (i) unit.ep0 = [10, 0xfffffffe, 2, 50, 50, 0] // the first base stalls DIAG
@@ -264,8 +266,110 @@ describe('sending a module', () => {
       await link.update('PREVIEW VOL', one)
     }
     expect(failures).toEqual([{ error: 'transport', kind: 'NetworkError' },
-      ...['TimeoutError', 'OtherError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0] }))])
+      ...['TimeoutError', 'OtherError', 'NetworkError', 'VendorTransportError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0] }))])
   })
+  it.each(['cancel', 'timeout'] as const)('closes a pending diagnostic read before continuing from %s', async outcome => {
+    const unit = fakeUnit(), [device] = await unit.usb.getDevices()
+    const connect = vi.fn(fakeSession(unit)), link = new OctatrackLink(unit.usb, connect, 300)
+    const failures: unknown[] = []
+    link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') failures.push(event) })
+    await link.connect()
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    const close = vi.spyOn(device, 'close'), open = vi.spyOn(device, 'open'), claim = vi.spyOn(device, 'claimInterface')
+    const read = device.controlTransferIn.bind(device), pending = deferred()
+    vi.spyOn(device, 'controlTransferIn').mockImplementation((setup, length) => {
+      if (setup.request !== 4) return read(setup, length)
+      pending.resolve()
+      return new Promise<never>(() => {})
+    })
+
+    const update = link.update('PREVIEW VOL', one)
+    await pending.promise
+    if (outcome === 'cancel') link.cancel()
+    await vi.advanceTimersByTimeAsync(outcome === 'cancel' ? 0 : 1000)
+    expect(close).toHaveBeenCalledTimes(1)
+    expect(open).toHaveBeenCalledTimes(1)
+    expect(claim).toHaveBeenCalledTimes(2)
+    expect(close.mock.invocationCallOrder[0]).toBeLessThan(open.mock.invocationCallOrder[0])
+    await vi.runAllTimersAsync()
+    await update
+
+    if (outcome === 'cancel') {
+      expect(connect).toHaveBeenCalledTimes(1)
+      expect(link.getState()).toMatchObject({ status: 'ready', active: FAKE_BASE,
+        notice: { text: 'Cancelled. Nothing changed on the Octatrack.' } })
+      expect(failures).toMatchObject([{ error: 'cancelled' }])
+    } else {
+      expect(connect).toHaveBeenCalledTimes(2)
+      expect(connect.mock.calls[1][0]).not.toBe(connect.mock.calls[0][0])
+      expect(claim.mock.invocationCallOrder[1]).toBeLessThan(connect.mock.invocationCallOrder[1])
+      expect(link.getState().status).toBe('trial')
+      expect(failures).toEqual([])
+      const undo = link.undo()
+      await vi.runAllTimersAsync()
+      await undo
+    }
+  })
+
+  it.each(['reopened', 'reopen failed'] as const)('settles a lost upload reply when the diagnostic read hangs and USB %s', async outcome => {
+    const unit = fakeUnit(), [device] = await unit.usb.getDevices()
+    unit.ep0 = [10, 0, 0, 10, 10, 0]
+    const base = fakeSession(unit)
+    let connections = 0
+    const connect = vi.fn<typeof base>(async (...args) => {
+      const session = await base(...args)
+      if (++connections !== 2) return session
+      return Object.create(session, {
+        connectionTrusted: { get: () => false },
+        stage: { value: async () => {
+          unit.staged = true
+          throw new UploadUnconfirmedError('chunk was not confirmed', session.status, new DOMException('fixture', 'NetworkError'))
+        } },
+      })
+    })
+    const link = new OctatrackLink(unit.usb, connect, 300), failures: unknown[] = []
+    link.subscribeDiagnostics(event => {
+      if (event.event === 'sync_failed') failures.push({ step: event.step, error: event.error, kind: event.kind, usb: event.usb })
+    })
+    await link.connect()
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    const close = vi.spyOn(device, 'close'), open = vi.spyOn(device, 'open')
+    if (outcome === 'reopen failed') open.mockRejectedValueOnce(new DOMException('fixture', 'NetworkError'))
+    const read = device.controlTransferIn.bind(device), pending = deferred()
+    let reads = 0
+    vi.spyOn(device, 'controlTransferIn').mockImplementation((setup, length) => {
+      if (setup.request !== 4 || ++reads === 1) return read(setup, length)
+      pending.resolve()
+      return new Promise<never>(() => {})
+    })
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    try {
+      const update = link.update('PREVIEW VOL', one)
+      await vi.advanceTimersByTimeAsync(0)
+      await pending.promise
+      expect(unit.staged).toBe(true)
+      await vi.advanceTimersByTimeAsync(1000)
+      expect(close).toHaveBeenCalledTimes(1)
+      expect(open).toHaveBeenCalledTimes(1)
+      await vi.runAllTimersAsync()
+      await update
+
+      expect(failures).toEqual([{ step: 'stage', error: 'transport', kind: 'NetworkError', usb: undefined }])
+      if (outcome === 'reopened') {
+        expect(connect).toHaveBeenCalledTimes(3)
+        expect(connect.mock.calls[2][0]).not.toBe(connect.mock.calls[1][0])
+        expect(unit.staged).toBe(false)
+        expect(link.getState()).toMatchObject({ status: 'ready', active: FAKE_BASE,
+          notice: { text: 'The Octatrack missed a reply, so nothing changed. Try again.' } })
+      } else {
+        expect(connect).toHaveBeenCalledTimes(2)
+        expect(unit.staged).toBe(true)
+        expect(link.getState()).toMatchObject({ status: 'idle', notice: { text: expect.stringContaining('Unplug the USB cable') } })
+      }
+    } finally { log.mockRestore() }
+  })
+
   it('says why the Octatrack rejected a module, from the base’s record', async () => {
     const { unit, link } = await linked()
     unit.refusal = 7 // a track plays the effect it would replace
