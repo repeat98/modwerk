@@ -418,7 +418,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     board_post: async args => {
       const token = await boardWrite('Posting on the board')
       const result = await board.post({ kind: args.kind, topic: args.topic, key: args.key, body: args.text, ...(args.to ? { to: args.to } : {}), ...(args.pullRequest ? { pullRequest: args.pullRequest } : {}), ...(args.priority ? { priority: args.priority } : {}), parentIssue: args.parentIssue, parentClaim: args.parentClaim }, { ...boardOptions(), token })
-      return { message: threadView(result.message), ...(result.recipientInactive ? { recipientInactive: true, advice: 'No recent board activity from the recipient. Consider the relevant GitHub thread.' } : {}) }
+      return { message: threadView(result.message), ...(result.recipientInactive ? { recipientInactive: true, advice: 'No recent board activity from the recipient, so ask on GitHub now. board_inbox has the draft under followups.' } : {}) }
     },
     board_reply: async args => ({ message: threadView((await board.messageAction(args.id, 'reply', { body: args.text, outcome: args.outcome, evidence: args.evidence }, { ...boardOptions(), token: await boardWrite('Replying on the board') })).message) }),
     board_take: async args => ({ message: threadView((await board.messageAction(args.id, 'take', { pullRequest: args.pullRequest }, { ...boardOptions(), token: await boardWrite('Taking a wanted task') })).message) }),
