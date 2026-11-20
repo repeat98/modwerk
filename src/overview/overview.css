@@ -24,7 +24,7 @@
 /* Machine cards: a dark panel rather than a grey box. A faint top-lit surface, a hairline edge that barely separates
    it from the page and a thin highlight along the top. Every card is the same size; on hover the panel brightens one
    step and nothing moves. */
-.machine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); grid-auto-rows: 1fr; gap: 18px; }
+.machine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 18px; }
 .overview-tile { display: flex; flex-direction: column; min-width: 0; border: 1px solid #ffffff0d; border-radius: 14px; background: linear-gradient(180deg, #ffffff09, #ffffff02 60%); box-shadow: inset 0 1px 0 #ffffff0d, 0 10px 24px -14px #00000080; color: inherit; transition: background .2s, border-color .2s; }
 .overview-tile:hover { border-color: #ffffff1a; background: linear-gradient(180deg, #ffffff0f, #ffffff04 60%); }
 .overview-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
@@ -65,8 +65,9 @@
 }
 .overview-tile-body { display: flex; flex-direction: column; flex: 1; gap: 11px; padding: 6px 20px 20px; }
 .overview-tile-line { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
-.overview-tile-name { display: flex; align-items: baseline; gap: 7px; min-width: 0; overflow: hidden; white-space: nowrap; font-size: 17px; font-weight: 600; letter-spacing: -.25px; }
-.overview-tile-name small { overflow: hidden; text-overflow: ellipsis; color: var(--muted); font-size: 12.5px; font-weight: 400; letter-spacing: 0; }
+.overview-tile-line:has(.overview-state) { flex-direction: column; gap: 5px; }
+.overview-tile-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 7px; min-width: 0; font-size: 17px; font-weight: 600; letter-spacing: -.25px; }
+.overview-tile-name small { color: var(--muted); font-size: 12.5px; font-weight: 400; letter-spacing: 0; }
 .overview-state { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; color: var(--text-secondary); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .overview-state::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--done); }
 .overview-tile.is-preview .overview-state::before { background: var(--apricot); }

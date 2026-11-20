@@ -80,6 +80,7 @@ export function FaqPage({ previewGuide = false, open, machine: device }: { previ
         <button type="button" key={item.id} aria-pressed={item.id === machine} onClick={() => { setMachine(item.id); setCurrent(undefined) }}>{item.label}</button>)}
       </div>
     </div>
+    <label className="faq-search"><Icon name="search" size={17} /><input type="search" aria-label="Search the FAQ" placeholder={machine === 'octatrack' ? 'Search: sync, card, recovery, Windows…' : 'Search: .syx, Transfer, recovery…'} value={query} onChange={event => setQuery(event.target.value)} /></label>
     {!searching && <section className="faq-quick" aria-labelledby="faq-quick-title">
       <header><h2 id="faq-quick-title">{quick.title}</h2>
         <div className="faq-quick-actions">{quick.actions.map((action, index) => <a key={action.href} className={'button ' + (index ? 'button-quiet' : 'button-primary')} href={action.href}>{action.label} <Icon name="arrow" size={15} /></a>)}</div>
@@ -87,7 +88,6 @@ export function FaqPage({ previewGuide = false, open, machine: device }: { previ
       <ol>{quick.steps.map(step => <li key={step.title}><strong>{step.title}</strong><span>{step.text}</span></li>)}</ol>
       <p className="faq-quick-caution"><Icon name="warn" size={16} /><span>{quick.caution} <a href={'#faq/' + quick.more}>All steps</a></span></p>
     </section>}
-    <label className="faq-search"><Icon name="search" size={17} /><input type="search" aria-label="Search the FAQ" placeholder={machine === 'octatrack' ? 'Search: sync, card, recovery, Windows…' : 'Search: .syx, Transfer, recovery…'} value={query} onChange={event => setQuery(event.target.value)} /></label>
     {searching && <p className="faq-results" role="status">{count} {count === 1 ? 'answer' : 'answers'} for the {FAQ_MACHINES.find(item => item.id === machine)!.name}
       {elsewhere.map(item => <button type="button" className="text-button" key={item.id} onClick={() => setMachine(item.id)}>{item.count} more for {item.label}</button>)}</p>}
     {count > 0 && <div className="faq-body">
