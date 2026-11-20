@@ -45,7 +45,7 @@ identity `dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921`. No 
   Tuner leaves the quantizer's seven sites in place.
 - Beside FM Synth 0.1.4 as released: the loader admits both (no refusal), and the quantizer's
   sites stay in place. FM Synth 0.1.4 still declares a conflict with `quantizer`, so the
-  configurator does not offer this pair; it is not a supported set and was not played.
+  configurator flags this pair as a conflict; it is not a supported set and was not played.
 - BlackPyramids has no released package on main, so the pair was not tested. Keep FOLLOW OFF on
   its tracks until it is.
 - Self-test snapshots stay in progress (0 of 2 done, none failed), as before.
