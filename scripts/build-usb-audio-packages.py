@@ -19,7 +19,6 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'sdk/octabam/modules/usb-audio-out-tracks-main-cue/layouts'
 OUTPUT = ROOT / 'src/engine/assets/usb-audio-packages.json'
 REVISION = '7b2984c859732ae6c797ae49c7d61d250b1b6519'
-VERSION = '0.2.0-experimental'
 LAYOUTS = [('tracks-main-cue', 0, 'TRACKS MAIN CUE', 20), ('tracks', 1, 'TRACKS', 16),
            ('tracks-post', 5, 'TRACKS POST', 16), ('main-cue', 3, 'MAIN CUE', 4),
            ('main', 4, 'MAIN', 2), ('master', 2, 'MASTER', 2)]
@@ -113,7 +112,8 @@ def build():
     midi['detours'] = [row for row in midi['detours'] if row['address'] != 0x4001e606]
     hooks = {key: audio[key] + midi[key] for key in audio}
     assert len(hooks['detours']) == 14 and len(hooks['refs']) == 4 and len(hooks['pokes']) == 1
-    return dict(schema=1, version=VERSION, revision=json.loads((ROOT / 'sdk/catalog.json').read_text())['sourceRevision'], upstreamRevision=REVISION, sources=sources, common=common, layouts=layouts, hooks=hooks)
+    version = json.loads((SOURCE.parent / 'octamod.module.json').read_text())['version']
+    return dict(schema=1, version=version, revision=json.loads((ROOT / 'sdk/catalog.json').read_text())['sourceRevision'], upstreamRevision=REVISION, sources=sources, common=common, layouts=layouts, hooks=hooks)
 
 
 if __name__ == '__main__':
