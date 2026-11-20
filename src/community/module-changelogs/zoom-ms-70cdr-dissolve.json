@@ -1,0 +1,9 @@
+[
+  {
+    "version": "2.0.0",
+    "date": "2026-11-20",
+    "changes": [
+      "A glitch delay after the OBNE Parting: chunks of what you play are dropped, smeared into a wash, reversed or dropped an octave."
+    ]
+  }
+]
