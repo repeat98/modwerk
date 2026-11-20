@@ -140,7 +140,7 @@ Keep one uploader owner throughout a retained trial. A second
 first transport retains its cached counter. That can make its next ENTER reuse
 the second client's sequence and receive a stale HELLO result. Shared observers
 may read identity, inventory and load or drive panel requests; do not SUBMIT
-another upload frame while the first client retains ownership.
+another upload frame while the first client retains ownership. Close paired Modwerk browser tabs before a native USB Audio trial. When the unit reconnects with new audio interfaces, a paired tab can claim the vendor interface and run its unfinished-sync recovery.
 
 After an unplug, a crash restart or a RAM boot, the bridge can hold a dead handle; `pkill -f usb_bridge;
 pkill -f '^node scripts/device.mjs serve'` and the loop starts both again. Anchor the pattern: without `^` it also
@@ -297,7 +297,8 @@ not isolated: verify each held-row transition and stock modifier release, and st
 - **Modwerk's pages.** PROJ's fifth category, MODWERK (from S55, 12 October 2026), lists STATUS (the status dialog,
   also CUE+PROJ from anywhere), MODULE COST, MISSING, SELF TEST and, on a base with it, MODULES (every installed
   module, ON or OFF: UP and DOWN move, YES switches the one under the cursor at once, stopped, and the last line says
-  why when it can't); NO closes each. The list keeps its cursor from
+  why when it can't); NO closes each. On a development base with SETTINGS, open it, then choose a module such as USB AUDIO.
+  UP and DOWN highlight its options, YES applies the highlighted one, and NO returns to the module list. The PROJ menu keeps its cursor from
   last time, like stock's, so go UP to its top before counting rows down. On older bases these were SYSTEM >
   MODWERK and MODWERK TEST.
 

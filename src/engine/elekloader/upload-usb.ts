@@ -34,6 +34,7 @@ export function parseRuntimeCapabilities(view: DataView): RuntimeCapabilities {
 }
 export const VENDOR_SLOTS = 39 // the base's two-slot layout (sdk/machines/octatrack/elekloader/flash.h); older bases stall it
 export const VENDOR_USB_FUNCTION = 41
+const VENDOR_SETTING_PRESETS = 42
 export const VENDOR_OFF = 40 // the modules switched off on the unit (elekloader/modset.c's shelf); older bases stall it
 export const OFF_PAGE = 5 // entries an OFF reply holds; wValue is the first (elekloader/status.h)
 export const OFF_BYTES = 8 + 56 * OFF_PAGE
@@ -214,6 +215,24 @@ export class UsbVendorTransport implements UploadTransport {
     if (reply.status === 'stall') return undefined
     if (reply.status !== 'ok' || !reply.data) throw new VendorTransportError('The Octatrack did not answer the loader capabilities request.')
     return parseRuntimeCapabilities(reply.data)
+  }
+  /** Initial settings installed with active packages, from the last completed owner epoch. */
+  async settingPresets(signal?: AbortSignal): Promise<Map<number, number> | undefined> {
+    signal?.throwIfAborted()
+    const reply = await this.device.controlTransferIn(this.setup(VENDOR_SETTING_PRESETS, 0), 68)
+    signal?.throwIfAborted()
+    if (reply.status === 'stall') return undefined
+    const data = reply.data
+    if (reply.status !== 'ok' || !data || data.byteLength < 4 || data.getUint32(0) >>> 8 !== 0x4d5750 ||
+        data.getUint8(3) > 8 || data.byteLength !== 4 + 8 * data.getUint8(3))
+      throw new VendorTransportError('The Octatrack did not confirm its installed setting presets.')
+    const presets = new Map<number, number>()
+    for (let i = 4; i < data.byteLength; i += 8) {
+      const key = data.getUint32(i)
+      if (!key || presets.has(key)) throw new VendorTransportError('The Octatrack reported a duplicate or empty setting key.')
+      presets.set(key, data.getUint32(i + 4))
+    }
+    return presets
   }
   /** The runtime USB function is being added, is live, or has reconnected in this boot. */
   async hasUsbFunctionChanges(): Promise<boolean> {
