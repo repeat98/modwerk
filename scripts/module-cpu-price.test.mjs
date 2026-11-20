@@ -158,13 +158,22 @@ describe('a module costs nothing while nobody uses it (owner, 20 November 2026)'
     expect(atRestStatus({ root: fixture({}), document: hook('slot', '1.0.0', share(7.7), 31), glue: {} }).state).toBe('info')
   })
 
-  it('passes a module that answers ev_in_use, and a machine, which the base rests', () => {
+  it('passes a module that answers ev_in_use, and a machine or an effect whose detours rest with it, which the base rests', () => {
+    const wave = machineFolder('\n    .reserved = {7},')
     const root = fixture({
       'sdk/octatrack/modules/rests/runtime.json': { schema: 1, subscribe: [{ event: 'ev_in_use', fn: 'in_use', order: 50 }] },
-      ...changelog('rests', '0.2.0', AT_REST_FROM), ...machineFolder('\n    .reserved = {7},'),
+      ...changelog('rests', '0.2.0', AT_REST_FROM), ...wave,
+      'sdk/octatrack/modules/wave/runtime.json': { schema: 1, contribute: [{ to: 'ot_machines', order: 50, data: 'wave' }], rests: ['0x40007978'] },
+      'sdk/octatrack/modules/echo/runtime.json': { schema: 1, rests: ['0x4000361a'] }, ...changelog('echo', '1.1.0', AT_REST_FROM),
+      ...changelog('loud', '1.1.0', AT_REST_FROM),
     })
     expect(atRestStatus({ root, document: hook('rests', '0.2.0', share(1.4)), glue: {} })).toMatchObject({ state: 'ok', detail: expect.stringContaining('ev_in_use') })
     expect(atRestStatus({ root, document: { ...module('wave', 'Track machine', render(7)), version: '0.1.0' }, glue: {} })).toMatchObject({ state: 'ok', detail: expect.stringContaining('machine') })
+    expect(atRestStatus({ root, document: hook('echo', '1.1.0', share(1.4), 15), glue: {} })).toMatchObject({ state: 'ok', detail: expect.stringContaining('effect') })
+    /* An effect over the limit with no detour marked: its handlers rest, its detours do not, so it still fails, told to mark them. */
+    const loud = atRestStatus({ root: fixture({ ...reading('loud', 2.5, 7.2), ...changelog('loud', '1.1.0', AT_REST_FROM) }), document: hook('loud', '1.1.0', { ...share(7.2), source: 'evidence/cpu-price.json' }, 29), glue: {} })
+    expect(loud).toMatchObject({ state: 'fail' })
+    expect(loud.fix).toContain('the base rests an effect no slot uses')
   })
 
   it('holds on main: no published release fails, whatever it costs at rest', () => {
