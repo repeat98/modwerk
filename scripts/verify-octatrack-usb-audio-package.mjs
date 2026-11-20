@@ -7,7 +7,7 @@
 //
 // On a base with USB MIDI alone: a trial of the package makes the base reconnect; the host then reads a configuration
 // with AudioControl and AudioStreaming behind the base's own interfaces, the clock source answers its sample rate,
-// alternate setting 1 opens the stream and EP3 IN sends packets of whole 20-channel frames at the high-speed rate;
+// alternate setting 1 opens the stream and EP3 IN sends packets of whole frames of the layout at the high-speed rate;
 // alternate setting 0 closes it; a rollback takes the function out again and the configuration is the first one.
 // Emulator evidence of the package's and the base's code only: no host driver, no audio content check, no hardware.
 import assert from 'node:assert/strict'
@@ -18,9 +18,9 @@ import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloade
 import { diagnostics } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { Bench, device } from './usb-bench.mjs'
 
-const [socket, file] = process.argv.slice(2)
-if (!socket || !file) throw new Error('Usage: verify-octatrack-usb-audio-package.mjs BENCH-SOCKET usb-audio.mwrm')
-const AC = 4, AS = 5, CLOCK = 0x10, FRAME_BYTES = 80 // 8 tracks, MAIN and CUE, stereo, 4 bytes a sample
+const [socket, file, frame = '80'] = process.argv.slice(2)
+if (!socket || !file || ![8, 16, 64, 80].includes(Number(frame))) throw new Error('Usage: verify-octatrack-usb-audio-package.mjs BENCH-SOCKET usb-audio.mwrm [FRAME-BYTES: 80 (default, 20 channels), 64 TRACKS, 16 MAIN CUE, 8 MASTER or MAIN]')
+const AC = 4, AS = 5, CLOCK = 0x10, FRAME_BYTES = Number(frame) // a frame: 4 bytes a sample for each channel of the layout
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 const bench = new Bench(socket)
 await bench.ready()
@@ -121,5 +121,5 @@ assert.equal(now.count, 4)
 assert.equal(now.cfg.toString('hex'), first.cfg.toString('hex'))
 assert.equal(await bench.controlIn(0xa1, 1, 0x0100, CLOCK << 8 | AC, 4), null, 'no clock source without the module')
 await session.leaveUploadMode()
-console.log('USB Audio as a package in the emulator: it enumerates behind the base’s interfaces, answers its clock, streams 20-channel packets at high speed, closes, and a rollback takes it out.')
+console.log('USB Audio as a package in the emulator: it enumerates behind the base’s interfaces, answers its clock, streams packets of whole frames at high speed, closes, and a rollback takes it out.')
 process.exit(0)

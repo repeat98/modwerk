@@ -51,7 +51,7 @@ class UsbAudioPackage(unittest.TestCase):
         self.assertEqual(text.count('moveal  mwua_dtds,'), 3)
         self.assertIn('.set UAC2_AC_IFACE,  4 ', text)
         with self.assertRaisesRegex(ValueError, 'Not built as a package yet'):
-            builder.build('USB AUDIO OUT MASTER')
+            builder.build('USB AUDIO OUT TRACKS POST')
 
     def test_the_package_subscribes_to_the_four_hooks_and_carries_three_guarded_sites(self):
         if not shutil.which('m68k-elf-as'):

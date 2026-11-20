@@ -35,7 +35,8 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 MODULE = 'usb-audio-out-tracks-main-cue'
 TITLE = 'USB AUDIO'
-SUPPORTED = ('USB AUDIO OUT TRACKS MAIN CUE',)  # the 20-channel layout first; the others follow
+SUPPORTED = ('USB AUDIO OUT TRACKS MAIN CUE', 'USB AUDIO OUT TRACKS', 'USB AUDIO OUT MASTER', 'USB AUDIO OUT MAIN CUE',
+             'USB AUDIO OUT MAIN')  # USB AUDIO OUT TRACKS POST needs its stock gain curve: not built as a package yet
 USB_EP0_SEND = 0x4001d498  # stock: usb_ep0_send(length, buffer), the routine EP0_SEND_TAIL (0x4001de5c) calls
 
 
