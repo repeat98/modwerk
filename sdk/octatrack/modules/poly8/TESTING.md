@@ -2,6 +2,33 @@
 
 Status: experimental release preparation, **not hardware-qualified**.
 
+## 0.3.4: rests while no track uses it (prepared 20 November 2026, not built, not tested)
+
+No code change. `runtime.json` marks POLY8's 11 frame-interrupt detours `"rests"` (0x4000bb0e, 0x4000e39e, 0x4000dd44,
+0x400041c4, 0x40007978, 0x4000c0d6, 0x4000c140, 0x4000bfe8, 0x4000f450, 0x4000b7bc, 0x40004d66). Its panel, keyboard
+and octave detours, its pokes and its renderer-table entries stay. On a base that judges machines (#1849, base 0.7.11,
+loader capability 2048) the base rests POLY8 while no track of any Part of the project is POLY8: those detours hold
+stock's bytes and its `ev_play_increment`, `ev_voice_bind` and `ev_voice_bind_run` handlers leave the frame.
+
+- **Why:** on base 0.7.10, POLY8 0.3.3 installed on no track added 2.3 points of the frame interrupt while seven FLEX
+  tracks played (MKII, OS 1.40C, development build `acc111da`, `npm run device:price`, 20 November 2026;
+  [record](../../../../docs/verification/2026-11-20-octatrack-unused-module-cost.md)).
+- **Not built yet:** the package needs the builder change in #1849 (a machine port's `rests`), and its row
+  `requiresCapabilities: 2048`, since an older base refuses resting sites without POLY8's own `ev_in_use`. A
+  development build with these 11 detours marked (same module id and image as 0.3.3) exists for the unit run.
+- **Test procedure:** not run. Steps 1 to 4 wait for the build; steps 6 to 10 for the unit (off USB, then held by
+  another session, on 20 November 2026).
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Installed, used nowhere | the 11 detours must hold stock's bytes and cost nothing | `device:price` at rest on a 0.7.11 development build | not run: package not built, unit unavailable |
+| Pick POLY8 while playing | the wake writes 11 sites masked before the commit | frame guard over the pick window, STATIC pick as control | not run: as above |
+| A paste or project load brings a POLY8 track | stock reads POLY8's bytes for up to one UI tick | the track renders silence until the next tick (base host test) | pass (host, base #1849); unit not run |
+| A Part or bank change to a Part with POLY8 while playing | must not need a wake | any Part of the project keeps it awake (base host test) | pass (host); unit not run |
+| A MIDI note on a channel shared with a POLY8 track | the wide-note detours rest only while no track is POLY8 | MIDI on that channel, POLY8 on another Part | not run |
+| Undo of the trial that brought 0.3.4 | resting sites restored while resting | whole-set trial and Undo | not run |
+| A base without capability 2048 | it refuses resting sites without ev_in_use | the site must not offer the package there | not run |
+
 ## 0.3.3: less cost on tracks without POLY8 (14 November 2026)
 
 **Unit result** (the owner's MKII, development twin `0277c5c5` of main, 14 November 2026). The scene was the owner's project with four FLEX tracks sounding one loop at 126 BPM and T5-T8 silent, transport playing, POLY8 installed on no track, one module installed at a time. Each reading is a timed trial (`octatrack-price.mjs`) in RAM, rolled back by itself. Without modules the frame interrupt takes 41-42 %; with POLY8:

@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.3.4-experimental",
+    "date": "2026-11-20",
+    "changes": [
+      "Costs the Octatrack nothing while no track of the project uses POLY8, on the next base (0.7.11).",
+      "POLY8 tracks sound and behave as before; picking POLY8 wakes it at once.",
+      "Not yet checked on a unit."
+    ]
+  },
+  {
     "version": "0.3.3-experimental",
     "date": "2026-11-14",
     "changes": [
