@@ -12,7 +12,7 @@ export function ModuleAudioCardCover({ id, name, summary, href, onBrowse, inert,
   onPrepare: () => void; clip: AudioPreviewClip; children: ReactNode
 }) {
   return <div className="module-cover module-audio-cover" data-module={id} inert={inert} onPointerEnter={event => { if (event.pointerType !== 'touch') onPrepare() }} onFocus={onPrepare}>
-    <a className="module-audio-cover-link" href={href} onClick={onBrowse} onAuxClick={onBrowse} aria-description={summary} aria-label={'View ' + name + ' (audio preview available)'}>{children}</a>
+    <a className="module-audio-cover-link" href={href} onClick={onBrowse} onAuxClick={onBrowse} title={summary} aria-label={'View ' + name + ' (audio preview available)'}>{children}</a>
     <span className="audio-preview-hint" aria-hidden="true"><span className="audio-preview-hint-idle"><Icon name="play" size={13}/></span><span className="audio-preview-hint-playing"><Icon name="wave" size={13}/></span></span>
     <div className="audio-preview-dock"><AudioPreviewPlayer key={clip.id} clip={clip} name={name} prepare={prepare} variant="dock"/></div>
   </div>
