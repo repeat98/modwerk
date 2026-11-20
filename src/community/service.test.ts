@@ -92,6 +92,41 @@ const issue=(extra:Record<string,unknown>={})=>({title:'Knob issue',steps:'Load 
 afterEach(()=>{vi.useRealTimers();for(const db of databases.splice(0))db.close()})
 const details={moduleId:'new-filter',title:'New filter',repositoryUrl:'https://github.com/sambanks/example/tree/main/modules/filter',description:'Original filter',usage:'Choose the filter',testReportUrl:'https://github.com/sambanks/example/blob/main/TESTS.md',stressNotes:'Eight tracks under stress',qualityNotes:'Emulator only; hardware untested',resourceNotes:'100 words; CPU not measured',license:'Original code, MIT; own capture',rightsConfirmed:true}
 describe('community access and review',()=>{
+ it('counts outstanding work across all three admin queues', async () => {
+  const { call, db, admin } = await fixture()
+  const counts = async () => (await call('/admin/overview', 'GET', undefined, '', undefined, admin)).json()
+  expect(await counts()).toMatchObject({ issues: 0, forum: 0, requests: 0 })
+  db.exec(`
+    INSERT INTO issues(id,module_id,author_login,reporter_id,title,body) VALUES('issue','mod','author','other','Title','Body');
+    INSERT INTO forum_threads(id,user_id,title,category) VALUES('thread','author','Title','general');
+    INSERT INTO forum_posts(id,thread_id,user_id,body) VALUES('post','thread','author','Body');
+    INSERT INTO forum_reports(id,post_id,user_id,reason) VALUES('report','post','other','Reason');
+    INSERT INTO forum_shouts(id,user_id,body) VALUES('shout','author','Body');
+    INSERT INTO forum_shout_reports(id,shout_id,user_id,reason) VALUES('shout-report','shout','other','Reason');
+    INSERT INTO conversations(id,pair_key) VALUES('dm','author:other');
+    INSERT INTO conversation_members(conversation_id,user_id) VALUES('dm','author'),('dm','other');
+    INSERT INTO message_reports(id,conversation_id,user_id,reason) VALUES('dm-report','dm','other','Reason');
+    INSERT INTO account_removal_requests(id,user_id,status) VALUES('new','author','requested'),('active','other','reviewing');
+  `)
+  expect(await counts()).toMatchObject({ issues: 1, forum: 3, requests: 2 })
+  db.exec(`
+    UPDATE issues SET status='closed';
+    UPDATE forum_reports SET resolved=1;
+    UPDATE message_reports SET resolved=1;
+    UPDATE account_removal_requests SET status='completed' WHERE id='active';
+    UPDATE account_removal_requests SET status='cancelled' WHERE id='new';
+  `)
+  expect(await counts()).toMatchObject({ issues: 0, forum: 1, requests: 0 })
+  const ids = async (path: string) => {
+    const result = await call(path, 'GET', undefined, '', undefined, admin)
+    expect(result.status).toBe(200)
+    return (await result.json() as { id: string }[]).map(item => item.id).sort()
+  }
+  expect(await ids('/admin/forum/reports?view=pending')).toEqual(['shout-report'])
+  expect(await ids('/admin/forum/reports?view=reviewed')).toEqual(['dm-report', 'report'])
+  expect(await ids('/admin/account-requests?view=active')).toEqual([])
+  expect(await ids('/admin/account-requests?view=archive')).toEqual(['active', 'new'])
+ })
  it('does not grant publication to historical reports during migration',()=>{
   const db=new DatabaseSync(':memory:');databases.push(db)
   db.exec("CREATE TABLE issues(id TEXT PRIMARY KEY,context_json TEXT,github_url TEXT); INSERT INTO issues VALUES('private',NULL,NULL),('structured','{}',NULL),('published','{}','https://github.com/repeat98/octamod/issues/1')")
