@@ -55,6 +55,28 @@ The agent opened SETTINGS with only USB AUDIO installed and captured the module 
 
 A separate four-channel trial on this base rolled back during its add reconnect. macOS again recorded a paired browser trying to claim the interface. These records establish contention but do not identify an Undo command. The run stopped there. The owner power-cycled and all ten original flashed inventory rows matched after the project loaded.
 
+## One configurable USB Audio package
+
+The owner granted an exception for the Modwerk integration on 20 November. Mark Roberts remains the original module author. The trial used revision `d15bcaa66340`, base `5416441a2276d1355333ea0ebf5a2b043ed58df00b38ba06718f7e980eecfdf6`, RAM image `495b84a2fd26c538e1bdfe7c1db4fe270242c9838a5d89286be44bc368f06023` and package `e579d74e0297cb3f2173a193952d347c9df3ce7a6a7269dc25e6169e01c53f7c`. Its inventory row reported kind 7. The same installed package produced every recording below.
+
+On the owner's Octatrack MKII, SETTINGS opened a module list. USB AUDIO showed SEND TO, LAYOUT, TRACK TAP and OUTPUT MODE with their current values. Opening TRACK TAP displayed both PRE LEVEL and POST LEVEL. Selecting OUTBOX 8 added four assignable stereo pairs and ASSIGN IN ORDER.
+
+| Panel choice | Core Audio recording at 44.1 kHz |
+| --- | --- |
+| Tracks + Main + Cue | 353,792 frames on 20 channels. The agent switched from PRE LEVEL to POST LEVEL during the recording. |
+| Tracks | 353,792 frames on 16 channels, including the change from POST LEVEL to PRE LEVEL. |
+| Outbox 8 | 88,576 frames on eight channels. With MAIN, MAIN, OFF and CUE selected, the first two stereo pairs matched sample for sample and contained nonzero data throughout. Both channels of the third pair were zero throughout. Cue was silent on this pattern. |
+| Main + Cue | 88,576 frames on four channels. |
+| Main and Track 8 / Master | Each recorded 88,576 frames on two channels. Main contained a low-level signal. Track 8 was silent on this pattern. |
+
+In the two track recordings the right channel of track 1 changed from a peak of 1,023 in PRE to 255 in POST (32-bit host samples, start and end windows). The scratch pattern carried very little signal. A listening test with known music, and separate measurements for mute, solo and crossfader response, remain open. No physical Outbox 8 was available to check its jacks.
+
+Two earlier attempts on the same base rolled back during the add reconnect, including a repeat with a 50 ms polling interval. During the 400 ms attempt macOS explicitly reported Opera holding the Octatrack before the test bridge could open it. After the owner quit Opera, the original 400 ms test stayed active through all the layout changes. The source of an Undo command was not logged.
+
+ASSIGN IN ORDER restored the first four sources. The agent restored COMPUTER, 20 channels, PRE LEVEL and ALL CHANNELS and verified the original settings word (0). Undo restored the initial USB descriptors, empty runtime inventory, active identity and scratch Part. The agent returned to the original A01 and verified both Part copies. The owner power-cycled and all ten flashed inventory rows matched. No Keep or flash was performed.
+
+Host tests exercised the packaged descriptor blocks at both speeds, the grouped settings and saved values, exact left/right channel order with distinct test samples, duplicated and silent pairs, and the full-speed stereo fallback. macOS denied the development bridge direct access to the audio class interface. In the emulator, the same package accepted SET_CUR at 44.1 kHz, rejected 48 kHz, sent whole 20-channel frames and produced the expected silent samples for OFF and MAIN + CUE ONLY. It also sent whole frames at 16 and 20 channels in POST, eight routed Outbox channels and stereo on a simulated full-speed host. Undo restored the original USB configuration. Across menu changes and interrupted host polling the emulator counted 11 overruns and 52 underruns. Continuous-stream timing needs a separate measurement.
+
 ## Remaining verification
 
-A direct change from one installed layout to another, a physical full-speed host, Windows/WASAPI after a channel-count change, and a Keep/removal lifecycle remain open. The full-set regression, soak and listening stages also remain open. The published site continues to use its existing base variants.
+A physical full-speed host, Windows/WASAPI after a channel-count change, and a Keep/removal lifecycle remain open. The full-set regression, soak and listening stages also remain open. The published site continues to use its existing base variants.

@@ -62,14 +62,21 @@ async function stopping(step) {
     try { return await step() } catch (error) { if (!['unsafe', 'needs-recovery'].includes(error.status?.result) || Date.now() - start > 5000) throw error }
   }
 }
+let reconnectCount = 0
 async function settle(label, live, speed = 'hs') {
+  const expected = (reconnectCount + 1) & 255
   const seen = []
   let now
   for (const start = Date.now(); Date.now() - start < 240000; await wait(20)) {
     const s = await usb(), key = JSON.stringify(s?.slice(0, 5))
     if (seen.at(-1) !== key) { seen.push(key); console.log(`  ${label}: USB FUNCTION ${key}`) }
-    if (s?.[0] === 3 && !now) now = await enumerate(speed)
-    if (s?.[0] === 0 && s[1] === live) { assert.ok(now, label + ': the unit went off the bus and came back'); return now }
+    if (s?.[3] !== expected) continue // a panel key can arrive before the UI tick handles it
+    if (s[0] === 3 && !now) now = await enumerate(speed)
+    if (s[0] === 0 && s[1] === live && s[2] === live) {
+      assert.ok(now, label + ': the unit went off the bus and came back')
+      reconnectCount = expected
+      return now
+    }
   }
   throw new Error(label + ': the reconnect did not settle')
 }

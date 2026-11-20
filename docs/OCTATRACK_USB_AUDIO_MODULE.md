@@ -1,7 +1,7 @@
 # Octatrack: USB Audio as a module (design, for owner review)
 
 Status, 20 November 2026: [decision](decisions/2026-11-20-usb-audio-is-a-module.md), development branch
-`base/usb-audio-module`, draft #1848. The six single-layout prototypes recorded on a real MKII with macOS. The configurable package is under test ([unit record](verification/2026-11-20-octatrack-usb-audio-package.md)).
+`base/usb-audio-module`, draft #1848. The six single-layout prototypes recorded on a real MKII with macOS. One configurable package also recorded at all five USB widths with on-panel layout, tap and Outbox routing changes ([unit record](verification/2026-11-20-octatrack-usb-audio-package.md)).
 Players still use the published base variants. Addresses are OS 1.40C.
 
 ## Today
