@@ -137,7 +137,7 @@ describe('live library selection details', () => {
   })
 
   it('distinguishes a full Octatrack set from a saved set already over the limit', async () => {
-    const ids = AVAILABLE_MODULES.map(module => module.id).filter(countsTowardLimit).slice(0, SET_MODULE_LIMIT + 1)
+    const ids = AVAILABLE_MODULES.map(module => module.id).filter(id => countsTowardLimit(id)).slice(0, SET_MODULE_LIMIT + 1)
     const render = (moduleIds: string[]) => act(() => root.render(
       createElement(LibrarySelection, { sets: [newConfiguration('Live set', moduleIds)], betaAccess: false, collapsible: true }),
     ))

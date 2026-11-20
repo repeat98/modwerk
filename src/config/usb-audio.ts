@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later OR Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 export const USB_AUDIO_MODULE = 'usb-audio-out-tracks-main-cue'
+/** Whether the site publishes USB Audio as module packages (docs/OCTATRACK_USB_AUDIO_MODULE.md) rather than as the base
+ * in each layout. Owner, 20 November 2026: as a module it counts toward the module limit. A constant, not read from the
+ * package manifest, because the Worker's limit check reads this file and the manifest is no backend dependency;
+ * usb-audio-package.test.ts requires it to match the manifest's `usbAudio`, so publishing the packages flips it. */
+export const USB_AUDIO_PACKAGED: boolean = false
+/** A module the base itself provides, so a module set's counts and comparisons with the unit leave it out: USB Audio,
+ * until it ships as a module package. `packaged` is for tests. */
+export const comesWithBase = (id: string, packaged = USB_AUDIO_PACKAGED) => !packaged && id === USB_AUDIO_MODULE
 export const USB_AUDIO_VERSION = '0.2.0-experimental'
 export const USB_AUDIO_REVISION = '7b2984c859732ae6c797ae49c7d61d250b1b6519'
 export const USB_AUDIO_LAYOUTS = [
@@ -12,6 +20,7 @@ export const USB_AUDIO_LAYOUTS = [
   { id: 'master', define: 2, key: 'USB AUDIO OUT MASTER', name: 'Track 8 / Master', channels: 2, pairs: ['Track 8'], tap: 'pre', description: 'Track 8 after its effects, before its fader. Enable MASTER TRACK on the Octatrack for a master-bus feed.' },
 ] as const
 export type UsbAudioLayout = typeof USB_AUDIO_LAYOUTS[number]['id']
+export type UsbAudioPackageKind = UsbAudioLayout | 'configurable'
 export type UsbAudioConfiguration = { version: typeof USB_AUDIO_VERSION; layout: UsbAudioLayout; destination: 'computer' | 'outbox'; outboxPairs: number[] }
 export function usbAudioLayout(id: UsbAudioLayout) { return USB_AUDIO_LAYOUTS.find(layout => layout.id === id)! }
 export function usbAudioPreset(destination: UsbAudioConfiguration['destination']): UsbAudioConfiguration {

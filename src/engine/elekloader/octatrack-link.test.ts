@@ -4,7 +4,7 @@ import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrac
 import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
-import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, StaleLoadError, inUseHint, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
+import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, RECONNECT_WAIT_MS, StaleLoadError, inUseHint, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
 import { UsbVendorTransport, parseBaseSlots } from './upload-usb'
 
@@ -587,6 +587,121 @@ describe('sending a module', () => {
     expect(leave).not.toHaveBeenCalled()
     expect(link.getState().status).toBe('idle')
     stop()
+  })
+})
+
+describe('a sync that changes the unit’s USB configuration', () => {
+  // USB Audio's package (SetChange.reconnects): the base takes the unit off USB and back once, with the trial open.
+  const audio = [{ module: 'USB Audio', data: new Uint8Array(4000), reconnects: true }]
+  async function reconnecting() {
+    const { unit, link } = await linked()
+    await link.update('USB Audio', audio)
+    expect(link.getState().status).toBe('trial')
+    unit.orphan = link.getState().active ?? 'trial' // what a fresh session finds: this page's trial, still open
+    unit.unplug()
+    expect(link.getState()).toMatchObject({ status: 'trial', reconnecting: true, notice: undefined })
+    return { unit, link }
+  }
+  it('waits for the unit, resumes the open trial and keeps Undo working', async () => {
+    const { unit, link } = await reconnecting()
+    await link.undo() // Keep and Undo wait while it reconnects
+    expect(link.getState()).toMatchObject({ status: 'trial', reconnecting: true })
+    unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().reconnecting).toBeUndefined())
+    expect(link.getState()).toMatchObject({ status: 'trial', module: 'USB Audio' })
+    await link.undo()
+    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'success', text: 'Undone. Your Octatrack is back to how it was.' } })
+  })
+  it('leaves another client’s USB Audio trial running when the paired page opens', async () => {
+    const unit = fakeUnit(), candidate = '79'.repeat(32)
+    unit.orphan = candidate
+    const probe = vi.spyOn(UsbVendorTransport.prototype, 'hasUsbFunctionChanges').mockResolvedValue(true)
+    const link = new OctatrackLink(unit.usb, fakeSession(unit)), stop = link.start()
+    try {
+      await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+      expect(unit.orphan).toBe(candidate)
+      expect(probe).toHaveBeenCalledOnce()
+    } finally { stop(); probe.mockRestore() }
+  })
+  it('releases a different trial that appeared while this page was waiting for its USB Audio trial', async () => {
+    const { unit, link } = await reconnecting()
+    unit.orphan = 'a8'.repeat(32)
+    unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+    expect(unit.orphan).toBe('a8'.repeat(32))
+  })
+  it('leaves a newer trial of the same USB Audio package with its owner', async () => {
+    const { unit, link } = await reconnecting()
+    const candidate = unit.orphan
+    unit.orphanTransaction = 8
+    unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+    expect(unit.orphan).toBe(candidate)
+  })
+  it('resumes the same USB Audio trial after a second format change from the panel', async () => {
+    const { unit, link } = await reconnecting()
+    for (let i=0; i<2; i++) {
+      unit.plug('base')
+      await vi.waitFor(() => expect(link.getState().reconnecting).toBeUndefined())
+      expect(link.getState().status).toBe('trial')
+      if (!i) unit.unplug()
+    }
+    await link.undo()
+    expect(link.getState().status).toBe('ready')
+  })
+  it('says so when the unit came back with the sync no longer open', async () => {
+    const { unit, link } = await reconnecting()
+    unit.orphan = undefined // the base undid it: the host did not reach it in time
+    unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
+    expect(link.getState()).toMatchObject({ notice: { tone: 'error', text: expect.stringMatching(/USB Audio was no longer open/) } })
+  })
+  it('gives up when the unit does not come back', async () => {
+    const { unit, link } = await linked()
+    await link.update('USB Audio', audio)
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    unit.unplug()
+    expect(RECONNECT_WAIT_MS).toBeGreaterThan(20000) // the base waits 20 s for a host to come back
+    vi.advanceTimersByTime(RECONNECT_WAIT_MS - 1)
+    expect(link.getState()).toMatchObject({ status: 'trial', reconnecting: true })
+    vi.advanceTimersByTime(1)
+    expect(link.getState()).toMatchObject({ status: 'idle', notice: { tone: 'error', text: expect.stringMatching(/didn’t come back on USB.*undoes USB Audio by itself/) } })
+  })
+  it('lets the Load dialog keep only once the reconnect is over', async () => {
+    const { unit, link } = await linked()
+    await link.update('USB Audio', audio)
+    const back = link.reconnected()
+    let settled: boolean | undefined
+    void back.then(value => { settled = value })
+    await settle()
+    expect(settled).toBeUndefined() // the base has not reconnected yet
+    unit.orphan = link.getState().active ?? 'trial'
+    unit.unplug(); await settle()
+    expect(settled).toBeUndefined()
+    unit.plug('base')
+    expect(await back).toBe(true)
+    expect(link.getState()).toMatchObject({ status: 'trial' })
+    await link.keep()
+    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'success' } })
+  })
+  it('tells the Load dialog when the trial ended during the reconnect', async () => {
+    const { unit, link } = await linked()
+    await link.update('USB Audio', audio)
+    const back = link.reconnected()
+    unit.unplug(); await settle()
+    unit.plug('base') // no trial open any more: the base undid it
+    expect(await back).toBe(false)
+  })
+  it('does not wait when nothing in the sync reconnects', async () => {
+    const { link } = await linked()
+    await link.update('PREVIEW VOL', [{ module: 'PREVIEW VOL', data: new Uint8Array(4000) }])
+    expect(await link.reconnected()).toBe(true)
+  })
+  it('handles an unplug as before when the sync does not reconnect', async () => {
+    const { unit, link } = await linked()
+    await link.update('PREVIEW VOL', [{ module: 'PREVIEW VOL', data: new Uint8Array(4000) }])
+    unit.unplug()
+    expect(link.getState()).toMatchObject({ status: 'idle', notice: { text: expect.stringMatching(/undoes PREVIEW VOL by itself/) } })
   })
 })
 
