@@ -1,1 +1,1 @@
-Octatrack base 0.7.12 supports installing USB Audio once, changing its layout on the instrument and reconnecting when a layout change updates the USB inputs. Existing sets supply their saved routing.
+The Octatrack installer keeps serving base 0.7.11 and its seven USB layouts while base 0.7.12 is staged for configurable USB Audio. Existing Recorder Loop downloads keep their original bytes.

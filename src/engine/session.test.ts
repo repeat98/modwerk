@@ -1,11 +1,10 @@
 import { publishedUsbAudioPackage } from '../config/published-usb-audio.fixture'
-import { readFileSync } from 'node:fs'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import { encodeFirmware, type DecodedFirmware } from './elek'
 import { createEngineSession } from './session'
 import type { EngineResponse } from './protocol'
 import { buildBase } from './elekloader/octatrack-base'
-import baseFills from './assets/octatrack-base-fills.json'
+import { publishedFills as baseFills, publishedPackageText, publishedVariants } from './elekloader/published-octatrack.fixture'
 import { DEFAULT_LAYOUT, variantPackage, type BaseVariants } from './elekloader/base-variants'
 
 // Exercise the real session boundary with synthetic bytes; no proprietary firmware enters this test or CI.
@@ -20,8 +19,8 @@ const synthetic = (): DecodedFirmware => ({
 
 describe('the Modwerk base', () => {
   it('asks for the OS file first, then builds from the verified file: USB Audio off unless a layout is asked for', async () => {
-    const text = readFileSync(new URL('./assets/octatrack-base.elemod', import.meta.url), 'utf8')
-    const layouts = readFileSync(new URL('./assets/octatrack-base-variants.json', import.meta.url), 'utf8')
+    const text = publishedPackageText()
+    const layouts = JSON.stringify(publishedVariants)
     const fetched = vi.fn(async (url: string) => (url.endsWith('octatrack-base.elemod') ? new Response(text)
       : url.includes('octatrack-base-variants') ? new Response(layouts) : new Response(null, { status: 404 })))
     vi.stubGlobal('fetch', fetched)

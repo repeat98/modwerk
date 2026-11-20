@@ -588,7 +588,6 @@ export class OctatrackLink {
   async missing(): Promise<MissingModule[] | undefined> { return this.read('missing modules', transport => transport.missing()).then(list => list ?? [], () => undefined) }
   /** The modules installed on the unit, while it is idle; undefined from a base before INVENTORY (it stalls the request).
    * Rejects with LinkBusyError when it couldn't ask just now. */
-  settingPresets() { return this.read('setting presets', transport => transport.settingPresets()) }
   inventory(): Promise<MissingModule[] | undefined> { return this.read('modules', transport => transport.inventory()) }
   /** The modules switched off on the unit (PROJ > MODWERK > MODULES): installed and saved, not running. Undefined from
    * a base before that page. Rejects with LinkBusyError when it couldn't ask just now. */

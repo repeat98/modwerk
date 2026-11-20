@@ -157,11 +157,12 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     try { await writeFile(temporary, JSON.stringify(values, null, 2), { mode: 0o600, flag: 'wx' }); await rename(temporary, file); sets = values }
     finally { await rm(temporary, { force: true }) }
   }
-  const manifest = JSON.parse(await readFile(join(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8'))
+  const manifest = !injected && frontend.publishedPackages || JSON.parse(await readFile(join(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8'))
   const preparedModules = options.preparedModules && await loadPreparedModules(options.preparedModules, manifest, frontend)
   const catalogue = preparedModules?.catalogue ?? frontend.createRuntimeCatalogue(manifest)
   const load = preparedModules?.load ?? (async entry => {
-    if (!/^octatrack-modules\/[a-z0-9-]+\/[a-zA-Z0-9.-]+\.mwrm$/.test(entry.path)) throw new Error('Unexpected module asset path.')
+    if (!/^octatrack-modules\/[a-z0-9-]+\/[a-zA-Z0-9.-]+\.mwrm$/.test(entry.path) &&
+        !(/^[a-f0-9]{64}$/.test(entry.sha256) && entry.path === 'octatrack-base-packages/' + entry.sha256 + '.mwrm')) throw new Error('Unexpected module asset path.')
     const bytes = new Uint8Array(await readFile(join(root, 'public', entry.path)))
     if (bytes.length !== entry.bytes || hash(bytes) !== entry.sha256) throw new Error('The local site package differs from its manifest.')
     return bytes

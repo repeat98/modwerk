@@ -101,6 +101,6 @@ describe('USB Audio as a module package', () => {
     expect(countsTowardLimit(USB_AUDIO_MODULE, false)).toBe(false)
     expect(countsTowardLimit(USB_AUDIO_MODULE, true)).toBe(true)
     expect(countsTowardLimit('repitch', false)).toBe(true)
-    expect(limitedCount(['repitch', USB_AUDIO_MODULE])).toBe(USB_AUDIO_PACKAGED ? 2 : 1)
+    expect(limitedCount(['repitch', USB_AUDIO_MODULE])).toBe(1) // today's manifest lists no USB Audio package
   })
 })

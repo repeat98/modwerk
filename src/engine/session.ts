@@ -1,13 +1,16 @@
-import { USB_AUDIO_PACKAGED } from '../config/usb-audio'
 import { inspectBaseFirmware } from './base'
 import { decodeFirmware } from './elek'
 import { recoverStockDsp } from './stock-dsp'
 import { buildBase, type BaseFill } from './elekloader/octatrack-base'
 // A file of its own, fetched when a base is built: the worker bundle inlines imports, and the package is 600 KB.
-import basePackage from './assets/octatrack-base.elemod?url'
-import baseVariants from './assets/octatrack-base-variants.json?url'
+import currentPackage from './assets/octatrack-base.elemod?url'
+import linkedPackage from './assets/linked-audio-0.7.11/octatrack-base.elemod?url'
+import { USB_AUDIO_PACKAGED } from '../config/usb-audio'
+import currentVariants from './assets/octatrack-base-variants.json?url'
+import linkedVariants from './assets/linked-audio-0.7.11/octatrack-base-variants.json?url'
 import { DEFAULT_LAYOUT, MEMBER_LAYOUT, variantPackage, type BaseVariants } from './elekloader/base-variants'
-import baseFills from './assets/octatrack-base-fills.json'
+import currentFills from './assets/octatrack-base-fills.json'
+import linkedFills from './assets/linked-audio-0.7.11/octatrack-base-fills.json'
 // The step base (base-step.ts), fetched only by an update that needs it.
 import stepPackage from './assets/octatrack-base-step.elemod?url'
 import stepVariants from './assets/octatrack-base-step-variants.json?url'
@@ -15,6 +18,10 @@ import stepFills from './assets/octatrack-base-step-fills.json?url'
 import { STEP_ASSETS, STEP_DEFAULT_LAYOUT, STEP_IDENTITIES } from './elekloader/base-step'
 import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
 import type { EngineRequest, EngineResponse } from './protocol'
+const basePackage = USB_AUDIO_PACKAGED ? currentPackage : linkedPackage
+const baseVariants = USB_AUDIO_PACKAGED ? currentVariants : linkedVariants
+const baseFills = USB_AUDIO_PACKAGED ? currentFills : linkedFills
+
 export function createEngineSession(reply: (response: EngineResponse, transfer?: Transferable[]) => void) {
   let stock: Uint8Array | null = null, generation = 0
   return async (request: EngineRequest) => {
@@ -35,7 +42,7 @@ export function createEngineSession(reply: (response: EngineResponse, transfer?:
         // from a module set, a member gets MEMBER_LAYOUT: USB MIDI alone. The step base is built the same way from
         // its own three assets, each checked against its pin.
         const step = request.step === true
-        const layout = USB_AUDIO_PACKAGED && !step ? DEFAULT_LAYOUT : request.layout ?? MEMBER_LAYOUT
+        const layout = !step && USB_AUDIO_PACKAGED ? MEMBER_LAYOUT : request.layout ?? MEMBER_LAYOUT
         const asset = async (url: string, pin: string | undefined, what: string) => {
           const response = await fetch(url)
           if (!response.ok) throw new Error(what + ' did not load. Reload the page and try again.')
