@@ -81,4 +81,4 @@ Original module by @twwwy and contributors, MIT ([LICENSE](LICENSE)). The runtim
 
 ## Screens and audio
 
-The two captures above are 0.1.66 emulator LCD captures ([capture provenance](media/capture.json)), not hardware audio evidence. The popup layout was approved by the author on 25 October 2026. No audio preview.
+The two captures above are the LCD's own pixels on the author's MKII, read over USB with 0.1.68 installed as a trial on a development twin of base 0.7.11 with SNAP (20 November 2026; [capture provenance](media/capture.json)). They are not audio evidence. No audio preview.

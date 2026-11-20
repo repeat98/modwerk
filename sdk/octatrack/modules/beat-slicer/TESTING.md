@@ -30,6 +30,28 @@ Ported from the private candidate in [sdk/drafts/beat-slicer/zero-cross/](../../
   - Not run: a USB Undo after a Keep, the slice positions read back, MAIN/CUE
     recordings, MKI, a power cycle. Sound and click-free playback are the author's to judge.
 - The draft's earlier MKII results were on measurement base `20ed7910…` and do not qualify this build.
+- Agent's runs after the author's test, same twin and package:
+  - Undo: a trial through the developer MCP (`device_review`, `device_trial`) ended by an explicit `device_undo`.
+    The active identity went `54cab594` > `ff5e28b7` (the trial) > `54cab594`, no modules: restored. No Keep.
+  - Cost, popup stopped on the SLICE page: `modwerk_cost[22]` (runtime module draw) 198.1 us a UI tick over 695 ticks
+    with the popup open and its settings turned 16 times (0.1.66: 1,058 us), 6.3 us closed; guard's longest frame
+    36.5 % open, 36.2 % closed; CPU meter 401-403 per mille open, 394-396 closed.
+  - Key-press stress: the popup opened (FUNC+AED twice) and closed (NO) 20 times while the pattern played, with
+    STOP, PLAY and a Part change between the two batches of ten; it answered every time, no hang, no new crash or
+    stall, nothing skipped. `npm run perf:audit -- check evidence/performance.json`:
+
+    | Check | Result |
+    |---|---|
+    | record | key-press coldfire record for beat-slicer@0.1.68-experimental |
+    | cycles | worst event 52,298 of 4,330,000 cycles (1 %) |
+    | stock benchmark | none: a key-press module adds nothing to the frame interrupt |
+    | stress | 20 presses of the dearest event while playing, no hang |
+
+  - A first attempt at the stress run turned encoder B inside each cycle. After the Part change the popup was not open
+    for some of them, and on AED's own page encoder B moved T1 to another sample slot (Part 1's working copy:
+    `R1-25-2151` in place of `05_ELoop 3`). Stock behaviour, not the module's; the Part was reloaded (PART 1
+    RELOADED, T1 back on `05_ELoop 3`; working and saved copies had been equal before the run) and the stress run
+    repeated without encoder turns.
 - Author's test (twwwy), reported on 20 November 2026, same twin `54cab594…` and package `195d2b46…`, a 10-minute
   trial without a Keep, T1 `05_ELoop 3`, as reported:
   - SNAP ON against OFF: "the pop noticeably decrease a lot" at slice boundaries.
