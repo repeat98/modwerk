@@ -85,6 +85,10 @@ The only stack push in the image is `pea` of the redraw argument, 4 bytes, on th
 | redraw argument on the UI stack | 4 |
 | total, one instance | 272 |
 
+## Release package
+
+The release builder compiles `package.c`, which exports the three handlers in `screen_off.c` under the loader's core hook names. The resulting 352-byte package matches the MKII-tested package byte for byte (SHA-256 `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`). The performance and qualification source fingerprints include this packaging file.
+
 ## Not tested
 
 - An MKI, and a card install. The MKII chord above is a report from the person at the unit, on 7 November and again on 16 November, both RAM trials of package `14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c`.
