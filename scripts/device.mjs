@@ -61,6 +61,7 @@ import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
 import { chooserIndex } from './effect-names.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
+  help: { type: 'boolean', short: 'h' },
   socket: { type: 'string', default: '/tmp/modwerk-ot.sock' },
   seconds: { type: 'string', default: '5' },
   accept: { type: 'boolean', default: false },
@@ -70,11 +71,27 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   share: { type: 'string' }, // serve: a second bench socket for the frontend MCP (shareBench)
   chunk: { type: 'string' }, // boot: bytes a frame (4096 for the flashed usbtest9 on macOS; docs/OCTATRACK_HARDWARE_TRAPS.md)
 } })
+const usage = `Usage: npm run device -- COMMAND [--socket PATH] [--emulator]
+
+  serve [--share PATH]
+  status | stats | state | missing | ui | loader | report
+  screen [--png FILE] [--scale 1-4]
+  try MODULE.mwrm | set FILE,-FILE,… | remove [MODULE.mwrm]  [--seconds 1-3600] [--accept]
+  recover | lifecycle
+  boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR
+  key NAME[+NAME] | enc A+3 | fader 0-255 | do SEQUENCE
+  mem ADDR LENGTH | probe 0|1 | meter 0|1
+
+  -h, --help   Show this help`
+if (values.help) {
+  console.log(usage)
+  process.exit(0)
+}
 let seconds = Number(values.seconds)
 if (!['serve', 'status', 'stats', 'try', 'set', 'recover', 'remove', 'lifecycle', 'boot', 'flash', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report', 'probe', 'meter', 'missing', 'ui', 'do', 'mem'].includes(command) || (['try', 'set', 'boot', 'flash', 'key', 'enc', 'fader', 'probe', 'meter', 'do', 'mem'].includes(command) && !file) ||
   (['serve', 'status', 'stats', 'recover', 'lifecycle', 'screen', 'state', 'loader', 'report', 'missing', 'ui'].includes(command) && file) ||
   !Number.isInteger(seconds) || seconds < 1 || seconds > 3600 || (values.chunk && !(Number(values.chunk) >= 1 && Number(values.chunk) <= 4096 && Number.isInteger(Number(values.chunk))))) {
-  console.error('Usage: device.mjs status | stats | try MODULE.mwrm [--seconds 1-3600] [--accept] | set FILE,-FILE,… [--accept] | recover | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR | key NAME[+NAME] | screen | state | loader | report | probe 0|1 | meter 0|1 | missing | ui | do SEQUENCE | mem ADDR LENGTH | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
+  console.error(usage)
   process.exit(2)
 }
 
@@ -604,7 +621,9 @@ if (command === 'serve') {
         bench.socket.end(); await wait(300)
         // MODWERK_UNIT=served: whoever sent this line took the unit's turn for it (device-send.py), so the boot waits for none
         const r = spawnSync(process.execPath, [process.argv[1], verb, arg, '--socket', values.socket, ...(chunk ? ['--chunk', chunk] : [])], { encoding: 'utf8', timeout: 400000, env: { ...process.env, MODWERK_UNIT: 'served' } })
-        out.push(r.stdout, r.stderr, 'serve exits; the loop restarts it'); setTimeout(() => process.exit(0), 200)
+        out.push(r.stdout, r.stderr)
+        if (r.status !== 0) out.push('error: ' + verb + ' failed (' + (r.error?.message ?? r.signal ?? 'exit ' + r.status) + ')')
+        out.push('serve exits; the loop restarts it'); setTimeout(() => process.exit(0), 200)
       } else if (verb === 'recover') { // a transaction left behind (an install whose reply went missing): undo it, as the site does
         const session = await UploadSession.connect(transport, identity.base, { timeoutMs: 10000 })
         const phase = session.status.phase

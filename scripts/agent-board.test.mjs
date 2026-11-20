@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -18,6 +18,14 @@ function repository(files) {
 }
 const events = indices => JSON.stringify({ events: indices.map(index => ({ event: 'ev_' + index, index })) })
 const claimRow = (kind, key, holder) => ({ id: crypto.randomUUID(), kind, key, holder, branch: 'work', pullRequest: null, expiresAt: '2026-11-12T00:00:00.000Z' })
+
+it.each([{ args: [] }, { args: ['--released'] }, { args: [''] }])('rejects a claims filter without a holder ($args)', ({ args }) => {
+  const result = spawnSync(process.execPath, [join(import.meta.dirname, 'agent-board.mjs'), 'list', '--holder', ...args], {
+    env: { ...process.env, MODWERK_BOARD: 'off' }, encoding: 'utf8',
+  })
+  expect(result.status).toBe(1)
+  expect(result.stderr).toContain('Give a GitHub login after --holder')
+})
 
 describe('what a branch needs claimed', () => {
   it('finds new module folders, hook and table indices, migrations and machine ids, and nothing that was already there', () => {

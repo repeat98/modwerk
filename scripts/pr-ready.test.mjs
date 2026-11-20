@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { copyFileSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { MODULE_SCOPE_REQUIRED_FROM, baseEdits, checkAndCommit, gateEdits, moduleScopeProblems, pythonProblem, readiness } from './pr-ready.mjs'
@@ -54,6 +54,13 @@ describe('pr:ready verdict', () => {
     const verdict = readiness({ python: old })
     expect(verdict.ok).toBe(false)
     expect(verdict.problems[0]).toBe(old)
+  })
+  it('makes npm run check name an old Python before the module gates crash in it', () => {
+    const check = readFileSync(new URL('./check.mjs', import.meta.url), 'utf8')
+    const probe = check.indexOf('localPythonProblem(root)')
+    expect(probe).toBeGreaterThan(-1)
+    expect(probe).toBeLessThan(check.indexOf("run('modules:check'"))
+    expect(probe).toBeLessThan(check.indexOf("run('modules:compat')"))
   })
   it('says how to bring a stale branch up to date from the remote that holds main', () => {
     expect(readiness({ behind: true, remote: 'upstream' }).problems[0]).toContain('git merge upstream/main')

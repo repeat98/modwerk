@@ -492,7 +492,7 @@
       "sha256": "8a5b26c7f7c97f1e945c2274fb2632e05fc94e7babb941e8b7c80f7e0f24bf61"
     }
   ],
-  "sourceCommit": "026184a96b0c4fba106bbae507b436236e7ea622",
+  "sourceCommit": "a74105c1aa14e12a73bfc6964bdf0e34329714e6",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
@@ -520,7 +520,7 @@
     "output-matrix": "0.1.1-experimental",
     "quantize-live-rec-toggle": "0.1.1-experimental",
     "apply-scene": "0.2.0-experimental",
-    "direct-jump-kyoti": "0.1.2-experimental",
+    "direct-jump-kyoti": "0.2.0-experimental",
     "dejavu": "0.1.0-experimental",
     "arp-key-locks": "0.1.0-experimental",
     "temp-save": "0.1.1-experimental",
