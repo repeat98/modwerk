@@ -2,15 +2,15 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { LIBRARY_CATEGORIES } from './modules'
+import { MODULE_V3_CATEGORIES } from './module-contract-v3'
 
 const root = fileURLToPath(new URL('../../', import.meta.url)), guides = resolve(root, 'docs/module-guides')
 const read = (path: string) => readFileSync(resolve(root, path), 'utf8')
-const categoryGuides = LIBRARY_CATEGORIES.map(category => category + '.md'), allGuides = ['README.md', 'sequencing.md', ...categoryGuides]
+const categoryGuides = MODULE_V3_CATEGORIES.map(category => category + '.md'), allGuides = ['README.md', 'sequencing.md', ...categoryGuides]
 const find = (directory: string, name: string): boolean => readdirSync(directory).some(entry => { const path = resolve(directory, entry); return statSync(path).isDirectory() ? find(path, name) : entry === name })
 
 describe('module guides', () => {
-  it('has a guide for every library category, the sequencing guide and the index, and nothing else', () => {
+  it('has a guide for every manifest category, the sequencing guide and the index, and nothing else', () => {
     expect(readdirSync(guides).sort()).toEqual([...allGuides].sort())
     const index = read('docs/module-guides/README.md')
     for (const guide of allGuides.filter(name => name !== 'README.md')) expect(index, guide + ' must be linked from the index').toContain('(' + guide + ')')
