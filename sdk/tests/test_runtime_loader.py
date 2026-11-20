@@ -151,6 +151,8 @@ class LoaderTests(unittest.TestCase):
         result = subprocess.run([sys.executable, '-B', ROOT / 'scripts/octatrack-module-packages.py', '--check'],
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        if result.stderr:
+            print(result.stderr.rstrip())
 
     def test_converted_module_becomes_image_relocations_and_sites(self):
         stock = {0x40001000: bytes.fromhex('70201140000e'), 0x40002000: bytes.fromhex('4e714e71')}

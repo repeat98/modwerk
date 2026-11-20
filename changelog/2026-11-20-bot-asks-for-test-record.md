@@ -1,0 +1,1 @@
+Development: The maintenance bot asks the author of a pull request that changes what runs on an instrument for its test record, instead of filing a hardware test for the owner. Submitters test, reviewers read.

@@ -4,6 +4,27 @@ How to measure a module before it is listed. The [module guides](module-guides/R
 
 For a large Octatrack set, measure the same saved Part with an empty inventory and with the set installed, both stopped and playing. Compare the module runtime in `profile:3`, the CPU meter in `stats` and the frame interrupt in `guard`. All three readings are in the [24-module MKII comparison](verification/2026-11-19-octatrack-idle-dispatch.md); which of those modules cost the frame while unused, and why, is in the [unused-module record](verification/2026-11-20-octatrack-unused-module-cost.md).
 
+### Build a private Octatrack CPU baseline
+
+Use `build_core.py` to choose the features in a private development build. The `octatrack:base` wrapper checks the published beta's identity, including when given `--out`. For a comparison on current main, the following profile includes USB development instrumentation, the DSP loader, site events, table owners and on-demand resident hooks.
+
+Start at the checkout root after `npm ci` on Node 24. Have Python 3.12+, the reviewed `m68k-elf` tools on PATH, the pinned Elekloader checkout from `npm run upstream:tools`, and the built Octabam DSP assembler. Set `OT_STOCK` to your own OS 1.40C file. Use an existing directory outside Git for `BASELINE_PARENT`; the builder requires a **new** output directory for each run.
+
+```sh
+export ELEKLOADER_DSP_ASM="$HOME/.cache/modwerk-upstream/octabam/vendor/dsp56300/build/source/dsp_host/dsp_asm"
+python3 -B sdk/machines/octatrack/elekloader/build_core.py \
+  --stock "$OT_STOCK" --upstream "$HOME/.cache/modwerk-upstream/elekloader" \
+  --output "$BASELINE_PARENT/cpu-baseline" --dev --dsp-loader --site-events \
+  --table-owners sdk/machines/octatrack/module-adapters/table-owners.json \
+  --resident-stock-hooks --resident-on-demand
+```
+
+For a minimal comparison **without resident hooks**, omit the last two flags on a revision that links that profile. On `457a216cc` it stops at the unresolved symbol `modwerk_machine_assigned`, whose definition is built with the resident controller. Record the enabled flags alongside the revision so these two profiles can be distinguished.
+
+A successful build verifies the linked and packed private image. Keep its output outside Git. CPU figures require a run on a named build with the same saved Part, transport state and empty inventory. Label these figures as a development-base baseline; stock OS 1.40C has no Modwerk `stats` reading.
+
+### Measure a module
+
 A module that is slow, or that only works when it is the only thing running, takes the room of every other module and of the stock instrument. Every new module therefore carries `evidence/performance.json`, a record of three measurements that `npm run perf:audit -- check <file>` judges and `module:doctor` enforces for modules listed from 7 October 2026. Earlier modules keep their [qualification evidence](MODULE_QUALIFICATION.md). Like `fx:audit`, the judgement runs offline and the numbers come from the native harness, which CI never has: a green `npm run check` says nothing about them. Start from `npm run perf:audit -- template dsp` (an effect, machine or other DSP module) `npm run perf:audit -- template coldfire` (a MIDI generator, MIDI effect or other ColdFire code) or `npm run perf:audit -- template key` (ColdFire code that runs only on a key press, below).
 
 New FX should aim for DSP cost in the **same ballpark as stock SPRING REV at its worst settings**. DSP cycles are tightly budgeted, so plan around that reference before implementation and measure as features are added. Benchmark Spring's expensive types/settings, endpoints, moving controls and trigger splits on both cores. Match units, audio buffers, sample/block sizes, core layouts and harness-overhead treatment. This is a design target without a fixed ratio or hard per-effect ceiling. A substantially more expensive design needs optimization and explicit review of the cost and remaining headroom. The complete supported configuration must still fit the instrument's real-time budget.
