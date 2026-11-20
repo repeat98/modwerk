@@ -84,6 +84,7 @@ no firmware. Hooks, entry points and state: [OCTATRACK_API.md](OCTATRACK_API.md)
 Each trial ends with a verdict from the unit's own log: a crash, DSP stall,
 frozen UI or skipped track during it fails the trial (exit 1), and it is
 rolled back even with `--accept`; `npm run device -- do diaglog` shows the log.
+Each incident names its boot and the seconds since that boot.
 
 **Two tiers.** `module:doctor -- --draft <id>` judges a draft as experimental:
 the lines a trial and a tester need (category, DSP sources, cross-compatibility,
