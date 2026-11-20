@@ -197,7 +197,7 @@ int main(void)
     memcpy(original, stock, sizeof stock);
     snapshot();
     uint8_t capabilities[12];
-    CHECK(modwerk_runtime_capabilities(capabilities) == 12u && be16(capabilities + 6) == (7u | 128u));
+    CHECK(modwerk_runtime_capabilities(capabilities) == 12u && be16(capabilities + 6) == (7u | 128u | 2048u)); /* 2048: machines judged (RUNTIME_SITE_EVENT_JUDGED) */
 
     /* Raw patches on an event's bytes are refused, naming the event, before memory is taken. */
     uint32_t none[RUNTIME_HOOKS];
@@ -426,6 +426,8 @@ int main(void)
     idle[171] = 1; resting_site(171, AT, 0); CHECK(install() && !memcmp(stock + (AT - STOCK), live_id(171)->site[0].code, 8));
     CHECK(modwerk_runtime_rest_poll() && !memcmp(stock + (AT - STOCK), live_id(171)->site[0].code, 8) && modwerk_runtime_intact() == 1);
     CHECK(removal(171) && !memcmp(stock + (AT - STOCK), bare, 8));
+    /* Capability 2048 tells a host that a machine's module may carry resting sites without its own ev_in_use. */
+    { uint8_t caps[12]; CHECK(modwerk_runtime_capabilities(caps) == 12u && ((unsigned)caps[6] << 8 | caps[7]) & 2048u); }
 
     /* A module the machine judges (a contributor to table 4, RUNTIME_SITE_EVENT_JUDGED: the Octatrack's machines) and
      * no ev_in_use of its own rests by the machine's answer, with its resting sites, which admission accepts for it.

@@ -60,6 +60,13 @@ static struct {
 #else
 #define UI_ROOTS_CAPABILITY 0u
 #endif
+/* 2048: the machine answers ev_in_use for the modules it judges (RUNTIME_SITE_EVENT_JUDGED), so such a module's sites may
+ * carry RUNTIME_SITE_RESTS without its own ev_in_use; an older base refuses that package as malformed. */
+#if RUNTIME_SITE_EVENTS && defined(RUNTIME_SITE_EVENT_IN_USE) && defined(RUNTIME_SITE_EVENT_JUDGED)
+#define JUDGED_CAPABILITY 2048u
+#else
+#define JUDGED_CAPABILITY 0u
+#endif
 int modwerk_runtime_set_busy(void) { return SET_ROWS != 0; }
 #ifndef MODWERK_RUNTIME_JOURNAL_EXTERNAL
 __attribute__((weak)) int modwerk_machine_journal_enabled(void) { return 0; }
@@ -162,7 +169,7 @@ unsigned modwerk_runtime_capabilities(uint8_t *out)
 {
     out[0] = 'M'; out[1] = 'W'; out[2] = 'C'; out[3] = 'P';
     out[4] = 1; out[5] = RUNTIME_ABI;
-    unsigned flags = RUNTIME_CAPABILITY_FLAGS | (RUNTIME_SITE_EVENTS ? 128u : 0u) | SET_CAPABILITY | UI_ROOTS_CAPABILITY;
+    unsigned flags = RUNTIME_CAPABILITY_FLAGS | (RUNTIME_SITE_EVENTS ? 128u : 0u) | SET_CAPABILITY | UI_ROOTS_CAPABILITY | JUDGED_CAPABILITY;
     out[6] = (uint8_t)(flags >> 8); out[7] = (uint8_t)flags;
     out[8] = (uint8_t)(RUNTIME_SITES >> 8); out[9] = (uint8_t)RUNTIME_SITES;
     out[10] = (uint8_t)(RUNTIME_COPIES >> 8); out[11] = (uint8_t)RUNTIME_COPIES;
