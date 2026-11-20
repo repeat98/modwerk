@@ -92,7 +92,17 @@ I installed Grain as a card set (`MODWERK0.SET`) on a Modwerk base built locally
 | Two tracks, DENS 100, SPRY 40, PAN 108 | 77 to 81 % | about +18 each |
 | Three tracks, the same settings | 90 to 91 % | glitches audible |
 
-A plain Flex track with the same sample and the 16-trig pattern of the MKII run were not measured yet. Mono and stereo samples were not compared on the same settings.
+The same stereo sample on a plain Flex track, and the 16-trig pattern of the MKII run (one track, 140 BPM, a trig on each of the 16 steps), read the same way:
+
+| Case | CPU meter | Over the stopped project (43 %) |
+| --- | --- | --- |
+| Flex, LOOP on, one sustained note | 47 % | about +4 |
+| Flex, 16 trigs | 49 to 50 % | about +6 to +7 |
+| Grain, defaults, one sustained note | 56 to 58 % | about +14 |
+| Grain, DENS 127, SPRY 127, SCAN at its maximum, one sustained note | 63 to 65 % | about +21 |
+| Grain, the same settings, 16 trigs | 64 to 65 % | about +21 to +22 |
+
+Grain costs about 10 points more than Flex with its defaults and about 15 more at its densest. The 16 trigs add nothing visible to Grain's cost: the settings decide it, not the pattern. The MKII run measured +24 points for the same pattern and settings (33 % to 57 %), close to the MKI's +21 to +22, though the two meters were read differently. Mono and stereo samples were not compared on the same settings.
 
 ## What was tested only in an emulator (ot_emu, MKII mode; not hardware)
 - A power cycle with the stock-faithful Part check, on a base **without** any knowledge of GRAIN: the track comes back
