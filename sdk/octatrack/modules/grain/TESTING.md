@@ -2,6 +2,29 @@
 
 Grain 0.1.0-experimental · by A Force Truly Evil.
 
+## Voice limits under USB audio and MIDI
+
+The MKII recorded a fresh 37,800-frame, 24-bit stereo source into R3. All three binaries used the same dense settings, A16 Part 3 at 100 BPM, one Grain assignment, six untriggered THRU tracks and a trig on every step of the test track. The comparison builds change the loop limit for spawning and mixing. The six-voice package matched the draft byte for byte.
+
+| Voices | 5 s capture T1 / T5 | 65 s capture T1 / T5 | MIDI alone T1 / T5 | Capture + MIDI T1 / T5 |
+|---|---|---|---|---|
+| 6 | 3 / 2 | — / — | 0 / 0 | — / — |
+| 5 | 0 / 0 | 1 / 0 | 0 / 0 | — / — |
+| 4 | 0 / 0 | 0 / 0 | 0 / 0 | 138 / 79 |
+
+Counts include startup and stop. A dash marks an unmeasured window. The stock Flex short capture on each track counted zero. The guard counts skipped machine renders. Short-window results varied with the Part and do not establish a worst-case limit.
+
+All three host renders were sample-identical at defaults, with at most two grains active. With the same dense plucked-chord phrase and output gain, six, five and four voices averaged 5.86, 4.90 and 3.93 simultaneous grains. RMS levels were −18.82, −19.39 and −20.48 dBFS respectively. The caps preserve the individual grain algorithm and change which overlaps play.
+
+[Build hashes, guard windows, MIDI counters and listening measurements](evidence/timing/voice-limits.json)
+
+- Grain, 3 voices on T1, 13-second combined window, 6 skipped renders and 74.6 % mean frame-interrupt time during the first ten seconds.
+- Amiga on T1, 13-second combined window, 0 skipped renders and 68.4 % mean frame-interrupt time during the first ten seconds.
+- POLY8 on T1, 13-second combined window, 0 skipped renders and 64.3 % mean frame-interrupt time during the first ten seconds.
+- Stock Flex on T1, 13-second combined window, 0 skipped renders and 60.1 % mean frame-interrupt time during the first ten seconds.
+
+The A16 pattern and both copies of Part 3 matched their starting bytes on return. A02, its pattern, 140 BPM and T2 were restored. The original working Part matched before correcting T4’s two recorder inputs to their stereo pairs, as observed at the beginning of the first turn. Recorder RAM returned to 16 bits with empty slots. The original production base booted with zero saved and zero live modules.
+
 ## Card-free 24-bit playback, render timing and USB recording
 
 On 20 November 2026 a queued Octatrack MKII running OS 1.40C and RAM base `06e08f35c62c02ce` recorded 37,800 stereo frames into recorder 3 at 24 bits. Normalization in the audio editor produced a source with distinct left and right samples and nonzero low bytes. Stock Flex played that recording through MAIN. The CF card was physically out throughout. [Run measurements](evidence/timing/recorder.json)
