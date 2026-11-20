@@ -70,8 +70,11 @@ Two things it found in the emulator shape the rest:
 - One catalogue module, the present id `usb-audio-out-tracks-main-cue`, so sets, reports and changelogs keep working.
 - The layout is a setting of the set on the site, as today. Each layout is its own package build of the same
   module id; changing it replaces the package and reconnects.
-- PROJ > MODWERK > USB AUDIO moves into it with the three choices tried in #1517 (ALL CHANNELS, MAIN + CUE ONLY,
-  OFF), which change no descriptor. The 13 November measurements there are the baseline.
+- **The player switches it on the Octatrack, in the Modwerk settings** (owner, 20 November 2026): the module adds
+  the row PROJ > MODWERK > USB AUDIO through the base's menu rows, with the three choices tried in #1517 (ALL
+  CHANNELS, MAIN + CUE ONLY, OFF). They change no descriptor, so nothing reconnects and the host keeps its
+  channel count; the choice is kept across power cycles. The row is there only while the module is installed.
+  The 13 November measurements in #1517 are the baseline.
 - The imported producer source stays exact; the adapter inserts at guarded seams, as `base_usb_functions.py` does.
 
 ## Sync
