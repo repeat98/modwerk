@@ -6,7 +6,8 @@
       "Play a Flex sample as a cloud of up to six grains per track.",
       "Set POS and SPRY across the full sample, including long recordings, and see the position on the waveform.",
       "Keep SRC and SETUP values in their own slots when a Grain track triggers or plays.",
-      "Reserve enough CPU for six grains when adding a Grain track to a Part."
+      "Dense stereo grains use less CPU. The base reserves 35 points when adding a Grain track to a Part.",
+      "Switching from a long sample to a very short one wraps the SCAN head immediately."
     ]
   }
 ]

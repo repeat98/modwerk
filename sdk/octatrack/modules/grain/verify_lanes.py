@@ -1,4 +1,5 @@
 """Check the compiled Grain wrappers against a synthetic Flex frame on a ColdFire CPU."""
+import hashlib
 import pathlib
 import struct
 import subprocess
@@ -65,6 +66,41 @@ def check_track(image, symbols, track, ping):
         raise AssertionError(f"the renderer read different SRC words on T{track + 1}, ping {ping}")
 
 
+def check_stereo(image, symbols):
+    """Exercise the packed big-endian read and ADDX carry in the shipped instructions."""
+    engine, params, sample, output, storage = 0x200000, 0x202000, 0x202040, 0x203000, 0x300000
+    pcm = bytes((i * 59 + (i >> 3) * 97) & 255 for i in range(614400))
+    # SHA-256 of 16 output frames and the six GranGrain structs from the previous
+    # draft package, 329b40ef. Alternate forward and reverse voices.
+    cases = [
+        (2, 0, True, "567e95e8a2887e420566f353d0f5a16f2a03d8dc03245f011f1fd64c0b9395a0"),
+        (2, 0x1f59ac3a, True, "5bb741c2795c85e1ed3ac4ab9f616f380f5f79af691da2c5f2fb5beecfc6edd7"),
+        (2, 0x1f59ac3a, False, "34140881c9dfc31c4edcb656e95b8554776ec03d40da6febfcde6de9240c4869"),
+        (3, 0x067ab234, True, "85130a1c13ca4acbe83c7d8f32f5d18b13411bfeb53cb30e3c9464139919f9ca"),
+    ]
+    for width, fraction, panned, expected in cases:
+        cpu = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
+        cpu.ctl_set_cpu_model(m68k_const.UC_CPU_M68K_CFV4E)
+        for address, size in ((IMAGE, 0x10000), (engine, 0x10000), (storage, 0xa0000)):
+            cpu.mem_map(address, size)
+        cpu.mem_write(IMAGE, image)
+        cpu.mem_write(storage, pcm)
+        for voice in range(6):
+            reverse = voice % 2
+            pan = (9817 + 3001 * voice) * (-1 if reverse else 1) if panned else 0
+            grain = struct.pack(">7Ii", 200 + 6000 * voice, 0x1f11ab20, 1200, 0x041234, 0x265, 0, reverse, pan)
+            cpu.mem_write(engine + voice * len(grain), grain)
+        cpu.mem_write(params, bytes((60, 127, 127, 127, 2, 12, 127, 1, 0, 1, 0, 0)))
+        cpu.mem_write(sample, struct.pack(">IBBII", len(pcm) // (width * 2), width, 2, 0, storage))
+        cpu.mem_write(STACK, struct.pack(">9I", RETURN, engine, 0, params, sample, 1, fraction, output, 16))
+        cpu.reg_write(m68k_const.UC_M68K_REG_SR, 0x2700)
+        cpu.reg_write(m68k_const.UC_M68K_REG_A7, STACK)
+        cpu.emu_start(symbols["gran_render"], RETURN, count=50000)
+        rendered = cpu.mem_read(output, 16 * 8) + cpu.mem_read(engine, 6 * 32)
+        if cpu.reg_read(m68k_const.UC_M68K_REG_PC) != RETURN or hashlib.sha256(rendered).hexdigest() != expected:
+            raise AssertionError(f"ColdFire stereo render changed for {width}-byte samples, step {fraction:#x}, pan {panned}")
+
+
 if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as directory:
         work = pathlib.Path(directory)
@@ -75,4 +111,6 @@ if __name__ == "__main__":
         for track in range(8):
             for ping in range(2):
                 check_track(image, symbols, track, ping)
+        check_stereo(image, symbols)
     print("[PASS] Grain preserves all 48 Flex frame bytes across START and render on all eight tracks and both buffers")
+    print("[PASS] Compiled 16-bit and 24-bit stereo kernels match the reference PCM and six cursors")

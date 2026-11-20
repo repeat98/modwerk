@@ -6,9 +6,9 @@
   "cycles": {
     "unit": "cycles/event",
     "static": null,
-    "measured": null,
-    "budget": null,
-    "method": "Not measured in cycles. No static bound was counted and no event was timed on the chip. What exists: the base's CPU meter, read by eye on the author's Octatrack MKI (OS 1.40C, Modwerk base built from this repository's sources, USB Audio off variant, 20 November 2026, a pattern with the tracks playing). 44 % with no Grain track. With two Grain tracks, mono, at DENS 64: 63 to 64 %. Two stereo tracks at DENS 64: 64 to 65 %. Two tracks at high density and PAN: 67 to 68 %. Two tracks with DENS and PAN at the maximum and all six grains sounding: 73 to 74 %. That is about 10 points of the meter for a track at DENS 64 and 14 to 15 with everything at the maximum. These are readings of the whole unit, stock work included, not the longest event of the module's code. The DSP and memory readings did not move. The engine itself is checked on a computer (verify.py): its optimized read paths give the same samples, byte for byte, as the plain ones."
+    "measured": 34402,
+    "budget": 95782,
+    "method": "MKII on OS 1.40C, RAM base 06e08f35c62c02ce, Grain package ff105b4615e339742a60241c7ab7b1c10e68bc3dd585cf33a3a9a13fa9d49d5f. A render is one guarded T1 call inside a 16-sample frame. At 264 MHz the whole-frame deadline is 95,782 cycles. Reset the track timers with cpu and read mw_frame_cost_max[0] and [8] after each six-second window. Across three triggered settings the longest first call took 14,628 ticks and the longest second call took 17,201 ticks at 132 MHz (34,402 CPU cycles). These elapsed times include the stock Flex render, Grain and any interrupts. This is an observed maximum for one stereo 16-bit sample. A static bound and 24-bit hardware measurements remain open."
   },
   "load": {
     "frameUs": 362.8,
@@ -16,7 +16,7 @@
     "moduleLongestUs": null,
     "stockIdlePercent": null,
     "moduleIdlePercent": null,
-    "method": "No cfmeter.py capture and no MIDI flood: Grain has no MIDI path. It works in the frame interrupt on every frame of a sounding Grain track, so the comparison that exists is the CPU meter above, with and without Grain tracks, on the same unit and pattern. The base's frame guard counter (mw_frame_sheds) was read on the unit with the full-screen page's own debug build and did not move from 0 while two Grain tracks played."
+    "method": "MKII B16 Part 1, T1 SYNC at 140 BPM with a stereo 16-bit, 88,200-frame sample. All eight tracks had both FX slots set to NONE throughout each comparison. With all 16 trigs removed and then restored, mean frame-interrupt load was 26.6/58.0% (SQR), 26.7/58.4% (NORM) and 26.7/59.2% (shorter NORM). The guard reported zero skips. The previous package measured 26.7/60.3% in the matched SQR setup. The loaded package was present in both windows. The stock-image load comparison under the prescribed MIDI traffic remains outstanding."
   },
   "stress": {
     "floodMessagesPerSecond": null,

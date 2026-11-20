@@ -2,6 +2,36 @@
 
 Grain 0.1.0-experimental · by A Force Truly Evil.
 
+## Optimized stereo renderer, 20 November 2026
+
+The 25,544-byte package tested on the MKII has SHA-256 `ff105b4615e339742a60241c7ab7b1c10e68bc3dd585cf33a3a9a13fa9d49d5f`. Both builders produced this package. All catalogue packages matched a rebuild with local OS 1.40C.
+
+On development base `06e08f35c62c02ce`, B16 Part 1 played at 140 BPM. T1 used an 88,200-frame stereo 16-bit Flex sample, PTCH 66, POS 60, DENS/SPRY/PAN 127, SCAN 73, DIR 12 and SYNC. Both FX slots on all eight tracks were set to NONE for the entire comparison. With each package installed, we measured six seconds with no T1 trigs, then six seconds with all 16 T1 trigs. Each guard window covered over 16,800 frames. Other tracks, effects and guard settings were identical between the quiet and triggered windows.
+
+| Package and settings | Quiet | Triggered | Added frame time | Active grain lifetimes sampled during triggered playback | Skipped renders |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Previous `329b40ef`, SQR, SIZE 127 | 26.7% | 60.3% | 33.6 points | 5–6 | 0 |
+| Optimized, SQR, SIZE 127 | 26.6% | 58.0% | 31.4 points | 6 | 0 |
+| Optimized, NORM, SIZE 127 | 26.7% | 58.4% | 31.7 points | 6 | 0 |
+| Optimized, NORM, shorter SIZE (39 encoder steps down) | 26.7% | 59.2% | 32.5 points | 5–6 | 0 |
+
+In the matched SQR case, the optimization saved 2.2 points. A shorter grain crosses more of its envelope per block. Keep the 35-point reservation until hardware timings cover more samples, including 24-bit stereo. The available samples in this project were all 16-bit stereo.
+
+Resetting the track timers before each window and reading `mw_frame_cost_max[0]` and `[8]` afterward gave maxima of 14,628 and 17,201 timer ticks across the triggered windows. At 132 MHz the second value is 130.3 µs, or 34,402 CPU cycles, for the longest T1 call observed. The timed call includes stock Flex, Grain and interruptions. Whole-interrupt peaks in these three windows were 82.7%, 85.5% and 83.9% of a frame. The formal static bound and stock comparison under MIDI load remain open.
+
+| Regression | How it was checked | Result |
+| --- | --- | --- |
+| Pitched and panned grains, forward and reverse | `test_grain.py` compares reference and optimized PCM plus six grain cursors on 1,600 blocks. Covers four windows, mono/stereo, 16/24-bit, uneven pages and block sizes from 1 to 32. The compiled checks in `verify_lanes.py` also exercise packed stereo reads and fractional carry against the previous package. | Byte-identical audio and cursors. The existing 28 optimized-path comparisons, three reference renders, 1,792 position/scatter cases and all 16 Flex control lanes also passed. |
+| Tempo, density and mode changes | Switch SYNC division, tempo and RAND/SYNC while reusing the same track. | The scheduler followed each change. |
+| Switch from a long sample to a one-frame sample with SCAN running | Set the previous read head to frame 44,860,415 and render 32 frames in either direction. | The head wraps immediately. The previous positive-SCAN path could subtract the new sample length millions of times inside the audio callback. |
+| Reversible install and playback | Compare the complete B16 pattern, the working and saved Part and the inventory before and after the trial. Return to A01 T1 and boot the original base `dfa438130710fea9`. Try this same package for 20 seconds beside its ten modules. | The pattern and Part matched byte for byte. Both trials rolled back. The normal base logged no crash, stall, freeze or skipped track in the coexistence trial. Its ten saved and live modules matched the starting inventory. |
+
+For a 16-frame block of six fractional-pitch stereo grains with alternating direction and nonzero pan, the isolated linked ColdFire renderer executed 5,448 instructions versus 7,588 before (28% fewer), with identical output and cursor state. This count covers the engine in an emulated CPU. The table above measures the complete playing track on hardware.
+
+The package loads 24,328 bytes of code and data and declares 2,124 bytes of BSS, totaling 26,452 static bytes. With GCC 16.2, the generator flags and `-fstack-usage -fcallgraph-info=su`, the deepest Grain audio path is `grain_render` (164 bytes), `gran_render` (448) and `stereo_page` (72), plus three four-byte return addresses, totaling 696 bytes. The waveform draw path remains 392 bytes. Interrupt nesting, stock callbacks and loader overhead are outside those bounds.
+
+Release qualification still needs the ordered assignment test on a suitable Part, the extended stress and soak, and a musician's listening and reboot checks on the final package. The author's SCAN +2.00 endpoint work is separate from the sample-change fix. Earlier MKI meter readings and MKII trials below apply to their named builds.
+
 ## SRC and SETUP control-buffer repair, 20 November 2026
 
 The control-repair build is `285605e6b24929f22d3f9d1c3eca61093e88461f315e8ba739c75f1ef4504808` (24,140 bytes, with 22,884 bytes of loaded code and data and 2,124 bytes of BSS). The development and catalogue builders produced identical bytes, and the catalogue-wide rebuild passed against OS 1.40C.

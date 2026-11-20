@@ -52,6 +52,7 @@ typedef struct {
     uint32_t scan, scanf;           /* SCAN: lo que ha corrido el cabezal desde la nota (frames, y fraccion Q16) */
     uint32_t count;                 /* largo del sample (para la pantalla) */
     uint8_t on, trig;
+    uint32_t sync_tempo24, sync_division;  /* cached inputs for the current SYNC spacing */
 } GranTrack;
 
 typedef struct {

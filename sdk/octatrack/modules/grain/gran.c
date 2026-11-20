@@ -78,15 +78,22 @@ void gran_params(GranEngine *e, unsigned track, const GranParams *p, const GranS
     uint32_t pos_word = p->pos > 127 ? 127u << 8 : ((uint32_t)p->pos << 8) | p->posf;
     t->pos = gran_position(count, pos_word);
     t->spray = gran_position(count, (uint32_t)(p->spray > 127 ? 127 : p->spray) << 8);
+    if (t->scan >= count) t->scan %= count;   /* a shorter sample may replace the playing sample */
     t->count = count;
     t->len = gran_size[p->size > 127 ? 127 : p->size];
     d = p->dens > 127 ? 127 : p->dens;
-    t->spacing = (t->len * gran_dens[d]) >> 8;
-    if (!t->spacing)
-        t->spacing = 1;
-    if (p->sync && tempo24) {       /* v077: un compas entre la division que elige DENS */
-        uint32_t n = BAR_44K_24 / tempo24 / gran_div[d * 11 / 128];
-        t->spacing = n ? n : 1;
+    if (p->sync && tempo24) {
+        unsigned division = gran_div[d * 11 / 128];
+        if (t->sync_tempo24 != tempo24 || t->sync_division != division) {
+            uint32_t n = BAR_44K_24 / tempo24 / division;
+            t->spacing = n ? n : 1;
+            t->sync_tempo24 = tempo24;
+            t->sync_division = division;
+        }
+    } else {
+        t->sync_tempo24 = 0;
+        t->spacing = (t->len * gran_dens[d]) >> 8;
+        if (!t->spacing) t->spacing = 1;
     }
 }
 
@@ -163,14 +170,15 @@ static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const G
             f = t->scanf + ((uint32_t)step & 0xffffu);
             whole = ((uint32_t)step >> 16) + (f >> 16);
             t->scanf = f & 0xffffu;
+            if (whole >= s->count) whole %= s->count;
             t->scan += whole;
-            while (t->scan >= s->count) t->scan -= s->count;
+            if (t->scan >= s->count) t->scan -= s->count;
         } else {
             uint32_t back = (uint32_t)-step;
             whole = back >> 16;
             if ((back & 0xffffu) > t->scanf) { t->scanf += 0x10000u; whole++; }
             t->scanf -= back & 0xffffu;
-            whole %= s->count;
+            if (whole >= s->count) whole %= s->count;
             t->scan = t->scan >= whole ? t->scan - whole : t->scan + s->count - whole;
         }
     }
@@ -200,6 +208,93 @@ static inline int gran_fetch(GranPage *pg, const GranSample *s, uint32_t idx, in
     *m = (l + r) >> 1;
     *sd = (l - r) >> 1;
     return 1;
+}
+
+/* Stereo grains use complementary pan coefficients. Factoring out the unity term leaves one
+ * signed product per sample. The two shifts for left pan retain the original floor rounding. */
+static inline void mix_stereo(int32_t *mid, int32_t *side, int32_t l, int32_t r, int32_t window,
+                              int32_t pan)
+{
+    int32_t vm = (((l + r) >> 1) * window) >> 15;
+    int32_t vs = (((l - r) >> 1) * window) >> 15;
+    if (pan > 0) {
+        int32_t change = (-(vm + vs) * pan) >> 15;
+        vm += change;
+        vs += change;
+    } else if (pan < 0) {
+        int32_t product = (vm - vs) * pan;
+        vm += product >> 15;
+        vs += -product >> 15;
+    }
+    *mid += vm;
+    *side += vs;
+}
+
+static inline void advance_cursor(uint32_t *index, uint32_t *fraction, uint32_t whole, uint32_t frac)
+{
+#if defined(__m68k__) || defined(__mcoldfire__)
+    __asm__("add.l %3,%1\n\taddx.l %2,%0"
+            : "+&d"(*index), "+&d"(*fraction) : "d"(whole), "d"(frac) : "cc");
+#else
+    uint32_t next = *fraction + frac;
+    *index += whole + (next < *fraction);
+    *fraction = next;
+#endif
+}
+
+/* A separate kernel keeps the six-voice inner loop's registers free of the scheduler and
+ * page lookup state. The Q32.32 cursor carries into the sample index on the ColdFire. */
+static inline __attribute__((always_inline)) void stereo_loop(GranGrain *grain, const uint8_t *page,
+        unsigned bytes, uint32_t first, uint32_t whole, uint32_t frac, const uint16_t *win,
+        int32_t *mid, int32_t *side, unsigned n, int fixed_gain)
+{
+    uint32_t index = grain->idx - first, fraction = grain->fr;
+    uint32_t phase = grain->ph, phase_step = grain->phs;
+    int32_t pan = grain->pan / 2;
+    int32_t gain = win[(phase >> 16) & 255u];
+    for (unsigned i = 0; i < n; ++i) {
+        const uint8_t *q = page + index * (2u * bytes);
+        int32_t l, r;
+#if defined(__m68k__) || defined(__mcoldfire__)
+        if (bytes == 2u) {
+            uint32_t lr = *(const uint32_t *)(const void *)q;  /* one Flex RAM access for both channels */
+            l = (int16_t)(lr >> 16);
+            r = (int16_t)lr;
+        } else
+#endif
+        {
+            l = GRAN_RD16(q);
+            r = GRAN_RD16(q + bytes);
+        }
+        if (!fixed_gain) gain = win[(phase >> 16) & 255u];
+        mix_stereo(mid + i, side + i, l, r, gain, pan);
+        if (__builtin_constant_p(frac) && frac == 0) {
+            index += whole;
+        } else {
+            advance_cursor(&index, &fraction, whole, frac);
+        }
+        if (!fixed_gain) phase += phase_step;
+    }
+    grain->idx = first + index;
+    grain->fr = fraction;
+    grain->ph += n * phase_step;
+}
+
+static __attribute__((noinline)) void stereo_page(GranGrain *g, const uint8_t *page, unsigned bytes,
+        uint32_t first, uint32_t whole, uint32_t frac, const uint16_t *win, int32_t *mid, int32_t *side, unsigned n)
+{
+    int constant = (g->ph >> 16) == ((g->ph + (n - 1u) * g->phs) >> 16);
+    if (bytes == 2 && constant) {
+        if (!frac)
+            stereo_loop(g, page, 2, first, whole, 0, win, mid, side, n, 1);
+        else
+            stereo_loop(g, page, 2, first, whole, frac, win, mid, side, n, 1);
+    } else if (bytes == 2)
+        stereo_loop(g, page, 2, first, whole, frac, win, mid, side, n, 0);
+    else if (constant)
+        stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 1);
+    else
+        stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 0);
 }
 
 void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranSample *s, int32_t whole, uint32_t frac,
@@ -258,6 +353,11 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
              * palabra se lee de una vez (el ColdFire es big-endian, como el sample) y, sin paneo (cm = 32768, cs = 0), las
              * multiplicaciones del paneo dan vm y vs exactos y se quitan. Menos trabajo en la interrupcion de frame: menos
              * renders que la guardia de la base convierte en silencio (los clics). */
+            if (GRAN_PTR_PATH && fast && stereo && (g->pan || f || s->bytes != 2u)) {
+                stereo_page(g, (const uint8_t *)t->pg.page, s->bytes, t->pg.pfirst, (uint32_t)w, f,
+                            win, mid + start, side + start, m);
+                continue;
+            }
             if (GRAN_UNIT_PATH && fast && f == 0u && (w == 1 || w == -1) && s->bytes == 2u) {
                 const uint8_t *q = (const uint8_t *)t->pg.page + (idx - t->pg.pfirst) * 2u * s->channels;
                 int32_t dq = w * 2 * (int32_t)s->channels;

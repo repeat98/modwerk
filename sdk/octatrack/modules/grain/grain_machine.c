@@ -48,9 +48,10 @@ static uintptr_t flex_page(const void *ctx, uint32_t frame, uint32_t *first, uin
      * El tope es el total de paginas del arena, 14602. */
     uint32_t total = 14602u, index, page;
     if (((bases - 0x46000000u) | (map - 0x46000000u)) >= 0x02000000u) return 0;
-    index = U32(bases + 4u * p->slot) + frame / p->perpage;
+    uint32_t sample_page = frame / p->perpage;
+    index = U32(bases + 4u * p->slot) + sample_page;
     if (index > total || !(page = U16(map + 2u * index)) || page > total) return 0;
-    *first = frame - frame % p->perpage; *count = p->perpage;
+    *first = sample_page * p->perpage; *count = p->perpage;
     return U32(0x4000045eu) + page * 6144u;
 }
 static int recorder_idle(uint32_t slot)
@@ -59,10 +60,11 @@ static int recorder_idle(uint32_t slot)
     return !U8(0x80004f1eu + 84u * (t + 8u * sel)) && (U8(0x80004f1eu + 84u * (t + 8u * (1u - sel))) | 2u) == 2u;
 }
 /* 1 cuando el sample de la voz se puede leer: lo describe en smp[track] */
+static const uint16_t frames_per_page[] = {2048, 1024, 3072, 1536}; /* 6144 bytes / (bytes per channel * channels) */
 static int flex_sample(unsigned track, uintptr_t voice)
 {
     uint32_t taken = 14602u - U32(0x40096f82u), m = U32(voice + 4u) - 0x46c922c4u, slot = m / 44u;
-    if (taken >= 14602u || U32(0x4000045eu) - 0x40a955e0u > (taken & 0xffffu) * 6144u || m % 44u || slot >= 136u) return 0;
+    if (taken >= 14602u || U32(0x4000045eu) - 0x40a955e0u > (taken & 0xffffu) * 6144u || slot >= 136u || m != slot * 44u) return 0;
     if (slot >= 128u && !recorder_idle(slot)) return 0;
     uintptr_t at = 0x46c922c4u + m;
     uint32_t mode = U32(at), frames = U32(at + 16u), id = U32(at + 20u);
@@ -71,7 +73,7 @@ static int flex_sample(unsigned track, uintptr_t voice)
     s->bytes = mode < 2u ? 3u : 2u; s->channels = (uint8_t)((mode & 1u) + 1u); s->count = frames;
     s->locate = flex_page; s->ctx = &pages[track];
     if (pages[track].slot != slot) eng.t[track].pg.pcount = 0;  /* otro sample: olvidar la pagina en cache */
-    pages[track].slot = slot; pages[track].perpage = 6144u / (s->bytes * s->channels);
+    pages[track].slot = slot; pages[track].perpage = frames_per_page[mode];
     return 1;
 }
 
@@ -91,7 +93,7 @@ static int slot_sample(unsigned track, uint32_t slot)
     GranSample *s = &dsmp[track];
     s->bytes = mode < 2u ? 3u : 2u; s->channels = (uint8_t)((mode & 1u) + 1u); s->count = frames;
     s->locate = flex_page; s->ctx = &dpages[track];
-    dpages[track].slot = slot; dpages[track].perpage = 6144u / (s->bytes * s->channels);
+    dpages[track].slot = slot; dpages[track].perpage = frames_per_page[mode];
     return 1;
 }
 
@@ -144,6 +146,7 @@ static volatile uint8_t *part_at(unsigned i);
 #define NB_PAN(t) (64u + 30u * (t))
 static void params_of(const View *v, GranParams *p, unsigned track)
 {
+    const volatile uint8_t *pp = bank_ok() && track < 8u ? part_at(U8(0x80000003u) & 3u) : 0;
     /* POS con su fraccion: el octeto bajo de la palabra es lo que ponen las escenas, los LFOs y los slides entre dos
      * valores; girando el mando es 0 y POS suena igual que en el original */
     /* y los octavos del mando (SETUP F, oculto: pos_step), 1/8 = 32/256, como los pasos de POS del original */
@@ -151,7 +154,7 @@ static void params_of(const View *v, GranParams *p, unsigned track)
         /* solo si POS es la del mando tal cual (la de la Part, sin escena, LFO ni p-lock): con una escena el crossfader no
          * llegaba al principio, porque los octavos se sumaban tambien a su valor (author, 19/11) */
         uint32_t pw = v->w[1];
-        if (!(pw & 0xffu) && bank_ok() && track < 8u && (pw >> 8) == part_at(U8(0x80000003u) & 3u)[0x30u + 30u * track + 1u])
+        if (!(pw & 0xffu) && pp && (pw >> 8) == pp[0x30u + 30u * track + 1u])
             pw += 32u * (v->setup[5] & 7u);
         if (pw > 0x7fffu) pw = 0x7fffu;
         p->pos = (uint8_t)(pw >> 8); p->posf = (uint8_t)pw;
@@ -169,7 +172,6 @@ static void params_of(const View *v, GranParams *p, unsigned track)
     }
     p->shape = v->setup[0]; p->sync = v->setup[3]; p->freeze = 0;
     {   /* DIR y PAN, de la Part que suena */
-        const volatile uint8_t *pp = bank_ok() && track < 8u ? part_at(U8(0x80000003u) & 3u) : 0;
         p->dir = pp ? pp[NB_DIR(track)] & 127u : 0; p->pan = pp ? pp[NB_PAN(track)] & 127u : 0;
     }
 }
@@ -758,10 +760,14 @@ void grain_draw(unsigned char *frame)
         /* SRC SETUP de una pista nuestra: la pagina de stock sin la barra de titulo invertida de abajo (fila 59). La funcion
          * de pagina de SETUP no se llama en cada dibujo (contadores en pantalla, emulador 19/11), asi que se mira el fotograma */
         {
-            unsigned tt = U8(0x100b14ccu) & 7u; int lit = 0;
-            for (int x = 20; x < 110; ++x) lit += (frame[x * 8 + 7 - (59 >> 3)] >> (59 & 7)) & 1;
-            was_setup = bank_ok() && !U8(0x80000015u) && U8(0x46c7d8d8u) == 0 && !U32(POOL_WINDOW) && !U32(0x460e5e30u) &&
-                ours(part_at(U8(0x100b14cfu) & 3u), tt) && lit * 2 < 90;
+            unsigned tt = U8(0x100b14ccu) & 7u;
+            was_setup = bank_ok() && !U8(0x80000015u) && U8(0x46c7d8d8u) == 0 && !U32(POOL_WINDOW) &&
+                        !U32(0x460e5e30u) && ours(part_at(U8(0x100b14cfu) & 3u), tt);
+            if (was_setup) {
+                unsigned lit = 0;
+                for (int x = 20; x < 110; ++x) lit += (frame[x * 8 + 7 - (59 >> 3)] >> (59 & 7)) & 1;
+                was_setup = lit < 45;
+            }
             setup_visible = (uint8_t)was_setup;
             if (was_setup && !U32(POOL_WINDOW)) pool_direct = 0;        /* de vuelta en una pagina: el pool, cerrado */
         }
