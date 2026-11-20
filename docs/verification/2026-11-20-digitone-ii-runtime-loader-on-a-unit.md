@@ -14,3 +14,23 @@ The Digitone II's runtime loader (`sdk/machines/digitone-ii/LOADER.md`) on the c
 - **The example module** `sdk/machines/digitone-ii/examples/corner_dot.c` (44 bytes, module aee18e5a, its draw hook only), on the merged build: before it the screen's bottom-right 3x3 pixels read clear; kept and a redraw later all nine were set; removed and a redraw later clear again.
 - **Health:** the diagnostics log held its START only (no FREEZE); 81,400 frame interrupts to 1,634 UI ticks over the first session, 50 to one, so the UI never stood still. How it sounded was not asked yet.
 - **Not tested:** stock copies, a switch while another task is paused inside a site (the check that refuses it never had to), a package converted from a catalogue mod, a module that takes keys, long sessions, Keep across many modules.
+
+## Edge cases
+
+On the merged build (main CRC 304cfcdc) unless the row says otherwise; private test packages built with `sdk/runtime/loader/build.py`.
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| A trial while the sequencer plays | the loader must never switch while audio-critical code runs | PLAY over the link, then `try` | pass: ENTER refused as unsafe, nothing changed |
+| The host goes away during a trial | a trial no one keeps must not stay | a person's key presses refused the host mid-trial | pass: rolled back by itself about 10 s later, stopped |
+| Two modules at once | positions, hooks and pool extents side by side | `try --keep` of the tick counter, then `corner_dot` | pass: two live, both hooks ran |
+| A same-id replacement | the loader swaps one position in place | `corner_dot` kept, then a build with the dot moved left under the same id | pass: still two live, only the new dot drawn |
+| A site the core owns | a module must never patch a base or core site | a package for 0x4002e464, the core's tick site | pass: refused at commit, the bytes unchanged |
+| A full pool | 2 MiB at a fixed address must refuse, not overrun | eight modules with 280 KiB of bss each, kept one by one | pass: seven fit beside two small ones, the eighth refused at verify; 9 live, frames to ticks 50:1, the log START only |
+| A refusal leaves upload mode | a refused package must not hold the loader | the two refusals above, after the host fix | pass: phase normal at once (before the fix, after about 10 s) |
+| A stock-code site, patched and restored | the switch writes stock code under the lock | `jsr` at 0x4002e4c0, ten keep and remove rounds | pass: patched while live, stock bytes after |
+| Removal and its rollback | a removal is a trial too | `remove`, then undo, then `remove --keep` | pass |
+| A power cycle with modules kept | RAM modules must go and the flashed base come back | the developer power-cycled with a module kept | pass: `ident` boot 0, the flashed base |
+| A switch while another task is paused inside a site | the paused-task check must refuse it | not run: no way to hold another task inside a site on demand | not run: the check never had to refuse |
+| Stock copies (ABI 7) | copies are reconstructed from stock bytes | not run: no Digitone II package carries copies yet | not run |
+| A module that takes a key or a turn | a taken event never reaches stock | not run: the probe module takes nothing | not run |

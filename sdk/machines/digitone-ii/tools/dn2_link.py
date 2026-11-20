@@ -262,12 +262,26 @@ def hello(port):
 
 
 def load(package, port):
-    """Stages a package and publishes it as a trial; returns the trial's transaction and session."""
-    import hashlib
+    """Stages a package and publishes it as a trial; returns the trial's transaction and session. A refusal leaves
+    upload mode at once (abort, then leave) rather than waiting for the unit's ten seconds."""
     h = hello(port)
     if h['phase'] != 0:
         sys.exit('the loader is in phase %s: keep or undo first' % MU_PHASE[h['phase']])
     session, tx = h['session'], h['last'] + 1
+    try:
+        return stage_and_publish(package, session, tx, h, port)
+    except SystemExit:
+        now = hello(port)
+        if now['phase'] in (2, 3):                  # receiving, verified: drop what was staged
+            submit('abort', tx, session, port=port, want=range(13))
+            now = hello(port)
+        if now['phase'] == 1:                       # ready: out of upload mode
+            submit('leave', now['current'], session, port=port, want=range(13))
+        raise
+
+
+def stage_and_publish(package, session, tx, h, port):
+    import hashlib
     submit('enter', 0, session, port=port)
     digest = hashlib.sha256(package).digest()
     submit('begin', tx, session, h['base'] + digest + struct.pack('>II', h['generation'], len(package)), port=port)
