@@ -219,6 +219,11 @@ export async function planDt2MachineSelectors(stock: Uint8Array, tableAddress: n
 const PLAYER_CALL = 0x28000000 + 2 * 0x1c6b00
 const PLAYER_CALL_GUARD = '4e25f0a1e4197c2c190ef606f09623a9ecf94e7274608038c39d0f09514b6621'
 const STOCK_PLAYER = 0x1c4ecf
+// The pass's other call, which a per-voice flag picks instead (CALL 0x1c5576 at 0x1c6af1). The emulator's test samples
+// never take it; on a unit a stereo sample's second voice played unchanged beside the grains, as through this call.
+const ALT_PLAYER_CALL = 0x28000000 + 2 * 0x1c6af1
+const ALT_PLAYER_CALL_GUARD = '483ccef5002c7c309b5c77787f3fa09dff0a741623b0b429201bb520d03a2e2f'
+const ALT_STOCK_PLAYER = 0x1c5576
 const FIRST_ADDED_TYPE = 7, MAX_ADDED_TYPES = 4
 // Universal register codes, and the 32-bit instructions the dispatcher uses (parcels, little-endian bytes).
 const R0 = 0x00, R1 = 0x01, I0 = 0x10, M0 = 0x20, ASTATX = 0x76, STKYX = 0x78
@@ -245,43 +250,61 @@ export async function planDt2MachinePlayers(
     throw new Error('Invalid machine player')
   }
   if (await sha256Hex(readStored(stock, PLAYER_CALL, 6)) !== PLAYER_CALL_GUARD) throw new Error('SHARC player call guard mismatch')
+  const altGuard = await sha256Hex(readStored(stock, ALT_PLAYER_CALL, 6))
+  if (altGuard !== ALT_PLAYER_CALL_GUARD) throw new Error('SHARC second player call guard mismatch: ' + altGuard)
   const save = dataAddress / 4, table = save + 8
   const data = new Uint8Array(4 * (8 + 32))
   for (let voice = 0; voice < 32; voice++) new DataView(data.buffer).setUint32(4 * (8 + voice), typesAddress + 4 * (voice >> 1), true)
 
-  const pc = programCounter(codeAddress)
   const parts: Uint8Array[] = []
-  let at = pc // short words
+  let at = programCounter(codeAddress) // short words
   const emit = (bytes: Uint8Array) => { parts.push(bytes); at += bytes.length / 2 }
   const restore = () => SAVED.forEach((reg, index) => emit(instruction(0x1000 | reg, save + index)))
-  SAVED.forEach((reg, index) => emit(instruction(0x1100 | reg, save + index)))
-  emit(instruction(0x0f00 | R0, 32))
-  emit(instruction(0x013e, 0x200e))            // R0 = R0 - R14: the voice
-  emit(M0_FROM_R0)
-  emit(instruction(0x0f00 | I0, table))
-  emit(R1_FROM_I0_M0)                          // its track's type word address
-  emit(I0_FROM_R1)
-  emit(M0_ZERO)
-  emit(R1_FROM_I0_M0)                          // the track's raw machine type
-  const branches: number[] = []
-  for (const player of players) {
-    emit(instruction(0x0f00 | R0, player.type))
-    emit(instruction(0x013e, 0x2010))          // R0 = R1 - R0
-    branches.push(parts.length)
-    emit(new Uint8Array(6))                    // IF EQ JUMP, filled in below
-  }
-  restore()
-  emit(instruction(0x063e, STOCK_PLAYER))
-  players.forEach((player, index) => {
-    parts[branches[index]] = instruction(0x0600, at)
+  // One entry for each of the render pass's two calls: an added machine's voice goes to its player with the word at
+  // DT2_MACHINE_STOCK_PLAYER (save + 6) saying which stock player the pass chose (0: 0x1c4ecf, 1: 0x1c5576), so the
+  // player renders with the same one; any other voice goes to that stock player, unchanged.
+  const entry = (stockPlayer: number, which: number) => {
+    const start = at
+    SAVED.forEach((reg, index) => emit(instruction(0x1100 | reg, save + index)))
+    emit(instruction(0x0f00 | R0, 32))
+    emit(instruction(0x013e, 0x200e))          // R0 = R0 - R14: the voice
+    emit(M0_FROM_R0)
+    emit(instruction(0x0f00 | I0, table))
+    emit(R1_FROM_I0_M0)                        // its track's type word address
+    emit(I0_FROM_R1)
+    emit(M0_ZERO)
+    emit(R1_FROM_I0_M0)                        // the track's machine type
+    const branches: number[] = []
+    for (const player of players) {
+      emit(instruction(0x0f00 | R0, player.type))
+      emit(instruction(0x013e, 0x2010))        // R0 = R1 - R0
+      branches.push(parts.length)
+      emit(new Uint8Array(6))                  // IF EQ JUMP, filled in below
+    }
     restore()
-    emit(instruction(0x063e, player.entry))
-  })
+    emit(instruction(0x063e, stockPlayer))
+    players.forEach((player, index) => {
+      parts[branches[index]] = instruction(0x0600, at)
+      emit(instruction(0x0f00 | R0, which))
+      emit(instruction(0x1100 | R0, save + 6))
+      restore()
+      emit(instruction(0x063e, player.entry))
+    })
+    return start
+  }
+  const pc = entry(STOCK_PLAYER, 0)
+  const altPc = entry(ALT_STOCK_PLAYER, 1)
   const code = new Uint8Array((parts.reduce((n, part) => n + part.length, 0) + 3) & ~3)
   parts.reduce((offset, part) => { code.set(part, offset); return offset + part.length }, 0)
   const allocations = [{ address: codeAddress, bytes: code }, { address: dataAddress, bytes: data }]
   checkAllocations(allocations)
-  return { sites: [{ address: PLAYER_CALL, guard: PLAYER_CALL_GUARD, instruction: instruction(0x1804, pc) }], allocations }
+  return {
+    sites: [
+      { address: PLAYER_CALL, guard: PLAYER_CALL_GUARD, instruction: instruction(0x1804, pc) },
+      { address: ALT_PLAYER_CALL, guard: ALT_PLAYER_CALL_GUARD, instruction: instruction(0x1804, altPc) },
+    ],
+    allocations,
+  }
 }
 
 // The receive site: the sound chip's handler of each transfer from the ColdFire, with I3 at the received frame; the
