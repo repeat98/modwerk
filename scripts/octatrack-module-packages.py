@@ -329,4 +329,23 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except SystemExit as result:
+        if result.code not in (None, 0):
+            raise
+    release_catalog = json.loads((APP / 'sdk/catalog.json').read_text())
+    if '--prepare-ports' not in sys.argv and any(
+            row['id'] == 'usb-audio-out-tracks-main-cue' for row in release_catalog['modules']):
+        # The configurable USB function owns one package outside the ordinary
+        # effect list. Rebuild its bytes and binding with the same release.
+        from argparse import ArgumentParser
+        options = ArgumentParser(add_help=False)
+        options.add_argument('--check', action='store_true')
+        options.add_argument('--stock', type=Path)
+        options.add_argument('--upstream', type=Path, default=Path.home() / '.cache/modwerk-upstream/elekloader')
+        args, _ = options.parse_known_args()
+        spec = importlib.util.spec_from_file_location('usb_audio_release', APP / 'scripts/octatrack-usb-audio-release.py')
+        release = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(release)
+        release.generate(args.check, args.stock, args.upstream)
