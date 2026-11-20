@@ -25,8 +25,9 @@ describe('release package scope and reviewed source inventory', () => {
       expect(paths).toContain('modules/' + id + '/manifest.py')
     }
     expect(versions.miniverb).toBe('0.2.3-experimental')
+    const usbLayouts = JSON.parse(await readFile(resolve(root, 'src/engine/assets/usb-audio-packages.json'), 'utf8'))
     for (const id of requested) {
-      expect(versions[id]).toBe(id === 'analog-bassdrum' ? '0.1.7-experimental' : id === 'vector' ? '0.3.2-experimental' : id === 'quantizer' ? '0.1.4-experimental' : id === 'synth' ? '0.1.4-experimental' : id === 'usb-audio-out-tracks-main-cue' ? '0.2.0-experimental' : '0.1.2-experimental')
+      expect(versions[id]).toBe(id === 'analog-bassdrum' ? '0.1.7-experimental' : id === 'vector' ? '0.3.2-experimental' : id === 'quantizer' ? '0.1.4-experimental' : id === 'synth' ? '0.1.4-experimental' : id === 'usb-audio-out-tracks-main-cue' ? usbLayouts.version : '0.1.2-experimental')
       expect(paths).toContain('modules/' + id + '/manifest.py')
     }
     expect(paths).toContain('platform/usb-midi/manifest.py')
