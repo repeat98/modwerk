@@ -51,6 +51,18 @@ describe('phone sheet keyboard interaction', () => {
     expect(document.activeElement).toBe(trigger)
     expect(document.body.style.overflow).not.toBe('hidden')
   })
+  it('sorts by downloads over a period from the sort sheet', async () => {
+    await act(() => root.render(createElement(LibraryResultsBar, { ...bar, sort: 'downloaded-30' })))
+    const trigger = container.querySelector<HTMLButtonElement>('[aria-label="Sort: Most downloaded, last 30 days"]')!
+    await click(trigger)
+    const periods = [...document.querySelectorAll('.library-sheet-periods button')]
+    expect(periods.map(button => button.textContent)).toEqual(['7 days', '30 days', '90 days', 'All time'])
+    expect(periods.map(button => button.getAttribute('aria-pressed'))).toEqual(['false', 'true', 'false', 'false'])
+    await click(buttonNamed('7 days'))
+    expect(bar.onSortChange).toHaveBeenCalledWith('downloaded-7')
+    expect(document.querySelector('[role="dialog"]')).toBeNull()
+    expect(document.activeElement).toBe(trigger)
+  })
   it('redirects outside focus and preserves elements that were already inert', async () => {
     const covered = document.createElement('aside'), outside = document.createElement('button')
     covered.setAttribute('inert', ''); covered.append(outside); document.body.append(covered)

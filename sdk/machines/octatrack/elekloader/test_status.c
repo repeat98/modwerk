@@ -116,7 +116,15 @@ volatile uint32_t dl_selection_completed, modwerk_boot_accepted;
 const fx_set modwerk_fx_modules = {{1u << 27 | 1u << 29}};
 volatile uint32_t mw_cpu_hot = 850u, mw_cpu_refusals, mw_cpu_refusal_tracks; /* machine_registry.c's */
 void modwerk_fxmap_name(unsigned id, char *out) { for (unsigned i = 0; i < 16u; ++i) out[i] = 0; out[0] = 'F', out[1] = 'X', out[2] = (char)('0' + id % 10u); }
-int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out) { (void)slot, (void)out; return 0; } /* draws only */
+static int budget_on; /* the pick box's DSP rows, so its CPU row draws */
+int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
+{
+    (void)slot;
+    if (!budget_on) return 0;
+    memset(out, 0, sizeof *out), out->allowance = out->arena = 1000u, strcpy(out->name, "Euclid");
+    return 1;
+}
+volatile uint32_t mw_frame_busy, mw_frame_count; /* machine_registry.c's: the frame guard's sums */
 uint32_t modwerk_dsp_booked(unsigned core) { return core; } /* draws only */
 unsigned modwerk_dsp_reads_buffer(unsigned id) { return id == 27u; } /* E-Verb reads one; Tape Echo (15) none */
 /* dsp.c's MODULE COST list: `installed` modules. */
@@ -340,6 +348,21 @@ int main(void)
     CHECK(open == MEMORY && budget_slot == -1);                        /* over USB: memory only, no slot */
     for (unsigned i = 0; i < 90u; ++i) memory_tick();
     CHECK(open == CLOSED);                                             /* gone after a second and a half */
+    /* The pick's CPU (owner, 17 November 2026: the box showed the DSP Tape Echo took, not the CPU): the frame share as
+     * it stood, against the line where the guard starts dropping renders, in place of POOL. */
+    { budget_on = 1;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 300u;        /* half the line (600) */
+      modwerk_test_live_fx[13] = 29; ++dl_selection_completed; memory_tick();
+      CHECK(open == MEMORY && budget_slot == 13 && pick_load == 300u);
+      CHECK(strstr(shows(), "|CPU|50%|") && !strstr(said, "POOL"));
+      modwerk_status_key(0, 1), modwerk_status_key(0, 0);
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 700u;        /* past the line: a full bar, no more */
+      modwerk_test_live_fx[13] = 27; ++dl_selection_completed; memory_tick();
+      CHECK(open == MEMORY && pick_load == 700u && strstr(shows(), "|CPU|100%|"));
+      modwerk_status_key(0, 1), modwerk_status_key(0, 0);
+      modwerk_test_live_fx[13] = 0; ++dl_selection_completed; memory_tick();
+      budget_on = 0;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
     /* DSP FULL with numbers (owner, 20 October 2026): the refused effect's slot and need, instead of the bare popup. */
     dl_refusal[0] = 1, dl_refusal[1] = 9, dl_refusal[2] = 27, dl_refusal[3] = 22, dl_refusal[4] = 327, dl_refusal[5] = 1602;
     dl_residency_words[1] = 1508;
@@ -443,6 +466,36 @@ int main(void)
       CHECK(!modwerk_status_effect_busy(11, 27) && open == CLOSED);      /* 70 % playing, 62 % now: passes */
       cpu_played = 0, play_readings = 0;
       for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0; }
+    /* A quiet delay (status.s left its read out) counts as awake: a pick is judged at what the unit costs once a
+     * scene opens the sends, and the box does not call that figure the last play's. */
+    { for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 780u;
+      mw_delay[17] = mw_delay[20] = mw_delay[24] = 1;
+      CHECK(modwerk_status_cpu_recent() == 780u && modwerk_status_cpu_load() == 810u);
+      CHECK(!modwerk_status_effect_busy(11, 27));                        /* 81 %: passes */
+      for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 1;
+      CHECK(modwerk_status_cpu_load() == 860u);
+      CHECK(modwerk_status_effect_busy(11, 27) == 1 && refused_booked == 860 && !refused_played); /* 78 % now, 86 % awake */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 0;
+      for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0; }
+    /* The frame share: the frame guard's sums between two readings, per mille of a frame. The guard's development read
+     * clears them: that reading is left out. */
+    { mw_frame_count = 1000u, mw_frame_busy = 187u * 600u; frame_note(0);
+      CHECK(frame_recent[0] == 600u);
+      mw_frame_count = 2000u, mw_frame_busy += 187u * 350u; frame_note(1);
+      CHECK(frame_recent[1] == 350u);
+      frame_recent[2] = 77u, mw_frame_count = 10u, mw_frame_busy = 1000u; frame_note(2);
+      CHECK(frame_recent[2] == 77u);
+      mw_frame_count = 1010u, mw_frame_busy = 1000u + 187u * 500u; frame_note(2);
+      CHECK(frame_recent[2] == 500u); }
+    /* Stopped, the box shows the frame share of the last play, when it was more; playing, the share now. */
+    { transport_stopped = 1, frame_played = 540u;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 200u;
+      CHECK(modwerk_status_frame_load() == 540u);
+      transport_stopped = 0;
+      CHECK(modwerk_status_frame_load() == 200u);
+      transport_stopped = 1, frame_played = 0;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
     modwerk_load_menu(0); modwerk_status_cpu_refused(2, "Poly8", 800, 266);
     CHECK(open == SHOWN);
     CHECK(strstr(shows(), "MODWERK BASE 0.7|"));                       /* the status page names the base by its version */

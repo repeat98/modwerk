@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import MACHINES from '../devices/machines.generated.json'
 import type { MachineProfile } from '../devices/machine-contract'
-import { LIBRARY_CATEGORIES } from './modules'
+import { LIBRARY_CATEGORIES, libraryClassification } from './library-classification'
 import { MODULE_V3_CATEGORIES, compareCoreVersions, parseElemodBuild, parseModwerkModule, requireModwerkPublication, type ModwerkModule } from './module-contract-v3'
 
 const machines = MACHINES as MachineProfile[]
@@ -56,8 +56,13 @@ describe('module contract v3', () => {
     expect(parseElemodBuild(JSON.parse(readFileSync(resolve('sdk/templates/elemod/build.json'), 'utf8').replace('__RELEASE__', '1.54')), document).subscribe).toEqual([{ event: 'ev_draw', fn: 'mod_draw', order: 50 }])
   })
 
-  it('shares the library categories, including standalone firmware', () => {
-    expect([...MODULE_V3_CATEGORIES]).toEqual([...LIBRARY_CATEGORIES])
+  it('can display every manifest category in the library, including standalone firmware', () => {
+    for (const category of MODULE_V3_CATEGORIES) {
+      const [browseCategory, type] = libraryClassification('digitakt', { id: 'example', category, presentation: { family: 'Example type' } })
+      expect(LIBRARY_CATEGORIES).toContain(browseCategory)
+      expect(browseCategory).toBe(category === 'scenes' ? 'performance' : category)
+      expect(type).toBe('Example type')
+    }
   })
 
   it('publishes measured modules with the author’s hardware report', () => {

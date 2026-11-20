@@ -22,7 +22,7 @@ key injection and RAM boot live only in its development bases. Build one with
 npm run machine:base -- analog-rytm-mkii --stock STOCK.syx --dev --out NEW-DIR
 ```
 
-which builds each variant (send-bus and plain) with base.json's `dev` on top, writes
+which builds each variant (send-bus, voices and plain) with base.json's `dev` on top, writes
 `modwerk-base-analog-rytm-mkii-dev-<sha>.elemod` and checks it against no binding: a development
 base is never recorded or released. Link a test image from it with
 `node scripts/link-image.mjs ... --elemod DEV.elemod` as any image. The plain variant with `dev`
@@ -32,11 +32,11 @@ The link adds one project storage bit (`mw_link_carry`), so a development image 
 storage layout than the release base: link it with `--lock-in` of the image the unit runs, use a
 scratch project, and do not go back from a link image to one without it on a project the link
 image saved (that project's module data would read as zeros). Cost on the send-bus base: about
-4.6 KB of `.run` and 1.8 KB of RAM in the shared mod area. The RAM boot's diagnostics use the top
-68 bytes of the mod area, and nothing checks that they are free: a set without a send effect must
-leave `ramSpare` of 68 B or more, or the gate writes them into a module's `.bss` at every boot. A
-send effect's work area runs to the top of the mod area, so with one in the set `diag` may read the
-effect's samples, and a RAM boot request writes 8 bytes into its work area just before the reset.
+4.6 KB of `.run` and 1.8 KB of RAM in the shared mod area. The RAM boot's diagnostics are 68 bytes
+at `0x47FEFFBC`, above every area the linker gives the mods and 64 KB under the boot stack's top
+([shared mod memory](README.md#memory-and-budgets)); `ident` names the place. A base built before that
+kept them in the top 68 bytes of the 128 KiB mod area (`0x47BFFFBC`), where a full set's `.bss` or a
+send effect's work area could hold them; the tool reads there when `ident` names no place.
 
 ## Arm
 
@@ -70,7 +70,7 @@ range, 5 a person is at the unit.
 
 | Request | cmd | Arm | What comes back |
 | --- | --- | --- | --- |
-| `ident` | 0x01 | no | link version, armed, person-at-unit flag, counters (person, posted, refused, drops, received), the link's tick count, reset status, playing, the image label (`link-image.mjs --version`), the OS build; the RAM boot's status, the CRC32 of 356 SRAM bytes as the gate found them, and the CRC32 of an image entered from RAM |
+| `ident` | 0x01 | no | link version, armed, person-at-unit flag, counters (person, posted, refused, drops, received), the link's tick count, reset status, playing, the image label (`link-image.mjs --version`), the OS build; the RAM boot's status, the CRC32 of 356 SRAM bytes as the gate found them, and the CRC32 of an image entered from RAM; and where the gate keeps its diagnostics (a base before that names no place) |
 | `disarm` | 0x02 | no | turns the arm off and clears every key the link held |
 | `key ID FLAGS` | 0x10 | yes | a panel key message on the UI queue with the flags as given; a held key reads as held to `is_key_held` |
 | `enc N DELTA` | 0x11 | yes | an encoder message (0-7 A-H, 8 LEVEL) of one raw count, as the panel task posts it |
@@ -193,7 +193,11 @@ Boot status in `ident`: 0 the flashed OS, no RAM boot asked; 1 booted from RAM; 
 a software reset; 3 check word; 4 lengths; 5 container CRC; 6 no MAIN OS section; 8 failed after
 the unpack. `rytm_link.py diag [IMAGE]` reads and names what the gate found at the last boot (the
 mailbox, the staged buffer's first words, the running image's marks on its way to the reset, RSR)
-from the 60 bytes of the mod area below its top 8, which hold the marks. Stock shows the flashed image's label whatever runs (the
+from the 60 bytes `ident` names; the 8 after them hold the marks. When the flashed base and a
+RAM-booted image keep them in different places (one built before the move, one after), `diag` reads
+where the running image says and the flashed gate wrote elsewhere: read `diag` on the flashed image.
+A fill of that RAM lasted through soft resets, the bootstrap and RAM boots on a unit; a `diag` readout
+of marks written there by a flashed base is not tested. Stock shows the flashed image's label whatever runs (the
 label lives in the container header), so `ident`'s label stays the flashed one after a RAM boot;
 its image CRC tells which image runs, and the tool compares it with the file's.
 
@@ -267,8 +271,9 @@ since, the link has not.
   reads a software reset (the supercap), a minute off reads power-on.
 - Unit, RAM boot: flashed gate base, another image uploaded: boot 1, that image's CRC, still
   armed; the same image over itself: sent in 5.6 s, back after 13.2 s, about 19 s to `ident`.
-  RAM boots afterwards took 16 to 21 s. A RAM-booted image's own `ramboot` does not land (the
-  request is the running image's, the gate the flashed one's). Two earlier gates whose mailbox
+  RAM boots afterwards took 16 to 21 s. A RAM-booted image's own `ramboot` did not land then (the
+  request is the running image's, the gate the flashed one's); on 17 November 2026 four in a row did,
+  each image built from the base of that day and RAM-booted over the one before, the flash on RB08. Two earlier gates whose mailbox
   went through the cache came back as the flashed OS: why the cache-off reset exists.
 - Rytm module tests driven through the link on the unit: Improved AMP (25 cases), Quick Mod
   Assign (6), Improved SMPL (7).

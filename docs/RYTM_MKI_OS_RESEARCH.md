@@ -115,12 +115,21 @@ On draadpiraat's unit, 8 November 2026, each flashed with Transfer:
 | MW02, a canary of Modwerk's own: `0x47B00000–0x47F00000` filled at boot with `address ^ 0xC0DEF00D`, checked 16 KB per UI tick | `P90 E0 0` with the sample memory full, sound locks, playback and a save: never written. After a power cycle the fill and count start again |
 | MW03, core.s's hook bus with a counter per event | `MW03 1349 K132 E74 S1`, `R102601 O102601`: every event, GLOBAL built once, render in and out equal; sound and timing as on stock |
 | MW06, this base (no modules), linked by Modwerk's linker and written by `ele2.ts` | a scratch project loads, plays, saves and reloads; GLOBAL and the pages as on stock; it survives a power cycle; stock 1.74 then loads the same project |
+| MW32 (9 November 2026), this base with ten MKII modules rebuilt for the MKI: CTRL ALL, Filter Hz, Pad Pressure Fix, Velocity Humanise, Quick Velocity Assign, Temp Save, Slice Loop, Euclid Accents, Sample Playback Rate and LFO RND; image SHA-256 `abce1832…39c16d5` | linked with no overlapping sites; each module's own steps passed together on the unit. Sample Playback Rate's audio was deliberately not listened to |
 
-`npm run machine:base` builds this base once Elekloader's kit knows the MKI (its device and the ELE2 reader, proposed upstream); with the device registered privately it gives MW06's package section for section.
+### Facts the machine guide relies on
+
+How each was found. Addresses are OS 1.74's; no stock bytes are given.
+
+- **The active kit is at project + 232** (the MKII's + 352). Stock's accessors for the working kit add 232 to the project singleton (`0x40155738`); the first is at `0x400AB772`, next to the sequencer at project + 48 (`0x400AB73A`), and the kit reload `0x400AC3B0` uses the same offset. Temp Save saves and reloads the kit through it, and passed on the unit in MW32.
+- **Knob records.** Each parameter id has an 88-byte record in RAM, from `0x416A6AA4` (id x 88), copies of the image's parameter records. Stock's turn path (`0x400376D4`) takes the fine step at +4 and, with the encoder pushed, the coarse step at +8; the knob's drawing is the function at +48 and +52. Read in the image and in rytm-emu while building the MKI send bus's stock-drawn pages (9 November 2026).
+- **The voices' ring.** Stock's send routine (`0x40107610`) reads its input from `0x401078DC`, which returns `0x8000CF34` + index x 40 and advances the block index at `0x402ACD70` by 32 frames (224 frames, back to 0 after 192). `0x40107914` fills the ring from the codec's DMA: words 0-7 the eight voices in voice order (BD BT SD LT HH MT CY RS), words 8-9 AUDIO IN L/R, each negated as the sends read them. MAIN L/R are not in it. Found by following the delay's and the reverb's input back from the send routine; a second ring at `0x8000B334` (8-word frames) is read only by the DAC and return mixers.
+
+`npm run machine:base` builds this base once Modwerk's builder knows the MKI (its device and the ELE2 reader); with the device registered privately it gives MW06's package section for section.
 
 ## 7. Next
 
-- The MKI in Elekloader (device, ELE2 reader, storage profile), then `base-binding.json` and the MKI in the site's linker (`LINK_DEVICES`).
+- The MKI in Modwerk's builder (device, ELE2 reader, storage profile), then `base-binding.json` and the MKI in the site's linker (`LINK_DEVICES`).
 - The send bus, and MKII modules rebuilt for the MKI: each module's own stock addresses found again.
 - ELE2 in the site's firmware flow, next to ELE3, once a build boots.
 - Later, as on the other machines: the USB link and loading modules without a reflash.

@@ -42,6 +42,7 @@ A machine Modwerk does not list yet starts with `npm run machine:new -- <id> --n
 - Set a step to `started` or `done` and add a `research` entry crediting the public work it relies on (repository, notes, author).
 - Move `status` from `open` to `research` once any step has started.
 - Run `npm run machines:check`; the contract rejects inconsistent claims.
+- Leave `maintainers` alone: only the owner names who reviews a machine's first releases ([who](DEVELOPER_WORKFLOW.md#who-reviews-a-first-release)).
 
 A pull request that marks steps done includes the evidence in its description: links to the public writer, emulator or boot reports. It never includes firmware.
 
@@ -55,6 +56,7 @@ What the Syntakt research turned up that applies to every ColdFire machine (the 
 - A region with no static reference is not free. On the Syntakt, hardware showed runtime page writes into memory nothing in the image names (Synthack-OS issue #4). Prove a range two ways, static and allocator, in every supported release, and offer mods only what both proofs cover.
 - Check where the image's BSS starts before appending code: on the Syntakt everything after the initialised data, including an appended tail, lies inside the range the OS zeroes at reset, so a core must hook before the clear and move its payload first.
 - The repository's packer may store the main OS more densely than Elektron's, which narrows the in-place depack margin rather than widening it; check the margin of the actual build, not of the stock file.
+- Don't trust the OS upgrade to bound an image. The Syntakt's receiver checks only checksums, then erases and programs the flash for as many bytes as the image claims, over the unit's own calibration record if the image is long enough. Find every record the flash holds above the OS (calibration, the OS's own store) and set the profile's `flashLimit` below the lowest, with a test that pins it: the builder is the only guard.
 - The packed OS stream's end marker is an offset gamma that wraps to the bias only in 32 bits. A decoder written with unbounded integers (Python, for example) reads it as a huge offset and concludes the stream has no end marker; decode with the repository's `unpackSection` or wrap explicitly.
 
 ## Research a Linux-class OS image
@@ -84,4 +86,4 @@ Run `npm run check` before opening the pull request. A new machine, platform or 
 
 Every machine ends up with the Octatrack's stack, so a module installs, runs beside the others and is tested the same way everywhere: a Modwerk base that owns shared sites as hooks and admits modules by their budgets, a USB link, loading without a reflash (review, trial, self-test, Keep, Undo), base updates over USB, the MCP's device tools and the site's machine page, beta-only behind `hasBetaUi`. The base is Modwerk's, started from an upstream core's source where one exists. [MACHINE_RECIPE.md](MACHINE_RECIPE.md) lists each piece with its Octatrack files and where every machine stands; keep its table current when a piece moves.
 
-The profile's `stack` records it piece by piece (`base`, `link`, `flash`, `loader`, `status`, `diagnostics`, `tools`, each `open`, `started` or `done`; one left out is open), and the machine page shows it as the road after the first mod. A machine with mods stays `preview` until every piece is done: the contract refuses `available` before that.
+The profile's `stack` records it piece by piece (`base`, `link`, `flash`, `loader`, `status`, `diagnostics`, `tools`, each `open`, `started` or `done`; one left out is open), and the machine page shows it as the road after the first mod. A piece is `done` once its exact build has passed on more than one unit and the owner has released it; until then it stays `started`. A machine with mods stays `preview` until every piece is done: the contract refuses `available` before that.

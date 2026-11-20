@@ -4,7 +4,9 @@ How to write a module that behaves like part of the instrument and fits every Mo
 
 ## Choose the category
 
-A module's category is the `category` field of its manifest (`octamod.module.json`, or `modwerk.module.json` on Digitakt and Digitone). It picks the guide; the library may group the module elsewhere.
+A module's category is the `category` field of its manifest (`octamod.module.json`, or `modwerk.module.json` on Digitakt and Digitone). It selects the development guide.
+
+In the library, categories describe the instrument function a musician wants to change. Performance covers scenes, macros, crossfaders, mutes and solos. System includes kit and Part management. Sequencing covers notes and patterns, and Modulation covers control sources such as LFOs. Types name a more specific job, such as drum synthesis or chorus, across instruments. `src/catalog/library-classification.ts` maps published families to these browse labels and uses machine-qualified entries when a family has several meanings.
 
 **Choose it by where the module acts, not by the menu you would like to switch it on from.** An FX processes the audio its slot receives. A module that makes or replaces a track's sound (reads the sample itself, renders voices on the ColdFire) is a machine. A module that makes or changes notes is a MIDI generator or MIDI effect. A module in the wrong category is sent back, so when it is unclear, ask the owner in an issue before you write code.
 
@@ -40,7 +42,7 @@ A module's category is the `category` field of its manifest (`octamod.module.jso
 - *Use the same documentation contract.* README sections, a tutorial of at least three steps, TESTING.md, real black-and-white screenshots. See [MODULE_QUALIFICATION.md](../MODULE_QUALIFICATION.md).
 - *Ship by the same CI.* Every PR gets the quick check. Only code changes get the Docker compile, the Windows check and a version bump; documentation and media edits need none.
 
-**Octatrack USB is part of the module.** Follow [the base and USB lifecycle requirements](../ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle): plan and prove common companion ownership on both cores, browser/runtime packages and their stock-free scans, install/self-test/Keep/Undo, removal/missing fallbacks and persistence. Native builds and isolated packages alone do not finish integration. A beta-set selection must have a working USB path; unavoidable limits need explicit owner review. Pending loader/ABI adapters remain staging and keep their real hardware qualification gaps.
+**Octatrack USB is part of the module.** Follow [the base and USB lifecycle requirements](../ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle): plan and prove common companion ownership on both cores, browser/runtime packages, install/self-test/Keep/Undo, removal/missing fallbacks and persistence. Native builds and isolated packages alone do not finish integration. A beta-set selection must have a working USB path; unavoidable limits need explicit owner review. Pending loader/ABI adapters remain staging and keep their real hardware qualification gaps.
 
 **Sequence with what exists.** A module that acts in time uses the instrument's own transport, tempo, track speed, track scale and length, and swing, as Euclid does. It never keeps a second clock. See [sequencing.md](sequencing.md).
 
@@ -98,7 +100,7 @@ A module reaches the musician and the instrument through an entry point: a key g
 
 1. **Look at what exists first.** List what the base or core already offers on this machine: its hooks ([HOOKS.md](../../sdk/machines/octatrack/HOOKS.md) on the Octatrack, the core hooks in the machine's SDK guide elsewhere), newer upstream core releases not yet pinned, and how the modules already there place their pages and controls. Use what fits.
 2. **Decide it with the developer.** Before you build, set out where a musician would look for the controls, how they get there with stock gestures, and what happens when a second and a third module want the same key, page or site. Bring the options with their trade-offs and let the developer choose, and the owner for a new machine. A gesture only one module can hold, such as a second press on a stock page key, leaves no room for the next one. On a machine just being unlocked the first modules set the pattern every later one copies.
-3. **Add a base or core hook only when many modules will use it.** A hook is code every unit carries, an ABI that is never renumbered, and an owner-reviewed base or upstream core release. It pays off for an entry point or site many modules will share, such as a list of pages behind a stock key. When only your module needs a site, patch it in the module and declare it (`compatibility.uiClaims` on the Octatrack, `platform.claims` on the elemod machines); the module that needs it second proposes a shared hook ([Octatrack](#propose-a-hook), [elemod](#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)).
+3. **Add a base or core hook only when many modules will use it.** A hook is code every unit carries, an ABI that is never renumbered, and an owner-reviewed base release. It pays off for an entry point or site many modules will share, such as a list of pages behind a stock key. When only your module needs a site, patch it in the module and declare it (`compatibility.uiClaims` on the Octatrack, `platform.claims` on the elemod machines); the module that needs it second proposes a shared hook ([Octatrack](#propose-a-hook), [elemod](#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)).
 
 ### UI claims
 
@@ -155,7 +157,7 @@ On the elemod machines (also the Rytm and the Analog Four) the core owns the sha
 
 1. Write the proposal as one pull request, before the module. For each hook: its name (`ev_` and what happens), the stock site (OS release, address, length in whole instructions and a SHA-256 guard; addresses, lengths and hashes only, no stock bytes), when it runs and in which context (UI tick, key, sequencer, render), its C prototype, what a nonzero result means and its order rule. For shared state: a named table with its record size, room and reader. Hook indices are an ABI: a released one is never renumbered; `pr:ready` claims new ones on the [agent board](../AGENT_BOARD.md).
 2. Say which mods patch that site or hold that state privately today, and what each would subscribe to instead. On the Digitakt mk1 the SRC machines share the SRC page, render and LFO destination sites, so a proposal there covers them together.
-3. The owner reviews it. On the Digitakt and Digitone (Modwerk's own cores), the Rytm and the Digitakt II the hook goes into Modwerk's core or base in this repository; Modwerk does not wait for an upstream core release (owner, 28 October 2026; [recipe](../MACHINE_RECIPE.md)). Where Modwerk has no base, such as the Digitone II or the Analog Four MKII, a core hook belongs to elekloader's core: propose it there ([contributing](../../CONTRIBUTING.md#elekloader-mods-and-cores)). The module pull request follows, subscribing in `build.json`, and it builds and runs on its own: a mod that shares another mod's state or code is refused ([no module depends on another](#cross-compatibility)).
+3. The owner reviews it. The hook goes into the machine's Modwerk core or base in this repository, started from the pinned core's source while the base does not exist yet; Modwerk does not wait for an upstream core release (owner, 28 October and 18 November 2026; [recipe](../MACHINE_RECIPE.md)). The module pull request follows, subscribing in `build.json`, and it builds and runs on its own: a mod that shares another mod's state or code is refused ([no module depends on another](#cross-compatibility)).
 
 ### Flag every incompatibility
 
@@ -166,6 +168,7 @@ Collisions are caught automatically, so nothing ships incompatible without its a
 - **USB sets.** `npm run modules:compat` still refuses every byte collision, flagged or not: beta sets install whatever is chosen, so subscribe to a hook or [propose one](#propose-a-hook).
 - **Digitakt and Digitone.** `npm run modules:check` refuses two mods that patch overlapping bytes on a release both support unless one names the other in `compatibility.conflicts`. The website already refused those pairs; the flag makes the author's decision explicit.
 - **Who flags.** The module whose change makes the pair collide flags it in its own manifest: the newer module, or the one being updated, and it fixes the collision instead when that is no big refactor. Nobody edits another author's module to add a flag. A flag names an existing module id of the same machine; the check refuses any other. Changing only `compatibility.conflicts` needs no new module version, but still runs every check and needs a marked note in the module's changelog.
+- **Folding one module into another.** The absorbing module flags the absorbed one while both are listed, since they patch the same sites. On the elemod machines that flag is built into its package, so retiring the absorbed module later needs a new version only to drop it: retire it in the same pull request as the fold (Improved SMPL 0.6.0 and 0.6.1, #1649 and #1650).
 - **What no gate sees.** A flag can also name a limit the ledger cannot see, such as DSP placement or behaviour. Say why in the README's Compatibility section. `npm run module:doctor -- <id>` lists the collisions the ledger finds, so a flag that no longer applies can go at the next version.
 
 ### Shared sites still to build
@@ -177,6 +180,7 @@ The more of these the base owns, the more modules combine. Each is a hook to [pr
 | Track machine list (SRC SETUP) | Base table `ot_machines`; on the card, POLY8's shared machine list |
 | Effect lists (FX1, FX2) | USB: the base has 128 effect ids, 109 of them for modules, and gives each installed effect module its own ([wider ids](../OCTATRACK_MORE_EFFECT_IDS.md)); card: stock's 32, 13 of them for modules, pinned |
 | SEQUENCER rows | Base table `ot_sequencer_rows` |
+| Part Edit window (FUNC+PART) rows | Base table `ot_part_menu`: a parent row and its actions, in two columns |
 | MIDI generators on a MIDI track (MIDI NOTE SETUP's list, the ARP page) | Base table `ot_midi_generators`; on the card, VECTOR's own registry ([midi-usb.md](midi-usb.md#midi-generators-and-midi-effects)) |
 | MIDI effects on a MIDI track's notes | Pitch: take hook `ev_midi_note_key`. Velocity, timing, added notes: not built |
 | Stock DSP effects a module hooks (Sidechain Compressor, Output Matrix) | Not built: DSP-side taps, one owner per stock site |

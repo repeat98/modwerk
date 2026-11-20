@@ -27,9 +27,9 @@ Every ColdFire module can define these. They run in the UI task, never at interr
 | `int module_key(int code, int pressed)` | each key press and release | nonzero takes the key from the firmware |
 | `int module_enc(int encoder, int delta)` | each encoder turn | nonzero takes the turn from the firmware |
 
-Every installed module's tick gets the same `api`, one after another, so `api->value` holds whatever the last module to write it left there. A one-shot `npm run device -- try` prints that word each second; with other modules installed that write it (SAMPLE LOCKS, Beat Slicer, Tiempos), it says nothing about the module on trial (13 November 2026, flashed beta base `c1f21351`).
+Every installed module's tick gets the same `api`, one after another, so `api->value` holds whatever the last module to write it left there. A one-shot `npm run device -- try` prints that word each second; with other modules installed that write it (SAMPLE LOCKS, Beat Slicer, Tiempos), it says nothing about the module on trial (13 November 2026, flashed beta base `c1f21351`). From the base after `dfb632b0` (not built yet on 16 November 2026), the word goes back to 0 on the first tick after the installed set changes, before any tick runs: a value there was written by a module installed now, and 0 means none of them wrote it. On earlier bases a removed module's value stays until another tick writes the word (#1314).
 
-Subscribe to them in `runtime.json` like any hook. Butter Fingers ([its draft](../sdk/drafts/butter-fingers/runtime.json)) does it this way:
+Subscribe in `runtime.json` only to the events the module uses. The 0.7.10 base visits subscribers in installed slot order. The first key or encoder handler that takes the event ends the search. Butter Fingers subscribes to keys and ticks. [Its runtime.json](../sdk/octatrack/modules/butter-fingers/runtime.json)
 
 ```json
 { "schema": 1, "subscribe": [{ "event": "module_key", "fn": "bf_key" }, { "event": "module_tick", "fn": "bf_tick" }] }
@@ -52,6 +52,7 @@ The base owns every stock site that more than one module needs and shares it as 
 
 - **Playback:** `ev_play_increment` (Repitch changes a track's playback rate), `ev_voice_bind`, `ev_voice_bind_run`.
 - **Mutes and stops:** `ev_mute_keep` and `ev_trig_muted` (raised), `ev_tail_kill`.
+- **Resting:** `ev_in_use`, which the base asks each module from the UI tick: while a module answers 0 it is left out of the hooks marked `rests`.
 - **MIDI and the keyboard:** `ev_midi_note_on`, `ev_midi_note_off`, `ev_midi_note_key`, `ev_octave_key`, `ev_octave_number`, `ev_keyboard_draw`, the `ev_chromatic_*` hooks, `ev_arp_setup_knob`, `ev_arp_setup_text`.
 - **Editing:** `ev_plock_store` (a lock byte is stored), `ev_knob_store` (a knob turn stores a Part byte).
 - **Projects and settings:** `ev_project_load`, `ev_project_line`, `ev_project_write`, `ev_project_defaults`, `ev_settings_sanitise`.
@@ -90,6 +91,7 @@ Never write into bytes another module saves, even one listed in your `compatibil
 
 - **An effect** has twelve knobs on two pages: slots 0-5 and 6-11. Each `Param` gives a short label, a default, a value count and a formatter. Put a MODE switch on an even slot. The page comes from the manifest. A draft's page is derived from it by `module:dev`, which shows stepped knobs as numbers until the module is listed.
 - **ColdFire code** draws with `module_draw`, reads keys and encoders with `module_key` and `module_enc`, or contributes to a table. For example, a row in `ot_sequencer_rows` is a `struct modwerk_sequencer_row` with `label`, `get` and `set`. Each module's controls sit where a musician would look for them ([choose how a module hooks in](module-guides/README.md#choose-how-a-module-hooks-in)).
+- **A window or key layer of its own** (the stock window manager, an input layer pushed onto stock's): the base will not remove, replace or undo the module while stock still names any of its memory, or while a task is paused in its code. The sync is refused with `RUNTIME_UI_OPEN` until the musician closes it. So close everything you open, on every path out (NO, another page, the stock window that evicts yours). A package that opens one names `requiresCapabilities: 1024` in `src/engine/assets/octatrack-module-packages.json`, so only a base with this check (loader capability 1024) is offered it.
 
 ## What stays stable
 

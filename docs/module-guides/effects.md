@@ -92,6 +92,21 @@ npm run fx:audit -- check out/fx out/fx-renders
 npm run fx:audit -- compare out/fx-noise/*.wav
 ```
 
+**Locate a render regression.** Add `--explain` to see the shared frame window and the first differing frame on each channel. Add `--block-frames 16` for a harness that processes 16-frame blocks. Frame and block numbers start at zero in the capture. The shift estimate checks up to 64 frames in either direction for an exact overlap across all channels, retaining at least eight frames and half the capture. A positive shift means the second render is late. Silence or several matching offsets gives an indeterminate result.
+
+For an automated assertion, capture both histories in the same format and use `--expect-identical`. It includes the explanation and exits 1 if any pair differs in length, channel count or sample value, or falls below the audit's silence floor. The assertion always uses the original samples, including when a shift explains the difference.
+
+To reproduce Euclid's TYPE-history regression, set `ELEKLOADER_DSP_ASM` to the assembler executable and `ELEKLOADER_DSP56300` to the built interpreter's source tree. Run each revision separately from the repository root.
+
+```sh
+python3 -B scripts/capture-euclid-filter.py 0e168b32c5  # 0.1.4, expected failure
+python3 -B scripts/capture-euclid-filter.py 47271cab7   # 0.1.5, expected pass
+# Set capture to the temporary directory printed by either run.
+npm run fx:audit -- compare "$capture/low-pass.raw" "$capture/via-amp.raw" --block-frames 16 --expect-identical
+```
+
+The fixture compares low-pass throughout with low-pass after one AMP block. Each directory holds its own two renders and a `capture.json` with the source and runner digests, capture format, frame range, gain words and test outcome. The final four stereo blocks cover frames 3136–3199 of the run. A missing tool produces a visible skip and exit 77.
+
 Render with every knob at its dearest setting and any modulation off, so that sidebands do not read as aliasing; render a modulated read separately with its modulation on and read the *residual* column, which holds sidebands and noise. The signals are mono and the effect sees them on both channels. `dsp_host` reads the `.raw` files with `-in` (mono is copied to both channels) and writes interleaved stereo int32 words with `-out`; `verify_knob_clicks.py`'s `render()` builds that command for a module. `rig_render.py` reads the `.wav` files as stems and writes `T1.wav`; `--mixer off --amp 1.0` makes the level in the table the level the effect sees (with the mixer model on, a 0 dBFS stem enters the effect at 0.254 FS):
 
 ```sh
@@ -129,7 +144,7 @@ How much it costs and whether it survives being worked hard: see [Performance](R
 
 Octabam's behaviour tests run through its DSP host and need a native toolchain ([SDK README](../../sdk/README.md#octatrack-native-development)). The pattern to copy is `verify_<module>.py`: render through `dsp_host` against predictable arithmetic or a reference. Drive any knob offline with `send_probe.py --set NAME=VALUE`. For sound quality, only the render needs the toolchain: `npm run fx:audit` analyses it offline (see Sound quality). In TESTING.md say which you ran, and mark everything else "not tested".
 
-**Running a module's own gate here.** The vendored SDK ships no named remixes, so `verify_<module>.py <id>` (for example `verify_tapeecho_cpu.py`) stops at "no remix". Build a disposable one the way `scripts/export-composition-proofs.py` composes a selection: in a private copy of `sdk/octabam` (`modules`, `platform`, `tools`, `dsp`, `licenses`, your own MAIN OS at `out/raw/section_3_MAIN_OS.bin`, `vendor` pointing at `/opt/toolchain/vendor`) inside the `modwerk-source-tools` image, set `registry.remix` to a `Remix` holding the site's own keep-stock menu for your module (`defaultChoosers([id], true)` from `src/engine/choosers.ts`, run with Node 24), call `build_bus.main()`, then run the gate in the same process. Mount `vendor/mc68k` from `npm run upstream:tools`' octabam checkout at `/opt/toolchain/vendor/mc68k`: the image lacks it, and the ColdFire emulator test needs it. Run the unmodified source through the same recipe first; if it reproduces the figures in the module's README, the setup is faithful and before/after numbers compare like for like. After editing only a test or a kernel, `cmake --build out/emu --target ot_<module>_cpu_test` and the test binary alone take about a minute.
+**Running a module's own gate here.** The vendored SDK ships no named remixes, so `verify_<module>.py <id>` (for example `verify_tapeecho_cpu.py`) stops at "no remix". Build a disposable one the way `scripts/export-composition-proofs.py` composes a selection: in a private copy of `sdk/octabam` (`modules`, `platform`, `tools`, `dsp`, `licenses`, your own MAIN OS at `out/raw/section_3_MAIN_OS.bin`, `vendor` pointing at `/opt/toolchain/vendor`) inside the `modwerk-source-tools` image, set `registry.remix` to a `Remix` holding the site's own keep-stock menu for your module (`defaultChoosers([id], true)` from `src/engine/choosers.ts`, run with Node 24), call `build_bus.main()`, then run the gate in the same process. Mount `vendor/mc68k` from `npm run upstream:tools`' octabam checkout at `/opt/toolchain/vendor/mc68k`: the image lacks it, and the ColdFire emulator test needs it. Run the unmodified source through the same recipe first; if it reproduces the figures in the module's README, the setup is faithful and before/after numbers compare like for like. After editing only a test or a kernel, `cmake --build out/emu --target ot_<module>_cpu_test` and the test binary alone take about a minute. The image builds `dsp_asm` but not `dsp_host`: build it in the container first (`cmake --build vendor/dsp56300/build --target dsp_host`). Two-core `dsp_host` runs die with SIGBUS on Docker's default 64 MB `/dev/shm`, so start the container with `--shm-size=2g` (Air Chorus 0.1.3, 16 November 2026).
 
 ## Traps
 

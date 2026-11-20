@@ -1,13 +1,13 @@
-import { useRef, useState, type ReactNode, type Ref } from 'react'
+import { useContext, useId, useRef, useState, type ReactNode, type Ref } from 'react'
 import { isBetaModule } from '../catalog/availability'
 import { moduleCaution } from '../catalog/module-cautions'
 import type { AddBlock } from '../catalog/add-blocks'
-import { DETAILS } from '../catalog/details'
 import { moduleBuildPending } from '../catalog/build-support'
 import { moduleHardwareEvidence } from '../catalog/module-evidence'
 import { moduleStability, type ModuleStability } from '../catalog/module-stability'
 import type { FirmwareModule } from '../catalog/modules'
-import { downloadCoverage, type ModuleStatistics } from '../community/module-statistics'
+import { downloadNote, downloadsIn, type ModuleStatistics } from '../community/module-statistics'
+import { DownloadPeriodContext } from '../community/download-period'
 import { moduleHref } from '../routing'
 import { Icon } from './Icon'
 import { ModulePreview } from './ModulePreview'
@@ -56,11 +56,13 @@ export function AddButton({ name, selected, onToggle, configure = false, conflic
 
 // Working reports, likes and downloads on one line, strongest signal first. An unavailable count shows a dash so a
 // loaded zero stays distinct from a service that did not answer.
+// Sorted by downloads over a period, the card counts that period, so the numbers read in the order shown.
 export function CardStats({ statistics: stats, children }: { statistics?: ModuleStatistics; children?: ReactNode }) {
+  const days = useContext(DownloadPeriodContext), downloads = downloadsIn(stats, days)
   return <div className="card-stats">
     <ModuleWorksCount count={stats?.worksReports} compact/>
     <span className="card-stat"><Icon name="heart" size={12} />{stats ? stats.likes.toLocaleString() : '—'}<span className="sr-only"> {stats?.likes === 1 ? 'like' : 'likes'}</span></span>
-    <span className="card-stat is-downloads" title={downloadCoverage(stats?.downloadsStarted)}><Icon name="download" size={12} />{stats?.downloads === undefined ? '—' : stats.downloads.toLocaleString()}<span className="sr-only"> {stats?.downloads === 1 ? 'download' : 'downloads'}</span></span>
+    <span className="card-stat is-downloads" title={downloadNote(days, stats)}><Icon name="download" size={12} />{downloads === undefined ? '—' : downloads.toLocaleString()}<span className="sr-only"> {downloads === 1 ? 'download' : 'downloads'}{days ? ' in the last ' + days + ' days' : ''}</span></span>
     {children}
   </div>
 }
@@ -81,9 +83,9 @@ export function CardProof({ stability, statistics, name, compared, canCompare, o
 }
 
 // A flagged module (module-cautions.ts) carries a warning badge; the reason is in its title and read out to screen readers.
-export function CautionBadge({ id }: { id: string }) {
+export function CautionBadge({ id, descriptionId }: { id: string; descriptionId?: string }) {
   const caution = moduleCaution(id)
-  return caution ? <span className="module-caution-badge" title={caution.title + '. ' + caution.detail}><Icon name="warn" size={11} />{caution.badge}<span className="sr-only">: {caution.title}. {caution.detail}</span></span> : null
+  return caution ? <span id={descriptionId} className="module-caution-badge" title={caution.title + '. ' + caution.detail}><Icon name="warn" size={11} />{caution.badge}<span className="sr-only">: {caution.title}. {caution.detail}</span></span> : null
 }
 
 export function ModuleCard({ module, selected, statistics, viewedVersion, baseline, compared, canCompare, onToggle, onCompare, onBrowse, block, onSwap }: ModuleCardProps) {
@@ -92,20 +94,22 @@ export function ModuleCard({ module, selected, statistics, viewedVersion, baseli
   const pending = selected ? undefined : block
   const trigger = useRef<HTMLButtonElement>(null)
   const prompt = useAddBlockPrompt(pending, trigger)
+  const cautionId = useId()
+  const caution = moduleCaution(module.id)
+  const preview = <ModulePreview id={module.id} indicator={caution ? <CautionBadge id={module.id} descriptionId={cautionId} /> : undefined} />
   return <article className={'module-card ' + (selected ? 'is-selected' : '')}>
-    {clips[0] ? <ModuleAudioCardCover id={module.id} name={module.name} href={moduleHref(module.id)} onBrowse={onBrowse} inert={prompt.open} prepare={audioReady} onPrepare={() => setAudioReady(true)} clip={clips[0]}><ModulePreview id={module.id}/></ModuleAudioCardCover> : <a href={moduleHref(module.id)} onClick={onBrowse} onAuxClick={onBrowse} className="module-cover" aria-label={'View ' + module.name} inert={prompt.open}>
-      <ModulePreview id={module.id} />
+    {clips[0] ? <ModuleAudioCardCover id={module.id} name={module.name} summary={module.description} href={moduleHref(module.id)} onBrowse={onBrowse} inert={prompt.open} prepare={audioReady} onPrepare={() => setAudioReady(true)} clip={clips[0]}>{preview}</ModuleAudioCardCover> : <a href={moduleHref(module.id)} onClick={onBrowse} onAuxClick={onBrowse} className="module-cover" aria-label={'View ' + module.name} inert={prompt.open}>
+      {preview}
       <div className="hover-info"><span>{module.description}</span><strong>Explore module <Icon name="arrow" size={15} /></strong></div>
     </a>}
     <div className="module-card-body" inert={prompt.open}>
       <div className="module-card-title">
-        <div className="module-card-heading"><a href={moduleHref(module.id)} onClick={onBrowse} onAuxClick={onBrowse}>{module.name}</a>{isBetaModule(module.id) && <span className="module-beta-badge">Beta</span>}<CautionBadge id={module.id} /><ModuleRelease module={module} viewedVersion={viewedVersion} baseline={baseline} /></div>
+        <div className="module-card-heading"><a href={moduleHref(module.id)} aria-describedby={caution ? cautionId : undefined} onClick={onBrowse} onAuxClick={onBrowse}>{module.name}</a>{isBetaModule(module.id) && <span className="module-beta-badge">Beta</span>}<ModuleRelease module={module} viewedVersion={viewedVersion} baseline={baseline} /></div>
         <AddButton ref={trigger} name={module.name} selected={selected} onToggle={onToggle} configure={module.id === USB_AUDIO_MODULE} conflict={prompt.conflict && { block: prompt.conflict, open: prompt.open, controls: prompt.id, onAsk: prompt.toggle }} blocked={pending?.kind === 'usb-only' || pending?.kind === 'limit' ? pending : undefined} />
       </div>
       {module.id === USB_AUDIO_MODULE && <span className="module-compatibility-badge module-card-compatibility"><Icon name="wave" size={12} />Outbox 8 compatible</span>}
       <div className="card-credit"><ModuleAuthors name={module.authorName} url={module.authorUrl} contributors={module.contributors}/><span>{module.detail}</span></div>
-      <p className="card-description">{module.description}</p>
-      <div className="card-bottom">{pending ? <AddBlockChip block={pending} /> : <span>{DETAILS[module.id].family}</span>}<CardStats statistics={statistics} /></div>
+      <div className="card-bottom">{pending ? <AddBlockChip block={pending} /> : <span>{module.type}</span>}<CardStats statistics={statistics} /></div>
       <CardProof stability={moduleStability(statistics, { buildPending: moduleBuildPending(module.id), hardware: moduleHardwareEvidence(module.id) })} statistics={statistics} name={module.name} compared={compared} canCompare={canCompare} onCompare={onCompare} />
     </div>
     {prompt.conflict && prompt.open && <AddBlockPrompt id={prompt.id} name={module.name} block={prompt.conflict} onCancel={prompt.close}

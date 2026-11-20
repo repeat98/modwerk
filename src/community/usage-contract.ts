@@ -32,4 +32,19 @@ export type UsageStatistics = { generatedAt: string; collectionStarted: string |
   devices?: UsageDeviceTotals[]
   /** Optional for compatibility with a backend deployed before page-level counts. */
   pagesStarted?: string | null
-  pages?: UsagePageDay[] }
+  pages?: UsagePageDay[]
+  /** The period's visit sources and sign-in prompt answers; absent from a backend before migration 0097. */
+  siteCounts?: SiteCountTotal[]
+  siteCountsStarted?: string | null }
+/** Where a page load came from: one fixed category from the link's `utm_source` or the referring site's domain
+ * (visit-source.ts). The address itself never leaves the browser. */
+export const VISIT_SOURCES = ['direct', 'google', 'bing', 'duckduckgo', 'brave', 'ecosia', 'other-search', 'chatgpt', 'claude', 'perplexity', 'gemini', 'copilot', 'reddit', 'youtube', 'instagram', 'facebook', 'x', 'discord', 'discord-bot', 'github', 'github-readme', 'elektronauts', 'gearnews', 'synthtopia', 'cdm', 'musicradar', 'synthanatomy', 'bonedo', 'push', 'forum-feed', 'forum-share', 'mail', 'mail-news', 'mail-activity', 'mail-welcome', 'mail-beta', 'other'] as const
+export type VisitSource = typeof VISIT_SOURCES[number]
+/** How the sign-in prompt was answered: `gate-…` before a firmware build (it can be skipped), `other-…` before a
+ * member action such as a like, a follow or a reply. */
+export const SIGN_IN_PROMPT_OUTCOMES = ['gate-shown', 'gate-sign-in', 'gate-create-account', 'gate-skipped', 'gate-closed', 'other-shown', 'other-sign-in', 'other-create-account', 'other-closed'] as const
+export type SignInPromptOutcome = typeof SIGN_IN_PROMPT_OUTCOMES[number]
+/** Identifier-free daily totals in site_count_daily, each with exactly one category from its list. */
+export const SITE_COUNTS = { visit_source: VISIT_SOURCES, sign_in_prompt: SIGN_IN_PROMPT_OUTCOMES } as const satisfies Record<string, readonly string[]>
+export type SiteCount = keyof typeof SITE_COUNTS
+export type SiteCountTotal = { event: SiteCount; detail: string; count: number }

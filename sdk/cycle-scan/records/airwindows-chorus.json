@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "module": "airwindows-chorus",
+  "version": "0.1.3-experimental",
+  "sourceSha256": "65cbea807a4368fcf8c6c453c2939b3fe77ace8570e21fc778b9e589f8d32443",
+  "scanRevision": "cc7cffc1a675a763c5b8d6fbe1659f2b322cc540",
+  "model": "DSP56300FM Table A-1 cycles and the A.2 and 3.5 stalls on one steady block of each --sweep setting; a model, not a measurement",
+  "dearest": {
+    "setting": "defaults/max",
+    "settings": 4,
+    "instructions": 357.94,
+    "cycles": 649,
+    "stalls": 56.5,
+    "stallsByKind": {
+      "agu": 7.88,
+      "arith": 46,
+      "arith-tcc": 1,
+      "transfer": 1.63
+    }
+  },
+  "stock": {
+    "comparator": "CHORUS",
+    "setting": "defaults/max",
+    "instructions": 257.81,
+    "cycles": 290,
+    "stalls": 5.06
+  }
+}

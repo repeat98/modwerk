@@ -1,10 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import catalog from '../../../sdk/catalog.json' with { type: 'json' }
 import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
 import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 import { removal } from '../../dev/octatrack-usb-lifecycle'
+import { RuntimeFeature } from './upload-usb'
 import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
 
 const file = (path: string) => new Uint8Array(readFileSync(new URL('../../../public/' + path, import.meta.url)))
@@ -13,7 +15,8 @@ const empty = { moduleIds: [], removedStockFx: [] }
 
 describe('the site’s runtime packages', () => {
   it('publishes each listed module with its checked runtime identity, ABI and record counts', () => {
-    expect(USB_MODULE_IDS).toEqual(['everb', 'miniverb', 'tapehead', 'airwindows-chorus', 'lofi2', 'ring-sc', 'previewvol', 'apply-scene', 'repitch', 'poly8', 'vector', 'synth', 'quantizer', 'tapeecho', 'euclid', 'bbd', 'playmodes', 'mute-modes', 'sidechain-compressor', 'output-matrix', 'cc-map', 'quantize-live-rec-toggle', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'recorder-loop-fix', 'analog-bassdrum', 'beat-slicer', 'temp-save', 'slow-lfo', 'bar-led', 'tiempos', 'syntiz', 'track-solo', 'pattern-sample-locks', 'amiga', 'usb-audio-out-tracks-main-cue'])
+    // Stem Recorder is the catalog's retained card-only module. New USB releases must appear in both inventories.
+    expect([...USB_MODULE_IDS].sort()).toEqual(catalog.modules.map(module => module.id).filter(id => id !== 'stem-rec').sort())
     for (const entry of manifest.packages) {
       const data = file(entry.path), view = new DataView(data.buffer), abi = view.getUint16(4)
       expect(entry.path).toBe(`octatrack-modules/${entry.id}/${entry.version}.mwrm`)
@@ -80,6 +83,17 @@ describe('preparing a module set', () => {
     expect(changes[1]).toEqual({ module: '0000002a', data: removalPackage('0000002a'), undo: undefined, replaces: true }) // nothing to put back
     expect(changes[2]).toEqual({ module: 'TapeHead', data: file(manifest.packages[2].path), undo: removalPackage('tapehead') })
   })
+  it('offers a package that needs a capability (a window of its own: uiRoots) only to a base that reports it', () => {
+    expect(RuntimeFeature.uiRoots).toBe(1024)
+    expect(readFileSync(new URL('../../../sdk/runtime/loader/loader.c', import.meta.url), 'utf8')).toContain('#define UI_ROOTS_CAPABILITY 1024u')
+    const entry = manifest.packages.find(item => item.id === 'tapehead')!
+    const catalogue = createRuntimeCatalogue({ packages: [{ ...entry, requiresCapabilities: RuntimeFeature.uiRoots }] })
+    const target = { name: 'Window', moduleIds: ['tapehead'] }, base = { abi: 10, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 }
+    expect(catalogue.review(target, empty, base).problem).toBeInstanceOf(BaseUpdateRequired)
+    expect(catalogue.review(target, empty, { ...base, features: base.features | RuntimeFeature.uiRoots }).problem).toBeUndefined()
+    expect(createRuntimeCatalogue({ packages: [entry] }).review(target, empty, base).problem).toBeUndefined()
+    expect(() => createRuntimeCatalogue({ packages: [{ ...entry, requiresCapabilities: 65536 }] }).review(target, empty, base)).toThrow(ModuleSetError)
+  })
   it('refuses what the base cannot do yet, before anything is sent', async () => {
     await expect(prepareModuleSet({ name: 'Set', moduleIds: ['everb', 'tapeecho'] }, empty, load)).rejects.toThrow(ModuleSetError)
     await expect(prepareModuleSet({ name: 'Set', moduleIds: [], removedStockFx: ['DARK REV'] }, empty, load)).rejects.toThrow(/stock effects/)
@@ -88,7 +102,7 @@ describe('preparing a module set', () => {
     const target = { name: 'All published', moduleIds: USB_MODULE_IDS }, fetched = vi.fn(load)
     // RINGMOD SC is a published ABI 9 package (a key bus reader) and Analog BD's carries its engine for the base's hook
     // site (ABI 10): a capable base reports ABI 10.
-    const events = { abi: 10, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 }
+    const events = { abi: 10, features: 7 | 128 | 512 | RuntimeFeature.uiRoots, maxSites: 128, maxCopies: 128 } // Tuner asks for uiRoots (base 0.7.5)
     await expect(prepareModuleSet(target, empty, fetched)).rejects.toBeInstanceOf(BaseUpdateRequired)
     await expect(prepareModuleSet(target, empty, fetched, { ...events, features: 7 })).rejects.toBeInstanceOf(BaseUpdateRequired) // Repitch subscribes
     await expect(prepareModuleSet(target, empty, fetched, { ...events, abi: 7 })).rejects.toBeInstanceOf(BaseUpdateRequired)
@@ -117,13 +131,13 @@ describe('preparing a module set', () => {
     const moved = createRuntimeCatalogue({ packages: [{ ...entry, bytes: core.length, sha256: sha(core) }] })
     await expect(moved.prepare({ name: 'Set', moduleIds: ['repitch'] }, empty, async () => core, events)).rejects.toThrow('inconsistent')
   })
-  it('checks a raised event’s slot, a take event’s record and a table’s record as the loader does', async () => {
+  it('checks a raised event’s slot, a take event’s record, a table’s record and a module’s memory as the loader does', async () => {
     const index = (name: string) => siteEvents.events.find(event => event.event === name)!.index
     const events = { abi: 8, features: 7 | 128, maxSites: 128, maxCopies: 128 }
     // Authored synthetic bytes only: an ABI 8 header, hook words, a zeroed image, no records and no firmware data.
-    function subscriber(words: Record<number, number>, image = 96, slot = 0) {
+    function subscriber(words: Record<number, number>, image = 96, slot = 0, bss = 0) {
       const hooks = Math.max(...Object.keys(words).map(Number)) + 1, data = new Uint8Array(76 + 4 * hooks + image), v = new DataView(data.buffer)
-      v.setUint32(0, 0x4d57524d); v.setUint16(4, 8); v.setUint32(8, image); v.setUint32(20, hooks); v.setUint32(28, Number.parseInt(runtimeId('mute-modes'), 16))
+      v.setUint32(0, 0x4d57524d); v.setUint16(4, 8); v.setUint32(8, image); v.setUint32(12, bss); v.setUint32(20, hooks); v.setUint32(28, Number.parseInt(runtimeId('mute-modes'), 16))
       for (let i = 0; i < hooks; i++) v.setUint32(76 + 4 * i, words[i] ?? 0xffffffff)
       if (slot) v.setUint32(76 + 4 * hooks + slot, 0x12345678)
       const entry = { id: 'mute-modes', name: 'Mute Modes', abi: 8, features: 128, sites: 0, copies: 0, fills: 0, bytes: data.length, sha256: sha(data), path: 'test/sub.mwrm' }
@@ -140,6 +154,9 @@ describe('preparing a module set', () => {
     await expect(subscriber({ [index('ot_machines')]: order(16) })).resolves.toBeDefined()
     await expect(subscriber({ [index('ot_machines')]: order(20) })).rejects.toThrow('inconsistent') // an 80-byte record past the image
     await expect(subscriber({ [4 + SITE_EVENTS]: order(8) })).rejects.toThrow('inconsistent') // past the base's events
+    // Image and bss together up to 288 KiB (loader.h RUNTIME_MODULE_BYTES), past the 128 KiB image limit.
+    await expect(subscriber({ [index('ev_mute_keep')]: raise(8) }, 96, 0, 294912 - 96)).resolves.toBeDefined()
+    await expect(subscriber({ [index('ev_mute_keep')]: raise(8) }, 96, 0, 294912 - 95)).rejects.toThrow('inconsistent')
   })
   it('fetches the site’s copy and refuses one that did not arrive intact', async () => {
     const entry = manifest.packages[0], data = file(entry.path)

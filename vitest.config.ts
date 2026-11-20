@@ -15,8 +15,10 @@ if (!Number.isInteger(requestedWorkers) || requestedWorkers < 1 || requestedWork
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts', 'scripts/**/*.test.mjs'],
+    include: ['src/**/*.test.ts', 'scripts/**/*.test.mjs', 'desktop/src/**/*.test.mjs'],
     pool: 'threads',
+    fsModuleCache: true,
+    fsModuleCachePath: 'node_modules/.vite/vitest/transforms',
     maxWorkers: Math.min(requestedWorkers, availableParallelism()),
     fileParallelism: true,
     isolate: true,

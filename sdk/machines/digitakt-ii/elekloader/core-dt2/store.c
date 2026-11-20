@@ -1,14 +1,14 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-/* core-dt2 1.1 and core-dn2 0.3: the mods' project data and kit data (store.s
- * calls these from the firmware's saves, loads and kit copies; the format:
- * docs/ADAPTING.md, "Frames, LEDs, project and kit data, value rows").
+/* core-dt2 1.1: the mods' project data and kit data (store.s calls these from
+ * the firmware's saves, loads and kit copies; the format: docs/ADAPTING.md,
+ * "Project data, kit data and value rows (core-dt2 1.1, Digitakt II)").
  *
  * Both live in bytes of the saved project the stock OS writes as zeros and
  * never reads, so a project saved with mods loads on the stock OS, which
  * keeps them when it saves a project it loaded. Core writes them only where
  * they hold zeros or its own data, and takes only its own: anything else
  * (another tool's, a later OS's) is left as it is and counted. */
-#include "mk2/core.h"
+#include "digitakt-mk2/core.h"
 
 extern const uint32_t core_store_layout[]; /* store.s: kits, kit size, pad, room, pattern object */
 extern const core_projdata_t *const core_projdata[];
@@ -112,7 +112,7 @@ void core_projdata_load(const uint8_t *file)
 #define KIT_MARK 0x4b /* 'K' */
 #define KIT_HEAD 3
 #define SHADOWS 8
-#define ROOM_MAX 340
+#define ROOM_MAX 194 /* KIT_ROOM: the bytes after a kit record's end mark */
 
 static uint16_t layout_id;
 static uint8_t layout_known;
@@ -144,7 +144,7 @@ uint32_t core_kitdata_room(void)
     return KIT_ROOM - KIT_HEAD;
 }
 
-int core_kit_index(const void *kit)
+static int core_kit_index(const void *kit)
 {
     uint32_t off = (uint32_t)kit - KITS;
     if ((uint32_t)kit < KITS || off % KIT_STRIDE || off / KIT_STRIDE >= CORE_KITS)

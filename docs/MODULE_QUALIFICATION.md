@@ -9,11 +9,11 @@ Existing published module authors may use the [automatic author-update workflow]
 - a hardware report: a functional report that gives the model, date, tester, summary and limitations is enough, with no minimum duration or track count;
 - its tutorial and screenshot paths.
 
-All of it is bound to the module version, its native-source SHA-256 and the SHA-256 of the local image it was tested with. A change to documentation or media alone uses `tests.retainedEvidence` instead. Bound only the module's own code and memory: when a number would need analysis of stock firmware, record it as not measured and ask the owner the same day ([Performance](module-guides/README.md#performance)). The steps are in [Add or port a module](ADD_A_MODULE.md). The rest of this page is the field reference and the record of owner exceptions.
+All of it is bound to the module version, its native-source SHA-256 and the SHA-256 of the local image it was tested with. A change to documentation or media alone uses `tests.retainedEvidence` instead. Bound only the module's own code and memory: when a number would need analysis of stock firmware, record it as not measured and ask the owner the same day ([Performance](module-guides/README.md#performance)). The steps are in [Add or port a module](ADD_A_MODULE.md), and the order of the tests in [the test procedure](TEST_PROCEDURE.md). The rest of this page is the field reference and the record of owner exceptions.
 
 From 2 October 2026, new modules and updates affecting runtime behavior, stability, cycles, memory or load must provide **worst-case cycle counts, exact memory accounting, attributed real-hardware test evidence and complete documentation**. These are publication requirements. Missing measurements, nominal/average CPU percentages, emulator-only evidence, historical evidence for another source and failed detailed hardware checks cannot qualify a submission. On 2 October 2026 the owner removed the mandatory 60-minute, eight-track stress run. A clearly labelled functional hardware report is accepted alongside the cycle, memory, source, UI and integration evidence below.
 
-`npm run modules:check`, `npm run modules:generate`, PR CI and release validation enforce the record. PR CI also checks version increases against the exact base commit. Configure `module-contract` as a required status check on protected main. The reviewer verifies the actual reports: the owner for a first release or changes beyond author scope, the registered module author for a scoped automatic update. Owner merge or the verified author-release workflow approves the version; there is no extra website approval. Metadata checks do not run submitted source or perform physical hardware tests. An unchecked contributor declaration cannot replace actual evidence verification; automatic author releases require the registered author to verify the reports and explicitly attest to the required acceptance checks.
+`npm run modules:check`, `npm run modules:generate`, PR CI and release validation enforce the record. PR CI also checks version increases against the exact base commit. Configure `module-contract` as a required status check on protected main. The submitter produces the reports through [the test procedure](TEST_PROCEDURE.md#who-runs-it); the reviewer verifies them and is never required to test on their own unit: the owner for a first release or changes beyond author scope, the registered module author for a scoped automatic update. Owner merge or the verified author-release workflow approves the version; there is no extra website approval. Metadata checks do not run submitted source or perform physical hardware tests. An unchecked contributor declaration cannot replace actual evidence verification; automatic author releases require the registered author to verify the reports and explicitly attest to the required acceptance checks.
 
 Every release also requires populated CPU, DSP core and memory gauges. These use [source-backed relative estimates](MODULE_RESOURCE_GAUGES.md), do not need exact whole-chip capacity percentages, and do not replace the qualification evidence below.
 
@@ -183,7 +183,7 @@ null when unreported), `testedOn`, credited `tester`, exact `sourceRevision`,
 `imageSha256`, `summary`, nonempty `limitations`, and a local `report` path.
 Set `tests.hardwareStatus: "reported"`. Source and image must agree with the
 qualification identities; retain the actual contributor statement and how the
-reviewer verified it (the owner on first release, the registered author on a scoped update). Describe unreported duration, track/instance counts, model
+reviewer verified it (a machine maintainer or the owner on first release, the registered author on a scoped update). Describe unreported duration, track/instance counts, model
 and untested cases explicitly. Do not fill them with guesses or upgrade an
 author report to a measured stress pass. A reproduced image must match the
 reported hardware image hash; packaging-only version changes are separate.
@@ -192,7 +192,7 @@ Detailed hardware records remain supported. Their project fingerprint, actual
 duration, track counts, maximum instance count, conditions and continuity,
 transport, controls, memory-integrity and recovery checks must describe the
 test actually performed. Pending/failed checks still block that form. There is
-no minimum duration or eight-active-track requirement. The owner reviews first releases and exceptions. For a scoped update the registered author verifies the
+no minimum duration or eight-active-track requirement. A machine maintainer or the owner reviews first releases; the owner, exceptions. For a scoped update the registered author verifies the
 evidence, explicitly requests publication and passes the author-release checks.
 
 DSP static counts must include expensive branches, parameter updates, trigger

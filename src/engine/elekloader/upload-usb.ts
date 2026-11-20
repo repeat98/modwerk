@@ -24,7 +24,7 @@ export const MISSING_PAGE = 13 // entries a MISSING reply holds; wValue is the f
 export const VENDOR_INVENTORY = 27 // the modules installed on the unit, in MISSING's form (sdk/runtime/loader/loader.c)
 export const VENDOR_CAPABILITIES = 29 // loader capabilities; older bases stall this read-only request
 export const CAPABILITIES_BYTES = 12
-export const RuntimeFeature = { sites: 1, stockCopies: 2, fills: 4, tables: 8, machineGroups: 16, sidechain: 32, siteEvents: 128, baseUpdate: 256, moduleSets: 512 } as const
+export const RuntimeFeature = { sites: 1, stockCopies: 2, fills: 4, tables: 8, machineGroups: 16, sidechain: 32, siteEvents: 128, baseUpdate: 256, moduleSets: 512, uiRoots: 1024 } as const
 export interface RuntimeCapabilities { abi: number; features: number; maxSites: number; maxCopies: number }
 /** MWCP v1. Unknown feature bits are retained: they do not imply features this client requires. */
 export function parseRuntimeCapabilities(view: DataView): RuntimeCapabilities {
@@ -326,6 +326,14 @@ export class UsbVendorTransport implements UploadTransport {
       // passed to cleanup, and an unacknowledged Begin is never adopted.
       if (owned !== undefined) await this.releaseSavedSet(owned)
     }
+  }
+  /** DIAG version 3 (request 4, ep0.c): the base's EP0 counters, answered in its USB interrupt even while it refuses
+   * submissions: frames received, refusals, bus resets, data stages primed, completed and abandoned. */
+  async ep0(): Promise<number[]> {
+    const reply = await this.device.controlTransferIn(this.setup(4, 0), 68), view = reply.data
+    if (reply.status !== 'ok' || !view || view.byteLength !== 68 || view.getUint32(0) !== 0x4d575544 || view.getUint8(4) !== 3)
+      throw new VendorTransportError('The Octatrack did not answer DIAG version 3.')
+    return [3, 4, 5, 6, 7, 14].map(word => view.getUint32(8 + 4 * word))
   }
   async result(signal?: AbortSignal): Promise<VendorResult> {
     signal?.throwIfAborted()

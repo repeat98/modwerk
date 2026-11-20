@@ -46,7 +46,7 @@ class MachineBases(unittest.TestCase):
         self.assertEqual({name: imported[name] for name in release["build"]["sources"]}, release["build"]["sources"])
 
     def test_digitakt_ii_base_source_is_core_dt2_1_1_unchanged(self):
-        record = json.loads((APP / "sdk/imports/core-dt2-source-3d7c2e3.json").read_text())
+        record = json.loads((APP / "sdk/imports/core-dt2-source-0df8409.json").read_text())
         self.assertRegex(record["revision"], r"^[0-9a-f]{40}$")
         for item in record["files"]:
             self.assertEqual(sha(APP / item["to"]), item["sha256"], item["to"])
@@ -56,7 +56,7 @@ class MachineBases(unittest.TestCase):
         mod = json.loads((folder / "mod.json").read_text())
         for source in mod["sources"]:
             self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), imported, source)
-        self.assertIn("sdk/machines/digitakt-ii/include/mk2/core.h", imported)
+        self.assertIn("sdk/machines/digitakt-ii/include/digitakt-mk2/core.h", imported)
 
     def test_digitakt_ii_proposed_hooks_name_the_sites_the_source_patches(self):
         interface = json.loads((APP / "sdk/digitakt-ii/core-profile/interface.json").read_text())
@@ -90,6 +90,16 @@ class MachineBases(unittest.TestCase):
             self.assertEqual(binding["built"]["toolchain"], config["toolchain"], machine)
             self.assertEqual(binding["built"]["stock"], machine_base.stock_sha(machine, config["os"]), machine)
 
+    def test_profiles_budget_the_bound_base_footprint(self):
+        # The machine page shows machine.json's budgets; one of them is the bound package's .run plus .bss.
+        for machine, config in bases():
+            binding = binding_of(machine, config)
+            if binding is None:
+                continue
+            footprint = binding["sections"][".run"] + binding["sections"][".bss"]
+            budgets = json.loads((APP / "sdk/machines" / machine / "machine.json").read_text())["sdk"]["budgets"]
+            self.assertIn(footprint, [budget["value"] for budget in budgets if budget["unit"] == "bytes"], machine)
+
     def test_staging_lays_out_every_source_and_header_mod_json_names(self):
         for machine, config in bases():
             with tempfile.TemporaryDirectory() as work:
@@ -112,14 +122,14 @@ class MachineBases(unittest.TestCase):
 
     def test_variants_stage_with_or_without_add_and_bindings_record_each(self):
         for machine, config in bases():
-            names = [name for name, _ in machine_base.variants(config)]
+            names = [name for name, _, _ in machine_base.variants(config)]
             binding = binding_of(machine, config)
             if "variants" in config and binding is not None:
                 self.assertEqual(list(binding["variants"]), names, machine)
                 self.assertEqual(binding["identity"], binding["variants"][names[0]], machine)
-            for name, add in machine_base.variants(config):
+            for name, add, leave in machine_base.variants(config):
                 with tempfile.TemporaryDirectory() as work:
-                    core = machine_base.stage(machine, config, pathlib.Path(work), add=add)
+                    core = machine_base.stage(machine, config, pathlib.Path(work), add=add, leave=leave)
                     staged = (core / "mod.json").read_bytes()
                 imported = imported_recipe(machine, config).read_bytes()
                 if "recipe" in config:
@@ -160,6 +170,30 @@ class MachineBases(unittest.TestCase):
                 with tempfile.TemporaryDirectory() as work, self.assertRaisesRegex(ValueError, "redo the copy"):
                     machine_base.stage(machine, stale, pathlib.Path(work))
 
+    def test_digitakt_ii_kit_data_ends_where_the_project_archive_starts(self):
+        # Core's kit data (KIT_PAD, KIT_ROOM) and the base's project archive (the last CHUNK_BYTES + 4 bytes of each
+        # kit record) share each serialized kit record. Overlapping, core's save zeroed the archive: with a kit-data
+        # module and an archive module together, the archive module's settings came back off after a power cycle.
+        config = json.loads((APP / "sdk/machines/digitakt-ii/elekloader/base.json").read_text())
+        with tempfile.TemporaryDirectory() as work:
+            core = machine_base.stage("digitakt-ii", config, pathlib.Path(work))
+            defsym = json.loads((core / "mod.json").read_text())["defsym"]
+            store = (core / "store.c").read_text()
+        archive = (APP / "sdk/machines/digitakt-ii/elekloader/modwerk/project-archive.c").read_text()
+        constant = lambda name: int(re.search(r"\b%s = (0x[0-9a-fA-F]+|\d+)" % name, archive).group(1), 0)
+        stride = int(defsym["FW_STARTUP_KIT_STRIDE"], 0)
+        self.assertEqual(constant("KIT_RECORD_SIZE"), stride)
+        self.assertEqual(constant("KIT_RECORDS"), int(defsym["FW_STARTUP_KITS_OFFSET"], 0))
+        kit_end = int(defsym["KIT_PAD"], 0) + int(defsym["KIT_ROOM"], 0)
+        archive_start = stride - (constant("CHUNK_BYTES") + 4)
+        self.assertLessEqual(kit_end, archive_start, "core's kit data runs into the project archive")
+        self.assertLessEqual(int(defsym["KIT_ROOM"], 0), int(re.search(r"#define ROOM_MAX (\d+)", store).group(1)))
+        # The copy differs from the imported recipe in the kit-data room alone.
+        imported = json.loads(imported_recipe("digitakt-ii", config).read_text())
+        copied = json.loads((APP / "sdk/machines/digitakt-ii/elekloader/copies/core-dt2/mod.json").read_text())
+        self.assertEqual(dict(copied, defsym=dict(copied["defsym"], KIT_ROOM=None)),
+                         dict(imported, defsym=dict(imported["defsym"], KIT_ROOM=None)))
+
     def test_retarget_replaces_the_recipe_and_refuses_anything_else(self):
         mod = {"device": "a", "defsym": {"X": "1"}, "sites": [{"a": 1}], "sources": ["a.s"]}
         out = machine_base.retarget(dict(mod), {"device": "b", "defsym": {"Y": "2"}, "sites": [], "sources": ["b.s"]}, [{"b": 2}])
@@ -197,14 +231,62 @@ class MachineBases(unittest.TestCase):
         with self.assertRaises(ValueError):
             machine_base.parts({"add": {"defsym": {"D": "1"}}, "dev": {"defsym": {"D": "1"}}}, dev=True)
 
+    def test_a_variant_leaves_out_of_add_what_its_patterns_name_and_keeps_the_rest_in_order(self):
+        add = {"sources": ["a.c", "bus.c", "v.c"], "cflags": ["-DX=1"],
+               "sites": [{"addr": "0x10", "target": "bus_gate"}, {"addr": "0x20", "op": "bytes"}, {"addr": "0x30", "target": "v_gate"}],
+               "subscribe": [{"event": "ev_tick", "fn": "bus_tick"}, {"event": "ev_tick", "fn": "v_tick"}],
+               "contribute": [{"to": "pages", "relocs": [[0, "abs32", "sym:bus_page", 0]]}, {"to": "params", "relocs": [[0, "abs32", "sym:v_params", 0]]}],
+               "defsym": {"bus_resume": "0x40"}, "collections": {"bus_fx": 4, "v_list": 4},
+               "storage": [{"sym": "bus_send", "scope": "sound", "bits": 7}, {"sym": "v_type", "scope": "sound", "bits": 3}]}
+        self.assertEqual(machine_base.leave_out(add, ["bus.c", "bus_*", "0x20"]), {
+            "sources": ["a.c", "v.c"], "cflags": ["-DX=1"], "sites": [{"addr": "0x30", "target": "v_gate"}],
+            "subscribe": [{"event": "ev_tick", "fn": "v_tick"}], "contribute": [add["contribute"][1]],
+            "collections": {"v_list": 4}, "storage": [add["storage"][1]]})
+        with self.assertRaises(ValueError):
+            machine_base.leave_out(add, ["bus_*", "no_such_*"])
+        with self.assertRaises(ValueError):
+            machine_base.variants({"variants": {"bad": {"add": False, "leave": ["bus_*"]}}})
+
+    def test_the_rytm_voices_variant_stages_add_without_the_send_bus_or_its_lock_words(self):
+        config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
+        variants = {name: (add, leave) for name, add, leave in machine_base.variants(config)}
+        staged = {}
+        for name in ("send-bus", "voices"):
+            with tempfile.TemporaryDirectory() as work:
+                add, leave = variants[name]
+                core = machine_base.stage("analog-rytm-mkii", config, pathlib.Path(work), add=add, leave=leave)
+                staged[name] = json.loads((core / "mod.json").read_text())
+        bus, voices = staged["send-bus"], staged["voices"]
+        for source in ("../base/locks.c", "../base/locks.s", "../base/clock.c", "../base/sendbus.c", "../base/sendbus.s"):
+            self.assertIn(source, bus["sources"])
+            self.assertNotIn(source, voices["sources"])
+        for source in ("../base/voice.c", "../base/voice.s"):
+            self.assertIn(source, voices["sources"])
+        names = json.dumps(voices)
+        self.assertNotIn("mw_send_", names)
+        # the FX track's lock words, which only the send bus writes: their three sites stay on send-bus with it
+        targets = {name: [site["target"] for site in machine_base.parts(config, add=variants[name][0], leave=variants[name][1])["sites"] if "target" in site]
+                   for name in ("send-bus", "voices")}
+        self.assertEqual([t for t in targets["send-bus"] if t.startswith("core_lk_")],
+                         ["core_lk_save_one", "core_lk_save_all", "core_lk_load"])
+        self.assertEqual([t for t in targets["voices"] if t.startswith("core_lk_")], [])
+        self.assertIn("mw_voice_applied_gate", targets["voices"])
+        self.assertNotIn("mw_fx", voices["collections"])
+        for name in ("mw_voices", "ev_sound_applied"):
+            self.assertIn(name, voices["collections"])
+        self.assertEqual([field["sym"] for field in voices["storage"]], ["mw_voice_type"])
+        # what remains is send-bus's, in send-bus's order
+        self.assertEqual([s for s in bus["sources"] if s in voices["sources"]], voices["sources"])
+        self.assertEqual([s for s in bus["subscribe"] if s in voices["subscribe"]], voices["subscribe"])
+
     def test_development_bases_stage_dev_on_every_variant_and_releases_never_carry_it(self):
         for machine, config in bases():
             if "dev" not in config:
                 continue
-            for name, add in machine_base.variants(config):
+            for name, add, leave in machine_base.variants(config):
                 for dev in (False, True):
                     with tempfile.TemporaryDirectory() as work:
-                        core = machine_base.stage(machine, config, pathlib.Path(work), add=add, dev=dev)
+                        core = machine_base.stage(machine, config, pathlib.Path(work), add=add, dev=dev, leave=leave)
                         mod = json.loads((core / "mod.json").read_text())
                     for source in config["dev"]["sources"]:
                         (self.assertIn if dev else self.assertNotIn)(source, mod["sources"], (name, dev))
@@ -242,6 +324,39 @@ class MachineBases(unittest.TestCase):
         self.assertTrue(all(1 <= int(n) <= 63 for n in ids), ids)
         self.assertEqual(len(set(ids.values())), len(ids), ids)
 
+
+    def test_carried_devices_match_their_machine_profile(self):
+        # A device Modwerk's builder carries names the stock files its machine.json lists, by the same hash.
+        carried = machine_base.carried_devices()
+        self.assertIn("digitone-mk2", carried)
+        for path in sorted((APP / "sdk/machines").glob("*/elekloader/device.json")):
+            machine = path.parts[-3]
+            facts = json.loads(path.read_text())["device"]
+            profile = json.loads((APP / "sdk/machines" / machine / "machine.json").read_text())
+            listed = {release["version"]: release["files"][0]["sha256"] for release in profile["firmware"]["releases"] if release["files"]}
+            for release in facts["releases"]:
+                self.assertEqual(listed.get(release["version"]), release["syx_sha256"], machine)
+
+    def test_carry_device_registers_a_device_the_kit_lacks_once(self):
+        class Kit:
+            def __init__(self):
+                self.known = []
+            def devices(self):
+                return self.known
+            Release = staticmethod(lambda **kw: kw)
+            class Device:
+                def __init__(self, **kw):
+                    self.__dict__.update(kw)
+        kit = Kit()
+        self.assertFalse(machine_base.carry_device(kit, "no-such-device"))
+        self.assertTrue(machine_base.carry_device(kit, "digitone-mk2"))
+        self.assertTrue(machine_base.carry_device(kit, "digitone-mk2"))
+        self.assertEqual(len(kit.known), 1)
+        device = kit.known[0]
+        self.assertEqual((device.sysex_id, device.main_load, device.stage), (0x15, 0x40000400, 0x40400000))
+        self.assertEqual(device.ddr, (0x47F00000, 0x47F40000))
+        self.assertEqual(device.hmac_key_from, (2, b"Multiplier"))
+        self.assertEqual(device.releases["1.12"]["main_len"], 3196288)
 
 if __name__ == "__main__":
     unittest.main()

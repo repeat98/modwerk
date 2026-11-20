@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Compare executed DSP output with the published source, byte for byte.
 
-Pass a private folder containing chorus.asm from the approved base commit;
-no stock firmware is needed. Finite fixture agreement is not chip timing or
+Pass a private folder containing chorus.asm and packed_sine.py from the
+approved base commit; no stock firmware is needed. Finite fixture agreement is not chip timing or
 hardware qualification. Baseline code and rendered audio remain private.
 """
 import argparse
@@ -22,6 +22,8 @@ def main():
     args = parser.parse_args()
     here = verify.HERE
     baseline = args.baseline.resolve()
+    if not (baseline/'packed_sine.py').exists():
+        parser.error('The baseline folder needs its packed_sine.py: without it the baseline runs on another sine table')
     n = 32768  # Cold history, warm history and several full ring wraps.
     rng = random.Random(0xA1C)
     left = [rng.randrange(-verify.Q, verify.Q) for _ in range(n)]

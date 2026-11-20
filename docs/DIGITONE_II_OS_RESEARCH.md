@@ -51,7 +51,32 @@ A ColdFire emulator of the control processor, without the DSP:
 - Core with a test mod that counts `ev_tick`, `ev_draw`, `ev_key` and `ev_enc` and takes nothing: all four count. Two trig presses give four `ev_key` calls (press and release) and two encoder turns two `ev_enc` calls. After those inputs the screen is identical to stock's under the same inputs.
 - Core with a test mod that adds one row through `core_additem` from `ev_settings` and one from `ev_personalize` (labels built with `std::string`'s constructor `0x401ceab8`, as the firmware's own labels are): the OS builds both menus once at boot, so each event runs once before any input. SETTINGS lists the row last, after SYSTEM, in the stock row style; PERSONALIZE lists its row last, after NOTE EDIT MENU. Selecting either row with YES runs its select callback once. Panel codes: SETTINGS 8, YES 10, UP 11, NO 12, DOWN 14.
 
+## Step 3: on a unit
+
+- toonst's unit (23 October 2026, [elekloader's build guide](https://github.com/toonst/elekloader/blob/3d7c2e3/docs/BUILDING.md#flash-it)): stock 1.12 and core/DigiHealth builds flashed over USB, the six UI events ran with core 0.1 and hooks-check 0.1, and the startup-menu recovery restored stock 1.12 over MIDI DIN.
+- A second unit (18 November 2026, [record](verification/2026-11-18-digitone-ii-core-on-a-unit.md)): toonst's elekloader at `3d7c2e3` built core-dn2 0.3 with hello-marker, then with hooks-check-dn2. Both booted from Transfer over USB, kits played normally, all six UI events and the subscriber order behaved as in the emulator, and a normal Transfer update put stock 1.12 back.
+
+## The processors (20 November 2026)
+
+What the 1.12 update and a unit show; nobody has opened a unit for this:
+
+- **A ColdFire of the MCF5441x family (V4)** runs the OS (`main_section` 3, loaded at `0x40000400`): the UI, the sequencer, USB and
+  MIDI, a kernel of sixteen tasks, and the parameter frames at 1,500 a second. 128 MB of DDR at `0x40000000`, read
+  uncached through `0x48000000`; 64 KB of SRAM at `0x80000000`, which section 4 fills (32 KB from `0x80000400`).
+  Section 2 (16 KB, at `0x02010000`) looks like the bootloader. External devices sit at `0xEC07xxxx` and `0xEC09xxxx`
+  (the MCF5441x's peripheral bridge: UART9 carries MIDI, 0xEC090000 the reset and its status, 0xEC094000 GPIO). Its
+  block at 0xFC0CC000, the eSDHC, holds the +Drive; DSPI0 drives the flash. The MCF5441x memory map (U-Boot's
+  `immap_5441x.h`) matches every block stock uses; the MCF5445x's does not. DSPI1 (0xFC03C000) and DSPI2
+  (0xEC038000) are the leads for how the ColdFire controls the SHARC.
+- **An Analog Devices SHARC+** (the ADSP-2156x or SC5xx family) renders the sound. Section 7 is an ADI boot stream:
+  95 blocks, each led by the 0xAD signature, filling the section exactly, into L1 (`0x2824xxxx`-`0x283xxxxx`), L2
+  (`0x2000xxxx`) and its own DDR (`0x80xxxxxx`). Its code is 48-bit ISA, little-endian words, with 32-bit float
+  tables. The Octatrack's DSP56k code cannot run there; algorithms port. A GPL-3.0 SHARC+ toolchain exists
+  ([selache](https://github.com/js216/selache): assembler, C compiler, linker, boot streams), and its disassembler
+  decodes the stock stream's code with about 1 % of words left undecoded.
+- **An ARM core** runs section 8 (160 KB: 4 KB of 0xFF, then Thumb code): which one, and what it does, is open.
+
 ## Still open
 
-- No run with the DSP, no hardware run, and recovery with the stock file has not been tried on a Digitone II.
-- `core-dn2` and the device profile were in a local elekloader checkout. toonst's elekloader fork now has `core-dn2` 0.3 (commit `3d7c2e3`): the six events above plus an input bridge, SysEx observers and a SHARC bridge from earlier cores, and the Digitakt II 1.1 additions (`ev_frame_params`, `ev_key_leds`, project and kit data) at this unit's addresses, which its author has run in an emulator only. Modwerk has not copied it. The Digitone II's SDK and base follow the Digitakt II's ([recipe](MACHINE_RECIPE.md)), once the machine's steps are done and the owner has agreed the core.
+- How the ColdFire boots and feeds the SHARC, where the stock delay sits in its code, and no run that exercises the DSP side of a mod, no project save or power-cycle persistence check, and the startup-menu recovery has been tried on one unit only.
+- `core-dn2` and the device profile were in a local elekloader checkout. toonst's elekloader fork now has `core-dn2` 0.3 (commit `3d7c2e3`): the six events above plus an input bridge, SysEx observers and a SHARC bridge from earlier cores, and the Digitakt II 1.1 additions (`ev_frame_params`, `ev_key_leds`, project and kit data) at this unit's addresses. Its boot and six UI events have run on a unit; the 1.1 additions and the bridges have run in an emulator only. Modwerk has not copied it. The Digitone II's base follows the Digitakt II's, built here ([goal](../sdk/machines/digitone-ii/GOAL.md)).

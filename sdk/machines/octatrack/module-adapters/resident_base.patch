@@ -1,6 +1,6 @@
 --- a/dsp.c
 +++ b/dsp.c
-@@ -1522,6 +1522,144 @@
+@@ -1554,6 +1554,144 @@
  /* Development (dev.c request 20): this many microseconds with interrupts masked on the next tick, timed by DTCN3
   * (132 MHz), to find how long the frame chain survives a held-off frame interrupt. Off the USB request path. */
  volatile uint32_t modwerk_dsp_mask_test;
@@ -114,7 +114,7 @@
 +    if (!n) return RUNTIME_OK;
 +    if (modwerk_saved_set_busy()) return RUNTIME_BUSY;
 +    int idle = dl_hook_claims_idle(spans, n);
-+    return idle > 0 ? RUNTIME_OK : idle < 0 ? RUNTIME_BUSY : RUNTIME_MEMORY;
++    return idle > 0 ? RUNTIME_OK : idle < 0 ? RUNTIME_BUSY : RUNTIME_BUFFER; /* a buffer under a claim, not memory */
 +}
 +int modwerk_stock_hook_begin(unsigned feature, uint32_t module, uint32_t generation, int enable)
 +{
@@ -145,7 +145,7 @@
  void modwerk_dsp_tick(void)
  {
      modwerk_dsp_watch_ticks = modwerk_dsp_watch_ticks + 1; /* the watchdog's heartbeat */
-@@ -1534,9 +1672,14 @@
+@@ -1566,9 +1704,14 @@
      }
      static int unpacked;
      if (!unpacked) unpacked = 1, modwerk_dsp_unpack();
@@ -163,7 +163,7 @@
      if (probing >= 0 && dl_job_status((unsigned)probing) != 0) {
          if (dl_job_status((unsigned)probing) > 0) modwerk_dsp_probes_ok = modwerk_dsp_probes_ok + 1;
          else modwerk_dsp_probes_failed = modwerk_dsp_probes_failed + 1;
-@@ -1545,7 +1688,7 @@
+@@ -1577,7 +1720,7 @@
      }
      if ((dl_phase || dl_c1_phase) && EDMA_ES >> 31 && !(EDMA_ES >> 8 & 0xfu)) recover(2); /* eDMA refused our transfer: at once */
      else if (modwerk_dsp_stalled(dl_frames, dl_phase || !dl_job_status(0) || !dl_job_status(1))) recover(1);
@@ -388,21 +388,13 @@
          btst    #1,y:<<$ffffd3
          brkcs
  c1over:
-@@ -578,6 +593,18 @@
+@@ -578,6 +593,10 @@
          nop
  missactual:
          nop
 +hookstate:                             ; private resident owner mask, initialized dormant by the upload
 +        nop
 +hookready:                             ; a complete observed reset is required before any activation
-+        nop
-+hookpos1:
-+        nop
-+hookpos2:
-+        nop
-+hookpos4:
-+        nop
-+hookpos8:                              ; the key bus's reset cursor
 +        nop
  idlewin:                                  ; never executed: the load meter (see frame): frames left,
          nop                             ; least, most, sum and missed of this window

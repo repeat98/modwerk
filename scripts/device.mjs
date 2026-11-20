@@ -8,7 +8,8 @@
 //   while [ -f scripts/device.mjs ]; do npm run device -- serve [--share /tmp/modwerk-share.sock]; sleep 1; done   # one long-lived link (starts the bridge
 //       if needed; --share lets the frontend MCP use the unit through it, --device-socket that path); send it
 //       scripts/device-send.py part2 pick:T1:FX2:E-Verb stats png:/tmp/s.png   # or 'try FILE', 'remove FILE', 'boot DIR'
-//   npm run device -- try MODULE.mwrm [--seconds 5] [--accept]
+//   npm run device -- try MODULE.mwrm [--seconds 5] [--accept]   # ends with a verdict from the unit's log: a crash, stall,
+//       frozen UI or skipped track during the trial fails it (exit 1) and it is rolled back even with --accept
 //   npm run device -- remove [MODULE.mwrm] [--accept]   # that file's module, else module 0
 //   npm run device -- set A.mwrm,B.mwrm,-C.mwrm [--accept]  # one whole-set offer, as the site's Sync sends it: files to install, -FILE
 //       to remove that file's module, +refuse for two test modules of which the base refuses the second (so the set rolls back)
@@ -37,7 +38,7 @@
 // the base rolls back any module that was not accepted.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { deflateSync, crc32 } from 'node:zlib'
-import { join, resolve } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 import { createConnection, createServer } from 'node:net'
 import { spawn, spawnSync } from 'node:child_process'
 import { homedir, tmpdir } from 'node:os'
@@ -54,7 +55,9 @@ import { encodeModuleSet } from '../src/engine/elekloader/set-package.ts'
 import { diagnostics, removal, runLifecycle, runtimePackage, ENTRY } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { describeRefusal } from './loader-refusals.mjs'
 import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
+import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
+import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
   socket: { type: 'string', default: '/tmp/modwerk-ot.sock' },
@@ -74,8 +77,20 @@ if (!['serve', 'status', 'stats', 'try', 'set', 'recover', 'remove', 'lifecycle'
   process.exit(2)
 }
 
+// The unit's turn (scripts/unit-queue.mjs): a command that drives the unit waits in line for it and gives it back when it
+// exits. `serve` is the shared link and takes none. Reads (IDENTIFY, RAM, the report, the screen, a read-only `do`) go
+// beside another session's turn; `status` does not, since its HELLO moves on the upload session another process may be
+// in the middle of (docs/OCTATRACK_DRIVING.md). An emulator needs no turn.
+const DRIVES = ['status', 'try', 'set', 'recover', 'remove', 'lifecycle', 'boot', 'flash', 'key', 'enc', 'fader', 'probe', 'meter']
+if (command !== 'serve' && !values.emulator && (DRIVES.includes(command) || command === 'do' && sequenceDrives(file)))
+  await takeUnitTurn({ note: `device ${command}${command === 'do' ? ` '${file.slice(0, 80)}'` : file ? ' ' + basename(file) : ''}`,
+    command: 'npm run device -- ' + process.argv.slice(2).join(' ').slice(0, 300),
+    expectMs: ['try', 'set', 'remove'].includes(command) ? (seconds + 120) * 1000 : command === 'flash' ? 600000 : command === 'boot' ? 300000 : 120000 })
+
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
-if (command === 'serve' && !await new Promise(resolve => { const c = createConnection(benchEndpoint(values.socket), () => { c.end(); resolve(true) }); c.on('error', () => resolve(false)) })) {
+// Is a bridge already listening? Not asked of an emulator: ot_emu takes one connection and stops when it hangs up, so serve --emulator
+// keeps its one link for the session (docs/TEST_PROCEDURE.md, the same steps on either target).
+if (command === 'serve' && !values.emulator && !await new Promise(resolve => { const c = createConnection(benchEndpoint(values.socket), () => { c.end(); resolve(true) }); c.on('error', () => resolve(false)) })) {
   const bridge = spawn(process.env.MODWERK_PYTHON ?? join(homedir(), '.cache/modwerk-upstream/venv/bin/python'),
     ['-B', 'scripts/octatrack-usb-bridge.py', values.socket], { stdio: ['ignore', 'pipe', 'inherit'] })
   await new Promise((resolve, reject) => { bridge.stdout.on('data', d => /ready/.test(d) && resolve()); bridge.once('exit', code => reject(new Error('bridge exited ' + code))) })
@@ -88,6 +103,16 @@ const transport = new UsbVendorTransport(unit, index, { pollMs: 5 })
 const identity = await transport.identify()
 // DIAG is the Octatrack base's own request; other bases may not answer it.
 const diag = () => diagnostics(unit, index).catch(() => undefined)
+/** diag.c's log over LOG (any base with it): the parsed log, null before the unit wrote one; throws on a base without LOG. */
+async function readLog() {
+  const data = new Uint8Array(DEVICE_LOG_PAGE * DEVICE_LOG_PAGES)
+  for (let page = 0; page < DEVICE_LOG_PAGES; ++page) {
+    const reply = await unit.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request: DEVICE_LOG_REQUEST, value: page, index }, DEVICE_LOG_PAGE)
+    if (reply.status !== 'ok' || reply.data?.byteLength !== DEVICE_LOG_PAGE) throw new Error(`This base does not answer LOG (diag.c): page ${page} ${reply.status} ${reply.data?.byteLength}`)
+    data.set(new Uint8Array(reply.data.buffer, reply.data.byteOffset, DEVICE_LOG_PAGE), page * DEVICE_LOG_PAGE)
+  }
+  return parseDeviceLog(data) ?? null
+}
 
 // Development bases (build_core.py --dev, dev.c): keys as the panel reports them, and the composed screen.
 const KEYS = { DOWN: 0x20, RIGHT: 0x21, SRC: 0x22, AMP: 0x23, LFO: 0x24, FX1: 0x25, FX2: 0x26, STOP: 0x27, PLAY: 0x28,
@@ -325,7 +350,11 @@ async function missing() {
  * memory (development bases: each memory's use, holes and largest free run), compact (pack each core's code now, timed),
  * dspmap (development bases: each core's code arena drawn, every block named with its slots), dspmap:watch:N (redrawn on change)
  * profile, profile:N (development bases: each UI tick hook's µs over N seconds, from the symbols of the build `boot` started)
+ * health (development bases: one JSON line of DSP frames, loader stalls and errors, ticks, CPU, crash and stall record counts; scripts/octatrack-soak.mjs)
  * (spaces in NAME as _; it waits until the track runs it). */
+/** Steps that only read: run() leaves out the 60 ms it puts after every other step (a health read cost 80 ms, 60 of
+ * them this pause). Not `gap`, `guard` or `cpu`: their reads restart a window or can set a value. */
+export const READ_ONLY = /^(health|state|stats|ui|loader|crash|stall|saved|inventory|missing|screen|png:\S+|mem:0x[0-9a-f]+:\d+)$/i
 async function run(sequence, until = Infinity) { // serve: past its time limit a sequence stops before its next step
   for (const step of sequence.trim().split(/\s+/)) {
     if (Date.now() > until) throw new Error('stopped at the time limit before ' + step)
@@ -440,13 +469,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     else if (step === 'crashtest') await devIn(17, 0, 1) // development bases: an illegal instruction on the next tick (crash.c)
     else if ((m = /^freezetest:(\d+)$/.exec(step))) await devIn(28, Number(m[1]), 1) // development bases: the UI tick stands still N s (diag.c)
     else if (step === 'diaglog') { // diag.c's log over LOG (any base with it): its incidents and the last loads
-      const data = new Uint8Array(DEVICE_LOG_PAGE * DEVICE_LOG_PAGES)
-      for (let page = 0; page < DEVICE_LOG_PAGES; ++page) {
-        const reply = await unit.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request: DEVICE_LOG_REQUEST, value: page, index }, DEVICE_LOG_PAGE)
-        if (reply.status !== 'ok' || reply.data?.byteLength !== DEVICE_LOG_PAGE) throw new Error(`This base does not answer LOG (diag.c): page ${page} ${reply.status} ${reply.data?.byteLength}`)
-        data.set(new Uint8Array(reply.data.buffer, reply.data.byteOffset, DEVICE_LOG_PAGE), page * DEVICE_LOG_PAGE)
-      }
-      const log = parseDeviceLog(data)
+      const log = await readLog()
       if (!log) console.log('diaglog: no log yet')
       else {
         console.log(`diaglog boot ${log.boot} seq ${log.seq}: ${log.incidents.length} incidents, ${log.loads.length} loads`)
@@ -477,9 +500,16 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     else if ((m = /^pick:T([1-8]):FX([12]):(\S+)$/i.exec(step))) await pick(Number(m[1]) - 1, Number(m[2]), m[3].replace(/_/g, ' '))
     else if ((m = /^pickid:T([1-8]):FX([12]):(\d+)$/i.exec(step))) await pick(Number(m[1]) - 1, Number(m[2]), Number(m[3])) // by effect id
     else if (step === 'state') { const [s, r] = await devIn(6, 0, 2); console.log(s ? 'stopped' : 'playing', r ? 'recording' : '') }
+    else if (step === 'health') { // one JSON line for scripts/octatrack-soak.mjs: DSP frames, loader stalls and errors, the UI tick's watch count, CPU,
+      // the crash and stall records' counts (battery RAM, 0 when none), the transport and the bank and pattern (development bases: MEM)
+      const w = await statusWords(), [stopped] = await devIn(6, 0, 2)
+      const record = async (at, magic) => { const b = await mem(at, 8), v = new DataView(b.buffer, b.byteOffset, 8); return v.getUint32(0) === magic ? v.getUint32(4) : 0 }
+      console.log(JSON.stringify({ health: { frames: w(1), stalls: w(11), errors: w(10), ticks: w(15), cpu: w(66), crash: await record(0x100ff800, 0x4d574352),
+        stall: await record(0x100ff900, 0x4d575354), playing: !stopped, pattern: [...await mem(0x800065bd, 4)] } })) // bank, pattern, then the queued ones
+    }
     else if (step === 'stats') { const w = await statusWords(); console.log(`stats cpu ${w(66)} T1-4 ${w(69)}/${w(70)} T5-8 ${w(67)}/${w(68)} passes ${(w(76) / 1024).toFixed(1)} ${(w(77) / 1024).toFixed(1)}`) }
     else { const [, spec, times] = /^(.+?)(?:\*(\d+))?$/.exec(step); for (let i = 0; i < Number(times ?? 1); i++) await keys(spec) }
-    await wait(60)
+    if (!READ_ONLY.test(step)) await wait(60) // room between presses and changes; a read changes nothing, so it needs none
   }
 }
 const state = s => `${s.phase}, generation ${s.generation}, active ${s.active?.slice(0, 16) ?? 'unknown'}…`
@@ -490,10 +520,12 @@ process.once('SIGINT', () => { console.log('interrupted: rolling back'); process
 
 /** While the unit plays, the base presses STOP and refuses with `unsafe`; retry for 3 s as the site does. A rollback
  * the loader could not switch yet answers `needs-recovery` and stays in recovery, from where it rolls back again
- * (OctatrackLink.whenStopped); given up at once, it left the unit in recovery until the base's own timeout. */
+ * (OctatrackLink.whenStopped); given up at once, it left the unit in recovery until the base's own timeout.
+ * A set rolls back one engine turn a row: at 3 s a 24-module trial stopped 16 rows in (MKII, 17 November 2026).
+ * shortcut: 20 s covers about 100 rows; take the site's setBudget(rows) when a set here grows past that. */
 async function stopping(step) {
   for (const start = Date.now(); ; await wait(200)) {
-    try { return await step() } catch (error) { if (!['unsafe', 'needs-recovery'].includes(error.status?.result) || Date.now() - start > 3000) throw error }
+    try { return await step() } catch (error) { if (!['unsafe', 'needs-recovery'].includes(error.status?.result) || Date.now() - start > (error.status.result === 'needs-recovery' ? 20000 : 3000)) throw error }
   }
 }
 
@@ -510,7 +542,10 @@ async function retried(step) {
     }
   }
 }
+/** The verdict comes from the unit's log before the trial and again before it is kept or undone (src/dev/trial-verdict.ts): a trial
+ * that logged a crash, a stall, a frozen UI or a skipped track is rolled back even with --accept, and the command exits 1. */
 async function trial(session, pkg) {
+  const logged = () => readLog().catch(() => undefined), before = await logged()
   await stopping(() => session.stage(pkg, { signal: interrupt.signal })); await session.activate(); await session.startTrial()
   console.log(`trial: ${pkg.sha256.slice(0, 16)}… running`)
   for (let second = 1; second <= seconds && !interrupt.signal.aborted; second++) {
@@ -519,8 +554,11 @@ async function trial(session, pkg) {
     if (d) console.log(`  ${second}s: ticks ${d.ticks}, value 0x${d.value.toString(16)}, slot ${d.active ? 'running' : 'empty'}, refusals ${d.refusals}`)
   }
   await stopping(() => session.holdTrial())
-  if (values.accept && !interrupt.signal.aborted) { await session.accept(); console.log('accepted') }
-  else { await stopping(() => session.rollback()); console.log('rolled back' + (values.accept ? '' : ' (pass --accept to keep it)')) }
+  const verdict = trialVerdict(before, await logged(), namesFor(identity.base))
+  console.log('verdict: ' + verdict.lines.join('\n  '))
+  if (verdict.failed && command !== 'serve') process.exitCode = 1
+  if (values.accept && !interrupt.signal.aborted && !verdict.failed) { await session.accept(); console.log('accepted') }
+  else { await stopping(() => session.rollback()); console.log('rolled back' + (verdict.failed ? ': the trial logged a fault (above), so it is not kept' : values.accept ? '' : ' (pass --accept to keep it)')) }
   const left = Date.now(), status = await session.leaveUploadMode()
   console.log(`left upload mode in ${Date.now() - left} ms`) // the card-set save runs first, in the same task
   return status
@@ -555,7 +593,8 @@ if (command === 'serve') {
       const [verb, arg, chunk] = line.trim().split(/\s+/)
       if (verb === 'boot' || verb === 'flash') { // the unit reboots and this link goes with it: hand the bridge to a one-shot boot or flash, then exit (run serve in a loop)
         bench.socket.end(); await wait(300)
-        const r = spawnSync(process.execPath, [process.argv[1], verb, arg, '--socket', values.socket, ...(chunk ? ['--chunk', chunk] : [])], { encoding: 'utf8', timeout: 400000 })
+        // MODWERK_UNIT=served: whoever sent this line took the unit's turn for it (device-send.py), so the boot waits for none
+        const r = spawnSync(process.execPath, [process.argv[1], verb, arg, '--socket', values.socket, ...(chunk ? ['--chunk', chunk] : [])], { encoding: 'utf8', timeout: 400000, env: { ...process.env, MODWERK_UNIT: 'served' } })
         out.push(r.stdout, r.stderr, 'serve exits; the loop restarts it'); setTimeout(() => process.exit(0), 200)
       } else if (verb === 'recover') { // a transaction left behind (an install whose reply went missing): undo it, as the site does
         const session = await UploadSession.connect(transport, identity.base, { timeoutMs: 10000 })
@@ -751,6 +790,6 @@ if (command === 'serve') {
   }
 } catch (error) {
   console.error(error.message, error.cause?.message ?? '')
-  console.error('If a module was left in trial, unplug USB: the base rolls back anything not accepted.')
+  console.error('If a module was left in trial, unplug USB: the base rolls back anything not accepted. If the unit restarted, npm run device -- do diaglog shows why once it is back.')
   process.exitCode = 1
 } finally { bench.socket.end(); backBench?.socket.end() }

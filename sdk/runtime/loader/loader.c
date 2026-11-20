@@ -21,6 +21,8 @@ static uint8_t pool[RUNTIME_POOL_BYTES] __attribute__((aligned(16)));
 struct modwerk_runtime_api modwerk_runtime_api;
 volatile uint32_t modwerk_runtime_ticks;
 static struct runtime_module *volatile live[RUNTIME_MODULES];
+/* One bit per position for each of the four UI hooks, lowest position first (ColdFire ff1). */
+static volatile uint32_t ui_positions[RUNTIME_EVENTS][(RUNTIME_MODULES + 31u) / 32u];
 static struct runtime_module *owned[OWNERS]; /* every module holding pool memory */
 static struct runtime_owner owner_identity[OWNERS]; /* never stored in uploaded/mutable module memory */
 static uint32_t owner_generation; /* nonzero, monotonic for this boot; exhaustion refuses */
@@ -34,6 +36,7 @@ static unsigned owners, slot;                /* slot: the transaction's position
 static struct runtime_module *candidate, *previous;
 static int prepared, held;
 static enum runtime_refusal refusal;
+static enum runtime_check refused_check; /* which admission check said `refusal` */
 struct journal_row { struct runtime_module *before,*after; uint32_t before_generation,after_generation,module; uint16_t position; uint8_t published,touched,needs_restore; uint8_t package_sha256[MU_DIGEST_BYTES]; };
 struct runtime_journal { struct journal_row row[RUNTIME_JOURNAL_ROWS]; struct runtime_journal_progress progress; uint8_t preparing; };
 static struct runtime_journal journal;
@@ -50,6 +53,12 @@ static struct {
 #else
 #define SET_ROWS 0u
 #define SET_CAPABILITY 0u
+#endif
+/* 1024: the machine refuses to retire a module whose window, page or key layer is still open (RUNTIME_UI_OPEN). */
+#ifdef MODWERK_RUNTIME_UI_ROOTS
+#define UI_ROOTS_CAPABILITY 1024u
+#else
+#define UI_ROOTS_CAPABILITY 0u
 #endif
 int modwerk_runtime_set_busy(void) { return SET_ROWS != 0; }
 #ifndef MODWERK_RUNTIME_JOURNAL_EXTERNAL
@@ -98,6 +107,38 @@ __attribute__((weak)) int modwerk_machine_image_validate(const struct runtime_ds
 #endif
 
 const struct runtime_module *modwerk_runtime_module(unsigned i) { return i < RUNTIME_MODULES ? live[i] : 0; }
+/* The engine task is the only writer. Add the new bits before publishing the module and clear its absent
+ * hooks afterwards. A reader can interrupt anywhere: an extra bit just makes it look at the live slot. */
+static void set_live(unsigned position, struct runtime_module *m)
+{
+    unsigned word = position / 32u;
+    uint32_t bit = 0x80000000u >> (position % 32u);
+    for (unsigned e = 0; e < RUNTIME_EVENTS; ++e)
+        if (m && m->hook[e]) ui_positions[e][word] |= bit;
+    live[position] = m;
+    for (unsigned e = 0; e < RUNTIME_EVENTS; ++e)
+        if (!m || !m->hook[e]) ui_positions[e][word] &= ~bit;
+}
+uintptr_t modwerk_runtime_next_hook(enum runtime_event event, unsigned *next)
+{
+    if ((unsigned)event >= RUNTIME_EVENTS) return 0;
+    for (unsigned i = *next; i < RUNTIME_MODULES;) {
+        unsigned word = i / 32u;
+        uint32_t bits = ui_positions[event][word] & (UINT32_MAX >> (i % 32u));
+        if (!bits) {
+            i = (word + 1u) * 32u;
+            continue;
+        }
+        i = word * 32u + (unsigned)__builtin_clz(bits);
+        const struct runtime_module *m = live[i++];
+        uintptr_t handler = m ? m->hook[event] : 0;
+        if (handler) {
+            *next = i;
+            return handler;
+        }
+    }
+    return 0;
+}
 unsigned modwerk_runtime_active(void)
 {
     unsigned n = 0;
@@ -105,7 +146,8 @@ unsigned modwerk_runtime_active(void)
     return n;
 }
 enum runtime_refusal modwerk_runtime_refusal(void) { return refusal; }
-void modwerk_runtime_refused(enum runtime_refusal why) { refusal = why; }
+void modwerk_runtime_refused(enum runtime_refusal why) { refusal = why, refused_check = RUNTIME_CHECK_NONE; }
+enum runtime_check modwerk_runtime_refused_check(void) { return refused_check; }
 uint32_t modwerk_runtime_value(void) { return modwerk_runtime_api.value; }
 uint32_t modwerk_runtime_calls(void) { return modwerk_runtime_ticks; }
 
@@ -118,13 +160,14 @@ unsigned modwerk_runtime_capabilities(uint8_t *out)
 {
     out[0] = 'M'; out[1] = 'W'; out[2] = 'C'; out[3] = 'P';
     out[4] = 1; out[5] = RUNTIME_ABI;
-    unsigned flags = RUNTIME_CAPABILITY_FLAGS | (RUNTIME_SITE_EVENTS ? 128u : 0u) | SET_CAPABILITY;
+    unsigned flags = RUNTIME_CAPABILITY_FLAGS | (RUNTIME_SITE_EVENTS ? 128u : 0u) | SET_CAPABILITY | UI_ROOTS_CAPABILITY;
     out[6] = (uint8_t)(flags >> 8); out[7] = (uint8_t)flags;
     out[8] = (uint8_t)(RUNTIME_SITES >> 8); out[9] = (uint8_t)RUNTIME_SITES;
     out[10] = (uint8_t)(RUNTIME_COPIES >> 8); out[11] = (uint8_t)RUNTIME_COPIES;
     return 12u;
 }
-static int refuse(enum runtime_refusal why) { refusal = why; return 0; }
+static int refuse(enum runtime_refusal why) { refusal = why, refused_check = RUNTIME_CHECK_NONE; return 0; }
+static int refuse_at(enum runtime_check check, enum runtime_refusal why) { refuse(why), refused_check = check; return 0; }
 /* ABI 9: the base features a package may require (loader.h). None unless the machine says so. */
 #ifndef MODWERK_RUNTIME_FEATURES_EXTERNAL
 __attribute__((weak)) unsigned modwerk_machine_dsp_features(void) { return 0; }
@@ -236,6 +279,28 @@ static uint8_t contributes(const uint32_t *hook) { (void)hook; return 0; }
 static int subscribes(const struct runtime_module *m) { (void)m; return 0; }
 static int in_dispatch(uint32_t v) { (void)v; return 0; }
 static uintptr_t raise_of(uint32_t hook) { (void)hook; return 0; }
+#endif
+#if RUNTIME_SITE_EVENTS && defined(RUNTIME_SITE_EVENT_IN_USE)
+/* A module rests until a track uses it (HOOKS.md): while its ev_in_use answers 0 its handlers stay out of the rows of
+ * the events that rest, so the frame interrupt never enters its code there. Bit i of `resting`: position i rests; of
+ * `asks`: its module subscribes ev_in_use. Both change locked: a switch wakes its position, rest_poll the others. */
+static const uint8_t event_rests[RUNTIME_SITE_EVENTS] = RUNTIME_SITE_EVENT_RESTS;
+#define REST_WORDS ((RUNTIME_MODULES + 31u) / 32u)
+static uint32_t resting[REST_WORDS], asks[REST_WORDS];
+static int is_resting(unsigned i) { return resting[i / 32u] >> (i % 32u) & 1u; }
+static int rests(unsigned e, unsigned i) { return event_rests[e - RUNTIME_EVENTS] && is_resting(i); }
+static void woken(unsigned position, const struct runtime_module *m)
+{
+    uint32_t bit = 1u << (position % 32u);
+    resting[position / 32u] &= ~bit;
+    asks[position / 32u] = (asks[position / 32u] & ~bit) | (m && m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] ? bit : 0u);
+}
+#else /* nothing rests: every subscriber is in every row, as before */
+#if RUNTIME_SITE_EVENTS
+static int rests(unsigned e, unsigned i) { (void)e; (void)i; return 0; }
+#endif
+static void woken(unsigned position, const struct runtime_module *m) { (void)position; (void)m; }
+static int is_resting(unsigned i) { (void)i; return 0; }
 #endif
 
 #ifdef MODWERK_CACHED_MODULES
@@ -368,6 +433,21 @@ int modwerk_runtime_owner_canonical(const struct runtime_owner *o,uintptr_t *ext
     *extent = (uintptr_t)pool + (o->owned_extent - lo);
     return 1;
 }
+void modwerk_runtime_site_view(const void *image, uint32_t address, uint8_t *out, uint32_t length)
+{
+    if (!image || !out || !length || address > UINT32_MAX - length) return;
+    for (unsigned p = 0; p < RUNTIME_MODULES; ++p) {
+        const struct runtime_module *m = live[p];
+        if (!m || (const void *)m->dsp.image != image) continue;
+        for (uint32_t i = 0; i < m->sites; ++i) {
+            const struct runtime_site *s = &m->site[i];
+            uint32_t lo = s->address > address ? s->address : address;
+            uint32_t hi = s->address + s->length < address + length ? s->address + s->length : address + length;
+            for (uint32_t a = lo; a < hi; ++a) out[a - address] = s->stock[a - s->address];
+        }
+        return;
+    }
+}
 static int reachable(const struct runtime_module *m)
 {
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) if (live[i] == m) return 1;
@@ -378,6 +458,21 @@ static int reachable(const struct runtime_module *m)
         if (change_set.row[i].before==m || change_set.row[i].after==m) return 1;
 #endif
     return m == candidate || m == previous;
+}
+int modwerk_runtime_restorable(uint32_t generation)
+{
+    if (!generation) return 0;
+    for (unsigned i = 0; i < owners; ++i) {
+        if (owner_identity[i].generation != generation) continue;
+        const struct runtime_module *m = owned[i];
+        if (m == previous) return 1;
+        for (unsigned k = 0; k < journal.progress.records; ++k) if (journal.row[k].before == m) return 1;
+#ifdef MODWERK_RUNTIME_SETS
+        for (unsigned k = 0; k < change_set.count; ++k) if (change_set.row[k].before == m) return 1;
+#endif
+        return 0;
+    }
+    return 0;
 }
 /* Locked: free every extent that no position, the transaction or a paused
  * task's stack or saved registers can reach. Unknown task state frees nothing. */
@@ -485,11 +580,12 @@ static void code_write(volatile uint8_t *to, const uint8_t *from, uint32_t n)
     }
     for (; j < n; ++j) to[j] = from[j];
 }
-static int holds(const struct runtime_module *m, int patched)
+/* Do m's sites hold its patches (patched) or stock's bytes? A module that rests keeps stock's in its resting sites. */
+static int holds(const struct runtime_module *m, int patched, int resting)
 {
     for (uint32_t i = 0; m && i < m->sites; ++i) {
         const struct runtime_site *s = &m->site[i];
-        if (!code_equal(modwerk_machine_code(s->address), patched ? s->code : s->stock, s->length)) return 0;
+        if (!code_equal(modwerk_machine_code(s->address), patched && !(resting && s->rests) ? s->code : s->stock, s->length)) return 0;
     }
     return 1;
 }
@@ -518,7 +614,7 @@ unsigned modwerk_runtime_intact(void)
     uint32_t lock = modwerk_machine_lock();
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) { /* masked a module at a time: many modules, short spans */
         uint32_t mask = modwerk_machine_mask();
-        n += live[i] && holds(live[i], 1);
+        n += live[i] && holds(live[i], 1, is_resting(i));
         modwerk_machine_unmask(mask);
     }
     modwerk_machine_unlock(lock);
@@ -531,7 +627,7 @@ uint32_t modwerk_runtime_broken(void)
     uint32_t lock = modwerk_machine_lock();
     for (unsigned i = 0; !id && i < RUNTIME_MODULES; ++i) {
         uint32_t mask = modwerk_machine_mask();
-        if (live[i] && !holds(live[i], 1)) id = live[i]->id;
+        if (live[i] && !holds(live[i], 1, is_resting(i))) id = live[i]->id;
         modwerk_machine_unmask(mask);
     }
     modwerk_machine_unlock(lock);
@@ -565,17 +661,51 @@ static void put(const struct runtime_module *m, int patched)
         if (!patched) modwerk_machine_site_restored(s->address, s->length, s->code, s->stock);
     }
 }
+#if RUNTIME_SITE_EVENTS && defined(RUNTIME_SITE_EVENT_IN_USE)
+/* Masked: m's resting sites to stock's bytes (it rests) or back to its patches (it wakes). */
+static void put_rests(const struct runtime_module *m, int resting)
+{
+    for (uint32_t i = 0; m && i < m->sites; ++i) {
+        const struct runtime_site *s = &m->site[i];
+        if (!s->rests) continue;
+        modwerk_machine_flush_data(s->address, s->length);
+        code_write(modwerk_machine_code(s->address), resting ? s->stock : s->code, s->length);
+        if (resting) modwerk_machine_site_restored(s->address, s->length, s->code, s->stock);
+    }
+}
+static int has_rests(const struct runtime_module *m)
+{
+    for (uint32_t i = 0; m && i < m->sites; ++i) if (m->site[i].rests) return 1;
+    return 0;
+}
+/* Locked: could a paused task resume inside one of m's resting sites, past its first byte? Waking writes the patch
+ * over stock's instructions there, so it would run the middle of one. Unknown counts as yes. */
+static int rests_in_flight(const struct runtime_module *m, const struct runtime_context *context)
+{
+    struct runtime_span span[RUNTIME_PAUSED];
+    unsigned n = modwerk_machine_paused(span, RUNTIME_PAUSED, context);
+    if (n > RUNTIME_PAUSED) return 1;
+    for (unsigned i = 0; i < n; ++i)
+        for (const uint8_t *p = span[i].from; p + 4 <= span[i].to; p += 2) {
+            uint32_t v = be32(p);
+            for (uint32_t k = 0; k < m->sites; ++k)
+                if (m->site[k].rests && v > m->site[k].address && v < m->site[k].address + m->site[k].length) return 1;
+        }
+    return 0;
+}
+#endif
 static const struct runtime_dsp no_dsp;
 static const struct runtime_dsp *dsp_of(const struct runtime_module *m) { return m ? &m->dsp : &no_dsp; }
 #if RUNTIME_SITE_EVENTS
-/* Locked: each site event's row once `position` holds `to`, by (order, module id). */
+/* Locked: each site event's row once `position` holds `to` (awake), by (order, module id); resting modules elsewhere
+ * stay out of the rows of the events that rest. */
 static int events_stage(unsigned position, const struct runtime_module *to)
 {
     for (unsigned e = RUNTIME_EVENTS; e < RUNTIME_HOOKS; ++e) {
         unsigned n = 0;
         for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
             const struct runtime_module *m = i == position ? to : live[i];
-            if (!m || !m->hook[e]) continue;
+            if (!m || !m->hook[e] || (i != position && rests(e, i))) continue;
             unsigned k = n++;
             for (; k && (m->order[e] < by_order[k - 1]->order[e] || (m->order[e] == by_order[k - 1]->order[e] && m->id < by_order[k - 1]->id)); --k)
                 by_order[k] = by_order[k - 1];
@@ -614,7 +744,7 @@ static int switch_locked(unsigned position, struct runtime_module *to, const str
     /* Only the writes run masked. The checks before and after them only read code, which the caller's lock keeps
      * this the only writer of: masked as well, a module with many sites held the frame interrupt past 200 µs (Play
      * Modes' 35, 229 µs) and could stop the DSPs (beta finding 46). */
-    if (ok) ok = holds(from, 1) && holds_stock_after(from, to);
+    if (ok) ok = holds(from, 1, is_resting(position)) && holds_stock_after(from, to);
     if (ok) {
         uint32_t mask = modwerk_machine_mask(); /* the machine's real-time interrupts may run these bytes */
         put(from, 0);
@@ -622,7 +752,7 @@ static int switch_locked(unsigned position, struct runtime_module *to, const str
         modwerk_machine_invalidate_code();
         if (rows) events_commit(), modwerk_machine_tables_changed();
         modwerk_machine_unmask(mask);
-        ok = holds(to, 1);
+        ok = holds(to, 1, 0);
         if (!ok) { /* a write that did not land: put back the sites and the rows `from` had */
             mask = modwerk_machine_mask();
             put(to, 0);
@@ -631,9 +761,10 @@ static int switch_locked(unsigned position, struct runtime_module *to, const str
             if (rows && events_stage(position, from)) events_commit(), modwerk_machine_tables_changed();
             modwerk_machine_unmask(mask);
         }
+        woken(position, ok ? to : from); /* the rows just staged hold the position awake */
         if (ok) {
             owners_changing();
-            live[position] = to;
+            set_live(position, to);
             owners_changed();
             /* The journal's adapter already owns all DSP jobs and ACKs. Its
              * CF commit observation must not start a second legacy job. */
@@ -655,6 +786,77 @@ static int restore_to(unsigned position,struct runtime_module *to,const struct r
 {
     restoring=1;int ok=switch_to(position,to,context);restoring=0;return ok;
 }
+#if RUNTIME_SITE_EVENTS && defined(RUNTIME_SITE_EVENT_IN_USE)
+#ifndef RUNTIME_ASK_IN_USE /* the host test answers for module code it cannot run */
+#define RUNTIME_ASK_IN_USE(handler) ((unsigned (*)(void))(handler))()
+#endif
+/* Locked: could a paused task resume part way through a row of the base's dispatch? Unknown counts as yes. */
+static int dispatching(const struct runtime_context *context)
+{
+    struct runtime_span span[RUNTIME_PAUSED];
+    unsigned n = modwerk_machine_paused(span, RUNTIME_PAUSED, context);
+    for (unsigned i = 0; i < n && n <= RUNTIME_PAUSED; ++i)
+        for (const uint8_t *p = span[i].from; p + 4 <= span[i].to; p += 2) if (in_dispatch(be32(p))) return 1;
+    return n > RUNTIME_PAUSED;
+}
+/* The UI tick (loader.h modwerk_runtime_rest_poll). Each module that subscribes ev_in_use is asked unlocked, as a
+ * tick hook is called (modules run no code under the loader's lock). Only when an answer changes the resting set are
+ * the rows staged again, locked and fenced as a switch is, and written masked; a position that changed meanwhile, or
+ * a paused task inside the dispatch, changes nothing, and the next tick asks again. */
+static int __attribute__((used)) rest_poll_context(const struct runtime_context *context)
+{
+    uint32_t epoch = owner_epoch, want[REST_WORDS], any = 0, differs = 0;
+    for (unsigned w = 0; w < REST_WORDS; ++w) any |= asks[w], want[w] = 0;
+    if (!any || (epoch & 1u)) return 0; /* resting positions are asking ones: nothing asks, nothing rests */
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
+        const struct runtime_module *m = asks[i / 32u] >> (i % 32u) & 1u ? live[i] : 0;
+        uintptr_t f = m ? m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] : 0;
+        if (f && !RUNTIME_ASK_IN_USE(f)) want[i / 32u] |= 1u << (i % 32u);
+    }
+    for (unsigned w = 0; w < REST_WORDS; ++w) differs |= want[w] ^ resting[w];
+    if (!differs) return 0;
+    uint32_t lock = modwerk_machine_lock();
+    int ok = owner_epoch == epoch && !dispatching(context);
+    /* A module's resting sites change with its rows: each must hold what its present state says, and none may be
+     * woken under a paused task's resume address. */
+    for (unsigned i = 0; ok && i < RUNTIME_MODULES; ++i) {
+        const struct runtime_module *m = live[i];
+        int now = is_resting(i), to = want[i / 32u] >> (i % 32u) & 1u;
+        if (now != to && has_rests(m)) ok = holds(m, 1, now) && (to || !rests_in_flight(m, context));
+    }
+    if (ok) {
+        uint32_t was[REST_WORDS];
+        for (unsigned w = 0; w < REST_WORDS; ++w) was[w] = resting[w], resting[w] = want[w];
+        /* No position switches: every row from the live modules, which admission fitted in each event's room. */
+        if ((ok = events_stage(RUNTIME_MODULES, 0))) {
+            uint32_t mask = modwerk_machine_mask();
+            for (unsigned i = 0; i < RUNTIME_MODULES; ++i)
+                if ((was[i / 32u] ^ want[i / 32u]) >> (i % 32u) & 1u) put_rests(live[i], is_resting(i));
+            modwerk_machine_invalidate_code();
+            events_commit(), modwerk_machine_tables_changed();
+            modwerk_machine_unmask(mask);
+            for (unsigned i = 0; ok && i < RUNTIME_MODULES; ++i) ok = !live[i] || holds(live[i], 1, is_resting(i));
+            if (!ok) { /* a write that did not land: every changed position back as it was, sites and rows */
+                for (unsigned w = 0; w < REST_WORDS; ++w) resting[w] = was[w];
+                mask = modwerk_machine_mask();
+                for (unsigned i = 0; i < RUNTIME_MODULES; ++i)
+                    if ((was[i / 32u] ^ want[i / 32u]) >> (i % 32u) & 1u) put_rests(live[i], is_resting(i));
+                modwerk_machine_invalidate_code();
+                if (events_stage(RUNTIME_MODULES, 0)) events_commit(), modwerk_machine_tables_changed();
+                modwerk_machine_unmask(mask);
+            }
+        } else for (unsigned w = 0; w < REST_WORDS; ++w) resting[w] = was[w];
+    }
+    modwerk_machine_unlock(lock);
+    return ok;
+}
+#ifdef __m68k__
+extern int modwerk_runtime_rest_poll(void);
+RUNTIME_CONTEXT_WRAPPER(modwerk_runtime_rest_poll, rest_poll_context, "", 68);
+#else
+int modwerk_runtime_rest_poll(void) { return rest_poll_context(0); } /* host glue supplies its own task contexts */
+#endif
+#endif
 /* The position of the live module `id`, else the first free one. */
 static unsigned position_of(uint32_t id)
 {
@@ -726,7 +928,7 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
 #ifdef MODWERK_RUNTIME_SETS
     if(change_set.count && !change_set.preparing) return refuse(RUNTIME_BUSY);
 #endif
-    candidate = 0; prepared = 0; refusal = RUNTIME_OK;
+    candidate = 0; prepared = 0; refusal = RUNTIME_OK, refused_check = RUNTIME_CHECK_NONE;
     if (length < 28u || data[0] != 'M' || data[1] != 'W' || data[2] != 'R' || data[3] != 'M' || be16(data + 4) < 3u ||
         be16(data + 4) > RUNTIME_ABI || be16(data + 6) & ~(be16(data + 4) >= 8u ? 7u : be16(data + 4) >= 6u ? 3u : 0u)) return refuse(RUNTIME_MALFORMED);
     uint32_t abi = be16(data + 4), header = abi >= 9 ? RUNTIME_HEADER_BYTES : abi == 8 ? 76u : abi == 7 ? 72u : abi == 6 ? 68u : abi == 5 ? 50u : abi == 4 ? 32u : 28u;
@@ -751,7 +953,7 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
     if (abi >= 9) dsp.requires = (uint16_t)be16(data + 76), dsp.claim_count = (uint8_t)claims;
     /* ABI 10: DSP words with no slot are an engine for the base's hook sites, not an effect. */
     const int engine = abi >= 10u && dsp.count && !dsp.slots;
-    if (image > RUNTIME_IMAGE_BYTES || bss > RUNTIME_IMAGE_BYTES - image || hooks > (abi >= 8u ? RUNTIME_HOOKS : RUNTIME_EVENTS) ||
+    if (image > RUNTIME_IMAGE_BYTES || bss > RUNTIME_MODULE_BYTES - image || hooks > (abi >= 8u ? RUNTIME_HOOKS : RUNTIME_EVENTS) ||
         count > RUNTIME_RELOCATIONS || sites > RUNTIME_SITES || copies > RUNTIME_COPIES || fills > RUNTIME_FILLS ||
         claims > RUNTIME_DSP_CLAIMS || entries > RUNTIME_DSP_HOOK_ENTRIES || length < at + image + 4u * count)
         return refuse(RUNTIME_MALFORMED);
@@ -777,8 +979,14 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
      * may reach past the site, over an instruction the module returns to); relocations u8; the SHA-256. */
     for (uint32_t i = 0; i < sites; ++i) {
         if (left < 8u) return refuse(RUNTIME_MALFORMED);
-        uint32_t n = abi >= 7u ? p[4] : be16(p + 4), keep = abi >= 7u ? p[5] : 0u, checked = abi >= 7u ? p[6] : n,
+        uint32_t n = abi >= 7u ? p[4] & ~RUNTIME_SITE_RESTS & 0xffu : be16(p + 4), keep = abi >= 7u ? p[5] : 0u, checked = abi >= 7u ? p[6] : n,
                  r = abi >= 7u ? p[7] : be16(p + 6);
+#if RUNTIME_SITE_EVENTS && defined(RUNTIME_SITE_EVENT_IN_USE)
+        if (abi >= 7u && p[4] & RUNTIME_SITE_RESTS && hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] == RUNTIME_NONE)
+            return refuse(RUNTIME_MALFORMED); /* a site rests only with a module that says when it is in use */
+#else
+        if (abi >= 7u && p[4] & RUNTIME_SITE_RESTS) return refuse(RUNTIME_MALFORMED);
+#endif
         address[i] = be32(p); size[i] = n;
         if (!n || n > RUNTIME_SITE_BYTES || (address[i] | n) & 1u || !checked || checked > RUNTIME_SITE_BYTES || keep > n || keep > checked ||
             r > RUNTIME_SITE_RELOCATIONS || left < site_bytes(abi, n, r) || !modwerk_machine_patchable(address[i], n > checked ? n : checked))
@@ -905,11 +1113,12 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
     for (uint32_t i = 0; i < sites; ++i) if (claimed(slot, address[i], size[i])) return refuse(RUNTIME_CONFLICT);
     if (claims_taken(slot, claim, claims)) return refuse(RUNTIME_CONFLICT); /* another live module's claim */
     uint32_t admission_lock = modwerk_machine_lock();
+    enum runtime_check check = RUNTIME_CHECK_CLAIMS;
     int why = engine ? modwerk_machine_dsp_engine_admit(&dsp) : modwerk_machine_dsp_claims_admit(dsp.requires, claim, claims);
-    if (!why) why = modwerk_machine_metadata_admit(dsp_of(live[slot]), &dsp, context, RUNTIME_METADATA_PREPARE);
-    if (!why) why = modwerk_machine_dsp_admit(dsp_of(live[slot]), &dsp);
+    if (!why) check = RUNTIME_CHECK_METADATA, why = modwerk_machine_metadata_admit(dsp_of(live[slot]), &dsp, context, RUNTIME_METADATA_PREPARE);
+    if (!why) check = RUNTIME_CHECK_DSP, why = modwerk_machine_dsp_admit(dsp_of(live[slot]), &dsp);
     modwerk_machine_unlock(admission_lock);
-    if (why) return refuse((enum runtime_refusal)why);
+    if (why) return refuse_at(check, (enum runtime_refusal)why);
     if (image || sites || dsp.count || engine) {
         if (owner_generation == UINT32_MAX) return refuse(RUNTIME_FULL);
         reclaim(context);
@@ -919,7 +1128,7 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
                  init_at = entries_at + (uint32_t)sizeof(struct runtime_dsp_entry) * entries,
                  tail = (init_at + 4u * init_words + 15u) & ~15u;
         struct runtime_module *m = take(head + code + tail);
-        if (!m) return refuse(RUNTIME_MEMORY);
+        if (!m) return refuse_at(RUNTIME_CHECK_POOL, RUNTIME_MEMORY);
         struct runtime_site *site = (struct runtime_site *)(void *)(m + 1);
         uint8_t *to = (uint8_t *)m + head;
         uint32_t base = (uint32_t)(uintptr_t)to;
@@ -949,7 +1158,7 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
         p = record;
         for (uint32_t i = 0; i < sites; ++i) {
             uint32_t n = size[i], r = abi >= 7u ? p[7] : be16(p + 6), held = abi >= 7u ? MU_DIGEST_BYTES : n, keep = abi >= 7u ? p[5] : 0u;
-            site[i].address = address[i]; site[i].length = n;
+            site[i].address = address[i]; site[i].length = n; site[i].rests = (uint8_t)(abi >= 7u && p[4] & RUNTIME_SITE_RESTS);
             for (uint32_t j = 0; j < n; ++j) site[i].code[j] = p[8 + held + j];
             if (abi < 7u) for (uint32_t j = 0; j < n; ++j) site[i].stock[j] = p[8 + j];
             else if (!stock_of(slot, address[i], n, p[6], site[i].stock, p + 8)) return refuse(RUNTIME_STOCK);
@@ -1056,7 +1265,7 @@ int modwerk_runtime_journal_digest(uint8_t out[MU_DIGEST_BYTES])
            !o.module) return 0;
         /* Match the existing intact-site check: the stable lock prevents task
          * mutation, and only this module's short site spans mask frames. */
-        uint32_t mask=modwerk_machine_mask();int intact=holds(live[i],1);
+        uint32_t mask=modwerk_machine_mask();int intact=holds(live[i],1,is_resting(i));
         modwerk_machine_unmask(mask);if(!intact) return 0;
         ids[n]=o.module;
         for(unsigned k=0;k<MU_DIGEST_BYTES;++k) sha[MU_DIGEST_BYTES*n+k]=o.package_sha256[k];

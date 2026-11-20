@@ -5,6 +5,7 @@ import type { DatabaseSync } from 'node:sqlite'
 import { testServer } from './test-server'
 import { communityModule } from './modules'
 import { PAUSED_MODULE_IDS, isBetaModule } from '../catalog/availability'
+import { asBeta } from '../catalog/beta-fixture'
 
 const databases: DatabaseSync[] = [], sent: { to: string[]; text: string }[] = [], password = 'a long original test passphrase'
 beforeEach(() => { sent.length = 0; vi.stubGlobal('fetch', vi.fn(async (_url: string, options: RequestInit) => { sent.push(JSON.parse(String(options.body))); return Response.json({ id: crypto.randomUUID() }) })) })
@@ -59,7 +60,7 @@ describe('member roles', () => {
     expect([f.role(alice.id), f.role(owner.id)]).toEqual(['user', 'owner'])
   })
 
-  it('grants and revokes beta access independently of roles and checks builds on the server', async () => {
+  it('grants and revokes beta access independently of roles and checks builds on the server', () => asBeta(async () => {
     const f = await fixture(), tester = await f.member('00schneider'), admin = await f.admin()
     const beta = '/admin/forum/beta-testers/00schneider'
     const access = () => f.call('/auth/build-access', 'POST', { moduleIds: ['airwindows-chorus'] }, tester.session)
@@ -89,9 +90,10 @@ describe('member roles', () => {
     expect((await f.call('/modules/airwindows-chorus/download', 'POST', {}, tester.session)).status).toBe(400)
     expect(f.role(tester.id)).toBe('developer')
     expect(f.db.prepare('SELECT action FROM forum_moderation WHERE target=?').all(tester.id)).toEqual([{ action: 'beta-tester:grant' }, { action: 'beta-tester:remove' }])
-  })
+  }))
 
   it('shows Owner and Developer beside posts, including developers by confirmed module claim', async () => {
+    expect(contributionRoles([42],new Set([42]),[{ id:'digitone',deviceReviewers:[42] }])).toEqual({roles:['device-reviewer','maintainer'],reviewDevices:['digitone']})
     const f = await fixture(), maker = await f.member('maker'), owner = await f.member('ownername'), plain = await f.member('plain')
     f.db.prepare("UPDATE users SET role='owner' WHERE id=?").run(owner.id)
     const author = communityModule('miniverb')!.author
@@ -117,7 +119,11 @@ describe('member roles', () => {
     const profile = async (name: string) => (await (await f.call('/forum/profiles/' + name)).json()) as { role: string; threads: number; likesReceived: number; reports: number }
     expect(await profile('alice')).toMatchObject({ role: 'user', threads: 1, likesReceived: 1, reports: 1 })
     expect((await profile('ownername')).role).toBe('owner')
+    expect(await profile('alice')).toMatchObject({ contributions:{roles:['contributor'],reviewDevices:[]} })
+    f.db.prepare("INSERT INTO auth_accounts(id,accountId,providerId,userId,createdAt,updatedAt) VALUES('authorLink','67785539','github',?,0,0)").run(alice.id)
+    expect(await profile('alice')).toMatchObject({ contributions:{roles:['modder'],reviewDevices:[]} })
     expect((await f.call('/admin/forum/roles/alice', 'PUT', { role: 'developer', reason: 'Builds modules' }, '', await f.admin())).status).toBe(200)
     expect((await profile('alice')).role).toBe('developer')
   })
 })
+import { contributionRoles } from '../../server/contribution-roles'

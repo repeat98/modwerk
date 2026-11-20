@@ -1,0 +1,1 @@
+Library cards group the author and track or license details on one line when space allows. Short module names share a line with their version. The Heavy CPU warning now appears in the upper-right corner of the module artwork.

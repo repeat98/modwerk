@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-16",
+  "reporter": "npp1993",
+  "status": "emulator",
+  "scope": "filter-hz 1.3.1: src/fx-hz.c's functions, which run only in the UI task to format the FX pages' text, are marked cold (built for size, out of the hot code); filter-hz.s is unchanged.",
+  "finding": "Every function in fx-hz.c runs in the UI task when a value's text is drawn, never in the audio block, so it can be built for size. With every function left at -O2, the object compare before and after gives byte-identical instructions apart from relocation offsets; built cold, the module takes 200 bytes less of the RAM all modules share.",
+  "change": "FHZ_UI = __attribute__((cold)) on mulhi, isqrt, atan2_q30, milli_hz, one_minus, fx_hz, clamp_word and the rest of fx-hz.c's functions. No behaviour change.",
+  "emulator": {
+    "name": "rytm-emu",
+    "revision": "2ac0f1f",
+    "binary": "dtboot (ramboot build)"
+  },
+  "builds": [
+    {
+      "label": "CB00",
+      "content": "a dev base (Modwerk's send-bus base with the dev link, from a private tree that leaves out the send bus) + Filter Hz 1.3.0, Improved AMP, Quick Mod Assign and Control In Actions, the sources before the change",
+      "syxSha256": "2df46aa47a2e4c32b37e68d8df247917fda36d8102abb4fd3d05d5e9633e48f9"
+    },
+    {
+      "label": "CA01",
+      "content": "the same with the cold sources (this version's code; its comment text differs)",
+      "syxSha256": "cfc5ee3bc3dcd01ef1af095876553e0e02b6419a4a94b478ba64564e116161fa"
+    }
+  ],
+  "method": "Modwerk's Rytm test rig in rytm-emu: CB00's screens recorded as references for the rig cases, then the same cases run on CA01 and compared with them.",
+  "results": [
+    "CA01 passes all 26 emulator cases against CB00's references, with identical screens and measures: the seven Filter Hz cases (delay-turn, delay-lock, khz-pair, reverb-turn, reverb-scene, scene-edit, perf-edit) and the other modules' cases in the same image.",
+    "Independent code review of the change: no defect found."
+  ],
+  "limitations": [
+    "Emulator only: not hardware evidence.",
+    "The images held three other modules beside Filter Hz in a development base; Filter Hz alone on core-ar2 was used only for the documentation captures.",
+    "No audio was measured; the frequencies follow from the filter equations, as in 1.3.0."
+  ]
+}

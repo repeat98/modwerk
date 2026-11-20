@@ -18,6 +18,7 @@
 
 #define EFF(t, i) (*(volatile short *)(PARAMS_EFF_AT + (t) * 84 + (i) * 2))
 #define IDX_FIN 18
+#define IDX_SMP 19         // the slot in its high byte: 128 and up are stock's own (the preview's 129)
 #define IDX_STA 21
 #define IDX_END 22
 #define IDX_LOP 23
@@ -30,6 +31,7 @@
 #define VOICES 8
 #define TRACKS 12
 #define STOP 0x4000         // FIN 64 in 8.8: the step scales to 0, and in the pitch no detune
+#define OWN_SLOT 0x8000     // SMP at or above: a stock preview, which plays at 1x forward (audio.s)
 #define TURN_LAG 14         // going down, the voice reads this many frames below the same position
 #define EDGE 32             // frames from STA or END where a change of direction waits
 #define MIN_WAIT 141        // shortest loop stock plays: below it no position is clear of both
@@ -83,7 +85,7 @@ void sample_rate_block(void)
             going_down[v] = 0;
             continue;
         }
-        down = EFF(t, IDX_FIN) < STOP;
+        down = EFF(t, IDX_FIN) < STOP && (unsigned short)EFF(t, IDX_SMP) < OWN_SLOT;
         if (down != going_down[v]) {
             if (turn_round(v, t, (int)(TRIG_NEXT >> v & 1)))
                 going_down[v] = (unsigned char)down;

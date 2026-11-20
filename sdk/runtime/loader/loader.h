@@ -12,7 +12,8 @@
 #define RUNTIME_CAPABILITY_FLAGS 7u     /* CF sites, hash-backed stock copies, authored constant fills; and 128, site events, when the machine has them (64 is the volatile journal) */
 #define RUNTIME_HEADER_BYTES 80u        /* ABI 9 and 10: ABI 8 (76) plus requires u16, claim and hook-entry counts u8;
                                          * older headers: 76, 72, 68, 50, 32, 28 */
-#define RUNTIME_IMAGE_BYTES 131072u      /* one module's image and bss (Tape Echo's tone table is 86 KiB) */
+#define RUNTIME_IMAGE_BYTES 131072u      /* one module's image (Tape Echo's tone table is 86 KiB) */
+#define RUNTIME_MODULE_BYTES 294912u     /* one module's image and bss (MIDI Scenes' locks: 64 Parts of 4 KiB) */
 #define RUNTIME_RELOCATIONS 2048u
 #define RUNTIME_SITES 128u
 #define RUNTIME_SITE_BYTES 32u
@@ -46,7 +47,10 @@ enum runtime_event { RUNTIME_TICK, RUNTIME_DRAW, RUNTIME_KEY, RUNTIME_ENC, RUNTI
 #define RUNTIME_HOOKS (RUNTIME_EVENTS + RUNTIME_SITE_EVENTS)
 #define RUNTIME_RAISE 255u /* a raised event's hook word with this order: the image offset of a zero 4-byte slot the
                             * loader fills with the base's entry for that event (modwerk_raise_<event>); not a handler */
-struct runtime_site { uint32_t address, length; uint8_t stock[RUNTIME_SITE_BYTES], code[RUNTIME_SITE_BYTES]; };
+/* ABI 7 site records: bit 7 of the length byte marks a site that rests with its module (HOOKS.md, ev_in_use): while
+ * the module answers ev_in_use 0 the site holds its stock bytes. Older bases read such a length as malformed. */
+#define RUNTIME_SITE_RESTS 0x80u
+struct runtime_site { uint32_t address, length; uint8_t stock[RUNTIME_SITE_BYTES], code[RUNTIME_SITE_BYTES], rests; };
 /* ABI 9: an X/Y span the module's DSP code reads or writes outside its own slot (README.md, "Base features and DSP
  * claims"). space 1 X, 2 Y; core 0 or 1 (on the Octatrack core 0 runs payload A, tracks 5-8); an address at or past
  * 0x30000 is in the window both cores see. access bit 0 read, bit 1 write. ABI 10, an engine's claims only: bit 2, its
@@ -124,6 +128,9 @@ int modwerk_runtime_owner_valid(const struct runtime_owner *);
  * its code runs from (owned_extent), and that allocation's canonical extent:
  * the pool's own base plus its offset, checked against the pool's ends. */
 int modwerk_runtime_owner_at(uintptr_t address,struct runtime_owner *);
+/* Stable lock held. `out` holds `length` bytes read at `address` (physical); the bytes that fall inside a site of
+ * the live module whose image is `image` become that site's stock bytes, as its switch out will leave them. */
+void modwerk_runtime_site_view(const void *image,uint32_t address,uint8_t *out,uint32_t length);
 int modwerk_runtime_owner_canonical(const struct runtime_owner *,uintptr_t *extent);
 /* Stable lock held. modwerk_runtime_owner_valid, trying the entry *hint first and leaving where it was found
  * there: one check while the ledger is unchanged. */
@@ -138,9 +145,14 @@ enum runtime_refusal { RUNTIME_OK, RUNTIME_MALFORMED, RUNTIME_MEMORY, RUNTIME_CO
                        RUNTIME_STOCK /* ABI 7: the bytes under a site are not the stock bytes its hash names */,
                        RUNTIME_EVENT /* a site or copy meets a stock site the base owns as an event: subscribe to it */,
                        RUNTIME_FEATURE /* ABI 9: a base feature the package requires cannot come up this boot (on the
-                                        * Octatrack, the key bus with a DSP core's state lost): restart, then retry */ };
+                                        * Octatrack, the key bus with a DSP core's state lost): restart, then retry */,
+                       RUNTIME_UI_OPEN /* a window, page or key layer of the module it would replace or remove is still
+                                        * open (capability 1024): close it, then retry */,
+                       RUNTIME_BUFFER /* ABI 9: a claim meets the delay buffer of an effect a track runs or will run (the
+                                       * machine's buffer census): move that effect to another slot, then retry */ };
 /* ABI 9 refusals use the codes above: a feature the base does not have, a claim another live module's claim meets
- * (either writing), and (ABI 9) any hook entry are RUNTIME_CONFLICT. ABI 10: an engine the machine does not admit
+ * (either writing), and (ABI 9) any hook entry are RUNTIME_CONFLICT; a claim under an effect's delay buffer is
+ * RUNTIME_BUFFER (never RUNTIME_MEMORY, which is the module pool and the DSP's own limits). ABI 10: an engine the machine does not admit
  * (modwerk_machine_dsp_engine_admit) answers the machine's refusal. */
 /* ABI 7's site record (a 32-byte hash for the stock bytes) is never longer than ABI 6's (the stock bytes). */
 #define RUNTIME_PACKAGE_BYTES (RUNTIME_HEADER_BYTES + 4u * RUNTIME_HOOKS + RUNTIME_IMAGE_BYTES + 4u * RUNTIME_RELOCATIONS + \
@@ -166,6 +178,9 @@ extern struct modwerk_runtime_api modwerk_runtime_api;
  * reclaimed only when no paused task holds an address inside it, so a hook
  * still running old code stays valid. */
 const struct runtime_module *modwerk_runtime_module(unsigned position);
+/* Tick, draw, key or encoder hook at or after *next, or 0. Start at position 0; each call advances
+ * past the handler it returns. Only positions are indexed, so the next call sees any live replacement. */
+uintptr_t modwerk_runtime_next_hook(enum runtime_event event, unsigned *next);
 unsigned modwerk_runtime_active(void);               /* modules live */
 unsigned modwerk_runtime_intact(void);               /* of them, those whose stock-code sites hold their patches */
 uint32_t modwerk_runtime_broken(void);               /* the first live module whose sites do not hold: its id, 0 none */
@@ -174,12 +189,22 @@ unsigned modwerk_runtime_list(uint8_t *out, unsigned first, unsigned most); /* I
 enum runtime_refusal modwerk_runtime_refusal(void);
 void modwerk_runtime_refused(enum runtime_refusal why); /* a machine check that refuses before the loader (Octatrack modset.c) */
 unsigned modwerk_runtime_refused_event(void);         /* after RUNTIME_EVENT: that event's hook index */
+/* Which admission check refused the last prepare, so one refusal code from several checks can be told apart
+ * (RUNTIME_MEMORY: the pool, a claim meeting the machine's buffers, or the DSP's limits). None for every other refusal. */
+enum runtime_check { RUNTIME_CHECK_NONE, RUNTIME_CHECK_POOL, RUNTIME_CHECK_CLAIMS, RUNTIME_CHECK_METADATA, RUNTIME_CHECK_DSP };
+enum runtime_check modwerk_runtime_refused_check(void);
 #if RUNTIME_SITE_EVENTS
 /* Each site event's handlers in (order, module id) order, then 0: the base's dispatch (runtime_events.s,
  * modwerk_events_code up to modwerk_events_code_end) walks them. Rewritten masked, only while no paused
  * task is inside that dispatch. */
 extern uintptr_t volatile *const modwerk_runtime_event_row[RUNTIME_SITE_EVENTS];
 extern const uint8_t modwerk_events_code[], modwerk_events_code_end[];
+#ifdef RUNTIME_SITE_EVENT_IN_USE
+/* The machine's UI tick (a task, never an interrupt): asks each module that subscribes the event the base asks
+ * (RUNTIME_SITE_EVENT_IN_USE) and moves those answering 0 out of the rows of the events that rest
+ * (RUNTIME_SITE_EVENT_RESTS), and those answering nonzero back. 1 when the rows changed. */
+int modwerk_runtime_rest_poll(void);
+#endif
 #endif
 void modwerk_machine_tables_changed(void);          /* masked, after rows changed; weak no-op by default */
 /* Masked: a site's bytes went back to stock (`patched` were its module's), so stock data that copied them can follow;

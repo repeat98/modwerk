@@ -78,10 +78,18 @@ export async function checkStockWrites(stock: Uint8Array, built: Uint8Array, map
     const previous = sorted[i - 1], site = sorted[i]
     if (site.addr < previous.addr + previous.length) problems.push(previous.owner + ' site ' + hex32(previous.addr) + ' and ' + site.owner + ' site ' + hex32(site.addr) + ' overlap')
   }
-  const changed = changedRanges(stock, built)
-  for (const [from, to] of changed) {
+  const changed: [number, number][] = []
+  for (const [from, to] of changedRanges(stock, built)) {
     const lo = map.mainLoad + from, hi = map.mainLoad + to
-    if (!sorted.some(site => site.addr <= lo && hi <= site.addr + site.length)) problems.push('stock bytes ' + hex32(lo) + '-' + hex32(hi) + ' change outside every declared site')
+    let cursor = lo
+    for (const site of sorted) {
+      if (site.addr > cursor || cursor === hi) break
+      const end = Math.min(hi, site.addr + site.length)
+      if (end <= cursor) continue
+      changed.push([cursor - map.mainLoad, end - map.mainLoad])
+      cursor = end
+    }
+    if (cursor !== hi) problems.push('stock bytes ' + hex32(cursor) + '-' + hex32(hi) + ' change outside every declared site')
   }
   const tail = Math.max(0, built.length - stock.length)
   if (tail > map.tailBudget) problems.push('the appended tail is ' + tail + ' bytes, over the ' + map.tailBudget + ' allowed')
