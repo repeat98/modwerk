@@ -7,7 +7,7 @@ import { tagDiscordLinks } from '../../server/site-link-tags.ts'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { TODO_COMMAND, actionId, classify } from './policy.mjs'
-import { MARKER, approveRun, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
+import { MARKER, approveRun, boardGet, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
 import { dailyReport } from './report.mjs'
 
 const daily = process.env.BOT_MODE === 'daily', dir = process.env.BOT_DIR ?? 'bot'
@@ -86,12 +86,26 @@ for (const run of (await api('/actions/runs?branch=main&status=completed&per_pag
 const failing = [...latest.values()].filter(run => run.conclusion === 'failure')
 if (failing.length) await bot('/todos', 'POST', { todos: failing.map(run => ({ id: actionId('todo', 0, 'red main', run.workflow_id, today), target: 0, command: 'gh run view ' + run.id + ' --log-failed', note: 'main is red: ' + run.name + ' at ' + run.head_sha.slice(0, 9), urgent: true })) })
 
+// One private draft per unanswered exchange. A board outage leaves existing to-dos in place.
+const followups = (await boardGet('/followups').catch(() => null))?.followups
+const pendingDrafts = followups?.map(item => ({
+  id: actionId('board-followup', item.id, item.since), target: 0, urgent: false,
+  command: 'npm run board -- followups ' + item.id,
+  note: 'GitHub follow-up for @' + item.to + ' · ' + item.target,
+}))
+if (pendingDrafts) {
+  for (let i = 0; i < pendingDrafts.length; i += 30) {
+    await bot('/todos', 'POST', { todos: pendingDrafts.slice(i, i + 30) })
+  }
+}
+
 // Open to-dos whose item is settled go away: a closed issue or pull request, an ended board thread, a workflow
 // that is green on main again.
 for (const todo of (await bot('/todos')).todos) {
   const thread = todo.command.match(/^npm run board -- reply ([0-9a-f-]{36})$/)?.[1], run = todo.command.match(/^gh run view (\d+) --log-failed$/)?.[1]
   let settled = false
-  if (thread) settled = (await readBoardTarget('board_reply', thread))?.state === 'closed'
+  if (todo.command.startsWith('npm run board -- followups ')) settled = !!pendingDrafts && !pendingDrafts.some(draft => draft.id === todo.id)
+  else if (thread) settled = (await readBoardTarget('board_reply', thread))?.state === 'closed'
   else if (run) { const workflow = (await api('/actions/runs/' + run).catch(() => null))?.workflow_id; settled = !!workflow && latest.get(workflow)?.conclusion === 'success' }
   else if (todo.target) settled = (await api('/issues/' + todo.target).then(issue => issue.state, () => 'open')) === 'closed'
   if (settled) await bot('/todos/' + todo.id + '/status', 'POST', { status: 'dropped' })

@@ -303,7 +303,7 @@ function report(title, lines, tiered = false) {
 
 // The agent board (docs/AGENT_BOARD.md): one read per run; a new module needs your claim, and someone else's claim stops it.
 // Open questions and findings on the module or its machine are a line to read, never a red one.
-const board = await import('./agent-board.mjs'), boardView = await board.boardSnapshot({ kind: 'module' }, { messages: {} })
+const board = await import('./agent-board.mjs'), boardView = await board.boardSnapshot({ kind: 'module' }, { messages: { moduleContext: true } })
 const boardLines = (machine, id, folder) => [board.moduleClaimLine({ root, machine, id, folder, ...boardView }), board.moduleMessagesLine({ machine, id, ...boardView })].filter(Boolean)
 let green = true
 const octatrackIds = all ? catalog.modules.map(item => item.id) : ids.filter(id => exists('sdk/octatrack/modules/' + id))
