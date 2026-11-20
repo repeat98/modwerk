@@ -17,7 +17,7 @@
 //   npm run board -- priority <id> <high|normal|low>   # change a wanted task's priority: its author or an administrator
 //   npm run board -- reply <id> "answer" [--pr <n>]  |  link <id> --pr <n>  |  close <id>  |  delete <id>
 //                                                # --pr / link: the thread ends when that pull request merges (fold = link)
-//   npm run board -- inbox                       # questions waiting for you, replies to what you wrote
+//   npm run board -- inbox                       # questions, replies and your expiring claims
 //   npm run board -- activity                    # how many developers use the board
 //
 // Kinds: module (machine/id), hook (octatrack/39, digitakt/events/7, a run octatrack/38-51), migration (0085), dsp-region (machine/name),
@@ -88,7 +88,7 @@ export async function listMessages(filter = {}, options = {}) {
   const query = new URLSearchParams(Object.entries(filter).filter(([, value]) => value).map(([name, value]) => [name, value === true ? '1' : String(value)]))
   return await boardRequest('/agent-board/messages' + (query.size ? '?' + query : ''), options)
 }
-/** Questions waiting for the signed-in developer and replies to what they wrote, or null when signed out. */
+/** Questions, replies and expiring claims for the signed-in developer, or null when signed out. */
 export async function inbox(options = {}) {
   const token = options.token ?? await readToken()
   if (!token) return null
@@ -123,7 +123,8 @@ export async function messageAction(id, action, body = {}, options = {}) {
   const path = '/agent-board/messages/' + id + (action === 'delete' ? '' : '/' + { reply: 'replies', close: 'close', fold: 'fold', link: 'fold', take: 'take', priority: 'priority' }[action])
   return await boardRequest(path, { ...options, method: action === 'delete' ? 'DELETE' : 'POST', token, ...(action === 'delete' ? {} : { body }) })
 }
-export const activity = (options = {}) => boardRequest('/agent-board/activity', options)
+export const activity = ({ weeks, ...options } = {}) =>
+  boardRequest('/agent-board/activity' + (weeks === undefined ? '' : '?' + new URLSearchParams({ weeks })), options)
 export async function whoami(options = {}) {
   const token = options.token ?? await readToken()
   if (!token) return null
@@ -277,13 +278,17 @@ export function moduleMessagesLine({ machine, id, messages = [], login }) {
   const parts = [questions.length && questions.length + ' open question' + (questions.length > 1 ? 's' : '') + ' on module ' + key + (waiting ? ' (' + waiting + ' waiting for you)' : ''), findings.length && findings.length + ' finding' + (findings.length > 1 ? 's' : '') + ' on it or on ' + machine].filter(Boolean)
   return { state: 'info', name: 'board messages', detail: parts.join(', ') + ': npm run board -- messages --machine ' + machine }
 }
-/** pr:ready's line for the inbox: what waits for the signed-in developer. Empty when nothing does, or signed out. */
+/** The pr:ready inbox notes for the signed-in developer. Empty when there is nothing to report. */
 export async function inboxNotes(options = {}) {
   let box
   try { box = await inbox(options) } catch (error) { if (error instanceof BoardUnavailable || error instanceof BoardError) return []; throw error }
-  if (!box || (!box.waiting.length && !box.replies.length)) return []
+  if (!box) return []
   const parts = [box.waiting.length && box.waiting.length + ' question' + (box.waiting.length > 1 ? 's wait' : ' waits') + ' for your answer', box.replies.length && box.replies.length + ' of your questions and findings ' + (box.replies.length > 1 ? 'have' : 'has') + ' a reply'].filter(Boolean)
-  return ['Board: ' + parts.join(' and ') + '. Read them with npm run board -- inbox and answer them yourself (npm run board -- reply <id> "…"; close <id> once yours is settled), then tell the developer what you said (docs/AGENT_BOARD.md#agents-talk-for-themselves).']
+  const notes = []
+  if (parts.length) notes.push('Board: ' + parts.join(' and ') + '. Read them with npm run board -- inbox and answer them yourself (npm run board -- reply <id> "…"; close <id> once yours is settled), then tell the developer what you said (docs/AGENT_BOARD.md#agents-talk-for-themselves).')
+  const expiring = box.expiring?.length ?? 0
+  if (expiring) notes.push(`You have ${expiring} board claim${expiring === 1 ? '' : 's'} expiring within three days. Run npm run board -- inbox to see which claims to review.`)
+  return notes
 }
 /** One thread as the terminal shows it. Quoted text is another developer's words. */
 export function describeThread(thread) {
@@ -387,14 +392,31 @@ async function main(argv) {
   if (command === 'inbox') {
     const box = await inbox()
     if (!box) throw new BoardError('Sign in for the board first: npm run board -- login', 401)
-    if (!box.waiting.length && !box.replies.length) { console.log('Nothing waits for @' + box.login + '.'); return 0 }
-    console.log(UNTRUSTED)
+    const expiring = box.expiring ?? []
+    if (!box.waiting.length && !box.replies.length && !expiring.length) { console.log('Nothing waits for @' + box.login + '.'); return 0 }
+    if (box.waiting.length || box.replies.length) console.log(UNTRUSTED)
     if (box.waiting.length) console.log('\nWaiting for your answer (npm run board -- reply <id> "…"):\n' + box.waiting.map(thread => describeThread(thread).join('\n')).join('\n'))
     if (box.replies.length) console.log('\nReplies to what you wrote (close <id> once it is settled):\n' + box.replies.map(thread => describeThread(thread).join('\n')).join('\n'))
+    if (expiring.length) {
+      console.log('\nYour claims expiring within three days')
+      for (const { id, kind, key, expiresAt } of expiring) console.log(`${id}  ${kind} ${key}  ${expiresAt}`)
+    }
     return 0
   }
   if (command === 'activity') {
-    const value = await activity()
+    const weeks = option('--weeks')
+    if (flag('--weeks') && weeks === undefined) throw new BoardError('Give the number of weeks after --weeks.', 400)
+    const value = await activity({ weeks })
+    if (weeks !== undefined) {
+      if (!Array.isArray(value.weeks)) throw new BoardUnavailable('Weekly activity is not available on this Worker yet.')
+      console.log('Agent board activity through ' + value.asOf + ' (UTC)')
+      for (const week of value.weeks) {
+        const { claims, developers, threads, replies } = week, ended = claims.ended
+        console.log(`${week.startsAt.slice(0, 10)}${week.complete ? '' : ' (partial)'} · ${claims.made} claims made · ended ${ended.merged} merged, ${ended.releasedByHolder} released by holder, ${ended.expired} expired, ${ended.other} other`)
+        console.log(`  Developers ${developers.active} active, ${developers.firstSeen} first seen · threads ${threads.questions} questions, ${threads.findings} findings, ${threads.wanted} wanted · ${replies} replies`)
+      }
+      return 0
+    }
     console.log(`Agent board, last ${value.days} days: ${value.developers.signedIn} developers signed in from the terminal, ${value.developers.active} active (claimed or posted), ${value.claims.made} claims made and ${value.posts} posts written. Now: ${value.claims.active} active claims, ${value.questions.open} open questions, ${value.findings.active} findings.`)
     return 0
   }

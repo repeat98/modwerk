@@ -325,5 +325,38 @@ class MachineBases(unittest.TestCase):
         self.assertEqual(len(set(ids.values())), len(ids), ids)
 
 
+    def test_carried_devices_match_their_machine_profile(self):
+        # A device Modwerk's builder carries names the stock files its machine.json lists, by the same hash.
+        carried = machine_base.carried_devices()
+        self.assertIn("digitone-mk2", carried)
+        for path in sorted((APP / "sdk/machines").glob("*/elekloader/device.json")):
+            machine = path.parts[-3]
+            facts = json.loads(path.read_text())["device"]
+            profile = json.loads((APP / "sdk/machines" / machine / "machine.json").read_text())
+            listed = {release["version"]: release["files"][0]["sha256"] for release in profile["firmware"]["releases"] if release["files"]}
+            for release in facts["releases"]:
+                self.assertEqual(listed.get(release["version"]), release["syx_sha256"], machine)
+
+    def test_carry_device_registers_a_device_the_kit_lacks_once(self):
+        class Kit:
+            def __init__(self):
+                self.known = []
+            def devices(self):
+                return self.known
+            Release = staticmethod(lambda **kw: kw)
+            class Device:
+                def __init__(self, **kw):
+                    self.__dict__.update(kw)
+        kit = Kit()
+        self.assertFalse(machine_base.carry_device(kit, "no-such-device"))
+        self.assertTrue(machine_base.carry_device(kit, "digitone-mk2"))
+        self.assertTrue(machine_base.carry_device(kit, "digitone-mk2"))
+        self.assertEqual(len(kit.known), 1)
+        device = kit.known[0]
+        self.assertEqual((device.sysex_id, device.main_load, device.stage), (0x15, 0x40000400, 0x40400000))
+        self.assertEqual(device.ddr, (0x47F00000, 0x47F40000))
+        self.assertEqual(device.hmac_key_from, (2, b"Multiplier"))
+        self.assertEqual(device.releases["1.12"]["main_len"], 3196288)
+
 if __name__ == "__main__":
     unittest.main()
