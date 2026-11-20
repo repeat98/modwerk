@@ -62,7 +62,7 @@ import { OctatrackLinkContext, useInventory, useMissing } from './hooks/useOctat
 import { recordLoad } from './hooks/useOctatrackLoad'
 import { baseGuideToReopen, forgetBaseGuideReopen, pendingBaseInstall } from './config/octatrack-progress'
 import { digiDownloadsEnabled, isCoreBuildPreview } from './engine/elekloader/protocol'
-import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
+import { comesWithBase, USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, usbAudioLayout, type UsbAudioConfiguration } from './config/usb-audio'
 import { downloadSelection, parseSelection } from './config/selection'
 import { Icon } from './components/Icon'
 import { desktopShell, openAppMenu, useDesktopCommands } from './desktop-shell'
@@ -447,7 +447,7 @@ export default function App() {
   const [putBackId, setPutBackId] = useState<string>(), [putBackOff, setPutBackOff] = useState<string[]>([])
   function putBack(last: LastSeen) {
     setPutBackOff(last.offIds ?? [])
-    const id = configurationsFor('octatrack').find(set => sameModules(set.moduleIds.filter(module => module !== USB_AUDIO_MODULE), last.moduleIds))?.id
+    const id = configurationsFor('octatrack').find(set => sameModules(set.moduleIds.filter(module => !comesWithBase(module)), last.moduleIds))?.id
       ?? workspace.importConfiguration('From my Octatrack', last.moduleIds, true, undefined, 'octatrack', undefined, last.removedStockFx)
     setPutBackId(id); setLoadingSet(id)
   }

@@ -10,6 +10,9 @@ export interface Inventory {
   /** Modules switched off on the unit itself (PROJ > MODWERK > MODULES): installed and saved there, not running. A sync
    * leaves them as they are. Absent from a base before that page. */
   offIds?: string[]
+  /** The layout of the USB Audio package on the unit, by the number it carries (engine/elekloader/module-set.ts), once
+   * USB Audio is a module package; absent while it comes with the base, or for a number the site does not know. */
+  usbAudioLayout?: UsbAudioLayout
 }
 /** What a load makes the unit match: a module set, or the device page's edits. `usbAudio` holds the set's USB Audio
  * layout, which the base itself provides (engine/elekloader/base-variants.ts). */

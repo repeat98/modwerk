@@ -6,7 +6,7 @@ import { lastInventory, sameModules, type Inventory } from '../config/inventory'
 import { lastSuccessfulSync } from '../config/octatrack-progress'
 import { BaseLayoutRequired, BaseUpdateRequired, baseOutdated, moduleSetReview, setLayout } from '../engine/elekloader/module-set'
 import { baseLayout, baseVersion, type BaseLayout } from '../engine/elekloader/base-variants'
-import { USB_AUDIO_MODULE } from '../config/usb-audio'
+import { comesWithBase } from '../config/usb-audio'
 import type { Configuration } from '../config/workspace'
 import { DeviceImage } from '../devices/DeviceImage'
 import { DEVICES_BY_ID } from '../devices/registry'
@@ -92,7 +92,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
   const unitIds = connected ? inventory?.moduleIds : last?.moduleIds
   const selected = sets.find(set => set.id === selectedId) ?? sets[0]
   // USB Audio is on the unit when its base runs the set's layout (base-variants.ts); the inventory lists packages only.
-  const same = (set: Configuration) => set.moduleIds.length > 0 && !!unitIds && sameModules(set.moduleIds.filter(id => id !== USB_AUDIO_MODULE), unitIds) &&
+  const same = (set: Configuration) => set.moduleIds.length > 0 && !!unitIds && sameModules(set.moduleIds.filter(id => !comesWithBase(id)), unitIds) &&
     (setLayout(set) === undefined || connected && baseLayout(identity?.base) === setLayout(set))
   const review = connected && inventory && selected ? moduleSetReview(selected, inventory, identity?.capabilities, identity?.base) : undefined
   const changes = review?.changes, updates = review?.updates ?? []

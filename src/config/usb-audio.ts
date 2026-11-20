@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later OR Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
+import packageManifest from '../engine/assets/octatrack-module-packages.json' with { type: 'json' }
 export const USB_AUDIO_MODULE = 'usb-audio-out-tracks-main-cue'
+/** Whether the site publishes USB Audio as module packages (the manifest's `usbAudio`, docs/OCTATRACK_USB_AUDIO_MODULE.md)
+ * rather than as the base in each layout. Owner, 20 November 2026: as a module it counts toward the module limit. */
+export const USB_AUDIO_PACKAGED = Object.keys((packageManifest as { usbAudio?: object }).usbAudio ?? {}).length > 0
+/** A module the base itself provides, so a module set's counts and comparisons with the unit leave it out: USB Audio,
+ * until it ships as a module package. `packaged` is for tests. */
+export const comesWithBase = (id: string, packaged = USB_AUDIO_PACKAGED) => !packaged && id === USB_AUDIO_MODULE
 export const USB_AUDIO_VERSION = '0.2.0-experimental'
 export const USB_AUDIO_REVISION = '7b2984c859732ae6c797ae49c7d61d250b1b6519'
 export const USB_AUDIO_LAYOUTS = [
