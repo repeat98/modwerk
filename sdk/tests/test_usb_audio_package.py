@@ -89,6 +89,7 @@ class UsbAudioPackage(unittest.TestCase):
         subscribed = {name for name, index in by_name.items() if index < hooks and words[index] != 0xffffffff}
         self.assertEqual(subscribed, {'ot_usb_functions', 'ev_usb_isr', 'ev_usb_bus_end', 'ev_usb_control', 'ev_usb_frame', 'ot_settings'})
         self.assertTrue(all(w == 0xffffffff for w in words[:4]))  # no tick, draw, key or encoder handler
+        self.assertEqual(struct.unpack_from('>H', data, 66)[0], 1)  # its layout number: the define of TRACKS MAIN CUE, plus one
 
 
 if __name__ == '__main__':

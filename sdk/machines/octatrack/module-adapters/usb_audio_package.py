@@ -427,7 +427,10 @@ def build(layout, cross='m68k-elf-'):
                dict(event='ev_usb_bus_end', fn='mwua_bus_end', order=50), dict(event='ev_usb_control', fn='mwua_control', order=50),
                dict(event='ev_usb_frame', fn='mwua_frame', order=50), dict(event='ot_settings', fn='mwua_setting', order=50)]
     hooks = loader.subscribe([loader.NONE] * len(loader.HANDLERS), entries, symbols)
-    data = loader.package(image, bss, hooks, offsets, sites, name=MODULE, hashed=True, title=TITLE, abi=8)
+    # The layout number the unit's inventory reports for it, so the site knows which layout is on the unit
+    # (src/engine/elekloader/module-set.ts usbAudioLayoutNumber): the source's layout define, plus one.
+    data = loader.package(image, bss, hooks, offsets, sites, name=MODULE, hashed=True, title=TITLE, abi=8,
+                          layout=functions.AUDIO_LAYOUTS[layout] + 1)
     return data, dict(image=len(image), bss=bss, relocations=len(offsets), sites=[hex(s[0]) for s in sites],
                       block=len(blocks[0]), stock_sites=sites)
 
