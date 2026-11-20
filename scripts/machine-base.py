@@ -27,6 +27,7 @@ Each variant is built and checked the same way, and the binding records every va
 base.json's dev holds what only development bases carry (the same keys as add, and its own about), such as a USB
 link any host may drive with no hand on the unit: --dev builds every variant with dev merged after add, writes them
 as modwerk-base-<id>-dev-<sha>.elemod and checks them against no binding, so they can never be recorded or released.
+dev's shared maps a staged folder to repository files several machines share (sdk/runtime's loader), copied into it.
 A machine whose OS shares another's base names that machine in source: its elekloader folder is staged instead,
 with this machine's own folders beside it. recipe then replaces the imported recipe's device, defsym and sites
 (sites named by length and SHA-256, as add's) and adds sources. copies lays files of this machine's copies/ folder
@@ -231,7 +232,7 @@ def parts(config, add=True, dev=False, leave=()):
     taken = [leave_out(config.get('add', {}), leave) if leave else config.get('add', {})] if add else []
     for part in [config.get('common', {})] + taken + ([config['dev']] if dev else []):
         for key, value in part.items():
-            if key == 'about':
+            if key in ('about', 'shared'):
                 continue
             if key in DICTS:
                 merged = dict(out.get(key, {}))
@@ -280,6 +281,12 @@ def stage(machine, config, root, sites=None, add=True, recipe_sites=None, dev=Fa
             raise ValueError('%s has changed since its copy %s was made from it: redo the copy, then record the new '
                              'SHA-256 in base.json.' % (source.relative_to(APP) / copy['from'], copy['path']))
         shutil.copyfile(own / 'copies' / copy['path'], mods / copy['path'])
+    for folder, files in (config['dev'].get('shared', {}) if dev else {}).items():
+        for name in files:   # repository sources several machines share (sdk/runtime), beside the folder's own
+            to = mods / folder / Path(name).name
+            if to.exists():
+                raise ValueError('base.json: dev shared %s would replace %s.' % (name, to.relative_to(root)))
+            shutil.copyfile(APP / name, to)
     core = mods / config['core']
     for item in (APP / config['include']).iterdir():
         shutil.copytree(item, core / item.name)

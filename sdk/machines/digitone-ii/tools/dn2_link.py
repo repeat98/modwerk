@@ -13,6 +13,11 @@
     dn2_link.py freeze SECONDS       # armed: the UI stands still that long (audio goes on), to test FREEZE logging
     dn2_link.py ramboot IMAGE.syx    # armed: upload, then boot it from RAM without writing the flash (LINK.md)
     dn2_link.py bootdiag             # what the boot gate found at the last start, and how far a RAM boot came
+    dn2_link.py loader               # the runtime loader's state: phase, the live set's digest, staged bytes
+    dn2_link.py try MODULE.mwrm [--seconds N] [--keep]
+                                     # armed, stopped: load a module to RAM for a trial, watch it N seconds (the
+                                     # test value), then roll it back, or with --keep keep it until a power cycle
+    dn2_link.py keep / undo          # keep, or roll back, the open trial (a trial a host leaves for 10 s rolls back)
 Keys and turns need SETTINGS > REMOTE CTRL on (it is at every boot); a person at the panel stops them for 3 s.
 
 Needs a development base on the unit (npm run machine:base -- digitone-ii --dev) and mido with a MIDI backend.
@@ -25,7 +30,7 @@ import time
 import zlib
 
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
-CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'mem': 0x21, 'diag': 0x22, 'freeze': 0x23, 'ramboot': 0x14}
+CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'mem': 0x21, 'diag': 0x22, 'freeze': 0x23, 'ramboot': 0x14, 'upload': 0x30}
 STATUS = {0: 'ok', 1: 'not armed (SETTINGS > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range',
           5: 'a person is at the unit'}
 # Panel key ids and encoders as stock's messages carry them (OS 1.12, seen on a unit).
@@ -81,8 +86,18 @@ def png(rows, scale=3):
     return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', head) + chunk(b'IDAT', zlib.compress(raw, 9)) + chunk(b'IEND', b'')
 
 
-def request(seq, name, *values):
-    return HEADER + bytes([seq & 0x7f, CMD[name]]) + b''.join(u32(v) for v in values) + b'\xF7'
+def request(seq, name, *values, raw=b''):
+    return HEADER + bytes([seq & 0x7f, CMD[name]]) + b''.join(u32(v) for v in values) + raw + b'\xF7'
+
+
+def pack7(data):
+    """The link's byte blocks: groups of up to seven, each led by a byte holding their top bits (the first's in bit 6)."""
+    out = bytearray()
+    for i in range(0, len(data), 7):
+        chunk = data[i:i + 7]
+        out.append(sum(0x40 >> k for k, b in enumerate(chunk) if b & 0x80))
+        out.extend(b & 0x7f for b in chunk)
+    return bytes(out)
 
 
 def parse(msg):
@@ -92,7 +107,10 @@ def parse(msg):
     return msg[6], msg[7] & 0x3f, msg[8], msg[9:-1]
 
 
-def ask(name, *values, port='Digitone II', timeout=2.0):
+_seq = [int(time.time() * 10)]
+
+
+def ask(name, *values, port='Digitone II', timeout=2.0, raw=b''):
     import mido
     pick = lambda names: [n for n in names if port.lower() in n.lower()]
     ins, outs = pick(mido.get_input_names()), pick(mido.get_output_names())
@@ -101,8 +119,9 @@ def ask(name, *values, port='Digitone II', timeout=2.0):
     with mido.open_input(ins[0]) as inp, mido.open_output(outs[0]) as out:
         for _ in inp.iter_pending():
             pass
-        seq = int(time.time() * 10) & 0x7f
-        out.send(mido.Message('sysex', data=request(seq, name, *values)[1:-1]))
+        _seq[0] += 1
+        seq = _seq[0] & 0x7f
+        out.send(mido.Message('sysex', data=request(seq, name, *values, raw=raw)[1:-1]))
         end = time.time() + timeout
         while time.time() < end:
             m = inp.poll()
@@ -192,6 +211,85 @@ def upload(syx, port):
     sys.exit('The unit never said the upload was complete; nothing confirmed.')
 
 
+# ---- the runtime loader: its upload controller's wire v1 (sdk/runtime/upload/README.md) over the link's upload ------
+MU = {'hello': 0, 'enter': 1, 'begin': 2, 'chunk': 3, 'verify': 4, 'commit': 5, 'accept': 6, 'rollback': 7, 'abort': 8,
+      'leave': 9}
+MU_RESULT = ['ok', 'state', 'unsafe (the unit plays: stop it)', 'identity', 'limit', 'stale', 'length', 'conflict',
+             'hash', 'rejected', 'backend (the loader refused the package)', 'needs recovery', 'progress']
+MU_PHASE = ['normal', 'ready', 'receiving', 'verified', 'pending', 'trial', 'recovery', 'publishing']
+CHUNK = 2048                            # bytes a frame: about 2.4 KB of SysEx, well inside what stock passes on
+FIELDS = ('result', 'phase', 'known', 'generation', 'last', 'current', 'received', 'capacity')
+
+
+def frame(command, transaction, session, body=b''):
+    return b'MWUP' + struct.pack('>HHII', 1, MU[command], transaction, len(body)) + session + body
+
+
+def response(data):
+    if len(data) < 144 or data[:4] != b'MWUR':
+        raise ValueError('not a controller response')
+    r = dict(zip(FIELDS, struct.unpack('>8I', data[16:48])))
+    r.update(command=struct.unpack('>H', data[6:8])[0], base=data[48:80], session=data[80:112], active=data[112:144])
+    return r
+
+
+def submit(command, transaction, session, body=b'', port='Digitone II', want=(0,)):
+    """One controller frame and its response; exits when the result is not one of `want`."""
+    _, _, status, p = ask('upload', raw=pack7(frame(command, transaction, session, body)), port=port, timeout=10.0)
+    if status:
+        sys.exit('%s: %s' % (command, STATUS.get(status, str(status))))
+    r = response(unpack7(p))
+    if r['command'] != MU[command]:
+        sys.exit('%s: the response is for another command' % command)
+    if r['result'] not in want:
+        sys.exit('%s: %s (phase %s)' % (command, MU_RESULT[r['result']] if r['result'] < len(MU_RESULT) else r['result'],
+                                        MU_PHASE[r['phase']] if r['phase'] < len(MU_PHASE) else r['phase']))
+    return r
+
+
+def hello(port):
+    return submit('hello', 0, bytes(32), port=port)
+
+
+def load(package, port):
+    """Stages a package and publishes it as a trial; returns the trial's transaction and session."""
+    import hashlib
+    h = hello(port)
+    if h['phase'] != 0:
+        sys.exit('the loader is in phase %s: keep or undo first' % MU_PHASE[h['phase']])
+    session, tx = h['session'], h['last'] + 1
+    submit('enter', 0, session, port=port)
+    digest = hashlib.sha256(package).digest()
+    submit('begin', tx, session, h['base'] + digest + struct.pack('>II', h['generation'], len(package)), port=port)
+    for at in range(0, len(package), CHUNK):
+        submit('chunk', tx, session, struct.pack('>I', at) + package[at:at + CHUNK], port=port)
+    submit('verify', tx, session, port=port)
+    r = submit('commit', tx, session, port=port, want=(0, 12))
+    for _ in range(400):
+        if r['result'] != 12:
+            break
+        time.sleep(0.05)
+        r = submit('commit', tx, session, port=port, want=(0, 12))
+    if r['phase'] != 4 or r['active'] != digest:
+        sys.exit('commit: the unit did not report the package active (phase %s)' % MU_PHASE[r['phase']])
+    r = submit('leave', tx, session, port=port)
+    if r['phase'] != 5:
+        sys.exit('leave: no trial (phase %s)' % MU_PHASE[r['phase']])
+    return tx, session
+
+
+def finish(keep, port):
+    """Keeps or rolls back the open trial: back into upload mode, then accept or rollback, then out."""
+    h = hello(port)
+    if h['phase'] != 5:
+        sys.exit('no trial is open (phase %s)' % MU_PHASE[h['phase']])
+    session, tx = h['session'], h['current']
+    submit('enter', 0, session, port=port)
+    submit('accept' if keep else 'rollback', tx, session, port=port)
+    r = submit('leave', tx, session, port=port)
+    return r
+
+
 def ok(name, *values, port):
     _, _, status, p = ask(name, *values, port=port)
     if status:
@@ -222,6 +320,13 @@ def main():
     sub.add_parser('freeze').add_argument('seconds', type=float)
     sub.add_parser('ramboot').add_argument('image')
     sub.add_parser('bootdiag')
+    sub.add_parser('loader')
+    trial = sub.add_parser('try')
+    trial.add_argument('module')
+    trial.add_argument('--seconds', type=float, default=5)
+    trial.add_argument('--keep', action='store_true')
+    sub.add_parser('keep')
+    sub.add_parser('undo')
     diag = sub.add_parser('diag')
     diag.add_argument('--save', help='write the log, read through mem, to this file')
     shot = sub.add_parser('screen')
@@ -262,6 +367,33 @@ def main():
         print('mailbox as found: ' + ' '.join('%08x' % w for w in d[:8]))
         print('staged struct: ' + ' '.join('%08x' % w for w in d[8:12]))
         print('marks: %08x %08x (%s); RSR %02x' % (d[12], d[13], STAGES.get(d[13] & 0xff, 'none') if d[13] >> 8 == 0x4d5754 else 'none', d[14] & 0xff))
+        return
+    if a.cmd == 'loader':
+        r = hello(a.port)
+        print('phase %s, generation %d, last transaction %d, staged %d of %d bytes; live set %s' % (
+            MU_PHASE[r['phase']], r['generation'], r['last'], r['received'], r['capacity'],
+            r['active'].hex()[:16] if r['known'] else 'unknown'))
+        return
+    if a.cmd in ('keep', 'undo'):
+        r = finish(a.cmd == 'keep', a.port)
+        print('%s: phase %s, live set %s' % ('kept' if a.cmd == 'keep' else 'rolled back', MU_PHASE[r['phase']], r['active'].hex()[:16]))
+        return
+    if a.cmd == 'try':
+        package = open(a.module, 'rb').read()
+        load(package, a.port)
+        print('trial: %s is live (%d bytes)' % (a.module, len(package)))
+        end = time.time() + a.seconds
+        while True:
+            _, _, _, p = ask('ident', port=a.port)
+            v = [get32(p, 5 * i) for i in range(len(p) // 5)]
+            if len(v) >= 14:
+                print('  modules live %d, test value %08x' % (v[12], int.from_bytes(mem(v[13], 4, a.port), 'big')))
+            hello(a.port)               # the host is still there: no rollback
+            if time.time() >= end:
+                break
+            time.sleep(1.0)
+        r = finish(a.keep, a.port)
+        print('%s; phase %s' % ('kept until a power cycle' if a.keep else 'rolled back', MU_PHASE[r['phase']]))
         return
     if a.cmd == 'freeze':
         ok('freeze', int(a.seconds * 1500), port=a.port)
@@ -309,6 +441,8 @@ def main():
             line += ', armed %d, person %d, presses by a person %d, posted %d, refused %d' % tuple(v[4:9])
         if len(v) >= 11:
             line += '; boot %d (%s), image crc %08x' % (v[9], BOOT_STATUS.get(v[9], '?'), v[10])
+        if len(v) >= 14:
+            line += '; modules live %d' % v[12]
         print(line)
     else:
         _, _, status, p = ask('mem', a.addr, a.n, port=a.port)

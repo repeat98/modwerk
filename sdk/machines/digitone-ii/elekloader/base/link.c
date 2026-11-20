@@ -6,7 +6,8 @@
 // Numbers are u32 as five 7-bit bytes, least significant first; byte blocks are 7-bit packed, the first byte's top
 // bit in bit 6 of the group's leading byte.
 //   ident   0x01 -> link version, messages received, messages dropped, ticks, armed, person at the unit,
-//                   presses and turns from a person, events posted, requests refused
+//                   presses and turns from a person, events posted, requests refused, RAM boot status and image,
+//                   the boot record's address, modules live, the address of the modules' test value
 //   disarm  0x02 -> lets go of every key the link holds and turns the arm off
 //   key     0x10 ID FLAGS -> a panel key message (flags bit 0 down, 0x10 a release), armed only
 //   enc     0x11 N DELTA -> an encoder turn (1-8 A-H, 9 LEVEL), armed only
@@ -16,6 +17,10 @@
 //   mem     0x21 ADDR N -> up to 128 bytes of DDR (0x40000000-0x47ffffff) or SRAM (0x80000000-0x8000ffff)
 //   diag    0x22 -> the diagnostics log's address and size (read it with mem), frame interrupts and UI ticks so far
 //   freeze  0x23 N -> armed: the next UI tick stands still N frames (at most 15 s), audio goes on: a FREEZE test
+//   upload  0x30 FRAME -> armed: one request frame of the runtime loader's upload controller (sdk/runtime/upload,
+//                   wire v1), 7-bit packed; the reply holds its response frame, packed. One at a time: a frame sent
+//                   while one waits is dropped. Modules load to RAM for a trial; ten seconds without a frame during a
+//                   trial roll it back once the unit is stopped (LOADER.md). A power cycle ends every module.
 // Keys and turns go on the UI task's queue (0x4013747a, queue_put 0x40001896) as the panel's messages do, so the UI
 // loop plays them through the core's ev_key/ev_enc sites and stock: modules see them too. A key the link holds reads
 // as held to stock's is_key_held (0x4011fac4, which base.json points at mw_link_held). Arm: SETTINGS > REMOTE CTRL, ON
@@ -24,6 +29,8 @@
 // Receive (link.s): stock's SysEx router, MIDI task; the link's own messages from USB go into a ring, the router goes
 // on as stock. Work: ev_tick (UI task) takes the ring and replies through stock's sysex_send on USB.
 #include <stdint.h>
+#include "loader.h"                     // the runtime loader (sdk/runtime/loader), staged beside this file
+#include "wire.h"
 #define COLD __attribute__((cold, noinline))
 
 #define LINK_VERSION 1
@@ -60,6 +67,7 @@
 #define CMD_MEM 0x21
 #define CMD_DIAG 0x22                   // the diagnostics log (diag.c): its address and size, frames and ticks
 #define CMD_FREEZE_TEST 0x23            // armed: the next UI tick stands still N frames (diag.c), to see a FREEZE logged
+#define CMD_UPLOAD 0x30                 // armed: one upload controller frame (runtime.c, the loader's glue)
 #define SLOTS 40                        // posted messages, reused in turn (more than PENDING)
 #define PENDING 32                      // posted events not yet seen at ev_key/ev_enc
 #define HUMAN_TICKS 60                  // about 3 s
@@ -74,6 +82,11 @@
 static uint8_t ring[RING][CMD_BYTES];
 static uint8_t ring_len[RING];
 static volatile uint32_t ring_head, ring_tail, ring_drops, rx_count;
+#define PACKED(n) (((n) + 6) / 7 * 8)  // a block of n bytes, 7-bit packed
+// The upload frame waiting for the UI task: its SysEx as received, its length published last (0: the slot is free).
+#define UPLOAD_IN (HEADER + PACKED(MU_WIRE_MAX) + 1)
+static uint8_t upload_in[UPLOAD_IN];
+static volatile uint32_t upload_len;
 static uint32_t ticks;
 
 // From link.s, in the MIDI task, for every SysEx stock's router gets.
@@ -86,6 +99,17 @@ void mw_link_rx(const uint8_t *msg, uint32_t len, uint32_t source)
     if (source != USB && source != AUTO_USB)
         return;                         // ours, but not from USB: never acted on
     rx_count++;
+    if (msg[7] == CMD_UPLOAD) {         // too long for the ring: its own slot, one frame at a time
+        if (upload_len || len > UPLOAD_IN) {
+            ring_drops++;
+            return;
+        }
+        for (i = 0; i < len; i++)
+            upload_in[i] = msg[i];
+        __asm__ volatile("" ::: "memory");
+        upload_len = len;
+        return;
+    }
     h = ring_head;
     if (h - ring_tail >= RING || len > CMD_BYTES) {
         ring_drops++;
@@ -98,7 +122,10 @@ void mw_link_rx(const uint8_t *msg, uint32_t len, uint32_t source)
     ring_head = h + 1;                  // published last: the UI task reads it after the bytes
 }
 
-static uint8_t reply[HEADER + 1 + 5 + (MEM_MAX / 7 + 1) * 8 + 1];
+#define MEM_REPLY (HEADER + 1 + 5 + PACKED(MEM_MAX) + 1)
+#define UPLOAD_REPLY (HEADER + 1 + PACKED(MU_WIRE_RESPONSE) + 1)
+static uint8_t reply[MEM_REPLY > UPLOAD_REPLY ? MEM_REPLY : UPLOAD_REPLY];
+
 
 static uint8_t *put32(uint8_t *p, uint32_t v)
 {
@@ -357,6 +384,8 @@ static void COLD act(const uint8_t *m, int len)
         p = put32(p, boot_status);
         p = put32(p, boot_image);
         p = put32(p, (uint32_t)DIAG);
+        p = put32(p, modwerk_runtime_active());
+        p = put32(p, (uint32_t)&modwerk_runtime_api.value);
         send(p);
         return;
     case CMD_DIAG:
@@ -453,6 +482,80 @@ static void COLD act(const uint8_t *m, int len)
     }
 }
 
+// ---- upload: the runtime loader's controller (sdk/runtime/upload) over the link -----------------------------------
+// One owner, the UI task: the controller, the loader's admission and switches run here, never in the MIDI task.
+#define HOST_TICKS 300                  // ten seconds without a frame during an upload or a trial: the host is gone
+#define STAGING ((uint8_t *)STAGING_AT) // DDR nothing else uses (base.json): the received package
+_Static_assert(STAGING_BYTES >= RUNTIME_PACKAGE_BYTES, "the staging region holds the largest package");
+static struct mu_context controller;
+static uint8_t controller_started, upload_frame[MU_WIRE_MAX], upload_out[MU_WIRE_RESPONSE];
+static uint32_t upload_quiet;
+
+// The 7-bit blocks back to bytes; -1 when a byte has its top bit or the bytes overflow `most`.
+static int unpack(const uint8_t *p, int n, uint8_t *out, int most)
+{
+    int i, k, got = 0;
+    for (i = 0; i < n; i += 8) {
+        uint8_t top = p[i];
+        for (k = 1; k < 8 && i + k < n; k++) {
+            if (p[i + k] & 0x80 || got >= most)
+                return -1;
+            out[got++] = (uint8_t)(p[i + k] | (top & (0x40 >> (k - 1)) ? 0x80 : 0));
+        }
+    }
+    return got;
+}
+
+static int COLD upload_start(void)
+{
+    // The base's identity for the host's offers, and a per-boot session: not secrets, the controller's freshness.
+    static const char base[] = "Modwerk Digitone II OS 1.12 development base, link upload v1";
+    uint8_t digest[MU_DIGEST_BYTES], session[MU_DIGEST_BYTES];
+    uint32_t seed[4] = {ticks, rx_count, *(volatile uint32_t *)0xfc080004u /* PIT0's count */, 0x4d575553u};
+    mu_sha256((const uint8_t *)base, sizeof base - 1, digest);
+    mu_sha256((const uint8_t *)seed, sizeof seed, session);
+    session[0] |= 1u;
+    if (!mu_init(&controller, STAGING, STAGING_BYTES, digest, session, digest, 0, &modwerk_runtime_backend))
+        return 0;
+    controller_started = 1;
+    return 1;
+}
+
+static void COLD upload(const uint8_t *m, int len)
+{
+    int seq = m[6], status = ST_OK, n = 0;
+    if (m[5] != LINK_VERSION || m[len - 1] != 0xF7)
+        status = ST_BAD;
+    else if (!armed)
+        status = ST_NOT_ARMED;
+    else if (human_ticks >= 0 && human_ticks < HUMAN_TICKS)
+        status = ST_HUMAN;
+    else if (!controller_started && !upload_start())
+        status = ST_BUSY;
+    else {
+        int frame = unpack(m + HEADER, len - HEADER - 1, upload_frame, sizeof upload_frame);
+        n = frame < 0 ? 0 : (int)mu_request(&controller, upload_frame, (uint32_t)frame, upload_out, sizeof upload_out);
+        if (!n)
+            status = ST_BAD;
+        upload_quiet = 0;
+    }
+    if (status != ST_OK)
+        refused_count++;
+    send(n ? pack(begin(seq, CMD_UPLOAD, ST_OK), upload_out, n) : begin(seq, CMD_UPLOAD, status));
+}
+
+// A host silent for HOST_TICKS while an upload or a trial is open is handled as unplugged: the controller discards
+// what it staged, and rolls a trial back once the unit is stopped, retried each tick until it is.
+static void upload_tick(void)
+{
+    if (!controller_started || controller.phase == MU_NORMAL)
+        return;
+    if (upload_quiet < HOST_TICKS)
+        upload_quiet++;
+    else
+        (void)mu_disconnect(&controller);
+}
+
 void mw_link_tick(void)
 {
     int done;
@@ -484,6 +587,11 @@ void mw_link_tick(void)
         act(ring[t % RING], ring_len[t % RING]);
         ring_tail = t + 1;
     }
+    if (upload_len && USB_SYSEX_STATE != 0xF0) {
+        upload(upload_in, (int)upload_len);
+        upload_len = 0;                 // the slot is free once the reply is out
+    }
+    upload_tick();
 }
 
 // ---- SETTINGS > REMOTE CTRL ----------------------------------------------------
