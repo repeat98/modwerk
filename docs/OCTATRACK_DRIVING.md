@@ -180,13 +180,26 @@ for 0.6 s, or the UI tick still for 1.5 s. Then it reads `stall`, `crash` and `d
 every operation, so `--replay LOG [--until N]` plays the same run again. The default is three minutes at 20 operations a
 second, about as many operations as an hour at a player's pace.
 
+Measured on an MKII on OS 1.40C, development twin `0ad7efc5` of main, 20 November 2026 (`--profile pc`, 30 s a rate,
+programs 0-3): asked for 5, 10, 20, 40 and 60 operations a second, it held 4.7, 9.4, 18.7, 32.1 and 33.8, and 87,
+163, 269, 403 and 425 pattern changes landed a minute. A health read took 16 to 19 ms (median), 20 to 23 ms (p95).
+One read after every operation caps the runner at about 34 operations a second, so a `--rate` above 30 buys
+nothing. `--profile mix` at 20 a second held 18.7, with 140 pattern changes a minute. No run logged a new crash or
+stall. Each CC was checked on its own against the Part's bytes and the screen: level 7, mute 49, FX1 knobs A-F
+34-39, FX2 knobs A-F 40-45, scenes A and B 55 and 56, the crossfader 48.
+
 - MIDI goes through `scripts/octatrack-midi-bridge.py` on the computer the unit is plugged into (on Windows the device
   venv's Python, through winmm; port 50124, beside the USB bridge's: on a Windows host with WSL's mirrored
   networking 47812 refused the bind, 19 November 2026). Start it before the run and stop it after: while it runs it holds the
   unit's MIDI port.
-- The project: track channels 1-8, PROG CH RECEIVE on the channel `--pc-channel` names (default 1), CC and transport
-  receive on, effects of the modules under test on the Parts that `--programs` reaches. A program change while playing
-  lands at the pattern's end, so short patterns at a high tempo give the most transitions.
+- The project: track channels 1-8, and TRANSP RECV and PROG CH RECV on in PROJECT > MIDI > SYNC. A project with
+  them off ignores START and program changes without an error: the summary then shows no pattern changes and the
+  stopped CPU. Program changes arrive on the channel PROG CH RECV names; set to CH AUTO, that is MIDI > CHANNELS'
+  AUTO channel, so pass that as `--pc-channel` (11 on the MKII of 20 November 2026). Track CCs go out on the track
+  channels, the crossfader and scenes on `--auto-channel` (the unit took them on channel 1 too). Effects of the
+  modules under test belong on the Parts that `--programs` reaches. A program change while playing lands at the
+  pattern's end, so short patterns at a high tempo give the most transitions. MIDI STOP pauses the sequencer, and
+  `health.playing` stays true until a panel STOP.
 - `--replay LOG --shrink --reset DIR` finds the shortest prefix of a failed run that still fails: before each replay it
   RAM-boots `DIR` (a development twin; serve in its loop) and waits out the base's 25 s panel hold, so each try costs
   about a minute, and halving needs about a dozen tries for two thousand operations.
