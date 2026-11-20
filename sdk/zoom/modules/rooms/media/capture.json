@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "rooms",
+  "moduleVersion": "2.0.0",
+  "imageSha256": "8a08e4048e640ade0c2dbeb6562cc77578b1aa3924a323427c16ede754e5ec1b",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "3ad02acbeacdb76ff6ec10f014b8da12ede4e32ab8b5f5ea3dd13e0ec82d0d41",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}

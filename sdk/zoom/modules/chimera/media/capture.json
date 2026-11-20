@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "chimera",
+  "moduleVersion": "0.3.0",
+  "imageSha256": "59ba2eb3252fce589fa8741e0fb14c868ee6be238817ab8317ede5f2874a0704",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "faa855202bf13d7adb27fecd4bbea0eb8326a7563d7d5a5860dd0fdb7a9cdfbe",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}
