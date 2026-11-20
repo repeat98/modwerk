@@ -606,8 +606,7 @@ power cycle with six modules kept each left MNL with a solid bar, no key pressed
 dev twin (`82b9bef4`) ran for over 15 minutes (its log has loads) but never
 enumerated on the Mac: no Elektron device at all, not a dead bridge handle.
 Only a power cycle brought USB back. The same image had RAM-booted cleanly
-before and did again after. Again on Windows on 20 November 2026: a Tracks Post dev twin (`a328967d`) booted
-cleanly from the flashed base, kept six modules, and its RAM boot into itself to restore them never enumerated.
+before and did again after.
 
 **An unused setup slot is not free storage.** MIDI NOTE SETUP shows four values, but its window binds all six
 encoders: D and F edit the two `----` slots (setup record +0x03 and +0x05) unseen, and YES commits all six staged
