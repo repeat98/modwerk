@@ -166,6 +166,12 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .module-card .module-preview { background-color: var(--preview); }
 .module-cover { display: block; position: relative; overflow: hidden; }
 .module-cover:focus-visible { outline-offset: -3px; }
+@media (min-width: 821px) {
+  .module-library { max-width: 70rem; }
+  .module-library .module-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.25rem), 1fr)); gap: 16px; }
+  .module-library .module-card .module-preview { height: 152px; }
+  .module-library .module-card-body { padding: 12px 14px 10px; }
+}
 
 /* Library module cards: cover, name row with Add, one meta line, the description, a stats line, then the hardware
    evidence and Compare. The same block serves the Octatrack and Digi cards. */
@@ -1269,12 +1275,6 @@ h1 { font-size: 28px; }
 .library-selection-device p, .library-selection-device ul { margin: 6px 0 0; color: var(--text-secondary); }
 .library-selection-device ul { padding-inline-start: 17px; color: #f0c792; }
 .library-selection-device li + li { margin-top: 4px; }
-@media (max-width: 600px) {
-  .library-selection { margin: 0 16px 8px; }
-  .library-selection summary { min-height: 44px; padding-block: 11px; cursor: pointer; }
-  .library-selection summary > span { margin-inline-start: 8px; color: #f0c792; }
-  .library-selection-device > a { min-height: 44px; }
-}
 
 .firmware-help { margin-top: 16px; font-size: 12px; line-height: 1.7; }
 .firmware-help a { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); }
@@ -2229,9 +2229,9 @@ button.signal-tile[aria-pressed="true"] > svg { fill: currentColor; }
   .sidebar-brand .app-brand { padding: 0; }
   .sidebar-brand .app-brand > small { font-size: .75rem; white-space: normal; }
   .sidebar-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line-hover) transparent; padding: .75rem; }
-  .primary-nav { gap: .1875rem; }
+  .primary-nav { gap: .125rem; }
   .primary-nav a { min-height: 2.75rem; font-weight: 550; }
-  .sidebar-workspace { margin-block: 1.25rem; }
+  .sidebar-workspace { margin-block: .75rem 1rem; padding-top: .875rem; border-top: 1px solid var(--chrome-edge); }
   .sidebar-workspace .sidebar-section-label { padding: 0 .5rem .5rem; color: var(--muted); font-weight: 600; }
   .sidebar-workspace .configuration-label { padding-bottom: .25rem; }
   .sidebar-workspace .sidebar-build { min-height: 0; padding: .75rem .5rem .25rem; border: 0; align-items: flex-start; }
@@ -2239,13 +2239,13 @@ button.signal-tile[aria-pressed="true"] > svg { fill: currentColor; }
   .sidebar-build-copy strong, .sidebar-workspace .sidebar-device strong, .sidebar-account-name strong { font-size: .875rem; }
   .sidebar-workspace .sidebar-build-copy small { display: block; overflow: visible; }
   .sidebar-build-copy small, .sidebar-account-name small, .sidebar-workspace .sidebar-device small, .configuration-recent small { font-size: .8125rem; line-height: 1.4; }
-  .sidebar-scroll .develop-card { margin: 0 0 .5rem; }
-  .sidebar-resources summary { display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-height: 2.75rem; padding: 0 .625rem; color: var(--text-secondary); font-size: .9375rem; cursor: pointer; border-radius: 6px; list-style: none; }
+  .sidebar-scroll .develop-card { margin: 0 0 .875rem; }
+  .sidebar-resources summary { display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-height: 2.75rem; padding: 0 .625rem; color: var(--muted); font-size: .8125rem; font-weight: 600; cursor: pointer; border-radius: 6px; list-style: none; }
   .sidebar-resources summary::-webkit-details-marker { display: none; }
-  .sidebar-resources summary::after { content: ''; width: .4rem; height: .4rem; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
-  .sidebar-resources[open] summary::after { transform: rotate(225deg); }
+  .sidebar-resources summary::after { content: ''; width: .4rem; height: .4rem; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(-45deg); }
+  .sidebar-resources[open] summary::after { transform: rotate(45deg); }
   .sidebar-resources summary:hover { background: var(--surface-hover); }
-  .sidebar-resources nav a { min-height: 2.5rem; font-size: .875rem; }
+  .sidebar-resources nav a { min-height: 2.5rem; padding-inline: .625rem; font-size: .8125rem; }
   .sidebar-resources a[aria-current="page"] { color: var(--text); background: var(--accent-soft); }
   .sidebar-bottom { padding: .625rem .75rem; }
   .sidebar-account { margin: 0; }
@@ -2270,7 +2270,7 @@ button.signal-tile[aria-pressed="true"] > svg { fill: currentColor; }
   .sidebar-nav .sidebar-feature-new { border: 0; background: var(--accent-soft); }
   .sidebar-nav .sidebar-online { border: 0; background: #27332d; }
   .sidebar-nav .sidebar-online.is-unknown { background: transparent; color: var(--faint); font-weight: 500; }
-  .primary-nav a.active, .primary-nav .sidebar-nav-row:has(> a.active) { box-shadow: none; }
+  .primary-nav > a.active, .primary-nav .sidebar-nav-row:has(> a.active) { box-shadow: inset 2px 0 var(--accent); }
   .workspace-content { padding-inline: clamp(1rem, 2.5vw, 2.5rem); }
   .configuration-button { flex-shrink: 1; min-width: 0; max-width: 100%; }
   .configuration-button > span:first-of-type { overflow: hidden; text-overflow: ellipsis; }
@@ -2323,6 +2323,10 @@ button.signal-tile[aria-pressed="true"] > svg { fill: currentColor; }
   .library-page .library-subheading { gap: .375rem 1rem; flex-wrap: wrap; }
   .library-page .library-subheading > span:first-child, .library-page .library-subheading > .subtle { white-space: normal; overflow-wrap: anywhere; }
   .library-subheading, .module-card-heading > a { font-size: 1.0625rem; }
+  .module-library .module-card-heading { flex: 1; column-gap: 6px; }
+  .module-library .module-card-heading > a { flex-basis: 100%; font-size: .9375rem; overflow-wrap: anywhere; }
+  .module-library .card-credit { margin-top: 6px; }
+  .module-library .card-bottom { margin-block: 8px; }
   .library-subheading .subtle, .library-total, .card-credit, .card-proof { font-size: .8125rem; }
   .card-version { font-size: .75rem; }
   .detail-tabs { flex-wrap: wrap; gap: .25rem 1.25rem; }
