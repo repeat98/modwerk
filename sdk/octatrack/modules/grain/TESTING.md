@@ -78,7 +78,7 @@ I installed Grain as a card set (`MODWERK0.SET`) on a Modwerk base built locally
   63–64 % with two tracks at DENS 64; 64–65 % with two stereo tracks at DENS 64; 67–68 % with two tracks at high
   density and PAN; 73–74 % with both tracks at the maximum of DENS and PAN. DSP and memory readings did not change.
 - The base's frame guard (mw_frame_sheds) was read on the unit with a debug build of an earlier version: it stayed at 0 while two Grain tracks played, so no render was swapped for silence.
-- Project and Part saves keep everything: the track is still GRAIN and every knob is as set after a power cycle (confirmed by the author on 0.4.x).
+- Project and Part saves keep everything: the track is still GRAIN and every knob is as set after a power cycle (confirmed by the author on 0.4.x). On 20 November 2026 the author repeated it on the MKI with a new bank, a new pattern and a new sample, POS, SIZE and DENS set, the Part and the project saved and a power cycle, then loaded another project and reloaded the first: the track, the sample and every knob came back as set. This was an earlier 0.4.x build on the author's local base, not the corrected USB package.
 - Loading a sample from another folder through the sample pool keeps the track as Grain.
 
 ## What was tested only in an emulator (ot_emu, MKII mode; not hardware)
