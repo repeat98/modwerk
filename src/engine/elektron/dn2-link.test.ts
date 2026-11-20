@@ -68,6 +68,21 @@ describe('the Digitone II link from the site', () => {
     expect(frameRows(new Uint8Array(1024))[0]).toHaveLength(128)
   })
 
+  it.each([
+    [0x40000008, 4, 'reply does not match the requested address'],
+    [0x40000000, 3, 'expected 4 bytes, received 3'],
+    [0x40000000, 5, 'expected 4 bytes, received 5'],
+  ])('rejects a memory reply for address %i with %i bytes', async (address, length, error) => {
+    let reply: Uint8Array
+    const line: LinkLine = {
+      send(request) {
+        reply = Uint8Array.from([...LINK_HEADER, request[6], 0x61, 0, ...u32(address), ...pack7(new Uint8Array(length)), 0xf7])
+      },
+      async next() { return reply },
+    }
+    await expect(mem(line, 0x40000000, 4)).rejects.toThrow(error)
+  })
+
   it('reads the diagnostics log the unit keeps, in the Octatrack\'s layout, with the site\'s parser', async () => {
     // As diag.c left it on a unit (19 November 2026): a START, then a FREEZE of 9,050 frames after FLTR (0x03).
     const memory = new Map<number, number>(), at = 0x47f0315c, size = 6148
@@ -145,11 +160,15 @@ describe('the runtime loader over the Digitone II link', () => {
     expect(Array.from(linkRequest(1, 'upload')).slice(7, 8)).toEqual([0x30])
   })
 
-  it('refuses a short response and a cancelled exchange', async () => {
+  it.each([20, 145])('refuses an upload response of %i bytes', async length => {
     const queue: Uint8Array[] = []
-    const line: LinkLine = { send(data) { queue.push(Uint8Array.from([...LINK_HEADER, data[6], 0x70, 0, ...linkPack7(new Uint8Array(20)), 0xf7])) }, async next() { return queue.shift() ?? null } }
+    const line: LinkLine = { send(data) { queue.push(Uint8Array.from([...LINK_HEADER, data[6], 0x70, 0, ...linkPack7(new Uint8Array(length)), 0xf7])) }, async next() { return queue.shift() ?? null } }
     const transport = uploadTransport(line)
-    await expect(transport.exchange(new Uint8Array(48), new AbortController().signal)).rejects.toThrow('20-byte response')
+    await expect(transport.exchange(new Uint8Array(48), new AbortController().signal)).rejects.toThrow(`${length}-byte response`)
+  })
+
+  it('refuses a cancelled exchange before sending', async () => {
+    const transport = uploadTransport({ send() { throw new Error('unexpected send') }, async next() { return null } })
     const cancelled = new AbortController(); cancelled.abort()
     await expect(transport.exchange(new Uint8Array(48), cancelled.signal)).rejects.toBeInstanceOf(LinkError)
   })
