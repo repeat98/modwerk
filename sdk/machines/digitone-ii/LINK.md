@@ -89,6 +89,11 @@ Cancelling: a press or turn on the panel or a `disarm` cancels the request, and 
 flash: for two minutes after `ramboot` the job's call resets without a mailbox, so the flashed OS comes back
 unwritten.
 
+On a unit, 20 November 2026: an image without the marker booted from RAM (boot 1, its own CRC), a power cycle brought
+the flashed one back, and stock then flashed normally from this base ([record](../../../docs/verification/2026-11-20-digitone-ii-ram-boot-on-a-unit.md)).
+RSR read 0x20 after a power cycle too, so the software-reset check does not tell them apart here; the mailbox, lost
+with the DDR's contents at power-off, does.
+
 Limits: the unpacked OS must end below the mailbox (0x38bac0 bytes), the container fit the copy (0x300000 bytes);
 the host refuses others. The gate's C code, compiled for a computer, unpacked a development image's container to the
 linker's main OS byte for byte (19 November 2026).
