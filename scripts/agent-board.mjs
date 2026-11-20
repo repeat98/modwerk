@@ -396,7 +396,9 @@ async function main(argv) {
   if (command === 'logout') { await rm(tokenFile(), { force: true }); console.log('Signed out.'); return 0 }
   if (command === 'whoami') { const name = await whoami(); console.log(name ? '@' + name : 'Not signed in: npm run board -- login'); return name ? 0 : 1 }
   if (command === 'list') {
-    const query = new URLSearchParams(Object.entries({ kind: rest[0], key: rest[1], holder: option('--holder'), released: flag('--released') && '1' }).filter(([, value]) => value))
+    const holder = option('--holder')
+    if (flag('--holder') && (!holder?.trim() || holder.startsWith('-'))) throw new Error('Give a GitHub login after --holder.')
+    const query = new URLSearchParams(Object.entries({ kind: rest[0], key: rest[1], holder, released: flag('--released') && '1' }).filter(([, value]) => value))
     const { claims, released } = await boardRequest('/agent-board/claims' + (query.size ? '?' + query : ''))
     if (!claims.length) console.log('No active claims' + (rest.length ? ' for ' + rest.join(' ') : '') + '.')
     claims.forEach(print)
