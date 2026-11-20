@@ -9,6 +9,47 @@ public v2.23 tag, `e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb`. Its added FM proje
 write runs only beside FM Synth (`HAVE_SYNTH` is 0 here); the unused format string remains in
 the native object. The native object therefore changes even though that write does not run.
 
+## Test procedure and edge cases — 20 November 2026
+
+Main `57b0cd39` (base 0.7.10) is merged, without rebasing. The package is unchanged: 7,038 bytes,
+SHA-256 `092a8a13b999d14c63df6100d84f3c5202f615120c95f3df605e8c43d3736d50`.
+
+`npm run test:procedure -- quantizer --no-unit --package public/octatrack-modules/quantizer/0.1.5-experimental.mwrm`
+(docs/TEST_PROCEDURE.md). Without `--package` it stops at step 3: `module:dev --build-only` cannot
+build this module, which needs its machine path.
+
+| # | Step | Result |
+|---|---|---|
+| 1 | Software checks | red on the module rules line until the owner's approval record for 0.1.5 exists; passes with a local stand-in record that is not committed |
+| 2 | Beside every other module | passed: 42 active modules, 0 problems |
+| 3 | Name the build | passed: the committed package, `092a8a13` |
+| 4 | DSP cost model | passed |
+| 5 | Emulator rehearsal | not run: no emulator session on base 0.7.10 yet |
+| 6-10 | Unit steps | not run: no unit has this build yet |
+| 11 | Agent by hand | not run on a unit; the emulator results are in the next section |
+| 12 | Submitter's own stage | not run: no unit has this build yet |
+
+**Edge cases.** Emulator results are from the sessions on base 0.7.9 in the next section. They
+are not hardware evidence.
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| Install with Keep, then remove | the package patches 7 sites; 0.1.4 patched 9 | emulator, base 0.7.9, over USB; every site read after each step | pass (emulator): 7 patched, then 7 exact stock |
+| The two sites 0.1.5 no longer hooks, `0x4004fc84` and `0x40005162` | they must stay stock with the package installed | the package's site list | pass (package): neither is among its 7 sites. Not read on a running base |
+| 0.1.5 installed over a kept 0.1.4 | the replace must put stock back at the two sites only 0.1.4 patched | not yet | not run: my sessions started without a kept 0.1.4; next, on base 0.7.10 |
+| Power cycle after Keep | the boot restore replays the new 7-site set | emulator, base 0.7.9, card and battery RAM carried over | pass (emulator): active at boot; rows, settings and both pitches back |
+| A project saved with 0.1.4, reloaded on 0.1.5, then SAVE PROJECT | the settings must read and write as before | emulator, base 0.7.9 | pass (emulator): same settings; the project files equal 0.1.4's save |
+| Pitch and MIDI notes with FOLLOW ON and OFF | the native object changed | emulator, base 0.7.9: four windows per track, three notes per state | pass (emulator) |
+| Beside FM Synth 0.1.4, which hooks both sites itself; quantizer installed first | the two sites now belong to FM Synth alone | emulator, base 0.7.9 | pass (emulator) for the install: the loader admits both and the 7 sites hold. Not played: FM Synth 0.1.4 declares the conflict |
+| The same pair, FM Synth installed first | as above | not yet | not run: the pair is a declared conflict until FM Synth's update, which tests it |
+| Beside Tuner 0.1.0, then Tuner removed | another module's removal must leave the 7 sites | emulator, base 0.7.9 | pass (emulator) |
+| The card's saved set after the removal | the removal rewrites `MODWERK0.SET` shorter | emulator, base 0.7.9, FAT chain listing | fail: the set file's chain ends in a free cluster. The base's writer, not this package: #1830 |
+| Undo, a refused set, a trial that expires with SEQUENCER open | the loader paths around the new site list | not yet | not run: not in my sessions on base 0.7.9; next, on base 0.7.10 |
+| All of the above on base 0.7.10 | the base moved after my runs | not yet | not run: 0.7.10 reached main after my sessions; they are next |
+| On a unit | an emulator result is not hardware evidence | not yet | not run: no unit has this build yet; my unit is an MKI |
+
+Not tested on a unit: no unit has run this package (`092a8a13`) yet.
+
 ## Current main, base 0.7.9 — 19 November 2026
 
 Main `2c164121` (base 0.7.9) is merged, without rebasing. The quantizer's sources are unchanged.
