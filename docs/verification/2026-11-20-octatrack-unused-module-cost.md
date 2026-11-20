@@ -29,3 +29,34 @@ The seven modules with frame code together added 5.6 points; the other 17 togeth
 cost is base work that grows with the number of installed modules (0.7.10's sparse dispatch removed the UI tick's), and
 none of it is in the DSP: it is module code the frame interrupt enters while no track uses the module, through the
 hooks that rest and through each module's own detours.
+
+## The change: machines rest
+
+The base now answers `ev_in_use` for a machine's module (HOOKS.md): it rests while no track of any Part of the project,
+working or saved, is that machine. That takes POLY8's three handlers out of the frame on its own. Its 11 frame-path
+detours rest only once its package marks them `"rests"`, a POLY8 release of its own; a development build of POLY8
+0.3.3 with those 11 marked (same module id and image) was built for the unit run below and is not published.
+
+The other five modules in the table are not machines: each needs its own `ev_in_use` answer (HOOKS.md) to rest.
+
+## Not yet on the unit
+
+The after-twin of this change (`a7085bbd`) was built and queued at 10:32. The unit had been off USB since about 10:30
+(another session's RAM boot that did not come back), so none of its steps ran and nothing on this branch reached the
+unit. The planned run: the empty and 24-package readings above against the after-twin, the 24 with the development
+POLY8, POLY8 alone, a pick of the resting POLY8 on T8 while playing (the frame guard over the window holding the wake,
+beside a STATIC pick as control), the same with a USB capture checked for zero runs, a self-test with the 24 installed,
+a 120 s soak at 20 operations a second, and `npm run test:procedure -- --base` steps 6 to 10.
+
+## Host checks
+
+- `test_machine_registry.c` (and `sdk/tests/test_machine_charge.c` on it): resting after two idle scans, the frame
+  path of eight unowned FLEX tracks with two resting machines equal to the path with none, wake on pick before the
+  commit, the wake margin at the busy line, rest on release, a pasted track silent and START-less until the next tick,
+  a saved copy or another Part keeping a machine awake, no idle scans during a project load, a set change and a late
+  machine awake for two scans, removal while resting, RENDER_FLEX never resting. Without the resting check in the
+  render path two of them fail.
+- `sdk/runtime/loader/tests/events_test.c` at 32 and 128 modules: a judged module leaves and rejoins only the resting
+  rows by the machine's answer, keeps its table record, its resting site holds stock's bytes, admission accepts the
+  site, `modwerk_runtime_resting_at`, and Undo of a trial over a resting module and over a woken one. Without the
+  judged path in the loader 12 checks fail.
