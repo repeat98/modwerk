@@ -9,6 +9,59 @@ public v2.23 tag, `e908beb0f2c1fce3cf8b1de5178d7cb77b00d7fb`. Its added FM proje
 write runs only beside FM Synth (`HAVE_SYNTH` is 0 here); the unused format string remains in
 the native object. The native object therefore changes even though that write does not run.
 
+## Current main, base 0.7.9 — 19 November 2026
+
+Main `2c164121` (base 0.7.9) is merged, without rebasing. The quantizer's sources are unchanged.
+
+**Builds and checks.** The package rebuilds byte for byte: two `--check` runs reproduce all 40
+committed packages, and two kept-link builds give the same 7,038 bytes, SHA-256
+`092a8a13b999d14c63df6100d84f3c5202f615120c95f3df605e8c43d3736d50`. The linked object is
+identical to the one verified on 15 November. The package does not bind to the base: it has no
+`requiredBase`, and the base files that changed under it (`build.py`, `machine_ports.py`) do not
+change its bytes. Alignment: 7 detours and 19 hooks resolve to even addresses; 363 direct
+branch targets are even, no instruction sits at an odd address, and 8 indirect calls are outside
+that static check. The isolated Docker build and development import pass; only source-commit
+metadata and the quantizer's rows move. Native source fingerprint:
+`931d9cd97feb3e46a9ac0d72581d7587980d92d0e9cd9838cc38ae479a66e8d1`.
+
+**Emulator.** Native `ot_emu`, MKII panel, copied cards, base built from main `2c164121`:
+identity `dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921`. No unit ran.
+
+- USB Keep: the inventory lists Scale Quantizer and all seven sites differ from stock.
+  Removal restores the seven exact stock bytes. After a power cycle, Keep works again.
+- An old-base saved set is ignored; the 0.1.5 set restores at boot.
+- A project saved with 0.1.4 reloads through PROJECT > RELOAD with 0.1.5 installed: the scale
+  bytes come back unchanged (`0000008401000002`: C MAJOR, AUDIO 3 and 8 and MIDI 2 not
+  following). SAVE PROJECT then writes project files byte-identical to 0.1.4's.
+- SEQUENCER shows SCALE MAJOR, ROOT C, GLIDE OFF, TRACK and FOLLOW. TRACK steps to AUDIO 8,
+  which shows FOLLOW OFF. YES on AUDIO 1's FOLLOW turns it OFF and ON again.
+- Pitch, four windows per track, same sample, Part PTCH +1: with AUDIO 1 following, T1 plays
+  344.531 Hz and T8 (not following) plays 365.012 Hz, +0.9997 semitone. With AUDIO 1 set to OFF,
+  both play 365.012 Hz. These match the 15 November values on the earlier base.
+- After SAVE PROJECT and a power cycle, the rows, the settings and both pitches come back.
+- MIDI UART output: three note-on/off pairs at 61 with FOLLOW OFF, three at 60 with FOLLOW ON
+  in C MAJOR, channel 2, velocity 100, no stray bytes.
+- Beside Tuner 0.1.0: both install, the self-test reports three modules intact, and removing
+  Tuner leaves the quantizer's seven sites in place.
+- Beside FM Synth 0.1.4 as released: the loader admits both (no refusal), and the quantizer's
+  sites stay in place. FM Synth 0.1.4 still declares a conflict with `quantizer`, so the
+  configurator does not offer this pair; it is not a supported set and was not played.
+- BlackPyramids has no released package on main, so the pair was not tested. Keep FOLLOW OFF on
+  its tracks until it is.
+- Self-test snapshots stay in progress (0 of 2 done, none failed), as before.
+
+**Saved module sets.** The base rewrites `/MODWERK0.SET` or `/MODWERK1.SET` after every Keep or
+removal. When the new set is shorter than the file it replaces, the file's last cluster still
+links to a cluster the write marked free. This reproduced here with the removal of FM Synth,
+of Tuner and of Scale Quantizer. The quantizer never writes these files; it is a base issue,
+reported to the owner separately. Persistence of the quantizer's
+own settings was checked through SAVE PROJECT, RELOAD and a power cycle on a card whose set files
+were sound; no SAVE was run on a card with a broken set chain.
+
+**Not run on this base:** hardware; the full 16-window pitch matrix and the lock walk (a short
+four-window check per FOLLOW state replaces them); FOLLOW on FM tracks; Undo and the whole
+catalogue set; an empty-battery cold boot.
+
 ## Builds and checks — 15 November 2026
 
 The USB package first built on 13 November from main `208f05a6` is unchanged after merging
@@ -246,7 +299,7 @@ interface, not complete-frame pixel equivalence, hardware, audio or qualificatio
 Not tested yet on 0.1.5: hardware; complete timing, memory and stress qualification; every
 scale, root and pitch endpoint; Static and Pickup; tempo/swing/track-speed/pattern-change
 combinations; Part-copy and Part-save combinations; FM FOLLOW beside the currently released
-FM Synth. Released FM Synth 0.1.2/0.1.3 declares a conflict, so it is not forced into this set.
+FM Synth. Released FM Synth (0.1.2 to 0.1.4) declares a conflict, so it is not forced into this set.
 The held FM chromatic-key mark issue described in the PR is a code-reading finding, not a
 new capture. The first integer-lock walk had the incorrect +0.2 input described above;
 the bounded completion also failed, with its cause unresolved. Both remain recorded as failures.
