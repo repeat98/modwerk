@@ -15,6 +15,9 @@ python3 sdk/machines/digitone-ii/tools/dn2_link.py remove MODULE.mwrm --keep    
 python3 sdk/machines/digitone-ii/tools/dn2_link.py keep    # or undo: the open trial
 ```
 
+A first module to try is [`examples/corner_dot.c`](examples/corner_dot.c): while it is live, a 3x3 dot sits in the
+screen's bottom-right corner.
+
 The unit must be stopped: the loader refuses while the sequencer plays (`unsafe`), and SETTINGS > REMOTE CTRL must be
 on. While a trial is open the host sends a frame at least every ten seconds (`try` does); a host gone for ten seconds
 is handled as unplugged, and the unit rolls the trial back once it is stopped.
