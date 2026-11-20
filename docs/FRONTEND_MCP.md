@@ -124,6 +124,16 @@ It claims no mass-storage or audio interface. `device_status` reads IDENTIFY,
 inventory, missing modules and bounded diagnostic status. Socket loss invalidates
 the connection; restart the server/bridge to establish a fresh session.
 
+The unit is shared by every session on the computer, and the MCP takes its turn
+([taking turns](OCTATRACK_DRIVING.md#taking-turns-on-the-unit)): `device_trial`
+holds it until Keep, Undo or the MCP's exit, and opening the link takes it for a
+moment, since an opening link rolls back a transaction left open. While another
+session has the unit the call waits up to 50 s (`MODWERK_UNIT_MCP_WAIT`), then
+sends nothing and names the holder. Run `npm run unit -- hold` from the same
+checkout in a background shell to wait for the turn, call again once it returns,
+and `npm run unit -- release` after Keep or Undo. `MODWERK_UNIT=emulator` in the
+MCP's environment skips the queue for an emulator.
+
 Before handing the instrument to the browser's WebUSB client, finish the
 authorized trial and verify its restored baseline, close the MCP, then stop only
 the bridge process you own. The bridge holds the vendor interface; a competing

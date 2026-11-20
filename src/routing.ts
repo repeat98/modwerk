@@ -2,7 +2,7 @@ import { assetUrl } from './hosting'
 import { moduleIdFromSlug, modulePath, moduleSlug } from './catalog/module-links'
 import { profilePath, threadIdFromSegment, threadPath } from './community/forum-links'
 import { AUDIO_PREVIEW_GUIDE_ROUTE } from './components/audio-preview-guide'
-import { hasDeviceModulePages } from './devices/registry'
+import { ALL_MACHINES, DEVICES_BY_ID, hasDeviceModulePages } from './devices/registry'
 
 const moduleRoute = /^module\/([a-z0-9-]+)$/
 const deviceModuleRoute = /^([a-z0-9-]+)\/module\/[a-z0-9-]+$/
@@ -25,12 +25,20 @@ function pathRoute(url: URL, appUrl: URL) {
   return /^projects\/(?:index\.html)?$/.test(path) ? 'projects' + url.search : /^submit\/(?:index\.html)?$/.test(path) ? 'submit' : module ? 'module/' + module[1] : thread ? 'forum/thread/' + threadIdFromSegment(thread[1]) + url.search : profile ? 'forum/profile/' + profile[1] + url.search : ''
 }
 
+/** Keep bookmarks and saved browse sessions from the old Scenes category usable. */
+export function currentLibraryRoute(route: string): string {
+  if (route === 'scenes') return 'performance'
+  const [machine, category, ...rest] = route.split('/')
+  if (!rest.length && category === 'scenes' && (machine === ALL_MACHINES || Object.hasOwn(DEVICES_BY_ID, machine))) return machine + '/performance'
+  return route
+}
+
 /** Only app destinations participate; assets, downloads and external links keep normal browser behavior. */
 export function routeFromUrl(url: URL, appUrl: URL, fallback = 'library'): string | undefined {
   if (url.origin !== appUrl.origin || !url.pathname.startsWith(appUrl.pathname)) return undefined
   const path = url.pathname.slice(appUrl.pathname.length), known = pathRoute(url, appUrl)
   if (path && path !== 'index.html' && !known) return undefined
-  const route = url.hash.slice(1) || known || fallback
+  const route = currentLibraryRoute(url.hash.slice(1) || known || fallback)
   const nativeRoute = route.replace(/^module\/([a-z0-9-]+)(?=\?|$)/, (_match, slug: string) => 'module/' + moduleIdFromSlug(slug))
   // The forum's account page replaced the separate activity page; old #activity links open it.
   return route === 'faq/audio-previews' ? AUDIO_PREVIEW_GUIDE_ROUTE : route === 'remixes' ? 'module-sets' : route === 'activity' ? 'account' : route.startsWith('remix/') ? 'module-set/' + route.slice(6) : nativeRoute
