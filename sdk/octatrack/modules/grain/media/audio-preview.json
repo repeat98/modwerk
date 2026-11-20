@@ -4,14 +4,13 @@
   "durationSeconds": 45.06,
   "source": "Recording supplied by the author (A Force Truly Evil) of Grain on an Octatrack MKI; not an offline render",
   "sample": {
-    "name": "not stated by the author",
-    "origin": "unknown",
-    "rights": "to be confirmed by the author before merge"
+    "name": "the author's own sounds",
+    "origin": "made by the author; some generated with Claude (Anthropic); performance by the author",
+    "rights": "no third-party samples or copyright; offered under the module's license"
   },
   "passes": "not documented by the author: one continuous take, settings not recorded",
   "unknownFields": [
     "Modwerk base build used",
-    "sample",
     "settings per section",
     "recording chain"
   ],

@@ -288,10 +288,10 @@
     {
       "path": "media/audio-preview.mp3",
       "captureType": "audio",
-      "caption": "A recording of Grain playing on an Octatrack MKI, made by the author: a Flex sample played through the Grain machine while POS, SIZE, DENS, SPRY and SCAN are turned. A supplied recording, not an offline render; the sample's origin and the exact settings are not stated.",
+      "caption": "A recording of Grain playing on an Octatrack MKI, made by the author: a Flex sample played through the Grain machine while POS, SIZE, DENS, SPRY and SCAN are turned. A supplied recording, not an offline render. The sounds are the author's own, some generated with Claude and played by the author; no third-party samples.",
       "alt": "A 45 second recording of the Grain machine on an Octatrack, with the granular texture changing as the knobs are turned.",
-      "credit": "A Force Truly Evil (recording). Sample: not stated by the author.",
-      "license": "Recording by the author; sample rights to be confirmed (media/LICENSE.md)",
+      "credit": "A Force Truly Evil (recording). Sounds: the author's own.",
+      "license": "Recording and sounds by the author (media/LICENSE.md)",
       "source": "original"
     }
   ],
