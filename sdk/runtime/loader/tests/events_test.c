@@ -12,6 +12,9 @@
 #include <stdint.h>
 static unsigned host_in_use(uintptr_t handler);
 #define RUNTIME_ASK_IN_USE(handler) host_in_use(handler)
+struct runtime_module;
+static int host_machine_in_use(const struct runtime_module *m);
+#define RUNTIME_MACHINE_IN_USE(m) host_machine_in_use(m)
 #include "../loader.c"
 #include "../../upload/sha256.c"
 #include <stdio.h>
@@ -142,6 +145,27 @@ static unsigned host_in_use(uintptr_t handler)
     CHECK(!"an ev_in_use handler of no live module");
     return 1;
 }
+/* The machine's answer for a module it judges (a contributor to table 4, RUNTIME_SITE_EVENT_JUDGED, without ev_in_use):
+ * machine_idle[id] answers 0. Never under the lock or masked; never asked for a module that answers itself. */
+static uint8_t machine_idle[256];
+static unsigned machine_asked;
+static int host_machine_in_use(const struct runtime_module *m)
+{
+    CHECK(!locked && !masked && m && !m->hook[IN_USE] && m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_JUDGED]); ++machine_asked;
+    return !machine_idle[m->id & 255u];
+}
+/* A machine's module (a record in table 4, at image offset 4) with no ev_in_use, one 8-byte site at `address`. */
+static void judged_site(uint32_t id, uint32_t address, int rests, uint8_t variant)
+{
+    uint32_t hooks[RUNTIME_HOOKS];
+    for (unsigned i = 0; i < RUNTIME_HOOKS; ++i) hooks[i] = RUNTIME_NONE;
+    hooks[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_JUDGED] = 50u << 24 | 4u;
+    hooks[RUNTIME_EVENTS] = 50u << 24 | 8u;                          /* and a handler on resting event 0 */
+    pkg(id, hooks, RUNTIME_HOOKS, 1, 0);
+    p[n - 64 + 40] = variant;                                        /* another build of the same module */
+    unsigned at = n; site8(address, 8, 8);
+    if (rests) p[at + 4] |= RUNTIME_SITE_RESTS;
+}
 /* A module of `order` on the events in `on` (bit e: hook RUNTIME_EVENTS + e, its handler at offset 4 (e + 1)). */
 static void on_events(uint32_t id, unsigned on, uint8_t order)
 {
@@ -173,7 +197,7 @@ int main(void)
     memcpy(original, stock, sizeof stock);
     snapshot();
     uint8_t capabilities[12];
-    CHECK(modwerk_runtime_capabilities(capabilities) == 12u && be16(capabilities + 6) == (7u | 128u));
+    CHECK(modwerk_runtime_capabilities(capabilities) == 12u && be16(capabilities + 6) == (7u | 128u | 2048u)); /* 2048: machines judged (RUNTIME_SITE_EVENT_JUDGED) */
 
     /* Raw patches on an event's bytes are refused, naming the event, before memory is taken. */
     uint32_t none[RUNTIME_HOOKS];
@@ -402,12 +426,54 @@ int main(void)
     idle[171] = 1; resting_site(171, AT, 0); CHECK(install() && !memcmp(stock + (AT - STOCK), live_id(171)->site[0].code, 8));
     CHECK(modwerk_runtime_rest_poll() && !memcmp(stock + (AT - STOCK), live_id(171)->site[0].code, 8) && modwerk_runtime_intact() == 1);
     CHECK(removal(171) && !memcmp(stock + (AT - STOCK), bare, 8));
+    /* Capability 2048 tells a host that a machine's module may carry resting sites without its own ev_in_use. */
+    { uint8_t caps[12]; CHECK(modwerk_runtime_capabilities(caps) == 12u && ((unsigned)caps[6] << 8 | caps[7]) & 2048u); }
+
+    /* A module the machine judges (a contributor to table 4, RUNTIME_SITE_EVENT_JUDGED: the Octatrack's machines) and
+     * no ev_in_use of its own rests by the machine's answer, with its resting sites, which admission accepts for it.
+     * A module that is neither is never asked and never rests. */
+    enum { JUDGED = 1u << RUNTIME_SITE_EVENT_JUDGED };
+    machine_asked = 0; asked = 0;
+    on_events(180, ALL | JUDGED, 30); CHECK(install());
+    on_events(185, ALL, 40); CHECK(install());
+    CHECK(!modwerk_runtime_rest_poll() && machine_asked == 1u && !asked);
+    CHECK(row_is(0, (const uint32_t[]){180, 185}, 2) && row_is(RUNTIME_SITE_EVENT_JUDGED, (const uint32_t[]){180}, 1));
+    machine_idle[180] = 1; changed = tables_changed;
+    CHECK(modwerk_runtime_rest_poll() && tables_changed == changed + 1u);
+    CHECK(row_is(0, (const uint32_t[]){185}, 1) && row_is(1, (const uint32_t[]){185}, 1) && row_is(2, (const uint32_t[]){180, 185}, 2));
+    CHECK(row_is(RUNTIME_SITE_EVENT_JUDGED, (const uint32_t[]){180}, 1));                /* its record stays in its table */
+    CHECK(modwerk_runtime_resting_at((uintptr_t)live_id(180) + 8u) && !modwerk_runtime_resting_at((uintptr_t)live_id(185) + 8u));
+    CHECK(!modwerk_runtime_resting_at((uintptr_t)live_id(180) + live_id(180)->size));
+    machine_idle[180] = 0; CHECK(modwerk_runtime_rest_poll() && row_is(0, (const uint32_t[]){180, 185}, 2));
+    CHECK(!modwerk_runtime_resting_at((uintptr_t)live_id(180) + 8u));
+    CHECK(removal(180) && removal(185));
+    /* Its resting site: stock's bytes while the machine says no track uses it. */
+    judged_site(190, AT, 1, 0); CHECK(install());
+    const struct runtime_module *j = live_id(190);
+    CHECK(j && j->site[0].rests && !memcmp(stock + (AT - STOCK), j->site[0].code, 8));
+    machine_idle[190] = 1; CHECK(modwerk_runtime_rest_poll() && !memcmp(stock + (AT - STOCK), bare, 8) && row_is(0, 0, 0));
+    CHECK(modwerk_runtime_intact() == 1 && !modwerk_runtime_broken());
+    /* Undo with a resting module: a new build published (a trial) starts awake and patched; undone, the old one
+     * comes back awake and patched too, and rests again at the machine's next answer. */
+    judged_site(190, AT, 1, 1);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && live_id(190) != j);
+    CHECK(!memcmp(stock + (AT - STOCK), live_id(190)->site[0].code, 8) && row_is(0, (const uint32_t[]){190}, 1));
+    CHECK(b->restore(0) && live_id(190) == j && !memcmp(stock + (AT - STOCK), j->site[0].code, 8) && row_is(0, (const uint32_t[]){190}, 1));
+    CHECK(modwerk_runtime_rest_poll() && !memcmp(stock + (AT - STOCK), bare, 8) && row_is(0, 0, 0));
+    /* Undo of a trial whose module woke: the new build installed while the old rests, used (awake), undone. */
+    machine_idle[190] = 0; judged_site(190, AT, 1, 2);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && !modwerk_runtime_rest_poll());
+    CHECK(!memcmp(stock + (AT - STOCK), live_id(190)->site[0].code, 8));
+    CHECK(b->restore(0) && live_id(190) == j && !memcmp(stock + (AT - STOCK), j->site[0].code, 8));
+    CHECK(b->retire(0));
+    machine_idle[190] = 1; CHECK(modwerk_runtime_rest_poll() && removal(190) && !memcmp(stock + (AT - STOCK), bare, 8));
+    machine_idle[190] = 0;
     for (unsigned e = 0; e < RUNTIME_SITE_EVENTS; ++e) CHECK(row_is(e, 0, 0));
     CHECK(!modwerk_runtime_active() && modwerk_runtime_free(0) == RUNTIME_POOL_BYTES);
     CHECK(!memcmp(stock, original, sizeof stock) && !rows_written_unmasked && !masked && !locked);
     if (failures) { fprintf(stderr, "%u event checks failed\n", failures); return 1; }
     puts("Site events: refusals naming the event, ordered rows in every install order, removal, replacement and "
          "restore, two events at one site, the paused-dispatch fence, groups, journal commit/rollback, take and table rooms, owned"
-         " table sites, contributor marks, a raised event's entry slot, modules resting by their ev_in_use answers and their resting sites passed.");
+         " table sites, contributor marks, a raised event's entry slot, modules resting by their ev_in_use answers, machines resting by the machine's answer, their resting sites and Undo passed.");
     return 0;
 }
