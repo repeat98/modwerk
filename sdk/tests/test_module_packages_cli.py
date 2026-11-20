@@ -16,6 +16,16 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class ModulePackagesCliTests(unittest.TestCase):
+    def test_recipe_report_distinguishes_source_changes_and_unavailable_inputs(self):
+        spec = importlib.util.spec_from_file_location('module_packages_cli', ROOT / 'scripts/octatrack-module-packages.py')
+        cli = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cli)
+        recorded = {'changed': 'before', 'gone': 'old', 'same': 'one', 'upstream/file': 'old'}
+        current = {'changed': 'after', 'new': 'new', 'same': 'one'}
+        expected = ['changed changed', 'missing gone', 'added new']
+        self.assertEqual(list(cli.recipe_differences(recorded, current, False)), expected)
+        self.assertEqual(list(cli.recipe_differences(recorded, current, True)), [*expected, 'missing upstream/file'])
+
     def test_private_preparation_can_resolve_its_builder_module(self):
         # Exercise the actual wrapper with a private preparation entry point.
         # The published builder can remain older than that staged entry point;
