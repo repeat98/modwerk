@@ -20,9 +20,11 @@ export function MembersOnlineChip({ presence }: { presence: Presence | null }) {
   return <span className="sidebar-online" title={onlineLabel(presence.online) + ' · active in the last 5 minutes'}><span className="online-dot" aria-hidden="true" />{presence.online} online</span>
 }
 
-/** One line on the forum home naming who is around right now. Nothing shows while nobody is online. */
+/** One line on the forum home naming who is around right now. The line keeps its height while loading, when nobody
+ * is online and when the count is unavailable, so the page below it never moves. */
 export function ForumOnlineNow() {
   const presence = useMembersOnline(true, false)
-  if (!presence?.online) return null
-  return <div className="forum-online-now"><span className="forum-online-now-label" title="Active in the last 5 minutes"><span className="online-dot" aria-hidden="true" />{presence.online} online now</span><MembersOnlineList presence={presence} /></div>
+  return <div className="forum-online-now">{presence?.online
+    ? <><span className="forum-online-now-label" title="Active in the last 5 minutes"><span className="online-dot" aria-hidden="true" />{presence.online} online now</span><MembersOnlineList presence={presence} /></>
+    : presence && <span className="forum-online-now-label is-quiet">Nobody online in the last 5 minutes</span>}</div>
 }
