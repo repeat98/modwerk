@@ -57,7 +57,7 @@ describe('the steps', () => {
     expect(statuses(steps)).toEqual({ software: 'passed', compat: 'passed', build: 'passed', 'cost-model': 'not run', emulator: 'not run', 'unit-read': 'passed',
       'unit-pass': 'passed', soak: 'passed', 'cost-unit': 'passed', restore: 'passed', 'by-hand': 'to do', developer: 'to do' })
     expect(steps.find(step => step.id === 'soak').reason).toMatch(/inside the scripted pass as device:test --soak 120.*#1770/)
-    expect(steps.find(step => step.id === 'cost-model').reason).toMatch(/#1798/)
+    expect(steps.find(step => step.id === 'cost-model').reason).toMatch(/cycle-scan.mjs\) is not in this checkout/)
   })
 
   it('stops at the first failure and records every later step as not run, with the step that stopped it', async () => {

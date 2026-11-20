@@ -90,7 +90,7 @@ export function plan(step, ctx) {
       if (!octatrack) return { skip: 'module:dev builds Octatrack packages; name the build by hand (revision and SHA-256)' }
       return { commands: [npmRun('module:dev', ctx.id, '--build-only', ...(ctx.draft === false && ctx.alsoDraft ? ['--listed'] : []), '--out', pkg)] }
     case 'cost-model':
-      if (!ctx.tools?.cycleScan) return { skip: 'the DSP cycle scan (' + SCAN_TOOL + ', pull request #1798) is not in this checkout yet' }
+      if (!ctx.tools?.cycleScan) return { skip: 'the DSP cycle scan (' + SCAN_TOOL + ') is not in this checkout: merge main' }
       return { commands: [node(SCAN_TOOL, 'check')] }
     case 'emulator':
       if (!ctx.emulatorSocket) return { skip: 'no emulator session (--emulator-socket SOCK, an ot_emu with --usb-host on a development base)' }
