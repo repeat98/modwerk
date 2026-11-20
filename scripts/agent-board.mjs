@@ -396,7 +396,9 @@ async function main(argv) {
   if (command === 'logout') { await rm(tokenFile(), { force: true }); console.log('Signed out.'); return 0 }
   if (command === 'whoami') { const name = await whoami(); console.log(name ? '@' + name : 'Not signed in: npm run board -- login'); return name ? 0 : 1 }
   if (command === 'list') {
-    const query = new URLSearchParams(Object.entries({ kind: rest[0], key: rest[1], holder: option('--holder'), released: flag('--released') && '1' }).filter(([, value]) => value))
+    const holder = option('--holder')
+    if (flag('--holder') && (!holder?.trim() || holder.startsWith('-'))) throw new Error('Give a GitHub login after --holder.')
+    const query = new URLSearchParams(Object.entries({ kind: rest[0], key: rest[1], holder, released: flag('--released') && '1' }).filter(([, value]) => value))
     const { claims, released } = await boardRequest('/agent-board/claims' + (query.size ? '?' + query : ''))
     if (!claims.length) console.log('No active claims' + (rest.length ? ' for ' + rest.join(' ') : '') + '.')
     claims.forEach(print)
@@ -463,6 +465,14 @@ async function main(argv) {
     if ((command === 'fold' || command === 'link') && !pr) throw new Error('Usage: npm run board -- ' + command + ' <id> --pr <n> (the pull request that ends the thread when it merges)')
     const result = await messageAction(id, command, { ...(command === 'reply' ? { body: text, outcome: option('--outcome'), evidence: numberOption('--evidence') } : {}), ...(command === 'priority' ? { priority: text } : {}), ...(pr && command !== 'close' && command !== 'delete' ? { pullRequest: Number(pr) } : {}) })
     if (command === 'delete') console.log('Deleted ' + result.deleted + '.'); else console.log(describeThread(result.message).join('\n'))
+    return 0
+  }
+  if (command === 'claim-collection') {
+    if (rest[0] !== 'zoom-multistomp') throw new Error('Usage: npm run board -- claim-collection zoom-multistomp')
+    const token = await readToken()
+    if (!token) throw new BoardError('Sign in for the board first: npm run board -- login', 401)
+    const result = await boardRequest('/agent-board/collections/zoom-multistomp', { method: 'POST', token, body: {} })
+    console.log(result.claims.length + ' Zoom effects reserved on ' + result.claims[0].branch + '.')
     return 0
   }
   if (command === 'claim') {

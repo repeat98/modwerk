@@ -57,14 +57,14 @@ class RequestedImports(unittest.TestCase):
     def test_catalog_and_author_dependencies_remain_exact(self):
         catalog = json.loads((APP / 'sdk/catalog.json').read_text())
         pins = {item['id']: item['version'] for item in catalog['modules']}
+        usb_layouts = json.loads((APP / 'src/engine/assets/usb-audio-packages.json').read_text())
         for id in REPORT['modules']:
             doc = json.loads((SDK / 'modules' / id / 'octamod.module.json').read_text())
             self.assertEqual(pins[id], doc['version'])
             self.assertEqual(doc['source']['revision'], '6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136' if id == 'usb-audio-out-tracks-main-cue' else REPORT['revision'])
             self.assertTrue((SDK / 'modules' / id / 'LICENSE').is_file())
             self.assertNotIn('build', doc)
-            # USB Audio 0.2 retains the classic lifecycle and MIDI clock sources beside selectable layouts.
-            self.assertEqual(doc['version'], '0.2.0-experimental' if id == 'usb-audio-out-tracks-main-cue' else '0.1.7-experimental' if id == 'analog-bassdrum' else '0.1.4-experimental' if id == 'quantizer' else '0.1.2-experimental')
+            self.assertEqual(doc['version'], usb_layouts['version'] if id == 'usb-audio-out-tracks-main-cue' else '0.1.7-experimental' if id == 'analog-bassdrum' else '0.1.4-experimental' if id == 'quantizer' else '0.1.2-experimental')
         for id, pin in REPORT.get('authorPins', {}).items():
             sources = [item for item in REPORT['files'] if item['path'].startswith('modules/' + id + '/upstream/')]
             self.assertTrue(sources)

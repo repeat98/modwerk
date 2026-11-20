@@ -24,6 +24,8 @@ Options: `--package FILE` tests that package instead of building one, `--publish
 
 Every step applies to modules and bases alike; what differs for a base is in each row and [below](#what-a-base-adds).
 
+For a ColdFire track machine, leave grid and live recording off. Step 7 records the longest sequenced render on T1 and T5. On hardware it also measures the increase in the frame interrupt’s mean share when the selected machine is triggered. With transport stopped, it takes one six-second quiet reading and a second six-second reading with panel auditions four times per second. Each starts a fresh `guard` window. A mean increase above the machine’s declared price fails this check. A skipped track remains a trial failure. This measures the tested settings. The release price uses the fully voiced, every-step pattern in [Module performance](MODULE_PERFORMANCE.md).
+
 | # | Step | Layer | Command | Passes when | Evidence |
 |---|---|---|---|---|---|
 | 1 | Software checks | host | `npm run module:doctor -- <id>` (a draft: `--draft <id>`); a base: `npm run sdk:check` | green | its log |

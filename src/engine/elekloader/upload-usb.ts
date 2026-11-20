@@ -24,7 +24,7 @@ export const MISSING_PAGE = 13 // entries a MISSING reply holds; wValue is the f
 export const VENDOR_INVENTORY = 27 // the modules installed on the unit, in MISSING's form (sdk/runtime/loader/loader.c)
 export const VENDOR_CAPABILITIES = 29 // loader capabilities; older bases stall this read-only request
 export const CAPABILITIES_BYTES = 12
-export const RuntimeFeature = { sites: 1, stockCopies: 2, fills: 4, tables: 8, machineGroups: 16, sidechain: 32, siteEvents: 128, baseUpdate: 256, moduleSets: 512, uiRoots: 1024 } as const
+export const RuntimeFeature = { sites: 1, stockCopies: 2, fills: 4, tables: 8, machineGroups: 16, sidechain: 32, siteEvents: 128, baseUpdate: 256, moduleSets: 512, uiRoots: 1024, judgedRests: 2048 } as const
 export interface RuntimeCapabilities { abi: number; features: number; maxSites: number; maxCopies: number }
 /** MWCP v1. Unknown feature bits are retained: they do not imply features this client requires. */
 export function parseRuntimeCapabilities(view: DataView): RuntimeCapabilities {
@@ -82,7 +82,11 @@ export function findVendorInterface(configuration: { interfaces: readonly UsbInt
 export class VendorTransportError extends Error {
   /** True only when the device positively reported that the frame was never executed. */
   readonly notExecuted: boolean
-  constructor(message: string, notExecuted = false) { super(message); this.name = 'VendorTransportError'; this.notExecuted = notExecuted }
+  constructor(message: string, notExecuted = false, cause?: unknown) {
+    super(message, { cause })
+    this.name = 'VendorTransportError'
+    this.notExecuted = notExecuted
+  }
 }
 export interface VendorResult { status: VendorStatusName; sequence: number; response?: Uint8Array }
 
@@ -437,14 +441,15 @@ export class UsbVendorTransport implements UploadTransport {
     for (let attempt = 0; ; attempt++) {
       const sequence = this.sequence = (this.sequence + 1) & 0xffff
       let sent: { status: string; bytesWritten: number } | undefined
-      try { sent = await this.device.controlTransferOut(this.setup(VENDOR_SUBMIT, sequence), frame) } catch { sent = undefined }
+      let transferError: unknown
+      try { sent = await this.device.controlTransferOut(this.setup(VENDOR_SUBMIT, sequence), frame) } catch (error) { transferError = error }
       signal.throwIfAborted()
       if (sent?.status === 'ok' && sent.bytesWritten === frame.length) return sequence
       // Unconfirmed submission: the device's result says whether it was accepted.
       const state = await this.result(signal)
       if (state.sequence === sequence && (state.status === 'pending' || state.status === 'ready')) return sequence
       const refused = sent?.status === 'stall' && (state.sequence !== sequence || state.status === 'refused')
-      if (!refused) throw new VendorTransportError('The submission failed without a device refusal.')
+      if (!refused) throw new VendorTransportError('The submission failed without a device refusal.', false, transferError)
       if (attempt >= retries) throw new VendorTransportError('The device kept refusing the submission.', true)
       await wait(2 ** Math.min(attempt, 5), signal)
     }
