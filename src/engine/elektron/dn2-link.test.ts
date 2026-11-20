@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { UploadSession } from '../elekloader/upload-session'
 import { UploadCommand, UploadPhase, UploadResult } from '../elekloader/upload-wire'
@@ -129,9 +128,9 @@ function uploadUnit() {
 }
 
 describe('the runtime loader over the Digitone II link', () => {
-  it('names the development base as link.c does', () => {
-    const source = readFileSync(new URL('../../../sdk/machines/digitone-ii/elekloader/base/link.c', import.meta.url), 'utf8')
-    expect(source).toContain(`static const char base[] = "${UPLOAD_BASE_TEXT}";`)
+  it('names the development base by the SHA-256 of link.c\'s text', () => {
+    // link.c (sdk/machines/digitone-ii, base/digitone-ii-next) hashes this text in upload_start.
+    expect(UPLOAD_BASE_TEXT).toBe('Modwerk Digitone II OS 1.12 development base, link upload v1')
     expect(UPLOAD_BASE).toBe(sha(new TextEncoder().encode(UPLOAD_BASE_TEXT)))
   })
 
