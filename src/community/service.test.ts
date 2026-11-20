@@ -117,6 +117,15 @@ describe('community access and review',()=>{
     UPDATE account_removal_requests SET status='cancelled' WHERE id='new';
   `)
   expect(await counts()).toMatchObject({ issues: 0, forum: 1, requests: 0 })
+  const ids = async (path: string) => {
+    const result = await call(path, 'GET', undefined, '', undefined, admin)
+    expect(result.status).toBe(200)
+    return (await result.json() as { id: string }[]).map(item => item.id).sort()
+  }
+  expect(await ids('/admin/forum/reports?view=pending')).toEqual(['shout-report'])
+  expect(await ids('/admin/forum/reports?view=reviewed')).toEqual(['dm-report', 'report'])
+  expect(await ids('/admin/account-requests?view=active')).toEqual([])
+  expect(await ids('/admin/account-requests?view=archive')).toEqual(['active', 'new'])
  })
  it('does not grant publication to historical reports during migration',()=>{
   const db=new DatabaseSync(':memory:');databases.push(db)
