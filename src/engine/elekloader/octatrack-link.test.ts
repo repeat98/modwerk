@@ -640,6 +640,14 @@ describe('a sync that changes the unit’s USB configuration', () => {
     await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
     expect(unit.orphan).toBe(candidate)
   })
+  it('leaves a matching USB Audio trial from a different boot session with its owner', async () => {
+    const { unit, link } = await reconnecting()
+    const candidate = unit.orphan
+    unit.bootSession = '17'.repeat(32)
+    unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+    expect(unit.orphan).toBe(candidate)
+  })
   it('resumes the same USB Audio trial after a second format change from the panel', async () => {
     const { unit, link } = await reconnecting()
     for (let i=0; i<2; i++) {
