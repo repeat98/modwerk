@@ -28,7 +28,7 @@ typedef struct {
     uint8_t pan;                    /* 0..127 (0 = OFF); 127 = el PAN maximo del original */
     uint8_t sync;                   /* 0 RAND (libre), 1 SYNC */
     uint8_t freeze;                 /* 1: POS fija desde la nota (ya no se usa en la Octatrack) */
-    int8_t scan;                    /* -64..+63: velocidad del cabezal, scan/32 (1.00 = la del sample, -2.00..+1.97); 0 = quieto */
+    int8_t scan;                    /* -64..+64: velocidad del cabezal, scan/32 (1.00 = la del sample, -2.00..+2.00); 0 = quieto */
     uint8_t sizef;                  /* fraccion de SIZE (octavos del mando): solo para la pantalla. El motor original lee SIZE
                                      * entera (sw_gran: asrl #8), asi que un ajuste copiado del original suena igual */
     uint8_t posf;                   /* fraccion de POS en 1/256 (escenas, LFOs); 0 = POS entera, igual que el original */

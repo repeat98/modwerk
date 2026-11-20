@@ -144,6 +144,14 @@ static volatile uint8_t *part_at(unsigned i);
  * tras la firma GR 1 (60 + 30 t), DIR en 63 + 30 t y PAN en 64 + 30 t. Sus casillas FLEX (SLIC, LEN) quedan en 0. */
 #define NB_DIR(t) (63u + 30u * (t))
 #define NB_PAN(t) (64u + 30u * (t))
+/* SCAN: el valor del mando (0..127) en pasos de 1/32 de la velocidad del sample: valor - 64, de -2.00 a +1.97; el tope (127)
+ * vale +2.00, el doble de velocidad. Fuera de 0..127 es un RTIM heredado de stock o de la 0.1.0 (se veia «3.03»): cuenta
+ * como 0.00, quieto. Solo cambia el ultimo paso: el resto suena igual que antes. */
+static inline int scan_steps(unsigned v)
+{
+    return v > 127u ? 0 : v == 127u ? 64 : (int)v - 64;
+}
+
 static void params_of(const View *v, GranParams *p, unsigned track)
 {
     const volatile uint8_t *pp = bank_ok() && track < 8u ? part_at(U8(0x80000003u) & 3u) : 0;
@@ -166,10 +174,7 @@ static void params_of(const View *v, GranParams *p, unsigned track)
     }
     p->dens = (uint8_t)(v->w[3] >> 8);
     p->spray = (uint8_t)(v->w[4] >> 8);
-    {   /* SCAN: fuera de 0..127 es un RTIM heredado de stock o de la 0.1.0 (se veia «3.03»): cuenta como 0.00, quieto */
-        unsigned sc = v->w[5] >> 8;
-        p->scan = (int8_t)(sc > 127u ? 0 : (int)sc - 64);
-    }
+    p->scan = (int8_t)scan_steps(v->w[5] >> 8);   /* SCAN: ver scan_steps */
     p->shape = v->setup[0]; p->sync = v->setup[3]; p->freeze = 0;
     {   /* DIR y PAN, de la Part que suena */
         p->dir = pp ? pp[NB_DIR(track)] & 127u : 0; p->pan = pp ? pp[NB_PAN(track)] & 127u : 0;
@@ -255,10 +260,11 @@ static void word(char *out, const char *text) { while ((*out++ = *text++)) {} }
 static void shape_text(char *out, int v) { word(out, v <= 0 ? "NORM" : v == 1 ? "TRI" : v == 2 ? "PERC" : "SQR"); }
 static void mode_text(char *out, int v) { word(out, v <= 0 ? "RAND" : "SYNC"); }
 static void pan_text(char *out, int v) { if (v <= 0) word(out, "OFF"); else number(out, (unsigned)v); }
-/* SCAN: valor del mando - 64, en 1/32: "-2.00" .. "+1.97" (1.00 = la velocidad del sample) */
+/* SCAN: valor del mando - 64, en 1/32: "-2.00" .. "+2.00" (1.00 = la velocidad del sample, 2.00 = el doble). Con 0..127 el
+ * ultimo paso quedaba en 63/32 = 1.96; el tope (127) vale ahora +2.00 exacto y el resto no cambia. */
 static void scan_text(char *out, int v)
 {
-    int s = v > 127 ? 0 : v - 64; unsigned a = (unsigned)(s < 0 ? -s : s), c = a * 100u / 32u;
+    int s = scan_steps((unsigned)v); unsigned a = (unsigned)(s < 0 ? -s : s), c = a * 100u / 32u;
     *out++ = s < 0 ? '-' : s > 0 ? '+' : ' ';
     *out++ = (char)('0' + c / 100u); *out++ = '.'; *out++ = (char)('0' + c / 10u % 10u); *out++ = (char)('0' + c % 10u); *out = 0;
 }

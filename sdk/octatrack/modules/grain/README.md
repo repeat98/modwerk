@@ -21,7 +21,7 @@ SRC (knobs A to F):
 | SIZE | 0 to 127 | The length of each grain, on an exponential scale: 0 is 10 ms, 64 about 100 ms, 127 one second. |
 | DENS | 0 to 127 | How often a grain is born. Low values leave gaps; 64 puts the grains one after another; 127 overlaps four of them (up to six sound at once). With MODE SYNC it picks the division of the bar: 1, 2, 4, 6, 8, 12, 16, 24, 32, 48 or 64 grains. |
 | SPRY | 0 to 127 | How far each grain strays from POS at random: 0 keeps them all on POS, 127 spreads them up to half the sample either way. |
-| SCAN | -2.00 to +1.97 | A read head that runs through the sample from POS: 1.00 is the sample's own speed, negative runs backwards, 0.00 holds. It wraps round the sample and starts again from POS at every trig. |
+| SCAN | -2.00 to +2.00 | A read head that runs through the sample from POS: 1.00 is the sample's own speed, negative runs backwards, 0.00 holds. It wraps round the sample and starts again from POS at every trig. |
 
 SRC SETUP (knobs A to D):
 

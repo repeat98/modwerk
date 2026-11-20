@@ -74,7 +74,7 @@
       "name": "SCAN",
       "default": 64,
       "count": 128,
-      "doc": "A read head that runs through the sample from POS, shown from -2.00 to +1.97: 1.00 is the sample's own speed, negative runs backwards, 0.00 holds. It wraps round the sample and starts again from POS at every trig. SRC knob F.",
+      "doc": "A read head that runs through the sample from POS, shown from -2.00 to +2.00: 1.00 is the sample's own speed, negative runs backwards, 0.00 holds. It wraps round the sample and starts again from POS at every trig. SRC knob F.",
       "labels": null
     },
     {
