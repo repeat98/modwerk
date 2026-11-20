@@ -97,8 +97,7 @@ int modwerk_machine_metadata_admit(const struct runtime_dsp *from,struct runtime
 #ifdef MODWERK_RUNTIME_UI_ROOTS
         /* Any module may open a window or push a key layer whose callbacks run its code (the Tuner's UP + TEMPO
          * window). Before its image is retired (removed, replaced or undone), the stock UI roots must not name any
-         * of its allocation, code, data or BSS: refused while they do. Contributed machines keep their reviewed
-         * check above (machine_contributor_admission). */
+         * of its allocation, code, data or BSS: refused while they do. Contributed machines run their UI and Part checks below. */
         if(from->present && from->image_bytes && from->image!=to->image) {
             uint32_t lo=MW_IMAGE_ADDRESS(from->image),hi=lo+from->image_bytes;
             struct runtime_owner owner;
@@ -117,7 +116,14 @@ int modwerk_machine_metadata_admit(const struct runtime_dsp *from,struct runtime
     uint32_t bank=*(volatile uint32_t *)(uintptr_t)0x46c82456u;
     if(contributor) {
         to->foreign_roots=0;
-        int why=machine_contributor_admission(from,to,board_read,0,bank,operation);
+        /* VECTOR owns a stock key definition. Its original handler is restored by
+         * the switch, while cached callbacks and all Part copies remain live roots. */
+#ifdef MODWERK_RUNTIME_UI_ROOTS
+        machine_memory_read read_ui=ui_read_after;
+#else
+        machine_memory_read read_ui=board_read;
+#endif
+        int why=machine_contributor_admission(from,to,read_ui,board_read,(void *)from->image,bank,operation);
         if(why) return why;
         if(!((from->flags|to->flags)&RUNTIME_GROUP_METADATA) && !family) return RUNTIME_OK;
     }

@@ -1198,12 +1198,21 @@ void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu)
  * effect (`id`, on slot 0-15: FX1 T1-T8, then FX2) while the unit is busy, and the pick is then not made. A module
  * effect's control code, hooks and frame work are ColdFire time no price covers. Stock's effects and NONE always pass,
  * so a busy unit can always be made lighter. The box names the slot as an effect's ("Tn FXn"). */
-extern volatile uint32_t mw_cpu_hot, mw_cpu_refusals, mw_cpu_refusal_tracks; /* machine_registry.c */
+extern volatile uint32_t mw_cpu_hot, mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille; /* machine_registry.c */
 void modwerk_fxmap_name(unsigned id, char *out); /* fxmap.c: 16 bytes */
+int modwerk_machine_effect_resting(unsigned id);  /* machine_registry.c: effect modules that rest */
+void modwerk_machine_effect_wake(unsigned id);
 int modwerk_status_effect_busy(unsigned slot, unsigned id)
 {
     uint32_t cpu = modwerk_status_cpu_load();
-    if (slot > 15u || !fx_in(modwerk_fx_modules, id) || cpu < mw_cpu_hot) return 0;
+    if (slot > 15u || !fx_in(modwerk_fx_modules, id)) return 0;
+    /* A resting effect module brings its ColdFire hooks back into the frame: judged with them on top, then woken
+     * before stock writes the pick, so its first frame on the slot has its detours. */
+    int waking = modwerk_machine_effect_resting(id);
+    if (cpu + (waking ? mw_wake_mille : 0u) < mw_cpu_hot) {
+        if (waking) modwerk_machine_effect_wake(id);
+        return 0;
+    }
     char name[16];
     modwerk_fxmap_name(id, name);
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);

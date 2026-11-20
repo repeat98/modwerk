@@ -96,12 +96,12 @@ const struct machine_retirement *machine_retirement(const uint8_t *record)
 struct reader { machine_memory_read read; void *context; };
 static int part_read(void *opaque, uint32_t at, uint8_t *out, unsigned n)
 { struct reader *r = opaque; return r->read(r->context, at, out, n); }
-int machine_contributor_admission(const struct runtime_dsp *from, struct runtime_dsp *to, machine_memory_read read, void *context,
-                                  uint32_t bank, unsigned operation)
+int machine_contributor_admission(const struct runtime_dsp *from, struct runtime_dsp *to,
+                                  machine_memory_read read_ui, machine_memory_read read_part, void *context, uint32_t bank, unsigned operation)
 {
     const uint8_t *old = machine_contribution(from), *next = machine_contribution(to);
     if (old && !same_machine(old, next)) {
-        if (from->image_bytes && machine_ui_lifetime(read, context, MW_IMAGE_ADDRESS(from->image),
+        if (from->image_bytes && machine_ui_lifetime(read_ui, context, MW_IMAGE_ADDRESS(from->image),
                                                      MW_IMAGE_ADDRESS(from->image) + from->image_bytes) != MACHINE_CLEAR)
             return RUNTIME_IN_USE;
         const struct machine_retirement *r = machine_retirement(old);
@@ -110,7 +110,7 @@ int machine_contributor_admission(const struct runtime_dsp *from, struct runtime
             if (result != MACHINE_RETIRE_CLEAR && !(operation != RUNTIME_METADATA_SWITCH && result == MACHINE_RETIRE_PLANNED))
                 return RUNTIME_IN_USE;
         } else {
-            struct reader reader = {read, context};
+            struct reader reader = {read_part, context};
             if (machine_part_signature(part_read, &reader, bank, old + 4, old[6], old[7]) != MACHINE_PART_CLEAR) return RUNTIME_IN_USE;
         }
     }
