@@ -2,7 +2,6 @@ import { useContext, useRef, useState, type ReactNode, type Ref } from 'react'
 import { isBetaModule } from '../catalog/availability'
 import { moduleCaution } from '../catalog/module-cautions'
 import type { AddBlock } from '../catalog/add-blocks'
-import { DETAILS } from '../catalog/details'
 import { moduleBuildPending } from '../catalog/build-support'
 import { moduleHardwareEvidence } from '../catalog/module-evidence'
 import { moduleStability, type ModuleStability } from '../catalog/module-stability'
@@ -107,7 +106,7 @@ export function ModuleCard({ module, selected, statistics, viewedVersion, baseli
       </div>
       {module.id === USB_AUDIO_MODULE && <span className="module-compatibility-badge module-card-compatibility"><Icon name="wave" size={12} />Outbox 8 compatible</span>}
       <div className="card-credit"><ModuleAuthors name={module.authorName} url={module.authorUrl} contributors={module.contributors}/><span>{module.detail}</span></div>
-      <div className="card-bottom">{pending ? <AddBlockChip block={pending} /> : <span>{DETAILS[module.id].family}</span>}<CardStats statistics={statistics} /></div>
+      <div className="card-bottom">{pending ? <AddBlockChip block={pending} /> : <span>{module.type}</span>}<CardStats statistics={statistics} /></div>
       <CardProof stability={moduleStability(statistics, { buildPending: moduleBuildPending(module.id), hardware: moduleHardwareEvidence(module.id) })} statistics={statistics} name={module.name} compared={compared} canCompare={canCompare} onCompare={onCompare} />
     </div>
     {prompt.conflict && prompt.open && <AddBlockPrompt id={prompt.id} name={module.name} block={prompt.conflict} onCancel={prompt.close}

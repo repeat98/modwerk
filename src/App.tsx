@@ -46,7 +46,6 @@ import type { ChangeEvent, ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import { LIBRARY_CATEGORIES, LIBRARY_CATEGORY_LABELS, MODULES, type ModuleCategory } from './catalog/modules'
 import { AVAILABLE_MODULES, availableModules, isModuleAvailable, isModulePaused, moduleAvailabilityError } from './catalog/availability'
-import { DETAILS } from './catalog/details'
 import { readCatalogBrowse, saveCatalogBrowse, type CatalogBrowse } from './catalog/catalog-browse'
 import { DSP_LOADER } from './engine/protocol'
 import { issueRepository, setWorkspaceReportContext } from './community/report-context'
@@ -418,10 +417,10 @@ export default function App() {
     : []
   const cornerSelection = showSelection && !drawerLayout
   const libraryFilter = allRoute ? allCategory ?? 'all' : filter
-  const libraryFamily = allRoute || accessibleModules.some(module=>DETAILS[module.id].family===family) ? family : 'all'
+  const libraryFamily = accessibleModules.some(module => module.type === family) || (allRoute && (DIGI_MODS.some(mod => mod.category === family) || ZOOM_EFFECTS.some(effect => effect.type === family))) ? family : 'all'
   const visibleModules = accessibleModules.filter((module) =>
     (libraryFilter === 'all' || module.category === libraryFilter)
-    && (libraryFamily==='all'||DETAILS[module.id].family===libraryFamily)
+    && (libraryFamily==='all'||module.type===libraryFamily)
     && octatrackMatchesQuery(module, query),
   ).sort((a,b)=>compareModules(a,b,sort,statistics))
   const displayedModules = detailModule ? [detailModule] : allRoute || route === 'library' || LIBRARY_CATEGORIES.includes(route as typeof LIBRARY_CATEGORIES[number]) ? visibleModules : []
@@ -540,7 +539,7 @@ export default function App() {
       const count = libraryCount(category), current = onLibrary && libraryCategory === category
       if (!phoneLayout && !count && !current) return null
       return <a key={category} href={libraryHref(category)} onClick={() => setFamily('all')} className={(current ? 'active' : '') + (count ? '' : ' is-empty') + (category === 'standalone' ? ' sidebar-standalone' : '')} aria-current={current ? 'page' : undefined}>
-        {phoneLayout && <Icon name={category === 'standalone' ? 'lock' : category === 'scenes' ? 'grid' : category === 'effects' || category === 'midi-usb' ? 'wave' : 'sliders'} />}
+        {phoneLayout && <Icon name={category === 'standalone' ? 'lock' : category === 'performance' ? 'grid' : category === 'effects' || category === 'midi-usb' ? 'wave' : 'sliders'} />}
         <span>{LIBRARY_CATEGORY_LABELS[category]}</span><small>{count}</small>
       </a>
     })}

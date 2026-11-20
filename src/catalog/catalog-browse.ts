@@ -1,8 +1,8 @@
 import { availableModules } from './availability'
 import { LIBRARY_CATEGORIES } from './modules'
-import { DIGI_MODS } from '../devices/digi-mods'
+import { DIGI_MODS, isDigiDevice } from '../devices/digi-mods'
 import { DEVICES_BY_ID, deviceHref } from '../devices/registry'
-import { moduleHref } from '../routing'
+import { currentLibraryRoute, moduleHref } from '../routing'
 import { MODULE_SORT_VALUES } from '../community/module-statistics'
 
 export type CatalogBrowse = { route: string; query: string; family: string; sort: string; ids: readonly string[] }
@@ -12,7 +12,7 @@ const sorts = MODULE_SORT_VALUES
 function validLibraryRoute(route: string) {
   if (route === 'library' || LIBRARY_CATEGORIES.includes(route as typeof LIBRARY_CATEGORIES[number])) return true
   const [machine, category, extra] = route.split('/')
-  return (machine === 'all' || machine === 'digitakt' || machine === 'digitone') && !extra && (!category || LIBRARY_CATEGORIES.includes(category as typeof LIBRARY_CATEGORIES[number]))
+  return (machine === 'all' || isDigiDevice(machine)) && !extra && (!category || LIBRARY_CATEGORIES.includes(category as typeof LIBRARY_CATEGORIES[number]))
 }
 
 function target(id: string, betaAccess = false) {
@@ -25,12 +25,14 @@ function target(id: string, betaAccess = false) {
 export function parseCatalogBrowse(json: string | null, betaAccess = false): CatalogBrowse | null {
   try {
     const value = JSON.parse(json ?? 'null')
-    if (!value || typeof value.route !== 'string' || !validLibraryRoute(value.route)
+    if (!value || typeof value.route !== 'string'
       || typeof value.query !== 'string' || typeof value.family !== 'string' || !sorts.includes(value.sort)
       || !Array.isArray(value.ids) || value.ids.length > 256 || !value.ids.every((id: unknown) => typeof id === 'string')) return null
+    const route = currentLibraryRoute(value.route)
+    if (!validLibraryRoute(route)) return null
     // A previously browsed module may have been removed or paused since this tab was opened.
     const ids = [...new Set<string>(value.ids)].filter(id => target(id, betaAccess))
-    return { route: value.route, query: value.query, family: value.family, sort: value.sort, ids }
+    return { route, query: value.query, family: value.family, sort: value.sort, ids }
   } catch { return null }
 }
 
