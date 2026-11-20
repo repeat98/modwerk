@@ -11,7 +11,7 @@ The order is fixed: your tests on the unit first, then the developer's. A build 
 2. **Prepare.**
    - The software checks are green first (`npm run module:doctor -- <id>`, `npm run modules:compat -- <id>`).
    - Name the build: the source revision and each package's SHA-256. A draft's package comes from `npm run module:dev -- <id> --build-only`. Both stages are about this build only; a rebuild starts again at stage 1.
-   - Tell the developer what you will run on their unit and get their OK for this run. Read `docs/OCTATRACK_DRIVING.md` and keep its rules.
+   - Tell the developer what you will run on their unit and get their OK for this run (on the owner's computer it stands, `docs/OWNER_OPERATIONS.md`). Read `docs/OCTATRACK_DRIVING.md` and keep its rules.
    - Start one session with `npm run device -- serve --share /tmp/modwerk-share.sock` on a development base, transport stopped, on a bank and Part whose working copy equals its saved one. Read the unit before you change it: `ui` and `npm run device -- do inventory`.
 3. **Stage 1: your tests on the unit** (Octatrack; the Rytm below). Run them yourself; do not ask the developer to press anything. No Keep in this stage.
    - **The scripted pass:** `npm run device:test -- --testing-entry run.md <package>`, in the background, reading its log (`docs/ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle`). It installs the package as a trial and rolls it back at the end; places it alone on T1 and T5 and on every track while playing; sweeps its knobs; switches Parts and banks; reads the load meters, loader, crash and stall counters and the self-test; then restores the Part and checks the inventory. One package a run.

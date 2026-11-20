@@ -100,8 +100,9 @@ device commands take turns on it by themselves (`scripts/unit-queue.mjs`), so no
   (Linux `~/.local/state/modwerk/unit-queue`, macOS `~/Library/Application Support/modwerk/unit-queue`, Windows
   `%LOCALAPPDATA%\modwerk\unit-queue`; `MODWERK_UNIT_DIR` moves it), shared by every clone and worktree. Sessions in WSL
   and on its Windows host keep separate queues.
-- The queue replaces only asking whether the unit is free. What runs on the developer's unit still needs their OK, and
-  power cycles, flashing and Keeps stay as the rules above say.
+- The queue replaces only asking whether the unit is free. What runs on the developer's unit still needs their OK (on
+  the owner's computer it stands, [OWNER_OPERATIONS.md](OWNER_OPERATIONS.md)), and power cycles, flashing and Keeps stay
+  as the rules above say.
 
 ## Start the link
 
