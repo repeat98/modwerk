@@ -73,6 +73,22 @@ class DeviceTest(unittest.TestCase):
         kept.wait_started(10)
         kept.end(failures)
         self.assertEqual(failures, ['the trial process says accepted: the package was kept'])
+        faulted = octatest.Trial([sys.executable, '-c', FAKE_TRIAL, 'verdict: FAIL (boot 7 +313s) the frame guard skipped tracks T1, '
+                                  '2 skips since the start\n  note (boot 7 +326s) the CPU meter over its limit\n'
+                                  'rolled back: the trial logged a fault (above), so it is not kept'])
+        faulted.wait_started(10)
+        failures = []
+        faulted.end(failures)
+        self.assertEqual(failures, ['the unit logged during the trial: FAIL (boot 7 +313s) the frame guard skipped tracks T1, 2 skips since the start'])
+
+    def test_only_the_verdicts_fail_lines_are_faults(self):
+        trial = octatest.Trial.__new__(octatest.Trial)
+        trial.lines = ['trial: 0123 running', '  12s: ticks 1, refusals 0 FAIL', 'verdict: note (boot 6 +31872s) the CPU meter over its limit',
+                       '  FAIL (boot 6 +31873s) DSP stall (eDMA refused a transfer)', '  npm run device -- do diaglog prints the whole log',
+                       'rolled back: the trial logged a fault (above), so it is not kept', '  FAIL not part of the verdict']
+        self.assertEqual(trial.faults(), ['FAIL (boot 6 +31873s) DSP stall (eDMA refused a transfer)'])
+        trial.lines = ['trial: 0123 running', 'verdict: no fault logged', 'rolled back (pass --accept to keep it)']
+        self.assertEqual(trial.faults(), [])
 
     def test_the_entry_says_nothing_was_kept_and_what_is_left(self):
         result = dict(args=['e.mwrm'], crash=False, failures=[], packages=[dict(file='e.mwrm', name='E-Verb', sha256='5f' * 32)],
