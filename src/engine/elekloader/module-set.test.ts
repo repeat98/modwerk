@@ -2,9 +2,9 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import catalog from '../../../sdk/catalog.json' with { type: 'json' }
-import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
+import { publishedManifest as manifest } from './published-octatrack.fixture'
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
-import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from './published-octatrack.fixture'
 import { removal } from '../../dev/octatrack-usb-lifecycle'
 import { RuntimeFeature } from './upload-usb'
 import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'

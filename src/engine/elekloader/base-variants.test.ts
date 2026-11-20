@@ -1,15 +1,12 @@
 import { sha } from '../../../vendor/elekloader/kit/src/bytes'
-import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
-import published from '../assets/octatrack-base-variants.json' with { type: 'json' }
-import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
+import { publishedBinding as baseBinding, publishedManifest as manifest, publishedPackageText, publishedVariants as published } from './published-octatrack.fixture'
 import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, type UsbAudioLayout } from '../../config/usb-audio'
 import { applyVariantPatch, baseLayout, DEFAULT_LAYOUT, isPublishedBase, layoutIdentity, variantPackage, type BaseLayout, type BaseVariants } from './base-variants'
 import { BaseLayoutRequired, BaseUpdateRequired, createRuntimeCatalogue, USB_MODULE_IDS } from './module-set'
 
 const variants = published as BaseVariants
-const defaultText = readFileSync(new URL('../assets/octatrack-base.elemod', import.meta.url), 'utf8')
+const defaultText = publishedPackageText()
 const configurable = Boolean((manifest as { usbAudio?: { configurable?: unknown } }).usbAudio?.configurable)
 const layouts: BaseLayout[] = configurable ? ['off'] : [...USB_AUDIO_LAYOUTS.map(layout => layout.id), 'off']
 const identities = (baseBinding as unknown as { variants: Record<BaseLayout, string> }).variants

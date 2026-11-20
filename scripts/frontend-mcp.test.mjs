@@ -1,3 +1,4 @@
+import { publishedBinding } from '../src/engine/elekloader/published-octatrack.fixture.ts'
 import { publishedUsbAudioPackage } from '../src/config/published-usb-audio.fixture.ts'
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import { mkdtemp, rm, readFile, writeFile, chmod, symlink, mkdir } from 'node:fs/promises'
@@ -75,7 +76,7 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     expect(usb).toContain('usb-audio-out-tracks-main-cue')
     // Every published package alone, every pair and all together, on the published base with site events (every subset
     // of 19 would be 2^19 sets; preparing one only preflights each package).
-    const { identity: base } = JSON.parse(await readFile(new URL('../sdk/machines/octatrack/base-binding.json', import.meta.url), 'utf8'))
+    const { identity: base } = publishedBinding
     const capabilities = { abi: 10, features: 7 | 128 | 512 | 1024, maxSites: 128, maxCopies: 128 } // ABI 10: Analog BD's engine; 1024: Tuner's window (base 0.7.5)
     const sets = [...usb.map(id => [id]), ...usb.flatMap((a, i) => usb.slice(i + 1).map(b => [a, b])), usb]
     for (const moduleIds of sets) {

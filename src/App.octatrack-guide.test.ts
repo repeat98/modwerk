@@ -11,7 +11,7 @@ import { fakeUnit } from './dev/octatrack-link-fake'
 import { OCTATRACK_WELCOME_KEY } from './hooks/useOctatrackWelcome'
 import { waitForBaseInstall } from './config/octatrack-progress'
 import { OCTATRACK_DIAGNOSTICS_VERSION } from './community/octatrack-diagnostics-contract'
-import baseBinding from '../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from './engine/elekloader/published-octatrack.fixture'
 import { newConfiguration } from './config/workspace'
 import { deviceStore, openDeviceDatabase } from './storage/device'
 import { USB_AUDIO_MODULE, usbAudioPreset } from './config/usb-audio'

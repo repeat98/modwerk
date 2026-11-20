@@ -9,7 +9,7 @@ import { UploadUnconfirmedError } from '../engine/elekloader/upload-session'
 import { pendingBaseInstall, waitForBaseInstall } from '../config/octatrack-progress'
 import { BaseInstallDialog } from './BaseInstallDialog'
 import { pendingReask, resetReask } from '../community/diagnostics-reask'
-import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from '../engine/elekloader/published-octatrack.fixture'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
 
 // The browser's download of the .bin; the guide's own steps are what is tested here.
