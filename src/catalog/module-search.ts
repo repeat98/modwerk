@@ -17,10 +17,10 @@ export function matchesModuleQuery(query: string, ...fields: string[]) {
 
 export function octatrackMatchesQuery(module: FirmwareModule, query: string) {
   return matchesModuleQuery(query, module.name, module.description, module.authorName, module.author,
-    contributorSearchText(module.contributors), 'Octatrack', DETAILS[module.id].family, LIBRARY_CATEGORY_LABELS[module.category])
+    contributorSearchText(module.contributors), 'Octatrack', module.type, DETAILS[module.id].family, LIBRARY_CATEGORY_LABELS[module.category])
 }
 
 export function digiMatchesQuery(module: DigiMod, query: string) {
   return matchesModuleQuery(query, module.title, module.summary, module.author, contributorSearchText(module.contributors),
-    DEVICES_BY_ID[module.device].name, module.category, LIBRARY_CATEGORY_LABELS[module.libraryCategory])
+    DEVICES_BY_ID[module.device].name, module.category, module.sourceFamily ?? '', LIBRARY_CATEGORY_LABELS[module.libraryCategory])
 }

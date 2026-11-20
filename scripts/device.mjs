@@ -38,7 +38,7 @@
 // the base rolls back any module that was not accepted.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { deflateSync, crc32 } from 'node:zlib'
-import { join, resolve } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 import { createConnection, createServer } from 'node:net'
 import { spawn, spawnSync } from 'node:child_process'
 import { homedir, tmpdir } from 'node:os'
@@ -57,8 +57,10 @@ import { describeRefusal } from './loader-refusals.mjs'
 import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
 import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
+import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
+  help: { type: 'boolean', short: 'h' },
   socket: { type: 'string', default: '/tmp/modwerk-ot.sock' },
   seconds: { type: 'string', default: '5' },
   accept: { type: 'boolean', default: false },
@@ -68,16 +70,44 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   share: { type: 'string' }, // serve: a second bench socket for the frontend MCP (shareBench)
   chunk: { type: 'string' }, // boot: bytes a frame (4096 for the flashed usbtest9 on macOS; docs/OCTATRACK_HARDWARE_TRAPS.md)
 } })
+const usage = `Usage: npm run device -- COMMAND [--socket PATH] [--emulator]
+
+  serve [--share PATH]
+  status | stats | state | missing | ui | loader | report
+  screen [--png FILE] [--scale 1-4]
+  try MODULE.mwrm | set FILE,-FILE,… | remove [MODULE.mwrm]  [--seconds 1-3600] [--accept]
+  recover | lifecycle
+  boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR
+  key NAME[+NAME] | enc A+3 | fader 0-255 | do SEQUENCE
+  mem ADDR LENGTH | probe 0|1 | meter 0|1
+
+  -h, --help   Show this help`
+if (values.help) {
+  console.log(usage)
+  process.exit(0)
+}
 let seconds = Number(values.seconds)
 if (!['serve', 'status', 'stats', 'try', 'set', 'recover', 'remove', 'lifecycle', 'boot', 'flash', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report', 'probe', 'meter', 'missing', 'ui', 'do', 'mem'].includes(command) || (['try', 'set', 'boot', 'flash', 'key', 'enc', 'fader', 'probe', 'meter', 'do', 'mem'].includes(command) && !file) ||
   (['serve', 'status', 'stats', 'recover', 'lifecycle', 'screen', 'state', 'loader', 'report', 'missing', 'ui'].includes(command) && file) ||
   !Number.isInteger(seconds) || seconds < 1 || seconds > 3600 || (values.chunk && !(Number(values.chunk) >= 1 && Number(values.chunk) <= 4096 && Number.isInteger(Number(values.chunk))))) {
-  console.error('Usage: device.mjs status | stats | try MODULE.mwrm [--seconds 1-3600] [--accept] | set FILE,-FILE,… [--accept] | recover | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR | key NAME[+NAME] | screen | state | loader | report | probe 0|1 | meter 0|1 | missing | ui | do SEQUENCE | mem ADDR LENGTH | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
+  console.error(usage)
   process.exit(2)
 }
 
+// The unit's turn (scripts/unit-queue.mjs): a command that drives the unit waits in line for it and gives it back when it
+// exits. `serve` is the shared link and takes none. Reads (IDENTIFY, RAM, the report, the screen, a read-only `do`) go
+// beside another session's turn; `status` does not, since its HELLO moves on the upload session another process may be
+// in the middle of (docs/OCTATRACK_DRIVING.md). An emulator needs no turn.
+const DRIVES = ['status', 'try', 'set', 'recover', 'remove', 'lifecycle', 'boot', 'flash', 'key', 'enc', 'fader', 'probe', 'meter']
+if (command !== 'serve' && !values.emulator && (DRIVES.includes(command) || command === 'do' && sequenceDrives(file)))
+  await takeUnitTurn({ note: `device ${command}${command === 'do' ? ` '${file.slice(0, 80)}'` : file ? ' ' + basename(file) : ''}`,
+    command: 'npm run device -- ' + process.argv.slice(2).join(' ').slice(0, 300),
+    expectMs: ['try', 'set', 'remove'].includes(command) ? (seconds + 120) * 1000 : command === 'flash' ? 600000 : command === 'boot' ? 300000 : 120000 })
+
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
-if (command === 'serve' && !await new Promise(resolve => { const c = createConnection(benchEndpoint(values.socket), () => { c.end(); resolve(true) }); c.on('error', () => resolve(false)) })) {
+// Is a bridge already listening? Not asked of an emulator: ot_emu takes one connection and stops when it hangs up, so serve --emulator
+// keeps its one link for the session (docs/TEST_PROCEDURE.md, the same steps on either target).
+if (command === 'serve' && !values.emulator && !await new Promise(resolve => { const c = createConnection(benchEndpoint(values.socket), () => { c.end(); resolve(true) }); c.on('error', () => resolve(false)) })) {
   const bridge = spawn(process.env.MODWERK_PYTHON ?? join(homedir(), '.cache/modwerk-upstream/venv/bin/python'),
     ['-B', 'scripts/octatrack-usb-bridge.py', values.socket], { stdio: ['ignore', 'pipe', 'inherit'] })
   await new Promise((resolve, reject) => { bridge.stdout.on('data', d => /ready/.test(d) && resolve()); bridge.once('exit', code => reject(new Error('bridge exited ' + code))) })
@@ -337,7 +367,11 @@ async function missing() {
  * memory (development bases: each memory's use, holes and largest free run), compact (pack each core's code now, timed),
  * dspmap (development bases: each core's code arena drawn, every block named with its slots), dspmap:watch:N (redrawn on change)
  * profile, profile:N (development bases: each UI tick hook's µs over N seconds, from the symbols of the build `boot` started)
+ * health (development bases: one JSON line of DSP frames, loader stalls and errors, ticks, CPU, crash and stall record counts; scripts/octatrack-soak.mjs)
  * (spaces in NAME as _; it waits until the track runs it). */
+/** Steps that only read: run() leaves out the 60 ms it puts after every other step (a health read cost 80 ms, 60 of
+ * them this pause). Not `gap`, `guard` or `cpu`: their reads restart a window or can set a value. */
+export const READ_ONLY = /^(health|state|stats|ui|loader|crash|stall|saved|inventory|missing|screen|png:\S+|mem:0x[0-9a-f]+:\d+)$/i
 async function run(sequence, until = Infinity) { // serve: past its time limit a sequence stops before its next step
   for (const step of sequence.trim().split(/\s+/)) {
     if (Date.now() > until) throw new Error('stopped at the time limit before ' + step)
@@ -483,9 +517,16 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     else if ((m = /^pick:T([1-8]):FX([12]):(\S+)$/i.exec(step))) await pick(Number(m[1]) - 1, Number(m[2]), m[3].replace(/_/g, ' '))
     else if ((m = /^pickid:T([1-8]):FX([12]):(\d+)$/i.exec(step))) await pick(Number(m[1]) - 1, Number(m[2]), Number(m[3])) // by effect id
     else if (step === 'state') { const [s, r] = await devIn(6, 0, 2); console.log(s ? 'stopped' : 'playing', r ? 'recording' : '') }
+    else if (step === 'health') { // one JSON line for scripts/octatrack-soak.mjs: DSP frames, loader stalls and errors, the UI tick's watch count, CPU,
+      // the crash and stall records' counts (battery RAM, 0 when none), the transport and the bank and pattern (development bases: MEM)
+      const w = await statusWords(), [stopped] = await devIn(6, 0, 2)
+      const record = async (at, magic) => { const b = await mem(at, 8), v = new DataView(b.buffer, b.byteOffset, 8); return v.getUint32(0) === magic ? v.getUint32(4) : 0 }
+      console.log(JSON.stringify({ health: { frames: w(1), stalls: w(11), errors: w(10), ticks: w(15), cpu: w(66), crash: await record(0x100ff800, 0x4d574352),
+        stall: await record(0x100ff900, 0x4d575354), playing: !stopped, pattern: [...await mem(0x800065bd, 4)] } })) // bank, pattern, then the queued ones
+    }
     else if (step === 'stats') { const w = await statusWords(); console.log(`stats cpu ${w(66)} T1-4 ${w(69)}/${w(70)} T5-8 ${w(67)}/${w(68)} passes ${(w(76) / 1024).toFixed(1)} ${(w(77) / 1024).toFixed(1)}`) }
     else { const [, spec, times] = /^(.+?)(?:\*(\d+))?$/.exec(step); for (let i = 0; i < Number(times ?? 1); i++) await keys(spec) }
-    await wait(60)
+    if (!READ_ONLY.test(step)) await wait(60) // room between presses and changes; a read changes nothing, so it needs none
   }
 }
 const state = s => `${s.phase}, generation ${s.generation}, active ${s.active?.slice(0, 16) ?? 'unknown'}…`
@@ -569,8 +610,11 @@ if (command === 'serve') {
       const [verb, arg, chunk] = line.trim().split(/\s+/)
       if (verb === 'boot' || verb === 'flash') { // the unit reboots and this link goes with it: hand the bridge to a one-shot boot or flash, then exit (run serve in a loop)
         bench.socket.end(); await wait(300)
-        const r = spawnSync(process.execPath, [process.argv[1], verb, arg, '--socket', values.socket, ...(chunk ? ['--chunk', chunk] : [])], { encoding: 'utf8', timeout: 400000 })
-        out.push(r.stdout, r.stderr, 'serve exits; the loop restarts it'); setTimeout(() => process.exit(0), 200)
+        // MODWERK_UNIT=served: whoever sent this line took the unit's turn for it (device-send.py), so the boot waits for none
+        const r = spawnSync(process.execPath, [process.argv[1], verb, arg, '--socket', values.socket, ...(chunk ? ['--chunk', chunk] : [])], { encoding: 'utf8', timeout: 400000, env: { ...process.env, MODWERK_UNIT: 'served' } })
+        out.push(r.stdout, r.stderr)
+        if (r.status !== 0) out.push('error: ' + verb + ' failed (' + (r.error?.message ?? r.signal ?? 'exit ' + r.status) + ')')
+        out.push('serve exits; the loop restarts it'); setTimeout(() => process.exit(0), 200)
       } else if (verb === 'recover') { // a transaction left behind (an install whose reply went missing): undo it, as the site does
         const session = await UploadSession.connect(transport, identity.base, { timeoutMs: 10000 })
         const phase = session.status.phase

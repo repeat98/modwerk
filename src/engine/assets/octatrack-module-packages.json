@@ -336,9 +336,9 @@
       "name": "SIDECHAIN COMP",
       "module": "95cff696",
       "bytes": 2636,
-      "sha256": "6cf9892ded68b89660aed1d3c77028530722a734a0587036ae76eb74b45409b6",
+      "sha256": "7aedb56f64cc17732efd367a3a1e4a85f73196924e4bf362411fa23217639408",
       "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
-      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921"
+      "requiredBase": "a08a1557c5bd7d04b6b0615361f059ac99ba2bc40f8a7e3b86842db2ccbbb5bd"
     },
     {
       "id": "output-matrix",
@@ -352,9 +352,9 @@
       "name": "OUTPUT MATRIX",
       "module": "caf158b5",
       "bytes": 3740,
-      "sha256": "d67e9a432c59f8f430b20f3ada22f74317209169062941f5290f6b66f6d3e4e2",
+      "sha256": "0304acd09210badf33e888c09f111a887f221a3842aaeb781ecd20147044203b",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921"
+      "requiredBase": "a08a1557c5bd7d04b6b0615361f059ac99ba2bc40f8a7e3b86842db2ccbbb5bd"
     },
     {
       "id": "cc-map",
@@ -370,7 +370,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921"
+      "requiredBase": "a08a1557c5bd7d04b6b0615361f059ac99ba2bc40f8a7e3b86842db2ccbbb5bd"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -394,15 +394,15 @@
       "octabam": true,
       "abi": 7,
       "features": 1,
-      "sites": 5,
+      "sites": 7,
       "copies": 0,
       "fills": 0,
-      "version": "0.1.2-experimental",
+      "version": "0.2.0-experimental",
       "name": "DirectJmp Kyoti",
       "module": "075d79a3",
-      "bytes": 2462,
-      "sha256": "89a38e18728bb2039a0f5e3f39305fcb7be75e0db260acd6b33bd46d7e281cef",
-      "path": "octatrack-modules/direct-jump-kyoti/0.1.2-experimental.mwrm"
+      "bytes": 4546,
+      "sha256": "ed3ba88a2f57c7f5ab122a5f572a8a814c91a338c5baa3a56da324c86d71060d",
+      "path": "octatrack-modules/direct-jump-kyoti/0.2.0-experimental.mwrm"
     },
     {
       "id": "dejavu",
@@ -446,9 +446,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "71bd73bdab4b32b9a4fdbc48d0f89ab07f8dada0213f6a76216f8f1aebbad8bd",
+      "sha256": "16fcc02a5628e32c0cdd09e414360a76cf30169892ad96686e9541d0bb27daa8",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921"
+      "requiredBase": "a08a1557c5bd7d04b6b0615361f059ac99ba2bc40f8a7e3b86842db2ccbbb5bd"
     },
     {
       "id": "analog-bassdrum",
@@ -462,9 +462,9 @@
       "name": "Analog BD",
       "module": "abdb1445",
       "bytes": 26172,
-      "sha256": "40b2d12280b56bfeb3db925a668bc759019f8db45b58580ad3f5389249df1baf",
+      "sha256": "99581aece3500d9a7c5d1b389afc8ff1697086d323bd28dbf01b4def22acacbc",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "dfa438130710fea9dfac40296d1a7db79b6ba3efc45c77b043ae6d45f44d3921",
+      "requiredBase": "a08a1557c5bd7d04b6b0615361f059ac99ba2bc40f8a7e3b86842db2ccbbb5bd",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -721,6 +721,23 @@
       "module": "5cf69df3",
       "bytes": 652,
       "sha256": "c470e87aefa7c8e2c87dd7b1429a265e5353430b74331adb53158055269c9655"
+    },
+    {
+      "id": "screen-off",
+      "sources": [
+        "sdk/octabam/modules/screen-off/package.c"
+      ],
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/screen-off/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "screen-off",
+      "module": "66166c56",
+      "bytes": 352,
+      "sha256": "14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c"
     }
   ]
 }

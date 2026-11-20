@@ -134,6 +134,15 @@
         "rationale": "Inherited 16K Y allocation, of which the ring uses 15,870 words, and the X reservation; 402,972 logical bytes for eight instances including both programs and full hardware stack capacity. Complete runtime bounds and hardware canaries remain unverified.",
         "source": "TESTING.md"
       }
+    },
+    "cpuPrice": {
+      "value": 0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-18",
+      "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41.2 % before, 41.1 % installed and used nowhere, 41 % on T1 FX2; CPU meter 63.1 % before, 63.9 % at rest, 60.8 % in use.",
+      "source": "evidence/cpu-price.json"
     }
   },
   "tests": {

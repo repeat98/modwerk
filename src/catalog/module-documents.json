@@ -151,6 +151,15 @@
             "rationale": "Inherited 16K Y allocation, of which the ring uses 15,870 words, and the X reservation; 402,972 logical bytes for eight instances including both programs and full hardware stack capacity. Complete runtime bounds and hardware canaries remain unverified.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41.2 % before, 41.1 % installed and used nowhere, 41 % on T1 FX2; CPU meter 63.1 % before, 63.9 % at rest, 60.8 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -372,6 +381,15 @@
             "rationale": "The module adds 200 bytes of state per track plus code and coefficient tables, while reusing stock delay rings. The common 10 MiB DRAM platform arena is shared rather than additive per instance. Moderate is an incremental footprint estimate.",
             "source": "README.md"
           }
+        },
+        "cpuPrice": {
+          "value": 7.7,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41.4 % installed and used nowhere, 48.7 % on T1 FX2; CPU meter 60.3 % before, 60.3 % at rest, 70.3 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -837,6 +855,15 @@
             "rationale": "The README states DSP state is private to each instance and no audio buffer is allocated. Small rhythm/control state, code and tables remain; low is an estimate, not an exact total memory claim.",
             "source": "README.md"
           }
+        },
+        "cpuPrice": {
+          "value": 7.2,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 43.5 % installed and used nowhere, 48.2 % on T1 FX2; CPU meter 59.5 % before, 61.8 % at rest, 64.9 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -1229,6 +1256,15 @@
             "rationale": "422 words of DSP program per payload and 31 words of state in each instance's existing r7 block. No allocator buffer, tables or Y memory, where SPRING REV takes 1,063 words and a 16,384-word instance buffer.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41.3 % before, 41.1 % installed and used nowhere, 41 % on T1 FX2; CPU meter 63.5 % before, 63.8 % at rest, 61.3 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -1854,6 +1890,15 @@
             "rationale": "1,602 program words per core in two given-up stock reverbs' space, a 132-word X block per instance, and 15,870 words of the 16K-word FX2 delay buffer every reverb already gets.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41 % installed and used nowhere, 41 % on T1 FX2; CPU meter 60.8 % before, 60.6 % at rest, 61.2 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -2165,6 +2210,15 @@
             "rationale": "1,112 program words per core in the space of SPRING REV and PLATE REV, a 91-word X block per instance, the 16K-word FX2 delay buffer every delay already gets.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 40.9 % installed and used nowhere, 41 % on T1 FX2; CPU meter 60 % before, 59.5 % at rest, 61.1 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -2581,6 +2635,15 @@
             "rationale": "1,354 contiguous program-memory words on each DSP core (838 code, 516 table), more than any single stock reverb's span (SPRING REV 1,063, DARK REV 1,067), so a static build gives up two adjacent reverbs. 132 state words per instance in the existing r7 block; no buffer.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41 % installed and used nowhere, 41 % on T1 FX2; CPU meter 60.5 % before, 59.4 % at rest, 60.9 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -2979,6 +3042,15 @@
             "rationale": "351 words of DSP program per core and 22 words of state in each instance's existing block; the key bus's memory is the base's.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41 % installed and used nowhere, 41 % on T1 FX2; CPU meter 60.5 % before, 59.5 % at rest, 60.8 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -4181,6 +4253,15 @@
             "rationale": "The card build has a 255-byte ROM core/stub/trampoline footprint plus small settings. DRAM code, menus and loader overhead are additional. Minimal is a relative source estimate, not a claim that total memory is only 255 bytes.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41 % installed and used nowhere; CPU meter 60.4 % before, 59.5 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -4861,6 +4942,15 @@
             "rationale": "36 authored ROM bytes, up to 127 alignment bytes, no newly allocated heap or persistent RAM. Existing stock state is reused.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 40.9 % before, 40.9 % installed and used nowhere; CPU meter 60.4 % before, 59.4 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -7823,6 +7913,15 @@
             "rationale": "208 bytes of ROM; no RAM or audio memory of its own.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 40.9 % installed and used nowhere; CPU meter 59.5 % before, 60.6 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -8115,6 +8214,15 @@
             "rationale": "2,062 bytes of ColdFire code and state (101 bytes of it state: the YES press and the TRIG + SCENE chord); no DSP memory and no saved data of its own.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41 % installed and used nowhere; CPU meter 60.6 % before, 60.5 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -8356,18 +8464,18 @@
       "id": "direct-jump-kyoti",
       "key": "DIRECT_JUMP_KYOTI",
       "name": "Direct Jump Kyoti",
-      "version": "0.1.2-experimental",
+      "version": "0.2.0-experimental",
       "category": "system",
       "source": {
-        "repository": "https://github.com/sambanks/octabam",
-        "revision": "b725fb1a20e77bea37930be4f934a13ba53abc23",
-        "path": "modules/direct-jump-kyoti"
+        "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+        "revision": "cd788e93c765120cd2d2feda60bafee9a02f8508",
+        "path": "octabam-modules/direct-jump-kyoti"
       },
       "access": {
         "location": "Front panel: hold [PTN], press [YES]. No menu row or page.",
         "steps": [
           "Hold [PTN] and press [YES]: DIRECT JUMP ON appears. Release [PTN]; the pattern chooser stays shut.",
-          "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since START.",
+          "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since PLAY or the last normal pattern change.",
           "Hold [PTN] and press [YES] again for DIRECT JUMP OFF: cued patterns wait for the end of the playing one again, as on the stock OS."
         ],
         "screenshots": [
@@ -8381,26 +8489,29 @@
         "name": "Zac Kyoti",
         "credits": [
           "Zac Kyoti: Direct Jump's design, its ColdFire source and the MKI hardware work behind it. Sam Banks: octabam integration.",
-          "Modwerk contributors: source import with stock guards in place of stock bytes, the stock-free re-encoding of three kernel posts for the USB package, the emulator gate, documentation and SVG thumbnail."
+          "Modwerk contributors: source import with stock guards in place of stock bytes, the emulator gate, documentation and SVG thumbnail."
         ]
       },
       "nativeManifest": "manifest.py",
       "presentation": {
         "label": "Clock-locked pattern jump on [PTN] + [YES]",
         "family": "Sequencer",
-        "summary": "Hold [PTN] and press [YES] to turn Direct Jump Kyoti on: a pattern you cue takes over on the next step, where it would be had it played since START.",
-        "overview": "On the stock OS a cued pattern waits for the playing one to reach its end. With Direct Jump on, it takes over on the next step instead, locked to the master clock: it starts at the step it would be on had it been playing since you pressed PLAY, whatever its length, scale or per-track settings. The Part, START SILENT and trig conditions change as on a stock pattern change. It is off at every power-on, so the stock behaviour stays the default. It is Zac Kyoti's design, distinct from octabam's other direct jump (Tim Hastie's CHAIN AFTER option).",
+        "summary": "Hold [PTN] and press [YES] to turn Direct Jump Kyoti on: a pattern you cue takes over on the next step, where it would be had it played since PLAY or the last normal pattern change.",
+        "overview": "On the stock OS a cued pattern waits for the playing one to reach its end. With Direct Jump on, it takes over on the next step instead, locked to the master clock: it starts at the step it would be on had it been playing since you pressed PLAY, or since the last normal pattern change, whatever its length, scale or per-track settings. Trig conditions carry on as if the new pattern had played all along, each track gets its new Part settings with its own first trig, and with SILENCE TRACKS on the tracks a jump silences are released before the step instead of cut. It is off at every power-on, so the stock behaviour stays the default. It is Zac Kyoti's design, distinct from octabam's other direct jump (Tim Hastie's CHAIN AFTER option).",
         "highlights": [
-          "OS 1.40C. Zac Kyoti tested the clock-locked timing, the Part change and the toggle on his MKI; Modwerk's USB package ran on an MKII.",
+          "OS 1.40C. Zac Kyoti ran this Modwerk build (its native card image) on his MKI on 17 November 2026: all 13 checks of his list passed. On 19 November 2026 he ran its USB package on the same MKI: install, jumps, a power cycle, removal and a rolled-back trial passed. Not yet run on an MKII.",
           "Off at every power-on: until you turn it on, pattern changes are the stock ones.",
-          "The new pattern lands where it would be had it played since START, also with differing track lengths and scales (PER TRACK mode), so tracks stay in phase with the master clock.",
-          "The Part, START SILENT and trig conditions change as on a stock pattern change; the last MIDI Program Change names the pattern that plays; no MIDI START is sent on a jump.",
+          "The new pattern lands where it would be had it played since PLAY or the last normal pattern change, also with differing track lengths and scales (PER TRACK mode), so tracks stay in phase with the master clock: after a normal change to a 12-step pattern, a jump to another 12-step pattern lands on the step the first was on. It lands a tick before the step, so its first step is never late, and a cue in the playing pattern's last step lands on its grid point too.",
+          "Trig conditions carry on across a jump: every A:B count stands where the new pattern's would, counted from that same restart; a latched [FILL] stays on, and a PRE trig right after the jump plays.",
+          "The Part's pattern-wide settings and START SILENT change as on a stock pattern change. With LFO AUTO CHANGE on, each track's new LFO settings arrive with its first trig of the new pattern, so a sound still ringing keeps its own.",
+          "With SILENCE TRACKS on, the tracks a jump silences are released with stock's note-off just before the step, so they do not pop.",
+          "The last MIDI Program Change names the pattern that plays; no MIDI START is sent on a jump.",
           "Includes Zac Kyoti's fix for stock's MIDI Plays-Free stall, so a Plays Free MIDI track in PER TRACK mode keeps playing and Direct Jump places it with its own scale.",
           "The arranger and pattern chains are left alone: while either runs, pattern changes are stock."
         ],
         "usage": [
           "Hold [PTN] and press [YES]: DIRECT JUMP ON appears. Release [PTN]; the pattern chooser stays shut.",
-          "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since START.",
+          "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since PLAY or the last normal pattern change.",
           "Hold [PTN] and press [YES] again for DIRECT JUMP OFF: cued patterns wait for the end of the playing one again, as on the stock OS."
         ]
       },
@@ -8425,10 +8536,11 @@
           "key:PATTERN+YES"
         ],
         "limitations": [
-          "OS 1.40C. The author tested the timing, the Part change and the toggle on an MKI. Modwerk's USB package ran on an MKII (toggle, jumps between a 64- and a 16-step pattern, a power cycle, removal); a jump into another Part, per-track scales and external MIDI were not tried on it, and the card build has not run on a unit.",
+          "OS 1.40C. The author ran this version's native card image on his MKI (17 November 2026): the toggle, OFF at power-on, a Part-changing jump, other lengths and scales, a last-step cue, trig conditions with FILL and PRE, a jump after a normal pattern change, LFO AUTO CHANGE, SILENCE TRACKS, a Plays Free MIDI track and Direct Jump off all passed. On 19 November 2026 he ran the USB package ed3ba88a on the same MKI over a Modwerk development base (c889442d): installed and kept; a jump into another Part, the 16-12-12 restart case with its 1:2 hi-hat, a latched [FILL] and SILENCE TRACKS without a pop passed; after a power cycle it came back OFF and still installed; removed while ON and playing, [PTN] + [YES] was stock again; a trial left to roll back did. Not run on an MKII; the 0.1.x USB package ran on an MKII (toggle, jumps between a 64- and a 16-step pattern, a power cycle, removal).",
           "OFF at every power-on and not stored in the project: turn it on again after a restart.",
           "While the arranger or a pattern chain runs, pattern changes stay stock.",
           "With differing track scales or lengths in PER TRACK mode, the jump waits for the next tick where every track is at a step boundary, at most one common step of all tracks' scales (24 clock ticks for 1x, 3/4x and 1/2x together).",
+          "With LFO AUTO CHANGE on, a track whose new pattern has trigs keeps the old Part's LFO setup until its first trig there; STOP, turning Direct Jump off or the next jump applies every waiting track at once.",
           "[PTN] + [YES] no longer opens the pattern chooser on releasing [PTN]; [YES] alone and [PTN] with a trig key are unchanged.",
           "Carries the author's fix for stock's MIDI Plays-Free stall (a Plays Free MIDI track with trig quantize DIRECT under PER TRACK scale stopped after its first step), whether Direct Jump is on or off. The bundle's other two fixes are not included.",
           "A jump changes the Part through stock's own Part-change path, so stock's known Part-change carryover issues (a track going from PICKUP to FLEX can keep the old Part's pickup loop) happen on a jump as on a stock pattern change.",
@@ -8436,31 +8548,31 @@
         ]
       },
       "resources": {
-        "recorded": "25 October 2026; source assembly, the image gate and the ColdFire port",
+        "recorded": "16 November 2026; source assembly, the native image of this module alone and the ColdFire port",
         "storage": {
           "label": "DRAM code and detours",
-          "display": "2,078 B code and state + four 6 B detours + one 4 B pointer",
-          "value": 2106,
+          "display": "4,000 B code and state + six 6 B detours + one 4 B pointer",
+          "value": 4040,
           "unit": "bytes",
           "method": "static",
-          "conditions": "Two linked units in the DRAM reserve: Direct Jump's 2,016 bytes (code, two toast strings and 62 bytes of state) and the MIDI Plays-Free fix's 62 bytes of code; four six-byte detours over stock instructions and the [PTN]-layer YES press pointer. The USB package carries the units as 2,080 bytes (aligned). No DSP memory, no saved data.",
+          "conditions": "Two linked units in the DRAM reserve: Direct Jump's 3,938 bytes (code, two toast strings and 176 bytes of state) and the MIDI Plays-Free fix's 62 bytes of code; six six-byte detours over stock instructions and the [PTN]-layer YES press pointer. The USB package carries the units aligned, 4,546 bytes in all. No DSP memory, no saved data.",
           "source": "TESTING.md"
         },
         "processing": {
           "label": "ColdFire, per sequencer tick",
-          "display": "18 instr. a tick OFF, ~35 ON; at most 2,946 on a landing tick",
-          "value": 2946,
+          "display": "30 instr. a tick OFF, 45 ON; at most 9,078 on a landing tick",
+          "value": 9078,
           "unit": "instructions/event",
           "method": "emulator",
-          "conditions": "Authored instructions of the tick hook under ot_emu, worst at a cue that lands on its arming tick; the stock routines a landing calls (Program Change, three kernel posts, the trig-condition reset) add up to about 220. The tick interrupt runs at level 3, below the DSP frame interrupt. Not chip timing.",
+          "conditions": "Authored instructions of the tick hook under ot_emu, worst at a cue that lands on its arming tick while all 16 tracks still wait for their first trig after the previous jump; the stock routines a landing calls (Program Change, the kernel posts, the per-track Part apply, the note-off) bring it to 17,225. While tracks wait for their first trig, up to 1,898 a tick. A stock pattern change adds 13 instructions (dj_swres) to stock's switch on that tick. The tick interrupt runs at level 3, below the DSP frame interrupt. Not chip timing.",
           "source": "TESTING.md"
         },
         "impact": {
-          "conditions": "A jump to a pattern on another Part while playing: the landing tick, the dearest event. Between jumps, a short counter on every sequencer tick.",
+          "conditions": "A jump to a pattern on another Part while playing, with LFO AUTO CHANGE and SILENCE TRACKS on: the landing tick and the tick after it, the dearest events. Between jumps, a short counter on every sequencer tick, and while tracks wait for their first trig in the new pattern a scan of the 16 tracks.",
           "cpu": {
             "level": "minimal",
             "basis": "measured-comparison",
-            "rationale": "18 executed instructions a sequencer tick while OFF and about 35 while ON; at most 2,946 authored (3,166 with the stock routines it calls) on the tick a jump lands (ot_emu). The tick interrupt runs at level 3, below the level-5 DSP frame interrupt. Under a 62 s MIDI flood with a jump every second, the longest frame interrupt was the original OS's (167.3 us in the port's time) and idle 0.36 points lower. Time on the unit is not measured.",
+            "rationale": "30 executed instructions a sequencer tick while OFF and 45 while ON; up to 1,898 a tick while tracks wait for their first trig; at most 9,078 authored (17,225 with the stock routines it calls) on the tick a jump lands, and 13 on the tick of a stock pattern change (ot_emu). The tick interrupt runs at level 3, below the level-5 DSP frame interrupt. Under a 15 s MIDI flood with a jump every second, the longest frame interrupt was 1.0 us longer than the original OS's (156.7 us against 155.7 us in the port's time) and idle 0.30 points lower. Time on the unit is not measured.",
             "source": "TESTING.md"
           },
           "dsp": {
@@ -8472,16 +8584,25 @@
           "memory": {
             "level": "minimal",
             "basis": "measured-comparison",
-            "rationale": "2,078 bytes of ColdFire code and state in the DRAM reserve (62 bytes of state) and 28 bytes of stock writes; no DSP memory and no saved data.",
+            "rationale": "4,000 bytes of ColdFire code and state in the DRAM reserve (176 bytes of state) and 40 bytes of stock writes; no DSP memory and no saved data.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0.1,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 40.9 % before, 41 % installed and used nowhere; CPU meter 60.6 % before, 60.5 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "On the owner's MKII over USB (25 Oct 2026), on the published beta base 109f23bd: the 0.1.2 package (listed as DirectJmp Kyoti) installed and kept beside four other modules as a tester's sync does it, self-test passed (5/5 intact), removed, and the restored set self-tested again. 0.1.0's run on a development twin (24 Oct 2026) drove the toggle and clock-locked jumps with the same Direct Jump unit. Under the ColdFire port (verify.py, 39 checks): OFF identical to the original OS through a pattern change; three jumps (16 steps; 7 steps on Part 2; PER TRACK lengths and scales) whose sequencer state equals a reference run of the incoming pattern since START on every tick after the landing; and the MIDI Plays-Free stall, which the original OS shows and the module fixes.",
+        "summary": "The author ran 0.2.0's native card image of this module alone on his MKI on 17 November 2026: all 13 checklist items passed (evidence/hardware.md). Under the ColdFire port (verify.py, 74 checks, all passed on that image): OFF identical to the original OS through a pattern change; four jumps (16 steps with [FILL] latched; 7 steps on Part 2; PER TRACK lengths and scales; a cue in the last step) whose sequencer state and trig-condition state equal a reference run of the incoming pattern since START on every tick after the landing; two jumps after a stock pattern change (12 steps at 1x after 12 at 1x; 3/4x after 2x) that equal a run which changed straight to the jump's pattern; each track's Part handed to the engine at its first sounding trig with LFO AUTO CHANGE on; the tracks SILENCE TRACKS silences released with stock's note-off the tick after the landing; and the MIDI Plays-Free stall, which the original OS shows and the module fixes. Before that he tested the same Direct Jump code in his own builds (15 and 16 November 2026); the 0.1.x USB package ran on the owner's MKII in October 2026. On 19 November 2026 he ran the USB package ed3ba88a on the same MKI over a Modwerk development base (c889442d): installed and kept; a jump into another Part, the 16-12-12 restart case with its 1:2 hi-hat, a latched [FILL] and SILENCE TRACKS without a pop passed; after a power cycle it came back OFF and still installed; removed while ON and playing, [PTN] + [YES] was stock again; a trial left to roll back did. CPU price on a development twin of that base (87830783), a 12-step pattern playing: 0.0 points of the frame interrupt, Direct Jump OFF and ON alike.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "cf95656dbc0e386b4fda769e04cc18eb2a5d3364",
+        "evidenceRevision": "20d216e1b454edee281d66dcfb179275fe24b4b0",
         "gates": [
           "modules/direct-jump-kyoti/verify.py"
         ],
@@ -8490,7 +8611,7 @@
             "title": "Quick tutorial: jump between patterns on the next step",
             "steps": [
               "Hold [PTN] and press [YES]: DIRECT JUMP ON appears. Release [PTN]; the pattern chooser stays shut.",
-              "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since START.",
+              "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since PLAY or the last normal pattern change.",
               "Hold [PTN] and press [YES] again for DIRECT JUMP OFF: cued patterns wait for the end of the playing one again, as on the stock OS."
             ]
           },
@@ -8507,7 +8628,7 @@
               "title": "Quick tutorial: jump between patterns on the next step",
               "steps": [
                 "Hold [PTN] and press [YES]: DIRECT JUMP ON appears. Release [PTN]; the pattern chooser stays shut.",
-                "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since START.",
+                "Press [PLAY]. Hold [PTN] and press a trig key to cue that pattern: it takes over on the next step, at the step it would be on had it played since PLAY or the last normal pattern change.",
                 "Hold [PTN] and press [YES] again for DIRECT JUMP OFF: cued patterns wait for the end of the playing one again, as on the stock OS."
               ]
             },
@@ -8518,24 +8639,24 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.1.2-experimental",
-          "sourceSha256": "a692cb9858bc80acb561de3a9d13e30523a4b6921c834de9335485cbf38eecf8",
-          "imageSha256": "89a38e18728bb2039a0f5e3f39305fcb7be75e0db260acd6b33bd46d7e281cef",
+          "moduleVersion": "0.2.0-experimental",
+          "sourceSha256": "bbd96f67a1bfa050fac0fc7ce0463a40ba18b96dfd4a80416c52bd14856445a6",
+          "imageSha256": "a7074bfd6fea3c9516eaf872d1693327957fe4c1248b01ead73136fadbfe9f1c",
           "cycles": [
             {
               "processor": "coldfire",
-              "worstCase": 47136,
-              "maxConfiguration": 47136,
+              "worstCase": 145248,
+              "maxConfiguration": 145248,
               "maxInstances": 1,
               "budget": 2200000,
               "unit": "cycles/event",
               "method": "emulator",
               "conditions": {
-                "parameterExtremes": "OFF, ON while idle, the tick that arms a jump and the landing tick; 16-step patterns and a PER TRACK pattern with tracks at 2x, 3/2x, 1x, 3/4x, 1/2x, 1/4x and 1/8x (the largest common step, 48 clock ticks).",
+                "parameterExtremes": "OFF, ON while idle, the tick that arms a jump, the landing tick and the tick after it, also after a stock pattern change (V7.3's restart frame); 16-step and 7-step (Part 2) patterns and a PER TRACK pattern with tracks from 2x to 1/8x; LFO AUTO CHANGE and SILENCE TRACKS on, all 16 tracks waiting for a trig, every MIDI LFO on a designer wave.",
                 "parameterModulation": "Not applicable: one ON/OFF word toggled by a key gesture; no knob, lock, LFO or scene reaches it.",
-                "modeSwitching": "Toggled ON and OFF while stopped and while playing; cues, re-cues inside one gesture and jumps back to the previous pattern.",
+                "modeSwitching": "Toggled ON and OFF while stopped and while playing; cues at the six phases of a step, re-jumps while every track still waits for its first trig, and jumps back to the previous pattern.",
                 "maxLoad": "One instance per unit. Runs once per sequencer clock tick in the tick interrupt (level 3; its ICR read 3 in the port), below the level-5 DSP frame interrupt, which preempts it; its deadline is the next tick: 8.33 ms at the top tempo of 300 BPM (2,200,000 cycles at 264 MHz).",
-                "inputConditions": "Authored instructions of dj_land per tick under ot_emu (PC watches on its entry and return and on both sides of each stock call), priced at 16 cycles each: at most 2,946 (47,136 cycles), on a cue that lands on its arming tick; 3,166 with the stock routines it calls (Program Change, the kernel post, the trig-condition reset), which are stock cost. Static bound from the source: 5,700 (91,200). Not chip timing."
+                "inputConditions": "Authored instructions of dj_land per tick under ot_emu (PC watches on its entry and the hook's return, on each stock routine it calls and the unit's return site after it, and on the frame interrupt, whose instructions are removed when it preempts the tick), priced at 16 cycles each: at most 9,078 (145,248 cycles), on a cue that lands on its arming tick and first publishes 16 waiting tracks; 17,225 with the stock routines it calls, which are stock cost. Static bound from the source, every reachable routine and loop at its cap: 41,017 (656,272). dj_swres, outside dj_land in stock's switch block: 13, once per stock pattern change. Not chip timing."
               },
               "report": "TESTING.md"
             }
@@ -8543,11 +8664,11 @@
           "memory": {
             "regions": [
               {
-                "name": "ColdFire code, two toast strings and 62 bytes of state (Direct Jump's linked unit, DRAM)",
+                "name": "ColdFire code, two toast strings and 176 bytes of state (Direct Jump's linked unit, DRAM)",
                 "space": "sdram",
-                "words": 2016,
+                "words": 3938,
                 "wordBits": 8,
-                "bytes": 2016,
+                "bytes": 3938,
                 "scope": "shared"
               },
               {
@@ -8559,35 +8680,34 @@
                 "scope": "shared"
               },
               {
-                "name": "Four six-byte detours and the four-byte [PTN]-layer YES pointer, written over stock in place",
+                "name": "Six six-byte detours and the four-byte [PTN]-layer YES pointer, written over stock in place",
                 "space": "cpu-flash",
-                "words": 28,
+                "words": 40,
                 "wordBits": 8,
-                "bytes": 28,
+                "bytes": 40,
                 "scope": "shared"
               }
             ],
             "perInstanceBytes": 0,
-            "sharedBytes": 2106,
+            "sharedBytes": 4040,
             "maxInstances": 1,
-            "totalBytes": 2106,
-            "conditions": "From the two linked units (2,016 and 62 bytes of code and data, no bss; the USB package carries the same bytes, 2,080 aligned, with 18 relocations) and the five stock writes. No DSP memory, no heap, no saved data.",
+            "totalBytes": 4040,
+            "conditions": "From the two linked units (3,938 and 62 bytes of code and data, no bss; the USB package carries the same bytes aligned) and the seven stock writes. No DSP memory, no heap, no saved data.",
             "report": "TESTING.md"
           },
           "hardware": {
             "kind": "functional",
             "status": "reported",
-            "model": "MKII",
-            "testedOn": "2026-10-25",
-            "tester": "repeat98",
-            "sourceRevision": "cf95656dbc0e386b4fda769e04cc18eb2a5d3364",
-            "imageSha256": "89a38e18728bb2039a0f5e3f39305fcb7be75e0db260acd6b33bd46d7e281cef",
-            "summary": "The owner's MKII, OS 1.40C, driven over USB by the agent at the owner's request, on the published beta base 109f23bd (flashed, running from RAM on the same image) with SIDECHAIN COMP, Ringmod SC, Mini Verb and POLY8 kept: package 89a38e18 installed and kept as a tester's sync does it (generation 7), listed as DirectJmp Kyoti; self-test passed (5/5 intact, both DSP modules ran, longest frame 419 us, card set saved 5/5); removal kept (generation 8), the four remained; self-test passed again (4/4, 418 us). 0.1.2 differs from the 0.1.1 package run the same way earlier that day only in its 15-character title. The 0.1.0 package's toggle and jumps ran on a development twin on 24 Oct 2026 with the byte-identical Direct Jump unit (evidence/hardware.md).",
+            "model": "MKI",
+            "testedOn": "2026-11-17",
+            "tester": "Zac Kyoti",
+            "sourceRevision": "20d216e1b454edee281d66dcfb179275fe24b4b0",
+            "imageSha256": "a7074bfd6fea3c9516eaf872d1693327957fe4c1248b01ead73136fadbfe9f1c",
+            "summary": "The author flashed the native card image of this module alone (OCTATRACK_MW_DJK73B.bin, MAIN OS a7074bfd, OS VERSION MW_DJK73B; DIRECT JUMP V7.3 byte for byte) on his MKI and reported all 13 checklist items passed: boot; the [PTN] + [YES] toggle and toast with the chooser shut; OFF after a power cycle; a jump into a pattern on another Part; jumps between other lengths and into PER TRACK scales, landing where the pattern would be since PLAY or the last normal pattern change; a cue in the last step on its grid point; 1:2 and 1:4 trigs in step across jumps, a latched [FILL] kept and a PRE trig played; a jump after a normal change from a 16-step A01 to a 12-step A02 landing a 12-step A03 in phase with A02, its 1:2 hi-hat in step; LFO AUTO CHANGE with a ringing sample; no pop with SILENCE TRACKS; a Plays Free MIDI track in PER TRACK mode; Direct Jump off as stock; nothing odd.",
             "limitations": [
-              "One unit, driven by the agent; nothing judged by ear.",
-              "Not exercised on the unit with 0.1.1 or 0.1.2: the toggle, a jump and the MIDI Plays-Free fix itself (the beta base answers no key presses or RAM reads over USB). The author confirmed the fix on his MKI; the emulator gate runs the stall against the original OS.",
-              "Not run: a power cycle with 0.1.1 kept, the card build, an MKI, the site's review/Keep/Undo pages.",
-              "About ten minutes of use over the two runs."
+              "The card image above; the shipped USB package ed3ba88a, built from the same source, ran on the same MKI over a Modwerk development base c889442d on 19 November 2026 (evidence/hardware.md, TESTING.md): installed and kept, a jump into another Part, the 16-12-12 restart case, a latched [FILL], SILENCE TRACKS without a pop, OFF and still installed after a power cycle, removal while ON and playing, a rolled-back trial.",
+              "MKI only; not run on an MKII.",
+              "A functional report: the project, how long it ran and whether external MIDI gear was attached are not stated; nothing timed or recorded."
             ],
             "report": "evidence/hardware.md"
           }
@@ -8611,9 +8731,9 @@
             "page": "Main screen with the notification",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.2-experimental",
-            "imageSha256": "4453c3684fd72b242bbf9b4abef5b53a344364274391352266b4d81919677768",
-            "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 4453c368…)."
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "a7074bfd6fea3c9516eaf872d1693327957fe4c1248b01ead73136fadbfe9f1c",
+            "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS a7074bfd…)."
           }
         },
         {
@@ -8628,9 +8748,9 @@
             "page": "Main screen while playing",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.2-experimental",
-            "imageSha256": "4453c3684fd72b242bbf9b4abef5b53a344364274391352266b4d81919677768",
-            "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 4453c368…)."
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "a7074bfd6fea3c9516eaf872d1693327957fe4c1248b01ead73136fadbfe9f1c",
+            "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS a7074bfd…)."
           }
         },
         {
@@ -8645,9 +8765,9 @@
             "page": "Main screen with the notification",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.2-experimental",
-            "imageSha256": "4453c3684fd72b242bbf9b4abef5b53a344364274391352266b4d81919677768",
-            "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS 4453c368…)."
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "a7074bfd6fea3c9516eaf872d1693327957fe4c1248b01ead73136fadbfe9f1c",
+            "setup": "Headless ot_emu; MKII panel; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card, its missing-project prompts dismissed with three NO presses; native initialized state, no saved project. Static native build of this module alone with every stock effect kept (MAIN OS a7074bfd…)."
           }
         }
       ]
@@ -8751,6 +8871,15 @@
             "rationale": "2,784 bytes of code and tables and 2,784 bytes of state in the DRAM reserve, plus 32 bytes of stock writes; no DSP memory and no saved data.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 40.9 % before, 40.9 % installed and used nowhere; CPU meter 59.4 % before, 60.5 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -9517,6 +9646,15 @@
             "rationale": "A 42,892-byte buffer for one pattern and one Part, plus 892 bytes of code: on USB about a sixth of the 256 KB module pool all modules share; no saved data.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 40.9 % installed and used nowhere; CPU meter 59.5 % before, 60.7 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -10003,6 +10141,15 @@
             "rationale": "One global sample ring and detector workspace; no per-track allocation or new sample storage. Current linked allocation, loader overhead and stack maximum are unmeasured.",
             "source": "upstream/tuner.s"
           }
+        },
+        "cpuPrice": {
+          "value": 0.1,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41.1 % installed and used nowhere; CPU meter 60.8 % before, 60.6 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -10627,6 +10774,15 @@
             "rationale": "64 bytes of code and state.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 40.9 % installed and used nowhere; CPU meter 60.4 % before, 59.6 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -11336,6 +11492,15 @@
             "rationale": "2,892 bytes of ColdFire code, data and state in DRAM, from the package header.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0.1,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 40.9 % before, 41 % installed and used nowhere; CPU meter 60.4 % before, 59.7 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -12257,6 +12422,15 @@
             "rationale": "A 1,500-byte image with 44 writable bytes, zero BSS, and a 2,544-byte loader extent, with no buffers or per-track allocation.",
             "source": "evidence/resource-accounting.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0.3,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-18",
+          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41.3 % installed and used nowhere; CPU meter 59.5 % before, 60.9 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -13697,6 +13871,236 @@
         "spdx": "MIT",
         "file": "LICENSE",
         "declaration": "Original module by Jan Kolkmeier, MIT. No firmware, extracted stock code or built images are included."
+      },
+      "media": []
+    },
+    {
+      "schemaVersion": 2,
+      "id": "screen-off",
+      "key": "SCREEN OFF",
+      "name": "Screen Off",
+      "version": "0.1.0-experimental",
+      "category": "system",
+      "access": {
+        "location": "Front panel: hold UP, tap NO",
+        "steps": [
+          "Hold UP and tap NO. The screen goes black. Let go of both keys.",
+          "Press PLAY, change a pattern or turn a knob. The action happens and the screen stays black.",
+          "Hold UP and tap NO again. The screen returns to the page you were on."
+        ],
+        "screenshots": [],
+        "noUiReason": "It draws nothing of its own. Hold UP and tap NO and the stock screen goes black until the same chord."
+      },
+      "author": {
+        "github": "jonathanwardle1992-beep",
+        "credits": [
+          "jonathanwardle1992-beep: the chord and the wish to blank the panel while a pattern keeps running."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "Blank the screen with UP + NO",
+        "family": "Front-panel shortcut",
+        "summary": "Hold UP and tap NO to blank the screen until the same chord. Sound, the sequencer and the other keys keep going.",
+        "overview": "The MKII already dims its OLED after five quiet minutes and turns it off after an hour, and only while the sequencer is stopped. Screen Off blanks the glass at once, including while a pattern plays, and leaves it blank until you ask for it back. The trig lamps stay lit, so a running pattern is still visible on the keys.",
+        "highlights": [
+          "Hold UP and tap NO. The screen goes black. The same chord brings it back.",
+          "Every other key and every knob still does what it did. The screen stays black while you use them.",
+          "UP alone and NO alone are unchanged. NO still disarms, or steps back in a list.",
+          "Nothing is stored in the project. A power cycle turns the screen back on."
+        ],
+        "usage": [
+          "Hold UP and tap NO. The screen goes black. Let go of both keys.",
+          "Press PLAY, change a pattern or turn a knob. The action happens and the screen stays black.",
+          "Hold UP and tap NO again. The screen returns to the page you were on."
+        ]
+      },
+      "controls": [],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Project sequencer",
+        "conflicts": [],
+        "uiClaims": [
+          "key:UP+NO"
+        ],
+        "limitations": [
+          "OS 1.40C. The author reports that on a MKII the chord blanks the screen and brings it back. It needs the Modwerk base: the base passes keys and the composed frame to the module.",
+          "The blank clears the pixels. On a MKII that leaves the OLED dark. Whether the panel's own power-off command can be used as well is not yet known. On an MKI the backlight may stay lit behind a blank glass.",
+          "The screen stays black until UP + NO again, including while other keys and knobs do their usual jobs. You will not see the result until the screen is back.",
+          "Holding UP already moves the highlight in a list by one step before NO blanks the screen. That NO does not disarm and does not answer a question.",
+          "The blank is forgotten at power-on. It is not saved with the Part or the project. The stock screen saver still runs when this blank is off.",
+          "Known issue: not yet tested on the MKI, or beside the stock screen saver while a pattern plays."
+        ]
+      },
+      "resources": {
+        "recorded": "19 November 2026",
+        "storage": {
+          "label": "ColdFire unit",
+          "display": "272 bytes",
+          "value": 272,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "Package 14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c. Linked image 256 bytes (250 of code, 2 of alignment, the 4-byte so_at pointer) plus 12 bytes of bss. The redraw path pushes 4 bytes on the UI stack. No heap and no DSP memory. The composed frame is stock's.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "ColdFire, per key and per composed frame",
+          "display": "25033 cycles",
+          "value": 25033,
+          "unit": "cycles/event",
+          "method": "emulator",
+          "conditions": "ot_emu executed instructions from so_draw's entry to its rts, interrupts included, blank on. 26 clears of the frame took 6157 with no interrupt inside the draw. The dearest was 25033. This is not a chip wall-clock count.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "UI task: one key chord, and a frame clear only while the blank is on.",
+          "cpu": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "The chord is a handful of compares. The clear is 1024 bytes on the UI draw, and only while the screen is black. Nothing runs in the audio interrupt.",
+            "source": "TESTING.md"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP code. The blank only clears the composed frame on the UI task.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "256 bytes of linked image, 12 bytes of state, and a 4-byte push on the redraw path. No heap and no DSP memory.",
+            "source": "screen_off.c"
+          }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price",
+          "date": "2026-11-19",
+          "conditions": "MKII, OS 1.40C, development twin 878307834ad3c23a RAM-booted (no controller rows, not flashed). Package 14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c, built before this twin. One 8 s reading, pattern left as the unit came up, transport stopped beforehand, module installed and the blank off. Frame interrupt +0.0 points. The CPU meter read +1.7 and is not this price.",
+          "source": "TESTING.md"
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "Host gate on screen_off.c. The author reports that on a MKII the chord blanks the screen and brings it back, and that a power cycle brought the screen back on with the module still installed. An MKI was not tried.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "7105ec60ecfdda0a00f31ce7f76f2091580644cf",
+        "gates": [
+          "modules/screen-off/verify.py"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial",
+              "steps": [
+                "Hold UP and tap NO. The screen goes black. Let go of both keys.",
+                "Press PLAY, or turn a knob. The Octatrack does it, and the screen stays black. The trig lamps still show the pattern.",
+                "Hold UP and tap NO again. The screen returns to the page you left."
+              ]
+            },
+            "screenshots": [],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "a02e6e703841b5db83e81a3c7110c025263101998a4cb94b9e5dec4b4d206c34",
+          "imageSha256": "14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 25033,
+              "maxConfiguration": 25033,
+              "maxInstances": 1,
+              "budget": 26600000,
+              "unit": "cycles/event",
+              "method": "emulator",
+              "conditions": {
+                "parameterExtremes": "There is no parameter. The blank is off or on, and the dearest draw is the clear of the 1024-byte frame.",
+                "parameterModulation": "No LFO, p-lock, MIDI CC or scene reaches this module. The chord is the only control, and it was the event that was counted.",
+                "modeSwitching": "One UP+NO turned the blank on. A later run sent STOP and PART+RIGHT, which changed the Part byte from 0 to 1, then PLAY, between two groups of the same chord.",
+                "maxLoad": "One instance. It takes no track, no FX slot and no DSP core. The count is one draw, not a sum across tracks.",
+                "inputConditions": "With the blank off the draw returned in 10 instructions. With it on, 26 clears took 6157 and the dearest, the same clear with an interrupt inside it, took 25033. That count is executed instructions, not chip wall-clock cycles, and it does not bound the stock redraw call."
+              },
+              "report": "TESTING.md"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "ColdFire code",
+                "space": "cpu-ram",
+                "words": 250,
+                "wordBits": 8,
+                "bytes": 250,
+                "scope": "shared"
+              },
+              {
+                "name": "Alignment before so_at",
+                "space": "cpu-ram",
+                "words": 2,
+                "wordBits": 8,
+                "bytes": 2,
+                "scope": "shared"
+              },
+              {
+                "name": "so_at pointer",
+                "space": "cpu-ram",
+                "words": 4,
+                "wordBits": 8,
+                "bytes": 4,
+                "scope": "shared"
+              },
+              {
+                "name": "struct so",
+                "space": "cpu-ram",
+                "words": 12,
+                "wordBits": 8,
+                "bytes": 12,
+                "scope": "shared"
+              },
+              {
+                "name": "Redraw argument on the UI stack",
+                "space": "sdram",
+                "words": 4,
+                "wordBits": 8,
+                "bytes": 4,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 272,
+            "maxInstances": 1,
+            "totalBytes": 272,
+            "conditions": "ABI 8 package 14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c, image 256 bytes and bss 12, one instance. The 4-byte figure is the only push in the image. Stock's stack under the redraw call, the composed frame and the held-key row are not this module's. No heap, no table, no DSP memory. Hardware canaries were not measured.",
+            "report": "TESTING.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKII",
+            "testedOn": "2026-11-18",
+            "tester": "jonathanwardle1992-beep",
+            "sourceRevision": "7105ec60ecfdda0a00f31ce7f76f2091580644cf",
+            "imageSha256": "14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c",
+            "summary": "On a MKII, OS 1.40C, the author reports that hold UP, tap NO blanks the screen and the same chord brings it back, including in a list, the sample editor, the arranger and the status page. On 18 November 2026 the same package was kept, the author powered the unit off and on, and they report the screen came back on with the module still installed. Removal while the screen was black brought the page back and the chord no longer blanked it. A try without keeping rolled back. No SAVE and no flash.",
+            "limitations": [
+              "The blank and the restore are the author's report. The log shows the tick word, not a photograph of the glass.",
+              "An MKI was not tried. A card install was not tried.",
+              "The stock screen saver, the OLED power-off command and the MKI backlight were not tried.",
+              "Part save and project save were not tried. The blank is not stored.",
+              "No audio was measured. This module writes no samples."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Original module by jonathanwardle1992-beep, MIT. No firmware, extracted stock code or built images are included."
       },
       "media": []
     }

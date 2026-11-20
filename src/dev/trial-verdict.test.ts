@@ -21,17 +21,22 @@ describe('trial verdict', () => {
     const verdict = trialVerdict(before, after, address => address === 0x40a00004 ? 'mymod_tick+0x4' : '')
     expect(verdict.failed).toBe(true)
     expect(verdict.lines).toEqual([
-      'FAIL +3s crash at PC 0x40a00004 (mymod_tick+0x4)',
-      'FAIL +3s the UI stood still for 40 frames',
-      'FAIL +3s the frame guard skipped tracks T1, T3, 3 skips since the start',
-      'FAIL +3s DSP stall (eDMA refused a transfer)',
+      'FAIL (boot 7 +3s) crash at PC 0x40a00004 (mymod_tick+0x4)',
+      'FAIL (boot 7 +3s) the UI stood still for 40 frames',
+      'FAIL (boot 7 +3s) the frame guard skipped tracks T1, T3, 3 skips since the start',
+      'FAIL (boot 7 +3s) DSP stall (eDMA refused a transfer)',
       'npm run device -- do diaglog prints the whole log; do crash or do stall the record',
     ])
   })
 
   it('notes a hot CPU without failing, and ignores the trial\'s own set and start records', () => {
     const verdict = trialVerdict(log(10), log(13, [incident(11, 'set', 2), incident(12, 'hot', 6), incident(13, 'start')]))
-    expect(verdict).toEqual({ failed: false, lines: ['note +3s the CPU at 90 % or more for 3 s', 'no fault logged'] })
+    expect(verdict).toEqual({ failed: false, lines: ['note (boot 7 +3s) the CPU at 90 % or more for 3 s', 'no fault logged'] })
+  })
+
+  it('identifies the incident’s own boot when a short trial reports a long uptime', () => {
+    const cpu = { ...incident(11, 'cpu', 0, 31872), boot: 6 }
+    expect(trialVerdict(log(10), log(11, [cpu])).lines[0]).toBe('note (boot 6 +31872s) the CPU meter over its limit')
   })
 
   it('fails on a crash or stall record whose count moved when no incident says so', () => {

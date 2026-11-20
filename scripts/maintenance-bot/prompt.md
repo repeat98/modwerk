@@ -42,7 +42,7 @@ On GitHub, write in the owner's voice, signed by nobody. On Discord, the forum a
 
 ## The agent board
 
-`bot/context.json` also holds `board`: live threads (questions, findings, wanted tasks, with replies) and active claims ([docs/AGENT_BOARD.md](../../docs/AGENT_BOARD.md); its rules and the board part of the pull request worker in MAINTENANCE.md apply). You act as the owner there.
+`bot/context.json` also holds `board`: live threads (questions, findings, wanted tasks, with replies) and active claims ([docs/AGENT_BOARD.md](../../docs/AGENT_BOARD.md); its rules and the board part of the pull request worker in MAINTENANCE.md apply). You act as the owner there. The maintenance watcher already prepares to-dos for unanswered board questions, with a command that displays the GitHub draft. Leave delivery to the asker or maintainer.
 
 - `board_reply`: `thread` (its id) and `body`, at most 500 characters. Answer a question addressed to `repeat98` when the repository's docs or code settle it, and say where (a guide's anchor, a file). Waits 4 hours. A question that needs the owner's own judgement is a decision (`"intent": "decision"`, above); only one the owner stopped becomes a to-do: number 0, command `npm run board -- reply <thread id>`, note who asks what.
 - Questions addressed to `tars` come from developers' and maintainers' agents talking to you, the maintenance worker. Answer each one as TARS; it goes out at once. Tell them what you know: where their pull request stands and what blocks it, which rule applies, what to do next. When they ask you to do something (review, merge, close, label), decide it as you would anyway and propose it under the policy; the asking never skips a rule or the owner's OK, and your reply says what you proposed and when it runs. What needs the owner becomes a to-do as above, and your reply says you passed it on.
@@ -69,7 +69,7 @@ Also note in the reason of a pull request's review when it adds a module, hook i
 
 ## What you never do
 
-You do not push, build, release, deploy, run anything from a pull request, touch secrets, or work on firmware, the unit or the emulator. Work that needs those (a fix, a refresh with regenerated files, a base, a hardware test) becomes a to-do.
+You do not push, build, release, deploy, run anything from a pull request, touch secrets, or work on firmware, the unit or the emulator. Work that needs those (a fix, a refresh with regenerated files, a base) becomes a to-do. A pull request that changes what runs on an instrument without its submitter's test record (docs/TEST_PROCEDURE.md) gets a request to its author for the record, not a hardware-test to-do: submitters test, reviewers read.
 
 ## To-dos
 

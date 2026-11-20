@@ -340,6 +340,74 @@
      "container": 803472
     }
    }
+  },
+  {
+   "base": "0.7.10",
+   "identity": "b1c76d06dbe7638df87831d9d6793deb0dcb7cdc169101d96627b7b05c894f9a",
+   "layouts": {
+    "tracks-main-cue": {
+     "main": 1326139,
+     "container": 806836
+    },
+    "tracks": {
+     "main": 1325988,
+     "container": 806664
+    },
+    "tracks-post": {
+     "main": 1327592,
+     "container": 808356
+    },
+    "main-cue": {
+     "main": 1325902,
+     "container": 806532
+    },
+    "main": {
+     "main": 1325768,
+     "container": 806380
+    },
+    "master": {
+     "main": 1325791,
+     "container": 806436
+    },
+    "off": {
+     "main": 1324362,
+     "container": 804756
+    }
+   }
+  },
+  {
+   "base": "0.7.11",
+   "identity": "a08a1557c5bd7d04b6b0615361f059ac99ba2bc40f8a7e3b86842db2ccbbb5bd",
+   "layouts": {
+    "tracks-main-cue": {
+     "main": 1327492,
+     "container": 808332
+    },
+    "tracks": {
+     "main": 1327347,
+     "container": 808128
+    },
+    "tracks-post": {
+     "main": 1328952,
+     "container": 809860
+    },
+    "main-cue": {
+     "main": 1327259,
+     "container": 808048
+    },
+    "main": {
+     "main": 1327122,
+     "container": 807916
+    },
+    "master": {
+     "main": 1327146,
+     "container": 807928
+    },
+    "off": {
+     "main": 1325717,
+     "container": 806276
+    }
+   }
   }
  ]
 }

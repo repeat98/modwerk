@@ -114,7 +114,11 @@ volatile uint32_t modwerk_modset_result;
 uint8_t modwerk_test_live_fx[16];
 volatile uint32_t dl_selection_completed, modwerk_boot_accepted;
 const fx_set modwerk_fx_modules = {{1u << 27 | 1u << 29}};
-volatile uint32_t mw_cpu_hot = 850u, mw_cpu_refusals, mw_cpu_refusal_tracks; /* machine_registry.c's */
+volatile uint32_t mw_cpu_hot = 850u, mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille = 30u; /* machine_registry.c's */
+/* machine_registry.c's effect modules that rest: effect 27's module rests while effect_rests; a wake records its id. */
+static int effect_rests; static unsigned effect_wakes, effect_woken;
+int modwerk_machine_effect_resting(unsigned id) { return effect_rests && id == 27u; }
+void modwerk_machine_effect_wake(unsigned id) { ++effect_wakes, effect_woken = id, effect_rests = 0; }
 void modwerk_fxmap_name(unsigned id, char *out) { for (unsigned i = 0; i < 16u; ++i) out[i] = 0; out[0] = 'F', out[1] = 'X', out[2] = (char)('0' + id % 10u); }
 static int budget_on; /* the pick box's DSP rows, so its CPU row draws */
 int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
@@ -465,6 +469,29 @@ int main(void)
       for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 620u;
       CHECK(!modwerk_status_effect_busy(11, 27) && open == CLOSED);      /* 70 % playing, 62 % now: passes */
       cpu_played = 0, play_readings = 0;
+      for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0; }
+    /* A quiet delay (status.s left its read out) counts as awake: a pick is judged at what the unit costs once a
+     * scene opens the sends, and the box does not call that figure the last play's. */
+    { for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 780u;
+      mw_delay[17] = mw_delay[20] = mw_delay[24] = 1;
+      CHECK(modwerk_status_cpu_recent() == 780u && modwerk_status_cpu_load() == 810u);
+      CHECK(!modwerk_status_effect_busy(11, 27));                        /* 81 %: passes */
+      for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 1;
+      CHECK(modwerk_status_cpu_load() == 860u);
+      CHECK(modwerk_status_effect_busy(11, 27) == 1 && refused_booked == 860 && !refused_played); /* 78 % now, 86 % awake */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 0;
+      for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0; }
+    /* A pick of an effect whose module rests: judged with its hooks back on top (mw_wake_mille), and woken before
+     * stock writes the pick when it passes; an awake module or a stock effect is never woken. */
+    { for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 830u;
+      effect_rests = 1; effect_wakes = 0;
+      CHECK(modwerk_status_effect_busy(11, 27) == 1 && !effect_wakes && effect_rests); /* 83 % + 3: refused, still resting */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 819u;
+      CHECK(!modwerk_status_effect_busy(11, 27) && effect_wakes == 1 && effect_woken == 27u && !effect_rests);
+      CHECK(!modwerk_status_effect_busy(11, 27) && effect_wakes == 1);                 /* awake: no second wake */
+      CHECK(!modwerk_status_effect_busy(11, 8) && effect_wakes == 1);                  /* a stock effect */
       for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0; }
     /* The frame share: the frame guard's sums between two readings, per mille of a frame. The guard's development read
      * clears them: that reading is left out. */

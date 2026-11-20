@@ -18,6 +18,7 @@ import { appendFileSync, existsSync, readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
+import { takeUnitTurn } from './unit-queue.mjs'
 
 const TIMEOUT_MS = 200000 // device.mjs gives each of up to two restarts 60 s, and the upload its own time
 
@@ -62,6 +63,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     process.exit(1)
   }
   const base = JSON.parse(readFileSync(join(dir, 'proofs.json'), 'utf8')).configurationHash.slice(0, 16)
+  // Every boot of the batch is one turn on the unit (scripts/unit-queue.mjs): nobody else's trial starts between two boots.
+  await takeUnitTurn({ note: `bootsoak ${cycles} RAM boots of ${base}…`, command: 'node scripts/octatrack-bootsoak.mjs ' + process.argv.slice(2).join(' ').slice(0, 300), expectMs: (5 + cycles * 0.5) * 60000 })
   let cycle = last?.cycle ?? 0
   const written = [...earlier]
   for (let n = 0; n < cycles; n++) {
