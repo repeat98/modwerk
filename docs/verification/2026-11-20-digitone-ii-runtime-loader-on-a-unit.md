@@ -15,6 +15,10 @@ The Digitone II's runtime loader (`sdk/machines/digitone-ii/LOADER.md`) on the c
 - **Health:** the diagnostics log held its START only (no FREEZE); 81,400 frame interrupts to 1,634 UI ticks over the first session, 50 to one, so the UI never stood still. How it sounded was not asked yet.
 - **Not tested:** stock copies, a switch while another task is paused inside a site (the check that refuses it never had to), a package converted from a catalogue mod, a module that takes keys, long sessions, Keep across many modules.
 
+## The developer's own stage
+
+With nine modules live at once (the tick counter, the moved corner dot and seven of 280 KiB each, nearly the whole pool), the developer played a pattern and turned knobs: "alles lingt normal" ("everything sounds normal"), 20 November 2026.
+
 ## Edge cases
 
 On the merged build (main CRC 304cfcdc) unless the row says otherwise; private test packages built with `sdk/runtime/loader/build.py`.
