@@ -87,7 +87,9 @@ def visit_limits(name, n, instructions):
         # and one-kernel-per-voice sites in this specific ELF.
         limits = {pc: 6 * (n + 1) for pc in instructions}
         limits.update({0x2b68: n, 0x2b8c: n, 0x2ce8: n, 0x2cf4: 6*n,
-                       0x347e: 6, 0x2dd8: 6, 0x343a: 6})
+                       0x347e: 6, 0x2dd8: 6, 0x343a: 6,
+                       0x327a: 6,       # Page preflight, once per voice.
+                       0x2fea: 6*n})    # Scalar fallback, once per voice and sample.
         return limits
     if name in ("flex_page", "recorder_idle", "gran_params"):
         return {}
@@ -123,33 +125,54 @@ def analyze(functions):
         limits = visit_limits(name, n, ops)
         if not set(limits).issubset(ops):
             raise ValueError("Instruction layout changed")
-        caps = list(limits)
+        constraints = [({pc: 1}, maximum) for pc, maximum in limits.items()]
+        if name == "stereo_page":
+            # Each stereo_loop iteration writes mid[i] once. These stores are
+            # alternate compiled paths for that write in the pinned image.
+            mid_stores = (0x20ae, 0x211e, 0x21ce, 0x2298, 0x231e,
+                          0x235c, 0x2424, 0x24e4, 0x25b4)
+            assert all(ops[pc][0] == "movel" and ops[pc][1].endswith("@+") for pc in mid_stores)
+            constraints.append((dict.fromkeys(mid_stores, 1), n))
+        elif name == "gran_render":
+            # Each voice either calls stereo_page once and continues to the next
+            # voice, or mixes at most n individual samples. Count the two scalar
+            # loop index increments and one mid write from each inline kernel.
+            # Charging a full n for the call preserves this inequality even for
+            # short voices, since the remaining five voices can mix at most 5*n.
+            mix_visits = dict.fromkeys((0x2eea, 0x30ae, 0x339e, 0x3764, 0x38d4, 0x39da), 1)
+            mix_visits[0x343a] = n
+            constraints.append((mix_visits, 6 * n))
+        rows_for_pc = {pc: [] for pc in pcs}
+        for row, (sites, _) in enumerate(constraints):
+            for pc, coefficient in sites.items():
+                rows_for_pc[pc].append((row, coefficient))
         flow = lil_matrix((len(pcs), len(edges)))
-        visits = lil_matrix((len(caps), len(edges)))
+        visits = lil_matrix((len(constraints), len(edges)))
         weights = []
         for j, (pc, dest) in enumerate(edges):
             flow[index[pc], j] += 1
             if dest is not None:
                 flow[index[dest], j] -= 1
-            if pc in limits:
-                visits[caps.index(pc), j] = 1
+            for row, coefficient in rows_for_pc[pc]:
+                visits[row, j] = coefficient
             callee = bound(calls[pc], n, model) if pc in calls else 0
             weights.append(cost(*ops[pc], model) + callee)
         source = np.zeros(len(pcs))
         source[0] = 1
         result = linprog(-np.array(weights), A_eq=flow.tocsr(), b_eq=source,
-                         A_ub=visits.tocsr() if caps else None,
-                         b_ub=list(limits.values()) if caps else None,
+                         A_ub=visits.tocsr() if constraints else None,
+                         b_ub=[limit for _, limit in constraints] or None,
                          bounds=(0, None), method="highs")
         if not result.success:
             raise ValueError(f"{name} {model}: {result.message}")
         # Certify the returned upper bound edge by edge with exact arithmetic.
         potentials = {pc: Fraction(-v).limit_denominator() for pc, v in zip(pcs, result.eqlin.marginals)}
-        prices = {pc: Fraction(-v).limit_denominator() for pc, v in zip(caps, result.ineqlin.marginals)}
-        assert all(v >= 0 for v in prices.values())
+        prices = [Fraction(-v).limit_denominator() for v in result.ineqlin.marginals]
+        assert len(prices) == len(constraints) and all(v >= 0 for v in prices)
         for (pc, dest), work in zip(edges, weights):
-            assert potentials[pc] - potentials.get(dest, 0) + prices.get(pc, 0) >= work
-        total = potentials[pcs[0]] + sum(limits[pc] * price for pc, price in prices.items())
+            cap_cost = sum(prices[row] * coefficient for row, coefficient in rows_for_pc[pc])
+            assert potentials[pc] - potentials.get(dest, 0) + cap_cost >= work
+        total = potentials[pcs[0]] + sum(limit * price for (_, limit), price in zip(constraints, prices))
         return -(-total.numerator // total.denominator)
 
     for frames in (16, 32):

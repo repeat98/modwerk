@@ -6,9 +6,9 @@
   "cycles": {
     "unit": "cycles/event",
     "static": null,
-    "measured": 35690,
+    "measured": 36620,
     "budget": 95782,
-    "method": "MKII OS 1.40C, RAM base 06e08f35c62c02ce, package 0c5632f6. The longest guarded render in the six-voice 24-bit T1/T5 sequencer and MIDI windows was 17,845 ticks at 132 MHz in the T1 Part-switch trace. Times include stock Flex and interruptions. The static calculation bounds Grain-owned instructions. Its zero-wait-state model excludes SDRAM stalls and interrupts, so a full elapsed-cycle upper bound remains unmeasured."
+    "method": "MKII OS 1.40C, package 0c5632f6, RAM base fac1523234f4bb0b. The longest guarded callback in the T1 24-bit stereo USB audio and MIDI comparison was 18,310 ticks of the 132 MHz timer. This includes stock Flex and interruptions. The earlier sequencer and MIDI-only comparison peaked at 17,845 ticks. The static Grain-only zero-wait-state model gives 192,656 cycles for 16 and 359,568 for 32 source frames. External memory, stock callees and interrupt interference remain unbounded."
   },
   "load": {
     "frameUs": 362.8,
@@ -25,6 +25,6 @@
     "stuckNotes": null,
     "hangs": 0,
     "dropped": null,
-    "droppedExplanation": "One trace submitted 13,249 USB MIDI events in 12 seconds. Receive errors, transmit drops and render skips held steady in the MIDI-only windows, including a completed Part 2/1 change. End-to-end message delivery and stuck notes were not counted. The 20-channel audio capture had render drops, counted separately in evidence/timing/recorder.json."
+    "droppedExplanation": "One trace submitted 13,249 USB MIDI events in 12 seconds. Receive errors, transmit drops and render skips held steady in the MIDI-only windows, including a completed Part 2/1 change. End-to-end message delivery and stuck notes were not counted. The 20-channel audio capture had render drops, counted separately in evidence/timing/recorder.json. On the 0.7.11 development twin, adding USB audio to the MIDI workload produced 658 skipped renders on the six-voice T1. A separate two-voice trial stalled at the panel after a 60-second combined flood. See evidence/timing/combined-load.json."
   }
 }

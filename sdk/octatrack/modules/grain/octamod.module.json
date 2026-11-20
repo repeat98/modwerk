@@ -135,20 +135,20 @@
     "recorded": "2026-11-20",
     "storage": {
       "label": "Module image and memory",
-      "display": "26,540 bytes of static runtime memory",
-      "value": 26540,
+      "display": "27,140 bytes of static runtime memory",
+      "value": 27140,
       "unit": "bytes",
       "method": "static",
-      "conditions": "The USB package loads 24,416 bytes of code and data and declares 2,124 bytes of BSS. The deepest paths measured from the compiler output use 696 bytes of Grain stack for audio and 392 bytes for drawing. Stack and loader overhead are additional.",
+      "conditions": "Package 0c5632f6 loads 25,016 bytes of code and data and declares 2,124 bytes of BSS. The deepest Grain-only call paths use 692 stack bytes for audio and 392 for drawing, including return addresses. Nested interrupts, stock callees and loader overhead add to these figures.",
       "source": "TESTING.md"
     },
     "processing": {
       "label": "ColdFire, in the frame interrupt",
-      "display": "34,402 cycles for the longest guarded T1 render observed",
-      "value": 34402,
+      "display": "36,620 cycles for the longest guarded T1 render in the combined capture",
+      "value": 36620,
       "unit": "cycles/render",
       "method": "hardware",
-      "conditions": "Previous stereo optimization build ff105b46. Octatrack MKII, OS 1.40C, 264 MHz ColdFire. The second T1 render reached 17,201 ticks of the 132 MHz timer in a six-second window with six grains sounding. The timer includes stock Flex, Grain and any preemption. A static worst-case bound is outstanding.",
+      "conditions": "Package 0c5632f6, MKII 1.40C, RAM base fac15232. A dense six-voice T1 played a 24-bit stereo recorder buffer while 20-channel USB capture and the 12-second MIDI trace ran. One guarded callback reached 18,310 ticks at 132 MHz, or 138.7 microseconds. This elapsed measurement includes stock Flex and preemption. The package skipped renders during capture. A hardware worst-case bound remains open.",
       "source": "TESTING.md"
     },
     "impact": {
@@ -168,7 +168,7 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "The 25,632-byte package loads 24,416 bytes of code and data and declares 2,124 bytes of zero-initialized state. It reads existing Flex pages. Stack and loader overhead are additional.",
+        "rationale": "The 26,236-byte package loads 25,016 bytes of code and data and declares 2,124 bytes of zero-initialized state. It reads existing Flex pages. Stack and loader overhead are additional.",
         "source": "TESTING.md"
       }
     },
@@ -186,7 +186,7 @@
     "report": "TESTING.md",
     "summary": "The compiled SCAN endpoint and stereo kernels match the reference. On the card-free MKII, package 0c5632f6 played a 24-bit stereo recorder buffer on T1 and T5. The six-voice sequencer soaks and MIDI-only traces logged zero skipped renders. Opening 20-channel USB audio capture caused skipped renders on both tracks.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "709574328062586802e80578c3d7fcb30c8f3143",
+    "evidenceRevision": "55f41f49e6769958376e89bfa94272860aa9c9da",
     "gates": [
       "python3 -B test_grain.py",
       "python3 -B generate.py --check"

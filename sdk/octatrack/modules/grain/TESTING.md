@@ -2,6 +2,20 @@
 
 Grain 0.1.0-experimental · by A Force Truly Evil.
 
+## Sustained MIDI with 24-bit playback and USB audio on base 0.7.11
+
+The card-free MKII ran the 0.7.11 development twin `fac1523234f4bb0b` on OS 1.40C. Both test tracks addressed a fresh 37,800-frame stereo recording in R3. Its channels differed and the low byte carried signal. In the 13-second run with 20-channel USB capture and the same 12-second MIDI trace, stock Flex dropped zero machine renders on T1 and T5. The six-voice draft on T1 dropped 658 from stream open through stop, including 648 during playback. Its longest guarded callback was 18,310 ticks, or 36,620 core cycles. All runs used one test machine at a time.
+
+The two-voice trial on T5 completed 61 seconds of uninterrupted playback with 60 seconds of MIDI and USB capture. The T1 Flex and T5 Grain stems both carried stereo audio. The render skip, MIDI receive error and transmit drop counters stayed steady. A frame reached 107.3% of budget. After stopping, audio frames advanced while the UI tick stayed fixed for at least 27 seconds. The panel failed to change machines, and the USB rollback and RAM restart could not complete. A card-free power cycle restored the original production base with an empty module inventory. Two earlier short two-voice windows had a near-silent T5 stem and are excluded from this comparison.
+
+After the power cycle, stock Flex on the same development base ran the 61-second T5 control against a fresh R3 recording of the same length and format. Both stems carried audio, the frame peak was 81.9%, and the health and MIDI error counters held steady. UI ticks advanced during all 24 seconds of post-stop observation and the panel selected T2 and T5. This control used an empty module inventory. The cause of the freeze after the Grain trial is still open.
+
+A six-voice experiment reused page and parameter calculations between samples or callbacks and used a precomputed pitch table. The compiled engine produced identical PCM and grain state on the host comparisons. On T1 it still skipped 489 renders during the short combined test. This trial used the fresh recording after reboot, so the difference from 658 does not isolate the effect of the optimization. The draft retains its existing six-voice package.
+
+The draft package occupies 26,236 bytes on disk, loads 25,016 bytes of image and reserves 2,124 bytes of BSS. The deepest Grain-only audio call chain uses 692 stack bytes, including return addresses (164 for `grain_render`, 448 for `gran_render`, 68 for `stereo_page`, and 12 for the three return addresses). The drawing path uses 392 bytes. The compiler emitted identical assembly with stack reporting enabled. [Measurements and build identities](evidence/timing/combined-load.json)
+
+A16 and both copies of scratch Part 3 matched the original snapshots. A02, its working Part 1, track T2 and 140 BPM were restored. All eight recorders were empty and in 16-bit mode. The normal production base dfa438130710fea9 returned with zero saved and zero live modules. The hardware reservation was released.
+
 ## Voice limits under USB audio and MIDI
 
 The MKII recorded a fresh 37,800-frame, 24-bit stereo source into R3. All three binaries used the same dense settings, A16 Part 3 at 100 BPM, one Grain assignment, six untriggered THRU tracks and a trig on every step of the test track. The comparison builds change the loop limit for spawning and mixing. The six-voice package matched the draft byte for byte.
@@ -46,7 +60,7 @@ Each soak reached six voices with SIZE, DENS, SPRY and PAN at 127, SYNC, fractio
 
 **20-channel USB recording still drops renders.** The same stock Flex control added zero skips. The six-voice candidate added 724 on T1 and 755 on T5 from stream open through settling after STOP. During the 4.6-second sustained portion alone the counts were 566 and 376. T5 had added 913 in that portion on the silent SCAN build and 726 with just the page-map repair. The repaired stereo MAIN response and the cumulative skip deltas were measured independently. The 120-second soaks on the earlier SCAN package exercised a silent output path. The intermediate recorder repair `9471a4cc` produced stereo and completed a 120-second T5 soak with zero new skips outside USB audio capture.
 
-For the six-voice binary, the static bounds for 16 and 32 source frames are 66,757 and 128,421 Grain-owned instructions. The zero-wait-state core model gives 536,744 and 1,027,368 cycles. These are conservative model bounds. External SDRAM service and interrupt interference remain outside the calculation. The release still needs a clean USB capture, full qualification, a musician's listening check and a reboot check on the chosen package. [Bound calculation](evidence/timing/bound.py)
+For the six-voice binary, the static bounds for 16 and 32 source frames are 20,689 and 38,481 Grain-owned instructions. The zero-wait-state core model gives 192,656 and 359,568 cycles. The analysis counts each voice's choice of one mixing path and allows a scalar page lookup for every sample. These upper bounds exceed the frame budget. External SDRAM service, stock callees and interrupt interference remain outside the calculation. The release still needs a clean USB capture, full qualification, a musician's listening check and a reboot check on the chosen package. [Bound calculation](evidence/timing/bound.py)
 
 Rollback returned the original base `dfa438130710fea9` with zero saved and zero live modules, matching card-free preflight. All eight working track machine and sample assignments, FX choices, grid masks and 140 BPM were checked. Recorder RAM returned to 16-bit and all buffers were empty. The saved Part copy matched. A full fingerprint of the starting card-free working Part and pattern was unavailable. The T4 recorder input menu ended on summed input pairs; its starting screen showed stereo pairs. The test issued no project Save, Keep or flash.
 
