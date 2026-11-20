@@ -1,6 +1,7 @@
 import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
 import { STOCK_EFFECTS } from '../catalog/stock-effects'
-import { changeUsbAudioLayout, USB_AUDIO_MODULE, USB_AUDIO_PACKAGED, usbAudioFromInstallPreset, usbAudioPreset, type UsbAudioConfiguration, type UsbAudioSetPreset, type UsbAudioPackageKind } from './usb-audio'
+import { changeUsbAudioLayout, USB_AUDIO_MODULE, USB_AUDIO_PACKAGED, usbAudioFromInstallPreset, usbAudioInstallPreset, usbAudioPreset, type UsbAudioConfiguration, type UsbAudioSetPreset, type UsbAudioPackageKind } from './usb-audio'
+import { lastSuccessfulSync } from './octatrack-progress'
 import { runningLayout } from '../engine/elekloader/base-variants'
 
 /** What an Octatrack running the Modwerk base has on it: its modules and the stock effects left out of the menus. */
@@ -68,14 +69,38 @@ export function loadStep(status: string, started: boolean, preparing: boolean): 
 const LAST_SEEN = 'modwerk.octatrack.last-seen'
 /** `offIds`: those of `moduleIds` switched off on the unit then (PROJ > MODWERK > MODULES). A base update drops that
  * state, so a put-back brings them back on, and the sync says which (owner, 16 November 2026). */
-export interface LastSeen { usbAudio?: UsbAudioConfiguration; base: string; moduleIds: string[]; removedStockFx: string[]; at: string; offIds?: string[] }
-function allSeen(): Record<string, Omit<LastSeen, 'base'> & { usbAudioInstallPreset?: number }> {
+export interface LastSeen { usbAudioInstallPreset?: number; usbAudio?: UsbAudioConfiguration; base: string; moduleIds: string[]; removedStockFx: string[]; at: string; offIds?: string[] }
+function allSeen(): Record<string, Omit<LastSeen, 'base'>> {
   try { const value = JSON.parse(localStorage.getItem(LAST_SEEN) ?? '{}'); return value && typeof value === 'object' && !Array.isArray(value) ? value : {} } catch { return {} }
 }
-export function inventoryUsbAudio(base: string | undefined, installPreset?: number) {
-  if (!USB_AUDIO_PACKAGED) return undefined
+/** A linked base identifies its layout. Only the matching saved setup knows its destination and routing. */
+export function inventoryUsbAudio(base: string | undefined, inventory: Pick<Inventory, 'usbAudioInstallPreset' | 'moduleIds'>): Pick<LastSeen, 'moduleIds' | 'usbAudio' | 'usbAudioInstallPreset'> {
+  const { moduleIds } = inventory
+  if (!USB_AUDIO_PACKAGED) return { moduleIds }
   const layout = runningLayout(base)
-  return layout && layout !== 'off' ? changeUsbAudioLayout(usbAudioPreset('computer'), layout) : usbAudioFromInstallPreset(installPreset)
+  if (!layout || layout === 'off') {
+    const preset = inventory.usbAudioInstallPreset
+    const usbAudio = usbAudioFromInstallPreset(preset)
+    return usbAudio || preset === 0 ? { moduleIds, usbAudio, usbAudioInstallPreset: preset } : { moduleIds }
+  }
+  const ids = [...new Set([...inventory.moduleIds, USB_AUDIO_MODULE])]
+  const sync = lastSuccessfulSync(base)
+  if (sync && sameModules(ids, sync.moduleIds) && (sync.usbAudio?.layout ?? 'tracks-main-cue') === layout) {
+    try {
+      const preset = usbAudioInstallPreset(sync.usbAudio)
+      return { moduleIds: ids, usbAudio: usbAudioFromInstallPreset(preset), usbAudioInstallPreset: preset }
+    } catch { /* A damaged local record still leaves the layout known from the base. */ }
+  }
+  return { moduleIds: ids, usbAudio: changeUsbAudioLayout(usbAudioPreset('computer'), layout) }
+}
+
+/** The known initial preset distinguishes sets with the same modules and different Outbox assignments. */
+export function matchesUsbAudio(configuration: UsbAudioSetPreset | undefined, seen: Pick<LastSeen, 'usbAudio' | 'usbAudioInstallPreset'>) {
+  if (seen.usbAudioInstallPreset !== undefined) {
+    try { return usbAudioInstallPreset(configuration) === seen.usbAudioInstallPreset }
+    catch { return false } // older browser records are untrusted
+  }
+  return !seen.usbAudio || (configuration?.layout ?? 'tracks-main-cue') === seen.usbAudio.layout
 }
 export function rememberInventory(base: string, inventory: Inventory, at = new Date().toISOString()) {
   // With the ones switched off on the unit: they are installed there, and a put-back after a base update brings them along.
@@ -90,9 +115,8 @@ export function lastInventory(base?: string, except?: string): LastSeen | undefi
     .sort((a, b) => b[1].at.localeCompare(a[1].at))
   const offIds = found && strings(found[1].offIds) ? found[1].offIds.filter(id => found[1].moduleIds.includes(id)) : []
   if (!found) return undefined
-  const linked = inventoryUsbAudio(found[0], found[1].usbAudioInstallPreset)
-  const moduleIds = linked ? [...new Set([...found[1].moduleIds, USB_AUDIO_MODULE])] : found[1].moduleIds
-  return { base: found[0], moduleIds, ...(linked && { usbAudio: linked }), removedStockFx: strings(found[1].removedStockFx) ? found[1].removedStockFx : [], at: found[1].at, ...offIds.length ? { offIds } : {} }
+  const audio = inventoryUsbAudio(found[0], found[1])
+  return { base: found[0], ...audio, removedStockFx: strings(found[1].removedStockFx) ? found[1].removedStockFx : [], at: found[1].at, ...offIds.length ? { offIds } : {} }
 }
 /** The self-test record's `saved` when this boot loaded nothing because the card's set is another base's (modset.c FOREIGN):
  * after a base update, or a power cycle back to an older flashed base. The base can't load it itself, since some packages

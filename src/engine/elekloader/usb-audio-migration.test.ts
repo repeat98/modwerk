@@ -2,8 +2,9 @@ import { readFileSync } from 'node:fs'
 import { afterEach, expect, it, vi } from 'vitest'
 import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, USB_AUDIO_VERSION, usbAudioPreset, changeUsbAudioLayout, usbAudioInstallPreset, usbAudioFromInstallPreset } from '../../config/usb-audio'
 import { createSelection, parseSelection } from '../../config/selection'
-import { modulesToPutBack, rememberInventory, SAVED_BY_ANOTHER_BASE, type Inventory } from '../../config/inventory'
+import { inventoryUsbAudio, matchesUsbAudio, modulesToPutBack, rememberInventory, SAVED_BY_ANOTHER_BASE, type Inventory } from '../../config/inventory'
 import { CURRENT_BASE, prepareCardSet, prepareModuleSet, type RuntimePackage } from './module-set'
+import { rememberSuccessfulSync } from '../../config/octatrack-progress'
 import manifest from '../assets/octatrack-module-packages.json'
 import events from '../../../sdk/machines/octatrack/events.json'
 
@@ -65,4 +66,24 @@ it('recovers built-in USB Audio from the previous base identity even if it was i
   expect(modulesToPutBack(CURRENT_BASE, SAVED_BY_ANOTHER_BASE, empty)).toMatchObject({
     moduleIds: ids, usbAudio: { layout: 'tracks-post', destination: 'computer' }
   })
+})
+
+it('puts back the saved Outbox routing when two sets use the same linked layout', () => {
+  const oldTracksPost = '94101a5a4a5fb2899b7ff7e1572f51e60579ae21d7f4eb289f6a96fca1fb2295'
+  const saved = { ...changeUsbAudioLayout(usbAudioPreset('outbox'), 'tracks-post'), outboxPairs: [8, 8, 0, 2] }
+  const storage = new Map<string, string>()
+  vi.stubGlobal('localStorage', { getItem: (key: string) => storage.get(key), setItem: (key: string, value: string) => storage.set(key, value) })
+  rememberSuccessfulSync({ base: oldTracksPost, active: '1'.repeat(64), name: 'Studio', moduleIds: ids, usbAudio: saved, at: '2026-11-20T10:00:00Z' })
+  rememberInventory(oldTracksPost, empty)
+  const recovered = modulesToPutBack(CURRENT_BASE, SAVED_BY_ANOTHER_BASE, empty)!
+  expect(recovered.usbAudio).toEqual(saved)
+  expect(matchesUsbAudio(saved, recovered)).toBe(true)
+  expect(matchesUsbAudio({ ...saved, destination: 'computer' }, recovered)).toBe(false)
+  expect(matchesUsbAudio({ ...saved, outboxPairs: [8, 0, 8, 2] }, recovered)).toBe(false)
+  const packaged = inventoryUsbAudio(CURRENT_BASE, { moduleIds: ids, usbAudioInstallPreset: usbAudioInstallPreset(saved) })
+  expect(packaged.usbAudio).toEqual(saved)
+  expect(matchesUsbAudio(usbAudioPreset('outbox'), packaged)).toBe(false)
+  const classic = inventoryUsbAudio(CURRENT_BASE, { moduleIds: ids, usbAudioInstallPreset: 0 })
+  expect(matchesUsbAudio(undefined, classic)).toBe(true)
+  expect(matchesUsbAudio(usbAudioPreset('computer'), classic)).toBe(false)
 })

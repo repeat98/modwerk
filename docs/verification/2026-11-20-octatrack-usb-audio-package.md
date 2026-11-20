@@ -85,6 +85,8 @@ The cumulative 0.7.11 build (`61a2c3b75a848dec`) reproduced its native OS byte-f
 
 The MKII RAM-booted base 0.7.11 `a2ae64eb82bcb93430ef62b80e4b80b738fb982c4a4594e50b051dcb6aed868f`. The native and browser-built OS had SHA-256 `cb5779ae78920845e4dd467eee45155eb7a93a4ea863401bade6db2368efce52`. The default 0.3.0-experimental module had SHA-256 `0ac4d6a58a437706e85ab8b577da26dfe88c5c866c5d7a008665fbe2fefcf11f`. Each trial used the installer to encode a saved 0.2 configuration into that module. The live preset, module inventory and host USB descriptor matched both saved configurations.
 
+Software checks imported all six saved 0.2 layouts, including Outbox assignments with a duplicated source and an Off pair. USB and card preparation produced the same configured module bytes. Regression cases separately check classic sets without a USB settings block, Undo to the previous preset, and two saved sets that use the same layout with different routing. A legacy base identifies its layout. Recovering its Outbox assignments requires the saved set or the matching successful sync in the browser.
+
 | Saved configuration | Installed preset | Core Audio on macOS at 44.1 kHz | Undo |
 | --- | --- | --- | --- |
 | Outbox 8 with Main, Main, Off, Cue | `80a09940` | 89,600 eight-channel frames. Both Main pairs matched sample for sample and the Off pair was silent. Playback was stopped. | The original four interfaces and empty trial baseline returned. |
