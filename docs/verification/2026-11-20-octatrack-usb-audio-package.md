@@ -114,9 +114,9 @@ Base `dd7e684c9540e50f5eadaaf090983acadcdb984b59281d7abeac0763952caa01` checks t
 
 The native and browser builders produced identical OS bytes, SHA-256 `b1c88d62b606518e188129d54c0ce005c00318881283b256bf4c4c3ba1d0d0bb`. All seven saved-set fixtures gave the same module bytes through the USB and card installers. On this exact OS the emulator installed the migrated sixteen-channel PRE set, then the Track 8/Master set twice. Each trial streamed sixteen complete packets and Undo restored the original four USB interfaces. These tests exercise ordinary successful enumeration. Hardware qualification follows separately.
 
-## Remaining verification
+## Scope of the earlier trials
 
-A physical full-speed host, Windows/WASAPI after a channel-count change, and a Keep/removal lifecycle remain open. The full-set regression, soak and listening stages also remain open. The published site continues to use its existing base variants.
+The earlier trials did not cover a physical full-speed host, Windows/WASAPI after a channel-count change, a kept removal, a full-set soak or a listening assessment. Subsequent sections record the reconnect, Keep and physical cold-start tests on their named builds.
 
 ## Track 8/Master reconnect candidate
 
@@ -146,3 +146,24 @@ A host disk-space interruption before trial 4 left the USB attachment count at s
 ### Keep and physical power cycle
 
 On the same base the Track 8/Master package had SHA-256 `92987d7105010887bc10b7f5f02c6abc40f932170096a43ae24069542bfd4efd`. The instrument self-test reported one intact module and zero failed checks. Keep reported one module saved and checked. The owner switched the instrument fully off and on. The flashed base restored all ten original modules. The identical release base was then RAM-booted without uploading a module. It reported that one module was restored from the card, the same saved-set SHA-256 `95cd029f32efc8550b6589a684e638dcf681f7a2f63a6c598945efb86220743d`, and preset `0x80000110`. The Mac recorded 89,088 stereo frames from that restored set. The final physical power cycle returned the flashed base, ten modules, empty shelf and original saved-set checksum. The release base was never flashed.
+
+## Release verification on base 0.7.12
+
+The Octatrack MKII ran base 0.7.12 `254c5a75a139255e057e69532bb952daffef5039ffeee0e6c9fabda302e5bb91` in RAM on OS 1.40C. The native and site builds produced the same OS image, SHA-256 `7e7539c8ea20f72ffc8cc2491452129c3f46aad2081d9bcb1a73e116a3a2640a`. The configurable 0.3.0-experimental package was `0ac4d6a58a437706e85ab8b577da26dfe88c5c866c5d7a008665fbe2fefcf11f`. The site prepared the same seven migrated profiles for USB and CompactFlash. The MKII emulator showed the four documented settings screens and restored its baseline USB interfaces after streaming.
+
+| Trial | Saved layout | USB channels | Frames at 44.1 kHz | Attachments after Undo |
+| --- | --- | ---: | ---: | ---: |
+| 1 | Tracks PRE LEVEL | 16 | 88,576 | 2 |
+| 2 | Track 8/Master | 2 | 88,576 | 4 |
+| 3 | Main | 2 | 89,088 | 6 |
+| 4 | Main and Cue | 4 | 89,600 | 8 |
+| 5 | Outbox 8 | 8 | 88,576 | 10 |
+| 6 | Tracks POST LEVEL | 16 | 88,576 | 12 |
+| 7 | Classic set with no stored USB settings | 20 | 88,576 | 14 |
+| 8 | Track 8/Master | 2 | 89,088 | 16 |
+
+On macOS, each Undo restored the initial set checksum and all four baseline interfaces. The panel tick continued after every Undo. Eight installs and eight Undos produced 16 attachments. The extra attachment retry did not run in these trials. The Outbox capture contained 88,576 frames. Both Main assignments were nonzero and sample-identical in every frame, and the Off pair was silent throughout.
+
+The instrument self-test reported one intact module and zero failures. Keep saved the migrated Track 8/Master package `92987d7105010887bc10b7f5f02c6abc40f932170096a43ae24069542bfd4efd` and the instrument reported one checked, saved module. After the owner power-cycled with the card inserted, the flashed base restored all ten original modules. A RAM boot of the same 0.7.12 image, without any module upload, loaded preset `0x80000110` and saved-set checksum `95cd029f32efc8550b6589a684e638dcf681f7a2f63a6c598945efb86220743d`. macOS recorded 89,088 stereo frames from that restored configuration. After a final power cycle, the original ten modules, their complete saved-set checksum and the empty switched-off list matched the starting state.
+
+No physical Outbox 8, Windows, Linux or full-speed-only audio host was available. Worst-case ColdFire cycles and complete memory use including stack and DMA remain unmeasured under the version-specific owner exception.
