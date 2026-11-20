@@ -1,4 +1,5 @@
 """Run the reference renders and sample-position boundaries in module:doctor."""
+import importlib.util
 import pathlib
 import shutil
 import subprocess
@@ -18,3 +19,7 @@ if __name__ == "__main__":
         subprocess.run([cc, "-std=c11", "-O2", "-o", str(exe), "range_test.c", "gran.c"],
                        cwd=HERE, check=True)
         subprocess.run([str(exe)], check=True)
+    if importlib.util.find_spec("unicorn") and shutil.which("m68k-elf-as"):
+        subprocess.run([sys.executable, "-B", str(HERE / "verify_lanes.py")], check=True)
+    else:
+        print("[SKIP] Compiled Flex frame test requires Python Unicorn and m68k-elf binutils")

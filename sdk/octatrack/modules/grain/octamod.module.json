@@ -120,7 +120,7 @@
     "conflicts": [],
     "uiClaims": [],
     "limitations": [
-      "Experimental: played and measured on one MKI; TESTING.md lists what was not tried. Not yet tried on an MKII.",
+      "Experimental. Earlier builds ran on an MKI and MKII. TESTING.md identifies the build and the remaining hardware checks.",
       "Measured on an MKI with the base's CPU meter: one Grain track takes about 10 to 12 points of the meter, up to 14 or 15 with DENS and PAN at the maximum. The base's budget reserves 15 points for each Grain track and refuses a machine that does not fit.",
       "Up to six grains sound at once; with all six sounding, a grain that is due is not born.",
       "A sample the module cannot read, or one that is still loading, plays silence. Changing the sample while a note plays stops it, as on a Flex track.",
@@ -135,28 +135,28 @@
     "recorded": "2026-11-20",
     "storage": {
       "label": "Module image and memory",
-      "display": "See the package size",
-      "value": null,
-      "unit": "unknown",
-      "method": "unmeasured",
-      "conditions": "The memory total is recorded with the qualification once the package is built in the pinned toolchain.",
+      "display": "25,008 bytes of static runtime memory",
+      "value": 25008,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "The USB builder reports 22,884 bytes of loaded code and data and 2,124 bytes of BSS. Stack use and loader overhead are separate.",
       "source": "TESTING.md"
     },
     "processing": {
       "label": "ColdFire, in the frame interrupt",
-      "display": "About 10 to 12 points of the unit's CPU meter a track; 14 to 15 at the maximum",
+      "display": "34% of a frame reserved per playing Grain track",
       "value": null,
       "unit": "cycles/block",
       "method": "unmeasured",
-      "conditions": "No worst case in cycles exists. On an MKI with the base's status screen: 44 % with no Grain, 63 to 64 % with two tracks at DENS 64, 64 to 65 % with two stereo tracks at DENS 64, 67 to 68 % with two tracks at high density and PAN, 73 to 74 % with both at the maximum of DENS and PAN. These are readings of the whole unit.",
-      "source": "evidence/performance.json"
+      "conditions": "The six-voice MKII comparison is recorded in TESTING.md. Worst-case chip cycles have not been bounded.",
+      "source": "TESTING.md"
     },
     "impact": {
-      "conditions": "CPU from the base's status screen on an MKI with two Grain tracks playing (means, one reading each). Memory from the package.",
+      "conditions": "Frame-interrupt means on the MKII with one playing Grain track and with its trigs removed. Memory from the package.",
       "cpu": {
-        "level": "moderate",
+        "level": "high",
         "basis": "measured-comparison",
-        "rationale": "The ColdFire reads each sounding grain's samples from the Flex pages and mixes them in the frame interrupt. On the unit one track added 10 to 12 points of the CPU meter in typical use and 14 to 15 with DENS and PAN at the maximum, all six grains sounding. The base's CPU budget admits three Grain tracks a Part. Worst-case cycles are not measured.",
+        "rationale": "On the MKII, one stereo track with six grains sounding added up to 33.9 percentage points to the frame interrupt. The Octatrack uses a price of 34 to admit Grain tracks according to the rest of the current Part.",
         "source": "TESTING.md"
       },
       "dsp": {
@@ -168,23 +168,23 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "The 23,948-byte package contains 22,692 bytes of loaded code and data and declares 2,124 bytes of zero-initialized state. It reads sample data from the existing Flex pages. Stack and loader overhead are separate.",
+        "rationale": "The 24,140-byte package contains 22,884 bytes of loaded code and data and declares 2,124 bytes of zero-initialized state. It reads sample data from the existing Flex pages. Stack and loader overhead are separate.",
         "source": "TESTING.md"
       }
     },
     "cpuPrice": {
-      "value": 15,
+      "value": 34,
       "unit": "percent-of-frame",
       "measure": "machine-render",
-      "tool": "npm run device -- do (not used: the readings are of the base's status screen, read by eye)",
+      "tool": "npm run device -- do (guard)",
       "date": "2026-11-20",
-      "conditions": "Author's MKI, the base's CPU meter on its status screen, a pattern with the tracks playing: 44 % with no Grain; two Grain tracks added about 10 points each at DENS 64 and 14 to 15 each with DENS and PAN at the maximum and all six grains sounding (73 to 74 % in all). 15 is the dearest reading, and the machine descriptor's reserved[0] is 15.",
+      "conditions": "Octatrack MKII, OS 1.40C, development base 06e08f35, B16 Part 1, stereo 16-bit Flex sample of 88,200 frames. T1 at 140 BPM in SYNC with six grains observed, SIZE, DENS, SPRY and PAN 127. Three paired six-second windows averaged 60.1, 60.8 and 60.8% with all 16 trigs, and 26.8, 26.9 and 26.9% without them. Highest difference 33.9 points, rounded up to 34. No skipped renders in these windows.",
       "source": "TESTING.md"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host checks cover reference renders, optimized mono and stereo reads, and position and scatter up to the maximum Flex sample length. The author's MKI observations and emulator captures cover earlier builds. TESTING.md identifies the corrected package and outstanding checks.",
+    "summary": "On the MKII all six SRC controls reached the correct renderer words, SETUP selected SYNC, and six voices sounded together in the measured pricing scene. Linked ColdFire tests cover both buffers on every track. Host checks cover reference renders, optimized mono and stereo reads, and the full Flex position and scatter range. TESTING.md names each build and its remaining checks.",
     "hardwareStatus": "reported",
     "evidenceRevision": "e106348f4f6b11e1e474ac4da3d30bb52e588f9d",
     "gates": [

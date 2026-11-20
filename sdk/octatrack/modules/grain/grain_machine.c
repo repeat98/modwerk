@@ -887,11 +887,8 @@ const struct modwerk_machine_setup grain_machine = {.machine = {
     .defaults = defaults, .admit_track = grain_admit, .assign = grain_assign, .chooser_type = grain_chooser,
     .track_page = grain_page, .ui_tick = grain_ui_tick, .pool_open = grain_pool_open, .pool_left = grain_pool_left,
     .render = grain_render,
-    /* precio de CPU para la base (% de un frame, peor render en una pista): estimado, sin medir en la unidad. Sin el
-     * (0 = el de la base) el emulador lo rechazaba con CPU FULL 88 %. AMIGA mide ~5,5 puntos; 6 granos, algo mas. */
-    /* medido en la MKI del autor (20/11, medidor de CPU de la base, dos pistas): ~10 puntos por pista con DENS 64 (mono o
-     * estereo), ~12 con DENS 64 y PAN, ~15 con DENS y PAN al maximo (los 6 granos sonando). El precio es el peor caso. */
-    .reserved = {15},
+    /* Media del frame en MKII, seis granos en SYNC: 33,3 a 33,9 puntos sobre la pista sin trigs (TESTING.md). */
+    .reserved = {34},
 }, .page = grain_setup_page, .knob = grain_setup_knob};
 const struct modwerk_machine_start grain_machine_start = {
     .abi = MODWERK_MACHINE_START_ABI, .bytes = sizeof(struct modwerk_machine_start),
