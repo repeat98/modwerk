@@ -218,6 +218,47 @@ static int release_all(void)            // -> 1 when any key was held; one the q
     return any;
 }
 
+// ---- RAM boot (LINK.md): the Analog Rytm MKII link's, at OS 1.12's addresses --------------
+// Stock's upload buffer (0x40122574): a 32-byte header, then the upload's struct (its length, then the container from
+// +8). The mailbox is written over that header, which the receiver is done with once the job runs. Unlike the Rytm's,
+// the staged upload cannot stay where it is across the reset: the bootstrap reads the flashed image's packed MAIN OS
+// to 0x40400000 on every start, inside it. So before the reset the container is copied to COPY, in DDR that neither
+// the bootstrap nor stock's start (it clears 0x402fb000-0x466b8c50 after the gate) touches; the CRCs stand guard.
+#define MAILBOX ((volatile uint32_t *)0x4038bec0)
+#define STAGED ((const uint32_t *)0x4038bee0)
+#define COPY ((uint8_t *)0x47000000)
+#define MB_ASKED 0x4d574254             // 'MWBT': boot the copied image
+#define MB_SPENT 0x4d574255             // 'MWBU': the unpack began
+#define MB_BOOTED 0x4d574253            // 'MWBS': the unpacked image checked out and was entered
+#define MB_CHECK 0x52794c6b             // the check word's seed
+#define OS_BASE 0x40000400              // MAIN OS: its first long is the entry
+#define IMAGE_MAX 0x38bac0              // the unpacked OS must end below the mailbox
+#define CONTAINER_MAX 0x300000          // COPY + this stays below the mod area (0x47f00000)
+#define MAIN_OS 3
+// Diagnostics of the reset, outside the mod area and 64 KB under the boot stack's top, as the Rytm's: DIAG by the
+// gate (0-7 the mailbox as found, 8-11 the staged struct's first words, 12-13 MARK as found, 14 RSR); MARK on the way
+// to a RAM boot's reset (0 DIAG_MARK + flags, 1 DIAG_STAGE + how far it came). Written only at boot, before stock
+// runs, and on the way to the reset, so stock may use this RAM in between.
+#define DIAG ((volatile uint32_t *)0x47feffbc)
+#define MARK ((volatile uint32_t *)0x47fefff8)
+#define DIAG_MARK 0x4d570000            // + person presses << 8 + due (bits 0-1), 4 armed, 8 stock's struct is STAGED, 16 its length matches
+#define DIAG_STAGE 0x4d575400           // + 1 the command was taken, 2 stock's job reached the site, 3 its wait returned,
+                                        //   4 the drain returned, 5 written with the data cache off, 6 copied
+#define RSR (*(volatile uint8_t *)0xEC090001)      // reset status: bit 5 software reset
+#define RSR_SOFT 0x20
+#define BOOT_ARG (*(const uint32_t *)0x40287a60)   // what the bootstrap passed the OS entry (0x400004ec)
+#define STOCK_DELAY ((void (*)(int))0x4013492c)    // stock's wait before its reset (0x401391e6)
+#define STOCK_DRAIN ((void (*)(void))0x400023f6)   // what stock calls with interrupts masked before its reset
+
+#define BOOT_FLASH 0                    // no request: the flashed OS
+#define BOOT_RAM 1                      // this image was booted from RAM
+#define BOOT_NOT_SOFT 2                 // a request, but not after a software reset
+#define BOOT_BAD_CHECK 3
+#define BOOT_BAD_BOUNDS 4
+#define BOOT_BAD_CRC 5                  // the copy did not survive the reset
+#define BOOT_NO_OS 6
+#define BOOT_FAILED 8                   // the unpacked image was wrong: reset, and this is the flashed OS
+
 // ---- RAM boot state ----------------------------------------------------------------
 int mw_link_ramboot_due;                // link.s reads it where stock's job would flash: 0 flash, 1 RAM boot, 2 cancelled
 static uint32_t ramboot[4];             // from the host: unpacked length and CRC, container length and CRC
@@ -477,47 +518,6 @@ void COLD mw_link_settings(void *menu)
 {
     core_additem(menu, row);
 }
-
-// ---- RAM boot (LINK.md): the Analog Rytm MKII link's, at OS 1.12's addresses --------------
-// Stock's upload buffer (0x40122574): a 32-byte header, then the upload's struct (its length, then the container from
-// +8). The mailbox is written over that header, which the receiver is done with once the job runs. Unlike the Rytm's,
-// the staged upload cannot stay where it is across the reset: the bootstrap reads the flashed image's packed MAIN OS
-// to 0x40400000 on every start, inside it. So before the reset the container is copied to COPY, in DDR that neither
-// the bootstrap nor stock's start (it clears 0x402fb000-0x466b8c50 after the gate) touches; the CRCs stand guard.
-#define MAILBOX ((volatile uint32_t *)0x4038bec0)
-#define STAGED ((const uint32_t *)0x4038bee0)
-#define COPY ((uint8_t *)0x47000000)
-#define MB_ASKED 0x4d574254             // 'MWBT': boot the copied image
-#define MB_SPENT 0x4d574255             // 'MWBU': the unpack began
-#define MB_BOOTED 0x4d574253            // 'MWBS': the unpacked image checked out and was entered
-#define MB_CHECK 0x52794c6b             // the check word's seed
-#define OS_BASE 0x40000400              // MAIN OS: its first long is the entry
-#define IMAGE_MAX 0x38bac0              // the unpacked OS must end below the mailbox
-#define CONTAINER_MAX 0x300000          // COPY + this stays below the mod area (0x47f00000)
-#define MAIN_OS 3
-// Diagnostics of the reset, outside the mod area and 64 KB under the boot stack's top, as the Rytm's: DIAG by the
-// gate (0-7 the mailbox as found, 8-11 the staged struct's first words, 12-13 MARK as found, 14 RSR); MARK on the way
-// to a RAM boot's reset (0 DIAG_MARK + flags, 1 DIAG_STAGE + how far it came). Written only at boot, before stock
-// runs, and on the way to the reset, so stock may use this RAM in between.
-#define DIAG ((volatile uint32_t *)0x47feffbc)
-#define MARK ((volatile uint32_t *)0x47fefff8)
-#define DIAG_MARK 0x4d570000            // + person presses << 8 + due (bits 0-1), 4 armed, 8 stock's struct is STAGED, 16 its length matches
-#define DIAG_STAGE 0x4d575400           // + 1 the command was taken, 2 stock's job reached the site, 3 its wait returned,
-                                        //   4 the drain returned, 5 written with the data cache off, 6 copied
-#define RSR (*(volatile uint8_t *)0xEC090001)      // reset status: bit 5 software reset
-#define RSR_SOFT 0x20
-#define BOOT_ARG (*(const uint32_t *)0x40287a60)   // what the bootstrap passed the OS entry (0x400004ec)
-#define STOCK_DELAY ((void (*)(int))0x4013492c)    // stock's wait before its reset (0x401391e6)
-#define STOCK_DRAIN ((void (*)(void))0x400023f6)   // what stock calls with interrupts masked before its reset
-
-#define BOOT_FLASH 0                    // no request: the flashed OS
-#define BOOT_RAM 1                      // this image was booted from RAM
-#define BOOT_NOT_SOFT 2                 // a request, but not after a software reset
-#define BOOT_BAD_CHECK 3
-#define BOOT_BAD_BOUNDS 4
-#define BOOT_BAD_CRC 5                  // the copy did not survive the reset
-#define BOOT_NO_OS 6
-#define BOOT_FAILED 8                   // the unpacked image was wrong: reset, and this is the flashed OS
 
 extern void mw_cache_push(void);
 extern void mw_cache_off(void);

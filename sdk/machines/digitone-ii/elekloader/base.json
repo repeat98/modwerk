@@ -173,7 +173,7 @@
     ]
   },
   "dev": {
-    "about": "The development link (base/link.c, link.s): diagnostics over USB MIDI SysEx in the Analog Rytm MKII link's wire format (ident; mem, up to 128 bytes of DDR or SRAM, through which the host also reads the screen), and while SETTINGS > REMOTE CTRL is on (at every boot) panel keys and encoder turns, posted on the UI queue as the panel's. Its receive site observes stock's SysEx router at 0x4012197a, where core-dn2 0.3's ev_sysex sits; replies go through stock's sysex_send on USB from ev_tick. is_key_held (0x4011fac4) also sees the keys the link holds. The diagnostics log (base/diag.c, the Octatrack's layout), read through the link's diag and mem. Development bases only.",
+    "about": "The development link (base/link.c, link.s): diagnostics over USB MIDI SysEx in the Analog Rytm MKII link's wire format (ident; mem, up to 128 bytes of DDR or SRAM, through which the host also reads the screen), and while SETTINGS > REMOTE CTRL is on (at every boot) panel keys and encoder turns, posted on the UI queue as the panel's. Its receive site observes stock's SysEx router at 0x4012197a, where core-dn2 0.3's ev_sysex sits; replies go through stock's sysex_send on USB from ev_tick. is_key_held (0x4011fac4) also sees the keys the link holds. The diagnostics log (base/diag.c, the Octatrack's layout), read through the link's diag and mem. RAM boot (link.s, link.c): where stock's upgrade job would erase and write the flash (0x4010921c) the base resets into the staged image instead, and a gate at 0x4000053e unpacks and enters it. Development bases only.",
     "sources": [
       "../base/link.c",
       "../base/link.s",
@@ -193,6 +193,20 @@
         "stockSha256": "9eab14ed9d527816054c9f68837b2e021fba5470d105516b94b63ffb8ed1f45d",
         "op": "jmp",
         "target": "mw_link_held"
+      },
+      {
+        "addr": "0x4010921c",
+        "len": 6,
+        "stockSha256": "bed7566b303eed127e5a4f320a0e52bb80eb0bb2f1d45b3765b209b307774e82",
+        "op": "jsr",
+        "target": "mw_link_program"
+      },
+      {
+        "addr": "0x4000053e",
+        "len": 8,
+        "stockSha256": "dbd7ee3ac848bc629a889c3a534a8b23d8bb88fb05c5dd9f8f825696a3c6b633",
+        "op": "jsr",
+        "target": "mw_boot_site"
       }
     ],
     "cflags": [
@@ -205,7 +219,10 @@
       "-DFRAME_HZ_MEASURED=1500"
     ],
     "defsym": {
-      "SYSEX_TABLE": "0x40207f9e"
+      "SYSEX_TABLE": "0x40207f9e",
+      "mw_link_flash": "0x40139104",
+      "mw_boot_data": "0x4000045c",
+      "mw_boot_bss": "0x400004b2"
     },
     "subscribe": [
       {

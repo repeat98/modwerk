@@ -79,3 +79,12 @@ class Dn2Diagnostics(unittest.TestCase):
         mine = (APP / "sdk/machines/digitone-ii/elekloader/base/diag.h").read_bytes()
         self.assertEqual(mine, (APP / "sdk/machines/octatrack/elekloader/diag.h").read_bytes(),
                          "diag.h is the Octatrack's: copy it again (the site reads both logs with device-log.ts)")
+
+    def test_the_hosts_ram_boot_limits_are_the_gates(self):
+        import re
+        source = (APP / "sdk/machines/digitone-ii/elekloader/base/link.c").read_text()
+        define = lambda name: int(re.search(r"#define %s (0x[0-9a-f]+)" % name, source).group(1), 16)
+        self.assertEqual((link.IMAGE_MAX, link.CONTAINER_MAX), (define("IMAGE_MAX"), define("CONTAINER_MAX")))
+        # the unpacked OS ends below the mailbox, and the copy below the mod area
+        self.assertEqual(0x40000400 + define("IMAGE_MAX"), 0x4038bec0)
+        self.assertLessEqual(0x47000000 + define("CONTAINER_MAX"), 0x47f00000)

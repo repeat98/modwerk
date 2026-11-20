@@ -21,6 +21,7 @@ python3 sdk/machines/digitone-ii/tools/dn2_link.py turn A 8        # encoders A-
 | `release` | 0x12 | armed: lets go of every key the link holds |
 | `diag` | 0x22 | the diagnostics log's address and size, frame interrupts and UI ticks so far |
 | `freeze N` | 0x23 | armed: the next UI tick stands still N frames (at most 15 s), to test FREEZE logging |
+| `ramboot ULEN UCRC CLEN CCRC` | 0x14 | armed: YES at UPGRADE OS NOW?, and the staged image boots from RAM instead of being flashed (below) |
 | `mem ADDR N` | 0x21 | the address, then up to 128 bytes of DDR (0x4000_0000-0x47ff_ffff) or SRAM (0x8000_0000-0x8000_ffff) |
 
 `screen` is the host's: it reads stock's frame pointer and the frame through `mem` (no command of its own on the unit),
@@ -53,4 +54,41 @@ Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at t
   while the frame interrupt goes on (1,500 a second, measured), each with the last 16 keys, and a load window every
   five minutes with the longest run of frames without a tick. No meters, machines or tempo yet, and the log lives in
   .bss, so it starts empty at every start ([record](../../../docs/verification/2026-11-19-digitone-ii-diagnostics-on-a-unit.md)).
-- **Not yet.** The Rytm link's remote YES and RAM boot; the diagnostics' upload from the page.
+- **Not yet.** The Rytm link's remote YES for a flash (on purpose: only a person's YES writes the flash); the
+  diagnostics' upload from the page.
+
+## RAM boot
+
+`dn2_link.py ramboot IMAGE.syx` runs an image without erasing or writing the flash; a power cycle brings the
+flashed OS back. The unit must run a *flashed* development base: the gate is the flashed image's. The Analog Rytm
+MKII link's RAM boot ([its LINK.md](../analog-rytm-mkii/LINK.md#ram-boot)), at OS 1.12's addresses, with one change.
+
+1. The host uploads the image with stock's OS upgrade, then sends `ramboot` with the unpacked MAIN OS's length and
+   CRC32 and the container's (the Rytm link's `ramboot_args`). The base presses YES and sets a flag.
+2. Stock's upgrade job validates the upload and saves the working state. Where it calls the erase-and-write routine
+   (0x4010921c -> 0x40139104), the base looks at the flag: clear, stock's routine runs. Set, it waits and drains as
+   stock does, writes the data cache's dirty lines out, switches the data cache off and, if the staged upload has the
+   length the host gave and the link is still armed, **copies the container to 0x47000000**, writes a mailbox over the
+   32-byte header of stock's upload buffer (0x4038bec0) and resets. Nothing is erased or written.
+3. At the next start the flashed base's gate runs at 0x4000053e, before stock fills SRAM and clears its RAM
+   (0x402fb000-0x466b8c50, the staged upload included) and before the data cache comes on. It takes the mailbox once,
+   only after a software reset, checks it, the copy's CRC32 and its MAIN OS section, unpacks it over the running OS
+   with the Rytm link's depacker and enters it. A failure before the unpack boots the flashed OS; one after it resets
+   once more, and the spent mailbox boots the flashed OS.
+
+The change: the Digitone II's bootstrap reads the flashed image's packed MAIN OS to 0x40400000 on every start, inside
+the staged upload, so the upload is copied before the reset to DDR neither the bootstrap nor stock's start touches.
+The CRCs stand guard: a copy that did not survive boots the flashed OS. The same 8 bytes as the Rytm's boot site, the
+same reset and the same cache settings on OS 1.12.
+
+Status in `ident` and `bootdiag`: 0 the flashed OS; 1 booted from RAM; 2 a mailbox without a software reset; 3 check
+word; 4 lengths; 5 the copy's CRC; 6 no MAIN OS section; 8 failed after the unpack. `bootdiag` reads what the gate
+found (the mailbox, the staged struct's first words, the marks of the way to the reset, RSR) from 0x47feffbc.
+
+Cancelling: a press or turn on the panel or a `disarm` cancels the request, and a cancelled request never becomes a
+flash: for two minutes after `ramboot` the job's call resets without a mailbox, so the flashed OS comes back
+unwritten.
+
+Limits: the unpacked OS must end below the mailbox (0x38bac0 bytes), the container fit the copy (0x300000 bytes);
+the host refuses others. The gate's C code, compiled for a computer, unpacked a development image's container to the
+linker's main OS byte for byte (19 November 2026).

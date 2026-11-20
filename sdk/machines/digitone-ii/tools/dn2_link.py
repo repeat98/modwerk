@@ -11,6 +11,8 @@
     dn2_link.py release / disarm     # let go of every key the link holds / and turn the arm off
     dn2_link.py diag [--save F]      # the diagnostics log (the Octatrack's layout): where it is, and its bytes into F
     dn2_link.py freeze SECONDS       # armed: the UI stands still that long (audio goes on), to test FREEZE logging
+    dn2_link.py ramboot IMAGE.syx    # armed: upload, then boot it from RAM without writing the flash (LINK.md)
+    dn2_link.py bootdiag             # what the boot gate found at the last start, and how far a RAM boot came
 Keys and turns need SETTINGS > REMOTE CTRL on (it is at every boot); a person at the panel stops them for 3 s.
 
 Needs a development base on the unit (npm run machine:base -- digitone-ii --dev) and mido with a MIDI backend.
@@ -23,7 +25,7 @@ import time
 import zlib
 
 HEADER = bytes([0xF0, 0x7D, ord('M'), ord('W'), ord('L'), 1])
-CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'mem': 0x21, 'diag': 0x22, 'freeze': 0x23}
+CMD = {'ident': 0x01, 'disarm': 0x02, 'key': 0x10, 'enc': 0x11, 'release': 0x12, 'mem': 0x21, 'diag': 0x22, 'freeze': 0x23, 'ramboot': 0x14}
 STATUS = {0: 'ok', 1: 'not armed (SETTINGS > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range',
           5: 'a person is at the unit'}
 # Panel key ids and encoders as stock's messages carry them (OS 1.12, seen on a unit).
@@ -127,6 +129,69 @@ def screen(port):
     return b''.join(mem(front + at, 128, port) for at in range(0, FRAME_BYTES, 128))
 
 
+# The boot gate's limits (link.c): the unpacked OS ends below the mailbox at 0x4038bec0, and the container fits the
+# copy at 0x47000000 below the mod area.
+IMAGE_MAX, CONTAINER_MAX = 0x38bac0, 0x300000
+BOOT_STATUS = {0: 'the flashed OS, no RAM boot asked', 1: 'booted from RAM', 2: 'a mailbox, but not after a software reset',
+               3: "the mailbox's check word", 4: 'lengths out of bounds', 5: "the copied container's CRC",
+               6: 'no MAIN OS section', 8: 'the unpacked image was wrong (reset, flashed OS)'}
+STAGES = {1: 'the command was taken', 2: "stock's job reached the flash call", 3: "stock's wait returned",
+          4: 'the drain returned', 5: 'the data cache was off', 6: 'the container was copied'}
+
+
+def rytm_link():
+    import importlib.util
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location(
+        'rytm_link', Path(__file__).resolve().parents[2] / 'analog-rytm-mkii/tools/rytm_link.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def ramboot_args(syx):
+    """(unpacked length, CRC32, container length, CRC32) of the image's MAIN OS, as the Rytm link computes them,
+    refused where the Digitone II's gate would refuse it."""
+    ulen, ucrc, clen, ccrc = rytm_link().ramboot_args(syx)
+    if ulen > IMAGE_MAX or clen > CONTAINER_MAX:
+        raise ValueError('the image unpacks to %d bytes (limit %d) from a %d-byte container (limit %d)'
+                         % (ulen, IMAGE_MAX, clen, CONTAINER_MAX))
+    return ulen, ucrc, clen, ccrc
+
+
+def upload(syx, port):
+    """Stock's OS upgrade over USB (os-upgrade.ts's messages): returns once the unit asks UPGRADE OS NOW?."""
+    import mido
+    rl = rytm_link()
+    pick = lambda names: [n for n in names if port.lower() in n.lower()]
+    msgs = rl.ek_upgrade_messages(syx)
+    with mido.open_input(pick(mido.get_input_names())[0]) as inp, mido.open_output(pick(mido.get_output_names())[0]) as out:
+        for _ in inp.iter_pending():
+            pass
+        for i, (seq, req) in enumerate(msgs):
+            out.send(mido.Message('sysex', data=req[1:-1]))
+            reply, end = None, time.time() + 10
+            while reply is None and time.time() < end:
+                m = inp.poll()
+                if m is None:
+                    time.sleep(0.001)
+                    continue
+                if m.type == 'sysex' and bytes(m.data[:5]) == rl.EK_HEADER[1:]:
+                    d = rl.ek_decode(bytes([0xF0]) + bytes(m.data) + b'\xF7')
+                    if len(d) > (9 if i else 5) and (d[2] << 8 | d[3]) == seq and d[4] == (0xD0 if i == 0 else 0xD1):
+                        reply = d
+            if reply is None:
+                sys.exit('No answer to upgrade message %d of %d: the unit stays on its OS.' % (i + 1, len(msgs)))
+            status = reply[5] if i == 0 else reply[9]
+            if (i == 0 and status) or status > 1:
+                sys.exit('The unit refused message %d (status %d): it stays on its OS.' % (i + 1, status))
+            if i and status == 1:
+                if i != len(msgs) - 1:
+                    sys.exit('The unit said done early; nothing confirmed.')
+                return
+    sys.exit('The unit never said the upload was complete; nothing confirmed.')
+
+
 def ok(name, *values, port):
     _, _, status, p = ask(name, *values, port=port)
     if status:
@@ -155,6 +220,8 @@ def main():
     sub.add_parser('disarm')
     sub.add_parser('keys')
     sub.add_parser('freeze').add_argument('seconds', type=float)
+    sub.add_parser('ramboot').add_argument('image')
+    sub.add_parser('bootdiag')
     diag = sub.add_parser('diag')
     diag.add_argument('--save', help='write the log, read through mem, to this file')
     shot = sub.add_parser('screen')
@@ -165,6 +232,36 @@ def main():
         print(ascii_art(rows))
         if a.png:
             open(a.png, 'wb').write(png(rows))
+        return
+    if a.cmd == 'ramboot':
+        syx = open(a.image, 'rb').read()
+        args = ramboot_args(syx)
+        print('image: unpacked %d bytes, crc %08x; container %d bytes, crc %08x' % args)
+        upload(syx, a.port)
+        print('uploaded; asking for a RAM boot (the base presses YES; nothing is written to the flash)')
+        time.sleep(0.5)
+        ok('ramboot', *args, port=a.port)
+        time.sleep(8)
+        for _ in range(60):
+            try:
+                _, _, status, p = ask('ident', port=a.port, timeout=1.0)
+            except SystemExit:
+                time.sleep(1)
+                continue
+            v = [get32(p, 5 * i) for i in range(len(p) // 5)]
+            if len(v) >= 11:
+                print('boot status %d: %s; image crc %08x (wanted %08x)' % (v[9], BOOT_STATUS.get(v[9], '?'), v[10], args[1]))
+            return
+        sys.exit('The unit did not answer within a minute after the reset; power cycle it to get the flashed OS back.')
+    if a.cmd == 'bootdiag':
+        _, _, status, p = ask('ident', port=a.port)
+        v = [get32(p, 5 * i) for i in range(len(p) // 5)]
+        at = v[11]
+        d = [int.from_bytes(mem(at + 4 * i, 4, a.port), 'big') for i in range(15)]
+        print('boot status %d: %s' % (v[9], BOOT_STATUS.get(v[9], '?')))
+        print('mailbox as found: ' + ' '.join('%08x' % w for w in d[:8]))
+        print('staged struct: ' + ' '.join('%08x' % w for w in d[8:12]))
+        print('marks: %08x %08x (%s); RSR %02x' % (d[12], d[13], STAGES.get(d[13] & 0xff, 'none') if d[13] >> 8 == 0x4d5754 else 'none', d[14] & 0xff))
         return
     if a.cmd == 'freeze':
         ok('freeze', int(a.seconds * 1500), port=a.port)
@@ -210,6 +307,8 @@ def main():
         line = 'link %d, received %d, dropped %d, ticks %d' % tuple(v[:4])
         if len(v) >= 9:
             line += ', armed %d, person %d, presses by a person %d, posted %d, refused %d' % tuple(v[4:9])
+        if len(v) >= 11:
+            line += '; boot %d (%s), image crc %08x' % (v[9], BOOT_STATUS.get(v[9], '?'), v[10])
         print(line)
     else:
         _, _, status, p = ask('mem', a.addr, a.n, port=a.port)
