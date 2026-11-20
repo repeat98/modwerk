@@ -16,7 +16,7 @@
         "shows": "location",
         "firmware": "1.40C",
         "moduleVersion": "0.3.0-experimental",
-        "imageSha256": "4f322f666f1e9111ab5e0d5aaa11e2e4d2262274d8e329bc30c30c6e1935cbc7",
+        "imageSha256": "3e269db196b09c6c338dd869fe78d018d127739dcef8d14a1807f025edaa9f59",
         "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
       }
     },
@@ -33,7 +33,7 @@
         "shows": "location-and-controls",
         "firmware": "1.40C",
         "moduleVersion": "0.3.0-experimental",
-        "imageSha256": "4f322f666f1e9111ab5e0d5aaa11e2e4d2262274d8e329bc30c30c6e1935cbc7",
+        "imageSha256": "3e269db196b09c6c338dd869fe78d018d127739dcef8d14a1807f025edaa9f59",
         "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
       }
     },
@@ -50,7 +50,7 @@
         "shows": "controls",
         "firmware": "1.40C",
         "moduleVersion": "0.3.0-experimental",
-        "imageSha256": "4f322f666f1e9111ab5e0d5aaa11e2e4d2262274d8e329bc30c30c6e1935cbc7",
+        "imageSha256": "3e269db196b09c6c338dd869fe78d018d127739dcef8d14a1807f025edaa9f59",
         "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
       }
     },
@@ -67,7 +67,7 @@
         "shows": "controls",
         "firmware": "1.40C",
         "moduleVersion": "0.3.0-experimental",
-        "imageSha256": "4f322f666f1e9111ab5e0d5aaa11e2e4d2262274d8e329bc30c30c6e1935cbc7",
+        "imageSha256": "3e269db196b09c6c338dd869fe78d018d127739dcef8d14a1807f025edaa9f59",
         "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
       }
     }

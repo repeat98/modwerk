@@ -2,7 +2,7 @@
 
 ## 0.3.0-experimental release candidate, 20 November 2026
 
-The four [menu captures](media/capture.json) show the exact candidate base `dd7e684c9540` running the migrated Outbox set in the MKII emulator. They show the settings list, USB Audio fields, both stem taps and the four output assignments. The images were taken from the display bytes sent to the emulated panel.
+The four [menu captures](media/capture.json) show the exact candidate base `c7eba65fa9ec` running the migrated Outbox set in the MKII emulator. They show the settings list, USB Audio fields, both stem taps and the four output assignments. The images were taken from the display bytes sent to the emulated panel.
 
 **Release blocked on Track 8/Master.** The rebuilt base `e0cbd7173d0b` passed seven RAM trials on the MKII. On the eighth trial it acknowledged the migrated Track 8/Master set and disappeared from USB before recording. The hub failed to enable the port. A software Undo could not be confirmed. The candidate was never kept. The same configurable module recorded at 2, 4, 8, 16 and 20 channels. Both 16-channel post-LEVEL trials returned to the original USB configuration and set checksum after Undo. The UI tick continued advancing after each of the seven successful reconnects. During the eighth trial the owner confirmed that the panel still responded. A cold start restored the original flashed base and all ten modules, with an exact match to the starting saved-set checksum. A physical Outbox was unavailable.
 

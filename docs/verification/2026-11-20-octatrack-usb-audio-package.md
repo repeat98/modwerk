@@ -117,3 +117,11 @@ The native and browser builders produced identical OS bytes, SHA-256 `b1c88d62b6
 ## Remaining verification
 
 A physical full-speed host, Windows/WASAPI after a channel-count change, and a Keep/removal lifecycle remain open. The full-set regression, soak and listening stages also remain open. The published site continues to use its existing base variants.
+
+## Track 8/Master reconnect candidate
+
+The Mac stopped before it could read the descriptors in the failed Track 8/Master trial. Main and Track 8/Master use the same stereo descriptors. The earlier hardware log did not capture the ColdFire port connection bit during the failure.
+
+Base 0.7.11 now checks whether the controller attached after it requested the USB connection. It retries once if VBUS is valid, the controller is running, the port is disconnected and neither a host reset nor USB disk use is in progress. Its original trial deadline still applies. The controller model checks successful attachment, suspend, reset, unplug and timeout.
+
+For the physical retest, release base identity is `c7eba65fa9ece225c518771c4134afce964e1bd8488264268f1605224f30440f`. The native and browser builds produced byte-identical OS images with SHA-256 `5b22402b47c7f711bebfbb9f8e3fb11b27c28514f7465603bc82043c161eeca6`. Both USB and card preparation reproduced all seven migrated profile fixtures. The MKII emulator streamed the 16-channel PRE layout and then Track 8/Master twice. Each Undo restored the four baseline USB interfaces. All three captures reported zero ring overruns and underruns.
