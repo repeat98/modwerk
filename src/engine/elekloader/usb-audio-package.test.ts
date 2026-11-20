@@ -4,7 +4,8 @@
 // lists no package. Synthetic package bytes only.
 import { describe, expect, it, vi } from 'vitest'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
-import { USB_AUDIO_MODULE, type UsbAudioLayout } from '../../config/usb-audio'
+import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
+import { USB_AUDIO_MODULE, USB_AUDIO_PACKAGED, type UsbAudioLayout } from '../../config/usb-audio'
 import { countsTowardLimit, limitedCount } from '../../catalog/set-limit'
 import { BaseLayoutRequired, createRuntimeCatalogue, ModuleSetError, removalPackage, runtimeId, usbAudioLayoutNumber, type RuntimePackage } from './module-set'
 
@@ -80,6 +81,9 @@ describe('USB Audio as a module package', () => {
     const review = catalogue.review(set('main'), empty, capable, 'not-a-published-base')
     expect(review.changes.add).toEqual([]) // the base provides it: nothing to add as a package
     expect(review.problem === undefined || review.problem instanceof BaseLayoutRequired || review.problem instanceof ModuleSetError).toBe(true)
+  })
+  it('flags USB Audio as packaged exactly when the manifest publishes its packages', () => {
+    expect(USB_AUDIO_PACKAGED).toBe(Object.keys((manifest as { usbAudio?: object }).usbAudio ?? {}).length > 0)
   })
   it('counts toward the module limit only as a package', () => {
     expect(countsTowardLimit(USB_AUDIO_MODULE, false)).toBe(false)
