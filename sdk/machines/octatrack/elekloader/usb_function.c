@@ -16,7 +16,8 @@
  *                disconnect, the independent frame interrupt reconnects after one second.
  *   BACK (tick)  the host resets the bus and enumerates. That reset is the base's own disconnect: ep0.c undoes
  *                no open sync or trial for it. The reconnect is over when the host, after a reset, reaches the
- *                vendor interface; without that for 20 s it counts as unplugged
+ *                vendor interface. If the powered link still shows no attachment after three seconds, offer
+ *                the same descriptors once more. The original 20-second host deadline still applies.
  *
  * The base raises ev_usb_isr, ev_usb_bus_end, ev_usb_control and ev_usb_frame by walking their rows here, never through the
  * loader's dispatch code (runtime_events.s): the loader holds a switch back while any task's stack holds an address
@@ -45,6 +46,10 @@ int modwerk_machine_stopped(void);
 int modwerk_machine_usb_disk(void); /* runtime.c: stock's USB DISK MODE is open */
 
 #define UF_USBCMD 0xfc0b0140u      /* bit 0, run/stop: the pull-up */
+#define UF_PORTSC1 0xfc0b0184u
+#define UF_OTGSC 0xfc0b01a4u
+#define UF_SESSION_VALID 0x800u    /* OTGSC.BSV */
+#define UF_PORT_ACTIVE 0x181u      /* PORTSC1.PR, SUSP or CCS, MCF54455RM section 10.3.4.14 */
 #define UF_SETUPSTAT 0xfc0b01acu
 #define UF_PRIME 0xfc0b01b0u
 #define UF_FLUSH 0xfc0b01b4u
@@ -68,6 +73,7 @@ extern const struct uf_base_configuration modwerk_cfg_native;
 #define UF_PATIENCE 600u
 #define UF_FRAME_TIMEOUT ((44100u + 15u) / 16u) /* one second in 16-sample blocks */
 #define UF_DOWN 30u
+#define UF_ATTACH_CHECK 180u       /* ticks after first asserting run/stop */
 #define UF_LEASE 1200u
 #define UF_FLUSH_SPINS 2000u
 
@@ -83,9 +89,10 @@ static volatile uint32_t row_serial;    /* 0 for none; a new number for every fu
 static volatile uint8_t dirty;
 static uint32_t serials, live_serial;   /* live: the function the slots describe */
 static volatile uint8_t state, reconnects;
-static uint8_t forced, live_profile, panel_reconnect;
+static uint8_t forced, live_profile, panel_reconnect, retried;
 static volatile uint8_t reset_seen; /* BACK: the host has reset the bus since the unit came back */
 static volatile uint16_t timer, frames_to_attach;
+static uint8_t off_ticks;
 static uint16_t waited;
 
 /* Every handler of a hook the base raises, in the row's order (lower first, then module id); their answers OR'd.
@@ -214,10 +221,16 @@ static void uf_compose(void)
 
 /* Called with the USB interrupt held off by the frame interrupt or by the tick's full mask.
  * The configuration slots have already been written. Allow the host to reset as soon as RS is set. */
+static void uf_wait_to_attach(void)
+{
+    off_ticks = UF_DOWN;
+    frames_to_attach = UF_FRAME_TIMEOUT;
+    state = UF_OFF; /* publish last to the frame interrupt */
+}
+
 static void uf_attach(void)
 {
     reset_seen = 0;
-    timer = UF_LEASE;
     state = UF_BACK;
     UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) | 1u;
     ++reconnects;
@@ -248,9 +261,9 @@ int modwerk_usb_function_tick(int quiet)
             panel_reconnect = row_serial == live_serial;
             if (panel_reconnect && row_endpoints) uf_retire(row_endpoints);
             uf_compose();
-            timer = UF_DOWN;
-            frames_to_attach = UF_FRAME_TIMEOUT;
-            state = UF_OFF; /* publish last to the frame interrupt */
+            timer = UF_LEASE;
+            retried = 0;
+            uf_wait_to_attach();
         } else ++waited;
         modwerk_machine_unlock(lock);
         break;
@@ -258,13 +271,28 @@ int modwerk_usb_function_tick(int quiet)
         /* The frame interrupt can complete this transition between the switch and the mask. */
         lock = modwerk_machine_mask();
         if (state == UF_OFF) {
-            if (timer) --timer;
+            if (retried && timer) --timer; /* the second detach is inside the original lease */
+            if (off_ticks) --off_ticks;
             else uf_attach();
         }
         modwerk_machine_unmask(lock);
         break;
     default:
-        if (timer && --timer) break;
+        if (timer && --timer) {
+            if (timer != UF_LEASE - UF_ATTACH_CHECK || retried) break;
+            /* RS requests attachment. CCS reports the result. Leave an attached, suspended
+             * or resetting port, a real unplug, and an active disk session to their owners. */
+            lock = modwerk_machine_lock();
+            if (state == UF_BACK && !reset_seen && quiet && !modwerk_machine_usb_disk() &&
+                (UF_REG(UF_OTGSC) & UF_SESSION_VALID) && !(UF_REG(UF_PORTSC1) & UF_PORT_ACTIVE) &&
+                (UF_REG(UF_USBCMD) & 1u)) {
+                retried = 1;
+                UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) & ~1u;
+                uf_wait_to_attach();
+            }
+            modwerk_machine_unlock(lock);
+            break;
+        }
         state = UF_SETTLED;
         return 1; /* nobody reached the vendor interface: as unplugged */
     }

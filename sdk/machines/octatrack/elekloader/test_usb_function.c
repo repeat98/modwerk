@@ -15,6 +15,8 @@ static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
 
 #define USBCMD 0xfc0b0140u
+#define PORTSC1 0xfc0b0184u
+#define OTGSC 0xfc0b01a4u
 #define SETUPSTAT 0xfc0b01acu
 #define FLUSH 0xfc0b01b4u
 #define STAT 0xfc0b01b8u
@@ -378,6 +380,31 @@ int main(void)
     modwerk_usb_function_bus_end();
     modwerk_usb_function_host();
     CHECK(!status(0) && !ticks(1300, 1) && status(3) == prior_reconnects + 1u);
+
+    /* A valid cable session and a run command do not prove physical attachment.
+     * Check the same installation against each link status. A second attach
+     * must keep the original deadline and the already published descriptors. */
+    struct link_case { unsigned session, port; int retry; } cases[] = {
+        {0x800, 0, 1}, {0, 0, 0}, {0x800, 1, 0}, {0x800, 0x100, 0}, {0x800, 0x80, 0}
+    };
+    for (unsigned k = 0; k < sizeof cases / sizeof cases[0]; ++k) {
+        UF_REG(OTGSC) = cases[k].session;
+        UF_REG(PORTSC1) = cases[k].port;
+        arrive();
+        CHECK(!ticks(62 + 31, 1) && attached() && status(0) == 3u);
+        unsigned first_attach = status(3);
+        CHECK(!ticks(180, 1));
+        CHECK(attached() == !cases[k].retry);
+        CHECK(!ticks(31, 1) && attached());
+        CHECK(status(3) == first_attach + (unsigned)cases[k].retry);
+        describes(1);
+        CHECK(!ticks(1200 - 211 - 1, 1) && ticks(1, 1) == 1u);
+        CHECK(!status(0) && status(3) == first_attach + (unsigned)cases[k].retry);
+        leave();
+        UF_REG(FLUSH) = UF_REG(COMPLETE) = 0;
+        CHECK(!ticks(62 + 31, 1) && attached());
+        back();
+    }
 
     if (failures) return 1;
     puts("usb function: admission, slots, reconnect and its holds pass");

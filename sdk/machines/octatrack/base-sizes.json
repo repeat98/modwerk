@@ -377,11 +377,11 @@
   },
   {
    "base": "0.7.11",
-   "identity": "e0cbd7173d0bc1bc5e9ba2f297c104b886035531c05cb93f070a61f7ba07fa9c",
+   "identity": "dd7e684c9540e50f5eadaaf090983acadcdb984b59281d7abeac0763952caa01",
    "layouts": {
     "off": {
-     "main": 1329599,
-     "container": 810712
+     "main": 1329758,
+     "container": 810888
     }
    }
   }

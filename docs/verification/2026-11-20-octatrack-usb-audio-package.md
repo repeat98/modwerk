@@ -106,6 +106,14 @@ A further migrated 16-channel PRE LEVEL trial recorded 91,648 frames and complet
 
 The owner confirmed that an arrow key still responded while the Mac could not see the unit. After a cold start with USB disconnected, the owner reconnected USB. The flashed base, ten module identities and complete saved-set checksum matched the starting record byte for byte. The retained log for trial boot 734 contained no new freeze, crash or DSP stall. The failed USB reconnection remains unexplained.
 
+### A second attachment attempt on a powered link
+
+The two-channel Main and Track 8/Master presets use the same descriptor profile. On the previous base, setting the controller's run bit started the twenty-second host deadline. The base did not consult the controller's attachment status during that interval. The host log alone cannot establish the value of that register on the failed unit.
+
+Base `dd7e684c9540e50f5eadaaf090983acadcdb984b59281d7abeac0763952caa01` checks the powered session and the device's attach, suspend and reset indications after three seconds. If attachment has still not completed, it offers the same descriptors once more within the original deadline. A controller-model regression checks a powered link without attachment, an absent cable, a successful attachment, suspend and reset. The previous code failed the missing-attachment checks. Both the USB function and package test suites passed on the new code. Register semantics follow the [MCF54455 reference manual, sections 10.3.4.1 and 10.3.4.14–15](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf).
+
+The native and browser builders produced identical OS bytes, SHA-256 `b1c88d62b606518e188129d54c0ce005c00318881283b256bf4c4c3ba1d0d0bb`. All seven saved-set fixtures gave the same module bytes through the USB and card installers. On this exact OS the emulator installed the migrated sixteen-channel PRE set, then the Track 8/Master set twice. Each trial streamed sixteen complete packets and Undo restored the original four USB interfaces. These tests exercise ordinary successful enumeration. Hardware qualification follows separately.
+
 ## Remaining verification
 
 A physical full-speed host, Windows/WASAPI after a channel-count change, and a Keep/removal lifecycle remain open. The full-set regression, soak and listening stages also remain open. The published site continues to use its existing base variants.
