@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 3,
+  "id": "tonic",
+  "name": "Tonic",
+  "version": "0.1.0",
+  "machine": "zoom-ms-70cdr",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "themanro",
+    "name": "Roman Rusinov",
+    "credits": [
+      "Roman Rusinov and the ZoomMultistompZDL contributors",
+      "Roman Rusinov and the MultiStomp Editor contributors, editor artwork",
+      "Leemuzhko, effect runtime",
+      "Jannik Aßfalg, ZoomMultistompZDL toolchain"
+    ]
+  },
+  "maintainers": [
+    "themanro",
+    "repeat98"
+  ],
+  "source": {
+    "repository": "https://github.com/themanro/ZoomMultistompZDL",
+    "revision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+    "path": "src/custom/tonic"
+  },
+  "presentation": {
+    "label": "TONIC",
+    "family": "Distortion",
+    "summary": "A Bitters-inspired multi-effect: drive, a phaser and one of decimate, crush, FM or ring mod, in either order.",
+    "overview": "A Bitters-inspired multi-effect: drive, a phaser and one of decimate, crush, FM or ring mod, in either order.",
+    "highlights": [
+      "Try each processor on the same phrase, then reverse the processing order."
+    ],
+    "usage": [
+      "Add Tonic from the Delay group to a spare patch.",
+      "Try each processor on the same phrase, then reverse the processing order.",
+      "Use the page buttons to reach the remaining controls."
+    ]
+  },
+  "access": {
+    "location": "Delay group in the MS-70CDR effect list, under Tonic.",
+    "steps": [
+      "Add Tonic from the Delay group to a spare patch.",
+      "Try each processor on the same phrase, then reverse the processing order."
+    ],
+    "screenshots": [
+      "media/cover.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Mode",
+      "default": 12,
+      "doc": "Four named regions: Decim, Crush, FM, Ring. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Amnt",
+      "default": 25,
+      "doc": "Selected processor strength; zero bypasses it. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Drive",
+      "default": 0,
+      "doc": "Gain-compensated cubic distortion; zero bypasses it. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Phase",
+      "default": 0,
+      "doc": "Six-stage sine-swept phaser, up to 20 Hz; zero bypasses it. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Order",
+      "default": 0,
+      "doc": "Fwd: Drive-Phase-Mode. Rev: Mode-Phase-Drive. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Mix",
+      "default": 50,
+      "doc": "Stereo dry to mono processed wet; exact dry at zero. Range 0–100.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "2.10"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Hardware untested on the original MS-70CDR with OS 2.10.",
+      "This build has startup knob initialization disabled. Check saved settings after recalling a patch."
+    ]
+  },
+  "platform": {
+    "kind": "zdl",
+    "file": "Tonic.ZDL",
+    "effectId": {
+      "gid": 8,
+      "fxid": 499
+    },
+    "effectVersion": "0.01",
+    "dspCost": 20.0,
+    "binary": {
+      "sha256": "388343ba778aa7b89709b0aa3363ec4c4c936a19f511c2de9ceaaf37813cc7a8",
+      "bytes": 10446,
+      "release": {
+        "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+        "tag": "tonic-0.01",
+        "asset": "Tonic.ZDL"
+      }
+    },
+    "screen": "static",
+    "pedals": [
+      {
+        "machine": "zoom-ms-70cdr",
+        "firmware": "2.10",
+        "status": "untested",
+        "report": null
+      }
+    ]
+  },
+  "resources": {
+    "memoryBytes": 10446,
+    "fastBytes": null,
+    "load": {
+      "display": "DSP 20 of 225 per patch",
+      "method": "static",
+      "conditions": "The effect descriptor declares this cost. Audio load on the pedal is unmeasured."
+    }
+  },
+  "evidence": {
+    "tier": "emulator",
+    "moduleVersion": "0.1.0",
+    "sourceSha256": "388343ba778aa7b89709b0aa3363ec4c4c936a19f511c2de9ceaaf37813cc7a8",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Ziddle passed the loader check and rendered 22,050 stereo frames. The compiled file passed the stock-code scan and MS-70CDR size limits. Hardware untested.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Add Tonic from the Delay group to a spare patch.",
+          "Try each processor on the same phrase, then reverse the processing order.",
+          "Use the page buttons to reach the remaining controls."
+        ]
+      },
+      "screenshots": [
+        "media/cover.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "MIT AND BSD-3-Clause",
+    "file": "LICENSE",
+    "declaration": "Effect source and artwork are MIT licensed. The runtime uses MIT and BSD-3-Clause components. See LICENSE for the applicable notices and credits."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.png",
+      "kind": "thumbnail",
+      "caption": "Tonic in the MultiStomp Editor",
+      "alt": "Tonic editor illustration",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "https://github.com/themanro/ZoomMultistompZDL/blob/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/graphics/fx/tonic.webp"
+    },
+    {
+      "path": "media/cover.png",
+      "kind": "screenshot",
+      "caption": "Tonic embedded cover",
+      "alt": "The monochrome effect cover for Tonic",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling.",
+      "capture": {
+        "type": "emulator",
+        "release": "2.10",
+        "moduleVersion": "0.1.0",
+        "imageSha256": "388343ba778aa7b89709b0aa3363ec4c4c936a19f511c2de9ceaaf37813cc7a8",
+        "setup": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+      }
+    }
+  ]
+}

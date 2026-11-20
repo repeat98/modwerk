@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "ring",
+  "moduleVersion": "0.3.0",
+  "imageSha256": "7be0ab44802cad6e3ebe08f94c23c51e0dcafc4e0ccaaf9ce596b336ad2d094c",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "691d3340bf96eace812c4eb06d47c9199d2aa4b1083462de986cced9ed55f3c5",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}

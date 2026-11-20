@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "flower",
+  "moduleVersion": "2.0.0",
+  "imageSha256": "3075e592e86fe95ff9744112a7997766aac5df127108653dd81746ee7d64ae15",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "0a0c103f55e37f255727159e335fc2541fb63f34ed96b5013029e0a9ad4e1c98",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}
