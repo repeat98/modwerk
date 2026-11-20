@@ -34,6 +34,23 @@ const library = {
 }
 
 describe('module library discovery', () => {
+  it('offers Scenes as a Performance type and groups macros across instruments', async () => {
+    const performance = AVAILABLE_MODULES.filter(module => module.category === 'performance')
+    const render = (family: string) => act(() => root.render(createElement(MachineLibrary, {
+      ...library, category: 'performance', family, octatrackModules: performance.filter(module => module.type === family),
+    })))
+    await render('Scenes')
+    const types = Array.from(container.querySelectorAll('.catalog-sort-group select:first-of-type option'), option => option.textContent)
+    expect(types).toEqual(expect.arrayContaining(['Scenes', 'Crossfader', 'Macros', 'Mutes & solos']))
+    expect(types).not.toContain('Kits & parts')
+    expect(container.querySelectorAll('.module-card')).toHaveLength(2)
+    expect(container.querySelector('.module-grid')?.textContent).toContain('MIDI Scenes')
+    await render('Macros')
+    expect(container.querySelector('#machine-digitakt')).not.toBeNull()
+    expect(container.querySelector('#machine-analog-rytm-mkii')).not.toBeNull()
+    expect(container.querySelector('#machine-octatrack')).toBeNull()
+  })
+
   it('lets desktop users change type directly and dismiss the separate category menu with Escape', async () => {
     const onFamilyChange = vi.fn()
     const categoryNav = createElement('nav', { 'aria-label': 'Module library' }, createElement('a', { href: '#effects' }, 'Effects'))
