@@ -3976,14 +3976,14 @@
         ]
       },
       "resources": {
-        "recorded": "29 Sep 2026 (upstream record)",
+        "recorded": "20 November 2026, configurable release package",
         "storage": {
-          "label": "Audio rings",
-          "display": "Depends on USB layout",
+          "label": "Runtime memory",
+          "display": "Full bound unmeasured",
           "value": null,
           "unit": "bytes",
           "method": "unmeasured",
-          "conditions": "Exact linked section sizes are recorded per layout in evidence/layouts.json; the historical 88 KiB figure applies to the classic twenty-channel path. Complete stack / DMA and hardware memory bounds have not been measured.",
+          "conditions": "USB Audio 0.3 allocates 10,288 initialized bytes and 94,152 zero-initialized bytes for every layout. The complete bound including stack and DMA remains unmeasured.",
           "source": "README.md"
         },
         "processing": {
@@ -4012,7 +4012,7 @@
           "memory": {
             "level": "moderate",
             "basis": "source-estimate",
-            "rationale": "The selected source determines the static audio ring footprint. Linked sections are recorded for all six layouts in evidence/layouts.json. This tier describes source allocation sizes, not a complete hardware memory bound.",
+            "rationale": "All layouts use the same release package. Its linked section sizes are recorded in TESTING.md. Complete memory use including stack and DMA remains unmeasured.",
             "source": "README.md"
           }
         }
