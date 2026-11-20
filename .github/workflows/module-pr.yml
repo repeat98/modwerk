@@ -37,7 +37,9 @@ jobs:
           node-version: 24
       - id: scope
         env:
-          OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}
+          # The merge commit's own base parent. The event's base.sha can be an older main than the one GitHub merged
+          # onto, and two commits of history do not hold it, so rev-parse failed whenever main had moved.
+          OCTAMOD_PR_BASE: HEAD^1
         run: node scripts/pr-check-plan.mjs --base "$OCTAMOD_PR_BASE" --head HEAD >> "$GITHUB_OUTPUT"
   describe:
     if: github.base_ref == 'main' || (startsWith(github.base_ref, 'base/') && endsWith(github.base_ref, '-next'))
