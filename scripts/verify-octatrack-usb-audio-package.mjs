@@ -13,6 +13,9 @@
 // SETTINGS, YES takes OFF and, in the twenty-channel layout, MAIN + CUE ONLY; each choice is in the base's battery-RAM
 // store, and the stream goes on under it with whole packets: of zeros under OFF, with silent track channels under
 // MAIN + CUE ONLY.
+// The emulated unit runs as the bench drives it, so the key presses and RAM reads between the bursts advance its
+// producer while nothing polls EP3: the ring then runs past its 1024 frames and the counters show an overrun or
+// two. The same control traffic with no setting change does it too (20 November 2026); a host polls all the time.
 // Emulator evidence of the package's and the base's code only: no host driver, no audio content check, no hardware.
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
