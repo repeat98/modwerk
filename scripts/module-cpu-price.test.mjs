@@ -54,7 +54,17 @@ describe('every Octatrack module names its CPU price', () => {
     expect(machine).toMatchObject({ state: 'fail', detail: expect.stringContaining('names no CPU price') })
     expect(machine.fix).toContain('npm run device -- do')
     const effect = cpuPriceStatus({ root, document: module('echo', 'FX2'), pending: new Map(), glue: {} })
-    expect(effect.fix).toContain('npm run device:price -- echo')
+    expect(effect.fix).toContain('npm run device:price -- --write --base ID --scene TEXT echo')
+  })
+
+  it('recomputes a price device:price wrote from its readings, and refuses one changed by hand', () => {
+    const reading = { module: 'echo', result: { atRestAdds: { frame: 0.2 }, inUseAdds: { frame: 1.3 } } }
+    const root = fixture({ 'sdk/octatrack/modules/echo/evidence/cpu-price.json': reading })
+    const status = value => cpuPriceStatus({ root, document: module('echo', 'FX2', { ...share(value), source: 'evidence/cpu-price.json' }), pending: new Map(), glue: {} })
+    expect(status(1.3).state).toBe('ok')
+    expect(status(0.5)).toMatchObject({ state: 'fail', detail: expect.stringContaining('the reading in evidence/cpu-price.json gives 1.3') })
+    const missing = cpuPriceStatus({ root, document: module('other', 'FX2', { ...share(0), source: 'evidence/cpu-price.json' }), pending: new Map(), glue: {} })
+    expect(missing).toMatchObject({ state: 'fail', detail: expect.stringContaining('holds no device:price reading of other') })
   })
 
   it('takes a machine whose descriptor carries the price it names, literal or #define', () => {
