@@ -40,6 +40,10 @@ class MachineEventTests(unittest.TestCase):
         result = host(self, OT / 'elekloader/test_machine_registry.c')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_charge_resolves_each_track_owner_once(self):
+        result = host(self, '-finstrument-functions', ROOT / 'sdk/tests/test_machine_charge.c')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_midi_generators_on_the_host(self):
         result = host(self, OT / 'elekloader/test_midi_generators.c')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

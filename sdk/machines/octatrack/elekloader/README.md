@@ -340,7 +340,7 @@ counts of zero (-120 dBFS) with its send gain at zero for 16,384 frames in a row
 whose echoes have died), its read and write are left out and only the dry gain is applied, as stock ramps it. Stock's
 filter never comes back to exact zero after a send, so this drops a residue below -120 dBFS rather than being
 bit-identical. A send that opens starts from silent taps. A module that takes the routine's seam before it (Tape Echo,
-`0x4000361a`) restarts the count. The A/B harness and the unit figures are in `delay-harness/`.
+`0x4000361a`) restarts the count. A pick is still judged as if every quiet delay were awake (`modwerk_status_cpu_load` adds a point a quiet track), since a scene that opens the sends takes the whole saving back from the next frame: the skip buys margin, never admission. The A/B harness and the unit figures are in `delay-harness/`.
 
 `status.c` also keeps the frame interrupt's share of each frame from the frame guard's sums, over the last four seconds (the last play's while stopped), and the box after a pick shows it in its CPU row against `mw_frame_line`, the share where the guard starts to drop renders.
 
