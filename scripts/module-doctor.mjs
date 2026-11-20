@@ -15,7 +15,7 @@ import { spawnSync } from 'node:child_process'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { availableModules, PAUSED_MODULE_IDS, isBetaModule } from '../src/catalog/availability.ts'
-import { LIBRARY_CATEGORIES } from '../src/catalog/modules.ts'
+import { MODULE_V3_CATEGORIES } from '../src/catalog/module-contract-v3.ts'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
 import { moduleSourceFingerprint } from './module-source.mjs'
 import { ANALOG_BD_DSP_COMPANIONS } from '../src/engine/analog-bd-layout.ts'
@@ -104,7 +104,7 @@ function octatrack(id) {
   else if (entry && !availableModules(true).some(module => module.id === id)) fail('library', 'the library does not offer it', 'run npm run modules:generate')
   else if (entry) ok('library', isBetaModule(id) ? 'offered to beta testers in the library and configurator' : 'offered in the library and the configurator')
 
-  if (!LIBRARY_CATEGORIES.includes(document.category)) fail('category guide', 'category ' + document.category + ' is not a library category', 'use one of ' + LIBRARY_CATEGORIES.join(', '))
+  if (!MODULE_V3_CATEGORIES.includes(document.category)) fail('category guide', 'category ' + document.category + ' is not a manifest category', 'use one of ' + MODULE_V3_CATEGORIES.join(', '))
   else if (!exists('docs/module-guides/' + document.category + '.md')) fail('category guide', 'docs/module-guides/' + document.category + '.md is missing', 'write the guide for this category')
   else ok('category guide', 'walk docs/module-guides/' + document.category + '.md (and sequencing.md if it acts in time)')
   // The knobs the build writes into the instrument (manifest.py) and the ones the site describes (controls[]) are one list.
@@ -251,7 +251,7 @@ function machineModule({ id, machine, folder, zdl = false }) {
   if (!manifest) lines.push({ state: 'fail', name: 'manifest', detail: folder + '/modwerk.module.json is missing', fix: 'npm run module:new -- <id> --machine ' + machine + ' --author <login>' })
   else {
     lines.push({ state: 'ok', name: 'manifest', detail: manifest.version })
-    if (!LIBRARY_CATEGORIES.includes(manifest.category)) lines.push({ state: 'fail', name: 'category guide', detail: 'category ' + manifest.category + ' is not a library category', fix: 'use one of ' + LIBRARY_CATEGORIES.join(', ') })
+    if (!MODULE_V3_CATEGORIES.includes(manifest.category)) lines.push({ state: 'fail', name: 'category guide', detail: 'category ' + manifest.category + ' is not a manifest category', fix: 'use one of ' + MODULE_V3_CATEGORIES.join(', ') })
     else if (!exists('docs/module-guides/' + manifest.category + '.md')) lines.push({ state: 'fail', name: 'category guide', detail: 'docs/module-guides/' + manifest.category + '.md is missing', fix: 'write the guide for this category' })
     else lines.push({ state: 'ok', name: 'category guide', detail: 'walk docs/module-guides/' + manifest.category + '.md' + (zdl ? ' and "Create an effect" in sdk/machines/' + machine + '/README.md' : ', and the Digitakt and Digitone section in it') })
   }
