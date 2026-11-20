@@ -1,12 +1,13 @@
 [
   {
     "version": "0.1.1-experimental",
-    "date": "2026-11-19",
+    "date": "2026-11-21",
     "changes": [
-      "SAVE KIT has moved into the Part Edit window: FUNC + PART, then KITS, then SAVE KIT. RENAME, RELOAD, SAVE and SAVE ALL are back under PART.",
+      "FUNC + PART now opens Kits' own Part Edit window: SAVE KIT, RELOAD KIT and RENAME KIT, in PART's place.",
+      "RENAME KIT renames the pattern's Kit; RELOAD KIT brings it back as saved.",
       "Now offered together with Pattern Sample Locks: each has its own row in that window.",
       "FUNC + PASTE + PART still copies the pasted pattern's Kit to the next empty one.",
-      "Needs Modwerk base 0.7.9 or newer, over USB."
+      "Needs Modwerk base 0.7.11 or newer, over USB."
     ]
   },
   {

@@ -19,7 +19,7 @@
     "label": "255 Kits per project",
     "family": "Parts and Kits",
     "summary": "255 Kits per project instead of four Parts per bank: each pattern plays its own Kit, saved and loaded by name.",
-    "overview": "A Kit is a saved Part with a name: machines, samples by slot, effects, track and MIDI settings, LFOs and the 16 scenes. Kits keeps 255 of them per project and lets each pattern play its own, so patterns are no longer tied to their bank's four Parts. Press PART to load a Kit into the current pattern, FUNC+PART to save the current Part as a Kit. Behind the scenes each pattern's Kit is copied into a free Part slot of its bank before the pattern plays, through the stock Part engine.",
+    "overview": "A Kit is a saved Part with a name: machines, samples by slot, effects, track and MIDI settings, LFOs and the 16 scenes. Kits keeps 255 of them per project and lets each pattern play its own, so patterns are no longer tied to their bank's four Parts. Press PART to load a Kit into the current pattern, FUNC+PART to save, reload or rename the pattern's Kit. Behind the scenes each pattern's Kit is copied into a free Part slot of its bank before the pattern plays, through the stock Part engine.",
     "highlights": [
       "LOAD KIT and SAVE KIT lists with the Kits' names, UNDO KIT, and seven-character names.",
       "Each pattern plays its Kit; copying and pasting a pattern carries its Kit.",
@@ -28,7 +28,7 @@
     ],
     "usage": [
       "Press PART (MKI: FUNC+MIDI): LOAD KIT lists UNDO KIT and the 255 Kits. Choose one with YES: the current pattern plays it now.",
-      "Press FUNC+PART (MKI: FUNC+MIDI, then FUNC+BANK): SAVE KIT. Choose a Kit with YES, name it and confirm: the current Part is saved into it and the pattern plays it.",
+      "Press FUNC+PART and YES on SAVE KIT (MKI: FUNC+MIDI, then FUNC+BANK). Choose a Kit with YES, name it and confirm: the current Part is saved into it and the pattern plays it.",
       "The status line shows the current pattern's Kit as NNN name."
     ]
   },
@@ -37,7 +37,7 @@
     "steps": [
       "Press PART on the MKII, or FUNC+MIDI on the MKI, to open LOAD KIT.",
       "Move to a Kit with UP and DOWN or the LEVEL encoder and press YES: the current pattern plays that Kit.",
-      "Press FUNC+PART on the MKII, or FUNC+MIDI then FUNC+BANK on the MKI, to open SAVE KIT; press YES on a Kit, edit its name and confirm to save the current Part into it."
+      "Press FUNC+PART and YES on SAVE KIT on the MKII, or FUNC+MIDI then FUNC+BANK on the MKI; press YES on a Kit, edit its name and confirm to save the current Part into it."
     ],
     "screenshots": [
       "media/ot-status-kit.png",
@@ -72,7 +72,7 @@
     "limitations": [
       "OS 1.40C on the Modwerk base with the sample-memory loan (ot_sample_memory), over USB only: card firmware cannot include it. Not yet run on a unit or in the emulator.",
       "Borrows 331 pages (about 2 MB) of sample memory while installed: about 23 s less of 16-bit mono sample time. When the pool cannot spare them, Kits stays off and the unit behaves as stock.",
-      "SAVE KIT is in the Part Edit window (FUNC+PART), under KITS: it needs a base with the Part Edit menu (ot_part_menu). On an older base it is not offered.",
+      "Needs Modwerk base 0.7.11 or newer: FUNC+PART opens the Part Edit window with SAVE KIT, RELOAD KIT and RENAME KIT in PART's place. Stock's Part Edit rows are left out while Kits is on; while it is off its row is left out and the window is stock's.",
       "No quick save with FUNC+YES in SAVE KIT: save with YES and the name editor. FUNC+YES in either list does what it does elsewhere.",
       "A Kit carries no MIDI scene locks, and a kits.work from an octabam image with MIDI SCENES (version 2) is not read: that project then plays its Parts as stock.",
       "A damaged kits.work is never overwritten: that project then plays its Parts as stock and keeps no Kits. Rename or delete the file on the card to start over.",
@@ -142,7 +142,7 @@
         "title": "Quick tutorial",
         "steps": [
           "Install Kits into a project and press PART (MKI: FUNC+MIDI). The list shows the project's Parts as Kits 001 to 064.",
-          "Change a sound on the current track, press FUNC+PART (MKI: FUNC+MIDI, then FUNC+BANK), move to an empty Kit, press YES, type a name and confirm: `KIT SAVED`, and the status line shows the new Kit.",
+          "Change a sound on the current track, press FUNC+PART and YES on SAVE KIT (MKI: FUNC+MIDI, then FUNC+BANK), move to an empty Kit, press YES, type a name and confirm: `KIT SAVED`, and the status line shows the new Kit.",
           "Select another pattern, press PART, choose the Kit you saved and press YES: that pattern now plays it. Switch between the two patterns while playing; each plays its own Kit."
         ]
       },

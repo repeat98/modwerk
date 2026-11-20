@@ -70,7 +70,7 @@ MODULE = Module(
     category=Category.PARTS, author="sambanks", author_url="https://github.com/sambanks",
     proof=Proof.UNTESTED,
     proof_note="USB package only; no emulator or hardware result for this port yet (TESTING.md).",
-    doc="255 Kits per project: PART = LOAD KIT, FUNC+PART > KITS > SAVE KIT (MKI: FUNC+MIDI, "
+    doc="255 Kits per project: PART = LOAD KIT, FUNC+PART = SAVE, RELOAD, RENAME KIT (MKI: FUNC+MIDI, "
         "then FUNC+BANK); each pattern plays its Kit through the stock Part slots. After Em's Octakit.",
     linked=(Linked("kits", "modules/kits/kits.s", dram=True),),
     detours=DETOURS,

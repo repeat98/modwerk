@@ -15,7 +15,7 @@ A Kit holds what a Part holds, and no more. Samples are referred to by slot numb
 | Keys | MKII | MKI |
 |---|---|---|
 | LOAD KIT | PART | FUNC+MIDI |
-| SAVE KIT | FUNC+PART, then KITS > SAVE KIT | FUNC+MIDI, then FUNC+BANK |
+| SAVE KIT, RELOAD KIT, RENAME KIT | FUNC+PART (the Part Edit window: Kits' rows in PART's place) | FUNC+MIDI, then FUNC+BANK (SAVE KIT) |
 | Reload the pattern's Kit as saved (KIT RELOADED) | FUNC+CUE | FUNC+CUE |
 | After a pattern paste: the pasted pattern plays a copy of its Kit in the next empty Kit | PART while STOP is still held | FUNC+MIDI while STOP is still held |
 | Save the Kit, copy it and the pattern to the next empty ones and play the copy | PTN+FUNC+RIGHT | PTN+FUNC+RIGHT |
@@ -39,7 +39,7 @@ In the LOAD KIT and SAVE KIT lists:
 
 ### What changes in a stock flow
 
-- PART opens LOAD KIT instead of stock's Part window. SAVE KIT is a row of the base's Part Edit window (FUNC+PART on the MKII: KITS, then SAVE KIT), beside stock's RENAME, RELOAD, SAVE and SAVE ALL under PART and other modules' rows.
+- PART opens LOAD KIT instead of stock's Part window. FUNC+PART (MKII) opens the base's Part Edit window with KITS in PART's place: SAVE KIT, RELOAD KIT (the pattern's Kit as saved, as FUNC+CUE) and RENAME KIT (the pattern's Kit's name, and the Part's while its slot holds that Kit). Stock's RENAME, RELOAD, SAVE and SAVE ALL act on the slot a Kit plays from, so they are left out while Kits is on. With another module's row there too, the window has two columns, KITS first under where PART was; with Kits' row alone it is drawn as stock's popup.
 - FUNC+CUE reloads the pattern's Kit from the library even when stock would see no change.
 - A pattern's Part byte is rewritten when its Kit is put into another slot. Removing Kits leaves each pattern playing the slot Kits last gave it.
 - While the base lends Kits no sample memory, nothing of this happens: every key and screen is stock's.
@@ -47,7 +47,7 @@ In the LOAD KIT and SAVE KIT lists:
 ## Quick tutorial
 
 1. Install Kits into a project and press PART (MKI: FUNC+MIDI). The list shows the project's Parts as Kits 001 to 064.
-2. Change a sound on the current track, press FUNC+PART, move to KITS, press RIGHT and YES on SAVE KIT (MKI: FUNC+MIDI, then FUNC+BANK), move to an empty Kit, press YES, type a name and confirm: `KIT SAVED`, and the status line shows the new Kit.
+2. Change a sound on the current track, press FUNC+PART and YES on SAVE KIT (MKI: FUNC+MIDI, then FUNC+BANK), move to an empty Kit, press YES, type a name and confirm: `KIT SAVED`, and the status line shows the new Kit.
 3. Select another pattern, press PART, choose the Kit you saved and press YES: that pattern now plays it. Switch between the two patterns while playing; each plays its own Kit.
 
 ## Compatibility and limitations
@@ -56,7 +56,8 @@ In the LOAD KIT and SAVE KIT lists:
 
 - OS 1.40C on the Modwerk base with the sample-memory loan (`ot_sample_memory`), installed over USB. Card firmware cannot include it. This port has not run on a unit or in the emulator yet.
 - Kits borrows 331 pages of sample memory (2,033,664 bytes) while it is installed: about 23 s less of 16-bit mono sample time (11.5 s of stereo). When the sample pool cannot spare them, Kits stays off and the unit behaves as stock.
-- SAVE KIT on the MKII needs Modwerk base 0.7.9 or newer (the Part Edit menu, `ot_part_menu`); on an older base it is not offered there.
+- Needs Modwerk base 0.7.11 or newer (the Part Edit menu's record version that leaves PART out, `ot_part_menu`).
+- While Kits is on, stock's Part Edit rows (RENAME, RELOAD, SAVE, SAVE ALL) are not in FUNC+PART: use SAVE KIT, RELOAD KIT and RENAME KIT. While Kits is off (no sample memory) its row is left out and the window is stock's.
 - No quick save: octabam's FUNC+YES in SAVE KIT is not here, because Temp Save owns that key's handler and the base has no shared hook for it yet. Save with YES and the name editor. FUNC+YES in either list does what stock or Temp Save does elsewhere.
 - A Kit carries no MIDI scene locks. MIDI Scenes keeps its locks with the Part slot, so they stay with the slot when a Kit is copied into it. A kits.work written by an octabam image with MIDI SCENES (version 2) is not read.
 - A damaged kits.work, or one of another version, is never overwritten: that project then plays its Parts as stock and keeps no Kits. Rename or delete the file on the card to start over (octabam's prompt for this is not here).
