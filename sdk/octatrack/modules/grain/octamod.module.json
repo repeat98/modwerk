@@ -255,7 +255,7 @@
     {
       "path": "media/grain-src-setup.png",
       "captureType": "emulator",
-      "caption": "SRC SETUP (press SRC twice). SHAP: the grain's window, how soft or sharp each grain starts and ends. DIR: at 0 every grain plays forwards, at 64 half play forwards and half backwards, at 127 all play backwards. PAN: random spread across the stereo field. MODE: RAND places grains at random times; SYNC locks them to the tempo, and DENS then picks the note division.",
+      "caption": "SRC SETUP (press SRC twice). SHAP: the grain's window, how soft or sharp each grain starts and ends. DIR: at 0 every grain plays forwards; as it rises, more and more grains play backwards, 64 is half and half, and at 127 all play backwards. PAN: random spread across the stereo field. MODE: RAND places grains at random times; SYNC locks them to the tempo, and DENS then picks the note division.",
       "alt": "Octatrack SRC SETUP page of a Grain track: GRAIN marked in the machine list, SHAP NORM, DIR and PAN dials, and MODE RAND.",
       "credit": "A Force Truly Evil; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -272,7 +272,7 @@
     {
       "path": "media/grain-full-screen.png",
       "captureType": "emulator",
-      "caption": "Full-screen page (press SRC once more from SRC SETUP; SRC again leaves it). The same as the SRC page, with a much larger waveform so the grains are easier to see, and each value beside its name. PTCH: pitch. POS: start in the sample. SIZE: grain length. DENS: how often a grain is born. SPRY: random scatter around POS. SCAN: speed the read position moves by itself.",
+      "caption": "Full-screen page (press SRC once more from SRC SETUP; SRC again leaves it). The controls are exactly the same as on the SRC page. The waveform is much larger, so the grains are easier to see, and each value is shown beside its name.",
       "alt": "Full-screen page of a Grain track: the LEV bar and track T1 on the left, PTCH, POS and SIZE with their values above a large stereo waveform with live grains, and DENS, SPRY and SCAN with their values below it.",
       "credit": "A Force Truly Evil; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
