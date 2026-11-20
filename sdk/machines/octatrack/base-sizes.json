@@ -374,6 +374,40 @@
      "container": 804740
     }
    }
+  },
+  {
+   "base": "0.7.11",
+   "identity": "dea1955f4266e91ea620757033030e1d744c1b76792f8c2b6eba8db1e10bc07d",
+   "layouts": {
+    "tracks-main-cue": {
+     "main": 1326140,
+     "container": 806832
+    },
+    "tracks": {
+     "main": 1325992,
+     "container": 806640
+    },
+    "tracks-post": {
+     "main": 1327598,
+     "container": 808392
+    },
+    "main-cue": {
+     "main": 1325900,
+     "container": 806516
+    },
+    "main": {
+     "main": 1325767,
+     "container": 806388
+    },
+    "master": {
+     "main": 1325786,
+     "container": 806440
+    },
+    "off": {
+     "main": 1324358,
+     "container": 804748
+    }
+   }
   }
  ]
 }
