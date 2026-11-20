@@ -1,0 +1,9 @@
+[
+  {
+    "version": "0.6.0",
+    "date": "2026-11-20",
+    "changes": [
+      "A shaded 3D skull that reacts to your playing: the jaw opens, the eyes light, it jolts on attacks and explodes at the loudest. Passes the sound through."
+    ]
+  }
+]

@@ -108,6 +108,8 @@ it('starts the workflow’s scope command as a fresh Node process', () => {
   const workflow = readFileSync(join(root, '.github/workflows/module-pr.yml'), 'utf8')
   const command = workflow.match(/run: node (scripts\/[\w.-]+) --base "\$OCTAMOD_PR_BASE" --head HEAD >> "\$GITHUB_OUTPUT"/)
   expect(command).toBeTruthy()
+  // The base is the merge commit's parent, which the two-commit checkout holds; the event's base.sha may not be in it.
+  expect(workflow).toMatch(/- id: scope\n {8}env:\n(?: {10}#.*\n)* {10}OCTAMOD_PR_BASE: HEAD\^1\n/)
   const output = execFileSync(process.execPath, [command[1], '--base', 'HEAD', '--head', 'HEAD'], { cwd: root, encoding: 'utf8' })
   expect(output.trim().split('\n')).toEqual([
     'parts=["test:1/2","test:2/2","sdk"]', 'modules=false', 'windows=false', 'elemod=false', 'logger=false',
