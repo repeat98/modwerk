@@ -34,7 +34,24 @@ const library = {
 }
 
 describe('module library discovery', () => {
-  it('opens desktop category and type filters together and returns focus after choosing a type', async () => {
+  it('offers Scenes as a Performance type and groups macros across instruments', async () => {
+    const performance = AVAILABLE_MODULES.filter(module => module.category === 'performance')
+    const render = (family: string) => act(() => root.render(createElement(MachineLibrary, {
+      ...library, category: 'performance', family, octatrackModules: performance.filter(module => module.type === family),
+    })))
+    await render('Scenes')
+    const types = Array.from(container.querySelectorAll('.catalog-sort-group select:first-of-type option'), option => option.textContent)
+    expect(types).toEqual(expect.arrayContaining(['Scenes', 'Crossfader', 'Macros', 'Mutes & solos']))
+    expect(types).not.toContain('Kits & parts')
+    expect(container.querySelectorAll('.module-card')).toHaveLength(2)
+    expect(container.querySelector('.module-grid')?.textContent).toContain('MIDI Scenes')
+    await render('Macros')
+    expect(container.querySelector('#machine-digitakt')).not.toBeNull()
+    expect(container.querySelector('#machine-analog-rytm-mkii')).not.toBeNull()
+    expect(container.querySelector('#machine-octatrack')).toBeNull()
+  })
+
+  it('lets desktop users change type directly and dismiss the separate category menu with Escape', async () => {
     const onFamilyChange = vi.fn()
     const categoryNav = createElement('nav', { 'aria-label': 'Module library' }, createElement('a', { href: '#effects' }, 'Effects'))
     await act(() => root.render(createElement(MachineLibrary, { ...library, categoryNav, onFamilyChange })))
@@ -44,18 +61,26 @@ describe('module library discovery', () => {
     await click(toggle)
     expect(panel.hidden).toBe(false)
     expect(document.activeElement).toBe(panel.querySelector('a'))
-    const type = panel.querySelector('select')!
-    await act(() => { type.value = 'Delay'; type.dispatchEvent(new Event('change', { bubbles: true })) })
-    expect(onFamilyChange).toHaveBeenCalledWith('Delay')
+    expect(panel.querySelector('select')).toBeNull()
+    await act(() => { document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })) })
     expect(panel.hidden).toBe(true)
     expect(document.activeElement).toBe(toggle)
+    const type = container.querySelector<HTMLSelectElement>('.catalog-sort-group select')!
+    await act(() => { type.focus(); type.value = 'Delay'; type.dispatchEvent(new Event('change', { bubbles: true })) })
+    expect(onFamilyChange).toHaveBeenCalledWith('Delay')
+    expect(panel.hidden).toBe(true)
+    expect(document.activeElement).toBe(type)
   })
 
-  it('uses the active machine’s configuration for the All machines build action', async () => {
-    await act(() => root.render(createElement(MachineLibrary, { ...library, buildHref: '#digitakt/configuration', buildLabel: 'Build firmware for Digitakt' })))
+  it.each([
+    { buildHref: '#digitakt/configuration', buildLabel: 'Build firmware for Digitakt', buildText: undefined },
+    { buildHref: '#zoom-ms-70cdr/pedal/set', buildLabel: 'Open your MS-70CDR and sync your set to it', buildText: 'Your MS-70CDR' },
+  ])('uses the active machine’s destination and action label for $buildHref in All machines', async ({ buildHref, buildLabel, buildText }) => {
+    await act(() => root.render(createElement(MachineLibrary, { ...library, buildHref, buildLabel, buildText })))
     const build = container.querySelector('.discovery-actions a')!
-    expect(build.getAttribute('href')).toBe('#digitakt/configuration')
-    expect(build.getAttribute('aria-label')).toBe('Build firmware for Digitakt')
+    expect(build.getAttribute('href')).toBe(buildHref)
+    expect(build.getAttribute('aria-label')).toBe(buildLabel)
+    expect(build.textContent).toBe(buildText ?? 'Build firmware')
   })
   it('finds Digi modules with combined instrument and type words', async () => {
     await act(() => root.render(createElement(MachineLibrary, { ...library, octatrackModules: [], query: 'digitakt midi' })))

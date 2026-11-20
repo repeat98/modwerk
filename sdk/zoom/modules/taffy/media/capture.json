@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "taffy",
+  "moduleVersion": "3.0.0",
+  "imageSha256": "6dd61dca204c34e8701c614796475c676843382cee8a82f6f675624c09b839ee",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "28320e5d73945c0ef2a8a2717b3af3b758b985da25aff1c52e31a1e945226bdb",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}

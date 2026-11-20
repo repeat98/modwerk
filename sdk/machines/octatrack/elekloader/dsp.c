@@ -1652,3 +1652,17 @@ void dl_publication_tick(void) {}
 /* status.c's NO ROOM box: whether the effect reads a Y buffer at all. One that reads none was refused for another
  * slot's buffer, since every pick plans all sixteen (owner's MKII, 12 November 2026). */
 unsigned modwerk_dsp_reads_buffer(unsigned id) { return id < MODWERK_FX_IDS ? dl_catalog[id].buffer : 0u; }
+/* controller_policy.h: the live module behind an effect handle, for the reviewed buffer extents (controller_policy.c).
+ * Its exact encoded package and the buffer words it declares; 0 when stock's own effect or nothing holds the handle. */
+const unsigned char *modwerk_controller_effect_package(unsigned id, unsigned *declared_words);
+const unsigned char *modwerk_controller_effect_package(unsigned id, unsigned *declared_words)
+{
+    if (id >= MODWERK_FX_IDS || !owner[id]) return 0;
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
+        const struct runtime_module *m = modwerk_runtime_module(i);
+        if (!m || m->dsp.module != owner[id] || !m->dsp.count || m->dsp.id != id) continue;
+        if (declared_words) *declared_words = m->dsp.buffer;
+        return m->dsp.package_sha256;
+    }
+    return 0;
+}

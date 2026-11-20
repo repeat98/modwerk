@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "deform",
+  "moduleVersion": "0.4.0",
+  "imageSha256": "9d2daaaccf6808ab09e4c3b215007c052d86a25cedde6d90eee5503a0c904369",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "c9507e124cd37c3546b316945aeee31a66017a4fa1804e546e9be56b671679ae",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}
