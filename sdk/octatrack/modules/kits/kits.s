@@ -502,9 +502,9 @@ pm_rename:
 | An empty name keeps the Kit's.
 rename_named:
         tstl    %sp@(4)
-        beq.s   9f
+        beq.w   9f
         tstb    NAMEBUF
-        beq.s   9f
+        beq.w   9f
         movel   SAVEK,%d0
         bsr.w   kit_at
         lea     NAMEBUF,%a1
