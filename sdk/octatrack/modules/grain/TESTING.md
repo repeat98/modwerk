@@ -22,7 +22,7 @@ The package is 23,948 bytes on disk. The builder reports 22,692 bytes of loaded 
 
 These bounds cover Grain's own frames on those paths. Peak memory across overlapping callbacks, loader overhead and worst-case chip cycles remain unmeasured.
 
-The ordered procedure stopped at step 1 (`module:doctor`). Its host tests, package and compatibility checks passed. Steps 2 through 12 did not run. The release performance and qualification records and the author's board claim are outstanding. Library generation waits on qualification. No hardware result for this package is recorded here.
+On clean commit `c4e9e72ab936`, `npm run test:procedure -- grain --package public/octatrack-modules/grain/0.1.0-experimental.mwrm` stopped at step 1 (`module:doctor`). Its host tests, package and compatibility checks passed. Steps 2 through 12 did not run. The release performance and qualification records and the author's board claim are outstanding. Library generation waits on qualification. No hardware result for this package is recorded here.
 
 ## What was tested on a unit (Octatrack MKI, OS 1.40C)
 I installed Grain as a card set (`MODWERK0.SET`) on a Modwerk base built locally from the repository's sources

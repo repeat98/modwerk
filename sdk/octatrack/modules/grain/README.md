@@ -70,6 +70,8 @@ The author captured these screens on an MKII emulator during development.
 - [SRC SETUP controls](media/grain-src-setup.png)
 - [Full-screen waveform](media/grain-full-screen.png)
 
+The author supplied a 45-second recording of Grain on their Octatrack MKI. They made the sounds in the recording, some with Claude. The build used for the recording is unknown. [Listen to the audio preview](media/audio-preview.mp3) · [Recording details and rights](media/audio-preview.json)
+
 ## Compatibility and limitations
 
 Grain uses a Modwerk base for Octatrack OS 1.40C and plays the selected track's Flex sample. Up to six grains can sound on each admitted track. An unreadable or loading sample plays silence. Replacing a sample during a note takes effect on the next trig. POS parameter locks use whole numbers.

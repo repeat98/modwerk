@@ -285,6 +285,15 @@
         "imageSha256": "2768ddc5f0ba213a908fd172cb04d8dafce71473c0557bd1ef5cad0c207900a0",
         "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at e106348f4 (imageSha256 is that twin's MAIN image), with the Grain package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, playing: the full-screen page. Not hardware captures."
       }
+    },
+    {
+      "path": "media/audio-preview.mp3",
+      "captureType": "audio",
+      "caption": "A recording of Grain playing on an Octatrack MKI, made by the author: a Flex sample played through the Grain machine while POS, SIZE, DENS, SPRY and SCAN are turned. A supplied recording, not an offline render. The sounds are the author's own, some generated with Claude and played by the author; no third-party samples.",
+      "alt": "A 45 second recording of the Grain machine on an Octatrack, with the granular texture changing as the knobs are turned.",
+      "credit": "A Force Truly Evil (recording). Sounds: the author's own.",
+      "license": "Recording and sounds by the author (media/LICENSE.md)",
+      "source": "original"
     }
   ],
   "access": {
