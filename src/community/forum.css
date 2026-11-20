@@ -415,12 +415,6 @@
 .news-composer textarea { resize: vertical; }
 .news-composer .review-actions { flex-wrap: wrap; }
 .news-preview { padding: 1rem; border: 1px solid var(--line); border-radius: .5rem; background: var(--field); overflow-wrap: anywhere; }
-.admin-section-picker { display: none; }
-@media (max-width: 600px) {
-  .admin-tabs > button { display: none; }
-  .admin-section-picker { display: flex; align-items: center; gap: .75rem; width: 100%; font-size: .875rem; color: var(--muted); }
-  .admin-section-picker select { flex: 1; min-width: 0; min-height: 44px; padding: .5rem .75rem; border: 1px solid var(--control-border); border-radius: .375rem; background: var(--field); color: var(--text); font: inherit; }
-}
 .developer-module-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .developer-module-grid .inbox-issue { padding: 16px; border: 1px solid var(--line); border-radius: 8px; }
 .private-report-context { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 18px; margin: 20px 0; font-size: 13px; line-height: 1.6; }

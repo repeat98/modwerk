@@ -288,7 +288,17 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       if (path === '/api/admin/activity' && request.method === 'GET') return response(await adminActivity(db,new Date(),Number(url.searchParams.get('days') ?? 30)))
       if (path === '/api/admin/accounts' && request.method === 'GET') return response(await adminAccounts(db,new Date(),Number(url.searchParams.get('days') ?? 30)))
       if (path === '/api/admin/statistics' && request.method === 'GET') return await usageStatistics(db,Number(url.searchParams.get('days') ?? 7))
-      if (path === '/api/admin/overview' && request.method === 'GET') return response(await db.prepare("SELECT (SELECT COUNT(*) FROM submissions WHERE status='pending') AS pending,(SELECT COUNT(*) FROM module_publications) AS published,(SELECT COUNT(*) FROM forum_posts p JOIN forum_threads t ON t.id=p.thread_id WHERE t.id='module-' || t.module_id AND p.id<>t.id AND p.hidden=0 AND t.hidden=0) AS comments,(SELECT COUNT(*) FROM issues WHERE status='open') AS issues,(SELECT COALESCE(SUM(bytes),0) FROM media) AS mediaBytes").first())
+      if (path === '/api/admin/overview' && request.method === 'GET') return response(await db.prepare(`
+        SELECT (SELECT COUNT(*) FROM issues WHERE status='open') AS issues,
+          (SELECT COUNT(*) FROM forum_reports WHERE resolved=0) +
+          (SELECT COUNT(*) FROM forum_shout_reports WHERE resolved=0) +
+          (SELECT COUNT(*) FROM message_reports WHERE resolved=0) AS forum,
+          (SELECT COUNT(*) FROM account_removal_requests WHERE status IN ('requested','reviewing')) AS requests,
+          (SELECT COUNT(*) FROM submissions WHERE status='pending') AS pending,
+          (SELECT COUNT(*) FROM module_publications) AS published,
+          (SELECT COUNT(*) FROM forum_posts p JOIN forum_threads t ON t.id=p.thread_id
+            WHERE t.id='module-' || t.module_id AND p.id<>t.id AND p.hidden=0 AND t.hidden=0) AS comments,
+          (SELECT COALESCE(SUM(bytes),0) FROM media) AS mediaBytes`).first())
       if (path === '/api/admin/history' && request.method === 'GET') return response((await db.prepare('SELECT e.id,e.module_id,e.action,e.note,e.created_at,u.display_name AS actor FROM review_events e JOIN users u ON u.id=e.actor_id ORDER BY e.rowid DESC LIMIT 100').all()).results)
       if (path === '/api/admin/issues' && request.method === 'GET') {
         const moduleId = url.searchParams.has('moduleId') ? required(url.searchParams.get('moduleId'),'Module ID',100) : '', status = url.searchParams.get('status')??'all'
