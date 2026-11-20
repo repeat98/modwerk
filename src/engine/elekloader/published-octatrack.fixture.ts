@@ -18,5 +18,6 @@ export const publishedFills: typeof fills = json(resolve(source, 'octatrack-base
 export const publishedVariants: typeof variants = json(resolve(source, 'octatrack-base-variants.json'))
 export const publishedPackageText = () => readFileSync(resolve(source, 'octatrack-base.elemod'), 'utf8')
 type CurrentRow = typeof packages.packages[number]
-const rowForInstaller = (entry: CurrentRow) => staged ? (entry as CurrentRow & { linkedAudioBase?: CurrentRow }).linkedAudioBase ?? entry : entry
-export const publishedManifest = { ...packages, packages: packages.packages.map(rowForInstaller) }
+const linkedRows: CurrentRow[] = staged ? json(resolve(linked, 'linked-base-packages.json')) : []
+const byId = new Map(linkedRows.map(entry => [entry.id, entry]))
+export const publishedManifest = { ...packages, packages: packages.packages.map(entry => byId.get(entry.id) ?? entry) }
