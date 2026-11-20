@@ -156,7 +156,7 @@
       "cpu": {
         "level": "high",
         "basis": "measured-comparison",
-        "rationale": "On the MKII, one stereo track with six grains sounding added up to 34.1 percentage points to the frame interrupt. The Octatrack uses a price of 35 to admit Grain tracks according to the rest of the current Part.",
+        "rationale": "The author's MKI status meter rose about 15 points in typical use and about 20 at dense settings. On the MKII a solo audition added 15.8 points to the frame interrupt. A heavily triggered stereo track with six active grains added 34.1 points. The base reserves 35 per track when deciding whether the current Part has room.",
         "source": "TESTING.md"
       },
       "dsp": {
@@ -186,7 +186,7 @@
     "report": "TESTING.md",
     "summary": "On the MKII all six SRC controls reached the correct renderer words, SETUP selected SYNC, and six concurrent voices were active in the measured pricing scene. Linked ColdFire tests cover both buffers on every track. Host checks cover reference renders, optimized mono and stereo reads, and the full Flex position and scatter range. TESTING.md names each build and its remaining checks.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "9f7be2c13a9adf2caeac91ca9452550351107dde",
+    "evidenceRevision": "f5664c187d869bc4638d554d8fafe420fd4b8566",
     "gates": [
       "python3 -B test_grain.py",
       "python3 -B generate.py --check"
