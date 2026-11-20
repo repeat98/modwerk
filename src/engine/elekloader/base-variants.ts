@@ -4,7 +4,7 @@
 // sources last in a fixed reserve (build_core.py usb_reserve), so all of them share every other address: one set of
 // base-bound packages fits each (scripts/octatrack-base.mjs --usb-audio-variants proves it when it writes them).
 // The committed package is the default layout's; each other variant is a line patch against it, checked by hash.
-import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from './octatrack-publication.ts'
 import baseVersions from '../../../sdk/machines/octatrack/base-versions.json' with { type: 'json' }
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { USB_AUDIO_LAYOUTS, type UsbAudioLayout } from '../../config/usb-audio.ts'

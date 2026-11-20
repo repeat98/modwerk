@@ -9,7 +9,7 @@ import { ELEKTRON_VENDOR_ID, OCTATRACK_PRODUCT_ID, OctatrackLink, type LinkDevic
 import { UPLOAD_TIMEOUT_MAX_MS, UploadDeviceError, UploadUnconfirmedError } from '../engine/elekloader/upload-session.ts'
 import { SELFTEST_BYTES, VENDOR_CLASS, VENDOR_PROTOCOL, VENDOR_SUBCLASS } from '../engine/elekloader/upload-usb.ts'
 import type { UploadPhaseName, UploadResultName, UploadStatus } from '../engine/elekloader/upload-wire.ts'
-import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from '../engine/elekloader/octatrack-publication.ts'
 
 /** The published base, so the pretend unit is a tester who is up to date (older bases are told to update). */
 export const FAKE_BASE: string = baseBinding.identity

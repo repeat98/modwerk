@@ -2,9 +2,8 @@
 // The builder for USB module sets: what loading a set onto an Octatrack with the Modwerk base sends. Modules the site
 // publishes as runtime packages (public/octatrack-modules, made from source by `npm run octatrack:module-packages`)
 // are installed from them; anything the set leaves out is removed with an empty package naming its module.
-import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
+import { publishedBinding as baseBinding, publishedPackages as manifest } from './octatrack-publication.ts'
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
-import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 import dspSites from '../../../sdk/machines/octatrack/dsp-sites.json' with { type: 'json' }
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { MODULES } from '../../catalog/modules.ts'
