@@ -14,6 +14,10 @@ from pathlib import Path
 APP = Path(__file__).resolve().parents[1]
 
 
+def preparing_ports():
+    return any(arg.partition('=')[0] == '--prepare-ports' for arg in sys.argv[1:])
+
+
 def lag_guard(builder, check):
     """USB packages at an older version than the catalogue, by manifest index.
 
@@ -103,7 +107,7 @@ def check_packages(builder):
 
 def run(builder):
     try:
-        if '--prepare-ports' in sys.argv[1:]:
+        if preparing_ports():
             builder.main()
         elif '--check' in sys.argv[1:]:
             check_packages(builder)
@@ -299,7 +303,7 @@ def main():
     os.chdir(APP)
     # Python's -X utf8 does not propagate to the builder's Python children.
     os.environ['PYTHONUTF8'] = '1'
-    if '--prepare-ports' in sys.argv[1:]:
+    if preparing_ports():
         return run(builder)
     check = '--check' in sys.argv[1:]
     manifest, held, failed = lag_guard(builder, check)
@@ -334,9 +338,10 @@ if __name__ == '__main__':
     except SystemExit as result:
         if result.code not in (None, 0):
             raise
+    if preparing_ports() or {'--help', '-h'}.intersection(sys.argv[1:]):
+        sys.exit(0)
     release_catalog = json.loads((APP / 'sdk/catalog.json').read_text())
-    if '--prepare-ports' not in sys.argv and any(
-            row['id'] == 'usb-audio-out-tracks-main-cue' for row in release_catalog['modules']):
+    if any(row['id'] == 'usb-audio-out-tracks-main-cue' for row in release_catalog['modules']):
         # The configurable USB function owns one package outside the ordinary
         # effect list. Rebuild its bytes and binding with the same release.
         from argparse import ArgumentParser
