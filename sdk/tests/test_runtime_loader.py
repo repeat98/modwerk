@@ -226,6 +226,12 @@ class SiteEventTests(unittest.TestCase):
             sys.path.insert(0, str(ROOT / 'sdk/machines/octatrack/module-adapters'))
             import machine_ports
             self.assertEqual(machine_ports.declaration('poly8', folder=folder)['rests'], ['0x40007978'])
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / 'runtime.json'
+            path.write_text(json.dumps(dict(schema=1, rests=['0x4000406a'])))
+            self.assertEqual(machine_ports.declaration('test-fx', temp, effect=True)['rests'], ['0x4000406a'])
+            with self.assertRaises(ValueError):
+                machine_ports.declaration('test-cf', temp)
         # The flag is bit 7 of the hashed site's length byte, and only there; the verifier reads the length without it.
         digest = hashlib.sha256(b'\0' * 8).digest()
         sites = [(0x4000406a, digest, b'\x4e\xf9\0\0\0\0\x4e\x71', [2], 0, 8, True), (0x4000409e, digest, b'\x4e\xf9\0\0\0\0\x4e\x71', [2], 0, 8)]
