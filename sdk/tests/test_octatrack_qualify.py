@@ -113,6 +113,37 @@ class UnitSteps(unittest.TestCase):
             self.assertFalse(qualify.save_part(1, saved))
 
 
+class Emulator(unittest.TestCase):
+    """An ot_emu session: the same cases, the frame checks listed as not run when its frames stand still (20 November 2026)."""
+
+    def clock(self, emulator, counts):
+        result, sent = {}, []
+        with mock.patch.object(qualify, 'EMULATOR', emulator), mock.patch.object(qualify, 'frames', side_effect=list(counts)), \
+             mock.patch.object(qualify, 'send', side_effect=lambda s: sent.append(s) or ''):
+            return qualify.frame_clock(result), result, sent
+
+    def test_the_unit_always_runs_the_frame_checks_and_reads_nothing_for_it(self):
+        self.assertEqual(self.clock(False, []), (True, {}, []))
+
+    def test_an_emulator_whose_frames_stand_still_lists_them_as_not_run(self):
+        ok, result, sent = self.clock(True, [1, 1])
+        self.assertFalse(ok)
+        self.assertEqual(sent, ['w300'])
+        self.assertIn('DSP frames stand still', result['not_run'][0])
+        entry = qualify.testing_entry(dict(args=['x.mwrm'], crash=False, failures=[], packages=[], modules=[], not_run=result['not_run']), '2026-11-20')
+        self.assertIn('- Not run here: the frame checks and the queued bank change', entry)
+        self.assertIn('Result: passed', entry)
+
+    def test_an_emulator_running_its_dsps_runs_them_too(self):
+        self.assertEqual(self.clock(True, [1, 40])[:2], (True, {}))
+
+    def test_the_unit_waits_and_timeouts_are_unchanged(self):
+        self.assertEqual(qualify.SOCKET, __import__('os').environ.get('MODWERK_DEV_SOCKET', '/tmp/modwerk-dev.sock'))
+        source = (ROOT / 'scripts/octatrack-qualify.py').read_text()
+        self.assertIn('s.settimeout(40)', source)
+        self.assertIn("until(lambda: mem(0x800065bd, 2) == bytes([bank, pattern]), 20)", source)
+
+
 class Qualify(unittest.TestCase):
     def test_it_starts_only_once_the_keeps_are_acknowledged(self):
         with mock.patch.object(sys, 'argv', ['octatrack-qualify.py', 'x.mwrm']), mock.patch.object(qualify, 'send', side_effect=AssertionError('reached the unit')):
