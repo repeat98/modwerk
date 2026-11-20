@@ -46,6 +46,92 @@ async function fixture() {
 }
 
 describe('agent board', () => {
+  it('warns about inactive recipients and drafts a follow-up after three days until the addressee replies', async () => {
+    const { boardLogin, claim, post, call, reply } = await fixture()
+    const ada = await boardLogin('ada'), bo = await boardLogin('bo'), cy = await boardLogin('cy')
+    await claim(bo, { kind: 'module', key: 'digitakt/dr-kick', pullRequest: 100 })
+    const question = { kind: 'question', topic: 'module', key: 'digitakt/dr-kick', body: 'Which part should I investigate?' }
+    const ask = async (extra = {}) => (await post(ada, { ...question, ...extra })).json()
+    const drafts = async () => (await (await call('/agent-board/followups')).json()).followups
+    const now = Date.now(), day = 86400000
+    vi.useFakeTimers({ now, toFake: ['Date'] })
+    expect((await ask()).recipientInactive).toBeUndefined()
+    const unknown = await ask({ to: 'absent', topic: 'issue', key: '1619' })
+    expect(unknown.recipientInactive).toBe(true)
+    vi.setSystemTime(now + 8 * day)
+    const { message, recipientInactive } = await ask()
+    expect(recipientInactive).toBe(true)
+    await call('/agent-board/inbox', 'GET', undefined, bo)
+    expect((await ask()).recipientInactive).toBeUndefined()
+    await reply(cy, message.id, 'I can help too.')
+    vi.setSystemTime(now + 11 * day - 1)
+    expect(await drafts()).not.toContainEqual(expect.objectContaining({ id: message.id }))
+    vi.setSystemTime(now + 11 * day)
+    expect(await drafts()).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: message.id, target: 'pull/100', draft: expect.stringContaining('@bo') }),
+      expect.objectContaining({ id: unknown.message.id, target: 'issues/1619' }),
+    ]))
+    expect((await (await call('/agent-board/inbox', 'GET', undefined, ada)).json()).followups).toContainEqual(expect.objectContaining({ id: message.id }))
+    expect((await (await call('/agent-board/inbox', 'GET', undefined, cy)).json()).followups).toBeUndefined()
+    await reply(bo, message.id, 'Please check loading.')
+    expect(await drafts()).not.toContainEqual(expect.objectContaining({ id: message.id }))
+    await reply(ada, message.id, 'Which version?')
+    vi.setSystemTime(now + 14 * day)
+    expect(await drafts()).toContainEqual(expect.objectContaining({ id: message.id }))
+  })
+
+  it('groups independent tasks under an issue or claim and keeps their holders and PRs separate', async () => {
+    const { boardLogin, claim, post, call } = await fixture()
+    const ada = await boardLogin('ada'), bo = await boardLogin('bo'), cy = await boardLogin('cy')
+    const parent = (await (await claim(ada, { kind: 'issue', key: '1619' })).json()).claim
+    const task = { kind: 'wanted', topic: 'site', key: 'worker', body: 'Investigate the saved state.' }
+    const create = async (extra: Record<string, unknown>) => (await (await post(ada, { ...task, ...extra })).json()).message
+    const save = await create({ parentIssue: 1619 }), load = await create({ parentIssue: 1619, body: 'Investigate loading.' })
+    const other = await create({ parentClaim: parent.id })
+    const take = (id: string, token: string, pr?: number) => call('/agent-board/messages/' + id + '/take', 'POST', { pullRequest: pr }, token)
+    expect((await take(save.id, bo, 222)).status).toBe(200)
+    expect((await take(load.id, cy)).status).toBe(200)
+    expect((await take(save.id, cy)).status).toBe(409)
+    const siblings = (await (await call('/agent-board/messages?parentIssue=1619')).json()).messages
+    expect(siblings).toHaveLength(2)
+    expect(siblings).toEqual(expect.arrayContaining([expect.objectContaining({ to: 'bo', pullRequest: 222 }), expect.objectContaining({ to: 'cy', pullRequest: null })]))
+    expect((await (await call('/agent-board/messages?parentClaim=' + parent.id)).json()).messages).toEqual([other])
+    expect((await post(ada, { ...task, parentClaim: 'missing' })).status).toBe(400)
+    expect((await post(ada, { ...task, parentIssue: 1619, parentClaim: parent.id })).status).toBe(400)
+    expect((await post(ada, { ...task, kind: 'finding', parentIssue: 1619 })).status).toBe(400)
+  })
+
+  it('records independent findings and their evidence without folding the original thread', async () => {
+    const { boardLogin, post, call } = await fixture()
+    const ada = await boardLogin('ada'), bo = await boardLogin('bo')
+    const about = { topic: 'site', key: 'worker', body: 'A save can lose the version.' }
+    const finding = (await (await post(ada, { ...about, kind: 'finding', pullRequest: 12 })).json()).message
+    const wanted = (await (await post(ada, { ...about, kind: 'wanted' })).json()).message
+    const record = (id: string, token: string, outcome: string) => call('/agent-board/messages/' + id + '/replies', 'POST', { body: 'Checked the saved version.', outcome, evidence: 345 }, token)
+    expect((await record(finding.id, ada, 'reproduced')).status).toBe(400)
+    expect((await record(wanted.id, bo, 'reproduced')).status).toBe(400)
+    expect((await record(finding.id, bo, 'unknown')).status).toBe(400)
+    for (const outcome of ['reproduced', 'different-result']) {
+      const result = (await (await record(finding.id, bo, outcome)).json()).message
+      expect(result.pullRequest).toBe(12)
+      expect(result.replies.at(-1)).toMatchObject({ author: 'bo', outcome, evidence: 345 })
+    }
+  })
+
+  it('keeps module findings reachable by the doctor when more than a page is active', async () => {
+    const { db, call, boardLogin, post } = await fixture()
+    const ada = await boardLogin('ada')
+    const finding = (await (await post(ada, { kind: 'finding', topic: 'module', key: 'digitakt/dr-kick', body: 'Check the saved version.' })).json()).message
+    const copy = db.prepare(`INSERT INTO agent_messages(id,kind,topic_kind,topic_key,user_id,body,created_at,active_at)
+      SELECT ?,kind,'machine','digitakt',user_id,body,created_at,active_at FROM agent_messages WHERE id=?`)
+    for (let i = 0; i < 100; i++) copy.run(crypto.randomUUID(), finding.id)
+    const first = await (await call('/agent-board/messages?moduleContext=1')).json()
+    expect(first.messages).toHaveLength(100)
+    const last = await (await call('/agent-board/messages?moduleContext=1&offset=' + first.nextOffset)).json()
+    expect(last.messages).toEqual([finding])
+    expect(last.nextOffset).toBeUndefined()
+  })
+
   it('signs any GitHub account in from the terminal, for the board only', async () => {
     const { call, boardLogin, db } = await fixture()
     const token = await boardLogin('first-porter')

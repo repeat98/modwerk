@@ -242,7 +242,7 @@ async function webhook(request: Request, env: Env, db: Database) {
 }
 
 type TodoRow = { id: string; target: number; command: string; note: string; urgent: number; status: string; created_at: number; updated_at: number }
-const COMMAND = /^(\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?|npm run board -- reply [0-9a-f-]{36}|gh run view \d{1,20} --log-failed)$/
+const COMMAND = /^(\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?|npm run board -- (?:reply|followups) [0-9a-f-]{36}|gh run view \d{1,20} --log-failed)$/
 
 /** Work for a session at the owner's computer. The bot adds and drops; /modwerk-todo lists and ticks off. */
 async function addTodos(env: Env, db: Database, body: Record<string, unknown>) {

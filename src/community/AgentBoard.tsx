@@ -3,7 +3,7 @@ import { api, post } from './api'
 import { useCommunity } from './context'
 
 export type BoardClaim = { id: string; kind: 'module' | 'hook' | 'migration' | 'dsp-region' | 'machine-id' | 'issue'; key: string; holder: string; branch: string | null; pullRequest: number | null; note: string; createdAt: string; expiresAt: string | null; releasedAt?: string; releasedReason?: string }
-export type BoardThread = { id: string; kind: 'question' | 'finding' | 'wanted'; topic: { kind: BoardClaim['kind'] | 'machine' | 'site'; key: string }; author: string; to: string | null; body: string; pullRequest: number | null; priority?: Priority; createdAt: string; endsAt?: string; endedAt?: string; endedReason?: string; replies: { id: string; author: string; body: string; createdAt: string }[] }
+export type BoardThread = { id: string; kind: 'question' | 'finding' | 'wanted'; topic: { kind: BoardClaim['kind'] | 'machine' | 'site'; key: string }; author: string; to: string | null; body: string; pullRequest: number | null; parentIssue?: number; parentClaim?: string; priority?: Priority; createdAt: string; endsAt?: string; endedAt?: string; endedReason?: string; replies: { outcome?: 'reproduced' | 'different-result'; evidence?: number | null; id: string; author: string; body: string; createdAt: string }[] }
 type Priority = 'high' | 'normal' | 'low'
 export type BoardActivity = { days: number; developers: { signedIn: number; active: number }; claims: { active: number; made: number }; questions: { open: number }; findings: { active: number }; posts: number }
 const KIND = { module: 'Module', hook: 'Hook or table', migration: 'Migration', 'dsp-region': 'DSP region', 'machine-id': 'Machine id', issue: 'Issue', machine: 'Machine' } as const
@@ -17,6 +17,7 @@ export function AgentBoard({ repository }: { repository: string }) {
   const { session } = useCommunity()
   const [claims, setClaims] = useState<BoardClaim[] | null>(null), [released, setReleased] = useState<BoardClaim[]>([]), [error, setError] = useState('')
   const [all, setAll] = useState<BoardThread[] | null>(null), [done, setDone] = useState<BoardThread[]>([]), [activity, setActivity] = useState<BoardActivity | null>(null)
+  const [taskParent, setTaskParent] = useState('')
   const load = () => Promise.all([
     api<{ claims: BoardClaim[]; released?: BoardClaim[] }>('/agent-board/claims?released=1').then(value => { setClaims(value.claims); setReleased(value.released ?? []); setError('') }, () => setError('The board could not be loaded. Try again in a moment.')),
     // ended=1 adds the 50 most recently ended threads; a wanted task among them whose pull request merged is done.
@@ -35,11 +36,13 @@ export function AgentBoard({ repository }: { repository: string }) {
   const claimKey = (claim: BoardClaim) => claim.kind === 'issue' ? <a href={repository + '/issues/' + claim.key} target="_blank" rel="noreferrer">#{claim.key} ↗</a> : claim.key
   // The server lists the most urgent wanted tasks first; questions and findings have no priority.
   const threads = (all ?? []).filter(thread => thread.kind !== 'wanted'), wanted = (all ?? []).filter(thread => thread.kind === 'wanted')
+  const parentOf = (task: BoardThread) => task.parentIssue ? 'Issue #' + task.parentIssue : task.parentClaim ? 'Claim ' + task.parentClaim : ''
+  const parentTasks = (tasks: BoardThread[]) => taskParent ? tasks.filter(task => parentOf(task) === taskParent) : tasks
   const columns = [
-    { title: 'To do', tasks: wanted.filter(task => !task.to) },
-    { title: 'Taken', tasks: wanted.filter(task => task.to && !task.pullRequest) },
-    { title: 'In review', tasks: wanted.filter(task => task.pullRequest) },
-    { title: 'Done', tasks: done },
+    { title: 'To do', tasks: parentTasks(wanted).filter(task => !task.to && !task.pullRequest) },
+    { title: 'Taken', tasks: parentTasks(wanted).filter(task => task.to && !task.pullRequest) },
+    { title: 'In review', tasks: parentTasks(wanted).filter(task => task.pullRequest) },
+    { title: 'Done', tasks: parentTasks(done) },
   ]
   // Collapsed by default: the board is reference, and open it pushed the help links far down the page.
   return <details className="agent-board">
@@ -50,6 +53,7 @@ export function AgentBoard({ repository }: { repository: string }) {
     {all && <>
       <h3 className="agent-board-subtitle">To do</h3>
       <p className="agent-board-hint">Small jobs anyone's agent can take, most urgent first. Post one with <code>npm run board -- wanted &lt;topic&gt; &lt;key&gt; "…" --priority high</code>, take one with <code>npm run board -- take &lt;id&gt;</code>.</p>
+      {taskParent && <p>Tasks for {taskParent} <button type="button" onClick={() => setTaskParent('')}>Show all tasks</button></p>}
       <div className="agent-board-columns">
         {columns.map(column => <section key={column.title} aria-label={column.title}>
           <h4>{column.title} <span>{column.tasks.length}</span></h4>
@@ -59,6 +63,8 @@ export function AgentBoard({ repository }: { repository: string }) {
               <p className="agent-board-body">{task.body}</p>
               <div className="agent-board-meta">
                 <span>{task.to ? (task.endedAt ? 'done by @' : 'taken by @') + task.to : 'posted by @' + task.author}</span>
+                {parentOf(task) && <button type="button" className="text-button" onClick={() => setTaskParent(parentOf(task))}>{task.parentIssue ? parentOf(task) : 'Tasks for ' + (claims?.find(claim => claim.id === task.parentClaim)?.key ?? parentOf(task))}</button>}
+                {task.parentIssue && <a href={repository + '/issues/' + task.parentIssue}>View issue #{task.parentIssue}</a>}
                 {task.pullRequest && pull(task.pullRequest)}
                 {session.admin && !task.endedAt && <select aria-label={'Priority of ' + task.topic.key} value={task.priority ?? 'normal'} onChange={event => void prioritise(task, event.target.value)}><option value="high">High</option><option value="normal">Normal</option><option value="low">Low</option></select>}
                 {session.admin && !task.endedAt && <button type="button" className="text-button" onClick={() => void act('Close this wanted task by @' + task.author + '?', '/agent-board/messages/' + task.id + '/close', 'POST', 'The task could not be closed.')}>Close</button>}
@@ -100,7 +106,7 @@ export function AgentBoard({ repository }: { repository: string }) {
             {session.admin && <button type="button" className="text-button" onClick={() => void act('Delete this ' + thread.kind + ' by @' + thread.author + ' and its replies?', '/agent-board/messages/' + thread.id, 'DELETE', 'The thread could not be deleted.')}>Delete</button>}
           </div>
           <p className="agent-board-body">{thread.body}</p>
-          {thread.replies.length > 0 && <ol className="agent-board-replies">{thread.replies.map(reply => <li key={reply.id}><span>@{reply.author}</span> {reply.body}</li>)}</ol>}
+          {thread.replies.length > 0 && <ol className="agent-board-replies">{thread.replies.map(reply => <li key={reply.id}><span>@{reply.author}</span> {reply.outcome && <strong>{reply.outcome === 'reproduced' ? 'Reproduced' : 'Different result'} </strong>}{reply.body} {reply.evidence && <a href={repository + '/issues/' + reply.evidence}>Evidence #{reply.evidence}</a>}</li>)}</ol>}
         </li>)}
       </ul>
     </>}
