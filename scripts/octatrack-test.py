@@ -117,6 +117,9 @@ def main():
         for trial in trials: trial.end(failures)
 
     result = qualify.run(args, pkgs, install, uninstall, selftest=True, inventory=True)
+    if qualify.EMULATOR:  # the same cases on an ot_emu session: labelled as such, never hardware evidence
+        qualify.finish(result, args, title='Agent test in the emulator (not hardware evidence)', command='device:test',
+                       notes=[NOTE, 'Ran on an ot_emu session (MODWERK_UNIT=emulator), not on a unit'], left=LEFT_FOR_THE_DEVELOPER)
     qualify.finish(result, args, title='Agent test on the unit', command='device:test', notes=[NOTE], left=LEFT_FOR_THE_DEVELOPER)
 
 

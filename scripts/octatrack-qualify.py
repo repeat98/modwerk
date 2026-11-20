@@ -25,6 +25,10 @@ import argparse, datetime, glob, hashlib, json, os, pathlib, re, socket, subproc
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SOCKET = os.environ.get('MODWERK_DEV_SOCKET', '/tmp/modwerk-dev.sock')
+# An ot_emu session (npm run device:emulator; test:procedure --target emulator), paced to the wall clock so every wait below
+# means the same there as on the unit. Never hardware evidence. A check the emulator cannot answer (its DSP frames standing
+# still) is listed as not run there, never passed; on the unit every check runs as always.
+EMULATOR = os.environ.get('MODWERK_UNIT') == 'emulator'
 PEAK_LIMIT = 900  # per mille of a frame
 HEADERS = {6: 68, 7: 72, 8: 76, 9: 80, 10: 80}  # header bytes by ABI (sdk/runtime/loader/abi9.py); hook words follow
 MACHINES = next(e['index'] for e in json.loads((ROOT / 'sdk/machines/octatrack/events.json').read_text())['events'] if e['event'] == 'ot_machines')
@@ -101,6 +105,7 @@ def testing_entry(result, day, title='Qualification run', command='device:qualif
     if result.get('soak'): lines.append('- Soak: %d s, highest core peak %d per mille' % (10 * len(result['soak']), max(max(m['core0_peak'], m['core1_peak']) for m in result['soak'])))
     lines.append('- Crash test: %s' % ('run, the unit came back' if result.get('crash') and not any('crash' in f for f in result['failures']) else 'run' if result.get('crash') else 'not run'))
     if result.get('inventory'): lines.append('- Inventory at the end: ' + ('the same as before the run' if result['inventory'] == 'unchanged' else 'different from before the run'))
+    if result.get('not_run'): lines.append('- Not run here: ' + '; '.join(result['not_run']))
     lines.append('- Result: ' + ('passed' if not result['failures'] else 'failed: ' + '; '.join(result['failures'])))
     if left: lines += ['', 'Left for the developer at the unit: ' + ', '.join(left) + '.', '']
     else: lines += ['', 'Not covered by this run: ' + ', '.join(NOT_COVERED) + '.', '']
@@ -244,6 +249,16 @@ def running(failures, what):  # frames advance: the DSPs are alive
     return a != b
 
 
+def frame_clock(result):
+    """Whether the DSP frames advance, so the checks that read them can run. Always on the unit; in the emulator only when
+    its session runs the DSPs and the frame interrupt (--dsp --frame), else those checks are listed in result['not_run']."""
+    if not EMULATOR: return True
+    a = frames(); send('w300')
+    if frames() != a: return True
+    result.setdefault('not_run', []).append('the frame checks and the queued bank change: the emulator\'s DSP frames stand still')
+    return False
+
+
 def until(test, seconds):
     for _ in range(int(seconds * 4)):
         if test(): return True
@@ -368,6 +383,7 @@ def run(args, pkgs, install, uninstall, selftest=False, inventory=False):
             send('T%d w200 %s w300 ' % (track, slot if slot == 'SRC' else 'FX%d' % slot) + ' '.join('enc%s-127 enc%s-127 ' % (e, e) + ' '.join(['enc%s+16 w100' % e] * 8) for e in 'ABCDEF'))
             running(failures, 'sweeping %s on T%d' % (name, track))
         # The four Parts, three times round: each switch done (the part step waits) and its effects running.
+        clock = frame_clock(result)
         result['parts'] = []
         for n in [2, 3, 4, 1] * 3:
             try:
@@ -376,10 +392,10 @@ def run(args, pkgs, install, uninstall, selftest=False, inventory=False):
                 result['parts'].append(n if ok else -n)
                 if not ok: failures.append('Part %d did not run its own effects within 3 s' % n)
             except RuntimeError as e: failures.append(str(e))
-        running(failures, 'after the Part switches')
+        if clock: running(failures, 'after the Part switches')
         # A queued pattern change into another bank (BANK, TRIG b, TRIG n) and back, playing: it lands at the pattern's end.
         other = 2 if start_bank == 0 else 1
-        for bank, pattern in ((other - 1, 0), (start_bank, start_pattern)):
+        for bank, pattern in ((other - 1, 0), (start_bank, start_pattern)) if clock else ():
             send('BANK w150 TRIG%d w150 TRIG%d' % (bank + 1, pattern + 1))
             if not until(lambda: mem(0x800065bd, 2) == bytes([bank, pattern]), 20):
                 failures.append('the queued change to bank %d pattern %d did not land within 20 s' % (bank + 1, pattern + 1)); break
@@ -393,7 +409,7 @@ def run(args, pkgs, install, uninstall, selftest=False, inventory=False):
                 m = meters(5); result['soak'].append(m); log('  soak:', m)
                 peak = max(m['core0_peak'], m['core1_peak'])
                 if peak > PEAK_LIMIT: failures.append('a core peaked at %d per mille in the soak' % peak); break
-                if not running(failures, 'soak'): break
+                if clock and not running(failures, 'soak'): break
         send('STOP w500')
     finally:
         send('STOP w300')

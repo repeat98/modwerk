@@ -293,9 +293,10 @@ const catalogue = root => JSON.parse(readFileSync(join(root, 'src/engine/assets/
 export function context(root, values, positionals, env = process.env) {
   const git = (...args) => { try { return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim() } catch { return '' } }
   const share = values.share ?? env.MODWERK_SHARE_SOCKET ?? '/tmp/modwerk-share.sock'
-  const target = values.target ?? 'unit'
+  // Inside an emulator session (npm run device:emulator -- … -- npm run test:procedure …) the unit steps run there.
+  const target = values.target ?? (env.MODWERK_UNIT === 'emulator' ? 'emulator' : 'unit')
   if (!['unit', 'emulator'].includes(target)) throw new Error('--target is unit or emulator')
-  const devSocket = values['dev-socket']
+  const devSocket = values['dev-socket'] ?? (target === 'emulator' ? env.MODWERK_DEV_SOCKET : undefined)
   const scripts = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts ?? {}
   const rows = catalogue(root)
   let ctx = { kind: values.base ? 'base' : 'module', share, target, devSocket,
