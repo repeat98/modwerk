@@ -14,4 +14,12 @@ describe('update limits', () => {
     const result = { device: 'digitakt-mk2', files: [{ name: 'a.syx', path: 'a.syx', bytes: 1, sha256: 'x', data: new ArrayBuffer(1) }], sha256: 'x', bytes: 1 }
     expect(await fitBuilt(result, new Uint8Array(0))).toBe(result)
   })
+  it('fits a Digitone II build as the kit names it, by its device name', async () => {
+    // The kit's result says "Digitone II", not digitone-mk2: a build by that name is fitted (here it fails on the empty
+    // stock file, which shows it was not passed through), and the Digitakt II's by its name is left as it is.
+    const file = { name: 'a.syx', path: 'a.syx', bytes: 1, sha256: 'x', data: new ArrayBuffer(1) }
+    await expect(fitBuilt({ device: 'Digitone II', files: [file], sha256: 'x', bytes: 1 }, new Uint8Array(0))).rejects.toThrow()
+    const other = { device: 'Digitakt II', files: [file], sha256: 'x', bytes: 1 }
+    expect(await fitBuilt(other, new Uint8Array(0))).toBe(other)
+  })
 })
