@@ -152,9 +152,9 @@ describe('a module costs nothing while nobody uses it (owner, 20 November 2026)'
 
   it('reads an effect at rest from its device:price readings, not its price on a slot', () => {
     const root = fixture({ ...reading('echo', 0.1, 7.7), ...reading('loud', 0.5, 7.7), ...changelog('echo', '1.0.0', AT_REST_FROM), ...changelog('loud', '1.0.0', AT_REST_FROM) })
-    const priced = id => ({ ...share(7.7), source: 'evidence/cpu-price.json' })
-    expect(atRestStatus({ root, document: hook('echo', '1.0.0', priced('echo'), 31), glue: {} }).state).toBe('ok')
-    expect(atRestStatus({ root, document: hook('loud', '1.0.0', priced('loud'), 31), glue: {} }).state).toBe('fail')
+    const priced = () => ({ ...share(7.7), source: 'evidence/cpu-price.json' })
+    expect(atRestStatus({ root, document: hook('echo', '1.0.0', priced(), 31), glue: {} }).state).toBe('ok')
+    expect(atRestStatus({ root, document: hook('loud', '1.0.0', priced(), 31), glue: {} }).state).toBe('fail')
     expect(atRestStatus({ root: fixture({}), document: hook('slot', '1.0.0', share(7.7), 31), glue: {} }).state).toBe('info')
   })
 
