@@ -4063,7 +4063,7 @@
             "shows": "location",
             "firmware": "1.40C",
             "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "3e269db196b09c6c338dd869fe78d018d127739dcef8d14a1807f025edaa9f59",
+            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
             "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
           }
         },
@@ -4080,7 +4080,7 @@
             "shows": "location-and-controls",
             "firmware": "1.40C",
             "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "3e269db196b09c6c338dd869fe78d018d127739dcef8d14a1807f025edaa9f59",
+            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
             "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
           }
         },
@@ -4097,7 +4097,7 @@
             "shows": "controls",
             "firmware": "1.40C",
             "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "3e269db196b09c6c338dd869fe78d018d127739dcef8d14a1807f025edaa9f59",
+            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
             "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
           }
         },
@@ -4114,7 +4114,7 @@
             "shows": "controls",
             "firmware": "1.40C",
             "moduleVersion": "0.3.0-experimental",
-            "imageSha256": "3e269db196b09c6c338dd869fe78d018d127739dcef8d14a1807f025edaa9f59",
+            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
             "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
           }
         }

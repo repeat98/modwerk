@@ -2,7 +2,7 @@
 
 ## 0.3.0-experimental on an Octatrack MKII, 20 November 2026
 
-The four [menu captures](media/capture.json) show the exact candidate base `c7eba65fa9ec` running the migrated Outbox set in the MKII emulator. They show the settings list, USB Audio fields, both stem taps and the four output assignments. The images were taken from the display bytes sent to the emulated panel.
+The four [menu captures](media/capture.json) show the 0.7.12 release candidate `254c5a75a139` running the migrated Outbox set in the MKII emulator. They show the settings list, USB Audio fields, both stem taps and the four output assignments. The images were taken from the display bytes sent to the emulated panel.
 
 **Reconnect, Keep and card restoration passed on base 0.7.11 `c7eba65fa9ec`.** On the owner’s Octatrack MKII, macOS recorded eight RAM trials at 44.1 kHz. The widths in order were 16, 2, 2, 4, 8, 16, 20 and 2 channels. Both Track 8/Master trials recorded 88,576 frames. Every Undo restored the starting set checksum and the base’s four USB interfaces. The panel tick advanced after all eight. The base counted 16 attachments across eight installs and eight Undos. The additional attachment retry did not run during this sequence.
 

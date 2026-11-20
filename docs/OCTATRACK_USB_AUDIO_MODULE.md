@@ -1,14 +1,12 @@
 # Octatrack: USB Audio as a module (design, for owner review)
 
-Status, 20 November 2026: [decision](decisions/2026-11-20-usb-audio-is-a-module.md), development branch
-`base/usb-audio-module`, draft #1848. The six single-layout prototypes recorded on a real MKII with macOS. One configurable package also recorded at all five USB widths with on-panel layout, tap and Outbox routing changes ([unit record](verification/2026-11-20-octatrack-usb-audio-package.md)).
-Players still use the published base variants. Addresses are OS 1.40C.
+USB Audio 0.3.0-experimental uses Octatrack base 0.7.12 on OS 1.40C. [PR #1840](https://github.com/repeat98/modwerk/pull/1840) published base 0.7.11 with the built-in layouts. The new USB function and settings hooks first appear together in the 0.7.12 release candidate. Earlier references to 0.7.11 in the [unit record](verification/2026-11-20-octatrack-usb-audio-package.md) name development builds by their individual identities.
 
-## Today
+The [design decision](decisions/2026-11-20-usb-audio-is-a-module.md) explains why USB Audio became a package. The following design describes the transition from the built-in layouts.
 
-USB Audio has no runtime package. Since #756 each of its six output layouts, and USB MIDI alone (`off`), is a
-published base, because the layout sets the USB configuration descriptors. Turning it on or changing the layout
-installs a base (RAM boot, then the write). The cost:
+## Through base 0.7.11
+
+Since #756 each of the six output layouts, and USB MIDI alone (`off`), shipped as a separate base because the layout set the USB configuration descriptors. Turning on USB Audio or changing the layout required a base install. That design required the following:
 
 - seven base identities to build, prove and publish for every base change (`base-variants.ts`,
   `octatrack-base-variants.json`, `base-binding.json`'s `variants`);

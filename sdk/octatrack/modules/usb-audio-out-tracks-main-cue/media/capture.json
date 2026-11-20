@@ -1,12 +1,12 @@
 {
   "firmware": "1.40C",
-  "sourceRevision": "d55bb5f4df08451efa4fe6f9feac2f23c985a2a2",
+  "sourceRevision": "506d0ecf7c97a17c1906422c25cafafb77b3086d",
   "moduleVersion": "0.3.0-experimental",
   "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6\u00d7 integer scale.",
   "output": "Decoded LCD blocks from the emulator panel transmit stream using Octabam PanelLink.",
-  "imageSha256": "3e269db196b09c6c338dd869fe78d018d127739dcef8d14a1807f025edaa9f59",
+  "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
   "emulatorSha256": "a2151c36f1f1f4e04b9eb9a43c61a4a36079c6384092fa2547e45709418b32dc",
-  "cardSha256": "15d4f4f4cdd9991a35ed2a7605fab0b249c5d62a8c5491772cdfaa4ad257e8c6",
+  "cardSha256": "cb03f60e670ed47afffa454f46539aa90cdf7a0cbf2e5dbd559e35dba9d38043",
   "keyMs": 150,
   "plan": [
     {

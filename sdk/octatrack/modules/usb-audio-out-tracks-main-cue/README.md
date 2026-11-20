@@ -34,6 +34,8 @@ When you load an existing Modwerk set, its saved destination, layout, track tap 
 
 ## Compatibility and limitations
 
+USB Audio 0.3.0-experimental requires the configurable USB Audio hooks introduced in Modwerk’s Octatrack base 0.7.12. If you use base 0.7.11 or earlier, update the base, then load your existing set to restore its saved routing.
+
 - Built for Octatrack OS 1.40C. USB Audio supports output only. Multichannel recording needs a high-speed USB connection.
 - The DRAM platform reserves about 10 MB of sample memory. A project that filled Flex and recorder memory can show OUT OF MEMORY. Shorten its recorder reservation or use a Static machine for long samples. [Memory guidance](https://github.com/repeat98/modwerk/issues/433).
 - The physical Outbox 8 and Windows and Linux hosts remain untested on this release candidate.
