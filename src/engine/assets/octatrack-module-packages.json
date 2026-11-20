@@ -394,15 +394,15 @@
       "octabam": true,
       "abi": 7,
       "features": 1,
-      "sites": 5,
+      "sites": 7,
       "copies": 0,
       "fills": 0,
-      "version": "0.1.2-experimental",
+      "version": "0.2.0-experimental",
       "name": "DirectJmp Kyoti",
       "module": "075d79a3",
-      "bytes": 2462,
-      "sha256": "89a38e18728bb2039a0f5e3f39305fcb7be75e0db260acd6b33bd46d7e281cef",
-      "path": "octatrack-modules/direct-jump-kyoti/0.1.2-experimental.mwrm"
+      "bytes": 4546,
+      "sha256": "ed3ba88a2f57c7f5ab122a5f572a8a814c91a338c5baa3a56da324c86d71060d",
+      "path": "octatrack-modules/direct-jump-kyoti/0.2.0-experimental.mwrm"
     },
     {
       "id": "dejavu",
@@ -721,6 +721,23 @@
       "module": "5cf69df3",
       "bytes": 652,
       "sha256": "c470e87aefa7c8e2c87dd7b1429a265e5353430b74331adb53158055269c9655"
+    },
+    {
+      "id": "screen-off",
+      "sources": [
+        "sdk/octabam/modules/screen-off/package.c"
+      ],
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/screen-off/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "screen-off",
+      "module": "66166c56",
+      "bytes": 352,
+      "sha256": "14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c"
     }
   ]
 }

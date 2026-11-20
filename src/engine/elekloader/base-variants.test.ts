@@ -1,3 +1,4 @@
+import { sha } from '../../../vendor/elekloader/kit/src/bytes'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
@@ -9,11 +10,12 @@ import { BaseLayoutRequired, BaseUpdateRequired, createRuntimeCatalogue, USB_MOD
 
 const variants = published as BaseVariants
 const defaultText = readFileSync(new URL('../assets/octatrack-base.elemod', import.meta.url), 'utf8')
-const layouts: BaseLayout[] = [...USB_AUDIO_LAYOUTS.map(layout => layout.id), 'off']
+const configurable = Boolean((manifest as { usbAudio?: { configurable?: unknown } }).usbAudio?.configurable)
+const layouts: BaseLayout[] = configurable ? ['off'] : [...USB_AUDIO_LAYOUTS.map(layout => layout.id), 'off']
 const identities = (baseBinding as unknown as { variants: Record<BaseLayout, string> }).variants
 
 describe('the base in each USB Audio layout', () => {
-  it('publishes every layout and USB MIDI alone, each under its own identity', () => {
+  it('publishes exactly the base identities required by the USB Audio installation format', () => {
     expect(Object.keys(identities).sort()).toEqual([...layouts].sort())
     expect(new Set(Object.values(identities)).size).toBe(layouts.length)
     expect(identities[DEFAULT_LAYOUT]).toBe(baseBinding.identity)
@@ -39,11 +41,18 @@ describe('the base in each USB Audio layout', () => {
   })
 
   it('refuses a damaged patch, a foreign default package or an unpublished layout', () => {
-    const variant = variants.variants[0]
-    expect(() => applyVariantPatch(defaultText, [[0, 1, ['not the package']], ...variant.patch], variant.packageSha256)).toThrow('damaged')
-    expect(() => applyVariantPatch(defaultText, [...variant.patch].reverse(), variant.packageSha256)).toThrow('damaged')
-    expect(() => variantPackage(defaultText + ' ', variants, variant.layout)).toThrow('don’t match')
-    expect(() => variantPackage(defaultText, { ...variants, variants: [] }, variant.layout)).toThrow('isn’t published')
+    // Exercise patch validation even when the current release needs a single base.
+    const digest = (text: string) => sha(new TextEncoder().encode(text))
+    const original = 'a\nb\nc', changed = 'A\nb\nC'
+    const variant = { layout: 'tracks' as const, identity: 'a'.repeat(64), packageSha256: digest(changed),
+      patch: [[0, 1, ['A']], [2, 1, ['C']]] as BaseVariants['variants'][number]['patch'], fills: [] }
+    const fixture = { schema: 1 as const, packageSha256: digest(original), variants: [variant] }
+    const base = { defaultLayout: 'off' as const, identity: () => variant.identity }
+    expect(variantPackage(original, fixture, variant.layout, base)?.text).toBe(changed)
+    expect(() => applyVariantPatch(original, [[0, 1, ['not the package']], ...variant.patch], variant.packageSha256)).toThrow('damaged')
+    expect(() => applyVariantPatch(original, [...variant.patch].reverse(), variant.packageSha256)).toThrow('damaged')
+    expect(() => variantPackage(original + ' ', fixture, variant.layout, base)).toThrow('don’t match')
+    expect(() => variantPackage(original, { ...fixture, variants: [] }, variant.layout, base)).toThrow('isn’t published')
   })
 })
 
@@ -54,7 +63,14 @@ describe('USB Audio in a module set', () => {
 
   it('is selectable over USB because the base provides it', () => expect(USB_MODULE_IDS).toContain(USB_AUDIO_MODULE))
 
-  it('needs nothing synced when the base runs the set’s layout', () => {
+  it('installs the set on the published base for its USB Audio format', () => {
+    if (configurable) {
+      for (const layout of USB_AUDIO_LAYOUTS) {
+        const review = catalogue.review(set(layout.id), empty, capable, identities.off)
+        expect(review).toMatchObject({ needsSync: true, changes: { add: [USB_AUDIO_MODULE] }, problem: undefined })
+      }
+      return
+    }
     const review = catalogue.review(set('tracks-post'), empty, undefined, identities['tracks-post'])
     expect(review).toMatchObject({ needsSync: false, problem: undefined })
     expect(review.changes.add).toEqual([])
@@ -62,7 +78,13 @@ describe('USB Audio in a module set', () => {
     expect(catalogue.review(set(), empty, undefined, identities['tracks-main-cue']).problem).toBeUndefined()
   })
 
-  it('asks for the base in the set’s layout when the unit runs another one, and sends nothing', async () => {
+  it('requires the right base before fetching any USB Audio package', async () => {
+    if (configurable) {
+      const old = 'b'.repeat(64)
+      expect(catalogue.review(set('tracks-post'), empty, capable, old).problem).toBeInstanceOf(BaseUpdateRequired)
+      await expect(catalogue.prepare(set('main'), empty, () => Promise.reject(new Error('fetched')), capable, old)).rejects.toBeInstanceOf(BaseUpdateRequired)
+      return
+    }
     for (const running of ['off', 'tracks-main-cue', 'main'] as BaseLayout[]) {
       const review = catalogue.review(set('tracks-post'), empty, undefined, identities[running])
       expect(review.needsSync).toBe(true)
