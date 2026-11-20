@@ -1,3 +1,4 @@
+import { publishedUsbAudioPackage } from '../src/config/published-usb-audio.fixture.ts'
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import { mkdtemp, rm, readFile, writeFile, chmod, symlink, mkdir } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -80,7 +81,8 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     for (const moduleIds of sets) {
       const prepared = await service.call('site_selection', { moduleIds, usb: true, capabilities, base })
       // USB Audio comes with the base (here in its default layout, the set's), so it adds no package.
-      expect(prepared.changes).toHaveLength(moduleIds.filter(id => id !== 'usb-audio-out-tracks-main-cue').length)
+      const expected = publishedUsbAudioPackage ? moduleIds : moduleIds.filter(id => id !== 'usb-audio-out-tracks-main-cue')
+      expect(prepared.changes).toHaveLength(expected.length)
       expect(prepared.changes.every(change => /^[a-f0-9]{64}$/.test(change.sha256) && change.undoSha256)).toBe(true)
     }
     await expect(service.call('site_selection', { moduleIds: ['sidechain-compressor'], usb: true, capabilities })).rejects.toThrow('latest Modwerk base')
