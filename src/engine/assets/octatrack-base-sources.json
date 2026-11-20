@@ -22,7 +22,7 @@
   "sdk/firmware_codec/transport.py": "30f1b71c28cf4c57fdbe38c0e535465cc2f29503ef348888a68940f93f070ae5",
   "sdk/machines/octatrack/dsp-sites.json": "16b491f0a22ce571178af7d2f323701adbe7dba2b3dcd5e3928b464860811f9d",
   "sdk/machines/octatrack/dsp_sites.py": "581b9dd7a1f39a0da8b691d5a64fd28c3322acf47bdd500049042f1ec1b53633",
-  "sdk/machines/octatrack/elekloader/base-version.json": "6d67bc7623796279bc92767ef8c34aedd9c1f9b34698d99632aafc6319cdcb77",
+  "sdk/machines/octatrack/elekloader/base-version.json": "cd07f979c841e73b8b93c2d003a3990ded3a99a4e90c8c9096cbd697d979d12c",
   "sdk/machines/octatrack/elekloader/boot.c": "8b865330d684580ce9ca99de04d7e45a9b4861dfb02d6b91fe0009873b7354f6",
   "sdk/machines/octatrack/elekloader/boot.h": "bda50491aa150bdb686af653031f792c7107e4ad5a0b7960fd96636096e148d7",
   "sdk/machines/octatrack/elekloader/boot.s": "43d21b7bf863bd39bd9c53b94f3e6b47f2dd3e12b30be6b4830580d7b93eb123",
