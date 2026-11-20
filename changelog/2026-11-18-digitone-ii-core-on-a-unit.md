@@ -1,0 +1,1 @@
+Digitone II: a second unit ran modified OS 1.12 builds. core-dn2 0.3 from toonst's elekloader booted, kits played normally, all six UI events ran and stock 1.12 went back on with Transfer. The machine page now shows the boot step done. No module can be built for the Digitone II yet.

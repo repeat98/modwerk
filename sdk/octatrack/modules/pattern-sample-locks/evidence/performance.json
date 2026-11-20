@@ -1,20 +1,20 @@
 {
   "schema": 1,
   "module": "pattern-sample-locks",
-  "version": "0.1.8-experimental",
+  "version": "0.1.9-experimental",
   "kind": "coldfire",
   "trigger": "key",
   "cycles": {
     "unit": "cycles/event",
     "static": null,
-    "measured": 333805,
+    "measured": 307343,
     "budget": 26600000,
-    "method": "Emulator, not hardware (8 November 2026): executed instructions in ot_emu (sha256 b087c97f...) from entry to return of module_key for the dearest press, CLEAR SAMPLE LOCKS confirmed on 8 tracks x 64 steps (512 SAMPLE fields, no other locks), stock callees and interrupts included. Exact package 3e13c46f..., public beta base 9b3ba417..., profile symbols for that package, capture_emulator.py --performance with DSP running. The commit alone took 314,215; every field and the lock index were verified after each edit. Five cases measured (2, 64 and three 512-field fixtures); the next dearest was 326,556."
+    "method": "Emulator, not hardware (17 November 2026): executed instructions in ot_emu (sha256 b087c97f...) from entry to return of module_key for the dearest press, CLEAR SAMPLE LOCKS confirmed on 8 tracks x 64 steps (512 SAMPLE fields, no other locks), stock callees and interrupts included. Exact package 6fea272e..., Octatrack base 0.7.8 with the Part Edit menu (ot_part_menu), profile symbols for that package, capture_emulator.py --performance with DSP running, in the arm64 toolchain container; the action opened through FUNC+PART > LOCKS. The commit alone took 276,410; LOCK on the same 512 fields 96,682; every field verified. 0.1.8 measured 333,805 on base 9b3ba417."
   },
   "stress": {
     "events": 40,
     "playing": true,
     "hangs": 0,
-    "method": "Emulator, not hardware (8 November 2026): 20 rounds, each LOCK SAMPLES TO PATTERN then CLEAR SAMPLE LOCKS on 512 fields while the sequencer played, every write verified, playback still running and audio frames advancing (at least 8,280 per round); then STOP and a Part change (hold PART + DOWN or UP; the Part index changed every round). Same base, package and emulator as above, scratch copy of capture_emulator.py with a 20-round press exercise."
+    "method": "Emulator, not hardware (18 November 2026): 20 rounds, each PLAY, then LOCK SAMPLES and CLEAR SAMPLE LOCKS on 512 fields opened through FUNC+PART > LOCKS and confirmed, every SAMPLE field, the battery copy and the lock index verified after each, the sequencer still playing and audio frames advancing (at least 6,379 per action); then STOP and a Part change (hold PART + the next Part's arrow; all four Parts visited). Same emulator, card, base 0.7.8 and package 6fea272e... as the cycles; capture_emulator.py --press-stress (press_stress_emulator.py)."
   }
 }

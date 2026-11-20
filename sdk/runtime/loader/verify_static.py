@@ -57,6 +57,7 @@ def unpack_recipe(data):
     for _ in range(sites):
         if abi >= 7:
             address, n, keep, checked, r = struct.unpack_from('>IBBBB', data, at)
+            n &= 0x7f  # bit 7 marks a site that rests with its module (loader.h RUNTIME_SITE_RESTS)
             records.append((address, data[at + 8:at + 40], data[at + 40:at + 40 + n],
                             struct.unpack_from('>%dH' % r, data, at + 40 + n), keep, checked))
             at += 40 + n + 2 * r

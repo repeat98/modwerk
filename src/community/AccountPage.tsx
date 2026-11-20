@@ -1,7 +1,7 @@
 import { BackLink } from '../components/BackLink'
 import { ForumAvatar } from './ForumIdentity'
 import { NewsPreferences } from './NewsPreferences'
-import { NotificationPreferences, Unsubscribe } from './NotificationPreferences'
+import { DiagnosticsMailUnsubscribe, NotificationPreferences, Unsubscribe } from './NotificationPreferences'
 import { AccountRemovalRequest } from './AccountRequests'
 import { useEffect, useState } from 'react'
 import { PrivateIssueDetail } from './PrivateIssueDetail'
@@ -29,6 +29,7 @@ function AccountContent({route}:{route:string}) {
   const accountSections=[{id:'profile',label:'Profile',href:'#account'},{id:'activity',label:'Activity',href:'#account/activity'},{id:'notifications',label:'Emails',href:'#account/notifications'},{id:'security',label:'Security & data',href:'#account/security'},{id:'developer',label:'Developer',href:'#account/developer'}] as const
   const section=action==='report'?'activity':accountSections.find(item=>item.id===action)?.id??'profile'
   const emailAvailable=session.emailAvailable??session.registrationAvailable
+  const socialProviders=session.ssoProviders??[]
   const [lastLink,setLastLink]=useState(linkToken)
   // A fresh emailed link starts a fresh form; stripping a consumed token keeps
   // the successful confirmation visible without retaining the sensitive URL.
@@ -87,7 +88,15 @@ function AccountContent({route}:{route:string}) {
       {!(mode==='verify'||mode==='reset')&&<nav className="account-auth-tabs" aria-label="Account actions"><a aria-current={mode==='login'?'page':undefined} href={accountHref('login',next)}>Sign in</a><a aria-current={mode==='register'?'page':undefined} href={accountHref('register',next)}>Create account</a></nav>}
       {mode==='register'&&!session.registrationAvailable&&<p className="service-note" role="status">New registrations are temporarily closed. Existing accounts can still sign in.</p>}
       {!emailAvailable&&['forgot','resend'].includes(mode)&&<p className="service-note" role="status">Account email is not available yet. Please try again later.</p>}
-      {(mode==='login'||mode==='register')&&<><div className="account-social-options"><div className="social-sign-in" role="group" aria-label="Social sign-in">{(['google','github','discord'] as const).map(provider=><SocialButton key={provider} provider={provider} disabled={busy||!session.ssoProviders?.includes(provider)} onClick={()=>void social(provider)}/>)}</div>{session.ssoProviders?.length?<p className="service-note">Continue to sign in or create an account. No username needed to get started.</p>:<p className="service-note">Social sign-in is being prepared. Use email to continue.</p>}</div><p className="account-divider">{mode==='register'?'Or create an account with email':'Or use email'}</p></>}
+      {(mode==='login'||mode==='register')&&socialProviders.length>0&&<>
+        <div className="account-social-options">
+          <div className="social-sign-in" role="group" aria-label="Social sign-in">
+            {socialProviders.map(provider=><SocialButton key={provider} provider={provider} disabled={busy} onClick={()=>void social(provider)}/>)}
+          </div>
+          <p className="service-note">Continue to sign in or create an account. No username needed to get started.</p>
+        </div>
+        <p className="account-divider">{mode==='register'?'Or create an account with email':'Or use email'}</p>
+      </>}
       {message&&mode==='reset'?<a className="button button-primary" href="#account/login">Continue to sign in</a>:<form className="community-form" onSubmit={event=>{event.preventDefault();void submit(event.currentTarget)}}>
         {mode==='register'&&<label>Public username<input name="username" required minLength={3} maxLength={24} pattern="[A-Za-z0-9_]+" autoComplete="username" spellCheck={false}/><small>3–24 letters, numbers or underscores.</small></label>}
         {mode!=='verify'&&mode!=='reset'&&<label>Email address<input type="email" name="email" required maxLength={254} autoComplete="email" placeholder="you@example.com"/></label>}
@@ -108,4 +117,4 @@ function AccountContent({route}:{route:string}) {
   </div>
 }
 
-export function AccountPage({route}:{route:string}) { return route==='account/sso-app'||route.startsWith('account/sso-app/')?<SocialAppReturn code={route.split('/')[2]??''}/>:route==='account/sso'||route.startsWith('account/sso/')?<SocialReturn code={route.split('/')[2]??''}/>:route.startsWith('account/unsubscribe/')?<Unsubscribe token={route.split('/')[2]??''}/>:<AccountContent route={route}/> }
+export function AccountPage({route}:{route:string}) { return route==='account/sso-app'||route.startsWith('account/sso-app/')?<SocialAppReturn code={route.split('/')[2]??''}/>:route==='account/sso'||route.startsWith('account/sso/')?<SocialReturn code={route.split('/')[2]??''}/>:route.startsWith('account/unsubscribe/')?<Unsubscribe token={route.split('/')[2]??''}/>:route.startsWith('account/diagnostics-mail-off/')?<DiagnosticsMailUnsubscribe token={route.split('/')[2]??''}/>:<AccountContent route={route}/> }

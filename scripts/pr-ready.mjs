@@ -1,6 +1,7 @@
 // Will this pull request merge without the owner's help? Run it before every push:
 //
 //   npm run pr:ready                        # any change: up to date, regenerated, every check green
+//   npm run pr:ready -- --commit "Message"  # check a fully staged change once, commit it, then finish the PR checks
 //   npm run pr:ready -- --author <login>    # a registered author's update: also the bot's merge scope
 //   npm run pr:ready -- --remote upstream   # the remote that holds Modwerk's main (default: upstream, else origin)
 //
@@ -8,6 +9,8 @@
 // CI repeats the same checks against the PR's base, and the author-update bot runs the same scope inspection
 // (scripts/author-update-git.mjs).
 import { execFileSync, spawnSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { alternation, moduleFolders } from './machine-folders.mjs'
 import { instrumentFiles } from './pr-body.mjs'
@@ -17,7 +20,7 @@ const GENERATORS = [['licenses:generate'], ['machines:generate'], ['modules:gene
 // The checks that judge a module. A module pull request never edits them: a red check names the fix, and a wrong check is its own
 // Fix: pull request (AGENTS.md, "Setup and checks"). A module release still carries its builder list, assets, comparisons and test lists.
 const MODULE_FOLDER = new RegExp(`^sdk\\/(?:${alternation(moduleFolders())})\\/modules\\/[^/]+\\/|^sdk\\/drafts\\/[^/]+\\/`)
-const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates|dsp_register_contract)\.py$|scripts\/(?:modules|module-doctor|module-cpu-price|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|change-scope|machine-folders|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates|dsp-register-contract)\.py$)/
+const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates|dsp_register_contract)\.py$|scripts\/(?:modules|module-doctor|module-cpu-price|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|pr-check-plan|change-scope|machine-folders|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates|dsp-register-contract)\.py$)/
 /** The gate files a change edits while it also adds or changes a module; [] when it changes no module. */
 export function gateEdits(files) {
   return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(file => GATE.test(file)) : []
@@ -67,7 +70,7 @@ export function readiness({ python = null, dirty = [], behind = false, remote = 
   if (author) {
     if (scope?.error) problems.push(`This is not an automatic author update (${scope.error}). Keep the PR to your own module's folder and its changelog entry, or ask the owner for a review.`)
     else if (scope) notes.push('Automatic merge: the bot can merge this update to ' + scope.modules.join(', ') + ' once both release boxes are ticked and CI is green.')
-  } else notes.push('Without --author this is a new module or a shared change: the owner reviews it and merges it with one click once CI is green.')
+  } else notes.push('For a first release, ask a device reviewer or repository maintainer to review and merge once CI is green. Shared changes go to a maintainer.')
   // pr:ready has no toolchain, so it can only say which packages CI rebuilds in Docker and how to reproduce them first (DEVELOPER_WORKFLOW.md, "Compiled packages").
   if (compiled?.octatrack) notes.push('CI rebuilds the Octatrack packages (octatrack-source) and requires the committed ones to match. pr:ready cannot run that: before you push, reproduce them with bash scripts/build-modules-isolated.sh <clean checkout> <new dir> <image id> from a clean, committed tree ("Compiled packages" in docs/DEVELOPER_WORKFLOW.md).')
   if (compiled?.elemod) notes.push('CI rebuilds the Digitakt, Digitone, Rytm and Four packages (elemod-source) and requires the committed ones to match. pr:ready cannot run that: before you push, run bash scripts/build-elemod-isolated.sh and node scripts/verify-elemod-release-exports.mjs <dir> from a clean, committed tree ("Compiled packages" in docs/DEVELOPER_WORKFLOW.md).')
@@ -110,6 +113,33 @@ export async function boardClaims(root, base, board) {
   return { problems, notes }
 }
 
+/** Run the full check before committing, then bind its result to the tree Git actually committed. */
+export function checkAndCommit(root, git, message, check) {
+  const branch = git('branch', '--show-current'), parent = git('rev-parse', 'HEAD')
+  if (!branch || branch === 'main') throw new Error('--commit needs a checked-out topic branch.')
+  const inProgress = ['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply', 'sequencer']
+  if (inProgress.some(name => existsSync(resolve(root, git('rev-parse', '--git-path', name))))) {
+    throw new Error('Finish the Git operation in progress before using --commit.')
+  }
+  const stagedTree = () => {
+    const status = git('status', '--porcelain=v1', '-z', '--no-renames', '--untracked-files=all', '--ignore-submodules=none')
+    if (!status || status.split('\0').filter(Boolean).some(entry => entry[1] !== ' ')) {
+      throw new Error('--commit needs a fully staged change. Review git status and stage the files you intend to commit.')
+    }
+    return git('write-tree')
+  }
+  const tree = stagedTree()
+  if (!check()) return false
+  if (git('branch', '--show-current') !== branch || git('rev-parse', 'HEAD') !== parent || stagedTree() !== tree) {
+    throw new Error('The branch, HEAD or staged files changed during the check. Review git status and run pr:ready again.')
+  }
+  console.log(git('commit', '-m', message))
+  if (git('branch', '--show-current') !== branch || git('show', '-s', '--format=%T %P', 'HEAD') !== tree + ' ' + parent) {
+    throw new Error('The resulting commit differs from the checked tree or parent. Inspect the commit and run pr:ready again.')
+  }
+  return true
+}
+
 async function main(argv) {
   const root = fileURLToPath(new URL('../', import.meta.url))
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trimEnd()
@@ -117,17 +147,19 @@ async function main(argv) {
   const remotes = git('remote').split('\n')
   const remote = option('--remote') ?? (remotes.includes('upstream') ? 'upstream' : 'origin')
   const author = option('--author')?.replace(/^@/, '') ?? null
+  const commit = option('--commit')
+  if (argv.includes('--commit') && (!commit?.trim() || commit.startsWith('--'))) throw new Error('--commit needs a commit message.')
   const npmCli = process.env.npm_execpath
   if (!npmCli) throw new Error('Run this through npm run pr:ready.')
   const npm = (...args) => spawnSync(process.execPath, [npmCli, 'run', ...args], { cwd: root, stdio: 'inherit' }).status === 0
-  const tracked = () => git('status', '--porcelain', '--untracked-files=no').split('\n').filter(Boolean).map(line => line.slice(3))
+  const changedFiles = () => git('status', '--porcelain', '--untracked-files=all').split('\n').filter(Boolean).map(line => line.slice(3))
 
   console.log(`Fetching ${remote}/main`)
   // A single-branch clone may fetch main only into FETCH_HEAD. Update the
   // tracking ref too, so the suggested `git merge <remote>/main` is useful.
   git('fetch', '--no-tags', remote, `refs/heads/main:refs/remotes/${remote}/main`)
-  const base = git('rev-parse', 'FETCH_HEAD'), head = git('rev-parse', 'HEAD')
-  const dirty = tracked()
+  const base = git('rev-parse', 'FETCH_HEAD')
+  let head = git('rev-parse', 'HEAD'), dirty = changedFiles()
   let behind = false
   try { git('merge-base', '--is-ancestor', base, head) } catch { behind = true }
   // The same interpreter the gates call (scripts/modules.mjs).
@@ -136,13 +168,23 @@ async function main(argv) {
   const python = pythonProblem({ command: pythonCommand, version: probe.stdout?.trim() || null, error: probe.error?.message ?? (probe.status ? (probe.stderr || '').trim().split('\n').pop() || 'exit ' + probe.status : null) })
   // Each step runs only when the ones before it passed, so the first problem is the one to fix.
   let regenerated = [], checkPassed = true, scope = null
-  if (!python && !dirty.length && !behind) {
+  const check = () => npm('check', '--', '--base', base)
+  if (commit && !python && !behind) {
+    if (!checkAndCommit(root, git, commit, check)) {
+      console.error('The full check failed. Fix the failure before committing.')
+      return 1
+    }
+    head = git('rev-parse', 'HEAD')
+    dirty = changedFiles()
+    // The board checks additions by commit. Run that gate on the new HEAD before the usual author and PR checks.
+    checkPassed = npm('board', '--', 'check', '--base', base)
+  } else if (!python && !dirty.length && !behind) {
     // A passing check proved every generated file current, so the generators run only after a failure: stale files are then
     // the first problem to fix, and the next run checks the rest. A generator that fails leaves the check's own report.
-    checkPassed = npm('check', '--', '--base', base)
+    checkPassed = check()
     if (!checkPassed) {
       for (const args of GENERATORS) if (!npm(...args)) break
-      regenerated = tracked()
+      regenerated = changedFiles()
       if (regenerated.length) checkPassed = true
     }
   }
@@ -162,6 +204,8 @@ async function main(argv) {
   const verdict = readiness({ python, dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
+  // Once the work is ready, the agent reviews its session and asks whether to share it with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
+  if (verdict.ok) { const sharing = await import('./agent-session.mjs'), preference = await sharing.readPreference(); verdict.notes.push(sharing.reviewLine); if (preference !== 'never') verdict.notes.push(sharing.sharingLine(preference)) }
   for (const line of verdict.notes) console.log('· ' + line)
   console.log(!verdict.ok ? 'Not ready yet.' : verdict.instrument
     ? 'Ready to open as a draft: the checks pass. Mark it ready for review once the exact build has run on a unit (above).'

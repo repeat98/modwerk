@@ -19,6 +19,7 @@ commit.
 
   python3 -B scripts/dsp-source-gates.py [--base <commit>]   # everything; exit 1 on a refusal
   python3 -B scripts/dsp-source-gates.py --json <module id>  # one module's findings as JSON
+  python3 -B scripts/dsp-source-gates.py --json-modules <id>...  # findings keyed by module ID
 """
 import json
 import pathlib
@@ -97,11 +98,15 @@ def module_findings(module_id, added, base=None):
 
 def main(argv):
     added = catalog_added()
-    if '--json' in argv:
-        module_id = argv[argv.index('--json') + 1]
-        if not (MODULES / module_id).is_dir():
-            sys.exit(f'no module folder sdk/octabam/modules/{module_id}')
-        print(json.dumps(module_findings(module_id, added)))
+    if '--json' in argv or '--json-modules' in argv:
+        batch = '--json-modules' in argv
+        ids = argv[argv.index('--json-modules') + 1:] if batch else [argv[argv.index('--json') + 1]]
+        results = {}
+        for module_id in ids:
+            if not (MODULES / module_id).is_dir():
+                sys.exit(f'no module folder sdk/octabam/modules/{module_id}')
+            results[module_id] = module_findings(module_id, added)
+        print(json.dumps(results if batch else results[ids[0]]))
         return 0
     base = argv[argv.index('--base') + 1] if '--base' in argv else None
     errors, warnings, files = [], [], 0

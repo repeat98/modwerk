@@ -12,7 +12,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef MODWERK_HOST_OVERLAP_STOCK
+#define STOCK ((uint32_t)(uintptr_t)pool)
+#else
 #define STOCK 0x1000u
+#endif
 static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
 static uint8_t stock[256], original[256], paused[64], saved_registers[64];
@@ -34,8 +38,13 @@ uint8_t *modwerk_machine_code(uint32_t a) { CHECK(locked); return stock + (a - S
 void modwerk_machine_flush_data(uint32_t a, uint32_t n)
 {
     flushed++;
-    if (!in_pool(a, n)) { CHECK(masked); return; }
-    CHECK(!push_pending && !locked && !masked && !(a & 15u) && !(n & 15u)); /* whole lines, off-line: nothing runs there yet */
+    /* A host pool address truncated to 32 bits can overlap our fake stock addresses. A stock flush
+     * covers one patch site. A pool flush includes at least the much larger runtime_module header. */
+    if (n <= RUNTIME_SITE_BYTES) {
+        CHECK(masked && n && a - STOCK <= sizeof stock - n);
+        return;
+    }
+    CHECK(in_pool(a, n) && !push_pending && !locked && !masked && !(a & 15u) && !(n & 15u));
     ++pool_flushes, pushed_at = a, pushed_bytes = n, push_pending = 1;
 }
 #ifdef MODWERK_CACHED_MODULES
