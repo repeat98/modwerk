@@ -1,0 +1,1 @@
+Octatrack base: a module pick is now judged as if every quiet delay were awake. The base saves up to 7 CPU points by leaving out silent delays, but a scene that opens the delay sends takes all of it back at once, so a set put together while the delays were quiet could tip over mid-performance. That saving now only adds margin.

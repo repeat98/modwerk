@@ -212,7 +212,10 @@ entry, a DSP word u32. Then the DSP words and relocations, as before. Claims and
   meets another live module's claim when either of the two writes (`RUNTIME_CONFLICT`); the machine checks the rest
   (`modwerk_machine_dsp_claims_admit`, weak: a machine with no DSP ledger refuses every claim). The Octatrack's
   resident base refuses a claim on any base feature's words but a read wholly inside a feature the package requires,
-  and one over a live or planned slot buffer (`RUNTIME_MEMORY`), and keeps every buffer clear of live claims.
+  and one over a live or planned slot buffer (`RUNTIME_BUFFER`, 12; `RUNTIME_MEMORY` until base 0.7.10), and keeps
+  every buffer clear of live claims. A slot's buffer counts as the whole block unless the effect's exact package has
+  a reviewed extent (`controller-policy/controller_policy.c`: E-Verb, Mini Verb, BBD Delay and Vibrato), so a key-bus
+  reader is refused only beside a module effect on FX2 of T1, T5 or T7 whose buffer can reach the bus.
 - **Hook entries** are checked whole and then refused (`RUNTIME_CONFLICT`) in an ABI 9 package: an ABI 9 base has no
   hook slots. ABI 10 gives them to engines (below).
 
@@ -280,6 +283,9 @@ website no longer has. Both generations must fit concurrently; site ownership,
 hook capacity and the production DSP/controller safety checks can refuse or
 delay a change. This does not enable the separate experimental volatile DSP
 journal or relax its trust and reclamation gates.
+
+On the Octatrack, close a module’s page before Undo. If a trial expires with
+the page open, close it and run `npm run device -- recover` to finish Undo.
 
 Octatrack request **38** returns a cached 40-byte `MWSD v1` baseline record
 (`magic, version, known, count u16, digest[32]`). The engine computes it; EP0

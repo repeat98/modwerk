@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { CURRENT_BASE_VERSION } from '../engine/elekloader/base-variants'
 import { BasePage } from './BasePage'
 
 let root: Root, container: HTMLDivElement
@@ -58,6 +59,7 @@ it('lists the other instruments without repeating the three that have their own 
 
 it('shows the newest change for the chosen base and links earlier changes to shipped notes', async () => {
   await render()
+  expect(container.querySelector('.base-changelog > dl dt')?.textContent).toBe(CURRENT_BASE_VERSION)
   for (const [machine, note] of [['Octatrack', 'octatrack'], ['MS-70CDR', 'midistomp'], ['Analog Rytm', 'rytm']]) {
     await choose(machine)
     const log = container.querySelector('.base-changelog')!
