@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { ask, frameRows, get32, ident, LINK_HEADER, linkRequest, LinkError, mem, parseLinkReply, readLog, screen, u32, type LinkLine } from './dn2-link'
+import { readFileSync } from 'node:fs'
+import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { UploadSession } from '../elekloader/upload-session'
+import { UploadCommand, UploadPhase, UploadResult } from '../elekloader/upload-wire'
+import { ask, frameRows, get32, ident, LINK_HEADER, linkRequest, LinkError, mem, pack7 as linkPack7, parseLinkReply, readLog, screen, u32, unpack7, uploadTransport, UPLOAD_BASE, UPLOAD_BASE_TEXT, type LinkLine } from './dn2-link'
 
 // What link.c packs: groups of seven, each led by a byte holding their top bits.
 function pack7(data: Uint8Array): number[] {
@@ -81,5 +85,73 @@ describe('the Digitone II link from the site', () => {
     expect(line.requests).toBe(1 + Math.ceil(size / 128))
     expect(log).toMatchObject({ version: 2, boot: 1, seq: 2, loads: [] })
     expect(log!.incidents.map(i => [i.kind, i.second, i.a, i.keys.filter(k => k !== 0xff)])).toEqual([['start', 0, 0, []], ['freeze', 14, 9050, [3]]])
+  })
+})
+
+/** A unit whose link carries upload frames (link.c's upload command) to a controller as far as a trial reaches it
+ * (sdk/runtime/upload/upload.c): hello, enter, begin, chunk, verify, commit, leave. */
+function uploadUnit() {
+  const names = Object.fromEntries(Object.entries(UploadCommand).map(([name, code]) => [code, name]))
+  const state = { phase: 'normal', last: 0, current: 0, received: 0, generation: 0, active: UPLOAD_BASE, digest: '', frames: 0, longest: 0 }
+  const respond = (command: number, transaction: number, result = 'ok') => {
+    const out = new Uint8Array(144), view = new DataView(out.buffer)
+    view.setUint32(0, 0x4d575552); view.setUint16(4, 1); view.setUint16(6, command); view.setUint32(8, transaction); view.setUint32(12, 128)
+    ;[UploadResult.indexOf(result as never), UploadPhase.indexOf(state.phase as never), 1, state.generation, state.last, state.current, state.received, 262144]
+      .forEach((value, i) => view.setUint32(16 + 4 * i, value))
+    out.set(Buffer.from(UPLOAD_BASE, 'hex'), 48); out.set(new Uint8Array(32).fill(0x53), 80); out.set(Buffer.from(state.active, 'hex'), 112)
+    return out
+  }
+  const controller = (frame: Uint8Array) => {
+    const view = new DataView(frame.buffer, frame.byteOffset), command = view.getUint16(6), transaction = view.getUint32(8)
+    switch (names[command]) {
+      case 'enter': state.phase = state.phase === 'trial' ? 'pending' : 'ready'; break
+      case 'leave': state.phase = state.phase === 'pending' ? 'trial' : 'normal'; break
+      case 'begin': state.last = state.current = transaction; state.phase = 'receiving'; state.received = 0
+        state.digest = Buffer.from(frame.subarray(80, 112)).toString('hex'); break
+      case 'chunk': state.received += frame.length - 52; break
+      case 'verify': state.phase = 'verified'; break
+      case 'commit': state.phase = 'pending'; state.active = state.digest; state.generation++; break
+    }
+    return respond(command, transaction)
+  }
+  const queue: Uint8Array[] = []
+  const line: LinkLine = {
+    send(data) {
+      const seq = data[6], cmd = data[7]
+      if (cmd !== 0x30) return void queue.push(Uint8Array.from([...LINK_HEADER, seq, cmd | 0x40, 2, 0xf7]))
+      state.frames++; state.longest = Math.max(state.longest, data.length)
+      const frame = unpack7(data.subarray(8, -1))
+      queue.push(Uint8Array.from([...LINK_HEADER, seq, 0x70, 0, ...linkPack7(controller(frame)), 0xf7]))
+    },
+    async next() { return queue.shift() ?? null },
+  }
+  return { line, state }
+}
+
+describe('the runtime loader over the Digitone II link', () => {
+  it('names the development base as link.c does', () => {
+    const source = readFileSync(new URL('../../../sdk/machines/digitone-ii/elekloader/base/link.c', import.meta.url), 'utf8')
+    expect(source).toContain(`static const char base[] = "${UPLOAD_BASE_TEXT}";`)
+    expect(UPLOAD_BASE).toBe(sha(new TextEncoder().encode(UPLOAD_BASE_TEXT)))
+  })
+
+  it('stages a package, publishes it and opens a trial through UploadSession', async () => {
+    const unit = uploadUnit(), data = new Uint8Array(10000).map((_, i) => i * 7), pkg = { base: UPLOAD_BASE, data, sha256: sha(data) }
+    const session = await UploadSession.connect(uploadTransport(unit.line), UPLOAD_BASE)
+    await session.stage(pkg)
+    expect(unit.state.received).toBe(data.length)
+    expect(await session.activate()).toMatchObject({ result: 'ok', phase: 'pending', active: pkg.sha256 })
+    expect((await session.startTrial()).phase).toBe('trial')
+    expect(unit.state.longest).toBeLessThanOrEqual(8192)          // stock passed 8,192-byte link messages on a unit
+    expect(Array.from(linkRequest(1, 'upload')).slice(7, 8)).toEqual([0x30])
+  })
+
+  it('refuses a short response and a cancelled exchange', async () => {
+    const queue: Uint8Array[] = []
+    const line: LinkLine = { send(data) { queue.push(Uint8Array.from([...LINK_HEADER, data[6], 0x70, 0, ...linkPack7(new Uint8Array(20)), 0xf7])) }, async next() { return queue.shift() ?? null } }
+    const transport = uploadTransport(line)
+    await expect(transport.exchange(new Uint8Array(48), new AbortController().signal)).rejects.toThrow('20-byte response')
+    const cancelled = new AbortController(); cancelled.abort()
+    await expect(transport.exchange(new Uint8Array(48), cancelled.signal)).rejects.toBeInstanceOf(LinkError)
   })
 })

@@ -2,13 +2,18 @@
 // The Digitone II development link's client for the site (sdk/machines/digitone-ii/LINK.md, the host
 // sdk/machines/digitone-ii/tools/dn2_link.py): its requests and replies in the Analog Rytm MKII link's wire format, and
 // the reads the page and the diagnostics need: the link's identity, memory, the screen and the diagnostics log, which
-// is the Octatrack's layout and reads with parseDeviceLog. Read-only: no keys, turns or RAM boot from here.
+// is the Octatrack's layout and reads with parseDeviceLog. No keys, turns or RAM boot from here. The one command
+// that changes the unit is `upload`, which carries the runtime loader's upload controller (uploadTransport): modules
+// load to RAM for a trial, and a power cycle ends them (sdk/machines/digitone-ii/LOADER.md).
 // Transport-free (LinkLine): the page gives it Web MIDI, a test a simulated unit.
+import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { DEVICE_LOG_IMAGE_BYTES, parseDeviceLog, type DeviceLog } from '../elekloader/device-log.ts'
+import type { UploadTransport } from '../elekloader/upload-session.ts'
+import { UPLOAD_RESPONSE } from '../elekloader/upload-wire.ts'
 
 /** F0 7D 'M' 'W' 'L' version: the link's header, a request's and a reply's. */
 export const LINK_HEADER = [0xf0, 0x7d, 0x4d, 0x57, 0x4c, 1] as const
-export const LINK_COMMANDS = { ident: 0x01, mem: 0x21, diag: 0x22 } as const
+export const LINK_COMMANDS = { ident: 0x01, mem: 0x21, diag: 0x22, upload: 0x30 } as const
 export type LinkCommand = keyof typeof LINK_COMMANDS
 export const LINK_STATUS: Readonly<Record<number, string>> = {
   1: 'not armed (SETTINGS > REMOTE CTRL)', 2: 'bad request', 3: 'busy', 4: 'out of range', 5: 'a person is at the unit',
@@ -42,8 +47,21 @@ export function unpack7(bytes: Uint8Array): Uint8Array {
   return Uint8Array.from(out)
 }
 
+/** link.c's byte blocks from bytes: groups of up to seven, each led by a byte holding their top bits. */
+export function pack7(data: Uint8Array): number[] {
+  const out: number[] = []
+  for (let i = 0; i < data.length; i += 7) {
+    const chunk = data.subarray(i, i + 7)
+    out.push(chunk.reduce((top, b, k) => top | (b & 0x80 ? 0x40 >> k : 0), 0), ...Array.from(chunk, b => b & 0x7f))
+  }
+  return out
+}
+
 export function linkRequest(seq: number, command: LinkCommand, ...values: number[]): Uint8Array {
-  return Uint8Array.from([...LINK_HEADER, seq & 0x7f, LINK_COMMANDS[command], ...values.flatMap(u32), 0xf7])
+  return linkRequestWith(seq, command, values, [])
+}
+function linkRequestWith(seq: number, command: LinkCommand, values: number[], raw: number[]): Uint8Array {
+  return Uint8Array.from([...LINK_HEADER, seq & 0x7f, LINK_COMMANDS[command], ...values.flatMap(u32), ...raw, 0xf7])
 }
 /** A reply's sequence, command, status and payload; null for anything that is not one. */
 export function parseLinkReply(message: Uint8Array): { seq: number; command: number; status: number; payload: Uint8Array } | null {
@@ -53,9 +71,9 @@ export function parseLinkReply(message: Uint8Array): { seq: number; command: num
 
 let nextSeq = 0
 /** One request and its reply; throws a LinkError on a refusal or no answer. */
-export async function ask(line: LinkLine, command: LinkCommand, values: number[] = [], timeoutMs = 2000): Promise<Uint8Array> {
+export async function ask(line: LinkLine, command: LinkCommand, values: number[] = [], timeoutMs = 2000, raw: number[] = []): Promise<Uint8Array> {
   const seq = nextSeq = (nextSeq + 1) & 0x7f
-  line.send(linkRequest(seq, command, ...values))
+  line.send(linkRequestWith(seq, command, values, raw))
   for (const end = Date.now() + timeoutMs; Date.now() < end;) {
     const message = await line.next(Math.max(1, end - Date.now()))
     if (!message) break
@@ -99,4 +117,25 @@ export async function readLog(line: LinkLine): Promise<{ bytes: Uint8Array; log:
   const bytes = await read(line, address, size), image = new Uint8Array(DEVICE_LOG_IMAGE_BYTES)
   image.set(bytes)                       // the Digitone II keeps no crash or stall record: zeros, as an older base answers
   return { bytes, log: parseDeviceLog(image) }
+}
+
+/** The development base's identity for the upload controller (link.c upload_start): the SHA-256 of this text. */
+export const UPLOAD_BASE_TEXT = 'Modwerk Digitone II OS 1.12 development base, link upload v1'
+export const UPLOAD_BASE = sha(new TextEncoder().encode(UPLOAD_BASE_TEXT))
+/** The longest wait for one controller frame's reply: a commit admits and switches on the unit. */
+export const UPLOAD_REPLY_MS = 10000
+/** The upload controller (sdk/runtime/upload) over the link's upload command: one frame out, its 144-byte response
+ * back, for UploadSession. Armed and stopped only: the unit refuses otherwise (status, or the controller's 'unsafe').
+ * A frame the unit is still running when the signal aborts is not taken back; the session then trusts the line no
+ * more (UploadUnconfirmedError). */
+export function uploadTransport(line: LinkLine): UploadTransport {
+  return {
+    async exchange(frame, signal) {
+      if (signal.aborted) throw new LinkError('upload: cancelled')
+      const payload = await ask(line, 'upload', [], UPLOAD_REPLY_MS, pack7(frame))
+      const response = unpack7(payload)
+      if (response.length < UPLOAD_RESPONSE) throw new LinkError(`upload: a ${response.length}-byte response`)
+      return response.subarray(0, UPLOAD_RESPONSE)
+    },
+  }
 }
