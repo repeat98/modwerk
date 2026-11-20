@@ -13,7 +13,7 @@ const moduleCtx = (extra = {}) => ({ kind: 'module', id: 'vibrato', version: '0.
   unit: { available: true }, files: [], manifest: { category: 'effects', compatibility: { effectId: 9, uiClaims: [] } }, ...extra })
 
 /** Fake tools: every command passes and device.mjs's inventory prints the same set, unless `fail` or `inventories` say otherwise. */
-function fakeDeps({ fail = [], inventories = [INVENTORY, INVENTORY], files = {}, trialOutput = 'trial: 1234… running\nrolled back (pass --accept to keep it)', basePrices = 2 } = {}) {
+function fakeDeps({ fail = [], inventories = [INVENTORY, INVENTORY], files = {}, trialOutput = 'trial: 1234… running\nrolled back (pass --accept to keep it)', basePrices = 2, priceResults } = {}) {
   const ran = [], started = [], envs = []
   let clock = 0, inventory = 0
   return {
@@ -32,7 +32,9 @@ function fakeDeps({ fail = [], inventories = [INVENTORY, INVENTORY], files = {},
       const code = fail.some(part => line.includes(part)) ? 1 : 0
       if (line.startsWith('npm run device:price')) { // its file, one result a package it priced
         const n = line.endsWith('.mwrm') ? 1 : basePrices
-        files['/out/price.json'] = JSON.stringify({ results: Array.from({ length: n }, (_, i) => ({ id: 'm' + i, rolledBack: true })) })
+        files['/out/price.json'] = JSON.stringify({ results: priceResults ?? Array.from({ length: n }, (_, i) => ({
+          id: 'm' + i, rolledBack: true, atRestAdds: { frame: 0 }, inUseAdds: { frame: 1 },
+        })) })
       }
       if (line.includes('do memory')) return { code, output: 'pool: 1000 of 100000 bytes used; free 99000, largest free run 90000' }
       if (line.includes('device.mjs set ')) return { code, output: 'set: 2 changes\ntrial: ab… running\nverdict: no crash\nrolled back (pass --accept to keep it)' }
@@ -387,23 +389,32 @@ describe('what the first base run on a unit found (20 November 2026)', () => {
   })
 
   it('keeps every price: one module\'s failed pick is its own line, and only an unsafe or short run fails step 9', async () => {
-    const deps = fakeDeps(), exec = deps.exec, files = {}
-    deps.read = path => files[path]
-    deps.exists = path => path in files || path.endsWith('.mwrm') || path.endsWith('.elemod')
-    deps.exec = async (argv, ...rest) => {
-      const run = await exec(argv, ...rest)
-      if (argv.join(' ').startsWith('npm run device:price')) files['/out/price.json'] = JSON.stringify({ results: [{ id: 'everb', rolledBack: true },
-        { id: 'ring-sc', rolledBack: true, inUseError: 'picking SC Ringmod: No SC Ringmod in the FX2 chooser.' }] })
-      return run
-    }
+    const deps = fakeDeps({ priceResults: [
+      { id: 'everb', rolledBack: true, atRestAdds: { frame: 0 } },
+      { id: 'ring-sc', rolledBack: true, atRestAdds: { frame: 0 }, inUseError: 'picking SC Ringmod: No SC Ringmod in the FX2 chooser.' },
+    ] })
     const ctx = baseCtx({ setPackages: ['/p/everb.mwrm', '/p/ring-sc.mwrm'] })
     const [result] = await runSteps(['cost-unit'], ctx, deps)
     expect(result.status).toBe('passed')
-    expect(result.details).toEqual(['2 of 2 packages priced', 'ring-sc: in use not measured: picking SC Ringmod: No SC Ringmod in the FX2 chooser.'])
+    expect(result.details).toEqual(['1 of 2 packages priced (2 processed)', 'ring-sc: in use not measured: picking SC Ringmod: No SC Ringmod in the FX2 chooser.'])
     const [short] = await runSteps(['cost-unit'], baseCtx({ setPackages: ['/p/a.mwrm', '/p/b.mwrm', '/p/c.mwrm'] }), deps)
     expect(short).toMatchObject({ status: 'failed', reason: 'device:price stopped after 2 of 3 packages' })
     const md = recordMarkdown(record(ctx, [result], { started: 0, finished: 1000, command: 'x' }))
     expect(md).toContain('- Step 1: ring-sc: in use not measured')
+  })
+
+  it.each([
+    [{ refused: 'the loader refused the package' }, 'not installed: the loader refused the package'],
+    [{}, 'at rest not measured; in use not measured'],
+    [{ atRestAdds: { frame: 0 } }, 'in use not measured'],
+  ])('fails a single-module price when the receipt lacks a required reading (%j)', async (receipt, reason) => {
+    const deps = fakeDeps({ priceResults: [{ id: 'vibrato', rolledBack: true, ...receipt }] })
+    const [result] = await runSteps(['cost-unit'], moduleCtx(), deps)
+    expect(result).toMatchObject({
+      status: 'failed',
+      reason: 'vibrato: ' + reason,
+      details: ['0 of 1 packages priced (1 processed)', 'vibrato: ' + reason],
+    })
   })
 
   it('finds an effect in the chooser by the name the package gives it', () => {

@@ -246,13 +246,24 @@ const HANDLERS = {
     if (run.code !== 0) { result.reason = `exit ${run.code}: ${shown(p.commands[0])}`; return run.code }
     const file = join(ctx.out, 'price.json')
     const results = deps.exists(file) ? JSON.parse(deps.read(file)).results ?? [] : []
-    const expected = ctx.kind === 'module' ? 1 : (ctx.priceModules ?? ctx.setPackages ?? []).length
-    result.details = [`${results.length} of ${expected} packages priced`,
-      ...results.filter(r => r.refused || r.inUseError || r.restore || !r.rolledBack)
-        .map(r => `${r.id}: ${r.refused ? 'not installed: ' + r.refused : ''}${r.inUseError ? 'in use not measured: ' + r.inUseError : ''}${r.restore ? '; ' + r.restore : ''}${r.rolledBack ? '' : '; the trial did not roll back'}`)]
+    const module = ctx.kind === 'module'
+    const expected = module ? 1 : (ctx.priceModules ?? ctx.setPackages ?? []).length
+    const needsInUse = module && ctx.manifest?.compatibility?.effectId != null
+    const unmeasured = results.flatMap(r => {
+      const issues = []
+      if (r.refused) issues.push('not installed: ' + r.refused)
+      else if (!Number.isFinite(r.atRestAdds?.frame)) issues.push('at rest not measured')
+      if (r.inUseError) issues.push('in use not measured: ' + r.inUseError)
+      else if (needsInUse && !r.refused && !Number.isFinite(r.inUseAdds?.frame)) issues.push('in use not measured')
+      if (r.restore) issues.push(r.restore)
+      if (!r.rolledBack) issues.push('the trial did not roll back')
+      return issues.length ? [`${r.id}: ${issues.join('; ')}`] : []
+    })
+    result.details = [`${results.length - unmeasured.length} of ${expected} packages priced (${results.length} processed)`, ...unmeasured]
     const unsafe = results.find(r => !r.rolledBack || r.restore)
     if (unsafe) { result.reason = `${unsafe.id} left the unit in a state nobody chose; device:price stopped there`; return 1 }
     if (results.length < expected) { result.reason = `device:price stopped after ${results.length} of ${expected} packages`; return 1 }
+    if (module && unmeasured.length) { result.reason = unmeasured[0]; return 1 }
     return 0
   },
 }
