@@ -58,3 +58,26 @@ it('guards direct links before mounting a private panel', async () => {
   expect(container.querySelector('a.button-primary')?.getAttribute('href')).toBe('#account/login?next=admin%2Frequests')
   expect(mockApi).not.toHaveBeenCalled()
 })
+
+it('opens the selected accounts tool directly and only reads that panel', async () => {
+  mockApi.mockResolvedValue([])
+  await open('admin/accounts?view=mail')
+  expect(container.querySelector('nav[aria-label="Views"] [aria-current]')?.textContent).toBe('Email delivery')
+  expect(container.querySelectorAll('nav[aria-label="Views"] a')).toHaveLength(6)
+  expect(mockApi.mock.calls.map(([path]) => path)).toEqual(['/admin/account-mail'])
+  await open('admin/accounts?view=unknown')
+  expect(container.querySelector('nav[aria-label="Views"] [aria-current]')?.textContent).toBe('Member roles')
+  expect(mockApi.mock.lastCall?.[0]).toBe('/admin/forum/roles')
+})
+
+it('keeps archived removal requests read-only even when switching views', async () => {
+  const base = { username: 'sample', created_at: '2026-11-01 09:00:00', responseDueAt: '2026-12-01T09:00:00Z' }
+  mockApi.mockResolvedValue([{ ...base, id: 'a', status: 'reviewing' }, { ...base, id: 'b', status: 'completed' }])
+  await open('admin/requests')
+  expect(container.querySelectorAll('.admin-record')).toHaveLength(1)
+  expect(container.querySelector('.admin-record form')).not.toBeNull()
+  await open('admin/requests?view=archive')
+  expect(mockApi.mock.lastCall?.[0]).toBe('/admin/account-requests?view=archive')
+  expect(container.querySelector('.admin-record summary')?.textContent).toContain('Completed')
+  expect(container.querySelector('.admin-record form')).toBeNull()
+})
