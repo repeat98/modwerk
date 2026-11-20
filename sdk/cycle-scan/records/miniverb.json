@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "module": "miniverb",
+  "version": "0.2.3-experimental",
+  "sourceSha256": "59b60c1e34a03727b1f45c63181621a60c889e39eabf0811eae7a32079465195",
+  "scanRevision": "cc7cffc1a675a763c5b8d6fbe1659f2b322cc540",
+  "model": "DSP56300FM Table A-1 cycles and the A.2 and 3.5 stalls on one steady block of each --sweep setting; a model, not a measurement",
+  "dearest": {
+    "setting": "RATE=0.34/min",
+    "settings": 24,
+    "instructions": 363.38,
+    "cycles": 698.56,
+    "stalls": 159.25,
+    "stallsByKind": {
+      "agu": 96,
+      "agu-lua": 6,
+      "arith": 47.19,
+      "transfer": 10.06
+    }
+  }
+}

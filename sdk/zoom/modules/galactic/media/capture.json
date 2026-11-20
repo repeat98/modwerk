@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "galactic",
+  "moduleVersion": "1.2.0",
+  "imageSha256": "7f41a7fe6f1e685abd2aa93f117d58cd62ea9749a722ebb2671006550a3f0353",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "7ad8b1a4e680782dea5ca68c30ad241105f811aa2821ef2b4ba7856e4377fb09",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}

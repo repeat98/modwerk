@@ -1,12 +1,14 @@
 import { configurationSummary } from './configuration-report'
-import { useEffect, useState } from 'react'
-import { api, apiFetch, post } from './api'
+import { useState } from 'react'
+import { apiFetch, post } from './api'
+import { useAdminQueue } from './useAdminQueue'
 import { isDigiIssue, FLASH_STATES, LOG_MISSING_REASONS, OT_MODELS } from './issue-context'
 import type { IssueContext, LogMissingReason } from './issue-context'
 import { describeOtLog } from './ot-log'
 import type { OtLogSummary } from './ot-log'
 import type { ReportMetadata } from './report-closure'
 import { ReportState } from './ReportState'
+import { AdminRecord } from './AdminViews'
 import { ReportTriageForm } from './ReportTriageForm'
 import { CloseReportForm } from './CloseReportForm'
 type Issue = ReportMetadata & {
@@ -14,16 +16,24 @@ type Issue = ReportMetadata & {
   context: IssueContext | null; log: OtLogSummary | null; log_missing: LogMissingReason | null; log_missing_note: string
   public_sharing: number; forum_thread_id: string | null; github_state: 'none' | 'pending' | 'syncing' | 'synced' | 'failed'; github_url: string | null; github_error: string
 }
-export function IssueInbox({moduleId = '',onClearModule}: {moduleId?: string;onClearModule?: () => void}) {
-  const [status,setStatus] = useState(moduleId ? 'open' : 'all')
+export function IssueInbox({moduleId, status, onStatus, onClearModule}: {
+  moduleId: string; status: string; onStatus: (value: string) => void; onClearModule: () => void
+}) {
   const path = '/admin/issues?status='+status+(moduleId ? '&moduleId='+encodeURIComponent(moduleId) : '')
-  const [items, setItems] = useState<Issue[]>([]), [error, setError] = useState(''), [loading, setLoading] = useState(true), [busy, setBusy] = useState('')
-  useEffect(() => { let cancelled = false; void api<Issue[]>(path).then(items => { if (!cancelled) setItems(items) }).catch(error => { if (!cancelled) { setItems([]); setError(error.message) } }).finally(() => { if (!cancelled) setLoading(false) }); return () => { cancelled = true } }, [path])
-  async function act(item: Issue, action: () => Promise<unknown>, failure: string) { setBusy(item.id); setError(''); try { await action(); setItems(await api<Issue[]>(path)) } catch (error) { setError(error instanceof Error ? error.message : failure) } finally { setBusy('') } }
+  const { items, loading, loadError, reload } = useAdminQueue<Issue>(path)
+  const [actionError, setActionError] = useState(''), [busy, setBusy] = useState('')
+  const error = loadError || actionError
+  async function act(item: Issue, action: () => Promise<unknown>, failure: string) {
+    setBusy(item.id)
+    setActionError('')
+    try { await action(); reload() }
+    catch (error) { setActionError(error instanceof Error ? error.message : failure) }
+    finally { setBusy('') }
+  }
   const resolve = (item: Issue) => act(item, () => post('/admin/issues/' + item.id, { status: item.status === 'open' ? 'closed' : 'open' }, 'PATCH'), 'Unable to update issue.')
   const mirror = (item: Issue) => act(item, async () => { const result = await post<{ state: string; error?: string }>('/admin/issues/' + item.id + '/github', {}); if (result.state === 'failed') throw new Error(result.error ?? 'GitHub mirroring failed.') }, 'Unable to mirror issue.')
   async function download(item: Issue) {
-    setError('')
+    setActionError('')
     try {
       // The admin session travels in a header, so fetch the log rather than linking to it.
       const result = await apiFetch('/admin/issues/' + item.id + '/log')
@@ -31,15 +41,14 @@ export function IssueInbox({moduleId = '',onClearModule}: {moduleId?: string;onC
       const link = document.createElement('a'), url = URL.createObjectURL(await result.blob())
       link.href = url; link.download = 'OCTAMOD-' + item.module_id + '-' + item.id.slice(0, 8) + '.LOG'; link.click()
       setTimeout(() => URL.revokeObjectURL(url), 1000)
-    } catch (error) { setError(error instanceof Error ? error.message : 'The log could not be downloaded.') }
+    } catch (error) { setActionError(error instanceof Error ? error.message : 'The log could not be downloaded.') }
   }
-  return <section className="configuration-section"><div className="section-title"><h2>Author-directed issues</h2><span className="pill">{items.filter(item => item.status === 'open').length} open</span></div>
-    <p className="service-note">New account reports and logs stay private. Previously published reports retain their GitHub links and status synchronization. Private reports cannot be published through retries.</p>
-    <div className="statistics-controls inbox-controls"><label>Issue status<select value={status} disabled={!!busy} onChange={event => { setStatus(event.target.value); setLoading(true); setError('') }}><option value="all">All reports</option><option value="open">Open reports</option><option value="closed">Closed reports</option></select></label>{moduleId && <span className="service-note">Module: {moduleId} <button className="text-button" onClick={onClearModule}>Clear module filter</button></span>}</div>
+  return <section className="configuration-section"><div className="section-title"><h2>Issue reports</h2>{!loading && !error && <span className="pill">{items.length} {items.length === 1 ? 'report' : 'reports'}</span>}</div>
+    <div className="statistics-controls inbox-controls"><label>Issue status<select value={status} disabled={!!busy} onChange={event => onStatus(event.target.value)}><option value="all">All reports</option><option value="open">Open reports</option><option value="closed">Closed reports</option></select></label>{moduleId && <span className="service-note">Module: {moduleId} <button className="text-button" onClick={onClearModule}>Clear module filter</button></span>}</div>
     {items.length===200 && <p className="service-note">Showing the latest 200 matching reports.</p>}
-    {loading ? <p role="status">Loading reports…</p> : items.length ? items.map(item => <article className="inbox-issue" key={item.id}>
-      <div className="section-title"><h3>{item.title}</h3><ReportState report={item}/></div>
-      <small>{item.scope === 'configuration' ? 'Whole configuration · ' + configurationSummary(item.module_count ?? 0) : item.module_id} · from {item.reporter} · for @{item.author_login}</small>
+    {loading ? <p role="status">Loading reports…</p> : items.length ? items.map(item => <AdminRecord key={item.id}
+      title={item.title} status={<ReportState report={item}/>}
+      meta={`${item.scope === 'configuration' ? 'Whole configuration · ' + configurationSummary(item.module_count ?? 0) : item.module_id} · from ${item.reporter} · for @${item.author_login}`}>
       <p className="preserve-lines">{item.body}</p>
       <dl>
         {item.context && <><dt>Device</dt><dd>{isDigiIssue(item.context)?item.context.model:OT_MODELS[item.context.model]} · {FLASH_STATES[item.context.flash]} · OS {item.context.os}</dd>
@@ -54,5 +63,8 @@ export function IssueInbox({moduleId = '',onClearModule}: {moduleId?: string;onC
         {!!item.public_sharing && item.github_state !== 'synced' && <button className="text-button" disabled={!!busy} onClick={() => void mirror(item)}>{item.github_state === 'none' ? 'Mirror to GitHub' : 'Retry GitHub'}</button>}
       </div>
       {item.status === 'open' && <><ReportTriageForm report={item} busy={!!busy} publicReport={!!item.github_url || !!item.forum_thread_id} onChange={body => void act(item,() => post('/issues/'+item.id,body,'PATCH'),'Unable to triage report.')}/><CloseReportForm busy={!!busy} publicReport={!!item.github_url || !!item.forum_thread_id} onClose={(closureReason,note) => void act(item,() => post('/issues/'+item.id,{status:'closed',closureReason,note},'PATCH'),'Unable to close report.')}/></>}
-    </article>) : !error && <p className="service-note">No reports match these filters.</p>}{error && <p className="file-error" role="alert">{error}</p>}</section>
+    </AdminRecord>) : !error && <p className="admin-empty">No reports match these filters.</p>}{error && <p className="file-error" role="alert">{error}</p>}
+    {loadError && <button className="button button-quiet" onClick={reload}>Retry loading reports</button>}
+    <p className="service-note">New reports and logs stay private. Previously published reports keep their GitHub links and sync status.</p>
+  </section>
 }

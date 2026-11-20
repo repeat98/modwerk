@@ -33,24 +33,28 @@ export function NewsPanel() {
     void run(async () => { const id = await save(); await post('/admin/news/' + id + '/queue', {}); clear() }, 'Queued. The hourly sender works through the recipients within the daily budget.')
   }
   return <section className="configuration-section">
-    <h2>News mail</h2>
+    <h2>{editing ? 'Edit draft' : 'Compose news email'}</h2>
     <p className="service-note">An occasional email to the members who opted in to Modwerk news. Markdown, rendered like a forum post. The sender keeps within {overview?.dailyLimit ?? '…'} messages a day beside account mail, so a campaign to more members is sent over several days. Every message carries a one-click unsubscribe and a link to account settings.</p>
     {overview && <p className="service-note"><strong>{overview.optIns}</strong> {overview.optIns === 1 ? 'member has' : 'members have'} current news consent.{!overview.emailAvailable && ' Email is not connected on this backend, so nothing can be sent yet.'}</p>}
-    <form className="admin-form" onSubmit={event => { event.preventDefault(); void run(save, editing ? 'Draft updated.' : 'Draft saved.') }}>
+    <form className="community-form news-composer" onSubmit={event => { event.preventDefault(); void run(save, editing ? 'Draft updated.' : 'Draft saved.') }}>
+      <details className="admin-help"><summary>Start from a template</summary><div className="review-actions">
+        <button type="button" className="button button-quiet" disabled={busy} onClick={() => void run(async () => { const suggestion = await api<{ subject: string; body: string }>('/admin/news/suggest'); setSubject(suggestion.subject); setBody(suggestion.body); setBetaInvitation(false); setPreview(false) })}>Suggest this week’s digest</button>
+        <button type="button" className="button button-quiet" disabled={busy} onClick={() => void run(async () => { const suggestion = await api<{ subject: string; body: string }>('/admin/news/beta-invitation'); setEditing(null); setSubject(suggestion.subject); setBody(suggestion.body); setBetaInvitation(true); setPreview(false) })}>Prepare beta invitation</button>
+      </div></details>
       <label>Subject<input value={subject} maxLength={150} required minLength={3} onChange={event => setSubject(event.target.value)} placeholder="What landed on Modwerk in October" /></label>
       <label>Message (markdown){preview
         ? <div className="news-preview"><ForumPostBody body={(betaInvitation ? body.replaceAll(BETA_INVITATION_PLACEHOLDER, 'https://modwerk.app/#' + betaInvitationRoute(editing ?? '0'.repeat(32))) : body) || '_Nothing to preview yet._'} /></div>
         : <textarea value={body} maxLength={20000} required rows={14} onChange={event => setBody(event.target.value)} placeholder={'Hi,\n\nHere’s what landed on Modwerk this month.\n\n## New and updated modules\n\n- [Mini Verb](https://modwerk.app/#module/miniverb) — new'} />}</label>
       {betaInvitation && <p className="service-note">Beta invitation · a styled Join the beta button opens the site’s risk reminder. Each recipient must accept before getting access, within the 50-person pool. Keep the {BETA_INVITATION_PLACEHOLDER} link. Saving this draft sends nothing.</p>}
       <div className="review-actions">
-        <button type="button" className="button button-quiet" disabled={busy} onClick={() => void run(async () => { const suggestion = await api<{ subject: string; body: string }>('/admin/news/suggest'); setSubject(suggestion.subject); setBody(suggestion.body); setBetaInvitation(false); setPreview(false) })}>Suggest this week’s digest</button>
-        <button type="button" className="button button-quiet" disabled={busy} onClick={() => void run(async () => { const suggestion = await api<{ subject: string; body: string }>('/admin/news/beta-invitation'); setEditing(null); setSubject(suggestion.subject); setBody(suggestion.body); setBetaInvitation(true); setPreview(false) })}>Prepare beta invitation</button>
         <button type="button" className="button button-quiet" disabled={busy} onClick={() => setPreview(value => !value)}>{preview ? 'Edit' : 'Preview'}</button>
-        <button type="submit" className="button button-quiet" disabled={busy || !dirty}>{editing ? 'Update draft' : 'Save draft'}</button>
-        <button type="button" className="button button-quiet" disabled={busy || !dirty || !overview?.testAvailable} title={overview && !overview.testAvailable ? 'Sign in with your administrator account to receive a test message.' : undefined} onClick={() => void run(async () => { const id = await save(); await post('/admin/news/' + id + '/test', {}) }, 'Test message sent to your address.')}>Send a test to my address</button>
-        <button type="button" className="button button-primary" disabled={busy || !dirty || !overview?.emailAvailable || !overview.optIns} onClick={queue}>Queue for sending</button>
+        <button type="submit" className="button button-primary" disabled={busy || !dirty}>{editing ? 'Update draft' : 'Save draft'}</button>
         {(editing || subject || body) && <button type="button" className="text-button" disabled={busy} onClick={clear}>Clear</button>}
       </div>
+      <fieldset className="admin-send"><legend>Delivery</legend><div className="review-actions">
+        <button type="button" className="button button-quiet" disabled={busy || !dirty || !overview?.testAvailable} title={overview && !overview.testAvailable ? 'Sign in with your administrator account to receive a test message.' : undefined} onClick={() => void run(async () => { const id = await save(); await post('/admin/news/' + id + '/test', {}) }, 'Test message sent to your address.')}>Send a test to my address</button>
+        <button type="button" className="button button-primary" disabled={busy || !dirty || !overview?.emailAvailable || !overview.optIns} onClick={queue}>Queue for sending</button>
+      </div></fieldset>
     </form>
     {error && <p className="file-error" role="alert">{error}</p>}
     {note && <p className="success-note" role="status">{note}</p>}

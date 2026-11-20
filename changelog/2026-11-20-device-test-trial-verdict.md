@@ -1,0 +1,1 @@
+SDK (Octatrack): `npm run device:test` now fails when the trial's own verdict does. A crash, DSP stall, frozen UI or skipped track that the unit logged during the trial used to show only in the trial's output; on an MKII on 20 November 2026 a POLY8 run logged 1609 frame-guard skips on T1 and still reported only its CPU price.

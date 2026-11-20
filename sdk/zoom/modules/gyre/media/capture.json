@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "gyre",
+  "moduleVersion": "1.0.0",
+  "imageSha256": "c7de68b262567e37ecec35a4cdae49b0caf88e0b1ffc495d358b78975c0b621a",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "520d4cf348bda2a29bbe73039a57cf7ef3339547e25bf24725ad0bfc9b6631c3",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}
