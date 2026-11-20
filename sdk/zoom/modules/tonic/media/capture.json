@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "tonic",
+  "moduleVersion": "0.1.0",
+  "imageSha256": "388343ba778aa7b89709b0aa3363ec4c4c936a19f511c2de9ceaaf37813cc7a8",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "f7a90b03351a6fd20cdfadcce274c6e6c1f22cfa19b3b5c3ff8d93c6542e7514",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}
