@@ -350,7 +350,9 @@ so pattern, Part and bank changes never need a wake; a module rests after two sc
 never on a scan taken while a project loads, and every machine stays awake for two scans after the set changes. A pick
 of a resting machine wakes it before the pick commits and is judged with `mw_wake_mille` (3 meter points) on top of its
 price, for its hooks coming back into the frame; a track that names one without a pick renders stock's silent source
-and starts no voice until the next UI tick wakes it. A RENDER_FLEX machine never rests.
+and starts no voice until the next UI tick wakes it. A RENDER_FLEX machine never rests. The module of a DSP effect rests the same way while no slot of the project names its effect id (fxmap.c's
+map of every bank's Parts) and no live slot runs it;  judges a pick of it with the same
+margin and wakes it before stock writes the pick.
 
 `status.c` also keeps the frame interrupt's share of each frame from the frame guard's sums, over the last four seconds (the last play's while stopped), and the box after a pick shows it in its CPU row against `mw_frame_line`, the share where the guard starts to drop renders.
 

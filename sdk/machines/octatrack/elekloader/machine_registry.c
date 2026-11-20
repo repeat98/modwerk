@@ -10,6 +10,7 @@
 #include "loader.h"
 #include "modwerk_events.h"
 #include "status.h" /* MODWERK_MACHINE_MAP and the machine map's calls */
+#include "fxids.h"  /* the effect ids a project names (effect modules that rest) */
 #ifndef MW_HOST /* test_machine_registry.c maps these onto a model of the unit's memory */
 #define U8(a) (*(volatile uint8_t *)(uintptr_t)(a))
 #define U32(a) (*(volatile uint32_t *)(uintptr_t)(a))
@@ -358,9 +359,62 @@ static void asleep_refresh(void) /* masked: the loader just changed the rows or 
     for (uintptr_t volatile *row = modwerk_runtime_event_row[MACHINES]; *row && asleep_n < ROWS - 5u; ++row)
         if (modwerk_runtime_resting_at(*row)) asleep_who[asleep_n++] = (const Machine *)*row;
 }
+/* Effect modules rest the same way (owner, 20 November 2026): a module with a DSP effect and no ev_in_use of its own is
+ * in use while a slot of the project names its effect id (fxmap.c's modwerk_fxmap_used: every bank's Parts, working
+ * and saved, and what runs) or a live slot runs it (checked at every ask, so a paste or a load wakes it within a tick).
+ * Its ColdFire detours marked rests (Euclid's frame hook, Tape Echo's delay seam) hold stock's bytes meanwhile; its DSP
+ * code is the DSP's, resident on demand as before. A pick of it wakes it before stock writes the pick (status.c's
+ * modwerk_status_effect_busy). */
+#define LIVE_FX 0x80000ec4u /* what each slot runs: FX1 T1-T8, then FX2 */
+fx_set modwerk_fxmap_used(void);       /* fxmap.c */
+int modwerk_fxmap_handle(uint32_t module);
+static uint8_t fx_idle[MODWERK_FX_IDS]; /* idle scans in a row for each effect id (UI task) */
+static uint32_t fx_epoch;
+static volatile int fx_wanted = -1;    /* an effect id being picked while its module rests */
+static int effect_id(const struct runtime_module *module)
+{
+    int id = modwerk_fxmap_handle(module->id);
+    return id >= 0 ? id : (int)module->dsp.id;
+}
+static int effect_in_use(const struct runtime_module *module)
+{
+    int id = effect_id(module);
+    if (id < 0 || (unsigned)id >= MODWERK_FX_IDS || id == fx_wanted || modwerk_runtime_owner_epoch() != fx_epoch) return 1;
+    for (unsigned k = 0; k < 16u; ++k) if (U8(LIVE_FX + k) == (unsigned)id) return 1;
+    return fx_idle[id] < REST_AFTER;
+}
+static void fx_scanned(void) /* the machine map's refresh, with its whole scan */
+{
+    fx_set used = modwerk_fxmap_used();
+    uint32_t epoch = modwerk_runtime_owner_epoch();
+    int loading = modwerk_fxmap_loading(), same_set = epoch == fx_epoch;
+    fx_epoch = epoch;
+    for (unsigned id = 0; id < MODWERK_FX_IDS; ++id) {
+        unsigned was = same_set ? fx_idle[id] : 0u;
+        fx_idle[id] = (uint8_t)(fx_in(used, id) ? 0u : loading || was == 255u ? was : was + 1u);
+    }
+    if (fx_wanted >= 0 && (fx_in(used, (unsigned)fx_wanted) || fx_idle[fx_wanted] >= REST_AFTER)) fx_wanted = -1;
+}
+/* status.c, before stock writes an effect pick: whether the module behind `id` rests, and its wake. */
+int modwerk_machine_effect_resting(unsigned id)
+{
+    for (unsigned p = 0; p < RUNTIME_MODULES; ++p) {
+        const struct runtime_module *m = modwerk_runtime_module(p);
+        if (m && m->dsp.count && !m->hook[MODWERK_OT_MACHINES] && effect_id(m) == (int)id)
+            return modwerk_runtime_resting_at((uintptr_t)m);
+    }
+    return 0;
+}
+void modwerk_machine_effect_wake(unsigned id)
+{
+    if (id >= MODWERK_FX_IDS) return;
+    fx_wanted = (int)id, fx_idle[id] = 0;
+    modwerk_runtime_rest_poll();
+}
 int modwerk_machine_in_use(const struct runtime_module *module)
 {
     const Machine *who = (const Machine *)module->hook[MODWERK_OT_MACHINES];
+    if (!who && module->dsp.count) return effect_in_use(module);
     if (!who || who->abi != MODWERK_MACHINE_ABI || who->flags & MODWERK_MACHINE_RENDER_FLEX || pick_who == who ||
         modwerk_runtime_owner_epoch() != use_epoch) return 1;
     for (unsigned t = 0; t < 8u; ++t) if (wake_who[t] == who) return 1;
@@ -1135,6 +1189,7 @@ void modwerk_machine_map_refresh(void)
     const Machine *m[ROWS - 5u]; unsigned n = machines(m);
     uint32_t mine, named = mc_scan(m, n, &mine), absent = 0;
     use_scanned(m, n, mine); /* which machines' modules may rest (modwerk_machine_in_use) */
+    fx_scanned();            /* and which effect modules */
     for (unsigned k = 0; k < MODWERK_MACHINE_MAP; ++k) {
         const volatile struct mc_entry *e = &MCMAP->e[k];
         if (!(named >> k & 1u)) continue;

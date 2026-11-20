@@ -12,6 +12,7 @@ static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
 static uint8_t stock_voices[8 * 168]; /* stock's voice records (0x800049d8 + 168 * track): byte 0 is "playing" */
 static uint32_t render_states[8 * 10]; /* stock's render states (0x80004898 + 40 * track): +4 the RTRG count */
+static uint8_t live_fx[16]; /* what each slot runs (0x80000ec4): FX1 T1-T8, then FX2 */
 
 /* Synthetic memory: a few segments at the addresses the registry reads. */
 struct segment { uint32_t base, size; uint8_t *bytes; };
@@ -25,6 +26,7 @@ static struct segment segments[] = {
     {0x40079240u, 0x10, code}, {0x400585f0u, 0x10, code + 0x10}, {0x4003c950u, 4, code + 0x20}, {0x40078678u, 4, code + 0x24},
     {0x400786ccu, 4, code + 0x28}, {0x40079904u, 4, code + 0x2c}, {0x40065c7cu, 4, code + 0x30}, {0x40078c20u, sizeof clamps, clamps},
     {0x800049d8u, sizeof stock_voices, stock_voices}, {0x80004898u, sizeof render_states, (uint8_t *)render_states},
+    {0x80000ec4u, sizeof live_fx, live_fx},
 };
 static uint8_t *host_at(uint32_t a)
 {
@@ -64,6 +66,13 @@ static unsigned rest_polls; /* the loader's resting poll, checked by sdk/runtime
 static int project_loading; /* fxmap.c's: a project load runs */
 int modwerk_fxmap_loading(void);
 int modwerk_fxmap_loading(void) { return project_loading; }
+/* fxmap.c's effect ids: the ids the project names (bit id of project_fx), and module 700 + id holds id. */
+#include "fxids.h"
+static uint32_t project_fx;
+fx_set modwerk_fxmap_used(void);
+fx_set modwerk_fxmap_used(void) { fx_set s = {{0}}; for (unsigned id = 0; id < 32u; ++id) if (project_fx >> id & 1u) s = fx_with(s, id); return s; }
+int modwerk_fxmap_handle(uint32_t module);
+int modwerk_fxmap_handle(uint32_t module) { return module >= 700u && module < 732u ? (int)(module - 700u) : -1; }
 /* The loader's side: the table rows and the machine glue. */
 #include "loader.h"
 volatile uint32_t modwerk_machine_assigned; /* controller_board.c's, not linked here */
@@ -125,7 +134,7 @@ int modwerk_runtime_rest_poll(void)
     if (!model_rests) return 0;
     int changed = 0;
     for (unsigned i = 0; i < judged_n; ++i) {
-        uintptr_t record = judged_mod[i].hook[MODWERK_OT_MACHINES];
+        uintptr_t record = judged_mod[i].hook[MODWERK_OT_MACHINES] ? judged_mod[i].hook[MODWERK_OT_MACHINES] : (uintptr_t)&judged_mod[i];
         int rest = !modwerk_machine_in_use(&judged_mod[i]);
         if ((resting_rec[i] != 0) != rest) resting_rec[i] = rest ? record : 0, changed = 1;
     }
@@ -669,6 +678,24 @@ static void check_resting_machines(void)
     resting_rec[0] = 0; rows(q_only, 1, 0, 0); ++owner_epoch;
     CHECK(asleep_n == 1 && asleep_who[0] == &Q);
     mw_ui_tick(); CHECK(!resting(1));                                    /* the set changed: Q awake again */
+
+    /* An effect module (DSP code, no machine): in use while any slot of the project names its id or a live slot runs
+     * it; it rests after two idle scans, wakes within a tick of a slot running it, and at once for a pick. */
+    rows(0, 0, 0, 0); judged_n = 1; memset(&judged_mod[0], 0, sizeof judged_mod[0]);
+    judged_mod[0].id = 705u, judged_mod[0].dsp.count = 64u, judged_mod[0].dsp.id = 9u, resting_rec[0] = 0;  /* its handle is 5 */
+    memset(live_fx, 0, sizeof live_fx); project_fx = 0; ++owner_epoch;
+    mw_ui_tick(); CHECK(!resting(0));                                    /* a new set: awake until scanned */
+    scan_tick(); CHECK(!resting(0));
+    scan_tick(); CHECK(resting(0));                                      /* two idle scans: rests */
+    live_fx[11] = 5; mw_ui_tick(); CHECK(!resting(0));                   /* T4 FX2 runs it (a paste, a load): one tick */
+    live_fx[11] = 0; project_fx = 1u << 5; scan_tick(); CHECK(!resting(0)); /* another Part names it */
+    scan_tick(); scan_tick(); CHECK(!resting(0));
+    project_fx = 0; scan_tick(); CHECK(!resting(0)); scan_tick(); CHECK(resting(0));
+    project_loading = 1; project_fx = 0; scan_tick(); CHECK(resting(0)); project_loading = 0;
+    modwerk_machine_effect_wake(5); CHECK(!resting(0) && fx_wanted == 5); /* a pick: awake before stock writes it */
+    scan_tick(); scan_tick(); CHECK(resting(0) && fx_wanted < 0);        /* the pick never landed: rests again */
+    project_fx = 1u << 9; live_fx[0] = 9; scan_tick(); CHECK(resting(0)); /* another id: not this module */
+    live_fx[0] = 0; project_fx = 0;
 
     model_rests = 0; judged_n = 0; rows(0, 0, 0, 0); clear_sigs();
     CHECK(!asleep_n && !masked);

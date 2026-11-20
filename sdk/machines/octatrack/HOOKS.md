@@ -24,8 +24,9 @@ every hook whose kind says `rests`, so the frame interrupt never enters its code
 from the UI tick and puts it back, in its (order, module id) place, at the first nonzero answer. A module
 that contributes a machine (`ot_machines`) and does not subscribe is answered for by the base: it rests while
 no track of any Part of the project, working or saved, is that machine, and wakes before a pick of it
-commits. Any other module that does not subscribe never rests. Installing, replacing or removing a module
-wakes its position.
+commits. So is a module with a DSP effect: it rests while no slot of the project names its effect id and no
+live slot runs it, and wakes before a pick of it is written. Any other module that does not subscribe never
+rests. Installing, replacing or removing a module wakes its position.
 A module can let its own detours rest too: `"rests": ["0x…"]` in its runtime.json names them, and while it
 answers 0 the base puts stock's bytes back there, then its patch at the next nonzero answer (never under a
 paused task's resume address). Stock runs those sites unpatched until the next UI tick wakes the module, so

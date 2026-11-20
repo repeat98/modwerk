@@ -299,13 +299,13 @@ static const uint8_t event_rests[RUNTIME_SITE_EVENTS] = RUNTIME_SITE_EVENT_RESTS
 static uint32_t resting[REST_WORDS], asks[REST_WORDS];
 static int is_resting(unsigned i) { return resting[i / 32u] >> (i % 32u) & 1u; }
 static int rests(unsigned e, unsigned i) { return event_rests[e - RUNTIME_EVENTS] && is_resting(i); }
-/* A module that contributes to the table the machine judges (RUNTIME_SITE_EVENT_JUDGED: the Octatrack's track machines)
- * and does not answer ev_in_use itself: the machine knows when a track uses it, so it answers for it
- * (modwerk_machine_in_use) and the module rests as if it had answered. */
+/* A module that contributes to the table the machine judges (RUNTIME_SITE_EVENT_JUDGED: the Octatrack's track machines),
+ * or carries DSP code (an effect: the machine knows which slots name it), and does not answer ev_in_use itself: the
+ * machine knows when it is used, so it answers for it (modwerk_machine_in_use) and the module rests as if it had. */
 #ifdef RUNTIME_SITE_EVENT_JUDGED
 static int judged(const struct runtime_module *m)
 {
-    return m && !m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] && m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_JUDGED];
+    return m && !m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] && (m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_JUDGED] || m->dsp.count);
 }
 #else
 static int judged(const struct runtime_module *m) { (void)m; return 0; }
@@ -1018,7 +1018,7 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
 #if RUNTIME_SITE_EVENTS && defined(RUNTIME_SITE_EVENT_IN_USE)
         if (abi >= 7u && p[4] & RUNTIME_SITE_RESTS && hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] == RUNTIME_NONE
 #ifdef RUNTIME_SITE_EVENT_JUDGED
-            && hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_JUDGED] == RUNTIME_NONE
+            && hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_JUDGED] == RUNTIME_NONE && !dsp.count
 #endif
             ) return refuse(RUNTIME_MALFORMED); /* a site rests only with a module that says, or the machine knows, when it is in use */
 #else
