@@ -176,11 +176,8 @@ int modwerk_upload_busy(void) {
 #endif
     return controller_started && controller.phase != MU_NORMAL;
 }
-#ifdef MODWERK_SAMPLE_EDITOR
-/* UI observations only. A complete trial may run its module, while receiving,
- * partial publication, uncertain rollback and a disconnect may not edit. */
-int mw_sample_ep0_wake(const void *message) { return message==wake_message; }
-int mw_sample_transport_ready(void)
+/* A settled trial may use the instrument. Receiving, publication, rollback and disconnect still own it. */
+int modwerk_upload_settled(void)
 {
     if(receiving || held)return 0;
 #ifdef MODWERK_RUNTIME_VOLATILE_JOURNAL
@@ -192,6 +189,9 @@ int mw_sample_transport_ready(void)
     return !controller_started || (controller.initialized && controller.active_known && !controller.disconnecting &&
         (controller.phase==MU_NORMAL || controller.phase==MU_TRIAL));
 }
+#ifdef MODWERK_SAMPLE_EDITOR
+int mw_sample_ep0_wake(const void *message) { return message==wake_message; }
+int mw_sample_transport_ready(void) { return modwerk_upload_settled(); }
 #endif
 
 static void wake(void)

@@ -9,6 +9,7 @@ extern const uint16_t modwerk_dsp_arena[2];
 extern struct dl_package dl_catalog[DL_PACKAGES];
 extern uint8_t modwerk_keybus_readers;
 int modwerk_fxmap_loading(void);
+int modwerk_upload_settled(void);
 int modwerk_machine_stopped(void);
 int modwerk_dsp_bank_names(unsigned id);
 unsigned modwerk_controller_held(void);
@@ -91,4 +92,34 @@ int mw_project_sidechain_notice(void)
         mw_engines_admitted[SIDECHAIN] != 1u + MW_ENGINE_MEMORY) return 0;
     notice = 0;
     return 1;
+}
+
+/* A stopped project can fit but have one retained stock effect splitting its last free span.
+ * Try both arena ends on a private copy of the ledger. The live ledger changes only when
+ * the complete target fits and its ordinary move transaction accepts a disjoint new copy. */
+int mw_project_fx_move(struct dl_allocator *allocator, const uint8_t ids[16], uint32_t token)
+{
+    if (!hold || project != modwerk_project_loaded || modwerk_fxmap_loading() ||
+        !mw_engines_settled() || !modwerk_upload_settled()) return 0;
+
+    static struct dl_allocator preview; /* UI task only, outside the ColdFire task stack */
+    fx_set seen[2] = {{{0}}, {{0}}};
+    for (unsigned i = 0; i < 16u; ++i) {
+        unsigned id = ids[i], core = (i & 7u) < 4u ? 1u : 0u;
+        if (id >= 32u || fx_in(modwerk_fx_modules, id) || fx_in(seen[core], id)) continue;
+        seen[core] = fx_with(seen[core], id);
+        const struct dl_placement *live = &allocator->live[core][id];
+        unsigned cap = allocator->capacity[core], align = dl_catalog[id].alignment;
+        if (!live->present || !align || live->words > cap) continue;
+        unsigned ends[2] = {0, (cap - live->words) & ~(align - 1u)};
+        for (unsigned end = 0; end < 2u; ++end) {
+            unsigned to = ends[end];
+            if (to < (unsigned)live->offset + live->words && to + live->words > live->offset) continue;
+            preview = *allocator;
+            preview.live[core][id].offset = (uint16_t)to;
+            if (dl_allocator_prepare(&preview, ids, token) == DL_ALLOC_OK &&
+                dl_allocator_move(allocator, core, id, to, token) == DL_ALLOC_OK) return 1;
+        }
+    }
+    return 0;
 }

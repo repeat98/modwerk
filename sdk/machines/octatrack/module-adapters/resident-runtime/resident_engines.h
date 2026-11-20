@@ -98,6 +98,8 @@ unsigned modwerk_machine_dsp_features(void);
  * seconds after the last key or knob and no pick waiting, as an evacuation waits. */
 int mw_engines_settled(void);
 /* Project priority is evaluated on the UI task from the complete incoming slot map. */
+struct dl_allocator;
+int mw_project_fx_move(struct dl_allocator *allocator, const uint8_t ids[16], uint32_t token);
 int mw_project_sidechain_used(unsigned compressor);
 int mw_project_fx_wait(const uint8_t ids[16]); /* negative: draining, positive: plan the slots now */
 int mw_project_sidechain_notice(void);         /* consume one confirmed pause */

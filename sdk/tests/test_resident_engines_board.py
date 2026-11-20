@@ -29,6 +29,8 @@ a reader goes in whatever room the Part leaves; the pick that brings its effect 
 Mode 64: a core's owned channel closed from outside the engines (MKII, 27 October 2026) refuses at admission.
 Modes 67-68 (#1736): a trial that removes Analog BD frees its engine's room but keeps its slot, so a rollback binds it
 again; 68 is the whole-set trial `device -- set` sends, run in a build with the set backend.
+Modes 69–75 cover saved-Part priority, a fragmented stock effect, a refused move, USB and pattern transitions,
+module ownership, and playback starting during a copy. The light Part readmits Sidechain after the move.
 """
 import importlib.util
 import hashlib
@@ -184,6 +186,8 @@ void test_fx(unsigned p, unsigned n)
     dl_codes[0][p] = dl_codes[1][p] = (struct code){fx_words[p], 0, (uint16_t)n, 0, 1, 0};
 }
 /* One Part switch through the actual selection route: prepare, poll to READY, commit, retire. */
+/* The real observer queues a generation and pumps the manager from the UI tick. */
+void test_observe(const uint8_t ids[16]) { begin(ids, ++auto_serial, 1); }
 static uint32_t select_token = 1;
 int test_select(const uint8_t ids[16], void (*pump)(void))
 {
@@ -232,6 +236,7 @@ void test_inject_target(unsigned c, unsigned p, unsigned offset, unsigned n);
 void test_force_table(unsigned c, unsigned e);
 int test_table_matches(unsigned c, unsigned e);
 void test_advance(void);
+void test_observe(const uint8_t ids[16]);
 void test_fx(unsigned p, unsigned n);
 void test_none(void);
 int test_select(const uint8_t ids[16], void (*pump)(void));
@@ -277,6 +282,8 @@ int modwerk_dsp_keybus_charge(int on)
  * says (modes 54-58). */
 volatile uint32_t modwerk_project_loaded;
 int modwerk_fxmap_loading(void) { return 0; }
+static int upload_settled = 1;
+int modwerk_upload_settled(void) { return upload_settled; }
 const uint16_t modwerk_dsp_arena[2] = {MODWERK_DSP_WORDS0 - 64u, MODWERK_DSP_WORDS1 - 64u};
 static uint32_t board_bank = 1;
 static unsigned names_compressor = 1, names_reader = 1, leasing = 0xffu;
@@ -587,6 +594,58 @@ int main(int argc, char **argv)
     (void)kb;
     test_none(); test_fx(3, 900); test_fx(5, 400); test_fx(6, 400); test_fx(7, 400); test_fx(8, 400); test_fx(9, 300);
     run(2);
+    if (mode >= 70 && mode <= 75) {
+        /* A small incumbent leaves a hole too small for any of the four incoming effects.
+         * Both layouts ask for 1,890 out of 1,936 words. Sidechain initially holds 388. */
+        uint8_t initial[16] = {0}, heavy[16] = {0};
+        unsigned kept = mode == 74 ? 40u : 4u; /* a module can occupy the same span */
+        test_fx(5, 100); test_fx(kept, 210);
+        for (unsigned p = 6; p <= 9; ++p) test_fx(p, 420);
+        initial[4] = 5; initial[5] = (uint8_t)kept;
+        memcpy(test_parts[0], initial, 16);
+        assert(test_select(initial, pump) == 1 && test_live(0, kept) == 100);
+        leasing = 0; assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED); run(400);
+        assert(dsp_mask[0] == 9 && dsp_mask[1] == 9);
+        heavy[4] = 6; heavy[5] = (uint8_t)kept; heavy[6] = 7; heavy[7] = 8; heavy[12] = 9;
+        memcpy(test_parts[0], heavy, 16);
+        ++modwerk_project_loaded;
+        int ready = mw_project_fx_wait(heavy);
+        assert(ready < 0);
+        for (unsigned tick = 0; tick < 600 && ready < 0; ++tick) { run(1); ready = mw_project_fx_wait(heavy); }
+        assert(ready == 1 && test_capacity(0) == top);
+        if (mode == 71) upload_settled = 0; /* an Undo or a publication owns the unit */
+        if (mode == 72) refuse_write[0] = 64u + top - 210u;
+        if (mode == 73) queued = 1;
+        unsigned before = dl_residency_failures, rollbacks = dl_residency_rollbacks;
+        test_observe(heavy);
+        unsigned began_playing = 0;
+        for (unsigned n = 0; n < 3000 && !test_idle(); ++n) {
+            if (mode == 75 && test_target(0, kept) == (int)top - 210)
+                began_playing = 1, transport_running = 1, quiet = 0;
+            run(1);
+        }
+        assert(test_idle());
+        if (mode == 70 || mode == 75) {
+            assert(dl_residency_failures == before && test_live(0, kept) == (int)top - 210);
+            for (unsigned i = 0; i < 16; ++i) assert(test_active(i) == heavy[i]);
+            assert(!dsp_mask[0] && !dsp_mask[1] && began_playing == (mode == 75));
+            transport_running = 0; quiet = 1;
+            assert(mw_project_fx_wait(heavy) == 0);
+            memcpy(test_parts[0], initial, 16);
+            ++modwerk_project_loaded;
+            assert(mw_project_fx_wait(initial) == 0);
+            test_observe(initial);
+            run(1000);
+            assert(test_idle() && dl_residency_failures == before);
+            assert(dsp_mask[0] == 9 && dsp_mask[1] == 9 && test_live(0, kept) < (int)sc);
+            assert(test_active(4) == 5 && test_active(5) == kept);
+        } else {
+            assert(dl_residency_failures > before && test_live(0, kept) == 100);
+            assert(dl_residency_rollbacks == rollbacks + (mode == 72));
+        }
+        assert(frames_checked);
+        return 0;
+    }
     if (mode == 69) {
         uint8_t light[16] = {0}, heavy[16] = {0};
         leasing = 0;
@@ -2066,7 +2125,7 @@ class ResidentEnginesBoard(unittest.TestCase):
             generated(work, bundles())
             binary, result = build(work)
             self.assertEqual(result.returncode, 0, result.stderr)
-            for mode in (*range(self.MODES), 69):
+            for mode in (*range(self.MODES), *range(69, 76)):
                 with self.subTest(mode=mode):
                     result = subprocess.run([str(binary), str(mode)], capture_output=True, text=True)
                     self.assertEqual(result.returncode, 0, result.stderr)

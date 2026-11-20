@@ -377,35 +377,35 @@
   },
   {
    "base": "0.7.11",
-   "identity": "5c7dfcaa13b59db2c1a2695925a845eb473271f9af4291320d675e896fa957b7",
+   "identity": "98971ac40d60dc76532d13738f3a5c46f5d2fb7ec58b3ea554cbd81d46a7c3cc",
    "layouts": {
     "tracks-main-cue": {
-     "main": 1326831,
-     "container": 807604
+     "main": 1327530,
+     "container": 808280
     },
     "tracks": {
-     "main": 1326674,
-     "container": 807376
+     "main": 1327369,
+     "container": 808144
     },
     "tracks-post": {
-     "main": 1328276,
-     "container": 809152
+     "main": 1328985,
+     "container": 809900
     },
     "main-cue": {
-     "main": 1326592,
-     "container": 807284
+     "main": 1327292,
+     "container": 808008
     },
     "main": {
-     "main": 1326455,
-     "container": 807164
+     "main": 1327153,
+     "container": 807900
     },
     "master": {
-     "main": 1326475,
-     "container": 807160
+     "main": 1327178,
+     "container": 807908
     },
     "off": {
-     "main": 1325052,
-     "container": 805608
+     "main": 1325748,
+     "container": 806320
     }
    }
   }
