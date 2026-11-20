@@ -767,7 +767,13 @@ if (command === 'serve') {
     const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages)
     console.log(`set: ${packages.length} changes, ${data.length} bytes`)
     try { console.log(state(await retried(() => trial(session, { base: identity.base, data, sha256: sha(data) })))) }
-    catch (error) { console.log('refused: ' + error.message); await session.cancel().catch(() => {}); await session.leaveUploadMode().catch(() => {}); console.log(state(session.status)) }
+    catch (error) {
+      process.exitCode ||= 1
+      console.log('refused: ' + error.message)
+      await session.cancel().catch(() => {})
+      await session.leaveUploadMode().catch(() => {})
+      console.log(state(session.status))
+    }
     console.log('installed:', (await transport.inventory())?.map(m => m.name).join(', ') || 'none')
   }
   if (command === 'flash') {

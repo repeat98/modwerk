@@ -170,8 +170,8 @@ export function poolFree(text) {
 }
 
 const SET_DEPTH = 4 // a set the base refuses for memory is halved, at most this often
-// A whole-set offer names its modules as bits of a 32-bit mask (volatile_service.c), the live ones included: a set of 36
-// was refused at verify on the emulator's twin, 20 November 2026. The modules read at step 6 take their share.
+// Keep these trial batches bounded as well as fitting their bytes in the module pool.
+// Count the starting inventory so a run with modules already installed offers smaller batches.
 export const SET_MODULES = 32
 const HANDLERS = {
   /** Step 7 for a base: the sets, each a whole-set trial, its result and the inventory after it in the record. */
