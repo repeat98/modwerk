@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "genloss",
+  "moduleVersion": "1.0.0",
+  "imageSha256": "04ca88ae2dc7f4e2c2c8d0fe349434736b2ccf49cc75f7b69793369d8264696e",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "fa9067b9b21b167b45677035f10e82a544196781def98efd4a936eb810364b87",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}

@@ -402,13 +402,15 @@ static int resources_idle(void *u, const struct mw_controller_binding *b)
 static int writes_blocked(void *u) { (void)u; return modwerk_saved_set_busy() != 0; }
 static int publication_confirmed(void *u, const struct mw_controller_binding *b)
 { (void)u; return live(b) && !modwerk_runtime_broken(); }
-/* Nothing can resume or point into the image: unpublished, no journal that
- * could roll back to it, no reviewed UI root, and for Matrix no destination
- * codes left for stock to read as cue levels. */
+/* Nothing can resume or point into the image: unpublished, no journal or
+ * trial that could roll back to it (#1736: released while a trial ran, a
+ * rolled-back controller came back unbound until a power cycle), no reviewed
+ * UI root, and for Matrix no destination codes left for stock to read as cue
+ * levels. */
 static int roots_clear(void *u, const struct mw_controller_binding *b)
 {
     (void)u;
-    if (modwerk_runtime_volatile_busy() || live(b)) return 0;
+    if (modwerk_runtime_volatile_busy() || modwerk_runtime_restorable(b->generation) || live(b)) return 0;
     if (b->identity.feature == 2u && (READ8(MATRIX_MODE) == 2u || READ8(MATRIX_MODE_CS1) == 2u)) return 0;
     return b->canonical_extent <= UINTPTR_MAX - b->extent_bytes && UI_CLEAR(b->canonical_extent, b->canonical_extent + b->extent_bytes);
 }
@@ -546,6 +548,8 @@ static int engine_wanted(unsigned at)
     const struct mw_controller_slot *s = &REGISTRY.slots[at];
     if (!held(s)) return 0;
     if (parked[at]) return s->state != MW_CTL_RETIRING;
+    /* Removed by a trial that can still roll back (#1736): kept only for the rollback, so its room is the trial's. */
+    if (s->state == MW_CTL_RETIRING && modwerk_runtime_restorable(s->binding.generation)) return 0;
     if (roomless[at] && s->state <= MW_CTL_BOUND) return 0;
     return (used & s->binding.identity.feature) || s->touched || s->state > MW_CTL_BOUND;
 }

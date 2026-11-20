@@ -84,6 +84,7 @@ no firmware. Hooks, entry points and state: [OCTATRACK_API.md](OCTATRACK_API.md)
 Each trial ends with a verdict from the unit's own log: a crash, DSP stall,
 frozen UI or skipped track during it fails the trial (exit 1), and it is
 rolled back even with `--accept`; `npm run device -- do diaglog` shows the log.
+Each incident names its boot and the seconds since that boot.
 
 **Two tiers.** `module:doctor -- --draft <id>` judges a draft as experimental:
 the lines a trial and a tester need (category, DSP sources, cross-compatibility,
@@ -234,7 +235,8 @@ reboot where applicable. Give hardware steps and record actual results;
 emulator/host tests do not fill missing hardware qualification. With
 `npm run device -- serve` running, `npm run device:qualify -- --keeps-ok
 --testing-entry run.md <package>` installs the package, places it alone on
-each DSP core and then beside itself on every track, sweeps its knobs, switches
+each DSP core (a machine through the machine list, playing, its render read
+against its CPU price) and then beside itself on every track, sweeps its knobs, switches
 Parts and banks, optionally soaks (`--soak`) and crashes on purpose
 (`--crash`), restores the Part and removes the package. It writes what it saw,
 with the package's SHA-256, as an entry to paste into TESTING.md. The
@@ -293,6 +295,8 @@ the asset hashes that moved; `--check` must then call every package identical.
 (`src/engine/assets/octatrack-base-sources.json`): a change to how packages are
 published goes in the host wrapper `scripts/octatrack-module-packages.py`.
 In the toolchain image set `ELEKLOADER_DSP_ASM`; restore old versions it deletes.
+
+**C/assembly USB source recipes.** A package row's `sourceRecipe` opts into `scripts/source-runtime-package.py`. Its `base` declares only reviewed `imports` (export names) and `runOrigin`; identity, package hash and addresses are read from the committed base at each build, never embedded as runtime identity guards. `python3 -B scripts/source-runtime-package.py --recipe <runtime-build.json> --check` rebuilds and validates without writing output. Reconstruction review pins authored module inputs, explicitly compiled shared units and the linked image with only linker-proven import words normalized; `baseImports` pins those words' offsets, names and addends. Other SDK/base inputs remain in build provenance. Compatible base changes need no recipe recapture; missing/non-runtime exports, changed authored code or overlapping reconstruction spans still fail. Capture with a private original OS is a separate review step, not a scan waiver.
 
 **A first release on an owner approval** (`sdk/approvals/<id>-build-approval.json`, which only the owner writes).
 It binds the native source hash: every file in the folder but `octamod.module.json`, `media/`, Markdown and licences,

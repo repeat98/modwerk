@@ -55,6 +55,10 @@ int modwerk_machine_journal_accept(const struct runtime_journal_view *,unsigned)
  * reopen the journal. */
 void modwerk_machine_journal_idle(uint32_t generation);
 int modwerk_runtime_volatile_busy(void);
+/* An open transaction can still put this owner generation back at a position: a trial's replaced module, or a journal
+ * or set row's `before`, until the trial is kept or rolled back. The controller board keeps such a slot instead of
+ * releasing it, so a rollback finds it held (#1736). */
+int modwerk_runtime_restorable(uint32_t generation);
 /* Trusted engine calls only, with captured caller context. Each function
  * acquires the real stable lock at its use boundary. The journal owns its
  * generation, candidates and baseline until exact rollback or Keep. */

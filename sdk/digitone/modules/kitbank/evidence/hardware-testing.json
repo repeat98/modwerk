@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-20",
+  "source": "The author's step-by-step answers in the development conversation, read back while the steps were done",
+  "reporter": "ZOGV",
+  "status": "hardware-tested-author-reported",
+  "model": "Digitone",
+  "release": "1.44",
+  "moduleVersion": "0.2.0-experimental",
+  "builds": [
+    {
+      "name": "Core dn1 2.0a + kitbank 0.2.0-experimental (XX08)",
+      "syxSha256": "6c94a77ef70ae10ebdde390bce1252dffdc946f47aca168b42cd880b9494c49c",
+      "durationMinutes": 10,
+      "steps": {
+        "power-on with an existing project saved by the author's own always-on kit-per-bank OS: KIT PER BANK came up ticked (that project carries kitbank's record with the switch on)": "as expected",
+        "switch unticked, A02's filter closed: A01 unchanged; ticked, A02 plays A01's sound; unticked again, A02 muffled again": "OK",
+        "switch ticked, a filter knob turned on A02: A01 changes too": "OK",
+        "stopped on A01, PTN held, trigs 5 then 6, then YES, PTN released, PLAY: the chain plays A05 A06 A05 A06, no A01 added (the XX07 defect)": "OK",
+        "A03 locked with PTN+YES (KIT LOCKED), project saved as new, power cycle, project reloaded: KIT PER BANK still ticked, A03 still locked (PTN+YES then showed KIT SHARED)": "OK",
+        "an older project loaded: KIT PER BANK unticked, it plays as before": "OK"
+      },
+      "notTried": [
+        "queued pattern changes while playing (PTN+2 then PTN+1)",
+        "FUNC+YES / FUNC+NO kit save and reload",
+        "copy and paste of a locked pattern",
+        "song mode"
+      ]
+    }
+  ],
+  "limitations": [
+    "About 10 minutes, as estimated by the author.",
+    "Queued changes while playing, FUNC+YES/NO, copy and paste of a locked pattern and song mode were not tried on the unit in this run; they are covered by the emulator runs only.",
+    "The earlier XX07 run (2026-11-14, reported as one statement) is not evidence for this build."
+  ]
+}

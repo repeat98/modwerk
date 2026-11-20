@@ -121,6 +121,14 @@ describe('mobile configuration workspaces', () => {
 })
 
 describe('the MS-70CDR pedal page without the beta', () => {
+  it('names the pedal and links to its library on phones', async () => {
+    window.location.hash = 'zoom-ms-70cdr/pedal/set'
+    await act(async () => root.render(createElement(App)))
+    await vi.waitFor(() => expect(container.querySelector('main h1')?.textContent).toBe('Your MS-70CDR'))
+    expect(container.querySelector('main a')?.getAttribute('href')).toBe('#zoom-ms-70cdr')
+    noFirmware()
+  })
+
   it('offers to install the base', async () => {
     media.width = 1280
     media.coarse = false
