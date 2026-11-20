@@ -2,6 +2,7 @@
   "schema": 1,
   "module": "mute-modes",
   "version": "0.2.3-experimental",
+  "sourceSha256": "a39bcd3ce265176a80d475e25dc3aea846858ec0837f2964643b4602ad47c9f9",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
@@ -12,20 +13,20 @@
   },
   "load": {
     "frameUs": 362.8,
-    "stockLongestUs": null,
-    "moduleLongestUs": null,
-    "stockIdlePercent": null,
-    "moduleIdlePercent": null,
-    "method": "No physical cfmeter.py stock/module interrupt and idle capture for 0.2.2; no model values substituted."
+    "stockLongestUs": 168.3,
+    "moduleLongestUs": 175,
+    "stockIdlePercent": 54.87,
+    "moduleIdlePercent": 54.65,
+    "method": "Emulator, not hardware: ot_emu --mkii --dsp --frame (the ColdFire port, SHA-256 87d73ccf..., the binary of Direct Jump Kyoti's record), 19 Nov 2026. Two native static-stock images: the original MAIN OS 1.40C (164f3122...) and the module-alone image with every stock effect kept (006aca91...), which links Mute Modes' plain unit (996 B at 0x400d6b80): it has no SIDECHAIN, so the frame hook is the plain variant (bound 2,176). The 0.2.3 change (mm_trig_muted) assembles only under MODWERK_EVENTS, which the native build never defines: the image built from this source and from 0.2.2's (main) are byte-identical. The same 15 s on both from PLAY: one three-byte message every ms on channels 1-8 (notes on, notes off and CCs, 1,000 a second) plus a MIDI clock byte every 10 ms (250 BPM), Direct Jump Kyoti's flood except that its CC 49, 50 and 51 (track mute, solo and cue on the track channels, which mute, solo and cue every track within 10 s) are sent as CC 46-48; A01 edited in RAM with trigs on audio tracks 1-5 and MIDI track 1, T1-T4 muted by FUNC + track key before PLAY and T4 toggled the same way every second; A02 (Part 2) cued at 3.5 s and A01 (Part 1) at 9.5 s, STOP at 6.6 s and PLAY at 7.6 s; on the module image MUTE MODE OTFX-T written in RAM (GATE 0x800000dc = 1, not through the menu) and OT (stock behaviour) from 11.6 to 12.6 s. Longest frame interrupt: the most instructions between the frame handler's entry (watched at 0x4000aad4) and its epilogue 0x4000d9a6 over about 44,880 frames, priced at 362.8 / 63,840 us an instruction: 29,622 stock, 30,791 with the module (+1,169, 1.8% of the frame). Idle: the port's own share, 100 x (1 - executed instructions / (3,990 x elapsed samples)). Runs are deterministic (a repeat gave the same counts). The same pair in each MUTE MODE (OT, OTFX-T, DT-T, OTFX: GATE 0-3), with and without the events and under Direct Jump Kyoti's flood unchanged, 12 pairs: the longest frame interrupt moves by -1,029 to +1,169 instructions (-5.9 to +6.7 us) against the stock run of the same input, and idle falls by 0.00 to 0.49 points (OTFX, flood.py). The frame hook itself, timed at its site (0x40004dc6 to 0x40004dcc, every pass inside the frame interrupt): at most 407 instructions (OTFX-T, the unchanged flood with the events), a mean of 14 (OT) to 132 (OTFX) a frame, against stock's one. The longest frame is set by stock work whose timing the module shifts, so its difference is not the hook's cost alone."
   },
   "stress": {
-    "floodMessagesPerSecond": null,
-    "clockBpm": null,
-    "seconds": null,
-    "stuckNotes": null,
-    "hangs": null,
-    "dropped": null,
-    "droppedExplanation": "No physical flood/audio stress run of 0.2.2. The author's 10-minute functional hardware run of the tested image is in TESTING.md; it is not a stress run."
+    "floodMessagesPerSecond": 1000,
+    "clockBpm": 250,
+    "seconds": 15,
+    "stuckNotes": 0,
+    "hangs": 0,
+    "dropped": 0,
+    "droppedExplanation": "Emulator, not hardware, the run above on the module image (OTFX-T): 15,000 three-byte messages and 1,500 clock bytes, with the STOP, the two Part changes and the MUTE MODE bypass during the flood. Dropped: counted at the MIDI thread's handlers (note on 0x4000e018, note off 0x4000db98, CC 0x4000e79c, clock 0x40005a48): every type's entries were at least the messages sent (84 and 89 more note-on and note-off entries, as on the original OS), none missing, here and in every other run (stock and module). At 4.71 s the flood paused the transport (2) on both images alike, and the run pressed PLAY once; the Part changed to 2 at 5.18 s and back to 1 at 11.15 s on both. Hangs: frames advanced every second (2,984 or more a second in every run) to the end and the transport was running. Stuck notes: no samples are loaded and the port does not capture MIDI OUT here, so audible stuck notes could not be observed. After the flood, with every mute, solo and cue cleared, the module's own state was empty (UNHELD 0xff, SHADOW 0) in OTFX-T, DT-T and OTFX. In OTFX-T, which holds a silenced track's note-off (REL_STATE 0x8000184a), the release bits of tracks 2 and 3 stayed set for the 2 s traced after that unmute while A01 played; after the same flood a release bit written by hand on the original OS stays set too (without the flood both images clear it at the next trig), so after this flood stock's own trigs do not end a release on those tracks. On the unit (the author's MKI, 19 November 2026, a development twin with Mute Modes 0.2.3 on trial, no MIDI flood) in OTFX-T with T1-T4 muted, unmuting T2 and T3 while the pattern played brought each back at its next trig, and repeated mutes and unmutes of T1-T4 brought every track back; the flood's case itself was not run there."
   },
   "hardwareEvidence": {
     "status": "reported",

@@ -79,6 +79,15 @@
     ]
   },
   "resources": {
+    "cpuPrice": {
+      "value": 1.7,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price",
+      "date": "2026-11-19",
+      "conditions": "MKI, development twin fc4b7abd of base 0.7.9 with this version as the PERSONALIZE table owner (the beta flags plus --dev), the author's project, bank A pattern A02 (12 steps) on Part 1 playing, nothing muted, MUTE MODE at the installed default, 8 s per reading, two runs: frame interrupt 48.9 % before and 50.6 % installed (+1.7), then 49.2 % and 50.7 % (+1.5); CPU meter +1.8 and +1.4. With T1-T4 muted and MUTE MODE OTFX-T the same reading was 33.9 % against 49.3 % for stock's mute (CPU 46.9 against 61.3 %): OTFX-T starts no new notes on muted tracks, so the price is the unmuted case.",
+      "source": "TESTING.md"
+    },
     "recorded": "3 November 2026; authored-source assembly and isolated native-code probes of 0.2.2",
     "storage": {
       "label": "Authored code and relocated menu tables",
@@ -149,7 +158,7 @@
     },
     "qualification": {
       "moduleVersion": "0.2.3-experimental",
-      "sourceSha256": "15511310dadfa61fd16722caec0c2fd2fe5ddeab189f1487457406bf714496a7",
+      "sourceSha256": "3d62945169a36f9205c8dded03bc50ba2cf5696c1237de031f7d1e9a41b55666",
       "imageSha256": "d460c7e2e4b44bffd61d5a76eae1bfbfcef8f8b497c9c37cbdfb48612f537cdc",
       "cycles": [
         {
