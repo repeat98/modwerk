@@ -296,6 +296,8 @@ the asset hashes that moved; `--check` must then call every package identical.
 published goes in the host wrapper `scripts/octatrack-module-packages.py`.
 In the toolchain image set `ELEKLOADER_DSP_ASM`; restore old versions it deletes.
 
+**C/assembly USB source recipes.** A package row's `sourceRecipe` opts into `scripts/source-runtime-package.py`. Its `base` declares only reviewed `imports` (export names) and `runOrigin`; identity, package hash and addresses are read from the committed base at each build, never embedded as runtime identity guards. `python3 -B scripts/source-runtime-package.py --recipe <runtime-build.json> --check` rebuilds and validates without writing output. Reconstruction review pins authored module inputs, explicitly compiled shared units and the linked image with only linker-proven import words normalized; `baseImports` pins those words' offsets, names and addends. Other SDK/base inputs remain in build provenance. Compatible base changes need no recipe recapture; missing/non-runtime exports, changed authored code or overlapping reconstruction spans still fail. Capture with a private original OS is a separate review step, not a scan waiver.
+
 **A first release on an owner approval** (`sdk/approvals/<id>-build-approval.json`, which only the owner writes).
 It binds the native source hash: every file in the folder but `octamod.module.json`, `media/`, Markdown and licences,
 so `evidence/performance.json`, the thumbnail and `manifest.py` are final before the owner signs. Without it
