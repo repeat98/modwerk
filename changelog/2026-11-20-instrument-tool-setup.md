@@ -1,0 +1,1 @@
+Developers can install the Octatrack, Rytm or Zoom tools separately with `npm run upstream:tools -- --for octatrack`, `--for rytm` or `--for zoom`. Zoom setup uses the current pinned Ziddle source archive.

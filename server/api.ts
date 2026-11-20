@@ -273,7 +273,15 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     }
     if (path.startsWith('/api/admin/')) {
       if (!admin) throw new HttpError(403,'Administrator access is required.')
-      if(path==='/api/admin/account-requests'&&request.method==='GET')return response((await db.prepare("SELECT r.id,r.user_id,r.status,r.created_at,r.updated_at,r.review_note,u.username FROM account_removal_requests r JOIN users u ON u.id=r.user_id ORDER BY CASE WHEN r.status IN ('requested','reviewing') THEN 0 ELSE 1 END,r.created_at ASC,r.rowid ASC LIMIT 100").all<{created_at:string}>()).results.map(withPrivacyDeadline))
+      if (path === '/api/admin/account-requests' && request.method === 'GET') {
+        const view = url.searchParams.get('view')
+        const active = "r.status IN ('requested','reviewing')"
+        const filter = view === 'active' ? 'WHERE ' + active : view === 'archive' ? 'WHERE NOT (' + active + ')' : ''
+        const order = view === 'archive' ? 'r.updated_at DESC, r.rowid DESC' : `CASE WHEN ${active} THEN 0 ELSE 1 END, r.created_at, r.rowid`
+        const rows = await db.prepare(`SELECT r.id,r.user_id,r.status,r.created_at,r.updated_at,r.review_note,u.username
+          FROM account_removal_requests r JOIN users u ON u.id=r.user_id ${filter} ORDER BY ${order} LIMIT 100`).all<{created_at:string}>()
+        return response(rows.results.map(withPrivacyDeadline))
+      }
       if(path==='/api/admin/account-mail'&&request.method==='GET')return response((await db.prepare('SELECT day,purpose,accepted,failed,limited FROM account_mail_daily ORDER BY day DESC,purpose LIMIT 60').all()).results)
       if((match=path.match(/^\/api\/admin\/account-requests\/([a-zA-Z0-9-]+)$/))&&request.method==='PATCH')return reviewAccountRequest(request,db,match[1])
       const announcements = await adminAnnouncements(request, db, path)

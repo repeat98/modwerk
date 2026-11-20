@@ -5,6 +5,7 @@ import pathlib
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -107,6 +108,26 @@ class UpstreamCheckouts(unittest.TestCase):
         (path / "tools/hw/rec.swift").write_text("// mine\n")
         with self.assertRaisesRegex(ValueError, "local edits"):
             tools.sync("plain", self.url, self.first, self.base, False)
+
+
+class InstrumentSetup(unittest.TestCase):
+    def test_fetches_only_the_selected_tools(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = pathlib.Path(tmp)
+            (base / 'octabam/tools/hw').mkdir(parents=True)
+            for selection, repos, archive in [
+                    (['--for', 'octatrack'], ['octabam', 'elekloader'], False),
+                    (['--for', 'rytm'], ['rytm-emu'], False),
+                    (['--for', 'zoom'], [], True),
+                    ([], ['octabam', 'elekloader', 'rytm-emu'], True)]:
+                with self.subTest(selection=selection), \
+                     mock.patch.object(sys, 'argv', ['upstream:tools', '--dir', tmp, *selection]), \
+                     mock.patch.object(tools, 'sync', side_effect=lambda name, *_: base / name) as sync, \
+                     mock.patch.object(tools, 'fetch_archive', return_value=base / 'ziddle') as fetch, \
+                     mock.patch('builtins.print'):
+                    tools.main()
+                    self.assertEqual([call.args[0] for call in sync.call_args_list], repos)
+                    self.assertEqual(fetch.call_count, int(archive))
 
 
 class ArchivePin(unittest.TestCase):

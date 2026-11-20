@@ -1,9 +1,10 @@
+// @vitest-environment jsdom
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { MODULES } from '../catalog/modules'
 import { MODULE_CAUTIONS } from '../catalog/module-cautions'
-import { CautionBadge } from './ModuleCard'
+import { CautionBadge, ModuleCard } from './ModuleCard'
 
 describe('heavy module caution', () => {
   it('flags POLY8, FM Synth, SYNTIZ and Tape Echo, and only modules in the catalog', () => {
@@ -20,5 +21,22 @@ describe('heavy module caution', () => {
 
   it('shows nothing for a module without a caution', () => {
     expect(renderToStaticMarkup(createElement(CautionBadge, { id: 'miniverb' }))).toBe('')
+  })
+
+  it.each(['synth', 'tuner'])('uses the appropriate artwork indicator on the %s card', id => {
+    const module = MODULES.find(item => item.id === id)!
+    const card = createElement(ModuleCard, { module, selected: false, compared: false, canCompare: true, baseline: null, onToggle() {}, onCompare() {} })
+    const doc = new DOMParser().parseFromString(renderToStaticMarkup(card), 'text/html')
+    const badge = doc.querySelector('.preview-label .module-caution-badge')
+    const title = doc.querySelector('.module-card-heading > a')!
+    if (id === 'synth') {
+      expect(badge?.textContent).toContain('Heavy CPU')
+      expect(badge?.id).toBe(title.getAttribute('aria-describedby'))
+      expect(doc.querySelector('.preview-led')).toBeNull()
+    } else {
+      expect(badge).toBeNull()
+      expect(title.hasAttribute('aria-describedby')).toBe(false)
+      expect(doc.querySelector('.preview-label .preview-led')).toBeTruthy()
+    }
   })
 })

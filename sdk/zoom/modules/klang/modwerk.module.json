@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 3,
+  "id": "klang",
+  "name": "Klang",
+  "version": "2.0.0",
+  "machine": "zoom-ms-70cdr",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "themanro",
+    "name": "Roman Rusinov",
+    "credits": [
+      "Roman Rusinov and the ZoomMultistompZDL contributors",
+      "Roman Rusinov and the MultiStomp Editor contributors, editor artwork",
+      "Leemuzhko, effect runtime",
+      "Jannik Aßfalg, ZoomMultistompZDL toolchain"
+    ]
+  },
+  "maintainers": [
+    "themanro",
+    "repeat98"
+  ],
+  "source": {
+    "repository": "https://github.com/themanro/ZoomMultistompZDL",
+    "revision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+    "path": "src/custom/klang"
+  },
+  "presentation": {
+    "label": "KLANG",
+    "family": "Ring modulation",
+    "summary": "A swept-carrier ring modulator: sirens, dive bombs and clanging metal.",
+    "overview": "A swept-carrier ring modulator: sirens, dive bombs and clanging metal.",
+    "highlights": [
+      "Play a sustained tone and sweep the modulation to hear the metallic sidebands."
+    ],
+    "usage": [
+      "Add Klang from the Delay group to a spare patch.",
+      "Play a sustained tone and sweep the modulation to hear the metallic sidebands.",
+      "Compare the effect with bypass using the footswitch."
+    ]
+  },
+  "access": {
+    "location": "Delay group in the MS-70CDR effect list, under Klang.",
+    "steps": [
+      "Add Klang from the Delay group to a spare patch.",
+      "Play a sustained tone and sweep the modulation to hear the metallic sidebands."
+    ],
+    "screenshots": [
+      "media/cover.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Freq",
+      "default": 40,
+      "doc": "params[5]. Carrier centre frequency (~0.5..2000 Hz, linear). Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Sweep",
+      "default": 30,
+      "doc": "params[6]. Carrier LFO rate (0..~12 Hz) + depth together; 0 = static. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Mix",
+      "default": 50,
+      "doc": "Mix default 1 (quiet-safe). The editor materialises patches on load (full-patch send), so audible-on-load no longer needs a hot default. Range 0–100.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "2.10"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Hardware untested on the original MS-70CDR with OS 2.10.",
+      "This build has startup knob initialization disabled. Check saved settings after recalling a patch."
+    ]
+  },
+  "platform": {
+    "kind": "zdl",
+    "file": "Klang.ZDL",
+    "effectId": {
+      "gid": 8,
+      "fxid": 455
+    },
+    "effectVersion": "2.00",
+    "dspCost": 20.0,
+    "binary": {
+      "sha256": "2f64691a4ab840a2094d558d5f02809ff1c4ca22b8b8cc61ff71a01486335173",
+      "bytes": 7930,
+      "release": {
+        "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+        "tag": "klang-2.00",
+        "asset": "Klang.ZDL"
+      }
+    },
+    "screen": "static",
+    "pedals": [
+      {
+        "machine": "zoom-ms-70cdr",
+        "firmware": "2.10",
+        "status": "untested",
+        "report": null
+      }
+    ]
+  },
+  "resources": {
+    "memoryBytes": 7930,
+    "fastBytes": null,
+    "load": {
+      "display": "DSP 20 of 225 per patch",
+      "method": "static",
+      "conditions": "The effect descriptor declares this cost. Audio load on the pedal is unmeasured."
+    }
+  },
+  "evidence": {
+    "tier": "emulator",
+    "moduleVersion": "2.0.0",
+    "sourceSha256": "2f64691a4ab840a2094d558d5f02809ff1c4ca22b8b8cc61ff71a01486335173",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Ziddle passed the loader check and rendered 22,050 stereo frames. The compiled file passed the stock-code scan and MS-70CDR size limits. Hardware untested.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Add Klang from the Delay group to a spare patch.",
+          "Play a sustained tone and sweep the modulation to hear the metallic sidebands.",
+          "Compare the effect with bypass using the footswitch."
+        ]
+      },
+      "screenshots": [
+        "media/cover.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "MIT AND BSD-3-Clause",
+    "file": "LICENSE",
+    "declaration": "Effect source and artwork are MIT licensed. The runtime uses MIT and BSD-3-Clause components. See LICENSE for the applicable notices and credits."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.png",
+      "kind": "thumbnail",
+      "caption": "Klang in the MultiStomp Editor",
+      "alt": "Klang editor illustration",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "https://github.com/themanro/ZoomMultistompZDL/blob/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/graphics/fx/klang.webp"
+    },
+    {
+      "path": "media/cover.png",
+      "kind": "screenshot",
+      "caption": "Klang embedded cover",
+      "alt": "The monochrome effect cover for Klang",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling.",
+      "capture": {
+        "type": "emulator",
+        "release": "2.10",
+        "moduleVersion": "2.0.0",
+        "imageSha256": "2f64691a4ab840a2094d558d5f02809ff1c4ca22b8b8cc61ff71a01486335173",
+        "setup": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+      }
+    }
+  ]
+}
