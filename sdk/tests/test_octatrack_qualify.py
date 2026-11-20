@@ -83,6 +83,36 @@ class Machines(unittest.TestCase):
         self.assertIn('All at once, playing (machines T1-T8: ACID 303, refused)', entry)
 
 
+class UnitSteps(unittest.TestCase):
+    """What the first run on an MKII (20 November 2026) showed the steps must do."""
+
+    def test_a_machine_alone_plays_again_once_its_track_has_its_machine_back(self):
+        order = []
+
+        class Rows:
+            def row_of(self, part, track): return 1
+            def place(self, track, m): order.append('place T%d' % (track + 1))
+            def pick(self, track, row): order.append('back T%d' % (track + 1)); return row
+
+        reading = dict(cpu=500, core1=300, core1_peak=400, core0=200, core0_peak=300)
+        with mock.patch.object(qualify, 'send', side_effect=lambda s: order.append(s) if s.startswith('PLAY w5000') else ''), \
+             mock.patch.object(qualify, 'meters', return_value=dict(reading)), mock.patch.object(qualify, 'renders', return_value=[1.0] * 8), \
+             mock.patch.object(qualify, 'part_copy', return_value=bytes(6322)), mock.patch.object(qualify, 'mem', return_value=b'\0'):
+            failures = []
+            qualify.machine_alone(Rows(), dict(label='POLY8', price=0, voice=False), failures)
+        self.assertEqual(order, ['place T1', 'back T1', 'PLAY w5000 STOP w500', 'place T5', 'back T5', 'PLAY w5000 STOP w500'])
+        self.assertEqual(failures, [])
+
+    def test_the_part_is_saved_before_the_run_and_must_stay_as_it_was(self):
+        saved, sent = bytes(range(256)) * 24 + bytes(178), []
+        with mock.patch.object(qualify, 'send', side_effect=lambda s: sent.append(s) or ''), \
+             mock.patch.object(qualify, 'part_copy', return_value=saved):
+            self.assertTrue(qualify.save_part(1, saved))
+        self.assertIn('FUNC+PART w600 UP w150 UP w150 UP w150 DOWN w150 DOWN w200 YES', sent[0])
+        with mock.patch.object(qualify, 'send', return_value=''), mock.patch.object(qualify, 'part_copy', return_value=bytes(6322)):
+            self.assertFalse(qualify.save_part(1, saved))
+
+
 class Qualify(unittest.TestCase):
     def test_it_starts_only_once_the_keeps_are_acknowledged(self):
         with mock.patch.object(sys, 'argv', ['octatrack-qualify.py', 'x.mwrm']), mock.patch.object(qualify, 'send', side_effect=AssertionError('reached the unit')):

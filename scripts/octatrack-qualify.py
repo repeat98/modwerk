@@ -198,9 +198,25 @@ class Machines:
                            % (m['label'], track + 1, REFUSED % (track + 1)))
 
 
+def save_part(part, saved):
+    """SAVE from the Part menu, on a Part whose working copy equals its saved one: the same bytes, but the closing RELOAD
+    then works, which a Part not saved since the boot refuses (SAVE PART FIRST!: every Part after a RAM boot, MKII,
+    20 November 2026). The menu keeps its cursor and stops at RENAME, so UP three times, DOWN twice. True when both
+    copies still equal `saved`."""
+    send('NO w200 FUNC+PART w600 UP w150 UP w150 UP w150 DOWN w150 DOWN w200 YES w1000')
+    return part_copy(part) == saved and part_copy(part, saved=True) == saved
+
+
+def refresh_load():
+    """Five seconds of playing. Stopped, the base judges a pick by the mean of the last four seconds it played (status.c
+    cpu_played), so right after a machine is taken off a track the next pick is still judged with it: on an MKII
+    (20 November 2026) POLY8 on T1 played at 84 %, and every pick after it was refused CPU FULL."""
+    send('PLAY w5000 STOP w500')
+
+
 def restore_part(part, saved, machines=None):
-    """The Part as `saved` again, in both copies. RELOAD first; a Part that was never saved refuses it (SAVE PART FIRST!,
-    nothing changes), so then each slot whose effect differs gets the saved one picked back by name, which brings its
+    """The Part as `saved` again, in both copies. RELOAD first (run() saved the Part, so it works after a RAM boot too);
+    a Part that was never saved refuses it (SAVE PART FIRST!, nothing changes), so then each slot whose effect differs gets the saved one picked back by name, which brings its
     default knobs back, and with `machines` (a Machines) each track whose machine differs gets the saved one's row: enough
     for a Part that holds defaults (a cleared one). True when both copies equal `saved`."""
     send('reload')
@@ -284,6 +300,7 @@ def machine_alone(machines, m, failures):
         except RuntimeError as e:
             send('STOP w300'); failures.append(str(e)); entry['T%d' % track] = 'refused'
         if machines.pick(track - 1, back) != back: failures.append('T%d did not get its own machine back (row %d)' % (track, back))
+        refresh_load()
     return entry
 
 
@@ -295,6 +312,7 @@ def run(args, pkgs, install, uninstall, selftest=False, inventory=False):
     if 'stopped' not in send('state'): raise SystemExit('Stop the transport first.')
     if not part_saved_equal(): raise SystemExit('The current Part differs from its saved copy: run on one that does not.')
     saved_start = part_copy(mem(PART, 1)[0], saved=True)  # what the reload at the end must bring back, in both copies
+    if not save_part(mem(PART, 1)[0], saved_start): raise SystemExit('Saving the Part, so that RELOAD works at the end, changed it: check the unit.')
     before = counters()
     inventory_start = send('inventory').strip() if inventory else None
     start_part, (start_bank, start_pattern) = mem(PART, 1)[0], mem(0x800065bd, 2)

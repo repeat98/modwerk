@@ -205,7 +205,10 @@ not isolated: verify each held-row transition and stock modifier release, and st
   (`PART+FUNC+PLAY`): it CLEARS the Part**, both working and saved copies, its knobs, machines and name
   (`PART 1`), and saves that (stock's Part Clear; 11 October 2026). FUNC+PLAY elsewhere clears the pattern.
   To reload, use `reload`: FUNC+PART opens RENAME, RELOAD, SAVE, SAVE ALL, keeps its cursor from last time and
-  stops at RENAME, so UP three times, DOWN, YES. Do not use SAVE or SAVE ALL. `reload` reports no failure: compare
+  stops at RENAME, so UP three times, DOWN, YES. Do not use SAVE or SAVE ALL on a Part you changed. After a RAM boot
+  every Part counts as never saved and RELOAD shows SAVE PART FIRST! (MKII, 20 November 2026), so `device:test` and
+  `device:qualify` SAVE the Part once before they change anything, while its working copy equals its saved one: the
+  same bytes, and their closing RELOAD then works. `reload` reports no failure: compare
   the Part with its saved copy afterwards (SAVE PART FIRST! above).
 - **Patterns.** PATTERN+TRIG n selects pattern n of this bank. Another bank: BANK, then TRIG b (bank b), then
   TRIG n (pattern n) within four seconds (the manual's "CHOOSE BANK", "CHOOSE PATTERN"). Stopped, it applies
