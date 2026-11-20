@@ -4,7 +4,9 @@ How to write a module that behaves like part of the instrument and fits every Mo
 
 ## Choose the category
 
-A module's category is the `category` field of its manifest (`octamod.module.json`, or `modwerk.module.json` on Digitakt and Digitone). It picks the guide; the library may group the module elsewhere.
+A module's category is the `category` field of its manifest (`octamod.module.json`, or `modwerk.module.json` on Digitakt and Digitone). It selects the development guide.
+
+In the library, categories describe the instrument function a musician wants to change. Performance covers scenes, macros, crossfaders, mutes and solos. System includes kit and Part management. Sequencing covers notes and patterns, and Modulation covers control sources such as LFOs. Types name a more specific job, such as drum synthesis or chorus, across instruments. `src/catalog/library-classification.ts` maps published families to these browse labels and uses machine-qualified entries when a family has several meanings.
 
 **Choose it by where the module acts, not by the menu you would like to switch it on from.** An FX processes the audio its slot receives. A module that makes or replaces a track's sound (reads the sample itself, renders voices on the ColdFire) is a machine. A module that makes or changes notes is a MIDI generator or MIDI effect. A module in the wrong category is sent back, so when it is unclear, ask the owner in an issue before you write code.
 
