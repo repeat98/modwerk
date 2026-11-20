@@ -60,11 +60,14 @@ A ColdFire emulator of the control processor, without the DSP:
 
 What the 1.12 update and a unit show; nobody has opened a unit for this:
 
-- **ColdFire MCF5445x (V4e)** runs the OS (`main_section` 3, loaded at `0x40000400`): the UI, the sequencer, USB and
+- **A ColdFire of the MCF5441x family (V4)** runs the OS (`main_section` 3, loaded at `0x40000400`): the UI, the sequencer, USB and
   MIDI, a kernel of sixteen tasks, and the parameter frames at 1,500 a second. 128 MB of DDR at `0x40000000`, read
   uncached through `0x48000000`; 64 KB of SRAM at `0x80000000`, which section 4 fills (32 KB from `0x80000400`).
   Section 2 (16 KB, at `0x02010000`) looks like the bootloader. External devices sit at `0xEC07xxxx` and `0xEC09xxxx`
-  (the reset and reset-status registers, and the power switch's interrupt). The SPI module drives the flash.
+  (the MCF5441x's peripheral bridge: UART9 carries MIDI, 0xEC090000 the reset and its status, 0xEC094000 GPIO). Its
+  block at 0xFC0CC000, the eSDHC, holds the +Drive; DSPI0 drives the flash. The MCF5441x memory map (U-Boot's
+  `immap_5441x.h`) matches every block stock uses; the MCF5445x's does not. DSPI1 (0xFC03C000) and DSPI2
+  (0xEC038000) are the leads for how the ColdFire controls the SHARC.
 - **An Analog Devices SHARC+** (the ADSP-2156x or SC5xx family) renders the sound. Section 7 is an ADI boot stream:
   95 blocks, each led by the 0xAD signature, filling the section exactly, into L1 (`0x2824xxxx`-`0x283xxxxx`), L2
   (`0x2000xxxx`) and its own DDR (`0x80xxxxxx`). Its code is 48-bit ISA, little-endian words, with 32-bit float
