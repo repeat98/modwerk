@@ -5,7 +5,7 @@
 // Every add, the USB sync, the card build and the Worker's build check read it from here. A set that already holds
 // more still loads and shows; it only cannot be synced or built until trimmed.
 import { MODULES } from './modules.ts'
-import { USB_AUDIO_MODULE } from '../config/usb-audio.ts'
+import { USB_AUDIO_MODULE, USB_AUDIO_PACKAGED } from '../config/usb-audio.ts'
 import type { AddBlock } from './add-blocks.ts'
 
 export const SET_MODULE_LIMIT = 24
@@ -13,11 +13,12 @@ export const SET_MODULE_LIMIT = 24
 /** Only the Octatrack's sets are limited; other machines keep their own rules. */
 export const limitApplies = (device = 'octatrack') => device === 'octatrack'
 
-/** Every selected module counts, machine group members one by one. USB Audio does not: it ships as a variant of the
- * base, not as a module package. Stock effects taken out of the menus and the base itself are not in the list at all. */
-export const countsTowardLimit = (id: string) => id !== USB_AUDIO_MODULE
+/** Every selected module counts, machine group members one by one. USB Audio counts once it ships as a module package
+ * (owner, 20 November 2026); while it is a variant of the base it does not. Stock effects taken out of the menus and the
+ * base itself are not in the list at all. `packaged` is for tests. */
+export const countsTowardLimit = (id: string, packaged = USB_AUDIO_PACKAGED) => packaged || id !== USB_AUDIO_MODULE
 
-export const limitedCount = (ids: readonly string[]) => new Set(ids.filter(countsTowardLimit)).size
+export const limitedCount = (ids: readonly string[]) => new Set(ids.filter(id => countsTowardLimit(id))).size
 
 export const overLimit = (ids: readonly string[], device = 'octatrack') => limitApplies(device) && limitedCount(ids) > SET_MODULE_LIMIT
 
