@@ -6,7 +6,7 @@ export function DigiModPreview({ mod, compact = false }: { mod: DigiMod; compact
   const document = digiModuleDocument(mod), thumbnail = document.media.find(item => item.kind === 'thumbnail')!
   return (
     <div className={'module-preview ' + (compact ? 'compact-preview' : '')} data-module={'digi-' + categorySlug(mod.category)} aria-hidden="true">
-      <div className="preview-label"><span>{mod.title}</span><span className="preview-led" /></div>
+      <div className="preview-label"><span className="preview-led" /></div>
       <svg viewBox="0 0 320 192" className="signal-art" fill="none">
         <image className="saved-thumbnail" href={assetUrl('module-media/' + mod.device + '-' + mod.id + '/' + document.version + '/' + thumbnail.path)} width="320" height="192" />
       </svg>
