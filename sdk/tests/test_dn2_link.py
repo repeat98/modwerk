@@ -81,10 +81,10 @@ class Dn2Diagnostics(unittest.TestCase):
                          "diag.h is the Octatrack's: copy it again (the site reads both logs with device-log.ts)")
 
     def test_the_hosts_ram_boot_limits_are_the_gates(self):
-        import re
-        source = (APP / "sdk/machines/digitone-ii/elekloader/base/link.c").read_text()
-        define = lambda name: int(re.search(r"#define %s (0x[0-9a-f]+)" % name, source).group(1), 16)
-        self.assertEqual((link.IMAGE_MAX, link.CONTAINER_MAX), (define("IMAGE_MAX"), define("CONTAINER_MAX")))
-        # the unpacked OS ends below the mailbox, and the copy below the mod area
-        self.assertEqual(0x40000400 + define("IMAGE_MAX"), 0x4038bec0)
-        self.assertLessEqual(0x47000000 + define("CONTAINER_MAX"), 0x47f00000)
+        import json
+        cflags = json.loads((APP / "sdk/machines/digitone-ii/elekloader/base.json").read_text())["dev"]["cflags"]
+        recipe = {flag[2:].split("=")[0]: int(flag.split("=")[1], 0) for flag in cflags if "=" in flag}
+        # link.c: IMAGE_MAX is UPLOAD_AT - 0x40000400, so the unpacked OS ends below the mailbox
+        self.assertEqual(link.IMAGE_MAX, recipe["UPLOAD_AT"] - 0x40000400)
+        self.assertEqual(link.CONTAINER_MAX, recipe["CONTAINER_MAX"])
+        self.assertLessEqual(recipe["RAMBOOT_COPY_AT"] + recipe["CONTAINER_MAX"], 0x47f00000)   # below the mod area

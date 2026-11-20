@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The Digitone II's development link: diagnostics and, while armed, panel keys and encoders over USB MIDI SysEx, in the Analog Rytm MKII
+// The development link for the Digitakt II platform (one file, each machine's addresses in its recipe: owner, board,
+// 19 November 2026), built for the Digitone II: diagnostics and, while armed, panel keys and encoders over USB MIDI SysEx, in the Analog Rytm MKII
 // link's wire format (sdk/machines/analog-rytm-mkii/LINK.md), so one host speaks to both. Development bases only.
 // Requests and replies are F0 7D 'M' 'W' 'L' version seq cmd ... F7; a reply's cmd has 0x40 set, then a status.
 // Numbers are u32 as five 7-bit bytes, least significant first; byte blocks are 7-bit packed, the first byte's top
@@ -35,13 +36,11 @@
 #define QUEUE_POST ((void (*)(void *, const void *))QUEUE_POST_AT)
 #define KEY_INDEX ((const int32_t *)KEY_INDEX_AT)        // is_key_held's tables: id -> bit, -1 for none
 #define KEY_BITS ((const volatile uint8_t *)KEY_BITS_AT)
-#define KEY_IDS 111                     // KEY_INDEX's entries
+// KEY_IDS (KEY_INDEX's entries), ENC_FIRST, ENC_LAST and KEY_YES come from the recipe (base.json's dev cflags)
 #define MSG_KEY 0
 #define MSG_ENC 1
 #define KEY_DOWN 1
 #define KEY_RELEASE 0x10                // flags of a release, as the panel posts it
-#define ENC_FIRST 1                     // A..H are 1..8, LEVEL 9 (seen on a unit)
-#define ENC_LAST 9
 
 #define USB 2
 #define AUTO_USB 4
@@ -57,7 +56,6 @@
 #define CMD_ENC 0x11
 #define CMD_RELEASE_ALL 0x12
 #define CMD_RAMBOOT 0x14                // armed: YES at UPGRADE OS NOW?, and the staged image is booted from RAM, never flashed
-#define KEY_YES 0x0a
 #define CARRY_TICKS 1800                // a minute: a RAM boot asked for and not reached is cancelled
 #define CMD_MEM 0x21
 #define CMD_DIAG 0x22                   // the diagnostics log (diag.c): its address and size, frames and ticks
@@ -224,31 +222,31 @@ static int release_all(void)            // -> 1 when any key was held; one the q
 // the staged upload cannot stay where it is across the reset: the bootstrap reads the flashed image's packed MAIN OS
 // to 0x40400000 on every start, inside it. So before the reset the container is copied to COPY, in DDR that neither
 // the bootstrap nor stock's start (it clears 0x402fb000-0x466b8c50 after the gate) touches; the CRCs stand guard.
-#define MAILBOX ((volatile uint32_t *)0x4038bec0)
-#define STAGED ((const uint32_t *)0x4038bee0)
-#define COPY ((uint8_t *)0x47000000)
+#define MAILBOX ((volatile uint32_t *)UPLOAD_AT)          // the recipe's: stock's upload buffer
+#define STAGED ((const uint32_t *)(UPLOAD_AT + 32))
+#define COPY ((uint8_t *)RAMBOOT_COPY_AT)                // the recipe's
 #define MB_ASKED 0x4d574254             // 'MWBT': boot the copied image
 #define MB_SPENT 0x4d574255             // 'MWBU': the unpack began
 #define MB_BOOTED 0x4d574253            // 'MWBS': the unpacked image checked out and was entered
 #define MB_CHECK 0x52794c6b             // the check word's seed
 #define OS_BASE 0x40000400              // MAIN OS: its first long is the entry
-#define IMAGE_MAX 0x38bac0              // the unpacked OS must end below the mailbox
-#define CONTAINER_MAX 0x300000          // COPY + this stays below the mod area (0x47f00000)
+#define IMAGE_MAX (UPLOAD_AT - OS_BASE)  // the unpacked OS must end below the mailbox
+// CONTAINER_MAX, the recipe's: COPY + it stays below the mod area
 #define MAIN_OS 3
 // Diagnostics of the reset, outside the mod area and 64 KB under the boot stack's top, as the Rytm's: DIAG by the
 // gate (0-7 the mailbox as found, 8-11 the staged struct's first words, 12-13 MARK as found, 14 RSR); MARK on the way
 // to a RAM boot's reset (0 DIAG_MARK + flags, 1 DIAG_STAGE + how far it came). Written only at boot, before stock
 // runs, and on the way to the reset, so stock may use this RAM in between.
-#define DIAG ((volatile uint32_t *)0x47feffbc)
-#define MARK ((volatile uint32_t *)0x47fefff8)
+#define DIAG ((volatile uint32_t *)RAMBOOT_DIAG_AT)      // the recipe's
+#define MARK ((volatile uint32_t *)(RAMBOOT_DIAG_AT + 0x3c))
 #define DIAG_MARK 0x4d570000            // + person presses << 8 + due (bits 0-1), 4 armed, 8 stock's struct is STAGED, 16 its length matches
 #define DIAG_STAGE 0x4d575400           // + 1 the command was taken, 2 stock's job reached the site, 3 its wait returned,
                                         //   4 the drain returned, 5 written with the data cache off, 6 copied
 #define RSR (*(volatile uint8_t *)0xEC090001)      // reset status: bit 5 software reset
 #define RSR_SOFT 0x20
-#define BOOT_ARG (*(const uint32_t *)0x40287a60)   // what the bootstrap passed the OS entry (0x400004ec)
-#define STOCK_DELAY ((void (*)(int))0x4013492c)    // stock's wait before its reset (0x401391e6)
-#define STOCK_DRAIN ((void (*)(void))0x400023f6)   // what stock calls with interrupts masked before its reset
+#define BOOT_ARG (*(const uint32_t *)BOOT_ARG_AT)   // what the bootstrap passed the OS entry
+#define STOCK_DELAY ((void (*)(int))STOCK_DELAY_AT)  // stock's wait before its reset
+#define STOCK_DRAIN ((void (*)(void))STOCK_DRAIN_AT) // what stock calls with interrupts masked before its reset
 
 #define BOOT_FLASH 0                    // no request: the flashed OS
 #define BOOT_RAM 1                      // this image was booted from RAM

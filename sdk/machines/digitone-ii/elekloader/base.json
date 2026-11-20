@@ -216,7 +216,18 @@
       "-DQUEUE_POST_AT=0x40001896",
       "-DKEY_INDEX_AT=0x401f3d10",
       "-DKEY_BITS_AT=0x445a2e30",
-      "-DFRAME_HZ_MEASURED=1500"
+      "-DFRAME_HZ_MEASURED=1500",
+      "-DKEY_IDS=111",
+      "-DENC_FIRST=1",
+      "-DENC_LAST=9",
+      "-DKEY_YES=0x0a",
+      "-DUPLOAD_AT=0x4038bec0",
+      "-DRAMBOOT_COPY_AT=0x47000000",
+      "-DCONTAINER_MAX=0x300000",
+      "-DRAMBOOT_DIAG_AT=0x47feffbc",
+      "-DBOOT_ARG_AT=0x40287a60",
+      "-DSTOCK_DELAY_AT=0x4013492c",
+      "-DSTOCK_DRAIN_AT=0x400023f6"
     ],
     "defsym": {
       "SYSEX_TABLE": "0x40207f9e",
