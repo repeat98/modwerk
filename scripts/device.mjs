@@ -337,7 +337,11 @@ async function missing() {
  * memory (development bases: each memory's use, holes and largest free run), compact (pack each core's code now, timed),
  * dspmap (development bases: each core's code arena drawn, every block named with its slots), dspmap:watch:N (redrawn on change)
  * profile, profile:N (development bases: each UI tick hook's µs over N seconds, from the symbols of the build `boot` started)
+ * health (development bases: one JSON line of DSP frames, loader stalls and errors, ticks, CPU, crash and stall record counts; scripts/octatrack-soak.mjs)
  * (spaces in NAME as _; it waits until the track runs it). */
+/** Steps that only read: run() leaves out the 60 ms it puts after every other step (a health read cost 80 ms, 60 of
+ * them this pause). Not `gap`, `guard` or `cpu`: their reads restart a window or can set a value. */
+export const READ_ONLY = /^(health|state|stats|ui|loader|crash|stall|saved|inventory|missing|screen|png:\S+|mem:0x[0-9a-f]+:\d+)$/i
 async function run(sequence, until = Infinity) { // serve: past its time limit a sequence stops before its next step
   for (const step of sequence.trim().split(/\s+/)) {
     if (Date.now() > until) throw new Error('stopped at the time limit before ' + step)
@@ -483,9 +487,16 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     else if ((m = /^pick:T([1-8]):FX([12]):(\S+)$/i.exec(step))) await pick(Number(m[1]) - 1, Number(m[2]), m[3].replace(/_/g, ' '))
     else if ((m = /^pickid:T([1-8]):FX([12]):(\d+)$/i.exec(step))) await pick(Number(m[1]) - 1, Number(m[2]), Number(m[3])) // by effect id
     else if (step === 'state') { const [s, r] = await devIn(6, 0, 2); console.log(s ? 'stopped' : 'playing', r ? 'recording' : '') }
+    else if (step === 'health') { // one JSON line for scripts/octatrack-soak.mjs: DSP frames, loader stalls and errors, the UI tick's watch count, CPU,
+      // the crash and stall records' counts (battery RAM, 0 when none), the transport and the bank and pattern (development bases: MEM)
+      const w = await statusWords(), [stopped] = await devIn(6, 0, 2)
+      const record = async (at, magic) => { const b = await mem(at, 8), v = new DataView(b.buffer, b.byteOffset, 8); return v.getUint32(0) === magic ? v.getUint32(4) : 0 }
+      console.log(JSON.stringify({ health: { frames: w(1), stalls: w(11), errors: w(10), ticks: w(15), cpu: w(66), crash: await record(0x100ff800, 0x4d574352),
+        stall: await record(0x100ff900, 0x4d575354), playing: !stopped, pattern: [...await mem(0x800065bd, 4)] } })) // bank, pattern, then the queued ones
+    }
     else if (step === 'stats') { const w = await statusWords(); console.log(`stats cpu ${w(66)} T1-4 ${w(69)}/${w(70)} T5-8 ${w(67)}/${w(68)} passes ${(w(76) / 1024).toFixed(1)} ${(w(77) / 1024).toFixed(1)}`) }
     else { const [, spec, times] = /^(.+?)(?:\*(\d+))?$/.exec(step); for (let i = 0; i < Number(times ?? 1); i++) await keys(spec) }
-    await wait(60)
+    if (!READ_ONLY.test(step)) await wait(60) // room between presses and changes; a read changes nothing, so it needs none
   }
 }
 const state = s => `${s.phase}, generation ${s.generation}, active ${s.active?.slice(0, 16) ?? 'unknown'}…`

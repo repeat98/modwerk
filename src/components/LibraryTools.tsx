@@ -31,24 +31,26 @@ export function LibraryTools({ family, families, onFamilyChange, sort, onSortCha
   // #configuration opens it on the set you edit.
   const usb = useOctatrackBase() && buildHref === '#configuration', mobile = useMobileWorkspace()
   const days = downloadPeriod(sort)
-  const { open, setOpen, buttonRef, panelRef, panelId, moveFocus, choose } = useActionsMenu()
-  const activeFilters = [categoryLabel, family !== 'all' ? family : undefined].filter(Boolean).join(' · ')
+  const { open, setOpen, buttonRef, panelRef, panelId, moveFocus } = useActionsMenu()
   return <div className="discovery-tools">
     {machine}
     <div className="catalog-commands">
-      <div className="catalog-filter">
+      {categoryNav && <div className="catalog-filter" onBlur={event => {
+        if (open && !event.currentTarget.contains(event.relatedTarget)) setOpen(false)
+      }}>
         <button type="button" ref={buttonRef} className="catalog-command" aria-expanded={open} aria-controls={open ? panelId : undefined} onClick={() => setOpen(!open)}>
-          <Icon name="filter" size={16} /><span>{activeFilters || 'Filter'}</span>
+          <Icon name="filter" size={16} /><span>{categoryLabel || 'Category'}</span>
         </button>
-        <div className="catalog-filter-panel" hidden={!open} ref={panelRef} id={open ? panelId : undefined} onKeyDown={event => { if (event.target instanceof HTMLAnchorElement) moveFocus(event) }}>
-          {categoryNav && <div onClick={event => { if (event.target instanceof Element && event.target.closest('a')) { setOpen(false); buttonRef.current?.focus() } }}>
-            <span className="catalog-filter-heading">Category</span>
-            {categoryNav}
-          </div>}
-          <label>Type<select value={family} disabled={disabled} onChange={event => choose(() => onFamilyChange(event.target.value))}><option value="all">All types</option>{families.map(value => <option key={value}>{value}</option>)}</select></label>
+        <div className="catalog-filter-panel" hidden={!open} ref={panelRef} id={open ? panelId : undefined} onKeyDown={moveFocus}
+          onClick={event => { if (event.target instanceof Element && event.target.closest('a')) { setOpen(false); buttonRef.current?.focus() } }}>
+          {categoryNav}
         </div>
-      </div>
+      </div>}
       <div className="catalog-sort-group">
+        <label><span className="sr-only">Type</span><select value={family} disabled={disabled} onChange={event => onFamilyChange(event.target.value)}>
+          <option value="all">All types</option>
+          {[...families].sort((a, b) => a.localeCompare(b)).map(value => <option key={value}>{value}</option>)}
+        </select></label>
         <label className="catalog-sort"><Icon name="sort" size={16} /><span className="sr-only">Sort</span><select value={sortOption(sort).value} disabled={disabled} onChange={event => onSortChange(event.target.value)}>{MODULE_SORTS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
         {days !== undefined && <label className="discovery-period"><span className="sr-only">Period</span><select value={sort} disabled={disabled} onChange={event => onSortChange(event.target.value)}>{DOWNLOAD_PERIODS.map(period => <option key={period.value} value={period.value}>{period.label}</option>)}</select></label>}
       </div>
