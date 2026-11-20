@@ -2,6 +2,12 @@
 
 Grain 0.1.0-experimental · by A Force Truly Evil.
 
+## SCAN double-speed endpoint, 20 November 2026
+
+Antonio’s correction at `d75b1ecc651cfae491214c3f5f7bd8fb2db41611` maps knob 127 to +64 thirty-seconds of sample speed. The rebuilt 25,632-byte USB package has SHA-256 `371e2e19169814750c4bf844a2b907b1871328f8919fd32b5bddd869859c60b0`. The development and catalogue builders produced identical bytes. The package loads 24,416 bytes and declares 2,124 bytes of BSS. The compiler stack bounds remain 696 bytes along the audio path and 392 bytes along the waveform path.
+
+`verify_lanes.py` executes the linked ColdFire formatter, START and render with a synthetic 1,024-frame 24-bit stereo Flex sample. Across all 128 knob positions and 128 out-of-range legacy values the displayed speed and read head agreed with the expected mapping. The top step now displays +2.00 and advances 32 source frames in 16 output frames. At 126 it advances 31 frames (+1.93 on the display). At 104 it advances 20 (+1.25), at 64 it holds, and at zero it wraps backwards by 32 frames (−2.00). Legacy values above 127 hold position. The real-time measurements below identify the preceding package. The 35-point reservation carries forward pending verification.
+
 ## Optimized stereo renderer, 20 November 2026
 
 The 25,544-byte package tested on the MKII has SHA-256 `ff105b4615e339742a60241c7ab7b1c10e68bc3dd585cf33a3a9a13fa9d49d5f`. Both builders produced this package. All catalogue packages matched a rebuild with local OS 1.40C.

@@ -66,6 +66,54 @@ def check_track(image, symbols, track, ping):
         raise AssertionError(f"the renderer read different SRC words on T{track + 1}, ping {ping}")
 
 
+    if track == 0 and ping == 0:
+        check_scan(cpu, symbols, lane, packet)
+
+
+def check_scan(cpu, symbols, lane, packet):
+    """Read both the displayed speed and the actual cursor after a 16-frame render."""
+    def call(name, *args):
+        cpu.reg_write(m68k_const.UC_M68K_REG_A7, STACK)
+        cpu.mem_write(STACK, struct.pack(f">{1 + len(args)}I", RETURN, *args))
+        cpu.emu_start(symbols[name], RETURN, count=50000)
+        if cpu.reg_read(m68k_const.UC_M68K_REG_PC) != RETURN:
+            raise AssertionError(f"{name} did not return")
+
+    # Model one allocated Flex page containing a 1,024-frame, 24-bit stereo sample.
+    descriptor, arena, page_indices, page_map = 0x46c922c4, 0x40a955e0, 0x46000000, 0x46000100
+    cpu.mem_map(0x46c92000, 0x1000)
+    cpu.mem_map(0x40a95000, 0x4000)
+    cpu.mem_map(0x46000000, 0x1000)
+    cpu.mem_write(0x800049dc, struct.pack(">I", descriptor))
+    cpu.mem_write(descriptor, struct.pack(">6I", 1, 0, 0, 0, 1024, 1))
+    cpu.mem_write(0x46c920a4, struct.pack(">I", 1))
+    cpu.mem_write(0x40096f82, struct.pack(">I", 14601))
+    cpu.mem_write(0x4000045e, struct.pack(">I", arena))
+    cpu.mem_write(0x80006914, struct.pack(">2I", page_map, page_indices))
+    cpu.mem_write(page_map, struct.pack(">H", 1))
+    cpu.mem_write(arena + 6144, bytes.fromhex("1000552000aa") * 1024)
+    display = 0x204000
+    for value in range(256):
+        steps = 0 if value > 127 else 64 if value == 127 else value - 64
+        hundredths = abs(steps) * 100 // 32
+        sign = "-" if steps < 0 else "+" if steps > 0 else " "
+        expected = f"{sign}{hundredths // 100}.{hundredths % 100:02}"
+        call("scan_text", display, value)
+        label = bytes(cpu.mem_read(display, 6)).split(b"\0", 1)[0].decode("ascii")
+        if label != expected:
+            raise AssertionError(f"SCAN {value} displayed {label!r}, expected {expected!r}")
+
+        cpu.mem_write(lane + 10, struct.pack(">H", value << 8))
+        cpu.mem_write(CURSOR, struct.pack(">I", packet))
+        call("grain_start", 0, 0, 0)
+        call("grain_render", 0, 0, 0, 16)
+        # T1 GranTrack.scan and scanf are the whole-frame and Q16 fractional cursors.
+        whole, fraction = struct.unpack(">2I", cpu.mem_read(symbols["eng"] + 228, 8))
+        expected_cursor = (steps * 16 * 2048) % (1024 << 16)
+        if (whole << 16) + fraction != expected_cursor:
+            raise AssertionError(f"SCAN {value} advanced to {whole}+{fraction}/65536, expected Q16 {expected_cursor}")
+
+
 def check_stereo(image, symbols):
     """Exercise the packed big-endian read and ADDX carry in the shipped instructions."""
     engine, params, sample, output, storage = 0x200000, 0x202000, 0x202040, 0x203000, 0x300000
@@ -113,4 +161,5 @@ if __name__ == "__main__":
                 check_track(image, symbols, track, ping)
         check_stereo(image, symbols)
     print("[PASS] Grain preserves all 48 Flex frame bytes across START and render on all eight tracks and both buffers")
+    print("[PASS] Compiled SCAN label and cursor match on 24-bit stereo at all 128 settings and 128 legacy values")
     print("[PASS] Compiled 16-bit and 24-bit stereo kernels match the reference PCM and six cursors")

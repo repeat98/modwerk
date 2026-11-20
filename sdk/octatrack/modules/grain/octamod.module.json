@@ -135,11 +135,11 @@
     "recorded": "2026-11-20",
     "storage": {
       "label": "Module image and memory",
-      "display": "26,452 bytes of static runtime memory",
-      "value": 26452,
+      "display": "26,540 bytes of static runtime memory",
+      "value": 26540,
       "unit": "bytes",
       "method": "static",
-      "conditions": "The USB package loads 24,328 bytes of code and data and declares 2,124 bytes of BSS. The deepest paths measured from the compiler output use 696 bytes of Grain stack for audio and 392 bytes for drawing. Stack and loader overhead are additional.",
+      "conditions": "The USB package loads 24,416 bytes of code and data and declares 2,124 bytes of BSS. The deepest paths measured from the compiler output use 696 bytes of Grain stack for audio and 392 bytes for drawing. Stack and loader overhead are additional.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -148,7 +148,7 @@
       "value": 34402,
       "unit": "cycles/render",
       "method": "hardware",
-      "conditions": "Octatrack MKII, OS 1.40C, 264 MHz ColdFire. The second T1 render reached 17,201 ticks of the 132 MHz timer in a six-second window with six grains sounding. The timer includes stock Flex, Grain and any preemption. A static worst-case bound is outstanding.",
+      "conditions": "Previous stereo optimization build ff105b46. Octatrack MKII, OS 1.40C, 264 MHz ColdFire. The second T1 render reached 17,201 ticks of the 132 MHz timer in a six-second window with six grains sounding. The timer includes stock Flex, Grain and any preemption. A static worst-case bound is outstanding.",
       "source": "TESTING.md"
     },
     "impact": {
@@ -168,7 +168,7 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "The 25,544-byte package loads 24,328 bytes of code and data and declares 2,124 bytes of zero-initialized state. It reads existing Flex pages. Stack and loader overhead are additional.",
+        "rationale": "The 25,632-byte package loads 24,416 bytes of code and data and declares 2,124 bytes of zero-initialized state. It reads existing Flex pages. Stack and loader overhead are additional.",
         "source": "TESTING.md"
       }
     },
@@ -178,13 +178,13 @@
       "measure": "machine-render",
       "tool": "npm run device -- do (guard)",
       "date": "2026-11-20",
-      "conditions": "MKII 1.40C, base 06e08f35, B16 Part 1, 140 BPM. A stereo 16-bit Flex sample played on T1 in SYNC with DENS, SPRY and PAN 127. Across paired six-second windows with zero and 16 trigs, SQR and long grains added 31.4 points, NORM and long grains 31.7, and NORM and shorter grains 32.5. All reached six voices with zero skips. The reservation retains headroom for other samples and Parts; 24-bit hardware timing is outstanding.",
+      "conditions": "Carried forward from package ff105b46. MKII 1.40C, base 06e08f35, B16 Part 1, 140 BPM. A stereo 16-bit Flex sample played on T1 in SYNC with DENS, SPRY and PAN 127. Across paired six-second windows with zero and 16 trigs, SQR and long grains added 31.4 points, NORM and long grains 31.7, and NORM and shorter grains 32.5. All reached six voices with zero skips. The reservation retains headroom for other samples and Parts; 24-bit hardware timing is outstanding.",
       "source": "TESTING.md"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "On the MKII the optimized package played six stereo grains. Three paired settings added 31.4–32.5 CPU points with zero skipped renders. The normal ten-module set passed a 20-second install and rollback trial. Host tests compare audio and cursors on 1,600 paged blocks and check the compiled SRC and SETUP lanes on every track. TESTING.md lists the remaining release checks.",
+    "summary": "The compiled SCAN label and read head agree at 128 knob settings and 128 legacy byte values, including double speed at the top step. Compiled stereo tests cover 16/24-bit PCM and all six grain cursors. The preceding build ran on an MKII and returned the original ten-module inventory. TESTING.md identifies each build and its qualification status.",
     "hardwareStatus": "reported",
     "evidenceRevision": "3351b427a31ef1cd7d5710024700ce80049987f8",
     "gates": [
