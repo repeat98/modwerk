@@ -21,12 +21,13 @@ describe('release package scope and reviewed source inventory', () => {
     const versions = await compiledModuleVersions(root, catalog), paths = await moduleSourcePaths(root)
     expect(Object.keys(versions)).toEqual(['miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc', 'vibrato', ...requested.filter(id => id !== 'vector'),'previewvol','cc-map','sidechain-compressor','vector','playmodes','mute-modes','recorder-loop-fix','poly8','output-matrix','quantize-live-rec-toggle','apply-scene','direct-jump-kyoti','dejavu', 'arp-key-locks', 'temp-save', 'tuner', 'slow-lfo', 'bar-led', 'stem-rec'])
     for (const id of ['playmodes', 'mute-modes', 'recorder-loop-fix', 'output-matrix', 'quantize-live-rec-toggle','apply-scene','direct-jump-kyoti','dejavu', 'arp-key-locks', 'temp-save', 'tuner', 'slow-lfo', 'bar-led', 'stem-rec']) {
-      expect(versions[id]).toBe(id === 'playmodes' ? '0.2.0-experimental' : id === 'mute-modes' ? '0.2.2-experimental' : id === 'output-matrix' ? '0.1.1-experimental' : id === 'apply-scene' ? '0.2.0-experimental' : id === 'quantize-live-rec-toggle' ? '0.1.1-experimental' : id === 'direct-jump-kyoti' ? '0.1.2-experimental' : id === 'temp-save' ? '0.1.1-experimental' : '0.1.0-experimental')
+      expect(versions[id]).toBe(id === 'playmodes' ? '0.2.0-experimental' : id === 'mute-modes' ? '0.2.2-experimental' : id === 'output-matrix' ? '0.1.1-experimental' : id === 'apply-scene' ? '0.2.0-experimental' : id === 'quantize-live-rec-toggle' ? '0.1.1-experimental' : id === 'direct-jump-kyoti' ? '0.2.0-experimental' : id === 'temp-save' ? '0.1.1-experimental' : '0.1.0-experimental')
       expect(paths).toContain('modules/' + id + '/manifest.py')
     }
     expect(versions.miniverb).toBe('0.2.3-experimental')
+    const usbLayouts = JSON.parse(await readFile(resolve(root, 'src/engine/assets/usb-audio-packages.json'), 'utf8'))
     for (const id of requested) {
-      expect(versions[id]).toBe(id === 'analog-bassdrum' ? '0.1.7-experimental' : id === 'vector' ? '0.3.2-experimental' : id === 'quantizer' ? '0.1.5-experimental' : id === 'synth' ? '0.1.4-experimental' : id === 'usb-audio-out-tracks-main-cue' ? '0.2.0-experimental' : '0.1.2-experimental')
+      expect(versions[id]).toBe(id === 'analog-bassdrum' ? '0.1.7-experimental' : id === 'vector' ? '0.3.2-experimental' : id === 'quantizer' ? '0.1.5-experimental' : id === 'synth' ? '0.1.4-experimental' : id === 'usb-audio-out-tracks-main-cue' ? usbLayouts.version : '0.1.2-experimental')
       expect(paths).toContain('modules/' + id + '/manifest.py')
     }
     expect(paths).toContain('platform/usb-midi/manifest.py')

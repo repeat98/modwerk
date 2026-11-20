@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "carillon",
+  "moduleVersion": "0.4.0",
+  "imageSha256": "327646298c5f164a3df3cd31fee16ebd802331edfb143b2bd3680c85ddcd1f1b",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "2c3998ec0b358ac885f90beeb728f2a3db88bd66aadb1f0a004a8469e8ee660d",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}

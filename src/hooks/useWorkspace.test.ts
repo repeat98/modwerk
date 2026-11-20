@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { publishedUsbAudioPackage } from '../config/published-usb-audio.fixture'
 import 'fake-indexeddb/auto'
 import { act, createElement, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -130,14 +131,20 @@ describe('the module limit of an Octatrack set', () => {
     expect(workspace.active?.moduleIds).toHaveLength(over)
     for (const id of ids.slice(SET_MODULE_LIMIT, over)) await act(() => workspace.toggleModule(id))
     expect(workspace.active?.moduleIds).toEqual(ids.slice(0, SET_MODULE_LIMIT))
-    // Full: the 21st is refused, USB Audio's setup does not count.
+    // A module set imported above the limit remains intact. Its next addition respects the published slot cost.
     await act(() => workspace.toggleModule(ids[over]))
     expect(workspace.active?.moduleIds).toEqual(ids.slice(0, SET_MODULE_LIMIT))
     await act(() => workspace.configureUsbAudio(undefined))
-    expect(workspace.active?.moduleIds).toEqual([...ids.slice(0, SET_MODULE_LIMIT), USB_AUDIO_MODULE])
+    const addedAudio = publishedUsbAudioPackage ? [] : [USB_AUDIO_MODULE]
+    expect(workspace.active?.moduleIds).toEqual([...ids.slice(0, SET_MODULE_LIMIT), ...addedAudio])
     await act(() => workspace.toggleModule(ids[0]))
     await act(() => workspace.toggleModule(ids[over]))
-    expect(workspace.active?.moduleIds).toEqual([...ids.slice(1, SET_MODULE_LIMIT), USB_AUDIO_MODULE, ids[over]])
+    expect(workspace.active?.moduleIds).toEqual([...ids.slice(1, SET_MODULE_LIMIT), ...addedAudio, ids[over]])
+    if (publishedUsbAudioPackage) {
+      await act(() => workspace.toggleModule(ids[over]))
+      await act(() => workspace.configureUsbAudio(undefined))
+      expect(workspace.active?.moduleIds).toEqual([...ids.slice(1, SET_MODULE_LIMIT), USB_AUDIO_MODULE])
+    }
     await vi.waitFor(() => expect(workspace.saving).toBe(false))
   })
   it('fills a set from what’s on the Octatrack whole, as an import does, past the limit too', async () => {

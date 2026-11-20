@@ -23,6 +23,7 @@
 //   npm run device -- do 'T5 FX2 FUNC+FX2 DOWN*4 YES w300 encC+3 ui stats'  # a sequence in one connection
 //   npm run device -- mem 0x80000ec4 16             # RAM, read-only (development bases)
 //   npm run device -- state                         # stopped / playing, recording
+//   npm run device -- usb                           # a module's USB function and the base's own reconnect for it (USB FUNCTION, usb_function.h)
 //   npm run device -- loader                        # the DSP loader's counters (--dsp-loader bases)
 //   npm run device -- report                        # its full report (dsp.c modwerk_dsp_report, version 11: 78 words; miss0-2 the first refused packet (dsp_receiver.asm))
 //   npm run device -- stats                         # CPU and DSP load, DSP arena, delay buffers, module pool (status.c; the modal is CUE + PROJ)
@@ -60,6 +61,7 @@ import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench
 import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
+  help: { type: 'boolean', short: 'h' },
   socket: { type: 'string', default: '/tmp/modwerk-ot.sock' },
   seconds: { type: 'string', default: '5' },
   accept: { type: 'boolean', default: false },
@@ -69,11 +71,27 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   share: { type: 'string' }, // serve: a second bench socket for the frontend MCP (shareBench)
   chunk: { type: 'string' }, // boot: bytes a frame (4096 for the flashed usbtest9 on macOS; docs/OCTATRACK_HARDWARE_TRAPS.md)
 } })
+const usage = `Usage: npm run device -- COMMAND [--socket PATH] [--emulator]
+
+  serve [--share PATH]
+  status | stats | usb | state | missing | ui | loader | report
+  screen [--png FILE] [--scale 1-4]
+  try MODULE.mwrm | set FILE,-FILE,… | remove [MODULE.mwrm]  [--seconds 1-3600] [--accept]
+  recover | lifecycle
+  boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR
+  key NAME[+NAME] | enc A+3 | fader 0-255 | do SEQUENCE
+  mem ADDR LENGTH | probe 0|1 | meter 0|1
+
+  -h, --help   Show this help`
+if (values.help) {
+  console.log(usage)
+  process.exit(0)
+}
 let seconds = Number(values.seconds)
-if (!['serve', 'status', 'stats', 'try', 'set', 'recover', 'remove', 'lifecycle', 'boot', 'flash', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report', 'probe', 'meter', 'missing', 'ui', 'do', 'mem'].includes(command) || (['try', 'set', 'boot', 'flash', 'key', 'enc', 'fader', 'probe', 'meter', 'do', 'mem'].includes(command) && !file) ||
-  (['serve', 'status', 'stats', 'recover', 'lifecycle', 'screen', 'state', 'loader', 'report', 'missing', 'ui'].includes(command) && file) ||
+if (!['serve', 'status', 'stats', 'usb', 'try', 'set', 'recover', 'remove', 'lifecycle', 'boot', 'flash', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report', 'probe', 'meter', 'missing', 'ui', 'do', 'mem'].includes(command) || (['try', 'set', 'boot', 'flash', 'key', 'enc', 'fader', 'probe', 'meter', 'do', 'mem'].includes(command) && !file) ||
+  (['serve', 'status', 'stats', 'usb', 'recover', 'lifecycle', 'screen', 'state', 'loader', 'report', 'missing', 'ui'].includes(command) && file) ||
   !Number.isInteger(seconds) || seconds < 1 || seconds > 3600 || (values.chunk && !(Number(values.chunk) >= 1 && Number(values.chunk) <= 4096 && Number.isInteger(Number(values.chunk))))) {
-  console.error('Usage: device.mjs status | stats | try MODULE.mwrm [--seconds 1-3600] [--accept] | set FILE,-FILE,… [--accept] | recover | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR | key NAME[+NAME] | screen | state | loader | report | probe 0|1 | meter 0|1 | missing | ui | do SEQUENCE | mem ADDR LENGTH | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
+  console.error(usage)
   process.exit(2)
 }
 
@@ -595,7 +613,9 @@ if (command === 'serve') {
         bench.socket.end(); await wait(300)
         // MODWERK_UNIT=served: whoever sent this line took the unit's turn for it (device-send.py), so the boot waits for none
         const r = spawnSync(process.execPath, [process.argv[1], verb, arg, '--socket', values.socket, ...(chunk ? ['--chunk', chunk] : [])], { encoding: 'utf8', timeout: 400000, env: { ...process.env, MODWERK_UNIT: 'served' } })
-        out.push(r.stdout, r.stderr, 'serve exits; the loop restarts it'); setTimeout(() => process.exit(0), 200)
+        out.push(r.stdout, r.stderr)
+        if (r.status !== 0) out.push('error: ' + verb + ' failed (' + (r.error?.message ?? r.signal ?? 'exit ' + r.status) + ')')
+        out.push('serve exits; the loop restarts it'); setTimeout(() => process.exit(0), 200)
       } else if (verb === 'recover') { // a transaction left behind (an install whose reply went missing): undo it, as the site does
         const session = await UploadSession.connect(transport, identity.base, { timeoutMs: 10000 })
         const phase = session.status.phase
@@ -694,6 +714,15 @@ if (command === 'serve') {
   if (command === 'probe') {
     if (!['0', '1'].includes(file)) throw new Error('Use probe 0 or probe 1.')
     console.log('probe core', file, (await devIn(12, Number(file), 1))[0] ? 'sent' : 'not sent (busy or not idle)'); process.exit(0)
+  }
+  if (command === 'usb') { // USB FUNCTION (0xC1, bRequest 41; usb_function.h): any base with ot_usb_functions, not only development ones
+    const reply = await unit.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request: 41, value: 0, index }, 8)
+    if (reply.status !== 'ok' || reply.data?.byteLength !== 8) throw new Error('This base takes no USB function from a module (it has no ot_usb_functions).')
+    const [state, live, table, reconnects, forced] = new Uint8Array(reply.data.buffer, reply.data.byteOffset, 8)
+    console.log(`${['settled', 'a reconnect is due', 'off the bus', 'back on the bus, waiting for the host'][state] ?? 'state ' + state}; ` +
+      `the configuration the host read ${live ? "holds a module's function" : "is the base's own"}; ${table ? 'a module contributes one' : 'no module contributes one'}; ` +
+      `${reconnects} reconnects, ${forced} of them without an idle control endpoint`)
+    process.exit(0)
   }
   if (command === 'state') { const [stopped, recording] = await devIn(6, 0, 2); console.log(stopped ? 'stopped' : 'playing', recording ? '(recording)' : ''); process.exit(0) }
   // A whole OS image takes the unit (and far longer the emulator) a while to hash.

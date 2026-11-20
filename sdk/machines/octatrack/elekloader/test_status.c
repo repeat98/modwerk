@@ -2,6 +2,7 @@
  * Host check of status.c's keys: with the dialog closed every key reaches stock, TRIG 1 (code 0) included
  * (a release swallowed there left bank changes to pattern 1 undone on the unit, 11 October 2026); CUE +
  * PROJ opens it and takes PROJ's release; NO closes it and takes its own. */
+#define MODWERK_SETTINGS
 #include "status.c"
 #include <stdio.h>
 #include <string.h>
@@ -114,7 +115,11 @@ volatile uint32_t modwerk_modset_result;
 uint8_t modwerk_test_live_fx[16];
 volatile uint32_t dl_selection_completed, modwerk_boot_accepted;
 const fx_set modwerk_fx_modules = {{1u << 27 | 1u << 29}};
-volatile uint32_t mw_cpu_hot = 850u, mw_cpu_refusals, mw_cpu_refusal_tracks; /* machine_registry.c's */
+volatile uint32_t mw_cpu_hot = 850u, mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille = 30u; /* machine_registry.c's */
+/* machine_registry.c's effect modules that rest: effect 27's module rests while effect_rests; a wake records its id. */
+static int effect_rests; static unsigned effect_wakes, effect_woken;
+int modwerk_machine_effect_resting(unsigned id) { return effect_rests && id == 27u; }
+void modwerk_machine_effect_wake(unsigned id) { ++effect_wakes, effect_woken = id, effect_rests = 0; }
 void modwerk_fxmap_name(unsigned id, char *out) { for (unsigned i = 0; i < 16u; ++i) out[i] = 0; out[0] = 'F', out[1] = 'X', out[2] = (char)('0' + id % 10u); }
 static int budget_on; /* the pick box's DSP rows, so its CPU row draws */
 int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
@@ -166,8 +171,96 @@ unsigned modwerk_modset_off_list(uint8_t *out, unsigned first, unsigned most)
 }
 volatile uint32_t modwerk_modset_switch_result;
 int modwerk_modset_switch(uint32_t id, int on) { asked_id = id, asked_on = (unsigned)on, modwerk_modset_switch_result = MODSET_SWITCH_PENDING; return 1; }
+/* Fixture for the panel tests. test_settings.c exercises the real table and battery store. */
+static struct modwerk_setting_view settings_fixture[] = {
+    { 2, 3, 0, "USB AUDIO", {"ALL CHANNELS", "OFF", "MAIN + CUE ONLY"}, 0, {{0}} },
+    { 2, 6, 5, "OTHER MOD", {"ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"}, 0, {{0}} }
+};
+static unsigned fixture_rows, selections, grouped_fixture;
+void modwerk_settings_tick(void) {}
+unsigned modwerk_settings_count(void) { return fixture_rows; }
+unsigned modwerk_settings_read(unsigned i, struct modwerk_setting_view *v)
+{
+    if (i >= fixture_rows) return 0;
+    *v = settings_fixture[i];
+    if (grouped_fixture && !i) {
+        v->fields = 1; v->count = 2; v->active = 0;
+        strcpy(v->choices[0], "LAYOUT"); strcpy(v->choices[1], "TRACK TAP"); strcpy(v->values[1], "POST LEVEL");
+    }
+    return 1;
+}
+unsigned modwerk_settings_field(unsigned i, unsigned field, struct modwerk_setting_view *v)
+{
+    if (field == MODWERK_SETTING_FIELDS) return modwerk_settings_read(i,v);
+    if (!grouped_fixture || i || field != 1) return 0;
+    *v = settings_fixture[0];
+    strcpy(v->label,"TRACK TAP");
+    strcpy(v->choices[0],"PRE LEVEL"); strcpy(v->choices[1],"POST LEVEL");
+    v->count=2; return 1;
+}
+void modwerk_settings_choose(unsigned i, uint32_t epoch, unsigned field, unsigned choice)
+{
+    CHECK((field == MODWERK_SETTING_FIELDS || (grouped_fixture && field == 1)) && i < fixture_rows && epoch == settings_fixture[i].epoch && choice < settings_fixture[i].count);
+    settings_fixture[i].active = choice;
+    ++selections;
+}
+static void settings_press(int key)
+{
+    CHECK(modwerk_status_key(key, 1));
+    CHECK(modwerk_status_key(key, 0));
+}
+static void check_settings_panel(void)
+{
+    modwerk_test_menu_open = 1;
+    modwerk_settings_menu(0);
+    CHECK(strstr(shows(), "NO MODULE HAS A SETTING."));
+    fixture_rows = 1u;
+    CHECK(strstr(shows(), "SETTINGS|USB AUDIO|") && !strstr(said, "ALL CHANNELS"));
+    settings_press(YES);
+    CHECK(strstr(shows(), "USB AUDIO|ALL CHANNELS|OFF|MAIN + CUE ONLY|"));
+    settings_press(DOWN);
+    (void)shows();
+    CHECK(!selections && lit(X0 + 11u, Y0 + 15u) && !lit(X0 + 11u, Y0 + 23u)); /* active remains on ALL */
+    settings_press(NO);
+    CHECK(strstr(shows(), "SETTINGS|USB AUDIO|") && !selections);
+    settings_press(YES);
+    CHECK(setting_option.row == 0u);
+    settings_press(DOWN);
+    settings_press(YES);
+    (void)shows();
+    CHECK(selections == 1u && !lit(X0 + 11u, Y0 + 15u) && lit(X0 + 11u, Y0 + 23u));
+    settings_press(NO);
+    fixture_rows = 2u;
+    CHECK(strstr(shows(), "SETTINGS|USB AUDIO|OTHER MOD|"));
+    settings_press(DOWN);
+    settings_press(YES);
+    CHECK(strstr(shows(), "OTHER MOD|TWO|THREE|FOUR|FIVE|SIX|") && setting_option.row == 5u);
+    settings_press(UP);
+    ++settings_fixture[1].epoch;
+    settings_press(YES);
+    CHECK(selections == 1u && strstr(shows(), "SETTINGS|USB AUDIO|OTHER MOD|"));
+    settings_press(NO);
+    CHECK(open == CLOSED);
+    grouped_fixture = 1;
+    modwerk_settings_menu(0);
+    settings_press(YES);
+    CHECK(strstr(shows(),"USB AUDIO|LAYOUT|TRACK TAP|POST LEVEL|"));
+    settings_press(DOWN); settings_press(YES);
+    CHECK(strstr(shows(),"TRACK TAP|PRE LEVEL|POST LEVEL|"));
+    settings_press(UP); settings_press(YES);
+    CHECK(selections == 2 && !settings_fixture[0].active);
+    settings_press(NO);
+    CHECK(strstr(shows(),"USB AUDIO|LAYOUT|TRACK TAP|POST LEVEL|"));
+    settings_press(NO);
+    CHECK(strstr(shows(),"SETTINGS|USB AUDIO|OTHER MOD|"));
+    settings_press(NO);
+    grouped_fixture = 0;
+    fixture_rows = 0;
+    modwerk_test_menu_open = close_menu = 0;
+}
 int main(void)
 {
+    check_settings_panel();
     uint8_t load_out[MODWERK_LOAD_BYTES];
     CHECK(modwerk_status_load(load_out) == 48u && load_out[5] == 0u);
     modwerk_status[0] = 123u; modwerk_status[1] = 456u; modwerk_status[2] = 789u;
@@ -477,6 +570,17 @@ int main(void)
       CHECK(modwerk_status_effect_busy(11, 27) == 1 && refused_booked == 860 && !refused_played); /* 78 % now, 86 % awake */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 0;
+      for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0; }
+    /* A pick of an effect whose module rests: judged with its hooks back on top (mw_wake_mille), and woken before
+     * stock writes the pick when it passes; an awake module or a stock effect is never woken. */
+    { for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 830u;
+      effect_rests = 1; effect_wakes = 0;
+      CHECK(modwerk_status_effect_busy(11, 27) == 1 && !effect_wakes && effect_rests); /* 83 % + 3: refused, still resting */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 819u;
+      CHECK(!modwerk_status_effect_busy(11, 27) && effect_wakes == 1 && effect_woken == 27u && !effect_rests);
+      CHECK(!modwerk_status_effect_busy(11, 27) && effect_wakes == 1);                 /* awake: no second wake */
+      CHECK(!modwerk_status_effect_busy(11, 8) && effect_wakes == 1);                  /* a stock effect */
       for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0; }
     /* The frame share: the frame guard's sums between two readings, per mille of a frame. The guard's development read
      * clears them: that reading is left out. */
