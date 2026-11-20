@@ -7,7 +7,7 @@ import { runSelftest, waitUntilSaved } from './selftest.ts'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { UploadDeviceError, UploadSession, UploadUnconfirmedError } from './upload-session.ts'
 import type { UploadResultName } from './upload-wire.ts'
-import { findVendorInterface, RuntimeFeature, UsbVendorTransport, type BaseSlots, type ControlDevice, type MissingModule, type OffModule, type SelftestRecord, type VendorIdentity } from './upload-usb.ts'
+import { findVendorInterface, RuntimeFeature, UsbVendorTransport, VendorTransportError, type BaseSlots, type ControlDevice, type MissingModule, type OffModule, type SelftestRecord, type VendorIdentity } from './upload-usb.ts'
 import * as formats from '../../../vendor/elekloader/kit/src/formats.ts'
 import type { ElekFile } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { OCTATRACK } from '../../../vendor/elekloader/kit/src/devices.ts'
@@ -858,7 +858,9 @@ export class OctatrackLink {
     // `kind` then said only VendorTransportError (the unit stalled the submission), so the base's EP0 counters over the sync
     // come too: they tell a submission refused at its SETUP from a data stage that stopped part way or a bus reset.
     const step = this.step
-    this.diagnostic('sync_failed', {error: label, ...(step ? {step} : {}), ...(label === 'unknown' ? {kind: diagnosticErrorKind(error)} : label === 'transport' ? {kind: diagnosticErrorKind((error as Error).cause)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {}),
+    const cause = error instanceof UploadUnconfirmedError ? error.cause : error
+    const detail = cause instanceof VendorTransportError ? cause.cause ?? cause : cause
+    this.diagnostic('sync_failed', {error: label, ...(step ? {step} : {}), ...(label === 'unknown' || label === 'transport' ? {kind: diagnosticErrorKind(detail)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {}),
       ...(usb && after ? {usb: after.map((count, i) => (count - usb[i]) >>> 0)} : {})})
     this.session = undefined
     await this.release()
