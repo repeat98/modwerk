@@ -121,7 +121,7 @@ A base update carries several developers' changes onto players' instruments at o
 
 - **Join it.** Commit your base change to that branch, or open your pull request against it (`gh pr create --base base/<machine>-next`); it is merged in with your authorship. A base pull request against `main` is sent there. With none open for the machine, open it as a draft from `base/<machine>-next`.
 - **Share the branch.** Several developers commit to it: fetch first, add your commits on top, merge `main` into it, and never rebase or force-push it. Update the description's list of what is in it so far.
-- **It stays a draft** until the base has been tested extensively on a unit. Run each build through [the test procedure](TEST_PROCEDURE.md#what-a-base-adds) and record what ran, on which unit; `pr:ready` saying Ready means the checks pass, not that it was tested. Only the owner marks it ready and ships it.
+- **It stays a draft** until the base has been tested extensively on a unit. Record each build that ran, on which unit, and what ran on it; `pr:ready` saying Ready means the checks pass, not that it was tested. Only the owner marks it ready and ships it.
 
 ## Manage reports on GitHub
 
