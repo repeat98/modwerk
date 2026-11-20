@@ -59,8 +59,7 @@ big-endian copies of the stock effects, the shared routines in the payload sites
 gap as a recipe of `src/engine/assets/stock-dsp-metadata.json`. The kit refuses the package until
 [`octatrack-base.ts`](../../../../src/engine/elekloader/octatrack-base.ts) has put the words back, recovered
 from the user's file and checked against each recipe's hashes; then it links, packs and verifies as
-`patch.build` does. [`check_stock_free.py`](check_stock_free.py) fails on any run of 16 or more stock bytes
-the package ships literally (`--min 8` lists the chance ones below that: effect names, its own code).
+`patch.build` does.
 
 The committed pair is `src/engine/assets/octatrack-base.elemod` and `octatrack-base-fills.json`. Any change
 to what the base's source hash covers (this folder, the logger, upload, loader, DSP transport and startup
@@ -177,8 +176,10 @@ hashes; Octabam's DSP DYNLOAD STOCK is the reference for the layout. It
 needs Octabam's patched `dsp_asm` (`ELEKLOADER_DSP_ASM`), with
 `dsp56kDisassemble` built beside it in the same tree (`make setup` in
 `~/.cache/modwerk-upstream/octabam`, or `cmake --build` of its
-`vendor/dsp56300` with the `dsp_asm` and `dsp56kDisassemble` targets), and
-Node 24 for Modwerk's chooser composer ([`octatrack-base-choosers.mjs`](../../../../scripts/octatrack-base-choosers.mjs)).
+`vendor/dsp56300` with the `dsp_asm` and `dsp56kDisassemble` targets). The
+base builds its choosers on the unit; building a module FX package
+(`sdk/runtime/loader/build.py --dsp`) needs Node 24 for its FX page recipe
+([`octatrack-module-page.mjs`](../../../../scripts/octatrack-module-page.mjs)).
 The module FX with a chooser row (`MODULES` in `dsp_loader.py`) as packages. The
 figures are each module's own: cycles per sample and instance with their kind
 (executed worst cases for E-Verb and AIR CHORUS, static bounds, modeled, for the rest),
@@ -315,8 +316,12 @@ a set with a shelf is version 2 and is whole only with a whole shelf of its own 
 short falls back to the other file's older set and shelf (`sdk/tests/runtime_card_shelf.c` cuts the power before every
 sector). The shelf takes its room from the set's, and it goes with the set when another base starts (FOREIGN). A host
 that installs a module that is off switches it on; one that removes it takes it off the shelf. PROJ held at power-on
-skips the set and keeps the shelf. After a start that did not load the card's whole set (skipped, held or one left out
-by the boot guard) the page refuses a switch with `RESTART FIRST`: saving that start's smaller set would lose the rest.
+skips the set and keeps the shelf. A start that did not load the card's whole set refuses a switch (saving its smaller
+set would lose the rest): `RESTART FIRST` after a skipped or held start, or one the boot guard left a module out of;
+`SYNC ON THE SITE FIRST` after another base's set, a damaged file or a module that failed to load. A module that is off
+is not missing: MISSING marks it (OFF) and YES switches every one on; it opens for one only after a project load, not
+right after the player switched it off, and its track says `<NAME> IS OFF`. Switching off a module another Part names
+says where (`USED IN C SAVED PART 2 T5`).
 
 A host reads the shelf with OFF (0xC1, bRequest 40, wValue the first entry, wLength 288): `MWO`, the entries in the
 reply, the count of all, then 56 bytes a module, an INVENTORY entry and its package's SHA-256, 5 a page. The site lists
@@ -328,20 +333,34 @@ removal package any module gets (`sdk/tests/runtime_card_guard.c`: the loader ta
 `status.s` also gates stock's time-stretch helper task (`mw_ts_gate`): it skips a track whose TSTR is OFF, since only
 time-stretch reads its splice search and only BEAT reads its transient markers.
 
+`status.s` also shortens stock's delay routine (`mw_delay_read0`, `mw_delay_read`, `mw_delay_idle`). Stock reads,
+filters, mixes and writes back all eight tracks' delay rings every frame, whatever their FX2 and however silent the
+ring; nearly all of its time is the ring transfers. Once a track's taps and filter state have stayed within 2,048
+counts of zero (-120 dBFS) with its send gain at zero for 16,384 frames in a row (no DELAY on the track, or a DELAY
+whose echoes have died), its read and write are left out and only the dry gain is applied, as stock ramps it. Stock's
+filter never comes back to exact zero after a send, so this drops a residue below -120 dBFS rather than being
+bit-identical. A send that opens starts from silent taps. A module that takes the routine's seam before it (Tape Echo,
+`0x4000361a`) restarts the count. The A/B harness and the unit figures are in `delay-harness/`.
+
+`status.c` also keeps the frame interrupt's share of each frame from the frame guard's sums, over the last four seconds (the last play's while stopped), and the box after a pick shows it in its CPU row against `mw_frame_line`, the share where the guard starts to drop renders.
+
 `status.c` measures, all the time, the ColdFire's load (main's idle spin, timed on DTIM3, `status.s`), each
 DSP core's mean and peak load (core 0's own idle count, core 1's counted wait for core 0, `dsp_receiver.asm`),
 each core's code arena, the delay-buffer blocks and the module pool. CUE + PROJ shows it as a dialog (NO closes it),
-and so does PROJ > MODWERK > LOAD: MODWERK BASE and its version over five rows, each with its bar: CPU, DSP T1-4 and
+and so does PROJ > MODWERK > STATUS: MODWERK BASE and its version over five rows, each with its bar: CPU, DSP T1-4 and
 DSP T5-8 (each DSP chip's time by its tracks, measured, with the recent peak; tracks 1-4 run on core 1, tracks 5-8 on
 core 0), then MEM T1-4 and MEM T5-8 (DSP memory per chip, the fuller of what admission books and its code memory: what says
 DSP MEMORY FULL first); `npm run device -- stats` prints it from the loader report on development
 bases. PROJ > MODWERK is a fifth root category (Octabam's MAINMENU.md: the root window is five rows tall, stock fills
 four; `build_core.py` copies the four stock rows and appends it, with its icon and list): MODULES last ("Modules on
-and off" above), and before it LOAD, MODULE LOAD (each
+and off" above), and before it STATUS, MODULE COST (each
 installed module's share of each core's frame from its own cycle figure, `~` when that is 7/4 of an emulator claim:
 the meters see only each core's sum), MISSING (each module a project names but no installed module serves, with where
 it is named first: the current bank, then the others, a working Part before a saved copy, `BANK A SAVED PART 2 T5`;
-its slots show NONE's page renamed MISSING, `MISS` in the footer) and SELF TEST. SYSTEM stays stock. A DSP core's load is its idle passes times their calibrated cycles (20.0 on core 0, 14.5 on core 1)
+its slots show NONE's page renamed MISSING, `MISS` in the footer; since 0.7.3 also each machine the project uses that
+no installed machine serves, from `machine_registry.c`'s machine map: a Part names a machine only by its signature, so
+the map keeps each one's module and name, in battery RAM at `0x100ffd40` and in project.work as `#MODWERK_MC=` lines
+beside the effects' `#MODWERK_FX=`; its track then says `MISSING POLY8` or `POLY8 IS OFF`) and SELF TEST. SYSTEM stays stock. A DSP core's load is its idle passes times their calibrated cycles (20.0 on core 0, 14.5 on core 1)
 of a 72,520-cycle frame; recalibrate with `build_core.py --dsp-burn 1000` (core 0) or `-1000` (core 1).
 
 

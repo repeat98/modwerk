@@ -49,6 +49,8 @@ export function openFailure(agent = typeof navigator === 'undefined' ? '' : navi
 }
 /** Well inside the base's 10 s quiet limit (sdk/runtime/upload/vendor.c mv_tick); any vendor request counts. */
 const KEEPALIVE_MS = 1000
+/** Leave time for recovery before the base’s quiet-USB timer expires. */
+const EP0_DIAGNOSTIC_MS = 1000
 /** Asked while playing, the base presses STOP itself and answers `unsafe` that once; ask again until it has stopped. */
 const STOP_RETRY_MS = 200
 /** A whole set publishes and restores one row per engine turn (20 rows took 3.8 s at the 200 ms retry interval):
@@ -115,8 +117,9 @@ const UNCONFIRMED = 'The Octatrack hasn’t confirmed that the new base is saved
 class NothingWritten extends Error {}
 
 /** One step of a module set load: a runtime package, and the package that puts back what it changes (absent when the
- * site has none, such as for a removed module it does not publish). */
-export interface SetChange { readonly module: string; readonly data: Uint8Array; readonly undo?: Uint8Array }
+ * site has none, such as for a removed module it does not publish). `replaces`: it removes or replaces a module already
+ * on the unit, so a track may be using it (the loader's refusal 7, RUNTIME_IN_USE). */
+export interface SetChange { readonly module: string; readonly data: Uint8Array; readonly undo?: Uint8Array; readonly replaces?: boolean }
 
 export type LinkStatus = 'unsupported' | 'idle' | 'connecting' | 'stock' | 'busy' | 'ready' | 'sending' | 'testing' | 'trial' | 'finishing'
 export interface LinkState {
@@ -147,6 +150,15 @@ const REFUSED: Partial<Record<UploadResultName, string>> = {
  * loader's refusals (sdk/runtime/loader-refusals.json). A code without one shows the plain text above. */
 const REJECTED: Partial<Record<number, string>> = Object.fromEntries(
   loaderRefusals.refusals.flatMap(refusal => 'musician' in refusal && refusal.musician ? [[refusal.code, refusal.musician]] : []))
+const RUNTIME_IN_USE = 7
+/** After refusal 7, the modules the sync removes or replaces: one of them is on a track. The base does not say which
+ * track (November 2026: testers were refused several times in a row looking for it). */
+export function inUseHint(modules: readonly string[]) {
+  const names = [...new Set(modules)]
+  if (!names.length) return ''
+  const shown = names.length > 5 ? [...names.slice(0, 4), `${names.length - 4} more`] : names
+  return ` Look for ${new Intl.ListFormat('en', { type: 'disjunction' }).format(shown)} on the tracks.`
+}
 /** The browser couldn't claim the unit. In the data (11 Nov 2026) that was mostly Modwerk in another tab or browser, which
  * reads the unit every second while connected, not an Elektron app (they use the MIDI and audio interfaces). On Windows it
  * can also be the computer: an interface it set up without the base's interface GUID never claims (the same NetworkError),
@@ -217,6 +229,8 @@ export class OctatrackLink {
   private step?: DiagnosticSyncStep
   /** Changes in the last load: how long its publication or restore may take (setBudget). */
   private rows = 1
+  /** What the last load removes or replaces on the unit (SetChange.replaces), named after refusal 7. */
+  private replaced: readonly string[] = []
   private abort?: AbortController
   private keepalive?: ReturnType<typeof setInterval>
   private baseStep?: BaseUpdateStep
@@ -309,6 +323,11 @@ export class OctatrackLink {
     const connection = this.connection
     return this.serial(async () => { if (connection === this.connection) await this.opening(device) })
   }
+  private async openDevice(device: LinkDevice, connection: number) {
+    if (!device.opened) await device.open()
+    this.live(connection)
+    if (!device.configuration) await device.selectConfiguration(1)
+  }
   private async opening(device: LinkDevice) {
     const connection = this.connection
     await this.release(true)
@@ -317,9 +336,7 @@ export class OctatrackLink {
     if (this.state.status !== 'busy') this.setFor(connection, { status: 'connecting' })
     this.device = device
     try {
-      if (!device.opened) await device.open()
-      this.live(connection)
-      if (!device.configuration) await device.selectConfiguration(1)
+      await this.openDevice(device, connection)
       this.live(connection)
       const index = findVendorInterface(device.configuration)
       if (index === undefined) { await device.close().catch(() => {}); return this.setFor(connection, { status: 'stock' }) }
@@ -381,6 +398,36 @@ export class OctatrackLink {
     if (close) { this.device = this.index = this.transport = this.session = undefined; if (device?.opened) await device.close().catch(() => {}) }
   }
 
+  /** DIAG is optional. Close an unanswered control transfer before sending any further USB commands. */
+  private async syncUsbCounters(signal?: AbortSignal): Promise<number[] | undefined> {
+    const { device, transport, connection } = this
+    if (!device || !transport || signal?.aborted) return undefined
+    let abandon!: () => void
+    const unanswered = new Promise<null>(resolve => { abandon = () => resolve(null) })
+    const timer = setTimeout(abandon, EP0_DIAGNOSTIC_MS)
+    signal?.addEventListener('abort', abandon, { once: true })
+    const counters = await Promise.race([transport.ep0().catch(() => undefined), unanswered]).finally(() => {
+      clearTimeout(timer)
+      signal?.removeEventListener('abort', abandon)
+    })
+    if (counters !== null) return counters
+
+    // WebUSB close cancels EP0 and releases the claim. A new transport starts
+    // with the device's last sequence when Sync or recovery checks the session.
+    if (connection === this.connection) this.index = this.transport = undefined
+    await device.close()
+    this.live(connection)
+    await this.openDevice(device, connection)
+    this.live(connection)
+    const index = findVendorInterface(device.configuration)
+    if (index === undefined) throw new DOMException('The Modwerk USB interface is unavailable.', 'NotFoundError')
+    await device.claimInterface(index)
+    this.live(connection)
+    this.index = index
+    this.transport = new UsbVendorTransport(device, index)
+    return undefined
+  }
+
   /** Stage a whole set on capable bases, then trial it once. Older bases
    * accept a single change; several changes require an updated base. No
    * intermediate acceptance or browser-supplied rollback packages. */
@@ -402,13 +449,16 @@ export class OctatrackLink {
     if (!changes.length || this.state.status !== 'ready' || !this.state.identity?.canSubmit || !base || !await this.claim()) return
     const abort = this.abort = new AbortController(), total = changes.reduce((sum, change) => sum + change.data.length, 0)
     this.rows = changes.length
+    this.replaced = changes.filter(change => change.replaces).map(change => change.module)
     this.set({ status: 'sending', identity: this.state.identity, active: this.state.active, module, progress: 0 })
     this.diagnostic('sync_started', {packages: changes.map(change => ({sha256:sha(change.data),bytes:change.data.length}))})
-    let session: LinkSession | undefined
+    let usb: number[] | undefined, session: LinkSession | undefined
     this.step = 'session'
     try {
       const wholeSet = !!(this.state.identity?.capabilities?.features && this.state.identity.capabilities.features & RuntimeFeature.moduleSets)
       if (changes.length > 1 && !wholeSet) throw new WholeSetBaseRequired()
+      if (this.diagnosticListeners.size) usb = await this.syncUsbCounters(abort.signal)
+      this.live(connection); abort.signal.throwIfAborted()
       session = this.session = await this.connectSession(this.transport!, base)
       this.live(connection); abort.signal.throwIfAborted()
       // Another tab loaded while this one waited for the unit: these changes were planned for what was on it before.
@@ -430,7 +480,7 @@ export class OctatrackLink {
       this.startKeepalive()
       this.set({ status: 'trial', identity: this.state.identity, active: session.status.active, module })
     } catch (error) {
-      if (connection === this.connection) await this.failed(error, session)
+      if (connection === this.connection) await this.failed(error, session, usb)
       this.step = undefined
     }
   }
@@ -708,10 +758,13 @@ export class OctatrackLink {
   /** Undo what this session left behind. When a reply went missing (the session no longer trusts its
    * connection), a fresh session reads where the base stands and undoes it from there; only when that fails
    * too does the user get the unplug advice. */
-  private async failed(error: unknown, session?: LinkSession) {
+  private async failed(error: unknown, session?: LinkSession, usb?: number[]) {
     const connection = this.connection
     if (!(error instanceof UploadDeviceError) && !(error instanceof DOMException) && !(error instanceof StaleLoadError) && !(error instanceof WholeSetBaseRequired)) console.error(error)
     this.stopKeepalive()
+    // Read before the recovery below sends anything, so the counters cover the failed sync alone.
+    const after = usb && error instanceof UploadUnconfirmedError ? await this.syncUsbCounters(this.abort?.signal).catch(() => undefined) : undefined
+    if (connection !== this.connection) return
     let clean = !session, settled = session?.connectionTrusted ? session : undefined, recovered = false
     if (session && !session.connectionTrusted && error instanceof UploadUnconfirmedError && this.transport && this.state.identity?.base) {
       try { settled = await this.connectSession(this.transport, this.state.identity.base); recovered = true } catch { settled = undefined }
@@ -727,13 +780,21 @@ export class OctatrackLink {
     // An unclassified failure names its error type (never the message), so the diagnostics can tell a bug from a refusal;
     // a transport failure names what stopped it (the browser's USB error, a timeout, a dropped submission, else a reply
     // that did not confirm the step): in November 2026 four units failed every sync at `stage` and the record could not say why.
+    // `kind` then said only VendorTransportError (the unit stalled the submission), so the base's EP0 counters over the sync
+    // come too: they tell a submission refused at its SETUP from a data stage that stopped part way or a bus reset.
     const step = this.step
-    this.diagnostic('sync_failed', {error: label, ...(step ? {step} : {}), ...(label === 'unknown' ? {kind: diagnosticErrorKind(error)} : label === 'transport' ? {kind: diagnosticErrorKind((error as Error).cause)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {})})
+    this.diagnostic('sync_failed', {error: label, ...(step ? {step} : {}), ...(label === 'unknown' ? {kind: diagnosticErrorKind(error)} : label === 'transport' ? {kind: diagnosticErrorKind((error as Error).cause)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {}),
+      ...(usb && after ? {usb: after.map((count, i) => (count - usb[i]) >>> 0)} : {})})
     this.session = undefined
     await this.release()
     // An untrusted connection that could not be read again leaves the running set unknown.
-    const text = recovered && clean ? RECOVERED : (REJECTED[why ?? 0] ?? explainLinkError(error)) + (clean ? '' : ' ' + UNPLUG)
-    if (this.device && connection === this.connection) this.ready({ tone: 'error', text }, session ? settled?.status.active : this.state.active)
+    const text = recovered && clean ? RECOVERED : (REJECTED[why ?? 0] ?? explainLinkError(error)) +
+      (why === RUNTIME_IN_USE ? inUseHint(this.replaced) : '') + (clean ? '' : ' ' + UNPLUG)
+    if (this.device && connection === this.connection) {
+      const notice = { tone: 'error', text } as const
+      if (this.transport) this.ready(notice, session ? settled?.status.active : this.state.active)
+      else this.set({ status: 'idle', notice })
+    }
   }
   /** Cancel, roll back or leave upload mode from whatever phase `session` reports; true once back to normal. */
   private async cleanUp(session: LinkSession) {

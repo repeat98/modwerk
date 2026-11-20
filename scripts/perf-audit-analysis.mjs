@@ -141,6 +141,18 @@ export function judgeRecord(record, options = {}) {
   return rows
 }
 
+/** Whether a record's numbers were measured on the module's current source: its `sourceSha256`, written by
+ * `perf:audit check FILE --stamp`, against modulePerformanceSourceSha256. `required` (a module listed from the day stamps began,
+ * or a draft judged as a release) turns a missing stamp from a note into a failure; a stamp for other source always fails. */
+export function stampVerdict(record, sourceSha256, required, file = '<module>/evidence/performance.json') {
+  const fix = 'measure again on this source, then npm run perf:audit -- check ' + file + ' --stamp'
+  if (record?.sourceSha256 === undefined) return required
+    ? { state: 'fail', detail: 'its numbers name no source, so nothing shows they were measured on this code', fix: 'npm run perf:audit -- check ' + file + ' --stamp, right after you measure' }
+    : { state: 'note', detail: 'not stamped: stamp it when you next measure (npm run perf:audit -- check ' + file + ' --stamp)' }
+  if (record.sourceSha256 !== sourceSha256) return { state: 'fail', detail: 'measured on other source (stamp ' + String(record.sourceSha256).slice(0, 12) + '…, the source is now ' + sourceSha256.slice(0, 12) + '…): the code changed after the numbers were taken', fix }
+  return { state: 'ok', detail: 'measured on this source (' + sourceSha256.slice(0, 12) + '…)' }
+}
+
 /** Only missing measurements may be excused by the existing exact-source owner approval.
  * The publication validator separately validates the complete approval and documentation.
  * A cycles row may also be excused when only the static bound is missing and a measurement with its budget is given (code whose cost

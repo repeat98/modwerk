@@ -6,6 +6,7 @@ import { emptySession } from './context'
 import { ForumRoleBadge } from './ForumIdentity'
 import { ModuleCard } from '../components/ModuleCard'
 import { MODULES } from '../catalog/modules'
+import { asBeta } from '../catalog/beta-fixture'
 
 const member = { id: 'member', username: '00schneider', displayName: '00schneider', verified: true }
 describe('beta tester class', () => {
@@ -16,13 +17,17 @@ describe('beta tester class', () => {
     expect(hasBetaAccess({ ...emptySession, user: { ...member, verified: false, betaTester: true } })).toBe(false)
     expect(hasBetaAccess({ ...emptySession, admin: true, user: member })).toBe(true)
   })
-  it('keeps the developer badge alongside beta tester membership', () => {
+  it('keeps the modder badge alongside beta tester membership', () => {
     const html = renderToStaticMarkup(createElement(ForumRoleBadge, { role: 'developer', betaTester: true }))
-    expect(html).toContain('Developer'); expect(html).toContain('Beta tester')
+    expect(html).toContain('Modder'); expect(html).toContain('Beta tester')
   })
-  it('marks Air Chorus cards as Beta without changing ordinary module cards', () => {
+  it('shows no Beta badge on Air Chorus since its release to everyone', () => {
+    const card = renderToStaticMarkup(createElement(ModuleCard, { module: MODULES.find(module => module.id === 'airwindows-chorus')!, selected: false, baseline: null, compared: false, canCompare: true, onToggle() {}, onCompare() {} }))
+    expect(card).not.toContain('module-beta-badge')
+  })
+  it('marks beta module cards as Beta without changing ordinary module cards', () => asBeta(() => {
     const card = (id: string) => renderToStaticMarkup(createElement(ModuleCard, { module: MODULES.find(module => module.id === id)!, selected: false, baseline: null, compared: false, canCompare: true, onToggle() {}, onCompare() {} }))
     expect(card('airwindows-chorus')).toContain('module-beta-badge">Beta')
     expect(card('miniverb')).not.toContain('module-beta-badge')
-  })
+  }))
 })

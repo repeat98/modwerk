@@ -1,0 +1,1 @@
+Developers can share the conversation of a coding-agent session with the owner, so what got in the way gets fixed. The agent asks once when the work is done; only prompts, replies and tool calls are sent, with tool output, code, firmware-like content and secrets removed first (`npm run session`, docs/AGENT_SESSIONS.md).

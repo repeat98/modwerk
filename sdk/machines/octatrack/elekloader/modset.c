@@ -648,8 +648,11 @@ static uint32_t switch_now(uint32_t id, int on)
     if (!restored || pending || candidate || VOLATILE_BLOCKED() || HOST_BUSY() || !GATE()) return MODSET_SWITCH_BUSY;
     /* Only while the set here is the card's. After a start that skipped, held or left out modules the card still has
      * them all, and saving this start's smaller set over it for a switch would lose them: a restart restores them, a
-     * sync decides them. */
-    if (modwerk_modset_result != RESTORED && modwerk_modset_result != NONE_SAVED && modwerk_modset_result != SAVED) return MODSET_SWITCH_PARTIAL;
+     * sync decides them. After a base update (another base's set), a damaged file or a module the restore could not
+     * load, a restart comes back the same: only a sync makes the set whole, so the page says that (owner, 16 November
+     * 2026). */
+    if (modwerk_modset_result == SKIPPED || modwerk_modset_result == HELD || modwerk_modset_result == LEFT_OUT) return MODSET_SWITCH_PARTIAL;
+    if (modwerk_modset_result != RESTORED && modwerk_modset_result != NONE_SAVED && modwerk_modset_result != SAVED) return MODSET_SWITCH_SYNC;
     uint32_t n = used(), count = be32(set) == 0x4d575354u ? be32(set + 12) : 0, at = HEADER, length = 0, step = 0;
     static uint8_t gone[32]; /* the package that removes a module: ABI 4, no image, hooks or sites (removes()) */
     const uint8_t *package = gone;
@@ -710,6 +713,12 @@ unsigned modwerk_modset_off_list(uint8_t *out, unsigned first, unsigned most)
     out[0] = 'M', out[1] = 'W', out[2] = 'O', out[3] = (uint8_t)n, out[4] = (uint8_t)(count >> 8), out[5] = (uint8_t)count, out[6] = out[7] = 0;
     return 8u + MODSET_OFF_ENTRY * n;
 }
+int modwerk_modset_is_off(uint32_t module)
+{
+    uint32_t moving = off_moving;
+    const uint8_t *r = module && !(moving & 1u) ? off_find(module) : 0;
+    return r && off_moving == moving; /* a move meanwhile: not sure, so not off */
+}
 /* ep0.c holds host frames until the restore has run: an install before it would race it, and the restore would undo it. */
 int modwerk_modset_restored(void) { return (int)restored; }
 #ifdef MODWERK_SAMPLE_EDITOR
@@ -747,9 +756,14 @@ void modwerk_modset_service(void)
        * plays. A module installed into a running project reads its own file now; no project load will tell it. */
         extern uint32_t modwerk_runtime_owner_epoch(void);
         extern const unsigned char modwerk_raise_ev_modules_ready[]; /* runtime_events.s: the base raises it, no module */
+        extern void modwerk_sample_memory_service(void); /* sample_memory.c: ot_sample_memory's pages, before the raise */
         static uint32_t ready;
         uint32_t now = modwerk_runtime_owner_epoch();
-        if (now != ready) { ready = now; (void)((unsigned (*)(void))(uintptr_t)modwerk_raise_ev_modules_ready)(); }
+        if (now != ready) {
+            ready = now;
+            modwerk_sample_memory_service();
+            (void)((unsigned (*)(void))(uintptr_t)modwerk_raise_ev_modules_ready)();
+        }
     }
 #endif
     if (!pending || TICKS < retry_at) return;

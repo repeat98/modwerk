@@ -60,6 +60,8 @@ static void *host_stock(uint32_t a)
 
 void mg_tick(void); /* midi_generators.c, checked by test_midi_generators.c */
 void mg_tick(void) {}
+static unsigned rest_polls; /* the loader's resting poll, checked by sdk/runtime/loader/tests/events_test.c */
+int modwerk_runtime_rest_poll(void) { return ++rest_polls, 0; }
 /* The loader's side: the table rows and the machine glue. */
 #include "loader.h"
 volatile uint32_t modwerk_machine_assigned; /* controller_board.c's, not linked here */
@@ -98,6 +100,9 @@ static uintptr_t volatile *const host_rows[RUNTIME_SITE_EVENTS] = {
     [MODWERK_OT_MACHINE_STARTS - RUNTIME_EVENTS] = start_row};
 static volatile uint32_t host_timer; /* the frame timer (DTCN3): the synthetic renders advance it */
 #define DTCN3 host_timer
+/* The loader's count of owner changes: the machine map notes a newly installed set's machines when it moves. */
+static uint32_t owner_epoch;
+uint32_t modwerk_runtime_owner_epoch(void) { return owner_epoch; }
 #include "machine_registry.c"
 #undef modwerk_runtime_event_row
 
@@ -404,7 +409,7 @@ static void check_cpu_budget(void)
     const void *both[] = {&A, &P};
     rows(both, 2, 0, 0);
     for (unsigned t = 0; t < 8; ++t) { part0()[0x22 + t] = 1; for (unsigned k = 0; k < 3; ++k) part0()[60 + 30 * t + k] = 0; }
-    fresh(); a_admit = 1; mw_cpu_allowance = 45; mw_ui_tick();
+    fresh(); a_admit = 1; mw_cpu_allowance = 45; { unsigned polls = rest_polls; mw_ui_tick(); CHECK(rest_polls == polls + 1u); }
     CHECK(!mw_cpu_refused && !mw_cpu_booked);
     /* A busy unit (the meter at mw_cpu_hot or more) takes no further machine, with its own box and the measured
      * load; the same machine on its own track asks nothing, and the pick passes once the load is under the line. */
@@ -475,6 +480,55 @@ static void check_engine_price(void)
     ab.source_engine = 0; ab.source_voice = 411;                   /* still priced in its record too */
     made = claims_made; CHECK(!claim(0, &ab) && claims_made == made);
     engine_installed = 0; want_voice = 411, want_engine = 3, want_kind = 1;
+}
+/* The machines a project uses (owner, 16 November 2026: machines in the project map): noted when a track takes one,
+ * written as the project's lines, read back from them, and absent, named, once the machine's module is gone. The bank
+ * and its SRAM mirror come back as they were. */
+static uint8_t bank_copy[sizeof bank], sram_copy[sizeof sram];
+static void check_machine_map(void)
+{
+    memcpy(bank_copy, bank, sizeof bank), memcpy(sram_copy, sram, sizeof sram);
+    memset(&host_mc_map, 0, sizeof host_mc_map), mc_stale = 1, mc_epoch_seen = 0;
+    uint32_t m; char name[16]; uint8_t sig[2]; unsigned lo, hi, b, p, t;
+    const void *a_only[] = {&A};
+    rows(a_only, 1, 0, 0);
+    a_admit = 1; CHECK(mw_assign(part0(), 4, 5) == 1);                     /* T5 takes ANALOG BD: noted */
+    CHECK(host_mc_map.magic == MC_MAGIC && host_mc_map.e[0].module == 'A' && !strcmp(host_mc_map.e[0].name, "ANALOG BD"));
+    CHECK(host_mc_map.e[0].sig[0] == 'A' && host_mc_map.e[0].sig[1] == 'B' && host_mc_map.e[0].lo == 1 && host_mc_map.e[0].hi == 1);
+    modwerk_machine_map_refresh();
+    CHECK(!modwerk_machine_absent(0, &m, name) && !modwerk_machine_track_absent(4, &m, name)); /* installed: not absent */
+    CHECK(modwerk_machine_where(0, &b, &p, &t) == 1 && b == 0 && p == 0 && t == 4);
+    CHECK(modwerk_machine_map_line(0, sig, &lo, &hi, &m, name) == 1 && sig[0] == 'A' && sig[1] == 'B' && lo == 1 && hi == 1);
+    CHECK(m == 'A' && !strcmp(name, "ANALOG BD") && !modwerk_machine_map_line(1, sig, &lo, &hi, &m, name));
+    /* Its module gone (switched off, removed): absent, by name, in MISSING and on its track. */
+    rows(0, 0, 0, 0); ++owner_epoch; modwerk_machine_map_refresh();
+    CHECK(modwerk_machine_absent(0, &m, name) && m == 'A' && !strcmp(name, "ANALOG BD") && !modwerk_machine_absent(1, &m, name));
+    CHECK(modwerk_machine_track_absent(4, &m, name) && m == 'A' && !modwerk_machine_track_absent(3, &m, name));
+    memset(host_at(0x46000000u + PART_OFF + SIG + 30u * 4u), 0, 3); mc_stale = 1; modwerk_machine_map_refresh();
+    CHECK(!modwerk_machine_absent(0, &m, name) && !modwerk_machine_track_absent(4, &m, name)); /* named nowhere now */
+    /* A project load with lines: the map takes them (a repeat once); one without keeps the map; a failed one too. */
+    const uint8_t pl[2] = {'P', 'L'};
+    modwerk_machine_map_begin(); modwerk_machine_map_stage(pl, 1, 1, 0x9fa85eefu, "POLY8"); modwerk_machine_map_stage(pl, 1, 1, 0x9fa85eefu, "AGAIN");
+    modwerk_machine_map_loaded(1);
+    CHECK(host_mc_map.e[0].module == 0x9fa85eefu && !strcmp(host_mc_map.e[0].name, "POLY8") && !host_mc_map.e[1].module);
+    memcpy(host_at(0x46000000u + PART_OFF + SIG + 30u * 6u), "PL\1", 3); mc_stale = 1; modwerk_machine_map_refresh(); /* T7 signed POLY8, none installed */
+    CHECK(modwerk_machine_absent(0, &m, name) && m == 0x9fa85eefu && modwerk_machine_track_absent(6, &m, name));
+    CHECK(modwerk_machine_where(0, &b, &p, &t) == 1 && t == 6);
+    CHECK(modwerk_machine_where_module(0x9fa85eefu, &b, &p, &t) == 1 && t == 6 && !modwerk_machine_where_module(0x1234u, &b, &p, &t));
+    memcpy(host_at(0x46000000u + 0x9504au + 2u * 6322u + SIG + 30u * 5u), "PL\1", 3); /* also in a saved Part 3's T6 */
+    bank[0x9504au + 2u * 6322u + 0x22 + 5] = 1;
+    memset(host_at(0x46000000u + PART_OFF + SIG + 30u * 6u), 0, 3); mc_stale = 1; modwerk_machine_map_refresh();
+    CHECK(modwerk_machine_absent(0, &m, name) && modwerk_machine_where(0, &b, &p, &t) == 2 && p == 2 && t == 5);
+    modwerk_machine_map_begin(); modwerk_machine_map_loaded(1); CHECK(host_mc_map.e[0].module == 0x9fa85eefu);
+    modwerk_machine_map_begin(); modwerk_machine_map_stage(pl, 1, 1, 0x1234u, "OTHER"); modwerk_machine_map_loaded(0);
+    CHECK(host_mc_map.e[0].module == 0x9fa85eefu);
+    /* Damage: the whole check gives an empty map. */
+    host_mc_map.e[0].name[0] ^= 1; mc_valid(); CHECK(!host_mc_map.e[0].module && host_mc_map.magic == MC_MAGIC);
+    /* A machine installed while the project already names it: noted when the installed set changes. */
+    memcpy(host_at(0x46000000u + PART_OFF + SIG + 30u * 4u), "AB\1", 3); rows(a_only, 1, 0, 0); ++owner_epoch; modwerk_machine_map_refresh();
+    CHECK(host_mc_map.e[0].module == 'A' && !modwerk_machine_absent(0, &m, name));
+    rows(0, 0, 0, 0);
+    memcpy(bank, bank_copy, sizeof bank), memcpy(sram, sram_copy, sizeof sram);
 }
 int main(void)
 {
@@ -931,6 +985,7 @@ int main(void)
     CHECK((counts_now() & 0xff) == 6u && mw_seq_getters[3] == (void *)1 && mw_seq_labels[6] == (const void *)mw_seq_none);
     rows(0, 0, 0, 0);
     CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u) && !masked && clamp_now() == 5);
+    check_machine_map();
     check_source_starts();
     check_native_flex_voice();
     check_cpu_budget();

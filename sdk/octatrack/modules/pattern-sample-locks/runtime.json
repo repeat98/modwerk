@@ -17,5 +17,12 @@
       "event": "module_enc",
       "fn": "module_enc"
     }
+  ],
+  "contribute": [
+    {
+      "to": "ot_part_menu",
+      "data": "psl_part_menu",
+      "order": 50
+    }
   ]
 }

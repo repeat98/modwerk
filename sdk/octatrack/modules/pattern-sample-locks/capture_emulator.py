@@ -62,6 +62,7 @@ def main():
     parser.add_argument('--prepare-fixture',action='store_true',help='Save a consistent disposable fixture before persistence tests')
     parser.add_argument('--live-playback',action='store_true',help='Live editing, RAM preferences and matched CPU monitor')
     parser.add_argument('--performance',action='store_true',help='Matched emulator load and small/maximum edit instruction measurements')
+    parser.add_argument('--press-stress',action='store_true',help='20 rounds of Lock then Clear on 512 fields while playing, then STOP and a Part change')
     parser.add_argument('--stress-save',action='store_true',help='Maximum native edits plus native save/reload on the copied card')
     parser.add_argument('--exercise',action='store_true',help='Exercise native edits on disposable emulator media')
     parser.add_argument('--exercise-ui',action='store_true',help='Capture the complete UI, then exercise native edits')
@@ -72,7 +73,7 @@ def main():
     parser.add_argument('--cs1-in',type=Path,help='Private battery snapshot for a fresh native power-up')
     parser.add_argument('--menu-only',action='store_true',help='Capture only the level-one list, then Undo')
     parser.add_argument('--no-dsp',action='store_true',help='Skip DSP execution; do not claim audio coverage')
-    source_names=('capture_emulator.py','attestation_emulator.py','prepare_fixture_emulator.py','profile_symbols.py','live_emulator.py','performance_emulator.py','profile_emulator.py','stress_emulator.py','exercise_emulator.py','unit.s','engine.c','engine.h','ui.c','ui.h','native.c','font.c','font.h','runtime.json','manifest.py')
+    source_names=('capture_emulator.py','press_stress_emulator.py','attestation_emulator.py','prepare_fixture_emulator.py','profile_symbols.py','live_emulator.py','performance_emulator.py','profile_emulator.py','stress_emulator.py','exercise_emulator.py','unit.s','engine.c','engine.h','ui.c','ui.h','native.c','font.c','font.h','runtime.json','manifest.py')
     source_hashes={name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest() for name in source_names}
     args=parser.parse_args();out=args.out.resolve();out.mkdir(parents=True,exist_ok=False)
     if ROOT==out or ROOT in out.parents:raise ValueError('Use private output outside the repository')
@@ -83,10 +84,10 @@ def main():
     plane=out/'lcd.private.bin';sock=out/'usb.sock'
     command=[str(args.emulator),'--image',str(args.base/'MAIN.raw'),'--card',str(card),
         '--mount','--set','BEATLAB','--project','PROJECT 261023','--load-ms','30000','--load-early',
-        '--dsp','--frame','--ips','3990','--ms','3000','--interactive','--main-level','off','--rtc','host','--mkii',
+        '--dsp','--frame','--ips','3990','--ms','3000','--max','4000000000','--interactive','--main-level','off','--rtc','host','--mkii',
         '--usb-host',str(sock),'--lcd',str(plane)]
-    if args.stress_save or args.prepare_fixture or args.performance or args.exercise_ui or args.live_playback:args.exercise=True
-    if args.stress_save or args.prepare_fixture or args.performance or args.live_playback or args.keep or args.boot_auto:command.append('--card-rw')
+    if args.stress_save or args.prepare_fixture or args.performance or args.press_stress or args.exercise_ui or args.live_playback:args.exercise=True
+    if args.stress_save or args.prepare_fixture or args.performance or args.press_stress or args.live_playback or args.keep or args.boot_auto:command.append('--card-rw')
     if args.boot_auto and not args.cs1_in:raise ValueError('--boot-auto requires battery state')
     if args.no_dsp:command.remove('--dsp')
     if args.cs1_in:
@@ -110,7 +111,8 @@ def main():
         if args.boot_auto:
             assert status['phase']==0, 'saved-set startup not normal'
             # Prove automatic native restore without replacing the saved package.
-            assert port.peek(0x4002dc68,2)==b'\x4e\xb9', 'automatic module restore absent'
+            restored=json.loads((args.base/'symbols.json').read_text())['modwerk_runtime_event_row']+4*(53-4)
+            assert int.from_bytes(port.peek(int.from_bytes(port.peek(restored,4),'big'),4),'big'), 'automatic module restore absent'
         else:
             request(1,transaction=0)
             request(2,bytes.fromhex(base)+bytes.fromhex(package_hash)+struct.pack('>II',status['generation'],len(package)))
@@ -118,7 +120,7 @@ def main():
             request(4);status=request(5)
             while status['result']==12:time.sleep(.025);status=request(5)
             assert status['phase']==4;status=request(9);assert status['phase']==5
-            if args.stress_save or args.prepare_fixture or args.performance or args.live_playback or args.keep:
+            if args.stress_save or args.prepare_fixture or args.performance or args.press_stress or args.live_playback or args.keep:
                 # No physical USB surface is available to this process.
                 # Save/reload coverage exceeds a bounded trial's timeout.
                 # Keep is confined to the copied disposable emulator card.
@@ -242,7 +244,7 @@ def main():
                 capture('clear-all-selected.png');key('YES');capture('clear-confirm.png');key('NO');key('NO')
             else:key('NO')
         if args.exercise:
-            exercise=load('psl_exercise',Path(__file__).with_name('live_emulator.py' if args.live_playback else 'prepare_fixture_emulator.py' if args.prepare_fixture else 'performance_emulator.py' if args.performance else 'stress_emulator.py' if args.stress_save else 'exercise_emulator.py'))
+            exercise=load('psl_exercise',Path(__file__).with_name('live_emulator.py' if args.live_playback else 'prepare_fixture_emulator.py' if args.prepare_fixture else 'performance_emulator.py' if args.performance else 'press_stress_emulator.py' if args.press_stress else 'stress_emulator.py' if args.stress_save else 'exercise_emulator.py'))
             key('NO');key('NO')
             checks=exercise.exercise(port,run,tap,key,encoder,capture,out,bool(args.cs1_in))
         checks.update(live_checks)

@@ -5,6 +5,7 @@
     npm run modules:compat                 # every active module, every pair and the whole set
     npm run modules:compat -- <id>         # only what involves <id>
     npm run modules:compat -- --json       # the same, machine-readable (module:doctor reads it)
+    npm run modules:compat -- --json --native-params  # include the native controls from the loaded manifests
     npm run modules:compat -- --with <id>  # also a folder under sdk/octabam/modules/ the catalogue does not list (module:doctor passes it)
 
 Reads declarations only, through octabam's claim model (manifests, the loader integration's port recipes
@@ -405,6 +406,13 @@ def repository_inputs(extra=()):
     return ids, modules, inputs, load + mismatched
 
 
+def native_params(ids, modules):
+    return {module_id: [dict(slot=slot, name=p.name.decode('ascii', 'replace') if p.name is not None else None,
+                             default=p.default, count=p.count)
+                        for slot, p in enumerate(module.params) if p.active]
+            for module_id, module in zip(ids, modules)}
+
+
 def main(argv):
     started = time.perf_counter()
     sys.stdout.reconfigure(encoding='utf-8')  # the report prints '✗'; a Windows pipe defaults to the ANSI code page
@@ -426,7 +434,10 @@ def main(argv):
                    pending=[dict(modules=r['modules'], event=r['event'], until=r['until'])
                             for r in inputs.get('relations', []) if r.get('kind') == 'pending-migration'])
     if as_json:
-        print(json.dumps(dict(problems=problems, summary=summary)))
+        report = dict(problems=problems, summary=summary)
+        if '--native-params' in argv:
+            report['nativeParams'] = native_params(ids, modules)
+        print(json.dumps(report))
     else:
         for p in problems:
             print('✗ ' + p['text'])

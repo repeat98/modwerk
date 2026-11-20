@@ -14,12 +14,12 @@
     },
     {
       "id": "euclid",
-      "version": "0.1.4-experimental",
+      "version": "0.1.5-experimental",
       "addedAt": "2026-10-01T06:53:41Z"
     },
     {
       "id": "repitch",
-      "version": "0.2.0-experimental",
+      "version": "0.2.1-experimental",
       "addedAt": "2026-10-01T06:53:41Z"
     },
     {
@@ -29,7 +29,7 @@
     },
     {
       "id": "airwindows-chorus",
-      "version": "0.1.2-experimental",
+      "version": "0.1.3-experimental",
       "addedAt": "2026-10-08T21:00:00Z"
     },
     {
@@ -53,6 +53,11 @@
       "addedAt": "2026-10-20T12:00:00Z"
     },
     {
+      "id": "vibrato",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-17T19:20:00Z"
+    },
+    {
       "id": "analog-bassdrum",
       "version": "0.1.7-experimental",
       "addedAt": "2026-10-01T09:19:37Z"
@@ -69,7 +74,7 @@
     },
     {
       "id": "synth",
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "addedAt": "2026-10-06T08:00:28Z"
     },
     {
@@ -189,13 +194,28 @@
     },
     {
       "id": "pattern-sample-locks",
-      "version": "0.1.8-experimental",
+      "version": "0.1.9-experimental",
       "addedAt": "2026-11-10T12:00:00Z"
     },
     {
       "id": "amiga",
       "version": "0.3.0-experimental",
       "addedAt": "2026-11-11T10:50:00Z"
+    },
+    {
+      "id": "midi-scenes",
+      "version": "0.3.0-experimental",
+      "addedAt": "2026-11-16T20:00:00Z"
+    },
+    {
+      "id": "kits",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-16T21:00:00Z"
+    },
+    {
+      "id": "butter-fingers",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-18T16:04:00Z"
     }
   ]
 }

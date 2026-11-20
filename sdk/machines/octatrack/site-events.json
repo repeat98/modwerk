@@ -273,6 +273,25 @@
    "index": 51,
    "event": "ev_modules_ready",
    "kind": "raise"
+  },
+  {
+   "index": 52,
+   "event": "ot_sample_memory",
+   "kind": "table",
+   "room": 1,
+   "record": 16
+  },
+  {
+   "index": 53,
+   "event": "ot_part_menu",
+   "kind": "table",
+   "room": 7,
+   "record": 24
+  },
+  {
+   "index": 54,
+   "event": "ev_in_use",
+   "kind": "call"
   }
  ]
 }

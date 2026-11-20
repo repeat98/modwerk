@@ -17,9 +17,10 @@
 // attack's records: 0 instant, 0.2 ms steps to 5 ms, 0.5 ms steps to 15 ms, then about 10 % a
 // step to stock's 30 s.
 //
-// DEC and REL (AMP DEC id 58, FILTER DEC id 51, FILTER REL id 53) and HLD (id 57) have fine steps
-// at the short end too (tools/dec_table.py): their stock tables are replaced by our own, through
-// ptr sites in build.json, so stock's state machine and record writers read them unchanged.
+// DEC and REL (AMP DEC id 58, FILTER DEC id 51, FILTER REL id 53) have fine steps at the short end
+// too (tools/dec_table.py): their stock tables are replaced by our own, through ptr sites in
+// build.json, so stock's state machine and record writers read them unchanged. HLD (id 57) is
+// counted in steps here; stock's own hold compare is kept from ending a hold (below).
 //
 // FILTER ATK (id 50) has the same curve, in its own table improved_amp_flt_atk: build.json's ptr
 // site points stock's lea at 0x4010d2a8 (the filter envelope's attack table, read for the
@@ -32,11 +33,18 @@
 #include "hot.h"
 #include "analog-rytm-mk2/pages.h"
 
+// IA_UI marks functions that run only in the UI task (keys, knobs, screen, parameter
+// text, tick housekeeping), never in the audio block. cold builds them for size, out of the hot
+// code, so the module takes less of the RAM all modules share; the rest stays at -O2. No
+// behaviour change.
+#define IA_UI __attribute__((cold))
+
 typedef uint32_t word_t;
 
 // ---- stock OS 1.74 ----
-// (The stock tables of AMP HLD 0x401ee81c, AMP DEC 0x401ee61c and FILTER DEC/REL 0x401ef030 are
-// replaced by improved_amp_hold, improved_amp_amp_dec and improved_amp_flt_dec below, through ptr sites.)
+// (The stock tables of AMP DEC 0x401ee61c and FILTER DEC/REL 0x401ef030 are replaced by
+// improved_amp_amp_dec and improved_amp_flt_dec below, through ptr sites; AMP HLD's 0x401ee81c is no
+// longer read.)
 // amp_env_commands' states: 0 a trig (sends the attack, moves to 1 or 2), 1 gate (holds while the
 // note is on, then 3), 2 timed hold, 3 decay, 4 choke, -1 idle. The block that leaves 1 or 2 still
 // sends the hold's record.
@@ -152,11 +160,14 @@ const uint32_t improved_amp_flt_dec[128] __attribute__((aligned(4))) = {
     0xef8f5, 0xf1349, 0xf3087, 0xf4a27, 0xf609f, 0xf744f, 0xf8591, 0xf94b1,
 };
 
-// Stock's own hold compare (0x40109bc2: the hold counter in ticks against the entry of the knob's
-// live value, every block of state 2) reads this in place of its table and must never end a hold:
-// the hold is counted in steps by improved_amp_voice. Every entry is out of the counter's reach,
-// 127 too: stock reads it when HLD is turned to AUTO in a hold.
-const int32_t improved_amp_hold[128] __attribute__((aligned(4))) = { [0 ... 127] = 0x7fffffff };
+// Stock's own hold compare (0x40109bc2..0x40109bd1, every block of state 2: the hold counter in
+// ticks against the entry of the knob's live value in its hold table) must never end a hold: the hold
+// is counted in steps by improved_amp_voice. build.json's two byte sites make it compare the counter
+// with 0x7fffffff, out of its reach, for every knob value, 127 (AUTO, read when HLD is turned to AUTO
+// in a hold) too: the lea of the table becomes `movea.l #0x7fffffff,%a0`, the indexed compare
+// `tst.l %d1; cmp.l %a0,%d1`. (Up to 0.1.1 a ptr site pointed the lea at a 512-byte table of
+// 0x7fffffff; the flags and the state it leaves are the same. a0 is scratch from there to the loop's
+// end: the record hook's entries may use it, and the loop head loads it again.)
 
 // AMP HLD knob -> hold in steps of the voice's track, x 225,000 (a quarter of the musical clock's
 // units in a step at one pulse a step; tools/dec_table.py). At 120 BPM and 1x a value holds as
@@ -369,7 +380,7 @@ uint32_t improved_amp_voice(int32_t v, volatile int32_t *st, const volatile int8
 }
 
 // ---- FUNC + turn on HOLD: 0, the step grid (0.125 .. 64 steps), AUTO ----
-static int32_t hold_jump(const void *fn, int32_t value, int32_t delta, int32_t min, int32_t max,
+IA_UI static int32_t hold_jump(const void *fn, int32_t value, int32_t delta, int32_t min, int32_t max,
                          int32_t def)
 {
     static const int8_t pos[] = { 0, 19, 25, 33, 37, 42, 49, 53, 61, 66, 78, 90, 102, 114, HLD_AUTO };  // HOLD_STEPS' grid
@@ -389,7 +400,7 @@ static int32_t hold_jump(const void *fn, int32_t value, int32_t delta, int32_t m
 }
 
 // The records are built at boot; the jump goes in once and is checked at the UI's rate.
-void improved_amp_tick(void *ctrl)
+IA_UI void improved_amp_tick(void *ctrl)
 {
     (void)ctrl;
     if (JUMP_INVOKER(ID_A_HLD) != (word_t)hold_jump) {
@@ -399,7 +410,7 @@ void improved_amp_tick(void *ctrl)
 }
 
 // ---- times on the knobs ----
-__attribute__((noinline)) static char *put_uint(char *p, uint32_t v)
+IA_UI __attribute__((noinline)) static char *put_uint(char *p, uint32_t v)
 {
     char t[10];
     int n = 0;
@@ -411,14 +422,14 @@ __attribute__((noinline)) static char *put_uint(char *p, uint32_t v)
     return p;
 }
 
-__attribute__((noinline)) static void put_text(char *p, const char *s)
+IA_UI __attribute__((noinline)) static void put_text(char *p, const char *s)
 {
     while ((*p++ = *s++))
         ;
 }
 
 // ticks of 2 samples: "0", "0.2ms", "9.8ms", "87ms", "1234ms", "2.1s", "15.5s", "100s".
-__attribute__((noinline)) static void put_time(char *p, uint32_t ticks)
+IA_UI __attribute__((noinline)) static void put_time(char *p, uint32_t ticks)
 {
     uint32_t ms10, ms, s10;
 
@@ -456,7 +467,7 @@ __attribute__((noinline)) static void put_time(char *p, uint32_t ticks)
 // A hold in steps from HOLD_STEPS, three digits: "0", "0.005", "0.080", "1.64", "14.9", "21.0",
 // "124". A hold of whole eighths of a step below 100, which the grid's 13 are and no other value
 // is, drops the zeros at its end: "0.125", "0.5", "1", "1.5", "64".
-__attribute__((noinline)) static void put_steps(char *p, uint32_t cq)
+IA_UI __attribute__((noinline)) static void put_steps(char *p, uint32_t cq)
 {
     uint32_t q, d;
     char *end;
@@ -499,7 +510,7 @@ __attribute__((noinline)) static void put_steps(char *p, uint32_t cq)
 }
 
 // log2(y) x 65536, y > 0.
-__attribute__((noinline)) static int32_t log2_q16(uint32_t y)
+IA_UI __attribute__((noinline)) static int32_t log2_q16(uint32_t y)
 {
     int32_t n = 31, bit, f = 0;
     uint32_t m;
@@ -523,7 +534,7 @@ __attribute__((noinline)) static int32_t log2_q16(uint32_t y)
 // The OS's own (0x4011e85c) runs on the MAC in fractional mode, which only the audio
 // interrupt sets, so it reads wrong from the UI. Small steps: -ln p = x (1 + x / 2), x =
 // step / 2^31 (the next term is under 0.01 %); larger: log2, 1/65536 resolution.
-__attribute__((noinline)) static uint32_t t60_ticks(uint32_t c)
+IA_UI __attribute__((noinline)) static uint32_t t60_ticks(uint32_t c)
 {
     uint32_t s = rate_step(c), d;
     int32_t q;
@@ -541,7 +552,7 @@ __attribute__((noinline)) static uint32_t t60_ticks(uint32_t c)
 }
 
 // A linear segment's ticks over levels, as the OS counts them (0x4011e7d6).
-__attribute__((noinline)) static uint32_t linear_ticks(uint32_t levels, uint32_t c)
+IA_UI __attribute__((noinline)) static uint32_t linear_ticks(uint32_t levels, uint32_t c)
 {
     uint32_t s = rate_step(c);
     return s ? (levels << 23) / s + 1 : 0x7fffffffu;
@@ -549,12 +560,12 @@ __attribute__((noinline)) static uint32_t linear_ticks(uint32_t levels, uint32_t
 
 // ticks x f / 1024, rounded, without overflow (ticks up to 0x7fffffff). Rounded, not
 // floored, so short attacks (a few dozen ticks) read their nearest tenth.
-static uint32_t scaled(uint32_t ticks, uint32_t f)
+IA_UI static uint32_t scaled(uint32_t ticks, uint32_t f)
 {
     return (ticks >> 10) * f + (((ticks & 1023) * f + 512) >> 10);
 }
 
-static int improved_amp_text(struct core_text *t)
+IA_UI static int improved_amp_text(struct core_text *t)
 {
     int v = t->value >> 8;
 

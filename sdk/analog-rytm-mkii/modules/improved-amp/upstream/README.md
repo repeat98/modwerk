@@ -16,7 +16,7 @@ envelope curves, knob texts and OVR curve are new code.
 | hook `ev_amp_record`, order 50 | | `improved_amp_write` | the amp record write in `amp_env_commands` (0x40109c24), every voice every block |
 | 0x400d3302 | 6 | jsr `improved_amp_amp_graph` | the AMP page's envelope picture (HLD 127 drawn as AUTO, 0 as no hold) |
 | 0x4010d2aa | 4 | ptr `improved_amp_flt_atk` | FILTER ATK rate table |
-| 0x40109bc4 | 4 | ptr `improved_amp_hold` | AMP HLD compare |
+| 0x40109bc2, 0x40109bce | 6, 4 | bytes | AMP HLD compare: the counter against 0x7fffffff, so stock never ends a hold |
 | 0x40109bf0 | 4 | ptr `improved_amp_amp_dec` | AMP DEC record |
 | 0x4010d344, 0x4010d3b4, 0x4010d3dc | 4 each | ptr `improved_amp_flt_dec` | FILTER DEC and REL records |
 | 0x40109b14 | 10 | jsr `improved_amp_ovr` | the reader of AMP OVR's live value, once a voice a block |

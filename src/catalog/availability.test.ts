@@ -37,9 +37,10 @@ describe('temporary module availability', () => {
     expect(moduleAvailabilityError(restored.moduleIds)).not.toContain('Euclid')
     expect(moduleAvailabilityError(restored.moduleIds)).toContain('Remove these modules')
   })
-  it('offers and builds only Air Chorus for beta access while retaining other pauses', () => {
+  it('offers beta modules to beta access while retaining other pauses', () => {
     expect(availableModules(true).map(module => module.id)).toEqual([...MODULES].filter(module => !PAUSED_MODULE_IDS.includes(module.id) || BETA_MODULE_IDS.includes(module.id)).map(module => module.id))
-    expect(BETA_MODULE_IDS).toEqual(['airwindows-chorus'])
+    expect(BETA_MODULE_IDS).toEqual([])
+    expect(isModuleAvailable('airwindows-chorus')).toBe(true)
     for (const id of BETA_MODULE_IDS) expect(isModuleAvailable(id, true)).toBe(true)
     for (const id of paused) {
       expect(isModuleAvailable(id)).toBe(false)
@@ -59,7 +60,7 @@ describe('temporary module availability', () => {
     expect(() => moduleAvailabilityError(['unknown'])).toThrow('Unknown module')
   })
   it('no longer offers or pauses the modules removed from the library', () => {
-    expect(REMOVED_MODULE_IDS).toEqual(['spectrum', 'modulation', 'character', 'midi-scenes'])
+    expect(REMOVED_MODULE_IDS).toEqual(['spectrum', 'modulation', 'character'])
     for (const id of REMOVED_MODULE_IDS) {
       expect(MODULES.some(module => module.id === id)).toBe(false)
       expect(PAUSED_MODULE_IDS).not.toContain(id)

@@ -1,7 +1,7 @@
 import { BackLink } from '../components/BackLink'
 import { ForumAvatar } from './ForumIdentity'
 import { NewsPreferences } from './NewsPreferences'
-import { NotificationPreferences, Unsubscribe } from './NotificationPreferences'
+import { DiagnosticsMailUnsubscribe, NotificationPreferences, Unsubscribe } from './NotificationPreferences'
 import { AccountRemovalRequest } from './AccountRequests'
 import { useEffect, useState } from 'react'
 import { PrivateIssueDetail } from './PrivateIssueDetail'
@@ -9,7 +9,7 @@ import { AccountExport } from './AccountExport'
 import { COMMUNITY_RULES_VERSION } from '../legal/policy'
 import { AccountInbox } from './AccountInbox'
 import { AccountSettings } from './AccountSettings'
-import { SocialReturn } from './SocialReturn'
+import { SocialAppReturn, SocialReturn } from './SocialReturn'
 import { startSocial, type SocialProvider } from './social-login'
 import { SocialButton } from './SocialButton'
 import { accountHref, rememberNext, safeNext, takeNext, welcomeHref } from './member-access'
@@ -53,7 +53,7 @@ function AccountContent({route}:{route:string}) {
   }
   async function social(provider:SocialProvider) {
     setBusy(true);setError('')
-    try{await startSocial(provider,params.get('reauth')==='1'?'account':next)}catch(error){setError(error instanceof Error?error.message:'Unable to start sign-in.')}finally{setBusy(false)}
+    try{if(await startSocial(provider,params.get('reauth')==='1'?'account':next)==='browser')setMessage('Finish signing in in your browser. Modwerk comes back here by itself when you are done.')}catch(error){setError(error instanceof Error?error.message:'Unable to start sign-in.')}finally{setBusy(false)}
   }
   async function endSessions(all:boolean){setBusy(true);setError('');try{if(all){await api('/auth/sessions',{method:'DELETE'});setDevices(await api<DeviceSession[]>('/auth/sessions'));setMessage('Other sessions signed out.')}else{await post('/auth/logout',{});await refresh();window.location.assign('#account/login')}}catch(error){setError(error instanceof Error?error.message:'Unable to sign out.')}finally{setBusy(false)}}
   const titles:Record<string,string>={login:'Welcome back',register:'Join the community',resend:'Verify your email',forgot:'Forgot your password?',verify:'Confirm your email',reset:'Choose a new password'}
@@ -108,4 +108,4 @@ function AccountContent({route}:{route:string}) {
   </div>
 }
 
-export function AccountPage({route}:{route:string}) { return route==='account/sso'||route.startsWith('account/sso/')?<SocialReturn code={route.split('/')[2]??''}/>:route.startsWith('account/unsubscribe/')?<Unsubscribe token={route.split('/')[2]??''}/>:<AccountContent route={route}/> }
+export function AccountPage({route}:{route:string}) { return route==='account/sso-app'||route.startsWith('account/sso-app/')?<SocialAppReturn code={route.split('/')[2]??''}/>:route==='account/sso'||route.startsWith('account/sso/')?<SocialReturn code={route.split('/')[2]??''}/>:route.startsWith('account/unsubscribe/')?<Unsubscribe token={route.split('/')[2]??''}/>:route.startsWith('account/diagnostics-mail-off/')?<DiagnosticsMailUnsubscribe token={route.split('/')[2]??''}/>:<AccountContent route={route}/> }

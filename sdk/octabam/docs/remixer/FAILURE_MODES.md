@@ -1167,3 +1167,46 @@ The right channels hold the tone in runs 124–380 frames off phase. Each
 USB frame carries a track's L and R in adjacent subslots of one packet, so
 a device-side packet swap would move both; a right-only reorder points at
 the host's assembly of the stream (inferred, not measured).
+
+## The Part validator caps stock fields and runs on every bank read
+
+Seen under `ot_emu` on a personal remix's builds (8 and 11 Nov 2026), not on a
+unit.
+
+**Symptom.** A value a remix gives a stock Part field comes back as stock's
+after every LOAD PROJECT or bank change, without a word, while the kit keeps
+it: the Part and its kit disagree (a track stopped replaying the buffer its
+kit named). At power-up the whole current bank is lost (empty patterns,
+default Parts, even right after SAVE PROJECT), or the screen says BANK
+UNAVAILABLE for that bank.
+
+**Cause.** The Part validator (`0x40002318`) checks more than effect slots.
+In the recorder setup it caps LOOP (Part `+0x607 + 12t`) at 1 (`moveq #1` at
+`0x40002cd2`) and SRC3 (`+0x606 + 12t`) at 10 (`moveq #10` at `0x40002cb2`);
+a remix that gave LOOP four overdub values (2..5) and SRC3 two bus sources
+(11, 12) was hit by both. It holds every track's XVOL (Part `+0x125 + 0x18t`,
+AMP page 1 slot 5) at 127, stock's only value (`beq.s` at `0x40002d24`); a
+remix that kept a per-track width there lost it to 127 on every load. The bank
+file read (`0x4008cea0`) calls the validator and ignores its result. The
+battery restore at power-up (`0x40025770`) takes the same correction as a
+failure and drops the bank ("The boot validates the bank" in
+[OCTATRACK_HARDWARE_TRAPS.md](../../../../docs/OCTATRACK_HARDWARE_TRAPS.md)).
+With an XVOL other than 127 it refused that bank: BANK UNAVAILABLE (the bank's
+flag at `0x4017d516 + bank * 0x9b340`, read at `0x4007b2fc`) until a power-up
+on another bank read it back from the card.
+
+**Fix.** The restore runs about 3 s before any module is back, so a module
+cannot raise a cap in time. The base raises it, as it does for the FX id
+clamps (`VALIDATOR_CLAMPS` in `sdk/machines/octatrack/elekloader/build_core.py`),
+or the module keeps stock fields in their stock range. On the remix, whose
+image patches from boot, raising the two caps (`7201` -> `7205`, `720a` ->
+`720c`) and turning the XVOL `beq.s` into `bra.s` (`6708` -> `6008`) fixed it
+under `ot_emu`: the project reloads with no byte changed, and a power cycle
+with `--cs1-in --no-post` restores the bank, the pattern validator
+(`0x4009a670`) leaving locks of that slot alone. Pattern bytes need the same
+check against `0x4009a670`.
+
+**Finding the refusing check.** Boot `ot_emu` with that run's CS1
+(`--cs1-in FILE --no-post`) and `--watch-pc` on every `addql #1,%d2` in
+`0x40002318..0x40002df0`. Each fix counts there, and `hits` names the PC and
+the Part (`a0`).

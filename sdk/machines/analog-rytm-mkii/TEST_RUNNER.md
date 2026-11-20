@@ -16,7 +16,7 @@ this file is the reference.
 - rytm-emu from `npm run upstream:tools`, built once with `cargo build --release` in its checkout: `dtboot` is the
   binary (`--emu` or `RYTM_EMU`).
 - A test image: a development base (`npm run machine:base -- analog-rytm-mkii --stock STOCK.syx --dev --out DIR`,
-  the send-bus one unless the set has no send effect), linked with your module and those it must be tested beside by
+  the variant the site would pick for the set: send-bus with a send effect, voices with a voice machine, else plain), linked with your module and those it must be tested beside by
   `node scripts/link-image.mjs --stock STOCK.syx --version XX01 --out IMAGE.syx --elemod DEV.elemod --module
   analog-rytm-mkii:<id> --lock-in RUNNING.store-lock.json --lock-out XX01.store-lock.json`. A new four-character label
   for every build; `ramSpare` 68 B or more. Images, lockfiles, reports and recordings stay outside Git.
@@ -84,6 +84,7 @@ note BD                  # a MIDI note for a track: velocity 100, held 100 ms
 note SD 64 250           # velocity 1 to 127, held 10 to 10000 ms
 cc 79 42                 # a controller (0 to 119) on the auto channel: the active track's
 nrpn 1:20 64 0           # an NRPN on the auto channel as a controller sends it: CC 99, 98, 6 (and 38)
+nrpn 1:20 64 ch2         # cc and nrpn take a last chN: that channel instead (a track that is not active)
 midi fb begin            # what the Rytm sends on MIDI from here (a link answer marks the place)
 midi fb end              # to here: its non-SysEx, non-real-time messages, over USB on both targets
 emu key GLOBAL           # key, cc, nrpn, note or wait for the emulator alone; the unit keeps the time
@@ -101,6 +102,7 @@ expect a.onset == b.onset within 3   # == and != take a tolerance
 expect hit == ref                    # every measure against the recorded ones
 expect fb has nrpn 1:20 100          # a parameter the Rytm sent: nrpn MSB:LSB or cc N, with or without the
 expect fb lacks cc 74                # value (an NRPN's data entry, 0 to 127)
+expect fb has nrpn 5:0 1 ch2         # a last chN: only on that channel (rytm-emu sends on the auto channel)
 expect fb.count == 0                 # how many parameter messages: == != < >
 ```
 

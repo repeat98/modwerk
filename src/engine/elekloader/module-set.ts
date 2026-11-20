@@ -28,6 +28,9 @@ export interface RuntimePackage {
   entries?: number
   /** Exact IDENTIFY digest when authored code depends on this base's addresses. */
   requiredBase?: string
+  /** Loader capability bits (MWCP) the package needs beyond what its records imply, such as RuntimeFeature.uiRoots for a
+   * module with a window of its own: only a base that refuses to retire it while the window is open may take it. */
+  requiresCapabilities?: number
 }
 export interface MachineVariant extends RuntimePackage {
   layout: number; current: boolean; members: { id: string; version: string }[]
@@ -121,7 +124,7 @@ function requirements(entry: RuntimePackage, group = false) {
   const requires = entry.requires ?? 0, claims = entry.claims ?? 0, entries = entry.entries ?? 0
   // An engine (ABI 10 hook entries) runs only for a controller its base trusts, so only a base-bound package has one.
   if (![6, 7, 8, 9, 10].includes(abi) || !bounded(sites, 128) || !bounded(copies, 128) || !bounded(fills, 64) ||
-      !bounded(entry.features ?? 0, 65535) || (abi < 8 && fills) || (abi < 7 && copies) ||
+      !bounded(entry.features ?? 0, 65535) || !bounded(entry.requiresCapabilities ?? 0, 65535) || (abi < 8 && fills) || (abi < 7 && copies) ||
       !bounded(requires, 65535) || !bounded(claims, DSP_CLAIMS) || (abi < 9 && (requires || claims)) || (requires & ~BASE_DSP_FEATURES) ||
       !bounded(entries, HOOK_ENTRIES) || (entries && (abi < 10 || entry.requiredBase === undefined)) ||
       (group && abi !== 8) || (entry.requiredBase !== undefined && (typeof entry.requiredBase !== 'string' || !/^[0-9a-f]{64}$/.test(entry.requiredBase))) ||
@@ -130,7 +133,7 @@ function requirements(entry: RuntimePackage, group = false) {
     throw invalidPackage()
   // Required features follow the actual record types even if a manifest accidentally omits a bit.
   const features = (entry.features ?? 0) | (sites ? RuntimeFeature.sites : 0) | (copies ? RuntimeFeature.stockCopies : 0) |
-    (fills ? RuntimeFeature.fills : 0) | (group ? RuntimeFeature.machineGroups : 0)
+    (fills ? RuntimeFeature.fills : 0) | (group ? RuntimeFeature.machineGroups : 0) | (entry.requiresCapabilities ?? 0)
   return { abi, sites, copies, fills, features, requires, claims, entries }
 }
 /** Two ABI 9 claims meet as the loader says (loader.c claims_meet): the same core (an ABI 10 claim on both cores, core 2,
@@ -155,7 +158,7 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
   // Hooks 0-3 are the core handlers; an ABI 8 package that subscribes to the base's site events (feature 128) adds one
   // word per event of sdk/machines/octatrack/events.json after them: its order in the top byte, its handler below.
   const subscriber = abi >= 8 && (want.features & RuntimeFeature.siteEvents) !== 0
-  if (flags & ~(abi >= 8 ? 7 : 3) || image + bss > 131072 || relocations > 2048 || hooks > (subscriber ? 4 + SITE_EVENTS : 4) ||
+  if (flags & ~(abi >= 8 ? 7 : 3) || image > 131072 || image + bss > 294912 || relocations > 2048 || hooks > (subscriber ? 4 + SITE_EVENTS : 4) ||
       view.getUint32(32) > 4096 || view.getUint16(36) > 256 || header + 4 * hooks + image + 4 * relocations > data.length) fail()
   if (variant) {
     const mask = variant.members.reduce((value, member) => value | MACHINE_BITS[member.id], 0), start = header + 4 * hooks
@@ -188,7 +191,7 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
   const sites: [number, number][] = []
   for (let i = 0; i < want.sites; i++) {
     if (end + 8 > data.length) fail()
-    const address = view.getUint32(end), bytes = abi >= 7 ? view.getUint8(end + 4) : view.getUint16(end + 4)
+    const address = view.getUint32(end), bytes = abi >= 7 ? view.getUint8(end + 4) & 0x7f : view.getUint16(end + 4) // bit 7: the site rests with its module (loader.h RUNTIME_SITE_RESTS)
     const keep = abi >= 7 ? view.getUint8(end + 5) : 0, checked = abi >= 7 ? view.getUint8(end + 6) : bytes
     const local = abi >= 7 ? view.getUint8(end + 7) : view.getUint16(end + 6), held = abi >= 7 ? 32 : bytes
     const length = 8 + held + bytes + 2 * local
@@ -396,8 +399,10 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
         checkPackage(entry, data, step.id, step.group ? entry as MachineVariant : undefined)
         packages.set(entry, data)
       })))
+      // A removal, or a machine package replacing the one on the unit (it has the previous one as its undo), changes what a
+      // track may be using; a new module cannot be in use yet.
       return { name: target.name, changes: steps.map(step => ({ module: step.name, data: step.add ? packages.get(step.add)! : removalPackage(step.id),
-        undo: step.undo ? packages.get(step.undo)! : step.add ? removalPackage(step.id) : undefined })) }
+        undo: step.undo ? packages.get(step.undo)! : step.add ? removalPackage(step.id) : undefined, ...(!step.add || step.undo ? { replaces: true } : {}) })) }
     },
   }
 }

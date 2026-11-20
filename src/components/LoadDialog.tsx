@@ -23,7 +23,7 @@ import type { PrepareUpdate } from './OctatrackUpdate'
 import './link-hero.css'
 import './octatrack-link.css'
 
-const list = (ids: string[]) => new Intl.ListFormat('en', { type: 'conjunction' }).format(ids.map(id => MODULES.find(item => item.id === id)?.name ?? id))
+const list = (ids: string[], type: 'conjunction' | 'disjunction' = 'conjunction') => new Intl.ListFormat('en', { type }).format(ids.map(id => MODULES.find(item => item.id === id)?.name ?? id))
 
 /**
  * The one way to sync a module set to the Octatrack: review what changes, then sync (the base stops playback itself)
@@ -31,10 +31,12 @@ const list = (ids: string[]) => new Intl.ListFormat('en', { type: 'conjunction' 
  * Runtime package changes are reviewed even when the visible member IDs stay the same. A base upgrade or
  * unavailable package stops preparation here; the installer preserves this set. A failed sync offers `onReport`.
  */
-export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdate, onClose, onInstallBase, onEdit, onReport }: {
+export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inventory, prepareUpdate, onClose, onInstallBase, onEdit, onReport }: {
   link: OctatrackLink; set: InventoryTarget; inventory?: Inventory; prepareUpdate?: PrepareUpdate; onClose: () => void
   /** Opened because the base changed and the unit started without these modules (PutBackModules). */
   putBack?: boolean
+  /** With `putBack`: the modules that were switched off on the unit before the base changed. They come back on. */
+  comesBackOn?: readonly string[]
   /** Opens the base installer: with a layout when the set needs the base in another USB Audio layout. */
   onInstallBase: (layout?: BaseLayout) => void; onEdit: () => void; onReport: () => void
 }) {
@@ -122,6 +124,13 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
       rememberSuccessfulSync({ ...set, moduleIds: [...set.moduleIds], base: kept.identity.base, active: kept.active, at: new Date().toISOString() })
   }
   const closable = step === 'review' || step === 'done'
+  // The modules this sync takes off a track's reach (removed or replaced by their update): the base refuses the whole sync
+  // while a track uses one (refusal 7), the most common failed sync in November 2026, so it is said before, not after.
+  const leaving = [...changes?.remove ?? [], ...updates]
+  const failed = step === 'done' && !!(error || notice?.tone === 'error')
+  /** After a failed sync, back to the review with the same set: the link has undone what it could and said what is left
+   * (octatrack-link.ts failed), and the review reads the unit again. */
+  function reviewAgain() { setStarted(false); setError(''); keeping.current = false; logged.current = false }
 
   return <dialog ref={dialog} className="base-install-dialog load-dialog" aria-labelledby="load-title" onCancel={event => { event.preventDefault(); if (closable) onClose() }}>
     {closable && <button type="button" className="icon-button base-install-close" aria-label="Close" onClick={onClose}><Icon name="close" size={18} /></button>}
@@ -132,6 +141,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
         : !review?.needsSync && !problem ? <p className="base-install-intro">Your Octatrack already has exactly these modules.</p>
         : <>
           {putBack && <p className="base-install-intro">The base on your Octatrack changed, so it started without your modules. Sync them to put them back.</p>}
+          {putBack && comesBackOn.length > 0 && <p className="base-install-intro">{list([...comesBackOn])} {comesBackOn.length === 1 ? 'was' : 'were'} switched off on your Octatrack and {comesBackOn.length === 1 ? 'comes' : 'come'} back on. To switch {comesBackOn.length === 1 ? 'it' : 'them'} off again, use <strong>PROJECT › MODWERK › MODULES</strong> after the sync.</p>}
           <p className="load-summary">Adds {changes.add.length} · Removes {changes.remove.length}{updates.length > 0 && <> · Updates {updates.length}</>}</p>
           <p className="base-install-intro">The modules stay on your Octatrack, also after a restart. Your project isn’t changed.</p>
           <ul className="load-changes">{([['load', 'Base', audio !== undefined && !audioOn ? [USB_AUDIO_MODULE] : []], ['load', 'Adds', changes.add], ['load', 'Updates', updates], ['leaving', 'Removes', changes.remove]] as const).flatMap(([state, label, ids]) => ids.map(id => {
@@ -142,6 +152,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
               <StateChip state={state}>{label}</StateChip>
             </li>
           }))}</ul>
+          {leaving.length > 0 && !paused.length && <p className="link-hint load-in-use" role="note">Before you sync: a track can’t keep a module that leaves or is updated. If a track uses {list(leaving, 'disjunction')} as its effect or machine, pick another one on that track first (check the bank’s other Parts too).</p>}
           {!!stays.length && <details className="load-unchanged"><summary>Already on your Octatrack · {stays.length}</summary><ul>{stays.map(id => <li key={id}>{MODULES.find(module => module.id === id)?.name ?? id}</li>)}</ul></details>}
           {!!off.length && <details className="load-unchanged"><summary>Switched off on your Octatrack · {off.length}</summary><p>These stay off. Switch one on in PROJECT &gt; MODWERK &gt; MODULES on the Octatrack.</p><ul>{off.map(id => <li key={id}>{MODULES.find(module => module.id === id)?.name ?? id}</li>)}</ul></details>}
           {paused.length > 0 && <div className="load-blocked" role="note">
@@ -172,7 +183,8 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
             : <button type="button" className="button button-primary" disabled={!connected || !review?.needsSync || !!problem || paused.length > 0 || !!tooMany || !prepareUpdate} onClick={() => void load()}><Icon name="download" size={16} />Sync to Octatrack</button>}</>}
         {step === 'loading' && !preparing && progress < 1 && <button type="button" className="button button-quiet" onClick={() => link.cancel()}>Cancel</button>}
         {status === 'trial' && notice?.tone === 'error' && <button type="button" className="button button-primary" onClick={() => void keep()}>Try again</button>}
-        {step === 'done' && (error || notice?.tone === 'error') && <button type="button" className="button button-quiet" aria-haspopup="dialog" onClick={onReport}><Icon name="message" size={16} />Report a problem</button>}
+        {failed && <button type="button" className="button button-quiet" aria-haspopup="dialog" onClick={onReport}><Icon name="message" size={16} />Report a problem</button>}
+        {failed && connected && <button type="button" className="button button-quiet" onClick={reviewAgain}>Try again</button>}
         {step === 'done' && <button type="button" className="button button-primary" onClick={onClose}>Done</button>}
       </div>
     </footer>

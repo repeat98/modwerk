@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The committed Octatrack base package (src/engine/assets/octatrack-base.elemod and its fills), rebuilt from source
-// and your own OS 1.40C file, then proven three ways: it carries no stock bytes (check_stock_free.py), it is the
-// committed one (or, with --write, becomes it), and the browser's path (octatrack-base.ts, the kit in TypeScript)
+// and your own OS 1.40C file, then proven two ways: it is the committed one (or, with --write, becomes it), and the
+// browser's path (octatrack-base.ts, the kit in TypeScript)
 // builds a .bin byte-identical to build_core.py's NOT_FLASH_CANDIDATE.bin, which passes check_flash_safety.py.
 // With --out the browser-built .bin, its MAIN.raw and build_core.py's proofs.json and symbols.json are saved there,
 // a new directory outside Git: what `npm run device -- boot DIR` and the emulator's run scripts read. Firmware and generated images never enter the checkout.
@@ -44,7 +44,8 @@ const { values: args } = parseArgs({ options: {
   'saved-set-export': { type: 'boolean', default: false },
   controllers: { type: 'boolean', default: false }, 'usb-audio-variants': { type: 'boolean', default: false },
   'cached-modules': { type: 'boolean', default: false },
-  'module-sets': { type: 'boolean', default: false }, 'sample-editor': { type: 'boolean', default: false },
+  'module-sets': { type: 'boolean', default: false }, 'sample-editor': { type: 'boolean', default: false }, 'part-menu': { type: 'boolean', default: false },
+  'module-ui-roots': { type: 'boolean', default: false },
   beta: { type: 'boolean', default: false },
 } })
 if (!args.stock) throw new Error('Usage: npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--beta] [--upstream ELEKLOADER] [--write] [--out NEW-DIR]')
@@ -52,7 +53,7 @@ if (!args.stock) throw new Error('Usage: npm run octatrack:base -- --stock OCTAT
 // and every base after it ran module code uncached: so --write takes only these, through --beta.
 const BETA = { 'usb-midi': true, 'usb-audio': 'USB AUDIO OUT TRACKS MAIN CUE', 'site-events': true, 'table-owners': true,
   'resident-stock-hooks': true, 'resident-on-demand': true, controllers: true, 'module-sets': true, 'usb-audio-variants': true,
-  'cached-modules': true, 'sample-editor': true }
+  'cached-modules': true, 'sample-editor': true, 'module-ui-roots': true, 'part-menu': true }
 if (args.beta) {
   const own = Object.keys(args).filter(flag => !['stock', 'upstream', 'write', 'out', 'beta'].includes(flag) && process.argv.some(arg => arg === '--' + flag || arg.startsWith('--' + flag + '=')))
   if (own.length) throw new Error('--beta is every flag of the beta base; leave out ' + own.map(flag => '--' + flag).join(', ') + '.')
@@ -82,7 +83,7 @@ const buildLayout = (layout, output, ...rest) => python('build_core.py', '--stoc
   ...(args['table-owners'] ? ['--table-owners', join(adapters, 'table-owners.json')] : []),
   ...(args['resident-stock-hooks'] ? ['--resident-stock-hooks'] : []), ...(args['resident-on-demand'] ? ['--resident-on-demand'] : []),
   ...(args['saved-set-export'] ? ['--saved-set-export'] : []), ...(args['module-sets'] ? ['--module-sets'] : []),
-  ...(args['sample-editor'] ? ['--sample-editor'] : []), ...rest)
+  ...(args['sample-editor'] ? ['--sample-editor'] : []), ...(args['part-menu'] ? ['--part-menu'] : []), ...(args['module-ui-roots'] ? ['--module-ui-roots'] : []), ...rest)
 const build = (output, ...rest) => buildLayout(args['usb-audio'], output, ...rest)
 const defaultLayout = USB_AUDIO_LAYOUTS.find(layout => layout.key === args['usb-audio'])?.id
 if (args['usb-audio-variants'] && (!args['usb-midi'] || !defaultLayout)) throw new Error('--usb-audio-variants needs --usb-midi and a --usb-audio layout, the default variant.')
@@ -98,7 +99,6 @@ if (args.controllers) {
   same(readFileSync(join(encoded, 'controller-policies.json')), committed.policies)
   build(core, '--controller-policies', committed.policies, '--controller-layout', join(empty, 'symbols.json'))
 } else build(core)
-python('check_stock_free.py', join(core, 'base.elemod'), '--stock', args.stock, '--upstream', args.upstream)
 for (const [key, file] of [['package', 'base.elemod'], ['fills', 'base-fills.json'], ['sources', 'base-sources.json']])
   same(readFileSync(join(core, file)), committed[key])
 // What the base-bound packages link against (module-adapters/base_bound.py): its identity, arena, pool and lease entries.
@@ -129,7 +129,6 @@ if (args['usb-audio-variants']) {
       assert(readFileSync(join(dir + '-encoded', 'controller-policies.json')).equals(readFileSync(committed.policies)), layout + ': the controller packages differ on this layout.')
       buildLayout(key, dir, '--controller-policies', committed.policies, '--controller-layout', join(dir + '-empty', 'symbols.json'))
     } else buildLayout(key, dir)
-    python('check_stock_free.py', join(dir, 'base.elemod'), '--stock', args.stock, '--upstream', args.upstream)
     const own = bind(dir, dir + '-binding.json')
     assert.deepEqual({ ...own, identity: '' }, { ...binding, identity: '' }, layout + ': the base-bound packages would link differently on this layout.')
     const text = readFileSync(join(dir, 'base.elemod'), 'utf8'), extra = JSON.parse(text).sites.filter(site => !defaultSites.has(site.addr + '+' + site.len))

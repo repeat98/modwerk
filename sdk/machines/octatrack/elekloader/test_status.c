@@ -48,18 +48,37 @@ void modwerk_selftest_abort(void) { ++selftest_aborts; }
 void modwerk_selftest_refresh(void) {}
 uint32_t modwerk_runtime_free(uint32_t *largest) { if (largest) *largest = 0; return 0; }
 /* dsp.c's MISSING list: `listed` modules at handles 20 and up; modset.c's restore. */
-static unsigned listed;
+static unsigned listed, listed_machines;
 volatile uint32_t modwerk_runtime_ticks;
+/* machine_registry.c: the map's refresh, counted; map entry 3 is named in bank B's working Part 3 on T8. */
+static unsigned machine_refreshes;
+void modwerk_machine_map_refresh(void) { ++machine_refreshes; }
+int modwerk_machine_where(unsigned k, unsigned *bank, unsigned *part, unsigned *track)
+{
+    if (k != 3u) return 0;
+    *bank = 1, *part = 2, *track = 7;
+    return 1;
+}
+/* ... and module 0x10 (Euclid in the MODULES rows below) is a machine the map names there too. */
+int modwerk_machine_where_module(uint32_t module, unsigned *bank, unsigned *part, unsigned *track)
+{ return module == 0x10u ? modwerk_machine_where(3, bank, part, track) : 0; }
 unsigned modwerk_dsp_missing_list(uint8_t *out, unsigned first, unsigned most)
 {
     (void)first, (void)most;
     for (unsigned i = 0; i < listed; ++i) {
         uint8_t *e = out + 4u + 24u * i;
         for (unsigned c = 0; c < 24u; ++c) e[c] = 0;
-        e[0] = (uint8_t)(20u + i), e[8] = 'm', e[9] = 'o', e[10] = 'd', e[11] = (uint8_t)('a' + i);
+        e[0] = (uint8_t)(20u + i), e[6] = 1, e[7] = (uint8_t)i; /* module 0x100 + i */
+        e[8] = 'm', e[9] = 'o', e[10] = 'd', e[11] = (uint8_t)('a' + i);
     }
-    out[0] = 'M', out[1] = 'W', out[2] = 'M', out[3] = (uint8_t)listed;
-    return 4u + 24u * listed;
+    for (unsigned i = 0; i < listed_machines; ++i) { /* then the absent machines: map entry 3 on, module 0x200 on */
+        uint8_t *e = out + 4u + 24u * (listed + i);
+        for (unsigned c = 0; c < 24u; ++c) e[c] = 0;
+        e[0] = 0xffu, e[1] = (uint8_t)(0x80u | (3u + i)), e[6] = 2, e[7] = (uint8_t)i;
+        e[8] = 'P', e[9] = 'O', e[10] = 'L', e[11] = 'Y', e[12] = (uint8_t)('8' + i);
+    }
+    out[0] = 'M', out[1] = 'W', out[2] = 'M', out[3] = (uint8_t)(listed + listed_machines);
+    return 4u + 24u * (listed + listed_machines);
 }
 /* fxmap.c's lookup: handle 20 in bank C's saved Part 2 on T5, the others in bank A's working Part 1 on T2. */
 int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *track)
@@ -69,6 +88,25 @@ int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *t
     return id < 20u + listed ? 1 : 0;
 }
 void modwerk_fxpage_missing(void) {}
+/* modset.c's shelf: `off_module` is switched off. fxmap.c's map: handle 20 + i names the listed module 0x100 + i, and
+ * `map_module` names more; the project uses each. */
+static uint32_t off_module, off_module2, map_module[MODWERK_FX_IDS];
+int modwerk_modset_is_off(uint32_t module) { return module && (module == off_module || module == off_module2); }
+static int fx_loading; /* fxmap.c: a project load runs */
+int modwerk_fxmap_loading(void) { return fx_loading; }
+int modwerk_fxmap_describe(unsigned id, uint32_t *module, uint16_t *layout, char *name)
+{
+    if (id >= MODWERK_FX_IDS || (!map_module[id] && (id < 20u || id >= 20u + listed))) return 0;
+    *module = map_module[id] ? map_module[id] : 0x100u + (id - 20u), *layout = 0;
+    for (unsigned i = 0; i < 16u; ++i) name[i] = 0;
+    return 1;
+}
+fx_set modwerk_fxmap_used(void)
+{
+    fx_set used = {{0}};
+    for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) if (map_module[k] || (k >= 20u && k < 20u + listed)) used = fx_with(used, k);
+    return used;
+}
 static int restored;
 int modwerk_modset_restored(void) { return restored; }
 volatile uint32_t modwerk_modset_result;
@@ -78,10 +116,18 @@ volatile uint32_t dl_selection_completed, modwerk_boot_accepted;
 const fx_set modwerk_fx_modules = {{1u << 27 | 1u << 29}};
 volatile uint32_t mw_cpu_hot = 850u, mw_cpu_refusals, mw_cpu_refusal_tracks; /* machine_registry.c's */
 void modwerk_fxmap_name(unsigned id, char *out) { for (unsigned i = 0; i < 16u; ++i) out[i] = 0; out[0] = 'F', out[1] = 'X', out[2] = (char)('0' + id % 10u); }
-int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out) { (void)slot, (void)out; return 0; } /* draws only */
+static int budget_on; /* the pick box's DSP rows, so its CPU row draws */
+int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
+{
+    (void)slot;
+    if (!budget_on) return 0;
+    memset(out, 0, sizeof *out), out->allowance = out->arena = 1000u, strcpy(out->name, "Euclid");
+    return 1;
+}
+volatile uint32_t mw_frame_busy, mw_frame_count; /* machine_registry.c's: the frame guard's sums */
 uint32_t modwerk_dsp_booked(unsigned core) { return core; } /* draws only */
 unsigned modwerk_dsp_reads_buffer(unsigned id) { return id == 27u; } /* E-Verb reads one; Tape Echo (15) none */
-/* dsp.c's MODULE LOAD list: `installed` modules. */
+/* dsp.c's MODULE COST list: `installed` modules. */
 static unsigned installed;
 unsigned modwerk_dsp_module_loads(struct modwerk_module_load *out)
 {
@@ -187,6 +233,47 @@ int main(void)
     CHECK(modwerk_status_key(NO, 1) && open == CLOSED && modwerk_status_key(NO, 0));
     missing_check(); missing_check(); CHECK(open == CLOSED);           /* so NO closes it for good (12 October 2026) */
     listed = 0; missing_check(); CHECK(open == CLOSED);                /* all installed: it closes */
+    /* A module switched off on MODULES is named by the project, not gone (owner, 16 November 2026). One the player just
+     * switched off there opens nothing by itself; once a project loads, the page opens for it, says OFF beside it and
+     * YES switches it on. */
+    off_module = 0x100u, listed = 1; quiet_add(0x100u); missing_check(); missing_check(); CHECK(open == CLOSED && quiet_count == 1);
+    fx_loading = 1; missing_check(); fx_loading = 0; missing_check(); CHECK(open == MISSING && !quiet_count);
+    CHECK(strstr(shows(), "MODA (OFF)|") && strstr(said, "SWITCH ON|") && strstr(said, "NO|") && !strstr(said, "NOT INSTALLED"));
+    asked_id = 0; CHECK(modwerk_status_key(YES, 1) && modwerk_status_key(YES, 0) && open == MISSING && on_count == 1);
+    missing_on_tick(); CHECK(asked_id == 0x100u && asked_on == 1 && on_waiting);
+    CHECK(strstr(shows(), "SWITCHING ON...|"));
+    asked_id = 0; CHECK(modwerk_status_key(YES, 1) && modwerk_status_key(YES, 0) && !asked_id); /* one run at a time */
+    modwerk_modset_switch_result = MODSET_SWITCHED, off_module = 0; missing_on_tick(); CHECK(!on_count);
+    listed = 0; missing_check(); CHECK(open == CLOSED);                /* it runs: nothing is missing, the page closes */
+    /* A refusal ends the run and is said; NO closes the page. */
+    off_module = 0x100u, listed = 1; missing_check(); missing_check(); CHECK(open == MISSING);
+    modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); missing_on_tick();
+    modwerk_modset_switch_result = MODSET_SWITCH_PLAYING; missing_on_tick();
+    CHECK(!on_count && strstr(shows(), "STOP PLAYBACK FIRST|") && strstr(said, "NO|"));
+    CHECK(modwerk_status_key(NO, 1) && modwerk_status_key(NO, 0) && open == CLOSED);
+    /* One off, one not installed: both listed, YES switches on only the one that is off. */
+    open = MISSING, missing_top = 0, missing_asked = 1, listed = 2; missing_check();
+    CHECK(strstr(shows(), "MODA (OFF)|") && strstr(said, "MODB|") && strstr(said, "SWITCH ON|"));
+    asked_id = 0; modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); CHECK(on_count == 1); missing_on_tick(); CHECK(asked_id == 0x100u);
+    modwerk_modset_switch_result = MODSET_SWITCHED, off_module = 0; missing_on_tick(); CHECK(!on_count);
+    missing_check(); CHECK(open == MISSING && strstr(shows(), "2 NOT INSTALLED|")); /* the stub still lists both */
+    /* Nothing off: YES only closes, as before. */
+    CHECK(modwerk_status_key(YES, 1) && modwerk_status_key(YES, 0) && open == CLOSED);
+    off_module = off_module2 = 0, listed = 0, missing_asked = 0; missing_check(); CHECK(open == CLOSED);
+    /* A machine the project uses that is absent (machine_registry.c's map; owner, 16 November 2026): it opens the page
+     * as an effect does, with where the project uses it; switched off, it says OFF and YES switches it on, by module. */
+    unsigned refreshed = machine_refreshes;
+    listed_machines = 1; missing_check(); missing_check();
+    CHECK(machine_refreshes == refreshed + 2 && open == MISSING);
+    CHECK(strstr(shows(), "POLY8|") && strstr(said, "BANK B PART 3 T8|") && strstr(said, "1 NOT INSTALLED|"));
+    CHECK(modwerk_status_key(NO, 1) && modwerk_status_key(NO, 0) && open == CLOSED);
+    missing_check(); missing_check(); CHECK(open == CLOSED);          /* told: it stays closed */
+    off_module = 0x200u; missing_check(); CHECK(open == CLOSED);      /* switched off now: still told */
+    open = MISSING, missing_top = 0, missing_asked = 1; missing_check();
+    CHECK(strstr(shows(), "POLY8 (OFF)|") && strstr(said, "SWITCH ON|"));
+    asked_id = 0; modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); missing_on_tick(); CHECK(asked_id == 0x200u && asked_on == 1);
+    modwerk_modset_switch_result = MODSET_SWITCHED, off_module = 0, listed_machines = 0; missing_on_tick(); CHECK(!on_count);
+    open = CLOSED, missing_asked = 0; missing_check(); CHECK(open == CLOSED);
     /* A module sync shows its box and bar while the modules arrive and start, and holds no key. */
     upload_view = 1, upload_permille = 500; transfer_tick();
     CHECK(transfer == T_SYNC && strstr(shows(), "MODWERK SYNC|RECEIVING MODULES|50%"));
@@ -261,6 +348,21 @@ int main(void)
     CHECK(open == MEMORY && budget_slot == -1);                        /* over USB: memory only, no slot */
     for (unsigned i = 0; i < 90u; ++i) memory_tick();
     CHECK(open == CLOSED);                                             /* gone after a second and a half */
+    /* The pick's CPU (owner, 17 November 2026: the box showed the DSP Tape Echo took, not the CPU): the frame share as
+     * it stood, against the line where the guard starts dropping renders, in place of POOL. */
+    { budget_on = 1;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 300u;        /* half the line (600) */
+      modwerk_test_live_fx[13] = 29; ++dl_selection_completed; memory_tick();
+      CHECK(open == MEMORY && budget_slot == 13 && pick_load == 300u);
+      CHECK(strstr(shows(), "|CPU|50%|") && !strstr(said, "POOL"));
+      modwerk_status_key(0, 1), modwerk_status_key(0, 0);
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 700u;        /* past the line: a full bar, no more */
+      modwerk_test_live_fx[13] = 27; ++dl_selection_completed; memory_tick();
+      CHECK(open == MEMORY && pick_load == 700u && strstr(shows(), "|CPU|100%|"));
+      modwerk_status_key(0, 1), modwerk_status_key(0, 0);
+      modwerk_test_live_fx[13] = 0; ++dl_selection_completed; memory_tick();
+      budget_on = 0;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
     /* DSP FULL with numbers (owner, 20 October 2026): the refused effect's slot and need, instead of the bare popup. */
     dl_refusal[0] = 1, dl_refusal[1] = 9, dl_refusal[2] = 27, dl_refusal[3] = 22, dl_refusal[4] = 327, dl_refusal[5] = 1602;
     dl_residency_words[1] = 1508;
@@ -282,6 +384,7 @@ int main(void)
     CHECK(!modwerk_status_refused(2) && open == SHOWN);                 /* a page is open: not covered */
     modwerk_status_key(NO, 1); modwerk_status_key(NO, 0);
     /* PROJ > MODWERK's other rows: each opens its page; NO closes it. */
+    CHECK(!strcmp(modwerk_load_label, "STATUS") && !strcmp(modwerk_modules_label, "MODULE COST")); /* not read as loading modules */
     modwerk_load_menu(0);
     CHECK(open == SHOWN && tip_until == ticks + 120u);                 /* from the menu: the CUE + PROJ tip for 2 s */
     CHECK(strstr(shows(), "CPU|") && strstr(said, "|DSP T1-4|") && strstr(said, "|DSP T5-8|") && strstr(said, "|MEM T1-4|") &&
@@ -363,6 +466,24 @@ int main(void)
       CHECK(!modwerk_status_effect_busy(11, 27) && open == CLOSED);      /* 70 % playing, 62 % now: passes */
       cpu_played = 0, play_readings = 0;
       for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0; }
+    /* The frame share: the frame guard's sums between two readings, per mille of a frame. The guard's development read
+     * clears them: that reading is left out. */
+    { mw_frame_count = 1000u, mw_frame_busy = 187u * 600u; frame_note(0);
+      CHECK(frame_recent[0] == 600u);
+      mw_frame_count = 2000u, mw_frame_busy += 187u * 350u; frame_note(1);
+      CHECK(frame_recent[1] == 350u);
+      frame_recent[2] = 77u, mw_frame_count = 10u, mw_frame_busy = 1000u; frame_note(2);
+      CHECK(frame_recent[2] == 77u);
+      mw_frame_count = 1010u, mw_frame_busy = 1000u + 187u * 500u; frame_note(2);
+      CHECK(frame_recent[2] == 500u); }
+    /* Stopped, the box shows the frame share of the last play, when it was more; playing, the share now. */
+    { transport_stopped = 1, frame_played = 540u;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 200u;
+      CHECK(modwerk_status_frame_load() == 540u);
+      transport_stopped = 0;
+      CHECK(modwerk_status_frame_load() == 200u);
+      transport_stopped = 1, frame_played = 0;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
     modwerk_load_menu(0); modwerk_status_cpu_refused(2, "Poly8", 800, 266);
     CHECK(open == SHOWN);
     CHECK(strstr(shows(), "MODWERK BASE 0.7|"));                       /* the status page names the base by its version */
@@ -403,6 +524,29 @@ int main(void)
     (void)shows(); CHECK(strstr(said, "IN USE ON A TRACK") && switches[1].on);
     modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); modwerk_modset_switch_result = MODSET_SWITCH_PLAYING; switches_tick();
     (void)shows(); CHECK(strstr(said, "STOP PLAYBACK FIRST"));
+    /* A start that did not load the card's whole set: a restart when that brings it back, else a sync (owner, 16
+     * November 2026: after a base update RESTART FIRST came back the same). */
+    modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); modwerk_modset_switch_result = MODSET_SWITCH_PARTIAL; switches_tick();
+    (void)shows(); CHECK(strstr(said, "RESTART FIRST"));
+    modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); modwerk_modset_switch_result = MODSET_SWITCH_SYNC; switches_tick();
+    (void)shows(); CHECK(strstr(said, "SYNC ON THE SITE FIRST"));
+    /* Switched off while another Part of the project names it: where, and nothing when it is named nowhere. */
+    map_module[20] = 0x30u;
+    modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); CHECK(asked_id == 0x30u && asked_on == 0);
+    modwerk_modset_switch_result = MODSET_SWITCHED; switches_tick();
+    CHECK(switch_said == used_text && !strcmp(used_text, "USED IN C SAVED PART 2 T5"));
+    CHECK(is_quiet(0x30u));                                             /* MISSING will not open for it by itself */
+    (void)shows(); CHECK(strstr(said, "USED IN ANOTHER PART|"));         /* the host's letters are wider than the unit's */
+    map_module[20] = 0;
+    modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); modwerk_modset_switch_result = MODSET_SWITCHED; switches_tick();
+    CHECK(!switch_said);
+    /* A machine another bank's Part uses, by the project's machine map: where too. */
+    switch_waiting = 0, switch_asked = 0x10u, switch_asked_on = 0, switch_waiting = 1, modwerk_modset_switch_result = MODSET_SWITCHED;
+    switches_tick(); CHECK(switch_said == used_text && !strcmp(used_text, "USED IN B PART 3 T8"));
+    asked_on = 1; unit[0].on = 0; switches_read(); /* switched on: nothing said either */
+    modwerk_status_key(YES, 1); modwerk_status_key(YES, 0); CHECK(asked_on == 1);
+    map_module[20] = 0x30u; modwerk_modset_switch_result = MODSET_SWITCHED; switches_tick(); CHECK(!switch_said);
+    map_module[20] = 0; unit[0].on = 1; switches_read();
     /* A shelf that moves is read at the next tick; the cursor follows its module when a host changes the set. */
     unit_count = 7; shelf_moving = 1; ticks += 60u; switches_tick(); CHECK(switch_count == 3 && switch_stale); /* the second's reading */
     shelf_moving = 0; switches_tick(); CHECK(switch_count == 7 && switches[switch_cursor].id == 0x30u && !switch_stale);

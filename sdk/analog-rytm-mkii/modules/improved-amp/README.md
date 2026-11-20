@@ -77,9 +77,10 @@ let a long sound restart cleanly on every step.
   and the state counter alike) at it.
 - DEC, REL and HLD: `tools/dec_table.py` builds `improved_amp_amp_dec` and `improved_amp_flt_dec`
   (128 words each), and `ptr` sites point stock's leas at them: the amp decay record (0x40109bee) and
-  the filter decay and release records (0x4010d342, 0x4010d3b2, 0x4010d3da). A third `ptr` site points
-  stock's hold compare (0x40109bc2) at `improved_amp_hold`, 128 words out of its counter's reach, so
-  stock never ends a timed hold: only `improved_amp_voice` does. Stock's tables stay where they are,
+  the filter decay and release records (0x4010d342, 0x4010d3b2, 0x4010d3da). Two byte sites make
+  stock's hold compare (0x40109bc2 and 0x40109bce) compare its counter with 0x7fffffff, out of its
+  reach, in place of the hold table's entry, so stock never ends a timed hold: only
+  `improved_amp_voice` does. (Up to 0.1.1 a `ptr` site pointed it at a 512-byte table of that value.) Stock's tables stay where they are,
   unread by the OS. The AMP table is built for the VCA's
   0.918x decay speed, the filter's for 1.00x. The same script builds `improved_amp_hold_steps`, the
   hold in steps x 225,000 (a quarter of the clock's units in a step at one pulse a step). The hold is
@@ -116,10 +117,11 @@ exponential (straight lines in dB). A choke or stop still fades over stock's fix
 ## Compatibility and limitations
 
 It needs Modwerk's Rytm base with the amp record hook. It takes the amp record through `ev_amp_record`,
-points stock's envelope table reads at its own tables, replaces the OVR reader and two bytes of the ENV
-RESET menu (sites in [upstream/README.md](upstream/README.md)), and subscribes to `ev_tick`. Claims:
+points stock's envelope table reads at its own tables, keeps stock's hold compare from ending a hold,
+replaces the OVR reader and two bytes of the ENV RESET menu (sites in [upstream/README.md](upstream/README.md)), and subscribes to `ev_tick`. Claims:
 FUNC + turn on AMP HLD, the value text of AMP ATK/HLD/DEC and FILTER ATK/DEC/REL, the AMP page picture,
-SOUND SETTINGS ENV RESET's values, the amp and filter envelope tables and the overdrive's control. It
+SOUND SETTINGS ENV RESET's values, the amp and filter envelope tables, the amp hold compare and the
+overdrive's control. It
 needs no other module. It cannot be installed with Env Reset Amp, whose ENV RESET values it carries:
 the configurator offers one or the other.
 
@@ -190,7 +192,7 @@ November, after a review made only the module end a timed hold, the hold and pre
 again (IL06), and a hold follows HLD turned to or from AUTO during a note. The package's own image
 (IA15) was then flashed: it booted, pad hits held their step, HLD and ENV RESET AMP came back after a
 project save and load and after a power cycle.
-Memory: 9,548 bytes of the shared mod area (the plain base alone leaves 119,004, with this module 109,456).
+Memory: 8,716 bytes of the shared mod area (the plain base alone leaves 119,004, with this module 110,288; 9,228 before 0.1.2, 9,548 before 0.1.1).
 Load, on the author's unit with the sequencer stopped (TESTING.md): the audio block was 67.4 to 67.5 %
 busy with this module, where the base alone read 65.8 % earlier that day: about 1.6 points, about 1.0 of
 them in the amp record entries, which run every block for every voice (0.1 point more than before the
@@ -208,7 +210,7 @@ addresses only; no Elektron firmware is included.
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build IA14, this package linked alone on the Modwerk base
+Screenshots are rytm-emu captures of build IA17 (0.1.2), this package linked alone on the Modwerk base
 ([media/capture.json](media/capture.json)). No audio preview.
 
 ![AMP DEC reading a time](media/decay-time.png) ![AMP HLD reading steps](media/hold-steps.png) ![ENV RESET at AMP](media/env-reset-amp.png)

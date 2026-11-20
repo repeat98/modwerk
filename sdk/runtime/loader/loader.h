@@ -12,7 +12,8 @@
 #define RUNTIME_CAPABILITY_FLAGS 7u     /* CF sites, hash-backed stock copies, authored constant fills; and 128, site events, when the machine has them (64 is the volatile journal) */
 #define RUNTIME_HEADER_BYTES 80u        /* ABI 9 and 10: ABI 8 (76) plus requires u16, claim and hook-entry counts u8;
                                          * older headers: 76, 72, 68, 50, 32, 28 */
-#define RUNTIME_IMAGE_BYTES 131072u      /* one module's image and bss (Tape Echo's tone table is 86 KiB) */
+#define RUNTIME_IMAGE_BYTES 131072u      /* one module's image (Tape Echo's tone table is 86 KiB) */
+#define RUNTIME_MODULE_BYTES 294912u     /* one module's image and bss (MIDI Scenes' locks: 64 Parts of 4 KiB) */
 #define RUNTIME_RELOCATIONS 2048u
 #define RUNTIME_SITES 128u
 #define RUNTIME_SITE_BYTES 32u
@@ -46,7 +47,10 @@ enum runtime_event { RUNTIME_TICK, RUNTIME_DRAW, RUNTIME_KEY, RUNTIME_ENC, RUNTI
 #define RUNTIME_HOOKS (RUNTIME_EVENTS + RUNTIME_SITE_EVENTS)
 #define RUNTIME_RAISE 255u /* a raised event's hook word with this order: the image offset of a zero 4-byte slot the
                             * loader fills with the base's entry for that event (modwerk_raise_<event>); not a handler */
-struct runtime_site { uint32_t address, length; uint8_t stock[RUNTIME_SITE_BYTES], code[RUNTIME_SITE_BYTES]; };
+/* ABI 7 site records: bit 7 of the length byte marks a site that rests with its module (HOOKS.md, ev_in_use): while
+ * the module answers ev_in_use 0 the site holds its stock bytes. Older bases read such a length as malformed. */
+#define RUNTIME_SITE_RESTS 0x80u
+struct runtime_site { uint32_t address, length; uint8_t stock[RUNTIME_SITE_BYTES], code[RUNTIME_SITE_BYTES], rests; };
 /* ABI 9: an X/Y span the module's DSP code reads or writes outside its own slot (README.md, "Base features and DSP
  * claims"). space 1 X, 2 Y; core 0 or 1 (on the Octatrack core 0 runs payload A, tracks 5-8); an address at or past
  * 0x30000 is in the window both cores see. access bit 0 read, bit 1 write. ABI 10, an engine's claims only: bit 2, its
@@ -138,7 +142,9 @@ enum runtime_refusal { RUNTIME_OK, RUNTIME_MALFORMED, RUNTIME_MEMORY, RUNTIME_CO
                        RUNTIME_STOCK /* ABI 7: the bytes under a site are not the stock bytes its hash names */,
                        RUNTIME_EVENT /* a site or copy meets a stock site the base owns as an event: subscribe to it */,
                        RUNTIME_FEATURE /* ABI 9: a base feature the package requires cannot come up this boot (on the
-                                        * Octatrack, the key bus with a DSP core's state lost): restart, then retry */ };
+                                        * Octatrack, the key bus with a DSP core's state lost): restart, then retry */,
+                       RUNTIME_UI_OPEN /* a window, page or key layer of the module it would replace or remove is still
+                                        * open (capability 1024): close it, then retry */ };
 /* ABI 9 refusals use the codes above: a feature the base does not have, a claim another live module's claim meets
  * (either writing), and (ABI 9) any hook entry are RUNTIME_CONFLICT. ABI 10: an engine the machine does not admit
  * (modwerk_machine_dsp_engine_admit) answers the machine's refusal. */
@@ -180,6 +186,12 @@ unsigned modwerk_runtime_refused_event(void);         /* after RUNTIME_EVENT: th
  * task is inside that dispatch. */
 extern uintptr_t volatile *const modwerk_runtime_event_row[RUNTIME_SITE_EVENTS];
 extern const uint8_t modwerk_events_code[], modwerk_events_code_end[];
+#ifdef RUNTIME_SITE_EVENT_IN_USE
+/* The machine's UI tick (a task, never an interrupt): asks each module that subscribes the event the base asks
+ * (RUNTIME_SITE_EVENT_IN_USE) and moves those answering 0 out of the rows of the events that rest
+ * (RUNTIME_SITE_EVENT_RESTS), and those answering nonzero back. 1 when the rows changed. */
+int modwerk_runtime_rest_poll(void);
+#endif
 #endif
 void modwerk_machine_tables_changed(void);          /* masked, after rows changed; weak no-op by default */
 /* Masked: a site's bytes went back to stock (`patched` were its module's), so stock data that copied them can follow;

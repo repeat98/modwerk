@@ -128,6 +128,8 @@ describe('questions and findings in the commands', () => {
     const token = 'a'.repeat(64)
     expect(await board.inboxNotes({ token, fetch: async () => Response.json({ login: 'ada', waiting: [thread({})], replies: [thread({ author: 'ada', to: 'bo' }), thread({ author: 'ada', kind: 'finding' })] }) })).toEqual([expect.stringMatching(/^Board: 1 question waits for your answer and 2 of your questions and findings have a reply\. .*npm run board -- inbox/)])
     expect(await board.inboxNotes({ token, fetch: async () => Response.json({ login: 'ada', waiting: [], replies: [] }) })).toEqual([])
+    const expiring = [{ kind: 'issue', key: '1620' }]
+    expect(await board.inboxNotes({ token, fetch: async () => Response.json({ login: 'ada', waiting: [], replies: [], expiring }) })).toEqual(['You have 1 board claim expiring within three days. Run npm run board -- inbox to see which claims to review.'])
     expect(await board.inboxNotes({ token, fetch: async () => Response.json({ error: 'Sign in for the board first' }, { status: 401 }) })).toEqual([])
     expect(await board.inboxNotes({ token, fetch: async () => { throw new TypeError('fetch failed') } })).toEqual([])
   })
@@ -150,6 +152,7 @@ describe('questions and findings in the commands', () => {
     // A wanted task names who took it and the pull request that ends it, and its text is quoted like any other.
     const wanted = board.describeThread(thread({ kind: 'wanted', topic: { kind: 'site', key: 'forum' }, to: 'cy', body: 'Show the module version on forum threads.', pullRequest: 1500 }))
     expect(wanted).toEqual([expect.stringMatching(/wanted +site forum +@bo taken by @cy {2}open until 2026-11-29 {2}ends with #1500$/), '    «Show the module version on forum threads.»'])
+    expect(board.describeThread(thread({ kind: 'wanted', to: null, priority: 'high' }))[0]).toMatch(/open until 2026-11-29 {2}high priority$/)
   })
   it('sends take, link and a reply\'s pull request to the routes that hold them', async () => {
     const sent = [], fetch = async (url, init) => { sent.push([url.replace(/^.*\/api/, ''), init.method, JSON.parse(init.body ?? 'null')]); return Response.json({ message: {} }) }
@@ -158,8 +161,21 @@ describe('questions and findings in the commands', () => {
     await board.messageAction(id, 'link', { pullRequest: 1501 }, options)
     await board.messageAction(id, 'reply', { body: 'Sent as #1502.', pullRequest: 1502 }, options)
     expect(sent).toEqual([['/agent-board/messages/' + id + '/take', 'POST', { pullRequest: 1500 }], ['/agent-board/messages/' + id + '/fold', 'POST', { pullRequest: 1501 }], ['/agent-board/messages/' + id + '/replies', 'POST', { body: 'Sent as #1502.', pullRequest: 1502 }]])
+    await board.messageAction(id, 'priority', { priority: 'high' }, options)
+    expect(sent.at(-1)).toEqual(['/agent-board/messages/' + id + '/priority', 'POST', { priority: 'high' }])
     expect(board.MESSAGE_KINDS).toContain('wanted'); expect(board.TOPICS).toContain('site')
   })
+})
+
+it('requests weekly board activity only when a week count is supplied', async () => {
+  const api = 'https://board.test/api', requested = []
+  const fetch = async url => {
+    requested.push(url)
+    return Response.json(url.endsWith('?weeks=8') ? { weeks: [] } : { days: 30 })
+  }
+  expect(await board.activity({ api, fetch, weeks: 8 })).toEqual({ weeks: [] })
+  expect(await board.activity({ api, fetch })).toEqual({ days: 30 })
+  expect(requested).toEqual([api + '/agent-board/activity?weeks=8', api + '/agent-board/activity'])
 })
 
 describe('pr:ready and the board', () => {

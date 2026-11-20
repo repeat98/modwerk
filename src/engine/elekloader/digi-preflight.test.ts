@@ -43,7 +43,7 @@ function mod(extra: Partial<ParsedMod> = {}): ParsedMod {
   return {
     format: 2, id: 'core', version: '1.1', device: DT2, release: DT2.releases[0], sites: [site(0x40000500, 6)], regions: [], names: [], requires: [], conflicts: [],
     blob: null, shownVersion: null, sections: { '.boot': { align: 2, size: 32 } }, symbols: new Map(), exports: [], imports: [], weak: new Set(), relocs: [],
-    collections: new Map(), contribute: [], copied: [], storage: [], ...extra,
+    collections: new Map(), contribute: [], copied: [], storage: [], sharc: null, ...extra,
   }
 }
 /** The stock main OS with `bytes` written at `addr` and `tail` bytes appended. */

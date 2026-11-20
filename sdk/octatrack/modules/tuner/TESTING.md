@@ -93,11 +93,17 @@ The same tooling launched the standalone 2.19 bus (`2db6a88885f39250ba2b8eb2727b
 
 The retained `npm run check -- --base origin/main` attempt on 25 October ended with exit 1 after 182.482477 seconds. The receipt records two failed application test files, 325 passed files, two failed tests, 2,598 passed tests and two skipped tests. The named failures include the firmware API tests; their safe diagnostics are retained in `relay-062/draft-check/full-check.json`. Earlier metadata and compatibility phases passing does not turn the overall check into a readiness pass. No rerun or current-rebased-check result is asserted here.
 
-## Card-only delivery and future USB work
+## USB package on base 0.7.5
 
-Card builds only: the base has no removal refusal for ordinary modules. Tim accepted card-only delivery; USB support is optional and is not a blocker for this draft. The earlier [USB admission proposal](evidence/usb-admission.md) remains a later design idea, not an implemented runtime feature or required test plan.
+The open window and its input layer hold callbacks into module memory. Base 0.7.5 (#1475, loader capability 1024) refuses to retire any module whose window or key layer the stock UI still names, and the package row asks for that capability. The earlier [USB admission proposal](evidence/usb-admission.md) is what it implements, as #1162's refusal shape.
 
-The open window/input layer retains callbacks into module memory. No safe hot-removal result, USB package, installation, Keep/Undo, replacement or persistence result is claimed. The source adds no tuner setting to a Part, project or battery RAM; that does not establish general USB module-set persistence.
+**On hardware, 16 November 2026 (the owner's MKII; observed and recorded by the owner's session).** Package `0.1.0-experimental.mwrm` (22,920 bytes, sha256 `05fef3971afaabec88d5e7238a185b7fd0fce171c91f02ff41ecee7294e9dbd7`, built from this folder's unchanged `upstream/` source; the published file is byte for byte the one that ran) on a RAM-booted development twin of base 0.7.5 (`7db3251b`: the beta flags plus `--dev`, no controller rows), in timed trials with no Keep:
+
+- UP + TEMPO opened TUNER T1 over USB; it read `--` with no input.
+- With the window left open, the trial's Undo at 45 s was refused (`needs-recovery` after the client's 3 s of retries); the module stayed live and the window kept drawing. After NO closed it, `npm run device -- recover` rolled the trial back (inventory empty).
+- A second trial, the window closed by TEMPO before its end, rolled back at once.
+
+Not tested on hardware: Keep, removal and replacement of a kept Tuner (refusal 11 is the base's host test only), YES and UP + TEMPO as close, the stock TEMPO window evicting Tuner's, the site's sync dialog when a trial ends with the window open, a reading from a real input, cost on the unit, and a power cycle with Tuner kept. The source adds no tuner setting to a Part, project or battery RAM.
 
 ## Qualification still required
 

@@ -40,6 +40,14 @@
 rp_source:
         lea     -12(%sp),%sp
         movem.l %d1-%d2/%a0,(%sp)
+        bsr.s   rp_find
+        movem.l (%sp),%d1-%d2/%a0
+        lea     12(%sp),%sp
+        rts
+
+| rp_source without keeping d1, d2 and a0, for rate_gate, where they are
+| dead. OFF, NORM and BEAT return after the one SETUP byte.
+rp_find:
         moveq   #0,%d0
         moveq   #7,%d2
         cmp.l   %d2,%d1
@@ -49,6 +57,12 @@ rp_source:
         lea     (LANES).l,%a0
         move.b  28(%a0,%d2.l),%d0       | SETUP TSTR, zero-extended
         move.l  %d0,%d2
+        moveq   #0,%d0
+        cmpi.l  #TSTR_AUTO,%d2          | stock's default first
+        beq.s   .rs_voice
+        cmpi.l  #TSTR_REPITCH,%d2
+        bne.s   .rs_out
+.rs_voice:
         move.l  #168,%d0
         mulu.l  %d0,%d1
         lea     (VOICES).l,%a0
@@ -65,11 +79,7 @@ rp_source:
         moveq   #TSTR_REPITCH,%d1
         cmp.l   %d1,%d2
         beq.s   .rs_on
-        moveq   #TSTR_AUTO,%d1
-        cmp.l   %d1,%d2
-        bne.s   .rs_out
-        moveq   #TSTR_REPITCH,%d1
-        cmp.l   0x110(%a0),%d1          | the sample's own TSMODE
+        cmp.l   0x110(%a0),%d1          | AUTO: the sample's own TSMODE
         bne.s   .rs_out
 .rs_on:
         move.l  0x114(%a0),%d1          | the sample's BPMx24
@@ -79,8 +89,6 @@ rp_source:
         bgt.s   .rs_out
         move.l  %d1,%d0
 .rs_out:
-        movem.l (%sp),%d1-%d2/%a0
-        lea     12(%sp),%sp
         rts
 
 | void fmt(char *buf, int raw). The caller already supplied sprintf's buf at
@@ -113,26 +121,26 @@ tstr_fmt:
 .rpch:  .asciz  "RPCH"
         .balign 2
 
-| 0x4000406a, the playback-increment builder shared by STATIC/FLEX/PICKUP:
-| d3 is free from its entry to 0x40004176, so it carries this track's
-| sample BPMx24 (0 = not REPITCH) to the two hooks below. Then the
-| displaced `btst #4,67(sp); bne` (the recompute flag, set on the
-| per-frame call).
+| 0x4000406a, the playback-increment builder shared by STATIC/FLEX/PICKUP,
+| at its displaced `btst #4,67(sp); bne` (the recompute flag, set on the
+| per-frame call). Every other call reuses the stored increment at once:
+| neither hook below is on that path, and stock sets d3 at 0x40004176
+| before it reads it. On a recompute, d3 (free from the builder's entry to
+| 0x40004176) carries this track's sample BPMx24 (0 = not REPITCH) to the
+| two hooks below. d0-d2 and a0 are dead there: stock writes each (0x4000409e,
+| 0x400040b0, 0x400040c0, 0x40004168) before it reads it, and the base's
+| 0x40004100 keeps them for its handlers.
 rate_gate:
-        lea     -8(%sp),%sp
-        movem.l %d0-%d1,(%sp)
-        move.l  (CUR_STATE).l,%d1
-        subi.l  #STATES,%d1
-        moveq   #40,%d3
-        divu.l  %d3,%d1                  | the track
-        bsr     rp_source
-        move.l  %d0,%d3
-        movem.l (%sp),%d0-%d1
-        lea     8(%sp),%sp
         btst    #4,67(%sp)               | displaced
         bne.s   .rg_compute
         jmp     (0x40004072).l
 .rg_compute:
+        move.l  (CUR_STATE).l,%d1
+        subi.l  #STATES,%d1
+        moveq   #40,%d0
+        divu.l  %d0,%d1                  | the track
+        bsr     rp_find
+        move.l  %d0,%d3
         jmp     (0x4000407a).l
 
 | 0x4000409e: the PTCH word is not applied on a REPITCH track; neutral
