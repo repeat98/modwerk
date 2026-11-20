@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { publishedUsbAudioPackage } from '../config/published-usb-audio.fixture'
 import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -124,11 +125,12 @@ describe('live library selection details', () => {
     await render(set.moduleIds)
     const status = container.querySelector('[role="status"]')!
     const panel = container.querySelector('.library-selection')!
-    expect(panel.textContent).toContain(`1 of ${SET_MODULE_LIMIT} modules`)
+    const initialCount = publishedUsbAudioPackage ? 2 : 1
+    expect(panel.textContent).toContain(`${initialCount} of ${SET_MODULE_LIMIT} modules`)
     expect(panel.textContent).toContain('All stock FX kept')
     expect(panel.querySelector('a')?.getAttribute('href')).toBe('#configuration')
     await render([...set.moduleIds, 'tapeecho'], ['SPRING REV'])
-    expect(status.textContent).toContain(`2 of ${SET_MODULE_LIMIT} modules`)
+    expect(status.textContent).toContain(`${initialCount + 1} of ${SET_MODULE_LIMIT} modules`)
     expect(panel.textContent).toContain('Spring Reverb is marked off in the stock FX menus')
     expect(panel.textContent).toContain('USB sync requires all stock FX')
     await render([])
