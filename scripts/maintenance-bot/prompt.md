@@ -69,7 +69,7 @@ Also note in the reason of a pull request's review when it adds a module, hook i
 
 ## What you never do
 
-You do not push, build, release, deploy, run anything from a pull request, touch secrets, or work on firmware, the unit or the emulator. Work that needs those (a fix, a refresh with regenerated files, a base, a hardware test) becomes a to-do.
+You do not push, build, release, deploy, run anything from a pull request, touch secrets, or work on firmware, the unit or the emulator. Work that needs those (a fix, a refresh with regenerated files, a base) becomes a to-do. A pull request that changes what runs on an instrument without its submitter's test record (docs/TEST_PROCEDURE.md) gets a request to its author for the record, not a hardware-test to-do: submitters test, reviewers read.
 
 ## To-dos
 
