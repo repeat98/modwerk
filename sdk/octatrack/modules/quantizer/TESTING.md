@@ -141,6 +141,11 @@ bounded compatibility follow-up for the base's installed-module ON/OFF controls 
 shelf, followed by its status-display patch. It does not relabel the full 15 November pitch
 matrix above as tested on this base. No quantizer executable code changed in this follow-up.
 
+**Saved-file acceptance withdrawn; submission held.** Independent file-allocation checks
+found a corrupt stored project in the original SAVE/OFF sequence and reproduced a dangling
+saved-slot chain in two matched controls. The observations below do not qualify persistence.
+The supported file-open/truncate/close sequence and repair direction are pending on #1597.
+
 The wrapper's initial docstring now names the actual public v2.23 source and archived root
 README. On matched source and base inputs, its executable AST is identical after removing
 only that initial docstring; actual before/after assembly reproduces the same 7,038-byte
@@ -167,28 +172,47 @@ These are serial native emulator sessions at normal priority under a rig lease, 
 cards and completed battery-RAM snapshots, not hardware or empty-battery cold-boot evidence.
 
 - An older-base saved set is reported FOREIGN. USB Keep installs 0.1.5, removal restores all
-  seven exact stock guard hashes, and reinstall succeeds. Native PROJECT RELOAD preserves
+  seven exact stock guard hashes, and reinstall succeeds, but the saved-slot write has the
+  allocation finding below. Native PROJECT RELOAD preserves
   all four 0.1.4-saved project/bank files byte for byte and restores `0000008401000002`, with
-  the fixture's unchanged event/lock state.
-- The valid +1/+3/0/+2 fixture is observed before native SAVE PROJECT and playback: stored
-  locks 69/79/64/74, four note events, C MAJOR, and the saved FOLLOW settings. SAVE completes
-  and card flush reports zero errors. The actual MODULES page shows Scale Quantizer ON;
+  the fixture's unchanged event/lock state in that bounded reload session.
+- The original SAVE/OFF sequence combined a 0.1.4-derived card with battery RAM from a
+  different saved session. After OFF, the 3,960-byte stored project's logical data shares
+  clusters 5407 and 5408 with `MODWERK0.SET`, confirmed independently in both FAT copies.
+  Cluster 20825 is only an unused chain tail. No intermediate audit separates SAVE from OFF,
+  so the first damaging write is unknown; mixed histories are not a proven cause. A completed
+  SAVE screen and zero flush errors do not clear the corruption.
+- Two matched card/battery controls reproduce a separate invalid transition: removal shortens
+  the saved slot from 7,680 to 512 bytes but leaves its first cluster pointing to a free cluster
+  in both FAT copies. The original-layout control observes `5406 -> 5407 -> FREE` immediately
+  after removal; re-Keep preserves it. Reading back the 512 logical bytes does not validate
+  the remaining chain. The stock API, wrapper and emulator remain possible causes.
+- The original mixed-history sequence observes live locks 69/79/64/74, four note events,
+  C MAJOR and FOLLOW settings. The actual MODULES page shows Scale Quantizer ON;
   YES changes it to OFF, restoring all seven stock guards. Two request-40 inventory reads
   report the same OFF package and leave it inactive.
-- The short paired sample check passes eight measured second-bar windows with the unchanged
+- That sequence's short paired sample check passes eight measured second-bar windows with the unchanged
   0.01-semitone tolerance: module ON gives [0,2,0,2], module OFF gives [1,3,0,2]. Maximum error
   is 0.000363677 semitone. All four locks and note events remain intact. This uses the same
-  DC-removed relative-pitch method as the historical runs, not an absolute-fidelity claim.
-- The real OFF saved set is version 2, generation 4, with no active module and a matching
-  generation-4 MWOF shelf containing the exact package and valid body/package hashes. A
-  fresh process restores OFF, its inventory, seven stock guards, settings and all four locks
-  and events. Native YES re-enables it, and the actual status page shows base 0.7.1 with five
-  rows. Saving the enabled module set writes version 1, generation 5. Another fresh process
-  restores that active set, all seven exact installed detours, settings, locks and events
-  before any new panel input. The four saved project/bank files remain unchanged by toggling.
-- In that final fresh ON restart, actual MIDI UART0 output has three matched note-on/off
+  DC-removed relative-pitch method as the historical runs. It is a live relative-pitch
+  observation, not an absolute-fidelity or persistence claim.
+- In the matched original-layout control, SAVE moves the stored project to clusters
+  15700/15701 without reusing 5407. OFF writes a valid version-2, generation-4 set and matching
+  shelf containing the exact package, preserving all four immediate post-SAVE project/bank
+  logical hashes. The other matched control also preserves those files through OFF; its
+  preceding SAVE changes both bank files. Neither control reproduces the original logical
+  project corruption. Both run in one process and do not cover the original fresh-mount
+  boundary, so neither establishes the whole remove/SAVE/OFF path as safe.
+- The original sequence's fresh processes observe OFF inventory and stock guards, then ON
+  with all seven installed detours, live settings, locks and events. The actual status page
+  shows base 0.7.1 with five rows. These saved-battery restarts come from a chain containing
+  the corrupt stored project; they do not establish correct on-card project persistence.
+  Independent request-40 reads on a validated matched OFF state leave its generation and
+  audited files unchanged. Restart/audio/MIDI acceptance after a filesystem repair is pending.
+- In the original final fresh ON restart, actual MIDI UART0 output has three matched note-on/off
   pairs at note 61 with FOLLOW OFF and three at note 60 with FOLLOW ON in C MAJOR, channel 2,
-  velocity 100, with zero stray data. This is a short MIDI smoke, not a physical MIDI test.
+  velocity 100, with zero stray data. This is a short live MIDI observation, not a physical
+  MIDI test or a saved-project acceptance pass.
 
 The historical full pitch matrix, UI gallery, incomplete self-test, earlier failed fixtures
 and unqualified items remain as recorded above and below. No full pitch or synthetic
