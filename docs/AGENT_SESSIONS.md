@@ -2,9 +2,25 @@
 
 Since 19 November 2026. Developers build with coding agents on their own computers, and what slows them down (a guide that sent the agent the wrong way, a check that failed without saying why, a setup step that took an hour) mostly stays in their sessions. A developer can now send the owner the conversation of one session, so the owner can fix what got in the way. Sharing is voluntary, one session at a time, and never needed to contribute.
 
+## Review the session first
+
+Since 20 November 2026. Before the final message of a session that did real work (about half an hour or 40 tool calls, not a short question), the agent looks back at it once. `pr:ready` prints the reminder.
+
+1. **Measure.** `npm run session -- review` reads this session's transcript and prints the wall time per tool, the slowest calls, the failed calls, what ran three times or more, and how long questions waited for the developer. Nothing is sent. A transcript holds no processor time, so wall time is the measure, and it includes waiting for a permission prompt.
+2. **Add what the figures cannot show:** where you guessed and were wrong, which guide, check or error message sent you the wrong way or said nothing, and what the developer had to correct or say twice.
+3. **Tell the developer at most three findings**, a line each: what cost time, why, and the fix. When nothing would spare a later session time, say so in a line and stop.
+
+A finding with a concrete fix becomes a pull request of its own, titled `Workflow: …` and labelled `workflow` from that: a check that names its cause, a quicker command, a script for what you ran by hand, a corrected guide line. It holds one change, branched from current `main`, and stays off the task's pull request and out of a module release, so every one can be found under the label. Its description says what cost time, how much the review measured, and what changes, without names or quotes from the session. The rest of [Fixes and improvements](DEVELOPER_WORKFLOW.md#fixes-and-improvements) applies: prefer a check to a sentence, ask first in a contributor's fork, and open an issue for what you cannot fix.
+
 ## Ask once, at the end
 
-When a task is done (`npm run pr:ready` says Ready, or the developer stops), the agent asks the developer once, in one line, whether to share this session. `pr:ready` prints the reminder, and `npm run session -- status` says what to do:
+When a task is done (`npm run pr:ready` says Ready, or the developer stops) and the review is told, the agent asks the developer once whether to share this session, and says why it helps:
+
+- What slowed a session down stays in it. The owner sees the pull request, not the hour before it.
+- The owner turns what a session shows into a guide edit, a check or a fix, which spares the developer's next session and every other developer the same.
+- The conversation shows what was tried and in which order. The review and the note hold only what the agent noticed.
+
+`pr:ready` prints the reminder, and `npm run session -- status` says what to do:
 
 - **ask** (the default): ask, and share only on a yes. Write the developer's answer and the agent's own short account of what got in the way as the note: `npm run session -- share --note "…"`.
 - **always**: the developer said to share every session. Share it and say so in a line.
