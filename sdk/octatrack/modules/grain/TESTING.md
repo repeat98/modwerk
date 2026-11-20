@@ -2,6 +2,51 @@
 
 Grain 0.1.0-experimental · by A Force Truly Evil.
 
+## Physical 24-bit engine timing and stock Flex MIDI comparison, 20 November 2026
+
+The queued MKII ran OS 1.40C and development base `06e08f35c62c02ce`. The SCAN package was `371e2e19169814750c4bf844a2b907b1871328f8919fd32b5bddd869859c60b0`. All eight loaded Flex samples were stereo 16-bit and all eight recorder buffers were empty and set to 16-bit stereo. The current bank's four working Parts and four saved copies had no Grain assignment. Elektron documents that edits to an active project are cached to CompactFlash and that entering the set-change menu syncs it. The run used a generated sample entirely in private RAM. [Octatrack MKII manual, sections 4.12 and 7.1](https://www.elektron.se/wp-content/uploads/2024/09/Octatrack-MKII-User-Manual_ENG_OS1.40A_210414.pdf)
+
+### Time on the physical ColdFire
+
+A private timing probe linked the same Grain object verified against the catalogue package. It rendered two native-size pages of deterministic 24-bit stereo into a private PCM buffer, using engine track indices 0 and 4. Each run covered 64 cases eight times, with six active voices, all four windows, fractional pitch, alternating direction and pan, page crossings, both SCAN endpoints and 140/240 BPM. The ColdFire's 132 MHz timer surrounded `gran_params` and `gran_render`. Both runs returned 512 calls and the expected final PCM fingerprint for each of the 64 cases, independently reproduced with the portable renderer's fast paths disabled.
+
+| Engine track and source frames per call | Highest elapsed time without MIDI | Highest elapsed time during the MIDI run |
+| --- | ---: | ---: |
+| T1, 16 | 266.5 µs | 401.5 µs |
+| T5, 16 | 292.1 µs | 347.7 µs |
+| T1, 32 | 333.9 µs | 617.2 µs |
+| T5, 32 | 327.0 µs | 372.2 µs |
+
+The probe ran one call per UI tick. Interruptions count towards its elapsed time. The largest observation was 81,476 timer ticks, or 162,952 core cycles. The stock audio interrupt continued to run and logged zero skips in the measured MIDI window. The test exercises 24-bit rendering on the physical chip. Guarded assignment, delivery to MAIN, and frame-interrupt timing with Grain selected on the two physical tracks remain open. [Per-case timer readings and PCM fingerprints](evidence/timing/measurements.json)
+
+### Static bound for the submitted binary
+
+For one call to `grain_render`, the conservative upper bound on Grain-owned instructions is **56,887** for a packet of up to 16 source frames and **109,527** for up to 32. The linked wrapper accepts both lengths. `grain_start` is bounded at 187 instructions. The analysis follows both sides of branches, bounds the six voices, packet length, spawn attempts, page accesses and control copies, and accounts for calls into other Grain routines. It excludes the stock Flex callees. The linear-program dual is verified in exact rational arithmetic.
+
+The accompanying zero-wait-state core model gives upper bounds of 449,864 and 861,384 modeled cycles respectively. It allows incompatible paths and does not characterize instruction-fetch stalls, external SDRAM service or interrupt interference. These bounds exceed the 95,782-cycle frame budget and do not certify that the playing track meets its deadline. [Reproducible calculation](evidence/timing/bound.py) · [NXP MCF54455 reference manual, section 3.3.5](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)
+
+### MIDI on stock Flex tracks
+
+One paired run on the same development base compared an empty module inventory with the exact Grain release candidate installed. The voice monitor showed stock Flex active on T1 and T5 in both windows. CoreMIDI sent the same 12-second trace of 288 chromatic notes and their releases, 11,520 unmapped CC119 messages, 1,152 clocks at 240 BPM and one STOP during a held note. This corresponds to 31,200 DIN bits/s before the single STOP. The transport was USB MIDI. The host trace contains 13,249 timestamped messages.
+
+| What ran on the instrument | Longest frame interrupt | Mean frame-interrupt load | Median idle from the CPU meter | Skipped renders |
+| --- | ---: | ---: | ---: | ---: |
+| Stock Flex, empty inventory | 243.8 µs (67.2%) | 36.6% | 0.8% | 0 |
+| Stock Flex, Grain installed and unassigned | 245.6 µs (67.7%) | 37.7% | 0.0% | 0 |
+
+Both voices were observed in both windows and the USB receive-error and transmit-drop counters held steady. Those counters do not establish delivery of every individual message. A four-window repeat was rejected. Its first stock window recorded a USB receive error and subsequent windows showed no responding voices. After a RAM restart both voices responded again. The final kernel timing run with MIDI had zero new receive errors. A matched comparison with Grain assigned and sounding, including a Part change under load, remains open. [Observed and rejected windows](evidence/timing/measurements.json) · [MIDI trace generator](evidence/timing/midi_trace.c)
+
+All four working Parts, four saved Parts and the active pattern matched their starting fingerprints through the four-window comparison. A later check after RAM restarts found a different checksum for **working Part 1**. All four saved Parts and the other three working Parts still matched. The comparison did not identify the changed field or its cause. The original base `dfa438130710fea9` returned with its complete original inventory and all ten modules saved and live. The run issued no project Save, Reload, Keep, flash or card-file commands.
+
+The host reproducer below uses the SDK toolchain, Python with SciPy for the bound and a native C compiler for the reference. The probe's SHA-256 is `ad52e8af91b33cdd97531ff7d390e57162d20b0cf259ce788e54d7d02037d652`.
+
+```sh
+out=$(mktemp -d)
+timing=sdk/octatrack/modules/grain/evidence/timing
+python3 -B "$timing/build_probe.py" "$out"
+python3 -B "$timing/bound.py" "$out/grain.elf"
+```
+
 ## SCAN double-speed endpoint, 20 November 2026
 
 Antonio’s correction at `d75b1ecc651cfae491214c3f5f7bd8fb2db41611` maps knob 127 to +64 thirty-seconds of sample speed. The rebuilt 25,632-byte USB package has SHA-256 `371e2e19169814750c4bf844a2b907b1871328f8919fd32b5bddd869859c60b0`. The development and catalogue builders produced identical bytes. The package loads 24,416 bytes and declares 2,124 bytes of BSS. The compiler stack bounds remain 696 bytes along the audio path and 392 bytes along the waveform path.
