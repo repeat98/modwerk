@@ -45,7 +45,7 @@ describe('the Zoom pedal page', () => {
     expect(container.querySelector('[role=status]')?.textContent).toMatch(/Not connected/)
     await click([...container.querySelectorAll('button')].find(b => b.textContent === 'Connect')!); await settle()
     expect(container.querySelector('[role=status]')?.textContent).toMatch(/Connected · firmware 2\.10/)
-    expect(container.querySelector('.hub-hero h2')?.textContent).toBe('MS-70CDR')
+    expect(container.querySelector('.hub-hero h1')?.textContent).toBe('MS-70CDR')
     for (let i = 0; i < 150 && !open().querySelector('.zoom-files'); i++) await settle()   // reads every effect's version first
     expect(open().textContent).toMatch(/1 effect · 1 capture or cab · 200 KB free/)
     expect([...open().querySelectorAll('.zoom-files strong')].map(c => c.textContent)).toEqual(['LOOP.ZDL', 'NAM1smok.ZDL'])
