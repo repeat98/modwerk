@@ -8,7 +8,11 @@ Run it on the computer the unit is plugged into: on Windows with the device venv
 "On Windows, from WSL"), where WSL reaches it on 127.0.0.1 through mirrored networking as it reaches the USB bridge.
 Each line holds MIDI messages as hex words ('c003', 'fa', 'b0307f'); they go out back to back, and the line is
 answered 'ok N' (messages sent) or 'error: ...'. Windows sends through winmm (ctypes, nothing to install); other
-systems through mido, if it is installed. Short messages only, no SysEx. --list prints the MIDI outputs and exits."""
+systems through mido, if it is installed. Short messages only, no SysEx. --list prints the MIDI outputs and exits.
+
+'ping' is answered 'ok 0 NAME' once the output it opened still reaches the unit, reopening it first when it does not:
+after a power cycle a bridge's old handle refused every message (20 November 2026). npm run test:procedure asks it
+before a soak, and starts a bridge of its own when the answer is not 'ok'. A send that fails reopens the output once too."""
 import argparse, socket, socketserver, sys
 
 
@@ -37,16 +41,35 @@ class Winmm:
             c = Caps()
             w.midiOutGetDevCapsW(i, ctypes.byref(c), ctypes.sizeof(c))
             self.names.append(c.name)
-        self.handle = None
+        self.ctypes, self.wintypes, self.Caps, self.name, self.handle = ctypes, wintypes, Caps, name, None
         if name is None:
             return
-        found = [i for i, n in enumerate(self.names) if name.lower() in n.lower()]
+        self.open()
+
+    def open(self):
+        ctypes, w = self.ctypes, self.w
+        self.names = []
+        for i in range(w.midiOutGetNumDevs()):
+            c = self.Caps()
+            w.midiOutGetDevCapsW(i, ctypes.byref(c), ctypes.sizeof(c))
+            self.names.append(c.name)
+        found = [i for i, n in enumerate(self.names) if self.name.lower() in n.lower()]
         if not found:
-            raise SystemExit('No MIDI output named like %r: %s' % (name, ', '.join(self.names) or 'none'))
-        self.handle = wintypes.HANDLE()
-        if w.midiOutOpen(ctypes.byref(self.handle), found[0], None, None, 0):
+            raise SystemExit('No MIDI output named like %r: %s' % (self.name, ', '.join(self.names) or 'none'))
+        handle = self.wintypes.HANDLE()
+        if w.midiOutOpen(ctypes.byref(handle), found[0], None, None, 0):
             raise SystemExit('Could not open %s (another program may hold it).' % self.names[found[0]])
-        self.opened = self.names[found[0]]
+        self.handle, self.opened = handle, self.names[found[0]]
+
+    def alive(self):
+        device = self.wintypes.UINT()
+        return self.handle is not None and self.w.midiOutGetID(self.handle, self.ctypes.byref(device)) == 0
+
+    def reopen(self):
+        if self.handle is not None:
+            self.w.midiOutClose(self.handle)  # a stale handle: its close may fail too, which changes nothing
+            self.handle = None
+        self.open()
 
     def send(self, data):
         word = data[0] | (data[1] << 8 if len(data) > 1 else 0) | (data[2] << 16 if len(data) > 2 else 0)
@@ -67,6 +90,17 @@ class Mido:
         self.port, self.opened = mido.open_output(found[0]), found[0]
         self.mido = mido
 
+    def alive(self):
+        return self.port is not None and self.opened in self.mido.get_output_names()
+
+    def reopen(self):
+        if self.port is not None:
+            self.port.close()
+        found = [n for n in self.mido.get_output_names() if self.opened.lower() in n.lower()]
+        if not found:
+            raise SystemExit('No MIDI output named like %r any more' % self.opened)
+        self.port, self.opened = self.mido.open_output(found[0]), found[0]
+
     def send(self, data):
         self.port.send(self.mido.Message.from_bytes(list(data)))
 
@@ -78,6 +112,26 @@ def output(name):
         return Mido(name)
     except ImportError:
         raise SystemExit('Outside Windows this bridge needs mido (pip install mido python-rtmidi).')
+
+
+def answer(out, line):
+    """One line's reply: 'ping' checks (and if need be reopens) the output; MIDI words go out, with one reopen when a send
+    fails, as a stale handle after a power cycle does."""
+    try:
+        if line.strip() == 'ping':
+            if not out.alive():
+                out.reopen()
+            return 'ok 0 %s\n' % out.opened
+        messages = parse(line)
+        for m in messages:
+            try:
+                out.send(m)
+            except OSError:
+                out.reopen()
+                out.send(m)
+        return 'ok %d\n' % len(messages)
+    except (ValueError, OSError, SystemExit) as e:
+        return 'error: %s\n' % e
 
 
 def main():
@@ -95,14 +149,7 @@ def main():
         def handle(self):
             self.connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)  # a reply per line, no batching
             for raw in self.rfile:
-                try:
-                    messages = parse(raw.decode('ascii', 'replace'))
-                    for m in messages:
-                        out.send(m)
-                    reply = 'ok %d\n' % len(messages)
-                except (ValueError, OSError) as e:
-                    reply = 'error: %s\n' % e
-                self.wfile.write(reply.encode())
+                self.wfile.write(answer(out, raw.decode('ascii', 'replace')).encode())
                 self.wfile.flush()
 
     socketserver.TCPServer.allow_reuse_address = True

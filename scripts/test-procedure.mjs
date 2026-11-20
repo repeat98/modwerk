@@ -19,7 +19,8 @@
 // takes the unit between reading it and checking it was put back.
 import { spawn, execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { createConnection } from 'node:net'
 import { tmpdir } from 'node:os'
 import { basename, dirname, join, relative, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
@@ -54,7 +55,7 @@ export const STEPS = [
   { id: 'cost-model', title: 'DSP cost model', applies: 'both' },
   { id: 'emulator', title: 'Emulator rehearsal', applies: 'both' },
   { id: 'unit-read', title: 'Read the unit', applies: 'both', unit: true },
-  { id: 'unit-pass', title: 'Scripted unit pass', baseTitle: 'Large set and Undo', applies: 'both', unit: true },
+  { id: 'unit-pass', title: 'Scripted unit pass', baseTitle: 'Large sets and Undo', applies: 'both', unit: true },
   { id: 'soak', title: 'Soak', applies: 'both', unit: true },
   { id: 'cost-unit', title: 'Cost on the unit', applies: 'both', unit: true },
   { id: 'restore', title: 'Put back', applies: 'both', unit: true },
@@ -73,6 +74,7 @@ export const builtPackage = ctx => join(ctx.out, (ctx.id ?? 'base') + (ctx.kind 
 /** The layer of the test pyramid a step stands on (docs/TEST_PROCEDURE.md): a claim is proven on the lowest layer that can prove it. */
 export const LAYER = { software: 'host', compat: 'contract', build: 'host', 'cost-model': 'contract', emulator: 'emulator', 'unit-read': 'target',
   'unit-pass': 'target', soak: 'target', 'cost-unit': 'unit', restore: 'target', 'by-hand': 'target', developer: 'unit' }
+const DEFAULT_MIDI = '127.0.0.1:50124'
 const EMULATOR_FIGURES = 'the emulator\'s load figures are not the unit\'s (DMA is instant, no DSP timing): docs/OCTATRACK_HARDWARE_TRAPS.md#the-emulator-and-the-tools'
 
 /** The commands each step runs for this target, or why it is not run. Pure: everything it reads is in ctx. */
@@ -107,21 +109,25 @@ export function plan(step, ctx) {
     case 'unit-read':
       return { commands: [node('scripts/device.mjs', 'status', '--socket', ctx.share), node('scripts/device.mjs', 'do', 'inventory', '--socket', ctx.share)] }
     case 'unit-pass':
-      if (!module) return { commands: [node('scripts/device.mjs', 'set', set, '--seconds', '30', '--socket', ctx.share)] }
+      // A base: every USB package does not fit the module pool at once (36 packages, 439 KB, refused whole on 20 November
+      // 2026), so as few sets as cover them, each as large as the pool the base reports takes (as the owner's 24-package
+      // sets of 0.7.10, #1757), each a whole-set trial rolled back and the inventory checked after it.
+      if (!module) return { run: 'base-sets', commands: [node('scripts/device.mjs', 'do', 'memory', '--socket', ctx.share), node('scripts/device.mjs', 'set', '<a set that fits>', '--seconds', '30', '--socket', ctx.share)] }
       return { commands: [npmRun('device:test', '--share', ctx.share, '--testing-entry', join(ctx.out, 'device-test.md'),
         ...(ctx.tools?.soak ? [] : ['--soak', String(ctx.soakSeconds)]), pkg)] }
     case 'soak': {
       if (ctx.target === 'emulator' && ctx.tools?.soak) return { skip: 'the fast soak sends USB MIDI to the unit\'s port, which the emulator has not' }
       if (!ctx.tools?.soak) return module ? { inside: 'unit-pass', note: 'ran inside the scripted pass as device:test --soak ' + ctx.soakSeconds + '; the fast seeded soak (' + SOAK_TOOL + ', pull request #1770) is not in this checkout yet' }
         : { skip: 'the fast seeded soak (' + SOAK_TOOL + ', pull request #1770) is not in this checkout yet' }
-      const soak = node(SOAK_TOOL, '--seconds', String(ctx.soakSeconds), '--log', join(ctx.out, 'soak.json'))
-      // A module soaks inside a trial of its own, rolled back at the end; a base soaks with whatever the unit runs.
-      return module ? { commands: [soak], trial: node('scripts/device.mjs', 'try', pkg, '--seconds', String(ctx.soakSeconds + 300), '--socket', ctx.share) } : { commands: [soak] }
+      const soak = node(SOAK_TOOL, '--seconds', String(ctx.soakSeconds), '--log', join(ctx.out, 'soak.json'), '--midi', ctx.midi ?? DEFAULT_MIDI)
+      // A module soaks inside a trial of its own, rolled back at the end; a base soaks with whatever the unit runs. The MIDI
+      // bridge is checked first and, when it does not answer, one of the runner's own carries the run (soakBridge).
+      return module ? { run: 'soak', commands: [soak], trial: node('scripts/device.mjs', 'try', pkg, '--seconds', String(ctx.soakSeconds + 300), '--socket', ctx.share) } : { run: 'soak', commands: [soak] }
     }
     case 'cost-unit':
       if (ctx.target === 'emulator') return { skip: EMULATOR_FIGURES }
       if (module && ctx.baseBound) return { skip: 'a base-bound package: device:price leaves it out, since a development twin does not trust it' }
-      return { commands: [npmRun('device:price', '--share', ctx.share, '--out', join(ctx.out, 'price.json'), '--scene', ctx.scene ?? DEFAULT_SCENE, ...(module ? [pkg] : ctx.priceModules ?? []))] }
+      return { run: 'price', commands: [npmRun('device:price', '--share', ctx.share, '--out', join(ctx.out, 'price.json'), '--scene', ctx.scene ?? DEFAULT_SCENE, ...(module ? [pkg] : ctx.priceModules ?? []))] }
     case 'restore':
       return { commands: [node('scripts/device.mjs', 'do', 'inventory', '--socket', ctx.share)], compare: 'unit-read' }
     case 'by-hand': return { todo: BY_HAND[ctx.kind] }
@@ -134,6 +140,117 @@ export function plan(step, ctx) {
 export function lastJson(text) {
   for (const line of (text ?? '').trim().split('\n').reverse()) { try { return JSON.parse(line) } catch { /* not this line */ } }
   return undefined
+}
+
+/** The module id a published package's path names (public/octatrack-modules/<id>/<version>.mwrm), else its file name. */
+export const packageId = path => /octatrack-modules\/([^/]+)\/[^/]+\.mwrm$/.exec(path)?.[1] ?? basename(path, '.mwrm')
+
+/** As few sets as cover every package, each as large as `budget` bytes take: the uncovered packages first (largest first),
+ * then the set filled up with covered ones (smallest first), so each set is as large as fits and every package is in one.
+ * A package larger than the budget goes alone, for the base to refuse with its reason. */
+export function packSets(packages, budget) {
+  const byPath = new Map(packages.map(pkg => [pkg.path, pkg])), covered = new Set(), sets = []
+  const ascending = [...packages].sort((a, b) => a.bytes - b.bytes || a.path.localeCompare(b.path))
+  while (covered.size < packages.length) {
+    const set = new Set()
+    let total = 0
+    for (const pkg of [...ascending].reverse()) if (!covered.has(pkg.path) && total + pkg.bytes <= budget) { set.add(pkg.path); total += pkg.bytes }
+    if (!set.size) { const big = [...ascending].reverse().find(pkg => !covered.has(pkg.path)); set.add(big.path); total += big.bytes }
+    for (const pkg of ascending) if (!set.has(pkg.path) && total + pkg.bytes <= budget) { set.add(pkg.path); total += pkg.bytes }
+    for (const path of set) covered.add(path)
+    sets.push(packages.filter(pkg => set.has(pkg.path)).map(pkg => byPath.get(pkg.path)))
+  }
+  return sets
+}
+
+/** `do memory`'s line: the pool's free bytes (and its largest free run, which the record names). */
+export function poolFree(text) {
+  const m = /pool: (\d+) of (\d+) bytes used; free (\d+), largest free run (\d+)/.exec(text ?? '')
+  return m ? { used: Number(m[1]), size: Number(m[2]), free: Number(m[3]), largest: Number(m[4]) } : null
+}
+
+const SET_DEPTH = 4 // a set the base refuses for memory is halved, at most this often
+const HANDLERS = {
+  /** Step 7 for a base: the sets, each a whole-set trial, its result and the inventory after it in the record. */
+  async 'base-sets'({ ctx, deps, log, result }) {
+    const share = ctx.share
+    const memory = await deps.exec(node('scripts/device.mjs', 'do', 'memory', '--socket', share), log, ctx.env)
+    const pool = poolFree(memory.output)
+    if (memory.code !== 0 || !pool) { result.reason = 'could not read the module pool (do memory): ' + (memory.output ?? '').trim().split('\n').slice(-1)[0]; return 1 }
+    const packages = (ctx.setPackages ?? []).map(path => ({ path, id: packageId(path), bytes: deps.size(path) }))
+    const queue = packSets(packages, pool.free).map(set => ({ set, depth: 0 }))
+    result.details = [`pool ${pool.size} bytes, ${pool.free} free (largest free run ${pool.largest}) before the sets; ${packages.length} packages`]
+    result.sets = []
+    let code = 0
+    while (queue.length) {
+      const { set, depth } = queue.shift(), n = result.sets.length + 1, bytes = set.reduce((sum, pkg) => sum + pkg.bytes, 0)
+      const entry = { n, packages: set.map(pkg => pkg.id), bytes }
+      result.sets.push(entry)
+      const run = await deps.exec(node('scripts/device.mjs', 'set', set.map(pkg => pkg.path).join(','), '--seconds', '30', '--socket', share), log, ctx.env)
+      const refused = /^refused: (.*)$/m.exec(run.output ?? '')?.[1]
+      if (refused && /RUNTIME_MEMORY|refusal 2\b/.test(refused) && set.length > 1 && depth < SET_DEPTH) {
+        entry.result = 'refused for memory (' + refused.slice(0, 80) + '): split in two'
+        const half = Math.ceil(set.length / 2)
+        queue.unshift({ set: set.slice(0, half), depth: depth + 1 }, { set: set.slice(half), depth: depth + 1 })
+        continue
+      }
+      if (refused) { entry.result = 'refused: ' + refused.slice(0, 160); code = 1 }
+      else if (run.code !== 0 || !/^rolled back/m.test(run.output ?? '')) { entry.result = 'failed: ' + ((run.output ?? '').trim().split('\n').find(line => /verdict|fault|crash|stall/i.test(line)) ?? 'exit ' + run.code); code = 1 }
+      else entry.result = 'passed, rolled back'
+      const after = await deps.exec(node('scripts/device.mjs', 'do', 'inventory', '--socket', share), log, ctx.env)
+      if (JSON.stringify(lastJson(after.output)) !== JSON.stringify(ctx.startInventory)) { entry.result += '; the inventory after it differs from the start'; code = 1 }
+      if (code) break // never go on over a unit left in a state nobody chose
+    }
+    result.details.push(...result.sets.map(entry => `set ${entry.n} (${entry.packages.length} packages, ${entry.bytes} bytes): ${entry.result}: ${entry.packages.join(', ')}`))
+    const missing = packages.filter(pkg => !result.sets.some(entry => entry.result?.startsWith('passed') && entry.packages.includes(pkg.id)))
+    if (!code && missing.length) { result.reason = 'not every package ran in a set that passed: ' + missing.map(pkg => pkg.id).join(', '); return 1 }
+    if (code) result.reason = `set ${result.sets.at(-1).n}: ${result.sets.at(-1).result}`
+    return code
+  },
+
+  /** Step 8: the soak through a MIDI bridge that answers. One that does not (a stale one another session left) is left
+   * alone; the runner starts its own on a free port for the run and stops it afterwards. */
+  async soak({ p, ctx, deps, log, result }) {
+    const [host, port] = (ctx.midi ?? DEFAULT_MIDI).split(':'), configured = Number(port)
+    const reply = await deps.ask(host, configured, 'ping', 3000)
+    let use = configured, own = null
+    if (reply?.startsWith('ok')) result.details = [`MIDI bridge on ${host}:${configured}: it answered ping (${reply.trim()})`]
+    else {
+      const command = ctx.bridgeCommand ?? ['python3', '-B', 'scripts/octatrack-midi-bridge.py']
+      for (let candidate = configured + 1; candidate <= configured + 16 && !own; candidate++) {
+        if (await deps.ask(host, candidate, 'ping', 500) !== null) continue // someone else's: never touch it
+        const bridge = deps.start([...command, String(candidate)], log, {})
+        try { await bridge.waitFor(new RegExp(`MIDI to .* on 127\\.0\\.0\\.1:${candidate}`), 20000); own = bridge; use = candidate }
+        catch { await bridge.stop(); if (/Could not open|No MIDI output/.test(bridge.output?.() ?? '')) break }
+      }
+      if (own) result.details = [`MIDI bridge: the runner's own on ${host}:${use}, stopped after the run (the one on ${configured} ${reply === null ? 'did not answer' : 'answered ' + JSON.stringify(reply.trim().slice(0, 80))})`]
+      else if (reply !== null) result.details = [`MIDI bridge on ${host}:${configured}: an older bridge without ping, used as it is; no other could be started, so its path to the unit was not checked`]
+      else { result.reason = `no MIDI bridge answers on ${host}:${configured} and none could be started: run scripts/octatrack-midi-bridge.py on the computer the unit is plugged into, or name its command in MODWERK_MIDI_BRIDGE`; return 1 }
+    }
+    const argv = p.commands[0].map(arg => arg === `${host}:${configured}` ? `${host}:${use}` : arg)
+    result.commands = [...(p.trial ? [shown(p.trial)] : []), shown(argv)]
+    try {
+      const run = await deps.exec(argv, log, ctx.env)
+      if (run.code !== 0) { result.reason = `exit ${run.code}: ${shown(argv)}`; return run.code }
+      return 0
+    } finally { if (own) await own.stop() }
+  },
+
+  /** Step 9: device:price, then its file read back, so one module's failed pick is that module's line, not the step's loss. */
+  async price({ p, ctx, deps, log, result }) {
+    const run = await deps.exec(p.commands[0], log, ctx.env)
+    if (run.code !== 0) { result.reason = `exit ${run.code}: ${shown(p.commands[0])}`; return run.code }
+    const file = join(ctx.out, 'price.json')
+    const results = deps.exists(file) ? JSON.parse(deps.read(file)).results ?? [] : []
+    const expected = ctx.kind === 'module' ? 1 : (ctx.priceModules ?? ctx.setPackages ?? []).length
+    result.details = [`${results.length} of ${expected} packages priced`,
+      ...results.filter(r => r.refused || r.inUseError || r.restore || !r.rolledBack)
+        .map(r => `${r.id}: ${r.refused ? 'not installed: ' + r.refused : ''}${r.inUseError ? 'in use not measured: ' + r.inUseError : ''}${r.restore ? '; ' + r.restore : ''}${r.rolledBack ? '' : '; the trial did not roll back'}`)]
+    const unsafe = results.find(r => !r.rolledBack || r.restore)
+    if (unsafe) { result.reason = `${unsafe.id} left the unit in a state nobody chose; device:price stopped there`; return 1 }
+    if (results.length < expected) { result.reason = `device:price stopped after ${results.length} of ${expected} packages`; return 1 }
+    return 0
+  },
 }
 
 /** Run the steps in `ids`, in the fixed order, stopping at the first failure. deps.exec(argv, logFile) -> {code, output};
@@ -169,7 +286,8 @@ export async function runSteps(ids, ctx, deps, results = []) {
       }
       const outputs = []
       let code = 0
-      for (const argv of p.commands) {
+      if (p.run) code = await HANDLERS[p.run]({ p, ctx, deps, log, result })
+      else for (const argv of p.commands) {
         const run = await deps.exec(argv, log, ctx.env)
         outputs.push(run.output ?? '')
         if (run.code !== 0) { code = run.code; result.reason = `exit ${run.code}: ${shown(argv)}`; break }
@@ -256,6 +374,7 @@ export function recordMarkdown(record) {
     `\`${record.command}\`, ${record.seconds} s. Emulator results are not hardware evidence; only what ran on the unit is.`, '',
     '| # | Step | Layer | Result | Command | Evidence |', '|---|---|---|---|---|---|',
     ...steps.map((step, index) => `| ${index + 1} | ${step.title}${step.emulator ? ' (emulator)' : ''} | ${step.layer === 'target' ? (step.emulator ? 'emulator' : 'unit') : step.layer ?? ''} | ${STATUS_WORD[step.status]}${step.reason ? ': ' + cell(step.reason) : ''} | ${step.commands.map(c => '`' + cell(c) + '`').join('<br>')} | ${step.log ?? ''} |`),
+    ...(steps.some(step => step.details?.length) ? ['', ...steps.flatMap((step, index) => (step.details ?? []).map(line => `- Step ${index + 1}: ${line}`))] : []),
     '', '#### Edge cases for this change', '',
     'Derive them from what the change touches and run each one (docs/TEST_PROCEDURE.md#edge-cases). A start, from the manifest and the changed files:', '',
     ...(record.edgeCases.suggested.length ? record.edgeCases.suggested.map(s => `- ${s.touches}: ${s.ask} (docs/${s.see})`) : ['- nothing matched: read the diff']), '',
@@ -302,6 +421,7 @@ export function context(root, values, positionals, env = process.env) {
   let ctx = { kind: values.base ? 'base' : 'module', share, target, devSocket,
     // The session's line socket for device:test's steps; an emulator takes no turn of the unit queue.
     env: { ...(devSocket ? { MODWERK_DEV_SOCKET: devSocket } : {}), ...(target === 'emulator' ? { MODWERK_UNIT: 'emulator' } : {}) }, soakSeconds: Number(values['soak-seconds'] ?? 120), scene: values.scene, emulatorSocket: values['emulator-socket'],
+    midi: values.midi ?? env.MODWERK_MIDI, bridgeCommand: env.MODWERK_MIDI_BRIDGE ? ['sh', '-c', 'exec ' + env.MODWERK_MIDI_BRIDGE + ' "$0"'] : undefined,
     tools: { cycleScan: existsSync(join(root, SCAN_TOOL)), soak: existsSync(join(root, SOAK_TOOL)), unitQueue: !!scripts.unit },
     build: { revision: git('rev-parse', 'HEAD') || 'unknown', dirty: !!git('status', '--porcelain', '--untracked-files=no') } }
   const named = positionals[0]
@@ -359,6 +479,14 @@ function realDeps(root) {
   return {
     now: () => Date.now(),
     exists: path => existsSync(path),
+    size: path => statSync(path).size,
+    ask: (host, port, line, ms) => new Promise(done => { // the first line a TCP line service answers, or null when none listens
+      const socket = createConnection({ host, port: Number(port) }); let reply = '', over = false
+      const end = value => { if (!over) { over = true; socket.destroy(); done(value) } }
+      socket.setTimeout(ms, () => end(reply || 'error: no answer within ' + ms + ' ms'))
+      socket.on('connect', () => socket.write(line + '\n')).on('data', chunk => { reply += chunk; if (reply.includes('\n')) end(reply.split('\n')[0]) })
+        .on('error', () => end(null)).on('close', () => end(reply || null))
+    }),
     read: path => readFileSync(path, 'utf8'),
     sha256: path => createHash('sha256').update(readFileSync(path)).digest('hex'),
     exec: async (argv, log, env) => { const { state } = launch(argv, log, env); const code = await state.done; return { code, output: state.output } },
@@ -367,6 +495,7 @@ function realDeps(root) {
       let ended = false
       state.done.then(() => { ended = true })
       return {
+        output: () => state.output,
         async waitFor(pattern, ms) {
           for (const until = Date.now() + ms; Date.now() < until; await new Promise(r => setTimeout(r, 250))) {
             if (pattern.test(state.output)) return
@@ -387,7 +516,7 @@ function realDeps(root) {
 
 const OPTIONS = { base: { type: 'boolean' }, package: { type: 'string' }, published: { type: 'boolean' }, plan: { type: 'boolean' }, out: { type: 'string' },
   share: { type: 'string' }, 'no-unit': { type: 'boolean' }, 'emulator-socket': { type: 'string' }, 'soak-seconds': { type: 'string' }, scene: { type: 'string' },
-  'price-modules': { type: 'string' }, target: { type: 'string' }, 'dev-socket': { type: 'string' }, 'unit-phase': { type: 'string' }, help: { type: 'boolean', short: 'h' } }
+  'price-modules': { type: 'string' }, midi: { type: 'string' }, target: { type: 'string' }, 'dev-socket': { type: 'string' }, 'unit-phase': { type: 'string' }, help: { type: 'boolean', short: 'h' } }
 
 async function main() {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: OPTIONS })
