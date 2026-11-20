@@ -74,12 +74,25 @@ I installed Grain as a card set (`MODWERK0.SET`) on a Modwerk base built locally
   full-screen page.
 - POS in fine steps, speeding up with the turn; a pressed knob jumps by seven.
 - Parameter changes with scenes and the crossfader, LFOs on the SRC knobs and parameter locks on trigs.
-- Two Grain tracks at once (mono, and stereo with PAN) and three at once; a fourth and more were not tried. CPU read on the base's status screen: 44 % with no GRAIN;
-  63–64 % with two tracks at DENS 64; 64–65 % with two stereo tracks at DENS 64; 67–68 % with two tracks at high
+- Two Grain tracks at once (mono samples, with and without PAN) and three at once; a fourth and more were not tried. CPU read on the base's status screen: 44 % with no GRAIN;
+  63–64 % with two tracks at DENS 64; 64–65 % with two tracks with PAN set at DENS 64 (mono samples: PAN makes the output stereo, the sample is not); 67–68 % with two tracks at high
   density and PAN; 73–74 % with both tracks at the maximum of DENS and PAN. DSP and memory readings did not change.
 - The base's frame guard (mw_frame_sheds) was read on the unit with a debug build of an earlier version: it stayed at 0 while two Grain tracks played, so no render was swapped for silence.
 - Project and Part saves keep everything: the track is still GRAIN and every knob is as set after a power cycle (confirmed by the author on 0.4.x). On 20 November 2026 the author repeated it on the MKI with a new bank, a new pattern and a new sample, POS, SIZE and DENS set, the Part and the project saved and a power cycle, then loaded another project and reloaded the first: the track, the sample and every knob came back as set. This was an earlier 0.4.x build on the author's local base, not the corrected USB package.
 - Loading a sample from another folder through the sample pool keeps the track as Grain.
+
+**CPU readings on the MKI, 20 November 2026.** One track playing one sustained note (a single trig, AMP HOLD at its maximum, a 64-step pattern, 140 BPM) with the engine's defaults and the base's CPU meter read by eye. The samples were **mono**; the readings above and these were all made with mono samples, so the cost with a stereo sample was not measured on the MKI. The DSP meters did not move (tracks 1 to 4 at 33 %, tracks 5 to 8 at 40 %): Grain runs only on the ColdFire.
+
+| Case | CPU meter | Over the stopped project (43 %) |
+| --- | --- | --- |
+| Stopped | 43 % | – |
+| One track, defaults (DENS 64, SIZE 64, SPRY 0, SCAN 0, PAN 0) | 56 to 58 % | about +14 |
+| One track, DENS 100, SPRY 40, PAN 108 | 60 to 61 % | about +18 |
+| One track, DENS 127, SPRY 127, SCAN at its maximum | 63 to 65 % | about +21 |
+| Two tracks, DENS 100, SPRY 40, PAN 108 | 77 to 81 % | about +18 each |
+| Three tracks, the same settings | 90 to 91 % | glitches audible |
+
+A plain Flex track with the same sample and the 16-trig pattern of the MKII run were not measured yet.
 
 ## What was tested only in an emulator (ot_emu, MKII mode; not hardware)
 - A power cycle with the stock-faithful Part check, on a base **without** any knowledge of GRAIN: the track comes back
@@ -106,8 +119,8 @@ back to SRC. Pressing PLAYBACK again closes it. FUNC + PLAYBACK still opens SRC 
 
 | Case | Why this change makes it a risk | How run | Result |
 | --- | --- | --- | --- |
-| Two or more Grain tracks at once, mono and stereo, with PAN | every track keeps its own grains, read position and page cache in one shared render | Two tracks on the author's MKI with the pattern running; CPU read on the base's status screen | pass (MKI, an earlier build of this source) |
-| Three Grain tracks at once; a fourth, or eight | one track costs 10 to 15 points of the CPU meter and the base reserves 15 for it | Three Grain tracks playing at once on the MKI (the author, 0.4.x builds); a fourth and eight were not tried | pass for three (MKI); not run for a fourth and eight: the base refuses the next with CPU FULL, not tried on the unit |
+| Two or more Grain tracks at once, mono samples, with PAN | every track keeps its own grains, read position and page cache in one shared render | Two tracks on the author's MKI with the pattern running; CPU read on the base's status screen | pass (MKI, an earlier build of this source) |
+| Three Grain tracks at once; a fourth, or eight | one track costs 14 to 21 points of the CPU meter on the MKI (mono sample, 20 November) and the base reserves 15 for it | Three tracks playing a sustained note on the MKI (the author), earlier at DENS 64 and on 20 November with DENS 100, SPRY 40 and PAN 108; a fourth and eight were not tried | partial (MKI): two tracks at 77 to 81 %; three tracks reach 90 to 91 % with audible glitches at the denser settings; not run for a fourth and eight |
 | A Part and a project saved, then a power cycle | every value Grain stores in a Part must pass stock's own power-on check, with or without the module | Saved the project and the Parts on the MKI, switched off and on; in `ot_emu` a power cycle with the stock-faithful check on a base that knows nothing of Grain | pass (MKI by the author on 0.4.x; emulator on the GCC 13 build of the same source) |
 | A project opened without the module, or on a unit without it | the track must read as Flex and no bank may be refused | Not run on a unit; the stored bytes were chosen to pass stock's check | not run: no unit run without the module |
 | A sample picked from another folder through the sample pool | the pool opens from a Grain track and its file browser can hide the track from the machine | Picked samples from other folders on the MKI (the author, 0.4.x builds) and in `ot_emu`; the track stays Grain | pass (MKI, emulator) |
