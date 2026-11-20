@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "horizon",
+  "moduleVersion": "0.3.0",
+  "imageSha256": "e7422a884ad56e13346f2dc186da4e3b2599beee756ebeac2a08970208e600d2",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "ab04da8df55a752a988ef12aabc76910020eba5526bd1cf8a385533532edfdda",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}

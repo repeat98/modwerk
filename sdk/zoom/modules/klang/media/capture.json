@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "klang",
+  "moduleVersion": "2.0.0",
+  "imageSha256": "2f64691a4ab840a2094d558d5f02809ff1c4ca22b8b8cc61ff71a01486335173",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "1b764882f01de5559af17eba03d2d71d127b247d694c997d4b77af7f4d12b7b2",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}
