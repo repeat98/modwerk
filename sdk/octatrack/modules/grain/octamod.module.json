@@ -144,7 +144,7 @@
     },
     "processing": {
       "label": "ColdFire, in the frame interrupt",
-      "display": "34% of a frame reserved per playing Grain track",
+      "display": "35% of a frame reserved per playing Grain track",
       "value": null,
       "unit": "cycles/block",
       "method": "unmeasured",
@@ -156,7 +156,7 @@
       "cpu": {
         "level": "high",
         "basis": "measured-comparison",
-        "rationale": "On the MKII, one stereo track with six grains sounding added up to 33.9 percentage points to the frame interrupt. The Octatrack uses a price of 34 to admit Grain tracks according to the rest of the current Part.",
+        "rationale": "On the MKII, one stereo track with six grains sounding added up to 34.1 percentage points to the frame interrupt. The Octatrack uses a price of 35 to admit Grain tracks according to the rest of the current Part.",
         "source": "TESTING.md"
       },
       "dsp": {
@@ -173,20 +173,20 @@
       }
     },
     "cpuPrice": {
-      "value": 34,
+      "value": 35,
       "unit": "percent-of-frame",
       "measure": "machine-render",
       "tool": "npm run device -- do (guard)",
       "date": "2026-11-20",
-      "conditions": "Octatrack MKII, OS 1.40C, development base 06e08f35, B16 Part 1, stereo 16-bit Flex sample of 88,200 frames. T1 at 140 BPM in SYNC with six grains observed, SIZE, DENS, SPRY and PAN 127. Three paired six-second windows averaged 60.1, 60.8 and 60.8% with all 16 trigs, and 26.8, 26.9 and 26.9% without them. Highest difference 33.9 points, rounded up to 34. No skipped renders in these windows.",
+      "conditions": "Octatrack MKII, OS 1.40C, development base 06e08f35, B16 Part 1, stereo 16-bit Flex sample of 88,200 frames. T1 at 140 BPM in SYNC with six grains observed, SIZE, DENS, SPRY and PAN 127. Three paired six-second windows averaged 60.1, 60.8 and 60.8% with all 16 trigs, and 26.8, 26.9 and 26.9% without them. A repeat after the track admission tests measured 32.1% quiet and 66.2% triggered. Highest difference 34.1 points, rounded up to 35. No skipped renders in these windows.",
       "source": "TESTING.md"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "On the MKII all six SRC controls reached the correct renderer words, SETUP selected SYNC, and six voices sounded together in the measured pricing scene. Linked ColdFire tests cover both buffers on every track. Host checks cover reference renders, optimized mono and stereo reads, and the full Flex position and scatter range. TESTING.md names each build and its remaining checks.",
+    "summary": "On the MKII all six SRC controls reached the correct renderer words, SETUP selected SYNC, and six concurrent voices were active in the measured pricing scene. Linked ColdFire tests cover both buffers on every track. Host checks cover reference renders, optimized mono and stereo reads, and the full Flex position and scatter range. TESTING.md names each build and its remaining checks.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "e106348f4f6b11e1e474ac4da3d30bb52e588f9d",
+    "evidenceRevision": "9f7be2c13a9adf2caeac91ca9452550351107dde",
     "gates": [
       "python3 -B test_grain.py",
       "python3 -B generate.py --check"

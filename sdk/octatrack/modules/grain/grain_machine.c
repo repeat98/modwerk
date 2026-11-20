@@ -887,8 +887,8 @@ const struct modwerk_machine_setup grain_machine = {.machine = {
     .defaults = defaults, .admit_track = grain_admit, .assign = grain_assign, .chooser_type = grain_chooser,
     .track_page = grain_page, .ui_tick = grain_ui_tick, .pool_open = grain_pool_open, .pool_left = grain_pool_left,
     .render = grain_render,
-    /* Media del frame en MKII, seis granos en SYNC: 33,3 a 33,9 puntos sobre la pista sin trigs (TESTING.md). */
-    .reserved = {34},
+    /* Media del frame en MKII, seis granos en SYNC: 33,3 a 34,1 puntos sobre la pista sin trigs (TESTING.md). */
+    .reserved = {35},
 }, .page = grain_setup_page, .knob = grain_setup_knob};
 const struct modwerk_machine_start grain_machine_start = {
     .abi = MODWERK_MACHINE_START_ABI, .bytes = sizeof(struct modwerk_machine_start),

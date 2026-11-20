@@ -6240,7 +6240,7 @@ grain_machine:
 	.zero	8
 	.long	grain_render
 	.zero	9
-	.string	"\""
+	.string	"#"
 	.zero	1
 	.long	grain_setup_page
 	.long	grain_setup_knob
