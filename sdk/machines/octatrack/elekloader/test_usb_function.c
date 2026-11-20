@@ -406,6 +406,18 @@ int main(void)
         back();
     }
 
+    /* With the cable still powered, a successful second attachment settles
+     * the existing trial. Do not treat the remaining lease as a disconnect. */
+    UF_REG(OTGSC) = 0x800;
+    UF_REG(PORTSC1) = 0;
+    arrive();
+    CHECK(!ticks(62 + 31 + 180, 1) && !attached());
+    CHECK(!ticks(31, 1) && attached());
+    UF_REG(PORTSC1) = 1u;
+    back();
+    CHECK(!status(0) && !ticks(1200, 1));
+    describes(1);
+
     if (failures) return 1;
     puts("usb function: admission, slots, reconnect and its holds pass");
     return 0;
