@@ -23,9 +23,12 @@ the same image booted one-shot came back. Everything else here was done on the o
   PART+FUNC+PLAY, which clears: Dev12's bank B Part 1 is named `PART 1` from it.)
 - Read the state before you change it, and after you put it back.
 - RELOAD needs a Part that was saved at least once. On one that never was, it shows SAVE PART FIRST! and
-  changes nothing, though the saved copy reads equal (Dev12's bank B after a RAM boot, 12 October 2026). The
-  scripts then pick each changed slot's saved effect back by name (`restore_part` in `octatrack-qualify.py`), which
-  restores a cleared Part's default knobs, and check both copies afterwards.
+  changes nothing, even when its working and saved copies matched before the test. Picking the original effects
+  back can leave their knobs at defaults. Before editing a scratch Part, check whether another Part in that bank
+  is byte-identical to its starting working and saved copies. To restore from that duplicate, recheck its bytes,
+  select it, press `PART+FUNC+REC`, and verify COPY PART names the source. Close the selector with NO, select
+  the scratch Part and press `PART+FUNC+STOP`. Verify PASTE ON PART names the destination, then close with NO.
+  This uses the Part clipboard. Read back both copies and restore the pattern's original Part assignment.
 - After a power cycle, check the Part again: the unit can come back with an older working copy from the card
   (11 October 2026: a RELOAD made before the unplug was gone, and picks from before it were back).
 - Keep each command short: a few steps, a time limit, its output read at once. A long run goes in the
@@ -151,7 +154,7 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 | `screen` | the screen as block characters (thousands of tokens; avoid) |
 | `crash` | the last crash record (vector, PC, registers); `crashtest` makes one. The PC and the stack read as names (`mw_frame_exit+0x2c`) when the running base was built with `octatrack:base -- --out` or started with `boot DIR` on this computer; your own names for stock addresses go in `~/.cache/modwerk-local/octatrack/addresses.json` (`{"0x…": "name"}`), never in Git. `diaglog` and `diagnostics:pull` name them the same way |
 | `selftest` | PROJ > MODWERK > SELF TEST over USB: start it (transport stopped), wait, print the verdict, the modules that ran and the CPU and core peaks |
-| `saved` | the card set's result code, modules saved and live, read without a test: 1 restored at this start, 7 saved since. Not its generation, which no request reports. To try a set from the card, `node scripts/octatrack-card-set.mjs --out DIR ID…` writes `MODWERK0.SET` for the published base; the owner copies it and power-cycles (restored so on the MKII, released base `d891acb3`, 11 November 2026) |
+| `saved` | the card set's result code, modules saved and live, read without a test: 1 restored at this start, 7 saved since. Not its generation, which no request reports. To try a set from the card, `node scripts/octatrack-card-set.mjs --out DIR ID…` writes `MODWERK0.SET` for the published base; on a used card run the same script with `--out CARD --import DIR/MODWERK0.SET` to select that export ahead of `MODWERK1.SET` and keep the recovery slot, then power-cycle (restored so on the MKII, released base `d891acb3`, 11 November 2026) |
 | `dspmap`, `dspmap:watch:N` | each core's DSP code arena drawn as 64 cells, a letter per placed block and `.` per free words, then each block's name, start, words and the slots running it (else `preloaded`: code another Part of the bank names). `watch:N` redraws it for N seconds (at most 15) whenever a block comes, goes or moves, so compaction shows: on 24 October 2026 removing a Mini Verb between SPRING REV and DARK REV left a 538-word hole and DARK REV moved down into it 2.1 s later |
 | `profile`, `profile:N` | the base's tick profile (`modwerk_cost`, diag.h): each UI tick hook's µs a tick over N seconds (3, at most 15) and the frame transfer's µs a frame. It reads the address from the build `boot DIR` last started (`~/.cache/modwerk-octatrack/last-boot`) and refuses when another base runs. On 24 October 2026 it showed the controller tick at 814 µs with 26 modules installed, 212 µs after the fix in #880 |
 | `selftest:trace` | the same, printing each half second's phase, progress, the CPU the test recorded and the meter's latest window beside it: what a CPU or core peak came from |

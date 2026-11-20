@@ -1,0 +1,1 @@
+- Catalog checks now inspect the JPEGs the site build actually emits and render the gallery once per test suite.

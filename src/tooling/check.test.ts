@@ -1,11 +1,25 @@
 import { spawnSync, execFileSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
+import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { expect, it } from 'vitest'
 
-const runner = fileURLToPath(new URL('../../scripts/check.mjs', import.meta.url))
+const runner = new URL('../../scripts/check.mjs', import.meta.url)
+const generators = ['licenses:generate', 'machines:generate', 'modules:generate']
+const preflight = ['prepare', 'licenses:check', 'machines:check', 'modules:check', 'elekloader:check', 'modules:compat', ...generators]
+const appChecks = ['lint', 'typecheck', 'build:bundle']
+
+// The real runner takes its root from import.meta.url. Keep its fixture and last-run record
+// in the scratch repository while importing the same check implementations as the CLI.
+function writeRunner(folder: string) {
+  const scripts = join(folder, 'scripts')
+  mkdirSync(scripts)
+  const path = join(scripts, 'check.mjs')
+  const source = readFileSync(runner, 'utf8').replace(/from '(\.\/[^']+)'/g, (_, specifier: string) =>
+    'from ' + JSON.stringify(new URL(specifier, runner).href))
+  writeFileSync(path, source)
+  return path
+}
 
 function check(failure = '', buildOnly = false, args: string[] = []) {
   const folder = mkdtempSync(join(tmpdir(), 'octamod-check-test.'))
@@ -14,15 +28,28 @@ function check(failure = '', buildOnly = false, args: string[] = []) {
   writeFileSync(npm, `
     import { appendFileSync } from 'node:fs'
     const name = process.argv[3]
-    appendFileSync(process.env.CHECK_TEST_LOG, name + '\\n')
+    appendFileSync(process.env.CHECK_TEST_LOG, JSON.stringify(process.argv.slice(3)) + '\\n')
     process.exitCode = process.env.CHECK_TEST_FAIL === name ? 1 : 0
   `)
   try {
-    const result = spawnSync(process.execPath, [runner, ...(buildOnly ? ['--build'] : []), ...args], {
+    const entry = writeRunner(folder)
+    mkdirSync(join(folder, 'src/catalog'), { recursive: true })
+    mkdirSync(join(folder, 'src/community/module-changelogs'), { recursive: true })
+    for (const file of ['module-documents.json', 'machine-modules.json']) {
+      writeFileSync(join(folder, 'src/catalog', file), JSON.stringify({ modules: [] }))
+    }
+    const machine = 'sdk/machines/octatrack/'
+    mkdirSync(join(folder, machine, 'elekloader'), { recursive: true })
+    for (const file of ['base-sizes.json', 'base-binding.json', 'base-versions.json', 'elekloader/flash.h', 'elekloader/build_core.py']) {
+      copyFileSync(new URL('../' + machine + file, runner), join(folder, machine, file))
+    }
+    const result = spawnSync(process.execPath, [entry, ...(buildOnly ? ['--build'] : []), ...args], {
       encoding: 'utf8',
       env: { ...process.env, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure, MODWERK_SLOTS: '0' },
     })
-    return { ...result, scripts: readFileSync(log, 'utf8').trim().split('\n') }
+    if (result.error) throw result.error
+    const calls: string[][] = readFileSync(log, 'utf8').trim().split('\n').map(line => JSON.parse(line))
+    return { ...result, calls, scripts: calls.map(([name]) => name) }
   } finally {
     rmSync(folder, { recursive: true, force: true })
   }
@@ -51,23 +78,27 @@ it('refuses a cross-compatibility clash before generation or any dependent check
 it.each(['sdk:check', 'lint', 'test', 'build:bundle', ''])('keeps every independent check mandatory and waits for all results (failure: %s)', failure => {
   const result = check(failure)
   expect(result.status).toBe(failure ? 1 : 0)
-  expect(result.scripts.slice(0, 9)).toEqual(['prepare', 'licenses:check', 'machines:check', 'modules:check', 'elekloader:check', 'modules:compat', 'licenses:generate', 'machines:generate', 'modules:generate'])
-  expect(result.scripts.slice(9, -1).sort()).toEqual(['build:bundle', 'lint', 'sdk:check', 'test', 'typecheck'])
+  expect(result.scripts.slice(0, preflight.length)).toEqual(preflight)
+  expect(result.scripts.slice(preflight.length, -1).sort()).toEqual([...appChecks, 'sdk:check', 'test'].sort())
   expect(result.scripts.indexOf('build:bundle')).toBeGreaterThan(result.scripts.indexOf('typecheck'))
   expect(result.scripts.indexOf('sdk:check')).toBeGreaterThan(result.scripts.indexOf('test'))
   // The module doctor's draft test copies a draft under sdk/octatrack/modules/, so it runs alone once the parallel stage is done.
   expect(result.scripts.at(-1)).toBe('test')
 })
 
-it('runs as CI\'s parallel parts, which together start every script of the whole check once', () => {
-  const whole = check().scripts, generate = ['prepare', 'licenses:generate', 'machines:generate', 'modules:generate']
-  const contract = check('', false, ['--part', 'contract']).scripts, sdk = check('', false, ['--part', 'sdk']).scripts, shard = check('', false, ['--part', 'test:1/2']).scripts
-  expect(sdk).toEqual([...generate, 'sdk:check'])
-  expect(shard).toEqual([...generate, 'test'])
-  // The contract part keeps the draft doctor's own test run, last; the shards carry the other.
-  expect(contract.filter(name => name === 'test')).toEqual(['test'])
-  expect(contract.at(-1)).toBe('test')
-  expect([...contract, 'sdk:check', 'test'].sort()).toEqual([...whole].sort())
+it('runs as CI\'s contract part with the draft doctor last', () => {
+  const result = check('', false, ['--part', 'contract'])
+  expect(result.status).toBe(0)
+  expect(result.scripts.slice(0, preflight.length)).toEqual(preflight)
+  expect(result.scripts.slice(preflight.length, -1).sort()).toEqual([...appChecks].sort())
+  expect(result.calls.at(-1)).toEqual(['test', '--', 'scripts/module-doctor.test.mjs', '-t', 'checks a draft where every gate looks'])
+}, 15_000) // The contract launches 13 npm subprocesses, even with the recording fixture.
+
+it.each([['sdk', 'sdk:check'], ['test:1/2', 'test'], ['test:2/2', 'test']])('runs as CI\'s %s part', (part, suite) => {
+  const result = check('', false, ['--part', part])
+  expect(result.status).toBe(0)
+  expect(result.scripts).toEqual(['prepare', ...generators, suite])
+  if (suite === 'test') expect(result.calls.at(-1)).toEqual(['test', '--', '--shard=' + part.slice('test:'.length)])
 })
 
 it('prevents bundling on a type error while finishing the other checks', () => {
@@ -101,16 +132,7 @@ it('rejects stale licence notices before generation can overwrite them', () => {
 
 function documentationCheck(missingNotes = false, failure = '', changelogEntry = '') {
   const folder = mkdtempSync(join(tmpdir(), 'modwerk-doc-check.'))
-  const scripts = join(folder, 'scripts'), log = join(folder, 'scripts.log'), npm = join(folder, 'npm.mjs')
-  mkdirSync(scripts)
-  const scope = new URL('../../scripts/change-scope.mjs', import.meta.url).href
-  const changelogs = new URL('../../scripts/module-changelogs.mjs', import.meta.url).href
-  const application = new URL('../../scripts/changelog.mjs', import.meta.url).href
-  const docs = new URL('../../scripts/docs.mjs', import.meta.url).href
-  const ready = new URL('../../scripts/pr-ready.mjs', import.meta.url).href
-  const slots = new URL('../../scripts/machine-slots.mjs', import.meta.url).href
-  const size = new URL('../../scripts/base-size.mjs', import.meta.url).href
-  writeFileSync(join(scripts, 'check.mjs'), readFileSync(runner, 'utf8').replace("'./change-scope.mjs'", JSON.stringify(scope)).replace("'./module-changelogs.mjs'", JSON.stringify(changelogs)).replace("'./changelog.mjs'", JSON.stringify(application)).replace("'./docs.mjs'", JSON.stringify(docs)).replace("'./pr-ready.mjs'", JSON.stringify(ready)).replace("'./machine-slots.mjs'", JSON.stringify(slots)).replace("'./base-size.mjs'", JSON.stringify(size)))
+  const entry = writeRunner(folder), log = join(folder, 'scripts.log'), npm = join(folder, 'npm.mjs')
   writeFileSync(npm, `import { appendFileSync } from 'node:fs'; appendFileSync(process.env.CHECK_TEST_LOG, process.argv[3] + '\\n'); process.exitCode = process.env.CHECK_TEST_FAIL === process.argv[3] ? 1 : 0`)
   mkdirSync(join(folder, 'src/catalog'), { recursive: true })
   mkdirSync(join(folder, 'src/community/module-changelogs'), { recursive: true })
@@ -128,7 +150,7 @@ function documentationCheck(missingNotes = false, failure = '', changelogEntry =
       const notesPath = join(folder, 'src/community/module-changelogs/euclid.json')
       writeFileSync(notesPath, readFileSync(notesPath, 'utf8').replace('Correct the clock reset during playback.', 'Documentation-only: clarify the playback reset guide.'))
     }
-    const result = spawnSync(process.execPath, [join(scripts, 'check.mjs'), '--base', 'HEAD'], {
+    const result = spawnSync(process.execPath, [entry, '--base', 'HEAD'], {
       encoding: 'utf8', env: { ...process.env, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure, MODWERK_SLOTS: '0' },
     })
     return { ...result, scripts: readFileSync(log, 'utf8').trim().split('\n') }

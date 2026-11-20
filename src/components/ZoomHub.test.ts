@@ -45,7 +45,7 @@ describe('the Zoom pedal page', () => {
     expect(container.querySelector('[role=status]')?.textContent).toMatch(/Not connected/)
     await click([...container.querySelectorAll('button')].find(b => b.textContent === 'Connect')!); await settle()
     expect(container.querySelector('[role=status]')?.textContent).toMatch(/Connected · firmware 2\.10/)
-    expect(container.querySelector('.hub-hero h2')?.textContent).toBe('MS-70CDR')
+    expect(container.querySelector('.hub-hero h1')?.textContent).toBe('MS-70CDR')
     for (let i = 0; i < 150 && !open().querySelector('.zoom-files'); i++) await settle()   // reads every effect's version first
     expect(open().textContent).toMatch(/1 effect · 1 capture or cab · 200 KB free/)
     expect([...open().querySelectorAll('.zoom-files strong')].map(c => c.textContent)).toEqual(['LOOP.ZDL', 'NAM1smok.ZDL'])
@@ -235,7 +235,7 @@ describe('installing and removing on the pedal page', () => {
     expect(unload()).toBe(false)
     await idle(fake.link)
   })
-  it('says when the effect list is missing, and writes back one a failed rollback left unwritten', async () => {
+  it.each([false, true])('offers rollback recovery only on its original connection (replace pedal: %s)', async replace => {
     vi.stubGlobal('confirm', () => true)
     const list = fakeEffectList({ 8: ['LOOP.ZDL'] }).data, fake = fakeZoomPedal({ files: [fakeEffect('LOOP.ZDL', 8, 480, '0.03')] }), link = new ZoomLink(() => Promise.resolve(fake.access), 200)
     await link.connect()
@@ -247,6 +247,21 @@ describe('installing and removing on the pedal page', () => {
     Object.defineProperty(input, 'files', { value: [new File([Uint8Array.from(fakeEffect('NAM1SMOK.ZDL', 8, 900, '0.26').data)], 'NAM1SMOK.ZDL')], configurable: true })
     await act(() => { input.dispatchEvent(new Event('change', { bubbles: true })) })
     await until(() => !!button('Write the effect list back'))
+    if (replace) {
+      const originalConnection = link.getState().connection!
+      const other = fakeZoomPedal({ files: [fakeEffectList({ 8: ['OTHER.ZDL'] })] })
+      const before = other.files[0].data.slice()
+      fake.input.state = fake.output.state = 'disconnected'
+      Object.assign(fake.access, { inputs: other.access.inputs, outputs: other.access.outputs })
+      await act(() => fake.access.onstatechange?.({}))
+      await until(() => link.getState().status === 'ready')
+      expect(button('Write the effect list back')).toBeUndefined()
+      expect(open().querySelector('a[download]')).toBeTruthy()
+      await idle(link)
+      await expect(link.restoreList(list, originalConnection)).rejects.toThrow(/connection changed/)
+      expect(other.files[0].data).toEqual(before)
+      return
+    }
     await click(button('Write the effect list back'))
     await until(() => /effect list from before is back/.test(open().textContent ?? '') && !open().querySelector('.hub-error'))
     expect(fake.files.find(f => f.name === 'FLST_SEQ.ZDT')?.data).toEqual(list)
@@ -260,13 +275,14 @@ describe('syncing the set to the pedal', () => {
   const listed = async (id: string, file: string, fxid: number, data: number[]) => ({ id, name: id, version: '0.1.0', machine: device.id, presentation: { summary: '' }, media: [{ kind: 'thumbnail', path: 'thumbnail.svg' }],
     platform: { kind: 'zdl', file, effectId: { gid: 8, fxid }, effectVersion: '0.03', dspCost: 8, binary: { sha256: await sha(data), bytes: data.length, release: { repository: 'https://github.com/x/y', tag: 't', asset: file } }, screen: 'static', pedals: [] } }) as unknown as ZoomEffect
 
-  it('installs the set’s effects, replaces an older version, removes listed ones it dropped and leaves the rest', async () => {
+  it.each([false, true])('repairs a set with a missing or unlisted file (unlisted: %s)', async orphan => {
     vi.stubGlobal('confirm', () => true)
     const loop = fakeEffect('LOOP.ZDL', 8, 467, '0.03', 1300), scope = fakeEffect('SCOPE.ZDL', 8, 468, '0.03', 900), dirt = fakeEffect('DIRT.ZDL', 8, 469, '0.03', 700)
     const effects = [await listed('loop', 'Loop.ZDL', 467, loop.data), await listed('scope', 'Scope.ZDL', 468, scope.data), await listed('dirt', 'Dirt.ZDL', 469, dirt.data)]
     const served: Record<string, number[]> = { 'Loop.ZDL': loop.data, 'Scope.ZDL': scope.data, 'Dirt.ZDL': dirt.data }
     vi.stubGlobal('fetch', async (url: string) => new Response(Uint8Array.from(served[url.split('/').pop()!])))
     const files = [fakeEffect('DELAY.ZDL', 7, 16, '1.00'), fakeEffect('LOOP.ZDL', 8, 467, '0.02', 1300), dirt, fakeEffectList({ 7: ['DELAY.ZDL'], 8: ['LOOP.ZDL', 'DIRT.ZDL'] })]
+    if (orphan) files.push(scope)
     const fake = fakeZoomPedal({ files }), link = new ZoomLink(() => Promise.resolve(fake.access), 200)
     await link.connect()
     const live = { id: 'live', name: 'Live', device: device.id, moduleIds: ['loop', 'scope'], moduleVersions: {}, keepStockFx2: false, createdAt: '2026-11-09T00:00:00Z', updatedAt: '2026-11-09T00:00:00Z' }
@@ -274,7 +290,7 @@ describe('syncing the set to the pedal', () => {
     expect(open().querySelector('h2')?.textContent).toBe('Live')
     expect(container.querySelector('.hub-set-open strong')?.textContent).toBe('Live')
     for (let i = 0; i < 100 && !/Installs/.test(open().textContent ?? ''); i++) await settle()
-    expect(open().querySelector('.hub-sync p')?.textContent).toBe('Installs 2 · Removes 1 · needs 1 KB of 391 KB free')
+    expect(open().querySelector('.hub-sync p')?.textContent).toBe(orphan ? 'Installs 2 · Removes 1 · 391 KB free' : 'Installs 2 · Removes 1 · needs 1 KB of 391 KB free')
     expect([...open().querySelectorAll('.module-tile:not(.is-add)')].map(tile => tile.querySelector('strong')?.textContent + ' ' + tile.querySelector('.module-tile-state')?.textContent)).toEqual(['loop Adds', 'scope Adds', 'dirt Leaves'])
     await click(button('Sync to MS-70CDR'))
     for (let i = 0; i < 200 && !/has your set/.test(open().textContent ?? ''); i++) await settle()
