@@ -12,6 +12,7 @@ static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
 static uint8_t stock_voices[8 * 168]; /* stock's voice records (0x800049d8 + 168 * track): byte 0 is "playing" */
 static uint32_t render_states[8 * 10]; /* stock's render states (0x80004898 + 40 * track): +4 the RTRG count */
+static uint8_t live_fx[16]; /* what each slot runs (0x80000ec4): FX1 T1-T8, then FX2 */
 
 /* Synthetic memory: a few segments at the addresses the registry reads. */
 struct segment { uint32_t base, size; uint8_t *bytes; };
@@ -25,6 +26,7 @@ static struct segment segments[] = {
     {0x40079240u, 0x10, code}, {0x400585f0u, 0x10, code + 0x10}, {0x4003c950u, 4, code + 0x20}, {0x40078678u, 4, code + 0x24},
     {0x400786ccu, 4, code + 0x28}, {0x40079904u, 4, code + 0x2c}, {0x40065c7cu, 4, code + 0x30}, {0x40078c20u, sizeof clamps, clamps},
     {0x800049d8u, sizeof stock_voices, stock_voices}, {0x80004898u, sizeof render_states, (uint8_t *)render_states},
+    {0x80000ec4u, sizeof live_fx, live_fx},
 };
 static uint8_t *host_at(uint32_t a)
 {
@@ -60,8 +62,17 @@ static void *host_stock(uint32_t a)
 
 void mg_tick(void); /* midi_generators.c, checked by test_midi_generators.c */
 void mg_tick(void) {}
-static unsigned rest_polls; /* the loader's resting poll, checked by sdk/runtime/loader/tests/events_test.c */
-int modwerk_runtime_rest_poll(void) { return ++rest_polls, 0; }
+static unsigned rest_polls; /* the loader's resting poll, checked by sdk/runtime/loader/tests/events_test.c; modelled below */
+static int project_loading; /* fxmap.c's: a project load runs */
+int modwerk_fxmap_loading(void);
+int modwerk_fxmap_loading(void) { return project_loading; }
+/* fxmap.c's effect ids: the ids the project names (bit id of project_fx), and module 700 + id holds id. */
+#include "fxids.h"
+static uint32_t project_fx;
+fx_set modwerk_fxmap_used(void);
+fx_set modwerk_fxmap_used(void) { fx_set s = {{0}}; for (unsigned id = 0; id < 32u; ++id) if (project_fx >> id & 1u) s = fx_with(s, id); return s; }
+int modwerk_fxmap_handle(uint32_t module);
+int modwerk_fxmap_handle(uint32_t module) { return module >= 700u && module < 732u ? (int)(module - 700u) : -1; }
 /* The loader's side: the table rows and the machine glue. */
 #include "loader.h"
 volatile uint32_t modwerk_machine_assigned; /* controller_board.c's, not linked here */
@@ -105,6 +116,39 @@ static uint32_t owner_epoch;
 uint32_t modwerk_runtime_owner_epoch(void) { return owner_epoch; }
 #include "machine_registry.c"
 #undef modwerk_runtime_event_row
+
+/* The loader's resting, modelled (loader.c rest_poll and judged; the rows and sites are events_test.c's): each judged
+ * module is a runtime_module whose ot_machines hook is its machine; at each poll it rests or wakes as
+ * modwerk_machine_in_use answers, and a change calls modwerk_machine_tables_changed masked, as the loader does. Off
+ * (model_rests 0) every machine stays awake and the poll only counts. */
+static struct runtime_module judged_mod[3]; static unsigned judged_n, rest_changes; static int model_rests;
+static uintptr_t resting_rec[3];
+int modwerk_runtime_resting_at(uintptr_t a)
+{
+    for (unsigned i = 0; i < judged_n; ++i) if (a && resting_rec[i] == a) return 1;
+    return 0;
+}
+int modwerk_runtime_rest_poll(void)
+{
+    ++rest_polls;
+    if (!model_rests) return 0;
+    int changed = 0;
+    for (unsigned i = 0; i < judged_n; ++i) {
+        uintptr_t record = judged_mod[i].hook[MODWERK_OT_MACHINES] ? judged_mod[i].hook[MODWERK_OT_MACHINES] : (uintptr_t)&judged_mod[i];
+        int rest = !modwerk_machine_in_use(&judged_mod[i]);
+        if ((resting_rec[i] != 0) != rest) resting_rec[i] = rest ? record : 0, changed = 1;
+    }
+    if (changed) { masked = 1; modwerk_machine_tables_changed(); masked = 0; ++rest_changes; }
+    return changed;
+}
+static void judge(unsigned i, const struct modwerk_machine *m)
+{
+    memset(&judged_mod[i], 0, sizeof judged_mod[i]);
+    judged_mod[i].id = 900u + i, judged_mod[i].hook[MODWERK_OT_MACHINES] = (uintptr_t)m, resting_rec[i] = 0;
+}
+static int resting(unsigned i) { return resting_rec[i] != 0; }
+/* One machine-map scan (twice a second on the unit, a whole scan at once after a change), then a UI tick. */
+static void scan_tick(void) { mc_stale = 1; modwerk_machine_map_refresh(); mw_ui_tick(); }
 
 /* The DSP budget's source stage (dsp.c, synthetic): a core carries `room` voices; a claim replaces the track's voice,
  * and an engine off frees its machine's engine and every voice it held. */
@@ -529,6 +573,132 @@ static void check_machine_map(void)
     CHECK(host_mc_map.e[0].module == 'A' && !modwerk_machine_absent(0, &m, name));
     rows(0, 0, 0, 0);
     memcpy(bank, bank_copy, sizeof bank), memcpy(sram, sram_copy, sizeof sram);
+}
+/* Machines that rest (machine_registry.c, HOOKS.md): a machine's module no track of the project uses rests after two
+ * scans and costs the frame nothing; it wakes before its pick commits, at the next tick when a track names it without a
+ * pick (a paste, a load, a pattern while playing), and after any set change until two scans of the new set. */
+static void clear_sigs(void)
+{
+    for (unsigned p = 0; p < 4u; ++p)
+        for (unsigned t = 0; t < 8u; ++t) {
+            memset(host_at(0x46000000u + PART_OFF + p * PART_STRIDE + SIG + 30u * t), 0, 3);
+            memset(host_at(0x46000000u + SAVED_OFF + p * PART_STRIDE + SIG + 30u * t), 0, 3);
+            *host_at(0x46000000u + PART_OFF + p * PART_STRIDE + 0x22 + t) = 1;
+            *host_at(0x46000000u + SAVED_OFF + p * PART_STRIDE + 0x22 + t) = 1;
+        }
+}
+static void check_resting_machines(void)
+{
+    static const struct modwerk_machine Q = {MODWERK_MACHINE_ABI, {'Q', '8'}, 1, 1, "POLY", 0, 0, a_defaults,
+                                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}}; /* renders inside stock's */
+    extern volatile uint32_t mw_cpu_hot, mw_wake_mille;
+    const void *aq[] = {&A, &Q};
+    clear_sigs(); misc[0x0f] = 0; /* Part 1 */
+    fresh(); a_admit = 1; cpu_now = 0; mw_cpu_allowance = 45; mw_cpu_refused = 0;
+    rows(0, 0, 0, 0);
+    int flex0 = stock_renders, a0 = a_renders;
+    for (unsigned t = 0; t < 8u; ++t) CHECK(later(t) == -7);
+    int flex_none = stock_renders - flex0; CHECK(flex_none == 8 && a_renders == a0);
+
+    /* Installed, used nowhere: awake until two scans of the new set have found no track on them, then resting. */
+    judged_n = 2; judge(0, &A); judge(1, &Q); model_rests = 1;
+    rows(aq, 2, 0, 0); ++owner_epoch;
+    mw_ui_tick(); CHECK(!resting(0) && !resting(1));                     /* a new set: not scanned yet */
+    scan_tick(); CHECK(!resting(0) && !resting(1));                      /* one idle scan */
+    scan_tick(); CHECK(resting(0) && resting(1) && asleep_n == 2);       /* two: both rest */
+    /* Resting, they cost the frame what no machine costs: every unowned FLEX track straight to stock's render. */
+    flex0 = stock_renders, a0 = a_renders;
+    for (unsigned t = 0; t < 8u; ++t) CHECK(later(t) == -7);
+    CHECK(stock_renders - flex0 == flex_none && a_renders == a0);
+    for (unsigned t = 0; t < 8u; ++t) CHECK(!wake_who[t]);
+    scan_tick(); CHECK(resting(0) && resting(1) && !pick_who);           /* stays so */
+
+    /* A pick wakes its module before it commits; the other stays at rest. */
+    unsigned polls = rest_polls;
+    CHECK(mw_assign(part0(), 2, 5) == 1 && rest_polls == polls + 1u && !resting(0) && resting(1) && pick_who == &A);
+    a0 = a_renders; CHECK(later(2) == a0 + 1);                           /* A renders its own track at once */
+    scan_tick(); CHECK(!resting(0) && resting(1) && !pick_who);          /* the scan finds it used */
+    scan_tick(); scan_tick(); CHECK(!resting(0) && resting(1));
+
+    /* A busy unit: a pick that would wake a module is judged with its hooks back on top (mw_wake_mille). */
+    { unsigned boxes = hot_boxes;
+      cpu_now = mw_cpu_hot - 10u * CPU_DEFAULT - mw_wake_mille;
+      CHECK(mw_assign(part0(), 3, 6) == (unsigned)-1 && hot_boxes == boxes + 1 && resting(1) && !pick_who);
+      cpu_now = mw_cpu_hot - 10u * CPU_DEFAULT - mw_wake_mille - 1u;
+      CHECK(mw_assign(part0(), 3, 6) == 1 && hot_boxes == boxes + 1 && !resting(1));
+      CHECK(mw_assign(part0(), 3, 1) == 1); cpu_now = 0; }               /* back to FLEX */
+
+    /* The last track leaves: two scans later it rests again. */
+    CHECK(mw_assign(part0(), 2, 1) == 1);
+    scan_tick(); CHECK(!resting(0));
+    scan_tick(); CHECK(resting(0) && resting(1));
+
+    /* A track that names a resting machine without a pick (a paste, a Part or bank change while playing, a load):
+     * stock's silent source and no START until the next tick wakes it; then the machine plays it. */
+    memcpy((void *)(part0() + SIG + 30u * 4u), "AB\1", 3);
+    stock_voices[4 * 168] = 1;
+    { int silent = silent_renders; a0 = a_renders;
+      CHECK(later(4) == -9 && silent_renders == silent + 1 && a_renders == a0 && stock_voices[4 * 168] == 0 && wake_who[4] == &A);
+      unsigned calls = fallback_calls;
+      CHECK(mw_source_start_select(4, fallback_start) != fallback_start && !selected_start(4, 127, 0xc0, fallback_start) && fallback_calls == calls);
+      mw_ui_tick(); CHECK(!resting(0) && resting(1));                    /* one tick */
+      CHECK(later(4) == a0 + 1);
+      scan_tick(); CHECK(!resting(0) && !wake_who[4]);                   /* the scan finds it: awake while it is used */
+    }
+    memset((void *)(part0() + SIG + 30u * 4u), 0, 3);
+    /* A saved copy alone keeps it awake (RELOAD brings it back), and so does another Part (a pattern change). */
+    memcpy(host_at(0x46000000u + SAVED_OFF + 2u * PART_STRIDE + SIG + 30u * 6u), "AB\1", 3);
+    scan_tick(); scan_tick(); scan_tick(); CHECK(!resting(0));
+    memset(host_at(0x46000000u + SAVED_OFF + 2u * PART_STRIDE + SIG + 30u * 6u), 0, 3);
+    memcpy(host_at(0x46000000u + PART_OFF + 3u * PART_STRIDE + SIG + 30u * 1u), "Q8\1", 3);
+    scan_tick(); CHECK(!resting(1));                                     /* Q woken by the scan, before any frame */
+    memset(host_at(0x46000000u + PART_OFF + 3u * PART_STRIDE + SIG + 30u * 1u), 0, 3);
+    scan_tick(); scan_tick(); CHECK(resting(0) && resting(1));
+    /* A project load: scans while it runs count no idle scan, so a machine used before it does not rest on a
+     * half-written bank; it still wakes for what the scans see used. */
+    memcpy((void *)(part0() + SIG + 30u * 5u), "AB\1", 3);
+    scan_tick(); CHECK(!resting(0));
+    memset((void *)(part0() + SIG + 30u * 5u), 0, 3); project_loading = 1;
+    scan_tick(); scan_tick(); scan_tick(); CHECK(!resting(0) && resting(1));
+    project_loading = 0; scan_tick(); CHECK(!resting(0)); scan_tick(); CHECK(resting(0));
+
+    /* A set change (install, removal, Undo or a rolled-back trial) wakes every machine until two scans of the new set;
+     * a module that registers late is awake until then too. A RENDER_FLEX machine never rests. */
+    judged_n = 3; judge(2, &F);
+    const void *aqf[] = {&A, &Q, &F};
+    rows(aqf, 3, 0, 0); ++owner_epoch;                                   /* F's position switched; A and Q still rest */
+    CHECK(asleep_n == 2);
+    mw_ui_tick(); CHECK(!resting(0) && !resting(1) && !resting(2) && !asleep_n);
+    scan_tick(); CHECK(!resting(0) && !resting(1) && !resting(2));
+    scan_tick(); CHECK(resting(0) && resting(1) && !resting(2));
+    /* Removed while resting (Undo of the trial that brought it): no resting machine left in the frame's list. */
+    rows(aq, 2, 0, 0); ++owner_epoch; judged_n = 2;
+    CHECK(asleep_n == 2);
+    const void *q_only[] = {&Q};
+    resting_rec[0] = 0; rows(q_only, 1, 0, 0); ++owner_epoch;
+    CHECK(asleep_n == 1 && asleep_who[0] == &Q);
+    mw_ui_tick(); CHECK(!resting(1));                                    /* the set changed: Q awake again */
+
+    /* An effect module (DSP code, no machine): in use while any slot of the project names its id or a live slot runs
+     * it; it rests after two idle scans, wakes within a tick of a slot running it, and at once for a pick. */
+    rows(0, 0, 0, 0); judged_n = 1; memset(&judged_mod[0], 0, sizeof judged_mod[0]);
+    judged_mod[0].id = 705u, judged_mod[0].dsp.count = 64u, judged_mod[0].dsp.id = 9u, resting_rec[0] = 0;  /* its handle is 5 */
+    memset(live_fx, 0, sizeof live_fx); project_fx = 0; ++owner_epoch;
+    mw_ui_tick(); CHECK(!resting(0));                                    /* a new set: awake until scanned */
+    scan_tick(); CHECK(!resting(0));
+    scan_tick(); CHECK(resting(0));                                      /* two idle scans: rests */
+    live_fx[11] = 5; mw_ui_tick(); CHECK(!resting(0));                   /* T4 FX2 runs it (a paste, a load): one tick */
+    live_fx[11] = 0; project_fx = 1u << 5; scan_tick(); CHECK(!resting(0)); /* another Part names it */
+    scan_tick(); scan_tick(); CHECK(!resting(0));
+    project_fx = 0; scan_tick(); CHECK(!resting(0)); scan_tick(); CHECK(resting(0));
+    project_loading = 1; project_fx = 0; scan_tick(); CHECK(resting(0)); project_loading = 0;
+    modwerk_machine_effect_wake(5); CHECK(!resting(0) && fx_wanted == 5); /* a pick: awake before stock writes it */
+    scan_tick(); scan_tick(); CHECK(resting(0) && fx_wanted < 0);        /* the pick never landed: rests again */
+    project_fx = 1u << 9; live_fx[0] = 9; scan_tick(); CHECK(resting(0)); /* another id: not this module */
+    live_fx[0] = 0; project_fx = 0;
+
+    model_rests = 0; judged_n = 0; rows(0, 0, 0, 0); clear_sigs();
+    CHECK(!asleep_n && !masked);
 }
 int main(void)
 {
@@ -990,9 +1160,11 @@ int main(void)
     check_native_flex_voice();
     check_cpu_budget();
     check_engine_price();
+    check_resting_machines();
     if (failures) { fprintf(stderr, "%u registry checks failed\n", failures); return 1; }
     puts("Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent "
          "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows, chooser "
-         "counts and cursor clamps, SETUP_PAGE machines' own SRC SETUP, the frame guard and the CPU budget passed.");
+         "counts and cursor clamps, SETUP_PAGE machines' own SRC SETUP, the frame guard, the CPU budget and resting "
+         "machines (rest when unused, wake on pick, on a track and after a set change) passed.");
     return 0;
 }

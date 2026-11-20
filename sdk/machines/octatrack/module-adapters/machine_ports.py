@@ -77,6 +77,15 @@ def declaration(name, folder=None, path=PORTS):
                 raise ValueError('%s: its runtime.json and its machine port both subscribe to %s' % (name, e['event']))
         doc['subscribe'] += entry.get('subscribe', [])
         doc['contribute'] += entry.get('contribute', [])
+    # Detours that rest with the module: from its runtime.json and its port. A machine (a contribution to a table the
+    # base judges, ot_machines) needs no ev_in_use of its own: the base answers for it (HOOKS.md).
+    rests = list((own or {}).get('rests', [])) + list((entry or {}).get('rests', []))
+    if rests:
+        judged = _builder().judged_tables()
+        if len(set(rests)) != len(rests) or not all(isinstance(a, str) and a.startswith('0x') for a in rests) or not (
+                any(e.get('event') == 'ev_in_use' for e in doc['subscribe']) or any(c.get('to') in judged for c in doc['contribute'])):
+            raise ValueError('%s: "rests" names its own detours once each, beside ev_in_use or a machine contribution' % name)
+        doc['rests'] = rests
     return doc
 
 
