@@ -287,9 +287,12 @@ def main():
                          'then starts with no modules after a power cycle. Note the flashed set first (the session\'s inventory step, '
                          'docs/OCTATRACK_DRIVING.md), then run again with --keeps-ok. For a run that keeps nothing: npm run device:test.')
     # The whole run is one turn on the unit: it waits here while another session has it (scripts/unit-queue.mjs).
-    from unit_turn import take_turn
-    take_turn('device:qualify ' + ' '.join(os.path.basename(p) for p in args.packages),
-              expect='%ds' % (600 + 120 * len(args.packages) + 2 * args.soak + 4 * args.seconds))
+    import importlib.util
+    turn = importlib.util.spec_from_file_location('unit_turn', os.path.join(os.path.dirname(os.path.realpath(__file__)), 'unit_turn.py'))
+    unit_turn = importlib.util.module_from_spec(turn)
+    turn.loader.exec_module(unit_turn)
+    unit_turn.take_turn(__file__, 'device:qualify ' + ' '.join(os.path.basename(p) for p in args.packages),
+                        expect='%ds' % (600 + 120 * len(args.packages) + 2 * args.soak + 4 * args.seconds))
     pkgs = [package(p) for p in args.packages]
 
     def install(pkgs):

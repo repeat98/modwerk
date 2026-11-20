@@ -24,7 +24,6 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location('octatrack_qualify', ROOT / 'scripts/octatrack-qualify.py')
 qualify = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(qualify)
-from unit_turn import take_turn  # scripts/ is this script's folder, so it is on the path
 
 SHARE = os.environ.get('MODWERK_SHARE_SOCKET', '/tmp/modwerk-share.sock')
 LEFT_FOR_THE_DEVELOPER = ('listening (how it sounds and plays, timing by ear)', 'MIDI, scenes and recording',
@@ -93,7 +92,10 @@ def main():
     args.crash = False
     hold = args.hold or min(3600, 300 + 2 * args.seconds + 2 * args.soak)
     # The whole run is one turn on the unit: it waits here while another session has it (scripts/unit-queue.mjs).
-    take_turn('device:test ' + os.path.basename(args.packages[0]), expect='%ds' % (hold + 120))
+    turn = importlib.util.spec_from_file_location('unit_turn', ROOT / 'scripts/unit_turn.py')
+    unit_turn = importlib.util.module_from_spec(turn)
+    turn.loader.exec_module(unit_turn)
+    unit_turn.take_turn(__file__, 'device:test ' + os.path.basename(args.packages[0]), expect='%ds' % (hold + 120))
     pkgs = [qualify.package(p) for p in args.packages]
     trials = []
 
