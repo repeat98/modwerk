@@ -14,13 +14,15 @@ voice renderer away from TSTR 4, a value only Repitch adds. Needs a base with `e
   twin of 0.7.8 measured the same idea at 0.1 points (17 November 2026, #1694).
 - **Built:** `build.py --octabam repitch` gives module `5c49f0f0`, 708 bytes, two hooks (`ev_play_increment`,
   `ev_in_use`), `rate_gate` and `pitch_gate` flagged resting. The published package and its row are not regenerated yet.
-- **Known gap:** the answer reads the live Part. A Part or bank change that brings a REPITCH track in while playing
-  meets Repitch resting for up to one UI tick: that track plays at stock speed and pitch, rendered dry, until it wakes.
-  Closing it means answering for every Part of the project, as the base does for machines: Repitch would read each
-  Part's SRC SETUP TSTR byte and, for AUTO, the TSMODE of the sample slot the Part names. No code in the repository
-  names those Part offsets yet (the registry reads only the type byte and the signature), so they are to be found on the
-  unit first (diff a Part with `mem` while turning TSTR and changing the slot), then scanned every two seconds like the
-  machine map. Until then the gap stays, and the release notes say so.
+- **Part changes:** the answer also sweeps every Part of the project, working and saved, one Part a UI tick (all 128
+  within about two seconds), for a STATIC or FLEX track whose SRC SETUP TSTR is REPITCH (the Part's byte at
+  0x1da + 30 * track + 6 * pool + 4, as POLY8's registration writes it), so a Part, pattern or bank change while
+  playing finds Repitch awake. Built: module `5c49f0f0`, 872 bytes, 8 of bss.
+- **Known gap, narrower:** a track on TSTR AUTO whose sample carries REPITCH as its own TIMESTRETCH is seen only on the
+  live Part (`rp_find`): the Part names the slot, not the attribute, and the sample-slot tables are not mapped in the
+  repository. Such a track brought in by a Part or bank change while playing plays up to one UI tick at stock speed,
+  rendered dry, until Repitch wakes. A track set to REPITCH directly is covered, and so is a change made a sweep
+  (about two seconds) before it plays.
 - **Test procedure:** not run; the unit was off USB, then held by another session, on 20 November 2026. The
   performance record's `sourceSha256` is stale until it is measured again.
 
