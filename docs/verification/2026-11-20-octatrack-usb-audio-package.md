@@ -125,3 +125,24 @@ The Mac stopped before it could read the descriptors in the failed Track 8/Maste
 Base 0.7.11 now checks whether the controller attached after it requested the USB connection. It retries once if VBUS is valid, the controller is running, the port is disconnected and neither a host reset nor USB disk use is in progress. Its original trial deadline still applies. The controller model checks successful attachment, suspend, reset, unplug and timeout.
 
 For the physical retest, release base identity is `c7eba65fa9ece225c518771c4134afce964e1bd8488264268f1605224f30440f`. The native and browser builds produced byte-identical OS images with SHA-256 `5b22402b47c7f711bebfbb9f8e3fb11b27c28514f7465603bc82043c161eeca6`. Both USB and card preparation reproduced all seven migrated profile fixtures. The MKII emulator streamed the 16-channel PRE layout and then Track 8/Master twice. Each Undo restored the four baseline USB interfaces. All three captures reported zero ring overruns and underruns.
+
+### Physical recording and Undo
+
+The owner cold-started the Octatrack MKII with its usual card. The flashed base restored ten modules and the starting saved-set checksum. The release base ran from RAM. Each migrated profile below was installed, recorded at 44.1 kHz on macOS and undone on the same boot. After each Undo the device returned to its four baseline interfaces, the original empty RAM-set checksum and an advancing panel tick.
+
+| Trial | Saved configuration | Channels | Frames recorded | Cumulative attachments after Undo |
+| --- | --- | ---: | ---: | ---: |
+| 1 | Eight tracks, PRE LEVEL | 16 | 90,112 | 2 |
+| 2 | Track 8/Master | 2 | 88,576 | 4 |
+| 3 | Main | 2 | 88,576 | 6 |
+| 4 | Main and Cue | 4 | 88,576 | 8 |
+| 5 | Outbox 8 | 8 | 88,576 | 10 |
+| 6 | Eight tracks, POST LEVEL | 16 | 88,576 | 12 |
+| 7 | Classic set without stored USB settings | 20 | 89,088 | 14 |
+| 8 | Track 8/Master | 2 | 88,576 | 16 |
+
+A host disk-space interruption before trial 4 left the USB attachment count at six and the RAM set empty. Those values were verified before continuing. The Outbox trial duplicated Main on USB pairs 1 and 2. Both pairs were sample-identical and nonzero in every frame. Pair 3, assigned Off, was silent in every frame. No physical Outbox was available. Each install and Undo counted one attachment. The extra retry was exercised in the controller model.
+
+### Keep and physical power cycle
+
+On the same base the Track 8/Master package had SHA-256 `92987d7105010887bc10b7f5f02c6abc40f932170096a43ae24069542bfd4efd`. The instrument self-test reported one intact module and zero failed checks. Keep reported one module saved and checked. The owner switched the instrument fully off and on. The flashed base restored all ten original modules. The identical release base was then RAM-booted without uploading a module. It reported that one module was restored from the card, the same saved-set SHA-256 `95cd029f32efc8550b6589a684e638dcf681f7a2f63a6c598945efb86220743d`, and preset `0x80000110`. The Mac recorded 89,088 stereo frames from that restored set. The final physical power cycle returned the flashed base, ten modules, empty shelf and original saved-set checksum. The release base was never flashed.

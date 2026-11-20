@@ -113,7 +113,7 @@ every module. A set that names a layout keeps naming it.
 
 ## Steps
 
-Steps 1 to 3 ran in the emulator. On the Octatrack MKII, all six layouts recorded on macOS and Undo restored the
+The packaged 0.3.0-experimental candidate passed Keep and card restoration across a physical power cycle on an Octatrack MKII. The Mac recorded 89,088 stereo frames from the restored Track 8/Master set. Steps 1 to 3 also ran in the emulator. On the Octatrack MKII, all six layouts recorded on macOS and Undo restored the
 original configuration. Main + Cue passed three repeats with one USB client after two earlier rollbacks with a paired
 browser open. The [hardware record](verification/2026-11-20-octatrack-usb-audio-package.md) includes the package hashes and settings measurements.
 

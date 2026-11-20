@@ -6,7 +6,8 @@
       "Install USB Audio once and choose layouts in PROJ > MODWERK > SETTINGS > USB AUDIO.",
       "Switch eight track stems between pre-LEVEL and post-LEVEL in both the 16- and 20-channel layouts.",
       "Route any available source or silence to each of the four Outbox 8 USB pairs.",
-      "Loading an existing set restores its saved destination, layout and pair assignments."
+      "Loading an existing set restores its saved destination, layout and pair assignments.",
+      "Track 8/Master reconnects after layout changes and can be kept on the card."
     ]
   },
   {
