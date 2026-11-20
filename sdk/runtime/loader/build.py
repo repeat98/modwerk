@@ -348,7 +348,7 @@ def port_judged(name):
 REST_FLAG = 0x80  # loader.h RUNTIME_SITE_RESTS: bit 7 of an ABI 7 site's length byte, the site rests with its module
 
 
-def runtime_declaration(folder):
+def runtime_declaration(folder, effect=False):
     """A module's runtime.json, or None: {"schema": 1, "subscribe": [{"event", "fn", "order", "replaces"}],
     "contribute": [{"to", "order", "data", "replaces"}], "raise": [event]}. With it the package subscribes or contributes
     (needs a base with those events and tables) and its units assemble with MODWERK_EVENTS defined. `replaces` names what
@@ -373,7 +373,7 @@ def runtime_declaration(folder):
     rests = doc.get('rests', [])
     if (doc.get('schema') != 1 or not {'schema'} < set(doc) <= {'schema', 'subscribe', 'contribute', 'raise', 'rests'}
             or not isinstance(doc.get('subscribe', []), list) or not isinstance(doc.get('contribute', []), list)
-            or not doc.get('subscribe', []) + doc.get('contribute', [])
+            or not (doc.get('subscribe', []) + doc.get('contribute', []) or (effect and rests))
             or not all(entry(e) for e in doc.get('subscribe', []))
             or not all(contribution(e) for e in doc.get('contribute', []))
             or not isinstance(doc.get('raise', []), list) or not all(isinstance(e, str) for e in doc.get('raise', []))
@@ -382,7 +382,7 @@ def runtime_declaration(folder):
             or len({int(a, 16) for a in rests}) != len(rests)
             or (rests and not any(e.get('event') == 'ev_in_use' for e in doc.get('subscribe', []))
                 and not any(c.get('to') in judged_tables() for c in doc.get('contribute', []))
-                and not port_judged(Path(folder).name))):
+                and not port_judged(Path(folder).name) and not effect)):
         raise ValueError('%s: {"schema": 1, "subscribe": [{"event", "fn", "order", "replaces"}], '
                          '"contribute": [{"to", "order", "data", "replaces"}], "raise": [event], "rests": ["0x…"] '
                          '(with an ev_in_use subscription, or a contribution to a table the base judges: ot_machines)}' % path)
@@ -550,7 +550,7 @@ def octabam_units(name, origin, cross, upstream, dsp=False, hooks=None):
     extra += ['hooks in stock DSP code'] if m.dsp and m.dsp.hooks else ['its DSP code (give --dsp)'] if m.dsp and not dsp else []
     if extra or not m.linked:
         raise ValueError('%s needs what a runtime package cannot carry yet: %s' % (name, ', '.join(extra) or 'no ColdFire unit'))
-    declared = runtime_declaration(root / 'modules' / name)
+    declared = runtime_declaration(root / 'modules' / name, effect=bool(dsp))
     if declared and hooks is None:
         raise ValueError(name + ' subscribes to site events (runtime.json): its caller must take its hook words.')
     with tempfile.TemporaryDirectory() as tmp:
