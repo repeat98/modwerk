@@ -186,7 +186,7 @@ volatile uint32_t mw_cpu_hot = 850u; /* per mille; development bases may change 
 /* A pick that wakes a resting machine's module (below, "Machines that rest") is judged with this on top of its price:
  * what the module's hooks and detours cost the frame again once awake, which the meter cannot show before. The most
  * of the 24 packages measured at rest on an MKII (20 November 2026, base 0.7.10 twin, playing): POLY8 0.3.3, 2.3
- * points; MKII tracks here are about one meter point a frame point. Per mille of the meter. */
+ * points of the frame interrupt and 2.6 of the CPU meter. Per mille of the meter. */
 volatile uint32_t mw_wake_mille = 30u;
 volatile uint32_t mw_cpu_allowance = 45u, mw_cpu_booked; /* percent of a frame; development bases may change the allowance */
 volatile uint8_t mw_cpu_refused;    /* the current Part's tracks past the allowance: the frame interrupt reads it whole */
@@ -526,7 +526,7 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
         if (old != next) { /* a unit this machine's renders would make busy does not take it */
             uint32_t cpu = modwerk_status_cpu_load();
             /* A resting machine's module also brings its hooks and detours back into the frame: the meter does not
-             * hold them yet, so its pick is judged with them (MW_WAKE_MILLE) on top. */
+             * hold them yet, so its pick is judged with them (mw_wake_mille) on top. */
             if (cpu + 10u * cpu_price(next) + (waking ? mw_wake_mille : 0u) >= mw_cpu_hot) {
                 mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
                 modwerk_status_cpu_hot(track, next->label, cpu);
