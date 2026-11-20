@@ -187,13 +187,17 @@ volatile uint32_t mw_cpu_allowance = 45u, mw_cpu_booked; /* percent of a frame; 
 volatile uint8_t mw_cpu_refused;    /* the current Part's tracks past the allowance: the frame interrupt reads it whole */
 static uint8_t cpu_warned;          /* ... whose box already showed, as `warned` */
 static unsigned cpu_price(const Machine *m) { return m->reserved[0] ? m->reserved[0] : m->source_kind ? 0u : CPU_DEFAULT; }
-/* The Part's bill without track `skip` (8: none), tracks in order; *over gets the tracks that did not fit. */
-static unsigned cpu_bill(const Machine *const *m, unsigned n, const Part *part, unsigned skip, uint8_t *over)
+/* The Part's bill without track `skip` (8: none), in track order. The tick also uses these owners to charge DSP
+ * voices and label refusals. Keep them on its stack for this pass, so a Part or module change is read afresh next tick. */
+static unsigned cpu_bill(const Machine *const *m, unsigned n, const Part *part, unsigned skip, uint8_t *over, const Machine **owners)
 {
-    unsigned sum = 0; const Machine *who;
+    unsigned sum = 0;
     *over = 0;
     for (unsigned t = 0; t < 8; ++t) {
-        unsigned p = t != skip && owner(m, n, part, t, &who) ? cpu_price(who) : 0u;
+        const Machine *who = 0;
+        if (t != skip) owner(m, n, part, t, &who);
+        if (owners) owners[t] = who;
+        unsigned p = who ? cpu_price(who) : 0u;
         if (sum + p > mw_cpu_allowance) *over |= (uint8_t)(1u << t); else sum += p;
     }
     return sum;
@@ -412,16 +416,18 @@ static void leave(Part *part, Part *mirror, unsigned track, const Machine *old)
 static void charge(const Machine *const *m, unsigned n)
 {
     if (!valid_bank()) return;
-    const Part *part = current_part(); const Machine *who;
+    const Machine *owners[8];
+    uint8_t over;
+    unsigned booked = cpu_bill(m, n, current_part(), 8, &over, owners);
     for (unsigned t = 0; t < 8; ++t) {
-        if (!owner(m, n, part, t, &who) || !who->source_kind) who = 0;
+        const Machine *who = owners[t];
+        if (who && !who->source_kind) who = 0;
         if (!who) warned &= (uint8_t)~(1u << t);
         if (who ? charged[t] != who && !claim(t, who) : charged[t] != 0) release(t);
     }
-    uint8_t over; unsigned booked = cpu_bill(m, n, part, 8, &over);
     for (unsigned t = 0; t < 8; ++t)
-        if (over & ~cpu_warned & 1u << t && owner(m, n, part, t, &who)) { /* the first new one: the box shows one at a time */
-            cpu_refuse(t, who, booked);
+        if (over & ~cpu_warned & 1u << t && owners[t]) { /* the first new one: the box shows one at a time */
+            cpu_refuse(t, owners[t], booked);
             break;
         }
     mw_cpu_refused = cpu_warned = over, mw_cpu_booked = booked;
@@ -462,7 +468,7 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
             }
         }
         if (old != next && cpu_price(next)) { /* before the DSP claim: nothing to give back */
-            uint8_t over; unsigned booked = cpu_bill(m, n, part, track, &over);
+            uint8_t over; unsigned booked = cpu_bill(m, n, part, track, &over, 0);
             if (booked + cpu_price(next) > mw_cpu_allowance) {
                 cpu_refuse(track, next, booked);
                 return (unsigned)-1;

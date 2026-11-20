@@ -114,7 +114,7 @@
 +    if (!n) return RUNTIME_OK;
 +    if (modwerk_saved_set_busy()) return RUNTIME_BUSY;
 +    int idle = dl_hook_claims_idle(spans, n);
-+    return idle > 0 ? RUNTIME_OK : idle < 0 ? RUNTIME_BUSY : RUNTIME_MEMORY;
++    return idle > 0 ? RUNTIME_OK : idle < 0 ? RUNTIME_BUSY : RUNTIME_BUFFER; /* a buffer under a claim, not memory */
 +}
 +int modwerk_stock_hook_begin(unsigned feature, uint32_t module, uint32_t generation, int enable)
 +{
