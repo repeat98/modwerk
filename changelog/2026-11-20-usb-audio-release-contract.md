@@ -1,0 +1,1 @@
+Development: The Octatrack release checks verify every published USB Audio layout against the base or module that provides it. The legacy patch and package integrity checks run for both installer formats.
