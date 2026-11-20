@@ -43,22 +43,24 @@ effect id and no live slot runs it. Euclid (2.5 points at rest in its own record
 18 November) and Tape Echo (0.4) were not in the 24-package set; their figures are the same measure on another base
 and scene, and come from their ColdFire detours in the frame, which their next releases mark resting.
 
-## Not yet on the unit
+## 0.7.11 on the MKII
 
-No after-figure exists yet. On 20 November 2026 the unit was off USB from about 10:30 (another session's RAM boot) until
-the owner's power cycle, then held by other sessions. At 15:02 the run of `block2.sh` RAM-booted the before twin of 0.7.11
-(`12108493`, base/octatrack-next without this change); the boot tool reported it had not come back within 60 s, the
-script stopped there as written, and the unit was in fact up on that twin a few seconds later. No trial ran. At 15:07 the
-flashed image the unit started on (`dfa43813`, 0.7.9) was RAM-booted back: identity `dfa43813`, the same ten kept
-modules in the same order (Tape Echo, Air Chorus, Vibrato, VECTOR, BBD Delay, Mini Verb, E-Verb, Euclid, TapeHead,
-Analog BD). That base answers no development requests, so the Part was not read; no step of the run changed one.
+The Windows RAM boot exceeded its 60-second reconnect window before a trial started. The later Mac comparison used the same compiler and Tracks + Main + Cue layout for both twins. Control `69354a52b1142a6b` came from `e58e9805afb8`. Candidate `fac1523234f4bb0b` came from `618040e7ed12`. A01 played on Part 4, whose working and saved copies matched. Seven FLEX tracks had trigs. USB audio varied on T1 and Main during these captures.
 
-The after twin of this change on 0.7.11 is `4a6060b6`. The planned run, in `block2.sh`: empty, the 24 published and the
-other 12 packages (every USB package in sets that fit, at most 32 modules a set and the pool) on both twins, the 24 with
-the development POLY8 (11 detours resting), POLY8 alone, picks of resting POLY8, SYNTIZ and Amiga on T8 while playing
-(the frame guard over the window holding the wake, a STATIC pick as control: the wake cost and its spread), the same
-with a USB capture checked for zero runs, a self-test with the 24, a 120 s soak at 20 operations a second, and the
-test procedure's unit steps by hand.
+| Playing window | Control mean frame | Candidate mean frame | Control longest frame | Candidate longest frame |
+|---|---:|---:|---:|---:|
+| Empty | 51.8% | 51.0% | 88.6% | 90.5% |
+| 24 published packages | 58.0% | 56.0% | 102.6% | 104.4% |
+| Published POLY8 alone | 54.5% | 53.2% | 98.5% | 97.6% |
+| 24 with private resting POLY8 | — | 54.1% | — | 96.1% |
+| Private resting POLY8 alone | — | 51.0% | — | 91.5% |
+| Empty, repeated | 51.9% | 51.0% | 90.0% | 90.1% |
+
+The 24 published packages added 6.2 percentage points on control and 5.0 on candidate. Each cell is one approximately eight-second window. A longest frame above 100% exceeded its frame period. The guard counted zero skipped renders in these windows.
+
+All 18 picks landed on T8 as requested. Each machine pick had a matched STATIC control. The two uncaptured POLY8 wakes added 2.6 and 2.7 points of steady frame time. SYNTIZ and Amiga showed no repeatable increase on this scene. No pick added a skipped render. The six USB recordings had no consecutive all-zero Main frames or repeated non-silent 128-frame blocks. The 24-package self-test with private POLY8 returned 24/24 modules intact and 1/1 DSP effect run. The flat 3% wake estimate remains provisional near the 85% admission threshold.
+
+A later stopped VECTOR trial exposed a rollback failure on the candidate. The follow-up records the fix and the 30-second Undo on the exact release image. [VECTOR qualification](2026-11-20-octatrack-vector-undo.md)
 
 ## Host checks
 
