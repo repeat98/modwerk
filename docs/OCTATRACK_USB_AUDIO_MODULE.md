@@ -62,8 +62,10 @@ Two things it found in the emulator shape the rest:
 3. **Memory.** The module's bss (the ring, up to 96 KiB) comes from the 768 KiB runtime pool. Check the
    controller's alignment and addressing needs for the isochronous buffers and transfer descriptors against pool
    memory, and what the largest layout leaves for a set of 24 modules.
-4. **The POST layout's gain curve** (`usb_post.py`) is 256 stock words read from the owner's own OS: the package
-   takes it as a stock copy (ABI 7), never as bytes in the repository.
+4. **The POST layout's gain curve** (`usb_post.py`) is 256 stock words a linked base reads from the owner's own OS.
+   The package takes the computed quarter sine instead (owner, 20 November 2026), the curve `usb_post.py` checks
+   the stock table against and accepts within 64 of 2^23; a stem's level can differ from a linked base's by at most
+   that. Not compared on a unit.
 5. **Removing the reserve and the variants.** With the function in a package the base drops `USB_RESERVE`, the
    linked-in USB Audio sources and six of its seven identities. This is the base change players get, so it joins
    `base/octatrack-next` only when the module is ready to take over.
@@ -73,11 +75,13 @@ Two things it found in the emulator shape the rest:
 - One catalogue module, the present id `usb-audio-out-tracks-main-cue`, so sets, reports and changelogs keep working.
 - The layout is a setting of the set on the site, as today. Each layout is its own package build of the same
   module id; changing it replaces the package and reconnects.
-- **The player switches it on the Octatrack, in the Modwerk settings** (owner, 20 November 2026): the module adds
-  the row PROJ > MODWERK > USB AUDIO through the base's menu rows, with the three choices tried in #1517 (ALL
-  CHANNELS, MAIN + CUE ONLY, OFF). They change no descriptor, so nothing reconnects and the host keeps its
-  channel count; the choice is kept across power cycles. The row is there only while the module is installed.
-  The 13 November measurements in #1517 are the baseline.
+- **The player switches it on the Octatrack, in the Modwerk settings** (owner, 20 November 2026). The base has one
+  row, PROJ > MODWERK > SETTINGS, for every module that has a setting (table `ot_settings`, `settings.c`): each
+  setting shows its label and the choice in force, and YES takes the next choice at once. The base keeps the
+  choice in battery RAM under the label, through power cycles and module updates, and applies it again after
+  every change of the installed modules. USB Audio offers ALL CHANNELS and OFF in every layout and MAIN + CUE ONLY
+  in the twenty-channel one, read by the producer through #1517's seams. None of them changes a descriptor, so
+  nothing reconnects and the host keeps its channel count. The 13 November measurements in #1517 are the baseline.
 - The imported producer source stays exact; the adapter inserts at guarded seams, as `base_usb_functions.py` does.
 
 ## Sync
@@ -116,10 +120,12 @@ every module. A set that names a layout keeps naming it.
 
 ## Steps
 
+Steps 1 to 3 are built and seen in the emulator only (20 November 2026, draft #1848); none ran on a unit.
+
 1. Bring `base/usb-audio-module` onto current `main`, add the frame event, and run its emulator verifier.
 2. Build USB Audio (20 channels first) as a package against a development twin; verify in the emulator, then on a
    unit: enumerate at both speeds, record, add and remove during a trial, Undo, power cycle, the Windows case.
-3. The other five layouts and the on-device page.
+3. The other five layouts and the SETTINGS page.
 4. The site: package selection, the reconnect in the Load dialog, the limit, the special cases out.
 5. The base without reserve and variants on `base/octatrack-next`, with the transition, a draft until
    extensively tested on a unit.
