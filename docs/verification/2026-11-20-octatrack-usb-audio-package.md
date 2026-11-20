@@ -104,6 +104,8 @@ On the failed build, only the UI tick could turn the USB controller back on afte
 
 A further migrated 16-channel PRE LEVEL trial recorded 91,648 frames and completed Undo with 361 UI ticks in six seconds. The subsequent Track 8/Master trial acknowledged installation of its set. Before any recording, while the host was waiting for the two-channel descriptor, the Octatrack disappeared from the Mac's USB tree. The hub repeatedly reported that a port reset failed to enable the port. The test could not confirm rollback. No Keep or flash was performed. This failure blocks the rebuilt candidate as well. The passing two-channel Main trial used a different preset.
 
+The owner confirmed that an arrow key still responded while the Mac could not see the unit. After a cold start with USB disconnected, the owner reconnected USB. The flashed base, ten module identities and complete saved-set checksum matched the starting record byte for byte. The retained log for trial boot 734 contained no new freeze, crash or DSP stall. The failed USB reconnection remains unexplained.
+
 ## Remaining verification
 
 A physical full-speed host, Windows/WASAPI after a channel-count change, and a Keep/removal lifecycle remain open. The full-set regression, soak and listening stages also remain open. The published site continues to use its existing base variants.
