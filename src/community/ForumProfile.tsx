@@ -62,7 +62,6 @@ function MaintainedModules({ maintains }: { maintains: MemberProfile['maintains'
         <a href={item.href} className="module-cover" aria-label={'View ' + module.name}><ModulePreview id={module.id} /><div className="hover-info"><span>{module.description}</span><strong>Explore module <Icon name="arrow" size={15} /></strong></div></a>
         <div className="module-card-body">
           <div className="module-card-heading"><a href={item.href}>{module.name}</a></div>
-          <p className="card-description">{module.description}</p>
           <div className="card-bottom"><span>{DETAILS[module.id].family} · {machine}</span><CardStats statistics={statistics?.find(stats => stats.module_id === module.id)} /></div>
         </div>
       </article>

@@ -35,7 +35,6 @@ export function ZoomEffectCard({ effect, selected, onToggle, statistics, compare
     <div className="module-card-body">
       <div className="module-card-title"><div className="module-card-heading"><a href={href} onClick={onBrowse} onAuxClick={onBrowse}>{effect.name}</a><div className="card-release"><span className="card-version">v{effect.version}</span></div></div><AddButton name={effect.name} selected={selected} onToggle={onToggle} /></div>
       <div className="card-credit"><ModuleAuthors name={zoomEffectAuthor(effect)} url={zoomEffectRepository(effect)} contributors={effect.author.contributors} /><span>{effect.license.spdx}</span></div>
-      <p className="card-description">{effect.presentation.summary}</p>
       <div className="card-bottom"><span>{effect.presentation.family}</span><CardStats statistics={statistics}><span className="card-stat">DSP {effect.platform.dspCost}</span></CardStats></div>
       <CardProof stability={stability} statistics={statistics} name={effect.name + ' for ' + name} compared={compared} canCompare={canCompare} onCompare={onCompare} />
     </div>

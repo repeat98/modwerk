@@ -136,6 +136,7 @@ describe('starter prompts', () => {
     expect(workflow).toContain('## Make it mergeable')
     expect(workflow).toContain('### Fixes and improvements')
     expect(readFileSync('.github/workflows/pr-flags.yml', 'utf8')).toContain('Improvement:*) label=enhancement')
+    expect(readFileSync('.github/workflows/pr-flags.yml', 'utf8')).toContain('Workflow:*) label=workflow')
     expect(readFileSync('.github/pull_request_template.md', 'utf8')).toContain('**What was wrong or hard:**')
     expect(agents).toContain('npm run pr:ready')
     expect(agents).toContain('what the guides lacked or got wrong')
