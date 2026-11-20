@@ -56,6 +56,18 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
   const issues = useModuleIssues(id)
   const workingCount = useModuleWorksReports(id)
   const [discussionCount, setDiscussionCount] = useState<number | null>(null)
+  const backRef = useRef<HTMLAnchorElement>(null)
+  // Esc goes back, like the back link, unless it is already doing something else (typing, a dialog, a menu).
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape" || event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+      const target = event.target instanceof Element ? event.target : null
+      if (target?.closest("input, textarea, select, [contenteditable]") || document.querySelector("dialog[open], [role=dialog], [aria-modal=true]")) return
+      backRef.current?.click()
+    }
+    document.addEventListener("keydown", onKeyDown)
+    return () => document.removeEventListener("keydown", onKeyDown)
+  }, [])
   useEffect(() => { const navigate = () => setTab(linkedTab()); window.addEventListener('hashchange', navigate); return () => window.removeEventListener('hashchange', navigate) }, [])
   function showConfiguration() {
     setTab('Overview')
@@ -73,7 +85,7 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
   return <div className={'detail-page' + (navigation && navigation.total > 1 ? ' has-catalog-navigation' : '')}>
     {navigation && navigation.total > 1 && <CatalogNavigation navigation={navigation} />}
     {!modal && <div className="module-page-actions">
-      <div className="module-browse-context"><a className="back-link" href={navigation?.backHref ?? backHref} onClick={navigation ? onBackToResults : undefined}><Icon name="back" size={15} />{navigation ? 'Back to results' : backLabel}</a>{navigation && <span className="catalog-position" aria-label={'Module ' + navigation.position + ' of ' + navigation.total + ' results'}>{navigation.position} of {navigation.total}</span>}</div>
+      <div className="module-browse-context"><a ref={backRef} className="back-link" href={navigation?.backHref ?? backHref} onClick={navigation ? onBackToResults : undefined}><Icon name="back" size={15} />{navigation ? 'Back to results' : backLabel}</a>{navigation && <span className="catalog-position" aria-label={'Module ' + navigation.position + ' of ' + navigation.total + ' results'}>{navigation.position} of {navigation.total}</span>}</div>
       <div className="module-page-buttons"><ShareModuleButton id={id} title={title} /></div>
     </div>}
     <section className="detail-hero detail-hero-with-resources" aria-labelledby="module-title">
