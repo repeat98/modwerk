@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboard
 import { Icon } from '../components/Icon'
 import { post } from './api'
 import { useCommunity } from './context'
+import { isAdminRoute } from './admin-navigation'
 import { ForumAvatar } from './ForumIdentity'
 
 // The sidebar's account row: the member's name opens a menu upwards with their account, workspaces and sign-out.
@@ -25,7 +26,7 @@ export function AccountMenu({ route }: { route: string }) {
     window.addEventListener('pointerdown', onPointer)
     return () => { window.removeEventListener('hashchange', close); window.removeEventListener('keydown', onKey); window.removeEventListener('pointerdown', onPointer) }
   }, [open])
-  const current = route === 'account' || route.startsWith('account/') || route === 'developer' || route.startsWith('developer/') || route === 'admin' || route === 'review'
+  const current = route === 'account' || route.startsWith('account/') || route === 'developer' || route.startsWith('developer/') || isAdminRoute(route)
   const user = session.user?.verified ? session.user : null
   if (!user) return <div className="sidebar-account"><a className={'sidebar-account-row' + (current ? ' active' : '')} href="#account" aria-current={current ? 'page' : undefined}><span className="sidebar-account-icon"><Icon name="shield" size={16} /></span><span className="sidebar-account-name"><strong>Sign in / register</strong><small>Join the community</small></span></a></div>
   const roles = [session.admin && 'Admin', developer?.user && 'Modder', user.betaTester && 'Beta tester'].filter(Boolean).join(' · ')
@@ -48,7 +49,7 @@ export function AccountMenu({ route }: { route: string }) {
         <a href="#account" aria-current={route === 'account' || route.startsWith('account/') ? 'page' : undefined}><Icon name="shield" size={16} />Your account</a>
         {user.username && <a href={'#forum/profile/' + encodeURIComponent(user.username)}><Icon name="message" size={16} />Your public profile</a>}
         {developer?.user && <a href="#developer" aria-current={route === 'developer' || route.startsWith('developer/') ? 'page' : undefined}><Icon name="sliders" size={16} />Creator settings</a>}
-        {session.admin && <a href="#admin" aria-current={route === 'admin' || route === 'review' ? 'page' : undefined}><Icon name="star" size={16} />Admin workspace</a>}
+        {session.admin && <a href="#admin" aria-current={isAdminRoute(route) ? 'page' : undefined}><Icon name="star" size={16} />Admin workspace</a>}
         <hr />
         <button type="button" disabled={busy} onClick={() => void signOut()}><Icon name="back" size={16} />{busy ? 'Signing out…' : 'Sign out'}</button>
         {error && <p className="sidebar-account-error" role="alert">{error}</p>}
