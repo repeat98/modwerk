@@ -9,6 +9,7 @@ type BaseChange = {
 // Use the published Octatrack version. The Rytm's base changes are dated, and Zoom uses MIDISTOMP's version.
 const changes: Record<'octatrack' | 'rytm' | 'zoom', BaseChange[]> = {
   octatrack: [
+    { label: '0.7.11', summary: 'Development bases without the resident controller build again. Nothing changes on your Octatrack.', note: '2026-11-20-octatrack-minimal-base-links' },
     { label: '0.7.10', summary: 'Large module sets spend less time handling the controls. Picks leave room for delay sends to open, and Undo restores Analog BD’s sound.', note: '2026-11-19-octatrack-base-0-7-10' },
     { label: '0.7.9', summary: 'Modules can share the Part Edit menu. Module effects also stay assigned after loading a project and restarting.', note: '2026-11-18-octatrack-effect-lost-after-project-load' },
     { label: '0.7.8', summary: 'Several DSP machines can run in one set. Modules that support resting can free up processing time while unused.', note: '2026-11-03-octatrack-dsp-hook-chains' },
