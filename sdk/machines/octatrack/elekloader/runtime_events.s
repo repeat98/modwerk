@@ -1179,6 +1179,12 @@ modwerk_raise_ev_usb_control:
         lea     modwerk_runtime_event_row+212,%a0
         bra.w   modwerk_raise_row
 
+| ---- raised (by a module, or by the base): ev_usb_frame: unsigned f(void); every handler runs, the answers OR'd
+        .globl  modwerk_raise_ev_usb_frame
+modwerk_raise_ev_usb_frame:
+        lea     modwerk_runtime_event_row+220,%a0
+        bra.w   modwerk_raise_row
+
 | a0: the hook's row pointer. C convention: d0 the answers OR'd, d2-d7/a2-a6 kept.
 modwerk_raise_row:
         lea     -8(%sp),%sp

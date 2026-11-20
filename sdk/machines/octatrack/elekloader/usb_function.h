@@ -22,6 +22,8 @@ int modwerk_usb_reconnecting(void);
 void modwerk_usb_function_isr(void);
 void modwerk_usb_function_bus_end(void);
 unsigned modwerk_usb_function_control(void);
+/* The frame interrupt, every 16-sample block (base_usb_functions.py FRAME_SHIM): ev_usb_frame. */
+void modwerk_usb_function_frame(void);
 /* USB FUNCTION (0xC1, bRequest 41, wValue 0, wLength 8): [0] 0 settled, 1 a reconnect is due, 2 off the bus,
  * 3 back on the bus and waiting for the host to reset it and reach this interface; [1] 1 while the configuration the host reads holds a function; [2] 1 while a
  * module contributes one; [3] reconnects made, modulo 256; [4] of them, those that did not wait for an idle

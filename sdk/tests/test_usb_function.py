@@ -20,7 +20,7 @@ import base_usb_functions as functions  # noqa: E402
 import events  # noqa: E402
 from host_flags import SANITIZE  # noqa: E402
 
-HOOKS = ('ev_usb_isr', 'ev_usb_bus_end', 'ev_usb_control')
+HOOKS = ('ev_usb_isr', 'ev_usb_bus_end', 'ev_usb_control', 'ev_usb_frame')
 
 
 def load(name, relative):
@@ -67,7 +67,7 @@ class UsbFunction(unittest.TestCase):
             self.assertIn('uf_raise(MODWERK_%s)' % name.upper(), source)
         self.assertEqual(raises[by_name['ev_mute_keep']['index'] - events.FIRST], '(uintptr_t)modwerk_raise_ev_mute_keep')
         kinds = {row['event']: row for row in json.loads(events.browser(registry))['events']}
-        self.assertEqual([kinds[name]['kind'] for name in HOOKS], ['raise'] * 3)  # as every raised hook; the loader hands no package their entry (raises above)
+        self.assertEqual([kinds[name]['kind'] for name in HOOKS], ['raise'] * 4)  # as every raised hook; the loader hands no package their entry (raises above)
         self.assertEqual(kinds['ev_mute_keep']['kind'], 'raise')
         self.assertEqual({k: kinds['ot_usb_functions'][k] for k in ('kind', 'room', 'record')},
                          dict(kind='table', room=1, record=32))

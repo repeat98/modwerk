@@ -1,11 +1,12 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
  * The smallest module that adds a USB function to the Modwerk base (events.json ot_usb_functions), and the fixture
  * of scripts/verify-octatrack-usb-function.mjs. It contributes two vendor-class interfaces, 4 and 5, with one bulk
- * IN endpoint 3 that it never uses, and subscribes to the three hooks the base raises for a function:
+ * IN endpoint 3 that it never uses, and subscribes to the four hooks the base raises for a function:
  *
  *   python3 -B sdk/runtime/loader/build.py sdk/machines/octatrack/elekloader/examples/usb_function.c \
  *     -o usb_function.mwrm --subscribe ot_usb_functions:usb_function:50 --subscribe ev_usb_isr:usb_function_isr:50 \
- *     --subscribe ev_usb_bus_end:usb_function_bus_end:50 --subscribe ev_usb_control:usb_function_control:50
+ *     --subscribe ev_usb_bus_end:usb_function_bus_end:50 --subscribe ev_usb_control:usb_function_control:50 \
+ *     --subscribe ev_usb_frame:usb_function_frame:50
  *
  * Installing it makes the base reconnect: the host then reads a configuration with six interfaces. DIAG's value
  * reads back what the hooks saw: bus ends in the top byte, then the class requests it answered, those it was
@@ -28,11 +29,13 @@ static const uint8_t full[] = FUNCTION(64, 0), high[] = FUNCTION(0, 2);
 const struct modwerk_usb_function usb_function = {MODWERK_USB_FUNCTION_ABI, sizeof usb_function, 2, sizeof full,
                                                   0x00080000u /* endpoint 3 IN */, full, high, full, high};
 
-static volatile uint32_t interrupts, ends, asked, answered;
+static volatile uint32_t interrupts, ends, asked, answered, frames;
 
 /* The USB interrupt: a function retires its own endpoint's completions here. This one only counts. */
 unsigned usb_function_isr(void) { interrupts = interrupts + 1; return 0; }
 /* A bus reset, the cable pulled or the base's own reconnect: back to alternate setting 0. */
+/* The frame interrupt's block: a function produces its audio here. This one only counts. */
+unsigned usb_function_frame(void) { frames = frames + 1; return 0; }
 unsigned usb_function_bus_end(void) { ends = ends + 1; return 0; }
 /* A request stock and the base do not know. A class IN request 0x70 to interface 4 is this function's: it refuses
  * it itself, both ways, and says so; every other request is not its own. */
@@ -46,5 +49,5 @@ unsigned usb_function_control(void)
 }
 void module_tick(struct modwerk_runtime_api *api)
 {
-    api->value = (ends & 0xffu) << 24 | (answered & 0xffu) << 16 | (asked & 0xffu) << 8 | (interrupts ? 1u : 0u);
+    api->value = (ends & 0xffu) << 24 | (answered & 0xffu) << 16 | (asked & 0xffu) << 8 | (frames ? 2u : 0u) | (interrupts ? 1u : 0u);
 }

@@ -3,7 +3,8 @@
 //
 //   python3 -B sdk/runtime/loader/build.py sdk/machines/octatrack/elekloader/examples/usb_function.c -o /private/usb_function.mwrm \
 //     --subscribe ot_usb_functions:usb_function:50 --subscribe ev_usb_isr:usb_function_isr:50 \
-//     --subscribe ev_usb_bus_end:usb_function_bus_end:50 --subscribe ev_usb_control:usb_function_control:50
+//     --subscribe ev_usb_bus_end:usb_function_bus_end:50 --subscribe ev_usb_control:usb_function_control:50 \
+//     --subscribe ev_usb_frame:usb_function_frame:50
 //   ot_emu --image BUILD/MAIN.raw --usb-host /tmp/ot-usb.sock --ms 900000 &      # the adapted ot_emu, one run a check
 //   node scripts/verify-octatrack-usb-function.mjs /tmp/ot-usb.sock /private/usb_function.mwrm [--linked]
 //
@@ -110,6 +111,7 @@ describes(now, true)
 let d = await diag()
 assert.ok(d.active, 'the trial is still open and the module still runs after the base’s own reconnect')
 assert.ok(d.value >>> 24 >= 1 && (d.value & 1) === 1, 'ev_usb_bus_end and ev_usb_isr ran')
+assert.equal(d.value & 2, 2, 'ev_usb_frame ran: the frame interrupt reaches the module')
 // A class request to interface 4 is the function's, one to interface 5 is nobody's: both stall, one by its own hand.
 assert.equal(await bench.controlIn(0xa1, 0x70, 0, 4, 1), null)
 assert.equal(await bench.controlIn(0xa1, 0x70, 0, 5, 1), null)

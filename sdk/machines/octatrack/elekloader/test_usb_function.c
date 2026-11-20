@@ -39,8 +39,8 @@ static volatile uint32_t *host_reg(uint32_t a)
 #include "loader.h"
 #include "modwerk_events.h"
 /* The hooks' rows hold handlers; here, numbers the walk hands to host_call. */
-enum { H_ISR = 1, H_BUS_END, H_CONTROL, H_CONTROL_OTHER };
-static unsigned isrs, bus_ends, controls, others, answer;
+enum { H_ISR = 1, H_BUS_END, H_CONTROL, H_CONTROL_OTHER, H_FRAME };
+static unsigned isrs, bus_ends, controls, others, answer, frames;
 static unsigned host_call(uintptr_t handler)
 {
     switch (handler) {
@@ -48,6 +48,7 @@ static unsigned host_call(uintptr_t handler)
     case H_BUS_END: return ++bus_ends, 0u;
     case H_CONTROL: return ++controls, answer;
     case H_CONTROL_OTHER: return ++others, 4u;
+    case H_FRAME: return ++frames, 0u;
     }
     fprintf(stderr, "uncalled %#lx\n", (unsigned long)handler); exit(2);
 }
@@ -58,11 +59,11 @@ void modwerk_machine_unlock(uint32_t s) { CHECK(locked && s == 4); locked = 0; }
 int modwerk_machine_usb_disk(void) { return usb_disk; }
 uint8_t modwerk_cfg_fs[512], modwerk_cfg_hs[512], modwerk_cfg_os_fs[512], modwerk_cfg_os_hs[512];
 volatile uint32_t modwerk_cfg_len = MODWERK_USB_CFG_BYTES;
-static uintptr_t volatile function_row[2], isr_row[2] = {H_ISR}, bus_end_row[2] = {H_BUS_END}, control_row[3] = {H_CONTROL};
+static uintptr_t volatile function_row[2], isr_row[2] = {H_ISR}, bus_end_row[2] = {H_BUS_END}, control_row[3] = {H_CONTROL}, frame_row[2] = {H_FRAME};
 #define modwerk_runtime_event_row host_rows
 static uintptr_t volatile *const host_rows[RUNTIME_SITE_EVENTS] = {
     [MODWERK_OT_USB_FUNCTIONS - RUNTIME_EVENTS] = function_row, [MODWERK_EV_USB_ISR - RUNTIME_EVENTS] = isr_row,
-    [MODWERK_EV_USB_BUS_END - RUNTIME_EVENTS] = bus_end_row, [MODWERK_EV_USB_CONTROL - RUNTIME_EVENTS] = control_row};
+    [MODWERK_EV_USB_BUS_END - RUNTIME_EVENTS] = bus_end_row, [MODWERK_EV_USB_CONTROL - RUNTIME_EVENTS] = control_row, [MODWERK_EV_USB_FRAME - RUNTIME_EVENTS] = frame_row};
 #include "usb_function.c"
 #undef modwerk_runtime_event_row
 
@@ -288,6 +289,8 @@ int main(void)
     isr_row[0] = 0;                                     /* nobody subscribes: nothing is called */
     modwerk_usb_function_isr();
     CHECK(isrs == 1u);
+    modwerk_usb_function_frame(), modwerk_usb_function_frame();  /* the frame interrupt's block */
+    CHECK(frames == 2u && isrs == 1u && !locked);
     if (failures) return 1;
     puts("usb function: admission, slots, reconnect and its holds pass");
     return 0;

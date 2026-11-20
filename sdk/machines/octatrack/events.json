@@ -2384,6 +2384,22 @@
    "subscribers": [],
    "orderEvidence": "One function at a time: the controller has one endpoint left (3) and every authored USB Audio layout uses it, so a second function could not share the configuration. The USB Audio module is the first to contribute; until its package is published no module does.",
    "sites": []
+  },
+  {
+   "event": "ev_usb_frame",
+   "index": 59,
+   "site": null,
+   "prototype": "unsigned f(void)",
+   "args": [],
+   "results": "or",
+   "when": "every 16-sample block of the frame interrupt, at the point where USB Audio's producer runs when it is linked into a base, before stock clears its word at 0x46104d4e; no stock site: the base raises it from its own shim at 0x4000d9a0, in a base that takes a module's USB function",
+   "context": "the frame interrupt: short, no firmware call that can block, the EMAC kept as found",
+   "contract": "Every handler runs; the answers are ignored. A USB function produces its block here: it reads the frame's read-back words, fills its ring and primes its own endpoint. Return at once while the host has not opened your stream: this runs every block, playing or not. d2-d7/a2-a6 must be kept, as C keeps them; the base keeps d0-d1/a0-a1.",
+   "order": "lower first, then module id; every handler runs, so the order does not change the result. 10-90.",
+   "subscribers": [],
+   "raisers": [],
+   "raisedByBase": true,
+   "orderEvidence": "A function owns its ring and endpoint alone (ot_usb_functions holds one function). No module subscribes yet: USB Audio's audio_frame_shim does this work at the same site when it is linked into a base, and such a base leaves the site to it."
   }
  ]
 }

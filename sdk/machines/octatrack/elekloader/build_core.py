@@ -2191,7 +2191,7 @@ modwerk_retained_end:
         recipe['sites'].append(dict({k: v for k, v in site.items() if k != 'length'},
                                     addr=hex(addr), stock=stock_at(addr, site['length']).hex()))
     recipe['sites'] += (usb_profiles.sites(usb, usb_functions, stock_at, args.usb_audio) if usb_profiles else
-                       usb_functions.sites(usb, stock_at, args.usb_audio) if usb_functions else usb.sites(stock_at, args.dev))
+                       usb_functions.sites(usb, stock_at, args.usb_audio, slots=usb_function_slots) if usb_functions else usb.sites(stock_at, args.dev))
     # RAM boot: the gate at the OS entry, and the DSP park in both payloads.
     at = BOOT_GATE[0] - device.main_load
     if image[at:at+6].hex() != BOOT_GATE[1]:

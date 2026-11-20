@@ -301,4 +301,8 @@ struct modwerk_usb_function {
 #define MODWERK_USB_FUNCTION_INTERFACE 4u /* the base's own: 0 mass storage, 1 its vendor interface, 2 and 3 USB MIDI */
 #define MODWERK_USB_FUNCTION_ENDPOINT 3u  /* 0 control, 1 mass storage, 2 USB MIDI */
 
+/* ev_usb_frame (raised by the base): every 16-sample block of the frame interrupt, at the point where USB Audio's producer runs when it is linked into a base, before stock clears its word at 0x46104d4e; no stock site: the base raises it from its own shim at 0x4000d9a0, in a base that takes a module's USB function. The frame interrupt: short, no firmware call that can block, the EMAC kept as found. Every handler runs; the answers are ignored. A USB function produces its block here: it reads the frame's read-back words, fills its ring and primes its own endpoint. Return at once while the host has not opened your stream: this runs every block, playing or not. d2-d7/a2-a6 must be kept, as C keeps them; the base keeps d0-d1/a0-a1. */
+#define MODWERK_EV_USB_FRAME 59
+typedef unsigned modwerk_ev_usb_frame(void);
+
 #endif

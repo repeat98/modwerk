@@ -17,7 +17,7 @@
  *                no open sync or trial for it. The reconnect is over when the host, after a reset, reaches the
  *                vendor interface; without that for 20 s it counts as unplugged
  *
- * The base raises ev_usb_isr, ev_usb_bus_end and ev_usb_control by walking their rows here, never through the
+ * The base raises ev_usb_isr, ev_usb_bus_end, ev_usb_control and ev_usb_frame by walking their rows here, never through the
  * loader's dispatch code (runtime_events.s): the loader holds a switch back while any task's stack holds an address
  * inside that code, and the USB interrupt runs on whichever task it interrupts, so return addresses from there
  * would stay in stack memory and refuse every later removal (seen in the emulator: a rollback refused for good). The
@@ -85,7 +85,7 @@ static volatile uint8_t reset_seen; /* BACK: the host has reset the bus since th
 static uint16_t timer, waited;
 
 /* Every handler of a hook the base raises, in the row's order (lower first, then module id); their answers OR'd.
- * From the USB interrupt, or with it held off. */
+ * From the USB or the frame interrupt, or with them held off. */
 static unsigned uf_raise(unsigned hook)
 {
     unsigned answer = 0;
@@ -243,6 +243,8 @@ void modwerk_usb_function_bus_end(void)
     (void)uf_raise(MODWERK_EV_USB_BUS_END);
 }
 unsigned modwerk_usb_function_control(void) { return uf_raise(MODWERK_EV_USB_CONTROL); }
+/* The frame interrupt's block (usb_base.s modwerk_usb_frame_shim), in a base that does not link USB Audio in. */
+void modwerk_usb_function_frame(void) { (void)uf_raise(MODWERK_EV_USB_FRAME); }
 
 unsigned modwerk_usb_function_status(uint8_t *out)
 {

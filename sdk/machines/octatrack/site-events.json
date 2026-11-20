@@ -314,6 +314,11 @@
    "kind": "table",
    "room": 1,
    "record": 32
+  },
+  {
+   "index": 59,
+   "event": "ev_usb_frame",
+   "kind": "raise"
   }
  ]
 }
