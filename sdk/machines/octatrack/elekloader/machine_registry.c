@@ -183,6 +183,11 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
  * under the line played over it, and the frame guard then dropped its renders (shared diagnostics, 11 to 14
  * November 2026: 166 skip records on 24 units beside 5 refusals). */
 volatile uint32_t mw_cpu_hot = 850u; /* per mille; development bases may change it */
+/* A pick that wakes a resting machine's module (below, "Machines that rest") is judged with this on top of its price:
+ * what the module's hooks and detours cost the frame again once awake, which the meter cannot show before. The most
+ * of the 24 packages measured at rest on an MKII (20 November 2026, base 0.7.10 twin, playing): POLY8 0.3.3, 2.3
+ * points; MKII tracks here are about one meter point a frame point. Per mille of the meter. */
+volatile uint32_t mw_wake_mille = 30u;
 volatile uint32_t mw_cpu_allowance = 45u, mw_cpu_booked; /* percent of a frame; development bases may change the allowance */
 volatile uint8_t mw_cpu_refused;    /* the current Part's tracks past the allowance: the frame interrupt reads it whole */
 static uint8_t cpu_warned;          /* ... whose box already showed, as `warned` */
@@ -320,8 +325,69 @@ static unsigned sequencer(void)
  * FLEX track; walking the machine table and comparing every machine's signature each time was most of its own cost.
  * Written in the frame interrupt only. The descriptors it names are the rows': looked_up is cleared masked when the
  * rows change (modwerk_machine_tables_changed), before a machine that left loses its memory. */
-enum { NOBODY, OWNED, ORPHAN };
+enum { NOBODY, OWNED, ORPHAN, ASLEEP };
 static struct { const Part *part; uint32_t bytes; const Machine *who; unsigned kind; } looked[8];
+/* ---- Machines that rest (owner, 20 November 2026: an installed module no track uses costs nothing) -----------------
+ * A machine's module that does not answer ev_in_use itself is answered for here (events.json's judged ot_machines,
+ * loader.h modwerk_machine_in_use): it is in use while a track of any Part of the project, working or saved, is the
+ * machine, so a pattern, Part or bank change never needs it woken; the scan is the machine map's (mc_scan), every two
+ * seconds or at once after a change. It rests after REST_AFTER scans in a row find no such track: its handlers leave
+ * the hooks that rest (the frame interrupt's ev_play_increment, ev_voice_bind and ev_tail_kill) and its detours marked
+ * rests hold stock's bytes. A track that names a resting machine all the same (a paste, a project just loaded) renders
+ * stock's silent source and asks for it (wake_who) until the next UI tick wakes it; a pick wakes it before it commits.
+ * A RENDER_FLEX machine is offered FLEX tracks nobody owns, so it never rests. */
+#define REST_AFTER 2u
+int modwerk_fxmap_loading(void); /* fxmap.c: a project load runs */
+static const Machine *use_who[ROWS - 5u]; /* the rows' machines at the last scan, and how many scans in a row found */
+static uint8_t use_idle[ROWS - 5u];       /* no track of the project on each (UI task) */
+static unsigned use_n;
+static uint32_t use_epoch;                /* the loader's owner epoch at the last scan: a set installed, removed or undone
+                                           * since keeps every machine awake until REST_AFTER scans of the new set */
+static const Machine *volatile wake_who[8]; /* the frame interrupt: track t names this resting machine */
+static const Machine *volatile pick_who;    /* mw_assign: this resting machine is being picked */
+static const Machine *asleep_who[ROWS - 5u]; /* the rows' machines whose module rests: written masked (tables changed) */
+static unsigned asleep_n;
+static int asleep(const Machine *who)
+{
+    for (unsigned k = 0; k < asleep_n; ++k) if (asleep_who[k] == who) return 1;
+    return 0;
+}
+static void asleep_refresh(void) /* masked: the loader just changed the rows or the resting set */
+{
+    asleep_n = 0;
+    for (uintptr_t volatile *row = modwerk_runtime_event_row[MACHINES]; *row && asleep_n < ROWS - 5u; ++row)
+        if (modwerk_runtime_resting_at(*row)) asleep_who[asleep_n++] = (const Machine *)*row;
+}
+int modwerk_machine_in_use(const struct runtime_module *module)
+{
+    const Machine *who = (const Machine *)module->hook[MODWERK_OT_MACHINES];
+    if (!who || who->abi != MODWERK_MACHINE_ABI || who->flags & MODWERK_MACHINE_RENDER_FLEX || pick_who == who ||
+        modwerk_runtime_owner_epoch() != use_epoch) return 1;
+    for (unsigned t = 0; t < 8u; ++t) if (wake_who[t] == who) return 1;
+    for (unsigned k = 0; k < use_n; ++k) if (use_who[k] == who) return use_idle[k] < REST_AFTER;
+    return 1; /* not scanned since it came: awake until a scan says otherwise */
+}
+/* The machine map's scan found `mine` (bit k: a track of the project is m[k]): the count of idle scans for each. */
+static void use_scanned(const Machine *const *m, unsigned n, uint32_t mine)
+{
+    uint8_t idle[ROWS - 5u];
+    uint32_t epoch = modwerk_runtime_owner_epoch();
+    int same_set = epoch == use_epoch, loading = modwerk_fxmap_loading();
+    use_epoch = epoch;
+    for (unsigned k = 0; k < n; ++k) {
+        unsigned was = 0;
+        for (unsigned j = 0; same_set && j < use_n; ++j) if (use_who[j] == m[k]) was = use_idle[j];
+        /* While a project loads, stock rewrites the banks a Part at a time (fxmap.c): a scan then counts what it sees
+         * used, never an idle scan, so nothing rests on a half-loaded project. */
+        idle[k] = mine >> k & 1u ? 0u : loading ? (uint8_t)was : (uint8_t)(was < 255u ? was + 1u : 255u);
+        if (!(mine >> k & 1u) && idle[k] < REST_AFTER) continue;
+        /* used, or idle long enough: a wake asked for it is answered either way */
+        if (pick_who == m[k]) pick_who = 0;
+        for (unsigned t = 0; t < 8u; ++t) if (wake_who[t] == m[k]) wake_who[t] = 0;
+    }
+    for (unsigned k = 0; k < n; ++k) use_who[k] = m[k], use_idle[k] = idle[k];
+    use_n = n;
+}
 static const Machine *flex_machine; /* the first RENDER_FLEX machine with a render: it takes unowned FLEX tracks */
 static uint32_t looked_up;          /* bit t: looked[t] stands; bit 8: flex_machine does */
 /* Those bytes are slow to read: the Part index is in battery RAM, about half a microsecond a read, and the bank's
@@ -351,6 +417,7 @@ void modwerk_machine_tables_changed(void)
     }
     for (unsigned k = 5; k < ROWS; ++k) mw_src_names[k] = (const char *)(uintptr_t)U32(0x400a78c8u + 4), mw_pb_table[k] = FLEX_PAGE;
     counts(n, sequencer());
+    asleep_refresh();
 }
 
 const char *mw_name(unsigned row)
@@ -455,9 +522,12 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
     if (next) {
         if (next->admit_track && !next->admit_track(part, track)) return (unsigned)-1;
         warned &= (uint8_t)~(1u << track); /* a pick is a new ask: say so again if it is refused again */
+        int waking = old != next && asleep(next);
         if (old != next) { /* a unit this machine's renders would make busy does not take it */
             uint32_t cpu = modwerk_status_cpu_load();
-            if (cpu + 10u * cpu_price(next) >= mw_cpu_hot) {
+            /* A resting machine's module also brings its hooks and detours back into the frame: the meter does not
+             * hold them yet, so its pick is judged with them (MW_WAKE_MILLE) on top. */
+            if (cpu + 10u * cpu_price(next) + (waking ? mw_wake_mille : 0u) >= mw_cpu_hot) {
                 mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
                 modwerk_status_cpu_hot(track, next->label, cpu);
                 return (unsigned)-1;
@@ -471,6 +541,10 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
             }
         }
         if (next->source_kind && old != next && !claim(track, next)) return (unsigned)-1;
+        if (waking) { /* awake before the track becomes it: its hooks see the commit; else silent until the next tick */
+            pick_who = next;
+            modwerk_runtime_rest_poll();
+        }
         if (old != next) mc_assigned(next);
         if (old && old != next) leave(part, mirror, track, old);
         if (absent) flex_defaults(part, mirror, track);
@@ -712,6 +786,10 @@ int mw_source_start_impl(unsigned track, unsigned sample, unsigned flags, Source
         start_refused[track] = 0;
         return orphan(current_part(), track) ? 0 : fallback ? fallback(track, sample, flags) : 0;
     }
+    if (asleep(who)) { /* as an absent machine's track, until it wakes */
+        start_refused[track] = 0, wake_who[track] = who;
+        return 0;
+    }
     if (!(who->flags & MODWERK_MACHINE_START)) {
         start_refused[track] = 0;
         return fallback ? fallback(track, sample, flags) : 0;
@@ -751,7 +829,7 @@ SourceStart *mw_source_start_select(unsigned track, SourceStart *fallback)
     const Machine *m[ROWS - 5u], *who = 0;
     unsigned n = machines(m);
     if (owner(m, n, current_part(), track, &who)) {
-        if (who->flags & MODWERK_MACHINE_START) return source_start_dispatch;
+        if (who->flags & MODWERK_MACHINE_START || asleep(who)) return source_start_dispatch;
     } else if (orphan(current_part(), track)) {
         return source_start_dispatch;
     }
@@ -854,7 +932,7 @@ static unsigned look(unsigned t, const Machine **who)
         uint32_t bytes = (uint32_t)part[0x22 + t] << 24 | (uint32_t)s[0] << 16 | (uint32_t)s[1] << 8 | s[2];
         if (!(looked_up >> t & 1u) || looked[t].part != part || looked[t].bytes != bytes) {
             const Machine *m[ROWS - 5u]; unsigned n = render_rows(m);
-            looked[t].kind = owner(m, n, part, t, &looked[t].who) ? OWNED : orphan(part, t) ? ORPHAN : NOBODY;
+            looked[t].kind = owner(m, n, part, t, &looked[t].who) ? asleep(looked[t].who) ? ASLEEP : OWNED : orphan(part, t) ? ORPHAN : NOBODY;
             looked[t].part = part, looked[t].bytes = bytes, looked_up |= 1u << t;
         }
         frame_seen |= 1u << t;
@@ -889,7 +967,8 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
         }
         Render *f = who->render ? who->render : STOCK(Render *, 0x40004008u); /* POLY8's voices render inside stock's */
         return who->source_kind ? f(track, ping, start, end) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
-    } else if (kind == ORPHAN) { /* its bytes are the absent machine's, not FLEX's */
+    } else if (kind == ORPHAN || kind == ASLEEP) { /* its bytes are the absent machine's, not FLEX's */
+        if (kind == ASLEEP) wake_who[track] = who; /* resting: its detours hold stock's bytes until it wakes */
         stop_stock(track);
         return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
     }
@@ -919,7 +998,8 @@ int mw_foreign_render(unsigned track, unsigned ping, unsigned start, unsigned en
     if (kind == NOBODY) /* THRU, NEIGHBOR and PICKUP have no stand-in here */
         return frame_part && frame_part[0x22 + track] <= 1u
             ? guarded(f, STOCK(Render *, 0x40004008u), track, ping, start, end) : f(track, ping, start, end);
-    if (kind == ORPHAN || start_refused[track] == who || mw_cpu_refused >> track & 1u ||
+    if (kind == ASLEEP) wake_who[track] = who;
+    if (kind == ORPHAN || kind == ASLEEP || start_refused[track] == who || mw_cpu_refused >> track & 1u ||
         (who->source_kind && charged[track] != who))
         return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
     return who->source_kind ? f(track, ping, start, end) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
@@ -1053,7 +1133,8 @@ void modwerk_machine_map_refresh(void)
     if (!mc_stale && (mc_refreshes & 3u)) return;
     mc_stale = 0;
     const Machine *m[ROWS - 5u]; unsigned n = machines(m);
-    uint32_t named = mc_scan(0, 0, 0), absent = 0;
+    uint32_t mine, named = mc_scan(m, n, &mine), absent = 0;
+    use_scanned(m, n, mine); /* which machines' modules may rest (modwerk_machine_in_use) */
     for (unsigned k = 0; k < MODWERK_MACHINE_MAP; ++k) {
         const volatile struct mc_entry *e = &MCMAP->e[k];
         if (!(named >> k & 1u)) continue;
