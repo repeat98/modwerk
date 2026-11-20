@@ -42,7 +42,6 @@ export async function moduleThumbnail(id: string, stylesheet: string): Promise<B
     <style>${styles}</style>
     <defs><radialGradient id="glow" cx="60%" cy="100%" r="75%"><stop stop-color="${color}" stop-opacity=".075"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></radialGradient></defs>
     <rect width="1200" height="630" fill="#1c1c22"/><rect width="1200" height="630" fill="url(#glow)"/>
-    <text x="55" y="58" fill="${color}" opacity=".85" font-family="monospace" font-size="24" letter-spacing="2">${escapeHtml(detail.label)}</text>
     <circle cx="1140" cy="48" r="7" fill="${color}" opacity=".6"/>
     ${artwork.replace('<svg ', '<svg x="60" y="70" width="1080" height="490" ')}
     ${detail.controls.slice(0, 3).map((control, index) => `<text x="${[55, 600, 1145][index]}" y="595" text-anchor="${['start', 'middle', 'end'][index]}" fill="${color}" opacity=".75" font-family="monospace" font-size="22" letter-spacing="1">${escapeHtml(control)}</text>`).join('')}
