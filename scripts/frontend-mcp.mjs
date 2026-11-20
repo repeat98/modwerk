@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+import { existsSync } from 'node:fs'
 import { readFile, writeFile, mkdir, rename, lstat, rm } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { pathToFileURL, fileURLToPath } from 'node:url'
@@ -157,7 +158,11 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     try { await writeFile(temporary, JSON.stringify(values, null, 2), { mode: 0o600, flag: 'wx' }); await rename(temporary, file); sets = values }
     finally { await rm(temporary, { force: true }) }
   }
-  const manifest = !injected && frontend.publishedPackages || JSON.parse(await readFile(join(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8'))
+  const publication = join(root, 'src/engine/elekloader/octatrack-publication.ts')
+  // Private preparation receipts name the native SDK's paths. A normal site session uses its served files.
+  const manifest = !options.preparedModules && !injected && existsSync(publication)
+    ? (await import(pathToFileURL(publication).href)).publishedPackages
+    : JSON.parse(await readFile(join(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8'))
   const preparedModules = options.preparedModules && await loadPreparedModules(options.preparedModules, manifest, frontend)
   const catalogue = preparedModules?.catalogue ?? frontend.createRuntimeCatalogue(manifest)
   const load = preparedModules?.load ?? (async entry => {
