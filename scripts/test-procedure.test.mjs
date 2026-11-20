@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process'
 import { mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -234,5 +235,36 @@ describe('the target switch', () => {
   it('names the pyramid layer of every step', () => {
     expect(Object.keys(LAYER)).toEqual(STEPS.map(step => step.id))
     expect(new Set(Object.values(LAYER))).toEqual(new Set(['host', 'contract', 'emulator', 'target', 'unit']))
+  })
+})
+
+describe('the real unit queue', () => {
+  it('runs the unit steps as one turn of scripts/unit-queue.mjs, and a device command inside does not queue again', async () => {
+    // The argv the runner hands to `npm run unit`, run by the real queue with a private state folder.
+    const deps = fakeDeps(), exec = deps.exec, argvs = []
+    deps.exec = (argv, ...rest) => { argvs.push(argv); return exec(argv, ...rest) }
+    await runProcedure(moduleCtx({ tools: { unitQueue: true } }), deps)
+    const queued = argvs.find(argv => argv.slice(0, 4).join(' ') === 'npm run unit --')
+    const words = queued.slice(4, queued.indexOf('--', 4))
+    expect(words.slice(0, 1)).toEqual(['run'])
+    const queue = join(import.meta.dirname, 'unit-queue.mjs')
+    // In place of the inner test:procedure: what device.mjs does when a device command starts inside the turn.
+    const probe = `const q = await import(${JSON.stringify(queue)}); const t = await q.takeUnitTurn({ note: 'device try', waitMs: 2000 });` +
+      'console.log(JSON.stringify({ nested: !!t?.nested, state: q.describe().state, turn: !!process.env.MODWERK_UNIT_TURN })); t?.release()'
+    const env = { ...process.env, MODWERK_UNIT_DIR: mkdtempSync(join(tmpdir(), 'unit-queue-')) }
+    for (const name of ['MODWERK_UNIT_TURN', 'MODWERK_UNIT', 'MODWERK_UNIT_WHO']) delete env[name]
+    const run = spawnSync(process.execPath, [queue, ...words, '--', process.execPath, '--input-type=module', '-e', probe], { encoding: 'utf8', env, timeout: 20000 })
+    expect(run.status, run.stderr).toBe(0)
+    expect(JSON.parse(run.stdout.trim().split('\n').at(-1))).toEqual({ nested: true, state: 'held', turn: true })
+    // And the turn is given back when the steps end.
+    const after = spawnSync(process.execPath, [queue, 'status', '--json'], { encoding: 'utf8', env })
+    expect(JSON.parse(after.stdout).state).toBe('free')
+  })
+
+  it('takes no turn for the emulator target: the runner tells the device commands so', async () => {
+    const ctx = context(join(import.meta.dirname, '..'), { out: mkdtempSync(join(tmpdir(), 'procedure-')), target: 'emulator' }, ['vibrato'], {})
+    expect(ctx.env.MODWERK_UNIT).toBe('emulator')
+    const { takeUnitTurn } = await import('./unit-queue.mjs')
+    expect(await takeUnitTurn({ env: { MODWERK_UNIT: 'emulator' } })).toBeNull()
   })
 })

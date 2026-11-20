@@ -66,6 +66,7 @@
     "coldfire:isa": "node scripts/mirror-octatrack-modules.mjs && python3 -B sdk/runtime/coldfire_isa.py",
     "sdk:check": "node scripts/sdk-check.mjs",
     "slots": "node scripts/machine-slots.mjs status",
+    "unit": "node scripts/unit-queue.mjs",
     "lane": "node scripts/lane.mjs",
     "sdk:imports:check": "node scripts/sdk-imports.mjs",
     "modules:build": "node scripts/mirror-octatrack-modules.mjs && python3 -B scripts/build-module-packages.py",
