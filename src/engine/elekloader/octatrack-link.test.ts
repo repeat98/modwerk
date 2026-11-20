@@ -6,7 +6,7 @@ import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
 import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, StaleLoadError, inUseHint, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
-import { UsbVendorTransport, parseBaseSlots } from './upload-usb'
+import { UsbVendorTransport, VendorTransportError, parseBaseSlots } from './upload-usb'
 
 const settle = () => new Promise(resolve => setTimeout(resolve, 0))
 const deferred = () => { let resolve!: () => void; const promise = new Promise<void>(done => { resolve = done }); return { promise, resolve } }
@@ -240,7 +240,9 @@ describe('sending a module', () => {
     expect(failures).toEqual([{ error: 'device', step: 'stage', refusal: 7 }])
   })
   it('reports what stopped a sync whose transfer was never confirmed, with the base’s EP0 counters over it', async () => {
-    const causes = [new DOMException('private text', 'NetworkError'), Object.assign(new Error('private text'), { name: 'TimeoutError' }), undefined], failures: unknown[] = []
+    const networkError = new DOMException('private text', 'NetworkError')
+    const causes = [networkError, Object.assign(new Error('private text'), { name: 'TimeoutError' }), undefined,
+      new VendorTransportError('unconfirmed OUT', false, networkError), new VendorTransportError('device refusal')], failures: unknown[] = []
     for (const [i, cause] of causes.entries()) {
       const unit = fakeUnit(), base = fakeSession(unit)
       if (i) unit.ep0 = [10, 0xfffffffe, 2, 50, 50, 0] // the first base stalls DIAG
@@ -264,7 +266,7 @@ describe('sending a module', () => {
       await link.update('PREVIEW VOL', one)
     }
     expect(failures).toEqual([{ error: 'transport', kind: 'NetworkError' },
-      ...['TimeoutError', 'OtherError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0] }))])
+      ...['TimeoutError', 'OtherError', 'NetworkError', 'VendorTransportError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0] }))])
   })
   it.each(['cancel', 'timeout'] as const)('closes a pending diagnostic read before continuing from %s', async outcome => {
     const unit = fakeUnit(), [device] = await unit.usb.getDevices()
