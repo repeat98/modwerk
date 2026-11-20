@@ -47,10 +47,66 @@ def lag_guard(builder, check):
     return manifest, held, failed
 
 
+def recipe_differences(recorded, current, has_upstream):
+    """Describe source pin differences, excluding unavailable external inputs."""
+    for path in sorted(recorded.keys() | current.keys()):
+        if path.startswith('upstream/') and not has_upstream:
+            continue
+        if path not in current:
+            yield 'missing ' + path
+        elif path not in recorded:
+            yield 'added ' + path
+        elif current[path] != recorded[path]:
+            yield 'changed ' + path
+
+
+def check_packages(builder):
+    """Explain source drift and partial checks without changing the pinned builder."""
+    adapters = str(APP / 'sdk/machines/octatrack/module-adapters')
+    if adapters not in sys.path:
+        sys.path.append(adapters)
+    import standalone_runtime
+
+    tools_available, build = builder.tools, builder.build
+    skipped = []
+
+    def tools_for_check(entry, upstream):
+        available = tools_available(entry, upstream)
+        name = entry['id']
+        if entry.get('standalone'):
+            recipe = standalone_runtime.reviewed(APP, name)
+            current = standalone_runtime.sources(APP, upstream, name)
+            has_upstream = (upstream / 'elekloader/sdk/octabam.py').is_file()
+            for detail in recipe_differences(recipe['sources'], current, has_upstream):
+                print(f'{name} standalone recipe: {detail}', file=sys.stderr)
+        if not available:
+            skipped.append(name)
+        return available
+
+    def build_for_check(entry, *args, **kwargs):
+        try:
+            return build(entry, *args, **kwargs)
+        except subprocess.CalledProcessError:
+            print(f"{entry['id']}: package rebuild failed", file=sys.stderr)
+            raise
+
+    builder.tools, builder.build = tools_for_check, build_for_check
+    try:
+        builder.main()
+    finally:
+        builder.tools, builder.build = tools_available, build
+        if skipped:
+            sys.stdout.flush()
+            print(f'Package rebuilds skipped ({len(skipped)}): {", ".join(skipped)}. '
+                  'Install the required tools to verify these packages.', file=sys.stderr)
+
+
 def run(builder):
     try:
-        if '--check' in sys.argv[1:] or '--prepare-ports' in sys.argv[1:]:
+        if '--prepare-ports' in sys.argv[1:]:
             builder.main()
+        elif '--check' in sys.argv[1:]:
+            check_packages(builder)
         else:
             keep_published(builder, builder.main)
     except subprocess.CalledProcessError as error:

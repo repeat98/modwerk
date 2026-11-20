@@ -29,7 +29,7 @@ export function ModuleDetail({ module, selected, onToggle, addBlock, onSwap, bro
   const details = DETAILS[module.id]
   const moduleDocument = MODULE_DOCUMENTS_BY_ID[module.id]
   const caution = moduleCaution(module.id)
-  return <ModuleDetailLayout modal={modal} browse={browse} onBackToResults={onBackToResults} id={module.id} title={module.name} family={details.family} detail={module.detail}
+  return <ModuleDetailLayout modal={modal} browse={browse} onBackToResults={onBackToResults} id={module.id} title={module.name} family={module.type} detail={module.detail}
     titleBadge={isBetaModule(module.id) ? 'Beta' : module.id === USB_AUDIO_MODULE ? 'Outbox 8 compatible' : undefined}
     configureTarget={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio ? 'usb-setup' : undefined}
     author={module.authorName} authorUrl={module.authorUrl} contributors={module.contributors} description={module.description}

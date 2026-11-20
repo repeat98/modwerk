@@ -15,6 +15,7 @@ import { parseMachineProfile } from '../src/devices/machine-contract.ts'
 import { parseElemodBuild, parseModwerkModule, requireModwerkPublication } from '../src/catalog/module-contract-v3.ts'
 import { compareModuleVersions } from '../src/catalog/versions.ts'
 import { requireFlaggedOverlaps, requireKnownConflicts } from './conflict-ids.mjs'
+import { USB_AUDIO_LAYOUTS } from '../src/config/usb-audio.ts'
 import { requireDistinctZdl, requireZdlBinary, unlistedZdl, zdlPath } from './zdl-binaries.mjs'
 const json=async path=>JSON.parse(await readFile(path,'utf8'))
 async function walk(folder){const paths=[];for(const entry of await readdir(folder,{withFileTypes:true})){if(entry.name==='__pycache__')continue;if(entry.isSymbolicLink())throw new Error('Module symlinks are not allowed: '+entry.name);if(entry.isDirectory())paths.push(...(await walk(resolve(folder,entry.name))).map(p=>entry.name+'/'+p));else paths.push(entry.name)}return paths.sort()}
@@ -50,7 +51,12 @@ export function unlistedPackages(root){
  const named=new Set(),walk=value=>{if(typeof value==='string'&&value.endsWith('.mwrm'))named.add(value);else if(value&&typeof value==='object')Object.values(value).forEach(walk)}
  const rows=resolve(root,'src/engine/assets/octatrack-module-packages.json')
  if(!existsSync(rows))return // a repository without USB packages, such as a minimal test fixture
- walk(JSON.parse(readFileSync(rows,'utf8')).packages)
+ const manifest=JSON.parse(readFileSync(rows,'utf8'))
+ walk(manifest.packages)
+ for(const key of ['configurable', ...USB_AUDIO_LAYOUTS.map(layout=>layout.id)]){
+  const path=manifest.usbAudio?.[key]?.path
+  if(typeof path==='string' && path.endsWith('.mwrm'))named.add(path)
+ }
  const files=folders(root,'public/octatrack-modules').flatMap(folder=>readdirSync(resolve(root,folder)).filter(name=>name.endsWith('.mwrm')).map(name=>folder+'/'+name))
  const stale=files.filter(path=>!named.has(path.replace(/^public\//,'')))
  if(stale.length)throw new Error(stale.join(', ')+': no package row names '+(stale.length>1?'these':'this')+' any more. A module update deletes its previous package: git rm '+stale.join(' '))
@@ -140,7 +146,7 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
   // Only the pull-request check (--base) refuses it: a newly scaffolded module must still pass npm ci's prepare while its developer draws one.
   if(baseCommit&&dir===folderRoot)for(const item of document.media)if(item.kind==='thumbnail')requireOriginalThumbnail(label,item,await readFile(await file(folder,item.path),'utf8'))
   for(const path of await walk(folder))if(/\.(bin|syx|elemod|exe|dll|so|dylib|zip|img|hex)$/i.test(path))throw new Error('Prohibited firmware/binary file: '+label+'/'+path)
-  if(published.some(item=>item.id===document.id)||newVersion){try{requireModwerkPublication(document)}catch(error){throw new Error(label+': '+error.message+(newVersion?' (every new library version passes the publication gate: docs/ADD_A_MODULE.md#digitakt-and-digitone)':''),{cause:error})}}
+  if(published.some(item=>item.id===document.id)||newVersion){try{requireModwerkPublication(document, zdl ? await json(resolve(root,'sdk/approvals/zoom-release-waivers.json')) : undefined)}catch(error){throw new Error(label+': '+error.message+(newVersion?' (every new library version passes the publication gate: docs/ADD_A_MODULE.md#digitakt-and-digitone)':''),{cause:error})}}
   if(write)for(const item of document.media){const destination=resolve(root,'public/module-media',machine.id+'-'+document.id,document.version,item.path);await mkdir(dirname(destination),{recursive:true});await copyFile(await file(folder,item.path),destination)}
   // Only addresses and lengths are needed by the planner; never include stock bytes.
   const patchSites=!build?{}:Object.fromEntries(Object.entries(build.releases).map(([release,value])=>[release,[...value.sites,...(build.derive?.releases.includes(release)?build.derive.callSites:[])].map(({addr,len})=>({addr,len}))]))

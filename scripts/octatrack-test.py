@@ -5,7 +5,7 @@
   npm run device:test -- [--seconds 30] [--soak SECONDS] [--hold SECONDS] [--share SOCKET] [--testing-entry FILE] PKG.mwrm
 
 The run of `npm run device:qualify` (the module alone on T1 and T5 with the load meters, an effect in its FX slot and a
-machine through SRC SETUP's machine list with its render against its CPU price, then on every track while the
+machine through SRC SETUP's machine list with its sequenced peak and its triggered mean cost against its CPU price, then on every track while the
 pattern plays, its knobs swept, the Parts and a bank switched, an optional soak, the Part restored, the loader, crash
 and stall counters compared), with these differences:
 - The package goes in as a trial in RAM through `npm run device -- try` on the session's shared socket, without
@@ -105,8 +105,13 @@ def main():
     if not args.share.isdigit() and not os.path.exists(args.share):
         raise SystemExit('Nothing shares the unit on %s: start the session with `npm run device -- serve --share %s`.' % (args.share, args.share))
     args.crash = False
-    pkgs = [qualify.package(p) for p in args.packages]
     hold = args.hold or min(3600, 300 + 2 * args.seconds + 2 * args.soak)
+    # The whole run is one turn on the unit: it waits here while another session has it (scripts/unit-queue.mjs).
+    turn = importlib.util.spec_from_file_location('unit_turn', ROOT / 'scripts/unit_turn.py')
+    unit_turn = importlib.util.module_from_spec(turn)
+    turn.loader.exec_module(unit_turn)
+    unit_turn.take_turn(__file__, 'device:test ' + os.path.basename(args.packages[0]), expect='%ds' % (hold + 120))
+    pkgs = [qualify.package(p) for p in args.packages]
     trials = []
 
     def install(pkgs):
@@ -117,6 +122,9 @@ def main():
         for trial in trials: trial.end(failures)
 
     result = qualify.run(args, pkgs, install, uninstall, selftest=True, inventory=True)
+    if qualify.EMULATOR:  # the same cases on an ot_emu session: labelled as such, never hardware evidence
+        qualify.finish(result, args, title='Agent test in the emulator (not hardware evidence)', command='device:test',
+                       notes=[NOTE, 'Ran on an ot_emu session (MODWERK_UNIT=emulator), not on a unit'], left=LEFT_FOR_THE_DEVELOPER)
     qualify.finish(result, args, title='Agent test on the unit', command='device:test', notes=[NOTE], left=LEFT_FOR_THE_DEVELOPER)
 
 

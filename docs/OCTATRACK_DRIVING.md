@@ -38,7 +38,13 @@ the same image booted one-shot came back. Everything else here was done on the o
   `/MODWERK0.SET` and `/MODWERK1.SET`, written alternately and stamped with the writing base's identity
   (`modset.c`); a base loads neither file another base wrote. Two Keeps on a twin (a `try`, then a `remove`)
   replace both, and after the power cycle the flashed base starts with no modules (23 October 2026, MKII, flashed
-  `a408c505`, twin `8dc7692c`). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
+  `a408c505`, twin `8dc7692c`). A base with no set of its own on the card saves first to `/MODWERK1.SET`, then to each
+  other file in turn (`modset.c` `slot`), so one Keep on a twin replaces only that file. The kept set's whole-set identity
+  (USB request 38, order-free: `journal.h` `runtime_journal_set_digest`) names its exact packages: hash candidate files
+  the same way to find them before a twin overwrites anything (flashed `dfa43813`, 20 November 2026). A twin's RAM boot
+  that restores its kept set took 72 s to answer on USB after a power-cycled start, past `boot`'s 60 s wait, and 18 s
+  later; keep polling `status`. Boot into a kept twin from another image: the one boot from a twin into itself, seconds
+  after its Keep, never enumerated (Windows, `a328967d`, same day). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
   ones (Analog BD, Output Matrix) must be the copies bound to that base, from the commit that built it. Afterwards,
   power-cycle and `try` each again. `npm run device -- lifecycle` is such a pair too: it accepts a test module, then
   its removal. It is not a read; never run it on a unit whose kept set matters (30 October 2026, MKII, twin `04e94075`).
@@ -67,6 +73,42 @@ row, ten seconds at least; 20 changes at 200 ms between requests took 3.8
 seconds before USB latency. An
 unconfirmed reply still stops the connection, and restoration is verified
 before reporting success.
+
+## Taking turns on the unit
+
+Every agent session and terminal of one user on one computer shares the one unit on its USB. Since 20 November 2026 the
+device commands take turns on it by themselves (`scripts/unit-queue.mjs`), so nobody asks whether it is free:
+
+- **These wait in line,** in the order they came, and go ahead by themselves when their turn comes: `npm run device:test`,
+  `device:qualify` and `device:price` (the whole run is one turn), `scripts/octatrack-bootsoak.mjs` (the whole batch),
+  the `npm run device` commands that drive (`try`, `set`, `remove`, `recover`, `lifecycle`, `boot`, `flash`, `status`,
+  `key`, `enc`, `fader`, `probe`, `meter`, and `do` with any step but the reads below), `scripts/device-send.py` lines
+  that drive, and the frontend MCP's `device_trial` until its Keep or Undo. A waiting command prints who has the unit and
+  its place in line; run it in the background. The commands a turn starts (the trial `device:test` runs) are inside it.
+- **Reads go beside another session's turn:** `screen`, `ui`, `state`, `mem`, `stats`, `loader`, `report`, `missing`, and
+  `do` or `device-send.py` lines made only of `ui`, `screen`, `png:`, `mem:`, `state`, `stats`, `report`, `loader`,
+  `missing`, `inventory`, `crash`, `stall`, `diaglog`, `saved`, `memory`, `dspmap` and at most a second of `w`. `status`
+  is not a read: its HELLO moves on the upload session another process may be in (below, one uploader owner). Nor are
+  `guard`, `cpu` and `gap`, which restart another run's measurement window. The MCP takes the turn for the moment it
+  opens its link, since an opening link rolls back a transaction it finds left open; reads through an open link need none.
+- **`serve` takes no turn:** it is the shared link. Its sender gates a line (`device-send.py`); a client that writes to
+  its socket by other means is not queued.
+- **By hand:** `npm run unit -- status` shows who has the unit, doing what, since when and until when, and who waits.
+  `npm run unit -- hold --note "…" [--for 30m]` keeps it across several commands, or while the owner plays it: commands
+  from the same checkout go ahead inside the hold, everyone else's wait. `release` gives it back, `hold` again extends
+  it, and `npm run unit -- run --note "…" [--expect 15m] -- COMMAND` puts any other command in a turn.
+- **A holder that is gone or late:** a turn whose processes are gone (a crash, a kill) ends, and the next in line is
+  told to check the unit first: a trial the dead holder started may still run (`do inventory`, then `recover`). A live
+  turn five minutes past its expected end is reported to `status` and to the waiters, never taken over, since that
+  would end its trial; `release --force` is the owner's call for one that is stuck. A hold ten minutes past its time,
+  with nothing of its own running, ends once someone waits.
+- **Emulators need no turn:** `--emulator`, or `MODWERK_UNIT=emulator` for the scripts. The queue lives per user
+  (Linux `~/.local/state/modwerk/unit-queue`, macOS `~/Library/Application Support/modwerk/unit-queue`, Windows
+  `%LOCALAPPDATA%\modwerk\unit-queue`; `MODWERK_UNIT_DIR` moves it), shared by every clone and worktree. Sessions in WSL
+  and on its Windows host keep separate queues.
+- The queue replaces only asking whether the unit is free. What runs on the developer's unit still needs their OK (on
+  the owner's computer it stands, [OWNER_OPERATIONS.md](OWNER_OPERATIONS.md)), and power cycles, flashing and Keeps stay
+  as the rules above say.
 
 ## Start the link
 
@@ -279,9 +321,9 @@ To compare a Part's working and saved copies: `mem:` both addresses with length 
 
 ## Fast and safe habits
 
-- One session; a handful of steps per command; `perl -e 'alarm N; exec @ARGV'` around anything that talks to
-  the unit. Right before a trial, check `~/.cache/modwerk-octatrack/last-boot` and running `device.mjs`
-  processes: another session's RAM boot mid-trial replaces your image and ends the trial.
+- One session drives at a time; a handful of steps per command; `perl -e 'alarm N; exec @ARGV'` around anything that
+  talks to the unit (its time includes any wait in line). Another session's RAM boot mid-trial replaces your image and
+  ends the trial, which is why a boot waits for the turn like a trial does ([taking turns](#taking-turns-on-the-unit)).
 - Let steps wait for their result (`pick:`, `part`), not fixed `w` waits.
 - After a power cycle, the first `npm run device` command often fails while the bridge reopens the unit; run it
   again before treating it as a fault. `status` then shows generation 0 and the base's own digest as the active
