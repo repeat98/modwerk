@@ -1,6 +1,32 @@
 # Repitch testing
 
-Version: 0.2.1-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
+Version: 0.2.2-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
+
+## 0.2.2: rests while no track uses REPITCH (prepared 20 November 2026, not tested)
+
+Repitch answers `ev_in_use` (`repitch_in_use`: REPITCH in force on a track of the live Part, by the same `rp_find` the
+increment builder uses) and marks `rate_gate` and `pitch_gate` `"rests"`. While it answers 0 its `ev_play_increment`
+handler leaves the frame and those two detours hold stock's bytes; `tstr_resolve` stays patched, since it keeps the
+voice renderer away from TSTR 4, a value only Repitch adds. Needs a base with `ev_in_use` (0.7.8 on).
+
+- **Why:** 0.2.1 installed on no track added 1.4 points of the frame interrupt with seven FLEX tracks playing (MKII,
+  OS 1.40C, development build of base 0.7.10 `acc111da`, `npm run device:price`, 20 November 2026). A development
+  twin of 0.7.8 measured the same idea at 0.1 points (17 November 2026, #1694).
+- **Built:** `build.py --octabam repitch` gives module `5c49f0f0`, 708 bytes, two hooks (`ev_play_increment`,
+  `ev_in_use`), `rate_gate` and `pitch_gate` flagged resting. The published package and its row are not regenerated yet.
+- **Known gap:** the answer reads the live Part. A Part or bank change that brings a REPITCH track in while playing
+  meets Repitch resting for up to one UI tick: that track plays at stock speed and pitch, rendered dry, until it wakes.
+- **Test procedure:** not run; the unit was off USB, then held by another session, on 20 November 2026. The
+  performance record's `sourceSha256` is stale until it is measured again.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Installed, no track on REPITCH | must cost about nothing | `device:price` at rest | not run: unit unavailable |
+| A track switched to TSTR REPITCH while playing | the first tick plays at stock speed | USB capture across the switch, increment read before and after | not run |
+| A sample with TSMODE REPITCH on a TSTR AUTO track | `rp_find` must see it | set AUTO, read the increment | not run |
+| A Part change bringing a REPITCH track in while playing | the answer reads the live Part only | capture across the Part change | not run |
+| A REPITCH sample without a tempo | Repitch does nothing there, so it may rest | read the increment | not run |
+| Undo of the trial over a resting Repitch | its resting sites go back | whole-set trial and Undo | not run |
 
 0.2.1 makes the idle case cheaper and nothing else; 0.2.0 changed the runtime package only (REPITCH subscribes to `ev_play_increment`, order 50, on a base that owns 0x40004100). The historical evidence below is retained. 0.2.1's only unit result is its cost at rest, so no new hardware or DSP qualification is claimed.
 

@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.2.2-experimental",
+    "date": "2026-11-20",
+    "changes": [
+      "Costs the Octatrack almost nothing while no track uses REPITCH: it rests until a track does.",
+      "A track switched to REPITCH while playing may play its first moments at stock speed until Repitch wakes, within a sixtieth of a second.",
+      "Not yet checked on a unit."
+    ]
+  },
+  {
     "version": "0.2.1-experimental",
     "date": "2026-11-14",
     "changes": [

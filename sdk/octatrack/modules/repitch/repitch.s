@@ -212,6 +212,27 @@ repitch_play_increment:
         move.l  %d0,(%a0)
 9:      moveq   #0,%d0
         rts
+
+| ev_in_use, asked from the base's UI tick (a task): nonzero while REPITCH is in force on a track of the live Part
+| (rp_find: SETUP TSTR = REPITCH, or AUTO with the bound sample's TSMODE = REPITCH, and a tempo in range), 0
+| otherwise. While it answers 0 the base leaves repitch_play_increment out of the frame and puts stock's bytes back
+| at rate_gate and pitch_gate (runtime.json "rests"); tstr_resolve stays patched, since it keeps the voice renderer
+| away from TSTR 4, a value only Repitch adds. C convention: d0-d1/a0-a1 free, d2 and d3 kept.
+        .global repitch_in_use
+repitch_in_use:
+        lea     -8(%sp),%sp
+        movem.l %d2-%d3,(%sp)
+        moveq   #7,%d3
+1:      move.l  %d3,%d1
+        bsr     rp_find
+        tst.l   %d0
+        bne.s   2f
+        subq.l  #1,%d3
+        bpl.s   1b
+        moveq   #0,%d0
+2:      movem.l (%sp),%d2-%d3
+        lea     8(%sp),%sp
+        rts
         .endif
 
 | 0x40007d96, in the voice renderer: d1 is the track's TSTR just resolved
