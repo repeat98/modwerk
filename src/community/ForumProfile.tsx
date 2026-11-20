@@ -21,7 +21,7 @@ export function ForumProfile({ username, onLoad }: { username: string; onLoad?: 
   useEffect(() => { let cancelled = false; void api<MemberProfile>('/forum/profiles/' + encodeURIComponent(username)).then(value => { if (!cancelled) { setProfile(value); onLoad?.(value) } }).catch(error => { if (!cancelled) setError(error.message) }); return () => { cancelled = true } }, [username, onLoad])
   if (!profile) return <section className="configuration-section forum-profile"><p role={error ? 'alert' : 'status'}>{error || 'Loading member profile…'}</p></section>
   return <><section className="configuration-section forum-profile"><ForumAvatar username={profile.username} avatar={profile.avatar} /><div>
-    <h2>{profile.displayName}<ForumRoleBadge role={profile.role} betaTester={profile.betaTester} />{profile.maintains.length > 0 && <ForumMaintainerBadge profile />}</h2>
+    <h2>{profile.displayName}<ForumRoleBadge contributions={profile.contributions} role={profile.role} betaTester={profile.betaTester} />{profile.maintains.length > 0 && <ForumMaintainerBadge />}</h2>
     <p className="forum-profile-since">@{profile.username} · Member since {memberSince(profile.memberSince)}</p>
     {profile.bio && <p className="profile-bio">{profile.bio}</p>}
     <ProfileLinksView key={profile.username} profile={profile} />
@@ -62,7 +62,6 @@ function MaintainedModules({ maintains }: { maintains: MemberProfile['maintains'
         <a href={item.href} className="module-cover" aria-label={'View ' + module.name}><ModulePreview id={module.id} /><div className="hover-info"><span>{module.description}</span><strong>Explore module <Icon name="arrow" size={15} /></strong></div></a>
         <div className="module-card-body">
           <div className="module-card-heading"><a href={item.href}>{module.name}</a></div>
-          <p className="card-description">{module.description}</p>
           <div className="card-bottom"><span>{DETAILS[module.id].family} · {machine}</span><CardStats statistics={statistics?.find(stats => stats.module_id === module.id)} /></div>
         </div>
       </article>

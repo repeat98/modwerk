@@ -186,10 +186,11 @@ export function authorizeAuthorUpdate(registry: AuthorRegistry, author: unknown,
 }
 
 /** Job names bind CI to the event's base and head, including fork PRs with no API PR association. */
-export function requireAuthorChecks(run: unknown, jobs: readonly unknown[], repository: string, head: string, base: string, workflowId: number, scope: { octatrack: boolean; packages: boolean; elemodCompile: boolean }) {
+export function requireAuthorChecks(run: unknown, jobs: readonly unknown[], repository: string, head: string, base: string, workflowId: number, scope: { octatrack: boolean; packages: boolean; elemodCompile: boolean; requireAggregate?: boolean }) {
   const value = object(run)
   if (object(value.repository).full_name !== repository || value.workflow_id !== workflowId || value.path !== '.github/workflows/module-pr.yml' || value.event !== 'pull_request' || value.head_sha !== head || value.status !== 'completed' || value.conclusion !== 'success') throw new Error('Author release requires successful current Module PR checks.')
   const rows = jobs.map(object), required = ['scope / ' + base + ' / ' + head, 'module-contract']
+  if (scope.requireAggregate) required.push('module-pr-ok')
   if (scope.octatrack || scope.packages) required.push('octatrack-source')
   if (scope.elemodCompile) required.push('elemod-source')
   for (const name of required) if (rows.filter(job => job.name === name && job.status === 'completed' && job.conclusion === 'success').length !== 1) throw new Error('Missing successful author release check: ' + name)

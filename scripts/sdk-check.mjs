@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { resolve, dirname } from 'node:path'
 import { takeSlot, workersFor } from './machine-slots.mjs'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
+import { asanToolchain } from './asan-preflight.mjs'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 // octabam's tools read the untracked mirror of sdk/octatrack/modules; make it current first.
 mirrorOctatrackModules(root)
@@ -39,6 +40,10 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
 // Alone it takes a slot (scripts/machine-slots.mjs); inside npm run check, which holds one, it takes none. Then up to four
 // jobs, fewer when free memory is short: a test that starts a compiler or an emulator needs about a gigabyte.
 await takeSlot('npm run sdk:check')
+// Before any job: on macOS, tools whose AddressSanitizer programs hang would keep this from ever finishing (scripts/asan-preflight.mjs).
+let toolchain
+try { toolchain = asanToolchain() } catch (error) { console.error('SDK checks FAILED before any job: ' + error.message); process.exit(1) }
+if (toolchain.note) console.log(toolchain.note)
 const workers = workersFor({ most: Math.min(4, availableParallelism()), each: 1024 ** 3 }), started = performance.now(), failed = [], count = jobs.length, taken = {}
 let executed = 0
 const skips = []
@@ -46,7 +51,7 @@ async function worker() {
   for (let job; (job = jobs.shift());) {
     const output = [], begun = performance.now()
     const code = await new Promise(done => {
-      const child = spawn(job.command, job.args, { cwd: root, env: { ...process.env, ...job.env } })
+      const child = spawn(job.command, job.args, { cwd: root, env: { ...process.env, ...toolchain.env, ...job.env } })
       children.add(child)
       // Below normal priority (the compilers and emulators a test starts inherit it), so Vitest's five-second tests, from another
       // worktree's check too, get the cores first. Alone, these processes still take every free core.

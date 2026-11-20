@@ -167,7 +167,7 @@
 .forum-role-badge { --role-color: #92bccd; color: var(--role-color); font-size: 10px; font-weight: 600; letter-spacing: .02em; padding: 2px 5px; border: 1px solid color-mix(in srgb, var(--role-color) 45%, transparent); border-radius: 4px; }
 .forum-role-badge[data-role="owner"] { --role-color: #e3c27c; }
 .forum-post time, .forum-post small { font-size: 11px; color: var(--muted); }
-.forum-post-body { overflow-wrap: anywhere; font-size: 15px; line-height: 1.85; color: #dedde8; }
+.forum-post-body { overflow-wrap: anywhere; font-size: 15px; line-height: var(--reading-line-height); color: #dedde8; }
 .forum-post-body p { white-space: pre-wrap; }
 .forum-post-body > * + * { margin-top: 16px; }
 .forum-post-body blockquote { margin: 16px 0; padding: 10px 16px; border-left: 3px solid #696587; border-radius: 0 6px 6px 0; background: #2b2933; color: #bdb7d0; white-space: pre-wrap; }
@@ -369,6 +369,10 @@
 .forum-page button:disabled, .account-page button:disabled { opacity: .5; }
 .forum-page a:focus-visible, .forum-page summary:focus-visible, .account-page a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .forum-page .forum-categories a:focus-visible { outline-offset: -3px; border-radius: 3px; }
+@media (min-width: 601px) {
+  .forum-post time, .forum-post small, .forum-meta, .forum-recent .forum-meta { font-size: .8125rem; }
+  .forum-post-action { font-size: .875rem; }
+}
 @media (max-width: 1100px) {
   .forum-compose-layout { grid-template-columns: minmax(0, 1fr); }
   .forum-compose-tips { display: none; }
@@ -405,6 +409,18 @@
 
 .forum-machines { margin: 6px 0 30px; }
 .developer-page > .page-heading { flex-wrap: wrap; align-items: flex-start; }
+.developer-page > .configuration-section > p { max-width: 68ch; margin-top: .65rem; color: var(--muted); font-size: .875rem; line-height: 1.65; }
+.developer-page > .configuration-section > .forum-actions { margin-top: .75rem; }
+.news-composer { margin-block: 1.25rem 1.5rem; }
+.news-composer textarea { resize: vertical; }
+.news-composer .review-actions { flex-wrap: wrap; }
+.news-preview { padding: 1rem; border: 1px solid var(--line); border-radius: .5rem; background: var(--field); overflow-wrap: anywhere; }
+.admin-section-picker { display: none; }
+@media (max-width: 600px) {
+  .admin-tabs > button { display: none; }
+  .admin-section-picker { display: flex; align-items: center; gap: .75rem; width: 100%; font-size: .875rem; color: var(--muted); }
+  .admin-section-picker select { flex: 1; min-width: 0; min-height: 44px; padding: .5rem .75rem; border: 1px solid var(--control-border); border-radius: .375rem; background: var(--field); color: var(--text); font: inherit; }
+}
 .developer-module-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .developer-module-grid .inbox-issue { padding: 16px; border: 1px solid var(--line); border-radius: 8px; }
 .private-report-context { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 18px; margin: 20px 0; font-size: 13px; line-height: 1.6; }
@@ -603,9 +619,9 @@ li[data-status="error"] .forum-media-status { color: #f0a6ad; }
 .forum-post-body hr { border: 0; border-top: 1px solid var(--line); }
 @media (max-width: 1100px) {
   .forum-search-field { flex-basis: 100%; }
-  .forum-topic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .forum-topic-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
   .forum-activity-layout { grid-template-columns: minmax(0, 1fr); }
-  .forum-recent { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; }
+  .forum-recent { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 0 20px; }
   .forum-recent > .forum-list-heading, .forum-recent > .service-note { grid-column: 1 / -1; }
 }
 @media (max-width: 600px) {
@@ -629,6 +645,7 @@ li[data-status="error"] .forum-media-status { color: #f0a6ad; }
 /* Floating chat occupies no space in the forum's grid or document flow. */
 .forum-chat-launcher { position: fixed; z-index: 90; right: 22px; bottom: 48px; display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 12px 17px; border: 1px solid #6b628b; border-radius: 24px; background: #393346; color: #e4dcfa; box-shadow: 0 5px 24px #0006; font-size: 13px; font-weight: 600; }
 .forum-chat-launcher:hover { background: #48405a; border-color: #9684b9; }
+.shoutbox-unread { position: absolute; top: -6px; right: -5px; display: grid; place-items: center; min-width: 21px; height: 21px; padding: 0 5px; border-radius: 999px; background: #bd304b; color: #fff; box-shadow: 0 0 0 2px var(--surface); font-size: 11px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
 .forum-shoutbox.is-floating { position: fixed; z-index: 90; right: 22px; bottom: 48px; display: flex; flex-direction: column; width: 440px; height: 720px; max-width: calc(100vw - 28px); max-height: calc(100dvh - 115px); margin: 0; box-shadow: 0 12px 55px #0008; }
 .forum-shoutbox.is-floating .shoutbox-heading { flex-shrink: 0; padding: 12px 14px; }
 .forum-shoutbox.is-floating .shoutbox-heading > div:first-child { gap: 6px 9px; }
@@ -697,6 +714,8 @@ li[data-status="error"] .forum-media-status { color: #f0a6ad; }
    machine filters folded behind a toggle, and a lean machine browser, so discussions start on the first screen. */
 @media (max-width: 600px) {
   .forum-page .page-heading.forum-heading { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding-top: 0; }
+  .forum-page .page-heading.forum-profile-heading { flex-wrap: wrap; }
+  .forum-profile-heading h1 { overflow-wrap: anywhere; }
   .forum-heading .forum-eyebrow, .forum-heading > div > p { display: none; }
   .forum-heading h1 { font-size: 22px; }
   .forum-heading-actions .button { min-height: 40px; padding-inline: 12px; font-size: 13px; }
@@ -964,11 +983,15 @@ li[data-status="error"] .forum-media-status { color: #f0a6ad; }
    Phones stack the steps and keep each one to a line or two. */
 .get-started { margin: 0 0 24px; padding: 18px 20px; border: 1px solid #4a4a6e; border-radius: 12px; background: linear-gradient(135deg, #26263a, var(--surface) 65%); }
 .account-page .get-started { margin-bottom: 20px; }
-.get-started-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.get-started-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .get-started-heading h2 { font-size: 15px; }
-.get-started-heading p { margin-top: 4px; color: var(--muted); font-size: 12px; }
+.get-started-toggle { display: inline-flex; align-items: center; gap: .4rem; min-height: 32px; padding: 0; border: 0; background: none; color: var(--text); font: inherit; }
+.get-started-toggle svg { transform: rotate(180deg); }
+.get-started-toggle[aria-expanded="true"] svg { transform: rotate(-90deg); }
+.get-started-heading p { color: var(--muted); font-size: 12px; }
 .get-started-heading .text-button { flex-shrink: 0; min-height: 32px; }
-.get-started-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.get-started-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin: 14px 0 0; padding: 0; list-style: none; }
+.get-started-steps[hidden] { display: none; }
 .get-started-steps li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 2px 10px; align-items: start; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--field); }
 .get-started-steps li.is-done { border-style: dashed; background: transparent; }
 .get-started-mark { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border: 1px solid var(--control-border); border-radius: 50%; color: #9a9aaa; font-size: 11px; font-weight: 700; }
@@ -980,7 +1003,7 @@ li[data-status="error"] .forum-media-status { color: #f0a6ad; }
 .get-started-action:hover { color: #d8dcff; }
 @media (max-width: 600px) {
   .get-started { padding: 14px; margin-bottom: 16px; }
-  .get-started-heading { margin-bottom: 10px; }
+  .get-started-heading :is(.get-started-toggle, .text-button) { min-height: 44px; }
   .get-started-steps { grid-template-columns: minmax(0, 1fr); gap: 6px; }
   .get-started-steps li { padding: 10px 12px; }
   .get-started-steps li.is-done { padding: 6px 12px; }

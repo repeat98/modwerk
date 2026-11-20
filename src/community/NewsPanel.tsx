@@ -36,7 +36,7 @@ export function NewsPanel() {
     <h2>News mail</h2>
     <p className="service-note">An occasional email to the members who opted in to Modwerk news. Markdown, rendered like a forum post. The sender keeps within {overview?.dailyLimit ?? '…'} messages a day beside account mail, so a campaign to more members is sent over several days. Every message carries a one-click unsubscribe and a link to account settings.</p>
     {overview && <p className="service-note"><strong>{overview.optIns}</strong> {overview.optIns === 1 ? 'member has' : 'members have'} current news consent.{!overview.emailAvailable && ' Email is not connected on this backend, so nothing can be sent yet.'}</p>}
-    <form className="admin-form" onSubmit={event => { event.preventDefault(); void run(save, editing ? 'Draft updated.' : 'Draft saved.') }}>
+    <form className="community-form news-composer" onSubmit={event => { event.preventDefault(); void run(save, editing ? 'Draft updated.' : 'Draft saved.') }}>
       <label>Subject<input value={subject} maxLength={150} required minLength={3} onChange={event => setSubject(event.target.value)} placeholder="What landed on Modwerk in October" /></label>
       <label>Message (markdown){preview
         ? <div className="news-preview"><ForumPostBody body={(betaInvitation ? body.replaceAll(BETA_INVITATION_PLACEHOLDER, 'https://modwerk.app/#' + betaInvitationRoute(editing ?? '0'.repeat(32))) : body) || '_Nothing to preview yet._'} /></div>
