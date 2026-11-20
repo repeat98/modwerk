@@ -4,7 +4,7 @@ Running the live Modwerk site is the owner's work: the complete issue-fix and re
 
 ## On the owner's computer
 
-- Other agents often work on this computer at the same time, and checks or native builds running in parallel fill the disk and slow each other down. Queue them behind one machine-wide lock, for example `lockf -k /tmp/modwerk-check.lock npm run check -- --base origin/main`, which waits for any running check to finish first. There is also one connected Octatrack and one emulator for all of them: one session uses either at a time, and the unit only once the owner says it is free ([driving the unit](OCTATRACK_DRIVING.md)).
+- Other agents often work on this computer at the same time, and checks or native builds running in parallel fill the disk and slow each other down. Queue them behind one machine-wide lock, for example `lockf -k /tmp/modwerk-check.lock npm run check -- --base origin/main`, which waits for any running check to finish first. There is also one connected Octatrack and one emulator for all of them: one session uses either at a time. The device commands queue for the unit by themselves, so nobody waits for the owner to say it is free: `npm run unit -- status` shows who has it, and `npm run unit -- hold` keeps it while the owner plays it by hand ([taking turns on the unit](OCTATRACK_DRIVING.md#taking-turns-on-the-unit)).
 - Disk space on the owner's computer runs out. Once a pull request you opened is merged or closed, remove its worktree with `git worktree remove` and delete the temporary folders you created for it, such as builds, renders and logs under `/private/tmp`. Keep anything with uncommitted or unpushed work, and leave folders another session created.
 
 ## Email sendouts

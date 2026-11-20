@@ -16,6 +16,7 @@ import { connect } from 'node:net'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
+import { takeUnitTurn } from './unit-queue.mjs'
 
 const mean = values => values.reduce((sum, value) => sum + value, 0) / values.length, tenth = value => Math.round(value * 10) / 10
 /** One reading from the session's `guard` line and `stats` lines: percent of a frame, percent of the meter, per mille of a DSP. */
@@ -40,6 +41,9 @@ if (import.meta.filename === process.argv[1]) {
     : catalogue.filter(row => !row.requiredBase)
   const unknown = ids.filter(id => !catalogue.some(row => row.id === id)).concat(files.filter(file => !existsSync(file)))
   if (unknown.length) throw new Error('No USB package for ' + unknown.join(', '))
+  // All the readings are one turn on the unit (scripts/unit-queue.mjs); the trials below run inside it.
+  await takeUnitTurn({ note: 'device:price ' + chosen.map(row => row.id).join(' ').slice(0, 100), command: 'npm run device:price -- ' + process.argv.slice(2).join(' ').slice(0, 300),
+    expectMs: Math.max(10, 3 * chosen.length) * 60000 })
   const wait = ms => new Promise(done => setTimeout(done, ms))
   const send = line => new Promise((done, fail) => { // one line to the session, its whole reply
     let reply = ''; const socket = connect(args.socket, () => socket.write(line + '\n'))
