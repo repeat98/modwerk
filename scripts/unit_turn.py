@@ -4,7 +4,7 @@
 take_turn() runs the calling script again under `node scripts/unit-queue.mjs run`, which waits in line for the unit, runs
 it with MODWERK_UNIT_TURN set and gives the turn back however it ends. Inside a turn already (MODWERK_UNIT_TURN set), or
 with MODWERK_UNIT=emulator, it returns at once. steps: a device step line, for which the turn is taken only when it drives
-the unit (device-send.py)."""
+the unit (device-send.py does the same in its own lines)."""
 import os, pathlib, shutil, subprocess, sys
 
 
