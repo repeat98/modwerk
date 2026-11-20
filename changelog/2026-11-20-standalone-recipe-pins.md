@@ -1,0 +1,1 @@
+SDK: Tape Echo's and Euclid's reviewed standalone recipes pin their current inputs again, so their published packages rebuild byte for byte. A new SDK test compares those pins without the m68k toolchain, which CI's SDK job lacks, so the drift no longer hides.
