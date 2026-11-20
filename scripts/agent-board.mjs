@@ -10,7 +10,7 @@
 //   npm run board -- release <id>
 //   npm run board -- check [--base <ref>]        # the claims this branch needs (CI runs it)
 //   npm run board -- messages [topic] [key] [--machine <m>] [--kind question|finding|wanted] [--to <login>] [--ended]
-//   npm run board -- followups                    # GitHub drafts for questions waiting three days
+//   npm run board -- followups                    # GitHub drafts for questions their recipient has not answered
 //   npm run board -- ask <topic> <key> "question" [--to <login>] [--pr <n>]   # goes to the topic's holder, else a module's author, unless --to names someone
 //   npm run board -- finding <topic> <key> "what you found" [--pr <n>]   # --pr: the pull request that folds it into a guide
 //   npm run board -- wanted <topic> <key> "a small task anyone can take" [--priority high|normal|low] [--pr <n>] [--parent-issue <n> | --parent-claim <id>]
@@ -298,7 +298,7 @@ export async function inboxNotes(options = {}) {
   if (!box) return []
   const parts = [box.waiting.length && box.waiting.length + ' question' + (box.waiting.length > 1 ? 's wait' : ' waits') + ' for your answer', box.replies.length && box.replies.length + ' of your questions and findings ' + (box.replies.length > 1 ? 'have' : 'has') + ' a reply'].filter(Boolean)
   const notes = []
-  if (box.followups?.length) notes.push('Board: your questions have GitHub follow-up drafts after three days. Read them with npm run board -- inbox.')
+  if (box.followups?.length) notes.push('Board: questions of yours have GitHub follow-up drafts. Read them with npm run board -- inbox.')
   if (parts.length) notes.push('Board: ' + parts.join(' and ') + '. Read them with npm run board -- inbox and answer them yourself (npm run board -- reply <id> "…"; close <id> once yours is settled), then tell the developer what you said (docs/AGENT_BOARD.md#agents-talk-for-themselves).')
   const expiring = box.expiring?.length ?? 0
   if (expiring) notes.push(`You have ${expiring} board claim${expiring === 1 ? '' : 's'} expiring within three days. Run npm run board -- inbox to see which claims to review.`)
@@ -406,7 +406,7 @@ async function main(argv) {
   if (command === 'followups') {
     const result = await boardRequest('/agent-board/followups')
     const followups = rest[0] ? result.followups.filter(item => item.id === rest[0]) : result.followups
-    if (!followups.length) console.log('No board questions waiting three days for their recipient.')
+    if (!followups.length) console.log('No board questions need a GitHub follow-up.')
     for (const item of followups) console.log(formatFollowup(item))
     return 0
   }
@@ -453,7 +453,7 @@ async function main(argv) {
     const [topic, key, text] = rest
     if (!TOPICS.includes(topic) || !key || !text) throw new Error('Usage: npm run board -- ' + command + ' <' + TOPICS.join('|') + '> <key> "' + { ask: 'question', finding: 'what you found', wanted: 'the task' }[command] + '"' + (command === 'ask' ? ' [--to <login>]' : '') + (command === 'wanted' ? ' [--priority ' + PRIORITIES.join('|') + ']' : '') + ' [--pr <n>]')
     const pr = option('--pr'), result = await post({ kind: { ask: 'question', finding: 'finding', wanted: 'wanted' }[command], topic, key, body: text, ...(option('--to') ? { to: option('--to') } : {}), ...(pr ? { pullRequest: Number(pr) } : {}), ...(option('--priority') ? { priority: option('--priority') } : {}), parentIssue: numberOption('--parent-issue'), ...(option('--parent-claim') ? { parentClaim: option('--parent-claim') } : {}) })
-    if (result.recipientInactive) console.log('No recent board activity from @' + result.message.to + '. Consider asking on the relevant GitHub thread too.')
+    if (result.recipientInactive) console.log('No recent board activity from @' + result.message.to + ', so ask on GitHub now. The draft: npm run board -- followups ' + result.message.id)
     console.log({ ask: 'Asked @' + result.message.to + ':', finding: 'Left the finding:', wanted: 'Posted the wanted task:' }[command]); console.log(describeThread(result.message).join('\n')); return 0
   }
   if (['reply', 'close', 'fold', 'link', 'take', 'priority', 'delete'].includes(command)) {
