@@ -60,7 +60,7 @@ The 24 published packages added 6.2 percentage points on control and 5.0 on cand
 
 All 18 picks landed on T8 as requested. Each machine pick had a matched STATIC control. The two uncaptured POLY8 wakes added 2.6 and 2.7 points of steady frame time. SYNTIZ and Amiga showed no repeatable increase on this scene. No pick added a skipped render. The six USB recordings had no consecutive all-zero Main frames or repeated non-silent 128-frame blocks. The 24-package self-test with private POLY8 returned 24/24 modules intact and 1/1 DSP effect run. The flat 3% wake estimate remains provisional near the 85% admission threshold.
 
-A later stopped VECTOR trial exposed a rollback failure on the candidate. The follow-up records the fix and the 30-second Undo on the exact release image. [VECTOR qualification](2026-11-20-octatrack-vector-undo.md)
+A later stopped VECTOR trial exposed a rollback failure on the candidate. The follow-up records the fix, the 30-second Undo on the exact release image, the 36 individual package readings and the slower MIDI soak. [VECTOR and package qualification](2026-11-20-octatrack-vector-undo.md)
 
 ## Host checks
 
