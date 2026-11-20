@@ -19,8 +19,8 @@ import { LIBRARY_CATEGORIES } from '../src/catalog/modules.ts'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
 import { moduleSourceFingerprint } from './module-source.mjs'
 import { ANALOG_BD_DSP_COMPANIONS } from '../src/engine/analog-bd-layout.ts'
-import { moduleNativeSourceSha256 } from './module-qualification.mjs'
-import { judgeRecord, ownerWaivedPerformanceRow } from './perf-audit-analysis.mjs'
+import { moduleNativeSourceSha256, modulePerformanceSourceSha256 } from './module-qualification.mjs'
+import { judgeRecord, ownerWaivedPerformanceRow, stampVerdict } from './perf-audit-analysis.mjs'
 import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
 import { stageDraft } from './draft-stage.mjs'
 import { requireZdlBinary, zdlPath } from './zdl-binaries.mjs'
@@ -29,9 +29,13 @@ import { controlProblems } from './module-controls.mjs'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from './retest-queue.mjs'
 import { cpuPriceStatus, readCpuPricePending } from './module-cpu-price.mjs'
+import { moduleTestFiles, runModuleTests } from './module-tests.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
+// Modules first listed on or after this day, and every draft judged as a release, stamp their performance record with the source it
+// was measured on (npm run perf:audit -- check FILE --stamp); earlier records are asked to stamp at their next measurement.
+const PERFORMANCE_STAMP_REQUIRED_FROM = '2026-11-18'
 // Modules first listed on or after this day declare the key gestures and screens they take (compatibility.uiClaims).
 const UI_CLAIMS_REQUIRED_FROM = '2026-10-14'
 // Octatrack modules first listed on or after this day, and every draft judged as a release, build a machine page's controls with modwerk_page_control()
@@ -68,16 +72,15 @@ const rulesProblem = rules.status === 0 ? '' : (ruleLines.find(line => /^\w*Erro
 // Cross-compatibility of every active Octatrack module with every other and the base (scripts/module-compat.py): run once.
 // A single run also compares the module asked about when the catalogue does not list it yet (a draft, a new folder) or pauses it.
 const withId = !all && exists('sdk/octatrack/modules/' + ids[0]) ? ['--with', ids[0]] : []
-const compat = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/module-compat.py', '--json', ...withId], { cwd: root, encoding: 'utf8' })
+const compat = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/module-compat.py', '--json', '--native-params', ...withId], { cwd: root, encoding: 'utf8' })
 const compatResult = (() => { try { return JSON.parse(compat.stdout) } catch { return null } })(), compatProblems = compatResult?.problems
-// Each module's native knob declarations (scripts/module-native-params.py): run once, for the controls line.
-const nativeRun = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/module-native-params.py', ...withId], { cwd: root, encoding: 'utf8' })
-const nativeParams = (() => { try { return JSON.parse(nativeRun.stdout) } catch { return null } })()
+// The controls line uses the same native manifests the compatibility check already loaded.
+const nativeParams = compatResult?.nativeParams
 
 // The modules listed before every module had to name its CPU price, which wait for a measurement.
 const cpuPending = readCpuPricePending(root)
 // The qualification source hash is async; compute it once per module before the checks run.
-const nativeHashes = new Map()
+const nativeHashes = new Map(), performanceHashes = new Map()
 // The USB package file's Git history, read once and only when a hardware record and the shipped package differ.
 let packageRows = null
 const retest = documents => retestQueue({ documents, packages: json(PACKAGES).packages, history: (packageRows ??= packageHistory(root)), bases: json(BASES).bases })
@@ -106,12 +109,21 @@ function octatrack(id) {
   else ok('category guide', 'walk docs/module-guides/' + document.category + '.md (and sequencing.md if it acts in time)')
   // The knobs the build writes into the instrument (manifest.py) and the ones the site describes (controls[]) are one list.
   const knobs = nativeParams?.[id]
-  if (!nativeParams) fail('controls', 'the native knob declarations could not be read: ' + (nativeRun.stderr.trim().split('\n').at(-1) ?? 'scripts/module-native-params.py failed').slice(0, 200), 'fix what manifest.py reports, then run this again')
+  if (!nativeParams) fail('controls', 'the native knob declarations could not be read: ' + (compat.stderr || compat.error?.message || 'missing compatibility report').trim().split('\n').at(-1).slice(0, 200), 'fix what manifest.py reports, then run this again')
   else if (knobs?.length) {
     const problems = controlProblems(knobs, document.controls)
     if (problems.length) fail('controls', problems.slice(0, 3).join('; ') + (problems.length > 3 ? '; and ' + (problems.length - 3) + ' more' : ''), 'make controls[] in octamod.module.json say what manifest.py declares (name, default, count), then npm run modules:generate')
     else ok('controls', knobs.length + ' knob' + (knobs.length === 1 ? '' : 's') + ' in manifest.py, the same in controls[]')
   }
+  // Its own host tests (scripts/module-tests.mjs), run as sdk:check runs a listed module's on every pull request.
+  const tests = moduleTestFiles(root, folder)
+  if (tests.length && all) info('host tests', tests.length + ' test_*.py file' + (tests.length === 1 ? '' : 's') + ': npm run sdk:check runs them, npm run module:doctor -- ' + id + ' too')
+  else if (tests.length) {
+    const failed = runModuleTests(root, tests).filter(result => !result.ok)
+    if (failed.length) fail('host tests', failed.length + ' of ' + tests.length + ' fail: ' + failed.slice(0, 2).map(result => result.file.slice(folder.length + 1) + ' (' + result.detail + ')').join('; ') + (failed.length > 2 ? '; and ' + (failed.length - 2) + ' more' : ''),
+      'python3 -B ' + (draft ? 'sdk/drafts/' + id + failed[0].file.slice(folder.length) : failed[0].file) + ', and fix what it reports. A test_*.py runs with no arguments and no firmware, unit or emulator; rename a script that needs one (docs/ADD_A_MODULE.md, Host tests)')
+    else ok('host tests', tests.length + ' test_*.py file' + (tests.length === 1 ? '' : 's') + ' pass (a test skips what this computer lacks a tool for)')
+  } else info('host tests', 'none: a test_*.py in the module folder runs here and in npm run sdk:check')
   // No gate can see how an effect sounds, so this only points at the check and says whether TESTING.md already answers it.
   if (document.category === 'effects') {
     const testing = exists(folder + '/TESTING.md') ? readFileSync(resolve(root, folder + '/TESTING.md'), 'utf8') : ''
@@ -137,6 +149,11 @@ function octatrack(id) {
       else fail('performance', row.name + ': ' + row.detail, row.fix ?? 'npm run perf:audit -- check ' + folder + '/evidence/performance.json')
     }
     if (!lines.some(line => line.name === 'performance')) ok('performance', rows.filter(item => item.name !== 'record' && !ownerWaivedPerformanceRow(record, item, hardwareApproval, nativeHashes.get(id))).map(item => item.name + ' ' + item.state).join(', ') + ' (npm run perf:audit)')
+    // Were these numbers taken on this code? The stamp names the source they were measured on.
+    const stamped = stampVerdict(record, performanceHashes.get(id), draft || !entry || (entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_STAMP_REQUIRED_FROM, (draft ? 'sdk/drafts/' + id : folder) + '/evidence/performance.json')
+    if (stamped.state === 'fail') fail('performance stamp', stamped.detail, stamped.fix)
+    else if (stamped.state === 'note') info('performance stamp', stamped.detail)
+    else ok('performance stamp', stamped.detail)
   } else if (performanceRequired) fail('performance', 'a new module needs ' + folder + '/evidence/performance.json: worst-case cycles, a benchmark against stock and a stress run', 'npm run perf:audit -- template dsp|coldfire, measure (docs/MODULE_PERFORMANCE.md), then npm run perf:audit -- check')
   else info('performance', 'no evidence/performance.json. Not required before ' + PERFORMANCE_REQUIRED_FROM + '; npm run perf:audit measures the same three things')
 
@@ -153,9 +170,8 @@ function octatrack(id) {
   else if (sources.some(([, text]) => text.includes('modwerk_page.h'))) ok('page controls', 'built with modwerk_page_control(): two to five values draw as stock\'s switch, more as a knob')
 
   // The two DSP source gates (octabam's norep and nolabelprefix, sdk/octabam/docs/TRAPS.md): a label prefix is always refused; a rep is refused in a module listed from 2026-10-23.
-  const gates = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/dsp-source-gates.py', '--json', id], { cwd: root, encoding: 'utf8' })
-  const found = gates.status === 0 ? JSON.parse(gates.stdout) : null
-  if (!found) fail('dsp sources', 'the gates did not run: ' + (gates.stderr || gates.error?.message || '').trim().split('\n').pop(), 'python3 -B scripts/dsp-source-gates.py --json ' + id)
+  const found = sourceGates.modules?.[id]
+  if (!found) fail('dsp sources', 'the gates did not run: ' + (sourceGates.error ?? 'missing module report'), 'python3 -B scripts/dsp-source-gates.py --json ' + id)
   else if (found.errors.length) fail('dsp sources', found.errors[0], 'rewrite it as the message says, then npm run modules:check')
   else if (found.warnings.length) info('dsp sources', found.warnings[0].replace(/^sdk\/octatrack\/modules\/[^/]+\//, '') + '. Not refused in a module listed before 2026-10-23; a new rep is')
   else if (found.files) ok('dsp sources', found.files + ' DSP source' + (found.files === 1 ? '' : 's') + ': no rep, no label that prefixes another')
@@ -163,10 +179,9 @@ function octatrack(id) {
 
   // The register contract of its DSP package's entries, read from the assembled words (scripts/dsp-register-contract.py): a hook entry writes only its
   // site's clobbers, an init keeps r1/n1/m1. Reported until the owner sets REFUSED_FROM there; from then a module listed on or after it is refused.
-  const registers = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/dsp-register-contract.py', '--json', id], { cwd: root, encoding: 'utf8' })
-  const contract = registers.status === 0 ? JSON.parse(registers.stdout) : null, more = contract?.findings?.length > 1 ? ' (and ' + (contract.findings.length - 1) + ' more)' : ''
+  const contract = registerContracts.modules?.[id], more = contract?.findings?.length > 1 ? ' (and ' + (contract.findings.length - 1) + ' more)' : ''
   const registersFix = 'keep what the contract names, or widen the site\'s clobbers in a base pull request; python3 -B scripts/dsp-register-contract.py --json ' + id
-  if (!contract) fail('dsp registers', 'the check did not run: ' + (registers.stderr || registers.error?.message || '').trim().split('\n').pop(), 'python3 -B scripts/dsp-register-contract.py --json ' + id)
+  if (!contract) fail('dsp registers', 'the check did not run: ' + (registerContracts.error ?? 'missing module report'), 'python3 -B scripts/dsp-register-contract.py --json ' + id)
   else if (contract.skipped) info('dsp registers', 'not checked: ' + contract.skipped)
   else if (contract.findings.length && contract.refused) fail('dsp registers', contract.findings[0] + more, registersFix)
   else if (contract.findings.length) info('dsp registers', contract.findings[0] + more + '. Reported, not refused: the owner sets the date it is refused from')
@@ -292,9 +307,20 @@ const board = await import('./agent-board.mjs'), boardView = await board.boardSn
 const boardLines = (machine, id, folder) => [board.moduleClaimLine({ root, machine, id, folder, ...boardView }), board.moduleMessagesLine({ machine, id, ...boardView })].filter(Boolean)
 let green = true
 const octatrackIds = all ? catalog.modules.map(item => item.id) : ids.filter(id => exists('sdk/octatrack/modules/' + id))
+function dspReports(script) {
+  if (!octatrackIds.length) return { modules: {} }
+  const result = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', script, '--json-modules', ...octatrackIds], {
+    cwd: root, encoding: 'utf8', maxBuffer: octatrackIds.length * 1024 * 1024,
+  })
+  if (result.status === 0) return { modules: JSON.parse(result.stdout) }
+  return { error: (result.stderr || result.error?.message || 'missing report').trim().split('\n').pop() }
+}
+const sourceGates = dspReports('scripts/dsp-source-gates.py')
+const registerContracts = dspReports('scripts/dsp-register-contract.py')
 for (const id of octatrackIds) {
   const document = parseModuleDocument(json('sdk/octatrack/modules/' + id + '/octamod.module.json'))
   nativeHashes.set(id, await moduleNativeSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
+  performanceHashes.set(id, await modulePerformanceSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
 }
 // The fingerprint of the compiled packages must match the code too: documentation edits never change it.
 const fingerprintOk = !octatrackIds.length || (await moduleSourceFingerprint(root)) === json('src/engine/assets/module-build.json').sourceTreeSha256

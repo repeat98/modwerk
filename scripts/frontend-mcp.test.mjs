@@ -25,8 +25,9 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     const midi = await service.call('site_catalogue', { query: 'digitakt midi' })
     expect(midi.modules.length).toBeGreaterThan(0)
     expect(midi.modules.every(module => module.machine === 'digitakt')).toBe(true)
-    expect((await service.call('site_catalogue', { query: 'air chorus' })).modules).toHaveLength(0)
-    expect((await service.call('site_catalogue', { query: 'air chorus', beta: true })).modules.map(module => module.id)).toEqual(['airwindows-chorus'])
+    expect((await service.call('site_catalogue', { query: 'air chorus' })).modules.map(module => module.id)).toEqual(['airwindows-chorus'])
+    // The tool runs its own bundle of the site, so a test cannot stand a beta module in; the paused gate holds with and without beta.
+    for (const beta of [false, true]) expect((await service.call('site_catalogue', { query: 'stem rec', beta })).modules.map(module => module.id)).not.toContain('stem-rec')
   })
   it('bounds USB error logs without dumping bundled stacks, causes or account objects', () => {
     const error = new Error('The self-test record has the wrong length.', { cause: { session: 'private-session' } })
@@ -153,7 +154,7 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     const script = fileURLToPath(new URL('./frontend-mcp.mjs', import.meta.url))
     try {
       await expect(createFrontendTools({ dataDir: other })).rejects.toThrow('separate MCP process')
-      await expect(promisify(execFile)(process.execPath, [script, '--data-dir', folder])).rejects.toThrow('already locked')
+      await expect(promisify(execFile)(process.execPath, [script, '--data-dir', folder])).rejects.toThrow('in use by a running MCP server')
       const candidate = join(other, 'candidate'), workspace = join(other, 'state')
       await mkdir(candidate)
       // Candidate checkouts may predate the MCP itself. Read their real source,

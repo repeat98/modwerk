@@ -8,7 +8,8 @@
 //
 // A draft (sdk/drafts/<id>) is staged under sdk/octatrack/modules/ while this runs, as module:doctor --draft does. The package is
 // built by scripts/module-dev-package.py with the same builder as the site's packages, written outside the checkout, and loaded
-// by `npm run device -- try`: a trial in RAM that is rolled back unless you keep it with `npm run device -- try FILE --accept`.
+// by `npm run device -- try`: a trial in RAM that is rolled back unless you keep it with `npm run device -- try FILE --accept`. The
+// trial ends with a verdict from the unit's log: a crash, stall, frozen UI or skipped track it caused fails it (exit 1).
 // Needs: the unit on a Modwerk base and the USB bridge (docs/OCTATRACK_DRIVING.md), m68k-elf binutils for ColdFire code and
 // Octabam's dsp_asm for DSP code (docs/ADD_A_MODULE.md, The fast loop). No firmware, no Docker, no catalogue entry.
 import { existsSync, mkdirSync, watch } from 'node:fs'
@@ -82,7 +83,7 @@ async function cycle() {
     if (await build() && !values['build-only']) {
       current = trial()
       const mine = current
-      finished(mine).then(code => { if (current === mine) { current = null; console.log('Trial ended (' + code + '). Save a file to build and try again.') } })
+      finished(mine).then(code => { if (current === mine) { current = null; console.log((code === 0 ? 'Trial ended; its verdict is above.' : 'Trial failed (' + code + '): see above.') + ' Save a file to build and try again.') } })
     }
   } while (pending)
   busy = false

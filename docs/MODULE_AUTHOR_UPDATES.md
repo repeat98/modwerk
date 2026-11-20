@@ -1,6 +1,10 @@
 # Publishing updates as a module author
 
-The owner approves a module's first release by reviewing and merging its addition. After that, its registered author can request automatic merge and publication of their own updates. Open a pull request against `repeat98/modwerk` `main`; pushing to a personal upstream repository does not submit an update to Modwerk. New modules, ownership changes, shared SDK/compiler changes and release exceptions still need owner review.
+A device reviewer or repository maintainer can review and merge a module's first release and register the submitting modder ([first releases](DEVELOPER_WORKFLOW.md#who-reviews-a-first-release)). After that, its registered author can request automatic merge and publication of their own updates. Open a pull request against `repeat98/modwerk` `main`; pushing to a personal upstream repository does not submit an update to Modwerk. Ownership changes, shared SDK/compiler changes and release exceptions still need owner review.
+
+## Merge a first release
+
+Use `/modwerk-review-prs <number>` and the [review checklist](MAINTENANCE.md#pull-request-worker). When the reviewer chooses merge, submit an approving GitHub review for the exact commit inspected. Post a new PR comment containing `/modwerk merge <full-reviewed-head-sha>` from the same account. The **Merge a reviewed submission** workflow in GitHub Actions verifies the live review, scope and CI. If GitHub holds the first contributor's CI, the command starts only the reviewed Module PR checks. Wait for green and post the same command again. The maintenance worker records the reviewer and merges that commit. If the PR changes, review its new head. If main advances, merge main into the PR and rerun checks. For your own first release, ask another assigned reviewer or a maintainer.
 
 ## Start with an issue
 
@@ -85,4 +89,4 @@ This implementation needs no new personal access token, repository-wide collabor
 
 If main requires an approving review for every PR, GitHub will block automatic author merges until that rule is adjusted. Keep required `module-contract` and relevant source-build checks and require branches to be up to date; do not give the bot a general bypass of branch protections. The scope policy supplies owner review for changes beyond authors' own modules. Review repository-wide consequences before changing a ruleset.
 
-All current published primary authors are registered with numeric IDs from their public GitHub repository owner records. On the first owner-reviewed addition by a new author, register that account ID in the same PR. Release authority grows slowly and stays narrow: a registered author can release only their own modules, and nobody gains wider rights for being the most eager helper. Handle renames, maintainer appointments and revocations also need owner review of the registry/manifests. Website module claims and developer sign-in do not change this release authority.
+All current published primary authors are registered with numeric IDs from their public GitHub repository owner records. On the first reviewed addition by a new author, register that account ID in the same PR. Release authority grows slowly and stays narrow: a registered author can release only their own modules, and nobody gains wider rights for being the most eager helper. Handle renames, maintainer appointments and revocations also need owner review of the registry/manifests. Website module claims and developer sign-in do not change this release authority.

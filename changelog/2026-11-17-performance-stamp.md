@@ -1,0 +1,1 @@
+SDK: a module's performance record can now name the source it was measured on: `npm run perf:audit -- check <module>/evidence/performance.json --stamp` writes `sourceSha256`, and `module:doctor` fails a record whose source has changed since, and an unstamped one for modules listed from 18 November 2026.

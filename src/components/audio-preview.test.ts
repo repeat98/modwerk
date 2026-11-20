@@ -17,6 +17,7 @@ describe('module audio previews', () => {
     expect(moduleAudioPreviews('unknown')).toEqual([])
     expect(markup).toContain('class="module-cover"')
     expect(markup).toContain('hover-info')
+    expect(markup.slice(markup.indexOf('class="module-card-body"'))).not.toContain(module.description)
     expect(markup).not.toContain('audio-preview-player')
     expect(markup).not.toContain('audio-preview-hint')
   })
@@ -24,6 +25,8 @@ describe('module audio previews', () => {
   it('keeps playback outside the navigation link and omits clip descriptions', () => {
     const markup = renderToStaticMarkup(createElement(AudioPreviewContext.Provider, { value: { clips: { quantizer: [clip] }, onAdd: () => {} } }, card()))
     expect(markup).toContain('module-audio-cover-link')
+    expect(markup).toContain('title="' + module.description + '"')
+    expect(markup.slice(markup.indexOf('class="module-card-body"'))).not.toContain(module.description)
     expect(markup.indexOf('</a>')).toBeLessThan(markup.indexOf('audio-player-play"'))
     expect(markup).toContain('preload="none"')
     expect(markup).not.toContain('autoplay')

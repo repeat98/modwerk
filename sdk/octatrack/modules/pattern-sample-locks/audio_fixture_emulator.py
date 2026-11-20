@@ -94,8 +94,7 @@ def exercise(port, run, tap, key, encoder, capture, out, reboot):
     run(250)
     capture_audio(port, run, out, 'module-closed')
     def menu(clear):
-        port.command('key 0x25 32'); run(80); tap(0x23, 32); port.command('key 0x25 0'); run(80)
-        encoder(6, -24); encoder(6, 20 if clear else 16); key('YES')
+        fixture.open_action(port, run, tap, key, clear)
         assert port.ui_phase() == 2
         encoder(0, 4); key('YES'); assert port.ui_phase() == 3
     expected = bytearray(before)
@@ -148,14 +147,13 @@ def after_undo(port, out):
     STATE['tap'](0x25, 1)
     capture_audio(port, STATE['run'], out, 'without-module')
     STATE['tap'](0x24, 128)
-    for address in (0x4002dc68, 0x4002dc90, 0x4002dcc4):
-        assert hashlib.sha256(port.peek(address, 6)).hexdigest() == 'd35bfe797abb5bb27e98ec6d4cb422e20c44f307e5d6597af674380832f8dbdf'
+    assert fixture.part_menu_record(port) == 0, 'ot_part_menu still holds a record after removal'
     (out / 'audio-fixture.json').write_text(json.dumps(dict(hardware=False,
         explicitMainLevel=64, originalGeneratedSamples=True, captures=STATE['captures'],
         fixtureCardSha256=STATE['fixture']['cardSha256'], allEightExpectedTonesVerified=True,
         listeningVerdict=None, audioDuringCommitNotYetCompared=True,
         limitations='Native emulator PCM, not physical playback or dropout/CPU/stack qualification.'), indent=2) + '\n')
-    return dict(audioVerifiedWithoutModule=True, allDeclaredSitesRestored=True)
+    return dict(audioVerifiedWithoutModule=True, partMenuRecordRemoved=True)
 
 
 def main():

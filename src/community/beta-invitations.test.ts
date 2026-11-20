@@ -44,7 +44,7 @@ it('keeps the beta mail unsent as a draft, then binds a mailed invitation to its
   expect(await sendNewsMail(env, env.DB!)).toEqual({ sent: 1, queued: 0 })
   expect(mail).toHaveLength(1)
   expect(mail[0].to).toEqual([invited.email])
-  expect(mail[0].html).toContain('href="https://octamod.test/#beta/join/' + id + '"')
+  expect(mail[0].html).toContain('href="https://octamod.test/?utm_source=mail-news#beta/join/' + id + '"')
   expect(mail[0].html).toContain('50 people')
   expect(mail[0].text).toContain('development Discord')
   expect((await call(path)).status).toBe(401)

@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import sharp from 'sharp'
 import { MODULES } from '../src/catalog/modules.ts'
-import { digiModulePageHtml, digiModuleThumbnail, modulePageHtml, modulePages, moduleThumbnail, notFoundPageHtml } from './module-pages.ts'
+import { digiModulePageHtml, modulePageHtml, modulePages, moduleThumbnail, notFoundPageHtml } from './module-pages.ts'
 import { escapeHtml } from './page-html.ts'
 import { DIGI_MODS, digiModuleDocument } from '../src/devices/digi-mods.ts'
 import { DEVICES_BY_ID } from '../src/devices/registry.ts'
@@ -35,25 +35,6 @@ it('keeps canonical URLs, thumbnails and app assets under a Pages project base',
   expect(page).toContain('content="https://modwerk.app/octamod/module-thumbnails/analog.jpg"')
 })
 
-it('builds the FM Synth canonical page and keeps the old URL loadable', async () => {
-  const plugin = modulePages()
-  plugin.configResolved({ root: fileURLToPath(new URL('../', import.meta.url)), base: './' })
-  const assets = []
-  await plugin.generateBundle.call({ emitFile(asset) { assets.push(asset) } }, {}, { 'index.html': { type: 'asset', source: html } })
-  const canonical = assets.find(asset => asset.fileName === 'module/fm-synth/index.html')
-  const legacy = assets.find(asset => asset.fileName === 'module/synth/index.html')
-  expect(assets.find(asset => asset.fileName === '404.html').source).toContain('<base href="https://modwerk.app/" />')
-  expect(canonical.source).toContain('<title>FM Synth for Elektron Octatrack · Modwerk</title>')
-  expect(canonical.source).toContain('<link rel="canonical" href="https://modwerk.app/module/fm-synth/" />')
-  expect(canonical.source).toContain('<meta property="og:url" content="https://modwerk.app/module/fm-synth/" />')
-  expect(legacy.source).toBe(canonical.source)
-  // This integration renders every catalog thumbnail while the full check also bundles the app.
-  for (const mod of DIGI_MODS) {
-    const page = assets.find(asset => asset.fileName === `${mod.device}/module/${mod.id}/index.html`)
-    expect(page.source).toContain(`<h1>${escapeHtml(mod.title)} for Elektron ${escapeHtml(DEVICES_BY_ID[mod.device].name)}</h1>`)
-  }
-}, 30_000)
-
 it('boots the app from an absolute base for paths without a page, and keeps crawlers off that copy', () => {
   const page = notFoundPageHtml(html, './')
   expect(page).toContain('<base href="https://modwerk.app/" />')
@@ -84,20 +65,59 @@ it.each(['./', '/octamod/'])('gives both Digi machines independent pages under %
   }
 })
 
-it.each(MODULES)('renders a usable JPEG of $name from the library thumbnail', async module => {
-  const image = await moduleThumbnail(module.id, stylesheet)
-  const metadata = await sharp(image).metadata()
-  expect(metadata).toMatchObject({ format: 'jpeg', width: 1200, height: 630 })
-  expect(image.length).toBeGreaterThan(10000)
-  const statistics = await sharp(image).stats()
-  expect(statistics.channels.some(channel => channel.stdev > 10)).toBe(true)
-})
+describe('the generated module catalog', () => {
+  const assets = new Map()
+  let peak = 0
+  // Build once for the file. The setup budget grows with the number of real JPEGs it must render.
+  beforeAll(async () => {
+    const plugin = modulePages()
+    plugin.configResolved({ root: fileURLToPath(new URL('../', import.meta.url)), base: './' })
+    const toBuffer = sharp.prototype.toBuffer
+    let active = 0
+    const render = vi.spyOn(sharp.prototype, 'toBuffer').mockImplementation(async function (...args) {
+      active++
+      peak = Math.max(peak, active)
+      try { return await toBuffer.apply(this, args) }
+      finally { active-- }
+    })
+    try {
+      await plugin.generateBundle.call({ emitFile({ fileName, source }) { assets.set(fileName, source) } }, {}, { 'index.html': { type: 'asset', source: html } })
+    } finally {
+      render.mockRestore()
+    }
+  }, 1000 * (MODULES.length + DIGI_MODS.length))
 
-it.each(DIGI_MODS)('renders a usable JPEG of $device $title from its saved thumbnail', async mod => {
-  const image = await digiModuleThumbnail(mod)
-  expect(await sharp(image).metadata()).toMatchObject({ format: 'jpeg', width: 1200, height: 630 })
-  expect(image.length).toBeGreaterThan(10000)
-  expect((await sharp(image).stats()).channels.some(channel => channel.stdev > 10)).toBe(true)
+  it('builds the canonical and legacy module pages with at most two thumbnail renders in flight', () => {
+    expect(peak).toBeGreaterThan(0)
+    expect(peak).toBeLessThanOrEqual(2)
+    const canonical = assets.get('module/fm-synth/index.html')
+    const legacy = assets.get('module/synth/index.html')
+    expect(assets.get('404.html')).toContain('<base href="https://modwerk.app/" />')
+    expect(canonical).toContain('<title>FM Synth for Elektron Octatrack · Modwerk</title>')
+    expect(canonical).toContain('<link rel="canonical" href="https://modwerk.app/module/fm-synth/" />')
+    expect(canonical).toContain('<meta property="og:url" content="https://modwerk.app/module/fm-synth/" />')
+    expect(legacy).toBe(canonical)
+    for (const mod of DIGI_MODS) {
+      const page = assets.get(`${mod.device}/module/${mod.id}/index.html`)
+      expect(page).toContain(`<h1>${escapeHtml(mod.title)} for Elektron ${escapeHtml(DEVICES_BY_ID[mod.device].name)}</h1>`)
+    }
+  })
+
+  async function expectThumbnail(fileName) {
+    const image = assets.get(fileName)
+    expect(image, fileName).toBeInstanceOf(Buffer)
+    const metadata = await sharp(image).metadata()
+    expect(metadata).toMatchObject({ format: 'jpeg', width: 1200, height: 630 })
+    expect(image.length).toBeGreaterThan(10000)
+    const statistics = await sharp(image).stats()
+    expect(statistics.channels.some(channel => channel.stdev > 10)).toBe(true)
+  }
+
+  it.each(MODULES)('renders a usable JPEG of $name from the library thumbnail', module =>
+    expectThumbnail(`module-thumbnails/${module.id}.jpg`))
+
+  it.each(DIGI_MODS)('renders a usable JPEG of $device $title from its saved thumbnail', mod =>
+    expectThumbnail(`module-thumbnails/${mod.device}-${mod.id}.jpg`))
 })
 
 it('uses different module artwork and responds to thumbnail palette changes', async () => {

@@ -3,10 +3,11 @@
 // Step 3 of a maintenance bot pass (docs/MAINTENANCE_BOT.md). Runs from main with write access and no model:
 // it holds the model's proposals to the policy, files them in the Worker's ledger, carries out what is due and
 // not stopped, and on the daily run sends the report to Telegram.
+import { tagDiscordLinks } from '../../server/site-link-tags.ts'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { TODO_COMMAND, actionId, classify } from './policy.mjs'
-import { MARKER, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
+import { MARKER, approveRun, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
 import { dailyReport } from './report.mjs'
 
 const daily = process.env.BOT_MODE === 'daily', dir = process.env.BOT_DIR ?? 'bot'
@@ -23,11 +24,18 @@ if (state.paused) {
 }
 
 // 1. Proposals: the model's file is untrusted input, so each one is re-read against GitHub and the policy.
-let proposals = { actions: [], report: '' }
-const file = join(dir, 'proposals.json')
-if (existsSync(file)) {
-  try { proposals = JSON.parse(readFileSync(file, 'utf8')) } catch { rejected.push('The model wrote proposals that are not valid JSON.') }
-}
+let proposals = { actions: [], todos: [], drop: [] }, reviewError = ''
+const file = join(dir, 'proposals.json'), hasReview = existsSync(file)
+if (hasReview) {
+  try {
+    const parsed = JSON.parse(readFileSync(file, 'utf8'))
+    if (!Array.isArray(parsed?.actions) || parsed.actions.length > 40 ||
+        ['todos', 'drop'].some(key => key in parsed && (!Array.isArray(parsed[key]) || parsed[key].length > 30))) {
+      throw new Error('Invalid proposal lists')
+    }
+    proposals = { ...proposals, ...parsed }
+  } catch { reviewError = 'The review file could not be read as a valid list of proposals.' }
+} else if (process.env.BOT_FINGERPRINT) reviewError = 'The review file is missing.'
 const labels = new Set((await pages(api, '/labels')).map(label => label.name))
 // The forum and the shoutbox as the policy sees them: a thread is open while its last post is not a helper's.
 let activity
@@ -41,7 +49,7 @@ async function siteTarget(kind, id) {
   return { kind: 'shout', id, number: 0, author: shout?.author ?? '', state: shout && !shout.helper && !activity.shouts.slice(index + 1).some(row => row.helper) ? 'open' : 'closed' }
 }
 const accepted = []
-for (const proposal of (Array.isArray(proposals.actions) ? proposals.actions : []).slice(0, 40)) {
+for (const proposal of proposals.actions) {
   const kind = String(proposal?.kind ?? ''), board = kind.startsWith('board_'), talk = kind === 'discord_reply', site = kind === 'forum_reply' || kind === 'shout_reply', number = board || talk || site ? 0 : Number(proposal?.number)
   if (!board && !talk && !site && (!Number.isSafeInteger(number) || number < 1)) { rejected.push('A proposal named no pull request or issue.'); continue }
   if (talk && !chat) { rejected.push('A Discord reply was proposed, but the bot has no Discord token.'); continue }
@@ -50,19 +58,22 @@ for (const proposal of (Array.isArray(proposals.actions) ? proposals.actions : [
     const decision = classify(proposal, where, labels)
     if (decision.reject) { rejected.push((site ? 'Site' : talk ? 'Discord' : board ? 'Board' : '#' + number) + ' ' + kind + ': ' + decision.reject + '.'); continue }
     accepted.push({ id: decision.id, kind: decision.payload.kind, target: number, tier: decision.tier, summary: decision.summary, reason: decision.reason, payload: decision.payload, windowHours: decision.windowHours })
-  } catch (error) { rejected.push('#' + number + ': could not be read (' + error.message + ').') }
+  } catch (error) { reviewError = 'The review could not read every proposal target.'; rejected.push('#' + number + ': could not be read (' + error.message + ').') }
 }
 const { created } = accepted.length ? await bot('/actions', 'POST', { actions: accepted }) : { created: [] }
 console.log(accepted.length + ' proposals accepted (' + created.length + ' new), ' + rejected.length + ' held back.')
 
 // To-dos: work only a session at the owner's computer can do, picked up there with /modwerk-todo.
 const todos = []
-for (const todo of (Array.isArray(proposals.todos) ? proposals.todos : []).slice(0, 30)) {
+for (const todo of proposals.todos) {
   const number = Number(todo?.number), command = String(todo?.command ?? '').trim(), note = String(todo?.note ?? '').trim().replace(/\s+/g, ' ').slice(0, 200)
   if (!Number.isSafeInteger(number) || number < 0 || !TODO_COMMAND.test(command) || !note) { rejected.push('A to-do was not a /modwerk-* command with a number and a note.'); continue }
   todos.push({ id: actionId('todo', number, command), target: number, command, note, urgent: todo.urgent === true })
 }
 if (todos.length) await bot('/todos', 'POST', { todos })
+// The model may drop an open to-do it saw settled (answered, superseded, moved on); only ids that are open count.
+const open = new Set((await bot('/todos')).todos.map(todo => todo.id))
+for (const id of proposals.drop) if (open.has(id)) await bot('/todos/' + id + '/status', 'POST', { status: 'dropped' })
 
 // Watchers that need no model. A red run on main becomes an urgent to-do (the Worker tells the owner at once).
 const latest = new Map(), today = new Date().toISOString().slice(0, 10)
@@ -129,7 +140,7 @@ async function carryOut(action) {
     const now = await readDiscordTarget(chat, payload.channel, payload.message)
     if (!now || now.state !== 'open') return ['expired', 'someone answered in the meantime']
     // No pings of any kind: not @everyone, not roles, not the person replied to beyond Discord's reply marker.
-    await chat('/channels/' + payload.channel + '/messages', 'POST', { content: payload.body, message_reference: { message_id: payload.message, channel_id: payload.channel, fail_if_not_exists: false }, allowed_mentions: { parse: [], replied_user: false } })
+    await chat('/channels/' + payload.channel + '/messages', 'POST', { content: tagDiscordLinks(payload.body), message_reference: { message_id: payload.message, channel_id: payload.channel, fail_if_not_exists: false }, allowed_mentions: { parse: [], replied_user: false } })
     return ['done', '']
   }
   if (payload.kind.startsWith('board_')) {
@@ -143,7 +154,7 @@ async function carryOut(action) {
   const now = await fresh(payload.number)
   if (now.state !== 'open') return ['expired', 'it was closed in the meantime']
   if ((payload.pin?.head ?? '') !== now.head) return ['expired', 'new commits arrived']
-  if (payload.kind !== 'merge' && payload.kind !== 'label' && payload.pin?.comments !== now.comments) return ['expired', 'someone replied in the meantime']
+  if (payload.kind !== 'merge' && payload.kind !== 'label' && payload.kind !== 'approve_run' && payload.pin?.comments !== now.comments) return ['expired', 'someone replied in the meantime']
   const n = payload.number
   switch (payload.kind) {
     case 'label':
@@ -163,6 +174,12 @@ async function carryOut(action) {
       let result
       try { result = await bot('/merge', 'POST', { number: n, sha: payload.head, method: payload.method }) } catch (error) { return ['failed', error.message.slice(0, 200)] }
       return ['done', 'merged ' + String(result.sha).slice(0, 9)]
+    }
+    case 'approve_run': {
+      const runs = (await api('/actions/runs?status=action_required&head_sha=' + now.head + '&per_page=30')).workflow_runs ?? []
+      if (!runs.length) return ['expired', 'no run waits any more']
+      for (const run of runs) await approveRun(api, run.id)
+      return ['done', runs.length + ' run' + (runs.length === 1 ? '' : 's') + ' started']
     }
     case 'close':
       if (payload.body) await api('/issues/' + n + '/comments', 'POST', { body: payload.body + '\n\n' + MARKER })
@@ -185,11 +202,12 @@ console.log(log.length ? log.length + ' carried out: ' + tally('done') + ' done,
 if (rejected.length) console.log(rejected.length + ' held back by the policy.')
 
 // 3. The fingerprint moves only after the model's proposals were filed, so a failed run is retried next pass.
-if (process.env.BOT_FINGERPRINT && existsSync(file)) await bot('/state', 'PUT', { fingerprint: process.env.BOT_FINGERPRINT })
+if (process.env.BOT_FINGERPRINT && hasReview && !reviewError) await bot('/state', 'PUT', { fingerprint: process.env.BOT_FINGERPRINT })
 
 // 4. The daily report: a few lines; each action already has its own message with buttons.
 if (daily) {
   const { actions } = await bot('/actions/recent?hours=24')
-  const broken = !existsSync(file) || rejected.some(reason => reason.startsWith('The model wrote'))
+  const broken = !hasReview || !!reviewError
   await bot('/report', 'POST', { text: dailyReport(actions, (await bot('/todos')).todos) + (broken ? '\n⚠️ The review itself failed today; see the Actions log.' : '') })
 }
+if (reviewError) throw new Error(reviewError)

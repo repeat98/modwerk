@@ -140,3 +140,28 @@ The builder can place table and code separately, removes stock reverb donors
 as needed and still refuses combinations that exceed available memory.
 See [the current test record](TESTING.md#beta-012--shared-word-protection-and-wider-compatibility)
 for matched DSP cost, native composition evidence and remaining limits.
+
+## Beta 0.1.3 — 16 November 2026
+
+The same effect in fewer DSP instructions. The output is bit-identical to
+0.1.2 on every recorded fixture (30 fixtures, 983,040 stereo frames: cold and
+warm history, endpoints, moving controls and every trigger split), so the
+sound, the controls and saved settings are unchanged.
+
+The matched worst case drops from 394.625 to 362.375 net executed
+instructions per sample (8.2%), and from 388.4 to 339.4 at fixed settings
+without a trig split (12.6%); stock Chorus is 292.875 and Spring 314. The
+right channel no longer runs the shared-word checks that only the left ring
+needs, a delay triplet inside the protected prefix is read directly, the
+even/odd flip is tested once per channel, and the history count runs only
+while the ring fills. The program grows from 539 to 588 words per core.
+See [the test record](TESTING.md#beta-013--bit-identical-efficiency-pass).
+
+On an MKII (17 November 2026), four instances, two per core, ran on T1/T3/T5/T7
+and on T3/T4/T7/T8. T3, T4 and T7 output exact digital silence for silent input
+at full settings, which a corrupted delay ring would not. Music on T3 with moving
+controls showed no click above the stock Part's own transients. Two instances per
+core added about 14% less DSP load than 0.1.2 did. With 0.1.3, Air Chorus is
+offered to everyone again, no longer only to beta testers. Not tested: Part or
+project reload with Air Chorus saved, a reboot, and eight instances on the unit.
+

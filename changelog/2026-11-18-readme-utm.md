@@ -1,0 +1,1 @@
+Site: the link to modwerk.app in the repository README now says it came from the README, so the site statistics list visits from it as "GitHub README", apart from visits from issues or pull requests. The site removes the tag from the address once read.

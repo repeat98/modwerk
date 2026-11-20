@@ -43,6 +43,17 @@ export function NotificationPreferences({ focus = false }: { focus?: boolean }) 
 }
 
 /** Opened from the link in an activity email; works signed out because the signed token identifies the account. */
+/** The link in a diagnostics email (server/diagnostics-mail.ts): stops those emails; sharing diagnostics is unchanged. */
+export function DiagnosticsMailUnsubscribe({ token }: { token: string }) {
+  const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle'), [error, setError] = useState('')
+  async function confirm() {
+    setState('busy'); setError('')
+    try { await post('/diagnostics/mail/unsubscribe', { token }); setState('done') } catch (error) { setError(error instanceof Error ? error.message : 'Unable to unsubscribe.'); setState('idle') }
+  }
+  return <div className="community-page account-page"><BackLink href="#account">Your account</BackLink><div className="page-heading"><div><p className="page-kicker">MODWERK / ACCOUNT</p><h1>Diagnostics email</h1><p>Stop personal emails about problems your shared Octatrack diagnostics show.</p></div></div>
+    <section className="configuration-section">{state === 'done' ? <p className="success-note" role="status">You won’t get these emails any more. Your diagnostics sharing is unchanged; turn it off in Octatrack settings if you like.</p> : <><p>Confirm to stop emails about problems your diagnostics show and their fixes.</p><button className="button button-primary" disabled={state === 'busy'} onClick={() => void confirm()}>{state === 'busy' ? 'Please wait…' : 'Stop these emails'}</button></>}{error && <p className="file-error" role="alert">{error}</p>}</section>
+  </div>
+}
 export function Unsubscribe({ token }: { token: string }) {
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle'), [error, setError] = useState('')
   async function confirm() {

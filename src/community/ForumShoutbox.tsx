@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { api, apiFetch, post } from './api'
 import { useCommunity } from './context'
 import { SHOUT_MAX_LENGTH, type ForumShout, type ForumShouts } from './forum-contract'
@@ -9,18 +9,35 @@ import { MentionText, useTextareaMentions } from './mentions'
 import { useLoginPrompt } from './LoginPromptDialog'
 import { TextVideo } from './YouTubeEmbed'
 import { profileHref } from '../routing'
+import { trackShoutReads, type ShoutCount } from './shout-read'
 
-export function ForumShoutbox({archive=false,page=0,floating=false}:{archive?:boolean;page?:number;floating?:boolean}) {
+type ShoutboxProps = { archive?: boolean; page?: number; floating?: boolean }
+export function ForumShoutbox(props: ShoutboxProps) {
   const {session}=useCommunity()
-  const [data,setData]=useState<ForumShouts|null>(null),[error,setError]=useState(''),[notice,setNotice]=useState(''),[draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[collapsed,setCollapsed]=useState(()=>!archive&&typeof window!=='undefined'&&window.matchMedia('(max-width: 600px)').matches),[revision,setRevision]=useState(0),[editing,setEditing]=useState<string|null>(null),[editBody,setEditBody]=useState('')
+  const readKey='modwerk.shoutbox.read.'+(session.user?.id??'guest')
+  return <ShoutboxContent key={readKey+':'+session.admin} readKey={readKey} {...props}/>
+}
+
+function ShoutboxContent({archive=false,page=0,floating=false,readKey}:ShoutboxProps & {readKey:string}) {
+  const {session}=useCommunity()
+  const [data,setData]=useState<ForumShouts|null>(null),[error,setError]=useState(''),[notice,setNotice]=useState(''),[draft,setDraft]=useState(''),[busy,setBusy]=useState(false),[collapsed,setCollapsed]=useState(floating),[revision,setRevision]=useState(0),[editing,setEditing]=useState<string|null>(null),[editBody,setEditBody]=useState('')
   const composer=useRef<HTMLTextAreaElement>(null),mentions=useTextareaMentions(composer,draft,setDraft,'shoutbox-mentions')
   // The chat floats over every forum page, so a visitor's sign-in returns to the page they were reading.
   const {dialog,prompt}=useLoginPrompt(()=>window.location.hash.slice(1)||'forum'),joinPrompt=()=>prompt('Sign in to join the Shoutbox')
   const list=useRef<HTMLDivElement>(null),followEnd=useRef(true),minimizeButton=useRef<HTMLButtonElement>(null)
-  function expand(){setCollapsed(false);window.requestAnimationFrame(()=>minimizeButton.current?.focus())}
+  const trackReads=useMemo(()=>trackShoutReads(readKey),[readKey])
+  const [unread,setUnread]=useState<ShoutCount>({count:0,more:false})
+  function expand(){
+    if(data)setUnread(trackReads(data,true))
+    followEnd.current=true
+    setCollapsed(false)
+    window.requestAnimationFrame(()=>minimizeButton.current?.focus())
+  }
   function minimize(){setCollapsed(true);window.requestAnimationFrame(()=>document.getElementById('shoutbox-launcher')?.focus())}
+  function readAtEnd(element:HTMLDivElement){
+    if(page===0&&data&&unread.count>0&&document.visibilityState==='visible'&&nearEnd(element))setUnread(trackReads(data,true))
+  }
   useEffect(()=>{
-    if(collapsed)return
     let cancelled=false,inFlight=false
     const controller=new AbortController()
     async function load(){
@@ -28,17 +45,28 @@ export function ForumShoutbox({archive=false,page=0,floating=false}:{archive?:bo
       inFlight=true
       try{
         const next=await api<ForumShouts>('/forum/shouts?'+(archive?'page='+page:'compact=1'),{signal:controller.signal})
-        if(!cancelled){const element=list.current;followEnd.current=!element||element.scrollHeight-element.scrollTop-element.clientHeight<60;setData(next);setError('')}
+        if(!cancelled){
+          const element=list.current
+          followEnd.current=!element||nearEnd(element)
+          setData(next);setError('')
+          if(page===0&&document.visibilityState==='visible')setUnread(trackReads(next,!collapsed&&followEnd.current))
+        }
       }catch(error){if(!cancelled)setError(error instanceof Error?error.message:'Messages could not load.')}
       finally{inFlight=false}
     }
-    void load()
+    if(document.visibilityState==='visible')void load()
     const timer=window.setInterval(()=>{if(page===0&&document.visibilityState==='visible')void load()},30000)
-    const visible=()=>{if(page===0&&document.visibilityState==='visible')void load()}
+    const visible=()=>{if(document.visibilityState==='visible')void load()}
     document.addEventListener('visibilitychange',visible)
     return()=>{cancelled=true;controller.abort();window.clearInterval(timer);document.removeEventListener('visibilitychange',visible)}
-  },[archive,page,revision,collapsed,session.user?.id,session.admin])
-  useEffect(()=>{if(followEnd.current&&list.current)list.current.scrollTop=list.current.scrollHeight},[data])
+  },[archive,page,revision,collapsed,trackReads])
+  useEffect(()=>{if(followEnd.current&&list.current)list.current.scrollTop=list.current.scrollHeight},[data,collapsed])
+  useEffect(()=>{
+    if(!collapsed||!data)return
+    const sync=(event:StorageEvent)=>{if(event.key===readKey)setUnread(trackReads(data,false))}
+    window.addEventListener('storage',sync)
+    return()=>window.removeEventListener('storage',sync)
+  },[collapsed,data,readKey,trackReads])
   async function act(path:string,payload?:unknown,method='POST'){
     setBusy(true);setError('');setNotice('')
     try{
@@ -57,11 +85,17 @@ export function ForumShoutbox({archive=false,page=0,floating=false}:{archive?:bo
       {session.admin&&<form className="community-form" onSubmit={event=>{event.preventDefault();const form=event.currentTarget;void act('/admin/forum/shouts/'+item.id,{action:'hidden',value:!item.hidden,reason:new FormData(form).get('reason')},'PATCH').then(ok=>{if(ok){form.reset();form.closest('details')?.removeAttribute('open')}})}}><label>Moderation reason<input name="reason" required maxLength={1000}/></label><button className="text-button" disabled={busy}>{item.hidden?'Restore message':'Hide message'}</button></form>}
     </details>
   }
-  if(floating&&collapsed)return <button id="shoutbox-launcher" type="button" className="forum-chat-launcher" aria-expanded={false} aria-controls="shoutbox-content" onClick={expand}><Icon name="message" size={18}/><span>Shoutbox 8</span></button>
+  if(floating&&collapsed){
+    const label = unread.count ? `Shoutbox 8, ${unread.count}${unread.more?' or more':''} new message${unread.count===1&&!unread.more?'':'s'}` : undefined
+    return <button id="shoutbox-launcher" type="button" className="forum-chat-launcher" aria-label={label} aria-expanded={false} aria-controls="shoutbox-content" onClick={expand}>
+      <Icon name="message" size={18}/><span>Shoutbox 8</span>
+      {unread.count>0&&<span className="shoutbox-unread" aria-hidden="true">{unread.count}{unread.more?'+':''}</span>}
+    </button>
+  }
   return <section className={'forum-shoutbox'+(archive?' is-archive':'')+(floating?' is-floating':'')} aria-labelledby="shoutbox-title" role={floating?'dialog':undefined} aria-modal={floating?false:undefined} onKeyDown={event=>{if(floating&&event.key==='Escape'){event.stopPropagation();minimize()}}}>
     <header className="shoutbox-heading"><div><Icon name="message" size={18}/><h2 id="shoutbox-title">Shoutbox 8</h2><span>Quick questions. Small discoveries. Say hello.</span></div><div><a className="text-button" href={archive?'#forum':'#forum/shoutbox'}>{archive&&<Icon name="back" size={13}/>} {archive?'Back to forum':'Archive'}</a>{!archive&&<button ref={minimizeButton} type="button" className="text-button" aria-label={floating?'Minimize Shoutbox 8':undefined} aria-expanded={!collapsed} aria-controls="shoutbox-content" onClick={()=>floating?minimize():setCollapsed(current=>!current)}>{floating?<Icon name="close" size={16}/>:collapsed?'Expand':'Collapse'}</button>}</div></header>
     {!collapsed&&<div id="shoutbox-content">
-      <div className="shoutbox-messages" ref={list} role="region" aria-label="Community messages" tabIndex={0}>
+      <div className="shoutbox-messages" ref={list} role="region" aria-label="Community messages" tabIndex={0} onScroll={event=>readAtEnd(event.currentTarget)}>
         {!data&&!error?<p role="status" className="shoutbox-empty">Loading messages…</p>:data?.messages.length?[...data.messages].reverse().map(item=><article key={item.id} id={'shout-'+item.id} className="shout-message" data-hidden={!!item.hidden}>
           <ForumAvatar username={item.username} avatar={item.avatar}/>
           <div className="shout-message-content"><div className="forum-meta">{item.username?<a href={profileHref(item.username)}>@{item.username}</a>:<span>Deleted member</span>}<ForumTime value={item.created_at} relative/>{item.edited_at&&<small>Edited</small>}{!!item.hidden&&<span className="pill">Hidden</span>}</div>
@@ -75,4 +109,8 @@ export function ForumShoutbox({archive=false,page=0,floating=false}:{archive?:bo
       {archive&&(page>0||data?.hasMore)&&<nav className="forum-pagination" aria-label="Shoutbox archive pages">{page>0?<a href={'#forum/shoutbox?page='+(page-1)}><Icon name="back" size={14}/>Newer messages</a>:<span/>}<span>Page {page+1}</span>{data?.hasMore&&<a href={'#forum/shoutbox?page='+(page+1)}>Older messages<Icon name="arrow" size={14}/></a>}</nav>}
     </div>}
   </section>
+}
+
+function nearEnd(element: HTMLDivElement) {
+  return element.scrollHeight - element.scrollTop - element.clientHeight < 60
 }

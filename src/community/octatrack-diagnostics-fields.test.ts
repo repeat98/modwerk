@@ -3,7 +3,7 @@ import type { DatabaseSync } from 'node:sqlite'
 import { testServer } from './test-server'
 import { digest } from '../../server/security'
 import { cleanupOctatrackDiagnostics, validateDiagnostic } from '../../server/octatrack-diagnostics'
-import { OCTATRACK_DIAGNOSTICS_VERSION as version, PRE_LINK_FAILURES } from './octatrack-diagnostics-contract'
+import { OCTATRACK_DIAGNOSTICS_VERSION as version, PRE_LINK_FAILURES, DIAGNOSTIC_ELEKLOADER_MACHINES, elekloaderBuildKind } from './octatrack-diagnostics-contract'
 import { diagnosticClient } from './diagnostic-client'
 
 const databases: DatabaseSync[] = []
@@ -54,7 +54,7 @@ describe('browser family and pre-link failures in opted-in reports', () => {
     expect(db.prepare('SELECT count(*) AS n FROM octatrack_diagnostic_events').get()).toEqual({ n: 0 })
   })
   it('keeps an earlier consent sharing, the newer fields included, and records its text with each report', async () => {
-    expect(version).toBe('2026-11-11.1')
+    expect(version).toBe('2026-11-19.1')
     const { db, call, token, consent, send } = await fixture(), earlier = '2026-10-15.1', changedAt = new Date(Date.now() - 86400000).toISOString()
     db.prepare('INSERT INTO octatrack_diagnostic_consent(user_id,enabled,version,changed_at) VALUES(?,?,?,?)').run('member', 1, earlier, changedAt)
     db.prepare('INSERT INTO octatrack_diagnostic_events(user_id,event_id,consent_version,data_json,created_at) VALUES(?,?,?,?,?)').run('member', 'old', earlier, JSON.stringify({ id: 'old', event: 'connected', phase: 'ready' }), changedAt)
@@ -79,5 +79,15 @@ describe('diagnosticClient', () => {
     expect(diagnosticClient('Mozilla/5.0 (Windows NT 10.0) Chrome/131.0.0.0', { brands: [{ brand: 'Not A Brand', version: '99' }, { brand: 'Chromium', version: '131' }, { brand: 'Brave', version: '131' }], platform: 'Windows' })).toEqual({ browser: 'brave', major: 131, os: 'windows' })
     expect(diagnosticClient('Node.js/24')).toEqual({ browser: 'other', os: 'other' })
     expect(diagnosticClient('')).toEqual({ browser: 'other', os: 'other' })
+  })
+})
+
+describe('the machine of an elekloader build failure', () => {
+  it('names each builder machine in the build kind, and falls back to plain elekloader', () => {
+    expect(DIAGNOSTIC_ELEKLOADER_MACHINES.map(elekloaderBuildKind)).toEqual(['elekloader-digitakt', 'elekloader-digitakt-ii', 'elekloader-digitone', 'elekloader-analog-rytm-mkii'])
+    expect(elekloaderBuildKind('octatrack')).toBe('elekloader')
+    expect(elekloaderBuildKind('private file name')).toBe('elekloader')
+    for (const machine of DIAGNOSTIC_ELEKLOADER_MACHINES)
+      expect(validateDiagnostic({ id: crypto.randomUUID(), event: 'build_failed', phase: 'preparing', buildKind: elekloaderBuildKind(machine), error: 'build' })).toBeTruthy()
   })
 })

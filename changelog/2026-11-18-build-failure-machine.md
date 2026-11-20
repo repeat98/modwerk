@@ -1,0 +1,1 @@
+Shared diagnostics: a failed Digitakt, Digitakt II, Digitone or Rytm build now says which machine it was for, as part of its type of build, so a failure that recurs can be traced to one builder. Nothing else is collected; the consent text names the machine.

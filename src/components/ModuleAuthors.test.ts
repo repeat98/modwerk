@@ -26,6 +26,6 @@ describe('multiple module credits', () => {
     expect(module).toMatchObject({ author: 'sambanks', authorName: 'Sam Banks' })
     expect(communityModule(module.id)?.maintainers).toEqual([])
     expect(developerModules('sambanks')).toEqual([])
-    expect(developerModules('bryantysinger').map(module => module.id)).toEqual(['lofi2'])
+    expect(developerModules('bryantysinger').map(module => module.id)).toEqual(['lofi2', 'vibrato'])
   })
 })

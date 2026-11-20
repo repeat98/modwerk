@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import 'fake-indexeddb/auto'
+import { deviceStore, openDeviceDatabase } from '../storage/device'
 import { newConfiguration } from '../config/workspace'
 import { DigiConfiguration } from '../devices/MachinePages'
 import { DEVICES_BY_ID } from '../devices/registry'
@@ -14,8 +15,15 @@ import { LibraryTools } from './LibraryTools'
 import { MOBILE_WORKSPACE } from '../hooks/useMobileWorkspace'
 
 const media = vi.hoisted(() => {
-  const state = { mobile: true, listeners: new Set<() => void>() }
-  window.matchMedia = (query: string) => ({ matches: state.mobile && (query.includes('max-width: 600px') || query.includes('pointer: coarse')), media: query, onchange: null, addListener: () => {}, removeListener: () => {}, dispatchEvent: () => true, addEventListener: (_: string, callback: () => void) => { state.listeners.add(callback) }, removeEventListener: (_: string, callback: () => void) => { state.listeners.delete(callback) } }) as unknown as MediaQueryList
+  const state = { width: 390, coarse: true, listeners: new Set<() => void>() }
+  window.matchMedia = (query: string) => ({
+    matches: (state.width <= 600 && query.includes('max-width: 600px'))
+      || (state.width <= 1024 && query === '(max-width: 1024px)')
+      || (state.coarse && query.includes('pointer: coarse')),
+    media: query, onchange: null, addListener: () => {}, removeListener: () => {}, dispatchEvent: () => true,
+    addEventListener: (_: string, callback: () => void) => { state.listeners.add(callback) },
+    removeEventListener: (_: string, callback: () => void) => { state.listeners.delete(callback) },
+  }) as unknown as MediaQueryList
   return state
 })
 vi.mock('../hooks/firmware-client', async original => ({ ...await original<typeof import('../hooks/firmware-client')>(), createObservedDigiFirmwareClient: () => { throw new Error('Mobile must not initialize the firmware worker') } }))
@@ -23,11 +31,13 @@ vi.mock('../community/beta-access', async original => ({ ...await original<typeo
 const noop = () => {}
 let root: Root, container: HTMLDivElement
 beforeEach(() => {
-  media.mobile = true
+  media.width = 390
+  media.coarse = true
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 404 })))
   vi.spyOn(window, 'scrollTo').mockImplementation(noop)
   Object.defineProperty(HTMLElement.prototype, 'scrollTo', { configurable: true, value: noop })
+  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: noop })
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(noop)
   vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(noop)
   localStorage.clear(); sessionStorage.clear()
@@ -78,15 +88,50 @@ describe('mobile configuration workspaces', () => {
     await act(() => root.render(createElement('div', null, createElement(LibraryTools, props), createElement(LibraryDock, { compared: [], onClearComparison: noop, onCompare: noop, build: { count: 1, detail: 'Digitakt', href: '#digitakt/configuration' } }))))
     expect(container.querySelectorAll('a[href="#digitakt/configuration"]')).toHaveLength(2)
     for (const anchor of container.querySelectorAll('a')) { expect(anchor.textContent).toBe('Open configuration'); expect(anchor.getAttribute('aria-label')).toBeNull() }
-    await act(() => { media.mobile = false; media.listeners.forEach(listener => listener()) })
+    await act(() => { media.width = 1280; media.coarse = false; media.listeners.forEach(listener => listener()) })
     for (const anchor of container.querySelectorAll('a')) expect(anchor.textContent).toBe('Build firmware')
     expect(MOBILE_WORKSPACE).toContain('(hover: none) and (pointer: coarse)')
+  })
+
+  it('shows library selection details only in desktop layouts', async () => {
+    const database = await openDeviceDatabase()
+    await deviceStore(database).saveConfiguration(newConfiguration('Live set', ['everb']), { makeActive: true })
+    database.close()
+    window.location.hash = 'library'
+    await act(async () => root.render(createElement(App)))
+    await vi.waitFor(() => expect(container.querySelector('.library-dock a')?.textContent).toBe('Open configuration'))
+
+    const details = () => container.querySelector('.library-selection, .selection-widget')
+    const resize = (width: number, coarse: boolean) => act(() => {
+      media.width = width
+      media.coarse = coarse
+      media.listeners.forEach(listener => listener())
+    })
+    expect(details()).toBeNull()
+    await resize(800, true)
+    expect(container.querySelector('#navigation-drawer')).not.toBeNull()
+    expect(details()).toBeNull()
+    await resize(1280, true)
+    expect(details()).toBeNull()
+    await resize(1280, false)
+    expect(details()?.matches('.selection-widget')).toBe(true)
+    await resize(800, false)
+    expect(details()?.querySelector('summary')?.textContent).toBe('Selection details')
   })
 })
 
 describe('the MS-70CDR pedal page without the beta', () => {
+  it('names the pedal and links to its library on phones', async () => {
+    window.location.hash = 'zoom-ms-70cdr/pedal/set'
+    await act(async () => root.render(createElement(App)))
+    await vi.waitFor(() => expect(container.querySelector('main h1')?.textContent).toBe('Your MS-70CDR'))
+    expect(container.querySelector('main a')?.getAttribute('href')).toBe('#zoom-ms-70cdr')
+    noFirmware()
+  })
+
   it('offers to install the base', async () => {
-    media.mobile = false
+    media.width = 1280
+    media.coarse = false
     window.location.hash = 'zoom-ms-70cdr/pedal/setup'
     await act(async () => root.render(createElement(App)))
     await vi.waitFor(() => expect(button('Install the base')).toBeDefined(), { timeout: 4_000 })

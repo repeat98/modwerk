@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.2.1-experimental",
+    "date": "2026-11-14",
+    "changes": [
+      "Costs the Octatrack less processing time on tracks that do not use REPITCH, so more is left for other modules.",
+      "Known issue: how a REPITCH track sounds on this version was checked in the emulator only, where it is unchanged, not yet on a unit."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-10-14",
     "changes": [
