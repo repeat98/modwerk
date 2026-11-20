@@ -89,7 +89,7 @@ function DigiModCard({ mod, selected, statistics, compared, canCompare, onToggle
   const [prepare, setPrepare] = useState(false)
   const stability = moduleStability(statistics, { hardware: mod.hardware ? 'Author-tested on hardware.' : 'Author release, not yet tested in Modwerk.' })
   return <article className={'module-card ' + (selected ? 'is-selected' : '')}>
-    {clips.length ? <ModuleAudioCardCover id={id} name={mod.title} href={href} onBrowse={onBrowse} clip={clips[0]} prepare={prepare} onPrepare={() => setPrepare(true)}><DigiModPreview mod={mod}/></ModuleAudioCardCover> :
+    {clips.length ? <ModuleAudioCardCover id={id} name={mod.title} summary={mod.summary} href={href} onBrowse={onBrowse} clip={clips[0]} prepare={prepare} onPrepare={() => setPrepare(true)}><DigiModPreview mod={mod}/></ModuleAudioCardCover> :
       <a href={href} onClick={onBrowse} onAuxClick={onBrowse} className="module-cover" aria-label={'View ' + mod.title}><DigiModPreview mod={mod} /><div className="hover-info"><span>{mod.summary}</span><strong>Explore module <Icon name="arrow" size={15} /></strong></div></a>}
     <div className="module-card-body">
       <div className="module-card-title">
@@ -97,7 +97,6 @@ function DigiModCard({ mod, selected, statistics, compared, canCompare, onToggle
         <AddButton name={mod.title} selected={selected} onToggle={onToggle} />
       </div>
       <div className="card-credit"><ModuleAuthors name={mod.author} url={mod.repository} contributors={mod.contributors}/><span>{mod.license}</span></div>
-      <p className="card-description">{mod.summary}</p>
       <div className="card-bottom"><span>{mod.category}</span><CardStats statistics={statistics}><span className="card-stat">{kib(mod.ramBytes)} memory</span></CardStats></div>
       <CardProof stability={stability} statistics={statistics} name={mod.title + ' for ' + DEVICES_BY_ID[mod.device].name} compared={compared} canCompare={canCompare} onCompare={onCompare} />
     </div>

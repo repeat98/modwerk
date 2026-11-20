@@ -23,9 +23,12 @@ the same image booted one-shot came back. Everything else here was done on the o
   PART+FUNC+PLAY, which clears: Dev12's bank B Part 1 is named `PART 1` from it.)
 - Read the state before you change it, and after you put it back.
 - RELOAD needs a Part that was saved at least once. On one that never was, it shows SAVE PART FIRST! and
-  changes nothing, though the saved copy reads equal (Dev12's bank B after a RAM boot, 12 October 2026). The
-  scripts then pick each changed slot's saved effect back by name (`restore_part` in `octatrack-qualify.py`), which
-  restores a cleared Part's default knobs, and check both copies afterwards.
+  changes nothing, even when its working and saved copies matched before the test. Picking the original effects
+  back can leave their knobs at defaults. Before editing a scratch Part, check whether another Part in that bank
+  is byte-identical to its starting working and saved copies. To restore from that duplicate, recheck its bytes,
+  select it, press `PART+FUNC+REC`, and verify COPY PART names the source. Close the selector with NO, select
+  the scratch Part and press `PART+FUNC+STOP`. Verify PASTE ON PART names the destination, then close with NO.
+  This uses the Part clipboard. Read back both copies and restore the pattern's original Part assignment.
 - After a power cycle, check the Part again: the unit can come back with an older working copy from the card
   (11 October 2026: a RELOAD made before the unplug was gone, and picks from before it were back).
 - Keep each command short: a few steps, a time limit, its output read at once. A long run goes in the
