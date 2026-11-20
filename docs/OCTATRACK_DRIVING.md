@@ -166,7 +166,9 @@ scripts/device-send.py 'part2 pick:T1:FX2:E-Verb stats'
 perl -e 'alarm 10; exec @ARGV' scripts/device-send.py ui   # with a time limit
 ```
 
-One line, steps separated by spaces, the reply printed. A request has a 20 s limit; the session answers an
+One line, steps separated by spaces, the reply printed. After each step that presses, turns or changes something
+the session waits 60 ms; after a read (`health`, `state`, `stats`, `ui`, `mem:`, `crash`, `stall` and the like) it
+does not, so a read costs a few milliseconds (`state` 3 ms, `health` 20 ms over the Windows bridge, 19 November 2026). A request has a 20 s limit; the session answers an
 error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 
 | Step | What it does |
@@ -179,6 +181,7 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 | `part1`-`part4` | switch Parts (PART + an arrow), done once the Part changed |
 | `ui` | each track's FX1/FX2 as they run, the current track, Part, transport |
 | `stats` | CPU, each core's mean/peak per mille, idle passes. One reading is not a measurement: on 27 October 2026 (MKII, a dev twin, stopped, nothing changing) it swung between 41 % and 60 % within ten seconds. Take ten readings in each state, or time the hook itself with `modwerk_cost` (`profile`) |
+| `health` | one JSON line for scripts: the DSP frames, the loader's stalls and errors, the UI tick's watch count, CPU, the crash and stall records' counts (battery RAM, so earlier ones stay counted) and the transport. Development bases. [A fast soak](#a-fast-soak) reads it after every operation |
 | `loader` | packets accepted, rejected, errors, jobs, selections, commits, rollbacks, code words per core |
 | `mem:0x80000ec4:16` | RAM in hex, read-only, any length, within 0x40000400-0x40cfffff (short of the pool's end and the loader's statics), 0x46000000-0x46ffffff, 0x80000000-0x8000ffff and the battery RAM's records 0x100f0000-0x100fffff (`dev.c`); the battery-RAM Part copies are outside it |
 | (any sequence) | answers within 20 s beyond its own `w` waits, else an error, and the next request runs |
@@ -202,6 +205,40 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 STATE's `recording` bit reports sampler recorders. Check live-sequencer recording
 separately when qualifying an edit's recording refusal; that bit alone does not
 establish whether live recording started or stopped.
+
+## A fast soak
+
+`node scripts/octatrack-soak.mjs` plays a seeded run of USB MIDI at the unit (program changes and bursts of them,
+START and STOP, the crossfader, scenes, mutes, levels and FX knobs, transitions weighted most) and reads `health` after
+every operation. It stops at the first failure: a new crash or stall record, a loader stall or error, DSP frames still
+for 0.6 s, or the UI tick still for 1.5 s. Then it reads `stall`, `crash` and `diaglog` into the run's log, which holds
+every operation, so `--replay LOG [--until N]` plays the same run again. The default is three minutes at 20 operations a
+second, about as many operations as an hour at a player's pace.
+
+Measured on an MKII on OS 1.40C, development twin `0ad7efc5` of main, 20 November 2026 (`--profile pc`, 30 s a rate,
+programs 0-3): asked for 5, 10, 20, 40 and 60 operations a second, it held 4.7, 9.4, 18.7, 32.1 and 33.8, and 87,
+163, 269, 403 and 425 pattern changes landed a minute. A health read took 16 to 19 ms (median), 20 to 23 ms (p95).
+One read after every operation caps the runner at about 34 operations a second, so a `--rate` above 30 buys
+nothing. `--profile mix` at 20 a second held 18.7, with 140 pattern changes a minute. No run logged a new crash or
+stall. Each CC was checked on its own against the Part's bytes and the screen: level 7, mute 49, FX1 knobs A-F
+34-39, FX2 knobs A-F 40-45, scenes A and B 55 and 56, the crossfader 48.
+
+- MIDI goes through `scripts/octatrack-midi-bridge.py` on the computer the unit is plugged into (on Windows the device
+  venv's Python, through winmm; port 50124, beside the USB bridge's: on a Windows host with WSL's mirrored
+  networking 47812 refused the bind, 19 November 2026). Start it before the run and stop it after: while it runs it holds the
+  unit's MIDI port.
+- The project: track channels 1-8, and TRANSP RECV and PROG CH RECV on in PROJECT > MIDI > SYNC. A project with
+  them off ignores START and program changes without an error: the summary then shows no pattern changes and the
+  stopped CPU. Program changes arrive on the channel PROG CH RECV names; set to CH AUTO, that is MIDI > CHANNELS'
+  AUTO channel, so pass that as `--pc-channel` (11 on the MKII of 20 November 2026). Track CCs go out on the track
+  channels, the crossfader and scenes on `--auto-channel` (the unit took them on channel 1 too). Effects of the
+  modules under test belong on the Parts that `--programs` reaches. A program change while playing lands at the
+  pattern's end, so short patterns at a high tempo give the most transitions. MIDI STOP pauses the sequencer, and
+  `health.playing` stays true until a panel STOP.
+- `--replay LOG --shrink --reset DIR` finds the shortest prefix of a failed run that still fails: before each replay it
+  RAM-boots `DIR` (a development twin; serve in its loop) and waits out the base's 25 s panel hold, so each try costs
+  about a minute, and halving needs about a dozen tries for two thousand operations.
+- Nothing is installed, kept or flashed. A run that leaves the unit off USB needs the owner's power cycle, as always.
 
 ## The panel, as it behaves
 
