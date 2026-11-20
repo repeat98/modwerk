@@ -242,6 +242,7 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .card-proof[data-level="pending"] { --lv: var(--faint); }
 .card-proof-grade { display: inline-flex; flex: 1 1 0; align-items: center; gap: 5px; min-width: 0; color: var(--lv); font-weight: 500; }
 .card-proof-grade-label { overflow: hidden; text-overflow: ellipsis; }
+.card-proof:is([data-level="in-use"], [data-level="proven"]) .card-proof-grade-label { font-weight: 400; }
 /* Three bars show how far up the ladder a module is: limited testing, regular use, widely used. */
 .grade-meter { display: inline-flex; flex: none; gap: 2px; }
 .grade-meter span { width: 7px; height: 4px; border-radius: 2px; background: #4a4a54; }
