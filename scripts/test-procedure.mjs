@@ -145,18 +145,18 @@ export function lastJson(text) {
 /** The module id a published package's path names (public/octatrack-modules/<id>/<version>.mwrm), else its file name. */
 export const packageId = path => /octatrack-modules\/([^/]+)\/[^/]+\.mwrm$/.exec(path)?.[1] ?? basename(path, '.mwrm')
 
-/** As few sets as cover every package, each as large as `budget` bytes take: the uncovered packages first (largest first),
- * then the set filled up with covered ones (smallest first), so each set is as large as fits and every package is in one.
- * A package larger than the budget goes alone, for the base to refuse with its reason. */
-export function packSets(packages, budget) {
+/** As few sets as cover every package, each as large as `budget` bytes and `most` packages take: the uncovered packages
+ * first (largest first), then the set filled up with covered ones (smallest first), so each set is as large as fits and
+ * every package is in one. A package larger than the budget goes alone, for the base to refuse with its reason. */
+export function packSets(packages, budget, most = Infinity) {
   const byPath = new Map(packages.map(pkg => [pkg.path, pkg])), covered = new Set(), sets = []
   const ascending = [...packages].sort((a, b) => a.bytes - b.bytes || a.path.localeCompare(b.path))
   while (covered.size < packages.length) {
     const set = new Set()
     let total = 0
-    for (const pkg of [...ascending].reverse()) if (!covered.has(pkg.path) && total + pkg.bytes <= budget) { set.add(pkg.path); total += pkg.bytes }
+    for (const pkg of [...ascending].reverse()) if (set.size < most && !covered.has(pkg.path) && total + pkg.bytes <= budget) { set.add(pkg.path); total += pkg.bytes }
     if (!set.size) { const big = [...ascending].reverse().find(pkg => !covered.has(pkg.path)); set.add(big.path); total += big.bytes }
-    for (const pkg of ascending) if (!set.has(pkg.path) && total + pkg.bytes <= budget) { set.add(pkg.path); total += pkg.bytes }
+    for (const pkg of ascending) if (set.size < most && !set.has(pkg.path) && total + pkg.bytes <= budget) { set.add(pkg.path); total += pkg.bytes }
     for (const path of set) covered.add(path)
     sets.push(packages.filter(pkg => set.has(pkg.path)).map(pkg => byPath.get(pkg.path)))
   }
@@ -170,6 +170,9 @@ export function poolFree(text) {
 }
 
 const SET_DEPTH = 4 // a set the base refuses for memory is halved, at most this often
+// A whole-set offer names its modules as bits of a 32-bit mask (volatile_service.c), the live ones included: a set of 36
+// was refused at verify on the emulator's twin, 20 November 2026. The modules read at step 6 take their share.
+export const SET_MODULES = 32
 const HANDLERS = {
   /** Step 7 for a base: the sets, each a whole-set trial, its result and the inventory after it in the record. */
   async 'base-sets'({ ctx, deps, log, result }) {
@@ -178,8 +181,9 @@ const HANDLERS = {
     const pool = poolFree(memory.output)
     if (memory.code !== 0 || !pool) { result.reason = 'could not read the module pool (do memory): ' + (memory.output ?? '').trim().split('\n').slice(-1)[0]; return 1 }
     const packages = (ctx.setPackages ?? []).map(path => ({ path, id: packageId(path), bytes: deps.size(path) }))
-    const queue = packSets(packages, pool.free).map(set => ({ set, depth: 0 }))
-    result.details = [`pool ${pool.size} bytes, ${pool.free} free (largest free run ${pool.largest}) before the sets; ${packages.length} packages`]
+    const live = Array.isArray(ctx.startInventory) ? ctx.startInventory.length : 0, most = Math.max(1, SET_MODULES - live)
+    const queue = packSets(packages, pool.free, most).map(set => ({ set, depth: 0 }))
+    result.details = [`pool ${pool.size} bytes, ${pool.free} free (largest free run ${pool.largest}) before the sets; ${packages.length} packages, at most ${most} a set beside the ${live} installed`]
     result.sets = []
     let code = 0
     while (queue.length) {

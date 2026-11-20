@@ -296,6 +296,11 @@ describe('what the first base run on a unit found (20 November 2026)', () => {
     }
     // One larger than the pool goes alone, for the base to refuse with its reason; the rest still pack.
     expect(packSets([{ path: '/p/huge.mwrm', bytes: 50000 }, { path: '/p/a.mwrm', bytes: 1000 }], 10000).map(set => set.map(pkg => pkg.path))).toEqual([['/p/a.mwrm'], ['/p/huge.mwrm']])
+    // At most so many packages a set, whatever the bytes: a set's modules are bits of a 32-bit mask.
+    const many = Array.from({ length: 36 }, (_, i) => ({ path: `/p/n${String(i).padStart(2, '0')}.mwrm`, bytes: 100 }))
+    const counted = packSets(many, 1e9, 26)
+    expect(counted.map(set => set.length)).toEqual([26, 26])
+    expect(new Set(counted.flat()).size).toBe(36)
     expect(packageId('/r/public/octatrack-modules/ring-sc/0.1.0-experimental.mwrm')).toBe('ring-sc')
     expect(poolFree('pool: 120000 of 524288 bytes used; free 404288, largest free run 400000 (99 % of free)')).toEqual({ used: 120000, size: 524288, free: 404288, largest: 400000 })
   })
@@ -321,7 +326,7 @@ describe('what the first base run on a unit found (20 November 2026)', () => {
     expect(setLines.length).toBe(4) // refused, its two halves, then the set for c and d (filled up with b)
     expect(result.sets.map(set => [set.packages.join('+'), set.result.split(' (')[0].split(':')[0]])).toEqual([
       ['a+b', 'refused for memory'], ['a', 'passed, rolled back'], ['b', 'passed, rolled back'], ['b+c+d', 'passed, rolled back']])
-    expect(result.details[0]).toMatch(/pool 70000 bytes, 70000 free/)
+    expect(result.details[0]).toMatch(/pool 70000 bytes, 70000 free .*at most 31 a set beside the 1 installed/)
     expect(result.details).toContain('set 4 (3 packages, 60000 bytes): passed, rolled back: b, c, d')
     // Every set is followed by the inventory, checked against the start.
     expect(deps.ran.filter(line => line.endsWith('do inventory --socket /tmp/share.sock')).length).toBe(3)
