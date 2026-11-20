@@ -9,7 +9,7 @@ On the Octatrack open **PROJ → MODWERK → SETTINGS**, highlight **USB AUDIO**
 - **OUTPUT MODE** controls which channels send audio. OFF silences the stream.
 - For Outbox 8, assign a source to each of the four USB stereo pairs. You can send one source to several pairs, or set a pair to OFF. Map those USB pairs to the desired physical pairs once in Elektron's Outbox app. Afterward, choose the sources on the Octatrack.
 
-The installer reads existing sets' saved layouts, tap, destination and assignments. A classic set with no saved USB setup starts with eight pre-LEVEL track pairs plus Main and Cue. The 0.3 candidate is awaiting a fix for a freeze during Undo on the MKII. See the [hardware results](TESTING.md).
+The installer reads existing sets' saved layouts, tap, destination and assignments. A classic set with no saved USB setup starts with eight pre-LEVEL track pairs plus Main and Cue. The rebuilt 0.3 candidate passed Undo on the MKII at all five widths. Saved-set persistence is still being qualified. See the [hardware results](TESTING.md).
 
 ## Released 0.2 workflow
 
