@@ -238,7 +238,7 @@
     {
       "path": "media/grain-src.png",
       "captureType": "emulator",
-      "caption": "Press SRC. The track's waveform shows with the POS line and the grains as they sound, PTCH, POS and SIZE named above and DENS, SPRY and SCAN below. Turn POS to move the grains through the sample.",
+      "caption": "SRC page. The waveform shows the sample with a dotted line at POS and the live grains as small squares (framed where they fall inside the waveform; their height is their pan). PTCH: pitch of the grains. POS: where in the sample they start. SIZE: grain length. DENS: how often a grain is born. SPRY: random scatter around POS. SCAN: speed at which the read position moves by itself.",
       "alt": "Octatrack SRC page of a Grain track: tempo 90.0, the LEV bar, the sample name, and a stereo waveform with live grains (small squares, framed where they fall inside the waveform) and the six names PTCH, POS, SIZE, DENS, SPRY and SCAN and the status line GRANULAR:GRAIN.",
       "credit": "A Force Truly Evil; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -255,7 +255,7 @@
     {
       "path": "media/grain-src-setup.png",
       "captureType": "emulator",
-      "caption": "Press SRC twice for SRC SETUP. SHAP is the grain window, DIR the share of backward grains and PAN the random spread across the stereo field; MODE chooses RAND or SYNC. Try PAN up with DIR at 0.",
+      "caption": "SRC SETUP (press SRC twice). SHAP: the grain's window, how soft or sharp each grain starts and ends. DIR: at 0 every grain plays forwards; as it rises, more and more grains play backwards, 64 is half and half, and at 127 all play backwards. PAN: random spread across the stereo field. MODE: RAND places grains at random times; SYNC locks them to the tempo, and DENS then picks the note division.",
       "alt": "Octatrack SRC SETUP page of a Grain track: GRAIN marked in the machine list, SHAP NORM, DIR and PAN dials, and MODE RAND.",
       "credit": "A Force Truly Evil; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -272,7 +272,7 @@
     {
       "path": "media/grain-full-screen.png",
       "captureType": "emulator",
-      "caption": "Press SRC once more from SRC SETUP for the full-screen page: a much larger waveform with the POS line and the grains, and the six knobs with their values beside their names, for precise settings. Press SRC again to leave it.",
+      "caption": "Full-screen page (press SRC once more from SRC SETUP; SRC again leaves it). The controls are exactly the same as on the SRC page. The waveform is much larger, so the grains are easier to see, and each value is shown beside its name.",
       "alt": "Full-screen page of a Grain track: the LEV bar and track T1 on the left, PTCH, POS and SIZE with their values above a large stereo waveform with live grains, and DENS, SPRY and SCAN with their values below it.",
       "credit": "A Force Truly Evil; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
