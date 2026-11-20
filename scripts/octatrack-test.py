@@ -105,8 +105,13 @@ def main():
     if not args.share.isdigit() and not os.path.exists(args.share):
         raise SystemExit('Nothing shares the unit on %s: start the session with `npm run device -- serve --share %s`.' % (args.share, args.share))
     args.crash = False
-    pkgs = [qualify.package(p) for p in args.packages]
     hold = args.hold or min(3600, 300 + 2 * args.seconds + 2 * args.soak)
+    # The whole run is one turn on the unit: it waits here while another session has it (scripts/unit-queue.mjs).
+    turn = importlib.util.spec_from_file_location('unit_turn', ROOT / 'scripts/unit_turn.py')
+    unit_turn = importlib.util.module_from_spec(turn)
+    turn.loader.exec_module(unit_turn)
+    unit_turn.take_turn(__file__, 'device:test ' + os.path.basename(args.packages[0]), expect='%ds' % (hold + 120))
+    pkgs = [qualify.package(p) for p in args.packages]
     trials = []
 
     def install(pkgs):

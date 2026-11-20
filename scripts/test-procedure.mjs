@@ -42,7 +42,7 @@ export const DEVELOPER = {
 export const BY_HAND = {
   module: ['every control and screen by the README\'s button steps, a png: screenshot of each, compared with the README and its UI claims',
     'MAIN and CUE recorded over USB (rec) with a sustained sound, checked for dropouts (runs of exact zeros, a block played twice)'],
-  base: ['RAM boot the candidate\'s development build and back to the starting base, and check the starting modules came back (nothing is kept; a Keep, a flash or a power cycle needs the developer\'s yes)',
+  base: ['RAM boot the candidate\'s development build and back to the starting base, and check the starting modules came back (nothing is kept; a flash or a power cycle is always the unit owner\'s)',
     'USB captures of MAIN with the large set installed, across Part switches and pattern changes, checked for dropouts'],
 }
 
@@ -327,7 +327,7 @@ export function context(root, values, positionals, env = process.env) {
   ctx.unit = values['no-unit'] ? { available: false, reason: 'left alone with --no-unit' }
     : /^\d+$/.test(share) || existsSync(share) ? { available: true }
       : target === 'emulator' ? { available: false, reason: `no emulator session on ${share} (ot_emu --usb-host EMU, then MODWERK_DEV_SOCKET=DEV npm run device -- serve --emulator --socket EMU --share ${share}, and --dev-socket DEV here)` }
-        : { available: false, reason: `no unit session on ${share} (npm run device -- serve --share ${share}, with the developer's OK)` }
+        : { available: false, reason: `no unit session on ${share} (npm run device -- serve --share ${share}; on a contributor's unit with their OK)` }
   ctx.files = git('diff', '--name-only', 'origin/main...HEAD').split('\n').filter(Boolean)
   return ctx
 }
