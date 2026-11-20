@@ -20,9 +20,9 @@
 // needs no turn.
 import { execFileSync, spawn } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, watch, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, watch, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { basename, join, resolve } from 'node:path'
+import { basename, join, resolve, win32 } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const SECOND = 1000, MINUTE = 60 * SECOND
@@ -291,6 +291,31 @@ export function sequenceDrives(line) {
   return waits > 1000 || !steps.every(step => READ_STEPS.some(pattern => pattern.test(step))) // a long wait holds serve's queue
 }
 
+// cmd.exe's own characters. Inside the quoted argument each gets a caret, and a second one for a .cmd or .bat file,
+// which reads its arguments once more (%*), as cross-spawn does it.
+const CMD_META = /([()\][%!^"`<>&|;, *?])/g
+const cmdArgument = (arg, batch) => {
+  const quoted = ('"' + String(arg).replace(/(\\*)"/g, '$1$1\\"').replace(/(\\*)$/, '$1$1') + '"').replace(CMD_META, '^$1')
+  return batch ? quoted.replace(CMD_META, '^$1') : quoted
+}
+/** How Windows runs COMMAND ARGS… with each argument arriving as it was given. An .exe (or .com) starts directly and Node
+ * quotes its arguments. A .cmd or .bat (npm, npx) can start only through cmd.exe: one verbatim command line, each argument
+ * quoted for the program and escaped for cmd and the batch file, never a shell's plain join of the words. */
+export function windowsLaunch(argv, env = process.env, exists = existsSync) {
+  const [command, ...args] = argv, extensions = (env.PATHEXT || '.COM;.EXE;.BAT;.CMD').split(';').filter(Boolean)
+  const folders = /[\\/:]/.test(command) ? [''] : ['', ...(env.PATH ?? env.Path ?? '').split(';').filter(Boolean)]
+  let found
+  for (const folder of folders) {
+    for (const extension of /\.\w+$/.test(command) ? ['', ...extensions] : extensions) {
+      const candidate = folder ? win32.join(folder, command + extension) : command + extension
+      if (exists(candidate)) { found = candidate; break }
+    }
+    if (found) break
+  }
+  if (!found || !/\.(bat|cmd)$/i.test(found)) return { file: found ?? command, args }
+  return { file: env.ComSpec || 'cmd.exe', args: ['/d', '/s', '/c', `"${[found.replace(CMD_META, '^$1'), ...args.map(arg => cmdArgument(arg, true))].join(' ')}"`], verbatim: true }
+}
+
 const USAGE = 'Usage: npm run unit -- status [--json] | hold [--for 30m] [--note TEXT] [--wait D] | release [--force] | run [--note TEXT] [--expect 15m] [--wait D] [--steps LINE] -- COMMAND…'
 
 /** The command line; returns the exit status. */
@@ -356,7 +381,8 @@ export async function main(argv, { env = process.env, out = line => console.log(
     // Ctrl-C reaches the command from the terminal by itself, and a second SIGINT would cut its rollback short, so this
     // process keeps waiting for it. SIGTERM or SIGHUP (a closed terminal, a stopped task) ask the command to stop the way
     // Ctrl-C does, so a trial rolls back, and stop it outright 90 s on.
-    const child = spawn(commandLine[0], commandLine.slice(1), { stdio: 'inherit', cwd, shell: process.platform === 'win32',
+    const launch = process.platform === 'win32' ? windowsLaunch(commandLine, env) : { file: commandLine[0], args: commandLine.slice(1) }
+    const child = spawn(launch.file, launch.args, { stdio: 'inherit', cwd, windowsVerbatimArguments: Boolean(launch.verbatim),
       env: { ...env, MODWERK_UNIT_TURN: turn?.id ?? env.MODWERK_UNIT_TURN ?? 'none' } })
     if (child.pid) turn?.setChild(child.pid)
     const onInt = () => {}, onTerm = () => { child.kill('SIGINT'); setTimeout(() => child.kill('SIGTERM'), 90 * SECOND).unref() }

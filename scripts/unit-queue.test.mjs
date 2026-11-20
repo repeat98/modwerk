@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { acquire, describe as describeQueue, HOLD_GRACE, judge, parseDuration, processEntry, readTurn, sequenceDrives, UnitBusyError, unitDirectory, waiting } from './unit-queue.mjs'
+import { acquire, describe as describeQueue, HOLD_GRACE, judge, parseDuration, processEntry, readTurn, sequenceDrives, UnitBusyError, unitDirectory, waiting, windowsLaunch } from './unit-queue.mjs'
 
 const script = fileURLToPath(new URL('./unit-queue.mjs', import.meta.url))
 const goneProcess = () => Number(spawnSync(process.execPath, ['-e', 'process.stdout.write(String(process.pid))'], { encoding: 'utf8' }).stdout)
@@ -234,5 +234,21 @@ describe('the unit queue', () => {
     for (const line of ['T5 FX2', 'pick:T1:FX2:E-Verb', 'part2', 'try /tmp/x.mwrm', 'remove /tmp/x.mwrm', 'boot /tmp/build', 'recover', 'guard', 'cpu',
       'gap', 'selftest', 'reload', 'ui w5000', 'PLAY w2000 guard', 'encA+3', 'dspmap:watch:5', 'profile', 'crashtest'])
       expect(sequenceDrives(line), line).toBe(true)
+  })
+
+  it('passes the command its arguments as they were given: no shell on Linux and macOS, quoted for cmd.exe on Windows', async () => {
+    const words = ['a b', 'q"x', '$HOME', '*', 'x&y', '100%']
+    const run = cli(['run', '--', process.execPath, '-e', 'console.log(JSON.stringify(process.argv.slice(1)))', ...words])
+    expect(await run.done).toBe(0)
+    expect(JSON.parse(run.out)).toEqual(words)
+
+    // Windows: an .exe starts directly, and Node quotes its arguments.
+    const env = { PATH: 'C:\\Python;C:\\Program Files\\nodejs', PATHEXT: '.EXE;.CMD', ComSpec: 'C:\\Windows\\system32\\cmd.exe' }
+    expect(windowsLaunch(['python', '-B', 'x y.py'], env, path => path === 'C:\\Python\\python.EXE')).toEqual({ file: 'C:\\Python\\python.EXE', args: ['-B', 'x y.py'] })
+    expect(windowsLaunch(['tool', 'a b'], env, () => false)).toEqual({ file: 'tool', args: ['a b'] })
+    // npm is a .cmd: one verbatim cmd.exe line, each argument quoted and caret-escaped for cmd and again for the batch file.
+    const npm = windowsLaunch(['npm', 'run', '--', 'a b&calc', 'q"x', '100%', 'C:\\dir\\'], env, path => path === 'C:\\Program Files\\nodejs\\npm.CMD')
+    expect(npm).toEqual({ file: 'C:\\Windows\\system32\\cmd.exe', verbatim: true, args: ['/d', '/s', '/c',
+      '"C:\\Program^ Files\\nodejs\\npm.CMD ^^^"run^^^" ^^^"--^^^" ^^^"a^^^ b^^^&calc^^^" ^^^"q\\^^^"x^^^" ^^^"100^^^%^^^" ^^^"C:\\dir\\\\^^^""'] })
   })
 })
