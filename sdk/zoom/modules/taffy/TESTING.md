@@ -1,4 +1,4 @@
-# Taffy verification
+# Taffy 3.0.0 verification
 
 Ziddle passed the loader check and rendered 22,050 stereo frames. The compiled file passed the stock-code scan and MS-70CDR size limits. Hardware untested.
 
