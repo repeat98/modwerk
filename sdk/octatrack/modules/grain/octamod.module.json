@@ -239,7 +239,7 @@
       "path": "media/grain-src.png",
       "captureType": "emulator",
       "caption": "Press SRC. The track's waveform shows with the POS line and the grains as they sound, PTCH, POS and SIZE named above and DENS, SPRY and SCAN below. Turn POS to move the grains through the sample.",
-      "alt": "Octatrack SRC page of a Grain track: tempo 90.0, the LEV bar, the sample name, and a stereo waveform with the six names PTCH, POS, SIZE, DENS, SPRY and SCAN and the status line GRANULAR:GRAIN.",
+      "alt": "Octatrack SRC page of a Grain track: tempo 90.0, the LEV bar, the sample name, and a stereo waveform with live grains (small squares, framed where they fall inside the waveform) and the six names PTCH, POS, SIZE, DENS, SPRY and SCAN and the status line GRANULAR:GRAIN.",
       "credit": "A Force Truly Evil; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
@@ -249,7 +249,7 @@
         "firmware": "1.40C",
         "moduleVersion": "0.1.0-experimental",
         "imageSha256": "2768ddc5f0ba213a908fd172cb04d8dafce71473c0557bd1ef5cad0c207900a0",
-        "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at e106348f4 (imageSha256 is that twin's MAIN image), with the Grain package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, playing: the SRC page. Not hardware captures."
+        "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at e106348f4 (imageSha256 is that twin's MAIN image), with the Grain package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, playing: the SRC page. Settings: DENS 104, SPRY 40, SIZE 68, PAN 108, POS 64.0, with a stereo sample made for the capture, playing so that several grains are alive: they show as small squares, with a dark frame where they fall inside the waveform. Not hardware captures."
       }
     },
     {
@@ -273,7 +273,7 @@
       "path": "media/grain-full-screen.png",
       "captureType": "emulator",
       "caption": "Press SRC once more from SRC SETUP for the full-screen page: a much larger waveform with the POS line and the grains, and the six knobs with their values beside their names, for precise settings. Press SRC again to leave it.",
-      "alt": "Full-screen page of a Grain track: the LEV bar and track T1 on the left, PTCH, POS and SIZE with their values above a large stereo waveform, and DENS, SPRY and SCAN with their values below it.",
+      "alt": "Full-screen page of a Grain track: the LEV bar and track T1 on the left, PTCH, POS and SIZE with their values above a large stereo waveform with live grains, and DENS, SPRY and SCAN with their values below it.",
       "credit": "A Force Truly Evil; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
@@ -283,7 +283,7 @@
         "firmware": "1.40C",
         "moduleVersion": "0.1.0-experimental",
         "imageSha256": "2768ddc5f0ba213a908fd172cb04d8dafce71473c0557bd1ef5cad0c207900a0",
-        "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at e106348f4 (imageSha256 is that twin's MAIN image), with the Grain package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, playing: the full-screen page. Not hardware captures."
+        "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at e106348f4 (imageSha256 is that twin's MAIN image), with the Grain package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, playing: the full-screen page. Settings: DENS 104, SPRY 40, SIZE 68, PAN 108, POS 64.0, with a stereo sample made for the capture, playing so that several grains are alive: they show as small squares, with a dark frame where they fall inside the waveform. Not hardware captures."
       }
     },
     {

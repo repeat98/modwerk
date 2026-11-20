@@ -32,10 +32,10 @@
     },
     {
       "path": "grain-src.png",
-      "sha256": "db3ed76fcdc685d24679f1d558ed098d9cfb348780c212d8734beefc8203f8ee",
+      "sha256": "38269ac3bd4c09b565ae39ae0ec3d0db0502d4d7c84ebc883c16ede97b9f58ea",
       "scale": 2,
       "page": "SRC",
-      "state": "Track 1 on Grain with a Flex sample, playing: the SRC page."
+      "state": "Track 1 on Grain with a Flex sample, playing: the SRC page with live grains. Settings: DENS 104, SPRY 40 (32 %), SIZE 68, PAN 108 (85 %), POS 64.0, with a stereo sample made for the capture; the grains show as small squares, with a dark frame where they fall inside the waveform."
     },
     {
       "path": "grain-src-setup.png",
@@ -46,10 +46,10 @@
     },
     {
       "path": "grain-full-screen.png",
-      "sha256": "17ed43defa7fe5a7f1934ccc51782ff8fe906c2f23733ac425307e9fbeeb9cbd",
+      "sha256": "419bd4534dbf83a8a4a0c28440d8e6b9fe5af8208b1b41ff0ea431865c6789bb",
       "scale": 2,
       "page": "Full-screen page",
-      "state": "Track 1 on Grain with a Flex sample, playing: the full-screen page."
+      "state": "Track 1 on Grain with a Flex sample, playing: the full-screen page with live grains. Settings: DENS 104, SPRY 40 (32 %), SIZE 68, PAN 108 (85 %), POS 64.0, with a stereo sample made for the capture; the grains show as small squares, with a dark frame where they fall inside the waveform."
     }
   ]
 }
