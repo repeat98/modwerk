@@ -1,4 +1,4 @@
-**A fix or improvement outside a module?** Title it `Fix: …`, `Improvement: …` or `Docs: …` (it is labelled from that), keep it to one change, delete everything below and answer four questions in plain words:
+**A fix or improvement outside a module?** Title it `Fix: …`, `Improvement: …`, `Docs: …` or `Workflow: …` (it is labelled from that), keep it to one change, delete everything below and answer four questions in plain words:
 
 - **What was wrong or hard:**
 - **What this changes:**
