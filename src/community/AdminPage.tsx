@@ -13,14 +13,16 @@ import { CommunityActivity } from './CommunityActivity'
 import { useEffect, useState } from 'react'
 import { api, post } from './api'
 import { useCommunity } from './context'
-import { SubmissionPage } from './SubmissionPage'
+import { AdminOverview } from './AdminOverview'
+import { adminGroups, adminHref, adminSectionFor, type AdminSection } from './admin-navigation'
+import { accountHref } from './member-access'
+import { sourceRepository } from '../hosting'
 import { ModerationPanel } from './ModerationPanel'
 import { IssueInbox } from './IssueInbox'
 import { AnnouncementsPanel } from './AnnouncementsPanel'
 import { NewsPanel } from './NewsPanel'
 import { DiagnosticsMailPanel } from './DiagnosticsMailPanel'
 import type { PublishedModule } from './api'
-const ADMIN_SECTIONS = [['statistics', 'Statistics'], ['octatrack', 'Octatrack'], ['issues', 'Issues'], ['comments', 'Comments'], ['forum', 'Forum'], ['accounts', 'Accounts'], ['modules', 'Modules'], ['review', 'Module PRs'], ['announcements', 'Announcements'], ['news', 'News'], ['history', 'History']]
 type ReviewEvent = { id: string; module_id: string; action: string; note: string; created_at: string; actor: string }
 function PublishedModules({ onChange }: { onChange: () => void }) {
   const [items, setItems] = useState<PublishedModule[]>([]), [error, setError] = useState(''), [loading, setLoading] = useState(true), [selected, setSelected] = useState(''), [note, setNote] = useState(''), [busy, setBusy] = useState(false)
@@ -33,16 +35,58 @@ function ReviewHistory() {
   useEffect(() => { void api<ReviewEvent[]>('/admin/history').then(setItems).catch(error => setError(error.message)).finally(() => setLoading(false)) }, [])
   return <section className="configuration-section"><h2>Review history</h2><p className="service-note">Approvals, rejections and withdrawals record the administrator and their notes.</p>{loading ? <p role="status">Loading history…</p> : items.map(item => <article className="inbox-issue" key={item.id}><div className="section-title"><strong>{item.module_id}</strong><span className="pill">{item.action}</span></div><small>@{item.actor} · {item.created_at}</small><p>{item.note}</p></article>)}{!loading && !items.length && !error && <p className="service-note">No review actions recorded yet.</p>}{error && <p className="file-error" role="alert">{error}</p>}</section>
 }
-export function AdminPage() {
-  const { session, refresh } = useCommunity(), [tab, setTab] = useState('statistics'), [issueModule,setIssueModule] = useState('')
-  function navigate(next: string, moduleId = '') { setIssueModule(moduleId); setTab(next) }
-  if (!session.admin) return <div className="community-page admin-page"><BackLink href="#forum">Community forum</BackLink><div className="page-heading"><div><p className="page-kicker">MODWERK / ADMIN</p><h1>Admin workspace</h1><p>Moderation and publication history for the site administrator.</p></div></div><section className="configuration-section"><h2>Administrators only</h2><p className="service-note">{session.available ? (session.user ? 'Your account does not have administrator access.' : 'Sign in with an administrator account to continue.') : 'Community services are not connected yet.'}</p>{session.available && !session.user ? <a className="button button-primary" href="#account/login?next=forum">Sign in</a> : <a className="text-button" href="#library">Return to library →</a>}</section></div>
-  return <div className="community-page admin-page"><BackLink href="#forum">Community forum</BackLink><div className="page-heading"><div><p className="page-kicker">MODWERK / ADMIN</p><h1>Admin workspace</h1><p>Understand site activity, explore module engagement and manage the community.</p></div></div><nav className="admin-tabs" aria-label="Site management">
-    <label className="admin-section-picker">Section
-      <select value={tab} onChange={event => navigate(event.target.value)}>
-        {ADMIN_SECTIONS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-      </select>
-    </label>
-    {ADMIN_SECTIONS.map(([id, label]) => <button key={id} aria-pressed={tab === id} onClick={() => navigate(id)}>{label}</button>)}
-  </nav>{tab === 'statistics' ? <><AccountStatistics/><StatisticsPanel onNavigate={navigate}/><CommunityActivity/></> : tab === 'octatrack' ? <><OctatrackAdmin/><OctatrackDiagnosticsAdmin/><DiagnosticsMailPanel/></> : tab === 'review' ? <SubmissionPage/> : tab === 'modules' ? <PublishedModules onChange={() => void refresh()}/> : tab === 'accounts' ? <><PushSettings topic="signups"/><AccountStatistics/><AccountMailHealth/><AccountRequestInbox/><MemberRolesAdmin/><BetaTestersAdmin/><MaintainerAccess/></> : tab === 'forum' ? <ForumModeration/> : tab === 'announcements' ? <AnnouncementsPanel/> : tab === 'news' ? <NewsPanel/> : tab === 'comments' ? <ModerationPanel/> : tab === 'issues' ? <IssueInbox key={issueModule} moduleId={issueModule} onClearModule={() => navigate('issues')}/> : <ReviewHistory/>}</div>
+function SectionContent({ section, query }: { section: AdminSection; query: URLSearchParams }) {
+  const { refresh } = useCommunity()
+  switch (section) {
+    case 'statistics': return <><AccountStatistics/><StatisticsPanel onNavigate={(section, id) => { window.location.hash = adminHref(section, id) }}/><CommunityActivity/></>
+    case 'octatrack': return <><OctatrackAdmin/><OctatrackDiagnosticsAdmin/><DiagnosticsMailPanel/></>
+    case 'issues': {
+      const moduleId = query.get('module') ?? ''
+      const filter = query.get('status')
+      const status = filter === 'all' || filter === 'closed' ? filter : 'open'
+      return <IssueInbox moduleId={moduleId} status={status}
+        onStatus={value => { window.location.hash = adminHref('issues', moduleId, value) }}
+        onClearModule={() => { window.location.hash = adminHref('issues', '', status) }}/>
+    }
+    case 'forum': return <ForumModeration/>
+    case 'requests': return <AccountRequestInbox/>
+    case 'accounts': return <><MemberRolesAdmin/><BetaTestersAdmin/><MaintainerAccess/><PushSettings topic="signups"/><AccountMailHealth/><AccountStatistics/></>
+    case 'comments': return <ModerationPanel/>
+    case 'modules': return <PublishedModules onChange={() => void refresh()}/>
+    case 'review': return <section className="configuration-section"><h2>Review a contribution</h2>
+      <p className="service-note">Module changes are reviewed and merged in the Modwerk repository.</p>
+      <div className="forum-actions"><a className="button button-primary" href={(sourceRepository() || 'https://github.com/repeat98/modwerk') + '/pulls'} target="_blank" rel="noreferrer">Open pull requests ↗</a>
+        <a className="button button-quiet" href="#submit">Contribution guide</a></div>
+    </section>
+    case 'announcements': return <AnnouncementsPanel/>
+    case 'news': return <NewsPanel/>
+    case 'history': return <ReviewHistory/>
+  }
+}
+
+export function AdminPage({ route }: { route: string }) {
+  const { session, loading } = useCommunity()
+  const [path, search] = route.split('?')
+  const section = adminSectionFor(path)
+  const inside = !!section && session.admin
+  return <div className="community-page admin-page">
+    <BackLink href={inside ? '#admin' : '#forum'}>{inside ? 'Admin workspace' : 'Community forum'}</BackLink>
+    <header className="page-heading admin-heading">
+      <h1>{inside ? section.label : 'Admin workspace'}</h1>
+      {inside && <label className="admin-section-picker">Section
+        <select value={section.id} onChange={event => { window.location.hash = event.target.value ? '#admin/' + event.target.value : '#admin' }}>
+          <option value="">Workspace overview</option>
+          {adminGroups.map(group => <optgroup key={group.label} label={group.label}>
+            {group.sections.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+          </optgroup>)}
+        </select>
+      </label>}
+    </header>
+    {session.admin ? section ? <SectionContent section={section.id} query={new URLSearchParams(search)}/> : <AdminOverview/>
+      : loading ? <p role="status">Checking administrator access…</p>
+      : <section className="configuration-section"><h2>Administrators only</h2>
+        <p className="service-note">{session.available ? session.user ? 'Your account does not have administrator access.' : 'Sign in with an administrator account to continue.' : 'Community services are unavailable.'}</p>
+        {session.available && !session.user ? <a className="button button-primary" href={accountHref('login', route)}>Sign in</a> : <a className="text-button" href="#library">Return to library →</a>}
+      </section>}
+  </div>
 }
