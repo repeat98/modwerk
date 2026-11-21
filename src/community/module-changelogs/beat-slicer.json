@@ -7,7 +7,7 @@
       "New: FUNC+AED opens stock CREATE SLICE GRID; press it again to switch to CREATE BEAT GRID.",
       "The popup is drawn in the stock style and font, and costs less to draw.",
       "NO, or a failed analysis, leaves your old slices as they were. SNAP starts OFF and is not saved.",
-      "Needs Modwerk base 0.7.11 over USB."
+      "Needs Modwerk base 0.7.13 over USB."
     ]
   },
   {

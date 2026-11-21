@@ -408,6 +408,26 @@
      "container": 810180
     }
    }
+  },
+  {
+   "base": "0.7.12",
+   "identity": "254c5a75a139255e057e69532bb952daffef5039ffeee0e6c9fabda302e5bb91",
+   "layouts": {
+    "off": {
+     "main": 1331131,
+     "container": 812368
+    }
+   }
+  },
+  {
+   "base": "0.7.13",
+   "identity": "7512454497eaf749977315e0f010bec4f3e64e088427e4c36b094b7ccfab7a82",
+   "layouts": {
+    "off": {
+     "main": 1334654,
+     "container": 816348
+    }
+   }
   }
  ]
 }

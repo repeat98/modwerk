@@ -132,6 +132,18 @@
     "e5b6f5fb11c92efab94b1b5935dffd5804123a4ec1a4d3daf47ac89f56edb16f",
     "f549ed4cdafb7c5baa66fd13b22067a6d7316c821a15e482052ee23d1ab86780"
    ]
+  },
+  {
+   "version": "0.7.12",
+   "identities": [
+    "254c5a75a139255e057e69532bb952daffef5039ffeee0e6c9fabda302e5bb91"
+   ]
+  },
+  {
+   "version": "0.7.13",
+   "identities": [
+    "7512454497eaf749977315e0f010bec4f3e64e088427e4c36b094b7ccfab7a82"
+   ]
   }
  ]
 }

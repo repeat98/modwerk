@@ -8,7 +8,7 @@ import { moduleBuildPending } from '../catalog/build-support'
 import { DIGI_MODS, type DigiMod } from '../devices/digi-mods'
 import { DEVICES_BY_ID, deviceHref } from '../devices/registry'
 import { digiDownloadsEnabled } from '../engine/elekloader/protocol'
-import { USB_AUDIO_MODULE } from '../config/usb-audio'
+import { comesWithBase } from '../config/usb-audio'
 import { canAdd, LIMIT_REACHED } from '../catalog/set-limit'
 import { useSetWords } from '../community/beta-ui'
 
@@ -60,7 +60,7 @@ export function ModuleComparison({ betaAccess = false, ids, onClose, onToggle, s
     <div className="comparison-scroll" tabIndex={0} role="region" aria-label="Module comparison table"><table>
       <thead><tr><th scope="col">Module</th>{modules.map(module => <th scope="col" key={module.key}><a href={module.href} onClick={onClose}>{module.name} ↗</a><small>by <a href={module.authorUrl} target="_blank" rel="noreferrer">{module.author}</a></small></th>)}</tr></thead>
       <tbody>{ROWS.map(label => <tr key={label}><th scope="row">{label}</th>{modules.map(module => <td key={module.key}>{module.values[label]}</td>)}</tr>)}
-        <tr><th scope="row">{w.Set}</th>{modules.map(module => <td key={module.key}><button className="button button-quiet" aria-pressed={!module.selected && module.key === USB_AUDIO_MODULE ? undefined : module.selected} disabled={module.full} title={module.full ? LIMIT_REACHED : undefined} onClick={module.toggle}>{module.selected ? 'Added' : (module.key === USB_AUDIO_MODULE ? 'Configure ' : 'Add ') + module.name}</button>{module.full && <small>{LIMIT_REACHED}</small>}</td>)}</tr>
+        <tr><th scope="row">{w.Set}</th>{modules.map(module => <td key={module.key}><button className="button button-quiet" aria-pressed={!module.selected && comesWithBase(module.key) ? undefined : module.selected} disabled={module.full} title={module.full ? LIMIT_REACHED : undefined} onClick={module.toggle}>{module.selected ? 'Added' : (comesWithBase(module.key) ? 'Configure ' : 'Add ') + module.name}</button>{module.full && <small>{LIMIT_REACHED}</small>}</td>)}</tr>
       </tbody>
     </table></div>
     <p className="service-note">Storage and processing values use different measurement methods. Open each module for conditions and test evidence. Adding a module updates its machine’s configuration.</p>
