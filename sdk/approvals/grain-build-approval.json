@@ -1,0 +1,14 @@
+{
+  "kind": "owner-approved-update",
+  "id": "grain",
+  "version": "0.1.0-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-21",
+  "ownerStatement": "Approved by repeat98 in chat on 21 Nov 2026 for PR #1858. Asked how many instances can run: \"let's release it\". Then, choosing \"Test Keep/power cycle first\" and \"You merge when green\". After the Keep test passed and the waiver and untested items were disclosed: \"Approve, release it\".",
+  "reason": "First release of Grain 0.1.0-experimental, exact native source only (package db843bc2…, MKII OS 1.40C). The static zero-wait bound (157,940 core cycles for 16 source frames) exceeds the 95,782-cycle frame budget, so chip worst-case cycles are waived. The longest measured guarded callback is 33,640 cycles, against the 35-point reservation that limits a Part to one Grain track. Exact static sizes are recorded (27,132 bytes of code and data, 2,856 of BSS, a 740-byte audio stack), but no full memory-region inventory, so complete memory bounds are waived. On the owner's MKII this exact package played card-free in RAM trials. With USB audio capture closed (the shipping default) and under a 240 BPM, 1,096 messages/s MIDI flood it had no render skips and no frame over the deadline; the optional twenty-channel layout still overruns. It was kept over USB on shipping base 254c5a75 beside screen-off and USB AUDIO, restored after a power cycle and removed again. Not tested: project save and reload with Grain, a full module set, the lean Main USB layout, MKI on this build and the owner's listening check (six overlapping grains are much louder than one Flex voice). This exception applies to no other version or source.",
+  "sourceSha256": "94315febe22c1bd979ff1950a344329b516986fc2a1c0f34dc12fb18b16dfbff",
+  "waived": [
+    "chip-worst-case-cycles",
+    "complete-memory-bounds"
+  ]
+}

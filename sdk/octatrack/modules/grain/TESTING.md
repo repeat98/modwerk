@@ -71,6 +71,10 @@ The capture tool's count of repeated 128-frame blocks on the Grain stem (557 her
 
 The RAM boot back to the shipping base after these arms hung: the startup animation kept running, the controls and USB did not respond, and the unit's log holds no crash or stall record for that boot. Grain's trial had already been rolled back and no module was live. A power cycle with the CF card booted the flashed base and the card set. [Arms, flood, held-note probe and stem analysis](evidence/timing/release-bar.json)
 
+### USB Keep and power cycle on the shipping base
+
+On the MKII's flashed shipping base `254c5a75`, with the CF card in, the owner's kept set held screen-off and USB AUDIO. Over USB, `npm run device -- try public/octatrack-modules/grain/0.1.0-experimental.mwrm --accept` kept this exact package (`db843bc2`) beside them. The trial verdict logged no crash, stall, freeze or skipped track, and the card set read 3 modules saved and 3 live. After a power cycle the set restored at start with all three live, Grain included. `remove … --accept` then took Grain out again, leaving 2 saved and 2 live. After a second power cycle the original two-module set restored at start. Grain was not assigned to a track in the owner's project, and no project was saved.
+
 ## Compact six-voice synthesis loop, 21 November 2026
 
 The SDK and catalogue produce package `0e4fc8dd6a3bfc60ee60321a83bda82866adaedad8b555834ecdfb6b6dee6f21`. Its stereo loop reads the fractional sample step from a register and mixes one sample per iteration. It keeps the improved page check, Q15 arithmetic, six voices and 35-point reservation. The four-sample build below is retained as a comparison.
