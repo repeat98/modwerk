@@ -45,6 +45,11 @@ describe('module resource gauges', () => {
         } else if (indicator.score === null) {
           expect(indicator.valueText).toBeTruthy()
           expect(indicator.fill).toBe(0)
+        } else if (indicator.maximum === 100) {
+          expect(indicator.valueText).toBeTruthy()
+          expect(indicator.fill).toBe(indicator.score)
+          expect(indicator.score).toBeGreaterThanOrEqual(0)
+          expect(indicator.score).toBeLessThanOrEqual(100)
         } else {
           expect(['Minimal', 'Low', 'Moderate', 'High']).toContain(indicator.value)
           expect(indicator.fill).toBeGreaterThan(0)
@@ -72,7 +77,7 @@ describe('module resource gauges', () => {
   it('shows only the reported eleven-stem hardware peak for the card build', () => {
     const stems = MODULE_DOCUMENTS.find(document => document.id === 'stem-rec')!
     expect(moduleResourceIndicators(stems)[0]).toMatchObject({
-      value: '14.6%', status: 'Reported peak · 11 stems', score: null,
+      value: '14.6%', status: 'Reported peak · 11 stems', score: 14.6, maximum: 100, fill: 14.6,
       source: 'sdk/octatrack/modules/stem-rec/TESTING.md',
     })
     expect(moduleResourceIndicators({ ...stems, version: '0.2.0' })[0].status).toBe('Estimated')
@@ -89,7 +94,7 @@ describe('module resource gauges', () => {
     const memory = lofi.tests.qualification!.memory
     const [, lofiDsp, lofiMemory] = moduleResourceIndicators(lofi)
     expect(lofiDsp).toMatchObject({
-      value: '+10.3 pp', status: 'Measured · T1–4', score: null,
+      value: '+10.3 pp', status: 'Measured · T1–4', score: 10.3, maximum: 100, fill: 10.3,
       benchmark: { value: lofiPrice + ' cycles per sample per instance', basis: 'cycles/sample · Hardware-based' },
     })
     expect(lofiMemory).toMatchObject({ value: memory.totalBytes.toLocaleString('en-US') + ' B', status: 'Accounted total', score: null })

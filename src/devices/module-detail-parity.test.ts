@@ -94,7 +94,7 @@ describe('module detail parity across machines', () => {
     expect(html).toContain('/blob/main/sdk/octatrack/modules/euclid/' + price.source + '"')
   })
 
-  it('renders numeric DSP and memory records as amounts without percentage meters', () => {
+  it('renders all three Octatrack dials and uses an unscaled outline for byte counts', () => {
     const module = AVAILABLE_MODULES.find(module => module.id === 'lofi2')!
     const dsp = packageManifest.packages.find(entry => entry.id === module.id)!.cycles
     const memory = MODULE_DOCUMENTS_BY_ID[module.id].tests.qualification!.memory
@@ -106,7 +106,13 @@ describe('module detail parity across machines', () => {
     expect(html).toContain('Accounted total')
     expect(html).toContain('/blob/main/src/engine/assets/octatrack-module-packages.json"')
     expect(html).toContain('/blob/main/sdk/octatrack/modules/lofi2/' + memory.report + '"')
-    expect(html.match(/role="meter"/g)).toHaveLength(1)
+    expect(html).toContain('role="meter" aria-label="DSP core load change" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10.3"')
+    const gauges = html.match(/<dl class="module-resource-gauges">([\s\S]+?)<\/dl>/)![1]
+    expect(gauges.match(/class="resource-gauge-track"/g)).toHaveLength(3)
+    expect(gauges.match(/role="meter"/g)).toHaveLength(2)
+    const memoryGauge = gauges.split('resource-gauge resource-gauge-memory')[1]
+    expect(memoryGauge).toContain('data-unscaled="true"')
+    expect(memoryGauge).not.toContain('class="resource-gauge-fill"')
   })
 
   it('offers the report form on both Digi machines with public delivery, private configuration, and machine-specific fields', () => {
