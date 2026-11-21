@@ -285,6 +285,14 @@ describe('what the first base run on a unit found (20 November 2026)', () => {
     startInventory: JSON.parse(INVENTORY), ...extra })
   const unitPass = STEPS.find(step => step.id === 'unit-pass'), soakStep = STEPS.find(step => step.id === 'soak')
 
+  it('keeps the selected MIDI bridge and packages when queuing a base run', async () => {
+    let child
+    const deps = fakeDeps({ files: { onQueue(argv) { child = argv.slice(argv.indexOf('scripts/test-procedure.mjs') + 1) } } })
+    await runProcedure(baseCtx({ tools: { unitQueue: true }, midi: '127.0.0.1:4589', priceModules: ['ring-sc', 'euclid'] }), deps)
+    expect(child.slice(child.indexOf('--midi'), child.indexOf('--midi') + 2)).toEqual(['--midi', '127.0.0.1:4589'])
+    expect(child.slice(child.indexOf('--price-modules'), child.indexOf('--price-modules') + 2)).toEqual(['--price-modules', 'ring-sc,euclid'])
+  })
+
   it('packs the packages into as few sets as cover them, each as large as the pool takes', () => {
     const packages = [5, 1, 4, 2, 3, 6].map((kb, i) => ({ path: `/p/m${i}.mwrm`, bytes: kb * 1000 }))
     const sets = packSets(packages, 10000)
