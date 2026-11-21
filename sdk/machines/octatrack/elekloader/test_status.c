@@ -505,12 +505,12 @@ int main(void)
     for (unsigned i = 0; i < 180u; ++i) memory_tick();
     CHECK(open == CLOSED);
     /* A busy unit's refusal: the meter's mean over its last eight readings, the same box with the measured CPU. */
-    uint32_t modwerk_status_cpu_recent(void); void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu);
     for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 800u + 20u * i;
     CHECK(modwerk_status_cpu_recent() == 870u);
-    modwerk_status_cpu_hot(5, "Amiga", 870);
-    CHECK(open == REFUSED && refused_machine && refused_reason == 4 && refused[0] == 5 && refused[1] == 5 && refused_booked == 870 && refused[4] == 0);
+    modwerk_status_cpu_hot(5, "Amiga", 870, 120);
+    CHECK(open == REFUSED && refused_machine && refused_reason == 4 && refused[0] == 5 && refused[1] == 5 && refused_booked == 870 && refused[4] == 120);
     CHECK(!strcmp(refused_name, "AMIGA"));
+    CHECK(strstr(shows(), "AMIGA|CPU|87%|+12%|LIMIT|85%|"));
     for (unsigned i = 0; i < 180u; ++i) memory_tick();
     CHECK(open == CLOSED);
     /* An effect pick on a busy unit: a module's effect is refused with the box on its slot ("T4 FX2"), counted; a
@@ -525,8 +525,7 @@ int main(void)
       cpu_recent[0] = 0;                                                 /* mean 770: under the line */
       CHECK(modwerk_status_cpu_recent() < mw_cpu_hot && !modwerk_status_effect_busy(11, 27) && open == CLOSED); }
     for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0;
-    /* Stopped, a pick is judged by what the meter read while the unit last played: kept from eight readings in a row
-     * playing, used only while stopped and only when it is more than the meter now; the box is told whose figure it shows. */
+    /* After STOP and on restarting, preserve the last full playback window until a fresh one replaces it. */
     { uint32_t modwerk_status_cpu_load(void); uint32_t before = mw_cpu_refusals;
       CHECK(!cpu_played && modwerk_status_cpu_load() == 0);
       transport_stopped = 0;
@@ -535,19 +534,27 @@ int main(void)
       CHECK(!cpu_played);                                                /* seven readings: not yet a whole window playing */
       cpu_note_played();
       CHECK(cpu_played == 900u);
-      transport_stopped = 1; cpu_note_played(); transport_stopped = 0;   /* a stop between: the count starts again */
-      for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 700u;
-      for (unsigned r = 0; r < 7u; ++r) cpu_note_played();
+      transport_stopped = 1;
+      for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 620u, cpu_note_played();
+      transport_stopped = 0;
+      CHECK(modwerk_status_cpu_recent() == 620u && modwerk_status_cpu_load() == 900u);
+      for (unsigned r = 0; r < 7u; ++r) cpu_recent[r] = 700u, cpu_note_played();
       CHECK(cpu_played == 900u);
-      for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 620u;            /* stopped: the meter falls */
-      CHECK(modwerk_status_cpu_load() == 620u);                          /* still playing by the transport: the meter now */
+      CHECK(modwerk_status_effect_busy(11, 27) && refused_played && refused_booked == 900u);
+      CHECK(strstr(shows(), "PLAY|90%|LIMIT|85%|"));                    /* no extra wake charge */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      cpu_recent[7] = 700u; cpu_note_played();                          /* eighth playing reading: cheaper picks fit */
+      CHECK(cpu_played == 700u && !modwerk_status_effect_busy(11, 27));
+      for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 900u;
+      cpu_note_played();
+      for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 620u;
       transport_stopped = 1;
       CHECK(modwerk_status_cpu_recent() == 620u && modwerk_status_cpu_load() == 900u);
       CHECK(modwerk_status_effect_busy(11, 27) == 1 && open == REFUSED && refused[0] == 5 && refused_booked == 900 && refused_played);
-      CHECK(mw_cpu_refusals == before + 1);
+      CHECK(mw_cpu_refusals == before + 2);
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       CHECK(!modwerk_status_effect_busy(11, 8) && !modwerk_status_effect_busy(11, 0) && open == CLOSED); /* stock and NONE pass */
-      modwerk_status_cpu_hot(5, "Amiga", modwerk_status_cpu_load());
+      modwerk_status_cpu_hot(5, "Amiga", modwerk_status_cpu_load(), 120);
       CHECK(open == REFUSED && refused_machine && refused_played);
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 870u;            /* busy now: the meter's own figure and words */
@@ -576,6 +583,7 @@ int main(void)
     { for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 830u;
       effect_rests = 1; effect_wakes = 0;
       CHECK(modwerk_status_effect_busy(11, 27) == 1 && !effect_wakes && effect_rests); /* 83 % + 3: refused, still resting */
+      CHECK(strstr(shows(), "83%|+3%|LIMIT|85%|"));
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 819u;
       CHECK(!modwerk_status_effect_busy(11, 27) && effect_wakes == 1 && effect_woken == 27u && !effect_rests);
@@ -592,11 +600,14 @@ int main(void)
       CHECK(frame_recent[2] == 77u);
       mw_frame_count = 1010u, mw_frame_busy = 1000u + 187u * 500u; frame_note(2);
       CHECK(frame_recent[2] == 500u); }
-    /* Stopped, the box shows the frame share of the last play, when it was more; playing, the share now. */
+    /* The frame display uses the same playback window across a restart. */
     { transport_stopped = 1, frame_played = 540u;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 200u;
       CHECK(modwerk_status_frame_load() == 540u);
       transport_stopped = 0;
+      CHECK(modwerk_status_frame_load() == 540u);
+      play_readings = 0;
+      for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
       CHECK(modwerk_status_frame_load() == 200u);
       transport_stopped = 1, frame_played = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }

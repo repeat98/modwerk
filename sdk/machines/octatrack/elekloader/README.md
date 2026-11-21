@@ -354,7 +354,7 @@ and starts no voice until the next UI tick wakes it. A RENDER_FLEX machine never
 map of every bank's Parts) and no live slot runs it;  judges a pick of it with the same
 margin and wakes it before stock writes the pick.
 
-`status.c` also keeps the frame interrupt's share of each frame from the frame guard's sums, over the last four seconds (the last play's while stopped), and the box after a pick shows it in its CPU row against `mw_frame_line`, the share where the guard starts to drop renders.
+`status.c` also keeps the frame interrupt's share of each frame from the frame guard's sums, over the last four seconds (the larger of that and the last full playing window across STOP and PLAY), and the box after a pick shows it in its CPU row against `mw_frame_line`, the share where the guard starts to drop renders.
 
 `status.c` measures, all the time, the ColdFire's load (main's idle spin, timed on DTIM3, `status.s`), each
 DSP core's mean and peak load (core 0's own idle count, core 1's counted wait for core 0, `dsp_receiver.asm`),
