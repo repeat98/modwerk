@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/glue.s",
+    "src/filters.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "flt_tick",
+      "order": 60
+    },
+    {
+      "event": "ev_enc",
+      "fn": "flt_enc",
+      "order": 60
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:FLTR:TYPE"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.54": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400780a4",
+          "len": 6,
+          "stockSha256": "b0dd555906e4a5ef53c07b1aca8ea79f5058ed12d3b59a68d63d5f98df85e511",
+          "op": "lea",
+          "register": 3,
+          "target": "flt_voice"
+        },
+        {
+          "addr": "0x40065336",
+          "len": 6,
+          "stockSha256": "1d9bf14cdbc53525d951ca0de24a214365ee6ba6409323d2bd9a08c6cd2410fa",
+          "op": "jmp",
+          "target": "flt_fmt"
+        },
+        {
+          "addr": "0x40037444",
+          "len": 6,
+          "stockSha256": "b2fa000f06e051804c4a07ab04a5ca0a53d59fa1ae8bfaa637ac0e9599242c91",
+          "op": "jsr",
+          "target": "flt_resoq"
+        },
+        {
+          "addr": "0x4003799e",
+          "len": 6,
+          "stockSha256": "31fa7c54cb015e40b01093915b819b742382f0497c45ba66b26e4690512a19bb",
+          "op": "jsr",
+          "target": "flt_shape"
+        },
+        {
+          "addr": "0x400378cc",
+          "len": 6,
+          "stockSha256": "62f0415482d2507e975c71f839bc22cd07fb284b48b6af7e2ea7839e55575358",
+          "op": "jsr",
+          "target": "flt_boxcall"
+        },
+        {
+          "addr": "0x4000ff3c",
+          "len": 6,
+          "stockSha256": "244e8fe0bf99967647d19e70582721e12cacb8d4ec62366233b144d3fa8cd9b0",
+          "op": "jmp",
+          "target": "flt_setv"
+        },
+        {
+          "addr": "0x401aa75c",
+          "len": 4,
+          "stockSha256": "34aa8b53f20336a9858eff161c37fb0365c45e9f8e5fbdf3457982f2139ef491",
+          "op": "bytes",
+          "new": "00000900",
+          "kind": "data"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-10",
+    "changes": [
+      "First release for Digitakt I OS 1.54: two more filter TYPEs on the stock FLTR page, after EQ:5.",
+      "DJ: one knob from a low-pass on the left through open in the middle to a high-pass on the right, with a short catch in the middle; FUNC + FREQ jumps there.",
+      "BP: a band-pass at unity gain whose width RESO sets.",
+      "Both are saved with the sound and take p-locks and LFOs like the stock types. A sound with DJ or BP loads as EQ:5 without the module.",
+      "Known issue: it cannot be combined with Digi Health, which patches the same filter call."
+    ]
+  }
+]

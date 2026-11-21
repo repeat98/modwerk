@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/filters",
+  "moduleVersion": "0.1.0-experimental",
+  "sourceSha256": "a95b7442c233f2375b3c6ce2d06630825721dba17ee8e2394890739cdec6bcda",
+  "date": "2026-11-10",
+  "tester": "draadpiraat (run by Claude Code)",
+  "emulator": {
+    "name": "digiemu",
+    "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+    "unicornLibrarySha256": "ec37f2a15f263c085eec8a2016d60f8006d77a3bd53dd28998f1145635050c47",
+    "hle": false
+  },
+  "build": {
+    "release": "1.54",
+    "modules": [
+      "core 2.1",
+      "filters 0.1.0-experimental"
+    ],
+    "linker": "Modwerk engine linkMods (scripts/link-image.mjs), no other mods",
+    "imageSha256": "473bb8b34781795e34e54b27cd66124ef4b2f936115b405cb02952ee67a67116",
+    "note": "FL01"
+  },
+  "checks": [
+    {
+      "name": "TYPE range",
+      "result": "passed",
+      "detail": "FLTR, TYPE (G) past EQ:5 reaches DJ, then BP, and stops there; the title and the TYPE knob name each."
+    },
+    {
+      "name": "DJ middle marker",
+      "result": "seen",
+      "detail": "A tick over the FREQ box marks the middle on DJ."
+    },
+    {
+      "name": "audio-block load",
+      "result": "measured",
+      "detail": "Core alone 60.3%/62.0%; Filters on stock types 60.3%/62.1%; DJ on the tracks 59.9%/61.5%; BP 59.1%/60.7% (mean/worst block); calls into the new filter counted."
+    },
+    {
+      "name": "shared memory",
+      "result": "measured",
+      "detail": "5,668 bytes of the 128 KiB shared mod area."
+    }
+  ],
+  "notTested": [
+    "Hardware: FL01 not yet run on a unit.",
+    "Filter responses for this build, in the emulator or on a unit."
+  ]
+}

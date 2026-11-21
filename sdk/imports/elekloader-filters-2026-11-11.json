@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "filters-2026-11-11",
+  "about": "Modwerk source-only filters package for Digitakt I OS 1.54, compiled from sdk/digitakt/modules/filters.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "filters-0.1.0-experimental-os1.54.elemod",
+      "sha256": "83dcb40bfee580530afca728978bca9ff33082bd8db0b65de4cf8de7b614f4f9",
+      "id": "filters",
+      "version": "0.1.0-experimental",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "8e42bab3144c053991c1351a672a37114a37b9d1",
+        "path": "sdk/imports/packages/filters/filters-0.1.0-experimental-os1.54.elemod"
+      },
+      "title": "Filters",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [
+        "digihealth"
+      ],
+      "summary": "Two more filter TYPEs on the stock FLTR page: a one-knob DJ filter (low-pass one way, high-pass the other) and a band-pass.",
+      "description": "Two more filter TYPEs on the stock FLTR page: a one-knob DJ filter (low-pass one way, high-pass the other) and a band-pass.",
+      "category": "Filter",
+      "author": "draadpiraat",
+      "needs_core": "2.1",
+      "on_unit": "Emulator-checked; the author's hardware run of this build is pending."
+    }
+  ]
+}
