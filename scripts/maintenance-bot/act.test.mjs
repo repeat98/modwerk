@@ -19,6 +19,7 @@ beforeEach(() => {
   vi.stubEnv('BOT_FINGERPRINT', 'a'.repeat(64))
   vi.stubEnv('BOT_MODE', 'pass')
   bot.mockReset().mockImplementation(async path => {
+    if (path === '/eval-pilot') return { records: [] }
     if (path === '/todos') return { todos: [] }
     if (path === '/actions/due') return { actions: [] }
     return {}
@@ -39,6 +40,7 @@ it('prepares the same private draft on repeated passes and retires it when answe
   boardGet.mockResolvedValue({ followups: [{ id, to: 'ada', target: 'issues/1619', since: '2026-11-20' }] })
   let todos = []
   bot.mockImplementation(async (path, method, body) => {
+    if (path === '/eval-pilot') return { records: [] }
     if (path === '/todos' && method === 'POST') todos = body.todos
     if (path === '/todos') return { todos }
     if (path === '/actions/due') return { actions: [] }
