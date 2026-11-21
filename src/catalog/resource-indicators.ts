@@ -1,6 +1,6 @@
 import type { ModuleDocument } from './module-contract'
 import packageManifest from '../engine/assets/octatrack-module-packages.json'
-import { measuredDspLoad, measuredTrackedMemory } from './octatrack-resource-measurements'
+import { measuredDspLoad, measuredModulePool, measuredTrackedMemory } from './octatrack-resource-measurements'
 import { requireModuleResourceImpact } from './resource-impact'
 
 const packagesById = new Map(packageManifest.packages.map(entry => [entry.id, entry]))
@@ -116,6 +116,18 @@ export function moduleResourceIndicators(document: ModuleDocument) {
           + 'This count covers the measured pools ' + (tracked.slot ? 'with the effect on ' + tracked.slot : 'with the module installed and unused')
           + '. ' + tracked.scene + ' Base ' + tracked.base + '.',
         source: tracked.source, sourceInModwerk: true,
+      }
+    }
+    if (id === 'memory') {
+      const pool = measuredModulePool(document)
+      if (pool) {
+        return {
+          id, label: 'Memory', value: count(pool.bytes) + ' B', score: null, fill: 0, status: 'Measured · module pool',
+          valueText: count(pool.bytes) + ' bytes in the module pool for one installed module',
+          description: 'Two trials on an ' + pool.device + ' each matched the package’s full loader allocation. '
+            + pool.scene + ' Base ' + pool.base.slice(0, 16) + '. DSP memory and sample RAM have separate pools.',
+          source: pool.source, sourceInModwerk: true,
+        }
       }
     }
     const estimate = impact[id]
