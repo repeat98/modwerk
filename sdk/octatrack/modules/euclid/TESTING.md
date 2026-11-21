@@ -1,6 +1,28 @@
 # Euclid testing
 
-Version: 0.1.5-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
+Version: 0.1.6-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
+
+## 0.1.6-experimental: rests while no slot uses it (prepared 20 November 2026, not built, not tested)
+
+No code change. A `runtime.json` holding only `"rests"` marks its ColdFire detours `eu_frame_hook` (0x4000d562, every frame), `eu_start_hook` (0x4009c3d4) and `eu_resume_hook` (0x4009c4d4). On a base that judges
+effect modules (#1849, base 0.7.11, loader capability 2048) the base rests the module while no slot of the project,
+working or saved, names its effect id and no live slot runs it: those detours hold stock's bytes. Its DSP code is
+resident on demand as before.
+
+- **Why:** 2.5 points of the frame interrupt at rest in its `evidence/cpu-price.json` (`npm run device:price`, playing; MKII, development twin `d3d71297` of base 0.7.8, the Tresor Prep scene, 18 November 2026). The owner's goal (20 November 2026): an installed module nobody uses costs nothing.
+- **Note:** PLAY resets Euclid's phase through `eu_start_hook`: while it rests no slot names Euclid, so no phase is kept; it wakes before a pick lands.
+- **Not built yet:** the builder change that takes a rests-only `runtime.json` for an effect is in #1849; the package
+  row then needs `requiresCapabilities: 2048`, and the standalone recipe re-pins after #1862.
+- **Test procedure:** not run (no build; the unit was off USB, then held by another session, on 20 November 2026).
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Installed, no slot names it | the detours must hold stock's bytes and cost nothing | `device:price` at rest, same scene as before | not run: not built, unit unavailable |
+| Picked while playing | the wake writes its sites masked before stock writes the pick | frame guard over the pick window, a stock effect pick as control | not run |
+| A Part, pattern or bank change bringing it in | must not need a wake | any slot of the project keeps it awake (base host test) | pass (host, #1849); unit not run |
+| A paste or a project load putting it on a live slot | it runs unpatched until the next tick | the live slot wakes it within a tick (base host test) | pass (host); unit not run |
+| Both slots and two instances | the effect id is one for every slot | picks on T1 and T5 | not run |
+| Undo of the trial that brought this version | resting sites restored while resting | whole-set trial and Undo | not run |
 
 ## 0.1.5-experimental — 18 November 2026 (#1690)
 
