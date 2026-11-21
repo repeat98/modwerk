@@ -183,6 +183,11 @@ export const DIAGNOSTIC_USB_ERRORS = ['device', 'selftest', 'transport', 'cancel
  * loading it, or starting the trial. */
 export const DIAGNOSTIC_SYNC_STEPS = ['session', 'baseline', 'encode', 'stage', 'activate', 'trial'] as const
 export type DiagnosticSyncStep = typeof DIAGNOSTIC_SYNC_STEPS[number]
+export const STAGING_COMMANDS = ['enter', 'begin', 'chunk', 'verify', 'abort', 'rollback', 'leave'] as const
+export type StagingCommand = typeof STAGING_COMMANDS[number]
+export const isStagingCommand = (value: unknown): value is StagingCommand => STAGING_COMMANDS.some(command => command === value)
+/** Upload v1 schema bounds: a 2 MiB staged set and a 48-byte header, 4-byte offset and 4096-byte payload. */
+export const STAGING_SET_BYTES = 2 * 1024 * 1024, STAGING_FRAME_BYTES = 48 + 4 + 4096
 /** The type of build. An elekloader build names its machine, so a failure says which machine it was for; plain
  * `elekloader` is what records sent before that say, and what a machine missing from the list falls back to. */
 export const DIAGNOSTIC_ELEKLOADER_MACHINES = ['digitakt', 'digitakt-ii', 'digitone', 'analog-rytm-mkii'] as const
@@ -233,6 +238,8 @@ export interface OctatrackDiagnostic {
   /** A `transport` sync failure's change in the base's EP0 counters over the sync (DIAG version 3, ep0.c): frames
    * received, refusals, bus resets, data stages primed, completed and abandoned. */
   usb?: number[]
+  /** Offset into the staged package (CHUNK only). Remaining bytes refer to the entire EP0 OUT frame. */
+  upload?: { command: StagingCommand; chunkOffset?: number; remainingBytes?: number }
   live?: DiagnosticLive
   reason?: typeof DIAGNOSTIC_UNRESPONSIVE[number]
   log?: { loads: DeviceLoad[]; incidents: DeviceIncident[]; crash?: DeviceCrash; stall?: DeviceStall }

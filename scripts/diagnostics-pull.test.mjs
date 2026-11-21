@@ -7,6 +7,14 @@ const entry = (n, username = 'tester', data = { event: 'health', phase: 'ready' 
   ({ eventId: 'e' + n, username, createdAt: new Date(Date.UTC(2026, 9, 15, 0, 0, n)).toISOString(), data })
 
 describe('diagnostics pull', () => {
+  it('prints the staging command, byte offset and measured residual, including zero', () => {
+    const failure = { event: 'sync_failed', phase: 'sending', step: 'stage', error: 'transport' }
+    const events = [{command: 'chunk', chunkOffset: 0, remainingBytes: 0}, {command: 'verify'}]
+      .map((upload, i) => entry(i, 'tester', {...failure, upload}))
+    const text = summary({events, counts: []})
+    expect(text).toContain('command=chunk chunkOffset=0 remainingBytes=0')
+    expect(text).toMatch(/command=verify($|\n)/)
+  })
   it('pages from the last record of a full page and drops the overlap', async () => {
     const all = Array.from({ length: 700 }, (_, n) => entry(n))
     const asked = []

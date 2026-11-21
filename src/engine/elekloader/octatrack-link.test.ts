@@ -256,18 +256,46 @@ describe('sending a module', () => {
           stage: { value: async () => {
             trusted = false; unit.staged = true
             if (unit.ep0) unit.ep0 = [10, 6, 2, 50, 50, 0] // eight submissions refused at their SETUP, across the wrap
-            throw new UploadUnconfirmedError('chunk was not confirmed', session.status, cause)
+            throw new UploadUnconfirmedError('chunk was not confirmed', session.status, cause, {command: 'chunk', chunkOffset: 4043, sequence: 9})
           } },
         })
       }
       const link = new OctatrackLink(unit.usb, connect, 300)
-      link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') failures.push({ error: event.error, kind: event.kind, usb: event.usb }) })
+      link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') failures.push({ error: event.error, kind: event.kind, usb: event.usb, upload: event.upload }) })
       link.start(); await settle(); await settle()
       await link.update('PREVIEW VOL', one)
     }
-    expect(failures).toEqual([{ error: 'transport', kind: 'NetworkError' },
-      ...['TimeoutError', 'OtherError', 'NetworkError', 'VendorTransportError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0] }))])
+    const upload = {command: 'chunk', chunkOffset: 4043}
+    expect(failures).toEqual([{ error: 'transport', kind: 'NetworkError', upload },
+      ...['TimeoutError', 'OtherError', 'NetworkError', 'VendorTransportError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0], upload }))])
   })
+  it.each([[56, 0, 1, 56], [0, 0, 1, 0], [65535, 0, 1, undefined], [56, 1, 1, undefined], [56, 0, 0, undefined]] as const)(
+    'matches an EP0 sample (%s bytes, %s resets, %s primes) to the failed attempt', async (residual, resets, primes, expected) => {
+      const unit = fakeUnit(), [device] = await unit.usb.getDevices(), base = fakeSession(unit)
+      const reads: number[][] = [], read = device.controlTransferIn.bind(device)
+      vi.spyOn(device, 'controlTransferIn').mockImplementation((setup, length) => {
+        if (setup.request !== 4) return read(setup, length)
+        reads.push([setup.value, length])
+        const data = new DataView(new ArrayBuffer(length))
+        data.setUint32(0, 0x4d575544); data.setUint8(4, 3); data.setUint8(5, 1)
+        if (length === 70) {
+          data.setUint32(28, resets); data.setUint32(32, primes)
+          data.setUint16(68, residual)
+        }
+        return Promise.resolve({ status: 'ok', data })
+      })
+      const connect: typeof base = async (...args) => {
+        const session = await base(...args)
+        return Object.create(session, { stage: { value: () => {
+          throw new UploadUnconfirmedError('fixture', session.status, undefined, {command: 'chunk', chunkOffset: 0, sequence: 32})
+        } } })
+      }
+      const link = new OctatrackLink(unit.usb, connect, 300), uploads: unknown[] = []
+      link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') uploads.push(event.upload) })
+      await link.connect(); await link.update('PREVIEW VOL', one)
+      expect(reads).toEqual([[0, 68], [32, 70]])
+      expect(uploads).toEqual([{command: 'chunk', chunkOffset: 0, ...(expected !== undefined ? {remainingBytes: expected} : {})}])
+    })
   it.each(['cancel', 'timeout'] as const)('closes a pending diagnostic read before continuing from %s', async outcome => {
     const unit = fakeUnit(), [device] = await unit.usb.getDevices()
     const connect = vi.fn(fakeSession(unit)), link = new OctatrackLink(unit.usb, connect, 300)

@@ -132,11 +132,11 @@ static void frame_note(unsigned at)
     last_busy = busy, last_frame_count = count;
     if (dc && dc <= count) frame_recent[at] = db * 1000u / (dc * 187u); /* a frame is 47,891 counts, 187 of them >> 8 */
 }
-/* The frame share a pick is judged by: as the meter's, the last play's when the unit is stopped and that was more. */
+/* Until eight fresh playback readings replace the saved mean, the rolling window can include stopped frames. */
 uint32_t modwerk_status_frame_load(void)
 {
     uint32_t now = frame_mean();
-    return modwerk_machine_stopped() && frame_played > now ? frame_played : now;
+    return frame_played > now ? frame_played : now;
 }
 static void missing_check(void);
 static void missing_on_tick(void);
@@ -456,8 +456,18 @@ static uint32_t words_before[2];
 /* The pick's CPU (owner, 17 November 2026: the box showed the DSP an effect took, not the CPU): the frame share as it
  * stood, from windows that ended before the pick but for the last half second. */
 static uint32_t pick_load;
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+int mw_project_sidechain_notice(void);
+static unsigned sidechain_notice_left;
+#endif
 static void memory_tick(void)
 {
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+    if (open == CLOSED && transfer == T_NONE) {
+        if (sidechain_notice_left) --sidechain_notice_left;
+        else if (mw_project_sidechain_notice()) sidechain_notice_left = 180u;
+    } else sidechain_notice_left = 0;
+#endif
     static uint32_t completed, accepted;
     static uint8_t before[16];
     int over_usb = modwerk_boot_accepted != accepted, picked = 0;
@@ -1155,25 +1165,27 @@ void modwerk_status_machine_refused(unsigned track, const char *label)
 }
 /* machine_registry.c's CPU budget: the track's machine would take the Part past what the frame interrupt carries. The
  * same box, as CPU FULL: what the Part's machines book and what this one adds, per mille of the allowance. */
-void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
+static void cpu_refusal_box(unsigned slot, unsigned machine, const char *label, unsigned kind, uint32_t booked, uint32_t add)
 {
-    if ((open != CLOSED && open != MEMORY) || track > 7u) return;
+    if ((open != CLOSED && open != MEMORY) || slot >= (machine ? 8u : 16u)) return;
     for (unsigned i = 0; i < 8u; ++i) refused[i] = 0;
-    refused[0] = 4u, refused[1] = track, refused[4] = add, refused_booked = booked;
-    refused_machine = 1u, refused_reason = 4u;
+    refused[0] = kind, refused[1] = slot, refused[4] = add, refused_booked = booked;
+    refused_machine = machine, refused_reason = 4u;
+    refused_played = kind == 5u && cpu_played > recent_mean();
     for (unsigned i = 0; i < sizeof refused_name; ++i) refused_name[i] = 0;
     for (unsigned i = 0; label && i < 16u && label[i]; ++i) refused_name[i] = label[i] >= 'a' && label[i] <= 'z' ? (char)(label[i] - 32) : label[i];
     open = REFUSED, refused_left = 180u;
 }
-/* machine_registry.c: the unit is already busy (the meter's last four seconds), whatever this machine would add. The
- * same box: the measured CPU in the bar, no price. */
+void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
+{
+    cpu_refusal_box(track, 1u, label, 4u, booked, add);
+}
 uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
 /* The load a pick is judged by. A stopped unit is not busy, but the Part put together on it will play: stopped, the
  * larger of the meter now and what it read while the unit last played (cpu_played). On an MKII (13 November 2026)
  * picks made stopped at 62 to 74 % left a Part that played at 87 to 97 %, where a knob turn waits 0.1 to 0.2 s for
  * its redraw. The kept figure goes stale when the unit is made lighter while stopped (a stock pick, another
  * project): four seconds of playing replace it. */
-static unsigned load_was_played(void) { return modwerk_machine_stopped() && cpu_played > recent_mean(); }
 /* status.s leaves out the delay routine's ring transfers on a track whose delay is quiet: 7.4 meter points with all
  * eight (MKII, 16 November 2026: 41.2 % to 33.8 % stopped), all of it back from the frame a scene opens the sends. The
  * 85 % line was set from bases that always paid it, so a pick is judged as if every delay were awake: the skip buys
@@ -1187,12 +1199,12 @@ static uint32_t delays_asleep(void)
 }
 uint32_t modwerk_status_cpu_load(void)
 {
-    return (load_was_played() ? cpu_played : recent_mean()) + delays_asleep();
+    uint32_t now = recent_mean();
+    return (cpu_played > now ? cpu_played : now) + delays_asleep();
 }
-void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu)
+void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu, uint32_t add)
 {
-    modwerk_status_cpu_refused(track, label, cpu, 0);
-    if (open == REFUSED && refused_reason == 4u && refused[1] == track) refused[0] = 5u, refused_played = load_was_played();
+    cpu_refusal_box(track, 1u, label, 5u, cpu, add);
 }
 /* selection.c's guard (build_core.py's edit), before stock writes an FX pick: 1 when the pick asks for a module's
  * effect (`id`, on slot 0-15: FX1 T1-T8, then FX2) while the unit is busy, and the pick is then not made. A module
@@ -1204,21 +1216,20 @@ int modwerk_machine_effect_resting(unsigned id);  /* machine_registry.c: effect 
 void modwerk_machine_effect_wake(unsigned id);
 int modwerk_status_effect_busy(unsigned slot, unsigned id)
 {
-    uint32_t cpu = modwerk_status_cpu_load();
     if (slot > 15u || !fx_in(modwerk_fx_modules, id)) return 0;
+    uint32_t cpu = modwerk_status_cpu_load();
     /* A resting effect module brings its ColdFire hooks back into the frame: judged with them on top, then woken
      * before stock writes the pick, so its first frame on the slot has its detours. */
     int waking = modwerk_machine_effect_resting(id);
-    if (cpu + (waking ? mw_wake_mille : 0u) < mw_cpu_hot) {
+    uint32_t add = waking ? mw_wake_mille : 0u;
+    if (cpu + add < mw_cpu_hot) {
         if (waking) modwerk_machine_effect_wake(id);
         return 0;
     }
     char name[16];
     modwerk_fxmap_name(id, name);
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
-    modwerk_status_cpu_refused(slot & 7u, name, cpu, 0);
-    if (open == REFUSED && refused_reason == 4u && refused[0] == 4u)
-        refused[0] = 5u, refused[1] = slot, refused_machine = 0, refused_played = load_was_played();
+    cpu_refusal_box(slot, 0u, name, 5u, cpu, add);
     return 1;
 }
 static void refused_box(unsigned char *frame)
@@ -1257,10 +1268,13 @@ static void refused_box(unsigned char *frame)
      * MEM: the core's code words, and the effect's when its code is not on the core yet. Past 100 % is why. Only the
      * bar that refused it carries the effect: the core keeps other Parts' code loaded until it needs the room, so its
      * words plus the effect's can pass 100 % on a DSP FULL that memory never refused (owner's MKII, 20 October 2026). */
-    if (refused[0] == 5u) { /* a busy unit: the meter itself, and what makes room */
+    if (refused[0] == 5u) {
         *e = 0, label(23u, 26u, need);
-        label(23u, 34u, "CPU"), share_bar(frame, 45u, 34u, 40, 6, refused_booked, 0), percent(89u, 34u, refused_booked);
-        label(23u, 42u, refused_played ? "WAS BUSY PLAYING" : "UNIT IS BUSY"); /* the figure is the last play's */
+        label(23u, 34u, refused_played ? "PLAY" : "CPU");
+        percent(48u, 34u, refused_booked);
+        if (refused[4]) plus(77u, 34u, refused[4], 0);
+        label(23u, 42u, "LIMIT");
+        percent(54u, 42u, mw_cpu_hot);
         return;
     }
     if (refused_reason == 4u) { /* the CPU budget: one bar, and what makes room */
@@ -1428,6 +1442,16 @@ static void status_draw(unsigned char *frame)
     if (open == TEST) { test_page(frame); return; }
     if (open == MODULE_LOAD) { modules_page(frame); return; }
     if (open == SWITCHES) { switches_page(frame); return; }
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+    if (open == CLOSED && sidechain_notice_left) {
+        canvas(frame);
+        fill(frame, 13u, 18u, 114u, 45u, 0);
+        outline(frame, 13u, 18u, 114u, 45u);
+        centred(23u, "SIDECHAIN PAUSED");
+        centred(34u, "DSP MEMORY");
+        return;
+    }
+#endif
 #ifdef MODWERK_SETTINGS
     if (open == SETTINGS) { settings_page(frame); return; }
 #endif

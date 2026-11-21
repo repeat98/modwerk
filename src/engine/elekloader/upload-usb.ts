@@ -91,6 +91,7 @@ export class VendorTransportError extends Error {
   }
 }
 export interface VendorResult { status: VendorStatusName; sequence: number; response?: Uint8Array }
+export interface Ep0Diagnostics { counts: number[]; supportsRemaining: boolean; remainingBytes?: number }
 
 export interface VendorIdentity {
   canSubmit: boolean; base: string; model: string
@@ -190,7 +191,6 @@ export class UsbVendorTransport implements UploadTransport {
   private device: ControlDevice
   private index: number
   private options: { retries?: number; pollMs?: number }
-  private sequence?: number
   private busy = false
   constructor(device: ControlDevice, interfaceNumber: number, options: { retries?: number; pollMs?: number } = {}) {
     if (!Number.isInteger(interfaceNumber) || interfaceNumber < 0 || interfaceNumber > 255) throw new RangeError('Invalid interface number.')
@@ -362,10 +362,18 @@ export class UsbVendorTransport implements UploadTransport {
   /** DIAG version 3 (request 4, ep0.c): the base's EP0 counters, answered in its USB interrupt even while it refuses
    * submissions: frames received, refusals, bus resets, data stages primed, completed and abandoned. */
   async ep0(): Promise<number[]> {
-    const reply = await this.device.controlTransferIn(this.setup(4, 0), 68), view = reply.data
-    if (reply.status !== 'ok' || !view || view.byteLength !== 68 || view.getUint32(0) !== 0x4d575544 || view.getUint8(4) !== 3)
+    return (await this.ep0Diagnostics()).counts
+  }
+  /** The extended read is advertised by the legacy reply and matches only that SUBMIT sequence. */
+  async ep0Diagnostics(sequence?: number): Promise<Ep0Diagnostics> {
+    const length = sequence === undefined ? 68 : 70
+    const reply = await this.device.controlTransferIn(this.setup(4, sequence ?? 0), length), view = reply.data
+    if (reply.status !== 'ok' || !view || view.byteLength !== length || view.getUint32(0) !== 0x4d575544 || view.getUint8(4) !== 3)
       throw new VendorTransportError('The Octatrack did not answer DIAG version 3.')
-    return [3, 4, 5, 6, 7, 14].map(word => view.getUint32(8 + 4 * word))
+    const counts = [3, 4, 5, 6, 7, 14].map(word => view.getUint32(8 + 4 * word))
+    const supportsRemaining = !!(view.getUint8(5) & 1)
+    const remaining = length === 70 && supportsRemaining ? view.getUint16(68) : undefined
+    return { counts, supportsRemaining, remainingBytes: remaining !== undefined && remaining <= UPLOAD_MAX_FRAME ? remaining : undefined }
   }
   async result(signal?: AbortSignal): Promise<VendorResult> {
     signal?.throwIfAborted()
@@ -447,12 +455,12 @@ export class UsbVendorTransport implements UploadTransport {
       if (page.length < MISSING_PAGE) return all
     }
   }
-  async exchange(frame: Uint8Array, signal: AbortSignal): Promise<Uint8Array> {
+  async exchange(frame: Uint8Array, signal: AbortSignal, onSubmit?: (sequence: number) => void): Promise<Uint8Array> {
     if (this.busy) throw new VendorTransportError('A vendor exchange is already in progress.')
     if (frame.length < UPLOAD_HEADER || frame.length > UPLOAD_MAX_FRAME) throw new RangeError('Frame length is outside the protocol bounds.')
     this.busy = true
     try {
-      const sequence = await this.submit(frame.slice(), signal)
+      const sequence = await this.submit(frame.slice(), signal, onSubmit)
       for (let poll = 0; ; poll++) {
         const state = await this.result(signal)
         if (state.sequence !== sequence) throw new VendorTransportError('The device reports a different submission.')
@@ -462,14 +470,16 @@ export class UsbVendorTransport implements UploadTransport {
       }
     } finally { this.busy = false }
   }
-  private async submit(frame: Uint8Array, signal: AbortSignal) {
-    // Continue from the device's latest sequence; never reuse one, even across transports.
-    this.sequence ??= (await this.result(signal)).sequence
+  private async submit(frame: Uint8Array, signal: AbortSignal, onSubmit?: (sequence: number) => void) {
+    // Another client can have read status while this session was holding a trial.
+    // Reusing its sequence can make a refused SUBMIT look like its ready reply.
+    let sequence = (await this.result(signal)).sequence
     const retries = this.options.retries ?? 8
     for (let attempt = 0; ; attempt++) {
-      const sequence = this.sequence = (this.sequence + 1) & 0xffff
+      sequence = (sequence + 1) & 0xffff
       let sent: { status: string; bytesWritten: number } | undefined
       let transferError: unknown
+      onSubmit?.(sequence)
       try { sent = await this.device.controlTransferOut(this.setup(VENDOR_SUBMIT, sequence), frame) } catch (error) { transferError = error }
       signal.throwIfAborted()
       if (sent?.status === 'ok' && sent.bytesWritten === frame.length) return sequence

@@ -122,6 +122,30 @@ const exchange = (d: ControlDevice, signal = new AbortController().signal) =>
   new UsbVendorTransport(d, 6, { pollMs: 0 }).exchange(frame, signal)
 
 describe('vendor transport', () => {
+  it('resumes a retained trial from the current sequence after a status client used the interface', async () => {
+    let sequence = 15, responseTag = 0
+    const accepted: number[] = []
+    const unit: ControlDevice = {
+      async controlTransferIn() {
+        return { status: 'ok', data: new DataView(ready(sequence, responseTag).buffer) }
+      },
+      async controlTransferOut(setup, data) {
+        if (setup.value === sequence) return { status: 'stall', bytesWritten: 0 }
+        sequence = setup.value
+        responseTag = data[7]
+        accepted.push(sequence)
+        return { status: 'ok', bytesWritten: data.length }
+      },
+    }
+    const trial = new UsbVendorTransport(unit, 6), status = new UsbVendorTransport(unit, 6)
+    const signal = new AbortController().signal
+    const enter = frame.slice()
+    enter[7] = 1
+    await trial.exchange(enter, signal)
+    await status.exchange(frame, signal) // HELLO while the trial owner is idle
+    expect((await trial.exchange(enter, signal))[0]).toBe(1)
+    expect(accepted).toEqual([16, 17, 18])
+  })
   it('continues from the device sequence, wraps through zero and polls until ready', async () => {
     const d = device(['ok'], sent => [Uint8Array.from(header(1, sent[0])), ready(sent[0])])
     expect(await exchange(d)).toEqual(new Uint8Array(144).fill(7))
@@ -149,9 +173,11 @@ describe('vendor transport', () => {
     await expect(exchange(device(['ok'], sent => [Uint8Array.from(header(1, sent[0] + 3))]))).rejects.toThrow(/different submission/)
     await expect(exchange(device(['ok'], sent => [Uint8Array.from(header(3, sent[0]))]))).rejects.toMatchObject({ notExecuted: true })
     const d = device(new Array(20).fill('stall'), sent => [Uint8Array.from(header(3, sent.at(-1)!))])
-    await expect(new UsbVendorTransport(d, 6, { retries: 2 }).exchange(frame, new AbortController().signal))
+    const attempts: number[] = []
+    await expect(new UsbVendorTransport(d, 6, { retries: 2 }).exchange(frame, new AbortController().signal, seq => attempts.push(seq)))
       .rejects.toMatchObject({ notExecuted: true })
-    expect(d.sent).toHaveLength(3)
+    expect(attempts).toEqual([65535, 0, 1])
+    expect(attempts).toEqual(d.sent)
   })
   it('stops polling when aborted and refuses overlapping or out-of-bounds frames', async () => {
     const abort = new AbortController()

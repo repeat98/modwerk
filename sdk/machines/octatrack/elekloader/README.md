@@ -75,6 +75,16 @@ hooks, table owners, the resident engines on demand, the controllers, module set
 npm run octatrack:base -- --stock /private/OCTATRACK_OS1.40C.bin --beta --write
 ```
 
+`octatrack:base` always compares what it builds with the committed beta base, so a smaller development base (the
+minimal one CPU baselines compare against: site hooks and table owners) is built with `build_core.py` itself, into a
+folder outside the repository. `test_machine_events.py` keeps that flag set linking:
+
+```sh
+python3 -B sdk/machines/octatrack/elekloader/build_core.py --stock /private/OCTATRACK_OS1.40C.bin \
+  --upstream ~/.cache/modwerk-upstream/elekloader --output /private/minimal-base --dsp-loader --site-events \
+  --table-owners sdk/machines/octatrack/module-adapters/table-owners.json --dev
+```
+
 Without the reviewed GCC on the host (Linux, 24 October 2026), build the toolchain image once with
 `docker build -f sdk/build/Dockerfile -t modwerk-toolchain:local .` (it compiles binutils and GCC, about half an
 hour) and run the same script in it. The image has `node` but no `npm`, and its home is not yours, so call the
@@ -354,7 +364,7 @@ and starts no voice until the next UI tick wakes it. A RENDER_FLEX machine never
 map of every bank's Parts) and no live slot runs it;  judges a pick of it with the same
 margin and wakes it before stock writes the pick.
 
-`status.c` also keeps the frame interrupt's share of each frame from the frame guard's sums, over the last four seconds (the last play's while stopped), and the box after a pick shows it in its CPU row against `mw_frame_line`, the share where the guard starts to drop renders.
+`status.c` also keeps the frame interrupt's share of each frame from the frame guard's sums, over the last four seconds (the larger of that and the last full playing window across STOP and PLAY), and the box after a pick shows it in its CPU row against `mw_frame_line`, the share where the guard starts to drop renders.
 
 `status.c` measures, all the time, the ColdFire's load (main's idle spin, timed on DTIM3, `status.s`), each
 DSP core's mean and peak load (core 0's own idle count, core 1's counted wait for core 0, `dsp_receiver.asm`),

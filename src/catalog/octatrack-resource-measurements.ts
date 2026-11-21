@@ -42,6 +42,7 @@ type ActiveRecord = {
   module: string
   version: string
   releasePackageSha256: string
+  reboundReleasePackageSha256?: string
   packageSha256: string
   scene: string
   restoration: { liveInventoryRestored: boolean }
@@ -88,8 +89,13 @@ const activeEvidencePath = 'docs/verification/2026-11-21-octatrack-active-load.j
 function currentActiveLoad(document: ModuleDocument) {
   const record = activeLoadReadings.get(document.id)
   const entry = resourcePackage(document.id)
-  if (record?.version === document.version && entry?.version === document.version && record.releasePackageSha256 === entry.sha256
-    && /^[a-f0-9]{64}$/.test(record.packageSha256) && record.restoration.liveInventoryRestored) return record
+  if (record?.version !== document.version || entry?.version !== document.version
+    || !/^[a-f0-9]{64}$/.test(record.packageSha256) || !record.restoration.liveInventoryRestored) return
+  if (record.releasePackageSha256 === entry.sha256) return record
+  if (record.reboundReleasePackageSha256 === entry.sha256) {
+    return { ...record, scene: record.scene + ' Measured on development base ' + activeLoadEvidence.developmentBase.slice(0, 8)
+      + '. Only the controller addresses changed in this release package.' }
+  }
 }
 
 function pairedLoad(workload: ActiveWorkload, metric: 'frame' | 'dsp1to4' | 'dsp5to8') {

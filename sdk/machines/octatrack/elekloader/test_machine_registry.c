@@ -166,9 +166,10 @@ void modwerk_status_machine_refused(unsigned track, const char *label) { ++box_c
 static unsigned cpu_boxes, cpu_box_track = 99; static uint32_t cpu_box_booked, cpu_box_add;
 void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
 { (void)label; ++cpu_boxes, cpu_box_track = track, cpu_box_booked = booked, cpu_box_add = add; }
-static uint32_t cpu_now; static unsigned hot_boxes, hot_box_track = 99; static uint32_t hot_box_cpu;
+static uint32_t cpu_now; static unsigned hot_boxes, hot_box_track = 99; static uint32_t hot_box_cpu, hot_box_add;
 uint32_t modwerk_status_cpu_load(void) { return cpu_now; }
-void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu) { (void)label; ++hot_boxes, hot_box_track = track, hot_box_cpu = cpu; }
+void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu, uint32_t add)
+{ (void)label; ++hot_boxes, hot_box_track = track, hot_box_cpu = cpu, hot_box_add = add; }
 void modwerk_dsp_source_release(unsigned track) { voices &= (uint8_t)~(1u << track); voice_of[track] = 0; ++releases; }
 void modwerk_dsp_source_engine_off(uint32_t module)
 {
@@ -463,7 +464,7 @@ static void check_cpu_budget(void)
       CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 1 && hot_box_track == 7 && hot_box_cpu == mw_cpu_hot);
       CHECK(mw_cpu_refusals == refusals + 1 && cpu_boxes == was && !mw_cpu_booked);
       cpu_now = mw_cpu_hot - 120u; /* its price (12 % of a frame, unpriced) would take the meter to the line */
-      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 2 && hot_box_cpu == mw_cpu_hot - 120u);
+      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 2 && hot_box_cpu == mw_cpu_hot - 120u && hot_box_add == 120u);
       CHECK(mw_assign(part0(), 7, 6) == (unsigned)-1 && hot_boxes == 3);         /* nor the dear one (30) */
       cpu_now = mw_cpu_hot - 121u;
       CHECK(mw_assign(part0(), 7, 6) == (unsigned)-1 && hot_boxes == 4);
@@ -624,6 +625,7 @@ static void check_resting_machines(void)
     { unsigned boxes = hot_boxes;
       cpu_now = mw_cpu_hot - 10u * CPU_DEFAULT - mw_wake_mille;
       CHECK(mw_assign(part0(), 3, 6) == (unsigned)-1 && hot_boxes == boxes + 1 && resting(1) && !pick_who);
+      CHECK(hot_box_add == 10u * CPU_DEFAULT + mw_wake_mille);
       cpu_now = mw_cpu_hot - 10u * CPU_DEFAULT - mw_wake_mille - 1u;
       CHECK(mw_assign(part0(), 3, 6) == 1 && hot_boxes == boxes + 1 && !resting(1));
       CHECK(mw_assign(part0(), 3, 1) == 1); cpu_now = 0; }               /* back to FLEX */

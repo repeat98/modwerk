@@ -326,6 +326,11 @@
    "kind": "table",
    "room": 8,
    "record": 24
+  },
+  {
+   "index": 61,
+   "event": "ev_audio_frame_prepare",
+   "kind": "call"
   }
  ]
 }

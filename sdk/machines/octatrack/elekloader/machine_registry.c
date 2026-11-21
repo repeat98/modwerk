@@ -63,8 +63,8 @@ void modwerk_dsp_source_release(unsigned track);
 void modwerk_status_machine_refused(unsigned track, const char *label); /* status.c: the DSP FULL box for a machine */
 void modwerk_dsp_source_engine_off(uint32_t module);
 void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add); /* status.c: the CPU FULL box, per mille of the allowance */
-uint32_t modwerk_status_cpu_load(void); /* status.c: the CPU meter's mean over its last four seconds, per mille; stopped, what it last read playing if that was more */
-void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu); /* status.c: the CPU FULL box for a unit already busy */
+uint32_t modwerk_status_cpu_load(void); /* status.c: CPU load used for admission, per mille */
+void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu, uint32_t add);
 #ifndef MW_HOST
 __attribute__((weak)) int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, uint32_t engine, uint8_t kind)
 { (void)track; (void)module; (void)voice; (void)engine; (void)kind; return RUNTIME_CYCLES; }
@@ -74,7 +74,7 @@ __attribute__((weak)) void modwerk_dsp_source_engine_off(uint32_t module) { (voi
 __attribute__((weak)) void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
 { (void)track; (void)label; (void)booked; (void)add; }
 __attribute__((weak)) uint32_t modwerk_status_cpu_load(void) { return 0; }
-__attribute__((weak)) void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu) { (void)track; (void)label; (void)cpu; }
+__attribute__((weak)) void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu, uint32_t add) { (void)track; (void)label; (void)cpu; (void)add; }
 #endif
 /* Each track of the current Part: the priced machine its voice is charged to, or 0. A word each, so the render
  * reads it whole without a mask. */
@@ -563,7 +563,11 @@ static unsigned relive(const Part *part, uint32_t offset, unsigned track, unsign
 }
 static void mc_assigned(const Machine *who); /* the machine map, below: a track takes an installed machine */
 /* A machine's admission precedes every mutation; -1 refuses. */
+#ifdef MODWERK_RESIDENT_ON_DEMAND
 extern volatile uint32_t modwerk_machine_assigned; /* controller_board.c: it reads the bank's machines again after an assignment */
+#else
+volatile uint32_t modwerk_machine_assigned; /* no controller_board.c in this base (it comes with --resident-stock-hooks) */
+#endif
 unsigned mw_assign(Part *part, unsigned track, unsigned row)
 {
     modwerk_machine_assigned = modwerk_machine_assigned + 1u;
@@ -585,9 +589,10 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
             uint32_t cpu = modwerk_status_cpu_load();
             /* A resting machine's module also brings its hooks and detours back into the frame: the meter does not
              * hold them yet, so its pick is judged with them (mw_wake_mille) on top. */
-            if (cpu + 10u * cpu_price(next) + (waking ? mw_wake_mille : 0u) >= mw_cpu_hot) {
+            uint32_t add = 10u * cpu_price(next) + (waking ? mw_wake_mille : 0u);
+            if (cpu + add >= mw_cpu_hot) {
                 mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
-                modwerk_status_cpu_hot(track, next->label, cpu);
+                modwerk_status_cpu_hot(track, next->label, cpu, add);
                 return (unsigned)-1;
             }
         }
