@@ -1,0 +1,83 @@
+{
+ "date": "2026-11-21",
+ "model": "Octatrack MKII",
+ "os": "1.40C",
+ "developmentBase": "62ac89ff7ff72e9d8490188f424b7a4781a57e3cd1a1911b0e86696fcfd2ce36",
+ "card": "physically removed at power-up; mount flag zero",
+ "authorCommitPackage": {
+  "sha256": "043e448591536eef533de6fff57865531a8a59fcabaf0e49cd065b7ab86ebfb4",
+  "captureClosed": [
+   {
+    "track": 1,
+    "playbackSkips": 0,
+    "playbackMaxFrameMicroseconds": 345.1,
+    "maxGuardedCallbackMicroseconds": 123.4,
+    "observedGrains": 6,
+    "midiReceiveErrors": 0,
+    "midiTransmitDrops": 0,
+    "pickerAndPanel": [
+     true,
+     true,
+     true
+    ],
+    "framesOverDeadline": 0
+   },
+   {
+    "track": 5,
+    "playbackSkips": 0,
+    "playbackMaxFrameMicroseconds": 329.1,
+    "maxGuardedCallbackMicroseconds": 114.6,
+    "observedGrains": 6,
+    "midiReceiveErrors": 0,
+    "midiTransmitDrops": 0,
+    "pickerAndPanel": [
+     true,
+     true,
+     true
+    ],
+    "framesOverDeadline": 0
+   }
+  ],
+  "jumpThenFlexPick": {
+   "listAfterJump": "recordings listed",
+   "flexPickedAfterClose": false,
+   "flexPickedAfterSelectingAnotherTrack": true,
+   "reproduced": 2
+  }
+ },
+ "releasePackage": {
+  "sha256": "394fa3971e650d31aa293aabcc4c54b2248dba4ce98e6660f7007ac2e222ce0b",
+  "probe": {
+   "directOpened": true,
+   "flexAfterDirectPool": false,
+   "grainAgain1": true,
+   "poolOnT5": true,
+   "poolOpenAfterJump": true,
+   "poolClosed": true,
+   "flexAfterJump": true,
+   "grainAgain2": true,
+   "played": true,
+   "flexAtEnd": true,
+   "panel": [
+    true,
+    true
+   ]
+  },
+  "playStemRmsT1": [
+   0.3605591078,
+   0.5599153898
+  ],
+  "doubleTapLeftAfterPool": {
+   "opened": true,
+   "flexViaDoubleTapLeft": true,
+   "flexAtEnd": true
+  }
+ },
+ "knownLimit": "flexAfterDirectPool false: after a pool opened on the Grain track from the AMP page and closed, FUNC+SRC could not pick FLEX; a double tap and LEFT could.",
+ "notTested": [
+  "the audition (FUNC+YES over USB played nothing on any output)",
+  "project save and reload",
+  "a full module set",
+  "MKI"
+ ]
+}

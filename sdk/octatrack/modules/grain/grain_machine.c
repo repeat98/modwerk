@@ -570,7 +570,7 @@ static int pool_ours(void)
     return pool_direct && bank_ok() && U32(BANK) == pool_bank && (U8(0x100b14cfu) & 3u) == pool_part &&
         U8(0x100b14ccu) == pool_track && !U8(0x80000015u) && ours(part_at(pool_part), pool_track);
 }
-static uint8_t win_seen, win_track;
+static uint8_t win_seen, win_track, adopted;  /* adopted: pool_direct came from a jump in the open window */
 static unsigned grain_chooser(unsigned type, const volatile uint8_t *slot)
 {
     /* Jumping with the track key from a non-Grain track to a Grain track while the pool window is open: the pool was not
@@ -581,7 +581,7 @@ static unsigned grain_chooser(unsigned type, const volatile uint8_t *slot)
         unsigned part = U8(0x100b14cfu) & 3u, t = U8(0x100b14ccu);
         if (t != win_track && t < 8u && ours(part_at(part), t) && slot == part_at(part) + 0x22u + t) {
             pool_bank = U32(BANK); pool_part = (uint8_t)part; pool_track = (uint8_t)t; pool_direct = 1;
-            win_track = (uint8_t)t;
+            win_track = (uint8_t)t; adopted = 1;
         }
     }
     return pool_ours() && slot == part_at(pool_part) + 0x22u + pool_track ? type : 5;
@@ -623,7 +623,7 @@ static void grain_pool_open(void)
     if (!bank_ok() || U8(0x80000015u) || U32(0x460e5e30u) || U32(POOL_WINDOW)) return;
     unsigned part = U8(0x100b14cfu) & 3u, t = U8(0x100b14ccu);
     if (!ours(part_at(part), t)) return;
-    pool_bank = U32(BANK); pool_part = (uint8_t)part; pool_track = (uint8_t)t; pool_direct = 1;
+    pool_bank = U32(BANK); pool_part = (uint8_t)part; pool_track = (uint8_t)t; pool_direct = 1; adopted = 0;
     grain_stock_pool();
     if (!U32(POOL_WINDOW)) pool_direct = 0;
     ((void (*)(int))(uintptr_t)0x4004d948u)(-1);
@@ -661,8 +661,12 @@ static void grain_migrate(void)
 static void grain_ui_tick(void)
 {
     grain_migrate();
-    if (!U32(POOL_WINDOW)) win_seen = 0;    /* window closed: the next one may open from another track */
-    else {
+    if (!U32(POOL_WINDOW)) {                /* window closed: the next one may open from another track */
+        win_seen = 0;
+        /* A pool adopted on a jump belongs to that window only. Kept after it closed, the machine list saw the track as
+         * Flex, so FLEX and STATIC could not be picked until another track was selected (MKII, 21 Nov 2026). */
+        if (adopted) adopted = 0, pool_direct = 0;
+    } else {
         unsigned cur = U8(0x100b14ccu);
         if (!win_seen) { win_seen = 1; win_track = (uint8_t)cur; }         /* the track it opened from */
         else if (cur < 8u && bank_ok() && !ours(part_at(U8(0x100b14cfu) & 3u), cur))

@@ -127,7 +127,8 @@
       "POS locked on a trig takes whole numbers; the fine eighths are for turning the knob. A scene or an LFO moves POS smoothly between values.",
       "SRC page: a waveform view with the POS line and the grains replaces the six knob dials. Hold SCENE A or B for stock's knobs.",
       "A third press of PLAYBACK, from SRC SETUP, opens the full-screen page instead of going back to SRC; another press closes it. FUNC and PLAYBACK still open SRC SETUP.",
-      "A project opened without the module plays Grain tracks as FLEX at stock's defaults."
+      "A project opened without the module plays Grain tracks as FLEX at stock's defaults.",
+      "After the sample pool was opened on a Grain track from a page other than SRC and closed, FUNC+SRC cannot pick FLEX or STATIC until the SRC page is shown or another track is selected. A double tap on the track key and LEFT changes the machine."
     ],
     "effectId": null
   },
@@ -135,11 +136,11 @@
     "recorded": "2026-11-21",
     "storage": {
       "label": "Module image and memory",
-      "display": "29,988 bytes of static runtime memory",
-      "value": 29988,
+      "display": "30,816 bytes of static runtime memory",
+      "value": 30816,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Package db843bc2 loads 27,132 bytes of code and data and declares 2,856 bytes of BSS. The deepest Grain-only audio path uses 740 stack bytes including return addresses and saved frame pointers. Stock calls, interrupt nesting and loader overhead are additional.",
+      "conditions": "Package 394fa397 loads 27,956 bytes of code and data and declares 2,860 bytes of BSS. The deepest Grain-only audio path uses 764 stack bytes including return addresses and saved frame pointers. Stock calls, interrupt nesting and loader overhead are additional.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -168,7 +169,7 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "The 28,404-byte package loads 27,132 bytes of code and data and reserves 2,856 bytes of zero-initialized state. It reads the existing Flex sample pages. Stack and loader overhead are additional.",
+        "rationale": "The 29,296-byte package loads 27,956 bytes of code and data and reserves 2,860 bytes of zero-initialized state. It reads the existing Flex sample pages. Stack and loader overhead are additional.",
         "source": "TESTING.md"
       }
     },
@@ -184,7 +185,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Side-first package db843bc2 on the MKII, one minute per arm with 24-bit stereo, 20-channel USB capture and musical MIDI. Grain skipped 0 renders on T1 and 1 on T5 during playback; stock Flex skipped 0 and 0. On a same-boot trace run T5 skipped 1 render against the previous package's 4, and frames over the deadline fell from 18 to 8. After STOP the panel responded on both tracks. Release qualification remains open.",
+    "summary": "Release package 394fa397 on the MKII, card-free in RAM: with USB audio capture closed, six-voice Grain played T1 and T5 with no skipped renders and no frame over the deadline. A 240 BPM, 1,096 messages/s MIDI flood left nothing sounding after STOP. It was kept over USB beside other modules, restored after a power cycle and removed again (side-first build db843bc2). The optional twenty-channel USB layout still overruns. Listening, project reload and a full module set remain open.",
     "hardwareStatus": "reported",
     "evidenceRevision": "db1e077309f4c538a1b1b672960c345c22b07ead",
     "gates": [

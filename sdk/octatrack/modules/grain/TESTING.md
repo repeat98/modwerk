@@ -2,6 +2,24 @@
 
 Grain 0.1.0-experimental · by A Force Truly Evil.
 
+## Release build: pool fixes, 21 November 2026
+
+The release package is `394fa3971e650d31aa293aabcc4c54b2248dba4ce98e6660f7007ac2e222ce0b` (29,296 bytes; 27,956 bytes of code and data and 2,860 of BSS). It is the side-first build below plus two pool changes. Both the SDK and catalogue builders reproduce it.
+
+- **The author's pool fixes (`3733d94f`).** With the sample pool open, a Grain track plays as a plain Flex with its factory SRC and SETUP values, so FUNC+YES auditions the sample rather than Grain's cloud. Pressing a Grain track's key while the pool is open on another track now lists that track's samples instead of an empty list.
+- **The jump fix (maintainers, with the owner's OK).** On the MKII, after such a jump and closing the pool, the machine list kept seeing the track as Flex: FLEX could not be picked until another track was selected. It reproduced twice. A pool adopted on a jump now ends when the pool window closes. A pool opened on the Grain track itself still lasts until its SRC or SRC SETUP page is shown, so a sample loaded through the file browser keeps the track Grain.
+
+Only `grain_render` and `grain_start` changed on the audio path: each now checks whether the pool window is open. `gran_render` and `stereo_page` differ only in one table address. The deepest Grain audio stack grew to 764 bytes (`grain_render` 180), including return addresses and saved frame pointers.
+
+**On the MKII,** RAM only on the trace twin, card-free:
+- `043e4485`, the author's commit without the jump fix, played the 100 BPM phrase with USB audio capture closed for one minute per track. T1 peaked at 345.1 µs and T5 at 329.1 µs. Neither track skipped a render or ran a frame over 362.8 µs, and six grains played.
+- `394fa397`: the pool opened on T5 and a jump to T1 listed the recordings. After closing it, FLEX was picked on T1 at once. Grain played on T1 (stem RMS 0.36 and 0.56), the panel answered track selection, and the trial rolled back.
+- After a pool opened on the Grain track and closed, a double tap and LEFT changed the track to FLEX.
+
+**Known limit, also in the earlier builds:** after a pool opened on the Grain track from a page other than SRC and closed, FUNC+SRC cannot pick FLEX or STATIC until the SRC page is shown or another track is selected. A double tap and LEFT works.
+
+**Not tested on this build:** the audition itself (FUNC+YES over USB played nothing on any output, probably because the remote keys were not held), project save and reload, a full module set and the MKI. [Pool results](evidence/timing/pool-fixes.json)
+
 ## Side-first stereo mixer, 21 November 2026
 
 The SDK and catalogue produce package `db843bc231090ede8e663fe603226cca1c429d614b3755e49200af0e36a7dfc8`. The stereo loop computes side first and then adds the right channel to recover mid exactly, including odd-valued samples, which removes one instruction per stereo voice sample. Constant-gain spans keep the loop end in the register otherwise used for the envelope phase. The page-edge path (`stereo_paged`) and the generic mixer (`mix_other`) are separate functions, keeping those paths outside the packed stereo loop. Six voices, Q15 arithmetic and the 35-point reservation are unchanged. Inlining the voice mixer instead barely changed the workload and was discarded.
