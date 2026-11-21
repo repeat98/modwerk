@@ -16,12 +16,13 @@ const MINUTE = 60000
 
 let directory, places, env
 const place = name => { const folder = join(places, name); mkdirSync(folder, { recursive: true }); return folder }
-/** The CLI as a separate process, the way two sessions meet: its output collected, its exit awaited. */
+/** Separate processes share the queue. Wait for both output streams before checking a command's result. */
 function cli(args, { cwd = place('a'), extra = {} } = {}) {
   const child = spawn(process.execPath, [script, ...args], { cwd, env: { ...env, ...extra } })
   const run = { child, out: '', err: '' }
   child.stdout.on('data', chunk => { run.out += chunk }); child.stderr.on('data', chunk => { run.err += chunk })
-  run.done = new Promise(done => child.on('exit', code => done(code)))
+  run.exited = new Promise(done => child.once('exit', done))
+  run.done = new Promise(done => child.once('close', done))
   return run
 }
 const quiet = { log: () => {}, poll: 20 }
@@ -108,10 +109,11 @@ describe('the unit queue', () => {
     const next = cli(['run', '--note', 'next', '--', process.execPath, '-e', 'console.log("ran")'], { cwd: place('b') })
     await until(() => next.err.includes('number 1 in line'))
     killed.child.kill('SIGKILL') // the queue's process first: alone, the command it started still holds the turn
-    await killed.done
+    await killed.exited // the command still has the queue process's pipes open
     await new Promise(done => setTimeout(done, 100))
     expect(next.err).not.toMatch(/Taking over/)
     process.kill(holder.child.pid, 'SIGKILL')
+    await killed.done
     expect(await next.done).toBe(0)
     expect(next.out).toContain('ran')
     expect(next.err).toMatch(/turn on the unit ended: its process ended without giving the turn back\. Taking over\. Check the unit before you change it/)

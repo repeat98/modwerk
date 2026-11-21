@@ -37,7 +37,7 @@ export function ModuleDetail({ module, selected, onToggle, addBlock, onSwap, bro
     preview={<ModuleAudioDetailPreview id={module.id} name={module.name}/>} resources={<ModuleResourceIndicators id={module.id} usbLayout={module.id === USB_AUDIO_MODULE && !USB_AUDIO_PACKAGED && onConfigureUsbAudio ? draft.layout : undefined} />}
     notice={(caution || moduleDocument.build) && <>{caution && <p className="module-caution"><Icon name="warn" size={18} /><span><strong>{caution.title}.</strong> {caution.detail}</span></p>}{moduleDocument.build && <p className="service-note" role="status">{moduleDocument.build.reason}</p>}</>}
     overviewIntro={module.id === USB_AUDIO_MODULE && (USB_AUDIO_PACKAGED
-      ? <section className="detail-section"><h2>USB Audio settings</h2><p>After syncing, open PROJ → MODWERK → SETTINGS → USB AUDIO on the Octatrack. Choose your layout and stem tap there. For Outbox 8, map its outputs to USB pairs 1–4 in Elektron’s app, then select each pair’s source on the Octatrack.</p></section>
+      ? <section className="detail-section"><h2>USB Audio settings</h2><p>New installs send the stereo Main mix to your computer on USB channels 1–2. After syncing, open PROJ → MODWERK → SETTINGS → USB AUDIO on the Octatrack. Choose your layout and stem tap there. For Outbox 8, map its outputs to USB pairs 1–4 in Elektron’s app, then select each pair’s source on the Octatrack.</p></section>
       : onConfigureUsbAudio && <UsbAudioConfigurator key={previewKey} draft={draft} onDraftChange={value => setUsbDraft({ key: previewKey, value })} configuration={usbAudio} selected={selected} configurationName={configurationName} onConfigure={onConfigureUsbAudio} />)}
     guide={<>
       <details className="module-disclosure">

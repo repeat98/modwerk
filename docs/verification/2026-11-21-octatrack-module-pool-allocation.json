@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "instrument": "Octatrack MKII",
+  "developmentBase": "8850f5399c453b9c166e4686c9c8f718409a547258ed803c9b83a97dd5239f6c",
+  "loaderLayout": {
+    "moduleBytes": 736,
+    "siteBytes": 74,
+    "claimBytes": 12,
+    "entryBytes": 8,
+    "alignment": 16
+  },
+  "method": "Two rolled-back RAM trials per package on the owner\u2019s MKII and the exact named development twin. During each trial the only live module\u2019s measured pool occupation matched the full expected loader extent. Each extent is the 16-byte-aligned module and patched-site records plus the aligned image and BSS. These packages have no DSP image tail. The layout fields came from the ColdFire compiler using the development twin\u2019s headers.",
+  "scope": "ColdFire module-pool bytes for one installed module. The two DSP program-arena readings are whole-arena readings. DSP memory, sample RAM and the platform's shared allocations have separate regions.",
+  "measurements": [
+    {
+      "module": "cc-map",
+      "version": "0.1.2-experimental",
+      "package": "release-source",
+      "packageSha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed",
+      "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1\u20137 and an empty starting inventory. Release sources rebuilt for this twin\u2019s base binding",
+      "loaderExtentBytes": 1568,
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T07:50:07.303Z",
+          "before": {
+            "modulePoolBytes": 3312,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 1568,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T07:50:36.402Z",
+          "before": {
+            "modulePoolBytes": 1568,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 1568,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ],
+      "packageLayout": {
+        "imageBytes": 740,
+        "bssBytes": 0,
+        "patchedSites": 1,
+        "dspWords": 0
+      }
+    },
+    {
+      "module": "playmodes",
+      "version": "0.2.0-experimental",
+      "package": "release-source",
+      "packageSha256": "feae7bf8d603cce28d2299f9f5ec946354d761f2cf5647a6006a1a59bcbcd289",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed",
+      "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1\u20137. Private runtime package built from the listed Play Modes 0.2.0 source",
+      "loaderExtentBytes": 17168,
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T07:53:40.719Z",
+          "before": {
+            "modulePoolBytes": 4544,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 17168,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T07:54:11.521Z",
+          "before": {
+            "modulePoolBytes": 17168,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 17168,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ],
+      "packageLayout": {
+        "imageBytes": 13752,
+        "bssBytes": 0,
+        "patchedSites": 36,
+        "dspWords": 0
+      }
+    },
+    {
+      "module": "recorder-loop-fix",
+      "version": "0.1.0-experimental",
+      "package": "release-source",
+      "packageSha256": "43d26b2761a010e5e6a3ad9a2bcb6bb8beba92b245099acb0b4ed70065d208a4",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed",
+      "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1\u20137 and an empty starting inventory. Release sources rebuilt for this twin\u2019s base binding",
+      "loaderExtentBytes": 2208,
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T07:51:05.800Z",
+          "before": {
+            "modulePoolBytes": 1568,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 2208,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T07:51:35.373Z",
+          "before": {
+            "modulePoolBytes": 2208,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 2208,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ],
+      "packageLayout": {
+        "imageBytes": 868,
+        "bssBytes": 0,
+        "patchedSites": 8,
+        "dspWords": 0
+      }
+    },
+    {
+      "module": "usb-audio-out-tracks-main-cue",
+      "version": "0.3.0-experimental",
+      "package": "published",
+      "packageSha256": "0ac4d6a58a437706e85ab8b577da26dfe88c5c866c5d7a008665fbe2fefcf11f",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed",
+      "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on tracks 1\u20137. USB Audio 0.3.0 release package rebuilt byte-identically. Default Main layout without a recording client",
+      "loaderExtentBytes": 105408,
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T07:55:18.009Z",
+          "before": {
+            "modulePoolBytes": 17168,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 105408,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "rolledBack": true,
+          "explicitRecovery": true
+        },
+        {
+          "measuredAt": "2026-11-21T07:57:03.991Z",
+          "before": {
+            "modulePoolBytes": 105408,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 105408,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "rolledBack": true,
+          "explicitRecovery": true
+        }
+      ],
+      "packageLayout": {
+        "imageBytes": 10288,
+        "bssBytes": 94152,
+        "patchedSites": 3,
+        "dspWords": 0
+      }
+    }
+  ]
+}

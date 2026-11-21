@@ -88,6 +88,15 @@
         "rationale": "One active copy occupies an exact 10,832-byte extent in the shared runtime pool: 8,748 initialized bytes, 1,328 BSS bytes, 528-byte runtime header and 216 site-record bytes plus alignment. Apply Scene's 2,062-byte code/state is a minimal-tier reference; Temp Save's 42,892-byte buffer is moderate. The 10,048-byte package occupies existing shared upload staging, not another module allocation. The complete shared-task/interrupt stack remains unresolved, so this is not a total-memory qualification; the 21,664-byte overlap assumes two equal candidate extents.",
         "source": "evidence/memory-lifetimes-20261105.md"
       }
+    },
+    "cpuPrice": {
+      "value": 0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-21",
+      "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7, stock effects on both slots and an empty starting inventory; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.7 % before, 32.7 % installed and used nowhere; CPU meter 45.3 % before, 45.4 % at rest.",
+      "source": "evidence/cpu-price.json"
     }
   },
   "tests": {

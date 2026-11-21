@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { MODULE_DOCUMENTS } from './documents'
 import { parseModuleDocument, parseModuleResourceImpact } from './module-contract'
 import { moduleResourceIndicators } from './resource-indicators'
+import { readDspLoad, readTrackedMemory } from './octatrack-resource-measurements'
 import { parseRetainedResourceImpacts, requireModuleResourceImpact } from './resource-impact'
 import { resourceImpactFixture } from './test-fixtures/resource-impact'
 import example from '../../public/module-repository.example.json'
@@ -19,11 +20,12 @@ import amigaApproval from '../../sdk/approvals/amiga-build-approval.json'
 import tempSaveApproval from '../../sdk/approvals/temp-save-build-approval.json'
 import kitsApproval from '../../sdk/approvals/kits-build-approval.json'
 import sdkCatalog from '../../sdk/catalog.json'
+import packageManifest from '../engine/assets/octatrack-module-packages.json'
 
 const draft = () => parseModuleDocument(example)
 const rated = () => parseModuleDocument({ ...example, resources: { ...example.resources, impact: resourceImpactFixture() } })
 
-describe('required relative module resource gauges', () => {
+describe('module resource gauges', () => {
   it('populates CPU, DSP and memory for every current version without inventing measurements', () => {
     expect(MODULE_DOCUMENTS).toHaveLength(sdkCatalog.modules.length)
     // Only versions under an owner exception may go without a qualification record; none is invented for them.
@@ -32,10 +34,28 @@ describe('required relative module resource gauges', () => {
       const indicators = moduleResourceIndicators(document)
       expect(indicators.map(indicator => indicator.id)).toEqual(['cpu', 'dsp', 'memory'])
       for (const indicator of indicators) {
-        expect(['Minimal', 'Low', 'Moderate', 'High']).toContain(indicator.value)
-        expect(indicator.fill).toBeGreaterThan(0)
+        const price = document.resources.cpuPrice
+        if (indicator.id === 'cpu' && price) {
+          expect(indicator).toMatchObject({
+            value: price.value + '%', score: price.value, maximum: 100, fill: price.value,
+            source: 'sdk/octatrack/modules/' + document.id + '/' + price.source,
+          })
+          expect(indicator.description).toContain(price.conditions)
+          if (price.measure === 'machine-render') expect(indicator.valueText).toContain('per playing track')
+        } else if (indicator.score === null) {
+          expect(indicator.valueText).toBeTruthy()
+          expect(indicator.fill).toBe(0)
+        } else if (indicator.maximum === 100) {
+          expect(indicator.valueText).toBeTruthy()
+          expect(indicator.fill).toBe(indicator.score)
+          expect(indicator.score).toBeGreaterThanOrEqual(0)
+          expect(indicator.score).toBeLessThanOrEqual(100)
+        } else {
+          expect(['Minimal', 'Low', 'Moderate', 'High']).toContain(indicator.value)
+          expect(indicator.fill).toBeGreaterThan(0)
+          expect(indicator.status).toBe('Estimated')
+        }
         expect(indicator.description.length).toBeGreaterThan(20)
-        expect(indicator.value).not.toContain('%')
       }
       if(document.id==='sidechain-compressor') expect(document.tests.hardwareStatus).toBe('reported')
       if(document.id==='tapehead') expect(document.tests.hardwareStatus).toBe('reported')
@@ -45,12 +65,87 @@ describe('required relative module resource gauges', () => {
 
   it('draws ordinal load tiers without using a CPU or DSP capacity denominator', () => {
     const document = rated()
+    document.resources.impact!.cpu.basis = 'measured-comparison'
     const [cpu, dsp, memory] = moduleResourceIndicators(document)
     expect(cpu).toMatchObject({ value: 'Minimal', score: 1, fill: 25, status: 'Estimated' })
-    expect(dsp).toMatchObject({ value: 'High', score: 4, fill: 100, status: 'Compared' })
+    expect(dsp).toMatchObject({ value: 'High', score: 4, fill: 100, status: 'Estimated' })
     expect(memory).toMatchObject({ value: 'Moderate', score: 3, fill: 75 })
     expect(document.resources.processing.method).toBe('unmeasured')
     expect(document.resources.processing.value).toBeNull()
+  })
+
+  it('shows only the reported eleven-stem hardware peak for the card build', () => {
+    const stems = MODULE_DOCUMENTS.find(document => document.id === 'stem-rec')!
+    expect(moduleResourceIndicators(stems)[0]).toMatchObject({
+      value: '14.6%', status: 'Reported peak · 11 stems', score: 14.6, maximum: 100, fill: 14.6,
+      source: 'sdk/octatrack/modules/stem-rec/TESTING.md',
+    })
+    expect(moduleResourceIndicators({ ...stems, version: '0.2.0' })[0].status).toBe('Estimated')
+  })
+
+  it('uses hardware DSP readings and keeps software benchmarks in the evidence', () => {
+    const lofi = MODULE_DOCUMENTS.find(document => document.id === 'lofi2')!
+    const outputMatrix = MODULE_DOCUMENTS.find(document => document.id === 'output-matrix')!
+    const bbd = MODULE_DOCUMENTS.find(document => document.id === 'bbd')!
+    const chorus = MODULE_DOCUMENTS.find(document => document.id === 'airwindows-chorus')!
+    const lofiPrice = packageManifest.packages.find(entry => entry.id === lofi.id)!.cycles
+    const bbdPrice = packageManifest.packages.find(entry => entry.id === bbd.id)!.cycles
+    const hookPrice = outputMatrix.tests.qualification!.cycles.find(cycle => cycle.processor === 'dsp')!
+    const memory = lofi.tests.qualification!.memory
+    const [, lofiDsp, lofiMemory] = moduleResourceIndicators(lofi)
+    expect(lofiDsp).toMatchObject({
+      value: '+10.3 pp', status: 'Measured · T1–4', score: 10.3, maximum: 100, fill: 10.3,
+      benchmark: { value: lofiPrice + ' cycles per sample per instance', basis: 'cycles/sample · Hardware-based' },
+    })
+    expect(lofiMemory).toMatchObject({ value: memory.totalBytes.toLocaleString('en-US') + ' B', status: 'Accounted total', score: null })
+    expect(lofiMemory.description).toContain(memory.sharedBytes.toLocaleString('en-US') + ' B shared')
+    expect(lofiMemory.description).toContain(memory.perInstanceBytes.toLocaleString('en-US') + ' B per instance')
+    expect(moduleResourceIndicators(outputMatrix)[1]).toMatchObject({
+      status: 'Estimated', benchmark: { value: hookPrice.worstCase + ' cycles per sample for one instance', source: 'sdk/octatrack/modules/output-matrix/' + hookPrice.report },
+    })
+    expect(moduleResourceIndicators(bbd)[1]).toMatchObject({
+      value: '+10.8 pp', status: 'Measured · T1–4',
+      benchmark: { value: bbdPrice + ' instructions per sample per instance', basis: 'instr./sample · Emulator' },
+    })
+    expect(moduleResourceIndicators(chorus)[1]).toMatchObject({ value: '+10.8 pp', status: 'Measured · T1–4', source: 'sdk/octatrack/modules/airwindows-chorus/TESTING.md' })
+    const future = { ...rated(), id: lofi.id, version: '99.0.0' }
+    expect(moduleResourceIndicators(future)[1]).toMatchObject({ value: 'High', status: 'Estimated' })
+  })
+
+  it('uses the selected track’s core and the tracked pools from the same clean trial', () => {
+    const document = rated()
+    const before = { skipped: 0, dsp1to4: 30, dsp5to8: 31, allocation: {
+      modulePoolBytes: 0, dspProgramWordsT1to4: 50, dspProgramWordsT5to8: 80,
+    } }
+    const inUse = { skipped: 0, dsp1to4: 29.9, dsp5to8: 42, allocation: {
+      modulePoolBytes: 512, dspProgramWordsT1to4: 50, dspProgramWordsT5to8: 192,
+    } }
+    const result = { id: document.id, version: document.version, rolledBack: true, before, inUse, inUseOn: 'T5 FX2' }
+    const record = { module: document.id, version: document.version, base: 'test base', scene: 'saved scratch Part', result }
+    expect(readDspLoad(document, record)).toMatchObject({ before: 31, after: 42, core: 'T5–8', slot: 'T5 FX2' })
+    expect(readTrackedMemory(document, record)).toMatchObject({ poolBytes: 512, dspWordsT1to4: 0, dspWordsT5to8: 112 })
+    expect(readDspLoad(document, { ...record, version: '99.0.0' })).toBeUndefined()
+    expect(readDspLoad(document, { ...record, result: { ...result, repetitions: [{
+      before, inUse: { ...inUse, dsp5to8: 39 },
+    }] } })).toBeUndefined()
+    expect(readTrackedMemory(document, { ...record, result: { ...result, inUse: { ...inUse, skipped: 1 } } })).toBeUndefined()
+    expect(readTrackedMemory(document, { ...record, result: { ...result, before: {
+      ...before, allocation: { ...before.allocation, modulePoolBytes: 128 },
+    } } })).toBeUndefined()
+  })
+
+  it.each([
+    ['cc-map', '1,568 B'],
+    ['playmodes', '17,168 B'],
+    ['recorder-loop-fix', '2,208 B'],
+    ['usb-audio-out-tracks-main-cue', '105,408 B'],
+  ])('shows the hardware-verified module pool for %s at its measured version', (id, value) => {
+    const document = MODULE_DOCUMENTS.find(module => module.id === id)!
+    expect(moduleResourceIndicators(document)[2]).toMatchObject({
+      value, status: 'Measured · module pool', score: null,
+      source: 'docs/verification/2026-11-21-octatrack-module-pool-allocation.json',
+    })
+    expect(moduleResourceIndicators({ ...document, version: '99.0.0' })[2].status).toBe('Estimated')
   })
 
   it('keeps drafts parseable but blocks releases and gauge rendering without ratings', () => {

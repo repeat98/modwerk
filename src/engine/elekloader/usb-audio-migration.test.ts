@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { afterEach, expect, it, vi } from 'vitest'
-import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, USB_AUDIO_VERSION, usbAudioPreset, changeUsbAudioLayout, usbAudioInstallPreset, usbAudioFromInstallPreset } from '../../config/usb-audio'
+import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, USB_AUDIO_VERSION, usbAudioPreset, changeUsbAudioLayout, usbAudioForSelection, usbAudioInstallPreset, usbAudioFromInstallPreset } from '../../config/usb-audio'
 import { createSelection, parseSelection } from '../../config/selection'
 import { inventoryUsbAudio, matchesUsbAudio, modulesToPutBack, rememberInventory, SAVED_BY_ANOTHER_BASE, type Inventory } from '../../config/inventory'
 import { CURRENT_BASE, prepareCardSet, prepareModuleSet, type RuntimePackage } from './module-set'
@@ -22,6 +22,16 @@ const words = new DataView(canonical.buffer)
 const record = 76 + 4 * words.getUint32(20) + (words.getUint32(76 + 4 * (events.events.find(e => e.event === 'ot_settings')!.index)) & 0xffffff)
 const readSeed = (bytes: Uint8Array) => new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(record + 20)
 const installed = (preset: number) => ({ moduleIds: ids, removedStockFx: [], usbAudioLayout: 'configurable' as const, usbAudioInstallPreset: preset })
+
+it('installs stereo Main over USB and on the card for a newly selected module', async () => {
+  const usbAudio = usbAudioForSelection(ids)
+  const prepared = await prepare(usbAudio)
+  const data = prepared.changes[0].data
+  expect(readSeed(data)).toBe(0x8000010c)
+  const card = await prepareCardSet({ name: 'New set', moduleIds: ids, usbAudio }, load, 100000)
+  expect(card.file.subarray(92, 92 + data.length)).toEqual(data)
+  expect((await prepare(usbAudio, installed(0x8000010c))).changes).toEqual([])
+})
 
 it.each(USB_AUDIO_LAYOUTS)('migrates $id from a version 4 backup identically over USB and on the card', async layout => {
   const count = layout.pairs.length
