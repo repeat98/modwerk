@@ -1,4 +1,31 @@
-# FM Synth 0.1.4: its CPU price
+# FM Synth 0.1.5 experimental
+
+## MKII hardware trial on 21 November 2026
+
+On an Octatrack MKII running OS 1.40C and the 0.7.13 development base `1d880c5a`, the private package `b904a852fa2cd0dc9b2aef39969ba77637fe05a394adc06c2833b93df1d15f02` added **0.619 percentage points** on MWREPROB/TARGET at 140 BPM while assigned to no track. Three FM-only installs measured +0.675, +0.587 and +0.594 against the mean of the empty windows on either side. Across 247,897 measured frames the guard recorded zero skips. The +0.2-point hardware target remains open.
+
+The first isolated T1 audition sounded at 261.6 Hz. In a separate sequenced take, eight consecutive steady bar intervals averaged 1.71423 seconds at 140 BPM (expected 1.71429). The second onset overlapped the preceding sustained note. On the same sustained note in LEG MONO, moving PTCH up and down an octave stepped between 261.6 and 523.3 Hz with GLIDE OFF. At 96 it passed through intermediate pitches in both directions. GLIDE was returned to OFF.
+
+A saved FLEX fixture with a silent `FMSYNTH_OLD.WAV` in its first sample slot and no dedicated FM signature sounded at 271.3 Hz on its first sequenced note. The empty and post-Undo T1 recordings were digitally silent. This tested a Part-assigned marker. Sample-locked legacy markers, external clock, swing, other track speeds, cold boot and listening by a person remain open on this build.
+
+All five trials rolled back. TARGET's original bank, pattern, track, four working and saved Parts and stopped transport matched, and the original 0.7.12 base returned with the same saved and live set. Thirteen bank checksums were initially invalid and all passed on the final uncached reads. Byte-for-byte parity of those banks remains unverified.
+
+## Emulator comparison on base 0.7.13
+
+The installed package was `b904a852fa2cd0dc9b2aef39969ba77637fe05a394adc06c2833b93df1d15f02`. Two local builds reproduced it, including one from base draft commit `024c677c`. Each install used virtual USB and ended with Undo.
+
+On MWREPROB/TARGET at 140 BPM, four independent installs added 0.225, 0.165, 0.179 and 0.196 percentage points to the modeled frame interrupt, each against the mean of its adjacent empty windows. The mean increase was 0.192 points. All nine raw windows covered at least 16,000 frames with zero skipped renders. Each install returned to normal with an empty inventory after Undo. This is a ColdFire emulator measurement.
+
+On the emulated ColdFire, 64 first-trigger cases covered native FM, assigned legacy markers, sample-locked markers and ordinary FLEX samples on all eight tracks, with glide off and at 96. Each case had 64 idle frames before the trigger. The LFO filter woke on the trigger frame, the renderer recognized the first FM note, and removing the last voice returned to the ordinary LFO loop. A routed FLEX trigger may enter the filter for one frame while its sample lock resolves. The ordinary sample played without starting an FM voice.
+
+The two runtime packages produced the same output buffers and exit registers in 1,024 complete LFO passes. The comparison covered all 256 voice masks, both frame buffers and the standalone caller. All 24 LFO wave handlers ran on each pass. With no voices or pending starts the candidate made zero calls to the FM depth handler. Separate comparisons covered 38,352 clock frames, 4,096 routing cases, 1,284 marker cases and 6,144 glide trajectories at all 128 settings.
+
+In separate Octemu runs of statically linked images, the released and candidate engines reloaded the same saved FLEX project with a legacy `FMSYNTH_OLD.WAV` marker. The first 176,400 stereo frames from note onset matched exactly. They also matched on a project with LEG MONO, glide 96 and two pitch locks. Both recordings ended in silence after Stop. Standalone SDK builds call frame preparation at the existing LFO detour. The USB build subscribes to the base callback and reproduces the MKII-tested package byte for byte.
+
+The final standalone SDK image (`e0ea9dbc3f55468e6ae188ec66a9b98cb5c66ef37f4f317e7604d36e0339b7e2`) matched the reference for the first 176,400 stereo frames from note onset in each fixture. The legacy marker played after project reload. The glide-96 run used the previously loaded project snapshot after a fresh reload stalled on emulated card I/O. Both ended in silence after Stop.
+
+
+## Previous release 0.1.4
 
 0.1.4 differs from 0.1.3 only in the price byte of its generated machine descriptor: `"cpuPrice": 6` in FM Synth's entry of `sdk/machines/octatrack/module-adapters/machine-ports.json`, which `machine_ports.py` writes as `reserved[0]` of the `mw_machine` descriptor, and the same 6 as `resources.cpuPrice` in `octamod.module.json`. No code changed: in the module's folder only `release-notes.json`, the manifest and Markdown differ from 0.1.3. The 0.1.3 report follows unchanged below.
 

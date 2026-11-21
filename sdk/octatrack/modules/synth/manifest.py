@@ -28,14 +28,15 @@ _REG_POKES=(Poke(1074238024, stock_guard(1074238024, 4, '8fbd3190028fe564c11b56e
 MODULE=dataclasses.replace(_SY,
     category=Category.MACHINES, author='timhastie', author_url='https://github.com/timhastie',
     doc='Dedicated FM SYNTH machine: two-operator FM, one to four voices, chords, MIDI and glide.',
-    proof=Proof.UNTESTED, proof_note='0.1.2 software regressions pass; owner-approved experimental release, current hardware and chip timing untested',
+    proof=Proof.RENDER, proof_note='Standalone legacy and glide audio compared in Octemu. USB build b904a852 ran on an MKII on 21 November 2026; see TESTING.md.',
     requires=(), cf_patches=(),
     symbol_refs=_SY.symbol_refs+(SymbolRef(0x400d6458,0x4000f450,"poly","fm_start",note="Signed FM starts without sample resources; ordinary FLEX keeps stock start"),),
     linked=_SY.linked+_QZ.linked+(
         Linked('fmpage',_REL('upstream/synth/page.s'),cpu='5475',cave_addr=0x400d24d0),
         Linked('fmmachine',_REL('machine.s'),cpu='5475',dram=True),
         Linked('fmregistration',_REL('registration.s'),cpu='5475',dram=True)),
-    detours=tuple(d for d in _SY.detours if d.site not in (0x40079816,0x4005a848))+_QZ.detours+_REG_DETOURS+(
+    detours=tuple(d for d in _SY.detours if d.site not in (0x40079816,0x4005a848,0x4000d03e))+_QZ.detours+_REG_DETOURS+(
+        Detour(0x4000cf50,stock_guard(0x4000cf50,6,'527ad6f31bd163aa463e88294d4405e84510d1e40192edac022c852a43de999d'),'poly','fm_lfo_frame_entry','select the gated LFO pass once per frame'),
         Detour(0x4000d514,stock_guard(0x4000d514,8,'39173055fb04ac0a6c355f89561b48834bc5b31ad67609e3fe53efbff7de1866'),'poly','fm_source_dispatch',kind='jmp',pad_to=8),
         Detour(0x40031ece,stock_guard(0x40031ece,6,'5aed68f7498659f87e414631493741e91f3442c5319f46e6893b567c423ce24f'),'fmpage','pg_resolve',kind='jmp'),),
     pokes=_SY.pokes+_QZ.pokes+_REG_POKES,

@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.1.5-experimental",
+    "date": "2026-11-21",
+    "changes": [
+      "FM Synth skips its LFO depth check while it has no sounding voices. The first FM note still uses the instrument’s running clock.",
+      "Requires Octatrack base 0.7.13 or later."
+    ]
+  },
+  {
     "version": "0.1.4-experimental",
     "date": "2026-11-17",
     "changes": [
