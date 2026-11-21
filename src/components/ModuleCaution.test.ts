@@ -8,9 +8,10 @@ import { classifyCpuCaution, MODULE_CAUTIONS } from '../catalog/module-cautions'
 import { CautionBadge, ModuleCard } from './ModuleCard'
 
 describe('Octatrack CPU cautions', () => {
-  it('reserves Heavy CPU for POLY8 and marks five catalog modules High CPU', () => {
+  it('reserves Heavy CPU for POLY8 and Grain and marks five catalog modules High CPU', () => {
     expect(Object.fromEntries(Object.entries(MODULE_CAUTIONS).map(([id, caution]) => [id, caution.badge]))).toEqual({
       poly8: 'Heavy CPU',
+      grain: 'Heavy CPU',
       syntiz: 'High CPU',
       tapeecho: 'High CPU',
       'usb-audio-out-tracks-main-cue': 'High CPU',
