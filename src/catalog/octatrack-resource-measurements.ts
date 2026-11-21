@@ -1,4 +1,6 @@
 import type { ModuleDocument } from './module-contract'
+import modulePoolEvidence from '../../docs/verification/2026-11-21-octatrack-module-pool-allocation.json'
+import packageManifest from '../engine/assets/octatrack-module-packages.json'
 
 type AllocationReading = { modulePoolBytes: number; dspProgramWordsT1to4: number; dspProgramWordsT5to8: number }
 type LoadReading = { skipped: number; dsp1to4: number; dsp5to8: number; allocation?: Partial<AllocationReading> }
@@ -29,6 +31,7 @@ const records = import.meta.glob<DevicePriceRecord>(
   '../../sdk/octatrack/modules/*/evidence/cpu-price.json',
   { eager: true, import: 'default' },
 )
+const modulePoolReadings = new Map(modulePoolEvidence.measurements.map(record => [record.module, record]))
 
 const airChorus = {
   version: '0.1.3-experimental', before: 40.3, after: 51.1, core: 'T1–4', slot: 'T3 FX2',
@@ -103,4 +106,20 @@ export function readTrackedMemory(document: ModuleDocument, record: DevicePriceR
 
 export function measuredTrackedMemory(document: ModuleDocument) {
   return readTrackedMemory(document, recordedPrice(document.id))
+}
+
+export function measuredModulePool(document: ModuleDocument) {
+  const record = modulePoolReadings.get(document.id)
+  if (record?.version !== document.version || record.trials.length < 2 || record.loaderExtentBytes <= 0
+    || record.trials.some(trial => !trial.rolledBack || trial.installed.modulePoolBytes !== record.loaderExtentBytes)) return
+  if (record.package === 'published') {
+    const entry = document.id === 'usb-audio-out-tracks-main-cue' ? packageManifest.usbAudio.configurable
+      : packageManifest.packages.find(pkg => pkg.id === document.id)
+    if (entry?.sha256 !== record.packageSha256) return
+  }
+  return {
+    bytes: record.loaderExtentBytes, device: modulePoolEvidence.instrument,
+    base: modulePoolEvidence.developmentBase, scene: record.scene,
+    source: 'docs/verification/2026-11-21-octatrack-module-pool-allocation.json',
+  }
 }
