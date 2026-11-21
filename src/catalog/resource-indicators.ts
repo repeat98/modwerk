@@ -1,6 +1,6 @@
 import type { ModuleDocument } from './module-contract'
 import packageManifest from '../engine/assets/octatrack-module-packages.json'
-import { measuredDspLoad, measuredModulePool, measuredTrackedMemory } from './octatrack-resource-measurements'
+import { measuredActiveCpu, measuredDspLoad, measuredModulePool, measuredTrackedMemory, verifiedNoModuleDspCode } from './octatrack-resource-measurements'
 import { requireModuleResourceImpact } from './resource-impact'
 
 const packagesById = new Map(packageManifest.packages.map(entry => [entry.id, entry]))
@@ -11,6 +11,7 @@ const packageDspEvidence = {
 } as const
 const qualificationDspBasis = { hardware: 'Measured', emulator: 'Emulator', static: 'Modeled' } as const
 const count = (value: number) => value.toLocaleString('en-US')
+const kilobytes = (bytes: number) => (bytes / 1000).toLocaleString('en-US', { maximumFractionDigits: 3 })
 
 function dspIndicator(document: ModuleDocument) {
   const entry = packagesById.get(document.id)
@@ -43,6 +44,7 @@ function dspIndicator(document: ModuleDocument) {
 export function moduleResourceIndicators(document: ModuleDocument) {
   const impact = requireModuleResourceImpact(document)
   const price = document.resources.cpuPrice
+  const activeCpu = measuredActiveCpu(document)
   const dsp = dspIndicator(document)
   const dspLoad = measuredDspLoad(document)
   const memory = document.tests.qualification?.memory
@@ -66,6 +68,10 @@ export function moduleResourceIndicators(document: ModuleDocument) {
           + ' Measured on ' + price.date + '. ' + price.conditions,
         source: 'sdk/octatrack/modules/' + document.id + '/' + price.source,
         sourceInModwerk: true,
+        benchmark: activeCpu ? {
+          value: activeCpu.delta + '% of a frame added with ' + activeCpu.workload,
+          basis: 'Active hardware measurement', source: activeCpu.source,
+        } : undefined,
       }
     }
     if (id === 'cpu' && stemPeak?.budget) {
@@ -76,43 +82,67 @@ export function moduleResourceIndicators(document: ModuleDocument) {
         status: 'Reported peak · 11 stems',
         valueText: value + ' peak share of an audio block while recording eleven stems',
         description: 'Yves Rosius reported a peak of ' + count(stemPeak.worstCase) + ' of ' + count(stemPeak.budget)
-          + ' cycles per audio block in two eleven-stem, 24-bit takes on an Octatrack MKII. The fourteen-stem measurement is pending.',
+          + ' cycles per audio block in two eleven-stem, 24-bit takes on an Octatrack MKII. The fourteen-stem measurement is pending. '
+          + 'The relative CPU tier is ' + levels[impact.cpu.level].label + ' (estimated).',
         source: 'sdk/octatrack/modules/stem-rec/' + stemPeak.report, sourceInModwerk: true,
       }
     }
+    if (id === 'cpu' && activeCpu) {
+      const value = activeCpu.delta + '%'
+      const change = Math.abs(activeCpu.delta)
+      return {
+        id, label: 'CPU', ariaLabel: 'Measured CPU load', value, score: change, maximum: 100, fill: change,
+        status: 'Measured · in use', valueText: value + ' of an audio frame added in the test',
+        description: 'Frame-interrupt load went from ' + activeCpu.before + '% to ' + activeCpu.after + '% with '
+          + activeCpu.workload + '. ' + activeCpu.scene + ' The relative CPU tier is ' + levels[impact.cpu.level].label
+          + ' (estimated) while the release price is pending.',
+        source: activeCpu.source, sourceInModwerk: true,
+      }
+    }
     if (id === 'dsp' && dspLoad) {
-      const delta = Math.round((dspLoad.after - dspLoad.before) * 10) / 10
+      const delta = dspLoad.delta ?? Math.round((dspLoad.after - dspLoad.before) * 10) / 10
       const value = (delta > 0 ? '+' : '') + delta
       const change = Math.abs(delta)
       return {
         id, label: 'DSP core', ariaLabel: 'DSP core load change', value: value + ' pp',
         score: change, maximum: 100, fill: change, status: 'Measured · ' + dspLoad.core,
         valueText: value + ' percentage points of DSP core load',
-        description: 'Core ' + dspLoad.core + ' went from ' + dspLoad.before + '% to ' + dspLoad.after + '% with one instance on '
+        description: 'Core ' + dspLoad.core + ' went from ' + dspLoad.before + '% to ' + dspLoad.after + '%. The test used '
           + dspLoad.slot + '. ' + dspLoad.scene + ' Base ' + dspLoad.base + '.',
         source: dspLoad.source, sourceInModwerk: true,
         benchmark: dsp ? { value: dsp.valueText, basis: dsp.status, source: dsp.source } : undefined,
       }
     }
     if (id === 'dsp' && dsp?.hardware) return { id, label: 'DSP core', ...dsp, value: dsp.value + ' cycles' }
+    if (id === 'dsp') {
+      const direct = verifiedNoModuleDspCode(document)
+      if (direct) {
+        return {
+          id, label: 'DSP core', value: '0 cycles', score: null, fill: 0, status: 'Module code · ColdFire',
+          valueText: 'Zero cycles of module code on the DSP cores',
+          description: 'This version runs its code on the ColdFire. Stock playback and effects can still change the load on the DSP cores.',
+          source: direct.source, sourceInModwerk: true,
+        }
+      }
+    }
     if (id === 'memory' && memory) {
-      const value = count(memory.totalBytes) + ' B'
+      const total = kilobytes(memory.totalBytes)
       return {
-        id, label: 'Memory', value, score: null, fill: 0, status: 'Accounted total',
-        valueText: count(memory.totalBytes) + ' bytes at the supported instance limit',
-        description: count(memory.sharedBytes) + ' B shared plus ' + count(memory.perInstanceBytes)
-          + ' B per instance. The total covers up to ' + memory.maxInstances + ' instances. ' + memory.conditions,
+        id, label: 'Memory', value: total + ' kB', score: null, fill: 0, status: 'Accounted total',
+        valueText: total + ' kilobytes at the supported instance limit',
+        description: kilobytes(memory.sharedBytes) + ' kB shared plus ' + kilobytes(memory.perInstanceBytes)
+          + ' kB per instance. The total covers up to ' + memory.maxInstances + ' instances. ' + memory.conditions,
         source: 'sdk/octatrack/modules/' + document.id + '/' + memory.report,
         sourceInModwerk: true,
       }
     }
     if (id === 'memory' && tracked) {
-      const words = tracked.dspWordsT1to4 + tracked.dspWordsT5to8
-      const bytes = tracked.poolBytes + 3 * words
+      const dspBytes = 3 * (tracked.dspWordsT1to4 + tracked.dspWordsT5to8)
+      const total = kilobytes(tracked.poolBytes + dspBytes)
       return {
-        id, label: 'Memory', value: count(bytes) + ' B', score: null, fill: 0, status: 'Tracked allocation',
-        valueText: count(bytes) + ' bytes of tracked allocation',
-        description: count(tracked.poolBytes) + ' B in the module pool and ' + count(words) + ' 24-bit DSP program words across both cores. '
+        id, label: 'Memory', value: total + ' kB', score: null, fill: 0, status: 'Tracked allocation',
+        valueText: total + ' kilobytes of tracked allocation',
+        description: kilobytes(tracked.poolBytes) + ' kB in the module pool and ' + kilobytes(dspBytes) + ' kB of DSP program storage across both cores. '
           + 'This count covers the measured pools ' + (tracked.slot ? 'with the effect on ' + tracked.slot : 'with the module installed and unused')
           + '. ' + tracked.scene + ' Base ' + tracked.base + '.',
         source: tracked.source, sourceInModwerk: true,
@@ -121,11 +151,16 @@ export function moduleResourceIndicators(document: ModuleDocument) {
     if (id === 'memory') {
       const pool = measuredModulePool(document)
       if (pool) {
+        const total = kilobytes(pool.bytes + (pool.sampleBytes ?? 0))
+        const scope = pool.sampleBytes ? 'the module pool and leased sample RAM' : 'the module pool'
+        const allocation = pool.sampleBytes ? kilobytes(pool.bytes) + ' kB in the module pool and ' + kilobytes(pool.sampleBytes) + ' kB in leased sample RAM. ' : ''
         return {
-          id, label: 'Memory', value: count(pool.bytes) + ' B', score: null, fill: 0, status: 'Measured · module pool',
-          valueText: count(pool.bytes) + ' bytes in the module pool for one installed module',
+          id, label: 'Memory', value: total + ' kB', score: null, fill: 0,
+          status: pool.sampleBytes ? 'Measured · two pools' : 'Measured · module pool',
+          valueText: total + ' kilobytes in ' + scope + ' for one installed module',
           description: 'Two trials on an ' + pool.device + ' each matched the package’s full loader allocation. '
-            + pool.scene + ' Base ' + pool.base.slice(0, 16) + '. DSP memory and sample RAM have separate pools.',
+            + allocation + pool.scene + ' Base ' + pool.base.slice(0, 16) + '.'
+            + (pool.sampleBytes ? '' : ' DSP memory and sample RAM have separate pools.'),
           source: pool.source, sourceInModwerk: true,
         }
       }
