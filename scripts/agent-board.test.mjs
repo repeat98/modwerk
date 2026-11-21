@@ -75,6 +75,14 @@ describe('the board client', () => {
     expect([compared.mine, compared.others, compared.free].map(list => list.map(item => item.key))).toEqual([['0084'], ['octatrack/37'], ['octatrack/tape-echo']])
     expect((await board.compareClaims(needed, null, { fetch })).unknown).toHaveLength(2)
   })
+  it('counts a claim tied to the pull request as its own, whoever holds it', async () => {
+    const needed = [{ kind: 'module', key: 'octatrack/grain' }]
+    const held = { ...claimRow('module', 'octatrack/grain', 'maintainer'), pullRequest: 1858 }
+    const compare = pullRequest => board.compareClaims(needed, 'Author', { fetch: answer(200, { claims: [held] }), pullRequest })
+    expect((await compare(1858)).mine).toHaveLength(1)
+    expect((await compare(1859)).others).toHaveLength(1)
+    expect((await compare(undefined)).others).toHaveLength(1)
+  })
   it('compares a run of hooks with every claim inside it', async () => {
     const needed = [{ kind: 'hook', key: 'octatrack/38-51' }]
     const compare = (...rows) => board.compareClaims(needed, 'Ada', { fetch: answer(200, { claims: rows }) })
