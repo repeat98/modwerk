@@ -10,7 +10,8 @@ import { grade } from './grade.mjs'
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const git = (...args) => execFileSync('git', args, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] })
 const suite = createHash('sha256')
-for (const file of ['cases.mjs', 'grade.mjs', 'run.mjs']) suite.update(readFileSync(new URL(file, import.meta.url)))
+const guides = new Set(cases.map(item => item.guide).filter(Boolean))
+for (const file of ['cases.mjs', 'grade.mjs', 'run.mjs', ...guides]) suite.update(readFileSync(new URL(file, import.meta.url)))
 const suiteId = suite.digest('hex')
 
 function revision(item, fixed, remote) {
@@ -31,7 +32,8 @@ function prepare(item, directory, fixed = false, remote) {
       mkdirSync(dirname(join(stage, name)), { recursive: true })
       writeFileSync(join(stage, name), git('show', `${ref}:${name}`))
     }
-    writeFileSync(join(stage, 'TASK.md'), `${item.task}\n\nWork only with this snapshot. Make the fix in ${item.files[0]}. Use the supplied files and your own checks. Finish after editing the snapshot.\n`)
+    const guide = item.guide ? '\n' + readFileSync(new URL(item.guide, import.meta.url), 'utf8') : ''
+    writeFileSync(join(stage, 'TASK.md'), `${item.task}\n\nWork only with this snapshot. Make the fix in ${item.files[0]}. Use the supplied files and your own checks. Finish after editing the snapshot.\n${guide}`)
     renameSync(stage, directory)
   } finally { rmSync(stage, { recursive: true, force: true }) }
 }
