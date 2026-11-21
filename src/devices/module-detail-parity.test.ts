@@ -94,7 +94,7 @@ describe('module detail parity across machines', () => {
     expect(html).toContain('/blob/main/sdk/octatrack/modules/euclid/' + price.source + '"')
   })
 
-  it('renders all three Octatrack dials and uses an unscaled outline for byte counts', () => {
+  it('renders all three Octatrack dials and uses an unscaled outline for kilobyte values', () => {
     const module = AVAILABLE_MODULES.find(module => module.id === 'lofi2')!
     const dsp = packageManifest.packages.find(entry => entry.id === module.id)!.cycles
     const memory = MODULE_DOCUMENTS_BY_ID[module.id].tests.qualification!.memory
@@ -102,7 +102,8 @@ describe('module detail parity across machines', () => {
     expect(html).toContain('+10.3 percentage points of DSP core load')
     expect(html).toContain('Measured · T1–4')
     expect(html).toContain(dsp + ' cycles per sample per instance (cycles/sample · Hardware-based)')
-    expect(html).toContain(memory.totalBytes.toLocaleString('en-US') + ' bytes at the supported instance limit')
+    expect(html).toContain('11.926 kilobytes at the supported instance limit')
+    expect(html).toContain('11.926 kB')
     expect(html).toContain('Accounted total')
     expect(html).toContain('/blob/main/src/engine/assets/octatrack-module-packages.json"')
     expect(html).toContain('/blob/main/sdk/octatrack/modules/lofi2/' + memory.report + '"')
