@@ -601,10 +601,17 @@ def read_pbm(path):
     return [[(data[y * 16 + x // 8] >> (7 - x % 8)) & 1 for x in range(128)] for y in range(64)]
 
 
+# Where development bases before 21 Nov 2026 drew the link's armed mark (a dark 2 x 5 notch at the right end of
+# the header bar, beside stock's transport icon). No compare looks at it, so references recorded with the mark
+# still compare equal with screens from a base without it.
+OLD_ARMED_MARK = (126, 2, 2, 5)
+
+
 def screen_diff(a, b, region, ignore=()):
     """(pixels that differ, their bounding box as X Y W H or None), inside the region if one is given and
-    outside the ignored parts."""
+    outside the ignored parts and the old armed mark."""
     x0, y0, w, h = region or (0, 0, 128, 64)
+    ignore = tuple(ignore) + (OLD_ARMED_MARK,)
     pts = [(x, y) for y in range(y0, y0 + h) for x in range(x0, x0 + w) if a[y][x] != b[y][x]
            and not any(i <= x < i + k and j <= y < j + m for i, j, k, m in ignore)]
     if not pts:
