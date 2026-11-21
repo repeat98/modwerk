@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 3,
+  "id": "improved-performance",
+  "name": "Improved Performance",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "npp1993",
+    "name": "Nathaniel Pavel",
+    "credits": [
+      "Nathaniel Pavel (@npp1993) — the mod, its design and code, and this Modwerk module.",
+      "irpina — Elekloader and core-ar2, the core it links with, and its audio load figure."
+    ]
+  },
+  "maintainers": [
+    "npp1993"
+  ],
+  "presentation": {
+    "label": "IMPROVED PERFORMANCE",
+    "family": "Audio engine",
+    "summary": "The audio engine leaves out work whose result it already knows, so the same pattern uses less CPU and the screen and keys answer faster. A CPU mark shows when the load gets close to the limit.",
+    "overview": "Stock computes nearly everything in every audio block, whether it is used or not: all eight sample voices, every send, the delay and the reverb, every modulation pass. Improved Performance tests, block by block, whether a piece of that work can change anything, and leaves it out when it cannot: sample voices that play nothing, sends at zero, a silent delay or reverb, modulation with nothing to modulate, parameters that are not moving, the USB audio input when nothing streams. The output is stock's bit for bit, but for one thing: a delay or reverb that has died away below -114 dBFS and has no input is given exact silence. With the time saved the unit redraws and reads its keys sooner, and a busy pattern keeps further from dropouts. CPU appears in the lower right corner of the bottom status bar while the audio load is close to the limit, and OVR while it is over.",
+    "highlights": [
+      "Less CPU for the same pattern: nothing to set",
+      "No audible change: stock's output, but for effect tails below -114 dBFS",
+      "CPU in the lower right corner when the load is close to the limit, OVR when it is over"
+    ],
+    "usage": [
+      "Add it to your set and send the OS: there is nothing to switch on.",
+      "Play as usual. The sound is unchanged; under load the screen and keys answer sooner.",
+      "If CPU shows in the lower right corner, the audio load is close to its limit; OVR means it is over. Mute tracks, lower sends or take a module out of the set until it goes."
+    ]
+  },
+  "access": {
+    "location": "Nothing to open: it works by itself. CPU or OVR shows in the lower right corner of the bottom status bar while the audio load is high.",
+    "steps": [
+      "Add it to your set and send the OS: there is nothing to switch on.",
+      "Play as usual.",
+      "If CPU shows in the lower right corner the audio load is close to its limit; OVR means it is over."
+    ],
+    "screenshots": [
+      "media/cpu-near.png",
+      "media/cpu-over.png"
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Analog Rytm MKII, OS 1.74 only.",
+      "One part is not bit-identical to stock: once the delay or the reverb has had no input for the length of its memory and has died away below -114 dBFS, it outputs exact silence where stock keeps computing that residue.",
+      "CPU and OVR show only on screens with the bottom status bar: not in menus, lists or browsers. They take the bar's lower right corner: another module's mark there (Loop Sync's SYNC) is covered while they show.",
+      "Tested on one unit, with one project, in a set of 17 other modules. A project load while sound rings and a long USB audio stream are not tested.",
+      "What it saves depends on the project: a voice, a send or a modulation that is in use costs what it costs in stock."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [
+      "ev_render_out",
+      "ev_tick",
+      "ev_draw"
+    ],
+    "claims": [
+      "ui:status bar lower right corner while the audio load is high"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 3880,
+    "fastBytes": 0,
+    "load": {
+      "display": "Lowers the audio load: 85 % to 72 % of the block on one pattern in the author's set (unit)",
+      "method": "hardware",
+      "conditions": "The unit's own meter (the core's audio load figure, averaged), the author's Analog Rytm MKII, OS 1.74, one 12-track pattern played hands off in a set of 17 other modules on a development base: 85.4 % without this module's code (17 Nov 2026), 72.0 % with it as one module (20 Nov 2026); longest block 99.4 % and 87.2 %. When no part can skip anything its tests cost about 2 % of the block (read from the source, not measured)."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "rytm-emu: alone on the release base and beside 17 other modules, output and engine state identical to stock over about 69,500 blocks; a kit load with the reverb ringing identical. Unit (author, OS 1.74): self-checking builds of every part counted 0 differences against stock; one pattern's audio load 85.4 % without and 72.0 % with, in an 18-module set. See TESTING.md.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Add it to your set and send the OS: there is nothing to switch on.",
+          "Play as usual. The sound is unchanged; under load the screen and keys answer sooner.",
+          "If CPU shows in the lower right corner, the audio load is close to its limit; OVR means it is over. Mute tracks, lower sends or take a module out of the set until it goes."
+        ]
+      },
+      "screenshots": [
+        "media/cpu-near.png",
+        "media/cpu-over.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author, under GPL-3.0-or-later. The source names firmware addresses only; the patch preconditions are addresses, lengths and SHA-256s."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Improved Performance: the audio block with the work left out that changes nothing",
+      "alt": "A row of blocks, some drawn faint, under a load line that sits lower on the right.",
+      "credit": "npp1993",
+      "license": "GPL-3.0-or-later",
+      "source": "Original illustration in the shared signal-art style."
+    },
+    {
+      "path": "media/cpu-near.png",
+      "kind": "screenshot",
+      "caption": "CPU in the lower right corner: the audio load is close to its limit. Nothing to press: lighten the pattern, lower sends or take a module out until it goes.",
+      "alt": "The main screen of the BD track; at the right end of the bottom bar the word CPU in the bar's own text.",
+      "credit": "npp1993",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ba3c846291b71347dfdf8e16e56fdabef859b09efdd0b74f2e04d5a0a6d67309",
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running IPCN: the plain Rytm base and this folder's Improved Performance 0.1.0-experimental built with -DCW_NEAR_MEAN=1 so that the mark shows, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+      }
+    },
+    {
+      "path": "media/cpu-over.png",
+      "kind": "screenshot",
+      "caption": "OVR in the same place: the load is over the limit, so the screen and keys slow down and audio can drop out. It clears a second and a half after the load has come down.",
+      "alt": "The same screen; at the right end of the bottom bar the word OVR in the bar's own text.",
+      "credit": "npp1993",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f4244b4a9e1c8685693f940314e2b106db0bfd6c680418f6a86dbf5a5ca3f706",
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running IPCO: the plain Rytm base and this folder's Improved Performance 0.1.0-experimental built with -DCW_OVER_MEAN=1 so that the mark shows, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+      }
+    }
+  ]
+}

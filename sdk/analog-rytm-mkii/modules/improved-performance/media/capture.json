@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "improved-performance",
+  "moduleVersion": "0.1.0-experimental",
+  "records": [
+    {
+      "schemaVersion": 1,
+      "machine": "analog-rytm-mkii",
+      "moduleId": "improved-performance",
+      "moduleVersion": "0.1.0-experimental",
+      "firmware": "1.74",
+      "capturedAt": "2026-11-21T07:50:00Z",
+      "imageSha256": "ba3c846291b71347dfdf8e16e56fdabef859b09efdd0b74f2e04d5a0a6d67309",
+      "build": "Modwerk's linker: the plain Rytm base (core-ar2 0.7) + this folder's Improved Performance 0.1.0-experimental compiled with -DCW_NEAR_MEAN=1 (the mark's threshold lowered so that it shows in the emulator, where the audio load stays low; nothing else differs from the release build), materialised against stock OS 1.74, --version IPCN",
+      "emulator": {
+        "name": "rytm-emu",
+        "repository": "https://github.com/trigcondition/rytm-emu",
+        "binary": "dtboot",
+        "settings": "no card image (the card starts formatted); JIT on; --every 1000M",
+        "revision": "c5732f0"
+      },
+      "conditions": "Cold boot; four NO presses clear the notices; the main screen after 7,700 M instructions. The word CPU at the right end of the bottom bar: the warning.",
+      "captures": [
+        {
+          "path": "media/cpu-near.png",
+          "plan": "DTBOOT_END_PNG=cpu-near.png dtboot ipcn.syx --instr 7700M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M",
+          "sha256": "7646cf51b0e7646ccdab3eb09fa3a85c397f8203b1f613ceda9ddd4f08fe76ad"
+        }
+      ]
+    },
+    {
+      "schemaVersion": 1,
+      "machine": "analog-rytm-mkii",
+      "moduleId": "improved-performance",
+      "moduleVersion": "0.1.0-experimental",
+      "firmware": "1.74",
+      "capturedAt": "2026-11-21T07:50:00Z",
+      "imageSha256": "f4244b4a9e1c8685693f940314e2b106db0bfd6c680418f6a86dbf5a5ca3f706",
+      "build": "Modwerk's linker: the plain Rytm base (core-ar2 0.7) + this folder's Improved Performance 0.1.0-experimental compiled with -DCW_OVER_MEAN=1 (the mark's threshold lowered so that it shows in the emulator, where the audio load stays low; nothing else differs from the release build), materialised against stock OS 1.74, --version IPCO",
+      "emulator": {
+        "name": "rytm-emu",
+        "repository": "https://github.com/trigcondition/rytm-emu",
+        "binary": "dtboot",
+        "settings": "no card image (the card starts formatted); JIT on; --every 1000M",
+        "revision": "c5732f0"
+      },
+      "conditions": "Cold boot; four NO presses clear the notices; the main screen after 7,700 M instructions. The word OVR at the right end of the bottom bar: the overload.",
+      "captures": [
+        {
+          "path": "media/cpu-over.png",
+          "plan": "DTBOOT_END_PNG=cpu-over.png dtboot ipco.syx --instr 7700M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M",
+          "sha256": "4e3566338daec3c9a54ddb1c6b050f9f58220fcce13ac604d976f6994441d4bd"
+        }
+      ]
+    }
+  ]
+}
