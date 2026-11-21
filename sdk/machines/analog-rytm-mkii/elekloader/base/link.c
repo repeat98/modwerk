@@ -71,7 +71,6 @@
 #define UI_QUEUE ((void *(*)(void))UI_QUEUE_AT)
 #define QUEUE_POST ((void (*)(void *, const void *))QUEUE_POST_AT)
 #define VIEW_INVALIDATE ((void (*)(void *))VIEW_INVALIDATE_AT)
-#define FILLRECT ((void (*)(void *, int, int, int, int, int))FILLRECT_AT)
 #define SEQ_PLAYING (*(volatile int *)SEQ_PLAYING_AT)
 // The frame on the screen, 1024 bytes. Stock keeps two frame pointers side by side: it sends the one it drew
 // (0x40287b68) to the display, then swaps them, so the sent frame is the second (0x40287b6c). The first is the
@@ -822,18 +821,6 @@ void COLD mw_boot_gate(void)
         mw_boot_enter(arg);
     }
     mw_link_reset();
-}
-
-// The armed mark, on every frame: a black notch at the right end of the header bar,
-// columns 126-127, rows 2-6 from the top, beside stock's transport icon (x 121-125),
-// which it leaves alone. Screens without the white header show it as nothing. On the unit it merges
-// with the stop square and no one sees it: the GLOBAL row is what tells a person. Kept because the
-// rig's whole-screen references were recorded with it.
-void mw_link_draw(void *bmp, void *ctrl)
-{
-    (void)ctrl;
-    if (armed)
-        FILLRECT(bmp, 126, 57, 127, 61, 0);
 }
 
 // ---- GLOBAL > REMOTE CONTROL ---------------------------------------------------

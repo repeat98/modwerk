@@ -124,7 +124,7 @@ typedef void (*add_lock_trig_t)(void *tp, int step, int on);
 #define PAGE_SHOWN_FX 1            // page: the FX page
 #define PAGE_SHOWN_SEND 2          // the SEND page
 
-#define MODS_END 0x47c00000        // the end of the mods' RAM (elekloader's Analog Rytm MKII ddr), where the work area ends
+#define MODS_END 0x47f00000        // the end of the mods' RAM for base 0.7.1 on (the kit's coreDdr, kit-devices.ts), where the work area ends
 #define CLEAR_STEP 1024            // work area words cleared a block, the effect silent until it is clean
 #define UNITS_PER_BPM 120          // the tempo word's unit
 #define DIVS 12                    // note divisions (div_q1000)

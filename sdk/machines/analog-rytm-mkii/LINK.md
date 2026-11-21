@@ -43,8 +43,8 @@ send effect's work area could hold them; the tool reads there when `ident` names
 **GLOBAL > REMOTE CTRL**, the last row after SYSTEM, with stock's wrench icon. It is ON at every
 boot, power-on included: a development image is meant to be driven. YES on the row toggles it
 (OFF lasts until the next boot); RIGHT sets it ON. The row is the only place a person sees the
-arm: the base also draws a 2 x 5 notch at x 126-127 of the header bar, but on the unit it reads
-as part of stock's stop square, and only screen compares see it.
+arm; the screen is stock's. (Bases before 21 Nov 2026 drew a 2 x 5 notch at x 126-127 of the header
+bar while armed; the test runner's screen compares skip it, so references recorded with it still pass.)
 
 Reads (`ident`, `screen`, `mem`) work disarmed. Keys, turns, `confirm` and `ramboot` need the arm,
 and stop as soon as a person touches the panel: a press or turn on the panel while armed lets go
@@ -181,8 +181,8 @@ flashed image's, and the code that writes the request is the running image's.
 
 The gate calls nothing of the bootstrap or the OS: a MKII's SRAM did not hold the 1.74 container's
 bootstrap bytes (`ident`'s probe), so an earlier gate that called the bootstrap's depacker would
-have refused. The gate runs from the mod area (0x47be0000 up), its stack at 0x48000000 down, and
-the unpack writes below 0x403c8b00.
+have refused. The gate runs from the flashed base's mod area (0x47be0000 up on a 0.7 base,
+0x47b50000 up from 0.7.1), its stack at 0x48000000 down, and the unpack writes below 0x403c8b00.
 
 The cache: stock runs DDR copyback, and the soft reset does not write dirty lines out. A mailbox
 written through the cache and pushed with `cpushl` alone was not in DDR after the reset on a MKII.

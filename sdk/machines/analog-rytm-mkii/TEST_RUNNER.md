@@ -109,11 +109,12 @@ expect fb.count == 0                 # how many parameter messages: == != < >
 Every case starts with `release` and ends with the up of every key still held, then `release`. References are kept
 per target, `<refs>/<case folder>/<case>/<emu|unit>/NAME.pbm`, screens and sound measures only: a memory reference
 would be a memory dump, so `mem` compares with bytes written in the case or another capture. They are captures of the
-unit's screen and never enter Git. `--record` writes a reference only when the case had no problem and every other
-check passed, and says when it replaced a different one; it still records whatever the screen shows, so look at the
-PNGs before keeping a reference: one recorded from a wrong screen passes for ever. An `expect` that could not be
-checked (a failed capture, a short reply, no reference) makes the case an error, never a pass. A case with no `expect`
-passes when every request was answered, marked `(no checks)`.
+unit's screen and never enter Git. Every screen compare skips x 126-127, y 2-6, where bases before 21 Nov 2026 drew
+the link's armed mark, so references recorded with it still pass. `--record` writes a reference only when the case
+had no problem and every other check passed, and says when it replaced a different one; it still records whatever
+the screen shows, so look at the PNGs before keeping a reference: one recorded from a wrong screen passes for ever.
+An `expect` that could not be checked (a failed capture, a short reply, no reference) makes the case an error, never
+a pass. A case with no `expect` passes when every request was answered, marked `(no checks)`.
 
 ## Writing cases
 

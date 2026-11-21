@@ -23,7 +23,7 @@ const FX_EXPORTS = ['mw_fx_rate', 'mw_fx_onepole', 'mw_fx_tempo']
 describe('the Rytm sets\' Modwerk base', () => {
   it('serves each variant base-binding.json names, pinned by its identity', () => {
     for (const variant of VARIANTS) {
-      expect(variantPin(variant), variant).toMatchObject({ id: 'core', version: '0.7', device: 'analog-rytm-mk2', os: '1.74' })
+      expect(variantPin(variant), variant).toMatchObject({ id: 'core', version: '0.7.1', device: 'analog-rytm-mk2', os: '1.74' })
       expect(sha(read(variantPin(variant).file)), variant).toBe(RYTM_BASE.variants[variant])
     }
     expect(RYTM_BASE.identity).toBe(RYTM_BASE.variants['send-bus'])
@@ -153,4 +153,80 @@ describe.runIf(STOCK && FX)('a Rytm set built on the Modwerk base with the owner
     for (const field of bus.lock!.fields.filter(field => field.sym.startsWith('mw_send_'))) expect(back.lock!.freed, field.sym).toContainEqual(field)
     expect((await build(['analog-bd', 'chorus'], back.lock)).lock!.id).toBe(bus.lock!.id)
   }, 180_000)
+})
+
+// The mod area a set gets, through the same builder path and the owner's stock OS (MODWERK_RYTM_STOCK): base 0.7.1 on
+// links every set in the 3.7 MiB at 0x47b50000 (the kit's coreDdr, src/engine/elektron/kit-devices.ts). The buffers are
+// packages made here: a return and a .bss of the size named, no stock bytes. Run locally; CI has no stock file.
+describe.runIf(STOCK)('a Rytm set\'s mod area on the Modwerk base with the owner\'s OS', () => {
+  const BASE = 'https://modwerk.test/elekloader/'
+  const target = variantPackage('plain').target
+  const buffer = (id: string, bytes: number) => new TextEncoder().encode(JSON.stringify({
+    elemod: 2, id, version: '1.0', title: id, description: 'a test buffer', category: 'system', author: 'test', license: 'GPL-3.0-or-later', target,
+    sections: { '.run': { align: 4, parts: [['hex', '4e75']] }, '.bss': { align: 4, size: bytes } }, symbols: {}, exports: [], imports: [], weak: [], relocs: [], sites: [],
+    collections: {}, contribute: [], copied: [], resources: { regions: [], names: [], core: '0.7' }, requires: ['core'], conflicts: [], signature: null,
+  }))
+  const buffers = new Map([['buffer-200k', 200 * 1024], ['buffer-1m', 1048576], ['buffer-4m', 4 * 1048576]].map(([id, bytes]) => [id + '-1.0-os1.74.elemod', { id: id as string, data: buffer(id as string, bytes as number) }]))
+  const catalog: Catalog = { ...(CATALOG as Catalog), mods: [...(CATALOG as Catalog).mods, ...[...buffers].map(([file, mod]) => ({
+    file, sha256: sha(mod.data), id: mod.id, version: '1.0', device: 'analog-rytm-mk2', os: '1.74', license: 'GPL-3.0-or-later',
+    source: { repo: 'repeat98/modwerk', commit: '0'.repeat(40), path: 'sdk/imports/packages/' + mod.id + '/' + file },
+    title: mod.id.toUpperCase(), requires: ['core'], conflicts: [], needs_core: '0.7',
+  }))] }
+  const builder = () => {
+    const handle = createService(async url => {
+      const file = url.slice(BASE.length)
+      return file === 'catalog.json' ? new TextEncoder().encode(JSON.stringify(catalog)) : buffers.get(file)?.data ?? read(file)
+    })
+    const call = <T,>(name: string, args: Record<string, unknown> = {}, data?: ArrayBuffer) => handle({ call: name, args, data }) as Promise<T>
+    return {
+      call, load: () => call('init', { base: BASE }), setStock: async (file: File) => call('set_stock', { name: file.name }, await file.arrayBuffer()),
+      addCatalogMod: (file: string) => call('add_catalog_mod', { file }), mods: () => call('mods'),
+      tick: (enabled: readonly string[], path: string) => call('tick', { enabled, path }), check: (enabled: readonly string[]) => call('check', { enabled }),
+    } as unknown as Builder
+  }
+  const stock = () => new File([readFileSync(STOCK!)], 'Analog-Rytm_MKII_OS1.74.syx')
+  const AREA = [0x47b50000, 0x47f00000]
+  /** The set built on `variant`: where the linker put it (the build log's RAM line) and the .syx. */
+  const build = async (variant: Variant, moduleIds: string[]) => {
+    const client = builder()
+    const prepared = await prepareBuild(client, { machine: 'analog-rytm-mkii', release: '1.74', stock: stock(), moduleIds }, catalog)
+    if (!prepared.ok) return { error: [prepared.error, ...(prepared.check?.problems ?? [])].join('\n') }
+    expect(prepared.enabled.some(path => path.endsWith(variantPin(variant).file)), variant).toBe(true)
+    const result = await buildWithLock(client, prepared.enabled, 'MW01', 'test', null)
+    if (!result.ok) return { error: result.error }
+    const line = result.log.map(entry => entry[1]).find(text => text.startsWith('linked '))!
+    const [, start, end, spare] = line.match(/RAM 0x([0-9a-f]+)-0x([0-9a-f]+) \((\d+) bytes spare\)/)!
+    return { start: parseInt(start, 16), end: parseInt(end, 16), spare: Number(spare), syx: result.files.find(file => file.name.endsWith('.syx')) }
+  }
+
+  it('links a set under 128 KiB at the area\'s start', async () => {
+    const small = await build('plain', ['filter-hz', 'loop-sync'])
+    expect(small.start).toBe(AREA[0])
+    expect(small.end! - small.start!).toBeLessThan(131072)
+    expect(small.spare).toBe(AREA[1] - small.end!)
+    expect(small.syx).toBeDefined()
+  }, 120_000)
+  it('builds a set over 128 KiB on send-bus, with a send effect', async () => {
+    const bus = await build('send-bus', ['chorus', 'loop-sync', 'buffer-200k'])
+    expect(bus.start).toBe(AREA[0])
+    expect(bus.end! - bus.start!).toBeGreaterThan(131072)
+    expect(bus.spare).toBe(AREA[1] - bus.end!)
+    expect(bus.syx).toBeDefined()
+  }, 120_000)
+  it('builds a set over 128 KiB without the send bus, past 0x47c00000', async () => {
+    const voices = await build('voices', ['analog-bd', 'buffer-1m'])
+    expect(voices.start).toBe(AREA[0])
+    expect(voices.end).toBeGreaterThan(0x47c00000)
+    expect(voices.spare).toBe(AREA[1] - voices.end!)
+    expect(voices.syx).toBeDefined()
+    const plain = await build('plain', ['filter-hz', 'buffer-1m'])
+    expect(plain.end).toBeGreaterThan(0x47c00000)
+    expect(plain.syx).toBeDefined()
+  }, 180_000)
+  it('refuses a set past the area\'s end', async () => {
+    for (const [variant, ids] of [['plain', ['buffer-4m']], ['send-bus', ['chorus', 'buffer-4m']]] as const) {
+      const refused = await build(variant, [...ids])
+      expect(refused.error, variant).toMatch(/the mods need RAM to 0x[0-9a-f]+, past 0x47f00000 \(\d+ bytes over\)/)
+    }
+  }, 120_000)
 })
