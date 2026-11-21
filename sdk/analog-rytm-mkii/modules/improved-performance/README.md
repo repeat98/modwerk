@@ -19,7 +19,7 @@ None. There is nothing to switch on or set.
 | `CPU` in the lower right corner, in the bottom status bar | The audio load averaged 88 % or more over the last half second, or several blocks reached 97 %: close to dropouts. |
 | `OVR` in the same place | The load averaged 92 % or more, or several blocks used their whole period: the screen and keys slow down, and audio can drop out. |
 
-Both are written in the bar's own font, on its text line. They show on every screen that has the bottom status bar, and not in menus, lists or browsers. The corner is theirs: a mark another module has put there (Loop Sync's SYNC) is covered for as long as the word shows. The mark stays a second and a half after its cause has gone, so it does not flicker.
+Both are written in the bar's own font, on its text line. They show on every screen that has the bottom status bar, and not in menus, lists or browsers. The corner is theirs: what else stands there (a voice machine's type name, Loop Sync's SYNC) is covered for as long as the word shows. The mark stays a second and a half after its cause has gone, so it does not flicker.
 
 ## Usage
 
@@ -53,7 +53,7 @@ The CPU mark reads the core's own figure for each audio block (`core_audio_load`
 
 ## Changes to stock flows
 
-- **`CPU` and `OVR`** are written into the lower right corner of the bottom status bar (columns 112 to 125) while the load is high. That corner is empty in stock. The word takes it: a mark another module draws there (Loop Sync's SYNC on the SAMPLE page) is painted over while the load is high and comes back when it has gone, because the warning matters more than what else stands there. On a screen without the bottom bar nothing is drawn. It cannot be turned off. It is there because a module set can now bring the unit to its limit, and stock gives no sign of that before audio drops out.
+- **`CPU` and `OVR`** are written into the lower right corner of the bottom status bar while the load is high; the bar's right end, columns 96 to 127, is cleared under them. In stock that stretch is empty. On a voice machine's page the base writes the voice type there (808, 909 for Analog BD), and other modules put marks there (Loop Sync's SYNC on the SAMPLE page): the word covers them while the load is high, and they come back when it has gone, because the warning matters more. On a screen without the bottom bar nothing is drawn. It cannot be turned off. It is there because a module set can now bring the unit to its limit, and stock gives no sign of that before audio drops out.
 - Nothing else changes: no page, key, menu, save or load behaves differently.
 
 ## Compatibility and limitations

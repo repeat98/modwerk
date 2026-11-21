@@ -2,7 +2,7 @@
 
 Version 0.1.0-experimental, Analog Rytm MKII, OS 1.74. Tester and unit: Nathaniel Pavel (@npp1993), his own Analog Rytm MKII. Firmware, dumps and built images stay out of this folder.
 
-**What ran where.** The four assembly sources are the code that ran in every test below: the public files assemble, with `build.json`'s symbols, to the same code and data as the files the tests used (compared object for object). `src/cpu-mark.c`'s counting of the load is the tested code; its drawing was rewritten afterwards (stock's font, the words CPU and OVR, only where the bottom bar is) and has run in rytm-emu only. The unit tests ran from RAM beside 17 other modules of the author's set, on a development base with the USB link and a load meter. This release's source ran there as image IP06 on 21 November 2026; the package built from it in the pinned toolchain links, on the release base, to the same image as the source folder.
+**What ran where.** The four assembly sources are the code that ran in every test below: the public files assemble, with `build.json`'s symbols, to the same code and data as the files the tests used (compared object for object). `src/cpu-mark.c`'s counting of the load is the tested code. Its drawing ran on the unit in IP06 (stock's font, CPU and OVR in the bar's lower right corner) but never showed there, as the load stayed under 88 %; two small changes after IP06 (the bar cleared from column 96, the font routine's return declared as an integer, after a fourth review) ran in rytm-emu only. The unit tests ran from RAM beside 17 other modules of the author's set, on a development base with the USB link and a load meter. This release's source ran there as image IP06 on 21 November 2026; the package built from it in the pinned toolchain links, on the release base, to the same image as the source folder.
 
 ## rytm-emu
 
@@ -17,7 +17,7 @@ A local build of rytm-emu with a cache model and an interrupt profiler added (no
 
 **The after-use rest of the delay and the reverb** (the one part that is not bit-identical), its own session of 133,301 blocks: identical in every word from power-on to the first rest after use. At rest the output is zero where stock's was at most 266 (delay) and 60 (reverb) of 2^31; a 24-bit converter step is 256. With feedback raised to 100 and no input, the rest ended and the tone grew out of the residue as in stock. After the next use the two runs were identical again.
 
-**CPU and OVR** (upstream rytm-emu c5732f0, builds with one threshold lowered so that the word shows): on the main screen and under the TEMPO pop-up the word sits in the bottom bar's lower right corner, in the bar's font and on its text line; with a test module's dark box in that corner (where Loop Sync shows SYNC) the word replaces the box cleanly; on the GLOBAL menu and over the machine list nothing is drawn.
+**CPU and OVR** (upstream rytm-emu c5732f0, builds with one threshold lowered so that the word shows): on the main screen and under the TEMPO pop-up the word sits in the bottom bar's lower right corner, in the bar's font and on its text line; with a test module's dark box in that corner (where Loop Sync shows SYNC) the word replaces the box cleanly; a test build whose level cycles every second showed the word appear and clear again on the next redraw (eight screens over about 3 s); on the GLOBAL menu and over the machine list nothing is drawn.
 
 Not reached in rytm-emu: a USB audio stream, a sample that plays, the interrupt's short path during a project load.
 

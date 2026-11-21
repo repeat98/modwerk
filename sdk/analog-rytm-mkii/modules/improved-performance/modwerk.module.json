@@ -55,7 +55,7 @@
     "limitations": [
       "Analog Rytm MKII, OS 1.74 only.",
       "One part is not bit-identical to stock: once the delay or the reverb has had no input for the length of its memory and has died away below -114 dBFS, it outputs exact silence where stock keeps computing that residue.",
-      "CPU and OVR show only on screens with the bottom status bar: not in menus, lists or browsers. They take the bar's lower right corner: another module's mark there (Loop Sync's SYNC) is covered while they show.",
+      "CPU and OVR show only on screens with the bottom status bar: not in menus, lists or browsers. They take the bar's right end (columns 96 to 127): the base's voice type name (808, 909) and another module's mark there (Loop Sync's SYNC) are covered while they show.",
       "Tested on one unit, with one project, in a set of 17 other modules. A project load while sound rings and a long USB audio stream are not tested.",
       "What it saves depends on the project: a voice, a send or a modulation that is in use costs what it costs in stock."
     ]
@@ -99,6 +99,7 @@
       "limitations": [
         "The image holds the author's private development base (with the link and a meter) and 17 other modules, not the published base with this module alone.",
         "The self-checks ran in test builds with counters; the four assembly files of this release assemble to the same code.",
+        "After IP06 the CPU/OVR drawing changed twice in small ways (the bar is cleared from column 96, where the base writes a voice type name; the font routine's return is declared as an integer): those ran in rytm-emu only.",
         "CPU and OVR were not seen on the unit: the load never reached 88 %. Their drawing has run in rytm-emu only.",
         "The two load figures are four days apart, from the same pattern of a project the author kept working on.",
         "A project load while sound rings and a long USB audio stream are not tested."
@@ -152,7 +153,7 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ba3c846291b71347dfdf8e16e56fdabef859b09efdd0b74f2e04d5a0a6d67309",
+        "imageSha256": "778b3de031c862d49813d94269ccd1803d7bda3519265573d74ed53b661d31ea",
         "setup": "Headless rytm-emu (dtboot, c5732f0) running IPCN: the plain Rytm base and this folder's Improved Performance 0.1.0-experimental built with -DCW_NEAR_MEAN=1 so that the mark shows, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
       }
     },
@@ -168,7 +169,7 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "f4244b4a9e1c8685693f940314e2b106db0bfd6c680418f6a86dbf5a5ca3f706",
+        "imageSha256": "f5f50ee31cc4b91f2596324596849a29504418533ed972f8f4d3c6f25532e3b4",
         "setup": "Headless rytm-emu (dtboot, c5732f0) running IPCO: the plain Rytm base and this folder's Improved Performance 0.1.0-experimental built with -DCW_OVER_MEAN=1 so that the mark shows, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
       }
     }

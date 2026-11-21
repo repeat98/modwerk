@@ -14,8 +14,8 @@
 // block that follows a late one reads high (an 85 % block can read 256). The mean does not have that fault.
 // A level stays up for CW_HOLD looks after the last one that found it, so the mark does not flicker.
 // ev_draw writes a word into the bottom status bar's lower right corner, in the bar's own font and on its text
-// line: CPU for near, OVR for over. The corner is the word's: another module's mark there is painted over while
-// it shows. On a screen without the bar (a menu, a list, a browser) nothing is drawn.
+// line: CPU for near, OVR for over. The bar's right end is the word's: the base's voice type name and another
+// module's mark there are painted over while it shows. On a screen without the bar (a menu, a list, a browser) nothing is drawn.
 // A redraw is asked for only when the level changes. No stock site is patched; the draw calls stock's text routine.
 //
 // Why these figures (the author's MKII, 17 and 18 Nov 2026, a set of 18 modules): with the mean at
@@ -48,6 +48,9 @@
 
 static volatile uint32_t sum, blocks, high, full;    // written by the audio interrupt, cleared by the tick
 static uint8_t ticks, level, near_left, over_left;
+#ifdef CW_TEST_CYCLE
+static uint32_t cycle;
+#endif
 
 // The audio interrupt: about a dozen instructions a block.
 void cpu_warning_out(void)
@@ -83,6 +86,9 @@ CW_UI void cpu_warning_tick(void *ctrl)
     else if (near_left)
         near_left--;
     now = over_left ? 2 : near_left ? 1 : 0;
+#ifdef CW_TEST_CYCLE
+    now = (uint8_t)((++cycle / CW_TEST_CYCLE) % 3);   // test builds only: 0, 1, 2 in turn, to see the word clear
+#endif
     if (now != level) {
         level = now;
         ((char *)ctrl)[CTRL_REDRAW] = 1;
@@ -95,16 +101,19 @@ CW_UI void cpu_warning_tick(void *ctrl)
 // on a lit ground, the seventh is a string as wide as the widest text.
 typedef void (*text_draw_t)(void *bmp, void *font, int x, int y, int centred, int dark, const char *width,
                             const char *fmt, ...);
-typedef void *(*text_font_t)(void *ctx);
+typedef uint32_t (*text_font_t)(void *ctx);   // stock returns the font in d0: declared as an integer, as the
+                                              // base and Quick Mod Assign do (a pointer return reads a0)
 #define MARK_Y 2
 // The bar's lower right corner belongs to this word: whatever else stands there (another module's mark) is painted
 // over while it shows. The text's right edge is in line with the transport icon's above.
 #define CORNER_X 119                // the text's centre: columns 112 to 125, the bar's left margin mirrored
-#define CORNER_FROM 108             // the columns painted as empty bar under the word
+#define CORNER_FROM 96              // the columns painted as empty bar under the word: the bar's right end, where
+                                    // the base writes a voice machine's type name (808, 909) and other modules their marks
 #define CORNER_TO 127
 
-// The bottom status bar is a lit band over rows 55..63 with a dark row above it. A column's first word holds
-// the bottom 32 rows, the bottom row in bit 31.
+// The bottom status bar is a lit band over rows 55..63 with a dark row above it, rows counted from the top here
+// (the text routine's y counts up from the bottom row). A column's first word holds the bottom 32 rows, the
+// bottom row in bit 31.
 #define BAR_ROWS 0xff800000u        // rows 63..55
 #define BAR_ABOVE 0x00400000u       // row 54
 static const uint8_t bar_at[2] = { 1, 87 };   // the bar's left end, and the column after the pattern
@@ -127,6 +136,6 @@ CW_UI void cpu_warning_draw(void *bmp, void *ctrl)
             return;
     for (i = CORNER_FROM; i <= CORNER_TO; i++)
         w[i * stride] |= BAR_ROWS;
-    ((text_draw_t)TEXT_DRAW_AT)(bmp, ((text_font_t)TEXT_FONT_AT)((void *)TEXT_CTX_AT), CORNER_X, MARK_Y, 1, 1,
+    ((text_draw_t)TEXT_DRAW_AT)(bmp, (void *)((text_font_t)TEXT_FONT_AT)((void *)TEXT_CTX_AT), CORNER_X, MARK_Y, 1, 1,
                                 "XXX", "%s", level == 1 ? "CPU" : "OVR");
 }

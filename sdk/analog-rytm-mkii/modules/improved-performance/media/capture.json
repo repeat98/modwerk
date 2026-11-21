@@ -10,8 +10,8 @@
       "moduleId": "improved-performance",
       "moduleVersion": "0.1.0-experimental",
       "firmware": "1.74",
-      "capturedAt": "2026-11-21T07:50:00Z",
-      "imageSha256": "ba3c846291b71347dfdf8e16e56fdabef859b09efdd0b74f2e04d5a0a6d67309",
+      "capturedAt": "2026-11-21T15:40:00Z",
+      "imageSha256": "778b3de031c862d49813d94269ccd1803d7bda3519265573d74ed53b661d31ea",
       "build": "Modwerk's linker: the plain Rytm base (core-ar2 0.7) + this folder's Improved Performance 0.1.0-experimental compiled with -DCW_NEAR_MEAN=1 (the mark's threshold lowered so that it shows in the emulator, where the audio load stays low; nothing else differs from the release build), materialised against stock OS 1.74, --version IPCN",
       "emulator": {
         "name": "rytm-emu",
@@ -35,8 +35,8 @@
       "moduleId": "improved-performance",
       "moduleVersion": "0.1.0-experimental",
       "firmware": "1.74",
-      "capturedAt": "2026-11-21T07:50:00Z",
-      "imageSha256": "f4244b4a9e1c8685693f940314e2b106db0bfd6c680418f6a86dbf5a5ca3f706",
+      "capturedAt": "2026-11-21T15:40:00Z",
+      "imageSha256": "f5f50ee31cc4b91f2596324596849a29504418533ed972f8f4d3c6f25532e3b4",
       "build": "Modwerk's linker: the plain Rytm base (core-ar2 0.7) + this folder's Improved Performance 0.1.0-experimental compiled with -DCW_OVER_MEAN=1 (the mark's threshold lowered so that it shows in the emulator, where the audio load stays low; nothing else differs from the release build), materialised against stock OS 1.74, --version IPCO",
       "emulator": {
         "name": "rytm-emu",
