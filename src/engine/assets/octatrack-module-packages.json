@@ -479,8 +479,8 @@
       "subscribe": [
         "ot_sample_editor_actions:bs_sample_action:50"
       ],
-      "version": "0.1.66-experimental",
-      "path": "octatrack-modules/beat-slicer/0.1.66-experimental.mwrm",
+      "version": "0.1.68-experimental",
+      "path": "octatrack-modules/beat-slicer/0.1.68-experimental.mwrm",
       "abi": 8,
       "features": 128,
       "sites": 0,
@@ -488,8 +488,8 @@
       "fills": 0,
       "name": "beat-slicer",
       "module": "c8d078f2",
-      "bytes": 5780,
-      "sha256": "6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d"
+      "bytes": 5332,
+      "sha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643"
     },
     {
       "id": "temp-save",
