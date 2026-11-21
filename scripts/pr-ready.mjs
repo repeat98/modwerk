@@ -170,6 +170,13 @@ async function main(argv) {
   let behind = false
   try { git('merge-base', '--is-ancestor', base, head) } catch { behind = true }
   const python = localPythonProblem(root)
+  // Assign before the expensive check. Ignored replay files leave the staged tree unchanged.
+  const eligible = commit ? dirty.length && !git('ls-files', '--others', '--exclude-standard') && !git('diff', '--name-only') : !dirty.length && head !== base
+  if (!python && !behind && eligible) {
+    const { localReplay } = await import('./agent-eval/run.mjs')
+    const tree = commit ? git('write-tree') : git('rev-parse', 'HEAD^{tree}')
+    if (!localReplay(tree, remote, option('--eval-agent'))) return 2
+  }
   // Each step runs only when the ones before it passed, so the first problem is the one to fix.
   let regenerated = [], checkPassed = true, scope = null
   const check = () => npm('check', '--', '--base', base)
