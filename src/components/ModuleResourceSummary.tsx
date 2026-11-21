@@ -13,7 +13,9 @@ export function ModuleResourceSummary({ heading = 'Estimated load', indicators, 
       {indicators.map(indicator => <div className={'resource-gauge resource-gauge-' + indicator.id} key={indicator.id}>
         <dt>{indicator.label}</dt>
         <dd>
-          <div className="resource-gauge-dial" role={indicator.score === null ? 'img' : 'meter'}
+          {indicator.score === null && indicator.valueText !== undefined ? <div className="resource-gauge-dial">
+            <strong><span aria-hidden="true">{indicator.value}</span><span className="sr-only">{indicator.valueText}</span></strong>
+          </div> : <div className="resource-gauge-dial" role={indicator.score === null ? 'img' : 'meter'}
             aria-label={indicator.ariaLabel ?? (indicator.label + ' relative load' + (indicator.score === null ? ': ' + indicator.status : ''))}
             aria-valuemin={indicator.score === null ? undefined : 0} aria-valuemax={indicator.score === null ? undefined : indicator.maximum ?? 4} aria-valuenow={indicator.score ?? undefined}
             aria-valuetext={indicator.score === null ? undefined : indicator.valueText ?? indicator.value + ' · ' + indicator.status.toLowerCase() + ' relative load'}>
@@ -22,7 +24,7 @@ export function ModuleResourceSummary({ heading = 'Estimated load', indicators, 
               <path className="resource-gauge-fill" d="M 8 48 A 40 40 0 0 1 88 48" pathLength="100" strokeDasharray="100" strokeDashoffset={100 - indicator.fill} />
             </svg>
             <strong aria-hidden="true">{indicator.value}</strong>
-          </div>
+          </div>}
           <span className="resource-gauge-status">{indicator.status}</span>
         </dd>
       </div>)}
