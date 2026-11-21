@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" class="signal-art" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title description">
+<title id="title">IMPROVED PERFORMANCE</title>
+<desc id="description">The audio block as a row of pieces of work: the ones that would change nothing are left out, and the load falls.</desc>
+<style>.signal-grid{stroke:#fff;opacity:.035;stroke-width:.7}.signal-main{stroke:#9eb4ed;stroke-width:2.7}.signal-secondary{stroke:#9eb4ed;opacity:.65;stroke-width:1.7}.signal-ghost{stroke:#9eb4ed;opacity:.2;stroke-width:1.3}.signal-art text{fill:#9eb4ed;opacity:.8;font:10px monospace;letter-spacing:.7px;stroke:none}</style>
+<rect width="320" height="192" fill="#232328"/>
+<g class="signal-grid"><path d="M20 52H300"/><path d="M20 97H300"/><path d="M20 142H300"/><path d="M64 33V163"/><path d="M128 33V163"/><path d="M192 33V163"/><path d="M256 33V163"/></g>
+<g>
+<path class="signal-ghost" d="M73 112V76H93V112Z M102 112V76H122V112Z M160 112V76H180V112Z M189 112V76H209V112Z M247 112V76H267V112Z"/>
+<path class="signal-main" d="M44 112V76H64V112Z M131 112V76H151V112Z M218 112V76H238V112Z"/>
+<path class="signal-secondary" d="M40 128H280"/>
+<path class="signal-ghost" d="M40 150H280"/>
+<path class="signal-main" d="M40 150H128"/>
+<text x="40" y="44">AUDIO BLOCK</text><text x="280" y="44" text-anchor="end">EVERY 32 SAMPLES</text>
+<text x="40" y="176">WORK THAT CHANGES NOTHING</text><text x="280" y="176" text-anchor="end">LEFT OUT</text>
+</g>
+</svg>
