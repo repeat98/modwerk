@@ -10,7 +10,7 @@ Who is asking decides the flow:
 - **A registered author of the module:** the guided flow in `docs/MODULE_AUTHOR_UPDATES.md#start-with-an-issue`.
   - Release steps wait for their actual hardware results.
   - After live verification they post `/modwerk resolve <version> verified-download` on the issue.
-- **Anyone else:** ask the module's author first (`docs/DEVELOPER_WORKFLOW.md#ask-the-author-first`). A fix to shared code is its own `Fix:` pull request.
+- **Anyone else:** ask the module's author first (`docs/DEVELOPER_WORKFLOW.md#ask-the-author-first`). Put base fixes directly on the [machine’s cumulative draft](../../../docs/DEVELOPER_WORKFLOW.md#change-a-base). Other shared-code fixes have their own `Fix:` pull request.
   - With their OK linked and the author @mentioned, the fix is an ordinary pull request the owner reviews (`docs/DEVELOPER_WORKFLOW.md#update-or-fix-an-approved-module`).
   - Record results from your own unit as yours, on the named build; never attest for the author.
   - Resolving the report is for the module's registered author (`/modwerk resolve`) or the owner's flow, once the live download is verified.

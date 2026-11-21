@@ -80,12 +80,19 @@ describe('pr:ready verdict', () => {
     expect(notes.at(-1)).toContain('If main moves before the merge, run this again')
   })
   it('says a change to what runs on an instrument opens as a draft until the exact build ran on a unit', () => {
-    const verdict = readiness({ instrument: ['src/engine/assets/octatrack-base.elemod'] })
+    const verdict = readiness({ instrument: ['public/octatrack-modules/synth/example.mwrm'] })
     expect(verdict.ok).toBe(true)
     expect(verdict.instrument).toBe(true)
     expect(verdict.notes.find(note => note.startsWith('This changes what runs on an instrument'))).toContain('gh pr create --draft')
     expect(verdict.notes.at(-1)).toContain('If main moves before the merge, run this again')
     expect(readiness({}).instrument).toBe(false)
+  })
+  it('routes a base build to the cumulative draft without prompting for a topic PR', () => {
+    const verdict = readiness({ instrument: ['src/engine/assets/octatrack-base.elemod'] })
+    expect(verdict.baseDraft).toBe(true)
+    expect(verdict.notes.join(' ')).toContain('directly to base/<machine>-next')
+    expect(verdict.notes.join(' ')).not.toContain('gh pr create --draft')
+    expect(verdict.notes.join(' ')).not.toContain('open or update the PR')
   })
   it('asks what the guides lacked, listing the guide edits on the branch', () => {
     const asked = readiness({}).notes.find(note => note.startsWith('What did the guides lack'))
@@ -126,7 +133,7 @@ describe('pr:ready verdict', () => {
     expect(baseEdits(threshold.slice(1))).toEqual([])
     const verdict = readiness({ baseEdits: threshold.slice(1) })
     expect(verdict.ok).toBe(false)
-    expect(verdict.problems[0]).toContain('its own owner-reviewed pull request')
+    expect(verdict.problems[0]).toContain('directly to the machine’s base/<machine>-next branch')
   })
   it('refuses both in CI for a contributor\'s module pull request opened from the start day, never the owner\'s', () => {
     const files = ['sdk/drafts/threshold-slices/README.md', 'sdk/machines/octatrack/events.json', 'scripts/modules.mjs']
