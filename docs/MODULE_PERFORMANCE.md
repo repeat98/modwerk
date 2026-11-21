@@ -19,7 +19,7 @@ python3 -B sdk/machines/octatrack/elekloader/build_core.py \
   --resident-stock-hooks --resident-on-demand
 ```
 
-For a minimal comparison **without resident hooks**, omit the last two flags on a revision that links that profile. On `457a216cc` it stops at the unresolved symbol `modwerk_machine_assigned`, whose definition is built with the resident controller. Record the enabled flags alongside the revision so these two profiles can be distinguished.
+For a minimal comparison **without resident hooks**, omit the last two flags. Before the 0.7.13 fix that profile stopped at the unresolved symbol `modwerk_machine_assigned`, which only the resident controller defined; the machine registry now defines it when the controller is absent, and `sdk/tests/test_machine_events.py` keeps both profiles linking. Record the enabled flags alongside the revision so these two profiles can be distinguished.
 
 A successful build verifies the linked and packed private image. Keep its output outside Git. CPU figures require a run on a named build with the same saved Part, transport state and empty inventory. Label these figures as a development-base baseline; stock OS 1.40C has no Modwerk `stats` reading.
 
