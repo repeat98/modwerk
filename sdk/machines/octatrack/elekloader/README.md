@@ -105,8 +105,8 @@ needs `npm ci`'s generated files first (`npm run prepare`). To boot a built base
 `MAIN.raw`: the plain octabam `ot_emu` boots it but never creates the base's status task, so the sequencer sends no
 MIDI. On Linux use `flock` where that README says `lockf -k`.
 
-Analog BD's trust row hashes its reviewed inputs, `machine-ports.json` among them, so an edit there (any machine's
-entry) also needs this regeneration.
+Analog BD's trust row hashes its reviewed inputs, including its own entry in `machine-ports.json`. A change to
+that entry needs this regeneration. Edits to another machine's entry leave Analog BD's trust row alone.
 
 USB Audio is part of the base: its output layout sets the USB descriptors, so each layout is its own base, sent over
 USB like any base update when a module set asks for another layout (`src/engine/elekloader/base-variants.ts`). The

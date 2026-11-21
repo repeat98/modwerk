@@ -933,13 +933,17 @@ def octabam_tables(args):
 def machine_inputs(name, adapters):
     """The exact inputs a machine package's image comes from: its port's reviewed sources and the builders."""
     import machine_ports
-    entry = machine_ports.port(name) or {}
+    port_file = adapters / 'machine-ports.json'
+    entry = machine_ports.port(name, port_file) or {}
     root = Path(__file__).resolve().parents[3]
     ports = {'vector': ('vector_runtime.py',), 'synth': ('fm_runtime.py',), 'quantizer': ('quantizer_runtime.py',),
              'analog-bassdrum': ('analog_bd_runtime.py', 'analog_bd_write_lease.py', 'stock_hook_write_lease.h')}
-    files = [Path(__file__).resolve(), adapters / 'machine_ports.py', adapters / 'machine-ports.json'] + [
+    files = [Path(__file__).resolve(), adapters / 'machine_ports.py'] + [
         adapters / n for n in ports.get(name, ()) if (adapters / n).is_file()]
-    out = {str(f.relative_to(root)): hashlib.sha256(f.read_bytes()).hexdigest() for f in files}
+    out = {f.relative_to(root).as_posix(): hashlib.sha256(f.read_bytes()).hexdigest() for f in files}
+    # Only this machine's row feeds its package and controller policy.
+    port_input = json.dumps(entry, sort_keys=True, separators=(',', ':')).encode()
+    out[port_file.relative_to(root).as_posix()] = hashlib.sha256(port_input).hexdigest()
     out.update(entry.get('sources', {}))
     return dict(sorted(out.items()))
 
