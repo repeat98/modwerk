@@ -69,35 +69,28 @@ function amigaKeys() {
 }
 
 // Hand-drawn art for the catalog modules. A module without an entry shows its presentation/thumbnail.svg.
-/* Grain: a stretch of the sample, and six Hann windows read from around POS. */
-function grainWave() {
-  let d = ''
-  for (let i = 0; i <= 132; i++) {
-    const t = i / 132, y = 92 + Math.sin(i * .9) * Math.cos(i * .23) * (5 + 15 * Math.sin(t * Math.PI))
-    d += (i ? 'L' : 'M') + (28 + i * 2) + ' ' + y.toFixed(1)
+/* Grain, as its full-screen page draws it: the stereo sample filled, POS, and the grains as squares. */
+function grainLane(centre: number, seed: number) {
+  let top = '', bottom = ''
+  for (let i = 0; i <= 88; i++) {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff
+    const x = 28 + i * 3, a = 2 + (6 + seed % 13) * Math.min(1, i / 5, (88 - i) / 5) * (.6 + .4 * Math.sin(i * .13))
+    top += (i ? 'L' : 'M') + x + ' ' + (centre - a).toFixed(1)
+    bottom = 'L' + x + ' ' + (centre + a).toFixed(1) + bottom
   }
-  return d
+  return top + bottom + 'Z'
 }
-function grainWindow(cx: number, height: number) {
-  let d = ''
-  for (let i = 0; i <= 16; i++) {
-    const t = i / 16
-    d += (i ? 'L' : 'M') + (cx - 22 + t * 44).toFixed(1) + ' ' + (150 - height * (1 - Math.cos(2 * Math.PI * t)) / 2).toFixed(1)
-  }
-  return d
-}
-const GRAINS: readonly [number, number][] = [[118, 26], [134, 38], [148, 31], [163, 40], [177, 29], [193, 22]]
+const GRAINS: readonly [number, number, boolean][] = [[124, 66, false], [138, 118, true], [149, 74, true], [165, 61, false], [176, 126, true], [191, 80, false]]
 
 const ART: Readonly<Record<string, () => ReactElement>> = {
   grain: () => <g>
-    <path className="signal-ghost" d={grainWave()} />
-    <path className="signal-secondary" d="M156 40V150" strokeDasharray="3 5" />
-    {GRAINS.map(([cx, height], i) => <g key={cx}>
-      <path className={i % 2 ? 'signal-main' : 'signal-secondary'} d={grainWindow(cx, height)} />
-      <circle className="signal-dot" cx={cx} cy={150 - height} r="2" />
-    </g>)}
-    <text x="25" y="27">SAMPLE</text><text x="148" y="27">POS</text><text x="230" y="27">6 GRAINS</text>
-    <text x="25" y="177">ONE SAMPLE → A CLOUD</text>
+    <path className="signal-dot" opacity=".55" d={grainLane(74, 7)} />
+    <path className="signal-dot" opacity=".55" d={grainLane(122, 11)} />
+    <path className="signal-secondary" d="M156 40V156" strokeDasharray="2 4" />
+    <path className="signal-dot" d="M151 34H161L156 40Z" />
+    {GRAINS.map(([x, y, filled]) => filled
+      ? <rect key={x} className="signal-dot" x={x - 4} y={y - 4} width="8" height="8" />
+      : <rect key={x} className="signal-main" x={x - 4} y={y - 4} width="8" height="8" />)}
   </g>,
   poly8: () => <g>
     <path className="signal-main" d="M27 96H33C36 96 37 79 41 79S46 113 50 113 55 84 59 84 63 106 67 106 71 96 75 96H81" />
