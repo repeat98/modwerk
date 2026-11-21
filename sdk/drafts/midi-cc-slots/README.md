@@ -1,6 +1,6 @@
 # Midi Mode 2 — upstream review draft
 
-**Read [UPSTREAM_REVIEW.md](UPSTREAM_REVIEW.md) first.** This submission is a source snapshot for review. Current upstream correctly rejects the historical bank-load detour because the base now owns `ev_bank_load`. No installable current-base package or public listing is included.
+**Current upstream experiment: 0.0.20.** Read [BANK_LOAD_EVENTS.md](BANK_LOAD_EVENTS.md) for the paired-event adapter, failure-path host checks and explicit result-less-hook limitations. It builds with `--shared-bank-events`; hardware/native-load qualification and public catalogue registration remain pending. [UPSTREAM_REVIEW.md](UPSTREAM_REVIEW.md) retains the initial submission status.
 
 **Historical local-fork candidate: 0.0.19-experimental.** This compatibility update targets the published 5 November base `462fbd2b…` and its updated Sidechain Compressor / Mute Modes packages. The authored MIDI package is byte-identical to 0.0.18; all 24 patch sites and 25 stock-copy guards match the new base and have no declared base-owned overlap. All eight installer selections and the actual host C loader lifecycle passed offline. Hardware execution and restart on this base are **not tested**. See [the hardware test steps](HARDWARE_TEST_0.0.19.md).
 

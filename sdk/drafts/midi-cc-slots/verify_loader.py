@@ -26,9 +26,12 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--package', required=True, type=Path)
     p.add_argument('--main', required=True, type=Path)
+    p.add_argument('--shared-bank-events', action='store_true', help='Admit shared site events using the actual generated Octatrack event registry')
     args = p.parse_args()
     loader = ROOT / "sdk/runtime/loader"
     source = fixture_source(args.main)
+    if args.shared_bank_events:
+        source = '#define MODWERK_RUNTIME_EVENTS\n' + source + '\nconst uint8_t modwerk_events_code[1]={0},modwerk_events_code_end[1]={0};\nconst unsigned char modwerk_raise_ev_mute_keep[]={0},modwerk_raise_ev_trig_muted[]={0};\n'
     source += r'''
 int main(int argc, char **argv) {
     CHECK(argc == 3);
@@ -56,7 +59,8 @@ int main(int argc, char **argv) {
 '''
     with tempfile.TemporaryDirectory(prefix='cc-loader-') as temp:
         folder = Path(temp); (folder/'fixture.c').write_text(source)
-        subprocess.run(['cc','-std=c99','-I',str(loader),'-I',str(ROOT/'sdk/runtime/upload'),str(folder/'fixture.c'),'-o',str(folder/'fixture')],check=True,capture_output=True)
+        compiled=subprocess.run(['cc','-std=c99','-I',str(loader),'-I',str(ROOT/'sdk/runtime/upload'),'-I',str(ROOT/'sdk/machines/octatrack/elekloader'),str(folder/'fixture.c'),'-o',str(folder/'fixture')],capture_output=True,text=True)
+        if compiled.returncode:raise RuntimeError(compiled.stderr)
         subprocess.run([str(folder/'fixture'),str(args.main.resolve()),str(args.package.resolve())],check=True)
 
 if __name__ == '__main__':

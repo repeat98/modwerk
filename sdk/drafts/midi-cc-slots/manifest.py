@@ -7,8 +7,8 @@ USB base plus saved sets; build_resident.py remains the historical C15 adapter.
 """
 
 MODULE_ID = 'midi-cc-slots'
-VERSION = '0.0.19-experimental'
-USB_TRIAL_VERSION = '0.0.19-experimental'
+VERSION = '0.0.20-experimental'
+USB_TRIAL_VERSION = '0.0.20-experimental'
 LEGACY_USB_TRIAL_VERSION = '0.0.13-experimental'
 RUNTIME_BUILDER = 'build_runtime.py'
 CARD_BUILDER = 'build_usb_installer.mjs'
@@ -19,3 +19,6 @@ LOCAL_COMBINED_CARD_SUPPORTED = True
 NATIVE_CARD_SUPPORTED = False
 
 USB_CARD_INSTALLER_BUILDER = 'build_usb_installer.mjs'
+
+# The upstream event experiment is separate from historical local-site pins.
+SHARED_BANK_BUILD = 'shared-bank-build.json'

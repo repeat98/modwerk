@@ -218,8 +218,23 @@ static void advance(void){
     }
 }
 void mm_profile_service(void){
-    pending_wake=0;if(!mm_profile_gate())return;
+    pending_wake=0;
+#ifdef MM_SHARED_BANK_EVENTS
+    if(mt_bank_load_active())return;
+#endif
+    if(!mm_profile_gate())return;
     char now[260];if(!current(now))return;
+#ifdef MM_SHARED_BANK_EVENTS
+    unsigned mask;uint32_t caller;
+    if(mt_bank_take_completed(&mask,&caller)){
+        /* A post notification is not success. Once the engine queue is idle,
+         * only a changed current-project identity permits invalidation. A failed
+         * or same-project load keeps names, dirty data, clone and recovery state.
+         * No bank mask, bank checksum or post-hook return is a success oracle. */
+        (void)mask;
+        if(!same(now,directory))mt_project_loaded(caller);
+    }
+#endif
     if(!loaded||!same(now,directory)){
         unsigned was=requested||confirming;requested=finishing=busy=step=cancelled=confirming=confirm_armed=replacing=0;copy(directory,now,260);load_profile();recovery=1;rollback_reload=1;
         if(recover()!=1){busy=1;return;}if(was)announce(13);
@@ -246,7 +261,11 @@ void mm_profile_tick(void*api){
     }
     if(mt_busy()&&step!=3&&mt_cancel_held())cancelled=1;
     (void)api;if(redraw){redraw=0;mm_profile_redraw(status);}
-    if(++ticks<60&&((step==3&&status==12)||(loaded&&!step&&(!dirty||!mt_writable())&&!requested&&!recovery&&!finishing)))return;
+    if(++ticks<60
+#ifdef MM_SHARED_BANK_EVENTS
+        &&!mt_bank_load_pending()
+#endif
+        &&((step==3&&status==12)||(loaded&&!step&&(!dirty||!mt_writable())&&!requested&&!recovery&&!finishing)))return;
     ticks=0;if(!pending_wake){pending_wake=1;if(!mm_profile_wake())pending_wake=0;}
 }
 void mm_profile_changed(void){++revision;dirty=1;}

@@ -22,6 +22,7 @@ NAME_REPLAYS = [('header', 0x4004c40c, 8, 'names_header'), ('names_key', 0x4004a
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--current-base', action='store_true', help='Build the shared NOTE SETUP compatible local candidate')
+    p.add_argument('--shared-bank-events', action='store_true', help='0.0.20 experiment: paired shared bank-load notifications; requires --current-base')
     p.add_argument('--guards', type=Path, default=HERE / 'runtime-guards.json')
     p.add_argument('--output', type=Path, required=True)
     p.add_argument('--profile', action='store_true', help='Build the persistent project-profile experiment')
@@ -35,6 +36,7 @@ def main():
         p.error('--audit-dir must stay outside Git')
     if args.project_template and not args.profile:p.error('--project-template requires --profile')
     if args.current_base and not args.project_template:p.error('--current-base requires --project-template')
+    if args.shared_bank_events and not args.current_base:p.error('--shared-bank-events requires --current-base')
     guards = json.loads(args.guards.read_text())
     adapter=json.loads((HERE/'current-base-adapter.json').read_text())
     if args.current_base:guards[adapter['site']]=adapter['sha256']
@@ -56,10 +58,13 @@ def main():
         run('m68k-elf-as', '-mcpu=54455', '-o', 'slots.o', 'slots.s')
         units = ['slots.o']
         if args.profile:
-            for file in (['template/profile.c','template/platform.c','template/banks.c'] if args.project_template else ['profile.c', 'profile_140c.c']):
+            files=['template/profile.c','template/platform.c','template/banks.c'] if args.project_template else ['profile.c', 'profile_140c.c']
+            if args.shared_bank_events:files+=['template/bank_load.c']
+            for file in files:
                 obj = file+'.o'
                 (work/obj).parent.mkdir(parents=True,exist_ok=True)
                 audit_flags=['-fstack-usage','-fcallgraph-info=su'] if args.audit_dir else []
+                if args.shared_bank_events:audit_flags+=['-DMM_SHARED_BANK_EVENTS']
                 run('m68k-elf-gcc','-Os','-mcpu=54455','-msoft-float','-fno-builtin','-fno-common','-fno-late-combine-instructions','-ffreestanding',*audit_flags,'-c',str(HERE/file),'-o',obj)
                 units.append(obj)
             guard_spec = importlib.util.spec_from_file_location('codegen_guard', ROOT / 'sdk/runtime/m68k_codegen.py')
@@ -90,7 +95,7 @@ def main():
         copies = [(sym['replay_' + ('slot_' if name.startswith('sequence_') else '') + name], address, length, bytes.fromhex(guards[hex(address)])) for name, address, length in REPLAYS]
         copies += [(sym['replay_'+name], address, length, bytes.fromhex(guards[hex(address)])) for name,address,length,_ in NAME_REPLAYS if not(args.current_base and name=='names_draw')]
         if args.current_base:copies.append((sym['replay_shared_setup_exit'],int(adapter['site'],16),adapter['length'],bytes.fromhex(adapter['sha256'])))
-        if args.project_template:
+        if args.project_template and not args.shared_bank_events:
             copies.append((sym['replay_template_load'],0x400905d4,8,bytes.fromhex(guards['0x400905d4'])))
         # Authored instruction runs that coincide with stock use the same hash-copy
         # mechanism; never ship a stock-overlap scanner exemption.
@@ -125,6 +130,7 @@ def main():
             site(0x40084854, struct.pack('>HI',0x4eb9,sym['names_engine']), (2,))
         if args.project_template:
             for address,symbol,length in [(0x40084f44,'mt_clone_start_site',6),(0x4008505c,'mt_clone_end_site',6),(0x400905d4,'mt_load_site',8)]:
+                if args.shared_bank_events and symbol=='mt_load_site':continue
                 site(address,struct.pack('>HI',0x4eb9 if length==6 else 0x4ef9,sym[symbol])+b'\x4e\x71'*((length-6)//2),(2,))
         if args.current_base:
             site(int(adapter['site'],16),struct.pack('>HIH',0x4ef9,sym['names_shared_setup_exit'],0x4e71),(2,))
@@ -137,12 +143,14 @@ def main():
             builder.unevented(sites,copies,registry=json.loads(legacy))
         hooks=[sym['mm_profile_tick'] if args.profile else builder.NONE]+[builder.NONE]*3
         if args.project_template:hooks[2],hooks[3]=sym['mt_runtime_key'],sym['mt_runtime_enc']
+        if args.shared_bank_events:
+            hooks=builder.subscribe(hooks,[{'event':'ev_bank_load','fn':'mt_bank_load','order':60},{'event':'ev_bank_loaded','fn':'mt_bank_loaded','order':60}],sym)
         data = builder.package(image, 0, hooks, offsets, sites, name='midi-cc-slots',
                                hashed=True, title='MIDI MODE 2' if args.current_base else 'MIDI CC SLOTS', copies=copies)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_bytes(data)
         if args.receipt:
-            args.receipt.write_text(json.dumps({'symbols':sym,'imageBytes':len(image),'profile':args.profile,'projectTemplate':args.project_template,'packageSha256':hashlib.sha256(data).hexdigest()},indent=2)+'\n')
+            args.receipt.write_text(json.dumps({'symbols':sym,'imageBytes':len(image),'profile':args.profile,'projectTemplate':args.project_template,'packageSha256':hashlib.sha256(data).hexdigest(),'sharedBankEvents':args.shared_bank_events,'hooks':hooks},indent=2)+'\n')
         if args.audit_dir:
             shutil.copytree(work,args.audit_dir)
         print(json.dumps({'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest(), 'relocations': len(offsets), 'sites': len(sites), 'copies': len(copies)}))

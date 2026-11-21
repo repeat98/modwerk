@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.0.20-experimental",
+    "date": "2026-11-21",
+    "changes": [
+      "Use paired shared bank-load notifications instead of a private bank-load patch.",
+      "Preserve cached names and recovery state on failed or same-project load notifications.",
+      "Defer project changes to the settled engine task and wake idle profile processing.",
+      "Initialize the historical card builder through Modwerk firmware_codec.",
+      "Experimental: current-base hardware and native load-failure testing are still pending."
+    ]
+  },
+  {
     "version": "0.0.19-experimental",
     "date": "2026-11-05",
     "changes": [

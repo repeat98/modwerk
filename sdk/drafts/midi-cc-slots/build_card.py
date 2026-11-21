@@ -87,7 +87,9 @@ def main():
     upstream=args.upstream.resolve();pin=json.loads((APP/'vendor/elekloader/kit/kit.json').read_text())['commit']
     git=lambda *cmd:subprocess.check_output(['git','-C',str(upstream),*cmd],text=True).strip()
     if git('rev-parse','HEAD')!=pin or git('status','--porcelain','--untracked-files=no'):p.error('Use the exact clean Elekloader checkout pinned by the app')
-    sys.path.insert(0,str(upstream))
+    sys.path.insert(0,str(APP/'sdk'))
+    import firmware_codec
+    firmware_codec.use_elekloader(upstream)
     from elekloader import devices,formats,patch
     from elekloader.sdk import build as sdk
     original_file_hash=sha(args.stock.read_bytes())

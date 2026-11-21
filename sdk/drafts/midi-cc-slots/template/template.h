@@ -28,6 +28,12 @@ int mt_runtime_enc(int code,int delta);
 void mt_clone_begin(void);
 void mt_clone_finish(void);
 void mt_project_loaded(unsigned caller);
+/* The paired base notifications expose no stock return value. */
+void mt_bank_load(unsigned mask,uint32_t caller);
+unsigned mt_bank_loaded(void);
+unsigned mt_bank_load_active(void);
+unsigned mt_bank_load_pending(void);
+unsigned mt_bank_take_completed(unsigned *mask,uint32_t *caller);
 unsigned mt_initialized(void);
 unsigned mt_busy(void);
 #endif
