@@ -1,1 +1,3 @@
-Octatrack module pages now show zero direct DSP cycles for verified ColdFire-only builds. The gauge explains that stock playback and effects still use the DSP cores.
+Octatrack module pages show memory in kilobytes, including the sample RAM Kits borrows.
+DSP gauges show measured active load or zero direct DSP cycles for verified ColdFire builds.
+New CPU readings show what the measured workload adds to an audio frame.

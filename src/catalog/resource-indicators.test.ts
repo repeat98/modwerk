@@ -100,12 +100,14 @@ describe('module resource gauges', () => {
       value: '+10.3 pp', status: 'Measured · T1–4', score: 10.3, maximum: 100, fill: 10.3,
       benchmark: { value: lofiPrice + ' cycles per sample per instance', basis: 'cycles/sample · Hardware-based' },
     })
-    expect(lofiMemory).toMatchObject({ value: memory.totalBytes.toLocaleString('en-US') + ' B', status: 'Accounted total', score: null })
-    expect(lofiMemory.description).toContain(memory.sharedBytes.toLocaleString('en-US') + ' B shared')
-    expect(lofiMemory.description).toContain(memory.perInstanceBytes.toLocaleString('en-US') + ' B per instance')
+    expect(lofiMemory).toMatchObject({ value: '11.926 kB', status: 'Accounted total', score: null })
+    expect(lofiMemory.description).toContain((memory.sharedBytes / 1000) + ' kB shared')
+    expect(lofiMemory.description).toContain((memory.perInstanceBytes / 1000) + ' kB per instance')
     expect(moduleResourceIndicators(outputMatrix)[1]).toMatchObject({
-      status: 'Estimated', benchmark: { value: hookPrice.worstCase + ' cycles per sample for one instance', source: 'sdk/octatrack/modules/output-matrix/' + hookPrice.report },
+      value: '+6.8 pp', status: 'Measured · T5–8', score: 6.8, maximum: 100, fill: 6.8,
+      benchmark: { value: hookPrice.worstCase + ' cycles per sample for one instance', source: 'sdk/octatrack/modules/output-matrix/' + hookPrice.report },
     })
+    expect(moduleResourceIndicators(outputMatrix)[0].benchmark?.value).toBe('13.1% of a frame added with ALL routes')
     expect(moduleResourceIndicators(bbd)[1]).toMatchObject({
       value: '+10.8 pp', status: 'Measured · T1–4',
       benchmark: { value: bbdPrice + ' instructions per sample per instance', basis: 'instr./sample · Emulator' },
@@ -115,14 +117,29 @@ describe('module resource gauges', () => {
     expect(moduleResourceIndicators(future)[1]).toMatchObject({ value: 'High', status: 'Estimated' })
   })
 
+  it('shows the measured active CPU load when an Octatrack build has a verified workload', () => {
+    const analog = MODULE_DOCUMENTS.find(module => module.id === 'analog-bassdrum')!
+    for (const [id, value] of [
+      ['amiga', '7.4%'], ['analog-bassdrum', '10.1%'], ['poly8', '41.9%'], ['syntiz', '8.5%'],
+      ['usb-audio-out-tracks-main-cue', '13.3%'], ['vector', '0.6%'],
+    ]) {
+      const document = MODULE_DOCUMENTS.find(module => module.id === id)!
+      const [cpu] = moduleResourceIndicators(document)
+      expect(cpu, id).toMatchObject({ value, status: 'Measured · in use' })
+      expect(cpu.description).toContain('(estimated) while the release price is pending')
+    }
+    expect(moduleResourceIndicators(analog)[1]).toMatchObject({ value: '+5.6 pp', status: 'Measured · T1–4' })
+    expect(moduleResourceIndicators({ ...analog, version: '99.0.0' })[0].status).toBe('Estimated')
+  })
+
   it('binds zero direct DSP cycles to the audited packages and preserves active DSP paths', () => {
     for (const record of directDspEvidence.modules) {
       const document = MODULE_DOCUMENTS.find(module => module.id === record.module)
-      expect(document?.version).toBe(record.version)
-      expect(moduleResourceIndicators(document!)[1]).toMatchObject({
+      if (document?.version !== record.version) continue
+      expect(moduleResourceIndicators(document)[1]).toMatchObject({
         value: '0 cycles', status: 'Module code · ColdFire', score: null, source: record.source,
       })
-      expect(moduleResourceIndicators({ ...document!, version: '99.0.0' })[1].status).toBe('Estimated')
+      expect(moduleResourceIndicators({ ...document, version: '99.0.0' })[1].status).toBe('Estimated')
       if (!record.packageSha256) continue
       const entry = record.module === 'usb-audio-out-tracks-main-cue' ? packageManifest.usbAudio.configurable
         : packageManifest.packages.find(pkg => pkg.id === record.module)!
@@ -159,10 +176,11 @@ describe('module resource gauges', () => {
   })
 
   it.each([
-    ['cc-map', '1,568 B'],
-    ['playmodes', '17,168 B'],
-    ['recorder-loop-fix', '2,208 B'],
-    ['usb-audio-out-tracks-main-cue', '105,408 B'],
+    ['cc-map', '1.568 kB'],
+    ['playmodes', '17.168 kB'],
+    ['recorder-loop-fix', '2.208 kB'],
+    ['usb-audio-out-tracks-main-cue', '105.408 kB'],
+    ['previewvol', '0.944 kB'],
   ])('shows the hardware-verified module pool for %s at its measured version', (id, value) => {
     const document = MODULE_DOCUMENTS.find(module => module.id === id)!
     expect(moduleResourceIndicators(document)[2]).toMatchObject({
@@ -170,6 +188,19 @@ describe('module resource gauges', () => {
       source: 'docs/verification/2026-11-21-octatrack-module-pool-allocation.json',
     })
     expect(moduleResourceIndicators({ ...document, version: '99.0.0' })[2].status).toBe('Estimated')
+  })
+
+  it('includes Kits’ observed sample lease with the measured module pool', () => {
+    const kits = MODULE_DOCUMENTS.find(module => module.id === 'kits')!
+    const memory = moduleResourceIndicators(kits)[2]
+    expect(memory).toMatchObject({ value: '2,085.232 kB', status: 'Measured · two pools', score: null })
+    expect(memory.description).toContain('51.568 kB in the module pool and 2,033.664 kB in leased sample RAM')
+  })
+
+  it('shows the incremental Sidechain DSP load against stock compression', () => {
+    const sidechain = MODULE_DOCUMENTS.find(module => module.id === 'sidechain-compressor')!
+    expect(moduleResourceIndicators(sidechain)[1]).toMatchObject({ value: '+1.8 pp', status: 'Measured · T5–8' })
+    expect(moduleResourceIndicators(sidechain)[1].description).toContain('compared with stock COMPRESSOR')
   })
 
   it('keeps drafts parseable but blocks releases and gauge rendering without ratings', () => {

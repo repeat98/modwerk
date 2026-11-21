@@ -9,8 +9,8 @@
     "entryBytes": 8,
     "alignment": 16
   },
-  "method": "Two rolled-back RAM trials per package on the owner\u2019s MKII and the exact named development twin. During each trial the only live module\u2019s measured pool occupation matched the full expected loader extent. Each extent is the 16-byte-aligned module and patched-site records plus the aligned image and BSS. These packages have no DSP image tail. The layout fields came from the ColdFire compiler using the development twin\u2019s headers.",
-  "scope": "ColdFire module-pool bytes for one installed module. The two DSP program-arena readings are whole-arena readings. DSP memory, sample RAM and the platform's shared allocations have separate regions.",
+  "method": "Two rolled-back RAM trials per package on the owner’s MKII and the exact named development twin. During each trial the only live module’s measured pool occupation matched the full expected loader extent. The extent includes 16-byte-aligned module and patched-site records, image and BSS, and the packaged DSP and metadata tail when present. The layout came from the ColdFire compiler using that base’s headers. The Kits sample-page lease was checked separately.",
+  "scope": "ColdFire module-pool bytes for one installed module, plus the sample-RAM lease where measured. The earlier trial records include whole DSP-arena readings. The FLEX06 trials record the resident program words assigned to the installed effect. DSP memory, sample RAM and shared platform allocations use separate regions.",
   "measurements": [
     {
       "module": "cc-map",
@@ -19,7 +19,7 @@
       "packageSha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
       "scope": "module pool with one module installed",
-      "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1\u20137 and an empty starting inventory. Release sources rebuilt for this twin\u2019s base binding",
+      "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7 and an empty starting inventory. Release sources rebuilt for this twin’s base binding",
       "loaderExtentBytes": 1568,
       "trials": [
         {
@@ -67,7 +67,7 @@
       "packageSha256": "feae7bf8d603cce28d2299f9f5ec946354d761f2cf5647a6006a1a59bcbcd289",
       "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
       "scope": "module pool with one module installed",
-      "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1\u20137. Private runtime package built from the listed Play Modes 0.2.0 source",
+      "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7. Private runtime package built from the listed Play Modes 0.2.0 source",
       "loaderExtentBytes": 17168,
       "trials": [
         {
@@ -115,7 +115,7 @@
       "packageSha256": "43d26b2761a010e5e6a3ad9a2bcb6bb8beba92b245099acb0b4ed70065d208a4",
       "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
       "scope": "module pool with one module installed",
-      "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1\u20137 and an empty starting inventory. Release sources rebuilt for this twin\u2019s base binding",
+      "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7 and an empty starting inventory. Release sources rebuilt for this twin’s base binding",
       "loaderExtentBytes": 2208,
       "trials": [
         {
@@ -163,7 +163,7 @@
       "packageSha256": "0ac4d6a58a437706e85ab8b577da26dfe88c5c866c5d7a008665fbe2fefcf11f",
       "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
       "scope": "module pool with one module installed",
-      "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on tracks 1\u20137. USB Audio 0.3.0 release package rebuilt byte-identically. Default Main layout without a recording client",
+      "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on tracks 1–7. USB Audio 0.3.0 release package rebuilt byte-identically. Default Main layout without a recording client",
       "loaderExtentBytes": 105408,
       "trials": [
         {
@@ -203,6 +203,731 @@
         "patchedSites": 3,
         "dspWords": 0
       }
+    },
+    {
+      "module": "airwindows-chorus",
+      "version": "0.1.3-experimental",
+      "package": "published",
+      "packageSha256": "1307d71958a2e5c7a0e4ba8d7f7f53a0afc10bfe404a321936e39a65d229cc08",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 4640,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 496,
+        "bssBytes": 0,
+        "patchedSites": 0,
+        "dspWords": 844
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:33:33.639004+00:00",
+          "before": {
+            "modulePoolBytes": 2448,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 4640,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T10:33:38.257473+00:00",
+          "before": {
+            "modulePoolBytes": 4640,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 4640,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "amiga",
+      "version": "0.3.0-experimental",
+      "package": "published",
+      "packageSha256": "acae3fef97f85a941c3215e1065353c94967ff44bb9528c22135c611a8edc32e",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 15280,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 12448,
+        "bssBytes": 2092,
+        "patchedSites": 0,
+        "dspWords": 0
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:36:46.813398+00:00",
+          "before": {
+            "modulePoolBytes": 44688,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 15280,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T10:36:51.766776+00:00",
+          "before": {
+            "modulePoolBytes": 15280,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 15280,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "analog-bassdrum",
+      "version": "0.1.7-experimental",
+      "package": "release-source",
+      "packageSha256": "9d13b64aff0c4caf0d933d7db82ff07e67806189171149250b0e7ca1df456b90",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 26160,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 6268,
+        "bssBytes": 0,
+        "patchedSites": 0,
+        "dspWords": 1004
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:34:15.062071+00:00",
+          "before": {
+            "modulePoolBytes": 8128,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 26160,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T10:34:20.098707+00:00",
+          "before": {
+            "modulePoolBytes": 26160,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 26160,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "euclid",
+      "version": "0.1.5-experimental",
+      "package": "published",
+      "packageSha256": "69a5ecd307334b5f9e9e5d9806336653162a915ccd31b596d0bab4a598a65c88",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 10512,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 7940,
+        "bssBytes": 0,
+        "patchedSites": 3,
+        "dspWords": 396
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:32:42.602107+00:00",
+          "before": {
+            "modulePoolBytes": 112480,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 10512,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T10:32:47.664358+00:00",
+          "before": {
+            "modulePoolBytes": 10512,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 10512,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "everb",
+      "version": "0.1.2-experimental",
+      "package": "published",
+      "packageSha256": "5f81e72fbba43ea827ec3996509b50c036b458d4baa87d801e57d4b4ce1695ca",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 8128,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 968,
+        "bssBytes": 0,
+        "patchedSites": 0,
+        "dspWords": 1602
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:33:54.178225+00:00",
+          "before": {
+            "modulePoolBytes": 4640,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 8128,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T10:33:58.849789+00:00",
+          "before": {
+            "modulePoolBytes": 8128,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 8128,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "kits",
+      "version": "0.1.0-experimental",
+      "package": "published",
+      "packageSha256": "f1c13a071b299906dccd7eee60c8b01e82dea9212921f5d7fb28ca14b5932c0b",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool and sample RAM leased by one module",
+      "loaderExtentBytes": 51568,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 10744,
+        "bssBytes": 38968,
+        "patchedSites": 15,
+        "dspWords": 0
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:38:26.043274+00:00",
+          "before": {
+            "modulePoolBytes": 281200,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 51568,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false,
+          "samplePagesBefore": 10122,
+          "samplePagesBorrowed": 331
+        },
+        {
+          "measuredAt": "2026-11-21T10:38:31.724405+00:00",
+          "before": {
+            "modulePoolBytes": 51568,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 51568,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false,
+          "samplePagesBefore": 10122,
+          "samplePagesBorrowed": 331
+        }
+      ],
+      "samplePoolBytes": 2033664
+    },
+    {
+      "module": "midi-scenes",
+      "version": "0.3.0-experimental",
+      "package": "published",
+      "packageSha256": "f38ae755bbf3c3a6a675209b1421292e5806f0e8c1ac44bbd7a0d55e1ff546d5",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 281200,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 6088,
+        "bssBytes": 271920,
+        "patchedSites": 33,
+        "dspWords": 0
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:37:15.982163+00:00",
+          "before": {
+            "modulePoolBytes": 15280,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 281200,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T10:37:21.165694+00:00",
+          "before": {
+            "modulePoolBytes": 281200,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 281200,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "miniverb",
+      "version": "0.2.3-experimental",
+      "package": "published",
+      "packageSha256": "eea25e6cf8ac0a39ab300d8ba543b0d5829b789a03e0081c8d136c64f2eed518",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 3440,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 540,
+        "bssBytes": 0,
+        "patchedSites": 0,
+        "dspWords": 538
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:31:38.684590+00:00",
+          "before": {
+            "modulePoolBytes": 4544,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 3440,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T10:31:44.000197+00:00",
+          "before": {
+            "modulePoolBytes": 3440,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 3440,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "poly8",
+      "version": "0.3.3-experimental",
+      "package": "published",
+      "packageSha256": "1d9e9ecae22a60b592e5cfc8750adcdf0060faad36c826b6e6abb5393bb86c21",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 59392,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 56932,
+        "bssBytes": 0,
+        "patchedSites": 23,
+        "dspWords": 0
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:35:56.030543+00:00",
+          "before": {
+            "modulePoolBytes": 944,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 59392,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T10:36:00.867673+00:00",
+          "before": {
+            "modulePoolBytes": 59392,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 59392,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "previewvol",
+      "version": "0.1.2-experimental",
+      "package": "published",
+      "packageSha256": "9fd95d9a9a5a1c5932892ab1af36b39994650a51161df3903f36fa8afa6cb1c2",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 944,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 36,
+        "bssBytes": 0,
+        "patchedSites": 2,
+        "dspWords": 0
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:35:28.319528+00:00",
+          "before": {
+            "modulePoolBytes": 29296,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 944,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T10:35:32.994862+00:00",
+          "before": {
+            "modulePoolBytes": 944,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 944,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "quantizer",
+      "version": "0.1.4-experimental",
+      "package": "published",
+      "packageSha256": "33700b9339c0d0e619716cf6358ac83c9912c9881e30721411d2bf79897bbe04",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 7280,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 5872,
+        "bssBytes": 0,
+        "patchedSites": 9,
+        "dspWords": 0
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:34:39.244046+00:00",
+          "before": {
+            "modulePoolBytes": 26160,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 7280,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T10:34:44.141708+00:00",
+          "before": {
+            "modulePoolBytes": 7280,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 7280,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "repitch",
+      "version": "0.2.1-experimental",
+      "package": "published",
+      "packageSha256": "4b9278462747c87b0d25040a759773c1fff0425804d3f940ced69a475c2a70c9",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 2448,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 672,
+        "bssBytes": 0,
+        "patchedSites": 14,
+        "dspWords": 0
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:33:10.129127+00:00",
+          "before": {
+            "modulePoolBytes": 10512,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 2448,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T10:33:14.956834+00:00",
+          "before": {
+            "modulePoolBytes": 2448,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 2448,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "synth",
+      "version": "0.1.4-experimental",
+      "package": "published",
+      "packageSha256": "7d59f80928cee4690781039ae521c15e5d2bbedf70b0e88616c7bcf2bcecffc3",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 29296,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 26784,
+        "bssBytes": 0,
+        "patchedSites": 24,
+        "dspWords": 0
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:35:04.756443+00:00",
+          "before": {
+            "modulePoolBytes": 7280,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 29296,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T10:35:09.494766+00:00",
+          "before": {
+            "modulePoolBytes": 29296,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 29296,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "tapeecho",
+      "version": "0.1.6-experimental",
+      "package": "published",
+      "packageSha256": "921e7a60c3418e7ece96f24c254802b44fee2082713f25e7b964b37f233bbe9e",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 112480,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 111548,
+        "bssBytes": 0,
+        "patchedSites": 2,
+        "dspWords": 5
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:32:13.393926+00:00",
+          "before": {
+            "modulePoolBytes": 3440,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 112480,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T10:32:19.885857+00:00",
+          "before": {
+            "modulePoolBytes": 112480,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 112480,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
+    },
+    {
+      "module": "temp-save",
+      "version": "0.1.1-experimental",
+      "package": "published",
+      "packageSha256": "a389aa93c6408ba99f4049247934dc371c2fcad6cee72e039876a8d3df451ea9",
+      "sourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727",
+      "scope": "module pool with one module installed and unused",
+      "loaderExtentBytes": 44688,
+      "scene": "Octatrack MKII, stopped on the saved FLEX06 B01 Part 1. Each module ran alone in two separate RAM trials.",
+      "packageLayout": {
+        "imageBytes": 892,
+        "bssBytes": 42892,
+        "patchedSites": 2,
+        "dspWords": 0
+      },
+      "trials": [
+        {
+          "measuredAt": "2026-11-21T10:36:19.874479+00:00",
+          "before": {
+            "modulePoolBytes": 59392,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 44688,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        },
+        {
+          "measuredAt": "2026-11-21T10:36:24.960370+00:00",
+          "before": {
+            "modulePoolBytes": 44688,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          },
+          "installed": {
+            "modulePoolBytes": 44688,
+            "moduleDspProgramWordsT1to4": 0,
+            "moduleDspProgramWordsT5to8": 0
+          },
+          "rolledBack": true,
+          "explicitRecovery": false
+        }
+      ]
     }
   ]
 }
