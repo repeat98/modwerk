@@ -42,7 +42,7 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 
 ### On the unit (21 Nov 2026)
 
-SU63 (unpacked CRC `a36e9fea`) RAM-booted on npp1993's Analog Rytm MKII, OS 1.74, over the flashed CM02, in a scratch project; the flash was not written (a first upload stopped at block 276 of 886 with no answer and the author cancelled the receive; the second landed). Run by the author's rig over the development link, not by a person.
+SU63 (unpacked CRC `a36e9fea`) RAM-booted on Nathaniel Pavel's Analog Rytm MKII, OS 1.74, over the flashed CM02, in a scratch project; the flash was not written (a first upload stopped at block 276 of 886 with no answer and the author cancelled the receive; the second landed). Run by the author's rig over the development link, not by a person.
 
 - **`sample-rate-pipo-rest-063`, all 30 checks passed.**
   - With LOP OFF on all 12 tracks (each track's effective LOP read 0), `at_rest` read 1 before and during a BD note.
@@ -66,7 +66,7 @@ SU63 (unpacked CRC `a36e9fea`) RAM-booted on npp1993's Analog Rytm MKII, OS 1.74
 
 ### On the unit (20 Nov 2026)
 
-SU62 (unpacked CRC `388f4a9c`) RAM-booted on npp1993's Analog Rytm MKII, OS 1.74, over the flashed CM02, in a scratch project; the flash was not written. Everything below was run by the author's rig over the development link, not by a person.
+SU62 (unpacked CRC `388f4a9c`) RAM-booted on Nathaniel Pavel's Analog Rytm MKII, OS 1.74, over the flashed CM02, in a scratch project; the flash was not written. Everything below was run by the author's rig over the development link, not by a person.
 
 - **`sample-rate-pipo-rest`, all 30 checks passed.** With LOP OFF on all 12 tracks (each track's effective LOP read 0) `at_rest` read 1, before and during a BD note. LOP ON: 0. PIPO: `pipo_loop_armed` read 1 at each of four reads, and BD's STA and END read swapped (the way back) at all four. 200 ms after LOP OFF in the middle of the PIPO loop: `at_rest` 1, armed 0, and still 1 after 1.5 s with voices playing. PIPO again from rest: `at_rest` 0, the voice armed at once, and voice 0's `back` byte, read every 70 ms or so, toggled 9 times in 1.4 s (a turn each time); armed 1 at the four reads after. LOP OFF again: `at_rest` 1, armed 0.
 - **The rig's seven earlier Improved SMPL cases:** 2 pass; 5 stop at "no reference" (the rig's unit references predate 0.5.0's value row). Their screens, judged by eye: TUN +0.04, -0.02, (0) and +2.04 in the row, a held trig's +0.05 lock boxed, RATE +63 in its place, the SMPL WAVEFORM view with S and E.
@@ -89,7 +89,7 @@ Ping Pong Loop (`pipo-loop`) leaves the library, so `compatibility.conflicts` no
 
 ### On the unit (16 Nov 2026)
 
-MSU1 (`.syx` `a34e9ec9bfc1540fbc7125b7b10c1d06e5e848e781c684a5ebc998129b590579`, unpacked CRC `a046b2ee`) RAM-booted on npp1993's Analog Rytm MKII, OS 1.74, over the flashed RB08 (development base with the link), scratch project; the flash was not written.
+MSU1 (`.syx` `a34e9ec9bfc1540fbc7125b7b10c1d06e5e848e781c684a5ebc998129b590579`, unpacked CRC `a046b2ee`) RAM-booted on Nathaniel Pavel's Analog Rytm MKII, OS 1.74, over the flashed RB08 (development base with the link), scratch project; the flash was not written.
 
 - **The author's rig** (run by the rig on the unit, not by a person): Improved SMPL's seven cases and five of its unit cases (LFO look, LFO playhead, lock read, playhead at 1x, 0.125x, stop and -0.5x, recording off). No check failed: 7 pass, 5 stop at "no reference" (the cache holds none for the unit). The 26 screens, judged by eye: TUN in cents (+2.04, +0.05 boxed as a held trig's lock, +0.04, -0.02, (0)), the value row, RATE's values, the S and E labels on the lines. The LOOP slot reads ERR in the cases that send `CC 30 127`, as above.
 - **The author, by hand, as reported ("all pass"):** the SMPL key opens the waveform view with the row; LOP PIPO plays the loop back and forth with no click at the turns; FUNC + STA and END step to zero crossings, with the S and E labels; RATE down through 0 into reverse with LOP ON and with PIPO; TUN in cents, pressed in semitones; a PIPO lock on a held trig in GRID RECORDING.
@@ -109,7 +109,7 @@ rytm-emu, headless `dtboot`; emulator results are not hardware evidence.
 - Screenshots retaken on SV12 with 0.5.0's plans: the same screens, apart from where the playhead stood.
 - Unit image SU02 (base 1e92a59a with the link + this source, lock RB08, layout 0x026f1e10): `.syx` `3eb6830e…89fe`; boots and answers the link in rytm-emu. The author's earlier rig cases for this module (`cases/sample-rate`) give the same 1 pass and 5 fails on SU02 as on SU00 (0.5.0, same base): their references predate 0.5.0's screen.
 - Not run: a Sound previewed from the SOUND BROWSER whose sample is not in the project (if stock plays it from slot 129, it previews at 1x whatever its RATE).
-- Unit (16 Nov 2026, SU02 booted from RAM over RB08 on npp1993's Analog Rytm MKII, OS 1.74, scratch project), as the author reports: FUNC + YES in GLOBAL > SAMPLES previewed at normal speed with the active track at RATE 0, +63 and -64 and with an LFO on RATE; pad play followed RATE. "All good."
+- Unit (16 Nov 2026, SU02 booted from RAM over RB08 on Nathaniel Pavel's Analog Rytm MKII, OS 1.74, scratch project), as the author reports: FUNC + YES in GLOBAL > SAMPLES previewed at normal speed with the active track at RATE 0, +63 and -64 and with an LFO on RATE; pad play followed RATE. "All good."
 
 ## 0.5.0: one row of values over a taller waveform (2026-11-12)
 
@@ -123,9 +123,9 @@ rytm-emu (`c5732f0`, RAMP on BD, LOP ON, RATE +63 by CC 25); emulator results ar
 - With Ping Pong Loop (SV1P, sample loaded by replaying the setup's presses): LOP turned up reads PIPO in the row; its S and E marks sit at the bottom and top of the taller waveform.
 - Independent code review: stack and argument layout of the gate against stock's knob loop, registers, mapping, clipping (text clamped, the 27-wide lock box inside 0..127 at the row's ends) and the widget's area checked against stock 1.74; nothing serious. Applied: the gate returns with a jmp to 0x400d20f6 instead of a saved return. Noted: two neighbouring lock boxes overlap (above); in stock's bare lock-editor routine a knob's value text is stock's own, not a module's (not seen in the captures above).
 - Lock boxes, changed after the unit report below: the module draws a locked value's box itself, tiling the row (columns 0..25, 27..51, 53..76, 78..101, 103..127, one column between), and passes stock's routine no lock, so stock's 27-wide boxes no longer overlap. Build SV03 (vendored core-ar2 0.7 + this source): `.syx` `8ca41daa87c0360fa30cbd8dc615846824699d5eebbce54aac18b8e69a70ff1f`. rytm-emu, T1 held: TUN (-4.60), RATE (+61), BR and LOP locked, four boxes with one dark column between each, text inside.
-- Unit, 12 Nov 2026, as reported by npp1993 on their Analog Rytm MKII (OS 1.74), test image RC38 (`41071e4c…b2ab`: the author's private combo RC37 with this module's first 0.5.0 build, SV02's source, flashed by hand): the row, the knobs, LOOP and PIPO, the playhead and the sound look and sound right. Locking TUN and RATE (and LEV beside LOP) on a held trig, the two boxes met with a 2-pixel black bar between them, and a negative four-digit TUN reached its box's right edge; fixed as above, RC39 (`7c8ed400…069c`, RC38 with SV03's source) not yet on the unit. A trig whose SMP was locked to an empty slot showed no waveform while STA and END were locked on it: stock's behaviour (on each STA, END or SMP change stock reads SMP through the held trig's locks, 0x400d253a, and draws no sample for an empty slot), not this module's.
-- No waveform after boot, reported by npp1993 on RC39 (`7c8ed400…`, RC38 with SV03's source): booting into the SMPL page with a sample on BD drew only the centre line until STA or END was turned. Cause, read in stock 1.74: the widget draws the slot in its +0, which stock's page callback 0x400d253a sets, on a parameter or track change only, to SMP's slot or to 0 while that slot has no sample name yet (0x400b8192); at boot it runs before the samples are loaded, and stock's own SAMPLE page sits on its knobs at boot. Fix: while the widget's slot reads 0 the module runs that callback again every 8 ticks. Build SV05 (`9a953918…8c5e`), rytm-emu: with the widget's slot set to 0 by poke, SV03 stayed on the centre line for 700 M; SV05 showed the waveform by the first read (100 M); SMP OFF ran without a fault. Combo RC40 (`5d5241e0…b35e`, RC39 with this source), not yet on the unit. An independent review of the box and slot changes found nothing serious; it notes that with SMP OFF and a trig held whose SMP lock names a loaded sample, the callback can show that sample until the next change (not run).
-- Unit, 12 Nov 2026, as reported by npp1993: RC40 (`5d5241e0…b35e`, this source) flashed by hand, three boots into the SMPL page with a sample on BD. Each time the page showed no waveform for a few seconds after boot, then the waveform appeared with no knob touched. On the third boot STA and END were turned straight away: still no waveform until the sample came in, then it showed. Read in stock 1.74: a slot gets its name (0x41942350, written at 0x4009e39e) only when the sample loader (0x4009df72) has read its file whole; the project's pool loads slot by slot (0x400b739c) from background jobs after boot, and the widget takes a slot only once it has a name, so those seconds are stock's load time.
+- Unit, 12 Nov 2026, as reported by Nathaniel Pavel on their Analog Rytm MKII (OS 1.74), test image RC38 (`41071e4c…b2ab`: the author's private combo RC37 with this module's first 0.5.0 build, SV02's source, flashed by hand): the row, the knobs, LOOP and PIPO, the playhead and the sound look and sound right. Locking TUN and RATE (and LEV beside LOP) on a held trig, the two boxes met with a 2-pixel black bar between them, and a negative four-digit TUN reached its box's right edge; fixed as above, RC39 (`7c8ed400…069c`, RC38 with SV03's source) not yet on the unit. A trig whose SMP was locked to an empty slot showed no waveform while STA and END were locked on it: stock's behaviour (on each STA, END or SMP change stock reads SMP through the held trig's locks, 0x400d253a, and draws no sample for an empty slot), not this module's.
+- No waveform after boot, reported by Nathaniel Pavel on RC39 (`7c8ed400…`, RC38 with SV03's source): booting into the SMPL page with a sample on BD drew only the centre line until STA or END was turned. Cause, read in stock 1.74: the widget draws the slot in its +0, which stock's page callback 0x400d253a sets, on a parameter or track change only, to SMP's slot or to 0 while that slot has no sample name yet (0x400b8192); at boot it runs before the samples are loaded, and stock's own SAMPLE page sits on its knobs at boot. Fix: while the widget's slot reads 0 the module runs that callback again every 8 ticks. Build SV05 (`9a953918…8c5e`), rytm-emu: with the widget's slot set to 0 by poke, SV03 stayed on the centre line for 700 M; SV05 showed the waveform by the first read (100 M); SMP OFF ran without a fault. Combo RC40 (`5d5241e0…b35e`, RC39 with this source), not yet on the unit. An independent review of the box and slot changes found nothing serious; it notes that with SMP OFF and a trig held whose SMP lock names a loaded sample, the callback can show that sample until the next change (not run).
+- Unit, 12 Nov 2026, as reported by Nathaniel Pavel: RC40 (`5d5241e0…b35e`, this source) flashed by hand, three boots into the SMPL page with a sample on BD. Each time the page showed no waveform for a few seconds after boot, then the waveform appeared with no knob touched. On the third boot STA and END were turned straight away: still no waveform until the sample came in, then it showed. Read in stock 1.74: a slot gets its name (0x41942350, written at 0x4009e39e) only when the sample loader (0x4009df72) has read its file whole; the project's pool loads slot by slot (0x400b739c) from background jobs after boot, and the widget takes a slot only once it has a name, so those seconds are stock's load time.
 - Not run: a KIT menu or other full-screen menu over the page, scene and performance modes on the SMPL page, a sound with a module's page added behind SMPL (the layout then still applies to the waveform page).
 
 ## 0.4.0: the SMPL key shows the waveform only (2026-11-11)
@@ -135,7 +135,7 @@ rytm-emu (`c5732f0`) unless it says unit; emulator results are not hardware evid
 - SR42/SR43 (vendored core-ar2 0.7 + this source; SR43 `0a12166c…`): with the SAMPLE page left on its knob view, the view turns to SMPL WAVEFORM by itself; a second SMPL press stays there (stock toggles to the knobs); AMP then SMPL opens the waveform; SMPL held + PLAY still clears the page (CLEAR PAGE SMPL WAVEFORM, RATE back to +63). SR41, which made the list {5} with index 0, showed the waveform's title over the knob view: the view draws by index, so 0.4.0 keeps the list {4, 5}, counts one page and shows index 1.
 - Rig cases on SG04 (`aa073d83…`, the author's private test base + this source), emulator: all six pass, the new sample-rate-smpl-waveform among them (three SMPL presses, the same waveform body each time); the screen references were recorded again in the waveform view.
 - Source (0.4.0-experimental): fingerprint `2c8ec3bf…1270` (`evidence.sourceSha256`).
-- Hardware, 11 Nov 2026: npp1993's Analog Rytm MKII (OS 1.74, RB08 flashed), scratch project, SG04 (`aa073d83…`, image CRC `a04e51b5`) booted from RAM, flash untouched, run by the author's automated rig with the author's go: 7 cases pass in two runs in a row (one recording the unit references, now compared on the label row only, as the rate-default case clears BD's sample slot): sample-rate-smpl-waveform (three SMPL presses, SMPL WAVEFORM each time), rate-always, rate-default, fine-tun, coarse-tun, func-tun and fine-lock, all on the waveform view.
+- Hardware, 11 Nov 2026: Nathaniel Pavel's Analog Rytm MKII (OS 1.74, RB08 flashed), scratch project, SG04 (`aa073d83…`, image CRC `a04e51b5`) booted from RAM, flash untouched, run by the author's automated rig with the author's go: 7 cases pass in two runs in a row (one recording the unit references, now compared on the label row only, as the rate-default case clears BD's sample slot): sample-rate-smpl-waveform (three SMPL presses, SMPL WAVEFORM each time), rate-always, rate-default, fine-tun, coarse-tun, func-tun and fine-lock, all on the waveform view.
 - Independent code review: no crash, memory or bounds problem; every stock reader of the page list (page key, title, knob ids, CLEAR PAGE, draw, destructor) checked. Noted, not changed: if the change lands while the SAMPLE page is on screen, the header keeps the knob page's title until the next SMPL press; it normally lands at boot.
 
 ## 0.3.0: FIN is RATE on every sound (2026-11-11)
@@ -149,7 +149,7 @@ Everything in this section ran in rytm-emu (`c5732f0`, RAMP on BD, LOP ON) unles
 - Independent code review: no defect in the link or audio path; one change taken (a track's STA and END swap once a block even if two voices were its own).
 - Source (0.3.0-experimental): fingerprint `8b335547…9144` (`evidence.sourceSha256`).
 
-Hardware, 11 Nov 2026: npp1993's Analog Rytm MKII (OS 1.74, RB08 flashed again by the author), scratch project, SG02 (`3b9aba2d…`, image CRC `38dd88f8`) booted from RAM, flash untouched, run by the author's automated rig over USB with the author's go; no person at the unit. 6 cases pass in two runs in a row (one recording the unit references):
+Hardware, 11 Nov 2026: Nathaniel Pavel's Analog Rytm MKII (OS 1.74, RB08 flashed again by the author), scratch project, SG02 (`3b9aba2d…`, image CRC `38dd88f8`) booted from RAM, flash untouched, run by the author's automated rig over USB with the author's go; no person at the unit. 6 cases pass in two runs in a row (one recording the unit references):
 
 | Case (unit) | Measured |
 | --- | --- |
@@ -190,7 +190,7 @@ Rig cases, `tools/cases/sample-rate/` on the author's private rig (not in this r
 | sample-rate-fine-lock: held trig, second nudge | reads +0.05, inverted | not compared |
 | sample-rate-switch-snap: FIN read right after each tap | 0x7f00, 0x4000: pass | 0x782e, 0x40b2: fail (mid-glide) |
 
-Hardware, 11 Nov 2026: npp1993's Analog Rytm MKII (OS 1.74, flash RB08), scratch project, run by the author's automated rig over USB with the author's go; no person at the unit. Results are the rig's: memory words and screens, nobody listened.
+Hardware, 11 Nov 2026: Nathaniel Pavel's Analog Rytm MKII (OS 1.74, flash RB08), scratch project, run by the author's automated rig over USB with the author's go; no person at the unit. Results are the rig's: memory words and screens, nobody listened.
 
 - Source (0.2.0-experimental): fingerprint `6837e13d…21a0` (`evidence.sourceSha256`), run as SF08; SF06 (`cbbe1dc7…a0ef`) was the same but for TUN's text, which then dropped the two places on whole semitones.
 - SF06 (`12fbe1bc…9533`, the rig's base with the USB link + this source), booted from RAM (image CRC `829dd163`), flash untouched. SO05 (`f2bea70c…fe91`, the same with 0.1.1), booted from RAM in the same session.
@@ -217,9 +217,9 @@ Not covered by the rig: how the switch and the cents sound, pads, a pattern save
 
 - Source (0.1.1-experimental): fingerprint `22e0fea1…0050` (`evidence.sourceSha256`).
 - Build SR07 (vendored core-ar2 0.7 + Sample Playback Rate 0.1.1-experimental, `--version SR07`): `.syx` `59efe41469ce121a43c9f9d3ed7dd11292487e02615baaf0c0b9f5d949443ac1`. rytm-emu `c5732f0`: the five media frames, replayed from the timed plans now in media/capture.json, are byte-identical to SR06's.
-- Hardware, measured on npp1993's Analog Rytm MKII (OS 1.74) with a private telemetry base that times every audio block on DTIM0 and sends it over USB MIDI, sequencer stopped, scratch project, no USB audio streaming:
+- Hardware, measured on Nathaniel Pavel's Analog Rytm MKII (OS 1.74) with a private telemetry base that times every audio block on DTIM0 and sends it over USB MIDI, sequencer stopped, scratch project, no USB audio streaming:
   - 0.1.0's cost: the author's 16-module set idles at 72.9 % of the audio block; the same set without this module at 72.1 %.
-  - LF01 (`a6d85a85…`, that set with this source and Ping Pong Loop's and QPERF's idle fixes, on that base): 71.1 %. Its own share was not separated. npp1993 reports that RATE still slows, stops and reverses on LF01.
+  - LF01 (`a6d85a85…`, that set with this source and Ping Pong Loop's and QPERF's idle fixes, on that base): 71.1 %. Its own share was not separated. Nathaniel Pavel reports that RATE still slows, stops and reverses on LF01.
 - Not run alone on a unit.
 
 ## The row, the tap and the value (SR06)
@@ -358,7 +358,7 @@ Why it looks linear on a unit: the line moves by how far the voice moves, and a 
 
 What a change could buy, not built: a faster refresh (stock's view tick, not this module's) or a line drawn over STA to END instead of the whole sample (a change to a stock screen, needing the owner's agreement). Neither follows the voice more truly than stock does now.
 
-On a unit, 2 November 2026, as reported by npp1993 on looking again: the playhead does follow the LFO.
+On a unit, 2 November 2026, as reported by Nathaniel Pavel on looking again: the playhead does follow the LFO.
 
 ## Not tested
 
@@ -366,7 +366,7 @@ Replacing a stored sound in the emulator, a project file round trip, Env Reset A
 
 ## Hardware
 
-npp1993 flashed SP03 on an Analog Rytm MKII, OS 1.74, and reports the following. Reported by the author, not itemized measurements; no CPU reading was available.
+Nathaniel Pavel flashed SP03 on an Analog Rytm MKII, OS 1.74, and reports the following. Reported by the author, not itemized measurements; no CPU reading was available.
 
 | Check | Reported |
 | --- | --- |
@@ -390,17 +390,17 @@ npp1993 flashed SP03 on an Analog Rytm MKII, OS 1.74, and reports the following.
 | Many other stored sounds, LOAD TO TRACK | also ERROR, some loaded; cause not found |
 | A new store over a sound, then LOAD TO TRACK on another track | loaded, with FIN AS RATE off: the setting did not travel |
 
-On SP13, the source of this version, as reported by npp1993: the tap is very snappy, and two fast taps register as two.
+On SP13, the source of this version, as reported by Nathaniel Pavel: the tap is very snappy, and two fast taps register as two.
 
-On SP12, as reported by npp1993: holding SCNE or PERF and tapping flips; holding a pad to edit a scene does not; FUNC, NO or a held trig and a tap do not; in running live recording a tap does not flip; with a pad held outside those modes, in grid recording or with recording off, it flips.
+On SP12, as reported by Nathaniel Pavel: holding SCNE or PERF and tapping flips; holding a pad to edit a scene does not; FUNC, NO or a held trig and a tap do not; in running live recording a tap does not flip; with a pad held outside those modes, in grid recording or with recording off, it flips.
 
-On SP11, as reported by npp1993: taps flip normally and in scene and performance mode; while setting a scene or a performance with a pad held the press sets a lock and does not flip; holding SCNE or PERF and tapping does not flip; the author reads this as working as expected.
+On SP11, as reported by Nathaniel Pavel: taps flip normally and in scene and performance mode; while setting a scene or a performance with a pad held the press sets a lock and does not flip; holding SCNE or PERF and tapping does not flip; the author reads this as working as expected.
 
-On SP10, as reported by npp1993: the header changes over quickly after a tap, and the tap is blocked in scene and performance mode; SP11 allows it there.
+On SP10, as reported by Nathaniel Pavel: the header changes over quickly after a tap, and the tap is blocked in scene and performance mode; SP11 allows it there.
 
-On SP05 (SMP RATE row and first tap), as reported by npp1993: the checkbox works; taps of encoder B often did nothing, and repeated clicks got through; on SP06 the tap reliably switches, holding does not toggle, press and turn does not toggle, and NO + press on a FIN lock clears it and stays on FIN, as reported. The SOUND menu on the unit is FUNC + FILTER.
+On SP05 (SMP RATE row and first tap), as reported by Nathaniel Pavel: the checkbox works; taps of encoder B often did nothing, and repeated clicks got through; on SP06 the tap reliably switches, holding does not toggle, press and turn does not toggle, and NO + press on a FIN lock clears it and stays on FIN, as reported. The SOUND menu on the unit is FUNC + FILTER.
 
-On SP04 (with Pipo Loop `b0ed4fe7`), as reported by npp1993:
+On SP04 (with Pipo Loop `b0ed4fe7`), as reported by Nathaniel Pavel:
 
 | Check | Reported |
 | --- | --- |
@@ -421,7 +421,7 @@ The owner approved the first library release of 0.1.0-experimental on 2 November
 
 Ping Pong Loop was its own module, `pipo-loop`, until it moved into Improved SMPL 0.6.0 unchanged. Its report follows as it stood at 0.1.2; file names are its own (`src/audio.s` there is `src/pipo.s` here), and its media/ captures are retaken on MS01 (see 0.6.0 above).
 
-Everything below was observed in rytm-emu on the named build, except the Hardware section, which records what npp1993 reported from a unit.
+Everything below was observed in rytm-emu on the named build, except the Hardware section, which records what Nathaniel Pavel reported from a unit.
 
 - Source (0.1.0-experimental, on main 7ad765b0): `build.json` `1c7f575a…09d8`, `src/audio.s` `4cc9d5e4…78d6`,
   `src/pipo.c` `bd1e8dc2…a9d8`, `src/snap.c` `af812459…7bfb`, `src/marks.c` `d2994d5d…79a9`. Fingerprint (`sha256`
@@ -454,9 +454,9 @@ Everything below was observed in rytm-emu on the named build, except the Hardwar
 
 - Source (0.1.2-experimental): fingerprint `c47b6405…c9e1` (`evidence.sourceSha256`).
 - Build PP21 (vendored core-ar2 0.7 + Ping Pong Loop 0.1.2-experimental, `--version PP21`): `.syx` `df1762de120d304615ac58d944250666fcdcbe20e3cf40cdca4cf9529a451432`. rytm-emu `c5732f0`: the ten media/ plans replay on it; nine frames are byte-identical to PP17's, and markers-playing differs only in the playhead's position (the emulator's timing follows the code).
-- Hardware, measured on npp1993's Analog Rytm MKII (OS 1.74) with a private telemetry base that times every audio block on DTIM0 and sends it over USB MIDI, sequencer stopped, scratch project, no USB audio streaming:
+- Hardware, measured on Nathaniel Pavel's Analog Rytm MKII (OS 1.74) with a private telemetry base that times every audio block on DTIM0 and sends it over USB MIDI, sequencer stopped, scratch project, no USB audio streaming:
   - 0.1.1's cost: RC30's 16-module set idles at 72.9 % of the audio block; the same set without Pipo Loop at 70.6 %.
-  - LF01 (`a6d85a85…`, the RC30 set with this source and QPERF's and Sample Playback Rate's idle fixes, on that base): 71.1 %. Its own share was not separated. npp1993 reports that PIPO loops still work on LF01.
+  - LF01 (`a6d85a85…`, the RC30 set with this source and QPERF's and Sample Playback Rate's idle fixes, on that base): 71.1 %. Its own share was not separated. Nathaniel Pavel reports that PIPO loops still work on LF01.
 - Not run alone on a unit; the other 0.1.1 hardware rows still describe this code's playback, which 0.1.2 does not change.
 
 ### Emulator, 0.1.1 (2026-10-31)
@@ -491,7 +491,7 @@ Build PP19 (PP18 with one more change, zero snap's frame now rounds up as stock 
 
 Build PP20 (PP19 with the put-back step removed, `--version PP20`): `.syx` `51f4c019245374c80f1ada41173486587682946a41b1fc4fab069f1c98db243f`. Stock rebuilds the effective array every block before this handler (read from the code: the only branch past the rebuild also skips the handler), so the step never had work to do, and it could misfire: when another writer (a test build with a sample RATE that reverses by swapping STA and END) made stock's rebuilt values match what the handler wrote a block before, it swapped them again and lost the way the voice was going, and at the next turn a short piece from the loop's far end played. A block log showed that sequence. On that test build, RATE swept 46 to 127 every 2 s on a 345-frame loop: 12 full-loop jumps in four 45 s runs before, 0 after, largest step 139 to 5. Fixed RATE at raw 127, 66, 62, 20 and 0, and the sweep at TUN up and down: no click after the trig's attack. Pipo Loop alone: PP20 against PP18 sample-identical at LOP ON, LOP OFF, PIPO at TUN 0 and END below STA; PIPO at TUN +24 0 clicks, output differs; the 20-run sweep 0 clicks. PP20 not flashed.
 
-### Hardware, 0.1.1 (reported by npp1993, 2026-10-31)
+### Hardware, 0.1.1 (reported by Nathaniel Pavel, 2026-10-31)
 
 RC05 (Pipo Loop as PP17, in a combined image) on an Analog Rytm MKII, OS 1.74, sample set by hand, LOP PIPO, STA and END mid-sample: a click at the sample's attack; pops that come and go at TUN -24 and -20, and with END below STA, hard to tell from the audio itself; LOP ON clicks, as expected of an unsnapped loop; PIPO back after saving the kit and a power cycle. 
 RC07 (`6ae42b7b717b63d7aecc09875b76e5b0cd9a69bcbfe37a8850b111dbaaf6b7de`, this source in a combined image; PP18 alone not flashed): a short, loud sample, LOP PIPO, STA and END moved around, on zero crossings and off them, TUN moved up and down: "I'm not getting any pops or clicks." Reported, not itemized; exact TUN values were not stated.
@@ -607,7 +607,7 @@ sound edit, which the 0x4003a240 site already snaps.
   prefetch routines (voice 0 inline, voices 1-7 in a loop), and the position, phase and direction put
   right the next block. That is several new sites inside the audio interrupt and DMA timing the emulator
   may not show as the unit does. Not built.
-- **Exact zero snap past 30,720 frames.** Prototyped (FO01-FO03) and dropped at npp1993's choice (his
+- **Exact zero snap past 30,720 frames.** Prototyped (FO01-FO03) and dropped at Nathaniel Pavel's choice (their
   precise loops are short); the 0.64 s limit stays. Found on the way: reading the kit's sounds from an
   `ev_project` handler broke the project load at boot in rytm-emu; reading them from `ev_tick` did not.
   The design: a per-sound fine offset: 16 bits a sound of
@@ -645,7 +645,7 @@ one crossing, as one 8-count event does. With LOP ON, END stepped from 23,647 do
 
 With FUNC held a turn on STA or END only ever lands on a crossing: where none is left the way it
 goes, the point holds (PD01 had passed such a turn to stock, which stepped off the crossings). STA
-and END may pass each other and may share a crossing (npp1993's rule). rytm-emu, PP10, ZSIN on BD
+and END may pass each other and may share a crossing (Nathaniel Pavel's rule). rytm-emu, PP10, ZSIN on BD
 (24,000 frames, not at zero at its first or last frame), settled values as frames, `d`/`u` the
 crossing's direction:
 
@@ -665,7 +665,7 @@ Stock glides STA and END to a new value rather than jumping: PP10, effective STA
 instructions during a FUNC turn from 0 to ZSIN's first crossing went 0x00, 0x02, 0x0f, 0x1a, 0x22, …
 0x41, 0x42, 0x43 and settled on 0x44 about 30M instructions later (the same on the next step, 0x47
 … 0x9f). A wrap or PIPO turn inside that glide plays from a point between crossings, which matches
-npp1993's report of clicks only while turning (PD01/PD02 era, PIPO_110). Nathaniel chose to keep
+Nathaniel Pavel's report of clicks only while turning (PD01/PD02 era, PIPO_110). Nathaniel chose to keep
 stock's glide (2026-10-28).
 
 The emulator drops the first two to four encoder events after FUNC goes down or the turn changes
@@ -680,7 +680,7 @@ reads stock's silence buffer and its position wanders, so PD02 counts playing vo
 
 #### PC03 on an Analog Rytm MKII (2026-10-27), as reported
 
-npp1993 flashed PC03 (`f128beb4…1e2a`; core-ar2 0.3, Silent Pad+Trig 0.5.1, Pipo Loop 0.1.0) and reported:
+Nathaniel Pavel flashed PC03 (`f128beb4…1e2a`; core-ar2 0.3, Silent Pad+Trig 0.5.1, Pipo Loop 0.1.0) and reported:
 
 - LOP displays the three values OFF, ON and PIPO, but the switch graphic is only two-way: PIPO draws like ON.
 - Zero crossing does not work. (Not part of this module: stock never snaps STA, END or the loop to a zero
@@ -698,13 +698,13 @@ output does not apply the AMP envelope to the sample layer, so audio could not s
 Which screen shows the playhead was not identified.
 
 The switch icon is drawn from a two-frame sprite (17 x 9 pixels; OFF, ON) shared by twelve OFF/ON
-parameters; stock clamps any value above 1 to the last frame, so PIPO drew as ON. npp1993 chose LOP to
+parameters; stock clamps any value above 1 to the last frame, so PIPO drew as ON. Nathaniel Pavel chose LOP to
 look like BD CLASSIC's WAV switch: PP06 draws LOP, and only LOP, through the routine and frames stock
 uses for that WAV (three positions), so the module carries no picture of its own.
 
 #### PD01 on an Analog Rytm MKII (2026-10-28), as reported
 
-npp1993 flashed PD01 (`6ba6b5cc…9134`; PC07's code with one crossing an encoder event, plus a readout
+Nathaniel Pavel flashed PD01 (`6ba6b5cc…9134`; PC07's code with one crossing an encoder event, plus a readout
 of encoder counts, events, crossings moved and the last snapped frame while FUNC is held), loaded the
 test samples PIPO_SLOW, PIPO_110 and PIPO_SQR and reported:
 
@@ -730,7 +730,7 @@ test samples PIPO_SLOW, PIPO_110 and PIPO_SQR and reported:
 
 ### PD05 on an Analog Rytm MKII (2026-10-28), as reported
 
-npp1993 flashed the build with the S and E labels (PD05/PC11 code) and reported: the labels look
+Nathaniel Pavel flashed the build with the S and E labels (PD05/PC11 code) and reported: the labels look
 great; STA and END can sit on top of each other and change places (END before STA), with both labels
 showing; the loop plays; a lock set with FUNC + turn while a trig is held lands on a crossing and shows
 its position when that trig is held again; "I think that's everything good". PD05 is PC11's code plus
@@ -738,7 +738,7 @@ the readout; PC11 and PP13 themselves were not flashed.
 
 ### PP14 on an Analog Rytm MKII (2026-10-29), as reported
 
-npp1993 flashed PP14 (Pipo Loop 0.1.0 alone on core-ar2 0.7, `94bb1149…e2ac`) on an Analog Rytm MKII with stock OS 1.74
+Nathaniel Pavel flashed PP14 (Pipo Loop 0.1.0 alone on core-ar2 0.7, `94bb1149…e2ac`) on an Analog Rytm MKII with stock OS 1.74
 and reported, in order:
 
 - PIPO turns on a looping sample: "fine"; the LOP switch works; moving the sample markers, zero crossing
@@ -754,14 +754,14 @@ firmware read-back. Several voices, LOP locks and scenes and MIDI CC 30 were not
 
 ### PD04 report; S and E labels (2026-10-28)
 
-**PD04 on an Analog Rytm MKII, as reported by npp1993.** FUNC + STA/END feels better. A very slow
+**PD04 on an Analog Rytm MKII, as reported by Nathaniel Pavel.** FUNC + STA/END feels better. A very slow
 turn registers no change, the same as LOP with or without FUNC (stock). Once the marker skipped
 between two non-adjacent crossings and would not land on the one between; not reproduced. With LOP
 ON every other crossing is skipped by design (same direction as the other point); otherwise a
 moderately quick turn, for which LOP's profile gives two values, stepped two crossings. Fixed after
 PD04: up to two values step one crossing, past that one fewer than the values.
 
-**Labels (PM01 test build, then PP13, PC11 and PD05).** npp1993 approved the look from the emulator screenshots ("looking great"). Stock's waveform widget (draw routine 0x4006cb16, only
+**Labels (PM01 test build, then PP13, PC11 and PD05).** Nathaniel Pavel approved the look from the emulator screenshots ("looking great"). Stock's waveform widget (draw routine 0x4006cb16, only
 caller 0x400d211c) keeps the lines' columns at +4 and +8 (value x 123 / 30720, from x0 = 2), draws
 them dotted from y0 + 1 to y0 + height - 2 (y0 16, height 32) and draws the waveform over 124
 columns, which is why a line can sit a column left of its crossing. As the routine ends (site
@@ -773,7 +773,7 @@ the full battery as PP12, the labels and snap as PM01; PC11's quick check as PC1
 
 ### FUNC turns step like LOP (2026-10-28)
 
-**PD03 on an Analog Rytm MKII, as reported by npp1993.** Test E passed: STA held at PIPO_SLOW's first
+**PD03 on an Analog Rytm MKII, as reported by Nathaniel Pavel.** Test E passed: STA held at PIPO_SLOW's first
 crossing and END at its last; they passed each other and landed on the same crossing. With LOP ON,
 plain points clicked and snapped points were clean. Test F: during untouched PIPO playback the
 unmirrored counter stayed at 1 (it had reached 1 earlier, while points were being moved). A very
@@ -894,7 +894,7 @@ parameter ids 34-37, 45 (LOP), 224, 248 and 463; the switch icon by twelve param
 
 ### The STA and END lines on SMPL WAVEFORM (2026-10-28)
 
-npp1993 sent a photo (PIPO_SLOW, both points snapped): the END line sat about a column left of where
+Nathaniel Pavel sent a photo (PIPO_SLOW, both points snapped): the END line sat about a column left of where
 the waveform crosses zero. rytm-emu, PP10, PIPO_SLOW on BD, STA snapped to 5061 (rising) and END to
 16581 (rising), SMPL WAVEFORM read pixel by pixel (128 columns, 225 frames a column): the STA line is
 in column 23, the column where the drawn waveform changes sign; the END line is in column 72, and the
@@ -913,7 +913,7 @@ above.
 
 ### Open items
 
-- Possible later improvement (npp1993, 2026-10-28): FUNC snaps could skip stock's STA/END glide and
+- Possible later improvement (Nathaniel Pavel, 2026-10-28): FUNC snaps could skip stock's STA/END glide and
   jump straight to the crossing, so no wrap or PIPO turn plays from between crossings while a turn
   settles. Not built: STA and END as played are stock's smoothing plus LFO and velocity modulation,
   so the module would have to work out the target itself every audio block, only after a FUNC snap,
