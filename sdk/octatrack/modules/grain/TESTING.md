@@ -23,7 +23,38 @@ To repeat, export `sdk/octatrack/modules/grain/grain_core.s` from commit `402780
 
 On a successful switch back to Flex the base already reloads the track from the Part. The draft also queued six stock SRC writes and six live SETUP writes on the next UI tick for each changed track. The candidate removes that second update. On entry from Flex it uses the same per-track refresh as the base's standard machine assignment. The compiled callback tests check the stock call counts, both copies of the Part, reselecting Grain, and changes to an inactive Part.
 
-The full-system emulator ran the OS 1.40C development twin `fac1523234f4bb0b` twice, once with the draft and once with the candidate. With a simulated existing Grain Part on each track separately, stock applied the six live SETUP values, the panel played and stopped, the ordinary chooser switched T1 and T5 back to Flex, and T2/T5 track selection responded afterward. Both trials rolled back. The normal transition also passed on the draft, so this comparison does not reproduce the hardware freeze. A separate fresh-entry chooser attempt on the 0.7.13 emulator showed CPU FULL at 100%. These checks exercise control transitions. The candidate's hardware skip count, post-STOP responsiveness under combined load, and end-to-end worst-case time remain open. The next hardware comparison should use the same STOP, machine-picker actions and post-stop observation window on stock Flex and on the candidate.
+The full-system emulator ran the OS 1.40C development twin `fac1523234f4bb0b` twice, once with the draft and once with the candidate. With a simulated existing Grain Part on each track separately, stock applied the six live SETUP values, the panel played and stopped, the ordinary chooser switched T1 and T5 back to Flex, and T2/T5 track selection responded afterward. Both trials rolled back. The normal transition also passed on the draft, so this comparison does not reproduce the hardware freeze. A separate fresh-entry chooser attempt on the 0.7.13 emulator showed CPU FULL at 100%. These checks exercise control transitions. The matched hardware test below uses the same STOP, machine chooser and track-selection actions with both machines.
+
+### Card-free MKII comparison against stock Flex
+
+On OS 1.40C, development base `fac1523234f4bb0b`, the six-voice `ac1e5540` candidate missed renders on both tracks. Each run used the same 37,800-frame 24-bit stereo recording from recorder 3. The two channels differed and contained nonzero low bytes. The Part was A16, Part 3 at 100 BPM, with no effects and six untriggered THRU tracks. T1 and T5 each took a turn as the test track with 16 trigs. The other Flex track received notes through MIDI. One Grain instance booked 35 of the 45 available points. SIZE, DENS, SPRY and PAN were at maximum, with fractional pitch, mixed direction, SYNC and opposite SCAN endpoints on the two tracks. Both Grain runs reached six voices.
+
+Each capture received all 20 USB audio channels at 44.1 kHz. During 60 seconds of playback, the same musical MIDI phrase sent 2,400 clocks, 200 note-ons, 200 note-offs and 50 modulation changes. The audio deadline was 362.8 µs per frame. The two callback columns give the largest first and second pass individually. The guard instruments custom machines. Whole-interrupt timing provides the common measure for stock Flex.
+
+| Playback with USB capture | Peak interrupt | Mean frame load | Peak callback, first / second pass | Skips during playback | Skips through STOP and panel checks |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Flex T1 | 270.3 µs (74.5%) | 48.2% | — | 0 | 0 |
+| Flex T5 | 303.4 µs (83.6%) | 48.3% | — | 0 | 0 |
+| Grain T1 | 383.0 µs (105.6%) | 72.0% | 125.8 / 136.2 µs | 842 | 842 |
+| Grain T5 | 392.2 µs (108.1%) | 73.0% | 120.8 / 132.0 µs | 1,039 | 1,043 |
+
+With USB audio capture closed, both Grain tracks reached six voices and completed the same MIDI passage with zero skips. T1 peaked at 337.5 µs (93.0%) and T5 at 333.5 µs (91.9%). Opening capture raised the mean interrupt load by 14.5 percentage points on both tracks. This isolates a loss of frame headroom under the combined workload. The timing traces do not resolve the individual memory access or instruction responsible for a skip.
+
+The four captures had continuous CoreAudio timestamps, stereo signal on each test stem and MAIN, and zero MIDI receive errors or transmit drops. During the 55 seconds analyzed, 1,398 nonzero 128-frame blocks on the T1 Grain stem exactly repeated the preceding block. The T5 count was 725. Stock Flex had zero in either run. The block comparison and the render guard count different events. The panel accepted STOP, the Flex chooser and T2/T5 selections in all four runs. Panel ticks and audio frames kept advancing for at least 29 seconds after STOP, with no new crash, stall or loader error. The earlier high-rate MIDI freeze remains unverified with this candidate. [Hardware measurements](evidence/timing/six-voice-comparison.json)
+
+The full R3 PCM hash matched before and after all six runs. Both trials for each track rolled back. The original working Part, A02 and scratch A16 pattern bytes, both scratch Part copies, T3 selection and 140 BPM matched preflight. All eight recorders returned to their empty 16-bit settings. The initial base `254c5a75a139255e` came back with zero saved and zero live modules on the card-free boot. The first T5 stock attempt stopped before playback when the host could not write its log. The table uses the complete repeat.
+
+### Static timing of the six-voice candidate
+
+The [candidate timing analysis](evidence/timing/candidate_bound.py) checks the linked executable byte for byte against package `ac1e5540`. It bounds the module's own code across six voices, including page crossings and failed page lookups. Each result covers one callback. Both passes on a track can contribute to the same audio interrupt.
+
+| Callback | Source frames | Instruction upper bound | Core-cycle upper bound in the zero-wait model |
+| --- | ---: | ---: | ---: |
+| Start | 16 or 32 | 187 | 1,680 |
+| Render | 16 | 32,651 | 298,008 |
+| Render | 32 | 62,091 | 566,936 |
+
+These conservative bounds allow combinations of branches that may never occur together. The core model assumes instructions are available and memory has zero wait states. Stock Flex calls, SDRAM contention and interrupts require separate accounting. The bounds exceed the 95,782-core-cycle frame budget and leave the end-to-end deadline unproven.
 
 ## Sustained MIDI with 24-bit playback and USB audio on base 0.7.11
 
