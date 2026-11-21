@@ -312,7 +312,7 @@ static inline __attribute__((always_inline)) void stereo_loop(GranGrain *grain, 
 
 #if defined(__m68k__)
 /* Decode both signed PCM words, apply the Q15 window and signed pan, and accumulate in order.
- * The caller bounds the run to one page. Enter the unrolled loop at its partial first group.
+ * The caller bounds the run to one page. The fractional step stays in a register throughout the loop.
  * Keeping the Q32 cursor and its carry in registers avoids spilling it between samples.
  * Window and pan choices specialize at compile time. The C path uses the same rounding. */
 static inline __attribute__((always_inline)) void mix_page(GranGrain *g, unsigned bytes,
@@ -327,7 +327,7 @@ static inline __attribute__((always_inline)) void mix_page(GranGrain *g, unsigne
     const uint8_t *address;
     int32_t mid, side, correction;
     __asm__ volatile (
-        ".macro grain_mix_frame%=\n\t"
+        "1:\n\t"
         ".if %c[variable]\n\t"
         "move.l %[phase],%[gain]\n\t"
         "swap %[gain]\n\t"
@@ -376,30 +376,11 @@ static inline __attribute__((always_inline)) void mix_page(GranGrain *g, unsigne
         "add.l %[side],(%[dst])+\n\t"
         "add.l %[frac],%[sub]\n\t"
         "addx.l %[whole],%[idx]\n\t"
-        ".endm\n\t"
-        "move.l %[end],%[adjust]\n\t"
-        "sub.l %[dst],%[adjust]\n\t"
-        "and.l #24,%[adjust]\n\t"
-        "beq.s 1f\n\t"
-        "cmp.l #8,%[adjust]\n\t"
-        "beq.w 4f\n\t"
-        "cmp.l #16,%[adjust]\n\t"
-        "beq.w 3f\n\t"
-        "bra.w 2f\n\t"
-        "1:\n\t"
-        "grain_mix_frame%=\n\t"
-        "2:\n\t"
-        "grain_mix_frame%=\n\t"
-        "3:\n\t"
-        "grain_mix_frame%=\n\t"
-        "4:\n\t"
-        "grain_mix_frame%=\n\t"
-        ".purgem grain_mix_frame%=\n\t"
         "cmpa.l %[end],%[dst]\n\t"
         "bne.w 1b"
         : [idx] "+&d"(index), [sub] "+&d"(fraction), [dst] "+&a"(mix),
           [phase] "+&a"(phase), [gain] "+&d"(gain), [address] "=&a"(address), [mid] "=&d"(mid), [side] "=&d"(side), [adjust] "=&d"(correction)
-        : [page] "a"(page), [end] "a"(end), [frac] "g"(frac), [whole] "d"(whole),
+        : [page] "a"(page), [end] "g"(end), [frac] "a"(frac), [whole] "d"(whole),
           [pan] "m"(pan), [window] "ai"(fixed_gain ? 0 : (uintptr_t)window), [phase_step] "m"(phase_step),
           [bytes] "i"(bytes), [variable] "i"(!fixed_gain), [shift] "d"(15), [sign] "i"(sign)
         : "cc", "memory");

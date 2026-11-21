@@ -2,7 +2,22 @@
 
 Grain 0.1.0-experimental · by A Force Truly Evil.
 
-## Six-voice synthesis candidate, 21 November 2026
+## Compact six-voice synthesis loop, 21 November 2026
+
+The SDK and catalogue produce package `0e4fc8dd6a3bfc60ee60321a83bda82866adaedad8b555834ecdfb6b6dee6f21`. Its stereo loop reads the fractional sample step from a register and mixes one sample per iteration. It keeps the improved page check, Q15 arithmetic, six voices and 35-point reservation. The four-sample build below is retained as a comparison.
+
+| Compiled callback workload | Previous mean instructions | Compact mean | Previous peak | Compact peak |
+| --- | ---: | ---: | ---: | ---: |
+| Held controls | 3,041 | 2,783 | 7,604 | 7,315 |
+| Moving position | 3,079 | 2,838 | 7,643 | 7,499 |
+| Recorder, Part and control changes | 2,971 | 2,610 | 11,603 | 10,184 |
+| SRC and window moving every callback | 3,126 | 2,736 | 12,615 | 9,629 |
+
+All 12,288 compiled callbacks matched the preceding draft’s PCM and voice state. A second comparison matched all 4,096 combinations of short spans, formats, pan, direction, pitch, window and source edges. A further 2,789 callbacks used the packet-length distribution from the previous unit profile. Two-minute compiled runs on T1 and T5 each matched 5,292,000 stereo frames of the portable reference.
+
+The package occupies 28,612 bytes on disk. Its executable and static state occupy 30,196 bytes in RAM. The deepest Grain-only audio stack path uses 676 bytes including three return addresses. The static bounds for Grain’s zero-wait work are 247,832 core cycles for 16 source frames and 453,976 for 32. They exceed the 95,782-cycle frame budget before stock work, memory waits or interrupts are included.
+
+## Four-sample synthesis experiment, 21 November 2026
 
 SDK and catalogue builds reproduced package `d09bd8f8ce95acd398d13ab91191da6d5288313c9c442988435b1224641234a5`. Both stereo widths use the page-bounded mixer. It processes four frames per loop and enters the first group at the correct sample for shorter spans. The Q15 rounding and intermediate mid/side clipping are preserved. The voice limit is six and the reservation is 35 points.
 

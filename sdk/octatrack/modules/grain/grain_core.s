@@ -14,10 +14,10 @@ grain_stock_pool:
 	.align	2
 	.type	stereo_page, @function
 stereo_page:
-	lea (-84,%sp),%sp
-	move.l 88(%sp),%a0
+	lea (-88,%sp),%sp
+	move.l 92(%sp),%a0
 	movem.l #31996,(%sp)
-	move.l 120(%sp),%d1
+	move.l 124(%sp),%d1
 	subq.l #1,%d1
 	move.l 16(%a0),%d3
 	moveq #2,%d6
@@ -31,7 +31,7 @@ stereo_page:
 .L35:
 	clr.w %d5
 	swap %d5
-	move.l 116(%sp),%a2
+	move.l 120(%sp),%a2
 	add.l %d0,%d1
 	clr.w %d1
 	swap %d1
@@ -39,52 +39,52 @@ stereo_page:
 	move.l %d1,%a0
 	move.l %d4,%d1
 	asr.l #1,%d1
-	cmp.l 96(%sp),%d6
+	cmp.l 100(%sp),%d6
 	jeq .L25
 	cmp.l %d5,%a0
 	jeq .L12
-	move.l 112(%sp),%a3
-	cmp.l #gran_sq,%a3
+	move.l 116(%sp),%a1
+	cmp.l #gran_sq,%a1
 	jeq .L26
 .L13:
-	move.l 120(%sp),%d5
+	move.l 124(%sp),%d5
 	moveq #1,%d4
-	move.l 88(%sp),%a3
+	move.l 92(%sp),%a3
 	lsl.l #3,%d5
 	move.l (%a3),%a6
 	move.l 4(%a3),%a0
-	sub.l 100(%sp),%a6
+	sub.l 104(%sp),%a6
 	move.l %d5,%a1
 	add.l %a2,%a1
-	move.l %a1,52(%sp)
+	move.l %a1,44(%sp)
 	cmp.l %d2,%d4
 	jge .L27
-	move.l %a6,60(%sp)
+	move.l %a6,56(%sp)
 	moveq #15,%d7
 	neg.l %d1
 	move.l %d0,%a6
 	clr.l %d2
-	move.l %d1,76(%sp)
-	move.l %a0,64(%sp)
+	move.l %d1,80(%sp)
+	move.l %a0,68(%sp)
 	move.l %a0,%d1
 	move.l %a6,%a0
-	move.l 60(%sp),%d0
-	move.l %d3,80(%sp)
-	move.l %a2,44(%sp)
-	move.l 92(%sp),%a3
-	move.l 52(%sp),%a4
+	move.l 56(%sp),%d0
+	move.l %d3,84(%sp)
+	move.l %a2,52(%sp)
+	move.l 96(%sp),%a3
+	move.l 112(%sp),%a4
 	clr.l 48(%sp)
-	move.l 104(%sp),%d6
-	move.l 112(%sp),%a5
+	move.l 108(%sp),%d6
+	move.l 116(%sp),%a5
 #APP
 | 329 "gran.c" 1
-	.macro grain_mix_frame72
+	1:
 	.if 1
 	move.l %a0,%d2
 	swap %d2
 	mvz.b %d2,%d2
 	mvz.w (%a5,%d2.l*2),%d2
-	adda.l 80(%sp),%a0
+	adda.l 84(%sp),%a0
 	.endif
 	.if 3 == 2
 	move.l (%a3,%d0.l*4),%d3
@@ -107,14 +107,14 @@ stereo_page:
 	.if 1 > 0
 	move.l %d3,%d5
 	add.l %d4,%d5
-	muls.l 76(%sp),%d5
+	muls.l 80(%sp),%d5
 	asr.l %d7,%d5
 	add.l %d5,%d3
 	add.l %d5,%d4
 	.elseif 1 < 0
 	move.l %d3,%d5
 	sub.l %d4,%d5
-	muls.l 76(%sp),%d5
+	muls.l 80(%sp),%d5
 	move.l %d5,%a1
 	asr.l %d7,%d5
 	add.l %d5,%d3
@@ -125,39 +125,20 @@ stereo_page:
 	.endif
 	add.l %d3,(%a2)+
 	add.l %d4,(%a2)+
-	add.l 108(%sp),%d1
+	add.l %a4,%d1
 	addx.l %d6,%d0
-	.endm
-	move.l %a4,%d5
-	sub.l %a2,%d5
-	and.l #24,%d5
-	beq.s 1f
-	cmp.l #8,%d5
-	beq.w 4f
-	cmp.l #16,%d5
-	beq.w 3f
-	bra.w 2f
-	1:
-	grain_mix_frame72
-	2:
-	grain_mix_frame72
-	3:
-	grain_mix_frame72
-	4:
-	grain_mix_frame72
-	.purgem grain_mix_frame72
-	cmpa.l %a4,%a2
+	cmpa.l 44(%sp),%a2
 	bne.w 1b
 | 0 "" 2
 #NO_APP
 	move.l %a0,%a6
-	move.l 88(%sp),%a0
-	add.l 100(%sp),%d0
+	move.l 92(%sp),%a0
+	add.l 104(%sp),%d0
 	move.l %a6,12(%a0)
 	movem.l (%sp),#31996
 	move.l %d0,(%a0)
 	move.l %d1,4(%a0)
-	lea (84,%sp),%sp
+	lea (88,%sp),%sp
 	rts
 .L26:
 	moveq #7,%d4
@@ -167,51 +148,51 @@ stereo_page:
 	jhi .L13
 .L12:
 	move.w %a6,%d5
-	move.l 120(%sp),%d4
-	move.l 112(%sp),%a3
-	move.l 88(%sp),%a1
+	move.l 124(%sp),%d4
+	move.l 92(%sp),%a1
+	move.l 116(%sp),%a3
 	lsl.l #3,%d4
 	move.l 4(%a1),%a6
 	move.l (%a1),%a1
+	sub.l 104(%sp),%a1
 	mvz.b %d5,%d5
-	sub.l 100(%sp),%a1
+	add.l %a2,%d4
 	mvz.w (%a3,%d5.l*2),%d5
-	lea (%a2,%d4.l),%a4
+	move.l %d4,56(%sp)
 	moveq #1,%d4
-	move.l %a4,52(%sp)
-	move.l %d5,72(%sp)
 	cmp.l %d2,%d4
 	jge .L16
-	move.l %a2,64(%sp)
+	move.l %a2,72(%sp)
 	move.w #15,%a2
 	neg.l %d1
-	move.l %d3,80(%sp)
-	move.l %d1,76(%sp)
+	move.l %d3,84(%sp)
+	move.l %d1,80(%sp)
 	move.l %a1,%d2
 	move.l %d5,%d3
-	move.l 64(%sp),%a0
+	move.l 72(%sp),%a0
 	move.l %d0,%a1
 	move.l %a6,%d5
 	move.l %a2,%d4
-	move.l 92(%sp),%a5
-	move.l 104(%sp),%d1
+	move.l 96(%sp),%a4
+	move.l 112(%sp),%a5
+	move.l 108(%sp),%d1
 #APP
 | 329 "gran.c" 1
-	.macro grain_mix_frame124
+	1:
 	.if 0
 	move.l %a1,%d3
 	swap %d3
 	mvz.b %d3,%d3
 	mvz.w (#0,%d3.l*2),%d3
-	adda.l 80(%sp),%a1
+	adda.l 84(%sp),%a1
 	.endif
 	.if 3 == 2
-	move.l (%a5,%d2.l*4),%d6
+	move.l (%a4,%d2.l*4),%d6
 	mvs.w %d6,%d7
 	swap %d6
 	ext.l %d6
 	.else
-	lea (%a5,%d2.l*2),%a3
+	lea (%a4,%d2.l*2),%a3
 	mvs.w (%a3,%d2.l*4),%d6
 	mvs.w (3,%a3,%d2.l*4),%d7
 	.endif
@@ -226,14 +207,14 @@ stereo_page:
 	.if 1 > 0
 	move.l %d6,%d0
 	add.l %d7,%d0
-	muls.l 76(%sp),%d0
+	muls.l 80(%sp),%d0
 	asr.l %d4,%d0
 	add.l %d0,%d6
 	add.l %d0,%d7
 	.elseif 1 < 0
 	move.l %d6,%d0
 	sub.l %d7,%d0
-	muls.l 76(%sp),%d0
+	muls.l 80(%sp),%d0
 	move.l %d0,%a3
 	asr.l %d4,%d0
 	add.l %d0,%d6
@@ -244,92 +225,76 @@ stereo_page:
 	.endif
 	add.l %d6,(%a0)+
 	add.l %d7,(%a0)+
-	add.l 108(%sp),%d5
+	add.l %a5,%d5
 	addx.l %d1,%d2
-	.endm
-	move.l %a4,%d0
-	sub.l %a0,%d0
-	and.l #24,%d0
-	beq.s 1f
-	cmp.l #8,%d0
-	beq.w 4f
-	cmp.l #16,%d0
-	beq.w 3f
-	bra.w 2f
-	1:
-	grain_mix_frame124
-	2:
-	grain_mix_frame124
-	3:
-	grain_mix_frame124
-	4:
-	grain_mix_frame124
-	.purgem grain_mix_frame124
-	cmpa.l %a4,%a0
+	cmpa.l 56(%sp),%a0
 	bne.w 1b
 | 0 "" 2
 #NO_APP
-	move.l 120(%sp),%d0
-	lea (80,%sp),%a0
-	add.l 100(%sp),%d2
+	move.l 124(%sp),%d0
+	lea (84,%sp),%a0
+	add.l 104(%sp),%d2
 	muls.l (%a0),%d0
-	move.l 88(%sp),%a2
+	move.l 92(%sp),%a2
 	move.l %d2,(%a2)
 	move.l %d5,4(%a2)
 	add.l %a1,%d0
 	move.l %d0,12(%a2)
 	movem.l (%sp),#31996
-	lea (84,%sp),%sp
+	lea (88,%sp),%sp
 	rts
 .L25:
 	cmp.l %d5,%a0
 	jeq .L3
-	move.l 112(%sp),%a1
+	move.l 116(%sp),%a1
 	cmp.l #gran_sq,%a1
 	jeq .L4
 .L7:
-	move.l 120(%sp),%d4
+	move.l 124(%sp),%d4
 	moveq #1,%d5
-	move.l 88(%sp),%a3
+	move.l 92(%sp),%a3
 	lsl.l #3,%d4
 	move.l 4(%a3),%a0
 	move.l %d4,%a1
 	add.l %a2,%a1
 	move.l (%a3),%d4
-	sub.l 100(%sp),%d4
+	move.l %a1,56(%sp)
+	sub.l 104(%sp),%d4
 	cmp.l %d2,%d5
 	jge .L28
-	move.l %d3,80(%sp)
+	move.l %d3,84(%sp)
 	neg.l %d1
-	move.l %d1,76(%sp)
-	moveq #15,%d1
-	move.l %a0,%d2
-	move.l %d4,%d3
-	move.l %d0,%a0
 	move.l %a2,%a6
+	move.l %a0,%d2
+	move.l %d1,80(%sp)
+	moveq #15,%d1
+	move.l %d0,%a2
+	move.l %d4,%d3
 	clr.l %d0
-	move.l 92(%sp),%a4
-	move.l 104(%sp),%d7
-	move.l 112(%sp),%a5
+	move.l %a6,%a0
+	move.l 96(%sp),%a3
+	move.l 112(%sp),%a4
+	move.l 108(%sp),%d7
+	move.l 116(%sp),%a5
 #APP
 | 329 "gran.c" 1
-	.macro grain_mix_frame171
+	1:
 	.if 1
-	move.l %a0,%d0
+	move.l %a2,%d0
 	swap %d0
 	mvz.b %d0,%d0
 	mvz.w (%a5,%d0.l*2),%d0
-	adda.l 80(%sp),%a0
+	adda.l 84(%sp),%a2
 	.endif
 	.if 2 == 2
-	move.l (%a4,%d3.l*4),%d4
+	move.l (%a3,%d3.l*4),%d4
 	mvs.w %d4,%d5
 	swap %d4
 	ext.l %d4
 	.else
-	lea (%a4,%d3.l*2),%a3
-	mvs.w (%a3,%d3.l*4),%d4
-	mvs.w (3,%a3,%d3.l*4),%d5
+	lea (%a3,%d3.l*2),%a1
+	mvs.w (%a1,%d3.l*4),%d4
+	mvs.w (3,%a1,%d3.l*4),%d5
 	.endif
 	add.l %d5,%d4
 	asr.l #1,%d4
@@ -342,86 +307,67 @@ stereo_page:
 	.if 1 > 0
 	move.l %d4,%d6
 	add.l %d5,%d6
-	muls.l 76(%sp),%d6
+	muls.l 80(%sp),%d6
 	asr.l %d1,%d6
 	add.l %d6,%d4
 	add.l %d6,%d5
 	.elseif 1 < 0
 	move.l %d4,%d6
 	sub.l %d5,%d6
-	muls.l 76(%sp),%d6
-	move.l %d6,%a3
+	muls.l 80(%sp),%d6
+	move.l %d6,%a1
 	asr.l %d1,%d6
 	add.l %d6,%d4
-	move.l %a3,%d6
+	move.l %a1,%d6
 	neg.l %d6
 	asr.l %d1,%d6
 	add.l %d6,%d5
 	.endif
-	add.l %d4,(%a6)+
-	add.l %d5,(%a6)+
-	add.l 108(%sp),%d2
+	add.l %d4,(%a0)+
+	add.l %d5,(%a0)+
+	add.l %a4,%d2
 	addx.l %d7,%d3
-	.endm
-	move.l %a1,%d6
-	sub.l %a6,%d6
-	and.l #24,%d6
-	beq.s 1f
-	cmp.l #8,%d6
-	beq.w 4f
-	cmp.l #16,%d6
-	beq.w 3f
-	bra.w 2f
-	1:
-	grain_mix_frame171
-	2:
-	grain_mix_frame171
-	3:
-	grain_mix_frame171
-	4:
-	grain_mix_frame171
-	.purgem grain_mix_frame171
-	cmpa.l %a1,%a6
+	cmpa.l 56(%sp),%a0
 	bne.w 1b
 | 0 "" 2
 #NO_APP
-	add.l 100(%sp),%d3
-	move.l 88(%sp),%a1
-	move.l %d3,(%a1)
-	move.l %d2,4(%a1)
-	move.l %a0,12(%a1)
+	add.l 104(%sp),%d3
+	move.l 92(%sp),%a0
+	move.l %d3,(%a0)
+	move.l %d2,4(%a0)
+	move.l %a2,12(%a0)
 .L31:
 	movem.l (%sp),#31996
-	lea (84,%sp),%sp
+	lea (88,%sp),%sp
 	rts
 .L16:
 	moveq #-1,%d4
 	cmp.l %d2,%d4
 	jgt .L29
-	move.l %a2,64(%sp)
+	move.l %a2,52(%sp)
 	move.w #15,%a2
-	move.l %d3,80(%sp)
-	move.l %a1,68(%sp)
+	move.l %d3,84(%sp)
+	move.l %a1,72(%sp)
 	move.l %a6,%d2
+	move.l %d5,%d3
 	move.l %d0,%a6
-	move.l 72(%sp),%d3
-	move.l %a1,%d0
-	clr.l 76(%sp)
-	move.l %a6,%a1
 	move.l %a2,%d7
-	move.l 64(%sp),%a0
-	move.l 92(%sp),%a4
-	move.l 52(%sp),%a5
-	move.l 104(%sp),%d6
+	move.l %a1,%d0
+	move.l %a6,%a1
+	clr.l 80(%sp)
+	move.l 52(%sp),%a0
+	move.l 96(%sp),%a4
+	move.l 112(%sp),%a5
+	move.l 108(%sp),%d6
 #APP
 | 329 "gran.c" 1
-	.macro grain_mix_frame205
+	1:
 	.if 0
 	move.l %a1,%d3
 	swap %d3
 	mvz.b %d3,%d3
 	mvz.w (#0,%d3.l*2),%d3
-	adda.l 80(%sp),%a1
+	adda.l 84(%sp),%a1
 	.endif
 	.if 3 == 2
 	move.l (%a4,%d0.l*4),%d1
@@ -444,14 +390,14 @@ stereo_page:
 	.if 0 > 0
 	move.l %d1,%d5
 	add.l %d4,%d5
-	muls.l 76(%sp),%d5
+	muls.l 80(%sp),%d5
 	asr.l %d7,%d5
 	add.l %d5,%d1
 	add.l %d5,%d4
 	.elseif 0 < 0
 	move.l %d1,%d5
 	sub.l %d4,%d5
-	muls.l 76(%sp),%d5
+	muls.l 80(%sp),%d5
 	move.l %d5,%a3
 	asr.l %d7,%d5
 	add.l %d5,%d1
@@ -462,78 +408,61 @@ stereo_page:
 	.endif
 	add.l %d1,(%a0)+
 	add.l %d4,(%a0)+
-	add.l 108(%sp),%d2
+	add.l %a5,%d2
 	addx.l %d6,%d0
-	.endm
-	move.l %a5,%d5
-	sub.l %a0,%d5
-	and.l #24,%d5
-	beq.s 1f
-	cmp.l #8,%d5
-	beq.w 4f
-	cmp.l #16,%d5
-	beq.w 3f
-	bra.w 2f
-	1:
-	grain_mix_frame205
-	2:
-	grain_mix_frame205
-	3:
-	grain_mix_frame205
-	4:
-	grain_mix_frame205
-	.purgem grain_mix_frame205
-	cmpa.l %a5,%a0
+	cmpa.l 56(%sp),%a0
 	bne.w 1b
 | 0 "" 2
 #NO_APP
-	move.l 120(%sp),%d1
+	move.l 124(%sp),%d1
 	move.l %a1,%a6
-	lea (80,%sp),%a0
-	move.l 88(%sp),%a1
+	lea (84,%sp),%a0
+	move.l 92(%sp),%a1
 	muls.l (%a0),%d1
-	add.l 100(%sp),%d0
+	add.l 104(%sp),%d0
 	move.l %d2,4(%a1)
 	move.l %d0,(%a1)
 	add.l %a6,%d1
 	movem.l (%sp),#31996
 	move.l %d1,12(%a1)
-	lea (84,%sp),%sp
+	lea (88,%sp),%sp
 	rts
 .L28:
 	moveq #-1,%d5
 	cmp.l %d2,%d5
 	jgt .L30
-	move.l %d3,80(%sp)
+	move.l %d3,84(%sp)
 	moveq #15,%d1
-	move.l %a0,%d2
-	move.l %d4,%d3
-	move.l %d0,%a0
 	move.l %a2,%a6
-	move.l 92(%sp),%a4
+	move.l %a0,%d2
+	move.l %d0,%a2
+	move.l %d4,%d3
+	move.l 96(%sp),%a3
 	clr.l %d0
-	clr.l 76(%sp)
-	move.l 104(%sp),%d7
-	move.l 112(%sp),%a5
+	clr.l 80(%sp)
+	move.l 112(%sp),%a4
+	move.l %a6,%a0
+	move.l 108(%sp),%d7
+	move.l 116(%sp),%a5
 #APP
 | 329 "gran.c" 1
-	.macro grain_mix_frame238
+	1:
 	.if 1
-	move.l %a0,%d0
+	move.l %a2,%d0
 	swap %d0
 	mvz.b %d0,%d0
 	mvz.w (%a5,%d0.l*2),%d0
-	adda.l 80(%sp),%a0
+	adda.l 84(%sp),%a2
 	.endif
 	.if 2 == 2
-	move.l (%a4,%d3.l*4),%d4
+	move.l (%a3,%d3.l*4),%d4
 	mvs.w %d4,%d5
 	swap %d4
 	ext.l %d4
 	.else
-	lea (%a4,%d3.l*2),%a3
-	mvs.w (%a3,%d3.l*4),%d4
-	mvs.w (3,%a3,%d3.l*4),%d5
+	lea (%a3,%d3.l*2),%a1
+	mvs.w (%a1,%d3.l*4),%d4
+	mvs.w (3,%a1,%d3.l*4),%d5
 	.endif
 	add.l %d5,%d4
 	asr.l #1,%d4
@@ -546,54 +475,35 @@ stereo_page:
 	.if 0 > 0
 	move.l %d4,%d6
 	add.l %d5,%d6
-	muls.l 76(%sp),%d6
+	muls.l 80(%sp),%d6
 	asr.l %d1,%d6
 	add.l %d6,%d4
 	add.l %d6,%d5
 	.elseif 0 < 0
 	move.l %d4,%d6
 	sub.l %d5,%d6
-	muls.l 76(%sp),%d6
-	move.l %d6,%a3
+	muls.l 80(%sp),%d6
+	move.l %d6,%a1
 	asr.l %d1,%d6
 	add.l %d6,%d4
-	move.l %a3,%d6
+	move.l %a1,%d6
 	neg.l %d6
 	asr.l %d1,%d6
 	add.l %d6,%d5
 	.endif
-	add.l %d4,(%a6)+
-	add.l %d5,(%a6)+
-	add.l 108(%sp),%d2
+	add.l %d4,(%a0)+
+	add.l %d5,(%a0)+
+	add.l %a4,%d2
 	addx.l %d7,%d3
-	.endm
-	move.l %a1,%d6
-	sub.l %a6,%d6
-	and.l #24,%d6
-	beq.s 1f
-	cmp.l #8,%d6
-	beq.w 4f
-	cmp.l #16,%d6
-	beq.w 3f
-	bra.w 2f
-	1:
-	grain_mix_frame238
-	2:
-	grain_mix_frame238
-	3:
-	grain_mix_frame238
-	4:
-	grain_mix_frame238
-	.purgem grain_mix_frame238
-	cmpa.l %a1,%a6
+	cmpa.l 56(%sp),%a0
 	bne.w 1b
 | 0 "" 2
 #NO_APP
-	add.l 100(%sp),%d3
-	move.l 88(%sp),%a1
-	move.l %d3,(%a1)
-	move.l %d2,4(%a1)
-	move.l %a0,12(%a1)
+	add.l 104(%sp),%d3
+	move.l 92(%sp),%a0
+	move.l %d3,(%a0)
+	move.l %d2,4(%a0)
+	move.l %a2,12(%a0)
 	jra .L31
 .L4:
 	moveq #7,%d6
@@ -603,49 +513,50 @@ stereo_page:
 	jhi .L7
 .L3:
 	move.w %a6,%d7
-	move.l 120(%sp),%d4
-	move.l 88(%sp),%a1
-	move.l 112(%sp),%a3
+	move.l 124(%sp),%d4
+	move.l 92(%sp),%a1
+	move.l 116(%sp),%a3
 	lsl.l #3,%d4
 	move.l 4(%a1),%a0
 	move.l (%a1),%a1
-	sub.l 100(%sp),%a1
+	sub.l 104(%sp),%a1
 	mvz.b %d7,%d7
-	lea (%a2,%d4.l),%a4
-	moveq #1,%d4
+	add.l %a2,%d4
 	mvz.w (%a3,%d7.l*2),%d5
-	move.l %a4,52(%sp)
+	move.l %d4,56(%sp)
+	moveq #1,%d4
 	cmp.l %d2,%d4
 	jge .L8
 	move.w #15,%a6
-	move.l %d3,80(%sp)
+	move.l %d3,84(%sp)
 	neg.l %d1
-	move.l %d1,76(%sp)
+	move.l %d1,80(%sp)
 	move.l %a0,%d3
 	move.l %a1,%d2
-	move.l %a2,68(%sp)
+	move.l %a2,72(%sp)
 	move.l %d0,%a1
 	move.l %a6,%d4
-	move.l 68(%sp),%a0
-	move.l 92(%sp),%a5
-	move.l 104(%sp),%d1
+	move.l 72(%sp),%a0
+	move.l 96(%sp),%a4
+	move.l 112(%sp),%a5
+	move.l 108(%sp),%d1
 #APP
 | 329 "gran.c" 1
-	.macro grain_mix_frame283
+	1:
 	.if 0
 	move.l %a1,%d5
 	swap %d5
 	mvz.b %d5,%d5
 	mvz.w (#0,%d5.l*2),%d5
-	adda.l 80(%sp),%a1
+	adda.l 84(%sp),%a1
 	.endif
 	.if 2 == 2
-	move.l (%a5,%d2.l*4),%d6
+	move.l (%a4,%d2.l*4),%d6
 	mvs.w %d6,%d7
 	swap %d6
 	ext.l %d6
 	.else
-	lea (%a5,%d2.l*2),%a3
+	lea (%a4,%d2.l*2),%a3
 	mvs.w (%a3,%d2.l*4),%d6
 	mvs.w (3,%a3,%d2.l*4),%d7
 	.endif
@@ -660,14 +571,14 @@ stereo_page:
 	.if 1 > 0
 	move.l %d6,%d0
 	add.l %d7,%d0
-	muls.l 76(%sp),%d0
+	muls.l 80(%sp),%d0
 	asr.l %d4,%d0
 	add.l %d0,%d6
 	add.l %d0,%d7
 	.elseif 1 < 0
 	move.l %d6,%d0
 	sub.l %d7,%d0
-	muls.l 76(%sp),%d0
+	muls.l 80(%sp),%d0
 	move.l %d0,%a3
 	asr.l %d4,%d0
 	add.l %d0,%d6
@@ -678,168 +589,130 @@ stereo_page:
 	.endif
 	add.l %d6,(%a0)+
 	add.l %d7,(%a0)+
-	add.l 108(%sp),%d3
+	add.l %a5,%d3
 	addx.l %d1,%d2
-	.endm
-	move.l %a4,%d0
-	sub.l %a0,%d0
-	and.l #24,%d0
-	beq.s 1f
-	cmp.l #8,%d0
-	beq.w 4f
-	cmp.l #16,%d0
-	beq.w 3f
-	bra.w 2f
-	1:
-	grain_mix_frame283
-	2:
-	grain_mix_frame283
-	3:
-	grain_mix_frame283
-	4:
-	grain_mix_frame283
-	.purgem grain_mix_frame283
-	cmpa.l %a4,%a0
+	cmpa.l 56(%sp),%a0
 	bne.w 1b
 | 0 "" 2
 #NO_APP
-	move.l 120(%sp),%d0
-	lea (80,%sp),%a0
-	add.l 100(%sp),%d2
+	move.l 124(%sp),%d0
+	lea (84,%sp),%a0
+	add.l 104(%sp),%d2
 	muls.l (%a0),%d0
-	move.l 88(%sp),%a2
+	move.l 92(%sp),%a2
 	move.l %d2,(%a2)
 	move.l %d3,4(%a2)
 	add.l %a1,%d0
 	move.l %d0,12(%a2)
 .L34:
 	movem.l (%sp),#31996
-	lea (84,%sp),%sp
+	lea (88,%sp),%sp
 	rts
 .L27:
 	moveq #-1,%d4
 	cmp.l %d2,%d4
 	jgt .L32
-	move.l %d0,60(%sp)
-	moveq #15,%d1
-	move.l %d3,80(%sp)
-	move.l %a0,64(%sp)
-	move.l %a0,%d3
+	move.l %d0,56(%sp)
+	moveq #15,%d7
+	move.l %a0,72(%sp)
+	move.l %a0,%d1
 	move.l %a6,%d2
-	clr.l 76(%sp)
+	move.l 56(%sp),%a1
 	clr.l %d0
+	clr.l 80(%sp)
+	move.l %d3,84(%sp)
+	move.l 96(%sp),%a3
 	move.l %a2,%a0
-	move.l 60(%sp),%a1
-	move.l 92(%sp),%a3
-	move.l 52(%sp),%a4
-	move.l 104(%sp),%d7
-	move.l 112(%sp),%a5
+	move.l 112(%sp),%a4
+	move.l 108(%sp),%d6
+	move.l 116(%sp),%a5
 #APP
 | 329 "gran.c" 1
-	.macro grain_mix_frame320
+	1:
 	.if 1
 	move.l %a1,%d0
 	swap %d0
 	mvz.b %d0,%d0
 	mvz.w (%a5,%d0.l*2),%d0
-	adda.l 80(%sp),%a1
+	adda.l 84(%sp),%a1
 	.endif
 	.if 3 == 2
-	move.l (%a3,%d2.l*4),%d5
-	mvs.w %d5,%d6
-	swap %d5
-	ext.l %d5
+	move.l (%a3,%d2.l*4),%d3
+	mvs.w %d3,%d4
+	swap %d3
+	ext.l %d3
 	.else
 	lea (%a3,%d2.l*2),%a2
-	mvs.w (%a2,%d2.l*4),%d5
-	mvs.w (3,%a2,%d2.l*4),%d6
+	mvs.w (%a2,%d2.l*4),%d3
+	mvs.w (3,%a2,%d2.l*4),%d4
 	.endif
-	add.l %d6,%d5
-	asr.l #1,%d5
-	neg.l %d6
-	add.l %d5,%d6
-	muls.l %d0,%d5
-	muls.l %d0,%d6
-	asr.l %d1,%d5
-	asr.l %d1,%d6
-	.if 0 > 0
-	move.l %d5,%d4
-	add.l %d6,%d4
-	muls.l 76(%sp),%d4
-	asr.l %d1,%d4
-	add.l %d4,%d5
-	add.l %d4,%d6
-	.elseif 0 < 0
-	move.l %d5,%d4
-	sub.l %d6,%d4
-	muls.l 76(%sp),%d4
-	move.l %d4,%a2
-	asr.l %d1,%d4
-	add.l %d4,%d5
-	move.l %a2,%d4
+	add.l %d4,%d3
+	asr.l #1,%d3
 	neg.l %d4
-	asr.l %d1,%d4
-	add.l %d4,%d6
+	add.l %d3,%d4
+	muls.l %d0,%d3
+	muls.l %d0,%d4
+	asr.l %d7,%d3
+	asr.l %d7,%d4
+	.if 0 > 0
+	move.l %d3,%d5
+	add.l %d4,%d5
+	muls.l 80(%sp),%d5
+	asr.l %d7,%d5
+	add.l %d5,%d3
+	add.l %d5,%d4
+	.elseif 0 < 0
+	move.l %d3,%d5
+	sub.l %d4,%d5
+	muls.l 80(%sp),%d5
+	move.l %d5,%a2
+	asr.l %d7,%d5
+	add.l %d5,%d3
+	move.l %a2,%d5
+	neg.l %d5
+	asr.l %d7,%d5
+	add.l %d5,%d4
 	.endif
-	add.l %d5,(%a0)+
-	add.l %d6,(%a0)+
-	add.l 108(%sp),%d3
-	addx.l %d7,%d2
-	.endm
-	move.l %a4,%d4
-	sub.l %a0,%d4
-	and.l #24,%d4
-	beq.s 1f
-	cmp.l #8,%d4
-	beq.w 4f
-	cmp.l #16,%d4
-	beq.w 3f
-	bra.w 2f
-	1:
-	grain_mix_frame320
-	2:
-	grain_mix_frame320
-	3:
-	grain_mix_frame320
-	4:
-	grain_mix_frame320
-	.purgem grain_mix_frame320
-	cmpa.l %a4,%a0
+	add.l %d3,(%a0)+
+	add.l %d4,(%a0)+
+	add.l %a4,%d1
+	addx.l %d6,%d2
+	cmpa.l 44(%sp),%a0
 	bne.w 1b
 | 0 "" 2
 #NO_APP
-	add.l 100(%sp),%d2
-	move.l 88(%sp),%a0
+	add.l 104(%sp),%d2
+	move.l 92(%sp),%a0
 	move.l %d2,(%a0)
-	move.l %d3,4(%a0)
 	movem.l (%sp),#31996
+	move.l %d1,4(%a0)
 	move.l %a1,12(%a0)
-	lea (84,%sp),%sp
+	lea (88,%sp),%sp
 	rts
 .L8:
 	moveq #-1,%d4
 	cmp.l %d2,%d4
 	jgt .L33
 	move.w #15,%a6
-	move.l %d3,80(%sp)
+	move.l %d3,84(%sp)
 	move.l %a1,%d2
 	move.l %a0,%d4
-	move.l 92(%sp),%a3
+	move.l 96(%sp),%a3
 	move.l %d0,%a1
-	move.l 52(%sp),%a4
+	move.l 112(%sp),%a4
 	move.l %d5,%d3
-	clr.l 76(%sp)
-	move.l 104(%sp),%d6
+	clr.l 80(%sp)
+	move.l 108(%sp),%d6
 	move.l %a6,%d7
 #APP
 | 329 "gran.c" 1
-	.macro grain_mix_frame348
+	1:
 	.if 0
 	move.l %a1,%d3
 	swap %d3
 	mvz.b %d3,%d3
 	mvz.w (#0,%d3.l*2),%d3
-	adda.l 80(%sp),%a1
+	adda.l 84(%sp),%a1
 	.endif
 	.if 2 == 2
 	move.l (%a3,%d2.l*4),%d0
@@ -862,14 +735,14 @@ stereo_page:
 	.if 0 > 0
 	move.l %d0,%d5
 	add.l %d1,%d5
-	muls.l 76(%sp),%d5
+	muls.l 80(%sp),%d5
 	asr.l %d7,%d5
 	add.l %d5,%d0
 	add.l %d5,%d1
 	.elseif 0 < 0
 	move.l %d0,%d5
 	sub.l %d1,%d5
-	muls.l 76(%sp),%d5
+	muls.l 80(%sp),%d5
 	move.l %d5,%a0
 	asr.l %d7,%d5
 	add.l %d5,%d0
@@ -880,64 +753,45 @@ stereo_page:
 	.endif
 	add.l %d0,(%a2)+
 	add.l %d1,(%a2)+
-	add.l 108(%sp),%d4
+	add.l %a4,%d4
 	addx.l %d6,%d2
-	.endm
-	move.l %a4,%d5
-	sub.l %a2,%d5
-	and.l #24,%d5
-	beq.s 1f
-	cmp.l #8,%d5
-	beq.w 4f
-	cmp.l #16,%d5
-	beq.w 3f
-	bra.w 2f
-	1:
-	grain_mix_frame348
-	2:
-	grain_mix_frame348
-	3:
-	grain_mix_frame348
-	4:
-	grain_mix_frame348
-	.purgem grain_mix_frame348
-	cmpa.l %a4,%a2
+	cmpa.l 56(%sp),%a2
 	bne.w 1b
 | 0 "" 2
 #NO_APP
-	add.l 100(%sp),%d2
-	lea (80,%sp),%a5
-	move.l 88(%sp),%a0
-	move.l 120(%sp),%d0
+	add.l 104(%sp),%d2
+	lea (84,%sp),%a5
+	move.l 92(%sp),%a0
+	move.l 124(%sp),%d0
 	move.l %d2,(%a0)
 	muls.l (%a5),%d0
 	move.l %d4,4(%a0)
 	movem.l (%sp),#31996
 	add.l %a1,%d0
 	move.l %d0,12(%a0)
-	lea (84,%sp),%sp
+	lea (88,%sp),%sp
 	rts
 .L29:
-	move.l %d3,80(%sp)
+	move.l %d3,84(%sp)
 	move.l %a1,%d2
 	move.l %a6,%d4
 	move.l %d0,%a1
-	move.l %a2,%a0
-	move.l 72(%sp),%d3
+	move.l %d5,%d3
+	move.l 96(%sp),%a4
 	moveq #15,%d0
-	move.l %d1,76(%sp)
-	move.l 92(%sp),%a4
-	move.l 52(%sp),%a5
-	move.l 104(%sp),%d7
+	move.l %d1,80(%sp)
+	move.l 112(%sp),%a5
+	move.l %a2,%a0
+	move.l 108(%sp),%d7
 #APP
 | 329 "gran.c" 1
-	.macro grain_mix_frame377
+	1:
 	.if 0
 	move.l %a1,%d3
 	swap %d3
 	mvz.b %d3,%d3
 	mvz.w (#0,%d3.l*2),%d3
-	adda.l 80(%sp),%a1
+	adda.l 84(%sp),%a1
 	.endif
 	.if 3 == 2
 	move.l (%a4,%d2.l*4),%d1
@@ -960,14 +814,14 @@ stereo_page:
 	.if -1 > 0
 	move.l %d1,%d6
 	add.l %d5,%d6
-	muls.l 76(%sp),%d6
+	muls.l 80(%sp),%d6
 	asr.l %d0,%d6
 	add.l %d6,%d1
 	add.l %d6,%d5
 	.elseif -1 < 0
 	move.l %d1,%d6
 	sub.l %d5,%d6
-	muls.l 76(%sp),%d6
+	muls.l 80(%sp),%d6
 	move.l %d6,%a3
 	asr.l %d0,%d6
 	add.l %d6,%d1
@@ -978,68 +832,49 @@ stereo_page:
 	.endif
 	add.l %d1,(%a0)+
 	add.l %d5,(%a0)+
-	add.l 108(%sp),%d4
+	add.l %a5,%d4
 	addx.l %d7,%d2
-	.endm
-	move.l %a5,%d6
-	sub.l %a0,%d6
-	and.l #24,%d6
-	beq.s 1f
-	cmp.l #8,%d6
-	beq.w 4f
-	cmp.l #16,%d6
-	beq.w 3f
-	bra.w 2f
-	1:
-	grain_mix_frame377
-	2:
-	grain_mix_frame377
-	3:
-	grain_mix_frame377
-	4:
-	grain_mix_frame377
-	.purgem grain_mix_frame377
-	cmpa.l %a5,%a0
+	cmpa.l 56(%sp),%a0
 	bne.w 1b
 | 0 "" 2
 #NO_APP
-	move.l 120(%sp),%d0
-	lea (80,%sp),%a0
-	add.l 100(%sp),%d2
+	lea (84,%sp),%a0
+	move.l 124(%sp),%d0
+	add.l 104(%sp),%d2
+	move.l 92(%sp),%a2
 	muls.l (%a0),%d0
-	move.l 88(%sp),%a2
 	move.l %d2,(%a2)
 	move.l %d4,4(%a2)
 	add.l %a1,%d0
 	move.l %d0,12(%a2)
 	movem.l (%sp),#31996
-	lea (84,%sp),%sp
+	lea (88,%sp),%sp
 	rts
 .L32:
-	move.l %d3,80(%sp)
+	move.l %d3,84(%sp)
 	moveq #15,%d4
-	move.l %a6,60(%sp)
-	move.l %a0,64(%sp)
+	move.l %a6,56(%sp)
+	move.l %a0,68(%sp)
 	move.l %a0,%d6
 	clr.l %d7
-	move.l %d1,76(%sp)
-	move.l %a2,44(%sp)
+	move.l %d1,80(%sp)
+	move.l %a2,52(%sp)
 	clr.l 48(%sp)
-	move.l 60(%sp),%d5
+	move.l 56(%sp),%d5
 	move.l %d0,%a0
-	move.l 92(%sp),%a3
-	move.l 52(%sp),%a4
-	move.l 104(%sp),%d3
-	move.l 112(%sp),%a5
+	move.l 96(%sp),%a3
+	move.l 112(%sp),%a4
+	move.l 108(%sp),%d3
+	move.l 116(%sp),%a5
 #APP
 | 329 "gran.c" 1
-	.macro grain_mix_frame411
+	1:
 	.if 1
 	move.l %a0,%d7
 	swap %d7
 	mvz.b %d7,%d7
 	mvz.w (%a5,%d7.l*2),%d7
-	adda.l 80(%sp),%a0
+	adda.l 84(%sp),%a0
 	.endif
 	.if 3 == 2
 	move.l (%a3,%d5.l*4),%d0
@@ -1062,14 +897,14 @@ stereo_page:
 	.if -1 > 0
 	move.l %d0,%d2
 	add.l %d1,%d2
-	muls.l 76(%sp),%d2
+	muls.l 80(%sp),%d2
 	asr.l %d4,%d2
 	add.l %d2,%d0
 	add.l %d2,%d1
 	.elseif -1 < 0
 	move.l %d0,%d2
 	sub.l %d1,%d2
-	muls.l 76(%sp),%d2
+	muls.l 80(%sp),%d2
 	move.l %d2,%a1
 	asr.l %d4,%d2
 	add.l %d2,%d0
@@ -1080,71 +915,54 @@ stereo_page:
 	.endif
 	add.l %d0,(%a2)+
 	add.l %d1,(%a2)+
-	add.l 108(%sp),%d6
+	add.l %a4,%d6
 	addx.l %d3,%d5
-	.endm
-	move.l %a4,%d2
-	sub.l %a2,%d2
-	and.l #24,%d2
-	beq.s 1f
-	cmp.l #8,%d2
-	beq.w 4f
-	cmp.l #16,%d2
-	beq.w 3f
-	bra.w 2f
-	1:
-	grain_mix_frame411
-	2:
-	grain_mix_frame411
-	3:
-	grain_mix_frame411
-	4:
-	grain_mix_frame411
-	.purgem grain_mix_frame411
-	cmpa.l %a4,%a2
+	cmpa.l 44(%sp),%a2
 	bne.w 1b
 | 0 "" 2
 #NO_APP
-	add.l 100(%sp),%d5
+	add.l 104(%sp),%d5
 	move.l %a0,%a6
-	move.l 88(%sp),%a0
+	move.l 92(%sp),%a0
 	move.l %d5,(%a0)
 	move.l %d6,4(%a0)
 	move.l %a6,12(%a0)
 	movem.l (%sp),#31996
-	lea (84,%sp),%sp
+	lea (88,%sp),%sp
 	rts
 .L30:
-	move.l %d3,80(%sp)
-	move.l %d1,76(%sp)
-	moveq #15,%d1
-	move.l %a0,%d2
-	move.l %d4,%d3
-	move.l %d0,%a0
+	move.l %d3,84(%sp)
 	move.l %a2,%a6
+	move.l %a0,%d2
+	move.l %d1,80(%sp)
+	moveq #15,%d1
+	move.l %d0,%a2
+	move.l %d4,%d3
 	clr.l %d0
-	move.l 92(%sp),%a4
-	move.l 104(%sp),%d5
-	move.l 112(%sp),%a5
+	move.l 96(%sp),%a3
+	move.l %a6,%a0
+	move.l 112(%sp),%a4
+	move.l 108(%sp),%d5
+	move.l 116(%sp),%a5
 #APP
 | 329 "gran.c" 1
-	.macro grain_mix_frame437
+	1:
 	.if 1
-	move.l %a0,%d0
+	move.l %a2,%d0
 	swap %d0
 	mvz.b %d0,%d0
 	mvz.w (%a5,%d0.l*2),%d0
-	adda.l 80(%sp),%a0
+	adda.l 84(%sp),%a2
 	.endif
 	.if 2 == 2
-	move.l (%a4,%d3.l*4),%d4
+	move.l (%a3,%d3.l*4),%d4
 	mvs.w %d4,%d6
 	swap %d4
 	ext.l %d4
 	.else
-	lea (%a4,%d3.l*2),%a3
-	mvs.w (%a3,%d3.l*4),%d4
-	mvs.w (3,%a3,%d3.l*4),%d6
+	lea (%a3,%d3.l*2),%a1
+	mvs.w (%a1,%d3.l*4),%d4
+	mvs.w (3,%a1,%d3.l*4),%d6
 	.endif
 	add.l %d6,%d4
 	asr.l #1,%d4
@@ -1157,77 +975,58 @@ stereo_page:
 	.if -1 > 0
 	move.l %d4,%d7
 	add.l %d6,%d7
-	muls.l 76(%sp),%d7
+	muls.l 80(%sp),%d7
 	asr.l %d1,%d7
 	add.l %d7,%d4
 	add.l %d7,%d6
 	.elseif -1 < 0
 	move.l %d4,%d7
 	sub.l %d6,%d7
-	muls.l 76(%sp),%d7
-	move.l %d7,%a3
+	muls.l 80(%sp),%d7
+	move.l %d7,%a1
 	asr.l %d1,%d7
 	add.l %d7,%d4
-	move.l %a3,%d7
+	move.l %a1,%d7
 	neg.l %d7
 	asr.l %d1,%d7
 	add.l %d7,%d6
 	.endif
-	add.l %d4,(%a6)+
-	add.l %d6,(%a6)+
-	add.l 108(%sp),%d2
+	add.l %d4,(%a0)+
+	add.l %d6,(%a0)+
+	add.l %a4,%d2
 	addx.l %d5,%d3
-	.endm
-	move.l %a1,%d7
-	sub.l %a6,%d7
-	and.l #24,%d7
-	beq.s 1f
-	cmp.l #8,%d7
-	beq.w 4f
-	cmp.l #16,%d7
-	beq.w 3f
-	bra.w 2f
-	1:
-	grain_mix_frame437
-	2:
-	grain_mix_frame437
-	3:
-	grain_mix_frame437
-	4:
-	grain_mix_frame437
-	.purgem grain_mix_frame437
-	cmpa.l %a1,%a6
+	cmpa.l 56(%sp),%a0
 	bne.w 1b
 | 0 "" 2
 #NO_APP
-	add.l 100(%sp),%d3
-	move.l 88(%sp),%a1
-	move.l %d3,(%a1)
-	move.l %d2,4(%a1)
-	move.l %a0,12(%a1)
+	add.l 104(%sp),%d3
+	move.l 92(%sp),%a0
+	move.l %d3,(%a0)
+	move.l %d2,4(%a0)
+	move.l %a2,12(%a0)
 	jra .L31
 .L33:
 	move.w #15,%a6
-	move.l %d3,80(%sp)
-	move.l %d1,76(%sp)
+	move.l %d3,84(%sp)
+	move.l %d1,80(%sp)
 	move.l %a0,%d3
 	move.l %a1,%d2
-	move.l %a2,68(%sp)
+	move.l %a2,72(%sp)
 	move.l %d0,%a1
 	move.l %a6,%d4
-	move.l 68(%sp),%a0
-	move.l 92(%sp),%a4
-	move.l 52(%sp),%a5
-	move.l 104(%sp),%d1
+	move.l 72(%sp),%a0
+	move.l 96(%sp),%a4
+	move.l 112(%sp),%a5
+	move.l 108(%sp),%d1
 #APP
 | 329 "gran.c" 1
-	.macro grain_mix_frame459
+	1:
 	.if 0
 	move.l %a1,%d5
 	swap %d5
 	mvz.b %d5,%d5
 	mvz.w (#0,%d5.l*2),%d5
-	adda.l 80(%sp),%a1
+	adda.l 84(%sp),%a1
 	.endif
 	.if 2 == 2
 	move.l (%a4,%d2.l*4),%d6
@@ -1250,14 +1049,14 @@ stereo_page:
 	.if -1 > 0
 	move.l %d6,%d0
 	add.l %d7,%d0
-	muls.l 76(%sp),%d0
+	muls.l 80(%sp),%d0
 	asr.l %d4,%d0
 	add.l %d0,%d6
 	add.l %d0,%d7
 	.elseif -1 < 0
 	move.l %d6,%d0
 	sub.l %d7,%d0
-	muls.l 76(%sp),%d0
+	muls.l 80(%sp),%d0
 	move.l %d0,%a3
 	asr.l %d4,%d0
 	add.l %d0,%d6
@@ -1268,36 +1067,17 @@ stereo_page:
 	.endif
 	add.l %d6,(%a0)+
 	add.l %d7,(%a0)+
-	add.l 108(%sp),%d3
+	add.l %a5,%d3
 	addx.l %d1,%d2
-	.endm
-	move.l %a5,%d0
-	sub.l %a0,%d0
-	and.l #24,%d0
-	beq.s 1f
-	cmp.l #8,%d0
-	beq.w 4f
-	cmp.l #16,%d0
-	beq.w 3f
-	bra.w 2f
-	1:
-	grain_mix_frame459
-	2:
-	grain_mix_frame459
-	3:
-	grain_mix_frame459
-	4:
-	grain_mix_frame459
-	.purgem grain_mix_frame459
-	cmpa.l %a5,%a0
+	cmpa.l 56(%sp),%a0
 	bne.w 1b
 | 0 "" 2
 #NO_APP
-	move.l 120(%sp),%d0
-	lea (80,%sp),%a0
-	add.l 100(%sp),%d2
+	move.l 124(%sp),%d0
+	lea (84,%sp),%a0
+	add.l 104(%sp),%d2
 	muls.l (%a0),%d0
-	move.l 88(%sp),%a2
+	move.l 92(%sp),%a2
 	move.l %d2,(%a2)
 	move.l %d3,4(%a2)
 	add.l %a1,%d0
