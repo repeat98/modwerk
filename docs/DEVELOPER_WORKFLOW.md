@@ -38,7 +38,7 @@ Keep source worktrees in a persistent location, not `/tmp`, which a restart can 
 
 ### Open a draft early
 
-Open the pull request as a draft (`gh pr create --draft`) once a first commit shows the direction, and push to it as you go, so the work is on GitHub and the owner and reviewers can comment while a change of course is cheap (owner, 20 November 2026). Say in the description what is still open, and read the comments before you continue. A draft may be red: the `needs-work` label and the merge bot skip drafts. Mark it ready (`gh pr ready`) when the work and the developer's testing are done and `pr:ready` says Ready. A fix finished in one sitting can open ready.
+For base work, use the [machine’s cumulative draft](#change-a-base) from the first commit. For other work, open the pull request as a draft (`gh pr create --draft`) once a first commit shows the direction, and push to it as you go, so the work is on GitHub and the owner and reviewers can comment while a change of course is cheap (owner, 20 November 2026). Say in the description what is still open, and read the comments before you continue. A draft may be red: the `needs-work` label and the merge bot skip drafts. Mark it ready (`gh pr ready`) when the work and the developer's testing are done and `pr:ready` says Ready. A fix finished in one sitting can open ready.
 
 ### Ready means mergeable
 
@@ -124,9 +124,9 @@ Follow checks, the author publisher and deployments; then verify the live versio
 
 A base update carries several developers' changes onto players' instruments at once, so it ships as one release and only after a long run on hardware. Each machine has one cumulative draft pull request from `base/<machine>-next`, and the owner decides when it ships (owner, 18 and 19 November 2026).
 
-- **Join it.** Commit your base change to that branch, or open your pull request against it (`gh pr create --base base/<machine>-next`); it is merged in with your authorship. A base pull request against `main` is sent there. With none open for the machine, open it as a draft from `base/<machine>-next`.
+- **Find the draft first.** Run `gh pr list --state open --head base/<machine>-next` with the machine ID. Add every base fix, hook and rebuild directly to that branch and update the same pull request. From a fork, link your commits on the cumulative draft so a maintainer can apply them with your authorship. If the machine has no open cumulative draft, start one from `base/<machine>-next` into `main`.
 - **Share the branch.** Several developers commit to it: fetch first, add your commits on top, merge `main` into it, and never rebase or force-push it. Update the description's list of what is in it so far.
-- **It stays a draft** until the base has been tested extensively on a unit. Each submitter tests their change before it joins and adds their [record](TEST_PROCEDURE.md#what-a-base-adds): build, unit, what ran. Ready from `pr:ready` is not tested. Only the owner marks it ready and ships it.
+- **It stays a draft** until the base has been tested extensively on a unit. Each submitter lists pending tests on the draft, then adds the [build, unit and results](TEST_PROCEDURE.md#what-a-base-adds) before release. Only the owner marks it ready and ships it.
 
 ## Manage reports on GitHub
 
