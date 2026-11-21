@@ -12,7 +12,8 @@
 // Each module runs as a trial that is rolled back; nothing is kept. Base-bound packages are left out:
 // a twin does not trust them (docs/OCTATRACK_DRIVING.md).
 // shortcut: a machine's in-use price is not measured here (picking one is key presses that differ by list), read it
-// with `cpu` on the track; add it when the machine chooser has a step like pick:.
+// with `cpu` on the track; add it when the machine chooser has a step like pick:. Nor is a machine's meter cost
+// (resources.cpuMeter): read `health` against the track on Flex by hand (docs/MODULE_PERFORMANCE.md); add it with the same step.
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { connect } from 'node:net'
