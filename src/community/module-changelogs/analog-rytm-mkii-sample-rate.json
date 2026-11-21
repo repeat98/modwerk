@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.6.3-experimental",
+    "date": "2026-11-21",
+    "changes": [
+      "Also costs the Rytm less processing when samples loop forward (LOP ON) but none is set to PIPO.",
+      "Nothing you hear or see changes."
+    ]
+  },
+  {
     "version": "0.6.2-experimental",
     "date": "2026-11-20",
     "changes": [
