@@ -246,7 +246,7 @@
       "sha256": "d4b22d2975297e76f90654f25ca6eee4d28a288f727f4b3482fe73616b051378"
     }
   ],
-  "sourceCommit": "d55bb5f4df08451efa4fe6f9feac2f23c985a2a2",
+  "sourceCommit": "77247f4f3c61c2aa7f64fe405ce96674bc449d43",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
@@ -261,7 +261,7 @@
     "vibrato": "0.1.0-experimental",
     "analog-bassdrum": "0.1.7-experimental",
     "usb-audio-out-tracks-main-cue": "0.3.0-experimental",
-    "quantizer": "0.1.4-experimental",
+    "quantizer": "0.1.5-experimental",
     "synth": "0.1.4-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
