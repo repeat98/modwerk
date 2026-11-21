@@ -212,6 +212,93 @@ repitch_play_increment:
         move.l  %d0,(%a0)
 9:      moveq   #0,%d0
         rts
+
+| ev_in_use, asked from the base's UI tick (a task): nonzero while REPITCH is in force on a track of the live Part
+| (rp_find: SETUP TSTR = REPITCH, or AUTO with the bound sample's TSMODE = REPITCH, and a tempo in range), or while
+| any Part of the project, working or saved, sets a STATIC or FLEX track's SRC SETUP TSTR to REPITCH, so a Part,
+| pattern or bank change while playing finds Repitch awake. The Parts are swept one a call (16 banks, 4 working and 4
+| saved Parts each: every Part within 128 UI ticks, about two seconds), and a REPITCH seen in the last whole sweep or
+| this one keeps it awake. A Part's SRC SETUP bytes are LOOP SLIC LEN RATE TSTR TSNS at 0x1da + 30 * track + 6 * pool
+| (pool 0 STATIC, 1 FLEX: the type byte at 0x22 + track), as POLY8's registration writes them. While it answers 0 the
+| base leaves repitch_play_increment out of the frame and puts stock's bytes back at rate_gate and pitch_gate
+| (runtime.json "rests"); tstr_resolve stays patched, since it keeps the voice renderer away from TSTR 4, a value only
+| Repitch adds. C convention: d0-d1/a0-a1 free, d2-d4 kept.
+        .equ    BANK0, 0x400e21e0       | bank 0's base; all 16 banks stay in RAM
+        .equ    BANK_STRIDE, 0x9b340
+        .equ    PART_WORK, 0x8ed80      | the working Parts
+        .equ    PART_SAVED, 0x9504a     | the saved copies
+        .equ    PART_STRIDE, 6322
+        .global repitch_in_use
+repitch_in_use:
+        lea     -12(%sp),%sp
+        movem.l %d2-%d4,(%sp)
+        moveq   #0,%d4                  | the answer
+        moveq   #7,%d3
+1:      move.l  %d3,%d1
+        bsr     rp_find
+        tst.l   %d0
+        beq.s   2f
+        moveq   #1,%d4                  | the live Part uses it
+2:      subq.l  #1,%d3
+        bpl.s   1b
+        lea     (rp_sweep).l,%a1
+        move.l  (%a1),%d0               | the Part to read: bank * 8 + part
+        move.l  %d0,%d1
+        lsr.l   #3,%d1                  | the bank
+        move.l  #BANK_STRIDE,%d2
+        mulu.l  %d2,%d1
+        addi.l  #BANK0,%d1
+        movea.l %d1,%a0
+        move.l  %d0,%d1
+        moveq   #7,%d2
+        and.l   %d2,%d1                 | the Part, 0-3 working, 4-7 saved
+        move.l  #PART_WORK,%d2
+        moveq   #4,%d3
+        cmp.l   %d3,%d1
+        bcs.s   3f
+        subq.l  #4,%d1
+        move.l  #PART_SAVED,%d2
+3:      adda.l  %d2,%a0
+        move.l  #PART_STRIDE,%d2
+        mulu.l  %d2,%d1
+        adda.l  %d1,%a0                 | the Part
+        moveq   #7,%d3
+4:      moveq   #0,%d1
+        move.b  (0x22,%a0,%d3.l),%d1    | the track's type: 0 STATIC, 1 FLEX
+        cmpi.l  #1,%d1
+        bhi.s   5f
+        mulu.w  #6,%d1
+        moveq   #30,%d2
+        mulu.l  %d3,%d2
+        add.l   %d2,%d1
+        addi.l  #0x1de,%d1              | 0x1da + 30 * track + 6 * pool + 4: TSTR
+        move.b  (%a0,%d1.l),%d2
+        cmpi.b  #TSTR_REPITCH,%d2
+        bne.s   5f
+        move.b  #1,4(%a1)               | this sweep saw REPITCH
+5:      subq.l  #1,%d3
+        bpl.s   4b
+        addq.l  #1,%d0
+        andi.l  #127,%d0
+        move.l  %d0,(%a1)
+        bne.s   6f
+        move.b  4(%a1),5(%a1)           | a whole sweep ended: its answer stands for the next
+        clr.b   4(%a1)
+6:      tst.b   4(%a1)
+        bne.s   7f
+        tst.b   5(%a1)
+        beq.s   8f
+7:      moveq   #1,%d4
+8:      move.l  %d4,%d0
+        movem.l (%sp),%d2-%d4
+        lea     12(%sp),%sp
+        rts
+
+        .bss
+        .balign 4
+rp_sweep:
+        .space  8                       | the next Part (long), REPITCH seen this sweep, in the last (bytes 4, 5)
+        .text
         .endif
 
 | 0x40007d96, in the voice renderer: d1 is the track's TSTR just resolved

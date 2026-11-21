@@ -1,6 +1,8 @@
 {
  "schema": 1,
  "subscribe": [
-  {"event": "ev_play_increment", "fn": "repitch_play_increment", "order": 50, "replaces": "rate_hook"}
- ]
+  {"event": "ev_play_increment", "fn": "repitch_play_increment", "order": 50, "replaces": "rate_hook"},
+  {"event": "ev_in_use", "fn": "repitch_in_use", "order": 50}
+ ],
+ "rests": ["0x4000406a", "0x4000409e"]
 }
