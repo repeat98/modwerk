@@ -4,21 +4,23 @@ Grain 0.1.0-experimental · by A Force Truly Evil.
 
 ## Release build: pool fixes, 21 November 2026
 
-The release package is `394fa3971e650d31aa293aabcc4c54b2248dba4ce98e6660f7007ac2e222ce0b` (29,296 bytes; 27,956 bytes of code and data and 2,860 of BSS). It is the side-first build below plus two pool changes. Both the SDK and catalogue builders reproduce it.
+The release package is `ff5ac017118aa58850212e9bb7243ad933d654edadca1dc0f4db65c25dda56f5` (29,248 bytes; 27,908 bytes of code and data and 2,860 of BSS). It is the side-first build below plus three pool changes. Both the SDK and catalogue builders reproduce it.
 
 - **The author's pool fixes (`3733d94f`).** With the sample pool open, a Grain track plays as a plain Flex with its factory SRC and SETUP values, so FUNC+YES auditions the sample rather than Grain's cloud. Pressing a Grain track's key while the pool is open on another track now lists that track's samples instead of an empty list.
 - **The jump fix (maintainers, with the owner's OK).** On the MKII, after such a jump and closing the pool, the machine list kept seeing the track as Flex: FLEX could not be picked until another track was selected. It reproduced twice. A pool adopted on a jump now ends when the pool window closes. A pool opened on the Grain track itself still lasts until its SRC or SRC SETUP page is shown, so a sample loaded through the file browser keeps the track Grain.
+- **The selected-track audition (`cc6bb25e`, the author).** With the pool window open, only the selected track, whose pool it is, takes the plain Flex path. Before, a pool opened on any track turned every Grain track plain; Grain on another track now keeps its granular sound. `verify_lanes.py` checks the pool open on T5 and on T1 across all eight tracks.
 
-Only `grain_render` and `grain_start` changed on the audio path: each now checks whether the pool window is open. `gran_render` and `stereo_page` differ only in one table address. The deepest Grain audio stack grew to 764 bytes (`grain_render` 180), including return addresses and saved frame pointers.
+Only `grain_render` and `grain_start` changed on the audio path: each now checks whether the pool window is open on its own track. `gran_render` and `stereo_page` differ only in one table address. The deepest Grain audio stack is 756 bytes (`grain_render` 172; 764 and 180 in `394fa397`), including return addresses and saved frame pointers.
 
 **On the MKII,** RAM only on the trace twin, card-free:
 - `043e4485`, the author's commit without the jump fix, played the 100 BPM phrase with USB audio capture closed for one minute per track. T1 peaked at 345.1 µs and T5 at 329.1 µs. Neither track skipped a render or ran a frame over 362.8 µs, and six grains played.
 - `394fa397`: the pool opened on T5 and a jump to T1 listed the recordings. After closing it, FLEX was picked on T1 at once. Grain played on T1 (stem RMS 0.36 and 0.56), the panel answered track selection, and the trial rolled back.
 - After a pool opened on the Grain track and closed, a double tap and LEFT changed the track to FLEX.
+- `ff5ac017`, the release, on a fresh boot after a power cycle: while T1 played Grain, its six voices kept advancing with the pool open on T5. With the pool open on T1 itself they stopped, because the audition took the plain Flex path, and they advanced again once it closed. The `394fa397` steps then gave the same result at every step: FLEX picked after the jump, Grain picked again and played (stem RMS 0.56 and 0.63), the panel answered, and the trial rolled back. Run straight after six-voice playback, the base's CPU guard refused the Grain re-pick (CPU FULL, 62 %, WAS BUSY PLAYING). That refusal comes from the guard's memory of the playing load, not from Grain.
 
 **Known limit, also in the earlier builds:** after a pool opened on the Grain track from a page other than SRC and closed, FUNC+SRC cannot pick FLEX or STATIC until the SRC page is shown or another track is selected. A double tap and LEFT works.
 
-**Not tested on this build:** the audition itself (FUNC+YES over USB played nothing on any output, probably because the remote keys were not held), project save and reload, a full module set and the MKI. [Pool results](evidence/timing/pool-fixes.json)
+**Not tested on this build:** the audition's sound (FUNC+YES over USB played nothing on any output, probably because the remote keys were not held; the plain path it takes was seen on `ff5ac017`), project save and reload, a full module set and the MKI. [Pool results](evidence/timing/pool-fixes.json)
 
 ## Side-first stereo mixer, 21 November 2026
 

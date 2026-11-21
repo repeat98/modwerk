@@ -79,5 +79,79 @@
   "project save and reload",
   "a full module set",
   "MKI"
- ]
+ ],
+ "selectedTrackPackage": {
+  "sha256": "ff5ac017118aa58850212e9bb7243ad933d654edadca1dc0f4db65c25dda56f5",
+  "source": "the author's cc6bb25e merged with the jump fix",
+  "boot": "a fresh card-free RAM boot of the same trace twin after a power cycle",
+  "voicesWhilePlayingT1": {
+   "closed": {
+    "active": 5,
+    "changed": true
+   },
+   "poolOnT5": {
+    "active": 6,
+    "changed": true
+   },
+   "poolOnT1": {
+    "active": 6,
+    "changed": false
+   },
+   "after": {
+    "active": 6,
+    "changed": true
+   }
+  },
+  "voicesNote": "T1's six voice states read twice, 0.4 s apart: changed = the engine rendered; unchanged = the plain Flex path",
+  "checks": {
+   "poolOnT5": true,
+   "poolOnT1": true,
+   "poolClosed": true,
+   "engineWithPoolClosed": true,
+   "engineWithPoolOnT5": true,
+   "plainWithPoolOnT1": true,
+   "engineAfterClose": true
+  },
+  "repeatOf394fa397Probe": {
+   "checks": {
+    "directOpened": true,
+    "flexAfterDirectPool": false,
+    "grainAgain1": true,
+    "poolOnT5": true,
+    "poolOpenAfterJump": true,
+    "poolClosed": true,
+    "flexAfterJump": true,
+    "grainAgain2": true,
+    "played": true,
+    "flexAtEnd": true,
+    "panel": [
+     true,
+     true
+    ]
+   },
+   "playStemRmsT1": [
+    0.5568378626,
+    0.6286871227
+   ]
+  },
+  "cpuGuardAfterPlayback": {
+   "checks": {
+    "directOpened": true,
+    "flexAfterDirectPool": false,
+    "grainAgain1": true,
+    "poolOnT5": true,
+    "poolOpenAfterJump": true,
+    "poolClosed": true,
+    "flexAfterJump": true,
+    "grainAgain2": false,
+    "played": true,
+    "flexAtEnd": true,
+    "panel": [
+     true,
+     true
+    ]
+   },
+   "note": "Run straight after six-voice playback, the base's CPU guard refused the Grain re-pick (CPU FULL, 62 %, WAS BUSY PLAYING), so that run played T1 as Flex; on a fresh trial every check matched 394fa397"
+  }
+ }
 }
