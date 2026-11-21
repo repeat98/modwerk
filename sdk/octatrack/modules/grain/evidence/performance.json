@@ -19,12 +19,12 @@
     "method": "Matched 60-second runs at 100 BPM on T5, the track with the longest candidate frame. The same 24-bit stereo R3 played under 20-channel USB capture and a musical MIDI phrase. Idle percent is 100 minus the median stock CPU meter reading during playback, excluding its first 3 seconds."
   },
   "stress": {
-    "floodMessagesPerSecond": 47.5,
-    "clockBpm": 100,
-    "seconds": 60,
+    "floodMessagesPerSecond": 1096,
+    "clockBpm": 240,
+    "seconds": 50,
     "stuckNotes": null,
     "hangs": 0,
     "dropped": null,
-    "droppedExplanation": "Musical comparison on package db843bc2. Per run the host submitted 2,400 clocks, 200 note-ons, 200 note-offs and 50 modulation events over 60 seconds. The receive-error and transmit-drop counters are recorded separately from render skips and end-to-end MIDI delivery. Stuck notes and end-to-end message loss were not counted. UI and audio ticks advanced after STOP and Part changes. The earlier high-rate panel-freeze report is in TESTING.md."
+    "droppedExplanation": "Package db843bc2 on T1, USB audio capture closed: a 240 BPM clock plus one note-on, note-off or CC message per millisecond on channels 1 and 5 for 50 seconds, ending on a held note. STOP mid-note and a Part change followed. The unit recorded 0 MIDI receive errors and 0 transmit drops, the panel answered through 30.6 seconds after STOP, and a separate held-note capture was silent from half a second after STOP. Stuck notes after a MIDI channel change and end-to-end message delivery were not measured, so stuckNotes and dropped stay unset. See evidence/timing/release-bar.json."
   }
 }

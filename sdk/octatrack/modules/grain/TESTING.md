@@ -52,6 +52,25 @@ The guard compares the time already spent in the frame, plus the render's recent
 
 In the frames over the deadline, the side-first package's two passes took 117–154 µs on T1 and 90–106 µs on T5. Everything else in the frame interrupt took 223–247 µs and 262–275 µs. Eleven of the eighteen were over by less than 4 µs and the worst by 29.8 µs. Meeting the deadline therefore needs the Grain render up to about 30 µs shorter in the frames where stock's own work peaks. At their predicted cost, the remaining skips came from the guard's 80% margin, not from frames that would have missed the deadline. The trace adds a few stores per render. [Skip and overrun records](evidence/timing/guard-trace.json)
 
+### The shipping setup: USB audio closed, a MIDI flood and the stems
+
+USB audio is optional on a shipping unit, and its default layout is the leanest one; the twenty-channel layout above is the heaviest option. On the same trace twin, card-free, this package played one minute per arm with the host's USB audio capture closed, so the base streamed no audio. The lean Main layout lies between the two cases and was not measured.
+
+| Arm | Track | Skipped | Frames over 362.8 µs | Slowest frame | Longest Grain callback |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Capture closed, 100 BPM phrase | T1 | 0 | 0 | 326.5 µs | 118.3 µs |
+| Capture closed, 100 BPM phrase | T5 | 0 | 0 | 317.8 µs | 113.6 µs |
+| Capture closed, MIDI flood | T1 | 0 | 0 | 358.2 µs | 124.9 µs |
+| Twenty-channel capture, 100 BPM phrase | T1 | 0 | 12 | 383.3 µs | 124.1 µs |
+
+The flood sent a 240 BPM clock plus a note-on, note-off or CC message every millisecond on channels 1 and 5, 1,096 messages a second for 50 seconds. It ended holding a note on both tracks. STOP then came mid-note, followed by a change to Part 1 and back to Part 3. The unit recorded no MIDI receive errors or transmit drops. The panel switched Parts, returned the track to Flex and answered track selection through 30.6 seconds after STOP, and the crash and stall counters held. The flood's notes and CCs also started the stock T1 and T5 recorders, which the recorder reset emptied afterwards.
+
+A separate 40-second capture held a note on both tracks through STOP, a second STOP and the note-off. In the second before STOP the Grain stem's RMS was 0.68 and the Flex stem's 0.63. From half a second after STOP until the note-off both were silent (0.0000 and 0.0001), so no Grain note was left sounding. Grain's voice-state words stay nonzero after STOP; they are retained state, not sounding voices.
+
+The capture tool's count of repeated 128-frame blocks on the Grain stem (557 here) is clipping, not a stutter. The stem was saved and analysed: every repeated block is constant, 387 of them pinned at full scale, and none repeats changing audio. 53% of the Grain stem's samples sit at full scale with this loud recording and dense setting, against 3.4% for stock Flex on the same recording. The level of six overlapping grains is for the listening check.
+
+The RAM boot back to the shipping base after these arms hung: the startup animation kept running, the controls and USB did not respond, and the unit's log holds no crash or stall record for that boot. Grain's trial had already been rolled back and no module was live. A power cycle with the CF card booted the flashed base and the card set. [Arms, flood, held-note probe and stem analysis](evidence/timing/release-bar.json)
+
 ## Compact six-voice synthesis loop, 21 November 2026
 
 The SDK and catalogue produce package `0e4fc8dd6a3bfc60ee60321a83bda82866adaedad8b555834ecdfb6b6dee6f21`. Its stereo loop reads the fractional sample step from a register and mixes one sample per iteration. It keeps the improved page check, Q15 arithmetic, six voices and 35-point reservation. The four-sample build below is retained as a comparison.
