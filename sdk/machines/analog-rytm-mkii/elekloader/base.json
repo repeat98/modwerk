@@ -437,7 +437,6 @@
     ],
     "cflags": [
       "-fno-late-combine-instructions",
-      "-DFILLRECT_AT=0x40070726",
       "-DSEQ_PLAYING_AT=0x405c8cf8",
       "-DSYSEX_SEND_AT=0x40085a18",
       "-DUSB_SYSEX_STATE_AT=0x413db244",
@@ -468,11 +467,6 @@
         "event": "ev_tick",
         "fn": "mw_link_tick",
         "order": 240
-      },
-      {
-        "event": "ev_draw",
-        "fn": "mw_link_draw",
-        "order": 250
       },
       {
         "event": "ev_project",

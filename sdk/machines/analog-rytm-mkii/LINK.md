@@ -43,8 +43,8 @@ send effect's work area could hold them; the tool reads there when `ident` names
 **GLOBAL > REMOTE CTRL**, the last row after SYSTEM, with stock's wrench icon. It is ON at every
 boot, power-on included: a development image is meant to be driven. YES on the row toggles it
 (OFF lasts until the next boot); RIGHT sets it ON. The row is the only place a person sees the
-arm: the base also draws a 2 x 5 notch at x 126-127 of the header bar, but on the unit it reads
-as part of stock's stop square, and only screen compares see it.
+arm; the screen is stock's. (Bases before 21 Nov 2026 drew a 2 x 5 notch at x 126-127 of the header
+bar while armed; the test runner's screen compares skip it, so references recorded with it still pass.)
 
 Reads (`ident`, `screen`, `mem`) work disarmed. Keys, turns, `confirm` and `ramboot` need the arm,
 and stop as soon as a person touches the panel: a press or turn on the panel while armed lets go

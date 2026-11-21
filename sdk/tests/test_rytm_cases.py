@@ -95,9 +95,6 @@ class RytmCases(unittest.TestCase):
             path.unlink(missing_ok=True)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
     def test_a_channel_on_cc_nrpn_and_midi_expectations(self):
         text = ("name: chan\nstate: changes\n\ncc 74 100 ch2\nmidi a begin\nnrpn 1:20 64 ch3\nwait 100\nmidi a end\n"
                 "expect a has nrpn 5:0 1 ch2\nexpect a lacks nrpn 5:0 ch1\n")
@@ -119,3 +116,16 @@ if __name__ == "__main__":
                     rytm_test.find_cases([path])
         plain = rytm_test.find_cases([TOOLS / "cases/link-midi-out.case"])[0]
         self.assertTrue(all(len(op.values) == 2 for op in plain.ops if op.name == "cc"))   # no channel: as before
+
+    def test_screen_compares_skip_the_old_armed_mark(self):
+        lit = [[1] * 128 for _ in range(64)]
+        marked = [row[:] for row in lit]
+        for y in range(2, 7):
+            marked[y][126] = marked[y][127] = 0
+        self.assertEqual(rytm_test.screen_diff(marked, lit, None), (0, None))
+        marked[1][127] = 0                                  # a pixel beside it still counts
+        self.assertEqual(rytm_test.screen_diff(marked, lit, None), (1, (127, 1, 1, 1)))
+
+
+if __name__ == "__main__":
+    unittest.main()
