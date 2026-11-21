@@ -1,6 +1,6 @@
 # Grain
 
-Version 0.1.0-experimental · by A Force Truly Evil (@AForceTrulyEvil). The author played an earlier build on an MKI. The [test record](TESTING.md) identifies the build for each result.
+Version 0.1.1-experimental · by A Force Truly Evil (@AForceTrulyEvil). The author played an earlier build on an MKI. The [test record](TESTING.md) identifies the build for each result.
 
 ## Overview
 
