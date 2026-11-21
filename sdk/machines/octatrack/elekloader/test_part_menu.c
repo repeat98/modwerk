@@ -67,6 +67,8 @@ static uint32_t says; static unsigned asked;
 static uint32_t ask(void) { ++asked; return says; }
 static const char *const kit_actions[3] = {"SAVE KIT", "RELOAD KIT", "RENAME KIT"};
 static const struct modwerk_part_menu_ask k = {{MODWERK_PART_MENU_ABI_ASK, "KITS", 3, kit_actions, choose_b, 0}, ask};
+static const char *const other_actions[1] = {"OTHER"};
+static const struct modwerk_part_menu_ask k2 = {{MODWERK_PART_MENU_ABI_ASK, "OTHER", 1, other_actions, choose_b, 0}, ask};
 static const struct modwerk_part_menu_ask one_asks = {{MODWERK_PART_MENU_ABI, "OLD", 1, actions_b, choose_b, 0}, ask}; /* abi 1: never asked */
 
 static void open_part_edit(void)
@@ -217,6 +219,25 @@ int main(void)
     table[0] = 0;
     CHECK(press(PM_UP) && !pm_lo && !pm_list && pm_parent == 0);
     CHECK(asked == 7);                                              /* once an opening; abi 1's field never asked */
+    /* Kits hiding PART beside Locks, then only Kits removed while it is open: PART is back though Locks stays. */
+    table[0] = &a; table[1] = &k.menu; table[2] = 0;
+    open_part_edit();
+    CHECK(asked == 8 && pm_shown && pm_lo && !pm_list && pm_parent == 1);
+    table[1] = 0;
+    CHECK(press(PM_UP) && !pm_lo && !pm_list && pm_parent == 0);
+    texts = 0; mw_part_menu_draw(frame);
+    CHECK(!strcmp(drawn[1], "PART") && !strcmp(drawn[2], "LOCKS"));
+    CHECK(press(PM_RIGHT) && press(PM_UP) && press(PM_UP) && press(PM_UP) && press(PM_DOWN) && popup_row == 1 && mw_part_menu_key(PM_YES, 1) == 0 && !pm_shown); /* RELOAD: stock's */
+    mw_part_menu_key(PM_YES, 0);
+    /* Two records leaving PART out: it stays out until both are gone. */
+    table[0] = &a; table[1] = &k.menu; table[2] = &k2.menu; table[3] = 0;
+    open_part_edit();
+    CHECK(asked == 10 && pm_lo);
+    table[1] = &k2.menu; table[2] = 0;
+    CHECK(press(PM_DOWN) && pm_lo && pm_parent >= 1);
+    table[1] = 0;
+    CHECK(press(PM_UP) && !pm_lo && pm_parent == 0);
+    mw_part_menu_key(PM_NO, 1); mw_part_menu_key(PM_NO, 0);
 
     if (failures) { fprintf(stderr, "%u failed\n", failures); return 1; }
     puts("part menu: ok");
