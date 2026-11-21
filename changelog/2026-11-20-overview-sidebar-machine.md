@@ -1,0 +1,1 @@
+The overview and All machines no longer switch the sidebar's instrument to the machine whose set you edited last, such as the MS-70CDR after adding a Zoom effect. They show a connected Octatrack, else the last machine whose pages you opened, else the Octatrack. A connected Zoom pedal takes the sidebar on its own pages, and elsewhere only while no Octatrack is connected.

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from './published-octatrack.fixture'
 import { SET_MODULE_LIMIT } from '../../catalog/set-limit'
 import { USB_AUDIO_MODULE } from '../../config/usb-audio'
 import type { OctatrackLink } from './octatrack-link'

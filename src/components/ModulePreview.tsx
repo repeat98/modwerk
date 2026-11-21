@@ -239,13 +239,13 @@ const ART: Readonly<Record<string, () => ReactElement>> = {
   </g>,
 }
 
-export function ModulePreview({ id, compact = false }: { id: string; compact?: boolean }) {
+export function ModulePreview({ id, compact = false, indicator }: { id: string; compact?: boolean; indicator?: ReactElement }) {
   return (
     <div className={'module-preview ' + (compact ? 'compact-preview' : '')} data-module={id} aria-hidden="true">
-      <div className="preview-label"><span>{DETAILS[id].label}</span><span className="preview-led" /></div>
+      <div className="preview-label">{indicator ?? <span className="preview-led" />}</div>
       <svg viewBox="0 0 320 192" className="signal-art" fill="none">
         <g className="signal-grid">{[52, 97, 142].map((y) => <path key={y} d={'M20 ' + y + 'H300'} />)}{[64, 128, 192, 256].map((x) => <path key={x} d={'M' + x + ' 33V163'} />)}</g>
-        {ART[id] ? ART[id]() : <image href={assetUrl('module-media/' + id + '/' + MODULE_DOCUMENTS_BY_ID[id].version + '/presentation/thumbnail.svg')} width="320" height="192" />}
+        {ART[id] ? ART[id]() : <image className="saved-thumbnail" href={assetUrl('module-media/' + id + '/' + MODULE_DOCUMENTS_BY_ID[id].version + '/presentation/thumbnail.svg')} width="320" height="192" />}
       </svg>
       <div className="preview-controls">{DETAILS[id].controls.slice(0, 3).map((control) => <span key={control}>{control}</span>)}</div>
     </div>

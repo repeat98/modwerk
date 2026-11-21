@@ -13,7 +13,7 @@ import type { DeviceStore } from '../storage/device'
 import { createLazyFirmwareClient } from './firmware-client'
 import type { FirmwareClient } from '../engine/client'
 import type { FirmwareInspection } from '../engine/base'
-import { parseUsbAudioConfiguration, USB_AUDIO_MODULE, type UsbAudioConfiguration } from '../config/usb-audio'
+import { comesWithBase, parseUsbAudioConfiguration, usbAudioForSelection, USB_AUDIO_MODULE, type UsbAudioConfiguration } from '../config/usb-audio'
 
 const STORAGE_ATTEMPTS = 2, STORAGE_RETRY_MS = 300
 
@@ -175,14 +175,14 @@ export function useWorkspace() {
   }
   function toggleModule(id: string, device = DEFAULT_DEVICE) {
     const current = configurationFor(device)
-    // USB is added atomically with the user's setup through configureUsbAudio.
-    if (device === DEFAULT_DEVICE && id === USB_AUDIO_MODULE && !current.moduleIds.includes(id)) return
+    // Built-in audio needs its layout selection before it can be added.
+    if (device === DEFAULT_DEVICE && comesWithBase(id) && !current.moduleIds.includes(id)) return
     if (!current.moduleIds.includes(id) && device === DEFAULT_DEVICE && !isModuleAvailable(id, betaAccess)) return
     // A full Octatrack set takes no further module (set-limit.ts); the library shows why before anyone gets here.
     if (!canAdd(current.moduleIds, id, configurationDevice(current))) return
     const moduleIds = current.moduleIds.includes(id) ? current.moduleIds.filter(value => value !== id) : [...current.moduleIds, id]
     const moduleVersions = Object.fromEntries(moduleIds.map(selected=>[selected,current.moduleVersions[selected]??pinModuleVersions([selected],device)[selected]]))
-    updateActive({ moduleIds, moduleVersions, ...(id === USB_AUDIO_MODULE && !moduleIds.includes(id) ? { usbAudio: undefined } : {}) })
+    updateActive({ moduleIds, moduleVersions, usbAudio: usbAudioForSelection(moduleIds, current) })
     if(!current.moduleIds.length&&moduleIds.length)trackConfigurationStarted(current.id)
   }
   /** Adds every one of `ids` to the active set at once, as an import takes a set: one over the limit (set-limit.ts)
@@ -199,6 +199,7 @@ export function useWorkspace() {
   }
   function configureUsbAudio(usbAudio: UsbAudioConfiguration | undefined) {
     const current = configurationFor(DEFAULT_DEVICE)
+    if (!canAdd(current.moduleIds, USB_AUDIO_MODULE, DEFAULT_DEVICE)) return
     const moduleIds = current.moduleIds.includes(USB_AUDIO_MODULE) ? current.moduleIds : [...current.moduleIds, USB_AUDIO_MODULE]
     updateActive({ moduleIds, moduleVersions: { ...current.moduleVersions, ...pinModuleVersions([USB_AUDIO_MODULE]) }, usbAudio: usbAudio ? parseUsbAudioConfiguration(usbAudio) : undefined })
     if (!current.moduleIds.length) trackConfigurationStarted(current.id)

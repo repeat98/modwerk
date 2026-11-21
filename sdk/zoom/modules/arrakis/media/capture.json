@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "arrakis",
+  "moduleVersion": "2.0.0",
+  "imageSha256": "5c7957d9d2970378439adcada6dc504dba07118597c70fb7370a13d257294a32",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/cover.png",
+      "sha256": "a9f95f8e3d5fca1a83acc80423624ee80874ddefde49bc63f6b954a5bffa95d5",
+      "plan": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+    }
+  ]
+}

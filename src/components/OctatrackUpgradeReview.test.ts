@@ -69,12 +69,13 @@ describe('runtime package upgrade review', () => {
     const keep = vi.spyOn(real, 'keep'), undo = vi.spyOn(real, 'undo'), selftest = vi.spyOn(real, 'selftest')
     // A runtime install package as the builder makes it (sdk/runtime/loader/README.md).
     const data = new Uint8Array(36), view = new DataView(data.buffer); data.set([0x4d, 0x57, 0x52, 0x4d, 0, 4]); view.setUint32(8, 4); view.setUint32(28, 0xb)
-    await act(() => root.render(createElement(LoadDialog, { link: real, set, inventory, prepareUpdate: async () => ({ name: set.name, changes: [{ module: set.name, data }] }), onInstallBase() {}, onClose() {}, onEdit() {}, onReport() {} })))
+    const keptSet = { ...set, moduleIds: ['everb', 'miniverb'] }
+    await act(() => root.render(createElement(LoadDialog, { link: real, set: keptSet, inventory: { ...inventory, moduleIds: ['everb','miniverb'] }, prepareUpdate: async () => ({ name: set.name, changes: [{ module: set.name, data }] }), onInstallBase() {}, onClose() {}, onEdit() {}, onReport() {} })))
     expect(container.textContent).not.toMatch(/undo|self-test/i)
     await act(async () => button('Sync to Octatrack').click())
     await vi.waitFor(() => expect(container.textContent).toContain('Synced. Studio stays on your Octatrack, also after a restart.'))
     expect(unit.kept).toEqual(['+0000000b'])
-    // The module the sync updated counts as one download, once it is kept.
+    // The updated module gets credit and a follow-up. The unchanged one receives neither.
     await vi.waitFor(() => expect(counted).toHaveBeenCalledTimes(1)); expect(counted).toHaveBeenCalledWith(['everb'])
     expect(followed).toHaveBeenCalledTimes(1); expect(followed).toHaveBeenCalledWith(['everb'], { machine: 'Octatrack', os: '1.40C', modules: [expect.objectContaining({ id: 'everb' })] })
     expect(keep).toHaveBeenCalledTimes(1); expect(undo).not.toHaveBeenCalled(); expect(selftest).not.toHaveBeenCalled()

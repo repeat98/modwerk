@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { copyFileSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { MODULE_SCOPE_REQUIRED_FROM, baseEdits, checkAndCommit, gateEdits, moduleScopeProblems, pythonProblem, readiness } from './pr-ready.mjs'
@@ -55,6 +55,13 @@ describe('pr:ready verdict', () => {
     expect(verdict.ok).toBe(false)
     expect(verdict.problems[0]).toBe(old)
   })
+  it('makes npm run check name an old Python before the module gates crash in it', () => {
+    const check = readFileSync(new URL('./check.mjs', import.meta.url), 'utf8')
+    const probe = check.indexOf('localPythonProblem(root)')
+    expect(probe).toBeGreaterThan(-1)
+    expect(probe).toBeLessThan(check.indexOf("run('modules:check'"))
+    expect(probe).toBeLessThan(check.indexOf("run('modules:compat')"))
+  })
   it('says how to bring a stale branch up to date from the remote that holds main', () => {
     expect(readiness({ behind: true, remote: 'upstream' }).problems[0]).toContain('git merge upstream/main')
   })
@@ -73,12 +80,19 @@ describe('pr:ready verdict', () => {
     expect(notes.at(-1)).toContain('If main moves before the merge, run this again')
   })
   it('says a change to what runs on an instrument opens as a draft until the exact build ran on a unit', () => {
-    const verdict = readiness({ instrument: ['src/engine/assets/octatrack-base.elemod'] })
+    const verdict = readiness({ instrument: ['public/octatrack-modules/synth/example.mwrm'] })
     expect(verdict.ok).toBe(true)
     expect(verdict.instrument).toBe(true)
     expect(verdict.notes.find(note => note.startsWith('This changes what runs on an instrument'))).toContain('gh pr create --draft')
     expect(verdict.notes.at(-1)).toContain('If main moves before the merge, run this again')
     expect(readiness({}).instrument).toBe(false)
+  })
+  it('routes a base build to the cumulative draft without prompting for a topic PR', () => {
+    const verdict = readiness({ instrument: ['src/engine/assets/octatrack-base.elemod'] })
+    expect(verdict.baseDraft).toBe(true)
+    expect(verdict.notes.join(' ')).toContain('directly to base/<machine>-next')
+    expect(verdict.notes.join(' ')).not.toContain('gh pr create --draft')
+    expect(verdict.notes.join(' ')).not.toContain('open or update the PR')
   })
   it('asks what the guides lacked, listing the guide edits on the branch', () => {
     const asked = readiness({}).notes.find(note => note.startsWith('What did the guides lack'))
@@ -119,7 +133,7 @@ describe('pr:ready verdict', () => {
     expect(baseEdits(threshold.slice(1))).toEqual([])
     const verdict = readiness({ baseEdits: threshold.slice(1) })
     expect(verdict.ok).toBe(false)
-    expect(verdict.problems[0]).toContain('its own owner-reviewed pull request')
+    expect(verdict.problems[0]).toContain('directly to the machine’s base/<machine>-next branch')
   })
   it('refuses both in CI for a contributor\'s module pull request opened from the start day, never the owner\'s', () => {
     const files = ['sdk/drafts/threshold-slices/README.md', 'sdk/machines/octatrack/events.json', 'scripts/modules.mjs']

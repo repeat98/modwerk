@@ -35,6 +35,8 @@ On the site, TARS answers in the forum and the shoutbox as the system account `t
 
 The repository is public, and so are the job logs and artifacts. The model's output is never printed, the executor logs counts only, and the proposals travel between the jobs encrypted with the bot key.
 
+The [five-fix eval pilot](AGENT_EVALS.md#five-fix-pilot) checks newly merged Node fixes for gaps in the replay suite. TARS posts one wanted task per gap and reports how many independently verified cases land.
+
 ## Telegram
 
 Each action is one message of two lines, what and when, with **Stop**, **Now** or **Approve**, and **Why?** for the reason. The report at 07:00 UTC is a few lines: what waits, what was done (counted), failures, and how many to-dos wait, naming the urgent ones. `/pause` stops all proposals and actions until `/resume`, `/status` shows what is waiting, and `/todos` lists the open to-dos with their commands. Only the owner's private chat counts.
