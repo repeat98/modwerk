@@ -5,20 +5,28 @@ import { bodyProblems } from './pr-body.mjs'
 
 const template = readFileSync(new URL('../.github/pull_request_template.md', import.meta.url), 'utf8')
 
-it('makes the description part of the required PR verdict on pushes, edits and draft transitions', () => {
-  const workflow = parse(readFileSync(new URL('../.github/workflows/module-pr.yml', import.meta.url), 'utf8'))
-  expect(workflow.jobs['module-pr-ok'].needs).toContain('describe')
-  expect(workflow.on.pull_request.types).toEqual(expect.arrayContaining(['opened', 'synchronize', 'edited', 'converted_to_draft', 'ready_for_review', 'reopened']))
+const workflow = name => parse(readFileSync(new URL('../.github/workflows/' + name, import.meta.url), 'utf8'))
+
+it('checks the description on pushes, edits and draft transitions, and an edit reruns nothing else', () => {
+  const description = workflow('pr-description.yml'), checks = workflow('module-pr.yml')
+  expect(description.on.pull_request.types).toEqual(expect.arrayContaining(['opened', 'synchronize', 'edited', 'converted_to_draft', 'ready_for_review', 'reopened']))
+  expect(checks.on.pull_request.types).not.toContain('edited')
+  expect(checks.jobs.describe).toBeUndefined()
 })
 
-it('checks the description of a pull request into a cumulative base draft too, and nothing else there', () => {
-  const workflow = parse(readFileSync(new URL('../.github/workflows/module-pr.yml', import.meta.url), 'utf8'))
-  expect(workflow.on.pull_request.branches).toContain('base/*-next')
-  expect(workflow.jobs.describe.if).toMatch(/github\.base_ref == 'main'/)
-  expect(workflow.jobs.describe.if).toMatch(/startsWith\(github\.base_ref, 'base\/'\) && endsWith\(github\.base_ref, '-next'\)/)
-  // Every other job hangs off scope, which a pull request into base/ skips; the verdict counts skipped as passed.
-  expect(workflow.jobs.scope.if).toMatch(/!startsWith\(github\.base_ref, 'base\/'\)/)
-  for (const [name, job] of Object.entries(workflow.jobs)) if (!['scope', 'describe', 'module-pr-ok'].includes(name)) expect([job.needs].flat(), name).toContain('scope')
+it('checks the description of a pull request into main or a cumulative base draft', () => {
+  const description = workflow('pr-description.yml')
+  expect(description.on.pull_request.branches).toEqual(expect.arrayContaining(['main', 'base/*-next']))
+  expect(description.jobs.describe.if).toMatch(/github\.base_ref == 'main'/)
+  expect(description.jobs.describe.if).toMatch(/startsWith\(github\.base_ref, 'base\/'\) && endsWith\(github\.base_ref, '-next'\)/)
+  expect(workflow('module-pr.yml').on.pull_request.branches).not.toContain('base/*-next')
+})
+
+it('runs the jobs that repeat the catalogue checks only after module-contract passed, so one problem is one red job', () => {
+  const { jobs } = workflow('module-pr.yml')
+  for (const name of ['module-suites', 'module-paths-windows', 'octatrack-source']) expect([jobs[name].needs].flat(), name).toEqual(['scope', 'module-contract'])
+  for (const [name, job] of Object.entries(jobs)) if (!['scope', 'module-pr-ok'].includes(name)) expect([job.needs].flat(), name).toContain('scope')
+  expect(jobs['module-pr-ok'].needs).toEqual(expect.arrayContaining(Object.keys(jobs).filter(name => name !== 'module-pr-ok')))
 })
 
 it('refuses an empty description or the template as it came, and asks for the guides answer', () => {
