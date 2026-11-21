@@ -51,9 +51,41 @@ Milestone A, the TAPE engine. Everything below ran on 21 November 2026 on a Mac 
 - **Not tested:** aliasing when RATE is above 1 x. With linear interpolation and no anti-alias filter, high content is expected to alias when sped up. It needs a measurement this audit cannot make, and is listed as a limitation.
 - **Not tested:** `fx:audit compare` on knob ends.
 
-## In the emulator
+## In the emulator (not hardware evidence), 21 November 2026
 
-Not tested yet.
+`npm run device:emulator -- --image MAIN.raw --emulator ot_emu [--dsp] -- npm run test:procedure -- ghost-cut --package gc-a.mwrm`.
+
+- **Package:** `gc-a.mwrm`, SHA-256 `c5544c10568c690c85d5f29ad78b72c7982e511ba98c4b2d388bfa94e66605e0`, from commit `27f0d6917`, built by `npm run module:dev -- ghost-cut --build-only --slots fx2 --cycles 188 --cycles-kind modeled --state 28 --buffer 15870`.
+- **Base:** a development twin from `build_core.py --dsp-loader --dev --usb-midi --packaged-usb-audio --site-events --table-owners … --resident-stock-hooks --resident-on-demand --cached-modules --module-sets --sample-editor --module-ui-roots --part-menu`, base `d24c5acbe674f701…`. That is the beta base's flags without the controller trust rows.
+- **Emulator:** Octabam's `ot_emu`, rebuilt by `scripts/octatrack-emulator/build.py`.
+
+| Step | Result |
+|---|---|
+| 1 Software checks, 3 name the build, 4 DSP cost model | passed |
+| 6 Read the emulator | passed |
+| 7 Scripted pass (`device:test`) | **failed**, for a reason the emulator causes (below) |
+| 8–12 | not run (stopped at 7) |
+
+- **Placeholder figures are refused.** The first run used the builder's placeholder figures for a draft (600 modeled cycles, buffer 0). The base refused it at verify with loader refusal 6, RUNTIME_CYCLES. With Ghost Cut's own figures the base accepted it, and it installed as a trial in RAM.
+- **Every pick was refused.** The CPU FULL box read "GHOST CUT, CPU 100 %, UNIT IS BUSY", on T1 FX2 and T5 FX2, alone and all at once. The emulator's CPU meter read 1000 per mille from boot, with and without `--dsp`. The base refuses every module effect pick while the meter is at 85 % or more (docs/MODULE_PERFORMANCE.md).
+- **The control was refused the same way.** Vibrato's listed package (`f311dd62…`) on the same twin and emulator gave the same result: T1 and T5 refused, CPU 1000. So the refusal is the emulator's, not Ghost Cut's.
+- **Part switches:** 12 of 12 ran their own effects.
+- **Rollback:** the self-test did not start, the rollback reported "needs-recovery", and the inventory at the end differed from the start. Vibrato's control run did all three in the same way.
+- **Not run:** the frame checks, the queued bank change and the crash test.
+
+**Edge cases**
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| Two instances, FX2 of T1 and T5 (both cores) | an instance's state and ring | `device:test`'s picks | not run: the emulator refuses every module effect pick (CPU meter 100 %); dsp_host: four instances on one core pass |
+| T3 FX2, the block with Sidechain's key window | the ring ends at +$3DFD | dsp_host `-guard -guard-shared` | dsp_host pass; emulator and unit not run |
+| Picked on FX1 | the slot is too small: it must pass dry and write nothing past it | dsp_host | dsp_host pass (dry); unit not run |
+| A Part or pattern change while a loop plays | runtime state across the change | — | not run: no pick is admitted in the emulator |
+| Knobs swept, selects past their counts | the clamps | dsp_host | dsp_host pass; unit not run |
+| The trial ends while a loop is held | rollback in the middle of a loop | — | not run |
+| A tempo change while looping | LEN reads the tempo every block | dsp_host (per-tempo renders) | dsp_host pass for a fixed tempo per render; a live change not run |
+
+Nothing here is hardware evidence. Ghost Cut has not run on a track in the emulator: only dsp_host has run its DSP.
 
 ## On the unit
 
