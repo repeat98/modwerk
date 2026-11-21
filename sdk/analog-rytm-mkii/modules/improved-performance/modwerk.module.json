@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "improved-performance",
   "name": "Improved Performance",
-  "version": "0.1.0-experimental",
+  "version": "0.2.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
@@ -20,12 +20,13 @@
   "presentation": {
     "label": "IMPROVED PERFORMANCE",
     "family": "Audio engine",
-    "summary": "The audio engine leaves out work whose result it already knows, so the same pattern uses less CPU and the screen and keys answer faster. A CPU mark shows when the load gets close to the limit.",
-    "overview": "Stock computes nearly everything in every audio block, whether it is used or not: all eight sample voices, every send, the delay and the reverb, every modulation pass. Improved Performance tests, block by block, whether a piece of that work can change anything, and leaves it out when it cannot: sample voices that play nothing, sends at zero, a silent delay or reverb, modulation with nothing to modulate, parameters that are not moving, the USB audio input when nothing streams. The output is stock's bit for bit, but for one thing: a delay or reverb that has died away below -114 dBFS and has no input is given exact silence. With the time saved the unit redraws and reads its keys sooner, and a busy pattern keeps further from dropouts. CPU appears in the lower right corner of the bottom status bar while the audio load is close to the limit, and OVR while it is over.",
+    "summary": "Skips audio work that cannot change the sound, so patterns use less CPU and keys and pads answer faster. CPU or OVR warns you near the limit; under overload the screen redraws at half rate so presses get through.",
+    "overview": "Stock computes nearly everything in every audio block, whether it is used or not: all eight sample voices, every send, the delay and the reverb, every modulation pass. Improved Performance tests, block by block, whether a piece of that work can change anything, and leaves it out when it cannot: sample voices that play nothing, sends at zero, a silent delay or reverb, modulation with nothing to modulate, parameters that are not moving, the USB audio input when nothing streams. The output is stock's bit for bit, but for one thing: a delay or reverb that has died away below -114 dBFS and has no input is given exact silence. With the time saved the unit redraws and reads its keys sooner, and a busy pattern keeps further from dropouts. CPU appears in the lower right corner of the bottom status bar while the audio load is close to the limit, and OVR while it is over. When the UI falls behind anyway (an overloaded unit) and its messages start to queue up, the screen redraws at half rate until the queue is short again, so your presses are taken sooner.",
     "highlights": [
       "Less CPU for the same pattern: nothing to set",
       "No audible change: stock's output, but for effect tails below -114 dBFS",
-      "CPU in the lower right corner when the load is close to the limit, OVR when it is over"
+      "CPU in the lower right corner when the load is close to the limit, OVR when it is over",
+      "When the UI falls behind, the screen redraws at half rate so keys and pads keep getting through"
     ],
     "usage": [
       "Add it to your set and send the OS: there is nothing to switch on.",
@@ -56,6 +57,7 @@
       "Analog Rytm MKII, OS 1.74 only.",
       "One part is not bit-identical to stock: once the delay or the reverb has had no input for the length of its memory and has died away below -114 dBFS, it outputs exact silence where stock keeps computing that residue.",
       "CPU and OVR show only on screens with the bottom status bar: not in menus, lists or browsers. They take the bar's right end (columns 96 to 127): the base's voice type name (808, 909) and another module's mark there (Loop Sync's SYNC) are covered while they show.",
+      "While more than 8 messages wait for the UI (keys, pads, knobs, notes and the UI's own timer), which happens when the unit is overloaded or the UI is held up for a moment, the screen, its lights and module ticks run at half their rate.",
       "Tested on one unit, with one project, in a set of 17 other modules. A project load while sound rings and a long USB audio stream are not tested.",
       "What it saves depends on the project: a voice, a send or a modulation that is in use costs what it costs in stock."
     ]
@@ -70,7 +72,8 @@
       "ev_draw"
     ],
     "claims": [
-      "ui:status bar lower right corner while the audio load is high"
+      "ui:status bar lower right corner while the audio load is high",
+      "ui:screen redraw rate while the UI queue is backed up"
     ]
   },
   "resources": {
@@ -83,28 +86,11 @@
     }
   },
   "evidence": {
-    "tier": "author-hardware",
-    "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "b42b8f91b4878c8cb7c87875cb4a148996bb5cc7bd74fb6e0e4ef236ead962f7",
-    "reports": [
-      "TESTING.md"
-    ],
-    "hardware": {
-      "model": "Analog Rytm MKII",
-      "release": "1.74",
-      "testedOn": "2026-11-21",
-      "tester": "npp1993",
-      "durationMinutes": 9,
-      "summary": "0.1.0's source ran on npp1993's Analog Rytm MKII, OS 1.74, as IP06: the author's development base (USB link and a load meter) with this module and 17 other modules of his set, booted from RAM. Played hands off, one 12-track pattern of his project: the audio load averaged 72.1 % of the block (longest block 89.8 %), 55.2 % stopped; the screen's redraw step took 8.6 ms. On 17 November the same set without this module's code read 85.4 % (longest 99.4 %, redraw 19.1 ms). On 18 and 20 November self-checking builds of the same engine code, in which stock does all the work and each skip is compared with it, counted 0 differences for every part, and a kit switch with the reverb ringing sounded as on stock.",
-      "limitations": [
-        "The image holds the author's private development base (with the link and a meter) and 17 other modules, not the published base with this module alone.",
-        "The self-checks ran in test builds with counters; the four assembly files of this release assemble to the same code.",
-        "After IP06 the CPU/OVR drawing changed twice in small ways (the bar is cleared from column 96, where the base writes a voice type name; the font routine's return is declared as an integer): those ran in rytm-emu only.",
-        "CPU and OVR were not seen on the unit: the load never reached 88 %. Their drawing has run in rytm-emu only.",
-        "The two load figures are four days apart, from the same pattern of a project the author kept working on.",
-        "A project load while sound rings and a long USB audio stream are not tested."
-      ]
-    },
+    "tier": "none",
+    "moduleVersion": "0.2.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
     "verifiedBy": null
   },
   "tests": {
@@ -152,9 +138,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "778b3de031c862d49813d94269ccd1803d7bda3519265573d74ed53b661d31ea",
-        "setup": "Headless rytm-emu (dtboot, c5732f0) running IPCN: the plain Rytm base and this folder's Improved Performance 0.1.0-experimental built with -DCW_NEAR_MEAN=1 so that the mark shows, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "73919c91c0e8677301296510ec3e0c1c37e878b6e8ed816aefa2eac65b092de2",
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running IPCN: the plain Rytm base and this folder's Improved Performance 0.2.0-experimental built with -DCW_NEAR_MEAN=1 so that the mark shows, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
       }
     },
     {
@@ -168,9 +154,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "f5f50ee31cc4b91f2596324596849a29504418533ed972f8f4d3c6f25532e3b4",
-        "setup": "Headless rytm-emu (dtboot, c5732f0) running IPCO: the plain Rytm base and this folder's Improved Performance 0.1.0-experimental built with -DCW_OVER_MEAN=1 so that the mark shows, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "e863b06e65a9066e305205ca69bdeadbcad02e51da819c2c0e5c90d2239f2394",
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running IPCO: the plain Rytm base and this folder's Improved Performance 0.2.0-experimental built with -DCW_OVER_MEAN=1 so that the mark shows, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
       }
     }
   ]

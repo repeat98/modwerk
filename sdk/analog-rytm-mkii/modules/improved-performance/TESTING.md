@@ -1,6 +1,6 @@
 # Improved Performance testing
 
-Version 0.1.0-experimental, Analog Rytm MKII, OS 1.74. Tester and unit: Nathaniel Pavel (@npp1993), his own Analog Rytm MKII. Firmware, dumps and built images stay out of this folder.
+Version 0.2.0-experimental, Analog Rytm MKII, OS 1.74. Tester and unit: Nathaniel Pavel (@npp1993), his own Analog Rytm MKII. Firmware, dumps and built images stay out of this folder.
 
 **What ran where.** The four assembly sources are the code that ran in every test below: the public files assemble, with `build.json`'s symbols, to the same code and data as the files the tests used (compared object for object). `src/cpu-mark.c`'s counting of the load is the tested code. Its drawing ran on the unit in IP06 (stock's font, CPU and OVR in the bar's lower right corner) but never showed there, as the load stayed under 88 %; two small changes after IP06 (the bar cleared from column 96, the font routine's return declared as an integer, after a fourth review) ran in rytm-emu only. The unit tests ran from RAM beside 17 other modules of the author's set, on a development base with the USB link and a load meter. This release's source ran there as image IP06 on 21 November 2026; the package built from it in the pinned toolchain links, on the release base, to the same image as the source folder.
 
@@ -20,6 +20,12 @@ A local build of rytm-emu with a cache model and an interrupt profiler added (no
 **CPU and OVR** (upstream rytm-emu c5732f0, builds with one threshold lowered so that the word shows): on the main screen and under the TEMPO pop-up the word sits in the bottom bar's lower right corner, in the bar's font and on its text line; with a test module's dark box in that corner (where Loop Sync shows SYNC) the word replaces the box cleanly; a test build whose level cycles every second showed the word appear and clear again on the next redraw (eight screens over about 3 s); on the GLOBAL menu and over the machine list nothing is drawn.
 
 Not reached in rytm-emu: a USB audio stream, a sample that plays, the interrupt's short path during a project load.
+
+## 0.2.0: the screen rate
+
+- **rytm-emu** (upstream c5732f0), the module alone on the plain release base, 12,000 M instructions with page changes: the image boots and runs as 0.1.0 did (no fault). The emulator never backs the UI queue up, so a test build with the backlog set to -1 (always the half rate) stood in: it ran 6 to 9 frame steps per 1,000 M instructions where the release build ran 12 to 16, and both showed their pages. The documentation screenshots rebuilt from 0.2.0 are pixel-identical to 0.1.0's.
+- **The same gate on the unit, in the author's private bases since RC34, and switched on and off every 30 seconds in his measuring images** (the same code at the same site, 52 bytes): in every capture of normal and live playing (CM02, SK06, IP06, 25 minutes of the author playing by hand) the UI queue never held more than 8 messages, so it never skipped a frame. In two overloaded self-checking images (92 to 93 % audio load; SV03, SV05, one capture each, not a controlled A/B) the UI took about 173 messages a second with it against about 87 without, and its queue shrank instead of growing by about 17 a second; waits of non-key messages fell from 283 to 122 ms in one of them.
+- **0.2.0 itself on a unit:** not tested.
 
 ## On the unit (author's MKII, OS 1.74)
 
@@ -49,6 +55,8 @@ All from RAM, in test images of the author's 18-module set; the figures are the 
 - CPU and OVR: not seen on the unit. The load never reached 88 % on a build that carried the mark.
 
 ## Not tested
+
+- 0.2.0 on a unit: the screen rate in this module (the same code ran in the author's private base, above), and whether a load or save backs the UI queue up far enough to engage it.
 
 - This module as the only module on a unit: every unit run was beside 17 others.
 - A project load while sound rings (the audio interrupt takes a shorter path then; read, not run).

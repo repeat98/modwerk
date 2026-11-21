@@ -5,7 +5,8 @@
     "src/effects.s",
     "src/modulation.s",
     "src/engine.s",
-    "src/cpu-mark.c"
+    "src/cpu-mark.c",
+    "src/screen-rate.c"
   ],
   "defsym": {},
   "cflags": [],
@@ -32,7 +33,8 @@
   "copied": [],
   "regions": [],
   "claims": [
-    "ui:status bar lower right corner while the audio load is high"
+    "ui:status bar lower right corner while the audio load is high",
+    "ui:screen redraw rate while the UI queue is backed up"
   ],
   "requires": [],
   "derive": null,
@@ -108,7 +110,9 @@
       "cflags": [
         "-DTEXT_DRAW_AT=0x4007154c",
         "-DTEXT_FONT_AT=0x40071be8",
-        "-DTEXT_CTX_AT=0x417e389c"
+        "-DTEXT_CTX_AT=0x417e389c",
+        "-DFRAME_STEP_AT=0x400a2ce6",
+        "-DUI_QUEUE_AT=0x41943f54"
       ],
       "sites": [
         {
@@ -236,6 +240,13 @@
           "stockSha256": "370fbd328cbf757cf5bb0069621175eba8d68f3ec2aba8877e555795bece31ac",
           "op": "jmp",
           "target": "sm_run"
+        },
+        {
+          "addr": "0x400a4a32",
+          "len": 6,
+          "stockSha256": "cecd19b005e5e41f0f1047318808a77400f63c9caa49b22c372e4b99f688ed50",
+          "op": "jsr",
+          "target": "ip_frame_gate"
         }
       ]
     }

@@ -1,5 +1,13 @@
 [
  {
+  "version": "0.2.0-experimental",
+  "date": "2026-11-21",
+  "changes": [
+   "When the Rytm falls behind (an overloaded unit) and your keys, pads and knobs start to queue up, the screen redraws at half rate until they have caught up, so your presses get through sooner.",
+   "In normal playing the UI never falls that far behind, so nothing changes there."
+  ]
+ },
+ {
   "version": "0.1.0-experimental",
   "date": "2026-11-20",
   "changes": [

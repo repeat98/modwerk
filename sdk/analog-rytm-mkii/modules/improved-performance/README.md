@@ -1,6 +1,6 @@
 # Improved Performance
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.0-experimental, for OS 1.74.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.2.0-experimental, for OS 1.74.
 
 ## Overview
 
@@ -9,6 +9,8 @@ Stock computes nearly everything in every audio block, whether it is used or not
 On the author's unit, one 12-track pattern in a set of 17 other modules used 85.4 % of the audio block without it and 72.1 % with it; the longest block fell from 99.4 % to 89.8 %, and the screen's redraw step from 19.1 ms to 8.6 ms ([Tests and measurements](#tests-and-measurements)).
 
 `CPU` appears in the lower right corner of the screen while the audio load is close to its limit, and `OVR` while it is over.
+
+When the UI falls behind anyway (an overloaded unit) and its messages start to queue up, the screen redraws at half rate until the queue is short again, so your presses are taken sooner.
 
 ## Controls
 
@@ -49,11 +51,14 @@ Where a part runs its own loop in place of stock's (the smoother, the voice mix,
 
 **The one place that is not bit-identical.** Stock's delay and reverb never come back to exact silence after use: their filters settle on a residue of a few hundred in 2^31. Once one of them has had no input for the whole length of its memory (the delay about 11 seconds, the reverb about a third of a second) and everything in it lies below -114 dBFS, this module rests it and its output is exact zero, where stock goes on computing that residue. The first input ends the rest and stock runs on what it left. Before their first use after power-on, nothing differs at all.
 
+**The screen rate** (`src/screen-rate.c`): the UI task takes keys, pads, knobs and live recording's notes from one queue, and redraws the screen 20 times a second. Under heavy audio load the redraw can take most of what the UI gets, and the queue backs up. While more than 8 messages wait (keys, pads, knobs, notes and the UI's own 60 Hz timer messages), every other redraw is left out; as soon as the queue is short again the screen runs at its full rate. In every capture of normal and live playing so far the queue never went past 8, so it changes nothing there. In overloaded test images it doubled the messages the UI took a second, and the queue shrank instead of growing.
+
 The CPU mark reads the core's own figure for each audio block (`core_audio_load`), patches nothing and draws with stock's own text routine.
 
 ## Changes to stock flows
 
 - **`CPU` and `OVR`** are written into the lower right corner of the bottom status bar while the load is high; the bar's right end, columns 96 to 127, is cleared under them. In stock that stretch is empty. On a voice machine's page the base writes the voice type there (808, 909 for Analog BD), and other modules put marks there (Loop Sync's SYNC on the SAMPLE page): the word covers them while the load is high, and they come back when it has gone, because the warning matters more. On a screen without the bottom bar nothing is drawn. It cannot be turned off. It is there because a module set can now bring the unit to its limit, and stock gives no sign of that before audio drops out.
+- **The screen rate when the UI falls behind:** while more than 8 messages wait for the UI (keys, pads, knobs, notes and its own timer), the screen, its lights and module ticks run at half their rate; timeouts other modules count in ticks run up to twice as long meanwhile. Stock keeps redrawing and lets the presses wait. It happens when the unit is overloaded, or briefly when the UI is held up for more than about 150 ms (a load or save, for example), and it ends by itself; it cannot be turned off.
 - Nothing else changes: no page, key, menu, save or load behaves differently.
 
 ## Compatibility and limitations
