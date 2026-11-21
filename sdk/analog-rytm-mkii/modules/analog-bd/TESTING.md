@@ -42,7 +42,7 @@ Run by the author's automated rig on the author's MKII, not by a person: CD02 fl
 
 - No type badge: the bottom bar's right end (x 96-127, y 56-63) is the same for the 808 and, after a tap of B, the 909 (blank; with 0.2.1 the two differ there), B reads TON then SWT, and a second tap brings the type back.
 - TUN, LOW and HI turn their dials to both ends (the base's centred-dial fix, not this module): the dial differs between 0 and 8 and between 119 and 127 for each. One step of TUN or DEC moves the stored value by one (0x4000 to 0x4100).
-- The same cases in rytm-emu: pass on CD02, fail on CD00 (the same development base without the dial fix, with 0.2.1): there the dials sit on one end stop at 0 and 8, one TUN step moves 4/256 of a value, and the badge is drawn.
+- The same cases in rytm-emu: pass on CD02, fail on CD00 (the same development base without the dial fix, with 0.2.1): there the dials sit on one end stop at 0 and 8, one TUN step (the rig's 4 counts) moves 4/256 of a value, and the badge is drawn.
 - Not covered: pads and pressure, sound (0.2.2 changes no sound code), save and reload, power cycle.
 
 ## Memory, 0.2.1 (16 November 2026)
@@ -143,7 +143,7 @@ Over USB (MIDI and the unit's audio), 808 pass: select and switch passed, but 39
 ## Unit rig, AB06 (5 November 2026)
 
 808 pass over USB: select and switch passed; 39 of 40 hits still silent. A probe of four hits each (note 0 on channels 1 and 10, note 60 on channel 1) sounded about one in four on every channel: the trig arrived but the base marked it taken while its timer still pointed a block or more ahead. Fixed in AB07.
-Open: the type's name in the bottom bar draws over the menu a double tap of SRC opens (the author, AB06).
+Open: the type's name in the bottom bar draws over the menu a double tap of SRC opens (the author, AB06). (Fixed in AB08; since 0.2.2 no type name is drawn.)
 
 ## Unit rig, AB07 (5 November 2026)
 

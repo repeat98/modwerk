@@ -57,7 +57,7 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Built for OS 1.74 only, on the Modwerk base's digital voices (send-bus variant).",
+      "Built for OS 1.74 only, on the Modwerk base's digital voices (the voices variant; send-bus when the set also holds a send effect).",
       "Offered on the BD, SD and BT tracks only: on a MKII three 909s hit at the same instant played clean and four overran the audio block.",
       "The level into the voice's analog path and how hard it can be driven are not measured."
     ]
@@ -175,7 +175,7 @@
     {
       "path": "media/synth-909.png",
       "kind": "screenshot",
-      "caption": "A tap of encoder B switches to the 909: B reads SWT (909 sweep time).",
+      "caption": "A tap of encoder B switches to the 909: its header reads 909 SWEEP TIME.",
       "alt": "SYNTH page with the header 909 SWEEP TIME and B's value 80.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
