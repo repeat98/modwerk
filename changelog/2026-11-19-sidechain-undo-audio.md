@@ -1,0 +1,1 @@
+The Octatrack set verifier can compare Sidechain Compressor's isolated stereo output before a Mini Verb trial and after Undo, including a control that checks the key actually ducks the receiving track.

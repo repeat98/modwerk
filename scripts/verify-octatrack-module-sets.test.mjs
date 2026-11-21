@@ -1,16 +1,17 @@
 import { describe, expect, it, vi } from 'vitest'
 import { DSP_MODULES, STAGED_MODULES, verifierTools, verifyModuleSets, main } from './verify-octatrack-module-sets.mjs'
+import { MINI_VERB_023 } from './sidechain-undo-audio.mjs'
 const base = 'ab'.repeat(32), active = 'cd'.repeat(32), packageHash = 'ef'.repeat(32), undoHash = '12'.repeat(32)
-function fixture() {
+function fixture(hash = packageHash) {
   const baseline = { state: { status: 'ready', identity: { base, canSubmit: true }, active }, inventory: { moduleIds: ['everb'], removedStockFx: [] }, capabilities: { abi: 8, features: 7, maxSites: 128, maxCopies: 128 }, diagnostics: { savedCount: 1 } }
   const call = vi.fn(async (name, args) => {
     if (name === 'site_catalogue') return { modules: STAGED_MODULES.map(id => ({ id, usb: true })) }
     if (name === 'device_status') return structuredClone(baseline)
     if (name === 'site_selection') {
       expect(args.current).toEqual(baseline.inventory); expect(args.capabilities).toEqual(baseline.capabilities)
-      return { changes: args.moduleIds.filter(id => !baseline.inventory.moduleIds.includes(id)).map(module => ({ module, sha256: packageHash, undoSha256: undoHash })) }
+      return { changes: args.moduleIds.filter(id => !baseline.inventory.moduleIds.includes(id)).map(module => ({ module, sha256: hash, undoSha256: undoHash })) }
     }
-    if (name === 'device_review') return { review: 'review', base, active, changes: [{ sha256: packageHash, undoAvailable: true }] }
+    if (name === 'device_review') return { review: 'review', base, active, changes: [{ sha256: hash, undoAvailable: true }] }
     if (name === 'device_trial') return { trial: 'trial', state: { status: 'trial', identity: { base } } }
     if (name === 'device_undo') return structuredClone(baseline)
     throw new Error('Unexpected tool: ' + name)
@@ -113,6 +114,39 @@ describe('safe module verification through the frontend MCP', () => {
     const service = { call: vi.fn() }, call = verifierTools(service)
     expect(() => call('device_keep', {})).toThrow(/cannot Keep/); expect(() => call('api_request', {})).toThrow(/unrelated/)
     expect(service.call).not.toHaveBeenCalled()
+  })
+  it('observes the survivor across one reviewed Mini Verb addition and verifies restoration before reading audio', async () => {
+    const f = fixture(MINI_VERB_023)
+    f.baseline.inventory.moduleIds.push('sidechain-compressor')
+    const calls = () => f.call.mock.calls.map(([name]) => name)
+    const sidechainBench = {
+      baseline: vi.fn(() => expect(calls()).not.toContain('device_trial')),
+      gesture: vi.fn(() => expect(calls().at(-1)).toBe('device_trial')),
+      afterUndo: vi.fn(() => { expect(calls().slice(-2)).toEqual(['device_undo', 'device_status']); return { verdict: 'identical' } }),
+    }
+    const receipt = await f.run({ ...trial, sidechainBench })
+    expect(receipt).toMatchObject({ kept: false, audioVerified: true, sidechainAudio: { verdict: 'identical' }, packages: [{ id: 'miniverb', undoVerified: true }] })
+    expect(calls().at(-1)).toBe('device_status')
+    expect(sidechainBench.gesture).toHaveBeenCalledOnce()
+    expect(f.call.mock.calls.find(([name]) => name === 'device_review')[1].moduleIds).toEqual(['everb', 'miniverb', 'sidechain-compressor'])
+  })
+  it('refuses a missing survivor or a different Mini Verb binary before a device write', async () => {
+    const f = fixture(), sidechainBench = { baseline: vi.fn() }
+    await expect(f.run({ ...trial, sidechainBench })).rejects.toThrow(/already contain Sidechain/)
+    f.baseline.inventory.moduleIds.push('sidechain-compressor')
+    await expect(f.run({ ...trial, sidechainBench })).rejects.toThrow(/published Mini Verb 0.2.3/)
+    f.baseline.inventory.moduleIds.push('miniverb')
+    await expect(f.run({ ...trial, sidechainBench })).rejects.toThrow(/absent/)
+    expect(sidechainBench.baseline).not.toHaveBeenCalled()
+    expect(f.call.mock.calls.some(([name]) => name === 'device_trial')).toBe(false)
+  })
+  it('Undoes a trial even if the operator cannot complete the gesture', async () => {
+    const f = fixture(MINI_VERB_023), afterUndo = vi.fn()
+    f.baseline.inventory.moduleIds.push('sidechain-compressor')
+    const sidechainBench = { baseline() {}, gesture() { throw Error('gesture timed out') }, afterUndo }
+    await expect(f.run({ ...trial, sidechainBench })).rejects.toThrow(/gesture timed out/)
+    expect(f.call.mock.calls.filter(([name]) => name === 'device_undo')).toHaveLength(1)
+    expect(afterUndo).not.toHaveBeenCalled()
   })
   it('starts read-only with an explicit candidate root and closes the service on failure without printing raw results', async () => {
     const create = vi.fn(async () => ({ call: vi.fn(async () => { throw new Error('failure') }), close: vi.fn() })), log = vi.spyOn(console, 'log').mockImplementation(() => {})

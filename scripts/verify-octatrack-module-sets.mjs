@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import { parseArgs } from 'node:util'
 import { resolve } from 'node:path'
 import { pathToFileURL, fileURLToPath } from 'node:url'
+import { openSidechainBench, MINI_VERB_023, SidechainAudioError } from './sidechain-undo-audio.mjs'
 
 export const DSP_MODULES = ['everb', 'miniverb', 'tapehead', 'airwindows-chorus']
 export const STAGED_MODULES = [...DSP_MODULES, 'previewvol', 'repitch']
@@ -35,16 +36,22 @@ export const verifierTools = service => (name, args) => {
 }
 
 /** Legacy inventory cannot identify installed package bytes, so all targets retain the starting set. */
-export async function verifyModuleSets(call, { allStaged = false, trial = false, wholeSet = false, expectBase } = {}) {
+export async function verifyModuleSets(call, { allStaged = false, trial = false, wholeSet = false, expectBase, sidechainBench } = {}) {
+  if (sidechainBench) assert.ok(trial && !wholeSet && !allStaged, 'The Sidechain Compressor bench requires a single Mini Verb trial.')
   if (trial) assert.ok(digest(expectBase), '--trial requires the exact 64-character --expect-base identity.')
   if (expectBase !== undefined) assert.ok(digest(expectBase), 'Invalid --expect-base identity.')
-  const listed = await call('site_catalogue', { machine: 'octatrack', beta: true }), requested = allStaged ? STAGED_MODULES : DSP_MODULES
+  const listed = await call('site_catalogue', { machine: 'octatrack', beta: true })
+  const requested = sidechainBench ? ['miniverb'] : allStaged ? STAGED_MODULES : DSP_MODULES
   for (const id of requested) assert.ok(listed.modules?.some(module => module.id === id && module.usb), `${id} is not a staged USB package in the selected frontend root.`)
   const baseline = ready(await call('device_status', {}))
   if (expectBase) assert.equal(baseline.state.identity.base, expectBase, 'The connected base does not match --expect-base; nothing was sent.')
   const baselineIds = sortedIds(baseline.inventory.moduleIds), union = ids => [...new Set([...baselineIds, ...ids])].sort()
+  if (sidechainBench) {
+    assert.ok(baselineIds.includes('sidechain-compressor'), 'The baseline must already contain Sidechain Compressor.')
+    assert.ok(!baselineIds.includes('miniverb'), 'Mini Verb must be absent from the baseline.')
+  }
   const targets = requested.filter(id => !baselineIds.includes(id)).map(id => ({ id, moduleIds: union([id]) }))
-  const selection = moduleIds => call('site_selection', { usb: true, beta: true, moduleIds, current: baseline.inventory, capabilities: baseline.capabilities })
+  const selection = moduleIds => call('site_selection', { usb: true, beta: true, moduleIds, current: baseline.inventory, capabilities: baseline.capabilities, base: baseline.state.identity.base })
   const fullSet = await selection(union(requested))
   if (wholeSet) assert.ok(baseline.capabilities?.features & 512, 'Whole-set verification needs a base with module-set transactions; nothing was sent.')
   // Check every package with actual connected capabilities before the first possible write.
@@ -53,6 +60,7 @@ export async function verifyModuleSets(call, { allStaged = false, trial = false,
     assert.equal(prepared.changes?.length, 1, 'Trial-only verification requires exactly one package change.')
     assert.ok(digest(prepared.changes[0].sha256) && digest(prepared.changes[0].undoSha256), 'An intact package and exact Undo must be available.')
     target.packageSha256 = prepared.changes[0].sha256
+    if (sidechainBench) assert.equal(target.packageSha256, MINI_VERB_023, 'This bench trials only the published Mini Verb 0.2.3 package.')
   }
   const receipt = {
     mode: trial ? wholeSet ? 'whole-set-trial' : 'single-package-trials' : 'read-only-preflight', base: baseline.state.identity.base,
@@ -84,6 +92,7 @@ export async function verifyModuleSets(call, { allStaged = false, trial = false,
     return receipt
   }
   for (const [index, target] of targets.entries()) {
+    if (sidechainBench) await sidechainBench.baseline()
     restored(await call('device_status', {}), baseline)
     const review = await call('device_review', { moduleIds: target.moduleIds })
     assert.equal(review.base, baseline.state.identity.base, 'The base changed after preflight; nothing was sent.')
@@ -98,10 +107,21 @@ export async function verifyModuleSets(call, { allStaged = false, trial = false,
       assert.equal(started.state?.status, 'trial', 'The trial did not remain unaccepted.')
       assert.equal(started.state.identity?.base, baseline.state.identity.base, 'The trial base changed.')
       receipt.packages[index].trialPassed = true
-    } finally { if (started?.trial) undone = await call('device_undo', { trial: started.trial }) }
-    restored(undone, baseline)
-    restored(await call('device_status', {}), baseline)
+      if (sidechainBench) await sidechainBench.gesture()
+    } finally {
+      if (started?.trial) {
+        undone = await call('device_undo', { trial: started.trial })
+        restored(undone, baseline)
+        restored(await call('device_status', {}), baseline)
+      }
+    }
     receipt.packages[index].undoVerified = true
+    if (sidechainBench) {
+      receipt.sidechainAudio = await sidechainBench.afterUndo()
+      assert.equal(receipt.sidechainAudio?.verdict, 'identical', 'The restored audio comparison did not pass.')
+      restored(await call('device_status', {}), baseline)
+      receipt.audioVerified = true
+    }
   }
   return receipt
 }
@@ -110,22 +130,31 @@ export async function main(args, openService) {
   const { values } = parseArgs({ args, options: {
     socket: { type: 'string' }, 'data-dir': { type: 'string' }, 'mcp-server': { type: 'string' },
     'frontend-root': { type: 'string' }, 'all-staged': { type: 'boolean' }, trial: { type: 'boolean' }, 'whole-set': { type: 'boolean' },
-    'expect-base': { type: 'string' }, help: { type: 'boolean' },
+    'expect-base': { type: 'string' }, 'sidechain-audio': { type: 'boolean' }, help: { type: 'boolean' },
   } })
   if (values.help) {
+    console.log('--sidechain-audio with --trial measures Sidechain Compressor on T5 across a Mini Verb 0.2.3 trial on T3. See scripts/OCTATRACK_MODULE_SET_VERIFIER.md for the bench setup.')
     console.log('Usage: node scripts/verify-octatrack-module-sets.mjs --socket SOCKET --data-dir PRIVATE_DIR [--mcp-server FILE] [--frontend-root CHECKOUT] [--all-staged] [--whole-set] [--trial --expect-base SHA256]\nDefault: read-only package/capability preflight. Trials add one package at a time, self-test and Undo; --whole-set trials all additions in one transaction on a capable base. Never Keeps, flashes, reboots or edits Parts. Audio and reboot persistence need separate qualification.')
     return
   }
   assert.ok(values.socket && values['data-dir'], '--socket and an isolated --data-dir are required.')
   if (values.trial) assert.ok(digest(values['expect-base']), '--trial requires the exact --expect-base identity before starting the service.')
+  if (values['sidechain-audio']) assert.ok(values.trial && !values['all-staged'] && !values['whole-set'], '--sidechain-audio requires --trial alone.')
   const root = resolve(values['frontend-root'] ?? fileURLToPath(new URL('../', import.meta.url)))
   const server = resolve(values['mcp-server'] ?? fileURLToPath(new URL('./frontend-mcp.mjs', import.meta.url)))
   const create = openService ?? (await import(pathToFileURL(server).href)).createFrontendTools
   const service = await create({ root, dataDir: resolve(values['data-dir']), deviceSocket: values.socket, allowDeviceWrites: !!values.trial })
   let receipt
-  try { receipt = await verifyModuleSets(verifierTools(service), { allStaged: values['all-staged'], wholeSet: values['whole-set'], trial: values.trial, expectBase: values['expect-base'] }) }
-  finally { await service.close() }
+  let sidechainBench
+  try {
+    if (values['sidechain-audio']) sidechainBench = openSidechainBench()
+    receipt = await verifyModuleSets(verifierTools(service), { allStaged: values['all-staged'], wholeSet: values['whole-set'], trial: values.trial, expectBase: values['expect-base'], sidechainBench })
+  } finally { sidechainBench?.close(); await service.close() }
   console.log(JSON.stringify(receipt, null, 2))
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)
-  main(process.argv.slice(2)).catch(() => { console.error('Module-set verification failed; no successful hardware receipt was recorded. Inspect the connected unit before another trial.'); process.exitCode = 1 })
+  main(process.argv.slice(2)).catch(error => {
+    if (error instanceof SidechainAudioError) console.error(error.message)
+    console.error('Module-set verification failed; no successful hardware receipt was recorded. Inspect the connected unit before another trial.')
+    process.exitCode = 1
+  })
