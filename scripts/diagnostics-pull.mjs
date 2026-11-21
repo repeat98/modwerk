@@ -63,8 +63,10 @@ const REFUSED_CHECKS = ['', 'the module pool', 'its DSP claims', 'the machine me
 const refusedPool = r => !(r.cpu || r.dsp5to8 || r.dsp1to4) ? '' :
   (r.dsp1to4 ? `, by ${r.tempo24 === 2 && r.dsp1to4 === 2 ? 'its DSP claims meeting a delay buffer' : REFUSED_CHECKS[r.dsp1to4] ?? 'check ' + r.dsp1to4}` : '') +
   `, module memory ${Math.round(r.cpu / 64)} KiB used, largest free block ${(r.dsp5to8 / 64).toFixed(1)} KiB`
+// diag.c stores up to fourteen package IDs in the set record. A full record can be only part of the inventory.
+const SET_ID_CAPACITY = 14
 const incident = r => `#${r.seq} start ${r.boot} +${Math.floor(r.second / 60)}m${r.second % 60}s ${r.kind}` +
-  (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` +
+  (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a === SET_ID_CAPACITY ? 'at least ' : ''}${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` +
     (r.tempo24 === 0x101 ? '; all held: the last start crashed or froze' : r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24}${refusedPool(r)})` : '') : '') +
   (r.kind === 'freeze' ? (r.a ? ` ${(r.a * 16 / 44100).toFixed(1)} s` : ' until a restart') : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'crash' ? ` pc 0x${r.a.toString(16)}` : r.kind === 'stall' ? ` reason ${r.a}` : r.kind === 'cpu' ? ` ${r.a & 0xffffff} machines refused for CPU, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : r.kind === 'shed' ? ` ${r.a & 0xffffff} renders skipped, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : '') +
   (STATELESS.includes(r.kind) ? '' : `, cpu ${percent(r.cpu)} T1-4 ${percent(r.dsp1to4)} T5-8 ${percent(r.dsp5to8)}, ${r.playing ? 'playing' : 'stopped'} at ${(r.tempo24 / 24).toFixed(1)} BPM, screen 0x${r.screen.toString(16)}` +
