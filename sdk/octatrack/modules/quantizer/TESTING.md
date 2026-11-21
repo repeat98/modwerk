@@ -26,15 +26,15 @@ build this module, which needs its machine path. Steps 6 to 10 ran on the emulat
 | 3 | Name the build | passed: the committed package, `092a8a13` |
 | 4 | DSP cost model | passed |
 | 5 | Emulator rehearsal | steps 6, 7 and 10 on the emulator, base 0.7.12 |
-| 6 | Read the unit | passed on the emulator; not run on a unit |
+| 6 | Read the unit | passed on the emulator; on the MKI `status` and the inventory answered |
 | 7 | Scripted unit pass | passed on the emulator: the trial ran, 12 of 12 Part switches, rolled back; the self-test was not answered and the frame checks did not run there. Not run on a unit |
-| 8 | Soak | not run: the emulator has no USB MIDI port, and no unit has this build yet |
+| 8 | Soak | not run: the emulator has no USB MIDI port; not run on the unit |
 | 9 | Cost on the unit | not run: needs a unit. The committed at-rest reading (0 points) is 0.1.4's, on base 0.7.8 |
 | 10 | Put back | passed on the emulator: the inventory equals the start |
-| 11 | Agent by hand | not run on a unit; the emulator sessions are in the next two sections |
-| 12 | Submitter's own stage | not run: no unit has this build yet |
+| 11 | Agent by hand | not run on a unit; the emulator sessions are in the two base sections below |
+| 12 | Submitter's own stage | run on an MKI on 20 and 21 November 2026: the hardware section below |
 
-**Edge cases.** Emulator results are from the sessions on base 0.7.12 in the next section; the
+**Edge cases.** Emulator results are from the sessions on base 0.7.12 (its section below); the
 same sessions ran before on base 0.7.10 (the section after it). They are not hardware evidence.
 
 | Case | Why this change makes it a risk | How run | Result |
@@ -54,9 +54,47 @@ same sessions ran before on base 0.7.10 (the section after it). They are not har
 | A trial that expires with SEQUENCER open | the loader paths around the new site list | emulator, bases 0.7.12 and 0.7.10: page reopened inside the trial (SCALE and ROOT on screen), no USB request, then keys on the page; control: the same walk with Scale Quantizer 0.1.4 | fail: no crash and the 7 sites are stock from about 9 s, but the page does not redraw: it shows SCALE and ROOT until the next key, then two blank rows that do nothing (YES, arrows, LEVEL) until the page is left. 0.1.4 shows the same screens byte for byte on both bases, so this update did not introduce it. It looks like the base's expiry path; not traced |
 | Installed and used nowhere: cost at rest | the owner's limit of 0.2 points of the frame interrupt applies to a new release | not yet | not run: needs a unit (`npm run device:price`); the committed reading (0 points) is 0.1.4's, on base 0.7.8 |
 | All of the above on base 0.7.12 | the base moved after my runs on 0.7.10 | emulator, base 0.7.12 `254c5a75`, rebuilt from main `a241c595` | pass (emulator, base 0.7.12) for every row above but the two marked fail, the Tuner removal (not run: refused by the base on the emulator) and the cost at rest (not run: needs a unit) |
-| On a unit | an emulator result is not hardware evidence | not yet | not run: no unit has this build yet; my unit is an MKI |
+| On a unit | an emulator result is not hardware evidence | my MKI, base 0.7.12 `254c5a75`, packages sent with `npm run device -- try` | pass for the upgrade from a kept 0.1.4 (trial, roll-back four times, Keep), FOLLOW on audio and MIDI by ear, and the saved scale after a power cycle (eight runs). Not run on the unit: the two old hook sites and the at-rest cost (a development base in RAM). One observation not reproduced: SCALE one step lower after the first two runs of the sequence; TESTING.md has it |
 
-Not tested on a unit: no unit has run this package (`092a8a13`) yet.
+Tested on a unit: my Octatrack MKI, OS 1.40C, base 0.7.12 (`254c5a75`), 20 and 21 November 2026. The upgrade from a kept 0.1.4 (trial, roll-back, Keep), FOLLOW on audio and MIDI by ear, and the saved scale after a power cycle all work. Not read on the unit: the two old hook sites and the at-rest cost. The record is the next section.
+
+## Author-reported hardware — 20 and 21 November 2026 (0.1.5, over USB)
+
+Tim Hastie tested the 0.1.5-experimental package (`092a8a13`, 7,038 bytes) on his **Octatrack MKI,
+OS 1.40C, Modwerk base 0.7.12** (identity `254c5a75`, byte-identical to the file the site's installer builds,
+installed with OS UPGRADE from the card) on 20 and 21 November 2026. The packages were sent with
+`npm run device -- try FILE` and kept with `--accept`. After every trial and every Keep the unit's
+own verdict was "no crash, stall, freeze or skipped track logged during the trial". His words on
+the five tests below: "Yes, all five tests pass, including midi". **Reported by the author**, not
+independently repeated.
+
+- tested on: 2026-11-20 and 2026-11-21
+- tester: timhastie
+- model: MKI
+- base: 0.7.12 `254c5a75`, flashed
+- 1. Upgrade from a kept 0.1.4 (`33700b93`): with 0.1.4 kept, PROJECT > CONTROL > SEQUENCER ends in
+  SCALE, ROOT, GLIDE, TRACK and FOLLOW. A 120 s trial of 0.1.5 over it, rolled back: the rows and
+  the chosen scale stayed during the trial and after it, and the unit reported 0.1.4 active again. 0.1.5 kept over 0.1.4: rows and scale still there, and the
+  unit reports `092a8a13` active.
+- 2. Undo: the roll-back of a 0.1.5 trial over the kept 0.1.4 ran four times, each time back to 0.1.4.
+- 3. FOLLOW on audio, with 0.1.5 kept: the same pitched sample on T1 and T8 at PTCH +1, SCALE MAJOR,
+  ROOT C. AUDIO 1 following sounds one semitone below AUDIO 8 not following; with AUDIO 1 FOLLOW
+  OFF both sound the same.
+- 4. FOLLOW on MIDI: MIDI 1 with NOTE C# plays C with FOLLOW ON and C# with FOLLOW OFF.
+- 5. Saved settings after a power cycle (SAVE PROJECT, power off and on): in eight runs SCALE read
+  after the restart as it was saved. The runs: an edit alone (twice), the same version kept again,
+  0.1.5 kept directly over 0.1.4 after the scale was turned down and after it was turned up, a
+  same-version trial rolled back, and the whole upgrade sequence twice (trial, roll-back, Keep),
+  once with the page reopened between the steps and once with it open throughout.
+- One observation, not reproduced: in the first two runs of the upgrade sequence SCALE read one
+  step lower after the save and the power cycle (MAJOR came back as OFF, MINOR as MIXOLYD). LEFT
+  and RIGHT change the selected row's value by one step on this page, so one LEFT press before the
+  save would give exactly this; that is not established. The base's log on the unit lists every
+  start since the install in sequence, so no battery-RAM clear happened.
+- limitations: a functional check, not a load or stress qualification. The two sites 0.1.5 no
+  longer hooks were not read on the unit, and the at-rest cost (procedure step 9) was not measured:
+  both need a development base started in RAM, which these runs did not use. Play time beyond
+  these checks was not recorded.
 
 ## Base 0.7.12 — 20 November 2026
 
