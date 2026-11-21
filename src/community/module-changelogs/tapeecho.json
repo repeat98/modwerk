@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.1.7-experimental",
+    "date": "2026-11-20",
+    "changes": [
+      "Costs the Octatrack nothing of its own while no slot of the project uses Tape Echo, on the next base (0.7.11), and quiet delays on other tracks keep being skipped.",
+      "Picking Tape Echo wakes it before the pick lands; its sound and controls are unchanged.",
+      "Not yet checked on a unit."
+    ]
+  },
+  {
     "version": "0.1.6-experimental",
     "date": "2026-10-27",
     "changes": [
