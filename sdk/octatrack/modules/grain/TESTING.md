@@ -17,6 +17,29 @@ Each row compares 3,072 compiled callbacks with stock packet framing simulated. 
 
 The package loads 27,220 bytes of code and data and 2,856 bytes of zero-initialized state. GCC bounds the deepest Grain-only audio path at 680 stack bytes including return addresses. The [static timing analysis](evidence/timing/candidate_bound.py) bounds the module's zero-wait render work at 188,024 core cycles for 16 source frames and 344,312 for 32. Both exceed the 95,782-cycle whole-frame budget before stock work, memory waits and interrupts. Hardware qualification remains open.
 
+### Card-free MKII comparison with Flex
+
+Four five-minute playback runs used RAM base `3a4c07fe` with the 20-channel USB layout linked into it. All four used the same 37,800-frame stereo R3 recording, 24-bit samples, 44.1 kHz capture, 100 BPM and the same musical MIDI phrase. The two tracks were tested separately. Stock Flex played the other track over MIDI in each arm. The developer physically removed the CF card before boot.
+
+| Machine | Track | Slowest frame during playback | Skipped during playback | Total through STOP and panel checks |
+| --- | --- | ---: | ---: | ---: |
+| Stock Flex | T1 | 307.0 µs | 0 | 0 |
+| Six-voice Grain | T1 | 373.1 µs | 141 | 141 |
+| Stock Flex | T5 | 308.1 µs | 0 | 0 |
+| Six-voice Grain | T5 | 368.8 µs | 259 | 259 |
+
+The skip counter records occasions when the base substitutes silence for a guarded machine render to preserve frame headroom. Stock Flex runs directly. Whole-frame timing and USB capture continuity were measured in all four arms.
+
+All four post-STOP checks switched Parts, selected Flex and changed tracks. The UI and audio counters advanced through 28.7–30.1 seconds. The recording fingerprint and the starting RAM state were verified on return. The shipping base returned with zero saved and live modules, and the hardware reservation was released. The earlier high-rate panel freeze remains open. [Timing, MIDI, capture and restoration](evidence/timing/preparation-comparison.json).
+
+A separate profiling build sampled one in 97 callbacks during a one-minute T1 run. For the longest sampled 16-source-frame callback (120.15 µs), lane and stock Flex work accounted for 20.84 µs, packet, control and source preparation for 8.85 µs, granular synthesis for 90.15 µs and control restoration for 0.31 µs. The profiler matched the candidate in 3,072 compiled PCM and cursor comparisons.
+
+The profiler sampled 2,789 callbacks, including 702 with 16 source frames. Across that group the preparation stage averaged 6.64 µs and synthesis averaged 43.53 µs.
+
+Two further five-minute runs on the same boot and R3 recording measured the previous package `9ad52855`. On T1 it skipped 2,540 renders during playback and peaked at 399.2 µs. On T5 it skipped 4,542 and peaked at 380.1 µs. The preparation changes reduced playback skips by 94.4% on T1 and 94.3% on T5.
+
+Median CPU load during playback on T1 was 62.2% with Flex and 78.3% with Grain. On T5 it was 62.2% and 79.4%. Across the four runs the captures recorded 0 timestamp gaps. The unit recorded 0 MIDI receive errors and 0 transmit drops.
+
 ## Packed stereo mixer candidate, 21 November 2026
 
 The private SDK build and the catalogue builder produced package `9ad5285502117695e906dc90770840990008cea1a19398b8d2f395e870238443`. It keeps six voices and the 35-point admission price. The ColdFire mixes a 24-bit stereo page in one register-resident loop and reads the Flex page map once per callback. A second take in the same recorder slot can replace the first take's physical pages between callbacks. The compiled test remapped R3 and verified both its page address and the change in output PCM.

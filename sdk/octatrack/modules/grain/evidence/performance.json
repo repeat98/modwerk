@@ -6,25 +6,25 @@
   "cycles": {
     "unit": "cycles/event",
     "static": null,
-    "measured": 36620,
+    "measured": 34500,
     "budget": 95782,
-    "method": "MKII OS 1.40C, package 0c5632f6, RAM base fac1523234f4bb0b. The longest guarded callback in the T1 24-bit stereo USB audio and MIDI comparison was 18,310 ticks of the 132 MHz timer. This includes stock Flex and interruptions. The earlier sequencer and MIDI-only comparison peaked at 17,845 ticks. The static Grain-only zero-wait-state model gives 192,656 cycles for 16 and 359,568 for 32 source frames. External memory, stock callees and interrupt interference remain unbounded."
+    "method": "Exact MKII package 7d5cf2e7 on RAM base 3a4c07fe. The longest observed guarded callback during the four matched 300-second playback runs took 17,250 ticks of the 132 MHz timer. The conditional bound for Grain's own zero-wait work is 188,024 core cycles for 16 source frames and 344,312 for 32. Stock calls, external-memory latency and interrupt interference have no proven upper bound. See TESTING.md and evidence/timing/preparation-comparison.json."
   },
   "load": {
     "frameUs": 362.8,
-    "stockLongestUs": 255.0,
-    "moduleLongestUs": 337.4,
-    "stockIdlePercent": 0,
-    "moduleIdlePercent": 0,
-    "method": "Same 12-second USB MIDI trace on the 100 BPM card-free Part, stereo R3 on T1 and T5. Empty-inventory Flex peaked at 70.3% of a frame. One six-voice Grain on T1 or T5 peaked at 89.6% or 93.0% respectively. All three windows showed a median 100% CPU meter and zero new skipped renders. Opening 20-channel USB audio separately produced skips on both Grain tracks. See evidence/timing/recorder.json."
+    "stockLongestUs": 307.04,
+    "moduleLongestUs": 373.08,
+    "stockIdlePercent": 37.8,
+    "moduleIdlePercent": 21.7,
+    "method": "Matched 300-second runs at 100 BPM on T1, the track with the longest candidate frame. The same 24-bit stereo R3 played under 20-channel USB capture and a musical MIDI phrase. Idle percent is 100 minus the median stock CPU meter reading during playback, excluding its first 3 seconds."
   },
   "stress": {
-    "floodMessagesPerSecond": 1104,
-    "clockBpm": 240,
-    "seconds": 12,
+    "floodMessagesPerSecond": 47.5,
+    "clockBpm": 100,
+    "seconds": 300,
     "stuckNotes": null,
     "hangs": 0,
     "dropped": null,
-    "droppedExplanation": "One trace submitted 13,249 USB MIDI events in 12 seconds. Receive errors, transmit drops and render skips held steady in the MIDI-only windows, including a completed Part 2/1 change. End-to-end message delivery and stuck notes were not counted. The 20-channel audio capture had render drops, counted separately in evidence/timing/recorder.json. On the 0.7.11 development twin, adding USB audio to the MIDI workload produced 658 skipped renders on the six-voice T1. A separate two-voice trial stalled at the panel after a 60-second combined flood. See evidence/timing/combined-load.json."
+    "droppedExplanation": "Musical comparison on package 7d5cf2e7. Per run the host submitted 12,000 clocks, 1,000 note-ons, 1,000 note-offs and 250 modulation events over 300 seconds. The receive-error and transmit-drop counters are recorded separately from render skips and end-to-end MIDI delivery. Stuck notes and end-to-end message loss were not counted. UI and audio ticks advanced after STOP and Part changes. The earlier high-rate panel-freeze report is in TESTING.md."
   }
 }
