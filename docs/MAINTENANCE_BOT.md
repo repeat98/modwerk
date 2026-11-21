@@ -6,7 +6,7 @@ The maintenance bot does the routine part of the [daily pass](MAINTENANCE.md) on
 
 `.github/workflows/maintenance-bot.yml` runs in two jobs:
 
-1. **propose** runs `scripts/maintenance-bot/snapshot.mjs`, which lists open pull requests and issues and skips the model when nothing has changed since its last run. Otherwise Claude Code reads them with a read-only token and read-only `gh` and `git` commands, following [prompt.md](../scripts/maintenance-bot/prompt.md). It writes `bot/proposals.json` and nothing else. It never checks out or runs pull request code.
+1. **propose** runs `scripts/maintenance-bot/snapshot.mjs`, which lists open pull requests and issues and skips the model when nothing has changed since its last run. Otherwise Claude Code reads them with a read-only token and read-only `gh` and `git` commands, following [prompt.md](../scripts/maintenance-bot/prompt.md). It writes nothing: its proposals come back as structured output checked against a schema, and the job saves them to `bot/proposals.json`. It never checks out or runs pull request code.
 2. **act** runs `scripts/maintenance-bot/act.mjs` from `main`, with write access and no model. It re-reads each proposal's target from GitHub and holds it to [policy.mjs](../scripts/maintenance-bot/policy.mjs), which sets the tier. It files the proposal in the Worker's ledger (`server/maintenance-bot.ts`, table `maintenance_bot_actions`), carries out whatever is due, and on the daily run sends the report.
 
 | Tier | Actions | What happens |

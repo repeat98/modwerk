@@ -1,0 +1,1 @@
+- The maintenance bot no longer fails about a third of its passes: its model now returns its proposals as checked structured output instead of being asked to write them to a file, which it often skipped.

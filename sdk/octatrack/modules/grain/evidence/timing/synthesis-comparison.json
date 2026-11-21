@@ -1,0 +1,5715 @@
+{
+  "model": "Octatrack MKII",
+  "os": "1.40C",
+  "shippingBase": "254c5a75a139255e057e69532bb952daffef5039ffeee0e6c9fabda302e5bb91",
+  "developmentBase": "3a4c07fe4df32e41ce38283fabe85976a8d25c9fa084c999850f3252022072fc",
+  "captureLayout": "20 channels linked into the development base; shipping USB Audio is a separate module",
+  "part": "A16, Part 3, 100 BPM; T1 and T5 both assigned R3. One pattern track triggered at a time; six other tracks THRU. No FX.",
+  "durationSecondsPerArm": 300,
+  "timerMHz": 132,
+  "coreMHz": 264,
+  "frameBudgetTicks": 47891,
+  "guardShareTicks": 38312,
+  "machineBudgetPoints": 45,
+  "reservationPoints": 35,
+  "timingColumns": [
+    "phase",
+    "frameCount",
+    "maxFrameTicks",
+    "maxLateTicks",
+    "sumFrameTicksDiv256",
+    "skips",
+    "trackMask",
+    "firstPassMaxTicks",
+    "secondPassMaxTicks"
+  ],
+  "date": "2026-11-21",
+  "packageSHA256": "0e4fc8dd6a3bfc60ee60321a83bda82866adaedad8b555834ecdfb6b6dee6f21",
+  "previousPackageSHA256": "7d5cf2e739a0f99d5c8be4f5a0629e2a46691314cacf2ee5dace54ccf517aa1b",
+  "card": "CF absent, recorder and projects in RAM",
+  "source": {
+    "recorder": "R3",
+    "frames": 37800,
+    "channels": 2,
+    "bitDepth": 24,
+    "pcmSHA256": "f537e58e7fb7eac237392b34c133e9e9560137bc7dff887acef52534fdcc7b23"
+  },
+  "checkedSourcePages": [
+    [
+      0,
+      6710682,
+      51,
+      128
+    ],
+    [
+      1,
+      6710682,
+      45,
+      124
+    ],
+    [
+      3,
+      6710682,
+      43,
+      127
+    ],
+    [
+      7,
+      6710682,
+      42,
+      128
+    ],
+    [
+      12,
+      6710682,
+      43,
+      128
+    ],
+    [
+      20,
+      6710682,
+      46,
+      128
+    ],
+    [
+      30,
+      6710682,
+      41,
+      126
+    ]
+  ],
+  "conditions": [
+    {
+      "machine": "stock",
+      "track": 1,
+      "matchedMidi": "100 BPM, 12000 clocks, 1000 notes on, 1000 off, 250 modulation changes submitted",
+      "observedGrains": 0,
+      "playbackMaxFrameMicroseconds": 296.03,
+      "playbackSkips": 0,
+      "totalSkips": 0,
+      "maxGuardedCallbackMicroseconds": 0.0,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          3088,
+          36175,
+          0,
+          169638,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "playback minute 1",
+          168653,
+          38965,
+          0,
+          16665661,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "playback minute 2",
+          163911,
+          36877,
+          0,
+          16221392,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "playback minute 3",
+          167852,
+          37136,
+          0,
+          16607551,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "playback minute 4",
+          163779,
+          36660,
+          0,
+          16202473,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "playing",
+          168241,
+          39076,
+          0,
+          16648665,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "stop",
+          1026,
+          34982,
+          0,
+          101732,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "picker and panel",
+          17539,
+          35272,
+          0,
+          1311786,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "stream closed",
+          797,
+          16847,
+          0,
+          40131,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "post-STOP observation",
+          69384,
+          17129,
+          0,
+          3485140,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "audio": {
+        "checkedFrames": 13009500,
+        "sampleTimeGaps": 0,
+        "targetStem": {
+          "rms": [
+            0.6107571421,
+            0.8616642133
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "otherMidiStem": {
+          "rms": [
+            0.6100165818,
+            0.7783206778
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "main": {
+          "rms": [
+            0.8336593113,
+            0.9952606278
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "tailRmsT1T5Main": [
+          [
+            3.099441528e-06,
+            0.0001932382584
+          ],
+          [
+            9.536743164e-07,
+            0.0001932382584
+          ],
+          [
+            3.576278687e-06,
+            0.0002751350403
+          ]
+        ],
+        "tailSecondsAfterStop": 3.24
+      },
+      "afterStop": {
+        "parts": [
+          1,
+          3
+        ],
+        "returnedAssignment": true,
+        "flexSelected": true,
+        "trackSelectionVerified": true,
+        "observedSeconds": 29.09,
+        "uiTickProgress": 1332,
+        "audioFrameProgress": 61202,
+        "healthDelta": {
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0,
+          "errors": 0
+        }
+      },
+      "cpuMeter": {
+        "samples": 196,
+        "medianBusyPercent": 62.1,
+        "peakBusyPercent": 63.7
+      }
+    },
+    {
+      "machine": "grain",
+      "track": 1,
+      "matchedMidi": "100 BPM, 12000 clocks, 1000 notes on, 1000 off, 250 modulation changes submitted",
+      "observedGrains": 6,
+      "playbackMaxFrameMicroseconds": 391.977,
+      "playbackSkips": 15,
+      "totalSkips": 15,
+      "maxGuardedCallbackMicroseconds": 130.348,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          2002,
+          36797,
+          0,
+          145784,
+          0,
+          17,
+          2328,
+          840
+        ],
+        [
+          "playback minute 1",
+          168381,
+          51741,
+          3850,
+          22113399,
+          10,
+          17,
+          15144,
+          17206
+        ],
+        [
+          "playback minute 2",
+          167707,
+          46651,
+          0,
+          22071539,
+          1,
+          17,
+          13114,
+          16854
+        ],
+        [
+          "playback minute 3",
+          162420,
+          47192,
+          0,
+          21406158,
+          0,
+          17,
+          12913,
+          16706
+        ],
+        [
+          "playback minute 4",
+          166431,
+          47886,
+          0,
+          21917373,
+          4,
+          17,
+          14222,
+          16933
+        ],
+        [
+          "playing",
+          164106,
+          48209,
+          318,
+          21591707,
+          0,
+          17,
+          13012,
+          16370
+        ],
+        [
+          "stop",
+          1227,
+          42920,
+          0,
+          162763,
+          0,
+          17,
+          10663,
+          12419
+        ],
+        [
+          "picker and panel",
+          18988,
+          41033,
+          0,
+          1511078,
+          0,
+          17,
+          9739,
+          9817
+        ],
+        [
+          "stream closed",
+          2883,
+          30312,
+          0,
+          176522,
+          0,
+          17,
+          0,
+          0
+        ],
+        [
+          "post-STOP observation",
+          70327,
+          17079,
+          0,
+          3540204,
+          0,
+          17,
+          0,
+          0
+        ]
+      ],
+      "audio": {
+        "checkedFrames": 13009500,
+        "sampleTimeGaps": 0,
+        "targetStem": {
+          "rms": [
+            0.7914609148,
+            0.9168750939
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 5122
+        },
+        "otherMidiStem": {
+          "rms": [
+            0.6097946336,
+            0.7781058978
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "main": {
+          "rms": [
+            0.8870654637,
+            0.9738978999
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 16
+        },
+        "tailRmsT1T5Main": [
+          [
+            0.0001932382584,
+            0.0001932382584
+          ],
+          [
+            3.600120544e-05,
+            0.0001932382584
+          ],
+          [
+            0.0001639127731,
+            0.0002751350403
+          ]
+        ],
+        "tailSecondsAfterStop": 4.45
+      },
+      "afterStop": {
+        "parts": [
+          1,
+          3
+        ],
+        "returnedAssignment": true,
+        "flexSelected": true,
+        "trackSelectionVerified": true,
+        "observedSeconds": 30.61,
+        "uiTickProgress": 1341,
+        "audioFrameProgress": 61607,
+        "healthDelta": {
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0,
+          "errors": 0
+        }
+      },
+      "src": [
+        66,
+        60,
+        127,
+        127,
+        127,
+        127
+      ],
+      "setup": [
+        3,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "cpuMeter": {
+        "samples": 191,
+        "medianBusyPercent": 77.6,
+        "peakBusyPercent": 82.0
+      },
+      "durationSeconds": 300,
+      "packageSHA256": "0e4fc8dd6a3bfc60ee60321a83bda82866adaedad8b555834ecdfb6b6dee6f21"
+    },
+    {
+      "machine": "stock",
+      "track": 5,
+      "matchedMidi": "100 BPM, 12000 clocks, 1000 notes on, 1000 off, 250 modulation changes submitted",
+      "observedGrains": 0,
+      "playbackMaxFrameMicroseconds": 310.712,
+      "playbackSkips": 0,
+      "totalSkips": 0,
+      "maxGuardedCallbackMicroseconds": 0.0,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          2096,
+          38575,
+          0,
+          141403,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "playback minute 1",
+          168473,
+          39655,
+          0,
+          16693758,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "playback minute 2",
+          164021,
+          37629,
+          0,
+          16254222,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "playback minute 3",
+          168287,
+          41014,
+          0,
+          16674152,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "playback minute 4",
+          164276,
+          39785,
+          0,
+          16275849,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "playing",
+          164252,
+          39151,
+          0,
+          16278374,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "stop",
+          856,
+          35243,
+          0,
+          85327,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "picker and panel",
+          16828,
+          35530,
+          0,
+          1280415,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "stream closed",
+          3559,
+          30932,
+          0,
+          254553,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "post-STOP observation",
+          69183,
+          17218,
+          0,
+          3476186,
+          0,
+          1,
+          0,
+          0
+        ]
+      ],
+      "audio": {
+        "checkedFrames": 13009500,
+        "sampleTimeGaps": 0,
+        "targetStem": {
+          "rms": [
+            0.6110841456,
+            0.871457707
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "otherMidiStem": {
+          "rms": [
+            0.6095157132,
+            0.7780730406
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "main": {
+          "rms": [
+            0.8333600609,
+            0.9963238214
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "tailRmsT1T5Main": [
+          [
+            3.600120544e-05,
+            0.0001932382584
+          ],
+          [
+            3.099441528e-06,
+            0.0001932382584
+          ],
+          [
+            2.861022949e-05,
+            0.0002751350403
+          ]
+        ],
+        "tailSecondsAfterStop": 4.36
+      },
+      "afterStop": {
+        "parts": [
+          1,
+          3
+        ],
+        "returnedAssignment": true,
+        "flexSelected": true,
+        "trackSelectionVerified": true,
+        "observedSeconds": 29.71,
+        "uiTickProgress": 1331,
+        "audioFrameProgress": 61142,
+        "healthDelta": {
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0,
+          "errors": 0
+        }
+      },
+      "cpuMeter": {
+        "samples": 195,
+        "medianBusyPercent": 62.2,
+        "peakBusyPercent": 63.1
+      }
+    },
+    {
+      "machine": "grain",
+      "track": 5,
+      "matchedMidi": "100 BPM, 12000 clocks, 1000 notes on, 1000 off, 250 modulation changes submitted",
+      "observedGrains": 6,
+      "playbackMaxFrameMicroseconds": 395.394,
+      "playbackSkips": 33,
+      "totalSkips": 33,
+      "maxGuardedCallbackMicroseconds": 124.508,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          3142,
+          38150,
+          0,
+          217982,
+          0,
+          17,
+          1273,
+          708
+        ],
+        [
+          "playback minute 1",
+          169322,
+          52192,
+          4301,
+          22271192,
+          12,
+          17,
+          14859,
+          15929
+        ],
+        [
+          "playback minute 2",
+          166629,
+          49562,
+          1671,
+          22000005,
+          1,
+          17,
+          15075,
+          16165
+        ],
+        [
+          "playback minute 3",
+          164541,
+          48031,
+          140,
+          21777831,
+          2,
+          17,
+          15345,
+          16435
+        ],
+        [
+          "playback minute 4",
+          166151,
+          49266,
+          1375,
+          22070497,
+          10,
+          17,
+          15091,
+          16069
+        ],
+        [
+          "playing",
+          164927,
+          47506,
+          0,
+          21878449,
+          8,
+          17,
+          15400,
+          16313
+        ],
+        [
+          "stop",
+          1186,
+          43878,
+          0,
+          163670,
+          0,
+          17,
+          14042,
+          10277
+        ],
+        [
+          "picker and panel",
+          18644,
+          39808,
+          0,
+          1457922,
+          0,
+          17,
+          10567,
+          7944
+        ],
+        [
+          "stream closed",
+          639,
+          16668,
+          0,
+          32286,
+          0,
+          17,
+          0,
+          0
+        ],
+        [
+          "post-STOP observation",
+          70225,
+          18612,
+          0,
+          3538214,
+          0,
+          17,
+          0,
+          0
+        ]
+      ],
+      "audio": {
+        "checkedFrames": 13009500,
+        "sampleTimeGaps": 0,
+        "targetStem": {
+          "rms": [
+            0.7852406478,
+            0.9253704244
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 3727
+        },
+        "otherMidiStem": {
+          "rms": [
+            0.6097099549,
+            0.7781733407
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "main": {
+          "rms": [
+            0.8827148548,
+            0.9790014725
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 9
+        },
+        "tailRmsT1T5Main": [
+          [
+            2.992153168e-05,
+            0.0001932382584
+          ],
+          [
+            0.0001932382584,
+            0.0001932382584
+          ],
+          [
+            0.0001596212387,
+            0.0002751350403
+          ]
+        ],
+        "tailSecondsAfterStop": 3.41
+      },
+      "afterStop": {
+        "parts": [
+          1,
+          3
+        ],
+        "returnedAssignment": true,
+        "flexSelected": true,
+        "trackSelectionVerified": true,
+        "observedSeconds": 29.7,
+        "uiTickProgress": 1345,
+        "audioFrameProgress": 61788,
+        "healthDelta": {
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0,
+          "errors": 0
+        }
+      },
+      "src": [
+        66,
+        60,
+        127,
+        127,
+        127,
+        0
+      ],
+      "setup": [
+        3,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "cpuMeter": {
+        "samples": 193,
+        "medianBusyPercent": 78.1,
+        "peakBusyPercent": 82.2
+      },
+      "durationSeconds": 300,
+      "packageSHA256": "0e4fc8dd6a3bfc60ee60321a83bda82866adaedad8b555834ecdfb6b6dee6f21"
+    }
+  ],
+  "restoration": {
+    "checks": {
+      "card": true,
+      "track": true,
+      "tempo": true,
+      "pattern": true,
+      "part": true,
+      "recordModes": true,
+      "slots": true,
+      "inventory": true,
+      "startingWorkingPart": true,
+      "startingPatternData": true,
+      "scratchPartWorking": true,
+      "scratchPartSaved": true,
+      "scratchPatternData": true,
+      "stopped": true
+    },
+    "cardMounted": false,
+    "selectedTrack": 1,
+    "pattern": "0000",
+    "part": 1,
+    "bpm": 140.0,
+    "recorderSlots": 0,
+    "liveModules": 0,
+    "verifiedReturnBase": "254c5a75a139255e057e69532bb952daffef5039ffeee0e6c9fabda302e5bb91",
+    "returnInventory": {
+      "saved": 0,
+      "live": 0
+    }
+  },
+  "sourceUnchangedAfterPlayback": true,
+  "compiledComparisons": {
+    "held": {
+      "callbacks": 3072,
+      "pcmSha256": "387d70f27cc85ba01fd697b00194d41ab132f30062f07b12495f4db722528486",
+      "voiceHistogram": {
+        "1": 2,
+        "2": 254,
+        "3": 2,
+        "4": 142,
+        "5": 112,
+        "6": 2560
+      },
+      "exactAllPcmAndVoiceState": true,
+      "previous": {
+        "mean": 3040.98,
+        "peak": 7604
+      },
+      "candidate": {
+        "mean": 2782.7,
+        "peak": 7315
+      }
+    },
+    "movingPosition": {
+      "callbacks": 3072,
+      "pcmSha256": "9e39c014d8327ab59d2c967552470f4c87d774dcc624178b17b2d2a22f61f164",
+      "voiceHistogram": {
+        "1": 2,
+        "2": 254,
+        "3": 2,
+        "4": 142,
+        "5": 112,
+        "6": 2560
+      },
+      "exactAllPcmAndVoiceState": true,
+      "previous": {
+        "mean": 3079.26,
+        "peak": 7643
+      },
+      "candidate": {
+        "mean": 2838.37,
+        "peak": 7499
+      }
+    },
+    "partAndRecorder": {
+      "callbacks": 3072,
+      "pcmSha256": "e086af2fa8de64378ea66324900a67034f0707b58e5a18c51cab00e2d7a1e915",
+      "voiceHistogram": {
+        "1": 66,
+        "2": 108,
+        "0": 80,
+        "3": 312,
+        "4": 540,
+        "5": 464,
+        "6": 1502
+      },
+      "exactAllPcmAndVoiceState": true,
+      "previous": {
+        "mean": 2970.87,
+        "peak": 11603
+      },
+      "candidate": {
+        "mean": 2610.09,
+        "peak": 10184
+      }
+    },
+    "allSrcControls": {
+      "callbacks": 3072,
+      "pcmSha256": "1bd866da6bcdfab9925d11429b9d02652ecf34bcfdfbba16e8734b7b9dcf310f",
+      "voiceHistogram": {
+        "1": 57,
+        "2": 112,
+        "3": 115,
+        "4": 225,
+        "5": 606,
+        "6": 1957
+      },
+      "exactAllPcmAndVoiceState": true,
+      "previous": {
+        "mean": 3125.75,
+        "peak": 12615
+      },
+      "candidate": {
+        "mean": 2736.0,
+        "peak": 9629
+      }
+    },
+    "hardwareProfilePacketLengths": {
+      "callbacks": 2789,
+      "pcmSha256": "f825c0f6319442565bf85a3fb947902361bbdb8d09e3d7f5ec6c55c73f3eef3e",
+      "voiceHistogram": {
+        "1": 2,
+        "2": 254,
+        "3": 2,
+        "4": 254,
+        "5": 2,
+        "6": 2275
+      },
+      "exactAllPcmAndVoiceState": true,
+      "previous": {
+        "mean": 2896.67,
+        "peak": 5005
+      },
+      "candidate": {
+        "mean": 2727.72,
+        "peak": 4916
+      }
+    }
+  },
+  "compiledSpanComparison": {
+    "cases": 4096,
+    "binaries": [
+      "previous",
+      "compact"
+    ],
+    "sixVoice24BitStereo16FramesByShape": {
+      "0": [
+        3915.2,
+        3611.2
+      ],
+      "1": [
+        4026.0,
+        3762.0
+      ],
+      "2": [
+        3966.8,
+        3615.0
+      ],
+      "3": [
+        3794.2,
+        3579.8
+      ]
+    },
+    "allPcmAndSixVoiceStatesMatched": true
+  },
+  "compiledSoak": {
+    "tracks": [
+      1,
+      5
+    ],
+    "secondsPerTrack": 120,
+    "stereoFramesPerTrack": 5292000,
+    "maximumVoices": 6,
+    "matchedPortableReference": true,
+    "pcmSha256": "7f45ce08b48ea409323cd4bad3df6088283e31d1ab628d0f7a7e4b8e8979bb47",
+    "packageSHA256": "0e4fc8dd6a3bfc60ee60321a83bda82866adaedad8b555834ecdfb6b6dee6f21"
+  },
+  "conditionalZeroWaitTiming": [
+    {
+      "sourceFrames": 16,
+      "callback": "grain_start",
+      "instructions": 70,
+      "conditionalCoreCycles": 796
+    },
+    {
+      "sourceFrames": 16,
+      "callback": "grain_render",
+      "instructions": 28332,
+      "conditionalCoreCycles": 247832
+    },
+    {
+      "sourceFrames": 32,
+      "callback": "grain_start",
+      "instructions": 70,
+      "conditionalCoreCycles": 796
+    },
+    {
+      "sourceFrames": 32,
+      "callback": "grain_render",
+      "instructions": 52204,
+      "conditionalCoreCycles": 453976
+    }
+  ],
+  "grainStackBoundBytes": 676,
+  "hardwareMixerFixtures": [
+    {
+      "referencePackageSHA256": "d09bd8f8ce95acd398d13ab91191da6d5288313c9c442988435b1224641234a5",
+      "probeSHA256": "ccf16f3cff86439adbbe09a7113ffa03a39d22993a90727c27459b84bfa39281",
+      "calls": 512,
+      "loaderVerdict": "verdict: no crash, stall, freeze or skipped track logged during the trial",
+      "rolledBack": true,
+      "format": "24-bit stereo, six voices, UI tick, no capture or MIDI",
+      "caseOrder": "bench.c, 8 executions per case",
+      "rowColumns": [
+        "executions",
+        "minimumTicks",
+        "maximumTicks",
+        "sumTicks",
+        "pcmDigest"
+      ],
+      "pcmDigestsMatched": true,
+      "rows": [
+        [
+          8,
+          5924,
+          26854,
+          74509,
+          863691845
+        ],
+        [
+          8,
+          5828,
+          26144,
+          72511,
+          863691845
+        ],
+        [
+          8,
+          8922,
+          29167,
+          113355,
+          513567429
+        ],
+        [
+          8,
+          8774,
+          29238,
+          114360,
+          513567429
+        ],
+        [
+          8,
+          7244,
+          28228,
+          83599,
+          1062265925
+        ],
+        [
+          8,
+          6842,
+          27404,
+          81676,
+          1062265925
+        ],
+        [
+          8,
+          9864,
+          30692,
+          121673,
+          827681477
+        ],
+        [
+          8,
+          9613,
+          30267,
+          119871,
+          827681477
+        ],
+        [
+          8,
+          6138,
+          26210,
+          70311,
+          2862015557
+        ],
+        [
+          8,
+          5913,
+          25575,
+          84149,
+          2862015557
+        ],
+        [
+          8,
+          8952,
+          28962,
+          109387,
+          1508666053
+        ],
+        [
+          8,
+          8782,
+          25997,
+          89347,
+          1508666053
+        ],
+        [
+          8,
+          7219,
+          11350,
+          63194,
+          2139874373
+        ],
+        [
+          8,
+          6936,
+          27161,
+          80340,
+          2139874373
+        ],
+        [
+          8,
+          9862,
+          31298,
+          106456,
+          3887557317
+        ],
+        [
+          8,
+          9826,
+          30875,
+          122227,
+          3887557317
+        ],
+        [
+          8,
+          6131,
+          23206,
+          71620,
+          2176771141
+        ],
+        [
+          8,
+          5837,
+          23165,
+          70296,
+          2176771141
+        ],
+        [
+          8,
+          8715,
+          29725,
+          113102,
+          68971205
+        ],
+        [
+          8,
+          8657,
+          29219,
+          96635,
+          68971205
+        ],
+        [
+          8,
+          7404,
+          26866,
+          96588,
+          4227654725
+        ],
+        [
+          8,
+          7090,
+          26907,
+          95572,
+          4227654725
+        ],
+        [
+          8,
+          10183,
+          31508,
+          144782,
+          2971429573
+        ],
+        [
+          8,
+          9840,
+          30940,
+          122747,
+          2971429573
+        ],
+        [
+          8,
+          6043,
+          26432,
+          73534,
+          2927748165
+        ],
+        [
+          8,
+          5596,
+          26373,
+          66838,
+          2927748165
+        ],
+        [
+          8,
+          8378,
+          29178,
+          105344,
+          4026821317
+        ],
+        [
+          8,
+          8293,
+          24902,
+          87910,
+          4026821317
+        ],
+        [
+          8,
+          7365,
+          12048,
+          65213,
+          758703173
+        ],
+        [
+          8,
+          7133,
+          27987,
+          83765,
+          758703173
+        ],
+        [
+          8,
+          9832,
+          30614,
+          106371,
+          1527409349
+        ],
+        [
+          8,
+          9717,
+          30693,
+          120964,
+          1527409349
+        ],
+        [
+          8,
+          5849,
+          25471,
+          84321,
+          471917637
+        ],
+        [
+          8,
+          5546,
+          22175,
+          66402,
+          471917637
+        ],
+        [
+          8,
+          7975,
+          28086,
+          104677,
+          3462163141
+        ],
+        [
+          8,
+          8029,
+          28474,
+          103577,
+          3462163141
+        ],
+        [
+          8,
+          6809,
+          27611,
+          79986,
+          4104971333
+        ],
+        [
+          8,
+          6756,
+          27054,
+          78648,
+          4104971333
+        ],
+        [
+          8,
+          9562,
+          29758,
+          119030,
+          1819634373
+        ],
+        [
+          8,
+          9397,
+          30375,
+          118280,
+          1819634373
+        ],
+        [
+          8,
+          5828,
+          22739,
+          67866,
+          1380901957
+        ],
+        [
+          8,
+          5618,
+          22599,
+          63182,
+          1380901957
+        ],
+        [
+          8,
+          7990,
+          28592,
+          86367,
+          709913285
+        ],
+        [
+          8,
+          8155,
+          12531,
+          70952,
+          709913285
+        ],
+        [
+          8,
+          6933,
+          26456,
+          76109,
+          2465457221
+        ],
+        [
+          8,
+          6819,
+          23978,
+          77071,
+          2465457221
+        ],
+        [
+          8,
+          9505,
+          30016,
+          118439,
+          2002545349
+        ],
+        [
+          8,
+          9442,
+          30315,
+          118109,
+          2002545349
+        ],
+        [
+          8,
+          5827,
+          25758,
+          71116,
+          492364869
+        ],
+        [
+          8,
+          5611,
+          25462,
+          66414,
+          492364869
+        ],
+        [
+          8,
+          8078,
+          28316,
+          106952,
+          3672664773
+        ],
+        [
+          8,
+          8099,
+          28192,
+          106411,
+          3672664773
+        ],
+        [
+          8,
+          7053,
+          27296,
+          82590,
+          1745937477
+        ],
+        [
+          8,
+          7037,
+          27493,
+          82254,
+          1745937477
+        ],
+        [
+          8,
+          9661,
+          30077,
+          103646,
+          3221646021
+        ],
+        [
+          8,
+          9680,
+          31086,
+          120080,
+          3221646021
+        ],
+        [
+          8,
+          5627,
+          25430,
+          81821,
+          3947750469
+        ],
+        [
+          8,
+          5309,
+          21732,
+          61331,
+          3947750469
+        ],
+        [
+          8,
+          7541,
+          24607,
+          79671,
+          262892229
+        ],
+        [
+          8,
+          7734,
+          12084,
+          67899,
+          262892229
+        ],
+        [
+          8,
+          7098,
+          27252,
+          78126,
+          43705413
+        ],
+        [
+          8,
+          6948,
+          26946,
+          94560,
+          43705413
+        ],
+        [
+          8,
+          9504,
+          30717,
+          123229,
+          1925671621
+        ],
+        [
+          8,
+          9531,
+          30752,
+          123053,
+          1925671621
+        ]
+      ]
+    },
+    {
+      "referencePackageSHA256": "dd63590316d05b6e84bcd5fcff458aa0914af8b05319d10e025d43ac48259a92",
+      "probeSHA256": "e803a5eacad2cdf34f6838491aacc532d8c3e51d60ef2d691c43165c8ce1bfa6",
+      "calls": 512,
+      "loaderVerdict": "verdict: no crash, stall, freeze or skipped track logged during the trial",
+      "rolledBack": true,
+      "format": "24-bit stereo, six voices, UI tick, no capture or MIDI",
+      "caseOrder": "bench.c, 8 executions per case",
+      "rowColumns": [
+        "executions",
+        "minimumTicks",
+        "maximumTicks",
+        "sumTicks",
+        "pcmDigest"
+      ],
+      "pcmDigestsMatched": true,
+      "rows": [
+        [
+          8,
+          5908,
+          26253,
+          72407,
+          863691845
+        ],
+        [
+          8,
+          5574,
+          22399,
+          65941,
+          863691845
+        ],
+        [
+          8,
+          8509,
+          39388,
+          141852,
+          513567429
+        ],
+        [
+          8,
+          8063,
+          40281,
+          120975,
+          513567429
+        ],
+        [
+          8,
+          7032,
+          38356,
+          93294,
+          1062265925
+        ],
+        [
+          8,
+          6886,
+          24092,
+          90391,
+          1062265925
+        ],
+        [
+          8,
+          9889,
+          30532,
+          135532,
+          827681477
+        ],
+        [
+          8,
+          9841,
+          41294,
+          152335,
+          827681477
+        ],
+        [
+          8,
+          5890,
+          25077,
+          83432,
+          2862015557
+        ],
+        [
+          8,
+          5599,
+          25887,
+          69494,
+          2862015557
+        ],
+        [
+          8,
+          8488,
+          39979,
+          120949,
+          1508666053
+        ],
+        [
+          8,
+          8212,
+          39315,
+          117438,
+          1508666053
+        ],
+        [
+          8,
+          7044,
+          38198,
+          105099,
+          2139874373
+        ],
+        [
+          8,
+          6961,
+          27714,
+          78144,
+          2139874373
+        ],
+        [
+          8,
+          9960,
+          26504,
+          101218,
+          3887557317
+        ],
+        [
+          8,
+          9877,
+          40827,
+          115876,
+          3887557317
+        ],
+        [
+          8,
+          6017,
+          26039,
+          73674,
+          2176771141
+        ],
+        [
+          8,
+          5729,
+          22500,
+          67528,
+          2176771141
+        ],
+        [
+          8,
+          8608,
+          40115,
+          122768,
+          68971205
+        ],
+        [
+          8,
+          8340,
+          38312,
+          139464,
+          68971205
+        ],
+        [
+          8,
+          7461,
+          27885,
+          81462,
+          4227654725
+        ],
+        [
+          8,
+          7203,
+          27405,
+          112953,
+          4227654725
+        ],
+        [
+          8,
+          10309,
+          31136,
+          124735,
+          2971429573
+        ],
+        [
+          8,
+          10242,
+          42653,
+          156530,
+          2971429573
+        ],
+        [
+          8,
+          5911,
+          26011,
+          72022,
+          2927748165
+        ],
+        [
+          8,
+          5580,
+          37035,
+          80803,
+          2927748165
+        ],
+        [
+          8,
+          8229,
+          39366,
+          117853,
+          4026821317
+        ],
+        [
+          8,
+          7910,
+          28696,
+          85329,
+          4026821317
+        ],
+        [
+          8,
+          7397,
+          28476,
+          80944,
+          758703173
+        ],
+        [
+          8,
+          7330,
+          28232,
+          80579,
+          758703173
+        ],
+        [
+          8,
+          10121,
+          41349,
+          117596,
+          1527409349
+        ],
+        [
+          8,
+          9937,
+          26701,
+          102394,
+          1527409349
+        ],
+        [
+          8,
+          5656,
+          21837,
+          66574,
+          471917637
+        ],
+        [
+          8,
+          5363,
+          25416,
+          64255,
+          471917637
+        ],
+        [
+          8,
+          7685,
+          37763,
+          110296,
+          3462163141
+        ],
+        [
+          8,
+          7697,
+          27567,
+          114563,
+          3462163141
+        ],
+        [
+          8,
+          6671,
+          26801,
+          91251,
+          4104971333
+        ],
+        [
+          8,
+          6671,
+          38369,
+          110215,
+          4104971333
+        ],
+        [
+          8,
+          9321,
+          40246,
+          131647,
+          1819634373
+        ],
+        [
+          8,
+          9398,
+          40430,
+          144557,
+          1819634373
+        ],
+        [
+          8,
+          5641,
+          36185,
+          81046,
+          1380901957
+        ],
+        [
+          8,
+          5370,
+          21762,
+          60541,
+          1380901957
+        ],
+        [
+          8,
+          7695,
+          28173,
+          83083,
+          709913285
+        ],
+        [
+          8,
+          7697,
+          27871,
+          99089,
+          709913285
+        ],
+        [
+          8,
+          6849,
+          27817,
+          76904,
+          2465457221
+        ],
+        [
+          8,
+          6789,
+          37682,
+          86459,
+          2465457221
+        ],
+        [
+          8,
+          9418,
+          29242,
+          96545,
+          2002545349
+        ],
+        [
+          8,
+          9363,
+          30148,
+          96734,
+          2002545349
+        ],
+        [
+          8,
+          5772,
+          25311,
+          67287,
+          492364869
+        ],
+        [
+          8,
+          5582,
+          25703,
+          69484,
+          492364869
+        ],
+        [
+          8,
+          7976,
+          28017,
+          100335,
+          3672664773
+        ],
+        [
+          8,
+          7848,
+          28061,
+          105377,
+          3672664773
+        ],
+        [
+          8,
+          7085,
+          27607,
+          82269,
+          1745937477
+        ],
+        [
+          8,
+          7118,
+          38387,
+          94297,
+          1745937477
+        ],
+        [
+          8,
+          9710,
+          41120,
+          148435,
+          3221646021
+        ],
+        [
+          8,
+          9584,
+          30215,
+          115067,
+          3221646021
+        ],
+        [
+          8,
+          5517,
+          22423,
+          62937,
+          3947750469
+        ],
+        [
+          8,
+          5427,
+          25094,
+          63978,
+          3947750469
+        ],
+        [
+          8,
+          7654,
+          27578,
+          98752,
+          262892229
+        ],
+        [
+          8,
+          7613,
+          38380,
+          112039,
+          262892229
+        ],
+        [
+          8,
+          7064,
+          38872,
+          89734,
+          43705413
+        ],
+        [
+          8,
+          7081,
+          23290,
+          74016,
+          43705413
+        ],
+        [
+          8,
+          9607,
+          30268,
+          98893,
+          1925671621
+        ],
+        [
+          8,
+          9570,
+          31062,
+          103137,
+          1925671621
+        ]
+      ]
+    },
+    {
+      "referencePackageSHA256": "9a8189f96ce7c571a7360740c56ccf97d3aa887bfd42673cdfd4851eade2d065",
+      "probeSHA256": "de73f5b8e79a97d5d4cb2b1e665c8b5fbe6498a60d6aeec9f52fe139a2587baa",
+      "calls": 512,
+      "loaderVerdict": "verdict: no crash, stall, freeze or skipped track logged during the trial",
+      "rolledBack": true,
+      "format": "24-bit stereo, six voices, UI tick, no capture or MIDI",
+      "caseOrder": "bench.c, 8 executions per case",
+      "rowColumns": [
+        "executions",
+        "minimumTicks",
+        "maximumTicks",
+        "sumTicks",
+        "pcmDigest"
+      ],
+      "pcmDigestsMatched": true,
+      "rows": [
+        [
+          8,
+          6064,
+          26976,
+          70733,
+          863691845
+        ],
+        [
+          8,
+          5629,
+          9718,
+          50288,
+          863691845
+        ],
+        [
+          8,
+          8601,
+          13356,
+          75399,
+          513567429
+        ],
+        [
+          8,
+          8358,
+          29009,
+          93498,
+          513567429
+        ],
+        [
+          8,
+          6776,
+          23723,
+          77042,
+          1062265925
+        ],
+        [
+          8,
+          6555,
+          27063,
+          78980,
+          1062265925
+        ],
+        [
+          8,
+          9697,
+          30570,
+          104380,
+          827681477
+        ],
+        [
+          8,
+          9543,
+          29913,
+          118713,
+          827681477
+        ],
+        [
+          8,
+          6154,
+          26112,
+          70635,
+          2862015557
+        ],
+        [
+          8,
+          5729,
+          25141,
+          82668,
+          2862015557
+        ],
+        [
+          8,
+          8601,
+          29698,
+          108481,
+          1508666053
+        ],
+        [
+          8,
+          8505,
+          29002,
+          107431,
+          1508666053
+        ],
+        [
+          8,
+          6927,
+          27142,
+          96459,
+          2139874373
+        ],
+        [
+          8,
+          6665,
+          26844,
+          78074,
+          2139874373
+        ],
+        [
+          8,
+          9821,
+          31093,
+          120993,
+          3887557317
+        ],
+        [
+          8,
+          9596,
+          30727,
+          115091,
+          3887557317
+        ],
+        [
+          8,
+          6215,
+          23558,
+          68485,
+          2176771141
+        ],
+        [
+          8,
+          5870,
+          10473,
+          52454,
+          2176771141
+        ],
+        [
+          8,
+          8799,
+          13368,
+          76196,
+          68971205
+        ],
+        [
+          8,
+          8486,
+          28622,
+          94697,
+          68971205
+        ],
+        [
+          8,
+          7183,
+          26936,
+          95618,
+          4227654725
+        ],
+        [
+          8,
+          6956,
+          23614,
+          77520,
+          4227654725
+        ],
+        [
+          8,
+          10107,
+          30924,
+          140018,
+          2971429573
+        ],
+        [
+          8,
+          9935,
+          30416,
+          121607,
+          2971429573
+        ],
+        [
+          8,
+          5997,
+          26564,
+          70424,
+          2927748165
+        ],
+        [
+          8,
+          5688,
+          25643,
+          70095,
+          2927748165
+        ],
+        [
+          8,
+          8382,
+          28852,
+          109687,
+          4026821317
+        ],
+        [
+          8,
+          8084,
+          29892,
+          107840,
+          4026821317
+        ],
+        [
+          8,
+          7076,
+          27743,
+          83324,
+          758703173
+        ],
+        [
+          8,
+          6903,
+          27456,
+          80921,
+          758703173
+        ],
+        [
+          8,
+          9766,
+          30461,
+          120424,
+          1527409349
+        ],
+        [
+          8,
+          9658,
+          30099,
+          115403,
+          1527409349
+        ],
+        [
+          8,
+          5793,
+          22166,
+          64045,
+          471917637
+        ],
+        [
+          8,
+          5496,
+          9554,
+          49353,
+          471917637
+        ],
+        [
+          8,
+          7808,
+          28355,
+          84676,
+          3462163141
+        ],
+        [
+          8,
+          7872,
+          27698,
+          100604,
+          3462163141
+        ],
+        [
+          8,
+          6429,
+          26376,
+          88873,
+          4104971333
+        ],
+        [
+          8,
+          6428,
+          26313,
+          72595,
+          4104971333
+        ],
+        [
+          8,
+          9250,
+          30054,
+          116495,
+          1819634373
+        ],
+        [
+          8,
+          9085,
+          30378,
+          115240,
+          1819634373
+        ],
+        [
+          8,
+          5762,
+          26303,
+          72496,
+          1380901957
+        ],
+        [
+          8,
+          5423,
+          22398,
+          67043,
+          1380901957
+        ],
+        [
+          8,
+          7887,
+          28651,
+          90128,
+          709913285
+        ],
+        [
+          8,
+          7863,
+          28235,
+          89213,
+          709913285
+        ],
+        [
+          8,
+          6649,
+          23527,
+          75282,
+          2465457221
+        ],
+        [
+          8,
+          6621,
+          23264,
+          74277,
+          2465457221
+        ],
+        [
+          8,
+          9268,
+          29978,
+          115499,
+          2002545349
+        ],
+        [
+          8,
+          9184,
+          29655,
+          94919,
+          2002545349
+        ],
+        [
+          8,
+          5952,
+          6848,
+          48940,
+          492364869
+        ],
+        [
+          8,
+          5630,
+          25340,
+          66365,
+          492364869
+        ],
+        [
+          8,
+          8118,
+          28461,
+          89860,
+          3672664773
+        ],
+        [
+          8,
+          8028,
+          28846,
+          105242,
+          3672664773
+        ],
+        [
+          8,
+          6948,
+          27513,
+          81584,
+          1745937477
+        ],
+        [
+          8,
+          6795,
+          27022,
+          79320,
+          1745937477
+        ],
+        [
+          8,
+          9547,
+          29920,
+          119434,
+          3221646021
+        ],
+        [
+          8,
+          9501,
+          29575,
+          117575,
+          3221646021
+        ],
+        [
+          8,
+          5844,
+          22444,
+          68401,
+          3947750469
+        ],
+        [
+          8,
+          5481,
+          22499,
+          66294,
+          3947750469
+        ],
+        [
+          8,
+          7731,
+          24776,
+          85357,
+          262892229
+        ],
+        [
+          8,
+          7759,
+          28143,
+          88348,
+          262892229
+        ],
+        [
+          8,
+          6825,
+          26806,
+          92052,
+          43705413
+        ],
+        [
+          8,
+          6734,
+          26402,
+          90366,
+          43705413
+        ],
+        [
+          8,
+          9355,
+          30228,
+          117223,
+          1925671621
+        ],
+        [
+          8,
+          9318,
+          25877,
+          92246,
+          1925671621
+        ]
+      ]
+    },
+    {
+      "referencePackageSHA256": "7d5cf2e739a0f99d5c8be4f5a0629e2a46691314cacf2ee5dace54ccf517aa1b",
+      "probeSHA256": "f345d4e9ddc733e8209e5f04618c637de6df9e1e25efcf2dbe59c9b4c63cff68",
+      "calls": 512,
+      "loaderVerdict": "verdict: no crash, stall, freeze or skipped track logged during the trial",
+      "rolledBack": true,
+      "format": "24-bit stereo, six voices, UI tick, no capture or MIDI",
+      "caseOrder": "bench.c, 8 executions per case",
+      "rowColumns": [
+        "executions",
+        "minimumTicks",
+        "maximumTicks",
+        "sumTicks",
+        "pcmDigest"
+      ],
+      "pcmDigestsMatched": true,
+      "rows": [
+        [
+          8,
+          6190,
+          26537,
+          75456,
+          863691845
+        ],
+        [
+          8,
+          5978,
+          25829,
+          72441,
+          863691845
+        ],
+        [
+          8,
+          9110,
+          29845,
+          116296,
+          513567429
+        ],
+        [
+          8,
+          8928,
+          30138,
+          109507,
+          513567429
+        ],
+        [
+          8,
+          6849,
+          27148,
+          76481,
+          1062265925
+        ],
+        [
+          8,
+          6681,
+          11086,
+          59415,
+          1062265925
+        ],
+        [
+          8,
+          9889,
+          14978,
+          85704,
+          827681477
+        ],
+        [
+          8,
+          9671,
+          30663,
+          104564,
+          827681477
+        ],
+        [
+          8,
+          6285,
+          25732,
+          87352,
+          2862015557
+        ],
+        [
+          8,
+          5911,
+          22216,
+          69094,
+          2862015557
+        ],
+        [
+          8,
+          9015,
+          30026,
+          116126,
+          1508666053
+        ],
+        [
+          8,
+          8967,
+          29380,
+          113638,
+          1508666053
+        ],
+        [
+          8,
+          6831,
+          27403,
+          96677,
+          2139874373
+        ],
+        [
+          8,
+          6652,
+          27035,
+          75015,
+          2139874373
+        ],
+        [
+          8,
+          9861,
+          31402,
+          139465,
+          3887557317
+        ],
+        [
+          8,
+          9772,
+          31093,
+          120750,
+          3887557317
+        ],
+        [
+          8,
+          6267,
+          26686,
+          76932,
+          2176771141
+        ],
+        [
+          8,
+          6021,
+          23078,
+          70389,
+          2176771141
+        ],
+        [
+          8,
+          9168,
+          29710,
+          116081,
+          68971205
+        ],
+        [
+          8,
+          8889,
+          29433,
+          110272,
+          68971205
+        ],
+        [
+          8,
+          6933,
+          24200,
+          74077,
+          4227654725
+        ],
+        [
+          8,
+          6733,
+          11515,
+          59998,
+          4227654725
+        ],
+        [
+          8,
+          10065,
+          30839,
+          102765,
+          2971429573
+        ],
+        [
+          8,
+          9840,
+          30398,
+          121228,
+          2971429573
+        ],
+        [
+          8,
+          5975,
+          25901,
+          69053,
+          2927748165
+        ],
+        [
+          8,
+          5689,
+          25525,
+          66727,
+          2927748165
+        ],
+        [
+          8,
+          8604,
+          29753,
+          112283,
+          4026821317
+        ],
+        [
+          8,
+          8426,
+          28195,
+          105483,
+          4026821317
+        ],
+        [
+          8,
+          6805,
+          27250,
+          80661,
+          758703173
+        ],
+        [
+          8,
+          6586,
+          27654,
+          79301,
+          758703173
+        ],
+        [
+          8,
+          9544,
+          30188,
+          119193,
+          1527409349
+        ],
+        [
+          8,
+          9460,
+          30940,
+          118908,
+          1527409349
+        ],
+        [
+          8,
+          6013,
+          22236,
+          69293,
+          471917637
+        ],
+        [
+          8,
+          5748,
+          22114,
+          66821,
+          471917637
+        ],
+        [
+          8,
+          8414,
+          28724,
+          105303,
+          3462163141
+        ],
+        [
+          8,
+          8319,
+          28381,
+          87995,
+          3462163141
+        ],
+        [
+          8,
+          6554,
+          22395,
+          69491,
+          4104971333
+        ],
+        [
+          8,
+          6503,
+          26666,
+          73406,
+          4104971333
+        ],
+        [
+          8,
+          9337,
+          30369,
+          100372,
+          1819634373
+        ],
+        [
+          8,
+          9181,
+          29818,
+          115921,
+          1819634373
+        ],
+        [
+          8,
+          5919,
+          26538,
+          73849,
+          1380901957
+        ],
+        [
+          8,
+          5742,
+          25636,
+          70712,
+          1380901957
+        ],
+        [
+          8,
+          8497,
+          29119,
+          94077,
+          709913285
+        ],
+        [
+          8,
+          8381,
+          29180,
+          109421,
+          709913285
+        ],
+        [
+          8,
+          6522,
+          23502,
+          75027,
+          2465457221
+        ],
+        [
+          8,
+          6504,
+          23656,
+          75136,
+          2465457221
+        ],
+        [
+          8,
+          9225,
+          30116,
+          116690,
+          2002545349
+        ],
+        [
+          8,
+          9257,
+          29468,
+          99891,
+          2002545349
+        ],
+        [
+          8,
+          5880,
+          25926,
+          69165,
+          492364869
+        ],
+        [
+          8,
+          5780,
+          25584,
+          66682,
+          492364869
+        ],
+        [
+          8,
+          8439,
+          29596,
+          106342,
+          3672664773
+        ],
+        [
+          8,
+          8476,
+          24144,
+          84512,
+          3672664773
+        ],
+        [
+          8,
+          6613,
+          10697,
+          58051,
+          1745937477
+        ],
+        [
+          8,
+          6601,
+          27020,
+          77981,
+          1745937477
+        ],
+        [
+          8,
+          9343,
+          29859,
+          101705,
+          3221646021
+        ],
+        [
+          8,
+          9306,
+          30535,
+          117152,
+          3221646021
+        ],
+        [
+          8,
+          5701,
+          22471,
+          67375,
+          3947750469
+        ],
+        [
+          8,
+          5538,
+          22199,
+          65866,
+          3947750469
+        ],
+        [
+          8,
+          7861,
+          28491,
+          105218,
+          262892229
+        ],
+        [
+          8,
+          7723,
+          28007,
+          88563,
+          262892229
+        ],
+        [
+          8,
+          6473,
+          26468,
+          88862,
+          43705413
+        ],
+        [
+          8,
+          6409,
+          22716,
+          73361,
+          43705413
+        ],
+        [
+          8,
+          8991,
+          30012,
+          118385,
+          1925671621
+        ],
+        [
+          8,
+          8947,
+          29940,
+          110549,
+          1925671621
+        ]
+      ]
+    },
+    {
+      "referencePackageSHA256": "0e4fc8dd6a3bfc60ee60321a83bda82866adaedad8b555834ecdfb6b6dee6f21",
+      "probeSHA256": "1e4481d59fccd5249581515448ea845ae4c15235b3a4993f83638ccd791d72ef",
+      "calls": 512,
+      "loaderVerdict": "verdict: FAIL (boot 810 +1884s) the frame guard skipped tracks T1, T5, 6183 skips since the start",
+      "rolledBack": true,
+      "format": "24-bit stereo, six voices, UI tick, no capture or MIDI",
+      "caseOrder": "bench.c, 8 executions per case",
+      "rowColumns": [
+        "executions",
+        "minimumTicks",
+        "maximumTicks",
+        "sumTicks",
+        "pcmDigest"
+      ],
+      "pcmDigestsMatched": true,
+      "rows": [
+        [
+          8,
+          5901,
+          21873,
+          68364,
+          863691845
+        ],
+        [
+          8,
+          5495,
+          21569,
+          65421,
+          863691845
+        ],
+        [
+          8,
+          8831,
+          29050,
+          112354,
+          513567429
+        ],
+        [
+          8,
+          8482,
+          28753,
+          109475,
+          513567429
+        ],
+        [
+          8,
+          6815,
+          26690,
+          92891,
+          1062265925
+        ],
+        [
+          8,
+          6696,
+          26663,
+          91680,
+          1062265925
+        ],
+        [
+          8,
+          10295,
+          31733,
+          161593,
+          827681477
+        ],
+        [
+          8,
+          9801,
+          31570,
+          122164,
+          827681477
+        ],
+        [
+          8,
+          5844,
+          26267,
+          68772,
+          2862015557
+        ],
+        [
+          8,
+          5421,
+          5878,
+          45504,
+          2862015557
+        ],
+        [
+          8,
+          8706,
+          25955,
+          92908,
+          1508666053
+        ],
+        [
+          8,
+          8501,
+          28581,
+          93063,
+          1508666053
+        ],
+        [
+          8,
+          7113,
+          35066,
+          90660,
+          2139874373
+        ],
+        [
+          8,
+          6937,
+          35599,
+          89698,
+          2139874373
+        ],
+        [
+          8,
+          10169,
+          31398,
+          138689,
+          3887557317
+        ],
+        [
+          8,
+          10046,
+          30288,
+          118620,
+          3887557317
+        ],
+        [
+          8,
+          6034,
+          25452,
+          69039,
+          2176771141
+        ],
+        [
+          8,
+          5628,
+          25318,
+          66714,
+          2176771141
+        ],
+        [
+          8,
+          8972,
+          29753,
+          110838,
+          68971205
+        ],
+        [
+          8,
+          8694,
+          28788,
+          107509,
+          68971205
+        ],
+        [
+          8,
+          7492,
+          28528,
+          102355,
+          4227654725
+        ],
+        [
+          8,
+          7171,
+          27746,
+          82556,
+          4227654725
+        ],
+        [
+          8,
+          10638,
+          31793,
+          161451,
+          2971429573
+        ],
+        [
+          8,
+          10317,
+          31553,
+          121992,
+          2971429573
+        ],
+        [
+          8,
+          5625,
+          22050,
+          62854,
+          2927748165
+        ],
+        [
+          8,
+          5370,
+          9295,
+          47697,
+          2927748165
+        ],
+        [
+          8,
+          8318,
+          13029,
+          72946,
+          4026821317
+        ],
+        [
+          8,
+          8120,
+          36114,
+          98454,
+          4026821317
+        ],
+        [
+          8,
+          7101,
+          33766,
+          102490,
+          758703173
+        ],
+        [
+          8,
+          7007,
+          33032,
+          100208,
+          758703173
+        ],
+        [
+          8,
+          10092,
+          30829,
+          123173,
+          1527409349
+        ],
+        [
+          8,
+          9847,
+          30382,
+          120360,
+          1527409349
+        ],
+        [
+          8,
+          5562,
+          25476,
+          69282,
+          471917637
+        ],
+        [
+          8,
+          5270,
+          25215,
+          66872,
+          471917637
+        ],
+        [
+          8,
+          7984,
+          28231,
+          105541,
+          3462163141
+        ],
+        [
+          8,
+          7844,
+          27996,
+          104006,
+          3462163141
+        ],
+        [
+          8,
+          6676,
+          23249,
+          75752,
+          4104971333
+        ],
+        [
+          8,
+          6573,
+          26432,
+          77091,
+          4104971333
+        ],
+        [
+          8,
+          9511,
+          29705,
+          101357,
+          1819634373
+        ],
+        [
+          8,
+          9357,
+          29666,
+          112230,
+          1819634373
+        ],
+        [
+          8,
+          5586,
+          6382,
+          46171,
+          1380901957
+        ],
+        [
+          8,
+          5361,
+          9358,
+          48282,
+          1380901957
+        ],
+        [
+          8,
+          8073,
+          34751,
+          92530,
+          709913285
+        ],
+        [
+          8,
+          7858,
+          34527,
+          107511,
+          709913285
+        ],
+        [
+          8,
+          6804,
+          26776,
+          91265,
+          2465457221
+        ],
+        [
+          8,
+          6740,
+          26665,
+          74291,
+          2465457221
+        ],
+        [
+          8,
+          9484,
+          37591,
+          130256,
+          2002545349
+        ],
+        [
+          8,
+          9449,
+          37501,
+          129461,
+          2002545349
+        ],
+        [
+          8,
+          5832,
+          22859,
+          68865,
+          492364869
+        ],
+        [
+          8,
+          5579,
+          26040,
+          70686,
+          492364869
+        ],
+        [
+          8,
+          8098,
+          28095,
+          90688,
+          3672664773
+        ],
+        [
+          8,
+          7928,
+          28111,
+          90496,
+          3672664773
+        ],
+        [
+          8,
+          7119,
+          26388,
+          94218,
+          1745937477
+        ],
+        [
+          8,
+          7043,
+          23916,
+          77203,
+          1745937477
+        ],
+        [
+          8,
+          9834,
+          30604,
+          137970,
+          3221646021
+        ],
+        [
+          8,
+          9794,
+          30571,
+          100349,
+          3221646021
+        ],
+        [
+          8,
+          5315,
+          9333,
+          47978,
+          3947750469
+        ],
+        [
+          8,
+          5149,
+          32076,
+          69935,
+          3947750469
+        ],
+        [
+          8,
+          7622,
+          27625,
+          81207,
+          262892229
+        ],
+        [
+          8,
+          7464,
+          27422,
+          96450,
+          262892229
+        ],
+        [
+          8,
+          6913,
+          26972,
+          80412,
+          43705413
+        ],
+        [
+          8,
+          6857,
+          27028,
+          79531,
+          43705413
+        ],
+        [
+          8,
+          9444,
+          37233,
+          125472,
+          1925671621
+        ],
+        [
+          8,
+          9461,
+          37003,
+          124646,
+          1925671621
+        ]
+      ]
+    },
+    {
+      "referencePackageSHA256": "9010a79b787a39526dff3ca0062d3e94a71e559009d355f4e8a9f227ada12a06",
+      "probeSHA256": "058489f79ecedd525442ff2be52358000a6c76d6b842be47d620ed579d0df3b1",
+      "calls": 512,
+      "loaderVerdict": "verdict: no crash, stall, freeze or skipped track logged during the trial",
+      "rolledBack": true,
+      "format": "24-bit stereo, six voices, UI tick, no capture or MIDI",
+      "caseOrder": "bench.c, 8 executions per case",
+      "rowColumns": [
+        "executions",
+        "minimumTicks",
+        "maximumTicks",
+        "sumTicks",
+        "pcmDigest"
+      ],
+      "pcmDigestsMatched": true,
+      "rows": [
+        [
+          8,
+          5896,
+          25896,
+          71742,
+          863691845
+        ],
+        [
+          8,
+          5389,
+          25341,
+          68243,
+          863691845
+        ],
+        [
+          8,
+          8692,
+          28673,
+          110565,
+          513567429
+        ],
+        [
+          8,
+          8036,
+          28133,
+          102260,
+          513567429
+        ],
+        [
+          8,
+          7100,
+          27853,
+          78494,
+          1062265925
+        ],
+        [
+          8,
+          6890,
+          11481,
+          60994,
+          1062265925
+        ],
+        [
+          8,
+          9969,
+          26528,
+          102780,
+          827681477
+        ],
+        [
+          8,
+          9710,
+          31506,
+          105586,
+          827681477
+        ],
+        [
+          8,
+          5854,
+          25803,
+          84629,
+          2862015557
+        ],
+        [
+          8,
+          5372,
+          21422,
+          64376,
+          2862015557
+        ],
+        [
+          8,
+          8531,
+          29350,
+          107483,
+          1508666053
+        ],
+        [
+          8,
+          8093,
+          28633,
+          107316,
+          1508666053
+        ],
+        [
+          8,
+          7142,
+          27149,
+          98225,
+          2139874373
+        ],
+        [
+          8,
+          6865,
+          26551,
+          95614,
+          2139874373
+        ],
+        [
+          8,
+          9970,
+          31484,
+          127154,
+          3887557317
+        ],
+        [
+          8,
+          9766,
+          31139,
+          121060,
+          3887557317
+        ],
+        [
+          8,
+          5983,
+          22614,
+          69968,
+          2176771141
+        ],
+        [
+          8,
+          5534,
+          22314,
+          65711,
+          2176771141
+        ],
+        [
+          8,
+          8712,
+          28592,
+          111057,
+          68971205
+        ],
+        [
+          8,
+          8248,
+          28520,
+          87524,
+          68971205
+        ],
+        [
+          8,
+          7477,
+          28293,
+          81948,
+          4227654725
+        ],
+        [
+          8,
+          7159,
+          11710,
+          63410,
+          4227654725
+        ],
+        [
+          8,
+          10227,
+          31048,
+          121186,
+          2971429573
+        ],
+        [
+          8,
+          10189,
+          30833,
+          123611,
+          2971429573
+        ],
+        [
+          8,
+          5683,
+          25231,
+          66375,
+          2927748165
+        ],
+        [
+          8,
+          5319,
+          25016,
+          63719,
+          2927748165
+        ],
+        [
+          8,
+          8141,
+          28318,
+          106671,
+          4026821317
+        ],
+        [
+          8,
+          7813,
+          27827,
+          103678,
+          4026821317
+        ],
+        [
+          8,
+          7292,
+          27748,
+          84022,
+          758703173
+        ],
+        [
+          8,
+          7064,
+          27922,
+          82529,
+          758703173
+        ],
+        [
+          8,
+          9903,
+          31602,
+          123179,
+          1527409349
+        ],
+        [
+          8,
+          9779,
+          30788,
+          121363,
+          1527409349
+        ],
+        [
+          8,
+          5606,
+          22911,
+          67035,
+          471917637
+        ],
+        [
+          8,
+          5321,
+          21101,
+          62429,
+          471917637
+        ],
+        [
+          8,
+          7748,
+          28538,
+          100840,
+          3462163141
+        ],
+        [
+          8,
+          7703,
+          28365,
+          84022,
+          3462163141
+        ],
+        [
+          8,
+          6781,
+          22972,
+          71496,
+          4104971333
+        ],
+        [
+          8,
+          6652,
+          26228,
+          74232,
+          4104971333
+        ],
+        [
+          8,
+          9486,
+          30217,
+          101004,
+          1819634373
+        ],
+        [
+          8,
+          9401,
+          29765,
+          113417,
+          1819634373
+        ],
+        [
+          8,
+          5568,
+          22297,
+          65579,
+          1380901957
+        ],
+        [
+          8,
+          5244,
+          25348,
+          66499,
+          1380901957
+        ],
+        [
+          8,
+          7827,
+          28222,
+          88591,
+          709913285
+        ],
+        [
+          8,
+          7665,
+          28081,
+          87631,
+          709913285
+        ],
+        [
+          8,
+          6857,
+          27495,
+          81253,
+          2465457221
+        ],
+        [
+          8,
+          6726,
+          27006,
+          80198,
+          2465457221
+        ],
+        [
+          8,
+          9549,
+          30162,
+          117935,
+          2002545349
+        ],
+        [
+          8,
+          9381,
+          29950,
+          101495,
+          2002545349
+        ],
+        [
+          8,
+          5737,
+          25438,
+          83000,
+          492364869
+        ],
+        [
+          8,
+          5326,
+          25190,
+          63581,
+          492364869
+        ],
+        [
+          8,
+          7841,
+          28300,
+          101357,
+          3672664773
+        ],
+        [
+          8,
+          7778,
+          23838,
+          80529,
+          3672664773
+        ],
+        [
+          8,
+          7148,
+          11376,
+          61604,
+          1745937477
+        ],
+        [
+          8,
+          6948,
+          27414,
+          80632,
+          1745937477
+        ],
+        [
+          8,
+          9855,
+          30908,
+          105252,
+          3221646021
+        ],
+        [
+          8,
+          9702,
+          30733,
+          120452,
+          3221646021
+        ],
+        [
+          8,
+          5461,
+          22852,
+          66014,
+          3947750469
+        ],
+        [
+          8,
+          5202,
+          22060,
+          63263,
+          3947750469
+        ],
+        [
+          8,
+          7429,
+          27555,
+          86013,
+          262892229
+        ],
+        [
+          8,
+          7412,
+          27454,
+          85100,
+          262892229
+        ],
+        [
+          8,
+          6915,
+          26614,
+          92943,
+          43705413
+        ],
+        [
+          8,
+          6842,
+          26185,
+          91837,
+          43705413
+        ],
+        [
+          8,
+          9445,
+          30108,
+          117491,
+          1925671621
+        ],
+        [
+          8,
+          9323,
+          29754,
+          116903,
+          1925671621
+        ]
+      ]
+    },
+    {
+      "referencePackageSHA256": "c5fd787cb6ace58c92277ef5afc42bab9f748785d251bbd6e0cd9bc85bb69b46",
+      "probeSHA256": "e53cd0730e7bac2da6cb5417e50310c65298d240304ac1ce11cd071b921f2b2a",
+      "calls": 512,
+      "loaderVerdict": "verdict: no crash, stall, freeze or skipped track logged during the trial",
+      "rolledBack": true,
+      "format": "24-bit stereo, six voices, UI tick, no capture or MIDI",
+      "caseOrder": "bench.c, 8 executions per case",
+      "rowColumns": [
+        "executions",
+        "minimumTicks",
+        "maximumTicks",
+        "sumTicks",
+        "pcmDigest"
+      ],
+      "pcmDigestsMatched": true,
+      "rows": [
+        [
+          8,
+          5903,
+          25843,
+          68537,
+          863691845
+        ],
+        [
+          8,
+          5680,
+          22898,
+          66990,
+          863691845
+        ],
+        [
+          8,
+          8746,
+          36358,
+          122913,
+          513567429
+        ],
+        [
+          8,
+          8736,
+          37266,
+          104468,
+          513567429
+        ],
+        [
+          8,
+          7047,
+          35418,
+          90716,
+          1062265925
+        ],
+        [
+          8,
+          6864,
+          33145,
+          99084,
+          1062265925
+        ],
+        [
+          8,
+          9871,
+          30752,
+          118338,
+          827681477
+        ],
+        [
+          8,
+          9760,
+          30681,
+          119796,
+          827681477
+        ],
+        [
+          8,
+          5925,
+          25586,
+          84025,
+          2862015557
+        ],
+        [
+          8,
+          5658,
+          25824,
+          66942,
+          2862015557
+        ],
+        [
+          8,
+          8682,
+          36881,
+          99112,
+          1508666053
+        ],
+        [
+          8,
+          8694,
+          26422,
+          92295,
+          1508666053
+        ],
+        [
+          8,
+          7136,
+          27181,
+          82468,
+          2139874373
+        ],
+        [
+          8,
+          6909,
+          27042,
+          81352,
+          2139874373
+        ],
+        [
+          8,
+          9963,
+          30679,
+          118842,
+          3887557317
+        ],
+        [
+          8,
+          9766,
+          37621,
+          149418,
+          3887557317
+        ],
+        [
+          8,
+          6033,
+          26711,
+          74073,
+          2176771141
+        ],
+        [
+          8,
+          5706,
+          33917,
+          79801,
+          2176771141
+        ],
+        [
+          8,
+          8708,
+          36806,
+          103762,
+          68971205
+        ],
+        [
+          8,
+          8488,
+          36123,
+          118765,
+          68971205
+        ],
+        [
+          8,
+          7366,
+          33770,
+          103869,
+          4227654725
+        ],
+        [
+          8,
+          7134,
+          26939,
+          93830,
+          4227654725
+        ],
+        [
+          8,
+          10108,
+          30520,
+          122603,
+          2971429573
+        ],
+        [
+          8,
+          10167,
+          38828,
+          152117,
+          2971429573
+        ],
+        [
+          8,
+          5870,
+          25815,
+          67462,
+          2927748165
+        ],
+        [
+          8,
+          5452,
+          33820,
+          72936,
+          2927748165
+        ],
+        [
+          8,
+          8305,
+          24916,
+          85084,
+          4026821317
+        ],
+        [
+          8,
+          8256,
+          12656,
+          72004,
+          4026821317
+        ],
+        [
+          8,
+          7318,
+          28056,
+          84628,
+          758703173
+        ],
+        [
+          8,
+          7033,
+          27799,
+          82670,
+          758703173
+        ],
+        [
+          8,
+          9705,
+          37336,
+          132222,
+          1527409349
+        ],
+        [
+          8,
+          9793,
+          38364,
+          112359,
+          1527409349
+        ],
+        [
+          8,
+          5622,
+          33522,
+          78373,
+          471917637
+        ],
+        [
+          8,
+          5334,
+          32406,
+          71531,
+          471917637
+        ],
+        [
+          8,
+          7757,
+          33854,
+          106785,
+          3462163141
+        ],
+        [
+          8,
+          7941,
+          28181,
+          101190,
+          3462163141
+        ],
+        [
+          8,
+          6769,
+          26753,
+          90638,
+          4104971333
+        ],
+        [
+          8,
+          6781,
+          27241,
+          79126,
+          4104971333
+        ],
+        [
+          8,
+          9430,
+          37723,
+          129222,
+          1819634373
+        ],
+        [
+          8,
+          9508,
+          37555,
+          126078,
+          1819634373
+        ],
+        [
+          8,
+          5623,
+          33346,
+          73758,
+          1380901957
+        ],
+        [
+          8,
+          5425,
+          21619,
+          60661,
+          1380901957
+        ],
+        [
+          8,
+          7748,
+          12132,
+          68240,
+          709913285
+        ],
+        [
+          8,
+          7964,
+          12613,
+          69793,
+          709913285
+        ],
+        [
+          8,
+          6909,
+          27485,
+          81268,
+          2465457221
+        ],
+        [
+          8,
+          6846,
+          26738,
+          92868,
+          2465457221
+        ],
+        [
+          8,
+          9547,
+          37055,
+          125104,
+          2002545349
+        ],
+        [
+          8,
+          9514,
+          36737,
+          125257,
+          2002545349
+        ],
+        [
+          8,
+          5621,
+          32216,
+          73623,
+          492364869
+        ],
+        [
+          8,
+          5531,
+          25724,
+          65467,
+          492364869
+        ],
+        [
+          8,
+          7894,
+          27903,
+          100523,
+          3672664773
+        ],
+        [
+          8,
+          8035,
+          28246,
+          89420,
+          3672664773
+        ],
+        [
+          8,
+          7113,
+          27694,
+          81905,
+          1745937477
+        ],
+        [
+          8,
+          7064,
+          35195,
+          90379,
+          1745937477
+        ],
+        [
+          8,
+          9596,
+          37595,
+          126783,
+          3221646021
+        ],
+        [
+          8,
+          9650,
+          30603,
+          99710,
+          3221646021
+        ],
+        [
+          8,
+          5537,
+          22191,
+          62288,
+          3947750469
+        ],
+        [
+          8,
+          5203,
+          6164,
+          43495,
+          3947750469
+        ],
+        [
+          8,
+          7381,
+          12190,
+          65962,
+          262892229
+        ],
+        [
+          8,
+          7697,
+          28440,
+          84054,
+          262892229
+        ],
+        [
+          8,
+          6963,
+          26319,
+          92752,
+          43705413
+        ],
+        [
+          8,
+          6880,
+          26966,
+          96563,
+          43705413
+        ],
+        [
+          8,
+          9452,
+          36666,
+          128191,
+          1925671621
+        ],
+        [
+          8,
+          9501,
+          30952,
+          119286,
+          1925671621
+        ]
+      ]
+    },
+    {
+      "referencePackageSHA256": "9fd3843136605b769dccfcc39beac4920b6acc6a0b2ec96d1efa1ea3d221028a",
+      "probeSHA256": "0532c0d35fca33c8e4f708179af2102afe53107b2a871d1a89147bf0b132d532",
+      "calls": 512,
+      "loaderVerdict": "verdict: no crash, stall, freeze or skipped track logged during the trial",
+      "rolledBack": true,
+      "format": "24-bit stereo, six voices, UI tick, no capture or MIDI",
+      "caseOrder": "bench.c, 8 executions per case",
+      "rowColumns": [
+        "executions",
+        "minimumTicks",
+        "maximumTicks",
+        "sumTicks",
+        "pcmDigest"
+      ],
+      "pcmDigestsMatched": true,
+      "rows": [
+        [
+          8,
+          5854,
+          25633,
+          68487,
+          863691845
+        ],
+        [
+          8,
+          5489,
+          24831,
+          80282,
+          863691845
+        ],
+        [
+          8,
+          8706,
+          29606,
+          111711,
+          513567429
+        ],
+        [
+          8,
+          8328,
+          25619,
+          85764,
+          513567429
+        ],
+        [
+          8,
+          6977,
+          23529,
+          77285,
+          1062265925
+        ],
+        [
+          8,
+          6781,
+          27544,
+          76345,
+          1062265925
+        ],
+        [
+          8,
+          9969,
+          31485,
+          106748,
+          827681477
+        ],
+        [
+          8,
+          9707,
+          31118,
+          121079,
+          827681477
+        ],
+        [
+          8,
+          5875,
+          26611,
+          73803,
+          2862015557
+        ],
+        [
+          8,
+          5580,
+          22481,
+          67135,
+          2862015557
+        ],
+        [
+          8,
+          8763,
+          29644,
+          97231,
+          1508666053
+        ],
+        [
+          8,
+          8457,
+          29053,
+          94305,
+          1508666053
+        ],
+        [
+          8,
+          7033,
+          23588,
+          78890,
+          2139874373
+        ],
+        [
+          8,
+          6871,
+          27477,
+          96540,
+          2139874373
+        ],
+        [
+          8,
+          10086,
+          31112,
+          124332,
+          3887557317
+        ],
+        [
+          8,
+          9800,
+          30774,
+          120876,
+          3887557317
+        ],
+        [
+          8,
+          6019,
+          26285,
+          72697,
+          2176771141
+        ],
+        [
+          8,
+          5621,
+          25255,
+          65399,
+          2176771141
+        ],
+        [
+          8,
+          8879,
+          30002,
+          109048,
+          68971205
+        ],
+        [
+          8,
+          8435,
+          24548,
+          89776,
+          68971205
+        ],
+        [
+          8,
+          7243,
+          11835,
+          64100,
+          4227654725
+        ],
+        [
+          8,
+          7151,
+          27511,
+          83470,
+          4227654725
+        ],
+        [
+          8,
+          10259,
+          31687,
+          109809,
+          2971429573
+        ],
+        [
+          8,
+          10152,
+          31793,
+          125652,
+          2971429573
+        ],
+        [
+          8,
+          5859,
+          22198,
+          68191,
+          2927748165
+        ],
+        [
+          8,
+          5471,
+          21265,
+          65631,
+          2927748165
+        ],
+        [
+          8,
+          8423,
+          29310,
+          94317,
+          4026821317
+        ],
+        [
+          8,
+          8132,
+          28382,
+          106462,
+          4026821317
+        ],
+        [
+          8,
+          7331,
+          27407,
+          99680,
+          758703173
+        ],
+        [
+          8,
+          7087,
+          26755,
+          94235,
+          758703173
+        ],
+        [
+          8,
+          10044,
+          31406,
+          127195,
+          1527409349
+        ],
+        [
+          8,
+          9852,
+          30584,
+          124409,
+          1527409349
+        ],
+        [
+          8,
+          5628,
+          22522,
+          66852,
+          471917637
+        ],
+        [
+          8,
+          5270,
+          22342,
+          60839,
+          471917637
+        ],
+        [
+          8,
+          7800,
+          28464,
+          85282,
+          3462163141
+        ],
+        [
+          8,
+          7790,
+          12329,
+          68143,
+          3462163141
+        ],
+        [
+          8,
+          6548,
+          11123,
+          58460,
+          4104971333
+        ],
+        [
+          8,
+          6581,
+          27087,
+          78695,
+          4104971333
+        ],
+        [
+          8,
+          9401,
+          29968,
+          117235,
+          1819634373
+        ],
+        [
+          8,
+          9236,
+          29825,
+          101084,
+          1819634373
+        ],
+        [
+          8,
+          5563,
+          25074,
+          65352,
+          1380901957
+        ],
+        [
+          8,
+          5311,
+          24903,
+          63980,
+          1380901957
+        ],
+        [
+          8,
+          7905,
+          28496,
+          102309,
+          709913285
+        ],
+        [
+          8,
+          7913,
+          27513,
+          103087,
+          709913285
+        ],
+        [
+          8,
+          6759,
+          27246,
+          79291,
+          2465457221
+        ],
+        [
+          8,
+          6675,
+          27283,
+          79084,
+          2465457221
+        ],
+        [
+          8,
+          9424,
+          31035,
+          119474,
+          2002545349
+        ],
+        [
+          8,
+          9398,
+          29823,
+          116941,
+          2002545349
+        ],
+        [
+          8,
+          5702,
+          21586,
+          65995,
+          492364869
+        ],
+        [
+          8,
+          5490,
+          22435,
+          63010,
+          492364869
+        ],
+        [
+          8,
+          8098,
+          24699,
+          82401,
+          3672664773
+        ],
+        [
+          8,
+          7951,
+          12764,
+          69583,
+          3672664773
+        ],
+        [
+          8,
+          6921,
+          26926,
+          77073,
+          1745937477
+        ],
+        [
+          8,
+          6929,
+          26313,
+          92254,
+          1745937477
+        ],
+        [
+          8,
+          9676,
+          30772,
+          120068,
+          3221646021
+        ],
+        [
+          8,
+          9636,
+          30202,
+          119133,
+          3221646021
+        ],
+        [
+          8,
+          5558,
+          25826,
+          69273,
+          3947750469
+        ],
+        [
+          8,
+          5361,
+          25031,
+          67339,
+          3947750469
+        ],
+        [
+          8,
+          7637,
+          28075,
+          87288,
+          262892229
+        ],
+        [
+          8,
+          7689,
+          28061,
+          87511,
+          262892229
+        ],
+        [
+          8,
+          6984,
+          27358,
+          82153,
+          43705413
+        ],
+        [
+          8,
+          6859,
+          26928,
+          81112,
+          43705413
+        ],
+        [
+          8,
+          9565,
+          30473,
+          103292,
+          1925671621
+        ],
+        [
+          8,
+          9509,
+          30352,
+          118254,
+          1925671621
+        ]
+      ]
+    }
+  ],
+  "fourSampleExperiment": {
+    "packageSHA256": "d09bd8f8ce95acd398d13ab91191da6d5288313c9c442988435b1224641234a5",
+    "conditions": [
+      {
+        "machine": "grain",
+        "track": 1,
+        "matchedMidi": "100 BPM, 12000 clocks, 1000 notes on, 1000 off, 250 modulation changes submitted",
+        "observedGrains": 6,
+        "playbackMaxFrameMicroseconds": 392.326,
+        "playbackSkips": 2837,
+        "totalSkips": 2837,
+        "maxGuardedCallbackMicroseconds": 135.803,
+        "midiReceiveErrors": 0,
+        "midiTransmitDrops": 0,
+        "timing": [
+          [
+            "open",
+            2095,
+            39983,
+            0,
+            154709,
+            0,
+            0,
+            2516,
+            1100
+          ],
+          [
+            "playback minute 1",
+            168759,
+            51787,
+            3896,
+            23011430,
+            563,
+            1,
+            15243,
+            17926
+          ],
+          [
+            "playback minute 2",
+            164366,
+            48699,
+            808,
+            22493511,
+            682,
+            1,
+            14563,
+            17563
+          ],
+          [
+            "playback minute 3",
+            164248,
+            48947,
+            1056,
+            22479663,
+            409,
+            1,
+            14329,
+            17251
+          ],
+          [
+            "playback minute 4",
+            167966,
+            48787,
+            896,
+            23050155,
+            635,
+            1,
+            14183,
+            17129
+          ],
+          [
+            "playing",
+            163939,
+            48082,
+            191,
+            22471182,
+            548,
+            1,
+            14353,
+            17429
+          ],
+          [
+            "stop",
+            773,
+            40548,
+            0,
+            102639,
+            0,
+            1,
+            10583,
+            10857
+          ],
+          [
+            "picker and panel",
+            17366,
+            42281,
+            0,
+            1411829,
+            0,
+            1,
+            10411,
+            12690
+          ],
+          [
+            "stream closed",
+            3184,
+            30930,
+            0,
+            226550,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            "post-STOP observation",
+            69740,
+            18361,
+            0,
+            3502226,
+            0,
+            1,
+            0,
+            0
+          ]
+        ],
+        "audio": {
+          "checkedFrames": 13009500,
+          "sampleTimeGaps": 0,
+          "targetStem": {
+            "rms": [
+              0.7852027828,
+              0.9232408268
+            ],
+            "peak": [
+              1,
+              1
+            ],
+            "longestZeroFrames": 0,
+            "identicalNonzeroBlocks": 3451
+          },
+          "otherMidiStem": {
+            "rms": [
+              0.6095328049,
+              0.7781445567
+            ],
+            "peak": [
+              1,
+              1
+            ],
+            "longestZeroFrames": 0,
+            "identicalNonzeroBlocks": 0
+          },
+          "main": {
+            "rms": [
+              0.8858158051,
+              0.9785842279
+            ],
+            "peak": [
+              1,
+              1
+            ],
+            "longestZeroFrames": 0,
+            "identicalNonzeroBlocks": 7
+          },
+          "tailRmsT1T5Main": [
+            [
+              0.0001932382584,
+              0.0001932382584
+            ],
+            [
+              3.373622894e-05,
+              0.0001932382584
+            ],
+            [
+              0.0001623630524,
+              0.0002751350403
+            ]
+          ],
+          "tailSecondsAfterStop": 4.37
+        },
+        "afterStop": {
+          "parts": [
+            1,
+            3
+          ],
+          "returnedAssignment": true,
+          "flexSelected": true,
+          "trackSelectionVerified": true,
+          "observedSeconds": 29.95,
+          "uiTickProgress": 1342,
+          "audioFrameProgress": 61666,
+          "healthDelta": {
+            "stalls": 0,
+            "crash": 0,
+            "stall": 0,
+            "errors": 0
+          }
+        },
+        "src": [
+          66,
+          60,
+          127,
+          127,
+          127,
+          127
+        ],
+        "setup": [
+          3,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "cpuMeter": {
+          "samples": 195,
+          "medianBusyPercent": 80.8,
+          "peakBusyPercent": 85.2
+        }
+      },
+      {
+        "machine": "grain",
+        "track": 5,
+        "matchedMidi": "100 BPM, 12000 clocks, 1000 notes on, 1000 off, 250 modulation changes submitted",
+        "observedGrains": 6,
+        "playbackMaxFrameMicroseconds": 394.303,
+        "playbackSkips": 3338,
+        "totalSkips": 3346,
+        "maxGuardedCallbackMicroseconds": 127.0,
+        "midiReceiveErrors": 0,
+        "midiTransmitDrops": 0,
+        "timing": [
+          [
+            "open",
+            2130,
+            36673,
+            0,
+            158757,
+            0,
+            1,
+            1607,
+            747
+          ],
+          [
+            "playback minute 1",
+            168717,
+            52048,
+            4157,
+            23221567,
+            803,
+            17,
+            15962,
+            16764
+          ],
+          [
+            "playback minute 2",
+            163956,
+            48506,
+            615,
+            22512074,
+            613,
+            17,
+            15590,
+            16435
+          ],
+          [
+            "playback minute 3",
+            168089,
+            48438,
+            547,
+            23169767,
+            704,
+            17,
+            15987,
+            16482
+          ],
+          [
+            "playback minute 4",
+            163737,
+            50061,
+            2170,
+            22492407,
+            582,
+            17,
+            15604,
+            16751
+          ],
+          [
+            "playing",
+            163713,
+            49309,
+            1418,
+            22495898,
+            636,
+            17,
+            15500,
+            16333
+          ],
+          [
+            "stop",
+            790,
+            42601,
+            0,
+            111271,
+            0,
+            17,
+            11404,
+            10455
+          ],
+          [
+            "picker and panel",
+            17494,
+            43782,
+            0,
+            1428349,
+            8,
+            17,
+            12204,
+            12141
+          ],
+          [
+            "stream closed",
+            4105,
+            31253,
+            0,
+            291756,
+            0,
+            17,
+            0,
+            0
+          ],
+          [
+            "post-STOP observation",
+            69124,
+            18833,
+            0,
+            3477516,
+            0,
+            17,
+            0,
+            0
+          ]
+        ],
+        "audio": {
+          "checkedFrames": 13009500,
+          "sampleTimeGaps": 0,
+          "targetStem": {
+            "rms": [
+              0.7764534605,
+              0.9179152191
+            ],
+            "peak": [
+              1,
+              1
+            ],
+            "longestZeroFrames": 0,
+            "identicalNonzeroBlocks": 4038
+          },
+          "otherMidiStem": {
+            "rms": [
+              0.6103269361,
+              0.7782126981
+            ],
+            "peak": [
+              1,
+              1
+            ],
+            "longestZeroFrames": 0,
+            "identicalNonzeroBlocks": 0
+          },
+          "main": {
+            "rms": [
+              0.878620003,
+              0.975318408
+            ],
+            "peak": [
+              1,
+              1
+            ],
+            "longestZeroFrames": 0,
+            "identicalNonzeroBlocks": 7
+          },
+          "tailRmsT1T5Main": [
+            [
+              9.536743164e-07,
+              0.0001932382584
+            ],
+            [
+              0.0001932382584,
+              0.0001932382584
+            ],
+            [
+              0.0001389980316,
+              0.0002751350403
+            ]
+          ],
+          "tailSecondsAfterStop": 4.74
+        },
+        "afterStop": {
+          "parts": [
+            1,
+            3
+          ],
+          "returnedAssignment": true,
+          "flexSelected": true,
+          "trackSelectionVerified": true,
+          "observedSeconds": 30.12,
+          "uiTickProgress": 1330,
+          "audioFrameProgress": 61069,
+          "healthDelta": {
+            "stalls": 0,
+            "crash": 0,
+            "stall": 0,
+            "errors": 0
+          }
+        },
+        "src": [
+          66,
+          60,
+          127,
+          127,
+          127,
+          0
+        ],
+        "setup": [
+          3,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        "cpuMeter": {
+          "samples": 195,
+          "medianBusyPercent": 80.7,
+          "peakBusyPercent": 85.0
+        }
+      }
+    ],
+    "compiledComparisons": {
+      "held": {
+        "callbacks": 3072,
+        "pcmSha256": "387d70f27cc85ba01fd697b00194d41ab132f30062f07b12495f4db722528486",
+        "voiceHistogram": {
+          "1": 2,
+          "2": 254,
+          "3": 2,
+          "4": 142,
+          "5": 112,
+          "6": 2560
+        },
+        "exactAllPcmAndVoiceState": true,
+        "previous": {
+          "mean": 3040.98,
+          "peak": 7604
+        },
+        "candidate": {
+          "mean": 2734.2,
+          "peak": 7105
+        }
+      },
+      "movingPosition": {
+        "callbacks": 3072,
+        "pcmSha256": "9e39c014d8327ab59d2c967552470f4c87d774dcc624178b17b2d2a22f61f164",
+        "voiceHistogram": {
+          "1": 2,
+          "2": 254,
+          "3": 2,
+          "4": 142,
+          "5": 112,
+          "6": 2560
+        },
+        "exactAllPcmAndVoiceState": true,
+        "previous": {
+          "mean": 3079.26,
+          "peak": 7643
+        },
+        "candidate": {
+          "mean": 2789.65,
+          "peak": 7307
+        }
+      },
+      "partAndRecorder": {
+        "callbacks": 3072,
+        "pcmSha256": "e086af2fa8de64378ea66324900a67034f0707b58e5a18c51cab00e2d7a1e915",
+        "voiceHistogram": {
+          "1": 66,
+          "2": 108,
+          "0": 80,
+          "3": 312,
+          "4": 540,
+          "5": 464,
+          "6": 1502
+        },
+        "exactAllPcmAndVoiceState": true,
+        "previous": {
+          "mean": 2970.87,
+          "peak": 11603
+        },
+        "candidate": {
+          "mean": 2592.34,
+          "peak": 10184
+        }
+      },
+      "allSrcControls": {
+        "callbacks": 3072,
+        "pcmSha256": "1bd866da6bcdfab9925d11429b9d02652ecf34bcfdfbba16e8734b7b9dcf310f",
+        "voiceHistogram": {
+          "1": 57,
+          "2": 112,
+          "3": 115,
+          "4": 225,
+          "5": 606,
+          "6": 1957
+        },
+        "exactAllPcmAndVoiceState": true,
+        "previous": {
+          "mean": 3125.75,
+          "peak": 12615
+        },
+        "candidate": {
+          "mean": 2717.35,
+          "peak": 9629
+        }
+      }
+    },
+    "conditionalZeroWaitTiming": [
+      {
+        "sourceFrames": 16,
+        "callback": "grain_start",
+        "instructions": 70,
+        "conditionalCoreCycles": 796
+      },
+      {
+        "sourceFrames": 16,
+        "callback": "grain_render",
+        "instructions": 28404,
+        "conditionalCoreCycles": 248216
+      },
+      {
+        "sourceFrames": 32,
+        "callback": "grain_start",
+        "instructions": 70,
+        "conditionalCoreCycles": 796
+      },
+      {
+        "sourceFrames": 32,
+        "callback": "grain_render",
+        "instructions": 52276,
+        "conditionalCoreCycles": 454360
+      }
+    ],
+    "grainStackBoundBytes": 672,
+    "compiledSpanComparison": {
+      "cases": 4096,
+      "binaries": [
+        "ref",
+        "chosen"
+      ],
+      "sixVoice24BitStereo16FramesByShape": {
+        "0": [
+          3915.2,
+          3493.8
+        ],
+        "1": [
+          4026.0,
+          3643.8
+        ],
+        "2": [
+          3966.8,
+          3498.2
+        ],
+        "3": [
+          3794.2,
+          3464.8
+        ]
+      },
+      "allPcmAndSixVoiceStatesMatched": true
+    },
+    "emulator": {
+      "model": "MKII",
+      "transportBase": "fac1523234f4bb0b",
+      "transportTracks": [
+        1,
+        5
+      ],
+      "playAndStop": true,
+      "partRecall": true,
+      "flexReselection": true,
+      "rollback": true,
+      "liveAudioFrames": 0,
+      "kernelFixture": {
+        "calls": 512,
+        "digests": 64,
+        "match": true,
+        "tracks": [
+          1,
+          5
+        ],
+        "width": 24,
+        "voices": 6,
+        "sourceFrames": [
+          16,
+          32
+        ]
+      },
+      "transportPackageSHA256": "d09bd8f8ce95acd398d13ab91191da6d5288313c9c442988435b1224641234a5"
+    },
+    "compiledSoak": {
+      "tracks": [
+        1,
+        5
+      ],
+      "secondsPerTrack": 120,
+      "stereoFramesPerTrack": 5292000,
+      "maximumVoices": 6,
+      "matchedPortableReference": true,
+      "pcmSha256": "7f45ce08b48ea409323cd4bad3df6088283e31d1ab628d0f7a7e4b8e8979bb47"
+    }
+  },
+  "supplementalPlayback": [
+    {
+      "machine": "grain",
+      "track": 1,
+      "matchedMidi": "100 BPM, 2400 clocks, 200 notes on, 200 off, 50 modulation changes submitted",
+      "observedGrains": 6,
+      "playbackMaxFrameMicroseconds": 395.03,
+      "playbackSkips": 25,
+      "totalSkips": 25,
+      "maxGuardedCallbackMicroseconds": 132.886,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          3693,
+          36729,
+          0,
+          270825,
+          0,
+          17,
+          1399,
+          1622
+        ],
+        [
+          "playing",
+          168832,
+          52144,
+          4253,
+          22445022,
+          25,
+          17,
+          13765,
+          17541
+        ],
+        [
+          "stop",
+          795,
+          41961,
+          0,
+          104907,
+          0,
+          17,
+          10604,
+          10606
+        ],
+        [
+          "picker and panel",
+          17228,
+          40928,
+          0,
+          1373245,
+          0,
+          17,
+          9647,
+          8822
+        ],
+        [
+          "stream closed",
+          1631,
+          28973,
+          0,
+          96632,
+          0,
+          17,
+          0,
+          0
+        ],
+        [
+          "post-STOP observation",
+          69216,
+          18942,
+          0,
+          3483240,
+          0,
+          17,
+          0,
+          0
+        ]
+      ],
+      "audio": {
+        "checkedFrames": 2425500,
+        "sampleTimeGaps": 0,
+        "targetStem": {
+          "rms": [
+            0.7731848381,
+            0.9470806937
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 464
+        },
+        "otherMidiStem": {
+          "rms": [
+            0.6102770807,
+            0.7786416361
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "main": {
+          "rms": [
+            0.8802237547,
+            0.9900957945
+          ],
+          "peak": [
+            1,
+            1
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 10
+        },
+        "tailRmsT1T5Main": [
+          [
+            0.0001932382584,
+            0.0001932382584
+          ],
+          [
+            3.671646118e-05,
+            0.0001932382584
+          ],
+          [
+            0.0001643896103,
+            0.0002751350403
+          ]
+        ],
+        "tailSecondsAfterStop": 3.51
+      },
+      "afterStop": {
+        "parts": [
+          1,
+          3
+        ],
+        "returnedAssignment": true,
+        "flexSelected": true,
+        "trackSelectionVerified": true,
+        "observedSeconds": 29.19,
+        "uiTickProgress": 1330,
+        "audioFrameProgress": 61098,
+        "healthDelta": {
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0,
+          "errors": 0
+        }
+      },
+      "src": [
+        66,
+        60,
+        127,
+        127,
+        127,
+        127
+      ],
+      "setup": [
+        3,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "cpuMeter": {
+        "samples": 38,
+        "medianBusyPercent": 78.65,
+        "peakBusyPercent": 80.6
+      },
+      "durationSeconds": 60,
+      "packageSHA256": "7d5cf2e739a0f99d5c8be4f5a0629e2a46691314cacf2ee5dace54ccf517aa1b"
+    }
+  ],
+  "emulator": {
+    "model": "MKII",
+    "transportBase": "fac1523234f4bb0b",
+    "transportTracks": [
+      1,
+      5
+    ],
+    "playAndStop": true,
+    "partRecall": true,
+    "flexReselection": true,
+    "rollback": true,
+    "liveAudioFrames": 0,
+    "kernelFixture": {
+      "calls": 512,
+      "digests": 64,
+      "match": true,
+      "tracks": [
+        1,
+        5
+      ],
+      "width": 24,
+      "voices": 6,
+      "sourceFrames": [
+        16,
+        32
+      ]
+    },
+    "transportPackageSHA256": "0e4fc8dd6a3bfc60ee60321a83bda82866adaedad8b555834ecdfb6b6dee6f21"
+  },
+  "mixerBenchmarksNote": "The isolated fixtures call the granular kernel on a UI tick. The maximum includes interrupt preemption. The minimum of eight readings per case helps compare the loops. These timings and elapsed whole-frame time during USB capture measure different work.",
+  "compactLoop": "One frame per loop, fractional step in an address register. Four-sample experiment reads the fractional step from the stack. Both retain six voices, the 35-point price and the stock frame guard.",
+  "guardSemantics": "The base may substitute silence for a module render when its predicted cost exceeds available frame credit. Stock Flex runs directly. Capture timestamp gaps, MIDI errors and substituted renders are independent counters.",
+  "playbackOrder": [
+    "Flex T1 5 min",
+    "four-sample T1 5 min",
+    "Flex T5 5 min",
+    "four-sample T5 5 min",
+    "previous draft T1 1 min",
+    "compact T1 5 min",
+    "compact T5 5 min"
+  ],
+  "shippingTrial": {
+    "seconds": 12,
+    "packageSHA256": "0e4fc8dd6a3bfc60ee60321a83bda82866adaedad8b555834ecdfb6b6dee6f21",
+    "baseSHA256": "254c5a75a139255e057e69532bb952daffef5039ffeee0e6c9fabda302e5bb91",
+    "rolledBack": true
+  }
+}

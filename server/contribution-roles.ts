@@ -26,7 +26,7 @@ async function collaboratorIds(env?: Env) {
     for (let page = 1; ; page++) {
       const reply = await fetch('https://api.github.com/repos/' + repo + '/collaborators?per_page=100&page=' + page, {
         headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'User-Agent': 'modwerk-role-badges' },
-        redirect: 'error', signal: AbortSignal.timeout(3000),
+        redirect: 'manual', signal: AbortSignal.timeout(3000),
       })
       if (!reply.ok) throw new Error('Collaborator lookup failed')
       const rows = await reply.json() as { id: number; permissions?: { push?: boolean } }[]
