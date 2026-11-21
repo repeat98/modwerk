@@ -223,6 +223,21 @@ static void view_close(uintptr_t fp, const View *v)
     U32(fp + 24u) = v->first_setup;
     U16(fp + 28u) = v->last_setup;
 }
+#define POOL_WINDOW 0x460e70e0u
+/* The sample pool's audition (FUNC + YES with the pool window open) plays a sample from memory on this track's voice. On
+ * a Grain track it went through the engine with Grain's knobs: faster, lower, sometimes right. With the pool open the
+ * track plays as a plain Flex with its factory SRC and SETUP values: no loop, no time-stretch. */
+static void plain_view(uintptr_t fp, View *v)
+{
+    for (unsigned k = 0; k < 3; ++k) v->pairs[k] = U32(fp + 4u * k);
+    v->first_setup = U32(fp + 24u);
+    v->last_setup = U16(fp + 28u);
+    U32(fp) = 0x40000000u;
+    U32(fp + 4u) = 0x7f007f00u;
+    U32(fp + 8u) = 0x00004000u;
+    U32(fp + 24u) = ((uint32_t)U8(FLEX_DEFAULTS + 6u) << 24) | ((uint32_t)U8(FLEX_DEFAULTS + 8u) << 8);
+    U16(fp + 28u) = U8(FLEX_DEFAULTS + 11u);   /* TSTR OFF (byte 28), TSNS from the factory values */
+}
 #define BANK 0x46c82456u
 static int bank_ok(void);
 static volatile uint8_t *part_at(unsigned i);
@@ -336,6 +351,12 @@ int grain_start(unsigned track, unsigned sample, unsigned flags)
     uintptr_t fp = lane(track);
     if (!fp) return 0;
     View v;
+    if (U32(POOL_WINDOW)) {
+        plain_view(fp, &v);
+        int plain = FLEX_START(track, sample, flags);
+        view_close(fp, &v);
+        return plain;
+    }
     view_open(fp, &v);
     int result = FLEX_START(track, sample, flags);
     view_close(fp, &v);
@@ -350,6 +371,12 @@ int grain_render(unsigned track, unsigned ping, unsigned start, unsigned end)
     if (!fp || start > end || end > 16) return 0;
     View v;
     uintptr_t before = U32(CURSOR), voice = VOICE + track * 168u;
+    if (U32(POOL_WINDOW)) {                 /* pool open: the track plays as a plain Flex (audition) */
+        plain_view(fp, &v);
+        int plain = FLEX_RENDER(track, ping, start, end);
+        view_close(fp, &v);
+        return plain;
+    }
     view_open(fp, &v);
     int result = FLEX_RENDER(track, ping, start, end);
     if (U8(voice)) {
@@ -543,8 +570,20 @@ static int pool_ours(void)
     return pool_direct && bank_ok() && U32(BANK) == pool_bank && (U8(0x100b14cfu) & 3u) == pool_part &&
         U8(0x100b14ccu) == pool_track && !U8(0x80000015u) && ours(part_at(pool_part), pool_track);
 }
+static uint8_t win_seen, win_track;
 static unsigned grain_chooser(unsigned type, const volatile uint8_t *slot)
 {
+    /* Jumping with the track key from a non-Grain track to a Grain track while the pool window is open: the pool was not
+     * Grain's (pool_direct 0), the chooser answered 5 and the list came up empty. Adopt it, only on a jump (win_track is
+     * the last non-Grain track the window was on, kept by grain_ui_tick): opened from the Grain track itself, the machine
+     * list must not see the track as Flex, or Grain has no black box and Flex or Static cannot be picked. */
+    if (!pool_ours() && win_seen && U32(POOL_WINDOW) && bank_ok() && !U8(0x80000015u)) {
+        unsigned part = U8(0x100b14cfu) & 3u, t = U8(0x100b14ccu);
+        if (t != win_track && t < 8u && ours(part_at(part), t) && slot == part_at(part) + 0x22u + t) {
+            pool_bank = U32(BANK); pool_part = (uint8_t)part; pool_track = (uint8_t)t; pool_direct = 1;
+            win_track = (uint8_t)t;
+        }
+    }
     return pool_ours() && slot == part_at(pool_part) + 0x22u + pool_track ? type : 5;
 }
 static void put12(volatile uint8_t *part, volatile uint8_t *mirror, unsigned t, const volatile uint8_t *from)
@@ -622,6 +661,13 @@ static void grain_migrate(void)
 static void grain_ui_tick(void)
 {
     grain_migrate();
+    if (!U32(POOL_WINDOW)) win_seen = 0;    /* window closed: the next one may open from another track */
+    else {
+        unsigned cur = U8(0x100b14ccu);
+        if (!win_seen) { win_seen = 1; win_track = (uint8_t)cur; }         /* the track it opened from */
+        else if (cur < 8u && bank_ok() && !ours(part_at(U8(0x100b14cfu) & 3u), cur))
+            win_track = (uint8_t)cur;           /* on a non-Grain track: the next jump to a Grain track is adopted */
+    }
     if (!setup_visible) setup_turned[0] = setup_turned[1] = 0;   /* fuera de SETUP, sin numeros */
     if (want_src_page) {    /* FUNC + PLAYBACK abrio SRC SETUP: de vuelta a la pagina SRC (pantalla completa) */
         want_src_page = 0;
