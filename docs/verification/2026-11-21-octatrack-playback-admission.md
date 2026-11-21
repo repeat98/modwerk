@@ -24,3 +24,9 @@ The ColdFire emulator ran the preceding release image `ae78c478` and the candida
 The preceding image returned 62% CPU and 20% frame share and admitted a module effect on T4 FX2. The candidate returned 90% and 54% and refused it. Stock NONE remained available and the module effect fitted with the playing and recent readings both at 70%.
 
 The candidate drew both dialogs through its own renderer and font at 128 × 64 pixels. The effect dialog showed T4 FX2, PLAY 90% and LIMIT 85%. The machine dialog showed T6 SRC, AMIGA, PLAY 90%, +12% and LIMIT 85%. These were controlled meter inputs in the emulator.
+
+## Combined 0.7.13 draft
+
+After merging #1861, #1870, #1887 and #1165, the browser and native builders produced the same 819,896-byte OS (SHA-256 `08d8433b2ab223edc1de41b0f5347f5a28f717ba8e95791edca3e0087013c28f`). The release configuration is `74533ff5a9efe6b46d669be60006afa663a410ae0478aaa81191ca0495b7afcb`. The full development build `d096301a` and the minimal build without resident stock hooks `05d6d6d8` also linked.
+
+The emulator repeated the 90%, 70% and stock NONE cases above on the combined release with the same results. All 29 focused host tests for machine events, the sample editor, the controller board, resident engines and saved-project memory priority passed. The three relinked controller packages matched their original bytes after substituting the two write-lease addresses. Their catalog readings still identify the hardware run that measured them.
