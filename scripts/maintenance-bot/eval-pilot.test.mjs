@@ -35,6 +35,20 @@ it('screens chronological production changes, stops at a missing verdict and exc
   expect(await pilotCandidates(() => { throw Error('pilot already full') }, pulls.slice(0, 5).map(() => ({ verdict: 'covered' })))).toEqual([])
 })
 
+it('pins the landed commit from the merged timeline event when GitHub omits the PR field', async () => {
+  const pr = { ...pulls[2], merge_commit_sha: undefined }
+  const sha = 'e'.repeat(40)
+  const events = [{ event: 'merged', commit_id: sha }, { event: 'closed', commit_id: 'f'.repeat(40) }]
+  const read = async path => {
+    if (path.startsWith('/pulls?')) return [pr]
+    if (path.startsWith('/issues/3/timeline?')) return events
+    return [{ filename: 'scripts/check.mjs' }]
+  }
+  expect(await pilotCandidates(read, [])).toEqual([expect.objectContaining({ number: 3, merge: sha })])
+  events.shift()
+  await expect(pilotCandidates(read, [])).rejects.toThrow(/Missing merge commit.*#3/)
+})
+
 it('counts a case only on independent, merged and passing evidence for the exact source revision', async () => {
   const row = { number: 8, merge: 'f'.repeat(40), authorId: 10, verdict: 'gap', task: 'task' }
   const thread = async () => ({ message: { to: 'ada', pullRequest: 42, replies: [] } })

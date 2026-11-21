@@ -34,7 +34,11 @@ export async function pilotCandidates(api, records) {
         for (const match of patch.matchAll(/^\+\s*(?:it|test)\(\s*['"]([^'"\n]{8,160})['"]/gm)) hints.push(match[1])
       }
     }
-    candidates.push({ number: pr.number, merge: pr.merge_commit_sha, authorId: pr.user.id, author: pr.user.login,
+    // GitHub REST 2026-03-10 omits merge_commit_sha from both PR representations.
+    const merge = pr.merge_commit_sha ?? (await pages(api, '/issues/' + pr.number + '/timeline'))
+      .findLast(event => event.event === 'merged')?.commit_id
+    if (typeof merge !== 'string' || !/^[a-f0-9]{40}$/.test(merge)) throw Error('Missing merge commit for pilot candidate #' + pr.number)
+    candidates.push({ number: pr.number, merge, authorId: pr.user.id, author: pr.user.login,
       scripts: scripts.map(file => file.filename), hints: [...new Set(hints)].filter(Boolean).slice(0, 24) })
     if (candidates.length === fixLimit) break
   }
