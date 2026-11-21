@@ -138,6 +138,12 @@
    "identities": [
     "254c5a75a139255e057e69532bb952daffef5039ffeee0e6c9fabda302e5bb91"
    ]
+  },
+  {
+   "version": "0.7.13",
+   "identities": [
+    "6962a3cf0e3d7142a0442a2fb027cf0ae43c60cb2173f90bc694184898631bf2"
+   ]
   }
  ]
 }
