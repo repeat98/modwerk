@@ -1,10 +1,10 @@
 # Ghost Cut testing
 
-Milestone A, the TAPE engine. Everything below ran on 21 November 2026 on a Mac (Apple silicon), with octabam's DSP56300 tools built locally and the developer's own OS 1.40C extraction. No result here comes from a unit or from ot_emu.
+Milestones A (the TAPE engine) and B (the GRAIN engine). Everything below ran on 21 November 2026 on a Mac (Apple silicon), with octabam's DSP56300 tools built locally and the developer's own OS 1.40C extraction. No result here comes from a unit or from ot_emu.
 
 ## Render gates (dsp_host): RENDER
 
-`python3 -B modules/ghost-cut/verify.py`, from `sdk/octabam`, builds a scratch image holding only GHOST CUT (fallback NONE), dumps payload A and renders through `dsp_host`. **67 of 67 pass.**
+`python3 -B modules/ghost-cut/verify.py`, from `sdk/octabam`, builds a scratch image holding only GHOST CUT (fallback NONE), dumps payload A and renders through `dsp_host`. **96 of 96 pass** (21 November 2026, after milestone B).
 
 - **Dry:** without a GRAB every frame is bit-exact dry, with four different knob sets and GRAB up to 95. An FX1-sized slot is dry with GRAB held.
 - **Against the reference:** the DSP equals [ghost_cut_ref.py](ghost_cut_ref.py) sample for sample (max error 0 LSB) on:
@@ -15,6 +15,9 @@ Milestone A, the TAPE engine. Everything below ran on 21 November 2026 on a Mac 
   - 30, 60, 90, 133.33, 174 and 300 BPM at LEN 1/64, 1/16 and 1/4, and no tempo word;
   - GRAB hysteresis (64 holds, 100 does not grab again, 50 does not grab), and a re-grab during the release fade;
   - RATE swept and DIR changed while looping.
+- **GRAIN against the reference**, also sample for sample (max error 0 LSB): PTCH -24, -12, -24 clamped (0), 0, +12, +24 and +63 clamped; PTCH +12 at RATE -64, -32, +36 and +63; GRN 0, 64 and 127; FWD, REV and PEND; 1/64 at 300 BPM (grains capped at half the loop); MAN capture; PTCH swept while looping; ENG switched TAPE to GRAIN and back while looping; ENG switched during a release fade.
+- **GRAIN parts pitch from speed** (not leaning on the reference): a 500 Hz sine plays at 1,003 Hz at PTCH +12, 248 Hz at -12, 502 Hz at RATE -32, and 1,011 Hz at PTCH +12 with RATE +36 (each within 3 %, median zero-crossing period). TAPE at RATE -32 and +32 plays 250.0 and 1,000.0 Hz.
+- **The duck:** ENG switched while looping never steps past the steady output's own largest step.
 - **The loop itself** (not leaning on the reference): at 1 x the output is the recorded mono sum, within 2 LSB, at the period LEN and the tempo give. Checked at 120 BPM 1/16 (5,512 samples), 90 BPM 3/64 (5,512), 174 BPM 1/8 (7,603) and 60 BPM 1/4 (44,100, halved twice to 11,025).
 - **Release:** exact dry from 256 samples after GRAB falls.
 - **Seam:** a looped 220 Hz sine never steps more than 1.5 x the sine's own largest step (FWD and REV 141,006 against 131,462; PEND 131,463).
@@ -27,9 +30,9 @@ Milestone A, the TAPE engine. Everything below ran on 21 November 2026 on a Mac 
 
 ## Performance
 
-- **Static:** `tools/build/cycle_count.py --verify` gives **188 cycles a sample** on the worst path: the DIR fork's dispatch (8 words) plus its worst arm (28), with the seam's second read. That is about 73 % of stock SPRING REV's 257.5 instructions a sample, as `benchmark_stock_dsp.py` measures it on the original image. Not modelled: memory-contention stalls.
+- **Static:** `tools/build/cycle_count.py --verify` gives **390 cycles a sample** on the worst path, the GRAIN engine. That is the ENG fork's dispatch (4 words), the GRAIN arm (108), and two calls of `gcRD` (52 each, with its seam read). DIR is priced with every arm, since its skips are counted. Milestone A's TAPE-only build measured 188. Against stock SPRING REV's 257.5 instructions a sample (`benchmark_stock_dsp.py` on the original image), GRAIN is about 1.5 times and TAPE about 0.7 times. **GRAIN is above the guide's target and needs an optimization pass before release.** Not modelled: memory-contention stalls.
 - **Measured** (`perf.py bench` / `stress`), `evidence/performance.json` and the CPU price on a unit: **not measured yet.**
-- Memory: 15,870 Y words of the FX2 slot's own buffer, 28 state words in the r7 block (`$00..$1b`), 49 P table words. The USB package is 587 DSP words.
+- Memory: 15,870 Y words of the FX2 slot's own buffer, 45 state words in the r7 block (`$00..$2c`), and a 99-word P table. Milestone A's package was 585 DSP words; milestone B's is 951 (`module:dev --build-only --slots fx2 --cycles 390 --cycles-kind modeled --state 45 --buffer 15870`, SHA-256 `3eba7b1b5497a6da…`).
 
 ## Sound quality
 
@@ -51,7 +54,7 @@ Milestone A, the TAPE engine. Everything below ran on 21 November 2026 on a Mac 
 - **Not tested:** aliasing when RATE is above 1 x. With linear interpolation and no anti-alias filter, high content is expected to alias when sped up. It needs a measurement this audit cannot make, and is listed as a limitation.
 - **Not tested:** `fx:audit compare` on knob ends.
 
-## In the emulator (not hardware evidence), 21 November 2026
+## In the emulator (not hardware evidence), 21 November 2026, milestone A
 
 `npm run device:emulator -- --image MAIN.raw --emulator ot_emu [--dsp] -- npm run test:procedure -- ghost-cut --package gc-a.mwrm`.
 

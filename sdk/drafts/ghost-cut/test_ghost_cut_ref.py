@@ -8,8 +8,8 @@ import ghost_cut_ref as REF  # noqa: E402
 
 
 def knobs(**kw):
-    names = {"LEN": 0, "GRAB": 1, "RATE": 2, "MIX": 5, "CAPT": 7, "DIR": 10}
-    v = [3, 0, 64, 0, 0, 127, 0, 0, 0, 0, 0, 0]
+    names = {"LEN": 0, "GRAB": 1, "RATE": 2, "PTCH": 3, "MIX": 5, "ENG": 6, "CAPT": 7, "GRN": 8, "DIR": 10}
+    v = [3, 0, 64, 64, 0, 127, 0, 0, 40, 0, 0, 0]
     for k, x in kw.items():
         v[names[k]] = x
     return v
@@ -17,7 +17,7 @@ def knobs(**kw):
 
 class Table(unittest.TestCase):
     def test_shape(self):
-        self.assertEqual(len(REF.TABLE), 33 + 16)
+        self.assertEqual(len(REF.TABLE), 33 + 16 + 50)
         self.assertTrue(all(0 <= w < 1 << 24 for w in REF.TABLE))
 
     def test_rate_points(self):
@@ -33,6 +33,36 @@ class Table(unittest.TestCase):
             hi, lo = REF.TABLE[33 + 2 * i], REF.TABLE[34 + 2 * i]
             self.assertEqual((hi << 24) | lo, 2 * n)
             self.assertLess(hi, 720)                      # the div's high word stays under every divisor
+
+
+class Pitch(unittest.TestCase):
+    def test_points(self):
+        self.assertEqual(REF.pitch_q20(64 << 16), 1 << 20)
+        self.assertEqual(REF.pitch_q20(76 << 16), 1 << 21)      # +12: an octave up
+        self.assertEqual(REF.pitch_q20(52 << 16), 1 << 19)
+        self.assertEqual(REF.pitch_q20(127 << 16), 1 << 22)     # clamped at +24
+        self.assertEqual(REF.pitch_q20(0), 1 << 18)             # clamped at -24
+        self.assertEqual(REF.pitch_q20((39 << 16) | 0x8000), 1 << 18)  # a fraction under -24 stays there
+
+
+def zero_cross_hz(x):
+    t = [i - 1 + (-x[i - 1]) / (x[i] - x[i - 1]) for i in range(1, len(x)) if x[i - 1] < 0 <= x[i]]
+    gaps = sorted(b - a for a, b in zip(t, t[1:]))
+    return 44100 / gaps[len(gaps) // 2]
+
+
+class Grain(unittest.TestCase):
+    def render(self, **kw):
+        import math
+        n = 1200 * REF.BLOCK
+        sine = [int(0.5 * 0x7FFFFF * math.sin(2 * math.pi * 500 * i / 44100)) for i in range(n)]
+        ol, _ = REF.render(sine, sine, {0: knobs(ENG=1, **kw), 600: knobs(ENG=1, GRAB=127, **kw)}, REF.tempo24(120))
+        return ol[600 * REF.BLOCK + 2000:]
+
+    def test_ptch_sets_pitch_and_rate_does_not(self):
+        for ptch, rate, hz in ((64, 64, 500), (76, 64, 1000), (52, 64, 250), (76, 32, 1000), (64, 100, 500)):
+            got = zero_cross_hz(self.render(PTCH=ptch, RATE=rate))
+            self.assertAlmostEqual(got, hz, delta=hz * 0.03, msg=(ptch, rate))
 
 
 class Lengths(unittest.TestCase):

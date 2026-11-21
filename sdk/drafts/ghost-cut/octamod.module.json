@@ -22,6 +22,7 @@
     "highlights": [
       "GRAB with hysteresis: on at 96, off at 32, so a scene or the crossfader grabs once and lets go cleanly",
       "LEN follows the tempo: 1/64 to 1/4 of a note, halved until it fits the 353 ms ring",
+      "GRAIN engine: PTCH ±24 semitones apart from RATE, for time-stretched or transposed loops",
       "RATE from 1/4 x to almost 4 x, pitch and speed together; FWD, REV and PEND",
       "AUTO, MAN and OFF capture; the loop fades in and out over 256 samples",
       "Exact dry passthrough whenever no loop plays"
@@ -61,7 +62,14 @@
       "name": "RATE",
       "default": 64,
       "count": 128,
-      "doc": "The loop's speed and pitch together, drawn -64 to +63: 0 is the speed it was played at, -64 a quarter, +63 almost four times (an octave every 32 steps).",
+      "doc": "The loop's speed, drawn -64 to +63: 0 is the speed it was played at, -64 a quarter, +63 almost four times (an octave every 32 steps). On TAPE the pitch follows it; on GRAIN it stretches time instead.",
+      "labels": null
+    },
+    {
+      "name": "PTCH",
+      "default": 64,
+      "count": 128,
+      "doc": "GRAIN's pitch in semitones, -24 to +24 (past them it holds there), whatever RATE does. The LFO glides between semitones. TAPE ignores it.",
       "labels": null
     },
     {
@@ -70,6 +78,16 @@
       "count": 128,
       "doc": "The loop over the dry track: 0 is the dry track exactly, 127 the loop alone.",
       "labels": null
+    },
+    {
+      "name": "ENG",
+      "default": 0,
+      "count": 2,
+      "doc": "TAPE: the pitch follows RATE, like tape. GRAIN: two overlapping grains play the loop at PTCH while RATE moves through it, so pitch and time are apart. Changing it while a loop plays ducks the loop out and back in.",
+      "labels": [
+        "TAPE",
+        "GRAIN"
+      ]
     },
     {
       "name": "CAPT",
@@ -81,6 +99,13 @@
         "MAN",
         "OFF"
       ]
+    },
+    {
+      "name": "GRN",
+      "default": 40,
+      "count": 128,
+      "doc": "GRAIN's grain length, 10 ms at 0 to 79 ms at 127 (at most half the loop): short grains for clean pitch on drums, long ones for smooth pads. TAPE ignores it.",
+      "labels": null
     },
     {
       "name": "DIR",
@@ -105,7 +130,7 @@
       "The longest loop is 353 ms; a longer LEN is halved until it fits.",
       "The loop starts at GRAB and keeps its own length; it does not restart on the sequencer's steps, so it drifts by under a sample a repeat against the pattern. A GRAB locked on a trig starts it on that step.",
       "RATE above 1 x has no anti-alias filter and reads with linear interpolation, so high content aliases when sped up.",
-      "Milestone A: PTCH, DRFT, ENG, GRN, MOTN and FDBK are not built yet.",
+      "GRAIN uses triangular windows on two grains: steady tones keep their pitch, but transients smear and a slight flutter at the grain rate can be heard. Milestone C (DRFT, MOTN, FDBK) is not built yet.",
       "Rendered in dsp_host only: not run on a unit or in the emulator."
     ],
     "effectId": 10
@@ -133,7 +158,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Milestone A rendered in dsp_host on OS 1.40C: verify.py's 67 gates pass (bit-exact against the integer reference in every mode, exact dry while idle, guard clean beside Sidechain's key window, four instances a core). Not tested on a unit or in ot_emu.",
+    "summary": "Milestones A and B rendered in dsp_host on OS 1.40C: verify.py's 96 gates pass. They are bit-exact against the integer reference in every mode, TAPE and GRAIN; exact dry while idle; guard clean beside Sidechain's key window; four instances a core. Static cost: 390 cycles a sample on GRAIN, 188 on TAPE. In the emulator the base refused every module effect pick, Vibrato's too. Not tested on a unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [

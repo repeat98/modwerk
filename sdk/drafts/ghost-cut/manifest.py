@@ -1,19 +1,21 @@
 """GHOST CUT -- a microlooper on FX2: GRAB freezes a tempo-synced piece of the track and loops it.
 
-Milestone A, the TAPE engine: a mono ring of 15,870 words in the FX2 slot
+Milestones A and B, the TAPE and GRAIN engines: a mono ring of 15,870 words in the FX2 slot
 records the track's mono sum. GRAB (a knob, a scene or the crossfader) loops
 the last LEN of it (CAPT AUTO), the next LEN (MAN) or what the ring held when
 CAPT went OFF, at RATE (1/4 x to 4 x, pitch and speed together), forward,
-reversed or as a pendulum. LEN follows the tempo: 1/64 to 1/4 of a whole note,
+reversed or as a pendulum. ENG GRAIN keeps that speed for the playhead
+and reads two grains from it at PTCH (+-24 semitones), so pitch and time
+part; GRN sets the grain length. LEN follows the tempo: 1/64 to 1/4 of a whole note,
 halved until it fits the ring (353 ms at most). A 256-sample crossfade hides
 the seam; GRAB has hysteresis (on at 96, off at 32) and fades 256 samples in
 and out. MIX 0, and every moment no loop plays, is the dry track bit for bit.
 An FX1-sized slot passes dry.
 
 ghost_cut_ref.py is the integer reference and the source of the P table;
-verify.py renders the DSP against it. PTCH, DRFT, ENG, GRN, MOTN and FDBK
-(grain pitch, the drifting second head, feedback) are later milestones and
-their slots are blank until the DSP reads them. Not tested on hardware.
+verify.py renders the DSP against it. DRFT, MOTN and FDBK (the drifting
+second head, feedback) are milestone C; their slots are blank until the DSP
+reads them. Not tested on hardware.
 """
 
 import importlib.util
@@ -37,7 +39,7 @@ MODULE = Module(
     kind=Kind.DSP_EFFECT,
     category=Category.TRACK, author="jacobphono", author_url="https://github.com/jacobphono",
     proof=Proof.UNTESTED,
-    proof_note="Milestone A (TAPE engine): rendered in dsp_host against ghost_cut_ref.py on OS 1.40C; "
+    proof_note="Milestones A and B (TAPE and GRAIN engines): rendered in dsp_host against ghost_cut_ref.py on OS 1.40C; "
                "not run on a unit or in ot_emu.",
     doc="Microlooper: GRAB loops a tempo-synced piece of the track at RATE, fwd, rev or pendulum.",
     menu=MenuEntry(
@@ -54,24 +56,28 @@ MODULE = Module(
         Param(b"GRAB", 0, active=True, formatter=_PLAIN,
               doc="96 or more grabs a loop, 32 or less lets it go; set it per scene for the crossfader"),
         Param(b"RATE", 64, active=True, formatter=Formatter.BIPOLAR,
-              doc="loop speed and pitch together: 0 is 1x, -64 a quarter, +63 almost 4x"),
-        _BLANK,
+              doc="loop speed: 0 is 1x, -64 a quarter, +63 almost 4x; on TAPE the pitch follows it"),
+        Param(b"PTCH", 64, active=True, formatter=Formatter.BIPOLAR,
+              doc="GRAIN's pitch in semitones, -24 to +24 (past them it holds), apart from RATE"),
         _BLANK,
         Param(b"MIX", 127, active=True, formatter=_PLAIN,
               doc="the loop over the dry track; 0 is exact dry, 127 the loop alone"),
         # ---- page 2 ---------------------------------------------------------
-        _BLANK,
+        Param(b"ENG", 0, 2, active=True, formatter=_STEP, labels=_ref.ENG_LABELS,
+              doc="TAPE: pitch follows RATE; GRAIN: two grains part pitch (PTCH) from speed (RATE)"),
         Param(b"CAPT", 0, 3, active=True, formatter=_STEP, labels=_ref.CAPT_LABELS,
               doc="AUTO loops the last LEN, MAN records the next LEN first, OFF keeps the ring as it is"),
-        _BLANK,
+        Param(b"GRN", 40, active=True, formatter=_PLAIN,
+              doc="GRAIN's grain length, 10 to 79 ms (at most half the loop)"),
         _BLANK,
         Param(b"DIR", 0, 3, active=True, formatter=_STEP, labels=_ref.DIR_LABELS,
               doc="FWD, REV, or PEND (forwards then backwards, no seam)"),
         _BLANK,
     ),
+    mode_slot=6,
     dsp=DspSection(
         asm="modules/ghost-cut/ghost_cut.asm",
-        ptable=_ref.TABLE,         # RATE's 33 points (Q20), LEN's 8 dividends (high, low)
+        ptable=_ref.TABLE,         # RATE's 33 points (Q20), LEN's 8 dividends (high, low), PTCH's 50 points
         priority=33,
         bus_role=BusRole.NONE,     # an insert
         ybase=YBase.NEVER,
@@ -83,6 +89,6 @@ MODULE = Module(
     claims=Claims(stock_instance_buffer=True, buffer_words=_ref.R),
     harness=Harness(layout_char=None, is_server=False),
     gates=(Gate("modules/ghost-cut/verify.py", remix_arg=False),),
-    # looping, forwards (the seam's second read), at the fastest rate
-    dear={"LEN": 7, "GRAB": 127, "RATE": 127, "MIX": 127, "CAPT": 0, "DIR": 0},
+    # looping on GRAIN (two grains, each with its seam read), forwards, fastest
+    dear={"LEN": 7, "GRAB": 127, "RATE": 127, "PTCH": 127, "MIX": 127, "ENG": 1, "CAPT": 0, "GRN": 127, "DIR": 0},
 )

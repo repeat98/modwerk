@@ -5,6 +5,7 @@
     "changes": [
       "New: Ghost Cut, a microlooper on FX2. GRAB loops a tempo-synced piece of the track; let go and the track fades back.",
       "LEN from 1/64 to 1/4 of a note at the project's tempo, RATE from a quarter speed to almost four times.",
+      "ENG GRAIN plays the loop at PTCH (±24 semitones) while RATE only changes its speed; GRN sets the grain length.",
       "CAPT loops the last LEN, the next LEN, or the ring as it was; DIR plays forwards, backwards or back and forth.",
       "Not yet tried on a unit."
     ]

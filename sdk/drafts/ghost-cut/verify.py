@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GHOST CUT render gates (milestone A, the TAPE engine) -- the DSP in dsp_host
+"""GHOST CUT render gates (milestones A and B, the TAPE and GRAIN engines) -- the DSP in dsp_host
 against ghost_cut_ref.py, plus checks that do not lean on the reference.
 
 The scratch image is built here (GHOST CUT alone, fallback NONE), as Vibrato's
@@ -11,7 +11,10 @@ Gates:
   FX1 slot      -> an FX1-sized slot passes dry with GRAB held
   reference     -> the DSP matches the integer reference sample for sample: AUTO,
                    MAN and OFF capture; FWD, REV and PEND; RATE across its range;
-                   MIX; several tempos and every LEN; hysteresis; re-grab in a release
+                   MIX; several tempos and every LEN; hysteresis; re-grab in a release;
+                   GRAIN across PTCH, RATE, GRN and DIR; ENG switched while looping
+  pitch         -> GRAIN plays a sine at PTCH whatever RATE does; TAPE at RATE
+  duck          -> switching ENG while looping steps no more than the sine itself
   the loop      -> at RATE 1x the loop IS the captured mono sum, sample for sample,
                    with the period LEN and the tempo give
   release       -> 256 samples after GRAB falls the track is exact dry again
@@ -216,6 +219,55 @@ compare("RATE swept while looping", L_in, R_in,
 compare("DIR changed while looping", L_in, R_in,
         schedule(dict(RATE=90), {**G, 850: dict(DIR=1), 1000: dict(DIR=2), 1200: dict(DIR=0)}), tempo=120)
 
+# ---- 3b. GRAIN against the reference ---------------------------------------------
+GR = dict(ENG=1)
+for ptch in (0, 40, 52, 64, 76, 88, 127):
+    compare(f"GRAIN, PTCH {ptch - 64:+d}", L_in, R_in, schedule(dict(GR, PTCH=ptch), G), tempo=120)
+for rate in (0, 32, 100, 127):
+    compare(f"GRAIN, PTCH +12 at RATE {rate - 64:+d}", L_in, R_in, schedule(dict(GR, PTCH=76, RATE=rate), G), tempo=120)
+for grn in (0, 64, 127):
+    compare(f"GRAIN, GRN {grn}", L_in, R_in, schedule(dict(GR, PTCH=70, GRN=grn), G), tempo=120)
+for d, name in enumerate(REF.DIR_LABELS):
+    compare(f"GRAIN, {name} at RATE -20, PTCH -7", L_in, R_in, schedule(dict(GR, DIR=d, RATE=44, PTCH=57), G), tempo=120)
+compare("GRAIN, 1/64 at 300 BPM: grains capped at half the loop", L_in, R_in,
+        schedule(dict(GR, LEN=0, PTCH=100, GRN=127), G), tempo=300)
+compare("GRAIN, MAN capture", L_in, R_in, schedule(dict(GR, CAPT=1, PTCH=58), G), tempo=120)
+compare("GRAIN, PTCH swept while looping", L_in, R_in,
+        schedule(GR, {**G, **{900 + 8 * i: dict(PTCH=(i * 11) % 128) for i in range(50)}}), tempo=120)
+compare("ENG switched while looping: TAPE to GRAIN and back (the duck)", L_in, R_in,
+        schedule(dict(PTCH=80), {**G, 900: dict(ENG=1), 1100: dict(ENG=0)}), tempo=120)
+compare("ENG switched during the release fade", L_in, R_in,
+        schedule(dict(PTCH=80), {GRAB_AT: dict(GRAB=127), 900: dict(GRAB=0), 905: dict(ENG=1), 1000: dict(GRAB=127),
+                                 REL_AT: dict(GRAB=0)}), tempo=120)
+
+# ---- 3c. GRAIN parts pitch from speed (not leaning on the reference) -------------
+
+
+def zero_cross_hz(x):
+    t = [i - 1 + (-x[i - 1]) / (x[i] - x[i - 1]) for i in range(1, len(x)) if x[i - 1] < 0 <= x[i]]
+    gaps = sorted(b - a for a, b in zip(t, t[1:]))
+    return SR / gaps[len(gaps) // 2]
+
+
+s500 = tone(500, 0.5, N)
+for eng, ptch, rate, hz in ((1, 76, 64, 1000), (1, 52, 64, 250), (1, 64, 32, 500), (1, 76, 100, 1000),
+                            (0, 64, 32, 250), (0, 64, 96, 1000)):
+    dl, _ = dsp(s500, s500, schedule(dict(ENG=eng, PTCH=ptch, RATE=rate), G), tempo=120)
+    got = zero_cross_hz(dl[GRAB_AT * B + 2000:REL_AT * B])
+    check(f"{REF.ENG_LABELS[eng]} at PTCH {ptch - 64:+d}, RATE {rate - 64:+d}: a 500 Hz sine plays at {hz} Hz",
+          abs(got - hz) <= 0.03 * hz, f"measured {got:.1f} Hz")
+dl, _ = dsp(s500, s500, schedule(dict(PTCH=76), {**G, 900: dict(ENG=1), 1100: dict(ENG=0)}), tempo=120)
+def biggest_step(x):
+    return max(abs(x[i + 1] - x[i]) for i in range(len(x) - 1))
+
+
+seg = dl[880 * B:1150 * B]
+# the steady output either side: TAPE plays the sine at 500 Hz, GRAIN at +12 at 1 kHz (twice the step)
+own = max(biggest_step(dl[(GRAB_AT + 40) * B:880 * B]), biggest_step(dl[1000 * B:1090 * B]))
+step = biggest_step(seg)
+check("ENG switched while looping: no step past 1.5x the steady output's own (the duck)", step <= 1.5 * own,
+      f"largest step {step}, the steady output's {own}")
+
 # ---- 4. the loop is the captured mono sum, with LEN's period -------------------
 for bpm, ln in ((120, 3), (90, 2), (174, 5), (60, 7)):
     sched = schedule(dict(LEN=ln), G)
@@ -262,7 +314,7 @@ check("dirty memory: grabbing straight after the clear loops only silence and fr
       dl == rl and dr == rr, f"max error {max(worst(dl, rl), worst(dr, rr))} LSB")
 
 # ---- 8. guard ----------------------------------------------------------------------
-dear = schedule(dict(RATE=127, LEN=7), G)
+dear = schedule(dict(RATE=127, LEN=7, ENG=1, PTCH=127, GRN=127), G)
 for slot in ("t1 fx2", "t3 fx2"):
     dsp(L_in, R_in, dear, slot=slot, tempo=300, guard=True)
     g = dsp.log

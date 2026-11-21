@@ -30,10 +30,19 @@ LEN_LABELS = ("1/64", "1/32", "3/64", "1/16", "3/32", "1/8", "3/16", "1/4")
 LEN_N = [3969000 * m for m in LEN_MULT]
 # The table holds 2N: the DSP's 24 div steps on a 48-bit dividend (high word in
 # a1, low in a0) leave (dividend / 2) / divisor in a0, measured in dsp_host.
-TABLE = tuple(RATE_T) + tuple(w for n in LEN_N for w in ((2 * n) >> 24, (2 * n) & 0xFFFFFF))
-assert len(TABLE) == 33 + 16 and all(0 <= w < 1 << 24 for w in TABLE)
+# PTCH (GRAIN): 2^(s/12) for s = -24..+24 semitones, Q20, and the last point again
+# so a fraction past +24 reads it twice.
+PITCH_T = [round(2 ** ((s - 24) / 12) * (1 << 20)) for s in range(49)] + [1 << 22]
+TABLE = (tuple(RATE_T) + tuple(w for n in LEN_N for w in ((2 * n) >> 24, (2 * n) & 0xFFFFFF))
+         + tuple(PITCH_T))
+assert len(TABLE) == 33 + 16 + 50 and all(0 <= w < 1 << 24 for w in TABLE)
+PT_AT = 33 + 16
 
 CAPT_LABELS = ("AUTO", "MAN", "OFF")
+ENG_LABELS = ("TAPE", "GRAIN")
+GRAIN0 = 441          # GRN 0: 10 ms; each step adds 24 samples (GRN 127: 3,489, 79 ms)
+GRAIN_STEP = 24
+PH_ONE = 0x400000     # a grain's phase is Q22: 1.0 here
 DIR_LABELS = ("FWD", "REV", "PEND")
 
 IDLE, REC, LOOP, REL = 0, 1, 2, 3
@@ -71,6 +80,26 @@ def loop_length(len_idx, t24):
     return L
 
 
+def pitch_q20(word):
+    """PTCH's word -> 2^(s/12), s = knob - 64 clamped to +-24, its fraction between semitones."""
+    x = (word & 0x7FFF00) - (40 << 16)
+    x = max(0, min(48 << 16, x))
+    i = x >> 16
+    f = (x & 0xFF00) << 15
+    t0, t1 = PITCH_T[i], PITCH_T[i + 1]
+    return t0 + a1(mpy(f, t1 - t0))
+
+
+def glide(cur, target, primed):
+    """1/16 of the way a block, snapped within 16; unprimed, on the target."""
+    s = cur if primed else target
+    d = target - s
+    s = s + (d >> 4)
+    if abs(d) < 0x10:
+        s = target
+    return s
+
+
 def rate_q20(word):
     """vb_tab on RATE's word: the table's point and the knob's fraction between."""
     u = word & 0x7FFF00
@@ -100,6 +129,11 @@ class GhostCut:
         self.rq = 0
         self.primed = 0
         self.wet = 0
+        self.eng = 0        # the running engine
+        self.rq2 = 0        # PTCH, Q20 (glided)
+        self.ph = [0, PH_ONE // 2]
+        self.d = [0, 0]     # each grain's offset from the playhead, 48-bit
+        self.flag = 0       # the engine knob differs from the running engine: duck
 
     def block(self, knobs, frames, t24=0):
         """knobs: the 12 slot values (ints); frames: [(l, r)], processed in place."""
@@ -111,13 +145,7 @@ class GhostCut:
         direction = min(k[10], 2)
         L_target = loop_length(k[0], t24)
         # RATE glide: 1/16 of the way a block, snapped within 16
-        target = rate_q20(k[2] << 16)
-        s = self.rq if self.primed else target
-        d = target - s
-        s = s + (d >> 4)
-        if abs(d) < 0x10:
-            s = target
-        self.rq = s
+        self.rq = glide(self.rq, rate_q20(k[2] << 16), self.primed)
         inc = self.rq << 4          # asr #20 of rq in a 48-bit accumulator: int.frac
         # MIX run
         u = (k[5] << 16) & 0x7FFF00
@@ -141,6 +169,21 @@ class GhostCut:
             self._release()
         seam0 = self.L - SEAM
         pend_end = self.L - 1
+        # GRAIN: the engine, PTCH, the grain length
+        eng_k = min(k[6], 1)
+        self.rq2 = glide(self.rq2, pitch_q20(k[3] << 16), self.primed)
+        delta = (self.rq2 - self.rq) << 4            # each grain's offset moves this a sample
+        G = GRAIN0 + GRAIN_STEP * k[8]
+        if G > self.L >> 1:
+            G = self.L >> 1
+        if G < 64:
+            G = 64
+        inc_g = (1 << 22) // G
+        if self.state < LOOP or (self.state == LOOP and self.e == 0 and self.eng != eng_k):
+            self.eng = eng_k
+            self.ph = [0, PH_ONE // 2]
+            self.d = [0, 0]
+        self.flag = 1 if self.eng != eng_k else 0
         self.primed = 1
         out = []
         for (dl, dr) in frames:
@@ -177,21 +220,53 @@ class GhostCut:
                     if self.p < 0:
                         self.p = -self.p
                         self.back = 0
-                pi = self.p >> 24
-                fr = (self.p & 0xFFFFFF) >> 1
-                wet = self._interp(self.S + pi, fr)
-                if direction != 2 and pi - seam0 >= 0:
-                    gq = (pi - seam0) << 15
-                    tw = self._interp(self.S + pi - self.L, fr)
-                    wet = sat(wet + a1(2 * mpy(gq, sat((tw - wet) >> 1))))
-                self.wet = wet
-                if self.state == LOOP:
-                    self.e = min(self.e + ESTEP, 0x7FFFFF)
+                if self.eng == 0:
+                    pi = self.p >> 24
+                    fr = (self.p & 0xFFFFFF) >> 1
+                    wet = self._interp(self.S + pi, fr)
+                    if direction != 2 and pi - seam0 >= 0:
+                        gq = (pi - seam0) << 15
+                        tw = self._interp(self.S + pi - self.L, fr)
+                        wet = sat(wet + a1(2 * mpy(gq, sat((tw - wet) >> 1))))
+                    self.wet = wet
                 else:
-                    self.e -= ESTEP
-                    if self.e <= 0:
-                        self.e = 0
+                    prod = 0
+                    for i in (0, 1):
+                        ph = self.ph[i] + inc_g
+                        if ph >= PH_ONE:
+                            ph -= PH_ONE
+                            self.d[i] = 0
+                        self.ph[i] = ph
+                        self.d[i] += delta
+                        q = self.p + self.d[i]
+                        Lq = self.L << 24
+                        if q >= Lq:
+                            q -= Lq
+                            if q >= Lq:
+                                q -= Lq
+                        if q < 0:
+                            q += Lq
+                            if q < 0:
+                                q += Lq
+                        tap = self._read(q, seam0)
+                        b = PH_ONE - ph
+                        if b > ph:
+                            b = ph
+                        w = sat(b << 2)
+                        if i == 0:
+                            prod = sat(a1(mpy(w, tap)))
+                        else:
+                            self.wet = sat(a1(mpy(w, tap) + (prod << 24)))
+                up = min(self.e + ESTEP, 0x7FFFFF)
+                down = self.e - ESTEP
+                a = down if self.state == REL else up
+                if self.flag:
+                    a = down
+                if a <= 0:
+                    a = 0
+                    if self.state == REL:
                         self.state = IDLE
+                self.e = a
             # D: the output
             mm = a1(mpy(self.run, self.e))
             wet = self.wet
@@ -199,6 +274,17 @@ class GhostCut:
             orr = sat(dr + a1(2 * mpy(mm, sat((wet - dr) >> 1))))
             out.append((ol, orr))
         return out
+
+    def _read(self, q, seam0):
+        """gcRD: the loop at q (48-bit), crossfaded over the seam, branchless."""
+        qi = q >> 24
+        fr = (q & 0xFFFFFF) >> 1
+        t1 = self._interp(self.S + qi, fr)
+        g = (qi - seam0) << 15
+        if g < 0:
+            g = 0
+        tw = self._interp(self.S + qi - self.L, fr)
+        return sat(t1 + a1(2 * mpy(g, sat((tw - t1) >> 1))))
 
     def _interp(self, pos, fr):
         s0 = self.ring[pos % R]
