@@ -6,7 +6,7 @@ An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.0-experimenta
 
 Stock computes nearly everything in every audio block, whether it is used or not: all eight sample voices, every send, the delay and the reverb, every modulation pass. Improved Performance tests, block by block, whether a piece of that work can change anything, and leaves it out when it cannot. The output is stock's bit for bit, with one exception far below hearing ([How it works](#how-it-works)). With the time saved the unit redraws and reads its keys sooner, and a busy pattern keeps further from dropouts.
 
-On the author's unit, one 12-track pattern in a set of 17 other modules used 85.4 % of the audio block without it and 72.0 % with it; the longest block fell from 99.4 % to 87.2 %, and the screen's redraw step from 19.1 ms to 8.0 ms ([Tests and measurements](#tests-and-measurements)).
+On the author's unit, one 12-track pattern in a set of 17 other modules used 85.4 % of the audio block without it and 72.1 % with it; the longest block fell from 99.4 % to 89.8 %, and the screen's redraw step from 19.1 ms to 8.6 ms ([Tests and measurements](#tests-and-measurements)).
 
 `CPU` appears in the lower right corner of the screen while the audio load is close to its limit, and `OVR` while it is over.
 
@@ -69,7 +69,7 @@ The CPU mark reads the core's own figure for each audio block (`core_audio_load`
 Full record: [TESTING.md](TESTING.md).
 
 - **rytm-emu:** the module alone on the release base, and beside 17 other modules, against the same image with its patches put back to stock: parameters, smoother states, control frames, voice records and the audio output were identical in every one of about 69,500 blocks. A kit load while the reverb rang gave identical output too.
-- **On the author's unit (OS 1.74):** self-checking builds, in which stock does all the work and every skip is compared with it, counted 0 differences for every part. Audio load, the unit's own meter, the author's pattern in a set of 17 other modules: 85.4 % without, 72.0 % with; longest block 99.4 % and 87.2 %.
+- **On the author's unit (OS 1.74):** self-checking builds, in which stock does all the work and every skip is compared with it, counted 0 differences for every part. Audio load, the unit's own meter, the author's pattern in a set of 17 other modules: 85.4 % without, 72.1 % with; longest block 99.4 % and 89.8 %.
 - **Memory:** about 4 KB.
 
 ## Screens and audio

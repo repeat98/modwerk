@@ -2,7 +2,7 @@
 
 Version 0.1.0-experimental, Analog Rytm MKII, OS 1.74. Tester and unit: Nathaniel Pavel (@npp1993), his own Analog Rytm MKII. Firmware, dumps and built images stay out of this folder.
 
-**What ran where.** The four assembly sources are the code that ran in every test below: the public files assemble, with `build.json`'s symbols, to the same code and data as the files the tests used (compared object for object). `src/cpu-mark.c`'s counting of the load is the tested code; its drawing was rewritten afterwards (stock's font, the words CPU and OVR, only where the bottom bar is) and has run in rytm-emu only. The unit tests ran in private test builds beside 17 other modules of the author's set, on a development base with the USB link and a load meter. **The release package itself has not run on a unit.**
+**What ran where.** The four assembly sources are the code that ran in every test below: the public files assemble, with `build.json`'s symbols, to the same code and data as the files the tests used (compared object for object). `src/cpu-mark.c`'s counting of the load is the tested code; its drawing was rewritten afterwards (stock's font, the words CPU and OVR, only where the bottom bar is) and has run in rytm-emu only. The unit tests ran from RAM beside 17 other modules of the author's set, on a development base with the USB link and a load meter. This release's source ran there as image IP06 on 21 November 2026; the package built from it in the pinned toolchain links, on the release base, to the same image as the source folder.
 
 ## rytm-emu
 
@@ -40,7 +40,8 @@ All from RAM, in test images of the author's 18-module set; the figures are the 
 | Build | Pattern, mean | Longest block | Stopped | Redraw step |
 | --- | --- | --- | --- | --- |
 | The set without this module (17 Nov 2026) | 85.4 % | 99.4 % | not comparable | 19.1 ms |
-| The set with this module's code, as one module (20 Nov 2026) | 72.0 % | 87.2 % | 54.3 % | 8.0 ms |
+| The set with this release's source (IP06, 21 Nov 2026) | 72.1 % | 89.8 % | 55.2 % | 8.6 ms |
+| The same engine code as one module, before the CPU and OVR words were reworked (20 Nov 2026) | 72.0 % | 87.2 % | 54.3 % | 8.0 ms |
 
 - The delay rested only with the sequencer stopped, and the reverb never: on this project its input is never exactly zero.
 - A kit switch while the reverb rang (the author, 20 Nov 2026): the tail rang out with and without the module; the counters showed the reverb rest never engaged.
@@ -49,10 +50,9 @@ All from RAM, in test images of the author's 18-module set; the figures are the 
 
 ## Not tested
 
-- The release package (0.1.0-experimental as built from this folder) on a unit.
 - This module as the only module on a unit: every unit run was beside 17 others.
 - A project load while sound rings (the audio interrupt takes a shorter path then; read, not run).
 - A USB audio stream of more than the 1.6 s above.
 - A sample that plays through a rest of its voice in rytm-emu (on the unit the pattern has one sample voice playing).
-- The CPU mark on the unit, and its thresholds.
+- CPU and OVR on the unit, and their thresholds.
 - A second unit; any OS but 1.74.

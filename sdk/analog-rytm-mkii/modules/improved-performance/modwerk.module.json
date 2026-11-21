@@ -79,20 +79,36 @@
     "load": {
       "display": "Lowers the audio load: 85 % to 72 % of the block on one pattern in the author's set (unit)",
       "method": "hardware",
-      "conditions": "The unit's own meter (the core's audio load figure, averaged), the author's Analog Rytm MKII, OS 1.74, one 12-track pattern played hands off in a set of 17 other modules on a development base: 85.4 % without this module's code (17 Nov 2026), 72.0 % with it as one module (20 Nov 2026); longest block 99.4 % and 87.2 %. When no part can skip anything its tests cost about 2 % of the block (read from the source, not measured)."
+      "conditions": "The unit's own meter (the core's audio load figure, averaged), the author's Analog Rytm MKII, OS 1.74, one 12-track pattern played hands off in a set of 17 other modules on a development base: 85.4 % without this module's code (17 Nov 2026), 72.1 % with this release's source (IP06, 21 Nov 2026); longest block 99.4 % and 89.8 %. When no part can skip anything its tests cost about 2 % of the block (read from the source, not measured)."
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "80c13160e11ca0c095b86df4f87d33efde02819ee8f63c4b11a0a74e405427c8",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-21",
+      "tester": "npp1993",
+      "durationMinutes": 9,
+      "summary": "0.1.0's source ran on npp1993's Analog Rytm MKII, OS 1.74, as IP06: the author's development base (USB link and a load meter) with this module and 17 other modules of his set, booted from RAM. Played hands off, one 12-track pattern of his project: the audio load averaged 72.1 % of the block (longest block 89.8 %), 55.2 % stopped; the screen's redraw step took 8.6 ms. On 17 November the same set without this module's code read 85.4 % (longest 99.4 %, redraw 19.1 ms). On 18 and 20 November self-checking builds of the same engine code, in which stock does all the work and each skip is compared with it, counted 0 differences for every part, and a kit switch with the reverb ringing sounded as on stock.",
+      "limitations": [
+        "The image holds the author's private development base (with the link and a meter) and 17 other modules, not the published base with this module alone.",
+        "The self-checks ran in test builds with counters; the four assembly files of this release assemble to the same code.",
+        "CPU and OVR were not seen on the unit: the load never reached 88 %. Their drawing has run in rytm-emu only.",
+        "The two load figures are four days apart, from the same pattern of a project the author kept working on.",
+        "A project load while sound rings and a long USB audio stream are not tested."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu: alone on the release base and beside 17 other modules, output and engine state identical to stock over about 69,500 blocks; a kit load with the reverb ringing identical. Unit (author, OS 1.74): self-checking builds of every part counted 0 differences against stock; one pattern's audio load 85.4 % without and 72.0 % with, in an 18-module set. See TESTING.md.",
+    "summary": "rytm-emu: alone on the release base and beside 17 other modules, output and engine state identical to stock over about 69,500 blocks; a kit load with the reverb ringing identical. Unit (author, OS 1.74): self-checking builds of every part counted 0 differences against stock; one pattern's audio load 85.4 % without and 72.1 % with (IP06), in an 18-module set. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
