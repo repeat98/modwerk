@@ -20,10 +20,7 @@ spec.loader.exec_module(compat)
 def main(argv):
     extra = [argv[i + 1] for i, a in enumerate(argv[:-1]) if a == '--with']
     ids, modules, _, _ = compat.repository_inputs(extra)
-    json.dump({module_id: [dict(slot=slot, name=p.name.decode('ascii', 'replace') if p.name is not None else None,
-                                default=p.default, count=p.count)
-                           for slot, p in enumerate(module.params) if p.active]
-               for module_id, module in zip(ids, modules)}, sys.stdout)
+    json.dump(compat.native_params(ids, modules), sys.stdout)
 
 
 if __name__ == '__main__':

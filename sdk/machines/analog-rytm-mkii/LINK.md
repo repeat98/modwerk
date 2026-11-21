@@ -181,8 +181,8 @@ flashed image's, and the code that writes the request is the running image's.
 
 The gate calls nothing of the bootstrap or the OS: a MKII's SRAM did not hold the 1.74 container's
 bootstrap bytes (`ident`'s probe), so an earlier gate that called the bootstrap's depacker would
-have refused. The gate runs from the mod area (0x47be0000 up), its stack at 0x48000000 down, and
-the unpack writes below 0x403c8b00.
+have refused. The gate runs from the flashed base's mod area (0x47be0000 up on a 0.7 base,
+0x47b50000 up from 0.7.1), its stack at 0x48000000 down, and the unpack writes below 0x403c8b00.
 
 The cache: stock runs DDR copyback, and the soft reset does not write dirty lines out. A mailbox
 written through the cache and pushed with `cpushl` alone was not in DDR after the reset on a MKII.

@@ -110,6 +110,17 @@ export function digiModulePageHtml(html: string, mod: DigiMod, imagePath: string
   return pageContentHtml(page, digiContent(mod, appUrl))
 }
 
+async function renderThumbnails<T>(modules: readonly T[], render: (module: T) => Promise<Buffer>): Promise<Buffer[]> {
+  // Sharp and filesystem reads share libuv's worker pool. Only queue two images at a time.
+  const batchSize = 2
+  const thumbnails: Buffer[] = []
+  for (let start = 0; start < modules.length; start += batchSize) {
+    const batch = modules.slice(start, start + batchSize)
+    thumbnails.push(...await Promise.all(batch.map(render)))
+  }
+  return thumbnails
+}
+
 export function modulePages(): Plugin {
   let config: ResolvedConfig
   return {
@@ -123,8 +134,8 @@ export function modulePages(): Plugin {
       const html = String(index.source)
       this.emitFile({ type: 'asset', fileName: '404.html', source: notFoundPageHtml(html, config.base) })
       const stylesheet = readFileSync(resolve(config.root, 'src/styles.css'), 'utf8')
-      const thumbnails = await Promise.all(MODULES.map(module => moduleThumbnail(module.id, stylesheet)))
-      const cards = await Promise.all(DIGI_MODS.map(digiModuleThumbnail))
+      const thumbnails = await renderThumbnails(MODULES, module => moduleThumbnail(module.id, stylesheet))
+      const cards = await renderThumbnails(DIGI_MODS, digiModuleThumbnail)
       for (const [index, module] of MODULES.entries()) {
         const thumbnail = thumbnails[index]
         const hash = createHash('sha256').update(thumbnail).digest('hex').slice(0, 12)

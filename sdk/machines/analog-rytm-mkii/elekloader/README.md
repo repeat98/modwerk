@@ -36,6 +36,13 @@ send effect needs it, or that module would not link on plain; a voice machine us
 This base is Modwerk's, not elekloader's core-ar2, and its core work happens here
 ([contributing](../../../../CONTRIBUTING.md#contributions-stay-here)). It stays on 0.7's source:
 
+- **Version 0.7.1** (`base.json`'s `version`, in place of the imported recipe's 0.7; 18 November 2026). The builder
+  picks a base's mod area by its version (the kit's `coreDdr`), so the version moves when the layout does: 0.7.1 on
+  links in the 3.7 MiB area `0x47B50000–0x47F00000` ([shared mod memory](../README.md#memory-and-budgets)), where
+  `sendbus.c`'s `MODS_END` ends the send effects' work area. It is not 0.8: a mod that asks for core-ar2 0.8
+  (`resources.core`) must stay refused here. Modules still ask for the 0.7 interface (`machine.json`'s
+  `sdk.core.version`), so they link on core-ar2 0.7 and older development bases too. `coreDdr` goes by version alone:
+  before an upstream Rytm core of 0.7.1 or later joins the catalogue, `kit-devices.test.ts` fails.
 - **No core-ar2 0.8 or later.** core-ar2 0.8 (elekloader v0.9.0) jumps from the same two lock sites the lock words
   use, `0x40008f98` (row load) and `0x40009216` (lock rebuild). This base cannot take it, an elekloader mod that needs
   0.8 or later does not run on it, and a mod that uses the send bus does not run on core-ar2.
@@ -83,17 +90,17 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD"
 | Compiler | `.run` bytes | Relocations | Same as the release |
 |---|---|---|---|
 | irpina's release `core-ar2-0.7.elemod` | 10,692 | 103 | — |
-| m68k-elf GCC 16.2.0, binutils 2.47 (reviewed; this base's plain variant, `1c14b6b0`) | 10,792 | 102 | sources, sites, interface |
+| m68k-elf GCC 16.2.0, binutils 2.47 (reviewed; this base's plain variant, `13a1c204`) | 10,792 | 102 | sources, sites, interface |
 | Debian 12 m68k-linux-gnu GCC 12.2.0 | 10,248 | 94 | sources, sites, interface |
 | Ubuntu 24.04 m68k-linux-gnu GCC 13.3.0 | 10,320 | 94 | sources, sites, interface |
 | Debian 13 m68k-linux-gnu GCC 14.2.0 | 10,168 | 93 | sources, sites, interface |
 
-The send-bus variant (`3ece243b`) has 33,006 bytes of `.run` and 4,172 of `.bss` (4,140 and 1,464 more since
-the digital voices), 62 of the kit's 64 storage bits and 3 bits of each sound (a voice machine's type): about 92 KiB of the
-128 KiB mod area stays for modules and the effect that runs, whose work area is the RAM they leave free (`sendbus.c`),
-against about 116 KiB on plain. The voices variant (`dd771eae`) has 14,876 bytes of `.run` and 2,832 of `.bss`
-(1,240 and 512 less since the lock words left it): with Analog BD 0.2.1 linked, `ramSpare` is 95,792 B on voices
-against 76,272 B on send-bus, 19,520 B more for modules.
+The send-bus variant (`eb2ea64d`) has 33,006 bytes of `.run` and 4,172 of `.bss` (4,140 and 1,464 more since
+the digital voices), 62 of the kit's 64 storage bits and 3 bits of each sound (a voice machine's type): the rest of the
+[mod area](../README.md#memory-and-budgets) stays for modules and the effect that runs, whose work area is the RAM they
+leave free (`sendbus.c`). The voices variant (`5402f9a7`) has 14,876 bytes of `.run` and 2,832 of `.bss`
+(1,240 and 512 less since the lock words left it): with Analog BD 0.2.1 linked, the set takes 19,520 B less of the mod area on voices
+than on send-bus.
 
 The release records its sources but not its compiler, and none of these reproduces its compiled code byte for byte.
 The 22 functions that change size are all compiled C: 21 from `store.c`, 1 from `machines.c`. The sites, the

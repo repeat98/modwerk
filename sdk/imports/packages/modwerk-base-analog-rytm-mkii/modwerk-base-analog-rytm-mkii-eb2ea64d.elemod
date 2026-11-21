@@ -1,7 +1,7 @@
 {
  "elemod": 2,
  "id": "core",
- "version": "0.7",
+ "version": "0.7.1",
  "title": "core",
  "description": "The boot copier, the hook bus, mod storage and parameter pages for the Analog Rytm MKII: every other mod needs it. The Digitakt mk1's core.s, settings.s and render.s with the Rytm's addresses, and store.c: fields mods declare, placed by elekloader from the build's lockfile and kept in bytes stock never uses or always holds at 0; and pages.s: parameter pages and parameter overrides mods add through the tables core_pages and core_params (and core_page_fns, a page whose knobs follow the sound), from the first instructions of the four routines a page goes through, and the page keys' lists, stock's pages and then the ones mods add through core_view_pages, which the page key steps through (skipping a page while its mod says it is hidden, with the page's title in the header), and which keeps its page when the view is shown again; load.s: the audio interrupt's load, core_audio_load, for mods with work they can skip; and machines.c: machines mods add in the hidden slots 34..43 through core_machines, written into the machine table and the slots' parameter records at boot. On its own it changes nothing the unit does. And finish.s: an OS upgrade's restart sends the panel link's and the UART's queued bytes before it masks interrupts, where stock can hang on SUCCESS! REBOOTING.",
  "category": "Framework",
@@ -1456,7 +1456,7 @@
     ],
     [
      "hex",
-     "1c3c24790000000023c0000000004a8a67000104223c47c0000042839280e48947f900000000283c000000002f41001c20444a83677e71c349f00c00342a000241f9000000004281225830290002b5804a4057c0710044808280b1cc66ea71d253804a80671624534a8a672a342a0002588b41f900000000428160cc4a2a000466e4538275c2703eb08265044a816744245b4a8a669a23c300000000"
+     "1c3c24790000000023c0000000004a8a67000104223c47f0000042839280e48947f900000000283c000000002f41001c20444a83677e71c349f00c00342a000241f9000000004281225830290002b5804a4057c0710044808280b1cc66ea71d253804a80671624534a8a672a342a0002588b41f900000000428160cc4a2a000466e4538275c2703eb08265044a816744245b4a8a669a23c300000000"
     ],
     [
      "stock",
@@ -11034,7 +11034,7 @@
    "locks.c": "e1f22e40ef802f60ab37b78b3032005ada0d93d530f441fe393124477f9f805c",
    "locks.s": "221e5b51c87eec6db3b5b199bae9f2da6551753a3ed789002e64acdffcbb2d50",
    "clock.c": "1a5fe9ee18e615f1afb786dab86c27fa02d59caef84ae3256db7fb4a518d09f6",
-   "sendbus.c": "6b47efdaa7fa47a36d176534b6ae96b5f1d8321ddb7360bee0e5d2727a6da86f",
+   "sendbus.c": "78f0b06b57449d33b8c598d7c33dfccbc8da8ae4c315a43e78868cefeae74609",
    "sendbus.s": "a86d097ce7b2bd1e91888931034bea83afe1983685e901fa349e7f376ae9e0f4",
    "voice.c": "0263c71ba10a344f3b668dc28671db906b2d2f4acbc2e5a48e0694926b5c307d",
    "voice.s": "bff84fccbea9d264d866c71f45a09a6a62a6320794793ad9c87546ba74a989ff"

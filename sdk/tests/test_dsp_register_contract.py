@@ -7,6 +7,7 @@ import os
 import pathlib
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -21,6 +22,16 @@ SITE = {'index': 9, 'name': 'dsp_test', 'clobbers': ['a', 'x0'], 'exit': {'A': '
 
 
 class Decoding(unittest.TestCase):
+    def test_doctor_batch_has_each_modules_individual_findings(self):
+        driver = [sys.executable, '-B', str(ROOT / 'scripts/dsp-register-contract.py')]
+        ids = ('miniverb', 'euclid')
+        batch = json.loads(subprocess.check_output([*driver, '--json-modules', *ids], cwd=ROOT))
+        self.assertEqual(set(batch), set(ids))
+        for module in ids:
+            single = json.loads(subprocess.check_output([*driver, '--json', module], cwd=ROOT))
+            single.pop('reports', None)  # The doctor consumes the summary.
+            self.assertEqual(batch[module], single)
+
     def test_what_each_form_writes(self):
         for line, regs in (('move x:(r6)+,x0', {'r6', 'x0'}), ('tfr y1,b x:(r6)+n6,x1 y:(r0)-,b', {'b', 'r6', 'x1', 'r0'}),
                            ('lua (r0)+n0,r1', {'r1'}), ('move a,x:(r1)+', {'r1'}), ('move (r3)+n3', {'r3'}),

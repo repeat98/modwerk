@@ -519,7 +519,7 @@ Record real device outcomes against the exact source, base, package hashes and v
 
 ## Documentation validation and deployment scope
 
-Run `npm run check -- --base origin/main` before committing. `scripts/change-scope.mjs` compares actual changes, manifest prose and generated catalogues included. Documentation-only edits check licences, catalogue freshness, module contracts, tutorials, capture provenance and the catalogue tests, skipping the app suite, lint, typecheck, bundle and native builds. Local and pull request checks skip the SDK suite when every changed path falls on its tested list of unrelated site, Worker and release-note paths. An empty diff, an unknown path or an unscoped full check runs the SDK suite. The release workflow also runs it before deployment.
+Local readiness and PR CI use the same diff. A CSS edit builds the site and runs its stylesheet tests. Source changes run affected Vitest files, including importers and known filesystem consumers. Mixed changes combine checks. Module contracts, native builds and qualification follow their inputs. Changes to check infrastructure or dependencies, unknown paths, removals and unscoped runs get the full local suite. Release verification runs again before deployment.
 
 PR and Pages firmware builds follow firmware source and build identities rather than broad SDK directory changes. Digi documentation/version labels do not rebuild Octatrack packages. Source pins, build recipes, toolchains, code, linking metadata and package changes retain their native gates. Pages still bundles the site to publish updated documentation. Generated catalogue edits only redeploy the Worker when its consumed module fields change; a manual Worker dispatch still deploys.
 
