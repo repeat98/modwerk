@@ -683,20 +683,20 @@
         {
           "name": "Core image",
           "unit": "bytes",
-          "value": 12160,
-          "note": "Modwerk's base, plain variant (13a1c204), for a set with no send effect or digital voice machine: 10,792 bytes .run plus 1,368 bytes .bss in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
+          "value": 16056,
+          "note": "Modwerk's base, plain variant (ae77e1b0), for a set with no send effect or digital voice machine: 14,503 bytes .run plus 1,553 bytes .bss (3,711 and 185 of them the lean engine) in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
         },
         {
           "name": "Core image with the send bus",
           "unit": "bytes",
-          "value": 37178,
-          "note": "The base's send-bus variant (eb2ea64d), for a set with a send effect: 33,006 bytes .run plus 4,172 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
+          "value": 41077,
+          "note": "The base's send-bus variant (3cb27253), for a set with a send effect: 36,713 bytes .run plus 4,364 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
         },
         {
           "name": "Core image with the digital voices",
           "unit": "bytes",
-          "value": 17708,
-          "note": "The base's voices variant (5402f9a7), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 14,876 bytes .run plus 2,832 bytes .bss."
+          "value": 21603,
+          "note": "The base's voices variant (aba85f2c), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 18,583 bytes .run plus 3,020 bytes .bss."
         }
       ]
     }

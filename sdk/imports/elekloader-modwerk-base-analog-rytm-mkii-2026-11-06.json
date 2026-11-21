@@ -2,25 +2,11 @@
   "schema": 1,
   "kind": "elekloader-catalog",
   "revision": "modwerk-base-analog-rytm-mkii-2026-11-06",
-  "about": "Modwerk's Analog Rytm MKII base for OS 1.74, built by npm run machine:base -- analog-rytm-mkii from core-ar2 0.7's source (sdk/imports/core-ar2-source-fb58292.json) and Modwerk's base/ sources. Three variants, each identified by its SHA-256 in sdk/machines/analog-rytm-mkii/base-binding.json: plain (13a1c204, the source with the machine list's sections, the amp envelope's record and the FX track's edit save of words 38 to 41), send-bus (eb2ea64d, with the FX track's lock words, the send bus, whose effects work in the mod RAM the set leaves free, the sequencer's time, and the digital voices (mw_voices, ev_sound_applied)) and voices (5402f9a7, send-bus without the FX track's lock words, the send bus, its pages, the sequencer's time and the FX list: the digital voices), compiled with GCC's late-combine pass off. The site builds a Rytm set on send-bus when it holds a send effect (sdk/machines/analog-rytm-mkii/fx-ids.json), on voices when it holds a digital voice machine (voice-modules.json) and no send effect, and on plain otherwise. Stock-free: each site names its stock bytes by length and SHA-256, and the build fills them from the owner's OS.",
+  "about": "Modwerk's Analog Rytm MKII base for OS 1.74, built by npm run machine:base -- analog-rytm-mkii from core-ar2 0.7's source (sdk/imports/core-ar2-source-fb58292.json) and Modwerk's base/ sources. Three variants, each identified by its SHA-256 in sdk/machines/analog-rytm-mkii/base-binding.json: plain (ae77e1b0, the source with the machine list's sections, the amp envelope's record, the FX track's edit save of words 38 to 41 and the lean engine), send-bus (3cb27253, with the FX track's lock words, the send bus, whose effects work in the mod RAM the set leaves free, the sequencer's time, and the digital voices (mw_voices, ev_sound_applied)) and voices (aba85f2c, send-bus without the FX track's lock words, the send bus, its pages, the sequencer's time and the FX list: the digital voices), compiled with GCC's late-combine pass off. The site builds a Rytm set on send-bus when it holds a send effect (sdk/machines/analog-rytm-mkii/fx-ids.json), on voices when it holds a digital voice machine (voice-modules.json) and no send effect, and on plain otherwise. Stock-free: each site names its stock bytes by length and SHA-256, and the build fills them from the owner's OS.",
   "cores": [
     {
-      "file": "modwerk-base-analog-rytm-mkii-13a1c204.elemod",
-      "sha256": "13a1c20482e509dd2a89a104bc236b4dbc37565348f4541039ef512d14dd27a1",
-      "id": "core",
-      "version": "0.7.1",
-      "device": "analog-rytm-mk2",
-      "os": "1.74",
-      "license": "GPL-2.0-or-later",
-      "source": {
-        "repo": "repeat98/modwerk",
-        "commit": "77157b4a0c5c259f77f5625df63eea89e9795964",
-        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-13a1c204.elemod"
-      }
-    },
-    {
-      "file": "modwerk-base-analog-rytm-mkii-eb2ea64d.elemod",
-      "sha256": "eb2ea64d14053e5706cbfee137fabfd5799c503d6f5842b0565d7b313d342414",
+      "file": "modwerk-base-analog-rytm-mkii-ae77e1b0.elemod",
+      "sha256": "ae77e1b0f2a066a3bad2f36a14661ca397c02d1d44098e9a59abdb024c40e510",
       "id": "core",
       "version": "0.7.1",
       "device": "analog-rytm-mk2",
@@ -28,13 +14,13 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "77157b4a0c5c259f77f5625df63eea89e9795964",
-        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-eb2ea64d.elemod"
+        "commit": "0000000000000000000000000000000000000000",
+        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-ae77e1b0.elemod"
       }
     },
     {
-      "file": "modwerk-base-analog-rytm-mkii-5402f9a7.elemod",
-      "sha256": "5402f9a7aedfb4f96e3420c7b770a29618a7fb8b711d565293ae2dfe42b5ee62",
+      "file": "modwerk-base-analog-rytm-mkii-3cb27253.elemod",
+      "sha256": "3cb27253375f367929897cdc38ed16d13bee7c42108ac25cb86ecd441c571258",
       "id": "core",
       "version": "0.7.1",
       "device": "analog-rytm-mk2",
@@ -42,8 +28,22 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "77157b4a0c5c259f77f5625df63eea89e9795964",
-        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-5402f9a7.elemod"
+        "commit": "0000000000000000000000000000000000000000",
+        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-3cb27253.elemod"
+      }
+    },
+    {
+      "file": "modwerk-base-analog-rytm-mkii-aba85f2c.elemod",
+      "sha256": "aba85f2c1db1d1b41a7870a4db86cac3c3d8d2971ddcb7a6ef27b6dc538d31a5",
+      "id": "core",
+      "version": "0.7.1",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "0000000000000000000000000000000000000000",
+        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-aba85f2c.elemod"
       }
     }
   ],
