@@ -744,8 +744,8 @@
       "unitName": "Grain",
       "octabam": true,
       "usbOnly": true,
-      "version": "0.1.0-experimental",
-      "path": "octatrack-modules/grain/0.1.0-experimental.mwrm",
+      "version": "0.1.1-experimental",
+      "path": "octatrack-modules/grain/0.1.1-experimental.mwrm",
       "abi": 8,
       "features": 128,
       "sites": 0,
@@ -753,8 +753,8 @@
       "fills": 0,
       "name": "Grain",
       "module": "2c224021",
-      "bytes": 29248,
-      "sha256": "ff5ac017118aa58850212e9bb7243ad933d654edadca1dc0f4db65c25dda56f5"
+      "bytes": 29344,
+      "sha256": "1b3728c04f521b84c1c5381bc41513e819e8aee970dacdbe5e276cf8b708384f"
     }
   ],
   "usbAudio": {
