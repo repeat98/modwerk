@@ -11,44 +11,226 @@ the native object. The native object therefore changes even though that write do
 
 ## Test procedure and edge cases — 20 November 2026
 
-Main `57b0cd39` (base 0.7.10) is merged, without rebasing. The package is unchanged: 7,038 bytes,
+Main `6ac9c8ce` (base 0.7.12) is merged, without rebasing. The package is unchanged: 7,038 bytes,
 SHA-256 `092a8a13b999d14c63df6100d84f3c5202f615120c95f3df605e8c43d3736d50`.
 
 `npm run test:procedure -- quantizer --no-unit --package public/octatrack-modules/quantizer/0.1.5-experimental.mwrm`
 (docs/TEST_PROCEDURE.md). Without `--package` it stops at step 3: `module:dev --build-only` cannot
-build this module, which needs its machine path.
+build this module, which needs its machine path. Steps 6 to 10 ran on the emulator through
+`npm run device:emulator`, on a development twin of base 0.7.12.
 
 | # | Step | Result |
 |---|---|---|
 | 1 | Software checks | red on the module rules line until the owner's approval record for 0.1.5 exists; passes with a local stand-in record that is not committed |
-| 2 | Beside every other module | passed: 42 active modules, 0 problems |
+| 2 | Beside every other module | passed: 43 active modules, 0 problems |
 | 3 | Name the build | passed: the committed package, `092a8a13` |
 | 4 | DSP cost model | passed |
-| 5 | Emulator rehearsal | not run: no emulator session on base 0.7.10 yet |
-| 6-10 | Unit steps | not run: no unit has this build yet |
-| 11 | Agent by hand | not run on a unit; the emulator results are in the next section |
+| 5 | Emulator rehearsal | steps 6, 7 and 10 on the emulator, base 0.7.12 |
+| 6 | Read the unit | passed on the emulator; not run on a unit |
+| 7 | Scripted unit pass | passed on the emulator: the trial ran, 12 of 12 Part switches, rolled back; the self-test was not answered and the frame checks did not run there. Not run on a unit |
+| 8 | Soak | not run: the emulator has no USB MIDI port, and no unit has this build yet |
+| 9 | Cost on the unit | not run: needs a unit. The committed at-rest reading (0 points) is 0.1.4's, on base 0.7.8 |
+| 10 | Put back | passed on the emulator: the inventory equals the start |
+| 11 | Agent by hand | not run on a unit; the emulator sessions are in the next two sections |
 | 12 | Submitter's own stage | not run: no unit has this build yet |
 
-**Edge cases.** Emulator results are from the sessions on base 0.7.9 in the next section. They
-are not hardware evidence.
+**Edge cases.** Emulator results are from the sessions on base 0.7.12 in the next section; the
+same sessions ran before on base 0.7.10 (the section after it). They are not hardware evidence.
 
 | Case | Why this change makes it a risk | How run | Result |
 |---|---|---|---|
-| Install with Keep, then remove | the package patches 7 sites; 0.1.4 patched 9 | emulator, base 0.7.9, over USB; every site read after each step | pass (emulator): 7 patched, then 7 exact stock |
-| The two sites 0.1.5 no longer hooks, `0x4004fc84` and `0x40005162` | they must stay stock with the package installed | the package's site list | pass (package): neither is among its 7 sites. Not read on a running base |
-| 0.1.5 installed over a kept 0.1.4 | the replace must put stock back at the two sites only 0.1.4 patched | not yet | not run: my sessions started without a kept 0.1.4; next, on base 0.7.10 |
-| Power cycle after Keep | the boot restore replays the new 7-site set | emulator, base 0.7.9, card and battery RAM carried over | pass (emulator): active at boot; rows, settings and both pitches back |
-| A project saved with 0.1.4, reloaded on 0.1.5, then SAVE PROJECT | the settings must read and write as before | emulator, base 0.7.9 | pass (emulator): same settings; the project files equal 0.1.4's save |
-| Pitch and MIDI notes with FOLLOW ON and OFF | the native object changed | emulator, base 0.7.9: four windows per track, three notes per state | pass (emulator) |
-| Beside FM Synth 0.1.4, which hooks both sites itself; quantizer installed first | the two sites now belong to FM Synth alone | emulator, base 0.7.9 | pass (emulator) for the install: the loader admits both and the 7 sites hold. Not played: FM Synth 0.1.4 declares the conflict |
-| The same pair, FM Synth installed first | as above | not yet | not run: the pair is a declared conflict until FM Synth's update, which tests it |
-| Beside Tuner 0.1.0, then Tuner removed | another module's removal must leave the 7 sites | emulator, base 0.7.9 | pass (emulator) |
-| The card's saved set after the removal | the removal rewrites `MODWERK0.SET` shorter | emulator, base 0.7.9, FAT chain listing | fail: the set file's chain ends in a free cluster. The base's writer, not this package: #1830 |
-| Undo, a refused set, a trial that expires with SEQUENCER open | the loader paths around the new site list | not yet | not run: not in my sessions on base 0.7.9; next, on base 0.7.10 |
-| All of the above on base 0.7.10 | the base moved after my runs | not yet | not run: 0.7.10 reached main after my sessions; they are next |
+| Install with Keep, then remove | the package patches 7 sites; 0.1.4 patched 9 | emulator, base 0.7.12, over USB; every site read after each step | pass (emulator, base 0.7.12): 7 patched, then 7 exact stock; the set identity returns to the empty set's |
+| The two sites 0.1.5 no longer hooks, `0x4004fc84` and `0x40005162` | they must stay stock with the package installed | emulator, base 0.7.12: both read on the running base after each Keep and hashed against 0.1.4's stock hashes | pass (emulator, base 0.7.12): both stock with 0.1.5 installed, alone, beside FM Synth 0.1.4 (either order), after a power cycle, after the replace and during the upgrade trial |
+| 0.1.5 installed over a kept 0.1.4 | the replace must put stock back at the two sites only 0.1.4 patched | emulator, base 0.7.12, on a card holding a project saved with 0.1.4: Keep 0.1.4 (9 sites patched), the upgrade offered as a trial and undone, then kept; reload, FOLLOW, SAVE, power cycle, MIDI; then removal | pass (emulator, base 0.7.12): one inventory entry, and the card's newest set holds only the 0.1.5 package.<br>(1) Old hook sites: both stock during the upgrade trial, after the upgrade, after SAVE PROJECT and after the power cycle.<br>(2) FOLLOW: on audio 344.531 Hz following, 365.012 Hz not following, both 365.012 Hz with FOLLOW OFF; on MIDI 3 notes at 61 OFF and 3 at 60 ON, each with its note-off.<br>(3) Undo: read during the trial (one entry, 0.1.5's 7 sites patched), then undone: 0.1.4 back with its set identity and its nine patched sites byte for byte.<br>(4) Saved settings after a reboot: settings, rows and both pitches back.<br>After removal all 9 sites stock |
+| Power cycle after Keep | the boot restore replays the new 7-site set | emulator, base 0.7.12, card and battery RAM carried over | pass (emulator, base 0.7.12): active at boot; rows, settings and both pitches back |
+| A project saved with 0.1.4, reloaded on 0.1.5, then SAVE PROJECT | the settings must read and write as before | emulator, base 0.7.12 | pass (emulator, base 0.7.12): same settings; the project files equal 0.1.4's save |
+| Pitch and MIDI notes with FOLLOW ON and OFF | the native object changed | emulator, base 0.7.12: four windows per track, three notes per state | pass (emulator, base 0.7.12): 344.531 Hz following, 365.012 Hz not following (+1 st); 3 notes at 61 OFF, 3 at 60 ON, each with its note-off; the MIDI bytes equal those on base 0.7.10 |
+| Beside FM Synth 0.1.4, quantizer installed first | FM Synth 0.1.4 carries its own copy of the quantizer and declares a conflict with Scale Quantizer | emulator, base 0.7.12: Keep the quantizer, then FM Synth 0.1.4; then the quantizer removed | pass (emulator, base 0.7.12) for the install: the loader admits both, the 7 sites hold and the two dropped sites stay stock; FM Synth 0.1.4's 24 sites include none of the quantizer's. Removing the quantizer leaves FM Synth alone with the 9 quantizer sites stock. Not played: FM Synth 0.1.4 declares the conflict |
+| The same pair, FM Synth installed first | as above | emulator, base 0.7.12: Keep FM Synth 0.1.4, then the quantizer, then the quantizer removed | pass (emulator, base 0.7.12) for the install: admitted, no refusal, the same set as the other order, the 7 sites patched; its removal leaves FM Synth alone with the 9 quantizer sites stock. Not played: a declared conflict |
+| Beside Tuner 0.1.0, then Tuner removed | another module's removal must leave the 7 sites | emulator, base 0.7.12; control: Tuner alone on a card where the quantizer was never installed, on bases 0.7.12 and 0.7.10 | not run: on the emulator the base refuses Tuner's removal (refusal 5, busy), also with Tuner alone on a fresh card, on 0.7.12 and on 0.7.10; cause not traced. The pair installs (self-test: 2 intact) and the quantizer's 7 sites stay patched; removing the quantizer beside Tuner restores its 7 sites and leaves Tuner whole |
+| The card's saved set after the removal | the removal rewrites `MODWERK0.SET` or `MODWERK1.SET` shorter | emulator, base 0.7.12, FAT chain listing | fail: the set file's chain ends in a free cluster (`MODWERK1.SET` 7,680 -> 512 B, 15680 -> 15681 -> free). Reproduces on 0.7.12 and 0.7.10. The base's writer, not this package: #1830 |
+| Undo of an install or a trial | the loader paths around the new site list | emulator, base 0.7.12: Undo of a held and an unheld 0.1.5 trial on an empty set, and of a held 0.1.5 replace over a kept 0.1.4 | pass (emulator, base 0.7.12): inventory and set identity back each time; every site stock, or 0.1.4's nine patched sites byte-identical to before |
+| A refused set | the set must roll back whole | emulator, base 0.7.12: one set of 0.1.5 plus `device.mjs set`'s `+refuse` pair, on an empty set and with 0.1.4 kept | pass (emulator, base 0.7.12): refused at verify (refusal 3, conflict) before anything was applied; inventory, set identity and all 9 sites unchanged both times |
+| A trial that expires with SEQUENCER open | the loader paths around the new site list | emulator, bases 0.7.12 and 0.7.10: page reopened inside the trial (SCALE and ROOT on screen), no USB request, then keys on the page; control: the same walk with Scale Quantizer 0.1.4 | fail: no crash and the 7 sites are stock from about 9 s, but the page does not redraw: it shows SCALE and ROOT until the next key, then two blank rows that do nothing (YES, arrows, LEVEL) until the page is left. 0.1.4 shows the same screens byte for byte on both bases, so this update did not introduce it. It looks like the base's expiry path; not traced |
+| Installed and used nowhere: cost at rest | the owner's limit of 0.2 points of the frame interrupt applies to a new release | not yet | not run: needs a unit (`npm run device:price`); the committed reading (0 points) is 0.1.4's, on base 0.7.8 |
+| All of the above on base 0.7.12 | the base moved after my runs on 0.7.10 | emulator, base 0.7.12 `254c5a75`, rebuilt from main `a241c595` | pass (emulator, base 0.7.12) for every row above but the two marked fail, the Tuner removal (not run: refused by the base on the emulator) and the cost at rest (not run: needs a unit) |
 | On a unit | an emulator result is not hardware evidence | not yet | not run: no unit has this build yet; my unit is an MKI |
 
 Not tested on a unit: no unit has run this package (`092a8a13`) yet.
+
+## Base 0.7.12 — 20 November 2026
+
+Base 0.7.12 rebuilt from main `a241c595` with the repository's base script: identity
+`254c5a75a139255e057e69532bb952daffef5039ffeee0e6c9fabda302e5bb91`, equal to the committed
+binding; package, fills, sources, binding and base versions equal the committed files. The
+script's controller-policies check does not match on main itself (Analog BD's row hashes
+`machine_ports.py`, which #1896 changed); the base is built with the committed file, as the
+script does. The package is unchanged: 7,038 bytes, SHA-256
+`092a8a13b999d14c63df6100d84f3c5202f615120c95f3df605e8c43d3736d50`. Every result below is from
+`ot_emu` built by `scripts/octatrack-emulator/build.py` (its inputs equal main's), MKII panel,
+copied cards. No unit ran. Sites were checked as on base 0.7.10: hashes of the bytes read on the
+running base against the stock hashes in the packages' own site tables.
+
+**Test procedure on the emulator.** `npm run device:emulator -- --image MAIN.raw --emulator OT_EMU --
+npm run test:procedure -- quantizer --package public/octatrack-modules/quantizer/0.1.5-experimental.mwrm`
+on a development twin of 0.7.12 (`build_core.py` with the beta flags, no controller rows, plus
+`--dev`; configuration `d24c5acb`), 97 s. Steps 1 to 4 pass with a local stand-in approval record
+that is not committed. Steps 6, 7 and 10 pass on the emulator: the trial ran, 12 of 12 Part
+switches, rolled back, inventory unchanged; in step 7 the self-test was not answered (it asks for
+the transport to be stopped), and the frame checks and the crash test did not run (the DSP frames
+stand still on the emulator). Steps 8 and 9 are not run there by design; 11 and 12 are a unit's.
+
+**Install, remove, replace.**
+
+- USB Keep: Scale Quantizer listed, all seven sites patched; `0x4004fc84` and `0x40005162` stay
+  stock. Removal restores all seven and leaves all nine of 0.1.4's sites stock; the set identity
+  returns to the empty set's. After a power cycle the set is restored at boot, and Keep works
+  again on an emptied set.
+- Upgrade from a kept 0.1.4, on a card holding a project saved with 0.1.4: one inventory entry,
+  and the card's newest set holds only the 0.1.5 package. After removal all nine sites are stock.
+  - Old hook sites: `0x4004fc84` and `0x40005162` read stock during the upgrade trial, after the
+    upgrade, after SAVE PROJECT and after a power cycle.
+  - FOLLOW on audio: AUDIO 1 following plays 344.531 Hz, AUDIO 8 not following 365.012 Hz
+    (+1 semitone), both 365.012 Hz with AUDIO 1 OFF. FOLLOW on MIDI: three notes at 61 with
+    FOLLOW OFF and three at 60 with FOLLOW ON, each with its note-off.
+  - Undo: the upgrade offered as a trial over the kept 0.1.4, read during the trial (one entry,
+    0.1.5's seven sites patched, the two old sites stock), then undone, brings back 0.1.4, its set
+    identity and its nine patched sites byte for byte.
+  - Saved settings after a reboot: scale bytes `0000008401000002`, the rows and both pitches
+    come back after SAVE PROJECT and a power cycle.
+- Undo of a held and of an unheld 0.1.5 trial brings back the starting inventory, set identity
+  and sites; Undo of a held 0.1.5 replace trial over 0.1.4 brings back 0.1.4's nine patched sites
+  byte for byte.
+- A set of 0.1.5 plus `device.mjs set`'s `+refuse` pair is refused at verify (refusal 3), before
+  anything was applied, and nothing of it stays: inventory, set identity and sites unchanged, on
+  an empty set and with 0.1.4 kept.
+- A trial that expires with the quantizer's SEQUENCER rows open: no crash, and the seven sites
+  are stock about 9 s after the last USB request. The open page does not redraw by itself: it
+  shows SCALE and ROOT until the next key, then two blank rows that do nothing (YES, arrows,
+  LEVEL) until the page is left. Reopened, it shows the stock rows only. Scale Quantizer 0.1.4 in
+  the same walk shows the same screens byte for byte, so this update did not introduce it; it looks like the
+  base's expiry path (not traced).
+
+**Project, rows, pitch, MIDI.**
+
+- A project saved with 0.1.4 reloads through PROJECT > RELOAD: scale bytes `0000008401000002`
+  before and after. SAVE PROJECT writes project files byte-identical to 0.1.4's.
+- SEQUENCER shows SCALE MAJOR, ROOT C, GLIDE OFF, TRACK and FOLLOW (AUDIO 8 shows FOLLOW OFF);
+  YES on AUDIO 1's FOLLOW turns it OFF and ON again. The screens equal those on base 0.7.10.
+- Pitch, four windows per track: with AUDIO 1 following, T1 plays 344.531 Hz and T8 365.012 Hz
+  (+1 semitone); with AUDIO 1 OFF both play 365.012 Hz.
+- After SAVE PROJECT and a power cycle, the rows, the settings and both pitches come back.
+- MIDI UART output: three note-on/off pairs at 61 with FOLLOW OFF, three at 60 with FOLLOW ON,
+  channel 2, velocity 100, no stray bytes; byte-identical to the run on base 0.7.10.
+
+**Beside other modules.**
+
+- FM Synth 0.1.4 as released, in both orders: the loader admits the pair without a refusal and
+  ends at the same set; the seven sites are patched and the two dropped sites stay stock. FM Synth
+  0.1.4 patches none of the quantizer's sites; it still declares the conflict, so the pair was not
+  played. Removing the quantizer leaves FM Synth alone. Removing FM Synth in the session that kept
+  it is refused (refusal 5, busy), also with FM Synth alone on a card where the quantizer was never
+  installed, on this base and on 0.7.10; it does not involve this package.
+- Tuner 0.1.0: both install and the self-test reports both intact. Removing the quantizer beside
+  Tuner restores its seven sites and leaves Tuner whole. Removing Tuner is refused (refusal 5,
+  busy), also with Tuner alone on a card where the quantizer was never installed; it does not
+  involve this package. The cause is not traced, and a unit may behave differently.
+
+**Saved module sets.** The issue reported in #1830 reproduces on base 0.7.12: removing the
+quantizer rewrote `/MODWERK1.SET` from 7,680 to 512 bytes, and the file's last cluster still
+links to a cluster the write marked free. Writes into a new or larger slot stay clean.
+
+**Not run on this base:** hardware; the cost at rest of 0.1.5 (procedure step 9, a unit's);
+Tuner's removal beside the quantizer (refused by the base on the emulator); the full 16-window pitch matrix and
+the lock walk; FOLLOW on FM tracks; the whole catalogue set; an empty-battery cold boot;
+procedure steps 8, 9, 11 and 12.
+
+## Base 0.7.10 — 20 November 2026
+
+Base 0.7.10 rebuilt from main `cda22b81` with the repository's base script (the six other USB
+layouts skipped; package, fills, sources, binding, controller policies and base versions all equal
+the committed files): identity `b1c76d06dbe7638df87831d9d6793deb0dcb7cdc169101d96627b7b05c894f9a`.
+The package is unchanged: 7,038 bytes, SHA-256
+`092a8a13b999d14c63df6100d84f3c5202f615120c95f3df605e8c43d3736d50`. Every result below is from
+`ot_emu` built by `scripts/octatrack-emulator/build.py`, MKII panel, copied cards. No unit ran.
+Sites were checked by hashing the bytes read on the running base against the stock hashes in
+the packages' own site tables; the two sites 0.1.5 no longer hooks were read through 0.1.4's table.
+
+**Test procedure on the emulator.** `npm run device:emulator -- --image MAIN.raw --emulator OT_EMU --
+npm run test:procedure -- quantizer --package public/octatrack-modules/quantizer/0.1.5-experimental.mwrm`
+on a development twin of 0.7.10 (`build_core.py` with the beta flags, no controller rows, plus
+`--dev`; configuration `ed563610`), 95 s. Steps 1 to 4 pass with a local stand-in approval record
+that is not committed. Steps 6, 7 and 10 pass on the emulator: the trial ran, 12 of 12 Part
+switches, no fault logged, rolled back, inventory unchanged; in step 7 the self-test was not
+answered (it asks for the transport to be stopped) and the frame checks did not run (the DSP
+frames stand still on the emulator). Steps 8 and 9 are not run there by design; 11 and 12 are a
+unit's.
+
+**Install, remove, replace.**
+
+- USB Keep: Scale Quantizer listed, all seven sites patched; `0x4004fc84` and `0x40005162` stay
+  stock. Removal restores all seven and leaves all nine of 0.1.4's sites stock; the set identity
+  returns to the empty set's. After a power cycle, Keep works again.
+- Upgrade from a kept 0.1.4, on a card holding a project saved with 0.1.4: one inventory entry,
+  and the card's newest set holds only the 0.1.5 package. After removal all nine sites are stock.
+  - Old hook sites: `0x4004fc84` and `0x40005162` read stock after the upgrade, after SAVE PROJECT
+    and after a power cycle.
+  - FOLLOW on audio: AUDIO 1 following plays 344.531 Hz, AUDIO 8 not following 365.012 Hz
+    (+1 semitone), both 365.012 Hz with AUDIO 1 OFF. FOLLOW on MIDI: three notes at 61 with
+    FOLLOW OFF and three at 60 with FOLLOW ON, each with its note-off.
+  - Undo: the upgrade offered as a trial over the kept 0.1.4, read during the trial (one entry,
+    0.1.5's seven sites patched, the two old sites stock), then undone, brings back 0.1.4, its set
+    identity and its nine patched sites byte for byte.
+  - Saved settings after a reboot: scale bytes `0000008401000002`, the rows and both pitches
+    come back after SAVE PROJECT and a power cycle.
+- Undo of a held and of an unheld 0.1.5 trial brings back the starting inventory, set identity
+  and sites; Undo of a 0.1.5 replace trial over 0.1.4 brings back 0.1.4's nine patched sites
+  byte for byte.
+- A set of 0.1.5 plus `device.mjs set`'s `+refuse` pair is refused at verify (refusal 3), before
+  anything was applied, and nothing of it stays: inventory, set identity and sites unchanged, on
+  an empty set and with 0.1.4 kept.
+- A trial that expires with the quantizer's SEQUENCER rows open: no crash, and the seven sites
+  are stock about 9 s after the last USB request. The open page does not redraw by itself: it
+  shows SCALE and ROOT until the next key, then two blank rows that do nothing (YES, arrows,
+  LEVEL) until the page is left. Reopened, it shows the stock rows only. The same walk with
+  Scale Quantizer 0.1.4 in the trial shows the same screens byte for byte, so this update did not
+  introduce it; it looks like the base's expiry path (not traced).
+
+**Project, rows, pitch, MIDI.**
+
+- A project saved with 0.1.4 reloads through PROJECT > RELOAD: scale bytes `0000008401000002`
+  before and after. SAVE PROJECT writes project files byte-identical to 0.1.4's.
+- SEQUENCER shows SCALE MAJOR, ROOT C, GLIDE OFF, TRACK and FOLLOW (AUDIO 8 shows FOLLOW OFF);
+  YES on AUDIO 1's FOLLOW turns it OFF and ON again. The screens equal those on base 0.7.9.
+- Pitch, four windows per track: with AUDIO 1 following, T1 plays 344.531 Hz and T8 365.012 Hz
+  (+1 semitone); with AUDIO 1 OFF both play 365.012 Hz.
+- After SAVE PROJECT and a power cycle, the rows, the settings and both pitches come back.
+- MIDI UART output: three note-on/off pairs at 61 with FOLLOW OFF, three at 60 with FOLLOW ON,
+  channel 2, velocity 100, no stray bytes; byte-identical to the run on base 0.7.9.
+
+**Beside other modules.**
+
+- FM Synth 0.1.4 as released, in both orders: the loader admits the pair without a refusal and
+  ends at the same set; the seven sites are patched and the two dropped sites stay stock.
+  Removing the quantizer leaves FM Synth alone. FM Synth 0.1.4 patches none of the quantizer's
+  sites; it still declares the conflict, so the pair was not played. FM Synth's own removal went
+  through in a later session after a power cycle; removed in the session that kept it, it is
+  refused (refusal 5, busy), also with FM Synth alone on a card where the quantizer was never
+  installed.
+- Tuner 0.1.0: both install and the self-test reports every module intact. Removing Tuner is
+  refused by base 0.7.10 (refusal 5, busy), also after a power cycle and with Tuner alone in the
+  set; the set stays whole and the quantizer's sites stay patched. On a fresh card where the
+  quantizer was never installed, Tuner alone is kept and its removal is refused the same way, so
+  it does not involve this package. On base 0.7.9 the same removal went through. The cause is
+  not traced, and a unit may behave differently.
+
+**Saved module sets.** The issue reported in #1830 reproduces on base 0.7.10: removing the
+quantizer rewrote `/MODWERK1.SET` from 7,680 to 512 bytes, and the file's last cluster still
+links to a cluster the write marked free. Writes into a new or larger slot stay clean.
+
+**Not run on this base:** hardware; Tuner's removal beside the quantizer (refused by the base on the emulator);
+the full 16-window pitch matrix and the lock walk; FOLLOW on FM tracks; the whole catalogue set;
+an empty-battery cold boot; procedure steps 8, 9, 11 and 12.
 
 ## Current main, base 0.7.9 — 19 November 2026
 
