@@ -793,7 +793,8 @@ def check(case, e, caps, out, refs, record, clean):
                 return None, 'not recorded: the case has a problem or a failed check'
             path.parent.mkdir(parents=True, exist_ok=True)
             write_pbm(got, path)
-            return True, 'recorded %s%s' % (path, ' (it replaces a different one)' if old not in (None, got) else '')
+            replaced = old is not None and screen_diff(old, got, None)[0]
+            return True, 'recorded %s%s' % (path, ' (it replaces a different one)' if replaced else '')
         if old is None:
             return None, 'no reference %s: run once with --record and look at it' % path
         want = old
