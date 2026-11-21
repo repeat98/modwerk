@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/improved-performance",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-21",
+  "changes": [
+    "First release: the audio interrupt leaves out work whose result is known (idle sample voices, sends at zero, a silent delay and reverb, modulation passes that are the identity, parameters at rest, the compressor's control words, the unused USB audio input), and writes CPU or OVR into the status bar while the audio load is high. In rytm-emu identical per-block state and audio to the same image with its sites back at stock."
+  ],
+  "runtimeSourceSha256": "5acf0855b0b3dec97a6801ebd63108b30d7fad4c73e8c541c965e597d7aaff2c",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/improved-performance/improved-performance-0.1.0-experimental-os1.74.elemod",
+      "sha256": "7d58730d8ba9cba529d786002c928d94f889fe66b9b2ab3dafba2ae176c152cd"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/improved-performance/TESTING.md",
+  "requires": []
+}
