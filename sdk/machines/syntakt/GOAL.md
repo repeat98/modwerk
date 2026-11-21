@@ -18,7 +18,7 @@ This is the Octatrack's stack on the Syntakt ([machine recipe](../../../docs/MAC
 | USB link | Not started. The Modwerk base link is planned over stock USB MIDI | [USB link](#usb-link) below |
 | Loading without a reflash | Not started | [porting the runtime loader](../../runtime/loader/README.md#porting-to-another-machine) |
 | Base updates over USB | Not started | [two-slot base](../../../docs/OCTATRACK_TWO_SLOT_BASE.md) |
-| MCP device tools | Developer CLI and MCP read an existing Synfact core’s loader status over USB MIDI. Unit verification pending | [device tools](../../../docs/FRONTEND_MCP.md#then-test-the-connected-device) |
+| MCP device tools | Open for the Modwerk base. Developer CLI and MCP can read an existing Synfact core’s loader status for comparison; unit verification pending | [device tools](../../../docs/FRONTEND_MCP.md#then-test-the-connected-device) |
 | Machine page | Status only | [`OctatrackHub.tsx`](../../../src/components/OctatrackHub.tsx) is the model |
 | Modules | None. The linker refuses every module until a memory area and an interface exist | — |
 

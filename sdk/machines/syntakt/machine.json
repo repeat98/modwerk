@@ -45,9 +45,6 @@
     "core": "started",
     "mods": "open"
   },
-  "stack": {
-    "tools": "started"
-  },
   "research": [
     {
       "label": "Synfact base (GSM1980)",
