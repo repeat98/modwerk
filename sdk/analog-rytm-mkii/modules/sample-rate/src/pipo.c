@@ -68,6 +68,14 @@ static struct voice voices[VOICES];
 // leave the DMA as stock set it without calling pipo_loop_mirror, which costs the audio
 // interrupt 16 C calls a block with LOP OFF everywhere.
 unsigned char pipo_loop_armed;
+// The last pass found no voice's track in PIPO, so it left every voice with back 0 and none
+// armed. Until a PIPO comes on, a pass writes no position and swaps no STA/END. What it keeps
+// for a voice in ON goes stale: last_pos, seen and fresh only matter to the turn check, which
+// needs arm (none in the first PIPO pass, which sets them again), and the loop cache is a pure
+// lookup of (sta, end, frames) (stock's routine ends with its accumulators cleared and
+// pipo_loop_frame restores MACSR). Keep it so: a turn check that read them without arm, or a
+// cache that depended on more than its key, would make this rest unsafe.
+static unsigned char at_rest;
 static short mirror[VOICES][MIRROR] __attribute__((aligned(16)));
 
 int pipo_loop_frame(int v8, unsigned frames);   // pipo.s
@@ -82,8 +90,19 @@ static int frame_of(unsigned frames, int v8)
 
 void pipo_loop_audio(void)
 {
-    unsigned trig = TRIG_NEXT;
+    unsigned trig;
+    unsigned char rest = 1;
     int v;
+    if (at_rest) {                       // the audio interrupt runs this every block
+        for (v = 0; v < VOICES; v++) {
+            int t = OWNER(v);
+            if (t < TRACKS && (EFF(t, IDX_LOP) >> 8) == LOP_PIPO)
+                break;
+        }
+        if (v == VOICES)
+            return;
+    }
+    trig = TRIG_NEXT;
     for (v = 0; v < VOICES; v++) {
         struct voice *p = &voices[v];
         int t = OWNER(v), sta, end, pos;
@@ -94,6 +113,8 @@ void pipo_loop_audio(void)
             p->arm = ARM_NONE;
             continue;
         }
+        if ((EFF(t, IDX_LOP) >> 8) == LOP_PIPO)
+            rest = 0;
         pos = VPOS(v);
         sta = EFF(t, IDX_STA);
         end = EFF(t, IDX_END);
@@ -177,6 +198,7 @@ void pipo_loop_audio(void)
                 armed |= 1u << v;
         pipo_loop_armed = (unsigned char)armed;
     }
+    at_rest = rest;
 }
 
 // From the gates in pipo.s, as stock's prefetch sets up the DMA of a voice's

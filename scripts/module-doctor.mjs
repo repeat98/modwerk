@@ -28,7 +28,7 @@ import { moduleCardless } from '../src/catalog/usb-only.ts'
 import { controlProblems } from './module-controls.mjs'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from './retest-queue.mjs'
-import { cpuPriceStatus, readCpuPricePending } from './module-cpu-price.mjs'
+import { atRestStatus, cpuPriceStatus, readCpuPricePending } from './module-cpu-price.mjs'
 import { moduleTestFiles, runModuleTests } from './module-tests.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
@@ -192,6 +192,11 @@ function octatrack(id) {
   if (price.state === 'fail') fail('cpu price', price.detail, price.fix)
   else if (price.state === 'pending') info('cpu price', price.detail)
   else ok('cpu price', price.detail)
+  // What it costs installed and used nowhere (test procedure step 9): above the limit it must rest (answer ev_in_use), unless a machine.
+  const rest = atRestStatus({ root, document })
+  if (rest.state === 'fail') fail('cost at rest', rest.detail, rest.fix)
+  else if (rest.state === 'ok') ok('cost at rest', rest.detail)
+  else info('cost at rest', rest.detail + (rest.fix ? '. Fix: ' + rest.fix : ''))
 
   if (rulesProblem) fail('module rules', 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), 'fix what it names, then run npm run modules:check -- --base origin/main')
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')

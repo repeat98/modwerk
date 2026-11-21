@@ -15,7 +15,7 @@ From 2 October 2026, new modules and updates affecting runtime behavior, stabili
 
 `npm run modules:check`, `npm run modules:generate`, PR CI and release validation enforce the record. PR CI also checks version increases against the exact base commit. Configure `module-contract` as a required status check on protected main. The submitter produces the reports through [the test procedure](TEST_PROCEDURE.md#who-runs-it); the reviewer verifies them and is never required to test on their own unit: the owner for a first release or changes beyond author scope, the registered module author for a scoped automatic update. Owner merge or the verified author-release workflow approves the version; there is no extra website approval. Metadata checks do not run submitted source or perform physical hardware tests. An unchecked contributor declaration cannot replace actual evidence verification; automatic author releases require the registered author to verify the reports and explicitly attest to the required acceptance checks.
 
-Every release also requires populated CPU, DSP core and memory gauges. These use [source-backed relative estimates](MODULE_RESOURCE_GAUGES.md), do not need exact whole-chip capacity percentages, and do not replace the qualification evidence below.
+Every release also requires the relative CPU, DSP core and memory ratings described in [Module resource gauges](MODULE_RESOURCE_GAUGES.md). The page uses these ratings when the release has no numeric record for a gauge.
 
 ## Essential persistence and instance checks — 8 October 2026
 

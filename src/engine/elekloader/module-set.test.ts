@@ -2,9 +2,9 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import catalog from '../../../sdk/catalog.json' with { type: 'json' }
-import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
+import { publishedManifest as manifest } from './published-octatrack.fixture'
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
-import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from './published-octatrack.fixture'
 import { removal } from '../../dev/octatrack-usb-lifecycle'
 import { RuntimeFeature } from './upload-usb'
 import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
@@ -19,7 +19,9 @@ describe('the site’s runtime packages', () => {
     expect([...USB_MODULE_IDS].sort()).toEqual(catalog.modules.map(module => module.id).filter(id => id !== 'stem-rec').sort())
     for (const entry of manifest.packages) {
       const data = file(entry.path), view = new DataView(data.buffer), abi = view.getUint16(4)
-      expect(entry.path).toBe(`octatrack-modules/${entry.id}/${entry.version}.mwrm`)
+      const versioned = `octatrack-modules/${entry.id}/${entry.version}.mwrm`
+      const paths = 'base' in entry ? [versioned, `octatrack-base-packages/${sha(data)}.mwrm`] : [versioned]
+      expect(paths).toContain(entry.path)
       expect([data.length, sha(data), view.getUint32(28).toString(16).padStart(8, '0')]).toEqual([entry.bytes, entry.sha256, runtimeId(entry.id)])
       expect(String.fromCharCode(...data.subarray(0, 4))).toBe('MWRM')
       if (!('octabam' in entry) && !('machine' in entry) && !('tables' in entry) && !('base' in entry) && !('sources' in entry)) expect([abi, view.getUint32(20), view.getUint32(24)]).toEqual([entry.requires ? 9 : 6, 0, 0]) // ABI 6 DSP effects (9 when they require a base feature) carry no stock-code bytes

@@ -1,6 +1,10 @@
 # Module resource gauges
 
-Every catalog module must have populated **CPU, DSP core and memory** gauges before a release. The gauges show rough relative demand using four tiers: **Minimal, Low, Moderate, High**. The arc steps are ordinal, not percentages of chip utilization or remaining headroom. A full High arc means the highest relative tier, not an overloaded processor. No exact CPU or DSP capacity denominator is needed for these gauges.
+Every catalog module needs **CPU, DSP core and memory** ratings before release. On Octatrack module pages, the CPU gauge shows the recorded [CPU price](MODULE_PERFORMANCE.md) as a percentage of an audio frame when available. For a track machine this is the per-track budget based on hardware measurements. The gauge evidence links to the measurement in the Modwerk module folder.
+
+The DSP core gauge shows the release package's version-matched DSP price per instance, or the per-instance DSP count from the qualification record for a module without a separate package price. It labels hardware, emulator and modeled figures by their evidence. The memory gauge shows the qualification inventory's total bytes at the supported instance count, with shared and per-instance allocations in the evidence.
+
+When a numeric record is unavailable, the page displays the relative tier labelled **Estimated**. The four tiers are **Minimal, Low, Moderate, High**. A full High arc means the highest relative tier. DSP counts and memory totals use their recorded units and have no percentage arc.
 
 Ratings are estimates backed by source inspection or a documented comparison. Consider expensive modes, modulation/control changes, active voices and buffers. Audio effects/voices are rated per active instance; project-wide features such as USB Audio are rated while enabled. State a different workload explicitly. Minimal is useful for a small or absent added processing path; it is not a claim that the whole device consumes zero resources. Scores must not be summed across modules, processors or memory spaces.
 
