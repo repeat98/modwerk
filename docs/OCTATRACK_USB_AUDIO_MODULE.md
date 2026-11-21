@@ -123,7 +123,7 @@ browser open. The [hardware record](verification/2026-11-20-octatrack-usb-audio-
 5. The base without reserve and variants on `base/octatrack-next`, with the transition, a draft until
    extensively tested on a unit.
 
-## Private USB input candidate
+## USB input in the 0.7.13 draft
 
 **PROJ → MODWERK → SETTINGS → USB AUDIO → INPUTS** offers OFF, AB, CD
 and ABCD for a computer host. OFF is the default. AB and CD use the same
@@ -140,10 +140,11 @@ leaves the analog input intact. The base gives USB priority on the crossbar
 while a duplex configuration is selected and restores its previous values
 when that configuration leaves.
 
-Build a development twin with the packaged USB Audio and resident DSP flags
-above, plus `--dev --usb-input`. Build the matching private package with
-`python3 -B sdk/machines/octatrack/module-adapters/usb_audio_package.py --usb-input -o /private/path/usb-audio.mwrm`.
-The published package is still 0.3.0-experimental. Use the existing
+Build the cumulative draft with `npm run octatrack:base -- --beta --stock OS.bin --out /private/tmp/new-build-dir`.
+The output directory includes `usb-audio-input.mwrm`, the optional stock-free RAM trial package.
+The draft base also accepts the existing output-only 0.3.0-experimental package.
+For panel automation, build a development twin with the same USB and DSP flags plus `--dev`.
+Use the existing
 [USB tools](../sdk/machines/octatrack/hw/README.md) to capture counters,
 routing and underruns on a unit.
 
@@ -170,4 +171,4 @@ and Main/Cue preset (`bdad3889b242`), enumerated both descriptor shapes,
 accepted input alternate settings 1 and 0, and restored the original four
 interfaces after Undo. During the streaming attempt the input counters
 remained zero. The released 0.3 output-only package also returned zero
-nonempty audio packets in the same emulator setup. The subsequent [MKII RAM trial](../sdk/octatrack/modules/usb-audio-out-tracks-main-cue/TESTING.md#private-usb-input-ram-trial-on-an-octatrack-mkii-21-november-2026) verified simultaneous ABCD input and Main/Cue output, both stereo recorder pairs and playback of R1 over USB. Concurrent FX loads still need a unit run.
+nonempty audio packets in the same emulator setup. The subsequent [MKII RAM trial](verification/2026-11-21-octatrack-usb-input.md) verified simultaneous ABCD input and Main/Cue output, both stereo recorder pairs and playback of R1 over USB. Concurrent FX loads still need a unit run.

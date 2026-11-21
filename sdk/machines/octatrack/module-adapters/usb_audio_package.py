@@ -437,8 +437,8 @@ def capture_release(loader, image, protected, sources, stock, upstream):
 
 
 def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None, upstream=None, usb_input=False):
-    if usb_input and (layout is not None or release or capture):
-        raise ValueError('USB audio input is available only in the private configurable candidate.')
+    if usb_input and layout is not None:
+        raise ValueError('USB audio input requires the configurable audio package.')
     input_port = load('modwerk_usb_input', HERE / 'usb_audio_input.py') if usb_input else None
     if layout is not None and layout not in SUPPORTED:
         raise ValueError('Not built as a package yet: ' + layout)
@@ -496,6 +496,8 @@ def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None,
         sources = {'generatedAssembly': hashlib.sha256(text.encode()).hexdigest()}
         for path in (HERE / 'usb_audio_settings.c', HERE.parent / 'include/modwerk_events.h'):
             sources[str(path.relative_to(ROOT))] = hashlib.sha256(path.read_bytes()).hexdigest()
+        if input_port:
+            sources['generatedSettings'] = hashlib.sha256(input_port.settings_source((HERE / 'usb_audio_settings.c').read_text()).encode()).hexdigest()
         preset = symbols['mwua_setting'] + 20
         if capture:
             if capture.exists() or not stock or not upstream:
@@ -509,7 +511,8 @@ def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None,
                 item['purpose'] = f'Authored {label} + {at - address} in the USB Audio image'
             capture.write_text(json.dumps(recipe, indent=2) + '\n')
         else:
-            recipe = json.loads(RECIPE.read_text())
+            recipe_path = HERE / 'usb-audio-input-reconstruction.json' if input_port else RECIPE
+            recipe = json.loads(recipe_path.read_text())
         authored = image
         recipe_api = load('usb_audio_reconstruction', HERE / 'stock_recipe.py')
         image, copies, fills = recipe_api.apply(image, [*offsets, preset], recipe, sources)
@@ -559,7 +562,7 @@ def main():
     parser.add_argument('--cross', default='m68k-elf-')
     parser.add_argument('--stock', type=Path, help='check the three sites\' guards against this OS file')
     parser.add_argument('--upstream', type=Path, help='the Elekloader checkout --stock is read with')
-    parser.add_argument('--usb-input', action='store_true', help='private duplex candidate for an input-enabled development base')
+    parser.add_argument('--usb-input', action='store_true', help='duplex trial package for an input-enabled base')
     parser.add_argument('--release', action='store_true', help='build from the reviewed stock reconstruction recipe')
     parser.add_argument('--capture-recipe', type=Path, help='record hash-only reconstruction data for review')
     args = parser.parse_args()

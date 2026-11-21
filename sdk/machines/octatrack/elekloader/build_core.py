@@ -1544,7 +1544,7 @@ def main():
     parser.add_argument('--usb-audio-profiles', action='store_true',
                         help='Offline staging only: source-link all six outputs and off, with --usb-audio as the explicit initial profile. No host settings/recovery or catalogue admission.')
     parser.add_argument('--usb-input', action='store_true',
-                        help='Private development base for the USB Audio duplex candidate.')
+                        help='Include the optional USB input transfer for a duplex USB Audio package.')
     parser.add_argument('--dsp-hook', choices=tuple(DSP_HOOK_EDITS), default='guard',
                         help="with --dsp-loader: the state-7 entry, guard (default); usbin, pretend, noflags, long: hardware bisect variants")
     parser.add_argument('--dsp-probe', choices=('A', 'B', 'S', 'W', 'M', 'X'),
@@ -1759,9 +1759,9 @@ def main():
     (source / 'boot_art.h').write_text(base_art.header(VERSION.split('-')[0]))
     usb_input = None
     if args.usb_input:
-        if not (args.dev and args.dsp_loader and args.dsp_hook == 'guard' and args.resident_stock_hooks
+        if not (args.dsp_loader and args.dsp_hook == 'guard' and args.resident_stock_hooks
                 and args.packaged_usb_audio and args.site_events and args.usb_midi and not args.usb_audio):
-            parser.error('--usb-input needs the development, packaged USB Audio and resident DSP base with the guarded transfer.')
+            parser.error('--usb-input needs the packaged USB Audio and resident DSP base with the guarded transfer.')
         sys.path.insert(0, str(APP / 'sdk/machines/octatrack/module-adapters'))
         import usb_audio_input as usb_input
     dsp_sites, dsp_layout, rows = [], None, None

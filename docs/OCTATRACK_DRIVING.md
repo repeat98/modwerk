@@ -136,9 +136,8 @@ the one-shot `npm run device -- try FILE` without `--accept`; do not use session
 A private module-only trial does not inherit the flashed base's kept module set. To test companions, prepare copies bound to the exact temporary base and review/trial the complete set; a Keep on the twin is not an inventory-recovery step. A host client's own trial timer can also remove the set while its USB keepalive is still healthy. State the timeout and distinguish it from a RAM clear or restart.
 
 Keep one uploader owner throughout a retained trial. A second
-`UploadSession.connect` sends HELLO and advances the vendor sequence, while the
-first transport retains its cached counter. That can make its next ENTER reuse
-the second client's sequence and receive a stale HELLO result. Shared observers
+`UploadSession.connect` sends HELLO and advances the vendor sequence. The host
+reads the current sequence before each command, including ENTER on timed Undo. Shared observers
 may read identity, inventory and load or drive panel requests; do not SUBMIT
 another upload frame while the first client retains ownership. Close paired Modwerk browser tabs before a native USB Audio trial. When the unit reconnects with new audio interfaces, a paired tab can claim the vendor interface and run its unfinished-sync recovery.
 

@@ -191,7 +191,6 @@ export class UsbVendorTransport implements UploadTransport {
   private device: ControlDevice
   private index: number
   private options: { retries?: number; pollMs?: number }
-  private sequence?: number
   private busy = false
   constructor(device: ControlDevice, interfaceNumber: number, options: { retries?: number; pollMs?: number } = {}) {
     if (!Number.isInteger(interfaceNumber) || interfaceNumber < 0 || interfaceNumber > 255) throw new RangeError('Invalid interface number.')
@@ -472,11 +471,12 @@ export class UsbVendorTransport implements UploadTransport {
     } finally { this.busy = false }
   }
   private async submit(frame: Uint8Array, signal: AbortSignal, onSubmit?: (sequence: number) => void) {
-    // Continue from the device's latest sequence; never reuse one, even across transports.
-    this.sequence ??= (await this.result(signal)).sequence
+    // Another client can have read status while this session was holding a trial.
+    // Reusing its sequence can make a refused SUBMIT look like its ready reply.
+    let sequence = (await this.result(signal)).sequence
     const retries = this.options.retries ?? 8
     for (let attempt = 0; ; attempt++) {
-      const sequence = this.sequence = (this.sequence + 1) & 0xffff
+      sequence = (sequence + 1) & 0xffff
       let sent: { status: string; bytesWritten: number } | undefined
       let transferError: unknown
       onSubmit?.(sequence)
