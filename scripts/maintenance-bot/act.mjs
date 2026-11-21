@@ -8,6 +8,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { TODO_COMMAND, actionId, classify } from './policy.mjs'
 import { MARKER, approveRun, boardGet, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
+import { pilotReport, recordPilotReviews, settlePilot } from './eval-pilot.mjs'
 import { dailyReport } from './report.mjs'
 
 const daily = process.env.BOT_MODE === 'daily', dir = process.env.BOT_DIR ?? 'bot'
@@ -215,6 +216,14 @@ const tally = status => log.filter(line => line.startsWith(status + ':')).length
 console.log(log.length ? log.length + ' carried out: ' + tally('done') + ' done, ' + tally('failed') + ' failed, ' + tally('expired') + ' dropped.' : 'Nothing was due.')
 if (rejected.length) console.log(rejected.length + ' held back by the policy.')
 
+// Check only public merge evidence. The model may select a public hint but cannot write a task body.
+if (Array.isArray(proposals.evalPilot) && proposals.evalPilot.length && !reviewError) {
+  await recordPilotReviews(api, bot, proposals.evalPilot)
+}
+const pilot = await bot('/eval-pilot')
+await settlePilot(api, bot, boardGet, pilot.records)
+const progress = pilotReport((await bot('/eval-pilot')).records)
+
 // 3. The fingerprint moves only after the model's proposals were filed, so a failed run is retried next pass.
 if (process.env.BOT_FINGERPRINT && hasReview && !reviewError) await bot('/state', 'PUT', { fingerprint: process.env.BOT_FINGERPRINT })
 
@@ -222,6 +231,10 @@ if (process.env.BOT_FINGERPRINT && hasReview && !reviewError) await bot('/state'
 if (daily) {
   const { actions } = await bot('/actions/recent?hours=24')
   const broken = !hasReview || !!reviewError
-  await bot('/report', 'POST', { text: dailyReport(actions, (await bot('/todos')).todos) + (broken ? '\n⚠️ The review itself failed today; see the Actions log.' : '') })
+  await bot('/report', 'POST', { text: dailyReport(actions, (await bot('/todos')).todos) + (state.pilotReported ? '' : '\n' + progress) + (broken ? '\n⚠️ The review itself failed today; see the Actions log.' : '') })
+}
+if (!state.pilotReported && progress.startsWith('Node eval pilot complete')) {
+  if (!daily) await bot('/report', 'POST', { text: progress })
+  await bot('/state', 'PUT', { pilotReported: true })
 }
 if (reviewError) throw new Error(reviewError)

@@ -4,6 +4,7 @@ import { testServer } from './test-server'
 import { handleCommunity } from '../../server/transport'
 import { digest } from '../../server/security'
 import { claimNote, messageBody, syncAgentClaims, CLAIM_LIMIT, OPEN_THREADS } from '../../server/agent-board'
+import { finishPilotCase, pilotRecords, recordPilot } from '../../server/eval-pilot'
 import * as client from '../../scripts/agent-board.mjs'
 
 const databases: DatabaseSync[] = []
@@ -81,6 +82,32 @@ describe('agent board', () => {
     await reply(ada, message.id, 'Which version?')
     vi.setSystemTime(now + 14 * day)
     expect(await drafts()).toContainEqual(expect.objectContaining({ id: message.id }))
+  })
+
+  it('posts one task per gap and routes it to an independent holder through the real board', async () => {
+    const { env, boardLogin, call, inbox, db } = await fixture()
+    const adapter = env.DB!
+    db.prepare("INSERT INTO maintenance_bot_state VALUES ('fingerprint','plain text')").run()
+    const author = await boardLogin('ada'), verifier = await boardLogin('bo')
+    const review = { number: 42, merge: 'f'.repeat(40), authorId: 101, verdict: 'gap', hint: 'Keeps the final row' }
+    await recordPilot(adapter, review)
+    await recordPilot(adapter, review)
+    const [record] = await pilotRecords(adapter), id = record.task!
+    expect((await inbox(author)).pilotTasks).toBeUndefined()
+    expect((await inbox(verifier)).pilotTasks).toEqual([expect.objectContaining({ id, source: 42 })])
+    const take = (token: string) => call('/agent-board/messages/' + id + '/take', 'POST', {}, token)
+    expect((await take(author)).status).toBe(403)
+    expect((await take(verifier)).status).toBe(200)
+    const decline = (token: string) => call('/agent-board/messages/' + id + '/replies', 'POST', { outcome: 'different-result', body: 'The earlier version passes the same check.' }, token)
+    expect((await decline(author)).status).toBe(403)
+    expect((await decline(verifier)).status).toBe(201)
+    await finishPilotCase(adapter, 42, { result: 'different-result' })
+    await finishPilotCase(adapter, 42, { result: 'added', evidence: 99 })
+    expect((await pilotRecords(adapter))[0].result).toBe('different-result')
+    expect((await inbox(verifier)).pilotTasks).toBeUndefined()
+    for (let number = 43; number <= 47; number++) await recordPilot(adapter, { ...review, number, verdict: 'covered' })
+    expect(await pilotRecords(adapter)).toHaveLength(5)
+    expect(db.prepare("SELECT COUNT(*) AS n FROM agent_messages WHERE user_id='tars' AND kind='wanted'").get()?.n).toBe(1)
   })
 
   it('groups independent tasks under an issue or claim and keeps their holders and PRs separate', async () => {
