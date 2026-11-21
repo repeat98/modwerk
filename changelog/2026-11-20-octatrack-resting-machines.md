@@ -1,0 +1,1 @@
+An installed machine module that no track of the project uses now rests on the Octatrack base: its handlers leave the audio frame until a track picks the machine, which wakes it before the pick lands. Machines a project uses anywhere stay awake, so pattern, Part and bank changes never wait for one.

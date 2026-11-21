@@ -11,6 +11,7 @@
 #define RUNTIME_SITE_EVENT_TABLES { 0, 0, 0, 0, 1, 0, 0 }
 #define RUNTIME_SITE_EVENT_RESTS { 1, 1, 0, 0, 0, 0, 0 }
 #define RUNTIME_SITE_EVENT_IN_USE 6u
+#define RUNTIME_SITE_EVENT_JUDGED 4u
 #define RUNTIME_SITE_EVENT_WORDS (5u * (RUNTIME_MODULES + 1u) + 6u)
 #define RUNTIME_SITE_EVENT_ROWS(r) { (r) + 0u * (RUNTIME_MODULES + 1u) + 0u, (r) + 1u * (RUNTIME_MODULES + 1u) + 0u, (r) + 2u * (RUNTIME_MODULES + 1u) + 0u, (r) + 3u * (RUNTIME_MODULES + 1u) + 0u, (r) + 3u * (RUNTIME_MODULES + 1u) + 3u, (r) + 3u * (RUNTIME_MODULES + 1u) + 6u, (r) + 4u * (RUNTIME_MODULES + 1u) + 6u }
 #define RUNTIME_OWNED_SITES 1u

@@ -3912,7 +3912,7 @@
       "id": "usb-audio-out-tracks-main-cue",
       "key": "USB AUDIO OUT TRACKS MAIN CUE",
       "name": "USB Audio",
-      "version": "0.2.0-experimental",
+      "version": "0.3.0-experimental",
       "category": "midi-usb",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -3920,14 +3920,18 @@
         "path": "modules/usb-audio-out-tracks-main-cue"
       },
       "access": {
-        "location": "The Octatrack USB port and your recording host’s audio input selector.",
+        "location": "PROJ > MODWERK > SETTINGS > USB AUDIO",
         "steps": [
-          "Open USB Audio setup, choose Computer or Outbox 8, and select the audio to send. Read the signal-tap description and save the setup before adding it.",
-          "For Outbox 8, assign up to four stereo sources to the physical outputs. Match the shown USB pairs in Elektron’s Outbox app; Modwerk does not program the Outbox.",
-          "For Computer, select the Octatrack USB input in your recording software and use the shown stereo channel pairs. Full multichannel operation requires high-speed USB."
+          "Open SETTINGS, highlight USB AUDIO and press YES. Open a field to see its choices. Press YES to select one or NO to go back.",
+          "For a computer, choose COMPUTER and a layout. TRACK TAP offers PRE LEVEL and POST LEVEL for the 16- and 20-channel track layouts.",
+          "For Outbox 8, choose OUTBOX 8 and assign the four stereo pairs. In the Outbox app, map USB pairs 1–4 to the four desired physical output pairs. Subsequent source changes take place on the Octatrack."
         ],
-        "screenshots": [],
-        "noUiReason": "This automatic USB output contribution adds no dedicated OT page, chooser entry or panel controls. Access is through the USB connection and the host’s audio input selector. The reviewer must verify this absence of OT UI against the pinned source before publication."
+        "screenshots": [
+          "media/ot-settings.png",
+          "media/ot-usb-audio.png",
+          "media/ot-track-tap.png",
+          "media/ot-outbox-pairs.png"
+        ]
       },
       "author": {
         "github": "markandrus",
@@ -3944,17 +3948,17 @@
         "label": "USB AUDIO",
         "family": "USB audio",
         "summary": "Record stereo mixes or individual tracks over USB, or send them to Outbox 8 at 44.1 kHz and 24 bits.",
-        "overview": "Choose one USB output layout in Modwerk: Main, Main + Cue, Track 8 / Master, eight tracks before LEVEL, eight tracks following LEVEL, or eight tracks plus Main and Cue. The updated shared USB stack supports the Outbox 8 44.1 kHz handshake. Modwerk stores a routing plan; apply its USB channel pairs separately in Elektron’s Outbox app. Existing configurations without USB settings keep the classic twenty-channel implementation.",
+        "overview": "Install USB Audio once. Open PROJ > MODWERK > SETTINGS > USB AUDIO to choose a computer layout, a track tap, or four stereo sends for Outbox 8. Existing Modwerk sets supply their saved routing when loaded.",
         "highlights": [
-          "Six selectable stereo output layouts; 2 to 20 USB channels",
-          "Outbox 8 rate handshake and shared audio / MIDI reset handling",
-          "Saved four-pair Outbox routing plan and per-layout CPU estimates"
+          "Stereo mixes or eight track stems, plus optional Main and Cue",
+          "Pre-LEVEL or post-LEVEL stems in both track layouts",
+          "Four assignable Outbox stereo pairs, including duplicates and silence"
         ],
         "usage": [
-          "Open USB Audio setup, choose Computer or Outbox 8, and select the audio to send. Read the signal-tap description and save the setup before adding it.",
-          "For Outbox 8, assign up to four stereo sources to the physical outputs. Match the shown USB pairs in Elektron’s Outbox app; Modwerk does not program the Outbox.",
-          "For Computer, select the Octatrack USB input in your recording software and use the shown stereo channel pairs. Full multichannel operation requires high-speed USB.",
-          "To return to the classic twenty-channel source, choose Computer and Use classic 20-channel setup. This removes the new settings; existing saved configurations without USB settings keep their prior code path."
+          "Install USB Audio and open PROJ > MODWERK > SETTINGS > USB AUDIO.",
+          "Choose COMPUTER and a LAYOUT. In either track layout, choose PRE LEVEL or POST LEVEL under TRACK TAP.",
+          "Choose OUTBOX 8 and select the source or OFF for each output pair. Map the four USB pairs to their physical outputs in the Outbox app.",
+          "Open OUTPUT MODE to silence USB Audio or to send only Main and Cue in the twenty-channel layout."
         ]
       },
       "controls": [],
@@ -3962,31 +3966,24 @@
         "firmware": "1.40C",
         "effectId": null,
         "location": "USB",
-        "conflicts": [
-          "usb-audio-out-main",
-          "usb-audio-out-main-cue",
-          "usb-audio-out-master",
-          "usb-audio-out-tracks"
-        ],
+        "conflicts": [],
         "limitations": [
           "Output only, fixed 44.1 kHz / 24-bit; USB input and Crossbar variants are excluded.",
-          "One audio layout per build; shared USB MIDI is included.",
           "Like every DRAM module, gives up about 10 MB of sample memory: projects that filled Flex/recorder memory can show OUT OF MEMORY. Shorten recorder reservations or load long samples into Static (#433).",
-          "Outbox assignments are a plan and must be applied in Elektron’s Outbox app.",
           "At full speed, track feeds fall back to a stereo sum and Main + Cue to Main.",
           "Post-LEVEL tracks exclude MAIN LEVEL and master effects on tracks 1–7. With a master track, tracks 1–7 lead track 8 by 32 samples.",
-          "Current-build Octatrack / Outbox operation, chip timing, complete memory bounds, Windows and Linux host behavior are not tested."
+          "The current build ran on an Octatrack MKII with macOS. Physical Outbox 8 outputs, Windows and Linux hosts, worst-case ColdFire cycles and complete memory bounds remain untested."
         ]
       },
       "resources": {
-        "recorded": "29 Sep 2026 (upstream record)",
+        "recorded": "20 November 2026, configurable release package",
         "storage": {
-          "label": "Audio rings",
-          "display": "Depends on USB layout",
+          "label": "Runtime memory",
+          "display": "Full bound unmeasured",
           "value": null,
           "unit": "bytes",
           "method": "unmeasured",
-          "conditions": "Exact linked section sizes are recorded per layout in evidence/layouts.json; the historical 88 KiB figure applies to the classic twenty-channel path. Complete stack / DMA and hardware memory bounds have not been measured.",
+          "conditions": "USB Audio 0.3 allocates 10,288 initialized bytes and 94,152 zero-initialized bytes for every layout. The complete bound including stack and DMA remains unmeasured.",
           "source": "README.md"
         },
         "processing": {
@@ -4015,16 +4012,16 @@
           "memory": {
             "level": "moderate",
             "basis": "source-estimate",
-            "rationale": "The selected source determines the static audio ring footprint. Linked sections are recorded for all six layouts in evidence/layouts.json. This tier describes source allocation sizes, not a complete hardware memory bound.",
+            "rationale": "All layouts use the same release package. Its linked section sizes are recorded in TESTING.md. Complete memory use including stack and DMA remains unmeasured.",
             "source": "README.md"
           }
         }
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Software checks cover six source-only layouts, GNU runtime linking, guarded hooks, packaging and configuration persistence. Owner approved this experimental release without physical hardware testing. Hardware operation, real-chip timing and complete memory bounds remain unmeasured.",
-        "hardwareStatus": "untested",
-        "evidenceRevision": "7b2984c859732ae6c797ae49c7d61d250b1b6519",
+        "summary": "On an Octatrack MKII, macOS recorded all five widths. Track 8/Master reconnected and survived Undo twice. Keep and card restoration after a physical power cycle passed on the same release image. See TESTING.md for build identities and limits.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "d55bb5f4df08451efa4fe6f9feac2f23c985a2a2",
         "gates": [
           "tools/verify/verify_usb.py",
           "tools/verify/verify_usb_align.py"
@@ -4033,12 +4030,17 @@
           "tutorial": {
             "title": "Record a mix or send Main + Cue to Outbox",
             "steps": [
-              "Choose and save: open USB Audio setup, choose Outbox 8 and Main + Cue mixes, then Assign in order. Save the setup to the named configuration and build locally from your own OS 1.40C file.",
-              "Connect and route: connect the Octatrack USB port to Outbox 8. In Elektron's Outbox app, match Main / USB 1/2 to physical outputs 1/2 and Cue / USB 3/4 to physical outputs 3/4. Modwerk stores this plan; it does not program the Outbox hardware.",
-              "Use and reset: Main is the final stereo mix; Cue is the separate stereo Cue bus. Outputs 5/6 and 7/8 are off. To use different signals, change and save the source and assignments, rebuild, and update the external app. Stop the stream before changing cabling."
+              "Load the USB Audio module. Open PROJ > MODWERK > SETTINGS > USB AUDIO and select OUTBOX 8 under SEND TO.",
+              "Choose MAIN + CUE under LAYOUT. Set OUT 1/2 to MAIN and OUT 3/4 to CUE. Pick OFF for the remaining outputs.",
+              "In the Outbox app assign the four USB pairs to their corresponding physical outputs. You can now change the source for each pair on the Octatrack."
             ]
           },
-          "screenshots": [],
+          "screenshots": [
+            "media/ot-settings.png",
+            "media/ot-usb-audio.png",
+            "media/ot-track-tap.png",
+            "media/ot-outbox-pairs.png"
+          ],
           "screenshotStyle": "black-and-white"
         }
       },
@@ -4047,7 +4049,76 @@
         "file": "LICENSE",
         "declaration": "Imported original/MIT-licensed sources with upstream copyright, author attribution and exact commit pins retained. No firmware, extracted stock routines, recordings or screenshots imported. Contributor licensing statements are retained in LICENSE; owner/reviewer verification is required before publication and is not automatic legal clearance."
       },
-      "media": []
+      "media": [
+        {
+          "path": "media/ot-settings.png",
+          "captureType": "emulator",
+          "caption": "Open PROJ, choose MODWERK and open SETTINGS. Highlight USB AUDIO and press YES.",
+          "alt": "SETTINGS lists USB AUDIO with a right-facing selection arrow and YES OPEN.",
+          "credit": "Modwerk, Octatrack MKII emulator capture",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SETTINGS",
+            "shows": "location",
+            "firmware": "1.40C",
+            "moduleVersion": "0.3.0-experimental",
+            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
+            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+          }
+        },
+        {
+          "path": "media/ot-usb-audio.png",
+          "captureType": "emulator",
+          "caption": "Open SEND TO to choose a computer or Outbox 8. Open LAYOUT to choose which tracks or mixes to send.",
+          "alt": "USB AUDIO shows SEND TO set to OUTBOX 8, LAYOUT to 20 CH, TRACK TAP to PRE LEVEL and OUTPUT MODE to ALL.",
+          "credit": "Modwerk, Octatrack MKII emulator capture",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "USB AUDIO",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.3.0-experimental",
+            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
+            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+          }
+        },
+        {
+          "path": "media/ot-track-tap.png",
+          "captureType": "emulator",
+          "caption": "On either track layout, open TRACK TAP. Choose PRE LEVEL for stems before track level, or POST LEVEL to record level changes.",
+          "alt": "TRACK TAP shows PRE LEVEL selected and POST LEVEL below it.",
+          "credit": "Modwerk, Octatrack MKII emulator capture",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "TRACK TAP",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.3.0-experimental",
+            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
+            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+          }
+        },
+        {
+          "path": "media/ot-outbox-pairs.png",
+          "captureType": "emulator",
+          "caption": "With OUTBOX 8 selected, open each output pair and choose its source. Here the first two pairs carry Main, the third is silent and the last carries Cue.",
+          "alt": "USB AUDIO shows OUT 1/2 MAIN, OUT 3/4 MAIN, OUT 5/6 OFF and OUT 7/8 CUE, with OUT 7/8 highlighted.",
+          "credit": "Modwerk, Octatrack MKII emulator capture",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "USB AUDIO outputs",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.3.0-experimental",
+            "imageSha256": "08e13819fc8fade5b1c69f4086537b648d0c4b4f60df78119e1b966a3e05af7a",
+            "setup": "Octatrack MKII panel in ot_emu, stopped transport, Outbox preset loaded from the disposable card. Actual panel output at 6× integer scale."
+          }
+        }
+      ]
     },
     {
       "schemaVersion": 2,
@@ -13871,6 +13942,236 @@
         "spdx": "MIT",
         "file": "LICENSE",
         "declaration": "Original module by Jan Kolkmeier, MIT. No firmware, extracted stock code or built images are included."
+      },
+      "media": []
+    },
+    {
+      "schemaVersion": 2,
+      "id": "screen-off",
+      "key": "SCREEN OFF",
+      "name": "Screen Off",
+      "version": "0.1.0-experimental",
+      "category": "system",
+      "access": {
+        "location": "Front panel: hold UP, tap NO",
+        "steps": [
+          "Hold UP and tap NO. The screen goes black. Let go of both keys.",
+          "Press PLAY, change a pattern or turn a knob. The action happens and the screen stays black.",
+          "Hold UP and tap NO again. The screen returns to the page you were on."
+        ],
+        "screenshots": [],
+        "noUiReason": "It draws nothing of its own. Hold UP and tap NO and the stock screen goes black until the same chord."
+      },
+      "author": {
+        "github": "jonathanwardle1992-beep",
+        "credits": [
+          "jonathanwardle1992-beep: the chord and the wish to blank the panel while a pattern keeps running."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "Blank the screen with UP + NO",
+        "family": "Front-panel shortcut",
+        "summary": "Hold UP and tap NO to blank the screen until the same chord. Sound, the sequencer and the other keys keep going.",
+        "overview": "The MKII already dims its OLED after five quiet minutes and turns it off after an hour, and only while the sequencer is stopped. Screen Off blanks the glass at once, including while a pattern plays, and leaves it blank until you ask for it back. The trig lamps stay lit, so a running pattern is still visible on the keys.",
+        "highlights": [
+          "Hold UP and tap NO. The screen goes black. The same chord brings it back.",
+          "Every other key and every knob still does what it did. The screen stays black while you use them.",
+          "UP alone and NO alone are unchanged. NO still disarms, or steps back in a list.",
+          "Nothing is stored in the project. A power cycle turns the screen back on."
+        ],
+        "usage": [
+          "Hold UP and tap NO. The screen goes black. Let go of both keys.",
+          "Press PLAY, change a pattern or turn a knob. The action happens and the screen stays black.",
+          "Hold UP and tap NO again. The screen returns to the page you were on."
+        ]
+      },
+      "controls": [],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Project sequencer",
+        "conflicts": [],
+        "uiClaims": [
+          "key:UP+NO"
+        ],
+        "limitations": [
+          "OS 1.40C. The author reports that on a MKII the chord blanks the screen and brings it back. It needs the Modwerk base: the base passes keys and the composed frame to the module.",
+          "The blank clears the pixels. On a MKII that leaves the OLED dark. Whether the panel's own power-off command can be used as well is not yet known. On an MKI the backlight may stay lit behind a blank glass.",
+          "The screen stays black until UP + NO again, including while other keys and knobs do their usual jobs. You will not see the result until the screen is back.",
+          "Holding UP already moves the highlight in a list by one step before NO blanks the screen. That NO does not disarm and does not answer a question.",
+          "The blank is forgotten at power-on. It is not saved with the Part or the project. The stock screen saver still runs when this blank is off.",
+          "Known issue: not yet tested on the MKI, or beside the stock screen saver while a pattern plays."
+        ]
+      },
+      "resources": {
+        "recorded": "19 November 2026",
+        "storage": {
+          "label": "ColdFire unit",
+          "display": "272 bytes",
+          "value": 272,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "Package 14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c. Linked image 256 bytes (250 of code, 2 of alignment, the 4-byte so_at pointer) plus 12 bytes of bss. The redraw path pushes 4 bytes on the UI stack. No heap and no DSP memory. The composed frame is stock's.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "ColdFire, per key and per composed frame",
+          "display": "25033 cycles",
+          "value": 25033,
+          "unit": "cycles/event",
+          "method": "emulator",
+          "conditions": "ot_emu executed instructions from so_draw's entry to its rts, interrupts included, blank on. 26 clears of the frame took 6157 with no interrupt inside the draw. The dearest was 25033. This is not a chip wall-clock count.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "UI task: one key chord, and a frame clear only while the blank is on.",
+          "cpu": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "The chord is a handful of compares. The clear is 1024 bytes on the UI draw, and only while the screen is black. Nothing runs in the audio interrupt.",
+            "source": "TESTING.md"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP code. The blank only clears the composed frame on the UI task.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "256 bytes of linked image, 12 bytes of state, and a 4-byte push on the redraw path. No heap and no DSP memory.",
+            "source": "screen_off.c"
+          }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price",
+          "date": "2026-11-19",
+          "conditions": "MKII, OS 1.40C, development twin 878307834ad3c23a RAM-booted (no controller rows, not flashed). Package 14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c, built before this twin. One 8 s reading, pattern left as the unit came up, transport stopped beforehand, module installed and the blank off. Frame interrupt +0.0 points. The CPU meter read +1.7 and is not this price.",
+          "source": "TESTING.md"
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "Host gate on screen_off.c. The author reports that on a MKII the chord blanks the screen and brings it back, and that a power cycle brought the screen back on with the module still installed. An MKI was not tried.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "7105ec60ecfdda0a00f31ce7f76f2091580644cf",
+        "gates": [
+          "modules/screen-off/verify.py"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial",
+              "steps": [
+                "Hold UP and tap NO. The screen goes black. Let go of both keys.",
+                "Press PLAY, or turn a knob. The Octatrack does it, and the screen stays black. The trig lamps still show the pattern.",
+                "Hold UP and tap NO again. The screen returns to the page you left."
+              ]
+            },
+            "screenshots": [],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "a02e6e703841b5db83e81a3c7110c025263101998a4cb94b9e5dec4b4d206c34",
+          "imageSha256": "14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 25033,
+              "maxConfiguration": 25033,
+              "maxInstances": 1,
+              "budget": 26600000,
+              "unit": "cycles/event",
+              "method": "emulator",
+              "conditions": {
+                "parameterExtremes": "There is no parameter. The blank is off or on, and the dearest draw is the clear of the 1024-byte frame.",
+                "parameterModulation": "No LFO, p-lock, MIDI CC or scene reaches this module. The chord is the only control, and it was the event that was counted.",
+                "modeSwitching": "One UP+NO turned the blank on. A later run sent STOP and PART+RIGHT, which changed the Part byte from 0 to 1, then PLAY, between two groups of the same chord.",
+                "maxLoad": "One instance. It takes no track, no FX slot and no DSP core. The count is one draw, not a sum across tracks.",
+                "inputConditions": "With the blank off the draw returned in 10 instructions. With it on, 26 clears took 6157 and the dearest, the same clear with an interrupt inside it, took 25033. That count is executed instructions, not chip wall-clock cycles, and it does not bound the stock redraw call."
+              },
+              "report": "TESTING.md"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "ColdFire code",
+                "space": "cpu-ram",
+                "words": 250,
+                "wordBits": 8,
+                "bytes": 250,
+                "scope": "shared"
+              },
+              {
+                "name": "Alignment before so_at",
+                "space": "cpu-ram",
+                "words": 2,
+                "wordBits": 8,
+                "bytes": 2,
+                "scope": "shared"
+              },
+              {
+                "name": "so_at pointer",
+                "space": "cpu-ram",
+                "words": 4,
+                "wordBits": 8,
+                "bytes": 4,
+                "scope": "shared"
+              },
+              {
+                "name": "struct so",
+                "space": "cpu-ram",
+                "words": 12,
+                "wordBits": 8,
+                "bytes": 12,
+                "scope": "shared"
+              },
+              {
+                "name": "Redraw argument on the UI stack",
+                "space": "sdram",
+                "words": 4,
+                "wordBits": 8,
+                "bytes": 4,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 272,
+            "maxInstances": 1,
+            "totalBytes": 272,
+            "conditions": "ABI 8 package 14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c, image 256 bytes and bss 12, one instance. The 4-byte figure is the only push in the image. Stock's stack under the redraw call, the composed frame and the held-key row are not this module's. No heap, no table, no DSP memory. Hardware canaries were not measured.",
+            "report": "TESTING.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKII",
+            "testedOn": "2026-11-18",
+            "tester": "jonathanwardle1992-beep",
+            "sourceRevision": "7105ec60ecfdda0a00f31ce7f76f2091580644cf",
+            "imageSha256": "14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c",
+            "summary": "On a MKII, OS 1.40C, the author reports that hold UP, tap NO blanks the screen and the same chord brings it back, including in a list, the sample editor, the arranger and the status page. On 18 November 2026 the same package was kept, the author powered the unit off and on, and they report the screen came back on with the module still installed. Removal while the screen was black brought the page back and the chord no longer blanked it. A try without keeping rolled back. No SAVE and no flash.",
+            "limitations": [
+              "The blank and the restore are the author's report. The log shows the tick word, not a photograph of the glass.",
+              "An MKI was not tried. A card install was not tried.",
+              "The stock screen saver, the OLED power-off command and the MKI backlight were not tried.",
+              "Part save and project save were not tried. The blank is not stored.",
+              "No audio was measured. This module writes no samples."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Original module by jonathanwardle1992-beep, MIT. No firmware, extracted stock code or built images are included."
       },
       "media": []
     }

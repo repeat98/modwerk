@@ -16,7 +16,7 @@ const uint8_t *machine_contribution(const struct runtime_dsp *);
 int machine_contributor_validate(const struct runtime_dsp *, unsigned operation);
 const struct machine_retirement *machine_retirement(const uint8_t *record);
 /* Machine lock held. RUNTIME_OK, RUNTIME_IN_USE while the leaving machine is still held; sets to->foreign_roots
- * for a contributor. */
-int machine_contributor_admission(const struct runtime_dsp *from, struct runtime_dsp *to, machine_memory_read, void *,
-                                  uint32_t bank, unsigned operation);
+ * for a contributor. read_ui sees the outgoing sites as restored. read_part sees live Part data. */
+int machine_contributor_admission(const struct runtime_dsp *from, struct runtime_dsp *to,
+                                  machine_memory_read read_ui, machine_memory_read read_part, void *context, uint32_t bank, unsigned operation);
 #endif

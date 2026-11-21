@@ -16,4 +16,9 @@ if not os.environ.get('MODWERK_UNIT_TURN') and os.environ.get('MODWERK_UNIT') no
 s = socket.socket(socket.AF_UNIX)
 s.connect(os.environ.get('MODWERK_DEV_SOCKET', '/tmp/modwerk-dev.sock'))
 s.sendall((line + '\n').encode())
-sys.stdout.write(s.makefile().read())
+reply = s.makefile().read()
+if not reply:
+    raise SystemExit('The device server disconnected without a reply.')
+sys.stdout.write(reply)
+if any(line.startswith('error: ') for line in reply.splitlines()):
+    raise SystemExit(1)
