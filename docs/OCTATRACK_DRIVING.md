@@ -302,6 +302,8 @@ not isolated: verify each held-row transition and stock modifier release, and st
   last time, like stock's, so go UP to its top before counting rows down. On older bases these were SYSTEM >
   MODWERK and MODWERK TEST.
 
+`device:price --memory --out FILE.json` also records bytes in the module pool and program words on each DSP core after every reading. These are tracked allocations. Pair them with the module's region inventory for state, existing reservations and buffers.
+
 ## Where the state is (OS 1.40C)
 
 | What | Where |

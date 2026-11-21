@@ -116,6 +116,15 @@
         "rationale": "About 4.7 KB of DRAM data in the platform reserve plus the unit's code, and a 2,310-byte battery-RAM table; no per-instance copies.",
         "source": "TESTING.md"
       }
+    },
+    "cpuPrice": {
+      "value": 0.1,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-21",
+      "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7. Private runtime package built from the listed Play Modes 0.2.0 source; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.6 % before, 32.7 % installed and used nowhere; CPU meter 45.6 % before, 45.2 % at rest.",
+      "source": "evidence/cpu-price.json"
     }
   },
   "tests": {
