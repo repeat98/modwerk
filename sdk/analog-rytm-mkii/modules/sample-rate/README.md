@@ -1,6 +1,6 @@
 # Improved SMPL
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.6.1-experimental, OS 1.74 with core-ar2 0.7. Called Sample Playback Rate before 0.2.0 and Fine Tune + Sample Rate in 0.2.0 and 0.3.0; its id stays `sample-rate`. Since 0.6.0 it holds Ping Pong Loop (LOP PIPO and the zero snap on STA and END), which was its own module, `pipo-loop`, up to 0.1.2: both change how a sample plays from the SAMPLE page, so they live in one place. Ping Pong Loop has left the library; install this module instead.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.6.2-experimental, OS 1.74 with core-ar2 0.7. Called Sample Playback Rate before 0.2.0 and Fine Tune + Sample Rate in 0.2.0 and 0.3.0; its id stays `sample-rate`. Since 0.6.0 it holds Ping Pong Loop (LOP PIPO and the zero snap on STA and END), which was its own module, `pipo-loop`, up to 0.1.2: both change how a sample plays from the SAMPLE page, so they live in one place. Ping Pong Loop has left the library; install this module instead.
 
 ## Overview
 
