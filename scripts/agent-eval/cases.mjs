@@ -13,6 +13,7 @@ export const cases = [
   {
     id: 'bold-guides', pr: 1334, merge: 'd9cba731ef5f43bc675af629ac1ac32c3fd41a13',
     files: ['scripts/pr-body.mjs', '.github/pull_request_template.md'],
+    guide: 'markdown-fields.md',
     task: 'The PR description check rejects a completed guides answer when the author formats the label or question in bold Markdown. Accept inline answers and a bold question with its answer on the next paragraph. An empty heading followed by another heading still needs an answer. Preserve existing description checks.',
   },
 ]

@@ -82,7 +82,7 @@ These stumbling blocks have each cost a contributor and the owner a repair round
 
 The Octatrack compiler job rebuilds every base-bound package with the pinned Elekloader sources and compares its bytes with the published package. To repeat that check from the repository root, run `bash scripts/test-base-bound.sh <compiler-image-id> [local-elekloader-checkout]`. It uses the committed tree. The SDK summary lists other skipped checks and their prerequisites.
 
-The required PR check includes the description and hardware-evidence verdict. Editing the description or changing draft status runs it again. The branch must be current with main to merge.
+The required PR check includes the description and hardware-evidence verdict. Editing the description or changing draft status runs it again. When changing how the checker reads form fields, [exercise inline labels and standalone questions](../scripts/agent-eval/markdown-fields.md). The branch must be current with main to merge.
 
 ### Who reviews a first release
 
