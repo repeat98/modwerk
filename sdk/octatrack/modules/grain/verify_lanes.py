@@ -22,18 +22,18 @@ FLEX_RENDER = 0x40004008
 CURSOR = 0x80001C80
 
 
-def check_track(image, symbols, track, ping, pool=None):
+def check_track(image, symbols, track, ping, pool=None, audition=False):
     cpu = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
     cpu.ctl_set_cpu_model(m68k_const.UC_CPU_M68K_CFV4E)
     for address, size in ((IMAGE, 0x10000), (0x200000, 0x10000), (0x40000000, 0xE0000),
                           (0x80000000, 0x10000), (0x46C82000, 0x1000), (0x460E7000, 0x1000), (0x100B1000, 0x1000)):
         cpu.mem_map(address, size)
     cpu.mem_write(IMAGE, image)
-    # The sample pool window and the selected track. With the pool open on track `pool`, only that track's voice plays the
-    # audition as a plain Flex; every other Grain track keeps its granular path.
+    # The sample pool window and the selected track. Opening the pool changes nothing: only a START with the audition flag
+    # (FUNC + YES, 0xe0 on the MKII against a sequencer trig's 0xc0) plays that voice as a plain Flex until the next trig.
     cpu.mem_write(0x460E70E0, struct.pack(">I", 1 if pool is not None else 0))
     cpu.mem_write(0x100B14CC, bytes((pool if pool is not None else 0,)))
-    plain = pool == track
+    plain = audition
     # Synthetic Flex callbacks simply return. The render callback also emits a valid 16-frame packet.
     for address in (FLEX_START, FLEX_RENDER):
         cpu.mem_write(address, bytes.fromhex("4e75"))
@@ -63,7 +63,8 @@ def check_track(image, symbols, track, ping, pool=None):
     cpu.reg_write(m68k_const.UC_M68K_REG_SR, 0x2700)
     for entry in ("grain_start", "grain_render"):
         cpu.reg_write(m68k_const.UC_M68K_REG_A7, STACK)
-        cpu.mem_write(STACK, struct.pack(">5I", RETURN, track, ping, 0, 16))
+        third = (0xE0 if audition else 0xC0) if entry == "grain_start" else 0   # START's flags, render's first frame
+        cpu.mem_write(STACK, struct.pack(">5I", RETURN, track, ping, third, 16))
         cpu.emu_start(symbols[entry], RETURN, count=20000)
         if cpu.reg_read(m68k_const.UC_M68K_REG_PC) != RETURN or cpu.mem_read(lane, 48) != frame:
             raise AssertionError(f"{entry} on T{track + 1}, ping {ping} failed to return the complete Flex frame")
@@ -313,14 +314,15 @@ if __name__ == "__main__":
         for track in range(8):
             for ping in range(2):
                 check_track(image, symbols, track, ping)
-        # Pool open on T5 (an audition there) or on T1: that track plays plain Flex, the other seven stay granular.
+        # Pool open on T5 or on T1: all eight tracks stay granular; an audition START on the pool's track plays plain Flex.
         for pool in (4, 0):
             for track in range(8):
                 check_track(image, symbols, track, 0, pool)
+            check_track(image, symbols, pool, 0, pool, audition=True)
         check_stereo(image, symbols)
         check_assign(image, symbols)
     print("[PASS] Grain preserves all 48 Flex frame bytes across START and render on all eight tracks and both buffers")
-    print("[PASS] With the pool open on T5 or T1, only that track's voice takes the plain Flex path; Grain on the other tracks stays granular")
+    print("[PASS] With the pool open on T5 or T1 every track stays granular; only an audition START (0xe0) takes the plain Flex path")
     print("[PASS] Compiled SCAN label and cursor match on 24-bit stereo at all 128 settings and 128 legacy values")
     print("[PASS] Compiled 16-bit and 24-bit stereo kernels match the reference PCM and six cursors")
     print("[PASS] T1/T5 assignment refreshes Flex once, restores both Part copies and queues no control writes on exit")
