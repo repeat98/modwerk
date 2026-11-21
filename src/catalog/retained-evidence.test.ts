@@ -129,6 +129,9 @@ describe('risk-based retained module evidence',()=>{
     artifact.packages[0].version=document.version
     artifact.sourceCommit='b'.repeat(40)
     put(path,JSON.stringify(artifact));expect(await check()).toBe('retained-evidence')
+    // Package files no longer copy the build's provenance (module-build.json holds it); evidence from before still holds.
+    const current=structuredClone(artifact);delete current.sourceCommit;delete current.moduleVersions
+    put(path,JSON.stringify(current));expect(await check()).toBe('retained-evidence')
     artifact.packages[0].address++
     put(path,JSON.stringify(artifact));await expect(check()).rejects.toThrow('full qualification')
     artifact.packages[0].address--

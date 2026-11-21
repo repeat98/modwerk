@@ -22,6 +22,7 @@ it('checks real PR publication changes without executing module source', async (
     put(resolve(root,'sdk/catalog.json'),JSON.stringify(catalog))
   }
   const run=(...args:string[])=>spawnSync(process.execPath,['scripts/modules.mjs',...args],{cwd:root,encoding:'utf8'})
+  const draft=()=>spawnSync(process.execPath,['scripts/modules.mjs','--base','HEAD'],{cwd:root,encoding:'utf8',env:{...process.env,MODWERK_EVIDENCE_PENDING:'1',GITHUB_ACTIONS:''}})
   const failure=()=>{const result=run('--base','HEAD','--write');expect(result.status).not.toBe(0);return result.stderr}
   const git=(...args:string[])=>execFileSync('git',args,{cwd:root,encoding:'utf8'})
   try {
@@ -69,6 +70,12 @@ it('checks real PR publication changes without executing module source', async (
     // A new version's TESTING.md names it (scripts/module-qualification.mjs, testingVersionProblem).
     put(resolve(folder,'TESTING.md'),'Fixture document for 0.1.1\n')
     expect(failure()).toContain('actual screenshots')
+    // A draft pull request reports the missing evidence and goes on to the next check, which still fails: resource estimates are
+    // written before a unit test, so a draft owes them like any other check.
+    const pending=draft()
+    expect(pending.stderr).toContain('Release evidence still to come (draft): '+document.id+': '+document.id+'.access: publication requires OT UI access instructions and actual screenshots')
+    expect(pending.stderr).toContain('release requires populated CPU, DSP core and memory gauges')
+    expect(pending.status).not.toBe(0)
     const path='media/ui.png'
     document.access.screenshots=[path]
     // Synthetic image fixture exercises file validation, not authenticity review.
@@ -110,4 +117,4 @@ it('checks real PR publication changes without executing module source', async (
     save()
     expect(failure()).toContain('actual screenshots')
   } finally { rmSync(root,{recursive:true,force:true}) }
-},15000)
+},20000)
