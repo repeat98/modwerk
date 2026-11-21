@@ -2,6 +2,25 @@
 
 Grain 0.1.0-experimental · by A Force Truly Evil.
 
+## Packed stereo mixer candidate, 21 November 2026
+
+The private SDK build and the catalogue builder produced package `9ad5285502117695e906dc90770840990008cea1a19398b8d2f395e870238443`. It keeps six voices and the 35-point admission price. The ColdFire mixes a 24-bit stereo page in one register-resident loop and reads the Flex page map once per callback. A second take in the same recorder slot can replace the first take's physical pages between callbacks. The compiled test remapped R3 and verified both its page address and the change in output PCM.
+
+The 512 ColdFire comparisons matched the previous six-voice package (`ac1e5540`) for every PCM word and every voice cursor. Both 120-second compiled soaks reached six voices. T1 and T5 each matched all 5,292,000 stereo frames of the portable reference, SHA-256 `7f45ce08b48ea409323cd4bad3df6088283e31d1ab628d0f7a7e4b8e8979bb47`. The 1,600 paged blocks, 48 sparse-page cases, 256 SCAN values, and assignment and return-to-Flex checks also passed.
+
+All 64 six-voice timing fixtures executed fewer instructions. Counts cover the granular kernel and its synthetic page resolver.
+
+| Source frames | Page crossing | Previous mean | Candidate mean | Previous peak | Candidate peak |
+| --- | --- | ---: | ---: | ---: | ---: |
+| 16 | No | 5,780.1 | 4,684.9 | 5,961 | 4,793 |
+| 16 | Yes | 6,932.8 | 5,853.2 | 7,195 | 6,030 |
+| 32 | No | 10,257.5 | 8,054.2 | 10,617 | 8,281 |
+| 32 | Yes | 11,411.9 | 9,224.4 | 11,855 | 9,522 |
+
+The [static timing analysis](evidence/timing/candidate_bound.py) checks the identity of the linked package. A start callback is bounded at 70 instructions and 796 zero-wait core cycles. For 16 source frames, the render bounds are 21,453 instructions and 186,620 cycles. For 32 frames they are 39,517 instructions and 343,420 cycles. These conservative bounds exceed the 95,782-cycle frame budget before stock calls, memory contention and interrupts are accounted for. They do not certify the deadline.
+
+The package is 27,280 bytes. The loaded image is 26,076 bytes with 2,440 bytes of BSS, totaling 28,516 bytes of static RAM. GCC's Grain-only stack bounds include return addresses and reach 668 bytes for the audio callback. Hardware USB capture, musical MIDI, STOP and sustained T1/T5 playback on this hash are pending.
+
 ## Six-voice private build, 21 November 2026
 
 The SDK reproduced private package `ac1e55403bf37b39c529501d30c610c5f055ef73b04a359c25b07b023d6d51bd`. The comparison package was the draft at `402780562`, SHA-256 `0c5632f677aecd873b11ae71a82ac5d72c3357d1dd43ccdb1dfc545cd3a5f38a`. Both have six voices and a 35-point reservation. The new package occupies 26,860 bytes on disk with 25,696 bytes of image and 2,120 bytes of BSS. GCC's stack-usage output, checked against identical production assembly, gives 688 bytes for the deepest Grain-owned render chain including return addresses.

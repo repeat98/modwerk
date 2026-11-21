@@ -135,11 +135,11 @@
     "recorded": "2026-11-20",
     "storage": {
       "label": "Module image and memory",
-      "display": "27,140 bytes of static runtime memory",
-      "value": 27140,
+      "display": "28,516 bytes of static runtime memory",
+      "value": 28516,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Package 0c5632f6 loads 25,016 bytes of code and data and declares 2,124 bytes of BSS. The deepest Grain-only call paths use 692 stack bytes for audio and 392 for drawing, including return addresses. Nested interrupts, stock callees and loader overhead add to these figures.",
+      "conditions": "Package 9ad52855 loads 26,076 bytes of code and data and declares 2,440 bytes of BSS. The deepest Grain-only audio call path uses 668 stack bytes including return addresses. Stock calls, interrupt nesting and loader overhead are additional.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -168,7 +168,7 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "The 26,236-byte package loads 25,016 bytes of code and data and declares 2,124 bytes of zero-initialized state. It reads existing Flex pages. Stack and loader overhead are additional.",
+        "rationale": "The 27,280-byte package loads 26,076 bytes of code and data and reserves 2,440 bytes of zero-initialized state. It reads the existing Flex sample pages. Stack and loader overhead are additional.",
         "source": "TESTING.md"
       }
     },

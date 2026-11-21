@@ -214,13 +214,17 @@ static inline int gran_fetch(GranPage *pg, const GranSample *s, uint32_t idx, in
     return 1;
 }
 
+typedef struct { int32_t mid, side; } StereoSum;
+
 /* Stereo grains use complementary pan coefficients. Factoring out the unity term leaves one
  * signed product per sample. The two shifts for left pan retain the original floor rounding. */
-static inline void mix_stereo(int32_t *mid, int32_t *side, int32_t l, int32_t r, int32_t window,
+static inline void mix_stereo(StereoSum *mix, int32_t l, int32_t r, int32_t window,
                               int32_t pan, int sign)
 {
-    int32_t vm = (((l + r) >> 1) * window) >> 15;
-    int32_t vs = (((l - r) >> 1) * window) >> 15;
+    int32_t sum = (l + r) >> 1;
+    int32_t vm = (sum * window) >> 15;
+    /* floor((l - r) / 2) equals floor((l + r) / 2) - r, including odd sums. */
+    int32_t vs = ((sum - r) * window) >> 15;
     if (sign > 0) {
         int32_t change = (-(vm + vs) * pan) >> 15;
         vm += change;
@@ -230,8 +234,12 @@ static inline void mix_stereo(int32_t *mid, int32_t *side, int32_t l, int32_t r,
         vm += product >> 15;
         vs += -product >> 15;
     }
-    *mid += vm;
-    *side += vs;
+#if defined(__m68k__)
+    __asm__("add.l %2,%0\n\tadd.l %3,%1" : "+m"(mix->mid), "+m"(mix->side) : "d"(vm), "d"(vs) : "cc");
+#else
+    mix->mid += vm;
+    mix->side += vs;
+#endif
 }
 
 static inline void advance_cursor(uint32_t *index, uint32_t *fraction, uint32_t whole, uint32_t frac)
@@ -250,7 +258,7 @@ static inline void advance_cursor(uint32_t *index, uint32_t *fraction, uint32_t 
  * page lookup state. The Q32.32 cursor carries into the sample index on the ColdFire. */
 static inline __attribute__((always_inline)) void stereo_loop(GranGrain *grain, const uint8_t *page,
         unsigned bytes, uint32_t first, uint32_t whole, uint32_t frac, const uint16_t *win,
-        int32_t *mid, int32_t *side, unsigned n, int fixed_gain, int pan_sign)
+        StereoSum *mix, unsigned n, int fixed_gain, int pan_sign)
 {
     uint32_t index = grain->idx - first, fraction = grain->fr;
     uint32_t phase = grain->ph, phase_step = grain->phs;
@@ -278,7 +286,7 @@ static inline __attribute__((always_inline)) void stereo_loop(GranGrain *grain, 
         }
 #endif
         if (!fixed_gain) gain = win[(phase >> 16) & 255u];
-        mix_stereo(mid + i, side + i, l, r, gain, pan,
+        mix_stereo(mix + i, l, r, gain, pan,
                    pan_sign == 2 ? (pan > 0) - (pan < 0) : pan_sign);
         if (__builtin_constant_p(frac) && frac == 0) {
             index += whole;
@@ -292,42 +300,133 @@ static inline __attribute__((always_inline)) void stereo_loop(GranGrain *grain, 
     grain->ph += n * phase_step;
 }
 
+#if defined(__m68k__)
+/* Decode both signed PCM words, apply the Q15 window and signed pan, and accumulate in order.
+ * The 24-bit stereo page holds 1024 packed six-byte frames. The caller bounds the run.
+ * Keeping the Q32 cursor and its carry in registers avoids spilling it between samples.
+ * Window and pan choices specialize at compile time. The C path uses the same rounding. */
+static inline __attribute__((always_inline)) void mix_page24(GranGrain *g,
+        const uint8_t *page, uint32_t first, uint32_t whole, uint32_t frac, const uint16_t *window,
+        StereoSum *mix, unsigned n, int32_t pan, int sign, int fixed_gain)
+{
+    uint32_t index = g->idx - first, fraction = g->fr;
+    uint32_t phase = g->ph, phase_step = g->phs;
+    int32_t gain = fixed_gain ? window[(phase >> 16) & 255u] : 0;
+    if (sign > 0) pan = -pan;
+    const StereoSum *end = mix + n;
+    const uint8_t *address;
+    int32_t mid, side, correction;
+    __asm__ volatile (
+        "1:\n\t"
+        ".if %c[variable]\n\t"
+        "move.l %[phase],%[gain]\n\t"
+        "swap %[gain]\n\t"
+        "mvz.b %[gain],%[gain]\n\t"
+        "mvz.w (%[window],%[gain].l*2),%[gain]\n\t"
+        "adda.l %[phase_step],%[phase]\n\t"
+        ".endif\n\t"
+        "lea (%[page],%[idx].l*2),%[address]\n\t"
+        "mvs.w (%[address],%[idx].l*4),%[mid]\n\t"
+        "mvs.w (3,%[address],%[idx].l*4),%[side]\n\t"
+        "add.l %[side],%[mid]\n\t"
+        "asr.l #1,%[mid]\n\t"
+        "neg.l %[side]\n\t"
+        "add.l %[mid],%[side]\n\t"
+        "muls.l %[gain],%[mid]\n\t"
+        "muls.l %[gain],%[side]\n\t"
+        "asr.l %[shift],%[mid]\n\t"
+        "asr.l %[shift],%[side]\n\t"
+        ".if %c[sign] > 0\n\t"
+        "move.l %[mid],%[adjust]\n\t"
+        "add.l %[side],%[adjust]\n\t"
+        "muls.l %[pan],%[adjust]\n\t"
+        "asr.l %[shift],%[adjust]\n\t"
+        "add.l %[adjust],%[mid]\n\t"
+        "add.l %[adjust],%[side]\n\t"
+        ".elseif %c[sign] < 0\n\t"
+        "move.l %[mid],%[adjust]\n\t"
+        "sub.l %[side],%[adjust]\n\t"
+        "muls.l %[pan],%[adjust]\n\t"
+        "move.l %[adjust],%[address]\n\t"
+        "asr.l %[shift],%[adjust]\n\t"
+        "add.l %[adjust],%[mid]\n\t"
+        "move.l %[address],%[adjust]\n\t"
+        "neg.l %[adjust]\n\t"
+        "asr.l %[shift],%[adjust]\n\t"
+        "add.l %[adjust],%[side]\n\t"
+        ".endif\n\t"
+        "add.l %[mid],(%[dst])+\n\t"
+        "add.l %[side],(%[dst])+\n\t"
+        "add.l %[frac],%[sub]\n\t"
+        "addx.l %[whole],%[idx]\n\t"
+        "cmpa.l %[end],%[dst]\n\t"
+        "bne.b 1b"
+        : [idx] "+&d"(index), [sub] "+&d"(fraction), [dst] "+&a"(mix),
+          [phase] "+&a"(phase), [gain] "+&d"(gain), [address] "=&a"(address), [mid] "=&d"(mid), [side] "=&d"(side), [adjust] "=&d"(correction)
+        : [page] "a"(page), [end] "a"(end), [frac] "a"(frac), [whole] "d"(whole),
+          [pan] "m"(pan), [window] "ai"(fixed_gain ? 0 : (uintptr_t)window), [phase_step] "m"(phase_step),
+          [variable] "i"(!fixed_gain), [shift] "d"(15), [sign] "i"(sign)
+        : "cc", "memory");
+    g->idx = first + index;
+    g->fr = fraction;
+    g->ph = fixed_gain ? phase + n * phase_step : phase;
+}
+#endif
+
 static __attribute__((noinline)) void stereo_page(GranGrain *g, const uint8_t *page, unsigned bytes,
-        uint32_t first, uint32_t whole, uint32_t frac, const uint16_t *win, int32_t *mid, int32_t *side, unsigned n)
+        uint32_t first, uint32_t whole, uint32_t frac, const uint16_t *win, StereoSum *mix, unsigned n)
 {
     unsigned begin = g->ph >> 16, end = (g->ph + (n - 1u) * g->phs) >> 16;
     int constant = begin == end || (win == gran_sq && begin >= 8 && end < 248);
     if (bytes == 2 && constant) {
         if (!frac)
-            stereo_loop(g, page, 2, first, whole, 0, win, mid, side, n, 1, 2);
+            stereo_loop(g, page, 2, first, whole, 0, win, mix, n, 1, 2);
         else
-            stereo_loop(g, page, 2, first, whole, frac, win, mid, side, n, 1, 2);
+            stereo_loop(g, page, 2, first, whole, frac, win, mix, n, 1, 2);
     } else if (bytes == 2)
-        stereo_loop(g, page, 2, first, whole, frac, win, mid, side, n, 0, 2);
+        stereo_loop(g, page, 2, first, whole, frac, win, mix, n, 0, 2);
     else if (constant) {
         /* A grain's pan is fixed until its next trigger. Keep that choice outside the sample loop. */
         int sign = g->pan / 2;
+#if defined(__m68k__)
         if (sign > 0)
-            stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 1, 1);
+            mix_page24(g, page, first, whole, frac, win, mix, n, sign, 1, 1);
         else if (sign < 0)
-            stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 1, -1);
+            mix_page24(g, page, first, whole, frac, win, mix, n, sign, -1, 1);
         else
-            stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 1, 0);
+            mix_page24(g, page, first, whole, frac, win, mix, n, sign, 0, 1);
+#else
+        if (sign > 0)
+            stereo_loop(g, page, 3, first, whole, frac, win, mix, n, 1, 1);
+        else if (sign < 0)
+            stereo_loop(g, page, 3, first, whole, frac, win, mix, n, 1, -1);
+        else
+            stereo_loop(g, page, 3, first, whole, frac, win, mix, n, 1, 0);
+#endif
     } else {
         int sign = g->pan / 2;
+#if defined(__m68k__)
         if (sign > 0)
-            stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 0, 1);
+            mix_page24(g, page, first, whole, frac, win, mix, n, sign, 1, 0);
         else if (sign < 0)
-            stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 0, -1);
+            mix_page24(g, page, first, whole, frac, win, mix, n, sign, -1, 0);
         else
-            stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 0, 0);
+            mix_page24(g, page, first, whole, frac, win, mix, n, sign, 0, 0);
+#else
+        if (sign > 0)
+            stereo_loop(g, page, 3, first, whole, frac, win, mix, n, 0, 1);
+        else if (sign < 0)
+            stereo_loop(g, page, 3, first, whole, frac, win, mix, n, 0, -1);
+        else
+            stereo_loop(g, page, 3, first, whole, frac, win, mix, n, 0, 0);
+#endif
     }
 }
 
 /* Keep the stereo kernel on both sides of a page boundary. A run may end at
  * the sample boundary even if its last physical page has unused frames. */
 static void stereo_paged(GranGrain *g, GranPage *pg, const GranSample *s, int32_t whole,
-                         uint32_t frac, const uint16_t *win, int32_t *mid, int32_t *side, unsigned n)
+                         uint32_t frac, const uint16_t *win, StereoSum *mix, unsigned n)
 {
     unsigned done = 0;
     while (done < n) {
@@ -356,7 +455,7 @@ static void stereo_paged(GranGrain *g, GranPage *pg, const GranSample *s, int32_
             run = i;
         }
         stereo_page(g, (const uint8_t *)pg->page, s->bytes, pg->pfirst, (uint32_t)whole, frac,
-                    win, mid + done, side + done, run);
+                    win, mix + done, run);
         done += run;
     }
 }
@@ -365,7 +464,7 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
                  int32_t *out, unsigned n)
 {
     GranTrack *t = &e->t[track];
-    int32_t mid[32], side[32];
+    StereoSum mix[32];
     const uint16_t *win = gran_shapes[p->shape > 3 ? 0 : p->shape];
     uint32_t count = s && (s->locate || s->ctx) ? s->count : 0;
     int stereo = s && s->channels > 1;
@@ -373,7 +472,7 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
     if (n > 32)
         n = 32;
     for (unsigned i = 0; i < n; ++i)
-        mid[i] = side[i] = 0;
+        mix[i].mid = mix[i].side = 0;
     if (count)
         gran_spawn(e, t, p, s, n);
     for (unsigned k = 0; k < GRAN_MAX && count; ++k) {
@@ -411,7 +510,7 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
             continue;
         }
         if (GRAN_PTR_PATH && stereo && s->bytes == 3u) {
-            stereo_paged(g, &t->pg, s, w, f, win, mid + start, side + start, m);
+            stereo_paged(g, &t->pg, s, w, f, win, mix + start, m);
             continue;
         }
         cs = -g->pan / 2;
@@ -434,7 +533,7 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
              * renders que la guardia de la base convierte en silencio (los clics). */
             if (GRAN_PTR_PATH && fast && stereo && (g->pan || f || s->bytes != 2u)) {
                 stereo_page(g, (const uint8_t *)t->pg.page, s->bytes, t->pg.pfirst, (uint32_t)w, f,
-                            win, mid + start, side + start, m);
+                            win, mix + start, m);
                 continue;
             }
             if (GRAN_UNIT_PATH && fast && f == 0u && (w == 1 || w == -1) && s->bytes == 2u) {
@@ -449,13 +548,13 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
 #else
                         int32_t l = GRAN_RD16(q), r = GRAN_RD16(q + 2), wv = win[(ph >> 16) & 0xff];
 #endif
-                        mid[i] += (((l + r) >> 1) * wv) >> 15;
-                        side[i] += (((l - r) >> 1) * wv) >> 15;
+                        mix[i].mid += (((l + r) >> 1) * wv) >> 15;
+                        mix[i].side += (((l - r) >> 1) * wv) >> 15;
                         ph += phs;
                     }
                 } else if (!stereo && !g->pan) {
                     for (unsigned i = start; i < end; ++i, q += dq) {
-                        mid[i] += (GRAN_RD16(q) * win[(ph >> 16) & 0xff]) >> 15;
+                        mix[i].mid += (GRAN_RD16(q) * win[(ph >> 16) & 0xff]) >> 15;
                         ph += phs;
                     }
                 } else {
@@ -464,12 +563,12 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
                         if (stereo) {
                             int32_t r = GRAN_RD16(q + 2);
                             int32_t vm = (((l + r) >> 1) * wv) >> 15, vs = (((l - r) >> 1) * wv) >> 15;
-                            mid[i] = (int32_t)((uint32_t)mid[i] + (uint32_t)((int32_t)((uint32_t)(vm * cm) + (uint32_t)(vs * cs)) >> 15));
-                            side[i] = (int32_t)((uint32_t)side[i] + (uint32_t)((int32_t)((uint32_t)(vm * cs) + (uint32_t)(vs * cm)) >> 15));
+                            mix[i].mid = (int32_t)((uint32_t)mix[i].mid + (uint32_t)((int32_t)((uint32_t)(vm * cm) + (uint32_t)(vs * cs)) >> 15));
+                            mix[i].side = (int32_t)((uint32_t)mix[i].side + (uint32_t)((int32_t)((uint32_t)(vm * cs) + (uint32_t)(vs * cm)) >> 15));
                         } else {
                             int32_t vm = (l * wv) >> 15;
-                            mid[i] = (int32_t)((uint32_t)mid[i] + (uint32_t)((vm * cm) >> 15));
-                            side[i] = (int32_t)((uint32_t)side[i] + (uint32_t)((vm * cs) >> 15));
+                            mix[i].mid = (int32_t)((uint32_t)mix[i].mid + (uint32_t)((vm * cm) >> 15));
+                            mix[i].side = (int32_t)((uint32_t)mix[i].side + (uint32_t)((vm * cs) >> 15));
                         }
                         ph += phs;
                     }
@@ -488,12 +587,12 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
                     if (stereo) {
                         int32_t r = GRAN_RD16(q + rb);
                         int32_t vm = (((l + r) >> 1) * wv) >> 15, vs = (((l - r) >> 1) * wv) >> 15;
-                        mid[i] = (int32_t)((uint32_t)mid[i] + (uint32_t)((int32_t)((uint32_t)(vm * cm) + (uint32_t)(vs * cs)) >> 15));
-                        side[i] = (int32_t)((uint32_t)side[i] + (uint32_t)((int32_t)((uint32_t)(vm * cs) + (uint32_t)(vs * cm)) >> 15));
+                        mix[i].mid = (int32_t)((uint32_t)mix[i].mid + (uint32_t)((int32_t)((uint32_t)(vm * cm) + (uint32_t)(vs * cs)) >> 15));
+                        mix[i].side = (int32_t)((uint32_t)mix[i].side + (uint32_t)((int32_t)((uint32_t)(vm * cs) + (uint32_t)(vs * cm)) >> 15));
                     } else {
                         int32_t vm = (l * wv) >> 15;
-                        mid[i] = (int32_t)((uint32_t)mid[i] + (uint32_t)((vm * cm) >> 15));
-                        side[i] = (int32_t)((uint32_t)side[i] + (uint32_t)((vm * cs) >> 15));
+                        mix[i].mid = (int32_t)((uint32_t)mix[i].mid + (uint32_t)((vm * cm) >> 15));
+                        mix[i].side = (int32_t)((uint32_t)mix[i].side + (uint32_t)((vm * cs) >> 15));
                     }
                     ph += phs;
                     { uint32_t nf = fr + f, cy = nf < fr; idx += (uint32_t)w + cy; fr = nf; q += dq + (cy ? (int32_t)fs : 0); }
@@ -510,12 +609,12 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
                     if (stereo) {
                         int32_t r = (int16_t)(q[rb] << 8 | q[rb + 1]);
                         int32_t vm = (((l + r) >> 1) * wv) >> 15, vs = (((l - r) >> 1) * wv) >> 15;
-                        mid[i] = (int32_t)((uint32_t)mid[i] + (uint32_t)((int32_t)((uint32_t)(vm * cm) + (uint32_t)(vs * cs)) >> 15));
-                        side[i] = (int32_t)((uint32_t)side[i] + (uint32_t)((int32_t)((uint32_t)(vm * cs) + (uint32_t)(vs * cm)) >> 15));
+                        mix[i].mid = (int32_t)((uint32_t)mix[i].mid + (uint32_t)((int32_t)((uint32_t)(vm * cm) + (uint32_t)(vs * cs)) >> 15));
+                        mix[i].side = (int32_t)((uint32_t)mix[i].side + (uint32_t)((int32_t)((uint32_t)(vm * cs) + (uint32_t)(vs * cm)) >> 15));
                     } else {
                         int32_t vm = (l * wv) >> 15;
-                        mid[i] = (int32_t)((uint32_t)mid[i] + (uint32_t)((vm * cm) >> 15));
-                        side[i] = (int32_t)((uint32_t)side[i] + (uint32_t)((vm * cs) >> 15));
+                        mix[i].mid = (int32_t)((uint32_t)mix[i].mid + (uint32_t)((vm * cm) >> 15));
+                        mix[i].side = (int32_t)((uint32_t)mix[i].side + (uint32_t)((vm * cs) >> 15));
                     }
                     ph += phs;
                     { uint32_t nf = fr + f; idx += (uint32_t)w + (nf < fr); fr = nf; }
@@ -532,11 +631,11 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
                 if (stereo) {
                     int32_t vs = (ss * wv) >> 15;
                     /* sumas de 32 bits que dan la vuelta igual que en el ColdFire */
-                    mid[i] = (int32_t)((uint32_t)mid[i] + (uint32_t)((int32_t)((uint32_t)(vm * cm) + (uint32_t)(vs * cs)) >> 15));
-                    side[i] = (int32_t)((uint32_t)side[i] + (uint32_t)((int32_t)((uint32_t)(vm * cs) + (uint32_t)(vs * cm)) >> 15));
+                    mix[i].mid = (int32_t)((uint32_t)mix[i].mid + (uint32_t)((int32_t)((uint32_t)(vm * cm) + (uint32_t)(vs * cs)) >> 15));
+                    mix[i].side = (int32_t)((uint32_t)mix[i].side + (uint32_t)((int32_t)((uint32_t)(vm * cs) + (uint32_t)(vs * cm)) >> 15));
                 } else {
-                    mid[i] = (int32_t)((uint32_t)mid[i] + (uint32_t)((vm * cm) >> 15));
-                    side[i] = (int32_t)((uint32_t)side[i] + (uint32_t)((vm * cs) >> 15));
+                    mix[i].mid = (int32_t)((uint32_t)mix[i].mid + (uint32_t)((vm * cm) >> 15));
+                    mix[i].side = (int32_t)((uint32_t)mix[i].side + (uint32_t)((vm * cs) >> 15));
                 }
             }
             ph += phs;
@@ -549,7 +648,7 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
         g->idx = idx; g->fr = fr; g->ph = ph;
     }
     for (unsigned i = 0; i < n; ++i) {
-        int32_t a = clamp16(mid[i]), b = clamp16(side[i]);
+        int32_t a = clamp16(mix[i].mid), b = clamp16(mix[i].side);
         out[2 * i] = clamp16(a + b) * 65536;
         out[2 * i + 1] = clamp16(a - b) * 65536;
     }

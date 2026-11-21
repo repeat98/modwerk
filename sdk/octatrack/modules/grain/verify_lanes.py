@@ -81,8 +81,8 @@ def check_scan(cpu, symbols, lane, packet):
 
     # Model one allocated Flex page containing a 1,024-frame, 24-bit stereo sample.
     descriptor, arena, page_indices, page_map = 0x46c922c4, 0x40a955e0, 0x46000000, 0x46000100
-    cpu.mem_map(0x46c92000, 0x1000)
-    cpu.mem_map(0x40a95000, 0x4000)
+    cpu.mem_map(0x46c92000, 0x3000)
+    cpu.mem_map(0x40a95000, 0x6000)
     cpu.mem_map(0x46000000, 0x1000)
     cpu.mem_write(0x800049dc, struct.pack(">I", descriptor))
     cpu.mem_write(descriptor, struct.pack(">6I", 1, 0, 0, 0, 1024, 1))
@@ -119,13 +119,17 @@ def check_scan(cpu, symbols, lane, packet):
     total = 14602
     cpu.mem_map(recorder_map, 0x48000)
     cpu.mem_write(0x80006914, struct.pack(">I", recorder_map))
-    ctx, first, length = display + 32, display + 48, display + 52
+    ctx, first, length = display + 32, display + 64, display + 68
 
     def locate(slot, start, frame, physical):
-        cpu.mem_write(ctx, struct.pack(">2I", slot, 1024))
+        cpu.mem_write(descriptor + 44 * slot, struct.pack(">6I", 1, 0, 0, 0, 37800, 1))
+        cpu.mem_write(0x46c920a4 + 4 * slot, struct.pack(">I", 1))
         cpu.mem_write(page_indices + slot * 4, struct.pack(">I", start))
         if physical is not None:
             cpu.mem_write(recorder_map + 2 * (start + frame // 1024), struct.pack(">H", physical))
+        call("open_sample", slot, display + 100, ctx)
+        if not cpu.reg_read(m68k_const.UC_M68K_REG_D0):
+            return 0
         call("flex_page", ctx, frame, first, length)
         return cpu.reg_read(m68k_const.UC_M68K_REG_D0)
 
@@ -141,6 +145,28 @@ def check_scan(cpu, symbols, lane, packet):
         assert locate(slot, start, total * 1024, None) == 0
     assert locate(0, 2, 0, 1) == arena + 6144
     assert locate(0, total + 1, 0, None) == 0
+
+    # Two 24-bit stereo takes in R3. Keep the slot, descriptor and track running
+    # while Flex remaps its first page between callbacks.
+    slot = 130
+    row = (slot - 126) * total
+    cpu.mem_write(0x800049dc, struct.pack(">I", descriptor + 44 * slot))
+    cpu.mem_write(page_indices + slot * 4, struct.pack(">I", row))
+    cpu.mem_write(descriptor + 44 * slot, struct.pack(">6I", 1, 0, 0, 0, 1024, 1))
+    cpu.mem_write(0x46c920a4 + 4 * slot, struct.pack(">I", 1))
+    cpu.mem_write(lane, struct.pack(">6H", 0x4000, 0, 0x7f00, 0x4000, 0, 0x4000))
+    cpu.mem_write(lane + 24, bytes((3, 0, 0, 0, 0, 0)))
+    cpu.mem_write(symbols["eng"], bytes(6 * 32))  # previous SCAN tests leave six voices running
+    for physical, frame in ((1, "400077300055"), (2, "c00088d000aa")):
+        cpu.mem_write(recorder_map + 2 * row, struct.pack(">H", physical))
+        cpu.mem_write(arena + physical * 6144, bytes.fromhex(frame) * 1024)
+        cpu.mem_write(CURSOR, struct.pack(">I", packet))
+        call("grain_start", 0, slot, 0)
+        call("grain_render", 0, 0, 0, 16)
+        page, = struct.unpack(">I", cpu.mem_read(symbols["eng"] + 6 * 32, 4))
+        assert page == arena + physical * 6144, "R3 reused the previous take's Flex page"
+        pcm = struct.unpack(">32i", cpu.mem_read(packet + 16, 128))
+        assert any(pcm) and (min(pcm) >= 0 if physical == 1 else max(pcm) <= 0), pcm
 
 
 def check_assign(image, symbols):

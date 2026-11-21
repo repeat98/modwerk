@@ -6,7 +6,7 @@
       "Play Flex samples and live recorder buffers as a cloud of up to six grains per track.",
       "Set POS and SPRY across the full sample, including long recordings, and see the position on the waveform.",
       "Keep SRC and SETUP values in their own slots during playback and restore Flex controls once when leaving Grain.",
-      "Six-voice stereo playback uses a faster mixing loop across 24-bit sample pages. Each Grain track reserves 35 CPU points.",
+      "Mix up to six stereo grains with less CPU work and pick up new takes in the same recorder slot. Each Grain track reserves 35 CPU points.",
       "SCAN reaches exactly double speed at either end and wraps immediately when switching to a shorter sample."
     ]
   }

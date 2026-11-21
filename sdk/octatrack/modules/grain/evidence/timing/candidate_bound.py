@@ -18,11 +18,14 @@ from bound import cost, edges_and_calls
 PACKAGE = "ac1e55403bf37b39c529501d30c610c5f055ef73b04a359c25b07b023d6d51bd"
 LOCATE = (0x3078, 0x32AE, 0x38C0)
 STEREO_CALLS = (0x34C8, 0x3960, 0x39EC, 0x3A98, 0x3D5C)
+PAGE_MIX_PACKAGE = "9ad5285502117695e906dc90770840990008cea1a19398b8d2f395e870238443"
+PAGE_MIX_LOCATE = (0x3198, 0x33AA, 0x39A0)
+PAGE_MIX_CALLS = (0x35AE, 0x3A32, 0x3AB4, 0x3B62, 0x3E72)
 
 
 def read_image(package, elf):
     packed = package.read_bytes()
-    if hashlib.sha256(packed).hexdigest() != PACKAGE:
+    if hashlib.sha256(packed).hexdigest() not in (PACKAGE, PAGE_MIX_PACKAGE):
         raise ValueError("The package differs from the six-voice candidate")
     # ABI 8 stores the image immediately after the 76-byte header and hook words.
     first = 76 + 4 * int.from_bytes(packed[20:24], "big")
@@ -45,7 +48,7 @@ def read_image(package, elf):
     return functions
 
 
-def reachable(functions, root):
+def reachable(functions, root, locate):
     todo, edges, instructions = [root], [], {}
     while todo:
         name = todo.pop()
@@ -53,7 +56,7 @@ def reachable(functions, root):
             continue
         ops = functions[name].copy()
         if name == "gran_render":
-            for pc in LOCATE:
+            for pc in locate:
                 assert ops[pc] == ("jsr", "%a0@")
                 # The machine sets GranSample.locate to flex_page.
                 ops[pc] = ("jsr", f'{min(functions["flex_page"]):x} <flex_page>')
@@ -99,9 +102,33 @@ def visit_limits(functions, root, n, instructions):
     return caps
 
 
-def certify(functions, root, n, model):
-    instructions, edges = reachable(functions, root)
-    constraints = visit_limits(functions, root, n, instructions)
+def page_mix_limits(functions, root, n, instructions):
+    if root == "grain_start":
+        return []  # The three paired control reads and writes are unrolled.
+    caps = [([pc], maximum) for pc, maximum in (
+        (0x3FE8, 3), (0x419E, 6), (0x4258, 2 * n),  # header bytes, SRC words, silent packet
+        (0x2C84, n), (0x2CAE, n),                   # initialize and clamp the output
+        (0x2E06, n), (0x2E12, 6 * n), (0x2EEE, 6)  # spawn attempts, slot search, voices
+    )]
+    # Each voice advances through at most n source positions. A single 24-bit
+    # page fits 1024 frames. With a pitch of at most four frames per step, a
+    # monotone run of 32 samples can consume no more than two mapped spans.
+    # A missing page still costs a lookup for each silent source position.
+    # The other stereo path calls the kernel once when the whole voice fits.
+    caps.extend(([pc], 12 * (n + 1)) for pc in functions["gran_render"])
+    caps.extend([(PAGE_MIX_LOCATE, 6 * (n + 1)), (PAGE_MIX_CALLS, 12),
+                 ([0x3A76], 6 * n)])  # simulating the cursor at page boundaries
+    # All nine stereo loops consume one sample per iteration. The scalar
+    # phase advances and packed-page silent advances consume disjoint samples.
+    stereo = (0x1F7E, 0x2064, 0x2122, 0x21E8, 0x2274, 0x234C, 0x2418, 0x24F4, 0x2582)
+    scalar = (0x314C, 0x3252, 0x34B4, 0x38B4, 0x3C5C, 0x3D38, 0x3A4E, 0x3AC6)
+    caps.append(([*stereo, *scalar], 6 * n))
+    return caps
+
+
+def certify(functions, root, n, model, page_mix=False):
+    instructions, edges = reachable(functions, root, PAGE_MIX_LOCATE if page_mix else LOCATE)
+    constraints = (page_mix_limits if page_mix else visit_limits)(functions, root, n, instructions)
     index = {pc: i for i, pc in enumerate(instructions)}
     flow = lil_matrix((len(index), len(edges)))
     visits = lil_matrix((len(constraints), len(edges)))
@@ -145,7 +172,8 @@ if __name__ == "__main__":
     parser.add_argument("elf", type=Path)
     args = parser.parse_args()
     functions = read_image(args.package, args.elf)
-    results = [dict(sourceFrames=n, callback=fn, instructions=certify(functions, fn, n, "instructions"),
-                    conditionalCoreCycles=certify(functions, fn, n, "core"))
+    page_mix = hashlib.sha256(args.package.read_bytes()).hexdigest() == PAGE_MIX_PACKAGE
+    results = [dict(sourceFrames=n, callback=fn, instructions=certify(functions, fn, n, "instructions", page_mix),
+                    conditionalCoreCycles=certify(functions, fn, n, "core", page_mix))
                for n in (16, 32) for fn in ("grain_start", "grain_render")]
     print(json.dumps(results, indent=2))

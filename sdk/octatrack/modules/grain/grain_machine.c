@@ -37,29 +37,43 @@ static GranEngine eng = { .seed = GRAN_SEED0 };   /* el azar de SPRAY/DIR, desde
 static GranSample smp[8];
 
 /* ---- el sample FLEX en la memoria de stock (como AMIGA, tras el adaptador FLEX de FRACT, ex1010, MIT) ---- */
-typedef struct { uint32_t slot, perpage; } Pages;
+/* Keep one checked row for the duration of this render or screen draw. */
+typedef struct {
+    uintptr_t row, pool;
+    uint32_t perpage, max_page, slot;
+} Pages;
 static Pages pages[8];
+#define FLEX_PAGES 14602u
+
+static int open_pages(Pages *p, uint32_t slot, uint32_t perpage, uintptr_t pool)
+{
+    uintptr_t bases = U32(0x80006918u), map = U32(0x80006914u);
+    if (((bases - 0x46000000u) | (map - 0x46000000u)) >= 0x02000000u || slot >= 136u) return 0;
+    uint32_t start = U32(bases + 4u * slot);
+    if (slot >= 128u) {
+        if (start != (slot - 126u) * FLEX_PAGES) return 0;
+        p->max_page = FLEX_PAGES - 1u;
+    } else {
+        if (start > FLEX_PAGES) return 0;
+        p->max_page = FLEX_PAGES - start;
+    }
+    p->slot = slot;
+    p->row = map + 2u * start;
+    p->pool = pool;
+    p->perpage = perpage;
+    return 1;
+}
 static uintptr_t flex_page(const void *ctx, uint32_t frame, uint32_t *first, uint32_t *count)
 {
     const Pages *p = ctx;
-    uintptr_t bases = U32(0x80006918u), map = U32(0x80006914u);
-    /* 0x40096f82 son las paginas LIBRES (flex_sample calcula las ocupadas como 14602 - eso), no el total: con ese tope
-     * se descartaban las paginas de numero alto y el principio del sample salia en silencio (v0.2.4, Bell Pad C).
-     * El tope es el total de paginas del arena, 14602. */
-    uint32_t total = 14602u, index, page;
-    if (((bases - 0x46000000u) | (map - 0x46000000u)) >= 0x02000000u) return 0;
-    uint32_t sample_page = p->perpage == 1024u ? frame >> 10 : frame / p->perpage;
-    uint32_t start = U32(bases + 4u * p->slot);
-    if (p->slot >= 128u) {
-        /* Each track recorder owns a separate row in the page map. Its physical
-         * pages still come from the same arena as ordinary Flex samples. */
-        if (p->slot >= 136u || start != (p->slot - 126u) * total || sample_page >= total) return 0;
-    } else if (start > total || sample_page > total - start) return 0;
-    index = start + sample_page;
-    page = U16(map + 2u * index);
-    if (!page || page > total) return 0;
-    *first = sample_page * p->perpage; *count = p->perpage;
-    return U32(0x4000045eu) + page * 6144u;
+    uint32_t perpage = p->perpage;
+    uint32_t index = perpage == 1024u ? frame >> 10 : frame / perpage;
+    if (index > p->max_page) return 0;
+    uint32_t physical = U16(p->row + 2u * index);
+    if (!physical || physical > FLEX_PAGES) return 0;
+    *first = index * perpage;
+    *count = perpage;
+    return p->pool + physical * 6144u;
 }
 static int recorder_idle(uint32_t slot)
 {
@@ -68,40 +82,36 @@ static int recorder_idle(uint32_t slot)
 }
 /* 1 cuando el sample de la voz se puede leer: lo describe en smp[track] */
 static const uint16_t frames_per_page[] = {2048, 1024, 3072, 1536}; /* 6144 bytes / (bytes per channel * channels) */
-static int flex_sample(unsigned track, uintptr_t voice)
-{
-    uint32_t taken = 14602u - U32(0x40096f82u), m = U32(voice + 4u) - 0x46c922c4u, slot = m / 44u;
-    if (taken >= 14602u || U32(0x4000045eu) - 0x40a955e0u > (taken & 0xffffu) * 6144u || slot >= 136u || m != slot * 44u) return 0;
-    if (slot >= 128u && !recorder_idle(slot)) return 0;
-    uintptr_t at = 0x46c922c4u + m;
-    uint32_t mode = U32(at), frames = U32(at + 16u), id = U32(at + 20u);
-    if (mode > 3u || U32(at + 8u) || frames - 1u >= 44860416u || !id || id != U32(0x46c920a4u + 4u * slot)) return 0;
-    GranSample *s = &smp[track];
-    s->bytes = mode < 2u ? 3u : 2u; s->channels = (uint8_t)((mode & 1u) + 1u); s->count = frames;
-    s->locate = flex_page; s->ctx = &pages[track];
-    if (pages[track].slot != slot) eng.t[track].pg.pcount = 0;  /* otro sample: olvidar la pagina en cache */
-    pages[track].slot = slot; pages[track].perpage = frames_per_page[mode];
-    return 1;
-}
-
-/* Para la pantalla: el sample que la Part asigna a la pista (su byte de slot FLEX, Part + 0x2ca + 5t + 1, octabam
- * docs/firmware/PARTS.md 1a), sin esperar a que suene (v0.3.3 seguia dibujando el sample anterior hasta la nota).
- * Copia aparte (dsmp/dpages): la pantalla no toca lo que usa el render. */
+/* The display and the interrupt have separate snapshots of the Flex page map. */
 static GranSample dsmp[8];
 static Pages dpages[8];
-static int slot_sample(unsigned track, uint32_t slot)
+
+static int open_sample(uint32_t slot, GranSample *sample, Pages *p)
 {
-    uint32_t taken = 14602u - U32(0x40096f82u);
-    if (taken >= 14602u || U32(0x4000045eu) - 0x40a955e0u > (taken & 0xffffu) * 6144u || slot >= 136u) return 0;
+    uint32_t taken = FLEX_PAGES - U32(0x40096f82u);
+    uintptr_t pool = U32(0x4000045eu);
+    if (slot >= 136u || taken >= FLEX_PAGES || pool - 0x40a955e0u > (taken & 0xffffu) * 6144u) return 0;
     if (slot >= 128u && !recorder_idle(slot)) return 0;
     uintptr_t at = 0x46c922c4u + 44u * slot;
     uint32_t mode = U32(at), frames = U32(at + 16u), id = U32(at + 20u);
     if (mode > 3u || U32(at + 8u) || frames - 1u >= 44860416u || !id || id != U32(0x46c920a4u + 4u * slot)) return 0;
-    GranSample *s = &dsmp[track];
-    s->bytes = mode < 2u ? 3u : 2u; s->channels = (uint8_t)((mode & 1u) + 1u); s->count = frames;
-    s->locate = flex_page; s->ctx = &dpages[track];
-    dpages[track].slot = slot; dpages[track].perpage = frames_per_page[mode];
+    if (!open_pages(p, slot, frames_per_page[mode], pool)) return 0;
+    sample->bytes = mode < 2u ? 3u : 2u;
+    sample->channels = (uint8_t)((mode & 1u) + 1u);
+    sample->count = frames; sample->locate = flex_page; sample->ctx = p;
     return 1;
+}
+static int flex_sample(unsigned track, uintptr_t voice)
+{
+    uint32_t offset = U32(voice + 4u) - 0x46c922c4u, slot = offset / 44u;
+    if (slot >= 136u || offset != slot * 44u) return 0;
+    /* A take can replace the physical pages of the same recorder between callbacks. */
+    eng.t[track].pg.pcount = 0;
+    return open_sample(slot, &smp[track], &pages[track]);
+}
+static int slot_sample(unsigned track, uint32_t slot)
+{
+    return open_sample(slot, &dsmp[track], &dpages[track]);
 }
 
 static uintptr_t lane(unsigned track)
@@ -124,24 +134,28 @@ static unsigned packet(unsigned track, uintptr_t fp, uintptr_t before, int32_t *
 }
 
 /* ---- los mandos: guardados de la vía (con p-locks, LFOs y escenas ya aplicados) mientras stock ve una FLEX neutra ---- */
-typedef struct { uint16_t w[6]; uint8_t setup[6]; } View;   /* palabras del SRC (valor en el octeto alto) y octetos del SETUP */
+typedef struct {
+    union { uint16_t w[6]; uint32_t pairs[3]; };
+    union { uint8_t setup[6]; struct { uint32_t first_setup; uint16_t last_setup; }; };
+} View;
+
 static void view_open(uintptr_t fp, View *v)
 {
-    for (unsigned k = 0; k < 6; ++k) v->w[k] = U16(fp + 2u * k);
-    for (unsigned k = 0; k < 6; ++k) v->setup[k] = U8(fp + 24u + k);
-    U16(fp) = 0x4000u;                    /* PTCH 0: el motor pone el pitch ? */
-    U16(fp + 2u) = 0;                     /* STRT al principio */
-    U16(fp + 4u) = 0x7f00u;               /* LEN al maximo ? */
-    U16(fp + 6u) = 0x7f00u;               /* RATE adelante, a velocidad normal */
-    U32(fp + 8u) = 0x00004000u;           /* RTRG 0, RTIM centro (como AMIGA) */
-    U8(fp + 24u) = 1;                     /* LOOP ON: la voz sigue viva mientras suena la nota ? */
-    U8(fp + 25u) = 0;                     /* SLIC OFF */
-    U8(fp + 26u) = U8(FLEX_DEFAULTS + 8u); U8(fp + 27u) = 0; U8(fp + 28u) = 0; U8(fp + 29u) = U8(FLEX_DEFAULTS + 11u);
+    for (unsigned k = 0; k < 3; ++k) v->pairs[k] = U32(fp + 4u * k);
+    v->first_setup = U32(fp + 24u);
+    v->last_setup = U16(fp + 28u);
+    /* Stock reads six neutral big-endian SRC words and six SETUP bytes. */
+    U32(fp) = 0x40000000u;
+    U32(fp + 4u) = 0x7f007f00u;
+    U32(fp + 8u) = 0x00004000u;
+    U32(fp + 24u) = 0x01000000u | ((uint32_t)U8(FLEX_DEFAULTS + 8u) << 8);
+    U16(fp + 28u) = U8(FLEX_DEFAULTS + 11u);
 }
 static void view_close(uintptr_t fp, const View *v)
 {
-    for (unsigned k = 0; k < 6; ++k) U16(fp + 2u * k) = v->w[k];
-    for (unsigned k = 0; k < 6; ++k) U8(fp + 24u + k) = v->setup[k];
+    for (unsigned k = 0; k < 3; ++k) U32(fp + 4u * k) = v->pairs[k];
+    U32(fp + 24u) = v->first_setup;
+    U16(fp + 28u) = v->last_setup;
 }
 static int bank_ok(void);
 static volatile uint8_t *part_at(unsigned i);
@@ -191,19 +205,43 @@ static void params_of(const View *v, GranParams *p, unsigned track)
 /* PTCH (palabra, 0x4000 = 0, 0x100 por semitono ?) -> paso de lectura Q32.32: 2^(st/12) */
 static void pitch_step(uint16_t ptch, int32_t *whole, uint32_t *frac)
 {
-    static const uint32_t semi[12] = { /* 2^(k/12) en Q31 */
-        2147483648u, 2275179671u, 2410468846u, 2553802834u, 2705659852u, 2866546703u,
-        3037000500u, 3217589982u, 3408917050u, 3611618883u, 3826370402u, 4053888097u };
-    /* PTCH de GRAIN: el mando va de 0 a 48 con 24 = 0 semitonos (-24..+24, como se pidio; stock llegaba a +-60).
-     * Un valor mayor (pistas de versiones anteriores, centradas en 64) se recorta a +24. */
-    int32_t st = (int32_t)(ptch >> 8) - 64;      /* como el PTCH de FLEX: 64 = 0 semitonos */
-    if (st > 24) st = 24;
-    if (st < -24) st = -24;
-    int32_t oct = st >= 0 ? st / 12 : -((11 - st) / 12);
-    uint64_t q = (uint64_t)semi[st - 12 * oct] << 1;    /* Q32 de 1..2 */
-    /* oct va de -2 a +2: desplazamientos fijos (uno variable de 64 bits pide __ashldi3, que no hay en la base) */
-    if (oct == 2) q <<= 2; else if (oct == 1) q <<= 1; else if (oct == -1) q >>= 1; else if (oct == -2) q >>= 2;
-    *whole = (int32_t)(q >> 32); *frac = (uint32_t)q;
+    /* The original 12 Q31 semitone coefficients expanded across -24..+24. */
+    static const uint8_t integer[49] = {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3,
+        4,
+    };
+    static const uint32_t fraction[49] = {
+        0x40000000u, 0x43ce3e4bu, 0x47d66af7u, 0x4c1bf829u, 0x50a28be6u, 0x556e0407u,
+        0x5a82799au, 0x5fe4436fu, 0x6597f91du, 0x6ba27721u, 0x7208e3b1u, 0x78d0b630u,
+        0x80000000u, 0x879c7c97u, 0x8facd5eeu, 0x9837f052u, 0xa14517ccu, 0xaadc080fu,
+        0xb504f334u, 0xbfc886deu, 0xcb2ff23au, 0xd744ee43u, 0xe411c762u, 0xf1a16c61u,
+        0x00000000u, 0x0f38f92eu, 0x1f59abdcu, 0x306fe0a4u, 0x428a2f98u, 0x55b8101eu,
+        0x6a09e668u, 0x7f910dbcu, 0x965fe474u, 0xae89dc86u, 0xc8238ec4u, 0xe342d8c2u,
+        0x00000000u, 0x1e71f25cu, 0x3eb357b8u, 0x60dfc148u, 0x85145f30u, 0xab70203cu,
+        0xd413ccd0u, 0xff221b78u, 0x2cbfc8e8u, 0x5d13b90cu, 0x90471d88u, 0xc685b184u,
+        0x00000000u,
+    };
+    unsigned word = ptch >> 8;
+    unsigned note = word < 40u ? 0u : word > 88u ? 48u : word - 40u;
+    *whole = integer[note]; *frac = fraction[note];
+}
+
+typedef struct { uint32_t count, position_size_density_spray, posf_sync, tempo24; } ParamInputs;
+static ParamInputs last_params[8];
+static void set_params(unsigned track, const GranParams *p, const GranSample *sample, uint32_t tempo24)
+{
+    ParamInputs *last = &last_params[track];
+    uint32_t controls;
+    __builtin_memcpy(&controls, p, sizeof controls); /* pos, size, dens, spray */
+    uint32_t posf_sync = p->posf | ((uint32_t)p->sync << 8);
+    if (!p->sync) tempo24 = 0;
+    if (last->count == sample->count && last->position_size_density_spray == controls &&
+        last->posf_sync == posf_sync && last->tempo24 == tempo24) return;
+    gran_params(&eng, track, p, sample, tempo24);
+    last->count = sample->count; last->position_size_density_spray = controls;
+    last->posf_sync = posf_sync; last->tempo24 = tempo24;
 }
 
 /* lo que suena de verdad (palabras del SRC tras p-locks, LFOs y escenas), para dibujarlo; live_at = live_tick del
@@ -245,7 +283,7 @@ int grain_render(unsigned track, unsigned ping, unsigned start, unsigned end)
             live_at[track] = live_tick;
             pitch_step(v.w[0], &whole, &frac);
             if (flex_sample(track, voice)) {
-                gran_params(&eng, track, &p, &smp[track], U32(TEMPO24));
+                set_params(track, &p, &smp[track], U32(TEMPO24));
                 gran_render(&eng, track, &p, &smp[track], whole, frac, pcm, sources);
             } else
                 for (unsigned i = 0; i < 2u * sources; ++i) pcm[i] = 0;   /* sample ilegible: silencio */
