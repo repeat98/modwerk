@@ -224,6 +224,12 @@ static void view_close(uintptr_t fp, const View *v)
     U16(fp + 28u) = v->last_setup;
 }
 #define POOL_WINDOW 0x460e70e0u
+/* The track whose voice plays the pool's audition: the selected track, while the pool window is open. Other Grain tracks
+ * keep playing granular. */
+static inline int auditioning(unsigned track)
+{
+    return U32(POOL_WINDOW) && track == U8(0x100b14ccu);
+}
 /* The sample pool's audition (FUNC + YES with the pool window open) plays a sample from memory on this track's voice. On
  * a Grain track it went through the engine with Grain's knobs: faster, lower, sometimes right. With the pool open the
  * track plays as a plain Flex with its factory SRC and SETUP values: no loop, no time-stretch. */
@@ -351,7 +357,7 @@ int grain_start(unsigned track, unsigned sample, unsigned flags)
     uintptr_t fp = lane(track);
     if (!fp) return 0;
     View v;
-    if (U32(POOL_WINDOW)) {
+    if (auditioning(track)) {
         plain_view(fp, &v);
         int plain = FLEX_START(track, sample, flags);
         view_close(fp, &v);
@@ -371,7 +377,7 @@ int grain_render(unsigned track, unsigned ping, unsigned start, unsigned end)
     if (!fp || start > end || end > 16) return 0;
     View v;
     uintptr_t before = U32(CURSOR), voice = VOICE + track * 168u;
-    if (U32(POOL_WINDOW)) {                 /* pool open: the track plays as a plain Flex (audition) */
+    if (auditioning(track)) {               /* the selected track with the pool open: a plain Flex (audition) */
         plain_view(fp, &v);
         int plain = FLEX_RENDER(track, ping, start, end);
         view_close(fp, &v);
