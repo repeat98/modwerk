@@ -1,0 +1,10 @@
+{
+ "schema": 1,
+ "subscribe": [
+  {
+   "event": "ev_audio_frame_prepare",
+   "fn": "fm_prepare_frame",
+   "order": 40
+  }
+ ]
+}

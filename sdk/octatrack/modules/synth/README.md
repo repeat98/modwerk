@@ -1,5 +1,7 @@
 # FM Synth — 0.1.4 experimental
 
+This private 0.1.5 candidate uses the frame hook in base 0.7.13. Between notes, the ordinary Octatrack LFO loop handles idle frames. A pending source trigger wakes the filter in time for legacy sample locks. The clock keeps following the sequencer during silence.
+
 ## Overview
 
 FM SYNTH is a dedicated track machine beside FLEX, STATIC, THRU, NEIGHBOR and PICKUP. It uses Tim Hastie’s octatrick v2.9 two-operator FM engine: a sine carrier with a sine modulator, feedback and an index-decay envelope. One to four paraphonic voices feed the track’s existing AMP, filter and effects.

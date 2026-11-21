@@ -3,7 +3,7 @@
   "id": "synth",
   "key": "SYNTH MACHINE",
   "name": "FM Synth",
-  "version": "0.1.4-experimental",
+  "version": "0.1.5-experimental",
   "category": "machines",
   "source": {
     "repository": "https://github.com/sambanks/octabam",
