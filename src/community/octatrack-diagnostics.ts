@@ -177,7 +177,8 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
       }
     }
     if (before !== 'connecting' || state.status === 'connecting') return
-    if (state.status === 'busy') linkFailed('claim-failed')
+    // An identified unit was already claimed. It can be busy while another client owns a trial.
+    if (state.status === 'busy' && !state.identity) linkFailed('claim-failed')
     else if (state.status === 'idle' && state.notice?.tone === 'error') linkFailed('open-failed')
   })
   const unit = () => { const state = link!.getState(); return {phase:state.status,...(state.identity ? {base:state.identity.base} : {}),...(state.active ? {active:state.active} : {})} }
