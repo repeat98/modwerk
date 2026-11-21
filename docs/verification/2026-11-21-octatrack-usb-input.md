@@ -39,6 +39,36 @@ used one take with only DIR AB at 80 and another with only DIR CD at 80. The sou
 | CD | 2 / 4 | Host 1/2 returned on C/D. The A/B take had no test tones. |
 | ABCD | 4 / 4 | Host 1/2 returned on A/B and host 3/4 on C/D, in channel order. |
 
+### Sustained duplex recording with FX
+
+The owner requested the unit for the waiting Grain session during the 20-minute run.
+The Mac captured **17 min 33.814 s**, 46,473,216 four-channel frames at 44.1 kHz. The sequencer
+played B01 throughout. A/B passed through T1 THRU, FILTER and VIBRATO with the FX mix at maximum.
+C/D went directly to Main at level 80. The six-second dry and wet controls distinguished the
+pitch modulation from a plain return. Both A/B tones had modulation sidebands in every interior
+one-second window. The two C/D reference tones remained on their assigned Main channels.
+
+CoreAudio reported zero callback faults. Across the interior whole-second windows on Main,
+the analysis found no simultaneous digital zeros and no repeated 16-, 32- or 64-sample blocks.
+Between the 1.01-second and 1,020-second device readings, the MKII retired 4,076,080 input packets
+and drained 44,936,029 output frames. Input underruns held at five, the value at the first reading.
+Input overruns and packet errors, output over- and underruns, and repeated output banks stayed at zero.
+Sampled CPU was 53.8–54.7%. The trial logged no crash, stall, freeze or skipped track.
+
+During the host recording, the MKII also took two four-step stereo recordings. All 18,900
+16-bit frames of R1 contained the A/B tones on their expected channels. All 18,900 frames of R2
+contained the C/D tones. Each measured 0.075 peak with less than 0.000009 RMS residual per channel.
+The long recording is the Mac's return from the instrument. The two shorter recordings are the MKII's own buffers.
+
+The scratch Part, original A01 selection, T1, original working and saved Part digests, mixer levels
+and USB settings were restored. Undo returned the instrumented build to its empty inventory.
+A USB disconnect interrupted the first RAM upload back to the starting base. The supported recovery
+command cleared that incomplete upload. The retry returned to `254c5a75a139255e` with SCREEN-OFF and
+USB AUDIO and the original whole-set digest `cb128faffab75dfa435829f13ef797849299fc0dad4b279045ed59edd22c8eaa`.
+Grain then acquired the unit. The release stays on hold. No Keep or flash was performed.
+
+[Build and recording hashes, full-buffer measurements and device counter readings](2026-11-21-octatrack-usb-input.json)
+
 ## Private USB input RAM trial on an Octatrack MKII, 21 November 2026
 
 Source `182846bc2`, OS 1.40C, development base `3e4fa8ce43706259942ebeba14b041e07576fe52f0fcb5f2f9773bf9525ce1c4`.

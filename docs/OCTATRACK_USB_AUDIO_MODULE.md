@@ -171,4 +171,4 @@ and Main/Cue preset (`bdad3889b242`), enumerated both descriptor shapes,
 accepted input alternate settings 1 and 0, and restored the original four
 interfaces after Undo. During the streaming attempt the input counters
 remained zero. The released 0.3 output-only package also returned zero
-nonempty audio packets in the same emulator setup. The subsequent [MKII RAM trial](verification/2026-11-21-octatrack-usb-input.md) verified simultaneous ABCD input and Main/Cue output, both stereo recorder pairs and playback of R1 over USB. Concurrent FX loads still need a unit run.
+nonempty audio packets in the same emulator setup. The [MKII RAM trials](verification/2026-11-21-octatrack-usb-input.md) verified all four INPUTS modes, both recorder pairs, playback of R1 over USB and 17 min 34 s of four-channel duplex audio with Vibrato running.
