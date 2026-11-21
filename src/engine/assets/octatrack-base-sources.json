@@ -27,7 +27,7 @@
   "sdk/machines/octatrack/elekloader/boot.s": "43d21b7bf863bd39bd9c53b94f3e6b47f2dd3e12b30be6b4830580d7b93eb123",
   "sdk/machines/octatrack/elekloader/boot_anim.c": "191960aa25ebd605ad7be5e77dd00c243f2bd8619e7caf34c657ef0feeb7e743",
   "sdk/machines/octatrack/elekloader/boot_anim.s": "c1abdf728b67ee9a1b5509b197edc6592c17baf35200634311765686e4ab839d",
-  "sdk/machines/octatrack/elekloader/build_core.py": "eac229f81c99e75d0ac777623c6488e1135db5650e8ec39a11e389baf7239786",
+  "sdk/machines/octatrack/elekloader/build_core.py": "c7f6d70680d678e206400908d84531b078d2739ff1767aeb70f28c195cfddfc1",
   "sdk/machines/octatrack/elekloader/build_ports.py": "02ec9e7e403ca8a670cfd4408980ac80c8b64858286aa895c9dc9363b10b6a82",
   "sdk/machines/octatrack/elekloader/build_stub.py": "7c51167979b0b477bf880afb16da43ecc9fac228c043b2fe71b60fadde847186",
   "sdk/machines/octatrack/elekloader/check_flash_safety.py": "1df7e66ba3af1476e9011355f3a5f2411db2efb3316ae32d3e6ef0e2653ad229",
