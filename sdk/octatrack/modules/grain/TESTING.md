@@ -17,6 +17,33 @@ All 12,288 compiled callbacks matched the preceding draft’s PCM and voice stat
 
 The package occupies 28,612 bytes on disk. Its executable and static state occupy 30,196 bytes in RAM. The deepest Grain-only audio stack path uses 676 bytes including three return addresses. The static bounds for Grain’s zero-wait work are 247,832 core cycles for 16 source frames and 453,976 for 32. They exceed the 95,782-cycle frame budget before stock work, memory waits or interrupts are included.
 
+### Card-free MKII synthesis comparison with Flex
+
+Each machine and track ran for five minutes on RAM base `3a4c07fe` with the 20-channel USB layout linked into it. All four used the same 37,800-frame stereo R3 recording, 24-bit samples, 44.1 kHz capture, 100 BPM and the same musical MIDI phrase. The two tracks were tested separately. The Flex controls ran before the compact arms on the same boot. Stock Flex played the other track over MIDI in each arm. The developer physically removed the CF card before boot.
+
+| Machine | Track | Slowest frame during playback | Skipped during playback | Total through STOP and panel checks |
+| --- | --- | ---: | ---: | ---: |
+| Stock Flex | T1 | 296.0 µs | 0 | 0 |
+| Six-voice Grain | T1 | 392.0 µs | 15 | 15 |
+| Stock Flex | T5 | 310.7 µs | 0 | 0 |
+| Six-voice Grain | T5 | 395.4 µs | 33 | 33 |
+
+The skip counter records occasions when the base substitutes silence for a guarded machine render to preserve frame headroom. Stock Flex runs directly. Whole-frame timing and USB capture continuity were measured in all four arms.
+
+The compact build exceeded the 362.8 µs whole-frame deadline on both tracks. Its longest guarded Grain callback was 130.3 µs on T1 and 124.5 µs on T5.
+
+All four post-STOP checks switched Parts, selected Flex and changed tracks. The UI and audio counters advanced through 29.1–30.6 seconds. The recording fingerprint and the starting RAM state were verified on return. The shipping 0.7.12 base subsequently ran the exact compact package alone for 12 seconds and rolled it back. An independent USB session confirmed the original base and an empty inventory before the hardware reservation was released. The earlier high-rate panel freeze remains open. [Timing, MIDI, capture and restoration](evidence/timing/synthesis-comparison.json).
+
+The first build (`d09bd8f8`) used a four-sample loop and read the fractional step from the stack. It skipped 2,837 renders in T1 playback and 3,338 on T5 (3,346 including STOP and panel checks on T5). The compact loop keeps that step in a register. Both builds matched the reference PCM. The register placement and the loop size changed together.
+
+The previous draft (`7d5cf2e7`) ran a separate one-minute T1 comparison on this recording and skipped 25 renders. In their first measured minute the four-sample build skipped 563 and the compact build skipped 10. All three used the same MIDI phrase. The earlier five-minute measurements of the previous draft are recorded below.
+
+Median CPU load during playback on T1 was 62.1% with Flex and 77.6% with Grain. On T5 it was 62.2% and 78.1%. Across the four runs the captures recorded 0 timestamp gaps. The unit recorded 0 MIDI receive errors and 0 transmit drops.
+
+The hardware kernel fixture ran 512 six-voice calls per build with no capture or MIDI. The compact fixture matched all 64 PCM digests. Its trial rollback reported the cumulative 6,183 guard skips already counted in the four earlier playback runs. The full musical runs above record their own before/after counters. Maximum fixture timings include preemption by the audio interrupt.
+
+The compact package also passed the MKII emulator's T1/T5 transport, Part-recall, Flex-selection and rollback checks on development base `fac1523234f4bb0b`. The paced transport reported zero live audio frames. A separate tick-driven fixture with the same mixer object ran 512 six-voice renders and matched all 64 reference PCM fingerprints.
+
 ## Four-sample synthesis experiment, 21 November 2026
 
 SDK and catalogue builds reproduced package `d09bd8f8ce95acd398d13ab91191da6d5288313c9c442988435b1224641234a5`. Both stereo widths use the page-bounded mixer. It processes four frames per loop and enters the first group at the correct sample for shorter spans. The Q15 rounding and intermediate mid/side clipping are preserved. The voice limit is six and the reservation is 35 points.

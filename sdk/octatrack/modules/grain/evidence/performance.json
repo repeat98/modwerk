@@ -6,17 +6,17 @@
   "cycles": {
     "unit": "cycles/event",
     "static": null,
-    "measured": 34500,
+    "measured": 34412,
     "budget": 95782,
-    "method": "Exact MKII package 7d5cf2e7 on RAM base 3a4c07fe. The longest observed guarded callback during the four matched 300-second playback runs took 17,250 ticks of the 132 MHz timer. The conditional bound for Grain's own zero-wait work is 188,024 core cycles for 16 source frames and 344,312 for 32. Stock calls, external-memory latency and interrupt interference have no proven upper bound. See TESTING.md and evidence/timing/preparation-comparison.json."
+    "method": "Exact MKII package 0e4fc8dd on RAM base 3a4c07fe. The longest observed guarded callback during the four matched 300-second playback runs took 17,206 ticks of the 132 MHz timer. The conditional bound for Grain's own zero-wait work is 247,832 core cycles for 16 source frames and 453,976 for 32. Stock calls, external-memory latency and interrupt interference have no proven upper bound. See TESTING.md and evidence/timing/synthesis-comparison.json."
   },
   "load": {
     "frameUs": 362.8,
-    "stockLongestUs": 307.04,
-    "moduleLongestUs": 373.08,
+    "stockLongestUs": 310.71,
+    "moduleLongestUs": 395.39,
     "stockIdlePercent": 37.8,
-    "moduleIdlePercent": 21.7,
-    "method": "Matched 300-second runs at 100 BPM on T1, the track with the longest candidate frame. The same 24-bit stereo R3 played under 20-channel USB capture and a musical MIDI phrase. Idle percent is 100 minus the median stock CPU meter reading during playback, excluding its first 3 seconds."
+    "moduleIdlePercent": 21.9,
+    "method": "Matched 300-second runs at 100 BPM on T5, the track with the longest candidate frame. The same 24-bit stereo R3 played under 20-channel USB capture and a musical MIDI phrase. Idle percent is 100 minus the median stock CPU meter reading during playback, excluding its first 3 seconds."
   },
   "stress": {
     "floodMessagesPerSecond": 47.5,
@@ -25,6 +25,6 @@
     "stuckNotes": null,
     "hangs": 0,
     "dropped": null,
-    "droppedExplanation": "Musical comparison on package 7d5cf2e7. Per run the host submitted 12,000 clocks, 1,000 note-ons, 1,000 note-offs and 250 modulation events over 300 seconds. The receive-error and transmit-drop counters are recorded separately from render skips and end-to-end MIDI delivery. Stuck notes and end-to-end message loss were not counted. UI and audio ticks advanced after STOP and Part changes. The earlier high-rate panel-freeze report is in TESTING.md."
+    "droppedExplanation": "Musical comparison on package 0e4fc8dd. Per run the host submitted 12,000 clocks, 1,000 note-ons, 1,000 note-offs and 250 modulation events over 300 seconds. The receive-error and transmit-drop counters are recorded separately from render skips and end-to-end MIDI delivery. Stuck notes and end-to-end message loss were not counted. UI and audio ticks advanced after STOP and Part changes. The earlier high-rate panel-freeze report is in TESTING.md."
   }
 }
