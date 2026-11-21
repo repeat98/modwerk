@@ -118,6 +118,11 @@ python -B scripts/octatrack-usb-bridge.py /private/path/modwerk-ot.sock
 node scripts/frontend-mcp.mjs --data-dir /private/path/modwerk-mcp --device-socket /private/path/modwerk-ot.sock
 ```
 
+For a Syntakt running Synfact, start the MCP with `--syntakt-midi` and call
+`device_status` with `{"machine":"syntakt"}`. It reads the fixed loader
+status over local USB MIDI. The [machine guide](../sdk/machines/syntakt/README.md#synfact-base-integration)
+describes the fields and the equivalent CLI command.
+
 The MCP uses `OctatrackLink`, `UploadSession`, `moduleSetKit` and the same
 package validator as the site, through the bridge's WebUSB-compatible adapter.
 It claims no mass-storage or audio interface. `device_status` reads IDENTIFY,

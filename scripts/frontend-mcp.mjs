@@ -14,6 +14,7 @@ import { assertMcpPrivateHost } from './frontend-mcp-private-host.mjs'
 import { saveSavedBackup } from './frontend-mcp-saved-backup.mjs'
 import { openRemoteUnit } from './frontend-mcp-remote.mjs'
 import * as board from './agent-board.mjs'
+import { readSynfactStatus } from './synfact-status.ts'
 import { nodeMidiAccess, zoomCommand } from './zoom-device.ts'
 import { acquire, UnitBusyError } from './unit-queue.mjs'
 
@@ -62,7 +63,7 @@ const TOOLS = [
   tool('board_take', 'Take one wanted task. Its parent issue or claim and sibling tasks keep their own holders.', { id: string, pullRequest: { type: 'integer' } }, ['id'], true),
   tool('board_close', 'Close a question or finding this developer wrote, by id; with foldPullRequest, link the pull request that folds a finding into a guide instead (it ends when that merges). Needs --allow-api-writes.', { id: string, foldPullRequest: { type: 'number' } }, ['id'], true),
   tool('firmware_download', 'Build from exact deployed public inputs using local private stock, save files privately and return only a hash/identity receipt. Never sends firmware to MCP.', { request: { type: 'object' } }, ['request'], true),
-  tool('device_status', 'Read the connected base identity, inventory, missing modules and bounded diagnostic status through the real site USB client.'),
+  tool('device_status', 'Read the connected base identity, inventory, missing modules and bounded diagnostic status through the real site USB client. With machine=syntakt, read the local Synfact loader over USB MIDI (startup --syntakt-midi).', { machine: { type: 'string', enum: ['octatrack', 'syntakt'] } }),
   tool('device_load', 'Read one cached CPU/DSP meter snapshot through the real frontend client. Read-only; never runs a self-test. Older bases report unsupported.'),
   tool('device_log', 'Read the unit’s own log (five-minute load records and incidents with what it was doing) through the real frontend client. Read-only; older bases report unsupported.'),
   { ...tool('device_saved_backup', 'Read only /MODWERK0.SET and /MODWERK1.SET through the frontend client, save verified bytes in the startup-selected private workspace and return only a metadata receipt. No card writes, memory access, arbitrary paths or recovery qualification. Older bases report unsupported.'),
@@ -307,7 +308,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     return token
   }
   const handlers = {
-    site_features: async () => ({ beta: true, tools: TOOLS.map(item => item.name), coverage: ['instrument/module catalogue, search and module guides', 'catalogue availability and USB package preflight/Undo', 'isolated set CRUD/import/export/current versions', 'community API with normal permissions', 'saved public firmware download receipts', 'real site USB review/trial/self-test/Keep/Undo', 'cached live load and fixed saved-module-file backup receipts', 'read-only remote sessions on a member’s unit through their browser, after they accept', 'a Zoom MultiStomp over MIDI (--zoom-midi): identity, files, backup, and installing or removing one added effect'], limits: ['Domain/API tests do not measure CSS pixels or audible output.', 'OAuth/browser sign-in and upload file selection use their separate existing workflows.', 'No raw memory, key injection, whole-OS flash or automatic Keep.', 'Local sources and private workspace are distinct from a live signed-in browser.', 'A saved-module-file backup does not qualify recovery or permit Keep over foreign saved files.'] }),
+    site_features: async () => ({ beta: true, tools: TOOLS.map(item => item.name), coverage: ['instrument/module catalogue, search and module guides', 'catalogue availability and USB package preflight/Undo', 'isolated set CRUD/import/export/current versions', 'community API with normal permissions', 'saved public firmware download receipts', 'real site USB review/trial/self-test/Keep/Undo', 'cached live load and fixed saved-module-file backup receipts', 'read-only remote sessions on a member’s unit through their browser, after they accept', 'a Syntakt running Synfact over USB MIDI (--syntakt-midi): loader and rollback status', 'a Zoom MultiStomp over MIDI (--zoom-midi): identity, files, backup, and installing or removing one added effect'], limits: ['Domain/API tests do not measure CSS pixels or audible output.', 'OAuth/browser sign-in and upload file selection use their separate existing workflows.', 'No raw memory, key injection, whole-OS flash or automatic Keep.', 'Local sources and private workspace are distinct from a live signed-in browser.', 'A saved-module-file backup does not qualify recovery or permit Keep over foreign saved files.'] }),
     site_catalogue: async args => {
       const machine = args.machine ?? 'all', octa = frontend.availableModules(!!args.beta).map(module => ({ ...module, machine: 'octatrack', usb: catalogue.ids.includes(module.id) })), digi = frontend.digiModules.map(module => ({ ...module, name: module.title, description: module.summary, machine: module.device }))
       return { machines: frontend.machines, ...preparedModules ? { privatePreparation: preparedModules.info } : {}, modules: [...octa, ...digi].filter(module => (machine === 'all' || module.machine === machine) && (!args.category || (module.libraryCategory ?? module.category) === args.category) && (module.machine === 'octatrack' ? frontend.octatrackMatchesQuery(module, args.query ?? '') : frontend.digiMatchesQuery(module, args.query ?? ''))) }
@@ -342,7 +343,12 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
       return { status: response.status, body }
     },
     firmware_download: async args => { if (!options.stock) throw new Error('Choose private stock at startup with --stock.'); return buildAndSave(args.request, { stockPath: options.stock, outputDir: dataDir, site, root }) },
-    device_status: snapshot,
+    device_status: async args => {
+      if (args.machine !== 'syntakt') return snapshot()
+      if (remote) throw new Error('End the remote Octatrack session before reading a local Syntakt.')
+      if (!options.syntaktMidi) throw new Error('Syntakt status requires --syntakt-midi at startup.')
+      return readSynfactStatus(dependencies.syntaktAccess ?? nodeMidiAccess)
+    },
     device_load: async () => {
       const unit = await connected(), before = unit.getState()
       if (before.status !== 'ready' || !/^[0-9a-f]{64}$/.test(before.identity?.base ?? '')) throw new Error('The Octatrack must be idle with a verified base identity.')
@@ -544,8 +550,8 @@ export function createProtocol(service) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   for (const method of ['log', 'info', 'debug', 'warn', 'error']) console[method] = (...args) => process.stderr.write(formatMcpLog(...args) + '\n')
   try {
-  const { values } = parseArgs({ options: { 'data-dir': { type: 'string' }, 'frontend-root': { type: 'string' }, 'prepared-modules': { type: 'string' }, 'api': { type: 'string' }, site: { type: 'string' }, 'session-file': { type: 'string' }, stock: { type: 'string' }, 'device-socket': { type: 'string' }, 'zoom-midi': { type: 'boolean' }, 'zoom-effects': { type: 'string' }, 'allow-api-writes': { type: 'boolean' }, 'allow-device-writes': { type: 'boolean' } } })
-  const service = await createFrontendTools({ root: values['frontend-root'] && resolve(values['frontend-root']), preparedModules: values['prepared-modules'] && resolve(values['prepared-modules']), dataDir: values['data-dir'] && resolve(values['data-dir']), apiBase: values.api, site: values.site, sessionFile: values['session-file'], stock: values.stock, deviceSocket: values['device-socket'], zoomMidi: values['zoom-midi'], zoomEffects: values['zoom-effects'] && resolve(values['zoom-effects']), allowApiWrites: values['allow-api-writes'], allowDeviceWrites: values['allow-device-writes'] })
+  const { values } = parseArgs({ options: { 'data-dir': { type: 'string' }, 'frontend-root': { type: 'string' }, 'prepared-modules': { type: 'string' }, 'api': { type: 'string' }, site: { type: 'string' }, 'session-file': { type: 'string' }, stock: { type: 'string' }, 'device-socket': { type: 'string' }, 'zoom-midi': { type: 'boolean' }, 'syntakt-midi': { type: 'boolean' }, 'zoom-effects': { type: 'string' }, 'allow-api-writes': { type: 'boolean' }, 'allow-device-writes': { type: 'boolean' } } })
+  const service = await createFrontendTools({ root: values['frontend-root'] && resolve(values['frontend-root']), preparedModules: values['prepared-modules'] && resolve(values['prepared-modules']), dataDir: values['data-dir'] && resolve(values['data-dir']), apiBase: values.api, site: values.site, sessionFile: values['session-file'], stock: values.stock, deviceSocket: values['device-socket'], zoomMidi: values['zoom-midi'], syntaktMidi: values['syntakt-midi'], zoomEffects: values['zoom-effects'] && resolve(values['zoom-effects']), allowApiWrites: values['allow-api-writes'], allowDeviceWrites: values['allow-device-writes'] })
   const protocol = createProtocol(service), input = createInterface({ input: process.stdin, crlfDelay: Infinity })
   let queue = Promise.resolve()
   input.on('line', line => { queue = queue.then(async () => { let reply; try { if (Buffer.byteLength(line) > 64 * 1024) throw new Error('Message too large.'); reply = await protocol(JSON.parse(line)) } catch { reply = { jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Invalid JSON-RPC message.' } } } if (reply) process.stdout.write(JSON.stringify(reply) + '\n') }) })
