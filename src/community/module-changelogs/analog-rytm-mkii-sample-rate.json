@@ -4,7 +4,8 @@
     "date": "2026-11-21",
     "changes": [
       "Also costs the Rytm less processing when samples loop forward (LOP ON) but none is set to PIPO.",
-      "Nothing you hear or see changes."
+      "Nothing you hear or see changes.",
+      "Documentation only: the test report names the author as Nathaniel Pavel (GitHub @npp1993)."
     ]
   },
   {
