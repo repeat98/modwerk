@@ -1,0 +1,1112 @@
+{
+  "device": "Octatrack MKII",
+  "os": "1.40C",
+  "base": "06e08f35c62c02ce",
+  "date": "2026-11-20",
+  "project": "card-free, 100 BPM, FX NONE, six untriggered THRU tracks and T1/T5 on recorder 3",
+  "recording": {
+    "slot": "R3",
+    "frames": 37800,
+    "format": "signed packed 24-bit stereo",
+    "sourcePages": [
+      [
+        0,
+        4001990,
+        50,
+        126
+      ],
+      [
+        1,
+        4035906,
+        50,
+        128
+      ],
+      [
+        3,
+        4205481,
+        46,
+        128
+      ],
+      [
+        7,
+        8049200,
+        46,
+        128
+      ],
+      [
+        12,
+        7777879,
+        50,
+        128
+      ],
+      [
+        20,
+        7348287,
+        53,
+        128
+      ],
+      [
+        30,
+        6523018,
+        50,
+        126
+      ]
+    ]
+  },
+  "packages": {
+    "bare": "empty inventory",
+    "matched, t1, t5": "371e2e19169814750c4bf844a2b907b1871328f8919fd32b5bddd869859c60b0",
+    "fixed": "9471a4cc5ae9a1858b70ad4861e487e46940543a284416ef596a77bcba792168",
+    "fast": "0c5632f677aecd873b11ae71a82ac5d72c3357d1dd43ccdb1dfc545cd3a5f38a"
+  },
+  "notes": [
+    "Frame guard and MIDI error counters are deltas. Historical accumulated skips appear in the raw guard response.",
+    "Both Flex voices fire in the MIDI runs. A soak sequences one track only. Per-grain memory retains inactive track state and is reported only for assigned tracks.",
+    "USB phase counter reads and frame statistics are sequential. Counts for settling after STOP include the remaining time with USB open. MAIN measures normalized AC amplitude on channels 17/18.",
+    "The first matched stock Part-switch attempt did not select Part 2. Only the completed retry appears."
+  ],
+  "windows": [
+    {
+      "run": "bare-flex-midi",
+      "seconds": 12,
+      "grainTracks": [],
+      "partChanges": [],
+      "frame": {
+        "peakPercent": 70.3,
+        "latePercent": 0.0,
+        "meanPercent": 50.9,
+        "frames": 34080
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 100.0,
+      "voicePolls": [
+        45,
+        45
+      ],
+      "polls": 46,
+      "peakGrains": {},
+      "timerTicks": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    },
+    {
+      "run": "matched-flex-midi",
+      "seconds": 12,
+      "grainTracks": [],
+      "partChanges": [],
+      "frame": {
+        "peakPercent": 67.0,
+        "latePercent": 0.0,
+        "meanPercent": 50.9,
+        "frames": 33985
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 100.0,
+      "voicePolls": [
+        42,
+        42
+      ],
+      "polls": 43,
+      "peakGrains": {},
+      "timerTicks": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    },
+    {
+      "run": "matched-flex-part-retry",
+      "seconds": 12,
+      "grainTracks": [],
+      "partChanges": [
+        [
+          2,
+          2
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "frame": {
+        "peakPercent": 67.2,
+        "latePercent": 0.0,
+        "meanPercent": 46.4,
+        "frames": 33885
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 98.9,
+      "voicePolls": [
+        30,
+        30
+      ],
+      "polls": 43,
+      "peakGrains": {},
+      "timerTicks": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    },
+    {
+      "run": "t1-dense-soak",
+      "seconds": 120,
+      "grainTracks": [
+        1
+      ],
+      "partChanges": [],
+      "frame": {
+        "peakPercent": 96.8,
+        "latePercent": 0.0,
+        "meanPercent": 62.2,
+        "frames": 331872
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 66.85,
+      "voicePolls": [
+        228,
+        0
+      ],
+      "polls": 228,
+      "peakGrains": {
+        "T1": 6
+      },
+      "timerTicks": [
+        17458,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        18823,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "midi": null
+    },
+    {
+      "run": "t5-dense-soak",
+      "seconds": 120,
+      "grainTracks": [
+        5
+      ],
+      "partChanges": [],
+      "frame": {
+        "peakPercent": 96.9,
+        "latePercent": 0.0,
+        "meanPercent": 63.4,
+        "frames": 332175
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 68.5,
+      "voicePolls": [
+        0,
+        217
+      ],
+      "polls": 217,
+      "peakGrains": {
+        "T5": 6
+      },
+      "timerTicks": [
+        0,
+        0,
+        0,
+        0,
+        17402,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        18762,
+        0,
+        0,
+        0
+      ],
+      "midi": null
+    },
+    {
+      "run": "t1-dense-midi",
+      "seconds": 12,
+      "grainTracks": [
+        1
+      ],
+      "partChanges": [],
+      "frame": {
+        "peakPercent": 92.6,
+        "latePercent": 0.0,
+        "meanPercent": 70.9,
+        "frames": 34345
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 100.0,
+      "voicePolls": [
+        41,
+        41
+      ],
+      "polls": 42,
+      "peakGrains": {
+        "T1": 6
+      },
+      "timerTicks": [
+        1162,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        19120,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    },
+    {
+      "run": "t5-dense-midi",
+      "seconds": 12,
+      "grainTracks": [
+        5
+      ],
+      "partChanges": [],
+      "frame": {
+        "peakPercent": 95.0,
+        "latePercent": 0.0,
+        "meanPercent": 71.7,
+        "frames": 34073
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 100.0,
+      "voicePolls": [
+        40,
+        40
+      ],
+      "polls": 41,
+      "peakGrains": {
+        "T5": 6
+      },
+      "timerTicks": [
+        0,
+        0,
+        0,
+        0,
+        10011,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        17594,
+        0,
+        0,
+        0
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    },
+    {
+      "run": "t5-part-midi",
+      "seconds": 12,
+      "grainTracks": [
+        5
+      ],
+      "partChanges": [
+        [
+          2,
+          2
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "frame": {
+        "peakPercent": 92.9,
+        "latePercent": 0.0,
+        "meanPercent": 62.3,
+        "frames": 34462
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 100.0,
+      "voicePolls": [
+        26,
+        26
+      ],
+      "polls": 35,
+      "peakGrains": {
+        "T5": 6
+      },
+      "timerTicks": [
+        0,
+        0,
+        0,
+        0,
+        4234,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        17874,
+        0,
+        0,
+        0
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    },
+    {
+      "run": "fixed-t5-midi",
+      "seconds": 12,
+      "grainTracks": [
+        5
+      ],
+      "partChanges": [],
+      "frame": {
+        "peakPercent": 93.1,
+        "latePercent": 0.0,
+        "meanPercent": 68.9,
+        "frames": 34348
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 100.0,
+      "voicePolls": [
+        44,
+        44
+      ],
+      "polls": 45,
+      "peakGrains": {
+        "T5": 6
+      },
+      "timerTicks": [
+        0,
+        0,
+        0,
+        0,
+        4315,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        16111,
+        0,
+        0,
+        0
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    },
+    {
+      "run": "fixed-t5-soak",
+      "seconds": 120,
+      "grainTracks": [
+        5
+      ],
+      "partChanges": [],
+      "frame": {
+        "peakPercent": 97.4,
+        "latePercent": 0.0,
+        "meanPercent": 63.0,
+        "frames": 331504
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 68.1,
+      "voicePolls": [
+        0,
+        228
+      ],
+      "polls": 229,
+      "peakGrains": {
+        "T5": 6
+      },
+      "timerTicks": [
+        0,
+        0,
+        0,
+        0,
+        16188,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        17885,
+        0,
+        0,
+        0
+      ],
+      "midi": null
+    },
+    {
+      "run": "fast-t1-soak",
+      "seconds": 70,
+      "grainTracks": [
+        1
+      ],
+      "partChanges": [],
+      "frame": {
+        "peakPercent": 86.4,
+        "latePercent": 0.0,
+        "meanPercent": 60.2,
+        "frames": 194144
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 65.9,
+      "voicePolls": [
+        128,
+        0
+      ],
+      "polls": 129,
+      "peakGrains": {
+        "T1": 6
+      },
+      "timerTicks": [
+        14128,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        17182,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "midi": null
+    },
+    {
+      "run": "fast-t5-soak",
+      "seconds": 70,
+      "grainTracks": [
+        5
+      ],
+      "partChanges": [],
+      "frame": {
+        "peakPercent": 85.9,
+        "latePercent": 0.0,
+        "meanPercent": 61.9,
+        "frames": 194060
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 67.1,
+      "voicePolls": [
+        0,
+        127
+      ],
+      "polls": 128,
+      "peakGrains": {
+        "T5": 6
+      },
+      "timerTicks": [
+        0,
+        0,
+        0,
+        0,
+        15286,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        16364,
+        0,
+        0,
+        0
+      ],
+      "midi": null
+    },
+    {
+      "run": "fast-t1-midi",
+      "seconds": 12,
+      "grainTracks": [
+        1
+      ],
+      "partChanges": [],
+      "frame": {
+        "peakPercent": 89.6,
+        "latePercent": 0.0,
+        "meanPercent": 68.1,
+        "frames": 34122
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 100.0,
+      "voicePolls": [
+        41,
+        41
+      ],
+      "polls": 42,
+      "peakGrains": {
+        "T1": 6
+      },
+      "timerTicks": [
+        1238,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        17084,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    },
+    {
+      "run": "fast-t5-midi",
+      "seconds": 12,
+      "grainTracks": [
+        5
+      ],
+      "partChanges": [],
+      "frame": {
+        "peakPercent": 93.0,
+        "latePercent": 0.0,
+        "meanPercent": 67.9,
+        "frames": 34105
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 100.0,
+      "voicePolls": [
+        41,
+        41
+      ],
+      "polls": 42,
+      "peakGrains": {
+        "T5": 6
+      },
+      "timerTicks": [
+        0,
+        0,
+        0,
+        0,
+        4266,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        15612,
+        0,
+        0,
+        0
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    },
+    {
+      "run": "fast-t1-part",
+      "seconds": 12,
+      "grainTracks": [
+        1
+      ],
+      "partChanges": [
+        [
+          2,
+          2
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "frame": {
+        "peakPercent": 87.8,
+        "latePercent": 0.0,
+        "meanPercent": 58.7,
+        "frames": 34121
+      },
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpuPercent": 100.0,
+      "voicePolls": [
+        27,
+        27
+      ],
+      "polls": 39,
+      "peakGrains": {
+        "T1": 6
+      },
+      "timerTicks": [
+        1183,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        17845,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    }
+  ],
+  "usb": [
+    {
+      "run": "flex-usb",
+      "captureChannels": 20,
+      "phases": [
+        {
+          "name": "capture stopped",
+          "skipDelta": 0,
+          "frame": {
+            "peakPercent": 80.6,
+            "latePercent": 0.0,
+            "meanPercent": 42.0,
+            "frames": 1953
+          }
+        },
+        {
+          "name": "play start",
+          "skipDelta": 0,
+          "frame": {
+            "peakPercent": 80.1,
+            "latePercent": 0.0,
+            "meanPercent": 54.3,
+            "frames": 1936
+          }
+        },
+        {
+          "name": "playing",
+          "skipDelta": 0,
+          "frame": {
+            "peakPercent": 81.8,
+            "latePercent": 0.0,
+            "meanPercent": 55.4,
+            "frames": 13029
+          }
+        },
+        {
+          "name": "stop",
+          "skipDelta": 0,
+          "frame": {
+            "peakPercent": 75.7,
+            "latePercent": 0.0,
+            "meanPercent": 55.4,
+            "frames": 1649
+          }
+        },
+        {
+          "name": "capture ended",
+          "skipDelta": 0,
+          "frame": {
+            "peakPercent": 74.9,
+            "latePercent": 0.0,
+            "meanPercent": 46.6,
+            "frames": 16237
+          }
+        }
+      ],
+      "mainStoppedStd": [
+        0.0,
+        0.0
+      ],
+      "mainPlayingStd": [
+        0.155071673,
+        0.155076285
+      ]
+    },
+    {
+      "run": "t5-usb-window",
+      "captureChannels": 20,
+      "phases": [
+        {
+          "name": "capture stopped",
+          "skipDelta": 0,
+          "frame": {
+            "peakPercent": 81.6,
+            "latePercent": 0.0,
+            "meanPercent": 45.2,
+            "frames": 2039
+          }
+        },
+        {
+          "name": "play start",
+          "skipDelta": 10,
+          "frame": {
+            "peakPercent": 103.3,
+            "latePercent": 3.3,
+            "meanPercent": 72.0,
+            "frames": 1926
+          }
+        },
+        {
+          "name": "playing",
+          "skipDelta": 913,
+          "frame": {
+            "peakPercent": 107.7,
+            "latePercent": 7.7,
+            "meanPercent": 77.0,
+            "frames": 13032
+          }
+        },
+        {
+          "name": "stop",
+          "skipDelta": 201,
+          "frame": {
+            "peakPercent": 97.8,
+            "latePercent": 0.0,
+            "meanPercent": 77.7,
+            "frames": 1649
+          }
+        },
+        {
+          "name": "capture ended",
+          "skipDelta": 273,
+          "frame": {
+            "peakPercent": 95.4,
+            "latePercent": 0.0,
+            "meanPercent": 52.0,
+            "frames": 16360
+          }
+        }
+      ],
+      "mainStoppedStd": [
+        0.0,
+        0.0
+      ],
+      "mainPlayingStd": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "run": "fixed-t5-usb",
+      "captureChannels": 20,
+      "phases": [
+        {
+          "name": "capture stopped",
+          "skipDelta": 0,
+          "frame": {
+            "peakPercent": 79.9,
+            "latePercent": 0.0,
+            "meanPercent": 45.2,
+            "frames": 2007
+          }
+        },
+        {
+          "name": "play start",
+          "skipDelta": 0,
+          "frame": {
+            "peakPercent": 101.0,
+            "latePercent": 1.0,
+            "meanPercent": 71.8,
+            "frames": 1941
+          }
+        },
+        {
+          "name": "playing",
+          "skipDelta": 726,
+          "frame": {
+            "peakPercent": 103.3,
+            "latePercent": 3.3,
+            "meanPercent": 76.0,
+            "frames": 13033
+          }
+        },
+        {
+          "name": "stop",
+          "skipDelta": 100,
+          "frame": {
+            "peakPercent": 94.9,
+            "latePercent": 0.0,
+            "meanPercent": 78.5,
+            "frames": 1663
+          }
+        },
+        {
+          "name": "capture ended",
+          "skipDelta": 128,
+          "frame": {
+            "peakPercent": 93.3,
+            "latePercent": 0.0,
+            "meanPercent": 51.9,
+            "frames": 16164
+          }
+        }
+      ],
+      "mainStoppedStd": [
+        0.0,
+        0.0
+      ],
+      "mainPlayingStd": [
+        0.140809429,
+        0.132375226
+      ]
+    },
+    {
+      "run": "fast-t1-usb",
+      "captureChannels": 20,
+      "phases": [
+        {
+          "name": "capture stopped",
+          "skipDelta": 0,
+          "frame": {
+            "peakPercent": 85.2,
+            "latePercent": 0.0,
+            "meanPercent": 43.8,
+            "frames": 2452
+          }
+        },
+        {
+          "name": "play start",
+          "skipDelta": 19,
+          "frame": {
+            "peakPercent": 108.7,
+            "latePercent": 8.7,
+            "meanPercent": 72.5,
+            "frames": 2058
+          }
+        },
+        {
+          "name": "playing",
+          "skipDelta": 566,
+          "frame": {
+            "peakPercent": 106.8,
+            "latePercent": 6.8,
+            "meanPercent": 75.3,
+            "frames": 13064
+          }
+        },
+        {
+          "name": "stop",
+          "skipDelta": 81,
+          "frame": {
+            "peakPercent": 91.9,
+            "latePercent": 0.0,
+            "meanPercent": 72.4,
+            "frames": 1782
+          }
+        },
+        {
+          "name": "capture ended",
+          "skipDelta": 58,
+          "frame": {
+            "peakPercent": 97.8,
+            "latePercent": 0.0,
+            "meanPercent": 52.0,
+            "frames": 16083
+          }
+        }
+      ],
+      "mainStoppedStd": [
+        0.0,
+        0.0
+      ],
+      "mainPlayingStd": [
+        0.127943746,
+        0.126017696
+      ]
+    },
+    {
+      "run": "fast-t5-usb",
+      "captureChannels": 20,
+      "phases": [
+        {
+          "name": "capture stopped",
+          "skipDelta": 0,
+          "frame": {
+            "peakPercent": 86.2,
+            "latePercent": 0.0,
+            "meanPercent": 44.2,
+            "frames": 2576
+          }
+        },
+        {
+          "name": "play start",
+          "skipDelta": 158,
+          "frame": {
+            "peakPercent": 103.9,
+            "latePercent": 3.9,
+            "meanPercent": 74.1,
+            "frames": 1954
+          }
+        },
+        {
+          "name": "playing",
+          "skipDelta": 376,
+          "frame": {
+            "peakPercent": 110.2,
+            "latePercent": 10.2,
+            "meanPercent": 75.4,
+            "frames": 13049
+          }
+        },
+        {
+          "name": "stop",
+          "skipDelta": 143,
+          "frame": {
+            "peakPercent": 98.7,
+            "latePercent": 0.0,
+            "meanPercent": 78.1,
+            "frames": 1882
+          }
+        },
+        {
+          "name": "capture ended",
+          "skipDelta": 78,
+          "frame": {
+            "peakPercent": 94.1,
+            "latePercent": 0.0,
+            "meanPercent": 51.7,
+            "frames": 15900
+          }
+        }
+      ],
+      "mainStoppedStd": [
+        0.0,
+        0.0
+      ],
+      "mainPlayingStd": [
+        0.178987602,
+        0.136916454
+      ]
+    }
+  ]
+}
