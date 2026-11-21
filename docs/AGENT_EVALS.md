@@ -1,6 +1,6 @@
 # Agent evals from merged fixes
 
-An agent gets the task description and the relevant public files from the first parent of a merged fix. A grader outside that snapshot checks the reported behaviour and cases that already worked. A case passes when every check passes. Each case currently covers one Node script.
+An agent gets the task description and the relevant public files from the first parent of a merged fix. A grader outside that snapshot checks the reported behaviour and cases that already worked. A case passes when every check passes. Each case currently covers one Node script. A case can name a contributor guide in `guide`. Local and hosted agents receive its current text in TASK.md. Its contents count toward the suite ID, so a guidance change gets a fresh attempt.
 
 ## On a contributor’s computer
 
