@@ -135,6 +135,18 @@
     },
     {
       "path": "manifest.py",
+      "address": 1073794890,
+      "length": 6,
+      "sha256": "d667a779e117b682edd70e6622bdeebe3c61e1e25ce8ff48b0e2d6cba7c505ca"
+    },
+    {
+      "path": "manifest.py",
+      "address": 1073794896,
+      "length": 6,
+      "sha256": "527ad6f31bd163aa463e88294d4405e84510d1e40192edac022c852a43de999d"
+    },
+    {
+      "path": "manifest.py",
       "address": 1073796372,
       "length": 8,
       "sha256": "39173055fb04ac0a6c355f89561b48834bc5b31ad67609e3fe53efbff7de1866"
