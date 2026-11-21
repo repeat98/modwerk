@@ -16,11 +16,12 @@ export interface TrialVerdict { failed: boolean; lines: string[] }
  * bookkeeping, or a restart that already ended the trial with an error. */
 const FAILS: ReadonlySet<string> = new Set(['crash', 'stall', 'freeze', 'shed'])
 const WARNS: ReadonlySet<string> = new Set(['hot', 'cpu'])
+const tracks = (mask: number) => [...Array(8).keys()].filter(t => mask >> t & 1).map(t => 'T' + (t + 1)).join(', ') || '(none named)'
 const SAID: Record<string, (a: number) => string> = {
   crash: a => `crash at PC 0x${a.toString(16)}`,
   stall: a => `DSP stall (${['a test', 'frames stopped', 'eDMA refused a transfer'][a] ?? 'reason ' + a})`,
   freeze: a => a ? `the UI stood still for ${a} frames` : 'the UI stood still and never came back',
-  shed: a => `the frame guard skipped tracks ${[...Array(8).keys()].filter(t => a >>> 24 >> t & 1).map(t => 'T' + (t + 1)).join(', ') || '(none named)'}, ${a & 0xffffff} skips since the start`,
+  shed: a => `the frame guard skipped tracks ${tracks(a >>> 24)}, ${a & 0xffffff} skips since the start`,
   hot: a => `the CPU at 90 % or more for ${a / 2} s`,
   cpu: () => 'the CPU meter over its limit',
 }
@@ -29,11 +30,16 @@ const SAID: Record<string, (a: number) => string> = {
 export function trialVerdict(before: LogReading, after: LogReading, names?: (address: number) => string): TrialVerdict {
   if (before === undefined || after === undefined) return { failed: false, lines: ['no verdict: this base keeps no log (LOG), so a crash or stall in the trial is not seen here'] }
   const seen = before?.seq ?? 0
-  const incidents = (after?.incidents ?? []).filter((incident: DeviceIncident) => incident.seq > seen && (FAILS.has(incident.kind) || WARNS.has(incident.kind)))
+  // A base that pages the guard's live skip count is judged by it: its SHED incidents come at most once in ten minutes, so
+  // one can carry an earlier trial's skips into this one's window (owner's MKII, 21 November 2026).
+  const counted = before?.sheds && after?.sheds ? after.sheds.count - before.sheds.count : undefined
+  const incidents = (after?.incidents ?? []).filter((incident: DeviceIncident) => incident.seq > seen && (FAILS.has(incident.kind) || WARNS.has(incident.kind))
+    && !(incident.kind === 'shed' && counted !== undefined))
   const lines = incidents.map(incident => {
     const name = incident.kind === 'crash' && names?.(incident.a)
     return `${FAILS.has(incident.kind) ? 'FAIL' : 'note'} (boot ${incident.boot} +${incident.second}s) ${SAID[incident.kind](incident.a)}${name ? ' (' + name + ')' : ''}`
   })
+  if (counted) lines.push(`FAIL the frame guard skipped ${counted} render${counted === 1 ? '' : 's'} during the trial (tracks it skipped on since the start: ${tracks(after!.sheds!.tracks)})`)
   // A crash or stall record whose count moved, when no incident of its kind says so (a log that wrapped, or a record kept before its incident).
   const crash = after?.crash, stall = after?.stall
   if (crash && crash.count !== (before?.crash?.count ?? 0) && !incidents.some(incident => incident.kind === 'crash'))

@@ -655,11 +655,12 @@ DSP_EDITS = {
                     '    jobs[c].proc=(uint16_t)expected; jobs[c].expected=expected&0xffffffu;\n'
                     '    publish(); jobs[c].state=1; return 1;\n}\n'
                     'int dl_job_status(unsigned c) {'),
-                   # The longest time between two frames, DTCN3 counts (132 MHz): the self-test's frame-timing check.
+                   # The longest time between two frames, DTCN3 counts (132 MHz): the self-test's frame-timing check. The first
+                   # frame after a start has none before it (it read the whole RAM boot, 32 s, on an MKII on 21 November 2026).
                    ('unsigned dl_frame(void) {\n    ++dl_frames;',
                     'volatile uint32_t dl_frame_gap=0;\nstatic uint32_t frame_at=0;\n'
                     'unsigned dl_frame(void) {\n'
-                    '    { uint32_t now=*(volatile uint32_t *)0xfc07c00cu, d=now-frame_at; frame_at=now; if(d>dl_frame_gap) dl_frame_gap=d; }\n'
+                    '    { uint32_t now=*(volatile uint32_t *)0xfc07c00cu, d=now-frame_at; if(frame_at && d>dl_frame_gap) dl_frame_gap=d; frame_at=now; }\n'
                     '    ++dl_frames;'),
                    ('volatile uint16_t dl_tx[2][DL_WORDS]={{0}}, dl_rx[2][32]={{0}};',
                     'volatile uint16_t dl_tx[2][DL_WORDS] __attribute__((aligned(16)))={{0}}, '

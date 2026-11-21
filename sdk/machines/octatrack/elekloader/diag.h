@@ -68,6 +68,12 @@ typedef char diag_load_layout[sizeof(struct diag_load) == 32u ? 1 : -1];
 typedef char diag_incident_layout[sizeof(struct diag_incident) == 92u ? 1 : -1];
 typedef char diag_log_layout[sizeof(struct diag_log) == 40u + 92u + 32u * DIAG_LOADS + 92u * DIAG_INCIDENTS ? 1 : -1];
 #define DIAG_IMAGE_BYTES (sizeof(struct diag_log) + DIAG_CRASH_BYTES + DIAG_STALL_BYTES + DIAG_TRACE_BYTES) /* what LOG pages */
+/* Then, in the last page's spare bytes: the frame guard's skips since the start and their tracks as they stand now
+ * ("MWSK", count, track mask). A SHED incident comes at most once in HOT_GAP, so skips can be logged inside a later
+ * trial's window; a host compares two reads of this count instead (owner's MKII, 21 November 2026). */
+#define DIAG_SHEDS_MAGIC 0x4d57534bu
+#define DIAG_SHEDS_BYTES 12u
+typedef char diag_sheds_fit[DIAG_IMAGE_BYTES % DIAG_PAGE + DIAG_SHEDS_BYTES <= DIAG_PAGE ? 1 : -1];
 
 void modwerk_diag_tick(void);                          /* ev_tick */
 int modwerk_diag_key(int code, int pressed);           /* ev_key: remembers presses, takes none */

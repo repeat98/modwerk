@@ -305,10 +305,12 @@ unsigned modwerk_diag_read(uint8_t *out, unsigned page)
 {
     const volatile uint8_t *log = (const volatile uint8_t *)LOG, *crash = (const volatile uint8_t *)CRASH, *stall = (const volatile uint8_t *)STALL,
         *frames = (const volatile uint8_t *)TRACE;
+    const uint32_t sheds[3] = {DIAG_SHEDS_MAGIC, mw_frame_sheds, mw_frame_shed_tracks};
     for (unsigned i = 0, at = page * DIAG_PAGE; i < DIAG_PAGE; ++i, ++at)
         out[i] = at < sizeof(struct diag_log) ? log[at]
                : at < sizeof(struct diag_log) + DIAG_CRASH_BYTES ? crash[at - sizeof(struct diag_log)]
                : at < sizeof(struct diag_log) + DIAG_CRASH_BYTES + DIAG_STALL_BYTES ? stall[at - sizeof(struct diag_log) - DIAG_CRASH_BYTES]
-               : at < DIAG_IMAGE_BYTES ? frames[at - sizeof(struct diag_log) - DIAG_CRASH_BYTES - DIAG_STALL_BYTES] : 0;
+               : at < DIAG_IMAGE_BYTES ? frames[at - sizeof(struct diag_log) - DIAG_CRASH_BYTES - DIAG_STALL_BYTES]
+               : at < DIAG_IMAGE_BYTES + DIAG_SHEDS_BYTES ? (uint8_t)(sheds[(at - DIAG_IMAGE_BYTES) / 4u] >> (24u - 8u * ((at - DIAG_IMAGE_BYTES) % 4u))) : 0;
     return DIAG_PAGE;
 }

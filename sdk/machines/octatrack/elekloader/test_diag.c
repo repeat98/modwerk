@@ -159,7 +159,11 @@ int main(void)
     const volatile uint8_t *cb = (const volatile uint8_t *)modwerk_test_crash, *sb = (const volatile uint8_t *)modwerk_test_stall; /* the host's byte order */
     CHECK(modwerk_diag_read(page, at / DIAG_PAGE) == DIAG_PAGE && page[at % DIAG_PAGE] == cb[0] && page[at % DIAG_PAGE + 3u] == cb[3] && (cb[0] == 'M' || cb[3] == 'M'));
     CHECK(modwerk_diag_read(page, stall_at / DIAG_PAGE) == DIAG_PAGE && page[stall_at % DIAG_PAGE] == sb[0] && page[stall_at % DIAG_PAGE + 3u] == sb[3]);
-    CHECK(modwerk_diag_read(page, end / DIAG_PAGE) == DIAG_PAGE && page[end % DIAG_PAGE] == 0 && page[DIAG_PAGE - 1u] == 0);
+    /* Then the guard's skips as they stand ("MWSK", count, tracks), then zeros. */
+    mw_frame_sheds = 0x01020304u, mw_frame_shed_tracks = 0x21u;
+    CHECK(modwerk_diag_read(page, end / DIAG_PAGE) == DIAG_PAGE && page[end % DIAG_PAGE] == 'M' && page[end % DIAG_PAGE + 3u] == 'K' &&
+          page[end % DIAG_PAGE + 4u] == 1u && page[end % DIAG_PAGE + 7u] == 4u && page[end % DIAG_PAGE + 11u] == 0x21u &&
+          page[end % DIAG_PAGE + DIAG_SHEDS_BYTES] == 0 && page[DIAG_PAGE - 1u] == 0);
     CHECK(DIAG_PAGE % 64u != 0u);
 
     /* The frames before a stall: the last DIAG_TRACE_FRAMES, oldest first, the newest last; a gap and a run past the

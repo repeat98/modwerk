@@ -29,6 +29,18 @@ describe('trial verdict', () => {
     ])
   })
 
+  it('judges skips by the guard’s live count where the base pages it, so a late-logged shed from before is no fault', () => {
+    const sheds = (count: number, tracks = 0xff) => ({ sheds: { count, tracks } })
+    // diag.c logs a SHED incident at most once in ten minutes: this one carries an earlier trial's 33 skips.
+    const late = { ...log(14, [incident(13, 'shed', 0xff000021)]), ...sheds(33) }
+    expect(trialVerdict({ ...log(10), ...sheds(33) }, late)).toEqual({ failed: false, lines: ['no crash, stall, freeze or skipped track logged during the trial'] })
+    const verdict = trialVerdict({ ...log(10), ...sheds(33) }, { ...log(10), ...sheds(35, 0x05) })
+    expect(verdict.failed).toBe(true)
+    expect(verdict.lines[0]).toBe('FAIL the frame guard skipped 2 renders during the trial (tracks it skipped on since the start: T1, T3)')
+    // An older base pages no count: its incidents decide, as before.
+    expect(trialVerdict(log(10), log(14, [incident(13, 'shed', 0x05000003)])).failed).toBe(true)
+  })
+
   it('notes a hot CPU without failing, and ignores the trial\'s own set and start records', () => {
     const verdict = trialVerdict(log(10), log(13, [incident(11, 'set', 2), incident(12, 'hot', 6), incident(13, 'start')]))
     expect(verdict).toEqual({ failed: false, lines: ['note (boot 7 +3s) the CPU at 90 % or more for 3 s', 'no fault logged'] })
