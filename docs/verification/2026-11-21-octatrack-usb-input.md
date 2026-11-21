@@ -1,8 +1,47 @@
 # Octatrack USB input RAM trials, 21 November 2026
 
+## Cumulative 0.7.13 draft on the MKII
+
+The browser and native builders produced the same 821,072-byte OS image, SHA-256
+`996e5ab55bc1f4c783b90c9b63230a2b088c0f074430c479894cc7959167fafc`.
+The cumulative base identifies as `8cd1320411a62dad70e3248387f8b61655af3ae739f4ebdf0088b3144c88ac24`.
+Its optional USB Audio package `0cb56b0c269cb2f3b355a3116f00cd951ed060961813486da76f3c3665c03c3f`
+reproduced byte-for-byte from the stock-free recipe and from the owner's OS 1.40C file.
+
+The exact cumulative base ran from RAM. With the canonical package and INPUTS set to OFF, macOS recorded
+352,800 frames over eight seconds on Main/Cue at 44.1 kHz. The 32-second trial ended in normal mode.
+Its empty starting inventory and complete set digest matched after Undo.
+
+### Timed Undo
+
+The earlier 90-second trial failed on ENTER, before the host could send ROLLBACK. The host had retained
+its last USB submission sequence throughout the trial. A host regression reproduced the same symptom
+when a status client sent HELLO during the hold. The corrected uploader reads the latest device sequence
+before each command. It still validates the command, transaction, session and base in the reply.
+
+On the exact draft, the trial owner's last submission before the wait was LEAVE at sequence 14.
+At timeout the unit reported a completed HELLO at sequence 15. The owner's bridge had sent no such frame.
+The owner sent ENTER at 16, ROLLBACK at 17 and LEAVE at 18. All three received matching replies.
+The trace identifies the intervening command. It does not identify the process that sent it.
+
+### Panel routing
+
+The instrumented build `9ff0c2892385c424bf58feb470656f75ebfa1f2bab6a665f2f9a2e3eff06ef88` ran
+the same canonical USB Audio package with Vibrato 0.1.0-experimental. On B01, with the sequencer stopped,
+each five-second take used the physical INPUTS menu and a single CoreAudio device. Each row with input
+used one take with only DIR AB at 80 and another with only DIR CD at 80. The source tones were
+433, 1,009, 2,017 and 4,001 Hz at 0.075 peak. Main returned the selected tones at 0.029295 peak.
+
+| INPUTS | Channels from Mac / to Mac | Measured routing |
+| --- | --- | --- |
+| OFF | 0 / 4 | CoreAudio captured 220,500 output frames. |
+| AB | 2 / 4 | Host 1/2 returned on A/B. The C/D take had no test tones. |
+| CD | 2 / 4 | Host 1/2 returned on C/D. The A/B take had no test tones. |
+| ABCD | 4 / 4 | Host 1/2 returned on A/B and host 3/4 on C/D, in channel order. |
+
 ## Private USB input RAM trial on an Octatrack MKII, 21 November 2026
 
-Source `96c932b50`, OS 1.40C, development base `3e4fa8ce43706259942ebeba14b041e07576fe52f0fcb5f2f9773bf9525ce1c4`.
+Source `182846bc2`, OS 1.40C, development base `3e4fa8ce43706259942ebeba14b041e07576fe52f0fcb5f2f9773bf9525ce1c4`.
 The trial used package `bdad3889b242388cc66a4910b91ead3fecc5da6c568487c9efc21f68ad955b63`.
 It differs from the OFF-default private package `35f2a26cf5eb406b2ca80206a10281c279fd179d3c241535684afccfefb124f0`
 only in its ABCD input and Main/Cue output preset. Both directions were open on the same macOS CoreAudio device at 44.1 kHz.
