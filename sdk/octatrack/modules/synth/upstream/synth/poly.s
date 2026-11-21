@@ -5767,18 +5767,19 @@ fm_start:
         lea 8(%sp),%sp
         jmp 0x4000f450
 
-| The runtime base delivers ev_audio_frame_prepare. In a standalone card
-| build, preserve the frame builder's live registers across that same call.
-        .ifndef MODWERK_EVENTS
+| The base prepares the frame before the LFO pass. A standalone SDK build
+| makes the same call at the existing LFO detour, preserving its live registers.
+        .global fm_lfo_frame_entry
+        .ifdef MODWERK_EVENTS
+        .set    fm_lfo_frame_entry,fm_lfo_pass
+        .else
         .text
         .balign 4
-        .global fm_native_frame
-fm_native_frame:
+fm_lfo_frame_entry:
         lea     -20(%sp),%sp
         movem.l %d0-%d1/%a0-%a2,(%sp)
         jsr     fm_prepare_frame
         movem.l (%sp),%d0-%d1/%a0-%a2
         lea     20(%sp),%sp
-        lea     0x8000136c,%a3
-        jmp     0x4000cf50
+        jmp     fm_lfo_pass
         .endif

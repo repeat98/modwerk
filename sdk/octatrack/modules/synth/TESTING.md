@@ -20,7 +20,9 @@ On the emulated ColdFire, 64 first-trigger cases covered native FM, assigned leg
 
 The two runtime packages produced the same output buffers and exit registers in 1,024 complete LFO passes. The comparison covered all 256 voice masks, both frame buffers and the standalone caller. All 24 LFO wave handlers ran on each pass. With no voices or pending starts the candidate made zero calls to the FM depth handler. Separate comparisons covered 38,352 clock frames, 4,096 routing cases, 1,284 marker cases and 6,144 glide trajectories at all 128 settings.
 
-In separate Octemu runs of statically linked images, the released and candidate engines reloaded the same saved FLEX project with a legacy `FMSYNTH_OLD.WAV` marker. The first 176,400 stereo frames from note onset matched exactly. They also matched on a project with LEG MONO, glide 96 and two pitch locks. Both recordings ended in silence after Stop. The standalone SDK build from the release sources reproduced the complete candidate image used for these two recordings byte for byte (SHA-256 `a737d650a2500cf3aa1449f4ea5cacb135c57d50e5bb4f2c36db9677ee3b1c10`). The runtime build from the same sources reproduced the MKII package byte for byte.
+In separate Octemu runs of statically linked images, the released and candidate engines reloaded the same saved FLEX project with a legacy `FMSYNTH_OLD.WAV` marker. The first 176,400 stereo frames from note onset matched exactly. They also matched on a project with LEG MONO, glide 96 and two pitch locks. Both recordings ended in silence after Stop. Standalone SDK builds call frame preparation at the existing LFO detour. The USB build subscribes to the base callback and reproduces the MKII-tested package byte for byte.
+
+The final standalone SDK image (`e0ea9dbc3f55468e6ae188ec66a9b98cb5c66ef37f4f317e7604d36e0339b7e2`) matched the reference for the first 176,400 stereo frames from note onset in each fixture. The legacy marker played after project reload. The glide-96 run used the previously loaded project snapshot after a fresh reload stalled on emulated card I/O. Both ended in silence after Stop.
 
 
 ## Previous release 0.1.4

@@ -11,17 +11,17 @@
     {
       "path": "manifest.py",
       "previousSha256": "780dbb5617d20167a5e3e67d49af7f9525021b89657a559ca678b95c5ae88f79",
-      "draftSha256": "87606f9a5ea657a4ea3058cc3736d28126f668978aa28ea10b50f518218e4987"
+      "draftSha256": "4c28544721728eced2bb45f0e70fec900bbde560032c7386bac0b92df7032e7c"
     },
     {
       "path": "stock-guards.json",
       "previousSha256": "0f7ce8ef13554f5baceda2925ac1d02bc6ad70d776ba971a4f580eeb02883bc7",
-      "draftSha256": "dc295b53004d12b7546057b19e3a9fbc2e9db55f658b49db1d229e824ea228d4"
+      "draftSha256": "1111c8406e98b03a35c2e91a0f8526480a51404a6ff8fbb9440401ea7b6f35fa"
     },
     {
       "path": "upstream/synth/poly.s",
       "previousSha256": "5f6e39e55c813cd351538d00e0b02eb56cc253f803f95ca9450e140442064d60",
-      "draftSha256": "236953949c0f62625b0968ec006f6531b62a7145c78dcc97456248a2b0aee2f2"
+      "draftSha256": "77e31fd5e120d0507d0b5624ea060d01f81307561971d23bc93bb81e725c2651"
     },
     {
       "path": "upstream/quantizer/manifest.py",
