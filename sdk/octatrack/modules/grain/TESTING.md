@@ -17,9 +17,32 @@ All 64 six-voice timing fixtures executed fewer instructions. Counts cover the g
 | 32 | No | 10,257.5 | 8,054.2 | 10,617 | 8,281 |
 | 32 | Yes | 11,411.9 | 9,224.4 | 11,855 | 9,522 |
 
+The full callback matched PCM and all six voice states in 3,072 comparisons across T1 and T5, including changes to pitch, fine position, window and mode. Of those callbacks, 2,560 ran with six active grains. The largest observed instruction count fell from 9,740 to 7,962.
+
+In the MKII emulator, STOP, switching away from and back to the Grain Part, choosing Flex again, and selecting another track worked on both T1 and T5. These panel checks used development base `fac1523234f4bb0b`. On the card-free shipping base `254c5a75a139255e`, Grain and USB Audio each ran and rolled back in a single-package emulator trial. The two-package set request stopped at verification. The base requires its card-set restore before it can verify a whole-set trial. The card-free hardware comparison therefore uses a development build with the 20-channel layout linked into the base.
+
 The [static timing analysis](evidence/timing/candidate_bound.py) checks the identity of the linked package. A start callback is bounded at 70 instructions and 796 zero-wait core cycles. For 16 source frames, the render bounds are 21,453 instructions and 186,620 cycles. For 32 frames they are 39,517 instructions and 343,420 cycles. These conservative bounds exceed the 95,782-cycle frame budget before stock calls, memory contention and interrupts are accounted for. They do not certify the deadline.
 
-The package is 27,280 bytes. The loaded image is 26,076 bytes with 2,440 bytes of BSS, totaling 28,516 bytes of static RAM. GCC's Grain-only stack bounds include return addresses and reach 668 bytes for the audio callback. Hardware USB capture, musical MIDI, STOP and sustained T1/T5 playback on this hash are pending.
+The package is 27,280 bytes. The loaded image is 26,076 bytes with 2,440 bytes of BSS, totaling 28,516 bytes of static RAM. GCC's Grain-only stack bounds include return addresses and reach 668 bytes for the audio callback.
+
+### Card-free MKII playback on the packed stereo build
+
+The MKII loaded package `9ad52855` alone on shipping base 0.7.12 (`254c5a75a139255e`) in a 12-second RAM trial and rolled it back to the empty inventory. For the four playback runs, development base `3a4c07fe4df32e41` supplied the 20-channel USB layout and panel telemetry. The source was a 37,800-frame 24-bit stereo recording in R3. Seven inspected pages contained distinct channels and nonzero low bytes. Each five-minute run used 20-channel CoreAudio capture at 44.1 kHz and the same 100 BPM MIDI phrase with 12,000 clocks, 1,000 note-ons, 1,000 note-offs and 250 modulation changes. T1 and T5 shared R3. One track played Grain per run within the 45-point Part budget.
+
+| Machine | Track | Longest observed frame | Playback skips | Total skips including STOP and chooser |
+| --- | --- | ---: | ---: | ---: |
+| Stock Flex | T1 | 296.0 µs | 0 | 0 |
+| Grain, six voices | T1 | 382.1 µs | 3,185 | 3,187 |
+| Stock Flex | T5 | 300.1 µs | 0 | 0 |
+| Grain, six voices | T5 | 385.9 µs | 3,924 | 3,941 |
+
+The audio-frame deadline is 362.8 µs. Six grains played on both tested tracks. All four captures contained stereo signal, had continuous host timestamps, and recorded zero MIDI receive errors or transmit drops. Following STOP, the panel switched Parts and restored the assignment, returned the track to Flex, and responded to track selection through the final 29–31-second observation. The crash and stall counters held. The earlier panel freeze remains unresolved. This normalized recorder-input test covers render load and transport behavior. Musical listening and reboot qualification remain open.
+
+The isolated timing fixture sampled the release renderer on a preemptible UI tick. Across 512 calls, all 64 PCM fingerprints matched, and the longest observed call took 36,282 timer ticks (274.9 µs). The frame numbers above measure live playback with stock work, USB capture and musical MIDI. [Per-phase timing, audio checks and restoration](evidence/timing/packed-stereo-comparison.json).
+
+A private profiling build sampled one in 97 callbacks during a one-minute T1 run. All 3,072 compiled PCM and voice-state comparisons matched the tested package. The 2,717 physical samples included a 129.3 µs callback for 16 source frames. Its measured components were 30.4 µs for the lane and stock Flex render, 38.2 µs for packet handling, controls and source lookup, 60.5 µs for granular synthesis, and 0.2 µs for restoring the lane. A bit-identical instruction scheduling experiment had a lower single maximum in the preemptible timing fixture, but its 512-call mean rose from 83.5 to 86.5 µs. The tested package keeps the original schedule.
+
+The original R3 fingerprint matched after the runs. The scratch and starting patterns and Parts matched their snapshots. The eight empty recorders, original tempo and track selection were restored. The normal shipping base returned with zero saved and live modules, and the hardware reservation was released.
 
 ## Six-voice private build, 21 November 2026
 

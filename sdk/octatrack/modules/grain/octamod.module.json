@@ -132,7 +132,7 @@
     "effectId": null
   },
   "resources": {
-    "recorded": "2026-11-20",
+    "recorded": "2026-11-21",
     "storage": {
       "label": "Module image and memory",
       "display": "28,516 bytes of static runtime memory",
@@ -144,11 +144,11 @@
     },
     "processing": {
       "label": "ColdFire, in the frame interrupt",
-      "display": "36,620 cycles for the longest guarded T1 render in the combined capture",
-      "value": 36620,
+      "display": "35,242 core cycles for the longest observed guarded callback in the combined capture",
+      "value": 35242,
       "unit": "cycles/render",
       "method": "hardware",
-      "conditions": "Package 0c5632f6, MKII 1.40C, RAM base fac15232. A dense six-voice T1 played a 24-bit stereo recorder buffer while 20-channel USB capture and the 12-second MIDI trace ran. One guarded callback reached 18,310 ticks at 132 MHz, or 138.7 microseconds. This elapsed measurement includes stock Flex and preemption. The package skipped renders during capture. A hardware worst-case bound remains open.",
+      "conditions": "Package 9ad52855, MKII OS 1.40C, RAM base 3a4c07fe. Dense six-voice 24-bit stereo playback on T1 and T5 with 20-channel capture and musical MIDI, five minutes per track. The longest observed guarded callback took 17,621 timer ticks at 132 MHz (133.5 microseconds). The worst whole audio frame reached 385.9 microseconds against a 362.8-microsecond deadline.",
       "source": "TESTING.md"
     },
     "impact": {
@@ -184,9 +184,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The compiled SCAN endpoint and stereo kernels match the reference. On the card-free MKII, package 0c5632f6 played a 24-bit stereo recorder buffer on T1 and T5. The six-voice sequencer soaks and MIDI-only traces logged zero skipped renders. Opening 20-channel USB audio capture caused skipped renders on both tracks.",
+    "summary": "The six-voice package 9ad52855 played a 24-bit stereo RAM recorder on the MKII. With 20-channel USB capture and musical MIDI, five-minute playback skipped 3,185 renders on T1 and 3,924 on T5. Matched stock Flex runs skipped zero. STOP, Part changes and the return to Flex worked on both tracks. Release qualification remains open.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "55f41f49e6769958376e89bfa94272860aa9c9da",
+    "evidenceRevision": "f4b064f66ca8f0b515d91ae1f0d6ffa0f15764b4",
     "gates": [
       "python3 -B test_grain.py",
       "python3 -B generate.py --check"
