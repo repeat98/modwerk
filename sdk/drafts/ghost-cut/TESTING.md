@@ -1,6 +1,6 @@
 # Ghost Cut testing
 
-Milestones A (the TAPE engine) and B (the GRAIN engine). Everything below ran on 21 November 2026 on a Mac (Apple silicon), with octabam's DSP56300 tools built locally and the developer's own OS 1.40C extraction. No result here comes from a unit or from ot_emu.
+Milestones A (the TAPE engine), B (the GRAIN engine) and C (the drift head). The render and performance work below ran on 21 November 2026 on a Mac (Apple silicon), with octabam's DSP56300 tools built locally and the developer's own OS 1.40C extraction. Those results do not come from a unit or from ot_emu; the later sections identify emulator and unit runs separately.
 
 ## Render gates (dsp_host): RENDER
 
@@ -104,7 +104,14 @@ Nothing here is hardware evidence. Ghost Cut has not run on a track in the emula
 
 ## On the unit
 
-Not tested.
+### 22 November 2026: private RAM install and Undo
+
+- **Build:** Ghost Cut 0.1.0-experimental from source revision `424dc4ae1`, built with `module:dev --build-only --slots fx2 --cycles 281 --cycles-kind modeled --state 53 --buffer 15870`. Package SHA-256: `58289edadefd1d41280c4fdcc2eace329276ef56facede77aa9925159e0c7517`. No source changes were in the working tree; `sdk/octabam/vendor` was an untracked link to the local upstream tools.
+- **Unit and baseline:** Octatrack OS 1.40C, flashed Modwerk base `254c5a75a139255e…`. The developer reported a test project selected and transport stopped. The base reported normal, generation 0, and an empty module inventory before the run. It does not answer development requests for the UI or transport state, so the Part's saved and working copies could not be checked remotely.
+- **Temporary trials:** The exact package was installed into RAM for 30, 180, 300 and 600 seconds. In each run the slot reported running and the frame tick count advanced throughout. The refusal count was 20 at the first one-second reading and stayed at 20 during all four trials. The unit log verdict for each was no crash, DSP stall, frozen UI or skipped track. All four trials rolled back without Keep.
+- **Developer report during the 300-second trial:** GHOST CUT appeared in the FX2 chooser on an audio track and looped when GRAB was set above 96. Lowering GRAB below 32 returned the track sound; a new GRAB followed by RATE changed the loop's speed or pitch. The developer initially looked after the 180-second trial had rolled back, when the row was absent as expected. They thought switching ENG to GRAIN changed the sound, but could not confirm that GRAIN looped. These are the developer's observations, not an independent recording or agent-controlled UI capture.
+- **Afterward:** The base returned to normal with the same active identity, generation 8, no running slot and an empty module inventory. No card set was kept, no flash was written and no power cycle was performed.
+- **Not tested by this run:** GRAIN, PTCH, DRFT, scenes, two instances, a Part change, CPU price and persistence. The flashed base refuses the development UI and performance requests. The developer's report confirms the TAPE controls above, not the other behaviours.
 
 ## Stock flows
 

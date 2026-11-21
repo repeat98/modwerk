@@ -1,6 +1,6 @@
 # Ghost Cut
 
-Version 0.1.0-experimental · by @jacobphono · a draft: milestones A to C (the TAPE and GRAIN engines and the drift head), rendered in dsp_host, not yet run on a unit or on a track in the emulator.
+Version 0.1.0-experimental · by @jacobphono · a draft: milestones A to C (the TAPE and GRAIN engines and the drift head), rendered in dsp_host. A private RAM trial ran on an Octatrack; full unit qualification and an emulator track run are still pending.
 
 ## Overview
 
@@ -64,7 +64,7 @@ Setup knob F (FDBK in the plan) is blank: feedback into the loop is not built.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). In short: 96 render gates in dsp_host pass, bit-exact against the integer reference [ghost_cut_ref.py](ghost_cut_ref.py). The static cost is 188 cycles a sample at worst on TAPE and 281 on GRAIN, both with the drift head (stock SPRING REV measures 257.5). Not run on a unit or in the emulator.
+See [TESTING.md](TESTING.md). In short: 115 render gates in dsp_host pass, bit-exact against the integer reference [ghost_cut_ref.py](ghost_cut_ref.py). The static cost is 188 cycles a sample at worst on TAPE and 281 on GRAIN, both with the drift head (stock SPRING REV measures 257.5). Private RAM trials installed and rolled back on a unit; the developer reported that GHOST CUT appeared in FX2 and that GRAB and RATE worked in TAPE. Full hardware qualification remains open.
 
 ## Authorship and licences
 

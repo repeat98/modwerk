@@ -156,7 +156,7 @@
       "The loop starts at GRAB and keeps its own length; it does not restart on the sequencer's steps, so it drifts by under a sample a repeat against the pattern. A GRAB locked on a trig starts it on that step.",
       "RATE above 1 x has no anti-alias filter and reads with linear interpolation, so high content aliases when sped up.",
       "GRAIN uses triangular windows on two grains: steady tones keep their pitch, but transients smear and a slight flutter at the grain rate can be heard. FDBK is not built: writing the loop back into itself would undo the baked seam.",
-      "Rendered in dsp_host only: not run on a unit or in the emulator."
+      "The DSP was rendered in dsp_host. A private RAM trial on a unit confirmed the TAPE loop by developer report; GRAIN and full unit qualification remain untested. The effect has not run on a track in the emulator."
     ],
     "effectId": 10
   },
@@ -183,7 +183,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Milestones A to C rendered in dsp_host on OS 1.40C: verify.py's 115 gates pass. They are bit-exact against the integer reference in every mode (TAPE, GRAIN, the drift head); exact dry while idle; guard clean beside Sidechain's key window; four instances a core. Static cost: 281 cycles a sample on GRAIN, 188 on TAPE. In the emulator the base refused every module effect pick, Vibrato's too. Not tested on a unit.",
+    "summary": "Milestones A to C: 115 dsp_host gates pass, bit-exact against the integer reference. Static cost is 281 cycles a sample on GRAIN and 188 on TAPE. Four private RAM trials installed and rolled back on an Octatrack without logged faults; the developer reported that TAPE's GRAB and RATE worked. GRAIN and full hardware qualification remain untested. The emulator refused all effect picks, including Vibrato.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [
