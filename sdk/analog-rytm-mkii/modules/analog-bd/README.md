@@ -38,7 +38,7 @@ Choose BD ANALOG on the BD, SD or BT track and play it like a stock BD machine: 
 1. Select the BD track, press FUNC + SRC, scroll to BD ANALOG (the last of the BD section) and press YES.
 2. Play the pad soft and hard: velocity is the accent, harder hits are snappier.
 3. Turn TUN for the pitch and DEC for the length; SWP sets how far the pitch sweeps down.
-4. Tap encoder B: the label changes from TON to SWT and the bar from 808 to 909. Play it again, and tap again for the 808.
+4. Tap encoder B: its label changes from TON (808 Tone) to SWT (909 Sweep Time). Play it again, and tap again for the 808.
 
 ### Changes to stock flows
 
