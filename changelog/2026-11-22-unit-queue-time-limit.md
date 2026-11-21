@@ -1,0 +1,1 @@
+A time limit around a unit command (`perl -e 'alarm N' … device-send.py`, as the Octatrack driving guide shows) now stops the command it started, the way Ctrl-C does. Before, it ended only the unit queue's own process and left the request waiting for its reply forever.
