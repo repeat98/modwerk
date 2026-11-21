@@ -2,7 +2,7 @@
 
 ## 0.1.68-experimental, 20 November 2026 (not yet tested on a unit)
 
-Ported from the private candidate in [sdk/drafts/beat-slicer/zero-cross/](../../../drafts/beat-slicer/zero-cross/README.md) onto Octatrack base 0.7.13 (0.7.11 while in development), which carries SNAP's `replace_options` and the FUNC+AED cycle (pull request #1165). The module now uses the base's own `modwerk_sample_editor.h` instead of the draft's temporary declaration.
+Ported from the private candidate in [sdk/drafts/beat-slicer/zero-cross/](../../../drafts/beat-slicer/zero-cross/README.md) onto Octatrack base 0.7.14 (0.7.11 while in development), which carries SNAP's `replace_options` and the FUNC+AED cycle (pull request #1165). The module now uses the base's own `modwerk_sample_editor.h` instead of the draft's temporary declaration.
 
 - Host: `test_device_module.py` passes (the controller against the base's sample-editor service with sanitizers, an uncached renderer compared pixel for pixel, and the ColdFire package's action record).
 - Unit, agent's run on the author's MKII, 20 November 2026 (not the author's own test). Base: a development twin of 0.7.11

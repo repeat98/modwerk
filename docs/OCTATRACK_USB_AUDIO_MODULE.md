@@ -123,7 +123,7 @@ browser open. The [hardware record](verification/2026-11-20-octatrack-usb-audio-
 5. The base without reserve and variants on `base/octatrack-next`, with the transition, a draft until
    extensively tested on a unit.
 
-## USB input in the 0.7.13 draft
+## USB input in the 0.7.14 draft
 
 **PROJ → MODWERK → SETTINGS → USB AUDIO → INPUTS** offers OFF, AB, CD
 and ABCD for a computer host. OFF is the default. AB and CD use the same
