@@ -88,10 +88,11 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     }
     await expect(service.call('site_selection', { moduleIds: ['sidechain-compressor'], usb: true, capabilities })).rejects.toThrow('latest Modwerk base')
     const cardOnly = catalogue.modules.find(module => module.machine === 'octatrack' && !module.usb)
-    if (cardOnly) await expect(service.call('site_selection', { moduleIds: [cardOnly.id], usb: true })).rejects.toThrow('USB')
+    // A card-only module and one whose package is not published yet (a release in progress) are both refused over USB.
+    if (cardOnly) await expect(service.call('site_selection', { moduleIds: [cardOnly.id], usb: true })).rejects.toThrow(/USB|can’t be loaded onto the base/)
     // A module that needs the base is in the catalogue like any other: there is no card form to keep it from.
     expect((await service.call('site_catalogue', { machine: 'octatrack' })).modules.some(module => module.id === 'ring-sc')).toBe(true)
-  })
+  }, 60000) // every pair of published packages: grows with each USB release (5-8 s at 40 modules), past vitest's 5 s default
   it('offers the agent board, refuses claims without --allow-api-writes and never reaches the live board in tests', async () => {
     expect((await service.call('site_features')).tools).toEqual(expect.arrayContaining(['board_claims', 'board_claim', 'board_release', 'board_messages', 'board_inbox', 'board_activity', 'board_post', 'board_reply', 'board_close']))
     await expect(service.call('board_claim', { kind: 'migration', key: '0085' })).rejects.toThrow('--allow-api-writes')
