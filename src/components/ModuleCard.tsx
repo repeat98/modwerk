@@ -85,7 +85,7 @@ export function CardProof({ stability, statistics, name, compared, canCompare, o
 // A flagged module (module-cautions.ts) carries a warning badge; the reason is in its title and read out to screen readers.
 export function CautionBadge({ id, descriptionId }: { id: string; descriptionId?: string }) {
   const caution = moduleCaution(id)
-  return caution ? <span id={descriptionId} className="module-caution-badge" title={caution.title + '. ' + caution.detail}><Icon name="warn" size={11} />{caution.badge}<span className="sr-only">: {caution.title}. {caution.detail}</span></span> : null
+  return caution ? <span id={descriptionId} className="module-caution-badge" data-tier={caution.tier} title={caution.detail}><Icon name="warn" size={11} />{caution.badge}<span className="sr-only">. {caution.detail}</span></span> : null
 }
 
 export function ModuleCard({ module, selected, statistics, viewedVersion, baseline, compared, canCompare, onToggle, onCompare, onBrowse, block, onSwap }: ModuleCardProps) {

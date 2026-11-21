@@ -125,6 +125,12 @@ describe('diagnostics pull', () => {
       entry(4, 'tester', { event: 'health', phase: 'ready', reading: { saved: 6, savedCount: 2, live: 2 }, modules: mods(['miniverb', 'poly8']) })]
     expect(summary({ events, counts: [] })).toContain('refused (missing ring-sc)')
   })
+  it('reports a full set incident as a lower bound because the log holds fourteen IDs', () => {
+    const set = { seq: 1, boot: 1, second: 0, kind: 'set', screen: 0, tempo24: 0,
+      machines: Array(24).fill(1), fx: Array(16).fill(2), keys: Array(16).fill(3) }
+    expect(unitLines([{ ...set, a: 13 }])[0]).toContain('set 13 installed:')
+    expect(unitLines([{ ...set, a: 14 }])[0]).toContain('set at least 14 installed:')
+  })
   it('names a restore’s refused package from its set record', () => {
     const set = { seq: 4, boot: 3, second: 5, kind: 'set', a: 1, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: [0x3c, 0xbe, 0xdc, 0x9c, ...Array(20).fill(0)],
       fx: Array(16).fill(0), keys: Array(16).fill(0), screen: 0x773c84aa, tempo24: 5, playing: false }
