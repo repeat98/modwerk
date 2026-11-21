@@ -124,10 +124,10 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD"
 | Ubuntu 24.04 m68k-linux-gnu GCC 13.3.0 | 10,320 | 94 | sources, sites, interface |
 | Debian 13 m68k-linux-gnu GCC 14.2.0 | 10,168 | 93 | sources, sites, interface |
 
-The send-bus variant (`20fbc98f`) has 36,881 bytes of `.run` and 4,364 of `.bss` (3,875 and 192 of them since
+The send-bus variant (`46e2e4f6`) has 36,901 bytes of `.run` and 4,364 of `.bss` (3,875 and 192 of them since
 the lean engine), 62 of the kit's 64 storage bits and 3 bits of each sound (a voice machine's type): the rest of the
 [mod area](../README.md#memory-and-budgets) stays for modules and the effect that runs, whose work area is the RAM they
-leave free (`sendbus.c`). The voices variant (`ee44bde6`) has 18,751 bytes of `.run` and 3,024 of `.bss`, and plain (`5ca4480f`) 14,671
+leave free (`sendbus.c`). The voices variant (`e1f399a9`) has 18,771 bytes of `.run` and 3,024 of `.bss`, and plain (`5ca4480f`) 14,671
 and 1,557, the lean engine included: with Analog BD 0.2.1 linked, the set took 19,520 B less of the mod area on voices (before the lean engine, which both variants carry)
 than on send-bus.
 
