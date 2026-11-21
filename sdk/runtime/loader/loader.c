@@ -17,7 +17,13 @@
 #include "set_package.h"
 
 #define OWNERS (2u * RUNTIME_MODULES) /* live, the transaction's two and those waiting to be reclaimed */
+#ifdef RUNTIME_POOL_AT
+/* A machine whose base area is too small for the pool names RAM nothing else uses (the Digitone II: DDR above what
+ * stock clears at boot). Nothing assumes it zeroed: the ledger is owned[], and prepare zeroes each module's bss. */
+#define pool ((uint8_t *)(uintptr_t)(RUNTIME_POOL_AT))
+#else
 static uint8_t pool[RUNTIME_POOL_BYTES] __attribute__((aligned(16)));
+#endif
 struct modwerk_runtime_api modwerk_runtime_api;
 volatile uint32_t modwerk_runtime_ticks;
 static struct runtime_module *volatile live[RUNTIME_MODULES];

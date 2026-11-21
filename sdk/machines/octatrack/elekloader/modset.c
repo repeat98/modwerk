@@ -92,6 +92,13 @@ extern int olog_stock_open(struct file_object *, const char *, const char *, voi
 extern int olog_stock_read(struct file_object *, void *, unsigned);
 extern int olog_stock_write(struct file_object *, const void *, unsigned);
 extern int olog_stock_close(struct file_object *);
+#ifdef MODWERK_HOST_CARD
+int modwerk_test_card_size(struct file_object *);
+#define FILE_SIZE(f) modwerk_test_card_size(f)
+#else
+/* An open file's length, as the logger reads it (stock_140c.c). */
+#define FILE_SIZE(f) ((int (*)(uint32_t))(uintptr_t)*(volatile uint32_t *)0x46c8241eu)((f)->word[0])
+#endif
 #endif
 
 static uint8_t set[SET_BYTES] __attribute__((aligned(4)));
@@ -435,9 +442,13 @@ static int store(unsigned which)
     struct file_object f;
     uint32_t n = (used() + 511u) & ~511u;
     if (olog_stock_open(&f, path, "w", octamod_log_io, 512) < 0) return 0;
-    int ok = 1;
+    int had = FILE_SIZE(&f), ok = 1;
     for (uint32_t at = 0; ok && at < n; at += 512) ok = !VOLATILE_BLOCKED() && GATE() && olog_stock_write(&f, set + at, 512) == 1;
     for (uint32_t at = 0; ok && at < off_bytes; at += 512) ok = !VOLATILE_BLOCKED() && GATE() && olog_stock_write(&f, OFF + at, 512) == 1; /* the shelf */
+    /* Stock's close takes the length from word 4, and shortening a file leaves its last cluster linked to the freed
+     * tail (#1830). So the file keeps its length; the header says how much of it is the set, and a version 1 set
+     * reads no shelf after it. */
+    if (had > 0 && (uint32_t)had > n + off_bytes) f.word[4] = (uint32_t)had;
     ok = olog_stock_close(&f) >= 0 && ok;
     if (!ok || olog_stock_open(&f, path, "r", octamod_log_io, 512) < 0) return 0;
     for (uint32_t at = 0; ok && at < n; at += 512) {
