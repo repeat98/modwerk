@@ -1,0 +1,12 @@
+[
+ {
+  "version": "0.1.0-experimental",
+  "date": "2026-11-20",
+  "changes": [
+   "First release. The audio engine leaves out work that cannot change the sound, so the same pattern uses less CPU and the screen and keys answer faster under load.",
+   "Nothing to set. CPU shows in the lower right corner of the screen when the audio load is close to its limit, and OVR when it is over.",
+   "The output is stock's, but for one thing: a delay or reverb that has died away below -114 dBFS and has no input is given exact silence.",
+   "Known limits: OS 1.74 only; tested on one unit beside 17 other modules; a project load while sound rings and long USB audio streams are not tested yet."
+  ]
+ }
+]
