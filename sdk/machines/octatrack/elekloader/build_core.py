@@ -1313,7 +1313,7 @@ def replace_literal(parts, offset, old, new, stock_at=None):
     return out
 
 
-def fill_table_owners(document, owners, stock_at):
+def reviewed_table_owners(owners):
     """The reviewed table owners (owner decision 14 Oct 2026, module-adapters/table-owners.json): each declaration is
     validated against its exact published package (table_declarations.validate) and the records go into the base's
     fixed table-owner storage before the image is built, so the base admits those packages and no other. Returns the
@@ -1328,7 +1328,8 @@ def fill_table_owners(document, owners, stock_at):
         raise ValueError('table-owners.json: {"schema": 1, "owners": [...]}.')
     entries, read = [], {str(owners.relative_to(APP)): sha(owners.read_bytes())}
     for owner in doc['owners']:
-        if set(owner) != {'module', 'package', 'declaration', 'recipe', 'reviewedSha256', 'approval'}:
+        keys = {'module', 'package', 'declaration', 'recipe', 'reviewedSha256', 'approval'}
+        if set(owner) not in (keys, keys | {'sourceRoot'}):
             raise ValueError('A table owner names its module, package, declaration, recipe, reviewed hash and approval.')
         files = {}
         for key in ('package', 'declaration', 'recipe'):
@@ -1337,11 +1338,26 @@ def fill_table_owners(document, owners, stock_at):
                 raise ValueError('A table owner file is missing or outside the repository: ' + owner[key])
             files[key] = path.read_bytes()
             read[owner[key]] = sha(files[key])
-        entries.append(dict(files, reviewed_sha256=owner['reviewedSha256'], source_root=APP))
+        source_root = APP
+        if 'sourceRoot' in owner:
+            source_root = (APP / owner['sourceRoot']).resolve()
+            if not source_root.is_relative_to(owners.parent / 'table-owners') or not source_root.is_dir():
+                raise ValueError('A table owner source snapshot must be inside table-owners/.')
+        entries.append(dict(files, reviewed_sha256=owner['reviewedSha256'], source_root=source_root))
     table = declarations.generate(entries)
+    # generate() verified these file hashes under their respective roots. Include each snapshot in the base inventory.
+    for entry in entries:
+        if entry['source_root'] != APP:
+            for name, digest in json.loads(entry['declaration'])['sources'].items():
+                read[str(entry['source_root'].relative_to(APP) / name)] = digest
+    return declarations.empty(), table, read
+
+
+def fill_table_owners(document, owners, stock_at):
+    empty, table, read = reviewed_table_owners(owners)
     section, offset = document['symbols']['modwerk_table_declarations']
     document['sections'][section]['parts'] = replace_literal(document['sections'][section]['parts'], offset,
-                                                             declarations.empty(), table, stock_at)
+                                                             empty, table, stock_at)
     return table, read
 
 
@@ -1991,11 +2007,8 @@ def main():
     inputs['sdk/runtime/startup/base.json'] = sha((artwork.parent/'base.json').read_bytes())
     inputs['sdk/runtime/startup/base_art.py'] = sha((artwork.parent/'base_art.py').read_bytes())
     if args.table_owners:  # the owners list and every package, declaration and recipe it names
-        owners = args.table_owners.resolve()
-        inputs[str(owners.relative_to(APP))] = sha(owners.read_bytes())
-        for owner in json.loads(owners.read_text()).get('owners', []):
-            for key in ('package', 'declaration', 'recipe'):
-                inputs[owner[key]] = sha((APP / owner[key]).read_bytes())
+        _, _, reviewed_inputs = reviewed_table_owners(args.table_owners.resolve())
+        inputs.update(reviewed_inputs)
     source_hash = sha(json.dumps(inputs, sort_keys=True, separators=(',', ':')).encode())
     chooser = json.loads((APP/'src/engine/assets/chooser-metadata.json').read_text())
     configuration = dict(fx1=['NONE', *chooser['stockFx1']], fx2=['NONE', *chooser['stockFx2']],
