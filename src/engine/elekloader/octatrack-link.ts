@@ -385,7 +385,8 @@ export class OctatrackLink {
         // Back after the base's own reconnect: this page's trial is still open on the unit. Adopt it and carry on.
         const candidate = this.reconnectCandidate
         if (resuming && candidate?.active && session && session.status.active === candidate.active &&
-            identity.base === candidate.base && session.status.currentTransaction === candidate.currentTransaction &&
+            identity.base === candidate.base && session.status.session === candidate.session &&
+            session.status.currentTransaction === candidate.currentTransaction &&
             session.status.generation === candidate.generation && ['pending', 'trial'].includes(session.status.phase)) {
           session.adopt()
           if (session.status.phase === 'pending') await session.startTrial()
