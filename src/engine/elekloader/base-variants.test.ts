@@ -1,15 +1,12 @@
 import { sha } from '../../../vendor/elekloader/kit/src/bytes'
-import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
-import published from '../assets/octatrack-base-variants.json' with { type: 'json' }
-import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
+import { publishedBinding as baseBinding, publishedManifest as manifest, publishedPackageText, publishedVariants as published } from './published-octatrack.fixture'
 import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, type UsbAudioLayout } from '../../config/usb-audio'
 import { applyVariantPatch, baseLayout, DEFAULT_LAYOUT, isPublishedBase, layoutIdentity, variantPackage, type BaseLayout, type BaseVariants } from './base-variants'
 import { BaseLayoutRequired, BaseUpdateRequired, createRuntimeCatalogue, USB_MODULE_IDS } from './module-set'
 
 const variants = published as BaseVariants
-const defaultText = readFileSync(new URL('../assets/octatrack-base.elemod', import.meta.url), 'utf8')
+const defaultText = publishedPackageText()
 const configurable = Boolean((manifest as { usbAudio?: { configurable?: unknown } }).usbAudio?.configurable)
 const layouts: BaseLayout[] = configurable ? ['off'] : [...USB_AUDIO_LAYOUTS.map(layout => layout.id), 'off']
 const identities = (baseBinding as unknown as { variants: Record<BaseLayout, string> }).variants
@@ -112,13 +109,15 @@ describe('a base’s version', () => {
     const binding = (await import('../../../sdk/machines/octatrack/base-binding.json', { with: { type: 'json' } })).default
     const number = (await import('../../../sdk/machines/octatrack/elekloader/base-version.json', { with: { type: 'json' } })).default
     const patch = 'patch' in number && number.patch ? '.' + number.patch : ''
-    expect(CURRENT_BASE_VERSION).toBe(number.major + '.' + number.minor + patch) // what the base itself shows: MODWERK BASE 0.7.1
-    for (const identity of [binding.identity, ...Object.values(binding.variants)]) expect(baseVersion(identity)).toBe(CURRENT_BASE_VERSION)
+    expect(baseVersion(binding.identity)).toBe(number.major + '.' + number.minor + patch) // what the base itself shows: MODWERK BASE 0.7.1
+    const publishedVersion = versions.bases.find(release => release.identities.includes(baseBinding.identity))?.version
+    expect(CURRENT_BASE_VERSION).toBe(publishedVersion)
+    for (const identity of [baseBinding.identity, ...Object.values(baseBinding.variants)]) expect(baseVersion(identity)).toBe(CURRENT_BASE_VERSION)
     expect(new Set(versions.bases.map(base => base.version)).size).toBe(versions.bases.length)
     const identities = versions.bases.flatMap(base => base.identities)
     expect(new Set(identities).size).toBe(identities.length) // one base, one version
     expect(versions.bases.every(base => /^\d{1,3}\.\d{1,3}(\.\d{1,3})?$/.test(base.version))).toBe(true)
-    expect(baseName(binding.identity)).toBe(CURRENT_BASE_VERSION)
+    expect(baseName(baseBinding.identity)).toBe(CURRENT_BASE_VERSION)
     expect(baseVersion('b'.repeat(64))).toBeUndefined()
     expect(baseName('a6b457a1' + '0'.repeat(56))).toBe('a6b457a1') // a base from before versions
     expect(baseVersion()).toBeUndefined()

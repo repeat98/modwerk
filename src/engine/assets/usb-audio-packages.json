@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "version": "0.2.0-experimental",
+  "version": "0.3.0-experimental",
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
   "upstreamRevision": "7b2984c859732ae6c797ae49c7d61d250b1b6519",
   "sources": {
@@ -553,7 +553,7 @@
       }
     ]
   },
-  "sourceCommit": "c17df63fb46d6480eb616251437b3bc7022339d9",
+  "sourceCommit": "d55bb5f4df08451efa4fe6f9feac2f23c985a2a2",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
@@ -567,7 +567,7 @@
     "ring-sc": "0.2.1-experimental",
     "vibrato": "0.1.0-experimental",
     "analog-bassdrum": "0.1.7-experimental",
-    "usb-audio-out-tracks-main-cue": "0.2.0-experimental",
+    "usb-audio-out-tracks-main-cue": "0.3.0-experimental",
     "quantizer": "0.1.4-experimental",
     "synth": "0.1.4-experimental",
     "previewvol": "0.1.2-experimental",
