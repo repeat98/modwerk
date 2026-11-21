@@ -1,7 +1,35 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { expect, it } from 'vitest'
-import { added, pickFailure, reading, writePrice } from './octatrack-price.mjs'
+import { createHash } from 'node:crypto'
+import { added, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
+
+function runtimeEffect(slots) {
+  const data = Buffer.alloc(76)
+  data.write('MWRM')
+  data.writeUInt16BE(8, 4)
+  data.writeUInt32BE(0xa01e9876, 28)
+  data.writeUInt32BE(2, 32)
+  data[39] = slots
+  data.write('ECHO WIDE', 50)
+  return data
+}
+
+it.each([[1, 'fx1'], [2, 'fx2'], [3, 'both'], [0, undefined]])('prices a private file using the package slots %i', (mask, slots) => {
+  const data = runtimeEffect(mask)
+  expect(priceFileTarget('wide-echo.mwrm', data, [])).toEqual({
+    id: 'wide-echo', name: 'ECHO WIDE', slots, version: 'file', file: 'wide-echo.mwrm',
+  })
+})
+
+it('finds a published package by runtime id even when its file is named after the version', () => {
+  const data = runtimeEffect(2), version = '0.1.0-experimental'
+  const catalogue = [{ id: 'wide-echo', module: 'a01e9876', version, sha256: createHash('sha256').update(data).digest('hex') }]
+  const file = version + '.mwrm'
+  expect(priceFileTarget(file, data, catalogue)).toMatchObject({ id: 'wide-echo', version, slots: 'fx2', file })
+  const update = runtimeEffect(1)
+  expect(priceFileTarget(file, update, catalogue)).toMatchObject({ id: 'wide-echo', version: 'file', slots: 'fx1' })
+})
 
 it('reads the guard window and the mean of the meter readings, and what a module added', () => {
   const guard = share => `frame max 112.2 %, latest start 12.2 %, in the frame interrupt ${share} % over 22000 frames, skipped 2 on T1 T3, share 80.0 %\n`
