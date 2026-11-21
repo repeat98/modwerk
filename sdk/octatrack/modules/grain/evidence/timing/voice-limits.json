@@ -1,0 +1,1290 @@
+{
+  "octatrack": "MKII, OS 1.40C, development base 06e08f35c62c02ce, no CompactFlash card",
+  "stimulus": "Recorder 3, 37,800 stereo frames at 24 bits. A16, Part 3 at 100 BPM. All effects cleared, six untriggered THRU machines. Both T1 and T5 point at R3. Grain assigned to one at a time, with 16 trigs on the target. Dense SRC and SETUP are identical across voice limits. SCAN +2 on T1 and -2 on T5.",
+  "capture": "The CoreAudio device delivered 20 channels at 44.1 kHz. The meter accumulated energy for all incoming samples and checked the MAIN channels. The guard deltas cover the stream startup, transport, sustained playback and stop. The 12-second MIDI workload sends 13,249 events. In the combined test USB audio, sequencer and MIDI run together. Guard skips count omitted machine renders, not host audio samples.",
+  "audition": "Host render of the portable Grain core with the same seed, stereo plucked phrase and gain for every build. Eight seconds at defaults and eight seconds dense. Level in dBFS. The default renders are sample-identical.",
+  "variants": {
+    "6": {
+      "packageSha256": "0c5632f677aecd873b11ae71a82ac5d72c3357d1dd43ccdb1dfc545cd3a5f38a",
+      "audition": {
+        "defaults": {
+          "maxVoices": 2,
+          "meanVoices": 1.0117,
+          "rmsDbfs": -24.99,
+          "peakDbfs": -13.17,
+          "sideMidDb": -10.09
+        },
+        "dense": {
+          "maxVoices": 6,
+          "meanVoices": 5.8642,
+          "rmsDbfs": -18.82,
+          "peakDbfs": -5.08,
+          "sideMidDb": -8.15
+        }
+      }
+    },
+    "5": {
+      "packageSha256": "be370f2c0b0bd9a067af7e085cb875590083d9917ce14bc1c282f6b633f339ca",
+      "audition": {
+        "defaults": {
+          "maxVoices": 2,
+          "meanVoices": 1.0117,
+          "rmsDbfs": -24.99,
+          "peakDbfs": -13.17,
+          "sideMidDb": -10.09,
+          "identical": true,
+          "differenceDbfs": null
+        },
+        "dense": {
+          "maxVoices": 5,
+          "meanVoices": 4.8985,
+          "rmsDbfs": -19.39,
+          "peakDbfs": -6.24,
+          "sideMidDb": -8.93,
+          "identical": false,
+          "differenceDbfs": -16.28
+        }
+      }
+    },
+    "4": {
+      "packageSha256": "6c1fb9673c99d654946a45f3c8086ca534364cbfcaa5e3ee905dec466bcb24c3",
+      "audition": {
+        "defaults": {
+          "maxVoices": 2,
+          "meanVoices": 1.0117,
+          "rmsDbfs": -24.99,
+          "peakDbfs": -13.17,
+          "sideMidDb": -10.09,
+          "identical": true,
+          "differenceDbfs": null
+        },
+        "dense": {
+          "maxVoices": 4,
+          "meanVoices": 3.9282,
+          "rmsDbfs": -20.48,
+          "peakDbfs": -6.61,
+          "sideMidDb": -8.68,
+          "identical": false,
+          "differenceDbfs": -16.67
+        }
+      }
+    },
+    "3": {
+      "packageSha256": "5bbc91c0d9b06065cd58f8af3b7ab1301965c76deca00e7b7143488f9381ca4c",
+      "audition": {
+        "defaults": {
+          "maxVoices": 2,
+          "meanVoices": 1.0117,
+          "rmsDbfs": -24.99,
+          "peakDbfs": -13.17,
+          "sideMidDb": -10.09,
+          "identical": true,
+          "differenceDbfs": null
+        },
+        "dense": {
+          "maxVoices": 3,
+          "meanVoices": 2.9532,
+          "rmsDbfs": -21.82,
+          "peakDbfs": -7.95,
+          "sideMidDb": -10.24,
+          "identical": false,
+          "differenceDbfs": -17.06
+        }
+      }
+    },
+    "2": {
+      "packageSha256": "28f6bf0e56a2d727472566e9bb96590e5422c36b5ba797a3bf4733da6656fff8",
+      "audition": {
+        "defaults": {
+          "maxVoices": 2,
+          "meanVoices": 1.0117,
+          "rmsDbfs": -24.99,
+          "peakDbfs": -13.17,
+          "sideMidDb": -10.09,
+          "identical": true,
+          "differenceDbfs": null
+        },
+        "dense": {
+          "maxVoices": 2,
+          "meanVoices": 1.9735,
+          "rmsDbfs": -23.65,
+          "peakDbfs": -8.55,
+          "sideMidDb": -9.23,
+          "identical": false,
+          "differenceDbfs": -17.72
+        }
+      }
+    }
+  },
+  "windows": {
+    "cap-0-t1-usb": {
+      "playSeconds": 5,
+      "inputFrames": 581632,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.461361,
+        0.230627
+      ],
+      "skipsIncludingStartStop": 0,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 77.7,
+          "meanFrameInterruptPercent": 30.5
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 73.7,
+          "meanFrameInterruptPercent": 44.5
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 77.2,
+          "meanFrameInterruptPercent": 46.1
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 68.7,
+          "meanFrameInterruptPercent": 46.1
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 68.7,
+          "meanFrameInterruptPercent": 38.1
+        }
+      ]
+    },
+    "cap-0-t5-usb": {
+      "playSeconds": 5,
+      "inputFrames": 581632,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.461465,
+        0.230633
+      ],
+      "skipsIncludingStartStop": 0,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 73.4,
+          "meanFrameInterruptPercent": 34.9
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 75.3,
+          "meanFrameInterruptPercent": 46.4
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 76.5,
+          "meanFrameInterruptPercent": 47.8
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 70.6,
+          "meanFrameInterruptPercent": 47.7
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 68.4,
+          "meanFrameInterruptPercent": 39.3
+        }
+      ]
+    },
+    "cap-4-t1-combined": {
+      "playSeconds": 13,
+      "inputFrames": 933888,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.809855,
+        0.605145
+      ],
+      "skipsIncludingStartStop": 138,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 91.4,
+          "meanFrameInterruptPercent": 48.8
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 97.1,
+          "meanFrameInterruptPercent": 64.3
+        },
+        {
+          "interval": "playing",
+          "skips": 138,
+          "maxFramePercent": 104.6,
+          "meanFrameInterruptPercent": 75.2
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 95.9,
+          "meanFrameInterruptPercent": 75.3
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 86.4,
+          "meanFrameInterruptPercent": 74.6
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 86.8,
+          "meanFrameInterruptPercent": 54.3
+        }
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    },
+    "cap-4-t1-midi": {
+      "grainTracks": [
+        1
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds",
+      "maxGrains": [
+        4,
+        0
+      ],
+      "sample24": [
+        true,
+        false
+      ],
+      "guard": "frame max 80.9 %, latest start 0.0 %, in the frame interrupt 61.5 % over 34464 frames, skipped 6 on T1 T5, share 80.0 %",
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpu": 100.0
+    },
+    "cap-4-t1-soak": {
+      "playSeconds": 65,
+      "inputFrames": 3227136,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.511481,
+        0.294412
+      ],
+      "skipsIncludingStartStop": 0,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 76.9,
+          "meanFrameInterruptPercent": 39.8
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 95.6,
+          "meanFrameInterruptPercent": 65.4
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 98.5,
+          "meanFrameInterruptPercent": 67.2
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 95.0,
+          "meanFrameInterruptPercent": 67.0
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 97.5,
+          "meanFrameInterruptPercent": 67.7
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 97.5,
+          "meanFrameInterruptPercent": 66.7
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 93.0,
+          "meanFrameInterruptPercent": 66.8
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 93.8,
+          "meanFrameInterruptPercent": 67.0
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 93.8,
+          "meanFrameInterruptPercent": 66.8
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 90.3,
+          "meanFrameInterruptPercent": 66.2
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 87.1,
+          "meanFrameInterruptPercent": 44.5
+        }
+      ]
+    },
+    "cap-4-t1-usb": {
+      "playSeconds": 5,
+      "inputFrames": 581632,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.381351,
+        0.205098
+      ],
+      "skipsIncludingStartStop": 0,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 83.2,
+          "meanFrameInterruptPercent": 38.9
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 95.2,
+          "meanFrameInterruptPercent": 64.2
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 102.2,
+          "meanFrameInterruptPercent": 67.3
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 89.4,
+          "meanFrameInterruptPercent": 67.3
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 88.9,
+          "meanFrameInterruptPercent": 45.0
+        }
+      ]
+    },
+    "cap-4-t5-combined": {
+      "playSeconds": 13,
+      "inputFrames": 934400,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.805593,
+        0.597229
+      ],
+      "skipsIncludingStartStop": 79,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 89.7,
+          "meanFrameInterruptPercent": 46.5
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 95.7,
+          "meanFrameInterruptPercent": 64.2
+        },
+        {
+          "interval": "playing",
+          "skips": 79,
+          "maxFramePercent": 101.9,
+          "meanFrameInterruptPercent": 74.6
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 96.0,
+          "meanFrameInterruptPercent": 74.0
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 85.0,
+          "meanFrameInterruptPercent": 72.5
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 88.4,
+          "meanFrameInterruptPercent": 54.6
+        }
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    },
+    "cap-4-t5-midi": {
+      "grainTracks": [
+        5
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds",
+      "maxGrains": [
+        4,
+        4
+      ],
+      "sample24": [
+        true,
+        true
+      ],
+      "guard": "frame max 82.0 %, latest start 0.0 %, in the frame interrupt 61.0 % over 33863 frames, skipped 144 on T1 T5, share 80.0 %",
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpu": 100.0
+    },
+    "cap-4-t5-soak": {
+      "playSeconds": 65,
+      "inputFrames": 3227136,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.557754,
+        0.32777
+      ],
+      "skipsIncludingStartStop": 0,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 75.3,
+          "meanFrameInterruptPercent": 39.7
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 92.0,
+          "meanFrameInterruptPercent": 66.7
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 94.2,
+          "meanFrameInterruptPercent": 68.4
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 93.3,
+          "meanFrameInterruptPercent": 68.9
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 91.9,
+          "meanFrameInterruptPercent": 68.0
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 94.3,
+          "meanFrameInterruptPercent": 68.9
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 93.4,
+          "meanFrameInterruptPercent": 68.9
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 92.5,
+          "meanFrameInterruptPercent": 68.8
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 93.9,
+          "meanFrameInterruptPercent": 67.9
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 92.2,
+          "meanFrameInterruptPercent": 72.7
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 90.9,
+          "meanFrameInterruptPercent": 46.2
+        }
+      ]
+    },
+    "cap-4-t5-usb": {
+      "playSeconds": 5,
+      "inputFrames": 582144,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.387531,
+        0.261557
+      ],
+      "skipsIncludingStartStop": 0,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 79.4,
+          "meanFrameInterruptPercent": 38.3
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 95.7,
+          "meanFrameInterruptPercent": 63.6
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 99.1,
+          "meanFrameInterruptPercent": 68.4
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 88.0,
+          "meanFrameInterruptPercent": 68.0
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 87.3,
+          "meanFrameInterruptPercent": 45.0
+        }
+      ]
+    },
+    "cap-5-t1-midi": {
+      "grainTracks": [
+        1
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds",
+      "maxGrains": [
+        5,
+        0
+      ],
+      "sample24": [
+        true,
+        false
+      ],
+      "guard": "frame max 82.1 %, latest start 0.0 %, in the frame interrupt 62.6 % over 33831 frames, skipped 5 on T1 T5, share 80.0 %",
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpu": 100.0
+    },
+    "cap-5-t1-soak": {
+      "playSeconds": 65,
+      "inputFrames": 3227648,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.53085,
+        0.288935
+      ],
+      "skipsIncludingStartStop": 1,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 79.9,
+          "meanFrameInterruptPercent": 38.6
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 96.9,
+          "meanFrameInterruptPercent": 64.3
+        },
+        {
+          "interval": "playing",
+          "skips": 1,
+          "maxFramePercent": 102.4,
+          "meanFrameInterruptPercent": 68.9
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 98.3,
+          "meanFrameInterruptPercent": 68.4
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 97.1,
+          "meanFrameInterruptPercent": 68.7
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 97.9,
+          "meanFrameInterruptPercent": 68.4
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 98.2,
+          "meanFrameInterruptPercent": 68.0
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 94.0,
+          "meanFrameInterruptPercent": 68.6
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 95.4,
+          "meanFrameInterruptPercent": 68.0
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 86.2,
+          "meanFrameInterruptPercent": 64.2
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 89.3,
+          "meanFrameInterruptPercent": 44.7
+        }
+      ]
+    },
+    "cap-5-t1-usb": {
+      "playSeconds": 5,
+      "inputFrames": 582656,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.409172,
+        0.180638
+      ],
+      "skipsIncludingStartStop": 0,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 80.6,
+          "meanFrameInterruptPercent": 37.9
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 98.7,
+          "meanFrameInterruptPercent": 66.2
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 99.6,
+          "meanFrameInterruptPercent": 68.9
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 91.6,
+          "meanFrameInterruptPercent": 67.9
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 91.2,
+          "meanFrameInterruptPercent": 44.5
+        }
+      ]
+    },
+    "cap-5-t5-midi": {
+      "grainTracks": [
+        5
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds",
+      "maxGrains": [
+        5,
+        5
+      ],
+      "sample24": [
+        true,
+        true
+      ],
+      "guard": "frame max 85.2 %, latest start 0.0 %, in the frame interrupt 61.6 % over 34239 frames, skipped 6 on T1 T5, share 80.0 %",
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpu": 100.0
+    },
+    "cap-5-t5-soak": {
+      "playSeconds": 65,
+      "inputFrames": 3227648,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.571347,
+        0.31389
+      ],
+      "skipsIncludingStartStop": 0,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 91.5,
+          "meanFrameInterruptPercent": 48.7
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 100.6,
+          "meanFrameInterruptPercent": 66.6
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 104.1,
+          "meanFrameInterruptPercent": 69.0
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 98.7,
+          "meanFrameInterruptPercent": 69.7
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 98.2,
+          "meanFrameInterruptPercent": 69.0
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 99.3,
+          "meanFrameInterruptPercent": 70.1
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 97.8,
+          "meanFrameInterruptPercent": 69.4
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 96.7,
+          "meanFrameInterruptPercent": 69.3
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 97.6,
+          "meanFrameInterruptPercent": 70.3
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 88.9,
+          "meanFrameInterruptPercent": 68.3
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 90.2,
+          "meanFrameInterruptPercent": 44.9
+        }
+      ]
+    },
+    "cap-5-t5-usb": {
+      "playSeconds": 5,
+      "inputFrames": 581632,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.413357,
+        0.212456
+      ],
+      "skipsIncludingStartStop": 0,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 79.6,
+          "meanFrameInterruptPercent": 38.2
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 98.7,
+          "meanFrameInterruptPercent": 67.7
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 99.4,
+          "meanFrameInterruptPercent": 69.8
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 90.3,
+          "meanFrameInterruptPercent": 69.5
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 90.5,
+          "meanFrameInterruptPercent": 45.1
+        }
+      ]
+    },
+    "cap-6-t1-midi": {
+      "grainTracks": [
+        1
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds",
+      "maxGrains": [
+        6,
+        0
+      ],
+      "sample24": [
+        true,
+        false
+      ],
+      "guard": "frame max 84.3 %, latest start 0.0 %, in the frame interrupt 61.8 % over 33820 frames, skipped 3 on T1, share 80.0 %",
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpu": 100.0
+    },
+    "cap-6-t1-usb": {
+      "playSeconds": 5,
+      "inputFrames": 581632,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.410295,
+        0.180253
+      ],
+      "skipsIncludingStartStop": 3,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 80.5,
+          "meanFrameInterruptPercent": 38.7
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 101.6,
+          "meanFrameInterruptPercent": 67.4
+        },
+        {
+          "interval": "playing",
+          "skips": 3,
+          "maxFramePercent": 100.9,
+          "meanFrameInterruptPercent": 70.2
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 92.0,
+          "meanFrameInterruptPercent": 67.4
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 94.0,
+          "meanFrameInterruptPercent": 45.2
+        }
+      ]
+    },
+    "cap-6-t5-midi": {
+      "grainTracks": [
+        5
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds",
+      "maxGrains": [
+        6,
+        6
+      ],
+      "sample24": [
+        true,
+        true
+      ],
+      "guard": "frame max 85.7 %, latest start 0.0 %, in the frame interrupt 63.3 % over 33955 frames, skipped 5 on T1 T5, share 80.0 %",
+      "delta": {
+        "skips": 0,
+        "rxErrors": 0,
+        "txDrops": 0
+      },
+      "medianCpu": 100.0
+    },
+    "cap-6-t5-usb": {
+      "playSeconds": 5,
+      "inputFrames": 581632,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.419762,
+        0.189441
+      ],
+      "skipsIncludingStartStop": 2,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 76.9,
+          "meanFrameInterruptPercent": 38.1
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 99.8,
+          "meanFrameInterruptPercent": 68.4
+        },
+        {
+          "interval": "playing",
+          "skips": 2,
+          "maxFramePercent": 101.9,
+          "meanFrameInterruptPercent": 71.3
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 89.5,
+          "meanFrameInterruptPercent": 69.0
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 89.1,
+          "meanFrameInterruptPercent": 44.7
+        }
+      ]
+    },
+    "peer-3-t1-combined": {
+      "playSeconds": 13,
+      "inputFrames": 934400,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.796474,
+        0.569932
+      ],
+      "skipsIncludingStartStop": 6,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 91.2,
+          "meanFrameInterruptPercent": 47.5
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 103.1,
+          "meanFrameInterruptPercent": 64.0
+        },
+        {
+          "interval": "playing",
+          "skips": 6,
+          "maxFramePercent": 99.5,
+          "meanFrameInterruptPercent": 74.6
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 93.2,
+          "meanFrameInterruptPercent": 74.1
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 87.2,
+          "meanFrameInterruptPercent": 75.1
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 86.4,
+          "meanFrameInterruptPercent": 55.7
+        }
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    },
+    "peer-3-t1-play": {
+      "guard": "frame max 78.6 %, latest start 0.0 %, in the frame interrupt 51.8 % over 14131 frames, skipped 223 on T1 T5, share 80.0 %",
+      "skips": 0
+    },
+    "peer-amiga-t1-audio": {
+      "playSeconds": 4,
+      "inputFrames": 538112,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.365224,
+        0.164951
+      ],
+      "skipsIncludingStartStop": 0,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 89.6,
+          "meanFrameInterruptPercent": 42.0
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 84.0,
+          "meanFrameInterruptPercent": 57.8
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 85.7,
+          "meanFrameInterruptPercent": 59.7
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 88.1,
+          "meanFrameInterruptPercent": 58.3
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 80.8,
+          "meanFrameInterruptPercent": 43.0
+        }
+      ]
+    },
+    "peer-amiga-t1-combined": {
+      "playSeconds": 13,
+      "inputFrames": 934400,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.792156,
+        0.529941
+      ],
+      "skipsIncludingStartStop": 0,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 84.4,
+          "meanFrameInterruptPercent": 37.4
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 83.0,
+          "meanFrameInterruptPercent": 57.5
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 92.0,
+          "meanFrameInterruptPercent": 68.4
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 90.1,
+          "meanFrameInterruptPercent": 68.6
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 83.4,
+          "meanFrameInterruptPercent": 68.8
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 81.3,
+          "meanFrameInterruptPercent": 49.7
+        }
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    },
+    "peer-amiga-t1-play": {
+      "guard": "frame max 72.1 %, latest start 0.0 %, in the frame interrupt 40.9 % over 14124 frames, skipped 229 on T1 T5, share 80.0 %",
+      "skips": 0
+    },
+    "peer-poly8-t1-audio": {
+      "playSeconds": 4,
+      "inputFrames": 537600,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.437453,
+        0.217304
+      ],
+      "skipsIncludingStartStop": 0,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 85.8,
+          "meanFrameInterruptPercent": 43.7
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 89.5,
+          "meanFrameInterruptPercent": 53.0
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 94.4,
+          "meanFrameInterruptPercent": 54.2
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 74.9,
+          "meanFrameInterruptPercent": 54.4
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 75.4,
+          "meanFrameInterruptPercent": 45.2
+        }
+      ]
+    },
+    "peer-poly8-t1-combined": {
+      "playSeconds": 13,
+      "inputFrames": 933888,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.794387,
+        0.630132
+      ],
+      "skipsIncludingStartStop": 0,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 81.4,
+          "meanFrameInterruptPercent": 41.2
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 92.8,
+          "meanFrameInterruptPercent": 53.0
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 94.7,
+          "meanFrameInterruptPercent": 64.3
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 89.7,
+          "meanFrameInterruptPercent": 64.4
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 75.8,
+          "meanFrameInterruptPercent": 64.1
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 76.8,
+          "meanFrameInterruptPercent": 47.3
+        }
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    },
+    "peer-poly8-t1-play": {
+      "guard": "frame max 75.1 %, latest start 0.0 %, in the frame interrupt 35.1 % over 14124 frames, skipped 229 on T1 T5, share 80.0 %",
+      "skips": 0
+    },
+    "peer-stock-t1-combined": {
+      "playSeconds": 13,
+      "inputFrames": 934400,
+      "captureChannels": 20,
+      "mainLeftRightRms": [
+        0.809736,
+        0.657543
+      ],
+      "skipsIncludingStartStop": 0,
+      "phases": [
+        {
+          "interval": "capture stopped",
+          "skips": 0,
+          "maxFramePercent": 78.2,
+          "meanFrameInterruptPercent": 35.0
+        },
+        {
+          "interval": "play start",
+          "skips": 0,
+          "maxFramePercent": 76.8,
+          "meanFrameInterruptPercent": 47.7
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 80.5,
+          "meanFrameInterruptPercent": 60.1
+        },
+        {
+          "interval": "playing",
+          "skips": 0,
+          "maxFramePercent": 77.5,
+          "meanFrameInterruptPercent": 60.2
+        },
+        {
+          "interval": "stop",
+          "skips": 0,
+          "maxFramePercent": 71.9,
+          "meanFrameInterruptPercent": 60.1
+        },
+        {
+          "interval": "capture ended",
+          "skips": 0,
+          "maxFramePercent": 72.8,
+          "meanFrameInterruptPercent": 42.3
+        }
+      ],
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds"
+    }
+  },
+  "comparisonPackages": {
+    "amiga": "acae3fef97f85a941c3215e1065353c94967ff44bb9528c22135c611a8edc32e",
+    "poly8": "1d9e9ecae22a60b592e5cfc8750adcdf0060faad36c826b6e6abb5393bb86c21"
+  },
+  "restore": "The A16 test pattern and working and saved Part 3 matched their initial byte snapshots. A02, its full pattern, Part 1, 140 BPM and T2 were restored. After confirming its original working Part, the two T4 input selectors were returned from the summed pairs inherited from the preceding test to the original stereo pair inputs. All eight recorders were empty and back in 16-bit mode. The original production base dfa438130710fea9 booted with zero saved and zero live modules."
+}

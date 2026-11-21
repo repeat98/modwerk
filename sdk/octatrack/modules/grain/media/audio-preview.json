@@ -1,0 +1,19 @@
+{
+  "file": "media/audio-preview.mp3",
+  "sha256": "54d982ac3557a3fd501375ad5b1b1b28bab6bed48994d32facff1b88d41f3db5",
+  "durationSeconds": 45.06,
+  "source": "Recording supplied by the author (A Force Truly Evil) of Grain on an Octatrack MKI; not an offline render",
+  "sample": {
+    "name": "the author's own sounds",
+    "origin": "made by the author; some generated with Claude (Anthropic); performance by the author",
+    "rights": "no third-party samples or copyright; offered under the module's license"
+  },
+  "passes": "not documented by the author: one continuous take, settings not recorded",
+  "unknownFields": [
+    "Modwerk base build used",
+    "settings per section",
+    "recording chain"
+  ],
+  "method": "The supplied MP3 (stereo 44.1 kHz, 320 kbit/s, embedded title tag removed) was decoded, scaled by -2.5 dB for headroom, given a 5 ms fade in and encoded to MP3 at 192 kbit/s with ffmpeg/libmp3lame. No other edit. The decoded final file peaks at -2.8 dBFS.",
+  "hardwareQualification": "none; a recording adds no hardware qualification by itself"
+}
