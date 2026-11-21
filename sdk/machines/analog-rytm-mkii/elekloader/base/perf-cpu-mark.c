@@ -14,9 +14,12 @@
 // block that follows a late one reads high (an 85 % block can read 256). The mean does not have that fault.
 // A level stays up for CW_HOLD looks after the last one that found it, so the mark does not flicker.
 // ev_draw writes a word into the bottom status bar's lower right corner, in the bar's own font and on its text
-// line: CPU for near, OVR for over. The bar's right end is the word's: the base's voice type name and another
-// module's mark there are painted over while it shows. On a screen without the bar (a menu, a list, a browser) nothing is drawn.
-// A redraw is asked for only when the level changes. No stock site is patched; the draw calls stock's text routine.
+// line: CPU for near, OVR for over. Both blink so they catch the eye: CPU comes and goes, OVR swaps between lit
+// text in a dark box and dark text on the lit bar. The bar's right end is the word's: the base's voice type name and
+// another module's mark there are painted over while it shows. On a screen without the bar (a menu, a list, a browser)
+// nothing is drawn. A redraw is asked for when the level changes and, while a word shows, at each blink (about four a
+// second): all of it on the UI side, nothing more in the audio interrupt. No stock site is patched; the draw calls
+// stock's text routine.
 //
 // Why these figures (the author's MKII, 17 and 18 Nov 2026, a set of 18 modules): with the mean at
 // 80 to 85 % the unit played normally and the UI had about a quarter of the time; with the mean at 92 %
@@ -42,12 +45,14 @@
 #endif
 #define CW_TICKS 10                 // a look every half second
 #define CW_HOLD 3                   // looks a level outlasts its cause
+#define CW_BLINK 5                  // ticks a blink phase lasts (about a quarter second)
 #define CTRL_REDRAW 0x20            // ev_tick's ctrl: asks for a redraw
 
 #define CW_UI __attribute__((cold))
 
 static volatile uint32_t sum, blocks, high, full;    // written by the audio interrupt, cleared by the tick
 static uint8_t ticks, level, near_left, over_left;
+static uint8_t blink_ticks, dim;    // dim: the blink's second phase (CPU hidden, OVR not inverted)
 #ifdef CW_TEST_CYCLE
 static uint32_t cycle;
 #endif
@@ -71,6 +76,11 @@ CW_UI void le_cpu_warning_tick(void *ctrl)
 {
     uint32_t s, n, h, f, mean;
     uint8_t now;
+    if (level && ++blink_ticks >= CW_BLINK) {
+        blink_ticks = 0;
+        dim ^= 1;
+        ((char *)ctrl)[CTRL_REDRAW] = 1;
+    }
     if (++ticks < CW_TICKS)
         return;
     ticks = 0;
@@ -91,6 +101,8 @@ CW_UI void le_cpu_warning_tick(void *ctrl)
 #endif
     if (now != level) {
         level = now;
+        blink_ticks = 0;
+        dim = 0;                        // a new word shows at once, in its first phase
         ((char *)ctrl)[CTRL_REDRAW] = 1;
     }
 }
@@ -110,6 +122,7 @@ typedef uint32_t (*text_font_t)(void *ctx);   // stock returns the font in d0: d
 #define CORNER_FROM 96              // the columns painted as empty bar under the word: the bar's right end, where
                                     // the base writes a voice machine's type name (808, 909) and other modules their marks
 #define CORNER_TO 127
+#define BOX_FROM 110                // OVR's dark box: the word's columns 112 to 125 and two either side
 
 // The bottom status bar is a lit band over rows 55..63 with a dark row above it, rows counted from the top here
 // (the text routine's y counts up from the bottom row). A column's first word holds the bottom 32 rows, the
@@ -123,7 +136,7 @@ static const uint8_t bar_at[2] = { 1, 87 };   // the bar's left end, and the col
 CW_UI void le_cpu_warning_draw(void *bmp, void *ctrl)
 {
     uint32_t *w;
-    int stride, i;
+    int stride, i, box;
     (void)ctrl;
     if (!level)
         return;
@@ -136,6 +149,12 @@ CW_UI void le_cpu_warning_draw(void *bmp, void *ctrl)
             return;
     for (i = CORNER_FROM; i <= CORNER_TO; i++)
         w[i * stride] |= BAR_ROWS;
-    ((text_draw_t)LE_TEXT_DRAW_AT)(bmp, (void *)((text_font_t)LE_TEXT_FONT_AT)((void *)LE_TEXT_CTX_AT), CORNER_X, MARK_Y, 1, 1,
+    if (level == 1 && dim)
+        return;                         // CPU's off phase: the empty bar
+    box = level == 2 && !dim;           // OVR's first phase: lit text in a dark box
+    if (box)
+        for (i = BOX_FROM; i <= CORNER_TO; i++)
+            w[i * stride] &= ~BAR_ROWS;
+    ((text_draw_t)LE_TEXT_DRAW_AT)(bmp, (void *)((text_font_t)LE_TEXT_FONT_AT)((void *)LE_TEXT_CTX_AT), CORNER_X, MARK_Y, 1, !box,
                                 "XXX", "%s", level == 1 ? "CPU" : "OVR");
 }
