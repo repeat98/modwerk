@@ -102,7 +102,7 @@ export function readiness({ python = null, dirty = [], behind = false, remote = 
   // Ready means the checks pass, not that anything ran on a unit (#1694 went up ready to merge after only development twins had).
   if (baseDraft) notes.push('Add these base commits directly to base/<machine>-next and update its cumulative draft. Start the machine’s cumulative draft only if none is open. Record the exact build and unit results there. The owner marks it ready after extensive hardware testing (docs/DEVELOPER_WORKFLOW.md#change-a-base).')
   else if (instrument.length) notes.push('This changes what runs on an instrument (' + instrument.slice(0, 3).join(', ') + (instrument.length > 3 ? ` and ${instrument.length - 3} more` : '') +
-    '): open the pull request as a draft (gh pr create --draft) and mark it ready only after the developer has tested the exact build on a unit. The description then names it on a line of its own ("Tested on a unit: base 8d1db124 (or the package\'s sha256), MKII, what ran", or "Not tested on a unit: <why>" for the owner to decide); CI refuses a ready one without it.')
+    '): open the pull request as a draft (gh pr create --draft) and mark it ready only after the developer has tested the exact build on a unit. The description then names it on a line of its own ("Tested on a unit: base 8d1db124 (or the package\'s sha256), MKII, what ran", or "Not tested on a unit: <why>" for the owner to decide); CI refuses a ready one without it. Until then, pr:ready -- --draft and the draft\'s CI list missing qualification, captures or approval as warnings.')
   if (baseDraft) notes.push('Watch the existing cumulative draft’s checks with gh pr checks <number> --watch. If main moves before the merge, run this again.')
   else notes.push('Then push, open or update the PR with a description in the template\'s shape (CI checks it says what changed and answers the guides question; `node scripts/pr-body.mjs FILE.md` checks a description in a file the same way before you open the PR), and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
   return { ok: problems.length === 0, problems, notes, instrument: instrument.length > 0, baseDraft }
@@ -171,6 +171,8 @@ async function main(argv) {
   const remote = option('--remote') ?? (remotes.includes('upstream') ? 'upstream' : 'origin')
   const author = option('--author')?.replace(/^@/, '') ?? null
   const commit = option('--commit')
+  // --draft: the pull request stays a draft until the exact build ran on a unit, so missing release evidence warns (scripts/modules.mjs).
+  if (argv.includes('--draft')) process.env.MODWERK_EVIDENCE_PENDING = '1'
   if (argv.includes('--commit') && (!commit?.trim() || commit.startsWith('--'))) throw new Error('--commit needs a commit message.')
   const npmCli = process.env.npm_execpath
   if (!npmCli) throw new Error('Run this through npm run pr:ready.')
@@ -243,7 +245,7 @@ async function main(argv) {
   // Once the work is ready, the agent reviews its session and asks whether to share it with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
   if (verdict.ok) { const sharing = await import('./agent-session.mjs'), preference = await sharing.readPreference(); verdict.notes.push(sharing.reviewLine); if (preference !== 'never') verdict.notes.push(sharing.sharingLine(preference)) }
   for (const line of verdict.notes) console.log('· ' + line)
-  console.log(!verdict.ok ? 'Not ready yet.' : verdict.baseDraft ? 'Ready to update the cumulative base draft.' : verdict.instrument
+  console.log(!verdict.ok ? 'Not ready yet.' : process.env.MODWERK_EVIDENCE_PENDING === '1' ? 'Ready as a draft: missing release evidence is listed above as a warning. Run pr:ready without --draft before you mark it ready for review.' : verdict.baseDraft ? 'Ready to update the cumulative base draft.' : verdict.instrument
     ? 'Ready to open as a draft: the checks pass. Mark it ready for review once the exact build has run on a unit (above).'
     : 'Ready: this PR can merge without the owner repairing it.')
   return verdict.ok ? 0 : 1
