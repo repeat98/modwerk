@@ -455,7 +455,7 @@ async function reviewedMerge(env: Env, db: Database, body: Record<string, unknow
     const token = env.MAINTENANCE_BOT_GITHUB_TOKEN?.trim()
     if (!token) throw new HttpError(503, 'The bot has no GitHub token to merge with.')
     const repo = env.GITHUB_REPOSITORY?.trim() || 'repeat98/modwerk'
-    const reply = await fetch('https://api.github.com/repos/' + repo + path, { headers: { Authorization: 'Bearer ' + token, 'User-Agent': 'modwerk-maintenance-bot' }, redirect: 'error', signal: AbortSignal.timeout(15000) })
+    const reply = await fetch('https://api.github.com/repos/' + repo + path, { headers: { Authorization: 'Bearer ' + token, 'User-Agent': 'modwerk-maintenance-bot' }, redirect: 'manual', signal: AbortSignal.timeout(15000) })
     if (!reply.ok) throw new HttpError(502, 'Unable to verify reviewed merge on GitHub.')
     return reply.json()
   }
