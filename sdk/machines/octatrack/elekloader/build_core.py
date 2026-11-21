@@ -1891,7 +1891,7 @@ def main():
             dsp_sites += resident_boot_prepared['sites']
         if args.resident_on_demand:
             (source / 'resident-engines-data.c').write_text(resident_engines.data_c(resident_bundles))
-            for name in ('resident_engines.c', 'resident_engines.h'):
+            for name in ('resident_engines.c', 'resident_engines.h', 'project_fx.c'):
                 shutil.copyfile(resident_source.RUNTIME / name, source / name)
         chooser_sites, chooser_lists = loader_dsp.choosers(image, FX_IDS)
         at, guard, stepper = KNOB_STEP
@@ -1990,7 +1990,8 @@ def main():
             inputs[p.relative_to(APP).as_posix()] = sha(p.read_bytes())
     if args.resident_on_demand:
         for p in (APP / 'sdk/machines/octatrack/module-adapters/resident_engines.py',
-                  resident_source.RUNTIME / 'resident_engines.c', resident_source.RUNTIME / 'resident_engines.h'):
+                  resident_source.RUNTIME / 'resident_engines.c', resident_source.RUNTIME / 'resident_engines.h',
+                  resident_source.RUNTIME / 'project_fx.c'):
             inputs[p.relative_to(APP).as_posix()] = sha(p.read_bytes())
     if args.resident_stock_hooks:
         for name in CONTROLLER_POLICY_SOURCES:

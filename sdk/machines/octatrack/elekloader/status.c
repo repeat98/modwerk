@@ -456,8 +456,18 @@ static uint32_t words_before[2];
 /* The pick's CPU (owner, 17 November 2026: the box showed the DSP an effect took, not the CPU): the frame share as it
  * stood, from windows that ended before the pick but for the last half second. */
 static uint32_t pick_load;
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+int mw_project_sidechain_notice(void);
+static unsigned sidechain_notice_left;
+#endif
 static void memory_tick(void)
 {
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+    if (open == CLOSED && transfer == T_NONE) {
+        if (sidechain_notice_left) --sidechain_notice_left;
+        else if (mw_project_sidechain_notice()) sidechain_notice_left = 180u;
+    } else sidechain_notice_left = 0;
+#endif
     static uint32_t completed, accepted;
     static uint8_t before[16];
     int over_usb = modwerk_boot_accepted != accepted, picked = 0;
@@ -1432,6 +1442,16 @@ static void status_draw(unsigned char *frame)
     if (open == TEST) { test_page(frame); return; }
     if (open == MODULE_LOAD) { modules_page(frame); return; }
     if (open == SWITCHES) { switches_page(frame); return; }
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+    if (open == CLOSED && sidechain_notice_left) {
+        canvas(frame);
+        fill(frame, 13u, 18u, 114u, 45u, 0);
+        outline(frame, 13u, 18u, 114u, 45u);
+        centred(23u, "SIDECHAIN PAUSED");
+        centred(34u, "DSP MEMORY");
+        return;
+    }
+#endif
 #ifdef MODWERK_SETTINGS
     if (open == SETTINGS) { settings_page(frame); return; }
 #endif
