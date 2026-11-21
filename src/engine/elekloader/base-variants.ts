@@ -47,6 +47,12 @@ const PREVIOUS_IDENTITIES = new Map<string, BaseLayout>([
   ['d16bd599630c2312ad50d0cfb0c4011138154bc5ea3c7f7e09f7a1353f1b8962', 'master'],
   ['05b7f09031bc3892626e7c2576810386faeb01bd3a3101353a56c56c96d82a4a', 'off'],
 ])
+// Published 0.7 through 0.7.11 recorded the default identity followed by the six alternatives in this order.
+const linkedAudioLayouts: BaseLayout[] = ['tracks-main-cue', 'tracks', 'tracks-post', 'main-cue', 'main', 'master', 'off']
+for (const release of baseVersions.bases) {
+  if (release.identities.length === linkedAudioLayouts.length)
+    release.identities.forEach((identity, index) => PREVIOUS_IDENTITIES.set(identity, linkedAudioLayouts[index]))
+}
 /** The layout a unit's base runs as far as the site knows: a published base's, or the previous base's; undefined for
  * any other base, which may have had USB Audio. */
 export const runningLayout = (identity?: string) => identity === undefined ? undefined : IDENTITIES.get(identity) ?? PREVIOUS_IDENTITIES.get(identity)

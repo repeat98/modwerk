@@ -12,7 +12,7 @@ import { moduleHref } from '../routing'
 import { Icon } from './Icon'
 import { ModulePreview } from './ModulePreview'
 import { ModuleRelease } from './ModuleRelease'
-import { USB_AUDIO_MODULE } from '../config/usb-audio'
+import { comesWithBase, USB_AUDIO_MODULE } from '../config/usb-audio'
 import { ModuleWorksCount } from '../community/ModuleWorksCount'
 import { ModuleAuthors } from './ModuleAuthors'
 import { AddBlockChip, AddBlockPrompt } from './AddBlockPrompt'
@@ -105,7 +105,7 @@ export function ModuleCard({ module, selected, statistics, viewedVersion, baseli
     <div className="module-card-body" inert={prompt.open}>
       <div className="module-card-title">
         <div className="module-card-heading"><a href={moduleHref(module.id)} aria-describedby={caution ? cautionId : undefined} onClick={onBrowse} onAuxClick={onBrowse}>{module.name}</a>{isBetaModule(module.id) && <span className="module-beta-badge">Beta</span>}<ModuleRelease module={module} viewedVersion={viewedVersion} baseline={baseline} /></div>
-        <AddButton ref={trigger} name={module.name} selected={selected} onToggle={onToggle} configure={module.id === USB_AUDIO_MODULE} conflict={prompt.conflict && { block: prompt.conflict, open: prompt.open, controls: prompt.id, onAsk: prompt.toggle }} blocked={pending?.kind === 'usb-only' || pending?.kind === 'limit' ? pending : undefined} />
+        <AddButton ref={trigger} name={module.name} selected={selected} onToggle={onToggle} configure={comesWithBase(module.id)} conflict={prompt.conflict && { block: prompt.conflict, open: prompt.open, controls: prompt.id, onAsk: prompt.toggle }} blocked={pending?.kind === 'usb-only' || pending?.kind === 'limit' ? pending : undefined} />
       </div>
       {module.id === USB_AUDIO_MODULE && <span className="module-compatibility-badge module-card-compatibility"><Icon name="wave" size={12} />Outbox 8 compatible</span>}
       <div className="card-credit"><ModuleAuthors name={module.authorName} url={module.authorUrl} contributors={module.contributors}/><span>{module.detail}</span></div>
