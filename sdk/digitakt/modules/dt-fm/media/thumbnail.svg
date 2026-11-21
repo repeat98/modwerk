@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192">
+  <rect width="320" height="192" fill="#101820"/>
+  <rect x="18" y="18" width="284" height="156" rx="8" fill="#1b2f3d" stroke="#8ad2ff" stroke-width="2"/>
+  <text x="160" y="78" text-anchor="middle" font-size="28" fill="#eaf6ff" font-family="sans-serif" font-weight="700">DT-FM</text>
+  <text x="160" y="110" text-anchor="middle" font-size="12" fill="#a9d9f7" font-family="sans-serif">Four-operator FM synth</text>
+  <g stroke="#8ad2ff" stroke-width="2" fill="none">
+    <path d="M60 148 L86 148 L102 128 L118 148 L140 148"/>
+    <path d="M180 148 L205 148 L220 128 L240 148 L260 148"/>
+    <circle cx="102" cy="128" r="10" fill="#8ad2ff"/>
+    <circle cx="220" cy="128" r="10" fill="#8ad2ff"/>
+  </g>
+</svg>
