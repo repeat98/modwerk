@@ -11,23 +11,23 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'pass (review what changed) or daily (also send the report)'
+        description: 'pass (review changes), daily (also send the report), or eval-pilot (only screen and reconcile the five fixes)'
         type: choice
-        options: [pass, daily]
+        options: [pass, daily, eval-pilot]
         default: pass
 permissions:
   contents: read
 concurrency:
   # The daily run has its own group so a pass never cancels it while queued; claims in the ledger keep two
   # overlapping runs from carrying out the same action.
-  group: maintenance-bot-${{ inputs.mode == 'daily' && 'daily' || 'pass' }}
+  group: maintenance-bot-${{ inputs.mode }}
   cancel-in-progress: false
 env:
   BOT_MODE: ${{ inputs.mode == 'daily' && 'daily' || 'pass' }}
   BOT_DIR: bot
 jobs:
   propose:
-    if: vars.MAINTENANCE_BOT_ENABLED == 'true'
+    if: vars.MAINTENANCE_BOT_ENABLED == 'true' && inputs.mode != 'eval-pilot'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
@@ -134,3 +134,42 @@ jobs:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_OWNER_ID: ${{ vars.DISCORD_OWNER_ID }}
           BOT_FINGERPRINT: ${{ needs.propose.outputs.ran == 'true' && needs.propose.outputs.fingerprint || '' }}
+
+  eval-pilot:
+    if: vars.MAINTENANCE_BOT_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: five-node-fix-pilot
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - id: inputs
+        run: node scripts/maintenance-bot/screen-pilot.mjs prepare
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          COMMUNITY_API_URL: ${{ vars.COMMUNITY_API_URL }}
+          MAINTENANCE_BOT_KEY: ${{ secrets.MAINTENANCE_BOT_KEY }}
+      - if: steps.inputs.outputs.screen == 'true'
+        run: npm install --global --no-fund --no-audit @anthropic-ai/claude-code@2.1.311 && claude --version
+      - if: steps.inputs.outputs.screen == 'true'
+        run: node scripts/maintenance-bot/screen-pilot.mjs review
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          MODEL: ${{ vars.MAINTENANCE_BOT_MODEL || 'claude-sonnet-5-5' }}
+      - if: steps.inputs.outputs.active == 'true'
+        run: node scripts/maintenance-bot/screen-pilot.mjs record
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          COMMUNITY_API_URL: ${{ vars.COMMUNITY_API_URL }}
+          MAINTENANCE_BOT_KEY: ${{ secrets.MAINTENANCE_BOT_KEY }}

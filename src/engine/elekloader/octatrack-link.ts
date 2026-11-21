@@ -12,6 +12,8 @@ import * as formats from '../../../vendor/elekloader/kit/src/formats.ts'
 import type { ElekFile } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { OCTATRACK } from '../../../vendor/elekloader/kit/src/devices.ts'
 import type { OctatrackDiagnostic, DiagnosticReading, DiagnosticSyncStep } from '../../community/octatrack-diagnostics-contract'
+import { isStagingCommand } from '../../community/octatrack-diagnostics-contract'
+import type { Ep0Diagnostics } from './upload-usb.ts'
 import { encodeModuleSet } from './set-package.ts'
 import { baseName } from './base-variants.ts'
 import { diagnosticErrorKind } from '../../community/site-diagnostic-events'
@@ -452,14 +454,14 @@ export class OctatrackLink {
   }
 
   /** DIAG is optional. Close an unanswered control transfer before sending any further USB commands. */
-  private async syncUsbCounters(signal?: AbortSignal): Promise<number[] | undefined> {
+  private async syncUsbCounters(signal?: AbortSignal, sequence?: number): Promise<Ep0Diagnostics | undefined> {
     const { device, transport, connection } = this
     if (!device || !transport || signal?.aborted) return undefined
     let abandon!: () => void
     const unanswered = new Promise<null>(resolve => { abandon = () => resolve(null) })
     const timer = setTimeout(abandon, EP0_DIAGNOSTIC_MS)
     signal?.addEventListener('abort', abandon, { once: true })
-    const counters = await Promise.race([transport.ep0().catch(() => undefined), unanswered]).finally(() => {
+    const counters = await Promise.race([transport.ep0Diagnostics(sequence).catch(() => undefined), unanswered]).finally(() => {
       clearTimeout(timer)
       signal?.removeEventListener('abort', abandon)
     })
@@ -506,7 +508,7 @@ export class OctatrackLink {
     this.audioTrial = this.expectReconnect = changes.some(change => change.reconnects)
     this.set({ status: 'sending', identity: this.state.identity, active: this.state.active, module, progress: 0 })
     this.diagnostic('sync_started', {packages: changes.map(change => ({sha256:sha(change.data),bytes:change.data.length}))})
-    let usb: number[] | undefined, session: LinkSession | undefined
+    let usb: Ep0Diagnostics | undefined, session: LinkSession | undefined
     this.step = 'session'
     try {
       const wholeSet = !!(this.state.identity?.capabilities?.features && this.state.identity.capabilities.features & RuntimeFeature.moduleSets)
@@ -547,6 +549,7 @@ export class OctatrackLink {
     // A publication the loader refused as busy (a resident controller quiescing before it can leave) drops the staged
     // package: stage it again. One refused as playing keeps it: publish it again.
     await this.whenStopped(async () => {
+      this.step = 'stage'
       if (!['verified', 'publishing'].includes(session.status.phase)) await session.stage({ base: session.status.base, data, sha256: sha(data) }, { signal, progress })
       signal?.throwIfAborted() // cancelled, unplugged or left while the last chunk's reply was on its way
       this.step = 'activate'
@@ -833,12 +836,16 @@ export class OctatrackLink {
   /** Undo what this session left behind. When a reply went missing (the session no longer trusts its
    * connection), a fresh session reads where the base stands and undoes it from there; only when that fails
    * too does the user get the unplug advice. */
-  private async failed(error: unknown, session?: LinkSession, usb?: number[]) {
+  private async failed(error: unknown, session?: LinkSession, usb?: Ep0Diagnostics) {
     const connection = this.connection
     if (!(error instanceof UploadDeviceError) && !(error instanceof DOMException) && !(error instanceof StaleLoadError) && !(error instanceof WholeSetBaseRequired)) console.error(error)
     this.stopKeepalive()
     // Read before the recovery below sends anything, so the counters cover the failed sync alone.
-    const after = usb && error instanceof UploadUnconfirmedError ? await this.syncUsbCounters(this.abort?.signal).catch(() => undefined) : undefined
+    const failed = this.step === 'stage' && (error instanceof UploadUnconfirmedError || error instanceof UploadDeviceError) ? error.upload : undefined
+    const sequence = usb?.supportsRemaining ? failed?.sequence : undefined
+    const after = usb && error instanceof UploadUnconfirmedError ? await this.syncUsbCounters(this.abort?.signal, sequence).catch(() => undefined) : undefined
+    const counts = after && usb ? after.counts.map((count, i) => (count - usb.counts[i]) >>> 0) : undefined
+    const remaining = counts && counts[2] === 0 && counts[3] > 0 ? after?.remainingBytes : undefined
     if (connection !== this.connection) return
     let clean = !session, settled = session?.connectionTrusted ? session : undefined, recovered = false
     if (session && !session.connectionTrusted && error instanceof UploadUnconfirmedError && this.transport && this.state.identity?.base) {
@@ -861,7 +868,9 @@ export class OctatrackLink {
     const cause = error instanceof UploadUnconfirmedError ? error.cause : error
     const detail = cause instanceof VendorTransportError ? cause.cause ?? cause : cause
     this.diagnostic('sync_failed', {error: label, ...(step ? {step} : {}), ...(label === 'unknown' || label === 'transport' ? {kind: diagnosticErrorKind(detail)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {}),
-      ...(usb && after ? {usb: after.map((count, i) => (count - usb[i]) >>> 0)} : {})})
+      ...(counts ? {usb: counts} : {}),
+      ...(failed && isStagingCommand(failed.command) ? {upload: { command: failed.command,
+        ...(failed.chunkOffset !== undefined ? {chunkOffset: failed.chunkOffset} : {}), ...(remaining !== undefined ? {remainingBytes: remaining} : {}) }} : {})})
     this.session = undefined
     await this.release()
     // An untrusted connection that could not be read again leaves the running set unknown.

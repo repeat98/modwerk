@@ -215,6 +215,15 @@
         "rationale": "26,288 bytes at sixteen instances including inherited stock buffers; no new heap/SDRAM delay storage.",
         "source": "TESTING.md"
       }
+    },
+    "cpuPrice": {
+      "value": 0.5,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-21",
+      "conditions": "Octatrack MKII, owner scratch A01 and saved Part 4 with trigs on tracks 1–7. T5 FX1 NONE at baseline, COMPRESSOR on T5 FX1 keyed from T1 in use. The stock-compressor reading is also retained.; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.6 % before, 33 % installed and used nowhere, 33.1 % on T5 FX1; CPU meter 45 % before, 45.7 % at rest, 45.3 % in use.",
+      "source": "evidence/cpu-price.json"
     }
   },
   "tests": {

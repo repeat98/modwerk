@@ -345,4 +345,8 @@ struct modwerk_setting_pages { /* ABI 2: row.choices points here, row.count is z
     uint32_t (*choose)(uint32_t saved, unsigned field, unsigned choice);
 };
 
+/* ev_audio_frame_prepare (0x4000cf4a): once per 16-sample audio frame, after sequencer event staging and before the eight audio tracks calculate LFOs and render their sources, including while transport is stopped. The audio frame interrupt. Keep the EMAC as found and preserve the C callee-saved registers. A handler must be bounded and must not block.. Observe the instrument’s current step and tick here to prepare the upcoming render. Return without starting transport or advancing the sequencer. Each subscriber receives one notification per visit to the frame preparation site. The hook stays active while a module rests, so it can retain timing from before its first note. */
+#define MODWERK_EV_AUDIO_FRAME_PREPARE 61
+typedef void modwerk_ev_audio_frame_prepare(void);
+
 #endif

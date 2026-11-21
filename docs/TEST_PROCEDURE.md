@@ -90,7 +90,7 @@ On 20 November 2026 temp-save ran this way end to end in 101 s (73 s of procedur
 
 ## What a base adds
 
-A base carries every installed module, so it is tested as a set ([Change a base](DEVELOPER_WORKFLOW.md#change-a-base)). Each submitter runs these for their own change, on their own unit, before it joins the machine's cumulative draft, and adds their record to it:
+A base carries every installed module, so it is tested as a set ([Change a base](DEVELOPER_WORKFLOW.md#change-a-base)). Each submitter lists pending tests on the machine’s cumulative draft, runs them on their own unit and adds the results there before release.
 
 - step 1 is the SDK suite and step 2 every module against every other;
 - step 7 installs every USB package in one whole-set trial (a base with feature 512), and Undo must bring back the starting inventory and active identity (step 10);
@@ -139,6 +139,6 @@ When the change cannot behave differently on an instrument (a package rebuilt to
 
 - **A module:** `procedure.md` with the edge-case table filled in, as an entry in the module's `TESTING.md`, followed by the submitter's own results apart from their agent's.
 - **A base:** a dated record in `docs/verification/`, linked from the cumulative draft's description.
-- **The pull request:** the record's last lines, "Tested on a unit: …" (or "Not tested on a unit: why") and the edge-case table under a line "Edge cases". A ready pull request that changes a `.mwrm`, `.elemod` or `.ZDL` file fails its description check without both ([the check](../scripts/pr-body.mjs)). A draft may still be in test, so it needs no unit line yet, but it lists its edge cases from the start, each "not run: why" until it ran. Pull requests into a cumulative `base/<machine>-next` draft are checked the same way.
+- **The pull request:** the record's last lines, "Tested on a unit: …" (or "Not tested on a unit: why") and the edge-case table under a line "Edge cases". A ready pull request that changes a `.mwrm`, `.elemod` or `.ZDL` file fails its description check without both ([the check](../scripts/pr-body.mjs)). A draft may still be in test, so it needs no unit line yet, but it lists its edge cases from the start, each "not run: why" until it ran. For base work, keep this table on the machine’s cumulative draft.
 
 "Not tested" is a valid result, and it stays visible. An emulator result never counts as hardware evidence. A tester's report stays labelled as reported.
