@@ -135,11 +135,11 @@
     "recorded": "2026-11-21",
     "storage": {
       "label": "Module image and memory",
-      "display": "30,196 bytes of static runtime memory",
-      "value": 30196,
+      "display": "29,988 bytes of static runtime memory",
+      "value": 29988,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Package 0e4fc8dd loads 27,340 bytes of code and data and declares 2,856 bytes of BSS. The deepest Grain-only audio path uses 676 stack bytes including return addresses. Stock calls, interrupt nesting and loader overhead are additional.",
+      "conditions": "Package db843bc2 loads 27,132 bytes of code and data and declares 2,856 bytes of BSS. The deepest Grain-only audio path uses 740 stack bytes including return addresses and saved frame pointers. Stock calls, interrupt nesting and loader overhead are additional.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -168,7 +168,7 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "The 28,612-byte package loads 27,340 bytes of code and data and reserves 2,856 bytes of zero-initialized state. It reads the existing Flex sample pages. Stack and loader overhead are additional.",
+        "rationale": "The 28,404-byte package loads 27,132 bytes of code and data and reserves 2,856 bytes of zero-initialized state. It reads the existing Flex sample pages. Stack and loader overhead are additional.",
         "source": "TESTING.md"
       }
     },

@@ -2,6 +2,23 @@
 
 Grain 0.1.0-experimental · by A Force Truly Evil.
 
+## Side-first stereo mixer, 21 November 2026
+
+The SDK and catalogue produce package `db843bc231090ede8e663fe603226cca1c429d614b3755e49200af0e36a7dfc8`. The stereo loop computes side first and then adds the right channel to recover mid exactly, including odd-valued samples, which removes one instruction per stereo voice sample. Constant-gain spans keep the loop end in the register otherwise used for the envelope phase. The page-edge path (`stereo_paged`) and the generic mixer (`mix_other`) are separate functions, keeping those paths outside the packed stereo loop. Six voices, Q15 arithmetic and the 35-point reservation are unchanged. Inlining the voice mixer instead barely changed the workload and was discarded.
+
+| Compiled callback workload | Previous mean instructions | Side-first mean | Previous peak | Side-first peak |
+| --- | ---: | ---: | ---: | ---: |
+| Held controls | 2,783 | 2,726 | 7,315 | 7,140 |
+| Moving position | 2,838 | 2,781 | 7,499 | 7,303 |
+| SRC and window moving every callback | 2,736 | 2,707 | 9,629 | 9,427 |
+| Packet lengths from the unit profile (2,789 callbacks) | 2,728 | 2,651 | 4,916 | 4,786 |
+
+These are emulator instruction counts. Each 3,072-callback workload matched the previous package's PCM and all six voice states. A second comparison matched 4,096 combinations of sample format, pan, direction, pitch, window and short spans. Two-minute compiled runs on T1 and T5 each matched 5,292,000 stereo frames of the portable reference and reached six active voices. The recorder, Part and control-change workload of the previous section was not rerun.
+
+The package occupies 28,404 bytes on disk. Its executable and static state occupy 29,988 bytes in RAM. The deepest Grain-only audio stack path is `grain_render` (156 bytes), `gran_render` (384), `stereo_paged` (92) and `stereo_page` (84) by GCC's stack-usage report, plus four return addresses: 732 bytes. GCC's figures leave out the frame pointer that `link.w` saves, so the path is 740 bytes on the unit. The same correction makes the previous package's 676 bytes 684.
+
+The [static timing analysis](evidence/timing/candidate_bound.py) checks the linked executable byte for byte against the package. It bounds Grain's zero-wait render work at 157,940 core cycles for 16 source frames and 279,860 for 32 (18,386 and 32,850 instructions); a start callback stays at 796 cycles. The previous package's 247,832 and 453,976 were loose: its compiler emitted two copies of the silent page advance and the analysis counted one. Counting both under the same limit gives 167,120 and 297,616, so the side-first build is about 6% lower like for like. Both bounds exceed the 95,782-cycle frame budget before stock work, memory waits or interrupts are included, so the deadline is not certified.
+
 ## Compact six-voice synthesis loop, 21 November 2026
 
 The SDK and catalogue produce package `0e4fc8dd6a3bfc60ee60321a83bda82866adaedad8b555834ecdfb6b6dee6f21`. Its stereo loop reads the fractional sample step from a register and mixes one sample per iteration. It keeps the improved page check, Q15 arithmetic, six voices and 35-point reservation. The four-sample build below is retained as a comparison.

@@ -326,6 +326,7 @@ static inline __attribute__((always_inline)) void mix_page(GranGrain *g, unsigne
     const StereoSum *end = mix + n;
     const uint8_t *address;
     int32_t mid, side, correction;
+    if (fixed_gain) phase = (uintptr_t)end;
     __asm__ volatile (
         "1:\n\t"
         ".if %c[variable]\n\t"
@@ -336,19 +337,18 @@ static inline __attribute__((always_inline)) void mix_page(GranGrain *g, unsigne
         "adda.l %[phase_step],%[phase]\n\t"
         ".endif\n\t"
         ".if %c[bytes] == 2\n\t"
-        "move.l (%[page],%[idx].l*4),%[mid]\n\t"
-        "mvs.w %[mid],%[side]\n\t"
-        "swap %[mid]\n\t"
-        "ext.l %[mid]\n\t"
+        "move.l (%[page],%[idx].l*4),%[side]\n\t"
+        "mvs.w %[side],%[mid]\n\t"
+        "swap %[side]\n\t"
+        "ext.l %[side]\n\t"
         ".else\n\t"
         "lea (%[page],%[idx].l*2),%[address]\n\t"
-        "mvs.w (%[address],%[idx].l*4),%[mid]\n\t"
-        "mvs.w (3,%[address],%[idx].l*4),%[side]\n\t"
+        "mvs.w (%[address],%[idx].l*4),%[side]\n\t"
+        "mvs.w (3,%[address],%[idx].l*4),%[mid]\n\t"
         ".endif\n\t"
+        "sub.l %[mid],%[side]\n\t"
+        "asr.l #1,%[side]\n\t"
         "add.l %[side],%[mid]\n\t"
-        "asr.l #1,%[mid]\n\t"
-        "neg.l %[side]\n\t"
-        "add.l %[mid],%[side]\n\t"
         "muls.l %[gain],%[mid]\n\t"
         "muls.l %[gain],%[side]\n\t"
         "asr.l %[shift],%[mid]\n\t"
@@ -376,17 +376,21 @@ static inline __attribute__((always_inline)) void mix_page(GranGrain *g, unsigne
         "add.l %[side],(%[dst])+\n\t"
         "add.l %[frac],%[sub]\n\t"
         "addx.l %[whole],%[idx]\n\t"
+        ".if %c[variable]\n\t"
         "cmpa.l %[end],%[dst]\n\t"
+        ".else\n\t"
+        "cmpa.l %[phase],%[dst]\n\t"
+        ".endif\n\t"
         "bne.w 1b"
         : [idx] "+&d"(index), [sub] "+&d"(fraction), [dst] "+&a"(mix),
           [phase] "+&a"(phase), [gain] "+&d"(gain), [address] "=&a"(address), [mid] "=&d"(mid), [side] "=&d"(side), [adjust] "=&d"(correction)
-        : [page] "a"(page), [end] "g"(end), [frac] "a"(frac), [whole] "d"(whole),
+        : [page] "a"(page), [end] "g"(fixed_gain ? 0 : (uintptr_t)end), [frac] "a"(frac), [whole] "d"(whole),
           [pan] "m"(pan), [window] "ai"(fixed_gain ? 0 : (uintptr_t)window), [phase_step] "m"(phase_step),
           [bytes] "i"(bytes), [variable] "i"(!fixed_gain), [shift] "d"(15), [sign] "i"(sign)
         : "cc", "memory");
     g->idx = first + index;
     g->fr = fraction;
-    g->ph = fixed_gain ? phase + n * phase_step : phase;
+    g->ph = fixed_gain ? g->ph + n * phase_step : phase;
 }
 #endif
 
@@ -438,7 +442,7 @@ static __attribute__((noinline)) void stereo_page(GranGrain *g, const uint8_t *p
 
 /* Keep the stereo kernel on both sides of a page boundary. A run may end at
  * the sample boundary even if its last physical page has unused frames. */
-static void stereo_paged(GranGrain *g, GranPage *pg, const GranSample *s, int32_t whole,
+static __attribute__((noinline)) void stereo_paged(GranGrain *g, GranPage *pg, const GranSample *s, int32_t whole,
                          uint32_t frac, const uint16_t *win, StereoSum *mix, unsigned n)
 {
     unsigned done = 0;
@@ -662,6 +666,13 @@ static inline __attribute__((always_inline)) void mix_voices(GranTrack *t, const
     }
 }
 
+static __attribute__((noinline)) void mix_other(GranTrack *t, const GranSample *s,
+        int32_t whole, uint32_t frac, const uint16_t *win, StereoSum *mix, unsigned n,
+        uint32_t count, int stereo)
+{
+    mix_voices(t, s, whole, frac, win, mix, n, count, stereo, 0);
+}
+
 void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranSample *s, int32_t whole, uint32_t frac,
                  int32_t *out, unsigned n)
 {
@@ -680,7 +691,7 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
     if (GRAN_PTR_PATH && stereo)
         mix_voices(t, s, whole, frac, win, mix, n, count, 1, 1);
     else
-        mix_voices(t, s, whole, frac, win, mix, n, count, stereo, 0);
+        mix_other(t, s, whole, frac, win, mix, n, count, stereo);
     for (unsigned i = 0; i < n; ++i) {
         int32_t mid = mix[i].mid, side = mix[i].side;
         int32_t l = mid + side, r = mid - side;

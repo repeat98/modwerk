@@ -27,11 +27,14 @@ SYNTH_PACKAGE = "d09bd8f8ce95acd398d13ab91191da6d5288313c9c442988435b1224641234a
 COMPACT_PACKAGE = "0e4fc8dd6a3bfc60ee60321a83bda82866adaedad8b555834ecdfb6b6dee6f21"
 SYNTH_LOCATE = (0x3C60, 0x4114, 0x4362, 0x4536)
 PREP_LOCATE = (0x31A6, 0x35B8, 0x3A3C)
+SPLIT_PACKAGE = "db843bc231090ede8e663fe603226cca1c429d614b3755e49200af0e36a7dfc8"
+SPLIT_LOCATE = {"gran_render": (0x3B46,), "stereo_paged": (0x17F8,), "mix_other.constprop.0": (0x1D1E, 0x1FA2)}
+SPLIT_PAGED_CALLS = (0x1882, 0x1910, 0x194A, 0x1980)  # jsr %a5@ into stereo_page
 
 
 def read_image(package, elf):
     packed = package.read_bytes()
-    if hashlib.sha256(packed).hexdigest() not in (PACKAGE, PAGE_MIX_PACKAGE, PREP_PACKAGE, SYNTH_PACKAGE, COMPACT_PACKAGE):
+    if hashlib.sha256(packed).hexdigest() not in (PACKAGE, PAGE_MIX_PACKAGE, PREP_PACKAGE, SYNTH_PACKAGE, COMPACT_PACKAGE, SPLIT_PACKAGE):
         raise ValueError("The package differs from the six-voice candidate")
     # ABI 8 stores the image immediately after the 76-byte header and hook words.
     first = 76 + 4 * int.from_bytes(packed[20:24], "big")
@@ -54,22 +57,25 @@ def read_image(package, elf):
     return functions
 
 
-def reachable(functions, root, locate, lookup_targets=("flex_page",)):
+def reachable(functions, root, locate, lookup_targets=("flex_page",), register_calls={}):
+    # locate lists gran_render's sites, or maps each function to its sites.
+    sites = locate if isinstance(locate, dict) else {"gran_render": locate}
     todo, edges, instructions = [root], [], {}
     while todo:
         name = todo.pop()
         if min(functions[name]) in instructions:
             continue
         ops = functions[name].copy()
-        if name == "gran_render":
-            for pc in locate:
-                assert ops[pc][0] == "jsr" and re.fullmatch(r"%a[0-6]@", ops[pc][1])
-                # Classify the indirect branch before expanding its format-specific targets.
-                ops[pc] = ("jsr", f'{min(functions["flex_page"]):x} <flex_page>')
+        for pc in sites.get(name, ()):
+            assert ops[pc][0] == "jsr" and re.fullmatch(r"%a[0-6]@", ops[pc][1])
+            # Classify the indirect branch before expanding its format-specific targets.
+            ops[pc] = ("jsr", f'{min(functions["flex_page"]):x} <flex_page>')
+        for pc, callee in register_calls.get(name, {}).items():
+            ops[pc] = ("jsr", f'{min(functions[callee]):x} <{callee}>')
         local, calls = edges_and_calls(name, ops)
         instructions.update(functions[name])
         for pc, dest in local:
-            if name == "gran_render" and pc in locate:
+            if pc in sites.get(name, ()):
                 edges.extend((pc, dest, min(functions[target])) for target in lookup_targets)
                 todo.extend(lookup_targets)
             else:
@@ -194,8 +200,55 @@ def synthesis_limits(functions, root, n, delta, unroll):
     return caps
 
 
+def split_limits(functions, root, n):
+    if root == "grain_start":
+        return []
+    # stereo_paged and mix_other are noinline copies of code gran_render used
+    # to inline. grain_render keeps its branch layout and moves by -0xCE.
+    starts = {"stereo_page": 0xE, "stereo_paged": 0x1782, "mix_other.constprop.0": 0x1A2E,
+              "gran_render": 0x3672, "grain_render": 0x3EFC}
+    assert all(min(functions[name]) == pc for name, pc in starts.items())
+    render = {**functions["gran_render"], **functions["stereo_paged"], **functions["mix_other.constprop.0"]}
+    # stereo_paged loads stereo_page into %a5 once, in its straight-line prologue.
+    paged = functions["stereo_paged"]
+    assert paged[0x17B8] == ("lea", "%pc@(e <stereo_page>),%a5")
+    assert {pc for pc, (_, arg) in paged.items() if "%a5" in arg} == {0x17B8, *SPLIT_PAGED_CALLS}
+    assert all(int(t, 16) > 0x17B8 for t in re.findall(r"([0-9a-f]+) <stereo_paged", " ".join(a for _, a in paged.values())) if t != "17b6")
+    # The wrapper clears two words per frame. gran_render clears and clamps n
+    # outputs, tries at most n spawns, scans six slots per try and fills at
+    # most six empty slots. Only one of the two voice loops runs, six visits.
+    # The probe loop runs at most once per sample of the run it then mixes.
+    sites = {0x4644: ([0x4644, 0x464E], 2 * n), 0x36EE: ([0x36EE], n), 0x371E: ([0x371E], n),
+             0x38FE: ([0x38FE], n), 0x3900: ([0x3900], 6 * n), 0x3C30: ([0x3C30], 6),
+             0x3A12: ([0x3A12, 0x1A66], 6), 0x18DC: ([0x18DC], 6 * n)}
+    ops = {**render, **functions["grain_render"]}
+    assert [ops[pc][0] for pc in (0x4644, 0x464E, 0x36EE, 0x371E, 0x38FE, 0x3900, 0x3C30, 0x3A12, 0x1A66, 0x18DC)] == \
+        ["clrl", "clrl", "clrl", "moveal", "clrl", "lea", "movel", "movel", "movel", "addl"]
+    caps = list(sites.values())
+    # At up to 4x, 32 positions cross at most one 1,024- or 1,536-frame page
+    # edge, so each voice mixes at most two spans. A missing page may still
+    # need a lookup per position, plus the packed or generic page preflight.
+    assert "<stereo_page>" in render[0x3D82][1]
+    caps.extend([([0x3D82, *SPLIT_PAGED_CALLS], 12),
+                 ([pc for pcs in SPLIT_LOCATE.values() for pc in pcs], 6 * (n + 3))])
+    caps.extend(([pc], 12 * (n + 1)) for pc in render)
+    writes = [pc for pc, (op, arg) in functions["stereo_page"].items()
+              if op == "addl" and re.fullmatch(r"%d[0-7],%(?:a[0-7]|fp)@\+", arg)]
+    assert len(writes) == 24 and all(b == a + 2 for a, b in zip(writes[::2], writes[1::2]))
+    # Silent stereo_paged advances and mix_other's scalar, pointer and unit
+    # loops (the mono one unrolled twice) each consume one voice sample.
+    scalar = (0x18A2, 0x1BD8, 0x1C9C, 0x1EB8, 0x209C, 0x2126, 0x2150)
+    assert all(render[pc][0] == "addql" for pc in scalar)
+    caps.append(([*writes[::2], *scalar], 6 * n))
+    return caps
+
+
 def certify(functions, root, n, model, package=PACKAGE):
-    if package in (SYNTH_PACKAGE, COMPACT_PACKAGE):
+    if package == SPLIT_PACKAGE:
+        instructions, edges = reachable(functions, root, SPLIT_LOCATE, ("flex_page", "stereo24_page"),
+                                        {"stereo_paged": dict.fromkeys(SPLIT_PAGED_CALLS, "stereo_page")})
+        constraints = split_limits(functions, root, n)
+    elif package in (SYNTH_PACKAGE, COMPACT_PACKAGE):
         delta, unroll = (0x2DB4 - 0x37F2, 1) if package == COMPACT_PACKAGE else (0, 4)
         locate = [pc + delta for pc in SYNTH_LOCATE]
         instructions, edges = reachable(functions, root, locate, ("flex_page", "stereo24_page"))
