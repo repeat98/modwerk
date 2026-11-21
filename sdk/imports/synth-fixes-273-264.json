@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "id": "synth",
-  "version": "0.1.4-experimental",
+  "version": "0.1.5-experimental",
   "status": "released",
-  "basedOn": "a378920a64d73896ea9b7023fe672b487453bda0",
+  "basedOn": "05d738fc50d792fccffa14620e1cc2d9853d5340",
   "originalImport": "synth-949f3be.json",
   "folder": "sdk/octabam/modules/synth",
   "issues": [],
@@ -11,17 +11,17 @@
     {
       "path": "manifest.py",
       "previousSha256": "780dbb5617d20167a5e3e67d49af7f9525021b89657a559ca678b95c5ae88f79",
-      "draftSha256": "7854330aca001d2841de2fb384f0ca8adb7497db49dacc56da2815c1f444c0e6"
+      "draftSha256": "87606f9a5ea657a4ea3058cc3736d28126f668978aa28ea10b50f518218e4987"
     },
     {
       "path": "stock-guards.json",
       "previousSha256": "0f7ce8ef13554f5baceda2925ac1d02bc6ad70d776ba971a4f580eeb02883bc7",
-      "draftSha256": "3a197afbd8994e969a9d431b5b3ba4b2c4f0a82d390e9c787199c3610ba93aaf"
+      "draftSha256": "dc295b53004d12b7546057b19e3a9fbc2e9db55f658b49db1d229e824ea228d4"
     },
     {
       "path": "upstream/synth/poly.s",
       "previousSha256": "5f6e39e55c813cd351538d00e0b02eb56cc253f803f95ca9450e140442064d60",
-      "draftSha256": "bdc2a328672a68b144da4f35ea84cc8b876b63a39abf118dad443d47d15a9ba9"
+      "draftSha256": "236953949c0f62625b0968ec006f6531b62a7145c78dcc97456248a2b0aee2f2"
     },
     {
       "path": "upstream/quantizer/manifest.py",
@@ -40,7 +40,7 @@
     }
   ],
   "changes": [
-    "The machine names its CPU price, 6 % of a frame a track: \"cpuPrice\" in its machine-ports.json entry, which machine_ports.py writes as reserved[0] of its descriptor. The module's code is 0.1.3's."
+    "Read the running clock once per audio frame. Skip FM depth filtering between notes and wake on a pending source trigger."
   ],
-  "publication": "0.1.4-experimental: the machine's CPU price for the base's CPU budget, measured with 0.1.3 on an MKII; no change to the module's code"
+  "publication": "0.1.5-experimental. Scoped owner approval on 21 November 2026. See TESTING.md for the MKII and emulator measurements and remaining limits."
 }

@@ -5766,3 +5766,19 @@ fm_start:
 1:      movem.l (%sp),%d2/%a0
         lea 8(%sp),%sp
         jmp 0x4000f450
+
+| The runtime base delivers ev_audio_frame_prepare. In a standalone card
+| build, preserve the frame builder's live registers across that same call.
+        .ifndef MODWERK_EVENTS
+        .text
+        .balign 4
+        .global fm_native_frame
+fm_native_frame:
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+        jsr     fm_prepare_frame
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        lea     0x8000136c,%a3
+        jmp     0x4000cf50
+        .endif

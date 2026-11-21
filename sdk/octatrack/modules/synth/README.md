@@ -1,6 +1,6 @@
-# FM Synth — 0.1.4 experimental
+# FM Synth — 0.1.5 experimental
 
-This private 0.1.5 candidate uses the frame hook in base 0.7.13. Between notes, the ordinary Octatrack LFO loop handles idle frames. A pending source trigger wakes the filter in time for legacy sample locks. The clock keeps following the sequencer during silence.
+FM Synth 0.1.5 uses the frame hook in base 0.7.13. Between notes, the ordinary Octatrack LFO loop handles idle frames. A pending source trigger wakes the filter in time for legacy sample locks. The clock keeps following the sequencer during silence.
 
 ## Overview
 
@@ -12,7 +12,7 @@ Version 0.1.3 makes FM Synth cheaper on the CPU, above all while it is installed
 
 Version 0.1.2 fixed the MIDI chromatic selector stack imbalance and added 18.06 dB of source headroom before voice summing and stock AMP gain. It keeps the existing voices/envelopes and their relative levels; sounds play quieter at identical mixer settings. Increase track LEVEL or mixer gain as needed while checking the full mix. Effects, resonant filtering and the sum of multiple tracks can still clip.
 
-The dedicated machine plays without a sample. This experimental version has emulator playback and shared native/browser composition evidence. The owner explicitly authorized releasing 0.1.2 without current hardware validation on 8 October. Hardware is untested. Worst-case chip timing and complete stack/lifetime bounds remain unmeasured. Version-matched release notes are published in the community changelog. These measurements remain unknown; see TESTING.md for the release limits.
+The dedicated machine plays without a sample. On an MKII at 140 BPM, installing 0.1.5 with no FM track added 0.619 percentage points to the frame interrupt on MWREPROB/TARGET. The first FM note, two-way glide and a saved FLEX marker played on the unit. TESTING.md records the individual readings and the limits of the trial.
 
 ## Controls
 

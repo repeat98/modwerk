@@ -4,7 +4,8 @@
   {
    "event": "ev_audio_frame_prepare",
    "fn": "fm_prepare_frame",
-   "order": 40
+   "order": 40,
+   "replaces": "fm_native_frame"
   }
  ]
 }
