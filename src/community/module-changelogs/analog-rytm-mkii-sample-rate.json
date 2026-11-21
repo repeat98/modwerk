@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.6.2-experimental",
+    "date": "2026-11-20",
+    "changes": [
+      "Costs the Rytm less processing while LOP is OFF on every track.",
+      "Nothing you hear or see changes."
+    ]
+  },
+  {
     "version": "0.6.1-experimental",
     "date": "2026-11-16",
     "changes": [
