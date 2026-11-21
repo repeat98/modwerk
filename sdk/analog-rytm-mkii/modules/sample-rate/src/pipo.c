@@ -68,8 +68,13 @@ static struct voice voices[VOICES];
 // leave the DMA as stock set it without calling pipo_loop_mirror, which costs the audio
 // interrupt 16 C calls a block with LOP OFF everywhere.
 unsigned char pipo_loop_armed;
-// The last pass found LOP OFF on every voice's track and left every voice reset and none armed:
-// until a LOP comes on, a pass would write what is there already.
+// The last pass found no voice's track in PIPO, so it left every voice with back 0 and none
+// armed. Until a PIPO comes on, a pass writes no position and swaps no STA/END. What it keeps
+// for a voice in ON goes stale: last_pos, seen and fresh only matter to the turn check, which
+// needs arm (none in the first PIPO pass, which sets them again), and the loop cache is a pure
+// lookup of (sta, end, frames) (stock's routine ends with its accumulators cleared and
+// pipo_loop_frame restores MACSR). Keep it so: a turn check that read them without arm, or a
+// cache that depended on more than its key, would make this rest unsafe.
 static unsigned char at_rest;
 static short mirror[VOICES][MIRROR] __attribute__((aligned(16)));
 
@@ -91,7 +96,7 @@ void pipo_loop_audio(void)
     if (at_rest) {                       // the audio interrupt runs this every block
         for (v = 0; v < VOICES; v++) {
             int t = OWNER(v);
-            if (t < TRACKS && EFF(t, IDX_LOP) >> 8)
+            if (t < TRACKS && (EFF(t, IDX_LOP) >> 8) == LOP_PIPO)
                 break;
         }
         if (v == VOICES)
@@ -108,7 +113,8 @@ void pipo_loop_audio(void)
             p->arm = ARM_NONE;
             continue;
         }
-        rest = 0;
+        if ((EFF(t, IDX_LOP) >> 8) == LOP_PIPO)
+            rest = 0;
         pos = VPOS(v);
         sta = EFF(t, IDX_STA);
         end = EFF(t, IDX_END);

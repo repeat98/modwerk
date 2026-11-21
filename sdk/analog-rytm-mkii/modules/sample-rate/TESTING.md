@@ -29,6 +29,30 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 - A core-only image, same stock and core, for comparison.
 - Emulator: rytm-emu `c5732f0`, headless `dtboot`, JIT on. One generated sample, RAMP, 23,777 frames (odd, so STA and END fall on no round multiple), on BD with LOP ON. Audio is dtboot's `--wav`. Voice words are read with `DTBOOT_PEEK`: step at rec + 12, position at rec + 4, effective FIN at 0x8000f7cc. A click means a sample-to-sample step over 40, or six times the median, on a ramp whose normal step is below 2; each run also flags the trig's own attack, which is not counted.
 
+## 0.6.3: the loop follower also rests with forward loops (2026-11-21)
+
+0.6.2's rest of `pipo_loop_audio` (`src/pipo.c`) needed LOP OFF on every voice. 0.6.3 rests whenever the last pass found no voice's track in PIPO: LOP ON (stock's forward loop) and OFF both rest, and the next block only looks at the 8 voices' effective LOP and returns while none is PIPO.
+
+- **Read in the code:** a pass in which no voice is in PIPO leaves every voice with `back` 0 and `arm` none (the non-PIPO reset), so `pipo_loop_armed` is 0 and the DMA gates and `pipo_loop_mirror` leave stock's DMA alone. For a voice in ON, such a pass writes no position and swaps no STA/END; it only refreshes `last_pos`, `seen`, `fresh` and the loop cache. In the first pass after LOP goes ON to PIPO, `arm` is still none, so the turn check that reads `last_pos`, `seen` and `fresh` does not run, and the pass sets them again. The loop cache is a pure lookup of STA, END and the sample's length, so filling it a few blocks later gives the same values. Stock's STA/END routine (0x4011bf44) ends with both accumulators cleared (`movclr`), and `pipo_loop_frame` restores MACSR. The pass in which a voice leaves PIPO still runs in full (the rest starts only after it). An independent review (a subagent given the diff and the module source, asked to find a case where the rest changes behaviour) found none. On its advice, the comment above `at_rest` now says which invariants keep the rest exact.
+- Builds (rytm-emu only): SX62 (vendored core-ar2 0.7 + 0.6.2 as on main) `.syx` `3aee0d25…1491`, `ramSpare` 109148; SX63 (+ this source) `.syx` `b9729b9e…6cd1`, `ramSpare` 109132: 16 bytes more, 9,812 in all.
+- **Same results, block for block** (the 0.6.2 method: a private rytm-emu copy with an 8 KB cache model and a per-block log): cold boot on a card holding RAMP, loaded on BD. Track 2's kit sample loops with LOP ON throughout. The session then sets RATE +63, LOP ON with hits, PIPO with hits, PIPO to ON while the loop plays, a hit, STA moved by CC 28 during an ON rest, PIPO switched on in the same moment as a hit, OFF, ON with a hit, and PIPO again with a hit. Over 146,802 blocks the six per-block records and the DAC capture were identical. BD was in PIPO for 25,637 blocks with 35 turns, and 121,106 blocks had a LOP on and no PIPO.
+- **Cost, emulator counts:** with a LOP on and no PIPO (two looping voices here), the audio interrupt ran 164 fewer instructions a block, with 25 fewer instruction-cache and 4 fewer data-cache line misses. With PIPO somewhere it ran 14 more instructions, about the same misses. With LOP OFF everywhere the cost is 0.6.2's. By the study's per-hook costs this is about 0.7 point of the block with forward loops, an estimate.
+- **The rig's case in rytm-emu** (`sample-rate-pipo-rest-063`, on SU63 below; emulator, not hardware): `at_rest` read 1 with LOP OFF on all 12 tracks and also with BD's LOP ON (no PIPO), and 0 in PIPO. 200 ms after PIPO to ON in the middle of the loop, it read 1 and armed 0. PIPO again from rest armed the voice at once, and its `back` byte toggled through 1.4 s of reads.
+- Unit image SU63 (the same development base as SU62, `879c6c23`, + this source, linked against CM02's lockfile): `.syx` `4680af7a501e9e74128c94678872a0e411252dfad81f298dce8a412e80401a7e`, `ramSpare` 95404; boots in rytm-emu.
+
+### On the unit (21 Nov 2026)
+
+SU63 (unpacked CRC `a36e9fea`) RAM-booted on npp1993's Analog Rytm MKII, OS 1.74, over the flashed CM02, in a scratch project; the flash was not written (a first upload stopped at block 276 of 886 with no answer and the author cancelled the receive; the second landed). Run by the author's rig over the development link, not by a person.
+
+- **`sample-rate-pipo-rest-063`, all 30 checks passed.**
+  - With LOP OFF on all 12 tracks (each track's effective LOP read 0), `at_rest` read 1 before and during a BD note.
+  - With BD's LOP ON (no PIPO) it read 1.
+  - In PIPO, `pipo_loop_armed` read 1 at four reads, and BD's STA and END read swapped at all four.
+  - 200 ms after PIPO to ON in the middle of the loop, `at_rest` read 1 and the armed byte 0, and `at_rest` was still 1 after 1.5 s.
+  - PIPO again from rest gave `at_rest` 0 and armed the voice at once. Voice 0's `back` byte toggled 10 times in 1.4 s, and the armed byte was 1 at four reads after.
+  - LOP OFF again: `at_rest` 1, armed 0.
+- Not run on the unit: anything by ear, the CPU saving (no meter on SU63; it is the emulator's count above), several voices in PIPO at once.
+
 ## 0.6.2: the loop follower rests while LOP is OFF everywhere (2026-11-20)
 
 `pipo_loop_audio` (`src/pipo.c`) runs in the audio interrupt every block and walked all 8 voices with LOP OFF on every track. It now keeps `at_rest`, set after a pass in which every voice had no track or LOP OFF; while it is set, a block only looks at the 8 voices' effective LOP words and returns when all are still OFF. Nothing else changes.
