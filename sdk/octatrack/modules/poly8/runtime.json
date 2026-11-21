@@ -4,5 +4,7 @@
   {"event": "ev_play_increment", "fn": "poly_play_increment", "order": 20, "replaces": "mr_rate_hook"},
   {"event": "ev_voice_bind", "fn": "poly_voice_bind", "order": 20, "replaces": "mr_stop_voice"},
   {"event": "ev_voice_bind_run", "fn": "poly_voice_bind_run", "order": 50}
- ]
+ ],
+ "rests": ["0x4000bb0e", "0x4000e39e", "0x4000dd44", "0x400041c4", "0x40007978", "0x4000c0d6", "0x4000c140", "0x4000bfe8",
+           "0x4000f450", "0x4000b7bc", "0x40004d66"]
 }
