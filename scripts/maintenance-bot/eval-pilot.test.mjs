@@ -2,6 +2,20 @@
 import { expect, it, vi } from 'vitest'
 import { pilotCandidates, pilotReport, recordPilotReviews, settlePilot } from './eval-pilot.mjs'
 
+import { parseVerdict } from './screen-pilot.mjs'
+
+it('requires one verdict and binds it to the source even if the model omits or substitutes identity', () => {
+  const candidate = { number: 1918, merge: 'a'.repeat(40), hints: ['Check the last row'] }
+  const run = answer => JSON.stringify({ subtype: 'success', result: JSON.stringify(answer) })
+  expect(() => parseVerdict(run({ actions: [], todos: [], drop: [] }), candidate)).toThrow(/verdict/)
+  expect(() => parseVerdict(run({ verdict: 'gap', hint: 3 }), candidate)).toThrow(/verdict/)
+  expect(() => parseVerdict('{"is_error":true}', candidate)).toThrow(/completed review/)
+  expect(parseVerdict(run({ number: 42, merge: 'other', verdict: 'gap', hint: 0 }), candidate)).toEqual({
+    number: candidate.number, merge: candidate.merge, verdict: 'gap', hint: 0,
+  })
+  expect(parseVerdict(run({ verdict: 'other' }), candidate).verdict).toBe('other')
+})
+
 const pulls = Array.from({ length: 9 }, (_, i) => ({
   number: i + 1, merged_at: '2026-11-22T00:00:0' + i + 'Z', updated_at: '2026-11-22T00:01:00Z',
   merge_commit_sha: String(i + 1).repeat(40), user: { id: i + 100, login: 'dev' }, title: 'Correct the selection',

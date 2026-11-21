@@ -24,8 +24,7 @@ export async function pilotCandidates(api, records) {
     const files = await pages(api, '/pulls/' + pr.number + '/files')
     const scripts = files.filter(f => [f.filename, f.previous_filename].some(name => name && productionScript(name)))
     if (!scripts.length) continue
-    // The shared maintenance prompt also sees private conversations. It can select only public evidence
-    // by index. No model-written text crosses into a public wanted task.
+    // The classifier selects public evidence by index. No model-written text crosses into a board task.
     const hints = [pr.title]
     for (const file of files) {
       const patch = file.patch ?? ''
