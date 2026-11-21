@@ -1313,7 +1313,7 @@ def replace_literal(parts, offset, old, new, stock_at=None):
     return out
 
 
-def fill_table_owners(document, owners, stock_at):
+def reviewed_table_owners(owners):
     """The reviewed table owners (owner decision 14 Oct 2026, module-adapters/table-owners.json): each declaration is
     validated against its exact published package (table_declarations.validate) and the records go into the base's
     fixed table-owner storage before the image is built, so the base admits those packages and no other. Returns the
@@ -1326,9 +1326,10 @@ def fill_table_owners(document, owners, stock_at):
     doc = json.loads(owners.read_text())
     if doc.get('schema') != 1 or not isinstance(doc.get('owners'), list) or not doc['owners']:
         raise ValueError('table-owners.json: {"schema": 1, "owners": [...]}.')
-    entries, read = [], {str(owners.relative_to(APP)): sha(owners.read_bytes())}
+    entries, read = [], {owners.relative_to(APP).as_posix(): sha(owners.read_bytes())}
     for owner in doc['owners']:
-        if set(owner) != {'module', 'package', 'declaration', 'recipe', 'reviewedSha256', 'approval'}:
+        keys = {'module', 'package', 'declaration', 'recipe', 'reviewedSha256', 'approval'}
+        if set(owner) not in (keys, keys | {'sourceRoot'}):
             raise ValueError('A table owner names its module, package, declaration, recipe, reviewed hash and approval.')
         files = {}
         for key in ('package', 'declaration', 'recipe'):
@@ -1337,11 +1338,26 @@ def fill_table_owners(document, owners, stock_at):
                 raise ValueError('A table owner file is missing or outside the repository: ' + owner[key])
             files[key] = path.read_bytes()
             read[owner[key]] = sha(files[key])
-        entries.append(dict(files, reviewed_sha256=owner['reviewedSha256'], source_root=APP))
+        source_root = APP
+        if 'sourceRoot' in owner:
+            source_root = (APP / owner['sourceRoot']).resolve()
+            if not source_root.is_relative_to(owners.parent / 'table-owners') or not source_root.is_dir():
+                raise ValueError('A table owner source snapshot must be inside table-owners/.')
+        entries.append(dict(files, reviewed_sha256=owner['reviewedSha256'], source_root=source_root))
     table = declarations.generate(entries)
+    # generate() verified these file hashes under their respective roots. Include each snapshot in the base inventory.
+    for entry in entries:
+        if entry['source_root'] != APP:
+            for name, digest in json.loads(entry['declaration'])['sources'].items():
+                read[(entry['source_root'].relative_to(APP) / name).as_posix()] = digest
+    return declarations.empty(), table, read
+
+
+def fill_table_owners(document, owners, stock_at):
+    empty, table, read = reviewed_table_owners(owners)
     section, offset = document['symbols']['modwerk_table_declarations']
     document['sections'][section]['parts'] = replace_literal(document['sections'][section]['parts'], offset,
-                                                             declarations.empty(), table, stock_at)
+                                                             empty, table, stock_at)
     return table, read
 
 
@@ -1926,38 +1942,38 @@ def main():
     # Identity describes this core-only private base. Later selections need
     # their complete module/version/chooser identities regenerated explicitly.
     folders = (logger, upload, loader, HERE, firmware_codec.HERE) + ((DYNLOAD,) if args.dsp_loader else ())
-    inputs = {str(p.relative_to(APP)): sha(p.read_bytes()) for folder in folders
+    inputs = {p.relative_to(APP).as_posix(): sha(p.read_bytes()) for folder in folders
               for p in sorted(folder.iterdir()) if p.is_file() and p.suffix in ('.c', '.h', '.s', '.asm', '.py', '.json')}
     for path, digest in profile_inputs.items():
         if sha(path.read_bytes()) != digest:
             raise ValueError('A USB profile input changed during source preparation.')
-        inputs[str(path.relative_to(APP))] = digest
+        inputs[path.relative_to(APP).as_posix()] = digest
     inputs['sdk/runtime/m68k_codegen.py'] = sha((APP / 'sdk/runtime/m68k_codegen.py').read_bytes())  # its flag and gate
     for name in MACHINE_TRUST_SOURCES:
         path = machine_trust / name
-        inputs[str(path.relative_to(APP))] = sha(path.read_bytes())
+        inputs[path.relative_to(APP).as_posix()] = sha(path.read_bytes())
     path = APP / 'sdk/machines/octatrack/include/modwerk_sample_editor.h'
-    inputs[str(path.relative_to(APP))] = sha(path.read_bytes())
+    inputs[path.relative_to(APP).as_posix()] = sha(path.read_bytes())
     if args.sample_editor:
         for name in SAMPLE_EDITOR_SOURCES:
             path = machine_trust / name
-            inputs[str(path.relative_to(APP))] = sha(path.read_bytes())
+            inputs[path.relative_to(APP).as_posix()] = sha(path.read_bytes())
     for name in RETIREMENT_SOURCES:
         path = machine_trust / name
         if path.is_file():
-            inputs[str(path.relative_to(APP))] = sha(path.read_bytes())
+            inputs[path.relative_to(APP).as_posix()] = sha(path.read_bytes())
     if saved_set_root:
         for name in saved_set_files:
             path = saved_set_root / name
-            inputs[str(path.relative_to(APP))] = sha(path.read_bytes())
+            inputs[path.relative_to(APP).as_posix()] = sha(path.read_bytes())
     if args.dev:
         for path in (usb.AUDIO_SOURCE, usb.AUDIO_DESCRIPTORS):
-            inputs[str(path.relative_to(APP))] = sha(path.read_bytes())
+            inputs[path.relative_to(APP).as_posix()] = sha(path.read_bytes())
     if usb_functions:
         for path in (Path(usb_functions.__file__), descriptor_path,
                      usb.OCTABAM / 'platform/usb-midi/usbmidi.s',
                      HERE / 'usbmidi_rx.s') + ((audio_path,) if args.usb_audio else ()):
-            inputs[str(path.relative_to(APP))] = sha(path.read_bytes())
+            inputs[path.relative_to(APP).as_posix()] = sha(path.read_bytes())
     if args.dsp_loader:
         for name in ('src/engine/assets/stock-dsp-metadata.json', 'src/engine/assets/chooser-metadata.json',
                      'scripts/octatrack-module-page.mjs'):
@@ -1965,24 +1981,24 @@ def main():
     if args.resident_stock_hooks:
         for name in ('resident_dsp.py', 'resident_boot.py', 'resident_driver.py', 'resident_source.py', 'resident_placement.py', 'resident_journal.py', 'resident_base.patch', 'resident_base_sources.json'):
             p = APP / 'sdk/machines/octatrack/module-adapters' / name
-            inputs[str(p.relative_to(APP))] = sha(p.read_bytes())
+            inputs[p.relative_to(APP).as_posix()] = sha(p.read_bytes())
         inputs.update({'sdk/octabam/' + p: h for p, h in resident_dsp.verify_sources(resident_ob.root).items()})
         for name in ('dsp-sites.json', 'dsp_sites.py'):  # the ledger dsp_ledger.h is generated from
             inputs['sdk/machines/octatrack/' + name] = sha((APP / 'sdk/machines/octatrack' / name).read_bytes())
         for name in ('stock_hooks.c', 'stock_hooks.h', 'stock_hook_driver.c', 'stock_hook_driver.h', 'stock_hook_resources.c', 'stock_hook_resources.h', 'dsp_ledger.h', 'cue_cfg.s'):
             p = resident_source.RUNTIME / name
-            inputs[str(p.relative_to(APP))] = sha(p.read_bytes())
+            inputs[p.relative_to(APP).as_posix()] = sha(p.read_bytes())
     if args.resident_on_demand:
         for p in (APP / 'sdk/machines/octatrack/module-adapters/resident_engines.py',
                   resident_source.RUNTIME / 'resident_engines.c', resident_source.RUNTIME / 'resident_engines.h'):
-            inputs[str(p.relative_to(APP))] = sha(p.read_bytes())
+            inputs[p.relative_to(APP).as_posix()] = sha(p.read_bytes())
     if args.resident_stock_hooks:
         for name in CONTROLLER_POLICY_SOURCES:
             p = APP / 'sdk/machines/octatrack/module-adapters/controller-policy' / name
-            inputs[str(p.relative_to(APP))] = sha(p.read_bytes())
+            inputs[p.relative_to(APP).as_posix()] = sha(p.read_bytes())
         if args.controller_policies:  # the committed reviewed rows by their path; a private file by its hash only
             policies = args.controller_policies.resolve()
-            inputs[str(policies.relative_to(APP)) if policies.is_relative_to(APP) else 'private:controller-policies'] = \
+            inputs[policies.relative_to(APP).as_posix() if policies.is_relative_to(APP) else 'private:controller-policies'] = \
                 sha(policies.read_bytes())
     inputs.update({'elekloader/' + p.name: sha(p.read_bytes()) for p in original_core.iterdir() if p.is_file()})
     artwork = APP / 'sdk/runtime/startup/artwork.json'
@@ -1991,11 +2007,8 @@ def main():
     inputs['sdk/runtime/startup/base.json'] = sha((artwork.parent/'base.json').read_bytes())
     inputs['sdk/runtime/startup/base_art.py'] = sha((artwork.parent/'base_art.py').read_bytes())
     if args.table_owners:  # the owners list and every package, declaration and recipe it names
-        owners = args.table_owners.resolve()
-        inputs[str(owners.relative_to(APP))] = sha(owners.read_bytes())
-        for owner in json.loads(owners.read_text()).get('owners', []):
-            for key in ('package', 'declaration', 'recipe'):
-                inputs[owner[key]] = sha((APP / owner[key]).read_bytes())
+        _, _, reviewed_inputs = reviewed_table_owners(args.table_owners.resolve())
+        inputs.update(reviewed_inputs)
     source_hash = sha(json.dumps(inputs, sort_keys=True, separators=(',', ':')).encode())
     chooser = json.loads((APP/'src/engine/assets/chooser-metadata.json').read_text())
     configuration = dict(fx1=['NONE', *chooser['stockFx1']], fx2=['NONE', *chooser['stockFx2']],
@@ -2367,7 +2380,7 @@ modwerk_retained_end:
         (out/'base.elemod').write_text(json.dumps(strip(document, fills, recovered, image, device.main_load), indent=1)+'\n')
         (out/'base-fills.json').write_text(json.dumps(fills, indent=1)+'\n')
         # What the base's source hash covers, so a test without the stock file sees the package go stale.
-        (out/'base-sources.json').write_text(json.dumps(dict(folders=[str(f.relative_to(APP)) for f in folders], sources=inputs),
+        (out/'base-sources.json').write_text(json.dumps(dict(folders=[f.relative_to(APP).as_posix() for f in folders], sources=inputs),
                                                         indent=1, sort_keys=True)+'\n')
     mod = elemod.load_any(path)
     if set(mod.imports) - {'__run_load','__run_start','__run_words','__bss_start','__bss_words',

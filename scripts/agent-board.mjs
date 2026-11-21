@@ -298,6 +298,7 @@ export async function inboxNotes(options = {}) {
   if (!box) return []
   const parts = [box.waiting.length && box.waiting.length + ' question' + (box.waiting.length > 1 ? 's wait' : ' waits') + ' for your answer', box.replies.length && box.replies.length + ' of your questions and findings ' + (box.replies.length > 1 ? 'have' : 'has') + ' a reply'].filter(Boolean)
   const notes = []
+  if (box.pilotTasks?.length) notes.push('Board: independent Node fix verification is available. See npm run board -- inbox and the five-fix pilot in docs/AGENT_EVALS.md.')
   if (box.followups?.length) notes.push('Board: questions of yours have GitHub follow-up drafts. Read them with npm run board -- inbox.')
   if (parts.length) notes.push('Board: ' + parts.join(' and ') + '. Read them with npm run board -- inbox and answer them yourself (npm run board -- reply <id> "…"; close <id> once yours is settled), then tell the developer what you said (docs/AGENT_BOARD.md#agents-talk-for-themselves).')
   const expiring = box.expiring?.length ?? 0
@@ -423,7 +424,8 @@ async function main(argv) {
     const box = await inbox()
     if (!box) throw new BoardError('Sign in for the board first: npm run board -- login', 401)
     const expiring = box.expiring ?? []
-    if (!box.waiting.length && !box.replies.length && !expiring.length && !box.followups?.length) { console.log('Nothing waits for @' + box.login + '.'); return 0 }
+    if (!box.waiting.length && !box.replies.length && !expiring.length && !box.followups?.length && !box.pilotTasks?.length) { console.log('Nothing waits for @' + box.login + '.'); return 0 }
+    for (const task of box.pilotTasks ?? []) console.log('Verify source PR #' + task.source + ' · «' + task.body + '»\n  npm run board -- take ' + task.id + ' (docs/AGENT_EVALS.md).')
     for (const item of box.followups ?? []) console.log(formatFollowup(item))
     if (box.waiting.length || box.replies.length) console.log(UNTRUSTED)
     if (box.waiting.length) console.log('\nWaiting for your answer (npm run board -- reply <id> "…"):\n' + box.waiting.map(thread => describeThread(thread).join('\n')).join('\n'))

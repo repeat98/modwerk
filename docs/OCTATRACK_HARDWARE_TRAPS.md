@@ -27,20 +27,18 @@ it primes its data stage, and the client never sends such a frame (it
 shortens that chunk by a byte), so older bases work too. `usbtest9`,
 `508b0e52`.
 
-**An EP0 OUT data stage can go unanswered two ways, and the tick
-covers both.** Measured on the owner's MKII, 11 October 2026, about one
-SUBMIT in 50–100 (502 primes: 29 of the first kind, 2 of the second). (1) The
-stage completes inside the ISR after the poll at the start of the transfer
-path, and stock's completion loop takes the bit: no new interrupt, no status
-stage. (2) The stage stops part way: 64 bytes of a 120-byte frame arrived (the
-queue head's overlay token `0x00388080`), the endpoint is still primed, and
-the host waits on a status stage that never comes. libusb gives up after its
-timeout; a browser may wait for ever. `modwerk_ep0_tick` (60 Hz, USB held off
-with the level-4 lock) finishes a stage that has completed and, after half a
-second without completion, refuses the frame and stalls EP0. The host then
-sees a stall and a REFUSED result for its sequence, and submits again (a
-refused frame never ran). Counters: `caught`, `stalled`, `stuck_overlay` in
-ep0.c (read with `mem:`). The cause of (2) on the wire is not known.
+**EP0 OUT can lose a completion interrupt or stop mid-frame.** On the owner's MKII
+(11 October 2026, 502 primes), 29 stages completed after the ISR poll and stock
+took the interrupt. Two stopped mid-frame: a 120-byte SUBMIT received 64 bytes
+(overlay `0x00388080`). The host then waited for status. At 60 Hz under the
+level-4 lock, `modwerk_ep0_tick` catches completed stages or stalls EP0 after
+half a second so the host can retry a refused frame. See `caught`, `stalled`
+and `stuck_overlay` in ep0.c. The cause of the partial transfer is still unknown.
+
+DIAG v3 byte 5 bit 0 advertises a 70-byte read. Pass the failed SUBMIT sequence
+in `wValue` before recovery. Bytes 68–69 give the controller's remaining OUT
+bytes, big-endian. Zero means no bytes outstanding, `0xffff` no matching sample.
+The CHUNK offset counts bytes from the start of the staged set.
 
 **Host frames wait for the boot restore.** The saved module set is
 reinstalled about 3 s after boot and its DSP code loads afterwards. An

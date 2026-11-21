@@ -50,6 +50,20 @@
    ]
   },
   {
+   "site": "0x4000cf4a",
+   "length": 6,
+   "guard": "d667a779e117b682edd70e6622bdeebe3c61e1e25ce8ff48b0e2d6cba7c505ca",
+   "routine": "the audio frame builder, immediately before it enters the track and LFO loops. Both paths into their setup join at 0x4000cf40. The six-byte address load has no PC-relative operand.",
+   "head": [],
+   "tail": [
+    {
+     "stock": 6
+    },
+    "jmp 0x4000cf50"
+   ],
+   "done": null
+  },
+  {
    "site": "0x4000dfd4",
    "length": 8,
    "guard": "85d5478797bd0d879fe58aa4de88956a8f8fbacdd65ac8faa8a28da95e9c14f4",
@@ -2419,6 +2433,21 @@
    "order": "lower first, then module id: the page's row order. 50-90.",
    "subscribers": [],
    "orderEvidence": "Each setting is its module's own and no row reads another's. USB Audio is the first to contribute (ALL CHANNELS, OFF, and MAIN + CUE ONLY in the twenty-channel layout: issue 1512); until its package is published no module does."
+  },
+  {
+   "event": "ev_audio_frame_prepare",
+   "index": 61,
+   "site": "0x4000cf4a",
+   "length": 6,
+   "prototype": "void f(void)",
+   "args": [],
+   "results": "notify",
+   "when": "once per 16-sample audio frame, after sequencer event staging and before the eight audio tracks calculate LFOs and render their sources, including while transport is stopped",
+   "context": "the audio frame interrupt. Keep the EMAC as found and preserve the C callee-saved registers. A handler must be bounded and must not block.",
+   "contract": "Observe the instrument’s current step and tick here to prepare the upcoming render. Return without starting transport or advancing the sequencer. Each subscriber receives one notification per visit to the frame preparation site. The hook stays active while a module rests, so it can retain timing from before its first note.",
+   "order": "Lower order first, then module ID. All subscribers run. 10-90.",
+   "subscribers": [],
+   "orderEvidence": "Clock readers such as FM Synth and sequenced machines observe stock state independently. Subscribers must not rely on another module’s state."
   }
  ]
 }
