@@ -11,7 +11,7 @@ the native object. The native object therefore changes even though that write do
 
 ## Test procedure and edge cases — 20 November 2026
 
-Main `6ac9c8ce` (base 0.7.12) is merged, without rebasing. The package is unchanged: 7,038 bytes,
+Main `52b920e5` (base 0.7.12) is merged, without rebasing. The package is unchanged: 7,038 bytes,
 SHA-256 `092a8a13b999d14c63df6100d84f3c5202f615120c95f3df605e8c43d3736d50`.
 
 `npm run test:procedure -- quantizer --no-unit --package public/octatrack-modules/quantizer/0.1.5-experimental.mwrm`
