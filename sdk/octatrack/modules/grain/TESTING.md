@@ -19,6 +19,39 @@ The package occupies 28,404 bytes on disk. Its executable and static state occup
 
 The [static timing analysis](evidence/timing/candidate_bound.py) checks the linked executable byte for byte against the package. It bounds Grain's zero-wait render work at 157,940 core cycles for 16 source frames and 279,860 for 32 (18,386 and 32,850 instructions); a start callback stays at 796 cycles. The previous package's 247,832 and 453,976 were loose: its compiler emitted two copies of the silent page advance and the analysis counted one. Counting both under the same limit gives 167,120 and 297,616, so the side-first build is about 6% lower like for like. Both bounds exceed the 95,782-cycle frame budget before stock work, memory waits or interrupts are included, so the deadline is not certified.
 
+### Card-free MKII comparison with Flex, one minute per arm
+
+Each machine and track ran for one minute on RAM base `3a4c07fe` with the 20-channel USB layout linked into it; the developer chose one-minute arms over five. All four used one fresh 37,800-frame 24-bit stereo R3 recording, 44.1 kHz capture, 100 BPM and the same musical MIDI phrase (2,400 clocks, 200 note-ons, 200 note-offs and 50 modulation changes). The two tracks were tested separately, and stock Flex played the other track over MIDI in each arm. The developer physically removed the CF card before boot.
+
+| Machine | Track | Slowest frame during playback | Skipped during playback |
+| --- | --- | ---: | ---: |
+| Stock Flex | T1 | 288.4 µs | 0 |
+| Side-first Grain | T1 | 385.0 µs | 0 |
+| Stock Flex | T5 | 287.1 µs | 0 |
+| Side-first Grain | T5 | 388.7 µs | 1 |
+
+Six grains played in both Grain arms. The longest guarded Grain callback was 127.4 µs on T1 and 123.7 µs on T5. Grain still exceeds the 362.8 µs whole-frame deadline on both tracks. Median CPU load during playback was 62.3% with Flex and 76.85% with Grain on T1, and 61.7% and 78.25% on T5. The captures recorded no timestamp gaps, and the unit recorded no MIDI receive errors or transmit drops.
+
+All four post-STOP checks switched Parts, selected Flex and changed tracks; the UI and audio counters advanced through 29.4–29.7 seconds, and the crash and stall counters held. The recording fingerprint and the starting RAM state were verified on return. The shipping 0.7.12 base then ran the exact package alone for 12 seconds and rolled it back to the empty inventory. [Timing, MIDI, capture and restoration](evidence/timing/side-first-comparison.json)
+
+In the first minute of its five-minute arms the previous package skipped 10 renders on T1 and 12 on T5, but on another recording and boot. The same-boot comparison below is the fair one.
+
+### What the frame guard saw at each skip
+
+A development twin of base `3a4c07fe`, identity `62ac89ff`, recorded the guard's inputs at every skip and every frame over 362.8 µs. It has the same sources and flags with only that trace added to the frame guard, and it is not part of any base release. On another fresh recording, T1 and T5 each played this package for one minute, then T5 played the previous package `0e4fc8dd` for one minute, all on the same boot.
+
+| Package | Track | Skipped during playback | Frames over 362.8 µs | Slowest frame |
+| --- | --- | ---: | ---: | ---: |
+| Side-first `db843bc2` | T1 | 2 | 10 | 392.6 µs |
+| Side-first `db843bc2` | T5 | 1 | 8 | 379.4 µs |
+| Previous `0e4fc8dd` | T5 | 4 | 18 | 381.3 µs |
+
+Skip counts this small vary between runs: the side-first T1 arm skipped 0 times above and 2 here.
+
+The guard compares the time already spent in the frame, plus the render's recent cost and the work that followed it last frame, with an 80% share of the frame and its accumulated credit. All three side-first skips fell on the track's second render pass. Each came after one or two frames of 303–314 µs had drained the credit, and the prediction exceeded the share by 1.7–6.6 µs. Had Grain rendered at its predicted cost, those frames would have ended at 297–352 µs, inside the deadline. Two of the previous package's four skipped frames would have ended past it, at 366 and 420 µs.
+
+In the frames over the deadline, the side-first package's two passes took 117–154 µs on T1 and 90–106 µs on T5. Everything else in the frame interrupt took 223–247 µs and 262–275 µs. Eleven of the eighteen were over by less than 4 µs and the worst by 29.8 µs. Meeting the deadline therefore needs the Grain render up to about 30 µs shorter in the frames where stock's own work peaks. At their predicted cost, the remaining skips came from the guard's 80% margin, not from frames that would have missed the deadline. The trace adds a few stores per render. [Skip and overrun records](evidence/timing/guard-trace.json)
+
 ## Compact six-voice synthesis loop, 21 November 2026
 
 The SDK and catalogue produce package `0e4fc8dd6a3bfc60ee60321a83bda82866adaedad8b555834ecdfb6b6dee6f21`. Its stereo loop reads the fractional sample step from a register and mixes one sample per iteration. It keeps the improved page check, Q15 arithmetic, six voices and 35-point reservation. The four-sample build below is retained as a comparison.

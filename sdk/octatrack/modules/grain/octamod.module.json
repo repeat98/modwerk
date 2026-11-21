@@ -144,11 +144,11 @@
     },
     "processing": {
       "label": "ColdFire, in the frame interrupt",
-      "display": "34,412 core cycles for the longest observed guarded callback during combined playback",
-      "value": 34412,
+      "display": "33,640 core cycles for the longest observed guarded callback during combined playback",
+      "value": 33640,
       "unit": "cycles/render",
       "method": "hardware",
-      "conditions": "Package 0e4fc8dd, MKII OS 1.40C, RAM base 3a4c07fe. Dense six-voice 24-bit stereo on T1 and T5, tested separately. Five minutes per track with 20-channel capture and musical MIDI. The longest observed guarded callback took 17,206 ticks at 132 MHz (130.3 microseconds). The longest observed whole frame during Grain playback took 395.4 microseconds against the 362.8-microsecond deadline.",
+      "conditions": "Package db843bc2, MKII OS 1.40C, RAM base 3a4c07fe. Dense six-voice 24-bit stereo on T1 and T5, tested separately. One minute per track with 20-channel capture and musical MIDI. The longest observed guarded callback took 16,820 ticks at 132 MHz (127.4 microseconds). The longest observed whole frame during Grain playback took 388.7 microseconds against the 362.8-microsecond deadline.",
       "source": "TESTING.md"
     },
     "impact": {
@@ -156,7 +156,7 @@
       "cpu": {
         "level": "high",
         "basis": "measured-comparison",
-        "rationale": "Package 0e4fc8dd added 15.5 CPU-meter points on T1 and 15.9 on T5 against stock Flex. The base reserves 35 points per Grain track. The author reported about 15 points in typical use and 20 at dense settings on an earlier MKI build.",
+        "rationale": "Package db843bc2 added 14.55 CPU-meter points on T1 and 16.55 on T5 against stock Flex. The base reserves 35 points per Grain track. The author reported about 15 points in typical use and 20 at dense settings on an earlier MKI build.",
         "source": "TESTING.md"
       },
       "dsp": {
@@ -184,9 +184,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Six-voice package 0e4fc8dd on the MKII, five minutes per arm with 24-bit stereo, 20-channel USB capture and musical MIDI. Grain skipped 15 renders on T1 and 33 on T5 during playback. Stock Flex skipped 0 and 0. After STOP the panel responded on both tracks. Release qualification remains open.",
+    "summary": "Side-first package db843bc2 on the MKII, one minute per arm with 24-bit stereo, 20-channel USB capture and musical MIDI. Grain skipped 0 renders on T1 and 1 on T5 during playback; stock Flex skipped 0 and 0. On a same-boot trace run T5 skipped 1 render against the previous package's 4, and frames over the deadline fell from 18 to 8. After STOP the panel responded on both tracks. Release qualification remains open.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "c649586e72d0aa003517535088238935196900cf",
+    "evidenceRevision": "db1e077309f4c538a1b1b672960c345c22b07ead",
     "gates": [
       "python3 -B test_grain.py",
       "python3 -B generate.py --check"
