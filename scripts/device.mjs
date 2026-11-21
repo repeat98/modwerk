@@ -59,6 +59,7 @@ import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
 import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
+import { chooserIndex } from './effect-names.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
   help: { type: 'boolean', short: 'h' },
@@ -301,6 +302,11 @@ async function pick(track, slot, wanted) {
   let id = typeof wanted === 'number' ? wanted : -1 // a number: that effect id, through its chooser row (pickid)
   for (let i = 0; i < tables.count && id < 0; i++)
     if (ids[i] && Buffer.from(await mem(ids[i] + 9, 13)).toString('latin1').replace(/\0.*$/s, '').toLowerCase() === wanted.toLowerCase()) id = i
+  if (id < 0 && typeof wanted === 'string') { // the package's name, not the chooser's (SC Ringmod shows as RINGMOD SC): as device:test finds it
+    const names = []
+    for (let i = 0; i < tables.count; i++) names.push(ids[i] ? Buffer.from(await mem(ids[i] + 9, 13)).toString('latin1').replace(/\0.*$/s, '') : null)
+    id = chooserIndex(names, wanted)
+  }
   if (id < 0 || id >= tables.count || (typeof wanted === 'number' && !rows[id])) throw new Error('No ' + wanted + ' in the FX' + slot + ' chooser.')
   // NO first: right after a pick on another track the next FUNC+FX can be lost, and the LEVEL turn below then changes that
   // track's level in the Part instead of scrolling (owner's MKII, 20 October 2026)
@@ -584,9 +590,12 @@ async function trial(session, pkg) {
 
 /** After a RAM boot: wait until the unit has gone away and come back far enough to answer HELLO. */
 let backBench
+// A base that restores its kept set from the card answered after 72 s once, the first boot after a power cycle (MKII, twin
+// a328967d, 20 November 2026), and after 18 s later on: wait long enough for that.
+const BACK_MS = 150000
 async function rebooted() {
   let gone = false
-  for (const start = Date.now(); Date.now() - start < 60000; await wait(500)) {
+  for (const start = Date.now(); Date.now() - start < BACK_MS; await wait(500)) {
     const again = backBench = new Bench(values.socket)
     try {
       await again.ready()
@@ -596,7 +605,7 @@ async function rebooted() {
       again.socket.end()
     } catch { gone = true; again.socket.end() }
   }
-  throw new Error('The unit did not come back within 60 s; a power cycle boots the flashed base.')
+  throw new Error(`The unit did not come back within ${BACK_MS / 1000} s; a power cycle boots the flashed base.`)
 }
 
 if (command === 'serve') {
@@ -758,7 +767,13 @@ if (command === 'serve') {
     const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages)
     console.log(`set: ${packages.length} changes, ${data.length} bytes`)
     try { console.log(state(await retried(() => trial(session, { base: identity.base, data, sha256: sha(data) })))) }
-    catch (error) { console.log('refused: ' + error.message); await session.cancel().catch(() => {}); await session.leaveUploadMode().catch(() => {}); console.log(state(session.status)) }
+    catch (error) {
+      process.exitCode ||= 1
+      console.log('refused: ' + error.message)
+      await session.cancel().catch(() => {})
+      await session.leaveUploadMode().catch(() => {})
+      console.log(state(session.status))
+    }
     console.log('installed:', (await transport.inventory())?.map(m => m.name).join(', ') || 'none')
   }
   if (command === 'flash') {

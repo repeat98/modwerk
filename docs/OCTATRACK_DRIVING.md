@@ -233,7 +233,7 @@ stall. Each CC was checked on its own against the Part's bytes and the screen: l
 - MIDI goes through `scripts/octatrack-midi-bridge.py` on the computer the unit is plugged into (on Windows the device
   venv's Python, through winmm; port 50124, beside the USB bridge's: on a Windows host with WSL's mirrored
   networking 47812 refused the bind, 19 November 2026). Start it before the run and stop it after: while it runs it holds the
-  unit's MIDI port.
+  unit's MIDI port. It answers `ping` with the output it holds, reopening it first when its handle went stale (a bridge left from before a power cycle refused every message, 20 November 2026), and reopens it once when a send fails.
 - The project: track channels 1-8, and TRANSP RECV and PROG CH RECV on in PROJECT > MIDI > SYNC. A project with
   them off ignores START and program changes without an error: the summary then shows no pattern changes and the
   stopped CPU. Program changes arrive on the channel PROG CH RECV names; set to CH AUTO, that is MIDI > CHANNELS'
