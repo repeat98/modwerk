@@ -4,7 +4,7 @@ name: Module PR checks
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened, ready_for_review, converted_to_draft]
-    # base/<machine>-next: a base change joining its machine's cumulative draft gets the description check only (below).
+    # base/<machine>-next: keep description checks for legacy topic PRs. New base commits go directly on the cumulative branch.
     branches: [main, 'modwerk/**', 'codex/modwerk-*', 'base/*-next']
 permissions:
   contents: read
@@ -16,7 +16,7 @@ jobs:
   # source/build inputs; app changes retain lint, tests, types and the bundle.
   scope:
     name: scope / ${{ github.event.pull_request.base.sha }} / ${{ github.event.pull_request.head.sha }}
-    # Into a cumulative base draft only the description is checked; the draft's own pull request into main runs the rest.
+    # The cumulative draft targeting main runs full checks. Legacy topic PRs receive the description check only.
     if: ${{ !startsWith(github.base_ref, 'base/') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
