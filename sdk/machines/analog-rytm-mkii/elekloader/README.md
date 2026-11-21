@@ -53,7 +53,7 @@ bit for bit with one exception: once the delay or the reverb has had no input fo
 lies below -114 dBFS, it rests and outputs exact zero where stock keeps computing a residue of a few hundred in 2^31; the
 first input ends the rest. Two parts reach the screen: `CPU` or `OVR` in the bottom status bar's lower right corner
 while the core's `core_audio_load` is near or over its limit (`perf-cpu-mark.c`, stock's font, columns 96-127 cleared
-under it), and every other frame step left out while more than 8 messages wait for the UI task (`perf-screen-rate.c`).
+under it; CPU blinks on and off, OVR blinks between lit text in a dark box and dark text, about twice a second), and every other frame step left out while more than 8 messages wait for the UI task (`perf-screen-rate.c`).
 
 There is no wake-up latency: each test runs at the start of its part in the same block, so the first block with input
 runs stock's work. The worst-case block is stock's plus the tests; their cost alone has not been measured. Measured as the module on the author's MKII, one 12-track pattern beside
@@ -124,11 +124,11 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD"
 | Ubuntu 24.04 m68k-linux-gnu GCC 13.3.0 | 10,320 | 94 | sources, sites, interface |
 | Debian 13 m68k-linux-gnu GCC 14.2.0 | 10,168 | 93 | sources, sites, interface |
 
-The send-bus variant (`3cb27253`) has 36,713 bytes of `.run` and 4,364 of `.bss` (3,707 and 192 of them since
+The send-bus variant (`20fbc98f`) has 36,881 bytes of `.run` and 4,364 of `.bss` (3,875 and 192 of them since
 the lean engine), 62 of the kit's 64 storage bits and 3 bits of each sound (a voice machine's type): the rest of the
 [mod area](../README.md#memory-and-budgets) stays for modules and the effect that runs, whose work area is the RAM they
-leave free (`sendbus.c`). The voices variant (`aba85f2c`) has 18,583 bytes of `.run` and 3,020 of `.bss`, and plain (`ae77e1b0`) 14,503
-and 1,553, the lean engine included: with Analog BD 0.2.1 linked, the set took 19,520 B less of the mod area on voices (before the lean engine, which both variants carry)
+leave free (`sendbus.c`). The voices variant (`ee44bde6`) has 18,751 bytes of `.run` and 3,024 of `.bss`, and plain (`5ca4480f`) 14,671
+and 1,557, the lean engine included: with Analog BD 0.2.1 linked, the set took 19,520 B less of the mod area on voices (before the lean engine, which both variants carry)
 than on send-bus.
 
 The release records its sources but not its compiler, and none of these reproduces its compiled code byte for byte.
