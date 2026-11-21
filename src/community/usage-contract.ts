@@ -18,7 +18,15 @@ export type UsageDeviceTotals = { device: UsageDevice; builds: number; builds_fa
 export type UsageComparison = { from: string; to: string; rows: UsageDay[]; unavailableReason: 'collection' | 'retention' | null }
 /** Counts per named page and UTC day, without visitor identifiers. */
 export type UsagePageDay = { day: string; page: string; views: number }
+export const OCTATRACK_INSTALL_EVENTS = ['base_first_connection', 'base_usb_update_done', 'usb_sync_kept'] as const
+export type OctatrackInstallEvent = typeof OCTATRACK_INSTALL_EVENTS[number]
+export type InstallActivity = {
+  guideFrom: string | null
+  syncFrom: string | null
+  counts: { day: string; event: OctatrackInstallEvent; count: number }[]
+}
 export type UsageStatistics = { generatedAt: string; collectionStarted: string | null; from: string; to: string; days: number; rows: UsageDay[]; comparison?: UsageComparison
+  installActivity?: InstallActivity
   /** When failed builds and the machine split began to be counted; earlier days have neither. */
   breakdownsStarted?: string | null
   /** Migration boundary for Digitakt II and Analog Rytm MKII attribution; earlier events stay unattributed. */
