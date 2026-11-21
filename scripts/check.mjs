@@ -2,6 +2,7 @@ import { execFileSync, spawn } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
+import { stripVTControlCharacters } from 'node:util'
 import { checkBaseSize } from './base-size.mjs'
 import { readChangeScope } from './change-scope.mjs'
 import { affectedTests, filesForShard, planPrChecks } from './pr-check-plan.mjs'
@@ -88,7 +89,7 @@ const results = new Map(), skipped = [], outputs = new Map(), flaky = []
 // on this computer) or leans on another file's state: it is reported, not failed (owner, 21 November 2026). A file that fails alone
 // too fails the check, and more than RERUN_LIMIT failed files is a real break, so they are not rerun.
 const RERUN_LIMIT = 12
-const failedTestFiles = text => [...new Set([...text.replace(/\x1b\[[0-9;]*m/g, '').matchAll(/^\s*FAIL\s+(\S+\.test\.[cm]?[jt]sx?)\b/gm)].map(match => match[1]))]
+const failedTestFiles = text => [...new Set([...stripVTControlCharacters(text).matchAll(/^\s*FAIL\s+(\S+\.test\.[cm]?[jt]sx?)\b/gm)].map(match => match[1]))]
 async function rerunAlone(args) {
   const failed = failedTestFiles(outputs.get(['test', ...args].join(' ')) ?? '')
   if (!failed.length || failed.length > RERUN_LIMIT || interrupted) return false
