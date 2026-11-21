@@ -1,1 +1,1 @@
-The effects guide now warns that the DSP's 24-step `div` on a 48-bit dividend leaves half the integer quotient, and how to get the whole one.
+The effects guide now explains how to get the integer quotient from the DSP's fractional divide when both operands are positive and in range.
