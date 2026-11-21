@@ -1,0 +1,781 @@
+{
+  "device": "Octatrack MKII, OS 1.40C. Development twin of base 0.7.11, fac1523234f4bb0b. CompactFlash removed.",
+  "fixture": "A16, Part 3, 100 BPM. One test track with a trig at every step, the other Flex track sharing R3, six untriggered THRU tracks and no effects. R3 contains a 37,800-frame 24-bit stereo recording. SCAN +2 on T1, -2 on T5; SIZE, DENS, SPRY and PAN at maximum. T1 and T5 are assigned separately.",
+  "workload": "CoreAudio at 44.1 kHz, 20 channels. MIDI alternates notes on T1 and T5 and sends CC119 and 240 BPM clock. The short comparison sends one STOP halfway through the 12-second trace. The sustained comparison sends no STOP within the 60-second trace. Maximum and mean percentages are frame-interrupt time. Skips count machine callbacks omitted by the base.",
+  "packages": {
+    "draftSix": "0c5632f677aecd873b11ae71a82ac5d72c3357d1dd43ccdb1dfc545cd3a5f38a",
+    "twoVoiceTrial": "28f6bf0e56a2d727472566e9bb96590e5422c36b5ba797a3bf4733da6656fff8",
+    "leanmath": "b801887c230afa3b53194c8b4e947d2901ee5dcadef3a6c9ddaae99d4bc52307"
+  },
+  "windows": {
+    "cap-stock-t1-combined": {
+      "seconds": 13,
+      "framesReceived": 934400,
+      "totalSkips": 0,
+      "sustainedSkips": 0,
+      "t1Rms": [
+        0.455147,
+        0.689367
+      ],
+      "t5Rms": [
+        0.436836,
+        0.664278
+      ],
+      "mainRms": [
+        0.602548,
+        0.777401
+      ],
+      "maxGuardedCallbackTicks": 0,
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds",
+      "midiRxErrors": 0,
+      "midiTxDrops": 0,
+      "healthDelta": {
+        "frames": 59674,
+        "errors": 0,
+        "crash": 0,
+        "stalls": 0
+      },
+      "intervals": [
+        {
+          "phase": "capture stopped",
+          "skips": 0,
+          "peakPercent": 76.9,
+          "interruptPercent": 33.6
+        },
+        {
+          "phase": "play start",
+          "skips": 0,
+          "peakPercent": 72.6,
+          "interruptPercent": 43.1
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 79.7,
+          "interruptPercent": 57.6
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 77.5,
+          "interruptPercent": 57.9
+        },
+        {
+          "phase": "stop",
+          "skips": 0,
+          "peakPercent": 71.1,
+          "interruptPercent": 47.7
+        },
+        {
+          "phase": "capture ended",
+          "skips": 0,
+          "peakPercent": 71.3,
+          "interruptPercent": 38.1
+        }
+      ]
+    },
+    "cap-stock-t1-usb": {
+      "seconds": 5,
+      "framesReceived": 581632,
+      "totalSkips": 0,
+      "sustainedSkips": 0,
+      "t1Rms": [
+        0.341094,
+        0.493003
+      ],
+      "t5Rms": [
+        3e-06,
+        0.0
+      ],
+      "mainRms": [
+        0.24281,
+        0.350946
+      ],
+      "maxGuardedCallbackTicks": 0,
+      "midi": null,
+      "midiRxErrors": 0,
+      "midiTxDrops": 0,
+      "healthDelta": {
+        "frames": 37642,
+        "errors": 0,
+        "crash": 0,
+        "stalls": 0
+      },
+      "intervals": [
+        {
+          "phase": "capture stopped",
+          "skips": 0,
+          "peakPercent": 79.0,
+          "interruptPercent": 31.7
+        },
+        {
+          "phase": "play start",
+          "skips": 0,
+          "peakPercent": 72.3,
+          "interruptPercent": 42.9
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 77.8,
+          "interruptPercent": 44.2
+        },
+        {
+          "phase": "stop",
+          "skips": 0,
+          "peakPercent": 69.1,
+          "interruptPercent": 44.1
+        },
+        {
+          "phase": "capture ended",
+          "skips": 0,
+          "peakPercent": 67.9,
+          "interruptPercent": 37.3
+        }
+      ]
+    },
+    "cap-stock-t5-combined": {
+      "seconds": 13,
+      "framesReceived": 934400,
+      "totalSkips": 0,
+      "sustainedSkips": 0,
+      "t1Rms": [
+        0.455793,
+        0.679717
+      ],
+      "t5Rms": [
+        0.472536,
+        0.712285
+      ],
+      "mainRms": [
+        0.619913,
+        0.783186
+      ],
+      "maxGuardedCallbackTicks": 0,
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds",
+      "midiRxErrors": 0,
+      "midiTxDrops": 0,
+      "healthDelta": {
+        "frames": 59372,
+        "errors": 0,
+        "crash": 0,
+        "stalls": 0
+      },
+      "intervals": [
+        {
+          "phase": "capture stopped",
+          "skips": 0,
+          "peakPercent": 89.6,
+          "interruptPercent": 35.5
+        },
+        {
+          "phase": "play start",
+          "skips": 0,
+          "peakPercent": 72.7,
+          "interruptPercent": 44.2
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 78.9,
+          "interruptPercent": 58.0
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 77.3,
+          "interruptPercent": 58.1
+        },
+        {
+          "phase": "stop",
+          "skips": 0,
+          "peakPercent": 71.3,
+          "interruptPercent": 52.0
+        },
+        {
+          "phase": "capture ended",
+          "skips": 0,
+          "peakPercent": 71.5,
+          "interruptPercent": 38.1
+        }
+      ]
+    },
+    "cap-stock-t5-usb": {
+      "seconds": 5,
+      "framesReceived": 581632,
+      "totalSkips": 0,
+      "sustainedSkips": 0,
+      "t1Rms": [
+        2.1e-05,
+        0.000193
+      ],
+      "t5Rms": [
+        0.34063,
+        0.492413
+      ],
+      "mainRms": [
+        0.242488,
+        0.350615
+      ],
+      "maxGuardedCallbackTicks": 0,
+      "midi": null,
+      "midiRxErrors": 0,
+      "midiTxDrops": 0,
+      "healthDelta": {
+        "frames": 37455,
+        "errors": 0,
+        "crash": 0,
+        "stalls": 0
+      },
+      "intervals": [
+        {
+          "phase": "capture stopped",
+          "skips": 0,
+          "peakPercent": 80.3,
+          "interruptPercent": 34.8
+        },
+        {
+          "phase": "play start",
+          "skips": 0,
+          "peakPercent": 72.0,
+          "interruptPercent": 44.1
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 77.9,
+          "interruptPercent": 45.1
+        },
+        {
+          "phase": "stop",
+          "skips": 0,
+          "peakPercent": 72.5,
+          "interruptPercent": 45.3
+        },
+        {
+          "phase": "capture ended",
+          "skips": 0,
+          "peakPercent": 68.9,
+          "interruptPercent": 38.1
+        }
+      ]
+    },
+    "cap-6-t1-usb": {
+      "seconds": 5,
+      "framesReceived": 581120,
+      "totalSkips": 11,
+      "sustainedSkips": 11,
+      "t1Rms": [
+        0.485714,
+        0.509612
+      ],
+      "t5Rms": [
+        9e-06,
+        0.000193
+      ],
+      "mainRms": [
+        0.345761,
+        0.362847
+      ],
+      "maxGuardedCallbackTicks": 17843,
+      "midi": null,
+      "midiRxErrors": 0,
+      "midiTxDrops": 0,
+      "healthDelta": {
+        "frames": 37331,
+        "errors": 0,
+        "crash": 0,
+        "stalls": 0
+      },
+      "intervals": [
+        {
+          "phase": "capture stopped",
+          "skips": 0,
+          "peakPercent": 79.2,
+          "interruptPercent": 38.1
+        },
+        {
+          "phase": "play start",
+          "skips": 0,
+          "peakPercent": 103.7,
+          "interruptPercent": 67.3
+        },
+        {
+          "phase": "playing",
+          "skips": 11,
+          "peakPercent": 108.5,
+          "interruptPercent": 70.8
+        },
+        {
+          "phase": "stop",
+          "skips": 0,
+          "peakPercent": 93.2,
+          "interruptPercent": 67.3
+        },
+        {
+          "phase": "capture ended",
+          "skips": 0,
+          "peakPercent": 92.0,
+          "interruptPercent": 43.8
+        }
+      ]
+    },
+    "cap-6-t1-combined": {
+      "seconds": 13,
+      "framesReceived": 934400,
+      "totalSkips": 658,
+      "sustainedSkips": 648,
+      "t1Rms": [
+        0.680408,
+        0.773342
+      ],
+      "t5Rms": [
+        0.455891,
+        0.677444
+      ],
+      "mainRms": [
+        0.722311,
+        0.784829
+      ],
+      "maxGuardedCallbackTicks": 18310,
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds",
+      "midiRxErrors": 0,
+      "midiTxDrops": 0,
+      "healthDelta": {
+        "frames": 59419,
+        "errors": 0,
+        "crash": 0,
+        "stalls": 0
+      },
+      "intervals": [
+        {
+          "phase": "capture stopped",
+          "skips": 0,
+          "peakPercent": 90.9,
+          "interruptPercent": 38.4
+        },
+        {
+          "phase": "play start",
+          "skips": 2,
+          "peakPercent": 106.5,
+          "interruptPercent": 66.8
+        },
+        {
+          "phase": "playing",
+          "skips": 648,
+          "peakPercent": 105.3,
+          "interruptPercent": 76.7
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 96.9,
+          "interruptPercent": 76.6
+        },
+        {
+          "phase": "stop",
+          "skips": 8,
+          "peakPercent": 91.3,
+          "interruptPercent": 77.6
+        },
+        {
+          "phase": "capture ended",
+          "skips": 0,
+          "peakPercent": 88.3,
+          "interruptPercent": 55.5
+        }
+      ]
+    },
+    "cap-2-t5-matched-soak": {
+      "seconds": 61,
+      "framesReceived": 3051008,
+      "totalSkips": 0,
+      "sustainedSkips": 0,
+      "t1Rms": [
+        0.540405,
+        0.819545
+      ],
+      "t5Rms": [
+        0.69263,
+        0.765399
+      ],
+      "mainRms": [
+        0.773723,
+        0.887946
+      ],
+      "maxGuardedCallbackTicks": 15180,
+      "midi": "1440 notes on, 1440 off, 57600 CC119, 5760 clocks, 0 STOP submitted to Octatrack, 60 seconds",
+      "midiRxErrors": 0,
+      "midiTxDrops": 0,
+      "healthDelta": {
+        "frames": 191910,
+        "errors": 0,
+        "crash": 0,
+        "stalls": 0
+      },
+      "intervals": [
+        {
+          "phase": "capture stopped",
+          "skips": 0,
+          "peakPercent": 79.0,
+          "interruptPercent": 38.7,
+          "playing": false
+        },
+        {
+          "phase": "play start",
+          "skips": 0,
+          "peakPercent": 90.4,
+          "interruptPercent": 59.5,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 98.6,
+          "interruptPercent": 71.5,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 99.8,
+          "interruptPercent": 72.9,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 100.3,
+          "interruptPercent": 72.9,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 100.1,
+          "interruptPercent": 72.3,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 107.3,
+          "interruptPercent": 72.4,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 100.4,
+          "interruptPercent": 72.7,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 93.0,
+          "interruptPercent": 74.2,
+          "playing": true
+        },
+        {
+          "phase": "stop",
+          "skips": 0,
+          "peakPercent": 96.0,
+          "interruptPercent": 74.2,
+          "playing": false
+        },
+        {
+          "phase": "capture ended",
+          "skips": 0,
+          "peakPercent": 84.7,
+          "interruptPercent": 55.4,
+          "playing": false
+        }
+      ]
+    },
+    "stock-t5-soak": {
+      "seconds": 61,
+      "framesReceived": 3051008,
+      "totalSkips": 0,
+      "sustainedSkips": 0,
+      "t1Rms": [
+        0.557732,
+        0.820617
+      ],
+      "t5Rms": [
+        0.560161,
+        0.86744
+      ],
+      "mainRms": [
+        0.397024,
+        0.584159
+      ],
+      "maxGuardedCallbackTicks": 0,
+      "midi": "1440 notes on, 1440 off, 57600 CC119, 5760 clocks, 0 STOP submitted to Octatrack, 60 seconds",
+      "midiRxErrors": 0,
+      "midiTxDrops": 0,
+      "healthDelta": {
+        "frames": 191747,
+        "errors": 0,
+        "crash": 0,
+        "stalls": 0
+      },
+      "intervals": [
+        {
+          "phase": "capture stopped",
+          "skips": 0,
+          "peakPercent": 72.4,
+          "interruptPercent": 31.4,
+          "playing": false
+        },
+        {
+          "phase": "play start",
+          "skips": 0,
+          "peakPercent": 74.5,
+          "interruptPercent": 41.9,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 80.2,
+          "interruptPercent": 57.7,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 81.9,
+          "interruptPercent": 58.0,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 79.2,
+          "interruptPercent": 58.1,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 80.3,
+          "interruptPercent": 58.1,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 79.1,
+          "interruptPercent": 58.1,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 81.2,
+          "interruptPercent": 58.2,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 73.4,
+          "interruptPercent": 58.7,
+          "playing": true
+        },
+        {
+          "phase": "stop",
+          "skips": 0,
+          "peakPercent": 74.8,
+          "interruptPercent": 58.5,
+          "playing": true
+        },
+        {
+          "phase": "capture ended",
+          "skips": 0,
+          "peakPercent": 70.3,
+          "interruptPercent": 44.6,
+          "playing": false
+        }
+      ]
+    },
+    "cap-leanmath-t1-matched-combined": {
+      "seconds": 13,
+      "framesReceived": 934912,
+      "totalSkips": 489,
+      "sustainedSkips": 489,
+      "t1Rms": [
+        0.742356,
+        0.803548
+      ],
+      "t5Rms": [
+        0.479907,
+        0.677715
+      ],
+      "mainRms": [
+        0.528449,
+        0.572008
+      ],
+      "maxGuardedCallbackTicks": 18719,
+      "midi": "288 notes on, 288 off, 11520 CC119, 1152 clocks, 1 STOP submitted to Octatrack, 12 seconds",
+      "midiRxErrors": 0,
+      "midiTxDrops": 0,
+      "healthDelta": {
+        "frames": 59883,
+        "errors": 0,
+        "crash": 0,
+        "stalls": 0
+      },
+      "intervals": [
+        {
+          "phase": "capture stopped",
+          "skips": 0,
+          "peakPercent": 79.0,
+          "interruptPercent": 37.5,
+          "playing": false
+        },
+        {
+          "phase": "play start",
+          "skips": 0,
+          "peakPercent": 97.6,
+          "interruptPercent": 64.9,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 489,
+          "peakPercent": 103.3,
+          "interruptPercent": 75.9,
+          "playing": true
+        },
+        {
+          "phase": "playing",
+          "skips": 0,
+          "peakPercent": 96.5,
+          "interruptPercent": 75.2,
+          "playing": true
+        },
+        {
+          "phase": "stop",
+          "skips": 0,
+          "peakPercent": 85.6,
+          "interruptPercent": 74.7,
+          "playing": true
+        },
+        {
+          "phase": "capture ended",
+          "skips": 0,
+          "peakPercent": 91.0,
+          "interruptPercent": 54.3,
+          "playing": false
+        }
+      ]
+    }
+  },
+  "exclusions": "Two short two-voice windows returned zero skips but the T5 stem was near silent. They are excluded from the matched comparison. The saved scratch Part was reloaded and the stock T5 stem verified before the longer soak.",
+  "recovery": {
+    "twoVoiceT5": "After capture drained and STOP was issued, an attempted machine change did not complete. The audio frame counter continued to advance while the tick counter stayed at 72115 for at least 27 seconds. The USB rollback timed out. Recovery and RAM boot were refused. A card-free power cycle restored the production base and zero saved and live modules. The prior crash and stall record identifiers stayed unchanged during the measurement.",
+    "stockFlexAfterStop": [
+      {
+        "seconds": 2,
+        "ticks": 16351,
+        "frames": 721840,
+        "cpu": 362
+      },
+      {
+        "seconds": 4,
+        "ticks": 16472,
+        "frames": 727386,
+        "cpu": 363
+      },
+      {
+        "seconds": 6,
+        "ticks": 16593,
+        "frames": 732934,
+        "cpu": 365
+      },
+      {
+        "seconds": 8,
+        "ticks": 16714,
+        "frames": 738489,
+        "cpu": 362
+      },
+      {
+        "seconds": 10,
+        "ticks": 16835,
+        "frames": 744044,
+        "cpu": 363
+      },
+      {
+        "seconds": 12,
+        "ticks": 16955,
+        "frames": 749599,
+        "cpu": 363
+      },
+      {
+        "seconds": 14,
+        "ticks": 17076,
+        "frames": 755140,
+        "cpu": 363
+      },
+      {
+        "seconds": 16,
+        "ticks": 17197,
+        "frames": 760687,
+        "cpu": 365
+      },
+      {
+        "seconds": 18,
+        "ticks": 17318,
+        "frames": 766242,
+        "cpu": 363
+      },
+      {
+        "seconds": 20,
+        "ticks": 17438,
+        "frames": 771784,
+        "cpu": 362
+      },
+      {
+        "seconds": 22,
+        "ticks": 17559,
+        "frames": 777339,
+        "cpu": 363
+      },
+      {
+        "seconds": 24,
+        "ticks": 17680,
+        "frames": 782894,
+        "cpu": 365
+      }
+    ]
+  },
+  "staticModel": {
+    "package": "0c5632f677aecd873b11ae71a82ac5d72c3357d1dd43ccdb1dfc545cd3a5f38a",
+    "sourceFrames": [
+      16,
+      32
+    ],
+    "renderInstructions": [
+      20689,
+      38481
+    ],
+    "coreCyclesWithZeroWaitMemory": [
+      192656,
+      359568
+    ],
+    "coverage": "Grain-owned instructions only. Conditional core ceilings exceed the deadline. No bound on external memory arbitration, external callees or interrupt preemption."
+  },
+  "memory": {
+    "packageFileBytes": 26236,
+    "loadImageBytes": 25016,
+    "bssBytes": 2124,
+    "staticRuntimeBytes": 27140,
+    "grainAudioStackBytes": 692,
+    "grainDrawStackBytes": 392,
+    "stackMethod": "GCC stack-usage and call graph emitted with the production flags; instrumented compile emitted identical assembly. Includes a four-byte return address per Grain function. Stock, loader and nested callbacks are additional."
+  },
+  "sixVoiceExperiment": "The window marked leanmath used the same six-voice engine with a page-map snapshot once per audio block, contiguous SRC reads, a per-track parameter cache and precomputed pitch steps. A compiled comparison across 256 pitch bytes and four parameter blocks per pitch gave identical PCM and grain state to the draft. It ran after the reboot on a separately recorded R3 of the same format and length.",
+  "return": "A16 and both copies of scratch Part 3 matched the original snapshots. A02, its working Part 1, track T2 and 140 BPM were restored. All eight recorders were empty and in 16-bit mode. The normal production base dfa438130710fea9 returned with zero saved and zero live modules. The hardware reservation was released."
+}
