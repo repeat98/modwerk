@@ -207,8 +207,8 @@ describe('every machine', () => {
     expect(rytmTempSave).toMatchObject({ machine: 'analog-rytm-mkii', source: true, baseBound: false })
     expect(rytmTempSave.pkg).toBeUndefined()
     expect(() => context(root, { out, base: true }, ['no-such-machine'], {})).toThrow(/No machine named no-such-machine/)
-    expect(() => context(root, { out, label: 'TOOLONG' }, ['improved-performance'], {})).toThrow(/four-character label/)
-    expect(() => context(root, { out, target: 'emulator' }, ['improved-performance'], {})).toThrow(/--target emulator drives an Octatrack emulator/)
+    expect(() => context(root, { out, label: 'TOOLONG' }, ['quick-velocity-aftertouch-assign'], {})).toThrow(/four-character label/)
+    expect(() => context(root, { out, target: 'emulator' }, ['quick-velocity-aftertouch-assign'], {})).toThrow(/--target emulator drives an Octatrack emulator/)
   })
 
   it('runs another machine\'s unit steps as one turn of the unit queue, with what the inner run needs', async () => {
