@@ -160,10 +160,10 @@
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-11-20",
+      "testedOn": "2026-11-21",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "0.6.2 ran on npp1993's Analog Rytm MKII, OS 1.74, as SU62 (the author's development base with the link + this module only, sha256 886783f3…6678), booted from RAM over the flashed CM02 in a scratch project: the rig's rest case passed all 30 checks (the follower's rest byte set with LOP OFF on every track and cleared by LOP ON or PIPO; PIPO armed and turning, also right after a rest), and the earlier cases' screens read as before. 0.6.0 ran as MSU1 the same way: the rig's twelve cases with no failed check, and by hand the author reports all pass: the waveform view and row; PIPO back and forth with no click at the turns; FUNC + STA and END to zero crossings with the S and E labels; RATE through 0 into reverse with LOP ON and PIPO; TUN in cents and semitones; a PIPO lock on a held trig. 0.6.1 links to the same image as 0.6.0.",
+      "summary": "0.6.3 ran on npp1993's Analog Rytm MKII, OS 1.74, as SU63 (the author's development base with the link + this module only, sha256 4680af7a…1a7e), booted from RAM over the flashed CM02 in a scratch project: the rig's rest case passed all 30 checks (the follower rests with LOP OFF or ON and no PIPO, wakes for PIPO, PIPO armed and turning, also right after a rest and after PIPO to ON mid-loop). 0.6.2 ran the same way as SU62 (30 checks, earlier cases' screens as before). 0.6.0 ran as MSU1 the same way: the rig's twelve cases with no failed check, and by hand the author reports all pass: the waveform view and row; PIPO back and forth with no click at the turns; FUNC + STA and END to zero crossings with the S and E labels; RATE through 0 into reverse with LOP ON and PIPO; TUN in cents and semitones; a PIPO lock on a held trig. 0.6.1 links to the same image as 0.6.0.",
       "limitations": [
         "Hand results are reported by the author from playing; the rig's twelve cases are its own checks, five of them without stored references (judged by eye).",
         "The image holds the author's private development base (with the link), not the published base.",
@@ -175,7 +175,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Unit (0.6.2, SU62 from RAM): the rig's rest case, 30 checks passed. Unit (0.6.0, MSU1 from RAM): the rig's 12 cases with no failed check; by hand, as the author reports, PIPO, zero snap and labels, RATE through 0 with ON and PIPO, TUN, a PIPO lock. rytm-emu: 0.6.2 against 0.6.1, identical state and audio over 144,552 blocks; (MS01) every documented capture of Ping Pong Loop and Improved SMPL replays byte-identical to the two side by side (126 frames). Earlier versions and Ping Pong Loop's history: TESTING.md.",
+    "summary": "Unit (0.6.3, SU63, and 0.6.2, SU62, from RAM): the rig's rest cases, 30 checks passed each. Unit (0.6.0, MSU1 from RAM): the rig's 12 cases with no failed check; by hand, as the author reports, PIPO, zero snap and labels, RATE through 0 with ON and PIPO, TUN, a PIPO lock. rytm-emu: 0.6.3 against 0.6.2 and 0.6.2 against 0.6.1, identical state and audio over 146,802 and 144,552 blocks; (MS01) every documented capture of Ping Pong Loop and Improved SMPL replays byte-identical to the two side by side (126 frames). Earlier versions and Ping Pong Loop's history: TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
