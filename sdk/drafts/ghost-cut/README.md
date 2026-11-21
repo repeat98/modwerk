@@ -26,6 +26,8 @@ Signal path: the track's mono sum, (L + R) / 2, goes into a ring of 15,870 sampl
 
 Setup knob F (FDBK in the plan) is blank: feedback into the loop is not built.
 
+On a private draft package, ENG may show numbers rather than the engine names: 0 is TAPE and 1 is GRAIN. DRFT is the separate drift-head control on the main page.
+
 ## Usage
 
 1. Select an audio track that plays something.
