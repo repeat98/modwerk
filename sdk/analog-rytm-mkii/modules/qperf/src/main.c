@@ -833,10 +833,10 @@ static void render_all(void)
         knob_armed = steps * POINTS - pos;
         knob_armed_pos = pos;
     } else if (knob_armed) {
-        // It runs to the loop's end: done once the place comes round to the start, and
-        // a loop made longer or shorter meanwhile moves that end with it. A place past a
-        // shorter loop's end, read back to its start, has not come round.
-        knob_armed = pos < knob_armed_pos && knob_armed_pos < steps * POINTS ? 0 : steps * POINTS - pos;
+        // It runs to the loop's end: done once the place comes round to the start, or
+        // jumps back there because the loop was cut short of it, so the moves before the
+        // turn are kept. A loop made longer, or shorter ahead of it, moves that end with it.
+        knob_armed = pos < knob_armed_pos ? 0 : steps * POINTS - pos;
         knob_armed_pos = pos;
     }
     knob_was = knob_touched != 0;
