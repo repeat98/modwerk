@@ -277,14 +277,20 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     if (after.status !== 'ready' || after.identity?.base !== state.identity.base || after.active !== state.active) throw new Error('The device changed while reading; reconnect and review again.')
     return { state: after, inventory, capabilities: after.identity.capabilities, missing, diagnostics }
   }
+  function usbTarget(name, moduleIds, current) {
+    const installed = [...current.moduleIds, ...(current.offIds ?? [])]
+    const usbAudio = !preparedModules && catalogue.installPresets && frontend.usbAudioSettings.usbAudioForSelection?.(moduleIds, { moduleIds: installed })
+    return { name, moduleIds, removedStockFx: [], ...(usbAudio ? { usbAudio } : {}) }
+  }
   const selection = async args => {
     const selected = ids(args.moduleIds), machine = args.machine ?? 'octatrack'
     if (machine !== 'octatrack') { if (!frontend.isDigiDevice(machine)) throw new Error('This machine has no supported builder.'); frontend.resolveDigiSelection(machine, selected); return frontend.estimateCombination(machine, selected) }
     frontend.resolveSelection(selected)
     // Without `usb` only the catalogue is asked; whether a set fits is the unit's own admission when it is synced.
     if (!args.usb) return { availability: frontend.moduleAvailabilityError(selected, !!args.beta) }
-    const target = { name: 'MCP test set', moduleIds: selected, removedStockFx: [] }, current = args.current ?? { moduleIds: [], removedStockFx: [] }
+    const current = args.current ?? { moduleIds: [], removedStockFx: [] }
     ids(current.moduleIds); ids(current.removedStockFx)
+    const target = usbTarget('MCP test set', selected, current)
     preparedModules?.requireBase([...selected, ...current.moduleIds], args.base)
     const prepared = await catalogue.prepare(target, current, load, args.capabilities, args.base)
     return { review: catalogue.review(target, current, args.capabilities, args.base), changes: prepared.changes.map(change => ({ module: change.module, bytes: change.data.length, sha256: hash(change.data), undoSha256: change.undo && hash(change.undo) })) }
@@ -312,9 +318,11 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     set_export: async () => ({ configurations: sets, firmwareIncluded: false }),
     set_save: async args => {
       if (sets.length >= 100 && !args.id) throw new Error('Limit of 100 local module sets.')
-      const previous = args.id && sets.find(item => item.id === args.id)
+      const previous = sets.find(item => item.id === args.id)
       if (args.id && !previous) throw new Error('Unknown module set.')
-      const item = frontend.newConfiguration(args.name, ids(args.moduleIds), args.keepStockFx2 ?? true, undefined, args.machine ?? 'octatrack', args.usbAudio)
+      const moduleIds = ids(args.moduleIds), machine = args.machine ?? 'octatrack'
+      const usbAudio = args.usbAudio === undefined && machine === 'octatrack' ? frontend.usbAudioSettings.usbAudioForSelection?.(moduleIds, previous) : args.usbAudio
+      const item = frontend.newConfiguration(args.name, moduleIds, args.keepStockFx2 ?? true, undefined, machine, usbAudio)
       const value = frontend.validateConfiguration({ ...item, ...(previous ? { id: previous.id, createdAt: previous.createdAt } : {}), removedStockFx: args.removedStockFx })
       await save([...sets.filter(entry => entry.id !== value.id), value]); return value
     },
@@ -362,7 +370,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     },
     device_review: async args => {
       if (trial) throw new Error('Finish the current trial first.')
-      const before = await snapshot(), target = { name: 'MCP reviewed set', moduleIds: ids(args.moduleIds), removedStockFx: [] }
+      const before = await snapshot(), target = usbTarget('MCP reviewed set', ids(args.moduleIds), before.inventory)
       if (!before.diagnostics) throw new Error('The device does not provide the required self-test status.')
       // Legacy INVENTORY gives a layout, not the exact installed package hash. Preserve existing
       // modules rather than pretending the latest site package is their exact rollback image.
