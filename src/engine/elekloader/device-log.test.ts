@@ -96,6 +96,19 @@ describe('the unit’s diagnostics log, version 2', () => {
     // An entry in the window long before the stop is not what stopped it.
     expect(describeStallFrames(trace([513, 520], [213, 100], ...Array.from({ length: 8 }, (): [number, number] => [363, 100])))).toMatch(/so not the late entry$/)
   })
+  it('reads the frame guard’s live skip count after the trace, where the base pages it', () => {
+    const paged = (magic: number) => {
+      const data = new Uint8Array(DEVICE_LOG_PAGES * DEVICE_LOG_PAGE)
+      data.set(log2(() => {}))
+      const view = new DataView(data.buffer), at = V2_END + 180 + 456 + 520 // after the crash and stall records and the trace
+      view.setUint32(at, magic); view.setUint32(at + 4, 33); view.setUint32(at + 8, 0x1ff)
+      return parseDeviceLog(data)!
+    }
+    expect(paged(0x4d57534b).sheds).toEqual({ count: 33, tracks: 0xff })
+    expect(paged(0).sheds).toBeUndefined() // an older base: zeros there
+    expect(DEVICE_LOG_PAGES * DEVICE_LOG_PAGE).toBeGreaterThanOrEqual(V2_END + 180 + 456 + 520 + 12) // inside the pages read
+  })
+
   it('reads the frames kept with the stall record, in µs, and no other stall’s', () => {
     const traced = (count: number) => {
       const data = new Uint8Array(DEVICE_LOG_PAGES * DEVICE_LOG_PAGE)
