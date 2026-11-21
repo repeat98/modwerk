@@ -1,6 +1,6 @@
 # Test procedure
 
-Every change to a module or a base goes through these steps, in this order, on one named build. Then it runs the edge cases its own change asks for. The other testing guides hold the detail of each step; this page holds the order.
+Every change to a module or a base, on every machine, goes through these steps, in this order, on one named build. Then it runs the edge cases its own change asks for. The other testing guides hold the detail of each step; this page holds the order.
 
 ## Who runs it
 
@@ -14,11 +14,13 @@ Every change to a module or a base goes through these steps, in this order, on o
 npm run test:procedure -- <module id>          # a module, built from its source
 npm run test:procedure -- <module id> --plan   # the steps and their commands, nothing run
 npm run test:procedure -- --base               # the Octatrack base, with every USB package
+npm run test:procedure -- --base analog-rytm-mkii   # another machine's base: the same steps ([every machine](#every-machine))
+npm run test:procedure -- analog-rytm-mkii:temp-save   # machine:id where two machines have a module of that id
 ```
 
 It runs the steps below with the tools that already do them and stops at the first failure. Without a unit session it records the unit steps as not run, with the command each would have run. It ends with a record for the build: `procedure.md`, a `TESTING.md` entry with an empty edge-case table, and `procedure.json` for programs. A module's automated part takes under a minute without a unit (temp-save, 20 November 2026: 9 to 18 s for steps 1 to 4, 32 s with the emulator) and a few minutes with one.
 
-Options: `--package FILE` tests that package instead of building one, `--published` the catalogue's, `--share SOCKET` names the unit session, `--no-unit` leaves the unit alone, `--emulator-socket SOCK` adds the emulator rehearsal, `--target emulator` runs steps 6 to 10 on an emulator session ([below](#one-set-of-cases-two-targets)), `--out DIR` puts the record there (default: the system's temporary folder), `--soak-seconds` and `--scene` go to the soak and the price.
+Options: `--package FILE` tests that package instead of building one, `--published` the catalogue's, `--share SOCKET` names the unit session, `--no-unit` leaves the unit alone, `--emulator-socket SOCK` adds the emulator rehearsal, `--target emulator` runs steps 6 to 10 on an emulator session ([below](#one-set-of-cases-two-targets)), `--out DIR` puts the record there (default: the system's temporary folder), `--soak-seconds` and `--scene` go to the soak and the price. On another machine: `--stock STOCK.syx --elemod BASE.elemod --label XX01` link the test image, `--link` drives the unit over the machine's own link, `--cases DIR` and `--emu DTBOOT` ([every machine](#every-machine)).
 
 ## The steps
 
@@ -54,7 +56,27 @@ Each step proves only what it ran. Steps 1 to 5 prove the code paths they exerci
 - **11.** Reach every control and screen by the README's button steps and take a `png:` screenshot of each. Record MAIN and CUE over USB with a sustained sound and look for runs of exact zeros or a block played twice. Then Undo and check the inventory again ([/modwerk-test-on-unit](../.claude/skills/modwerk-test-on-unit/SKILL.md)).
 - **12.** The developer here is the submitter: the person whose agent ran steps 1 to 11, at their own unit, not a reviewer. Only after 1 to 11 passed on this build. Give the developer the button steps and what they should see or hear for each item the record lists: the sound, timing by ear, MIDI and scenes, two instances, Part and project reload, the Keep and the power cycle. On a contributor's unit the Keep, the power cycle, a flash and listening are theirs, and the agent asks for each run; on the owner's computer agents need no OK for trials, RAM boots of development builds or a Keep a test needs, and never ask him for a card, while flashing and power cycles stay his ([owner operations](OWNER_OPERATIONS.md)). A fault they find is fixed, and the procedure starts again on the new build.
 
-A machine without a USB link runs steps 1 to 3 and its emulator; step 12 then carries all the hardware evidence ([/modwerk-test-on-unit](../.claude/skills/modwerk-test-on-unit/SKILL.md)).
+A machine without a USB link runs the steps its tools reach, and the record lists the rest as not run with what is missing; step 12 then carries all the hardware evidence ([every machine](#every-machine)).
+
+## Every machine
+
+The steps, their order and the record are the same on every machine. Each step runs the machine's own tool where it has one (`MACHINE_STEPS` in [the runner](../scripts/test-procedure.mjs)); where it has none, the record says "not run" and what is missing, so the gap stays in sight until the machine's next piece fills it ([where each machine stands](MACHINE_RECIPE.md#where-each-machine-stands)). A tool added for a machine fills its row here and in `MACHINE_STEPS` in the same pull request.
+
+| # | Octatrack | Analog Rytm MKII | Every other machine |
+|---|---|---|---|
+| 1 | `module:doctor`; a base: `sdk:check` | the same | the same |
+| 2 | `modules:compat` | not yet: link the image beside the modules it must work with (the link refuses two on one site) | not yet, as the Rytm |
+| 3 | `module:dev`; a base: its `.elemod` | `link-image.mjs` from `--stock`, `--elemod` (a development base: `machine:base -- analog-rytm-mkii --stock STOCK.syx --dev --out DIR`) and `--label`; or `--package IMAGE.syx` | an elemod machine as the Rytm; otherwise `--package FILE` |
+| 4 | `cycle-scan.mjs check` | not run: the scan models the Octatrack's DSP | not run |
+| 5 | `ot_emu` (`--emulator-socket`) | `rytm_test.py emu` with `--emu DTBOOT` or `RYTM_EMU` | not yet |
+| 6, 10 | `device.mjs status`, `do inventory` | `rytm_link.py ident`: the flashed label is unchanged at the end | not yet: no USB link |
+| 7 | `device:test`; a base: `device.mjs set` | `rytm_link.py ramboot`, then `rytm_test.py unit` with the module's cases (a base: the link's own) | not yet |
+| 8 | `octatrack-soak.mjs` | not yet | not yet |
+| 9 | `device:price` | by hand: the audio load (`core_audio_load`) with and without the change | not yet |
+| 11, 12 | by hand, then the submitter | the same | the same |
+
+- **Rytm unit steps** run only with `--link`, in a scratch project with REMOTE CTRL armed on a development base ([LINK.md](../sdk/machines/analog-rytm-mkii/LINK.md)). The RAM boot writes nothing to the flash and restarts the unit, so on a contributor's unit say so and get their OK first; their power cycle brings the flashed base back. Cases live in [`tools/cases/<id>/`](../sdk/machines/analog-rytm-mkii/tools/cases/README.md) and may change the saved state ([TEST_RUNNER.md](../sdk/machines/analog-rytm-mkii/TEST_RUNNER.md)); a module without them records step 7 as not run until they are written.
+- **A base on another machine** is tested on an image linked from its development base with the set it is tested beside: link it with `--module` for each and pass it as `--package`, or the runner links the base alone. `--target emulator` is the Octatrack's session switch; elsewhere the emulator is step 5.
 
 ## The layers
 
@@ -95,7 +117,7 @@ An effect cannot be tried on a track there today. On a development twin under `o
 A base carries every installed module, so it is tested as a set ([Change a base](DEVELOPER_WORKFLOW.md#change-a-base)). Each submitter lists pending tests on the machine’s cumulative draft, runs them on their own unit and adds the results there before release.
 
 - step 1 is the SDK suite and step 2 every module against every other;
-- step 7 installs every USB package in one whole-set trial (a base with feature 512), and Undo must bring back the starting inventory and active identity (step 10);
+- step 7 installs every USB package in one whole-set trial (a base with feature 512), and Undo must bring back the starting inventory and active identity (step 10); on another machine it runs the image linked with the set;
 - step 9 prices every package at rest on the new base, the figure a base change can move for everyone;
 - by hand: RAM boot the development build of the candidate, run the steps, RAM boot back to the starting base, and check its modules came back. Nothing is kept by a RAM boot. On a contributor's unit say beforehand how many restarts are coming and get their OK for the run; on the owner's computer it stands. A flash or a power cycle is always the unit owner's;
 - the record goes to `docs/verification/<YYYY-MM-DD>-<topic>.md` and the machine's cumulative draft. That draft stays a draft until the base has been tested extensively on a unit, through the records its submitters bring; only the owner marks it ready and merges it.
