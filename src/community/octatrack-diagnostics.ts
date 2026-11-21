@@ -73,7 +73,7 @@ export function reportLinkFailure(failure: PreLinkFailure) { try { linkFailures?
 /** One collector per page, for the verified member or, without one, the visitor (`memberId` DIAGNOSTICS_GUEST). No persistent trace queue, arbitrary errors, extra device identifiers,
  * project references or diagnostic reads before consent. Unsent events are dropped; USB work never awaits the network. */
 export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLink | null, inventory: () => Inventory | undefined) {
-  let stopped = false, refreshing = false, reading = false, activeSync = false, lastHealth = '', sent = 0, budgetAt = Date.now(), sending = false
+  let stopped = false, refreshing = false, reading = false, lastHealth = '', sent = 0, budgetAt = Date.now(), sending = false
   const queue: OctatrackDiagnostic[] = [], onStored = new WeakMap<OctatrackDiagnostic, () => void>()
   const requests = new AbortController()
   const currentGeneration = ++generation, client = accountApi = scopedApi(), busy = snapshot.busy
@@ -140,14 +140,16 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
       }
     } finally { queue.length=0; sending=false }
   }
+  let sync: 'idle' | 'active' | 'disconnected' = 'idle'
   const unsubscribe = link?.subscribeDiagnostics(event => {
     if (!current()) return
     if (event.event === 'link_failed') { if (event.failure) linkFailed(event.failure); return } // the link's own report of the same
-    if (event.event === 'sync_started') { activeSync = true; countOctatrackAction('usb_sync_started') }
-    else if (activeSync && ['kept','undone','sync_failed','disconnected'].includes(event.event)) {
+    if (event.event === 'sync_started') { sync = 'active'; countOctatrackAction('usb_sync_started') }
+    else if (event.event === 'disconnected' && sync !== 'idle') sync = 'disconnected'
+    else if (sync !== 'idle' && ['kept','undone','sync_failed'].includes(event.event)) {
       if (event.event === 'kept' || event.event === 'undone') countOctatrackAction(event.event === 'kept' ? 'usb_sync_kept' : 'usb_sync_undone')
       else countOctatrackAction('usb_sync_failed', syncFailureReason(event))
-      activeSync = false
+      sync = 'idle'
     }
     if (['sync_started','kept','undone','sync_failed','disconnected'].includes(event.event)) flushLoad()
     void send(event)
@@ -166,6 +168,14 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
   const unwatch = link?.subscribe(() => {
     const state = link.getState(), before = lastStatus
     lastStatus = state.status
+    // The disconnect event arrives before the link decides whether its USB Audio trial can resume.
+    if (sync === 'disconnected' && !state.reconnecting) {
+      if (state.status === 'trial') sync = 'active'
+      else {
+        sync = 'idle'
+        countOctatrackAction('usb_sync_failed', 'disconnected')
+      }
+    }
     if (before !== 'connecting' || state.status === 'connecting') return
     // An identified unit was already claimed. It can be busy while another client owns a trial.
     if (state.status === 'busy' && !state.identity) linkFailed('claim-failed')
