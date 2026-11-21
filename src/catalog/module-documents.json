@@ -5299,6 +5299,15 @@
             "rationale": "724 authored ROM bytes, up to 127 alignment bytes, no newly allocated heap or persistent RAM. Existing stock state is reused.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-21",
+          "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7 and an empty starting inventory. Release sources rebuilt for this twin’s base binding; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.7 % before, 32.7 % installed and used nowhere; CPU meter 45.2 % before, 45.5 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -5665,6 +5674,15 @@
             "rationale": "26,288 bytes at sixteen instances including inherited stock buffers; no new heap/SDRAM delay storage.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0.5,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-21",
+          "conditions": "Octatrack MKII, owner scratch A01 and saved Part 4 with trigs on tracks 1–7. T5 FX1 NONE at baseline, COMPRESSOR on T5 FX1 keyed from T1 in use. The stock-compressor reading is also retained.; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.6 % before, 33 % installed and used nowhere, 33.1 % on T5 FX1; CPU meter 45 % before, 45.7 % at rest, 45.3 % in use.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -6575,6 +6593,15 @@
             "rationale": "About 4.7 KB of DRAM data in the platform reserve plus the unit's code, and a 2,310-byte battery-RAM table; no per-instance copies.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0.1,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-21",
+          "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7. Private runtime package built from the listed Play Modes 0.2.0 source; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.6 % before, 32.7 % installed and used nowhere; CPU meter 45.6 % before, 45.2 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -6782,6 +6809,15 @@
             "rationale": "Small authored ROM patches and reused stock state; no new audio buffer allocation.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 1.2,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-21",
+          "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7, stock effects on both slots and an empty starting inventory; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.7 % before, 33.9 % installed and used nowhere; CPU meter 45.5 % before, 46.3 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -7137,6 +7173,15 @@
             "rationale": "Small authored ROM patches and reused stock state; no new audio buffer allocation.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-21",
+          "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7 and an empty starting inventory. Release sources rebuilt for this twin’s base binding; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.7 % before, 32.7 % installed and used nowhere; CPU meter 45.1 % before, 45.5 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -7651,6 +7696,15 @@
             "rationale": "1,678 bytes of DRAM code and data, 671 DSP program words reused from SPRING REV and 193 DSP Y words.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0.1,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-21",
+          "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7 and an empty starting inventory. Release sources rebuilt for this twin’s base binding; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.7 % before, 32.8 % installed and used nowhere; CPU meter 45.3 % before, 45.5 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -9384,6 +9438,15 @@
             "rationale": "4,480 bytes of ColdFire code, data and state in DRAM; locks live in spare bytes the project already has.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-21",
+          "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7, stock effects on both slots and an empty starting inventory; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.7 % before, 32.7 % installed and used nowhere; CPU meter 45.3 % before, 45.4 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -9944,6 +10007,15 @@
             "rationale": "6,380 bytes of ColdFire code, data and state in DRAM (from the package); the slice table it fills is the sample's own.",
             "source": "evidence/hardware.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-21",
+          "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7, stock effects on both slots and an empty starting inventory; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.7 % before, 32.7 % installed and used nowhere; CPU meter 45.2 % before, 45.5 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -10618,6 +10690,15 @@
             "rationale": "184 bytes of code and labels.",
             "source": "TESTING.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0.5,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-21",
+          "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7, stock effects on both slots and an empty starting inventory; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.7 % before, 33.2 % installed and used nowhere; CPU meter 45.2 % before, 45.9 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
@@ -12776,6 +12857,15 @@
             "rationale": "One active copy occupies an exact 10,832-byte extent in the shared runtime pool: 8,748 initialized bytes, 1,328 BSS bytes, 528-byte runtime header and 216 site-record bytes plus alignment. Apply Scene's 2,062-byte code/state is a minimal-tier reference; Temp Save's 42,892-byte buffer is moderate. The 10,048-byte package occupies existing shared upload staging, not another module allocation. The complete shared-task/interrupt stack remains unresolved, so this is not a total-memory qualification; the 21,664-byte overlap assumes two equal candidate extents.",
             "source": "evidence/memory-lifetimes-20261105.md"
           }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-21",
+          "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7, stock effects on both slots and an empty starting inventory; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.7 % before, 32.7 % installed and used nowhere; CPU meter 45.3 % before, 45.4 % at rest.",
+          "source": "evidence/cpu-price.json"
         }
       },
       "tests": {
