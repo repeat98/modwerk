@@ -338,7 +338,7 @@
       "bytes": 2636,
       "sha256": "7aedb56f64cc17732efd367a3a1e4a85f73196924e4bf362411fa23217639408",
       "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
-      "requiredBase": "24d3b92890e97f5dc57af2f7ce3e12475a229d22c2b9b1649cf606cf78f721b6"
+      "requiredBase": "8da292e735b2d95110d03eb13a6ee11d293fa15010ffab49e1eea04f84919fdc"
     },
     {
       "id": "output-matrix",
@@ -354,7 +354,7 @@
       "bytes": 3740,
       "sha256": "0304acd09210badf33e888c09f111a887f221a3842aaeb781ecd20147044203b",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "24d3b92890e97f5dc57af2f7ce3e12475a229d22c2b9b1649cf606cf78f721b6"
+      "requiredBase": "8da292e735b2d95110d03eb13a6ee11d293fa15010ffab49e1eea04f84919fdc"
     },
     {
       "id": "cc-map",
@@ -370,7 +370,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "24d3b92890e97f5dc57af2f7ce3e12475a229d22c2b9b1649cf606cf78f721b6"
+      "requiredBase": "8da292e735b2d95110d03eb13a6ee11d293fa15010ffab49e1eea04f84919fdc"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -446,9 +446,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "16fcc02a5628e32c0cdd09e414360a76cf30169892ad96686e9541d0bb27daa8",
+      "sha256": "de28d726bf54966c4b929deeb15db274a1ae1d1fecb49e1b4d7891e2141c9d6f",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "24d3b92890e97f5dc57af2f7ce3e12475a229d22c2b9b1649cf606cf78f721b6"
+      "requiredBase": "8da292e735b2d95110d03eb13a6ee11d293fa15010ffab49e1eea04f84919fdc"
     },
     {
       "id": "analog-bassdrum",
@@ -464,7 +464,7 @@
       "bytes": 26172,
       "sha256": "99581aece3500d9a7c5d1b389afc8ff1697086d323bd28dbf01b4def22acacbc",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "24d3b92890e97f5dc57af2f7ce3e12475a229d22c2b9b1649cf606cf78f721b6",
+      "requiredBase": "8da292e735b2d95110d03eb13a6ee11d293fa15010ffab49e1eea04f84919fdc",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -739,5 +739,21 @@
       "bytes": 352,
       "sha256": "14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c"
     }
-  ]
+  ],
+  "usbAudio": {
+    "configurable": {
+      "name": "USB Audio",
+      "version": "0.3.0-experimental",
+      "path": "octatrack-modules/usb-audio-out-tracks-main-cue/0.3.0-experimental.mwrm",
+      "bytes": 11804,
+      "sha256": "0ac4d6a58a437706e85ab8b577da26dfe88c5c866c5d7a008665fbe2fefcf11f",
+      "abi": 8,
+      "features": 131,
+      "sites": 3,
+      "copies": 3,
+      "fills": 0,
+      "installPresets": true,
+      "requiredBase": "8da292e735b2d95110d03eb13a6ee11d293fa15010ffab49e1eea04f84919fdc"
+    }
+  }
 }

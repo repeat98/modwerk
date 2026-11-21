@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseModuleCpuPrice, parseModuleDocument } from '../src/catalog/module-contract.ts'
-import { CPU_PRICE_PENDING_REASON, cReserved0, cpuPriceProblems, cpuPriceStatus, glueReserved0, machineDescriptors, parseCpuPricePending, portGlue, readCpuPricePending } from './module-cpu-price.mjs'
+import { AT_REST_FROM, AT_REST_LIMIT, CPU_PRICE_PENDING_REASON, atRestStatus, cReserved0, cpuPriceProblems, cpuPriceStatus, glueReserved0, machineDescriptors, parseCpuPricePending, portGlue, readCpuPricePending } from './module-cpu-price.mjs'
 
 const repo = fileURLToPath(new URL('../', import.meta.url))
 const roots = []
@@ -128,4 +128,59 @@ describe('every Octatrack module names its CPU price', () => {
     delete vague.conditions
     expect(() => parseModuleCpuPrice(vague)).toThrow('conditions')
   })
+})
+
+describe('a module costs nothing while nobody uses it (owner, 20 November 2026)', () => {
+  const hook = (id, version, cpuPrice, effectId = null) => ({ id, version, compatibility: { location: 'Hook', effectId }, resources: cpuPrice ? { cpuPrice } : {} })
+  const changelog = (id, version, date) => ({ ['src/community/module-changelogs/' + id + '.json']: [{ version, date, changes: ['x'] }] })
+  const reading = (id, atRest, inUse) => ({ ['sdk/octatrack/modules/' + id + '/evidence/cpu-price.json']: { module: id, result: { atRestAdds: { frame: atRest }, inUseAdds: inUse == null ? undefined : { frame: inUse } } } })
+
+  it('passes a module at or under the limit, and one with nothing measured is only reported', () => {
+    const root = fixture({ ...changelog('quiet', '0.2.0', AT_REST_FROM) })
+    expect(atRestStatus({ root, document: hook('quiet', '0.2.0', share(AT_REST_LIMIT)), glue: {} }).state).toBe('ok')
+    expect(atRestStatus({ root, document: hook('quiet', '0.2.0'), glue: {} }).state).toBe('info')
+  })
+
+  it('fails a new release above the limit that does not rest, and only warns about a release from before the date', () => {
+    const root = fixture({ ...changelog('busy', '0.3.0', AT_REST_FROM), ...changelog('old', '0.1.0', '2026-11-14') })
+    const fresh = atRestStatus({ root, document: hook('busy', '0.3.0', share(1.4)), glue: {} })
+    expect(fresh).toMatchObject({ state: 'fail', detail: expect.stringContaining('1.4 points') })
+    expect(fresh.fix).toContain('ev_in_use')
+    expect(atRestStatus({ root, document: hook('busy', '0.4.0', share(1.4)), glue: {} }).state).toBe('fail') /* no changelog entry yet: a new release */
+    expect(atRestStatus({ root, document: hook('old', '0.1.0', share(1.4)), glue: {} })).toMatchObject({ state: 'warn', detail: expect.stringContaining('not refused') })
+  })
+
+  it('reads an effect at rest from its device:price readings, not its price on a slot', () => {
+    const root = fixture({ ...reading('echo', 0.1, 7.7), ...reading('loud', 0.5, 7.7), ...changelog('echo', '1.0.0', AT_REST_FROM), ...changelog('loud', '1.0.0', AT_REST_FROM) })
+    const priced = () => ({ ...share(7.7), source: 'evidence/cpu-price.json' })
+    expect(atRestStatus({ root, document: hook('echo', '1.0.0', priced(), 31), glue: {} }).state).toBe('ok')
+    expect(atRestStatus({ root, document: hook('loud', '1.0.0', priced(), 31), glue: {} }).state).toBe('fail')
+    expect(atRestStatus({ root: fixture({}), document: hook('slot', '1.0.0', share(7.7), 31), glue: {} }).state).toBe('info')
+  })
+
+  it('passes a module that answers ev_in_use, and a machine or an effect whose detours rest with it, which the base rests', () => {
+    const wave = machineFolder('\n    .reserved = {7},')
+    const root = fixture({
+      'sdk/octatrack/modules/rests/runtime.json': { schema: 1, subscribe: [{ event: 'ev_in_use', fn: 'in_use', order: 50 }] },
+      ...changelog('rests', '0.2.0', AT_REST_FROM), ...wave,
+      'sdk/octatrack/modules/wave/runtime.json': { schema: 1, contribute: [{ to: 'ot_machines', order: 50, data: 'wave' }], rests: ['0x40007978'] },
+      'sdk/octatrack/modules/echo/runtime.json': { schema: 1, rests: ['0x4000361a'] }, ...changelog('echo', '1.1.0', AT_REST_FROM),
+      ...changelog('loud', '1.1.0', AT_REST_FROM),
+    })
+    expect(atRestStatus({ root, document: hook('rests', '0.2.0', share(1.4)), glue: {} })).toMatchObject({ state: 'ok', detail: expect.stringContaining('ev_in_use') })
+    expect(atRestStatus({ root, document: { ...module('wave', 'Track machine', render(7)), version: '0.1.0' }, glue: {} })).toMatchObject({ state: 'ok', detail: expect.stringContaining('machine') })
+    expect(atRestStatus({ root, document: hook('echo', '1.1.0', share(1.4), 15), glue: {} })).toMatchObject({ state: 'ok', detail: expect.stringContaining('effect') })
+    /* An effect over the limit with no detour marked: its handlers rest, its detours do not, so it still fails, told to mark them. */
+    const loud = atRestStatus({ root: fixture({ ...reading('loud', 2.5, 7.2), ...changelog('loud', '1.1.0', AT_REST_FROM) }), document: hook('loud', '1.1.0', { ...share(7.2), source: 'evidence/cpu-price.json' }, 29), glue: {} })
+    expect(loud).toMatchObject({ state: 'fail' })
+    expect(loud.fix).toContain('the base rests an effect no slot uses')
+  })
+
+  it('holds on main: no published release fails, whatever it costs at rest', () => {
+    const catalog = JSON.parse(readFileSync(join(repo, 'sdk/catalog.json'), 'utf8')), glue = portGlue(repo)
+    for (const item of catalog.modules) {
+      const document = parseModuleDocument(JSON.parse(readFileSync(join(repo, 'sdk/octatrack/modules', item.id, 'octamod.module.json'), 'utf8')))
+      expect([item.id, atRestStatus({ root: repo, document, glue }).state]).not.toEqual([item.id, 'fail'])
+    }
+  }, 20_000)
 })

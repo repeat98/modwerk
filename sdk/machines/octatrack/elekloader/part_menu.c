@@ -64,6 +64,8 @@ static unsigned pm_lo;   /* the first parent shown: 1 while a record has PART le
 static unsigned pm_list; /* PART left out and one row shown: stock's popup with that row's actions */
 static const PmEntry *pm_out[PM_ROOM]; /* the records that left their own row out when the window opened */
 static unsigned pm_outs;
+static const PmEntry *pm_hider[PM_ROOM]; /* the records that left PART out when the window opened */
+static unsigned pm_hiders;
 /* What the window remembers, as PROJ's menu does: the parent it was on, the column, and each parent's action row,
  * kept as the cursor moves, so leaving with NO keeps them too. A parent is named by its record (PART: 1), so a module
  * removed and installed again starts afresh. Module RAM only: a restart forgets it. */
@@ -98,21 +100,25 @@ static unsigned pm_rows_shown(const PmEntry **e)
 static unsigned pm_ask(void)
 {
     const PmEntry *e[PM_ROOM];
-    unsigned n = pm_entries(e), part = 0;
-    pm_outs = 0;
+    unsigned n = pm_entries(e);
+    pm_outs = 0; pm_hiders = 0;
     for (unsigned k = 0; k < n; ++k) {
         if (e[k]->abi != MODWERK_PART_MENU_ABI_ASK) continue;
         uint32_t (*ask)(void) = ((const struct modwerk_part_menu_ask *)(const void *)e[k])->ask;
         uint32_t says = ask ? ask() : 0u;
         if (says & MODWERK_PART_MENU_LEAVE_ROW) pm_out[pm_outs++] = e[k];
-        else if (says & MODWERK_PART_MENU_LEAVE_PART) part = 1u;
+        else if (says & MODWERK_PART_MENU_LEAVE_PART) pm_hider[pm_hiders++] = e[k];
     }
-    return part;
+    return pm_hiders ? 1u : 0u;
 }
-/* The parents the window may be on: pm_lo..n. PART comes back once no contribution is left. */
-static void pm_clamp(unsigned n)
+/* The parents the window may be on: pm_lo..n. PART comes back once no record that left it out is left, even while
+ * other contributions stay. */
+static void pm_clamp(const PmEntry *const *e, unsigned n)
 {
-    if (pm_lo > n) pm_lo = 0u;
+    unsigned hiding = 0;
+    for (unsigned k = 0; k < n && pm_lo; ++k)
+        for (unsigned j = 0; j < pm_hiders; ++j) hiding |= pm_hider[j] == e[k];
+    if (!hiding) { pm_lo = 0u; pm_hiders = 0; }
     pm_list = pm_lo && n == 1u;
     if (pm_list) { pm_parent = 1u; pm_focus = 1; }
     if (pm_parent > n) { pm_parent = n; pm_focus = 0; }
@@ -159,7 +165,7 @@ void mw_part_menu_open(uint32_t count, uint32_t row, uint32_t *out, const char *
     pm_names = names; pm_focus = 0; pm_parent = 0; pm_child = 0; pm_residual = 0;
     for (unsigned k = pm_lo; k <= n; ++k)
         if (pm_id(e, k) == pm_was) { pm_parent = k; pm_focus = pm_was_focus; }
-    pm_clamp(n);
+    pm_clamp(e, n);
     pm_child = pm_recall(e, n, pm_parent);
     if (pm_focus && pm_parent == 0u) U32(PM_ROW) = pm_child;
     pm_shown = 1; pm_redraw();
@@ -197,7 +203,7 @@ int mw_part_menu_key(int code, int pressed)
         return 0; /* stock's, with the window as it is */
     const PmEntry *e[PM_ROOM];
     unsigned n = pm_rows_shown(e);
-    pm_clamp(n);
+    pm_clamp(e, n);
     if (pm_focus && pm_child >= pm_children(e, n, pm_parent)) pm_child = 0;
     if (code == PM_NO) { pm_remember(e); pm_hide(); return 0; } /* from either column, as PROJ: stock closes its popup */
     if (pm_focus && code == PM_YES && pm_parent == 0u) { U32(PM_ROW) = pm_child; pm_remember(e); pm_hide(); return 0; } /* stock's row */
@@ -227,7 +233,7 @@ int mw_part_menu_enc(int encoder, int delta)
     if (encoder != 6) return 1;
     const PmEntry *e[PM_ROOM];
     unsigned n = pm_rows_shown(e);
-    pm_clamp(n);
+    pm_clamp(e, n);
     if ((pm_residual < 0 && delta > 0) || (pm_residual > 0 && delta < 0)) pm_residual = 0;
     pm_residual += delta;
     while (pm_residual >= 4) { pm_move(e, n, 1); pm_residual -= 4; }
@@ -304,7 +310,7 @@ void mw_part_menu_draw(unsigned char *frame)
     const PmEntry *e[PM_ROOM];
     unsigned n = pm_rows_shown(e);
     if (!n) return;
-    pm_clamp(n);
+    pm_clamp(e, n);
     if (pm_list) { pm_draw_list(frame, e[0]); return; }
 #ifndef PM_HOST
     for (unsigned i = 0; i < 7u; ++i) pm_surface[i] = ((const volatile uint32_t *)0x400bf10au)[i];
