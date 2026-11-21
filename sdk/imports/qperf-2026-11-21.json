@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/qperf",
+  "version": "0.3.0-experimental",
+  "date": "2026-11-21",
+  "changes": [
+    "When the loop gets longer, the quick perf rec repeats over the new steps at the take's own period, once, at the length change; a shorter loop cuts the take to its start only after a whole pass has played at it. A QPER knob take follows a longer loop to its new end and ends when the loop is cut short of it. 16,233 to 16,553 bytes of RAM; the idle quick exit is unchanged."
+  ],
+  "runtimeSourceSha256": "5f69d1e5ba6ab5beb9daf4c0b62d2d6ac39bd51ee50ef7446eb29e272e22552c",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/qperf/qperf-0.3.0-experimental-os1.74.elemod",
+      "sha256": "9b7b8801baf07a0b99145cc9c3c138473a0149776042bbc9d538905a11ec1011"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/qperf/TESTING.md",
+  "requires": []
+}
