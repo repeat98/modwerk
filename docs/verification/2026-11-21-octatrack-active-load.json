@@ -18,7 +18,7 @@
       },
       "workloads": [
         {
-          "name": "ALL routes",
+          "name": "ALL routes in MATRIX mode",
           "core": "T5–8",
           "routes": [
             6,
