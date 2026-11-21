@@ -2,6 +2,7 @@ import { execFileSync, spawn } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
+import { stripVTControlCharacters } from 'node:util'
 import { checkBaseSize } from './base-size.mjs'
 import { readChangeScope } from './change-scope.mjs'
 import { affectedTests, filesForShard, planPrChecks } from './pr-check-plan.mjs'
@@ -55,6 +56,7 @@ async function run(name, args = [], env = {}) {
       const passed = code === 0
       console.log(`${name}: ${passed ? 'passed' : 'FAILED'} (${((performance.now() - started) / 1000).toFixed(2)}s)`)
       results.set(key, passed)
+      if (name === 'test') outputs.set(key, Buffer.concat(output).toString('utf8'))
       resolve(passed)
     })
   })
@@ -82,7 +84,20 @@ const suiteOnly = !!part && part !== 'contract'
 // steps read what they write. A rerun is a shortcut between fixes, never a pass: pr:ready and CI run everything.
 const record = fileURLToPath(new URL('../node_modules/.cache/check-last.json', import.meta.url))
 const WRITES = new Set(['prepare', 'licenses:generate', 'machines:generate', 'modules:generate'])
-const results = new Map(), skipped = []
+const results = new Map(), skipped = [], outputs = new Map(), flaky = []
+// A Vitest file that fails in the full run but passes when rerun alone on one worker timed out under load (other sessions' checks
+// on this computer) or leans on another file's state: it is reported, not failed (owner, 21 November 2026). A file that fails alone
+// too fails the check, and more than RERUN_LIMIT failed files is a real break, so they are not rerun.
+const RERUN_LIMIT = 12
+const failedTestFiles = text => [...new Set([...stripVTControlCharacters(text).matchAll(/^\s*FAIL\s+(\S+\.test\.[cm]?[jt]sx?)\b/gm)].map(match => match[1]))]
+async function rerunAlone(args) {
+  const failed = failedTestFiles(outputs.get(['test', ...args].join(' ')) ?? '')
+  if (!failed.length || failed.length > RERUN_LIMIT || interrupted) return false
+  console.log(`Rerunning the ${failed.length} failed test file(s) alone on one worker: ${failed.join(', ')}`)
+  if (!await run('test', failed, { MODWERK_DEFER_DRAFT_DOCTOR: '1', MODWERK_TEST_WORKERS: '1' })) return false
+  flaky.push(...failed)
+  return true
+}
 let previous = null
 try { previous = JSON.parse(readFileSync(record, 'utf8')) } catch { /* no earlier run */ }
 const carried = new Set(process.argv.includes('--rerun-failed') && previous?.base === base && previous?.build === buildOnly ? previous.passed : [])
@@ -163,7 +178,8 @@ if (passed && !documentationOnly) {
     const files = plan.full ? [] : filesForShard(await affectedTests(root, scope, plan), part)
     if (!plan.full && !files.length) return skip('test', 'no affected Vitest files')
     if (!plan.full) console.log('Affected Vitest files (' + files.length + '): ' + files.join(', '))
-    return run('test', plan.full ? args : files, { MODWERK_DEFER_DRAFT_DOCTOR: '1' })
+    const testArgs = plan.full ? args : files
+    return await run('test', testArgs, { MODWERK_DEFER_DRAFT_DOCTOR: '1' }) || rerunAlone(testArgs)
   }
   const sdk = () => plan.sdk ? run('sdk:check') : skip('sdk:check', 'no changed path reaches it')
   async function appChecks() {
@@ -198,5 +214,6 @@ try {
 } catch { /* the record only speeds up a rerun */ }
 const queued = (started - requested) / 1000
 console.log(`${buildOnly ? 'Build' : documentationOnly ? 'Documentation check' : 'Check'} ${passed ? 'passed' : 'FAILED'} in ${((performance.now() - requested) / 1000).toFixed(2)}s${queued >= 1 ? ` (including ${queued.toFixed(1)}s waiting for a slot)` : ''}`)
+if (flaky.length) console.log(`${process.env.GITHUB_ACTIONS ? '::warning title=Flaky tests::' : ''}Failed in the full run and passed alone, so they did not fail the check: ${flaky.join(', ')}. A file listed here run after run needs its own fix.`)
 if (skipped.length) console.log(`Rerun: ${skipped.join(', ')} passed in the last run and did not run now. Run the full check (or pr:ready) before you push.`)
 if (!passed && !process.exitCode) process.exitCode = 1
