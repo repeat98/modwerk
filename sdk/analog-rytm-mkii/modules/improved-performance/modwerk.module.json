@@ -82,20 +82,36 @@
     "load": {
       "display": "Lowers the audio load: 85 % to 72 % of the block on one pattern in the author's set (unit)",
       "method": "hardware",
-      "conditions": "The unit's own meter (the core's audio load figure, averaged), the author's Analog Rytm MKII, OS 1.74, one 12-track pattern played hands off in a set of 17 other modules on a development base: 85.4 % without this module's code (17 Nov 2026), 72.1 % with this release's source (IP06, 21 Nov 2026); longest block 99.4 % and 89.8 %. When no part can skip anything its tests cost about 2 % of the block (read from the source, not measured)."
+      "conditions": "The unit's own meter (the core's audio load figure, averaged), the author's Analog Rytm MKII, OS 1.74, one 12-track pattern played hands off in a set of 17 other modules on a development base: 85.4 % without this module's code (17 Nov 2026), 72.1 % with this release's source (IP06, 21 Nov 2026); longest block 99.4 % and 89.8 %. When no part can skip anything its tests cost about 2 % of the block (read from the source, not measured). 0.2.0 (IQ07, 21 Nov 2026, the core's figure read over the link): 72.6 % playing."
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.2.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "b42b8f91b4878c8cb7c87875cb4a148996bb5cc7bd74fb6e0e4ef236ead962f7",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-21",
+      "tester": "npp1993",
+      "durationMinutes": 3,
+      "summary": "0.2.0's source ran on npp1993's Analog Rytm MKII, OS 1.74, as IQ07: the author's development base (USB link, no meter) with this module and 17 other modules of his set, booted from RAM. Hands off over the link: the main screen and the SRC, SAMPLE, FILTER, AMP and LFO pages drew as normal while a pattern played; the core's audio load averaged 72.6 % of the block playing and 49.4 % stopped after the boot. 0.1.0's engine code ran as IP06 on the same set: 72.1 % against 85.4 % without the module (17 Nov), and self-checking builds counted 0 differences against stock. The screen-rate part is the gate the author's private bases carried since RC34 at the same site; in his overloaded test images it doubled the messages the UI took.",
+      "limitations": [
+        "The image holds the author's development base and 17 other modules, not the published base with this module alone.",
+        "IQ07 ran a pattern of the project on the unit at the time (KIT 1, 120 BPM), not necessarily the pattern of the earlier captures.",
+        "0.2.0's half rate was not seen on the unit: no overload was made, and the queue never backs up in normal playing.",
+        "CPU and OVR were not seen on the unit: the load never reached 88 %.",
+        "A project load while sound rings and a long USB audio stream are not tested."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu: alone on the release base and beside 17 other modules, output and engine state identical to stock over about 69,500 blocks; a kit load with the reverb ringing identical. Unit (author, OS 1.74): self-checking builds of every part counted 0 differences against stock; one pattern's audio load 85.4 % without and 72.1 % with (IP06), in an 18-module set. See TESTING.md.",
+    "summary": "rytm-emu: output and engine state identical to stock over about 69,500 blocks; the half rate halves the frame steps in a forced test build. Unit (author, OS 1.74): 0.2.0 ran beside 17 modules (IQ07), pages and playing normal, 72.6 % load; 0.1.0's engine code 72.1 % vs 85.4 % without, self-checks 0 differences. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

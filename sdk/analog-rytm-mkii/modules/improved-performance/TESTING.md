@@ -25,7 +25,7 @@ Not reached in rytm-emu: a USB audio stream, a sample that plays, the interrupt'
 
 - **rytm-emu** (upstream c5732f0), the module alone on the plain release base, 12,000 M instructions with page changes: the image boots and runs as 0.1.0 did (no fault). The emulator never backs the UI queue up, so a test build with the backlog set to -1 (always the half rate) stood in: it ran 6 to 9 frame steps per 1,000 M instructions where the release build ran 12 to 16, and both showed their pages. The documentation screenshots rebuilt from 0.2.0 are pixel-identical to 0.1.0's.
 - **The same gate on the unit, in the author's private bases since RC34, and switched on and off every 30 seconds in his measuring images** (the same code at the same site, 52 bytes): in every capture of normal and live playing (CM02, SK06, IP06, 25 minutes of the author playing by hand) the UI queue never held more than 8 messages, so it never skipped a frame. In two overloaded self-checking images (92 to 93 % audio load; SV03, SV05, one capture each, not a controlled A/B) the UI took about 173 messages a second with it against about 87 without, and its queue shrank instead of growing by about 17 a second; waits of non-key messages fell from 283 to 122 ms in one of them.
-- **0.2.0 itself on a unit:** not tested.
+- **0.2.0 itself on a unit** (IQ07, 21 November 2026; the author's development base with the USB link and no meter, this module beside 17 others, booted from RAM, hands off over the link): it booted; the main screen and the SRC, SAMPLE, FILTER, AMP and LFO pages drew as normal while a pattern played (the project then on the unit: KIT 1, 120 BPM); the core's audio load read over the link averaged 72.6 % playing (240 samples over 60 s, longest sample 75.0 %) and 49.4 % stopped after the boot. No overload was made, so the half rate itself was not seen on the unit.
 
 ## On the unit (author's MKII, OS 1.74)
 
@@ -56,7 +56,7 @@ All from RAM, in test images of the author's 18-module set; the figures are the 
 
 ## Not tested
 
-- 0.2.0 on a unit: the screen rate in this module (the same code ran in the author's private base, above), and whether a load or save backs the UI queue up far enough to engage it.
+- 0.2.0's half rate on the unit (it needs an overload; the same code ran in the author's private bases, above), and whether a load or save backs the UI queue up far enough to engage it.
 
 - This module as the only module on a unit: every unit run was beside 17 others.
 - A project load while sound rings (the audio interrupt takes a shorter path then; read, not run).
