@@ -36,7 +36,7 @@ When a piece moves, update this table, the [recipe's table](../../../docs/MACHIN
 Three kinds of work can happen at any time:
 
 - **Research on the unknown sites:** the draw call's register contract, project load and save, the sequencer step and the audio block's sample rate. Each finding goes into the research report as addresses, lengths and guards for both releases.
-- **Base services that several modules will want:** a settings or project block (no storage location is proven free yet), per-kit state in one table the base owns, and a helper for menu rows. Each one goes in as its own base pull request, before the module that needs it.
+- **Base services that several modules will want:** a settings or project block (no storage location is proven free yet), per-kit state in one table the base owns, and a helper for menu rows. Add these services directly to the machine’s cumulative base draft before releasing a module that uses them.
 - **Modules,** once steps 1 and 2 are in. Each one builds, installs and works as the only module chosen.
 
 ## USB link
@@ -60,7 +60,7 @@ The stock OS speaks USB MIDI, so the link starts as SysEx over it. That needs no
 - **Recovery needs MIDI DIN.** Before you flash any build, have the stock `.syx`, a MIDI DIN interface and Transfer's legacy OS-upgrade page ready ([flash and recover](README.md#flash-and-recover)). USB does not work in the startup menu.
 - **Only a unit qualifies a build.** Record the image's SHA-256 and what you saw. digiemu's Syntakt port (an open upstream pull request) boots to the UI without the FPGA or the analog tracks, so it is for iteration only.
 - **Firmware stays on your computer.** Never commit the OS file, extracted stock code or built images.
-- **One piece per pull request.** The memory area, the core, the link, a loader port and the page each go in their own pull request for the owner to review, never inside a module release.
+- **Owner review.** Add base changes directly to `base/syntakt-next` and update its cumulative draft. A separate link, loader port or page outside the base has its own review.
 
 ## Open questions
 
