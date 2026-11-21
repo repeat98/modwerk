@@ -134,6 +134,20 @@ describe('module resource gauges', () => {
     } } })).toBeUndefined()
   })
 
+  it.each([
+    ['cc-map', '1,568 B'],
+    ['playmodes', '17,168 B'],
+    ['recorder-loop-fix', '2,208 B'],
+    ['usb-audio-out-tracks-main-cue', '105,408 B'],
+  ])('shows the hardware-verified module pool for %s at its measured version', (id, value) => {
+    const document = MODULE_DOCUMENTS.find(module => module.id === id)!
+    expect(moduleResourceIndicators(document)[2]).toMatchObject({
+      value, status: 'Measured · module pool', score: null,
+      source: 'docs/verification/2026-11-21-octatrack-module-pool-allocation.json',
+    })
+    expect(moduleResourceIndicators({ ...document, version: '99.0.0' })[2].status).toBe('Estimated')
+  })
+
   it('keeps drafts parseable but blocks releases and gauge rendering without ratings', () => {
     expect(draft().resources.impact).toBeUndefined()
     expect(() => requireModuleResourceImpact(draft())).toThrow('release requires populated CPU, DSP core and memory gauges')
