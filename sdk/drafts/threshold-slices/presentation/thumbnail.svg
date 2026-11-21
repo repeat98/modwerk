@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 192" fill="none">
+  <rect width="320" height="192" fill="#14181c"/>
+  <path d="M0 52H320M0 97H320M0 142H320M64 0V192M128 0V192M192 0V192M256 0V192" stroke="#ffffff" stroke-opacity="0.06"/>
+  <path d="M28 120 L48 120 L58 78 L70 120 L86 46 L98 120 L118 90 L132 120 L160 62 L174 120 L210 84 L228 120 L292 120" stroke="#7dcea0" stroke-width="1.5"/>
+  <path d="M28 96H292" stroke="#7dcea0" stroke-opacity="0.35" stroke-dasharray="3 4"/>
+  <circle cx="86" cy="46" r="2.5" fill="#7dcea0"/>
+  <circle cx="160" cy="62" r="2.5" fill="#7dcea0"/>
+  <circle cx="58" cy="78" r="2.5" fill="#7dcea0"/>
+  <text x="28" y="164" fill="#7dcea0" font-family="ui-monospace,monospace" font-size="11">THRESHOLD SLICES</text>
+</svg>
