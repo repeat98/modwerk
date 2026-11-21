@@ -143,6 +143,68 @@ def check_scan(cpu, symbols, lane, packet):
     assert locate(0, total + 1, 0, None) == 0
 
 
+def check_assign(image, symbols):
+    """Count stock calls and check both Part copies across a machine change."""
+    cpu = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
+    cpu.ctl_set_cpu_model(m68k_const.UC_CPU_M68K_CFV4E)
+    bank, mirror, apply_track, src_writer = 0x46000000, 0x100a4ece, 0x40001f18, 0x40054cd8
+    for at, size in ((IMAGE, 0x10000), (0x200000, 0x10000), (0x40000000, 0xe0000),
+                     (0x100a4000, 0xe000), (0x80000000, 0x10000), (bank, 0xa0000), (0x46c82000, 0x1000)):
+        cpu.mem_map(at, size)
+    cpu.mem_write(IMAGE, image)
+    cpu.mem_write(0x46c82456, struct.pack(">I", bank))
+    cpu.mem_write(0x100b14ce, bytes((7, 2)))  # Bank H, Part 3
+    stock = bytes((64, 0, 0, 127, 0, 79, 1, 0, 0, 0, 0, 64))
+    cpu.mem_write(0x400d320c, stock)
+    calls = []
+
+    def watch(machine, address, size, unused):
+        sp = machine.reg_read(m68k_const.UC_M68K_REG_A7)
+        calls.append((address, *struct.unpack(">3I", machine.mem_read(sp + 4, 12))))
+
+    for address in (apply_track, src_writer):
+        cpu.mem_write(address, bytes.fromhex("4e75"))
+        cpu.hook_add(UC_HOOK_CODE, watch, begin=address, end=address)
+    cpu.reg_write(m68k_const.UC_M68K_REG_SR, 0x2700)
+
+    def call(name, *args):
+        cpu.mem_write(STACK, struct.pack(f">{len(args) + 1}I", RETURN, *args))
+        cpu.reg_write(m68k_const.UC_M68K_REG_A7, STACK)
+        cpu.emu_start(symbols[name], RETURN, count=20000)
+        assert cpu.reg_read(m68k_const.UC_M68K_REG_PC) == RETURN
+        return cpu.reg_read(m68k_const.UC_M68K_REG_D0)
+
+    def lanes(part, track):
+        at = part + 30 * track
+        return bytes(cpu.mem_read(at + 0x30, 6) + cpu.mem_read(at + 0x1e0, 6))
+
+    part = bank + 0x8ed80 + 2 * 6322
+    for t in (0, 4):
+        cpu.mem_write(part + 0x22 + t, b"\x01")
+        assert call("grain_admit", part, t) == 1
+        defaults = bytes(cpu.mem_read(symbols["defaults"], 12))
+        assert call("grain_assign", part, t, 1) == 1
+        assert calls == [(apply_track, 7, 2, t)]
+        assert call("grain_assign", part, t, 1) == 1
+        for copy in (part, mirror + 2 * 6322):
+            assert lanes(copy, t) == defaults
+            assert cpu.mem_read(copy + 60 + 30*t, 3) == b"GR\x01"
+        assert call("grain_assign", part, t, 0) == 1
+        call("grain_ui_tick")
+        for copy in (part, mirror + 2 * 6322):
+            assert lanes(copy, t) == stock and cpu.mem_read(copy + 60 + 30*t, 5) == bytes(5)
+        assert calls == [(apply_track, 7, 2, t)]
+        calls.clear()
+    # Stock also refreshes when the stored machine type changes. An inactive
+    # Part must never update the currently sounding track on a later UI tick.
+    for address, kind in ((part, 2), (part - 6322, 1)):
+        cpu.mem_write(address + 0x22, bytes([kind]))
+        assert call("grain_assign", address, 0, 1) == 1
+        for _ in range(3):
+            call("grain_ui_tick")
+        assert not calls
+
+
 def check_stereo(image, symbols):
     """Exercise the packed big-endian read and ADDX carry in the shipped instructions."""
     engine, params, sample, output, storage = 0x200000, 0x202000, 0x202040, 0x203000, 0x300000
@@ -189,6 +251,8 @@ if __name__ == "__main__":
             for ping in range(2):
                 check_track(image, symbols, track, ping)
         check_stereo(image, symbols)
+        check_assign(image, symbols)
     print("[PASS] Grain preserves all 48 Flex frame bytes across START and render on all eight tracks and both buffers")
     print("[PASS] Compiled SCAN label and cursor match on 24-bit stereo at all 128 settings and 128 legacy values")
     print("[PASS] Compiled 16-bit and 24-bit stereo kernels match the reference PCM and six cursors")
+    print("[PASS] T1/T5 assignment refreshes Flex once, restores both Part copies and queues no control writes on exit")

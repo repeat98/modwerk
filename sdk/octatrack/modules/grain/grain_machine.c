@@ -415,8 +415,8 @@ static unsigned grain_admit(const volatile uint8_t *part, unsigned track)
 /* ---- el pool de samples FLEX, igual que AMIGA (cola de S950/POLY8/FRACT, MIT) ---- */
 #define BANK 0x46c82456u
 #define POOL_WINDOW 0x460e70e0u
-static uint32_t pool_bank, publish_bank;
-static uint8_t pool_part, pool_track, pool_direct, publish_part, publish_tracks;
+static uint32_t pool_bank;
+static uint8_t pool_part, pool_track, pool_direct;
 __asm__(".text\n\t.even\ngrain_stock_pool:\n\tmove.l %a2,-(%sp)\n\ttst.l 0x460e70e0\n\tjmp 0x400791ec\n");
 extern void grain_stock_pool(void);
 static int bank_ok(void) { uint32_t b = U32(BANK); return b >= 0x40000000u && b < 0x47f00000u; }
@@ -459,10 +459,12 @@ static unsigned grain_assign(volatile uint8_t *part, unsigned t, unsigned on)
     }
     if (!on && !keep)                       /* deja de ser GRAIN: DIR y PAN fuera de NEIGHBOR */
         for (unsigned a = NB_DIR(t); a <= NB_PAN(t); ++a) part[a] = mirror[a] = 0;
-    if (!was || (!on && !keep)) {
-        if (publish_bank != U32(BANK) || publish_part != index) publish_tracks = 0;
-        publish_bank = U32(BANK); publish_part = (uint8_t)index; publish_tracks |= (uint8_t)(1u << t);
-    }
+    /* The registry returns directly from a custom assign callback on entry.
+     * For Flex -> Grain the stored type stays Flex, so refresh it once, as
+     * mw_assign does for a machine with no custom callback. A type change
+     * gets stock's own refresh. On exit mw_assign already handles both cases. */
+    if (on && !was && part[0x22u + t] == 1u && index == (U8(0x100b14cfu) & 3u) && !U8(0x80000015u))
+        ((void (*)(unsigned, unsigned, unsigned))(uintptr_t)0x40001f18u)(U8(0x100b14ceu), index, t);
     return 1;
 }
 static void grain_pool_open(void)
@@ -517,16 +519,6 @@ static void grain_ui_tick(void)
      * de archivos que se abre desde el (otra carpeta). La 0.3.14 lo olvidaba al cerrarse la ventana del pool, y al cargar el
      * sample la pista dejaba de ser GRAIN (author, 19/11). Lo cierra grain_draw al ver SRC o SRC SETUP. */
     if (pool_direct && !pool_ours()) pool_direct = 0;
-    unsigned tracks = publish_tracks;
-    publish_tracks = 0;
-    if (!tracks || !bank_ok() || U32(BANK) != publish_bank || (U8(0x100b14cfu) & 3u) != publish_part || U8(0x80000015u)) return;
-    volatile uint8_t *part = part_at(publish_part);
-    for (unsigned t = 0; t < 8; ++t)
-        if (tracks >> t & 1u)
-            for (unsigned k = 0; k < 6; ++k) {
-                ((int (*)(unsigned, unsigned, unsigned))(uintptr_t)0x40054cd8u)(t, k, part[0x30u + 30u * t + k]);
-                U8(0x80000830u + 72u * t + k) = part[0x1e0u + 30u * t + k];
-            }
 }
 
 /* ---- la pantalla: la zona de los 6 mandos del SRC pasa a ser la ventana de onda con los granos ----

@@ -184,27 +184,31 @@ static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const G
     }
 }
 
-/* El frame `idx` (< count) como los planos del original: *m = (L+R)>>1, *sd = (L-R)>>1; mono: *m = la muestra. 0 si su
- * pagina no se puede leer (entonces suena silencio, como fuera del sample). */
-static inline int gran_fetch(GranPage *pg, const GranSample *s, uint32_t idx, int32_t *m, int32_t *sd)
+static inline int gran_page(GranPage *pg, const GranSample *s, uint32_t idx)
 {
-    const uint8_t *q;
-    int32_t l, r;
-
     if (idx - pg->pfirst >= pg->pcount) {
         uint32_t first = 0, cnt = s->count;
         uintptr_t page = s->locate ? s->locate(s->ctx, idx, &first, &cnt) : (uintptr_t)s->ctx;
         pg->page = page; pg->pfirst = first; pg->pcount = page ? cnt : 0;
-        if (!page || idx - first >= cnt)
-            return pg->pcount = 0, 0;
+        if (!page || idx - first >= cnt) {
+            pg->pcount = 0;
+            return 0;
+        }
     }
-    q = (const uint8_t *)pg->page + (idx - pg->pfirst) * s->bytes * s->channels;
-    l = (int16_t)(q[0] << 8 | q[1]);
+    return 1;
+}
+
+/* Read a frame as mid and side. An unmapped page contributes silence. */
+static inline int gran_fetch(GranPage *pg, const GranSample *s, uint32_t idx, int32_t *m, int32_t *sd)
+{
+    if (!gran_page(pg, s, idx)) return 0;
+    const uint8_t *q = (const uint8_t *)pg->page + (idx - pg->pfirst) * s->bytes * s->channels;
+    int32_t l = (int16_t)(q[0] << 8 | q[1]);
     if (s->channels < 2) {
         *m = l;
         return 1;
     }
-    r = (int16_t)(q[s->bytes] << 8 | q[s->bytes + 1]);
+    int32_t r = (int16_t)(q[s->bytes] << 8 | q[s->bytes + 1]);
     *m = (l + r) >> 1;
     *sd = (l - r) >> 1;
     return 1;
@@ -260,12 +264,19 @@ static inline __attribute__((always_inline)) void stereo_loop(GranGrain *grain, 
             uint32_t lr = *(const uint32_t *)(const void *)q;  /* one Flex RAM access for both channels */
             l = (int16_t)(lr >> 16);
             r = (int16_t)lr;
-        } else
-#endif
+        } else {
+            /* A packed stereo frame is six bytes. The two indexed loads add
+             * 4*index to page+2*index without a multiply in the sample loop. */
+            const uint8_t *base;
+            __asm__("lea (%3,%4.l*2),%0\n\tmvs.w (%0,%4.l*4),%1\n\tmvs.w (3,%0,%4.l*4),%2"
+                    : "=&a"(base), "=&d"(l), "=d"(r) : "a"(page), "d"(index) : "cc", "memory");
+        }
+#else
         {
             l = GRAN_RD16(q);
             r = GRAN_RD16(q + bytes);
         }
+#endif
         if (!fixed_gain) gain = win[(phase >> 16) & 255u];
         mix_stereo(mid + i, side + i, l, r, gain, pan,
                    pan_sign == 2 ? (pan > 0) - (pan < 0) : pan_sign);
@@ -302,9 +313,52 @@ static __attribute__((noinline)) void stereo_page(GranGrain *g, const uint8_t *p
             stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 1, -1);
         else
             stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 1, 0);
+    } else {
+        int sign = g->pan / 2;
+        if (sign > 0)
+            stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 0, 1);
+        else if (sign < 0)
+            stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 0, -1);
+        else
+            stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 0, 0);
     }
-    else
-        stereo_loop(g, page, 3, first, whole, frac, win, mid, side, n, 0, 2);
+}
+
+/* Keep the stereo kernel on both sides of a page boundary. A run may end at
+ * the sample boundary even if its last physical page has unused frames. */
+static void stereo_paged(GranGrain *g, GranPage *pg, const GranSample *s, int32_t whole,
+                         uint32_t frac, const uint16_t *win, int32_t *mid, int32_t *side, unsigned n)
+{
+    unsigned done = 0;
+    while (done < n) {
+        uint32_t idx = g->idx;
+        if (idx >= s->count || !gran_page(pg, s, idx)) {
+            advance_cursor(&g->idx, &g->fr, (uint32_t)whole, frac);
+            g->ph += g->phs;
+            ++done;
+            continue;
+        }
+        uint32_t size = s->count - pg->pfirst;
+        if (pg->pcount < size) size = pg->pcount;
+        uint32_t offset = idx - pg->pfirst;
+        unsigned run = n - done;
+        uint32_t room = whole < 0 ? offset : size - 1u - offset;
+        uint32_t step = whole < 0 ? 0u - (uint32_t)whole : (uint32_t)whole + (frac != 0);
+        /* For the usual pitch range this product fits. Only walk the cursor
+         * when the conservative last-frame bound reaches a page edge. */
+        if (step > 65535u || (run - 1u) * step > room) {
+            uint32_t probe = offset, sub = g->fr;
+            unsigned i = 1;
+            for (; i < run; ++i) {
+                advance_cursor(&probe, &sub, (uint32_t)whole, frac);
+                if (probe >= size) break;
+            }
+            run = i;
+        }
+        stereo_page(g, (const uint8_t *)pg->page, s->bytes, pg->pfirst, (uint32_t)whole, frac,
+                    win, mid + done, side + done, run);
+        done += run;
+    }
 }
 
 void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranSample *s, int32_t whole, uint32_t frac,
@@ -356,16 +410,19 @@ void gran_render(GranEngine *e, unsigned track, const GranParams *p, const GranS
             g->ph = ph + m * phs;
             continue;
         }
+        if (GRAN_PTR_PATH && stereo && s->bytes == 3u) {
+            stereo_paged(g, &t->pg, s, w, f, win, mid + start, side + start, m);
+            continue;
+        }
         cs = -g->pan / 2;
         cm = 32768 - (g->pan < 0 ? -g->pan : g->pan) / 2;
         /* Via rapida (mismo resultado bit a bit): si todo el tramo del grano cae dentro de una sola pagina del sample,
          * se lee directamente de ella, sin comprobar pagina ni limites en cada muestra. Hacia delante el indice avanza
          * como mucho w + 1 por muestra; hacia atras retrocede como mucho |w|. */
         {
-            int32_t d0, d1;
             uint32_t lo, hi, aw = w >= 0 ? (uint32_t)w : (uint32_t)-w;
             int fast = 0;
-            if (idx < count && aw < 0x10000u && gran_fetch(&t->pg, s, idx, &d0, &d1)) {
+            if (idx < count && aw < 0x10000u && gran_page(&t->pg, s, idx)) {
                 if (w >= 0) { lo = idx; hi = idx + m * (aw + 1u); fast = hi < count; }
                 else { hi = idx; lo = idx - m * aw; fast = m * aw <= idx; }
                 fast = fast && lo - t->pg.pfirst < t->pg.pcount && hi - t->pg.pfirst < t->pg.pcount;

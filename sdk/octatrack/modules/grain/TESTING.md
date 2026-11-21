@@ -2,6 +2,29 @@
 
 Grain 0.1.0-experimental · by A Force Truly Evil.
 
+## Six-voice private build, 21 November 2026
+
+The SDK reproduced private package `ac1e55403bf37b39c529501d30c610c5f055ef73b04a359c25b07b023d6d51bd`. The comparison package was the draft at `402780562`, SHA-256 `0c5632f677aecd873b11ae71a82ac5d72c3357d1dd43ccdb1dfc545cd3a5f38a`. Both have six voices and a 35-point reservation. The new package occupies 26,860 bytes on disk with 25,696 bytes of image and 2,120 bytes of BSS. GCC's stack-usage output, checked against identical production assembly, gives 688 bytes for the deepest Grain-owned render chain including return addresses.
+
+**Render drops.** In the saved hardware comparison below, the guard skipped the six-voice T1 callback 648 times during playback with MIDI and 20-channel USB capture. The guard uses the previous callback cost, the remaining work in the frame and available credit. The counters identify the skipped callback but do not identify its sample position. In the previous renderer, one voice crossing a Flex page boundary sent its entire packet through the scalar mixer. The candidate runs the stereo mixer up to each boundary, then resumes it on the next mapped page. In the packed 24-bit loop, two indexed loads address each stereo frame and the grain's pan direction is chosen outside the loop.
+
+The original 64 timing fixtures use six voices, native 1,024-frame pages, fractional pitch, forward and reverse grains and all four windows. The figures below count instructions executed in `gran_render`, including its synthetic page lookup, in the ColdFire emulator. Each row covers 16 cases. All 64 improved and matched the saved reference PCM fingerprints.
+
+| Source frames | Page crossing | Mean instructions, draft → candidate | Largest observed, draft → candidate |
+|---|---|---:|---:|
+| 16 | No | 6,288 → 5,780 | 6,608 → 5,961 |
+| 16 | Yes | 10,004 → 6,933 | 10,011 → 7,195 |
+| 32 | No | 11,306 → 10,258 | 11,936 → 10,617 |
+| 32 | Yes | 18,839 → 11,412 | 18,849 → 11,855 |
+
+To repeat, export `sdk/octatrack/modules/grain/grain_core.s` from commit `402780562` and pass that file and the candidate assembly to [compare_render.py](evidence/timing/compare_render.py). The 512-case compiled comparison matched the draft PCM and all six grain states. Two 120-second software soaks, on engine tracks T1 and T5 separately, each rendered 5,292,000 stereo frames with six voices reached. Every sample matched the portable reference, SHA-256 `7f45ce08b48ea409323cd4bad3df6088283e31d1ab628d0f7a7e4b8e8979bb47`. The native paged tests also passed with address and undefined-behavior sanitizers, including 48 cases with holes, short final pages, and grains crossing into and out of silence.
+
+**Panel freeze.** The saved hardware run that froze used two voices. It had zero render skips. Audio frames continued after STOP while the UI tick stayed at 72,115 for at least 27 seconds. The chooser never confirmed a switch to Flex. The stock control kept responding to track selection. The trace contains no faulting UI program counter and does not establish that Grain's unassignment callback ran.
+
+On a successful switch back to Flex the base already reloads the track from the Part. The draft also queued six stock SRC writes and six live SETUP writes on the next UI tick for each changed track. The candidate removes that second update. On entry from Flex it uses the same per-track refresh as the base's standard machine assignment. The compiled callback tests check the stock call counts, both copies of the Part, reselecting Grain, and changes to an inactive Part.
+
+The full-system emulator ran the OS 1.40C development twin `fac1523234f4bb0b` twice, once with the draft and once with the candidate. With a simulated existing Grain Part on each track separately, stock applied the six live SETUP values, the panel played and stopped, the ordinary chooser switched T1 and T5 back to Flex, and T2/T5 track selection responded afterward. Both trials rolled back. The normal transition also passed on the draft, so this comparison does not reproduce the hardware freeze. A separate fresh-entry chooser attempt on the 0.7.13 emulator showed CPU FULL at 100%. These checks exercise control transitions. The candidate's hardware skip count, post-STOP responsiveness under combined load, and end-to-end worst-case time remain open. The next hardware comparison should use the same STOP, machine-picker actions and post-stop observation window on stock Flex and on the candidate.
+
 ## Sustained MIDI with 24-bit playback and USB audio on base 0.7.11
 
 The card-free MKII ran the 0.7.11 development twin `fac1523234f4bb0b` on OS 1.40C. Both test tracks addressed a fresh 37,800-frame stereo recording in R3. Its channels differed and the low byte carried signal. In the 13-second run with 20-channel USB capture and the same 12-second MIDI trace, stock Flex dropped zero machine renders on T1 and T5. The six-voice draft on T1 dropped 658 from stream open through stop, including 648 during playback. Its longest guarded callback was 18,310 ticks, or 36,620 core cycles. All runs used one test machine at a time.
