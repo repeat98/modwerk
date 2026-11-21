@@ -170,5 +170,4 @@ and Main/Cue preset (`bdad3889b242`), enumerated both descriptor shapes,
 accepted input alternate settings 1 and 0, and restored the original four
 interfaces after Undo. During the streaming attempt the input counters
 remained zero. The released 0.3 output-only package also returned zero
-nonempty audio packets in the same emulator setup. Sustained USB audio,
-recorder read-back and concurrent FX loads still need a unit run.
+nonempty audio packets in the same emulator setup. The subsequent [MKII RAM trial](../sdk/octatrack/modules/usb-audio-out-tracks-main-cue/TESTING.md#private-usb-input-ram-trial-on-an-octatrack-mkii-21-november-2026) verified simultaneous ABCD input and Main/Cue output, both stereo recorder pairs and playback of R1 over USB. Concurrent FX loads still need a unit run.
