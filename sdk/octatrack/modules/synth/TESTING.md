@@ -22,6 +22,8 @@ The two runtime packages produced the same output buffers and exit registers in 
 
 In separate Octemu runs of statically linked images, the released and candidate engines reloaded the same saved FLEX project with a legacy `FMSYNTH_OLD.WAV` marker. The first 176,400 stereo frames from note onset matched exactly. They also matched on a project with LEG MONO, glide 96 and two pitch locks. Both recordings ended in silence after Stop. Standalone SDK builds call frame preparation at the existing LFO detour. The USB build subscribes to the base callback and reproduces the MKII-tested package byte for byte.
 
+The final standalone SDK image (`e0ea9dbc3f55468e6ae188ec66a9b98cb5c66ef37f4f317e7604d36e0339b7e2`) matched the reference for the first 176,400 stereo frames from note onset in each fixture. The legacy marker played after project reload. The glide-96 run used the previously loaded project snapshot after a fresh reload stalled on emulated card I/O. Both ended in silence after Stop.
+
 
 ## Previous release 0.1.4
 
