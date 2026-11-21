@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import { MODULE_DOCUMENTS } from './documents'
 import { parseModuleDocument, parseModuleResourceImpact } from './module-contract'
 import { moduleResourceIndicators } from './resource-indicators'
@@ -6,6 +8,7 @@ import { readDspLoad, readTrackedMemory } from './octatrack-resource-measurement
 import { parseRetainedResourceImpacts, requireModuleResourceImpact } from './resource-impact'
 import { resourceImpactFixture } from './test-fixtures/resource-impact'
 import example from '../../public/module-repository.example.json'
+import directDspEvidence from '../../docs/verification/2026-11-21-octatrack-direct-dsp-code.json'
 import baseline from '../../sdk/approvals/module-qualification-baseline.json'
 import retained from '../../sdk/module-resource-estimates.json'
 import waivers from '../../sdk/approvals/module-release-waivers.json'
@@ -110,6 +113,27 @@ describe('module resource gauges', () => {
     expect(moduleResourceIndicators(chorus)[1]).toMatchObject({ value: '+10.8 pp', status: 'Measured · T1–4', source: 'sdk/octatrack/modules/airwindows-chorus/TESTING.md' })
     const future = { ...rated(), id: lofi.id, version: '99.0.0' }
     expect(moduleResourceIndicators(future)[1]).toMatchObject({ value: 'High', status: 'Estimated' })
+  })
+
+  it('binds zero direct DSP cycles to the audited packages and preserves active DSP paths', () => {
+    for (const record of directDspEvidence.modules) {
+      const document = MODULE_DOCUMENTS.find(module => module.id === record.module)
+      expect(document?.version).toBe(record.version)
+      expect(moduleResourceIndicators(document!)[1]).toMatchObject({
+        value: '0 cycles', status: 'Module code · ColdFire', score: null, source: record.source,
+      })
+      expect(moduleResourceIndicators({ ...document!, version: '99.0.0' })[1].status).toBe('Estimated')
+      if (!record.packageSha256) continue
+      const entry = record.module === 'usb-audio-out-tracks-main-cue' ? packageManifest.usbAudio.configurable
+        : packageManifest.packages.find(pkg => pkg.id === record.module)!
+      const bytes = readFileSync('public/' + entry.path)
+      expect(createHash('sha256').update(bytes).digest('hex')).toBe(record.packageSha256)
+      expect(bytes.readUInt32BE(32)).toBe(0)
+    }
+    for (const id of ['analog-bassdrum', 'output-matrix', 'sidechain-compressor']) {
+      const document = MODULE_DOCUMENTS.find(module => module.id === id)!
+      expect(moduleResourceIndicators(document)[1].value).not.toBe('0 cycles')
+    }
   })
 
   it('uses the selected track’s core and the tracked pools from the same clean trial', () => {

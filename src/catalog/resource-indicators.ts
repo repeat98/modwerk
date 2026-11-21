@@ -1,6 +1,6 @@
 import type { ModuleDocument } from './module-contract'
 import packageManifest from '../engine/assets/octatrack-module-packages.json'
-import { measuredDspLoad, measuredModulePool, measuredTrackedMemory } from './octatrack-resource-measurements'
+import { measuredDspLoad, measuredModulePool, measuredTrackedMemory, verifiedNoModuleDspCode } from './octatrack-resource-measurements'
 import { requireModuleResourceImpact } from './resource-impact'
 
 const packagesById = new Map(packageManifest.packages.map(entry => [entry.id, entry]))
@@ -95,6 +95,17 @@ export function moduleResourceIndicators(document: ModuleDocument) {
       }
     }
     if (id === 'dsp' && dsp?.hardware) return { id, label: 'DSP core', ...dsp, value: dsp.value + ' cycles' }
+    if (id === 'dsp') {
+      const direct = verifiedNoModuleDspCode(document)
+      if (direct) {
+        return {
+          id, label: 'DSP core', value: '0 cycles', score: null, fill: 0, status: 'Module code · ColdFire',
+          valueText: 'Zero cycles of module code on the DSP cores',
+          description: 'This version runs its code on the ColdFire. Stock playback and effects can still change the load on the DSP cores.',
+          source: direct.source, sourceInModwerk: true,
+        }
+      }
+    }
     if (id === 'memory' && memory) {
       const value = count(memory.totalBytes) + ' B'
       return {

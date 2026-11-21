@@ -1,5 +1,8 @@
 import type { ModuleDocument } from './module-contract'
+import directDspEvidence from '../../docs/verification/2026-11-21-octatrack-direct-dsp-code.json'
 import modulePoolEvidence from '../../docs/verification/2026-11-21-octatrack-module-pool-allocation.json'
+import playModesApproval from '../../sdk/approvals/playmodes-build-approval.json'
+import stemRecApproval from '../../sdk/approvals/stem-rec-build-approval.json'
 import packageManifest from '../engine/assets/octatrack-module-packages.json'
 
 type AllocationReading = { modulePoolBytes: number; dspProgramWordsT1to4: number; dspProgramWordsT5to8: number }
@@ -32,6 +35,10 @@ const records = import.meta.glob<DevicePriceRecord>(
   { eager: true, import: 'default' },
 )
 const modulePoolReadings = new Map(modulePoolEvidence.measurements.map(record => [record.module, record]))
+const directDspReadings = new Map(directDspEvidence.modules.map(record => [record.module, record]))
+const cardBuildApprovals = new Map([playModesApproval, stemRecApproval].map(approval => [approval.id, approval]))
+const resourcePackage = (id: string) => id === 'usb-audio-out-tracks-main-cue' ? packageManifest.usbAudio.configurable
+  : packageManifest.packages.find(pkg => pkg.id === id)
 
 const airChorus = {
   version: '0.1.3-experimental', before: 40.3, after: 51.1, core: 'T1–4', slot: 'T3 FX2',
@@ -83,6 +90,19 @@ export function measuredDspLoad(document: ModuleDocument) {
   if (document.id === 'airwindows-chorus' && document.version === airChorus.version) return airChorus
 }
 
+export function verifiedNoModuleDspCode(document: ModuleDocument) {
+  const record = directDspReadings.get(document.id)
+  if (record?.version !== document.version || record.moduleDspWords !== 0) return
+  if (record.packageSha256) {
+    const entry = resourcePackage(document.id)
+    if (entry?.version !== record.version || entry.sha256 !== record.packageSha256) return
+  } else {
+    const approval = cardBuildApprovals.get(document.id)
+    if (approval?.version !== record.version || approval.sourceSha256 !== record.sourceSha256) return
+  }
+  return record
+}
+
 export function readTrackedMemory(document: ModuleDocument, record: DevicePriceRecord | undefined) {
   const reading = currentReading(document, record)
   if (!reading) return
@@ -113,8 +133,7 @@ export function measuredModulePool(document: ModuleDocument) {
   if (record?.version !== document.version || record.trials.length < 2 || record.loaderExtentBytes <= 0
     || record.trials.some(trial => !trial.rolledBack || trial.installed.modulePoolBytes !== record.loaderExtentBytes)) return
   if (record.package === 'published') {
-    const entry = document.id === 'usb-audio-out-tracks-main-cue' ? packageManifest.usbAudio.configurable
-      : packageManifest.packages.find(pkg => pkg.id === document.id)
+    const entry = resourcePackage(document.id)
     if (entry?.sha256 !== record.packageSha256) return
   }
   return {
