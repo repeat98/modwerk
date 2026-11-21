@@ -102,11 +102,21 @@ static uint32_t recent_mean(void)
  * kept until it plays four seconds again. Eight readings in a row playing, so none of them is a stopped one. */
 static uint32_t frame_recent[8], frame_played; /* as cpu_recent and cpu_played, for the frame share below */
 static uint32_t frame_mean(void);
+/* Machines picked or removed since the meter last held them (machine_registry.c), per mille: a pick made stopped is
+ * judged with every one before it, and a machine swapped out and back stopped by what it adds, once. Eight readings
+ * played after the last change, the meter holds them all. */
+static int32_t cpu_adjust;
+static uint32_t adjust_readings;
 static void cpu_note_played(void)
 {
-    if (modwerk_machine_stopped()) play_readings = 0;
-    else if (++play_readings >= 8u) cpu_played = recent_mean(), frame_played = frame_mean();
+    if (modwerk_machine_stopped()) play_readings = adjust_readings = 0;
+    else {
+        if (++play_readings >= 8u) cpu_played = recent_mean(), frame_played = frame_mean();
+        if (++adjust_readings >= 8u) cpu_adjust = 0;
+    }
 }
+void modwerk_status_cpu_entered(uint32_t mille) { cpu_adjust += (int32_t)mille, adjust_readings = 0; }
+void modwerk_status_cpu_left(uint32_t mille) { cpu_adjust -= (int32_t)mille, adjust_readings = 0; }
 /* The frame interrupt's share of each frame, per mille, from the frame guard's own sums (machine_registry.c): what a
  * module effect's CPU price (`npm run device:price`) is measured in. The meter above is all of the ColdFire, averaged;
  * the guard drops renders frame by frame once this share passes its own, so the pick box shows this one (owner's MKII, 17 November 2026: a third Tape Echo, the meter at 72 %, the guard dropped 4,782
@@ -1197,10 +1207,13 @@ static uint32_t delays_asleep(void)
     for (unsigned t = 0; t < 8u; ++t) n += ((volatile uint32_t *)mw_delay)[17u + t] != 0; /* status.s: no read this frame */
     return n * DELAY_WAKE;
 }
+/* With the picks since on top. Never below the newest reading when a machine left: right after STOP the four-second
+ * mean still holds the play, so FLEX and back to Grain was refused at once (owner's MKII, 21 November 2026). */
 uint32_t modwerk_status_cpu_load(void)
 {
     uint32_t now = recent_mean();
-    return (cpu_played > now ? cpu_played : now) + delays_asleep();
+    int32_t judged = (int32_t)(cpu_played > now ? cpu_played : now) + cpu_adjust, newest = (int32_t)modwerk_status[CPU];
+    return (uint32_t)(cpu_adjust < 0 && judged < newest ? newest : judged) + delays_asleep();
 }
 void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu, uint32_t add)
 {

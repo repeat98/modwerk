@@ -170,6 +170,9 @@ static uint32_t cpu_now; static unsigned hot_boxes, hot_box_track = 99; static u
 uint32_t modwerk_status_cpu_load(void) { return cpu_now; }
 void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu, uint32_t add)
 { (void)label; ++hot_boxes, hot_box_track = track, hot_box_cpu = cpu, hot_box_add = add; }
+static uint32_t cpu_in, cpu_out; /* what picks reported adding to the meter and exits taking away (status.c counts them) */
+void modwerk_status_cpu_entered(uint32_t mille) { cpu_in += mille; }
+void modwerk_status_cpu_left(uint32_t mille) { cpu_out += mille; }
 void modwerk_dsp_source_release(unsigned track) { voices &= (uint8_t)~(1u << track); voice_of[track] = 0; ++releases; }
 void modwerk_dsp_source_engine_off(uint32_t module)
 {
@@ -449,6 +452,9 @@ static void check_native_flex_voice(void)
  * CPU_DEFAULT a track, a priced one its reserved[0]; a DSP voice that names none costs nothing. */
 static const struct modwerk_machine P = {MODWERK_MACHINE_ABI, {'P', 'C'}, 1, 1, "DEAR", MODWERK_MACHINE_PROTECT, 0, a_defaults,
                                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, render_a, 0, 0, 0, 0, {30}};
+/* Priced 30, measured at 5 points of the meter (reserved[1]). */
+static const struct modwerk_machine L = {MODWERK_MACHINE_ABI, {'L', 'T'}, 1, 1, "LIGHT", MODWERK_MACHINE_PROTECT, 0, a_defaults,
+                                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, render_a, 0, 0, 0, 0, {30, 5}};
 static void check_cpu_budget(void)
 {
     const void *both[] = {&A, &P};
@@ -473,6 +479,19 @@ static void check_cpu_budget(void)
       CHECK(mw_assign(part0(), 7, 5) == 1 && hot_boxes == 4);                    /* already this machine's track */
       CHECK(mw_assign(part0(), 7, 1) == 1 && hot_boxes == 4);                    /* back to stock: never refused */
       cpu_now = 0; mw_ui_tick(); }
+    /* The busy check adds a machine's measured meter cost (reserved[1]), its price only without one; a pick reports
+     * what it adds and an exit what it takes away (owner's MKII, 21 November 2026: Grain priced 35 added 8.9). */
+    { const void *three[] = {&A, &P, &L}; rows(three, 3, 0, 0); fresh(); a_admit = 1; cpu_in = cpu_out = 0;
+      cpu_now = mw_cpu_hot - 100u;
+      CHECK(mw_assign(part0(), 7, 6) == (unsigned)-1 && !cpu_in);               /* the dear one by its price: 30 */
+      CHECK(mw_assign(part0(), 7, 7) == 1 && cpu_in == 50u);                    /* priced 30, adds 5: admitted */
+      CHECK(mw_assign(part0(), 7, 1) == 1 && cpu_out == 50u);                   /* back to stock: its cost comes off */
+      cpu_now = 0;
+      CHECK(mw_assign(part0(), 6, 5) == 1 && cpu_in == 170u);                   /* unmeasured: its price, 12 */
+      CHECK(mw_assign(part0(), 6, 6) == 1 && cpu_out == 170u && cpu_in == 470u); /* a swap: one out, one in */
+      CHECK(mw_assign(part0(), 6, 6) == 1 && cpu_in == 470u);                   /* its own track again: nothing */
+      CHECK(mw_assign(part0(), 6, 1) == 1 && cpu_out == 470u);
+      rows(both, 2, 0, 0); fresh(); a_admit = 1; mw_ui_tick(); }
     unsigned boxes = cpu_boxes;
     CHECK(mw_assign(part0(), 0, 5) == 1 && mw_assign(part0(), 1, 5) == 1 && mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes);
     CHECK(mw_assign(part0(), 3, 5) == (unsigned)-1 && part0()[60 + 90] == 0);  /* a fourth at 12: 48 of 45, nothing written */

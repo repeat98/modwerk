@@ -565,6 +565,33 @@ int main(void)
       for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 620u;
       CHECK(!modwerk_status_effect_busy(11, 27) && open == CLOSED);      /* 70 % playing, 62 % now: passes */
       cpu_played = 0, play_readings = 0;
+    /* Machines picked or removed since the meter last held them count on top, each by its cost: a stopped swap is judged
+     * by what the machine adds once, never below the newest reading; eight readings played clear them (owner's MKII,
+     * 21 November 2026: Grain to FLEX and back, right after STOP, refused at once). */
+    { void modwerk_status_cpu_entered(uint32_t mille), modwerk_status_cpu_left(uint32_t mille);
+      uint32_t newest = modwerk_status[CPU], kept[8]; memcpy(kept, cpu_recent, sizeof kept);
+      transport_stopped = 0;
+      for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 514u;             /* the Part played with Grain at 51.4 % */
+      for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
+      transport_stopped = 1; cpu_note_played();
+      CHECK(cpu_played == 514u && modwerk_status_cpu_load() == 514u);
+      modwerk_status[CPU] = 350u;                                         /* the newest reading, stopped */
+      modwerk_status_cpu_left(350u);                                      /* Grain, unmeasured, by its price 35 */
+      CHECK(modwerk_status_cpu_load() == 350u);                           /* 164 by the sum: the meter now instead */
+      modwerk_status_cpu_entered(350u);
+      CHECK(modwerk_status_cpu_load() == 514u);                           /* back: what it adds, once */
+      modwerk_status_cpu_entered(120u);                                   /* a second machine counts the first */
+      CHECK(modwerk_status_cpu_load() == 634u);
+      transport_stopped = 0;
+      for (unsigned r = 0; r < 7u; ++r) cpu_note_played();
+      CHECK(cpu_adjust == 120);                                           /* not yet four seconds played */
+      transport_stopped = 1; cpu_note_played(); transport_stopped = 0;    /* a stop between: the count starts again */
+      for (unsigned r = 0; r < 7u; ++r) cpu_note_played();
+      CHECK(cpu_adjust == 120);
+      cpu_note_played();
+      CHECK(cpu_adjust == 0);                                             /* the meter holds them now */
+      transport_stopped = 1, modwerk_status[CPU] = newest, cpu_played = 0, play_readings = adjust_readings = 0;
+      memcpy(cpu_recent, kept, sizeof kept); }
       for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0; }
     /* A quiet delay (status.s left its read out) counts as awake: a pick is judged at what the unit costs once a
      * scene opens the sends, and the box does not call that figure the last play's. */
