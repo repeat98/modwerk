@@ -54,7 +54,13 @@ for(const entry of await readdir(modules,{withFileTypes:true})){
   try {qualification=await requireFolderQualification(folder,document,baseline,waivers,{root,...(baseCommit?{approvedRef:baseCommit}:{})})}
   catch(error){if(needsPublicationUi)requireModuleUiForPublication(document);throw error}
   if(needsPublicationUi&&qualification!=='owner-approved-update')requireModuleUiForPublication(document)
- } catch(error){throw draftHint(document.id,error)}
+ } catch(error){
+  // A draft pull request is work before its unit test (docs/DEVELOPER_WORKFLOW.md): its missing qualification, captures or approval are
+  // reported, not failed, so generation and every later check still run. Marking it ready runs the full check without this.
+  if(process.env.MODWERK_EVIDENCE_PENDING!=='1')throw draftHint(document.id,error)
+  console.warn((process.env.GITHUB_ACTIONS?'::warning title=Release evidence still to come::':'Release evidence still to come (draft): ')+document.id+': '+error.message)
+  qualification='pending'
+ }
  const impact=requireModuleResourceImpact(document,['retained','retained-evidence'].includes(qualification)?impacts:undefined,qualification==='retained-evidence'?document.tests.retainedEvidence.moduleVersion:undefined)
  if(qualification==='retained-evidence')console.log(document.id+': retained evidence from '+document.tests.retainedEvidence.moduleVersion+'; runtime and resource inputs unchanged; no new native/hardware qualification required')
  for(const key of ['cpu','dsp','memory'])if(!(await readFile(await file(folder,impact[key].source),'utf8')).trim())throw new Error(document.id+': resource estimate source must be a nonempty local text record')
