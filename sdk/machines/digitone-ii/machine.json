@@ -53,5 +53,8 @@
     "body": "compact",
     "encoders": 8,
     "trigs": 16
+  },
+  "stack": {
+    "base": "started"
   }
 }

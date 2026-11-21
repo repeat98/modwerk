@@ -379,7 +379,7 @@
       "mods": "open"
     },
     "stack": {
-      "base": "open",
+      "base": "started",
       "link": "open",
       "flash": "open",
       "loader": "open",

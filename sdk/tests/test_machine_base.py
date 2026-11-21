@@ -358,5 +358,23 @@ class MachineBases(unittest.TestCase):
         self.assertEqual(device.hmac_key_from, (2, b"Multiplier"))
         self.assertEqual(device.releases["1.12"]["main_len"], 3196288)
 
+    def test_digitone_ii_copies_change_only_what_their_readme_says(self):
+        import difflib
+        original = APP / "sdk/machines/digitakt-ii/elekloader/core-dt2"
+        copy = APP / "sdk/machines/digitone-ii/elekloader/copies/core-dt2"
+        def changed(name):
+            diff = difflib.ndiff(original.joinpath(name).read_text().splitlines(), copy.joinpath(name).read_text().splitlines())
+            return [line[2:] for line in diff if line[:2] in ("- ", "+ ")]
+        self.assertEqual([line for line in changed("store.c") if "ROOM_MAX" not in line], [])
+        store = [line for line in changed("store.s") if not line.lstrip().startswith("|")]
+        self.assertEqual(sorted(line.split("|")[0].strip() for line in store), sorted(["move.l  %a3, -(%sp)", "move.l  %a2, -(%sp)"] * 2))
+        mod, dt2 = json.loads(copy.joinpath("mod.json").read_text()), json.loads(original.joinpath("mod.json").read_text())
+        self.assertEqual(mod["os"], "1.12")
+        self.assertEqual(mod["sources"], [source for source in dt2["sources"] if source != "../core/fast.s"])
+        self.assertNotIn("subscribe", mod)
+        self.assertEqual(mod["collections"], {name: room for name, room in dt2["collections"].items() if name != "core_fast"})
+        self.assertEqual({key: value for key, value in mod.items() if key not in ("os", "sources", "collections", "description")},
+                         {key: value for key, value in dt2.items() if key not in ("os", "sources", "collections", "description", "subscribe")})
+
 if __name__ == "__main__":
     unittest.main()

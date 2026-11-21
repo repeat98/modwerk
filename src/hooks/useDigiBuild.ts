@@ -6,6 +6,7 @@ import { elekloaderBuildKind } from '../community/octatrack-diagnostics-contract
 import { trackUsage } from '../community/usage'
 import { buildStep, buildWithLock, builtLock, createMachineBuilder, prepareBuild, type Builder } from '../engine/elekloader/machine-build'
 import { PREFLIGHT_MACHINES, PreflightError, preflightBuiltFile, type PreflightFacts } from '../engine/elekloader/digi-preflight'
+import { fitBuilt } from '../engine/elekloader/fit-update'
 import type { StorageLock } from '../config/workspace'
 import type { BuilderCheck, BuilderDevice, BuilderMachine, BuilderResult } from '../engine/elekloader/protocol'
 import type { BuildProgress } from '../engine/protocol'
@@ -77,10 +78,12 @@ export function useDigiBuild(machine: BuilderMachine, file: File | undefined, re
       const named = await builder.version(version, enabled)
       if (operation.current !== request) return
       if (!named.ok) { emitSiteDiagnosticEvent({ event: 'build_failed', phase: 'preparing', buildKind: elekloaderBuildKind(machine), error: 'input' }, context); setView({ phase: 'failed', key, enabled, device, error: named.error ?? 'Check the OS version.' }); return }
-      const result = await buildWithLock(builder, enabled, version, named.name, storage?.lock ?? null, line => {
+      const built = await buildWithLock(builder, enabled, version, named.name, storage?.lock ?? null, line => {
         step = buildStep(line, step)
         if (operation.current === request) setView({ phase: 'building', key, enabled, device, log: line, step })
       })
+      // A unit that refuses large upgrades gets its build packed to fit (fit-update.ts); other machines' are unchanged.
+      const result = built.ok && file ? await fitBuilt(built, new Uint8Array(await file.arrayBuffer())) : built
       if (operation.current !== request) return
       if (!result.ok) emitSiteDiagnosticEvent({ event: 'build_failed', phase: step, buildKind: elekloaderBuildKind(machine), error: 'build' }, context)
       // A second, independent check before the page offers the file (digi-preflight.ts): a refusal is a failed build.
