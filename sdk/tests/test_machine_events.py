@@ -36,6 +36,16 @@ def host(test, *sources):
 
 
 class MachineEventTests(unittest.TestCase):
+    def test_machine_can_ask_for_muted_tracks_without_a_subscription(self):
+        with tempfile.TemporaryDirectory() as temp:
+            Path(temp, 'runtime.json').write_text(json.dumps({'schema': 1, 'raise': ['ev_trig_muted']}))
+            declared = machine_ports.declaration('synth', folder=temp)
+        self.assertEqual(declared['raise'], ['ev_trig_muted'])
+        self.assertIn('ot_machines', [row['to'] for row in declared['contribute']])
+        builder = machine_ports._builder()
+        hooks = builder.subscribe([], [], {'raise_ev_trig_muted': 16}, raises=declared['raise'])
+        self.assertEqual(hooks[35], builder.RAISE << 24 | 16)
+
     def test_registry_on_the_host(self):
         result = host(self, OT / 'elekloader/test_machine_registry.c')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
