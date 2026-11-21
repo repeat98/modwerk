@@ -122,7 +122,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.3.0 (the take repeats when the loop gets longer): host scenarios, rytm-emu and four rig cases on the author's unit read the take from RAM; RECORD + YES after a lengthening applied on the unit. 0.2.2 (a shorter quick exit for the audio block): a host differential test against 0.2.1 found no difference in 80 million blocks, rytm-emu screens are byte-identical, with the sequencer stopped the audio hook ran a quarter of the instructions, and on the author's unit it took 470 ticks a block stopped against 0.2.1's 850 to 854, with the same results in two rig cases. 0.2.1 passed the tutorial on the author's unit alone (QR01). TESTING.md names each build.",
+    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.3.0 (the take repeats when the loop gets longer): host scenarios, rytm-emu, and four rig cases on the author's unit that read the take from RAM; RECORD + YES after a lengthening applied on the unit. 0.2.2: no difference from 0.2.1 in 80 million host blocks, and 470 ticks a block stopped on the unit against 850. 0.2.1 passed the tutorial on the author's unit alone (QR01). TESTING.md names each build.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
