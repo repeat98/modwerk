@@ -118,5 +118,11 @@
   },
   "overrides": {
     "source-map-js": "1.2.1"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "workerd@1.20260926.1": true,
+    "fsevents@2.3.3": true,
+    "@julusian/midi@3.8.1": true
   }
 }
