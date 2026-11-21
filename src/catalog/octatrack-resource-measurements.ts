@@ -1,5 +1,6 @@
 import type { ModuleDocument } from './module-contract'
 import activeLoadEvidence from '../../docs/verification/2026-11-21-octatrack-active-load.json'
+import stackedCpuEvidence from '../../docs/verification/2026-11-21-octatrack-stacked-cpu-limits.json'
 import directDspEvidence from '../../docs/verification/2026-11-21-octatrack-direct-dsp-code.json'
 import modulePoolEvidence from '../../docs/verification/2026-11-21-octatrack-module-pool-allocation.json'
 import playModesApproval from '../../sdk/approvals/playmodes-build-approval.json'
@@ -56,6 +57,7 @@ const records = import.meta.glob<DevicePriceRecord>(
 )
 const modulePoolReadings = new Map(modulePoolEvidence.measurements.map(record => [record.module, record]))
 const activeLoadReadings = new Map<string, ActiveRecord>(activeLoadEvidence.measurements.map(record => [record.module, record]))
+const stackedCpuReadings = new Map(stackedCpuEvidence.measurements.map(record => [record.module, record]))
 const directDspReadings = new Map(directDspEvidence.modules.map(record => [record.module, record]))
 const cardBuildApprovals = new Map([playModesApproval, stemRecApproval].map(approval => [approval.id, approval]))
 const resourcePackage = (id: string) => id === 'usb-audio-out-tracks-main-cue' ? packageManifest.usbAudio.configurable
@@ -118,6 +120,13 @@ export function measuredActiveCpu(document: ModuleDocument) {
       source: 'sdk/octatrack/modules/amiga/TESTING.md',
     }
   }
+}
+
+export function measuredStackedCpuLimit(document: ModuleDocument) {
+  const record = stackedCpuReadings.get(document.id)
+  const entry = resourcePackage(document.id)
+  if (record?.version === document.version && entry?.version === document.version && record.releasePackageSha256 === entry.sha256
+    && ((record.skippedRenders ?? 0) > 0 || (record.cpuFullOnInstance ?? 0) > 1)) return record
 }
 
 export function readDspLoad(document: ModuleDocument, record: DevicePriceRecord | undefined) {

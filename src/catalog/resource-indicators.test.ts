@@ -107,7 +107,7 @@ describe('module resource gauges', () => {
       value: '+6.8 pp', status: 'Measured · T5–8', score: 6.8, maximum: 100, fill: 6.8,
       benchmark: { value: hookPrice.worstCase + ' cycles per sample for one instance', source: 'sdk/octatrack/modules/output-matrix/' + hookPrice.report },
     })
-    expect(moduleResourceIndicators(outputMatrix)[0].benchmark?.value).toBe('13.1% of a frame added with ALL routes')
+    expect(moduleResourceIndicators(outputMatrix)[0].benchmark?.value).toBe('13.1% of a frame added with ALL routes in MATRIX mode')
     expect(moduleResourceIndicators(bbd)[1]).toMatchObject({
       value: '+10.8 pp', status: 'Measured · T1–4',
       benchmark: { value: bbdPrice + ' instructions per sample per instance', basis: 'instr./sample · Emulator' },
