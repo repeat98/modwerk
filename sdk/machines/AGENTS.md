@@ -6,5 +6,5 @@ You are changing a machine: its profile, core, base, hooks or USB link. Every ma
 - What several modules share (a send bus, an FX list, shared pages or menu rows, per-kit state) belongs to the base, and each module adds one record to it. A module never carries it for the others.
 - Extend the Octatrack's loader, USB link, builder, MCP and page with the machine's glue. Do not design a second one.
 - When a piece moves, update the recipe's table and the machine's guide in the same pull request.
-- A new device starts with a message to the owner ([talk to the owner first](../../docs/ADD_A_MACHINE.md#talk-to-the-owner-first)). A base, a link or a loader port is shared SDK work in its own owner-reviewed pull request, never inside a module release.
+- A new device starts with a message to the owner ([talk to the owner first](../../docs/ADD_A_MACHINE.md#talk-to-the-owner-first)). All base work goes directly onto the [machine’s cumulative draft](../../docs/DEVELOPER_WORKFLOW.md#change-a-base). A link or loader port outside the base has its own owner-reviewed pull request.
 - Never commit firmware, stock code or tables, memory dumps or built images.

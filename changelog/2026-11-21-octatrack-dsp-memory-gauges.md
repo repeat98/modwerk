@@ -1,0 +1,1 @@
+Octatrack module pages show recorded DSP costs and accounted memory in their original units. DSP numbers identify their measurement or model, and memory totals show the shared and per-instance breakdown in the evidence.
