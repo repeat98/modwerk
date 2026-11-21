@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "qualification": false,
+  "recorded": "2026-10-29",
+  "base": "c1ae2ee92a829e06aa9398d35981b8228efdd34c578c9583ef36fba8f5bc637f",
+  "runtimeSetDigest": "6b9b601b7df88a41b46bd1299397ece3b42d0a825989da3edcd0b06c3fc02e64",
+  "packages": [
+    {
+      "module": "73bab3b1",
+      "id": "mute-modes",
+      "sha256": "c35b154d7a6ff4d9affc339387d68bde87554aec82a87b60059b6307f5b2b848"
+    },
+    {
+      "module": "95cff696",
+      "id": "sidechain-compressor",
+      "sha256": "ed2431f0ffe91e3def6a0101441ed650cab1db9a25a6bf83bff2dc2555b8cd0e"
+    },
+    {
+      "module": "abdb1445",
+      "id": "analog-bassdrum",
+      "sha256": "c2d8644cba572a3ff6534c84a1f4273f922e7469abce43fe9b7a2ecb787c0ef7"
+    },
+    {
+      "module": "be4ff75a",
+      "id": "playmodes",
+      "sha256": "abf1cda888e617408b4d088bb9afd536f9ea96c1bdb90339e56a3932d300bced"
+    },
+    {
+      "module": "f36a496d",
+      "id": "midi-cc-slots",
+      "sha256": "8d971baca19198b9e35d7644c7c8810f917471f980eadc2db03fab8de3668451"
+    }
+  ],
+  "method": "SHA-256 of MWS1 + big-endian u32 count + sorted (big-endian u32 module ID, 32-byte package SHA-256); exact match to device request 38 before and after temporary removal/Undo.",
+  "pinSources": [
+    "src/engine/assets/octatrack-module-packages.json",
+    "sdk/drafts/midi-cc-slots/local-build.json"
+  ],
+  "limitations": [
+    "Verifies complete running package identities; does not measure timing, memory canaries, card contents or reboot persistence.",
+    "Earlier generic functional user report did not independently capture its running identity."
+  ]
+}
