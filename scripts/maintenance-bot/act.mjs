@@ -8,6 +8,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { TODO_COMMAND, actionId, classify } from './policy.mjs'
 import { MARKER, approveRun, boardGet, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
+import { pilotReport } from './eval-pilot.mjs'
 import { dailyReport } from './report.mjs'
 
 const daily = process.env.BOT_MODE === 'daily', dir = process.env.BOT_DIR ?? 'bot'
@@ -222,6 +223,7 @@ if (process.env.BOT_FINGERPRINT && hasReview && !reviewError) await bot('/state'
 if (daily) {
   const { actions } = await bot('/actions/recent?hours=24')
   const broken = !hasReview || !!reviewError
-  await bot('/report', 'POST', { text: dailyReport(actions, (await bot('/todos')).todos) + (broken ? '\n⚠️ The review itself failed today; see the Actions log.' : '') })
+  const progress = state.pilotReported ? '' : '\n' + pilotReport((await bot('/eval-pilot')).records)
+  await bot('/report', 'POST', { text: dailyReport(actions, (await bot('/todos')).todos) + progress + (broken ? '\n⚠️ The review itself failed today; see the Actions log.' : '') })
 }
 if (reviewError) throw new Error(reviewError)

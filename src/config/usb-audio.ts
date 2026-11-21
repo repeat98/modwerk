@@ -30,6 +30,12 @@ export function changeUsbAudioLayout(configuration: UsbAudioConfiguration, layou
   const count = usbAudioLayout(layout).pairs.length
   return { ...configuration, layout, outboxPairs: configuration.outboxPairs.map(pair => pair <= count ? pair : 0) }
 }
+/** Choose an install preset when editing a selection. Missing settings on an existing audio set mean classic 20-channel audio. */
+export function usbAudioForSelection(ids: readonly string[], previous?: { moduleIds: readonly string[]; usbAudio?: UsbAudioConfiguration }): UsbAudioConfiguration | undefined {
+  if (!ids.includes(USB_AUDIO_MODULE)) return undefined
+  if (previous?.moduleIds.includes(USB_AUDIO_MODULE)) return previous.usbAudio
+  return USB_AUDIO_PACKAGED ? changeUsbAudioLayout(usbAudioPreset('computer'), 'main') : undefined
+}
 export function suggestedUsbAudioPairs(layout: UsbAudioLayout): number[] {
   const count = usbAudioLayout(layout).pairs.length
   return Array.from({ length: 4 }, (_, index) => index < count ? index + 1 : 0)

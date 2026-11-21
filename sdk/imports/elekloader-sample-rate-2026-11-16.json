@@ -6,17 +6,17 @@
   "cores": [],
   "mods": [
     {
-      "file": "sample-rate-0.6.2-experimental-os1.74.elemod",
-      "sha256": "81271a174442a235e43af2b5248a00e51707c9ae5067522e39fbf8a7350336fd",
+      "file": "sample-rate-0.6.3-experimental-os1.74.elemod",
+      "sha256": "2d0bf20568e831b1ef1a73915f13b522e1cda89094653d04b64e89c2f71b99e7",
       "id": "sample-rate",
-      "version": "0.6.2-experimental",
+      "version": "0.6.3-experimental",
       "device": "analog-rytm-mk2",
       "os": "1.74",
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "ca64cbbc36dae49b4645d60c12d42ed85b6d5c8f",
-        "path": "sdk/imports/packages/sample-rate/sample-rate-0.6.2-experimental-os1.74.elemod"
+        "commit": "6e5f74e08947bac48dc402bc39a4ae59e89809a3",
+        "path": "sdk/imports/packages/sample-rate/sample-rate-0.6.3-experimental-os1.74.elemod"
       },
       "title": "Improved SMPL",
       "requires": [
@@ -28,7 +28,7 @@
       "category": "Playback",
       "author": "npp1993",
       "needs_core": "0.7",
-      "on_unit": "This package's source ran alone on the author's Analog Rytm MKII on OS 1.74 from RAM in a test image with the author's private development base (SU62); the author's rig found it working (30 checks). 0.6.0 (MSU1) was also played by the author, as the author reports."
+      "on_unit": "This package's source ran alone on the author's Analog Rytm MKII on OS 1.74 from RAM in a test image with the author's private development base (SU63); the author's rig found it working (30 checks). 0.6.0 (MSU1) was also played by the author, as the author reports."
     }
   ]
 }

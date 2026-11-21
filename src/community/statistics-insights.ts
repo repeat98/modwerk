@@ -1,6 +1,7 @@
 import type { UsageDay, UsageHour, UsageStatistics } from './usage-contract'
 import type { AdminAccounts, AdminAccountsDay, AdminModuleInsight } from './admin-insights-contract'
 import { bayesianRating, ratingPrior } from './rating-ranking'
+import { installActivityDays, installSeries } from './install-activity'
 
 export const usageMetrics = [
   ['visitors', 'Daily visitors'], ['page_views', 'Page views'], ['configurations', 'Configurations started'],
@@ -77,9 +78,14 @@ export function rankedModules(modules: readonly AdminModuleInsight[], sort: Modu
 }
 
 export function usageCsv(data: UsageStatistics) {
-  return ['date_utc,coverage,'+usageMetrics.map(([key]) => key).join(','),...dailyRows(data).map(({day,counts}) => {
+  const days = dailyRows(data), activity = installActivityDays(data, days)
+  const columns = ['date_utc','coverage',...usageMetrics.map(([key]) => key)]
+  if (data.installActivity) columns.push(...installSeries.slice(1).map(([key]) => key), 'recorded_install_activity', 'install_activity_coverage')
+  return [columns.join(','),...days.map(({day,counts}, index) => {
     const coverage = !counts ? 'uncollected' : day===data.to || day===data.collectionStarted?.slice(0,10) ? 'partial' : 'complete'
-    return [day,coverage,...usageMetrics.map(([key]) => counts?.[key]??'')].join(',')
+    const row = activity[index]
+    const extra = row ? [...row.values.slice(1), row.total, row.total === null ? 'uncollected' : row.incomplete ? 'partial' : 'complete'] : []
+    return [day,coverage,...usageMetrics.map(([key]) => counts?.[key]??''),...extra].join(',')
   })].join('\n')+'\n'
 }
 

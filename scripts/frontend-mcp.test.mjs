@@ -103,6 +103,22 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     await expect(service.call('board_claims', { kind: 'module' })).rejects.toThrow('turned off')
     await expect(service.call('board_messages', { machine: 'octatrack' })).rejects.toThrow('turned off')
   })
+  it.runIf(publishedUsbAudioPackage)('starts fresh sets on stereo Main and retains saved USB routing on edit', async () => {
+    const moduleIds = ['usb-audio-out-tracks-main-cue']
+    const fresh = await service.call('set_save', { name: 'Fresh USB', moduleIds })
+    try {
+      expect(fresh.usbAudio).toMatchObject({ destination: 'computer', layout: 'main', outboxPairs: [1, 0, 0, 0] })
+      const saved = { ...fresh.usbAudio, destination: 'outbox', layout: 'tracks-post', outboxPairs: [7, 1, 7, 0] }
+      await service.call('set_save', { id: fresh.id, name: 'Outbox', moduleIds, usbAudio: saved })
+      expect((await service.call('set_save', { id: fresh.id, name: 'Renamed', moduleIds })).usbAudio).toEqual(saved)
+      const classic = { ...fresh }
+      delete classic.usbAudio
+      await service.call('set_import', { configurations: [classic] })
+      expect((await service.call('set_save', { id: fresh.id, name: 'Classic', moduleIds })).usbAudio).toBeUndefined()
+    } finally {
+      await service.call('set_delete', { id: fresh.id })
+    }
+  })
   it('round trips sets through frontend validation without including private firmware', async () => {
     const created = await service.call('set_save', { name: 'MCP test', moduleIds: ['miniverb'] })
     const updated = await service.call('set_save', { id: created.id, name: 'Edited', moduleIds: ['everb', 'miniverb'] })
