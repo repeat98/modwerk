@@ -2,6 +2,20 @@
 import { expect, it, vi } from 'vitest'
 import { pilotCandidates, pilotReport, recordPilotReviews, settlePilot } from './eval-pilot.mjs'
 
+import { parseVerdict } from './screen-pilot.mjs'
+
+it('requires one verdict and binds it to the source even if the model omits or substitutes identity', () => {
+  const candidate = { number: 1918, merge: 'a'.repeat(40), hints: ['Check the last row'] }
+  const run = answer => JSON.stringify({ subtype: 'success', result: JSON.stringify(answer) })
+  expect(() => parseVerdict(run({ actions: [], todos: [], drop: [] }), candidate)).toThrow(/verdict/)
+  expect(() => parseVerdict(run({ verdict: 'gap', hint: 3 }), candidate)).toThrow(/verdict/)
+  expect(() => parseVerdict('{"is_error":true}', candidate)).toThrow(/completed review/)
+  expect(parseVerdict(run({ number: 42, merge: 'other', verdict: 'gap', hint: 0 }), candidate)).toEqual({
+    number: candidate.number, merge: candidate.merge, verdict: 'gap', hint: 0,
+  })
+  expect(parseVerdict(run({ verdict: 'other' }), candidate).verdict).toBe('other')
+})
+
 const pulls = Array.from({ length: 9 }, (_, i) => ({
   number: i + 1, merged_at: '2026-11-22T00:00:0' + i + 'Z', updated_at: '2026-11-22T00:01:00Z',
   merge_commit_sha: String(i + 1).repeat(40), user: { id: i + 100, login: 'dev' }, title: 'Correct the selection',
@@ -19,6 +33,20 @@ it('screens chronological production changes, stops at a missing verdict and exc
   await recordPilotReviews(api, bot, batch.filter(row => row.number !== 6).map(row => ({ ...row, verdict: 'gap', hint: 0, body: 'private note' })))
   expect(bot.mock.calls.filter(([, method]) => method === 'POST').map(([, , row]) => [row.number, row.hint])).toEqual([[4, 'Correct the selection'], [5, 'Correct the selection']])
   expect(await pilotCandidates(() => { throw Error('pilot already full') }, pulls.slice(0, 5).map(() => ({ verdict: 'covered' })))).toEqual([])
+})
+
+it('pins the landed commit from the merged timeline event when GitHub omits the PR field', async () => {
+  const pr = { ...pulls[2], merge_commit_sha: undefined }
+  const sha = 'e'.repeat(40)
+  const events = [{ event: 'merged', commit_id: sha }, { event: 'closed', commit_id: 'f'.repeat(40) }]
+  const read = async path => {
+    if (path.startsWith('/pulls?')) return [pr]
+    if (path.startsWith('/issues/3/timeline?')) return events
+    return [{ filename: 'scripts/check.mjs' }]
+  }
+  expect(await pilotCandidates(read, [])).toEqual([expect.objectContaining({ number: 3, merge: sha })])
+  events.shift()
+  await expect(pilotCandidates(read, [])).rejects.toThrow(/Missing merge commit.*#3/)
 })
 
 it('counts a case only on independent, merged and passing evidence for the exact source revision', async () => {
