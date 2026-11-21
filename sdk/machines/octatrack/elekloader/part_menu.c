@@ -77,7 +77,11 @@ static const char *const *pm_names;       /* stock's four labels, as the opener 
 static uint32_t pm_consumed[2];
 static int pm_residual;
 #ifndef PM_HOST
-static uint32_t pm_surface[7];
+static uint32_t pm_surface[7]; /* stock's text surface, pointed at the frame being drawn */
+#define PM_BIND(frame) do { \
+        for (unsigned i = 0; i < 7u; ++i) pm_surface[i] = ((const volatile uint32_t *)0x400bf10au)[i]; \
+        pm_surface[3] = (uint32_t)(uintptr_t)(frame); \
+    } while (0)
 #endif
 
 static unsigned pm_stock_open(void)
@@ -203,6 +207,7 @@ int mw_part_menu_key(int code, int pressed)
         return 0; /* stock's, with the window as it is */
     const PmEntry *e[PM_ROOM];
     unsigned n = pm_rows_shown(e);
+    if (!n) { pm_hide(); return 0; } /* the last contribution removed while open: the window is stock's again */
     pm_clamp(e, n);
     if (pm_focus && pm_child >= pm_children(e, n, pm_parent)) pm_child = 0;
     if (code == PM_NO) { pm_remember(e); pm_hide(); return 0; } /* from either column, as PROJ: stock closes its popup */
@@ -233,6 +238,7 @@ int mw_part_menu_enc(int encoder, int delta)
     if (encoder != 6) return 1;
     const PmEntry *e[PM_ROOM];
     unsigned n = pm_rows_shown(e);
+    if (!n) { pm_hide(); return 0; }
     pm_clamp(e, n);
     if ((pm_residual < 0 && delta > 0) || (pm_residual > 0 && delta < 0)) pm_residual = 0;
     pm_residual += delta;
@@ -245,7 +251,9 @@ int mw_part_menu_enc(int encoder, int delta)
 void mw_part_menu_tick(void);
 void mw_part_menu_tick(void)
 {
-    if (pm_shown && !pm_stock_open()) pm_hide();
+    if (!pm_shown) return;
+    const PmEntry *e[PM_ROOM];
+    if (!pm_stock_open() || !pm_rows_shown(e)) pm_hide();
 }
 
 /* Drawing: the frame is a quarter turn round, a row of 8 bytes per x, pixel (x, y) at bit 63 - y (status.c). */
@@ -311,11 +319,8 @@ void mw_part_menu_draw(unsigned char *frame)
     unsigned n = pm_rows_shown(e);
     if (!n) return;
     pm_clamp(e, n);
+    PM_BIND(frame); /* before either drawing: PM_TEXT writes through it */
     if (pm_list) { pm_draw_list(frame, e[0]); return; }
-#ifndef PM_HOST
-    for (unsigned i = 0; i < 7u; ++i) pm_surface[i] = ((const volatile uint32_t *)0x400bf10au)[i];
-    pm_surface[3] = (uint32_t)(uintptr_t)frame;
-#endif
     pm_fill(frame, 6u, 0u, 121u, 63u, 0);                 /* PROJ blanks its span top to bottom; the strips stay */
     PM_TEXT(8u, 3u, "PART EDIT");
     pm_fill(frame, 6u, 1u, 121u, 9u, 2);                 /* the title bar, its text cut out of it */
