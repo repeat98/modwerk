@@ -131,34 +131,44 @@ static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const G
         GranGrain *g = 0;
         for (unsigned i = 0; i < GRAN_MAX; ++i)
             if (!t->g[i].left) { g = &t->g[i]; break; }
-        if (g) {                    /* todos ocupados: el grano se pierde (techo de CPU, como el original) */
-            int32_t at = (int32_t)(p->freeze ? t->fpos : t->pos);
-            if (t->scan) {          /* SCAN: POS mas lo que ha corrido el cabezal, dando la vuelta al sample */
-                uint32_t q = (uint32_t)at + t->scan;
-                at = (int32_t)(q >= s->count ? q - s->count : q);
+        if (!g) {
+            /* A voice can only finish during the subsequent mixing pass. All
+             * remaining spawn attempts in this block would find the same six. */
+            uint32_t distance = n - d6;
+            if (t->spacing >= distance) d6 += t->spacing;
+            else {
+                uint32_t tail = distance % t->spacing;
+                d6 = n + (tail ? t->spacing - tail : 0);
             }
-            if (t->spray) {
-                uint32_t r = lcg(&e->seed) >> 16;
-                at += (int32_t)scaled_product(t->spray >> 5, r, 11);
-                at -= (int32_t)(t->spray >> 1);
-                if (at < 0)
-                    at = 0;
-            }
-            if ((uint32_t)at >= s->count)
-                at = (int32_t)s->count - 1;
-            g->idx = (uint32_t)at;
-            g->fr = 0;
-            g->left = t->len;
-            g->ph = 0;
-            g->phs = 0x1000000u / t->len;
-            g->start = d6;
-            g->rev = gran_dir(e, p->dir);
-            g->pan = 0;             /* v018: paneo al azar dentro de +-PAN/16 */
-            if (p->pan) {           /* PAN 0..127: 127 da exactamente el PAN maximo del original */
-                uint32_t amt = p->pan > 127 ? 127 : p->pan;
-                lcg(&e->pseed);
-                g->pan = ((int32_t)(e->pseed >> 16) - 32768) * (int32_t)amt / 127;
-            }
+            break;
+        }
+        int32_t at = (int32_t)(p->freeze ? t->fpos : t->pos);
+        if (t->scan) {          /* SCAN: POS mas lo que ha corrido el cabezal, dando la vuelta al sample */
+            uint32_t q = (uint32_t)at + t->scan;
+            at = (int32_t)(q >= s->count ? q - s->count : q);
+        }
+        if (t->spray) {
+            uint32_t r = lcg(&e->seed) >> 16;
+            at += (int32_t)scaled_product(t->spray >> 5, r, 11);
+            at -= (int32_t)(t->spray >> 1);
+            if (at < 0)
+                at = 0;
+        }
+        if ((uint32_t)at >= s->count)
+            at = (int32_t)s->count - 1;
+        g->idx = (uint32_t)at;
+        g->fr = 0;
+        g->left = t->len;
+        g->ph = 0;
+        g->phs = 0x1000000u / t->len;
+        g->start = d6;
+        g->rev = gran_dir(e, p->dir);
+        g->pan = 0;             /* v018: paneo al azar dentro de +-PAN/16 */
+        if (p->pan) {           /* PAN 0..127: 127 da exactamente el PAN maximo del original */
+            uint32_t amt = p->pan > 127 ? 127 : p->pan;
+            lcg(&e->pseed);
+            int32_t pan = (int32_t)(e->pseed >> 16) - 32768;
+            g->pan = amt == 127u ? pan : pan * (int32_t)amt / 127;
         }
         d6 += t->spacing;
     }
@@ -437,15 +447,21 @@ static void stereo_paged(GranGrain *g, GranPage *pg, const GranSample *s, int32_
             ++done;
             continue;
         }
-        uint32_t size = s->count - pg->pfirst;
-        if (pg->pcount < size) size = pg->pcount;
         uint32_t offset = idx - pg->pfirst;
         unsigned run = n - done;
-        uint32_t room = whole < 0 ? offset : size - 1u - offset;
+        /* Away from the page and sample ends every legal pitch stays in the
+         * same page. At an edge, find the actual run from the Q32.32 cursor. */
+        uint32_t room;
+        if (whole < 0) {
+            room = offset;
+        } else {
+            room = pg->pcount - 1u - offset;
+            if (s->count - 1u - idx < room) room = s->count - 1u - idx;
+        }
         uint32_t step = whole < 0 ? 0u - (uint32_t)whole : (uint32_t)whole + (frac != 0);
-        /* For the usual pitch range this product fits. Only walk the cursor
-         * when the conservative last-frame bound reaches a page edge. */
         if (step > 65535u || (run - 1u) * step > room) {
+            uint32_t size = s->count - pg->pfirst;
+            if (pg->pcount < size) size = pg->pcount;
             uint32_t probe = offset, sub = g->fr;
             unsigned i = 1;
             for (; i < run; ++i) {

@@ -2,6 +2,21 @@
 
 Grain 0.1.0-experimental · by A Force Truly Evil.
 
+## Six-voice preparation candidate, 21 November 2026
+
+The private SDK and catalogue builds produced `7d5cf2e739a0f99d5c8be4f5a0629e2a46691314cacf2ee5dace54ccf517aa1b`. The render callback reuses validated Flex geometry while checking the live recorder, descriptor and page map on every call. POS slides update only position when the other controls hold. Six occupied voices can skip the remaining spawn attempts within a block. The voice limit, 35-point admission price and mixer arithmetic are the same as in `9ad52855`.
+
+| Compiled callback workload | Previous mean instructions | Candidate mean | Previous peak | Candidate peak |
+| --- | ---: | ---: | ---: | ---: |
+| Held controls | 3,174 | 3,041 | 7,845 | 7,604 |
+| Moving position | 3,289 | 3,079 | 7,962 | 7,643 |
+| Recorder, Part and control changes | 3,058 | 2,971 | 11,769 | 11,603 |
+| SRC and window controls moving each callback | 3,166 | 3,126 | 12,608 | 12,615 |
+
+Each row compares 3,072 compiled callbacks with stock packet framing simulated. PCM and six voice states matched the preceding binary on all 12,288 calls. Across 512 calls per preparation measurement, average instructions before entering the mixer fell from 512 to 382 with held controls and from 619 to 412 with moving position. The largest candidate preparation count was 657, compared with 628 and 636 respectively. A separate 512-case kernel comparison matched all PCM and cursors. Two-minute T1 and T5 engine runs each matched 5,292,000 reference stereo frames.
+
+The package loads 27,220 bytes of code and data and 2,856 bytes of zero-initialized state. GCC bounds the deepest Grain-only audio path at 680 stack bytes including return addresses. The [static timing analysis](evidence/timing/candidate_bound.py) bounds the module's zero-wait render work at 188,024 core cycles for 16 source frames and 344,312 for 32. Both exceed the 95,782-cycle whole-frame budget before stock work, memory waits and interrupts. Hardware qualification remains open.
+
 ## Packed stereo mixer candidate, 21 November 2026
 
 The private SDK build and the catalogue builder produced package `9ad5285502117695e906dc90770840990008cea1a19398b8d2f395e870238443`. It keeps six voices and the 35-point admission price. The ColdFire mixes a 24-bit stereo page in one register-resident loop and reads the Flex page map once per callback. A second take in the same recorder slot can replace the first take's physical pages between callbacks. The compiled test remapped R3 and verified both its page address and the change in output PCM.

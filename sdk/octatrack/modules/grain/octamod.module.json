@@ -135,11 +135,11 @@
     "recorded": "2026-11-21",
     "storage": {
       "label": "Module image and memory",
-      "display": "28,516 bytes of static runtime memory",
-      "value": 28516,
+      "display": "30,076 bytes of static runtime memory",
+      "value": 30076,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Package 9ad52855 loads 26,076 bytes of code and data and declares 2,440 bytes of BSS. The deepest Grain-only audio call path uses 668 stack bytes including return addresses. Stock calls, interrupt nesting and loader overhead are additional.",
+      "conditions": "Package 7d5cf2e7 loads 27,220 bytes of code and data and declares 2,856 bytes of BSS. The deepest Grain-only audio path uses 680 stack bytes including return addresses. Stock calls, interrupt nesting and loader overhead are additional.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -168,7 +168,7 @@
       "memory": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "The 27,280-byte package loads 26,076 bytes of code and data and reserves 2,440 bytes of zero-initialized state. It reads the existing Flex sample pages. Stack and loader overhead are additional.",
+        "rationale": "The 28,488-byte package loads 27,220 bytes of code and data and reserves 2,856 bytes of zero-initialized state. It reads the existing Flex sample pages. Stack and loader overhead are additional.",
         "source": "TESTING.md"
       }
     },
@@ -184,7 +184,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The six-voice package 9ad52855 played a 24-bit stereo RAM recorder on the MKII. With 20-channel USB capture and musical MIDI, five-minute playback skipped 3,185 renders on T1 and 3,924 on T5. Matched stock Flex runs skipped zero. STOP, Part changes and the return to Flex worked on both tracks. Release qualification remains open.",
+    "summary": "The six-voice preparation candidate 7d5cf2e7 matched the preceding package across 12,288 compiled callbacks. The preceding package 9ad52855 skipped 3,185 renders on T1 and 3,924 on T5 in the five-minute 24-bit stereo, USB capture and MIDI comparison. Release qualification remains open.",
     "hardwareStatus": "reported",
     "evidenceRevision": "f4b064f66ca8f0b515d91ae1f0d6ffa0f15764b4",
     "gates": [

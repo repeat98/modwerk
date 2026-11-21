@@ -22,10 +22,13 @@ PAGE_MIX_PACKAGE = "9ad5285502117695e906dc90770840990008cea1a19398b8d2f395e87023
 PAGE_MIX_LOCATE = (0x3198, 0x33AA, 0x39A0)
 PAGE_MIX_CALLS = (0x35AE, 0x3A32, 0x3AB4, 0x3B62, 0x3E72)
 
+PREP_PACKAGE = "7d5cf2e739a0f99d5c8be4f5a0629e2a46691314cacf2ee5dace54ccf517aa1b"
+PREP_LOCATE = (0x31A6, 0x35B8, 0x3A3C)
+
 
 def read_image(package, elf):
     packed = package.read_bytes()
-    if hashlib.sha256(packed).hexdigest() not in (PACKAGE, PAGE_MIX_PACKAGE):
+    if hashlib.sha256(packed).hexdigest() not in (PACKAGE, PAGE_MIX_PACKAGE, PREP_PACKAGE):
         raise ValueError("The package differs from the six-voice candidate")
     # ABI 8 stores the image immediately after the 76-byte header and hook words.
     first = 76 + 4 * int.from_bytes(packed[20:24], "big")
@@ -48,7 +51,7 @@ def read_image(package, elf):
     return functions
 
 
-def reachable(functions, root, locate):
+def reachable(functions, root, locate, lookup_targets=("flex_page",)):
     todo, edges, instructions = [root], [], {}
     while todo:
         name = todo.pop()
@@ -57,14 +60,18 @@ def reachable(functions, root, locate):
         ops = functions[name].copy()
         if name == "gran_render":
             for pc in locate:
-                assert ops[pc] == ("jsr", "%a0@")
-                # The machine sets GranSample.locate to flex_page.
+                assert ops[pc][0] == "jsr" and re.fullmatch(r"%a[0-6]@", ops[pc][1])
+                # Classify the indirect branch before expanding its format-specific targets.
                 ops[pc] = ("jsr", f'{min(functions["flex_page"]):x} <flex_page>')
         local, calls = edges_and_calls(name, ops)
         instructions.update(functions[name])
         for pc, dest in local:
-            entry = min(functions[calls[pc]]) if pc in calls else None
-            edges.append((pc, dest, entry))
+            if name == "gran_render" and pc in locate:
+                edges.extend((pc, dest, min(functions[target])) for target in lookup_targets)
+                todo.extend(lookup_targets)
+            else:
+                entry = min(functions[calls[pc]]) if pc in calls else None
+                edges.append((pc, dest, entry))
         todo.extend(calls.values())
     return instructions, edges
 
@@ -126,9 +133,37 @@ def page_mix_limits(functions, root, n, instructions):
     return caps
 
 
-def certify(functions, root, n, model, page_mix=False):
-    instructions, edges = reachable(functions, root, PAGE_MIX_LOCATE if page_mix else LOCATE)
-    constraints = (page_mix_limits if page_mix else visit_limits)(functions, root, n, instructions)
+def preparation_limits(functions, root, n):
+    if root == "grain_start":
+        return []
+    # The wrapper only loops to clear the two output words per source frame.
+    caps = [([0x469C], 2 * n), ([0x2D22], n), ([0x2D4C], n)]
+    # One initial/grain spawn per source frame at most, up to six free-slot
+    # checks per attempt, and at most six grains receiving a new cursor.
+    caps.extend([([0x2EAE], n), ([0x2EB4], 6 * n), ([0x2F9E], 6)])
+    # The remaining per-voice loops advance a cursor, consume a sample, or
+    # leave the current span. Include terminal probes and shared tails.
+    caps.extend(([pc], 12 * (n + 1)) for pc in functions["gran_render"])
+    # No voice can traverse three 1024-frame pages in 32 samples at ±4x. A
+    # missing page still permits one unsuccessful lookup per source sample.
+    caps.extend([(PREP_LOCATE, 6 * (n + 1)), ([0x37BC, 0x3AD6, 0x3B84, 0x3C32, 0x3F48], 12),
+                 ([0x3B46], 6 * n)])
+    # Each kernel iteration, scalar phase advance and silent cursor advance
+    # consumes a distinct sample from one of the six grains.
+    stereo = (0x201C, 0x2102, 0x21C0, 0x2286, 0x2312, 0x23EA, 0x24B6, 0x2592, 0x2620)
+    scalar = (0x30B2, 0x3260, 0x36C2, 0x395A, 0x3D32, 0x3E0E, 0x3AF2, 0x3B10)
+    caps.append(([*stereo, *scalar], 6 * n))
+    return caps
+
+
+def certify(functions, root, n, model, package=PACKAGE):
+    if package == PREP_PACKAGE:
+        instructions, edges = reachable(functions, root, PREP_LOCATE, ("flex_page", "stereo24_page"))
+        constraints = preparation_limits(functions, root, n)
+    else:
+        page_mix = package == PAGE_MIX_PACKAGE
+        instructions, edges = reachable(functions, root, PAGE_MIX_LOCATE if page_mix else LOCATE)
+        constraints = (page_mix_limits if page_mix else visit_limits)(functions, root, n, instructions)
     index = {pc: i for i, pc in enumerate(instructions)}
     flow = lil_matrix((len(index), len(edges)))
     visits = lil_matrix((len(constraints), len(edges)))
@@ -172,8 +207,8 @@ if __name__ == "__main__":
     parser.add_argument("elf", type=Path)
     args = parser.parse_args()
     functions = read_image(args.package, args.elf)
-    page_mix = hashlib.sha256(args.package.read_bytes()).hexdigest() == PAGE_MIX_PACKAGE
-    results = [dict(sourceFrames=n, callback=fn, instructions=certify(functions, fn, n, "instructions", page_mix),
-                    conditionalCoreCycles=certify(functions, fn, n, "core", page_mix))
+    package = hashlib.sha256(args.package.read_bytes()).hexdigest()
+    results = [dict(sourceFrames=n, callback=fn, instructions=certify(functions, fn, n, "instructions", package),
+                    conditionalCoreCycles=certify(functions, fn, n, "core", package))
                for n in (16, 32) for fn in ("grain_start", "grain_render")]
     print(json.dumps(results, indent=2))

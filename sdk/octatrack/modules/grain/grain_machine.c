@@ -45,7 +45,16 @@ typedef struct {
 static Pages pages[8];
 #define FLEX_PAGES 14602u
 
-static int open_pages(Pages *p, uint32_t slot, uint32_t perpage, uintptr_t pool)
+/* A successful open records the geometry that was actually checked. On a
+ * stable voice, reread each live invalidator before reusing that geometry.
+ * Individual physical page numbers are always read from the current map. */
+typedef struct {
+    uintptr_t descriptor, bases, map, pool;
+    uint32_t reserved, start, mode, frames, id;
+} SampleBinding;
+static SampleBinding bindings[8];
+
+static int open_pages(Pages *p, uint32_t slot, uint32_t perpage, uintptr_t pool, SampleBinding *binding)
 {
     uintptr_t bases = U32(0x80006918u), map = U32(0x80006914u);
     if (((bases - 0x46000000u) | (map - 0x46000000u)) >= 0x02000000u || slot >= 136u) return 0;
@@ -56,6 +65,11 @@ static int open_pages(Pages *p, uint32_t slot, uint32_t perpage, uintptr_t pool)
     } else {
         if (start > FLEX_PAGES) return 0;
         p->max_page = FLEX_PAGES - start;
+    }
+    if (binding) {
+        binding->bases = bases;
+        binding->map = map;
+        binding->start = start;
     }
     p->slot = slot;
     p->row = map + 2u * start;
@@ -75,10 +89,28 @@ static uintptr_t flex_page(const void *ctx, uint32_t frame, uint32_t *first, uin
     *count = perpage;
     return p->pool + physical * 6144u;
 }
+/* A packed stereo Flex page always holds 1,024 frames. */
+static uintptr_t stereo24_page(const void *ctx, uint32_t frame, uint32_t *first, uint32_t *count)
+{
+    const Pages *p = ctx;
+    uint32_t index = frame >> 10;
+    if (index > p->max_page) return 0;
+    uint32_t physical = U16(p->row + 2u * index);
+    if (physical - 1u >= FLEX_PAGES) return 0;
+    *first = frame & ~1023u;
+    *count = 1024u;
+    return p->pool + physical * 6144u;
+}
 static int recorder_idle(uint32_t slot)
 {
-    unsigned t = slot - 128u, sel = U32(0x80004f18u) >> t & 1u;
-    return !U8(0x80004f1eu + 84u * (t + 8u * sel)) && (U8(0x80004f1eu + 84u * (t + 8u * (1u - sel))) | 2u) == 2u;
+    unsigned t = slot - 128u;
+    uintptr_t a = 0x80004f1eu + 84u * t;
+    uintptr_t active = a, other = a + 8u * 84u;
+    if (U32(0x80004f18u) & (1u << t)) {
+        active = other;
+        other = a;
+    }
+    return !U8(active) && (U8(other) & ~2u) == 0;
 }
 /* 1 cuando el sample de la voz se puede leer: lo describe en smp[track] */
 static const uint16_t frames_per_page[] = {2048, 1024, 3072, 1536}; /* 6144 bytes / (bytes per channel * channels) */
@@ -86,28 +118,56 @@ static const uint16_t frames_per_page[] = {2048, 1024, 3072, 1536}; /* 6144 byte
 static GranSample dsmp[8];
 static Pages dpages[8];
 
-static int open_sample(uint32_t slot, GranSample *sample, Pages *p)
+static int open_source(uint32_t slot, GranSample *sample, Pages *p, SampleBinding *binding)
 {
-    uint32_t taken = FLEX_PAGES - U32(0x40096f82u);
+    uint32_t reserved = U32(0x40096f82u), taken = FLEX_PAGES - reserved;
     uintptr_t pool = U32(0x4000045eu);
     if (slot >= 136u || taken >= FLEX_PAGES || pool - 0x40a955e0u > (taken & 0xffffu) * 6144u) return 0;
     if (slot >= 128u && !recorder_idle(slot)) return 0;
     uintptr_t at = 0x46c922c4u + 44u * slot;
     uint32_t mode = U32(at), frames = U32(at + 16u), id = U32(at + 20u);
     if (mode > 3u || U32(at + 8u) || frames - 1u >= 44860416u || !id || id != U32(0x46c920a4u + 4u * slot)) return 0;
-    if (!open_pages(p, slot, frames_per_page[mode], pool)) return 0;
+    if (!open_pages(p, slot, frames_per_page[mode], pool, binding)) return 0;
+    if (binding) {
+        binding->reserved = reserved;
+        binding->pool = pool;
+        binding->mode = mode;
+        binding->frames = frames;
+        binding->id = id;
+        binding->descriptor = at;
+    }
     sample->bytes = mode < 2u ? 3u : 2u;
     sample->channels = (uint8_t)((mode & 1u) + 1u);
-    sample->count = frames; sample->locate = flex_page; sample->ctx = p;
+    sample->count = frames; sample->locate = mode == 1u ? stereo24_page : flex_page; sample->ctx = p;
     return 1;
+}
+static __attribute__((noinline)) int open_sample(uint32_t slot, GranSample *sample, Pages *p)
+{
+    return open_source(slot, sample, p, 0);
 }
 static int flex_sample(unsigned track, uintptr_t voice)
 {
-    uint32_t offset = U32(voice + 4u) - 0x46c922c4u, slot = offset / 44u;
-    if (slot >= 136u || offset != slot * 44u) return 0;
-    /* A take can replace the physical pages of the same recorder between callbacks. */
+    Pages *p = &pages[track];
+    GranSample *sample = &smp[track];
+    SampleBinding *b = &bindings[track];
+    uintptr_t descriptor = U32(voice + 4u);
+    uint32_t slot = p->slot;
     eng.t[track].pg.pcount = 0;
-    return open_sample(slot, &smp[track], &pages[track]);
+    if (descriptor && descriptor == b->descriptor) {
+        if (slot >= 128u && !recorder_idle(slot)) return 0;
+        if (U32(descriptor + 8u)) return 0;
+        if (U32(descriptor) == b->mode && U32(descriptor + 16u) == b->frames &&
+            U32(descriptor + 20u) == b->id && U32(0x46c920a4u + 4u * slot) == b->id &&
+            U32(0x40096f82u) == b->reserved && U32(0x4000045eu) == b->pool &&
+            U32(0x80006918u) == b->bases && U32(0x80006914u) == b->map &&
+            U32(b->bases + 4u * slot) == b->start) return 1;
+    } else {
+        uint32_t offset = descriptor - 0x46c922c4u;
+        slot = offset / 44u;
+        if (slot >= 136u || offset != slot * 44u) return 0;
+    }
+    b->descriptor = 0;
+    return open_source(slot, sample, p, b);
 }
 static int slot_sample(unsigned track, uint32_t slot)
 {
@@ -120,15 +180,21 @@ static uintptr_t lane(unsigned track)
     return track < 8 && (fp == at || fp == at + 384u) ? fp : 0;
 }
 
-static unsigned packet(unsigned track, uintptr_t fp, uintptr_t before, int32_t **pcm)
+static unsigned packet(uintptr_t fp, uintptr_t before, int32_t **pcm)
 {
-    uintptr_t after = U32(CURSOR), record = 0x80001c90u + (fp - (0x80000510u + track * 48u)) / 384u * 0xa80u + track * 336u;
-    if (before < record || before - record > 320u || after < before + 16u || after > record + 336u) return 0;
+    /* Both banks have one 336-byte record per 48-byte control lane. */
+    uintptr_t record = 0x80001c90u + 7u * (fp - 0x80000510u);
+    uint32_t start = before - record, end = U32(CURSOR) - record;
+    if (start > 320u || end > 336u || end < start + 16u) return 0;
     uint32_t header = U32(before);
-    unsigned sources = header & 255u, segments = 0;
-    for (uint32_t h = header >> 8; h; h >>= 8, ++segments)
-        if (!(h & 255u)) return 0;
-    if (!segments || after - before != 16u + 4u * (segments - 1u) + 8u * sources) return 0;
+    unsigned sources = header & 255u;
+    uint32_t segments = header >> 8, overhead = 16u;
+    if (!segments || !(segments & 255u)) return 0;
+    if (segments > 255u) {
+        if (!(segments & 0xff00u)) return 0;
+        overhead += segments > 65535u ? 8u : 4u;
+    }
+    if (end - start != overhead + 8u * sources) return 0;
     *pcm = (int32_t *)(before + 16u);
     return sources;
 }
@@ -157,6 +223,7 @@ static void view_close(uintptr_t fp, const View *v)
     U32(fp + 24u) = v->first_setup;
     U16(fp + 28u) = v->last_setup;
 }
+#define BANK 0x46c82456u
 static int bank_ok(void);
 static volatile uint8_t *part_at(unsigned i);
 /* Lo que GRAIN guarda en la Part pasa por si solo la comprobacion de stock (regla de Modwerk, docs/ADD_A_MODULE.md):
@@ -171,35 +238,6 @@ static volatile uint8_t *part_at(unsigned i);
 static inline int scan_steps(unsigned v)
 {
     return v > 127u ? 0 : v == 127u ? 64 : (int)v - 64;
-}
-
-static void params_of(const View *v, GranParams *p, unsigned track)
-{
-    const volatile uint8_t *pp = bank_ok() && track < 8u ? part_at(U8(0x80000003u) & 3u) : 0;
-    /* POS con su fraccion: el octeto bajo de la palabra es lo que ponen las escenas, los LFOs y los slides entre dos
-     * valores; girando el mando es 0 y POS suena igual que en el original */
-    /* y los octavos del mando (SETUP F, oculto: pos_step), 1/8 = 32/256, como los pasos de POS del original */
-    {
-        /* solo si POS es la del mando tal cual (la de la Part, sin escena, LFO ni p-lock): con una escena el crossfader no
-         * llegaba al principio, porque los octavos se sumaban tambien a su valor (author, 19/11) */
-        uint32_t pw = v->w[1];
-        if (!(pw & 0xffu) && pp && (pw >> 8) == pp[0x30u + 30u * track + 1u])
-            pw += 32u * (v->setup[5] & 7u);
-        if (pw > 0x7fffu) pw = 0x7fffu;
-        p->pos = (uint8_t)(pw >> 8); p->posf = (uint8_t)pw;
-    }
-    {   /* SIZE igual: sus octavos en SETUP E (indice 4), solo sin modulacion; en numeros enteros suena como siempre */
-        uint32_t sw = v->w[2];
-        if (sw > 0x7fffu) sw = 0x7fffu;
-        p->size = (uint8_t)(sw >> 8); p->sizef = (uint8_t)sw;
-    }
-    p->dens = (uint8_t)(v->w[3] >> 8);
-    p->spray = (uint8_t)(v->w[4] >> 8);
-    p->scan = (int8_t)scan_steps(v->w[5] >> 8);   /* SCAN: ver scan_steps */
-    p->shape = v->setup[0]; p->sync = v->setup[3]; p->freeze = 0;
-    {   /* DIR y PAN, de la Part que suena */
-        p->dir = pp ? pp[NB_DIR(track)] & 127u : 0; p->pan = pp ? pp[NB_PAN(track)] & 127u : 0;
-    }
 }
 
 /* PTCH (palabra, 0x4000 = 0, 0x100 por semitono ?) -> paso de lectura Q32.32: 2^(st/12) */
@@ -228,26 +266,70 @@ static void pitch_step(uint16_t ptch, int32_t *whole, uint32_t *frac)
     *whole = integer[note]; *frac = fraction[note];
 }
 
-typedef struct { uint32_t count, position_size_density_spray, posf_sync, tempo24; } ParamInputs;
-static ParamInputs last_params[8];
-static void set_params(unsigned track, const GranParams *p, const GranSample *sample, uint32_t tempo24)
-{
-    ParamInputs *last = &last_params[track];
-    uint32_t controls;
-    __builtin_memcpy(&controls, p, sizeof controls); /* pos, size, dens, spray */
-    uint32_t posf_sync = p->posf | ((uint32_t)p->sync << 8);
-    if (!p->sync) tempo24 = 0;
-    if (last->count == sample->count && last->position_size_density_spray == controls &&
-        last->posf_sync == posf_sync && last->tempo24 == tempo24) return;
-    gran_params(&eng, track, p, sample, tempo24);
-    last->count = sample->count; last->position_size_density_spray = controls;
-    last->posf_sync = posf_sync; last->tempo24 = tempo24;
-}
-
-/* lo que suena de verdad (palabras del SRC tras p-locks, LFOs y escenas), para dibujarlo; live_at = live_tick del
- * ultimo render de la pista (live_tick lo avanza la pantalla) */
-static uint16_t live_w[8][6];
+/* The waveform reads the last effective SRC words after slides, locks and scenes. */
+static union { uint16_t w[6]; uint32_t pairs[3]; } live_w[8];
 static volatile uint32_t live_at[8], live_tick = 1;
+
+typedef struct {
+    GranParams params;
+    uint32_t count, tempo24, setup;
+    int32_t whole;
+    uint32_t frac;
+} Prepared;
+static Prepared prepared[8];
+
+static Prepared *prepare_frame(unsigned track, const View *v, const GranSample *sample)
+{
+    Prepared *c = &prepared[track];
+    GranParams *p = &c->params;
+    unsigned pos = v->w[1], size = v->w[2];
+    uintptr_t bank = U32(BANK);
+    unsigned dir = 0, pan = 0;
+    if (bank - 0x40000000u < 0x07f00000u) {
+        const volatile uint8_t *row = (const volatile uint8_t *)(bank + 0x8ed80u +
+                (U8(0x80000003u) & 3u) * 6322u + track * 30u);
+        unsigned fine = v->setup[5] & 7u;
+        if (fine && !(pos & 255u) && (pos >> 8) == row[0x31u]) pos += fine << 5;
+        dir = row[NB_DIR(0)] & 127u;
+        pan = row[NB_PAN(0)] & 127u;
+    }
+    if (pos > 0x7fffu) pos = 0x7fffu;
+    if (size > 0x7fffu) size = 0x7fffu;
+    uint32_t pitch_pos = (v->pairs[0] & 0xffff0000u) | pos;
+    uint32_t size_dens = (size << 16) | v->w[3];
+    uint32_t spray_scan = v->pairs[2];
+    live_at[track] = live_tick;
+    p->dir = dir;
+    p->pan = pan;
+    unsigned sync = v->setup[3];
+    uint32_t tempo = sync ? U32(TEMPO24) : 0u;
+    if (sample && c->count == sample->count && c->tempo24 == tempo &&
+        c->setup == v->first_setup && live_w[track].pairs[1] == size_dens &&
+        live_w[track].pairs[2] == spray_scan && live_w[track].w[0] == v->w[0]) {
+        /* A slide or scene may move POS every callback. Only POS depends on it. */
+        if (live_w[track].w[1] != pos) {
+            live_w[track].w[1] = pos;
+            p->pos = pos >> 8; p->posf = pos;
+            eng.t[track].pos = gran_position(sample->count, pos);
+        }
+        return c;
+    }
+    live_w[track].pairs[0] = pitch_pos;
+    live_w[track].pairs[1] = size_dens;
+    live_w[track].pairs[2] = spray_scan;
+    c->count = sample ? sample->count : 0;
+    if (sample) {
+        c->tempo24 = tempo;
+        c->setup = v->first_setup;
+        pitch_step(v->w[0], &c->whole, &c->frac);
+        p->pos = pos >> 8; p->posf = pos;
+        p->size = size >> 8; p->sizef = size;
+        p->dens = v->w[3] >> 8; p->spray = v->w[4] >> 8;
+        p->shape = v->setup[0]; p->scan = scan_steps(v->w[5] >> 8); p->sync = sync;
+        gran_params(&eng, track, p, sample, tempo);
+    }
+    return c;
+}
 
 int grain_start(unsigned track, unsigned sample, unsigned flags)
 {
@@ -272,19 +354,12 @@ int grain_render(unsigned track, unsigned ping, unsigned start, unsigned end)
     int result = FLEX_RENDER(track, ping, start, end);
     if (U8(voice)) {
         int32_t *pcm = 0;
-        unsigned sources = packet(track, fp, before, &pcm);
+        unsigned sources = packet(fp, before, &pcm);
         if (pcm && sources && sources <= 32u) {
-            GranParams p;
-            int32_t whole; uint32_t frac;
-            params_of(&v, &p, track);
-            for (unsigned k = 0; k < 6; ++k) live_w[track][k] = v.w[k];   /* para la pantalla: con escenas y LFOs */
-            live_w[track][1] = (uint16_t)(p.pos << 8 | p.posf);            /* POS con sus octavos */
-            live_w[track][2] = (uint16_t)(p.size << 8 | p.sizef);          /* SIZE con sus octavos */
-            live_at[track] = live_tick;
-            pitch_step(v.w[0], &whole, &frac);
-            if (flex_sample(track, voice)) {
-                set_params(track, &p, &smp[track], U32(TEMPO24));
-                gran_render(&eng, track, &p, &smp[track], whole, frac, pcm, sources);
+            const GranSample *sample = flex_sample(track, voice) ? &smp[track] : 0;
+            Prepared *c = prepare_frame(track, &v, sample);
+            if (sample) {
+                gran_render(&eng, track, &c->params, sample, c->whole, c->frac, pcm, sources);
             } else
                 for (unsigned i = 0; i < 2u * sources; ++i) pcm[i] = 0;   /* sample ilegible: silencio */
         }
@@ -451,7 +526,6 @@ static unsigned grain_admit(const volatile uint8_t *part, unsigned track)
 }
 
 /* ---- el pool de samples FLEX, igual que AMIGA (cola de S950/POLY8/FRACT, MIT) ---- */
-#define BANK 0x46c82456u
 #define POOL_WINDOW 0x460e70e0u
 static uint32_t pool_bank;
 static uint8_t pool_part, pool_track, pool_direct;
@@ -721,7 +795,7 @@ static void wave_area(unsigned t, volatile uint8_t *part, int x0, int x1, int to
     }
     /* POS: linea de puntos y triangulito, FIJA donde esta POS; con SCAN son los granos los que corren (author, 18/11).
      * POS de lo que suena (con escenas y LFOs) mientras suena; si no, el de la Part; misma cuenta que el motor */
-    uint32_t step = s->count / (uint32_t)width + 1u, pw = live ? live_w[t][1] : part_pos(part, t);
+    uint32_t step = s->count / (uint32_t)width + 1u, pw = live ? live_w[t].w[1] : part_pos(part, t);
     uint32_t at = gran_position(s->count, pw > 0x7fffu ? 0x7fffu : pw);
     int px = x0 + (int)(at / step);
     for (int y = top + 3; y <= bot; y += 2)          /* en inverso: se ve tambien encima de la onda */
@@ -742,7 +816,7 @@ static void wave_area(unsigned t, volatile uint8_t *part, int x0, int x1, int to
 /* El valor de un mando para la pantalla: POS con sus octavos (lo que suena, si suena), el resto con value_text */
 static void knob_value(char *buf, unsigned t, volatile uint8_t *part, unsigned k)
 {
-    if (k == 1) pos_text(buf, live_at[t] + 8u > live_tick ? live_w[t][1] : part_pos(part, t));
+    if (k == 1) pos_text(buf, live_at[t] + 8u > live_tick ? live_w[t].w[1] : part_pos(part, t));
     else if (k == 2) number(buf, part[0x30u + 30u * t + 2]);   /* SIZE 0..127, entera como la lee el motor (author, 19/11) */
     else value_text(buf, k, part[0x30u + 30u * t + k]);
 }

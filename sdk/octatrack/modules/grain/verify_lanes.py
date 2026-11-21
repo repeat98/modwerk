@@ -168,6 +168,23 @@ def check_scan(cpu, symbols, lane, packet):
         pcm = struct.unpack(">32i", cpu.mem_read(packet + 16, 128))
         assert any(pcm) and (min(pcm) >= 0 if physical == 1 else max(pcm) <= 0), pcm
 
+    # A new recording in the same slot can be busy, then change format and
+    # length. The previous take's validated geometry cannot stand in for it.
+    recorder_state = 0x80004f1e + 84 * (slot - 128)
+    cpu.mem_write(recorder_state, b"\x01")
+    cpu.mem_write(CURSOR, struct.pack(">I", packet))
+    call("grain_render", 0, 0, 0, 16)
+    assert cpu.mem_read(packet + 16, 128) == bytes(128), "active recorder must be silent"
+    cpu.mem_write(recorder_state, b"\x00")
+    cpu.mem_write(descriptor + 44 * slot, struct.pack(">6I", 3, 0, 0, 0, 960, 2))
+    cpu.mem_write(0x46c920a4 + 4 * slot, struct.pack(">I", 2))
+    cpu.mem_write(arena + 2 * 6144, bytes.fromhex("30005000") * 960)
+    cpu.mem_write(CURSOR, struct.pack(">I", packet))
+    call("grain_start", 0, slot, 0)
+    call("grain_render", 0, 0, 0, 16)
+    assert cpu.mem_read(symbols["smp"], 6) == struct.pack(">IBB", 960, 2, 2)
+    assert max(struct.unpack(">32i", cpu.mem_read(packet + 16, 128))) > 0
+
 
 def check_assign(image, symbols):
     """Count stock calls and check both Part copies across a machine change."""
