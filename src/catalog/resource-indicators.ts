@@ -69,9 +69,10 @@ export function moduleResourceIndicators(document: ModuleDocument) {
       }
     }
     if (id === 'cpu' && stemPeak?.budget) {
-      const value = (100 * stemPeak.worstCase / stemPeak.budget).toFixed(1) + '%'
+      const percent = Number((100 * stemPeak.worstCase / stemPeak.budget).toFixed(1))
+      const value = percent + '%'
       return {
-        id, label: 'CPU', ariaLabel: 'Reported peak CPU load', value, score: null, fill: 0,
+        id, label: 'CPU', ariaLabel: 'Reported peak CPU load', value, score: percent, maximum: 100, fill: percent,
         status: 'Reported peak · 11 stems',
         valueText: value + ' peak share of an audio block while recording eleven stems',
         description: 'Yves Rosius reported a peak of ' + count(stemPeak.worstCase) + ' of ' + count(stemPeak.budget)
@@ -82,8 +83,10 @@ export function moduleResourceIndicators(document: ModuleDocument) {
     if (id === 'dsp' && dspLoad) {
       const delta = Math.round((dspLoad.after - dspLoad.before) * 10) / 10
       const value = (delta > 0 ? '+' : '') + delta
+      const change = Math.abs(delta)
       return {
-        id, label: 'DSP core', value: value + ' pp', score: null, fill: 0, status: 'Measured · ' + dspLoad.core,
+        id, label: 'DSP core', ariaLabel: 'DSP core load change', value: value + ' pp',
+        score: change, maximum: 100, fill: change, status: 'Measured · ' + dspLoad.core,
         valueText: value + ' percentage points of DSP core load',
         description: 'Core ' + dspLoad.core + ' went from ' + dspLoad.before + '% to ' + dspLoad.after + '% with one instance on '
           + dspLoad.slot + '. ' + dspLoad.scene + ' Base ' + dspLoad.base + '.',

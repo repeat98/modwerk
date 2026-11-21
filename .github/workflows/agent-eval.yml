@@ -29,6 +29,16 @@ jobs:
         run: |
           docker build --tag modwerk-eval-agent scripts/agent-eval
           docker run --rm --network none modwerk-eval-agent --version
+      - name: Compare offline and host scores on private snapshots
+        if: github.event_name == 'pull_request'
+        run: |
+          node scripts/agent-eval/run.mjs list | jq -r '.[]' | while read -r case_id; do
+            snapshot="$RUNNER_TEMP/$case_id"
+            node scripts/agent-eval/run.mjs prepare "$case_id" "$snapshot"
+            node scripts/agent-eval/grade.mjs "$case_id" "$snapshot" > "$snapshot.host.json"
+            bash scripts/agent-eval/score-offline.sh "$case_id" "$snapshot" > "$snapshot.offline.json"
+            diff -u "$snapshot.host.json" "$snapshot.offline.json"
+          done
       - id: corpus
         run: echo "cases=$(node scripts/agent-eval/run.mjs list)" >> "$GITHUB_OUTPUT"
 
@@ -68,10 +78,7 @@ jobs:
           jq -e '.is_error == false' "$RUNNER_TEMP/model.json" > /dev/null
       - name: Score in a fresh offline container
         run: |
-          docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges \
-            --pids-limit 64 --memory 384m --cpus 1 -v "$RUNNER_TEMP/case:/case:ro" \
-            -v "$PWD/scripts/agent-eval:/grader:ro" node:24.21.0-bookworm-slim \
-            node /grader/grade.mjs "$CASE_ID" /case > "$RUNNER_TEMP/score.json"
+          bash scripts/agent-eval/score-offline.sh "$CASE_ID" "$RUNNER_TEMP/case" > "$RUNNER_TEMP/score.json"
           jq --arg suite "$(node scripts/agent-eval/run.mjs suite)" --arg model "$MODEL" --arg commit "$GITHUB_SHA" \
             '. + {suite: $suite, agent: ("Claude Code 2.1.311 / " + $model), commit: $commit}' \
             "$RUNNER_TEMP/score.json" > "$RUNNER_TEMP/result.json"
