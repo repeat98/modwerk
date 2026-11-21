@@ -1,6 +1,8 @@
 # Module resource gauges
 
-Every catalog module must have populated **CPU, DSP core and memory** gauges before a release. The gauges show rough relative demand using four tiers: **Minimal, Low, Moderate, High**. The arc steps are ordinal, not percentages of chip utilization or remaining headroom. A full High arc means the highest relative tier, not an overloaded processor. No exact CPU or DSP capacity denominator is needed for these gauges.
+Every catalog module needs **CPU, DSP core and memory** ratings before release. On Octatrack module pages, the CPU gauge shows the recorded [CPU price](MODULE_PERFORMANCE.md) as a percentage of an audio frame when available. For a track machine this is the per-track budget based on hardware measurements. The gauge evidence links to the measurement in the Modwerk module folder.
+
+Pending CPU prices display the relative tier labelled **Estimated**. DSP core and memory also use the four relative tiers **Minimal, Low, Moderate, High**. A full High arc means the highest relative tier. The tiers need no exact resource capacity denominator.
 
 Ratings are estimates backed by source inspection or a documented comparison. Consider expensive modes, modulation/control changes, active voices and buffers. Audio effects/voices are rated per active instance; project-wide features such as USB Audio are rated while enabled. State a different workload explicitly. Minimal is useful for a small or absent added processing path; it is not a claim that the whole device consumes zero resources. Scores must not be summed across modules, processors or memory spaces.
 

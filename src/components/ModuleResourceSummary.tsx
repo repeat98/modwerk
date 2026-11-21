@@ -3,18 +3,18 @@ import { Icon } from './Icon'
 
 export type ResourceIndicator = {
   id: 'cpu' | 'dsp' | 'memory'; label: string; value: string; status: string
-  score: number | null; maximum?: number; fill: number; valueText?: string
+  score: number | null; maximum?: number; fill: number; valueText?: string; ariaLabel?: string
 }
 
-export function ModuleResourceSummary({ indicators, evidence }: { indicators: ResourceIndicator[]; evidence: ReactNode }) {
+export function ModuleResourceSummary({ heading = 'Estimated load', indicators, evidence }: { heading?: string; indicators: ResourceIndicator[]; evidence: ReactNode }) {
   return <aside className="module-resource-summary" aria-label="Module resource usage">
-    <h2>Estimated load</h2>
+    <h2>{heading}</h2>
     <dl className="module-resource-gauges">
       {indicators.map(indicator => <div className={'resource-gauge resource-gauge-' + indicator.id} key={indicator.id}>
         <dt>{indicator.label}</dt>
         <dd>
           <div className="resource-gauge-dial" role={indicator.score === null ? 'img' : 'meter'}
-            aria-label={indicator.label + ' relative load' + (indicator.score === null ? ': ' + indicator.status : '')}
+            aria-label={indicator.ariaLabel ?? (indicator.label + ' relative load' + (indicator.score === null ? ': ' + indicator.status : ''))}
             aria-valuemin={indicator.score === null ? undefined : 0} aria-valuemax={indicator.score === null ? undefined : indicator.maximum ?? 4} aria-valuenow={indicator.score ?? undefined}
             aria-valuetext={indicator.score === null ? undefined : indicator.valueText ?? indicator.value + ' · ' + indicator.status.toLowerCase() + ' relative load'}>
             <svg viewBox="0 0 96 54" fill="none" aria-hidden="true">
@@ -29,7 +29,7 @@ export function ModuleResourceSummary({ indicators, evidence }: { indicators: Re
     </dl>
     <details className="module-resource-evidence">
       <summary>How we rate load <Icon name="plus" size={12} /></summary>
-      <div className="resource-evidence-panel" role="region" aria-label="Resource estimate records" tabIndex={0}>{evidence}</div>
+      <div className="resource-evidence-panel" role="region" aria-label="Resource evidence" tabIndex={0}>{evidence}</div>
     </details>
   </aside>
 }
