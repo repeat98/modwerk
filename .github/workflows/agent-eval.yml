@@ -1,0 +1,85 @@
+name: Post-merge agent eval
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'scripts/agent-eval/**'
+      - '.github/workflows/agent-eval.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  controls:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      cases: ${{ steps.corpus.outputs.cases }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.21.0
+      - run: node scripts/agent-eval/run.mjs verify
+      - name: Check the solver image on eval changes
+        if: github.event_name == 'pull_request'
+        run: |
+          docker build --tag modwerk-eval-agent scripts/agent-eval
+          docker run --rm --network none modwerk-eval-agent --version
+      - id: corpus
+        run: echo "cases=$(node scripts/agent-eval/run.mjs list)" >> "$GITHUB_OUTPUT"
+
+  replay:
+    if: github.event_name != 'pull_request' && github.repository == 'repeat98/modwerk' && github.ref == 'refs/heads/main'
+    needs: controls
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        case: ${{ fromJSON(needs.controls.outputs.cases) }}
+    env:
+      CASE_ID: ${{ matrix.case }}
+      MODEL: ${{ vars.AGENT_EVAL_MODEL || vars.MAINTENANCE_BOT_MODEL || 'claude-sonnet-5-5' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.21.0
+      - name: Prepare the pre-fix snapshot
+        run: |
+          node scripts/agent-eval/run.mjs prepare "$CASE_ID" "$RUNNER_TEMP/case"
+          docker build --tag modwerk-eval-agent scripts/agent-eval
+      - name: Attempt the task in the snapshot
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          test -n "$CLAUDE_CODE_OAUTH_TOKEN"
+          docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e CLAUDE_CODE_OAUTH_TOKEN \
+            -v "$RUNNER_TEMP/case:/work" -w /work modwerk-eval-agent \
+            -p "$(cat "$RUNNER_TEMP/case/TASK.md")" --model "$MODEL" --max-turns 16 --output-format json \
+            --tools 'Read,Edit,Glob,Grep' --allowedTools 'Read,Edit,Glob,Grep' > "$RUNNER_TEMP/model.json"
+          jq -e '.is_error == false' "$RUNNER_TEMP/model.json" > /dev/null
+      - name: Score in a fresh offline container
+        run: |
+          docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges \
+            --pids-limit 64 --memory 384m --cpus 1 -v "$RUNNER_TEMP/case:/case:ro" \
+            -v "$PWD/scripts/agent-eval:/grader:ro" node:24.21.0-bookworm-slim \
+            node /grader/grade.mjs "$CASE_ID" /case > "$RUNNER_TEMP/score.json"
+          jq --arg suite "$(node scripts/agent-eval/run.mjs suite)" --arg model "$MODEL" --arg commit "$GITHUB_SHA" \
+            '. + {suite: $suite, agent: ("Claude Code 2.1.311 / " + $model), commit: $commit}' \
+            "$RUNNER_TEMP/score.json" > "$RUNNER_TEMP/result.json"
+          jq -r '"**" + .case + "** " + (if .passed then "passed" else "failed" end), (.checks[] | "- " + .name + " — " + (if .passed then "pass" else "fail" end))' \
+            "$RUNNER_TEMP/result.json" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: agent-eval-${{ matrix.case }}
+          path: ${{ runner.temp }}/result.json
+          if-no-files-found: error
+          retention-days: 90
