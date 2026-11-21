@@ -1,0 +1,1 @@
+Adding USB Audio to an Octatrack set now starts with the stereo Main mix on USB channels 1–2. Existing sets keep their routing, including the original 20-channel layout on sets saved without USB settings.
