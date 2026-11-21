@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { ModuleDetail } from '../components/ModuleDetail'
 import { AVAILABLE_MODULES } from '../catalog/availability'
+import { MODULE_DOCUMENTS_BY_ID } from '../catalog/documents'
 import { CommunityContext, emptySession } from '../community/context'
 import type { Session } from '../community/api'
 import { DigiModDetail } from './DigiModDetail'
@@ -78,6 +79,18 @@ describe('module detail parity across machines', () => {
     expect(html).toContain('CPU and DSP load have no separate measurements yet.')
     expect(html).toContain('role="meter" aria-label="Memory relative load"')
     expect(html).not.toContain('aria-valuenow="0"')
+  })
+
+  it('shows the Octatrack CPU price as a hardware measurement with a local evidence record', () => {
+    const module = AVAILABLE_MODULES.find(module => module.id === 'euclid')!
+    const price = MODULE_DOCUMENTS_BY_ID[module.id].resources.cpuPrice!
+    const html = render(createElement(ModuleDetail, { module, selected: false, onToggle: noop }))
+    expect(html).toContain('role="meter" aria-label="CPU price" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + price.value + '"')
+    expect(html).toContain('aria-valuetext="' + price.value + '% of an audio frame, measured on hardware"')
+    expect(html).toContain('>' + price.value + '%</strong>')
+    expect(html).toContain('Measured · of frame')
+    expect(html).toContain('Measured on ' + price.date)
+    expect(html).toContain('/blob/main/sdk/octatrack/modules/euclid/' + price.source + '"')
   })
 
   it('offers the report form on both Digi machines with public delivery, private configuration, and machine-specific fields', () => {
