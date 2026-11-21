@@ -50,7 +50,7 @@ npm run pr:ready -- --commit "Message" # check and commit fully staged work in o
 npm run pr:ready -- --author <login>   # a registered author's update: also the bot's merge scope
 ```
 
-It fetches current `main` and runs the same change-scoped checks as PR CI with `npm run check -- --base <main>`. With `--commit`, stage the whole change first. A passing check commits that tree with your normal Git hooks, verifies the resulting tree and parent, and checks the committed PR scope and board claims. A failed check leaves the change staged. The default checks a clean, committed branch and regenerates stale catalogues or notices after a failure. Add `--author` for the publication bot's scope check. Once **Ready**, push and watch `gh pr checks <number> --watch` until green. A test file that fails in the full run is rerun alone on one worker; if it passes there, the check lists it as flaky and passes.
+It fetches current `main` and runs PR CI's change-scoped checks with `npm run check -- --base <main>`. With `--commit`, stage the whole change first. A passing check commits that tree with your Git hooks, verifies tree and parent, and checks the PR scope and board claims. A failed check leaves the change staged. The default checks a clean, committed branch and regenerates stale catalogues or notices after a failure. Add `--author` for the publication bot's scope check. Once **Ready**, push and watch `gh pr checks <number> --watch` until green. A test file failing in the full run is rerun alone; passing there, it is listed as flaky.
 
 These stumbling blocks have each cost a contributor and the owner a repair round:
 
