@@ -174,3 +174,76 @@ function lazyGlue(root) {
   let units = null
   return new Proxy({}, { get: (_, id) => (units ??= portGlue(root))[id] })
 }
+
+// ---- What a module costs while nobody uses it (owner, 20 November 2026) ------------------------------------------------------
+// An installed module that no track, slot or page uses should cost the frame interrupt nothing: a player with 24 modules paid 6.1
+// points for code the interrupt entered while nothing used it (docs/verification/2026-11-20-octatrack-unused-module-cost.md). The
+// test procedure's step 9 measures it, and this is the one measure the limit is judged on: `npm run device:price`'s at-rest reading,
+// the share of the frame interrupt (`guard`) the module adds while the selected pattern plays, installed and used nowhere, on a
+// development twin of a base, against the same scene without it; the reading's base and scene are in its record. A module whose
+// figure is above AT_REST_LIMIT must rest: answer
+// ev_in_use and mark its frame detours "rests" (sdk/machines/octatrack/HOOKS.md), unless it is a machine, which the base rests itself.
+// Both numbers are the owner's to change. Releases dated from AT_REST_FROM (the version's entry in its changelog, or a version with
+// none yet) fail; earlier published releases are only warned, so nothing published breaks retroactively.
+export const AT_REST_LIMIT = 0.2 // points of the frame interrupt
+export const AT_REST_FROM = '2026-11-20' // the day the check merged
+const AT_REST_TOLERANCE = 1e-9
+
+/** Whether the module answers ev_in_use itself: its runtime*.json, its machine port or its USB package row subscribes it. */
+export function answersInUse({ root, id }) {
+  const folder = resolve(root, 'sdk/octatrack/modules', id)
+  for (const name of existsSync(folder) ? readdirSync(folder).filter(name => /^runtime.*\.json$/.test(name)) : [])
+    if ((readJson(join(folder, name))?.subscribe ?? []).some(item => item.event === 'ev_in_use')) return true
+  if ((readJson(resolve(root, PORTS, 'machine-ports.json'))?.ports?.[id]?.subscribe ?? []).some(item => item.event === 'ev_in_use')) return true
+  const row = readJson(resolve(root, 'src/engine/assets/octatrack-module-packages.json'))?.packages?.find(item => item.id === id)
+  return (row?.subscribe ?? []).some(item => typeof item === 'string' && item.split(':')[0] === 'ev_in_use')
+}
+
+/** The figure at rest: device:price's atRestAdds.frame in its record, else the declared price of a module with no effect slot
+ *  when device:price took it (installed and used nowhere is all such a module's price measures). null when nothing says: a
+ *  machine-render price, or a price some other tool took, is another measure and never judged against the limit. */
+export function atRestFigure({ root, document }) {
+  const declared = document.resources?.cpuPrice, record = readJson(resolve(root, 'sdk/octatrack/modules', document.id, CPU_PRICE_RECORD))
+  if (record?.module === document.id && typeof record.result?.atRestAdds?.frame === 'number') return { value: record.result.atRestAdds.frame, from: CPU_PRICE_RECORD }
+  if (declared?.measure === 'frame-interrupt' && /device:price/.test(declared.tool ?? '') && document.compatibility?.effectId == null)
+    return { value: declared.value, from: 'resources.cpuPrice' }
+  return null
+}
+
+/** The date of the module's current version in its changelog (src/community/module-changelogs/<id>.json), or null for none yet. */
+export function releaseDate({ root, document }) {
+  const entries = readJson(resolve(root, 'src/community/module-changelogs', document.id + '.json'))
+  const entry = Array.isArray(entries) ? entries.find(item => item?.version === document.version) : null
+  return typeof entry?.date === 'string' ? entry.date.slice(0, 10) : null
+}
+
+/** Whether the module marks any of its detours "rests": its runtime*.json or its machine port. */
+export function declaresRests({ root, id }) {
+  const folder = resolve(root, 'sdk/octatrack/modules', id)
+  for (const name of existsSync(folder) ? readdirSync(folder).filter(name => /^runtime.*\.json$/.test(name)) : [])
+    if ((readJson(join(folder, name))?.rests ?? []).length) return true
+  return Boolean((readJson(resolve(root, PORTS, 'machine-ports.json'))?.ports?.[id]?.rests ?? []).length)
+}
+
+/** One module's cost at rest: { state: 'ok' | 'info' | 'warn' | 'fail', detail, fix? }. A machine or an effect is answered for by
+ *  the base (its handlers rest by themselves), but its own detours rest only where it marks them, so it passes over the limit only
+ *  with "rests"; any other module passes over it only by answering ev_in_use. */
+export function atRestStatus({ root, document, glue = null }) {
+  const id = document.id, figure = atRestFigure({ root, document })
+  const machine = machineDescriptors({ root, id, glue }).length > 0 || document.compatibility?.location === 'Track machine'
+  const judged = machine || document.compatibility?.effectId != null, measured = figure ? ' (' + figure.value + ' points measured at rest)' : ''
+  if (answersInUse({ root, id })) return { state: 'ok', detail: 'it answers ev_in_use, so it rests while it acts on no track' + measured }
+  if (judged && declaresRests({ root, id })) return { state: 'ok', detail: 'the base rests ' + (machine ? 'a machine no track uses' : 'an effect no slot uses') + ', its detours marked rests with it' + measured }
+  if (!figure) return { state: 'info', detail: 'no cost at rest measured yet (test procedure step 9, npm run device:price)' }
+  if (figure.value <= AT_REST_LIMIT + AT_REST_TOLERANCE) return { state: 'ok', detail: figure.value + ' points of the frame interrupt installed and used nowhere (' + figure.from + '), within ' + AT_REST_LIMIT }
+  const date = releaseDate({ root, document }), refused = !date || date >= AT_REST_FROM
+  return {
+    state: refused ? 'fail' : 'warn',
+    detail: 'installed and used nowhere it costs ' + figure.value + ' points of the frame interrupt (' + figure.from + '), more than ' + AT_REST_LIMIT +
+      (refused ? '' : '; reported, not refused, for a release dated before ' + AT_REST_FROM),
+    fix: (judged
+      ? 'list its frame-interrupt detours under "rests" in runtime.json: the base rests ' + (machine ? 'a machine no track uses' : 'an effect no slot uses') + ' and puts stock\'s bytes back there'
+      : 'subscribe ev_in_use and answer 0 while it acts on no track, and list its frame-interrupt detours under "rests" in runtime.json') +
+      ' (sdk/machines/octatrack/HOOKS.md, docs/MODULE_PERFORMANCE.md "A module that no track uses rests"); then measure again with npm run device:price',
+  }
+}

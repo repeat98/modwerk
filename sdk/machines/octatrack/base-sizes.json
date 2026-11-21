@@ -377,35 +377,55 @@
   },
   {
    "base": "0.7.11",
-   "identity": "98971ac40d60dc76532d13738f3a5c46f5d2fb7ec58b3ea554cbd81d46a7c3cc",
+   "identity": "a08a1557c5bd7d04b6b0615361f059ac99ba2bc40f8a7e3b86842db2ccbbb5bd",
    "layouts": {
     "tracks-main-cue": {
-     "main": 1327530,
-     "container": 808280
+     "main": 1327492,
+     "container": 808332
     },
     "tracks": {
-     "main": 1327369,
-     "container": 808144
+     "main": 1327347,
+     "container": 808128
     },
     "tracks-post": {
-     "main": 1328985,
-     "container": 809900
+     "main": 1328952,
+     "container": 809860
     },
     "main-cue": {
-     "main": 1327292,
-     "container": 808008
+     "main": 1327259,
+     "container": 808048
     },
     "main": {
-     "main": 1327153,
-     "container": 807900
+     "main": 1327122,
+     "container": 807916
     },
     "master": {
-     "main": 1327178,
-     "container": 807908
+     "main": 1327146,
+     "container": 807928
     },
     "off": {
-     "main": 1325748,
-     "container": 806320
+     "main": 1325717,
+     "container": 806276
+    }
+   }
+  },
+  {
+   "base": "0.7.12",
+   "identity": "254c5a75a139255e057e69532bb952daffef5039ffeee0e6c9fabda302e5bb91",
+   "layouts": {
+    "off": {
+     "main": 1331131,
+     "container": 812368
+    }
+   }
+  },
+  {
+   "base": "0.7.13",
+   "identity": "5add931eb7ddcddfda67e9ca184234eb823f4476829a194e4cb0786991ba9584",
+   "layouts": {
+    "off": {
+     "main": 1333150,
+     "container": 814684
     }
    }
   }

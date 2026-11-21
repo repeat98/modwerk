@@ -23,7 +23,7 @@ import sdkCatalog from '../../sdk/catalog.json'
 const draft = () => parseModuleDocument(example)
 const rated = () => parseModuleDocument({ ...example, resources: { ...example.resources, impact: resourceImpactFixture() } })
 
-describe('required relative module resource gauges', () => {
+describe('module resource gauges', () => {
   it('populates CPU, DSP and memory for every current version without inventing measurements', () => {
     expect(MODULE_DOCUMENTS).toHaveLength(sdkCatalog.modules.length)
     // Only versions under an owner exception may go without a qualification record; none is invented for them.
@@ -32,10 +32,17 @@ describe('required relative module resource gauges', () => {
       const indicators = moduleResourceIndicators(document)
       expect(indicators.map(indicator => indicator.id)).toEqual(['cpu', 'dsp', 'memory'])
       for (const indicator of indicators) {
-        expect(['Minimal', 'Low', 'Moderate', 'High']).toContain(indicator.value)
-        expect(indicator.fill).toBeGreaterThan(0)
+        const price = document.resources.cpuPrice
+        if (indicator.id === 'cpu' && price) {
+          expect(indicator).toMatchObject({ value: price.value + '%', score: price.value, maximum: 100, fill: price.value, source: price.source })
+          expect(indicator.description).toContain(price.conditions)
+          if (price.measure === 'machine-render') expect(indicator.valueText).toContain('per playing track')
+        } else {
+          expect(['Minimal', 'Low', 'Moderate', 'High']).toContain(indicator.value)
+          expect(indicator.fill).toBeGreaterThan(0)
+          if (indicator.id === 'cpu') expect(indicator.status).toBe('Estimated')
+        }
         expect(indicator.description.length).toBeGreaterThan(20)
-        expect(indicator.value).not.toContain('%')
       }
       if(document.id==='sidechain-compressor') expect(document.tests.hardwareStatus).toBe('reported')
       if(document.id==='tapehead') expect(document.tests.hardwareStatus).toBe('reported')
@@ -45,6 +52,7 @@ describe('required relative module resource gauges', () => {
 
   it('draws ordinal load tiers without using a CPU or DSP capacity denominator', () => {
     const document = rated()
+    document.resources.impact!.cpu.basis = 'measured-comparison'
     const [cpu, dsp, memory] = moduleResourceIndicators(document)
     expect(cpu).toMatchObject({ value: 'Minimal', score: 1, fill: 25, status: 'Estimated' })
     expect(dsp).toMatchObject({ value: 'High', score: 4, fill: 100, status: 'Compared' })

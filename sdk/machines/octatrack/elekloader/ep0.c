@@ -15,6 +15,9 @@
  * The controller's backend is boot.c's: the runtime loader's for module
  * packages, plus whole OS images for a RAM boot. */
 #include "status.h"
+#ifdef MODWERK_SETTINGS
+#include "settings.h"
+#endif
 #ifdef MODWERK_DSP_LOADER
 #include "selftest.h"
 #include "fxids.h"
@@ -22,6 +25,9 @@
 #endif
 #include "vendor.h"
 #include "usb_base.h"
+#ifdef MODWERK_USB_FUNCTIONS
+#include "usb_function.h"
+#endif
 #include "runtime.h"
 #include "boot.h"
 #include "flash.h"
@@ -90,6 +96,9 @@ static uint32_t primes, completions, submit_state, last_token, last_received, pr
 /* The tick's catch-ups and refusals (modwerk_ep0_tick), the descriptor's token at the last abandon (not active: the
  * data had come) and the queue head's overlay token at the last refusal (what the controller had received). */
 static volatile uint32_t caught, stalled, abandoned_token, stuck_overlay;
+/* Only the last normal SUBMIT may answer a sequence-specific DIAG. Zero means no sample. */
+static uint16_t sample_sequence, remaining_plus_one;
+static uint8_t track_receive;
 static uint32_t waited; /* ticks the primed data stage has not completed */
 const uint8_t *modwerk_ep0_reply;
 /* The engine ignores messages whose first byte is above 45 and returns to
@@ -219,6 +228,7 @@ static void flush_receive(void)
 
 static uint32_t prime_receive(uint8_t *buffer,uint32_t length)
 {
+        track_receive = SETUP[1] == MV_SUBMIT;
         /* Stock's completion loop handles an EP0 OUT completion harmlessly
          * only in its idle state (11) with no awaited OUT descriptor; in any
          * other state it spins on the bit forever. This new SETUP has ended
@@ -251,7 +261,7 @@ static uint32_t prime_receive(uint8_t *buffer,uint32_t length)
 
 /* DIAG (0xC1, bRequest 4, wValue 0, wLength 68, never a multiple of 64; see
  * vendor.h): read-only counters for a hardware run, big-endian after "MWUD",
- * version 3 and three zero bytes:
+ * version 3, flags (bit 0 supports the 70-byte read) and two zero bytes:
  * runtime ticks, the test module's value, whether a module is active, frames
  * received, our refusals, bus resets, data stages primed and completed, the
  * stock EP0 state (high 16 bits) and awaited-OUT flag at the last SUBMIT,
@@ -260,14 +270,34 @@ static uint32_t prime_receive(uint8_t *buffer,uint32_t length)
  * back, the first four bytes received, and data stages abandoned. */
 static int diag(const uint8_t *s, uint8_t *out)
 {
-    if (s[0] != MV_RESULT_TYPE || s[1] != 4 || s[2] || s[3] || s[4] != MODWERK_VENDOR_INTERFACE || s[5] ||
-        s[6] != 68 || s[7]) return 0;
+    if (s[0] != MV_RESULT_TYPE || s[1] != 4 || s[4] != MODWERK_VENDOR_INTERFACE || s[5] || s[7]) return 0;
+    uint16_t sequence = s[2] | (uint16_t)s[3] << 8;
+    if (s[6] != 70 && (s[6] != 68 || sequence)) return 0;
     uint32_t words[15] = {modwerk_runtime_calls(), modwerk_runtime_value(), modwerk_runtime_active() != 0,
                           frames, refusals, resets, primes, completions, submit_state, last_token,
                           last_received, prime_status, qh_next, frame_head, abandons};
-    out[0] = 'M'; out[1] = 'W'; out[2] = 'U'; out[3] = 'D'; out[4] = 3; out[5] = out[6] = out[7] = 0;
+    out[0] = 'M'; out[1] = 'W'; out[2] = 'U'; out[3] = 'D'; out[4] = 3; out[5] = 1; out[6] = out[7] = 0;
     for (uint32_t i = 0; i < 60; ++i) out[8 + i] = (uint8_t)(words[i / 4] >> (24 - 8 * (i % 4)));
-    return 1;
+    if (s[6] == 70) {
+        uint16_t remaining = remaining_plus_one && sequence == sample_sequence ? remaining_plus_one - 1u : 0xffffu;
+        out[68] = remaining >> 8; out[69] = (uint8_t)remaining;
+    }
+    return s[6];
+}
+
+static void sample_token(uint32_t token)
+{
+    uint32_t remaining = token >> 16 & 0x7fffu;
+    if (track_receive && remaining <= expected) remaining_plus_one = (uint16_t)(remaining + 1u);
+}
+
+/* Before completion the dTD can still hold the original length. Only the controller's
+ * current overlay, after it has consumed this prime, measures partial progress. */
+static void sample_overlay(void)
+{
+    volatile uint32_t *qh = (volatile uint32_t *)(uintptr_t)EP0_OUT_QH;
+    if (!(ENDPTPRIME & 1u) && qh[1] == (uint32_t)(uintptr_t)UNCACHED(&data_dtd))
+        sample_token(qh[3]);
 }
 
 /* What Windows asks before it binds WinUSB to the vendor interface: the BOS
@@ -297,6 +327,12 @@ uint32_t modwerk_ep0_dispatch(void)
 {
     struct mv_transport *t = vendor();
     uint8_t *out = UNCACHED(reply);
+    if (receiving) sample_overlay();
+    if (SETUP[0] == MV_SUBMIT_TYPE && SETUP[1] == MV_SUBMIT && SETUP[4] == MODWERK_VENDOR_INTERFACE && !SETUP[5]) {
+        remaining_plus_one = 0;
+        sample_sequence = SETUP[2] | (uint16_t)SETUP[3] << 8;
+        track_receive = 0;
+    }
 #ifdef MODWERK_RUNTIME_VOLATILE_JOURNAL
     /* A new SETUP abandons an incomplete private OUT. Unknown writes trigger
      * board expiry/recovery, never controller adoption or frame replay. */
@@ -339,10 +375,19 @@ uint32_t modwerk_ep0_dispatch(void)
         ++abandons;
         flush_receive();
     }
-    if (r.action == MV_PASS) return windows(SETUP, out);
-    if (r.action == MV_STALL && diag(SETUP, out)) { /* mv_setup stalls requests it does not know */
+    if (r.action == MV_PASS) {
+        uint32_t n = windows(SETUP, out);
+#ifdef MODWERK_USB_FUNCTIONS
+        /* Neither stock's nor the vendor interface's: a module's USB function may answer it itself
+         * (ev_usb_control). Nothing is sent or stalled here then: stock's done path. */
+        if (!n && modwerk_usb_function_control()) return MODWERK_EP0_RECEIVING;
+#endif
+        return n;
+    }
+    uint32_t diagnostic_bytes = r.action == MV_STALL ? diag(SETUP, out) : 0;
+    if (diagnostic_bytes) {
         modwerk_ep0_reply = out;
-        return 68;
+        return diagnostic_bytes;
     }
     /* CAPABILITIES (0xC1, bRequest 29, wValue 0, wLength 12): MWCP v1,
      * loader ABI, feature bits, site/copy bounds. Older bases stall; canSubmit
@@ -362,6 +407,26 @@ uint32_t modwerk_ep0_dispatch(void)
         modwerk_ep0_reply = out;
         return FLASH_SLOTS_BYTES;
     }
+#ifdef MODWERK_USB_FUNCTIONS
+    /* USB FUNCTION (0xC1, bRequest 41, wValue 0, wLength 8): whether the base is about to reconnect or is
+     * reconnecting because a module's USB function came or went, and whether the configuration the host read holds
+     * one (usb_function.h). Read-only; bases without ot_usb_functions stall it. */
+    if (r.action == MV_STALL && SETUP[0] == MV_RESULT_TYPE && SETUP[1] == 41 && !SETUP[2] && !SETUP[3] &&
+        SETUP[4] == MODWERK_VENDOR_INTERFACE && !SETUP[5] && SETUP[6] == MODWERK_USB_FUNCTION_STATUS_BYTES && !SETUP[7]) {
+        modwerk_ep0_reply = out;
+        return modwerk_usb_function_status(out);
+    }
+#endif
+#ifdef MODWERK_SETTINGS
+    /* Read-only install presets. The current panel choice remains private to the unit. */
+    if (r.action == MV_STALL && SETUP[0] == MV_RESULT_TYPE && SETUP[1] == 42u && !SETUP[2] && !SETUP[3] &&
+        SETUP[4] == MODWERK_VENDOR_INTERFACE && !SETUP[5] && SETUP[6] == 4 + 8 * MODWERK_SETTINGS_ROOM && !SETUP[7]) {
+        unsigned n = modwerk_settings_presets(out);
+        if (!n) return MODWERK_EP0_REFUSE;
+        modwerk_ep0_reply = out;
+        return n;
+    }
+#endif
 #ifdef MODWERK_RUNTIME_SETS
     /* Exact baseline identity; only cached copies in the ISR. A stale cache
      * wakes its engine owner and refuses this read until it is refreshed. */
@@ -471,9 +536,13 @@ uint32_t modwerk_ep0_dispatch(void)
 void modwerk_ep0_poll(void);
 void modwerk_ep0_poll(void)
 {
+#ifdef MODWERK_USB_FUNCTIONS
+    modwerk_usb_function_isr(); /* ev_usb_isr: a module's USB function retires its endpoint before stock's loop */
+#endif
     if (!receiving) return;
     struct mv_transport *t = vendor();
     if (ENDPTSETUPSTAT & 1u) { /* The host gave this data stage up. */
+        sample_overlay();
         receiving = 0;
         ++abandons;
         abandoned_token = ((volatile struct dtd *)UNCACHED(&data_dtd))->token;
@@ -487,6 +556,7 @@ void modwerk_ep0_poll(void)
     }
     uint32_t token = ((volatile struct dtd *)UNCACHED(&data_dtd))->token;
     if (token & DTD_ACTIVE) return;
+    sample_token(token);
     receiving = 0;
     ENDPTCOMPLETE = 1u; /* Ours, if the stock loop has not taken it. */
     uint32_t received = token & DTD_ERRORS ? 0 : expected - (token >> 16 & 0x7fffu);
@@ -516,6 +586,11 @@ void modwerk_ep0_bus_reset(void)
 {
     struct mv_transport *t = vendor();
     ++resets;
+    remaining_plus_one = 0;
+    track_receive = 0;
+#ifdef MODWERK_USB_FUNCTIONS
+    modwerk_usb_function_bus_end(); /* ev_usb_bus_end: a module's USB function goes back to alternate setting 0 */
+#endif
 #ifdef MODWERK_RUNTIME_VOLATILE_JOURNAL
     volatile_receiving=0;modwerk_volatile_reset(VOLATILE_SERVICE);wake();
 #endif
@@ -526,6 +601,11 @@ void modwerk_ep0_bus_reset(void)
         receiving = 0;
         flush_receive();
     }
+#ifdef MODWERK_USB_FUNCTIONS
+    /* The base took the unit off the bus itself, to show the host a configuration with or without a module's USB
+     * function (usb_function.c). The host is still there: an open sync or trial stays open. */
+    if (modwerk_usb_reconnecting()) return;
+#endif
     if (mv_reset(t)) wake();
 }
 
@@ -558,7 +638,16 @@ static void ep0_tick(void)
         if (quiet >= HOST_TIMEOUT_TICKS) ((void (*)(const char *, unsigned))0x4005a2b8u)("MODWERK CONNECTED", 0x60);
         heard = activity, quiet = 0;
         modwerk_flash_host = 1; /* a computer talks to this base: flash.c may confirm its slot */
+#ifdef MODWERK_USB_FUNCTIONS
+        modwerk_usb_function_host(); /* and it is back after the base's own reconnect */
+#endif
     } else if (quiet < HOST_TIMEOUT_TICKS) ++quiet;
+#ifdef MODWERK_USB_FUNCTIONS
+    /* ot_usb_functions changed: the base reconnects by itself (usb_function.c). A host that does not reach the
+     * vendor interface again is handled as unplugged; until then its silence is not counted. */
+    if (modwerk_usb_function_tick(!receiving) && mv_reset(vendor())) wake();
+    if (!modwerk_usb_reconnecting())
+#endif
     if (started && controller_started && mv_tick(vendor(), controller.phase != MU_NORMAL, HOST_TIMEOUT_TICKS)) wake();
     if (controller_started && controller.disconnecting) wake(); /* finish all rows of an abandoned set */
     if (modwerk_boot_tick()) wake(); /* an armed RAM boot is due */
@@ -584,6 +673,7 @@ static void ep0_tick(void)
         if (receiving && !(((volatile struct dtd *)UNCACHED(&data_dtd))->token & DTD_ACTIVE)) ++caught, modwerk_ep0_poll();
         else if (receiving && ++waited >= 30u) {
             stuck_overlay = ((volatile uint32_t *)(uintptr_t)EP0_OUT_QH)[3];
+            sample_overlay();
             receiving = 0, waited = 0, ++stalled;
 #ifdef MODWERK_RUNTIME_VOLATILE_JOURNAL
             if(volatile_receiving) { volatile_receiving=0;modwerk_volatile_reset(VOLATILE_SERVICE);wake(); }

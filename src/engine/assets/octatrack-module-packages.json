@@ -338,7 +338,7 @@
       "bytes": 2636,
       "sha256": "cbd0fa736250c328efdfaa0f015217a42e124cb8f73c4718f5d90f4b2977319c",
       "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
-      "requiredBase": "98971ac40d60dc76532d13738f3a5c46f5d2fb7ec58b3ea554cbd81d46a7c3cc"
+      "requiredBase": "5add931eb7ddcddfda67e9ca184234eb823f4476829a194e4cb0786991ba9584"
     },
     {
       "id": "output-matrix",
@@ -354,7 +354,7 @@
       "bytes": 3740,
       "sha256": "0b9bf60368dd2cb538970de6ea58334bb001f63d1e3eaea9bec3256bb0894372",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "98971ac40d60dc76532d13738f3a5c46f5d2fb7ec58b3ea554cbd81d46a7c3cc"
+      "requiredBase": "5add931eb7ddcddfda67e9ca184234eb823f4476829a194e4cb0786991ba9584"
     },
     {
       "id": "cc-map",
@@ -370,7 +370,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "98971ac40d60dc76532d13738f3a5c46f5d2fb7ec58b3ea554cbd81d46a7c3cc"
+      "requiredBase": "5add931eb7ddcddfda67e9ca184234eb823f4476829a194e4cb0786991ba9584"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -394,15 +394,15 @@
       "octabam": true,
       "abi": 7,
       "features": 1,
-      "sites": 5,
+      "sites": 7,
       "copies": 0,
       "fills": 0,
-      "version": "0.1.2-experimental",
+      "version": "0.2.0-experimental",
       "name": "DirectJmp Kyoti",
       "module": "075d79a3",
-      "bytes": 2462,
-      "sha256": "89a38e18728bb2039a0f5e3f39305fcb7be75e0db260acd6b33bd46d7e281cef",
-      "path": "octatrack-modules/direct-jump-kyoti/0.1.2-experimental.mwrm"
+      "bytes": 4546,
+      "sha256": "ed3ba88a2f57c7f5ab122a5f572a8a814c91a338c5baa3a56da324c86d71060d",
+      "path": "octatrack-modules/direct-jump-kyoti/0.2.0-experimental.mwrm"
     },
     {
       "id": "dejavu",
@@ -446,9 +446,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "16fcc02a5628e32c0cdd09e414360a76cf30169892ad96686e9541d0bb27daa8",
+      "sha256": "43d26b2761a010e5e6a3ad9a2bcb6bb8beba92b245099acb0b4ed70065d208a4",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "98971ac40d60dc76532d13738f3a5c46f5d2fb7ec58b3ea554cbd81d46a7c3cc"
+      "requiredBase": "5add931eb7ddcddfda67e9ca184234eb823f4476829a194e4cb0786991ba9584"
     },
     {
       "id": "analog-bassdrum",
@@ -464,7 +464,7 @@
       "bytes": 26172,
       "sha256": "0998ca980b68b44df9c6f1b6c16a8f9bdefa019bd7bd4ba4b6dd816bf3406930",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "98971ac40d60dc76532d13738f3a5c46f5d2fb7ec58b3ea554cbd81d46a7c3cc",
+      "requiredBase": "5add931eb7ddcddfda67e9ca184234eb823f4476829a194e4cb0786991ba9584",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -721,6 +721,39 @@
       "module": "5cf69df3",
       "bytes": 652,
       "sha256": "c470e87aefa7c8e2c87dd7b1429a265e5353430b74331adb53158055269c9655"
+    },
+    {
+      "id": "screen-off",
+      "sources": [
+        "sdk/octabam/modules/screen-off/package.c"
+      ],
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/screen-off/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "screen-off",
+      "module": "66166c56",
+      "bytes": 352,
+      "sha256": "14aea62fbfef825e2ea23cc4baf6e01a2f2b0bf44b215db28748c1a546aeae0c"
     }
-  ]
+  ],
+  "usbAudio": {
+    "configurable": {
+      "name": "USB Audio",
+      "version": "0.3.0-experimental",
+      "path": "octatrack-modules/usb-audio-out-tracks-main-cue/0.3.0-experimental.mwrm",
+      "bytes": 11804,
+      "sha256": "0ac4d6a58a437706e85ab8b577da26dfe88c5c866c5d7a008665fbe2fefcf11f",
+      "abi": 8,
+      "features": 131,
+      "sites": 3,
+      "copies": 3,
+      "fills": 0,
+      "installPresets": true,
+      "requiredBase": "5add931eb7ddcddfda67e9ca184234eb823f4476829a194e4cb0786991ba9584"
+    }
+  }
 }

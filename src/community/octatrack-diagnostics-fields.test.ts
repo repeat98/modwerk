@@ -20,6 +20,22 @@ async function fixture() {
 const id = () => crypto.randomUUID()
 const client = { browser: 'chrome', major: 131, os: 'windows' } as const
 
+it('stores only bounded technical fields for a failed staging command', async () => {
+  const { db, consent, send } = await fixture()
+  const event = {id: id(), event: 'sync_failed', phase: 'sending', step: 'stage', error: 'transport'}
+  const upload = {command: 'chunk', chunkOffset: 0, remainingBytes: 0}
+  expect((await consent()).status).toBe(200)
+  expect((await send({...event, upload})).status).toBe(200)
+  expect(JSON.parse((db.prepare('SELECT data_json FROM octatrack_diagnostic_events').get() as {data_json: string}).data_json).upload).toEqual(upload)
+  expect(validateDiagnostic({...event, upload: {command: 'begin'}}).upload).toEqual({command: 'begin'})
+  for (const bad of [{...upload, data: [1]}, {...upload, sequence: 0}, {...upload, command: 'begin'}, {command: 'chunk'},
+    {...upload, command: 'free text'}, {...upload, chunkOffset: 2097152}, {...upload, chunkOffset: -1},
+    {...upload, remainingBytes: 4149}, {...upload, remainingBytes: 0.5}])
+    expect(() => validateDiagnostic({...event, upload: bad})).toThrow()
+  for (const bad of [{step: 'activate'}, {error: 'stale'}, {event: 'sync_started'}])
+    expect(() => validateDiagnostic({...event, ...bad, upload})).toThrow()
+})
+
 describe('browser family and pre-link failures in opted-in reports', () => {
   it('accepts a coarse browser and OS family on every report but the unit’s own log, and nothing finer', () => {
     for (const data of [

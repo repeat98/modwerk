@@ -1523,6 +1523,8 @@ def main():
     parser.add_argument('--usb-audio', choices=('USB AUDIO OUT TRACKS MAIN CUE', 'USB AUDIO OUT TRACKS',
                         'USB AUDIO OUT MASTER', 'USB AUDIO OUT MAIN CUE', 'USB AUDIO OUT MAIN', usb_post.LAYOUT),
                         help='Private composite-base preparation: one authored output layout, with internal USB MIDI. Requires exact new-base qualification.')
+    parser.add_argument('--packaged-usb-audio', action='store_true',
+                        help='Build one USB MIDI base with a runtime audio function slot and no linked audio reserve.')
     parser.add_argument('--usb-audio-profiles', action='store_true',
                         help='Offline staging only: source-link all six outputs and off, with --usb-audio as the explicit initial profile. No host settings/recovery or catalogue admission.')
     parser.add_argument('--dsp-hook', choices=tuple(DSP_HOOK_EDITS), default='guard',
@@ -1577,6 +1579,8 @@ def main():
                         help='with --dsp-loader: the base\'s effect ids (fxids.h, the dispatch and chooser tables; '
                              'docs/OCTATRACK_MORE_EFFECT_IDS.md). 32, the old width, only to bisect a fault.')
     args = parser.parse_args()
+    if args.packaged_usb_audio and (args.usb_audio or not args.usb_midi or not args.site_events or not args.dsp_loader):
+        parser.error('--packaged-usb-audio needs USB MIDI, site events, DSP loader and no linked USB Audio')
     if args.part_menu and not args.site_events:
         parser.error('--part-menu needs --site-events.')
     if args.sample_editor and (not args.site_events or not args.dsp_loader or args.dsp_probe or args.dsp_burn):
@@ -1713,6 +1717,14 @@ def main():
              'midi_generators.s', 'sample_memory.c') if args.site_events else ()) + (
             ('part_menu.c', 'part_menu.s') if args.part_menu else ()):
         shutil.copyfile(HERE / name, source / name)
+    if args.site_events and args.dsp_loader:  # PROJ > MODWERK > SETTINGS (events.json ot_settings; status.c's page)
+        for name in ('settings.c', 'settings.h', 'setting_presets.h'):
+            shutil.copyfile(HERE / name, source / name)
+    # A module may add one USB function to the base's configuration (events.json ot_usb_functions, usb_function.c).
+    usb_function_slots = bool(usb_functions) and not usb_profiles and args.site_events
+    if usb_function_slots:
+        for name in ('usb_function.c', 'usb_function.h'):
+            shutil.copyfile(HERE / name, source / name)
     # The boot stub's sector, which flash.c writes when it converts a unit to two slots (build_stub.py: stub_body.c).
     sys.path.insert(0, str(HERE))
     import build_stub
@@ -1879,9 +1891,10 @@ def main():
                 raise ValueError('The Part validator\'s clamp at %#x is not moveq #31.' % at)
             chooser_sites.append(dict(addr=hex(at), stock=word.hex(), op='bytes', new=bytes((word[0], FX_IDS - 1)).hex()))
         dsp_sites += chooser_sites
-    (source/'usb_base.h').write_text(usb.header())
+    (source/'usb_base.h').write_text(usb.header() + (
+        usb_functions.header(usb, usb_descriptors, args.usb_audio) if usb_function_slots else ''))
     (source/'usb_base.s').write_text(usb_profiles.assembly(usb, usb_functions, usb_descriptors, args.usb_audio) if usb_profiles else
-                                   usb_functions.assembly(usb, usb_descriptors, args.usb_audio)
+                                   usb_functions.assembly(usb, usb_descriptors, args.usb_audio, slots=usb_function_slots)
                                    if usb_functions else usb.assembly(args.dev))
     if usb_functions:
         (source/'usbmidi.s').write_text(usb_functions.midi_source((usb.OCTABAM / 'platform/usb-midi/usbmidi.s').read_text()))
@@ -2060,7 +2073,8 @@ def main():
             raise ValueError('PROJ\'s root menu is not the four stock rows; review the MODWERK category.')
         stock_rows = image[ROOT_ROWS - device.main_load:][:4 * 24]
         columns = [sum(1 << r for r in range(8) if ICON[r][c] == '#') << 24 for c in range(19)]
-        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'), ('switches', 'switches'))
+        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'), ('switches', 'switches')) + (
+            (('settings', 'settings'),) if args.site_events else ())  # settings.c: the settings modules contribute
         definitions += ('struct menu_row { const void *label, *window, *action, *value, *child; uint32_t page; };\n'
                         'extern char modwerk_menu_label[], %s;\nvoid %s;\n' % (
                             ', '.join('modwerk_%s_label[]' % label for label, _ in leaves),
@@ -2133,6 +2147,10 @@ modwerk_retained_end:
         recipe['cflags'].append('-DMODWERK_RUNTIME_SETS')
     if args.module_ui_roots:  # loader.c's capability 1024, machine_admission_runtime.c
         recipe['cflags'].append('-DMODWERK_RUNTIME_UI_ROOTS')
+    if args.site_events and args.dsp_loader:
+        recipe['cflags'].append('-DMODWERK_SETTINGS')
+    if usb_function_slots:  # a base with USB Audio linked in (a development twin) has the table and refuses every function
+        recipe['cflags'] += ['-DMODWERK_USB_FUNCTIONS'] + (['-DMODWERK_USB_AUDIO_LINKED'] if args.usb_audio else [])
     if args.saved_set_export:
         recipe['cflags'].append('-DMODWERK_SAVED_SET_EXPORT')
     if args.resident_stock_hooks:
@@ -2189,7 +2207,7 @@ modwerk_retained_end:
         recipe['sites'].append(dict({k: v for k, v in site.items() if k != 'length'},
                                     addr=hex(addr), stock=stock_at(addr, site['length']).hex()))
     recipe['sites'] += (usb_profiles.sites(usb, usb_functions, stock_at, args.usb_audio) if usb_profiles else
-                       usb_functions.sites(usb, stock_at, args.usb_audio) if usb_functions else usb.sites(stock_at, args.dev))
+                       usb_functions.sites(usb, stock_at, args.usb_audio, slots=usb_function_slots) if usb_functions else usb.sites(stock_at, args.dev))
     # RAM boot: the gate at the OS entry, and the DSP park in both payloads.
     at = BOOT_GATE[0] - device.main_load
     if image[at:at+6].hex() != BOOT_GATE[1]:
@@ -2269,11 +2287,14 @@ modwerk_retained_end:
     locked = catalogue_overlaps(recipe['sites'])
     if locked:
         raise ValueError('Base sites overlap what these catalogue modules patch: ' + ', '.join(locked))
-    if usb_functions and not usb_profiles:
+    if args.packaged_usb_audio:
+        recipe['sources'] = ([name for name in recipe['sources'] if name not in USB_GROUP] +
+                             [name for name in USB_GROUP if name in recipe['sources']])
+    elif usb_functions and not usb_profiles:
         recipe['sources'] = usb_reserve(source, recipe['sources'], recipe.get('defsym', {}), device, sdk)
     (source/'mod.json').write_text(json.dumps(recipe, indent=2)+'\n')
     path, _ = sdk.build(str(source), str(args.stock), str(out/'package'))
-    if usb_functions and not usb_profiles:
+    if usb_functions and not usb_profiles and not args.packaged_usb_audio:
         usb_reserve_check(json.loads(Path(path).read_text())['symbols'])
     # Every C object of the base, before anything is packaged (sdk/runtime/m68k_codegen.py).
     if not CODEGEN.check_mcf54455(sorted((out/'package').glob('*.work/*.c.o')), args.cross + 'objdump'):
