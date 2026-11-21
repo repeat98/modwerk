@@ -72,7 +72,7 @@
     "limitations": [
       "OS 1.40C on the Modwerk base with the sample-memory loan (ot_sample_memory), over USB only: card firmware cannot include it. Not yet run on a unit or in the emulator.",
       "Borrows 331 pages (about 2 MB) of sample memory while installed: about 23 s less of 16-bit mono sample time. When the pool cannot spare them, Kits stays off and the unit behaves as stock.",
-      "Needs Modwerk base 0.7.11 or newer: FUNC+PART opens the Part Edit window with SAVE KIT, RELOAD KIT and RENAME KIT in PART's place. Stock's Part Edit rows are left out while Kits is on; while it is off its row is left out and the window is stock's.",
+      "Needs Modwerk base 0.7.13 or newer: FUNC+PART opens the Part Edit window with SAVE KIT, RELOAD KIT and RENAME KIT in PART's place. Stock's Part Edit rows are left out while Kits is on; while it is off its row is left out and the window is stock's.",
       "No quick save with FUNC+YES in SAVE KIT: save with YES and the name editor. FUNC+YES in either list does what it does elsewhere.",
       "A Kit carries no MIDI scene locks, and a kits.work from an octabam image with MIDI SCENES (version 2) is not read: that project then plays its Parts as stock.",
       "A damaged kits.work is never overwritten: that project then plays its Parts as stock and keeps no Kits. Rename or delete the file on the card to start over.",

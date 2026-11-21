@@ -7,7 +7,7 @@
       "RENAME KIT renames the pattern's Kit; RELOAD KIT brings it back as saved.",
       "Now offered together with Pattern Sample Locks: each has its own row in that window.",
       "FUNC + PASTE + PART still copies the pasted pattern's Kit to the next empty one.",
-      "Needs Modwerk base 0.7.11 or newer, over USB."
+      "Needs Modwerk base 0.7.13 or newer, over USB."
     ]
   },
   {
