@@ -1,0 +1,55 @@
+{
+  "firmware": "1.40C",
+  "moduleVersion": "0.1.0-experimental",
+  "hardware": false,
+  "model": "MKII (emulated)",
+  "capturedOn": "2026-11-20",
+  "capturedBy": "AForceTrulyEvil",
+  "imageSha256": "2768ddc5f0ba213a908fd172cb04d8dafce71473c0557bd1ef5cad0c207900a0",
+  "baseIdentity": null,
+  "packageSha256": "dc203ec20b790e7942614ee25a55812e7ee7f4333e899fc9a4fa7e8ab4b90b8b",
+  "sourceRevision": "e106348f4f6b11e1e474ac4da3d30bb52e588f9d",
+  "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at e106348f4 (imageSha256 is that twin's MAIN image), with the Grain package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. See each image. Not hardware captures.",
+  "palette": {
+    "on": [
+      24,
+      24,
+      24
+    ],
+    "off": [
+      255,
+      255,
+      255
+    ]
+  },
+  "images": [
+    {
+      "path": "grain-machine-list.png",
+      "sha256": "62f105c4f7c6c32931abf128252dc56c03b06b345a872bb86b00b4e860ad89b1",
+      "scale": 2,
+      "page": "Machine list (SRC SETUP)",
+      "state": "Track 1 on FLEX, the cursor moved down to GRAIN in the machine list."
+    },
+    {
+      "path": "grain-src.png",
+      "sha256": "38269ac3bd4c09b565ae39ae0ec3d0db0502d4d7c84ebc883c16ede97b9f58ea",
+      "scale": 2,
+      "page": "SRC",
+      "state": "Track 1 on Grain with a Flex sample, playing: the SRC page with live grains. Settings: DENS 104, SPRY 40 (32 %), SIZE 68, PAN 108 (85 %), POS 64.0, with a stereo sample made for the capture; the grains show as small squares, with a dark frame where they fall inside the waveform."
+    },
+    {
+      "path": "grain-src-setup.png",
+      "sha256": "f4bf4b6af36c651f2b764054e0d49c37551218f178719ccba6f1629f1e45b40f",
+      "scale": 2,
+      "page": "SRC SETUP",
+      "state": "Track 1 on Grain with a Flex sample, at the defaults: SRC SETUP."
+    },
+    {
+      "path": "grain-full-screen.png",
+      "sha256": "419bd4534dbf83a8a4a0c28440d8e6b9fe5af8208b1b41ff0ea431865c6789bb",
+      "scale": 2,
+      "page": "Full-screen page",
+      "state": "Track 1 on Grain with a Flex sample, playing: the full-screen page with live grains. Settings: DENS 104, SPRY 40 (32 %), SIZE 68, PAN 108 (85 %), POS 64.0, with a stereo sample made for the capture; the grains show as small squares, with a dark frame where they fall inside the waveform."
+    }
+  ]
+}

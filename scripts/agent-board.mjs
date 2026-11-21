@@ -217,15 +217,16 @@ function hookRuns(items) {
   return out
 }
 
-/** Compare what a branch needs with the board. Without a login it can name holders but not tell whether they are you. */
-export async function compareClaims(needed, login, options = {}) {
+/** Compare what a branch needs with the board. Without a login it can name holders but not tell whether they are you.
+ * A claim tied to `pullRequest` belongs to that pull request: a maintainer finishing a contributor's PR holds it for them. */
+export async function compareClaims(needed, login, { pullRequest, ...options } = {}) {
   if (!needed.length) return { mine: [], others: [], free: [], unknown: [] }
   const claims = await listClaims({}, options), byKey = new Map(claims.map(item => [item.kind + ' ' + item.key, item]))
   const result = { mine: [], others: [], free: [], unknown: [] }
   for (const item of needed) {
     // Hook claims overlap by index; the holder's own inside a run give way to it when the run is claimed.
     const near = item.kind === 'hook' ? claims.filter(claim => claim.kind === 'hook' && overlaps(claim.key, item.key)) : [byKey.get(item.kind + ' ' + item.key)].filter(Boolean)
-    const theirs = login && near.find(claim => claim.holder !== login.toLowerCase()), exact = near.find(claim => claim.key === item.key)
+    const theirs = login && near.find(claim => claim.holder !== login.toLowerCase() && !(pullRequest && claim.pullRequest === pullRequest)), exact = near.find(claim => claim.key === item.key)
     if (!near.length) result.free.push(item)
     else if (!login) result.unknown.push({ ...item, claim: near[0] })
     else if (theirs) result.others.push({ ...item, claim: theirs })
@@ -350,18 +351,19 @@ function openBrowser(url) {
   try { spawn(command, args, { stdio: 'ignore', detached: true }).on('error', () => {}).unref() } catch { /* the printed address still works */ }
 }
 
-/** Who opened the pull request CI runs for, from the GitHub Actions event. */
-function pullRequestAuthor() {
-  try { return JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')).pull_request?.user?.login ?? null } catch { return null }
+/** The pull request CI runs for, from the GitHub Actions event. */
+function pullRequestEvent() {
+  try { return JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')).pull_request ?? null } catch { return null }
 }
+const pullRequestAuthor = () => pullRequestEvent()?.user?.login ?? null
 
 /** npm run board -- check: refuse what someone else holds; name what is unclaimed. Never fails on an outage.
  * A pull request's CI run (requireClaims) also refuses what nobody claimed: reviewers asked for the claim on one module PR in seven. */
-export async function checkBranch({ root, base, login, requireClaims = false }) {
+export async function checkBranch({ root, base, login, requireClaims = false, pullRequest = null }) {
   const needed = neededClaims({ root, base })
   if (!needed.length) return { ok: true, lines: ['Board: this branch adds nothing that needs a claim.'] }
   let compared
-  try { compared = await compareClaims(needed, login) } catch (error) {
+  try { compared = await compareClaims(needed, login, { pullRequest }) } catch (error) {
     if (error instanceof BoardUnavailable) return { ok: true, lines: ['Board: not checked. ' + error.message] }
     throw error
   }
@@ -496,7 +498,7 @@ async function main(argv) {
     let name = pullRequestAuthor()
     if (!name) try { name = await whoami() } catch (error) { if (!(error instanceof BoardUnavailable)) throw error }
     // In a pull request's CI run the author is known from the event, and an unclaimed module, hook or migration fails.
-    const result = await checkBranch({ root, base, login: name, requireClaims: Boolean(pullRequestAuthor()) })
+    const result = await checkBranch({ root, base, login: name, requireClaims: Boolean(pullRequestAuthor()), pullRequest: pullRequestEvent()?.number ?? null })
     result.lines.forEach(line => console.log(line))
     return result.ok ? 0 : 1
   }

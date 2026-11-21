@@ -68,7 +68,8 @@ jobs:
             sleep 15
           done
           exit 1
-      # The model gets a read-only token and read-only commands. It may write only under bot/.
+      # The model gets a read-only token and read-only commands and writes nothing. Its proposals come back as
+      # schema-checked structured output: asked to write a file, it skipped the file in about a third of runs.
       - id: model
         if: steps.snapshot.outputs.run == 'true'
         env:
@@ -77,7 +78,8 @@ jobs:
           MODEL: ${{ env.BOT_MODE == 'daily' && (vars.MAINTENANCE_BOT_DAILY_MODEL || 'claude-opus-5-5') || (vars.MAINTENANCE_BOT_MODEL || 'claude-sonnet-5-5') }}
         run: |
           claude -p "$(cat scripts/maintenance-bot/prompt.md)" --model "$MODEL" --max-turns 120 --output-format json \
-            --allowedTools 'Read' 'Grep' 'Glob' 'Edit(./bot/**)' \
+            --json-schema '{"type":"object","required":["actions","todos","drop"],"properties":{"actions":{"type":"array","items":{"type":"object"}},"todos":{"type":"array","items":{"type":"object"}},"drop":{"type":"array","items":{"type":"string"}}}}' \
+            --allowedTools 'Read' 'Grep' 'Glob' \
               'Bash(gh pr view:*)' 'Bash(gh pr list:*)' 'Bash(gh pr diff:*)' 'Bash(gh pr checks:*)' \
               'Bash(gh issue view:*)' 'Bash(gh issue list:*)' 'Bash(gh run list:*)' 'Bash(gh run view:*)' \
               'Bash(git log:*)' 'Bash(git show:*)' 'Bash(git diff:*)' \
@@ -85,8 +87,7 @@ jobs:
           # The repository is public, and so are this log and its artifacts. Discord messages, diagnostics and draft
           # replies stay out of both: the log gets how the run ended and its token counts, never its text, and the
           # proposals travel encrypted with the bot key.
-          node scripts/maintenance-bot/model-status.mjs "$RUNNER_TEMP/model.json"
-          test -s bot/proposals.json
+          node scripts/maintenance-bot/model-status.mjs "$RUNNER_TEMP/model.json" bot/proposals.json
       - if: steps.model.outcome == 'success'
         env:
           MAINTENANCE_BOT_KEY: ${{ secrets.MAINTENANCE_BOT_KEY }}

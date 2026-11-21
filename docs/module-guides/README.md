@@ -8,6 +8,8 @@ A module's category is the `category` field of its manifest (`octamod.module.jso
 
 In the library, categories describe the instrument function a musician wants to change. Performance covers scenes, macros, crossfaders, mutes and solos. System includes kit and Part management. Sequencing covers notes and patterns, and Modulation covers control sources such as LFOs. Types name a more specific job, such as drum synthesis or chorus, across instruments. `src/catalog/library-classification.ts` maps published families to these browse labels and uses machine-qualified entries when a family has several meanings.
 
+**First, is it a module at all?** A module is something a musician adds to a set for what it does. A change that only makes the instrument faster or fixes the stock OS or the base, with nothing new to play, pick or set, is base work: it goes on the [machine's cumulative draft](../DEVELOPER_WORKFLOW.md#change-a-base) and reaches every player with the next base. A load warning that comes with it is the base's too, since every set needs it (owner, 21 November 2026).
+
 **Choose it by where the module acts, not by the menu you would like to switch it on from.** An FX processes the audio its slot receives. A module that makes or replaces a track's sound (reads the sample itself, renders voices on the ColdFire) is a machine. A module that makes or changes notes is a MIDI generator or MIDI effect. A module in the wrong category is sent back, so when it is unclear, ask the owner in an issue before you write code.
 
 | Category | Guide | Choose it when the module | For example |
