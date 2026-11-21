@@ -99,16 +99,30 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.3.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "266b28c935ca933f9eb1d16462c1700e51b7a065ea035313eb8504f6361a3cb9",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-21",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "0.3.0 ran alone on npp1993's Analog Rytm MKII, OS 1.74, from RAM as QU01 (the Modwerk base with the development link and this module; sha256 e7b525a5…d1fd, src/main.c sha256 266b28c9…3cb9). Four rig cases, run over the USB link with no hand on the unit, read the take from RAM: a 16-step take repeated over steps 17-32 when the SCALE menu took the master length to 32 one step at a time, 16 to 24 repeated steps 1-8, 32 scrolled down to INF kept the take and repeated it over 33-64, a cleared take stayed as it was until NO brought it back filled to 32, and RECORD + YES after a lengthening showed APPLY QUICK PERF REC and made a 16-step track 32 steps.",
+      "limitations": [
+        "Run by the rig over the USB link, not by a person: no pads, pressure, QPER knob, LEDs or sound.",
+        "The image holds the base with the development link, not the plain published base.",
+        "The cases ran one after another on one pattern, so two checks that assumed empty steps past the loop read moves left by the case before."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.2.2 (a shorter quick exit for the audio block): a host differential test against 0.2.1 found no difference in 80 million blocks, rytm-emu screens are byte-identical, with the sequencer stopped the audio hook ran a quarter of the instructions, and on the author's unit it took 470 ticks a block stopped against 0.2.1's 850 to 854, with the same results in two rig cases. 0.2.1 passed the tutorial on the author's unit alone (QR01). TESTING.md names each build.",
+    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. 0.3.0 (the take repeats when the loop gets longer): host scenarios, rytm-emu and four rig cases on the author's unit read the take from RAM; RECORD + YES after a lengthening applied on the unit. 0.2.2 (a shorter quick exit for the audio block): a host differential test against 0.2.1 found no difference in 80 million blocks, rytm-emu screens are byte-identical, with the sequencer stopped the audio hook ran a quarter of the instructions, and on the author's unit it took 470 ticks a block stopped against 0.2.1's 850 to 854, with the same results in two rig cases. 0.2.1 passed the tutorial on the author's unit alone (QR01). TESTING.md names each build.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
