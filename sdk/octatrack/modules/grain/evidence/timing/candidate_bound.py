@@ -23,12 +23,14 @@ PAGE_MIX_LOCATE = (0x3198, 0x33AA, 0x39A0)
 PAGE_MIX_CALLS = (0x35AE, 0x3A32, 0x3AB4, 0x3B62, 0x3E72)
 
 PREP_PACKAGE = "7d5cf2e739a0f99d5c8be4f5a0629e2a46691314cacf2ee5dace54ccf517aa1b"
+SYNTH_PACKAGE = "d09bd8f8ce95acd398d13ab91191da6d5288313c9c442988435b1224641234a5"
+SYNTH_LOCATE = (0x3C60, 0x4114, 0x4362, 0x4536)
 PREP_LOCATE = (0x31A6, 0x35B8, 0x3A3C)
 
 
 def read_image(package, elf):
     packed = package.read_bytes()
-    if hashlib.sha256(packed).hexdigest() not in (PACKAGE, PAGE_MIX_PACKAGE, PREP_PACKAGE):
+    if hashlib.sha256(packed).hexdigest() not in (PACKAGE, PAGE_MIX_PACKAGE, PREP_PACKAGE, SYNTH_PACKAGE):
         raise ValueError("The package differs from the six-voice candidate")
     # ABI 8 stores the image immediately after the 76-byte header and hook words.
     first = 76 + 4 * int.from_bytes(packed[20:24], "big")
@@ -156,8 +158,37 @@ def preparation_limits(functions, root, n):
     return caps
 
 
+def synthesis_limits(functions, root, n):
+    if root == "grain_start":
+        return []
+    # The wrapper clears exactly two words per frame on an unreadable source.
+    caps = [([0x5150, 0x515A], 2 * n), ([0x3862], n), ([0x388E], n)]
+    # Each block attempts at most n spawns. Each attempt inspects six slots.
+    # The two compiled voice loops are mutually exclusive and each visits six.
+    caps.extend([([0x3A68], n), ([0x3A6E], 6 * n), ([0x3F80], 6),
+                 ([0x3B84, 0x3DF0], 6), ([0x4094], 6 * n)])
+    # A successful native span covers one or more output positions. At a pitch
+    # of up to 4x, 32 source positions cross at most one 1,024- or 1,536-frame
+    # page edge. A missing page may still need a lookup per output position.
+    calls = (0x3D04, 0x40D2, 0x41DE, 0x4230, 0x47CA)
+    assert all("<stereo_page>" in functions["gran_render"][pc][1] for pc in calls)
+    caps.extend([(calls, 12), (SYNTH_LOCATE, 6 * (n + 3))])
+    # Bound the six voice visits, spawn scans, scalar mixers and boundary probes.
+    # A probe visits each consumed position and at most one terminal edge per run.
+    caps.extend(([pc], 12 * (n + 1)) for pc in functions["gran_render"])
+    # Every unrolled frame accumulates exactly two consecutive mid/side words.
+    writes = [pc for pc, (op, arg) in functions["stereo_page"].items()
+              if op == "addl" and re.fullmatch(r"%d[0-7],%(?:a[0-7]|fp)@\+", arg)]
+    assert len(writes) == 2 * 2 * 3 * 4 * 2  # widths, gains, pan signs, unroll, channels
+    caps.append((writes[::2], 6 * n))
+    return caps
+
+
 def certify(functions, root, n, model, package=PACKAGE):
-    if package == PREP_PACKAGE:
+    if package == SYNTH_PACKAGE:
+        instructions, edges = reachable(functions, root, SYNTH_LOCATE, ("flex_page", "stereo24_page"))
+        constraints = synthesis_limits(functions, root, n)
+    elif package == PREP_PACKAGE:
         instructions, edges = reachable(functions, root, PREP_LOCATE, ("flex_page", "stereo24_page"))
         constraints = preparation_limits(functions, root, n)
     else:

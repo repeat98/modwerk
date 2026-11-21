@@ -274,13 +274,23 @@ def check_stereo(image, symbols):
             cpu.mem_write(engine + voice * len(grain), grain)
         cpu.mem_write(params, bytes((60, 127, 127, 127, 2, 12, 127, 1, 0, 1, 0, 0)))
         cpu.mem_write(sample, struct.pack(">IBBII", len(pcm) // (width * 2), width, 2, 0, storage))
-        cpu.mem_write(STACK, struct.pack(">9I", RETURN, engine, 0, params, sample, 1, fraction, output, 16))
-        cpu.reg_write(m68k_const.UC_M68K_REG_SR, 0x2700)
-        cpu.reg_write(m68k_const.UC_M68K_REG_A7, STACK)
-        cpu.emu_start(symbols["gran_render"], RETURN, count=50000)
-        rendered = cpu.mem_read(output, 16 * 8) + cpu.mem_read(engine, 6 * 32)
-        if cpu.reg_read(m68k_const.UC_M68K_REG_PC) != RETURN or hashlib.sha256(rendered).hexdigest() != expected:
-            raise AssertionError(f"ColdFire stereo render changed for {width}-byte samples, step {fraction:#x}, pan {panned}")
+        initial = bytes(cpu.mem_read(engine, 250))
+        for lengths in ((16,), (1, 15), (2, 14), (3, 13)):
+            cpu.mem_write(engine, initial)
+            cpu.mem_write(output, b"\xa5" * (17 * 8))
+            written = 0
+            for length in lengths:
+                cpu.mem_write(STACK, struct.pack(">9I", RETURN, engine, 0, params, sample, 1, fraction,
+                                                 output + written * 8, length))
+                cpu.reg_write(m68k_const.UC_M68K_REG_SR, 0x2700)
+                cpu.reg_write(m68k_const.UC_M68K_REG_A7, STACK)
+                cpu.emu_start(symbols["gran_render"], RETURN, count=50000)
+                assert cpu.reg_read(m68k_const.UC_M68K_REG_PC) == RETURN
+                written += length
+                assert cpu.mem_read(output + written * 8, 8) == b"\xa5" * 8, "wrote past the stereo span"
+            rendered = cpu.mem_read(output, 16 * 8) + cpu.mem_read(engine, 6 * 32)
+            if hashlib.sha256(rendered).hexdigest() != expected:
+                raise AssertionError(f"stereo render changed for {width} bytes, {fraction:#x}, pan {panned}, spans {lengths}")
 
 
 if __name__ == "__main__":

@@ -2,6 +2,23 @@
 
 Grain 0.1.0-experimental · by A Force Truly Evil.
 
+## Six-voice synthesis candidate, 21 November 2026
+
+SDK and catalogue builds reproduced package `d09bd8f8ce95acd398d13ab91191da6d5288313c9c442988435b1224641234a5`. Both stereo widths use the page-bounded mixer. It processes four frames per loop and enters the first group at the correct sample for shorter spans. The Q15 rounding and intermediate mid/side clipping are preserved. The voice limit is six and the reservation is 35 points.
+
+| Compiled callback workload | Previous mean instructions | Candidate mean | Previous peak | Candidate peak |
+| --- | ---: | ---: | ---: | ---: |
+| Held controls | 3,041 | 2,734 | 7,604 | 7,105 |
+| Moving position | 3,079 | 2,790 | 7,643 | 7,307 |
+| Recorder, Part and control changes | 2,971 | 2,592 | 11,603 | 10,184 |
+| SRC and window moving every callback | 3,126 | 2,717 | 12,615 | 9,629 |
+
+All 12,288 full callbacks matched the preceding package's PCM and six voice states. A separate 4,096-case comparison covered lengths 1 through 32, mono and stereo, 16- and 24-bit data, four windows, fractional and integer pitch, forward and reverse voices, pan and source edges. Two-minute T1 and T5 runs each matched all 5,292,000 portable reference stereo frames. The compiled split-span regression checks a guard word after each output and compares the summed spans to the existing reference fingerprint.
+
+The MKII emulator on development base `fac1523234f4bb0b` loaded this package, recalled the prepared Grain assignment on T1 and T5, reported PLAY and STOP on each, switched Parts, returned each track to Flex and rolled back. Its live audio-frame counter stayed at zero under paced transport. A separate tick-driven emulator fixture linked the same compiled mixer object and verified all 64 portable PCM fingerprints across 512 six-voice 24-bit stereo renders on T1 and T5. These emulator timings do not qualify the unit.
+
+The 31,232-byte package loads 29,960 bytes of code/data and 2,856 bytes of BSS. GCC's stack-usage build produced identical assembly and bounds the deepest Grain-only audio call chain at 672 bytes including three return addresses. The conditional zero-wait [timing model](evidence/timing/candidate_bound.py) does not establish the 95,782-core-cycle frame deadline.
+
 ## Six-voice preparation candidate, 21 November 2026
 
 The private SDK and catalogue builds produced `7d5cf2e739a0f99d5c8be4f5a0629e2a46691314cacf2ee5dace54ccf517aa1b`. The render callback reuses validated Flex geometry while checking the live recorder, descriptor and page map on every call. POS slides update only position when the other controls hold. Six occupied voices can skip the remaining spawn attempts within a block. The voice limit, 35-point admission price and mixer arithmetic are the same as in `9ad52855`.
