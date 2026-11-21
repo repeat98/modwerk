@@ -8,8 +8,9 @@ import ghost_cut_ref as REF  # noqa: E402
 
 
 def knobs(**kw):
-    names = {"LEN": 0, "GRAB": 1, "RATE": 2, "PTCH": 3, "MIX": 5, "ENG": 6, "CAPT": 7, "GRN": 8, "DIR": 10}
-    v = [3, 0, 64, 64, 0, 127, 0, 0, 40, 0, 0, 0]
+    names = {"LEN": 0, "GRAB": 1, "RATE": 2, "PTCH": 3, "DRFT": 4, "MIX": 5, "ENG": 6, "CAPT": 7, "GRN": 8,
+             "MOTN": 9, "DIR": 10}
+    v = [3, 0, 64, 64, 0, 127, 0, 0, 40, 4, 0, 0]
     for k, x in kw.items():
         v[names[k]] = x
     return v
@@ -17,8 +18,9 @@ def knobs(**kw):
 
 class Table(unittest.TestCase):
     def test_shape(self):
-        self.assertEqual(len(REF.TABLE), 33 + 16 + 50)
+        self.assertEqual(len(REF.TABLE), 33 + 16 + 50 + 8)
         self.assertTrue(all(0 <= w < 1 << 24 for w in REF.TABLE))
+        self.assertTrue(all(0 < k < 1 << 23 for k in REF.MOTN_K))
 
     def test_rate_points(self):
         self.assertEqual(REF.RATE_T[16], 1 << 20)          # 64 is 1 x
@@ -63,6 +65,33 @@ class Grain(unittest.TestCase):
         for ptch, rate, hz in ((64, 64, 500), (76, 64, 1000), (52, 64, 250), (76, 32, 1000), (64, 100, 500)):
             got = zero_cross_hz(self.render(PTCH=ptch, RATE=rate))
             self.assertAlmostEqual(got, hz, delta=hz * 0.03, msg=(ptch, rate))
+
+
+class Drift(unittest.TestCase):
+    def test_motn_cycle(self):
+        # a 1 bar triangle at 120 BPM: 88,200 samples, 5,512.5 blocks
+        per_block = 2 * REF.tempo24(120) * REF.MOTN_K[2]
+        self.assertAlmostEqual(REF.PHASE_CYCLE / per_block, 88200 / 16, delta=0.5)
+
+    def test_drift_zero_is_milestone_b(self):
+        n = 900 * REF.BLOCK
+        x, sig = 5, []
+        for _ in range(n):
+            x = (x * 1103515245 + 12345) & 0x7FFFFFFF
+            sig.append((((x >> 7) & 0xFFFFFF) - 0x800000) >> 2)
+        for eng in (0, 1):
+            ol, orr = REF.render(sig, sig, {0: knobs(ENG=eng), 600: knobs(ENG=eng, GRAB=127)})
+            self.assertEqual(ol, orr)                       # no drift: one head, both sides alike
+
+    def test_drift_parts_the_sides_on_tape(self):
+        n = 1400 * REF.BLOCK
+        x, sig = 9, []
+        for _ in range(n):
+            x = (x * 1103515245 + 12345) & 0x7FFFFFFF
+            sig.append((((x >> 7) & 0xFFFFFF) - 0x800000) >> 2)
+        ol, orr = REF.render(sig, sig, {0: knobs(DRFT=127, MOTN=0), 600: knobs(DRFT=127, MOTN=0, GRAB=127)})
+        tail = range(1000 * REF.BLOCK, 1400 * REF.BLOCK)
+        self.assertGreater(sum(1 for t in tail if ol[t] != orr[t]), len(tail) // 2)
 
 
 class Lengths(unittest.TestCase):

@@ -26,7 +26,12 @@
 ; 16-23); ENG slot 6 (r6+$c bits 16-23), CAPT 7 (r6+$c bits 8-15), GRN 8
 ; (r6+$d bits 16-23), DIR 10 (r6+$e bits 16-23); tempo24 << 8 at r6+$13.
 ;
-; The r7 block ($00..$2f, all zeroed at init):
+; DRFT puts a second read head DRFT x L/2 after the first, swinging as a
+; triangle over MOTN bars from GRAB on (tempo-synced, ramped a sample at a
+; time). TAPE plays the first head left and the second right; GRAIN reads its
+; second grain at the second head.
+;
+; The r7 block ($00..$3f, all zeroed at init):
 ;   $00 ring base               $01 live (1: an FX2-sized slot)
 ;   $02 clear chunks left       $03 state: 0 idle, 1 rec, 2 bake, 3 loop, 4 release
 ;   $04 GRAB latch              $05 write index w
@@ -46,7 +51,10 @@
 ;   $23 grain 1 phase (Q22)     $24/$25 grain 1 offset
 ;   $26 grain 2 phase           $27/$28 grain 2 offset
 ;   $29 running engine          $2a ENG           $2b duck (ENG differs)
-;   $2c PTCH, Q20 (glided)      $1e, $2d..$2f free
+;   $2c PTCH, Q20 (glided)      $2d tempo24 (clamped)
+;   $2e/$2f the drift's phase (48-bit, cycle 2^45)
+;   $30/$31 the second head's offset D (48-bit)    $32/$33 D's step a sample
+;   $34 wet, right              $1e, $35..$3f free
 ;
 ; Every mpy is `mpy x0,y1` (AGENTS.md). AND and ASL leave A2 stale: values
 ; leave through a1. Labels are gc and two characters, so none is another's
@@ -58,7 +66,7 @@ init:
         clr     a
         move    r7,r5
         move    #>$ffffff,m5
-        do      #$30,>gc00
+        do      #$40,>gc00
         move    a,x:(r5)+
 gc00:
         nop
@@ -151,6 +159,7 @@ gc02:
         cmp     x0,b
         tgt     x0,b
         move    b1,x0                   ; the divisor
+        move    b1,x:(r7+$2d)
         move    p:(r5)+,y0              ; N's high word
         move    p:(r5),b                ; ... and its low word
         move    b,x:(r7+$1a)
@@ -322,6 +331,12 @@ gcB7:
         move    a0,x:(r7+$09)
         clr     b
         move    b,x:(r7+$0a)
+        move    b,x:(r7+$2e)            ; the drift from 0
+        move    b,x:(r7+$2f)
+        move    b,x:(r7+$30)
+        move    b,x:(r7+$31)
+        move    b,x:(r7+$32)
+        move    b,x:(r7+$33)
         move    #>$3,x0
         move    x0,x:(r7+$03)           ; loop
 gcB8:
@@ -451,6 +466,62 @@ gcE9:
         move    #>$1,x0
         tne     x0,b                    ; ENG differs from the running engine: duck
         move    b1,x:(r7+$2b)
+; ---- DRFT and MOTN, while looping: D = DRFT x L/2 x a triangle over MOTN bars
+        move    x:(r7+$03),a
+        cmp     #>$3,a
+        blt     gcF9
+        move    x:(r6+$d),a
+        and     #>$007f00,a
+        asr     #$8,a,a                 ; MOTN, at most 7
+        move    #>$7,x0
+        cmp     x0,a
+        tgt     x0,a
+        move    a1,n5
+        move    x:(r7+$16),a
+        add     #>$63,a                 ; MOTN's 8 points follow PTCH's
+        move    a1,r5
+        nop
+        move    (r5)+n5
+        move    p:(r5),y1               ; K
+        move    x:(r7+$2d),x0
+        mpy     x0,y1,a                 ; a block's step: tempo24 x 2K, 48-bit
+        move    a1,x1
+        move    a0,x0
+        move    x:(r7+$2e),a
+        move    x:(r7+$2f),a0
+        add     x,a
+        move    #>$200000,x0
+        cmp     x0,a
+        blt     gcF1
+        sub     x0,a                    ; one cycle round
+gcF1:
+        move    a1,x:(r7+$2e)
+        move    a0,x:(r7+$2f)
+        move    a1,x0
+        move    #>$200000,b
+        sub     x0,b
+        cmp     x0,b
+        tgt     x0,b                    ; the triangle: min(h, cycle - h)
+        asl     #$3,b,b
+        move    b,x0                    ; ... Q23, at most full
+        move    x:(r6+$4),a
+        and     #>$7fff00,a
+        move    a1,y1                   ; DRFT
+        mpy     x0,y1,a
+        move    a,x0
+        move    x:(r7+$07),a
+        asr     #$1,a,a
+        move    a1,y1                   ; L / 2
+        mpy     x0,y1,a                 ; the target offset, 48-bit samples
+        move    x:(r7+$30),x1
+        move    x:(r7+$31),x0
+        neg     a
+        add     x,a
+        neg     a                       ; target - D
+        asr     #$4,a,a                 ; ... a sixteenth of it a sample
+        move    a1,x:(r7+$32)
+        move    a0,x:(r7+$33)
+gcF9:
         move    #>$1,x0
         move    x0,x:(r7+$15)           ; primed
 ; ---- the pointers: r4 writes, r5 reads from the loop's start
@@ -546,7 +617,24 @@ gcT9:
         mpy     x0,y1,a
         asl     #$1,a,a
         add     b,a
-        move    a,x:(r7+$19)            ; wet
+        move    a,x:(r7+$19)            ; wet, left
+        move    x:(r7+$30),a            ; D, one step on
+        move    x:(r7+$31),a0
+        move    x:(r7+$32),x1
+        move    x:(r7+$33),x0
+        add     x,a
+        move    a1,x:(r7+$30)
+        move    a0,x:(r7+$31)
+        move    x:(r7+$08),x1
+        move    x:(r7+$09),x0
+        add     x,a                     ; the second head: p + D
+        move    x:(r7+$07),x0
+        cmp     x0,a
+        blt     gcV0
+        sub     x0,a
+gcV0:
+        bsr     gcRD
+        move    a,x:(r7+$34)            ; wet, right
         bra     gcEN
 ; MODEFORK_MID: GRAIN
 gcK0:
@@ -600,6 +688,13 @@ gcU1:
 gcU9:
         move    a1,x:(r7+$08)
         move    a0,x:(r7+$09)
+        move    x:(r7+$30),a            ; D, one step on
+        move    x:(r7+$31),a0
+        move    x:(r7+$32),x1
+        move    x:(r7+$33),x0
+        add     x,a
+        move    a1,x:(r7+$30)
+        move    a0,x:(r7+$31)
         move    x:(r7+$23),a           ; the phase, one step on
         move    x:(r7+$20),x0
         add     x0,a
@@ -664,8 +759,14 @@ gcKd:
         move    x:(r7+$08),x1
         move    x:(r7+$09),x0
         add     x,a                     ; playhead + offset
+        move    x:(r7+$30),x1
+        move    x:(r7+$31),x0
+        add     x,a                     ; ... at the drifted head
         move    x:(r7+$07),x0
-        cmp     x0,a                    ; into the loop: grains under L / 4 need one step
+        cmp     x0,a                    ; into the loop: up to two steps with D
+        blt     gcKe
+        sub     x0,a
+        cmp     x0,a
         blt     gcKe
         sub     x0,a
 gcKe:
@@ -686,6 +787,7 @@ gcKf:
         move    x:(r7+$1f),y0
         add     y0,a
         move    a,x:(r7+$19)            ; wet: the two grains
+        move    a,x:(r7+$34)            ; ... on both sides
         bra     gcEN
 ; MODEFORK_MID: record, while idle (not CAPT OFF) or recording
 gcW0:
@@ -757,7 +859,7 @@ gcNB:
         add     b,a
         move    a,x:(r0)
         move    x:(r0+n0),b
-        move    x:(r7+$19),a
+        move    x:(r7+$34),a            ; the right side's wet
         sub     b,a
         asr     #$1,a,a
         move    a,y1

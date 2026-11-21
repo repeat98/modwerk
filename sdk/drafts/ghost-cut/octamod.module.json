@@ -23,6 +23,7 @@
       "GRAB with hysteresis: on at 96, off at 32, so a scene or the crossfader grabs once and lets go cleanly",
       "LEN follows the tempo: 1/64 to 1/4 of a note, halved until it fits the 353 ms ring",
       "GRAIN engine: PTCH ±24 semitones apart from RATE, for time-stretched or transposed loops",
+      "DRFT and MOTN: a second head that drifts against the first over 1/4 to 32 bars, in stereo on TAPE",
       "RATE from 1/4 x to almost 4 x, pitch and speed together; FWD, REV and PEND",
       "AUTO, MAN and OFF capture; the loop fades in and out over 256 samples",
       "Exact dry passthrough whenever no loop plays"
@@ -73,6 +74,13 @@
       "labels": null
     },
     {
+      "name": "DRFT",
+      "default": 0,
+      "count": 128,
+      "doc": "A second read head, up to half the loop after the first at 127, swinging as a triangle over MOTN. On TAPE the first head plays left and the second right, so the loop phases against itself; on GRAIN the second grain reads at the second head. 0 is one head, exactly as without it.",
+      "labels": null
+    },
+    {
       "name": "MIX",
       "default": 127,
       "count": 128,
@@ -108,6 +116,22 @@
       "labels": null
     },
     {
+      "name": "MOTN",
+      "default": 4,
+      "count": 8,
+      "doc": "How slowly DRFT swings: one triangle over 1/4, 1/2, 1, 2, 4, 8, 16 or 32 bars at the project's tempo, starting from no offset at each GRAB.",
+      "labels": [
+        "1/4B",
+        "1/2B",
+        "1B",
+        "2B",
+        "4B",
+        "8B",
+        "16B",
+        "32B"
+      ]
+    },
+    {
       "name": "DIR",
       "default": 0,
       "count": 3,
@@ -126,12 +150,12 @@
     "uiClaims": [],
     "limitations": [
       "FX2 only: the ring needs an FX2 slot's buffer. On an FX1-sized slot it passes the track dry.",
-      "Mono loop: the ring records the track's mono sum, and the loop plays on both sides.",
+      "Mono loop: the ring records the track's mono sum. One wet plays on both sides, except TAPE with DRFT, which plays its two heads left and right.",
       "The longest loop is 353 ms; a longer LEN is halved until it fits.",
       "After a GRAB the track stays dry for 2.9 ms while the seam is baked into the ring; the loop then starts where it would be had it played since GRAB.",
       "The loop starts at GRAB and keeps its own length; it does not restart on the sequencer's steps, so it drifts by under a sample a repeat against the pattern. A GRAB locked on a trig starts it on that step.",
       "RATE above 1 x has no anti-alias filter and reads with linear interpolation, so high content aliases when sped up.",
-      "GRAIN uses triangular windows on two grains: steady tones keep their pitch, but transients smear and a slight flutter at the grain rate can be heard. Milestone C (DRFT, MOTN, FDBK) is not built yet.",
+      "GRAIN uses triangular windows on two grains: steady tones keep their pitch, but transients smear and a slight flutter at the grain rate can be heard. FDBK is not built: writing the loop back into itself would undo the baked seam.",
       "Rendered in dsp_host only: not run on a unit or in the emulator."
     ],
     "effectId": 10
@@ -159,7 +183,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Milestones A and B rendered in dsp_host on OS 1.40C: verify.py's 96 gates pass. They are bit-exact against the integer reference in every mode, TAPE and GRAIN; exact dry while idle; guard clean beside Sidechain's key window; four instances a core. Static cost: 266 cycles a sample on GRAIN (about stock SPRING REV), 148 on TAPE. In the emulator the base refused every module effect pick, Vibrato's too. Not tested on a unit.",
+    "summary": "Milestones A to C rendered in dsp_host on OS 1.40C: verify.py's 115 gates pass. They are bit-exact against the integer reference in every mode (TAPE, GRAIN, the drift head); exact dry while idle; guard clean beside Sidechain's key window; four instances a core. Static cost: 281 cycles a sample on GRAIN, 188 on TAPE. In the emulator the base refused every module effect pick, Vibrato's too. Not tested on a unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [

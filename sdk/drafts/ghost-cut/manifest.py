@@ -13,9 +13,11 @@ and out. MIX 0, and every moment no loop plays, is the dry track bit for bit.
 An FX1-sized slot passes dry.
 
 ghost_cut_ref.py is the integer reference and the source of the P table;
-verify.py renders the DSP against it. DRFT, MOTN and FDBK (the drifting
-second head, feedback) are milestone C; their slots are blank until the DSP
-reads them. Not tested on hardware.
+DRFT puts a second head up to half the loop after the first, swinging as a
+triangle over MOTN bars: TAPE plays it right (the first left), GRAIN reads its
+second grain there. verify.py renders the DSP against the reference. FDBK is
+not built (writing back into the loop would undo the baked seam); its slot
+is blank. Not tested on hardware.
 """
 
 import importlib.util
@@ -39,7 +41,7 @@ MODULE = Module(
     kind=Kind.DSP_EFFECT,
     category=Category.TRACK, author="jacobphono", author_url="https://github.com/jacobphono",
     proof=Proof.UNTESTED,
-    proof_note="Milestones A and B (TAPE and GRAIN engines): rendered in dsp_host against ghost_cut_ref.py on OS 1.40C; "
+    proof_note="Milestones A to C (TAPE, GRAIN, the drift head): rendered in dsp_host against ghost_cut_ref.py on OS 1.40C; "
                "not run on a unit or in ot_emu.",
     doc="Microlooper: GRAB loops a tempo-synced piece of the track at RATE, fwd, rev or pendulum.",
     menu=MenuEntry(
@@ -59,7 +61,8 @@ MODULE = Module(
               doc="loop speed: 0 is 1x, -64 a quarter, +63 almost 4x; on TAPE the pitch follows it"),
         Param(b"PTCH", 64, active=True, formatter=Formatter.BIPOLAR,
               doc="GRAIN's pitch in semitones, -24 to +24 (past them it holds), apart from RATE"),
-        _BLANK,
+        Param(b"DRFT", 0, active=True, formatter=_PLAIN,
+              doc="a second head up to half the loop away, swinging over MOTN; 0 is one head"),
         Param(b"MIX", 127, active=True, formatter=_PLAIN,
               doc="the loop over the dry track; 0 is exact dry, 127 the loop alone"),
         # ---- page 2 ---------------------------------------------------------
@@ -69,7 +72,8 @@ MODULE = Module(
               doc="AUTO loops the last LEN, MAN records the next LEN first, OFF keeps the ring as it is"),
         Param(b"GRN", 40, active=True, formatter=_PLAIN,
               doc="GRAIN's grain length, 10 to 79 ms (at most a quarter of the loop)"),
-        _BLANK,
+        Param(b"MOTN", 4, 8, active=True, formatter=Formatter.WIDE_STEPPED, labels=_ref.MOTN_LABELS,
+              doc="how slowly DRFT swings: one triangle over 1/4 to 32 bars at the tempo"),
         Param(b"DIR", 0, 3, active=True, formatter=_STEP, labels=_ref.DIR_LABELS,
               doc="FWD, REV, or PEND (forwards then backwards, no seam)"),
         _BLANK,
@@ -90,5 +94,6 @@ MODULE = Module(
     harness=Harness(layout_char=None, is_server=False),
     gates=(Gate("modules/ghost-cut/verify.py", remix_arg=False),),
     # looping on GRAIN (two grains, each with its seam read), forwards, fastest
-    dear={"LEN": 7, "GRAB": 127, "RATE": 127, "PTCH": 127, "MIX": 127, "ENG": 1, "CAPT": 0, "GRN": 127, "DIR": 0},
+    dear={"LEN": 7, "GRAB": 127, "RATE": 127, "PTCH": 127, "DRFT": 127, "MIX": 127, "ENG": 1, "CAPT": 0,
+          "GRN": 127, "MOTN": 0, "DIR": 0},
 )

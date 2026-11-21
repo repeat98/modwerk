@@ -34,10 +34,18 @@ LEN_N = [3969000 * m for m in LEN_MULT]
 # PTCH (GRAIN): 2^(s/12) for s = -24..+24 semitones, Q20, and the last point again
 # so a fraction past +24 reads it twice.
 PITCH_T = [round(2 ** ((s - 24) / 12) * (1 << 20)) for s in range(49)] + [1 << 22]
+# MOTN: the drift's triangle takes 1/4 to 32 bars. Its phase is 48-bit with a cycle
+# of 2^45; a block (16 samples) adds tempo24 * 2K, K = 2^48 / (bars * 254,016,000)
+# (a bar is 254,016,000 / tempo24 samples).
+MOTN_BARS = (0.25, 0.5, 1, 2, 4, 8, 16, 32)
+MOTN_LABELS = ("1/4B", "1/2B", "1B", "2B", "4B", "8B", "16B", "32B")
+MOTN_K = [round((1 << 48) / (b * 254016000)) for b in MOTN_BARS]
+PHASE_CYCLE = 1 << 45
 TABLE = (tuple(RATE_T) + tuple(w for n in LEN_N for w in ((2 * n) >> 24, (2 * n) & 0xFFFFFF))
-         + tuple(PITCH_T))
-assert len(TABLE) == 33 + 16 + 50 and all(0 <= w < 1 << 24 for w in TABLE)
+         + tuple(PITCH_T) + tuple(MOTN_K))
+assert len(TABLE) == 33 + 16 + 50 + 8 and all(0 <= w < 1 << 23 or i in range(33, 49) for i, w in enumerate(TABLE))
 PT_AT = 33 + 16
+MK_AT = PT_AT + 50
 
 CAPT_LABELS = ("AUTO", "MAN", "OFF")
 ENG_LABELS = ("TAPE", "GRAIN")
@@ -70,12 +78,17 @@ def tempo24(bpm):
     return int(bpm * 24 + 0.5) & 0xFFFF
 
 
-def loop_length(len_idx, t24):
-    """LEN and the tempo -> loop samples: N / tempo24, halved until it fits."""
+def clamp_t24(t24):
     if t24 < 720:
         t24 = 2880        # no or an implausible tempo word: 120 BPM
     if t24 > 7200:
         t24 = 7200        # 300 BPM
+    return t24
+
+
+def loop_length(len_idx, t24):
+    """LEN and the tempo -> loop samples: N / tempo24, halved until it fits."""
+    t24 = clamp_t24(t24)
     L = LEN_N[min(max(len_idx, 0), 7)] // t24
     for _ in range(4):
         if L > LMAX:
@@ -138,6 +151,10 @@ class GhostCut:
         self.d = [0, 0]     # each grain's offset from the playhead, 48-bit
         self.flag = 0       # the engine knob differs from the running engine: duck
         self.baked = 0      # BAKE: seam words done
+        self.mphase = 0     # the drift's triangle, 48-bit, cycle 2^45
+        self.D = 0          # the second head's offset, 48-bit
+        self.slope = 0      # ... and its step a sample
+        self.wetR = 0
 
     def block(self, knobs, frames, t24=0):
         """knobs: the 12 slot values (ints); frames: [(l, r)], processed in place."""
@@ -189,6 +206,19 @@ class GhostCut:
             self.ph = [0, PH_ONE // 2]
             self.d = [0, 0]
         self.flag = 1 if self.eng != eng_k else 0
+        # DRFT and MOTN: the second head's offset, DRFT x L/2 x a triangle over MOTN bars
+        if self.state >= LOOP:
+            self.mphase += 2 * clamp_t24(t24) * MOTN_K[min(k[9], 7)]
+            if (self.mphase >> 24) >= PHASE_CYCLE >> 24:
+                self.mphase -= PHASE_CYCLE
+            h = self.mphase >> 24
+            b = (PHASE_CYCLE >> 24) - h
+            if b > h:
+                b = h
+            tri = sat(b << 3)
+            m = a1(mpy(tri, (k[4] << 16) & 0x7FFF00))
+            target = mpy(m, self.L >> 1)
+            self.slope = (target - self.D) >> 4
         self.primed = 1
         out = []
         for (dl, dr) in frames:
@@ -226,7 +256,13 @@ class GhostCut:
                         self.back = 0
                 if self.eng == 0:
                     self.wet = self._read(self.p)
+                    self.D += self.slope
+                    q2 = self.p + self.D
+                    if q2 >= Lq:
+                        q2 -= Lq
+                    self.wetR = sat(self._read(q2))
                 else:
+                    self.D += self.slope
                     prod = 0
                     for i in (0, 1):
                         ph = self.ph[i] + inc_g
@@ -236,8 +272,12 @@ class GhostCut:
                         self.ph[i] = ph
                         self.d[i] += delta
                         q = self.p + self.d[i]
+                        if i == 1:
+                            q += self.D               # the second grain reads at the drifted head
                         if q >= Lq:
                             q -= Lq
+                            if i == 1 and q >= Lq:
+                                q -= Lq
                         if q < 0:
                             q += Lq
                         tap = sat(self._read(q))
@@ -249,6 +289,7 @@ class GhostCut:
                             prod = sat(a1(mpy(w, tap)))
                         else:
                             self.wet = sat(a1(mpy(w, tap) + (prod << 24)))
+                            self.wetR = self.wet
                 up = min(self.e + ESTEP, 0x7FFFFF)
                 down = self.e - ESTEP
                 a = down if self.state == REL else up
@@ -263,7 +304,7 @@ class GhostCut:
             mm = a1(mpy(self.run, self.e))
             wet = self.wet
             ol = sat(dl + a1(2 * mpy(mm, sat((wet - dl) >> 1))))
-            orr = sat(dr + a1(2 * mpy(mm, sat((wet - dr) >> 1))))
+            orr = sat(dr + a1(2 * mpy(mm, sat((self.wetR - dr) >> 1))))
             out.append((ol, orr))
         return out
 
@@ -283,6 +324,7 @@ class GhostCut:
         if self.baked < SEAM:
             return
         self.ring[(self.S + self.L) % R] = self.ring[self.S]
+        self.mphase = self.D = self.slope = 0
         lead = BAKE_LEAD * inc
         self.p = (self.L << 24) - lead if direction == 1 else lead
         self.back = 0

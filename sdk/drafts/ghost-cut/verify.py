@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GHOST CUT render gates (milestones A and B, the TAPE and GRAIN engines) -- the DSP in dsp_host
+"""GHOST CUT render gates (milestones A to C: TAPE, GRAIN and the drift head) -- the DSP in dsp_host
 against ghost_cut_ref.py, plus checks that do not lean on the reference.
 
 The scratch image is built here (GHOST CUT alone, fallback NONE), as Vibrato's
@@ -15,6 +15,9 @@ Gates:
                    GRAIN across PTCH, RATE, GRN and DIR; ENG switched while looping
   pitch         -> GRAIN plays a sine at PTCH whatever RATE does; TAPE at RATE
   duck          -> switching ENG while looping steps no more than the sine itself
+  drift         -> DRFT 0 is one head on both sides; with DRFT, TAPE's left side is
+                   unchanged and its right plays the second head; GRAIN keeps one wet;
+                   the fastest, deepest drift glides
   the loop      -> at RATE 1x the loop IS the captured mono sum, sample for sample,
                    with the period LEN and the tempo give
   release       -> 256 samples after GRAB falls the track is exact dry again
@@ -268,6 +271,45 @@ step = biggest_step(seg)
 check("ENG switched while looping: no step past 1.5x the steady output's own (the duck)", step <= 1.5 * own,
       f"largest step {step}, the steady output's {own}")
 
+# ---- 3d. the drift head ----------------------------------------------------------
+for eng in (0, 1):
+    for drft, motn in ((32, 4), (90, 2), (127, 0), (127, 7)):
+        compare(f"{REF.ENG_LABELS[eng]}, DRFT {drft}, MOTN {REF.MOTN_LABELS[motn]}", L_in, R_in,
+                schedule(dict(ENG=eng, DRFT=drft, MOTN=motn, PTCH=70), G), tempo=120)
+for bpm in (60, 174, 300):
+    compare(f"TAPE, DRFT 127, MOTN 1/4B at {bpm} BPM", L_in, R_in, schedule(dict(DRFT=127, MOTN=0), G), tempo=bpm)
+compare("GRAIN, DRFT 127 on a 1/64 loop at 300 BPM (two wrap steps)", L_in, R_in,
+        schedule(dict(ENG=1, DRFT=127, MOTN=0, LEN=0, PTCH=100, GRN=127), G), tempo=300)
+compare("DRFT and MOTN moved while looping", L_in, R_in,
+        schedule({}, {**G, 800: dict(DRFT=100), 900: dict(MOTN=0), 1000: dict(DRFT=10), 1100: dict(MOTN=7)}),
+        tempo=120)
+compare("TAPE, DRFT 127 in REV and PEND", L_in, R_in,
+        schedule(dict(DRFT=127, MOTN=1, DIR=1), {**G, 1000: dict(DIR=2)}), tempo=120)
+
+base_l, base_r = dsp(L_in, R_in, schedule({}, G), tempo=120)
+drift_l, drift_r = dsp(L_in, R_in, schedule(dict(DRFT=127, MOTN=0), G), tempo=120)
+full = range((GRAB_AT + 40) * B, REL_AT * B)   # looping at full level; L and R in are different signals
+
+
+def sides_alike(l, r):
+    return max(abs(l[t] - r[t]) for t in full)    # MIX 127: each side is the wet within 2 LSB of its own dry
+
+
+check("DRFT 0: both sides alike while looping (one head)", sides_alike(base_l, base_r) <= 4,
+      f"largest difference {sides_alike(base_l, base_r)} LSB")
+check("TAPE with DRFT: the left side is exactly the one head without DRFT", drift_l == base_l)
+late = range((GRAB_AT + 100) * B, REL_AT * B)
+moved = sum(1 for t in late if drift_r[t] != drift_l[t])
+check("TAPE with DRFT: the right side plays the second head", moved > len(late) // 2, f"{moved} of {len(late)} frames differ")
+gl, gr = dsp(L_in, R_in, schedule(dict(ENG=1, DRFT=127, MOTN=0), G), tempo=120)
+check("GRAIN with DRFT: one wet on both sides while looping", sides_alike(gl, gr) <= 4,
+      f"largest difference {sides_alike(gl, gr)} LSB")
+dl, dr = dsp(s500, s500, schedule(dict(DRFT=127, MOTN=0), G), tempo=300)
+own = biggest_step(s500[:4000])
+step = biggest_step(dr[(GRAB_AT + 40) * B:REL_AT * B])
+check("the fastest, deepest drift (1/4 bar at 300 BPM) glides: no step past 3x the sine's own",
+      step <= 3 * own, f"largest step {step}, the sine's {own}")
+
 # ---- 4. the loop is the captured mono sum, with LEN's period -------------------
 for bpm, ln in ((120, 3), (90, 2), (174, 5), (60, 7)):
     sched = schedule(dict(LEN=ln), G)
@@ -314,7 +356,7 @@ check("dirty memory: grabbing straight after the clear loops only silence and fr
       dl == rl and dr == rr, f"max error {max(worst(dl, rl), worst(dr, rr))} LSB")
 
 # ---- 8. guard ----------------------------------------------------------------------
-dear = schedule(dict(RATE=127, LEN=7, ENG=1, PTCH=127, GRN=127), G)
+dear = schedule(dict(RATE=127, LEN=7, ENG=1, PTCH=127, GRN=127, DRFT=127, MOTN=0), G)
 for slot in ("t1 fx2", "t3 fx2"):
     dsp(L_in, R_in, dear, slot=slot, tempo=300, guard=True)
     g = dsp.log
