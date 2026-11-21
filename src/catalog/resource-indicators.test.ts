@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { MODULE_DOCUMENTS } from './documents'
 import { parseModuleDocument, parseModuleResourceImpact } from './module-contract'
 import { moduleResourceIndicators } from './resource-indicators'
+import { readDspLoad, readTrackedMemory } from './octatrack-resource-measurements'
 import { parseRetainedResourceImpacts, requireModuleResourceImpact } from './resource-impact'
 import { resourceImpactFixture } from './test-fixtures/resource-impact'
 import example from '../../public/module-repository.example.json'
@@ -68,25 +69,64 @@ describe('module resource gauges', () => {
     expect(document.resources.processing.value).toBeNull()
   })
 
-  it('uses the shipped DSP price with its evidence method and falls back to qualification for hooks', () => {
+  it('shows only the reported eleven-stem hardware peak for the card build', () => {
+    const stems = MODULE_DOCUMENTS.find(document => document.id === 'stem-rec')!
+    expect(moduleResourceIndicators(stems)[0]).toMatchObject({
+      value: '14.6%', status: 'Reported peak · 11 stems', score: null,
+      source: 'sdk/octatrack/modules/stem-rec/TESTING.md',
+    })
+    expect(moduleResourceIndicators({ ...stems, version: '0.2.0' })[0].status).toBe('Estimated')
+  })
+
+  it('uses hardware DSP readings and keeps software benchmarks in the evidence', () => {
     const lofi = MODULE_DOCUMENTS.find(document => document.id === 'lofi2')!
     const outputMatrix = MODULE_DOCUMENTS.find(document => document.id === 'output-matrix')!
     const bbd = MODULE_DOCUMENTS.find(document => document.id === 'bbd')!
+    const chorus = MODULE_DOCUMENTS.find(document => document.id === 'airwindows-chorus')!
     const lofiPrice = packageManifest.packages.find(entry => entry.id === lofi.id)!.cycles
     const bbdPrice = packageManifest.packages.find(entry => entry.id === bbd.id)!.cycles
     const hookPrice = outputMatrix.tests.qualification!.cycles.find(cycle => cycle.processor === 'dsp')!
     const memory = lofi.tests.qualification!.memory
     const [, lofiDsp, lofiMemory] = moduleResourceIndicators(lofi)
-    expect(lofiDsp).toMatchObject({ value: String(lofiPrice), status: 'cycles/sample · Hardware-based', score: null })
+    expect(lofiDsp).toMatchObject({
+      value: '+10.3 pp', status: 'Measured · T1–4', score: null,
+      benchmark: { value: lofiPrice + ' cycles per sample per instance', basis: 'cycles/sample · Hardware-based' },
+    })
     expect(lofiMemory).toMatchObject({ value: memory.totalBytes.toLocaleString('en-US') + ' B', status: 'Accounted total', score: null })
     expect(lofiMemory.description).toContain(memory.sharedBytes.toLocaleString('en-US') + ' B shared')
     expect(lofiMemory.description).toContain(memory.perInstanceBytes.toLocaleString('en-US') + ' B per instance')
     expect(moduleResourceIndicators(outputMatrix)[1]).toMatchObject({
-      value: String(hookPrice.worstCase), status: hookPrice.unit + ' · Emulator', source: 'sdk/octatrack/modules/output-matrix/' + hookPrice.report,
+      status: 'Estimated', benchmark: { value: hookPrice.worstCase + ' cycles per sample for one instance', source: 'sdk/octatrack/modules/output-matrix/' + hookPrice.report },
     })
-    expect(moduleResourceIndicators(bbd)[1]).toMatchObject({ value: String(bbdPrice), status: 'instr./sample · Emulator' })
+    expect(moduleResourceIndicators(bbd)[1]).toMatchObject({
+      value: '+10.8 pp', status: 'Measured · T1–4',
+      benchmark: { value: bbdPrice + ' instructions per sample per instance', basis: 'instr./sample · Emulator' },
+    })
+    expect(moduleResourceIndicators(chorus)[1]).toMatchObject({ value: '+10.8 pp', status: 'Measured · T1–4', source: 'sdk/octatrack/modules/airwindows-chorus/TESTING.md' })
     const future = { ...rated(), id: lofi.id, version: '99.0.0' }
     expect(moduleResourceIndicators(future)[1]).toMatchObject({ value: 'High', status: 'Estimated' })
+  })
+
+  it('uses the selected track’s core and the tracked pools from the same clean trial', () => {
+    const document = rated()
+    const before = { skipped: 0, dsp1to4: 30, dsp5to8: 31, allocation: {
+      modulePoolBytes: 0, dspProgramWordsT1to4: 50, dspProgramWordsT5to8: 80,
+    } }
+    const inUse = { skipped: 0, dsp1to4: 29.9, dsp5to8: 42, allocation: {
+      modulePoolBytes: 512, dspProgramWordsT1to4: 50, dspProgramWordsT5to8: 192,
+    } }
+    const result = { id: document.id, version: document.version, rolledBack: true, before, inUse, inUseOn: 'T5 FX2' }
+    const record = { module: document.id, version: document.version, base: 'test base', scene: 'saved scratch Part', result }
+    expect(readDspLoad(document, record)).toMatchObject({ before: 31, after: 42, core: 'T5–8', slot: 'T5 FX2' })
+    expect(readTrackedMemory(document, record)).toMatchObject({ poolBytes: 512, dspWordsT1to4: 0, dspWordsT5to8: 112 })
+    expect(readDspLoad(document, { ...record, version: '99.0.0' })).toBeUndefined()
+    expect(readDspLoad(document, { ...record, result: { ...result, repetitions: [{
+      before, inUse: { ...inUse, dsp5to8: 39 },
+    }] } })).toBeUndefined()
+    expect(readTrackedMemory(document, { ...record, result: { ...result, inUse: { ...inUse, skipped: 1 } } })).toBeUndefined()
+    expect(readTrackedMemory(document, { ...record, result: { ...result, before: {
+      ...before, allocation: { ...before.allocation, modulePoolBytes: 128 },
+    } } })).toBeUndefined()
   })
 
   it('keeps drafts parseable but blocks releases and gauge rendering without ratings', () => {

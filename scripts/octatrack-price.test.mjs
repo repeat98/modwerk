@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
-import { added, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
+import { added, allocationReading, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
 
 function runtimeEffect(slots) {
   const data = Buffer.alloc(76)
@@ -38,6 +38,17 @@ it('reads the guard window and the mean of the meter readings, and what a module
   const after = reading(guard('64.5') + 'stats cpu 750 T1-4 428/438 T5-8 419/420 passes 1.0 2.0\n')
   expect(added(before, after)).toEqual({ frame: 23.4, cpu: 10, dsp1to4: 9.9, dsp5to8: 0 })
   expect(() => reading('stats cpu 1 T1-4 1/1 T5-8 1/1')).toThrow('No guard')
+})
+
+it('records the module pool and each DSP program arena in their own units', () => {
+  const report = [
+    'pool: 128 of 10912 bytes used; free 10784, largest free run 10784 (100 % of free)',
+    'core 1 (T1-4): 388 of 399 words in 1 blocks [id 2 @0+388]; holes 0 words, largest free run 11 of 11 free',
+    'core 0 (T5-8): 0 of 399 words in 0 blocks []; holes 0 words, largest free run 399 of 399 free',
+    'buffer blocks in use: 0x1',
+  ].join('\n')
+  expect(allocationReading(report)).toEqual({ modulePoolBytes: 128, dspProgramWordsT1to4: 388, dspProgramWordsT5to8: 0 })
+  expect(allocationReading('error: unavailable')).toHaveProperty('unavailable')
 })
 
 it('writes a clean reading as the module\'s price, its readings beside it, and takes it off the pending list', async () => {

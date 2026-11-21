@@ -1,8 +1,8 @@
 # Module resource gauges
 
-Every catalog module needs **CPU, DSP core and memory** ratings before release. On Octatrack module pages, the CPU gauge shows the recorded [CPU price](MODULE_PERFORMANCE.md) as a percentage of an audio frame when available. For a track machine this is the per-track budget based on hardware measurements. The gauge evidence links to the measurement in the Modwerk module folder.
+Every catalog module needs **CPU, DSP core and memory** ratings before release. On Octatrack module pages, the CPU gauge shows the recorded [CPU price](MODULE_PERFORMANCE.md) as a percentage of an audio frame when available. For a track machine this is the per-track budget based on hardware measurements. Stem Rec shows its reported peak while recording eleven stems. The gauge evidence links to the measurement in the Modwerk module folder.
 
-The DSP core gauge shows the release package's version-matched DSP price per instance, or the per-instance DSP count from the qualification record for a module without a separate package price. It labels hardware, emulator and modeled figures by their evidence. The memory gauge shows the qualification inventory's total bytes at the supported instance count, with shared and per-instance allocations in the evidence.
+The DSP core gauge shows the measured change in core load for one active instance, in percentage points. The evidence gives the base, scene, slot and before/after readings. When the release has hardware-backed cycles per sample, those can also supply a numeric gauge. Emulator counts and modeled bounds appear in the evidence. The memory gauge uses the qualification inventory's total bytes at the supported instance count, with shared and per-instance allocations in the evidence. A measured module-pool and DSP program allocation can supply a scoped quantity when the full inventory is unavailable.
 
 When a numeric record is unavailable, the page displays the relative tier labelled **Estimated**. The four tiers are **Minimal, Low, Moderate, High**. A full High arc means the highest relative tier. DSP counts and memory totals use their recorded units and have no percentage arc.
 

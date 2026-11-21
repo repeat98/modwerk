@@ -24,7 +24,10 @@ export function ModuleResourceIndicators({ id, usbLayout }: { id: string; usbLay
       const href = indicator.sourceInModwerk ? repository + indicator.source : resourceSource(id, indicator.source)
       return <div key={indicator.id}>
         <dt>{indicator.label} <span>{indicator.status}</span></dt>
-        <dd>{indicator.description} <a href={indicator.id === 'cpu' && previewCpu ? previewCpu.source : href} target="_blank" rel="noreferrer">Read record ↗</a></dd>
+        <dd>
+          {indicator.description} <a href={indicator.id === 'cpu' && previewCpu ? previewCpu.source : href} target="_blank" rel="noreferrer">Read record ↗</a>
+          {indicator.benchmark && <p>{indicator.benchmark.value} ({indicator.benchmark.basis}). <a href={repository + indicator.benchmark.source} target="_blank" rel="noreferrer">Benchmark record ↗</a></p>}
+        </dd>
       </div>
     })}</dl>
   </>} />
