@@ -69,7 +69,29 @@ function amigaKeys() {
 }
 
 // Hand-drawn art for the catalog modules. A module without an entry shows its presentation/thumbnail.svg.
+/* Grain, as its full-screen page draws it: the stereo sample filled, POS, and the grains as squares. */
+function grainLane(centre: number, seed: number) {
+  let top = '', bottom = ''
+  for (let i = 0; i <= 88; i++) {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff
+    const x = 28 + i * 3, a = 2 + (6 + seed % 13) * Math.min(1, i / 5, (88 - i) / 5) * (.6 + .4 * Math.sin(i * .13))
+    top += (i ? 'L' : 'M') + x + ' ' + (centre - a).toFixed(1)
+    bottom = 'L' + x + ' ' + (centre + a).toFixed(1) + bottom
+  }
+  return top + bottom + 'Z'
+}
+const GRAINS: readonly [number, number, boolean][] = [[124, 66, false], [138, 118, true], [149, 74, true], [165, 61, false], [176, 126, true], [191, 80, false]]
+
 const ART: Readonly<Record<string, () => ReactElement>> = {
+  grain: () => <g>
+    <path className="signal-dot" opacity=".55" d={grainLane(74, 7)} />
+    <path className="signal-dot" opacity=".55" d={grainLane(122, 11)} />
+    <path className="signal-secondary" d="M156 40V156" strokeDasharray="2 4" />
+    <path className="signal-dot" d="M151 34H161L156 40Z" />
+    {GRAINS.map(([x, y, filled]) => filled
+      ? <rect key={x} className="signal-dot" x={x - 4} y={y - 4} width="8" height="8" />
+      : <rect key={x} className="signal-main" x={x - 4} y={y - 4} width="8" height="8" />)}
+  </g>,
   poly8: () => <g>
     <path className="signal-main" d="M27 96H33C36 96 37 79 41 79S46 113 50 113 55 84 59 84 63 106 67 106 71 96 75 96H81" />
     <path className="signal-ghost" d="M81 96H97Q103 96 103 90V53Q103 47 109 47H111M103 90V139Q103 145 109 145H111M103 61H111M103 75H111M103 89H111M103 103H111M103 117H111M103 131H111" />

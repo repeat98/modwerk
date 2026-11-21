@@ -48,7 +48,7 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
   const [preparationError, setPreparationError] = useState<{ review: string; error: ModuleSetError }>()
   // Whether the sync got as far as keeping, for this browser's sync history; written once when the dialog reaches its result.
   const keeping = useRef(false), logged = useRef(false)
-  // The modules this sync adds or updates, as reviewed when it started: counted as downloads once it is kept.
+  // The reviewed additions and updates receive download credit once Keep succeeds.
   const installing = useRef<string[]>([])
   const { followDownloads, followNotice } = useDownloadFollows()
   const step = loadStep(status, started, preparing)
@@ -88,8 +88,7 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
     const failure = error || (notice?.tone === 'error' ? notice.text : '')
     if (!failure && !keeping.current) return
     logged.current = true
-    // What a downloaded build got: the count, update notifications and the hardware feedback reminder.
-    if (!failure) { trackModuleDownloads(installing.current); followDownloads(installing.current, installedOnOctatrack(installing.current)) }
+    if (!failure) followDownloads(installing.current, installedOnOctatrack(installing.current))
     recordSync({ name: set.name, modules: set.moduleIds.length, outcome: failure ? 'failed' : 'kept', ...(failure ? { message: failure.slice(0, 300) } : {}) })
   }, [step, started, error, notice, set]) // eslint-disable-line react-hooks/exhaustive-deps -- followDownloads is a new function each render
 
@@ -129,8 +128,10 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
     keeping.current = true
     await link.keep()
     const kept = link.getState()
-    if (kept.status === 'ready' && kept.notice?.tone === 'success' && kept.identity && kept.active)
-      rememberSuccessfulSync({ ...set, moduleIds: [...set.moduleIds], base: kept.identity.base, active: kept.active, at: new Date().toISOString() })
+    if (kept.status === 'ready' && kept.notice?.tone === 'success') {
+      trackModuleDownloads(installing.current)
+      if (kept.identity && kept.active) rememberSuccessfulSync({ ...set, moduleIds: [...set.moduleIds], base: kept.identity.base, active: kept.active, at: new Date().toISOString() })
+    }
   }
   const closable = step === 'review' || step === 'done'
   // The modules this sync takes off a track's reach (removed or replaced by their update): the base refuses the whole sync

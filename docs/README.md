@@ -81,6 +81,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [SINGLE_SIGN_ON.md](SINGLE_SIGN_ON.md): accounts and single sign-on.
 - [DEVELOPER_WORKSPACE.md](DEVELOPER_WORKSPACE.md): creator settings and private report details.
 - [AGENT_BOARD.md](AGENT_BOARD.md): the agent board: claims every developer's agent sees and makes (module ports, hook, table and migration numbers), the questions and findings agents leave each other, and the commands that check them.
+- Coding agents replay merged fixes locally and on GitHub. [Agent evals](AGENT_EVALS.md)
 - [AGENT_SESSIONS.md](AGENT_SESSIONS.md): the review an agent makes of its own session before it finishes, and sharing the conversation of an agent session with the owner, what is removed before it leaves the computer, and who reads it for how long.
 - [STATISTICS.md](STATISTICS.md): the admin statistics.
 - [WEB_PUSH.md](WEB_PUSH.md): device push notifications.

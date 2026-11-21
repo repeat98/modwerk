@@ -13,7 +13,7 @@ import type { DeviceStore } from '../storage/device'
 import { createLazyFirmwareClient } from './firmware-client'
 import type { FirmwareClient } from '../engine/client'
 import type { FirmwareInspection } from '../engine/base'
-import { comesWithBase, parseUsbAudioConfiguration, USB_AUDIO_MODULE, type UsbAudioConfiguration } from '../config/usb-audio'
+import { comesWithBase, parseUsbAudioConfiguration, usbAudioForSelection, USB_AUDIO_MODULE, type UsbAudioConfiguration } from '../config/usb-audio'
 
 const STORAGE_ATTEMPTS = 2, STORAGE_RETRY_MS = 300
 
@@ -182,7 +182,7 @@ export function useWorkspace() {
     if (!canAdd(current.moduleIds, id, configurationDevice(current))) return
     const moduleIds = current.moduleIds.includes(id) ? current.moduleIds.filter(value => value !== id) : [...current.moduleIds, id]
     const moduleVersions = Object.fromEntries(moduleIds.map(selected=>[selected,current.moduleVersions[selected]??pinModuleVersions([selected],device)[selected]]))
-    updateActive({ moduleIds, moduleVersions, ...(id === USB_AUDIO_MODULE && !moduleIds.includes(id) ? { usbAudio: undefined } : {}) })
+    updateActive({ moduleIds, moduleVersions, usbAudio: usbAudioForSelection(moduleIds, current) })
     if(!current.moduleIds.length&&moduleIds.length)trackConfigurationStarted(current.id)
   }
   /** Adds every one of `ids` to the active set at once, as an import takes a set: one over the limit (set-limit.ts)

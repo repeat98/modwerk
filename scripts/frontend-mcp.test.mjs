@@ -88,10 +88,11 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     }
     await expect(service.call('site_selection', { moduleIds: ['sidechain-compressor'], usb: true, capabilities })).rejects.toThrow('latest Modwerk base')
     const cardOnly = catalogue.modules.find(module => module.machine === 'octatrack' && !module.usb)
-    if (cardOnly) await expect(service.call('site_selection', { moduleIds: [cardOnly.id], usb: true })).rejects.toThrow('USB')
+    // A card-only module and one whose package is not published yet (a release in progress) are both refused over USB.
+    if (cardOnly) await expect(service.call('site_selection', { moduleIds: [cardOnly.id], usb: true })).rejects.toThrow(/USB|can’t be loaded onto the base/)
     // A module that needs the base is in the catalogue like any other: there is no card form to keep it from.
     expect((await service.call('site_catalogue', { machine: 'octatrack' })).modules.some(module => module.id === 'ring-sc')).toBe(true)
-  })
+  }, 60000) // every pair of published packages: grows with each USB release (5-8 s at 40 modules), past vitest's 5 s default
   it('offers the agent board, refuses claims without --allow-api-writes and never reaches the live board in tests', async () => {
     expect((await service.call('site_features')).tools).toEqual(expect.arrayContaining(['board_claims', 'board_claim', 'board_release', 'board_messages', 'board_inbox', 'board_activity', 'board_post', 'board_reply', 'board_close']))
     await expect(service.call('board_claim', { kind: 'migration', key: '0085' })).rejects.toThrow('--allow-api-writes')
@@ -102,6 +103,22 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     await expect(service.call('board_post', { kind: 'note', topic: 'machine', key: 'octatrack', text: 'x' })).rejects.toThrow()
     await expect(service.call('board_claims', { kind: 'module' })).rejects.toThrow('turned off')
     await expect(service.call('board_messages', { machine: 'octatrack' })).rejects.toThrow('turned off')
+  })
+  it.runIf(publishedUsbAudioPackage)('starts fresh sets on stereo Main and retains saved USB routing on edit', async () => {
+    const moduleIds = ['usb-audio-out-tracks-main-cue']
+    const fresh = await service.call('set_save', { name: 'Fresh USB', moduleIds })
+    try {
+      expect(fresh.usbAudio).toMatchObject({ destination: 'computer', layout: 'main', outboxPairs: [1, 0, 0, 0] })
+      const saved = { ...fresh.usbAudio, destination: 'outbox', layout: 'tracks-post', outboxPairs: [7, 1, 7, 0] }
+      await service.call('set_save', { id: fresh.id, name: 'Outbox', moduleIds, usbAudio: saved })
+      expect((await service.call('set_save', { id: fresh.id, name: 'Renamed', moduleIds })).usbAudio).toEqual(saved)
+      const classic = { ...fresh }
+      delete classic.usbAudio
+      await service.call('set_import', { configurations: [classic] })
+      expect((await service.call('set_save', { id: fresh.id, name: 'Classic', moduleIds })).usbAudio).toBeUndefined()
+    } finally {
+      await service.call('set_delete', { id: fresh.id })
+    }
   })
   it('round trips sets through frontend validation without including private firmware', async () => {
     const created = await service.call('set_save', { name: 'MCP test', moduleIds: ['miniverb'] })
