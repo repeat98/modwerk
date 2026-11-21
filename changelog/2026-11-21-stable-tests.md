@@ -1,0 +1,1 @@
+Checks no longer fail on unrelated pull requests: the module scope test reads each module's version from the catalogue instead of a written-out list, the USB refusal test accepts a module whose release is still in progress, the first-release rule test checks the rule rather than its exact sentence, and the Zoom link's slow write tests get time to wait out the pedal's replies.
