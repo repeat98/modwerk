@@ -69,7 +69,36 @@ function amigaKeys() {
 }
 
 // Hand-drawn art for the catalog modules. A module without an entry shows its presentation/thumbnail.svg.
+/* Grain: a stretch of the sample, and six Hann windows read from around POS. */
+function grainWave() {
+  let d = ''
+  for (let i = 0; i <= 132; i++) {
+    const t = i / 132, y = 92 + Math.sin(i * .9) * Math.cos(i * .23) * (5 + 15 * Math.sin(t * Math.PI))
+    d += (i ? 'L' : 'M') + (28 + i * 2) + ' ' + y.toFixed(1)
+  }
+  return d
+}
+function grainWindow(cx: number, height: number) {
+  let d = ''
+  for (let i = 0; i <= 16; i++) {
+    const t = i / 16
+    d += (i ? 'L' : 'M') + (cx - 22 + t * 44).toFixed(1) + ' ' + (150 - height * (1 - Math.cos(2 * Math.PI * t)) / 2).toFixed(1)
+  }
+  return d
+}
+const GRAINS: readonly [number, number][] = [[118, 26], [134, 38], [148, 31], [163, 40], [177, 29], [193, 22]]
+
 const ART: Readonly<Record<string, () => ReactElement>> = {
+  grain: () => <g>
+    <path className="signal-ghost" d={grainWave()} />
+    <path className="signal-secondary" d="M156 40V150" strokeDasharray="3 5" />
+    {GRAINS.map(([cx, height], i) => <g key={cx}>
+      <path className={i % 2 ? 'signal-main' : 'signal-secondary'} d={grainWindow(cx, height)} />
+      <circle className="signal-dot" cx={cx} cy={150 - height} r="2" />
+    </g>)}
+    <text x="25" y="27">SAMPLE</text><text x="148" y="27">POS</text><text x="230" y="27">6 GRAINS</text>
+    <text x="25" y="177">ONE SAMPLE → A CLOUD</text>
+  </g>,
   poly8: () => <g>
     <path className="signal-main" d="M27 96H33C36 96 37 79 41 79S46 113 50 113 55 84 59 84 63 106 67 106 71 96 75 96H81" />
     <path className="signal-ghost" d="M81 96H97Q103 96 103 90V53Q103 47 109 47H111M103 90V139Q103 145 109 145H111M103 61H111M103 75H111M103 89H111M103 103H111M103 117H111M103 131H111" />
