@@ -1543,6 +1543,8 @@ def main():
                         help='Build one USB MIDI base with a runtime audio function slot and no linked audio reserve.')
     parser.add_argument('--usb-audio-profiles', action='store_true',
                         help='Offline staging only: source-link all six outputs and off, with --usb-audio as the explicit initial profile. No host settings/recovery or catalogue admission.')
+    parser.add_argument('--usb-input', action='store_true',
+                        help='Private development base for the USB Audio duplex candidate.')
     parser.add_argument('--dsp-hook', choices=tuple(DSP_HOOK_EDITS), default='guard',
                         help="with --dsp-loader: the state-7 entry, guard (default); usbin, pretend, noflags, long: hardware bisect variants")
     parser.add_argument('--dsp-probe', choices=('A', 'B', 'S', 'W', 'M', 'X'),
@@ -1755,6 +1757,13 @@ def main():
     spec = importlib.util.spec_from_file_location('modwerk_base_art', APP / 'sdk/runtime/startup/base_art.py')
     base_art = importlib.util.module_from_spec(spec); spec.loader.exec_module(base_art)
     (source / 'boot_art.h').write_text(base_art.header(VERSION.split('-')[0]))
+    usb_input = None
+    if args.usb_input:
+        if not (args.dev and args.dsp_loader and args.dsp_hook == 'guard' and args.resident_stock_hooks
+                and args.packaged_usb_audio and args.site_events and args.usb_midi and not args.usb_audio):
+            parser.error('--usb-input needs the development, packaged USB Audio and resident DSP base with the guarded transfer.')
+        sys.path.insert(0, str(APP / 'sdk/machines/octatrack/module-adapters'))
+        import usb_audio_input as usb_input
     dsp_sites, dsp_layout, rows = [], None, None
     resident_boot_prepared, resident_boot_helper, resident_factory = None, None, None
     if args.resident_stock_hooks:
@@ -1772,9 +1781,11 @@ def main():
         resident_bundles = {}  # each core's placed block, its on-demand engine units included
 
         def resident_factory(tag, hi):
-            resident_bundles[tag] = resident_dsp.place_resident(
-                resident_ob, tag, hi, str(source), dsp_packages.assemble,
-                resident_dsp.ALLOWED[tag] if args.resident_on_demand else 0)
+            def place(end):
+                return resident_dsp.place_resident(
+                    resident_ob, tag, end, str(source), dsp_packages.assemble,
+                    resident_dsp.ALLOWED[tag] if args.resident_on_demand else 0)
+            resident_bundles[tag] = usb_input.place_receiver(place, dsp_packages.assemble, tag, hi, str(source)) if usb_input else place(hi)
             return resident_bundles[tag]
         if args.resident_on_demand:  # the ColdFire side (docs/OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md)
             import resident_engines
@@ -1834,6 +1845,8 @@ def main():
                 text = resident_engines.refusal(text)
             if args.resident_stock_hooks and name in zero_state.UNITS:  # last, after every other seam
                 text = zero_state.unit(name, text, preserved_dynload)
+            if usb_input and name == 'hooks.s':
+                text = usb_input.scheduler(text)
             (source / ('dsp_hooks.s' if name == 'hooks.s' else name)).write_text(text)
         if args.resident_stock_hooks:
             for name in ('stock_hooks.c', 'stock_hooks.h', 'stock_hook_driver.c', 'stock_hook_driver.h', 'stock_hook_resources.c', 'stock_hook_resources.h',
@@ -1867,6 +1880,17 @@ def main():
             shutil.copyfile(HERE / 'dsp.c', source / 'dsp.c')
         if saved_set_wiring:
             (source / 'dsp.c').write_text(saved_set_wiring.dsp((source / 'dsp.c').read_text()))
+        if usb_input:
+            dsp_file = source / 'dsp.c'
+            dsp_text = usb_input.replace(dsp_file.read_text(),
+                'DSP_SELECT = dl_c1_phase ? 1u : (uint8_t)(dl_phase - 1u);',
+                'DSP_SELECT = dl_c1_phase ? 1u : 0u; /* state 7 always targets core 0 */')
+            dsp_file.write_text(usb_input.replace(dsp_text, '    dl_phase = dl_c1_phase = 0;',
+                '    if (dl_phase >= 3u) {\n'
+                '        extern void modwerk_usb_input_dma_failed(void);\n'
+                '        modwerk_usb_input_dma_failed();\n'
+                '    }\n'
+                '    dl_phase = dl_c1_phase = 0;'))
         shutil.copyfile(HERE / 'dsp_core1.s', source / 'dsp_core1.s')
         for name in ('dsp_journal.h', 'dsp_journal_manager.h', 'fxmap.h', 'fxpage.h', 'fxmap.c', 'fxmap.s', 'fxpage.c', 'fxpage.s', 'status.c', 'status.s', 'status.h', 'load_wire.h', 'selftest.h', 'diag.c', 'diag.h'):
             shutil.copyfile(HERE / name, source / name)
@@ -1880,7 +1904,8 @@ def main():
                                                   burn_window=args.dsp_burn_window,
                                                   **({'resident': resident_factory} if args.resident_stock_hooks else {}))
         if args.resident_stock_hooks:
-            resident_boot_prepared = resident_boot_helper.prepare(image, device, dsp, dsp_layout)
+            extra = usb_input.mailbox_initialization(image, device, dsp) if usb_input else None
+            resident_boot_prepared = resident_boot_helper.prepare(image, device, dsp, dsp_layout, extra=extra)
             (source / 'resident-dsp-boot.s').write_text(resident_boot_prepared['assembly'])
             bootstrap = (source / 'core-ot.s').read_text()
             seam = '        jsr     BOOT_CONTINUE'
@@ -2007,6 +2032,9 @@ def main():
     inputs['sdk/runtime/startup/build.py'] = sha((artwork.parent/'build.py').read_bytes())
     inputs['sdk/runtime/startup/base.json'] = sha((artwork.parent/'base.json').read_bytes())
     inputs['sdk/runtime/startup/base_art.py'] = sha((artwork.parent/'base_art.py').read_bytes())
+    if usb_input:
+        for path in (Path(usb_input.__file__), *(usb_input.UPSTREAM / name for name in usb_input.SOURCES)):
+            inputs[path.relative_to(APP).as_posix()] = sha(path.read_bytes())
     if args.table_owners:  # the owners list and every package, declaration and recipe it names
         _, _, reviewed_inputs = reviewed_table_owners(args.table_owners.resolve())
         inputs.update(reviewed_inputs)
@@ -2164,6 +2192,8 @@ modwerk_retained_end:
         recipe['cflags'].append('-DMODWERK_SETTINGS')
     if usb_function_slots:  # a base with USB Audio linked in (a development twin) has the table and refuses every function
         recipe['cflags'] += ['-DMODWERK_USB_FUNCTIONS'] + (['-DMODWERK_USB_AUDIO_LINKED'] if args.usb_audio else [])
+        if usb_input:
+            recipe['cflags'].append('-DMODWERK_USB_INPUT')
     if args.saved_set_export:
         recipe['cflags'].append('-DMODWERK_SAVED_SET_EXPORT')
     if args.resident_stock_hooks:

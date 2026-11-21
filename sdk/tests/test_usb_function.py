@@ -32,6 +32,8 @@ def load(name, relative):
 
 base = load('usb_function_base', 'sdk/machines/octatrack/elekloader/usb_base.py')
 descriptors = load('usb_function_descriptors', 'sdk/octabam/platform/usb-midi/descriptors.py')
+duplex_descriptors = load('usb_duplex_descriptors',
+    'sdk/octatrack/modules/usb-audio-out-tracks-main-cue/layouts/descriptors.py')
 
 
 class UsbFunction(unittest.TestCase):
@@ -87,6 +89,24 @@ class UsbFunction(unittest.TestCase):
         endpoints = {record[2] & 15 for record in functions.records(blob) if record[1] == 5}
         self.assertEqual((numbers, endpoints), ({0, 1, 2, 3}, {1, 2}))
 
+    def test_duplex_descriptors_preserve_the_base_and_full_speed_output(self):
+        for layout in functions.AUDIO_LAYOUTS:
+            for input_mode, channels in duplex_descriptors.IN_LAYOUT.items():
+                for other in (False, True):
+                    with self.subTest(layout=layout, input_mode=input_mode, other=other):
+                        full = functions.configuration(base, duplex_descriptors, False, other, layout, audio_input=input_mode)
+                        self.assertEqual(full, functions.configuration(base, duplex_descriptors, False, other, layout))
+                        high = functions.configuration(base, duplex_descriptors, True, other, layout, audio_input=input_mode)
+                        midi = functions.configuration(base, duplex_descriptors, True, other)
+                        self.assertEqual(high[9:len(midi)], midi[9:])
+                        self.assertEqual((high[1], high[4]), (7 if other else 2, 7))
+                        self.assertEqual(int.from_bytes(high[2:4], 'little'), len(high))
+                        rows = list(functions.records(high))
+                        self.assertEqual({r[2] for r in rows if r[1] == 4}, set(range(7)))
+                        endpoints = {r[2]: r for r in rows if r[1] == 5}
+                        self.assertEqual(endpoints[0x03], bytes((7, 5, 3, 5, 48 * channels, 0, 2)))
+                        self.assertEqual(endpoints[0x83][3], 0x25)
+
     def test_slots_hold_each_configuration_and_the_clamps_read_the_live_length(self):
         plain = functions.assembly(base, descriptors)
         self.assertEqual(plain, functions.assembly(base, descriptors, slots=False))
@@ -95,8 +115,14 @@ class UsbFunction(unittest.TestCase):
         length = len(functions.configuration(base, descriptors, True))
         self.assertNotIn('#modwerk_cfg_len', text)
         self.assertNotIn('.set modwerk_cfg_len', text)
-        self.assertEqual(text.count('    cmpl    modwerk_cfg_len,%d1\n    blss    1f\n    movel   modwerk_cfg_len,%d1\n'), 2)
-        self.assertIn('    .balign 4\n    .global modwerk_cfg_len\nmodwerk_cfg_len:\n    .long %d\n' % length, text)
+        for request, first, second in ((1, 'fs', 'hs'), (2, 'hs', 'fs')):
+            clamp = text.split(f'modwerk_usb_clamp{request}:', 1)[1].split('jmp', 1)[0]
+            self.assertIn(f'movel   modwerk_cfg_len_{first},%d1', clamp)
+            self.assertIn(f'movel   modwerk_cfg_len_{second},%d1', clamp)
+            self.assertIn('cmpil   #0x08000000,%d0\n    bnes', clamp)
+            self.assertIn('cmpl    %d2,%d1\n    blss', clamp)
+        for speed in ('fs', 'hs'):
+            self.assertIn(f'modwerk_cfg_len_{speed}:\n    .long {length}\n', text)
         for name in ('modwerk_cfg_fs', 'modwerk_cfg_hs', 'modwerk_cfg_os_fs', 'modwerk_cfg_os_hs'):
             slot = text.split('    .balign 512\n    .global %s\n%s:\n' % (name, name), 1)[1].split('    .balign', 1)[0]
             self.assertEqual(slot.count('0x'), length)
@@ -126,7 +152,8 @@ class UsbFunction(unittest.TestCase):
         slots = [symbols[name][0] for name in ('modwerk_cfg_fs', 'modwerk_cfg_hs', 'modwerk_cfg_os_fs', 'modwerk_cfg_os_hs')]
         self.assertTrue(all(at % 512 == 0 for at in slots))
         self.assertEqual(sorted(b - a for a, b in zip(slots, slots[1:])), [512, 512, 512])
-        self.assertIn('modwerk_cfg_len', symbols)
+        self.assertIn('modwerk_cfg_len_fs', symbols)
+        self.assertIn('modwerk_cfg_len_hs', symbols)
 
     def test_the_base_wires_the_function_in_only_with_the_composite_configuration(self):
         build = (OT / 'elekloader/build_core.py').read_text()

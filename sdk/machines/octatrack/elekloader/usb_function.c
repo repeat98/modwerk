@@ -65,7 +65,27 @@ int modwerk_machine_usb_disk(void); /* runtime.c: stock's USB DISK MODE is open 
 struct uf_base_configuration { uint16_t bytes; uint8_t interfaces, audio_linked; };
 extern const struct uf_base_configuration modwerk_cfg_native;
 #define UF_TABLE (MODWERK_OT_USB_FUNCTIONS - RUNTIME_EVENTS)
+/* ABI 3 uses modwerk_usb_profiles with zero interfaces/length in its header.
+ * Its four pointers each address count entries of this type, one per profile.
+ * Corresponding CONFIG and OTHER_SPEED entries must agree on size and count. */
+#define MODWERK_USB_SPEED_PROFILES_ABI 3u
+#define MODWERK_USB_SPEED_PROFILES_MAX 16u
+struct modwerk_usb_profile_block {
+    uint16_t interfaces, length;
+    const uint8_t *descriptors;
+};
+/* The 40-byte input variant is admitted only by input-enabled development bases.
+ * receive returns the staged length in 64-byte DMA minor loops, or zero. */
+struct modwerk_usb_input_profiles {
+    struct modwerk_usb_profiles profiles;
+    unsigned (*receive)(void);
+};
+
+
 #define UF_RECORD 32u
+#define UF_PROFILE_RECORD 36u
+#define UF_INPUT_RECORD 40u
+#define UF_BLOCK_RECORD 8u
 #define UF_SLOT 512u
 #define UF_ROOM (UF_SLOT - modwerk_cfg_native.bytes)
 #define UF_ENDPOINTS 0x00080008u   /* endpoint 3, OUT and IN, as ENDPTFLUSH bits */
@@ -80,7 +100,7 @@ extern const struct uf_base_configuration modwerk_cfg_native;
 enum { UF_SETTLED, UF_WAIT, UF_OFF, UF_BACK };
 
 extern uint8_t modwerk_cfg_fs[], modwerk_cfg_hs[], modwerk_cfg_os_fs[], modwerk_cfg_os_hs[];
-extern volatile uint32_t modwerk_cfg_len;
+extern volatile uint32_t modwerk_cfg_len_fs, modwerk_cfg_len_hs;
 
 /* Written masked at a switch, read by the tick with the USB interrupt held off (no switch runs then). */
 static volatile uintptr_t row_record;   /* the function the table holds, 0 for none */
@@ -109,8 +129,9 @@ static uint32_t uf_word(const uint8_t *p)
 static unsigned uf_half(const uint8_t *p) { return (unsigned)p[0] << 8 | p[1]; }
 
 /* A function's block: whole descriptors, its interfaces numbered from the base's first free one, endpoint 3 only. */
-static int uf_block(const uint8_t *p, unsigned length, unsigned interfaces)
+static int uf_block(const uint8_t *p, unsigned length, unsigned interfaces, uint32_t endpoints)
 {
+    if (interfaces < 1u || interfaces > 4u || length < 9u || length > UF_ROOM) return 0;
     unsigned at = 0, seen = 0;
     while (at < length) {
         unsigned n = p[at];
@@ -124,10 +145,19 @@ static int uf_block(const uint8_t *p, unsigned length, unsigned interfaces)
         }
         if (type == 11u && (n != 8u || p[at + 2u] < MODWERK_USB_FUNCTION_INTERFACE || !p[at + 3u] ||
                             p[at + 2u] + p[at + 3u] > MODWERK_USB_FUNCTION_INTERFACE + interfaces)) return 0;
-        if (type == 5u && (n < 7u || (p[at + 2u] & 0x0fu) != MODWERK_USB_FUNCTION_ENDPOINT)) return 0;
+        if (type == 5u) {
+            if (n < 7u || (p[at + 2u] & 0x7fu) != MODWERK_USB_FUNCTION_ENDPOINT) return 0;
+            if (!(endpoints & (p[at + 2u] & 0x80u ? 0x00080000u : 0x00000008u))) return 0;
+        }
         at += n;
     }
     return seen == (1u << interfaces) - 1u;
+}
+
+static const uint8_t *uf_span(const struct runtime_dsp *d, uint32_t base, uint32_t address, unsigned length)
+{
+    if (address < base || address - base > d->image_bytes || length > d->image_bytes - (address - base)) return 0;
+    return d->image + (address - base);
 }
 
 int modwerk_usb_function_admit(const struct runtime_dsp *d, unsigned operation)
@@ -135,28 +165,55 @@ int modwerk_usb_function_admit(const struct runtime_dsp *d, unsigned operation)
     if (!d || !d->present) return RUNTIME_OK;
     uint32_t at = d->hook_offset[MODWERK_OT_USB_FUNCTIONS];
     if (at == RUNTIME_NONE) return RUNTIME_OK;
-    if (modwerk_cfg_native.audio_linked) return RUNTIME_CONFLICT; /* its configuration already holds USB Audio, on these interfaces and this endpoint */
+    if (modwerk_cfg_native.audio_linked) return RUNTIME_CONFLICT;
     if (operation != RUNTIME_METADATA_PREPARE && operation != RUNTIME_METADATA_SWITCH) return RUNTIME_MALFORMED;
     if (!d->image || (at & 1u) || at > d->image_bytes || d->image_bytes - at < UF_RECORD) return RUNTIME_MALFORMED;
     const uint8_t *record = d->image + at;
+    unsigned abi = uf_word(record), size = uf_word(record + 4), profiles = 1;
     unsigned interfaces = uf_half(record + 8), length = uf_half(record + 10);
     uint32_t endpoints = uf_word(record + 12);
-    unsigned profiles = 1, abi = uf_word(record);
-    if (abi == MODWERK_USB_PROFILES_ABI) {
-        if (d->image_bytes - at < 36u || uf_word(record + 4) != 36u) return RUNTIME_MALFORMED;
+    int variable = abi == MODWERK_USB_SPEED_PROFILES_ABI;
+    int input = variable && size == UF_INPUT_RECORD;
+#ifndef MODWERK_USB_INPUT
+    if (input) return RUNTIME_CONFLICT;
+#endif
+    if (!endpoints || (endpoints & ~UF_ENDPOINTS)) return RUNTIME_MALFORMED;
+    if (abi == MODWERK_USB_PROFILES_ABI || variable) {
+        if ((size != UF_PROFILE_RECORD && !input) || d->image_bytes - at < size) return RUNTIME_MALFORMED;
         profiles = uf_half(record + 32);
-        if (!profiles || profiles > 8u || record[34] >= profiles || record[35] >= profiles) return RUNTIME_MALFORMED;
-    } else if (abi != MODWERK_USB_FUNCTION_ABI || uf_word(record + 4) != UF_RECORD) return RUNTIME_MALFORMED;
-    if (interfaces < 1u ||
-        interfaces > 4u || length < 9u || length > UF_ROOM || !endpoints || (endpoints & ~UF_ENDPOINTS))
-        return RUNTIME_MALFORMED;
-    /* PREPARE runs before relocation: the pointer words still hold image offsets (machine_contributors.c). */
+        if (!profiles || profiles > (variable ? MODWERK_USB_SPEED_PROFILES_MAX : 8u) ||
+            record[34] >= profiles || record[35] >= profiles) return RUNTIME_MALFORMED;
+    } else if (abi != MODWERK_USB_FUNCTION_ABI || size != UF_RECORD) return RUNTIME_MALFORMED;
+    if (variable && (interfaces || length)) return RUNTIME_MALFORMED;
+
+    /* PREPARE sees image offsets. SWITCH sees relocated addresses. */
     uint32_t base = operation == RUNTIME_METADATA_PREPARE ? 0u : UF_IMAGE_ADDRESS(d->image);
+    if (input) {
+        uint32_t handler = uf_word(record + UF_PROFILE_RECORD);
+        if (!handler || (handler & 1u) || !uf_span(d, base, handler, 2u) || endpoints != UF_ENDPOINTS)
+            return RUNTIME_MALFORMED;
+    }
+    const uint8_t *speed_tables[2];
     for (unsigned k = 0; k < 4u; ++k) {
-        uint32_t block = uf_word(record + 16u + 4u * k);
-        if (block < base || block - base > d->image_bytes || d->image_bytes - (block - base) < profiles * length) return RUNTIME_MALFORMED;
-        for (unsigned i = 0; i < profiles; ++i)
-            if (!uf_block(d->image + (block - base) + i * length, length, interfaces)) return RUNTIME_MALFORMED;
+        uint32_t address = uf_word(record + 16u + 4u * k);
+        if (variable && (address & 3u)) return RUNTIME_MALFORMED;
+        const uint8_t *blocks = uf_span(d, base, address, profiles * (variable ? UF_BLOCK_RECORD : length));
+        if (!blocks) return RUNTIME_MALFORMED;
+        if (variable && k < 2u) speed_tables[k] = blocks;
+        const uint8_t *same_speed = variable && k >= 2u ? speed_tables[k - 2u] : 0;
+        for (unsigned i = 0; i < profiles; ++i) {
+            unsigned n = length, count = interfaces;
+            const uint8_t *block = blocks + i * length;
+            if (variable) {
+                const uint8_t *entry = blocks + i * UF_BLOCK_RECORD;
+                if (same_speed && uf_word(entry) != uf_word(same_speed + i * UF_BLOCK_RECORD))
+                    return RUNTIME_MALFORMED;
+                count = uf_half(entry);
+                n = uf_half(entry + 2);
+                block = uf_span(d, base, uf_word(entry + 4), n);
+            }
+            if (!block || !uf_block(block, n, count, endpoints)) return RUNTIME_MALFORMED;
+        }
     }
     return RUNTIME_OK;
 }
@@ -193,10 +250,44 @@ static int uf_idle(void)
 static unsigned uf_requested(void)
 {
     const struct modwerk_usb_profiles *p = (const void *)row_record;
-    if (!p || p->function.abi != MODWERK_USB_PROFILES_ABI) return 0;
+    if (!p || p->function.abi == MODWERK_USB_FUNCTION_ABI) return 0;
     unsigned index = p->requested;
     return index < p->count ? index : 0u;
 }
+
+#ifdef MODWERK_USB_INPUT
+/* OctaBam's USB receive priority, measured by Bryan Tysinger on MKII.
+ * Change it only while the controller is detached. Restore exactly what the
+ * base had before the duplex profile on Undo or when the player selects OFF. */
+#define USB_BURST_CONTROL 0xfc040024u
+#define USB_SDRAM_PRIORITY 0xfc004200u
+#define USB_SDRAM_ARBITRATION 0xfc004210u
+#define USB_SRAM_PRIORITY 0xfc004400u
+#define USB_SRAM_ARBITRATION 0xfc004410u
+static uint32_t saved_burst, saved_sdram_priority, saved_sdram_arb, saved_sram_priority, saved_sram_arb;
+static uint8_t usb_first;
+static void uf_input_priority(int enabled)
+{
+    if (enabled == usb_first) return;
+    if (enabled) {
+        saved_burst = UF_REG(USB_BURST_CONTROL);
+        saved_sdram_priority = UF_REG(USB_SDRAM_PRIORITY);
+        saved_sdram_arb = UF_REG(USB_SDRAM_ARBITRATION);
+        saved_sram_priority = UF_REG(USB_SRAM_PRIORITY);
+        saved_sram_arb = UF_REG(USB_SRAM_ARBITRATION);
+        UF_REG(USB_BURST_CONTROL) = saved_burst | 0x3ffu;
+        UF_REG(USB_SDRAM_PRIORITY) = UF_REG(USB_SRAM_PRIORITY) = 0x60504321u;
+        UF_REG(USB_SDRAM_ARBITRATION) = UF_REG(USB_SRAM_ARBITRATION) = 0x10u;
+    } else {
+        UF_REG(USB_SDRAM_ARBITRATION) = saved_sdram_arb;
+        UF_REG(USB_SRAM_ARBITRATION) = saved_sram_arb;
+        UF_REG(USB_SDRAM_PRIORITY) = saved_sdram_priority;
+        UF_REG(USB_SRAM_PRIORITY) = saved_sram_priority;
+        UF_REG(USB_BURST_CONTROL) = saved_burst;
+    }
+    usb_first = (uint8_t)enabled;
+}
+#endif
 
 /* The USB interrupt held off and the unit off the bus. Through the uncached alias: the controller reads memory. */
 static void uf_compose(void)
@@ -204,19 +295,35 @@ static void uf_compose(void)
     const struct modwerk_usb_function *f = (const struct modwerk_usb_function *)row_record;
     uint8_t *const slot[4] = {modwerk_cfg_fs, modwerk_cfg_hs, modwerk_cfg_os_fs, modwerk_cfg_os_hs};
     const uint8_t *const block[4] = {f ? f->fs : 0, f ? f->hs : 0, f ? f->os_fs : 0, f ? f->os_hs : 0};
-    unsigned length = f && f->length <= UF_ROOM ? f->length : 0u, interfaces = length ? f->interfaces : 0u;
-    unsigned total = modwerk_cfg_native.bytes + length;
     live_profile = (uint8_t)uf_requested();
-    if (f && f->abi == MODWERK_USB_PROFILES_ABI)
+    if (f && f->abi != MODWERK_USB_FUNCTION_ABI)
         ((struct modwerk_usb_profiles *)row_record)->active = live_profile;
     for (unsigned k = 0; k < 4u; ++k) {
+        const uint8_t *from = block[k];
+        unsigned length = 0, interfaces = 0;
+        if (f && f->abi == MODWERK_USB_SPEED_PROFILES_ABI) {
+            const struct modwerk_usb_profile_block *entry = (const void *)from;
+            entry += live_profile;
+            length = entry->length, interfaces = entry->interfaces, from = entry->descriptors;
+        } else if (f) {
+            length = f->length, interfaces = f->interfaces;
+            from += live_profile * length;
+        }
         volatile uint8_t *to = UF_UNCACHED(slot[k]);
+        unsigned total = modwerk_cfg_native.bytes + length;
         to[2] = (uint8_t)total, to[3] = (uint8_t)(total >> 8);
         to[4] = (uint8_t)(modwerk_cfg_native.interfaces + interfaces);
-        for (unsigned i = 0; i < length; ++i) to[modwerk_cfg_native.bytes + i] = block[k][live_profile * length + i];
+        for (unsigned i = 0; i < length; ++i) to[modwerk_cfg_native.bytes + i] = from[i];
+        if (k == 0u) modwerk_cfg_len_fs = total;
+        if (k == 1u) {
+            modwerk_cfg_len_hs = total;
+#ifdef MODWERK_USB_INPUT
+            uf_input_priority(f && f->abi == MODWERK_USB_SPEED_PROFILES_ABI &&
+                              f->bytes == UF_INPUT_RECORD && interfaces == 3u);
+#endif
+        }
     }
-    modwerk_cfg_len = total;
-    live_serial = length ? row_serial : 0u;
+    live_serial = f ? row_serial : 0u;
 }
 
 /* Called with the USB interrupt held off by the frame interrupt or by the tick's full mask.
@@ -317,6 +424,24 @@ unsigned modwerk_usb_function_control(void)
     if (answered && panel_reconnect && state == UF_BACK && reset_seen) state = UF_SETTLED;
     return answered;
 }
+#ifdef MODWERK_USB_INPUT
+static volatile uint8_t input_dma_failed;
+void modwerk_usb_input_dma_failed(void) { input_dma_failed = 1; }
+
+/* The guarded state-7 eDMA scheduler calls this once, before a loader write.
+ * The package prepares a complete 3- or 5-minor-loop block in fixed SRAM.
+ * The completion path owns only SRAM, so it can finish after a module leaves. */
+unsigned modwerk_usb_input_block(void)
+{
+    const struct modwerk_usb_profiles *profile = (const void *)row_record;
+    if (input_dma_failed || !profile || profile->function.abi != MODWERK_USB_SPEED_PROFILES_ABI ||
+        profile->function.bytes != UF_INPUT_RECORD) return 0;
+    const struct modwerk_usb_input_profiles *input = (const void *)profile;
+    unsigned loops = UF_CALL((uintptr_t)input->receive);
+    return loops == 3u || loops == 5u ? loops : 0u;
+}
+#endif
+
 /* The frame interrupt's block (usb_base.s modwerk_usb_frame_shim), in a base that does not link USB Audio in. */
 void modwerk_usb_function_frame(void)
 {
