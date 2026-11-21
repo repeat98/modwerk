@@ -165,9 +165,10 @@ if (passed && !suiteOnly && base && process.env.GITHUB_EVENT_PATH) {
 // an unreachable board only warns, so an outage never blocks a pull request.
 if (passed && !suiteOnly && base) passed = await run('board', ['check', '--base', base])
 // Documentation uses the same import policy as publication without running firmware gates. The catalogue tests read Markdown
-// (the module guides' links, the agent files, the pull request template), so a prose-only change can break them and must run them.
+// (the module guides' links, the agent files, the pull request template), so a prose-only change can break them and must run them;
+// so does the starter-prompts test, which holds AGENTS.md and the skills to their contributor-protecting rules.
 if (passed && !suiteOnly && plan.docContracts && !plan.sdk) passed = await run('sdk:imports:check')
-if (passed && !suiteOnly && documentationOnly) passed = await run('test', ['src/catalog'])
+if (passed && !suiteOnly && documentationOnly) passed = await run('test', ['src/catalog', 'src/community/starter-prompts.test.ts'])
 // module:doctor --draft copies a draft under sdk/octatrack/modules/ for its run, where the SDK suite, the other test files and the
 // build would read it as a listed module. Its test waits out that parallel stage and runs alone after it.
 const DRAFT_DOCTOR = ['scripts/module-doctor.test.mjs', '-t', 'checks a draft where every gate looks']
