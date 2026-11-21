@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-21",
+    "changes": [
+      "Opening the sample pool no longer stops Grain: the track keeps playing its grains while you browse.",
+      "FUNC+YES in the pool still previews the sample as plain Flex, until the track's next trig.",
+      "Grain can be picked on busier Parts once your base reads the CPU it really adds (a base update)."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-11-20",
     "changes": [
