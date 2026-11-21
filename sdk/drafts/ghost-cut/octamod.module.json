@@ -104,7 +104,7 @@
       "name": "GRN",
       "default": 40,
       "count": 128,
-      "doc": "GRAIN's grain length, 10 ms at 0 to 79 ms at 127 (at most half the loop): short grains for clean pitch on drums, long ones for smooth pads. TAPE ignores it.",
+      "doc": "GRAIN's grain length, 10 ms at 0 to 79 ms at 127 (at most a quarter of the loop): short grains for clean pitch on drums, long ones for smooth pads. TAPE ignores it.",
       "labels": null
     },
     {
@@ -128,6 +128,7 @@
       "FX2 only: the ring needs an FX2 slot's buffer. On an FX1-sized slot it passes the track dry.",
       "Mono loop: the ring records the track's mono sum, and the loop plays on both sides.",
       "The longest loop is 353 ms; a longer LEN is halved until it fits.",
+      "After a GRAB the track stays dry for 2.9 ms while the seam is baked into the ring; the loop then starts where it would be had it played since GRAB.",
       "The loop starts at GRAB and keeps its own length; it does not restart on the sequencer's steps, so it drifts by under a sample a repeat against the pattern. A GRAB locked on a trig starts it on that step.",
       "RATE above 1 x has no anti-alias filter and reads with linear interpolation, so high content aliases when sped up.",
       "GRAIN uses triangular windows on two grains: steady tones keep their pitch, but transients smear and a slight flutter at the grain rate can be heard. Milestone C (DRFT, MOTN, FDBK) is not built yet.",
@@ -158,7 +159,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Milestones A and B rendered in dsp_host on OS 1.40C: verify.py's 96 gates pass. They are bit-exact against the integer reference in every mode, TAPE and GRAIN; exact dry while idle; guard clean beside Sidechain's key window; four instances a core. Static cost: 390 cycles a sample on GRAIN, 188 on TAPE. In the emulator the base refused every module effect pick, Vibrato's too. Not tested on a unit.",
+    "summary": "Milestones A and B rendered in dsp_host on OS 1.40C: verify.py's 96 gates pass. They are bit-exact against the integer reference in every mode, TAPE and GRAIN; exact dry while idle; guard clean beside Sidechain's key window; four instances a core. Static cost: 266 cycles a sample on GRAIN (about stock SPRING REV), 148 on TAPE. In the emulator the base refused every module effect pick, Vibrato's too. Not tested on a unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [

@@ -16,13 +16,19 @@
 ; After init the ring is cleared 128 words a block (124 blocks, the frames
 ; pass dry meanwhile); modulo addressing keeps the last chunk inside it.
 ;
+; The seam is baked into the ring once a GRAB: over eight blocks (BAKE, the
+; frames dry), the loop's last 256 samples are blended toward the 256 before
+; its start, and its first sample is written once more after its end. Every
+; read is then a plain interpolation that runs on across the loop's end. The
+; loop starts 112 samples in, where it would be had it played since GRAB.
+;
 ; Knobs: LEN slot 0, GRAB 1, RATE 2, PTCH 3, MIX 5 (r6+$0..$5, knob in bits
 ; 16-23); ENG slot 6 (r6+$c bits 16-23), CAPT 7 (r6+$c bits 8-15), GRN 8
 ; (r6+$d bits 16-23), DIR 10 (r6+$e bits 16-23); tempo24 << 8 at r6+$13.
 ;
-; The r7 block ($00..$1f, all zeroed at init):
+; The r7 block ($00..$2f, all zeroed at init):
 ;   $00 ring base               $01 live (1: an FX2-sized slot)
-;   $02 clear chunks left       $03 state: 0 idle, 1 rec, 2 loop, 3 release
+;   $02 clear chunks left       $03 state: 0 idle, 1 rec, 2 bake, 3 loop, 4 release
 ;   $04 GRAB latch              $05 write index w
 ;   $06 loop start S            $07 loop length L
 ;   $08/$09 play position p, integer and fraction
@@ -32,15 +38,15 @@
 ;   $10/$11 increment, integer and fraction
 ;   $12 L for the next GRAB     $13 CAPT          $14 DIR
 ;   $15 primed                  $16 P table base
-;   $17 L - 256 (the seam)      $18 L - 1 (the pendulum's end)
+;   $17 BAKE: words done        $18 L - 1 (the pendulum's end)
 ;   $19 wet                     $1a scratch
 ;   $1b ring base + S (the loop's start)
-;   $1c/$1d/$1e gcRD's scratch  $1f grain 1's share
+;   $1c/$1d scratch             $1f grain 1's share
 ;   $20 grain phase step, Q22   $21/$22 grain offset step, integer and fraction
 ;   $23 grain 1 phase (Q22)     $24/$25 grain 1 offset
 ;   $26 grain 2 phase           $27/$28 grain 2 offset
 ;   $29 running engine          $2a ENG           $2b duck (ENG differs)
-;   $2c PTCH, Q20 (glided)      $2d..$2f free
+;   $2c PTCH, Q20 (glided)      $1e, $2d..$2f free
 ;
 ; Every mpy is `mpy x0,y1` (AGENTS.md). AND and ASL leave A2 stale: values
 ; leave through a1. Labels are gc and two characters, so none is another's
@@ -239,10 +245,90 @@ gc10:
         move    b,x:(r7+$04)
         bsr     gcRL
 gc1F:
-; ---- the seam's start and the pendulum's end, from the loop's L
+; ---- BAKE: the seam into the ring, 32 words a block, g = j / 256
+        move    x:(r7+$03),a
+        cmp     #>$2,a
+        bne     gcB9
+        move    x:(r7+$00),x0
+        move    x:(r7+$06),a
+        add     x0,a
+        move    a,r4
+        move    a1,r5
         move    x:(r7+$07),a
         sub     #>$100,a
+        move    x:(r7+$17),x0
+        add     x0,a
+        move    a1,n4                   ; L - 256 + j: the loop's tail
+        move    x0,a
+        sub     #>$100,a
+        move    a1,n5                   ; j - 256: the pre-roll
+        move    #>$3dfd,m4
+        move    #>$3dfd,m5
+        move    x0,a
+        asl     #$f,a,a
+        move    a1,x0                   ; g
+        move    (r4)+n4
+        move    (r5)+n5
+        do      #$20,>gcB1
+        move    y:(r4),b                ; tail
+        move    y:(r5),a                ; pre-roll
+        move    (r5)+
+        sub     b,a
+        asr     #$1,a,a
+        move    a,y1
+        mpy     x0,y1,a
+        asl     #$1,a,a
+        add     b,a
+        move    a,y:(r4)+               ; tail + g (pre-roll - tail)
+        move    x0,b
+        add     #>$8000,b
+        move    b,x0
+gcB1:
+        nop
+        move    x:(r7+$17),a
+        add     #>$20,a
         move    a1,x:(r7+$17)
+        cmp     #>$100,a
+        blt     gcB8
+; baked: the loop's first sample once more after its end, then loop
+        move    x:(r7+$00),x0
+        move    x:(r7+$06),a
+        add     x0,a
+        move    a,r4
+        move    x:(r7+$07),a
+        move    a1,n4
+        nop
+        move    y:(r4),a
+        move    (r4)+n4
+        move    a,y:(r4)+
+; p where the loop would be had it played since GRAB: 112 increments in
+        move    x:(r7+$10),x1
+        move    x:(r7+$11),x0
+        move    x:(r7+$10),a
+        move    x:(r7+$11),a0
+        asl     #$3,a,a
+        neg     a
+        add     x,a
+        neg     a
+        asl     #$4,a,a                 ; 112 inc: (8 - 1) * 16
+        move    x:(r7+$14),b
+        cmp     #>$1,b
+        bne     gcB7
+        neg     a                       ; REV: L - 112 inc
+        move    x:(r7+$07),x0
+        add     x0,a
+gcB7:
+        move    a1,x:(r7+$08)
+        move    a0,x:(r7+$09)
+        clr     b
+        move    b,x:(r7+$0a)
+        move    #>$3,x0
+        move    x0,x:(r7+$03)           ; loop
+gcB8:
+        move    #>$ffffff,m4
+        move    #>$ffffff,m5
+gcB9:
+; ---- the pendulum's end, from the loop's L
         move    x:(r7+$07),a
         sub     #>$1,a
         move    a1,x:(r7+$18)
@@ -305,7 +391,7 @@ gc1F:
         asr     #$14,a,a
         move    a1,x:(r7+$21)
         move    a0,x:(r7+$22)
-; ---- GRN: 441 + 24 k samples, at most half the loop, at least 64
+; ---- GRN: 441 + 24 k samples, at most a quarter of the loop, at least 64
         move    x:(r6+$d),a
         and     #>$7f0000,a
         asr     #$10,a,a
@@ -315,7 +401,7 @@ gc1F:
         asl     #$3,a,a
         add     #>$1b9,a
         move    x:(r7+$07),b
-        asr     #$1,b,b
+        asr     #$2,b,b
         move    b1,x0
         cmp     x0,a
         tgt     x0,a
@@ -333,10 +419,10 @@ gc1F:
 gcD1:
         move    a0,x0
         move    x0,x:(r7+$20)           ; the phase step, Q22
-; ---- the engine: idle or recording, it follows ENG at once; looping, once
-; the duck has taken the loop out (e = 0). Grains start half a grain apart.
+; ---- the engine: idle, recording or baking, it follows ENG at once; looping,
+; once the duck has taken the loop out (e = 0). Grains start half a grain apart.
         move    x:(r7+$03),a
-        cmp     #>$2,a
+        cmp     #>$3,a
         blt     gcE1
         bgt     gcE9
         move    x:(r7+$0b),b
@@ -380,109 +466,70 @@ gcE9:
         move    #$1,n0
         nop
         do      n7,>gcLE
-; ---- A: the MIX run
+; ---- the MIX run
         move    x:(r7+$0d),x0
         move    x:(r7+$0c),a
         add     x0,a
         move    a1,x:(r7+$0c)
-; ---- B: the ring write while idle or recording, and MAN's countdown
+; MODEFORK_BEGIN: one job a sample -- record, loop on TAPE or loop on GRAIN
         move    x:(r7+$03),a
         cmp     #>$2,a
-        bge     gc2F
-        tst     a
-        bne     gc21                    ; recording: always write
-        move    x:(r7+$13),b
-        cmp     #>$2,b
-        beq     gc2F                    ; CAPT OFF: the ring keeps what it holds
-gc21:
-        move    x:(r0),a
-        move    x:(r0+n0),x0
-        add     x0,a
-        asr     #$1,a,a                 ; the mono sum, (l + r) / 2
-        move    a,y:(r4)+
-        move    x:(r7+$03),a
-        tst     a
-        beq     gc2F
-        move    x:(r7+$0e),a
-        sub     #>$1,a
-        move    a1,x:(r7+$0e)
-        bne     gc2F
-        move    #>$2,x0                 ; the countdown is done: loop
-        move    x0,x:(r7+$03)
-        clr     a
-        move    a,x:(r7+$08)
-        move    a,x:(r7+$09)
-        move    a,x:(r7+$0a)
-gc2F:
-; ---- C: the loop read, the seam and the envelope
-        move    x:(r7+$03),a
-        cmp     #>$2,a
-        blt     gc4F
+        blt     gcW0
+        beq     gcNB                    ; baking: neither, the frame stays dry
+        move    x:(r7+$29),b
+        tst     b
+        bne     gcK0
+; MODEFORK_MID: TAPE
         move    x:(r7+$10),x1
         move    x:(r7+$11),x0           ; the increment, x1:x0
         move    x:(r7+$08),a
         move    x:(r7+$09),a0           ; p
-; DIR: every compare first, then one arm a sample
         move    x:(r7+$14),b
         tst     b
-        beq     gc30
+        beq     gcT0
         cmp     #>$1,b
-        beq     gc31
-; PEND, forwards to L - 1, then back to 0
-        move    x:(r7+$0a),b
+        beq     gcT1
+        move    x:(r7+$0a),b            ; PEND
         tst     b
-        bne     gc35
+        bne     gcT2
         add     x,a
         move    x:(r7+$18),x0           ; L - 1
         cmp     x0,a
-        blt     gc3A
+        blt     gcT9
         neg     a                       ; reflect: 2 (L - 1) - p
         add     x0,a
         add     x0,a
         move    #>$1,y1
         move    y1,x:(r7+$0a)
-        move    #>$1,b                  ; (a skip the cycle count prices)
-        tst     b
-        bne     gc3A
-gc35:
+        bra     gcT9
+gcT2:
         neg     a
         add     x,a
         neg     a
         tst     a
-        bge     gc3A
+        bge     gcT9
         neg     a
         clr     b
         move    b,x:(r7+$0a)
-        move    #>$1,b
-        tst     b
-        bne     gc3A
-; FWD
-gc30:
-        add     x,a
+        bra     gcT9
+gcT0:
+        add     x,a                     ; FWD
         move    x:(r7+$07),x0
         cmp     x0,a
-        blt     gc3A
+        blt     gcT9
         sub     x0,a
-        move    #>$1,b
-        tst     b
-        bne     gc3A
-; REV, p - inc as -(inc - p)
-gc31:
-        neg     a
+        bra     gcT9
+gcT1:
+        neg     a                       ; REV: p - inc, as -(inc - p)
         add     x,a
         neg     a
         tst     a
-        bge     gc3A
+        bge     gcT9
         move    x:(r7+$07),x0
         add     x0,a
-gc3A:
+gcT9:
         move    a1,x:(r7+$08)
         move    a0,x:(r7+$09)
-; MODEFORK_BEGIN: ENG -- one engine a sample
-        move    x:(r7+$29),b
-        tst     b
-        bne     gcK0
-; MODEFORK_MID: TAPE
         move    a1,n5
         move    x:(r7+$09),a
         lsr     #$1,a                   ; the fraction, Q23
@@ -492,7 +539,7 @@ gc3A:
         move    (r5)+n5
         move    y:(r5),b                ; s0
         move    (r5)+                   ; the modulo wraps
-        move    y:(r5),a                ; s1
+        move    y:(r5),a                ; s1 (past the end: the baked copy of the start)
         sub     b,a
         asr     #$1,a,a
         move    a,y1
@@ -500,44 +547,59 @@ gc3A:
         asl     #$1,a,a
         add     b,a
         move    a,x:(r7+$19)            ; wet
-; the seam (not on PEND): blend toward the pre-roll as the loop's end nears
-        move    x:(r7+$14),b
-        cmp     #>$2,b
-        beq     gc3F
-        move    x:(r7+$08),a
-        move    x:(r7+$17),y0
-        sub     y0,a
-        blt     gc3F
-        asl     #$f,a,a                 ; g = (p - (L - 256)) / 256
-        move    a1,x1
-        move    x:(r7+$08),a
-        move    x:(r7+$07),y0
-        sub     y0,a                    ; p - L
-        move    a1,n5
-        move    x:(r7+$1b),r5
-        nop
-        move    (r5)+n5
-        move    y:(r5),b
-        move    (r5)+
-        move    y:(r5),a
-        sub     b,a
-        asr     #$1,a,a
-        move    a,y1
-        mpy     x0,y1,a
-        asl     #$1,a,a
-        add     b,a                     ; the pre-roll's tap
-        move    x:(r7+$19),b
-        sub     b,a
-        asr     #$1,a,a
-        move    a,y1
-        move    x1,x0
-        mpy     x0,y1,a
-        asl     #$1,a,a
-        add     b,a
-        move    a,x:(r7+$19)            ; wet + g (tap - wet)
-        bra     gc3F
+        bra     gcEN
 ; MODEFORK_MID: GRAIN
 gcK0:
+        move    x:(r7+$10),x1
+        move    x:(r7+$11),x0           ; the increment, x1:x0
+        move    x:(r7+$08),a
+        move    x:(r7+$09),a0           ; p
+        move    x:(r7+$14),b
+        tst     b
+        beq     gcU0
+        cmp     #>$1,b
+        beq     gcU1
+        move    x:(r7+$0a),b            ; PEND
+        tst     b
+        bne     gcU2
+        add     x,a
+        move    x:(r7+$18),x0           ; L - 1
+        cmp     x0,a
+        blt     gcU9
+        neg     a                       ; reflect: 2 (L - 1) - p
+        add     x0,a
+        add     x0,a
+        move    #>$1,y1
+        move    y1,x:(r7+$0a)
+        bra     gcU9
+gcU2:
+        neg     a
+        add     x,a
+        neg     a
+        tst     a
+        bge     gcU9
+        neg     a
+        clr     b
+        move    b,x:(r7+$0a)
+        bra     gcU9
+gcU0:
+        add     x,a                     ; FWD
+        move    x:(r7+$07),x0
+        cmp     x0,a
+        blt     gcU9
+        sub     x0,a
+        bra     gcU9
+gcU1:
+        neg     a                       ; REV: p - inc, as -(inc - p)
+        add     x,a
+        neg     a
+        tst     a
+        bge     gcU9
+        move    x:(r7+$07),x0
+        add     x0,a
+gcU9:
+        move    a1,x:(r7+$08)
+        move    a0,x:(r7+$09)
         move    x:(r7+$23),a           ; the phase, one step on
         move    x:(r7+$20),x0
         add     x0,a
@@ -561,16 +623,10 @@ gcKa:
         move    x:(r7+$09),x0
         add     x,a                     ; playhead + offset
         move    x:(r7+$07),x0
-        cmp     x0,a                    ; into the loop: at most twice each way
-        blt     gcKb
-        sub     x0,a
-        cmp     x0,a
+        cmp     x0,a                    ; into the loop: grains under L / 4 need one step
         blt     gcKb
         sub     x0,a
 gcKb:
-        tst     a
-        bge     gcKc
-        add     x0,a
         tst     a
         bge     gcKc
         add     x0,a
@@ -609,16 +665,10 @@ gcKd:
         move    x:(r7+$09),x0
         add     x,a                     ; playhead + offset
         move    x:(r7+$07),x0
-        cmp     x0,a                    ; into the loop: at most twice each way
-        blt     gcKe
-        sub     x0,a
-        cmp     x0,a
+        cmp     x0,a                    ; into the loop: grains under L / 4 need one step
         blt     gcKe
         sub     x0,a
 gcKe:
-        tst     a
-        bge     gcKf
-        add     x0,a
         tst     a
         bge     gcKf
         add     x0,a
@@ -636,10 +686,36 @@ gcKf:
         move    x:(r7+$1f),y0
         add     y0,a
         move    a,x:(r7+$19)            ; wet: the two grains
+        bra     gcEN
+; MODEFORK_MID: record, while idle (not CAPT OFF) or recording
+gcW0:
+        tst     a
+        bne     gcW1                    ; recording: always write
+        move    x:(r7+$13),b
+        cmp     #>$2,b
+        beq     gcNB                    ; CAPT OFF: the ring keeps what it holds
+gcW1:
+        move    x:(r0),a
+        move    x:(r0+n0),x0
+        add     x0,a
+        asr     #$1,a,a                 ; the mono sum, (l + r) / 2
+        move    a,y:(r4)+
+        move    x:(r7+$03),a
+        tst     a
+        beq     gcNB
+        move    x:(r7+$0e),a
+        sub     #>$1,a
+        move    a1,x:(r7+$0e)
+        bne     gcNB
+        move    #>$2,x0                 ; recorded: bake, then loop
+        move    x0,x:(r7+$03)
+        clr     a
+        move    a,x:(r7+$17)
+        bra     gcNB
 ; MODEFORK_END
-gc3F:
+gcEN:
 ; the envelope, branchless: up while looping (at most full), down while
-; releasing; at 0 the release ends and the ring records again
+; releasing or ducking; at 0 the release ends and the ring records again
         move    x:(r7+$0b),a
         move    a,b
         add     #>$8000,b
@@ -650,7 +726,7 @@ gc3F:
         sub     #>$8000,a               ; down
         move    a,x0
         move    x:(r7+$03),b
-        cmp     #>$3,b
+        cmp     #>$4,b
         tne     x1,a                    ; looping: up
         move    x:(r7+$2b),b
         tst     b
@@ -659,13 +735,13 @@ gc3F:
         bgt     gc42
         clr     a
         move    x:(r7+$03),b
-        cmp     #>$3,b
+        cmp     #>$4,b
         bne     gc42                    ; the duck stays looping
         move    a,x:(r7+$03)            ; the release ends: idle
 gc42:
         move    a1,x:(r7+$0b)
-gc4F:
-; ---- D: dry + run e (wet - dry); idle, e = 0 and the frame stays exact
+gcNB:
+; ---- dry + run e (wet - dry); while e = 0 the frame stays exact
         move    x:(r7+$0c),x0
         move    x:(r7+$0b),y1
         mpy     x0,y1,a
@@ -703,14 +779,14 @@ gcZZ:
         rts
 
 ; ---------------------------------------------------------------------------
-; gcGR -- GRAB. Releasing: loop again. Idle: AUTO and OFF loop the last L
-; (S = w - L), MAN records the next L first (S = w).
+; gcGR -- GRAB. Releasing: loop again. Idle: AUTO and OFF bake and loop the
+; last L (S = w - L), MAN records the next L first (S = w).
 ; ---------------------------------------------------------------------------
 gcGR:
         move    x:(r7+$03),a
-        cmp     #>$3,a
+        cmp     #>$4,a
         bne     gcG1
-        move    #>$2,x0
+        move    #>$3,x0
         move    x0,x:(r7+$03)
         rts
 gcG1:
@@ -735,27 +811,25 @@ gcG3:
 gcG4:
         move    a1,x:(r7+$06)
         clr     a
-        move    a,x:(r7+$08)
-        move    a,x:(r7+$09)
-        move    a,x:(r7+$0a)
+        move    a,x:(r7+$17)
         move    #>$2,y0
-        move    y0,x:(r7+$03)
+        move    y0,x:(r7+$03)           ; bake
 gcG9:
         rts
 
 ; ---------------------------------------------------------------------------
-; gcRL -- release. Looping: fade out. Recording: back to idle.
+; gcRL -- release. Looping: fade out. Recording or baking: back to idle.
 ; ---------------------------------------------------------------------------
 gcRL:
         move    x:(r7+$03),a
-        cmp     #>$2,a
+        cmp     #>$3,a
         bne     gcR1
-        move    #>$3,x0
+        move    #>$4,x0
         move    x0,x:(r7+$03)
         rts
 gcR1:
-        cmp     #>$1,a
-        bne     gcR9
+        cmp     #>$4,a
+        beq     gcR9
         clr     a
         move    a,x:(r7+$03)
 gcR9:
@@ -763,14 +837,12 @@ gcR9:
 
 ; ---------------------------------------------------------------------------
 ; gcRD -- a = a loop position (48-bit: integer in a1, fraction in a0) ->
-; a = the loop there, crossfaded toward the pre-roll over the seam's last 256
-; samples. Straight-line: the pre-roll tap is read every time and weighted 0
-; outside the seam. Uses b x0 x1 y0 y1 r5 n5, $1c..$1e.
+; a = the loop there, linearly interpolated (the seam is baked in).
+; Straight-line. Uses b x0 y1 r5 n5, $1d.
 ; ---------------------------------------------------------------------------
 gcRD:
-        move    a1,x:(r7+$1c)
-        move    a0,x:(r7+$1d)
         move    a1,n5
+        move    a0,x:(r7+$1d)
         move    x:(r7+$1d),a
         lsr     #$1,a                   ; the fraction, Q23
         move    a1,x0
@@ -783,38 +855,6 @@ gcRD:
         sub     b,a
         asr     #$1,a,a
         move    a,y1
-        mpy     x0,y1,a
-        asl     #$1,a,a
-        add     b,a
-        move    a,x:(r7+$1e)            ; the tap
-        clr     b
-        move    x:(r7+$1c),a
-        move    x:(r7+$17),y0
-        sub     y0,a
-        asl     #$f,a,a
-        tlt     b,a                     ; g: 0 before the seam
-        move    a1,x1
-        move    x:(r7+$1c),a
-        move    x:(r7+$07),y0
-        sub     y0,a                    ; q - L, in the pre-roll
-        move    a1,n5
-        move    x:(r7+$1b),r5
-        nop
-        move    (r5)+n5
-        move    y:(r5),b
-        move    (r5)+
-        move    y:(r5),a
-        sub     b,a
-        asr     #$1,a,a
-        move    a,y1
-        mpy     x0,y1,a
-        asl     #$1,a,a
-        add     b,a
-        move    x:(r7+$1e),b
-        sub     b,a
-        asr     #$1,a,a
-        move    a,y1
-        move    x1,x0
         mpy     x0,y1,a
         asl     #$1,a,a
         add     b,a

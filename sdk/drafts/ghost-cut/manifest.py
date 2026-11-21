@@ -7,8 +7,8 @@ CAPT went OFF, at RATE (1/4 x to 4 x, pitch and speed together), forward,
 reversed or as a pendulum. ENG GRAIN keeps that speed for the playhead
 and reads two grains from it at PTCH (+-24 semitones), so pitch and time
 part; GRN sets the grain length. LEN follows the tempo: 1/64 to 1/4 of a whole note,
-halved until it fits the ring (353 ms at most). A 256-sample crossfade hides
-the seam; GRAB has hysteresis (on at 96, off at 32) and fades 256 samples in
+halved until it fits the ring (353 ms at most). GRAB first bakes a 256-sample
+crossfade over the seam into the ring (eight blocks), then loops; GRAB has hysteresis (on at 96, off at 32) and fades 256 samples in
 and out. MIX 0, and every moment no loop plays, is the dry track bit for bit.
 An FX1-sized slot passes dry.
 
@@ -68,7 +68,7 @@ MODULE = Module(
         Param(b"CAPT", 0, 3, active=True, formatter=_STEP, labels=_ref.CAPT_LABELS,
               doc="AUTO loops the last LEN, MAN records the next LEN first, OFF keeps the ring as it is"),
         Param(b"GRN", 40, active=True, formatter=_PLAIN,
-              doc="GRAIN's grain length, 10 to 79 ms (at most half the loop)"),
+              doc="GRAIN's grain length, 10 to 79 ms (at most a quarter of the loop)"),
         _BLANK,
         Param(b"DIR", 0, 3, active=True, formatter=_STEP, labels=_ref.DIR_LABELS,
               doc="FWD, REV, or PEND (forwards then backwards, no seam)"),

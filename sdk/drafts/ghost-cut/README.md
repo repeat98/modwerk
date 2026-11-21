@@ -6,7 +6,7 @@ Version 0.1.0-experimental · by @jacobphono · a draft: milestones A and B (the
 
 Ghost Cut is a microlooper for an audio track's FX2 slot. It always keeps the last 353 ms of the track. GRAB freezes a piece of that, 1/64 to 1/4 of a note at the project's tempo, and loops it in place of the track. Let go and the track fades back. On the TAPE engine, RATE plays the loop from a quarter speed to almost four times, pitch and speed together, like tape. On the GRAIN engine, RATE only sets the speed, and PTCH sets the pitch on its own, up to two octaves either way. Lock GRAB in a scene and the crossfader grabs and releases the loop.
 
-Signal path: the track's mono sum, (L + R) / 2, goes into a ring of 15,870 samples in the FX2 slot's own buffer. GRAB loops a stretch of the ring with a 256-sample crossfade over the seam, read with linear interpolation. GRAIN moves a playhead through the loop at RATE. Two grains, GRN long and half a grain apart, each start at the playhead and read at PTCH's speed. Their triangular windows add up to one. While a loop plays (or fades out), the ring stops recording, so the loop and the 256 samples before it stay intact. The loop fades in and out over 256 samples, and MIX blends it over the dry track. Whenever no loop plays, the frames pass exactly as they came.
+Signal path: the track's mono sum, (L + R) / 2, goes into a ring of 15,870 samples in the FX2 slot's own buffer. GRAB loops a stretch of the ring. First it bakes a 256-sample crossfade over the seam into the ring: eight blocks (2.9 ms), with the track dry meanwhile, then the loop starts where it would be had it played since GRAB. Reads use linear interpolation. GRAIN moves a playhead through the loop at RATE. Two grains, GRN long and half a grain apart, each start at the playhead and read at PTCH's speed. Their triangular windows add up to one. While a loop plays (or fades out), the ring stops recording, so the loop and the 256 samples before it stay intact. The loop fades in and out over 256 samples, and MIX blends it over the dry track. Whenever no loop plays, the frames pass exactly as they came.
 
 ## Controls
 
@@ -19,7 +19,7 @@ Signal path: the track's mono sum, (L + R) / 2, goes into a ring of 15,870 sampl
 | Main | F | MIX | 0–127 | 127 | The loop over the dry track. 0 is the dry track exactly, 127 the loop alone. |
 | Setup | A | ENG | TAPE, GRAIN | TAPE | TAPE: pitch follows RATE. GRAIN: pitch from PTCH, speed from RATE. Changed while a loop plays, the loop ducks out (256 samples), swaps engine and fades back in. |
 | Setup | B | CAPT | AUTO, MAN, OFF | AUTO | What GRAB loops: the last LEN (AUTO); the next LEN (MAN: the track plays dry while it records, then the loop starts); or the ring as it was when CAPT went OFF (OFF stops recording). |
-| Setup | C | GRN | 0–127 | 40 | GRAIN's grain length, 10 ms at 0 to 79 ms at 127 (32 ms at 40), at most half the loop. TAPE ignores it. |
+| Setup | C | GRN | 0–127 | 40 | GRAIN's grain length, 10 ms at 0 to 79 ms at 127 (32 ms at 40), at most a quarter of the loop. TAPE ignores it. |
 | Setup | E | DIR | FWD, REV, PEND | FWD | Forwards, backwards, or forwards then backwards (PEND turns round at each end, so it has no seam). |
 
 Main knob E and Setup knobs D and F are blank: they are kept for milestone C (DRFT, MOTN, FDBK).
@@ -49,16 +49,18 @@ Main knob E and Setup knobs D and F are blank: they are kept for milestone C (DR
 - FX2 only. The ring takes 15,870 words of the FX2 slot's buffer and stops at +$3DFD, so Sidechain Compressor's key window on track 3 stays free. On an FX1-sized slot Ghost Cut passes the track dry.
 - After the effect is chosen, the ring is cleared 128 words a block for 124 blocks (45 ms). The track passes dry meanwhile, and a grab before the ring has filled loops silence for the part never recorded.
 - The loop is mono on both sides.
+- The seam is baked into the ring. The loop's last 256 samples are blended toward the 256 before it, so near its end PEND turns round on that blend. With CAPT OFF, grabbing the same stretch again blends that tail a second time.
+- After a GRAB the track stays dry for 2.9 ms while the seam is baked. The loop then starts 112 samples in, so it stays where it would be had it played since GRAB, and the 256-sample fade-in covers the start.
 - At MIX 127 the loop is within 2 LSB of what was recorded (-138 dB): MIX times the full envelope is one step short of 1.
 - RATE above 1 x has no anti-alias filter and reads with linear interpolation, so content high up aliases when sped up.
 - The effect id (10) is refused beside Analog BD in card builds. USB sets have their own ids.
 - GRAIN's two grains have triangular windows. Steady sounds keep their pitch, but drums smear a little and a slight flutter at the grain rate can be heard; GRN changes the balance.
-- GRAIN costs 390 cycles a sample at worst, about 1.5 times stock SPRING REV. It still needs an optimization pass.
+- GRAIN costs 266 cycles a sample at worst (about stock SPRING REV's 257.5), TAPE 148.
 - Milestone C (the drifting second head DRFT and MOTN, and FDBK) is not built.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). In short: 96 render gates in dsp_host pass, bit-exact against the integer reference [ghost_cut_ref.py](ghost_cut_ref.py). The static cost is 188 cycles a sample at worst on TAPE and 390 on GRAIN (stock SPRING REV measures 257.5). Not run on a unit or in the emulator.
+See [TESTING.md](TESTING.md). In short: 96 render gates in dsp_host pass, bit-exact against the integer reference [ghost_cut_ref.py](ghost_cut_ref.py). The static cost is 148 cycles a sample at worst on TAPE and 266 on GRAIN (stock SPRING REV measures 257.5). Not run on a unit or in the emulator.
 
 ## Authorship and licences
 

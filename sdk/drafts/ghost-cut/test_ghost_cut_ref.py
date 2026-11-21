@@ -110,7 +110,7 @@ class Behaviour(unittest.TestCase):
         ol, _ = REF.render(l, r, {0: knobs(), g0: knobs(GRAB=127), rel: knobs(GRAB=0)})
         mono = [(a + b) >> 1 for a, b in zip(l, r)]
         L, t0 = 5512, g0 * REF.BLOCK
-        for t in range(t0 + 300, t0 + 2000):
+        for t in range(t0 + 400, t0 + 2000):  # the loop starts 112 in, full after 368
             ph = (t - t0 + 1) % L
             self.assertLessEqual(abs(ol[t] - mono[t0 - L + ph]), 2)
         back = rel * REF.BLOCK + REF.SEAM + REF.BLOCK

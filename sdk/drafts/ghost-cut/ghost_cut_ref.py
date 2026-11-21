@@ -1,9 +1,10 @@
 """GHOST CUT reference -- the integer model of ghost_cut.asm, and its P table.
 
-Milestone A: the TAPE engine. A mono ring of R words in the FX2 slot records
-the track's mono sum, (L + R) / 2. GRAB freezes the last LEN of it (AUTO), the
-next LEN (MAN) or whatever the ring holds (OFF) and loops it at RATE, forward,
-reversed or as a pendulum, with a 256-sample crossfade over the seam. MIX
+A mono ring of R words in the FX2 slot records the track's mono sum,
+(L + R) / 2. GRAB freezes the last LEN of it (AUTO), the next LEN (MAN) or
+whatever the ring holds (OFF), bakes a 256-sample crossfade over the seam
+into the ring (eight blocks) and loops it, forward, reversed or as a
+pendulum: on TAPE at RATE, on GRAIN with two grains at PTCH. MIX
 blends the loop over the dry track; MIX 0 and an idle loop are exact dry.
 
 This file follows the DSP's order of operations and its fixed-point steps
@@ -45,7 +46,9 @@ GRAIN_STEP = 24
 PH_ONE = 0x400000     # a grain's phase is Q22: 1.0 here
 DIR_LABELS = ("FWD", "REV", "PEND")
 
-IDLE, REC, LOOP, REL = 0, 1, 2, 3
+IDLE, REC, BAKE, LOOP, REL = 0, 1, 2, 3, 4
+BAKE_STEP = 32        # seam words baked a block
+BAKE_LEAD = 7 * BLOCK # the loop starts this far in: where it would be had it played since GRAB
 
 
 def mpy(x, y):
@@ -134,6 +137,7 @@ class GhostCut:
         self.ph = [0, PH_ONE // 2]
         self.d = [0, 0]     # each grain's offset from the playhead, 48-bit
         self.flag = 0       # the engine knob differs from the running engine: duck
+        self.baked = 0      # BAKE: seam words done
 
     def block(self, knobs, frames, t24=0):
         """knobs: the 12 slot values (ints); frames: [(l, r)], processed in place."""
@@ -167,19 +171,20 @@ class GhostCut:
         elif g <= 32:
             self.latch = 0
             self._release()
-        seam0 = self.L - SEAM
+        if self.state == BAKE:
+            self._bake(direction, inc)
         pend_end = self.L - 1
         # GRAIN: the engine, PTCH, the grain length
         eng_k = min(k[6], 1)
         self.rq2 = glide(self.rq2, pitch_q20(k[3] << 16), self.primed)
         delta = (self.rq2 - self.rq) << 4            # each grain's offset moves this a sample
         G = GRAIN0 + GRAIN_STEP * k[8]
-        if G > self.L >> 1:
-            G = self.L >> 1
+        if G > self.L >> 2:
+            G = self.L >> 2
         if G < 64:
             G = 64
         inc_g = (1 << 22) // G
-        if self.state < LOOP or (self.state == LOOP and self.e == 0 and self.eng != eng_k):
+        if self.state < LOOP or (self.state == LOOP and self.e == 0 and self.eng != eng_k):  # idle, rec, bake: at once
             self.eng = eng_k
             self.ph = [0, PH_ONE // 2]
             self.d = [0, 0]
@@ -189,27 +194,26 @@ class GhostCut:
         for (dl, dr) in frames:
             # A: the MIX run
             self.run += self.step
-            # B: the ring write (idle or recording), and MAN's countdown
-            if self.state < LOOP:
+            # one job a sample: record (idle or recording), nothing (baking), or loop
+            if self.state < BAKE:
                 if self.state == REC or capt != 2:
                     self.ring[self.w] = (dl + dr) >> 1
                     self.w = (self.w + 1) % R
                     if self.state == REC:
                         self.cnt -= 1
                         if self.cnt == 0:
-                            self.state = LOOP
-                            self.p = 0
-                            self.back = 0
-            # C: the loop read and the envelope
-            if self.state >= LOOP:
+                            self.state = BAKE
+                            self.baked = 0
+            elif self.state >= LOOP:
+                Lq = self.L << 24
                 if direction == 0:
                     self.p += inc
-                    if self.p >= self.L << 24:
-                        self.p -= self.L << 24
+                    if self.p >= Lq:
+                        self.p -= Lq
                 elif direction == 1:
                     self.p -= inc
                     if self.p < 0:
-                        self.p += self.L << 24
+                        self.p += Lq
                 elif not self.back:
                     self.p += inc
                     if self.p >= pend_end << 24:
@@ -221,14 +225,7 @@ class GhostCut:
                         self.p = -self.p
                         self.back = 0
                 if self.eng == 0:
-                    pi = self.p >> 24
-                    fr = (self.p & 0xFFFFFF) >> 1
-                    wet = self._interp(self.S + pi, fr)
-                    if direction != 2 and pi - seam0 >= 0:
-                        gq = (pi - seam0) << 15
-                        tw = self._interp(self.S + pi - self.L, fr)
-                        wet = sat(wet + a1(2 * mpy(gq, sat((tw - wet) >> 1))))
-                    self.wet = wet
+                    self.wet = self._read(self.p)
                 else:
                     prod = 0
                     for i in (0, 1):
@@ -239,16 +236,11 @@ class GhostCut:
                         self.ph[i] = ph
                         self.d[i] += delta
                         q = self.p + self.d[i]
-                        Lq = self.L << 24
                         if q >= Lq:
                             q -= Lq
-                            if q >= Lq:
-                                q -= Lq
                         if q < 0:
                             q += Lq
-                            if q < 0:
-                                q += Lq
-                        tap = self._read(q, seam0)
+                        tap = sat(self._read(q))
                         b = PH_ONE - ph
                         if b > ph:
                             b = ph
@@ -275,16 +267,26 @@ class GhostCut:
             out.append((ol, orr))
         return out
 
-    def _read(self, q, seam0):
-        """gcRD: the loop at q (48-bit), crossfaded over the seam, branchless."""
-        qi = q >> 24
-        fr = (q & 0xFFFFFF) >> 1
-        t1 = self._interp(self.S + qi, fr)
-        g = (qi - seam0) << 15
-        if g < 0:
-            g = 0
-        tw = self._interp(self.S + qi - self.L, fr)
-        return sat(t1 + a1(2 * mpy(g, sat((tw - t1) >> 1))))
+    def _read(self, q):
+        """gcRD and TAPE's read: the baked loop at q (48-bit), linearly interpolated."""
+        return self._interp(self.S + (q >> 24), (q & 0xFFFFFF) >> 1)
+
+    def _bake(self, direction, inc):
+        """32 words of the seam a block: the loop's tail toward the pre-roll, g = j / 256."""
+        for k in range(BAKE_STEP):
+            j = self.baked + k
+            t = (self.S + self.L - SEAM + j) % R
+            pre = self.ring[(self.S - SEAM + j) % R]
+            tail = self.ring[t]
+            self.ring[t] = sat(tail + a1(2 * mpy(j << 15, sat((pre - tail) >> 1))))
+        self.baked += BAKE_STEP
+        if self.baked < SEAM:
+            return
+        self.ring[(self.S + self.L) % R] = self.ring[self.S]
+        lead = BAKE_LEAD * inc
+        self.p = (self.L << 24) - lead if direction == 1 else lead
+        self.back = 0
+        self.state = LOOP
 
     def _interp(self, pos, fr):
         s0 = self.ring[pos % R]
@@ -304,14 +306,13 @@ class GhostCut:
             self.state = REC
             return
         self.S = (self.w - self.L) % R
-        self.p = 0
-        self.back = 0
-        self.state = LOOP
+        self.baked = 0
+        self.state = BAKE
 
     def _release(self):
         if self.state == LOOP:
             self.state = REL
-        elif self.state == REC:
+        elif self.state in (REC, BAKE):
             self.state = IDLE
 
 

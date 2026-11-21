@@ -276,7 +276,7 @@ for bpm, ln in ((120, 3), (90, 2), (174, 5), (60, 7)):
     g0 = GRAB_AT * B
     S = g0 - L                       # AUTO: the last L before the grab block
     bad = big = 0
-    for t in range(g0 + 300, REL_AT * B):
+    for t in range(g0 + 400, REL_AT * B):    # baked, then 112 in: full after 368
         ph = (t - g0 + 1) % L        # the first looped frame plays position 1/L in
         if ph >= L - REF.SEAM or ph == 0 or S + ph < C0 * B:
             continue                 # the seam, or ring the clear left silent (nothing recorded yet)
