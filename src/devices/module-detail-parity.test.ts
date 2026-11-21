@@ -94,6 +94,18 @@ describe('module detail parity across machines', () => {
     expect(html).toContain('/blob/main/sdk/octatrack/modules/euclid/' + price.source + '"')
   })
 
+  it.each([
+    ['poly8', 'heavy', 'Heavy CPU', 'one POLY8 track with repeated trigs'],
+    ['output-matrix', 'high', 'High CPU', '13.1 percentage points of audio-frame load added with ALL routes in MATRIX mode'],
+  ])('shows the %s CPU badge and workload on its module page', (id, tier, badge, workload) => {
+    const module = AVAILABLE_MODULES.find(module => module.id === id)!
+    const html = render(createElement(ModuleDetail, { module, selected: false, onToggle: noop }))
+    const notice = html.match(/<p class="module-caution"[^>]*>[\s\S]+?<\/p>/)?.[0]
+    expect(notice).toContain('data-tier="' + tier + '"')
+    expect(notice).toContain('<strong>' + badge + '.</strong>')
+    expect(notice?.toLowerCase()).toContain(workload.toLowerCase())
+  })
+
   it('renders all three Octatrack dials and uses an unscaled outline for kilobyte values', () => {
     const module = AVAILABLE_MODULES.find(module => module.id === 'lofi2')!
     const dsp = packageManifest.packages.find(entry => entry.id === module.id)!.cycles
