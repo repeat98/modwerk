@@ -60,8 +60,9 @@ import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
 
-const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
+const { values, positionals: [command, file], tokens } = parseArgs({ allowPositionals: true, tokens: true, options: {
   help: { type: 'boolean', short: 'h' },
+  machine: { type: 'string' },
   socket: { type: 'string', default: '/tmp/modwerk-ot.sock' },
   seconds: { type: 'string', default: '5' },
   accept: { type: 'boolean', default: false },
@@ -74,7 +75,7 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
 const usage = `Usage: npm run device -- COMMAND [--socket PATH] [--emulator]
 
   serve [--share PATH]
-  status | stats | usb | state | missing | ui | loader | report
+  status [--machine syntakt] | stats | usb | state | missing | ui | loader | report
   screen [--png FILE] [--scale 1-4]
   try MODULE.mwrm | set FILE,-FILE,… | remove [MODULE.mwrm]  [--seconds 1-3600] [--accept]
   recover | lifecycle
@@ -86,6 +87,16 @@ const usage = `Usage: npm run device -- COMMAND [--socket PATH] [--emulator]
 if (values.help) {
   console.log(usage)
   process.exit(0)
+}
+if (values.machine !== undefined && values.machine !== 'octatrack') {
+  if (values.machine !== 'syntakt' || command !== 'status' || file || tokens.some(t => t.kind === 'option' && t.name !== 'machine')) {
+    console.error('Usage: npm run device -- status --machine syntakt')
+    process.exit(2)
+  }
+  const { readSynfactStatus } = await import('./synfact-status.ts')
+  try { console.log(JSON.stringify(await readSynfactStatus(), null, 2)) }
+  catch (error) { console.error(error.message); process.exitCode = 1 }
+  process.exit(process.exitCode ?? 0)
 }
 let seconds = Number(values.seconds)
 if (!['serve', 'status', 'stats', 'usb', 'try', 'set', 'recover', 'remove', 'lifecycle', 'boot', 'flash', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report', 'probe', 'meter', 'missing', 'ui', 'do', 'mem'].includes(command) || (['try', 'set', 'boot', 'flash', 'key', 'enc', 'fader', 'probe', 'meter', 'do', 'mem'].includes(command) && !file) ||

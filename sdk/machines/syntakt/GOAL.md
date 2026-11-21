@@ -6,19 +6,19 @@ What the Syntakt's contributors are building, in what order, and how to take a p
 
 A Syntakt owner opens the machine page, builds the Modwerk base in the browser from their own OS 1.42 file and installs it once. After that, they add, try and remove modules over USB without a reflash. A trial runs from RAM and a power cycle ends it. Keep saves the set. Base updates also come over USB. Any set of modules runs side by side, and the stock OS and the maker's recovery always restore the unit.
 
-This is the Octatrack's stack on the Syntakt ([machine recipe](../../../docs/MACHINE_RECIPE.md)). No upstream core exists for this machine, so the base grows from Modwerk's own boot probe. Extend the Octatrack's, the Digitakt's and the Rytm's pieces rather than designing a second set.
+This is the Octatrack's stack on the Syntakt ([machine recipe](../../../docs/MACHINE_RECIPE.md)). GGSM’s [Synfact core](README.md#synfact-base-integration) provides a reference for shared hooks and optional engine banks. Modwerk’s own boot probe establishes the local build and recovery path. Extend the Octatrack's, the Digitakt's and the Rytm's pieces rather than designing a second set.
 
-## Where it stands (16 November 2026)
+## Where it stands (21 November 2026)
 
 | Piece | State | Where to look |
 | --- | --- | --- |
 | Memory for modules | In review. On OS 1.42, #1411 lowers the stack by 128 KB to free `0x47fe0000`–`0x48000000`. That build ran on a unit, also through a sample reload, and the owner chose this route. One check remains before the 128 KB counts as free: fill the whole gap at boot, load samples, play, and read it back | #1411, [memory](README.md#memory-areas-and-budgets) |
 | Base | Boot probe only. It runs on a unit with OS 1.42 and keeps no code running after boot. The Syntakt is not in the shared linker table yet, so nothing builds it in the browser | [core](../../syntakt/core/README.md), [platform](../../../docs/SYNTAKT_OS_RESEARCH.md#8-platform-decision-brief) |
-| Hooks | None yet. The UI tick, key and encoder delivery, a SETTINGS menu row and the audio block are located and guarded in 1.40 and 1.42. The display's draw path, project load and save, and the sequencer step are still unknown | [hook sites](../../../docs/SYNTAKT_OS_RESEARCH.md#44-main-cpu-ui-audio-and-project-sites) |
-| USB link | Not started. The plan is SysEx over the stock USB MIDI | [USB link](#usb-link) below |
+| Hooks | None yet. The UI tick, key and encoder delivery, a SETTINGS menu row and the audio block are located and guarded in 1.40 and 1.42. The private 1.42 probe build can also check Synfact’s four UI hook sites against stock, including its draw call. Project save/load and sequencer step hooks still need investigation | [hook sites](../../../docs/SYNTAKT_OS_RESEARCH.md#44-main-cpu-ui-audio-and-project-sites) |
+| USB link | Not started. The Modwerk base link is planned over stock USB MIDI | [USB link](#usb-link) below |
 | Loading without a reflash | Not started | [porting the runtime loader](../../runtime/loader/README.md#porting-to-another-machine) |
 | Base updates over USB | Not started | [two-slot base](../../../docs/OCTATRACK_TWO_SLOT_BASE.md) |
-| MCP device tools | Not started | [device tools](../../../docs/FRONTEND_MCP.md#then-test-the-connected-device) |
+| MCP device tools | Open for the Modwerk base. Developer CLI and MCP can read an existing Synfact core’s loader status for comparison; unit verification pending | [device tools](../../../docs/FRONTEND_MCP.md#then-test-the-connected-device) |
 | Machine page | Status only | [`OctatrackHub.tsx`](../../../src/components/OctatrackHub.tsx) is the model |
 | Modules | None. The linker refuses every module until a memory area and an interface exist | — |
 
@@ -35,7 +35,7 @@ When a piece moves, update this table, the [recipe's table](../../../docs/MACHIN
 
 Three kinds of work can happen at any time:
 
-- **Research on the unknown sites:** the display's draw path, project load and save, the sequencer step and the audio block's sample rate. Each finding goes into the research report as addresses, lengths and guards for both releases.
+- **Research on the unknown sites:** the draw call's register contract, project load and save, the sequencer step and the audio block's sample rate. Each finding goes into the research report as addresses, lengths and guards for both releases.
 - **Base services that several modules will want:** a settings or project block (no storage location is proven free yet), per-kit state in one table the base owns, and a helper for menu rows. Add these services directly to the machine’s cumulative base draft before releasing a module that uses them.
 - **Modules,** once steps 1 and 2 are in. Each one builds, installs and works as the only module chosen.
 
@@ -52,7 +52,7 @@ The stock OS speaks USB MIDI, so the link starts as SysEx over it. That needs no
 
 - **Only your own code.** The projects in the guide's [credits](README.md#credits) are research. Re-derive every address from your own OS files, and ask the owner before bringing in any of their code.
 - **No stock bytes in the repository.** Record addresses, lengths, counts and hashes only, never stock code, not even a single instruction or its encoding.
-- **Every stock write is a declared, guarded site.** The stock-write checker refuses everything else. The second ColdFire's, the FPGAs' and the UI MCU's images stay byte-identical.
+- **Every stock write is a declared, guarded site.** The stock-write checker refuses everything else. The current Modwerk builder keeps the second ColdFire, FPGA and UI MCU images byte-identical. A Synfact-style engine handoff needs a separately reviewed CPU2 change.
 - **The hardware can't fence memory.** The MMU is off and the access-control windows are 16 MB wide, so the linker is the fence. Modules get their regions from the linker, never raw addresses.
 - **UI, audio and sequencer sites go through the base.** A module never patches one. It proposes a base hook first ([propose a hook](../../../docs/module-guides/README.md#propose-a-hook)).
 - **Mind the build's margins.** The in-place depack margin is 16,679 bytes on the 1.42 probe and the container may not exceed 2 MB. Every build checks both, and a depack overrun hangs the unit at the logo.
