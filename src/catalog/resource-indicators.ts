@@ -1,5 +1,6 @@
 import type { ModuleDocument } from './module-contract'
 import packageManifest from '../engine/assets/octatrack-module-packages.json'
+import { measuredActiveCpu, measuredDspLoad, measuredModulePool, measuredTrackedMemory, verifiedNoModuleDspCode } from './octatrack-resource-measurements'
 import { requireModuleResourceImpact } from './resource-impact'
 
 const packagesById = new Map(packageManifest.packages.map(entry => [entry.id, entry]))
@@ -10,6 +11,7 @@ const packageDspEvidence = {
 } as const
 const qualificationDspBasis = { hardware: 'Measured', emulator: 'Emulator', static: 'Modeled' } as const
 const count = (value: number) => value.toLocaleString('en-US')
+const kilobytes = (bytes: number) => (bytes / 1000).toLocaleString('en-US', { maximumFractionDigits: 3 })
 
 function dspIndicator(document: ModuleDocument) {
   const entry = packagesById.get(document.id)
@@ -18,7 +20,7 @@ function dspIndicator(document: ModuleDocument) {
     if (evidence) {
       const value = count(entry.cycles)
       return {
-        value, score: null, fill: 0, status: evidence.unit + ' · ' + evidence.basis,
+        value, score: null, fill: 0, status: evidence.unit + ' · ' + evidence.basis, hardware: entry.cyclesKind === 'hardware',
         valueText: value + ' ' + evidence.unit.replace('instr.', 'instructions').replace('/', ' per ') + ' per instance',
         description: evidence.description + ' The figure is per active instance before the base applies any admission margin.',
         source: 'src/engine/assets/octatrack-module-packages.json',
@@ -31,7 +33,7 @@ function dspIndicator(document: ModuleDocument) {
   const value = count(cycle.worstCase)
   const basis = qualificationDspBasis[cycle.method]
   return {
-    value, score: null, fill: 0, status: cycle.unit + ' · ' + basis,
+    value, score: null, fill: 0, status: cycle.unit + ' · ' + basis, hardware: cycle.method === 'hardware',
     valueText: value + ' ' + cycle.unit.replace('/', ' per ') + ' for one instance',
     description: 'Worst-case DSP count for one instance in the qualification record. ' + cycle.conditions.maxLoad,
     source: 'sdk/octatrack/modules/' + document.id + '/' + cycle.report,
@@ -42,8 +44,15 @@ function dspIndicator(document: ModuleDocument) {
 export function moduleResourceIndicators(document: ModuleDocument) {
   const impact = requireModuleResourceImpact(document)
   const price = document.resources.cpuPrice
+  const activeCpu = measuredActiveCpu(document)
   const dsp = dspIndicator(document)
+  const dspLoad = measuredDspLoad(document)
   const memory = document.tests.qualification?.memory
+  const tracked = memory ? undefined : measuredTrackedMemory(document)
+  // The card build reports an observed interrupt peak for eleven stems, with the full configuration still estimated.
+  const stemPeak = document.id === 'stem-rec' && document.version === '0.1.0-experimental'
+    ? document.tests.qualification?.cycles.find(record => record.processor === 'coldfire' && record.method === 'hardware' && record.unit === 'cycles/block')
+    : undefined
   const levels = { minimal: { score: 1, label: 'Minimal' }, low: { score: 2, label: 'Low' }, moderate: { score: 3, label: 'Moderate' }, high: { score: 4, label: 'High' } }
   return (['cpu', 'dsp', 'memory'] as const).map(id => {
     if (id === 'cpu' && price) {
@@ -59,18 +68,101 @@ export function moduleResourceIndicators(document: ModuleDocument) {
           + ' Measured on ' + price.date + '. ' + price.conditions,
         source: 'sdk/octatrack/modules/' + document.id + '/' + price.source,
         sourceInModwerk: true,
+        benchmark: activeCpu ? {
+          value: activeCpu.delta + '% of a frame added with ' + activeCpu.workload,
+          basis: 'Active hardware measurement', source: activeCpu.source,
+        } : undefined,
       }
     }
-    if (id === 'dsp' && dsp) return { id, label: 'DSP core', ...dsp }
-    if (id === 'memory' && memory) {
-      const value = count(memory.totalBytes) + ' B'
+    if (id === 'cpu' && stemPeak?.budget) {
+      const percent = Number((100 * stemPeak.worstCase / stemPeak.budget).toFixed(1))
+      const value = percent + '%'
       return {
-        id, label: 'Memory', value, score: null, fill: 0, status: 'Accounted total',
-        valueText: count(memory.totalBytes) + ' bytes at the supported instance limit',
-        description: count(memory.sharedBytes) + ' B shared plus ' + count(memory.perInstanceBytes)
-          + ' B per instance. The total covers up to ' + memory.maxInstances + ' instances. ' + memory.conditions,
+        id, label: 'CPU', ariaLabel: 'Reported peak CPU load', value, score: percent, maximum: 100, fill: percent,
+        status: 'Reported peak · 11 stems',
+        valueText: value + ' peak share of an audio block while recording eleven stems',
+        description: 'Yves Rosius reported a peak of ' + count(stemPeak.worstCase) + ' of ' + count(stemPeak.budget)
+          + ' cycles per audio block in two eleven-stem, 24-bit takes on an Octatrack MKII. The fourteen-stem measurement is pending. '
+          + 'The relative CPU tier is ' + levels[impact.cpu.level].label + ' (estimated).',
+        source: 'sdk/octatrack/modules/stem-rec/' + stemPeak.report, sourceInModwerk: true,
+      }
+    }
+    if (id === 'cpu' && activeCpu) {
+      const value = activeCpu.delta + '%'
+      const change = Math.abs(activeCpu.delta)
+      return {
+        id, label: 'CPU', ariaLabel: 'Measured CPU load', value, score: change, maximum: 100, fill: change,
+        status: 'Measured · in use', valueText: value + ' of an audio frame added in the test',
+        description: 'Frame-interrupt load went from ' + activeCpu.before + '% to ' + activeCpu.after + '% with '
+          + activeCpu.workload + '. ' + activeCpu.scene + ' The relative CPU tier is ' + levels[impact.cpu.level].label
+          + ' (estimated) while the release price is pending.',
+        source: activeCpu.source, sourceInModwerk: true,
+      }
+    }
+    if (id === 'dsp' && dspLoad) {
+      const delta = dspLoad.delta ?? Math.round((dspLoad.after - dspLoad.before) * 10) / 10
+      const value = (delta > 0 ? '+' : '') + delta
+      const change = Math.abs(delta)
+      return {
+        id, label: 'DSP core', ariaLabel: 'DSP core load change', value: value + ' pp',
+        score: change, maximum: 100, fill: change, status: 'Measured · ' + dspLoad.core,
+        valueText: value + ' percentage points of DSP core load',
+        description: 'Core ' + dspLoad.core + ' went from ' + dspLoad.before + '% to ' + dspLoad.after + '%. The test used '
+          + dspLoad.slot + '. ' + dspLoad.scene + ' Base ' + dspLoad.base + '.',
+        source: dspLoad.source, sourceInModwerk: true,
+        benchmark: dsp ? { value: dsp.valueText, basis: dsp.status, source: dsp.source } : undefined,
+      }
+    }
+    if (id === 'dsp' && dsp?.hardware) return { id, label: 'DSP core', ...dsp, value: dsp.value + ' cycles' }
+    if (id === 'dsp') {
+      const direct = verifiedNoModuleDspCode(document)
+      if (direct) {
+        return {
+          id, label: 'DSP core', value: '0 cycles', score: null, fill: 0, status: 'Module code · ColdFire',
+          valueText: 'Zero cycles of module code on the DSP cores',
+          description: 'This version runs its code on the ColdFire. Stock playback and effects can still change the load on the DSP cores.',
+          source: direct.source, sourceInModwerk: true,
+        }
+      }
+    }
+    if (id === 'memory' && memory) {
+      const total = kilobytes(memory.totalBytes)
+      return {
+        id, label: 'Memory', value: total + ' kB', score: null, fill: 0, status: 'Accounted total',
+        valueText: total + ' kilobytes at the supported instance limit',
+        description: kilobytes(memory.sharedBytes) + ' kB shared plus ' + kilobytes(memory.perInstanceBytes)
+          + ' kB per instance. The total covers up to ' + memory.maxInstances + ' instances. ' + memory.conditions,
         source: 'sdk/octatrack/modules/' + document.id + '/' + memory.report,
         sourceInModwerk: true,
+      }
+    }
+    if (id === 'memory' && tracked) {
+      const dspBytes = 3 * (tracked.dspWordsT1to4 + tracked.dspWordsT5to8)
+      const total = kilobytes(tracked.poolBytes + dspBytes)
+      return {
+        id, label: 'Memory', value: total + ' kB', score: null, fill: 0, status: 'Tracked allocation',
+        valueText: total + ' kilobytes of tracked allocation',
+        description: kilobytes(tracked.poolBytes) + ' kB in the module pool and ' + kilobytes(dspBytes) + ' kB of DSP program storage across both cores. '
+          + 'This count covers the measured pools ' + (tracked.slot ? 'with the effect on ' + tracked.slot : 'with the module installed and unused')
+          + '. ' + tracked.scene + ' Base ' + tracked.base + '.',
+        source: tracked.source, sourceInModwerk: true,
+      }
+    }
+    if (id === 'memory') {
+      const pool = measuredModulePool(document)
+      if (pool) {
+        const total = kilobytes(pool.bytes + (pool.sampleBytes ?? 0))
+        const scope = pool.sampleBytes ? 'the module pool and leased sample RAM' : 'the module pool'
+        const allocation = pool.sampleBytes ? kilobytes(pool.bytes) + ' kB in the module pool and ' + kilobytes(pool.sampleBytes) + ' kB in leased sample RAM. ' : ''
+        return {
+          id, label: 'Memory', value: total + ' kB', score: null, fill: 0,
+          status: pool.sampleBytes ? 'Measured · two pools' : 'Measured · module pool',
+          valueText: total + ' kilobytes in ' + scope + ' for one installed module',
+          description: 'Two trials on an ' + pool.device + ' each matched the package’s full loader allocation. '
+            + allocation + pool.scene + ' Base ' + pool.base.slice(0, 16) + '.'
+            + (pool.sampleBytes ? '' : ' DSP memory and sample RAM have separate pools.'),
+          source: pool.source, sourceInModwerk: true,
+        }
       }
     }
     const estimate = impact[id]
@@ -80,6 +172,7 @@ export function moduleResourceIndicators(document: ModuleDocument) {
       value: level.label, score: level.score, fill: level.score / 4 * 100,
       status: 'Estimated',
       description: estimate.rationale, source: estimate.source,
+      benchmark: id === 'dsp' && dsp ? { value: dsp.valueText, basis: dsp.status, source: dsp.source } : undefined,
     }
   })
 }

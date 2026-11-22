@@ -3,7 +3,7 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // What a module costs an Octatrack, measured on a unit: the frame interrupt's share, the CPU meter and both DSPs,
 // before the module, with it installed but used nowhere (at rest), and for an effect on one slot (in use).
-//   npm run device:price -- [--out FILE.json] [--base ID --scene TEXT] [--seconds 8] [--slot T1] [--fx-name ID=NAME…] ID|FILE.mwrm…   (none: every USB package)
+//   npm run device:price -- [--memory] [--out FILE.json] [--base ID --scene TEXT] [--seconds 8] [--slot T1] [--fx-name ID=NAME…] ID|FILE.mwrm…   (none: every USB package)
 //   --write (needs --base and --scene): each module measured cleanly gets its price in octamod.module.json (resources.cpuPrice) and
 //   its readings in evidence/cpu-price.json, and leaves the pending list; modules:check recomputes the price from those readings.
 // It needs a development twin of the base (the guard request) behind `npm run device -- serve --share
@@ -12,7 +12,8 @@
 // Each module runs as a trial that is rolled back; nothing is kept. Base-bound packages are left out:
 // a twin does not trust them (docs/OCTATRACK_DRIVING.md).
 // shortcut: a machine's in-use price is not measured here (picking one is key presses that differ by list), read it
-// with `cpu` on the track; add it when the machine chooser has a step like pick:.
+// with `cpu` on the track; add it when the machine chooser has a step like pick:. Nor is a machine's meter cost
+// (resources.cpuMeter): read `health` against the track on Flex by hand (docs/MODULE_PERFORMANCE.md); add it with the same step.
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { connect } from 'node:net'
@@ -30,6 +31,14 @@ export function reading(text) {
   if (!guard || !stats.length) throw new Error('No guard and stats reading in: ' + text.slice(0, 200))
   return { frame: Number(guard[3]), frameMax: Number(guard[1]), frames: Number(guard[4]), skipped: Number(guard[5]),
     cpu: tenth(mean(stats.map(m => m[1] / 10))), dsp1to4: tenth(mean(stats.map(m => m[2] / 10))), dsp5to8: tenth(mean(stats.map(m => m[3] / 10))) }
+}
+/** Tracked allocation only. The module pool and each DSP program arena have distinct units and capacities. */
+export function allocationReading(text) {
+  const pool = /^pool: (\d+) of \d+ bytes used;/m.exec(text)
+  const core1 = /^core 1 \(T1-4\): (\d+) of \d+ words/m.exec(text)
+  const core0 = /^core 0 \(T5-8\): (\d+) of \d+ words/m.exec(text)
+  if (!pool || !core1 || !core0) return { unavailable: 'The development base did not report the module pool and both DSP program arenas.' }
+  return { modulePoolBytes: Number(pool[1]), dspProgramWordsT1to4: Number(core1[1]), dspProgramWordsT5to8: Number(core0[1]) }
 }
 /** What the second reading added to the first, in points, one decimal. */
 /** What went wrong with a pick, from the session's reply (device.mjs pick's errors), or null when the slot runs it. */
@@ -76,7 +85,7 @@ export function writePrice({ root, result, base, scene, seconds, measuredAt }) {
 
 if (import.meta.filename === process.argv[1]) {
   const { values: args, positionals } = parseArgs({ allowPositionals: true, options: { out: { type: 'string' }, seconds: { type: 'string', default: '8' },
-    slot: { type: 'string', default: 'T1' }, 'fx-name': { type: 'string', multiple: true }, base: { type: 'string' }, scene: { type: 'string' }, write: { type: 'boolean' }, socket: { type: 'string', default: '/tmp/modwerk-dev.sock' }, share: { type: 'string', default: '/tmp/modwerk-share.sock' } } })
+    slot: { type: 'string', default: 'T1' }, 'fx-name': { type: 'string', multiple: true }, base: { type: 'string' }, scene: { type: 'string' }, write: { type: 'boolean' }, memory: { type: 'boolean' }, socket: { type: 'string', default: '/tmp/modwerk-dev.sock' }, share: { type: 'string', default: '/tmp/modwerk-share.sock' } } })
   const root = resolve(import.meta.dirname, '..'), seconds = Number(args.seconds), measuredAt = new Date().toISOString()
   const fxNames = new Map((args['fx-name'] ?? []).map(pair => { const at = pair.indexOf('='); if (at < 1) throw new Error('--fx-name takes ID=NAME, the name the FX chooser shows'); return [pair.slice(0, at), pair.slice(at + 1)] }))
   if (args.write && !(args.base && args.scene)) throw new Error('--write needs --base and --scene: the price names the base and what played (model, project, pattern)')
@@ -103,13 +112,22 @@ if (import.meta.filename === process.argv[1]) {
     for (let i = 0; i < 3; i++) { await wait(seconds * 1000 / 3); text += await send('stats') }
     const text2 = await send('guard')
     await send('STOP w500')
-    return reading(text2 + text)
+    const load = reading(text2 + text)
+    if (!args.memory) return load
+    try {
+      return { ...load, allocation: allocationReading(await send('memory')) }
+    } catch {
+      return { ...load, allocation: { unavailable: 'The development base did not answer the allocation read.' } }
+    }
   }
   const slotNames = async () => /^(.+?)\s{2,}(.+)$/.exec((await send('ui')).split('\n').map(line => line.replace(/^[> ]+/, '')).find(line => line.startsWith(args.slot + ' '))?.slice(args.slot.length + 1).trim() ?? '') ?? [] // [, FX1, FX2]
   const results = []
   for (const row of chosen) {
-    const before = await measure(), result = { id: row.id, version: row.version, before }
-    const trial = spawn(process.execPath, [resolve(root, 'scripts/device.mjs'), 'try', row.file ?? resolve(root, 'public', row.path), '--seconds', '600', '--socket', args.share])
+    const packagePath = row.file ?? resolve(root, 'public', row.path)
+    const packageSha256 = createHash('sha256').update(readFileSync(packagePath)).digest('hex')
+    if (row.sha256 && packageSha256 !== row.sha256) throw new Error('Package SHA-256 differs from the release catalogue for ' + row.id)
+    const before = await measure(), result = { id: row.id, version: row.version, packageSha256, before }
+    const trial = spawn(process.execPath, [resolve(root, 'scripts/device.mjs'), 'try', packagePath, '--seconds', '600', '--socket', args.share])
     let log = ''; trial.stdout.on('data', chunk => { log += chunk }); trial.stderr.on('data', chunk => { log += chunk })
     const ended = new Promise(done => trial.on('exit', done))
     // A large package uploads for a minute: wait for the trial or the try's own end, never cut an upload short

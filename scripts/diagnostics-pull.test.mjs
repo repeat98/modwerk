@@ -117,6 +117,12 @@ describe('diagnostics pull', () => {
       entry(4, 'tester', { event: 'health', phase: 'ready', reading: { saved: 6, savedCount: 2, live: 2 }, modules: mods(['miniverb', 'poly8']) })]
     expect(summary({ events, counts: [] })).toContain('refused (missing ring-sc)')
   })
+  it('reports a full set incident as a lower bound because the log holds fourteen IDs', () => {
+    const set = { seq: 1, boot: 1, second: 0, kind: 'set', screen: 0, tempo24: 0,
+      machines: Array(24).fill(1), fx: Array(16).fill(2), keys: Array(16).fill(3) }
+    expect(unitLines([{ ...set, a: 13 }])[0]).toContain('set 13 installed:')
+    expect(unitLines([{ ...set, a: 14 }])[0]).toContain('set at least 14 installed:')
+  })
   it('names a restore’s refused package from its set record', () => {
     const set = { seq: 4, boot: 3, second: 5, kind: 'set', a: 1, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: [0x3c, 0xbe, 0xdc, 0x9c, ...Array(20).fill(0)],
       fx: Array(16).fill(0), keys: Array(16).fill(0), screen: 0x773c84aa, tempo24: 5, playing: false }
@@ -126,6 +132,12 @@ describe('diagnostics pull', () => {
       .toContain('refused SC Ringmod (module memory, by its DSP claims meeting a delay buffer, module memory 158 KiB used, largest free block 610.4 KiB)')
     expect(unitLines([{ ...set, tempo24: 2, dsp1to4: 1, cpu: 48640, dsp5to8: 96 }])[0])
       .toContain('refused SC Ringmod (module memory, by the module pool, module memory 760 KiB used, largest free block 1.5 KiB)')
+  })
+  it('names the USB Audio package in both the installed list and a refused restore', () => {
+    const set = { seq: 1, boot: 1, second: 0, kind: 'set', a: 1,
+      machines: [0xb1, 0x28, 0x8f, 0x29], fx: [], keys: [], screen: 0, tempo24: 0 }
+    expect(unitLines([set])[0]).toContain('1 installed: USB Audio')
+    expect(unitLines([{ ...set, a: 0, screen: 0xb1288f29, tempo24: 5 }])[0]).toContain('refused USB Audio (busy)')
   })
   it('calls a stall found at a start on another base an OS upgrade, and one on the same base nothing', () => {
     const at = (seq, boot, kind, a = 0) => ({ seq, boot, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
