@@ -1,8 +1,12 @@
 # CLYPS — experimental Octatrack performance module (community draft)
 
-**Public source draft.** This directory contains the production SRC/ARR renderer and input callbacks from the protected integration, plus a synthetic adapter and host and ColdFire checks. The complete installed sequencer currently runs on a private emulator base. Hardware qualification is outstanding.
+**Build the eight-track engine.** From the repository root run:
 
-Run `python3 -B sdk/drafts/clyps/test_renderer.py` from the checkout root. See [test coverage](TESTING.md) and [source provenance](PROVENANCE.md).
+```sh
+python3.12 -B -m unittest discover -s sdk/drafts/clyps -p 'test_*.py' -v
+```
+
+Use host cc, Python 3.12 and m68k-elf GCC/binutils (tested with GCC 16.2). This compiles the actual SRC/ARR, sequencer and edit-lock callbacks, checks ColdFire instructions, and links the relocatable image in a temporary directory. The stock-memory inputs in host tests are synthetic. Integration into a running public base still requires the hooks in [HOOK_PROPOSAL.md](HOOK_PROPOSAL.md).
 
 **Artist/product direction:** Endrew. Built on Zac Kyoti's existing CLYPS ideas and independent Modwerk research with attribution retained. The project is independent and unofficial.
 
@@ -31,8 +35,6 @@ See [HOOK_PROPOSAL.md](HOOK_PROPOSAL.md) for the shared-base ABI questions and [
 
 **Do not flash this development build.** No OS files, stock executable bytes, emulated project images, binaries, dumps, copyrighted samples or private project data belong in Git.
 
-## Provenance and publishing gate
+## Source and qualification
 
-Kyoti's original repo: https://github.com/Zac-Kyoti/octatrack-kyoti-fw (pinned source used in previous private experiments: `e750155a3d5c16fe2c8752413582fa61a90d97a2`), subject to the precise licence and exclusions of each imported file. Modwerk source and SDK have their own applicable licences. The artist previously reported permission for **private, isolated experimentation**; public reuse/attribution coordination with the original author must be completed before any dependent-source import or release requiring it. No contributor should import restricted source until review confirms its provenance and rights.
-
-**Public PR deliberately stays DRAFT.** Its initial RFC has been extended with the reviewable UI implementation. The runtime contract is proposed and the draft is outside the catalogue. Modules must follow Modwerk's current `AGENTS.md`, `ADD_A_MODULE.md`, `DEVELOPER_WORKFLOW.md` and `MODULE_QUALIFICATION.md`.
+[File-by-file import and licences](PROVENANCE.md). The native module remains a draft outside the catalogue. No physical MKII runs are recorded.

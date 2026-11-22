@@ -30,3 +30,9 @@ The revised module (SHA-256 `887a0fa2cd1c1002fd127e7448d9a2e849fb90d34f89feee3c6
 The tick observations distinguish UI/state publication from event scheduling on these fixtures. The musical scheduler and historical diagnostic expectations are unchanged. These comparisons do not establish sample-identical audio on all tracks.
 
 LEVEL is owned by the modal navigator while Meta is active. FUNC+LEVEL there is suppressed. Outside Meta a stock/candidate master-gain probe returned the same constant word in both runs; a positive master gain response has yet to be demonstrated independently.
+
+## Public engine checks
+
+The README discovery command builds the donor C handlers, links with the repository SDK and verifies the required entry points. The checked build produced 5,452 linked bytes, 164 BSS bytes and 238 relocations. tests/shared_state.c drives SRC on every combination of eight lanes and 16 references, checks preserved SRC bands, tests popup and page ownership, and exercises row 16 with all eight lanes distinct. It covers stopped immediate selection, a request after wrap, commit at the next wrap, supersession, STOP cancellation, native TRACK handoff, bank reset, foreign-source edit lock, and explicit stopped YES recovery. The host calls wrap explicitly; it does not reproduce the native clock.
+
+With independent native captures available, run tests/grade_wide.py CANDIDATE STOCK or tests/grade_boundary.py early|late CANDIDATE STOCK from this directory. In the archived protected captures the fixed eight-lane pair passes all three streams and the truncation controls; early passes; late passes its musical comparisons and still fails the strict pending-state diagnostic. Those are regrades of existing captures. New runs on the shared base require both callbacks and modal-input admission.

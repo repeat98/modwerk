@@ -44,3 +44,9 @@ Private R&D used two guarded sites with an isolated base build (OS 1.40C), **not
 ## Updated cumulative base
 
 At f2754cbbe6e363aff38e354c7fc8e3108542e4fd the cumulative base assigns **61 to ev_audio_frame_prepare and 62 to ev_frame_deadline**. The protected emulator donor a9980c97cbd2 predates the latter assignment. Its private wire layout is incompatible with the current cumulative branch. The public draft records only symbolic requirements in contracts/runtime.proposed.json. The maintainer must decide whether to provide a pre-wrap notification and an exclusive, typed source selector; any public numbers must come from the coordinated registry. The Agent Board claim is for the module only.
+
+## Public engine integration decision
+
+The live PR #1910 head checked for this import was a9674ed846ebe75d2bcbced307922fe9c4cb63f1. Its events.json and the separately resolved base/octatrack-next branch both returned Git blob 71eea6a5a526af64a2a0e67becf537db4ea4696b. Event 29 (ot_sequencer_rows) contributes settings-menu rows in the UI task. Event 61 runs after staging, and event 62 supplies a deadline. None supplies a mutable source argument before stock builds each audio event.
+
+Use the existing bank-load subscription for reset. At the pre-rehome boundary the base calls the wrap notification once; before building each ordinary lane it passes the current pattern by reference, track index and bank word to a single admitted selector. Preserve stock input for ineligible bank, track or pattern. Fail admission before callback registration unless both named contracts and protected key/encoder ownership are supported. A selector conflict must fail admission as well. Keep public numbering, register preservation and fail-closed loader implementation in the cumulative base PR. The module PR adds no index, direct site patch or alternate scheduler. Public hardware and emulator admission remain blocked until those base changes land.
