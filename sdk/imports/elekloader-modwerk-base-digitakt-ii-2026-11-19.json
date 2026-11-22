@@ -4,8 +4,8 @@
   "revision": "modwerk-base-digitakt-ii-2026-11-19",
   "cores": [
     {
-      "file": "modwerk-base-digitakt-ii-2f8a60d2.elemod",
-      "sha256": "2f8a60d2e31b4c812f76b1bd97388c419ba872c8be726a446147f0ff7441e768",
+      "file": "modwerk-base-digitakt-ii-1a052a38.elemod",
+      "sha256": "1a052a38a0db0b2615d3e8604af3f91bb553f7fde17657d02e9c643e1c56039a",
       "id": "core",
       "version": "1.1",
       "device": "digitakt-mk2",
@@ -13,8 +13,8 @@
       "license": "GPL-2.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "7d60961022987df263190eaabe84a3fecaa505ba",
-        "path": "sdk/imports/packages/modwerk-base-digitakt-ii/modwerk-base-digitakt-ii-2f8a60d2.elemod"
+        "commit": "e5040080fe87f599785ca701ce20a574f51a3088",
+        "path": "sdk/imports/packages/modwerk-base-digitakt-ii/modwerk-base-digitakt-ii-1a052a38.elemod"
       }
     }
   ],

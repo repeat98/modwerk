@@ -28,7 +28,7 @@
   },
   ".run": {
    "align": 4,
-   "len": 12977,
+   "len": 13329,
    "parts": [
     [
      "hex",
@@ -1089,7 +1089,16 @@
     ],
     [
      "hex",
-     "4ef9400763b44e752f027403202f000822005f81b481651c206f000c2208068100000010225058884a896708b091670cb28866f0241f93c920094e757006b0a9000465f0241f20094e752f027403202f000822005f81b481651a41f900000000225058884a89670cb091670eb1fc0000000066ec241f70ff4e75202900047206b28065f0"
+     "4ef9400763b44e752f027403202f000822005f81b481651c206f000c2208068100000010225058884a896708b091670cb28866f0241f93c920094e757006b0a9000465f0241f20094e752f027403202f000822005f81b481651a41f900000000225058884a89670cb091670eb1fc0000000066ec241f70ff4e75202900047206b28065f0241f"
+    ],
+    [
+     "stock",
+     "0x401214c0",
+     10
+    ],
+    [
+     "hex",
+     "b2806434220074035f81b481651a41f900000000225058884a89670cb091670eb1fc0000000066ec241f42804e75202900047206b28065f00680401eda3020407190"
     ],
     [
      "stock",
@@ -1116,12 +1125,12 @@
     ],
     [
      "hex",
-     "7406b4a900046500ff5452815280760bb6806600ff2a6000ff4c7606b6a9000465b8204021812c00528260ae2f027407202f00082200528173817180b4816426220074035f81b481651a41f900000000225058884a89670cb091670eb1fc0000000066ec4280241f4e757206b2a9000465f2241f4e752f027403202f00082040222f000c5f88b488651a41f900000000225058884a89670eb0916710b1fc0000000066ec93c9241f20094e757006b0a9000465f07402b48165ea22711c08241f20094e750000"
+     "7406b4a900046500ff5452815280760bb6806600ff2a6000ff4c7606b6a9000465b8204021812c00528260ae2f027407202f00082200528173817180b4816426220074035f81b481651a41f900000000225058884a89670cb091670eb1fc0000000066ec4280241f4e757206b2a9000465f2241f4e752f027403202f00082040222f000c5f88b488651a41f900000000225058884a89670eb0916710b1fc0000000066ec93c9241f20094e757006b0a9000465f07402b48165ea22711c08241f2009"
     ],
     [
      "stock",
-     "0x4003f4e8",
-     10
+     "0x4003f4e6",
+     12
     ],
     [
      "hex",
@@ -1242,7 +1251,7 @@
     ],
     [
      "hex",
-     "26794316501c2e3c402a1bf8beb94316513c670001502639400cd48c06830000100a2f3c4d4b00017c1248780010287c0001db7928390000000042852f0345faff744e922f04"
+     "26794316501c2e3c402a1bf8beb94316513c670001762639400cd48c06830000100a2f3c4d4b00017c1248780010287c0001db7928390000000042852f0345faff744e922f04"
     ],
     [
      "stock",
@@ -1251,7 +1260,7 @@
     ],
     [
      "hex",
-     "4beb048f4fef001824394020e2944a85670000b24a33c800670000d21015738048807e06be816500009c71c0207c4020e28c4bed06a520300c004c0408004c4200002f002f062f034e9252864fef000c7022b08666b82039000000007210b280650000982f0048780022"
+     "4beb048f4fef001824394020e2944a85670000d84a33c800670000f81015738048807e06be81650000c271c0207c4020e28c4bed06a520300c004c0408004c4200002f002f062f034e9252864fef000c7022b08666b82039000000007210b280650000be2f00742348780022267c4265338e"
     ],
     [
      "stock",
@@ -1260,7 +1269,16 @@
     ],
     [
      "hex",
-     "4aaf00386700ff30206f0038428043f90000000041e80962321075e8fffe58887e2048414241828223810c005280be806700ff043210588875e8fffa7e2048414241828223810c005280be8066ca6000fee620024c0408004bed06a54c4200002f002f062f034e9252864fef000c7022b0866600ff286000ff6c207c0001db7a103388006000ff2670102f0048780022"
+     "47eb045071abfbb02f00"
+    ],
+    [
+     "stock",
+     "0x4012fd98",
+     12
+    ],
+    [
+     "hex",
+     "b7fc4265788e66e24aaf00386700ff0a206f0038428043f90000000041e80962321075e8fffe58887e2048414241828223810c005280be806700fede3210588875e8fffa7e2048414241828223810c005280be8066ca6000fec020024c0408004bed06a54c4200002f002f062f034e9252864fef000c7022b0866600ff026000ff46207c0001db7a103388006000ff00701074232f00267c4265338e48780022"
     ],
     [
      "stock",
@@ -1269,7 +1287,7 @@
     ],
     [
      "hex",
-     "4aaf00386600ff6a6000fe944a8b6700feae207c0001db70d1cb2010"
+     "6000ff404a8b6700fe88207c0001db70d1cb2010"
     ],
     [
      "stock",
@@ -1278,7 +1296,7 @@
     ],
     [
      "hex",
-     "0c8100007e90634a2639400cd48c06830000100a2f3c4d4b00017a01487800107c12283900000000287c0001db792f0345fafe064e922f04"
+     "0c8100007e90634a2639400cd48c06830000100a2f3c4d4b00017a01487800107c12283900000000287c0001db792f0345fafde04e922f04"
     ],
     [
      "stock",
@@ -1287,7 +1305,7 @@
     ],
     [
      "hex",
-     "4beb048f4fef001824394020e2946000fe90283c05265c007a014c40400445fafdd87c124beb048f287c0001db7923c4000000002639400cd48c06830000100a2f3c4d4b"
+     "4beb048f4fef001824394020e2946000fe6a283c05265c007a014c40400445fafdb27c124beb048f287c0001db7923c4000000002639400cd48c06830000100a2f3c4d4b"
     ],
     [
      "stock",
@@ -1305,7 +1323,7 @@
     ],
     [
      "hex",
-     "001824394020e2946000fe3c00002f082f092f2f000c4eb900000000588f225f205f7207202f0004b081651c2f082f092f004eb900000000588f225f205f4a806702"
+     "001824394020e2946000fe162f082f092f2f000c4eb900000000588f225f205f7207202f0004b081651c2f082f092f004eb900000000588f225f205f4a806702"
     ],
     [
      "stock",
@@ -1332,7 +1350,115 @@
     ],
     [
      "hex",
-     "4ef9400da51c2f2f0004610e588f2f004eb900000000201f"
+     "4ef9400da51c"
+    ],
+    [
+     "stock",
+     "0x4000125c",
+     8
+    ],
+    [
+     "hex",
+     "2f014eb900000000588f2f400004"
+    ],
+    [
+     "stock",
+     "0x40001278",
+     8
+    ],
+    [
+     "hex",
+     "4ef940016cfe"
+    ],
+    [
+     "stock",
+     "0x4000125c",
+     8
+    ],
+    [
+     "hex",
+     "2f004eb900000000588f2f400004"
+    ],
+    [
+     "stock",
+     "0x40001278",
+     8
+    ],
+    [
+     "hex",
+     "4ef940016db8"
+    ],
+    [
+     "stock",
+     "0x4000125c",
+     8
+    ],
+    [
+     "hex",
+     "2f054eb900000000588f2e80"
+    ],
+    [
+     "stock",
+     "0x40001278",
+     8
+    ],
+    [
+     "hex",
+     "4ef94001775a"
+    ],
+    [
+     "stock",
+     "0x4000125c",
+     8
+    ],
+    [
+     "hex",
+     "2f034eb900000000588f2f400004"
+    ],
+    [
+     "stock",
+     "0x40001278",
+     8
+    ],
+    [
+     "hex",
+     "4ef940017f86"
+    ],
+    [
+     "stock",
+     "0x4000125c",
+     8
+    ],
+    [
+     "hex",
+     "2f044eb900000000588f2f400004"
+    ],
+    [
+     "stock",
+     "0x40001278",
+     8
+    ],
+    [
+     "hex",
+     "4ef940018406"
+    ],
+    [
+     "stock",
+     "0x4000125c",
+     8
+    ],
+    [
+     "hex",
+     "2f044eb900000000588f2f400004"
+    ],
+    [
+     "stock",
+     "0x40001278",
+     8
+    ],
+    [
+     "hex",
+     "4ef94001845e2f092f004eb900000000588f225f4e752f2f0004610e588f2f004eb900000000201f"
     ],
     [
      "stock",
@@ -1341,7 +1467,7 @@
     ],
     [
      "hex",
-     "4ef940052a102f082f092f004eb900000000588f225f205f74074ef9400db48a52b9000000002f2f00044eb94005f6bc588f7207b081651c2f082f092f002f004eb900000000588f221f225f205f4a806a02"
+     "4ef940052a102f082f092f004eb900000000588f225f205f74074ef9400db48a2f4a000452b9000000004ef9400177282f2f00044eb94005f6bc588f7207b081651c2f082f092f002f004eb900000000588f221f225f205f4a806a02"
     ],
     [
      "stock",
@@ -1612,7 +1738,7 @@
   ],
   "callbacks": [
    ".run",
-   12936
+   13288
   ],
   "start_stock": [
    ".run",
@@ -1684,7 +1810,7 @@
   ],
   "format": [
    ".run",
-   10476
+   10552
   ],
   "shown_values": [
    ".bss",
@@ -1696,23 +1822,23 @@
   ],
   "format_b": [
    ".run",
-   10604
+   10680
   ],
   "format_c": [
    ".run",
-   10624
+   10700
   ],
   "format_e": [
    ".run",
-   10646
+   10722
   ],
   "format_f": [
    ".run",
-   10668
+   10744
   ],
   "format_g": [
    ".run",
-   10690
+   10766
   ],
   "built": [
    ".bss",
@@ -1736,27 +1862,27 @@
   ],
   "KNOB_POSITION": [
    ".run",
-   12972
+   13324
   ],
   "FORMATTERS": [
    ".run",
-   12952
+   13304
   ],
   "put": [
    ".run",
-   11260
+   11336
   ],
   "stock_param_code": [
    ".run",
-   12026
+   12138
   ],
   "stock_permit": [
    ".run",
-   12082
+   12194
   ],
   "stock_list": [
    ".run",
-   12116
+   12458
   ],
   "core_mixer_page_ids": [
    ".bss",
@@ -1768,7 +1894,7 @@
   ],
   "core_machine_view_type_entry": [
    ".run",
-   12162
+   12514
   ],
   "core_mixer_list_entry": [
    ".run",
@@ -1796,7 +1922,7 @@
   ],
   "core_machine_view_track": [
    ".run",
-   12416
+   12768
   ],
   "core_memcpy": [
    ".run",
@@ -1816,7 +1942,7 @@
   ],
   "core_machine_name_entry": [
    ".run",
-   12210
+   12562
   ],
   "core_seq_note_step": [
    ".run",
@@ -1842,6 +1968,10 @@
    ".run",
    84
   ],
+  "core_machine_sample_slot": [
+   ".run",
+   10072
+  ],
   "fw_led_set": [
    "abs",
    1073940704
@@ -1856,11 +1986,15 @@
   ],
   "core_stock_descriptor": [
    ".run",
-   11950
+   12062
+  ],
+  "core_machine_slot_entry_17f74": [
+   ".run",
+   12314
   ],
   "core_machine_frame": [
    ".run",
-   11294
+   11370
   ],
   "fw_memcpy": [
    "abs",
@@ -1880,11 +2014,11 @@
   ],
   "core_machine_samples_per_step": [
    ".run",
-   12420
+   12772
   ],
   "core_machine_kit_type_entry": [
    ".run",
-   12130
+   12472
   ],
   "core_value_label": [
    ".run",
@@ -1900,7 +2034,7 @@
   ],
   "core_machine_descriptor": [
    ".run",
-   10712
+   10788
   ],
   "fw_enc_param": [
    "abs",
@@ -1945,6 +2079,10 @@
   "fw_select_track": [
    "abs",
    1074230024
+  ],
+  "core_machine_slot_entry_17748": [
+   ".run",
+   12280
   ],
   "core_kit_save": [
    ".run",
@@ -1998,6 +2136,10 @@
    ".run",
    478
   ],
+  "core_machine_sample_draw_entry": [
+   ".run",
+   12498
+  ],
   "core_mixer_prepare": [
    ".run",
    9674
@@ -2012,7 +2154,7 @@
   ],
   "core_machine_param_entry": [
    ".run",
-   11962
+   12074
   ],
   "core_machine_view": [
    ".bss",
@@ -2020,7 +2162,7 @@
   ],
   "core_machine_knob_names": [
    ".run",
-   10884
+   10960
   ],
   "core_mixer_draw": [
    ".run",
@@ -2034,13 +2176,17 @@
    ".run",
    3114
   ],
+  "core_machine_slot_entry_1844c": [
+   ".run",
+   12386
+  ],
   "core_machine_kit_type": [
    ".run",
-   10322
+   10400
   ],
-  "core_machine_sample_view_entry": [
+  "core_machine_slot_entry_17d56": [
    ".run",
-   12156
+   12422
   ],
   "core_seq_note_start": [
    ".run",
@@ -2048,7 +2194,7 @@
   ],
   "core_machine_short_entry": [
    ".run",
-   12278
+   12630
   ],
   "core_settings": [
    ".run",
@@ -2096,11 +2242,15 @@
   ],
   "core_machine_list_extend": [
    ".run",
-   10072
+   10150
   ],
   "core_machine_list_entry": [
    ".run",
-   12096
+   12438
+  ],
+  "core_machine_slot_entry_183f4": [
+   ".run",
+   12350
   ],
   "core_key_leds": [
    ".run",
@@ -2132,7 +2282,7 @@
   ],
   "core_machine_menu_entry": [
    ".run",
-   12346
+   12698
   ],
   "core_seq_note_bridge": [
    ".run",
@@ -2158,6 +2308,14 @@
    "abs",
    1075419328
   ],
+  "core_machine_slot_entry_16da6": [
+   ".run",
+   12244
+  ],
+  "core_machine_slot_entry_16cec": [
+   ".run",
+   12208
+  ],
   "fw_vt_func": [
    "abs",
    1075810824
@@ -2172,7 +2330,7 @@
   ],
   "core_machine_permit_entry": [
    ".run",
-   12038
+   12150
   ],
   "core_kitdata_save": [
    ".run",
@@ -2180,7 +2338,7 @@
   ],
   "core_machine_string": [
    ".run",
-   10396
+   10474
   ],
   "core_seq_phrase_submit": [
    ".run",
@@ -2204,7 +2362,7 @@
   ],
   "core_machine_descriptor_entry": [
    ".run",
-   11884
+   11996
   ],
   "core_mixer_descriptor_entry": [
    ".run",
@@ -2242,10 +2400,18 @@
   "core_machine_name_entry",
   "core_machine_param_entry",
   "core_machine_permit_entry",
-  "core_machine_sample_view_entry",
+  "core_machine_sample_draw_entry",
+  "core_machine_sample_slot",
   "core_machine_sample_views",
   "core_machine_samples_per_step",
   "core_machine_short_entry",
+  "core_machine_slot_entry_16cec",
+  "core_machine_slot_entry_16da6",
+  "core_machine_slot_entry_17748",
+  "core_machine_slot_entry_17d56",
+  "core_machine_slot_entry_17f74",
+  "core_machine_slot_entry_183f4",
+  "core_machine_slot_entry_1844c",
   "core_machine_stands_for",
   "core_machine_string",
   "core_machine_view",
@@ -2533,7 +2699,7 @@
    1024,
    "abs32",
    "sec:.run",
-   12424
+   12776
   ],
   [
    ".run",
@@ -3030,7 +3196,7 @@
    3160,
    "abs32",
    "sec:.run",
-   12936
+   13288
   ],
   [
    ".run",
@@ -3709,7 +3875,7 @@
    9780,
    "abs32",
    "sec:.run",
-   11294
+   11370
   ],
   [
    ".run",
@@ -3762,178 +3928,164 @@
   ],
   [
    ".run",
-   10086,
+   10096,
    "abs32",
    "sym:core_machines",
    0
   ],
   [
    ".run",
-   10108,
+   10114,
    "abs32",
    "sym:core_machines",
    16
   ],
   [
    ".run",
-   10174,
+   10164,
+   "abs32",
+   "sym:core_machines",
+   0
+  ],
+  [
+   ".run",
+   10186,
+   "abs32",
+   "sym:core_machines",
+   16
+  ],
+  [
+   ".run",
+   10252,
    "abs32",
    "sym:OP_NEW",
    0
   ],
   [
    ".run",
-   10216,
+   10294,
    "abs32",
    "sym:core_machines",
    0
   ],
   [
    ".run",
-   10234,
+   10312,
    "abs32",
    "sym:core_machines",
    16
   ],
   [
    ".run",
-   10354,
+   10432,
    "abs32",
    "sym:core_machines",
    0
   ],
   [
    ".run",
-   10372,
+   10450,
    "abs32",
    "sym:core_machines",
    16
   ],
   [
    ".run",
-   10418,
+   10496,
    "abs32",
    "sym:core_machines",
    0
   ],
   [
    ".run",
-   10436,
+   10514,
    "abs32",
    "sym:core_machines",
    16
   ],
   [
    ".run",
-   10488,
+   10564,
    "abs32",
    "sec:.bss",
    9904
   ],
   [
    ".run",
-   10544,
+   10620,
    "abs32",
    "sec:.bss",
    9884
   ],
   [
    ".run",
-   10726,
+   10802,
    "abs32",
    "sym:core_machines",
    0
   ],
   [
    ".run",
-   10734,
+   10810,
    "abs32",
    "sec:.run",
    9944
-  ],
-  [
-   ".run",
-   10750,
-   "abs32",
-   "sec:.bss",
-   10012
-  ],
-  [
-   ".run",
-   10770,
-   "abs32",
-   "sec:.bss",
-   10016
-  ],
-  [
-   ".run",
-   10804,
-   "abs32",
-   "sec:.run",
-   11950
   ],
   [
    ".run",
    10826,
    "abs32",
    "sec:.bss",
+   10012
+  ],
+  [
+   ".run",
+   10846,
+   "abs32",
+   "sec:.bss",
    10016
   ],
   [
    ".run",
-   10854,
+   10880,
+   "abs32",
+   "sec:.run",
+   12062
+  ],
+  [
+   ".run",
+   10902,
+   "abs32",
+   "sec:.bss",
+   10016
+  ],
+  [
+   ".run",
+   10930,
    "abs32",
    "sec:.bss",
    10032
   ],
   [
    ".run",
-   10874,
+   10950,
    "abs32",
    "sec:.bss",
    10016
   ],
   [
    ".run",
-   10894,
+   10970,
    "abs32",
    "sym:core_machines",
    0
   ],
   [
    ".run",
-   10904,
+   10980,
    "abs32",
    "sec:.run",
    9944
-  ],
-  [
-   ".run",
-   10924,
-   "abs32",
-   "sec:.bss",
-   9924
-  ],
-  [
-   ".run",
-   10934,
-   "abs32",
-   "sec:.bss",
-   9928
-  ],
-  [
-   ".run",
-   10946,
-   "abs32",
-   "sec:.bss",
-   9932
-  ],
-  [
-   ".run",
-   10994,
-   "abs32",
-   "sec:.bss",
-   9928
   ],
   [
    ".run",
@@ -3944,255 +4096,332 @@
   ],
   [
    ".run",
-   11012,
+   11010,
+   "abs32",
+   "sec:.bss",
+   9928
+  ],
+  [
+   ".run",
+   11022,
    "abs32",
    "sec:.bss",
    9932
   ],
   [
    ".run",
-   11026,
+   11070,
    "abs32",
    "sec:.bss",
    9928
   ],
   [
    ".run",
-   11044,
-   "abs32",
-   "sec:.run",
-   12972
-  ],
-  [
-   ".run",
-   11168,
-   "abs32",
-   "sec:.bss",
-   9904
-  ],
-  [
-   ".run",
-   11174,
-   "abs32",
-   "sec:.bss",
-   9884
-  ],
-  [
-   ".run",
-   11188,
-   "abs32",
-   "sec:.run",
-   12952
-  ],
-  [
-   ".run",
-   11228,
-   "abs32",
-   "sec:.bss",
-   9928
-  ],
-  [
-   ".run",
-   11238,
+   11076,
    "abs32",
    "sec:.bss",
    9924
   ],
   [
    ".run",
-   11390,
+   11088,
    "abs32",
-   "sec:.run",
-   12420
+   "sec:.bss",
+   9932
   ],
   [
    ".run",
-   11502,
+   11102,
    "abs32",
-   "sec:.run",
-   12416
+   "sec:.bss",
+   9928
   ],
   [
    ".run",
-   11544,
+   11120,
+   "abs32",
+   "sec:.run",
+   13324
+  ],
+  [
+   ".run",
+   11244,
+   "abs32",
+   "sec:.bss",
+   9904
+  ],
+  [
+   ".run",
+   11250,
+   "abs32",
+   "sec:.bss",
+   9884
+  ],
+  [
+   ".run",
+   11264,
+   "abs32",
+   "sec:.run",
+   13304
+  ],
+  [
+   ".run",
+   11304,
+   "abs32",
+   "sec:.bss",
+   9928
+  ],
+  [
+   ".run",
+   11314,
+   "abs32",
+   "sec:.bss",
+   9924
+  ],
+  [
+   ".run",
+   11466,
+   "abs32",
+   "sec:.run",
+   12772
+  ],
+  [
+   ".run",
+   11578,
+   "abs32",
+   "sec:.run",
+   12768
+  ],
+  [
+   ".run",
+   11658,
    "abs32",
    "sec:.bss",
    10196
   ],
   [
    ".run",
-   11752,
+   11866,
    "abs32",
    "sec:.run",
-   12420
+   12772
   ],
   [
    ".run",
-   11828,
+   11942,
    "abs32",
    "sec:.run",
-   12420
+   12772
   ],
   [
    ".run",
-   11894,
+   12006,
    "abs32",
    "sec:.run",
-   10884
+   10960
   ],
   [
    ".run",
-   11922,
+   12034,
    "abs32",
    "sec:.run",
-   10712
+   10788
   ],
   [
    ".run",
-   11982,
-   "abs32",
-   "sec:.run",
-   10010
-  ],
-  [
-   ".run",
-   12056,
+   12094,
    "abs32",
    "sec:.run",
    10010
   ],
   [
    ".run",
-   12108,
+   12168,
+   "abs32",
+   "sec:.run",
+   10010
+  ],
+  [
+   ".run",
+   12220,
    "abs32",
    "sec:.run",
    10072
   ],
   [
    ".run",
-   12138,
+   12256,
    "abs32",
    "sec:.run",
-   10322
+   10072
   ],
   [
    ".run",
-   12158,
+   12292,
+   "abs32",
+   "sec:.run",
+   10072
+  ],
+  [
+   ".run",
+   12326,
+   "abs32",
+   "sec:.run",
+   10072
+  ],
+  [
+   ".run",
+   12362,
+   "abs32",
+   "sec:.run",
+   10072
+  ],
+  [
+   ".run",
+   12398,
+   "abs32",
+   "sec:.run",
+   10072
+  ],
+  [
+   ".run",
+   12428,
+   "abs32",
+   "sec:.run",
+   10072
+  ],
+  [
+   ".run",
+   12450,
+   "abs32",
+   "sec:.run",
+   10150
+  ],
+  [
+   ".run",
+   12480,
+   "abs32",
+   "sec:.run",
+   10400
+  ],
+  [
+   ".run",
+   12504,
    "abs32",
    "sec:.bss",
    10192
   ],
   [
    ".run",
-   12190,
+   12542,
    "abs32",
    "sec:.run",
    10010
   ],
   [
    ".run",
-   12228,
+   12580,
    "abs32",
    "sec:.run",
    10010
   ],
   [
    ".run",
-   12250,
+   12602,
    "abs32",
    "sec:.run",
-   10396
+   10474
   ],
   [
    ".run",
-   12296,
-   "abs32",
-   "sec:.run",
-   10010
-  ],
-  [
-   ".run",
-   12318,
-   "abs32",
-   "sec:.run",
-   10396
-  ],
-  [
-   ".run",
-   12364,
+   12648,
    "abs32",
    "sec:.run",
    10010
   ],
   [
    ".run",
-   12386,
+   12670,
    "abs32",
    "sec:.run",
-   10396
+   10474
   ],
   [
    ".run",
-   12936,
+   12716,
+   "abs32",
+   "sec:.run",
+   10010
+  ],
+  [
+   ".run",
+   12738,
+   "abs32",
+   "sec:.run",
+   10474
+  ],
+  [
+   ".run",
+   13288,
    "abs32",
    "sec:.run",
    878
   ],
   [
    ".run",
-   12940,
+   13292,
    "abs32",
    "sec:.run",
    2936
   ],
   [
    ".run",
-   12944,
+   13296,
    "abs32",
    "sec:.run",
    3028
   ],
   [
    ".run",
-   12948,
+   13300,
    "abs32",
    "sec:.run",
    2938
   ],
   [
    ".run",
-   12952,
+   13304,
    "abs32",
    "sec:.run",
-   10604
+   10680
   ],
   [
    ".run",
-   12956,
+   13308,
    "abs32",
    "sec:.run",
-   10624
+   10700
   ],
   [
    ".run",
-   12960,
+   13312,
    "abs32",
    "sec:.run",
-   10646
+   10722
   ],
   [
    ".run",
-   12964,
+   13316,
    "abs32",
    "sec:.run",
-   10668
+   10744
   ],
   [
    ".run",
-   12968,
+   13320,
    "abs32",
    "sec:.run",
-   10690
+   10766
   ]
  ],
  "sites": [
@@ -4746,7 +4975,22 @@
     [
      2,
      "abs32",
-     "sym:core_machine_sample_view_entry",
+     "sym:core_machine_view_type_entry",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40017ada",
+   "len": 6,
+   "stock_sha256": "2001dd6b8e36e960a9c43babf34e205b422dc6e19c770075056fc34e193c7a6f",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_machine_sample_draw_entry",
      0
     ]
    ]
@@ -4762,6 +5006,111 @@
      2,
      "abs32",
      "sym:core_machine_view_type_entry",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40016cec",
+   "len": 10,
+   "stock_sha256": "3c3a5a4fc3004501c92d5cc476f354ca4508c5d36072f4810557a56b775d6ada",
+   "new": "4ef9000000004e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_machine_slot_entry_16cec",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40016da6",
+   "len": 10,
+   "stock_sha256": "d581632ccbce8164087b12b726317861af8d3d64a124ca78e757781e69f3c3d4",
+   "new": "4ef9000000004e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_machine_slot_entry_16da6",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40017748",
+   "len": 10,
+   "stock_sha256": "b1677fa1491e6ad567c2224c89d3c2bf5a64e819a6625a625869e59c491f1858",
+   "new": "4ef9000000004e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_machine_slot_entry_17748",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40017d56",
+   "len": 10,
+   "stock_sha256": "d581632ccbce8164087b12b726317861af8d3d64a124ca78e757781e69f3c3d4",
+   "new": "4ef9000000004e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_machine_slot_entry_17d56",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40017f74",
+   "len": 10,
+   "stock_sha256": "dfa0725ffa418b84f677f9b4207f8a2869883512e1328ca10171f4d0f99459bd",
+   "new": "4ef9000000004e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_machine_slot_entry_17f74",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400183f4",
+   "len": 10,
+   "stock_sha256": "0cc58e5b9df3c576d226ba5b85c3c68ba0b42a51d78db6c8253f6903705a4dde",
+   "new": "4ef9000000004e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_machine_slot_entry_183f4",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4001844c",
+   "len": 10,
+   "stock_sha256": "0166e13a30fefeb32317b7893a65d1b7f86a9432659ec84c3b1b1982262375f3",
+   "new": "4ef9000000004e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:core_machine_slot_entry_1844c",
      0
     ]
    ]
@@ -4869,10 +5218,10 @@
    "project-kitdata.c": "35a0b15561f10813710f9787e378f05285ef1722173e128fa94fad53085e16c3",
    "mixer.c": "9bfa9940f8cb2afdbfebc070d27b2ccf507794675a73aa7cb7a9d057a92a6d19",
    "mixer-entry.s": "944d1aff53fa9894913fc24cfc3e2d4dbbbca3f6a54bc31d6e31bd9665648d4a",
-   "machines.c": "2e7fa17deeefa0b5cd2c0f9293c0059d705804a9c86be9b5cd36c3e40b021c32",
+   "machines.c": "ed6dbe9eab05b5d8e66f5879eceeb52aa627cac39fcaa129bc1c1b735d318e76",
    "machine-knobs.c": "8c9fb21f1f9e0f44ca2877d7dfdfc408de6d270ac14b478f6ce2cfd23425ae20",
-   "machine-frame.c": "bf47a5d4d8c31e9b871f38746af8979289991cde3ab199d63a8699fc1b86473d",
-   "machines-entry.s": "03ac6b6e437cf3069cce4fbbcaaa32159850ef0d5d7ce2a6a30fa0a253e3d09f",
+   "machine-frame.c": "2190207b585a50cc09549d993ea74a8619c9aa1cac66c9b23e3548eb088f42d2",
+   "machines-entry.s": "5e03c5372499cc0466a7c50fa07488523a04e209be5cd2932557256bbbaad5fc",
    "fw-bindings.s": "f831c9f4099170c8390d510ee2ab09a610f8a142ba84363c8c90f51c0ad6187e"
   }
  },

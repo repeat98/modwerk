@@ -1,6 +1,6 @@
-# Digitakt II base 2f8a60d2: added machines and their sound-chip players
+# Digitakt II base 1a052a38: added machines and their sound-chip players
 
-The Digitakt II Modwerk base (OS 1.17) as this pull request vendors it: **2f8a60d2** (`modwerk-base-digitakt-ii-2f8a60d2.elemod`, `sdk/machines/digitakt-ii/base-binding.json`, pinned by `sdk/imports/elekloader-modwerk-base-digitakt-ii-2026-11-19.json`). It adds:
+The Digitakt II Modwerk base (OS 1.17) as this pull request vendors it: **1a052a38** (`modwerk-base-digitakt-ii-1a052a38.elemod`, `sdk/machines/digitakt-ii/base-binding.json`, pinned by `sdk/imports/elekloader-modwerk-base-digitakt-ii-2026-11-19.json`). It adds:
 
 - added track machines (`core_machines`);
 - their own knob and value names on the stand-in's parameters;
