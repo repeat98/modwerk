@@ -470,7 +470,7 @@ static uintptr_t lane(unsigned track)
  * and a note runs backwards only when stock sees it there all the time (MKII, 11 November 2026: with RATE shown to
  * stock only during START and render, a backward reader crawled). */
 /* The lane's words as stock keeps them: PTCH and STRT, RATE, the tail (SPD, GRN), LED and SRR, STR and BITS. */
-typedef struct { uint32_t ps, tail; uint16_t rate, ls, sb; } View;
+typedef struct { uint32_t ps, tail; uint16_t rate, ls, sb; } __attribute__((aligned(4))) View; /* its longs on long boundaries (the target's ABI aligns them to 2) */
 #define W_STRT(w) ((w)->ps & 0xffffu)
 #define W_LED(w) ((unsigned)(w)->ls >> 8)
 #define W_SRR(w) ((w)->ls & 255u)

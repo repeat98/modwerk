@@ -1693,7 +1693,7 @@ amiga_start:
 	lea (64,%sp),%sp
 	rts
 .L298:
-	lea (50,%sp),%a2
+	lea (48,%sp),%a2
 #APP
 | 489 "amiga.c" 1
 	move.l (%a1),(%a2)
@@ -1703,7 +1703,7 @@ amiga_start:
 	move.w 28(%a1),12(%a2)
 | 0 "" 2
 #NO_APP
-	mvz.b 62(%sp),%d0
+	mvz.b 60(%sp),%d0
 	subq.l #2,%d0
 	tst.l %d0
 	jeq .L316
@@ -1770,7 +1770,7 @@ amiga_start:
 	cmp.l #256,%d2
 	jeq .L302
 .L301:
-	move.l 50(%sp),%d2
+	move.l 48(%sp),%d2
 	sub.l %a1,%a1
 	moveq #1,%d3
 	swap %d3
@@ -1780,7 +1780,7 @@ amiga_start:
 	clr.l (%a2,%d1.l)
 	move.l %a1,164(%a0)
 	move.l 32(%sp),%a1
-	mvz.w 58(%sp),%d1
+	mvz.w 56(%sp),%d1
 	clr.l 8(%a0)
 	clr.l 60(%a0)
 	move.l %d3,32(%a0)
@@ -1816,8 +1816,8 @@ amiga_start:
 	move.l 28(%sp),8(%a0)
 	jra .L318
 .L316:
-	move.l 54(%sp),-(%sp)
-	move.l 54(%sp),-(%sp)
+	move.l 52(%sp),-(%sp)
+	move.l 52(%sp),-(%sp)
 	move.l %a1,-(%sp)
 	move.l %a1,36(%sp)
 	jsr (view_pch.isra.0)
@@ -1917,7 +1917,7 @@ amiga_start:
 	jhi .L305
 	move.l %d3,%a3
 	sub.l %d2,%a3
-	move.l 50(%sp),%d2
+	move.l 48(%sp),%d2
 	moveq #1,%d3
 	swap %d3
 	lea (1,%a0),%a1
@@ -1926,7 +1926,7 @@ amiga_start:
 	clr.l (%a2,%d1.l)
 	move.l %a1,164(%a0)
 	move.l 32(%sp),%a1
-	mvz.w 58(%sp),%d1
+	mvz.w 56(%sp),%d1
 	clr.l 8(%a0)
 	move.l %d3,32(%a0)
 	clr.l 60(%a0)
@@ -1969,7 +1969,7 @@ amiga_start:
 	sub.l 40(%sp),%d3
 	clr.l (%a2,%d1.l)
 	move.l %d2,140(%a3)
-	move.l 50(%sp),%d2
+	move.l 48(%sp),%d2
 	move.l %d3,144(%a3)
 	move.l %a1,%a3
 	sub.l %a0,%a3
@@ -1980,7 +1980,7 @@ amiga_start:
 	move.l %a1,164(%a0)
 	mvz.w %d2,%d2
 	move.l 32(%sp),%a1
-	mvz.w 58(%sp),%d1
+	mvz.w 56(%sp),%d1
 	clr.l 8(%a0)
 	clr.l 60(%a0)
 	clr.l 4(%a0)
@@ -2007,7 +2007,7 @@ amiga_start:
 	jls .L307
 	jra .L317
 .L308:
-	move.l 50(%sp),%d2
+	move.l 48(%sp),%d2
 	sub.l %a1,%a1
 	moveq #1,%d3
 	swap %d3
@@ -2016,7 +2016,7 @@ amiga_start:
 	clr.l (%a2,%d1.l)
 	move.l %a1,164(%a0)
 	move.l 32(%sp),%a1
-	mvz.w 58(%sp),%d1
+	mvz.w 56(%sp),%d1
 	clr.l 8(%a0)
 	clr.l 60(%a0)
 	move.l %d3,32(%a0)
@@ -3753,7 +3753,7 @@ amiga_render:
 	cmp.l %d2,%d0
 	jcs .L668
 	move.l -2147476352,%d1
-	lea (22,%sp),%a1
+	lea (20,%sp),%a1
 	move.l %d1,16(%sp)
 #APP
 | 489 "amiga.c" 1
@@ -3764,7 +3764,7 @@ amiga_render:
 	move.w 28(%a6),12(%a1)
 | 0 "" 2
 #NO_APP
-	mvz.b 34(%sp),%d0
+	mvz.b 32(%sp),%d0
 	subq.l #2,%d0
 	tst.l %d0
 	jeq .L676
@@ -3835,8 +3835,8 @@ amiga_render:
 #NO_APP
 	jra .L678
 .L676:
-	move.l 26(%sp),-(%sp)
-	move.l 26(%sp),-(%sp)
+	move.l 24(%sp),-(%sp)
+	move.l 24(%sp),-(%sp)
 	move.l %a6,-(%sp)
 	move.l %a1,20(%sp)
 	jsr (view_pch.isra.0)
