@@ -66,6 +66,8 @@ async function fixture(){
  db.exec(readFileSync(new URL('../../migrations/0068_report_triage.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0021_social_onboarding.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0063_github_actions.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0072_octatrack_diagnostics.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0089_octatrack_count_daily.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0087_shared_read_cache.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0097_site_count_daily.sql',import.meta.url),'utf8'))
  const env:Env={DB:adapter(db),APP_URL:'https://octamod.test',ADMIN_KEY_SHA256:await digest(adminKey)}
@@ -486,6 +488,25 @@ describe('administrator insights',()=>{
 })
 
 describe('private aggregate usage statistics',()=>{
+ it('returns retained install outcomes with independent guide and sync coverage',async()=>{
+  vi.useFakeTimers({toFake:['Date']});vi.setSystemTime(new Date('2026-11-21T12:00:00Z'))
+  const {call,db,admin}=await fixture()
+  db.exec(`INSERT INTO octatrack_count_daily VALUES ('2026-11-11','base_guide_opened','',8),('2026-11-12','base_first_connection','',4),
+    ('2026-11-12','base_file_downloaded','',7),('2026-11-12','base_usb_update_done','',3);
+    INSERT INTO octatrack_beta_daily VALUES ('2026-10-22','usb_sync_kept',99),('2026-11-05','usb_sync_started',3),
+    ('2026-11-12','usb_sync_kept',6),('2026-11-12','usb_sync_failed',2);`)
+  const read=async(days:number)=>(await(await call('/admin/statistics?days='+days,'GET',undefined,'',undefined,admin)).json())
+  const wide=await read(90)
+  expect(wide.installActivity.guideFrom).toBe('2026-11-11')
+  expect(wide.installActivity.syncFrom).toBe('2026-11-05')
+  expect(wide.installActivity.counts).toHaveLength(3)
+  expect(wide.installActivity.counts).toEqual(expect.arrayContaining([
+    {day:'2026-11-12',event:'base_first_connection',count:4},{day:'2026-11-12',event:'base_usb_update_done',count:3},
+    {day:'2026-11-12',event:'usb_sync_kept',count:6}
+  ]))
+  expect(wide.siteCounts).toEqual([])
+  expect((await read(7)).installActivity).toEqual({...wide.installActivity,counts:[]})
+ })
  it('counts events once, deduplicates daily visitors, and keeps summaries behind administrator authorization',async()=>{
   const {call,db,admin,tokens}=await fixture(),first=usageEvent()
   expect((await call('/usage/events','POST',first)).status).toBe(200)

@@ -19,12 +19,16 @@ export function ModuleResourceIndicators({ id, usbLayout }: { id: string; usbLay
     <p className="resource-evidence-date">{previewCpu ? 'DSP / memory · ' : ''}v{document.version} · {document.resources.recorded}</p>
     {previewCpu && usbLayout && <p>The USB 0.2 candidate preview for {usbAudioLayout(usbLayout).name} estimates relative CPU demand from the upstream USB hook. Timing on hardware for this exact build remains unmeasured.</p>}
     <p>Minimal → Low → Moderate → High shows relative demand where a numeric record is unavailable. Load varies with configuration, settings and active tracks.</p>
+    <p>The DSP load arc shows how much core load changed. A dotted arc frames a count in bytes or cycles.</p>
     {!previewCpu && <p>{document.resources.impact?.conditions}</p>}
     <dl>{indicators.map(indicator => {
       const href = indicator.sourceInModwerk ? repository + indicator.source : resourceSource(id, indicator.source)
       return <div key={indicator.id}>
         <dt>{indicator.label} <span>{indicator.status}</span></dt>
-        <dd>{indicator.description} <a href={indicator.id === 'cpu' && previewCpu ? previewCpu.source : href} target="_blank" rel="noreferrer">Read record ↗</a></dd>
+        <dd>
+          {indicator.description} <a href={indicator.id === 'cpu' && previewCpu ? previewCpu.source : href} target="_blank" rel="noreferrer">Read record ↗</a>
+          {indicator.benchmark && <p>{indicator.benchmark.value} ({indicator.benchmark.basis}). <a href={repository + indicator.benchmark.source} target="_blank" rel="noreferrer">Benchmark record ↗</a></p>}
+        </dd>
       </div>
     })}</dl>
   </>} />
