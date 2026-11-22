@@ -433,7 +433,12 @@ static void move_rows(struct arr_state *s, unsigned lo, unsigned hi, int dir)
     if (dir < 0) for (unsigned r = lo; r <= hi; ++r) copy_row(a, r, r - 1);
     else for (unsigned r = hi + 1; r-- > lo;) copy_row(a, r, r + 1);
     put_bytes(row_at(a, lands), keep, ROW_BYTES);
-    set_cursor(cursor() + dir);                          /* as stock moves it: the editor scrolls along (the developer's MKI) */
+    /* As stock moves the cursor, so the editor scrolls along (the developer's MKI). First to the block's other end, then
+     * to the cursor: stock scrolls only as far as each needs, so a block of up to six rows stays wholly on screen,
+     * moving up or down, whichever end the cursor is on. */
+    int to = cursor() + dir, nlo = (int)lo + dir, nhi = (int)hi + dir;
+    set_cursor(to == nhi ? nlo : nhi);
+    set_cursor(to);
     if (s->anchor >= 0) s->anchor = (int16_t)(s->anchor + dir);
     s->undo = UNDO_NONE;
     s->last = DID_MOVE;

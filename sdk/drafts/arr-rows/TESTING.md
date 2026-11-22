@@ -239,3 +239,8 @@ with CUE + RIGHT failed: the editor stopped scrolling, the selection went below 
 drawn. The move set the cursor itself, without the editor's first shown row. Fixed: moves and undo set the cursor with
 stock's own routine (0x400336bc), which scrolls the editor along (six rows shown). `verify.py`: 95 checks; the previous
 code fails the two new scroll checks.
+
+Package `794f1170…`, as the developer reported it: moving down past the screen now scrolled along (passed); moving up,
+only the selection's last row stayed on screen, the cursor's row, while the rows above it scrolled off. Fixed: after a
+move the module sets the cursor to the block's other end first and then back, so stock scrolls just enough to keep a
+block of up to six rows wholly visible either way. `verify.py`: 96 checks.

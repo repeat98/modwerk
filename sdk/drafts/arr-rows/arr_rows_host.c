@@ -517,7 +517,14 @@ int main(void)
     check("three moves down: the rows are on 7-8 and the cursor on 8", same(7, 4) && same(8, 5) && cursor() == 8);
     check("the editor scrolled to keep the cursor on screen (first row shown 3)", get32(0x460d1c64u) == 3);
     for (int k = 0; k < 6; ++k) { hold(CUE, 1); tap(LEFT); hold(CUE, 0); }
-    check("six moves back up: rows on 1-2, the cursor on 2, and the editor scrolled up to show it first", same(1, 4) && same(2, 5) && cursor() == 2 && get32(0x460d1c64u) == 2);
+    check("six moves back up: rows on 1-2, both on screen (first row shown 1), the cursor on 2", same(1, 4) && same(2, 5) && cursor() == 2 && get32(0x460d1c64u) == 1);
+    /* a block of four selected upward (cursor on its first row), moved down past the screen: all four stay visible */
+    fill(16);
+    set32(0x460d1c64u, 0); set_cursor(5);
+    hold(CUE, 1); tap(UP); tap(UP); tap(UP); hold(CUE, 0);   /* rows 2-5, cursor on 2 */
+    for (int k = 0; k < 6; ++k) { hold(CUE, 1); tap(RIGHT); hold(CUE, 0); }
+    { int top = (int)get32(0x460d1c64u);
+      check("moved down six: rows on 8-11, the cursor on 8, all four on screen", same(8, 2) && same(11, 5) && cursor() == 8 && top <= 8 && top + 5 >= 11); }
 
     printf("%d checks, %d failed\n", checks, failures);
     return failures != 0;
