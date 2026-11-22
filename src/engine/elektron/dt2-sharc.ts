@@ -25,6 +25,9 @@ export type Dt2RenderPlan = {
   /** Further base-owned sites, such as the machine selector table's base (`planDt2MachineSelectors`). */
   sites?: readonly Dt2SharcSite[]
   allocations: readonly Allocation[]
+  /** Frame receivers (loader byte addresses inside this plan's allocations) for the base's frame receiver
+   * (`planDt2FrameReceive`) to call: the base owns the receive site, so no plan takes it for itself. */
+  frameReceivers?: readonly number[]
 }
 
 const equal = (a: Uint8Array, b: Uint8Array) => a.length === b.length && a.every((byte, i) => byte === b[i])
@@ -180,12 +183,18 @@ export async function buildDt2RenderSection(stock: Uint8Array, plan: Dt2RenderPl
   await verifyDt2RenderSection(stock, output, plan)
   return output
 }
-// The machine selector lookup (in the track setup, short-word PC 0x1c2731) loads the base of a seven-word table that
-// maps machine types 0-6 to the voice selector; a higher type reads past it. The base points it at a longer copy.
+// Added machine types: 7 to 10, each a fixed number a module claims (kits save it).
+export const DT2_FIRST_ADDED_TYPE = 7, DT2_ADDED_TYPES = 4
+const STOCK_TYPES = 7
+
+// The machine selector lookup (in the track setup, short-word PC 0x1c2731) loads the base of the OS's seven-word table
+// that maps machine types 0-6 to a voice selector; a higher type reads past it. The base points the lookup at a longer
+// table in its own L2. Its first seven words are read from the owner's verified stock section when a build is composed;
+// only the stock table's address, length and SHA-256 are kept here.
 const SELECTOR_SITE = 0x28000000 + 2 * 0x1c2731
 const SELECTOR_GUARD = '6b6ef0ae1d21cc3860bb1fd860658c94652341826da44eeec9227d59be29c3af'
 const SELECTOR_TABLE = 0x28000000 + 0x2567c0 // the stock table's loader byte address (normal word 0x2567c0)
-const STOCK_SELECTORS = [0, 1, 2, 3, 4, 0, 5]
+const SELECTOR_TABLE_GUARD = '649a095a0c9914cce25113158448435698f18ee0c6b06db571574218d0f746b8' // its 28 bytes
 const I3 = 0x13
 
 function readStored(stock: Uint8Array, address: number, length: number): Uint8Array {
@@ -193,22 +202,32 @@ function readStored(stock: Uint8Array, address: number, length: number): Uint8Ar
   return stock.subarray(offset, offset + length)
 }
 
-/** A plan fragment giving added machine types (7 and up, in order) their voice selector: a copy of the stock table
- * with `added` appended, placed at `tableAddress` in free L2, and the lookup's base pointed at it. */
-export async function planDt2MachineSelectors(stock: Uint8Array, tableAddress: number, added: readonly number[]): Promise<Dt2RenderPlan> {
+/** A plan fragment giving each added machine type its voice selector: the stock table's seven words, then for types 7
+ * to 10 in order the word of the stock type each stands for (`standsFor`, four stock types; an unregistered type
+ * takes SAMPLE's, as kit load turns it into SAMPLE), placed at `tableAddress` in free L2, with the lookup pointed at it. */
+export async function planDt2MachineSelectors(stock: Uint8Array, tableAddress: number, standsFor: readonly number[]): Promise<Dt2RenderPlan> {
   if (await sha256Hex(stock) !== STOCK_SECTION) throw new Error('Unsupported Digitakt II SHARC image')
-  if (!added.length || added.some(value => !STOCK_SELECTORS.includes(value))) throw new Error('Invalid machine selector')
+  if (standsFor.length !== DT2_ADDED_TYPES || standsFor.some(type => !Number.isInteger(type) || type < 0 || type >= STOCK_TYPES)) {
+    throw new Error('Invalid machine selector')
+  }
   if (await sha256Hex(readStored(stock, SELECTOR_SITE, 6)) !== SELECTOR_GUARD) throw new Error('SHARC selector guard mismatch')
-  const view = new DataView(Uint8Array.from(readStored(stock, SELECTOR_TABLE, 4 * STOCK_SELECTORS.length)).buffer)
-  if (STOCK_SELECTORS.some((value, index) => view.getUint32(4 * index, true) !== value)) throw new Error('Unexpected SHARC selector table')
-  const words = [...STOCK_SELECTORS, ...added]
-  const table = new Uint8Array(4 * words.length)
-  words.forEach((value, index) => new DataView(table.buffer).setUint32(4 * index, value, true))
+  const stored = readStored(stock, SELECTOR_TABLE, 4 * STOCK_TYPES)
+  if (await sha256Hex(stored) !== SELECTOR_TABLE_GUARD) throw new Error('SHARC selector table guard mismatch')
+  const table = new Uint8Array(4 * (STOCK_TYPES + DT2_ADDED_TYPES))
+  table.set(stored)
+  standsFor.forEach((type, k) => table.set(stored.subarray(4 * type, 4 * type + 4), 4 * (STOCK_TYPES + k)))
   const allocations = [{ address: tableAddress, bytes: table }]
   checkAllocations(allocations)
   // Type 17a, I3 = the table's normal-word address (L2 byte address / 4).
   return { sites: [{ address: SELECTOR_SITE, guard: SELECTOR_GUARD, instruction: instruction(0x0f00 | I3, tableAddress / 4) }], allocations }
 }
+
+// A registry slot is one 48-bit instruction at a fixed L2 address the base owns: the whole-image builder writes it
+// today, and a runtime loader can write or clear it later, without changing the base's code around it.
+const SLOT_BYTES = 6
+const slotJump = (pc: number) => instruction(0x063e, pc)
+const SLOT_RTS = Uint8Array.of(0xbe, 0x0a, 0, 0, 0, 0) // unconditional RTS
+const L2_PROGRAM = [0xb80000, 0xc00000] as const
 
 // The render pass calls the stock sample voice player once per voice (a type 25a CALL); R14 counts the 32 voices
 // down, and voice v belongs to track v >> 1 (the setup loop at 0x1c2c94 sets up voices 2t and 2t + 1 from track t).
@@ -224,84 +243,93 @@ const STOCK_PLAYER = 0x1c4ecf
 const ALT_PLAYER_CALL = 0x28000000 + 2 * 0x1c6af1
 const ALT_PLAYER_CALL_GUARD = '483ccef5002c7c309b5c77787f3fa09dff0a741623b0b429201bb520d03a2e2f'
 const ALT_STOCK_PLAYER = 0x1c5576
-const FIRST_ADDED_TYPE = 7, MAX_ADDED_TYPES = 4
-// Universal register codes, and the 32-bit instructions the dispatcher uses (parcels, little-endian bytes).
-const R0 = 0x00, R1 = 0x01, I0 = 0x10, M0 = 0x20, ASTATX = 0x76, STKYX = 0x78
-const SAVED = [R0, R1, I0, M0, ASTATX, STKYX]
-const parcels = (...words: number[]) => Uint8Array.from(words.flatMap(word => [word & 255, word >>> 8]))
-const M0_FROM_R0 = parcels(0x703e, 0x103f)
-const I0_FROM_R1 = parcels(0x703e, 0x883f)
-const M0_ZERO = parcels(0x0fa0, 0x0000)
-const R1_FROM_I0_M0 = parcels(0x403e, 0x00bf) // R1 = DM(M0, I0), no update
+const SAVED = ['R0', 'R1', 'I0', 'M0', 'ASTATX', 'STKYX']
 
 /** A machine's own voice player: the program counter (short word) of its entry in L2. */
 export type Dt2MachinePlayer = { type: number; entry: number }
 
-/** A plan fragment that sends every voice of an added machine type to that machine's player and every other voice
- * to the stock player, unchanged: a dispatcher at `codeAddress` (free L2) in place of the render pass's call, with
- * its save area and voice table at `dataAddress`. A player is entered and returns exactly as the stock player. */
+/** The player dispatcher's code, the same for every set of players: entry 0 and 1 replace the render pass's two stock
+ * player calls. A voice whose track has an added type (7-10) goes through that type's registry slot (`slotsAddress`,
+ * one 48-bit slot per type); every other voice, and a voice whose slot is empty, goes to the stock player the pass
+ * chose, unchanged. The word at `dataAddress + 4 * 6` (DT2_MACHINE_STOCK_PLAYER) says which (0: 0x1c4ecf, 1: 0x1c5576),
+ * so a player renders through the same one. */
+function dispatcherSource(codeAddress: number, dataAddress: number, slotsAddress: number): string {
+  const save = dataAddress / 4, table = save + 8, slot = (k: number) => programCounter(slotsAddress) + k * SLOT_BYTES / 2
+  const keep = SAVED.map((reg, index) => `  DM(${save + index}) = ${reg}`).join('\n')
+  const restore = SAVED.map((reg, index) => `  ${reg} = DM(${save + index})`).join('\n')
+  const types = Array.from({ length: DT2_ADDED_TYPES }, (_, k) => k)
+  return `
+.code ${codeAddress}
+entry0:
+${keep}
+  R0 = 0
+  JUMP common
+entry1:
+${keep}
+  R0 = 1
+common:
+  DM(${save + 6}) = R0
+  R0 = 32
+  R0 = R0 - R14            // the voice
+  M0 = R0
+  I0 = ${table}
+  R1 = DM(M0, I0)          // the address of its track's type word
+  I0 = R1
+  M0 = 0
+  R1 = DM(M0, I0)          // the track's machine type
+  R0 = ${DT2_FIRST_ADDED_TYPE}
+  R0 = R1 - R0
+  IF LT JUMP stock
+  R1 = ${DT2_ADDED_TYPES}
+  COMP(R0, R1)
+  IF GE JUMP stock
+${types.slice(0, -1).map(k => `  R1 = ${k}\n  COMP(R0, R1)\n  IF EQ JUMP go${k}`).join('\n')}
+  JUMP go${DT2_ADDED_TYPES - 1}
+${types.map(k => `go${k}:\n${restore}\n  JUMP ${slot(k)}`).join('\n')}
+empty:                     // an empty slot; the save area still holds the voice's registers
+stock:
+  R0 = DM(${save + 6})
+  R1 = 0
+  COMP(R0, R1)
+  IF NE JUMP stock1
+${restore}
+  JUMP ${STOCK_PLAYER}
+stock1:
+${restore}
+  JUMP ${ALT_STOCK_PLAYER}
+`
+}
+
+/** A plan fragment that installs the base's player dispatcher in place of the render pass's two player calls, its
+ * save area and voice table at `dataAddress`, and fills the registry slots at `slotsAddress`: a registered player's
+ * slot jumps to its entry, the others to the stock path. A player is entered and returns exactly as the stock player. */
 export async function planDt2MachinePlayers(
-  stock: Uint8Array, codeAddress: number, dataAddress: number, players: readonly Dt2MachinePlayer[], typesAddress: number,
+  stock: Uint8Array, codeAddress: number, dataAddress: number, slotsAddress: number, players: readonly Dt2MachinePlayer[], typesAddress: number,
 ): Promise<Dt2RenderPlan> {
   if (await sha256Hex(stock) !== STOCK_SECTION) throw new Error('Unsupported Digitakt II SHARC image')
-  if (!players.length || players.length > MAX_ADDED_TYPES || new Set(players.map(p => p.type)).size !== players.length ||
-      players.some(p => !Number.isInteger(p.type) || p.type < FIRST_ADDED_TYPE || p.type >= FIRST_ADDED_TYPE + MAX_ADDED_TYPES ||
-        !Number.isInteger(p.entry) || p.entry < 0xb80000 || p.entry >= 0xc00000)) {
+  if (new Set(players.map(p => p.type)).size !== players.length ||
+      players.some(p => !Number.isInteger(p.type) || p.type < DT2_FIRST_ADDED_TYPE || p.type >= DT2_FIRST_ADDED_TYPE + DT2_ADDED_TYPES ||
+        !Number.isInteger(p.entry) || p.entry < L2_PROGRAM[0] || p.entry >= L2_PROGRAM[1])) {
     throw new Error('Invalid machine player')
   }
   if (await sha256Hex(readStored(stock, PLAYER_CALL, 6)) !== PLAYER_CALL_GUARD) throw new Error('SHARC player call guard mismatch')
   const altGuard = await sha256Hex(readStored(stock, ALT_PLAYER_CALL, 6))
   if (altGuard !== ALT_PLAYER_CALL_GUARD) throw new Error('SHARC second player call guard mismatch: ' + altGuard)
-  const save = dataAddress / 4, table = save + 8
   const data = new Uint8Array(4 * (8 + 32))
   for (let voice = 0; voice < 32; voice++) new DataView(data.buffer).setUint32(4 * (8 + voice), typesAddress + 4 * (voice >> 1), true)
-
-  const parts: Uint8Array[] = []
-  let at = programCounter(codeAddress) // short words
-  const emit = (bytes: Uint8Array) => { parts.push(bytes); at += bytes.length / 2 }
-  const restore = () => SAVED.forEach((reg, index) => emit(instruction(0x1000 | reg, save + index)))
-  // One entry for each of the render pass's two calls: an added machine's voice goes to its player with the word at
-  // DT2_MACHINE_STOCK_PLAYER (save + 6) saying which stock player the pass chose (0: 0x1c4ecf, 1: 0x1c5576), so the
-  // player renders with the same one; any other voice goes to that stock player, unchanged.
-  const entry = (stockPlayer: number, which: number) => {
-    const start = at
-    SAVED.forEach((reg, index) => emit(instruction(0x1100 | reg, save + index)))
-    emit(instruction(0x0f00 | R0, 32))
-    emit(instruction(0x013e, 0x200e))          // R0 = R0 - R14: the voice
-    emit(M0_FROM_R0)
-    emit(instruction(0x0f00 | I0, table))
-    emit(R1_FROM_I0_M0)                        // its track's type word address
-    emit(I0_FROM_R1)
-    emit(M0_ZERO)
-    emit(R1_FROM_I0_M0)                        // the track's machine type
-    const branches: number[] = []
-    for (const player of players) {
-      emit(instruction(0x0f00 | R0, player.type))
-      emit(instruction(0x013e, 0x2010))        // R0 = R1 - R0
-      branches.push(parts.length)
-      emit(new Uint8Array(6))                  // IF EQ JUMP, filled in below
-    }
-    restore()
-    emit(instruction(0x063e, stockPlayer))
-    players.forEach((player, index) => {
-      parts[branches[index]] = instruction(0x0600, at)
-      emit(instruction(0x0f00 | R0, which))
-      emit(instruction(0x1100 | R0, save + 6))
-      restore()
-      emit(instruction(0x063e, player.entry))
-    })
-    return start
+  const { blocks: code, symbols } = assembleSharc(dispatcherSource(codeAddress, dataAddress, slotsAddress))
+  if (code.length !== 1) throw new Error('Unexpected SHARC dispatcher layout')
+  const slots = new Uint8Array(SLOT_BYTES * DT2_ADDED_TYPES)
+  for (let k = 0; k < DT2_ADDED_TYPES; k++) {
+    const player = players.find(p => p.type === DT2_FIRST_ADDED_TYPE + k)
+    slots.set(slotJump(player ? player.entry : symbols.get('empty')!), SLOT_BYTES * k)
   }
-  const pc = entry(STOCK_PLAYER, 0)
-  const altPc = entry(ALT_STOCK_PLAYER, 1)
-  const code = new Uint8Array((parts.reduce((n, part) => n + part.length, 0) + 3) & ~3)
-  parts.reduce((offset, part) => { code.set(part, offset); return offset + part.length }, 0)
-  const allocations = [{ address: codeAddress, bytes: code }, { address: dataAddress, bytes: data }]
+  const allocations = [{ address: codeAddress, bytes: code[0].bytes }, { address: dataAddress, bytes: data }, { address: slotsAddress, bytes: slots }]
   checkAllocations(allocations)
   return {
     sites: [
-      { address: PLAYER_CALL, guard: PLAYER_CALL_GUARD, instruction: instruction(0x1804, pc) },
-      { address: ALT_PLAYER_CALL, guard: ALT_PLAYER_CALL_GUARD, instruction: instruction(0x1804, altPc) },
+      { address: PLAYER_CALL, guard: PLAYER_CALL_GUARD, instruction: instruction(0x1804, symbols.get('entry0')!) },
+      { address: ALT_PLAYER_CALL, guard: ALT_PLAYER_CALL_GUARD, instruction: instruction(0x1804, symbols.get('entry1')!) },
     ],
     allocations,
   }
@@ -326,16 +354,31 @@ export const DT2_MACHINE_TYPES_AT = L1_SAVE + 1
 const TYPE_WORDS = 16
 const REPLY_RECORDS = [0x266220, 0x267220] // L1 byte addresses
 
-/** A plan fragment for the base's machine wire: at the receive site, a receiver at `codeAddress` (free L2) copies the
- * step words the ColdFire base writes into the frame tail after its magic (DT2_MACHINE_WIRE: the samples per sixteenth
- * step at 1X, each track's at its speed, then the view track) to the words from `dataAddress + 0x20`, where machine
- * players read them (6,000, 120 BPM, and no view track until the first frame), copies the machine view from
- * `dataAddress + 4 * 26` into both reply records, then replays the displaced instruction and resumes. It keeps every
- * register it touches. */
-export async function planDt2MachineWire(stock: Uint8Array, codeAddress: number, dataAddress: number): Promise<Dt2RenderPlan> {
+/** Frame receivers the base calls at the receive site, through its frame slots: up to DT2_FRAME_RECEIVERS. */
+export const DT2_FRAME_RECEIVERS = 4
+
+/** A plan fragment for the base's frame receiver, which owns the receive site (the sound chip's handler of each
+ * transfer from the ColdFire). At `codeAddress` (free L2) it keeps the registers it uses, then:
+ *
+ * - when the frame tail carries the machine wire's magic (the ColdFire base writes it only while a machine is
+ *   registered), copies the step words after it (DT2_MACHINE_WIRE: the samples per sixteenth step at 1X, each track's
+ *   at its speed, then the view track) to the words from `dataAddress + 0x20`, where machine players read them (6,000,
+ *   120 BPM, and no view track until the first frame), each track's machine type to `dataAddress + 4 *
+ *   DT2_MACHINE_TYPES_AT`, and the machine view from `dataAddress + 4 * 26` into both reply records;
+ * - calls each of the DT2_FRAME_RECEIVERS frame slots at `slotsAddress`, in order: a registered receiver's slot jumps
+ *   to it (`receivers`, short-word program counters), an empty one returns at once. A receiver is called with I3 at the
+ *   received frame and L0-L2 zero; it may change R0, R1, I0-I2, M0, L0-L2, ASTATX and STKYX, keeps every other
+ *   register and returns with RTS;
+ * - restores what it kept, replays the displaced instruction and resumes. */
+export async function planDt2FrameReceive(
+  stock: Uint8Array, codeAddress: number, dataAddress: number, slotsAddress: number, receivers: readonly number[],
+): Promise<Dt2RenderPlan> {
   if (await sha256Hex(stock) !== STOCK_SECTION) throw new Error('Unsupported Digitakt II SHARC image')
+  if (receivers.length > DT2_FRAME_RECEIVERS || receivers.some(pc => !Number.isInteger(pc) || pc < L2_PROGRAM[0] || pc >= L2_PROGRAM[1])) {
+    throw new Error('Invalid SHARC frame receiver entry')
+  }
   const displaced = await dt2DisplacedInstruction(stock, 'receive')
-  const save = dataAddress / 4
+  const save = dataAddress / 4, slot = (k: number) => programCounter(slotsAddress) + k * SLOT_BYTES / 2
   const { blocks, symbols } = assembleSharc(`
 .code ${codeAddress}
   DM(${save}) = R0
@@ -347,8 +390,11 @@ export async function planDt2MachineWire(stock: Uint8Array, codeAddress: number,
   DM(${save + 6}) = I1
   DM(${save + 7}) = L0
   DM(${save + L1_SAVE}) = L1
+  DM(${save + VIEW_SAVE}) = I2
+  DM(${save + VIEW_SAVE + 1}) = L2
   L0 = 0
   L1 = 0
+  L2 = 0
   R0 = I3
   R1 = ${TAIL}
   R0 = R0 + R1
@@ -371,10 +417,6 @@ copied: DM(I1, M0) = R0
   R0 = DM(I0, M0)
   NOP
 typed: DM(I1, M0) = R0
-absent:
-  DM(${save + VIEW_SAVE}) = I2
-  DM(${save + VIEW_SAVE + 1}) = L2
-  L2 = 0
   I1 = ${dataAddress + 4 * VIEW_AT}
   I0 = ${REPLY_RECORDS[0] + 4 * DT2_MACHINE_VIEW}
   I2 = ${REPLY_RECORDS[1] + 4 * DT2_MACHINE_VIEW}
@@ -383,6 +425,8 @@ absent:
   R0 = DM(I1, M0)
   DM(I0, M0) = R0
 viewed: DM(I2, M0) = R0
+absent:
+${Array.from({ length: DT2_FRAME_RECEIVERS }, (_, k) => `  CALL ${slot(k)}`).join('\n')}
   I2 = DM(${save + VIEW_SAVE})
   L2 = DM(${save + VIEW_SAVE + 1})
   R0 = DM(${save})
@@ -404,7 +448,9 @@ displaced: NOP
   new DataView(data.buffer).setUint32(4 * (8 + STEP_WORDS - 1), VIEW_NONE, true)
   // The view block until a player writes it: no player's magic, a recognisable pattern.
   for (let word = 0; word < VIEW_WORDS; word++) new DataView(data.buffer).setUint32(4 * (VIEW_AT + word), 0x4d4b5600 + word, true)
-  const allocations = [{ address: codeAddress, bytes: code }, { address: dataAddress, bytes: data }]
+  const slots = new Uint8Array(SLOT_BYTES * DT2_FRAME_RECEIVERS)
+  for (let k = 0; k < DT2_FRAME_RECEIVERS; k++) slots.set(k < receivers.length ? slotJump(receivers[k]) : SLOT_RTS, SLOT_BYTES * k)
+  const allocations = [{ address: codeAddress, bytes: code }, { address: dataAddress, bytes: data }, { address: slotsAddress, bytes: slots }]
   checkAllocations(allocations)
   return { receiveInstruction: instruction(0x063e, programCounter(codeAddress)), allocations }
 }
@@ -418,11 +464,13 @@ export function combineDt2Plans(...plans: readonly (Dt2RenderPlan | null)[]): Dt
     if (found.length > 1) throw new Error('Two SHARC plans set the same site')
     return found[0]?.[key]
   }
+  const frameReceivers = present.flatMap(plan => plan.frameReceivers ?? [])
   return {
     renderInstruction: pick('renderInstruction'),
     receiveInstruction: pick('receiveInstruction'),
     sites: present.flatMap(plan => plan.sites ?? []),
     allocations: present.flatMap(plan => plan.allocations),
+    ...(frameReceivers.length ? { frameReceivers } : {}),
   }
 }
 
@@ -444,7 +492,9 @@ function instruction(opcode: number, operand: number): Uint8Array {
 
 /** Place the dispatcher and its register save area together in L2.
  * Subscribers return to the dispatcher and may clobber only the saved registers.
- * Subscriber entry points are the starts of their respective allocations. */
+ * Subscriber entry points are the starts of their respective allocations. A `bridge` receiver is not given the receive
+ * site: it is listed in `frameReceivers` for the base's frame receiver (`planDt2FrameReceive`) to call, and keeps that
+ * receiver's contract (returns with RTS). */
 export async function planDt2Render(
   stock: Uint8Array,
   dispatcherAddress: number,
@@ -485,7 +535,7 @@ export async function planDt2Render(
   emit(instruction(0x063e, RENDER_RESUME))
   return {
     renderInstruction: instruction(0x063e, programCounter(dispatcherAddress)),
-    receiveInstruction: bridge && instruction(0x063e, programCounter(bridge.receiverAddress)),
     allocations,
+    ...(bridge ? { frameReceivers: [bridge.receiverAddress] } : {}),
   }
 }

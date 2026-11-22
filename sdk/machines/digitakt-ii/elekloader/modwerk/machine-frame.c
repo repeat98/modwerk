@@ -10,6 +10,9 @@
  * module's page set. The base's receiver on the sound chip copies these eighteen words where machine players read them
  * (DT2_BASE_SHARC.stepSamples in the builder: the 1X step, tracks 1-16, the view track), and puts the machine view a
  * player posted into its reply, which comes back here with the next transfer.
+ *
+ * With no machine in core_machines nothing here runs: no tail words (the receiver then skips the wire and the view)
+ * and no reply read. The reply is read only while a module's page has set a view track.
  */
 #include <stdint.h>
 #include <mk2/machines.h>
@@ -36,6 +39,8 @@
 
 #define REPLY_VIEW 600u                    /* the reply word where the receiver puts the machine view */
 
+extern const struct dt2_machine *const core_machines[DT2_MACHINE_COUNT];
+
 uint32_t core_machine_samples_per_step = 6000; /* 120 BPM until a pattern's tempo is read */
 volatile uint32_t core_machine_view_track = DT2_MACHINE_VIEW_NONE;
 volatile uint32_t core_machine_view[DT2_MACHINE_VIEW_WORDS];
@@ -53,7 +58,7 @@ void core_machine_frame(unsigned int data_bytes, const void *data, unsigned int 
 {
     (void)data;
     (void)reply;
-    if (data_bytes != 0x802 || frame_bytes != 0xabc) {
+    if (data_bytes != 0x802 || frame_bytes != 0xabc || !core_machines[0]) {
         return;
     }
     const uintptr_t pattern = STOCK_WORD(CURRENT_PATTERN);
@@ -89,7 +94,7 @@ void core_machine_frame(unsigned int data_bytes, const void *data, unsigned int 
     }
     /* The machine view the sound chip's receiver put in the last reply (words 600-631): the reply arrives as 16-bit
      * units, each sound-chip word low half first. */
-    if (reply) {
+    if (reply && view_track < TRACKS) {
         const volatile uint16_t *halves = (const volatile uint16_t *)reply + 2 * REPLY_VIEW;
         for (unsigned int k = 0; k < DT2_MACHINE_VIEW_WORDS; ++k) {
             core_machine_view[k] = (uint32_t)halves[2 * k + 1] << 16 | halves[2 * k];

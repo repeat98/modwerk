@@ -19,9 +19,10 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { dirname, resolve } from 'node:path'
+import { basename, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { materializeElemodRecipe } from '../src/catalog/elemod-recipe.ts'
+import { composeDt2MachineBuild } from '../src/engine/elekloader/dt2-render-build.ts'
 import { ELE3_DEVICES, mainImage, packMain, readEle3Syx, verifyEle3Build, writeEle3Syx } from '../src/engine/elektron/ele3.ts'
 import { linkMods, parseElemod } from '../src/engine/elektron/elemod.ts'
 import { sendFxRoom } from '../src/engine/elekloader/rytm-fx-room.ts'
@@ -35,9 +36,10 @@ if (!stockPath || !out || !version || !prebuilt.length || modules.some(id => !/^
   throw new Error('Usage: link-image.mjs --stock STOCK.syx --version XX01 --out OUT.syx --elemod CORE.elemod [--elemod MORE.elemod] [--module machine:id ...] [--lock-in OLD.lock.json] [--lock-out NEW.lock.json]')
 
 const json = async path => JSON.parse(await readFile(resolve(path), 'utf8'))
-const stock = readEle3Syx(new Uint8Array(await readFile(resolve(stockPath))))
-const mods = []
-for (const path of prebuilt) mods.push(parseElemod(await json(path), path))
+const stockBytes = new Uint8Array(await readFile(resolve(stockPath)))
+const stock = readEle3Syx(stockBytes)
+const mods = [], documents = []
+for (const path of prebuilt) { const document = await json(path); documents.push({ name: basename(path), document }); mods.push(parseElemod(document, path)) }
 const machine = mods[0].device.machine
 const device = ELE3_DEVICES[machine]
 if (!device) throw new Error('No firmware container for ' + machine)
@@ -51,7 +53,9 @@ if (modules.length) {
     for (const id of modules) {
       const [moduleMachine, name] = id.split(':')
       const plan = await json(resolve(tmp, moduleMachine, name, mods[0].release.version + '.json'))
-      mods.push(parseElemod(await materializeElemodRecipe({ ...plan.module, ...plan, sites: plan.sites }, image), id))
+      const document = await materializeElemodRecipe({ ...plan.module, ...plan, sites: plan.sites }, image)
+      documents.push({ name: id, document })
+      mods.push(parseElemod(document, id))
     }
   } finally { await rm(tmp, { recursive: true, force: true }) }
 }
@@ -66,7 +70,13 @@ if (fx && fx.largest > fx.room)
   throw new Error(`The set leaves the send effects ${fx.room} words of work area, and its largest effect asks for ${fx.largest}: drop a module or that effect.`)
 if (lockOut && !linked.store) throw new Error('--lock-out: this set has no mod storage, so there is no lockfile to write')
 if (lockOut) await writeFile(resolve(lockOut), JSON.stringify(linked.store, null, 1) + '\n')
-const built = writeEle3Syx(stock, packMain(linked.image), device, version)
-const facts = verifyEle3Build(built, stock, linked.image, device, version)
+let built = writeEle3Syx(stock, packMain(linked.image), device, version)
+let facts = verifyEle3Build(built, stock, linked.image, device, version)
+// A Digitakt II set that registers machines gets the base's sound-chip parts and its modules' players through the
+// composition step the website's preflight runs (composeDt2MachineBuild), so both paths make the same image.
+if (machine === 'digitakt-ii') {
+  const composed = await composeDt2MachineBuild(stockBytes, built, mods, documents)
+  if (composed) { built = composed.output; facts = composed.facts }
+}
 await writeFile(resolve(out), built)
 console.log(JSON.stringify({ out: resolve(out), sha256: createHash('sha256').update(built).digest('hex'), order: linked.order, flashHeadroom: facts.flashHeadroom, ramSpare: linked.layout.ddrSpare, fastSpare: linked.layout.fastSpare, ...(fx && { fxWork: fx }) }, null, 1))

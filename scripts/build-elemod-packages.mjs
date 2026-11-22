@@ -147,7 +147,7 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
           if (entry === undefined) throw new Error(document.id + ': no label ' + player.entry + ' in ' + build.sharc.source)
           return { type: player.type, entry }
         })
-        module.build = { ...module.build, dt2_sharc: { version: 2, allocations: program.blocks.map(block => ({ address: block.address, data: Buffer.from(block.bytes).toString('base64') })), players } }
+        module.build = { ...module.build, dt2_sharc: { version: 2, allocations: program.blocks.map(block => ({ address: block.address, data: Buffer.from(block.bytes).toString('base64'), code: block.code })), players } }
       }
       parseElemod(module)
       const plan = { schemaVersion: 1, machine: machine.id, id: document.id, version: document.version, release, module, sites, derive: build.derive,

@@ -29,6 +29,8 @@
  *                                          RSQRTS Fx (the reference's seeds, about 8 bits); Rn = FIX Fx
  *   [IF cond] ureg = ureg                  type 5b (32-bit: never in the last 11 instructions of a loop)
  *   [IF cond] JUMP target                  type 8a, absolute, not delayed
+ *   [IF cond] CALL target                  type 8a, absolute, not delayed, pushing the return address
+ *   [IF cond] RTS                          type 11a, not delayed
  *   LCNTR = count, DO label UNTIL LCE      type 12a (label: the loop's last instruction)
  *   NOP
  *   CCALL target                           a linked call as the stock render loop makes one (the call, then the old
@@ -36,7 +38,8 @@
  *   CRET                                   the stock player's epilogue: I12 = DM(M7, I6), RETURN, RFRAME
  */
 
-export type SharcBlock = { address: number; bytes: Uint8Array }
+/** A loader block: `code` for instructions, false for data words (the two never share a block). */
+export type SharcBlock = { address: number; bytes: Uint8Array; code: boolean }
 export type SharcProgram = { blocks: SharcBlock[]; symbols: Map<string, number> }
 
 const L2_START = 0x20000000, L2_END = 0x20100000
@@ -279,10 +282,11 @@ function encode(text: string, line: number, pc: number): Encoded[] {
     condition = CONDITIONS[name]
     body = m[2]
   }
-  if ((m = /^JUMP (.+)$/i.exec(body))) {
-    const target = expr(m[1])
-    return one(48, labels => (0x06n << 40n) | (BigInt(condition) << 33n) | (u32(target(labels)) & 0xffffffn))
+  if ((m = /^(JUMP|CALL) (.+)$/i.exec(body))) {
+    const target = expr(m[2]), call = m[1].toUpperCase() === 'CALL' ? 1n << 39n : 0n
+    return one(48, labels => (0x06n << 40n) | call | (BigInt(condition) << 33n) | (u32(target(labels)) & 0xffffffn))
   }
+  if (/^RTS$/i.test(body)) return one(48, () => (0x0an << 40n) | (1n << 39n) | (BigInt(condition) << 33n))
   const compute = computation(body)
   if (compute !== null) return one(48, () => (0x01n << 40n) | (BigInt(condition) << 33n) | BigInt(compute))
   if (condition !== TRUE) {
@@ -365,28 +369,28 @@ function checkRules(code: Extract<Item, { kind: 'code' }>[], symbols: Map<string
 }
 
 function layout(items: Item[], symbols: Map<string, number>): SharcBlock[] {
-  const pieces: { address: number; bytes: Uint8Array }[] = []
+  const pieces: SharcBlock[] = []
   for (const item of items) {
     if (item.kind === 'data') {
       const value = item.build(symbols) >>> 0
-      pieces.push({ address: item.address, bytes: Uint8Array.of(value & 255, (value >>> 8) & 255, (value >>> 16) & 255, value >>> 24) })
+      pieces.push({ address: item.address, bytes: Uint8Array.of(value & 255, (value >>> 8) & 255, (value >>> 16) & 255, value >>> 24), code: false })
       continue
     }
     const frame = item.build(symbols)
     const parcels = Array.from({ length: item.width / 16 }, (_, k) => Number((frame >> BigInt(item.width - 16 - 16 * k)) & 0xffffn))
     const address = L2_START + (item.pc - 0xb80000) * 2
-    pieces.push({ address, bytes: Uint8Array.from(parcels.flatMap(p => [p & 255, p >>> 8])) })
+    pieces.push({ address, bytes: Uint8Array.from(parcels.flatMap(p => [p & 255, p >>> 8])), code: true })
   }
   pieces.sort((a, b) => a.address - b.address)
   const blocks: SharcBlock[] = []
   for (const piece of pieces) {
     const last = blocks[blocks.length - 1]
     if (last && piece.address < last.address + last.bytes.length) throw new Error(`overlapping code or data at ${piece.address.toString(16)}`)
-    if (last && piece.address === last.address + last.bytes.length) {
+    if (last && piece.address === last.address + last.bytes.length && last.code === piece.code) {
       const joined = new Uint8Array(last.bytes.length + piece.bytes.length)
       joined.set(last.bytes); joined.set(piece.bytes, last.bytes.length)
       last.bytes = joined
-    } else blocks.push({ address: piece.address, bytes: piece.bytes })
+    } else blocks.push({ ...piece })
   }
   // The loader places whole 32-bit words: pad a block that ends inside one (code ends on a 16-bit parcel).
   for (const [index, block] of blocks.entries()) {
