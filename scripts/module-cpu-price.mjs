@@ -269,12 +269,28 @@ export function releaseDate({ root, document }) {
   return typeof entry?.date === 'string' ? entry.date.slice(0, 10) : null
 }
 
-/** Whether the module marks any of its detours "rests": its runtime*.json or its machine port. */
-export function declaresRests({ root, id }) {
+/** The detours the module marks "rests" (0x addresses): its runtime*.json and its machine port. */
+export function declaredRests({ root, id }) {
   const folder = resolve(root, 'sdk/octatrack/modules', id)
-  for (const name of existsSync(folder) ? readdirSync(folder).filter(name => /^runtime.*\.json$/.test(name)) : [])
-    if ((readJson(join(folder, name))?.rests ?? []).length) return true
-  return Boolean((readJson(resolve(root, PORTS, 'machine-ports.json'))?.ports?.[id]?.rests ?? []).length)
+  const files = existsSync(folder) ? readdirSync(folder).filter(name => /^runtime.*\.json$/.test(name)) : []
+  return [...files.flatMap(name => readJson(join(folder, name))?.rests ?? []),
+    ...readJson(resolve(root, PORTS, 'machine-ports.json'))?.ports?.[id]?.rests ?? []]
+}
+export const declaresRests = args => declaredRests(args).length > 0
+
+/** The sites the module's committed USB package of `version` marks as resting (bit 7 of an ABI 7+ site's length byte, loader.h
+ *  RUNTIME_SITE_RESTS), or null while none of that version is committed. What the base reads, not what runtime.json asks for. */
+export function packageRests({ root, id, version }) {
+  const row = readJson(resolve(root, 'src/engine/assets/octatrack-module-packages.json'))?.packages?.find(item => item.id === id)
+  const path = row?.version === version ? resolve(root, 'public', row.path) : null
+  if (!path || !existsSync(path)) return null
+  const data = readFileSync(path), abi = data.readUInt16BE(4), rests = new Set()
+  let at = ({ 7: 72, 8: 76, 9: 80, 10: 80 })[abi] + 4 * data.readUInt32BE(20) + data.readUInt32BE(8) + 4 * data.readUInt32BE(16)
+  for (let i = 0; abi >= 7 && i < data.readUInt32BE(24); i++) {
+    if (data[at + 4] & 0x80) rests.add(data.readUInt32BE(at))
+    at += 40 + (data[at + 4] & 0x7f) + 2 * data[at + 7]
+  }
+  return rests
 }
 
 /** One module's cost at rest: { state: 'ok' | 'info' | 'warn' | 'fail', detail, fix? }. A machine or an effect is answered for by
@@ -284,6 +300,10 @@ export function atRestStatus({ root, document, glue = null }) {
   const id = document.id, figure = atRestFigure({ root, document })
   const machine = machineDescriptors({ root, id, glue }).length > 0 || document.compatibility?.location === 'Track machine'
   const judged = machine || document.compatibility?.effectId != null, measured = figure ? ' (' + figure.value + ' points measured at rest)' : ''
+  const built = packageRests({ root, id, version: document.version })
+  const unmarked = built ? declaredRests({ root, id }).filter(address => !built.has(Number.parseInt(address, 16))) : []
+  if (unmarked.length) return { state: 'fail', detail: 'its USB package ' + document.version + ' does not mark ' + unmarked.join(', ') + ' rests, which runtime.json names',
+    fix: 'rebuild it (npm run octatrack:module-packages); a builder route that drops "rests" is a Fix: pull request of its own' }
   if (answersInUse({ root, id })) return { state: 'ok', detail: 'it answers ev_in_use, so it rests while it acts on no track' + measured }
   if (judged && declaresRests({ root, id })) return { state: 'ok', detail: 'the base rests ' + (machine ? 'a machine no track uses' : 'an effect no slot uses') + ', its detours marked rests with it' + measured }
   if (!figure) return { state: 'info', detail: 'no cost at rest measured yet (test procedure step 9, npm run device:price)' }
