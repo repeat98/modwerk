@@ -131,17 +131,18 @@ int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
 }
 volatile uint32_t mw_frame_window; /* machine_registry.c's: the longest frame since the last reading */
 static uint32_t test_machines_booked; /* machine_registry.c's booking of the Part's module machines */
+static unsigned test_pattern; /* machine_registry.c: the pattern that plays */
+unsigned modwerk_machine_pattern(void) { return test_pattern; }
 static unsigned test_busiest, test_tracks, test_trigging; /* machine_registry.c: the playing pattern's busiest step, tracks that trig */
 unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2], uint16_t id[2])
 {
     most[0] = (uint8_t)test_busiest, tracks[0] = (uint8_t)(test_tracks > test_busiest ? test_tracks : test_busiest);
-    id[0] = 32u, id[1] = 32u;
+    id[0] = id[1] = (uint16_t)(test_pattern ? test_pattern : 32u);
     return 1u;
 }
 unsigned modwerk_machine_trigging(void) { return test_trigging; }
 static uint32_t test_rest; /* machine_registry.c's installed modules at rest */
-static unsigned test_pattern; /* machine_registry.c: the pattern that plays */
-unsigned modwerk_machine_pattern(void) { return test_pattern; }
+
 uint32_t modwerk_machine_rest_booked(void) { return test_rest; }
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net) { (void)skip; (void)net; return test_machines_booked; }
 /* ... and as the predicted brake lists them: one machine on T2 that books all of it */
@@ -800,6 +801,26 @@ int main(void)
       CHECK(modwerk_status_pick_busy(1, 1, "Amiga", 266u, 100u, 0));    /* a swap: the track played a machine, no share off */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       test_trigging = 0, frame_newest = 0, mw_stock_reserve = RESERVE_ADAPTIVE; }
+    /* A pattern played four seconds is judged by its own stock as measured, with the margin, when that is under the
+     * ladder's; other trigs, or another pattern, go by the ladder; a pattern change restarts the four seconds. */
+    { mw_stock_reserve = RESERVE_ADAPTIVE, test_busiest = 4, test_tracks = 4, test_rest = 25u, test_pattern = 34u;
+      transport_stopped = 0, frame_adjust = 0, frame_newest = 0;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 788u;
+      for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
+      CHECK(frame_played == 788u && played_stock == 763u && played_shape == (4u << 4 | 4u));
+      transport_stopped = 1, frame_played = 0;
+      CHECK(modwerk_status_frame_load() == 868u);                        /* 76.3 + 8 + 2.5, not 79.8 + 8 + 2.5 */
+      test_tracks = 5;
+      CHECK(modwerk_status_frame_load() == 929u);                        /* other trigs: the ladder, 79.8 + 2.6 + 8 + 2.5 */
+      test_tracks = 4, test_pattern = 35u;
+      CHECK(modwerk_status_frame_load() == 903u);                        /* another pattern: the ladder */
+      transport_stopped = 0, play_readings = 0;
+      for (unsigned r = 0; r < 7u; ++r) cpu_note_played();
+      test_pattern = 34u, cpu_note_played();                             /* back before four seconds: none kept */
+      CHECK(play_readings == 1u && played_pattern == 34u && played_stock == 763u);
+      test_rest = 0, test_busiest = 0, test_tracks = 0, test_pattern = 0, played_shape = 0xffffffffu, played_pattern = 0xffffu;
+      transport_stopped = 1, frame_played = 0;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
     /* Playing, what a pick replaces leaves the last four seconds too: a swap for a lighter module is never refused. */
     { transport_stopped = 0, mw_stock_reserve = 0, frame_adjust = 0, frame_played = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 1150u;

@@ -123,6 +123,8 @@ static int booked_moved; /* a pick or an exit since the last reading: the next o
  * empty one after a trial's rollback, in one take of three (twin 25). 0xffff: not known. */
 unsigned modwerk_machine_pattern(void); /* machine_registry.c */
 static unsigned played_pattern = 0xffffu;
+static void note_stock(void);
+static unsigned reading_pattern = 0xffffu; /* the pattern the readings in a row were played on */
 static void cpu_note_played(void)
 {
     uint32_t booked = modwerk_machine_frame_booked(8u, 0) + effects_booked(16u);
@@ -131,8 +133,10 @@ static void cpu_note_played(void)
         int32_t played = (int32_t)frame_played + (int32_t)booked - (int32_t)booked_seen;
         if (!booked_moved && booked != booked_seen) frame_played = played > 0 ? (uint32_t)played : 0u;
     } else {
+        unsigned now = modwerk_machine_pattern();
+        if (now != reading_pattern) play_readings = 0, reading_pattern = now; /* four seconds of this pattern first */
         if (++adjust_readings >= 8u) frame_adjust = 0;
-        if (++play_readings >= 8u && !frame_adjust) frame_played = frame_longest(), played_pattern = modwerk_machine_pattern();
+        if (++play_readings >= 8u && !frame_adjust) frame_played = frame_longest(), played_pattern = now, note_stock();
     }
     if (booked != booked_seen) booked_moved = 0;
     booked_seen = booked;
@@ -544,12 +548,35 @@ static uint32_t pattern_reserve(unsigned most, unsigned tracks) /* a pattern's, 
         tuned(RESERVE_MARGIN_ID, RESERVE_MARGIN), floor = tuned(RESERVE_FLOOR_ID, RESERVE_FLOOR);
     return r > floor ? r : floor;
 }
+/* A pattern the unit has played four seconds on, with the trigs it has now, is judged by its own stock as measured
+ * (the longest frame less what the Part's modules book) with the margin, when that is less than the ladder's, never under
+ * the floor (modwerk-bd, twin 28: C03 with three Tape Echos played at 95.9 to 97.3 % while the ladder judged 108 and
+ * refused a fourth). The ladder is samples on all eight tracks; a Part with empty slots plays lighter. Another pattern,
+ * or the same one with other trigs, goes by the ladder until it has played. */
+static uint32_t played_stock, played_shape = 0xffffffffu; /* that stock, and its pattern's busiest step << 4 | tracks */
+static void note_stock(void)
+{
+    uint8_t most[2] = {0, 0}, tracks[2] = {0, 0}; uint16_t id[2];
+    unsigned n = modwerk_machine_pattern_trigs(most, tracks, id);
+    uint32_t modules = modwerk_machine_frame_booked(8u, tuned(TRACK_STOCK_ID, mw_track_stock)) + effects_booked(16u) +
+        modwerk_machine_rest_booked();
+    played_stock = frame_played > modules ? frame_played - modules : 0u;
+    played_shape = n && id[0] == played_pattern ? (uint32_t)most[0] << 4 | tracks[0] : 0xffffffffu;
+}
+static uint32_t pattern_stock(unsigned p, unsigned most, unsigned tracks, unsigned id) /* p 0: the pattern that plays */
+{
+    uint32_t v = pattern_reserve(most, tracks);
+    if (p || mw_stock_reserve != RESERVE_ADAPTIVE || id != played_pattern || played_shape != (most << 4 | tracks)) return v;
+    uint32_t m = played_stock + tuned(RESERVE_MARGIN_ID, RESERVE_MARGIN), floor = tuned(RESERVE_FLOOR_ID, RESERVE_FLOOR);
+    if (m < floor) m = floor;
+    return m < v ? m : v;
+}
 static uint32_t stock_reserve(void)
 {
     uint8_t most[2] = {0, 0}, tracks[2] = {0, 0}; uint16_t id[2];
     unsigned patterns = modwerk_machine_pattern_trigs(most, tracks, id);
     uint32_t r = pattern_reserve(0, 0);
-    for (unsigned p = 0; p < patterns && p < 2u; ++p) { uint32_t v = pattern_reserve(most[p], tracks[p]); if (v > r) r = v; }
+    for (unsigned p = 0; p < patterns && p < 2u; ++p) { uint32_t v = pattern_stock(p, most[p], tracks[p], id[p]); if (v > r) r = v; }
     return r;
 }
 static uint32_t effect_cost(unsigned id, int first, int waking);
@@ -600,11 +627,11 @@ static void hush_name(unsigned n, const char *name)
 }
 /* What pattern `p` (its busiest step `most`, tracks that trig `tracks`) must go without: the machine tracks (bit t),
  * and in *fx the effects; `named` 1 writes the notice's names and count. */
-static unsigned hush_pick(unsigned most, unsigned tracks, fx_set *fx, int named)
+static unsigned hush_pick(unsigned p, unsigned most, unsigned tracks, unsigned id, fx_set *fx, int named)
 {
     uint8_t mt[8]; uint32_t mc[8]; const char *ml[8];
     unsigned nm = modwerk_machine_part_machines(mt, mc, ml, tuned(TRACK_STOCK_ID, mw_track_stock)), fid[16], nf = 0;
-    uint32_t fc[16], load = pattern_reserve(most, tracks) + modwerk_machine_rest_booked();
+    uint32_t fc[16], load = pattern_stock(p, most, tracks, id) + modwerk_machine_rest_booked();
     for (unsigned k = 0; k < nm; ++k) load += mc[k];
     fx_set dry = modwerk_machine_deadline_effects();
     for (unsigned k = 0; k < 16u; ++k) { /* the live effects by module, each with its first and each */
@@ -648,7 +675,7 @@ uint32_t modwerk_status_hush(fx_set fx[2], uint16_t id[2])
     uint32_t hush = 0;
     for (unsigned p = 0; p < 2u; ++p) {
         if (p >= patterns || id[p] > 255u) { id[p] = 0xffffu; continue; }
-        unsigned t = hush_pick(most[p], tracks[p], &fx[p], !p);
+        unsigned t = hush_pick(p, most[p], tracks[p], id[p], &fx[p], !p);
         if (t) hush |= ((uint32_t)id[p] << 8 | t) << (p ? 0u : 16u);
     }
     unsigned now = id[0] <= 255u && (hush >> 16 & 0xffu || fx_any(fx[0])) && !modwerk_machine_stopped();
@@ -1500,9 +1527,9 @@ int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label,
     uint32_t before = load > add ? load - add : 0u, rest = modwerk_machine_rest_booked();
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
     uint32_t reserve = stock_reserve(), modules = stock - net - reserve; /* the Part's modules but this pick, and at rest */
-    /* Why, in the box: modules installed and used nowhere, when their cost at rest is what leaves no room; the Part's own
-     * sound; else the Part's modules, one of which to change. */
-    unsigned why = rest && load - rest < line ? WHY_UNUSED : before > reserve + modules ? WHY_PART : WHY_CHANGE;
+    /* Why, in the box: modules installed and used nowhere, when their cost at rest is more than the pick's and what
+     * leaves no room; the Part's own sound; else the Part's modules, one of which to change. */
+    unsigned why = rest > add && load - rest < line ? WHY_UNUSED : before > reserve + modules ? WHY_PART : WHY_CHANGE;
     cpu_refusal_box(slot, machine, label, before, add, line, why, dsp);
     return 1;
 }
