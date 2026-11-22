@@ -81,11 +81,11 @@ describe('one module-set offer', () => {
     const shipped = JSON.parse(readFileSync(new URL('../../../sdk/machines/octatrack/frame-costs.json', import.meta.url), 'utf8'))
     const echo = shipped.costs.tapeecho
     expect(table.find(c => c.module === 0x9f482bb9)).toEqual({ module: 0x9f482bb9, use: Math.round(echo.each * 10), wake: Math.round(echo.first * 10) - Math.round(echo.each * 10), rest: Math.round((echo.rest ?? 0) * 10) })
-    const own = table.slice(-13)
-    expect(own.map(c => c.module)).toEqual(Array.from({ length: 13 }, (_, i) => 0xfffffff1 + i))
+    const own = table.slice(-14)
+    expect(own.map(c => c.module)).toEqual(Array.from({ length: 14 }, (_, i) => 0xfffffff1 + i))
     expect(own[0].use).toBe(Math.round(shipped.stock.trackStock * 10)); expect(own[1].use).toBe(Math.round(shipped.stock.line * 10))
     expect(own.slice(2, 11).map(c => c.use)).toEqual(shipped.stock.reserveBySteps.map((f: number) => Math.round(f * 10)))
-    expect([own[11].use, own[12].use]).toEqual([Math.round(shipped.stock.reserveMargin * 10), Math.round(shipped.stock.reserveFloor * 10)])
+    expect([own[11].use, own[12].use, own[13].use]).toEqual([shipped.stock.reserveMargin, shipped.stock.reserveFloor, shipped.stock.trackPlay].map((f: number) => Math.round(f * 10)))
     expect(frameCostTable({ x: { first: 1, each: 1 } }, null)).toHaveLength(1) // no stock: the base's compiled figures
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], table)).not.toThrow()
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], [{ module: 5, use: 0, wake: 0, rest: 0 }])).not.toThrow() // measured free

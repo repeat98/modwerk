@@ -645,14 +645,18 @@ static void clear_sigs(void)
  * record's first eight bytes, the last eight steps first). */
 static void check_busiest_step(void)
 {
-    uint8_t *base = (uint8_t *)AT(U32(BANK));
-    CHECK(modwerk_machine_busiest_step() == 0u);
+    uint8_t *base = (uint8_t *)AT(U32(BANK)), most[16], tracks[16], none[16] = {0};
+    CHECK(modwerk_machine_bank_trigs(most, tracks) == 16u && !memcmp(most, none, 16) && !memcmp(tracks, none, 16));
     for (unsigned t = 0; t < 5u; ++t) base[PATTERN_TRACK * t + 7u] |= 1u;                      /* pattern 1, step 1 */
-    CHECK(modwerk_machine_busiest_step() == 5u);
     for (unsigned t = 0; t < 7u; ++t) base[PATTERN_STRIDE * 3u + PATTERN_TRACK * t + 6u] |= 4u; /* pattern 4, step 11 */
-    CHECK(modwerk_machine_busiest_step() == 7u);
-    for (unsigned t = 0; t < 8u; ++t) base[PATTERN_TRACK * t + 7u] &= (uint8_t)~1u, base[PATTERN_STRIDE * 3u + PATTERN_TRACK * t + 6u] &= (uint8_t)~4u;
-    CHECK(modwerk_machine_busiest_step() == 0u);
+    for (unsigned t = 0; t < 8u; ++t) base[PATTERN_STRIDE + PATTERN_TRACK * t + 7u - t / 8u] |= (uint8_t)(1u << t); /* pattern 2: Tn on step n */
+    modwerk_machine_bank_trigs(most, tracks);
+    CHECK(most[0] == 5u && tracks[0] == 5u && most[3] == 7u && tracks[3] == 7u && most[1] == 1u && tracks[1] == 8u && !most[2] && !tracks[2]);
+    for (unsigned t = 0; t < 8u; ++t)
+        base[PATTERN_TRACK * t + 7u] &= (uint8_t)~1u, base[PATTERN_STRIDE * 3u + PATTERN_TRACK * t + 6u] &= (uint8_t)~4u,
+        base[PATTERN_STRIDE + PATTERN_TRACK * t + 7u] = 0;
+    modwerk_machine_bank_trigs(most, tracks);
+    CHECK(!memcmp(most, none, 16) && !memcmp(tracks, none, 16));
 }
 /* The reserve books each installed module's cost at rest, whether or not a track or slot uses it. */
 static void check_rest_booked(void)

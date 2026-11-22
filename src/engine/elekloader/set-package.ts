@@ -8,9 +8,10 @@ import frameCosts from '../../../sdk/machines/octatrack/frame-costs.json' with {
  * (`use`), on top for the Part's first (`wake`), and installed on no track or slot (`rest`). */
 export interface FrameCost { module: number; use: number; wake: number; rest: number }
 /** The base's own figures travel as these pseudo module ids (status.c), after every package id: a sample track's share,
- * the line, the stock reserve for a bank whose busiest step trigs 0 to 8 tracks, the reserve's margin and its floor. */
-export const STOCK_IDS = { trackStock: 0xfffffff1, line: 0xfffffff2, reserveBySteps: 0xfffffff3, reserveMargin: 0xfffffffc, reserveFloor: 0xfffffffd } as const
-type Stock = { trackStock: number; line: number; reserveBySteps: readonly number[]; reserveMargin: number; reserveFloor: number }
+ * the line, the stock reserve for a pattern whose busiest step trigs 0 to 8 tracks, the reserve's margin and its floor,
+ * and what each further track that trigs off that step adds. */
+export const STOCK_IDS = { trackStock: 0xfffffff1, line: 0xfffffff2, reserveBySteps: 0xfffffff3, reserveMargin: 0xfffffffc, reserveFloor: 0xfffffffd, trackPlay: 0xfffffffe } as const
+type Stock = { trackStock: number; line: number; reserveBySteps: readonly number[]; reserveMargin: number; reserveFloor: number; trackPlay: number }
 /** The measured costs (sdk/machines/octatrack/frame-costs.json, percent: `first` alone, `each` further, `rest` installed
  * and unused, and the base's `stock`) as v2 sends them, by id ascending. */
 export function frameCostTable(costs: Record<string, { first: number; each: number; rest?: number }> = frameCosts.costs, stock: Stock | null = frameCosts.stock): FrameCost[] {
@@ -27,6 +28,7 @@ export function frameCostTable(costs: Record<string, { first: number; each: numb
     ...stock.reserveBySteps.map((figure, n) => ({ module: STOCK_IDS.reserveBySteps + n, use: Math.round(figure * 10), wake: 0, rest: 0 })),
     { module: STOCK_IDS.reserveMargin, use: Math.round(stock.reserveMargin * 10), wake: 0, rest: 0 },
     { module: STOCK_IDS.reserveFloor, use: Math.round(stock.reserveFloor * 10), wake: 0, rest: 0 },
+    { module: STOCK_IDS.trackPlay, use: Math.round(stock.trackPlay * 10), wake: 0, rest: 0 },
   ] : []
   return [...modules.sort((a, b) => a.module - b.module), ...own]
 }

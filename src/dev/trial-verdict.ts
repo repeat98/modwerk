@@ -15,7 +15,7 @@ export interface TrialVerdict { failed: boolean; lines: string[] }
  * HOT and CPU (the CPU meter at 90 %) are printed but pass: stock alone can reach them. USB (the unit offered itself on USB
  * again because the host never enumerated it, #1985) is printed and passes: the link, not the module. START, SET and BASE are the trial's own
  * bookkeeping, or a restart that already ended the trial with an error. */
-const FAILS: ReadonlySet<string> = new Set(['crash', 'stall', 'freeze', 'shed', 'brake'])
+const FAILS: ReadonlySet<string> = new Set(['crash', 'stall', 'freeze', 'shed', 'brake', 'late'])
 const WARNS: ReadonlySet<string> = new Set(['hot', 'cpu', 'usb'])
 const tracks = (mask: number) => [...Array(8).keys()].filter(t => mask >> t & 1).map(t => 'T' + (t + 1)).join(', ') || '(none named)'
 const SAID: Record<string, (a: number) => string> = {
@@ -26,6 +26,7 @@ const SAID: Record<string, (a: number) => string> = {
   hot: a => `the CPU at 90 % or more for ${a / 2} s`,
   cpu: () => 'the CPU meter over its limit',
   brake: a => `the frame fell behind and the brake silenced the module machines (${a & 0xffffff} since boot)`,
+  late: a => `a late frame entry was held, so the DSP skipped a frame, heard as a click (${a} since boot)`,
   usb: a => `the host never enumerated the unit, so it offered itself on USB again (OTGSC 0x${(a >>> 16).toString(16)}, PORTSC1 0x${(a & 0xffff).toString(16)})`,
 }
 

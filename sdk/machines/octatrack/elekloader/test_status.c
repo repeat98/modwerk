@@ -131,8 +131,13 @@ int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
 }
 volatile uint32_t mw_frame_window; /* machine_registry.c's: the longest frame since the last reading */
 static uint32_t test_machines_booked; /* machine_registry.c's booking of the Part's module machines */
-static unsigned test_busiest; /* machine_registry.c's busiest step of the bank */
-unsigned modwerk_machine_busiest_step(void) { return test_busiest; }
+static unsigned test_busiest, test_tracks; /* machine_registry.c's bank: one pattern's busiest step and tracks that trig */
+unsigned modwerk_machine_bank_trigs(uint8_t most[16], uint8_t tracks[16])
+{
+    memset(most, 0, 16), memset(tracks, 0, 16);
+    most[3] = (uint8_t)test_busiest, tracks[3] = (uint8_t)(test_tracks > test_busiest ? test_tracks : test_busiest);
+    return 16u;
+}
 static uint32_t test_rest; /* machine_registry.c's installed modules at rest */
 uint32_t modwerk_machine_rest_booked(void) { return test_rest; }
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net) { (void)skip; (void)net; return test_machines_booked; }
@@ -705,7 +710,9 @@ int main(void)
       CHECK(modwerk_status_frame_load() == 1090u);                       /* eight tracks on a step: 101 % and 8 % */
       test_rest = 25u;
       CHECK(modwerk_status_frame_load() == 1115u);                       /* installed modules at rest on top */
-      test_rest = 0;
+      test_rest = 0, test_busiest = 1, test_tracks = 8;
+      CHECK(modwerk_status_frame_load() == 904u);                        /* spread: 64.2 %, 2.6 % for seven more, 8 % */
+      test_busiest = 8, test_tracks = 0;
       { uint8_t t[24] = {0xff, 0xff, 0xff, 0xfb, 0x03, 0x84, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xfc, 0, 20, 0, 0, 0, 0, 0, 0}; /* 90 % at eight, margin 2 % */
         modwerk_machine_frame_costs(t, 2);
         CHECK(modwerk_status_frame_load() == 920u);

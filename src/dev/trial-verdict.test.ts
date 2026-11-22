@@ -21,6 +21,12 @@ describe('trial verdict', () => {
     expect(verdict.lines[0]).toMatch(/^FAIL .*brake silenced the module machines \(1 since boot\)/)
   })
 
+  it('fails when a late frame entry made the DSP skip a frame', () => {
+    const verdict = trialVerdict(log(10), log(11, [incident(11, 'late', 4)]))
+    expect(verdict.failed).toBe(true)
+    expect(verdict.lines[0]).toMatch(/^FAIL .*DSP skipped a frame.*\(4 since boot\)/)
+  })
+
   it('prints a USB re-offer (#1985) but passes: the link, not the module', () => {
     const verdict = trialVerdict(log(10), log(11, [incident(11, 'usb', 0x0800 << 16 | 0x1000)]))
     expect(verdict.failed).toBe(false)

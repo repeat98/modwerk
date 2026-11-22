@@ -485,7 +485,10 @@ extern uint8_t modwerk_test_live_fx[16];
 #ifndef MW_STOCK_RESERVE
 #define MW_STOCK_RESERVE RESERVE_ADAPTIVE
 #endif
-/* Per mille of a frame, each count measured; the set's `stock` carries newer ones. */
+/* Per mille of a frame, each count measured; the set's `stock` carries newer ones. A track that trigs but not on the
+ * busiest step adds about 2.6 % more (one trig on every step of eight tracks: 82.3 %, against 64.2 % for one on one
+ * step; modwerk-bd, twin 7a5b0949), so each pattern is judged by its own pair and the bank by its busiest pattern. */
+#define TRACK_PLAY 26u
 static const uint16_t reserve_by_step[9] = {371u, 642u, 700u, 753u, 798u, 846u, 905u, 958u, 1010u};
 #define RESERVE_MARGIN 80u
 #define RESERVE_FLOOR 600u
@@ -495,7 +498,8 @@ static const uint16_t reserve_by_step[9] = {371u, 642u, 700u, 753u, 798u, 846u, 
 #endif
 volatile uint32_t mw_stock_reserve = MW_STOCK_RESERVE, /* per mille of a frame, or RESERVE_ADAPTIVE */
                   mw_track_stock = MW_TRACK_STOCK;     /* one sample track's share: (98.7 - 40.8 %) / 8 */
-unsigned modwerk_machine_busiest_step(void); /* machine_registry.c: the most tracks that trig on one step of the bank */
+/* machine_registry.c: per pattern of the bank, the most tracks that trig on one step and how many trig at all */
+unsigned modwerk_machine_bank_trigs(uint8_t most[16], uint8_t tracks[16]);
 /* machine_registry.c: the current Part's module machines but track `skip`, each less `net`, never below 0 */
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net);
 int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake);
@@ -507,18 +511,30 @@ uint32_t modwerk_machine_rest_booked(void); /* machine_registry.c: the installed
 #define RESERVE_STEP_ID 0xfffffff3u   /* + N, N = 0 to 8: the reserve for a bank whose busiest step trigs N tracks */
 #define RESERVE_MARGIN_ID 0xfffffffcu
 #define RESERVE_FLOOR_ID 0xfffffffdu
+#define TRACK_PLAY_ID 0xfffffffeu
 static uint32_t tuned(uint32_t id, uint32_t compiled)
 {
     uint32_t value, unused;
-    return modwerk_status_module_cost(id, &value, &unused) && value ? value : compiled;
+    return modwerk_status_module_cost(id, &value, &unused) ? value : compiled;
 }
-static uint32_t frame_line(void) { return tuned(FRAME_LINE_ID, mw_frame_line ? mw_frame_line : 1u); }
+static uint32_t frame_line(void)
+{
+    uint32_t line = tuned(FRAME_LINE_ID, 0u); /* a line of 0 would refuse every pick */
+    return line ? line : mw_frame_line ? mw_frame_line : 1u;
+}
 static uint32_t stock_reserve(void)
 {
     if (mw_stock_reserve != RESERVE_ADAPTIVE) return mw_stock_reserve;
-    unsigned n = modwerk_machine_busiest_step();
-    if (n > 8u) n = 8u;
-    uint32_t r = tuned(RESERVE_STEP_ID + n, reserve_by_step[n]) + tuned(RESERVE_MARGIN_ID, RESERVE_MARGIN), floor = tuned(RESERVE_FLOOR_ID, RESERVE_FLOOR);
+    uint8_t most[16], tracks[16];
+    unsigned patterns = modwerk_machine_bank_trigs(most, tracks);
+    uint32_t r = tuned(RESERVE_STEP_ID, reserve_by_step[0]), play = tuned(TRACK_PLAY_ID, TRACK_PLAY);
+    for (unsigned p = 0; p < patterns && p < 16u; ++p) {
+        unsigned n = most[p] > 8u ? 8u : most[p], t = tracks[p] > 8u ? 8u : tracks[p] < n ? n : tracks[p];
+        uint32_t v = tuned(RESERVE_STEP_ID + n, reserve_by_step[n]) + play * (t - n);
+        if (v > r) r = v;
+    }
+    r += tuned(RESERVE_MARGIN_ID, RESERVE_MARGIN);
+    uint32_t floor = tuned(RESERVE_FLOOR_ID, RESERVE_FLOOR);
     return r > floor ? r : floor;
 }
 static uint32_t effect_cost(unsigned id, int first, int waking);

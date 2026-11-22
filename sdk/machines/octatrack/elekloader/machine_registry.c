@@ -213,24 +213,31 @@ static int elsewhere(const Part *part, unsigned track, const Machine *who)
     for (unsigned t = 0; t < 8u; ++t) if (t != track && owner(m, n, part, t, &t_who) && t_who == who) return 1;
     return 0;
 }
-/* status.c's stock reserve: the most tracks that trig on one step of any pattern of the current bank, 0 to 8 (each
- * pattern's track record starts with its 64-step trig mask, the last eight steps first, as Pattern Sample Locks reads
- * it). Steps past a track's length count too: the safe side. */
+/* status.c's stock reserve: for each of the current bank's 16 patterns, the most tracks that trig on one step
+ * (`most`) and how many trig on any (`tracks`), 0 to 8 (each pattern's track record starts with its 64-step trig mask,
+ * the last eight steps first, as Pattern Sample Locks reads it). Steps past a track's length count too: the safe side.
+ * 16, or 0 without a bank. */
 #define PATTERN_STRIDE 0x8ed8u
 #define PATTERN_TRACK 0x91au
-unsigned modwerk_machine_busiest_step(void)
+unsigned modwerk_machine_bank_trigs(uint8_t most[16], uint8_t tracks[16])
 {
     if (!valid_bank()) return 0;
-    unsigned most = 0;
-    for (unsigned p = 0; p < 16u && most < 8u; ++p) {
+    for (unsigned p = 0; p < 16u; ++p) {
         const volatile uint8_t *pattern = AT(U32(BANK) + PATTERN_STRIDE * p);
+        unsigned top = 0, any = 0;
         for (unsigned s = 0; s < 64u; ++s) {
             unsigned n = 0;
-            for (unsigned t = 0; t < 8u; ++t) n += pattern[PATTERN_TRACK * t + 7u - s / 8u] >> (s % 8u) & 1u;
-            if (n > most) most = n;
+            for (unsigned t = 0; t < 8u; ++t) {
+                unsigned on = pattern[PATTERN_TRACK * t + 7u - s / 8u] >> (s % 8u) & 1u;
+                n += on, any |= on << t;
+            }
+            if (n > top) top = n;
         }
+        unsigned count = 0;
+        for (; any; any &= any - 1u) ++count;
+        most[p] = (uint8_t)top, tracks[p] = (uint8_t)count;
     }
-    return most;
+    return 16u;
 }
 /* status.c's stock reserve: what the current Part's module machines cost but track `skip` (8: none), each track by its
  * `each` and the first of a machine by its `first` too, less `net` (the sample a track would otherwise play), never
@@ -1023,6 +1030,7 @@ static uint8_t place[16], next[16], made; /* a render's place in the last frame'
 volatile uint32_t mw_late_wait_on = 1;
 /* For diagnostics, since the last read: the latest entry, the entries in the window, the waits and the longest. */
 volatile uint32_t mw_late_max, mw_late_hits, mw_late_waits, mw_late_wait_max;
+volatile uint32_t mw_frame_skips; /* every wait since boot, each a DSP frame skipped (diag.c's `late` incident) */
 static uint32_t entry_at, entry_late;
 /* From the frame interrupt's entry, after stock's register save (machine_registry.s): level 5, stock's stack. */
 void mw_frame_enter(void)
@@ -1040,7 +1048,7 @@ void mw_frame_enter(void)
         if (mw_late_wait_on) {
             uint32_t need = LATE_HI - l, waited;
             do waited = DTCN3 - now; while (waited < need);
-            mw_late_waits = mw_late_waits + 1u;
+            mw_late_waits = mw_late_waits + 1u, mw_frame_skips = mw_frame_skips + 1u;
             if (waited > mw_late_wait_max) mw_late_wait_max = waited;
             now += waited;
         }
