@@ -59,12 +59,11 @@ export function parseCallgraph(text, graph = { nodes: new Map(), edges: new Map(
 export function deepest(graph, title, seen = new Map(), path = []) {
   if (seen.has(title)) return seen.get(title)
   if (path.includes(title)) throw new Error('recursion in audio code: ' + [...path, title].map(t => graph.nodes.get(t)?.name ?? t).join(' -> '))
-  let node = graph.nodes.get(title)
-  if ((!node || node.bytes === null) && !title.includes(':')) {
-    // A call across sources to a weak definition: GCC titles the definition with its file, the call with the name.
-    const defined = [...graph.nodes.entries()].filter(([t, n]) => n.bytes !== null && t.endsWith(':' + title))
-    if (defined.length === 1) return deepest(graph, defined[0][0], seen, path)
-  }
+  // A call by name binds as the linker binds it: to a weak C definition only when no object defines the name
+  // strongly (GCC titles a weak definition with its file, the call with the name); never to another file's static.
+  const alias = graph.aliases?.get(title)
+  if (alias && alias !== title) return deepest(graph, alias, seen, path)
+  const node = graph.nodes.get(title)
   if (!node || node.bytes === null) {
     // Outside this module's C (assembly, a base or stock routine, an indirect call): not counted here.
     const result = { bytes: 0, chain: [], unknown: [node?.name ?? title] }
@@ -83,21 +82,37 @@ export function deepest(graph, title, seen = new Map(), path = []) {
   return result
 }
 
-const STB_GLOBAL = 1
+const STB_GLOBAL = 1, STB_WEAK = 2
+const byName = s => s.bind === STB_GLOBAL || s.bind === STB_WEAK
+const defines = name => s => s.name === name && s.type === STT_FUNC && s.section !== 0
 
-// A function by name in this module's objects: in C, the call graph's title (a global's name; a static's or a
-// weak's prefixed with its source, as GCC writes them); { external } when no C object defines it.
+// A function in this module's objects, as the call graph titles it (a global's name; a static's or a weak's prefixed
+// with its source, as GCC writes them); { external } when the definition the linker picks is not C. By name (no
+// source), it binds as the linker does: a global definition, else the first weak one, else the only static one.
 function resolveFunction(elves, name, source) {
-  const defs = elves.filter(o => (!source || o.source === source) && o.elf.symbols.some(s => s.name === name && s.type === STT_FUNC && s.section !== 0))
-  const c = defs.filter(o => o.c)
-  if (!c.length) return { name, title: name, external: true }
-  if (c.length > 1) {
-    const global = c.flatMap(o => o.elf.symbols.filter(s => s.name === name && s.type === STT_FUNC && s.section !== 0 && s.bind === STB_GLOBAL))
-    if (global.length) return { name, title: name }
-    throw new Error('audio entry ' + name + ' is defined in more than one source; give it one definition')
+  const external = { name, title: name, external: true }
+  if (source) {
+    const o = elves.find(o => o.source === source && o.elf.symbols.some(defines(name)))
+    return o?.c ? { name, title: source + ':' + name } : external
   }
-  const sym = c[0].elf.symbols.find(s => s.name === name && s.type === STT_FUNC && s.section !== 0)
-  return { name, title: sym.bind === STB_GLOBAL ? name : c[0].source + ':' + name }
+  const strong = elves.find(o => o.elf.symbols.some(s => defines(name)(s) && s.bind === STB_GLOBAL))
+  if (strong) return strong.c ? { name, title: name } : external
+  const weak = elves.find(o => o.elf.symbols.some(s => defines(name)(s) && s.bind === STB_WEAK))
+  if (weak) return weak.c ? { name, title: weak.source + ':' + name } : external
+  const local = elves.filter(o => o.c && o.elf.symbols.some(defines(name)))
+  if (local.length > 1) throw new Error('audio entry ' + name + ' is defined in more than one source; give it one definition')
+  return local.length ? { name, title: local[0].source + ':' + name } : external
+}
+
+// Each name a weak C definition serves, when no object defines it strongly: the call's title to the definition's.
+function weakAliases(elves) {
+  const aliases = new Map()
+  for (const o of elves) for (const s of o.elf.symbols)
+    if (s.bind === STB_WEAK && defines(s.name)(s) && !aliases.has(s.name)) {
+      const r = resolveFunction(elves, s.name, null)
+      if (!r.external && r.title !== s.name) aliases.set(s.name, r.title)
+    }
+  return aliases
 }
 
 // The function a record's field points at: the relocation at that field, to a function symbol, to its section plus
@@ -109,16 +124,17 @@ function fieldFunction(elves, o, at) {
   if (symbol.type === STT_SECTION) {
     const fn = o.elf.symbols.find(s => s.type === STT_FUNC && s.section === symbol.section && s.value === reloc.addend)
     if (!fn) throw new Error('a record field points into ' + o.source + ' but at no function')
-    return resolveFunction(elves, fn.name, fn.bind === STB_GLOBAL ? null : o.source)
+    return resolveFunction(elves, fn.name, byName(fn) ? null : o.source)
   }
-  if (symbol.section !== 0 && symbol.bind !== STB_GLOBAL) return resolveFunction(elves, symbol.name, o.source)
+  if (symbol.section !== 0 && !byName(symbol)) return resolveFunction(elves, symbol.name, o.source)
   return resolveFunction(elves, symbol.name, null)
 }
 
 // objects: [{ source (as given to the compiler), object, callgraph, c }]: every object of the module, C or assembly.
-export function audioEntries(config, offsets, build, objects) {
+const readObjects = objects => objects.map(o => ({ ...o, elf: readElemodElf(readFileSync(o.object)) }))
+
+export function audioEntries(config, offsets, build, objects, elves = readObjects(objects)) {
   const entries = []
-  const elves = objects.map(o => ({ ...o, elf: readElemodElf(readFileSync(o.object)) }))
   for (const sub of build.subscribe) if (config.events.includes(sub.event)) entries.push({ what: sub.event + ' ' + sub.fn, ...resolveFunction(elves, sub.fn, null) })
   for (const entry of build.contribute) {
     const table = config.tables[entry.to]
@@ -142,13 +158,14 @@ export function audioEntries(config, offsets, build, objects) {
 }
 
 export function checkAudioStack({ config, offsets, build, objects, label }) {
-  const graph = { nodes: new Map(), edges: new Map() }
+  const elves = readObjects(objects)
+  const graph = { nodes: new Map(), edges: new Map(), aliases: weakAliases(elves) }
   for (const o of objects.filter(o => o.c)) {
     if (!existsSync(o.callgraph)) throw new Error(label + ': the compiler wrote no call graph for ' + o.source)
     parseCallgraph(readFileSync(o.callgraph, 'utf8'), graph)
   }
   const results = []
-  for (const entry of audioEntries(config, offsets, build, objects)) {
+  for (const entry of audioEntries(config, offsets, build, objects, elves)) {
     if (!entry.external && graph.nodes.get(entry.title)?.bytes == null)
       throw new Error(label + ': ' + entry.what + ' is in C but its frame is not in the call graph (' + entry.title + ')')
     const r = deepest(graph, entry.title)

@@ -17,6 +17,10 @@ describe('audio stack: the call graph', () => {
     expect(r.chain).toEqual(['run 40 B', 'big 100 B'])
     expect(r.unknown).toEqual(['base_fn'])
   })
+  it('never charges a call by name to another file\'s static of that name', () => {
+    const g = parseCallgraph(node('run', 40) + external('copy_block') + edge('run', 'copy_block') + node('menu.c:copy_block', 1200))
+    expect(deepest(g, 'run').bytes).toBe(40 + 4)
+  })
   it('refuses recursion and a stack sized at run time', () => {
     expect(() => deepest(parseCallgraph(node('a', 8) + node('b', 8) + edge('a', 'b') + edge('b', 'a')), 'a')).toThrow(/recursion/)
     expect(() => deepest(parseCallgraph(node('a', 8, 'dynamic')), 'a')).toThrow(/run time/)
@@ -40,10 +44,11 @@ describe.skipIf(!cross)('audio stack: a compiled module', () => {
   const build = (bodies, subscribe = [], relocs = [[0, 'abs32', 'sym:my_fx', 0]]) => {
     const work = mkdtempSync(resolve(tmpdir(), 'audio-stack-')); works.push(work)
     const objects = [bodies].flat().map((body, i) => {
-      const source = resolve(work, 'm' + i + '.c'), object = resolve(work, i + '.o')
-      writeFileSync(source, '#include "modwerk/fx.h"\n' + body)
-      run('gcc', [...cflags, ...AUDIO_STACK_FLAGS, ...includes, '-c', source, '-o', object])
-      return { source, object, callgraph: resolve(work, i + '.ci'), c: true }
+      const asm = typeof body === 'object', object = resolve(work, i + '.o')
+      const source = resolve(work, 'm' + i + (asm ? '.s' : '.c'))
+      writeFileSync(source, asm ? body.asm : '#include "modwerk/fx.h"\n' + body)
+      run('gcc', [...cflags, ...(asm ? [] : [...AUDIO_STACK_FLAGS, ...includes]), '-c', source, '-o', object])
+      return { source, object, callgraph: resolve(work, i + '.ci'), c: !asm }
     })
     const offsets = fieldOffsets(config, { run, work, includes, cflags })
     const b = { subscribe, contribute: [{ to: 'mw_fx', relocs }] }
@@ -83,5 +88,14 @@ describe.skipIf(!cross)('audio stack: a compiled module', () => {
     const two = small + big + 'const struct mw_fx fxs[2] = { { MW_FX_ABI, 1, 0, 0, 256, 0, "A", {{"A", 0, 0, 0}}, nop_reset, small_render, 0 }, { MW_FX_ABI, 2, 0, 0, 256, 0, "B", {{"A", 0, 0, 0}}, nop_reset, big_render, 0 } };\n'
     expect(build(two, [], [[0, 'abs32', 'sym:fxs', 0]])().length).toBe(2)
     expect(build(two, [], [[0, 'abs32', 'sym:fxs', 0], [0, 'abs32', 'sym:fxs', 100]])).toThrow(/fxs\+100.render/)
+  })
+  it('binds a call to the definition the linker picks, not another file\'s static of that name', () => {
+    const audio = 'void copy_block(int *d);\nstatic void nop(int *w) { (void)w; }\nstatic void render(const int *x, int *l, int *r, const unsigned char *p, int *w) { copy_block(l); r[0] = x[0]; (void)p; (void)w; }\n' +
+      'const struct mw_fx my_fx = { MW_FX_ABI, 1, 0, 0, 256, 0, "T", {{"A", 0, 0, 0}}, nop, render, 0 };\n'
+    const menu = 'static void copy_block(int *d) { volatile int a[300]; a[3] = d[0]; d[1] = a[3]; }\nvoid menu_open(int *d) { copy_block(d); }\n'
+    const asm = { asm: '\t.text\n\t.globl copy_block\ncopy_block:\n\trts\n' }
+    expect(build([audio, menu, asm])().find(r => r.what.endsWith('.render')).bytes).toBeLessThan(64)
+    expect(build([audio, menu])().find(r => r.what.endsWith('.render')).bytes).toBeLessThan(64)
+    expect(build([audio, menu.replace('static void copy_block', '__attribute__((weak)) void copy_block')])).toThrow(/my_fx.render .*copy_block 1[0-9]{3} B/)
   })
 })
