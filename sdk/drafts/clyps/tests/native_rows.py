@@ -18,6 +18,7 @@ for field in ('emulator', 'base', 'card', 'symbols', 'output'):
 parser.add_argument('--octabam', type=Path, required=True)
 parser.add_argument('--reference', action='store_true')
 parser.add_argument('--lane-matrix', action='store_true')
+parser.add_argument('--scene-select', action='store_true')
 parser.add_argument('--arranger-recovery', action='store_true')
 parser.add_argument('--observe-queue', action='store_true')
 parser.add_argument('--boundary', choices=('early','late'))
@@ -188,6 +189,33 @@ with tempfile.TemporaryDirectory() as tmp:
         cmd('run 2000')
         print('clean start',hex(num(0x460d1e70)),hex(num(0x460d175c)),flush=True)
         assert not num(0x460d1e70) and not num(0x460d175c)
+        if args.scene_select:
+            # Part 1's two active scene bytes are adjacent. Exercise both physical
+            # selectors, including rollback, with and without the module.
+            part = 0x400e21e0 + 0x8ed80
+            def scenes():
+                return list(peek(cmd, part+0x10, 2))
+            def choose(key, slot):
+                cmd(f'key 35 {1 << (key % 8)}')
+                advance(100)
+                tap(slot)
+                cmd('key 35 0')
+                advance(100)
+                return scenes()
+            receipt = {}
+            for role in ('stock','installed'):
+                if role == 'installed':
+                    switch(1)
+                before = scenes()
+                a, b = (before[0]+5)%16, (before[1]+7)%16
+                sequence = [before,choose(0x19,a),choose(0x1a,b),
+                            choose(0x19,before[0]),choose(0x1a,before[1])]
+                receipt[role] = sequence
+                args.output.write_text(json.dumps(receipt))
+                assert sequence == [before,[a,before[1]],[a,b],[before[0],b],before], sequence
+            switch(0)
+            assert receipt['stock'] == receipt['installed']
+            sys.exit(0)
         if args.boundary:
             # Apply identical source edits to the stock A03 composite and A02.
             for pattern in (1, 2):
