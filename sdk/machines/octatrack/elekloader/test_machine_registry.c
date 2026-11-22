@@ -1212,6 +1212,19 @@ int main(void)
     stays = 0;
     for (unsigned i = 0; i < 10u; ++i) stays += frame(3, 10000, 10000) > 100;
     CHECK(stays == 10u);
+    /* A note start costs a render far more than its steady frames: at the ceiling a starting track is judged by what
+     * its last start cost (FM Synth on T8 at C01's step 1, owner's MKII, 22 November 2026); the first start has no
+     * figure yet, and a frame without a start goes by the steady cost. */
+    fresh(); f_cost = 2000;
+    for (unsigned i = 0; i < 4u; ++i) CHECK(frame(3, 10000, 0) > 100);
+    mw_frame_t0 = host_timer; host_timer += 10000; mw_source_start_select(3, 0); f_cost = 30000;
+    CHECK(mw_source_render_impl(3, 0, 0, 1) > 100); mw_frame_exit();     /* the first start: runs, and is measured */
+    f_cost = 2000;
+    for (unsigned i = 0; i < 12u; ++i) CHECK(frame(3, 10000, 0) > 100);
+    mw_frame_t0 = host_timer; host_timer += 30000; mw_source_start_select(3, 0); f_cost = 30000;
+    CHECK(mw_source_render_impl(3, 0, 0, 1) == -9); mw_frame_exit();     /* 30,000 + its start's 30,000: held */
+    f_cost = 2000; frame(3, 0, 0), frame(3, 0, 0);
+    CHECK(frame(3, 30000, 0) > 100);                                     /* no start: the steady cost fits */
     /* Two machine tracks, T3 (3,000) before T4 (20,000). When the frame would overdraw and skipping T4 alone makes
      * the room, T3 runs and T4 is skipped when it comes; when T4's cost would not make it, T3 is skipped at once. */
     CHECK(mw_assign(part0(), 2, 5) == 1);

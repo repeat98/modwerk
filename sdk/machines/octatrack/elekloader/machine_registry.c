@@ -931,9 +931,11 @@ static int source_start_dispatch(unsigned track, unsigned sample, unsigned flags
 {
     return mw_source_start_impl(track, sample, flags, 0);
 }
+static uint8_t starting, start_prev; /* the frame guard's: tracks that started a note this frame, and the last */
 SourceStart *mw_source_start_select(unsigned track, SourceStart *fallback)
 {
     if (track >= 8u) return 0;
+    starting |= (uint8_t)(1u << track); /* every START, a module's or stock's: its render is the dear one */
     if (!valid_bank()) return fallback;
     const Machine *m[ROWS - 5u], *who = 0;
     unsigned n = machines(m);
@@ -963,6 +965,7 @@ volatile uint32_t mw_frame_brakes; /* for diagnostics: how often */
 volatile uint32_t mw_frame_cost_max[16]; /* each guarded render's longest time since the last read: what a machine's `cpu` is set from */
 static int32_t credit;
 static uint32_t late, cost[16], after[16], end_at[16], timed; /* [track], then a track's second render [8 + track] */
+static uint32_t start_cost[16]; /* what each render cost the last time its track started a note (the ceiling) */
 static uint16_t skipped[16];
 static uint32_t before;            /* the renders the last frame made (bit k), skipped or not */
 static uint8_t place[16], next[16], made; /* a render's place in the last frame's order, and in this frame's so far */
@@ -1030,6 +1033,7 @@ void mw_frame_exit(void)
     mw_frame_busy += d >> 8, mw_frame_count = mw_frame_count + 1u;
     if (timed) for (unsigned k = 0; k < 16u; ++k) if (timed >> k & 1u) after[k] = now - end_at[k], place[k] = next[k];
     before = timed, timed = 0, made = 0;
+    start_prev = starting, starting = 0;
     frame_seen = 0;
 }
 /* Whether a render dearer than k, and dear enough to make up `over` alone, is still to come in this frame. */
@@ -1052,9 +1056,14 @@ static int guarded_as(Render *f, Render *instead, unsigned track, unsigned ping,
     unsigned k = track + 8u * (timed >> track & 1u);
     uint32_t at = DTCN3, ends = at - mw_frame_t0 + cost[k] + after[k]; int r;
     int32_t over = (int32_t)ends - credit - (int32_t)mw_frame_share;
-    /* past the ceiling no probe runs it: a render the guard knows would end the frame there is what stalls the DSP;
-     * it comes back when the rest of the frame leaves room, or afresh after STOP or a Part change (ceiling_tick) */
-    int ceiling = ends > FRAME_CEILING && !dearer_later(k, ends - FRAME_CEILING);
+    /* A note start costs a render far more than its steady frames (FM Synth on T8: 90 and 80 µs at C01's step 1, a few
+     * µs between, owner's MKII, 22 November 2026): a starting track is judged at the ceiling by what its last start
+     * cost. Past the ceiling no probe runs it: a render the guard knows would end the frame there is what stalls the
+     * DSP; it comes back when the rest of the frame leaves room, or afresh after STOP or a Part change (ceiling_tick).
+     * shortcut: a track's first start since boot has no figure yet and runs on its steady cost. */
+    unsigned starts = (starting | start_prev) >> track & 1u;
+    uint32_t peak = starts && start_cost[k] > cost[k] ? at - mw_frame_t0 + start_cost[k] + after[k] : ends;
+    int ceiling = peak > FRAME_CEILING && !dearer_later(k, peak - FRAME_CEILING);
     if (ceiling || (share && over > 0 && !dearer_later(k, (uint32_t)over) && ++skipped[k] < PROBE)) {
         if (ceiling && skipped[k] < 0xffffu) ++skipped[k]; /* timed afresh when it runs again */
         mw_frame_sheds = mw_frame_sheds + 1u, mw_frame_shed_tracks |= 1u << track;
@@ -1065,6 +1074,8 @@ static int guarded_as(Render *f, Render *instead, unsigned track, unsigned ping,
         r = f(track, ping, start, end);
         uint32_t c = DTCN3 - at, fall = cost[k] - (cost[k] >> 3);
         cost[k] = back || c > fall ? c : fall; /* a rise at once, a fall by an eighth a frame; after skips, as measured */
+        if (starting >> track & 1u) start_cost[k] = c > start_cost[k] - (start_cost[k] >> 3) ? c : start_cost[k] - (start_cost[k] >> 3);
+        else if (starts && c > start_cost[k]) start_cost[k] = c; /* the frame after a start: only a dearer one counts */
         if (c > mw_frame_cost_max[k]) mw_frame_cost_max[k] = c;
     }
     end_at[k] = DTCN3, timed |= 1u << k, next[k] = made++;
