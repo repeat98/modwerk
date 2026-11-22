@@ -19,16 +19,11 @@ A Session View-inspired performance system for Octatrack's **native sequencer**,
 
 **Only pattern references are implemented:** these are not sixteen independently allocated clip objects, and the row data is currently volatile.
 
-## Existing local evidence, not yet reproduced in this public draft
+## Emulator qualification
 
-The development owner reports that a **local** module under `sdk/drafts/clyps/` on a current Modwerk checkout built and ran with the Octatrack MKII emulator, including track SRC selection, ARR Panorama/Zoom, eight ordinary audio tracks, sixteen references and rows. Reported: 624 music events and 608 timestamp writes matched a stock composite over 219 ticks; twenty install/remove emulator cycles restored the pool, stock Arranger and 27 project files. A synthetic T1 FLEX stem changed from silence to signal after launch. The local package is not present in this public handoff yet.
+The protected MKII candidate runs eight ordinary audio lanes. The revised eight-lane replay matched 624 ordered events, 608 timestamp writes and 219 sampled states against an independent stock composite. The historical tick-193 sample and the late tick-187 diagnostic are documented with their strict comparison outcomes in [TESTING.md](TESTING.md). Track Solo now receives both TRACK edges in Meta. LEVEL handles CLYPS navigation.
 
-**Important open defects:**
-- Around the sequencer wrap, an early/late diagnostic observation differs by a tick; a tick-193 queue sample also differs. Treat these as unresolved, not harmless until falsified.
-- CLYPS Meta's TRACK key routing conflicts with **Track Solo**.
-- The private development base adds two sequencer callbacks not present in the current Modwerk public base. Their identities must not collide with existing hook 61.
-- Source-aware editing of a foreign pattern remains blocked (E1); T8 Master and external clock are unqualified; hardware is **NOT TESTED**.
-- Other track machine SRC screens (Grain / POLY8 / VECTOR) reportedly restore correctly in isolated emulator checks; this is not whole-module-set or device qualification.
+Earlier emulator evidence recorded twenty install/remove cycles, comparisons of 27 project files and a synthetic T1 FLEX audio transition. This sprint exercised module removal, stock UI recovery and the sequencing/output traces. Hardware, external clock, positive master gain adjustment and T8 Master remain unqualified. The dependent engine requires a protected development base. Public slots 61 and 62 already have different owners.
 
 ## Work requested from Modwerk community
 

@@ -11,7 +11,7 @@ Original artistic target: eight independently replaceable Octatrack audio-track 
 
 Jannik Aßfalg's proposed integration approach, as conveyed by the artist: **track-local clip chooser on SRC and global Meta matrix on ARR**. This avoids a full-time alternative control layout. Grain's native SRC integration is a useful *UI pattern*, not a machine dependency. CLYPS is a project-level module, not a new instrument/machine.
 
-## Current status by environment
+## Initial RFC snapshot (before the source publication)
 
 | Capability | Earlier private native emulator evidence (owner-reported) | In this public PR |
 | --- | --- | --- |
@@ -42,7 +42,7 @@ Jannik Aßfalg's proposed integration approach, as conveyed by the artist: **tra
 
 Emulator comparisons must include exact native event order/timestamp/queue and real panel frames. They do not establish analog audio quality or device CPU headroom.
 
-## Subtasks for contributors (independent boundaries)
+## Original RFC work items (see TESTING.md for completed checks)
 
 **A — Base/sequencer hooks (maintainer-owned):** decide how the stock scheduling-wrap and per-track audio source-selector entry points should be exposed as shared, versioned Modwerk events, with correct site ownership, task context, ordering, admission and public base compatibility.
 
@@ -63,4 +63,4 @@ Emulator comparisons must include exact native event order/timestamp/queue and r
 - Claim the corresponding module/hook or issue through Modwerk's real Agent Board **before changing shared sites**; check outstanding claims and existing draft base PR. Do not claim an already-owned index.
 - All code contributions to a published branch require appropriate source licence/provenance and attribution. Original author permission to experiment privately does not automatically authorize representing their module as your own.
 - Keep only source, manifests, documentation, test fixtures without proprietary content, and legitimate captures. Never commit Elektron's OS, firmware binaries, dumps, personal projects or credentials.
-- Keep this PR in DRAFT while it lacks code, exact build, hardware and a qualified compatible base. Review discussion is welcome; merge is not.
+- Keep this PR in DRAFT while the dependent public build, maintained hook contract and physical qualification are outstanding. Review discussion is welcome; merge is not.

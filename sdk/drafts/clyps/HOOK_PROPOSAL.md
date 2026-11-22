@@ -40,3 +40,7 @@ Private R&D used two guarded sites with an isolated base build (OS 1.40C), **not
 - Keep exact OS/build/source provenance and real native emulator witnesses; physical device test requires separate authorization.
 
 **No current proposal should merge to a shipping base from this document alone.**
+
+## Updated cumulative base
+
+At f2754cbbe6e363aff38e354c7fc8e3108542e4fd the cumulative base assigns **61 to ev_audio_frame_prepare and 62 to ev_frame_deadline**. The protected emulator donor a9980c97cbd2 predates the latter assignment. Its private wire layout is incompatible with the current cumulative branch. The public draft records only symbolic requirements in contracts/runtime.proposed.json. The maintainer must decide whether to provide a pre-wrap notification and an exclusive, typed source selector; any public numbers must come from the coordinated registry. The Agent Board claim is for the module only.
