@@ -6,7 +6,7 @@ Version 0.1.0-experimental, called Arr Setlists until 22 November 2026. Host gat
 
 ## Host gate
 
-`verify.py`: 71 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
+`verify.py`: 80 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
 both ways, arr09-arr128 named and written 8 at a time, book 1's backup and arr01-08 repaired on return, a file that
 will not read never written back, refusals (playing, card busy, no project), reinstall and power-cycle detection by
 the battery record, SAVE and RELOAD PROJECT, returning to where a project was left (in stock's order of hooks and its two
@@ -98,6 +98,16 @@ Package `08d0833a…` (source `f068cd608`), kept beside USB AUDIO on base 0.7.13
 22 November 2026: in arranger mode on book 2, SAVE and RELOAD PROJECT came back with the main screen showing B2 ONE,
 PLAY played B2 ONE's rows, and book 1's B1 ONE and B1 TWO were intact afterwards (passed). Together with the round
 before on `7b4329e6…` (LOAD back on book 2 in arranger mode, book 1 intact), the book 1 load fix is tested on the MKI.
+
+### A backup file missing or unreadable (found by the owner in review, #1737, 22 November 2026)
+
+Leaving book 1, deleting one of its `.bak` files and returning made the backup read treat the missing file as an empty
+slot and report success; all eight slots were then marked changed, and the next save replaced the valid arr03.work
+with an empty arrangement. Fixed: book 1 is restored slot by slot; a slot whose backup is missing or does not read
+comes from its own arr0N.work and is not marked, so that file stays as it was. A backup counts only when all eight
+files were written, so a partial one is never read back. `verify.py` (80 checks): a missing arr03.bak, an unreadable
+arr05.bak and a backup write failing after three files; the previous code fails the missing-file case (arr03.work
+saved empty). On the unit: not yet.
 
 ## Edge cases
 

@@ -72,6 +72,8 @@ void host_wr8(uint32_t a, uint8_t v)
 struct file { char path[64]; uint8_t work[BLOCK], saved[BLOCK], flags[SLOTS]; int used; };
 static struct file files[300];
 static int writes, reads, fail_read;
+static const char *fail_read_path;      /* one file that will not read, NULL none */
+static int fail_bak_writes_after = -1;  /* backup writes that succeed before the rest fail, -1 never */
 static struct file *find(const char *path)
 {
     for (int i = 0; i < 300; ++i) if (files[i].used && !strcmp(files[i].path, path)) return &files[i];
@@ -83,9 +85,14 @@ static struct file *create(const char *path)
     for (int i = 0; i < 300 && !f; ++i) if (!files[i].used) { f = &files[i]; f->used = 1; snprintf(f->path, sizeof f->path, "%s", path); }
     return f;
 }
+static void files_remove(const char *path) { struct file *f = find(path); if (f) f->used = 0; }
 static int file_count(void) { int n = 0; for (int i = 0; i < 300; ++i) n += files[i].used; return n; }
 int host_arr_write(const char *path, unsigned slot)
 {
+    if (fail_bak_writes_after >= 0 && strstr(path, ".bak")) {
+        if (fail_bak_writes_after == 0) return -1;
+        --fail_bak_writes_after;
+    }
     struct file *f = create(path);
     memcpy(f->work, &cs1[W(slot)], BLOCK); memcpy(f->saved, &cs1[S(slot)], BLOCK); memcpy(f->flags, &cs1[FLAGS], SLOTS);
     ++writes;
@@ -95,7 +102,7 @@ int host_arr_read(const char *path, unsigned slot)
 {
     struct file *f = find(path);
     if (!f) return 0;
-    if (fail_read) return -1;
+    if (fail_read || (fail_read_path && !strcmp(path, fail_read_path))) return -1;
     memcpy(&cs1[W(slot)], f->work, BLOCK); memcpy(&cs1[S(slot)], f->saved, BLOCK); memcpy(&cs1[FLAGS], f->flags, SLOTS);
     cs1[CHG] &= (uint8_t)~(1u << slot);
     ++reads;
@@ -274,6 +281,36 @@ int main(void)
     check("nothing marked changed after it, so arr01-08 stay as they are", cs1[CHG] == 0 && find("/SET/PROJ/arr04.work")->work[9] == (uint8_t)(0x10 + (W(3) + 9) % 7));
     tap(RIGHT); job(); tap(LEFT); job();
     check("and book 1 comes back from arr01-08, the backup left alone", book() == 0 && marked(0x10));
+
+    /* the owner's review (#1737): a backup file missing, unreadable, or written only in part */
+    tap(RIGHT); job(); as_tick(0);                 /* book 2; book 1's backup is fresh */
+    mark(0x20); cs1[CHG] = 0;
+    files_remove("/SET/PROJ/arr03.bak");           /* the owner's case: one backup file missing */
+    { uint8_t keep3 = find("/SET/PROJ/arr03.work")->work[100];
+      tap(LEFT); job(); as_tick(0);
+      check("a missing arr03.bak: slot 3 comes from arr03.work, unmarked", book() == 0 && cs1[W(2) + 100] == keep3 && !(cs1[CHG] & 0x04));
+      check("the slots that read from their backup are marked, so arr01-08 are repaired", (cs1[CHG] & 0xfb) == 0xfb);
+      job();
+      check("and the next save leaves arr03.work as it was, not empty", find("/SET/PROJ/arr03.work")->work[100] == keep3); }
+    tap(RIGHT); job(); as_tick(0);                 /* book 2 again; a full backup is written */
+    mark(0x20); cs1[CHG] = 0;
+    fail_read_path = "/SET/PROJ/arr05.bak";        /* one backup file there but not readable */
+    { uint8_t keep5 = find("/SET/PROJ/arr05.work")->work[100];
+      tap(LEFT); job(); as_tick(0);
+      check("an unreadable arr05.bak: slot 5 comes from arr05.work, unmarked", book() == 0 && cs1[W(4) + 100] == keep5 && !(cs1[CHG] & 0x10));
+      job();
+      check("and the next save leaves arr05.work as it was", find("/SET/PROJ/arr05.work")->work[100] == keep5); }
+    fail_read_path = 0;
+    /* a backup write that fails half way when leaving book 1 is never read back */
+    mark(0x10); cs1[CHG] = 0xff; job();          /* book 1 as it should be, written to arr01-08 */
+    fail_bak_writes_after = 3;
+    tap(RIGHT); job(); as_tick(0);
+    fail_bak_writes_after = -1;
+    mark(0x20);
+    { uint8_t want = find("/SET/PROJ/arr07.work")->work[100];
+      find("/SET/PROJ/arr07.bak")->work[100] = (uint8_t)(want + 1);  /* the stale backup differs from arr07.work */
+      tap(LEFT); job(); as_tick(0);
+      check("after a partial backup, book 1 comes from arr01-08, nothing marked", book() == 0 && cs1[W(6) + 100] == want && cs1[CHG] == 0); }
 
     /* reinstalls and power cycles */
     tap(RIGHT); job();

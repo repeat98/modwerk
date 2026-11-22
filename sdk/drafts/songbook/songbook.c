@@ -340,6 +340,25 @@ static int read_book(struct as_state *s, unsigned book, const char *ext)
     return ok;
 }
 
+/* Book 1 from its backup, slot by slot. A slot read from arr0N.bak is marked changed, so stock's next write puts it
+ * back into arr0N.work (which may have been overwritten while the module was away). A backup file missing or not
+ * readable leaves that slot to arr0N.work itself, unmarked, so a valid arr0N.work is never replaced by an empty
+ * arrangement (found by the owner in review, #1737). Returns the mask of slots to mark; *ok 0 when a slot read neither. */
+static unsigned restore_book1(struct as_state *s, int *ok)
+{
+    unsigned mark = 0;
+    *ok = 1;
+    for (unsigned n = 0; n < SLOTS; ++n) {
+        arr_path(s->path, arr_number(0, n), "bak");
+        if (arr_read(s, n) > 0) { mark |= 1u << n; continue; }
+        arr_path(s->path, arr_number(0, n), "work");
+        int r = arr_read(s, n);
+        if (r <= 0) clear_arr(n);
+        if (r < 0) *ok = 0;
+    }
+    return mark;
+}
+
 /* Only the slots edited, to their files: after a failed load, a slot that did not read keeps its file untouched. */
 static int write_changed(struct as_state *s, unsigned book)
 {
@@ -372,11 +391,13 @@ int as_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
         switched = 1;
         if (rc >= 0) {
             s->last[s->book] = (uint8_t)(rd8(INDEX) & 7u);     /* the book left: which arrangement was chosen */
-            if (s->book == 0) s->backup = !s->damaged && write_book(s, 0);   /* leaving book 1: its backup */
+            /* Leaving book 1: its backup, which counts only when all eight files were written: a partial one is never
+             * read back (book 1 then comes from arr01-08 themselves). */
+            if (s->book == 0) s->backup = !s->damaged && write_book(s, 0);
             int ok;
-            if (to == 0 && s->backup && read_book(s, 0, "bak")) {
-                wr8(CHANGED, 0xff);                          /* stock's next write puts them back into arr01-08 */
-                ok = 1;
+            if (to == 0 && s->backup) {
+                unsigned mark = restore_book1(s, &ok);       /* stock's next write puts these back into arr01-08 */
+                wr8(CHANGED, mark);
             } else {
                 ok = read_book(s, to, "work");                /* never marked changed: nothing is written back */
                 wr8(CHANGED, 0);
