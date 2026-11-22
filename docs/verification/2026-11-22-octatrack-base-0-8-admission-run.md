@@ -148,11 +148,12 @@ Nothing was kept; every twin after 27 was booted from the running one without a 
 | 30 | a further machine instance charged whole on the reserve | 26/26 | 16/26 | 16 |
 | 31 | 2.5 netted on a measured stock; what played since a pick counts | 26/26 | 14/26 | 0 |
 | 32 | margin 4 on a measured stock; a further machine pays its trig starts | 26/26 | 6/26 | 0 |
+| 33 | readings since a pick restart when modules move; a set change starts afresh | 26/26 | 18/26 | 0 |
 
 Twin 23 judged every pattern by the bank's busiest (C01, eight stacked) plus FM Synth 0.1.4's 20.3 at rest: over the line
 before any pick. Every drop after it came from the set with two Amigas on trigging tracks (a second Amiga adds 4.3 to 7.4,
 `each` is 4). Twin 32's medium refusals depend on the sets before them (a first Tape Echo refused at 77 % in the set run,
-admitted alone): not yet explained. Twin 28's first empty-pattern sets are invalid: C02 still held the trigs VECTOR's
+admitted alone): the readings since a pick survived a rollback and a reload, fixed in twin 33. Twin 28's first empty-pattern sets are invalid: C02 still held the trigs VECTOR's
 curve had written (60 % instead of 38 % with stock alone); `device:price` now stops when a module leaves trigs.
 
 **The overload scene** (set L on empty C02, then the stacked C01 played; stall 56 on twin 24): twin 24 stalled once,
