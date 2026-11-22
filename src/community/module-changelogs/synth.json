@@ -1,10 +1,12 @@
 [
   {
     "version": "0.1.5-experimental",
-    "date": "2026-11-21",
+    "date": "2026-11-22",
     "changes": [
-      "FM Synth skips its LFO depth check while it has no sounding voices. The first FM note still uses the instrument’s running clock.",
-      "Requires Octatrack base 0.7.13 or later."
+      "Costs the Octatrack nothing while nothing in the project uses FM Synth: it rests until a track does.",
+      "An FM track in any Part, a legacy FMSYNTH sample in any slot or GLIDE turned on keeps it awake. Picking FM SYNTH wakes it at once.",
+      "Between notes the Octatrack's own LFO loop does the work, and the first FM note still follows the running clock.",
+      "Sound and controls are unchanged. Needs Octatrack base 0.7.14."
     ]
   },
   {

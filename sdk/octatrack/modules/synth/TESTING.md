@@ -1,6 +1,93 @@
 # FM Synth 0.1.5 experimental
 
-## MKII hardware trial on 21 November 2026
+0.1.5 combines two drafts (22 November 2026): #1928, which reads the sequencer clock once a frame through the base's
+`ev_audio_frame_prepare` and leaves the LFO pass to stock between notes, and #1974, which lets FM Synth rest while
+nothing in the project uses it. The owner waived the ask-the-author step for this optimization work on 22 November
+2026; the engine and its credit stay Tim Hastie's. Each part was run on the owner's MKII as its own package (below,
+labelled by build). **The combined package has not run on a unit.**
+
+## The combined package (prepared 22 November 2026, not tested on a unit)
+
+`public/octatrack-modules/synth/0.1.5-experimental.mwrm`, 31,544 bytes, SHA-256
+`5b425a33a84886eeb52c85ec464fc4aed2f9c90e2673372398e60c0120638ac1`, module `e8c3e4fa`, 24 sites of which nine rest, 39
+stock copies, no bss; hooks `ot_machines`, `ev_in_use` and `ev_audio_frame_prepare` (order 40 each). It needs the base
+with `ev_audio_frame_prepare`, which only `base/octatrack-next` (0.7.14, #1910) has: main's `events.json` does not, so
+the package was built in a local integration of `base/octatrack-next` `490b085ee` with this branch (its events, loader
+and builder unchanged since the owner's twin base `b36f9c53e`), the way #1928's `b904a852` was, and its recipe captured
+there from the stock OS 1.40C (the same 39 copies; the recipe pins that builder, as #1928's did). On this branch alone
+the synth package cannot be rebuilt until #1910 is in main; every other package rebuilds identically.
+
+**Rests** (stock's bytes while `fm_in_use` answers 0):
+
+| Site | What | Why it rests |
+| --- | --- | --- |
+| 0x4000cf50 `fm_lfo_frame_entry` | the frame's LFO pass entry, once a frame (#1928's gate) | frame path; stock's inline loop is what it picks with no FM voice |
+| 0x40003ca4 `po_lfo3` | the standalone LFO loop's depth read | LFO 3 is muted only on an FM track |
+| 0x4000c634 `po_retrig` | the command byte copy, every track, a frame | acts on a sounding FM voice only |
+| 0x4000d514 `fm_source_dispatch` | the renderer slot copy, every track, a frame | rests with the STATIC entry, below |
+| 0x4000b51a `po_rel`, 0x4000b2c8 `po_stop`, 0x4000685c `po_kill` | release, STOP and voice kill consumers | end engine voices only |
+| 0x400d6434 (data) | the STATIC renderer entry, `sy_render` | a STATIC track bound while it rests gets stock's renderer; resting puts every slot holding `sy_render` back to stock's |
+| 0x400d6458 (data) | the FLEX start entry, `fm_start` | stock's start for every FLEX track |
+
+The two data entries are symbol references, which the pinned builder (`build.py`, a base input) cannot flag: the
+package row's `"restingReferences"` has the host wrapper (`scripts/octatrack-module-packages.py`) set the loader's rest
+bit on them. The panel, page, chooser, AMP SETUP, MIDI and key paths stay awake.
+
+**`ev_audio_frame_prepare` never rests** (events.json: it stays active while a module rests). So `fm_prepare_frame`
+first tests one byte, `FR_IDLE` in `fm_fr`, which `fm_in_use` sets when it answers 0 (clearing `FR_ROUTE` and
+`FR_PENDING` with it) and clears when it answers nonzero: while idle it returns at once, no clock, no masks. Waking sets
+`FR_REBASE`, and the first awake frame moves the clock's step baseline so the step change measured across the missed
+frames is dropped (`CK_FPS` keeps its last value until a whole step is measured again). The clock's only readers are FM
+tracks and the quantizer's synth-track hooks, which have nothing to time while it rests.
+
+**In use** (`fm_in_use`, each UI tick): a pick of FM SYNTH (the base's pick calls `fm_admit_track`, which sets a flag,
+just before it asks whether to wake a resting machine), GLIDE on (sample tracks with LEG MONO slide through
+`sy_render`), an FM/1 track in the live Part, and a sweep of one Part (16 banks, 4 working and 4 saved Parts each) and
+one FLEX slot (a legacy FMSYNTH* / SYNTH* marker) a call; it rests only after a whole sweep, 128 ticks or about two
+seconds, found neither. Cost a tick, in the UI task only: two Parts' type bytes (three signature bytes on a FLEX track),
+GLIDE, the Part index and bank word, one slot path up to 255 bytes of battery RAM (an empty slot one read).
+
+**Known gaps.** A slot that gets a legacy marker file while FM Synth rests is seen within a sweep. After a project load
+an FM track in the live Part wakes it within a UI tick, one in another bank within a sweep; a note that starts before the
+wake renders silent until its next trig.
+
+**Software checks** (22 November 2026): `test_in_use.py` (Unicorn's ColdFire core: the answer, the sweep, markers, GLIDE,
+the pick, and the FR_IDLE / FR_REBASE writes) and `test_lfo_wake.py` (#1928's 64 routing and LFO cases, plus: idle,
+`fm_prepare_frame` counts no frame; on waking it drops the step across the gap, 20 frames a step kept where it would
+read 19) pass; `sdk/tests/test_module_packages_cli.py` (the `restingReferences` step) passes; the package's site records
+show the nine rest flags; `--stock` strict scans pass in the integration build.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Installed, no FM track, C01 playing | the nine sites and the idle frame prepare must cost nothing | frame share against the empty base | not run: combined package not on a unit yet |
+| A pick while it rests | the wake must land before the commit | pick on a track of a playing pattern, read the kind-table entries | not run (pass on `2ac17c3a`, below) |
+| The first FM note after a wake | the gated LFO pass and the clock must be ready on its frame | isolated first trig after the pick, and a HOLD shorter than INF | not run |
+| Idle FM awake, no note (FM track present, silent) | #1928's gate keeps the awake idle cost low | frame share with an FM track that plays no trig | not run |
+| GLIDE on with a LEG MONO sample track | GLIDE must keep it awake and slide | glide by ear, GLIDE on, then off and wait two seconds | not run |
+| Back to STATIC | rests again after a sweep | frame share and kind-table entries after 2 s | not run (pass on `2ac17c3a`) |
+| Legacy FMSYNTH marker project | the slot sweep must keep it awake | #1928's saved marker fixture | not run |
+| In-use answer and idle flags | a wrong answer rests FM under a track | `test_in_use.py`, `test_lfo_wake.py` | pass |
+
+## MKII run of the rest package `2ac17c3a` (22 November 2026, #1974)
+
+Reported by the owner's session: package `2ac17c3aa4e6e73fd0eaddc08d72ba01ea89601c753d8596384fe98976c77812` (#1974's
+rest change without #1928's), Octatrack MKII, OS 1.40C, RAM-booted development twin `5aa7bdf8` (base 0.7.14
+`b36f9c53e` plus the owned-wrap fix), Dev17 C01 at 126 BPM, trigs on T1-T8, the frame interrupt's share over 8 s:
+
+| State | Frame share | Longest frame |
+| --- | ---: | ---: |
+| No module | 39.2 % | 88.3 % |
+| FM Synth 0.1.4 installed, on no track | 45.0 % | 119.9 % |
+| `2ac17c3a` installed, on no track | 39.3 % | 91.9 % |
+| `2ac17c3a` picked on T2 while playing (it was resting) | 51.4 % | 105.9 % |
+| T2 back to STATIC | 39.0 % | 103.2 % |
+
+While it rested the kind-table entries read stock's (`0x400d6434` = `40004008`, `0x400d6458` = `4000f450`); after the
+pick they read the module's before the commit, T2 became FLEX + FM/1 and no render was skipped; back on STATIC they were
+stock again within 2 s. The trial rolled back cleanly. Not run: GLIDE on, legacy marker slots, project load, listening,
+a Keep or power cycle.
+
+## MKII hardware trial of `b904a852` on 21 November 2026 (#1928)
 
 On an Octatrack MKII running OS 1.40C and the 0.7.13 development base `1d880c5a`, the private package `b904a852fa2cd0dc9b2aef39969ba77637fe05a394adc06c2833b93df1d15f02` added **0.619 percentage points** on MWREPROB/TARGET at 140 BPM while assigned to no track. Three FM-only installs measured +0.675, +0.587 and +0.594 against the mean of the empty windows on either side. Across 247,897 measured frames the guard recorded zero skips. The +0.2-point hardware target remains open.
 
@@ -10,7 +97,7 @@ A saved FLEX fixture with a silent `FMSYNTH_OLD.WAV` in its first sample slot an
 
 All five trials rolled back. TARGET's original bank, pattern, track, four working and saved Parts and stopped transport matched, and the original 0.7.12 base returned with the same saved and live set. Thirteen bank checksums were initially invalid and all passed on the final uncached reads. Byte-for-byte parity of those banks remains unverified.
 
-## Emulator comparison on base 0.7.13
+## Emulator comparison of `b904a852` on base 0.7.13
 
 The installed package was `b904a852fa2cd0dc9b2aef39969ba77637fe05a394adc06c2833b93df1d15f02`. Two local builds reproduced it, including one from base draft commit `024c677c`. Each install used virtual USB and ended with Undo.
 

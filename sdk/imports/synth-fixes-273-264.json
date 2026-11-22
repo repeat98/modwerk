@@ -3,7 +3,7 @@
   "id": "synth",
   "version": "0.1.5-experimental",
   "status": "released",
-  "basedOn": "05d738fc50d792fccffa14620e1cc2d9853d5340",
+  "basedOn": "fa4156543aa241e9fedb6782691d595388ea9e2c",
   "originalImport": "synth-949f3be.json",
   "folder": "sdk/octabam/modules/synth",
   "issues": [],
@@ -21,7 +21,7 @@
     {
       "path": "upstream/synth/poly.s",
       "previousSha256": "5f6e39e55c813cd351538d00e0b02eb56cc253f803f95ca9450e140442064d60",
-      "draftSha256": "77e31fd5e120d0507d0b5624ea060d01f81307561971d23bc93bb81e725c2651"
+      "draftSha256": "1c906a90675735decf42e334977e23899e6fcd03a6ef4fae4e9252e7bda654ab"
     },
     {
       "path": "upstream/quantizer/manifest.py",
@@ -37,10 +37,21 @@
       "path": "upstream/synth/manifest.py",
       "previousSha256": "58c7acd5684fe0b59c42501f7fdbfd1b288b3bfb71938dcadf43bc1774b3e5e8",
       "draftSha256": "786154c440d71f372abb49f527d345d5d6d74e96959a4af2f3ce248683753314"
+    },
+    {
+      "path": "registration.c",
+      "previousSha256": "c7f969f6536ef3b03727c02a05ce48755662c2eae0fbb4aaba80708d02c06f76",
+      "draftSha256": "a72cf8c7004518d1501e78acc680973ecaa02c0c45edffc7c65bfeca90e49a13"
+    },
+    {
+      "path": "registration.s",
+      "previousSha256": "d04e47d6d21287ea969e4d39d0fea8c90b262a577081ba8376915f96cd2d9d2d",
+      "draftSha256": "6dce0370be517eff9b251c0b0c2dccfd5c1f9c8674adae08d56c87f6bb6d48ad"
     }
   ],
   "changes": [
-    "Read the running clock once per audio frame. Skip FM depth filtering between notes and wake on a pending source trigger."
+    "Read the running clock once per audio frame. Skip FM depth filtering between notes and wake on a pending source trigger.",
+    "Rest while nothing in the project uses FM Synth: fm_in_use answers ev_in_use, its frame-path detours and its STATIC renderer and FLEX start entries hold stock's bytes meanwhile, and the frame prepare returns at once while idle."
   ],
-  "publication": "0.1.5-experimental. Scoped owner approval on 21 November 2026. See TESTING.md for the MKII and emulator measurements and remaining limits."
+  "publication": "0.1.5-experimental: #1928 and #1974 combined (22 November 2026); the combined package needs the owner's approval again. See TESTING.md."
 }
