@@ -127,14 +127,16 @@ def package(image, bss, hooks, offsets, sites=(), name='', dsp=None, flags=0, ha
                 raise ValueError('A copy or fill overlaps a relocation word.')
     records = b''
     for address, stock, code, local, *more in sites:
-        keep, checked = more if hashed else (0, len(code))
+        keep, checked, *flag = more if hashed else (0, len(code), *more[2:])
+        if flag and flag[0] and not hashed:
+            raise ValueError('Site at %#x: only a hashed (ABI 7) site can rest with its module.' % address)
         if (len(stock) != (32 if hashed else len(code)) or not 0 < len(code) <= SITE_BYTES or len(local) > SITE_RELOCATIONS
                 or not 0 <= keep <= min(checked, len(code)) or not 0 < checked <= SITE_BYTES or any(o < keep for o in local)):
             raise ValueError('Site at %#x exceeds the loader\'s bounds.' % address)
         if (address | len(code)) & 1:
             raise ValueError('Site at %#x: the loader writes whole instructions, at even addresses and lengths.' % address)
         code = b'\0' * keep + code[keep:]  # the base copies those from the stock bytes it checked
-        head = (struct.pack('>IBBBB', address, len(code), keep, checked, len(local)) if hashed else
+        head = (struct.pack('>IBBBB', address, len(code) | (REST_FLAG if flag and flag[0] else 0), keep, checked, len(local)) if hashed else
                 struct.pack('>IHH', address, len(code), len(local)))
         records += head + stock + code + struct.pack('>%dH' % len(local), *local)
     for offset, address, length, digest in copies:
@@ -331,14 +333,32 @@ def site_events():
     return module.load()
 
 
-def runtime_declaration(folder):
+def judged_tables():
+    """The tables whose contributors the base answers ev_in_use for ("judged" in events.json: the Octatrack's machines)."""
+    return {e['event'] for e in site_events()['events'] if e.get('judged')}
+
+
+def port_judged(name):
+    """Whether module `name`'s machine port (machine-ports.json) contributes to a judged table: the base answers for it."""
+    ports = HERE.parents[1] / 'machines/octatrack/module-adapters/machine-ports.json'
+    entry = json.loads(ports.read_text()).get('ports', {}).get(name, {}) if ports.is_file() else {}
+    return any(c.get('to') in judged_tables() for c in entry.get('contribute', []))
+
+
+REST_FLAG = 0x80  # loader.h RUNTIME_SITE_RESTS: bit 7 of an ABI 7 site's length byte, the site rests with its module
+
+
+def runtime_declaration(folder, effect=False):
     """A module's runtime.json, or None: {"schema": 1, "subscribe": [{"event", "fn", "order", "replaces"}],
     "contribute": [{"to", "order", "data", "replaces"}], "raise": [event]}. With it the package subscribes or contributes
     (needs a base with those events and tables) and its units assemble with MODWERK_EVENTS defined. `replaces` names what
     its native octabam build patches there instead, which the package leaves out: a detour's symbol, or (a list for a
     take event or a table) detour symbols and 0x addresses of pokes, symbol references and table references. A core
     event (module_tick, module_draw, module_key, module_enc) takes {"event", "fn"} alone. `raise` names events with no
-    site that the module raises: its zero word raise_<event> receives the base's entry at install (RUNTIME_RAISE)."""
+    site that the module raises: its zero word raise_<event> receives the base's entry at install (RUNTIME_RAISE).
+    `rests` lists 0x addresses of the module's own detours that rest with it: while it answers ev_in_use 0 the base
+    puts stock's bytes back there (HOOKS.md), so it must subscribe ev_in_use, or contribute a machine (a judged table:
+    the base answers for it)."""
     path = Path(folder) / 'runtime.json'
     if not path.is_file():
         return None
@@ -350,15 +370,22 @@ def runtime_declaration(folder):
                                                and {'event', 'fn', 'order'} <= set(e) and replaces(e))
     contribution = lambda e: (isinstance(e, dict) and not set(e) - {'to', 'data', 'order', 'replaces'}
                               and {'to', 'data', 'order'} <= set(e) and replaces(e))
-    if (doc.get('schema') != 1 or not {'schema'} < set(doc) <= {'schema', 'subscribe', 'contribute', 'raise'}
+    rests = doc.get('rests', [])
+    if (doc.get('schema') != 1 or not {'schema'} < set(doc) <= {'schema', 'subscribe', 'contribute', 'raise', 'rests'}
             or not isinstance(doc.get('subscribe', []), list) or not isinstance(doc.get('contribute', []), list)
-            or not doc.get('subscribe', []) + doc.get('contribute', [])
+            or not (doc.get('subscribe', []) + doc.get('contribute', []) or (effect and rests))
             or not all(entry(e) for e in doc.get('subscribe', []))
             or not all(contribution(e) for e in doc.get('contribute', []))
             or not isinstance(doc.get('raise', []), list) or not all(isinstance(e, str) for e in doc.get('raise', []))
-            or len(set(doc.get('raise', []))) != len(doc.get('raise', []))):
+            or len(set(doc.get('raise', []))) != len(doc.get('raise', []))
+            or not isinstance(rests, list) or not all(isinstance(a, str) and re.fullmatch('0x[0-9a-fA-F]{8}', a) for a in rests)
+            or len({int(a, 16) for a in rests}) != len(rests)
+            or (rests and not any(e.get('event') == 'ev_in_use' for e in doc.get('subscribe', []))
+                and not any(c.get('to') in judged_tables() for c in doc.get('contribute', []))
+                and not port_judged(Path(folder).name) and not effect)):
         raise ValueError('%s: {"schema": 1, "subscribe": [{"event", "fn", "order", "replaces"}], '
-                         '"contribute": [{"to", "order", "data", "replaces"}], "raise": [event]}' % path)
+                         '"contribute": [{"to", "order", "data", "replaces"}], "raise": [event], "rests": ["0x…"] '
+                         '(with an ev_in_use subscription, or a contribution to a table the base judges: ot_machines)}' % path)
     doc.setdefault('subscribe', [])
     return doc
 
@@ -523,7 +550,7 @@ def octabam_units(name, origin, cross, upstream, dsp=False, hooks=None):
     extra += ['hooks in stock DSP code'] if m.dsp and m.dsp.hooks else ['its DSP code (give --dsp)'] if m.dsp and not dsp else []
     if extra or not m.linked:
         raise ValueError('%s needs what a runtime package cannot carry yet: %s' % (name, ', '.join(extra) or 'no ColdFire unit'))
-    declared = runtime_declaration(root / 'modules' / name)
+    declared = runtime_declaration(root / 'modules' / name, effect=bool(dsp))
     if declared and hooks is None:
         raise ValueError(name + ' subscribes to site events (runtime.json): its caller must take its hook words.')
     with tempfile.TemporaryDirectory() as tmp:
@@ -555,6 +582,11 @@ def octabam_units(name, origin, cross, upstream, dsp=False, hooks=None):
         sites.append((ref.addr, digest, symbol(ref.symbol, ref.addend), [0], 0, checked))
     copies = [(symbols[c.symbol], c.span.address, c.span.length, stock_digest(c.span)[0])
               for unit in m.linked for c in getattr(unit, 'stock_copies', ())]
+    rest = {int(a, 16) for a in (declared or {}).get('rests', ())}
+    detours = {d.site for d in m.detours}
+    if rest - (detours & {s[0] for s in sites}):
+        raise ValueError('%s: "rests" names only its own detours: %s' % (name, ', '.join('%#x' % a for a in sorted(rest - detours))))
+    sites = [s + (True,) if s[0] in rest else s for s in sites]
     if declared:
         unevented(sites, copies)
         hooks[:] = subscribe([NONE] * len(HANDLERS), entries(declared), symbols, raises=declared.get('raise', ()))
@@ -814,6 +846,12 @@ def octabam_machine(args):
         digest, checked = stock_digest(ref.expect.to_bytes(4, 'big'))
         sites.append((ref.addr, digest, pointer(ref.symbol, ref.addend), [0], 0, checked))
     copies = [(symbols[c.symbol], c.span.address, c.span.length, stock_digest(c.span)[0]) for u in units for c in u.stock_copies]
+    # Detours that rest with the machine (its port's or runtime.json's "rests"): the base answers ev_in_use for a
+    # machine, so while no track of the project is it they hold stock's bytes (HOOKS.md).
+    rest = {int(a, 16) for a in machine_ports.declaration(m.name).get('rests', ())}
+    if rest - {d.site for d in m.detours}:
+        raise ValueError('%s: "rests" names only its own detours: %s' % (m.name, ', '.join('%#x' % a for a in sorted(rest - {d.site for d in m.detours}))))
+    sites = [s + (True,) if s[0] in rest else s for s in sites]
     unevented(sites, copies)
     if args.stock:
         check_stock(sites + [(address, digest, b'', [], 0, n) for _, address, n, digest in copies], args.stock, args.upstream)
@@ -969,7 +1007,7 @@ def check_stock(sites, stock, upstream):
     from elekloader import formats
     parsed, device, _ = formats.load(str(stock))
     main_image = formats.main_image(parsed, device)
-    for address, digest, _, _, _, checked in sites:
+    for address, digest, _, _, _, checked, *_ in sites:
         at = address - device.main_load
         if at < 0 or hashlib.sha256(main_image[at:at + checked]).digest() != digest:
             raise ValueError('The stock bytes at %#x are not the ones the module names.' % address)

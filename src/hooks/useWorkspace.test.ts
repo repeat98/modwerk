@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { publishedUsbAudioPackage } from '../config/published-usb-audio.fixture'
 import 'fake-indexeddb/auto'
 import { act, createElement, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -47,6 +48,21 @@ describe('opening the workspace', () => {
     const reopened = await openDeviceDatabase()
     expect((await deviceStore(reopened).listConfigurations()).map(item => item.name)).toEqual(['Live', 'Studio B'])
     reopened.close()
+  })
+  it('deletes the active set without overwriting the next set edited in another tab', async () => {
+    const db = await openDeviceDatabase(), otherTab = deviceStore(db)
+    const live = newConfiguration('Live'), studio = newConfiguration('Studio')
+    await otherTab.saveConfiguration(live, { makeActive: true })
+    await otherTab.saveConfiguration(studio)
+    await act(async () => root.render(createElement(Probe, { onRender: value => { workspace = value } })))
+    await vi.waitFor(() => expect(workspace.ready).toBe(true))
+    const edited = { ...studio, name: 'Studio B' }
+    await otherTab.saveConfiguration(edited)
+    await act(() => workspace.deleteConfiguration())
+    await vi.waitFor(() => expect(workspace.saving).toBe(false))
+    expect(await otherTab.listConfigurations()).toEqual([edited])
+    expect(await otherTab.activeConfiguration()).toBe(studio.id)
+    db.close()
   })
 })
 
@@ -115,15 +131,34 @@ describe('the module limit of an Octatrack set', () => {
     expect(workspace.active?.moduleIds).toHaveLength(over)
     for (const id of ids.slice(SET_MODULE_LIMIT, over)) await act(() => workspace.toggleModule(id))
     expect(workspace.active?.moduleIds).toEqual(ids.slice(0, SET_MODULE_LIMIT))
-    // Full: the 21st is refused, USB Audio's setup does not count.
+    // A module set imported above the limit remains intact. Its next addition respects the published slot cost.
     await act(() => workspace.toggleModule(ids[over]))
     expect(workspace.active?.moduleIds).toEqual(ids.slice(0, SET_MODULE_LIMIT))
     await act(() => workspace.configureUsbAudio(undefined))
-    expect(workspace.active?.moduleIds).toEqual([...ids.slice(0, SET_MODULE_LIMIT), USB_AUDIO_MODULE])
+    const addedAudio = publishedUsbAudioPackage ? [] : [USB_AUDIO_MODULE]
+    expect(workspace.active?.moduleIds).toEqual([...ids.slice(0, SET_MODULE_LIMIT), ...addedAudio])
     await act(() => workspace.toggleModule(ids[0]))
     await act(() => workspace.toggleModule(ids[over]))
-    expect(workspace.active?.moduleIds).toEqual([...ids.slice(1, SET_MODULE_LIMIT), USB_AUDIO_MODULE, ids[over]])
+    expect(workspace.active?.moduleIds).toEqual([...ids.slice(1, SET_MODULE_LIMIT), ...addedAudio, ids[over]])
+    if (publishedUsbAudioPackage) {
+      await act(() => workspace.toggleModule(ids[over]))
+      await act(() => workspace.configureUsbAudio(undefined))
+      expect(workspace.active?.moduleIds).toEqual([...ids.slice(1, SET_MODULE_LIMIT), USB_AUDIO_MODULE])
+    }
     await vi.waitFor(() => expect(workspace.saving).toBe(false))
+  })
+  it.runIf(publishedUsbAudioPackage)('starts a new USB Audio selection on stereo Main and preserves classic sets', async () => {
+    await act(async () => root.render(createElement(Probe, { onRender: value => { workspace = value } })))
+    await vi.waitFor(() => expect(workspace.ready).toBe(true))
+    await act(() => { workspace.importConfiguration('Classic', [USB_AUDIO_MODULE]) })
+    await act(() => workspace.toggleModule('everb'))
+    expect(workspace.active?.usbAudio).toBeUndefined()
+    await act(() => workspace.toggleModule(USB_AUDIO_MODULE))
+    await act(() => workspace.toggleModule(USB_AUDIO_MODULE))
+    expect(workspace.active?.usbAudio).toMatchObject({ destination: 'computer', layout: 'main', outboxPairs: [1, 0, 0, 0] })
+    await vi.waitFor(() => expect(workspace.saving).toBe(false))
+    const [saved] = (await deviceStore(storage.connections.at(-1)!).listConfigurations()).filter(item => item.name === 'Classic')
+    expect(saved.usbAudio).toEqual(workspace.active?.usbAudio)
   })
   it('fills a set from what’s on the Octatrack whole, as an import does, past the limit too', async () => {
     const ids = AVAILABLE_MODULES.map(module => module.id).filter(id => id !== USB_AUDIO_MODULE), over = SET_MODULE_LIMIT + 3

@@ -13,7 +13,7 @@ import type { DeviceStore } from '../storage/device'
 import { createLazyFirmwareClient } from './firmware-client'
 import type { FirmwareClient } from '../engine/client'
 import type { FirmwareInspection } from '../engine/base'
-import { parseUsbAudioConfiguration, USB_AUDIO_MODULE, type UsbAudioConfiguration } from '../config/usb-audio'
+import { comesWithBase, parseUsbAudioConfiguration, usbAudioForSelection, USB_AUDIO_MODULE, type UsbAudioConfiguration } from '../config/usb-audio'
 
 const STORAGE_ATTEMPTS = 2, STORAGE_RETRY_MS = 300
 
@@ -137,7 +137,7 @@ export function useWorkspace() {
     const source = copy && original && configurationDevice(original) === device ? original : undefined
     const item = { ...newConfiguration(name, source?.moduleIds, source?.keepStockFx2 ?? true, source?.moduleVersions, device, source?.usbAudio), ...removedSettings(device, source?.removedStockFx), ...startupSettings(device, source?.classicStartup), ...storageSettings(source?.storageLock) }
     replaceConfigurations([...configsRef.current, item]); changeActive(item.id)
-    persist(async store => { await store.saveConfiguration(item); await store.setActiveConfiguration(item.id) })
+    persist(store => store.saveConfiguration(item, { makeActive: true }))
     if(item.moduleIds.length)trackConfigurationStarted(item.id)
     return item
   }
@@ -145,7 +145,7 @@ export function useWorkspace() {
     const item = { ...newConfiguration(name, ids, keepStockFx2, moduleVersions, device, usbAudio), ...removedSettings(device, removedStockFx), ...startupSettings(device, classicStartup), ...storageSettings(storageLock) }
     replaceConfigurations([...configsRef.current,item]);changeActive(item.id)
     if(item.moduleIds.length)trackConfigurationStarted(item.id)
-    persist(async store => {await store.saveConfiguration(item);await store.setActiveConfiguration(item.id)})
+    persist(store => store.saveConfiguration(item, { makeActive: true }))
     return item.id
   }
   function updateActive(update: Partial<Pick<Configuration, 'name' | 'moduleIds' | 'moduleVersions' | 'keepStockFx2' | 'usbAudio' | 'removedStockFx' | 'classicStartup'>>) {
@@ -175,14 +175,14 @@ export function useWorkspace() {
   }
   function toggleModule(id: string, device = DEFAULT_DEVICE) {
     const current = configurationFor(device)
-    // USB is added atomically with the user's setup through configureUsbAudio.
-    if (device === DEFAULT_DEVICE && id === USB_AUDIO_MODULE && !current.moduleIds.includes(id)) return
+    // Built-in audio needs its layout selection before it can be added.
+    if (device === DEFAULT_DEVICE && comesWithBase(id) && !current.moduleIds.includes(id)) return
     if (!current.moduleIds.includes(id) && device === DEFAULT_DEVICE && !isModuleAvailable(id, betaAccess)) return
     // A full Octatrack set takes no further module (set-limit.ts); the library shows why before anyone gets here.
     if (!canAdd(current.moduleIds, id, configurationDevice(current))) return
     const moduleIds = current.moduleIds.includes(id) ? current.moduleIds.filter(value => value !== id) : [...current.moduleIds, id]
     const moduleVersions = Object.fromEntries(moduleIds.map(selected=>[selected,current.moduleVersions[selected]??pinModuleVersions([selected],device)[selected]]))
-    updateActive({ moduleIds, moduleVersions, ...(id === USB_AUDIO_MODULE && !moduleIds.includes(id) ? { usbAudio: undefined } : {}) })
+    updateActive({ moduleIds, moduleVersions, usbAudio: usbAudioForSelection(moduleIds, current) })
     if(!current.moduleIds.length&&moduleIds.length)trackConfigurationStarted(current.id)
   }
   /** Adds every one of `ids` to the active set at once, as an import takes a set: one over the limit (set-limit.ts)
@@ -199,19 +199,16 @@ export function useWorkspace() {
   }
   function configureUsbAudio(usbAudio: UsbAudioConfiguration | undefined) {
     const current = configurationFor(DEFAULT_DEVICE)
+    if (!canAdd(current.moduleIds, USB_AUDIO_MODULE, DEFAULT_DEVICE)) return
     const moduleIds = current.moduleIds.includes(USB_AUDIO_MODULE) ? current.moduleIds : [...current.moduleIds, USB_AUDIO_MODULE]
     updateActive({ moduleIds, moduleVersions: { ...current.moduleVersions, ...pinModuleVersions([USB_AUDIO_MODULE]) }, usbAudio: usbAudio ? parseUsbAudioConfiguration(usbAudio) : undefined })
     if (!current.moduleIds.length) trackConfigurationStarted(current.id)
   }
   function deleteConfiguration() {
     const deleting = activeRef.current
-    const { remaining, next } = afterDeleting(configsRef.current, deleting)
+    const { remaining, next, created } = afterDeleting(configsRef.current, deleting)
     replaceConfigurations(remaining); changeActive(next.id)
-    persist(async store => {
-      await store.saveConfiguration(next)
-      await store.setActiveConfiguration(next.id)
-      await store.deleteConfiguration(deleting)
-    })
+    persist(store => store.deleteConfiguration(deleting, created ? next : next.id))
   }
   async function readFile(file: File) {
     const request = ++generation.current

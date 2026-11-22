@@ -166,6 +166,15 @@
         "rationale": "1,354 contiguous program-memory words on each DSP core (838 code, 516 table), more than any single stock reverb's span (SPRING REV 1,063, DARK REV 1,067), so a static build gives up two adjacent reverbs. 132 state words per instance in the existing r7 block; no buffer.",
         "source": "TESTING.md"
       }
+    },
+    "cpuPrice": {
+      "value": 0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-18",
+      "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 41 % installed and used nowhere, 41 % on T1 FX2; CPU meter 60.5 % before, 59.4 % at rest, 60.9 % in use.",
+      "source": "evidence/cpu-price.json"
     }
   },
   "tests": {

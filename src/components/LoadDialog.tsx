@@ -4,7 +4,7 @@ import { recordSync, rememberSuccessfulSync } from '../config/octatrack-progress
 import { LINK_BUSY, LinkBusyError, type OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { BaseLayoutRequired, BaseUpdateRequired, baseOutdated, ModuleSetError, moduleSetReview, setLayout, SetLimitError, USB_MODULE_IDS } from '../engine/elekloader/module-set'
 import { baseLayout, layoutName, type BaseLayout } from '../engine/elekloader/base-variants'
-import { USB_AUDIO_MODULE } from '../config/usb-audio'
+import { comesWithBase, USB_AUDIO_MODULE, USB_AUDIO_PACKAGED } from '../config/usb-audio'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { MODULES } from '../catalog/modules'
 import { isModuleAvailable } from '../catalog/availability'
@@ -48,7 +48,7 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
   const [preparationError, setPreparationError] = useState<{ review: string; error: ModuleSetError }>()
   // Whether the sync got as far as keeping, for this browser's sync history; written once when the dialog reaches its result.
   const keeping = useRef(false), logged = useRef(false)
-  // The modules this sync adds or updates, as reviewed when it started: counted as downloads once it is kept.
+  // The reviewed additions and updates receive download credit once Keep succeeds.
   const installing = useRef<string[]>([])
   const { followDownloads, followNotice } = useDownloadFollows()
   const step = loadStep(status, started, preparing)
@@ -61,9 +61,13 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
   const changes = review?.changes, updates = review?.updates ?? []
   const problem = preparationError?.review === reviewKey ? preparationError.error : baseOutdated(state.identity?.base) ? new BaseUpdateRequired() : review?.problem
   const needsBase = problem instanceof BaseUpdateRequired
-  // USB Audio comes with the base: on when the connected base runs the set's layout, otherwise a base install first.
-  const audio = setLayout(set), audioOn = audio !== undefined && baseLayout(state.identity?.base) === audio
-  const stays = inventory ? set.moduleIds.filter(id => (id === USB_AUDIO_MODULE ? audioOn : inventory.moduleIds.includes(id)) && !updates.includes(id)) : []
+  // USB Audio while it comes with the base: on when the connected base runs the set's layout, otherwise a base install
+  // first. As a module package it is added, updated and removed like any module (module-set.ts).
+  const audio = USB_AUDIO_PACKAGED ? undefined : setLayout(set), audioOn = audio !== undefined && baseLayout(state.identity?.base) === audio
+  const stays = inventory ? set.moduleIds.filter(id => (comesWithBase(id) ? audioOn : inventory.moduleIds.includes(id)) && !updates.includes(id)) : []
+  // A USB Audio package that comes, goes or changes layout makes the unit reconnect on USB once (the base's own
+  // reconnect, usb_function.c): the computer then sees the new audio device.
+  const reconnects = USB_AUDIO_PACKAGED && !!changes && [changes.add, changes.remove, updates].some(ids => ids.includes(USB_AUDIO_MODULE))
   const off = staysOff(set.moduleIds, inventory) // switched off on the unit (PROJ > MODWERK > MODULES): a sync leaves them off
   // A paused module, or one with no USB package, can still be removed, never added; a beta module (Air Chorus) is added
   // only for a beta tester.
@@ -84,8 +88,7 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
     const failure = error || (notice?.tone === 'error' ? notice.text : '')
     if (!failure && !keeping.current) return
     logged.current = true
-    // What a downloaded build got: the count, update notifications and the hardware feedback reminder.
-    if (!failure) { trackModuleDownloads(installing.current); followDownloads(installing.current, installedOnOctatrack(installing.current)) }
+    if (!failure) followDownloads(installing.current, installedOnOctatrack(installing.current))
     recordSync({ name: set.name, modules: set.moduleIds.length, outcome: failure ? 'failed' : 'kept', ...(failure ? { message: failure.slice(0, 300) } : {}) })
   }, [step, started, error, notice, set]) // eslint-disable-line react-hooks/exhaustive-deps -- followDownloads is a new function each render
 
@@ -112,7 +115,12 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
     }
     if (stale()) return
     setPreparing(false); setStarted(true)
-    try { await link.update(prepared.name, prepared.changes); await keep() }
+    try {
+      await link.update(prepared.name, prepared.changes)
+      // A USB Audio change: the unit reconnects on USB once with the trial open; keep only when it is back.
+      if (prepared.changes.some(change => change.reconnects) && !await link.reconnected()) return
+      await keep()
+    }
     catch (failure) { console.error(failure); setError(failure instanceof ModuleSetError || failure instanceof LinkBusyError ? failure.message : 'This module set couldn’t be synced.') }
   }
   async function keep() {
@@ -120,8 +128,10 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
     keeping.current = true
     await link.keep()
     const kept = link.getState()
-    if (kept.status === 'ready' && kept.notice?.tone === 'success' && kept.identity && kept.active)
-      rememberSuccessfulSync({ ...set, moduleIds: [...set.moduleIds], base: kept.identity.base, active: kept.active, at: new Date().toISOString() })
+    if (kept.status === 'ready' && kept.notice?.tone === 'success') {
+      trackModuleDownloads(installing.current)
+      if (kept.identity && kept.active) rememberSuccessfulSync({ ...set, moduleIds: [...set.moduleIds], base: kept.identity.base, active: kept.active, at: new Date().toISOString() })
+    }
   }
   const closable = step === 'review' || step === 'done'
   // The modules this sync takes off a track's reach (removed or replaced by their update): the base refuses the whole sync
@@ -144,6 +154,7 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
           {putBack && comesBackOn.length > 0 && <p className="base-install-intro">{list([...comesBackOn])} {comesBackOn.length === 1 ? 'was' : 'were'} switched off on your Octatrack and {comesBackOn.length === 1 ? 'comes' : 'come'} back on. To switch {comesBackOn.length === 1 ? 'it' : 'them'} off again, use <strong>PROJECT › MODWERK › MODULES</strong> after the sync.</p>}
           <p className="load-summary">Adds {changes.add.length} · Removes {changes.remove.length}{updates.length > 0 && <> · Updates {updates.length}</>}</p>
           <p className="base-install-intro">The modules stay on your Octatrack, also after a restart. Your project isn’t changed.</p>
+          {reconnects && <p className="link-hint" role="note">Your Octatrack reconnects on USB once during this sync, so your computer sees its new audio setup. A recording that is running stops; start it again afterwards.</p>}
           <ul className="load-changes">{([['load', 'Base', audio !== undefined && !audioOn ? [USB_AUDIO_MODULE] : []], ['load', 'Adds', changes.add], ['load', 'Updates', updates], ['leaving', 'Removes', changes.remove]] as const).flatMap(([state, label, ids]) => ids.map(id => {
             const module = MODULES.find(item => item.id === id)
             return <li key={id} className={'load-change is-' + state}>
@@ -169,7 +180,7 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
     </> : step === 'done' ? <><p className={'base-install-intro ' + (error || notice?.tone === 'error' ? 'file-error' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? LINK_BUSY + ' Nothing was sent.' : 'Done.')}</p>{followNotice && <p className="link-hint" role="status">{followNotice}</p>}</>
     : <>
       {(step === 'loading' || step === 'trial') && <ProgressBar value={step === 'loading' && !preparing && progress < 1 ? progress : undefined} label="Syncing" percent />}
-      <p className="base-install-intro" role="status">{step === 'loading' ? (preparing ? 'Preparing your modules…' : progress < 1 ? 'Sending your modules to the Octatrack…' : 'Starting them on the Octatrack…')
+      <p className="base-install-intro" role="status">{state.reconnecting ? 'Your Octatrack is reconnecting on USB with its new audio setup…' : step === 'loading' ? (preparing ? 'Preparing your modules…' : progress < 1 ? 'Sending your modules to the Octatrack…' : 'Starting them on the Octatrack…')
         : 'Saving on your Octatrack…'}</p>
       {/* Keeping waits for playback to stop; started meanwhile, the link says so and the set runs until it is kept. */}
       {step === 'trial' && notice?.tone === 'error' && <p className="file-error" role="alert">{notice.text}</p>}

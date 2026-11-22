@@ -1,0 +1,1 @@
+On a Mac whose developer tools hang AddressSanitizer programs, `sdk:check` (and so `pr:ready`) no longer hangs: it uses the Command Line Tools when they work and says so, and otherwise stops at once with the fix.

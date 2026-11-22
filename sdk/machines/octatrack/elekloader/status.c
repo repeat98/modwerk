@@ -10,6 +10,9 @@
  * frame is 72,520 cycles. */
 #include <stdint.h>
 #include "loader.h"
+#ifdef MODWERK_SETTINGS
+#include "settings.h"
+#endif
 #include "selftest.h"
 #include "status.h"
 #include "fxids.h"
@@ -97,10 +100,53 @@ static uint32_t recent_mean(void)
 }
 /* Each reading: what the guard below goes by once the unit is stopped, the mean of the last four seconds it played,
  * kept until it plays four seconds again. Eight readings in a row playing, so none of them is a stopped one. */
+static uint32_t frame_recent[8], frame_played; /* as cpu_recent and cpu_played, for the frame share below */
+static uint32_t frame_mean(void);
+/* Machines picked or removed since the meter last held them (machine_registry.c), per mille: a pick made stopped is
+ * judged with every one before it, and a machine swapped out and back stopped by what it adds, once. Eight readings
+ * played after the last change, the meter holds them all. */
+static int32_t cpu_adjust;
+static uint32_t adjust_readings;
 static void cpu_note_played(void)
 {
-    if (modwerk_machine_stopped()) play_readings = 0;
-    else if (++play_readings >= 8u) cpu_played = recent_mean();
+    if (modwerk_machine_stopped()) play_readings = adjust_readings = 0;
+    else {
+        if (++play_readings >= 8u) cpu_played = recent_mean(), frame_played = frame_mean();
+        if (++adjust_readings >= 8u) cpu_adjust = 0;
+    }
+}
+void modwerk_status_cpu_entered(uint32_t mille) { cpu_adjust += (int32_t)mille, adjust_readings = 0; }
+void modwerk_status_cpu_left(uint32_t mille) { cpu_adjust -= (int32_t)mille, adjust_readings = 0; }
+/* The frame interrupt's share of each frame, per mille, from the frame guard's own sums (machine_registry.c): what a
+ * module effect's CPU price (`npm run device:price`) is measured in. The meter above is all of the ColdFire, averaged;
+ * the guard drops renders frame by frame once this share passes its own, so the pick box shows this one (owner's MKII, 17 November 2026: a third Tape Echo, the meter at 72 %, the guard dropped 4,782
+ * Amiga renders, 70 a second). The guard's development read clears its sums: that reading is left out. */
+extern volatile uint32_t mw_frame_busy, mw_frame_count; /* machine_registry.c: frame lengths >> 8, frames */
+#ifndef MW_FRAME_LINE
+#define MW_FRAME_LINE 600u
+#endif
+/* The line: on an MKII (17 November 2026, Amiga and three Tape Echos playing, the frame interrupt's mean 44 % of a frame)
+ * the guard at its 80 % skipped nothing with its share at 65 % and 114 renders in 5 s at 60 %: it drops renders once
+ * the mean comes within about 16 points of its share, so 60 % is a full bar. */
+volatile uint32_t mw_frame_line = MW_FRAME_LINE; /* per mille of a frame: the pick box's CPU bar is full at it */
+static uint32_t last_busy, last_frame_count;
+static uint32_t frame_mean(void)
+{
+    uint32_t sum = 0;
+    for (unsigned i = 0; i < 8u; ++i) sum += frame_recent[i];
+    return sum / 8u;
+}
+static void frame_note(unsigned at)
+{
+    uint32_t busy = mw_frame_busy, count = mw_frame_count, db = busy - last_busy, dc = count - last_frame_count;
+    last_busy = busy, last_frame_count = count;
+    if (dc && dc <= count) frame_recent[at] = db * 1000u / (dc * 187u); /* a frame is 47,891 counts, 187 of them >> 8 */
+}
+/* The frame share a pick is judged by: as the meter's, the last play's when the unit is stopped and that was more. */
+uint32_t modwerk_status_frame_load(void)
+{
+    uint32_t now = frame_mean();
+    return modwerk_machine_stopped() && frame_played > now ? frame_played : now;
 }
 static void missing_check(void);
 static void missing_on_tick(void);
@@ -116,6 +162,9 @@ static void transfer_tick(void);
 static void status_tick(void)
 {
     modwerk_status_close_menu();
+#ifdef MODWERK_SETTINGS
+    modwerk_settings_tick(); /* settings.c: the kept choices, after the installed modules changed */
+#endif
     transfer_tick();
     memory_tick();
     modwerk_fxpage_missing(); /* the first tick builds it; after that it returns at once */
@@ -131,6 +180,7 @@ static void status_tick(void)
     modwerk_status[CPU] = per && ticks > 30u && di / per < 1000u ? 1000u - di / per : 0;
     if (per && ticks > 30u && df) { load_flags |= 1u; load_at[0] = modwerk_runtime_ticks; }
     cpu_recent[(ticks / 30u) % 8u] = modwerk_status[CPU]; /* the page's CPU peak: the last four seconds */
+    frame_note((ticks / 30u) % 8u);
     cpu_note_played();
     if (reading >= 0) { /* least, most and sum of 1,024 frames, read 24 bits a tick */
         if (modwerk_dsp_meter_core == reading && modwerk_dsp_meter_bits >= (read_words == 1u ? 24u : 72u)) {
@@ -158,7 +208,7 @@ static void status_tick(void)
  * screen it covered is back as it was. CUE + PROJ toggles the status from anywhere; PROJ's MODWERK category (the
  * fifth root row build_core.py adds, owner 12 October 2026) opens each page: STATUS, MODULE COST, MISSING, SELF TEST, MODULES (renamed from LOAD and MODULE LOAD, owner,
  * 16 November 2026: they read like loading modules). */
-enum { CLOSED, SHOWN, TEST, MISSING, MEMORY, MODULE_LOAD, REFUSED, SWITCHES };
+enum { CLOSED, SHOWN, TEST, MISSING, MEMORY, MODULE_LOAD, REFUSED, SWITCHES, SETTINGS };
 static int open, taken = -1; /* which shows; a key press the handler took, whose release it takes too (-1: none; TRIG 1 is 0) */
 /* What a host is doing to the unit, on its own screen (owner, 13 November 2026: a sync shows a dialog with a progress
  * bar, and a base update takes the whole screen and the panel until it is saved). The step is worked out each tick
@@ -413,6 +463,9 @@ static int budget_slot = -1; /* the slot the pick put a module on; -1: an accept
  * another Part already holds takes +0% (one copy of the code per core), and a swap for a smaller one shows minus.
  * shortcut: a second pick within the box's 1.5 s counts from before the first, until the box closes. */
 static uint32_t words_before[2];
+/* The pick's CPU (owner, 17 November 2026: the box showed the DSP an effect took, not the CPU): the frame share as it
+ * stood, from windows that ended before the pick but for the last half second. */
+static uint32_t pick_load;
 static void memory_tick(void)
 {
     static uint32_t completed, accepted;
@@ -421,7 +474,7 @@ static void memory_tick(void)
     if (dl_selection_completed != completed) { /* a pick changes one slot; a Part change, usually many: no box then */
         unsigned changed = 0, module = 0, at = 0;
         for (unsigned i = 0; i < 16u; ++i) if (LIVE[i] != before[i]) ++changed, at = i, module |= (unsigned)fx_in(modwerk_fx_modules, LIVE[i]);
-        if (changed == 1u && module) picked = 1, budget_slot = (int)at;
+        if (changed == 1u && module) picked = 1, budget_slot = (int)at, pick_load = modwerk_status_frame_load();
     }
     if (over_usb && !picked) budget_slot = -1;
     if (dl_selection_completed != completed || over_usb) for (unsigned i = 0; i < 16u; ++i) before[i] = LIVE[i];
@@ -516,6 +569,7 @@ static const char *switch_why(uint32_t result)
     if (result == MODSET_SWITCH_REFUSED + RUNTIME_CYCLES) return "DSP FULL";
     if (result == MODSET_SWITCH_REFUSED + RUNTIME_CONFLICT) return "CLASHES WITH ANOTHER";
     if (result == MODSET_SWITCH_REFUSED + RUNTIME_FEATURE) return "RESTART, THEN RETRY";
+    if (result == MODSET_SWITCH_REFUSED + RUNTIME_BUFFER) return "MOVE AN FX2 EFFECT";
     if (result == MODSET_SWITCH_BUSY || result == MODSET_SWITCH_REFUSED + RUNTIME_BUSY) return "BUSY: TRY AGAIN";
     return result >= MODSET_SWITCH_REFUSED ? "REFUSED" : 0; /* GONE: a host changed it, and the rows show how */
 }
@@ -590,6 +644,70 @@ static void switches_tick(void)
     }
     if (switch_stale || ticks - switch_read_at >= 60u) switches_read();
 }
+#ifdef MODWERK_SETTINGS
+/* SETTINGS lists modules. Open a row to browse its choices without changing the sound. */
+#define SETTING_ROWS 5u
+char modwerk_settings_label[] = "SETTINGS";
+struct settings_cursor { unsigned row, top; };
+static struct settings_cursor setting_module, setting_option, setting_field;
+enum { SETTING_ROOT, SETTING_MODULE, SETTING_FIELD };
+static int choosing_setting;
+static unsigned settings_field_index(void)
+{
+    return choosing_setting == SETTING_FIELD ? setting_field.row : MODWERK_SETTING_FIELDS;
+}
+static uint32_t setting_epoch;
+static void settings_move(struct settings_cursor *c, unsigned count, int code)
+{
+    if (c->row >= count) c->row = count ? count - 1u : 0;
+    if (code == UP && c->row) --c->row;
+    if (code == DOWN && c->row + 1u < count) ++c->row;
+    if (c->top > c->row) c->top = c->row;
+    if (c->row >= c->top + SETTING_ROWS) c->top = c->row + 1u - SETTING_ROWS;
+}
+void modwerk_settings_menu(int unused)
+{
+    (void)unused;
+    if (!menu_open()) return;
+    open = SETTINGS;
+    setting_module = (struct settings_cursor){0, 0};
+    choosing_setting = 0;
+    close_menu = 1;
+}
+static void settings_key(int code)
+{
+    struct modwerk_setting_view view;
+    if (choosing_setting) {
+        if (!modwerk_settings_field(setting_module.row, settings_field_index(), &view) || view.epoch != setting_epoch) {
+            choosing_setting = SETTING_ROOT;
+            return;
+        }
+        if (code == NO) {
+            choosing_setting = choosing_setting == SETTING_FIELD ? SETTING_MODULE : SETTING_ROOT;
+            return;
+        }
+        struct settings_cursor *cursor = view.fields ? &setting_field : &setting_option;
+        settings_move(cursor, view.count, code);
+        if (code == YES && view.fields) {
+            if (modwerk_settings_field(setting_module.row, setting_field.row, &view) && view.epoch == setting_epoch) {
+                choosing_setting = SETTING_FIELD;
+                setting_option = (struct settings_cursor){view.active, 0};
+            }
+        } else if (code == YES) {
+            modwerk_settings_choose(setting_module.row, setting_epoch, settings_field_index(), setting_option.row);
+        }
+        return;
+    }
+    settings_move(&setting_module, modwerk_settings_count(), code);
+    if (code == YES && modwerk_settings_read(setting_module.row, &view)) {
+        choosing_setting = SETTING_MODULE;
+        setting_field = (struct settings_cursor){0, 0};
+        setting_epoch = view.epoch;
+        setting_option = (struct settings_cursor){view.active, 0};
+        settings_move(&setting_option, view.count, 0);
+    }
+}
+#endif
 void modwerk_switches_menu(int unused)
 {
     (void)unused;
@@ -631,6 +749,13 @@ int modwerk_status_key(int code, int pressed)
         taken = code;
         return 1;
     }
+#ifdef MODWERK_SETTINGS
+    if (open == SETTINGS && (code == UP || code == DOWN || code == YES || (code == NO && choosing_setting))) {
+        settings_key(code);
+        taken = code;
+        return 1;
+    }
+#endif
     if (open == SWITCHES && (code == UP || code == DOWN || code == YES)) {
         if (code == UP && switch_cursor) --switch_cursor;
         if (code == DOWN && switch_cursor + 1u < switch_count) ++switch_cursor;
@@ -707,7 +832,9 @@ static char *number(char *s, uint32_t v)
 #define FONT 0x400ba876u     /* the small UI font, 5 px capitals (Octabam's PANEL.md) */
 #define SURFACE 0x400bf10au  /* the UI's surface descriptor: copied, with the frame as its picture */
 #define DRAW_TEXT ((void (*)(uint32_t, void *, int, int, int, const char *))0x40012bd8u)
-static uint32_t surface[7];
+#ifndef MODWERK_HOST
+static uint32_t surface[7];          /* only the device build draws through stock's text call */
+#endif
 #ifdef MODWERK_HOST
 /* The host has no stock font: its own text calls, so the transfer screens can be drawn and checked there. */
 void host_draw_text(unsigned char *frame, int x, int top, const char *t);
@@ -957,14 +1084,14 @@ static void plus(unsigned x, unsigned top, uint32_t permille, int minus)
     *s++ = minus ? '-' : '+', s = number(s, (permille + 5u) / 10u), *s++ = '%', *s = 0;
     label(x, top, t);
 }
+static void canvas(unsigned char *frame);
 static void memory_box(unsigned char *frame)
 {
     static const char *const names[3] = {"T1-4", "T5-8", "POOL"};
     uint32_t largest, pool = RUNTIME_POOL_BYTES - modwerk_runtime_free(&largest);
     const uint32_t used[3] = {share(dl_residency_words[1], modwerk_dsp_arena[1]), share(dl_residency_words[0], modwerk_dsp_arena[0]),
                               share(pool, RUNTIME_POOL_BYTES)};
-    for (unsigned i = 0; i < 7u; ++i) surface[i] = ((const volatile uint32_t *)SURFACE)[i];
-    surface[3] = (uint32_t)(uintptr_t)frame;
+    canvas(frame);
     fill(frame, 18u, 12u, 109u, 50u, 0);
     outline(frame, 18u, 12u, 109u, 50u);
     struct modwerk_dsp_budget b;
@@ -979,7 +1106,9 @@ static void memory_box(unsigned char *frame)
         label(23u, 26u, "DSP"), share_bar(frame, 45u, 26u, 40, 6, dsp, dsp_part), plus(89u, 26u, dsp_part, 0);
         label(23u, 34u, "MEM"), share_bar(frame, 45u, 34u, 40, 6, mem, mem > before ? mem - before : 0);
         plus(89u, 34u, mem > before ? mem - before : before - mem, mem < before);
-        label(23u, 42u, "POOL"), bar(frame, 45u, 42u, 40, 6, used[2], 0), percent(89u, 42u, used[2]);
+        /* CPU: the frame share against the line where the frame guard starts dropping renders */
+        const uint32_t cpu = share(pick_load, mw_frame_line);
+        label(23u, 42u, "CPU"), bar(frame, 45u, 42u, 40, 6, cpu, 0), percent(89u, 42u, cpu);
         return;
     }
     label((unsigned)(64 - TEXT_WIDTH(FONT, -1, "MEMORY USED") / 2), 15u, "MEMORY USED");
@@ -1054,38 +1183,60 @@ uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
  * picks made stopped at 62 to 74 % left a Part that played at 87 to 97 %, where a knob turn waits 0.1 to 0.2 s for
  * its redraw. The kept figure goes stale when the unit is made lighter while stopped (a stock pick, another
  * project): four seconds of playing replace it. */
+static unsigned load_was_played(void) { return modwerk_machine_stopped() && cpu_played > recent_mean(); }
+/* status.s leaves out the delay routine's ring transfers on a track whose delay is quiet: 7.4 meter points with all
+ * eight (MKII, 16 November 2026: 41.2 % to 33.8 % stopped), all of it back from the frame a scene opens the sends. The
+ * 85 % line was set from bases that always paid it, so a pick is judged as if every delay were awake: the skip buys
+ * margin and is never spent. */
+#define DELAY_WAKE 10u /* per mille a quiet track */
+static uint32_t delays_asleep(void)
+{
+    uint32_t n = 0;
+    for (unsigned t = 0; t < 8u; ++t) n += ((volatile uint32_t *)mw_delay)[17u + t] != 0; /* status.s: no read this frame */
+    return n * DELAY_WAKE;
+}
+/* With the picks since on top. Never below the newest reading when a machine left: right after STOP the four-second
+ * mean still holds the play, so FLEX and back to Grain was refused at once (owner's MKII, 21 November 2026). */
 uint32_t modwerk_status_cpu_load(void)
 {
-    uint32_t now = recent_mean();
-    return modwerk_machine_stopped() && cpu_played > now ? cpu_played : now;
+    int32_t judged = (int32_t)(load_was_played() ? cpu_played : recent_mean()) + cpu_adjust, newest = (int32_t)modwerk_status[CPU];
+    return (uint32_t)(cpu_adjust < 0 && judged < newest ? newest : judged) + delays_asleep();
 }
 void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu)
 {
     modwerk_status_cpu_refused(track, label, cpu, 0);
-    if (open == REFUSED && refused_reason == 4u && refused[1] == track) refused[0] = 5u, refused_played = cpu > recent_mean();
+    if (open == REFUSED && refused_reason == 4u && refused[1] == track) refused[0] = 5u, refused_played = load_was_played();
 }
 /* selection.c's guard (build_core.py's edit), before stock writes an FX pick: 1 when the pick asks for a module's
  * effect (`id`, on slot 0-15: FX1 T1-T8, then FX2) while the unit is busy, and the pick is then not made. A module
  * effect's control code, hooks and frame work are ColdFire time no price covers. Stock's effects and NONE always pass,
  * so a busy unit can always be made lighter. The box names the slot as an effect's ("Tn FXn"). */
-extern volatile uint32_t mw_cpu_hot, mw_cpu_refusals, mw_cpu_refusal_tracks; /* machine_registry.c */
+extern volatile uint32_t mw_cpu_hot, mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille; /* machine_registry.c */
 void modwerk_fxmap_name(unsigned id, char *out); /* fxmap.c: 16 bytes */
+int modwerk_machine_effect_resting(unsigned id);  /* machine_registry.c: effect modules that rest */
+void modwerk_machine_effect_wake(unsigned id);
 int modwerk_status_effect_busy(unsigned slot, unsigned id)
 {
     uint32_t cpu = modwerk_status_cpu_load();
-    if (slot > 15u || !fx_in(modwerk_fx_modules, id) || cpu < mw_cpu_hot) return 0;
+    if (slot > 15u || !fx_in(modwerk_fx_modules, id)) return 0;
+    /* A resting effect module brings its ColdFire hooks back into the frame: judged with them on top, then woken
+     * before stock writes the pick, so its first frame on the slot has its detours. */
+    int waking = modwerk_machine_effect_resting(id);
+    if (cpu + (waking ? mw_wake_mille : 0u) < mw_cpu_hot) {
+        if (waking) modwerk_machine_effect_wake(id);
+        return 0;
+    }
     char name[16];
     modwerk_fxmap_name(id, name);
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
     modwerk_status_cpu_refused(slot & 7u, name, cpu, 0);
     if (open == REFUSED && refused_reason == 4u && refused[0] == 4u)
-        refused[0] = 5u, refused[1] = slot, refused_machine = 0, refused_played = cpu > recent_mean();
+        refused[0] = 5u, refused[1] = slot, refused_machine = 0, refused_played = load_was_played();
     return 1;
 }
 static void refused_box(unsigned char *frame)
 {
-    for (unsigned i = 0; i < 7u; ++i) surface[i] = ((const volatile uint32_t *)SURFACE)[i];
-    surface[3] = (uint32_t)(uintptr_t)frame;
+    canvas(frame);
     fill(frame, 18u, 12u, 109u, 50u, 0);
     outline(frame, 18u, 12u, 109u, 50u);
     unsigned slot = refused[1], c = refused_core;
@@ -1243,6 +1394,43 @@ void modwerk_status_draw(unsigned char *frame)
 {
     MW_STAMP(22); status_draw(frame); MW_STAMP(13);
 }
+#ifdef MODWERK_SETTINGS
+static void settings_page(unsigned char *frame)
+{
+    struct modwerk_setting_view view;
+    if (choosing_setting && (!modwerk_settings_field(setting_module.row, settings_field_index(), &view) || view.epoch != setting_epoch))
+        choosing_setting = 0;
+    struct settings_cursor *cursor = choosing_setting ? (view.fields ? &setting_field : &setting_option) : &setting_module;
+    unsigned count = choosing_setting ? view.count : modwerk_settings_count();
+    settings_move(cursor, count, 0);
+    dialog(frame, choosing_setting ? view.label : "SETTINGS");
+    if (!count) label(X0 + 6u, Y0 + 17u, "NO MODULE HAS A SETTING.");
+    for (unsigned i = 0; i < SETTING_ROWS && cursor->top + i < count; ++i) {
+        unsigned row = cursor->top + i, top = Y0 + 13u + 8u * i;
+        if (row == cursor->row) for (unsigned k = 0; k < 3u; ++k)
+            fill(frame, X0 + 3u + k, top + k, X0 + 3u + k, top + 4u - k, 1);
+        if (choosing_setting && view.fields) {
+            label(X0 + 9u, top, view.choices[row]);
+            const char *value = view.values[row];
+            int width = TEXT_WIDTH(FONT, -1, value);
+            int edge = count > SETTING_ROWS ? X1 - 12 : X1 - 4;
+            if (*value && edge - width >= (int)(X0 + 12u) + TEXT_WIDTH(FONT, -1, view.choices[row]))
+                label((unsigned)(edge - width), top, value);
+        } else if (choosing_setting) {
+            outline(frame, X0 + 9u, top, X0 + 13u, top + 4u);
+            if (row == view.active) fill(frame, X0 + 10u, top + 1u, X0 + 12u, top + 3u, 1);
+            label(X0 + 17u, top, view.choices[row]);
+        } else if (modwerk_settings_read(row, &view)) label(X0 + 9u, top, view.label);
+    }
+    if (cursor->top) arrow(frame, X1 - 9u, Y0 + 13u, 1);
+    if (cursor->top + SETTING_ROWS < count) arrow(frame, X1 - 9u, Y0 + 45u, 0);
+    if (count) {
+        button(frame, X0 + 4u, Y1 - 10u, "YES");
+        label(X0 + 30u, Y1 - 8u, choosing_setting && !view.fields ? "SELECT" : "OPEN");
+    }
+    button(frame, X1 - 24u, Y1 - 10u, "NO");
+}
+#endif
 static void status_draw(unsigned char *frame)
 {
     if (transfer == T_SYNC || transfer == T_SYNC_START) { sync_box(frame); return; }
@@ -1253,6 +1441,9 @@ static void status_draw(unsigned char *frame)
     if (open == TEST) { test_page(frame); return; }
     if (open == MODULE_LOAD) { modules_page(frame); return; }
     if (open == SWITCHES) { switches_page(frame); return; }
+#ifdef MODWERK_SETTINGS
+    if (open == SETTINGS) { settings_page(frame); return; }
+#endif
     if (open != SHOWN) return;
     /* The title names the base by its version (owner, 16 November 2026: a number a player can read and say). */
     static char title[24] = "MODWERK BASE ";

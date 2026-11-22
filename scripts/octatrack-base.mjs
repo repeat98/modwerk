@@ -38,22 +38,22 @@ import { keepSymbols } from '../src/dev/address-names.ts'
 const { values: args } = parseArgs({ options: {
   stock: { type: 'string' }, upstream: { type: 'string', default: join(homedir(), '.cache/modwerk-upstream/elekloader') },
   write: { type: 'boolean', default: false }, out: { type: 'string' },
-  'usb-midi': { type: 'boolean', default: false }, 'usb-audio': { type: 'string' }, 'site-events': { type: 'boolean', default: false },
+  'packaged-usb-audio': { type: 'boolean', default: false }, 'usb-midi': { type: 'boolean', default: false }, 'usb-audio': { type: 'string' }, 'site-events': { type: 'boolean', default: false },
   'table-owners': { type: 'boolean', default: false },
   'resident-stock-hooks': { type: 'boolean', default: false }, 'resident-on-demand': { type: 'boolean', default: false },
   'saved-set-export': { type: 'boolean', default: false },
   controllers: { type: 'boolean', default: false }, 'usb-audio-variants': { type: 'boolean', default: false },
   'cached-modules': { type: 'boolean', default: false },
-  'module-sets': { type: 'boolean', default: false }, 'sample-editor': { type: 'boolean', default: false },
+  'module-sets': { type: 'boolean', default: false }, 'sample-editor': { type: 'boolean', default: false }, 'part-menu': { type: 'boolean', default: false },
   'module-ui-roots': { type: 'boolean', default: false },
   beta: { type: 'boolean', default: false },
 } })
 if (!args.stock) throw new Error('Usage: npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--beta] [--upstream ELEKLOADER] [--write] [--out NEW-DIR]')
 // The beta base's flags. A regeneration that spelled them out by hand dropped --cached-modules once (20 October 2026),
 // and every base after it ran module code uncached: so --write takes only these, through --beta.
-const BETA = { 'usb-midi': true, 'usb-audio': 'USB AUDIO OUT TRACKS MAIN CUE', 'site-events': true, 'table-owners': true,
-  'resident-stock-hooks': true, 'resident-on-demand': true, controllers: true, 'module-sets': true, 'usb-audio-variants': true,
-  'cached-modules': true, 'sample-editor': true, 'module-ui-roots': true }
+const BETA = { 'usb-midi': true, 'packaged-usb-audio': true, 'site-events': true, 'table-owners': true,
+  'resident-stock-hooks': true, 'resident-on-demand': true, controllers: true, 'module-sets': true,
+  'cached-modules': true, 'sample-editor': true, 'module-ui-roots': true, 'part-menu': true }
 if (args.beta) {
   const own = Object.keys(args).filter(flag => !['stock', 'upstream', 'write', 'out', 'beta'].includes(flag) && process.argv.some(arg => arg === '--' + flag || arg.startsWith('--' + flag + '=')))
   if (own.length) throw new Error('--beta is every flag of the beta base; leave out ' + own.map(flag => '--' + flag).join(', ') + '.')
@@ -78,12 +78,12 @@ if (args['resident-on-demand'] && !args['resident-stock-hooks']) throw new Error
 if (args['resident-stock-hooks'] && !args['resident-on-demand']) throw new Error('--resident-stock-hooks needs --resident-on-demand: Analog BD’s engine is its package’s.')
 const work = mkdtempSync(join(tmpdir(), 'modwerk-base-')), core = join(work, 'core')
 const buildLayout = (layout, output, ...rest) => python('build_core.py', '--stock', args.stock, '--upstream', args.upstream, '--output', output, '--dsp-loader',
-  ...(args['usb-midi'] ? ['--usb-midi'] : []), ...(layout ? ['--usb-audio', layout] : []),
+  ...(args['usb-midi'] ? ['--usb-midi'] : []), ...(args['packaged-usb-audio'] ? ['--packaged-usb-audio'] : []), ...(layout ? ['--usb-audio', layout] : []),
   ...(args['site-events'] ? ['--site-events'] : []), ...(args['cached-modules'] ? ['--cached-modules'] : []),
   ...(args['table-owners'] ? ['--table-owners', join(adapters, 'table-owners.json')] : []),
   ...(args['resident-stock-hooks'] ? ['--resident-stock-hooks'] : []), ...(args['resident-on-demand'] ? ['--resident-on-demand'] : []),
   ...(args['saved-set-export'] ? ['--saved-set-export'] : []), ...(args['module-sets'] ? ['--module-sets'] : []),
-  ...(args['sample-editor'] ? ['--sample-editor'] : []), ...(args['module-ui-roots'] ? ['--module-ui-roots'] : []), ...rest)
+  ...(args['sample-editor'] ? ['--sample-editor'] : []), ...(args['part-menu'] ? ['--part-menu'] : []), ...(args['module-ui-roots'] ? ['--module-ui-roots'] : []), ...rest)
 const build = (output, ...rest) => buildLayout(args['usb-audio'], output, ...rest)
 const defaultLayout = USB_AUDIO_LAYOUTS.find(layout => layout.key === args['usb-audio'])?.id
 if (args['usb-audio-variants'] && (!args['usb-midi'] || !defaultLayout)) throw new Error('--usb-audio-variants needs --usb-midi and a --usb-audio layout, the default variant.')
@@ -145,6 +145,10 @@ if (args['usb-audio-variants']) {
   }
   binding.variants = identities
   same(Buffer.from(JSON.stringify({ schema: 1, packageSha256: sha(Buffer.from(defaultText)), variants }) + '\n'), committed.variants)
+}
+if (args['packaged-usb-audio']) {
+  binding.variants = { off: binding.identity }
+  same(Buffer.from(JSON.stringify({ schema: 1, packageSha256: sha(readFileSync(committed.package)), variants: [] }) + '\n'), committed.variants)
 }
 same(Buffer.from(JSON.stringify(binding, null, 1) + '\n'), committed.binding)
 // The base's version, for people (elekloader/base-version.json, built into the base): base-versions.json keeps every

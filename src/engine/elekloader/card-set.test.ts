@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
-import { cardSetGeneration, encodeCardSet } from './card-set'
+import { cardSetGeneration, encodeCardSet, forCardImport } from './card-set'
 import { prepareCardSet } from './module-set'
 import { SAVED_SET_CAPACITY } from './upload-wire'
 import { layoutIdentity } from './base-variants'
@@ -32,7 +32,20 @@ describe('the module set file for the card', () => {
     // Changed on purpose? Write this hex to the fixture; the C test then proves the base still takes it.
     expect(hex(fixture())).toBe(readFileSync(FIXTURE, 'utf8').trim())
   })
-  it('outranks the unit’s own saves and earlier files, and leaves the unit room to count on', () => {
+  it('reimports an old or slow-clock export ahead of a later USB save and keeps that recovery slot intact', () => {
+    const original = fixture(), saved = encodeCardSet(HOST_BASE, [pkg(1), pkg(2), pkg(3)], 1700000001)
+    const before = saved.slice()
+    for (const selected of [original, encodeCardSet(HOST_BASE, [pkg(1), pkg(2)], 1)]) {
+      const copy = forCardImport(selected, saved)
+      expect(new DataView(copy.buffer).getUint32(8)).toBe(1700000002)
+      expect(copy.subarray(12)).toEqual(selected.subarray(12))
+      expect(saved).toEqual(before)
+    }
+    expect(() => forCardImport(original, new Uint8Array(8))).toThrow(/complete/)
+    new DataView(saved.buffer).setUint32(8, 0xfffffffe)
+    expect(() => forCardImport(original, saved)).toThrow(/generation is full/)
+  })
+  it('dates a fresh export and leaves the unit room to count on', () => {
     expect(cardSetGeneration(Date.UTC(2026, 10, 11))).toBe(1794355200)
     expect(cardSetGeneration(1000 * 1000)).toBeLessThan(cardSetGeneration(1001 * 1000))
     for (const generation of [0, 1.5, 0xffffffff]) expect(() => encodeCardSet(HOST_BASE, [pkg(1)], generation)).toThrow(/generation/)

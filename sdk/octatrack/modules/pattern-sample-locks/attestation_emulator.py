@@ -9,9 +9,10 @@ def verify(port,package,root):
     parser=importlib.util.module_from_spec(spec);spec.loader.exec_module(parser)
     image,offsets,sites,copies,fills=parser.unpack_recipe(package)
     assert not copies and not fills,'this attestation is for the original CF-only prototype'
-    opener=next(row for row in sites if row[0]==0x4002dc68)
-    assert len(sites)==3 and opener[2][:2]==b'\x4e\xb9' and opener[3]==(2,)
-    base=int.from_bytes(port.peek(0x4002dc6a,4),'big')-struct.unpack_from('>I',opener[2],2)[0]
+    assert not sites,'0.1.9 patches no stock site: its Part Edit row is an ot_part_menu record'
+    exact=port.profile_symbols;assert exact,'attestation needs the exact package profile symbols'
+    row=int.from_bytes(port.peek(port.base_symbols['modwerk_runtime_event_row']+4*(53-4),4),'big')
+    base=int.from_bytes(port.peek(row,4),'big')-exact['psl_part_menu']
     actual=b''.join(port.peek(base+n,min(4096,len(image)-n)) for n in range(0,len(image),4096))
     assert actual==parser.placed(image,offsets,base),'live initialized image differs from the exact package'
     for address,_,new,relocs,*hashed in sites:

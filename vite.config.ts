@@ -5,6 +5,7 @@ import { forumPages } from './scripts/forum-pages.ts'
 import { sitePages } from './scripts/site-pages.ts'
 import { elekloaderSite } from './scripts/elekloader-vendor.ts'
 import { moduleReleases } from './scripts/module-releases'
+import { octatrackPublishedDownloads } from './scripts/octatrack-published-downloads.ts'
 import { seo } from './scripts/seo.ts'
 
 export default defineConfig(({ command, mode }) => {
@@ -13,7 +14,7 @@ export default defineConfig(({ command, mode }) => {
  if (api && !['https:', 'http:'].includes(new URL(api).protocol)) throw new Error('Invalid community API protocol.')
  const csp = `default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: ${origin}; media-src 'self' blob: ${origin}; font-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self' ${origin}; frame-src https://www.youtube-nocookie.com https://ko-fi.com https://w.soundcloud.com; base-uri 'self'; form-action 'none'; object-src 'none'`
  return {
-  plugins: [react(), modulePages(), forumPages(api), sitePages(), seo(), moduleReleases(), elekloaderSite(process.cwd()), { name:'static-security-policy', transformIndexHtml() {
+  plugins: [react(), modulePages(), forumPages(api), sitePages(), seo(), octatrackPublishedDownloads(), moduleReleases(), elekloaderSite(process.cwd()), { name:'static-security-policy', transformIndexHtml() {
    // GitHub Pages does not apply Cloudflare's _headers file. Vite HMR needs a separate dev policy.
    return command === 'build' ? [
     { tag:'meta', attrs:{ 'http-equiv':'Content-Security-Policy', content:csp }, injectTo:'head-prepend' },

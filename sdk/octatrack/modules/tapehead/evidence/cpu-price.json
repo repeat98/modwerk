@@ -1,0 +1,53 @@
+{
+  "module": "tapehead",
+  "version": "0.1.2-experimental",
+  "base": "development twin d3d71297 of base 0.7.8 (main 02dfa20ca)",
+  "scene": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE",
+  "seconds": 8,
+  "measuredAt": "2026-11-18T13:14:59.997Z",
+  "result": {
+    "id": "tapehead",
+    "version": "0.1.2-experimental",
+    "before": {
+      "frame": 41.3,
+      "frameMax": 75.6,
+      "frames": 22776,
+      "skipped": 0,
+      "cpu": 63.5,
+      "dsp1to4": 38.5,
+      "dsp5to8": 45.6
+    },
+    "atRest": {
+      "frame": 41.1,
+      "frameMax": 75.8,
+      "frames": 22768,
+      "skipped": 0,
+      "cpu": 63.8,
+      "dsp1to4": 38.7,
+      "dsp5to8": 45.6
+    },
+    "atRestAdds": {
+      "frame": -0.2,
+      "cpu": 0.3,
+      "dsp1to4": 0.2,
+      "dsp5to8": 0
+    },
+    "inUse": {
+      "frame": 41,
+      "frameMax": 74.3,
+      "frames": 22770,
+      "skipped": 0,
+      "cpu": 61.3,
+      "dsp1to4": 47.8,
+      "dsp5to8": 45.3
+    },
+    "inUseAdds": {
+      "frame": -0.3,
+      "cpu": -2.2,
+      "dsp1to4": 9.3,
+      "dsp5to8": -0.3
+    },
+    "inUseOn": "T1 FX2",
+    "rolledBack": true
+  }
+}

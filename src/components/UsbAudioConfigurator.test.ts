@@ -1,3 +1,4 @@
+import { publishedUsbAudioPackage } from '../config/published-usb-audio.fixture'
 import { createElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
@@ -20,18 +21,23 @@ function card(module = usb, selected = false) {
 
 describe('USB Audio setup before adding', () => {
   it('offers configuration instead of quick-add from the library and comparison', () => {
-    expect(card()).toContain('aria-label="Configure USB Audio"')
-    expect(card()).not.toContain('aria-label="Add USB Audio to configuration"')
+    const action = publishedUsbAudioPackage ? 'Add USB Audio to configuration' : 'Configure USB Audio'
+    expect(card()).toContain(`aria-label="${action}"`)
     const comparison = render(createElement(ModuleComparison, { ids: [USB_AUDIO_MODULE], selected: [], digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [] }, onToggle: noop, onToggleDigi: noop, onClose: noop }))
-    expect(comparison).toContain('>Configure USB Audio</button>')
-    expect(comparison).not.toContain('>Add USB Audio</button>')
+    expect(comparison).toContain(publishedUsbAudioPackage ? '>Add USB Audio</button>' : '>Configure USB Audio</button>')
   })
-  it('puts the add action inside the setup, while the hero opens configuration', () => {
+  it('offers the published install action and the controls for that release', () => {
     const html = render(createElement(ModuleDetail, { module: usb, selected: false, onToggle: noop, onConfigureUsbAudio: noop }))
     const [hero, setup] = html.split('id="usb-setup"')
-    expect(hero).toContain('Configure USB Audio</button>')
-    expect(hero).not.toContain('Add to configuration</button>')
-    expect(setup).toContain('Add to configuration</button>')
+    if (publishedUsbAudioPackage) {
+      expect(hero).toContain('Add to configuration</button>')
+      expect(html).toContain('PROJ → MODWERK → SETTINGS → USB AUDIO')
+      expect(setup).toBeUndefined()
+    } else {
+      expect(hero).toContain('Configure USB Audio</button>')
+      expect(hero).not.toContain('Add to configuration</button>')
+      expect(setup).toContain('Add to configuration</button>')
+    }
   })
   it('retains removal for selected USB and quick-add for other modules', () => {
     expect(card(usb, true)).toContain('aria-label="Remove USB Audio from configuration"')

@@ -1,0 +1,1 @@
+- The site builds module thumbnails two at a time so catalog checks can keep reading their files while the images render.

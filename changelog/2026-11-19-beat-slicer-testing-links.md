@@ -1,0 +1,1 @@
+Beat Slicer: the testing guide's links to the integration readiness, writer coverage, preview guard, boot observation, recorder boundary and USB test notes work again; they pointed at files that stayed in sdk/drafts/beat-slicer/ when the module moved to sdk/octatrack/modules/.

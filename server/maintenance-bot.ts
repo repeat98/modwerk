@@ -1,5 +1,6 @@
 import type { Database, Env, User } from './platform'
 import { digest, HttpError, jsonBody, response } from './security'
+import { finishPilotCase, pilotRecords, recordPilot } from './eval-pilot'
 import { boardReply, boardUser } from './agent-board'
 import { forum } from './forum'
 import { shoutbox } from './shoutbox'
@@ -73,7 +74,7 @@ function buttons(row: Pick<ActionRow, 'id' | 'tier'>, expanded = false) {
 async function state(db: Database) {
   const rows = (await db.prepare('SELECT key,value FROM maintenance_bot_state').all<{ key: string; value: string }>()).results
   const value = (key: string) => rows.find(row => row.key === key)?.value ?? ''
-  return { paused: value('paused') === '1', fingerprint: value('fingerprint'), upstream: value('upstream') }
+  return { paused: value('paused') === '1', fingerprint: value('fingerprint'), upstream: value('upstream'), pilotReported: value('eval-pilot-reported') === '1' }
 }
 const setState = (db: Database, key: string, value: string) => db.prepare('INSERT INTO maintenance_bot_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(key, value).run()
 
@@ -97,20 +98,14 @@ function proposal(value: unknown) {
 /** Records new proposals once; a proposal the bot already made (same id) keeps its first decision. */
 async function propose(env: Env, db: Database, body: Record<string, unknown>) {
   if (!Array.isArray(body.actions) || body.actions.length > 50) throw new HttpError(400, 'Send at most 50 actions.')
-  const items = body.actions.map(proposal), created: string[] = [], { chat } = configured(env), at = now()
+  const items = body.actions.map(proposal), created: string[] = [], at = now()
   for (const item of items) {
     const status = item.tier === 'notify' ? 'approved' : 'pending'
     const due = item.tier === 'window' ? at + Math.round(item.hours * 3600) : at
     const inserted = await db.prepare('INSERT INTO maintenance_bot_actions(id,kind,target,tier,summary,reason,payload_json,status,due_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO NOTHING RETURNING id')
       .bind(item.id, item.kind, item.target, item.tier, item.summary, item.reason, item.json, status, due, at, at).first()
-    if (!inserted) continue
-    created.push(item.id)
-    if (item.tier === 'notify') continue
-    // A lost Telegram message must not lose the action: the daily report lists every pending one again.
-    try {
-      const sent = await telegram(env, 'sendMessage', { chat_id: chat, text: actionText({ ...item, due_at: due }), reply_markup: buttons(item), link_preview_options: { is_disabled: true } })
-      if (sent?.message_id) await db.prepare('UPDATE maintenance_bot_actions SET telegram_message_id=? WHERE id=?').bind(sent.message_id, item.id).run()
-    } catch (error) { console.error('Maintenance bot could not send action ' + item.id + ': ' + (error instanceof Error ? error.message : String(error))) }
+    if (inserted) created.push(item.id)
+    if (!inserted || item.tier !== 'notify') await deliverNotice(env, db, item.id)
   }
   return { created }
 }
@@ -118,16 +113,42 @@ async function propose(env: Env, db: Database, body: Record<string, unknown>) {
 const PUBLIC = 'id,kind,target,tier,summary,reason,payload_json,status,due_at,decided_at,result,created_at,updated_at'
 const publicRow = ({ payload_json, ...row }: Omit<ActionRow, 'telegram_message_id'>) => ({ ...row, payload: JSON.parse(payload_json) as unknown })
 
-async function due(db: Database) {
+// Before delivery, due_at - created_at holds the original proposal's window, including for older rows.
+// Reserve the send briefly so overlapping passes share one notice. A stalled sender can be retried.
+async function deliverNotice(env: Env, db: Database, id: string) {
+  const at = now(), lease = at + 90
+  const row = await db.prepare(`UPDATE maintenance_bot_actions SET updated_at=? WHERE id=? AND status='pending'
+    AND tier IN ('ask','window') AND telegram_message_id IS NULL AND updated_at<=? RETURNING ${PUBLIC}`)
+    .bind(lease, id, at).first<ActionRow>()
+  if (!row) return
+  const seconds = row.due_at - row.created_at
+  try {
+    const sent = await telegram(env, 'sendMessage', { chat_id: configured(env).chat, text: actionText({ ...row, due_at: at + seconds }), reply_markup: buttons(row), link_preview_options: { is_disabled: true } })
+    if (!sent?.message_id) throw new Error('Missing Telegram message ID')
+    const delivered = now()
+    await db.prepare('UPDATE maintenance_bot_actions SET telegram_message_id=?,due_at=?,updated_at=? WHERE id=? AND updated_at=? AND telegram_message_id IS NULL')
+      .bind(sent.message_id, delivered + seconds, delivered, id, lease).run()
+  } catch (error) {
+    await db.prepare('UPDATE maintenance_bot_actions SET updated_at=? WHERE id=? AND updated_at=? AND telegram_message_id IS NULL').bind(now(), id, lease).run()
+    console.error('Maintenance bot could not send action ' + id + ': ' + (error instanceof Error ? error.message : String(error)))
+  }
+}
+
+const eligible = "status='approved' OR (status='pending' AND tier='window' AND telegram_message_id IS NOT NULL AND due_at<=?)"
+
+async function due(env: Env, db: Database) {
   if ((await state(db)).paused) return { paused: true, actions: [] }
-  const rows = (await db.prepare(`SELECT ${PUBLIC} FROM maintenance_bot_actions WHERE status='approved' OR (status='pending' AND tier='window' AND due_at<=?) ORDER BY created_at LIMIT 50`).bind(now()).all<ActionRow>()).results
+  const pending = await db.prepare(`SELECT id FROM maintenance_bot_actions WHERE status='pending' AND tier IN ('ask','window')
+    AND telegram_message_id IS NULL AND updated_at<=? ORDER BY updated_at,id LIMIT 8`).bind(now()).all<{ id: string }>()
+  for (const row of pending.results) await deliverNotice(env, db, row.id)
+  const rows = (await db.prepare(`SELECT ${PUBLIC} FROM maintenance_bot_actions WHERE ${eligible} ORDER BY created_at LIMIT 50`).bind(now()).all<ActionRow>()).results
   return { paused: false, actions: rows.map(publicRow) }
 }
 
 /** One executor at a time: a run claims an action before acting, so two overlapping runs never post twice. */
 async function claim(db: Database, id: string) {
   const at = now()
-  const row = await db.prepare(`UPDATE maintenance_bot_actions SET status='running',updated_at=? WHERE id=? AND (status='approved' OR (status='pending' AND tier='window' AND due_at<=?)) RETURNING id`).bind(at, id, at).first()
+  const row = await db.prepare(`UPDATE maintenance_bot_actions SET status='running',updated_at=? WHERE id=? AND (${eligible}) RETURNING id`).bind(at, id, at).first()
   if (!row) throw new HttpError(409, 'That action was decided, claimed or is not due.')
   return { ok: true }
 }
@@ -222,7 +243,7 @@ async function webhook(request: Request, env: Env, db: Database) {
 }
 
 type TodoRow = { id: string; target: number; command: string; note: string; urgent: number; status: string; created_at: number; updated_at: number }
-const COMMAND = /^(\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?|npm run board -- reply [0-9a-f-]{36}|gh run view \d{1,20} --log-failed)$/
+const COMMAND = /^(\/modwerk-[a-z-]{2,30}(?: [^\n]{1,100})?|npm run board -- (?:reply|followups) [0-9a-f-]{36}|gh run view \d{1,20} --log-failed)$/
 
 /** Work for a session at the owner's computer. The bot adds and drops; /modwerk-todo lists and ticks off. */
 async function addTodos(env: Env, db: Database, body: Record<string, unknown>) {
@@ -392,7 +413,7 @@ export async function dispatchMaintenance(env: Env, db: Database, now = new Date
  * The site publishes only owner merges (scripts/release-approval.mjs), and an owner merge starts the push workflows.
  * GitHub refuses unless the head is still exactly the commit the bot checked.
  */
-async function mergeAsOwner(env: Env, body: Record<string, unknown>) {
+async function mergeAsOwner(env: Env, body: Record<string, unknown>, message?: string) {
   const token = env.MAINTENANCE_BOT_GITHUB_TOKEN?.trim(), { number, sha, method } = body
   if (!token) throw new HttpError(503, 'The bot has no GitHub token to merge with.')
   if (!Number.isSafeInteger(number) || (number as number) < 1 || typeof sha !== 'string' || !/^[a-f0-9]{40}$/.test(sha) || (method !== 'merge' && method !== 'squash')) throw new HttpError(400, 'A merge needs a number, the checked commit and merge or squash.')
@@ -400,11 +421,64 @@ async function mergeAsOwner(env: Env, body: Record<string, unknown>) {
   const reply = await fetch('https://api.github.com/repos/' + repository + '/pulls/' + number + '/merge', {
     method: 'PUT', redirect: 'manual', signal: AbortSignal.timeout(20000),
     headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'User-Agent': 'modwerk-maintenance-bot', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sha, merge_method: method }),
+    body: JSON.stringify({ sha, merge_method: method, ...(message ? { commit_message: message } : {}) }),
   })
   const result = await reply.json().catch(() => null) as { merged?: boolean; sha?: string; message?: string } | null
   if (!reply.ok || !result?.merged || !result.sha) throw new HttpError(409, 'GitHub refused the merge: ' + (result?.message ?? 'HTTP ' + reply.status))
   return { merged: true, sha: result.sha }
+}
+
+/** Save the human approval before sending the merge to GitHub. */
+async function reviewedMerge(env: Env, db: Database, body: Record<string, unknown>) {
+  if (!body.review || typeof body.review !== 'object') throw new HttpError(400, 'A review receipt is required.')
+  const review = body.review as Record<string, unknown>, number = Number(body.number)
+  const { base, id, actorId, role, login, checkRun } = review
+  if (!Number.isSafeInteger(number) || number < 1 || body.method !== 'merge' || !/^[a-f0-9]{40}$/.test(String(base)) ||
+    !/^[a-f0-9]{40}$/.test(String(body.sha)) || ![id, actorId, checkRun].every(n => Number.isSafeInteger(n) && Number(n) > 0) ||
+    !/^[a-z0-9-]{1,39}$/i.test(String(login)) || !['maintainer','device-reviewer'].includes(String(role))) throw new HttpError(400, 'Invalid review receipt.')
+  if ((await state(db)).paused) throw new HttpError(409, 'Maintenance is paused.')
+  const veto = await db.prepare("SELECT 1 FROM maintenance_bot_actions WHERE target=? AND kind='merge' AND status='vetoed' AND json_extract(payload_json,'$.head')=?").bind(number,body.sha).first()
+  if (veto) throw new HttpError(409, 'The owner stopped this merge.')
+  const key = (await digest('github-review:' + number + ':' + id)).slice(0,16), stamp = now()
+  const summary = 'Merge #' + number + ' approved by @' + login
+  const claim = await db.prepare(`INSERT INTO maintenance_bot_actions(id,kind,target,tier,summary,reason,payload_json,status,due_at,decided_at,created_at,updated_at)
+    VALUES(?,'review_merge',?,'notify',?,?,?,'running',?,?,?,?)
+    ON CONFLICT(id) DO UPDATE SET status='running',updated_at=excluded.updated_at WHERE status='failed' OR (status='running' AND updated_at<?)`)
+    .bind(key,number,summary,String(role),JSON.stringify(body),stamp,stamp,stamp,stamp,stamp-300).run()
+  if (!claim.meta.changes) {
+    const row = await db.prepare('SELECT status,result FROM maintenance_bot_actions WHERE id=?').bind(key).first<ActionRow>()
+    if (row?.status === 'done') return { merged: true, sha: row.result }
+    throw new HttpError(409, 'This review is being processed.')
+  }
+  const message = ['Modwerk reviewed merge', 'Base: ' + base, 'Head: ' + body.sha, 'Review: ' + id, 'Approved by: ' + login + ' (' + actorId + ', ' + role + ')'].join('\n')
+  const read = async (path: string) => {
+    const token = env.MAINTENANCE_BOT_GITHUB_TOKEN?.trim()
+    if (!token) throw new HttpError(503, 'The bot has no GitHub token to merge with.')
+    const repo = env.GITHUB_REPOSITORY?.trim() || 'repeat98/modwerk'
+    const reply = await fetch('https://api.github.com/repos/' + repo + path, { headers: { Authorization: 'Bearer ' + token, 'User-Agent': 'modwerk-maintenance-bot' }, redirect: 'manual', signal: AbortSignal.timeout(15000) })
+    if (!reply.ok) throw new HttpError(502, 'Unable to verify reviewed merge on GitHub.')
+    return reply.json()
+  }
+  try {
+    const pull = await read('/pulls/' + number) as { state: string; draft: boolean; merged: boolean; merge_commit_sha: string; head: { sha: string }; base: { ref: string; sha: string } }
+    let result
+    if (pull.merged) {
+      // Recover a successful GitHub write if the Worker stopped before recording its result.
+      const commit = await read('/git/commits/' + pull.merge_commit_sha) as { message: string; parents: { sha: string }[] }
+      if (!commit.message.endsWith('\n\n' + message) || commit.parents.length !== 2 || commit.parents[0].sha !== base || commit.parents[1].sha !== body.sha) throw new HttpError(409, 'This PR was merged under a different decision.')
+      result = { merged: true, sha: pull.merge_commit_sha }
+    } else {
+      if (pull.state !== 'open' || pull.draft || pull.base.ref !== 'main' || pull.base.sha !== base || pull.head.sha !== body.sha) throw new HttpError(409, 'The reviewed PR changed before merge.')
+      const decision = await read('/pulls/' + number + '/reviews/' + id) as { state: string; commit_id: string; user: { id: number } }
+      if (decision.state !== 'APPROVED' || decision.commit_id !== body.sha || decision.user.id !== actorId) throw new HttpError(409, 'The GitHub approval changed before merge.')
+      result = await mergeAsOwner(env, body, message)
+    }
+    await db.prepare("UPDATE maintenance_bot_actions SET status='done',result=?,updated_at=? WHERE id=?").bind(result.sha,now(),key).run()
+    return result
+  } catch (error) {
+    await db.prepare("UPDATE maintenance_bot_actions SET status='failed',result=?,updated_at=? WHERE id=?").bind(String(error).slice(0,200),now(),key).run()
+    throw error
+  }
 }
 
 /** Routes under /api/maintenance-bot/. They run server-to-server, before the Origin check. */
@@ -417,9 +491,19 @@ export async function maintenanceBotRoutes(request: Request, env: Env, db: Datab
   if (who && route === '/todos' && method === 'GET') return response(await openTodos(db))
   if (who && todo && method === 'POST') return response(await todoStatus(db, todo[1], await jsonBody(request)))
   if (who !== 'bot') throw new HttpError(401, who ? 'Only the bot may do that.' : 'Wrong maintenance bot key. The owner signs in with npm run board -- login.')
+  if (route === '/eval-pilot' && method === 'GET') return response({ records: await pilotRecords(db) })
+  const pilotCase = route.match(/^\/eval-pilot\/([1-9]\d{0,6})$/)
+  if (method === 'POST' && (route === '/eval-pilot' || pilotCase)) {
+    if ((await state(db)).paused) throw new HttpError(409, 'Maintenance is paused.')
+    const body = await jsonBody(request)
+    if (pilotCase) await finishPilotCase(db, Number(pilotCase[1]), body)
+    else await recordPilot(db, body)
+    return response({ ok: true })
+  }
   if (route === '/todos' && method === 'POST') return response(await addTodos(env, db, await jsonBody(request, 64 * 1024)))
   if (route === '/diagnostics' && method === 'GET') return response(await diagnostics(db))
   if (route === '/merge' && method === 'POST') return response(await mergeAsOwner(env, await jsonBody(request)))
+  if (route === '/merge/reviewed' && method === 'POST') return response(await reviewedMerge(env, db, await jsonBody(request)))
   if (route === '/forum' && method === 'GET') return response(await forumActivity(env, db))
   // TARS's profile picture, through the site's own avatar upload (size, type and storage checks included).
   if (route === '/tars/avatar' && method === 'POST') {
@@ -435,13 +519,14 @@ export async function maintenanceBotRoutes(request: Request, env: Env, db: Datab
     const body = await jsonBody(request)
     if (body.fingerprint !== undefined && (typeof body.fingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(body.fingerprint))) throw new HttpError(400, 'A fingerprint is a SHA-256 hex digest.')
     if (body.upstream !== undefined && (typeof body.upstream !== 'string' || body.upstream.length > 4000)) throw new HttpError(400, 'The upstream heads are a short JSON text.')
-    if (body.fingerprint === undefined && body.upstream === undefined) throw new HttpError(400, 'Send a fingerprint or the upstream heads.')
+    if (body.fingerprint === undefined && body.upstream === undefined && body.pilotReported !== true) throw new HttpError(400, 'Send a fingerprint or the upstream heads.')
+    if (body.pilotReported === true) await setState(db, 'eval-pilot-reported', '1')
     if (typeof body.fingerprint === 'string') await setState(db, 'fingerprint', body.fingerprint)
     if (typeof body.upstream === 'string') await setState(db, 'upstream', body.upstream)
     return response({ ok: true })
   }
   if (route === '/actions' && method === 'POST') return response(await propose(env, db, await jsonBody(request, 256 * 1024)))
-  if (route === '/actions/due' && method === 'GET') return response(await due(db))
+  if (route === '/actions/due' && method === 'GET') return response(await due(env, db))
   if (route === '/actions/recent' && method === 'GET') return response(await recent(db, Number(new URL(request.url).searchParams.get('hours') ?? 24) || 24))
   const item = route.match(/^\/actions\/([a-f0-9]{16})\/(claim|result)$/)
   if (item && method === 'POST') return response(item[2] === 'claim' ? await claim(db, item[1]) : await finish(env, db, item[1], await jsonBody(request)))

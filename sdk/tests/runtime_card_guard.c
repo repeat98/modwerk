@@ -13,7 +13,7 @@
 #define put32 card_put32
 #include "../../sdk/machines/octatrack/elekloader/modset.c"
 void modwerk_diag_set(void) {} /* diag.c's log record of the set: not under test here */
-void modwerk_diag_refused(uint32_t module, uint32_t refusal) { (void)module; (void)refusal; }
+void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint32_t largest, uint32_t check) { (void)module; (void)refusal; (void)used; (void)largest; (void)check; }
 #undef candidate
 #undef candidate_bytes
 #undef slot

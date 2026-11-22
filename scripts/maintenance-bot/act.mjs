@@ -7,7 +7,8 @@ import { tagDiscordLinks } from '../../server/site-link-tags.ts'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { TODO_COMMAND, actionId, classify } from './policy.mjs'
-import { MARKER, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
+import { MARKER, approveRun, boardGet, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
+import { pilotReport } from './eval-pilot.mjs'
 import { dailyReport } from './report.mjs'
 
 const daily = process.env.BOT_MODE === 'daily', dir = process.env.BOT_DIR ?? 'bot'
@@ -24,11 +25,18 @@ if (state.paused) {
 }
 
 // 1. Proposals: the model's file is untrusted input, so each one is re-read against GitHub and the policy.
-let proposals = { actions: [], report: '' }
-const file = join(dir, 'proposals.json')
-if (existsSync(file)) {
-  try { proposals = JSON.parse(readFileSync(file, 'utf8')) } catch { rejected.push('The model wrote proposals that are not valid JSON.') }
-}
+let proposals = { actions: [], todos: [], drop: [] }, reviewError = ''
+const file = join(dir, 'proposals.json'), hasReview = existsSync(file)
+if (hasReview) {
+  try {
+    const parsed = JSON.parse(readFileSync(file, 'utf8'))
+    if (!Array.isArray(parsed?.actions) || parsed.actions.length > 40 ||
+        ['todos', 'drop'].some(key => key in parsed && (!Array.isArray(parsed[key]) || parsed[key].length > 30))) {
+      throw new Error('Invalid proposal lists')
+    }
+    proposals = { ...proposals, ...parsed }
+  } catch { reviewError = 'The review file could not be read as a valid list of proposals.' }
+} else if (process.env.BOT_FINGERPRINT) reviewError = 'The review file is missing.'
 const labels = new Set((await pages(api, '/labels')).map(label => label.name))
 // The forum and the shoutbox as the policy sees them: a thread is open while its last post is not a helper's.
 let activity
@@ -42,7 +50,7 @@ async function siteTarget(kind, id) {
   return { kind: 'shout', id, number: 0, author: shout?.author ?? '', state: shout && !shout.helper && !activity.shouts.slice(index + 1).some(row => row.helper) ? 'open' : 'closed' }
 }
 const accepted = []
-for (const proposal of (Array.isArray(proposals.actions) ? proposals.actions : []).slice(0, 40)) {
+for (const proposal of proposals.actions) {
   const kind = String(proposal?.kind ?? ''), board = kind.startsWith('board_'), talk = kind === 'discord_reply', site = kind === 'forum_reply' || kind === 'shout_reply', number = board || talk || site ? 0 : Number(proposal?.number)
   if (!board && !talk && !site && (!Number.isSafeInteger(number) || number < 1)) { rejected.push('A proposal named no pull request or issue.'); continue }
   if (talk && !chat) { rejected.push('A Discord reply was proposed, but the bot has no Discord token.'); continue }
@@ -51,14 +59,14 @@ for (const proposal of (Array.isArray(proposals.actions) ? proposals.actions : [
     const decision = classify(proposal, where, labels)
     if (decision.reject) { rejected.push((site ? 'Site' : talk ? 'Discord' : board ? 'Board' : '#' + number) + ' ' + kind + ': ' + decision.reject + '.'); continue }
     accepted.push({ id: decision.id, kind: decision.payload.kind, target: number, tier: decision.tier, summary: decision.summary, reason: decision.reason, payload: decision.payload, windowHours: decision.windowHours })
-  } catch (error) { rejected.push('#' + number + ': could not be read (' + error.message + ').') }
+  } catch (error) { reviewError = 'The review could not read every proposal target.'; rejected.push('#' + number + ': could not be read (' + error.message + ').') }
 }
 const { created } = accepted.length ? await bot('/actions', 'POST', { actions: accepted }) : { created: [] }
 console.log(accepted.length + ' proposals accepted (' + created.length + ' new), ' + rejected.length + ' held back.')
 
 // To-dos: work only a session at the owner's computer can do, picked up there with /modwerk-todo.
 const todos = []
-for (const todo of (Array.isArray(proposals.todos) ? proposals.todos : []).slice(0, 30)) {
+for (const todo of proposals.todos) {
   const number = Number(todo?.number), command = String(todo?.command ?? '').trim(), note = String(todo?.note ?? '').trim().replace(/\s+/g, ' ').slice(0, 200)
   if (!Number.isSafeInteger(number) || number < 0 || !TODO_COMMAND.test(command) || !note) { rejected.push('A to-do was not a /modwerk-* command with a number and a note.'); continue }
   todos.push({ id: actionId('todo', number, command), target: number, command, note, urgent: todo.urgent === true })
@@ -66,7 +74,7 @@ for (const todo of (Array.isArray(proposals.todos) ? proposals.todos : []).slice
 if (todos.length) await bot('/todos', 'POST', { todos })
 // The model may drop an open to-do it saw settled (answered, superseded, moved on); only ids that are open count.
 const open = new Set((await bot('/todos')).todos.map(todo => todo.id))
-for (const id of (Array.isArray(proposals.drop) ? proposals.drop : []).slice(0, 30)) if (open.has(id)) await bot('/todos/' + id + '/status', 'POST', { status: 'dropped' })
+for (const id of proposals.drop) if (open.has(id)) await bot('/todos/' + id + '/status', 'POST', { status: 'dropped' })
 
 // Watchers that need no model. A red run on main becomes an urgent to-do (the Worker tells the owner at once).
 const latest = new Map(), today = new Date().toISOString().slice(0, 10)
@@ -79,12 +87,26 @@ for (const run of (await api('/actions/runs?branch=main&status=completed&per_pag
 const failing = [...latest.values()].filter(run => run.conclusion === 'failure')
 if (failing.length) await bot('/todos', 'POST', { todos: failing.map(run => ({ id: actionId('todo', 0, 'red main', run.workflow_id, today), target: 0, command: 'gh run view ' + run.id + ' --log-failed', note: 'main is red: ' + run.name + ' at ' + run.head_sha.slice(0, 9), urgent: true })) })
 
+// One private draft per unanswered exchange. A board outage leaves existing to-dos in place.
+const followups = (await boardGet('/followups').catch(() => null))?.followups
+const pendingDrafts = followups?.map(item => ({
+  id: actionId('board-followup', item.id, item.since), target: 0, urgent: false,
+  command: 'npm run board -- followups ' + item.id,
+  note: 'GitHub follow-up for @' + item.to + ' · ' + item.target,
+}))
+if (pendingDrafts) {
+  for (let i = 0; i < pendingDrafts.length; i += 30) {
+    await bot('/todos', 'POST', { todos: pendingDrafts.slice(i, i + 30) })
+  }
+}
+
 // Open to-dos whose item is settled go away: a closed issue or pull request, an ended board thread, a workflow
 // that is green on main again.
 for (const todo of (await bot('/todos')).todos) {
   const thread = todo.command.match(/^npm run board -- reply ([0-9a-f-]{36})$/)?.[1], run = todo.command.match(/^gh run view (\d+) --log-failed$/)?.[1]
   let settled = false
-  if (thread) settled = (await readBoardTarget('board_reply', thread))?.state === 'closed'
+  if (todo.command.startsWith('npm run board -- followups ')) settled = !!pendingDrafts && !pendingDrafts.some(draft => draft.id === todo.id)
+  else if (thread) settled = (await readBoardTarget('board_reply', thread))?.state === 'closed'
   else if (run) { const workflow = (await api('/actions/runs/' + run).catch(() => null))?.workflow_id; settled = !!workflow && latest.get(workflow)?.conclusion === 'success' }
   else if (todo.target) settled = (await api('/issues/' + todo.target).then(issue => issue.state, () => 'open')) === 'closed'
   if (settled) await bot('/todos/' + todo.id + '/status', 'POST', { status: 'dropped' })
@@ -171,7 +193,7 @@ async function carryOut(action) {
     case 'approve_run': {
       const runs = (await api('/actions/runs?status=action_required&head_sha=' + now.head + '&per_page=30')).workflow_runs ?? []
       if (!runs.length) return ['expired', 'no run waits any more']
-      for (const run of runs) await api('/actions/runs/' + run.id + '/approve', 'POST')
+      for (const run of runs) await approveRun(api, run.id)
       return ['done', runs.length + ' run' + (runs.length === 1 ? '' : 's') + ' started']
     }
     case 'close':
@@ -195,11 +217,13 @@ console.log(log.length ? log.length + ' carried out: ' + tally('done') + ' done,
 if (rejected.length) console.log(rejected.length + ' held back by the policy.')
 
 // 3. The fingerprint moves only after the model's proposals were filed, so a failed run is retried next pass.
-if (process.env.BOT_FINGERPRINT && existsSync(file)) await bot('/state', 'PUT', { fingerprint: process.env.BOT_FINGERPRINT })
+if (process.env.BOT_FINGERPRINT && hasReview && !reviewError) await bot('/state', 'PUT', { fingerprint: process.env.BOT_FINGERPRINT })
 
 // 4. The daily report: a few lines; each action already has its own message with buttons.
 if (daily) {
   const { actions } = await bot('/actions/recent?hours=24')
-  const broken = !existsSync(file) || rejected.some(reason => reason.startsWith('The model wrote'))
-  await bot('/report', 'POST', { text: dailyReport(actions, (await bot('/todos')).todos) + (broken ? '\n⚠️ The review itself failed today; see the Actions log.' : '') })
+  const broken = !hasReview || !!reviewError
+  const progress = state.pilotReported ? '' : '\n' + pilotReport((await bot('/eval-pilot')).records)
+  await bot('/report', 'POST', { text: dailyReport(actions, (await bot('/todos')).todos) + progress + (broken ? '\n⚠️ The review itself failed today; see the Actions log.' : '') })
 }
+if (reviewError) throw new Error(reviewError)

@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "module": "arr-rows",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "trigger": "key",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": 131124,
+    "budget": 26600000,
+    "method": "The dearest key press: CUE + FUNC + STOP inserting 56 copied rows at row 0 of a 200-row arrangement (256 after it: the largest undo copy, row move and target pass). Executed instructions between the base's key site 0x40061dc8 and its return 0x40061dce, read with ot_emu's watch/hits (octabam f7d72906, the adapted emulator, --dsp --dsp-rt, MKI panel), on the beta base 0.7.5 built from the developer's 1.40C, package a0e796c2 (source 80e94f2be), 17 November 2026: 131,124 instructions, the module's message box and editor redraw included; its undo 96,899. Instructions, not cycles: at a few cycles each still about two hundred times under the budget."
+  },
+  "stress": {
+    "events": 40,
+    "playing": true,
+    "hangs": 0,
+    "method": "ot_emu, the same build and base: the arrangement playing, the dearest press (an insert of 56 rows and its undo, alternating) 20 times, STOP, PLAY, a Part change (FUNC + MIDI, Part 3), the editor reopened, 20 more; the transport ran throughout (0x800065b8 = 1) and stopped only on STOP, the screen kept updating, and the arrangement ended at its 200 rows."
+  }
+}

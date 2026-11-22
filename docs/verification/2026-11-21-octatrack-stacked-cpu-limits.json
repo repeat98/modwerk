@@ -1,0 +1,21 @@
+{
+  "instrument": "Octatrack MKII",
+  "measurements": [
+    {
+      "module": "syntiz",
+      "version": "0.1.0-experimental",
+      "releasePackageSha256": "f501a6a4ea3c8361427b85302fc77274906b9de2e3dfd6f3c81bc1759767c5e8",
+      "source": "sdk/octatrack/modules/syntiz/TESTING.md#load-on-the-authors-mkii-3-to-6-november-2026",
+      "skippedRenders": 45323,
+      "detail": "The frame guard dropped renders with three SYNTIZ tracks at maximum settings in the author's test Part."
+    },
+    {
+      "module": "tapeecho",
+      "version": "0.1.6-experimental",
+      "releasePackageSha256": "921e7a60c3418e7ece96f24c254802b44fee2082713f25e7b964b37f233bbe9e",
+      "source": "docs/verification/2026-11-19-octatrack-project-load-dsp.md#on-the-unit",
+      "cpuFullOnInstance": 3,
+      "detail": "The base refused a third Tape Echo with CPU FULL in a busy project."
+    }
+  ]
+}

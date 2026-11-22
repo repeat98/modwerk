@@ -139,6 +139,7 @@ fx_set modwerk_fxmap_used(void);
 uint32_t modwerk_fxmap_generation(void);
 void modwerk_fxmap_assign(unsigned id, uint32_t module, unsigned layout, const char *name);
 void modwerk_fxmap_name(unsigned id, char *out);
+uint32_t modwerk_fxmap_named(unsigned id);
 int modwerk_fxmap_loading(void);
 extern volatile uint32_t modwerk_fxmap_read, modwerk_fxmap_written;
 extern volatile uint32_t modwerk_modset_generation, modwerk_modset_count, modwerk_modset_result; /* modset.c */
@@ -258,7 +259,7 @@ static int free_for(unsigned k, uint32_t module, fx_set used)
 #ifdef MODWERK_RUNTIME_SETS
     if (modwerk_runtime_handle_reserved(module,k)) return 0;
 #endif
-    uint32_t named = modwerk_fxmap_module(k);
+    uint32_t named = modwerk_fxmap_named(k); /* the map, else the catalogue, as MISSING names it: a lost line (#1720) */
     return named == module || !fx_in(used, k); /* a handle the project uses for an unknown module stays its own */
 }
 static int choose(uint32_t module, unsigned preferred, int pinned)
@@ -532,7 +533,11 @@ static int rebind_tick(void) /* 1: the handles follow the map's current generati
             if (!owner[k]) continue;
             int want = modwerk_fxmap_handle(owner[k]);
             uint32_t named = modwerk_fxmap_module(k);
-            if (want == (int)k || (want < 0 && (!named || named == owner[k] || !fx_in(used, k)))) continue;
+            if (want == (int)k) continue;
+            if (want < 0 && (!named || named == owner[k] || !fx_in(used, k))) { /* it stays: named, so a save keeps it (#1720) */
+                modwerk_fxmap_assign(k, owner[k], owner_layout[k], owner_name[k]);
+                continue;
+            }
             moving[moving_count].package = dl_catalog[k];
             moving[moving_count].code[0] = dl_codes[0][k], moving[moving_count].code[1] = dl_codes[1][k];
             moving[moving_count].module = owner[k], moving[moving_count].layout = owner_layout[k];
@@ -1647,3 +1652,17 @@ void dl_publication_tick(void) {}
 /* status.c's NO ROOM box: whether the effect reads a Y buffer at all. One that reads none was refused for another
  * slot's buffer, since every pick plans all sixteen (owner's MKII, 12 November 2026). */
 unsigned modwerk_dsp_reads_buffer(unsigned id) { return id < MODWERK_FX_IDS ? dl_catalog[id].buffer : 0u; }
+/* controller_policy.h: the live module behind an effect handle, for the reviewed buffer extents (controller_policy.c).
+ * Its exact encoded package and the buffer words it declares; 0 when stock's own effect or nothing holds the handle. */
+const unsigned char *modwerk_controller_effect_package(unsigned id, unsigned *declared_words);
+const unsigned char *modwerk_controller_effect_package(unsigned id, unsigned *declared_words)
+{
+    if (id >= MODWERK_FX_IDS || !owner[id]) return 0;
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
+        const struct runtime_module *m = modwerk_runtime_module(i);
+        if (!m || m->dsp.module != owner[id] || !m->dsp.count || m->dsp.id != id) continue;
+        if (declared_words) *declared_words = m->dsp.buffer;
+        return m->dsp.package_sha256;
+    }
+    return 0;
+}
