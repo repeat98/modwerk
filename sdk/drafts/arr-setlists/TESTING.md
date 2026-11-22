@@ -65,6 +65,20 @@ Package `da945df5…`, as the developer reported it: SAVE on book 3, arrangement
 came back to book 3, arrangement 5 (passed); SYNC in arranger mode on book 2 and CHANGE to the same project came back
 on that book and arrangement in arranger mode (passed).
 
+### Book 1 overwritten with book 2 (found on the unit after the module was removed, 19 November 2026)
+
+As the developer reported it: after removing the module (on book 1, as the module said) the arrangements shown were
+book 2's. Cause, from stock's code: LOAD and RELOAD are two card jobs. The first (0x40085276: project, banks, and the
+arrangement files checked only) raises ev_banks_load and ev_banks_loaded; the second (job 27, 0x40085342) starts with
+the new-project step (0x400909d8, ev_project_new) and loads arr01-08 into the slots last (0x4008fd28). The module took
+ev_banks_load as "the slots hold book 1". When its return switch ran between the two jobs (its event log once showed
+the switch before ev_project_new), leaving "book 1" made stock's writer save the slots, still holding book 2, as
+arr01-08, and the backup took the same; the second job then loaded them. Fixed: the book changes to 1 only at
+ev_project_new, and the return switch is asked for only after it, so it queues behind the job that loads arr01-08.
+`verify.py` (71 checks) simulates both jobs and a write between them; against the previous code 8 checks fail,
+among them that write landing in arr01-08. On the unit: not yet (the unit is paused while #1980, base freezes, is
+open).
+
 ## Stock flows
 
 Not tested on the unit. In the emulator, ARR > CHANGE with the module and book 1 behaved as stock: YES chose the

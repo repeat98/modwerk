@@ -285,7 +285,11 @@ int main(void)
     tap(RIGHT); job();
     check("from there, book 2's own songs come back", book() == 1 && marked(0x20));
 
-    as_project_load(); mark(0x10); as_project_loaded();
+    as_project_load(); as_project_loaded();       /* stock's first job: it only checks the files */
+    check("while stock's first load job runs, the slots still hold book 2, and it knows", book() == 1 && marked(0x20));
+    { int sw0 = stock_writes; cs1[CHG] = 1; job();   /* a write between the two jobs (the developer's book 1 loss) */
+      check("a write between the two jobs saves book 2 to its own files, never arr01-08", stock_writes == sw0 && book() == 1); }
+    as_project_new(); mark(0x10);                 /* the second: the new-project step, then arr01-08 into the slots */
     check("a project load: book 1", book() == 0);
 
     /* a kept build on book 2; a trial of another build switches to book 1; the kept build comes back with its memory */
@@ -310,7 +314,7 @@ int main(void)
     as_project_stored();
     check("SAVE PROJECT copies arr09-arr24 and arrbook to .strd, and nothing past them", find("/SET/PROJ/arr09.strd") && find("/SET/PROJ/arr24.strd") && !find("/SET/PROJ/arr25.strd") && find("/SET/PROJ/arrbook.strd") && file_count() == before + 17);
     mark(0x55); cs1[CHG] = 1; job();               /* book 2 edited and written after the save */
-    as_project_reloaded(); mark(0x10);
+    as_project_reloaded(); as_project_new(); mark(0x10);
     check("RELOAD PROJECT leaves the slots on book 1", book() == 0);
     tap(RIGHT); job();
     check("book 2 is as saved, not as edited after", book() == 1 && marked(0x20));
@@ -319,11 +323,11 @@ int main(void)
     /* a project load comes back to the book and arrangement it was left on */
     while (book() != 2) { tap(book() < 2 ? RIGHT : LEFT); job(); as_tick(0); }
     chosen = 4; job();                             /* book 3, arrangement 5, SYNC */
-    as_project_load(); mark(0x10); chosen = 1; as_project_loaded();
-    check("right after a project load: book 1, as stock loaded it", book() == 0);
-    as_project_new(); mark(0x10);                   /* LOAD's new-project step, after the banks */
-    { int p1 = posted; for (int i = 0; i < 60; ++i) as_tick(0);
-      check("no switch while stock is still loading", posted == p1 && book() == 0); }
+    as_project_load(); as_project_loaded();
+    { int p1 = posted; for (int i = 0; i < 300; ++i) as_tick(0);
+      check("no return switch between stock's two load jobs, however long the gap", posted == p1 && book() == 2); }
+    as_project_new(); mark(0x10); chosen = 1;      /* LOAD's new-project step, then arr01-08 */
+    check("after stock's new-project step: book 1, as stock loaded it", book() == 0);
     settle();
     post_refuse = 3; as_tick(0); as_tick(0);
     check("while stock is still loading, it waits", book() == 0 && cs1[CHG] == 0);
@@ -335,7 +339,7 @@ int main(void)
     job();                                         /* ... and saves the project before loading it */
     as_project_load();
     check("left in arranger mode: during the load, the byte stock applies at its end says arranger", mode_wanted == 1);
-    mark(0x10); arr_mode = mode_wanted;            /* stock's end of the load applies it */
+    as_project_new(); mark(0x10); arr_mode = mode_wanted;  /* stock's end of the load applies it */
     settle(); job(); as_tick(0); as_tick(0);
     for (int i = 0; i < 130; ++i) as_tick(0);     /* two seconds of quiet */
     check("after LOAD: arranger mode, on book 3", arr_mode == 1 && book() == 2);
@@ -344,12 +348,12 @@ int main(void)
     mode_wanted = 0; as_tick(0); job();            /* LOAD: off, save, load */
     as_project_load();
     check("switched off by the musician: LOAD leaves pattern mode", mode_wanted == 0);
-    mark(0x10); settle(); job(); for (int i = 0; i < 130; ++i) as_tick(0);
+    as_project_new(); mark(0x10); settle(); job(); for (int i = 0; i < 130; ++i) as_tick(0);
     check("and nothing turns it on", arr_mode == 0 && book() == 2);
     /* RELOAD PROJECT: where it was saved, not where it was left after */
     as_project_stored();                           /* saved on book 3, arrangement 5 */
     tap(LEFT); job(); as_tick(0); chosen = 6; job();  /* book 2, arrangement 7, SYNC */
-    as_project_reloaded(); as_project_load(); mark(0x10);   /* the unit's order: no ev_banks_loaded after a reload */
+    as_project_reloaded(); as_project_load(); as_project_new(); mark(0x10);   /* no ev_banks_loaded after a reload */
     settle(); job(); as_tick(0);
     check("RELOAD PROJECT comes back to where it was saved: book 3, arrangement 5", book() == 2 && chosen == 4);
     /* RELOAD as the unit raised it the second time: the reload, stock's new-project step, and no ev_banks_load */
@@ -358,12 +362,12 @@ int main(void)
     as_project_reloaded(); as_project_new(); mark(0x10);
     settle(); job(); as_tick(0);
     check("RELOAD without ev_banks_load still comes back: book 3, arrangement 5", book() == 2 && chosen == 4);
-    as_project_load(); mark(0x10); as_project_loaded(); settle(); job(); as_tick(0);
+    as_project_load(); as_project_loaded(); as_project_new(); mark(0x10); settle(); job(); as_tick(0);
     /* saved on book 1: a load stays there, with no job */
     while (book() != 0) { tap(LEFT); job(); as_tick(0); }
     job();
     int p0 = posted;
-    as_project_load(); mark(0x10); settle(); job(); as_tick(0);
+    as_project_load(); as_project_new(); mark(0x10); settle(); job(); as_tick(0);
     check("left on book 1: it stays on book 1, with no job", book() == 0 && posted == p0 && marked(0x10));
     tap(RIGHT); job(); as_tick(0);                 /* book 2 again for the label checks */
 

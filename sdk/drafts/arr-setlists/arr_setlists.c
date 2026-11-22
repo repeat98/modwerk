@@ -113,6 +113,8 @@ struct as_state {
     uint8_t func_down, mode_key, mode_key_ticks, mode_seen;
     uint8_t quiet;           /* frames since the last job, switch or mode change, after a load */
     uint16_t since_hook;     /* frames since stock's last project event: a load is several jobs */
+    uint8_t loading;         /* a load or reload began: the slots hold the old book until stock's new-project step */
+    uint8_t reloaded_slots;  /* that step came: stock now puts arr01-08 in the slots, and a return may follow it */
     uint8_t hush;            /* frames after a switch of ours in which the job's NOW SAFE TO EJECT! is closed */
     int8_t restore_rc;       /* the last answer to posting the return after a load, for the diagnostic word */
     uint8_t loads, reloads;  /* project loads and reloads seen, for the diagnostic word */
@@ -154,7 +156,7 @@ static struct as_state *ready(void)
     evlog = rd32(RECORD + 16);                           /* the events before a power cycle */
     s->restore = -1;
     s->mode_pref = rd32(ARR_MODE) ? 1 : 0;
-    s->since_hook = 1000;
+    s->since_hook = 4000;
     return s;
 }
 
@@ -415,8 +417,12 @@ void as_project_load(void)
     struct as_state *s = ready();
     ev(1);
     s->since_hook = 0;
-    s->book = 0;
     s->pending = -1;
+    /* Not yet book 1: this is stock's first load job, which only checks the files; its second job, after the
+     * new-project step (ev_project_new), puts arr01-08 in the slots (0x4008fd28). Until then the slots still hold the
+     * book in use, so the module keeps it: a write in between must not save them as arr01-08. */
+    s->loading = 1;
+    s->reloaded_slots = 0;
     /* Where was the project left? Read here, in stock's load job on its card task, from the project being loaded (on
      * RELOAD, already the saved copy): ev_banks_loaded never came on the developer's MKI. Arranger mode goes into the
      * byte stock applies when the load ends (LOAD clears it as it starts), so stock itself turns the mode back on.
@@ -434,13 +440,19 @@ void as_project_new(void)
 {
     struct as_state *s = ready();
     ev(0xe);
+    /* Stock's job now resets the project and reads arr01-08 into the slots (or starts an empty one): book 1 from
+     * here. The module's own return job can only queue behind this one. */
     s->book = 0;
     s->pending = -1;
+    s->backup = 0;
+    s->damaged = 0;
     s->ready = 1;
-    /* LOAD runs this step too, after the banks are read (the developer's MKI): a load's pending return stays. */
-    int loading = s->since_hook < 600;
+    int loading = s->loading && s->since_hook < 3600;     /* LOAD and RELOAD run this step too (the developer's MKI) */
+    s->loading = 0;
     s->since_hook = 0;
-    if (loading) return;
+    remember(s);
+    if (loading) { s->reloaded_slots = 1; return; }       /* a load's pending return stays, and may go now */
+    s->reloaded_slots = 0;
     s->restore = -1;
     s->mode_on = 0;
     for (unsigned b = 0; b < BOOKS; ++b) s->last[b] = 0;
@@ -452,11 +464,8 @@ unsigned as_project_loaded(void)
 {
     struct as_state *s = ready();
     ev(2);
-    s->since_hook = 0;                                                /* the choices were read as the load began */
-    s->book = 0;
-    s->backup = 0;
-    s->damaged = 0;
-    ++s->loads;
+    s->since_hook = 0;                                    /* the choices were read as the load began; the slots are */
+    ++s->loads;                                           /* replaced only after the new-project step */
     remember(s);
     return 0;
 }
@@ -491,9 +500,8 @@ unsigned as_project_reloaded(void)
     place_path(s->path, "strd");
     place_path(s->path2, "work");
     copy_file(s);
-    s->book = 0;
-    s->backup = 0;
-    s->damaged = 0;
+    s->loading = 1;                                       /* the slots change only at the new-project step */
+    s->reloaded_slots = 0;
     /* Where it was saved: RELOAD's own hook, after the copy. On the developer's MKI a RELOAD was followed by stock's
      * new-project step (which keeps this) and sometimes by no ev_banks_load at all. */
     int b = read_place(s);
@@ -567,15 +575,15 @@ void as_tick(void *api)
         }
     }
     /* After a project load: back to the book it was left on, once stock has finished loading (its job queue frees). */
-    if (s->since_hook < 1000) ++s->since_hook;
+    if (s->since_hook < 4000) ++s->since_hook;
     if (s->restore >= 0 && s->pending < 0) {
-        if (s->since_hook < 120) { }                     /* stock still in its load: two quiet seconds first */
+        if (!s->reloaded_slots || s->since_hook < 30) { }  /* only once stock has put arr01-08 in the slots */
         else if (stopped()) {
             s->pending = s->restore;
             int rc = post_write();
             s->restore_rc = (int8_t)rc;
             ev(rc >= 0 ? 7u : 8u);
-            if (rc >= 0) s->restore = -1;
+            if (rc >= 0) { s->restore = -1; s->reloaded_slots = 0; }
             else {
                 s->pending = -1;                          /* stock still busy (a reload reads its samples): again */
                 if (rc == -7 || ++s->restore_ticks > 18000) s->restore = -1;  /* no project, or busy for 5 minutes */

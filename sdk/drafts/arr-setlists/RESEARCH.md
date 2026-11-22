@@ -54,6 +54,13 @@ the module's event log, 18 November 2026). LOAD PROJECT: ev_banks_load and no ev
 after the banks, and reads book 1 again: a load is several jobs, and the module waits two quiet seconds after the last
 project event before switching back.
 
+## LOAD and RELOAD are two jobs
+
+The first (0x40085276) reads the project file and banks (0x40090504, where ev_banks_load and ev_banks_loaded sit) and
+only checks the arrangement files (0x4008fc54 calls the reader with its third argument 1). The second, job 27
+(0x40085342), calls the new-project step 0x400909d8 (ev_project_new) first, then the project data and banks, and
+last loads arr01-08 into the slots (0x4008fd28, mask 0xff). Until then the slots hold what they held before.
+
 ## Card jobs
 
 `0x40022cd4(0)` posts job 7, SYNC TO CARD's "write the project". It returns a negative code without posting: -7 with
