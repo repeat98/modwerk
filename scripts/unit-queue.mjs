@@ -21,9 +21,11 @@
 import { execFileSync, spawn } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, watch, writeFileSync } from 'node:fs'
-import { homedir } from 'node:os'
+import { constants, homedir } from 'node:os'
 import { basename, join, resolve, win32 } from 'node:path'
 import { fileURLToPath } from 'node:url'
+// The signals that ask a running command to stop (below); SIGALRM only where the system has it.
+const STOPS = ['SIGTERM', 'SIGHUP', 'SIGALRM'].filter(signal => signal in constants.signals)
 
 const SECOND = 1000, MINUTE = 60 * SECOND
 export const RUN_EXPECT = 15 * MINUTE, RUN_GRACE = 5 * MINUTE
@@ -379,21 +381,23 @@ export async function main(argv, { env = process.env, out = line => console.log(
       catch (error) { if (error instanceof UnitBusyError) { err('Gave up waiting.\n' + error.message); return 3 } throw error }
     }
     // Ctrl-C reaches the command from the terminal by itself, and a second SIGINT would cut its rollback short, so this
-    // process keeps waiting for it. SIGTERM or SIGHUP (a closed terminal, a stopped task) ask the command to stop the way
-    // Ctrl-C does, so a trial rolls back, and stop it outright 90 s on.
+    // process keeps waiting for it. SIGTERM, SIGHUP or SIGALRM (a closed terminal, a stopped task, the `perl -e 'alarm N'`
+    // time limit docs/OCTATRACK_DRIVING.md puts around device-send.py) ask the command to stop the way Ctrl-C does, so a
+    // trial rolls back, and stop it outright 90 s on. Without SIGALRM the time limit ended only this process, and the
+    // command it started waited for its reply forever (MKII, 21 November 2026: a mem read left running past 2 min).
     const launch = process.platform === 'win32' ? windowsLaunch(commandLine, env) : { file: commandLine[0], args: commandLine.slice(1) }
     const child = spawn(launch.file, launch.args, { stdio: 'inherit', cwd, windowsVerbatimArguments: Boolean(launch.verbatim),
       env: { ...env, MODWERK_UNIT_TURN: turn?.id ?? env.MODWERK_UNIT_TURN ?? 'none' } })
     if (child.pid) turn?.setChild(child.pid)
     const onInt = () => {}, onTerm = () => { child.kill('SIGINT'); setTimeout(() => child.kill('SIGTERM'), 90 * SECOND).unref() }
     process.on('SIGINT', onInt)
-    for (const signal of ['SIGTERM', 'SIGHUP']) process.on(signal, onTerm)
+    for (const signal of STOPS) process.on(signal, onTerm)
     const status = await new Promise(done => {
       child.once('error', error => { err(`Could not start ${commandLine[0]}: ${error.message}`); done(127) })
       child.once('exit', (code, signal) => done(code ?? 128 + ({ SIGINT: 2, SIGKILL: 9, SIGTERM: 15 }[signal] ?? 1)))
     })
     process.off('SIGINT', onInt)
-    for (const signal of ['SIGTERM', 'SIGHUP']) process.off(signal, onTerm)
+    for (const signal of STOPS) process.off(signal, onTerm)
     turn?.release()
     return status
   }
