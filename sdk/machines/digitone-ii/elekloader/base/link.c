@@ -6,9 +6,11 @@
 // bit in bit 6 of the group's leading byte.
 //   ident   0x01 -> link version, messages received, messages dropped, ticks, armed, person at the unit,
 //                   presses and turns from a person, events posted, requests refused
-//   disarm  0x02 -> lets go of every key the link holds and turns the arm off
-//   key     0x10 ID FLAGS -> a panel key message (flags bit 0 down, 0x10 a release), armed only
-//   enc     0x11 N DELTA -> an encoder turn (1-8 A-H, 9 LEVEL), armed only
+//   disarm  0x02 -> turns the arm off and lets go of every key the link holds (a release the queue cannot take yet
+//                   follows from the UI tick)
+//   key     0x10 ID FLAGS -> a panel key message (flags bit 0 down, 0x10 a release), armed only; refused while an
+//                   OS upload waits at UPGRADE OS NOW? (a flash needs a person's YES)
+//   enc     0x11 N DELTA -> an encoder turn (1-8 A-H, 9 LEVEL), armed only, refused as key
 //   release 0x12 -> lets go of every key the link holds, armed only
 //   mem     0x21 ADDR N -> up to 128 bytes of DDR (0x40000000-0x47ffffff) or SRAM (0x80000000-0x8000ffff)
 // Keys and turns go on the UI task's queue (0x4013747a, queue_put 0x40001896) as the panel's messages do, so the UI
@@ -31,6 +33,9 @@
 #define QUEUE_POST ((void (*)(void *, const void *))QUEUE_POST_AT)
 #define KEY_INDEX ((const int32_t *)KEY_INDEX_AT)        // is_key_held's tables: id -> bit, -1 for none
 #define KEY_BITS ((const volatile uint8_t *)KEY_BITS_AT)
+// Stock's OS upload buffer (OS 1.12, 0x40122574 returns it): header byte 0 is 3 once an upload is complete, which is
+// when stock asks UPGRADE OS NOW?. Boot clears it (0x402fb000-0x466b8c50).
+#define UPLOAD_STATE (*(const volatile uint8_t *)UPLOAD_AT)
 #define KEY_IDS 111                     // KEY_INDEX's entries
 #define MSG_KEY 0
 #define MSG_ENC 1
@@ -47,6 +52,7 @@
 #define ST_BUSY 3
 #define ST_RANGE 4
 #define ST_HUMAN 5
+#define ST_FLASH 6                      // an OS upload waits at UPGRADE OS NOW?: only a person confirms it
 #define CMD_IDENT 0x01
 #define CMD_DISARM 0x02
 #define CMD_KEY 0x10
@@ -166,9 +172,15 @@ static int panel_down(int key)          // the panel's own bitmap, as stock read
     return index >= 0 && (KEY_BITS[index >> 3] >> (index & 7) & 1);
 }
 
+// An OS upload is staged: a flash is one YES away, so the link neither presses nor holds a key until the next boot.
+static int flash_waits(void)
+{
+    return UPLOAD_STATE == 3;
+}
+
 int mw_link_held(int key)               // stock's is_key_held, and the link's holds
 {
-    if ((unsigned)key < KEY_IDS && HELD(key))
+    if ((unsigned)key < KEY_IDS && HELD(key) && !flash_waits())
         return 1;
     return panel_down(key);
 }
@@ -205,15 +217,13 @@ static int release_all(void)            // -> 1 when any key was held; one the q
     return any;
 }
 
+// New presses stop at once; a release the queue cannot take now stays held and due, and the UI tick posts it when
+// there is room, so stock never keeps a key down that the link pressed.
 static void disarm(void)
 {
-    unsigned k;
     if (armed)
         release_all();
     armed = 0;
-    for (k = 0; k < sizeof held_bits; k++)
-        held_bits[k] = 0;
-    release_due = 0;
 }
 
 static int ours(int kind, int id, int value)    // the next event the link posted? pops it if so
@@ -304,6 +314,8 @@ static void COLD act(const uint8_t *m, int len)
             status = ST_HUMAN;
         else if (cmd == CMD_RELEASE_ALL)
             release_all();
+        else if (flash_waits())
+            status = ST_FLASH;
         else if (n < 10)
             status = ST_BAD;
         else {

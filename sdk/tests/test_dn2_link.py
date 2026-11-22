@@ -132,5 +132,26 @@ class Dn2LinkReplies(unittest.TestCase):
             self.assertEqual(len(pack7(bytes(n))), link.packed_len(n))
 
 
+
+class Dn2LinkKeysOnTheHost(unittest.TestCase):
+    """base/link.c's key handling compiled for the host with stock's queue and tables stubbed (dn2_link_host.c)."""
+
+    def test_disarm_keeps_releases_and_a_flash_needs_a_person(self):
+        import shutil
+        import subprocess
+        import tempfile
+        cc = shutil.which("cc")
+        if not cc:
+            self.skipTest("no host C compiler")
+        with tempfile.TemporaryDirectory() as tmp:
+            binary = pathlib.Path(tmp) / "dn2_link_host"
+            build = subprocess.run([cc, "-std=c11", "-O1", "-Wall", "-Wno-pointer-to-int-cast", "-Wno-int-to-pointer-cast",
+                                    "-Wno-unused-function", "-o", str(binary), str(APP / "sdk/tests/dn2_link_host.c")],
+                                   capture_output=True, text=True)
+            self.assertEqual(build.returncode, 0, build.stderr)
+            run = subprocess.run([str(binary)], capture_output=True, text=True)
+            self.assertEqual((run.returncode, run.stdout.strip()), (0, "ok"), run.stdout + run.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
