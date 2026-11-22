@@ -195,6 +195,24 @@ describe('a module costs nothing while nobody uses it (owner, 20 November 2026)'
     expect(loud.fix).toContain('the base rests an effect no slot uses')
   })
 
+  it('reads the rest marks from the committed USB package, not only from runtime.json', () => {
+    const site = (address, bytes, rests) => { const s = Buffer.alloc(40 + bytes); s.writeUInt32BE(address); s[4] = bytes | (rests ? 0x80 : 0); s[6] = bytes; return s }
+    const header = Buffer.alloc(76); header.write('MWRM'); header.writeUInt16BE(8, 4); header.writeUInt32BE(2, 24)
+    const root = fixture({
+      'sdk/octatrack/modules/mutes/runtime.json': { schema: 1, subscribe: [{ event: 'ev_in_use', fn: 'in_use', order: 50 }], rests: ['0x40004dc6'] },
+      'src/engine/assets/octatrack-module-packages.json': { packages: [{ id: 'mutes', version: '0.2.3', path: 'octatrack-modules/mutes/0.2.3.mwrm' }] },
+      ...changelog('mutes', '0.2.3', AT_REST_FROM),
+    })
+    mkdirSync(join(root, 'public/octatrack-modules/mutes'), { recursive: true })
+    const built = rests => writeFileSync(join(root, 'public/octatrack-modules/mutes/0.2.3.mwrm'), Buffer.concat([header, site(0x40004dc6, 6, rests), site(0x40068efe, 4, false)]))
+    built(false) /* a builder route that dropped the marks: the base would keep the detour patched */
+    expect(atRestStatus({ root, document: hook('mutes', '0.2.3', share(2.6)), glue: {} })).toMatchObject({ state: 'fail', detail: expect.stringContaining('0x40004dc6') })
+    built(true)
+    expect(atRestStatus({ root, document: hook('mutes', '0.2.3', share(2.6)), glue: {} }).state).toBe('ok')
+    /* No package of this version committed yet (a draft): the packages check names that; this one reads runtime.json. */
+    expect(atRestStatus({ root, document: hook('mutes', '0.2.4', share(2.6)), glue: {} }).state).toBe('ok')
+  })
+
   it('holds on main: no published release fails, whatever it costs at rest', () => {
     const catalog = JSON.parse(readFileSync(join(repo, 'sdk/catalog.json'), 'utf8')), glue = portGlue(repo)
     for (const item of catalog.modules) {
