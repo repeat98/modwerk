@@ -129,9 +129,20 @@ static unsigned reading_pattern = 0xffffu; /* the pattern the readings in a row 
  * seconds make them the kept figure (modwerk-bd, twin 30: after Amiga's pick C03 read 104.2 while the kept figure, the
  * reading before it with Amiga's table cost on top, said 102.9). */
 static uint32_t played_since;
+/* A set installed, removed or undone (the loader's owner epoch) starts the picks' account afresh: what they added is
+ * the readings' to show again, and readings from before it are another Part's. Twin 32: after one set's trial rolled
+ * back, the next set's first Tape Echo at 77 % was refused as PART IS BUSY against the last set's 110 %. */
+static uint32_t admit_epoch;
+static void epoch_check(void) /* each reading, and before a pick or an exit counts: one right after an install stays */
+{
+    uint32_t epoch = modwerk_runtime_owner_epoch();
+    if (epoch != admit_epoch) admit_epoch = epoch, frame_adjust = 0, adjust_readings = 0, play_readings = 0, played_since = 0;
+}
 static void cpu_note_played(void)
 {
+    epoch_check();
     uint32_t booked = modwerk_machine_frame_booked(8u, 0) + effects_booked(16u);
+    if (booked != booked_seen) played_since = 0; /* the modules moved (a pick, a rollback, a Part reload): what plays now */
     if (modwerk_machine_stopped()) {
         play_readings = adjust_readings = 0;
         int32_t played = (int32_t)frame_played + (int32_t)booked - (int32_t)booked_seen;
@@ -146,8 +157,8 @@ static void cpu_note_played(void)
     if (booked != booked_seen) booked_moved = 0;
     booked_seen = booked;
 }
-void modwerk_status_cpu_entered(uint32_t mille) { frame_adjust += (int32_t)mille, adjust_readings = 0, booked_moved = 1, played_since = 0; }
-void modwerk_status_cpu_left(uint32_t mille) { frame_adjust -= (int32_t)mille, adjust_readings = 0, booked_moved = 1, played_since = 0; }
+void modwerk_status_cpu_entered(uint32_t mille) { epoch_check(); frame_adjust += (int32_t)mille, adjust_readings = 0, booked_moved = 1, played_since = 0; }
+void modwerk_status_cpu_left(uint32_t mille) { epoch_check(); frame_adjust -= (int32_t)mille, adjust_readings = 0, booked_moved = 1, played_since = 0; }
 /* The longest frame interrupt of each reading, per mille of a frame (machine_registry.c's mw_frame_window, cleared at
  * each read). The meter above is all of the ColdFire, averaged; the frame guard drops renders frame by frame, once a
  * frame would run past its share and what credit the short frames before it left, so a pick is judged by the frames

@@ -131,6 +131,8 @@ int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
 }
 volatile uint32_t mw_frame_window; /* machine_registry.c's: the longest frame since the last reading */
 static uint32_t test_machines_booked; /* machine_registry.c's booking of the Part's module machines */
+static uint32_t test_epoch; /* the loader's owner epoch: a set installed, removed or undone */
+uint32_t modwerk_runtime_owner_epoch(void) { return test_epoch; }
 static unsigned test_pattern; /* machine_registry.c: the pattern that plays */
 unsigned modwerk_machine_pattern(void) { return test_pattern; }
 static unsigned test_busiest, test_tracks, test_trigging; /* machine_registry.c: the playing pattern's busiest step, tracks that trig */
@@ -843,6 +845,18 @@ int main(void)
       CHECK(played_since == 1042u && modwerk_status_frame_load() == 1042u); /* not 76.3 + 26.6 */
       modwerk_status_cpu_entered(40u);
       CHECK(!played_since && modwerk_status_frame_load() == 1069u);      /* a pick since: the kept figure and both */
+      /* A rollback or a reload takes modules off without a pick: what played before with them no longer counts; a
+       * set installed, removed or undone starts the picks' account afresh (twin 32: a first Tape Echo at 77 % refused as
+       * PART IS BUSY against the last set's 110 %). */
+      transport_stopped = 0, frame_newest = 1100u, cpu_note_played();
+      CHECK(played_since == 1100u);
+      test_machines_booked = 300u, frame_newest = 780u, cpu_note_played(); /* the modules moved: what plays now */
+      CHECK(played_since == 780u);
+      test_machines_booked = 0, test_epoch = test_epoch + 1u, cpu_note_played();
+      CHECK(!frame_adjust && played_since == 780u && play_readings == 1u);
+      test_epoch = test_epoch + 1u, modwerk_status_cpu_entered(99u), cpu_note_played();
+      CHECK(frame_adjust == 99);                                         /* a pick right after an install stays */
+      frame_adjust = 0, transport_stopped = 1;
       frame_adjust = 0, mw_stock_reserve = RESERVE_ADAPTIVE, test_pattern = 34u;
       test_rest = 0, test_busiest = 0, test_tracks = 0, test_pattern = 0, played_shape = 0xffffffffu, played_pattern = 0xffffu;
       transport_stopped = 1, frame_played = 0;
