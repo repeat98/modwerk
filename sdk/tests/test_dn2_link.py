@@ -38,10 +38,6 @@ class Dn2Link(unittest.TestCase):
         self.assertIsNone(link.parse(link.request(9, "mem", 0, 1)))   # a request is not a reply
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class Dn2Screen(unittest.TestCase):
     def test_frame_rows_reads_the_frame_column_by_column_top_row_first(self):
         fb = bytearray(1024)
@@ -60,3 +56,69 @@ class Dn2Screen(unittest.TestCase):
         idat = data.index(b"IDAT")
         size = struct.unpack(">I", data[idat - 4:idat])[0]
         self.assertEqual(len(zlib.decompress(data[idat + 4:idat + 4 + size])), 128 * (1 + 256))
+
+
+def mem_reply(seq, addr, data, status=0):
+    return link.HEADER + bytes([seq & 0x7f, 0x21 | 0x40, status]) + link.u32(addr) + pack7(data) + b"\xF7"
+
+
+class FakeLine:
+    """A MIDI pair whose replies come from answer(request) after the request is sent; queued ones arrive first."""
+
+    def __init__(self, answer, queued=()):
+        self.answer, self.queue, self.sent = answer, list(queued), []
+
+    def drain(self):
+        pass
+
+    def send(self, frame):
+        self.sent.append(frame)
+        self.queue += self.answer(frame)
+
+    def poll(self):
+        return self.queue.pop(0) if self.queue else None
+
+
+class Dn2LinkReplies(unittest.TestCase):
+    def test_each_request_takes_a_new_sequence_number(self):
+        line = FakeLine(lambda f: [mem_reply(f[6], link.get32(f, 8), bytes(4))])
+        link.mem(0x40000000, 4, "x", line)
+        link.mem(0x40000004, 4, "x", line)
+        self.assertNotEqual(line.sent[0][6], line.sent[1][6])
+
+    def test_a_late_reply_to_the_previous_chunk_is_not_taken_for_the_current_one(self):
+        old, new = bytes([0xAA] * 128), bytes([0x55] * 128)
+
+        def answer(f):
+            seq, addr = f[6], link.get32(f, 8)
+            # the previous chunk's reply, late, with this request's sequence number, then the real one
+            return [mem_reply(seq, addr - 128, old), mem_reply(seq, addr, new)]
+        self.assertEqual(link.mem(0x40001080, 128, "x", FakeLine(answer)), new)
+
+    def test_a_late_reply_with_the_previous_sequence_number_is_skipped(self):
+        def answer(f):
+            seq, addr = f[6], link.get32(f, 8)
+            return [mem_reply(seq - 1, addr, bytes([1] * 8)), mem_reply(seq, addr, bytes([2] * 8))]
+        self.assertEqual(link.mem(0x40000000, 8, "x", FakeLine(answer)), bytes([2] * 8))
+
+    def test_a_short_reply_is_never_passed_on(self):
+        line = FakeLine(lambda f: [mem_reply(f[6], link.get32(f, 8), bytes(100))])
+        with self.assertRaises(link.LinkError):
+            link.exchange(line, "mem", 0x40000000, 128, timeout=0.05,
+                          accept=link.mem_reply_fits(0x40000000, 128))
+        with self.assertRaises(SystemExit):
+            link.screen("x", FakeLine(lambda f: [mem_reply(f[6], link.get32(f, 8), bytes(3))]))
+
+    def test_a_refusal_is_still_reported(self):
+        line = FakeLine(lambda f: [link.HEADER + bytes([f[6], 0x21 | 0x40, 4, 0xF7])])
+        with self.assertRaises(SystemExit) as e:
+            link.mem(0x50000000, 4, "x", line)
+        self.assertIn("out of range", str(e.exception.code))
+
+    def test_packed_length_is_link_cs(self):
+        for n in (1, 4, 7, 8, 127, 128):
+            self.assertEqual(len(pack7(bytes(n))), link.packed_len(n))
+
+
+if __name__ == "__main__":
+    unittest.main()

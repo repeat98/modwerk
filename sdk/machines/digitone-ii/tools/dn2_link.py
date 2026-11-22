@@ -72,41 +72,109 @@ def parse(msg):
     return msg[6], msg[7] & 0x3f, msg[8], msg[9:-1]
 
 
-def ask(name, *values, port='Digitone II', timeout=2.0):
-    import mido
-    pick = lambda names: [n for n in names if port.lower() in n.lower()]
-    ins, outs = pick(mido.get_input_names()), pick(mido.get_output_names())
-    if len(ins) != 1 or len(outs) != 1:
-        sys.exit('Need exactly one MIDI input and output named like %r.' % port)
-    with mido.open_input(ins[0]) as inp, mido.open_output(outs[0]) as out:
-        for _ in inp.iter_pending():
+class LinkError(Exception):
+    """No acceptable reply: the caller decides whether that ends the command."""
+
+
+# The sequence number: advanced for every request, so a late reply to an earlier one (this run or the last) never
+# matches the current one. Seeded from the clock so two runs in a row start apart.
+_seq = [int(time.time() * 10)]
+
+
+class MidiLine:
+    """The unit's USB MIDI pair, through mido."""
+
+    def __init__(self, port):
+        import mido
+        self.mido = mido
+        pick = lambda names: [n for n in names if port.lower() in n.lower()]
+        ins, outs = pick(mido.get_input_names()), pick(mido.get_output_names())
+        if len(ins) != 1 or len(outs) != 1:
+            sys.exit('Need exactly one MIDI input and output named like %r.' % port)
+        self.inp, self.out = mido.open_input(ins[0]), mido.open_output(outs[0])
+
+    def drain(self):
+        for _ in self.inp.iter_pending():
             pass
-        seq = int(time.time() * 10) & 0x7f
-        out.send(mido.Message('sysex', data=request(seq, name, *values)[1:-1]))
-        end = time.time() + timeout
-        while time.time() < end:
-            m = inp.poll()
-            if m is None:
-                time.sleep(0.002)
-                continue
-            if m.type == 'sysex':
-                got = parse(bytes([0xF0]) + bytes(m.data) + b'\xF7')
-                if got and got[0] == seq and got[1] == CMD[name]:
-                    return got
-    sys.exit('No answer: is a development base with the link on the unit, and USB MIDI connected?')
+
+    def send(self, frame):
+        self.out.send(self.mido.Message('sysex', data=frame[1:-1]))
+
+    def poll(self):
+        """The next SysEx message as F0..F7 bytes, or None."""
+        m = self.inp.poll()
+        while m is not None and m.type != 'sysex':
+            m = self.inp.poll()
+        return None if m is None else bytes([0xF0]) + bytes(m.data) + b'\xF7'
+
+    def close(self):
+        self.inp.close()
+        self.out.close()
 
 
-def mem(addr, n, port):
-    _, _, status, p = ask('mem', addr, n, port=port)
+def exchange(line, name, *values, timeout=2.0, accept=None):
+    """Send one request on line and return the first reply with its sequence number, its command and, if given,
+    accept(reply) true. Anything else (a late reply to an earlier request, a short reply) is skipped."""
+    _seq[0] += 1
+    seq = _seq[0] & 0x7f
+    line.drain()
+    line.send(request(seq, name, *values))
+    end = time.time() + timeout
+    while time.time() < end:
+        msg = line.poll()
+        if msg is None:
+            time.sleep(0.002)
+            continue
+        got = parse(msg)
+        if got and got[0] == seq and got[1] == CMD[name] and (accept is None or accept(got)):
+            return got
+    raise LinkError('No answer: is a development base with the link on the unit, and USB MIDI connected?')
+
+
+def ask(name, *values, port='Digitone II', timeout=2.0, accept=None, line=None):
+    own = line is None
+    line = MidiLine(port) if own else line
+    try:
+        return exchange(line, name, *values, timeout=timeout, accept=accept)
+    except LinkError as e:
+        sys.exit(str(e))
+    finally:
+        if own:
+            line.close()
+
+
+def packed_len(n):
+    """The length of n bytes packed 7 in 8, as link.c's pack() writes them."""
+    return n + (n + 6) // 7
+
+
+def mem_reply_fits(addr, n):
+    """A mem reply is this request's only if it echoes addr and carries exactly n bytes (or is a refusal)."""
+    def fits(got):
+        _, _, status, p = got
+        if status:
+            return True
+        return len(p) == 5 + packed_len(n) and get32(p, 0) == addr
+    return fits
+
+
+def mem(addr, n, port, line=None):
+    _, _, status, p = ask('mem', addr, n, port=port, accept=mem_reply_fits(addr, n), line=line)
     if status:
         sys.exit('refused: ' + STATUS.get(status, str(status)))
     return unpack7(p[5:])[:n]
 
 
-def screen(port):
+def screen(port, line=None):
     """The frame on the screen: its pointer, then the frame in eight reads (a draw between them can tear it)."""
-    front = int.from_bytes(mem(FRAME_POINTERS + 4, 4, port), 'big')
-    return b''.join(mem(front + at, 128, port) for at in range(0, FRAME_BYTES, 128))
+    own = line is None
+    line = MidiLine(port) if own else line
+    try:
+        front = int.from_bytes(mem(FRAME_POINTERS + 4, 4, port, line), 'big')
+        return b''.join(mem(front + at, 128, port, line) for at in range(0, FRAME_BYTES, 128))
+    finally:
+        if own:
+            line.close()
 
 
 def main():
@@ -114,9 +182,9 @@ def main():
     parser.add_argument('--port', default='Digitone II')
     sub = parser.add_subparsers(dest='cmd', required=True)
     sub.add_parser('ident')
-    mem = sub.add_parser('mem')
-    mem.add_argument('addr', type=lambda s: int(s, 0))
-    mem.add_argument('n', type=int)
+    memp = sub.add_parser('mem')
+    memp.add_argument('addr', type=lambda s: int(s, 0))
+    memp.add_argument('n', type=int)
     shot = sub.add_parser('screen')
     shot.add_argument('--png', help='also write the frame as a PNG here')
     a = parser.parse_args()
@@ -132,10 +200,7 @@ def main():
             sys.exit('refused: ' + STATUS.get(status, str(status)))
         print('link %d, received %d, dropped %d, ticks %d' % tuple(get32(p, 5 * i) for i in range(4)))
     else:
-        _, _, status, p = ask('mem', a.addr, a.n, port=a.port)
-        if status:
-            sys.exit('refused: ' + STATUS.get(status, str(status)))
-        print('%08x: %s' % (get32(p, 0), unpack7(p[5:])[:a.n].hex()))
+        print('%08x: %s' % (a.addr, mem(a.addr, a.n, a.port).hex()))
 
 
 if __name__ == '__main__':
