@@ -74,7 +74,6 @@ Analog BD T6. The line stayed at 120 %; the reserve changed. Every refusal showe
 | FM Synth 0.1.5, 88 | 9 | 8 | 115.2 %, 16 renders dropped |
 | FM Synth 0.1.5, 92 | 8 | 8 | 116.7 %, 12 renders dropped |
 | FM Synth 0.1.5, medium-pattern table, 88 (line 120) | 7 | 7 | 101.3 %, none dropped |
-| FM Synth 0.1.5, medium-pattern table, 83 (line 115) | 7 | 7 | 100.5 %, none dropped |
 
 On the empty pattern every result is what the table predicts: the reserve term decides, and what is refused is the second
 or third heavy machine, or Amiga after six effects. The medium pattern refused more for three reasons:
@@ -91,18 +90,39 @@ price. With the medium-pattern table (FM Synth 0.1.5 at 31.3) the same picks pla
 what it refused was each machine after six effects, the reserve's arithmetic (88 + 17.1 booked + the machine's 15 to 24).
 
 The table these figures settle: reserve 88 (85 admits a seventh Tape Echo on an empty Part, 92 refuses Amiga, Tape Echo
-and Mini Verb together), a sample track's share 7, line 120 (module-heavy Parts dropped renders from about 115 %, none
-from 100 to 114 %; stock-heavy ones none to 125 %).
+and Mini Verb together), a sample track's share 7, line 120 (module-heavy Parts dropped renders from about 114 %, none
+from 100 to 113 %; stock-heavy ones none to 125 %). A run at reserve 83 and line 115 was meant to compare, but its install
+was refused (below) and it re-ran 88/120.
 
 C01 with all eight tracks playing refused all eleven picks: it played at 117.8 % with the set installed, and the
 window filled the MODS bar with the stock load above the reserve (changed after this run to show only the modules'
 share and "PART IS BUSY").
 
-A pick made stopped right after a short play is judged against the kept figure plus every pick since it was taken, until
-four seconds of play renew it. Six pairs (Euclid after Tape Echo, picked 0.2 s or 3 s after STOP) were admitted or
-refused by that margin alone.
+A pick made stopped after a short play is judged against the kept figure plus every pick since it was taken, until four
+seconds of play renew it. Euclid after Tape Echo on C03 was refused in four of six tries: played 96.8 + quiet delays 7.2
++ Tape Echo 12.4 left it a few tenths short.
 
-The late-entry wait was on through all of these: no entry fell in the window and none waited.
+The late-entry wait was on through all of these: no entry fell in the window and none waited. Three plain STARTs on each
+of C02, C04 and C01 (stock only) entered at most 7.5 µs late.
+
+Six everyday sets at reserve 88, line 120, each from a clean Part, picks made stopped (admitted / tried, then 15 s of play):
+
+| Set | Empty C02 | Medium C03 |
+|---|---|---|
+| Amiga, Tape Echo, Mini Verb | 3/3 | 2/3 (Tape Echo) |
+| FM Synth 0.1.5, Euclid, Tape Echo, E-Verb | 3/4 (Tape Echo) | 2/4 (Euclid, Tape Echo) |
+| Amiga ×2, Air Chorus, Tape Echo | 4/4 | 3/4 (Tape Echo); 114.0 %, 7 renders dropped |
+| Tape Echo ×7 | 6/7 | 6/7, 106.8 % |
+| SYNTIZ, Amiga, Tape Echo | 2/3 (Amiga) | 1/3 (SYNTIZ, Amiga) |
+| FM Synth 0.1.5 ×3, Tape Echo, Mini Verb | 4/5 (Tape Echo) | 3/5 (Tape Echo, Mini Verb) |
+
+The empty column is what the table predicts. The medium refusals of Euclid, Tape Echo and the first SYNTIZ came from the
+quiet-delay charge (7.2 on C03) and a kept figure read right after a reload (84 against 79.9 steady); without the charge,
+as 0.8 now judges, the model admits Tape Echo after Amiga, Euclid after FM Synth and SYNTIZ first. Not yet run on a unit.
+
+**A rollback the base would not finish.** After the reserve-88 session, its trial's rollback was refused
+"needs-recovery", and so was every `recover` for the next hour: the loader's restore kept failing while its journal read
+idle. The unit played, picks worked and nothing stalled; new sets could not be installed. A USB replug or a restart ends it.
 
 ## The refusal window
 
