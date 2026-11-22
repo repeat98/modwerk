@@ -66,13 +66,14 @@ static int track_block(Track *t, int32_t *audio) {
     g.running = (uint8_t)t->running;
     g.tick = t->running ? tick_at(t, t->clock) : 0;
     g.step_q4 = freeze_step_q4((uint32_t)lround(t->bpm * 24.0), t->scale);
+    int boundary = g.running && g.tick == 1 && t->st.prev_tick != 1;
     int32_t record[2 * FZ_FRAMES];
     freeze_process(&t->st, &t->p, &g, t->ring, t->write, audio, record);
     memcpy(&t->ring[2 * t->write], record, sizeof record);   /* the stock DMA write */
     t->write += FZ_FRAMES;
     if (t->write >= FZ_RING) t->write = 0;
     if (t->running) t->clock += FZ_FRAMES;
-    return 0;
+    return boundary;
 }
 
 /* ---- signals ------------------------------------------------------------ */
@@ -312,6 +313,49 @@ static void test_clicks(void) {
     free(out); free(t.ring);
 }
 
+static void test_step_change(unsigned initial, unsigned next) {
+    Track t; track_init(&t, 120, initial - 1);
+    long n = 0;
+    int32_t audio[2 * FZ_FRAMES];
+    run(&t, &n, blocks_for(SR * 3), gen_sine110, NULL);
+    t.p.grab = 1;
+    for (long b = 0; b < blocks_for(step_samples(&t) * 2) && !t.st.held; ++b) {
+        fill(audio, n, gen_sine110); track_block(&t, audio); n += FZ_FRAMES;
+    }
+    CHECK(t.st.held && t.st.cycle_steps == initial,
+          "STEP %u -> %u: hold must start with %u steps", initial, next, initial);
+    if (!t.st.held) { free(t.ring); return; }
+
+    unsigned steps = 0, first = 0, second = 0;
+    for (long b = 0; b < blocks_for(step_samples(&t) * (initial + next + 2)); ++b) {
+        fill(audio, n, gen_sine110);
+        int boundary = track_block(&t, audio);
+        n += FZ_FRAMES;
+        if (!boundary) continue;
+        ++steps;
+        if (steps == 1) {
+            CHECK(t.st.steps_in_cycle == 1 && t.st.cycles == 0,
+                  "STEP %u -> %u: first held step must stay in the first cycle", initial, next);
+            t.p.step = (uint8_t)(next - 1);
+        }
+        if (t.st.cycles == 1 && !first) {
+            first = steps;
+            CHECK(t.st.cycle_steps == next,
+                  "STEP %u -> %u: new length was not latched at the boundary", initial, next);
+            CHECK(t.st.period == (freeze_step_q4((uint32_t)lround(t.bpm * 24.0), t.scale) >> 4) * next,
+                  "STEP %u -> %u: new period was not planned", initial, next);
+        }
+        if (t.st.cycles == 2) { second = steps; break; }
+    }
+    printf("  STEP %u -> %u after first step: cycle boundaries at steps %u and %u\n",
+           initial, next, first, second);
+    CHECK(first == initial, "STEP %u -> %u: first cycle ended at %u, expected %u",
+          initial, next, first, initial);
+    CHECK(second == initial + next, "STEP %u -> %u: second cycle ended at %u, expected %u",
+          initial, next, second, initial + next);
+    free(t.ring);
+}
+
 static void test_swing_and_tempo(void) {
     /* Swing delays the odd steps' ticks: cycles still count track steps. */
     Track t; track_init(&t, 120, 2);
@@ -499,6 +543,9 @@ int main(int argc, char **argv) {
     test_jitter();
     printf("POSITION:\n");
     test_position();
+    printf("STEP changes:\n");
+    test_step_change(5, 2);
+    test_step_change(2, 5);
     printf("swing and tempo:\n");
     test_swing_and_tempo();
     printf("hold, release, STOP, entry:\n");

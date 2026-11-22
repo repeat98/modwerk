@@ -233,8 +233,8 @@ void freeze_process(FzState *s, const FzParams *p, const FzGrid *g,
     if (playing) {
         if (boundary) {
             ++s->steps_in_cycle;
-            if (s->steps_in_cycle >= (unsigned)(p->step < FZ_MAX_STEPS ? p->step + 1u : FZ_MAX_STEPS)) {
-                if (!s->seamed) { plan_cycle(s, p, g, want); start_seam(s, p, 0); }
+            if (s->steps_in_cycle >= s->cycle_steps) {
+                if (!s->seamed) start_seam(s, p, 0);
                 ++s->cycles;
                 begin_cycle(s, p, g, want);
             }

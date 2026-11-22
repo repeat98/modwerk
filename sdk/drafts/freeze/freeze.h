@@ -52,7 +52,7 @@ typedef struct {
     uint32_t env, env_step;    /* Q30 wet envelope and its per-sample ramp */
     uint32_t env_target;
     uint32_t fade_param;       /* FADE value the ramp was computed for */
-    uint8_t prev_tick, prev_running, steps_in_cycle, cycle_steps;
+    uint8_t prev_tick, prev_running, steps_in_cycle, cycle_steps; /* cycle_steps is latched until the next boundary */
     uint32_t t;                /* samples since the cycle started */
     uint32_t period;           /* nominal cycle length in samples */
     uint32_t seam_len;         /* crossfade length in samples */
