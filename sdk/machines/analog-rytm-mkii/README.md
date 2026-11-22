@@ -145,6 +145,14 @@ OS 1.74, read from the code for Improved AMP's fade before a trig (#1419: its `s
 - **Retrigs are not queued.** A series runs on its own tick counter, stepped once a tick (`0x4012089a`); it ends when its length runs out or when the track's next note trig fires. A queued event that fires takes its track's turn for that block, so a retrig tick due then is stepped a block later.
 - **Not read to the end:** a pattern change clears queued events from the change on (`0x4009bc60`, `0x4009b6e0`). On external MIDI clock the clock can move less than a block's worth, or stand.
 
+## Pattern length and the step counter
+
+OS 1.74, read from the code unless marked; QPER Live Rec 0.3.0 (#1967) follows the length this way.
+
+- **The counter wraps at one word.** The pulse handler (`0x4009bbe2`) reads the pattern's length (pattern + `0x14eb3`, s16) at every step and, when the next step reaches it, takes the length off once. 1 is INF: it never wraps there, and the u16 step counter (`0x405c8c94`) runs on. A length cut below the current step brings the counter back by that length at the next step, so a module that takes the step modulo the length it reads stays in step.
+- **Both modes use it.** With no length per track (pattern + `0x14eb9` is 0) every track takes its length from that word (`0x4009c0c4`); with one it is the master length, and a track's own length is track + 709 (917 bytes a track).
+- **The SCALE menu writes every value it passes** (FUNC + PAGE; seen in rytm-emu and through the test rig on a unit). UP and DOWN step a value by one and each value is stored at once, so a module that watches the length sees 16, 17, ... 32 for a move from 16 to 32, and every shorter value on the way down. Master LEN runs INF, 2 to 1024 (DOWN from 2 gives INF, then 1024). Switching to NORM takes the master length held between 2 and 64; switching back to ADV keeps NORM's length as the master length.
+
 ## Performance locks and the QPER knob
 
 OS 1.74, read from the code unless marked.

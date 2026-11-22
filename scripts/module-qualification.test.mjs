@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { evidenceOnBaseProblem, testingVersionProblem } from './module-qualification.mjs'
+import { evidenceOnBaseProblem, moduleFolderSha256, moduleNativeSourceSha256, modulePricelessFolderSha256, testingVersionProblem } from './module-qualification.mjs'
 
 const roots = []
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }) })
@@ -46,4 +46,25 @@ it('asks a new version\'s TESTING.md to name it, and leaves an unchanged version
   // 0.2.0 is not 0.2.01 or 10.2.0.
   write(folder + 'TESTING.md', 'Ran 10.2.0 and 0.2.01.')
   expect(testingVersionProblem({ root, base: main })).toMatch(/does not name/)
+})
+
+it('keeps a qualified folder retained when only a measured CPU price and its readings were added, and nothing else', async () => {
+  const folder = mkdtempSync(join(tmpdir(), 'priced-')); roots.push(folder)
+  const document = { id: 'echo', version: '0.1.0-experimental', author: { name: 'Jannik A\u00dffalg' }, resources: { memory: 'small' } }
+  writeFileSync(join(folder, 'octamod.module.json'), JSON.stringify(document, null, 2).replace(/\u00df/g, '\\u00df') + '\n')
+  writeFileSync(join(folder, 'echo.c'), 'int echo;\n')
+  const qualified = await moduleFolderSha256(folder), source = await moduleNativeSourceSha256(folder, { tests: {} })
+  // What device:price --write adds: resources.cpuPrice, in the file's own escaping, and evidence/cpu-price.json.
+  const priced = { ...document, resources: { ...document.resources, cpuPrice: { value: 7.7, unit: 'percent-of-frame', measure: 'frame-interrupt', source: 'evidence/cpu-price.json' } } }
+  writeFileSync(join(folder, 'octamod.module.json'), JSON.stringify(priced, null, 2).replace(/\u00df/g, '\\u00df') + '\n')
+  mkdirSync(join(folder, 'evidence')); writeFileSync(join(folder, 'evidence/cpu-price.json'), '{}\n')
+  expect(await moduleFolderSha256(folder)).not.toBe(qualified)
+  expect(await modulePricelessFolderSha256(folder)).toBe(qualified)
+  expect(await moduleNativeSourceSha256(folder, { tests: {} })).toBe(source)
+  // Anything else changed beside the price is a changed module.
+  writeFileSync(join(folder, 'octamod.module.json'), JSON.stringify({ ...priced, version: '0.1.1-experimental' }, null, 2).replace(/\u00df/g, '\\u00df') + '\n')
+  expect(await modulePricelessFolderSha256(folder)).not.toBe(qualified)
+  writeFileSync(join(folder, 'octamod.module.json'), JSON.stringify(priced, null, 2).replace(/\u00df/g, '\\u00df') + '\n')
+  writeFileSync(join(folder, 'echo.c'), 'int echo = 1;\n')
+  expect(await modulePricelessFolderSha256(folder)).not.toBe(qualified)
 })

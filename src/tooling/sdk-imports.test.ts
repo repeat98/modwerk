@@ -56,3 +56,18 @@ it.skipIf(process.platform === 'win32')('rejects symlinked guides', () => fixtur
   symlinkSync(target, path)
   expect(() => verifyImportedFile(path, checksum, root)).toThrow('regular file')
 }))
+
+it('lets a measured CPU price into an imported manifest, and nothing else', () => fixture(root => {
+  const path = join(root, 'octamod.module.json'), document = { id: 'echo', author: { name: 'Jannik A\u00dffalg' }, resources: { memory: 'small' } }
+  const text = (value: object) => JSON.stringify(value, null, 2).replace(/\u00df/g, '\\u00df') + '\n'
+  const imported = createHash('sha256').update(text(document)).digest('hex')
+  const priced = { ...document, resources: { ...document.resources, cpuPrice: { value: 0, unit: 'percent-of-frame', measure: 'frame-interrupt', source: 'evidence/cpu-price.json' } } }
+  writeFileSync(path, text(priced))
+  expect(verifyImportedFile(path, imported, root)).toBe(false)
+  expect(() => verifyImportedFile(path, imported)).toThrow('checksum mismatch')
+  writeFileSync(path, text({ ...priced, id: 'other' }))
+  expect(() => verifyImportedFile(path, imported, root)).toThrow('checksum mismatch')
+  const other = join(root, 'other.json')
+  writeFileSync(other, text(priced))
+  expect(() => verifyImportedFile(other, imported, root)).toThrow('checksum mismatch')
+}))

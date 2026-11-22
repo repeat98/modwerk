@@ -94,7 +94,10 @@ export async function ident(line: LinkLine): Promise<LinkIdent> {
 export async function mem(line: LinkLine, address: number, length: number): Promise<Uint8Array> {
   if (length < 1 || length > MEM_MAX) throw new LinkError(`mem: 1 to ${MEM_MAX} bytes`)
   const p = await ask(line, 'mem', [address, length])
-  return unpack7(p.subarray(5)).subarray(0, length)
+  if (p.length < 5 || get32(p, 0) !== address) throw new LinkError('mem: reply does not match the requested address')
+  const bytes = unpack7(p.subarray(5))
+  if (bytes.length !== length) throw new LinkError(`mem: expected ${length} bytes, received ${bytes.length}`)
+  return bytes
 }
 async function read(line: LinkLine, address: number, length: number): Promise<Uint8Array> {
   const out = new Uint8Array(length)
@@ -134,8 +137,8 @@ export function uploadTransport(line: LinkLine): UploadTransport {
       if (signal.aborted) throw new LinkError('upload: cancelled')
       const payload = await ask(line, 'upload', [], UPLOAD_REPLY_MS, pack7(frame))
       const response = unpack7(payload)
-      if (response.length < UPLOAD_RESPONSE) throw new LinkError(`upload: a ${response.length}-byte response`)
-      return response.subarray(0, UPLOAD_RESPONSE)
+      if (response.length !== UPLOAD_RESPONSE) throw new LinkError(`upload: a ${response.length}-byte response`)
+      return response
     },
   }
 }

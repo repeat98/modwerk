@@ -1,0 +1,9 @@
+[
+  {
+    "version": "0.2.0",
+    "date": "2026-11-20",
+    "changes": [
+      "Horizon at half the sample rate inside: the same space for about half the DSP, for chains where Horizon crackles. Hi tops out at 10 kHz."
+    ]
+  }
+]

@@ -340,6 +340,36 @@ class SelectiveImport(unittest.TestCase):
         self.assertLess(source.index('int serveInteractive('), source.index('::getppid()'))
         self.assertNotIn('OT_STALL_CPU', source)
 
+    def test_cycle_scan_import_sits_outside_the_module_source_fingerprint(self):
+        import hashlib, json
+        imported = json.loads((ROOT.parent / 'imports/octabam-cycle-scan-cc7cffc1.json').read_text(encoding='utf-8'))
+        self.assertEqual((imported['kind'], imported['modules']), ('infrastructure-backport', []))
+        self.assertEqual(imported['revision'], 'cc7cffc1a675a763c5b8d6fbe1659f2b322cc540')
+        # sdk/cycle-scan, not sdk/octabam/tools: tools/ is in the module-source fingerprint (scripts/module-source.mjs), and
+        # no compiler reads these files, so they must not make every module package count as rebuilt.
+        self.assertEqual(imported['destination'], 'sdk/cycle-scan')
+        scan_dir = ROOT.parent / 'cycle-scan'
+        self.assertEqual([f['path'] for f in imported['files']], ['interlock_scan.py', 'dsp_host.cpp', 'CYCLE_SCAN.md'])
+        for file in imported['files']:
+            with self.subTest(path=file['path']):
+                self.assertEqual(hashlib.sha256((scan_dir / file['path']).read_bytes()).hexdigest(), file['vendoredSha256'])
+        self.assertFalse((ROOT / 'tools/build/interlock_scan.py').exists())
+        # Two adaptations, both in the scanner: it finds sdk/octabam from its own folder, and, Modwerk having no SEND module
+        # (FX2 id 0x09 is LOFI2's), its scratch remix is the module beside the stock effects with no fallback, as the
+        # modules' perf.py builds theirs. dsp_host.cpp and the page are upstream's byte for byte.
+        adapted = {f['path'] for f in imported['files'] if f['sourceSha256'] != f['vendoredSha256']}
+        self.assertEqual(adapted, {'interlock_scan.py'})
+        scan = (scan_dir / 'interlock_scan.py').read_text(encoding='utf-8')
+        self.assertIn('def _send():', scan)
+        self.assertIn("fallback=\"NONE\",\\n    static_stock=True", scan)
+        self.assertNotIn('registry.by_name("send")', scan)
+        self.assertIn('os.environ.get("OCTABAM_ROOT"', scan)
+        # The harness copy under tools/ stays the 5c71bc8c import's; build-tools.sh stages upstream's -steptrace copy over the
+        # vendor tree's only when the scan's tools are built.
+        self.assertNotIn('-steptrace', (ROOT / 'tools/harness/dsp_host/dsp_host.cpp').read_text(encoding='utf-8'))
+        self.assertIn('-steptrace', (scan_dir / 'dsp_host.cpp').read_text(encoding='utf-8'))
+        self.assertIn('cp "$here/dsp_host.cpp" vendor/dsp56300/source/dsp_host/dsp_host.cpp', (scan_dir / 'build-tools.sh').read_text(encoding='utf-8'))
+
     def test_docs_imports_are_upstream_files_byte_for_byte(self):
         import hashlib, json
         records = [json.loads((ROOT.parent / 'imports' / name).read_text(encoding='utf-8')) for name in DOC_IMPORTS]

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later OR Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
-import packages from '../engine/assets/octatrack-module-packages.json' with { type: 'json' }
+import { publishedPackages as packages } from '../engine/elekloader/octatrack-publication.ts'
 import { builtModules } from './build-follow-up'
 import type { DownloadedBuild } from './hardware-feedback'
 

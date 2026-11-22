@@ -5,7 +5,7 @@ import { ForumHighlights } from './ForumHighlights'
 import { useReconnectRetry } from './useReconnectRetry'
 import { ForumOnlineNow } from './MembersOnline'
 import type { MemberProfile } from './forum-contract'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, post } from './api'
 import { useCommunity } from './context'
 import { FORUM_CATEGORIES, FORUM_CATEGORY_DESCRIPTIONS, REQUEST_STATUSES, type ForumCategory, type ForumThread, type ForumVisit, type SharedConfiguration } from './forum-contract'
@@ -24,7 +24,8 @@ import { ForumShoutbox } from './ForumShoutbox'
 import { ForumShowcase } from './ForumShowcase'
 import { ForumMessages } from './ForumMessages'
 import { ForumAvatar as Avatar } from './ForumIdentity'
-import { ForumThreadList } from './ForumThreadList'
+import { ForumThreadList, ForumThreadListSkeleton } from './ForumThreadList'
+import { Skeleton } from './ForumSkeleton'
 import { RichTextEditor } from './ForumEditor'
 import { DEVICES, DEVICES_BY_ID, deviceHref, deviceTitle } from '../devices/registry'
 import { DeviceImage } from '../devices/DeviceImage'
@@ -38,14 +39,13 @@ import { moveDiscussionIssueDraft, saveDiscussionIssueDraft } from './discussion
 import { profileHref } from '../routing'
 import { GetStarted } from './GetStarted'
 function errorText(error:unknown){return error instanceof Error?error.message:'The request could not be completed.'}
-/** Unread activity since the member's previous visit. Hidden on the first visit and once everything is read. */
-function SinceVisit({onReadAll}:{onReadAll:()=>void}){
-  const [visit,setVisit]=useState<ForumVisit|null>(null),[busy,setBusy]=useState(false)
-  useEffect(()=>{let cancelled=false;void api<ForumVisit>('/forum/visit').then(value=>{if(!cancelled)setVisit(value)}).catch(()=>{});return()=>{cancelled=true}},[])
+/** Unread activity since the member's previous visit, above the list it points into. Hidden on the first visit and once everything is read. */
+function SinceVisit({visit,onReadAll}:{visit?:ForumVisit|null;onReadAll:()=>void}){
+  const [busy,setBusy]=useState(false)
   if(!visit?.since||(!visit.newThreads&&!visit.newReplies&&!visit.unreadFollowed))return null
-  async function readAll(){setBusy(true);try{await post('/forum/read-all',{});setVisit(current=>current&&{...current,newThreads:0,newReplies:0,unreadFollowed:0});onReadAll()}catch{/* the list keeps its markers; the next visit tries again */}finally{setBusy(false)}}
+  async function readAll(){setBusy(true);try{await post('/forum/read-all',{});onReadAll()}catch{/* the list keeps its markers; the next visit tries again */}finally{setBusy(false)}}
   return <section className="forum-since-visit" aria-labelledby="forum-since-title">
-    <div className="forum-since-copy"><h2 id="forum-since-title">Since your last visit</h2><p><ForumTime value={visit.since} relative/></p></div>
+    <div className="forum-since-copy"><h3 id="forum-since-title">Since your last visit</h3><p><ForumTime value={visit.since} relative/></p></div>
     <ul>
       {!!visit.newThreads&&<li><a href="#forum?sort=newest&unread=1"><strong>{visit.newThreads}</strong>new {visit.newThreads===1?'thread':'threads'}</a></li>}
       {!!visit.newReplies&&<li><a href="#forum?following=1&unread=1"><strong>{visit.newReplies}</strong>new {visit.newReplies===1?'reply':'replies'} in threads you follow</a></li>}
@@ -55,10 +55,11 @@ function SinceVisit({onReadAll}:{onReadAll:()=>void}){
   </section>
 }
 function ForumList({query,profile,machineHint}:{query:URLSearchParams;profile?:string;machineHint?:string}){
-  const {session}=useCommunity(),[data,setData]=useState<{threads:ForumThread[];hasMore:boolean}|null>(null),[error,setError]=useState(''),[revision,setRevision]=useState(0)
+  const {session,settled=true}=useCommunity(),[data,setData]=useState<{threads:ForumThread[];hasMore:boolean}|null>(null),[error,setError]=useState(''),[revision,setRevision]=useState(0)
   const serialized=query.toString(),category=query.get('category')??'',page=Number(query.get('page')??0)
   // Phones fold the topic and machine filters behind a toggle next to the search field.
-  const [filtersOpen,setFiltersOpen]=useState(false),[member,setMember]=useState<MemberProfile|null>(null)
+  const [filtersOpen,setFiltersOpen]=useState(false),[member,setMember]=useState<MemberProfile|null>(null),[profileFailed,setProfileFailed]=useState(false)
+  const profileFail=useCallback(()=>setProfileFailed(true),[])
   useEffect(()=>{let cancelled=false;void api<{threads:ForumThread[];hasMore:boolean}>('/forum/threads?'+serialized+(profile?'&author='+encodeURIComponent(profile):'')).then(value=>{if(!cancelled){setData(value);setError('')}}).catch(error=>{if(!cancelled)setError(errorText(error))});return()=>{cancelled=true}},[serialized,profile,revision])
   useReconnectRetry(!!error,setRevision)
   function link(values:Record<string,string>){const next=new URLSearchParams(query);next.delete('page');next.delete('welcome');for(const [key,value] of Object.entries(values)){if(value)next.set(key,value);else next.delete(key)}return (profile?profileHref(profile):'#forum')+(next.size?'?'+next.toString():'')}
@@ -66,18 +67,28 @@ function ForumList({query,profile,machineHint}:{query:URLSearchParams;profile?:s
   // Feature requests open on the most voted ideas; the other views keep recent activity unless an order is chosen.
   const sort=query.get('sort')||(category==='requests'?'top':'active'),newest=sort==='newest',top=sort==='top',status=query.get('status')??''
   const overview=!profile&&!saved&&!following&&!moduleView&&!category&&!filtered&&page===0,home=overview&&!machine
+  // The visit banner sits above the list and arrives with it, so it never pushes loaded threads down.
+  const wantVisit=home&&!!session.user?.verified,[visit,setVisit]=useState<ForumVisit|null|undefined>(undefined)
+  useEffect(()=>{if(!wantVisit)return;let cancelled=false;void api<ForumVisit>('/forum/visit').then(value=>{if(!cancelled)setVisit(value)}).catch(()=>{if(!cancelled)setVisit(null)});return()=>{cancelled=true}},[wantVisit])
+  const listReady=!!data&&(!wantVisit||visit!==undefined)
   const heading=(profile?'Public discussions':saved?'Your bookmarks':following&&unreadOnly?'Unread in Following':following?'Following':unreadOnly?'Unread discussions':moduleView?'Module discussions':category&&Object.hasOwn(FORUM_CATEGORIES,category)?FORUM_CATEGORIES[category as ForumCategory]:query.get('q')?'Search results':newest?'New threads':top?'Top voted':'Latest activity')+(machine&&!profile?' · '+machine.name:'')
   const newParams=new URLSearchParams();if(category)newParams.set('category',category);if(machine)newParams.set('machine',machine.id);if(query.get('module'))newParams.set('module',query.get('module')!)
   const startHref=category==='issues'||session.user?.verified?'#forum/new'+(newParams.size?'?'+newParams.toString():''):session.user?'#account':'#account/register'
   const shareHref=session.user?.verified?'#forum/new?category=showcase'+(machine?'&machine='+machine.id:''):session.user?'#account':'#account/register'
   const showcase=overview&&<ForumShowcase machine={machine?.id} shareHref={shareHref}/>
   const gallery=!profile&&category==='showcase'&&!saved&&!following&&!filtered&&page===0&&<ForumShowcase layout="grid" category="showcase" machine={machine?.id} shareHref={shareHref}/>
-  return <>
+  const pageHeading=<>
     {profile&&<BackLink href="#forum">All discussions</BackLink>}
-    <div className="page-heading forum-heading"><div><span className="forum-eyebrow">Connect · Create · Explore</span><h1>{profile?'@'+profile:'Community forum'}</h1><p>{profile?'Public threads by this member.':'A place for the people who make their machines do more.'}</p></div><div className="forum-heading-actions"><a className={'button ' + (category==='issues'?'button-quiet module-issue-action':'button-primary')} href={startHref}><Icon name={category==='issues'?'message':'plus'} size={16}/><span className="forum-start-long">{category==='issues'?'Report an issue':'Start a thread'}</span><span className="forum-start-short">{category==='issues'?'Report':'New thread'}</span></a><a className="button development-discord-button" href={DEVELOPMENT_DISCORD_URL} target="_blank" rel="noreferrer" aria-label="Join Discord (opens in a new tab)"><img src={assetUrl('auth/discord.svg')} width={20} height={15} alt="" aria-hidden="true"/><span className="forum-start-long">Join Discord</span></a></div></div>
-    {profile&&<ForumProfile key={profile} username={profile} onLoad={setMember}/>}
+    <div className={'page-heading forum-heading' + (profile ? ' forum-profile-heading' : '')}><div><span className="forum-eyebrow">Connect · Create · Explore</span><h1>{profile?'@'+profile:'Community forum'}</h1><p>{profile?'Public threads by this member.':'A place for the people who make their machines do more.'}</p></div><div className="forum-heading-actions"><a className={'button ' + (category==='issues'?'button-quiet module-issue-action':'button-primary')} href={startHref}><Icon name={category==='issues'?'message':'plus'} size={16}/><span className="forum-start-long">{category==='issues'?'Report an issue':'Start a thread'}</span><span className="forum-start-short">{category==='issues'?'Report':'New thread'}</span></a><a className="button development-discord-button" href={DEVELOPMENT_DISCORD_URL} target="_blank" rel="noreferrer" aria-label="Join Discord (opens in a new tab)"><img src={assetUrl('auth/discord.svg')} width={20} height={15} alt="" aria-hidden="true"/><span className="forum-start-long">Join Discord</span></a></div></div>
+  </>
+  // With a stored session the member's own blocks (Get started, Following, the visit banner) belong on the page. Until
+  // that session is checked the page shows only its heading, then builds once, instead of drawing the visitor layout
+  // and rearranging it a moment later.
+  if(!settled)return <>{pageHeading}<div className="forum-pending" role="status" aria-busy="true"><span className="sr-only">Loading the forum…</span></div></>
+  return <>
+    {pageHeading}
+    {profile&&<ForumProfile key={profile} username={profile} onLoad={setMember} onFail={profileFail}/>}
     {home&&session.user?.verified&&<GetStarted machine={machineHint}/>}
-    {home&&session.user?.verified&&<SinceVisit onReadAll={()=>setRevision(value=>value+1)}/>}
     {home&&<ForumOnlineNow/>}
     {home&&showcase}
     {!profile&&<>
@@ -116,11 +127,12 @@ function ForumList({query,profile,machineHint}:{query:URLSearchParams;profile?:s
     {!profile&&category==='requests'&&<nav className="forum-status-filter" aria-label="Request status">{[['','All'],...Object.entries(REQUEST_STATUSES)].map(([value,label])=><a key={value} aria-current={status===value?'page':undefined} href={link({status:value})}>{label}</a>)}</nav>}
     {gallery}
     {moduleView&&<p className="forum-category-description">The home threads for catalog modules, with settings, questions and feedback collected in one place.</p>}
-    <div className={overview||member?'forum-activity-layout':''}><section className="forum-discussions" aria-labelledby="forum-discussions-title">
-      <div className="forum-list-heading"><h2 id="forum-discussions-title">{heading}</h2>{data&&!error&&<span>{data.threads.length}{data.hasMore?'+':''} {data.threads.length===1?'discussion':'discussions'}{page>0?' on this page':''}</span>}</div>
-      {error?<div className="forum-empty" role="alert"><Icon name="message" size={26}/><h2>Discussions could not load</h2><p>{error}</p><button className="button button-quiet" onClick={()=>{setError('');setRevision(value=>value+1)}}>Try again</button></div>:!data?<div className="forum-loading" role="status" aria-busy="true"><span>Loading discussions…</span>{[0,1,2].map(row=><div className="forum-loading-row" key={row} aria-hidden="true"><span/><span/></div>)}</div>:data.threads.length?<ForumThreadList threads={data.threads}/>:<div className="forum-empty"><Icon name={saved?'bookmark':'message'} size={28}/><h2>{unreadOnly?'Nothing unread':filtered?'No matching discussions':profile?'No public threads yet':saved?'No bookmarks yet':following?'No followed discussions yet':'Be the first to start a conversation'}</h2><p>{unreadOnly?'You have read everything here. New replies will show up as they arrive.':filtered?'Try another search or clear your filters.':saved?'Bookmark a thread to keep it close for later.':following?'Follow a thread to find it here. Threads you start or reply to are followed automatically.':profile?'Threads this member starts will appear here.':'Ask a question, share a discovery, or post a configuration you enjoy.'}</p><a className={'button button-quiet' + (!unreadOnly&&!filtered&&!saved&&!following&&!profile&&category==='issues'?' module-issue-action':'')} href={unreadOnly?link({unread:''}):filtered?link({q:'',module:'',status:''}):saved||following||profile?'#forum':startHref}>{!unreadOnly&&!filtered&&!saved&&!following&&!profile&&category==='issues'&&<Icon name="message" size={16}/>} {unreadOnly?'Show all':filtered?'Clear filters':saved||following||profile?'Browse discussions':category==='issues'?'Report an issue':'Start a thread'}</a></div>}
+    <div className={overview||(profile&&!profileFailed)?'forum-activity-layout':''}><section className="forum-discussions" aria-labelledby="forum-discussions-title">
+      <div className="forum-list-heading"><h2 id="forum-discussions-title">{heading}</h2>{!error&&(data&&listReady?<span>{data.threads.length}{data.hasMore?'+':''} {data.threads.length===1?'discussion':'discussions'}{page>0?' on this page':''}</span>:<span aria-hidden="true"><Skeleton width="84px"/></span>)}</div>
+      {listReady&&!error&&<SinceVisit visit={visit} onReadAll={()=>{setVisit(current=>current&&{...current,newThreads:0,newReplies:0,unreadFollowed:0});setRevision(value=>value+1)}}/>}
+      {error?<div className="forum-empty" role="alert"><Icon name="message" size={26}/><h2>Discussions could not load</h2><p>{error}</p><button className="button button-quiet" onClick={()=>{setError('');setRevision(value=>value+1)}}>Try again</button></div>:!data||!listReady?<ForumThreadListSkeleton/>:data.threads.length?<ForumThreadList threads={data.threads}/>:<div className="forum-empty"><Icon name={saved?'bookmark':'message'} size={28}/><h2>{unreadOnly?'Nothing unread':filtered?'No matching discussions':profile?'No public threads yet':saved?'No bookmarks yet':following?'No followed discussions yet':'Be the first to start a conversation'}</h2><p>{unreadOnly?'You have read everything here. New replies will show up as they arrive.':filtered?'Try another search or clear your filters.':saved?'Bookmark a thread to keep it close for later.':following?'Follow a thread to find it here. Threads you start or reply to are followed automatically.':profile?'Threads this member starts will appear here.':'Ask a question, share a discovery, or post a configuration you enjoy.'}</p><a className={'button button-quiet' + (!unreadOnly&&!filtered&&!saved&&!following&&!profile&&category==='issues'?' module-issue-action':'')} href={unreadOnly?link({unread:''}):filtered?link({q:'',module:'',status:''}):saved||following||profile?'#forum':startHref}>{!unreadOnly&&!filtered&&!saved&&!following&&!profile&&category==='issues'&&<Icon name="message" size={16}/>} {unreadOnly?'Show all':filtered?'Clear filters':saved||following||profile?'Browse discussions':category==='issues'?'Report an issue':'Start a thread'}</a></div>}
       {(page>0||data?.hasMore)&&<nav className="forum-pagination" aria-label="Discussion pages">{page>0?<a className="button button-quiet" href={link({page:String(page-1)})}><Icon name="back" size={14}/>Previous</a>:<span/>}<span>Page {page+1}</span>{data?.hasMore&&<a className="button button-quiet" href={link({page:String(page+1)})}>Next<Icon name="arrow" size={14}/></a>}</nav>}
-    </section>{overview&&<div className="forum-overview-sidebar">{home&&<ForumHighlights/>}<ForumDirectory machine={machine?.id} href={category=>link({category})}/><ForumRecentPosts machine={machine?.id}/></div>}{member&&<div className="forum-overview-sidebar"><ForumProfileReplies items={member.recentReplies}/></div>}</div><MemberPrompt/>
+    </section>{overview&&<div className="forum-overview-sidebar">{home&&<ForumHighlights/>}<ForumDirectory machine={machine?.id} href={category=>link({category})}/><ForumRecentPosts machine={machine?.id}/></div>}{profile&&!profileFailed&&<div className="forum-overview-sidebar"><ForumProfileReplies items={member?.recentReplies}/></div>}</div><MemberPrompt/>
   </>
 }
 

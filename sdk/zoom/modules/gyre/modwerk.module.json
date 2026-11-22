@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 3,
+  "id": "gyre",
+  "name": "Gyre",
+  "version": "1.0.0",
+  "machine": "zoom-ms-70cdr",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "themanro",
+    "name": "Roman Rusinov",
+    "credits": [
+      "Roman Rusinov and the ZoomMultistompZDL contributors",
+      "Roman Rusinov and the MultiStomp Editor contributors, editor artwork",
+      "Leemuzhko, effect runtime",
+      "Jannik Aßfalg, ZoomMultistompZDL toolchain"
+    ]
+  },
+  "maintainers": [
+    "themanro",
+    "repeat98"
+  ],
+  "source": {
+    "repository": "https://github.com/themanro/ZoomMultistompZDL",
+    "revision": "aee98c53d7b568cbb55bb927aefbdc9b4e739f3e",
+    "path": "src/custom/gyre"
+  },
+  "presentation": {
+    "label": "GYRE",
+    "family": "Granular delay",
+    "summary": "A loop you hold that keeps spiralling: two grains half a window apart make it unity-gain, so Decay at 0 holds for ever and Rise climbs or sinks it each pass.",
+    "overview": "A loop you hold that keeps spiralling: two grains half a window apart make it unity-gain, so Decay at 0 holds for ever and Rise climbs or sinks it each pass.",
+    "highlights": [
+      "Play a short phrase and check how the captured grains replay."
+    ],
+    "usage": [
+      "Add Gyre from the Delay group to a spare patch.",
+      "Play a short phrase and check how the captured grains replay.",
+      "Use the page buttons to reach the remaining controls."
+    ]
+  },
+  "access": {
+    "location": "Delay group in the MS-70CDR effect list, under Gyre.",
+    "steps": [
+      "Add Gyre from the Delay group to a spare patch.",
+      "Play a short phrase and check how the captured grains replay."
+    ],
+    "screenshots": [
+      "media/cover.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Size",
+      "default": 45,
+      "doc": "Loop length, ~40 ms to ~2.9 s, squared so the short end -- where it reads as a stutter rather than a phrase -- gets most of the travel. On knob 1: verbatim-stock LineSel handler, and the control you reach for first. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Feed",
+      "default": 60,
+      "doc": "How much of what you play enters the loop. At 0 the loop is sealed and what is already captured is all there is; turn it up and the loop keeps absorbing. This is the record control. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Decay",
+      "default": 0,
+      "doc": "0 holds forever -- the loop neither grows nor fades, because the two-grain window sums to exactly 1. Above 0 it fades, squared so the bottom of the knob is a very slow bloom and the top a short tail. This is the way out, and it always works. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Rise",
+      "default": 50,
+      "doc": "Per-pass pitch ratio: 0 is an octave down, 50 unity, 100 an octave up. The shift COMPOUNDS around the loop, so the held audio climbs or sinks endlessly instead of sitting still. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Glide",
+      "default": 0,
+      "doc": "Depth of an onset-triggered ramp on that ratio. A new phrase resets the ramp, so the loop starts at pitch and drifts away over Span. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Span",
+      "default": 50,
+      "doc": "How long the Glide ramp takes, ~0.19 s to ~8 s. Cubic in the knob so the long end keeps its resolution. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Tone",
+      "default": 55,
+      "doc": "Low-pass inside the loop. This is what makes a held loop darken as it circulates rather than repeating identically forever. Range 0–100.",
+      "labels": null
+    },
+    {
+      "name": "Mix",
+      "default": 50,
+      "doc": "Dry/wet crossfade. Range 0–100.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "2.10"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Hardware untested on the original MS-70CDR with OS 2.10.",
+      "This build has startup knob initialization disabled. Check saved settings after recalling a patch."
+    ]
+  },
+  "platform": {
+    "kind": "zdl",
+    "file": "Gyre.ZDL",
+    "effectId": {
+      "gid": 8,
+      "fxid": 484
+    },
+    "effectVersion": "1.00",
+    "dspCost": 20.0,
+    "binary": {
+      "sha256": "c7de68b262567e37ecec35a4cdae49b0caf88e0b1ffc495d358b78975c0b621a",
+      "bytes": 7482,
+      "release": {
+        "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+        "tag": "gyre-1.00",
+        "asset": "Gyre.ZDL"
+      }
+    },
+    "screen": "static",
+    "pedals": [
+      {
+        "machine": "zoom-ms-70cdr",
+        "firmware": "2.10",
+        "status": "untested",
+        "report": null
+      }
+    ]
+  },
+  "resources": {
+    "memoryBytes": 7482,
+    "fastBytes": null,
+    "load": {
+      "display": "DSP 20 of 225 per patch",
+      "method": "static",
+      "conditions": "The effect descriptor declares this cost. Audio load on the pedal is unmeasured."
+    }
+  },
+  "evidence": {
+    "tier": "emulator",
+    "moduleVersion": "1.0.0",
+    "sourceSha256": "c7de68b262567e37ecec35a4cdae49b0caf88e0b1ffc495d358b78975c0b621a",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Ziddle passed the loader check and rendered 22,050 stereo frames. The compiled file passed the stock-code scan and MS-70CDR size limits. Hardware untested.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Add Gyre from the Delay group to a spare patch.",
+          "Play a short phrase and check how the captured grains replay.",
+          "Use the page buttons to reach the remaining controls."
+        ]
+      },
+      "screenshots": [
+        "media/cover.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "MIT AND BSD-3-Clause",
+    "file": "LICENSE",
+    "declaration": "Effect source and artwork are MIT licensed. The runtime uses MIT and BSD-3-Clause components. See LICENSE for the applicable notices and credits."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.png",
+      "kind": "thumbnail",
+      "caption": "Gyre in the MultiStomp Editor",
+      "alt": "Gyre editor illustration",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "https://github.com/themanro/ZoomMultistompZDL/blob/aee98c53d7b568cbb55bb927aefbdc9b4e739f3e/graphics/fx/gyre.webp"
+    },
+    {
+      "path": "media/cover.png",
+      "kind": "screenshot",
+      "caption": "Gyre embedded cover",
+      "alt": "The monochrome effect cover for Gyre",
+      "credit": "Roman Rusinov and contributors",
+      "license": "MIT",
+      "source": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling.",
+      "capture": {
+        "type": "emulator",
+        "release": "2.10",
+        "moduleVersion": "1.0.0",
+        "imageSha256": "c7de68b262567e37ecec35a4cdae49b0caf88e0b1ffc495d358b78975c0b621a",
+        "setup": "Decoded the embedded 128 by 64 cover from this exact ZDL and scaled it four times using nearest-neighbor sampling."
+      }
+    }
+  ]
+}

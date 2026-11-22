@@ -20,6 +20,19 @@ describe('module discovery search', () => {
     expect(octatrackMatchesQuery(reverb, 'digitakt reverb')).toBe(false)
     expect(octatrackMatchesQuery(reverb, reverb.authorName)).toBe(true)
   })
+  it('groups equivalent functions across instruments while keeping previous terms searchable', () => {
+    const kick = MODULES.find(module => module.id === 'analog-bassdrum')!
+    const rytmKick = DIGI_MODS.find(mod => mod.device === 'analog-rytm-mkii' && mod.id === 'analog-bd')!
+    expect(kick).toMatchObject({ category: 'machines', type: 'Drum synthesis' })
+    expect(digiMatchesQuery(rytmKick, 'drum synthesis')).toBe(true)
+    const chorus = DIGI_MODS.find(mod => mod.device === 'analog-rytm-mkii' && mod.id === 'chorus')!
+    expect(chorus).toMatchObject({ libraryCategory: 'effects', category: 'Chorus' })
+    expect(digiMatchesQuery(chorus, 'send effects')).toBe(true)
+    for (const [id, category, type] of [
+      ['kits', 'system', 'Kits & parts'], ['quantizer', 'sequencing', 'Scale quantization'],
+      ['slow-lfo', 'modulation', 'LFO'], ['repitch', 'playback', 'Sample playback'],
+    ]) expect(MODULES.find(module => module.id === id)).toMatchObject({ category, type })
+  })
   it('uses the same matching rules for Digi instrument, type and author searches', () => {
     const mod = DIGI_MODS.find(mod => mod.device === 'digitakt' && mod.libraryCategory === 'midi-usb')!
     expect(mod).toBeDefined()

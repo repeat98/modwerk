@@ -1,0 +1,44 @@
+{
+ "module": "grain",
+ "about": "What Grain adds to the CPU meter (percent), each pair the same Part with the track on Flex and then Grain. resources.cpuMeter is the largest difference, rounded up: 16.55 -> 17. Figures are medians of the side-first runs, or the middle five of seven 1-second health readings (per mille) where readings are given.",
+ "pairs": [
+  {
+   "track": 5,
+   "flex": 61.7,
+   "machine": 78.25,
+   "conditions": "Package db843bc2 (the side-first build; 0.1.1's audio path differs from it only by the pool checks), MKII OS 1.40C, development base 3a4c07fe in RAM, card out, 20-channel USB capture open in both arms. A16 Part 3, 100 BPM, R3 24-bit stereo, dense six voices (SIZE, DENS, SPRY and SCAN at maximum), one minute per arm, median of 38 readings.",
+   "source": "evidence/timing/side-first-comparison.json"
+  },
+  {
+   "track": 1,
+   "flex": 62.3,
+   "machine": 76.85,
+   "conditions": "As the T5 pair, on T1.",
+   "source": "evidence/timing/side-first-comparison.json"
+  },
+  {
+   "track": 1,
+   "flex": 43.68,
+   "machine": 52.6,
+   "flexReadings": [
+    436,
+    440,
+    435,
+    444,
+    435,
+    437,
+    436
+   ],
+   "machineReadings": [
+    526,
+    530,
+    524,
+    535,
+    524,
+    526,
+    523
+   ],
+   "conditions": "Package c841ea87 (0.1.1's source without reserved[1]), MKII OS 1.40C, base twin 0449ed78 in RAM, card in, the owner's project at 134 BPM, USB capture closed. Grain at PTCH +24, SIZE and DENS at maximum, SPRY and SCAN at 0, on a 16-bit stereo sample; seven 1-second readings per arm, 21 November 2026."
+  }
+ ]
+}

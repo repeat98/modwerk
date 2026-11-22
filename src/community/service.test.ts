@@ -65,6 +65,8 @@ async function fixture(){
  db.exec(readFileSync(new URL('../../migrations/0068_report_triage.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0021_social_onboarding.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0063_github_actions.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0072_octatrack_diagnostics.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0089_octatrack_count_daily.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0087_shared_read_cache.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0097_site_count_daily.sql',import.meta.url),'utf8'))
  const env:Env={DB:adapter(db),APP_URL:'https://octamod.test',ADMIN_KEY_SHA256:await digest(adminKey)}
@@ -92,6 +94,41 @@ const issue=(extra:Record<string,unknown>={})=>({title:'Knob issue',steps:'Load 
 afterEach(()=>{vi.useRealTimers();for(const db of databases.splice(0))db.close()})
 const details={moduleId:'new-filter',title:'New filter',repositoryUrl:'https://github.com/sambanks/example/tree/main/modules/filter',description:'Original filter',usage:'Choose the filter',testReportUrl:'https://github.com/sambanks/example/blob/main/TESTS.md',stressNotes:'Eight tracks under stress',qualityNotes:'Emulator only; hardware untested',resourceNotes:'100 words; CPU not measured',license:'Original code, MIT; own capture',rightsConfirmed:true}
 describe('community access and review',()=>{
+ it('counts outstanding work across all three admin queues', async () => {
+  const { call, db, admin } = await fixture()
+  const counts = async () => (await call('/admin/overview', 'GET', undefined, '', undefined, admin)).json()
+  expect(await counts()).toMatchObject({ issues: 0, forum: 0, requests: 0 })
+  db.exec(`
+    INSERT INTO issues(id,module_id,author_login,reporter_id,title,body) VALUES('issue','mod','author','other','Title','Body');
+    INSERT INTO forum_threads(id,user_id,title,category) VALUES('thread','author','Title','general');
+    INSERT INTO forum_posts(id,thread_id,user_id,body) VALUES('post','thread','author','Body');
+    INSERT INTO forum_reports(id,post_id,user_id,reason) VALUES('report','post','other','Reason');
+    INSERT INTO forum_shouts(id,user_id,body) VALUES('shout','author','Body');
+    INSERT INTO forum_shout_reports(id,shout_id,user_id,reason) VALUES('shout-report','shout','other','Reason');
+    INSERT INTO conversations(id,pair_key) VALUES('dm','author:other');
+    INSERT INTO conversation_members(conversation_id,user_id) VALUES('dm','author'),('dm','other');
+    INSERT INTO message_reports(id,conversation_id,user_id,reason) VALUES('dm-report','dm','other','Reason');
+    INSERT INTO account_removal_requests(id,user_id,status) VALUES('new','author','requested'),('active','other','reviewing');
+  `)
+  expect(await counts()).toMatchObject({ issues: 1, forum: 3, requests: 2 })
+  db.exec(`
+    UPDATE issues SET status='closed';
+    UPDATE forum_reports SET resolved=1;
+    UPDATE message_reports SET resolved=1;
+    UPDATE account_removal_requests SET status='completed' WHERE id='active';
+    UPDATE account_removal_requests SET status='cancelled' WHERE id='new';
+  `)
+  expect(await counts()).toMatchObject({ issues: 0, forum: 1, requests: 0 })
+  const ids = async (path: string) => {
+    const result = await call(path, 'GET', undefined, '', undefined, admin)
+    expect(result.status).toBe(200)
+    return (await result.json() as { id: string }[]).map(item => item.id).sort()
+  }
+  expect(await ids('/admin/forum/reports?view=pending')).toEqual(['shout-report'])
+  expect(await ids('/admin/forum/reports?view=reviewed')).toEqual(['dm-report', 'report'])
+  expect(await ids('/admin/account-requests?view=active')).toEqual([])
+  expect(await ids('/admin/account-requests?view=archive')).toEqual(['active', 'new'])
+ })
  it('does not grant publication to historical reports during migration',()=>{
   const db=new DatabaseSync(':memory:');databases.push(db)
   db.exec("CREATE TABLE issues(id TEXT PRIMARY KEY,context_json TEXT,github_url TEXT); INSERT INTO issues VALUES('private',NULL,NULL),('structured','{}',NULL),('published','{}','https://github.com/repeat98/octamod/issues/1')")
@@ -450,6 +487,25 @@ describe('administrator insights',()=>{
 })
 
 describe('private aggregate usage statistics',()=>{
+ it('returns retained install outcomes with independent guide and sync coverage',async()=>{
+  vi.useFakeTimers({toFake:['Date']});vi.setSystemTime(new Date('2026-11-21T12:00:00Z'))
+  const {call,db,admin}=await fixture()
+  db.exec(`INSERT INTO octatrack_count_daily VALUES ('2026-11-11','base_guide_opened','',8),('2026-11-12','base_first_connection','',4),
+    ('2026-11-12','base_file_downloaded','',7),('2026-11-12','base_usb_update_done','',3);
+    INSERT INTO octatrack_beta_daily VALUES ('2026-10-22','usb_sync_kept',99),('2026-11-05','usb_sync_started',3),
+    ('2026-11-12','usb_sync_kept',6),('2026-11-12','usb_sync_failed',2);`)
+  const read=async(days:number)=>(await(await call('/admin/statistics?days='+days,'GET',undefined,'',undefined,admin)).json())
+  const wide=await read(90)
+  expect(wide.installActivity.guideFrom).toBe('2026-11-11')
+  expect(wide.installActivity.syncFrom).toBe('2026-11-05')
+  expect(wide.installActivity.counts).toHaveLength(3)
+  expect(wide.installActivity.counts).toEqual(expect.arrayContaining([
+    {day:'2026-11-12',event:'base_first_connection',count:4},{day:'2026-11-12',event:'base_usb_update_done',count:3},
+    {day:'2026-11-12',event:'usb_sync_kept',count:6}
+  ]))
+  expect(wide.siteCounts).toEqual([])
+  expect((await read(7)).installActivity).toEqual({...wide.installActivity,counts:[]})
+ })
  it('counts events once, deduplicates daily visitors, and keeps summaries behind administrator authorization',async()=>{
   const {call,db,admin,tokens}=await fixture(),first=usageEvent()
   expect((await call('/usage/events','POST',first)).status).toBe(200)
