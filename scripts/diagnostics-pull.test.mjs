@@ -141,6 +141,12 @@ describe('diagnostics pull', () => {
     expect(unitLines([{ ...set, tempo24: 2, dsp1to4: 1, cpu: 48640, dsp5to8: 96 }])[0])
       .toContain('refused SC Ringmod (module memory, by the module pool, module memory 760 KiB used, largest free block 1.5 KiB)')
   })
+  it('names the USB Audio package in both the installed list and a refused restore', () => {
+    const set = { seq: 1, boot: 1, second: 0, kind: 'set', a: 1,
+      machines: [0xb1, 0x28, 0x8f, 0x29], fx: [], keys: [], screen: 0, tempo24: 0 }
+    expect(unitLines([set])[0]).toContain('1 installed: USB Audio')
+    expect(unitLines([{ ...set, a: 0, screen: 0xb1288f29, tempo24: 5 }])[0]).toContain('refused USB Audio (busy)')
+  })
   it('calls a stall found at a start on another base an OS upgrade, and one on the same base nothing', () => {
     const at = (seq, boot, kind, a = 0) => ({ seq, boot, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
       fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 0, playing: false })

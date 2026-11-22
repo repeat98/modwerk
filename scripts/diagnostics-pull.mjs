@@ -13,6 +13,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { DSP_REPORT_NAMES, describeStallFrames } from '../src/community/octatrack-diagnostics-contract.ts'
+import { USB_AUDIO_MODULE } from '../src/config/usb-audio.ts'
 import { crashNames, namesFor, withName } from '../src/dev/address-names.ts'
 
 const ROOT = new URL('..', import.meta.url)
@@ -21,6 +22,8 @@ const API = process.env.MODWERK_API_URL ?? 'https://octamod-community.octamod.wo
 const OUT = join(homedir(), '.cache/modwerk-local/diagnostics')
 /** Module ids (the package's `module`, 8 hex digits) to names, for the unit's `set` records. */
 const MODULE_NAMES = new Map((() => { try { return JSON.parse(readFileSync(new URL('src/engine/assets/octatrack-module-packages.json', ROOT), 'utf8')).packages.map(p => [p.module, p.name ?? p.id]) } catch { return [] } })())
+// All USB Audio layouts share a runtime ID. The catalogue lists them separately from ordinary packages.
+MODULE_NAMES.set(createHash('sha256').update(USB_AUDIO_MODULE).digest('hex').slice(0, 8), 'USB Audio')
 const PAGE = 500
 const PROBLEMS = ['sync_failed', 'link_failed', 'build_failed', 'browser_error', 'unhandled_rejection', 'unresponsive']
 

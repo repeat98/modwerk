@@ -368,7 +368,7 @@ export class OctatrackLink {
       const index = findVendorInterface(device.configuration)
       if (index === undefined) { await device.close().catch(() => {}); return this.setFor(connection, { status: 'stock' }) }
       this.index = index; this.transport = new UsbVendorTransport(device, index)
-      if (!await this.claim()) return
+      if (!await this.claim(resuming)) return
       try {
         const identity = await this.transport.identify()
         this.live(connection)
@@ -434,14 +434,22 @@ export class OctatrackLink {
     }
   }
   /** Claimed only while talking, so other tabs and `npm run device` can use the unit in between. */
-  private async claim() {
+  private async claim(resuming = false): Promise<boolean> {
     const connection = this.connection, device = this.device, index = this.index
     if (!device || index === undefined) return false
     try {
       await device.claimInterface(index)
-      if (connection !== this.connection) { await device.releaseInterface(index).catch(() => {}); return false }
+      if (connection !== this.connection || resuming && !this.state.reconnecting) { await device.releaseInterface(index).catch(() => {}); return false }
       return true
     } catch {
+      // The trial still holds the tab lock. Retry under it until the existing reconnect deadline.
+      if (resuming) {
+        if (connection !== this.connection || this.device !== device || !this.state.reconnecting) return false
+        this.diagnostic('link_failed', { failure: 'claim-failed' })
+        await wait(BUSY_RETRY_MS)
+        if (connection !== this.connection || this.device !== device || !this.state.reconnecting) return false
+        return this.claim(true)
+      }
       this.setFor(connection, { status: 'busy', identity: this.state.identity })
       setTimeout(() => { if (connection === this.connection && this.state.status === 'busy') void this.retry() }, BUSY_RETRY_MS)
       return false

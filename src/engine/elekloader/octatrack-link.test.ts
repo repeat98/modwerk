@@ -653,6 +653,48 @@ describe('a sync that changes the unit’s USB configuration', () => {
       expect(probe).toHaveBeenCalledOnce()
     } finally { stop(); probe.mockRestore() }
   })
+  it('keeps its trial while the returning USB Audio interface is briefly busy', async () => {
+    const { unit, link } = await linked()
+    await link.update('USB Audio', audio)
+    const diagnostic = vi.fn()
+    link.subscribeDiagnostics(diagnostic)
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    unit.orphan = link.getState().active!
+    unit.unplug()
+    const back = link.reconnected()
+    unit.taken = true
+    unit.plug('base')
+    await vi.advanceTimersByTimeAsync(0)
+    expect(link.getState()).toMatchObject({ status: 'trial', reconnecting: true })
+    expect(diagnostic).toHaveBeenCalledWith(expect.objectContaining({ event: 'link_failed', phase: 'trial', failure: 'claim-failed' }))
+    unit.taken = false
+    await vi.advanceTimersByTimeAsync(3000)
+    await vi.waitFor(() => expect(link.getState().reconnecting).toBeUndefined())
+    expect(await back).toBe(true)
+    vi.useRealTimers()
+    await link.keep()
+    expect(link.getState()).toMatchObject({ status: 'ready', notice: { tone: 'success' } })
+  })
+  it('stops retrying the returned interface at the original trial deadline', async () => {
+    const { unit, link } = await linked()
+    await link.update('USB Audio', audio)
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    unit.orphan = link.getState().active!
+    unit.unplug()
+    const back = link.reconnected()
+    unit.taken = true
+    unit.plug('base')
+    const [device] = await unit.usb.getDevices()
+    const claim = vi.spyOn(device, 'claimInterface')
+    await vi.advanceTimersByTimeAsync(RECONNECT_WAIT_MS)
+    expect(await back).toBe(false)
+    expect(link.getState().status).toBe('idle')
+    const attempts = claim.mock.calls.length
+    expect(attempts).toBeGreaterThan(1)
+    unit.taken = false
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(claim).toHaveBeenCalledTimes(attempts)
+  })
   it('releases a different trial that appeared while this page was waiting for its USB Audio trial', async () => {
     const { unit, link } = await reconnecting()
     unit.orphan = 'a8'.repeat(32)
