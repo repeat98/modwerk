@@ -31,6 +31,13 @@ link.c keeps one frame at a time in its own slot (`UPLOAD_IN`, the largest frame
 dropped and counted in `ident`. The UI task runs it: the controller, the loader's admission and its switches never
 run in the MIDI task.
 
+**Which build HELLO names.** The controller's base is the development build's layout digest: `machine:base
+--dev` hashes the staged sources and the merged recipe (cflags, defsyms, sites; `layout_digest` in
+`scripts/machine-base.py`) and writes it to `base/build_identity.h` (base.json's dev `identity`), prints it and saves
+it beside the package as `.identity`. Two development builds with different layouts report different bases, and an
+offer bound to one is refused on the other (the controller's identity check). `dn2_link.py try --base FILE` refuses
+before sending anything when the unit's HELLO names another build.
+
 ## The Digitone II's glue (OS 1.12)
 
 Each value was found in the stock OS and checked on a unit (20 November 2026).
