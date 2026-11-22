@@ -18,6 +18,7 @@ for field in ('emulator', 'base', 'card', 'symbols', 'output'):
 parser.add_argument('--octabam', type=Path, required=True)
 parser.add_argument('--reference', action='store_true')
 parser.add_argument('--lane-matrix', action='store_true')
+parser.add_argument('--arranger-recovery', action='store_true')
 parser.add_argument('--observe-queue', action='store_true')
 parser.add_argument('--boundary', choices=('early','late'))
 parser.add_argument('--package', type=Path)
@@ -198,6 +199,7 @@ with tempfile.TemporaryDirectory() as tmp:
                 mask = num(t3 + 0x40, 8)
                 cmd(f'poke {t3 + 0x40:#x} {mask | 1:016x}')
                 cmd(f'poke {t3 + 0x52:#x} 10')
+        if args.boundary or args.arranger_recovery:
             # Add the second A01 row using stock EDIT in RAM before either trial.
             assert num(0x10000016,2) == 1
             tap(ARR)
@@ -212,6 +214,28 @@ with tempfile.TemporaryDirectory() as tmp:
             assert num(0x10000016,2) == 2
             arr_before = arr_run()
             print('stock Arranger before',len(arr_before['events']),'calls',flush=True)
+        if args.arranger_recovery:
+            initial = callbacks(), bank_parts(), block(0x400e21e0, 16 * 0x8ed8)
+            switch(1)
+            tap(ARR)
+            tap(1)
+            switch(0)
+            after = arr_run()
+            def signature(row):
+                writes = [(pc, addr, width, val) for _, pc, addr, val, width in row['writes']
+                          if any(base <= addr < base + 96 for base in (0x80001904, 0x80001984))]
+                assert len(writes) == len(row['events']) == 336
+                return [row['events'], row['wraps'], row['row'],
+                        [[pc, addr, width, (val-writes[0][3]) & 0xffffffff] for pc, addr, width, val in writes]]
+            control = signature(arr_before)
+            assert signature(after) == control
+            assert initial == (callbacks(), bank_parts(), block(0x400e21e0, 16 * 0x8ed8))
+            assert call('modwerk_runtime_free',0) == free and num(syms['core:owners']) == 0
+            assert 'errors=0' in cmd('card flush') and project(args.card) == project(scratch)
+            args.output.write_text(json.dumps(dict(events=336,writes=336,row=after['row'],pool=free,
+                                                   sha256=hashlib.sha256(json.dumps(control).encode()).hexdigest())))
+            sys.exit(0)
+        if args.boundary:
             if not args.reference:
                 switch(1)
                 witness = json.loads(args.symbols_module.read_text())

@@ -77,3 +77,5 @@ The following inventory covers every tracked file in the donor draft. IDs are Gi
 ## Shared candidate tools
 
 build_candidate.py links the public CLYPS sources against the candidate SDK and emits the ABI 9 package. The new tests adapt the original CLYPS synthetic card, MKII interactive transport and timing assays recorded above to the coordinated registry. They generate local inputs from a separately supplied synthetic project. They contain no firmware, card images, samples or linked executables. The original GPL and Kyoti notices apply as above. evidence/shared-base.json contains hashes, counts and measured emulator results.
+
+The shared-base replay adds a card recipe, native sequencer and panel harnesses, independently graded timing traces and the profile probe. make_fixture.py prepares project copies using the Octabam project tools. Provide the OS and project locally. The repository contains source and measured metadata only.

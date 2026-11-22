@@ -6,7 +6,7 @@
 python3.12 -B -m unittest discover -s sdk/drafts/clyps -p 'test_*.py' -v
 ```
 
-Use host cc, Python 3.12 and m68k-elf GCC/binutils (tested with GCC 16.2). This compiles the actual SRC/ARR, sequencer and edit-lock callbacks, checks ColdFire instructions, and links the relocatable image in a temporary directory. The stock-memory inputs in host tests are synthetic. Integration into a running public base still requires the hooks in [HOOK_PROPOSAL.md](HOOK_PROPOSAL.md).
+Use host cc, Python 3.12 and m68k-elf GCC/binutils (tested with GCC 16.2). This compiles the actual SRC/ARR, sequencer and edit-lock callbacks, checks ColdFire instructions, and links the relocatable image in a temporary directory. The stock-memory inputs in host tests are synthetic. For the public candidate based on the cumulative Octatrack branch, follow [the MKII build and replay recipe](NATIVE_REPLAY.md). The shared contract is under maintainer review.
 
 **Artist/product direction:** Endrew. Built on Zac Kyoti's existing CLYPS ideas and independent Modwerk research with attribution retained. The project is independent and unofficial.
 
@@ -25,9 +25,9 @@ A Session View-inspired performance system for Octatrack's **native sequencer**,
 
 ## Emulator qualification
 
-The protected MKII candidate runs eight ordinary audio lanes. The revised eight-lane replay matched 624 ordered events, 608 timestamp writes and 219 sampled states against an independent stock composite. The historical tick-193 sample and the late tick-187 diagnostic are documented with their strict comparison outcomes in [TESTING.md](TESTING.md). Track Solo now receives both TRACK edges in Meta. LEVEL handles CLYPS navigation.
+The public candidate based on #1910 ran a T2-only change at stock wrap 90. The independent eight-lane replay matched 624 ordered events, 608 timestamp writes and 219 sampled states. A second test exercised 16 rows and every ordinary track/source combination. FUNC+LEVEL outside Meta moved the native MAIN setting from 64 to 56 and back to 64, with CUE steady. The late request was accepted at 187, published at 188 and restored musically at 282. [Qualification and limits](TESTING.md).
 
-Earlier emulator evidence recorded twenty install/remove cycles, comparisons of 27 project files and a synthetic T1 FLEX audio transition. This sprint exercised module removal, stock UI recovery and the sequencing/output traces. Hardware, external clock, positive master gain adjustment and T8 Master remain unqualified. The dependent engine requires a protected development base. Public slots 61 and 62 already have different owners.
+The cumulative branch still needs the proposed capability. External clock, physical hardware and T8 as a playable Master track remain outside qualification.
 
 ## Work requested from Modwerk community
 

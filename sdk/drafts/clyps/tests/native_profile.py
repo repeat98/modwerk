@@ -70,19 +70,23 @@ with tempfile.TemporaryDirectory() as tmp:
             advance(120)
             return stages
 
-        def window():
+        def window(expected_source=None):
             starts = {WRAP: 'boundary', 0x400a2d5a:'source'}
             ends = {WRAP+6: 'boundary', 0x400a2d60:'source'}
-            cmd('watch ' + ','.join(hex(pc) for pc in (*starts, *ends)))
+            cmd('watch ' + ','.join(hex(pc) for pc in (*starts, *ends, AUDIO)))
             cmd('hits')
             metrics = ['mw_frame_skips','mw_frame_sheds','mw_frame_busy','mw_frame_count']
             before = [word(symbols[name]) for name in metrics]
+            observed_sources = set()
             current = {}
             spans = {name:[] for name in starts.values()}
             for _ in range(300):
                 advance(10)
                 for raw in cmd('hits').split()[2:]:
-                    stamp, pc = [int(x,16) for x in raw.split(':')[:2]]
+                    hit = [int(x,16) for x in raw.split(':')]
+                    stamp, pc = hit[:2]
+                    if pc == AUDIO and hit[7] == 0x400a2d82:
+                        observed_sources.add((hit[8], hit[10]))
                     if pc in starts:
                         current[starts[pc]] = stamp
                     elif pc in ends and ends[pc] in current:
@@ -93,6 +97,9 @@ with tempfile.TemporaryDirectory() as tmp:
             result['instruction_spans'] = {name:dict(count=len(v),minimum=min(v,default=None),
                                                       maximum=max(v,default=None)) for name,v in spans.items()}
             result['frame_peak_timer_counts_since_boot'] = word(symbols['mw_frame_max'])
+            result['audio_lane_sources'] = sorted(observed_sources)
+            if expected_source is not None:
+                assert observed_sources == {(lane, expected_source) for lane in range(8)}, observed_sources
             return result
 
         for ms, key in [(3000,0x32),(3000,0x32),(500,0x31)]:
@@ -108,7 +115,7 @@ with tempfile.TemporaryDirectory() as tmp:
             result[name+'-master'] = master()
             result[name+'-stopped'] = window()
             tap(0x28)
-            result[name+'-light'] = window()
+            result[name+'-light'] = window(0)
             tap(0x27)
         # Assign all eight lanes to a dense A02 in ordinary Normal-16 time.
         for t in range(8):
@@ -124,14 +131,14 @@ with tempfile.TemporaryDirectory() as tmp:
             tap(1)
         tap(0x28)
         assert word(symbols['modwerk_runtime_api']) & 0xfff == 0x111
-        result['installed-dense'] = window()
+        result['installed-dense'] = window(1)
         tap(0x27)
         switch(0)
         # Independent stock global A02 uses the same eight dense track records.
-        cmd('poke 0x800065c0 01')
         tap(0x28)
+        cmd('poke 0x800065c0 01')
         advance(2300)
-        result['empty-dense'] = window()
+        result['empty-dense'] = window(1)
         tap(0x27)
         args.output.write_text(json.dumps(result,indent=2))
         a,b=result['empty-master'],result['installed-master']
