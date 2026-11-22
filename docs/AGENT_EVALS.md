@@ -6,7 +6,7 @@ An agent gets the task description and the relevant public files from the first 
 
 Every coding agent following the repository workflow gets one assignment from `npm run pr:ready`, including the staged `--commit` and registered-author paths. The command chooses a case from the tree hash and prepares it under the ignored `.claude/agent-evals/` directory. Exit 2 with a TASK.md path hands the task to the agent already doing the work. This works in Codex, Claude Code and other agents without installing a second client.
 
-Read TASK.md and solve it inside the supplied directory using only that snapshot and your own checks. Repeat the original readiness command with `--eval-agent "<tool and model>"` after your first attempt, even if incomplete. Readiness scores the attempt and continues its usual checks. Retries on the same tree and suite reuse the first recorded score. A different tree gets a fresh assignment. Scores and candidate edits stay local. This uses the active agent’s session context.
+Read TASK.md and solve it inside the supplied directory using only that snapshot and your own checks. Repeat the original readiness command with `--eval-agent "<tool and model>"` after your first attempt, even if incomplete. Readiness scores the attempt and continues its usual checks. Retries on the same tree and suite reuse the first recorded score. A different tree gets a fresh assignment unless this computer already scored its case on the same suite, in this checkout or another worktree of it: then that score stands, and the same snapshot is not solved twice. Scores and candidate edits stay local. This uses the active agent’s session context.
 
 ## After a merge
 

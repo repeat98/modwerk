@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { context, LAYER, plan, record, recordMarkdown, runProcedure, STEPS, suggestEdgeCases } from './test-procedure.mjs'
+import { context, LAYER, plan, reading, record, recordMarkdown, runProcedure, STEPS, suggestEdgeCases } from './test-procedure.mjs'
 import { bodyProblems } from './pr-body.mjs'
 
 const INVENTORY = '[{"name":"KITS","version":"0.2.0"}]'
@@ -12,13 +12,13 @@ const moduleCtx = (extra = {}) => ({ kind: 'module', id: 'vibrato', version: '0.
   unit: { available: true }, files: [], manifest: { category: 'effects', compatibility: { effectId: 9, uiClaims: [] } }, ...extra })
 
 /** Fake tools: every command passes and device.mjs's inventory prints the same set, unless `fail` or `inventories` say otherwise. */
-function fakeDeps({ fail = [], inventories = [INVENTORY, INVENTORY], files = {}, trialOutput = 'trial: 1234… running\nrolled back (pass --accept to keep it)' } = {}) {
+function fakeDeps({ fail = [], inventories = [INVENTORY, INVENTORY], idents = ['link: 1\nlabel: FLSH', 'link: 1\nlabel: FLSH'], files = {}, trialOutput = 'trial: 1234… running\nrolled back (pass --accept to keep it)' } = {}) {
   const ran = [], started = [], envs = []
-  let clock = 0, inventory = 0
+  let clock = 0, inventory = 0, ident = 0
   return {
     ran, started, envs,
     now: () => (clock += 1000),
-    exists: path => path in files || path.endsWith('.mwrm') || path.endsWith('.elemod'),
+    exists: path => path in files || /\.(mwrm|elemod|syx)$/.test(path),
     read: path => files[path],
     sha256: () => 'ab'.repeat(32),
     exec: async (argv, log, env) => {
@@ -27,7 +27,7 @@ function fakeDeps({ fail = [], inventories = [INVENTORY, INVENTORY], files = {},
       envs.push(env)
       if (argv[2] === 'unit' && files.onQueue) files.onQueue(argv)
       const code = fail.some(part => line.includes(part)) ? 1 : 0
-      return { code, output: line.endsWith('do inventory --socket /tmp/share.sock') ? inventories[inventory++] : 'ok' }
+      return { code, output: line.endsWith('do inventory --socket /tmp/share.sock') ? inventories[inventory++] : line.endsWith('rytm_link.py ident') ? idents[ident++] : 'ok' }
     },
     start: argv => {
       started.push(argv.join(' '))
@@ -143,10 +143,78 @@ describe('the steps', () => {
     expect(steps.find(step => step.id === 'unit-pass').reason).toMatch(/unit queue run ended without a result \(exit 1\)/)
   })
 
-  it('leaves the unit and the compatibility gate to the machine\'s own tools for a module of another machine', () => {
-    const ctx = moduleCtx({ machine: 'digitakt' })
-    expect(plan(STEPS[0], ctx).commands).toEqual([['npm', 'run', 'module:doctor', '--', 'vibrato']])
-    for (const step of STEPS.filter(step => step.unit || step.id === 'compat')) expect(plan(step, ctx).skip).toMatch(/drive the Octatrack/)
+})
+
+describe('every machine', () => {
+  const RYTM = 'sdk/machines/analog-rytm-mkii/tools/'
+  const rytm = (extra = {}) => moduleCtx({ id: 'improved-performance', machine: 'analog-rytm-mkii', machineName: 'Analog Rytm MKII', platform: 'elemod', manifest: { category: 'system', compatibility: { uiClaims: [] } },
+    stock: '/fw/AR.syx', elemod: '/dev/base.elemod', label: 'IP07', linkable: true, cases: ['/c/improved-performance'], emu: '/emu/dtboot', ...extra })
+
+  it('runs the same steps on the Rytm with its own tools: the linked image, rytm-emu, the link\'s RAM boot and cases, the flash label put back', async () => {
+    const deps = fakeDeps(), ctx = rytm()
+    const steps = await runProcedure(ctx, deps)
+    expect(deps.ran).toEqual([
+      'npm run module:doctor -- improved-performance',
+      'node scripts/link-image.mjs --stock /fw/AR.syx --version IP07 --out /out/improved-performance.syx --elemod /dev/base.elemod --module analog-rytm-mkii:improved-performance',
+      `python3 -B ${RYTM}rytm_test.py emu /out/improved-performance.syx /c/improved-performance --emu /emu/dtboot --out /out/emulator`,
+      `python3 -B ${RYTM}rytm_link.py ident`,
+      `python3 -B ${RYTM}rytm_link.py ramboot /out/improved-performance.syx --label IP07`,
+      `python3 -B ${RYTM}rytm_test.py unit /c/improved-performance --label FLSH --image /out/improved-performance.syx --allow-state-change --out /out/unit`,
+      `python3 -B ${RYTM}rytm_link.py ident`,
+    ])
+    expect(statuses(steps)).toEqual({ software: 'passed', compat: 'not run', build: 'passed', 'cost-model': 'not run', emulator: 'passed', 'unit-read': 'passed',
+      'unit-pass': 'passed', soak: 'not run', 'cost-unit': 'not run', restore: 'passed', 'by-hand': 'to do', developer: 'to do' })
+    expect(steps.find(step => step.id === 'emulator').emulator).toBe(true)
+    expect(steps.find(step => step.id === 'compat').reason).toMatch(/modules:compat compares the Octatrack's modules only/)
+    expect(steps.find(step => step.id === 'cost-unit').reason).toMatch(/core_audio_load/)
+    const md = recordMarkdown(record(ctx, steps, { started: 0, finished: 1000, command: 'npm run test:procedure -- improved-performance' }))
+    expect(md).toMatch(/^Tested on a unit: package abababababab/m)
+  })
+
+  it('fails the put-back when the flashed label changed, and claims no unit test from reading the unit alone', async () => {
+    const steps = await runProcedure(rytm(), fakeDeps({ idents: ['label: FLSH', 'label: IP07'] }))
+    expect(steps.find(step => step.id === 'restore')).toMatchObject({ status: 'failed', reason: expect.stringMatching(/FLSH.*IP07/) })
+    expect(reading('[{"name":"KITS"}]')).toEqual([{ name: 'KITS' }])
+    const noCases = rytm({ cases: [] }), read = await runProcedure(noCases, fakeDeps())
+    expect(read.find(step => step.id === 'unit-pass')).toMatchObject({ status: 'not run', reason: expect.stringMatching(/no cases: write them in .*cases\/improved-performance\//) })
+    expect(recordMarkdown(record(noCases, read, { started: 0, finished: 1000, command: 'x' }))).toMatch(/^Not tested on a unit:/m)
+  })
+
+  it('names what a machine still lacks for each step it has no tool for, and what to pass for the build', () => {
+    const ctx = moduleCtx({ id: 'track-names', machine: 'digitakt-ii', machineName: 'Digitakt II', platform: 'elemod', cases: [] })
+    expect(plan(STEPS[0], ctx).commands).toEqual([['npm', 'run', 'module:doctor', '--', 'track-names']])
+    expect(plan(STEPS.find(step => step.id === 'build'), ctx).skip).toMatch(/--package IMAGE.syx, or --stock STOCK.syx --elemod BASE.elemod --label XX01/)
+    for (const step of STEPS.filter(step => step.unit)) expect(plan(step, ctx).skip).toMatch(/Digitakt II/)
+    expect(plan(STEPS.find(step => step.id === 'unit-pass'), ctx).skip).toMatch(/no USB link the procedure drives yet.*MACHINE_RECIPE/)
+    expect(plan(STEPS.find(step => step.id === 'emulator'), ctx).skip).toMatch(/no scripted emulator rehearsal/)
+    expect(plan(STEPS.find(step => step.id === 'by-hand'), ctx).todo).toBeDefined()
+  })
+
+  it('reads another machine\'s base and modules from the checkout, and leaves the unit alone without --link', () => {
+    const root = join(import.meta.dirname, '..'), out = mkdtempSync(join(tmpdir(), 'procedure-'))
+    const base = context(root, { out, base: true }, ['analog-rytm-mkii'], {})
+    expect(base).toMatchObject({ kind: 'base', machine: 'analog-rytm-mkii', machineName: 'Analog Rytm MKII', platform: 'elemod', linkable: false, unit: { available: false } })
+    expect(base.pkg).toBeUndefined()
+    expect(base.cases.length).toBeGreaterThan(0)
+    expect(base.cases.every(path => path.endsWith('.case'))).toBe(true) // the link's own cases, not every module's folder
+    expect(base.unit.reason).toMatch(/no --link/)
+    const module = context(root, { out, link: true, stock: '/fw/AR.syx', elemod: '/b.elemod', label: 'QV01' }, ['quick-velocity-aftertouch-assign'], { RYTM_EMU: '/e/dtboot' })
+    expect(module).toMatchObject({ machine: 'analog-rytm-mkii', version: expect.any(String), linkable: true, emu: '/e/dtboot', unit: { available: true }, passOn: ['--link', '--label', 'QV01'] })
+    expect(module.cases).toEqual([join(root, RYTM, 'cases/quick-velocity-aftertouch-assign')])
+    // temp-save is an Octatrack module and a Rytm one: machine:id picks the Rytm's.
+    expect(context(root, { out, 'no-unit': true }, ['temp-save'], {}).machine).toBe('octatrack')
+    const rytmTempSave = context(root, { out, 'no-unit': true }, ['analog-rytm-mkii:temp-save'], {})
+    expect(rytmTempSave).toMatchObject({ machine: 'analog-rytm-mkii', source: true, baseBound: false })
+    expect(rytmTempSave.pkg).toBeUndefined()
+    expect(() => context(root, { out, base: true }, ['no-such-machine'], {})).toThrow(/No machine named no-such-machine/)
+    expect(() => context(root, { out, label: 'TOOLONG' }, ['quick-velocity-aftertouch-assign'], {})).toThrow(/four-character label/)
+    expect(() => context(root, { out, target: 'emulator' }, ['quick-velocity-aftertouch-assign'], {})).toThrow(/--target emulator drives an Octatrack emulator/)
+  })
+
+  it('runs another machine\'s unit steps as one turn of the unit queue, with what the inner run needs', async () => {
+    const deps = fakeDeps({ fail: ['npm run unit'] })
+    await runProcedure(rytm({ kind: 'base', id: undefined, tools: { unitQueue: true }, passOn: ['--link', '--label', 'IP07'] }), deps)
+    expect(deps.ran.find(line => line.startsWith('npm run unit'))).toMatch(/ -- node scripts\/test-procedure.mjs --base analog-rytm-mkii --package \/out\/base.syx --share \/tmp\/share.sock --out \/out --link --label IP07 /)
   })
 })
 

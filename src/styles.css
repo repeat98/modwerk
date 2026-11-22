@@ -284,6 +284,7 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .module-preview[data-module="euclid"] { --signal: #c09be9; --signal-rgb: 192,155,233; }
 .module-preview[data-module="repitch"] { --signal: #9eb4ed; --signal-rgb: 158,180,237; }
 .module-preview[data-module="analog-bassdrum"] { --signal: #e9ab83; --signal-rgb: 233,171,131; }
+.module-preview[data-module="grain"] { --signal: #f0b45a; --signal-rgb: 240,180,90; }
 .module-preview[data-module="usb-audio-out-tracks-main-cue"] { --signal: #79b5f8; --signal-rgb: 121,181,248; }
 .module-preview[data-module="quantizer"] { --signal: #c09be9; --signal-rgb: 192,155,233; }
 .preview-label { color: var(--signal); font: 8px var(--mono); letter-spacing: 1px; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 0; height: 24px; flex-shrink: 0; }
@@ -1496,6 +1497,20 @@ h1 { font-size: 28px; }
 .visitors-bars .uncollected span { background:var(--line); }
 .visitors-bars .is-today span { background:#686483; }
 .visitors-bars button[aria-pressed="true"] span { background:#c4bcff; }
+.install-activity { margin-block:16px; }
+.install-bars { gap:1px; }
+.install-bars button { flex-direction:column-reverse; align-items:stretch; position:relative; }
+.install-bars button[aria-pressed="true"] { outline:1px solid var(--muted); outline-offset:0; }
+.install-bars button.install-change::after { content:""; position:absolute; inset:0 auto 0 0; border-left:1px dashed var(--text); pointer-events:none; }
+.install-bars button span { min-height:0; border-radius:0; }
+.install-activity [data-series="downloads"] { --series-color:#9389e6; }
+.install-activity [data-series="base_first_connection"] { --series-color:#65bdb3; }
+.install-activity [data-series="base_usb_update_done"] { --series-color:#e4ad64; }
+.install-activity [data-series="usb_sync_kept"] { --series-color:#659ed4; }
+.install-bars button span[data-series], .install-bars button[aria-pressed="true"] span[data-series], .install-legend i { background:var(--series-color); }
+.install-legend { display:flex; flex-wrap:wrap; gap:6px 18px; padding:0; list-style:none; font-size:13px; }
+.install-legend li { display:flex; align-items:center; gap:5px; }
+.install-legend i { width:10px; height:10px; }
 .chart-dates { display:flex; justify-content:space-between; color:var(--muted); font-size:11px; margin-top:12px; }
 .statistics-chart-tools { display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0; }
 .statistics-resolution { display:inline-flex; padding:2px; border:1px solid var(--line); border-radius:6px; background:var(--surface); }

@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { parseModuleCpuPrice, parseModuleDocument } from '../src/catalog/module-contract.ts'
+import { parseModuleCpuMeter, parseModuleCpuPrice, parseModuleDocument } from '../src/catalog/module-contract.ts'
 import { AT_REST_FROM, AT_REST_LIMIT, CPU_PRICE_PENDING_REASON, atRestStatus, cReserved0, cpuPriceProblems, cpuPriceStatus, glueReserved0, machineDescriptors, parseCpuPricePending, portGlue, readCpuPricePending } from './module-cpu-price.mjs'
 
 const repo = fileURLToPath(new URL('../', import.meta.url))
@@ -82,6 +82,25 @@ describe('every Octatrack module names its CPU price', () => {
     expect(cpuPriceStatus({ root: fixture({}), document: module('echo', 'FX2', render(3)), pending: new Map(), glue: {} }).detail).toContain('frame-interrupt')
     // A track machine with no descriptor the check can find is refused, not taken as a hook-only module.
     expect(cpuPriceStatus({ root: fixture({}), document: module('wave', 'Track machine', render(7)), pending: new Map(), glue: {} }).state).toBe('fail')
+  })
+
+  it('holds a machine\'s meter cost to its descriptor\'s reserved[1] and recomputes it from its paired readings', () => {
+    const meter = (value, source = 'evidence/cpu-meter.json') => ({ value, unit: 'percent-of-meter', measure: 'machine-meter', tool: 'npm run device -- do health', date: '2026-11-21', conditions: 'MKII, the same Part with the track on Flex', source })
+    const pairs = [{ track: 1, flex: 43.68, machine: 52.6, flexReadings: [436, 440, 435, 444, 435, 437, 436], machineReadings: [526, 530, 524, 535, 524, 526, 523] }, { track: 5, flex: 61.7, machine: 78.25 }]
+    const folder = (reserved, record = { module: 'wave', pairs }) => fixture({ ...machineFolder(reserved), 'sdk/octatrack/modules/wave/evidence/cpu-meter.json': record })
+    const status = (reserved, value, record) => cpuPriceStatus({ root: folder(reserved, record), document: { ...module('wave', 'Track machine', render(7)), resources: { cpuPrice: render(7), ...(value ? { cpuMeter: meter(value) } : {}) } }, pending: new Map(), glue: {} })
+    expect(status('\n    .reserved = {7, 17},', 17)).toMatchObject({ state: 'ok', detail: expect.stringContaining('adds 17 meter points') })
+    expect(status('\n    .reserved = {7, 20},', 20).state).toBe('ok')                                     // a margin above the readings
+    expect(status('\n    .reserved = {7},', 0).state).toBe('ok')                                          // names none, carries none
+    expect(status('\n    .reserved = {7, 16},', 16)).toMatchObject({ state: 'fail', detail: expect.stringContaining('its readings add 16.55') })
+    expect(status('\n    .reserved = {7},', 17)).toMatchObject({ state: 'fail', detail: expect.stringContaining("reserved[1] is 0") })
+    expect(status('\n    .reserved = {7, 17},', 0)).toMatchObject({ state: 'fail', detail: expect.stringContaining('does not name') })
+    expect(status('\n    .reserved = {7, 17},', 17, { module: 'wave', pairs: [{ ...pairs[0], flex: 40 }] })).toMatchObject({ state: 'fail', detail: expect.stringContaining('middle five') })
+    expect(status('\n    .reserved = {7, 17},', 17, { module: 'other', pairs })).toMatchObject({ state: 'fail', detail: expect.stringContaining('no paired meter readings of wave') })
+    expect(cReserved0(join(folder('\n    .reserved = { WAVE_PRICE, 12u },'), 'sdk/octatrack/modules/wave'), 'wave')).toMatchObject({ price: 9, meter: 12 })
+    const effect = cpuPriceStatus({ root: fixture({}), document: { ...module('echo', 'FX2'), resources: { cpuPrice: share(0.4), cpuMeter: meter(3) } }, pending: new Map(), glue: {} })
+    expect(effect).toMatchObject({ state: 'fail', detail: expect.stringContaining('only a machine') })
+    expect(() => parseModuleCpuMeter({ ...meter(17), value: 0 })).toThrow(/reserved\[1\]/)
   })
 
   it('says the price of a ported machine goes in its machine-ports.json entry', () => {
