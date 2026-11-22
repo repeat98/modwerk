@@ -151,9 +151,14 @@ static void gran_spawn(GranEngine *e, GranTrack *t, const GranParams *p, const G
             uint32_t r = lcg(&e->seed) >> 16;
             at += (int32_t)scaled_product(t->spray >> 5, r, 11);
             at -= (int32_t)(t->spray >> 1);
-            if (at < 0)
-                at = 0;
         }
+        /* The sample is a ring, as in typical granular engines (the author, 22 November 2026): a grain born past the
+         * end starts near the beginning and one born before the beginning starts near the end. POS is below count and
+         * SPRY's offset is within +-count/2, so one correction is enough; the last test only guards very short samples. */
+        if (at < 0)
+            at += (int32_t)s->count;
+        if ((uint32_t)at >= s->count)
+            at -= (int32_t)s->count;
         if ((uint32_t)at >= s->count)
             at = (int32_t)s->count - 1;
         g->idx = (uint32_t)at;
@@ -483,35 +488,13 @@ static __attribute__((noinline)) void stereo_paged(GranGrain *g, GranPage *pg, c
     }
 }
 
-static inline __attribute__((always_inline)) void mix_voices(GranTrack *t, const GranSample *s,
-        int32_t whole, uint32_t frac, const uint16_t *win, StereoSum *mix, unsigned n,
-        uint32_t count, int stereo, int packed)
+static inline __attribute__((always_inline)) void mix_grain(GranTrack *t, const GranSample *s, GranGrain *g,
+        int32_t w, uint32_t f, const uint16_t *win, StereoSum *mix, unsigned start, uint32_t m, uint32_t count,
+        int stereo, int packed, uint32_t step, uint32_t span)
 {
-    /* Upper bound on the distance any active voice travels in this callback. */
-    uint32_t step = whole < 0 ? 0u - (uint32_t)whole : (uint32_t)whole + (frac != 0);
-    uint32_t span = (n - 1u) * step;
-    for (unsigned k = 0; k < GRAN_MAX && count; ++k) {
-        GranGrain *g = &t->g[k];
-        uint32_t left = g->left, start, m, idx, fr, f = frac, ph, phs;
-        int32_t w = whole, cm, cs;
-
-        if (!left)
-            continue;
-        start = g->start;
-        g->start = 0;
-        if (start >= n) {           /* nace mas alla de este bloque (no pasa con el bucle de arriba) */
-            g->start = start - n;
-            continue;
-        }
-        m = n - start;
-        if (m > left)
-            m = left;
-        g->left = left - m;
-        idx = g->idx; fr = g->fr; ph = g->ph; phs = g->phs;
-        if (g->rev) {               /* el paso negado en 64 bits */
-            w = -w - (f != 0);
-            f = 0u - f;
-        }
+    uint32_t idx = g->idx, fr = g->fr, ph = g->ph, phs = g->phs;
+    int32_t cm, cs;
+    (void)step;
         /* Spray and reverse can leave a grain outside the sample for its remaining
          * lifetime. Advance its two cursors once when no frame can reach PCM.
          * Keep the scalar path if the unsigned index could wrap back into range. */
@@ -522,18 +505,18 @@ static inline __attribute__((always_inline)) void mix_voices(GranTrack *t, const
             g->fr = (high << 16) | (low & 65535u);
             g->idx = idx + m * (uint32_t)w + (high >> 16);
             g->ph = ph + m * phs;
-            continue;
+            return;
         }
         if (packed) {
             if (idx < count && gran_page(&t->pg, s, idx)) {
                 uint32_t last = w < 0 ? idx - span : idx + span;
                 if (step <= 65535u && last < count && last - t->pg.pfirst < t->pg.pcount) {
                     stereo_page(g, (const uint8_t *)t->pg.page, s->bytes, t->pg.pfirst, (uint32_t)w, f, win, mix + start, m);
-                    continue;
+                    return;
                 }
             }
             stereo_paged(g, &t->pg, s, w, f, win, mix + start, m);
-            continue;
+            return;
         }
         cs = -g->pan / 2;
         cm = 32768 - (g->pan < 0 ? -g->pan : g->pan) / 2;
@@ -591,7 +574,7 @@ static inline __attribute__((always_inline)) void mix_voices(GranTrack *t, const
                     }
                 }
                 g->idx = idx + (uint32_t)(w * (int32_t)m); g->ph = ph;   /* fr no cambia: f es 0 */
-                continue;
+                return;
             }
             if (GRAN_PTR_PATH && fast) {
                 /* con PTCH: el puntero avanza el paso entero y, con el acarreo de la fraccion, un frame mas (sin multiplicar
@@ -615,7 +598,7 @@ static inline __attribute__((always_inline)) void mix_voices(GranTrack *t, const
                     { uint32_t nf = fr + f, cy = nf < fr; idx += (uint32_t)w + cy; fr = nf; q += dq + (cy ? (int32_t)fs : 0); }
                 }
                 g->idx = idx; g->fr = fr; g->ph = ph;
-                continue;
+                return;
             }
             if (fast) {                 /* el bucle de antes (GRAN_PTR_PATH 0), igual bit a bit */
                 const uint8_t *pg0 = (const uint8_t *)t->pg.page;
@@ -637,7 +620,7 @@ static inline __attribute__((always_inline)) void mix_voices(GranTrack *t, const
                     { uint32_t nf = fr + f; idx += (uint32_t)w + (nf < fr); fr = nf; }
                 }
                 g->idx = idx; g->fr = fr; g->ph = ph;
-                continue;
+                return;
             }
         }
         for (unsigned i = start; i < start + m; ++i) {
@@ -663,6 +646,55 @@ static inline __attribute__((always_inline)) void mix_voices(GranTrack *t, const
             }
         }
         g->idx = idx; g->fr = fr; g->ph = ph;
+}
+
+static inline __attribute__((always_inline)) void mix_voices(GranTrack *t, const GranSample *s,
+        int32_t whole, uint32_t frac, const uint16_t *win, StereoSum *mix, unsigned n,
+        uint32_t count, int stereo, int packed)
+{
+    /* Upper bound on the distance any active voice travels in this callback. */
+    uint32_t step = whole < 0 ? 0u - (uint32_t)whole : (uint32_t)whole + (frac != 0);
+    uint32_t span = (n - 1u) * step;
+    for (unsigned k = 0; k < GRAN_MAX && count; ++k) {
+        GranGrain *g = &t->g[k];
+        uint32_t left = g->left, start, m, f = frac;
+        int32_t w = whole;
+
+        if (!left)
+            continue;
+        start = g->start;
+        g->start = 0;
+        if (start >= n) {           /* nace mas alla de este bloque (no pasa con el bucle de arriba) */
+            g->start = start - n;
+            continue;
+        }
+        m = n - start;
+        if (m > left)
+            m = left;
+        g->left = left - m;
+        if (g->rev) {               /* el paso negado en 64 bits */
+            w = -w - (f != 0);
+            f = 0u - f;
+        }
+        /* The sample is a ring: split the grain's frames so that no run reads past an edge, and wrap its cursor when it
+         * crosses one (forwards past the end -> beginning, backwards past the beginning -> end). A grain that stays away
+         * from both edges takes one run, exactly as before. */
+        while (m) {
+            uint32_t seg = m, i0 = g->idx;
+            if (i0 < count) {
+                uint32_t adv = w >= 0 ? (uint32_t)w + (f != 0) : (uint32_t)-w;
+                if (w >= 0 ? count - i0 <= m * adv : i0 < m * adv) {
+                    uint32_t room = w >= 0 ? (count - 1u - i0) / adv : i0 / adv;
+                    if (room + 1u < seg) seg = room + 1u;
+                }
+            }
+            mix_grain(t, s, g, w, f, win, mix, start, seg, count, stereo, packed, step, span);
+            start += seg; m -= seg;
+            if (g->idx >= count && count) {
+                if (w >= 0) g->idx %= count;
+                else { uint32_t d = (0u - g->idx) % count; g->idx = d ? count - d : 0u; }
+            }
+        }
     }
 }
 
