@@ -1,41 +1,61 @@
-# Digitakt II base 1a052a38: added machines and their sound-chip players
+# Digitakt II base a3ced45e: added machines and their sound-chip players
 
-The Digitakt II Modwerk base (OS 1.17) as this pull request vendors it: **1a052a38** (`modwerk-base-digitakt-ii-1a052a38.elemod`, `sdk/machines/digitakt-ii/base-binding.json`, pinned by `sdk/imports/elekloader-modwerk-base-digitakt-ii-2026-11-19.json`). It adds:
+The Digitakt II Modwerk base (OS 1.17) as this pull request vendors it: **a3ced45e** (`modwerk-base-digitakt-ii-a3ced45e.elemod`, `sdk/machines/digitakt-ii/base-binding.json`, pinned by `sdk/imports/elekloader-modwerk-base-digitakt-ii-2026-11-19.json`). It adds:
 
-- added track machines (`core_machines`);
+- added track machines (`core_machines`, table 5 after `core_mixer_pages`);
 - their own knob and value names on the stand-in's parameters;
-- the player dispatcher and selector table on the sound chip;
-- the machine wire (the pattern's tempo, each track's step and the view track);
+- on the sound chip: the selector table, the player dispatcher with its registry slots, and the frame receiver with its frame slots;
+- the machine wire (the pattern's tempo, each track's step, the view track and each track's type), only while a machine is registered;
 - the machine view back from the sound chip, for drawing over the sample page.
 
-Built by `npm run machine:base -- digitakt-ii` with the reviewed toolchain (GCC 16.2.0, binutils 2.47, Elekloader kit `3b31ef3`). Two builds gave the same package.
+Built by `npm run machine:base -- digitakt-ii` with the reviewed toolchain (GCC 16.2.0, binutils 2.47, Elekloader kit `3b31ef3`).
 
-Fixes since the first package (2f8a60d2), each found on a unit with the first machine module:
+## Changes after review (22 November 2026)
 
-- the wire brings each track's machine type from the kit, so the dispatcher reaches an added machine's player on every track (before, track 1 only);
-- both of the render pass's stock player calls reach a machine, so a stereo sample's right channel plays through it too;
-- the SRC page's per-type sample-slot table answers an added machine as its stand-in, so its sample list scrolls and chooses;
-- the sample view is counted at its own draw call, so a module draws over that page and no other, and nothing during a firmware transfer.
+- The interface keeps the cumulative branch's order: `core_machines` is table 5, after `core_mixer_pages` (4); `ev_audio_frame` stays event 10.
+- The sound chip's base code is the same for every set: players are reached through one registry slot per type 7-10, and frame receivers (a render plan's bridge, such as the sidechain prototype's) through four frame slots of the base's receiver, which keeps the receive site.
+- Types 7-10 take the selector of the stock type each registered machine stands for. The stock table's words are read from the owner's OS at composition, checked by SHA-256; the repository keeps only its address, length and hash.
+- A player must start in its own package's code and play a type its package registers.
+- With no machine registered the ColdFire writes no wire words and reads no reply; the reply is read only while a page has set a view track.
+- `scripts/link-image.mjs` builds a Digitakt II set through the website's path (the kit's build, then `composeDt2MachineBuild`).
 
-On a unit (Digitakt II, OS 1.17), base 1a052a38 with the Mikrotakt module (its own pull request), a 5:40 stereo sample:
+## Checks
 
-- the machine plays on tracks 1, 9, 10 and 11, both channels;
-- its sample list scrolls and changes the sample;
-- the module's drawing shows on the sample page only, and not during a firmware transfer.
+Revision `c6f1d5774` (branch `base/digitakt-ii-machines`), stock OS 1.17 `26c22f66…`, base `a3ced45e…`.
 
-Emulator (coupled ColdFire and sound chip, scripted panel; design notes and every run in `sdk/machines/digitakt-ii/elekloader/modwerk/MACHINES.md`):
+| Set | Final image SHA-256 |
+|---|---|
+| base alone | `a4b3cab2aa27357f1deae652186260dcc95bbe6ba565c83c0eda0b656b05f532` |
+| base + Mikrotakt (a development build of the first machine module, type 7, as the test machine) | `838c14622c410c1deff648cc2238817acfe9d5f00cd707676e77decacdf8b17a` |
 
-- Development builds of this base with a test machine:
-  - the machine menu lists it, and kits save and load it;
-  - the SRC page shows its knob and value names, and SAMPLE's again on a SAMPLE track;
-  - its second page is SAMPLE's sample view;
-  - stock SAMPLE playback through the player dispatcher is unchanged;
-  - the wire's tempo and step words arrive every block;
-  - the receiver's view words come back intact in the reply.
-- The first package (2f8a60d2) with Mikrotakt, composed by `composeDt2MachineBuild`, image `a9d9ec0631da0601be13053334863fe8bbaf5a9c89dd8d017976bd81c51183c7`:
-  - it passes the build preflight (sections 2, 4, 5 and 8 stock, flash headroom 1,392,032 bytes);
-  - it plays through the module's player without halts or missing blocks;
-  - the reply carries Mikrotakt's play head and grains while a note plays on the open sample view;
-  - with the reply copy bypassed and a fixed view written (panel probe), Mikrotakt's page draws it over the waveform on the second page and nothing on the first.
+Host, with the owner's OS (`MODWERK_DT2_STOCK`):
+
+- `dt2-link.test.ts`: both sets give the same final SHA-256 through the website's builder plus preflight and through `link-image.mjs`.
+- `dt2-render-build.test.ts`: an empty set leaves the sound chip stock; a machine with no player takes its stand-in's selector and leaves every player slot empty; two machines beside the stock types, one with a player, build through the same base code bytes and sites; frame receivers are called through the frame slots.
+
+Emulator only (coupled ColdFire and sound chip, scripted panel, from a ready point saved with each image):
+
+| Image | Run | Result |
+|---|---|---|
+| base + Mikrotakt | SAMPLE on track 1, two trigs | PCM since ready `da40d90b…`, byte-identical to the stock OS reference; no halt, no missing blocks |
+| base + Mikrotakt | Mikrotakt chosen through the machine menu on track 1, two trigs | plays through its own player (PCM `556067f6…`, peaks 0.05-0.11); no halt, no missing blocks |
+| base alone | SAMPLE on track 1, two trigs | PCM `da40d90b…`, as stock |
+| base alone | the same menu steps | the menu lists only the stock machines (the steps land on MIDI: silent) |
+
+`npm run test:procedure -- --base digitakt-ii --package <base + Mikrotakt image>` at `c6f1d577499d` (85 s), package SHA-256 `838c1462…`:
+
+| # | Step | Result |
+|---|---|---|
+| 1 | Software checks (`sdk:check`) | passed |
+| 2 | Beside every other module | not run: Digitakt II has no such gate yet (the link refuses two modules on one site) |
+| 3 | Name the build | passed |
+| 4 | DSP cost model | not run: the scan models the Octatrack's DSP only |
+| 5 | Emulator rehearsal | not run by the procedure: Digitakt II has none scripted (the coupled runs above stand in) |
+| 6, 7, 10 | Read the unit, large set and Undo, put back | not run: Digitakt II has no USB link the procedure drives yet |
+| 8 | Soak | not run: no Digitakt II soak yet |
+| 9 | Cost on the unit | not run: no Digitakt II price tool yet |
+| 11, 12 | By hand, then the submitter | to do on the unit with this image |
+
+On a unit: not yet run with a3ced45e. Earlier, base 1a052a38 with Mikrotakt (same ColdFire hooks; the sound chip's dispatcher then compared types inline) played on tracks 1, 9, 10 and 11 on both channels, its sample list scrolled and chose, and its drawing showed on the sample page only and not during a firmware transfer, on @Claptom-music's Digitakt II with a 5:40 stereo sample.
 
 Not checked on a unit: a pattern's trig copy between tracks of different lengths (reported once, not reproduced in the emulator, where it matches stock).

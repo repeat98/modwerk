@@ -162,7 +162,7 @@
       "since": "1.1",
       "entry": 4,
       "room": 4,
-      "purpose": "Null-terminated pointers to struct dt2_machine records (mk2/machines.h): track machines added after the seven stock types, each with its own machine type 7-10 (claimed as machine:<type>, saved with kits), the stock type it stands for, its names and its five knob names on the stand-in's parameters. The base lists them in the machine menu, keeps them through kit load, shows their knob names while a page shows that machine and, when the module's package carries a build.sharc player, sends their voices to it on the sound chip."
+      "purpose": "Null-terminated pointers to struct dt2_machine records (mk2/machines.h): track machines added after the seven stock types, each with its own machine type 7-10 (claimed as machine:<type>, saved with kits), the stock type it stands for, its names and its five knob names on the stand-in's parameters. The base lists them in the machine menu, keeps them through kit load, shows their knob names while a page shows that machine and, when the module's package carries a build.sharc player, sends their voices to it on the sound chip through that type's registry slot; without one they play as the stock type they stand for."
     }
   ],
   "exports": [
