@@ -201,6 +201,10 @@
     {
       "id": "synth",
       "machine": true,
+      "restingReferences": [
+        "0x400d6434",
+        "0x400d6458"
+      ],
       "abi": 8,
       "features": 131,
       "sites": 24,

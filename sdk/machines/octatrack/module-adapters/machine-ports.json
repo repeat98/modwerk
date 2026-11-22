@@ -226,7 +226,7 @@
    "sources": {
     "sdk/octabam/modules/synth/machine.s": "de9d849bf0b6e5d5ad747df32ae5806e7f9516674a14ac74b1c15d73d30d280a",
     "sdk/octabam/modules/synth/manifest.py": "4c28544721728eced2bb45f0e70fec900bbde560032c7386bac0b92df7032e7c",
-    "sdk/octabam/modules/synth/registration.s": "d04e47d6d21287ea969e4d39d0fea8c90b262a577081ba8376915f96cd2d9d2d",
+    "sdk/octabam/modules/synth/registration.s": "6dce0370be517eff9b251c0b0c2dccfd5c1f9c8674adae08d56c87f6bb6d48ad",
     "sdk/octabam/modules/synth/upstream/quantizer/core.s": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958",
     "sdk/octabam/modules/synth/upstream/quantizer/keys.s": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
     "sdk/octabam/modules/synth/upstream/quantizer/manifest.py": "e637e3718e4b65320b847ef0758e0d46800f8be6b8020290f89192c798c535ef",
@@ -234,7 +234,7 @@
     "sdk/octabam/modules/synth/upstream/quantizer/scale.s": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
     "sdk/octabam/modules/synth/upstream/synth/manifest.py": "786154c440d71f372abb49f527d345d5d6d74e96959a4af2f3ce248683753314",
     "sdk/octabam/modules/synth/upstream/synth/page.s": "25e2a0624fcc30ee3a8db5966954113119fb5942855042f765e664a2f8544a70",
-    "sdk/octabam/modules/synth/upstream/synth/poly.s": "77e31fd5e120d0507d0b5624ea060d01f81307561971d23bc93bb81e725c2651"
+    "sdk/octabam/modules/synth/upstream/synth/poly.s": "1c906a90675735decf42e334977e23899e6fcd03a6ef4fae4e9252e7bda654ab"
    },
    "subscribe": [
     {

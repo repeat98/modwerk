@@ -2652,13 +2652,28 @@ fm_lfo_frame_sp:
 | Called once before the eight tracks compute their LFOs. The base saves
 | the volatile registers. po_tick and fm_frame also use d3, which the C
 | callback convention preserves. Each routine leaves the EMAC alone.
+| Modwerk 0.1.5: the base keeps calling this while FM Synth rests (the event
+| never rests), so with FR_IDLE set (registration.c fm_in_use, answering 0)
+| it reads that one byte and returns. FR_REBASE (set as the answer wakes)
+| makes po_tick skip the step it would measure across the frames it missed.
         .balign 4
         .global fm_prepare_frame
 fm_prepare_frame:
+        tst.b   (fm_fr+FR_IDLE).l
+        bne.s   .fpf_idle
         move.l  %d3,-(%sp)
+        tst.b   (fm_fr+FR_REBASE).l
+        beq.s   .fpf_tick
+        clr.b   (fm_fr+FR_REBASE).l
+        lea     po_clock(%pc),%a0
+        move.l  CK_FRAMES(%a0),%d1
+        addi.l  #0x40000000,%d1          | the next step change measures a negative step: skipped
+        move.l  %d1,CK_FSTEP(%a0)
+.fpf_tick:
         bsr     po_tick
         bsr     fm_frame
         move.l  (%sp)+,%d3
+.fpf_idle:
         rts
 po_lfo3_depth:
         mvs.w   0x12(%a2,%d2.l*2),%d0    | displaced: the depth
@@ -5532,6 +5547,9 @@ fm_is_native:
         .set    FR_STALE, 7              | bit t: stock rendered track t alone since S_CUR was last set
         .set    FR_ON, 8                 | bit t: S_ON of track t is nonzero (written where S_ON is: sy_set, po_kill)
         .set    FR_PENDING, 9            | routed STARTs, beside FR_ON for the single word test
+        .set    FR_IDLE, 10              | nonzero: fm_in_use answered 0, fm_prepare_frame does nothing
+        .set    FR_REBASE, 11            | nonzero: fm_in_use woke, the clock drops its next step measurement
+        .global fm_fr                    | registration.c fm_in_use writes FR_IDLE, FR_REBASE, FR_ROUTE, FR_PENDING
         .balign 16
 fm_fr:
         .long   0
