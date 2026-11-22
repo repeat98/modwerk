@@ -125,7 +125,7 @@ export class DigitoneUnit {
       this.close()
       let now = 'unknown'
       try { now = (await this.status()).loader.phase } catch { /* the unit may be resetting the controller */ }
-      throw new Error(`${keep ? 'Keep' : 'Undo'} was not confirmed (${error instanceof Error ? error.message : String(error)}). The keepalive stopped, so the unit settles the trial by itself within ten seconds once it is stopped; the loader now reads ${now}.`)
+      throw new Error(`${keep ? 'Keep' : 'Undo'} was not confirmed (${error instanceof Error ? error.message : String(error)}). The keepalive stopped, so the unit settles the trial by itself within ten seconds once it is stopped; the loader now reads ${now}.`, { cause: error })
     }
     this.close()
     return { kept: keep, phase: status.phase, active: status.active }
