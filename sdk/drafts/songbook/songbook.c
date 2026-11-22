@@ -60,6 +60,7 @@
 #define INDEX 0x100b14d1u            /* the arrangement chosen, 0-7 */
 #define ARR_MODE 0x460d1aecu         /* arranger mode on (FUNC + PATTERN) */
 #define ARR_MODE_WANTED 0x80000010u  /* the mode stock applies when a load ends (0x4002390a); LOAD leaves it 0 */
+#define ARR_MODE_APPLY 0x40055fd8u   /* stock's end of a load: arranger mode off, then on if asked (0x4002390a) */
 #define ARR_MODE_ON 0x4005200cu      /* stock's switch into arranger mode (FUNC + PATTERN's, 0x4006103e); nothing if on */
 #define LIST_TOP 0x400c0ba0u         /* ARR > CHANGE: the first row shown */
 #define LIST_CURSOR 0x400c0ba4u      /* ARR > CHANGE: the cursor's row (stock opens the list with it on the choice) */
@@ -105,6 +106,7 @@ struct as_state {
     uint32_t seq;            /* the serial this copy last wrote into the record: another one there means another build ran */
     uint8_t damaged;         /* a file of the book in the slots did not read: write back only what is edited */
     uint8_t redraw;          /* a switch finished: the UI task chooses the book's arrangement and redraws the list */
+    uint8_t reapply;         /* the switch was a return after a load: rebuild the arranger as stock's end of a load does */
     uint8_t select_tries;    /* frames stock refused that choice (a change of its own still pending, as after RELOAD) */
     uint8_t last[BOOKS];     /* the arrangement last chosen in each book (0 = arrangement 1), kept in arrbook.work */
     int8_t restore;          /* a project was loaded on this book: the UI task switches to it once stock is done, -1 none */
@@ -174,6 +176,8 @@ static void arr_mode_on(void) { host_arr_mode_on(); }
 int host_close_message(void);
 static void close_message(void) { host_close_message(); }
 int host_select_arr(unsigned n);
+void host_arr_apply(int on);
+static void arr_apply(int on) { host_arr_apply(on); }
 static int select_arr(unsigned n) { return host_select_arr(n); }
 static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { return host_stock_writer(a1, a2, a3, a4); }
 static int arr_write(struct as_state *s, unsigned slot) { return host_arr_write(s->path, slot) >= 0; }
@@ -190,6 +194,7 @@ static void draw_change(void) { ((void (*)(void))DRAW_CHANGE)(); }
 static void arr_mode_on(void) { ((void (*)(void))ARR_MODE_ON)(); }
 static void close_message(void) { ((void (*)(void))MESSAGE_CLOSE)(); }
 static int select_arr(unsigned n) { return ((int (*)(int))SELECT_ARR)((int)n); }
+static void arr_apply(int on) { ((void (*)(int))ARR_MODE_APPLY)(on); }
 int as_stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4); /* below: stock's writer, entered past the site */
 static int stock_writer(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4) { return as_stock_writer(a1, a2, a3, a4); }
 
@@ -575,6 +580,11 @@ void as_tick(void *api)
         else {
             s->select_tries = 0;
             s->redraw = 0;
+            /* After a load, stock's end of the load may already have put arranger mode on over book 1's slots (the
+             * developer's MKI, RELOAD): the arranger and the main screen still show book 1. Apply the mode again as
+             * stock does then, now over this book. Only for a return after a load, never for LEFT/RIGHT. */
+            if (s->reapply && rd32(ARR_MODE)) arr_apply(1);
+            s->reapply = 0;
             if (rd32(CHANGE_WINDOW)) {
                 if (rd32(LIST_TOP) == 0) wr32(LIST_CURSOR, s->last[s->book]);  /* the cursor on it, as stock opens the list */
                 draw_change();
@@ -587,12 +597,14 @@ void as_tick(void *api)
         if (!s->reloaded_slots || s->since_hook < 30) { }  /* only once stock has put arr01-08 in the slots */
         else if (stopped()) {
             s->pending = s->restore;
+            s->reapply = 1;
             int rc = post_write();
             s->restore_rc = (int8_t)rc;
             ev(rc >= 0 ? 7u : 8u);
             if (rc >= 0) { s->restore = -1; s->reloaded_slots = 0; }
             else {
-                s->pending = -1;                          /* stock still busy (a reload reads its samples): again */
+                s->pending = -1;
+                s->reapply = 0;                          /* stock still busy (a reload reads its samples): again */
                 if (rc == -7 || ++s->restore_ticks > 18000) s->restore = -1;  /* no project, or busy for 5 minutes */
             }
         }

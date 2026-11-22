@@ -87,6 +87,13 @@ SAVE and RELOAD on book 2 came back on book 2, but the main screen showed book 1
 was opened and closed. Stock refuses select_arr while a change of its own is pending (0x800066a0), as after a RELOAD in
 arranger mode; the module now tries again on the next frames, up to two seconds. `verify.py`: 72 checks.
 
+Package `d731cb92…` (the retry), as the developer reported it: the main screen still showed book 1's arrangement
+after RELOAD. Event log: the reload's load, stock's new-project step, arranger mode off, return posted, arranger mode
+on (stock's end of the load, before the module's switch ran), switch to book 2. Stock had set up the arranger over
+book 1's slots; choosing the arrangement does not rebuild that. Fixed: after a return switch that follows a load, with
+arranger mode on, the module applies it again with stock's own routine (0x40055fd8, as stock's end of a load does);
+never after LEFT/RIGHT. `verify.py`: 74 checks.
+
 ## Stock flows
 
 Not tested on the unit. In the emulator, ARR > CHANGE with the module and book 1 behaved as stock: YES chose the
