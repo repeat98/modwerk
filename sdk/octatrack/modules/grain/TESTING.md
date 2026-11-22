@@ -35,8 +35,9 @@ MINOR, and the scale quantizer bundled with FM Synth steps PTCH in Flex units (5
 correctly. A second Grain track was refused (CPU FULL), as the base's CPU price allows. Then the exact package
 `f961b458` (card set `f6ca36c3`): `Ras_01_SineSteps` at POS 60.7, SIZE 79, DENS 127 and SPRY 4, 5 and 8 played clean;
 the author heard the odd click only at extreme settings. PTCH, the edges, the pool and the audition behaved as with
-`ee8419c2`. **Not recorded:** saving the project and a power cycle with either build, more than one Grain track on the official
-base (refused by its CPU price), MKII.
+`ee8419c2`. With `f961b458` the author then saved the project, powered the unit off and on, and Grain, its settings and the
+sound came back as left. **Not recorded:** a power cycle with `ee8419c2`, more than one Grain track on the official base
+(refused by its CPU price), MKII.
 
 **CPU on the MKI, asked for in review** (the author, exact package `f961b458`, official base `6d23e888`, the stock CPU meter read by
 eye, Grain on one track, DENS and SPRY at maximum, both samples 24-bit stereo). With the track stopped the meter read 49.5 %.
