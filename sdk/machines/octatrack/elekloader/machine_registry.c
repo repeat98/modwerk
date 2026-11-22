@@ -185,7 +185,7 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
  * modwerk_status_pick_busy, against mw_frame_line, its longest frame): a machine by what one track of it adds there, as the site measured
  * it (frame_cost below), else by its measured meter cost (reserved[1]) or its price, a machine's renders being frame
  * interrupt time either way. Admitted by the meter instead, SYNTIZ took a Part from 50.7 % to 65.2 % of the frame and the
- * guard dropped 24 renders in 8 s, three Analog BDs to 71.4 % and 61 (owner's MKII, base 0.7.14, 21 November 2026). */
+ * guard dropped 24 renders in 8 s, three Analog BDs to 71.4 % and 61 (owner's MKII, base 0.8, 21 November 2026). */
 /* A pick that wakes a resting module (below, "Machines that rest") is judged with its wake on top: what its hooks and
  * detours cost the frame again once awake, which the share cannot show before. The site's table names it for a module
  * it measured; this for the rest, the most of the 24 packages measured at rest on an MKII (20 November 2026, base

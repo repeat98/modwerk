@@ -1,4 +1,6 @@
-# Octatrack base 0.7.14: first unit run, big sets and the CPU guard (21–22 November 2026)
+# Octatrack base 0.8: first unit run, big sets and the CPU guard (21–22 November 2026)
+
+This base was numbered 0.7.14 while it was developed; the owner renamed it 0.8 on 22 November 2026.
 
 The owner's MKII, OS 1.40C, CF card in. Source `b36f9c53e` (`base/octatrack-next`, release identity `7342ecf7`), built as a
 development twin, `9203cdf6` (`MAIN.raw` `6d5269b8`). It has the beta flags, but USB Audio is linked in as `USB AUDIO OUT MAIN`,

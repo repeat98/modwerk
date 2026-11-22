@@ -122,7 +122,7 @@ void modwerk_status_cpu_left(uint32_t mille) { frame_adjust -= (int32_t)mille, a
 /* The longest frame interrupt of each reading, per mille of a frame (machine_registry.c's mw_frame_window, cleared at
  * each read). The meter above is all of the ColdFire, averaged; the frame guard drops renders frame by frame, once a
  * frame would run past its share and what credit the short frames before it left, so a pick is judged by the frames
- * at the top. On the owner's MKII (base 0.7.14, 21-22 November 2026, a Part with a trig every four steps on all eight
+ * at the top. On the owner's MKII (base 0.8, 21-22 November 2026, a Part with a trig every four steps on all eight
  * tracks) no render dropped with the longest frame at 88 to 108.7 % (Analog BD at a 61.7 % mean), and renders dropped
  * from 120 % (one in twenty Part switches; 125 %: 33 in 8 s, at a 57.5 % mean), while at a 50.7 % mean with eleven
  * modules installed they dropped too: the mean does not tell them apart, the longest frame does. */
