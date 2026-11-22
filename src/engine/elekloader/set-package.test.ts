@@ -75,7 +75,8 @@ describe('one module-set offer', () => {
     const table = frameCostTable()
     expect(table.length).toBeGreaterThan(0)
     expect(table.find(c => c.module === 0x9f482bb9)).toEqual({ module: 0x9f482bb9, use: 77, wake: 4 }) // tapeecho
-    expect(table.find(c => c.module === 0x970f03ad)).toEqual({ module: 0x970f03ad, use: 145, wake: 30 }) // syntiz: the default wake
+    expect(table.find(c => c.module === 0x970f03ad)).toEqual({ module: 0x970f03ad, use: 145, wake: 0 }) // syntiz: read from rest
+    expect(frameCostTable({ x: { use: 1 } })[0].wake).toBe(30) // the default wake
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], table)).not.toThrow()
     const record = JSON.parse(readFileSync(new URL('../../../sdk/machines/octatrack/frame-costs.json', import.meta.url), 'utf8'))
     for (const [id, cost] of Object.entries(record.costs) as [string, { use: number; wake?: number; measured: string }][]) {

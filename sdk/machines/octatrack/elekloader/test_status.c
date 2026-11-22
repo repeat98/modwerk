@@ -538,24 +538,24 @@ int main(void)
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 300u;
       CHECK(modwerk_status_frame_load() == 450u);
       /* Quiet delays count as awake once (MKII, 21 November 2026: eight asleep after a play that had them awake were
-       * charged on top of the kept figure, and a second FM Synth was refused at 79 % meter). */
+       * charged on top of the kept figure, and a second FM Synth was refused at 79 % meter), at what they cost the frame. */
       for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 1;
-      CHECK(modwerk_status_frame_load() == 450u);                        /* 300 + 80 now, 450 kept */
-      frame_newest = 400u;
-      CHECK(modwerk_status_frame_load() == 480u);                        /* the newest with its delays awake */
+      CHECK(modwerk_status_frame_load() == 450u);                        /* 300 + 16 now, 450 kept */
+      frame_newest = 440u;
+      CHECK(modwerk_status_frame_load() == 456u);                        /* the newest with its delays awake */
       for (unsigned t = 0; t < 8u; ++t) mw_delay[17u + t] = 0;
       transport_stopped = 0, mw_delay[17] = mw_delay[18] = 1;            /* two quiet while it plays: kept as awake */
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 430u;
       for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
       mw_delay[17] = mw_delay[18] = 0, transport_stopped = 1, frame_newest = 300u;
-      CHECK(frame_played == 430u && played_asleep == 20u && modwerk_status_frame_load() == 450u);
+      CHECK(frame_played == 430u && played_asleep == 4u && modwerk_status_frame_load() == 434u);
       /* Picks since count once: playing, the kept figure stays put while the mean takes the pick in. */
       transport_stopped = 0;
       modwerk_status_cpu_entered(100u);
-      CHECK(modwerk_status_frame_load() == 550u);
+      CHECK(modwerk_status_frame_load() == 534u);
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 530u;
       for (unsigned r = 0; r < 7u; ++r) cpu_note_played();
-      CHECK(frame_played == 430u && frame_adjust == 100 && modwerk_status_frame_load() == 550u);
+      CHECK(frame_played == 430u && frame_adjust == 100 && modwerk_status_frame_load() == 534u);
       cpu_note_played();
       CHECK(!frame_adjust && frame_played == 530u && modwerk_status_frame_load() == 530u);
       /* Stopped, a machine swapped out and back is judged by what it adds, once, never below the newest reading

@@ -1202,10 +1202,11 @@ void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t book
     cpu_refusal_box(track, 1u, label, booked, add);
 }
 uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
-/* status.s leaves out the delay routine's ring transfers on a track whose delay is quiet: 7.4 meter points with all
- * eight (MKII, 16 November 2026: 41.2 % to 33.8 % stopped), all of it frame interrupt time, back from the frame a scene
- * opens the sends. So a pick is judged as if every delay were awake: the skip buys margin and is never spent. */
-#define DELAY_WAKE 10u /* per mille a quiet track */
+/* status.s leaves out the delay routine's ring transfers on a track whose delay is quiet, back from the frame a scene
+ * opens the sends. So a pick is judged as if every delay were awake: the skip buys margin and is never spent. The
+ * routine runs from the eDMA handler, mostly outside the frame interrupt: all eight awake added 6 meter points but 1.7
+ * of the frame share (owner's MKII, 22 November 2026, Dev17 C01 playing: 38.9 % to 40.6 %). */
+#define DELAY_WAKE 2u /* per mille of a frame, a quiet track */
 static uint32_t delays_asleep(void)
 {
     uint32_t n = 0;
