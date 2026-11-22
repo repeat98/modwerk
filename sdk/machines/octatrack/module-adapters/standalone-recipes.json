@@ -158,19 +158,19 @@
   },
   "tapeecho": {
    "schema": 1,
-   "imageSha256": "def1bc39f8bc9e998cf49b7df6ab36725f42f460b1e73c079238ebc4c25caded",
+   "imageSha256": "ba47d759eadf54b4cf80f1c732584818ff903ad90d4d981109ad1940182b5721",
    "sources": {
-    "sdk/octabam/modules/tapeecho/cpu_hooks.s": "d1d959af91fbd0759191c5e244b4396613d18c057c8e65281d76cb67beb73e34",
-    "sdk/octabam/modules/tapeecho/cpu.c": "bbb50e96305a64f99d72045defa40d09ab3e8fc910e717d8122dd1f070de35a7",
+    "sdk/octabam/modules/tapeecho/cpu_hooks.s": "941e9d01fe4dbdc9727e3f0e53ec184b848b36034a0701cef4cdcf4ff611b515",
+    "sdk/octabam/modules/tapeecho/cpu.c": "a46aee0821d024e9ce04b5685f5f7fb64af7ff5e00d018c00f87bda878438da2",
     "sdk/octabam/modules/tapeecho/time_fmt.s": "f50337532bbd802f67bb3c93d975405c2e386ec2a75bf525a814b9f9756f9d15",
     "sdk/octabam/modules/tapeecho/cpu_tables.h": "1d2e3e062651f021ca94fd19339dde824bcf49c4d867da790c20957dd24db9b2",
     "sdk/octabam/modules/tapeecho/manifest.py": "8444fc496776df2c719401f6967aba44a5922e15f0906268286663d012dd94b8",
-    "sdk/octabam/modules/tapeecho/octamod.module.json": "7c97bc3a8cdc3fc1e2b0ec808a9f6ad76104c9c5efd9b8f1450c4f003a455e26",
+    "sdk/octabam/modules/tapeecho/octamod.module.json": "432b0b6b570504e250baaaf02c7ae6f622ac836e13e8ab6a7aa7805446eb28d3",
     "sdk/octabam/modules/tapeecho/runtime.json": "b66e3eddc16f9d5d40586f537cab7ccdf1c19688fed1c88e314525dab026dd87",
-    "sdk/octabam/modules/tapeecho/cpu_kernels.s": "1cb1d400cbf0f0b7a75dc0ea13f6afc70b56221f2d45f424f7f58fa79ce6347f",
-    "sdk/octabam/modules/tapeecho/cpu.s": "783901f817efc5496c9b6178367459cfae1fe036adfd2a5be3a89d62e37906b6",
+    "sdk/octabam/modules/tapeecho/cpu_kernels.s": "0abbfc5cb6189f08f5ecddb101867b67de23a8de6894ffb00c89583b420360bc",
+    "sdk/octabam/modules/tapeecho/cpu.s": "0040e5d5234e15e2e668e6449370916133002c9bd233bbbc40284057e5345c49",
     "sdk/octabam/modules/tapeecho/cpu_passthrough.asm": "68ef0beaa213de43e116d2feb367b437ef8c73c7f7b1c07328fde2d72edb3fdc",
-    "sdk/octabam/modules/tapeecho/cpu.h": "d07d496a62b95f23f8c2cbd893a0125e8a67071e83bf2c642e14251e48e69ff3",
+    "sdk/octabam/modules/tapeecho/cpu.h": "b3afe117675ec7cc9a6cd3cf0930a482161575d5ca12d034016571e7646c2e72",
     "sdk/octabam/modules/tapeecho/generate_tables.py": "3461b659e2f22d7da776eb87755610094a4a3e72609c875e82902a8da9a8a69c",
     "sdk/octabam/modules/tapeecho/generate_cpu.py": "09477f59af29dc6b68458454f818ec999339f4f4eefadb979cc13236ce431353",
     "sdk/octabam/modules/tapeecho/media/capture.json": "8e0627d47f074322917978cd4abf505d82d9b53ece8e8c2b1ad280b69cd2902b",
@@ -206,7 +206,7 @@
     "src/engine/coldfire-elf.ts": "319ca0d835d1b0c602c8f4b06990016d0ebfe246cedbfc596cea3cc7adfe3cd2",
     "src/engine/module-build.ts": "dcd8397b8cecf6fab61debd9aa2f86f612da0ca6ccf363c79d56033bc170b993",
     "src/catalog/modules.ts": "14304ea8450f8ec7ecaaf3ccf9e764929161288babe7b34cb37ff41e44fe1b43",
-    "src/engine/assets/dsp-packages.json": "2fa2454f9a802eb2b40e6ddbf4f69f34802894130504f38f2bf1db6a31479155",
+    "src/engine/assets/dsp-packages.json": "300d2620eb43fe37e86c9995c889859326102073bfd4839c6391a4c383108bb2",
     "src/engine/assets/descriptor-recipes.json": "a68ac90d1e83ead391f8058f51458e0dc4a48a250db9585135b2c620d66dac0b",
     "src/engine/assets/menu-recipes.json": "da6bf3602d4546eca11d1cc76f2772127b505bc01ecc8bae04d697e6ce0bc942",
     "src/engine/assets/rom-packages.json": "3c45c7b7b681d4df243c6f332dbb6a6119f5008aefd4abd5175423f7d500c6de",
@@ -245,120 +245,7 @@
     "sdk/firmware_codec/transport.py": "30f1b71c28cf4c57fdbe38c0e535465cc2f29503ef348888a68940f93f070ae5",
     "sdk/octabam/modules/tapeecho/evidence/cpu-price.json": "e36a69f6d41fea8d53ce061599289edf1fecc99b6722542fe6504f578cc7f02c"
    },
-   "copies": [
-    {
-     "offset": 676,
-     "length": 16,
-     "address": 1073984446,
-     "sha256": "2208dade979a9235783eacb36cdde6fac1f68a1c1e97629678e6ef71eaa7643b",
-     "purpose": "Authored free instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/tapeecho/time_fmt.s",
-      "lines": [
-       46,
-       49
-      ],
-      "symbol": "free",
-      "method": "native-formatter"
-     }
-    },
-    {
-     "offset": 3076,
-     "length": 18,
-     "address": 1073753950,
-     "sha256": "1e998d15e30ac012a8b3cd88d4588e8f85d7921a2850b0551b2259a84752a995",
-     "purpose": "Authored render_head instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/tapeecho/cpu.s",
-      "lines": [
-       915,
-       919
-      ],
-      "symbol": "render_head",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 3100,
-     "length": 26,
-     "address": 1074366192,
-     "sha256": "90dc32b1ff6203f13faaba47d8a89d606c770746e69ea8010df241e1241fd9c5",
-     "purpose": "Authored render_head instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/tapeecho/cpu.s",
-      "lines": [
-       921,
-       927
-      ],
-      "symbol": "render_head",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 3462,
-     "length": 19,
-     "address": 1074375602,
-     "sha256": "3fd2ea50644e110d89a47a30180101283abeae689e44d39c646c941fea217965",
-     "purpose": "Authored te_target instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/tapeecho/cpu.s",
-      "lines": [
-       1055,
-       1060
-      ],
-      "symbol": "te_target",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 7462,
-     "length": 13,
-     "address": 1073973354,
-     "sha256": "2393ebbe40716982dc0fc11a30e3e53f13d60755b68dc8f156a4cf02ec77c2f2",
-     "purpose": "Authored te_filter_block instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/tapeecho/cpu.s",
-      "lines": [
-       27285,
-       27332
-      ],
-      "symbol": "te_filter_block",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 8940,
-     "length": 8,
-     "address": 1073897668,
-     "sha256": "8937904adb028ee826e1da6e9593b99222dd3fb141bbaa852b54ef596f94054f",
-     "purpose": "Authored te_tape_block instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/tapeecho/cpu.s",
-      "lines": [
-       27523,
-       27524
-      ],
-      "symbol": "te_tape_block",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 8948,
-     "length": 16,
-     "address": 1073745896,
-     "sha256": "324b9e08fe60e608cbdebbbd690d3efdac6a0fc7a2ec6b9756fc1f64e1ef5281",
-     "purpose": "Authored te_read_linear instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/tapeecho/cpu.s",
-      "lines": [
-       27525,
-       27545
-      ],
-      "symbol": "te_read_linear",
-      "method": "native-unit"
-     }
-    }
-   ],
+   "copies": [],
    "fills": []
   },
   "euclid": {
@@ -407,7 +294,7 @@
     "src/engine/coldfire-elf.ts": "319ca0d835d1b0c602c8f4b06990016d0ebfe246cedbfc596cea3cc7adfe3cd2",
     "src/engine/module-build.ts": "dcd8397b8cecf6fab61debd9aa2f86f612da0ca6ccf363c79d56033bc170b993",
     "src/catalog/modules.ts": "14304ea8450f8ec7ecaaf3ccf9e764929161288babe7b34cb37ff41e44fe1b43",
-    "src/engine/assets/dsp-packages.json": "2fa2454f9a802eb2b40e6ddbf4f69f34802894130504f38f2bf1db6a31479155",
+    "src/engine/assets/dsp-packages.json": "300d2620eb43fe37e86c9995c889859326102073bfd4839c6391a4c383108bb2",
     "src/engine/assets/descriptor-recipes.json": "a68ac90d1e83ead391f8058f51458e0dc4a48a250db9585135b2c620d66dac0b",
     "src/engine/assets/menu-recipes.json": "da6bf3602d4546eca11d1cc76f2772127b505bc01ecc8bae04d697e6ce0bc942",
     "src/engine/assets/rom-packages.json": "3c45c7b7b681d4df243c6f332dbb6a6119f5008aefd4abd5175423f7d500c6de",

@@ -264,7 +264,7 @@ Use a backed-up test project and a short transient to hear the repeats clearly. 
 
 ## Compatibility and limitations
 
-Tape Echo targets Octatrack OS 1.40C FX2 and keeps stock DELAY and SPRING REV available. It uses the shared 10 MiB DRAM arena and existing stock delay rings; the original CPU integration and resource figures above remain the evidence for these costs. The pinned historical record reports six instances running and a seventh freezing the unit; other historical builds froze during edits. The current candidate is not a hardware-confirmed fix. Timing headroom, cache/bus behavior and live-set reliability remain unqualified. 0.1.6 does not address those limits. It adds work only while MIX, FDBK or AGE is moving (see Tests and measurements).
+Tape Echo targets Octatrack OS 1.40C FX2 and keeps stock DELAY and SPRING REV available. It uses the shared 10 MiB DRAM arena and existing stock delay rings; the original CPU integration and resource figures above remain the evidence for these costs. The pinned historical record reports six instances running and a seventh freezing the unit; other historical builds froze during edits. The current candidate is not a hardware-confirmed fix. Timing headroom, cache/bus behavior and live-set reliability remain unqualified. 0.1.6 adds work only while MIX, FDBK or AGE is moving (see Tests and measurements). 0.1.8 does the same audio with less ColdFire work while the controls stand still, and holds every instance for one block (dry passes, the tape records silence) when stock's delay routine starts more than a quarter frame late, so an overloaded unit drops echo instead of piling on; neither is measured on a unit yet ([TESTING.md](TESTING.md)).
 
 ## Tests and measurements
 

@@ -174,7 +174,7 @@ static void kernel_tests(ot::Machine& m) {
         const unsigned mode=test%4;
         s.mix=mode==0?0:mode==1?2147483640:(random()%128)*16909320u;
         s.hiss=te_hiss[random()%128]<<16;
-        s.filters[0][0]=int32_t(random())/8;s.filters[0][1]=int32_t(random())/8;
+        s.fir[0]=int32_t(random())/8;s.fir[1]=int32_t(random())/8;
         int32_t dm=0,df=0,dn=0;
         if(mode==3) {
             dm=test%16==3?-s.mix/8:(int32_t((random()%128)*16909320u)-s.mix)/512;
@@ -274,12 +274,16 @@ static void kernel_tests(ot::Machine& m) {
     std::puts("  [PASS] reader data-load counts match overlap reuse: settled block reads 17 uncached words instead of 32");
 }
 #endif
+// Stock's free-running DTIM3 count, which Tape Echo's overload hold reads. It
+// stands still (no hold ever) unless a test moves it.
+static uint32_t g_dtcn3=0;
 // The boot-only Machine deliberately has no peripheral models. Attach the
 // production descriptor/completion model plus a synchronous RAM DMA mover.
 // This proves addresses/order/bytes, NOT cache coherency or bus timing.
 static void dma_model(ot::Machine& m, ot::Edma& dma) {
     m.setPeripheralHandlers(
         [&](uint32_t a, uint8_t n, uint32_t& v) {
+            if(a>=0xfc07c00cu && a<0xfc07c010u) { v=n==4?g_dtcn3:n==2?(a&2?g_dtcn3&0xffff:g_dtcn3>>16):(g_dtcn3>>(8*(3-(a&3))))&255; return true; }
             if(a<ot::Edma::g_base || a>=ot::Edma::g_tcd+512) return false;
             v=dma.read(a,n); return true;
         },
@@ -302,6 +306,7 @@ static void benchmark(const std::vector<uint8_t>& image,const std::vector<uint8_
         {"stock DELAY x8 (patched firmware)",0,0,0,true},
         {"Tape x1, head 1, WOW=0 + stock x7",1,0,0,true},
         {"Tape x1, head 1, WOW=44 + stock x7",1,0,44,true},
+        {"Tape x1, default page (TIME 64, WOW 25, MIX 40) + stock x7",1,9,25,true},
         {"Tape x2, moving FREE TIME, WOW=44 + stock x6",2,1,44,true},
         {"Tape x2, changing BEAT TIME, WOW=44 + stock x6",2,2,44,true},
         {"Tape x3, settled TIME, WOW=44 + stock x5",3,0,44,true},
@@ -407,13 +412,13 @@ static void benchmark(const std::vector<uint8_t>& image,const std::vector<uint8_
                 for(unsigned i=0;i<8;++i)m.write8(setup+i,0);
                 m.write8(setup+7,tape?TE_ID:8);m.write8(0x80000eb4+audioSlot*8+t,1);
                 const unsigned stockValues[]={60,64,127,0,127,127};
-                const unsigned time=test.mode && test.mode!=7 ? (frame/8+t*17)%128 : 60;
+                const unsigned time=test.mode==9 ? 64 : test.mode && test.mode!=7 ? (frame/8+t*17)%128 : 60;
                 unsigned tapeValues[]={time,
                     allControls ? (frame/7+t*19)%128 : 64,
                     allControls ? (frame/11+t*23)%128 : test.wow,
                     allControls ? (frame/9+t*29)%128 : 64,
                     allControls ? (frame/41)%2 : test.mode==2?1u:0u,
-                    allControls ? (frame/13+t*31)%128 : test.mode==3?90u:test.mode==7?0u:127u};
+                    allControls ? (frame/13+t*31)%128 : test.mode==3?90u:test.mode==7?0u:test.mode==9?40u:127u};
                 // Alternating endpoint jumps: every block, every 16 blocks,
                 // then every 64 blocks to cover immediate and settling work.
                 const unsigned period=frame<warmup?16:(frame-warmup<256?1:frame-warmup<512?16:64);
@@ -506,6 +511,56 @@ static void benchmark(const std::vector<uint8_t>& image,const std::vector<uint8_
     }
     std::puts("  [BENCH] Same 44.1kHz/16-sample routine and modelled DMA; 1500 warm-up + 1000 measured blocks, stereo tone, active wet/feedback. Host wall time, DSP cost, cache misses and DMA/bus stalls excluded; NOT hardware CPU percent.");
 }
+static uint32_t symbol(const char* wanted) {
+    std::ifstream symbols("out/tapeecho-cpu/profile-symbols.txt");
+    uint32_t address; char type; std::string name,line;
+    while(std::getline(symbols,line)) {
+        std::istringstream fields(line);
+        if(fields>>std::hex>>address>>type>>name && name==wanted) return address;
+    }
+    std::fprintf(stderr,"missing symbol %s\n",wanted); std::exit(1);
+}
+// The steady path (te_cpu_frame: the same knob words and tempo as the last full
+// block, which left s->steady set) must compute exactly what the full control
+// half computes. Two native engines, one always full, one taking the steady
+// path whenever that decision allows it, over random piecewise-constant
+// controls (out-of-range knobs, invalid tempos, SYNC values above 1, dirty
+// re-entries): every state word, audio and record word equal after every block.
+static void steady_equivalence() {
+    uint32_t rs=0x2545f491u;
+    auto rnd=[&]{rs^=rs<<13;rs^=rs>>17;rs^=rs<<5;return rs;};
+    auto knob=[&]{return rnd()%100<3 ? 128+rnd()%128 : rnd()%128;};
+    static std::vector<int32_t> ringA(TE_RING*2), ringB(TE_RING*2);
+    for(unsigned i=0;i<TE_RING*2;++i)ringA[i]=ringB[i]=int32_t(rnd())/4;
+    TapeState A; std::memset(&A,0xa5,sizeof A); A.active=0; TapeState B=A;
+    TapeParams p{64,64,25,0,40,64,2880,3}, prev=p;
+    unsigned write=TE_RING-160, rate=50; unsigned long steadyBlocks=0;
+    const unsigned long blocks=1000000;
+    for(unsigned long b=0;b<blocks;++b) {
+        if(b%20000==0)rate=1+rnd()%400;
+        if(rnd()%rate==0) switch(rnd()%8) {
+            case 0:p.time=knob();break; case 1:p.feedback=knob();break; case 2:p.wow=knob();break;
+            case 3:p.sync=rnd()%4==0?rnd()%300:rnd()%2;break; case 4:p.mix=knob();break; case 5:p.age=knob();break;
+            case 6:p.tempo=rnd()%100<3?rnd()%9000:(30+rnd()%271)*24;break;
+            default: if(rnd()%64==0)A.active=B.active=0; break;
+        }
+        if(b%333331==0)p.lane=rnd()%8;
+        int32_t audioA[32],audioB[32],recA[32],recB[32];
+        for(unsigned i=0;i<32;++i)audioA[i]=audioB[i]=int32_t(rnd())>>(rnd()%4);
+        const unsigned steady=B.steady && B.active && !std::memcmp(&p,&prev,sizeof p);
+        steadyBlocks+=steady;
+        te_process(&A,&p,ringA.data(),write,audioA,recA);
+        te_host_process(&B,&p,ringB.data(),write,audioB,recB,steady);
+        if(std::memcmp(&A,&B,sizeof A)||std::memcmp(audioA,audioB,sizeof audioA)||std::memcmp(recA,recB,sizeof recA)) {
+            std::fprintf(stderr,"steady path differs from the full path at block %lu (steady %u)\n",b,steady);std::exit(1);
+        }
+        for(unsigned i=0;i<32;++i)ringA[2*write+i]=ringB[2*write+i]=recA[i];
+        write+=16; if(write>=TE_RING)write=0;
+        prev=p;
+    }
+    if(steadyBlocks<blocks/10){std::fprintf(stderr,"steady path barely exercised (%lu blocks)\n",steadyBlocks);std::exit(1);}
+    std::printf("  [PASS] steady path equals the full control path: %lu blocks, %lu steady; every state, audio and record word\n",blocks,steadyBlocks);
+}
 int main(int argc, char **argv) {
     if (argc != 5 && argc != 6) { std::fprintf(stderr, "probe IMAGE RUNTIME BASE STATE [--benchmark|--stress]\n"); return 2; }
     auto image = read(argv[1]), raw = read(argv[2]);
@@ -515,11 +570,15 @@ int main(int argc, char **argv) {
         benchmark(image,raw,base,state,!std::strcmp(argv[5],"--stress"));return 0;
     }
     ot::Machine m(image); ot::Edma dma; dma_model(m,dma); load(m, raw, base); init(m);
-    // The real reset must clear previously used state, not merely boot zeros.
-    for (unsigned i = 0; i < 8*sizeof(TapeState); ++i) m.write8(state + i, 0xa5);
+    // The real reset must clear previously used state, not merely boot zeros:
+    // the instances, the overload hold's clock and live mask, the steady keys.
+    const uint32_t keys=symbol("te_keys"), guard=symbol("te_guard");
+    if(guard!=keys+128 || state!=guard+sizeof(TapeGuard)){std::fprintf(stderr,"te_keys/te_guard/te_states layout\n");return 1;}
+    for (unsigned i = keys; i < state + 8*sizeof(TapeState); ++i) m.write8(i, 0xa5);
     init(m);
-    for (unsigned i = 0; i < 8*sizeof(TapeState); ++i) if (m.read8(state+i)) return 1;
-    std::puts("  [PASS] stock delay reset clears every CPU Tape Echo state byte");
+    for (unsigned i = keys; i < state + 8*sizeof(TapeState); ++i) if (m.read8(i)) return 1;
+    std::puts("  [PASS] stock delay reset clears every CPU Tape Echo state byte, its steady keys and its overload clock");
+    steady_equivalence();
     formatter_tests(m);
 #ifndef TE_HALF_RATE
     kernel_tests(m);
@@ -530,8 +589,23 @@ int main(int argc, char **argv) {
     TapeState states[8] = {};
     std::vector<std::vector<int32_t>> rings(8, std::vector<int32_t>(TE_RING * 2));
     unsigned write = TE_RING - 160, peak = 0;
-    const unsigned frames = 2300;
+    // 2300..3499: controls that stand still for hundreds of blocks, so the
+    // ColdFire takes its steady path (only the full control half stores
+    // s->active: those stores count the full blocks); then
+    // 3500..3503 move stock's DTIM3 count: one frame, a frame and a half late
+    // at 3502, must hold every instance and nothing else.
+    const unsigned frames = 3504, settled = 2300, settledEnd = 3500;
+    unsigned holdChecked = 0, full = 0;
+    m.addWriteWatch(state,state+8*sizeof(TapeState),[&full,state](uint32_t a,uint8_t,uint32_t,uint32_t){full+=(a-state)%sizeof(TapeState)==0;});
     for (unsigned frame = 0; frame < frames; ++frame) {
+        if(frame==settled)full=0;
+        if(frame==settledEnd) {
+            const unsigned blocks=8*(settledEnd-settled);
+            if(full>=blocks*3/4){std::fprintf(stderr,"steady path not taken: %u of %u blocks ran the full control half\n",full,blocks);return 1;}
+            std::printf("  [PASS] ColdFire steady path taken while controls stand still: %u of %u blocks ran the full control half\n",full,blocks);
+        }
+        if(frame>=settledEnd) g_dtcn3 = frame==settledEnd ? 1000000u : g_dtcn3 + (frame==settledEnd+2 ? TE_FRAME_COUNTS*3/2 : TE_FRAME_COUNTS);
+        const bool holding = frame==settledEnd+2;
         if(frame==2000) {
             // A second, synthetic full-history phase covers long BEAT
             // targets and an active-history wrap, not startup silence.
@@ -562,6 +636,12 @@ int main(int argc, char **argv) {
                 p.mix=(frame/13+t*31)%128;p.sync=(frame/41)%2;
             }
             p.age=(frame/8+t*13)%128;
+            if (frame >= settled) {
+                // Piecewise constant: one small FDBK step on T1-T4 halfway, a
+                // tempo change on T3 every 100 frames (FREE: target unchanged).
+                p = TapeParams{60u+t, 70u+(frame>=2900 && t<4), t&1 ? 0u : 25u, t==3, t==5 ? 127u : t==6 ? 0u : 40u, 64,
+                               t==2 ? (100u+(frame/100)%40)*24 : 2880u};
+            }
             p.lane=t;
             unsigned values[] = {p.time,p.feedback,p.wow,p.age,p.sync,p.mix};
             // Execute the stock producer-to-consumer copy for the six page-1
@@ -589,7 +669,9 @@ int main(int argc, char **argv) {
 #endif
                 out[i] = in[i]; m.write32(audio+4*i,in[i]);
             }
-            te_process(&states[t], &p, rings[t].data(), write, out, rec);
+            const TapeState before = states[t];
+            if (holding) { for (unsigned i=0;i<32;++i) rec[i]=0; }
+            else te_process(&states[t], &p, rings[t].data(), write, out, rec);
             m68k_set_reg(m.getCpuState(), M68K_REG_SP, stack);
             // Execute stock's actual MACSR setup, then this image's detour.
             run(m,0x400031c4,0x400031ca);
@@ -606,6 +688,11 @@ int main(int argc, char **argv) {
                 }
                 rings[t][write*2+i]=rec[i]; m.write32(ring+write*8+4*i,rec[i]);
             }
+            if (holding) {
+                // Held: dry passed untouched, silence recorded, only the history count moved.
+                states[t].valid = std::min(before.valid + TE_FRAMES, TE_RING - 1);
+                ++holdChecked;
+            }
             const uint32_t *s = reinterpret_cast<const uint32_t *>(&states[t]);
             for (unsigned i=0;i<sizeof(TapeState)/4;++i) if (m.read32(state+t*sizeof(TapeState)+4*i)!=s[i]) {
                 std::fprintf(stderr,"state mismatch frame %u track %u word %u: %08x/%08x\n",frame,t,i,m.read32(state+t*sizeof(TapeState)+4*i),s[i]); return 1;
@@ -613,7 +700,11 @@ int main(int argc, char **argv) {
         }
         write += 16; if (write == TE_RING) write = 0;
     }
-    std::printf("  [PASS] all 8 CPU instances match native arithmetic bit-for-bit (%u blocks; TIME/AGE sweeps, FREE/BEAT, tempo, wow, feedback, stock page-1 staging, ring wrap)\n",frames);
+    std::printf("  [PASS] all 8 CPU instances match native arithmetic bit-for-bit (%u blocks; TIME/AGE sweeps, FREE/BEAT, tempo, wow, feedback, settled controls, stock page-1 staging, ring wrap)\n",frames);
+    if(holdChecked!=8 || m.read32(guard+offsetof(TapeGuard,holds))!=8 || m.read32(guard+offsetof(TapeGuard,late))!=TE_FRAME_COUNTS*3/2) {
+        std::fprintf(stderr,"overload hold: %u held blocks checked, %u counted, late %u\n",holdChecked,m.read32(guard+offsetof(TapeGuard,holds)),m.read32(guard+offsetof(TapeGuard,late)));return 1;
+    }
+    std::puts("  [PASS] overload hold: a routine call 1.5 frames after the last holds all 8 instances for that block (dry untouched, silence recorded), the frames around it run normally and stay bit-exact");
     std::printf("  [METER] peak %u instructions/16-sample track callback (not hardware cycles)\n",peak);
     // A regression budget, NOT a real-time CPU certification. Hardware
     // timing still includes the rest of the OS, cache and memory stalls.

@@ -4,6 +4,19 @@
 engine. **Not a hardware capture or a real-time certification.** This pass
 brings the CPU voice closer to Galaxy without moving it back to the DSP.
 
+## Less ColdFire work, same samples (0.1.8, 22 Nov 2026)
+
+No arithmetic changed: 0.1.8's `te_process` equals 0.1.7's in every state, audio and record word over 40 million random
+blocks, and its new steady path equals the full path. What changed is how often control work is redone and how much code
+and data a block touches. Emulator figures, instructions per complete eight-track 16-sample routine (one instance, stock
+on the other seven): default page 8,944 → 8,669 (Tape Echo's own 2,075 → 1,800, 130 → 113 a sample); WOW 44 full wet 8,821
+→ 8,546; eight settled instances 15,283 → 14,315; eight instances with every control reversing in BEAT 22,571 → 22,586 (a
+moving control always takes the full path). One instance on the default page executes 147 sixteen-byte code lines a frame
+(173 before) and touches about 23 lines of state and tables (30); its 17 uncached ring words are unchanged. Where the time
+goes on a unit is still unmeasured: on base 0.7.11 with only Tape Echo installed one instance cost 1.7 points (#1869), beside
+a big set on 0.7.14 11.4, which points at cache line fills rather than arithmetic. See TESTING.md for the gates and the
+overload hold.
+
 ## EMAC rewrite: stock-style kernels (23 Sep 2026, later the same day)
 
 Same voice, rewritten for the ColdFire EMAC the way stock's delay loops

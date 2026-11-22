@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.1.8-experimental",
+    "date": "2026-11-22",
+    "changes": [
+      "Takes less of the Octatrack's processor while it plays, most of all while its knobs stand still. It sounds exactly as before.",
+      "When the Octatrack falls behind, Tape Echo drops a moment of echo instead of adding to the load.",
+      "Not yet checked on a unit."
+    ]
+  },
+  {
     "version": "0.1.7-experimental",
     "date": "2026-11-20",
     "changes": [
