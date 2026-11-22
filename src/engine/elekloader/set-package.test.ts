@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { encodeModuleSet, parseSetIdentity, SET_CHANGES, SET_MAX_ABI } from './set-package'
+import { encodeModuleSet, frameCostTable, parseSetIdentity, SET_CHANGES, SET_COSTS, SET_MAX_ABI } from './set-package'
+import { existsSync } from 'node:fs'
 
 const base = '31'.repeat(32), baseline = '45'.repeat(32)
 const pkg = (id: number, length = 33) => {
@@ -55,5 +56,32 @@ describe('one module-set offer', () => {
     view.setUint8(5, 1); view.setUint16(6, SET_CHANGES); expect(parseSetIdentity(view)).toBe(baseline)
     view.setUint16(6, SET_CHANGES + 1); expect(() => parseSetIdentity(view)).toThrow()
     expect(() => parseSetIdentity(new DataView(data.buffer, 0, 39))).toThrow()
+  })
+  it('appends the measured frame costs as v2, by package id, for a base that keeps them', () => {
+    const costs = [{ module: 5, use: 77, wake: 4 }, { module: 0x9f482bb9, use: 114, wake: 0 }]
+    const one = pkg(11), data = encodeModuleSet(base, baseline, [one], costs), view = new DataView(data.buffer)
+    expect(view.getUint16(4)).toBe(2); expect(view.getUint32(8)).toBe(data.length)
+    const at = 84 + 36
+    expect(view.getUint32(at)).toBe(2)
+    expect([view.getUint32(at + 4), view.getUint16(at + 8), view.getUint16(at + 10)]).toEqual([5, 77, 4])
+    expect([view.getUint32(at + 12), view.getUint16(at + 16), view.getUint16(at + 18)]).toEqual([0x9f482bb9, 114, 0])
+    expect(data.length).toBe(at + 4 + 16)
+    for (const bad of [[costs[1], costs[0]], [costs[0], costs[0]], [{ module: 5, use: 0, wake: 0 }], [{ module: 5, use: 1001, wake: 0 }], [{ module: 0, use: 1, wake: 0 }], [{ module: 5, use: 1.5, wake: 0 }]])
+      expect(() => encodeModuleSet(base, baseline, [one], bad)).toThrow(/frame costs/)
+    expect(() => encodeModuleSet(base, baseline, [one], Array.from({ length: SET_COSTS + 1 }, (_, i) => ({ module: i + 1, use: 1, wake: 0 })))).toThrow(/frame costs/)
+    expect(new DataView(encodeModuleSet(base, baseline, [one]).buffer).getUint16(4)).toBe(1) // v1 without costs
+  })
+  it('sends every module the base-owned record lists, in per mille, under its package id', () => {
+    const table = frameCostTable()
+    expect(table.length).toBeGreaterThan(0)
+    expect(table.find(c => c.module === 0x9f482bb9)).toEqual({ module: 0x9f482bb9, use: 114, wake: 4 }) // tapeecho
+    expect(table.find(c => c.module === 0x970f03ad)).toEqual({ module: 0x970f03ad, use: 145, wake: 30 }) // syntiz: the default wake
+    expect(() => encodeModuleSet(base, baseline, [pkg(11)], table)).not.toThrow()
+    const record = JSON.parse(readFileSync(new URL('../../../sdk/machines/octatrack/frame-costs.json', import.meta.url), 'utf8'))
+    for (const [id, cost] of Object.entries(record.costs) as [string, { use: number; wake?: number; measured: string }][]) {
+      expect(existsSync(new URL(`../../../sdk/octatrack/modules/${id}/octamod.module.json`, import.meta.url)), id).toBe(true)
+      expect(cost.measured.length, id).toBeGreaterThan(10)
+      expect(cost.use >= 0 && cost.use <= 100 && (cost.wake ?? 3) >= 0 && (cost.wake ?? 3) <= 100 && cost.use + (cost.wake ?? 3) > 0, id).toBe(true)
+    }
   })
 })

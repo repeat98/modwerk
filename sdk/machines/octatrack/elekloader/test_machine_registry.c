@@ -166,10 +166,19 @@ void modwerk_status_machine_refused(unsigned track, const char *label) { ++box_c
 static unsigned cpu_boxes, cpu_box_track = 99; static uint32_t cpu_box_booked, cpu_box_add;
 void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
 { (void)label; ++cpu_boxes, cpu_box_track = track, cpu_box_booked = booked, cpu_box_add = add; }
-static uint32_t cpu_now; static unsigned hot_boxes, hot_box_track = 99; static uint32_t hot_box_cpu, hot_box_add;
-uint32_t modwerk_status_cpu_load(void) { return cpu_now; }
-void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu, uint32_t add)
-{ (void)label; ++hot_boxes, hot_box_track = track, hot_box_cpu = cpu, hot_box_add = add; }
+/* status.c's frame judge: the share now (cpu_now) with the pick on top and what it replaces off, against the line. */
+static uint32_t cpu_now, hot_line = 500u; static unsigned hot_boxes, hot_box_track = 99; static uint32_t hot_box_cpu, hot_box_add, hot_box_gone;
+int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone)
+{
+    (void)label; CHECK(machine == 1u);
+    extern volatile uint32_t mw_cpu_refusals;
+    if (cpu_now + add < hot_line + gone) return 0;
+    mw_cpu_refusals = mw_cpu_refusals + 1u, ++hot_boxes, hot_box_track = slot, hot_box_cpu = cpu_now, hot_box_add = add, hot_box_gone = gone; return 1;
+}
+/* The site's measured costs: module 'L' (LIGHT) one track 2 % of a frame, 1 % to wake, while costs_listed. */
+static int costs_listed;
+int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
+{ if (!costs_listed || module != 'L') return 0; *use = 20u, *wake = 10u; return 1; }
 static uint32_t cpu_in, cpu_out; /* what picks reported adding to the meter and exits taking away (status.c counts them) */
 void modwerk_status_cpu_entered(uint32_t mille) { cpu_in += mille; }
 void modwerk_status_cpu_left(uint32_t mille) { cpu_out += mille; }
@@ -462,27 +471,28 @@ static void check_cpu_budget(void)
     for (unsigned t = 0; t < 8; ++t) { part0()[0x22 + t] = 1; for (unsigned k = 0; k < 3; ++k) part0()[60 + 30 * t + k] = 0; }
     fresh(); a_admit = 1; mw_cpu_allowance = 45; { unsigned polls = rest_polls; mw_ui_tick(); CHECK(rest_polls == polls + 1u); }
     CHECK(!mw_cpu_refused && !mw_cpu_booked);
-    /* A busy unit (the meter at mw_cpu_hot or more) takes no further machine, with its own box and the measured
-     * load; the same machine on its own track asks nothing, and the pick passes once the load is under the line. */
-    extern volatile uint32_t mw_cpu_hot, mw_cpu_refusals;
+    /* A unit at the frame line (status.c) takes no further machine, with its own box and the share it plays at; the
+     * same machine on its own track asks nothing, and the pick passes once the share and its cost are under the line. */
+    extern volatile uint32_t mw_cpu_refusals;
     { uint32_t refusals = mw_cpu_refusals; unsigned was = cpu_boxes;
-      cpu_now = mw_cpu_hot;
-      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 1 && hot_box_track == 7 && hot_box_cpu == mw_cpu_hot);
+      cpu_now = hot_line;
+      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 1 && hot_box_track == 7 && hot_box_cpu == hot_line);
       CHECK(mw_cpu_refusals == refusals + 1 && cpu_boxes == was && !mw_cpu_booked);
-      cpu_now = mw_cpu_hot - 120u; /* its price (12 % of a frame, unpriced) would take the meter to the line */
-      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 2 && hot_box_cpu == mw_cpu_hot - 120u && hot_box_add == 120u);
+      cpu_now = hot_line - 120u; /* its price (12 % of a frame, unpriced) would take the share to the line */
+      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 2 && hot_box_cpu == hot_line - 120u && hot_box_add == 120u);
       CHECK(mw_assign(part0(), 7, 6) == (unsigned)-1 && hot_boxes == 3);         /* nor the dear one (30) */
-      cpu_now = mw_cpu_hot - 121u;
+      cpu_now = hot_line - 121u;
       CHECK(mw_assign(part0(), 7, 6) == (unsigned)-1 && hot_boxes == 4);
       CHECK(mw_assign(part0(), 7, 5) == 1 && hot_boxes == 4);
       cpu_now = 1000u;
       CHECK(mw_assign(part0(), 7, 5) == 1 && hot_boxes == 4);                    /* already this machine's track */
       CHECK(mw_assign(part0(), 7, 1) == 1 && hot_boxes == 4);                    /* back to stock: never refused */
       cpu_now = 0; mw_ui_tick(); }
-    /* The busy check adds a machine's measured meter cost (reserved[1]), its price only without one; a pick reports
-     * what it adds and an exit what it takes away (owner's MKII, 21 November 2026: Grain priced 35 added 8.9). */
+    /* A pick adds what the site measured one track of the machine to add to the frame, else its measured meter cost
+     * (reserved[1]), else its price; it reports what it adds and an exit what it takes away (owner's MKII, 21 November
+     * 2026: Grain priced 35 added 8.9). A swap is judged with the one it replaces gone. */
     { const void *three[] = {&A, &P, &L}; rows(three, 3, 0, 0); fresh(); a_admit = 1; cpu_in = cpu_out = 0;
-      cpu_now = mw_cpu_hot - 100u;
+      cpu_now = hot_line - 100u;
       CHECK(mw_assign(part0(), 7, 6) == (unsigned)-1 && !cpu_in);               /* the dear one by its price: 30 */
       CHECK(mw_assign(part0(), 7, 7) == 1 && cpu_in == 50u);                    /* priced 30, adds 5: admitted */
       CHECK(mw_assign(part0(), 7, 1) == 1 && cpu_out == 50u);                   /* back to stock: its cost comes off */
@@ -491,6 +501,13 @@ static void check_cpu_budget(void)
       CHECK(mw_assign(part0(), 6, 6) == 1 && cpu_out == 170u && cpu_in == 470u); /* a swap: one out, one in */
       CHECK(mw_assign(part0(), 6, 6) == 1 && cpu_in == 470u);                   /* its own track again: nothing */
       CHECK(mw_assign(part0(), 6, 1) == 1 && cpu_out == 470u);
+      costs_listed = 1, cpu_in = cpu_out = 0;
+      CHECK(mw_assign(part0(), 7, 7) == 1 && cpu_in == 20u);                    /* measured by the site: 2 % */
+      cpu_now = hot_line - 100u;
+      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_box_gone == 20u);  /* LIGHT out, unpriced A in: 120 */
+      cpu_now = hot_line - 101u;
+      CHECK(mw_assign(part0(), 7, 5) == 1 && cpu_out == 20u && cpu_in == 140u);
+      CHECK(mw_assign(part0(), 7, 1) == 1); costs_listed = 0, cpu_now = 0;
       rows(both, 2, 0, 0); fresh(); a_admit = 1; mw_ui_tick(); }
     unsigned boxes = cpu_boxes;
     CHECK(mw_assign(part0(), 0, 5) == 1 && mw_assign(part0(), 1, 5) == 1 && mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes);
@@ -611,7 +628,7 @@ static void check_resting_machines(void)
 {
     static const struct modwerk_machine Q = {MODWERK_MACHINE_ABI, {'Q', '8'}, 1, 1, "POLY", 0, 0, a_defaults,
                                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}}; /* renders inside stock's */
-    extern volatile uint32_t mw_cpu_hot, mw_wake_mille;
+    extern volatile uint32_t mw_wake_mille;
     const void *aq[] = {&A, &Q};
     clear_sigs(); misc[0x0f] = 0; /* Part 1 */
     fresh(); a_admit = 1; cpu_now = 0; mw_cpu_allowance = 45; mw_cpu_refused = 0;
@@ -642,10 +659,10 @@ static void check_resting_machines(void)
 
     /* A busy unit: a pick that would wake a module is judged with its hooks back on top (mw_wake_mille). */
     { unsigned boxes = hot_boxes;
-      cpu_now = mw_cpu_hot - 10u * CPU_DEFAULT - mw_wake_mille;
+      cpu_now = hot_line - 10u * CPU_DEFAULT - mw_wake_mille;
       CHECK(mw_assign(part0(), 3, 6) == (unsigned)-1 && hot_boxes == boxes + 1 && resting(1) && !pick_who);
       CHECK(hot_box_add == 10u * CPU_DEFAULT + mw_wake_mille);
-      cpu_now = mw_cpu_hot - 10u * CPU_DEFAULT - mw_wake_mille - 1u;
+      cpu_now = hot_line - 10u * CPU_DEFAULT - mw_wake_mille - 1u;
       CHECK(mw_assign(part0(), 3, 6) == 1 && hot_boxes == boxes + 1 && !resting(1));
       CHECK(mw_assign(part0(), 3, 1) == 1); cpu_now = 0; }               /* back to FLEX */
 

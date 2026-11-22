@@ -89,8 +89,7 @@ static int reading = -1, read_last = 1; /* the core whose window (least, most, s
 static unsigned read_words = 3u;        /* how many of them */
 static unsigned waited;
 static uint32_t cpu_recent[8];
-static uint32_t cpu_played, play_readings; /* the mean below as it last stood playing; readings in a row taken playing */
-static unsigned refused_played;            /* the busy box shows that figure, not the meter's now */
+static uint32_t play_readings; /* readings in a row taken playing */
 int modwerk_machine_stopped(void);         /* runtime.c */
 static uint32_t recent_mean(void)
 {
@@ -100,35 +99,40 @@ static uint32_t recent_mean(void)
 }
 /* Each reading: what the guard below goes by once the unit is stopped, the mean of the last four seconds it played,
  * kept until it plays four seconds again. Eight readings in a row playing, so none of them is a stopped one. */
-static uint32_t frame_recent[8], frame_played; /* as cpu_recent and cpu_played, for the frame share below */
+static uint32_t frame_recent[8], frame_played, frame_newest; /* as cpu_recent; the mean as it last stood playing; the newest */
+static uint32_t played_asleep;                                /* the quiet delays' points when frame_played was taken */
 static uint32_t frame_mean(void);
-/* Machines picked or removed since the meter last held them (machine_registry.c), per mille: a pick made stopped is
- * judged with every one before it, and a machine swapped out and back stopped by what it adds, once. Eight readings
- * played after the last change, the meter holds them all. */
-static int32_t cpu_adjust;
+static uint32_t delays_asleep(void);
+/* Module picks and removals since the frame share last held them (machine_registry.c, the effect check below), per
+ * mille of a frame: a pick made stopped is judged with every one before it, and a machine swapped out and back stopped
+ * by what it adds, once. Eight readings played after the last change, the share holds them all; until then the kept
+ * figure stays as it was, so no pick counts twice. */
+static int32_t frame_adjust;
 static uint32_t adjust_readings;
 static void cpu_note_played(void)
 {
     if (modwerk_machine_stopped()) play_readings = adjust_readings = 0;
     else {
-        if (++play_readings >= 8u) cpu_played = recent_mean(), frame_played = frame_mean();
-        if (++adjust_readings >= 8u) cpu_adjust = 0;
+        if (++adjust_readings >= 8u) frame_adjust = 0;
+        if (++play_readings >= 8u && !frame_adjust) frame_played = frame_mean(), played_asleep = delays_asleep();
     }
 }
-void modwerk_status_cpu_entered(uint32_t mille) { cpu_adjust += (int32_t)mille, adjust_readings = 0; }
-void modwerk_status_cpu_left(uint32_t mille) { cpu_adjust -= (int32_t)mille, adjust_readings = 0; }
+void modwerk_status_cpu_entered(uint32_t mille) { frame_adjust += (int32_t)mille, adjust_readings = 0; }
+void modwerk_status_cpu_left(uint32_t mille) { frame_adjust -= (int32_t)mille, adjust_readings = 0; }
 /* The frame interrupt's share of each frame, per mille, from the frame guard's own sums (machine_registry.c): what a
  * module effect's CPU price (`npm run device:price`) is measured in. The meter above is all of the ColdFire, averaged;
  * the guard drops renders frame by frame once this share passes its own, so the pick box shows this one (owner's MKII, 17 November 2026: a third Tape Echo, the meter at 72 %, the guard dropped 4,782
  * Amiga renders, 70 a second). The guard's development read clears its sums: that reading is left out. */
 extern volatile uint32_t mw_frame_busy, mw_frame_count; /* machine_registry.c: frame lengths >> 8, frames */
 #ifndef MW_FRAME_LINE
-#define MW_FRAME_LINE 600u
+#define MW_FRAME_LINE 500u
 #endif
-/* The line: on an MKII (17 November 2026, Amiga and three Tape Echos playing, the frame interrupt's mean 44 % of a frame)
- * the guard at its 80 % skipped nothing with its share at 65 % and 114 renders in 5 s at 60 %: it drops renders once
- * the mean comes within about 16 points of its share, so 60 % is a full bar. */
-volatile uint32_t mw_frame_line = MW_FRAME_LINE; /* per mille of a frame: the pick box's CPU bar is full at it */
+/* The line every module pick is judged against. On the owner's MKII (base 0.7.14, 21-22 November 2026, a Part with a trig
+ * every four steps on all eight tracks) the frame guard dropped no render up to a 49.2 % mean (Euclid on four slots,
+ * longest frame 97 %), and dropped them at every mean from 50.7 % (11 modules installed: 10 renders in 8 s; on 50.8 %
+ * each effect added dropped 1 to 4; 57.5 %: 33). The longest frame rises with the mean (88 % at 39.4, 120 to 146 % past
+ * 50), so the mean is what a pick is judged by. */
+volatile uint32_t mw_frame_line = MW_FRAME_LINE; /* per mille of a frame: no pick past it, and the CPU bars are full at it */
 static uint32_t last_busy, last_frame_count;
 static uint32_t frame_mean(void)
 {
@@ -140,13 +144,21 @@ static void frame_note(unsigned at)
 {
     uint32_t busy = mw_frame_busy, count = mw_frame_count, db = busy - last_busy, dc = count - last_frame_count;
     last_busy = busy, last_frame_count = count;
-    if (dc && dc <= count) frame_recent[at] = db * 1000u / (dc * 187u); /* a frame is 47,891 counts, 187 of them >> 8 */
+    if (dc && dc <= count) frame_newest = frame_recent[at] = db * 1000u / (dc * 187u); /* a frame is 47,891 counts, 187 of them >> 8 */
 }
-/* Until eight fresh playback readings replace the saved mean, the rolling window can include stopped frames. */
+/* The frame share a pick is judged by, per mille of a frame. A stopped unit is not busy, but the Part put together on it
+ * will play: the larger of the share it last played at and the newest reading, with the picks since on top. On an MKII
+ * (13 November 2026) picks made stopped at 62 to 74 % meter left a Part that played at 87 to 97 %. A stopped reading
+ * holds no machine's renders, so a machine that left takes nothing off it: right after STOP the four-second mean still
+ * holds the play, and Grain to FLEX and back was refused at once (owner's MKII, 21 November 2026). Playing, the mean
+ * holds part of the picks since already: only the kept figure adds them. A quiet delay counts as awake either way
+ * (delays_asleep). The kept figure goes stale when the unit is made lighter while stopped (a stock pick, another
+ * project): four seconds of playing replace it. */
 uint32_t modwerk_status_frame_load(void)
 {
-    uint32_t now = frame_mean();
-    return frame_played > now ? frame_played : now;
+    int32_t kept = (int32_t)(frame_played + played_asleep) + frame_adjust, now = (int32_t)delays_asleep();
+    now += modwerk_machine_stopped() ? (int32_t)frame_newest + (frame_adjust > 0 ? frame_adjust : 0) : (int32_t)frame_mean();
+    return (uint32_t)(kept > now ? kept : now);
 }
 static void missing_check(void);
 static void missing_on_tick(void);
@@ -1175,31 +1187,24 @@ void modwerk_status_machine_refused(unsigned track, const char *label)
 }
 /* machine_registry.c's CPU budget: the track's machine would take the Part past what the frame interrupt carries. The
  * same box, as CPU FULL: what the Part's machines book and what this one adds, per mille of the allowance. */
-static void cpu_refusal_box(unsigned slot, unsigned machine, const char *label, unsigned kind, uint32_t booked, uint32_t add)
+static void cpu_refusal_box(unsigned slot, unsigned machine, const char *label, uint32_t booked, uint32_t add)
 {
     if ((open != CLOSED && open != MEMORY) || slot >= (machine ? 8u : 16u)) return;
     for (unsigned i = 0; i < 8u; ++i) refused[i] = 0;
-    refused[0] = kind, refused[1] = slot, refused[4] = add, refused_booked = booked;
+    refused[0] = 4u, refused[1] = slot, refused[4] = add, refused_booked = booked;
     refused_machine = machine, refused_reason = 4u;
-    refused_played = kind == 5u && cpu_played > recent_mean();
     for (unsigned i = 0; i < sizeof refused_name; ++i) refused_name[i] = 0;
     for (unsigned i = 0; label && i < 16u && label[i]; ++i) refused_name[i] = label[i] >= 'a' && label[i] <= 'z' ? (char)(label[i] - 32) : label[i];
     open = REFUSED, refused_left = 180u;
 }
 void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
 {
-    cpu_refusal_box(track, 1u, label, 4u, booked, add);
+    cpu_refusal_box(track, 1u, label, booked, add);
 }
 uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
-/* The load a pick is judged by. A stopped unit is not busy, but the Part put together on it will play: stopped, the
- * larger of the meter now and what it read while the unit last played (cpu_played). On an MKII (13 November 2026)
- * picks made stopped at 62 to 74 % left a Part that played at 87 to 97 %, where a knob turn waits 0.1 to 0.2 s for
- * its redraw. The kept figure goes stale when the unit is made lighter while stopped (a stock pick, another
- * project): four seconds of playing replace it. */
 /* status.s leaves out the delay routine's ring transfers on a track whose delay is quiet: 7.4 meter points with all
- * eight (MKII, 16 November 2026: 41.2 % to 33.8 % stopped), all of it back from the frame a scene opens the sends. The
- * 85 % line was set from bases that always paid it, so a pick is judged as if every delay were awake: the skip buys
- * margin and is never spent. */
+ * eight (MKII, 16 November 2026: 41.2 % to 33.8 % stopped), all of it frame interrupt time, back from the frame a scene
+ * opens the sends. So a pick is judged as if every delay were awake: the skip buys margin and is never spent. */
 #define DELAY_WAKE 10u /* per mille a quiet track */
 static uint32_t delays_asleep(void)
 {
@@ -1207,43 +1212,94 @@ static uint32_t delays_asleep(void)
     for (unsigned t = 0; t < 8u; ++t) n += ((volatile uint32_t *)mw_delay)[17u + t] != 0; /* status.s: no read this frame */
     return n * DELAY_WAKE;
 }
-/* With the picks since on top. Never below the newest reading when a machine left: right after STOP the four-second
- * mean still holds the play, so FLEX and back to Grain was refused at once (owner's MKII, 21 November 2026). */
-uint32_t modwerk_status_cpu_load(void)
+extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille; /* machine_registry.c */
+/* MWMS v2's frame cost table (loader.c, set_package.h): what each measured module adds to the frame share, per mille of
+ * a frame, on each track or slot it takes (use) and once when it wakes from resting (wake), as the site measured it on
+ * a unit (sdk/machines/octatrack/frame-costs.json). Kept in battery RAM through a power cycle; each v2 set replaces it.
+ * A module it does not list: a machine is charged by its descriptor (machine_registry.c), an effect nothing, and a wake
+ * mw_wake_mille. */
+#define EC_MAGIC 0x4d574543u /* "MWEC" */
+#define EC_ROOM 128u         /* set_package.h's RUNTIME_SET_COSTS */
+struct frame_costs { uint32_t magic, count, entry[EC_ROOM][2], sum; };
+#ifdef MODWERK_HOST
+struct frame_costs modwerk_test_costs;
+#define COSTS (&modwerk_test_costs)
+#else
+#define COSTS ((volatile struct frame_costs *)0x100f9200u) /* battery-ram.json */
+typedef char frame_costs_fit[sizeof(struct frame_costs) <= 0x40cu ? 1 : -1]; /* the range battery-ram.json gives it */
+#endif
+static uint32_t costs_sum(unsigned n)
 {
-    uint32_t now = recent_mean();
-    int32_t judged = (int32_t)(cpu_played > now ? cpu_played : now) + cpu_adjust, newest = (int32_t)modwerk_status[CPU];
-    return (uint32_t)(cpu_adjust < 0 && judged < newest ? newest : judged) + delays_asleep();
+    uint32_t sum = 0x5a17u + n;
+    for (unsigned i = 0; i < n; ++i) sum = sum * 31u + COSTS->entry[i][0] * 7u + COSTS->entry[i][1];
+    return sum;
 }
-void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu, uint32_t add)
+static uint32_t costs_be32(const uint8_t *p) { return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3]; }
+/* loader.c, engine task, after set_package.h checked every entry: torn while it writes, so a read meanwhile finds none. */
+void modwerk_machine_frame_costs(const uint8_t *table, unsigned n)
 {
-    cpu_refusal_box(track, 1u, label, 5u, cpu, add);
+    if (n > EC_ROOM) return;
+    COSTS->magic = 0;
+    for (unsigned i = 0; i < n; ++i) COSTS->entry[i][0] = costs_be32(table + 8u * i), COSTS->entry[i][1] = costs_be32(table + 8u * i + 4u);
+    COSTS->count = n, COSTS->sum = costs_sum(n), COSTS->magic = EC_MAGIC;
+}
+/* 1 with the module's costs when the table lists it (`module`: its package id). */
+int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
+{
+    unsigned n = COSTS->count;
+    if (COSTS->magic != EC_MAGIC || n > EC_ROOM || COSTS->sum != costs_sum(n)) return 0;
+    for (unsigned i = 0; i < n; ++i)
+        if (COSTS->entry[i][0] == module) { *use = COSTS->entry[i][1] >> 16, *wake = COSTS->entry[i][1] & 0xffffu; return 1; }
+    return 0;
+}
+/* Every module pick, a machine's (machine_registry.c) or an effect's (below): 1 when the frame share the unit would play
+ * at, with the pick's `add` on top and what the one it replaces took (`gone`) off, reaches mw_frame_line; the pick is
+ * then not made and the box says so. Per mille of a frame. Stock's machines and effects and NONE are never judged, so a
+ * busy unit can always be made lighter. The box gives both in percent of the line, as the pick box's CPU bar does. */
+int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone)
+{
+    frame_adjust -= (int32_t)gone;
+    uint32_t load = modwerk_status_frame_load(), line = mw_frame_line ? mw_frame_line : 1u;
+    frame_adjust += (int32_t)gone;
+    if (load + add < line) return 0;
+    mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
+    cpu_refusal_box(slot, machine, label, load * 1000u / line, add * 1000u / line);
+    return 1;
 }
 /* selection.c's guard (build_core.py's edit), before stock writes an FX pick: 1 when the pick asks for a module's
- * effect (`id`, on slot 0-15: FX1 T1-T8, then FX2) while the unit is busy, and the pick is then not made. A module
- * effect's control code, hooks and frame work are ColdFire time no price covers. Stock's effects and NONE always pass,
- * so a busy unit can always be made lighter. The box names the slot as an effect's ("Tn FXn"). */
-extern volatile uint32_t mw_cpu_hot, mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille; /* machine_registry.c */
+ * effect (`id`, on slot 0-15: FX1 T1-T8, then FX2; `old`: the slot's effect before) the unit has no room for, and the
+ * pick is then not made. A module effect's control code, hooks and ColdFire work run in the frame interrupt where the
+ * frame guard cannot drop them, so they push it onto the renders (owner's MKII, 22 November 2026: one Tape Echo on a
+ * Part at 50.7 % took it to 62.1 % and 165 renders dropped in 11 s). The box names the slot as an effect's ("Tn FXn"). */
 void modwerk_fxmap_name(unsigned id, char *out); /* fxmap.c: 16 bytes */
 int modwerk_machine_effect_resting(unsigned id);  /* machine_registry.c: effect modules that rest */
 void modwerk_machine_effect_wake(unsigned id);
-int modwerk_status_effect_busy(unsigned slot, unsigned id)
+static uint32_t effect_use(unsigned id, uint32_t *wake)
 {
-    if (slot > 15u || !fx_in(modwerk_fx_modules, id)) return 0;
-    uint32_t cpu = modwerk_status_cpu_load();
+    uint32_t module, use = 0; uint16_t layout; char name[16];
+    *wake = mw_wake_mille;
+    if (id < MODWERK_FX_IDS && fx_in(modwerk_fx_modules, id) && modwerk_fxmap_describe(id, &module, &layout, name))
+        modwerk_status_module_cost(module, &use, wake);
+    return use;
+}
+int modwerk_status_effect_busy(unsigned slot, unsigned id, unsigned old)
+{
+    uint32_t wake, gone = slot < 16u && old != id ? effect_use(old, &wake) : 0u;
+    if (slot > 15u || !fx_in(modwerk_fx_modules, id)) { if (gone) modwerk_status_cpu_left(gone); return 0; }
+    uint32_t use = effect_use(id, &wake);
+    if (old == id) use = 0; /* no change on this slot: only a wake to judge */
     /* A resting effect module brings its ColdFire hooks back into the frame: judged with them on top, then woken
      * before stock writes the pick, so its first frame on the slot has its detours. */
     int waking = modwerk_machine_effect_resting(id);
-    uint32_t add = waking ? mw_wake_mille : 0u;
-    if (cpu + add < mw_cpu_hot) {
-        if (waking) modwerk_machine_effect_wake(id);
-        return 0;
-    }
     char name[16];
     modwerk_fxmap_name(id, name);
-    mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
-    cpu_refusal_box(slot, 0u, name, 5u, cpu, add);
-    return 1;
+    if (modwerk_status_pick_busy(slot, 0u, name, use + (waking ? wake : 0u), gone)) return 1;
+    if (waking) modwerk_machine_effect_wake(id);
+    /* shortcut: counted when the guard passes the pick, before the DSP places it; a pick the DSP then refuses stays
+     * counted until the unit has played four seconds. Count at the DSP's commit if that ever misleads a pick. */
+    if (use + (waking ? wake : 0u)) modwerk_status_cpu_entered(use + (waking ? wake : 0u));
+    if (gone) modwerk_status_cpu_left(gone);
+    return 0;
 }
 static void refused_box(unsigned char *frame)
 {
@@ -1281,15 +1337,6 @@ static void refused_box(unsigned char *frame)
      * MEM: the core's code words, and the effect's when its code is not on the core yet. Past 100 % is why. Only the
      * bar that refused it carries the effect: the core keeps other Parts' code loaded until it needs the room, so its
      * words plus the effect's can pass 100 % on a DSP FULL that memory never refused (owner's MKII, 20 October 2026). */
-    if (refused[0] == 5u) {
-        *e = 0, label(23u, 26u, need);
-        label(23u, 34u, refused_played ? "PLAY" : "CPU");
-        percent(48u, 34u, refused_booked);
-        if (refused[4]) plus(77u, 34u, refused[4], 0);
-        label(23u, 42u, "LIMIT");
-        percent(54u, 42u, mw_cpu_hot);
-        return;
-    }
     if (refused_reason == 4u) { /* the CPU budget: one bar, and what makes room */
         const char *t = " NEEDS ";
         while (*t) *e++ = *t++;

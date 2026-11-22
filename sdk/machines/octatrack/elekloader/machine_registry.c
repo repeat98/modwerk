@@ -63,9 +63,10 @@ void modwerk_dsp_source_release(unsigned track);
 void modwerk_status_machine_refused(unsigned track, const char *label); /* status.c: the DSP FULL box for a machine */
 void modwerk_dsp_source_engine_off(uint32_t module);
 void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add); /* status.c: the CPU FULL box, per mille of the allowance */
-uint32_t modwerk_status_cpu_load(void); /* status.c: CPU load used for admission, per mille */
-void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu, uint32_t add); /* status.c: the CPU FULL box for a unit already busy */
-void modwerk_status_cpu_entered(uint32_t mille); /* status.c: a machine took a track; the meter shows it after four seconds played */
+/* status.c: 1, with the CPU FULL box, when the frame share past this pick would reach the line; per mille of a frame */
+int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone);
+int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake); /* status.c: the site's measured costs */
+void modwerk_status_cpu_entered(uint32_t mille); /* status.c: a machine took a track; the share shows it after four seconds played */
 void modwerk_status_cpu_left(uint32_t mille);    /* status.c: a machine left a track */
 #ifndef MW_HOST
 __attribute__((weak)) int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, uint32_t engine, uint8_t kind)
@@ -75,8 +76,9 @@ __attribute__((weak)) void modwerk_status_machine_refused(unsigned track, const 
 __attribute__((weak)) void modwerk_dsp_source_engine_off(uint32_t module) { (void)module; }
 __attribute__((weak)) void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
 { (void)track; (void)label; (void)booked; (void)add; }
-__attribute__((weak)) uint32_t modwerk_status_cpu_load(void) { return 0; }
-__attribute__((weak)) void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu, uint32_t add) { (void)track; (void)label; (void)cpu; (void)add; }
+__attribute__((weak)) int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone)
+{ (void)slot; (void)machine; (void)label; (void)add; (void)gone; return 0; }
+__attribute__((weak)) int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake) { (void)module; (void)use; (void)wake; return 0; }
 __attribute__((weak)) void modwerk_status_cpu_entered(uint32_t mille) { (void)mille; }
 __attribute__((weak)) void modwerk_status_cpu_left(uint32_t mille) { (void)mille; }
 #endif
@@ -177,29 +179,31 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
  * shortcut: CPU_DEFAULT and the allowance are estimates from the 24 October 2026 MKII runs (rest 23 %, POLY8 at its
  * cap about 45 %), to be set from `npm run device -- cpu` on a unit before a release. */
 #define CPU_DEFAULT 12u
-/* The prices cover a machine's renders. They do not cover what else an installed set costs the ColdFire: modules'
- * hooks, effects' control code, a DSP voice's glue, a USB recording. So a pick is also refused while the unit is
- * measured busy: the CPU meter (status.c: all the time main's idle loop did not get) at mw_cpu_hot or more over its
- * last four seconds. That is where the panel starts to lag: on 32 units' logs (30 October to 13 November 2026) a
- * five-minute window at 85 % or more had a UI gap past 100 ms more often than not, and under 65 % one in twenty did.
- * Stopped, it goes by what the meter read while the unit last played (status.c, modwerk_status_cpu_load): a Part
- * put together stopped is judged as it will play. A unit that has not played since its start is judged as it is.
- * A machine is judged with what it adds to the meter on top: one admitted just under the line played over it, and
- * the frame guard then dropped its renders (shared diagnostics, 11 to 14 November 2026: 166 skip records on 24 units
- * beside 5 refusals). That is its measured meter cost (meter_cost), else its price, the worst render of one frame:
- * Grain's 35-point price plus the wake on a Part kept at 43.5 % and 8 sleeping-delay points was 89.5 and refused,
- * while it played the Part at 52.7 %, 8.9 points more, at its worst settings (owner's MKII, 21 November 2026). */
-volatile uint32_t mw_cpu_hot = 850u; /* per mille; development bases may change it */
-/* A pick that wakes a resting machine's module (below, "Machines that rest") is judged with this on top of its price:
- * what the module's hooks and detours cost the frame again once awake, which the meter cannot show before. The most
- * of the 24 packages measured at rest on an MKII (20 November 2026, base 0.7.10 twin, playing): POLY8 0.3.3, 2.3
- * points of the frame interrupt and 2.6 of the CPU meter. Per mille of the meter. */
+/* The prices bound a Part's renders at their worst. What else an installed set costs the frame interrupt (modules' hooks,
+ * effects' ColdFire work, a DSP voice's glue) and what a machine costs in the frames between its worst ones no price
+ * knows. So every module pick is also judged by the frame share the unit would play at with it (status.c,
+ * modwerk_status_pick_busy, against mw_frame_line): a machine by what one track of it adds there, as the site measured
+ * it (frame_cost below), else by its measured meter cost (reserved[1]) or its price, a machine's renders being frame
+ * interrupt time either way. Admitted by the meter instead, SYNTIZ took a Part from 50.7 % to 65.2 % of the frame and the
+ * guard dropped 24 renders in 8 s, three Analog BDs to 71.4 % and 61 (owner's MKII, base 0.7.14, 21 November 2026). */
+/* A pick that wakes a resting module (below, "Machines that rest") is judged with its wake on top: what its hooks and
+ * detours cost the frame again once awake, which the share cannot show before. The site's table names it for a module
+ * it measured; this for the rest, the most of the 24 packages measured at rest on an MKII (20 November 2026, base
+ * 0.7.10 twin, playing): POLY8 0.3.3, 2.3 points of the frame interrupt. Per mille of a frame. */
 volatile uint32_t mw_wake_mille = 30u;
 volatile uint32_t mw_cpu_allowance = 45u, mw_cpu_booked; /* percent of a frame; development bases may change the allowance */
 volatile uint8_t mw_cpu_refused;    /* the current Part's tracks past the allowance: the frame interrupt reads it whole */
 static uint8_t cpu_warned;          /* ... whose box already showed, as `warned` */
 static unsigned cpu_price(const Machine *m) { return m->reserved[0] ? m->reserved[0] : m->source_kind ? 0u : CPU_DEFAULT; }
 static unsigned meter_cost(const Machine *m) { return m->reserved[1] ? m->reserved[1] : cpu_price(m); }
+/* What one track of `who` adds to the frame share, per mille of a frame, and its module's wake (above). */
+static uint32_t frame_cost(const Machine *who, uint32_t *wake)
+{
+    struct runtime_owner o; uint32_t use;
+    *wake = mw_wake_mille;
+    if (modwerk_runtime_owner_at((uintptr_t)who, &o) == 1 && modwerk_status_module_cost(o.module, &use, wake)) return use;
+    return 10u * meter_cost(who);
+}
 /* The Part's bill without track `skip` (8: none), in track order. The tick also uses these owners to charge DSP
  * voices and label refusals. Keep them on its stack for this pass, so a Part or module change is read afresh next tick. */
 static unsigned cpu_bill(const Machine *const *m, unsigned n, const Part *part, unsigned skip, uint8_t *over, const Machine **owners)
@@ -535,7 +539,8 @@ static void flex_defaults(Part *part, Part *mirror, unsigned track)
 static void leave(Part *part, Part *mirror, unsigned track, const Machine *old)
 {
     if (old->leave) old->leave(track);
-    modwerk_status_cpu_left(10u * meter_cost(old));
+    uint32_t wake;
+    modwerk_status_cpu_left(frame_cost(old, &wake));
     if (!old->assign && old->flags & MODWERK_MACHINE_PROTECT) flex_defaults(part, mirror, track);
     if (charged[track] == old) release(track); /* a priced machine that took the track was charged in its place */
 }
@@ -593,17 +598,11 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
         if (next->admit_track && !next->admit_track(part, track)) return (unsigned)-1;
         warned &= (uint8_t)~(1u << track); /* a pick is a new ask: say so again if it is refused again */
         int waking = old != next && asleep(next);
-        if (old != next) { /* a unit this machine's renders would make busy does not take it */
-            uint32_t cpu = modwerk_status_cpu_load();
-            /* A resting machine's module also brings its hooks and detours back into the frame: the meter does not
-             * hold them yet, so its pick is judged with them (mw_wake_mille) on top. */
-            uint32_t add = 10u * meter_cost(next) + (waking ? mw_wake_mille : 0u);
-            if (cpu + add >= mw_cpu_hot) {
-                mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
-                modwerk_status_cpu_hot(track, next->label, cpu, add);
-                return (unsigned)-1;
-            }
-        }
+        uint32_t wake, add = old != next ? frame_cost(next, &wake) : 0u, old_wake;
+        if (waking) add += wake; /* its module's hooks and detours come back into the frame, which does not hold them yet */
+        /* a unit whose frame this machine would fill does not take it; the one it replaces is judged gone */
+        if (old != next && modwerk_status_pick_busy(track, 1u, next->label, add, old ? frame_cost(old, &old_wake) : 0u))
+            return (unsigned)-1;
         if (old != next && cpu_price(next)) { /* before the DSP claim: nothing to give back */
             uint8_t over; unsigned booked = cpu_bill(m, n, part, track, &over, 0);
             if (booked + cpu_price(next) > mw_cpu_allowance) {
@@ -616,7 +615,7 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
             pick_who = next;
             modwerk_runtime_rest_poll();
         }
-        if (old != next) mc_assigned(next), modwerk_status_cpu_entered(10u * meter_cost(next));
+        if (old != next) mc_assigned(next), modwerk_status_cpu_entered(add);
         if (old && old != next) leave(part, mirror, track, old);
         if (absent) flex_defaults(part, mirror, track);
         if (next->assign) return next->assign(part, track, 1);

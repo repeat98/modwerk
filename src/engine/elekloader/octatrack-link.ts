@@ -14,7 +14,7 @@ import { OCTATRACK } from '../../../vendor/elekloader/kit/src/devices.ts'
 import type { OctatrackDiagnostic, DiagnosticReading, DiagnosticSyncStep } from '../../community/octatrack-diagnostics-contract'
 import { isStagingCommand } from '../../community/octatrack-diagnostics-contract'
 import type { Ep0Diagnostics } from './upload-usb.ts'
-import { encodeModuleSet } from './set-package.ts'
+import { encodeModuleSet, frameCostTable } from './set-package.ts'
 import { baseName } from './base-variants.ts'
 import { diagnosticErrorKind } from '../../community/site-diagnostic-events'
 import loaderRefusals from '../../../sdk/runtime/loader-refusals.json' with { type: 'json' }
@@ -524,7 +524,8 @@ export class OctatrackLink {
         const baseline = await this.transport!.setIdentity(abort.signal)
         this.live(connection)
         this.step = 'encode'
-        const data = encodeModuleSet(base, baseline, changes.map(change => change.data))
+        const costs = (this.state.identity?.capabilities?.features ?? 0) & RuntimeFeature.frameCosts ? frameCostTable() : undefined
+        const data = encodeModuleSet(base, baseline, changes.map(change => change.data), costs)
         await this.install(session, data, abort.signal, received => this.set({ ...this.state, progress: received / data.length }), changes.length)
       } else {
         await this.install(session, changes[0].data, abort.signal, received => this.set({ ...this.state, progress: received / total }))

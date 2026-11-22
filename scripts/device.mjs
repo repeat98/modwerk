@@ -49,10 +49,10 @@ import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
 import * as formats from '../vendor/elekloader/kit/src/formats.ts'
 import { OCTATRACK } from '../vendor/elekloader/kit/src/devices.ts'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
-import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
+import { findVendorInterface, RuntimeFeature, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
 import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
 import { DSP_REPORT_NAMES as REPORT_NAMES, describeStallFrames, describeStallPackets } from '../src/community/octatrack-diagnostics-contract.ts'
-import { encodeModuleSet } from '../src/engine/elekloader/set-package.ts'
+import { encodeModuleSet, frameCostTable } from '../src/engine/elekloader/set-package.ts'
 import { diagnostics, removal, runLifecycle, runtimePackage, ENTRY } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { describeRefusal } from './loader-refusals.mjs'
 import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
@@ -755,8 +755,9 @@ if (command === 'serve') {
     const packages = file.split(',').flatMap(name => name === '+refuse'
       ? [runtimePackage(identity.base, tick, 0x6d770002, [ENTRY]).data, runtimePackage(identity.base, tick, 0x6d770003, [[0x40000402, [0xff, 0xe4]]]).data]
       : name.startsWith('-') ? [removal(identity.base, id(new Uint8Array(readFileSync(name.slice(1))))).data] : [new Uint8Array(readFileSync(name))])
-    const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages)
-    console.log(`set: ${packages.length} changes, ${data.length} bytes`)
+    const costs = ((await transport.capabilities())?.features ?? 0) & RuntimeFeature.frameCosts ? frameCostTable() : undefined
+    const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages, costs)
+    console.log(`set: ${packages.length} changes, ${data.length} bytes${costs ? `, ${costs.length} frame costs` : ''}`)
     try { console.log(state(await retried(() => trial(session, { base: identity.base, data, sha256: sha(data) })))) }
     catch (error) { console.log('refused: ' + error.message); await session.cancel().catch(() => {}); await session.leaveUploadMode().catch(() => {}); console.log(state(session.status)) }
     console.log('installed:', (await transport.inventory())?.map(m => m.name).join(', ') || 'none')

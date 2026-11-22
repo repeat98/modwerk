@@ -1113,13 +1113,13 @@ REFUSAL_EDITS = {
          '            report(r==DL_ALLOC_MEMORY || r==DL_ALLOC_TRANSITION ? DL_SELECT_MEMORY :'),
         ('                dl_allocator_cancel(&allocator,current);\n                report(DL_SELECT_MEMORY); phase=0; return;',
          '                dl_allocator_cancel(&allocator,current);\n                refusal_note(3u); report(DL_SELECT_MEMORY); phase=0; return;')),
-    # A busy unit takes no further module effect (status.c, mw_cpu_hot): refused in the guard, before stock writes the
+    # A unit without frame room takes no further module effect (status.c, mw_frame_line): refused in the guard, before stock writes the
     # pick, with status.c's own box and no modal. selection.c links after the write-lease entries.
     'selection.c': (
         ('    if(++serial==0) ++serial;\n    token=serial;',
          '    if(slot<2) {\n'
-         '        extern int modwerk_status_effect_busy(unsigned slot,unsigned id); /* status.c: 1, and its CPU FULL box */\n'
-         '        if(modwerk_status_effect_busy(slot*8+request.track,request.target[slot*8+request.track])) { ++dl_selection_refused; return 0; }\n'
+         '        extern int modwerk_status_effect_busy(unsigned slot,unsigned id,unsigned old); /* status.c: 1, and its CPU FULL box */\n'
+         '        if(modwerk_status_effect_busy(slot*8+request.track,request.target[slot*8+request.track],request.before[slot*8+request.track])) { ++dl_selection_refused; return 0; }\n'
          '    }\n'
          '    if(++serial==0) ++serial;\n    token=serial;'),),
     'transfer.c': (

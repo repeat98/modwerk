@@ -1,12 +1,27 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// MWMS v1, sdk/runtime/loader/set_package.h. One offer and one Keep for all changes.
+// MWMS v1 and v2, sdk/runtime/loader/set_package.h. One offer and one Keep for all changes.
 import { digestBytes, UPLOAD_MAX_BYTES } from './upload-wire.ts'
+import { sha256 } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import frameCosts from '../../../sdk/machines/octatrack/frame-costs.json' with { type: 'json' }
+
+/** v2's table entry: a module's package id and what it adds to the frame share in use and on waking, per mille. */
+export interface FrameCost { module: number; use: number; wake: number }
+/** The measured costs (sdk/machines/octatrack/frame-costs.json) as v2 sends them, by package id ascending. */
+export function frameCostTable(costs: Record<string, { use: number; wake?: number }> = frameCosts.costs): FrameCost[] {
+  return Object.entries(costs).map(([id, cost]) => ({
+    module: new DataView(sha256(new TextEncoder().encode(id)).buffer).getUint32(0), // build.py module_id()
+    use: Math.round(cost.use * 10), wake: Math.round((cost.wake ?? 3) * 10),
+  })).sort((a, b) => a.module - b.module)
+}
+/** set_package.h RUNTIME_SET_COSTS. */
+export const SET_COSTS = 128
 
 /** set_package.h RUNTIME_SET_CHANGES and journal.h RUNTIME_JOURNAL_ROWS: the Octatrack base's 128 installed modules. */
 export const SET_CHANGES = 128
 /** The newest package ABI the base's set parser takes (loader.h RUNTIME_ABI, set_package.h). */
 export const SET_MAX_ABI = 10
-export function encodeModuleSet(base: string, baseline: string, packages: readonly Uint8Array[]): Uint8Array {
+/** `costs`: v2, for a base with RuntimeFeature.frameCosts; without, v1. */
+export function encodeModuleSet(base: string, baseline: string, packages: readonly Uint8Array[], costs?: readonly FrameCost[]): Uint8Array {
   const baseBytes = digestBytes(base), baselineBytes = digestBytes(baseline)
   if (!packages.length || packages.length > SET_CHANGES) throw new Error(`A module set needs between 1 and ${SET_CHANGES} changes.`)
   const ids = new Set<number>()
@@ -19,11 +34,22 @@ export function encodeModuleSet(base: string, baseline: string, packages: readon
     ids.add(id); bytes += 4 + Math.ceil(data.length / 4) * 4
     if (bytes > UPLOAD_MAX_BYTES) throw new Error('The module set exceeds the upload limit.')
   }
+  if (costs) {
+    if (costs.length > SET_COSTS || costs.some((c, i) => !(c.module > (i ? costs[i - 1].module : 0)) || c.module > 0xffffffff ||
+        ![c.use, c.wake].every(n => Number.isInteger(n) && n >= 0 && n <= 1000) || !(c.use || c.wake)))
+      throw new Error('The module set\'s frame costs are invalid.')
+    bytes += 4 + 8 * costs.length
+    if (bytes > UPLOAD_MAX_BYTES) throw new Error('The module set exceeds the upload limit.')
+  }
   const data = new Uint8Array(bytes), view = new DataView(data.buffer)
-  view.setUint32(0, 0x4d574d53); view.setUint16(4, 1); view.setUint16(6, packages.length); view.setUint32(8, bytes)
+  view.setUint32(0, 0x4d574d53); view.setUint16(4, costs ? 2 : 1); view.setUint16(6, packages.length); view.setUint32(8, bytes)
   data.set(baseBytes, 16); data.set(baselineBytes, 48)
   let at = 80
   for (const pkg of packages) { view.setUint32(at, pkg.length); data.set(pkg, at + 4); at += 4 + Math.ceil(pkg.length / 4) * 4 }
+  if (costs) {
+    view.setUint32(at, costs.length); at += 4
+    for (const c of costs) { view.setUint32(at, c.module); view.setUint16(at + 4, c.use); view.setUint16(at + 6, c.wake); at += 8 }
+  }
   return data
 }
 
