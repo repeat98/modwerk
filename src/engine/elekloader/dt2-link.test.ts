@@ -42,10 +42,11 @@ describe.runIf(STOCK)('a Digitakt II image built off the page and on it', () => 
       tick: (enabled: readonly string[], path: string) => call('tick', { enabled, path }), check: (enabled: readonly string[]) => call('check', { enabled }),
     } as unknown as Builder
   }
-  const stock = new Uint8Array(readFileSync(STOCK!))
+  // Read only when the tests run: vitest collects this block even without the owner's OS.
+  const readStock = () => new Uint8Array(readFileSync(STOCK!))
   /** The page: the builder worker's kit build, then the preflight, which composes the sound chip. */
   const onPage = async (moduleIds: string[]) => {
-    const client = builder()
+    const client = builder(), stock = readStock()
     const prepared = await prepareBuild(client, { machine: 'digitakt-ii', release: '1.17', stock: new File([stock], 'Digitakt_II_OS1.17.syx'), moduleIds }, catalog)
     if (!prepared.ok) throw new Error(prepared.error)
     const result = await buildWithLock(client, prepared.enabled, 'MW01', 'test', null)
@@ -55,7 +56,7 @@ describe.runIf(STOCK)('a Digitakt II image built off the page and on it', () => 
     return sha(new Uint8Array(result.files.find(file => /\.syx$/i.test(file.name))!.data))
   }
   /** Off the page: scripts/link-image.mjs's path. */
-  const offPage = async (names: string[]) => sha((await linkDt2Image(stock, names.map(name => ({ name, bytes: files.get(name)! })), 'MW01')).syx)
+  const offPage = async (names: string[]) => sha((await linkDt2Image(readStock(), names.map(name => ({ name, bytes: files.get(name)! })), 'MW01')).syx)
 
   it('makes the same base-only image both ways', async () => {
     expect(await offPage([baseFile])).toBe(await onPage([]))

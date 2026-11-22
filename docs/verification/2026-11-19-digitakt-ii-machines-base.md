@@ -54,8 +54,21 @@ Emulator only (coupled ColdFire and sound chip, scripted panel, from a ready poi
 | 6, 7, 10 | Read the unit, large set and Undo, put back | not run: Digitakt II has no USB link the procedure drives yet |
 | 8 | Soak | not run: no Digitakt II soak yet |
 | 9 | Cost on the unit | not run: no Digitakt II price tool yet |
-| 11, 12 | By hand, then the submitter | to do on the unit with this image |
+| 11, 12 | By hand, then the submitter | run by the submitter on the unit with this image (below) |
 
-On a unit: not yet run with a3ced45e. Earlier, base 1a052a38 with Mikrotakt (same ColdFire hooks; the sound chip's dispatcher then compared types inline) played on tracks 1, 9, 10 and 11 on both channels, its sample list scrolled and chose, and its drawing showed on the sample page only and not during a firmware transfer, on @Claptom-music's Digitakt II with a 5:40 stereo sample.
+On a unit (hands and ears, @Claptom-music's Digitakt II, OS 1.17, a new project, 22 November 2026), reported by the tester:
 
-Not checked on a unit: a pattern's trig copy between tracks of different lengths (reported once, not reproduced in the emulator, where it matches stock).
+| # | Image | Case | Result |
+|---|---|---|---|
+| 1 | base + Mikrotakt `838c1462…` | a SAMPLE track plays as usual | pass |
+| 2 | base + Mikrotakt | Mikrotakt on track 1, track 9 and track 16 plays grains | pass |
+| 3 | base + Mikrotakt | a stereo sample on tracks 1 and 16: both channels | pass |
+| 4 | base + Mikrotakt | knob D on a Mikrotakt track: the list scrolls and the chosen sample plays | pass |
+| 5 | base + Mikrotakt | tempo change, then a pattern change, while Mikrotakt plays: no freeze or dropout | pass |
+| 6 | base + Mikrotakt | the project saved with Mikrotakt on a track and reloaded: Mikrotakt still there | pass |
+| 7 | base + Mikrotakt | per-track length, tracks 1 and 2 of different lengths, FUNC+PAGE extends track 1: track 2's trigs do not appear on track 1's new pages | pass |
+| 8 | base alone `a4b3cab2…` | the same project loaded: the Mikrotakt track comes back as SAMPLE and plays, no crash | pass |
+
+Earlier, base 1a052a38 with Mikrotakt (same ColdFire hooks; the sound chip's dispatcher then compared types inline) played on tracks 1, 9, 10 and 11 on both channels, its sample list scrolled and chose, and its drawing showed on the sample page only and not during a firmware transfer, on @Claptom-music's Digitakt II with a 5:40 stereo sample.
+
+Not checked on a unit: a kit with two machine modules (none exists yet), and a machine with no player of its own (covered by the host test only).
