@@ -475,19 +475,19 @@ extern uint8_t modwerk_test_live_fx[16];
  * patterns ask for, with what the modules it runs cost on top (their first and each from the site's table), when that
  * is more than the unit measures. Owner, 22 November 2026: Tape Echos placed on an empty pattern, then a busy pattern
  * played, ran the unit past its frame; and refusals should be rare on empty and medium projects. A pattern's longest
- * frame follows how many tracks trig on one step (four on 1/5/9/13: 75 %, six: 79.4 %, eight: 96 to 98.7 %, owner's
- * MKII, base 0.8): the reserve is the bank's busiest step's figure (reserve_by_step) with a margin for what a pattern
- * cannot show (delays opening, LFOs, p-locks), never under a floor, so a project built on an empty pattern keeps room
- * for its trigs. A pick already made stays when the bank grows busier; the next one sees it. mw_stock_reserve fixes the
- * reserve instead (development bases and tests); ~0 leaves it to the bank. */
+ * frame follows how many tracks trig on one step (samples on all eight, none trigging: 37.1 %, one: 64.2 %, then about
+ * 5.4 % a track to 101 % at eight, owner's MKII, base 0.8): the reserve is the bank's busiest step's figure
+ * (reserve_by_step) with a margin for what a pattern cannot show (delays opening added 7 % at eight), never under a
+ * floor, so a project built on an empty pattern keeps room for its trigs. Installed modules' cost at rest (the table's
+ * `rest`) is booked on top. A pick already made stays when the bank grows busier; the next one sees it.
+ * mw_stock_reserve fixes the reserve instead (development bases and tests); ~0 leaves it to the bank. */
 #define RESERVE_ADAPTIVE 0xffffffffu
 #ifndef MW_STOCK_RESERVE
 #define MW_STOCK_RESERVE RESERVE_ADAPTIVE
 #endif
-/* shortcut: 0, 4, 6 and 8 tracks measured, the rest between them; a ladder of every count replaces these (the set's
- * `stock` carries them). Per mille of a frame. */
-static const uint16_t reserve_by_step[9] = {360u, 458u, 555u, 653u, 750u, 772u, 794u, 891u, 987u};
-#define RESERVE_MARGIN 50u
+/* Per mille of a frame, each count measured; the set's `stock` carries newer ones. */
+static const uint16_t reserve_by_step[9] = {371u, 642u, 700u, 753u, 798u, 846u, 905u, 958u, 1010u};
+#define RESERVE_MARGIN 80u
 #define RESERVE_FLOOR 600u
 /* A machine takes a track that would otherwise play a sample, so it is booked net of that track's share. */
 #ifndef MW_TRACK_STOCK
@@ -499,6 +499,7 @@ unsigned modwerk_machine_busiest_step(void); /* machine_registry.c: the most tra
 /* machine_registry.c: the current Part's module machines but track `skip`, each less `net`, never below 0 */
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net);
 int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake);
+uint32_t modwerk_machine_rest_booked(void); /* machine_registry.c: the installed modules' cost at rest */
 /* The set's measured stock figures take the compiled ones' place (frame-costs.json's `stock`, as pseudo module ids), so
  * a base whose stock gets cheaper gives modules more room with a new measurement and no new base. */
 #define TRACK_STOCK_ID 0xfffffff1u
@@ -537,7 +538,8 @@ static uint32_t effects_booked(unsigned skip)
 }
 static uint32_t reserved(unsigned machine_skip, unsigned effect_skip)
 {
-    return stock_reserve() + modwerk_machine_frame_booked(machine_skip, tuned(TRACK_STOCK_ID, mw_track_stock)) + effects_booked(effect_skip);
+    return stock_reserve() + modwerk_machine_rest_booked() + modwerk_machine_frame_booked(machine_skip, tuned(TRACK_STOCK_ID, mw_track_stock)) +
+        effects_booked(effect_skip);
 }
 uint32_t modwerk_status_frame_load(void)
 {
@@ -1302,25 +1304,26 @@ extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille; 
 /* MWMS v2's frame cost table (loader.c, set_package.h): what each measured module adds to the frame interrupt, per mille
  * of a frame, on each further track or slot it takes (its `each`) and on top for the first of the Part (its `first`
  * less `each`, in the wake field), as the site measured it
- * on a unit (sdk/machines/octatrack/frame-costs.json): what each added to the longest frame, which is more than it adds
+ * on a unit (sdk/machines/octatrack/frame-costs.json), and installed on no track or slot (its `rest`, which a module that
+ * rests keeps near 0): what each added to the longest frame, which is more than it adds
  * to the mean (Amiga on an empty track, 22 November 2026: +26.7 against +20). Each is judged on top of the kept figure
  * as if it fell on the longest frame, which over-counts a little with several: the safe side. Kept in battery RAM through a power cycle; each v2 set replaces it.
  * A module it does not list: a machine is charged by its descriptor (machine_registry.c), an effect nothing, and either
  * mw_wake_mille when it wakes from resting. */
-#define EC_MAGIC 0x4d574543u /* "MWEC" */
+#define EC_MAGIC 0x4d574552u /* "MWER": MWEC had no rest */
 #define EC_ROOM 128u         /* set_package.h's RUNTIME_SET_COSTS */
-struct frame_costs { uint32_t magic, count, entry[EC_ROOM][2], sum; };
+struct frame_costs { uint32_t magic, count, entry[EC_ROOM][2]; uint16_t rest[EC_ROOM]; uint32_t sum; };
 #ifdef MODWERK_HOST
 struct frame_costs modwerk_test_costs;
 #define COSTS (&modwerk_test_costs)
 #else
 #define COSTS ((volatile struct frame_costs *)0x100f9200u) /* battery-ram.json */
-typedef char frame_costs_fit[sizeof(struct frame_costs) <= 0x40cu ? 1 : -1]; /* the range battery-ram.json gives it */
+typedef char frame_costs_fit[sizeof(struct frame_costs) <= 0x50cu ? 1 : -1]; /* the range battery-ram.json gives it */
 #endif
 static uint32_t costs_sum(unsigned n)
 {
     uint32_t sum = 0x5a17u + n;
-    for (unsigned i = 0; i < n; ++i) sum = sum * 31u + COSTS->entry[i][0] * 7u + COSTS->entry[i][1];
+    for (unsigned i = 0; i < n; ++i) sum = sum * 31u + COSTS->entry[i][0] * 7u + COSTS->entry[i][1] + COSTS->rest[i] * 3u;
     return sum;
 }
 static uint32_t costs_be32(const uint8_t *p) { return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3]; }
@@ -1329,17 +1332,30 @@ void modwerk_machine_frame_costs(const uint8_t *table, unsigned n)
 {
     if (n > EC_ROOM) return;
     COSTS->magic = 0;
-    for (unsigned i = 0; i < n; ++i) COSTS->entry[i][0] = costs_be32(table + 8u * i), COSTS->entry[i][1] = costs_be32(table + 8u * i + 4u);
+    for (unsigned i = 0; i < n; ++i, table += 12u) /* set_package.h RUNTIME_SET_COST_BYTES */
+        COSTS->entry[i][0] = costs_be32(table), COSTS->entry[i][1] = costs_be32(table + 4u), COSTS->rest[i] = (uint16_t)(table[8] << 8 | table[9]);
     COSTS->count = n, COSTS->sum = costs_sum(n), COSTS->magic = EC_MAGIC;
 }
 /* 1 with the module's costs when the table lists it (`module`: its package id). */
-int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
+static int cost_row(uint32_t module)
 {
     unsigned n = COSTS->count;
-    if (COSTS->magic != EC_MAGIC || n > EC_ROOM || COSTS->sum != costs_sum(n)) return 0;
-    for (unsigned i = 0; i < n; ++i)
-        if (COSTS->entry[i][0] == module) { *use = COSTS->entry[i][1] >> 16, *wake = COSTS->entry[i][1] & 0xffffu; return 1; }
-    return 0;
+    if (COSTS->magic != EC_MAGIC || n > EC_ROOM || COSTS->sum != costs_sum(n)) return -1;
+    for (unsigned i = 0; i < n; ++i) if (COSTS->entry[i][0] == module) return (int)i;
+    return -1;
+}
+int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
+{
+    int i = cost_row(module);
+    if (i < 0) return 0;
+    *use = COSTS->entry[i][1] >> 16, *wake = COSTS->entry[i][1] & 0xffffu;
+    return 1;
+}
+/* What the module adds installed on no track or slot, per mille; 0 when the table does not list it. */
+uint32_t modwerk_status_module_rest(uint32_t module)
+{
+    int i = cost_row(module);
+    return i < 0 ? 0u : COSTS->rest[i];
 }
 /* Every module pick, a machine's (machine_registry.c) or an effect's (below): 1 when the longest frame the unit would
  * play, with the pick's `add` on top and what the one it replaces took (`gone`) off, reaches mw_frame_line; the pick is

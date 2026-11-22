@@ -338,7 +338,7 @@
       "bytes": 2636,
       "sha256": "cbd0fa736250c328efdfaa0f015217a42e124cb8f73c4718f5d90f4b2977319c",
       "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
-      "requiredBase": "f68d2dec3d03b07404b9a701eebae202e79e7e1886ab00ebf96c3c9777096445"
+      "requiredBase": "1206fdafbf70099089281d07040ef79a31716cb6d4114fcbe1b6f12b8b87388b"
     },
     {
       "id": "output-matrix",
@@ -354,7 +354,7 @@
       "bytes": 3740,
       "sha256": "0b9bf60368dd2cb538970de6ea58334bb001f63d1e3eaea9bec3256bb0894372",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "f68d2dec3d03b07404b9a701eebae202e79e7e1886ab00ebf96c3c9777096445"
+      "requiredBase": "1206fdafbf70099089281d07040ef79a31716cb6d4114fcbe1b6f12b8b87388b"
     },
     {
       "id": "cc-map",
@@ -370,7 +370,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "f68d2dec3d03b07404b9a701eebae202e79e7e1886ab00ebf96c3c9777096445"
+      "requiredBase": "1206fdafbf70099089281d07040ef79a31716cb6d4114fcbe1b6f12b8b87388b"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -446,9 +446,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "4ba8527ab8f2ac56c35afa455f8329a6934a2ce26dcf426ff020028af236a39d",
+      "sha256": "d7b7dd104f3367f5489f6052db7f46852f6a2ec7b7f01903d9217963d9cac7ff",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "f68d2dec3d03b07404b9a701eebae202e79e7e1886ab00ebf96c3c9777096445"
+      "requiredBase": "1206fdafbf70099089281d07040ef79a31716cb6d4114fcbe1b6f12b8b87388b"
     },
     {
       "id": "analog-bassdrum",
@@ -464,7 +464,7 @@
       "bytes": 26172,
       "sha256": "0998ca980b68b44df9c6f1b6c16a8f9bdefa019bd7bd4ba4b6dd816bf3406930",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "f68d2dec3d03b07404b9a701eebae202e79e7e1886ab00ebf96c3c9777096445",
+      "requiredBase": "1206fdafbf70099089281d07040ef79a31716cb6d4114fcbe1b6f12b8b87388b",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -770,7 +770,7 @@
       "copies": 3,
       "fills": 0,
       "installPresets": true,
-      "requiredBase": "f68d2dec3d03b07404b9a701eebae202e79e7e1886ab00ebf96c3c9777096445"
+      "requiredBase": "1206fdafbf70099089281d07040ef79a31716cb6d4114fcbe1b6f12b8b87388b"
     }
   }
 }

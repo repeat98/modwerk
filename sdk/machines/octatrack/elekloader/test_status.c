@@ -133,6 +133,8 @@ volatile uint32_t mw_frame_window; /* machine_registry.c's: the longest frame si
 static uint32_t test_machines_booked; /* machine_registry.c's booking of the Part's module machines */
 static unsigned test_busiest; /* machine_registry.c's busiest step of the bank */
 unsigned modwerk_machine_busiest_step(void) { return test_busiest; }
+static uint32_t test_rest; /* machine_registry.c's installed modules at rest */
+uint32_t modwerk_machine_rest_booked(void) { return test_rest; }
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net) { (void)skip; (void)net; return test_machines_booked; }
 uint32_t modwerk_dsp_booked(unsigned core) { return core; } /* draws only */
 unsigned modwerk_dsp_reads_buffer(unsigned id) { return id == 27u; } /* E-Verb reads one; Tape Echo (15) none */
@@ -606,6 +608,11 @@ int main(void)
       table[5] = 80u, table[7] = 40u;                                     /* each 8 %, first 12 % */
       frame_newest = 280u;
       CHECK(!modwerk_status_effect_busy(11, 27, 0) && !frame_adjust);   /* no table yet: nothing charged */
+      CHECK(!modwerk_status_module_rest(module));
+      table[9] = 25u;                                                     /* 2.5 % installed on no slot */
+      modwerk_machine_frame_costs(table, 1);
+      CHECK(modwerk_status_module_rest(module) == 25u && !modwerk_status_module_rest(module + 1u));
+      table[9] = 0;
       modwerk_machine_frame_costs(table, 1);
       CHECK(!modwerk_status_effect_busy(11, 27, 0) && frame_adjust == 120 && open == CLOSED); /* the Part's first */
       modwerk_test_live_fx[11] = 27;                                     /* stock wrote the pick */
@@ -658,8 +665,8 @@ int main(void)
       /* The set's measured stock figures take the compiled ones' place: a base whose stock got cheaper gives modules
        * more room with a new measurement and no new base. */
       { uint8_t t[24] = {0};
-        memcpy(t, table, 8);
-        t[8] = t[9] = t[10] = 0xff, t[11] = 0xf2, t[12] = 0x02, t[13] = 0x58;  /* line 60 % */
+        memcpy(t, table, 12);
+        t[12] = t[13] = t[14] = 0xff, t[15] = 0xf2, t[16] = 0x02, t[17] = 0x58;  /* line 60 % */
         modwerk_machine_frame_costs(t, 2);
         frame_newest = 100u, frame_adjust = 0, test_machines_booked = 50u, modwerk_test_live_fx[11] = 27;
         CHECK(modwerk_status_frame_load() == 470u);                       /* 30 % + machines 5 % + Tape Echo's first */
@@ -695,8 +702,11 @@ int main(void)
       mw_stock_reserve = RESERVE_ADAPTIVE, test_busiest = 0;
       CHECK(modwerk_status_frame_load() == 600u);                        /* an empty bank: the floor */
       test_busiest = 8;
-      CHECK(modwerk_status_frame_load() == 1037u);                       /* eight tracks on a step: 98.7 % and 5 % */
-      { uint8_t t[16] = {0xff, 0xff, 0xff, 0xfb, 0x03, 0x84, 0, 0, 0xff, 0xff, 0xff, 0xfc, 0, 20, 0, 0}; /* 90 % at eight, margin 2 % */
+      CHECK(modwerk_status_frame_load() == 1090u);                       /* eight tracks on a step: 101 % and 8 % */
+      test_rest = 25u;
+      CHECK(modwerk_status_frame_load() == 1115u);                       /* installed modules at rest on top */
+      test_rest = 0;
+      { uint8_t t[24] = {0xff, 0xff, 0xff, 0xfb, 0x03, 0x84, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xfc, 0, 20, 0, 0, 0, 0, 0, 0}; /* 90 % at eight, margin 2 % */
         modwerk_machine_frame_costs(t, 2);
         CHECK(modwerk_status_frame_load() == 920u);
         memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs); }

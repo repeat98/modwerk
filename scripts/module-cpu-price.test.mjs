@@ -225,19 +225,22 @@ describe('a module costs nothing while nobody uses it (owner, 20 November 2026)'
 describe('a release of an effect or a machine carries its instance curve', () => {
   const effect = (id, version) => ({ id, version, compatibility: { location: 'Track effect', effectId: 15 }, resources: {} })
   const dated = (id, version, date) => ({ ['src/community/module-changelogs/' + id + '.json']: [{ version, date, changes: ['x'] }] })
-  const curve = (id, version, first, each) => ({ ['sdk/octatrack/modules/' + id + '/' + FRAME_COST_RECORD]: { module: id, version, base: 'twin', measuredAt: '2026-11-22T10:00:00Z', first, each } })
+  const curve = (id, version, first, each, rest) => ({ ['sdk/octatrack/modules/' + id + '/' + FRAME_COST_RECORD]: { module: id, version, base: 'twin', measuredAt: '2026-11-22T10:00:00Z', first, each, ...(rest == null ? {} : { rest }) } })
 
   it('passes a measured curve for the current version', () => {
     const root = fixture({ ...curve('echo', '0.2.0', 13, 3.7) })
     expect(frameCostStatus({ root, document: effect('echo', '0.2.0'), glue: {} })).toMatchObject({ state: 'ok' })
+    const resting = fixture({ ...curve('echo', '0.2.0', 13, 3.7, 2.5) }), negative = fixture({ ...curve('echo', '0.2.0', 13, 3.7, -1) })
+    expect(frameCostStatus({ root: resting, document: effect('echo', '0.2.0'), glue: {} })).toMatchObject({ state: 'ok', detail: expect.stringContaining('rest 2.5') })
+    expect(frameCostStatus({ root: negative, document: effect('echo', '0.2.0'), glue: {} }).state).not.toBe('ok')
   })
 
   it('generates the table from the base list with each module\'s current curve on top, one module a line', () => {
     const manifest = (id, version) => ({ ['sdk/octatrack/modules/' + id + '/octamod.module.json']: { id, version } })
     const root = fixture({ [FRAME_COSTS_BASE_PATH]: { about: 'base', costs: { echo: { first: 9.7, each: 9.7 }, 'analog-bassdrum': { first: 19.7, each: 19.7 } } },
-      ...manifest('echo', '0.2.0'), ...curve('echo', '0.2.0', 13, 3.7), ...manifest('verb', '0.3.0'), ...curve('verb', '0.2.0', 2, 1) })
+      ...manifest('echo', '0.2.0'), ...curve('echo', '0.2.0', 13, 3.7, 1.5), ...manifest('verb', '0.3.0'), ...curve('verb', '0.2.0', 2, 1) })
     const text = generateFrameCosts(root), costs = JSON.parse(text).costs
-    expect(costs.echo).toMatchObject({ first: 13, each: 3.7 }) // the module's own curve wins
+    expect(costs.echo).toMatchObject({ first: 13, each: 3.7, rest: 1.5 }) // the module's own curve wins, its cost at rest with it
     expect(costs['analog-bassdrum']).toEqual({ first: 19.7, each: 19.7 }) // the base's own entry stays
     expect(costs.verb).toBeUndefined() // a curve for an older version is not this release's
     expect(JSON.parse(text).about).toMatch(/^GENERATED/)

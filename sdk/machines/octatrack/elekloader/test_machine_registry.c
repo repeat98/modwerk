@@ -185,6 +185,7 @@ int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label,
 static int costs_listed;
 int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
 { if (!costs_listed || module != 'L') return 0; *use = 20u, *wake = 10u; return 1; }
+uint32_t modwerk_status_module_rest(uint32_t module) { return costs_listed && module == 'L' ? 15u : 0u; } /* 1.5 % at rest */
 static uint32_t cpu_in, cpu_out; /* what picks reported adding to the meter and exits taking away (status.c counts them) */
 void modwerk_status_cpu_entered(uint32_t mille) { cpu_in += mille; }
 void modwerk_status_cpu_left(uint32_t mille) { cpu_out += mille; }
@@ -652,6 +653,16 @@ static void check_busiest_step(void)
     CHECK(modwerk_machine_busiest_step() == 7u);
     for (unsigned t = 0; t < 8u; ++t) base[PATTERN_TRACK * t + 7u] &= (uint8_t)~1u, base[PATTERN_STRIDE * 3u + PATTERN_TRACK * t + 6u] &= (uint8_t)~4u;
     CHECK(modwerk_machine_busiest_step() == 0u);
+}
+/* The reserve books each installed module's cost at rest, whether or not a track or slot uses it. */
+static void check_rest_booked(void)
+{
+    CHECK(!modwerk_machine_rest_booked());
+    engine_installed = 1, engine_module.id = 'L';
+    CHECK(!modwerk_machine_rest_booked());                 /* not in the table: nothing */
+    costs_listed = 1;
+    CHECK(modwerk_machine_rest_booked() == 15u);
+    costs_listed = 0, engine_installed = 0, engine_module.id = 0;
 }
 static void check_brake(void)
 {
@@ -1399,7 +1410,7 @@ int main(void)
     check_native_flex_voice();
     check_cpu_budget();
     check_engine_price();
-    check_busiest_step();
+    check_busiest_step(); check_rest_booked();
     check_brake();
     check_resting_machines();
     check_late_entry();

@@ -451,6 +451,17 @@ static void fx_scanned(void) /* the machine map's refresh, with its whole scan *
     }
     if (fx_wanted >= 0 && (fx_in(used, (unsigned)fx_wanted) || fx_idle[fx_wanted] >= REST_AFTER)) fx_wanted = -1;
 }
+uint32_t modwerk_status_module_rest(uint32_t module);
+/* status.c's reserve: what every installed module adds on no track or slot (the table's `rest`), per mille. */
+uint32_t modwerk_machine_rest_booked(void)
+{
+    uint32_t sum = 0;
+    for (unsigned p = 0; p < RUNTIME_MODULES; ++p) {
+        const struct runtime_module *m = modwerk_runtime_module(p);
+        if (m) sum += modwerk_status_module_rest(m->id);
+    }
+    return sum;
+}
 /* status.c, before stock writes an effect pick: whether the module behind `id` rests, and its wake. */
 int modwerk_machine_effect_resting(unsigned id)
 {
