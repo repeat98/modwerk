@@ -194,7 +194,11 @@ static unsigned int active_track(void)
 }
 
 static const char *const counts[MAX_VOICES] = { "1", "2", "3", "4", "5", "6", "7", "8" };
-static char label[12] = "T1 VOICES";
+/* core_addvalue draws the value right-aligned at the row's x + 19, where PERSONALIZE leaves room for it. A SETTINGS
+ * row has its icon there and the label after it (panel probe: the value landed on the label's second character), so
+ * the label starts with spaces and the value takes the icon's place. */
+#define LABEL_INDENT 3
+static char label[16] = "   T1 VOICES";
 
 static uint32_t get_voices(void)
 {
@@ -215,7 +219,7 @@ static const core_value_t voices_row = { label, counts, MAX_VOICES, get_voices, 
 void core_voice_settings(void *menu)
 {
     const unsigned int track = active_track() + 1u;
-    unsigned int i = 1;
+    unsigned int i = LABEL_INDENT + 1u;
     if (track >= 10) {
         label[i++] = '1';
         label[i++] = (char)('0' + track - 10u);
