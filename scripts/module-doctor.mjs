@@ -28,7 +28,7 @@ import { moduleCardless } from '../src/catalog/usb-only.ts'
 import { controlProblems } from './module-controls.mjs'
 import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from './retest-queue.mjs'
-import { atRestStatus, cpuPriceStatus, readCpuPricePending } from './module-cpu-price.mjs'
+import { atRestStatus, cpuPriceStatus, frameCostStatus, readCpuPricePending } from './module-cpu-price.mjs'
 import { moduleTestFiles, runModuleTests } from './module-tests.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
@@ -199,6 +199,11 @@ function octatrack(id) {
   if (rest.state === 'fail') fail('cost at rest', rest.detail, rest.fix)
   else if (rest.state === 'ok') ok('cost at rest', rest.detail)
   else info('cost at rest', rest.detail + (rest.fix ? '. Fix: ' + rest.fix : ''))
+  // What one more instance costs on a Part (base 0.8 admission): a release of an effect or a machine measures its curve on a unit.
+  const curve = frameCostStatus({ root, document })
+  if (curve.state === 'fail') fail('frame cost', curve.detail, curve.fix)
+  else if (curve.state === 'ok') ok('frame cost', curve.detail)
+  else info('frame cost', curve.detail + (curve.fix ? '. Fix: ' + curve.fix : ''))
 
   if (rulesProblem) fail('module rules', 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), 'fix what it names, then run npm run modules:check -- --base origin/main')
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')

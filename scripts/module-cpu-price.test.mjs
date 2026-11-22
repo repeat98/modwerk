@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseModuleCpuMeter, parseModuleCpuPrice, parseModuleDocument } from '../src/catalog/module-contract.ts'
-import { AT_REST_FROM, AT_REST_LIMIT, CPU_PRICE_PENDING_REASON, atRestStatus, cReserved0, cpuPriceProblems, cpuPriceStatus, glueReserved0, machineDescriptors, parseCpuPricePending, portGlue, readCpuPricePending } from './module-cpu-price.mjs'
+import { AT_REST_FROM, AT_REST_LIMIT, CPU_PRICE_PENDING_REASON, FRAME_COST_FROM, FRAME_COST_RECORD, FRAME_COSTS_BASE_PATH, atRestStatus, frameCostStatus, generateFrameCosts, cReserved0, cpuPriceProblems, cpuPriceStatus, glueReserved0, machineDescriptors, parseCpuPricePending, portGlue, readCpuPricePending } from './module-cpu-price.mjs'
 
 const repo = fileURLToPath(new URL('../', import.meta.url))
 const roots = []
@@ -220,4 +220,45 @@ describe('a module costs nothing while nobody uses it (owner, 20 November 2026)'
       expect([item.id, atRestStatus({ root: repo, document, glue }).state]).not.toEqual([item.id, 'fail'])
     }
   }, 20_000)
+})
+
+describe('a release of an effect or a machine carries its instance curve', () => {
+  const effect = (id, version) => ({ id, version, compatibility: { location: 'Track effect', effectId: 15 }, resources: {} })
+  const dated = (id, version, date) => ({ ['src/community/module-changelogs/' + id + '.json']: [{ version, date, changes: ['x'] }] })
+  const curve = (id, version, first, each) => ({ ['sdk/octatrack/modules/' + id + '/' + FRAME_COST_RECORD]: { module: id, version, base: 'twin', measuredAt: '2026-11-22T10:00:00Z', first, each } })
+
+  it('passes a measured curve for the current version', () => {
+    const root = fixture({ ...curve('echo', '0.2.0', 13, 3.7) })
+    expect(frameCostStatus({ root, document: effect('echo', '0.2.0'), glue: {} })).toMatchObject({ state: 'ok' })
+  })
+
+  it('generates the table from the base list with each module\'s current curve on top, one module a line', () => {
+    const manifest = (id, version) => ({ ['sdk/octatrack/modules/' + id + '/octamod.module.json']: { id, version } })
+    const root = fixture({ [FRAME_COSTS_BASE_PATH]: { about: 'base', costs: { echo: { first: 9.7, each: 9.7 }, 'analog-bassdrum': { first: 19.7, each: 19.7 } } },
+      ...manifest('echo', '0.2.0'), ...curve('echo', '0.2.0', 13, 3.7), ...manifest('verb', '0.3.0'), ...curve('verb', '0.2.0', 2, 1) })
+    const text = generateFrameCosts(root), costs = JSON.parse(text).costs
+    expect(costs.echo).toMatchObject({ first: 13, each: 3.7 }) // the module's own curve wins
+    expect(costs['analog-bassdrum']).toEqual({ first: 19.7, each: 19.7 }) // the base's own entry stays
+    expect(costs.verb).toBeUndefined() // a curve for an older version is not this release's
+    expect(JSON.parse(text).about).toMatch(/^GENERATED/)
+    const stocked = fixture({ [FRAME_COSTS_BASE_PATH]: { about: 'base', stock: { reserve: 105.6, trackStock: 7.2 }, costs: {} } })
+    expect(JSON.parse(generateFrameCosts(stocked)).stock).toEqual({ reserve: 105.6, trackStock: 7.2 }) // the base's stock room travels too
+    expect(text.split('\n').filter(line => line.startsWith('    "'))).toHaveLength(2)
+  })
+
+  it('refuses a new or undated release without a curve for its version, and only reports an earlier one', () => {
+    const undated = fixture({ ...curve('echo', '0.1.0', 13, 3.7), ...dated('echo', '0.1.0', '2026-11-14') }) // 0.2.0 has no entry yet
+    expect(frameCostStatus({ root: undated, document: effect('echo', '0.2.0'), glue: {} })).toMatchObject({ state: 'fail', detail: expect.stringContaining('not 0.2.0') })
+    const legacy = fixture({}) // no changelog file at all: a module from before the release notes
+    expect(frameCostStatus({ root: legacy, document: effect('echo', '0.2.0'), glue: {} }).state).toBe('warn')
+    const old = fixture({ ...dated('echo', '0.2.0', '2026-11-14') })
+    expect(frameCostStatus({ root: old, document: effect('echo', '0.2.0'), glue: {} }).state).toBe('warn')
+    const fresh = fixture({ ...dated('echo', '0.2.0', FRAME_COST_FROM) })
+    expect(frameCostStatus({ root: fresh, document: effect('echo', '0.2.0'), glue: {} })).toMatchObject({ state: 'fail', fix: expect.stringContaining('--curve') })
+  })
+
+  it('asks nothing of a module that is neither an effect nor a machine', () => {
+    const root = fixture({})
+    expect(frameCostStatus({ root, document: { id: 'keys', version: '0.1.0', compatibility: { location: 'Sequencer' }, resources: {} }, glue: {} }).state).toBe('info')
+  })
 })
