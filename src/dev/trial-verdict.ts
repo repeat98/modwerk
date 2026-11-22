@@ -14,7 +14,7 @@ export interface TrialVerdict { failed: boolean; lines: string[] }
 /** The incidents that fail a trial: the unit crashed, a DSP core stalled, the UI stood still or the frame guard skipped tracks.
  * HOT and CPU (the CPU meter at 90 %) are printed but pass: stock alone can reach them. START, SET and BASE are the trial's own
  * bookkeeping, or a restart that already ended the trial with an error. */
-const FAILS: ReadonlySet<string> = new Set(['crash', 'stall', 'freeze', 'shed'])
+const FAILS: ReadonlySet<string> = new Set(['crash', 'stall', 'freeze', 'shed', 'brake'])
 const WARNS: ReadonlySet<string> = new Set(['hot', 'cpu'])
 const tracks = (mask: number) => [...Array(8).keys()].filter(t => mask >> t & 1).map(t => 'T' + (t + 1)).join(', ') || '(none named)'
 const SAID: Record<string, (a: number) => string> = {
@@ -24,6 +24,7 @@ const SAID: Record<string, (a: number) => string> = {
   shed: a => `the frame guard skipped tracks ${tracks(a >>> 24)}, ${a & 0xffffff} skips since the start`,
   hot: a => `the CPU at 90 % or more for ${a / 2} s`,
   cpu: () => 'the CPU meter over its limit',
+  brake: a => `the frame fell behind and the brake silenced the module machines (${a & 0xffffff} since boot)`,
 }
 
 /** The verdict on a trial from the log before and after it. `names` turns a program counter into "symbol+0x1c" (address-names.ts). */

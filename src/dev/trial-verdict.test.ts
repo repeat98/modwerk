@@ -15,6 +15,12 @@ describe('trial verdict', () => {
     expect(trialVerdict(before, before)).toEqual({ failed: false, lines: ['no crash, stall, freeze or skipped track logged during the trial'] })
   })
 
+  it('fails when the brake caught the frame falling behind', () => {
+    const verdict = trialVerdict(log(10), log(11, [incident(11, 'brake', 0x02000001)]))
+    expect(verdict.failed).toBe(true)
+    expect(verdict.lines[0]).toMatch(/^FAIL .*brake silenced the module machines \(1 since boot\)/)
+  })
+
   it('fails on a crash, stall, freeze or skip logged after the trial began, and names the crash', () => {
     const before = log(10, [incident(9, 'stall', 1)])
     const after = log(14, [incident(9, 'stall', 1), incident(11, 'crash', 0x40a00004), incident(12, 'freeze', 40), incident(13, 'shed', 0x05000003), incident(14, 'stall', 2)])

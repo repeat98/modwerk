@@ -19,7 +19,7 @@ const uint8_t modwerk_base_digest[32] = {0x32, 0x0f, 0xc4, 0x54, 9};
 volatile uint8_t modwerk_test_running[16];
 volatile uint32_t modwerk_status[5], modwerk_runtime_ticks, dl_frames;
 void modwerk_track_machines(volatile uint8_t *out) { for (unsigned i = 0; i < 24u; ++i) out[i] = (uint8_t)(i + 1u); }
-volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks; /* machine_registry.c's frame guard */
+volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks, mw_frame_brakes; /* machine_registry.c's frame guard */
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget */
 
 static volatile struct diag_incident *last(void) { return &LOG->incident[(LOG->incidents - 1u) % DIAG_INCIDENTS]; }
@@ -107,6 +107,15 @@ int main(void)
     CHECK(LOG->incidents == before + 1u);
     tick();
     CHECK(LOG->incidents == before + 2u && last()->kind == DIAG_SHED && (last()->a & 0xffffffu) == 900u);
+    /* The brake: every time it catches the frame interrupt falling behind, with the tracks shed. */
+    mw_frame_brakes = 1u;
+    tick();
+    CHECK(LOG->incidents == before + 3u && last()->kind == DIAG_BRAKE && last()->a == (0x22u << 24 | 1u));
+    tick();
+    CHECK(LOG->incidents == before + 3u);
+    mw_frame_brakes = 2u;
+    tick();
+    CHECK(LOG->incidents == before + 4u && last()->kind == DIAG_BRAKE && (last()->a & 0xffffffu) == 2u);
 
     /* The CPU budget refused a machine on T4: one incident with the track and the count. */
     before = LOG->incidents;

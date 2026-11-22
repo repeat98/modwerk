@@ -114,6 +114,8 @@ static volatile uint32_t host_timer; /* the frame timer (DTCN3): the synthetic r
 /* The loader's count of owner changes: the machine map notes a newly installed set's machines when it moves. */
 static uint32_t owner_epoch;
 uint32_t modwerk_runtime_owner_epoch(void) { return owner_epoch; }
+static int test_stopped; /* runtime.c: the transport */
+int modwerk_machine_stopped(void) { return test_stopped; }
 #include "machine_registry.c"
 #undef modwerk_runtime_event_row
 
@@ -631,6 +633,32 @@ static void clear_sigs(void)
             *host_at(0x46000000u + PART_OFF + p * PART_STRIDE + 0x22 + t) = 1;
             *host_at(0x46000000u + SAVED_OFF + p * PART_STRIDE + 0x22 + t) = 1;
         }
+}
+/* The brake: a frame interrupt fallen two frames behind silences every module machine track, as one past the CPU budget
+ * renders, until STOP or a Part change (owner's MKII, 22 November 2026: past about 135 % the unit hung, twice). */
+static void check_brake(void)
+{
+    const void *one[] = {&A};
+    clear_sigs(); misc[0x0f] = 0; /* Part 1 */
+    fresh(); a_admit = 1; cpu_now = 0; mw_cpu_allowance = 45; mw_cpu_refused = 0;
+    rows(one, 1, 0, 0); mw_ui_tick();
+    CHECK(mw_assign(part0(), 2, 5) == 1);
+    mw_ui_tick();
+    int a0 = a_renders; CHECK(later(2) == a0 + 1);
+    uint32_t brakes = mw_frame_brakes;
+    frame(0, FRAME / 2u * 3u, 0), frame(0, FRAME / 2u * 3u, 0), frame(0, FRAME / 2u * 3u, 0), frame(0, FRAME / 2u * 3u, 0);
+    CHECK(!mw_frame_brake);                                              /* two frames behind: not past it yet */
+    frame(0, FRAME / 2u * 3u, 0);
+    CHECK(mw_frame_brake && mw_frame_brakes == brakes + 1u);
+    a0 = a_renders; later(2); CHECK(a_renders == a0);                   /* the module's track renders silence */
+    mw_ui_tick(); CHECK(mw_frame_brake);                                 /* the same Part, still playing */
+    frame(0, FRAME / 2u * 3u, 0); CHECK(mw_frame_brakes == brakes + 1u); /* braked once */
+    for (unsigned k = 0; k < 8u; ++k) frame(0, 0, 0);                    /* short frames: it catches up */
+    test_stopped = 1; mw_ui_tick(); test_stopped = 0;
+    CHECK(!mw_frame_brake);                                              /* STOP releases it */
+    a0 = a_renders; frame(2, 0, 0), frame(2, 0, 0), frame(2, 0, 0);
+    CHECK(a_renders > a0);                                               /* renders again (the guard re-times it first) */
+    CHECK(mw_assign(part0(), 2, 1) == 1);
 }
 static void check_resting_machines(void)
 {
@@ -1206,6 +1234,7 @@ int main(void)
     check_native_flex_voice();
     check_cpu_budget();
     check_engine_price();
+    check_brake();
     check_resting_machines();
     if (failures) { fprintf(stderr, "%u registry checks failed\n", failures); return 1; }
     puts("Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent "

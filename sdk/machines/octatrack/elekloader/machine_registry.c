@@ -677,8 +677,19 @@ void mw_ui_tick(void)
 {
     MW_STAMP(14); ui_tick(); MW_STAMP(24); mg_tick(); MW_STAMP(25); modwerk_runtime_rest_poll(); MW_STAMP(15);
 }
+int modwerk_machine_stopped(void); /* runtime.c */
+extern volatile uint8_t mw_frame_brake; /* the frame guard's brake (below) */
+static const Part *brake_part;     /* the Part that played when the brake caught */
+static void brake_tick(void)       /* released at STOP or a Part change */
+{
+    if (!mw_frame_brake) { brake_part = 0; return; }
+    const Part *part = valid_bank() ? current_part() : 0;
+    if (!brake_part) brake_part = part;
+    else if (modwerk_machine_stopped() || part != brake_part) mw_frame_brake = 0, brake_part = 0;
+}
 static void ui_tick(void)
 {
+    brake_tick();
     const Machine *m[ROWS - 5u]; unsigned n = machines(m);
     for (unsigned k = 0; k < n; ++k) if (m[k]->ui_tick) m[k]->ui_tick();
     charge(m, n);
@@ -936,6 +947,15 @@ volatile uint32_t mw_frame_t0, mw_frame_share = FRAME / 5u * 4u; /* development 
 volatile uint32_t mw_frame_max, mw_frame_late_max, mw_frame_busy, mw_frame_count, mw_frame_sheds, mw_frame_shed_tracks;
 volatile uint32_t mw_frame_last; /* how long the frame interrupt last ran: diag.c's trace of the frames before a stall */
 volatile uint32_t mw_frame_window; /* the longest frame interrupt since status.c last read it (the CPU guard) */
+/* The brake (owner, 22 November 2026: past a longest frame of about 135 % the unit hung, within seconds or minutes and
+ * with no record, twice; dropped renders on a heavy project are fine, a hang never is). When the frame interrupt has
+ * fallen BRAKE_LATE behind, more than the guard's own credit ever lets it, every module machine track renders stock's
+ * silent source, as one past the CPU budget does, until STOP or a Part change; stock keeps playing and diag.c logs it.
+ * An effect's ColdFire work it cannot stop. shortcut: two frames, above the one the guard's debt may reach; set it from
+ * mw_frame_late_max on heavy runs that held. */
+#define BRAKE_LATE (2u * FRAME)
+volatile uint8_t mw_frame_brake;   /* nonzero while braked */
+volatile uint32_t mw_frame_brakes; /* for diagnostics: how often */
 volatile uint32_t mw_frame_cost_max[16]; /* each guarded render's longest time since the last read: what a machine's `cpu` is set from */
 static int32_t credit;
 static uint32_t late, cost[16], after[16], end_at[16], timed; /* [track], then a track's second render [8 + track] */
@@ -949,6 +969,7 @@ void mw_frame_exit(void)
     if (d > mw_frame_window) mw_frame_window = d;
     mw_frame_last = d;
     late = due > FRAME ? due - FRAME : 0;
+    if (late > BRAKE_LATE && !mw_frame_brake) mw_frame_brake = 1, mw_frame_brakes = mw_frame_brakes + 1u;
     if (late > mw_frame_late_max) mw_frame_late_max = late;
     int32_t c = credit + (int32_t)mw_frame_share - (int32_t)d;
     credit = c > (int32_t)BURST ? (int32_t)BURST : c < -(int32_t)FRAME ? -(int32_t)FRAME : c;
@@ -1057,7 +1078,7 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
             if (native_flex) stop_stock(track);
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
         }
-        if (mw_cpu_refused >> track & 1u) { /* past the CPU budget (charge()) */
+        if (mw_cpu_refused >> track & 1u || mw_frame_brake) { /* past the CPU budget (charge()), or braked */
             if (native_flex) stop_stock(track);
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
         }
@@ -1076,7 +1097,7 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
             if (m[k]->flags & MODWERK_MACHINE_RENDER_FLEX && m[k]->render) flex_machine = m[k];
         looked_up |= 1u << 8;
     }
-    if (flex_machine) return guarded(flex_machine->render, STOCK(Render *, 0x40004008u), track, ping, start, end);
+    if (flex_machine && !mw_frame_brake) return guarded(flex_machine->render, STOCK(Render *, 0x40004008u), track, ping, start, end);
     return STOCK(Render *, 0x40004008u)(track, ping, start, end);
 }
 /* A renderer a module put into a track's slots itself, from the frame builder's two calls (machine_registry.s).
@@ -1093,9 +1114,10 @@ int mw_foreign_render(unsigned track, unsigned ping, unsigned start, unsigned en
     unsigned kind = look(track, &who);
     if (kind == NOBODY) /* THRU, NEIGHBOR and PICKUP have no stand-in here */
         return frame_part && frame_part[0x22 + track] <= 1u
-            ? guarded(f, STOCK(Render *, 0x40004008u), track, ping, start, end) : f(track, ping, start, end);
+            ? mw_frame_brake ? STOCK(Render *, 0x40004008u)(track, ping, start, end) : guarded(f, STOCK(Render *, 0x40004008u), track, ping, start, end)
+            : f(track, ping, start, end);
     if (kind == ASLEEP) wake_who[track] = who;
-    if (kind == ORPHAN || kind == ASLEEP || start_refused[track] == who || mw_cpu_refused >> track & 1u ||
+    if (kind == ORPHAN || kind == ASLEEP || start_refused[track] == who || mw_cpu_refused >> track & 1u || mw_frame_brake ||
         (who->source_kind && charged[track] != who))
         return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
     return who->source_kind ? f(track, ping, start, end) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
