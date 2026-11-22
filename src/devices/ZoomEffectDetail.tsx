@@ -15,15 +15,23 @@ import MACHINES from './machines.generated.json'
 import { DEVICES_BY_ID, deviceHref, type DeviceProfile } from './registry'
 import { zoomEffectAuthor, zoomEffectRepository, zoomEffectThumbnail, zoomEffectUrl, type ZoomEffect } from './zoom-effects'
 
+const animations = import.meta.glob<string>('./zoom-previews/*.webp', { eager: true, query: '?url', import: 'default' })
+
 const kib = (bytes: number) => (bytes / 1024).toFixed(1) + ' KiB'
 const documentUrl = (effect: ZoomEffect, path: string) => issueRepository() + '/blob/main/sdk/zoom/modules/' + effect.id + '/' + path
 const budget = (effect: ZoomEffect, name: string) => (MACHINES as MachineProfile[]).find(machine => machine.id === effect.machine)?.sdk?.budgets.find(entry => entry.name === name)?.value
 const tested = (effect: ZoomEffect) => effect.platform.pedals.filter(pedal => pedal.status === 'confirmed').map(pedal => DEVICES_BY_ID[pedal.machine].name + ' ' + pedal.firmware)
 
+const hardwareUntested = (effect: ZoomEffect) => effect.platform.pedals.some(pedal => pedal.machine === effect.machine && pedal.status === 'untested')
+
 export function ZoomEffectPreview({ effect, compact = false }: { effect: ZoomEffect; compact?: boolean }) {
+  const animation = animations['./zoom-previews/' + effect.id + '.webp']
   return <div className={'module-preview' + (compact ? ' compact-preview' : '')} data-module="zoom-effect" aria-hidden="true">
-    <div className="preview-label"><span>{effect.name}</span><span className="preview-led" /></div>
-    <svg viewBox="0 0 320 192" className="signal-art" fill="none"><image className="saved-thumbnail" href={zoomEffectThumbnail(effect)} width="320" height="192" /></svg>
+    <div className="preview-label"><span className="preview-led" /></div>
+    <picture className="signal-art zoom-preview-art">
+      {animation && <source media="(prefers-reduced-motion: no-preference)" srcSet={animation} type="image/webp" />}
+      <img src={zoomEffectThumbnail(effect)} alt="" loading="lazy" />
+    </picture>
   </div>
 }
 
@@ -33,10 +41,9 @@ export function ZoomEffectCard({ effect, selected, onToggle, statistics, compare
   return <article className={'module-card ' + (selected ? 'is-selected' : '')}>
     <a href={href} onClick={onBrowse} onAuxClick={onBrowse} className="module-cover" aria-label={'View ' + effect.name}><ZoomEffectPreview effect={effect} /><div className="hover-info"><span>{effect.presentation.summary}</span><strong>Explore effect <Icon name="arrow" size={15} /></strong></div></a>
     <div className="module-card-body">
-      <div className="module-card-title"><div className="module-card-heading"><a href={href} onClick={onBrowse} onAuxClick={onBrowse}>{effect.name}</a><div className="card-release"><span className="card-version">v{effect.version}</span></div></div><AddButton name={effect.name} selected={selected} onToggle={onToggle} /></div>
+      <div className="module-card-title"><div className="module-card-heading"><a href={href} onClick={onBrowse} onAuxClick={onBrowse}>{effect.name}</a><div className="card-release"><span className="card-version">v{effect.version}</span>{hardwareUntested(effect) && <span className="card-version">Hardware untested</span>}</div></div><AddButton name={effect.name} selected={selected} onToggle={onToggle} /></div>
       <div className="card-credit"><ModuleAuthors name={zoomEffectAuthor(effect)} url={zoomEffectRepository(effect)} contributors={effect.author.contributors} /><span>{effect.license.spdx}</span></div>
-      <p className="card-description">{effect.presentation.summary}</p>
-      <div className="card-bottom"><span>{effect.presentation.family}</span><CardStats statistics={statistics}><span className="card-stat">DSP {effect.platform.dspCost}</span></CardStats></div>
+      <div className="card-bottom"><span>{effect.type}</span><CardStats statistics={statistics}><span className="card-stat">DSP {effect.platform.dspCost}</span></CardStats></div>
       <CardProof stability={stability} statistics={statistics} name={effect.name + ' for ' + name} compared={compared} canCompare={canCompare} onCompare={onCompare} />
     </div>
   </article>
@@ -87,9 +94,9 @@ function ZoomEffectGuide({ effect, device }: { effect: ZoomEffect; device: Devic
 
 export function ZoomEffectDetail({ device, effect, selected, onToggle, browse, onBackToResults }: { device: DeviceProfile; effect: ZoomEffect; selected: boolean; onToggle: () => void; browse?: CatalogBrowse | null; onBackToResults?: () => void }) {
   const id = effect.machine + '-' + effect.id, dsp = budget(effect, 'Patch DSP') ?? 225, size = budget(effect, 'Effect file') ?? effect.platform.binary.bytes
-  return <ModuleDetailLayout browse={browse} onBackToResults={onBackToResults} id={id} title={effect.name} family={effect.presentation.family}
+  return <ModuleDetailLayout browse={browse} onBackToResults={onBackToResults} id={id} title={effect.name} family={effect.type}
     detail={'location' in effect.access ? effect.access.location : effect.access.noUiReason}
-    author={zoomEffectAuthor(effect)} authorUrl={zoomEffectRepository(effect)} contributors={effect.author.contributors} description={effect.presentation.summary}
+    author={zoomEffectAuthor(effect)} authorUrl={zoomEffectRepository(effect)} contributors={effect.author.contributors} description={effect.presentation.summary + (hardwareUntested(effect) ? ' Hardware untested.' : '')}
     selected={selected} onToggle={onToggle} backHref={deviceHref(effect.machine)} backLabel={'All ' + device.name + ' effects'}
     preview={<ZoomEffectPreview effect={effect} />}
     resources={<ModuleResourceSummary indicators={[

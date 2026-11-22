@@ -188,13 +188,17 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
   const listAlert = files && listFile?.size !== EFFECT_LIST_SIZE && <p role="alert" className="hub-error">The pedal’s effect list ({EFFECT_LIST}) is {listFile ? listFile.size + ' bytes, not ' + EFFECT_LIST_SIZE : 'missing'}: an install or removal was cut short. Don’t power-cycle the pedal. {recovery ? 'Write the effect list back here, or, failing that, run' : 'Run'} Zoom Effect Manager 2.3.3 with the pedal in update mode, which rewrites its whole effect file system.</p>
   const effects = files?.filter(f => /\.zdl$/i.test(f.name)) ?? [], captures = effects.filter(f => isCapture(f.name))
 
-  if (mobile) return <div className="configuration-page">{header}<p>Connecting a Zoom pedal needs Chrome or Edge on a computer.</p></div>
+  if (mobile) return <div className="configuration-page">
+    {header}
+    <div className="page-heading"><div><h1>Your {device.name}</h1><p>Connecting a Zoom pedal needs Chrome or Edge on a computer.</p></div></div>
+    <a className="button button-quiet" href={deviceHref(device.id)}>Open {device.name} library <Icon name="arrow" size={15} /></a>
+  </div>
   return <div className="configuration-page octatrack-hub zoom-hub">
     {header}
     <div className="hub-split">
       <header className="hub-hero">
         <DeviceImage device={device} eager />
-        <div><h2 className="hub-view-title">{model}</h2>
+        <div><h1 className="hub-view-title">{model}</h1>
           <p role="status"><span className={'unit-led is-' + led} aria-hidden="true" />{line}</p>
           {other && <p role="alert">This is an {identity!.model}, not an {device.name}. Open its own page, or plug in the {device.name}.</p>}
         </div>

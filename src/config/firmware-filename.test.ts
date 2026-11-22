@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from '../engine/elekloader/published-octatrack.fixture'
 import { CURRENT_BASE_VERSION } from '../engine/elekloader/base-variants'
 import { firmwareFilename } from './firmware-filename'
 

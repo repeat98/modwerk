@@ -28,7 +28,7 @@ The declaration has exactly these fields:
   provenance. Authored file paths must name this module's native inputs.
 - `fills: []`; this route admits no initializer fills.
 
-Shared-source changes refresh the affected SDK recipes in the same SDK/base PR,
+Shared-source changes refresh the affected SDK recipes on the cumulative Octatrack base branch,
 without editing module folders. Never refresh pins alone: rebuild and compare
 the exact image/package, rerun stock guards/scans and negative checks. Changed
 output needs a new reviewed recipe and qualification for the changed package.
