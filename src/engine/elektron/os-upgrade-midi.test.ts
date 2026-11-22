@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { findUnit, midiLine, type MidiIn, type MidiOut } from './os-upgrade-midi'
+import { findUnit, midiLine, namesModel, type MidiIn, type MidiOut } from './os-upgrade-midi'
 
 const port = (id: string, name: string, state = 'connected') => ({ id, name, state })
 
@@ -10,6 +10,30 @@ describe('the Web MIDI line for an OS upgrade', () => {
     const other = { ...port('x', 'IAC Bus'), send() {} } as MidiOut
     expect(findUnit({ inputs: new Map([['i', input]]), outputs: new Map([['o', output], ['x', other]]) }, 'digitone ii')).toEqual({ input, output })
     expect(findUnit({ inputs: new Map(), outputs: new Map([['o', output]]) }, 'Digitone II')).toBeNull()
+  })
+
+  it('tells the Digitone from the Digitone II, alone and connected together, whatever the system adds around the name', () => {
+    const pair = (id: string, name: string) => ({
+      input: { ...port(id + 'i', name), onmidimessage: null } as MidiIn,
+      output: { ...port(id + 'o', name), send() {} } as MidiOut,
+    })
+    const access = (...pairs: ReturnType<typeof pair>[]) => ({
+      inputs: new Map(pairs.map(p => [p.input.id, p.input] as [string, MidiIn])),
+      outputs: new Map(pairs.map(p => [p.output.id, p.output] as [string, MidiOut])),
+    })
+    const one = pair('1', 'Elektron Digitone'), two = pair('2', 'Elektron Digitone II')
+    expect(findUnit(access(two), 'Digitone')).toBeNull()
+    expect(findUnit(access(two), 'Digitone II')).toEqual(two)
+    expect(findUnit(access(one), 'Digitone')).toEqual(one)
+    expect(findUnit(access(one), 'Digitone II')).toBeNull()
+    expect(findUnit(access(one, two), 'Digitone')).toEqual(one)
+    expect(findUnit(access(one, two), 'Digitone II')).toEqual(two)
+    for (const name of ['Digitone II', 'Elektron Digitone II', 'Digitone II MIDI 1', '2- Elektron Digitone II', 'DIGITONE II'])
+      expect(namesModel(name, 'Digitone II')).toBe(true)
+    for (const name of ['Digitone II', 'Digitone MKII', 'Digitone Keys', 'Digitones', 'Elektron Digitone II MIDI 1'])
+      expect(namesModel(name, 'Digitone')).toBe(false)
+    for (const name of ['Digitone', 'Elektron Digitone', 'Digitone MIDI 1', '2- Elektron Digitone'])
+      expect(namesModel(name, 'Digitone')).toBe(true)
   })
 
   it('sends bytes as they are and hands back whole SysEx messages, joined across events, in order', async () => {

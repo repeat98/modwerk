@@ -5,22 +5,13 @@
 // The messages are the ones Modwerk's Rytm link sends (sdk/machines/analog-rytm-mkii/tools/rytm_link.py, from
 // elektroid's elektron.c); a test pins them to that tool's output. Transport-free: the page gives it a line.
 
+import { encode8in7 } from './codec/transport'
+
 export const HEADER = [0xf0, 0x00, 0x20, 0x3c, 0x10, 0x00] as const
 export const BLOCK = 0x800
 const START = 0x50, WRITE = 0x51, START_REPLY = 0xd0, WRITE_REPLY = 0xd1
 
-/** 8 bits in 7: before each group of up to 7 bytes, a byte holding their top bits, the first byte's highest. */
-export function pack7(data: Uint8Array): Uint8Array {
-  const out: number[] = []
-  for (let j = 0; j < data.length; j += 7) {
-    const chunk = data.subarray(j, j + 7)
-    let top = 0
-    for (let k = 0; k < 7; k++) top = top << 1 | (k < chunk.length && chunk[k] & 0x80 ? 1 : 0)
-    out.push(top, ...Array.from(chunk, b => b & 0x7f))
-  }
-  return Uint8Array.from(out)
-}
-
+/** encode8in7's inverse: each group of 8 bytes, its first holding the next seven's top bits. */
 export function unpack7(data: Uint8Array): Uint8Array {
   const out: number[] = []
   for (let i = 0; i < data.length; i += 8) {
@@ -44,7 +35,7 @@ export function crc32(data: Uint8Array, value = 0): number {
 }
 
 const message = (seq: number, body: number[] | Uint8Array): Uint8Array =>
-  Uint8Array.from([...HEADER, ...pack7(Uint8Array.from([seq >> 8 & 0xff, seq & 0xff, 0, 0, ...body])), 0xf7])
+  Uint8Array.from([...HEADER, ...encode8in7(Uint8Array.from([seq >> 8 & 0xff, seq & 0xff, 0, 0, ...body])), 0xf7])
 
 const u32 = (v: number, little: boolean) => {
   const b = new Uint8Array(4)
