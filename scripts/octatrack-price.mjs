@@ -64,6 +64,15 @@ export function priceFileTarget(file, data, catalogue) {
 }
 
 const OVERLOAD = 125 // percent of a frame: no skips up to ~115 on an MKII, drops from ~120 (22 Nov 2026)
+/** What a module adds to the longest frame while installed on no track or slot (its `rest`), in percent: the reading
+ * installed less the one before it. Under REST_NOISE it is the readings' own scatter (±2.5 between two 8-s readings of one
+ * scene on the owner's MKII, 22 November 2026) and counts 0, since the base adds every installed module's rest to the
+ * reserve: scatter would charge every set. FM Synth 0.1.4 read +20.3 on a medium pattern. */
+export const REST_NOISE = 2
+export function restCost(before, atRest) {
+  const rest = Math.round(((atRest?.frameMax ?? 0) - (before?.frameMax ?? 0)) * 10) / 10
+  return rest >= REST_NOISE ? rest : 0
+}
 /** The next-instance cost from a curve: `adds` is what the longest frame gained with 1, 2, 3… instances. `each` is the
  * steepest step from the third instance on (a lone second step can be steep while later ones are cheap: Tape Echo 9.2,
  * 16.7, 16.8, 20.5 on a busy Part), `first` the least that, with `each` after it, covers every measured point. */
@@ -273,7 +282,8 @@ if (import.meta.filename === process.argv[1]) {
   if (args.write) for (const result of results) console.log(result.id.padEnd(28) + writePrice({ root, result, base: args.base, scene: args.scene, seconds, measuredAt }))
   for (const result of results.filter(result => result.curve && !result.curve.error)) {
     const { first, each, adds, tracks, notes } = result.curve, wanted = args.curve.split(',').length
-    console.log(result.id.padEnd(28) + `curve on ${tracks.join(' ')}: +${adds.join(', +')} -> first ${first}, each ${each}` + (notes.length ? ' (' + notes.join('; ') + ')' : ''))
+    const rest = restCost(result.before, result.atRest)
+    console.log(result.id.padEnd(28) + `curve on ${tracks.join(' ')}: +${adds.join(', +')} -> rest ${rest}, first ${first}, each ${each}` + (notes.length ? ' (' + notes.join('; ') + ')' : ''))
     if (!args['write-costs'] && !args.write) continue
     // Fewer than three placed is fine when the curve stopped at overload: the module costs what it measured up to there.
     const overloaded = notes.some(note => note.startsWith('stopped after'))
@@ -286,11 +296,11 @@ if (import.meta.filename === process.argv[1]) {
     if (args.write && existsSync(manifestPath)) { // the release's own record, which module:doctor and modules:check hold its version to
       const record = resolve(root, 'sdk/octatrack/modules', result.id, FRAME_COST_RECORD)
       mkdirSync(dirname(record), { recursive: true })
-      writeFileSync(record, JSON.stringify({ module: result.id, version, base: args.base, scene: args.scene, seconds, measuredAt, tracks, first, each, points: result.curve.points, adds, notes }, null, 2) + '\n')
+      writeFileSync(record, JSON.stringify({ module: result.id, version, base: args.base, scene: args.scene, seconds, measuredAt, tracks, rest, first, each, points: result.curve.points, adds, notes }, null, 2) + '\n')
       wrote = 'wrote first ' + first + ', each ' + each + ' into ' + FRAME_COST_RECORD
     } else { // --write-costs: the base's own list (a base-bound module, or the base owner's reading of a published version)
       const path = resolve(root, FRAME_COSTS_BASE_PATH), list = JSON.parse(readFileSync(path, 'utf8'))
-      writeFileSync(path, frameCostsJson({ ...list, costs: { ...list.costs, [result.id]: { first, each, points: adds, measured } } }))
+      writeFileSync(path, frameCostsJson({ ...list, costs: { ...list.costs, [result.id]: { rest, first, each, points: adds, measured } } }))
       wrote = 'wrote first ' + first + ', each ' + each + ' into ' + FRAME_COSTS_BASE_PATH
     }
     writeFileSync(resolve(root, FRAME_COSTS_PATH), generateFrameCosts(root)) // as npm run modules:generate would

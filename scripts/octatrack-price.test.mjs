@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
-import { added, allocationReading, curveFit, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
+import { added, allocationReading, curveFit, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
 
 function runtimeEffect(slots) {
   const data = Buffer.alloc(76)
@@ -111,4 +111,12 @@ it('takes stock\'s reserve from the delays-awake reading and one track\'s share 
   // Owner's MKII, 22 Nov 2026: empty C02 40.8 %, eight sample tracks 98.7 %, delays awake 105.6 %.
   expect(stockFit({ empty: 40.8, quiet: 98.7, awake: 105.6 })).toEqual({ reserve: 105.6, trackStock: 7.2 })
   expect(stockFit({ empty: 50, quiet: 40, awake: 39 })).toEqual({ reserve: 40, trackStock: 0 }) // never negative, never under the quiet reading
+})
+
+it('counts a module at rest from REST_NOISE up, the readings\' scatter below it as 0', () => {
+  expect(restCost({ frameMax: 81 }, { frameMax: 101.3 })).toBe(20.3) // FM Synth 0.1.4 on a medium pattern
+  expect(restCost({ frameMax: 80 }, { frameMax: 82.5 })).toBe(2.5)
+  expect(restCost({ frameMax: 80.6 }, { frameMax: 79.3 })).toBe(0)  // lower than before: scatter
+  expect(restCost({ frameMax: 80 }, { frameMax: 80 + REST_NOISE - 0.1 })).toBe(0)
+  expect(restCost(undefined, { frameMax: 90 })).toBe(90 >= REST_NOISE ? 90 : 0)
 })
