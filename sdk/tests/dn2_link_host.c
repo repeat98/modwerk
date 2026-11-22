@@ -40,6 +40,11 @@ static uint8_t usb_state, upload[64];
 void mw_link_row_label(void) {}
 void core_additem(void *menu, const void *r) { (void)menu; (void)r; }
 void fw_invalidate(void *view) { (void)view; }
+static uint8_t diag_log[64];
+const volatile void *mw_diag_log_at(void) { return diag_log; }
+uint32_t mw_diag_log_bytes(void) { return sizeof diag_log; }
+uint32_t mw_diag_frames(void) { return 0; }
+volatile uint32_t mw_diag_test_freeze;
 
 static int failed;
 #define CHECK(c) do { if (!(c)) { printf("failed at line %d: %s\n", __LINE__, #c); failed = 1; } } while (0)
@@ -126,6 +131,16 @@ int main(void)
     CHECK(releases_of(9) == 1);
     upload[0] = 0;
     CHECK(request(CMD_KEY, 10, KEY_DOWN) == ST_OK);
+
+    // The FREEZE test waits for the musician as keys do: refused while a person was just at the panel, then taken.
+    ui_sees_key(20, KEY_DOWN);                          // a press the link did not post: a person
+    CHECK(request(CMD_FREEZE_TEST, 1500, 0) == ST_HUMAN && mw_diag_test_freeze == 0);
+    for (i = 0; i < HUMAN_TICKS - 1; i++)
+        mw_link_tick();
+    CHECK(request(CMD_FREEZE_TEST, 1500, 0) == ST_HUMAN && mw_diag_test_freeze == 0);
+    mw_link_tick();
+    CHECK(request(CMD_FREEZE_TEST, 1500, 0) == ST_OK && mw_diag_test_freeze == 1500);
+    CHECK(request(CMD_FREEZE_TEST, 15u * 1500u + 1, 0) == ST_BAD);
 
     if (!failed)
         printf("ok\n");

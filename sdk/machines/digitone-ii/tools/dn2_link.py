@@ -206,6 +206,31 @@ def key_id(name):
     return KEYS[name.upper()] if name.upper() in KEYS else int(name, 0)
 
 
+def save_log(at, size, path, port, line=None):
+    """The log's size bytes from at into path, only when every chunk came back whole (mem checks each reply): the file
+    is written beside path and renamed over it, so a failed read leaves an earlier capture as it was."""
+    import os
+    import tempfile
+    own = line is None
+    line = MidiLine(port) if own else line
+    try:
+        data = b''.join(mem(at + o, min(128, size - o), port, line) for o in range(0, size, 128))
+    finally:
+        if own:
+            line.close()
+    if len(data) != size:
+        sys.exit('the log came back %d bytes of %d: nothing saved' % (len(data), size))
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(os.path.abspath(path)), prefix='.dn2-diag-')
+    try:
+        with os.fdopen(fd, 'wb') as f:
+            f.write(data)
+        os.replace(tmp, path)
+    except BaseException:
+        os.unlink(tmp)
+        raise
+    return data
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--port', default='Digitone II')
@@ -242,9 +267,8 @@ def main():
         at, size, frames, ticks = (get32(p, 5 * i) for i in range(4))
         print('log at 0x%08x, %d bytes; %d frames, %d ticks' % (at, size, frames, ticks))
         if a.save:
-            data = b''.join(mem(at + o, min(128, size - o), a.port) for o in range(0, size, 128))
-            open(a.save, 'wb').write(data)
-            print('saved %d bytes to %s' % (len(data), a.save))
+            save_log(at, size, a.save, a.port)
+            print('saved %d bytes to %s' % (size, a.save))
         return
     if a.cmd == 'keys':
         print(' '.join(sorted(KEYS, key=KEYS.get)) + '; encoders ' + ' '.join(ENCODERS))

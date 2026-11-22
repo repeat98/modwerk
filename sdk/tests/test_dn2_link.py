@@ -160,5 +160,31 @@ class Dn2LinkKeysOnTheHost(unittest.TestCase):
             self.assertEqual((run.returncode, run.stdout.strip()), (0, "ok"), run.stdout + run.stderr)
 
 
+class Dn2DiagSave(unittest.TestCase):
+    def setUp(self):
+        import tempfile
+        self.dir = tempfile.TemporaryDirectory()
+        self.path = pathlib.Path(self.dir.name) / "log.bin"
+        self.path.write_bytes(b"earlier capture")
+
+    def tearDown(self):
+        self.dir.cleanup()
+
+    def test_a_complete_log_replaces_the_file(self):
+        log = bytes(range(256)) + bytes(44)
+        line = FakeLine(lambda f: [mem_reply(f[6], link.get32(f, 8), log[link.get32(f, 8) - 0x47F00000:][:link.get32(f, 13)])])
+        link.save_log(0x47F00000, len(log), str(self.path), "x", line)
+        self.assertEqual(self.path.read_bytes(), log)
+
+    def test_a_short_chunk_saves_nothing_and_keeps_the_earlier_capture(self):
+        def answer(f):
+            addr, n = link.get32(f, 8), link.get32(f, 13)
+            return [mem_reply(f[6], addr, bytes(n if addr == 0x47F00000 else n - 1))]
+        with self.assertRaises(SystemExit):
+            link.save_log(0x47F00000, 300, str(self.path), "x", FakeLine(answer))
+        self.assertEqual(self.path.read_bytes(), b"earlier capture")
+        self.assertEqual(sorted(p.name for p in pathlib.Path(self.dir.name).iterdir()), ["log.bin"])
+
+
 if __name__ == "__main__":
     unittest.main()

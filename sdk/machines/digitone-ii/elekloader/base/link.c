@@ -246,6 +246,11 @@ static int ours(int kind, int id, int value)    // the next event the link poste
     return 1;
 }
 
+static int person_at_panel(void)        // a person pressed or turned something in the last HUMAN_TICKS ticks
+{
+    return human_ticks >= 0 && human_ticks < HUMAN_TICKS;
+}
+
 static int human(void)                  // a person pressed or turned something; -> 1 takes that first press
 {
     human_count++;
@@ -303,7 +308,7 @@ static void COLD act(const uint8_t *m, int len)
         p = put32(p, ring_drops);
         p = put32(p, ticks);
         p = put32(p, (uint32_t)armed);
-        p = put32(p, human_ticks >= 0 && human_ticks < HUMAN_TICKS);
+        p = put32(p, (uint32_t)person_at_panel());
         p = put32(p, human_count);
         p = put32(p, posted_count);
         p = put32(p, refused_count);
@@ -320,6 +325,8 @@ static void COLD act(const uint8_t *m, int len)
     case CMD_FREEZE_TEST:
         if (!armed)
             status = ST_NOT_ARMED;
+        else if (person_at_panel())
+            status = ST_HUMAN;          // as for keys: the musician comes first
         else if (n < 5 || get32(m + HEADER) > 15u * 1500u)
             status = ST_BAD;
         else
@@ -337,7 +344,7 @@ static void COLD act(const uint8_t *m, int len)
     case CMD_RELEASE_ALL:
         if (!armed)
             status = ST_NOT_ARMED;
-        else if (human_ticks >= 0 && human_ticks < HUMAN_TICKS)
+        else if (person_at_panel())
             status = ST_HUMAN;
         else if (cmd == CMD_RELEASE_ALL)
             release_all();
