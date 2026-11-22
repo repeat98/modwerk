@@ -1,6 +1,6 @@
 # FM Synth — 0.1.5 experimental
 
-FM Synth 0.1.5 rests while nothing in the project uses it: while no track of any Part is FM SYNTH, no FLEX slot holds a legacy FMSYNTH sample and GLIDE is off, its frame-interrupt sites hold the stock bytes and the frame never enters its code. Picking FM SYNTH wakes it before the pick commits; a project load that brings an FM track wakes it within a UI tick. Awake, it uses the frame hook in base 0.7.14: between notes the ordinary Octatrack LFO loop handles idle frames, a pending source trigger wakes the filter in time for legacy sample locks, and the clock follows the sequencer. Sound and controls are 0.1.4's (TESTING.md).
+FM Synth 0.1.5 rests while nothing in the project uses it: while no track of any Part is FM SYNTH, no FLEX slot holds a legacy FMSYNTH sample and GLIDE is off, its frame-interrupt sites hold the stock bytes and the frame never enters its code. Picking FM SYNTH wakes it before the pick commits; a project load that brings an FM track wakes it within a UI tick. A silent FM track, before a note or after its release has faded, ships its silence without the FM engine. Sound and controls are 0.1.4's (TESTING.md).
 
 ## Overview
 

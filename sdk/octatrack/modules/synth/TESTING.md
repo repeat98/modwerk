@@ -1,28 +1,29 @@
 # FM Synth 0.1.5 experimental
 
-0.1.5 combines two drafts (22 November 2026): #1928, which reads the sequencer clock once a frame through the base's
-`ev_audio_frame_prepare` and leaves the LFO pass to stock between notes, and #1974, which lets FM Synth rest while
-nothing in the project uses it. The owner waived the ask-the-author step for this optimization work on 22 November
-2026; the engine and its credit stay Tim Hastie's. Each part was run on the owner's MKII as its own package (below,
-labelled by build). **The combined package has not run on a unit.**
+0.1.5 began as two drafts, #1928 (the sequencer clock read once a frame through the base's `ev_audio_frame_prepare`, and
+the LFO pass left to stock between notes) and #1974 (FM Synth rests while nothing in the project uses it), combined on
+22 November 2026 (package `5b425a33`). The owner's unit run of that package (below) showed the rest working and #1928's
+frame path costing 1.3 to 1.6 frame points more than the rest alone whenever FM Synth is awake: its saving was for an
+installed FM Synth on no track, which the rest now makes free. So the current package keeps the rest, drops #1928's
+frame-prepare clock and LFO gate (the LFO depth site and the clock are 0.1.4's again, so no base 0.7.14 is needed),
+keeps #1928's faster `fm_frame`, and cuts what a silent FM track costs. The owner waived the ask-the-author step for
+this optimization work on 22 November 2026; the engine and its credit stay Tim Hastie's.
 
-## The combined package (prepared 22 November 2026, not tested on a unit)
+## The package `8cf43bfb` (prepared 22 November 2026, not tested on a unit)
 
-`public/octatrack-modules/synth/0.1.5-experimental.mwrm`, 31,544 bytes, SHA-256
-`5b425a33a84886eeb52c85ec464fc4aed2f9c90e2673372398e60c0120638ac1`, module `e8c3e4fa`, 24 sites of which nine rest, 39
-stock copies, no bss; hooks `ot_machines`, `ev_in_use` and `ev_audio_frame_prepare` (order 40 each). It needs the base
-with `ev_audio_frame_prepare`, which only `base/octatrack-next` (0.7.14, #1910) has: main's `events.json` does not, so
-the package was built in a local integration of `base/octatrack-next` `490b085ee` with this branch (its events, loader
-and builder unchanged since the owner's twin base `b36f9c53e`), the way #1928's `b904a852` was, and its recipe captured
-there from the stock OS 1.40C (the same 39 copies; the recipe pins that builder, as #1928's did). On this branch alone
-the synth package cannot be rebuilt until #1910 is in main; every other package rebuilds identically.
+`public/octatrack-modules/synth/0.1.5-experimental.mwrm`, 31,598 bytes, SHA-256
+`8cf43bfbb0d2c5032bf02dbb1a29fcf8cfda8ef00a04a12e307a7a6a68a150de`, module `e8c3e4fa`, 24 sites of which nine rest, 39
+stock copies, no bss; hooks `ot_machines` and `ev_in_use` (order 40). Built on this branch with main's builder (`node
+scripts/mirror-octatrack-modules.mjs && python3 -B scripts/octatrack-module-packages.py`); its recipe recaptured from
+the stock OS 1.40C (the same 39 copies, at new offsets); `--check --stock`: every package identical, the strict
+stock-free scans pass. It needs a base with resting sites (0.7.10 or later; an older base refuses the package).
 
 **Rests** (stock's bytes while `fm_in_use` answers 0):
 
 | Site | What | Why it rests |
 | --- | --- | --- |
-| 0x4000cf50 `fm_lfo_frame_entry` | the frame's LFO pass entry, once a frame (#1928's gate) | frame path; stock's inline loop is what it picks with no FM voice |
-| 0x40003ca4 `po_lfo3` | the standalone LFO loop's depth read | LFO 3 is muted only on an FM track |
+| 0x4000d03e `po_lfo3b` | the frame builder's LFO depth read, every track and LFO; track 0's LFO 3 runs the clock and `fm_frame` | frame path |
+| 0x40003ca4 `po_lfo3` | the LFO routine's depth read | LFO 3 is muted only on an FM track |
 | 0x4000c634 `po_retrig` | the command byte copy, every track, a frame | acts on a sounding FM voice only |
 | 0x4000d514 `fm_source_dispatch` | the renderer slot copy, every track, a frame | rests with the STATIC entry, below |
 | 0x4000b51a `po_rel`, 0x4000b2c8 `po_stop`, 0x4000685c `po_kill` | release, STOP and voice kill consumers | end engine voices only |
@@ -33,40 +34,75 @@ The two data entries are symbol references, which the pinned builder (`build.py`
 package row's `"restingReferences"` has the host wrapper (`scripts/octatrack-module-packages.py`) set the loader's rest
 bit on them. The panel, page, chooser, AMP SETUP, MIDI and key paths stay awake.
 
-**`ev_audio_frame_prepare` never rests** (events.json: it stays active while a module rests). So `fm_prepare_frame`
-first tests one byte, `FR_IDLE` in `fm_fr`, which `fm_in_use` sets when it answers 0 (clearing `FR_ROUTE` and
-`FR_PENDING` with it) and clears when it answers nonzero: while idle it returns at once, no clock, no masks. Waking sets
-`FR_REBASE`, and the first awake frame moves the clock's step baseline so the step change measured across the missed
-frames is dropped (`CK_FPS` keeps its last value until a whole step is measured again). The clock's only readers are FM
-tracks and the quantizer's synth-track hooks, which have nothing to time while it rests.
-
 **In use** (`fm_in_use`, each UI tick): a pick of FM SYNTH (the base's pick calls `fm_admit_track`, which sets a flag,
 just before it asks whether to wake a resting machine), GLIDE on (sample tracks with LEG MONO slide through
 `sy_render`), an FM/1 track in the live Part, and a sweep of one Part (16 banks, 4 working and 4 saved Parts each) and
 one FLEX slot (a legacy FMSYNTH* / SYNTH* marker) a call; it rests only after a whole sweep, 128 ticks or about two
 seconds, found neither. Cost a tick, in the UI task only: two Parts' type bytes (three signature bytes on a FLEX track),
-GLIDE, the Part index and bank word, one slot path up to 255 bytes of battery RAM (an empty slot one read).
+GLIDE, the Part index and bank word, one slot path up to 255 bytes of battery RAM (an empty slot one read). Waking sets
+`fm_fr`'s `FR_REBASE`, and the next frame's clock (`po_rebase`) drops the step change it would measure across the
+frames it missed while its site held stock's bytes.
 
-**Known gaps.** A slot that gets a legacy marker file while FM Synth rests is seen within a sweep. After a project load
-an FM track in the live Part wakes it within a UI tick, one in another bank within a sweep; a note that starts before the
-wake renders silent until its next trig.
+**A silent FM track** (`sy_render`, 0.1.5): two paths ship this call's silence without the FM engine, each bit for bit
+what the full path ships (the source header and zeros, the cursor, the record's PTCH and RATE words, the AMP override
+and LEG lane byte the DSP reads), and the next note starts from the same state:
 
-**Software checks** (22 November 2026): `test_in_use.py` (Unicorn's ColdFire core: the answer, the sweep, markers, GLIDE,
-the pick, and the FR_IDLE / FR_REBASE writes) and `test_lfo_wake.py` (#1928's 64 routing and LFO cases, plus: idle,
-`fm_prepare_frame` counts no frame; on waking it drops the step across the gap, 20 frames a step kept where it would
-read 19) pass; `sdk/tests/test_module_packages_cli.py` (the `restingReferences` step) passes; the package's site records
-show the nine rest flags; `--stock` strict scans pass in the integration build.
+- no voice of ours (S_ON 0: after a voice kill such as STOP, or a pattern change), GLIDE off, no START this call: the
+  header and zeros, nothing else (the full path only wrote the record's PTCH word back as it was; S_CUR, which it also
+  followed, is set by every synth START);
+- a released mono voice at silence (S_ON bit 1, S_GAIN and S_GPREV 0, no paraphonic voice fading under it): every write
+  the DSP sees as before, then no parameter block, no FM loop and no zeros written twice. That state only decays further
+  and the next START is cold (S_GPREV 0), which resets the phases, envelopes and gains it would have advanced.
+
+A legacy marker's track, a paraphonic voice, GLIDE on with no voice, and an FM track before its first START (the base
+renders that one) keep their paths. `FM_NO_SILENT` assembles the full path alone, for the comparison.
+
+Module instructions a frame for one FM track (`fm_frame` and its two `sy_render` calls, on Unicorn's ColdFire core,
+stock calls stubbed; `test_silence.py` prints them):
+
+| FM track state | 0.1.4 engine (`2ac17c3a`) | `8cf43bfb` |
+| --- | ---: | ---: |
+| before its first START | 121 | 57 |
+| one sounding mono note | 1,424 | 1,396 |
+| released, at silence | 1,432 | 477 |
+| after a voice kill (STOP) | 397 | 250 |
+
+The fixed part of each is `fm_frame`, once a frame for all eight tracks (148 instructions in 0.1.4 with an FM track
+read, 112 now). Instruction counts are not frame points: memory access (cache misses) is not counted, nor is the
+base's route of an FM track.
+
+**Software checks** (22 November 2026): `test_silence.py` (both builds over silence before a note, a note, its release to
+silence, a second note, a retrigger, a voice kill and a note after it, and GLIDE on: every call's return and everything
+the DSP and stock read identical, the engine's state identical after the notes; the instruction counts above),
+`test_in_use.py` (the answer, the sweep, markers, GLIDE, the pick, the idle and rebase flags) and
+`sdk/tests/test_module_packages_cli.py` pass; `fm_frame` matched 0.1.4's on 5,000 random mask, start, GLIDE, machine
+and signature cases (a one-off comparison, not committed); `machine_composition_tests.py` passes.
 
 | Case | Why this change makes it a risk | How run | Result |
 | --- | --- | --- | --- |
-| Installed, no FM track, C01 playing | the nine sites and the idle frame prepare must cost nothing | frame share against the empty base | not run: combined package not on a unit yet |
-| A pick while it rests | the wake must land before the commit | pick on a track of a playing pattern, read the kind-table entries | not run (pass on `2ac17c3a`, below) |
-| The first FM note after a wake | the gated LFO pass and the clock must be ready on its frame | isolated first trig after the pick, and a HOLD shorter than INF | not run |
-| Idle FM awake, no note (FM track present, silent) | #1928's gate keeps the awake idle cost low | frame share with an FM track that plays no trig | not run |
-| GLIDE on with a LEG MONO sample track | GLIDE must keep it awake and slide | glide by ear, GLIDE on, then off and wait two seconds | not run |
-| Back to STATIC | rests again after a sweep | frame share and kind-table entries after 2 s | not run (pass on `2ac17c3a`) |
-| Legacy FMSYNTH marker project | the slot sweep must keep it awake | #1928's saved marker fixture | not run |
-| In-use answer and idle flags | a wrong answer rests FM under a track | `test_in_use.py`, `test_lfo_wake.py` | pass |
+| Installed, no FM track, C01 playing | the nine sites must cost nothing | frame share against the empty base | not run: `8cf43bfb` not on a unit yet (pass on `5b425a33`) |
+| FM on T2, C01 (notes) | the awake path must cost no more than the rest alone | frame share and CPU meter against `2ac17c3a` | not run |
+| FM on T2, C02 (no trigs, the note released) | the released-silence path must cut the silent track's cost | frame share against the empty C02 | not run |
+| STOP, then PLAY | the no-voice path after a kill, then the first note | frame share while stopped, the first note by ear | not run |
+| A pick while it rests | the wake must land before the commit | pick on a track of a playing pattern | not run (pass on `5b425a33`) |
+| GLIDE on with a LEG MONO sample track | GLIDE must keep it awake and slide | glide by ear, GLIDE on, then off | not run |
+| HOLD shorter than INF on the first notes after a wake | the clock's rebase | listen to the note lengths | not run |
+| Legacy FMSYNTH marker project | the slot sweep must keep it awake; its track keeps the full path | the saved marker fixture | not run |
+| Silent paths against the full path | a silent path must ship what the full path ships | `test_silence.py` | pass |
+
+## MKII runs of the combined package `5b425a33` (22 November 2026)
+
+Reported by the owner's session: Octatrack MKII, twin `d3c83646` (base 0.7.14 plus frame admission), Dev17, FM Synth
+alone in the set. Unused on C01: 38.9 % against about 39.0 % empty; the kind-table entries read `40004008` /
+`4000f450` while it rested and `40d81210` / `40d85e5c` after a pick on T2, which was admitted with no skipped render;
+back on STATIC it rested again. With FM Synth on T2 (frame share, longest frame, CPU meter):
+
+| Scene | rest only `2ac17c3a` | combined `5b425a33` |
+| --- | --- | --- |
+| C01 (notes) | 52.5 %, 105.5 %, 61.7 | 53.8 %, 106.7 %, 66.2 |
+| C02 (no trigs, silent) | 38.5 %, 64.7 %, 50.3 | 40.1 %, 65.7 %, 52.0 |
+
+C02 with no module was 23.6 %: an FM track that plays no note cost about 15 frame points in both builds.
 
 ## MKII run of the rest package `2ac17c3a` (22 November 2026, #1974)
 

@@ -32,10 +32,10 @@ unsigned fm_admit_track(const volatile u8 *part,unsigned t) { (void)part;fm_pick
 #define PART_SAVED 0x9504au
 #define SLOTS 0x100b14f0u         /* the FLEX slots' settings records, 0x448 each, the path at +0 */
 static u8 fm_sweep IMAGE,fm_seen IMAGE,fm_clean IMAGE;
-/* poly.s fm_fr, the frame's masks: FR_ROUTE 4, FR_PENDING 9, FR_IDLE 10, FR_REBASE 11. Idle, fm_prepare_frame (which
- * the base calls even while FM rests) returns at once, and nothing stays routed in a frame before the sites go back. */
+/* poly.s fm_fr, the frame's masks: FR_IDLE 10 (the last answer was 0), FR_REBASE 11 (the first frame after a rest
+ * drops the clock's step measured across the frames po_tick missed while its site held stock's bytes). */
 extern volatile u8 fm_fr[];
-enum { FR_ROUTE=4, FR_PENDING=9, FR_IDLE=10, FR_REBASE=11 };
+enum { FR_IDLE=10, FR_REBASE=11 };
 static unsigned any_signed(const volatile u8 *part) {
  for(unsigned t=0;t<8;++t) if(signed_track(part,t)) return 1;
  return 0;
@@ -54,7 +54,7 @@ unsigned fm_in_use(void) {
  unsigned use=fm_picked || U8(GLIDE_AT) || fm_seen || !fm_clean
   || bank<0x40000000u || bank>=0x47f00000u || any_signed(part_base()); /* no bank yet: awake */
  fm_picked=0;
- if(!use) fm_fr[FR_IDLE]=1,fm_fr[FR_ROUTE]=0,fm_fr[FR_PENDING]=0; /* idle first: the frame then leaves them be */
+ if(!use) fm_fr[FR_IDLE]=1;
  else if(fm_fr[FR_IDLE]) fm_fr[FR_REBASE]=1,fm_fr[FR_IDLE]=0;
  return use;
 }

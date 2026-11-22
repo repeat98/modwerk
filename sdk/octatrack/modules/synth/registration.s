@@ -168,10 +168,8 @@ fm_in_use:
 	clr.b %d4
 	moveq #1,%d1
 	move.b %d4,fm_picked
-	move.b %d1,fm_fr+10
-	move.b %d4,fm_fr+4
-	move.b %d4,fm_fr+9
 	movem.l (%sp),#28
+	move.b %d1,fm_fr+10
 	lea (16,%sp),%sp
 	rts
 .L55:

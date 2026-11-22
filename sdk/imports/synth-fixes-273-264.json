@@ -11,17 +11,17 @@
     {
       "path": "manifest.py",
       "previousSha256": "780dbb5617d20167a5e3e67d49af7f9525021b89657a559ca678b95c5ae88f79",
-      "draftSha256": "4c28544721728eced2bb45f0e70fec900bbde560032c7386bac0b92df7032e7c"
+      "draftSha256": "7854330aca001d2841de2fb384f0ca8adb7497db49dacc56da2815c1f444c0e6"
     },
     {
       "path": "stock-guards.json",
       "previousSha256": "0f7ce8ef13554f5baceda2925ac1d02bc6ad70d776ba971a4f580eeb02883bc7",
-      "draftSha256": "1111c8406e98b03a35c2e91a0f8526480a51404a6ff8fbb9440401ea7b6f35fa"
+      "draftSha256": "3a197afbd8994e969a9d431b5b3ba4b2c4f0a82d390e9c787199c3610ba93aaf"
     },
     {
       "path": "upstream/synth/poly.s",
       "previousSha256": "5f6e39e55c813cd351538d00e0b02eb56cc253f803f95ca9450e140442064d60",
-      "draftSha256": "1c906a90675735decf42e334977e23899e6fcd03a6ef4fae4e9252e7bda654ab"
+      "draftSha256": "db3cd8b0ca3dad25aebc1463c49e7a76dcef1cc34d00a965bc2fb7ac9006cfed"
     },
     {
       "path": "upstream/quantizer/manifest.py",
@@ -41,17 +41,17 @@
     {
       "path": "registration.c",
       "previousSha256": "c7f969f6536ef3b03727c02a05ce48755662c2eae0fbb4aaba80708d02c06f76",
-      "draftSha256": "a72cf8c7004518d1501e78acc680973ecaa02c0c45edffc7c65bfeca90e49a13"
+      "draftSha256": "32ba275df30f29a696201be5c0812e3dabb18c61881afd796242f9552f66752b"
     },
     {
       "path": "registration.s",
       "previousSha256": "d04e47d6d21287ea969e4d39d0fea8c90b262a577081ba8376915f96cd2d9d2d",
-      "draftSha256": "6dce0370be517eff9b251c0b0c2dccfd5c1f9c8674adae08d56c87f6bb6d48ad"
+      "draftSha256": "dc59fba32b15230b20338266ce8f2b6b664152b8c104f50158526140bfbe80fb"
     }
   ],
   "changes": [
-    "Read the running clock once per audio frame. Skip FM depth filtering between notes and wake on a pending source trigger.",
-    "Rest while nothing in the project uses FM Synth: fm_in_use answers ev_in_use, its frame-path detours and its STATIC renderer and FLEX start entries hold stock's bytes meanwhile, and the frame prepare returns at once while idle."
+    "Rest while nothing in the project uses FM Synth: fm_in_use answers ev_in_use, and its frame-path detours and its STATIC renderer and FLEX start entries hold stock's bytes meanwhile.",
+    "A silent FM track (no voice of ours, or a released voice at silence) ships its silence without the FM loop; #1928's faster fm_frame. #1928's frame-prepare clock and LFO gate are dropped: the rest covers the case they were for."
   ],
-  "publication": "0.1.5-experimental: #1928 and #1974 combined (22 November 2026); the combined package needs the owner's approval again. See TESTING.md."
+  "publication": "0.1.5-experimental: #1928 and #1974 combined, then the silent-track cost cut (22 November 2026); needs the owner's approval again. See TESTING.md."
 }

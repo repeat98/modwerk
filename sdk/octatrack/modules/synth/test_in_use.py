@@ -102,19 +102,18 @@ class InUse(unittest.TestCase):
         path(127, b"/" * 300)  # no terminator within 255 bytes: still bounded
         self.assertEqual(self.sweep(), [0] * 128)
 
-    def test_idle_tells_the_frame_prepare_and_waking_rebases_the_clock(self):
-        flags = lambda: list(self.cpu.mem_read(FR + 4, 8))  # FR_ROUTE 4 .. FR_REBASE 11
-        self.cpu.mem_write(FR + 4, b"\x05\0\0\0\0\x03\0\0")  # routed tracks and pending STARTs from the last frame
+    def test_idle_and_waking_tell_the_clock(self):
+        flags = lambda: list(self.cpu.mem_read(FR + 10, 2))  # FR_IDLE, FR_REBASE
         self.sweep()
-        self.assertEqual(flags(), [0, 0, 0, 0, 0, 0, 1, 0])  # idle: nothing routed, no pending START
+        self.assertEqual(flags(), [1, 0])  # idle
         self.sweep()
-        self.assertEqual(flags(), [0, 0, 0, 0, 0, 0, 1, 0])
+        self.assertEqual(flags(), [1, 0])
         self.cpu.mem_write(GLIDE, b"\x10")
         self.assertEqual(self.call("fm_in_use"), 1)
-        self.assertEqual(flags(), [0, 0, 0, 0, 0, 0, 0, 1])  # awake again: the clock drops one step measurement
-        self.cpu.mem_write(FR + 11, b"\0")  # fm_prepare_frame clears it
+        self.assertEqual(flags(), [0, 1])  # awake again: po_l3b_three drops one step measurement
+        self.cpu.mem_write(FR + 11, b"\0")  # po_rebase clears it
         self.assertEqual(self.call("fm_in_use"), 1)
-        self.assertEqual(flags(), [0] * 8)  # awake to awake: no rebase
+        self.assertEqual(flags(), [0, 0])  # awake to awake: no rebase
 
     def test_glide_a_pick_or_no_bank_keep_it_awake(self):
         self.sweep()

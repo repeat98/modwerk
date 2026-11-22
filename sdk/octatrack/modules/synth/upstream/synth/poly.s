@@ -115,8 +115,8 @@
 | 1.0). An LFO on PTCH sweeps ONE SEMITONE per unit of depth on a synth
 | track, five times the sample tracks' 0.2. Sample tracks: untouched.
 |
-| ALSO HERE: fm_lfo_pass selects the stock LFO loop once per frame.
-| When po_lfo3 filters a live FM voice, LFO 3's depth reads as 0 on a track
+| ALSO HERE: po_lfo3 / po_lfo3b (detours at the depth read of the LFO engine's
+| two copies, 0x40003ca4 and 0x4000d03e: LFO 3's depth is read as 0 on a track
 | whose playing voice is a synth, whatever VOIC -- its slots are VOIC and CHRD
 | there, and LFO 3's default PMTR is PTCH, so a chord byte read as its depth
 | was a pitch LFO: the same key gave a different pitch each press) and
@@ -135,7 +135,7 @@
 | main OS runs from DRAM and so does this.
 
         .text
-        .global sy_render, po_lfo3, po_lfopage
+        .global sy_render, po_lfo3, po_lfo3b, po_lfopage
         .global po_mon, po_moff, po_mgate, po_mogate, po_mrec, po_mtrig
         .global po_ampstage, po_ampdraw1, po_ampdraw2, po_ampdraw3, po_ampedit, po_amplane
         .global po_assign, po_machwin, po_machlist, po_loadsel, po_stop, po_kill
@@ -347,7 +347,7 @@ sy_render:
         | engine here, this is mostly the next frame's first call of such a track. d0, d1, a0, a1 are the caller's scratch.
         move.l  4(%sp),%d0               | track
         bsr     fm_fr_native             | a0 := the frame's reads
-        bne     sy_full
+        bne     sy_native
         tst.b   FR_GLIDE(%a0)
         bne     sy_full                  | GLIDE on: a sample's pitch slides (sy_sample)
         move.l  4(%sp),%d0
@@ -363,6 +363,49 @@ sy_render:
 sy_fast:
         bset    %d0,FR_STALE(%a0)        | S_CUR no longer follows this track's pitch (sy_sample snaps it)
         jmp     STOCK_RENDER
+| Modwerk 0.1.5: an FM track with no voice of ours (S_ON 0, FR_ON its mirror: no trig yet, or killed), GLIDE off,
+| on a call that starts none. The full path would only write the record's PTCH word back as it is (sy_sample's
+| snap) and ship this call's silence as fm_clear_source does, so this ships the same silence and returns. S_CUR is
+| not followed: every synth START sets it (sy_synth). FM_NO_SILENT assembles the full path alone (test_silence.py).
+sy_native:
+        .ifndef FM_NO_SILENT
+        move.l  4(%sp),%d0
+        btst    %d0,FR_ON(%a0)
+        bne     sy_full                  | a voice of ours is on
+        tst.b   FR_GLIDE(%a0)
+        bne     sy_full                  | GLIDE on: sy_sample's slide writes the record's word
+        moveq   #16,%d1
+        cmp.l   16(%sp),%d1              | the frame's second call?
+        bne.s   sy_quiet
+        lea     NIBBLE,%a1
+        lea     (%a1,%d0.l),%a1
+        btst    #4,(%a1)
+        bne     sy_full                  | a voice starts
+sy_quiet:
+        movea.l CURSOR,%a1               | the header this call writes, as fm_clear_source writes it
+        move.l  12(%sp),%d0              | start
+        move.l  %d0,4(%a1)               | source ring write position
+        move.l  #0x04000000,%d1
+        move.l  %d1,8(%a1)               | source rate 1.0, Q26
+        move.l  %d0,%d1
+        swap    %d1
+        lsl.l   #8,%d1
+        lsl.l   #2,%d1
+        move.l  %d1,12(%a1)              | source read position, Q26 (start << 26)
+        move.l  16(%sp),%d1
+        sub.l   %d0,%d1
+        move.l  %d1,(%a1)                | source count
+        lea     16(%a1),%a1
+        tst.l   %d1
+        beq.s   2f
+1:      clr.l   (%a1)+                   | L
+        clr.l   (%a1)+                   | R
+        subq.l  #1,%d1
+        bne.s   1b
+2:      move.l  %a1,CURSOR
+        moveq   #0,%d0
+        rts
+        .endif
 sy_full:
         lea     -48(%sp),%sp
         movem.l %d2-%d7/%a2-%a6,(%sp)    | 44(sp) the stock return; args 52 track, 56 ping, 60 start, 64 end
@@ -649,6 +692,24 @@ sy_machine:
 
 | ---- the mono voice's frame: the rate, as the stock renderer computes it -----
 sy_mono_frame:
+        .ifndef FM_NO_SILENT
+| Modwerk 0.1.5: a released mono voice of an FM track at silence (S_GAIN and S_GPREV 0) with no paraphonic voice
+| fading under it. The rest of the full path would only advance state the next START resets (it is cold: S_GPREV 0,
+| sy_cold1) and ship zeros over the silence fm_clear_source already wrote, so it ends here, every write the DSP sees
+| (the AMP override, the LEG lane byte, the record's PTCH and RATE words, the header) done as before. A legacy
+| marker's track keeps the full path: there the stock call shipped the sample's own samples.
+        btst    #1,S_ON(%a3)
+        beq.s   sy_mf_full
+        tst.l   S_GAIN(%a3)
+        bne.s   sy_mf_full
+        tst.w   S_GPREV(%a3)
+        bne.s   sy_mf_full
+        bsr     fm_native_fr             | track d2 (every other register kept)
+        beq.s   sy_mf_full
+        bsr     po_any                   | fading voices (clobbers d0, d1, a0)
+        beq     sy_done
+sy_mf_full:
+        .endif
         bsr     po_fade_frame            | paraphonic voices fading under the mono voice: their envelope (BUILD 32)
         bsr     po_rate_fold             | d0 = the increment for the word d6, any octave (clobbers d0/d1/d3/d4/d7/a0)
         cmpi.l  #INC_MAX,%d0             | safety net: an impossible pitch (a word off the curve's
@@ -914,7 +975,7 @@ sy_done:
         rts
 
 | ---- po_tick: the sequencer clock, once an audio frame -------------------------
-| Called from the shared frame-prepare callback. The frame builder runs
+| Called from po_lfo3b for track 0's LFO 3 -- the frame builder's LFO pass runs
 | every frame for every track from boot, voice or no voice (sy_render runs
 | only once a FLEX voice has started, which left the first note of a session
 | untimed). Counts frames and the changes of the sequencer's (step, tick) pair
@@ -951,6 +1012,17 @@ po_tk_step:
         blt     po_tk_done
         move.l  %d3,CK_FPS(%a0)
 po_tk_done:
+        rts
+
+| ---- po_rebase: the frame after a rest (this site held stock's bytes, po_tick missed frames): the step change it
+| would measure across them is dropped (negative: po_tick's plausibility test) and the next whole step measured.
+| Clobbers d1, a0.
+po_rebase:
+        clr.b   (fm_fr+FR_REBASE).l
+        lea     po_clock(%pc),%a0
+        move.l  CK_FRAMES(%a0),%d1
+        addi.l  #0x40000000,%d1
+        move.l  %d1,CK_FSTEP(%a0)
         rts
 
 | ---- po_rate: d0 := C4_INC * rate, the rate as the stock renderer computes it ----
@@ -2611,70 +2683,48 @@ po_fi_satp:
         move.l  #0x7fff0000,%d1
         bra     po_fi_put
 
-| ==== LFO depth for a live FM voice ===========================================
-| d2 is the LFO index and a4 identifies the track. po_lfo3_depth keeps the
-| stock destination and substitutes zero depth for LFO 3 on a sounding FM
-| track. Its chord parameter occupies that depth field.
-| The frame builder and the standalone LFO evaluator have identical loop
-| bodies on 1.40C. The ordinary inline loop stays intact. With a live FM
-| voice, use the standalone loop's existing depth filter for this pass.
-| Both evaluate the same 24 wave handlers and use the same two stack locals.
-        .global fm_lfo_pass
-        .balign 4
-fm_lfo_pass:
-        lea     LFO_STATE+56,%a4         | replay the frame's last-track pointer
-        tst.w   (fm_fr+FR_ON).l         | live voices or a newly routed START
-        bne.s   .lfo_active
-        jmp     0x4000cf56               | ordinary tracks stay in the inline loop
-.lfo_active:
-        move.l  %sp,fm_lfo_frame_sp.l
-        movea.l 94(%sp),%a5             | same frame-selected staging lane as inline
-        adda.l  #0x800002b8,%a5
-        jmp     0x40003bc6               | common loop setup, with a2-a5 ready
-
+| ==== po_lfo3: the LFO engine's depth read (jmp, 8 bytes), twice ==================
+| The engine exists twice in the OS, the same code: a routine at 0x40003b90
+| and a copy inlined in the frame builder at 0x4000cf40 (the one that runs
+| for the audio tracks' frames). At the depth read of both -- `mvsw
+| %a2@(0x12,%d2:l:2),%d0; lea %a0@(0,%d4:l:2),%a1` at 0x40003ca4 and at
+| 0x4000d03e -- d2 = the LFO (2 = LFO 3), a4 = the track's LFO state
+| (LFO_STATE + 8 * track), a2 = its fp record, a0 = its staging record. On a
+| track playing a synth voice LFO 3's depth reads as 0, whatever VOIC: the
+| chord byte modulates nothing. d1/d3/d4/d7 are dead here (reloaded by the
+| code that follows); a0 is done with. The stubs share po_lfo3_depth.
 po_lfo3:
         bsr     po_lfo3_depth
-        tst.l   %d2
-        bne.s   .lfo_standalone
-        cmpa.l  #LFO_STATE,%a4           | final iteration is track 1, LFO 1
-        bne.s   .lfo_standalone
-        move.l  %sp,%d1
-        addq.l  #8,%d1                  | the evaluator's two four-byte locals
-        cmp.l   fm_lfo_frame_sp(%pc),%d1
-        bne.s   .lfo_standalone          | an independent standalone invocation
-        clr.l   fm_lfo_frame_sp.l
-        jmp     0x4000d046               | finish the frame with its original stack and EMAC
-.lfo_standalone:
         jmp     0x40003cac
-        .balign 4
-fm_lfo_frame_sp:
-        .long   0
-| Called once before the eight tracks compute their LFOs. The base saves
-| the volatile registers. po_tick and fm_frame also use d3, which the C
-| callback convention preserves. Each routine leaves the EMAC alone.
-| Modwerk 0.1.5: the base keeps calling this while FM Synth rests (the event
-| never rests), so with FR_IDLE set (registration.c fm_in_use, answering 0)
-| it reads that one byte and returns. FR_REBASE (set as the answer wakes)
-| makes po_tick skip the step it would measure across the frames it missed.
-        .balign 4
-        .global fm_prepare_frame
-fm_prepare_frame:
-        tst.b   (fm_fr+FR_IDLE).l
-        bne.s   .fpf_idle
-        move.l  %d3,-(%sp)
-        tst.b   (fm_fr+FR_REBASE).l
-        beq.s   .fpf_tick
-        clr.b   (fm_fr+FR_REBASE).l
-        lea     po_clock(%pc),%a0
-        move.l  CK_FRAMES(%a0),%d1
-        addi.l  #0x40000000,%d1          | the next step change measures a negative step: skipped
-        move.l  %d1,CK_FSTEP(%a0)
-.fpf_tick:
-        bsr     po_tick
-        bsr     fm_frame
-        move.l  (%sp)+,%d3
-.fpf_idle:
+| po_lfo3b is the frame builder's copy, the one that runs: 24 calls a frame (eight tracks, three LFOs), whatever
+| the tracks play. Modwerk 0.1.3: a jsr site (it returns to the nop the 8-byte site leaves), and LFO 1 and 2 return
+| within this one line; LFO 3 tests one bit of the frame's line (FR_ON, S_ON's mirror) instead of the track's
+| record. Every line of the module a stock track's frame touches costs a cache miss (owner's MKII, 14 November 2026:
+| this site cost 2.8 points of the frame interrupt with FM Synth on no track).
+        .balign 16
+po_lfo3b:
+        mvs.w   0x12(%a2,%d2.l*2),%d0    | displaced: the depth
+        lea     (%a0,%d4.l*2),%a1        | displaced
+        moveq   #2,%d1
+        cmp.l   %d1,%d2
+        beq.s   po_l3b_three
         rts
+po_l3b_three:
+        move.l  %a4,%d1
+        subi.l  #LFO_STATE,%d1           | 8 * track
+        bne.s   po_l3b_depth
+        tst.b   (fm_fr+FR_REBASE).l      | Modwerk 0.1.5: FM Synth woke from a rest (registration.c fm_in_use)
+        beq.s   1f
+        bsr     po_rebase
+1:      bsr     po_tick                  | track 0, LFO 3: the clock, once a frame (clobbers d1, d3, a0)
+        bsr     fm_frame                 | ... and the frame's masks (clobbers d1, d3, a0)
+        moveq   #0,%d1                   | track 0
+po_l3b_depth:
+        lsr.l   #3,%d1
+        btst    %d1,(fm_fr+FR_ON).l      | its playing voice is a synth (po_lfo3_depth's test)?
+        beq.s   1f
+        moveq   #0,%d0                   | muted
+1:      rts
 po_lfo3_depth:
         mvs.w   0x12(%a2,%d2.l*2),%d0    | displaced: the depth
         lea     (%a0,%d4.l*2),%a1        | displaced
@@ -5533,9 +5583,10 @@ fm_is_native:
 | (owner's MKII, 14 November 2026: four FLEX tracks playing, FM Synth on none, 0.1.2 +19.0 points of the frame
 | interrupt, the first 0.1.3 +15.6; of that, the base's FLEX route to a RENDER_FLEX machine 6.5, the LFO depth site
 | 2.8, sy_render's fast path 2.3, the slot copy 2.2). So FM Synth declares no RENDER_FLEX, and fm_frame works out once
-| a frame, for all eight tracks, which of them the engine must render. The slot copy
-| reads FR_ROUTE. The LFO pass tests live voices and pending first notes before entering the track loop.
-| Both follow the frame-prepare callback. The Part index and GLIDE are in
+| a frame, for all eight tracks, which of them the engine must render; the slot copy (fm_source_dispatch) and the LFO
+| depth site (po_lfo3b) test one bit of this one line inline, and every other track's frame never enters FM Synth.
+| fm_frame runs from the LFO pass's track 0, LFO 3, every frame before the packer (nothing jumps into 0x4000cf40 ..
+| 0x4000d3fc from outside it: the pass always precedes the slot copies and renders). The Part index and GLIDE are in
 | battery RAM, about half a microsecond a read, and the bank's bytes are uncached (docs/MODULE_PERFORMANCE.md):
 | they are read here once a frame. Nothing below the frame interrupt runs inside it, so they hold for the frame. The
 | panel, key and MIDI hooks run outside the interrupt and keep reading the Part themselves (fm_is_native,
@@ -5546,10 +5597,10 @@ fm_is_native:
         .set    FR_GLIDE, 6              | the GLIDE byte
         .set    FR_STALE, 7              | bit t: stock rendered track t alone since S_CUR was last set
         .set    FR_ON, 8                 | bit t: S_ON of track t is nonzero (written where S_ON is: sy_set, po_kill)
-        .set    FR_PENDING, 9            | routed STARTs, beside FR_ON for the single word test
-        .set    FR_IDLE, 10              | nonzero: fm_in_use answered 0, fm_prepare_frame does nothing
-        .set    FR_REBASE, 11            | nonzero: fm_in_use woke, the clock drops its next step measurement
-        .global fm_fr                    | registration.c fm_in_use writes FR_IDLE, FR_REBASE, FR_ROUTE, FR_PENDING
+        .set    FR_PENDING, 9            | routed STARTs this frame (fm_frame; 0.1.5 keeps #1928's faster fm_frame)
+        .set    FR_IDLE, 10              | nonzero: fm_in_use answered 0 (FM Synth may rest)
+        .set    FR_REBASE, 11            | nonzero: fm_in_use woke it, po_l3b_three drops the clock's next step
+        .global fm_fr                    | registration.c fm_in_use writes FR_IDLE and FR_REBASE
         .balign 16
 fm_fr:
         .long   0
@@ -5784,20 +5835,3 @@ fm_start:
 1:      movem.l (%sp),%d2/%a0
         lea 8(%sp),%sp
         jmp 0x4000f450
-
-| The base prepares the frame before the LFO pass. A standalone SDK build
-| makes the same call at the existing LFO detour, preserving its live registers.
-        .global fm_lfo_frame_entry
-        .ifdef MODWERK_EVENTS
-        .set    fm_lfo_frame_entry,fm_lfo_pass
-        .else
-        .text
-        .balign 4
-fm_lfo_frame_entry:
-        lea     -20(%sp),%sp
-        movem.l %d0-%d1/%a0-%a2,(%sp)
-        jsr     fm_prepare_frame
-        movem.l (%sp),%d0-%d1/%a0-%a2
-        lea     20(%sp),%sp
-        jmp     fm_lfo_pass
-        .endif
