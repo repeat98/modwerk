@@ -1,3 +1,71 @@
+# FM Synth 0.1.5: rests while nothing uses it (prepared 22 November 2026, not tested on a unit)
+
+**Why.** The owner's MKII, development twin of Octatrack base 0.7.14 (`base/octatrack-next` `b36f9c53e`), Dev17
+pattern C01, eight STATIC tracks playing at 126 BPM: the frame interrupt's share was 39.4 % without modules and 45.2 %
+with FM Synth 0.1.4 installed and on no track, +5.8 points (reported by the owner's session, 22 November 2026; not
+re-measured here). The owner's rule (20 November 2026): an installed module nobody uses costs nothing. The owner waived
+the ask-the-author step for this optimization on 22 November 2026; the engine and its credit stay Tim Hastie's.
+
+**What changes.** FM Synth answers `ev_in_use` itself (`registration.c` `fm_in_use`, `runtime.json`), so the base
+no longer judges it as a machine. While it answers 0 these nine sites hold stock's bytes:
+
+| Site | What | Why it rests |
+| --- | --- | --- |
+| 0x4000d03e `po_lfo3b` | the frame builder's LFO depth read, every track and LFO, a frame; runs `fm_frame` | frame path |
+| 0x40003ca4 `po_lfo3` | the LFO routine's depth read | LFO 3 is muted only on an FM track |
+| 0x4000c634 `po_retrig` | the command byte copy, every track, a frame | acts on a sounding FM voice only |
+| 0x4000d514 `fm_source_dispatch` | the renderer slot copy, every track, a frame | rests with the STATIC entry, below |
+| 0x4000b51a `po_rel`, 0x4000b2c8 `po_stop`, 0x4000685c `po_kill` | release, STOP and voice kill consumers | end engine voices only |
+| 0x400d6434 (data) | the STATIC renderer entry, `sy_render` | a STATIC track bound while it rests gets stock's renderer; resting puts every slot holding `sy_render` back to stock's (the base's `modwerk_machine_site_restored`) |
+| 0x400d6458 (data) | the FLEX start entry, `fm_start` | stock's start for every FLEX track |
+
+The two data entries are symbol references, which the pinned builder (`build.py`, a base input) cannot flag; the
+package row's `"restingReferences"` has the host wrapper (`scripts/octatrack-module-packages.py`) set the loader's
+`RUNTIME_SITE_RESTS` bit on their records. The loader restores a resting site, code or data, masked and a whole aligned
+word at a time, the same way. Everything a musician reaches from the panel stays awake: the pages, choosers, AMP SETUP's
+LEG box, MIDI, transposition, the slot assigners and the quantizer's take events.
+
+**In use** (`fm_in_use`, each UI tick): a pick of FM SYNTH (`fm_admit_track` sets a flag the base's pick reads before
+it wakes a resting machine, so the wake lands before the commit), GLIDE on (sample tracks with LEG MONO slide through
+`sy_render`; on whether or not a track has LEG MONO), an FM/1 track in the live Part, and a sweep of one Part (16
+banks, 4 working and 4 saved Parts each) and one FLEX slot (a legacy FMSYNTH* / SYNTH* marker, `po_slot_marker`'s test)
+a call. It rests only after a whole sweep, 128 ticks or about two seconds, found neither. Its cost a tick, in the UI
+task and never in the frame interrupt: two Parts' eight type bytes (three signature bytes on a FLEX track), GLIDE, the
+Part index and the bank word, and one slot's path, read once a byte up to its end or 255 bytes from battery RAM (about
+half a microsecond a byte; an empty slot one read).
+
+**Known gaps.** A FLEX slot that gets a legacy marker file while FM Synth rests is seen within a sweep: notes on it
+until then play the marker's own sample (upstream's SYNTH.wav is silent). After a project load an FM track of the live
+Part wakes it within a UI tick, one in another bank within a sweep; a note that starts before the wake renders silent
+until its next trig, as the base renders a resting machine's track.
+
+**Built** (`node scripts/mirror-octatrack-modules.mjs && python3 -B scripts/octatrack-module-packages.py`, main
+`fa4156543` plus this change): `public/octatrack-modules/synth/0.1.5-experimental.mwrm`, 31,226 bytes, SHA-256
+`543001f3bb521968b6b5d38e246bea8a5d0828f16663397696191e96162b598c`, module `e8c3e4fa`, 24 sites (the nine above flagged
+resting, as the package's site records show), 39 stock copies, 4 bytes of bss, `ev_in_use` at hook 54. The recipe was
+recaptured from the stock OS 1.40C (`build.py --octabam-machine synth --capture-stock-recipe`): the same 39 copies at the
+same offsets, the image hash and the `registration.s` and `machine-ports.json` pins moved, and every machine recipe's pin of
+`machine-ports.json` with them. `octatrack-module-packages.py --check --stock` (the strict stock-free scans): every
+package identical.
+
+**Software checks.** `test_in_use.py` runs `fm_in_use` and `fm_admit_track` from `registration.s` on Unicorn's
+ColdFire V4e core with the bank, battery RAM and slot records mapped (skipped without Unicorn): awake from install until
+the first whole sweep finds nothing, then 0; an FM/1 track in the live Part, in Parts of banks 0, 9 and 15, working and
+saved, each found at its sweep index and kept for the next sweep; FM/2 and a STATIC track with the bytes are not FM; a
+marker in slot 100 (`FMSYNTH.WAV`, `SYNTH1.wav`, `SYNTH`) found, a folder named SYNTHS not, an unterminated path bounded;
+GLIDE, a pick (once) and no bank keep it awake. `sdk/tests/test_module_packages_cli.py` covers `restingReferences`.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Installed, no FM track, C01 playing | the nine sites must hold stock's bytes and cost nothing | `device:price` at rest against the empty base | not run: unit held by the owner |
+| Pick FM SYNTH while playing | the wake must land before the commit and the first FM note | pick on a track of a playing pattern, listen to the first trig | not run |
+| A STATIC track with LEG MONO, GLIDE on | GLIDE must keep it awake | slide by ear, GLIDE on and off | not run |
+| Remove the last FM track | rests after about two seconds | read the site bytes or the cost before and after | not run |
+| Part or bank change to a Part with FM while playing | the sweep must have kept it awake | change to a bank whose Part has FM | not run |
+| Project load with FM tracks | live Part within a tick | load, then PLAY | not run |
+| Legacy FMSYNTH marker project | the slot sweep must keep it awake | an upstream marker project | not run |
+| Undo of a trial over a resting FM Synth | resting sites go back | trial and Undo | not run |
+
 # FM Synth 0.1.4: its CPU price
 
 0.1.4 differs from 0.1.3 only in the price byte of its generated machine descriptor: `"cpuPrice": 6` in FM Synth's entry of `sdk/machines/octatrack/module-adapters/machine-ports.json`, which `machine_ports.py` writes as `reserved[0]` of the `mw_machine` descriptor, and the same 6 as `resources.cpuPrice` in `octamod.module.json`. No code changed: in the module's folder only `release-notes.json`, the manifest and Markdown differ from 0.1.3. The 0.1.3 report follows unchanged below.

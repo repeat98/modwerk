@@ -1,8 +1,10 @@
-# FM Synth — 0.1.4 experimental
+# FM Synth — 0.1.5 experimental
 
 ## Overview
 
 FM SYNTH is a dedicated track machine beside FLEX, STATIC, THRU, NEIGHBOR and PICKUP. It uses Tim Hastie’s octatrick v2.9 two-operator FM engine: a sine carrier with a sine modulator, feedback and an index-decay envelope. One to four paraphonic voices feed the track’s existing AMP, filter and effects.
+
+Version 0.1.5 rests while nothing in the project uses FM Synth: while no track of any Part is FM SYNTH, no FLEX slot holds a legacy FMSYNTH sample and GLIDE is off, its frame-interrupt sites hold the stock bytes and the frame never enters its code. Picking FM SYNTH wakes it before the pick commits; a project load that brings an FM track wakes it within a UI tick. Sound and controls are 0.1.4's (TESTING.md).
 
 Version 0.1.4 tells the Octatrack base what one playing track of FM Synth costs: 6 % of a frame, measured on an MKII with 0.1.3 (TESTING.md). The base's CPU budget then admits FM Synth on up to seven tracks of a Part, where it charged a machine that names no price 12 % and refused the fourth. The budget is in every Modwerk base from 0.7 on. Nothing else changes: sound, controls and the code are 0.1.3's.
 

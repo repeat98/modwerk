@@ -1,9 +1,9 @@
 {
-  "version": "0.1.4-experimental",
-  "date": "2026-11-17",
+  "version": "0.1.5-experimental",
+  "date": "2026-11-22",
   "changes": [
-    "name the machine's CPU price: \"cpuPrice\": 6 in its machine-ports.json entry, which machine_ports.py writes as reserved[0] of the generated mw_machine descriptor, and resources.cpuPrice in octamod.module.json.",
-    "the price is what one playing track adds to the frame interrupt (docs/MODULE_PERFORMANCE.md): measured with 0.1.3 on an MKII, 4.6 points, priced 6. The base's CPU budget (45) admits seven FM tracks a Part, where its default of 12 admitted three.",
-    "no other change: the module's code is 0.1.3's."
+    "FM Synth rests while nothing in the project uses it: it answers ev_in_use (registration.c fm_in_use) and marks its seven frame-path detours \"rests\" in runtime.json; the package row's \"restingReferences\" adds the STATIC renderer entry 0x400d6434 and the FLEX start entry 0x400d6458. While it rests all nine hold stock's bytes.",
+    "In use: an FM/1 track in the live Part, or in any Part of any bank, working or saved (one a UI tick), a FLEX slot holding a legacy FMSYNTH* / SYNTH* marker (one a tick), GLIDE on, or a pick of FM SYNTH (fm_admit_track, so the base's wake lands before the commit). It rests after a whole sweep, about two seconds, finds none.",
+    "No change to the sound or the controls; the engine, pages, MIDI and key hooks are 0.1.4's."
   ]
 }
