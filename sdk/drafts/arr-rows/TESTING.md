@@ -230,3 +230,12 @@ refused insert (no row added) left alone, and FUNC + UP untouched. Under ot_emu 
 built from this branch: a HALT on row 3 (`01000003`), cursor on it, FUNC + DOWN: 7 rows, row 3 `HALT: 003` and row 4
 `HALT: 004` (`01000004`); stock alone gives `LOOP: 003/∞` on row 4 (above). FUNC + DOWN on row 1, above the HALT:
 the HALT moved to row 4 with target 4, as on stock. Not tested on a unit yet.
+
+### On the unit, 22 November 2026 (base 0.7.13, kept beside USB AUDIO)
+
+Package `ec53c063…`, as the developer reported it: a HALT on row 3 and FUNC + DOWN on it gave `HALT: 003` and
+`HALT: 004` (passed); FUNC + DOWN on a pattern row and FUNC + UP behaved as on stock (passed). Moving two selected rows
+with CUE + RIGHT failed: the editor stopped scrolling, the selection went below the screen and the last row was not
+drawn. The move set the cursor itself, without the editor's first shown row. Fixed: moves and undo set the cursor with
+stock's own routine (0x400336bc), which scrolls the editor along (six rows shown). `verify.py`: 95 checks; the previous
+code fails the two new scroll checks.

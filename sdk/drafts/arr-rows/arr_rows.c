@@ -70,6 +70,7 @@
 #define CLEAR_ROW 0x4009aff4u      /* clear_row(row) */
 #define MESSAGE 0x4005a2b8u        /* message(text, 0x30) */
 #define REDRAW 0x40049738u         /* the editor's redraw */
+#define SET_CURSOR 0x400336bcu     /* set_cursor(row): stock's own cursor move, scrolling the editor with it (six rows shown) */
 #define ROW_LIMIT_TEXT 0x400b94abu /* "ROW LIMIT REACHED" */
 
 /* LCD rows of the list (measured on the 1.40C editor, RESEARCH.md): the first
@@ -86,6 +87,7 @@ void host_wr8(uint32_t a, uint8_t v);
 void host_clear_row(int row);
 void host_message(const char *text);
 void host_redraw(void);
+void host_set_cursor(int row);
 static uint32_t rd8(uint32_t a) { return host_rd8(a); }
 static void wr8(uint32_t a, uint32_t v) { host_wr8(a, (uint8_t)v); }
 static uint32_t rd16(uint32_t a) { return (rd8(a) << 8) | rd8(a + 1); }
@@ -95,6 +97,7 @@ static void wr32(uint32_t a, uint32_t v) { wr16(a, v >> 16); wr16(a + 2, v); }
 static void clear_row(int row) { host_clear_row(row); }
 static void message(const char *text) { host_message(text); }
 static void redraw(void) { host_redraw(); }
+static void set_cursor(int row) { host_set_cursor(row); }
 static void row_limit(void) { host_message("ROW LIMIT REACHED"); }
 #else
 static uint32_t rd8(uint32_t a) { return *(volatile uint8_t *)a; }
@@ -106,6 +109,7 @@ static void wr32(uint32_t a, uint32_t v) { *(volatile uint32_t *)a = v; }
 static void clear_row(int row) { ((void (*)(int))CLEAR_ROW)(row); }
 static void message(const char *text) { ((void (*)(const char *, int))MESSAGE)(text, 0x30); }
 static void redraw(void) { ((void (*)(void))REDRAW)(); }
+static void set_cursor(int row) { ((void (*)(int))SET_CURSOR)(row); }
 static void row_limit(void) { message((const char *)ROW_LIMIT_TEXT); }
 #endif
 
@@ -269,7 +273,7 @@ static void restore(struct arr_state *s, const char *text)
     uint32_t a = arr();
     put_bytes(a + ROW_AT, s->snap, ROWS * ROW_BYTES);
     wr16(a + COUNT_AT, s->undo_count);
-    if ((unsigned)cursor() > s->undo_count) wr32(CURSOR, s->undo_count);
+    if ((unsigned)cursor() > s->undo_count) set_cursor((int)s->undo_count);
     s->undo = UNDO_NONE;
     s->last = DID_UNDO;
     forget_selection(s);
@@ -429,7 +433,7 @@ static void move_rows(struct arr_state *s, unsigned lo, unsigned hi, int dir)
     if (dir < 0) for (unsigned r = lo; r <= hi; ++r) copy_row(a, r, r - 1);
     else for (unsigned r = hi + 1; r-- > lo;) copy_row(a, r, r + 1);
     put_bytes(row_at(a, lands), keep, ROW_BYTES);
-    wr32(CURSOR, (uint32_t)((int)cursor() + dir));
+    set_cursor(cursor() + dir);                          /* as stock moves it: the editor scrolls along (the developer's MKI) */
     if (s->anchor >= 0) s->anchor = (int16_t)(s->anchor + dir);
     s->undo = UNDO_NONE;
     s->last = DID_MOVE;

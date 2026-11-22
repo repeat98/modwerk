@@ -55,6 +55,16 @@ static uint8_t *row(unsigned r) { return &arrangement[0x14 + r * ROWB]; }
 void host_clear_row(int r) { memset(row((unsigned)r), 0, ROWB); clears[cleared++] = r; }
 void host_message(const char *text) { snprintf(last_message, sizeof last_message, "%s", text); }
 void host_redraw(void) { ++redraws; }
+/* Stock's set_cursor (0x400336bc): the cursor, and the first row shown kept within six rows of it. */
+void host_set_cursor(int row)
+{
+    set32(0x460d16e4u, (uint32_t)row);
+    int top = (int)get32(0x460d1c64u);
+    if (row < top) top = row;
+    if (row > top + 5) top = row - 5;
+    if (top < 0) top = 0;
+    set32(0x460d1c64u, (uint32_t)top);
+}
 static unsigned char lcd[1024];
 void host_invert(unsigned char *frame, int x, int y) { frame[x * 8 + 7 - (y >> 3)] ^= (unsigned char)(1u << (y & 7)); }
 static int lit(int x, int y) { return lcd[x * 8 + 7 - (y >> 3)] >> (y & 7) & 1; }
@@ -498,6 +508,16 @@ int main(void)
     hold(FUNC, 1); tap(UP); hold(FUNC, 0);
     arr_tick(0);
     check("FUNC + UP is stock's alone", row(5)[3] == 5 && rows() == 8);
+
+    /* moving rows past the bottom of the screen: the editor scrolls along, as with stock's cursor moves */
+    fill(14);
+    set32(0x460d1c64u, 0); set_cursor(4);
+    hold(CUE, 1); tap(DOWN); hold(CUE, 0);         /* rows 4-5 selected, cursor on 5 */
+    for (int k = 0; k < 3; ++k) { hold(CUE, 1); tap(RIGHT); hold(CUE, 0); }
+    check("three moves down: the rows are on 7-8 and the cursor on 8", same(7, 4) && same(8, 5) && cursor() == 8);
+    check("the editor scrolled to keep the cursor on screen (first row shown 3)", get32(0x460d1c64u) == 3);
+    for (int k = 0; k < 6; ++k) { hold(CUE, 1); tap(LEFT); hold(CUE, 0); }
+    check("six moves back up: rows on 1-2, the cursor on 2, and the editor scrolled up to show it first", same(1, 4) && same(2, 5) && cursor() == 2 && get32(0x460d1c64u) == 2);
 
     printf("%d checks, %d failed\n", checks, failures);
     return failures != 0;
