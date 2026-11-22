@@ -6,7 +6,7 @@ import { newConfiguration } from '../config/workspace'
 import type { LinkState, OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { pendingReask, resetReask, settleReask } from '../community/diagnostics-reask'
 import { OctatrackHub } from './OctatrackHub'
-import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from '../engine/elekloader/published-octatrack.fixture'
 
 // The unit's log says its DSP stalled (useOctatrackLoad reads it); the hub's line and the question after it are tested here.
 const load = vi.hoisted(() => ({ stopped: true }))

@@ -2,6 +2,8 @@
 // unit and how it was measured (docs/MODULE_PERFORMANCE.md, "Every module names its CPU price"). A machine's price is also what its
 // descriptor carries in reserved[0], the figure the base admits a Part's machines by (machine_registry.c's cpu_price()), so the two
 // must agree. Modules listed before the rule wait on one list, sdk/module-cpu-prices-pending.json, which only shrinks.
+// A machine may also name the CPU meter it adds (resources.cpuMeter, its descriptor's reserved[1]): the base's busy check charges that
+// in place of the price. It is recomputed from the paired readings in its source (CPU_METER_RECORD), never taken on trust.
 // npm run modules:check (CI, pr:ready, the doctor's "module rules") refuses what cpuPriceProblems() names; module:doctor shows a line.
 import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
@@ -12,12 +14,32 @@ export const CPU_PRICE_PENDING_PATH = 'sdk/module-cpu-prices-pending.json'
 export const CPU_PRICE_PENDING_LISTED_BEFORE = '2026-11-17'
 export const CPU_PRICE_PENDING_REASON = 'price not yet measured'
 const PORTS = 'sdk/machines/octatrack/module-adapters'
+// device:price --write keeps its readings here, in the module's folder; the checks recompute the price from them.
+export const CPU_PRICE_RECORD = 'evidence/cpu-price.json'
+// A machine's meter readings: { module, pairs: [{ track, flex, machine, flexReadings?, machineReadings?, conditions, source? }] }, percent
+// of the CPU meter; readings, when given, are seven 1-second `health` cpu values (per mille) whose middle five give flex and machine.
+export const CPU_METER_RECORD = 'evidence/cpu-meter.json'
+/** A manifest as device:price --write writes it: two-space JSON, \u-escaped when the text it came from was. */
+export function manifestJson(document, originalText) {
+  const json = JSON.stringify(document, null, 2) + '\n'
+  return /\\u[0-9a-fA-F]{4}/.test(originalText) ? json.replace(/[\u007f-\uffff]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')) : json
+}
+/** A manifest's text as it read before --write gave it a price; null when it names none. */
+export function manifestWithoutPrice(text) {
+  const document = JSON.parse(text)
+  if (!document.resources?.cpuPrice) return null
+  delete document.resources.cpuPrice
+  return manifestJson(document, text)
+}
+
+/** The price a device:price reading gives: the larger of what the module added at rest and in use, never below 0. */
+export const measuredPrice = result => Math.max(0, result.atRestAdds.frame, result.inUseAdds?.frame ?? 0)
 
 /** How to measure the price of a machine (true) or of any other module (false), for the messages. */
 export function cpuPriceHowTo(id, machine) {
   return machine
     ? 'measure what one track of it adds to the frame interrupt on a unit with npm run device -- do and guard (a trig on every step, every voice sounding, against the same pattern without those trigs; docs/MODULE_PERFORMANCE.md), then write resources.cpuPrice with "measure": "machine-render" in octamod.module.json and the same percent as reserved[0] of its machine descriptor (docs/MODULE_PERFORMANCE.md)'
-    : 'measure it on a unit with npm run device:price -- ' + id + ' (the frame interrupt\'s share it adds, installed and, for an effect, on one slot; docs/OCTATRACK_DRIVING.md), then write resources.cpuPrice with "measure": "frame-interrupt" in octamod.module.json (docs/MODULE_PERFORMANCE.md)'
+    : 'measure it on a unit with npm run device:price -- --write --base ID --scene TEXT ' + id + ' (the frame interrupt\'s share it adds, installed and, for an effect, on one slot; docs/OCTATRACK_DRIVING.md), which writes resources.cpuPrice ("measure": "frame-interrupt") and its readings in ' + CPU_PRICE_RECORD + ' (docs/MODULE_PERFORMANCE.md)'
 }
 
 /** The pending list: Map id -> reason. Throws on a list that is not plain. */
@@ -48,9 +70,11 @@ export function portGlue(root) {
 }
 
 /** reserved[0] of the generated mw_machine record: the byte after source_kind, which follows the .word voice, engine pair. */
-export function glueReserved0(glue) {
+export function glueReserved0(glue) { return glueReserved(glue)?.[0] ?? null }
+/** reserved[0] and reserved[1] of the generated mw_machine record, or null. */
+function glueReserved(glue) {
   const match = /^mw_machine:[\s\S]*?\.word\s+\d+,\s*\d+\s*\n\s*\.byte\s+(\d+),\s*(\d+),\s*(\d+),\s*(\d+)/m.exec(glue)
-  return match ? Number(match[2]) : null
+  return match ? [Number(match[2]), Number(match[3])] : null
 }
 
 function sourceFiles(folder, extensions) {
@@ -69,17 +93,22 @@ export function cReserved0(folder, symbol) {
   while (end < text.length && depth) { if (text[end] === '{') depth++; else if (text[end] === '}') depth--; end++ }
   const body = text.slice(start, end - 1)
   if (!/\.abi\s*=/.test(body)) return { problem: name + ': ' + symbol + ' is not written with designated fields, so its reserved[0] cannot be read', fix: 'write it as { .abi = MODWERK_MACHINE_ABI, ..., .reserved = {PERCENT} }' }
-  const match = /\.reserved\s*=\s*\{\s*([A-Za-z0-9_]+)|\.reserved\s*\[\s*0\s*\]\s*=\s*([A-Za-z0-9_]+)/.exec(body)
-  if (!match) return { price: 0, where: name }
-  let token = match[1] ?? match[2]
-  for (let i = 0; i < 4 && /^[A-Za-z_]\w*$/.test(token); i++) {
-    const define = texts.map(([, t]) => new RegExp('^\\s*#\\s*define\\s+' + token + '\\s+\\(?\\s*([A-Za-z0-9_]+)\\s*\\)?\\s*(?:/[*/].*)?$', 'm').exec(t)).find(Boolean)
-    if (!define) break
-    token = define[1]
+  const list = /\.reserved\s*=\s*\{([^}]*)\}/.exec(body)?.[1].split(',').map(item => item.trim()).filter(Boolean) ?? []
+  const single = k => new RegExp('\\.reserved\\s*\\[\\s*' + k + '\\s*\\]\\s*=\\s*([A-Za-z0-9_]+)').exec(body)?.[1]
+  const tokens = [list[0] ?? single(0), list[1] ?? single(1)], values = []
+  for (const [k, start] of tokens.entries()) {
+    if (start === undefined) { values.push(0); continue }
+    let token = start
+    for (let i = 0; i < 4 && /^[A-Za-z_]\w*$/.test(token); i++) {
+      const define = texts.map(([, t]) => new RegExp('^\\s*#\\s*define\\s+' + token + '\\s+\\(?\\s*([A-Za-z0-9_]+)\\s*\\)?\\s*(?:/[*/].*)?$', 'm').exec(t)).find(Boolean)
+      if (!define) break
+      token = define[1]
+    }
+    const literal = /^(0x[0-9a-f]+|\d+)u?$/i.exec(token)
+    if (!literal) return { problem: name + ': ' + symbol + '\'s reserved[' + k + '] is ' + token + ', which is not a number or a #define of one in its folder', fix: 'write .reserved = {PERCENT} with the measured percent' }
+    values.push(Number(literal[1]))
   }
-  const literal = /^(0x[0-9a-f]+|\d+)u?$/i.exec(token)
-  if (!literal) return { problem: name + ': ' + symbol + '\'s reserved[0] is ' + token + ', which is not a number or a #define of one in its folder', fix: 'write .reserved = {PERCENT} with the measured percent' }
-  return { price: Number(literal[1]), where: name }
+  return { price: values[0], meter: values[1], where: name }
 }
 
 /** Every machine descriptor the module contributes to ot_machines, from its runtime*.json, its machine port and its USB package row,
@@ -95,10 +124,10 @@ export function machineDescriptors({ root, id, glue = null }) {
   for (const item of row?.subscribe ?? []) if (typeof item === 'string' && item.startsWith('ot_machines:')) symbols.set(item.split(':')[1], symbols.get(item.split(':')[1]) ?? 'c')
   return [...symbols].map(([symbol, kind]) => {
     if (kind === 'c') return { symbol, ...cReserved0(folder, symbol) }
-    const price = glueReserved0((glue ?? portGlue(root))[id] ?? '')
-    return price === null
+    const reserved = glueReserved((glue ?? portGlue(root))[id] ?? '')
+    return reserved === null
       ? { symbol, problem: 'the descriptor ' + PORTS + '/machine_ports.py generates for it could not be read', fix: 'python3 -B -c "import machine_ports" in ' + PORTS + ' names the error' }
-      : { symbol, price, where: PORTS + '/machine-ports.json (generated by machine_ports.py)', port: true }
+      : { symbol, price: reserved[0], meter: reserved[1], where: PORTS + '/machine-ports.json (generated by machine_ports.py)', port: true }
   })
 }
 
@@ -118,6 +147,11 @@ export function cpuPriceStatus({ root, document, pending, glue = null }) {
   if (!declared) return { state: 'fail', detail: 'it names no CPU price (resources.cpuPrice)', fix: howTo }
   if (machine && declared.measure !== 'machine-render') return { state: 'fail', detail: 'it is a machine, so its price is what one playing track adds ("measure": "machine-render"), not ' + declared.measure, fix: howTo }
   if (!machine && declared.measure !== 'frame-interrupt') return { state: 'fail', detail: 'it is not a machine, so its price is the frame interrupt\'s share ("measure": "frame-interrupt"); only a machine\'s descriptor carries a render price', fix: howTo }
+  if (declared.source.endsWith('.json')) { // a price device:price wrote: recomputed from its readings, never taken on trust
+    const record = readJson(resolve(root, 'sdk/octatrack/modules', id, declared.source))
+    if (record?.module !== id || !record.result?.atRestAdds) return { state: 'fail', detail: 'its price names ' + declared.source + ' as its source, which holds no device:price reading of ' + id, fix: howTo }
+    if (measuredPrice(record.result) !== declared.value) return { state: 'fail', detail: 'it names ' + declared.value + ' % of a frame, but the reading in ' + declared.source + ' gives ' + measuredPrice(record.result), fix: 'write the price with npm run device:price -- --write, never by hand' }
+  }
   const disagree = descriptors.find(item => item.price !== declared.value)
   if (disagree) return {
     state: 'fail',
@@ -126,8 +160,48 @@ export function cpuPriceStatus({ root, document, pending, glue = null }) {
       ? 'a ported machine\'s descriptor comes from machine_ports.py: write "cpuPrice": ' + declared.value + ' in its entry of ' + PORTS + '/machine-ports.json'
       : 'write .reserved = {' + declared.value + '} in ' + disagree.symbol + ', the same percent as resources.cpuPrice',
   }
+  const meter = meterProblem({ root, document, machine, descriptors })
+  if (meter) return { state: 'fail', ...meter }
   const what = declared.value + ' % of a frame (' + declared.measure + ', ' + declared.tool + ', ' + declared.date + ')'
-  return { state: 'ok', detail: what + (descriptors.length ? '; ' + descriptors.map(item => item.symbol).join(', ') + ' carries the same in reserved[0]' : '') }
+  const adds = document.resources.cpuMeter ? '; adds ' + document.resources.cpuMeter.value + ' meter points (reserved[1], ' + document.resources.cpuMeter.date + ')' : ''
+  return { state: 'ok', detail: what + (descriptors.length ? '; ' + descriptors.map(item => item.symbol).join(', ') + ' carries the same in reserved[0]' : '') + adds }
+}
+
+/** The meter points a machine adds, recomputed from its paired readings: { added } or { problem }. */
+export function measuredMeter(root, id, source) {
+  const record = source?.endsWith('.json') ? readJson(resolve(root, 'sdk/octatrack/modules', id, source)) : null
+  if (record?.module !== id || !Array.isArray(record.pairs) || !record.pairs.length) return { problem: 'its meter cost names ' + source + ' as its source, which holds no paired meter readings of ' + id + ' (' + CPU_METER_RECORD + ')' }
+  const middle = readings => { const kept = [...readings].sort((a, b) => a - b).slice(1, -1); return kept.reduce((a, b) => a + b, 0) / kept.length / 10 }
+  let added = -Infinity
+  for (const [i, pair] of record.pairs.entries()) {
+    for (const side of ['flex', 'machine']) {
+      const readings = pair[side + 'Readings']
+      if (typeof pair[side] !== 'number') return { problem: source + ': pair ' + (i + 1) + ' has no ' + side + ' figure' }
+      if (readings !== undefined && (!Array.isArray(readings) || readings.length !== 7 || Math.abs(middle(readings) - pair[side]) > 0.05))
+        return { problem: source + ': pair ' + (i + 1) + '\'s ' + side + ' figure ' + pair[side] + ' is not the middle five of its seven readings' + (Array.isArray(readings) && readings.length === 7 ? ' (' + middle(readings).toFixed(2) + ')' : '') }
+    }
+    added = Math.max(added, pair.machine - pair.flex)
+  }
+  return { added }
+}
+
+/** A machine's meter cost against its descriptors and its readings, or null when it agrees (or names none and carries none). */
+function meterProblem({ root, document, machine, descriptors }) {
+  const meter = document.resources.cpuMeter, value = meter?.value ?? 0
+  if (meter && !machine) return { detail: 'only a machine names the CPU meter it adds (resources.cpuMeter)', fix: 'delete resources.cpuMeter' }
+  const port = descriptors.find(item => item.port)
+  // shortcut: machine_ports.py writes reserved[1] as 0, so a ported machine cannot carry a meter cost yet; add "cpuMeter" there when one needs it.
+  if (meter && port) return { detail: 'a ported machine cannot name its meter cost yet: machine_ports.py writes reserved[1] as 0', fix: 'delete resources.cpuMeter, or teach machine_ports.py a "cpuMeter" entry' }
+  const disagree = descriptors.find(item => (item.meter ?? 0) !== value)
+  if (disagree) return {
+    detail: meter ? 'it names ' + value + ' meter points but ' + disagree.symbol + '\'s reserved[1] is ' + (disagree.meter ?? 0) + ' (' + disagree.where + ')' : disagree.symbol + '\'s reserved[1] is ' + disagree.meter + ', a meter cost octamod.module.json does not name (resources.cpuMeter)',
+    fix: meter ? 'write .reserved = {PRICE, ' + value + '} in ' + disagree.symbol : 'name it in resources.cpuMeter with its readings in ' + CPU_METER_RECORD + ', or write reserved[1] as 0',
+  }
+  if (!meter) return null
+  const measured = measuredMeter(root, document.id, meter.source)
+  if (measured.problem) return { detail: measured.problem, fix: 'record each pair of meter readings in ' + CPU_METER_RECORD + ' (docs/MODULE_PERFORMANCE.md)' }
+  if (value < Math.ceil(measured.added - 1e-9)) return { detail: 'it names ' + value + ' meter points, but its readings add ' + measured.added.toFixed(2), fix: 'name at least ' + Math.ceil(measured.added - 1e-9) + ' in resources.cpuMeter and reserved[1]' }
+  return null
 }
 
 /** Every refusal: the list's own rules (only modules listed before CPU_PRICE_PENDING_LISTED_BEFORE, only shrinking against
@@ -151,4 +225,97 @@ export function cpuPriceProblems({ root, documents, catalog, pending, basePendin
 function lazyGlue(root) {
   let units = null
   return new Proxy({}, { get: (_, id) => (units ??= portGlue(root))[id] })
+}
+
+// ---- What a module costs while nobody uses it (owner, 20 November 2026) ------------------------------------------------------
+// An installed module that no track, slot or page uses should cost the frame interrupt nothing: a player with 24 modules paid 6.1
+// points for code the interrupt entered while nothing used it (docs/verification/2026-11-20-octatrack-unused-module-cost.md). The
+// test procedure's step 9 measures it, and this is the one measure the limit is judged on: `npm run device:price`'s at-rest reading,
+// the share of the frame interrupt (`guard`) the module adds while the selected pattern plays, installed and used nowhere, on a
+// development twin of a base, against the same scene without it; the reading's base and scene are in its record. A module whose
+// figure is above AT_REST_LIMIT must rest: answer
+// ev_in_use and mark its frame detours "rests" (sdk/machines/octatrack/HOOKS.md), unless it is a machine, which the base rests itself.
+// Both numbers are the owner's to change. Releases dated from AT_REST_FROM (the version's entry in its changelog, or a version with
+// none yet) fail; earlier published releases are only warned, so nothing published breaks retroactively.
+export const AT_REST_LIMIT = 0.2 // points of the frame interrupt
+export const AT_REST_FROM = '2026-11-20' // the day the check merged
+const AT_REST_TOLERANCE = 1e-9
+
+/** Whether the module answers ev_in_use itself: its runtime*.json, its machine port or its USB package row subscribes it. */
+export function answersInUse({ root, id }) {
+  const folder = resolve(root, 'sdk/octatrack/modules', id)
+  for (const name of existsSync(folder) ? readdirSync(folder).filter(name => /^runtime.*\.json$/.test(name)) : [])
+    if ((readJson(join(folder, name))?.subscribe ?? []).some(item => item.event === 'ev_in_use')) return true
+  if ((readJson(resolve(root, PORTS, 'machine-ports.json'))?.ports?.[id]?.subscribe ?? []).some(item => item.event === 'ev_in_use')) return true
+  const row = readJson(resolve(root, 'src/engine/assets/octatrack-module-packages.json'))?.packages?.find(item => item.id === id)
+  return (row?.subscribe ?? []).some(item => typeof item === 'string' && item.split(':')[0] === 'ev_in_use')
+}
+
+/** The figure at rest: device:price's atRestAdds.frame in its record, else the declared price of a module with no effect slot
+ *  when device:price took it (installed and used nowhere is all such a module's price measures). null when nothing says: a
+ *  machine-render price, or a price some other tool took, is another measure and never judged against the limit. */
+export function atRestFigure({ root, document }) {
+  const declared = document.resources?.cpuPrice, record = readJson(resolve(root, 'sdk/octatrack/modules', document.id, CPU_PRICE_RECORD))
+  if (record?.module === document.id && typeof record.result?.atRestAdds?.frame === 'number') return { value: record.result.atRestAdds.frame, from: CPU_PRICE_RECORD }
+  if (declared?.measure === 'frame-interrupt' && /device:price/.test(declared.tool ?? '') && document.compatibility?.effectId == null)
+    return { value: declared.value, from: 'resources.cpuPrice' }
+  return null
+}
+
+/** The date of the module's current version in its changelog (src/community/module-changelogs/<id>.json), or null for none yet. */
+export function releaseDate({ root, document }) {
+  const entries = readJson(resolve(root, 'src/community/module-changelogs', document.id + '.json'))
+  const entry = Array.isArray(entries) ? entries.find(item => item?.version === document.version) : null
+  return typeof entry?.date === 'string' ? entry.date.slice(0, 10) : null
+}
+
+/** The detours the module marks "rests" (0x addresses): its runtime*.json and its machine port. */
+export function declaredRests({ root, id }) {
+  const folder = resolve(root, 'sdk/octatrack/modules', id)
+  const files = existsSync(folder) ? readdirSync(folder).filter(name => /^runtime.*\.json$/.test(name)) : []
+  return [...files.flatMap(name => readJson(join(folder, name))?.rests ?? []),
+    ...readJson(resolve(root, PORTS, 'machine-ports.json'))?.ports?.[id]?.rests ?? []]
+}
+export const declaresRests = args => declaredRests(args).length > 0
+
+/** The sites the module's committed USB package of `version` marks as resting (bit 7 of an ABI 7+ site's length byte, loader.h
+ *  RUNTIME_SITE_RESTS), or null while none of that version is committed. What the base reads, not what runtime.json asks for. */
+export function packageRests({ root, id, version }) {
+  const row = readJson(resolve(root, 'src/engine/assets/octatrack-module-packages.json'))?.packages?.find(item => item.id === id)
+  const path = row?.version === version ? resolve(root, 'public', row.path) : null
+  if (!path || !existsSync(path)) return null
+  const data = readFileSync(path), abi = data.readUInt16BE(4), rests = new Set()
+  let at = ({ 7: 72, 8: 76, 9: 80, 10: 80 })[abi] + 4 * data.readUInt32BE(20) + data.readUInt32BE(8) + 4 * data.readUInt32BE(16)
+  for (let i = 0; abi >= 7 && i < data.readUInt32BE(24); i++) {
+    if (data[at + 4] & 0x80) rests.add(data.readUInt32BE(at))
+    at += 40 + (data[at + 4] & 0x7f) + 2 * data[at + 7]
+  }
+  return rests
+}
+
+/** One module's cost at rest: { state: 'ok' | 'info' | 'warn' | 'fail', detail, fix? }. A machine or an effect is answered for by
+ *  the base (its handlers rest by themselves), but its own detours rest only where it marks them, so it passes over the limit only
+ *  with "rests"; any other module passes over it only by answering ev_in_use. */
+export function atRestStatus({ root, document, glue = null }) {
+  const id = document.id, figure = atRestFigure({ root, document })
+  const machine = machineDescriptors({ root, id, glue }).length > 0 || document.compatibility?.location === 'Track machine'
+  const judged = machine || document.compatibility?.effectId != null, measured = figure ? ' (' + figure.value + ' points measured at rest)' : ''
+  const built = packageRests({ root, id, version: document.version })
+  const unmarked = built ? declaredRests({ root, id }).filter(address => !built.has(Number.parseInt(address, 16))) : []
+  if (unmarked.length) return { state: 'fail', detail: 'its USB package ' + document.version + ' does not mark ' + unmarked.join(', ') + ' rests, which runtime.json names',
+    fix: 'rebuild it (npm run octatrack:module-packages); a builder route that drops "rests" is a Fix: pull request of its own' }
+  if (answersInUse({ root, id })) return { state: 'ok', detail: 'it answers ev_in_use, so it rests while it acts on no track' + measured }
+  if (judged && declaresRests({ root, id })) return { state: 'ok', detail: 'the base rests ' + (machine ? 'a machine no track uses' : 'an effect no slot uses') + ', its detours marked rests with it' + measured }
+  if (!figure) return { state: 'info', detail: 'no cost at rest measured yet (test procedure step 9, npm run device:price)' }
+  if (figure.value <= AT_REST_LIMIT + AT_REST_TOLERANCE) return { state: 'ok', detail: figure.value + ' points of the frame interrupt installed and used nowhere (' + figure.from + '), within ' + AT_REST_LIMIT }
+  const date = releaseDate({ root, document }), refused = !date || date >= AT_REST_FROM
+  return {
+    state: refused ? 'fail' : 'warn',
+    detail: 'installed and used nowhere it costs ' + figure.value + ' points of the frame interrupt (' + figure.from + '), more than ' + AT_REST_LIMIT +
+      (refused ? '' : '; reported, not refused, for a release dated before ' + AT_REST_FROM),
+    fix: (judged
+      ? 'list its frame-interrupt detours under "rests" in runtime.json: the base rests ' + (machine ? 'a machine no track uses' : 'an effect no slot uses') + ' and puts stock\'s bytes back there'
+      : 'subscribe ev_in_use and answer 0 while it acts on no track, and list its frame-interrupt detours under "rests" in runtime.json') +
+      ' (sdk/machines/octatrack/HOOKS.md, docs/MODULE_PERFORMANCE.md "A module that no track uses rests"); then measure again with npm run device:price',
+  }
 }

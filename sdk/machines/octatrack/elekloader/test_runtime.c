@@ -2,6 +2,9 @@
  * Host check of the Octatrack trampolines (cc -DMODWERK_HOST): hooks point at
  * host functions; the loader itself is checked in sdk/runtime/loader/tests. */
 #define MODWERK_RUNTIME_REFERENCE_EXTERNAL /* runtime.c defines the Octatrack's modwerk_machine_reference */
+#ifndef RUNTIME_MODULES
+#define RUNTIME_MODULES 128u /* build_core.py's Octatrack size */
+#endif
 #include "loader.c"
 #include "runtime.c"
 #include "sha256.c" /* the loader checks ABI 7 sites against stock hashes */
@@ -41,14 +44,14 @@ int main(void)
     static struct runtime_module module, other;
     module.hook[RUNTIME_TICK] = (uintptr_t)host_tick; module.hook[RUNTIME_DRAW] = (uintptr_t)host_draw;
     module.hook[RUNTIME_KEY] = (uintptr_t)host_key; module.hook[RUNTIME_ENC] = (uintptr_t)host_enc;
-    live[3] = &module;
+    set_live(3, &module);
     CHECK(modwerk_runtime_key(0x31, 1) == 1 && modwerk_runtime_key(0x28, 1) == 0 && modwerk_runtime_key(0x28, 0) == 0 && keys == 2);
     CHECK(modwerk_runtime_enc(3, -2) == 1 && modwerk_runtime_enc(0, 1) == 0);
     modwerk_runtime_draw(frame); CHECK(draws == 1 && frame[0] == 1);
     modwerk_runtime_tick(); CHECK(modwerk_runtime_value() == 1 && modwerk_runtime_calls() == 2);
     /* Several modules: every tick and draw hook runs, in position order; the first key hook that takes a key ends it. */
     other.hook[RUNTIME_TICK] = (uintptr_t)host_tick; other.hook[RUNTIME_KEY] = (uintptr_t)host_key;
-    live[1] = &other;
+    set_live(1, &other);
     modwerk_runtime_tick(); CHECK(modwerk_runtime_value() == 3 && ticks == 3 && modwerk_runtime_active() == 2);
     CHECK(modwerk_runtime_key(0x31, 1) == 1 && keys == 3); /* position 1 took it: position 3 never saw it */
     CHECK(modwerk_runtime_key(0x28, 1) == 0 && keys == 5);
@@ -59,15 +62,28 @@ int main(void)
     owner_epoch += 2; modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 1);
     modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 1);
     owner_epoch += 2; modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 1); /* a prepare or discard: same set */
-    live[1] = 0; owner_epoch += 1; modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 1); /* under way: wait */
+    set_live(1, 0); owner_epoch += 1; modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 1); /* under way: wait */
     owner_epoch += 1; modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 2);
-    live[1] = &module; live[3] = 0; owner_epoch += 2; modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 3); /* moved */
-    live[1] = 0; owner_epoch += 2; modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 4); /* none left */
+    set_live(1, &module); set_live(3, 0); owner_epoch += 2; modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 3); /* moved */
+    set_live(1, 0); owner_epoch += 2; modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 4); /* none left */
     owner_epoch += 2; modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 4);
     /* The controller board wrote or put back a stock effect's page (#882): one redraw on the next tick, set unchanged. */
     modwerk_runtime_redraw_wanted = 1; modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 5 && !modwerk_runtime_redraw_wanted);
     CHECK(modwerk_test_headers == modwerk_test_redraws); /* every redraw draws the header too (SRC's machine name) */
     modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 5);
+    /* A dispatch paused in its first callback resumes at the following position. An install, removal or
+     * replacement there must be visible even in the same mask word. Check both ends of a word and the last slot. */
+    unsigned next = 0;
+    set_live(30, &module); set_live(31, &other); set_live(127, &module);
+    CHECK(modwerk_runtime_next_hook(RUNTIME_KEY, &next) == (uintptr_t)host_key && next == 31);
+    set_live(31, 0); set_live(32, &other);
+    CHECK(modwerk_runtime_next_hook(RUNTIME_KEY, &next) == (uintptr_t)host_key && next == 33);
+    CHECK(modwerk_runtime_next_hook(RUNTIME_KEY, &next) == (uintptr_t)host_key && next == 128);
+    CHECK(!modwerk_runtime_next_hook(RUNTIME_KEY, &next));
+    set_live(127, &other); /* no draw hook */
+    next = 31;
+    CHECK(!modwerk_runtime_next_hook(RUNTIME_DRAW, &next));
+    set_live(30, 0); set_live(32, 0); set_live(127, 0);
     /* Activation only while nothing plays or records; stock code only, below the bootloader copy. */
     modwerk_test_stopped = 0;
     CHECK(!modwerk_runtime_backend.enter(0));

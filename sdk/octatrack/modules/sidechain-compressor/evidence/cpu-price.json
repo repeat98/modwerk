@@ -1,0 +1,177 @@
+{
+  "module": "sidechain-compressor",
+  "version": "0.2.2-experimental",
+  "base": "8850f5399c453b9c (development twin, ef6099b0a)",
+  "scene": "Octatrack MKII, owner scratch A01 and saved Part 4 with trigs on tracks 1–7. T5 FX1 NONE at baseline, COMPRESSOR on T5 FX1 keyed from T1 in use. The stock-compressor reading is also retained.",
+  "seconds": 8,
+  "measuredAt": "2026-11-21T08:03:10.478Z",
+  "result": {
+    "id": "sidechain-compressor",
+    "version": "file",
+    "packageSha256": "9f22861f282565e9a95e272220faf49bc403cf0ac7065f50cd5e941217481622",
+    "before": {
+      "frame": 32.6,
+      "frameMax": 70.4,
+      "frames": 22871,
+      "skipped": 0,
+      "cpu": 45,
+      "dsp1to4": 43.4,
+      "dsp5to8": 38.2,
+      "allocation": {
+        "modulePoolBytes": 2960,
+        "dspProgramWordsT1to4": 1504,
+        "dspProgramWordsT5to8": 702
+      }
+    },
+    "atRest": {
+      "frame": 33,
+      "frameMax": 71.1,
+      "frames": 22772,
+      "skipped": 0,
+      "cpu": 45.7,
+      "dsp1to4": 45.7,
+      "dsp5to8": 38.9,
+      "allocation": {
+        "modulePoolBytes": 2960,
+        "dspProgramWordsT1to4": 1504,
+        "dspProgramWordsT5to8": 702
+      }
+    },
+    "stockCompressor": {
+      "frame": 32.6,
+      "frameMax": 70.7,
+      "frames": 22785,
+      "skipped": 0,
+      "cpu": 45,
+      "dsp1to4": 45.8,
+      "dsp5to8": 41,
+      "allocation": {
+        "modulePoolBytes": 2960,
+        "dspProgramWordsT1to4": 1504,
+        "dspProgramWordsT5to8": 882
+      }
+    },
+    "inUse": {
+      "frame": 33.1,
+      "frameMax": 71.2,
+      "frames": 22850,
+      "skipped": 0,
+      "cpu": 45.3,
+      "dsp1to4": 49.7,
+      "dsp5to8": 43.7,
+      "allocation": {
+        "modulePoolBytes": 2960,
+        "dspProgramWordsT1to4": 1504,
+        "dspProgramWordsT5to8": 882
+      }
+    },
+    "inUseOn": "T5 FX1",
+    "atRestAdds": {
+      "frame": 0.4,
+      "cpu": 0.7,
+      "dsp1to4": 2.3,
+      "dsp5to8": 0.7
+    },
+    "inUseAdds": {
+      "frame": 0.5,
+      "cpu": 0.3,
+      "dsp1to4": 6.3,
+      "dsp5to8": 5.5
+    },
+    "rolledBack": true,
+    "repetitions": [
+      {
+        "measuredAt": "2026-11-21T08:02:02.532Z",
+        "before": {
+          "frame": 32.6,
+          "frameMax": 70.6,
+          "frames": 22818,
+          "skipped": 0,
+          "cpu": 44.9,
+          "dsp1to4": 45.9,
+          "dsp5to8": 39.4,
+          "allocation": {
+            "modulePoolBytes": 2960,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        },
+        "atRest": {
+          "frame": 33,
+          "frameMax": 71.2,
+          "frames": 23298,
+          "skipped": 0,
+          "cpu": 45.3,
+          "dsp1to4": 48.8,
+          "dsp5to8": 39.8,
+          "allocation": {
+            "modulePoolBytes": 2960,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        },
+        "inUse": {
+          "frame": 33,
+          "frameMax": 71,
+          "frames": 23132,
+          "skipped": 0,
+          "cpu": 45.3,
+          "dsp1to4": 49.9,
+          "dsp5to8": 43.2,
+          "allocation": {
+            "modulePoolBytes": 2960,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 882
+          }
+        }
+      },
+      {
+        "measuredAt": "2026-11-21T08:03:10.478Z",
+        "before": {
+          "frame": 32.6,
+          "frameMax": 70.4,
+          "frames": 22871,
+          "skipped": 0,
+          "cpu": 45,
+          "dsp1to4": 43.4,
+          "dsp5to8": 38.2,
+          "allocation": {
+            "modulePoolBytes": 2960,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        },
+        "atRest": {
+          "frame": 33,
+          "frameMax": 71.1,
+          "frames": 22772,
+          "skipped": 0,
+          "cpu": 45.7,
+          "dsp1to4": 45.7,
+          "dsp5to8": 38.9,
+          "allocation": {
+            "modulePoolBytes": 2960,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 702
+          }
+        },
+        "inUse": {
+          "frame": 33.1,
+          "frameMax": 71.2,
+          "frames": 22850,
+          "skipped": 0,
+          "cpu": 45.3,
+          "dsp1to4": 49.7,
+          "dsp5to8": 43.7,
+          "allocation": {
+            "modulePoolBytes": 2960,
+            "dspProgramWordsT1to4": 1504,
+            "dspProgramWordsT5to8": 882
+          }
+        }
+      }
+    ],
+    "releaseSourceVersion": "0.2.2-experimental",
+    "releaseSourceCommit": "ef6099b0a29b971a23ab397cd284819ca6774727"
+  }
+}

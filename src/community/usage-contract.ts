@@ -6,7 +6,7 @@ export type UsageEvent = typeof USAGE_EVENTS[number]
 export const ANNOUNCEMENT_COUNTS = { announcement_shown: 'shown', announcement_opened: 'opened', announcement_dismissed: 'dismissed' } as const
 export type AnnouncementCountEvent = keyof typeof ANNOUNCEMENT_COUNTS
 /** Machines that build firmware here. Builds, failed builds and download requests may name one; nothing else does. */
-export const USAGE_DEVICES = ['octatrack', 'digitakt', 'digitone', 'digitakt-ii', 'analog-rytm-mkii'] as const
+export const USAGE_DEVICES = ['octatrack', 'digitakt', 'digitone', 'digitakt-ii', 'analog-rytm-mkii', 'digitone-ii'] as const
 export type UsageDevice = typeof USAGE_DEVICES[number]
 export const DEVICE_EVENTS: readonly UsageEvent[] = ['build_succeeded', 'build_failed', 'firmware_download_requested']
 export type DiscordInviteCounts = { discord_member_shown: number; discord_member_joins: number; discord_member_dismissals: number; discord_visitor_shown: number; discord_visitor_signups: number; discord_visitor_joins: number; discord_visitor_dismissals: number; discord_welcome_joins: number }
@@ -18,7 +18,15 @@ export type UsageDeviceTotals = { device: UsageDevice; builds: number; builds_fa
 export type UsageComparison = { from: string; to: string; rows: UsageDay[]; unavailableReason: 'collection' | 'retention' | null }
 /** Counts per named page and UTC day, without visitor identifiers. */
 export type UsagePageDay = { day: string; page: string; views: number }
+export const OCTATRACK_INSTALL_EVENTS = ['base_first_connection', 'base_usb_update_done', 'usb_sync_kept'] as const
+export type OctatrackInstallEvent = typeof OCTATRACK_INSTALL_EVENTS[number]
+export type InstallActivity = {
+  guideFrom: string | null
+  syncFrom: string | null
+  counts: { day: string; event: OctatrackInstallEvent; count: number }[]
+}
 export type UsageStatistics = { generatedAt: string; collectionStarted: string | null; from: string; to: string; days: number; rows: UsageDay[]; comparison?: UsageComparison
+  installActivity?: InstallActivity
   /** When failed builds and the machine split began to be counted; earlier days have neither. */
   breakdownsStarted?: string | null
   /** Migration boundary for Digitakt II and Analog Rytm MKII attribution; earlier events stay unattributed. */
