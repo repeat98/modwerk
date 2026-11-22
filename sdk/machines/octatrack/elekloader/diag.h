@@ -26,6 +26,11 @@ enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, 
 #define DIAG_TRACE_MAGIC 0x4d574654u
 struct diag_trace { uint32_t magic, count; uint16_t frame[DIAG_TRACE_FRAMES][2]; };
 #define DIAG_TRACE_BYTES 520u
+/* And with it ("MWLR", 0x100f9710): the lateness of the last eight frame-interrupt entries, oldest first, in DTCN3
+ * counts as the late-entry wait measured them (machine_registry.c): the trace's gaps are stamped later in the frame.
+ * Read from battery RAM; LOG does not page it. */
+#define DIAG_LATES_MAGIC 0x4d574c52u
+struct diag_lates { uint32_t magic, count; uint16_t late[8]; };
 typedef char diag_trace_layout[sizeof(struct diag_trace) == DIAG_TRACE_BYTES ? 1 : -1];
 
 /* Five minutes of the meters (status.c, per mille), sampled twice a second: `samples` of them, `playing` with the

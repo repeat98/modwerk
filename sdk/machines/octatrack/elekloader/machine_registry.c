@@ -1016,7 +1016,7 @@ static uint8_t place[16], next[16], made; /* a render's place in the last frame'
  * long frame interrupt makes the next enter late against the DSP's frame grid. An entry about 150 µs late can be
  * followed by a frame exchange that stops for good, while entries less late run on and later ones make the DSP skip
  * one frame and run on (docs/MODULE_PERFORMANCE.md has the measurements). So an entry more than LATE_LO and less than LATE_HI late waits here until it is
- * LATE_HI late: at most 80 µs, with the interrupt held, before mw_frame_t0 is stamped, so the budget does not charge
+ * LATE_HI late: at most 110 µs, with the interrupt held, before mw_frame_t0 is stamped, so the budget does not charge
  * the wait to the frame. An entry's lateness is the last entry's plus the time between the two less GRID (a frame and
  * 0.5 µs, so that an error decays), never below 0; within NEAR of a whole frame or past it, it is less that frame
  * (the DSP skipped one: left at a frame less 0.5 µs it would decay into the window 0.1 s later and every entry
@@ -1029,7 +1029,7 @@ static uint8_t place[16], next[16], made; /* a render's place in the last frame'
  * two frames: the self-test allows that much (selftest.h's SELFTEST_FRAME_LIMIT). */
 #define GRID (FRAME + 66u)
 #define NEAR 2640u     /* 20 µs */
-#define LATE_LO 14520u /* 110 µs */
+#define LATE_LO 10560u /* 80 µs: stall 56 (twin 24) came from an entry the trace put 138 µs late and this clock under 110 */
 #define LATE_HI 25080u /* 190 µs */
 #define IDLE (4u * GRID)
 #define DEADLINE_LATE (10560u - 2640u) /* 80 µs late, less a 20 µs margin */
@@ -1044,6 +1044,10 @@ volatile uint32_t mw_frame_skips; /* every wait since boot, each a DSP frame ski
  * which ends it. The wait itself never stops: an entry let through in the window is what stalls the DSP for good. */
 #define WAIT_RUN 16u
 static uint32_t entry_at, entry_late, wait_run;
+/* The last eight entries' lateness, DTCN3 counts, as this clock saw it: diag.c keeps them with a stall ("MWLR"). The
+ * stall trace is stamped later in the frame (dl_frame), so the two can differ by tens of µs. */
+volatile uint16_t mw_late_ring[8];
+volatile uint32_t mw_late_count;
 /* From the frame interrupt's entry, after stock's register save (machine_registry.s): level 5, stock's stack. */
 void mw_frame_enter(void)
 {
@@ -1054,6 +1058,7 @@ void mw_frame_enter(void)
         do l = l > GRID ? l - GRID : 0; while (l >= GRID - NEAR);
     }
     entry_late = l;
+    mw_late_ring[mw_late_count & 7u] = (uint16_t)l, mw_late_count = mw_late_count + 1u; /* l < GRID */
     if (l > mw_late_max) mw_late_max = l;
     if (l > LATE_LO && l < LATE_HI) {
         mw_late_hits = mw_late_hits + 1u;

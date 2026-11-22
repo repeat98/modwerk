@@ -25,6 +25,8 @@ extern volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks; /* machine_regist
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget's refusals */
 extern volatile uint32_t mw_frame_brakes;                         /* ... and its brake: module machines silenced */
 extern volatile uint32_t mw_frame_skips;                          /* ... and the late entries held, each a DSP frame skipped */
+extern volatile uint16_t mw_late_ring[8];                         /* ... and the last entries' lateness */
+extern volatile uint32_t mw_late_count;
 extern volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs;   /* ep0.c: the attach watchdog (usb_attach.h) */
 extern const uint8_t modwerk_base_digest[32];       /* the base's identity (build_core.py) */
 
@@ -34,6 +36,8 @@ extern volatile uint32_t modwerk_test_crash[DIAG_CRASH_BYTES / 4u], modwerk_test
     modwerk_test_screen, modwerk_test_timer;
 extern volatile struct diag_trace modwerk_test_trace;
 #define TRACE (&modwerk_test_trace)
+extern volatile struct diag_lates modwerk_test_lates;
+#define LATES (&modwerk_test_lates)
 extern volatile uint8_t modwerk_test_running[16];
 #define LOG (&modwerk_test_log)
 #define CRASH modwerk_test_crash
@@ -54,6 +58,8 @@ typedef char diag_fits_battery_ram[0x100fc000u + sizeof(struct diag_log) <= 0x10
 #define STALL ((const volatile uint32_t *)0x100ff900u) /* dsp.c: "MWST", count, reason */
 #define TRACE ((volatile struct diag_trace *)0x100ffb30u) /* after modset.c's boot guard (battery-ram.json) */
 typedef char diag_trace_fits_battery_ram[0x100ffb30u + sizeof(struct diag_trace) <= 0x100fff00u ? 1 : -1];
+#define LATES ((volatile struct diag_lates *)0x100f9710u) /* after status.c's MWER (battery-ram.json) */
+typedef char diag_lates_fit[sizeof(struct diag_lates) == 24u ? 1 : -1];
 #define PLAYING (*(volatile uint32_t *)0x800065b8u == 1u) /* dsp.c's PLAYING */
 #define TEMPO24 (*(volatile uint32_t *)0x80001814u)        /* the tempo times 24, as Recorder Loop Fix reads it */
 #define SCREEN (*(volatile uint32_t *)0x460d165cu)         /* stock's list of input layers, the top one (status.c) */
@@ -197,6 +203,10 @@ static void keep_trace(uint32_t count)
     for (uint32_t i = 0, from = traced; i < DIAG_TRACE_FRAMES; ++i)
         t->frame[i][0] = trace[(from + i) % DIAG_TRACE_FRAMES][0], t->frame[i][1] = trace[(from + i) % DIAG_TRACE_FRAMES][1];
     t->count = count, t->magic = DIAG_TRACE_MAGIC;
+    volatile struct diag_lates *e = LATES;
+    e->magic = 0;
+    for (uint32_t i = 0, from = mw_late_count; i < 8u; ++i) e->late[i] = mw_late_ring[(from + i) & 7u];
+    e->count = count, e->magic = DIAG_LATES_MAGIC;
 }
 void modwerk_diag_tick(void)
 {

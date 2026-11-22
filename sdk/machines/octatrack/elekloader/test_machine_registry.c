@@ -860,16 +860,17 @@ static void check_late_entry(void)
     late_fresh(5000000u);
     for (unsigned i = 0; i < 6u; ++i) CHECK(!entry(FRAME));
     CHECK(!mw_late_max && !mw_late_hits && !mw_late_waits && !mw_late_wait_max);
-    /* Below the window (100, 105 and 110 µs) and past it (190, 195, 200 and 250 µs) an entry goes straight on. The
+    /* Below the window (70, 75 and 80 µs) and past it (190, 195, 200 and 250 µs) an entry goes straight on. The
      * lateness is 0.5 µs under the interval's excess: GRID. */
-    static const uint16_t outside[] = {1, 60, 100, 105, 110, 191, 195, 200, 250, 340};
+    static const uint16_t outside[] = {1, 60, 70, 75, 80, 191, 195, 200, 250, 340};
     for (unsigned i = 0; i < sizeof outside / sizeof *outside; ++i) {
         CHECK(!late_by(outside[i]) && entry_late == outside[i] * US - 66u && mw_late_max == entry_late);
         CHECK(!mw_late_hits && !mw_late_waits);
     }
-    CHECK(!late_by(105) && !entry(FRAME - 105u * US) && !entry_late && !entry(FRAME));
-    /* In it (111 µs, the two logged stalls' 149 and 155 µs, 189 µs) it waits until it is 190 µs late: 80 µs at most. */
-    static const uint16_t inside[] = {111, 120, 149, 155, 189, 190};
+    CHECK(!late_by(75) && !entry(FRAME - 75u * US) && !entry_late && !entry(FRAME));
+    /* In it (81 µs; stall 56's entry, under 110 µs by this clock; the two logged stalls' 149 and 155 µs; 189 µs) it waits
+     * until it is 190 µs late: 110 µs at most. */
+    static const uint16_t inside[] = {81, 105, 111, 120, 149, 155, 189, 190};
     for (unsigned i = 0; i < sizeof inside / sizeof *inside; ++i) {
         CHECK(late_by(inside[i]) && entry_late == inside[i] * US - 66u && mw_late_max == entry_late);
         CHECK(mw_late_hits == 1u && mw_late_waits == 1u && mw_late_wait_max >= LATE_HI - entry_late);
@@ -888,6 +889,7 @@ static void check_late_entry(void)
     /* Lateness carries from one entry to the next: 60 µs twice is 120 µs. A frame that came early takes it back. */
     late_fresh(5000000u);
     CHECK(!entry(FRAME) && !entry(FRAME + 60u * US) && entry(FRAME + 60u * US) && entry_late == 120u * US - 132u);
+    CHECK(mw_late_ring[(mw_late_count - 1u) & 7u] == entry_late && !mw_late_ring[(mw_late_count - 3u) & 7u]); /* kept for a stall */
     late_fresh(5000000u);
     CHECK(!entry(FRAME) && !entry(FRAME + 60u * US) && !entry(FRAME - 60u * US) && !entry(FRAME + 60u * US));
     /* It is taken modulo a frame (three frames and 150 µs: the DSP skipped two), and four frames or more without an
@@ -897,7 +899,7 @@ static void check_late_entry(void)
     late_fresh(5000000u);
     CHECK(!entry(FRAME) && !entry(5u * FRAME + 150u * US) && !entry_late && !entry(FRAME));
     late_fresh(5000000u);
-    CHECK(!entry(FRAME) && !entry(FRAME + 100u * US) && entry_late && !entry(IDLE) && !entry_late && !mw_late_hits);
+    CHECK(!entry(FRAME) && !entry(FRAME + 70u * US) && entry_late && !entry(IDLE) && !entry_late && !mw_late_hits);
     /* After a skipped frame the sum is a frame less 0.5 µs: it counts as that frame. Left standing it decays 0.5 µs a
      * frame into the window, and about 150 entries on the grid wait:
      * 800 entries after a waited entry and its skipped frame, and after one 250 µs late and its skipped frame. */
@@ -918,8 +920,8 @@ static void check_late_entry(void)
     }
     /* The 32-bit timer wraps every 32.5 s: across it the intervals, the decision and a wait that spans it hold. */
     late_fresh(0u - 3u * FRAME);
-    CHECK(!entry(FRAME) && !entry(FRAME) && entered == 0u - FRAME && !entry(FRAME + 100u * US) && entered < FRAME);
-    CHECK(!entry(FRAME - 100u * US) && !entry_late && !mw_late_hits);
+    CHECK(!entry(FRAME) && !entry(FRAME) && entered == 0u - FRAME && !entry(FRAME + 70u * US) && entered < FRAME);
+    CHECK(!entry(FRAME - 70u * US) && !entry_late && !mw_late_hits);
     late_fresh(0u - 2u * FRAME - 149u * US - 40u * US);
     CHECK(!entry(FRAME) && entry(FRAME + 149u * US) && entered == 0u - 40u * US && mw_frame_t0 < 2u * US);
     CHECK(!entry(2u * FRAME - 149u * US) && !entry(FRAME) && mw_late_waits == 1u);

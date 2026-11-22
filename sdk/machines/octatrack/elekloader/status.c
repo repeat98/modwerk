@@ -143,11 +143,12 @@ void modwerk_status_cpu_left(uint32_t mille) { frame_adjust -= (int32_t)mille, a
  * modules installed they dropped too: the mean does not tell them apart, the longest frame does. */
 extern volatile uint32_t mw_frame_window; /* machine_registry.c: the longest frame since this last read it, DTCN3 counts */
 #ifndef MW_FRAME_LINE
-#define MW_FRAME_LINE 1200u
+#define MW_FRAME_LINE 1100u
 #endif
-/* 120 %: of 32 readings of 8 to 30 s on the owner's MKII (22 November 2026), none from 95 to 125 % dropped a render,
+/* Of 32 readings of 8 to 30 s on the owner's MKII (22 November 2026), none from 95 to 125 % dropped a render,
  * half from 125 to 130 % did and every one past 130 % (owner: "every refused pick is bad UX", "but so is every
- * stall or skipped render or crash"). Five points under the first drop, about one reading's noise. */
+ * stall or skipped render or crash"). That held for stock-heavy Parts; module-heavy ones dropped from about 112 %
+ * (twin 24, a medium pattern: 1 render at 112.1 %, 5 at 113.2 % in 15 s), so the owner chose 110 %. */
 volatile uint32_t mw_frame_line = MW_FRAME_LINE; /* per mille of a frame: no pick past it, and the CPU bars are full at it */
 static uint32_t frame_longest(void) /* the longest of the last four seconds */
 {

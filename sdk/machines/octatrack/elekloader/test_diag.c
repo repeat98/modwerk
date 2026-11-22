@@ -11,6 +11,9 @@ static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
 volatile struct diag_log modwerk_test_log;
 volatile struct diag_trace modwerk_test_trace;
+volatile struct diag_lates modwerk_test_lates;
+volatile uint16_t mw_late_ring[8];
+volatile uint32_t mw_late_count;
 volatile uint32_t mw_frame_last; /* machine_registry.c */
 volatile uint32_t modwerk_test_crash[DIAG_CRASH_BYTES / 4u], modwerk_test_stall[DIAG_STALL_BYTES / 4u], modwerk_test_playing, modwerk_test_tempo24,
     modwerk_test_screen, modwerk_test_timer;
@@ -200,8 +203,10 @@ int main(void)
     modwerk_test_timer += 0x1000000u, mw_frame_last = 0x800000u, modwerk_diag_frame();
     TRACE->magic = 0, tick();
     CHECK(TRACE->magic == 0); /* no new stall record: nothing kept */
+    for (unsigned i = 0; i < 11u; ++i) mw_late_ring[mw_late_count & 7u] = (uint16_t)(100u + i), mw_late_count = mw_late_count + 1u;
     modwerk_test_stall[1] = 4, tick(); /* dsp.c's record, found at the next tick */
     CHECK(TRACE->magic == DIAG_TRACE_MAGIC && TRACE->count == 4u);
+    CHECK(LATES->magic == DIAG_LATES_MAGIC && LATES->count == 4u && LATES->late[0] == 103u && LATES->late[7] == 110u); /* oldest first */
     CHECK(TRACE->frame[0][0] == 749u + 6u && TRACE->frame[0][1] == 100u && TRACE->frame[1][0] == 749u + 7u);
     CHECK(TRACE->frame[DIAG_TRACE_FRAMES - 2u][0] == 749u + DIAG_TRACE_FRAMES + 4u && TRACE->frame[DIAG_TRACE_FRAMES - 1u][0] == 65535u && TRACE->frame[DIAG_TRACE_FRAMES - 1u][1] == 65535u);
     unsigned trace_at = stall_at + DIAG_STALL_BYTES;
