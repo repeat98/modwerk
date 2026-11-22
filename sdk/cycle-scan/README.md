@@ -7,7 +7,10 @@ the idle cycles the core inserts for some sequences (pipeline stalls, sections A
 Imported from [sambanks/octabam](https://github.com/sambanks/octabam) at `cc7cffc1` (#1169, GPL-3), recorded in
 [`sdk/imports/octabam-cycle-scan-cc7cffc1.json`](../imports/octabam-cycle-scan-cc7cffc1.json). [CYCLE_SCAN.md](CYCLE_SCAN.md)
 is upstream's page: its results for octabam's effects and how the model compares with their unit (3.0 % above it on
-average over 38 settings of 22 effects).
+average over 38 settings of 22 effects). It is kept byte for byte, so its links to `COSTS.md`, the unit's measured
+figures, lead nowhere here: read
+[upstream's COSTS.md](https://github.com/sambanks/octabam/blob/cc7cffc1a675a763c5b8d6fbe1659f2b322cc540/docs/contributing/COSTS.md)
+at the same revision.
 
 It lives here, not under `sdk/octabam/tools`, because that folder is part of the module-source fingerprint
 (`scripts/module-source.mjs`): no compiler reads these files, so they must not make every package count as rebuilt.

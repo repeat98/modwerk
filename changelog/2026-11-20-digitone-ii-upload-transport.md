@@ -1,0 +1,1 @@
+Digitone II: the site's engine can load a module into a development base's RAM over the USB link for a trial, through the same upload session as the Octatrack's. The page offers it with the first Digitone II module.

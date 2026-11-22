@@ -60,6 +60,13 @@ static struct {
 #else
 #define UI_ROOTS_CAPABILITY 0u
 #endif
+/* 2048: the machine answers ev_in_use for the modules it judges (RUNTIME_SITE_EVENT_JUDGED), so such a module's sites may
+ * carry RUNTIME_SITE_RESTS without its own ev_in_use; an older base refuses that package as malformed. */
+#if RUNTIME_SITE_EVENTS && defined(RUNTIME_SITE_EVENT_IN_USE) && defined(RUNTIME_SITE_EVENT_JUDGED)
+#define JUDGED_CAPABILITY 2048u
+#else
+#define JUDGED_CAPABILITY 0u
+#endif
 int modwerk_runtime_set_busy(void) { return SET_ROWS != 0; }
 #ifndef MODWERK_RUNTIME_JOURNAL_EXTERNAL
 __attribute__((weak)) int modwerk_machine_journal_enabled(void) { return 0; }
@@ -90,6 +97,8 @@ int modwerk_runtime_volatile_busy(void) { return journal.progress.phase != RJ_ID
 #ifndef MODWERK_RUNTIME_TABLES_EXTERNAL
 __attribute__((weak)) void modwerk_machine_tables_changed(void) {}
 #endif
+/* A machine that judges no module keeps every module it would judge awake. */
+__attribute__((weak)) int modwerk_machine_in_use(const struct runtime_module *m) { (void)m; return 1; }
 
 #ifndef MODWERK_RUNTIME_REFERENCE_EXTERNAL
 __attribute__((weak)) uint32_t modwerk_machine_reference(uint32_t value) { return value; }
@@ -160,7 +169,7 @@ unsigned modwerk_runtime_capabilities(uint8_t *out)
 {
     out[0] = 'M'; out[1] = 'W'; out[2] = 'C'; out[3] = 'P';
     out[4] = 1; out[5] = RUNTIME_ABI;
-    unsigned flags = RUNTIME_CAPABILITY_FLAGS | (RUNTIME_SITE_EVENTS ? 128u : 0u) | SET_CAPABILITY | UI_ROOTS_CAPABILITY;
+    unsigned flags = RUNTIME_CAPABILITY_FLAGS | (RUNTIME_SITE_EVENTS ? 128u : 0u) | SET_CAPABILITY | UI_ROOTS_CAPABILITY | JUDGED_CAPABILITY;
     out[6] = (uint8_t)(flags >> 8); out[7] = (uint8_t)flags;
     out[8] = (uint8_t)(RUNTIME_SITES >> 8); out[9] = (uint8_t)RUNTIME_SITES;
     out[10] = (uint8_t)(RUNTIME_COPIES >> 8); out[11] = (uint8_t)RUNTIME_COPIES;
@@ -283,17 +292,38 @@ static uintptr_t raise_of(uint32_t hook) { (void)hook; return 0; }
 #if RUNTIME_SITE_EVENTS && defined(RUNTIME_SITE_EVENT_IN_USE)
 /* A module rests until a track uses it (HOOKS.md): while its ev_in_use answers 0 its handlers stay out of the rows of
  * the events that rest, so the frame interrupt never enters its code there. Bit i of `resting`: position i rests; of
- * `asks`: its module subscribes ev_in_use. Both change locked: a switch wakes its position, rest_poll the others. */
+ * `asks`: its module subscribes ev_in_use, or the machine answers for it (judged). Both change locked: a switch wakes
+ * its position, rest_poll the others. */
 static const uint8_t event_rests[RUNTIME_SITE_EVENTS] = RUNTIME_SITE_EVENT_RESTS;
 #define REST_WORDS ((RUNTIME_MODULES + 31u) / 32u)
 static uint32_t resting[REST_WORDS], asks[REST_WORDS];
 static int is_resting(unsigned i) { return resting[i / 32u] >> (i % 32u) & 1u; }
 static int rests(unsigned e, unsigned i) { return event_rests[e - RUNTIME_EVENTS] && is_resting(i); }
+/* A module that contributes to the table the machine judges (RUNTIME_SITE_EVENT_JUDGED: the Octatrack's track machines),
+ * or carries DSP code (an effect: the machine knows which slots name it), and does not answer ev_in_use itself: the
+ * machine knows when it is used, so it answers for it (modwerk_machine_in_use) and the module rests as if it had. */
+#ifdef RUNTIME_SITE_EVENT_JUDGED
+static int judged(const struct runtime_module *m)
+{
+    return m && !m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] && (m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_JUDGED] || m->dsp.count);
+}
+#else
+static int judged(const struct runtime_module *m) { (void)m; return 0; }
+#endif
 static void woken(unsigned position, const struct runtime_module *m)
 {
     uint32_t bit = 1u << (position % 32u);
     resting[position / 32u] &= ~bit;
-    asks[position / 32u] = (asks[position / 32u] & ~bit) | (m && m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] ? bit : 0u);
+    asks[position / 32u] = (asks[position / 32u] & ~bit) | (m && (m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] || judged(m)) ? bit : 0u);
+}
+int modwerk_runtime_resting_at(uintptr_t address)
+{
+    for (unsigned w = 0; w < REST_WORDS; ++w)
+        for (uint32_t bits = resting[w], b = 0; bits; bits >>= 1, ++b) {
+            const struct runtime_module *m = bits & 1u ? live[32u * w + b] : 0;
+            if (m && address >= (uintptr_t)m && address - (uintptr_t)m < m->size) return 1;
+        }
+    return 0;
 }
 #else /* nothing rests: every subscriber is in every row, as before */
 #if RUNTIME_SITE_EVENTS
@@ -301,6 +331,7 @@ static int rests(unsigned e, unsigned i) { (void)e; (void)i; return 0; }
 #endif
 static void woken(unsigned position, const struct runtime_module *m) { (void)position; (void)m; }
 static int is_resting(unsigned i) { (void)i; return 0; }
+int modwerk_runtime_resting_at(uintptr_t address) { (void)address; return 0; }
 #endif
 
 #ifdef MODWERK_CACHED_MODULES
@@ -790,6 +821,9 @@ static int restore_to(unsigned position,struct runtime_module *to,const struct r
 #ifndef RUNTIME_ASK_IN_USE /* the host test answers for module code it cannot run */
 #define RUNTIME_ASK_IN_USE(handler) ((unsigned (*)(void))(handler))()
 #endif
+#ifndef RUNTIME_MACHINE_IN_USE /* the machine's answer for a module it judges (loader.h modwerk_machine_in_use) */
+#define RUNTIME_MACHINE_IN_USE(m) modwerk_machine_in_use(m)
+#endif
 /* Locked: could a paused task resume part way through a row of the base's dispatch? Unknown counts as yes. */
 static int dispatching(const struct runtime_context *context)
 {
@@ -811,7 +845,7 @@ static int __attribute__((used)) rest_poll_context(const struct runtime_context 
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
         const struct runtime_module *m = asks[i / 32u] >> (i % 32u) & 1u ? live[i] : 0;
         uintptr_t f = m ? m->hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] : 0;
-        if (f && !RUNTIME_ASK_IN_USE(f)) want[i / 32u] |= 1u << (i % 32u);
+        if (f ? !RUNTIME_ASK_IN_USE(f) : judged(m) && !RUNTIME_MACHINE_IN_USE(m)) want[i / 32u] |= 1u << (i % 32u);
     }
     for (unsigned w = 0; w < REST_WORDS; ++w) differs |= want[w] ^ resting[w];
     if (!differs) return 0;
@@ -982,8 +1016,11 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
         uint32_t n = abi >= 7u ? p[4] & ~RUNTIME_SITE_RESTS & 0xffu : be16(p + 4), keep = abi >= 7u ? p[5] : 0u, checked = abi >= 7u ? p[6] : n,
                  r = abi >= 7u ? p[7] : be16(p + 6);
 #if RUNTIME_SITE_EVENTS && defined(RUNTIME_SITE_EVENT_IN_USE)
-        if (abi >= 7u && p[4] & RUNTIME_SITE_RESTS && hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] == RUNTIME_NONE)
-            return refuse(RUNTIME_MALFORMED); /* a site rests only with a module that says when it is in use */
+        if (abi >= 7u && p[4] & RUNTIME_SITE_RESTS && hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_IN_USE] == RUNTIME_NONE
+#ifdef RUNTIME_SITE_EVENT_JUDGED
+            && hook[RUNTIME_EVENTS + RUNTIME_SITE_EVENT_JUDGED] == RUNTIME_NONE && !dsp.count
+#endif
+            ) return refuse(RUNTIME_MALFORMED); /* a site rests only with a module that says, or the machine knows, when it is in use */
 #else
         if (abi >= 7u && p[4] & RUNTIME_SITE_RESTS) return refuse(RUNTIME_MALFORMED);
 #endif

@@ -59,7 +59,7 @@ export function AnnouncementsPanel() {
   }
   const ready = title.trim().length >= 3 && !!body.trim() && slug.length >= 3
   return <section className="configuration-section announcements-admin">
-    <h2>Announcements</h2>
+    <h2>Compose an announcement</h2>
     <p className="service-note">Public announcements appear as a dismissible floating card for everyone, including signed-out visitors. Only the latest announcement is shown; dismissed news stays quiet. Signed-in announcements appear in the bell of verified members who joined before they were sent. Neither is emailed.</p>
     <div className="announcement-compose">
       <form className="community-form announcement-form" onSubmit={event => void send(event)}>
@@ -89,7 +89,7 @@ export function AnnouncementsPanel() {
     {error && <p className="file-error" role="alert">{error}</p>}
     {note && <p className="success-note" role="status">{note}</p>}
     <h3 className="announcement-sent-heading">Sent{items.length ? <span className="subtle"> {items.length}</span> : null}</h3>
-    <p className="announcement-read-note">Card totals count everyone who was shown, opened or dismissed a public card, signed-out visitors included. They identify no one and leave out browsers sending Do Not Track or Global Privacy Control and visitors who objected to counting. Acknowledgements count members who clicked or dismissed the card; bell entries count members who opened them or used “Mark all read.” The audience includes eligible members who have not visited since it was sent; earlier read markers are preserved when visibility changes.</p>
+    <details className="admin-help"><summary>How reads and card totals are counted</summary><p className="announcement-read-note">Card totals count everyone who was shown, opened or dismissed a public card, signed-out visitors included. They identify no one and leave out browsers sending Do Not Track or Global Privacy Control and visitors who objected to counting. Acknowledgements count members who clicked or dismissed the card; bell entries count members who opened them or used “Mark all read.” The audience includes eligible members who have not visited since it was sent; earlier read markers are preserved when visibility changes.</p></details>
     {loading ? <p className="service-note" role="status">Loading announcements…</p> : items.length ? <ul className="announcement-sent">{items.map(item => {
       const share = item.audience ? Math.min(100, Math.round(item.reads / item.audience * 100)) : 0, from = countedFrom(item)
       return <li key={item.id}>

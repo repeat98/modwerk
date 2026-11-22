@@ -1,8 +1,10 @@
 import { createElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
+import packageManifest from '../engine/assets/octatrack-module-packages.json'
 import { ModuleDetail } from '../components/ModuleDetail'
 import { AVAILABLE_MODULES } from '../catalog/availability'
+import { MODULE_DOCUMENTS_BY_ID } from '../catalog/documents'
 import { CommunityContext, emptySession } from '../community/context'
 import type { Session } from '../community/api'
 import { DigiModDetail } from './DigiModDetail'
@@ -78,6 +80,32 @@ describe('module detail parity across machines', () => {
     expect(html).toContain('CPU and DSP load have no separate measurements yet.')
     expect(html).toContain('role="meter" aria-label="Memory relative load"')
     expect(html).not.toContain('aria-valuenow="0"')
+  })
+
+  it('shows the Octatrack CPU price as a hardware measurement with a local evidence record', () => {
+    const module = AVAILABLE_MODULES.find(module => module.id === 'euclid')!
+    const price = MODULE_DOCUMENTS_BY_ID[module.id].resources.cpuPrice!
+    const html = render(createElement(ModuleDetail, { module, selected: false, onToggle: noop }))
+    expect(html).toContain('role="meter" aria-label="CPU price" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + price.value + '"')
+    expect(html).toContain('aria-valuetext="' + price.value + '% of an audio frame, measured on hardware"')
+    expect(html).toContain('>' + price.value + '%</strong>')
+    expect(html).toContain('Measured · of frame')
+    expect(html).toContain('Measured on ' + price.date)
+    expect(html).toContain('/blob/main/sdk/octatrack/modules/euclid/' + price.source + '"')
+  })
+
+  it('renders numeric DSP and memory records as amounts without percentage meters', () => {
+    const module = AVAILABLE_MODULES.find(module => module.id === 'lofi2')!
+    const dsp = packageManifest.packages.find(entry => entry.id === module.id)!.cycles
+    const memory = MODULE_DOCUMENTS_BY_ID[module.id].tests.qualification!.memory
+    const html = render(createElement(ModuleDetail, { module, selected: false, onToggle: noop }))
+    expect(html).toContain(dsp + ' cycles per sample per instance')
+    expect(html).toContain('cycles/sample · Hardware-based')
+    expect(html).toContain(memory.totalBytes.toLocaleString('en-US') + ' bytes at the supported instance limit')
+    expect(html).toContain('Accounted total')
+    expect(html).toContain('/blob/main/src/engine/assets/octatrack-module-packages.json"')
+    expect(html).toContain('/blob/main/sdk/octatrack/modules/lofi2/' + memory.report + '"')
+    expect(html.match(/role="meter"/g)).toHaveLength(1)
   })
 
   it('offers the report form on both Digi machines with public delivery, private configuration, and machine-specific fields', () => {

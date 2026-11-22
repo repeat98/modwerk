@@ -13,6 +13,7 @@
     "src/catalog/availability.ts",
     "src/catalog/build-support.ts",
     "src/catalog/documents.ts",
+    "src/catalog/library-classification.ts",
     "src/catalog/module-authors.ts",
     "src/catalog/module-contract.ts",
     "src/catalog/module-links.ts",
@@ -81,6 +82,7 @@
   "dataFiles": [
     ".github/module-authors.json",
     "docs/news/008-beta-invitation.draft.json",
+    "sdk/approvals/zoom-release-waivers.json",
     "sdk/catalog.json",
     "src/catalog/machine-modules.json",
     "src/catalog/module-documents.json",

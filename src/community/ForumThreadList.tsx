@@ -4,6 +4,32 @@ import { REQUEST_STATUSES, type ForumThread } from './forum-contract'
 import { ForumAuthorName, ForumAvatar, ForumCategoryBadge, ForumMachineBadge } from './ForumIdentity'
 import { ForumTime } from './ForumTime'
 import { threadHref } from '../routing'
+import { Skeleton } from './ForumSkeleton'
+
+const TITLE_WIDTHS = ['72%', '54%', '64%', '46%']
+/** The list's loading state: the same columns and rows as a loaded page, with bars in place of the text. */
+export function ForumThreadListSkeleton({ rows = 6 }: { rows?: number }) {
+  return <div className="forum-thread-list" role="status" aria-busy="true">
+    <span className="sr-only">Loading discussions…</span>
+    <div className="forum-list-columns" aria-hidden="true"><span>Discussion</span><span>Replies</span><span>Last active</span></div>
+    <ul className="forum-thread-items" aria-hidden="true">
+      {Array.from({ length: rows }, (_, index) => <li key={index}>
+        <div className="forum-thread-row">
+          <div className="forum-thread-summary">
+            <span className="forum-avatar forum-skeleton-box" />
+            <div className="forum-thread-copy">
+              <h3><Skeleton width={TITLE_WIDTHS[index % TITLE_WIDTHS.length]} /></h3>
+              <div className="forum-thread-tags"><span className="forum-category-badge"><Skeleton width="64px" /></span><span className="forum-category-badge"><Skeleton width="52px" /></span></div>
+            </div>
+          </div>
+          <span className="forum-reply-count"><Skeleton width="22px" /></span>
+          {/* An anchor without href is not a link; it borrows the loaded row's sizing. */}
+          <span className="forum-last-active"><a><Skeleton width="44px" /><small><Skeleton width="56px" /></small></a></span>
+        </div>
+      </li>)}
+    </ul>
+  </div>
+}
 
 export function ForumThreadList({ threads }: { threads: ForumThread[] }) {
   return <div className="forum-thread-list">

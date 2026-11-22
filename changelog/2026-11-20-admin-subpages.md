@@ -1,0 +1,1 @@
+Admins can scan issue reports, review pending forum reports and handle active removal requests in dedicated queues. Accounts, statistics and Octatrack tools have direct links to each view. News drafts, contribution decisions and email delivery counts are easier to review.

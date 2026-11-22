@@ -79,7 +79,7 @@ class Machines(unittest.TestCase):
                       modules=[dict(name='ACID 303', slot='SRC', machine=True, T1=reading, T5='refused')],
                       together=dict(reading, placed=[], machines=['ACID 303', None]))
         entry = qualify.testing_entry(result, '2026-11-17')
-        self.assertIn('ACID 303 (machine) alone, playing: T1 core peak 610 per mille, CPU 520 per mille, its render 9.5 % of a frame, T5 refused', entry)
+        self.assertIn('ACID 303 (machine) alone, playing: T1 core peak 610 per mille, CPU 520 per mille, its render peak 9.5 % of a frame, T5 refused', entry)
         self.assertIn('All at once, playing (machines T1-T8: ACID 303, refused)', entry)
 
 
@@ -96,12 +96,32 @@ class UnitSteps(unittest.TestCase):
 
         reading = dict(cpu=500, core1=300, core1_peak=400, core0=200, core0_peak=300)
         with mock.patch.object(qualify, 'send', side_effect=lambda s: order.append(s) if s.startswith('PLAY w5000') else ''), \
-             mock.patch.object(qualify, 'meters', return_value=dict(reading)), mock.patch.object(qualify, 'renders', return_value=[1.0] * 8), \
+             mock.patch.object(qualify, 'meters', side_effect=lambda n: dict(reading)), mock.patch.object(qualify, 'renders', return_value=[35.9] * 8), \
+             mock.patch.object(qualify, 'EMULATOR', False), \
+             mock.patch.object(qualify, 'audition_price', side_effect=[dict(quiet=20, triggered=31, added=11, price=12),
+                                                                       dict(quiet=20, triggered=33, added=13, price=12)]), \
              mock.patch.object(qualify, 'part_copy', return_value=bytes(6322)), mock.patch.object(qualify, 'mem', return_value=b'\0'):
             failures = []
             qualify.machine_alone(Rows(), dict(label='POLY8', price=0, voice=False), failures)
         self.assertEqual(order, ['place T1', 'back T1', 'PLAY w5000 STOP w500', 'place T5', 'back T5', 'PLAY w5000 STOP w500'])
-        self.assertEqual(failures, [])
+        self.assertEqual(failures, ['POLY8 on T5 added 13.0 points of mean frame time, over its 12 % CPU price'])
+
+    def test_matched_auditions_use_the_guard_mean_and_stop_the_voice_on_failure(self):
+        quiet = 'frame max 39 %, in the frame interrupt 22.1 % over 16000 frames, skipped 0'
+        active = 'frame max 71 %, in the frame interrupt 31.4 % over 16600 frames, skipped 0'
+        def send(command):
+            return {'w6000 guard': quiet, 'guard': active, 'state': 'stopped'}.get(command, '')
+        with mock.patch.object(qualify, 'send', side_effect=send) as panel, \
+             mock.patch.object(qualify.time, 'sleep'), mock.patch.object(qualify, 'renders', return_value=[35.9] * 8):
+            self.assertEqual(qualify.audition_price(1, 15), dict(quiet=22.1, triggered=31.4, added=9.3, price=15))
+            self.assertEqual(panel.call_args, mock.call('T1+STOP w300'))
+            with mock.patch.object(qualify, 'renders', return_value=[0] * 8):
+                with self.assertRaisesRegex(ValueError, 'no guarded render'):
+                    qualify.audition_price(5, 15)
+            self.assertEqual(panel.call_args, mock.call('T5+STOP w300'))
+        for reply in ('', 'in the frame interrupt 3.3 % over 0 frames'):
+            with self.assertRaisesRegex(ValueError, 'no frame mean'):
+                qualify.frame_mean(reply)
 
     def test_the_part_is_saved_before_the_run_and_must_stay_as_it_was(self):
         saved, sent = bytes(range(256)) * 24 + bytes(178), []
@@ -111,6 +131,37 @@ class UnitSteps(unittest.TestCase):
         self.assertIn('FUNC+PART w600 UP w150 UP w150 UP w150 DOWN w150 DOWN w200 YES', sent[0])
         with mock.patch.object(qualify, 'send', return_value=''), mock.patch.object(qualify, 'part_copy', return_value=bytes(6322)):
             self.assertFalse(qualify.save_part(1, saved))
+
+
+class Emulator(unittest.TestCase):
+    """An ot_emu session: the same cases, the frame checks listed as not run when its frames stand still (20 November 2026)."""
+
+    def clock(self, emulator, counts):
+        result, sent = {}, []
+        with mock.patch.object(qualify, 'EMULATOR', emulator), mock.patch.object(qualify, 'frames', side_effect=list(counts)), \
+             mock.patch.object(qualify, 'send', side_effect=lambda s: sent.append(s) or ''):
+            return qualify.frame_clock(result), result, sent
+
+    def test_the_unit_always_runs_the_frame_checks_and_reads_nothing_for_it(self):
+        self.assertEqual(self.clock(False, []), (True, {}, []))
+
+    def test_an_emulator_whose_frames_stand_still_lists_them_as_not_run(self):
+        ok, result, sent = self.clock(True, [1, 1])
+        self.assertFalse(ok)
+        self.assertEqual(sent, ['w300'])
+        self.assertIn('DSP frames stand still', result['not_run'][0])
+        entry = qualify.testing_entry(dict(args=['x.mwrm'], crash=False, failures=[], packages=[], modules=[], not_run=result['not_run']), '2026-11-20')
+        self.assertIn('- Not run here: the frame checks and the queued bank change', entry)
+        self.assertIn('Result: passed', entry)
+
+    def test_an_emulator_running_its_dsps_runs_them_too(self):
+        self.assertEqual(self.clock(True, [1, 40])[:2], (True, {}))
+
+    def test_the_unit_waits_and_timeouts_are_unchanged(self):
+        self.assertEqual(qualify.SOCKET, __import__('os').environ.get('MODWERK_DEV_SOCKET', '/tmp/modwerk-dev.sock'))
+        source = (ROOT / 'scripts/octatrack-qualify.py').read_text()
+        self.assertIn('s.settimeout(40)', source)
+        self.assertIn("until(lambda: mem(0x800065bd, 2) == bytes([bank, pattern]), 20)", source)
 
 
 class Qualify(unittest.TestCase):

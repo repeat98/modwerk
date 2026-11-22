@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -18,6 +18,14 @@ function repository(files) {
 }
 const events = indices => JSON.stringify({ events: indices.map(index => ({ event: 'ev_' + index, index })) })
 const claimRow = (kind, key, holder) => ({ id: crypto.randomUUID(), kind, key, holder, branch: 'work', pullRequest: null, expiresAt: '2026-11-12T00:00:00.000Z' })
+
+it.each([{ args: [] }, { args: ['--released'] }, { args: [''] }])('rejects a claims filter without a holder ($args)', ({ args }) => {
+  const result = spawnSync(process.execPath, [join(import.meta.dirname, 'agent-board.mjs'), 'list', '--holder', ...args], {
+    env: { ...process.env, MODWERK_BOARD: 'off' }, encoding: 'utf8',
+  })
+  expect(result.status).toBe(1)
+  expect(result.stderr).toContain('Give a GitHub login after --holder')
+})
 
 describe('what a branch needs claimed', () => {
   it('finds new module folders, hook and table indices, migrations and machine ids, and nothing that was already there', () => {
@@ -118,8 +126,13 @@ describe('the board client', () => {
 describe('questions and findings in the commands', () => {
   const thread = values => ({ id: crypto.randomUUID(), kind: 'question', topic: { kind: 'module', key: 'octatrack/tape-echo' }, author: 'bo', to: 'ada', body: 'Room for a chorus?', pullRequest: null, createdAt: '2026-10-30T00:00:00.000Z', activeAt: '2026-10-30T00:00:00.000Z', endsAt: '2026-11-29T00:00:00.000Z', replies: [], ...values })
   it('gives the doctor an info line for questions and findings on the module or its machine, never a red one', () => {
+    const machineFinding = thread({ kind: 'finding', topic: { kind: 'machine', key: 'octatrack' }, body: 'Machine note' })
+    const moduleFinding = thread({ kind: 'finding', body: 'Exact module observation', pullRequest: 42 })
+    const detail = board.moduleMessagesLine({ machine: 'octatrack', id: 'tape-echo', messages: [machineFinding, moduleFinding] }).detail
+    expect(detail).toContain('module octatrack/tape-echo PR #42 «Exact module observation»')
+    expect(detail).not.toContain('Machine note')
     const messages = [thread({}), thread({ kind: 'finding', to: null, topic: { kind: 'machine', key: 'octatrack' } }), thread({ kind: 'finding', to: null, topic: { kind: 'machine', key: 'digitakt' } }), thread({ topic: { kind: 'module', key: 'octatrack/other' } })]
-    expect(board.moduleMessagesLine({ machine: 'octatrack', id: 'tape-echo', messages, login: 'Ada' })).toEqual({ state: 'info', name: 'board messages', detail: '1 open question on module octatrack/tape-echo (1 waiting for you), 1 finding on it or on octatrack: npm run board -- messages --machine octatrack' })
+    expect(board.moduleMessagesLine({ machine: 'octatrack', id: 'tape-echo', messages, login: 'Ada' })).toEqual({ state: 'info', name: 'board messages', detail: '1 open question on module octatrack/tape-echo (1 waiting for you), 1 finding on it or on octatrack · machine octatrack «Room for a chorus?»: npm run board -- messages --machine octatrack' })
     const answered = [thread({ replies: [{ id: crypto.randomUUID(), author: 'ada', body: 'Yes', createdAt: '2026-10-30T01:00:00.000Z' }] })]
     expect(board.moduleMessagesLine({ machine: 'octatrack', id: 'tape-echo', messages: answered, login: 'ada' }).detail).not.toContain('waiting')
     expect(board.moduleMessagesLine({ machine: 'digitone', id: 'swarm', messages, login: 'ada' })).toBeNull()

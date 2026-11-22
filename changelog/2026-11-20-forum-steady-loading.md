@@ -1,0 +1,4 @@
+- The forum builds once instead of in stages: signed-in members no longer see the visitor layout rearrange itself, and loading placeholders have the size of what replaces them.
+- "Since your last visit" now sits above the discussions it points to and arrives with them.
+- The online line, the Showcase strip, This month and member profiles keep their place while loading, when empty and when unavailable.
+- Library cards for modules in your set no longer get an outline; the filled check button marks them.
