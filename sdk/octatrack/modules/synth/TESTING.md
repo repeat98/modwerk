@@ -25,9 +25,9 @@ package row's `"restingReferences"` has the host wrapper (`scripts/octatrack-mod
 word at a time, the same way. Everything a musician reaches from the panel stays awake: the pages, choosers, AMP SETUP's
 LEG box, MIDI, transposition, the slot assigners and the quantizer's take events.
 
-**In use** (`fm_in_use`, each UI tick): a pick of FM SYNTH (`fm_admit_track` sets a flag the base's pick reads before
-it wakes a resting machine, so the wake lands before the commit), GLIDE on (sample tracks with LEG MONO slide through
-`sy_render`; on whether or not a track has LEG MONO), an FM/1 track in the live Part, and a sweep of one Part (16
+**In use** (`fm_in_use`, each UI tick): a pick of FM SYNTH (the base's pick calls `fm_admit_track`, which sets a flag,
+just before it asks whether to wake a resting machine, so the wake lands before the commit), GLIDE on (sample tracks
+with LEG MONO slide through `sy_render`; awake whether or not a track has LEG MONO), an FM/1 track in the live Part, and a sweep of one Part (16
 banks, 4 working and 4 saved Parts each) and one FLEX slot (a legacy FMSYNTH* / SYNTH* marker, `po_slot_marker`'s test)
 a call. It rests only after a whole sweep, 128 ticks or about two seconds, found neither. Its cost a tick, in the UI
 task and never in the frame interrupt: two Parts' eight type bytes (three signature bytes on a FLEX track), GLIDE, the
