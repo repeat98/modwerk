@@ -44,6 +44,7 @@ The module hooks three spots in OS 1.74's panel driver that no other module or t
 ## Compatibility and limitations
 
 - OS 1.74 and core-ar2 0.7 only.
+- Checked on a unit beside Silent Pad+Trig Settings: a light tap's strike meets its silent selection, FUNC + pad, LIVE REC and MUTE ALL SOUND as a real strike does. Audio load is unchanged (it does not run in the audio interrupt).
 - No dependency on another catalogue module. It takes no key gesture or screen; its row in the GLOBAL menu comes through the core's shared `ev_settings` hook.
 - Every light tap plays at the same velocity: the pads report no force or pressure for a light tap, so there is nothing to grade it by.
 - A light tap plays about 3 ms after its press, the time the module waits for a strike.

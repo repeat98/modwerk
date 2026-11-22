@@ -90,7 +90,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Built and linked for OS 1.74; not yet run on a unit as this module (Pad Thresh experiments reported in TESTING.md).",
+    "summary": "Build LT03 (plain base, sha256 72cad00c) on @filefolder's Rytm MKII, OS 1.74, as reported: light taps play, hard hits play once at stock level, mutes and selection unchanged, and every light tap plays through 15 s after a firm hit (the 4,096 ms case). Beside Silent Pad+Trig Settings (LS03) every check passed. Audio load: L 71-73 %, peak 75 % with Light Taps against 71-73 %, peak 76 % without. Host test: 12 timing cases.",
     "documentation": {
       "tutorial": {
         "title": "Usage",
