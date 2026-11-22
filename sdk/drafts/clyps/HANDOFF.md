@@ -1,3 +1,39 @@
+# CLYPS · chiusura indipendente del 22 novembre 2026
+
+**Sessione chiusa. Modulo Draft, ABI proposta, hardware NOT TESTED / NOT_FLASH_CANDIDATE.** Questa verifica ha riletto sorgenti, build e ricevute conservate e rieseguito i grader offline. I replay MKII e le misure appartengono allo sprint precedente. Le sezioni storiche più sotto ne conservano il contesto.
+
+| Riferimento | Identità verificata alla chiusura |
+|---|---|
+| [PR modulo #1997](https://github.com/repeat98/modwerk/pull/1997), aperta in Draft | `feature/clyps-community-draft`, checkpoint pre-verbale `93481e7c5509a914f6a8cdf8e9f5d140400ef2bd`. Sorgente consumatore testato con harness a `3478465af605575964c215dfef9e6b6fca8c27f3`. |
+| Candidato pubblicato sul fork contributor | `integration/clyps-shared-sequencer` a `b3184dd5e19caaae8c88e2e002c6ab5204ac27d6`, incorpora `23f41e720e6f3d90ecf44f66780fa76324a5ff9f`. MAIN e simboli identici alla build di replay `18e28a172b7836199e17d6da987649eda1710be2`. |
+| [PR cumulativa #1910](https://github.com/repeat98/modwerk/pull/1910), aperta in Draft | `base/octatrack-next` a `3375b212c55d85ef59ced4201f87d007d213c61c`. Quattro commit successivi alla base incorporata modificano il calcolo della riserva e la build. Questo HEAD richiede riqualificazione. |
+| Agent Board | Claim modulo `5f767223-670c-414e-88cd-301fcc8b1a6e` e claim hook `6bc7b6d1-559b-462f-8c5b-a05185f120e3` attivi. 63/64/65 e capability ABI 9 `0x4000` attendono la decisione del maintainer. [RFC](https://github.com/repeat98/modwerk/pull/1910#issuecomment-7084762329) |
+
+### Evidenza conservata
+
+SHA-256 del modulo MWRM `8aa6ccef2afd7db7874de28e8f6948f948e70f1e8b94a2f023d22452e4e90423`; MAIN `6a9d7518ba7707e3763215ecc50be1c7eec09628b1bdf45b86b3f207a02b434b`. Ricontrollati 33/33 digest delle ricevute, eseguibile Octabam MKII, scheda sintetica preparata, MAIN positivo e negativo, mappa simboli e digest di configurazione. Ambiente OS 1.40C, Python 3.12 e toolchain ColdFire. OS e progetto seed sono input locali. La scheda MODWERK/GATE3 è costruita su copie temporanee. L'archivio locale è `CLYPS-shared-replay-evidence/rc3/` nella workspace. [Manifesto delle identità](evidence/shared-base-refresh.json) · [Ricetta riproducibile](NATIVE_REPLAY.md) · [Provenienza e licenze](PROVENANCE.md)
+
+| Confronto su catture native | Esito riverificato offline |
+|---|---|
+| T2 da A01 ad A02 su A01 globale | PASS al wrap 90, 384 chiamate ordinate e 400 timestamp. SRC/ARR coerenti, altre sette tracce invariate, STOP annulla il pending. |
+| Otto tracce | 624 eventi e 608 timestamp coincidono. Default FAIL al tick 193, 218/219 stati coincidenti. Osservatore appaiato a 1 ms PASS con 219/219 e tre troncamenti respinti dallo stesso grader. |
+| Anticipato / RESTORE tardivo | Anticipato PASS, 576 eventi, 560 timestamp, 202 tick. Tardivo: coincidono 848 eventi, 816 timestamp e 298 tick. Richiesta a +1 ms del 187, pubblicazione a +5 ms del 187, T2 home al 282. FAIL del diagnostico che attende 188. |
+
+Le ricevute archiviate documentano 128 combinazioni su sedici righe, rifiuto 259 prima dell'attivazione con zero callback e owner, pool ripristinato a 786432 byte e Arranger stock con 336 chiamate e 336 scritture dopo OFF. Track Solo in entrambi gli ordini, ritorno SRC di Grain e delle schermate POLY8/VECTOR, popup, pool, AMP/LFO/FX, Scene A/B, crossfader, MAIN 64 → 56 → 64 fuori da Meta e trig/p-lock AMP su HOME sono coperti nei percorsi descritti. FLEX T1 passa da picco 0 a 1930. STATIC T2 registra 2117 prima e 2337 dopo anche nel controllo stock: fallisce il silenzio pre-lancio, isolamento audio inconclusivo. [Dettaglio prove e limiti](TESTING.md)
+
+5456 byte code/data, 164 BSS, 238 rilocazioni. Massimi osservati nel carico denso: 160 istruzioni emulate per selezione e 540 al wrap. Zero skip/shed nelle sei finestre. Frame locali del compilatore: 8 byte per callback del sequencer, 188 per draw. High-water totale dello stack e worst-case di cicli fisici non misurati. CI del checkpoint `93481e7c5`: 9 riusciti, 5 saltati. Compatibilità di catalogo archiviata: 44 moduli, 946 coppie, zero problemi. Doctor del draft rieseguito: FAIL, manca `octamod.module.json`.
+
+### Unico gate per la prossima sessione
+
+**Risolvere i due difetti di ownership con regressioni indipendenti.** Jannik ha compilato il draft e superato i quattro test circoscritti. Entrambi i difetti sono confermati dal maintainer e aperti sul sorgente ispezionato. La chiusura ha verificato il codice e la sua storia; la riproduzione dinamica dei difetti appartiene al prossimo gate. [Commento originale](https://github.com/repeat98/modwerk/pull/1997#issuecomment-7084719712)
+
+1. **Row Edit interrotto.** Aprire un popup stock durante Row Edit, chiuderlo e premere/rilasciare ARR. In [check_src_context](live_module.c) il popup azzera la visibilità lasciando attivo `editing`; [module_key](session_controls.h) può consumare ARR nel ramo di editing nascosto. Per accettare la correzione, verificare uscita pulita o ripristino visibile, ownership del rilascio e ritorno allo stock. Dopo la chiusura del popup ARR deve sempre poter riaprire una UI valida.
+2. **Invalidazione delle righe.** Definire una riga, notificare il pre-load di un banco estraneo e provare un caricamento fallito. [clyps_bank_load](live_module.c) ignora `mask` e `caller` e azzera `defined`, rendendo indisponibili tutte le sedici definizioni. Stabilire quale completamento riuscito autorizzi invalidazione o ripristino. Verificare conservazione delle righe su banco estraneo e fallimento, integrità del progetto e comportamento atteso sul successo pertinente.
+
+Per chiudere il gate devono restare validi SRC/ARR, quantizzazione e recupero stock. Poi riprendere il coordinamento su #1910 e riqualificare il candidato sulla base concordata. E1 resta interlocked.
+
+---
+
 ## Source integration update
 
 The eight-track engine, UI implementation, executable checks and source inventory are available in this branch. Start with [TESTING.md](TESTING.md) and [PROVENANCE.md](PROVENANCE.md). The numbered work items below preserve the initial RFC and its original evidence dates.
