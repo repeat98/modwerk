@@ -130,8 +130,8 @@ extern volatile uint32_t mw_frame_window; /* machine_registry.c: the longest fra
 #ifndef MW_FRAME_LINE
 #define MW_FRAME_LINE 1150u
 #endif
-/* shortcut: 115 % lies between the longest frames that dropped nothing (108.7 %) and those that dropped (120 %); narrow
- * it with runs between them. */
+/* shortcut: 115 % lies between the longest frames that dropped nothing (to 115.2 %, Amiga on an empty track, 8 s) and
+ * those that dropped (120 %); narrow it with runs between them. */
 volatile uint32_t mw_frame_line = MW_FRAME_LINE; /* per mille of a frame: no pick past it, and the CPU bars are full at it */
 static uint32_t frame_longest(void) /* the longest of the last four seconds */
 {
@@ -1214,8 +1214,9 @@ static uint32_t delays_asleep(void)
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille; /* machine_registry.c */
 /* MWMS v2's frame cost table (loader.c, set_package.h): what each measured module adds to the frame interrupt, per mille
  * of a frame, on each track or slot it takes (use) and once when it wakes from resting (wake), as the site measured it
- * on a unit (sdk/machines/octatrack/frame-costs.json). Their work is much the same every frame, so what they add to the
- * mean they add to the longest frame (Analog BD on T1, 22 November 2026: +22.5 and +20.0). Kept in battery RAM through a power cycle; each v2 set replaces it.
+ * on a unit (sdk/machines/octatrack/frame-costs.json): what each added to the longest frame, which is more than it adds
+ * to the mean (Amiga on an empty track, 22 November 2026: +26.7 against +20). Each is judged on top of the kept figure
+ * as if it fell on the longest frame, which over-counts a little with several: the safe side. Kept in battery RAM through a power cycle; each v2 set replaces it.
  * A module it does not list: a machine is charged by its descriptor (machine_registry.c), an effect nothing, and a wake
  * mw_wake_mille. */
 #define EC_MAGIC 0x4d574543u /* "MWEC" */
