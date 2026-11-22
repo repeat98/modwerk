@@ -130,6 +130,8 @@ int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out)
     return 1;
 }
 volatile uint32_t mw_frame_window; /* machine_registry.c's: the longest frame since the last reading */
+static uint32_t test_machines_booked; /* machine_registry.c's booking of the Part's module machines */
+uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net) { (void)skip; (void)net; return test_machines_booked; }
 uint32_t modwerk_dsp_booked(unsigned core) { return core; } /* draws only */
 unsigned modwerk_dsp_reads_buffer(unsigned id) { return id == 27u; } /* E-Verb reads one; Tape Echo (15) none */
 /* dsp.c's MODULE COST list: `installed` modules. */
@@ -443,7 +445,7 @@ int main(void)
     CHECK(open == CLOSED);                                             /* gone after a second and a half */
     /* The pick's CPU (owner, 17 November 2026: the box showed the DSP Tape Echo took, not the CPU): the frame share as
      * it stood, against the line where the guard starts dropping renders, in place of POOL. */
-    { budget_on = 1;
+    { budget_on = 1, mw_stock_reserve = 0; /* the measured figure alone (the reserve: below) */
       frame_newest = 575u;                                             /* stopped, half the line (1150) */
       modwerk_test_live_fx[13] = 29; ++dl_selection_completed; memory_tick();
       CHECK(open == MEMORY && budget_slot == 13 && pick_load == 575u);
@@ -454,7 +456,7 @@ int main(void)
       CHECK(open == MEMORY && pick_load == 1300u && strstr(shows(), "|CPU|100%|"));
       modwerk_status_key(0, 1), modwerk_status_key(0, 0);
       modwerk_test_live_fx[13] = 0; ++dl_selection_completed; memory_tick();
-      budget_on = 0, frame_newest = 0; }
+      budget_on = 0, frame_newest = 0, mw_stock_reserve = 1060u; }
     /* DSP FULL with numbers (owner, 20 October 2026): the refused effect's slot and need, instead of the bare popup. */
     dl_refusal[0] = 1, dl_refusal[1] = 9, dl_refusal[2] = 27, dl_refusal[3] = 22, dl_refusal[4] = 327, dl_refusal[5] = 1602;
     dl_residency_words[1] = 1508;
@@ -509,8 +511,8 @@ int main(void)
     int modwerk_status_effect_busy(unsigned slot, unsigned id, unsigned old);
     void modwerk_status_cpu_entered(uint32_t mille), modwerk_status_cpu_left(uint32_t mille);
     void modwerk_machine_frame_costs(const uint8_t *table, unsigned n);
-    CHECK(mw_frame_line == 1150u);
-    mw_frame_line = 500u; /* the figures below in round numbers */
+    CHECK(mw_frame_line == 1150u && mw_stock_reserve == 1060u && mw_track_stock == 70u);
+    mw_frame_line = 500u, mw_stock_reserve = 0; /* the figures below in round numbers, the reserve tried on its own */
     { uint32_t before = mw_cpu_refusals;
       transport_stopped = 1, frame_newest = 400u;
       CHECK(modwerk_status_frame_load() == 400u);
@@ -578,38 +580,65 @@ int main(void)
       CHECK(!frame_adjust);
       transport_stopped = 1, frame_played = played_asleep = frame_newest = 0, play_readings = adjust_readings = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
-    /* An effect pick: by its measured cost from the site's table (MWMS v2), with the box on its slot ("T4 FX2"); stock
-     * effects and NONE pass and take their old effect's cost off. A torn or unlisted table charges nothing. */
-    { uint32_t module = 0; uint16_t layout; char name[16];
+    /* An effect pick: by its measured cost from the site's table (MWMS v2), the Part's first slot of a module by its
+     * first, a further one by its each, with the box on its slot ("T5 FX2"); stock effects and NONE pass and take their
+     * old effect's cost off. A torn or unlisted table charges nothing but the wake from rest. */
+    { uint32_t module = 0; uint16_t layout; char name[16]; uint8_t live[16];
+      memcpy(live, modwerk_test_live_fx, sizeof live), memset(modwerk_test_live_fx, 0, sizeof live);
       map_module[27] = 0x9f482bb9u;                                     /* Tape Echo's package id */
       CHECK(modwerk_fxmap_describe(27, &module, &layout, name) && module == 0x9f482bb9u);
       uint8_t table[16] = {0};
       table[0] = (uint8_t)(module >> 24), table[1] = (uint8_t)(module >> 16), table[2] = (uint8_t)(module >> 8), table[3] = (uint8_t)module;
-      table[5] = 80u, table[7] = 40u;                                     /* 8 % in use, 4 % to wake */
-      frame_newest = 400u;
+      table[5] = 80u, table[7] = 40u;                                     /* each 8 %, first 12 % */
+      frame_newest = 280u;
       CHECK(!modwerk_status_effect_busy(11, 27, 0) && !frame_adjust);   /* no table yet: nothing charged */
       modwerk_machine_frame_costs(table, 1);
-      CHECK(!modwerk_status_effect_busy(11, 27, 0) && frame_adjust == 80 && open == CLOSED);
-      CHECK(!modwerk_status_effect_busy(11, 27, 27) && frame_adjust == 80); /* the same effect again: nothing more */
-      CHECK(modwerk_status_effect_busy(12, 27, 0) == 1 && open == REFUSED && refused[0] == 4 && refused[1] == 12 && !refused_machine);
-      CHECK(refused_booked == 960u && refused[4] == 160u && mw_cpu_refusal_tracks & 1u << 4 && frame_adjust == 80);
+      CHECK(!modwerk_status_effect_busy(11, 27, 0) && frame_adjust == 120 && open == CLOSED); /* the Part's first */
+      modwerk_test_live_fx[11] = 27;                                     /* stock wrote the pick */
+      CHECK(!modwerk_status_effect_busy(11, 27, 27) && frame_adjust == 120); /* the same effect again: nothing more */
+      CHECK(!modwerk_status_effect_busy(12, 27, 0) && frame_adjust == 200);  /* a further one: its each */
+      modwerk_test_live_fx[12] = 27;
+      CHECK(modwerk_status_effect_busy(13, 27, 0) == 1 && open == REFUSED && refused[0] == 4 && refused[1] == 13 && !refused_machine);
+      CHECK(refused_booked == 960u && refused[4] == 160u && mw_cpu_refusal_tracks & 1u << 5 && frame_adjust == 200);
       CHECK(strstr(shows(), "FX7 NEEDS +16%|CPU|112%|"));
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
-      CHECK(!modwerk_status_effect_busy(11, 8, 27) && !frame_adjust && open == CLOSED); /* stock in its place */
-      CHECK(!modwerk_status_effect_busy(11, 0, 0) && !modwerk_status_effect_busy(16, 27, 0) && !frame_adjust);
+      CHECK(!modwerk_status_effect_busy(12, 8, 27) && frame_adjust == 120 && open == CLOSED); /* one of two leaves: each */
+      modwerk_test_live_fx[12] = 8;
+      CHECK(!modwerk_status_effect_busy(11, 8, 27) && !frame_adjust);   /* the last: its first */
+      modwerk_test_live_fx[11] = 8;
+      CHECK(!modwerk_status_effect_busy(11, 0, 8) && !modwerk_status_effect_busy(16, 27, 0) && !frame_adjust);
       effect_rests = 1, effect_wakes = 0, frame_newest = 381u;
-      CHECK(modwerk_status_effect_busy(11, 27, 0) == 1 && !effect_wakes && effect_rests); /* 38.1 + 8 + 4: refused */
+      CHECK(modwerk_status_effect_busy(11, 27, 0) == 1 && !effect_wakes && effect_rests); /* 38.1 + 12: refused */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       frame_newest = 379u;
       CHECK(!modwerk_status_effect_busy(11, 27, 0) && effect_wakes == 1 && effect_woken == 27u && frame_adjust == 120);
       frame_adjust = 0;
       modwerk_test_costs.sum ^= 1u;                                      /* torn: nothing listed */
       CHECK(!modwerk_status_effect_busy(11, 27, 0) && !frame_adjust);
-      effect_rests = 1;                                                  /* unlisted: the default wake */
+      effect_rests = 1;                                                  /* unlisted, from rest: the default wake */
       CHECK(!modwerk_status_effect_busy(11, 27, 0) && frame_adjust == (int32_t)mw_wake_mille);
-      memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs);
-      frame_adjust = 0, frame_newest = 0, effect_rests = 0, map_module[27] = 0; }
-    mw_frame_line = 1150u;
+      modwerk_test_costs.sum ^= 1u, frame_adjust = 0;
+      /* The stock reserve: judged as if the Part played a full stock load, with what its modules cost on top. */
+      mw_stock_reserve = 300u, frame_newest = 100u;
+      CHECK(modwerk_status_frame_load() == 300u);                         /* 10 % measured, 30 % reserved */
+      CHECK(!modwerk_status_effect_busy(11, 27, 0) && frame_adjust == 120); /* 30 % + its first */
+      modwerk_test_live_fx[11] = 27;
+      CHECK(modwerk_status_frame_load() == 420u);                         /* the reserve with Tape Echo booked */
+      CHECK(modwerk_status_effect_busy(12, 27, 0) == 1 && refused_booked == 840u && refused[4] == 160u); /* 42 + 8 */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      test_machines_booked = 50u;
+      CHECK(modwerk_status_frame_load() == 470u);                         /* the Part's machines too */
+      frame_newest = 600u;
+      CHECK(modwerk_status_frame_load() == 720u);                         /* measured past it: the unit's own figure */
+      /* A machine takes a track that would play a sample: against the reserve it adds what it costs less that share. */
+      test_machines_booked = 0, frame_newest = 100u, frame_adjust = 0, memset(modwerk_test_live_fx, 0, 16);
+      CHECK(!modwerk_status_pick_busy(5, 1, "Amiga", 260u, 0) && open == CLOSED);  /* 30 + 26 - 7 = 49 % */
+      CHECK(modwerk_status_pick_busy(5, 0, "Echo", 200u, 0) && refused_booked == 600u); /* an effect: 30 + 20 % */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      test_machines_booked = 0, mw_stock_reserve = 0, frame_adjust = 0;
+      memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs), memcpy(modwerk_test_live_fx, live, sizeof live);
+      frame_newest = 0, effect_rests = 0, map_module[27] = 0; }
+    mw_frame_line = 1150u, mw_stock_reserve = 1060u;
     /* A reading: the longest frame since the last, per mille of a frame, and the guard's record cleared; a reading with
      * no frame keeps what it had. */
     { mw_frame_window = 28735u; frame_note(0);                          /* 60 % of 47,891 counts */
@@ -621,7 +650,7 @@ int main(void)
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0;
       frame_newest = 0; }
     /* The frame display uses the same playback window across a restart. */
-    { transport_stopped = 1, frame_played = 540u;
+    { transport_stopped = 1, frame_played = 540u, mw_stock_reserve = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 200u;
       CHECK(modwerk_status_frame_load() == 540u);
       transport_stopped = 0;
@@ -629,6 +658,8 @@ int main(void)
       play_readings = 0;
       for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
       CHECK(modwerk_status_frame_load() == 200u);
+      mw_stock_reserve = 1060u;
+      CHECK(modwerk_status_frame_load() == 1060u);                       /* a light Part: the reserve */
       transport_stopped = 1, frame_played = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
     modwerk_load_menu(0); modwerk_status_cpu_refused(2, "Poly8", 800, 266);

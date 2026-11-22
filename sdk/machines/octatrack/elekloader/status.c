@@ -153,7 +153,7 @@ static void frame_note(unsigned at)
  * four seconds hold part of the picks since already: only the kept figure adds them. A quiet delay counts as awake either way
  * (delays_asleep). The kept figure goes stale when the unit is made lighter while stopped (a stock pick, another
  * project): four seconds of playing replace it. */
-uint32_t modwerk_status_frame_load(void)
+static uint32_t measured_load(void)
 {
     int32_t kept = (int32_t)(frame_played + played_asleep) + frame_adjust, now = (int32_t)delays_asleep();
     now += modwerk_machine_stopped() ? (int32_t)frame_newest + (frame_adjust > 0 ? frame_adjust : 0) : (int32_t)frame_longest();
@@ -451,14 +451,55 @@ static void missing_check(void)
     missing_last = handles, machines_last = machines_now;
     if (open == MISSING) missing_locate();
 }
-/* The memory after a module loads (owner, 11 October 2026): picked onto a track, or accepted over USB. A box with
- * each core's code memory and the module pool, used, for a second and a half; it takes no key, and a key closes it. */
 #ifdef MODWERK_HOST
 extern uint8_t modwerk_test_live_fx[16];
 #define LIVE ((const volatile uint8_t *)modwerk_test_live_fx)
 #else
 #define LIVE ((const volatile uint8_t *)0x80000ec4u) /* the FX ids each track runs: FX1 T1-T8, then FX2 */
 #endif
+/* Modules never take the room stock needs later: a pick is judged as if the Part already played a full stock load
+ * (mw_stock_reserve), with what the modules it runs cost on top (their first and each from the site's table), when
+ * that is more than the unit measures. Owner, 22 November 2026: Tape Echos placed on an empty pattern, then trigs and
+ * samples added, ran the unit past its frame. */
+#ifndef MW_STOCK_RESERVE
+#define MW_STOCK_RESERVE 1060u
+#endif
+/* 106 %: eight sample tracks playing with all eight delays awake (owner's MKII, 22 November 2026: 105.2 to 105.6 %; the
+ * owner chose it). LFOs and p-locks on all of them reached 113 %: past the reserve, the guard drops module renders
+ * first. A machine takes a track that would otherwise play a sample, so it is booked net of that track's share. */
+#ifndef MW_TRACK_STOCK
+#define MW_TRACK_STOCK 70u
+#endif
+volatile uint32_t mw_stock_reserve = MW_STOCK_RESERVE, /* per mille of a frame */
+                  mw_track_stock = MW_TRACK_STOCK;     /* one sample track's share: (98.7 - 40.8 %) / 8 */
+/* machine_registry.c: the current Part's module machines but track `skip`, each less `net`, never below 0 */
+uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net);
+static uint32_t effect_cost(unsigned id, int first, int waking);
+static int runs_elsewhere(unsigned slot, unsigned id);
+/* The module effects the live slots run but slot `skip` (16: none), each by its `each` and the first of a module by its
+ * `first` too. */
+static uint32_t effects_booked(unsigned skip)
+{
+    uint32_t sum = 0;
+    for (unsigned k = 0; k < 16u; ++k) {
+        unsigned id = LIVE[k], first = 1;
+        if (k == skip) continue;
+        for (unsigned j = 0; j < k; ++j) if (j != skip && LIVE[j] == id) first = 0;
+        sum += effect_cost(id, (int)first, 0);
+    }
+    return sum;
+}
+static uint32_t reserved(unsigned machine_skip, unsigned effect_skip)
+{
+    return mw_stock_reserve + modwerk_machine_frame_booked(machine_skip, mw_track_stock) + effects_booked(effect_skip);
+}
+uint32_t modwerk_status_frame_load(void)
+{
+    uint32_t measured = measured_load(), stock = reserved(8u, 16u);
+    return measured > stock ? measured : stock;
+}
+/* The memory after a module loads (owner, 11 October 2026): picked onto a track, or accepted over USB. A box with
+ * each core's code memory and the module pool, used, for a second and a half; it takes no key, and a key closes it. */
 extern volatile uint32_t dl_selection_completed, modwerk_boot_accepted;
 static unsigned memory_left; /* ticks the box still shows */
 /* DSP FULL and DSP MEMORY FULL, said with numbers (owner, 20 October 2026: testers took the bare popup for a bug): the
@@ -1213,12 +1254,13 @@ static uint32_t delays_asleep(void)
 }
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille; /* machine_registry.c */
 /* MWMS v2's frame cost table (loader.c, set_package.h): what each measured module adds to the frame interrupt, per mille
- * of a frame, on each track or slot it takes (use) and once when it wakes from resting (wake), as the site measured it
+ * of a frame, on each further track or slot it takes (its `each`) and on top for the first of the Part (its `first`
+ * less `each`, in the wake field), as the site measured it
  * on a unit (sdk/machines/octatrack/frame-costs.json): what each added to the longest frame, which is more than it adds
  * to the mean (Amiga on an empty track, 22 November 2026: +26.7 against +20). Each is judged on top of the kept figure
  * as if it fell on the longest frame, which over-counts a little with several: the safe side. Kept in battery RAM through a power cycle; each v2 set replaces it.
- * A module it does not list: a machine is charged by its descriptor (machine_registry.c), an effect nothing, and a wake
- * mw_wake_mille. */
+ * A module it does not list: a machine is charged by its descriptor (machine_registry.c), an effect nothing, and either
+ * mw_wake_mille when it wakes from resting. */
 #define EC_MAGIC 0x4d574543u /* "MWEC" */
 #define EC_ROOM 128u         /* set_package.h's RUNTIME_SET_COSTS */
 struct frame_costs { uint32_t magic, count, entry[EC_ROOM][2], sum; };
@@ -1260,11 +1302,13 @@ int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
 int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label, uint32_t add, uint32_t gone)
 {
     frame_adjust -= (int32_t)gone;
-    uint32_t load = modwerk_status_frame_load(), line = mw_frame_line ? mw_frame_line : 1u;
+    uint32_t measured = measured_load() + add, line = mw_frame_line ? mw_frame_line : 1u;
     frame_adjust += (int32_t)gone;
-    if (load + add < line) return 0;
+    uint32_t net = machine ? (add > mw_track_stock ? add - mw_track_stock : 0u) : add; /* a machine in a sample's place */
+    uint32_t stock = reserved(machine ? slot : 8u, machine ? 16u : slot) + net, load = measured > stock ? measured : stock;
+    if (load < line) return 0;
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
-    cpu_refusal_box(slot, machine, label, load * 1000u / line, add * 1000u / line);
+    cpu_refusal_box(slot, machine, label, (load - (load > add ? add : load)) * 1000u / line, add * 1000u / line);
     return 1;
 }
 /* selection.c's guard (build_core.py's edit), before stock writes an FX pick: 1 when the pick asks for a module's
@@ -1275,30 +1319,35 @@ int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label,
 void modwerk_fxmap_name(unsigned id, char *out); /* fxmap.c: 16 bytes */
 int modwerk_machine_effect_resting(unsigned id);  /* machine_registry.c: effect modules that rest */
 void modwerk_machine_effect_wake(unsigned id);
-static uint32_t effect_use(unsigned id, uint32_t *wake)
+/* What one more slot of the module effect at handle `id` adds, per mille: the table's `each`, and its `first` extra when
+ * no other slot runs it; a module the table does not list, nothing, but mw_wake_mille when it wakes from resting. */
+static uint32_t effect_cost(unsigned id, int first, int waking)
 {
-    uint32_t module, use = 0; uint16_t layout; char name[16];
-    *wake = mw_wake_mille;
-    if (id < MODWERK_FX_IDS && fx_in(modwerk_fx_modules, id) && modwerk_fxmap_describe(id, &module, &layout, name))
-        modwerk_status_module_cost(module, &use, wake);
-    return use;
+    uint32_t module, each, extra; uint16_t layout; char name[16];
+    if (id >= MODWERK_FX_IDS || !fx_in(modwerk_fx_modules, id) || !modwerk_fxmap_describe(id, &module, &layout, name)) return 0;
+    if (modwerk_status_module_cost(module, &each, &extra)) return each + (first ? extra : 0u);
+    return waking ? mw_wake_mille : 0u;
+}
+static int runs_elsewhere(unsigned slot, unsigned id)
+{
+    for (unsigned k = 0; k < 16u; ++k) if (k != slot && LIVE[k] == id) return 1;
+    return 0;
 }
 int modwerk_status_effect_busy(unsigned slot, unsigned id, unsigned old)
 {
-    uint32_t wake, gone = slot < 16u && old != id ? effect_use(old, &wake) : 0u;
+    uint32_t gone = slot < 16u && old != id ? effect_cost(old, !runs_elsewhere(slot, old), 0) : 0u;
     if (slot > 15u || !fx_in(modwerk_fx_modules, id)) { if (gone) modwerk_status_cpu_left(gone); return 0; }
-    uint32_t use = effect_use(id, &wake);
-    if (old == id) use = 0; /* no change on this slot: only a wake to judge */
     /* A resting effect module brings its ColdFire hooks back into the frame: judged with them on top, then woken
      * before stock writes the pick, so its first frame on the slot has its detours. */
     int waking = modwerk_machine_effect_resting(id);
+    uint32_t add = old != id ? effect_cost(id, !runs_elsewhere(slot, id), waking) : 0u;
     char name[16];
     modwerk_fxmap_name(id, name);
-    if (modwerk_status_pick_busy(slot, 0u, name, use + (waking ? wake : 0u), gone)) return 1;
+    if (modwerk_status_pick_busy(slot, 0u, name, add, gone)) return 1;
     if (waking) modwerk_machine_effect_wake(id);
     /* shortcut: counted when the guard passes the pick, before the DSP places it; a pick the DSP then refuses stays
      * counted until the unit has played four seconds. Count at the DSP's commit if that ever misleads a pick. */
-    if (use + (waking ? wake : 0u)) modwerk_status_cpu_entered(use + (waking ? wake : 0u));
+    if (add) modwerk_status_cpu_entered(add);
     if (gone) modwerk_status_cpu_left(gone);
     return 0;
 }

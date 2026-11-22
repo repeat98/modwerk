@@ -74,16 +74,16 @@ describe('one module-set offer', () => {
   it('sends every module the base-owned record lists, in per mille, under its package id', () => {
     const table = frameCostTable()
     expect(table.length).toBeGreaterThan(0)
-    expect(table.find(c => c.module === 0x9f482bb9)).toEqual({ module: 0x9f482bb9, use: 97, wake: 0 }) // tapeecho
-    expect(table.find(c => c.module === 0x970f03ad)).toEqual({ module: 0x970f03ad, use: 181, wake: 0 }) // syntiz: read from rest
-    expect(frameCostTable({ x: { use: 1 } })[0].wake).toBe(30) // the default wake
+    expect(table.find(c => c.module === 0x9f482bb9)).toEqual({ module: 0x9f482bb9, use: 37, wake: 93 }) // tapeecho: each 3.7, first 13.0
+    expect(table.find(c => c.module === 0x970f03ad)).toEqual({ module: 0x970f03ad, use: 181, wake: 0 }) // syntiz: one reading, first = each
+    expect(frameCostTable({ x: { first: 1, each: 2 } })[0].wake).toBe(0) // never below each
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], table)).not.toThrow()
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], [{ module: 5, use: 0, wake: 0 }])).not.toThrow() // measured free
     const record = JSON.parse(readFileSync(new URL('../../../sdk/machines/octatrack/frame-costs.json', import.meta.url), 'utf8'))
-    for (const [id, cost] of Object.entries(record.costs) as [string, { use: number; wake?: number; measured: string }][]) {
+    for (const [id, cost] of Object.entries(record.costs) as [string, { first: number; each: number; measured: string }][]) {
       expect(existsSync(new URL(`../../../sdk/octatrack/modules/${id}/octamod.module.json`, import.meta.url)), id).toBe(true)
       expect(cost.measured.length, id).toBeGreaterThan(10)
-      expect(cost.use >= 0 && cost.use <= 100 && (cost.wake ?? 3) >= 0 && (cost.wake ?? 3) <= 100, id).toBe(true)
+      expect(cost.each >= 0 && cost.first >= cost.each && cost.first <= 100, id).toBe(true)
     }
   })
 })

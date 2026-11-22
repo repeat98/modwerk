@@ -501,13 +501,20 @@ static void check_cpu_budget(void)
       CHECK(mw_assign(part0(), 6, 6) == 1 && cpu_out == 170u && cpu_in == 470u); /* a swap: one out, one in */
       CHECK(mw_assign(part0(), 6, 6) == 1 && cpu_in == 470u);                   /* its own track again: nothing */
       CHECK(mw_assign(part0(), 6, 1) == 1 && cpu_out == 470u);
-      costs_listed = 1, cpu_in = cpu_out = 0;
-      CHECK(mw_assign(part0(), 7, 7) == 1 && cpu_in == 20u);                    /* measured by the site: 2 % */
-      cpu_now = hot_line - 100u;
-      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_box_gone == 20u);  /* LIGHT out, unpriced A in: 120 */
-      cpu_now = hot_line - 101u;
-      CHECK(mw_assign(part0(), 7, 5) == 1 && cpu_out == 20u && cpu_in == 140u);
-      CHECK(mw_assign(part0(), 7, 1) == 1); costs_listed = 0, cpu_now = 0;
+      /* Measured by the site: the first track of the Part by its first (2 % + 1 %), a further one by its each (2 %), and
+       * the reserve's booking of the Part's machines the same way. */
+      costs_listed = 1, cpu_in = cpu_out = 0, mw_cpu_allowance = 100; /* room for two LIGHTs at 30 */
+      CHECK(mw_assign(part0(), 7, 7) == 1 && cpu_in == 30u);
+      CHECK(mw_assign(part0(), 6, 7) == 1 && cpu_in == 50u);                    /* a second LIGHT: each */
+      uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net);
+      CHECK(modwerk_machine_frame_booked(8, 0) == 50u && modwerk_machine_frame_booked(7, 0) == 30u && modwerk_machine_frame_booked(6, 0) == 30u);
+      CHECK(modwerk_machine_frame_booked(8, 25u) == 5u);                         /* each less a sample's share, never below 0 */
+      CHECK(mw_assign(part0(), 6, 1) == 1 && cpu_out == 20u);                   /* one of two leaves: each */
+      cpu_now = hot_line - 89u;
+      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_box_gone == 30u);  /* the last LIGHT out, unpriced A in: 120 */
+      cpu_now = hot_line - 91u;
+      CHECK(mw_assign(part0(), 7, 5) == 1 && cpu_out == 50u && cpu_in == 170u);
+      CHECK(mw_assign(part0(), 7, 1) == 1); costs_listed = 0, cpu_now = 0, mw_cpu_allowance = 45;
       rows(both, 2, 0, 0); fresh(); a_admit = 1; mw_ui_tick(); }
     unsigned boxes = cpu_boxes;
     CHECK(mw_assign(part0(), 0, 5) == 1 && mw_assign(part0(), 1, 5) == 1 && mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes);

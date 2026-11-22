@@ -196,13 +196,40 @@ volatile uint8_t mw_cpu_refused;    /* the current Part's tracks past the allowa
 static uint8_t cpu_warned;          /* ... whose box already showed, as `warned` */
 static unsigned cpu_price(const Machine *m) { return m->reserved[0] ? m->reserved[0] : m->source_kind ? 0u : CPU_DEFAULT; }
 static unsigned meter_cost(const Machine *m) { return m->reserved[1] ? m->reserved[1] : cpu_price(m); }
-/* What one track of `who` adds to the frame share, per mille of a frame, and its module's wake (above). */
-static uint32_t frame_cost(const Machine *who, uint32_t *wake)
+/* What one more track of `who` adds to the longest frame, per mille of a frame: the site's measured `each`, and its
+ * `first` extra on the Part's first track of it; a machine the table does not list, its measured meter cost or its
+ * price, and mw_wake_mille (above) when its module wakes from resting. */
+static uint32_t frame_cost(const Machine *who, int first, int waking)
 {
-    struct runtime_owner o; uint32_t use;
-    *wake = mw_wake_mille;
-    if (modwerk_runtime_owner_at((uintptr_t)who, &o) == 1 && modwerk_status_module_cost(o.module, &use, wake)) return use;
-    return 10u * meter_cost(who);
+    struct runtime_owner o; uint32_t each, extra;
+    if (modwerk_runtime_owner_at((uintptr_t)who, &o) == 1 && modwerk_status_module_cost(o.module, &each, &extra))
+        return each + (first ? extra : 0u);
+    return 10u * meter_cost(who) + (waking ? mw_wake_mille : 0u);
+}
+/* Whether a track of `part` but `track` is `who`'s: a pick or an exit there is a further one, by its `each`. */
+static int elsewhere(const Part *part, unsigned track, const Machine *who)
+{
+    const Machine *m[ROWS - 5u], *t_who; unsigned n = machines(m);
+    for (unsigned t = 0; t < 8u; ++t) if (t != track && owner(m, n, part, t, &t_who) && t_who == who) return 1;
+    return 0;
+}
+/* status.c's stock reserve: what the current Part's module machines cost but track `skip` (8: none), each track by its
+ * `each` and the first of a machine by its `first` too, less `net` (the sample a track would otherwise play), never
+ * below 0. */
+uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net)
+{
+    if (!valid_bank()) return 0;
+    const Machine *m[ROWS - 5u], *who[8]; unsigned n = machines(m); uint32_t sum = 0;
+    const Part *part = current_part();
+    for (unsigned t = 0; t < 8u; ++t) {
+        who[t] = 0;
+        if (t == skip || !owner(m, n, part, t, &who[t])) { who[t] = 0; continue; }
+        int first = 1;
+        for (unsigned u = 0; u < t; ++u) if (who[u] == who[t]) first = 0;
+        uint32_t cost = frame_cost(who[t], first, 0);
+        sum += cost > net ? cost - net : 0u;
+    }
+    return sum;
 }
 /* The Part's bill without track `skip` (8: none), in track order. The tick also uses these owners to charge DSP
  * voices and label refusals. Keep them on its stack for this pass, so a Part or module change is read afresh next tick. */
@@ -539,8 +566,7 @@ static void flex_defaults(Part *part, Part *mirror, unsigned track)
 static void leave(Part *part, Part *mirror, unsigned track, const Machine *old)
 {
     if (old->leave) old->leave(track);
-    uint32_t wake;
-    modwerk_status_cpu_left(frame_cost(old, &wake));
+    modwerk_status_cpu_left(frame_cost(old, !elsewhere(part, track, old), 0));
     if (!old->assign && old->flags & MODWERK_MACHINE_PROTECT) flex_defaults(part, mirror, track);
     if (charged[track] == old) release(track); /* a priced machine that took the track was charged in its place */
 }
@@ -598,10 +624,9 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
         if (next->admit_track && !next->admit_track(part, track)) return (unsigned)-1;
         warned &= (uint8_t)~(1u << track); /* a pick is a new ask: say so again if it is refused again */
         int waking = old != next && asleep(next);
-        uint32_t wake, add = old != next ? frame_cost(next, &wake) : 0u, old_wake;
-        if (waking) add += wake; /* its module's hooks and detours come back into the frame, which does not hold them yet */
+        uint32_t add = old != next ? frame_cost(next, !elsewhere(part, track, next), waking) : 0u;
         /* a unit whose frame this machine would fill does not take it; the one it replaces is judged gone */
-        if (old != next && modwerk_status_pick_busy(track, 1u, next->label, add, old ? frame_cost(old, &old_wake) : 0u))
+        if (old != next && modwerk_status_pick_busy(track, 1u, next->label, add, old ? frame_cost(old, !elsewhere(part, track, old), 0) : 0u))
             return (unsigned)-1;
         if (old != next && cpu_price(next)) { /* before the DSP claim: nothing to give back */
             uint8_t over; unsigned booked = cpu_bill(m, n, part, track, &over, 0);

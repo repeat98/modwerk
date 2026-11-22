@@ -4,13 +4,15 @@ import { digestBytes, UPLOAD_MAX_BYTES } from './upload-wire.ts'
 import { sha256 } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import frameCosts from '../../../sdk/machines/octatrack/frame-costs.json' with { type: 'json' }
 
-/** v2's table entry: a module's package id and what it adds to the frame share in use and on waking, per mille. */
+/** v2's table entry: a module's package id and what it adds to the longest frame, per mille: each further instance
+ * (`use`), and on top for the Part's first (`wake`). */
 export interface FrameCost { module: number; use: number; wake: number }
-/** The measured costs (sdk/machines/octatrack/frame-costs.json) as v2 sends them, by package id ascending. */
-export function frameCostTable(costs: Record<string, { use: number; wake?: number }> = frameCosts.costs): FrameCost[] {
+/** The measured costs (sdk/machines/octatrack/frame-costs.json, percent: `first` alone, `each` further) as v2 sends
+ * them, by package id ascending. */
+export function frameCostTable(costs: Record<string, { first: number; each: number }> = frameCosts.costs): FrameCost[] {
   return Object.entries(costs).map(([id, cost]) => ({
     module: new DataView(sha256(new TextEncoder().encode(id)).buffer).getUint32(0), // build.py module_id()
-    use: Math.round(cost.use * 10), wake: Math.round((cost.wake ?? 3) * 10),
+    use: Math.round(cost.each * 10), wake: Math.max(0, Math.round(cost.first * 10) - Math.round(cost.each * 10)),
   })).sort((a, b) => a.module - b.module)
 }
 /** set_package.h RUNTIME_SET_COSTS. */
