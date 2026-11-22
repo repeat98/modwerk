@@ -16,10 +16,10 @@ const LOG_AT = 0x47f0315c, LOG_SIZE = 6148
 /** A Digitone II with a development base, in Web MIDI's shape: link.c's ident, diag and mem, and its upload command
  * into a controller as far as a trial, Keep and Undo reach (sdk/runtime/upload/upload.c). Every reply arrives split
  * over two events, as RtMidi hands long SysEx over. */
-function fakeDigitone({ playing = false } = {}) {
+function fakeDigitone({ playing = false, delayMs = 0, garble = '' } = {}) {
   const names = Object.fromEntries(Object.entries(UploadCommand).map(([name, code]) => [code, name]))
   const before = UPLOAD_BASE
-  const state = { phase: 'normal', last: 0, current: 0, received: 0, generation: 0, active: before, staged: '', previous: before, frames: [] }
+  const state = { phase: 'normal', last: 0, current: 0, received: 0, generation: 0, active: before, staged: '', previous: before, frames: [], inFlight: 0, mostInFlight: 0 }
   const memory = new Map()
   ;[...be(0x4d574447), ...be(2), ...be(0x1234), ...be(1), ...be(0), ...be(0), ...be(1)].forEach((b, i) => memory.set(LOG_AT + i, b))
   const base = LOG_AT + 40 + 92 + 32 * 96
@@ -52,17 +52,23 @@ function fakeDigitone({ playing = false } = {}) {
   let listener = null
   const reply = (seq, cmd, status, payload = []) => {
     const message = [...LINK_HEADER, seq, cmd | 0x40, status, ...payload, 0xf7], cut = message.length >> 1
-    queueMicrotask(() => { listener?.({ data: Uint8Array.from(message.slice(0, cut)) }); listener?.({ data: Uint8Array.from(message.slice(cut)) }) })
+    const deliver = () => { state.inFlight--; listener?.({ data: Uint8Array.from(message.slice(0, cut)) }); listener?.({ data: Uint8Array.from(message.slice(cut)) }) }
+    if (delayMs) setTimeout(deliver, delayMs); else queueMicrotask(deliver)
   }
   const unit = data => {
     const seq = data[6], cmd = data[7]
+    state.mostInFlight = Math.max(state.mostInFlight, ++state.inFlight)
     if (cmd === 0x01) return reply(seq, cmd, 0, [1, 7, 0, 300, 1, 0, 0, 0, 0, 1, 0, LOG_AT, state.phase === 'normal' && state.active === before ? 0 : 1, 0x47f00000].flatMap(u32))
     if (cmd === 0x22) return reply(seq, cmd, 0, [LOG_AT, LOG_SIZE, 1500, 30].flatMap(u32))
     if (cmd === 0x21) {
       const at = get32(data, 8), n = get32(data, 13)
       return reply(seq, cmd, 0, [...u32(at), ...pack7(Uint8Array.from({ length: n }, (_, i) => memory.get(at + i) ?? 0))])
     }
-    if (cmd === 0x30) return reply(seq, cmd, 0, pack7(controller(unpack7(data.subarray(8, -1)))))
+    if (cmd === 0x30) {
+      const response = controller(unpack7(data.subarray(8, -1)))
+      // garble: the acknowledgement of that command comes back cut short, as a lost reply would leave it unconfirmed
+      return reply(seq, cmd, 0, pack7(garble && state.frames.at(-1) === garble ? response.subarray(0, 20) : response))
+    }
     reply(seq, cmd, 2)
   }
   const access = {
@@ -98,6 +104,34 @@ describe('a Digitone II over the computer’s MIDI', () => {
     await unit.trial(new Uint8Array(100).fill(1))
     expect(await unit.undo()).toMatchObject({ kept: false, phase: 'normal', active: trial.sha256 })
     await expect(unit.undo()).rejects.toThrow('No trial is open')
+  })
+
+  it('never has two requests on the line: status and log reads wait for the keepalive and the other way round', async () => {
+    const fake = fakeDigitone({ delayMs: 3 }), unit = new DigitoneUnit(midiLinkLine(fake.access), 5)
+    await unit.trial(new Uint8Array(300).fill(4))
+    const [status, log] = await Promise.all([unit.status(), unit.log(), new Promise(done => setTimeout(done, 40))])
+    expect(status).toMatchObject({ loader: { phase: 'trial' }, trialOpen: true })
+    expect(log).toMatchObject({ version: 2 })
+    expect(fake.state.frames.filter(name => name === 'hello').length).toBeGreaterThanOrEqual(4)
+    expect(fake.state.mostInFlight).toBe(1)
+    expect(await unit.undo()).toMatchObject({ kept: false, phase: 'normal' })
+  })
+
+  it('stops the keepalive when Keep is not confirmed, and reads the loader again through a fresh session', async () => {
+    const fake = fakeDigitone({ garble: 'accept' }), unit = new DigitoneUnit(midiLinkLine(fake.access), 10)
+    await unit.trial(new Uint8Array(100).fill(2))
+    await expect(unit.keep()).rejects.toThrow(/Keep was not confirmed.*keepalive stopped.*loader now reads/)
+    expect(unit.trialOpen).toBe(false)
+    const after = fake.state.frames.length
+    await new Promise(done => setTimeout(done, 50))
+    expect(fake.state.frames.length).toBe(after)            // no keepalive: the unit's timeout settles the trial
+    expect(await unit.status()).toMatchObject({ loader: { phase: 'ready' } })
+  })
+
+  it('binds to the build the unit names, and refuses another build when one is given', async () => {
+    const fake = fakeDigitone()
+    expect(await new DigitoneUnit(midiLinkLine(fake.access), 20, UPLOAD_BASE).status()).toMatchObject({ base: UPLOAD_BASE })
+    await expect(new DigitoneUnit(midiLinkLine(fakeDigitone().access), 20, 'ab'.repeat(32)).trial(new Uint8Array(10))).rejects.toThrow('not abababab')
   })
 
   it('refuses a trial while the unit plays, and a port list without one Digitone II', async () => {

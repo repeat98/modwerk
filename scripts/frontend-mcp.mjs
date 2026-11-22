@@ -273,7 +273,7 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     if (!options.digitoneMidi) throw new Error('Digitone II tools require --digitone-midi at startup.')
     if (!digitone) {
       const access = await (dependencies.digitoneAccess ?? nodeMidiAccess)()
-      try { digitone = { access, unit: new DigitoneUnit(midiLinkLine(access)) } } catch (error) { access.close?.(); throw error }
+      try { digitone = { access, unit: new DigitoneUnit(midiLinkLine(access), undefined, options.digitoneBase) } } catch (error) { access.close?.(); throw error }
     }
     return digitone.unit
   }
@@ -576,8 +576,14 @@ export function createProtocol(service) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   for (const method of ['log', 'info', 'debug', 'warn', 'error']) console[method] = (...args) => process.stderr.write(formatMcpLog(...args) + '\n')
   try {
-  const { values } = parseArgs({ options: { 'data-dir': { type: 'string' }, 'frontend-root': { type: 'string' }, 'prepared-modules': { type: 'string' }, 'api': { type: 'string' }, site: { type: 'string' }, 'session-file': { type: 'string' }, stock: { type: 'string' }, 'device-socket': { type: 'string' }, 'zoom-midi': { type: 'boolean' }, 'zoom-effects': { type: 'string' }, 'digitone-midi': { type: 'boolean' }, 'digitone-packages': { type: 'string' }, 'allow-api-writes': { type: 'boolean' }, 'allow-device-writes': { type: 'boolean' } } })
-  const service = await createFrontendTools({ root: values['frontend-root'] && resolve(values['frontend-root']), preparedModules: values['prepared-modules'] && resolve(values['prepared-modules']), dataDir: values['data-dir'] && resolve(values['data-dir']), apiBase: values.api, site: values.site, sessionFile: values['session-file'], stock: values.stock, deviceSocket: values['device-socket'], zoomMidi: values['zoom-midi'], zoomEffects: values['zoom-effects'] && resolve(values['zoom-effects']), digitoneMidi: values['digitone-midi'], digitonePackages: values['digitone-packages'] && resolve(values['digitone-packages']), allowApiWrites: values['allow-api-writes'], allowDeviceWrites: values['allow-device-writes'] })
+  /** --digitone-base: a development build's .identity file (machine-base.py --dev --out) or its 64 hex digits. */
+  const buildIdentity = async given => {
+    const text = /^[0-9a-f]{64}$/i.test(given) ? given : (await readFile(resolve(given), 'utf8')).trim()
+    if (!/^[0-9a-f]{64}$/i.test(text)) throw new Error('--digitone-base takes a build .identity file or its 64 hex digits.')
+    return text.toLowerCase()
+  }
+  const { values } = parseArgs({ options: { 'data-dir': { type: 'string' }, 'frontend-root': { type: 'string' }, 'prepared-modules': { type: 'string' }, 'api': { type: 'string' }, site: { type: 'string' }, 'session-file': { type: 'string' }, stock: { type: 'string' }, 'device-socket': { type: 'string' }, 'zoom-midi': { type: 'boolean' }, 'zoom-effects': { type: 'string' }, 'digitone-midi': { type: 'boolean' }, 'digitone-packages': { type: 'string' }, 'digitone-base': { type: 'string' }, 'allow-api-writes': { type: 'boolean' }, 'allow-device-writes': { type: 'boolean' } } })
+  const service = await createFrontendTools({ root: values['frontend-root'] && resolve(values['frontend-root']), preparedModules: values['prepared-modules'] && resolve(values['prepared-modules']), dataDir: values['data-dir'] && resolve(values['data-dir']), apiBase: values.api, site: values.site, sessionFile: values['session-file'], stock: values.stock, deviceSocket: values['device-socket'], zoomMidi: values['zoom-midi'], zoomEffects: values['zoom-effects'] && resolve(values['zoom-effects']), digitoneMidi: values['digitone-midi'], digitonePackages: values['digitone-packages'] && resolve(values['digitone-packages']), digitoneBase: values['digitone-base'] && await buildIdentity(values['digitone-base']), allowApiWrites: values['allow-api-writes'], allowDeviceWrites: values['allow-device-writes'] })
   const protocol = createProtocol(service), input = createInterface({ input: process.stdin, crlfDelay: Infinity })
   let queue = Promise.resolve()
   input.on('line', line => { queue = queue.then(async () => { let reply; try { if (Buffer.byteLength(line) > 64 * 1024) throw new Error('Message too large.'); reply = await protocol(JSON.parse(line)) } catch { reply = { jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Invalid JSON-RPC message.' } } } if (reply) process.stdout.write(JSON.stringify(reply) + '\n') }) })
