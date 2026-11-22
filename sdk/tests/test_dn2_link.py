@@ -38,10 +38,6 @@ class Dn2Link(unittest.TestCase):
         self.assertIsNone(link.parse(link.request(9, "mem", 0, 1)))   # a request is not a reply
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class Dn2Screen(unittest.TestCase):
     def test_frame_rows_reads_the_frame_column_by_column_top_row_first(self):
         fb = bytearray(1024)
@@ -88,3 +84,120 @@ class Dn2Diagnostics(unittest.TestCase):
         self.assertEqual(link.IMAGE_MAX, recipe["UPLOAD_AT"] - 0x40000400)
         self.assertEqual(link.CONTAINER_MAX, recipe["CONTAINER_MAX"])
         self.assertLessEqual(recipe["RAMBOOT_COPY_AT"] + recipe["CONTAINER_MAX"], 0x47f00000)   # below the mod area
+
+
+def mem_reply(seq, addr, data, status=0):
+    return link.HEADER + bytes([seq & 0x7f, 0x21 | 0x40, status]) + link.u32(addr) + pack7(data) + b"\xF7"
+
+
+class FakeLine:
+    """A MIDI pair whose replies come from answer(request) after the request is sent; queued ones arrive first."""
+
+    def __init__(self, answer, queued=()):
+        self.answer, self.queue, self.sent = answer, list(queued), []
+
+    def drain(self):
+        pass
+
+    def send(self, frame):
+        self.sent.append(frame)
+        self.queue += self.answer(frame)
+
+    def poll(self):
+        return self.queue.pop(0) if self.queue else None
+
+
+class Dn2LinkReplies(unittest.TestCase):
+    def test_each_request_takes_a_new_sequence_number(self):
+        line = FakeLine(lambda f: [mem_reply(f[6], link.get32(f, 8), bytes(4))])
+        link.mem(0x40000000, 4, "x", line)
+        link.mem(0x40000004, 4, "x", line)
+        self.assertNotEqual(line.sent[0][6], line.sent[1][6])
+
+    def test_a_late_reply_to_the_previous_chunk_is_not_taken_for_the_current_one(self):
+        old, new = bytes([0xAA] * 128), bytes([0x55] * 128)
+
+        def answer(f):
+            seq, addr = f[6], link.get32(f, 8)
+            # the previous chunk's reply, late, with this request's sequence number, then the real one
+            return [mem_reply(seq, addr - 128, old), mem_reply(seq, addr, new)]
+        self.assertEqual(link.mem(0x40001080, 128, "x", FakeLine(answer)), new)
+
+    def test_a_late_reply_with_the_previous_sequence_number_is_skipped(self):
+        def answer(f):
+            seq, addr = f[6], link.get32(f, 8)
+            return [mem_reply(seq - 1, addr, bytes([1] * 8)), mem_reply(seq, addr, bytes([2] * 8))]
+        self.assertEqual(link.mem(0x40000000, 8, "x", FakeLine(answer)), bytes([2] * 8))
+
+    def test_a_short_reply_is_never_passed_on(self):
+        line = FakeLine(lambda f: [mem_reply(f[6], link.get32(f, 8), bytes(100))])
+        with self.assertRaises(link.LinkError):
+            link.exchange(line, "mem", 0x40000000, 128, timeout=0.05,
+                          accept=link.mem_reply_fits(0x40000000, 128))
+        with self.assertRaises(SystemExit):
+            link.screen("x", FakeLine(lambda f: [mem_reply(f[6], link.get32(f, 8), bytes(3))]))
+
+    def test_a_refusal_is_still_reported(self):
+        line = FakeLine(lambda f: [link.HEADER + bytes([f[6], 0x21 | 0x40, 4, 0xF7])])
+        with self.assertRaises(SystemExit) as e:
+            link.mem(0x50000000, 4, "x", line)
+        self.assertIn("out of range", str(e.exception.code))
+
+    def test_packed_length_is_link_cs(self):
+        for n in (1, 4, 7, 8, 127, 128):
+            self.assertEqual(len(pack7(bytes(n))), link.packed_len(n))
+
+
+
+class Dn2LinkKeysOnTheHost(unittest.TestCase):
+    """base/link.c's key handling compiled for the host with stock's queue and tables stubbed (dn2_link_host.c)."""
+
+    def test_disarm_keeps_releases_and_a_flash_needs_a_person(self):
+        import shutil
+        import subprocess
+        import tempfile
+        cc = shutil.which("cc")
+        if not cc:
+            self.skipTest("no host C compiler")
+        with tempfile.TemporaryDirectory() as tmp:
+            binary = pathlib.Path(tmp) / "dn2_link_host"
+            import json
+            # the recipe's values (base.json's dev cflags); its addresses (*_AT) are the host's own, in the driver
+            cflags = json.loads((APP / "sdk/machines/digitone-ii/elekloader/base.json").read_text())["dev"]["cflags"]
+            values = [flag for flag in cflags if flag.startswith("-D") and not flag.split("=")[0].endswith("_AT")]
+            build = subprocess.run([cc, "-std=c11", "-O1", "-Wall", "-Wno-pointer-to-int-cast", "-Wno-int-to-pointer-cast",
+                                    "-Wno-unused-function", *values, "-o", str(binary), str(APP / "sdk/tests/dn2_link_host.c")],
+                                   capture_output=True, text=True)
+            self.assertEqual(build.returncode, 0, build.stderr)
+            run = subprocess.run([str(binary)], capture_output=True, text=True)
+            self.assertEqual((run.returncode, run.stdout.strip()), (0, "ok"), run.stdout + run.stderr)
+
+
+class Dn2DiagSave(unittest.TestCase):
+    def setUp(self):
+        import tempfile
+        self.dir = tempfile.TemporaryDirectory()
+        self.path = pathlib.Path(self.dir.name) / "log.bin"
+        self.path.write_bytes(b"earlier capture")
+
+    def tearDown(self):
+        self.dir.cleanup()
+
+    def test_a_complete_log_replaces_the_file(self):
+        log = bytes(range(256)) + bytes(44)
+        line = FakeLine(lambda f: [mem_reply(f[6], link.get32(f, 8), log[link.get32(f, 8) - 0x47F00000:][:link.get32(f, 13)])])
+        link.save_log(0x47F00000, len(log), str(self.path), "x", line)
+        self.assertEqual(self.path.read_bytes(), log)
+
+    def test_a_short_chunk_saves_nothing_and_keeps_the_earlier_capture(self):
+        def answer(f):
+            addr, n = link.get32(f, 8), link.get32(f, 13)
+            return [mem_reply(f[6], addr, bytes(n if addr == 0x47F00000 else n - 1))]
+        with self.assertRaises(SystemExit):
+            link.save_log(0x47F00000, 300, str(self.path), "x", FakeLine(answer))
+        self.assertEqual(self.path.read_bytes(), b"earlier capture")
+        self.assertEqual(sorted(p.name for p in pathlib.Path(self.dir.name).iterdir()), ["log.bin"])
+
+
+if __name__ == "__main__":
+    unittest.main()

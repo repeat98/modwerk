@@ -5,7 +5,7 @@ import { prepareCardSet } from '../engine/elekloader/module-set'
 import { baseName, layoutName, runningLayout, type BaseLayout } from '../engine/elekloader/base-variants'
 import { knownBase } from '../config/base-download'
 import type { InventoryTarget } from '../config/inventory'
-import { USB_AUDIO_MODULE } from '../config/usb-audio'
+import { comesWithBase } from '../config/usb-audio'
 import { Icon } from './Icon'
 import { trackModuleDownloads } from '../community/usage'
 import { useDownloadFollows } from '../community/useDownloadFollows'
@@ -21,7 +21,7 @@ import './octatrack-link.css'
  * modules, with no message (18 November 2026, a tester who replaced both files and got no modules). */
 export function CardSetButton({ set, onInstall }: { set?: InventoryTarget; onInstall?: (layout: BaseLayout) => void }) {
   const [state, setState] = useState<{ busy?: boolean; error?: string; written?: Written }>({})
-  const modules = set?.moduleIds.filter(id => id !== USB_AUDIO_MODULE).length ?? 0
+  const modules = set?.moduleIds.filter(id => !comesWithBase(id)).length ?? 0
   const { followDownloads, followNotice } = useDownloadFollows()
   async function download() {
     if (!set) return
@@ -29,7 +29,7 @@ export function CardSetButton({ set, onInstall }: { set?: InventoryTarget; onIns
     try {
       const made = await prepareCardSet(set)
       // What a downloaded build got: the count, update notifications and the hardware feedback reminder.
-      const ids = set.moduleIds.filter(id => id !== USB_AUDIO_MODULE)
+      const ids = set.moduleIds.filter(id => !comesWithBase(id))
       const known = knownBase()
       setState({ written: { file: made.file, ids, base: made.base, layout: made.layout, ...known && known.base !== made.base ? { other: known } : {} } })
     } catch (error) { setState({ error: error instanceof Error ? error.message : 'Couldn’t write the module file.' }) }
@@ -98,7 +98,7 @@ function CardSetDialog({ name, written, error, notice, onDownload, onInstall, on
 
 /** Setup's section for it. */
 export function CardSetDownload({ set, onInstall }: { set?: InventoryTarget; onInstall?: (layout: BaseLayout) => void }) {
-  const modules = set?.moduleIds.filter(id => id !== USB_AUDIO_MODULE).length ?? 0
+  const modules = set?.moduleIds.filter(id => !comesWithBase(id)).length ?? 0
   return <section className="hub-section card-set" aria-labelledby="card-set-title">
     <h3 id="card-set-title">Load from the card</h3>
     <p>The same modules a USB sync installs, as one file ({CARD_SET_FILE}) your Octatrack reads when it starts. For when USB isn’t at hand: Firefox, Safari, an iPad, or an Octatrack that isn’t at the computer. It needs the Modwerk base on the Octatrack.</p>

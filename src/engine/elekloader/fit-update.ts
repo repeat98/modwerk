@@ -8,7 +8,7 @@ import { load, mainImage, parse, verify, write, type Parsed } from '../../../ven
 import type { Device } from '../../../vendor/elekloader/kit/src/devices.ts'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { packSectionOptimal } from '../elektron/codec/pack.ts'
-import { UPDATE_LIMITS } from './carried-devices'
+import { UPDATE_LIMITS, UPDATE_LIMITS_BY_NAME } from './carried-devices'
 
 export type Fitted = { syx: Uint8Array; decoded: number; limit: number | null; repacked: boolean }
 
@@ -42,7 +42,8 @@ type BuiltFiles = { device: string; files: Output[]; sha256: string; bytes: numb
 /** A site build's result with every .syx fitted to its device's limit (fitUpdate); a device with no known limit keeps
  * the result as it is, so other machines' builds do not change. The top-level sha256 and bytes follow the .syx. */
 export async function fitBuilt<T extends BuiltFiles>(result: T, stockRaw: Uint8Array): Promise<T> {
-  if (!(result.device in UPDATE_LIMITS)) return result
+  // The kit's result names its device ("Digitone II"), not its key.
+  if (!(result.device in UPDATE_LIMITS_BY_NAME) && !(result.device in UPDATE_LIMITS)) return result
   const files: Output[] = []
   let top = { sha256: result.sha256, bytes: result.bytes }
   for (const file of result.files) {

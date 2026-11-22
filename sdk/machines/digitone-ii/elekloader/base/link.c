@@ -7,9 +7,11 @@
 // bit in bit 6 of the group's leading byte.
 //   ident   0x01 -> link version, messages received, messages dropped, ticks, armed, person at the unit,
 //                   presses and turns from a person, events posted, requests refused
-//   disarm  0x02 -> lets go of every key the link holds and turns the arm off
-//   key     0x10 ID FLAGS -> a panel key message (flags bit 0 down, 0x10 a release), armed only
-//   enc     0x11 N DELTA -> an encoder turn (1-8 A-H, 9 LEVEL), armed only
+//   disarm  0x02 -> turns the arm off and lets go of every key the link holds (a release the queue cannot take yet
+//                   follows from the UI tick)
+//   key     0x10 ID FLAGS -> a panel key message (flags bit 0 down, 0x10 a release), armed only; refused while an
+//                   OS upload waits at UPGRADE OS NOW? (a flash needs a person's YES)
+//   enc     0x11 N DELTA -> an encoder turn (1-8 A-H, 9 LEVEL), armed only, refused as key
 //   release 0x12 -> lets go of every key the link holds, armed only
 //   ramboot 0x14 ULEN UCRC CLEN CCRC -> armed: YES for stock's UPGRADE OS NOW?, and where stock would erase and write
 //                   the flash the base resets into the staged image instead (LINK.md, RAM boot). Nothing writes the flash.
@@ -25,6 +27,9 @@
 // on as stock. Work: ev_tick (UI task) takes the ring and replies through stock's sysex_send on USB.
 #include <stdint.h>
 #define COLD __attribute__((cold, noinline))
+#ifndef MASK_INTERRUPTS                  // the host test (sdk/tests/dn2_link_host.c) gives its own
+#define MASK_INTERRUPTS() __asm__ volatile("move.w #0x2700, %sr")
+#endif
 
 #define LINK_VERSION 1
 #define SYSEX_SEND ((int (*)(const uint8_t *, int, const uint8_t *, int))SYSEX_SEND_AT)   // stock, OS 1.12
@@ -37,6 +42,9 @@
 #define KEY_INDEX ((const int32_t *)KEY_INDEX_AT)        // is_key_held's tables: id -> bit, -1 for none
 #define KEY_BITS ((const volatile uint8_t *)KEY_BITS_AT)
 // KEY_IDS (KEY_INDEX's entries), ENC_FIRST, ENC_LAST and KEY_YES come from the recipe (base.json's dev cflags)
+// Stock's OS upload buffer (OS 1.12, 0x40122574 returns it): header byte 0 is 3 once an upload is complete, which is
+// when stock asks UPGRADE OS NOW?. Boot clears it (0x402fb000-0x466b8c50).
+#define UPLOAD_STATE (*(const volatile uint8_t *)UPLOAD_AT)
 #define MSG_KEY 0
 #define MSG_ENC 1
 #define KEY_DOWN 1
@@ -50,6 +58,7 @@
 #define ST_BUSY 3
 #define ST_RANGE 4
 #define ST_HUMAN 5
+#define ST_FLASH 6                      // an OS upload waits at UPGRADE OS NOW?: only a person confirms it
 #define CMD_IDENT 0x01
 #define CMD_DISARM 0x02
 #define CMD_KEY 0x10
@@ -177,9 +186,15 @@ static int panel_down(int key)          // the panel's own bitmap, as stock read
     return index >= 0 && (KEY_BITS[index >> 3] >> (index & 7) & 1);
 }
 
+// An OS upload is staged: a flash is one YES away, so the link neither presses nor holds a key until the next boot.
+static int flash_waits(void)
+{
+    return UPLOAD_STATE == 3;
+}
+
 int mw_link_held(int key)               // stock's is_key_held, and the link's holds
 {
-    if ((unsigned)key < KEY_IDS && HELD(key))
+    if ((unsigned)key < KEY_IDS && HELD(key) && !flash_waits())
         return 1;
     return panel_down(key);
 }
@@ -268,16 +283,14 @@ static void ramboot_cancel(void)
         mw_link_ramboot_due = 2;        // the job's call then resets without a mailbox: nothing flashed, nothing booted
 }
 
+// New presses stop at once; a release the queue cannot take now stays held and due, and the UI tick posts it when
+// there is room, so stock never keeps a key down that the link pressed.
 static void disarm(void)
 {
     ramboot_cancel();
-    unsigned k;
     if (armed)
         release_all();
     armed = 0;
-    for (k = 0; k < sizeof held_bits; k++)
-        held_bits[k] = 0;
-    release_due = 0;
 }
 
 static int ours(int kind, int id, int value)    // the next event the link posted? pops it if so
@@ -290,6 +303,11 @@ static int ours(int kind, int id, int value)    // the next event the link poste
         return 0;
     pend_tail++;
     return 1;
+}
+
+static int person_at_panel(void)        // a person pressed or turned something in the last HUMAN_TICKS ticks
+{
+    return human_ticks >= 0 && human_ticks < HUMAN_TICKS;
 }
 
 static int human(void)                  // a person pressed or turned something; -> 1 takes that first press
@@ -350,7 +368,7 @@ static void COLD act(const uint8_t *m, int len)
         p = put32(p, ring_drops);
         p = put32(p, ticks);
         p = put32(p, (uint32_t)armed);
-        p = put32(p, human_ticks >= 0 && human_ticks < HUMAN_TICKS);
+        p = put32(p, (uint32_t)person_at_panel());
         p = put32(p, human_count);
         p = put32(p, posted_count);
         p = put32(p, refused_count);
@@ -370,6 +388,8 @@ static void COLD act(const uint8_t *m, int len)
     case CMD_FREEZE_TEST:
         if (!armed)
             status = ST_NOT_ARMED;
+        else if (person_at_panel())
+            status = ST_HUMAN;          // as for keys: the musician comes first
         else if (n < 5 || get32(m + HEADER) > 15u * 1500u)
             status = ST_BAD;
         else
@@ -410,10 +430,12 @@ static void COLD act(const uint8_t *m, int len)
     case CMD_RELEASE_ALL:
         if (!armed)
             status = ST_NOT_ARMED;
-        else if (human_ticks >= 0 && human_ticks < HUMAN_TICKS)
+        else if (person_at_panel())
             status = ST_HUMAN;
         else if (cmd == CMD_RELEASE_ALL)
             release_all();
+        else if (flash_waits())
+            status = ST_FLASH;
         else if (n < 10)
             status = ST_BAD;
         else {
@@ -540,7 +562,7 @@ void COLD mw_link_ramboot_go(const uint32_t *st)
     STOCK_DELAY(3000000);
     MARK[1] = DIAG_STAGE | 3;
     mw_cache_push();
-    __asm__ volatile("move.w #0x2700, %sr");
+    MASK_INTERRUPTS();
     STOCK_DRAIN();
     MARK[1] = DIAG_STAGE | 4;
     MARK[0] = DIAG_MARK | (human_count & 0xff) << 8 | (mw_link_ramboot_due & 3) | (armed ? 4 : 0)
@@ -712,7 +734,7 @@ void COLD mw_boot_gate(void)
     if (be32(e + 12) != OS_BASE || plen < 8 || off > clen || plen > clen - off)
         return;
     arg = BOOT_ARG;                     // inside the image the unpack overwrites
-    __asm__ volatile("move.w #0x2700, %sr");
+    MASK_INTERRUPTS();
     mb[0] = MB_SPENT;                   // from here the running image is gone: enter the new one or reset
     if (depack(c + off, plen, (uint8_t *)OS_BASE, ulen) == ulen && crc32((const uint8_t *)OS_BASE, ulen) == mb[4]) {
         mb[0] = MB_BOOTED;

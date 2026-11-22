@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useBaseInstallPrompt } from './useBaseInstallPrompt'
 import type { LinkState, OctatrackLink } from '../engine/elekloader/octatrack-link'
-import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { publishedBinding as baseBinding } from '../engine/elekloader/published-octatrack.fixture'
 import { rememberInventory } from '../config/inventory'
 
 const mocked = vi.hoisted(() => ({ api: vi.fn(), post: vi.fn() }))

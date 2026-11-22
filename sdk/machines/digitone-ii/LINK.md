@@ -15,7 +15,7 @@ python3 sdk/machines/digitone-ii/tools/dn2_link.py turn A 8        # encoders A-
 | Request | cmd | What comes back |
 | --- | --- | --- |
 | `ident` | 0x01 | link version, link messages received, dropped (ring full or too long), ticks, armed, a person at the unit, presses and turns by a person, events posted, requests refused |
-| `disarm` | 0x02 | lets go of every key the link holds and turns the arm off |
+| `disarm` | 0x02 | turns the arm off and lets go of every key the link holds; a release the UI queue cannot take yet follows from the UI tick |
 | `key ID FLAGS` | 0x10 | armed: a panel key message, flags 0x01 press, 0x10 release; a held key reads as held to stock's is_key_held |
 | `enc N DELTA` | 0x11 | armed: an encoder turn, 1-8 A-H, 9 LEVEL |
 | `release` | 0x12 | armed: lets go of every key the link holds |
@@ -29,7 +29,7 @@ so a draw between its reads can tear a frame. Stock keeps two frame pointers sid
 first to the display, then swaps them (0x40131fd2), so the frame on the screen is the second; 128x64 pixels, 1 bit each,
 in the Analog Rytm MKII's layout.
 
-Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at the unit. USB only: a link message from DIN is never acted on.
+Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at the unit, 6 an OS upload waits at UPGRADE OS NOW? (key and enc refused, and stock's is_key_held stops seeing the link's holds, until the next boot: a flash needs a person's YES). USB only: a link message from DIN is never acted on.
 
 `ident`, `mem` and the out-of-range refusal answered on a unit over USB ([19 November 2026](../../../docs/verification/2026-11-19-digitone-ii-link-on-a-unit.md)).
 

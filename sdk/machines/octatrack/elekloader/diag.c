@@ -242,18 +242,26 @@ static void diag_tick(void)
     n = cpu_sum = cpu_peak = d0_sum = d0_peak = d1_sum = d1_peak = played = hot_count = 0;
 }
 /* modset.c, engine task: the installed set after a restore from the card and after each Keep, as ids. */
-static uint32_t refused_module, refused_code;
-void modwerk_diag_refused(uint32_t module, uint32_t refusal) { refused_module = module, refused_code = refusal; }
+static uint32_t refused_module, refused_code, refused_used, refused_largest, refused_check;
+void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint32_t largest, uint32_t check)
+{
+    refused_module = module, refused_code = refusal, refused_used = used, refused_largest = largest, refused_check = check;
+}
+/* Bytes in the pool's 16-byte units, so its 768 KiB fit a u16. */
+static uint16_t sixteenths(uint32_t bytes) { bytes = (bytes + 15u) / 16u; return (uint16_t)(bytes < 65535u ? bytes : 65535u); }
 void modwerk_diag_set(void)
 {
-    if (!started) { refused_module = refused_code = 0; return; } /* never carried into a later set's record */
+    if (!started) { refused_module = refused_code = refused_used = refused_largest = refused_check = 0; return; } /* never carried into a later set's record */
     volatile struct diag_log *l = LOG;
     uint32_t ids[14];
     unsigned count = installed(ids, 14u);
     volatile struct diag_incident *r = slot(l);
     bare(r, DIAG_SET);
     r->boot = l->boot, r->second = ticks / 60u, r->a = count;
-    r->screen = refused_module, r->tempo24 = refused_code, refused_module = refused_code = 0; /* a set record has no context */
+    r->screen = refused_module, r->tempo24 = refused_code; /* a set record has no context */
+    if (refused_module) /* the module pool at the refusal, and the loader's check that refused (loader.h runtime_check) */
+        r->cpu = sixteenths(refused_used), r->dsp0 = sixteenths(refused_largest), r->dsp1 = (uint16_t)refused_check;
+    refused_module = refused_code = refused_used = refused_largest = refused_check = 0;
     volatile uint8_t *b = r->machine; /* machine, fx and keys: one run of 56 bytes */
     for (unsigned i = 0; i < 56u; ++i) b[i] = i < 4u * count ? (uint8_t)(ids[i / 4u] >> (24u - 8u * (i % 4u))) : 0;
     push(l, r);

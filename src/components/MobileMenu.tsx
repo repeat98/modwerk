@@ -5,6 +5,7 @@ import { useSheetFocus } from '../hooks/useSheetFocus'
 import { Icon } from './Icon'
 import type { IconName } from './Icon'
 import { SupportButton } from './SupportDialog'
+import { isAdminRoute } from '../community/admin-navigation'
 import { useSetWords } from '../community/beta-ui'
 
 type MenuLink = { href: string; label: string; icon: IconName; current: boolean; count?: number; online?: number | null; tag?: string; isNew?: boolean }
@@ -42,7 +43,7 @@ export function MobileMenu({ route, online, selectedCount, configurationHref, ad
       { href: '#account', label: 'Account / sign in', icon: 'shield', current: route.startsWith('account') },
       ...(developer ? [{ href: '#developer', label: 'Creator settings', icon: 'sliders' as const, current: route.startsWith('developer') }] : []),
       ...(highlightDevelop ? [] : [develop]),
-      ...(admin ? [{ href: '#admin', label: 'Admin workspace', icon: 'shield' as const, current: route === 'admin' || route === 'review' }] : []),
+      ...(admin ? [{ href: '#admin', label: 'Admin workspace', icon: 'shield' as const, current: isAdminRoute(route) }] : []),
     ],
     [
       { href: '#base', label: 'Base firmware', icon: 'shield', current: route === 'base', isNew: true },

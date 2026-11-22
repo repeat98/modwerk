@@ -1,0 +1,9 @@
+[
+  {
+    "version": "1.0.0",
+    "date": "2026-11-20",
+    "changes": [
+      "A tempo-locked delay whose repeats climb or sink in pitch, compounding with every repeat; Glide adds a rise that starts at each note."
+    ]
+  }
+]
