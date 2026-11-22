@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/analog-bd",
+  "version": "0.2.2-experimental",
+  "date": "2026-11-21",
+  "changes": [
+    "No type name (808 / 909) in the SYNTH page's bottom bar: mw_voice.names is 0, so the base draws nothing there; knob B's label says the type. No sound code changes."
+  ],
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/analog-bd/analog-bd-0.2.2-experimental-os1.74.elemod",
+      "sha256": "d268d58368dd07227ac26c8bab6139d0289f511bd99a858d17300e88e1b86f11"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/analog-bd/TESTING.md",
+  "requires": []
+}

@@ -16,11 +16,16 @@ def arr(ctype, name, vals, per=16, doc=""):
         L.append("    " + ",".join(map(str, vals[i:i + per])) + ",")
     L.append("};")
 
-hann = [round(32767 * math.sin(math.pi * (i + 0.5) / 256) ** 2) for i in range(256)]
-tri = [round(32767 * (1 - abs((i + 0.5) / 128 - 1))) for i in range(256)]
-perc = [round(32767 * (i + 0.5) / 12) if i < 12 else round(32767 * math.exp(-4.6 * (i - 12) / 243)) for i in range(256)]
-sq = [round(32767 * min(1, (i + 0.5) / 8, (255.5 - i) / 8)) for i in range(256)]
-arr("uint16_t", "gran_hann", hann, doc="Hann, 256 pasos, Q15 (NORMAL)")
+# 0.1.2: every grain 3 dB lower. Six long, overlapping grains of a loud sample summed past full scale and the output
+# clipped hard (the author's Ras_01_SineSteps at POS 60.7, SIZE 79, DENS 127, SPRY 4-8: about 2 % of the samples).
+# 3 dB less leaves 0.04 % at worst over 90 settings of SIZE, SPRY and POS. A fixed cut, the same for every grain and
+# window, so the timbre and the CPU cost do not change; Grain plays 3 dB quieter overall, also with a single grain.
+PEAK = 32767 * 10 ** (-3 / 20)
+hann = [round(PEAK * math.sin(math.pi * (i + 0.5) / 256) ** 2) for i in range(256)]
+tri = [round(PEAK * (1 - abs((i + 0.5) / 128 - 1))) for i in range(256)]
+perc = [round(PEAK * (i + 0.5) / 12) if i < 12 else round(PEAK * math.exp(-4.6 * (i - 12) / 243)) for i in range(256)]
+sq = [round(PEAK * min(1, (i + 0.5) / 8, (255.5 - i) / 8)) for i in range(256)]
+arr("uint16_t", "gran_hann", hann, doc="Hann, 256 pasos, Q15 (NORMAL), 3 dB por debajo de la escala completa")
 arr("uint16_t", "gran_tri", tri, doc="Triangular")
 arr("uint16_t", "gran_perc", perc, doc="Percusiva: ataque de 12 pasos, caida exponencial a ~-40 dB")
 arr("uint16_t", "gran_sq", sq, doc="Cuadrada con rampas de 8 pasos para no hacer clic")
