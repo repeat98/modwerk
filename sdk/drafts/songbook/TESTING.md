@@ -1,19 +1,20 @@
-# Arr Setlists testing
+# Songbook testing
 
-Version 0.1.0-experimental. Host gate, emulator runs and the developer's own tests on their MKI (flashed base
+Version 0.1.0-experimental, called Arr Setlists until 22 November 2026 (the records below keep the builds' names). Host gate, emulator runs and the developer's own tests on their MKI (flashed base
 `6c189889…`), each on the named build below; the last build tested on the unit is package `da945df5…` (source
-`c5027552c`).
+`c5027552c`); the book 1 load fix and the rename since are not yet tested on a unit.
 
 ## Host gate
 
-`verify.py`: 40 checks of arr_setlists.c against simulated battery RAM and simulated stock file routines: switching
+`verify.py`: 71 checks of songbook.c against simulated battery RAM and simulated stock file routines: switching
 both ways, arr09-arr128 named and written 8 at a time, book 1's backup and arr01-08 repaired on return, a file that
 will not read never written back, refusals (playing, card busy, no project), reinstall and power-cycle detection by
-the battery record, SAVE and RELOAD PROJECT, the label. Passes.
+the battery record, SAVE and RELOAD PROJECT, returning to where a project was left (in stock's order of hooks and its two
+load jobs, and a write between them), arranger mode after LOAD, the label. Passes.
 
 ## Emulator (ot_emu, adapted, beta base, OS 1.40C MKI layout), 18 November 2026
 
-Not hardware evidence. Package `arr-setlists.mwrm` built from this folder, trial over the emulator's USB link
+Not hardware evidence. Package `songbook.mwrm` built from this folder, trial over the emulator's USB link
 (`--dsp-rt`), a project created on an empty Set, the card written back (`--card-rw`).
 
 - Book 1 to 2: stock's SYNC TO CARD job ran (NOW SAFE TO EJECT!), book 2 came up with 8 empty arrangements, the label
@@ -86,7 +87,7 @@ arrangement, NO left the list.
 
 ## Performance
 
-Not measured. Counted from `arr_setlists_core.s`: the dearest work of the module's own is the fingerprint of the 8
+Not measured. Counted from `songbook_core.s`: the dearest work of the module's own is the fingerprint of the 8
 arrangement slots, 6 instructions a byte over 90,440 bytes (542,640 instructions), once a switch or project event and
 once every 120 ticks while a book other than 1 is in use. A switch's card work runs inside stock's own SYNC TO CARD
 job on its card task. No evidence/performance.json yet: perf:audit asks for a measured count and presses while

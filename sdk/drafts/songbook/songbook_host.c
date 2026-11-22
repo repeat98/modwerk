@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT
  * Copyright (C) 2026 Andrey Sidorkin
  *
- * ARR SETLISTS on the host: arr_setlists.c (built with -DAS_HOST) against simulated battery RAM and simulated stock
+ * SONGBOOK on the host: songbook.c (built with -DAS_HOST) against simulated battery RAM and simulated stock
  * routines: the per-file arrangement writer and reader (a file holds one slot's working and saved blocks and all 8
  * flags, as stock's do), the file copy, the project job's writer, clear and the message box. verify.py runs it. */
 #include <stdint.h>

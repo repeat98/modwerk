@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
-  "id": "arr-setlists",
-  "key": "ARR SETLISTS",
-  "name": "Arr Setlists",
+  "id": "songbook",
+  "key": "SONGBOOK",
+  "name": "Songbook",
   "version": "0.1.0-experimental",
   "category": "system",
   "author": {
@@ -16,7 +16,7 @@
     "label": "128 arrangements per project",
     "family": "Arranger",
     "summary": "16 books of 8 arrangements per project, every one a stock arrangement file: book 1 is arr01 to arr08, book 16 is arr121 to arr128.",
-    "overview": "Arr Setlists turns the Octatrack's 8 arrangements into 16 books of 8. Book 1 is stock's own arr01 to arr08 and stays exactly as it is; book 2 is arr09 to arr16, and so on up to arr128, all ordinary stock arrangement files in the project folder, written and read by the Octatrack's own code. In ARR > CHANGE, with the transport stopped, LEFT and RIGHT step through the books; inside a book every stock arrangement function works as usual. Setlists of up to 16 songs from any books follow in a later version.",
+    "overview": "Songbook turns the Octatrack's 8 arrangements into 16 books of 8. Book 1 is stock's own arr01 to arr08 and stays exactly as it is; book 2 is arr09 to arr16, and so on up to arr128, all ordinary stock arrangement files in the project folder, written and read by the Octatrack's own code. In ARR > CHANGE, with the transport stopped, LEFT and RIGHT step through the books; inside a book every stock arrangement function works as usual. Setlists of up to 16 songs from any books follow in a later version.",
     "highlights": [
       "128 arrangements: 16 books of 8, book 1 untouched.",
       "Every arrangement is a stock file, arr01 to arr128.",
@@ -42,7 +42,7 @@
       "screen:ARR CHANGE"
     ],
     "limitations": [
-      "OS 1.40C. Not yet tested on a unit.",
+      "OS 1.40C, tested on an MKI (the developer's own checks, build c5027552c); not tested on an MKII. The fix that changes the book only when stock's second load job loads arr01-08 is not yet tested on a unit.",
       "Books change only while the transport is stopped: the switch writes and reads the card, which stock itself does only stopped.",
       "Switch back to book 1 before removing the module: without it, stock's next save writes the book in use into arr01 to arr08. Book 1 is kept in a backup (arr01.bak to arr08.bak) and comes back the next time the module is installed and book 1 is chosen.",
       "A project comes back to the book and arrangement it was saved or left on; a power cycle keeps the book in use. Without the module a project opens on book 1.",
@@ -73,9 +73,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate (verify.py, 59 checks); book switching, stock's file format for arr09 and up, the list redraw and per-book choice under ot_emu; switching, per-book choice, the playing refusal, ARR SAVE/RELOAD and a power cycle on the developer's MKI.",
-    "hardwareStatus": "untested",
-    "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
+    "summary": "Host gate (verify.py, 71 checks, several replaying the unit's event orders and stock's two load jobs); stock's file format for arr09 and up, the list redraw and per-book choice under ot_emu. On the developer's MKI (OS 1.40C, base 0.7.5), build c5027552c (package da945df5): switching books 1-16, per-book choice, the playing refusal, ARR SAVE/RELOAD, FUNC + PLAY clears and their undo, a power cycle, SAVE/RELOAD/LOAD PROJECT and arranger mode after LOAD, as the developer reported them. Not on a unit yet: the fix for book 1 being overwritten during a load (found after removal), and the rename to Songbook.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "c5027552c951fcc8bf5c6498652c57efeb895c09",
     "gates": [
       "Worst-case cycles under parameter modulation and maximum load",
       "Exact memory region and maximum-instance totals",

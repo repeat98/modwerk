@@ -1,11 +1,11 @@
-# Arr Setlists
+# Songbook
 
 128 arrangements per project, as 16 books of 8, every one an ordinary stock arrangement file. Setlists of up to 16
 songs from any book follow in a later version. OS 1.40C, MKI and MKII.
 
 ## Overview
 
-Stock keeps 8 arrangements per project, in `arr01.work` to `arr08.work`. Arr Setlists makes them book 1 of 16
+Stock keeps 8 arrangements per project, in `arr01.work` to `arr08.work`. Songbook makes them book 1 of 16
 books of 8: book 2 is `arr09` to `arr16`, book 3 `arr17` to `arr24`, and so on up to book 16, `arr121` to `arr128`.
 In ARR > CHANGE, with the transport stopped, LEFT and RIGHT step to the book before or after, and BOOK 2 (and so on)
 shows at the screen's top right; the list shows the new book's names at once. Inside a book, every stock arrangement function works as usual: edit, ARR SAVE,
@@ -92,6 +92,6 @@ Emulator capture (ot_emu), not the unit. No audio: the module makes no sound.
 
 ## Develop
 
-- Hear it: `npm run module:dev -- arr-setlists` builds it and tries it on your unit over USB; `--watch` does that again on every save.
-- Check it: `npm run module:doctor -- --draft arr-setlists`, and `python3 -B sdk/drafts/arr-setlists/verify.py` for the host gate.
+- Hear it: `npm run module:dev -- songbook` builds it and tries it on your unit over USB; `--watch` does that again on every save.
+- Check it: `npm run module:doctor -- --draft songbook`, and `python3 -B sdk/drafts/songbook/verify.py` for the host gate.
 - Before you write ColdFire code: the traps in sdk/octabam/AGENTS.md, and docs/OCTATRACK_API.md for the hooks a module can use.

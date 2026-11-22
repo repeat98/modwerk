@@ -1,4 +1,4 @@
-# Arr Setlists research (OS 1.40C)
+# Songbook research (OS 1.40C)
 
 Found by disassembling the developer's own OS 1.40C (`m68k-elf-objdump -m m68k:cfv4e`; the image file starts at
 0x40000400, so `--adjust-vma=0x40000400` gives real addresses) and checked under ot_emu. Addresses only; no stock

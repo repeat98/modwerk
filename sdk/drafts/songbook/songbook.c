@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT
  * Copyright (C) 2026 Andrey Sidorkin
  *
- * ARR SETLISTS 0.1: 128 arrangements per project, as 16 books of 8, every one an ordinary stock arrangement file.
+ * SONGBOOK 0.1: 128 arrangements per project, as 16 books of 8, every one an ordinary stock arrangement file.
  *
  * Book 1 is stock's: arr01-arr08. Book 2 is arr09-arr16, and so on to book 16, arr121-arr128, in the project
  * directory beside them, each written and read by stock's own routines, so every file is in stock's format (the
@@ -24,7 +24,7 @@
  * After an install the module learns which book the slots hold from a fingerprint of the slots it keeps in battery RAM
  * (battery-ram.json): matching, they still hold the book it last loaded; otherwise book 1.
  *
- * Addresses: OS 1.40C (RESEARCH.md). generate.py compiles this into arr_setlists_core.s; verify.py runs it on the
+ * Addresses: OS 1.40C (RESEARCH.md). generate.py compiles this into songbook_core.s; verify.py runs it on the
  * host against simulated memory and simulated stock file routines (AS_HOST). */
 #include <stdint.h>
 
