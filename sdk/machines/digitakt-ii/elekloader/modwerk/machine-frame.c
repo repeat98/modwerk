@@ -40,6 +40,7 @@
 #define REPLY_VIEW 600u                    /* the reply word where the receiver puts the machine view */
 
 extern const struct dt2_machine *const core_machines[DT2_MACHINE_COUNT];
+unsigned int core_voice_lead(unsigned int track);
 
 uint32_t core_machine_samples_per_step = 6000; /* 120 BPM until a pattern's tempo is read */
 volatile uint32_t core_machine_view_track = DT2_MACHINE_VIEW_NONE;
@@ -88,9 +89,10 @@ void core_machine_frame(unsigned int data_bytes, const void *data, unsigned int 
     const uint32_t view_track = core_machine_view_track;
     put(tail, DT2_MACHINE_WIRE + 18, view_track < TRACKS ? view_track : DT2_MACHINE_VIEW_NONE);
     /* Each track's machine type, from the kit (the type byte of track t's sound), for the sound chip's player
-     * dispatcher: the sound chip's own copy of the types is not a table it keeps per track (MACHINES.md). */
+     * dispatcher: the sound chip's own copy of the types is not a table it keeps per track (MACHINES.md). A linked
+     * voice track plays its lead's sound, so it takes its lead's type (voices.c). */
     for (unsigned int track = 0; track < TRACKS; ++track) {
-        put(tail, DT2_MACHINE_WIRE + 19 + track, SOUND_TYPE(track));
+        put(tail, DT2_MACHINE_WIRE + 19 + track, SOUND_TYPE(core_voice_lead(track)));
     }
     /* The machine view the sound chip's receiver put in the last reply (words 600-631): the reply arrives as 16-bit
      * units, each sound-chip word low half first. */

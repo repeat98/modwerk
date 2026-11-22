@@ -6,6 +6,7 @@
         .globl core_audio_frame_entry
 
 core_audio_frame_entry:
+        jsr     core_voice_frame        | linked voices follow their lead's knobs (voices.c)
         move.l  %a2,-(%sp)
         move.l  20(%sp),-(%sp)          | the base's own frame words first (machine-frame.c)
         move.l  20(%sp),-(%sp)

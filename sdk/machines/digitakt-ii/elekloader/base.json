@@ -50,7 +50,31 @@
       "../modwerk/machine-knobs.c",
       "../modwerk/machine-frame.c",
       "../modwerk/machines-entry.s",
+      "../modwerk/voices.c",
+      "../modwerk/voices-entry.s",
       "../modwerk/fw-bindings.s"
+    ],
+    "subscribe": [
+      {
+        "event": "ev_settings",
+        "fn": "core_voice_settings",
+        "order": 10
+      }
+    ],
+    "contribute": [
+      {
+        "to": "core_project_archive",
+        "order": 10,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:core_voice_archive",
+            0
+          ]
+        ]
+      }
     ],
     "defsym": {
       "FW_FILLRECT": "0x401131ae",
@@ -82,6 +106,13 @@
         "stockSha256": "3b5bfef87fffe24f50bcde099ab9d3bc80df33b6497b71debb052fa2595c9ef1",
         "op": "jsr",
         "target": "core_audio_frame_entry"
+      },
+      {
+        "addr": "0x4002dff4",
+        "len": 6,
+        "stockSha256": "03aea46edf4951a496a72ca6cad701db0693d269aca529ebc661a3dbc8fcce0c",
+        "op": "jsr",
+        "target": "core_voice_event_entry"
       },
       {
         "addr": "0x40066df2",
