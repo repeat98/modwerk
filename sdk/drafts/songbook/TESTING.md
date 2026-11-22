@@ -1,8 +1,8 @@
 # Songbook testing
 
 Version 0.1.0-experimental, called Arr Setlists until 22 November 2026. Host gate, emulator runs and the developer's own tests on their MKI (flashed base
-`6c189889…`), each on the named build below; the last build tested on the unit is package `da945df5…` (source
-`c5027552c`); the book 1 load fix and the rename since are not yet tested on a unit.
+`6c189889…`), each on the named build below; the last build tested on the unit is package `08d0833a…` (source
+`f068cd608`), on base 0.7.13.
 
 ## Host gate
 
@@ -93,6 +93,11 @@ on (stock's end of the load, before the module's switch ran), switch to book 2. 
 book 1's slots; choosing the arrangement does not rebuild that. Fixed: after a return switch that follows a load, with
 arranger mode on, the module applies it again with stock's own routine (0x40055fd8, as stock's end of a load does);
 never after LEFT/RIGHT. `verify.py`: 74 checks.
+
+Package `08d0833a…` (source `f068cd608`), kept beside USB AUDIO on base 0.7.13, as the developer reported it,
+22 November 2026: in arranger mode on book 2, SAVE and RELOAD PROJECT came back with the main screen showing B2 ONE,
+PLAY played B2 ONE's rows, and book 1's B1 ONE and B1 TWO were intact afterwards (passed). Together with the round
+before on `7b4329e6…` (LOAD back on book 2 in arranger mode, book 1 intact), the book 1 load fix is tested on the MKI.
 
 ## Stock flows
 

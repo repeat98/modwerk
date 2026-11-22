@@ -42,7 +42,7 @@
       "screen:ARR CHANGE"
     ],
     "limitations": [
-      "OS 1.40C, tested on an MKI (the developer's own checks, build c5027552c); not tested on an MKII. The fix that changes the book only when stock's second load job loads arr01-08 is not yet tested on a unit.",
+      "OS 1.40C, tested on an MKI (the developer's own checks, build f068cd608, base 0.7.13); not tested on an MKII.",
       "Books change only while the transport is stopped: the switch writes and reads the card, which stock itself does only stopped.",
       "Switch back to book 1 before removing the module: without it, stock's next save writes the book in use into arr01 to arr08. Book 1 is kept in a backup (arr01.bak to arr08.bak) and comes back the next time the module is installed and book 1 is chosen.",
       "A project comes back to the book and arrangement it was saved or left on; a power cycle keeps the book in use. Without the module a project opens on book 1.",
@@ -73,9 +73,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate (verify.py, 71 checks, several replaying the unit's event orders and stock's two load jobs); stock's file format for arr09 and up, the list redraw and per-book choice under ot_emu. On the developer's MKI (OS 1.40C, base 0.7.5), build c5027552c (package da945df5): switching books 1-16, per-book choice, the playing refusal, ARR SAVE/RELOAD, FUNC + PLAY clears and their undo, a power cycle, SAVE/RELOAD/LOAD PROJECT and arranger mode after LOAD, as the developer reported them. Not on a unit yet: the fix for book 1 being overwritten during a load (found after removal), and the rename to Songbook.",
+    "summary": "Host gate (verify.py, 74 checks, several replaying the unit's event orders and stock's two load jobs); stock's file format for arr09 and up, the list redraw and per-book choice under ot_emu. On the developer's MKI (OS 1.40C): switching books 1-16, per-book choice, the playing refusal, ARR SAVE/RELOAD, FUNC + PLAY clears and their undo, a power cycle and arranger mode after LOAD (build c5027552c, base 0.7.5); LOAD and RELOAD returning to book 2 in arranger mode with book 1 intact, the main screen and PLAY on the returned book (build f068cd608, base 0.7.13, beside USB AUDIO), as the developer reported them.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "c5027552c951fcc8bf5c6498652c57efeb895c09",
+    "evidenceRevision": "f068cd6087b9098166fda7c34c39533a50aa1f4e",
     "gates": [
       "Worst-case cycles under parameter modulation and maximum load",
       "Exact memory region and maximum-instance totals",
