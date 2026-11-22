@@ -1,0 +1,1 @@
+Analog Rytm MKII: Improved Performance leaves the library. Its work (the audio engine skipping what cannot change the sound, CPU and OVR in the status bar, the half-rate screen while the UI falls behind) moves into the Rytm base firmware, which will carry it once it has been soak-tested on hardware; until then the Rytm runs as before.

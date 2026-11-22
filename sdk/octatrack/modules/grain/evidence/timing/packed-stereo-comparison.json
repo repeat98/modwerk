@@ -1,0 +1,2287 @@
+{
+  "date": "2026-11-21",
+  "model": "Octatrack MKII",
+  "os": "1.40C",
+  "packageSHA256": "9ad5285502117695e906dc90770840990008cea1a19398b8d2f395e870238443",
+  "shippingBase": "254c5a75a139255e057e69532bb952daffef5039ffeee0e6c9fabda302e5bb91",
+  "developmentBase": "3a4c07fe4df32e41ce38283fabe85976a8d25c9fa084c999850f3252022072fc",
+  "captureLayout": "20 channels linked into the development base; shipping USB Audio is a separate module",
+  "card": "physically removed at power-up; mount flag zero",
+  "part": "A16, Part 3, 100 BPM; T1 and T5 both assigned R3. One pattern track triggered at a time; six other tracks THRU. No FX.",
+  "source": {
+    "recorder": "R3",
+    "frames": 37800,
+    "channels": 2,
+    "bitDepth": 24,
+    "pcmSHA256": "0a8ef958cd8e8186cf359830d44561dc4b4abeec875534c907fba7818402aedc"
+  },
+  "checkedSourcePages": [
+    [
+      0,
+      8388353,
+      64,
+      128
+    ],
+    [
+      1,
+      8388353,
+      64,
+      128
+    ],
+    [
+      3,
+      8388353,
+      64,
+      128
+    ],
+    [
+      7,
+      8388353,
+      64,
+      128
+    ],
+    [
+      12,
+      8388353,
+      64,
+      128
+    ],
+    [
+      20,
+      8388353,
+      64,
+      128
+    ],
+    [
+      30,
+      8388353,
+      64,
+      128
+    ]
+  ],
+  "durationSecondsPerArm": 300,
+  "timerMHz": 132,
+  "coreMHz": 264,
+  "frameBudgetTicks": 47891,
+  "guardShareTicks": 38312,
+  "machineBudgetPoints": 45,
+  "reservationPoints": 35,
+  "timingColumns": [
+    "phase",
+    "frameCount",
+    "maxFrameTicks",
+    "maxLateTicks",
+    "sumFrameTicksDiv256",
+    "skips",
+    "trackMask",
+    "firstPassMaxTicks",
+    "secondPassMaxTicks"
+  ],
+  "conditions": [
+    {
+      "machine": "stock",
+      "track": 1,
+      "matchedMidi": "100 BPM, 12000 clocks, 1000 notes on, 1000 off, 250 modulation changes submitted",
+      "observedGrains": 0,
+      "playbackMaxFrameMicroseconds": 296.023,
+      "playbackSkips": 0,
+      "totalSkips": 0,
+      "maxGuardedCallbackMicroseconds": 0.0,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          3950,
+          34795,
+          0,
+          215487,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "playback minute 1",
+          170122,
+          38651,
+          0,
+          16753401,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "playback minute 2",
+          161985,
+          38641,
+          0,
+          15986545,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "playback minute 3",
+          165380,
+          39072,
+          0,
+          16316824,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "playback minute 4",
+          165881,
+          39075,
+          0,
+          16365732,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "playing",
+          167840,
+          38261,
+          0,
+          16561524,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "stop",
+          765,
+          35047,
+          0,
+          76128,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "picker and panel",
+          16766,
+          35570,
+          0,
+          1273241,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "stream closed",
+          1556,
+          31060,
+          0,
+          106149,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          "post-STOP observation",
+          69033,
+          16969,
+          0,
+          3460498,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "audio": {
+        "checkedFrames": 13009500,
+        "sampleTimeGaps": 0,
+        "targetStem": {
+          "rms": [
+            0.9941493323,
+            0.3295419343
+          ],
+          "peak": [
+            1,
+            0.7391809225
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "otherMidiStem": {
+          "rms": [
+            0.9844685731,
+            0.2800513927
+          ],
+          "peak": [
+            1,
+            0.621876955
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "main": {
+          "rms": [
+            1,
+            0.4287888524
+          ],
+          "peak": [
+            1,
+            0.7656950951
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "tailRmsT1T5Main": [
+          [
+            0.0001932382584,
+            0
+          ],
+          [
+            0.0001932382584,
+            0
+          ],
+          [
+            0.0002757310867,
+            0
+          ]
+        ],
+        "tailSecondsAfterStop": 3.59
+      },
+      "afterStop": {
+        "parts": [
+          1,
+          3
+        ],
+        "returnedAssignment": true,
+        "flexSelected": true,
+        "trackSelectionVerified": true,
+        "observedSeconds": 28.93,
+        "uiTickProgress": 1329,
+        "audioFrameProgress": 61077,
+        "healthDelta": {
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "machine": "grain",
+      "track": 1,
+      "matchedMidi": "100 BPM, 12000 clocks, 1000 notes on, 1000 off, 250 modulation changes submitted",
+      "observedGrains": 6,
+      "playbackMaxFrameMicroseconds": 382.091,
+      "playbackSkips": 3185,
+      "totalSkips": 3187,
+      "maxGuardedCallbackMicroseconds": 133.492,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          2271,
+          37786,
+          0,
+          160839,
+          0,
+          0,
+          2420,
+          960
+        ],
+        [
+          "playback minute 1",
+          168376,
+          50436,
+          2545,
+          22959566,
+          814,
+          1,
+          14894,
+          17439
+        ],
+        [
+          "playback minute 2",
+          163656,
+          48509,
+          618,
+          22279039,
+          590,
+          1,
+          14368,
+          17121
+        ],
+        [
+          "playback minute 3",
+          168426,
+          48540,
+          649,
+          22979538,
+          576,
+          1,
+          14362,
+          17175
+        ],
+        [
+          "playback minute 4",
+          163778,
+          49165,
+          1274,
+          22340172,
+          570,
+          1,
+          14366,
+          17621
+        ],
+        [
+          "playing",
+          163617,
+          48354,
+          463,
+          22320852,
+          635,
+          1,
+          14332,
+          17424
+        ],
+        [
+          "stop",
+          751,
+          43561,
+          0,
+          100812,
+          0,
+          1,
+          11987,
+          10875
+        ],
+        [
+          "picker and panel",
+          17304,
+          44924,
+          0,
+          1388994,
+          2,
+          1,
+          12709,
+          9504
+        ],
+        [
+          "stream closed",
+          4585,
+          31171,
+          0,
+          331090,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "post-STOP observation",
+          69089,
+          17365,
+          0,
+          3465284,
+          0,
+          1,
+          0,
+          0
+        ]
+      ],
+      "audio": {
+        "checkedFrames": 13009500,
+        "sampleTimeGaps": 0,
+        "targetStem": {
+          "rms": [
+            0.9390240271,
+            0.3253412745
+          ],
+          "peak": [
+            1,
+            0.9999997616
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 24338
+        },
+        "otherMidiStem": {
+          "rms": [
+            0.9844695166,
+            0.2796202275
+          ],
+          "peak": [
+            1,
+            0.621876955
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "main": {
+          "rms": [
+            0.9818506626,
+            0.3918166779
+          ],
+          "peak": [
+            1,
+            0.9999998808
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 2
+        },
+        "tailRmsT1T5Main": [
+          [
+            0.0001932382584,
+            0
+          ],
+          [
+            0.0001932382584,
+            0
+          ],
+          [
+            0.0002757310867,
+            0
+          ]
+        ],
+        "tailSecondsAfterStop": 4.9
+      },
+      "afterStop": {
+        "parts": [
+          1,
+          3
+        ],
+        "returnedAssignment": true,
+        "flexSelected": true,
+        "trackSelectionVerified": true,
+        "observedSeconds": 30.23,
+        "uiTickProgress": 1331,
+        "audioFrameProgress": 61133,
+        "healthDelta": {
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0,
+          "errors": 0
+        }
+      },
+      "src": [
+        66,
+        60,
+        127,
+        127,
+        127,
+        127
+      ],
+      "setup": [
+        3,
+        0,
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "machine": "stock",
+      "track": 5,
+      "matchedMidi": "100 BPM, 12000 clocks, 1000 notes on, 1000 off, 250 modulation changes submitted",
+      "observedGrains": 0,
+      "playbackMaxFrameMicroseconds": 300.121,
+      "playbackSkips": 0,
+      "totalSkips": 0,
+      "maxGuardedCallbackMicroseconds": 0.0,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          2417,
+          38616,
+          0,
+          160990,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "playback minute 1",
+          169203,
+          39248,
+          0,
+          16746720,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "playback minute 2",
+          165054,
+          38902,
+          0,
+          16341957,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "playback minute 3",
+          166537,
+          38802,
+          0,
+          16482924,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "playback minute 4",
+          166074,
+          37786,
+          0,
+          16433322,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "playing",
+          163334,
+          39616,
+          0,
+          16170074,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "stop",
+          1975,
+          34941,
+          0,
+          195587,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "picker and panel",
+          17521,
+          36628,
+          0,
+          1297384,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "stream closed",
+          1156,
+          31421,
+          0,
+          67866,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          "post-STOP observation",
+          69685,
+          16970,
+          0,
+          3493748,
+          0,
+          1,
+          0,
+          0
+        ]
+      ],
+      "audio": {
+        "checkedFrames": 13009500,
+        "sampleTimeGaps": 0,
+        "targetStem": {
+          "rms": [
+            0.9954570355,
+            0.3288661692
+          ],
+          "peak": [
+            1,
+            0.6588116884
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "otherMidiStem": {
+          "rms": [
+            0.9844514938,
+            0.2800732958
+          ],
+          "peak": [
+            1,
+            0.621876955
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "main": {
+          "rms": [
+            1,
+            0.4283573351
+          ],
+          "peak": [
+            1,
+            0.7790182829
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "tailRmsT1T5Main": [
+          [
+            0.0001932382584,
+            0
+          ],
+          [
+            0.0001932382584,
+            0
+          ],
+          [
+            0.0002757310867,
+            0
+          ]
+        ],
+        "tailSecondsAfterStop": 3.96
+      },
+      "afterStop": {
+        "parts": [
+          1,
+          3
+        ],
+        "returnedAssignment": true,
+        "flexSelected": true,
+        "trackSelectionVerified": true,
+        "observedSeconds": 29.57,
+        "uiTickProgress": 1335,
+        "audioFrameProgress": 61321,
+        "healthDelta": {
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "machine": "grain",
+      "track": 5,
+      "matchedMidi": "100 BPM, 12000 clocks, 1000 notes on, 1000 off, 250 modulation changes submitted",
+      "observedGrains": 6,
+      "playbackMaxFrameMicroseconds": 385.886,
+      "playbackSkips": 3924,
+      "totalSkips": 3941,
+      "maxGuardedCallbackMicroseconds": 129.386,
+      "midiReceiveErrors": 0,
+      "midiTransmitDrops": 0,
+      "timing": [
+        [
+          "open",
+          2483,
+          46525,
+          0,
+          175236,
+          0,
+          1,
+          1456,
+          726
+        ],
+        [
+          "playback minute 1",
+          169524,
+          50907,
+          3016,
+          23399864,
+          977,
+          17,
+          16172,
+          16838
+        ],
+        [
+          "playback minute 2",
+          164836,
+          50937,
+          3046,
+          22700685,
+          811,
+          17,
+          15771,
+          16766
+        ],
+        [
+          "playback minute 3",
+          165732,
+          48663,
+          772,
+          22846539,
+          677,
+          17,
+          16392,
+          17079
+        ],
+        [
+          "playback minute 4",
+          166443,
+          48428,
+          537,
+          22932937,
+          710,
+          17,
+          16927,
+          16626
+        ],
+        [
+          "playing",
+          162623,
+          48752,
+          861,
+          22419329,
+          749,
+          17,
+          15316,
+          16685
+        ],
+        [
+          "stop",
+          1094,
+          45142,
+          0,
+          160415,
+          17,
+          17,
+          12294,
+          12377
+        ],
+        [
+          "picker and panel",
+          18503,
+          44121,
+          0,
+          1474078,
+          0,
+          17,
+          11709,
+          8716
+        ],
+        [
+          "stream closed",
+          2368,
+          32676,
+          0,
+          150184,
+          0,
+          17,
+          0,
+          0
+        ],
+        [
+          "post-STOP observation",
+          70722,
+          17127,
+          0,
+          3548965,
+          0,
+          17,
+          0,
+          0
+        ]
+      ],
+      "audio": {
+        "checkedFrames": 13009500,
+        "sampleTimeGaps": 0,
+        "targetStem": {
+          "rms": [
+            0.9641357193,
+            0.3260810426
+          ],
+          "peak": [
+            1,
+            0.9999997616
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 24968
+        },
+        "otherMidiStem": {
+          "rms": [
+            0.9844536987,
+            0.2805042961
+          ],
+          "peak": [
+            1,
+            0.621876955
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 0
+        },
+        "main": {
+          "rms": [
+            0.9901615164,
+            0.391736506
+          ],
+          "peak": [
+            1,
+            0.9999998808
+          ],
+          "longestZeroFrames": 0,
+          "identicalNonzeroBlocks": 2
+        },
+        "tailRmsT1T5Main": [
+          [
+            0.0001932382584,
+            0
+          ],
+          [
+            0.0001932382584,
+            0
+          ],
+          [
+            0.0002757310867,
+            0
+          ]
+        ],
+        "tailSecondsAfterStop": 4.36
+      },
+      "afterStop": {
+        "parts": [
+          1,
+          3
+        ],
+        "returnedAssignment": true,
+        "flexSelected": true,
+        "trackSelectionVerified": true,
+        "observedSeconds": 30.53,
+        "uiTickProgress": 1359,
+        "audioFrameProgress": 62417,
+        "healthDelta": {
+          "stalls": 0,
+          "crash": 0,
+          "stall": 0,
+          "errors": 0
+        }
+      },
+      "src": [
+        66,
+        60,
+        127,
+        127,
+        127,
+        0
+      ],
+      "setup": [
+        3,
+        0,
+        0,
+        1,
+        0,
+        0
+      ]
+    }
+  ],
+  "rendererFixture": {
+    "schedule": "one callback per preemptible UI tick; no host capture or MIDI",
+    "packageSHA256": "0c24aa777bbc8685b4a653a682d218166746c6649a59078e580e3f9c9b4ca131",
+    "calls": 512,
+    "cases": 64,
+    "pcmDigestsMatched": true,
+    "worstTimerTicks": 36282,
+    "worstMicroseconds": 274.864,
+    "rows": [
+      [
+        8,
+        6304,
+        11031,
+        56624,
+        863691845
+      ],
+      [
+        8,
+        6100,
+        23741,
+        67462,
+        863691845
+      ],
+      [
+        8,
+        9315,
+        35710,
+        106668,
+        513567429
+      ],
+      [
+        8,
+        8955,
+        27141,
+        111596,
+        513567429
+      ],
+      [
+        8,
+        6948,
+        21935,
+        75377,
+        1062265925
+      ],
+      [
+        8,
+        6770,
+        32798,
+        86370,
+        1062265925
+      ],
+      [
+        8,
+        9811,
+        35009,
+        128224,
+        827681477
+      ],
+      [
+        8,
+        9656,
+        27614,
+        115432,
+        827681477
+      ],
+      [
+        8,
+        6343,
+        21177,
+        71691,
+        2862015557
+      ],
+      [
+        8,
+        6017,
+        20495,
+        68222,
+        2862015557
+      ],
+      [
+        8,
+        9202,
+        26803,
+        111854,
+        1508666053
+      ],
+      [
+        8,
+        9084,
+        28334,
+        101900,
+        1508666053
+      ],
+      [
+        8,
+        6870,
+        24739,
+        92840,
+        2139874373
+      ],
+      [
+        8,
+        6857,
+        24370,
+        86873,
+        2139874373
+      ],
+      [
+        8,
+        9692,
+        28425,
+        112112,
+        3887557317
+      ],
+      [
+        8,
+        9558,
+        24378,
+        97782,
+        3887557317
+      ],
+      [
+        8,
+        6329,
+        11281,
+        56232,
+        2176771141
+      ],
+      [
+        8,
+        6083,
+        32325,
+        81194,
+        2176771141
+      ],
+      [
+        8,
+        9294,
+        27909,
+        99590,
+        68971205
+      ],
+      [
+        8,
+        9196,
+        27840,
+        112318,
+        68971205
+      ],
+      [
+        8,
+        6876,
+        22138,
+        72963,
+        4227654725
+      ],
+      [
+        8,
+        6915,
+        21550,
+        74581,
+        4227654725
+      ],
+      [
+        8,
+        9791,
+        28356,
+        102808,
+        2971429573
+      ],
+      [
+        8,
+        9531,
+        28310,
+        116013,
+        2971429573
+      ],
+      [
+        8,
+        6138,
+        24104,
+        72546,
+        2927748165
+      ],
+      [
+        8,
+        5819,
+        23237,
+        83114,
+        2927748165
+      ],
+      [
+        8,
+        8802,
+        27323,
+        110064,
+        4026821317
+      ],
+      [
+        8,
+        8712,
+        26861,
+        107593,
+        4026821317
+      ],
+      [
+        8,
+        6721,
+        21866,
+        74623,
+        758703173
+      ],
+      [
+        8,
+        6591,
+        24846,
+        72894,
+        758703173
+      ],
+      [
+        8,
+        9276,
+        27959,
+        108595,
+        1527409349
+      ],
+      [
+        8,
+        9112,
+        23441,
+        92491,
+        1527409349
+      ],
+      [
+        8,
+        6046,
+        6780,
+        50171,
+        471917637
+      ],
+      [
+        8,
+        5794,
+        20302,
+        66396,
+        471917637
+      ],
+      [
+        8,
+        8313,
+        23295,
+        87113,
+        3462163141
+      ],
+      [
+        8,
+        8435,
+        26978,
+        88579,
+        3462163141
+      ],
+      [
+        8,
+        6530,
+        32220,
+        100444,
+        4104971333
+      ],
+      [
+        8,
+        6539,
+        23952,
+        85498,
+        4104971333
+      ],
+      [
+        8,
+        9337,
+        27195,
+        107873,
+        1819634373
+      ],
+      [
+        8,
+        9267,
+        27375,
+        112737,
+        1819634373
+      ],
+      [
+        8,
+        5995,
+        21056,
+        68940,
+        1380901957
+      ],
+      [
+        8,
+        5797,
+        20450,
+        66536,
+        1380901957
+      ],
+      [
+        8,
+        8380,
+        27658,
+        107175,
+        709913285
+      ],
+      [
+        8,
+        8474,
+        27214,
+        106656,
+        709913285
+      ],
+      [
+        8,
+        6486,
+        21397,
+        71826,
+        2465457221
+      ],
+      [
+        8,
+        6560,
+        21500,
+        69032,
+        2465457221
+      ],
+      [
+        8,
+        9269,
+        24393,
+        90810,
+        2002545349
+      ],
+      [
+        8,
+        9390,
+        23613,
+        90861,
+        2002545349
+      ],
+      [
+        8,
+        5938,
+        23775,
+        70488,
+        492364869
+      ],
+      [
+        8,
+        5719,
+        20075,
+        65941,
+        492364869
+      ],
+      [
+        8,
+        8346,
+        26493,
+        101091,
+        3672664773
+      ],
+      [
+        8,
+        8560,
+        35162,
+        118076,
+        3672664773
+      ],
+      [
+        8,
+        6667,
+        25181,
+        77034,
+        1745937477
+      ],
+      [
+        8,
+        6582,
+        24385,
+        71718,
+        1745937477
+      ],
+      [
+        8,
+        9348,
+        36282,
+        122252,
+        3221646021
+      ],
+      [
+        8,
+        9378,
+        27693,
+        113431,
+        3221646021
+      ],
+      [
+        8,
+        5743,
+        20794,
+        66499,
+        3947750469
+      ],
+      [
+        8,
+        5525,
+        20529,
+        64790,
+        3947750469
+      ],
+      [
+        8,
+        7814,
+        22620,
+        83012,
+        262892229
+      ],
+      [
+        8,
+        7886,
+        23003,
+        84167,
+        262892229
+      ],
+      [
+        8,
+        6387,
+        20972,
+        70792,
+        43705413
+      ],
+      [
+        8,
+        6343,
+        21032,
+        66959,
+        43705413
+      ],
+      [
+        8,
+        8921,
+        23429,
+        86811,
+        1925671621
+      ],
+      [
+        8,
+        8881,
+        13548,
+        81546,
+        1925671621
+      ]
+    ]
+  },
+  "sourceUnchangedAfterPlayback": true,
+  "restoration": {
+    "checks": {
+      "card": true,
+      "track": true,
+      "tempo": true,
+      "pattern": true,
+      "part": true,
+      "recordModes": true,
+      "slots": true,
+      "inventory": true,
+      "startingWorkingPart": true,
+      "startingPatternData": true,
+      "scratchPartWorking": true,
+      "scratchPartSaved": true,
+      "scratchPatternData": true,
+      "stopped": true
+    },
+    "cardMounted": false,
+    "selectedTrack": 1,
+    "pattern": "0000",
+    "part": 4,
+    "bpm": 120.0,
+    "recorderSlots": 0,
+    "liveModules": 0,
+    "verifiedReturnBase": "254c5a75a139255e057e69532bb952daffef5039ffeee0e6c9fabda302e5bb91",
+    "returnInventory": {
+      "saved": 0,
+      "live": 0
+    }
+  },
+  "instrumentedRender": {
+    "sha256": "8894484faa7fd7924aee407dbed8d79a786713b7f69398c0d2e947f3437831b9",
+    "sampleEvery": 97,
+    "timerMHz": 132,
+    "stages": [
+      "lane and stock Flex render",
+      "packet, controls and source lookup",
+      "granular engine",
+      "restore track controls"
+    ],
+    "groups": [
+      {
+        "sourceFrames": 1,
+        "calls": 167,
+        "sumTicks": [
+          350747,
+          237700,
+          377389,
+          14180
+        ],
+        "peakTicks": [
+          6136,
+          4269,
+          7883,
+          3413
+        ],
+        "longestTicks": 10708,
+        "splitOfLongest": [
+          1319,
+          1470,
+          7883,
+          36
+        ]
+      },
+      {
+        "sourceFrames": 2,
+        "calls": 4,
+        "sumTicks": [
+          20969,
+          4267,
+          6525,
+          152
+        ],
+        "peakTicks": [
+          6117,
+          1132,
+          2220,
+          44
+        ],
+        "longestTicks": 9459,
+        "splitOfLongest": [
+          6117,
+          1086,
+          2220,
+          36
+        ]
+      },
+      {
+        "sourceFrames": 3,
+        "calls": 135,
+        "sumTicks": [
+          304579,
+          191915,
+          317536,
+          5375
+        ],
+        "peakTicks": [
+          6392,
+          5523,
+          6804,
+          268
+        ],
+        "longestTicks": 9905,
+        "splitOfLongest": [
+          4947,
+          1043,
+          3879,
+          36
+        ]
+      },
+      {
+        "sourceFrames": 4,
+        "calls": 236,
+        "sumTicks": [
+          570461,
+          383566,
+          573683,
+          13304
+        ],
+        "peakTicks": [
+          6118,
+          5355,
+          7586,
+          3581
+        ],
+        "longestTicks": 10334,
+        "splitOfLongest": [
+          5008,
+          1055,
+          4235,
+          36
+        ]
+      },
+      {
+        "sourceFrames": 5,
+        "calls": 157,
+        "sumTicks": [
+          338743,
+          245203,
+          426402,
+          14406
+        ],
+        "peakTicks": [
+          6360,
+          4917,
+          7074,
+          3338
+        ],
+        "longestTicks": 11205,
+        "splitOfLongest": [
+          2729,
+          1861,
+          6579,
+          36
+        ]
+      },
+      {
+        "sourceFrames": 6,
+        "calls": 5,
+        "sumTicks": [
+          10240,
+          5845,
+          15226,
+          184
+        ],
+        "peakTicks": [
+          4921,
+          1326,
+          3467,
+          40
+        ],
+        "longestTicks": 8318,
+        "splitOfLongest": [
+          4921,
+          1038,
+          2319,
+          40
+        ]
+      },
+      {
+        "sourceFrames": 7,
+        "calls": 147,
+        "sumTicks": [
+          364473,
+          217170,
+          451403,
+          10395
+        ],
+        "peakTicks": [
+          6488,
+          4970,
+          7751,
+          3245
+        ],
+        "longestTicks": 11303,
+        "splitOfLongest": [
+          1216,
+          2300,
+          7751,
+          36
+        ]
+      },
+      {
+        "sourceFrames": 8,
+        "calls": 216,
+        "sumTicks": [
+          556454,
+          326063,
+          644276,
+          8734
+        ],
+        "peakTicks": [
+          6678,
+          5306,
+          7805,
+          155
+        ],
+        "longestTicks": 11941,
+        "splitOfLongest": [
+          5302,
+          1039,
+          5564,
+          36
+        ]
+      },
+      {
+        "sourceFrames": 9,
+        "calls": 150,
+        "sumTicks": [
+          379436,
+          233754,
+          535499,
+          25938
+        ],
+        "peakTicks": [
+          6768,
+          4930,
+          9337,
+          3573
+        ],
+        "longestTicks": 11930,
+        "splitOfLongest": [
+          1216,
+          1341,
+          9337,
+          36
+        ]
+      },
+      {
+        "sourceFrames": 10,
+        "calls": 3,
+        "sumTicks": [
+          11458,
+          3466,
+          10604,
+          108
+        ],
+        "peakTicks": [
+          5237,
+          1358,
+          4038,
+          36
+        ],
+        "longestTicks": 10274,
+        "splitOfLongest": [
+          5237,
+          1030,
+          3971,
+          36
+        ]
+      },
+      {
+        "sourceFrames": 11,
+        "calls": 162,
+        "sumTicks": [
+          447772,
+          278029,
+          579010,
+          13807
+        ],
+        "peakTicks": [
+          6717,
+          5357,
+          8780,
+          3921
+        ],
+        "longestTicks": 12537,
+        "splitOfLongest": [
+          6717,
+          1147,
+          4637,
+          36
+        ]
+      },
+      {
+        "sourceFrames": 12,
+        "calls": 245,
+        "sumTicks": [
+          597357,
+          397780,
+          931064,
+          18316
+        ],
+        "peakTicks": [
+          6686,
+          5670,
+          9448,
+          3270
+        ],
+        "longestTicks": 13139,
+        "splitOfLongest": [
+          1743,
+          1912,
+          9448,
+          36
+        ]
+      },
+      {
+        "sourceFrames": 13,
+        "calls": 147,
+        "sumTicks": [
+          372439,
+          252838,
+          580171,
+          8150
+        ],
+        "peakTicks": [
+          7146,
+          5479,
+          8275,
+          742
+        ],
+        "longestTicks": 11923,
+        "splitOfLongest": [
+          2202,
+          1711,
+          7974,
+          36
+        ]
+      },
+      {
+        "sourceFrames": 14,
+        "calls": 5,
+        "sumTicks": [
+          6585,
+          7535,
+          12605,
+          200
+        ],
+        "peakTicks": [
+          1498,
+          2659,
+          2895,
+          49
+        ],
+        "longestTicks": 7048,
+        "splitOfLongest": [
+          1445,
+          2659,
+          2895,
+          49
+        ]
+      },
+      {
+        "sourceFrames": 15,
+        "calls": 165,
+        "sumTicks": [
+          434132,
+          320097,
+          705713,
+          7610
+        ],
+        "peakTicks": [
+          6441,
+          5534,
+          9104,
+          732
+        ],
+        "longestTicks": 12918,
+        "splitOfLongest": [
+          5685,
+          1101,
+          6096,
+          36
+        ]
+      },
+      {
+        "sourceFrames": 16,
+        "calls": 773,
+        "sumTicks": [
+          1636187,
+          1100729,
+          4867365,
+          42233
+        ],
+        "peakTicks": [
+          6637,
+          6438,
+          10925,
+          3361
+        ],
+        "longestTicks": 17065,
+        "splitOfLongest": [
+          4009,
+          5042,
+          7986,
+          28
+        ]
+      }
+    ]
+  },
+  "schedulingExperiment": {
+    "release": false,
+    "packageSHA256": "3919b7f510973eaf0dd47534aa042964df27ff5e2a9a9af87cc62058ae212244",
+    "timerPackageSHA256": "7f2234dd4dbfec934a6d3f6c834c4f1650e3c751a32d1dfebb3cd21557f24931",
+    "rows": [
+      [
+        8,
+        6340,
+        26584,
+        75881,
+        863691845
+      ],
+      [
+        8,
+        6090,
+        25852,
+        70141,
+        863691845
+      ],
+      [
+        8,
+        9335,
+        30782,
+        118026,
+        513567429
+      ],
+      [
+        8,
+        9075,
+        30625,
+        115374,
+        513567429
+      ],
+      [
+        8,
+        6873,
+        27547,
+        80490,
+        1062265925
+      ],
+      [
+        8,
+        6732,
+        27273,
+        76011,
+        1062265925
+      ],
+      [
+        8,
+        9796,
+        30109,
+        116123,
+        827681477
+      ],
+      [
+        8,
+        9481,
+        25489,
+        97608,
+        827681477
+      ],
+      [
+        8,
+        6279,
+        25909,
+        71866,
+        2862015557
+      ],
+      [
+        8,
+        6240,
+        26950,
+        75946,
+        2862015557
+      ],
+      [
+        8,
+        9280,
+        30101,
+        117422,
+        1508666053
+      ],
+      [
+        8,
+        9129,
+        29636,
+        100029,
+        1508666053
+      ],
+      [
+        8,
+        6991,
+        26990,
+        92963,
+        2139874373
+      ],
+      [
+        8,
+        6773,
+        26541,
+        91610,
+        2139874373
+      ],
+      [
+        8,
+        9648,
+        31221,
+        123388,
+        3887557317
+      ],
+      [
+        8,
+        9511,
+        30678,
+        122189,
+        3887557317
+      ],
+      [
+        8,
+        6430,
+        27488,
+        77567,
+        2176771141
+      ],
+      [
+        8,
+        6129,
+        26736,
+        75237,
+        2176771141
+      ],
+      [
+        8,
+        9298,
+        30229,
+        117335,
+        68971205
+      ],
+      [
+        8,
+        8959,
+        29714,
+        115151,
+        68971205
+      ],
+      [
+        8,
+        6966,
+        27423,
+        81174,
+        4227654725
+      ],
+      [
+        8,
+        6790,
+        27527,
+        76249,
+        4227654725
+      ],
+      [
+        8,
+        9793,
+        30168,
+        100069,
+        2971429573
+      ],
+      [
+        8,
+        9511,
+        14579,
+        82623,
+        2971429573
+      ],
+      [
+        8,
+        6085,
+        26070,
+        69680,
+        2927748165
+      ],
+      [
+        8,
+        5684,
+        25818,
+        67816,
+        2927748165
+      ],
+      [
+        8,
+        8481,
+        29818,
+        112139,
+        4026821317
+      ],
+      [
+        8,
+        8253,
+        28930,
+        106435,
+        4026821317
+      ],
+      [
+        8,
+        6747,
+        27415,
+        79200,
+        758703173
+      ],
+      [
+        8,
+        6535,
+        27045,
+        77213,
+        758703173
+      ],
+      [
+        8,
+        8902,
+        29651,
+        115253,
+        1527409349
+      ],
+      [
+        8,
+        8891,
+        29876,
+        114860,
+        1527409349
+      ],
+      [
+        8,
+        6043,
+        22718,
+        70368,
+        471917637
+      ],
+      [
+        8,
+        5760,
+        22953,
+        69481,
+        471917637
+      ],
+      [
+        8,
+        8326,
+        28689,
+        105069,
+        3462163141
+      ],
+      [
+        8,
+        8498,
+        28501,
+        92980,
+        3462163141
+      ],
+      [
+        8,
+        6477,
+        26728,
+        89257,
+        4104971333
+      ],
+      [
+        8,
+        6553,
+        22641,
+        70058,
+        4104971333
+      ],
+      [
+        8,
+        9239,
+        25644,
+        95326,
+        1819634373
+      ],
+      [
+        8,
+        9296,
+        30034,
+        96345,
+        1819634373
+      ],
+      [
+        8,
+        5976,
+        26159,
+        72709,
+        1380901957
+      ],
+      [
+        8,
+        5815,
+        25876,
+        69078,
+        1380901957
+      ],
+      [
+        8,
+        8406,
+        28704,
+        109696,
+        709913285
+      ],
+      [
+        8,
+        8477,
+        28516,
+        109820,
+        709913285
+      ],
+      [
+        8,
+        6524,
+        23698,
+        75162,
+        2465457221
+      ],
+      [
+        8,
+        6599,
+        27518,
+        79599,
+        2465457221
+      ],
+      [
+        8,
+        9310,
+        29648,
+        116101,
+        2002545349
+      ],
+      [
+        8,
+        9229,
+        29968,
+        101163,
+        2002545349
+      ],
+      [
+        8,
+        5956,
+        25562,
+        84887,
+        492364869
+      ],
+      [
+        8,
+        5823,
+        25162,
+        83600,
+        492364869
+      ],
+      [
+        8,
+        8450,
+        29618,
+        106534,
+        3672664773
+      ],
+      [
+        8,
+        8304,
+        28976,
+        109153,
+        3672664773
+      ],
+      [
+        8,
+        6590,
+        27296,
+        73859,
+        1745937477
+      ],
+      [
+        8,
+        6635,
+        10703,
+        57602,
+        1745937477
+      ],
+      [
+        8,
+        9333,
+        25439,
+        95753,
+        3221646021
+      ],
+      [
+        8,
+        9321,
+        30375,
+        101066,
+        3221646021
+      ],
+      [
+        8,
+        5575,
+        22823,
+        67012,
+        3947750469
+      ],
+      [
+        8,
+        5564,
+        22357,
+        67570,
+        3947750469
+      ],
+      [
+        8,
+        7624,
+        28470,
+        87817,
+        262892229
+      ],
+      [
+        8,
+        7736,
+        28421,
+        88389,
+        262892229
+      ],
+      [
+        8,
+        6383,
+        26436,
+        88174,
+        43705413
+      ],
+      [
+        8,
+        6361,
+        23084,
+        72676,
+        43705413
+      ],
+      [
+        8,
+        8639,
+        29606,
+        112617,
+        1925671621
+      ],
+      [
+        8,
+        8745,
+        29421,
+        111696,
+        1925671621
+      ]
+    ],
+    "pcmDigestsMatched": true,
+    "fullCallbackComparison": {
+      "callbacks": 3072,
+      "pcmSha256": "9e39c014d8327ab59d2c967552470f4c87d774dcc624178b17b2d2a22f61f164",
+      "voiceHistogram": {
+        "1": 2,
+        "2": 254,
+        "3": 2,
+        "4": 142,
+        "5": 112,
+        "6": 2560
+      },
+      "exactAllPcmAndVoiceState": true,
+      "results": {
+        "candidate": {
+          "mean": 3289.12,
+          "peak": 7962
+        },
+        "scheduled": {
+          "mean": 3289.12,
+          "peak": 7962
+        }
+      }
+    },
+    "selected": false
+  },
+  "alternativeRoundingOffline": {
+    "release": false,
+    "packageSHA256": "ba5ace583dabc6603d0123d51a7118f0c4dc52fb861dc8262953ed9d035c732d",
+    "comparison": {
+      "callbacks": 3072,
+      "sampleWords": 147456,
+      "changed": 67122,
+      "maxAbsError16": 13,
+      "meanSignedError": 0.59716796875,
+      "rmsError16": 2.170934923446642,
+      "errorRmsDbfs": -83.57606259686433,
+      "signalToErrorDb": 75.1810908691185,
+      "identicalVoiceState": true,
+      "counts": {
+        "candidate": [
+          3289.1220703125,
+          7962
+        ],
+        "channel-prototype": [
+          3220.9319661458335,
+          6756
+        ]
+      },
+      "voices": {
+        "1": 2,
+        "2": 254,
+        "3": 2,
+        "4": 142,
+        "5": 112,
+        "6": 2560
+      }
+    },
+    "selected": false
+  }
+}

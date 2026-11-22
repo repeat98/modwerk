@@ -1,6 +1,6 @@
 # Test procedure
 
-Every change to a module or a base goes through these steps, in this order, on one named build. Then it runs the edge cases its own change asks for. The other testing guides hold the detail of each step; this page holds the order.
+Every change to a module or a base, on every machine, goes through these steps, in this order, on one named build. Then it runs the edge cases its own change asks for. The other testing guides hold the detail of each step; this page holds the order.
 
 ## Who runs it
 
@@ -14,11 +14,13 @@ Every change to a module or a base goes through these steps, in this order, on o
 npm run test:procedure -- <module id>          # a module, built from its source
 npm run test:procedure -- <module id> --plan   # the steps and their commands, nothing run
 npm run test:procedure -- --base               # the Octatrack base, with every USB package
+npm run test:procedure -- --base analog-rytm-mkii   # another machine's base: the same steps ([every machine](#every-machine))
+npm run test:procedure -- analog-rytm-mkii:temp-save   # machine:id where two machines have a module of that id
 ```
 
 It runs the steps below with the tools that already do them and stops at the first failure. Without a unit session it records the unit steps as not run, with the command each would have run. It ends with a record for the build: `procedure.md`, a `TESTING.md` entry with an empty edge-case table, and `procedure.json` for programs. A module's automated part takes under a minute without a unit (temp-save, 20 November 2026: 9 to 18 s for steps 1 to 4, 32 s with the emulator) and a few minutes with one.
 
-Options: `--package FILE` tests that package instead of building one, `--published` the catalogue's, `--share SOCKET` names the unit session, `--no-unit` leaves the unit alone, `--emulator-socket SOCK` adds the emulator rehearsal, `--target emulator` runs steps 6 to 10 on an emulator session ([below](#one-set-of-cases-two-targets)), `--out DIR` puts the record there (default: the system's temporary folder), `--soak-seconds` and `--scene` go to the soak and the price.
+Options: `--package FILE` tests that package instead of building one, `--published` the catalogue's, `--share SOCKET` names the unit session, `--no-unit` leaves the unit alone, `--emulator-socket SOCK` adds the emulator rehearsal, `--target emulator` runs steps 6 to 10 on an emulator session ([below](#one-set-of-cases-two-targets)), `--out DIR` puts the record there (default: the system's temporary folder), `--soak-seconds` and `--scene` go to the soak and the price. On another machine: `--stock STOCK.syx --elemod BASE.elemod --label XX01` link the test image, `--link` drives the unit over the machine's own link, `--cases DIR` and `--emu DTBOOT` ([every machine](#every-machine)).
 
 ## The steps
 
@@ -45,16 +47,36 @@ Each step proves only what it ran. Steps 1 to 5 prove the code paths they exerci
 
 - **1-2.** The doctor runs the module's host tests, the contract, the performance record and the compatibility lines. A draft is judged beside every other module by the doctor itself.
 - **1, a base.** Run it with the m68k-elf toolchain on PATH and the Elekloader checkout `npm run upstream:tools` keeps: without them `sdk:check` skips every package rebuild, as CI's SDK job does, so a stale reviewed recipe goes unseen. A failure there is the change's to fix, not the computer's (20 November 2026: Tape Echo's and Euclid's standalone recipes had gone stale on main).
-- **3. A rebuild starts again at step 1.** The record names the source revision (and says when the tree had uncommitted changes) and the package's SHA-256. Every later result is about this build only.
+- **3. A rebuild starts again at step 1.** The record names the source revision (and says when the tree had uncommitted changes) and the package's SHA-256. Every later result is about this build only. A draft DSP module with no published figures is built with the builder's placeholders (600 modeled cycles, buffer 0), which the loader refuses at verify with refusal 6, `RUNTIME_CYCLES` (Ghost Cut, 21 November 2026), and the runner takes no figures. Build it yourself with the measured ones and hand it over: `npm run module:dev -- <id> --build-only --cycles N --cycles-kind modeled --state N --buffer N --out PKG`, then `--package PKG`. `--buffer` is the Y words of the slot buffer the effect reads.
 - **4.** The check fails a cycle-scan record whose module source changed since its scan. After changing a module's DSP code, scan it again on a computer with the scan's tools: `node scripts/cycle-scan.mjs record <id>` ([sdk/cycle-scan](../sdk/cycle-scan/README.md), [MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md)).
-- **5.** Start `ot_emu` with `--usb-host SOCK` on a development twin of the base, from [the adapted emulator builder](../scripts/octatrack-emulator/build.py) (the plain port refused the trial with loader refusal 5, 20 November 2026). A ColdFire module needs no `--dsp`, which runs about ten times faster; give the base 20 s after the socket appears. Or run steps 6 to 10 there instead, through `npm run device:emulator` ([below](#one-set-of-cases-two-targets)). What passes here can still fail on the unit: read [what `ot_emu` does not show](OCTATRACK_HARDWARE_TRAPS.md#the-emulator-and-the-tools).
+- **5.** Start `ot_emu` with `--usb-host SOCK` on a development twin of the base, from [the adapted emulator builder](../scripts/octatrack-emulator/build.py) (the plain port refused the trial with loader refusal 5, 20 November 2026). A ColdFire module needs no `--dsp`, which runs about ten times faster; give the base 20 s after the socket appears. Or run steps 6 to 10 there instead, through `npm run device:emulator` ([below](#one-set-of-cases-two-targets)). What passes here can still fail on the unit: read [what `ot_emu` does not show](OCTATRACK_HARDWARE_TRAPS.md#the-emulator-and-the-tools). Build the twin with `build_core.py --dev` and the beta flags; on main it links only with `--resident-stock-hooks --resident-on-demand` among them, and without them stops at "Core has unexpected unresolved imports" (the arena, bss and run symbols and the `ev_` hooks). This set linked on 21 November 2026: `--dsp-loader --dev --usb-midi --packaged-usb-audio --site-events --table-owners sdk/machines/octatrack/module-adapters/table-owners.json --resident-stock-hooks --resident-on-demand --cached-modules --module-sets --sample-editor --module-ui-roots --part-menu`, with `ELEKLOADER_DSP_ASM` naming `dsp_asm` in the `dsp56300` build tree and `dsp56kDisassemble` built beside it.
 - **6-10.** The unit steps go through the device commands and keep [the driving rules](OCTATRACK_DRIVING.md): a development base, transport stopped, a bank and Part whose working copy equals its saved one. Nothing is kept: every install is a trial that rolls back. The runner takes the unit for steps 6 to 10 as one turn of [the unit queue](OCTATRACK_DRIVING.md#taking-turns-on-the-unit) (`npm run unit -- run`), and the device commands inside it do not queue again; an emulator target takes no turn.
 - **8.** The fast seeded soak needs the MIDI bridge on the computer the unit is plugged into (`scripts/octatrack-midi-bridge.py`) and the project's MIDI receive settings ([A fast soak](OCTATRACK_DRIVING.md)). A failure prints the seed and a log that replays it (`--replay FILE`). In a checkout without `scripts/octatrack-soak.mjs`, a module soaks inside step 7 (`device:test --soak 120`) instead.
 - **9.** "At rest" is the module installed and used nowhere: what every player pays for having it. The figure is `device:price`'s at-rest reading: the share of the frame interrupt (`guard`, 8 s) the module adds while the selected pattern plays with sounding sample tracks, installed and used nowhere, against the same scene without it, on a development twin of the base it is released for. It is the one measure the limit is judged on: a machine's render price or a figure from another tool is not compared with it, and the record (`evidence/cpu-price.json`) names its base and scene. Above 0.2 points the module must rest: a machine does by itself, any other module answers `ev_in_use` and marks its frame detours `"rests"`, and `module:doctor` fails a release from 20 November 2026 that does neither (`AT_REST_LIMIT` and `AT_REST_FROM` in `scripts/module-cpu-price.mjs`, both the owner's to change). Judge both figures against [MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md); a base-bound package is left out, since a development twin does not trust it.
 - **11.** Reach every control and screen by the README's button steps and take a `png:` screenshot of each. Record MAIN and CUE over USB with a sustained sound and look for runs of exact zeros or a block played twice. Then Undo and check the inventory again ([/modwerk-test-on-unit](../.claude/skills/modwerk-test-on-unit/SKILL.md)).
 - **12.** The developer here is the submitter: the person whose agent ran steps 1 to 11, at their own unit, not a reviewer. Only after 1 to 11 passed on this build. Give the developer the button steps and what they should see or hear for each item the record lists: the sound, timing by ear, MIDI and scenes, two instances, Part and project reload, the Keep and the power cycle. On a contributor's unit the Keep, the power cycle, a flash and listening are theirs, and the agent asks for each run; on the owner's computer agents need no OK for trials, RAM boots of development builds or a Keep a test needs, and never ask him for a card, while flashing and power cycles stay his ([owner operations](OWNER_OPERATIONS.md)). A fault they find is fixed, and the procedure starts again on the new build.
 
-A machine without a USB link runs steps 1 to 3 and its emulator; step 12 then carries all the hardware evidence ([/modwerk-test-on-unit](../.claude/skills/modwerk-test-on-unit/SKILL.md)).
+A machine without a USB link runs the steps its tools reach, and the record lists the rest as not run with what is missing; step 12 then carries all the hardware evidence ([every machine](#every-machine)).
+
+## Every machine
+
+The steps, their order and the record are the same on every machine. Each step runs the machine's own tool where it has one (`MACHINE_STEPS` in [the runner](../scripts/test-procedure.mjs)); where it has none, the record says "not run" and what is missing, so the gap stays in sight until the machine's next piece fills it ([where each machine stands](MACHINE_RECIPE.md#where-each-machine-stands)). A tool added for a machine fills its row here and in `MACHINE_STEPS` in the same pull request.
+
+| # | Octatrack | Analog Rytm MKII | Every other machine |
+|---|---|---|---|
+| 1 | `module:doctor`; a base: `sdk:check` | the same | the same |
+| 2 | `modules:compat` | not yet: link the image beside the modules it must work with (the link refuses two on one site) | not yet, as the Rytm |
+| 3 | `module:dev`; a base: its `.elemod` | `link-image.mjs` from `--stock`, `--elemod` (a development base: `machine:base -- analog-rytm-mkii --stock STOCK.syx --dev --out DIR`) and `--label`; or `--package IMAGE.syx` | an elemod machine as the Rytm; otherwise `--package FILE` |
+| 4 | `cycle-scan.mjs check` | not run: the scan models the Octatrack's DSP | not run |
+| 5 | `ot_emu` (`--emulator-socket`) | `rytm_test.py emu` with `--emu DTBOOT` or `RYTM_EMU` | not yet |
+| 6, 10 | `device.mjs status`, `do inventory` | `rytm_link.py ident`: the flashed label is unchanged at the end | not yet: no USB link |
+| 7 | `device:test`; a base: `device.mjs set` | `rytm_link.py ramboot`, then `rytm_test.py unit` with the module's cases (a base: the link's own) | not yet |
+| 8 | `octatrack-soak.mjs` | not yet | not yet |
+| 9 | `device:price` | by hand: the audio load (`core_audio_load`) with and without the change | not yet |
+| 11, 12 | by hand, then the submitter | the same | the same |
+
+- **Rytm unit steps** run only with `--link`, in a scratch project with REMOTE CTRL armed on a development base ([LINK.md](../sdk/machines/analog-rytm-mkii/LINK.md)). The RAM boot writes nothing to the flash and restarts the unit, so on a contributor's unit say so and get their OK first; their power cycle brings the flashed base back. Cases live in [`tools/cases/<id>/`](../sdk/machines/analog-rytm-mkii/tools/cases/README.md) and may change the saved state ([TEST_RUNNER.md](../sdk/machines/analog-rytm-mkii/TEST_RUNNER.md)); a module without them records step 7 as not run until they are written.
+- **A base on another machine** is tested on an image linked from its development base with the set it is tested beside: link it with `--module` for each and pass it as `--package`, or the runner links the base alone. `--target emulator` is the Octatrack's session switch; elsewhere the emulator is step 5.
 
 ## The layers
 
@@ -88,12 +110,14 @@ npm run device:emulator -- --image MAIN.raw --emulator OT_EMU -- npm run test:pr
 
 On 20 November 2026 temp-save ran this way end to end in 101 s (73 s of procedure, 61 s of them `device:test`): the trial, 12 of 12 Part switches, the knob sweeps, Undo and the inventory unchanged. Without `--dsp` the emulator's DSP frames stand still, so `device:test` lists its frame checks, the queued bank change and the self-test as not run there; with `--dsp` the frames did not advance under `pace on` either, which is the emulator's limit, not a step to fake.
 
+An effect cannot be tried on a track there today. On a development twin under `ot_emu` the CPU meter reads 1000 per mille from boot, with and without `--dsp`, so [the busy-unit guard](MODULE_PERFORMANCE.md) refuses every pick of a module's effect with CPU FULL and "UNIT IS BUSY", and `device:test`'s picks fail for any effect: Vibrato's listed package was refused like the Ghost Cut draft (21 November 2026). For an effect the emulator still runs the trial install, the loader's verify, the Part switches and the rollback. Its sound and its picks go to the `dsp_host` render gates and the unit.
+
 ## What a base adds
 
 A base carries every installed module, so it is tested as a set ([Change a base](DEVELOPER_WORKFLOW.md#change-a-base)). Each submitter lists pending tests on the machine’s cumulative draft, runs them on their own unit and adds the results there before release.
 
 - step 1 is the SDK suite and step 2 every module against every other;
-- step 7 installs every USB package in one whole-set trial (a base with feature 512), and Undo must bring back the starting inventory and active identity (step 10);
+- step 7 installs every USB package in one whole-set trial (a base with feature 512), and Undo must bring back the starting inventory and active identity (step 10); on another machine it runs the image linked with the set;
 - step 9 prices every package at rest on the new base, the figure a base change can move for everyone;
 - by hand: RAM boot the development build of the candidate, run the steps, RAM boot back to the starting base, and check its modules came back. Nothing is kept by a RAM boot. On a contributor's unit say beforehand how many restarts are coming and get their OK for the run; on the owner's computer it stands. A flash or a power cycle is always the unit owner's;
 - the record goes to `docs/verification/<YYYY-MM-DD>-<topic>.md` and the machine's cumulative draft. That draft stays a draft until the base has been tested extensively on a unit, through the records its submitters bring; only the owner marks it ready and merges it.

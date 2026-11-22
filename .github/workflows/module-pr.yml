@@ -3,21 +3,23 @@
 name: Module PR checks
 on:
   pull_request:
-    types: [opened, edited, synchronize, reopened, ready_for_review, converted_to_draft]
-    # base/<machine>-next: keep description checks for legacy topic PRs. New base commits go directly on the cumulative branch.
-    branches: [main, 'modwerk/**', 'codex/modwerk-*', 'base/*-next']
+    # No edited: the description check is its own workflow (pr-description.yml), so editing a description reruns only it.
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
+    # Pull requests into base/<machine>-next get the description check only (pr-description.yml).
+    branches: [main, 'modwerk/**', 'codex/modwerk-*']
 permissions:
   contents: read
 concurrency:
   group: module-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
+env:
+  # A draft reports missing release evidence instead of failing on it (scripts/modules.mjs); ready_for_review reruns every job without it.
+  MODWERK_EVIDENCE_PENDING: ${{ github.event.pull_request.draft && '1' || '0' }}
 jobs:
   # Documentation uses metadata/provenance checks. Firmware compilation follows actual
   # source/build inputs; app changes retain lint, tests, types and the bundle.
   scope:
     name: scope / ${{ github.event.pull_request.base.sha }} / ${{ github.event.pull_request.head.sha }}
-    # The cumulative draft targeting main runs full checks. Legacy topic PRs receive the description check only.
-    if: ${{ !startsWith(github.base_ref, 'base/') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
@@ -41,27 +43,6 @@ jobs:
           # onto, and two commits of history do not hold it, so rev-parse failed whenever main had moved.
           OCTAMOD_PR_BASE: HEAD^1
         run: node scripts/pr-check-plan.mjs --base "$OCTAMOD_PR_BASE" --head HEAD >> "$GITHUB_OUTPUT"
-  describe:
-    if: github.base_ref == 'main' || (startsWith(github.base_ref, 'base/') && endsWith(github.base_ref, '-next'))
-    runs-on: ubuntu-24.04
-    timeout-minutes: 3
-    steps:
-      # Read changed paths from the exact event trees. Run the validator from the trusted PR base.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-      - name: Check the description and hardware evidence
-        env:
-          PR_BASE: ${{ github.event.pull_request.base.sha }}
-          PR_HEAD: ${{ github.event.pull_request.head.sha }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-          PR_DRAFT: ${{ github.event.pull_request.draft }}
-        run: |
-          PR_FILES="$(git diff --name-only --no-renames "$PR_BASE...$PR_HEAD")"
-          export PR_FILES
-          git checkout --detach "$PR_BASE"
-          node scripts/pr-body.mjs
   module-contract:
     needs: scope
     runs-on: ubuntu-24.04
@@ -99,7 +80,8 @@ jobs:
       # and sdk:check load every module's manifest as Python.
   # Small test selections run in the contract job. The same plan as pr:ready chooses the remaining suites.
   module-suites:
-    needs: scope
+    # After module-contract, so one catalogue or evidence problem shows as one red job, not six.
+    needs: [scope, module-contract]
     if: needs.scope.outputs.parts != '[]'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -136,7 +118,7 @@ jobs:
           PART: ${{ matrix.part }}
         run: npm run check -- --base "$OCTAMOD_PR_BASE" --part "$PART"
   module-paths-windows:
-    needs: scope
+    needs: [scope, module-contract]
     if: needs.scope.outputs.windows == 'true'
     runs-on: windows-2025
     timeout-minutes: 10
@@ -210,7 +192,7 @@ jobs:
           retention-days: 14
           if-no-files-found: error
   octatrack-source:
-    needs: scope
+    needs: [scope, module-contract]
     if: needs.scope.outputs.modules == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -268,11 +250,22 @@ jobs:
   # A job the scope skips counts as passed; a failed, cancelled or unrun job does not.
   module-pr-ok:
     if: always()
-    needs: [scope, describe, module-contract, module-suites, module-paths-windows, core-logger-host, elemod-source, octatrack-source]
+    needs: [scope, module-contract, module-suites, module-paths-windows, core-logger-host, elemod-source, octatrack-source]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
-    permissions: {}
+    permissions:
+      pull-requests: read
     steps:
+      # A rerun keeps its event, so a draft's lenient run rerun after the PR was marked ready must not count as its verdict.
+      - name: Count a draft's run only while the PR is a draft
+        if: env.MODWERK_EVIDENCE_PENDING == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          if [ "$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)" != true ]; then
+            echo "::error::This run checked the PR as a draft, but it is ready for review now. Push, or close and reopen it, for the full check."; exit 1
+          fi
       - name: Require every check above to pass
         env:
           RESULTS: ${{ join(needs.*.result, ' ') }}

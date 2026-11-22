@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { createHash, randomUUID } from 'node:crypto'
-import { existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -38,10 +38,35 @@ function prepare(item, directory, fixed = false, remote) {
   } finally { rmSync(stage, { recursive: true, force: true }) }
 }
 
-// The same tree reaches this point both before and after --commit. Keep the first observation on retries.
-export function localReplay(tree, remote, agent, { directory = join(root, '.claude/agent-evals'), snapshot = prepare } = {}) {
+/** The replay folders of this checkout's other worktrees: one computer keeps one score per case. */
+function otherWorktrees() {
+  const paths = git('worktree', 'list', '--porcelain').toString().split('\n').filter(line => line.startsWith('worktree ')).map(line => line.slice(9))
+  return paths.filter(path => resolve(path) !== resolve(root)).map(path => join(path, '.claude/agent-evals'))
+}
+
+/** A score this computer already has for the case on this suite, from any tree: the same snapshot, solved before. */
+function solvedBefore(directories, id) {
+  for (const directory of directories) {
+    if (!existsSync(directory)) continue
+    for (const tree of readdirSync(directory)) {
+      const file = join(directory, tree, suiteId, 'result.json')
+      const record = existsSync(file) && JSON.parse(readFileSync(file, 'utf8'))
+      if (record?.case === id) return { ...record, file }
+    }
+  }
+}
+
+// The same tree reaches this point both before and after --commit. Keep the first observation on retries, and on a new
+// tree whose case this computer has already scored on this suite (owner, 21 November 2026: one session got eight
+// assignments of three cases as its tree and main moved).
+export function localReplay(tree, remote, agent, { directory = join(root, '.claude/agent-evals'), snapshot = prepare, elsewhere = otherWorktrees } = {}) {
   const item = cases[parseInt(tree.slice(0, 8), 16) % cases.length]
   const attempt = join(directory, tree, suiteId), workspace = join(attempt, 'work'), resultFile = join(attempt, 'result.json')
+  const earlier = !existsSync(resultFile) && !existsSync(workspace) && solvedBefore([directory, ...elsewhere()], item.id)
+  if (earlier) {
+    console.log(`Agent replay ${item.id}: ${earlier.passed ? 'pass' : 'fail'}, scored before on this computer (${earlier.file})`)
+    return true
+  }
   if (!existsSync(workspace)) {
     try { snapshot(item, workspace, false, remote) } catch (error) {
       if (!['EEXIST', 'ENOTEMPTY'].includes(error.code) || !existsSync(workspace)) throw error
