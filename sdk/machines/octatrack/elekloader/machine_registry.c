@@ -978,18 +978,18 @@ static uint8_t place[16], next[16], made; /* a render's place in the last frame'
  * 0.5 µs, so that an error decays), never below 0; within NEAR of a whole frame or past it, it is less that frame
  * (the DSP skipped one: left at a frame less 0.5 µs it would decay into the window 0.1 s later and every entry
  * would wait); IDLE or more after the last entry it is 0. The timer wraps every 32.5 s: only differences are used.
- * The wait is not yet measured on a unit (docs/MODULE_PERFORMANCE.md), so it is off: mw_late_wait_on 0 counts and does not
- * wait, and a development base switches it (dev.c LATE). Waiting makes the DSP skip a frame for entries that run on
- * unaided today, and puts 553 µs between two frames, past the self-test's limit: turn it on by default only once a
- * unit has shown both the stall without it and the audio across the skip with it. Until then only development bases
- * carry it (nothing reads the counts on another base, and the widest released base has no room for them). */
-#if defined MODWERK_DEV || defined MW_HOST
+ * On a unit (owner's MKII, 22 November 2026, base 0.8 twins) the stall came at a pattern change from an empty pattern to
+ * a busy one with modules placed, the entry 131 to 162 µs late after a 465 to 530 µs frame. With the frame ceiling
+ * (FRAME_CEILING) alone the first such switch still stalled (twin 18672928, stall 55); with the ceiling and this wait,
+ * twenty in a row ran on, each with one to eight entries held (the wait alone held eight and stalled on the ninth). So
+ * every base waits; a development base can switch it off for a comparison (dev.c LATE). A held entry puts up to 553 µs between
+ * two frames: the self-test allows that much (selftest.h's SELFTEST_FRAME_LIMIT). */
 #define GRID (FRAME + 66u)
 #define NEAR 2640u     /* 20 µs */
 #define LATE_LO 14520u /* 110 µs */
 #define LATE_HI 25080u /* 190 µs */
 #define IDLE (4u * GRID)
-volatile uint32_t mw_late_wait_on;
+volatile uint32_t mw_late_wait_on = 1;
 /* For diagnostics, since the last read: the latest entry, the entries in the window, the waits and the longest. */
 volatile uint32_t mw_late_max, mw_late_hits, mw_late_waits, mw_late_wait_max;
 static uint32_t entry_at, entry_late;
@@ -1016,9 +1016,6 @@ void mw_frame_enter(void)
     }
     mw_frame_t0 = now;
 }
-#else
-void mw_frame_enter(void) { mw_frame_t0 = DTCN3; }
-#endif
 void mw_frame_exit(void)
 {
     uint32_t now = DTCN3, d = now - mw_frame_t0, due = d + late;
