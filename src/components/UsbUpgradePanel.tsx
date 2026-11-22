@@ -11,7 +11,7 @@ import { Icon } from './Icon'
 export function UsbUpgradePanel({ machine, name, syx, sha256, version, recovery, riskAccepted, midi }: {
   machine: RecoveryMachine; name: string; syx: Uint8Array; sha256: string; version: string; recovery?: string; riskAccepted: boolean; midi?: MidiAccessRequest
 }) {
-  const { state, send } = useUsbUpgrade(name, midi)
+  const { state, send } = useUsbUpgrade(name, sha256, midi)
   const [recoveryKnown, setRecoveryKnown] = useState('')
   const knowsRecovery = recoveryKnown === sha256
   const busy = state.phase === 'connecting' || state.phase === 'sending'
@@ -22,7 +22,7 @@ export function UsbUpgradePanel({ machine, name, syx, sha256, version, recovery,
     <RecoveryNotice machine={machine} steps={recovery} checked={knowsRecovery} onChange={checked => setRecoveryKnown(checked ? sha256 : '')} />
     <p className="service-note">{FLASHING_RISKS} Flash at your own risk. Local checks cannot guarantee hardware safety.</p>
     <div className="build-actions">
-      <button className="button button-primary" disabled={!riskAccepted || !knowsRecovery || busy} onClick={() => void send(syx)}>
+      <button className="button button-primary" disabled={!riskAccepted || !knowsRecovery || busy} onClick={() => void send(syx, sha256)}>
         <Icon name="download" size={16} />{busy ? 'Sending…' : state.phase === 'confirm' || state.phase === 'failed' ? 'Send again' : 'Send ' + version + ' to the ' + name}
       </button>
     </div>
