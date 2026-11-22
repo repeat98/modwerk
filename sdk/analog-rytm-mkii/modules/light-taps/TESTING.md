@@ -8,6 +8,7 @@ Evidence tier: **none** until the developer's run on this module's own build is 
 - `npm run module:doctor -- light-taps`: green but "browser builder" (no catalog pin until the pull request is open) and the board claim (the board was not reachable).
 - 22 November 2026, after merging main: build LT02, linked on the plain Modwerk Rytm base (`modwerk-base-analog-rytm-mkii-1c14b6b0`), the variant a set with Light Taps alone gets; sha256 `bfeeed94bf23ac9fe3810d20dd563cc1be621436bccf4b3a8734f9dcefafc5a8`. The module's source is LT01's; the base under it differs. Memory: `ramSpare` 118836 for the base alone, 117912 with Light Taps (924 bytes); `fastSpare` 0 both.
 - 22 November 2026, emulator (rytm-emu 2ac0f1f, dtboot), build LT02, cold boot on a fresh card: GLOBAL, then DOWN past SYSTEM, shows **LIGHT TAPS: OFF** as the menu's last row; YES turns it to **LIGHT TAPS: ON**. Emulator result, screen only (the screenshots in `media/`, plan in `media/capture.json`): not hardware evidence, and the emulator plays no pad strikes.
+- 22 November 2026, after review on #1972 (a maintainer found that a strike's mark never expired and the panel's counter wraps at 4,096 ms, so a fresh light tap a multiple of 4.096 s after a firm hit could be dropped): the module now keeps its own millisecond count and expires a strike's mark after 3 ms. Host test `tests/test_tap_timing.py` (12 cases, no firmware) passes, including a strike just before the 4,096 ms wrap with a fresh light tap a full wrap later, three wraps later, and across the module count's own 32-bit wrap. With the old 12-bit, never-expiring mark put back in a copy of `main.c`, the two wrap cases fail, so the test catches the bug. Build LT03 on the plain base, sha256 `72cad00cef4ec7908327a6828305341f54f90d668336b0b6c4e06f83387a6bf3`; memory 1,016 bytes (`ramSpare` 117820). LT01 and LT02 had this bug.
 - `npm run test:procedure`: stops at step 1 until the package is pinned, which needs the pull request (see Build above).
 
 ## From the Pad Thresh experiments
@@ -25,7 +26,7 @@ The behaviour comes from Pad Thresh, a diagnostic never submitted (branch `pad-p
 Results below are recorded only as the developer reports them.
 
 - 22 November 2026, build LT01 (core-ar2 0.7 under the module, not the plain base), @filefolder's Rytm MKII, OS 1.74: "I've tested it and it all seems to work" (reported), against the list below. The final build, from the pinned package, is still to be tested.
-- 22 November 2026, build LT02 (sha256 `bfeeed94bf23ac9fe3810d20dd563cc1be621436bccf4b3a8734f9dcefafc5a8`, the plain base under this module's source), @filefolder's Rytm MKII, OS 1.74: "it tests OK" (reported), against the list below. If the pinned package's module code differs from LT02's, its build gets the same list again.
+- 22 November 2026, build LT02 (sha256 `bfeeed94bf23ac9fe3810d20dd563cc1be621436bccf4b3a8734f9dcefafc5a8`, the plain base under this module's source), @filefolder's Rytm MKII, OS 1.74: "it tests OK" (reported), against the list below. LT02 had the 4,096 ms bug fixed in LT03, so LT03, and then the pinned package's build, get the list again.
 
 To do on the unit, with the build named:
 

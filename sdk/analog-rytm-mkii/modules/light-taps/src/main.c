@@ -12,18 +12,20 @@
 //
 // The switch is a row in the GLOBAL menu, saved with the project.
 
+#ifndef LIGHT_TAPS_HOST
 #include "analog-rytm-mk2/store.h"
 
 STORE_FIELD(light_taps_enabled);
 extern void core_additem(void *, const void *);
 extern void light_taps_label(void);
 
-#define TICKS (*(volatile unsigned *)0x42f92114)   // the panel task's counter, kept below 4096
 #define QUEUE (*(void **)0x40285980)               // the panel driver's UI event queue
-#define STRIKE_CODES (*(int **)0x40285968)         // pad index -> a strike's code
+#define STRIKE_CODE(pad) ((*(int **)0x40285968)[pad])   // pad index -> a strike's code
 #define NOW (*(volatile unsigned *)0x8000fe54)     // the time stamp the driver puts in an event
 typedef void (*post_t)(void *queue, void *event);
 #define POST ((post_t)0x400013b2)
+#endif
+// tests/tap_timing.c defines these four for the host and includes this file.
 
 #define PADS 12
 #define PAD_KEY 0x90
@@ -32,36 +34,44 @@ typedef void (*post_t)(void *queue, void *event);
 #define TAPS 8
 
 static volatile int on;                // the setting, cached for the panel task
-static volatile unsigned pending[PADS];   // 1 + the tick of a press still waiting for its strike, else 0
-static volatile unsigned struck[PADS];    // 1 + the tick of the pad's last strike, else 0
+
+// Time is this module's own millisecond count, one per panel task tick. The
+// panel's counter (0x42f92114) wraps at 4096, so a stamp from it cannot tell a
+// press 2 ms after a strike from one 4098 ms after it; this count wraps after
+// 49 days, and unsigned subtraction measures across that wrap too.
+static volatile unsigned ms;
+static volatile unsigned char waiting[PADS];      // a press still waiting for its strike
+static volatile unsigned pressed_at[PADS];
+static volatile unsigned char recent[PADS];       // a strike in the last TAP_MS; light_taps_poll expires it
+static volatile unsigned struck_at[PADS];
 // The driver's strike record: type 3, the pad's strike code, the velocity, a time stamp.
 static struct { unsigned char type, unused[3]; int code; unsigned char velocity, unused2[3]; unsigned time; } taps[TAPS];
 static unsigned next_tap;
 
-static unsigned since(unsigned mark, unsigned now)
-{
-    return (now - (mark - 1)) & 0xfff;
-}
-
+#ifndef LIGHT_TAPS_HOST
 static void read_setting(void)
 {
     on = core_store_get(STORE(light_taps_enabled), 0, 0) != 0;
 }
+#endif
 
 // Called from hooks.s for each event the panel driver posts.
 void light_taps_event(char *ev)
 {
-    unsigned now = TICKS & 0xfff;
+    unsigned now = ms;
     int p;
     if (ev[0] == 0) {
         unsigned pad = (unsigned)*(int *)(ev + 4) - PAD_KEY;
-        if (pad < PADS && (ev[11] & 1) && !(struck[pad] && since(struck[pad], now) <= TAP_MS))
-            pending[pad] = 1 + now;
+        if (pad < PADS && (ev[11] & 1) && !(recent[pad] && now - struck_at[pad] <= TAP_MS)) {
+            pressed_at[pad] = now;
+            waiting[pad] = 1;
+        }
     } else if (ev[0] == 3) {
         for (p = 0; p < PADS; p++)
-            if (STRIKE_CODES[p] == *(int *)(ev + 4)) {
-                pending[p] = 0;
-                struck[p] = 1 + now;
+            if (STRIKE_CODE(p) == *(int *)(ev + 4)) {
+                waiting[p] = 0;
+                struck_at[p] = now;
+                recent[p] = 1;
             }
     }
 }
@@ -69,13 +79,15 @@ void light_taps_event(char *ev)
 // Called from hooks.s by the panel task, about every millisecond.
 void light_taps_poll(void)
 {
-    unsigned now = TICKS & 0xfff;
+    unsigned now = ++ms;
     int p, code;
     for (p = 0; p < PADS; p++) {
-        if (!pending[p] || since(pending[p], now) < TAP_MS)
+        if (recent[p] && now - struck_at[p] > TAP_MS)
+            recent[p] = 0;
+        if (!waiting[p] || now - pressed_at[p] < TAP_MS)
             continue;
-        pending[p] = 0;
-        code = STRIKE_CODES[p];
+        waiting[p] = 0;
+        code = STRIKE_CODE(p);
         if (!on || code < 0)
             continue;
         taps[next_tap].type = 3;
@@ -87,6 +99,7 @@ void light_taps_poll(void)
     }
 }
 
+#ifndef LIGHT_TAPS_HOST
 // The GLOBAL menu row.
 int light_taps_on(void)
 {
@@ -114,3 +127,4 @@ void light_taps_tick(char *ctrl)
     (void)ctrl;
     read_setting();
 }
+#endif

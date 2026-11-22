@@ -39,7 +39,7 @@ A light tap plays the sound like any hit: the amp, the filter envelope, velocity
 The module hooks three spots in OS 1.74's panel driver that no other module or the base patches, and declares them as claims:
 
 - `0x4008232c`, where the driver posts a pad's strike or pressure, and `0x40082492`, where it posts a key press or release. The module notes each pad press, and each strike, then passes the event on unchanged.
-- `0x40081944`, in the driver's task that runs about every millisecond. A pad press with no strike for 3 ms gets one: the record the driver builds itself (type 3, the pad's strike code, velocity 8, the time stamp), posted to the driver's own queue, so the OS plays it as any hit.
+- `0x40081944`, in the driver's task that runs about every millisecond. The module counts these ticks itself rather than reading the panel's own counter, which wraps every 4,096 ms: stamps from it made a fresh light tap a multiple of 4.096 s after a firm hit look like a press just after that hit. A strike's mark also expires after 3 ms. A pad press with no strike for 3 ms gets one: the record the driver builds itself (type 3, the pad's strike code, velocity 8, the time stamp), posted to the driver's own queue, so the OS plays it as any hit.
 
 ## Compatibility and limitations
 
