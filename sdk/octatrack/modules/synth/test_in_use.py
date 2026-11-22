@@ -25,7 +25,7 @@ class InUse(unittest.TestCase):
             for command in (
                 ["as", "-mcpu=5475", source, "-o", "r.o"],
                 ["ld", "-Ttext", hex(CODE), "--defsym", "fm_stock_validate=0", "-e", "fm_in_use", "r.o", "-o", "r.elf"],
-                ["objcopy", "-O", "binary", "--set-section-flags", ".bss=alloc,load,contents", "r.elf", "r.bin"],
+                ["objcopy", "-O", "binary", "r.elf", "r.bin"],
             ):
                 subprocess.run(["m68k-elf-" + command[0], *command[1:]], cwd=build, check=True)
             self.sym = {f[2]: int(f[0], 16) for f in (row.split() for row in subprocess.check_output(

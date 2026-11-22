@@ -18,7 +18,8 @@ static unsigned signed_track(const volatile u8 *part,unsigned t) {
  const volatile u8 *s=part+60+30*t;
  return t<8 && part[0x22+t]==1 && s[0]=='F' && s[1]=='M' && s[2]==1;
 }
-static volatile u8 fm_picked; /* the base's pick of FM SYNTH asks this before it wakes a resting module */
+#define IMAGE __attribute__((section(".data"))) /* state in the image, not .bss: a machine group package has none */
+static volatile u8 fm_picked IMAGE; /* the base's pick of FM SYNTH asks this before it wakes a resting module */
 unsigned fm_admit_track(const volatile u8 *part,unsigned t) { (void)part;fm_picked=1;return t<8; }
 /* ev_in_use (Modwerk 0.1.5), from the base's UI tick: nonzero while anything FM Synth plays may be in the project,
  * so the base rests its frame sites (runtime.json "rests") only while they could change nothing. In use: a pick of
@@ -30,7 +31,7 @@ unsigned fm_admit_track(const volatile u8 *part,unsigned t) { (void)part;fm_pick
 #define BANK0 0x400e21e0u         /* bank 0; all 16 stay in RAM, 0x9b340 apart */
 #define PART_SAVED 0x9504au
 #define SLOTS 0x100b14f0u         /* the FLEX slots' settings records, 0x448 each, the path at +0 */
-static u8 fm_sweep,fm_seen,fm_clean;
+static u8 fm_sweep IMAGE,fm_seen IMAGE,fm_clean IMAGE;
 static unsigned any_signed(const volatile u8 *part) {
  for(unsigned t=0;t<8;++t) if(signed_track(part,t)) return 1;
  return 0;

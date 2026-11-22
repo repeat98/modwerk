@@ -415,14 +415,23 @@ fm_validate_part:
 	jne .L71
 	jra .L95
 	.size	fm_validate_part, .-fm_validate_part
-	.local	fm_clean
-	.comm	fm_clean,1,1
-	.local	fm_seen
-	.comm	fm_seen,1,1
-	.local	fm_sweep
-	.comm	fm_sweep,1,1
-	.local	fm_picked
-	.comm	fm_picked,1,1
+	.section	.data,"aw"
+	.type	fm_clean, @object
+	.size	fm_clean, 1
+fm_clean:
+	.zero	1
+	.type	fm_seen, @object
+	.size	fm_seen, 1
+fm_seen:
+	.zero	1
+	.type	fm_sweep, @object
+	.size	fm_sweep, 1
+fm_sweep:
+	.zero	1
+	.type	fm_picked, @object
+	.size	fm_picked, 1
+fm_picked:
+	.zero	1
 	.globl	fm_defaults
 	.section	.rodata
 	.type	fm_defaults, @object

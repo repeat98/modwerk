@@ -40,9 +40,10 @@ Part wakes it within a UI tick, one in another bank within a sweep; a note that 
 until its next trig, as the base renders a resting machine's track.
 
 **Built** (`node scripts/mirror-octatrack-modules.mjs && python3 -B scripts/octatrack-module-packages.py`, main
-`fa4156543` plus this change): `public/octatrack-modules/synth/0.1.5-experimental.mwrm`, 31,226 bytes, SHA-256
-`543001f3bb521968b6b5d38e246bea8a5d0828f16663397696191e96162b598c`, module `e8c3e4fa`, 24 sites (the nine above flagged
-resting, as the package's site records show), 39 stock copies, 4 bytes of bss, `ev_in_use` at hook 54. The recipe was
+`fa4156543` plus this change): `public/octatrack-modules/synth/0.1.5-experimental.mwrm`, 31,230 bytes, SHA-256
+`2ac17c3aa4e6e73fd0eaddc08d72ba01ea89601c753d8596384fe98976c77812`, module `e8c3e4fa`, 24 sites (the nine above flagged
+resting, as the package's site records show), 39 stock copies, no bss (the answer's four state bytes are in the image's
+data, as a machine group package needs: `machine_composition_tests.py`), `ev_in_use` at hook 54. The recipe was
 recaptured from the stock OS 1.40C (`build.py --octabam-machine synth --capture-stock-recipe`): the same 39 copies at the
 same offsets, the image hash and the `registration.s` and `machine-ports.json` pins moved, and every machine recipe's pin of
 `machine-ports.json` with them. `octatrack-module-packages.py --check --stock` (the strict stock-free scans): every
