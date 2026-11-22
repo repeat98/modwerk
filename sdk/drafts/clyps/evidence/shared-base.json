@@ -1,0 +1,62 @@
+{
+  "baseCommit": "7419b7598006646dd2bbbd3f09af6f352b95ff9b",
+  "donor": "a9674ed846ebe75d2bcbced307922fe9c4cb63f1",
+  "module": "c3c516e8a13511899a6c8ff8c5140d918051b728",
+  "main": "3db3ece713e65048102c442cd341d6d587b38d6638006eabc772d71c711b4cbd",
+  "configuration": "08f12c2ebe9f0df093ea09f9d150ffa885d2b2082438836b666e083fa863e63c",
+  "mwrm": "8aa6ccef2afd7db7874de28e8f6948f948e70f1e8b94a2f023d22452e4e90423",
+  "emulator": "a1410ad471be5fbf0fee5e0865dbce9ec1ffcba1d4697aaa6e607943b5614a87",
+  "sourceCardSha256": "0e69834f607f27e090b34a7c6204dffbb90baf34bbcdebc3fbbf5a01eed996d2",
+  "receiptSha256": {
+    "candidate.json": "c585aeb5c8e20940d98c930475a207e0d218e9e1a92ffdc33ef528be0e789587",
+    "stock.json": "c585aeb5c8e20940d98c930475a207e0d218e9e1a92ffdc33ef528be0e789587",
+    "refusal.json": "acf2ba583a6b4261c3cd3db7727341681288220cfad279d6b9156e1143f6b9d6"
+  },
+  "slice": {
+    "wraps": [
+      90
+    ],
+    "orderedAudioAndMidiCalls": 384,
+    "relativeTimestampWrites": 400,
+    "initialPool": 786432,
+    "finalPool": 786432,
+    "track": 2,
+    "queuedSource": "A02",
+    "globalPattern": "A01",
+    "stopCancellation": true,
+    "srcLabels": true,
+    "arrSourceDigits": true,
+    "patternAndPartIntegrity": true
+  },
+  "featureMissingControl": {
+    "refusal": 259,
+    "before": {
+      "callbacks": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "active": 0,
+      "pool": 786432,
+      "owners": 0
+    },
+    "after": {
+      "callbacks": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "active": 0,
+      "pool": 786432,
+      "owners": 0
+    }
+  },
+  "controlBase": "8aeb9c3d0239eedb0f091273dfe860006152b3c8cb35f7d9ada0b8289a591c63",
+  "moduleResources": {
+    "codeDataBytes": 5456,
+    "bssBytes": 164,
+    "relocations": 238
+  }
+}

@@ -1,0 +1,432 @@
+"""Replay the historical composite or 16x8 lane matrix on the candidate MKII base."""
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import struct
+import sys
+import tempfile
+
+from mkii_panel import panel, peek
+
+TICK, WRAP, TRIG, AUDIO, MIDI = 0x400a3fdc, 0x400a43a0, 0x400a536c, 0x4009d1e8, 0x4009cf4c
+ARR, NO, YES, STOP, PLAY = 0x1f, 0x32, 0x31, 0x27, 0x28
+parser = argparse.ArgumentParser(description=__doc__)
+for field in ('emulator', 'base', 'card', 'symbols', 'output'):
+    parser.add_argument(field, type=Path)
+parser.add_argument('--octabam', type=Path, required=True)
+parser.add_argument('--reference', action='store_true')
+parser.add_argument('--lane-matrix', action='store_true')
+parser.add_argument('--observe-queue', action='store_true')
+parser.add_argument('--boundary', choices=('early','late'))
+parser.add_argument('--package', type=Path)
+parser.add_argument('--symbols-module', type=Path)
+args = parser.parse_args()
+if args.boundary and (args.lane_matrix or not args.reference and not (args.symbols_module and args.package)):
+    parser.error('Boundary candidate requires its MWRM and matching linked symbol map')
+if not __debug__ or args.lane_matrix and args.reference:
+    parser.error('Assertions required; the matrix needs a candidate')
+MODULE = 0x34e1e379
+syms = json.loads(args.symbols.read_text())
+with tempfile.TemporaryDirectory() as tmp:
+    scratch = Path(tmp) / 'test.img'
+    shutil.copyfile(args.card, scratch)
+    def project(card):
+        sys.path.insert(0, str(args.octabam.resolve() / 'tools/emu'))
+        import emu_card
+        return {k: hashlib.sha256(v).hexdigest() for k,v in
+                emu_card.extract_image(card.read_bytes()).items() if k.startswith('MODWERK/GATE3/')}
+
+    with panel(args.emulator, args.base, scratch, ['--card-rw','--names-early','--dsp']) as cmd:
+        def num(addr, size=4):
+            return int.from_bytes(peek(cmd, addr, size), 'big')
+
+        def call(name, *values):
+            for _ in range(200):
+                try:
+                    reply = cmd('call ' + ' '.join(hex(i) for i in (syms[name], *values)))
+                    return int(reply.split('d0=')[1].split()[0], 16)
+                except RuntimeError as exc:
+                    if "not main's spin" not in str(exc):
+                        raise
+                    cmd('run 3')
+            raise RuntimeError('Main task did not become idle')
+
+        def switch_once(on, target):
+            assert call('modwerk_modset_switch', target, on) == 1
+            for _ in range(100):
+                cmd('run 15')
+                actual = num(syms['modwerk_modset_switch_result'])
+                if actual != 1:
+                    break
+            return actual
+
+        def switch(on):
+            result = switch_once(on, MODULE)
+            assert result == 0, (on, result)
+            cmd('run 100' if on else 'run 1200')
+
+        def block(addr, size):
+            h = hashlib.sha256()
+            for off in range(0, size, 2048):
+                h.update(peek(cmd, addr + off, min(2048, size-off)))
+            return h.hexdigest()
+
+        def bank_parts():
+            return [block(0x400e21e0, 3*0x8ed8), block(0x400e21e0+0x8ed80, 4*0x18b2),
+                    block(0x400e21e0+0x9504a, 4*0x18b2)]
+
+        def callbacks():
+            words = [num(syms['modwerk_runtime_event_row'] + 4*(k-4)) for k in (40,63,64,65)]
+            return [num(a) for a in words]
+
+        def tap(code):
+            for val in (1 << (code%8), 0):
+                cmd(f'key {32+code//8} {val}')
+                advance(35)
+
+        def move_focus(delta):
+            cmd(f'knob 0x36 {delta}')
+            advance(70)
+
+        def start_trace():
+            global tick, events, wraps, writes, recording
+            cmd('hits')
+            cmd('writes')
+            tick, events, wraps, writes, recording = 0, [], [], [], True
+
+        def advance(ms):
+            global tick
+            quantum = 1 if args.observe_queue and recording and sampling and 190 <= tick <= 195 else 5
+            if recording and sampling and ms > quantum:
+                for offset in range(0, ms, quantum):
+                    advance(min(quantum, ms-offset))
+                return
+            old_tick = tick
+            cmd(f'run {ms}')
+            if not recording:
+                return
+            for raw in cmd('hits').split()[2:]:
+                h = [int(v, 16) for v in raw.split(':')]
+                pc = h[1]
+                if pc == TICK:
+                    tick += 1
+                elif pc == WRAP:
+                    wraps.append(tick)
+                elif pc == TRIG or (pc in (AUDIO, MIDI) and h[7] in (0x400a2d82, 0x400a39ca)):
+                    events.append([tick, pc, h[7], h[8], *([] if pc == TRIG else [h[11],h[10]])])
+            if args.observe_queue and sampling and 191 <= tick <= 195:
+                with args.output.with_suffix('.phase').open('a') as witness:
+                    print(tick, ms, peek(cmd,0x46c7fe44,8).hex(), file=witness)
+            if sampling and tick != old_tick:
+                assert tick == old_tick+1
+                state = []
+                for table, mask in ((0x80001904,0x46c7fe44),(0x80001984,0x46c7fe8c),(0x46c76a26,0x46c77be2)):
+                    times = struct.unpack('>24I', peek(cmd,table,96))
+                    flags = peek(cmd,mask,8)
+                    state.append([[t, slot, times[slot*8+t]] for t in range(8)
+                                  for slot in range(3) if flags[t] & (1<<slot)])
+                states.append([tick,state,peek(cmd,0x800064d0,64).hex(),peek(cmd,0x800065b2,6).hex()])
+            for raw in cmd('writes').split()[2:]:
+                sample, pc, addr, value, width, _ = raw.split(':')
+                writes.append([float(sample), int(pc,16), int(addr,16), int(value,16), int(width)])
+
+        def until(target):
+            for _ in range(1500):
+                if tick >= target:
+                    return
+                advance(10)
+            raise AssertionError(('stalled', tick, target, num(0x800065b8), num(0x10000016,2), num(0x80006698)))
+
+        def arr_run():
+            global recording
+            # FUNC+ARR, then stock playback for a complete row and its downbeat.
+            cmd('key 37 32')
+            advance(50)
+            tap(ARR)
+            cmd('key 37 0')
+            advance(50)
+            assert num(0x460d1aec) == 1
+            start_trace()
+            tap(PLAY)
+            row_at_start = num(0x80006698)
+            until(120)
+            assert row_at_start == 0 and num(0x80006698) == 1, ('stock rows',row_at_start,num(0x80006698))
+            record = dict(events=list(events), wraps=list(wraps), writes=list(writes), row=num(0x80006698))
+            recording = False
+            tap(STOP)
+            cmd('key 37 32')
+            advance(50)
+            tap(ARR)
+            cmd('key 37 0')
+            advance(50)
+            assert num(0x460d1aec) == 0 and num(0x800065b8) == 0
+            return record
+
+        recording = sampling = False
+        tick = 0
+        states = []
+        cmd('watch ' + ','.join(hex(i) for i in (TICK, WRAP, TRIG, AUDIO, MIDI)))
+        cmd('watchmem 0x80001904 256')
+        if args.observe_queue:
+            cmd('watchmem 0x46c7fe44 8')
+        print('boot active',call('modwerk_runtime_active'),'shelved',call('modwerk_modset_is_off',MODULE),flush=True)
+        assert call('modwerk_runtime_active') == 0
+        if not args.reference:
+            assert call('modwerk_modset_is_off', MODULE)
+        free = call('modwerk_runtime_free',0)
+        # On the clean UI fixture, dismiss the native missing-modules / clock
+        # windows using panel input before requesting module ownership.
+        cmd('run 3000')
+        tap(NO)
+        cmd('run 3000')
+        tap(NO)
+        cmd('run 500')
+        tap(YES)
+        cmd('run 2000')
+        print('clean start',hex(num(0x460d1e70)),hex(num(0x460d175c)),flush=True)
+        assert not num(0x460d1e70) and not num(0x460d175c)
+        if args.boundary:
+            # Apply identical source edits to the stock A03 composite and A02.
+            for pattern in (1, 2):
+                t1 = 0x400e21e0 + pattern * 0x8ed8
+                t3 = t1 + 2 * 0x91a
+                micro = num(t1 + 0x89a, 2)
+                assert micro & 0x1f80 == 0
+                cmd(f'poke {t1 + 0x89a:#x} {micro | ((-8 & 63) << 7):04x}')
+                mask = num(t3 + 0x40, 8)
+                cmd(f'poke {t3 + 0x40:#x} {mask | 1:016x}')
+                cmd(f'poke {t3 + 0x52:#x} 10')
+            # Add the second A01 row using stock EDIT in RAM before either trial.
+            assert num(0x10000016,2) == 1
+            tap(ARR)
+            tap(YES)
+            cmd('key 37 32')
+            advance(50)
+            tap(0x20)
+            cmd('key 37 0')
+            advance(50)
+            tap(NO)
+            tap(NO)
+            assert num(0x10000016,2) == 2
+            arr_before = arr_run()
+            print('stock Arranger before',len(arr_before['events']),'calls',flush=True)
+            if not args.reference:
+                switch(1)
+                witness = json.loads(args.symbols_module.read_text())
+                assert hashlib.sha256(args.package.read_bytes()).hexdigest() == witness['sha256']
+                origin = callbacks()[0] - witness['offsets']['clyps_bank_load']
+                def diag():
+                    return num(syms['modwerk_runtime_api'])
+
+                def expect(active, queued):
+                    assert diag() & 0xffffff == queued << 12 | active
+                expect(0,0)
+                tap(ARR)
+                for t in range(3):
+                    if t: move_focus(1)
+                    tap(1)
+                    refs = (0x111 & ((1 << (4*(t+1)))-1))
+                    expect(refs,refs)
+                tap(ARR)
+                tap(YES)
+                tap(4)
+                tap(ARR)
+                move_focus(-2)
+                for t in range(3):
+                    if t: move_focus(1)
+                    tap(0)
+                expect(0,0)
+                tap(ARR)
+            sampling = True
+            # Read the running firmware's fixture. Patterns must be distinguishable,
+            # and A03 must resolve each track to the independent mixed stock oracle.
+            masks = [[num(0x400e21e0 + pat*0x8ed8 + t*0x91a,8) for t in range(3)] for pat in range(3)]
+            assert masks == [[0x1008,0x2041,0x8204],[0x4081,0x1109,0x4811],[0x4081,0x2041,0x4811]]
+            start_trace()
+            tap(PLAY)
+            # Start the panel press on the last tick before wrap or first after.
+            first = 89 if args.boundary == 'early' else 91
+            commit = 90 if first == 89 else 186
+            panel_requests = []
+            def request(code, pattern, committed, pending, at):
+                until(at)
+                assert tick == at
+                if args.reference:
+                    cmd(f'poke 0x800065c0 {pattern:02x}')
+                else:
+                    cmd(f'key {32 + code//8} {1 << (code%8)}')
+                    observations = []
+                    for elapsed in range(1,21):
+                        advance(1)
+                        observations.append(dict(ms=elapsed, tick=tick,
+                            playing=num(origin+witness['offsets']['playing']),
+                            requested=num(origin+witness['offsets']['requested']),
+                            diag=diag() & 0xffffff, wraps=wraps[:]))
+                        args.output.with_suffix('.phase-'+str(at)+'.json').write_text(json.dumps(observations))
+                        if diag() & 0xffffff == pending << 12 | committed:
+                            break
+                    expect(committed, pending)
+                    # The published diagnostic is refreshed by module_tick.
+                    # Record the observed refresh separately from the panel edge.
+                    panel_requests.append(dict(edge=at, observed=tick, playing=committed, pending=pending))
+                advance(35)
+                if not args.reference:
+                    cmd(f'key {32 + code//8} 0')
+                advance(35)
+            request(4, 1, 0, 0x111, first)
+            if not args.reference:
+                tap(ARR)
+                move_focus(-1)
+            # The UI diagnostic is refreshed by module_tick after dispatch.
+            until(commit + 1)
+            if not args.reference:
+                expect(0x111, 0x111)
+            request(0, 2, 0x111, 0x101, first + 96)
+            until(commit + 96 + 16)
+            if not args.reference:
+                expect(0x101, 0x101)
+            args.output.write_text(json.dumps(dict(events=events, wraps=wraps, writes=writes, states=states,
+                                                  panel_requests=panel_requests)))
+            # Keep the strict historical diagnostic check after recording the
+            # musical trace so a display-cadence change remains diagnosable.
+            for request in panel_requests:
+                edge = request['edge']
+                refresh = 188 if args.boundary == 'late' and edge == 187 else edge
+                assert request['observed'] == refresh, ('diagnostic refresh',edge,request)
+            sys.exit(0)
+        if not args.lane_matrix:
+            bank, stride, track_size = 0x400e21e0, 0x8ed8, 0x91a
+            assert not num(0x80000034,1)
+            sources = list(range(4,12))
+            for lane, source in enumerate(sources):
+                addr = bank + lane*track_size
+                data = bytearray(peek(cmd,addr,1024) + peek(cmd,addr+1024,track_size-1024))
+                home = bytes(data)
+                data[:8] = (1 | (1 << (lane+2))).to_bytes(8,'big')
+                if lane == 0:
+                    micro = int.from_bytes(data[0x89a:0x89c],'big')
+                    data[0x89a:0x89c] = (micro | (56 << 7)).to_bytes(2,'big')
+                if lane == 2:
+                    data[0x47] |= 1
+                    data[0x52] = 16
+                for pat, record in [(source,data),(1,data),(2,home if lane==7 else data)]:
+                    for pos in range(0,track_size,128):
+                        cmd(f'poke {addr + pat*stride + pos:#x} {record[pos:pos+128].hex()}')
+                    cmd(f'poke {bank+pat*stride+0x8e50:#x} {peek(cmd,bank+0x8e50,8).hex()}')
+            initial = block(bank,16*stride), bank_parts(), project(args.card)
+            if not args.reference:
+                switch(1)
+                tap(ARR)
+                for t, source in enumerate(sources):
+                    if t: move_focus(1)
+                    tap(source)
+                tap(ARR)
+                tap(YES)
+                tap(4)
+                tap(ARR)
+                move_focus(-7)
+                for t in range(8):
+                    if t: move_focus(1)
+                    tap(0)
+                tap(ARR)
+            sampling = True
+            start_trace()
+            tap(PLAY)
+            until(32)
+            if args.reference:
+                cmd('poke 0x800065c0 01')
+            else:
+                tap(ARR)
+                tap(15)
+                tap(15)
+                tap(ARR)
+                tap(4)
+            until(124)
+            if args.reference:
+                cmd('poke 0x800065c0 02')
+            else:
+                tap(ARR)
+                tap(0)
+            until(219)
+            sampling = recording = False
+            assert wraps == [90,186]
+            for tick_no, pc, _, lane, *rest in events:
+                if pc in (AUDIO,MIDI):
+                    expected = (tick_no >= 90) + (tick_no >= 186) if args.reference else (
+                        sources[lane] if tick_no >= 90 and pc == AUDIO and (lane != 7 or tick_no < 186) else 0)
+                    assert rest[-1] == expected, (tick_no,lane,rest,expected)
+            tap(STOP)
+            if not args.reference:
+                switch(0)
+            assert call('modwerk_runtime_free',0)==free and num(syms['core:owners'])==0
+            assert 'errors=0' in cmd('card flush')
+            assert initial==(block(bank,16*stride),bank_parts(),project(scratch))
+            # Compare musical data after independently asserting each builder's source.
+            times = [(pc,addr,width,val) for _,pc,addr,val,width in writes
+                     if any(a <= addr < a+96 for a in (0x80001904,0x80001984))]
+            if args.observe_queue:
+                args.output.with_suffix('.flags.json').write_text(json.dumps(
+                    [w for w in writes if 0x46c7fe44 <= w[2] < 0x46c7fe4c]))
+            origin = times[0][-1]
+            stream = [[pc,addr,width,(val-origin)&0xffffffff] for pc,addr,width,val in times]
+            for _,domains,_,_ in states:
+                for domain in domains:
+                    for entry in domain:
+                        entry[2] = (entry[2]-origin)&0xffffffff
+            args.output.write_text(json.dumps(dict(events=[e[:5] for e in events], writes=stream, states=states)))
+            sys.exit(0)
+        if args.lane_matrix:
+            # Define the fixture before taking integrity hashes.
+            bank, stride = 0x400e21e0, 0x8ed8
+            assert not num(0x80000034,1)
+            trailer = peek(cmd, bank+0x8e50, 8).hex()
+            for pattern in range(16):
+                addr = bank + stride*pattern
+                cmd(f'poke {addr+0x8e50:#x} {trailer}')
+                for lane in range(8):
+                    mask = 1 | ((1 + 8*pattern + lane) << 1)
+                    cmd(f'poke {addr+lane*0x91a:#x} {mask:016x}')
+            original = block(bank, stride*16), bank_parts(), project(args.card)
+            def sample(sources):
+                start_trace()
+                tap(PLAY)
+                until(30)
+                for kind, expected in [(AUDIO,sources), (MIDI,[0]*8)]:
+                    observed = {(e[3],e[5]) for e in events if len(e)==6 and e[1]==kind}
+                    assert observed == set(enumerate(expected)), (kind,observed,expected)
+                recording_stop()
+                tap(STOP)
+            def recording_stop():
+                global recording
+                recording = False
+            before = callbacks()
+            switch(1)
+            tap(ARR)
+            rows = [[(r+t)%16 for t in range(8)] for r in range(16)]
+            for slot, sources in enumerate(rows):
+                move_focus(-7)
+                for lane, pat in enumerate(sources):
+                    if lane: move_focus(1)
+                    tap(pat)
+                tap(ARR)
+                tap(YES)
+                tap(slot)
+                tap(ARR)
+            tap(ARR)
+            for slot in reversed(range(16)):
+                tap(slot)
+                sample(rows[slot])
+            cmd('poke 0x80000034 01')
+            advance(100)
+            tap(15)
+            sample([0]*8)
+            cmd('poke 0x80000034 00')
+            switch(0)
+            assert callbacks()==before and call('modwerk_runtime_free',0)==free
+            assert num(syms['core:owners'])==0
+            assert 'errors=0' in cmd('card flush')
+            assert original==(block(bank,stride*16),bank_parts(),project(scratch))
+            args.output.write_text(json.dumps(dict(rows=rows,pool=free,owners=0)))
+            sys.exit(0)

@@ -73,3 +73,7 @@ The following inventory covers every tracked file in the donor draft. IDs are Gi
 | tests/twin/replay/session_panel.py | 57643d045569 | Protected base, admission or emulator-specific fixture; unsuitable for public registry. |
 | tests/twin/ui_fixture.py | b84b287e2930 | Protected base, admission or emulator-specific fixture; unsuitable for public registry. |
 | verify.py | 90459344f4b3 | Use SDK linker and code-generation guard directly from C. |
+
+## Shared candidate tools
+
+build_candidate.py links the public CLYPS sources against the candidate SDK and emits the ABI 9 package. The new tests adapt the original CLYPS synthetic card, MKII interactive transport and timing assays recorded above to the coordinated registry. They generate local inputs from a separately supplied synthetic project. They contain no firmware, card images, samples or linked executables. The original GPL and Kyoti notices apply as above. evidence/shared-base.json contains hashes, counts and measured emulator results.
