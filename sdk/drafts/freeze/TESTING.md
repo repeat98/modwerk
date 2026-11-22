@@ -1,7 +1,10 @@
 # Freeze testing
 
-Only what was run and seen. Engine source as in this branch, 22 November 2026, macOS host (Apple clang),
-m68k-elf-gcc 16.2.0.
+Only what was run and seen.
+
+**Version 0.1.0.** Tested build: the engine and tests in commit `1d435dd80` (`freeze.c`, `freeze.h`,
+`test_freeze.c`, `verify.py`), 22 November 2026, macOS host (Apple clang) and m68k-elf-gcc 16.2.0. Host
+tests only. 0.1.0 has no USB package and has not run in `ot_emu` or on a unit: **not tested on hardware.**
 
 ## Host gate: `python3 -B sdk/drafts/freeze/verify.py`
 
