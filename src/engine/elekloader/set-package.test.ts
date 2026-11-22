@@ -75,7 +75,7 @@ describe('one module-set offer', () => {
     const table = frameCostTable()
     expect(table.length).toBeGreaterThan(0)
     expect(table.find(c => c.module === 0x9f482bb9)).toEqual({ module: 0x9f482bb9, use: 97, wake: 0 }) // tapeecho
-    expect(table.find(c => c.module === 0x970f03ad)).toEqual({ module: 0x970f03ad, use: 145, wake: 0 }) // syntiz: read from rest
+    expect(table.find(c => c.module === 0x970f03ad)).toEqual({ module: 0x970f03ad, use: 181, wake: 0 }) // syntiz: read from rest
     expect(frameCostTable({ x: { use: 1 } })[0].wake).toBe(30) // the default wake
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], table)).not.toThrow()
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], [{ module: 5, use: 0, wake: 0 }])).not.toThrow() // measured free

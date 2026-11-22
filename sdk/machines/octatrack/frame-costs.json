@@ -7,9 +7,10 @@
     "euclid": {"use": 5.6, "wake": 2.3, "measured": "0.1.5 on T1 FX1, owner's MKII, base 0.7.14, 22 Nov 2026, Dev17 C01 (trigs on steps 1/5/9/13 of all eight tracks), longest frame over 8 s: installed about 89 -> 94.6 %; T1-T4 96.4 / 96.4 / 97.2, no render dropped; at rest +2.3 on the mean"},
     "everb": {"use": 1.0, "wake": 0, "measured": "As Air Chorus: +1.0; DSP only"},
     "miniverb": {"use": 1.6, "wake": 0, "measured": "As Air Chorus: +1.6; DSP only"},
+    "poly8": {"use": 51, "wake": 0, "measured": "0.3.4 on T1 (empty) from rest, owner's MKII, base 0.7.14, 22 Nov 2026, Dev17 C01 (trigs on steps 1/5/9/13 of all eight tracks), longest frame over 8 s: 88-90 -> 140.8 %, mean 39.0 -> 77.1 %, 5,260 renders dropped in 8 s, twin 64b66394; T1/T5 retrigger auditions +30.3 on base 0.7.11 (#1863)"},
     "sidechain-compressor": {"use": 0.5, "wake": 0.4, "measured": "On T5 FX1, base 0.7.8: +0.5 on the mean (evidence/cpu-price.json); the longest frame not measured"},
     "synth": {"use": 6, "wake": 11.6, "measured": "FM Synth 0.1.5 on T2 from rest, owner's MKII, base 0.7.14, 22 Nov 2026, Dev17 C01 (trigs on steps 1/5/9/13 of all eight tracks), longest frame over 8 s: 88.3 -> 105.9 % with its wake (+17.6; mean +12.2); a further track 1.2 on the mean (0.1.4, T1-T5), counted 6 to be safe"},
-    "syntiz": {"use": 14.5, "wake": 0, "measured": "0.1.0 on T2, a sample track, twin 9203cdf6, 21 Nov 2026: mean 50.7 -> 65.2 %, 24 renders dropped in 8 s; a floor until read on an empty track"},
+    "syntiz": {"use": 18.1, "wake": 0, "measured": "0.1.0 on T1 (empty) from rest, owner's MKII, base 0.7.14, 22 Nov 2026, Dev17 C01 (trigs on steps 1/5/9/13 of all eight tracks), longest frame over 8 s: 88-90 -> 106.2 %, mean 39.0 -> 56.1 %, no render dropped, twin 64b66394"},
     "tapeecho": {"use": 9.7, "wake": 0, "measured": "0.1.8 (d5a0bd7b) on T1 FX2 from rest, owner's MKII, base 0.7.14, 22 Nov 2026, Dev17 C01 (trigs on steps 1/5/9/13 of all eight tracks), longest frame over 8 s: 88.5 -> 98.2 %; two (T1, T2) 105.7 %, mean 46.2 %, no render dropped in 30 s, twin 64b66394"},
     "vibrato": {"use": 2.4, "wake": 0, "measured": "As Air Chorus: +2.4; DSP only"}
   }
