@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import { crc32, decodeReply, pack7, sendUpgrade, unpack7, upgradeMessages, UpgradeError, HEADER, type UpgradeLine } from './os-upgrade'
+import { encode8in7 } from './codec/transport'
+import { crc32, decodeReply, sendUpgrade, unpack7, upgradeMessages, UpgradeError, HEADER, type UpgradeLine } from './os-upgrade'
 
 const synthetic = (n: number) => Uint8Array.from({ length: n }, (_, i) => i * 31 + 7 & 0xff)
 const sha = (parts: Uint8Array[]) => createHash('sha256').update(Buffer.concat(parts)).digest('hex')
@@ -24,7 +25,7 @@ function unit(answer: (i: number) => number | null): UpgradeLine {
       const d = unpack7(data.subarray(HEADER.length, -1)), i = sent++, status = answer(i)
       if (status === null) return
       const body = i === 0 ? [d[0], d[1], d[0], d[1], 0xd0, status, 0] : [d[0], d[1], d[0], d[1], 0xd1, 0, 0, 0, 0, status, 0]
-      queue.push(Uint8Array.from([...HEADER, ...pack7(Uint8Array.from(body)), 0xf7]))
+      queue.push(Uint8Array.from([...HEADER, ...encode8in7(Uint8Array.from(body)), 0xf7]))
     },
     async next() { return queue.shift() ?? null },
   }
@@ -41,7 +42,7 @@ describe('the Elektron OS upgrade over USB MIDI', () => {
 
   it('packs 8 bits in 7 and back, and checks blocks as zlib\'s crc32 seeded with 0xffffffff', () => {
     const data = synthetic(1000)
-    expect(unpack7(pack7(data))).toEqual(data)
+    expect(unpack7(encode8in7(data))).toEqual(data)
     expect(crc32(new TextEncoder().encode('123456789'))).toBe(0xcbf43926)
     expect(crc32(new Uint8Array(0), 0xffffffff)).toBe(0xffffffff)
     expect(decodeReply(Uint8Array.of(0xf0, 0x00, 0x20, 0x3c, 0x01, 0x00, 0xf7))).toBeNull()
