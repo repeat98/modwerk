@@ -259,6 +259,8 @@ if (import.meta.filename === process.argv[1]) {
     await ended
     result.rolledBack = /rolled back/.test(log) || Boolean(result.refused) // a refused module was never in
     results.push(result)
+    // Written after every module: a unit that hangs on the next one must not take the finished readings with it.
+    if (args.out) writeFileSync(args.out, JSON.stringify({ base: args.base, scene: args.scene, seconds, slot: args.slot, measuredAt, results }, null, 1) + '\n')
     const signed = value => (value >= 0 ? '+' : '') + value
     console.log(row.id.padEnd(28) + (result.refused ? 'not installed: ' + result.refused : `at rest frame ${signed(result.atRestAdds.frame)}, cpu ${signed(result.atRestAdds.cpu)}` +
       (result.inUseAdds ? `; in use frame ${signed(result.inUseAdds.frame)}, cpu ${signed(result.inUseAdds.cpu)}, DSP ${signed(result.inUseAdds.dsp1to4)}/${signed(result.inUseAdds.dsp5to8)}` : '') + (result.inUseError ? '; in use: ' + result.inUseError : '') +
