@@ -3,7 +3,7 @@
   "id": "amiga",
   "key": "AMIGA",
   "name": "Amiga",
-  "version": "0.3.0-experimental",
+  "version": "0.3.1-experimental",
   "category": "machines",
   "author": {
     "github": "repeat98",
@@ -162,7 +162,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate on the engine (verify.py, 75 checks: the crunch, the stretch's timing, also at the project's tempo over the sample's, and its crossfades out of the sample, pages, words and directions), a comparison of the crossfades with Amigo's (reference/amigo_check.py, the owner's installed plug-in), an emulator count of 0.2.0's instructions (bench.py), and RAM trials on the owner's MKII on a development base: 0.2.0's on 13 and 14 November 2026 (restart ticks, load with one and three tracks, a recorder buffer), and this version's release package on 14 November 2026 (SYNC against FLEX's time-stretch on one loop by ear and by load, the default, LOOP on AUTO). TESTING.md lists what was not tried.",
+    "summary": "Host gate on the engine (verify.py, 76 checks: the crunch, the stretch's timing, also at the project's tempo over the sample's, and its crossfades out of the sample, pages, words and directions), a comparison of the crossfades with Amigo's (reference/amigo_check.py, the owner's installed plug-in), an emulator count of the render's instructions and cache lines with 0.3.1 handing the DSP the same samples as 0.3.0 (bench.py), and RAM trials on the owner's MKII on a development base: 0.2.0's on 13 and 14 November 2026 (restart ticks, load with one and three tracks, a recorder buffer), and this version's release package on 14 November 2026 (SYNC against FLEX's time-stretch on one loop by ear and by load, the default, LOOP on AUTO). TESTING.md lists what was not tried.",
     "hardwareStatus": "reported",
     "evidenceRevision": "ee4d3ba69f1343f8e4eb043864a209adc4f634f1",
     "gates": [

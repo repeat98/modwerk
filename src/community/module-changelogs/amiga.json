@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.3.1-experimental",
+    "date": "2026-11-22",
+    "changes": [
+      "Less work for the Octatrack's processor in every audio frame while an Amiga track plays.",
+      "It sounds exactly as 0.3.0, sample for sample, and projects are not affected."
+    ]
+  },
+  {
     "version": "0.3.0-experimental",
     "date": "2026-11-14",
     "changes": [
