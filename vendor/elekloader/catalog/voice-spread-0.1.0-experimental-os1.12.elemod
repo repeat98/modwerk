@@ -1,0 +1,571 @@
+{
+ "elemod": 2,
+ "id": "voice-spread",
+ "version": "0.1.0-experimental",
+ "title": "Voice Spread",
+ "description": "Spreads the voices of a chord across the stereo field, and their filters a little apart.",
+ "category": "playback",
+ "author": "prodbysmolec",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "digitone-mk2",
+  "product": "Digitone II",
+  "os": "1.12",
+  "syx_sha256": "7e5b8a733d4ab1fdf7e5d22757f7d8eddaa3cbf71d0858874a791844c02ceb35",
+  "section3_sha256": "a098f620019b2ad38fd7e0397df39501fb1cf6bc26d0283915f34c49446fdf1a",
+  "section3_len": 3196288
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 787,
+   "parts": [
+    [
+     "hex",
+     "2f024aaf00086634420013c000000000420013c000000000700141f900000000241f13d00000000041f90000000013c00000000013d0000000004e7571b90000000053804a80670c4202420013c20000000060be1039000000003040103900000000340873827404b481640291c83408738013c2000000007403b48164944200609071b9000000004e7571b9000000004e757201202f000413c00000000013c00000000013c1000000004e757201202f000413c00000000013c00000000013c1000000004e752f0a4879000000002f2f000c45f9000000004e924879000000002f2f00144e924fef0010245f4e751039000000001239000000002f02240084814a02671a738171802f012f002f2f00142f2f00144eb9000000004fef0010241f4e750000222f00087004b081651e700fc0af000441f9000000001030080041f9000000004880c1f01a004e7542804e752f027003222f000cb0816524202f0008740f5a80c08241f900000000241f1030080041f9000000004880c1f01a004e75241f42804e754fefffe0226f002448d71c7c222f00282a3c00000000262f002c47f90000000045e90086d281282f0030204b43e900b24a8366704a8466345288b1c566fa4cd71c7c4fef00204e7542404a826d0a0c8200007f006e78300234805288d3c1d5c1b1fc0000000067d64a83663870057c0f908bd088c08675527c03bc8465ca1033080049f9000000004880c1f44a00d48060b6424032804a8466d2d5c15288d3c1b1c5679a71517404b4836510141049f9000000004882c5f43a00d0824a806dd20c8000007f006fcc303c7f0060c6303c7f006084000000000000000000000000000400000000000000000000000000000000000000050000000000000000000000000000000000000000000000000000000000000000000000000000000000000000565350520000000400000000000000000000008001400280000001f803f005e807e0f808fc04fa06fe02f907fd03fb05ff0146494c5445522053505245414400564f49434520535052454144004f4646004c4f57004d494400484947480032350035300037350031303000"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 8
+  }
+ },
+ "symbols": {
+  "loaded": [
+   ".run",
+   0
+  ],
+  "pan_level": [
+   ".bss",
+   1
+  ],
+  "filter_level": [
+   ".bss",
+   0
+  ],
+  "saved": [
+   ".bss",
+   2
+  ],
+  "get_pan": [
+   ".run",
+   130
+  ],
+  "get_filter": [
+   ".run",
+   138
+  ],
+  "set_pan": [
+   ".run",
+   146
+  ],
+  "set_filter": [
+   ".run",
+   172
+  ],
+  "pan_row": [
+   ".run",
+   624
+  ],
+  "filter_row": [
+   ".run",
+   604
+  ],
+  "filter_values": [
+   ".run",
+   644
+  ],
+  "pan_values": [
+   ".run",
+   660
+  ],
+  "place": [
+   ".run",
+   714
+  ],
+  "pan_step": [
+   ".run",
+   704
+  ],
+  "filter_step": [
+   ".run",
+   696
+  ],
+  "vs_pan_offset": [
+   ".run",
+   292
+  ],
+  "vs_filter_offset": [
+   ".run",
+   336
+  ],
+  "vs_apply": [
+   ".run",
+   390
+  ],
+  "voice_spread_projdata": [
+   ".run",
+   680
+  ],
+  "voice_spread_frame": [
+   ".run",
+   238
+  ],
+  "voice_spread_personalize": [
+   ".run",
+   198
+  ]
+ },
+ "exports": [
+  "voice_spread_frame",
+  "voice_spread_personalize",
+  "voice_spread_projdata",
+  "vs_apply",
+  "vs_filter_offset",
+  "vs_pan_offset"
+ ],
+ "imports": [
+  "core_addvalue"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   12,
+   "abs32",
+   "sec:.bss",
+   1
+  ],
+  [
+   ".run",
+   20,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   28,
+   "abs32",
+   "sec:.bss",
+   1
+  ],
+  [
+   ".run",
+   36,
+   "abs32",
+   "sec:.bss",
+   3
+  ],
+  [
+   ".run",
+   42,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   48,
+   "abs32",
+   "sec:.bss",
+   2
+  ],
+  [
+   ".run",
+   54,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   62,
+   "abs32",
+   "sec:.bss",
+   2
+  ],
+  [
+   ".run",
+   78,
+   "abs32",
+   "sec:.bss",
+   1
+  ],
+  [
+   ".run",
+   86,
+   "abs32",
+   "sec:.bss",
+   3
+  ],
+  [
+   ".run",
+   94,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   116,
+   "abs32",
+   "sec:.bss",
+   1
+  ],
+  [
+   ".run",
+   132,
+   "abs32",
+   "sec:.bss",
+   1
+  ],
+  [
+   ".run",
+   140,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   154,
+   "abs32",
+   "sec:.bss",
+   1
+  ],
+  [
+   ".run",
+   160,
+   "abs32",
+   "sec:.bss",
+   3
+  ],
+  [
+   ".run",
+   166,
+   "abs32",
+   "sec:.bss",
+   2
+  ],
+  [
+   ".run",
+   180,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   186,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   192,
+   "abs32",
+   "sec:.bss",
+   2
+  ],
+  [
+   ".run",
+   202,
+   "abs32",
+   "sec:.run",
+   624
+  ],
+  [
+   ".run",
+   212,
+   "abs32",
+   "sym:core_addvalue",
+   0
+  ],
+  [
+   ".run",
+   220,
+   "abs32",
+   "sec:.run",
+   604
+  ],
+  [
+   ".run",
+   240,
+   "abs32",
+   "sec:.bss",
+   1
+  ],
+  [
+   ".run",
+   246,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   278,
+   "abs32",
+   "sec:.run",
+   390
+  ],
+  [
+   ".run",
+   310,
+   "abs32",
+   "sec:.run",
+   714
+  ],
+  [
+   ".run",
+   320,
+   "abs32",
+   "sec:.run",
+   704
+  ],
+  [
+   ".run",
+   360,
+   "abs32",
+   "sec:.run",
+   714
+  ],
+  [
+   ".run",
+   372,
+   "abs32",
+   "sec:.run",
+   696
+  ],
+  [
+   ".run",
+   408,
+   "abs32",
+   "sec:.run",
+   730
+  ],
+  [
+   ".run",
+   418,
+   "abs32",
+   "sec:.run",
+   714
+  ],
+  [
+   ".run",
+   488,
+   "abs32",
+   "sec:.run",
+   730
+  ],
+  [
+   ".run",
+   522,
+   "abs32",
+   "sec:.run",
+   696
+  ],
+  [
+   ".run",
+   566,
+   "abs32",
+   "sec:.run",
+   704
+  ],
+  [
+   ".run",
+   604,
+   "abs32",
+   "sec:.run",
+   730
+  ],
+  [
+   ".run",
+   608,
+   "abs32",
+   "sec:.run",
+   644
+  ],
+  [
+   ".run",
+   616,
+   "abs32",
+   "sec:.run",
+   138
+  ],
+  [
+   ".run",
+   620,
+   "abs32",
+   "sec:.run",
+   172
+  ],
+  [
+   ".run",
+   624,
+   "abs32",
+   "sec:.run",
+   744
+  ],
+  [
+   ".run",
+   628,
+   "abs32",
+   "sec:.run",
+   660
+  ],
+  [
+   ".run",
+   636,
+   "abs32",
+   "sec:.run",
+   130
+  ],
+  [
+   ".run",
+   640,
+   "abs32",
+   "sec:.run",
+   146
+  ],
+  [
+   ".run",
+   644,
+   "abs32",
+   "sec:.run",
+   757
+  ],
+  [
+   ".run",
+   648,
+   "abs32",
+   "sec:.run",
+   761
+  ],
+  [
+   ".run",
+   652,
+   "abs32",
+   "sec:.run",
+   765
+  ],
+  [
+   ".run",
+   656,
+   "abs32",
+   "sec:.run",
+   769
+  ],
+  [
+   ".run",
+   660,
+   "abs32",
+   "sec:.run",
+   757
+  ],
+  [
+   ".run",
+   664,
+   "abs32",
+   "sec:.run",
+   774
+  ],
+  [
+   ".run",
+   668,
+   "abs32",
+   "sec:.run",
+   777
+  ],
+  [
+   ".run",
+   672,
+   "abs32",
+   "sec:.run",
+   780
+  ],
+  [
+   ".run",
+   676,
+   "abs32",
+   "sec:.run",
+   783
+  ],
+  [
+   ".run",
+   688,
+   "abs32",
+   "sec:.bss",
+   2
+  ],
+  [
+   ".run",
+   692,
+   "abs32",
+   "sec:.run",
+   0
+  ]
+ ],
+ "sites": [],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_personalize",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:voice_spread_personalize",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_frame_params",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:voice_spread_frame",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "core_projdata",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:voice_spread_projdata",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "projdata:VSPR"
+  ],
+  "core": "1.1"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

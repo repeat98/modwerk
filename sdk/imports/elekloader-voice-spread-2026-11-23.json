@@ -14,7 +14,7 @@
       "os": "1.12",
       "license": "GPL-3.0-or-later",
       "source": {
-        "repo": "prodbysmolec/modwerk",
+        "repo": "repeat98/modwerk",
         "commit": "d072aae591ab530566ef47bb5914f22943cdd6f2",
         "path": "sdk/imports/packages/voice-spread/voice-spread-0.1.0-experimental-os1.12.elemod"
       },
