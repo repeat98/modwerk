@@ -1521,7 +1521,7 @@ int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label,
      * nothing (the second added 4.3 against its each of 4; a machine's own trig starts cost about the sample's). The
      * reserve's 7 % is the stacked ladder's, measured there. shortcut: one figure for every machine. */
     if (machine && !further && !gone && slot < 8u && modwerk_machine_trigging() >> slot & 1u) measured = measured > MEASURED_SAMPLE ? measured - MEASURED_SAMPLE : 0u;
-    uint32_t net = machine ? (add > track_stock ? add - track_stock : 0u) : add; /* a machine in a sample's place */
+    uint32_t net = !machine || further ? add : add > track_stock ? add - track_stock : 0u; /* a first machine in a sample's place */
     uint32_t stock = reserved(machine ? slot : 8u, machine ? 16u : slot) + net, load = measured > stock ? measured : stock;
     if (load < line) return 0;
     uint32_t before = load > add ? load - add : 0u, rest = modwerk_machine_rest_booked();

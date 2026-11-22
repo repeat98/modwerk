@@ -520,7 +520,7 @@ static void check_cpu_budget(void)
       CHECK(mw_assign(part0(), 6, 7) == 1 && cpu_in == 50u);                    /* a second LIGHT: each */
       uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net);
       CHECK(modwerk_machine_frame_booked(8, 0) == 50u && modwerk_machine_frame_booked(7, 0) == 30u && modwerk_machine_frame_booked(6, 0) == 30u);
-      CHECK(modwerk_machine_frame_booked(8, 25u) == 5u);                         /* each less a sample's share, never below 0 */
+      CHECK(modwerk_machine_frame_booked(8, 25u) == 25u);                        /* the first less a sample's share, a further one whole */
       CHECK(mw_assign(part0(), 6, 1) == 1 && cpu_out == 20u);                   /* one of two leaves: each */
       cpu_now = hot_line - 89u;
       CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_box_gone == 30u);  /* the last LIGHT out, unpriced A in: 120 */

@@ -260,8 +260,9 @@ unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2], uint1
     return n;
 }
 /* status.c's stock reserve: what the current Part's module machines cost but track `skip` (8: none), each track by its
- * `each` and the first of a machine by its `first` too, less `net` (the sample a track would otherwise play), never
- * below 0. */
+ * `each` and the first of a machine by its `first` too, the first less `net` (the sample its track would otherwise
+ * play), never below 0. A further one is charged whole: on a trigging track its trig starts cost about what the sample's
+ * did (modwerk-bd, twins 27 and 29: a second Amiga on C03 added 4.3 and 7.4 against its each of 4). */
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net)
 {
     if (!valid_bank()) return 0;
@@ -273,7 +274,7 @@ uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net)
         int first = 1;
         for (unsigned u = 0; u < t; ++u) if (who[u] == who[t]) first = 0;
         uint32_t cost = frame_cost(who[t], first, 0);
-        sum += cost > net ? cost - net : 0u;
+        sum += !first ? cost : cost > net ? cost - net : 0u;
     }
     return sum;
 }
@@ -290,7 +291,7 @@ unsigned modwerk_machine_part_machines(uint8_t tracks[8], uint32_t cost[8], cons
         while (j < k && seen[j] != who) ++j;
         if (j == k) seen[k] = who, tracks[k] = 0, cost[k] = 0, label[k] = who->label, ++k;
         uint32_t c = frame_cost(who, !tracks[j], 0);
-        tracks[j] = (uint8_t)(tracks[j] | 1u << t), cost[j] += c > net ? c - net : 0u;
+        cost[j] += tracks[j] ? c : c > net ? c - net : 0u, tracks[j] = (uint8_t)(tracks[j] | 1u << t);
     }
     return k;
 }

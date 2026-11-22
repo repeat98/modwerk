@@ -683,6 +683,10 @@ int main(void)
       /* A machine takes a track that would play a sample: against the reserve it adds what it costs less that share. */
       test_machines_booked = 0, frame_newest = 100u, frame_adjust = 0, memset(modwerk_test_live_fx, 0, 16);
       CHECK(!modwerk_status_pick_busy(5, 1, "Amiga", 260u, 0, 0) && open == CLOSED);  /* 30 + 26 - 7 = 49 % */
+      { uint32_t x = mw_frame_line - 300u + 10u;                          /* the line and 1 % past it, whole */
+        CHECK(!modwerk_status_pick_busy(5, 1, "Amiga", x, 0, 0));         /* a machine's first: less the sample's share */
+        CHECK(modwerk_status_pick_busy(5, 2, "Amiga", x, 0, 0));          /* a further one: whole */
+        for (unsigned i = 0; i < 180u; ++i) memory_tick(); }
       CHECK(modwerk_status_pick_busy(5, 0, "Echo", 200u, 0, 0) && refused_booked == 300u && refused[4] == 200u); /* an effect: 30 + 20 % */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       /* The set's measured stock figures take the compiled ones' place: a base whose stock got cheaper gives modules
