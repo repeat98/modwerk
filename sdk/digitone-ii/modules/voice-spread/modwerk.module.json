@@ -105,7 +105,7 @@
   "evidence": {
     "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "80b9bcc61e938fec29b08919ffdd1c0260e2b349ad26edcc75bc81f01434f410",
+    "sourceSha256": "b163786f8922a5eee7616979f823b6c2de76a3ebe3510969b5d1c91e4977bb2f",
     "reports": [
       "TESTING.md"
     ],
@@ -117,7 +117,7 @@
       "durationMinutes": null,
       "summary": "Image 51935592... (this source, GCC 16.2.0, with the Digitone II development base 1.1) booted from RAM over the link: both rows appear at the end of SETTINGS > PERSONALIZE and step with LEFT and RIGHT; at VOICE SPREAD 100 and FILTER SPREAD HIGH the 16 voices' pan and filter values, and the frame records sent to the DSP, carry the expected offsets, held in range, while the kit's own values stay unchanged.",
       "limitations": [
-        "Booted from RAM with the development base, not flashed; built with the local GCC 16.2.0, not the pinned Docker image.",
+        "Booted from RAM with the development base, not flashed. The unit ran the locally compiled module; the pinned package links to the same main OS byte for byte.",
         "Not tested: project save and reload of the setting, parameter locks and LFOs on pan and filter, CPU load on the unit."
       ]
     },

@@ -15,6 +15,10 @@ Digitone II, stock OS 1.12 (`Digitone_II_OS1.12.syx`, sha256 `7e5b8a733d4ab1fd�
 
 The `%` sign is not in the menu font (a first build showed a wrong glyph), so the values are plain numbers.
 
+## The released package
+
+`sdk/imports/packages/voice-spread/voice-spread-0.1.0-experimental-os1.12.elemod`, sha256 `9ce8ff19564deedd1531f60a3b4d2be3f898aab0a8e243db1d6aa20a3a17f0f5`, exported from the pinned Docker toolchain (`scripts/build-elemod-isolated.sh`, GCC 16.2.0, image `85394501…`) at commit `a78057606` (recipe sha256 `78d301ad…`, source tree `b163786f…`). Linked with the development base by Elekloader 0.11.0's patcher, it gives the same main OS, byte for byte (sha256 `493992eb8a335d40…`), as the locally compiled module the unit ran, so the unit results above hold for this package.
+
 ## Host test
 
 `cc -std=c11 -Wall -Wextra -Werror src/spread.c tests/spread_test.c && ./a.out` prints `voice-spread: ok`. It checks that OFF adds nothing, that each level's offsets sum to zero, that neighbouring voices go to opposite sides, the 100 % and HIGH limits, that values are held in range at both ends, and that no other parameter changes.
