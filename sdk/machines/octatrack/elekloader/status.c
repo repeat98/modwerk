@@ -523,7 +523,7 @@ extern volatile uint32_t dl_refusal[8];
 static unsigned refused_left, refused_reason, refused_core, refused_machine, refused_elsewhere;
 void modwerk_dsp_source_refusal(unsigned *core, uint32_t *add); /* dsp.c: the last machine voice refused for cycles */
 static uint32_t refused[8], refused_booked, refused_words, refused_arena;
-static uint32_t refused_allowed, refused_meter; /* CPU FULL: the modules' allowance (per mille of a frame), the meter then */
+static uint32_t refused_allowed, refused_meter, refused_busy; /* CPU FULL: the modules' allowance (per mille of a frame), the meter then, the Part's own load the cause */
 static char refused_name[17];
 static int budget_slot = -1; /* the slot the pick put a module on; -1: an accept over USB (memory only) */
 /* Each core's code words before the pick: what it took is the change, so a second instance on the core or a module
@@ -1242,14 +1242,16 @@ void modwerk_status_machine_refused(unsigned track, const char *label)
 }
 /* machine_registry.c's CPU budget: the track's machine would take the Part past what the frame interrupt carries. The
  * same box, as CPU FULL: what the Part's machines book and what this one adds, per mille of the allowance. */
-/* CPU FULL, per mille of a frame: what modules use of their allowance, what the pick adds, the allowance. The box gives
- * those and the CPU meter as it reads (owner, 22 November 2026: a bar past 100 % read as the CPU already overloaded). */
-static void cpu_refusal_box(unsigned slot, unsigned machine, const char *label, uint32_t used, uint32_t add, uint32_t allowed)
+/* CPU FULL, per mille of a frame: what the Part's modules take of their allowance, what the pick adds, the allowance.
+ * The box gives those and the CPU meter as it reads (owner, 22 November 2026: a bar past 100 % read as the CPU already
+ * overloaded), or, `busy`, that the Part's own sound leaves no room: a full bar there read as the modules' doing with
+ * none in use. */
+static void cpu_refusal_box(unsigned slot, unsigned machine, const char *label, uint32_t used, uint32_t add, uint32_t allowed, unsigned busy)
 {
     if ((open != CLOSED && open != MEMORY) || slot >= (machine ? 8u : 16u)) return;
     for (unsigned i = 0; i < 8u; ++i) refused[i] = 0;
     refused[0] = 4u, refused[1] = slot, refused[4] = add, refused_booked = used;
-    refused_allowed = allowed ? allowed : 1u, refused_meter = modwerk_status[CPU];
+    refused_allowed = allowed ? allowed : 1u, refused_meter = modwerk_status[CPU], refused_busy = busy;
     refused_machine = machine, refused_reason = 4u;
     for (unsigned i = 0; i < sizeof refused_name; ++i) refused_name[i] = 0;
     for (unsigned i = 0; label && i < 16u && label[i]; ++i) refused_name[i] = label[i] >= 'a' && label[i] <= 'z' ? (char)(label[i] - 32) : label[i];
@@ -1258,7 +1260,7 @@ static void cpu_refusal_box(unsigned slot, unsigned machine, const char *label, 
 /* machine_registry.c's per-Part price allowance, per mille of a frame. */
 void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add, uint32_t allowed)
 {
-    cpu_refusal_box(track, 1u, label, booked, add, allowed);
+    cpu_refusal_box(track, 1u, label, booked, add, allowed, 0);
 }
 uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
 /* status.s leaves out the delay routine's ring transfers on a track whose delay is quiet, back from the frame a scene
@@ -1327,8 +1329,8 @@ int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label,
     uint32_t stock = reserved(machine ? slot : 8u, machine ? 16u : slot) + net, load = measured > stock ? measured : stock;
     if (load < line) return 0;
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
-    uint32_t reserve = stock_reserve(), before = load > add ? load - add : 0u;
-    cpu_refusal_box(slot, machine, label, before > reserve ? before - reserve : 0u, add, line > reserve ? line - reserve : 1u);
+    uint32_t reserve = stock_reserve(), modules = stock - net - reserve, before = load - add; /* the Part's modules but this pick */
+    cpu_refusal_box(slot, machine, label, modules, add, line > reserve ? line - reserve : 1u, before > reserve + modules);
     return 1;
 }
 /* selection.c's guard (build_core.py's edit), before stock writes an FX pick: 1 when the pick asks for a module's
@@ -1414,7 +1416,8 @@ static void refused_box(unsigned char *frame)
         label(23u, 26u, need);
         const uint32_t used = (refused_booked + refused[4]) * 1000u / refused_allowed, part = refused[4] * 1000u / refused_allowed;
         label(23u, 34u, "MODS"), share_bar(frame, 45u, 34u, 40, 6, used, part), percent(89u, 34u, refused_allowed);
-        label(23u, 42u, "CPU NOW"), percent(58u, 42u, refused_meter);
+        if (refused_busy) label(23u, 42u, "PART IS BUSY");
+        else label(23u, 42u, "CPU NOW"), percent(58u, 42u, refused_meter);
         return;
     }
     const int32_t add = (int32_t)refused[4];

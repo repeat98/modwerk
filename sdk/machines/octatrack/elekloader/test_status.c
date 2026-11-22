@@ -519,8 +519,8 @@ int main(void)
       CHECK(modwerk_status_frame_load() == 400u);
       CHECK(!modwerk_status_pick_busy(5, 1, "Amiga", 99u, 0) && open == CLOSED);   /* 49.9 %: passes */
       CHECK(modwerk_status_pick_busy(5, 1, "Amiga", 120u, 0) && open == REFUSED && refused_machine && refused[0] == 4 && refused[1] == 5);
-      CHECK(refused_booked == 400u && refused[4] == 120u && refused_allowed == 500u && mw_cpu_refusals == before + 1 && mw_cpu_refusal_tracks & 1u << 5);
-      CHECK(!strcmp(refused_name, "AMIGA") && strstr(shows(), "AMIGA NEEDS +12%|MODS|50%|CPU NOW|64%|"));
+      CHECK(!refused_booked && refused[4] == 120u && refused_allowed == 500u && refused_busy && mw_cpu_refusals == before + 1 && mw_cpu_refusal_tracks & 1u << 5);
+      CHECK(!strcmp(refused_name, "AMIGA") && strstr(shows(), "AMIGA NEEDS +12%|MODS|50%|PART IS BUSY|")); /* no module: the Part's own load */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       CHECK(open == CLOSED);
       /* A swap: what leaves comes off the kept figure, never off a stopped reading (which holds no renders). */
@@ -528,7 +528,7 @@ int main(void)
       CHECK(!modwerk_status_pick_busy(5, 1, "Amiga", 70u, 30u) && modwerk_status_pick_busy(5, 1, "Amiga", 70u, 0));
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       frame_played = 0, frame_newest = 600u;
-      CHECK(modwerk_status_pick_busy(5, 1, "Amiga", 0, 300u) && refused_booked == 600u); /* past the line already */
+      CHECK(modwerk_status_pick_busy(5, 1, "Amiga", 0, 300u) && !refused_booked && refused_busy); /* past the line already */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       frame_newest = 0; }
     /* The kept figure: after STOP, the share of the last four seconds played, until four more replace it. */
@@ -600,8 +600,8 @@ int main(void)
       CHECK(!modwerk_status_effect_busy(12, 27, 0) && frame_adjust == 200);  /* a further one: its each */
       modwerk_test_live_fx[12] = 27;
       CHECK(modwerk_status_effect_busy(13, 27, 0) == 1 && open == REFUSED && refused[0] == 4 && refused[1] == 13 && !refused_machine);
-      CHECK(refused_booked == 480u && refused[4] == 80u && mw_cpu_refusal_tracks & 1u << 5 && frame_adjust == 200);
-      CHECK(strstr(shows(), "FX7 NEEDS +8%|MODS|50%|CPU NOW|"));
+      CHECK(refused_booked == 200u && refused[4] == 80u && mw_cpu_refusal_tracks & 1u << 5 && frame_adjust == 200);
+      CHECK(strstr(shows(), "FX7 NEEDS +8%|MODS|50%|PART IS BUSY|"));
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       CHECK(!modwerk_status_effect_busy(12, 8, 27) && frame_adjust == 120 && open == CLOSED); /* one of two leaves: each */
       modwerk_test_live_fx[12] = 8;
@@ -625,7 +625,8 @@ int main(void)
       CHECK(!modwerk_status_effect_busy(11, 27, 0) && frame_adjust == 120); /* 30 % + its first */
       modwerk_test_live_fx[11] = 27;
       CHECK(modwerk_status_frame_load() == 420u);                         /* the reserve with Tape Echo booked */
-      CHECK(modwerk_status_effect_busy(12, 27, 0) == 1 && refused_booked == 120u && refused[4] == 80u); /* 42 + 8: 12 of the 20 % modules have */
+      CHECK(modwerk_status_effect_busy(12, 27, 0) == 1 && refused_booked == 120u && refused[4] == 80u && !refused_busy); /* 42 + 8: 12 of the 20 % modules have */
+      CHECK(strstr(shows(), "FX7 NEEDS +8%|MODS|20%|CPU NOW|"));
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       test_machines_booked = 50u;
       CHECK(modwerk_status_frame_load() == 470u);                         /* the Part's machines too */
