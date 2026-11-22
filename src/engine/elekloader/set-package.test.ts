@@ -74,10 +74,12 @@ describe('one module-set offer', () => {
   it('sends every module the base-owned record lists, in per mille, under its package id', () => {
     const table = frameCostTable()
     expect(table.length).toBeGreaterThan(0)
-    expect(table.find(c => c.module === 0x9f482bb9)).toEqual({ module: 0x9f482bb9, use: 37, wake: 93 }) // tapeecho: each 3.7, first 13.0
-    expect(table.find(c => c.module === 0x970f03ad)).toEqual({ module: 0x970f03ad, use: 181, wake: 0 }) // syntiz: one reading, first = each
-    expect(frameCostTable({ x: { first: 1, each: 2 } })[0].wake).toBe(0) // never below each
-    expect(table.slice(-3)).toEqual([{ module: 0xfffffff0, use: 1060, wake: 0 }, { module: 0xfffffff1, use: 70, wake: 0 }, { module: 0xfffffff2, use: 1200, wake: 0 }])
+    expect(frameCostTable({ tapeecho: { first: 13, each: 3.7 } }, null)).toEqual([{ module: 0x9f482bb9, use: 37, wake: 93 }]) // build.py's id, per mille
+    expect(frameCostTable({ x: { first: 1, each: 2 } }, null)[0].wake).toBe(0) // never below each
+    const shipped = JSON.parse(readFileSync(new URL('../../../sdk/machines/octatrack/frame-costs.json', import.meta.url), 'utf8'))
+    const echo = shipped.costs.tapeecho
+    expect(table.find(c => c.module === 0x9f482bb9)).toEqual({ module: 0x9f482bb9, use: Math.round(echo.each * 10), wake: Math.round(echo.first * 10) - Math.round(echo.each * 10) })
+    expect(table.slice(-3)).toEqual([{ module: 0xfffffff0, use: shipped.stock.reserve * 10, wake: 0 }, { module: 0xfffffff1, use: shipped.stock.trackStock * 10, wake: 0 }, { module: 0xfffffff2, use: shipped.stock.line * 10, wake: 0 }])
     expect(frameCostTable({ x: { first: 1, each: 1 } }, null)).toHaveLength(1) // no stock: the base's compiled figures
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], table)).not.toThrow()
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], [{ module: 5, use: 0, wake: 0 }])).not.toThrow() // measured free
