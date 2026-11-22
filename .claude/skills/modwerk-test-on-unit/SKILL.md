@@ -30,3 +30,4 @@ The order is fixed: the steps of `docs/TEST_PROCEDURE.md`, your tests on the uni
 7. **Record** both stages in the module's `TESTING.md` (a base: `docs/verification/`), apart and on the named build: the procedure's record with its edge-case table, what you did by hand, then what the developer observed. "Not tested" is a valid result.
    - Your stage is evidence for what it measured, never for the sound or for persistence across a power cycle; software tests prove neither, nor rendered pixels.
    - The hardware report and the release boxes stay the developer's: never attest for them.
+   - When this run completes testing for a contribution the developer is submitting, update its PR with the exact build and results, then finish the GitHub handoff in `/modwerk-pr-ready`. If testing is still open, report who owns the next step.
