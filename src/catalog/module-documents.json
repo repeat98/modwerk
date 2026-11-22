@@ -14283,7 +14283,7 @@
       "id": "grain",
       "key": "GRAIN",
       "name": "Grain",
-      "version": "0.1.1-experimental",
+      "version": "0.1.2-experimental",
       "category": "machines",
       "access": {
         "location": "The track's machine list (double-tap TRACK, or SRC SETUP)",
@@ -14430,11 +14430,11 @@
         "recorded": "2026-11-21",
         "storage": {
           "label": "Module image and memory",
-          "display": "30,852 bytes of static runtime memory",
-          "value": 30852,
+          "display": "31,808 bytes of static runtime memory",
+          "value": 31808,
           "unit": "bytes",
           "method": "static",
-          "conditions": "Package 1b3728c0 loads 27,988 bytes of code and data and declares 2,864 bytes of BSS. The deepest Grain-only audio path uses 760 stack bytes including return addresses and saved frame pointers. Stock calls, interrupt nesting and loader overhead are additional.",
+          "conditions": "Package f961b458 loads 28,944 bytes of code and data and declares 2,864 bytes of BSS. The deepest Grain-only audio path uses 768 stack bytes including return addresses and saved frame pointers (grain_render 176, gran_render 392, stereo_paged 92 and stereo_page 84 by GCC's stack-usage report, plus four return addresses and the frame pointers link.w saves). Stock calls, interrupt nesting and loader overhead are additional.",
           "source": "TESTING.md"
         },
         "processing": {
@@ -14443,7 +14443,7 @@
           "value": 33640,
           "unit": "cycles/render",
           "method": "hardware",
-          "conditions": "Package db843bc2, MKII OS 1.40C, RAM base 3a4c07fe. Dense six-voice 24-bit stereo on T1 and T5, tested separately. One minute per track with 20-channel capture and musical MIDI. The longest observed guarded callback took 16,820 ticks at 132 MHz (127.4 microseconds). The longest observed whole frame during Grain playback took 388.7 microseconds against the 362.8-microsecond deadline.",
+          "conditions": "Historical, measured on 0.1.0 and not repeated on 0.1.2 (its MKI meter readings are in TESTING.md). Package db843bc2, MKII OS 1.40C, RAM base 3a4c07fe. Dense six-voice 24-bit stereo on T1 and T5, tested separately. One minute per track with 20-channel capture and musical MIDI. The longest observed guarded callback took 16,820 ticks at 132 MHz (127.4 microseconds). The longest observed whole frame during Grain playback took 388.7 microseconds against the 362.8-microsecond deadline.",
           "source": "TESTING.md"
         },
         "impact": {
@@ -14451,7 +14451,7 @@
           "cpu": {
             "level": "high",
             "basis": "measured-comparison",
-            "rationale": "Package db843bc2 added 14.55 CPU-meter points on T1 and 16.55 on T5 against stock Flex. The base reserves 35 points per Grain track. The author reported about 15 points in typical use and 20 at dense settings on an earlier MKI build.",
+            "rationale": "Historical, package db843bc2 (0.1.0; 0.1.2 readings are in TESTING.md). Package db843bc2 added 14.55 CPU-meter points on T1 and 16.55 on T5 against stock Flex. The base reserves 35 points per Grain track. The author reported about 15 points in typical use and 20 at dense settings on an earlier MKI build.",
             "source": "TESTING.md"
           },
           "dsp": {
@@ -14463,7 +14463,7 @@
           "memory": {
             "level": "minimal",
             "basis": "source-estimate",
-            "rationale": "The 29,344-byte package loads 27,988 bytes of code and data and reserves 2,864 bytes of zero-initialized state. It reads the existing Flex sample pages. Stack and loader overhead are additional.",
+            "rationale": "The 30,308-byte package loads 28,944 bytes of code and data and reserves 2,864 bytes of zero-initialized state. It reads the existing Flex sample pages. Stack and loader overhead are additional.",
             "source": "TESTING.md"
           }
         },
@@ -14488,7 +14488,7 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "0.1.1 package 1b3728c0 differs from the unit-tested build c841ea87 only by its meter cost (reserved[1]). On the MKII, c841ea87 kept Grain rendering with the pool open and took the plain Flex path only for a FUNC+YES audition, until the next trig. 0.1.0 package ff5ac017, card-free in RAM: Grain played T1, FLEX could be picked after a pool jump, and Grain kept its engine with the pool open on another track. Its audio path differs from the timed builds only by the pool check: with USB audio capture closed, six-voice Grain played T1 and T5 with no skipped renders and no frame over the deadline. A 240 BPM, 1,096 messages/s MIDI flood left nothing sounding after STOP. It was kept over USB beside other modules, restored after a power cycle and removed again (side-first build db843bc2). The optional twenty-channel USB layout still overruns. Listening, project reload and a full module set remain open.",
+        "summary": "0.1.2 package f961b458, on the author's MKI with the official base 6d23e888 and a card set of seven modules: the set loaded; PTCH, the edges, the pool and the audition behaved as described, and the clipping case played clean. Stock CPU meter, Grain on one track, 24-bit stereo, PTCH +24, DENS and SPRY at maximum, idle 49.5 %: 70-71 % with a 0.03 MB kick, 68-69 % with a 1.55 MB sample; the long sample at PTCH 0 read 66-67 %. No dropouts heard; skipped renders were not counted. Project saved, power cycled and reloaded with this exact package (f961b458): Grain, its settings and the sound came back as left. Historical, 0.1.1 and earlier: 0.1.1 package 1b3728c0 differs from the unit-tested build c841ea87 only by its meter cost (reserved[1]). On the MKII, c841ea87 kept Grain rendering with the pool open and took the plain Flex path only for a FUNC+YES audition, until the next trig. 0.1.0 package ff5ac017, card-free in RAM: Grain played T1, FLEX could be picked after a pool jump, and Grain kept its engine with the pool open on another track. Its audio path differs from the timed builds only by the pool check: with USB audio capture closed, six-voice Grain played T1 and T5 with no skipped renders and no frame over the deadline. A 240 BPM, 1,096 messages/s MIDI flood left nothing sounding after STOP. It was kept over USB beside other modules, restored after a power cycle and removed again (side-first build db843bc2). The optional twenty-channel USB layout still overruns. Listening, project reload and a full module set remain open.",
         "hardwareStatus": "reported",
         "evidenceRevision": "db1e077309f4c538a1b1b672960c345c22b07ead",
         "gates": [
@@ -14534,16 +14534,16 @@
             "page": "Machine list (SRC SETUP)",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "2768ddc5f0ba213a908fd172cb04d8dafce71473c0557bd1ef5cad0c207900a0",
-            "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at e106348f4 (imageSha256 is that twin's MAIN image), with the Grain package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on FLEX, the cursor moved down to GRAIN in the machine list. Not hardware captures."
+            "moduleVersion": "0.1.2-experimental",
+            "imageSha256": "6536f3ae90dc503e271e7b0cc32fa9950ffb1f836ce729ba760e64fbf9e532e8",
+            "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.1.2-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on FLEX, the cursor moved down to GRAIN in the machine list. Not hardware captures."
           }
         },
         {
           "path": "media/grain-src.png",
           "captureType": "emulator",
           "caption": "SRC page. The waveform shows the sample with a dotted line at POS and the live grains as small squares (framed where they fall inside the waveform; their height is their pan). PTCH: pitch of the grains. POS: where in the sample they start. SIZE: grain length. DENS: how often a grain is born. SPRY: random scatter around POS. SCAN: speed at which the read position moves by itself.",
-          "alt": "Octatrack SRC page of a Grain track: tempo 90.0, the LEV bar, the sample name, and a stereo waveform with live grains (small squares, framed where they fall inside the waveform) and the six names PTCH, POS, SIZE, DENS, SPRY and SCAN and the status line GRANULAR:GRAIN.",
+          "alt": "Octatrack SRC page of a Grain track: tempo 90.0, the LEV bar, the sample name, and a stereo waveform with a cloud of grains, with live grains (small squares, framed where they fall inside the waveform) and the six names PTCH, POS, SIZE, DENS, SPRY and SCAN and the status line GRANULAR:GRAIN.",
           "credit": "A Force Truly Evil; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -14551,9 +14551,9 @@
             "page": "SRC",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "2768ddc5f0ba213a908fd172cb04d8dafce71473c0557bd1ef5cad0c207900a0",
-            "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at e106348f4 (imageSha256 is that twin's MAIN image), with the Grain package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, playing: the SRC page. Settings: DENS 104, SPRY 40, SIZE 68, PAN 108, POS 64.0, with a stereo sample made for the capture, playing so that several grains are alive: they show as small squares, with a dark frame where they fall inside the waveform. Not hardware captures."
+            "moduleVersion": "0.1.2-experimental",
+            "imageSha256": "6536f3ae90dc503e271e7b0cc32fa9950ffb1f836ce729ba760e64fbf9e532e8",
+            "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.1.2-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, playing: the SRC page with a cloud of live grains. Settings: DENS 127, SPRY 50, SIZE 95, PAN 108 (85 %), POS 44.9, with a stereo sample made for the capture; the grains show as small squares, with a dark frame where they fall inside the waveform. Not hardware captures."
           }
         },
         {
@@ -14568,16 +14568,16 @@
             "page": "SRC SETUP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "2768ddc5f0ba213a908fd172cb04d8dafce71473c0557bd1ef5cad0c207900a0",
-            "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at e106348f4 (imageSha256 is that twin's MAIN image), with the Grain package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, at the defaults: SRC SETUP. Not hardware captures."
+            "moduleVersion": "0.1.2-experimental",
+            "imageSha256": "6536f3ae90dc503e271e7b0cc32fa9950ffb1f836ce729ba760e64fbf9e532e8",
+            "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.1.2-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, at the defaults: SRC SETUP. Not hardware captures."
           }
         },
         {
           "path": "media/grain-full-screen.png",
           "captureType": "emulator",
           "caption": "Full-screen page (press SRC once more from SRC SETUP; SRC again leaves it). The controls are exactly the same as on the SRC page. The waveform is much larger, so the grains are easier to see, and each value is shown beside its name.",
-          "alt": "Full-screen page of a Grain track: the LEV bar and track T1 on the left, PTCH, POS and SIZE with their values above a large stereo waveform with live grains, and DENS, SPRY and SCAN with their values below it.",
+          "alt": "Full-screen page of a Grain track: the LEV bar and track T1 on the left, PTCH, POS and SIZE with their values above a large stereo waveform with a cloud of grains with live grains, and DENS, SPRY and SCAN with their values below it.",
           "credit": "A Force Truly Evil; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -14585,9 +14585,9 @@
             "page": "Full-screen page",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "2768ddc5f0ba213a908fd172cb04d8dafce71473c0557bd1ef5cad0c207900a0",
-            "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at e106348f4 (imageSha256 is that twin's MAIN image), with the Grain package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, playing: the full-screen page. Settings: DENS 104, SPRY 40, SIZE 68, PAN 108, POS 64.0, with a stereo sample made for the capture, playing so that several grains are alive: they show as small squares, with a dark frame where they fall inside the waveform. Not hardware captures."
+            "moduleVersion": "0.1.2-experimental",
+            "imageSha256": "6536f3ae90dc503e271e7b0cc32fa9950ffb1f836ce729ba760e64fbf9e532e8",
+            "setup": "Captured from the headless emulator ot_emu in MKII mode, booted on a development twin of a Modwerk base built from this repository's main at 633ff3e9e (imageSha256 is that twin's MAIN image), with the Grain 0.1.2-experimental package built in the pinned toolchain installed through the development session. Each picture is the emulator's framebuffer read by the session's png step: 128x64 at integer scale 2 (256x128), converted to two grey levels in an 8-bit greyscale PNG, not edited otherwise. Track 1 on Grain with a Flex sample, playing: the full-screen page with a cloud of live grains. Settings: DENS 127, SPRY 50, SIZE 95, PAN 108 (85 %), POS 44.9, with a stereo sample made for the capture; the grains show as small squares, with a dark frame where they fall inside the waveform. Not hardware captures."
           }
         },
         {

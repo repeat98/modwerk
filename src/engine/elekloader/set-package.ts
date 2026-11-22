@@ -18,7 +18,7 @@ export function frameCostTable(costs: Record<string, { first: number; each: numb
     module: new DataView(sha256(new TextEncoder().encode(id)).buffer).getUint32(0), // build.py module_id()
     use: Math.round(cost.each * 10), wake: Math.max(0, Math.round(cost.first * 10) - Math.round(cost.each * 10)),
   }))
-  if (modules.some(m => m.module >= STOCK_IDS.reserve)) throw new Error('A module id collides with the base\'s own figures.')
+  if (modules.some(m => m.module >= 0xfffffff0)) throw new Error('A module id collides with the base\'s own figures.') // 0xfffffff0 and up are the base's
   if (stock && stock.reserveBySteps.length !== 9) throw new Error('The stock reserve needs a figure for 0 to 8 tracks on a step.')
   const own = stock ? [
     { module: STOCK_IDS.trackStock, use: Math.round(stock.trackStock * 10), wake: 0 },
