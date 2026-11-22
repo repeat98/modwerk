@@ -1,6 +1,6 @@
 # Songbook testing
 
-Version 0.1.0-experimental, called Arr Setlists until 22 November 2026 (the records below keep the builds' names). Host gate, emulator runs and the developer's own tests on their MKI (flashed base
+Version 0.1.0-experimental, called Arr Setlists until 22 November 2026. Host gate, emulator runs and the developer's own tests on their MKI (flashed base
 `6c189889…`), each on the named build below; the last build tested on the unit is package `da945df5…` (source
 `c5027552c`); the book 1 load fix and the rename since are not yet tested on a unit.
 
