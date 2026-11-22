@@ -25,6 +25,7 @@ The behaviour comes from Pad Thresh, a diagnostic never submitted (branch `pad-p
 Results below are recorded only as the developer reports them.
 
 - 22 November 2026, build LT01 (core-ar2 0.7 under the module, not the plain base), @filefolder's Rytm MKII, OS 1.74: "I've tested it and it all seems to work" (reported), against the list below. The final build, from the pinned package, is still to be tested.
+- 22 November 2026, build LT02 (sha256 `bfeeed94bf23ac9fe3810d20dd563cc1be621436bccf4b3a8734f9dcefafc5a8`, the plain base under this module's source), @filefolder's Rytm MKII, OS 1.74: "it tests OK" (reported), against the list below. If the pinned package's module code differs from LT02's, its build gets the same list again.
 
 To do on the unit, with the build named:
 
