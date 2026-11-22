@@ -660,6 +660,14 @@ static void check_brake(void)
     CHECK(!mw_frame_brake);                                              /* STOP releases it */
     a0 = a_renders; frame(2, 0, 0), frame(2, 0, 0), frame(2, 0, 0);
     CHECK(a_renders > a0);                                               /* renders again (the guard re-times it first) */
+    /* The ceiling: a render that would end the frame past 122 % does not run, however much credit there is; the next
+     * frame under it renders it again. */
+    for (unsigned k = 0; k < 4u; ++k) frame(0, 0, 0);                    /* full credit */
+    { uint32_t sheds = mw_frame_sheds; a0 = a_renders;
+      frame(2, FRAME_CEILING + 1u, 0);
+      CHECK(a_renders == a0 && mw_frame_sheds == sheds + 1u);
+      frame(2, FRAME / 4u, 0), frame(2, FRAME / 4u, 0);
+      CHECK(a_renders > a0); }
     CHECK(mw_assign(part0(), 2, 1) == 1);
 }
 static void check_resting_machines(void)
@@ -1178,24 +1186,28 @@ int main(void)
     fresh(); f_cost = 11973; unsigned ran = 0; uint32_t from = host_timer;
     for (unsigned i = 0; i < 10000u; ++i) ran += frame(3, 0, 30000) > 100;
     CHECK(ran > 6000u && ran < 7000u && (host_timer - from) / 10000u <= FRAME / 5u * 4u + 50u && !mw_frame_late_max);
-    /* Past the budget even with the credit full (64,000), within the slack: a probe about every 1,026 frames measures
-     * it again; lighter, it comes back within one probe and stays. */
+    /* Past the ceiling (64,000 of 58,451): once measured it never runs again, no probe (a frame that long stopped the
+     * DSP, owner's MKII, 22 November 2026); lighter, it is timed afresh at STOP or a Part change and stays. */
     fresh(); f_cost = 48000; ran = 0;
     for (unsigned i = 0; i < 3000u; ++i) ran += frame(3, 6000, 10000) > 100;
-    CHECK(ran >= 3u && ran <= 4u);
+    CHECK(ran == 1u);                                                    /* the first, before its cost was known */
     f_cost = 5000; ran = 0;
     for (unsigned i = 0; i < 1100u; ++i) ran += frame(3, 6000, 10000) > 100;
+    CHECK(!ran);
+    test_stopped = 1; mw_ui_tick(); test_stopped = 0; mw_ui_tick();
     unsigned stays = 0;
     for (unsigned i = 0; i < 10u; ++i) stays += frame(3, 6000, 10000) > 100;
-    CHECK(ran >= 10u && stays == 10u);
-    /* One slow render (90,000, as at a pattern change) is no sentence: too far over for the budget ever to have room
-     * for it, the track is probed after 1,024 skips, the probe's time is its cost again and it stays. */
+    CHECK(stays == 10u);
+    /* One slow render (90,000, as at a pattern change) is no sentence: held while its cost says it would pass the
+     * ceiling, it is timed afresh at STOP or a Part change, and stays. */
     fresh(); f_cost = 10000;
     for (unsigned i = 0; i < 4u; ++i) CHECK(frame(3, 10000, 10000) > 100);
     f_cost = 90000; CHECK(frame(3, 10000, 10000) > 100);
     f_cost = 10000; ran = 0;
     for (unsigned i = 0; i < 1023u; ++i) ran += frame(3, 10000, 10000) > 100;
     CHECK(!ran && cost[3] == 90000);
+    CHECK(frame(3, 10000, 10000) == -9);                                 /* no probe past the ceiling */
+    test_stopped = 1; mw_ui_tick(); test_stopped = 0; mw_ui_tick();      /* STOP: timed afresh */
     CHECK(frame(3, 10000, 10000) > 100 && cost[3] == 10000);
     stays = 0;
     for (unsigned i = 0; i < 10u; ++i) stays += frame(3, 10000, 10000) > 100;

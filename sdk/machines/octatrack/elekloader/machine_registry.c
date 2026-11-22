@@ -682,8 +682,10 @@ void mw_ui_tick(void)
 int modwerk_machine_stopped(void); /* runtime.c */
 extern volatile uint8_t mw_frame_brake; /* the frame guard's brake (below) */
 static const Part *brake_part;     /* the Part that played when the brake caught */
+static void ceiling_tick(void);     /* the frame guard's ceiling (below) */
 static void brake_tick(void)       /* released at STOP or a Part change */
 {
+    ceiling_tick();
     if (!mw_frame_brake) { brake_part = 0; return; }
     const Part *part = valid_bank() ? current_part() : 0;
     if (!brake_part) brake_part = part;
@@ -1038,14 +1040,23 @@ static unsigned dearer_later(unsigned k, uint32_t over)
         if (before >> j & 1u && !(timed >> j & 1u) && place[j] > place[k] && cost[j] > cost[k] && cost[j] >= over) return 1;
     return 0;
 }
-/* f, or `instead` when f would overdraw the frame. */
-static int guarded(Render *f, Render *instead, unsigned track, unsigned ping, unsigned start, unsigned end)
+/* The ceiling (owner's MKII, 22 November 2026): a single frame interrupt of about 465 µs, 128 % of a frame, stopped the
+ * DSP's frame exchange for good, whether a pattern change or an overload made it, before the brake's backlog could
+ * build (stalls 49 to 52). So no module render that would end the frame past FRAME_CEILING runs, whatever the credit;
+ * a DSP voice's ColdFire side, which the share never drops, is timed and held to it too (`share` 0). */
+#define FRAME_CEILING (FRAME + 10560u) /* + 80 µs: 443 µs, 122 % */
+/* f, or `instead` when f would overdraw the frame (`share`) or end it past the ceiling. */
+static int guarded_as(Render *f, Render *instead, unsigned track, unsigned ping, unsigned start, unsigned end, int share)
 {
     if (track >= 8u) return f(track, ping, start, end);
     unsigned k = track + 8u * (timed >> track & 1u);
-    uint32_t at = DTCN3; int r;
-    int32_t over = (int32_t)(at - mw_frame_t0 + cost[k] + after[k]) - credit - (int32_t)mw_frame_share;
-    if (over > 0 && !dearer_later(k, (uint32_t)over) && ++skipped[k] < PROBE) {
+    uint32_t at = DTCN3, ends = at - mw_frame_t0 + cost[k] + after[k]; int r;
+    int32_t over = (int32_t)ends - credit - (int32_t)mw_frame_share;
+    /* past the ceiling no probe runs it: a render the guard knows would end the frame there is what stalls the DSP;
+     * it comes back when the rest of the frame leaves room, or afresh after STOP or a Part change (ceiling_tick) */
+    int ceiling = ends > FRAME_CEILING && !dearer_later(k, ends - FRAME_CEILING);
+    if (ceiling || (share && over > 0 && !dearer_later(k, (uint32_t)over) && ++skipped[k] < PROBE)) {
+        if (ceiling && skipped[k] < 0xffffu) ++skipped[k]; /* timed afresh when it runs again */
         mw_frame_sheds = mw_frame_sheds + 1u, mw_frame_shed_tracks |= 1u << track;
         r = instead(track, ping, start, end);
     } else {
@@ -1058,6 +1069,21 @@ static int guarded(Render *f, Render *instead, unsigned track, unsigned ping, un
     }
     end_at[k] = DTCN3, timed |= 1u << k, next[k] = made++;
     return r;
+}
+static int guarded(Render *f, Render *instead, unsigned track, unsigned ping, unsigned start, unsigned end)
+{
+    return guarded_as(f, instead, track, ping, start, end, 1);
+}
+static const Part *ceiling_part;
+/* At STOP or a Part change, renders the ceiling holds are timed afresh. */
+static void ceiling_tick(void)
+{
+    const Part *part = valid_bank() ? current_part() : 0;
+    if (!modwerk_machine_stopped() && part == ceiling_part) return;
+    ceiling_part = modwerk_machine_stopped() ? 0 : part;
+    uint32_t mask = modwerk_machine_mask();
+    for (unsigned k = 0; k < 16u; ++k) if (skipped[k]) cost[k] = 0; /* a held render: measured again when it next runs */
+    modwerk_machine_unmask(mask);
 }
 /* The FLEX renderer, in the audio render: no mask. The row is read once, a word at a time; a module that left
  * stays in memory while the render holds it (the paused-task scan).
@@ -1135,7 +1161,7 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
         }
         Render *f = who->render ? who->render : STOCK(Render *, 0x40004008u); /* POLY8's voices render inside stock's */
-        return who->source_kind ? f(track, ping, start, end) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
+        return who->source_kind ? guarded_as(f, STOCK(Render *, 0x400047f0u), track, ping, start, end, 0) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
     } else if (kind == ORPHAN || kind == ASLEEP) { /* its bytes are the absent machine's, not FLEX's */
         if (kind == ASLEEP) wake_who[track] = who; /* resting: its detours hold stock's bytes until it wakes */
         stop_stock(track);
@@ -1172,7 +1198,7 @@ int mw_foreign_render(unsigned track, unsigned ping, unsigned start, unsigned en
     if (kind == ORPHAN || kind == ASLEEP || start_refused[track] == who || mw_cpu_refused >> track & 1u || mw_frame_brake ||
         (who->source_kind && charged[track] != who))
         return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
-    return who->source_kind ? f(track, ping, start, end) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
+    return who->source_kind ? guarded_as(f, STOCK(Render *, 0x400047f0u), track, ping, start, end, 0) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
 }
 
 /* ---- The machines a project uses (owner, 16 November 2026: machines in the project map) ------------------------------
