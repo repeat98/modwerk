@@ -138,6 +138,8 @@ unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2])
     return 1u;
 }
 static uint32_t test_rest; /* machine_registry.c's installed modules at rest */
+static unsigned test_pattern; /* machine_registry.c: the pattern that plays */
+unsigned modwerk_machine_pattern(void) { return test_pattern; }
 uint32_t modwerk_machine_rest_booked(void) { return test_rest; }
 uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net) { (void)skip; (void)net; return test_machines_booked; }
 uint32_t modwerk_dsp_booked(unsigned core) { return core; } /* draws only */
@@ -739,6 +741,20 @@ int main(void)
       CHECK(modwerk_status_pick_busy(12, 0, "Echo", 250u, 0, 0) && refused_busy != WHY_UNUSED); /* 125 %: the pick's own */
       for (unsigned i = 0; i < 180u; ++i) memory_tick();
       mw_stock_reserve = RESERVE_ADAPTIVE; }
+    /* The kept figure is the pattern's it was played on: on another one only that pattern's reserve and the newest
+     * reading judge a pick. */
+    { transport_stopped = 0, mw_stock_reserve = 0, frame_adjust = 0, test_pattern = 32u;  /* C01 */
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 1300u;
+      play_readings = 0; for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
+      transport_stopped = 1, frame_newest = 300u;
+      CHECK(frame_played == 1300u && modwerk_status_frame_load() == 1300u);
+      test_pattern = 33u;                                                /* C02, stopped */
+      CHECK(modwerk_status_frame_load() == 300u && !modwerk_status_pick_busy(12, 0, "Echo", 99u, 0, 0));
+      test_pattern = 32u;
+      CHECK(modwerk_status_frame_load() == 1300u);
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      frame_played = 0, frame_newest = 0, played_pattern = 0xffffu, test_pattern = 0, mw_stock_reserve = RESERVE_ADAPTIVE;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0; }
     /* Playing, what a pick replaces leaves the last four seconds too: a swap for a lighter module is never refused. */
     { transport_stopped = 0, mw_stock_reserve = 0, frame_adjust = 0, frame_played = 0;
       for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 1150u;

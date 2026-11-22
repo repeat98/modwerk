@@ -221,6 +221,10 @@ static int elsewhere(const Part *part, unsigned track, const Machine *who)
 #define PATTERN_STRIDE 0x8ed8u
 #define PATTERN_TRACK 0x91au
 #define PLAYING 0x800065bdu /* current bank and pattern, then the queued bank and pattern (OCTATRACK_DRIVING.md) */
+unsigned modwerk_machine_pattern(void) /* status.c: the pattern that plays, bank × 16 + pattern; 0xffff without a bank */
+{
+    return valid_bank() ? U8(PLAYING) * 16u + U8(PLAYING + 1u) : 0xffffu;
+}
 unsigned modwerk_machine_pattern_trigs(uint8_t most[2], uint8_t tracks[2])
 {
     if (!valid_bank()) return 0;

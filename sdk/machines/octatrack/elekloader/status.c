@@ -118,6 +118,11 @@ uint32_t modwerk_machine_frame_booked(unsigned skip, uint32_t net); /* machine_r
 static uint32_t effects_booked(unsigned skip);
 static uint32_t booked_seen;
 static int booked_moved; /* a pick or an exit since the last reading: the next one only notes the sum */
+/* The kept figure is the pattern's it was played on: on another one a pick goes by that pattern's reserve (owner,
+ * 22 November 2026: judged against the pattern that plays). Else a stacked pattern's 130 % refused picks made on an
+ * empty one after a trial's rollback, in one take of three (twin 25). 0xffff: not known. */
+unsigned modwerk_machine_pattern(void); /* machine_registry.c */
+static unsigned played_pattern = 0xffffu;
 static void cpu_note_played(void)
 {
     uint32_t booked = modwerk_machine_frame_booked(8u, 0) + effects_booked(16u);
@@ -127,7 +132,7 @@ static void cpu_note_played(void)
         if (!booked_moved && booked != booked_seen) frame_played = played > 0 ? (uint32_t)played : 0u;
     } else {
         if (++adjust_readings >= 8u) frame_adjust = 0;
-        if (++play_readings >= 8u && !frame_adjust) frame_played = frame_longest();
+        if (++play_readings >= 8u && !frame_adjust) frame_played = frame_longest(), played_pattern = modwerk_machine_pattern();
     }
     if (booked != booked_seen) booked_moved = 0;
     booked_seen = booked;
@@ -174,7 +179,8 @@ static void frame_note(unsigned at)
  * replace it. */
 static uint32_t measured_load(uint32_t gone) /* `gone`: what a pick's predecessor takes, off both */
 {
-    int32_t adjust = frame_adjust - (int32_t)gone, kept = (int32_t)frame_played + adjust, now;
+    unsigned elsewhere = played_pattern != 0xffffu && played_pattern != modwerk_machine_pattern();
+    int32_t adjust = frame_adjust - (int32_t)gone, kept = (int32_t)(elsewhere ? 0u : frame_played) + adjust, now;
     if (modwerk_machine_stopped()) now = (int32_t)frame_newest + (adjust > 0 ? adjust : 0);
     else now = (int32_t)frame_longest() - (int32_t)gone; /* playing, the last four seconds hold what leaves */
     int32_t most = kept > now ? kept : now;

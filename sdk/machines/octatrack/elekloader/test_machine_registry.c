@@ -657,7 +657,7 @@ static void check_busiest_step(void)
     playing[7] = 3u;                                                                             /* queued in bank D */
     CHECK(modwerk_machine_pattern_trigs(most, tracks) == 1u && most[0] == 5u);
     playing[6] = 1u, playing[7] = 2u;                                                            /* C02 plays */
-    CHECK(modwerk_machine_pattern_trigs(most, tracks) == 1u && most[0] == 1u && tracks[0] == 8u);
+    CHECK(modwerk_machine_pattern_trigs(most, tracks) == 1u && most[0] == 1u && tracks[0] == 8u && modwerk_machine_pattern() == 33u);
     playing[6] = playing[8] = 40u;                                                               /* no pattern: the safe side */
     CHECK(modwerk_machine_pattern_trigs(most, tracks) == 1u && most[0] == 8u && tracks[0] == 8u);
     for (unsigned t = 0; t < 8u; ++t) base[PATTERN_TRACK * t + 7u] &= (uint8_t)~1u, base[PATTERN_STRIDE + PATTERN_TRACK * t + 7u] = 0;

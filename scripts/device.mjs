@@ -444,7 +444,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     else if ((m = /^late(?::(on|off))?$/.exec(step))) { // LATE (dev request 42): the late-entry wait's counts since the last read; late:off / late:on switch it
       const b = Buffer.from(await devIn(42, m[1] === 'off' ? 1 : m[1] === 'on' ? 2 : 0, 20)), us = n => `${(n / 132).toFixed(1)} us`
       const [latest, hits, waits, longest, on] = [0, 4, 8, 12, 16].map(at => b.readUInt32BE(at))
-      console.log(`late-entry wait ${on ? 'on' : 'off'}: latest entry ${us(latest)} late, ${hits} in the window (110-190 us), ${waits} waited, longest wait ${us(longest)}`)
+      console.log(`late-entry wait ${on ? 'on' : 'off'}: latest entry ${us(latest)} late, ${hits} in the window (80-190 us), ${waits} waited, longest wait ${us(longest)}`)
     }
     else if (step === 'cpu' || step.startsWith('cpu:')) { // CPU (dev request 30): cpu:PERCENT sets the CPU budget's allowance
       const b = Buffer.from(await devIn(30, Number(step.slice(4)) || 0, 76)), pc = n => (n / 478.91).toFixed(1)
