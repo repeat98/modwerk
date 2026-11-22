@@ -1,6 +1,36 @@
 # GRAIN testing
 
-Grain 0.1.0-experimental · by A Force Truly Evil.
+Grain 0.1.2-experimental · by A Force Truly Evil.
+
+## 0.1.2-experimental: the sample is a ring, PTCH steps and 3 dB per grain, 22 November 2026
+
+The package is `f961b458deb9f93bad68435630b4c55110d3d0ef732bdfc7886df461a6250f66` (30,308 bytes), rebuilt with
+`scripts/octatrack-module-packages.py` (`--check`: identical; every other package unchanged).
+
+- **The sample is a ring**, as in typical granular engines (the author's choice, 22 November 2026). A grain born past
+  the end starts at the beginning and one born before the beginning starts at the end; a grain reading past an edge
+  continues on the other side in its own direction. `mix_voices` splits each grain's frames so that no run reads past an
+  edge; away from both edges a grain takes one run as before, and the audio is bit-identical to 0.1.1 there (a 12 s
+  sample, until the host sweep reaches the end). On the marks sample, the far side of the edge went from 15-19 dB to
+  76-77 dB in all four cases (POS at the end or the start, forwards or backwards). `range_test.c` checks both edges.
+- **PTCH** has its own knob step (slot 0): one semitone a detent without the base's accumulation, FUNC + turn stops at
+  -24, -12, 0, +12 and +24, a pressed knob moves 7. `verify_lanes.py` runs the compiled step on 18 cases.
+- **3 dB per grain.** The window tables (`gen_tables.py`) peak 3 dB below full scale. On the author's
+  `Ras_01_SineSteps` (mono, peak -0.3 dBFS) at POS 60.7, SIZE 79, DENS 127, the sum of six grains clipped in
+  `gran_render` on 2.0 % (SPRY 4), 2.6 % (SPRY 5) and 2.0 % (SPRY 8) of the output samples; now 0.005 %, 0.02 % and
+  0.04 %. Over 90 settings (SIZE 64-127, SPRY 2-64, three positions) 32 clipped, at worst 3.7 %; now 10, at worst
+  0.04 %. SPRY 0 never clipped. The tables are the only change in `grain_core.s`, so the CPU cost is unchanged.
+  The `verify.py` and `verify_lanes.py` references were regenerated; the previous ones pass with the previous tables.
+
+**On the MKI** (the author, OS 1.40C, official base `6d23e888` flashed, card set with Grain, E-Verb, Mini Verb,
+syntiz, FM Synth, BBD Delay and Tape Echo): first with build `ee8419c2` (this release without the 3 dB), the set loaded,
+PTCH stepped one semitone a detent and FUNC + turn reached 0, the edges wrapped, the pool kept Grain playing and the
+audition played plain Flex, and the Part and project came back after saving and a power cycle. PTCH first jumped by several semitones per detent (+1, +11, +16): the project had SCALE =
+MINOR, and the scale quantizer bundled with FM Synth steps PTCH in Flex units (5 a semitone); with SCALE OFF it stepped
+correctly. A second Grain track was refused (CPU FULL), as the base's CPU price allows. Then the exact package
+`f961b458` (card set `f6ca36c3`): `Ras_01_SineSteps` at POS 60.7, SIZE 79, DENS 127 and SPRY 4, 5 and 8 played clean;
+the author heard the odd click only at extreme settings. PTCH, the edges, the pool and the audition behaved as with
+`ee8419c2`. **Not tested:** more than one Grain track on the official base (refused by its CPU price), MKII.
 
 ## 0.1.1-experimental: the pool keeps Grain playing, 21 November 2026
 

@@ -37,10 +37,10 @@ CC = shutil.which('cc') or shutil.which('gcc')
 if not CC:
     sys.exit('[SKIP] no C compiler: the host gate did not run')
 
-REFERENCES = {   # settings (pos size dens spray shape dir pan sync) -> SHA-256 of the 8 s stereo render
-    'default': ((), 'e255e7b7960253b8d7f25fb4a3ffab2d9697c290c0e9189303f31e9ecec6b53e'),
-    'perc-sync': (('40', '40', '70', '20', '2', '0', '0', '1'), '90ecb4cca1b69c0173f2e1bdaa2a3eef22d41a98cfab32e5ecbd97cb1c411d28'),
-    'pan-dir': (('40', '70', '110', '50', '0', '64', '127', '0'), '5abf141f4c24be63465ff4aa1d278e2aeb522a76d69a366433c4d12b0468c670'),
+REFERENCES = {   # 0.1.2: the sample is a ring, so grains crossing an edge now read the other side, and every grain is 3 dB lower; settings (pos size dens spray shape dir pan sync) -> SHA-256 of the 8 s stereo render
+    'default': ((), 'ffafa70b40fee69e868b8d14749ddaa0754a2d67fcd4d75eba45526628d47314'),
+    'perc-sync': (('40', '40', '70', '20', '2', '0', '0', '1'), '9c4ba3c3429c80ec79aa93a43120f9380522763d6223b697491dc290c6f12762'),
+    'pan-dir': (('40', '70', '110', '50', '0', '64', '127', '0'), '2fe9531b4c53c71aa0f9cd2f3e5ea40083ca8ad49dff6f08311b16bb61e9adb3'),
 }
 CASES = [('40', '70', '90', '30', '0', '0', '0', '0'), ('40', '70', '110', '50', '0', '64', '0', '0'),
          ('40', '70', '110', '50', '0', '0', '127', '0'), ('40', '70', '110', '50', '0', '127', '80', '0'),
