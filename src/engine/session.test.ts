@@ -1,9 +1,10 @@
-import { readFileSync } from 'node:fs'
+import { publishedUsbAudioPackage } from '../config/published-usb-audio.fixture'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import { encodeFirmware, type DecodedFirmware } from './elek'
 import { createEngineSession } from './session'
 import type { EngineResponse } from './protocol'
 import { buildBase } from './elekloader/octatrack-base'
+import { publishedFills as baseFills, publishedPackageText, publishedVariants } from './elekloader/published-octatrack.fixture'
 import { DEFAULT_LAYOUT, variantPackage, type BaseVariants } from './elekloader/base-variants'
 
 // Exercise the real session boundary with synthetic bytes; no proprietary firmware enters this test or CI.
@@ -18,8 +19,8 @@ const synthetic = (): DecodedFirmware => ({
 
 describe('the Modwerk base', () => {
   it('asks for the OS file first, then builds from the verified file: USB Audio off unless a layout is asked for', async () => {
-    const text = readFileSync(new URL('./assets/octatrack-base.elemod', import.meta.url), 'utf8')
-    const layouts = readFileSync(new URL('./assets/octatrack-base-variants.json', import.meta.url), 'utf8')
+    const text = publishedPackageText()
+    const layouts = JSON.stringify(publishedVariants)
     const fetched = vi.fn(async (url: string) => (url.endsWith('octatrack-base.elemod') ? new Response(text)
       : url.includes('octatrack-base-variants') ? new Response(layouts) : new Response(null, { status: 404 })))
     vi.stubGlobal('fetch', fetched)
@@ -34,17 +35,22 @@ describe('the Modwerk base', () => {
     expect(reply).toMatchObject({ type: 'base', sha256: 'b', base: 'c'.repeat(64) })
     expect([...new Uint8Array(reply.buffer)]).toEqual([1, 2, 3])
     // No layout: the owner's default for members, USB MIDI alone (11 November 2026), patched from the committed package.
-    const off = variantPackage(text, JSON.parse(layouts) as BaseVariants, 'off')!
+    const off = publishedUsbAudioPackage ? { text, fills: baseFills } : variantPackage(text, JSON.parse(layouts) as BaseVariants, 'off')!
     const [stock, fetchedText, fills] = vi.mocked(buildBase).mock.calls[0]
     expect(stock).toEqual(input)
     expect(fetchedText).toBe(off.text)
     expect(fills).toEqual(off.fills)
-    expect(fetched).toHaveBeenCalledTimes(2)
+    expect(fetched).toHaveBeenCalledTimes(publishedUsbAudioPackage ? 1 : 2)
     // The committed package's own layout, asked for by a module set, is that package as it is.
     await handle({ id: 4, type: 'base', layout: DEFAULT_LAYOUT })
     const [, ownText, ownFills] = vi.mocked(buildBase).mock.calls[1]
     expect(ownText).toBe(text)
     expect(ownFills.length).toBeGreaterThan(0)
-    expect(fetched).toHaveBeenCalledTimes(3)
+    expect(fetched).toHaveBeenCalledTimes(publishedUsbAudioPackage ? 2 : 3)
+    if (publishedUsbAudioPackage) {
+      await handle({ id: 5, type: 'base', layout: 'master' })
+      expect(replies.at(-1)?.type).toBe('base')
+      expect(vi.mocked(buildBase).mock.calls[2][1]).toBe(text)
+    }
   })
 })

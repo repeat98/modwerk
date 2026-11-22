@@ -15,7 +15,7 @@ python3 sdk/machines/digitone-ii/tools/dn2_link.py turn A 8        # encoders A-
 | Request | cmd | What comes back |
 | --- | --- | --- |
 | `ident` | 0x01 | link version, link messages received, dropped (ring full or too long), ticks, armed, a person at the unit, presses and turns by a person, events posted, requests refused, RAM boot status and image, the boot record's address, modules live, the address of the modules' test value |
-| `disarm` | 0x02 | lets go of every key the link holds and turns the arm off |
+| `disarm` | 0x02 | turns the arm off and lets go of every key the link holds; a release the UI queue cannot take yet follows from the UI tick |
 | `key ID FLAGS` | 0x10 | armed: a panel key message, flags 0x01 press, 0x10 release; a held key reads as held to stock's is_key_held |
 | `enc N DELTA` | 0x11 | armed: an encoder turn, 1-8 A-H, 9 LEVEL |
 | `release` | 0x12 | armed: lets go of every key the link holds |
@@ -30,7 +30,7 @@ so a draw between its reads can tear a frame. Stock keeps two frame pointers sid
 first to the display, then swaps them (0x40131fd2), so the frame on the screen is the second; 128x64 pixels, 1 bit each,
 in the Analog Rytm MKII's layout.
 
-Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at the unit. USB only: a link message from DIN is never acted on.
+Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at the unit, 6 an OS upload waits at UPGRADE OS NOW? (key and enc refused, and stock's is_key_held stops seeing the link's holds, until the next boot: a flash needs a person's YES), 7 `ramboot` found no UPGRADE OS NOW? waiting for the upload it describes (container length) and pressed nothing. USB only: a link message from DIN is never acted on.
 
 `ident`, `mem` and the out-of-range refusal answered on a unit over USB ([19 November 2026](../../../docs/verification/2026-11-19-digitone-ii-link-on-a-unit.md)).
 
@@ -65,7 +65,9 @@ flashed OS back. The unit must run a *flashed* development base: the gate is the
 MKII link's RAM boot ([its LINK.md](../analog-rytm-mkii/LINK.md#ram-boot)), at OS 1.12's addresses, with one change.
 
 1. The host uploads the image with stock's OS upgrade, then sends `ramboot` with the unpacked MAIN OS's length and
-   CRC32 and the container's (the Rytm link's `ramboot_args`). The base presses YES and sets a flag.
+   CRC32 and the container's (the Rytm link's `ramboot_args`). The base presses YES and sets a flag, but only while
+   UPGRADE OS NOW? waits for that upload (stock's upload buffer complete, its struct the container's length);
+   otherwise it answers status 7 and leaves the panel alone.
 2. Stock's upgrade job validates the upload and saves the working state. Where it calls the erase-and-write routine
    (0x4010921c -> 0x40139104), the base looks at the flag: clear, stock's routine runs. Set, it waits and drains as
    stock does, writes the data cache's dirty lines out, switches the data cache off and, if the staged upload has the
@@ -85,6 +87,8 @@ same reset and the same cache settings on OS 1.12.
 Status in `ident` and `bootdiag`: 0 the flashed OS; 1 booted from RAM; 2 a mailbox without a software reset; 3 check
 word; 4 lengths; 5 the copy's CRC; 6 no MAIN OS section; 8 failed after the unpack. `bootdiag` reads what the gate
 found (the mailbox, the staged struct's first words, the marks of the way to the reset, RSR) from 0x47feffbc.
+`ramboot` exits 0 only when the unit answers after the reset with status 1 and the image CRC it asked for; the
+flashed OS, another CRC, a reply without a boot status or no answer within a minute exit nonzero.
 
 Cancelling: a press or turn on the panel or a `disarm` cancels the request, and a cancelled request never becomes a
 flash: for two minutes after `ramboot` the job's call resets without a mailbox, so the flashed OS comes back

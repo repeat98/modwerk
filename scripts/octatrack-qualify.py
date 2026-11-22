@@ -6,8 +6,9 @@
 
 Run it on a bank and Part whose working copy equals its saved one (docs/OCTATRACK_DRIVING.md), transport stopped.
 Installs the set, puts each DSP effect alone on T1 (core 1) and T5 (core 0) and reads the load meters, and each track
-machine (a package contributing to ot_machines) on T1 and T5 through SRC SETUP's machine list, playing, with its render
-time against its CPU price; then all of them at once while the pattern plays (machines on T1-T8 round the set, beside
+machine (a package contributing to ot_machines) on T1 and T5 through SRC SETUP's machine list, recording its peak render
+time during playback. A priced machine also gets matched quiet and triggered frame-mean readings. Then all run at once
+while the pattern plays (machines on T1-T8 round the set, beside
 the effects). A machine renders only on trigs: give T1 and T5 trigs. With everything placed, playing: each placed
 module's knobs swept (a machine's on its SRC page), the
 four Parts switched three times round (each must run its own effects), a queued pattern change into another bank
@@ -25,6 +26,10 @@ import argparse, datetime, glob, hashlib, json, os, pathlib, re, socket, subproc
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SOCKET = os.environ.get('MODWERK_DEV_SOCKET', '/tmp/modwerk-dev.sock')
+# An ot_emu session (npm run device:emulator; test:procedure --target emulator), paced to the wall clock so every wait below
+# means the same there as on the unit. Never hardware evidence. A check the emulator cannot answer (its DSP frames standing
+# still) is listed as not run there, never passed; on the unit every check runs as always.
+EMULATOR = os.environ.get('MODWERK_UNIT') == 'emulator'
 PEAK_LIMIT = 900  # per mille of a frame
 HEADERS = {6: 68, 7: 72, 8: 76, 9: 80, 10: 80}  # header bytes by ABI (sdk/runtime/loader/abi9.py); hook words follow
 MACHINES = next(e['index'] for e in json.loads((ROOT / 'sdk/machines/octatrack/events.json').read_text())['events'] if e['event'] == 'ot_machines')
@@ -85,9 +90,17 @@ def testing_entry(result, day, title='Qualification run', command='device:qualif
     for m in result['modules']:
         if m.get('machine'):
             alone = ', '.join('%s %s' % (track, 'refused' if r == 'refused' else 'core peak %d per mille, CPU %d per mille, its render %s' % (
-                r['core1_peak'] if track == 'T1' else r['core0_peak'], r['cpu'], 'not read' if r.get('render') is None else '%.1f %% of a frame' % r['render']))
+                r['core1_peak'] if track == 'T1' else r['core0_peak'], r['cpu'], 'not read' if r.get('render') is None else 'peak %.1f %% of a frame' % r['render']))
                 for track, r in m.items() if track in ('T1', 'T5'))
             lines.append('- %s (machine) alone, playing: %s' % (m['name'], alone))
+            if m.get('price_on_unit_only'):
+                lines.append('- Mean CPU price check: hardware only.')
+            for track in ('T1', 'T5'):
+                reading = m.get(track)
+                if isinstance(reading, dict) and 'audition' in reading:
+                    pair = reading['audition']
+                    lines.append('- %s %s, mean frame interrupt: quiet %.1f %%, triggered %.1f %%, added %+.1f points; price %d %%.' %
+                                 (m['name'], track, pair['quiet'], pair['triggered'], pair['added'], pair['price']))
             continue
         alone = ', '.join('%s %s' % (track, 'refused' if r == 'refused' else 'peak %d per mille of a frame, admitted in %d ms' % (
             r['core1_peak'] if track == 'T1' else r['core0_peak'], r['admit_ms'])) for track, r in m.items() if track in ('T1', 'T5'))
@@ -101,6 +114,7 @@ def testing_entry(result, day, title='Qualification run', command='device:qualif
     if result.get('soak'): lines.append('- Soak: %d s, highest core peak %d per mille' % (10 * len(result['soak']), max(max(m['core0_peak'], m['core1_peak']) for m in result['soak'])))
     lines.append('- Crash test: %s' % ('run, the unit came back' if result.get('crash') and not any('crash' in f for f in result['failures']) else 'run' if result.get('crash') else 'not run'))
     if result.get('inventory'): lines.append('- Inventory at the end: ' + ('the same as before the run' if result['inventory'] == 'unchanged' else 'different from before the run'))
+    if result.get('not_run'): lines.append('- Not run here: ' + '; '.join(result['not_run']))
     lines.append('- Result: ' + ('passed' if not result['failures'] else 'failed: ' + '; '.join(result['failures'])))
     if left: lines += ['', 'Left for the developer at the unit: ' + ', '.join(left) + '.', '']
     else: lines += ['', 'Not covered by this run: ' + ', '.join(NOT_COVERED) + '.', '']
@@ -244,6 +258,16 @@ def running(failures, what):  # frames advance: the DSPs are alive
     return a != b
 
 
+def frame_clock(result):
+    """Whether the DSP frames advance, so the checks that read them can run. Always on the unit; in the emulator only when
+    its session runs the DSPs and the frame interrupt (--dsp --frame), else those checks are listed in result['not_run']."""
+    if not EMULATOR: return True
+    a = frames(); send('w300')
+    if frames() != a: return True
+    result.setdefault('not_run', []).append('the frame checks and the queued bank change: the emulator\'s DSP frames stand still')
+    return False
+
+
 def until(test, seconds):
     for _ in range(int(seconds * 4)):
         if test(): return True
@@ -276,11 +300,49 @@ def selftest_reading(failures):
     return line
 
 
+def frame_mean(reply):
+    readings = re.findall(r'in the frame interrupt ([\d.]+) % over (\d+) frames', reply)
+    if not readings or int(readings[-1][1]) == 0:
+        raise ValueError('no frame mean in the guard window')
+    return float(readings[-1][0])
+
+
+def audition_price(track, price):
+    """Incremental mean in two equal-duration windows on one stopped Part, with only this track retriggered.
+    Panel auditions leave the pattern and its parameter locks alone. The sequenced peak is recorded separately."""
+    key = 'T%d' % track
+    if send('state').strip() != 'stopped':
+        raise ValueError('stop the transport before the audition')
+    # Holding a track and pressing STOP silences its machine. TRACK+PLAY auditions it without starting the sequencer.
+    send(key + '+STOP w500')
+    try:
+        send('w2500 guard')
+        quiet = frame_mean(send('w6000 guard'))
+        send(key + '+PLAY w2500')
+        renders()
+        send('guard')
+        start = time.monotonic()
+        for i in range(24):
+            time.sleep(max(0, start + i * 0.25 - time.monotonic()))
+            send(key + '+PLAY')
+        time.sleep(max(0, start + 6 - time.monotonic()))
+        triggered = frame_mean(send('guard'))
+        peaks = renders()
+        if not peaks or peaks[track - 1] == 0:
+            raise ValueError('no guarded render during the audition')
+        if send('state').strip() != 'stopped':
+            raise ValueError('transport changed during the audition')
+        return dict(quiet=quiet, triggered=triggered, added=round(triggered - quiet, 1), price=price)
+    finally:
+        send(key + '+STOP w300')
+
+
 def machine_alone(machines, m, failures):
-    """Machine `m` alone on T1 (core 1) and T5 (core 0), playing: the load meters and its track's longest render against
-    its CPU price (a DSP voice that names none has none), then the track's own machine back."""
+    """Measure the sequenced peak separately from the mean cost of triggering the track."""
     entry = dict(name=m['label'], slot='SRC', machine=True)
     price = m['price'] or (0 if m['voice'] else CPU_DEFAULT)
+    if price and EMULATOR:
+        entry['price_on_unit_only'] = True
     for track in (1, 5):
         back = machines.row_of(part_copy(mem(PART, 1)[0]), track - 1)
         try:
@@ -293,10 +355,15 @@ def machine_alone(machines, m, failures):
             reading['render'] = took and took[track - 1]
             entry['T%d' % track] = reading
             log('  %s on T%d:' % (m['label'], track), reading)
-            if price and took and took[track - 1] > price:
-                failures.append('%s rendered %.1f %% of a frame on T%d, over %s of %d %%: measure its price on the unit and '
-                                'declare it (docs/MODULE_PERFORMANCE.md)' % (m['label'], took[track - 1], track,
-                                'its CPU price' if m['price'] else 'the base\'s default price', price))
+            if price and not EMULATOR:
+                try:
+                    pair = audition_price(track, price)
+                    reading['audition'] = pair
+                    if pair['added'] > price:
+                        failures.append('%s on T%d added %.1f points of mean frame time, over its %d %% CPU price'
+                                        % (m['label'], track, pair['added'], price))
+                except (ValueError, RuntimeError) as error:
+                    failures.append('%s on T%d: CPU price not measured: %s' % (m['label'], track, error))
         except RuntimeError as e:
             send('STOP w300'); failures.append(str(e)); entry['T%d' % track] = 'refused'
         if machines.pick(track - 1, back) != back: failures.append('T%d did not get its own machine back (row %d)' % (track, back))
@@ -368,6 +435,7 @@ def run(args, pkgs, install, uninstall, selftest=False, inventory=False):
             send('T%d w200 %s w300 ' % (track, slot if slot == 'SRC' else 'FX%d' % slot) + ' '.join('enc%s-127 enc%s-127 ' % (e, e) + ' '.join(['enc%s+16 w100' % e] * 8) for e in 'ABCDEF'))
             running(failures, 'sweeping %s on T%d' % (name, track))
         # The four Parts, three times round: each switch done (the part step waits) and its effects running.
+        clock = frame_clock(result)
         result['parts'] = []
         for n in [2, 3, 4, 1] * 3:
             try:
@@ -376,10 +444,10 @@ def run(args, pkgs, install, uninstall, selftest=False, inventory=False):
                 result['parts'].append(n if ok else -n)
                 if not ok: failures.append('Part %d did not run its own effects within 3 s' % n)
             except RuntimeError as e: failures.append(str(e))
-        running(failures, 'after the Part switches')
+        if clock: running(failures, 'after the Part switches')
         # A queued pattern change into another bank (BANK, TRIG b, TRIG n) and back, playing: it lands at the pattern's end.
         other = 2 if start_bank == 0 else 1
-        for bank, pattern in ((other - 1, 0), (start_bank, start_pattern)):
+        for bank, pattern in ((other - 1, 0), (start_bank, start_pattern)) if clock else ():
             send('BANK w150 TRIG%d w150 TRIG%d' % (bank + 1, pattern + 1))
             if not until(lambda: mem(0x800065bd, 2) == bytes([bank, pattern]), 20):
                 failures.append('the queued change to bank %d pattern %d did not land within 20 s' % (bank + 1, pattern + 1)); break
@@ -393,7 +461,7 @@ def run(args, pkgs, install, uninstall, selftest=False, inventory=False):
                 m = meters(5); result['soak'].append(m); log('  soak:', m)
                 peak = max(m['core0_peak'], m['core1_peak'])
                 if peak > PEAK_LIMIT: failures.append('a core peaked at %d per mille in the soak' % peak); break
-                if not running(failures, 'soak'): break
+                if clock and not running(failures, 'soak'): break
         send('STOP w500')
     finally:
         send('STOP w300')
@@ -448,6 +516,13 @@ def main():
         raise SystemExit('Each install and removal in this run is a Keep, which rewrites the card\'s kept set; on a RAM-booted base the flashed base '
                          'then starts with no modules after a power cycle. Note the flashed set first (the session\'s inventory step, '
                          'docs/OCTATRACK_DRIVING.md), then run again with --keeps-ok. For a run that keeps nothing: npm run device:test.')
+    # The whole run is one turn on the unit: it waits here while another session has it (scripts/unit-queue.mjs).
+    import importlib.util
+    turn = importlib.util.spec_from_file_location('unit_turn', os.path.join(os.path.dirname(os.path.realpath(__file__)), 'unit_turn.py'))
+    unit_turn = importlib.util.module_from_spec(turn)
+    turn.loader.exec_module(unit_turn)
+    unit_turn.take_turn(__file__, 'device:qualify ' + ' '.join(os.path.basename(p) for p in args.packages),
+                        expect='%ds' % (600 + 120 * len(args.packages) + 2 * args.soak + 4 * args.seconds))
     pkgs = [package(p) for p in args.packages]
 
     def install(pkgs):

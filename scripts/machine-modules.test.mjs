@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, resolve } from 'node:path'
 import { readFileSync } from 'node:fs'
-import { copiedThumbnail, publishesNewVersion, requireNoSubmissions, requireOriginalThumbnail } from './machine-modules.mjs'
+import { copiedThumbnail, publishesNewVersion, requireNoSubmissions, requireOriginalThumbnail, unlistedPackages } from './machine-modules.mjs'
 
 it('refuses a new or changed submission and lets one move into the library', () => {
   const root = mkdtempSync(resolve(tmpdir(), 'modwerk-submissions.'))
@@ -55,4 +55,22 @@ it('runs the publication gate for a new library version only', () => {
   // A published version that only changes its documentation, and an old submission, keep their place.
   expect(publishesNewVersion({ inLibrary: true, baseVersion: '0.2.0-experimental', version: '0.2.0-experimental' })).toBe(false)
   expect(publishesNewVersion({ inLibrary: false, baseVersion: null, version: '0.1.0' })).toBe(false)
+})
+
+it('counts the USB Audio installer rows and refuses a superseded or unnamed download', () => {
+  const root = mkdtempSync(resolve(tmpdir(), 'usb-audio-package-list-'))
+  try {
+    const folder = 'octatrack-modules/usb-audio-out-tracks-main-cue'
+    const current = folder + '/current.mwrm', legacy = folder + '/tracks.mwrm'
+    const old = folder + '/old.mwrm', asset = resolve(root, 'src/engine/assets')
+    mkdirSync(asset, { recursive: true })
+    mkdirSync(resolve(root, 'public', folder), { recursive: true })
+    for (const name of [current, legacy]) writeFileSync(resolve(root, 'public', name), '')
+    writeFileSync(resolve(asset, 'octatrack-module-packages.json'), JSON.stringify({
+      packages: [], usbAudio: { configurable: { path: current }, tracks: { path: legacy }, unknown: { path: old } },
+    }))
+    unlistedPackages(root)
+    writeFileSync(resolve(root, 'public', old), '')
+    expect(() => unlistedPackages(root)).toThrow(old + ': no package row names')
+  } finally { rmSync(root, { recursive: true, force: true }) }
 })

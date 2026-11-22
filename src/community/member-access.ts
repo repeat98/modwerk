@@ -1,6 +1,10 @@
 import { post } from './api'
+import { isAdminRoute } from './admin-navigation'
 export function accountHref(mode: 'login' | 'register', next = 'forum') { return '#account/' + mode + '?next=' + encodeURIComponent(safeNext(next)) }
-export function safeNext(value: string | null) { return value && value.length <= 500 && /^[a-z][a-z0-9_/?=&%-]*$/i.test(value) && !value.startsWith('account') && !value.startsWith('admin') ? value : 'forum' }
+export function safeNext(value: string | null) {
+  if (!value || value.length > 500 || !/^[a-z][a-z0-9_/?=&%-]*$/i.test(value) || value.startsWith('account')) return 'forum'
+  return value.startsWith('admin') && !isAdminRoute(value) ? 'forum' : value
+}
 const nextKey = 'modwerk.account.next'
 /** Registration remembers where it started, so the emailed verification link can return there once the member is signed in. */
 export function rememberNext(next: string) { try { if (safeNext(next) === 'forum') localStorage.removeItem(nextKey); else localStorage.setItem(nextKey, safeNext(next)) } catch { /* The forum is the fallback. */ } }

@@ -28,7 +28,7 @@ def run(arguments):
     return result.stdout
 
 
-def compile_packages(app, output=None, provenance=None):
+def compile_packages(app, output=None):
     rows = []
     with tempfile.TemporaryDirectory(prefix='octamod-utility-source.') as temporary:
         work = Path(temporary)
@@ -92,7 +92,6 @@ def compile_packages(app, output=None, provenance=None):
     artifact = {
         'schema': 1, 'kind': 'authored-utility-packages', 'stockRead': False,
         'revision': json.loads((app / 'sdk/catalog.json').read_text())['sourceRevision'],
-        **(provenance or {'sourceCommit': None, 'moduleVersions': {row['id']: row['version'] for row in rows}}),
         'compilerSha256': sha(Path(__file__).read_bytes()),
         'qualification': 'Source assembly and relocation only. Hardware and release approval are not supplied by this artifact.',
         'packages': rows,

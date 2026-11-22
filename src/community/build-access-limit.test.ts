@@ -1,3 +1,4 @@
+import { publishedUsbAudioPackage } from '../config/published-usb-audio.fixture'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { DatabaseSync } from 'node:sqlite'
 import { AVAILABLE_MODULES } from '../catalog/availability'
@@ -16,6 +17,7 @@ describe('the Worker’s build check', () => {
     const over = await access(ids.slice(0, SET_MODULE_LIMIT + 1))
     expect(over.status).toBe(403)
     expect(JSON.stringify(await over.json())).toContain(`This set has ${SET_MODULE_LIMIT + 1} modules; ${SET_MODULE_LIMIT} is the limit for now. Remove 1 to build.`)
-    expect((await access([...ids.slice(0, SET_MODULE_LIMIT), USB_AUDIO_MODULE])).status).toBe(200)
+    expect((await access([...ids.slice(0, SET_MODULE_LIMIT - 1), USB_AUDIO_MODULE])).status).toBe(200)
+    expect((await access([...ids.slice(0, SET_MODULE_LIMIT), USB_AUDIO_MODULE])).status).toBe(publishedUsbAudioPackage ? 403 : 200)
   })
 })

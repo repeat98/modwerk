@@ -3,8 +3,8 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { parseModuleCpuPrice, parseModuleDocument } from '../src/catalog/module-contract.ts'
-import { CPU_PRICE_PENDING_REASON, cReserved0, cpuPriceProblems, cpuPriceStatus, glueReserved0, machineDescriptors, parseCpuPricePending, portGlue, readCpuPricePending } from './module-cpu-price.mjs'
+import { parseModuleCpuMeter, parseModuleCpuPrice, parseModuleDocument } from '../src/catalog/module-contract.ts'
+import { AT_REST_FROM, AT_REST_LIMIT, CPU_PRICE_PENDING_REASON, atRestStatus, cReserved0, cpuPriceProblems, cpuPriceStatus, glueReserved0, machineDescriptors, parseCpuPricePending, portGlue, readCpuPricePending } from './module-cpu-price.mjs'
 
 const repo = fileURLToPath(new URL('../', import.meta.url))
 const roots = []
@@ -84,6 +84,25 @@ describe('every Octatrack module names its CPU price', () => {
     expect(cpuPriceStatus({ root: fixture({}), document: module('wave', 'Track machine', render(7)), pending: new Map(), glue: {} }).state).toBe('fail')
   })
 
+  it('holds a machine\'s meter cost to its descriptor\'s reserved[1] and recomputes it from its paired readings', () => {
+    const meter = (value, source = 'evidence/cpu-meter.json') => ({ value, unit: 'percent-of-meter', measure: 'machine-meter', tool: 'npm run device -- do health', date: '2026-11-21', conditions: 'MKII, the same Part with the track on Flex', source })
+    const pairs = [{ track: 1, flex: 43.68, machine: 52.6, flexReadings: [436, 440, 435, 444, 435, 437, 436], machineReadings: [526, 530, 524, 535, 524, 526, 523] }, { track: 5, flex: 61.7, machine: 78.25 }]
+    const folder = (reserved, record = { module: 'wave', pairs }) => fixture({ ...machineFolder(reserved), 'sdk/octatrack/modules/wave/evidence/cpu-meter.json': record })
+    const status = (reserved, value, record) => cpuPriceStatus({ root: folder(reserved, record), document: { ...module('wave', 'Track machine', render(7)), resources: { cpuPrice: render(7), ...(value ? { cpuMeter: meter(value) } : {}) } }, pending: new Map(), glue: {} })
+    expect(status('\n    .reserved = {7, 17},', 17)).toMatchObject({ state: 'ok', detail: expect.stringContaining('adds 17 meter points') })
+    expect(status('\n    .reserved = {7, 20},', 20).state).toBe('ok')                                     // a margin above the readings
+    expect(status('\n    .reserved = {7},', 0).state).toBe('ok')                                          // names none, carries none
+    expect(status('\n    .reserved = {7, 16},', 16)).toMatchObject({ state: 'fail', detail: expect.stringContaining('its readings add 16.55') })
+    expect(status('\n    .reserved = {7},', 17)).toMatchObject({ state: 'fail', detail: expect.stringContaining("reserved[1] is 0") })
+    expect(status('\n    .reserved = {7, 17},', 0)).toMatchObject({ state: 'fail', detail: expect.stringContaining('does not name') })
+    expect(status('\n    .reserved = {7, 17},', 17, { module: 'wave', pairs: [{ ...pairs[0], flex: 40 }] })).toMatchObject({ state: 'fail', detail: expect.stringContaining('middle five') })
+    expect(status('\n    .reserved = {7, 17},', 17, { module: 'other', pairs })).toMatchObject({ state: 'fail', detail: expect.stringContaining('no paired meter readings of wave') })
+    expect(cReserved0(join(folder('\n    .reserved = { WAVE_PRICE, 12u },'), 'sdk/octatrack/modules/wave'), 'wave')).toMatchObject({ price: 9, meter: 12 })
+    const effect = cpuPriceStatus({ root: fixture({}), document: { ...module('echo', 'FX2'), resources: { cpuPrice: share(0.4), cpuMeter: meter(3) } }, pending: new Map(), glue: {} })
+    expect(effect).toMatchObject({ state: 'fail', detail: expect.stringContaining('only a machine') })
+    expect(() => parseModuleCpuMeter({ ...meter(17), value: 0 })).toThrow(/reserved\[1\]/)
+  })
+
   it('says the price of a ported machine goes in its machine-ports.json entry', () => {
     const root = fixture({ 'sdk/machines/octatrack/module-adapters/machine-ports.json': { schema: 1, ports: { wave: { machine: { sig: 'WV' }, contribute: [{ to: 'ot_machines', order: 10, data: 'mw_machine' }] } } } })
     const glue = { wave: 'mw_machine:\n        .long   1\n        .word   0, 0\n        .byte   1, 0, 0, 0\n' }
@@ -128,4 +147,77 @@ describe('every Octatrack module names its CPU price', () => {
     delete vague.conditions
     expect(() => parseModuleCpuPrice(vague)).toThrow('conditions')
   })
+})
+
+describe('a module costs nothing while nobody uses it (owner, 20 November 2026)', () => {
+  const hook = (id, version, cpuPrice, effectId = null) => ({ id, version, compatibility: { location: 'Hook', effectId }, resources: cpuPrice ? { cpuPrice } : {} })
+  const changelog = (id, version, date) => ({ ['src/community/module-changelogs/' + id + '.json']: [{ version, date, changes: ['x'] }] })
+  const reading = (id, atRest, inUse) => ({ ['sdk/octatrack/modules/' + id + '/evidence/cpu-price.json']: { module: id, result: { atRestAdds: { frame: atRest }, inUseAdds: inUse == null ? undefined : { frame: inUse } } } })
+
+  it('passes a module at or under the limit, and one with nothing measured is only reported', () => {
+    const root = fixture({ ...changelog('quiet', '0.2.0', AT_REST_FROM) })
+    expect(atRestStatus({ root, document: hook('quiet', '0.2.0', share(AT_REST_LIMIT)), glue: {} }).state).toBe('ok')
+    expect(atRestStatus({ root, document: hook('quiet', '0.2.0'), glue: {} }).state).toBe('info')
+  })
+
+  it('fails a new release above the limit that does not rest, and only warns about a release from before the date', () => {
+    const root = fixture({ ...changelog('busy', '0.3.0', AT_REST_FROM), ...changelog('old', '0.1.0', '2026-11-14') })
+    const fresh = atRestStatus({ root, document: hook('busy', '0.3.0', share(1.4)), glue: {} })
+    expect(fresh).toMatchObject({ state: 'fail', detail: expect.stringContaining('1.4 points') })
+    expect(fresh.fix).toContain('ev_in_use')
+    expect(atRestStatus({ root, document: hook('busy', '0.4.0', share(1.4)), glue: {} }).state).toBe('fail') /* no changelog entry yet: a new release */
+    expect(atRestStatus({ root, document: hook('old', '0.1.0', share(1.4)), glue: {} })).toMatchObject({ state: 'warn', detail: expect.stringContaining('not refused') })
+  })
+
+  it('reads an effect at rest from its device:price readings, not its price on a slot', () => {
+    const root = fixture({ ...reading('echo', 0.1, 7.7), ...reading('loud', 0.5, 7.7), ...changelog('echo', '1.0.0', AT_REST_FROM), ...changelog('loud', '1.0.0', AT_REST_FROM) })
+    const priced = () => ({ ...share(7.7), source: 'evidence/cpu-price.json' })
+    expect(atRestStatus({ root, document: hook('echo', '1.0.0', priced(), 31), glue: {} }).state).toBe('ok')
+    expect(atRestStatus({ root, document: hook('loud', '1.0.0', priced(), 31), glue: {} }).state).toBe('fail')
+    expect(atRestStatus({ root: fixture({}), document: hook('slot', '1.0.0', share(7.7), 31), glue: {} }).state).toBe('info')
+  })
+
+  it('passes a module that answers ev_in_use, and a machine or an effect whose detours rest with it, which the base rests', () => {
+    const wave = machineFolder('\n    .reserved = {7},')
+    const root = fixture({
+      'sdk/octatrack/modules/rests/runtime.json': { schema: 1, subscribe: [{ event: 'ev_in_use', fn: 'in_use', order: 50 }] },
+      ...changelog('rests', '0.2.0', AT_REST_FROM), ...wave,
+      'sdk/octatrack/modules/wave/runtime.json': { schema: 1, contribute: [{ to: 'ot_machines', order: 50, data: 'wave' }], rests: ['0x40007978'] },
+      'sdk/octatrack/modules/echo/runtime.json': { schema: 1, rests: ['0x4000361a'] }, ...changelog('echo', '1.1.0', AT_REST_FROM),
+      ...changelog('loud', '1.1.0', AT_REST_FROM),
+    })
+    expect(atRestStatus({ root, document: hook('rests', '0.2.0', share(1.4)), glue: {} })).toMatchObject({ state: 'ok', detail: expect.stringContaining('ev_in_use') })
+    expect(atRestStatus({ root, document: { ...module('wave', 'Track machine', render(7)), version: '0.1.0' }, glue: {} })).toMatchObject({ state: 'ok', detail: expect.stringContaining('machine') })
+    expect(atRestStatus({ root, document: hook('echo', '1.1.0', share(1.4), 15), glue: {} })).toMatchObject({ state: 'ok', detail: expect.stringContaining('effect') })
+    /* An effect over the limit with no detour marked: its handlers rest, its detours do not, so it still fails, told to mark them. */
+    const loud = atRestStatus({ root: fixture({ ...reading('loud', 2.5, 7.2), ...changelog('loud', '1.1.0', AT_REST_FROM) }), document: hook('loud', '1.1.0', { ...share(7.2), source: 'evidence/cpu-price.json' }, 29), glue: {} })
+    expect(loud).toMatchObject({ state: 'fail' })
+    expect(loud.fix).toContain('the base rests an effect no slot uses')
+  })
+
+  it('reads the rest marks from the committed USB package, not only from runtime.json', () => {
+    const site = (address, bytes, rests) => { const s = Buffer.alloc(40 + bytes); s.writeUInt32BE(address); s[4] = bytes | (rests ? 0x80 : 0); s[6] = bytes; return s }
+    const header = Buffer.alloc(76); header.write('MWRM'); header.writeUInt16BE(8, 4); header.writeUInt32BE(2, 24)
+    const root = fixture({
+      'sdk/octatrack/modules/mutes/runtime.json': { schema: 1, subscribe: [{ event: 'ev_in_use', fn: 'in_use', order: 50 }], rests: ['0x40004dc6'] },
+      'src/engine/assets/octatrack-module-packages.json': { packages: [{ id: 'mutes', version: '0.2.3', path: 'octatrack-modules/mutes/0.2.3.mwrm' }] },
+      ...changelog('mutes', '0.2.3', AT_REST_FROM),
+    })
+    mkdirSync(join(root, 'public/octatrack-modules/mutes'), { recursive: true })
+    const built = rests => writeFileSync(join(root, 'public/octatrack-modules/mutes/0.2.3.mwrm'), Buffer.concat([header, site(0x40004dc6, 6, rests), site(0x40068efe, 4, false)]))
+    built(false) /* a builder route that dropped the marks: the base would keep the detour patched */
+    expect(atRestStatus({ root, document: hook('mutes', '0.2.3', share(2.6)), glue: {} })).toMatchObject({ state: 'fail', detail: expect.stringContaining('0x40004dc6') })
+    built(true)
+    expect(atRestStatus({ root, document: hook('mutes', '0.2.3', share(2.6)), glue: {} }).state).toBe('ok')
+    /* No package of this version committed yet (a draft): the packages check names that; this one reads runtime.json. */
+    expect(atRestStatus({ root, document: hook('mutes', '0.2.4', share(2.6)), glue: {} }).state).toBe('ok')
+  })
+
+  it('holds on main: no published release fails, whatever it costs at rest', () => {
+    const catalog = JSON.parse(readFileSync(join(repo, 'sdk/catalog.json'), 'utf8')), glue = portGlue(repo)
+    for (const item of catalog.modules) {
+      const document = parseModuleDocument(JSON.parse(readFileSync(join(repo, 'sdk/octatrack/modules', item.id, 'octamod.module.json'), 'utf8')))
+      expect([item.id, atRestStatus({ root: repo, document, glue }).state]).not.toEqual([item.id, 'fail'])
+    }
+  }, 20_000)
 })
